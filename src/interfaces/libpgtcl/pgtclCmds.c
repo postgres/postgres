@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.21 1998/02/26 04:44:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.22 1998/03/15 08:02:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,258 +240,255 @@ tcl_value(char *value)
 
 /**********************************
  * pg_conndefaults
-
+ 
  syntax:
  pg_conndefaults
-
+ 
  the return result is a list describing the possible options and their
  current default values for a call to pg_connect with the new -conninfo
  syntax. Each entry in the list is a sublist of the format:
 
-	 {optname label dispchar dispsize value}
-
+     {optname label dispchar dispsize value}
+ 
  **********************************/
 
 int
-Pg_conndefaults(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
+Pg_conndefaults(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 {
-	PQconninfoOption *option;
-	char		buf[8192];
+    PQconninfoOption *option;
+    char	buf[8192];
 
-	Tcl_ResetResult(interp);
-	for (option = PQconndefaults(); option->keyword != NULL; option++)
-	{
-		if (option->val == NULL)
-		{
-			option->val = "";
-		}
-		sprintf(buf, "{%s} {%s} {%s} %d {%s}",
-				option->keyword,
-				option->label,
-				option->dispchar,
-				option->dispsize,
-				option->val);
-		Tcl_AppendElement(interp, buf);
+    Tcl_ResetResult(interp);
+    for(option = PQconndefaults(); option->keyword != NULL; option++) {
+        if(option->val == NULL) {
+	    option->val = "";
 	}
+	sprintf(buf, "{%s} {%s} {%s} %d {%s}",
+		option->keyword,
+		option->label,
+		option->dispchar,
+		option->dispsize,
+		option->val);
+        Tcl_AppendElement(interp, buf);
+    }
 
-	return TCL_OK;
+    return TCL_OK;
 }
 
 
 /**********************************
  * pg_connect
- make a connection to a backend.
-
+ make a connection to a backend.  
+ 
  syntax:
  pg_connect dbName [-host hostName] [-port portNumber] [-tty pqtty]]
-
+ 
  the return result is either an error message or a handle for a database
  connection.  Handles start with the prefix "pgp"
-
+ 
  **********************************/
 
 int
-Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	char	   *pghost = NULL;
-	char	   *pgtty = NULL;
-	char	   *pgport = NULL;
-	char	   *pgoptions = NULL;
-	char	   *dbName;
-	int			i;
-	PGconn	   *conn;
+    char *pghost = NULL;
+    char *pgtty = NULL;
+    char *pgport = NULL;
+    char *pgoptions = NULL;
+    char *dbName; 
+    int i;
+    PGconn *conn;
+  
+    if (argc == 1) {
+	Tcl_AppendResult(interp, "pg_connect: database name missing\n", 0);
+	Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]\n", 0);
+	Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
+	return TCL_ERROR;
+    
+    }
 
-	if (argc == 1)
-	{
-		Tcl_AppendResult(interp, "pg_connect: database name missing\n", 0);
-		Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]\n", 0);
-		Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
-		return TCL_ERROR;
-
+    if (!strcmp("-conninfo", argv[1])) {
+	/*
+	 * Establish a connection using the new PQconnectdb() interface
+	 */
+        if (argc != 3) {
+	    Tcl_AppendResult(interp, "pg_connect: syntax error\n", 0);
+	    Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
+	    return TCL_ERROR;
 	}
-
-	if (!strcmp("-conninfo", argv[1]))
-	{
-
-		/*
-		 * Establish a connection using the new PQconnectdb() interface
-		 */
-		if (argc != 3)
-		{
-			Tcl_AppendResult(interp, "pg_connect: syntax error\n", 0);
-			Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
-			return TCL_ERROR;
+	conn = PQconnectdb(argv[2]);
+    } else {
+	/*
+	 * Establish a connection using the old PQsetdb() interface
+	 */
+	if (argc > 2) { 
+	    /* parse for pg environment settings */
+	    i = 2;
+	    while (i+1 < argc) {
+		if (strcmp(argv[i], "-host") == 0) {
+		    pghost = argv[i+1];
+		    i += 2;
 		}
-		conn = PQconnectdb(argv[2]);
-	}
-	else
-	{
-
-		/*
-		 * Establish a connection using the old PQsetdb() interface
-		 */
-		if (argc > 2)
-		{
-			/* parse for pg environment settings */
-			i = 2;
-			while (i + 1 < argc)
-			{
-				if (strcmp(argv[i], "-host") == 0)
-				{
-					pghost = argv[i + 1];
-					i += 2;
-				}
-				else if (strcmp(argv[i], "-port") == 0)
-				{
-					pgport = argv[i + 1];
-					i += 2;
-				}
-				else if (strcmp(argv[i], "-tty") == 0)
-				{
-					pgtty = argv[i + 1];
-					i += 2;
-				}
-				else if (strcmp(argv[i], "-options") == 0)
-				{
-					pgoptions = argv[i + 1];
-					i += 2;
-				}
-				else
-				{
-					Tcl_AppendResult(interp, "Bad option to pg_connect : \n",
-									 argv[i], 0);
-					Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]", 0);
-					return TCL_ERROR;
-				}
-			}					/* while */
-			if ((i % 2 != 0) || i != argc)
-			{
-				Tcl_AppendResult(interp, "wrong # of arguments to pg_connect\n", argv[i], 0);
-				Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]", 0);
-				return TCL_ERROR;
+		else
+		    if (strcmp(argv[i], "-port") == 0) {
+			pgport = argv[i+1];
+			i += 2;
+		    }
+		    else
+			if (strcmp(argv[i], "-tty") == 0) {
+			    pgtty = argv[i+1];
+			    i += 2;
 			}
-		}
-		dbName = argv[1];
-		conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
-	}
-
-	if (conn->status == CONNECTION_OK)
-	{
-		PgSetConnectionId(cd, interp->result, conn);
-		return TCL_OK;
-	}
-	else
-	{
-		Tcl_AppendResult(interp, "Connection to database failed\n", 0);
-		Tcl_AppendResult(interp, conn->errorMessage, 0);
-		PQfinish(conn);
+			else if (strcmp(argv[i], "-options") == 0) {
+			    pgoptions = argv[i+1];
+			    i += 2;
+			}
+			else {
+			    Tcl_AppendResult(interp, "Bad option to pg_connect : \n",
+					     argv[i], 0);
+			    Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]",0);
+			    return TCL_ERROR;
+			}
+	    } /* while */
+	    if ((i % 2 != 0) || i != argc) {
+		Tcl_AppendResult(interp, "wrong # of arguments to pg_connect\n", argv[i],0);
+		Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]",0);
 		return TCL_ERROR;
+	    }
 	}
+	dbName = argv[1];
+        conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
+    }
+
+    if (conn->status == CONNECTION_OK) {
+	PgSetConnectionId(interp, conn);
+	return TCL_OK;
+    }
+    else {
+	Tcl_AppendResult(interp, "Connection to database failed\n", 0);
+	Tcl_AppendResult(interp, conn->errorMessage, 0);
+	PQfinish(conn);
+	return TCL_ERROR;
+    }
 }
 
 
 /**********************************
  * pg_disconnect
  close a backend connection
-
+ 
  syntax:
  pg_disconnect connection
-
+ 
  The argument passed in must be a connection pointer.
-
+ 
  **********************************/
 
 int
-Pg_disconnect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_disconnect(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
+    Tcl_Channel conn_chan;
 
-	if (argc != 2)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n", "pg_disconnect connection", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 2) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n", "pg_disconnect connection", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn_chan = Tcl_GetChannel(interp, argv[1], 0);
+    if (conn_chan == NULL) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, argv[1], " is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
 
-	PgDelConnectionId(cd, argv[1]);
-	PQfinish(conn);
-	return TCL_OK;
+    return Tcl_UnregisterChannel(interp, conn_chan);
 }
 
 /**********************************
  * pg_exec
  send a query string to the backend connection
-
+ 
  syntax:
  pg_exec connection query
-
+ 
  the return result is either an error message or a handle for a query
  result.  Handles start with the prefix "pgp"
  **********************************/
 
 int
-Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_exec(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	PGresult   *result;
+    Pg_ConnectionId *connid;
+    PGconn *conn;
+    PGresult *result;
+    int connStatus;
 
-	if (argc != 3)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_exec connection queryString", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_exec connection queryString", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], &connid);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
 
-	result = PQexec(conn, argv[2]);
-	if (result)
-	{
-		PgSetResultId(cd, interp->result, argv[1], result);
-		return TCL_OK;
+    if (connid->res_copyStatus != RES_COPY_NONE) {
+	Tcl_SetResult(interp, "Attempt to query while COPY in progress", TCL_STATIC);
+	return TCL_ERROR;
+    }
+
+    connStatus = conn->status;
+    result = PQexec(conn, argv[2]);
+    if (result) {
+	int rId = PgSetResultId(interp, argv[1], result);
+	if (result->resultStatus == PGRES_COPY_IN ||
+	    result->resultStatus == PGRES_COPY_OUT) {
+		connid->res_copyStatus = RES_COPY_INPROGRESS;
+		connid->res_copy = rId;
 	}
-	else
-	{
-		/* error occurred during the query */
-		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
-		return TCL_ERROR;
-	}
-	/* check return status of result */
 	return TCL_OK;
+    }
+    else {
+	/* error occurred during the query */
+	Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
+	if (connStatus == CONNECTION_OK) {
+	    PQreset(conn);
+	    if (conn->status == CONNECTION_OK) {
+		result = PQexec(conn, argv[2]);
+		if (result) {
+		    int rId = PgSetResultId(interp, argv[1], result);
+		    if (result->resultStatus == PGRES_COPY_IN ||
+			result->resultStatus == PGRES_COPY_OUT) {
+			    connid->res_copyStatus = RES_COPY_INPROGRESS;
+			    connid->res_copy = rId;
+		    }
+		    return TCL_OK;
+		}
+	    }
+	}
+	return TCL_ERROR;
+    }
 }
 
 /**********************************
  * pg_result
  get information about the results of a query
-
+ 
  syntax:
- pg_result result ?option?
-
+ pg_result result ?option? 
+ 
  the options are:
- -status
+ -status  
  the status of the result
  -conn
  the connection that produced the result
  -assign arrayName
  assign the results to an array
- -assignbyidx arrayName ?appendstr?
+ -assignbyidx arrayName
  assign the results to an array using the first field as a key
- optional appendstr append that string to the key name. Usefull for
- creating pseudo-multi dimentional arrays in tcl.
  -numTuples
  the number of tuples in the query
  -attributes
@@ -502,333 +499,303 @@ Pg_exec(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  returns the number of attributes returned by the query
  -getTuple tupleNumber
  returns the values of the tuple in a list
- -clear
+ -tupleArray tupleNumber arrayName
+ stores the values of the tuple in array arrayName, indexed
+ by the attributes returned
+ -clear 
  clear the result buffer. Do not reuse after this
  **********************************/
 int
-Pg_result(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGresult   *result;
-	char	   *opt;
-	int			i;
-	int			tupno;
-	char		prearrayInd[MAX_MESSAGE_LEN];
-	char		arrayInd[MAX_MESSAGE_LEN];
-	char	   *appendstr;
-	char	   *arrVar;
+    PGresult *result;
+    char *opt;
+    int i;
+    int tupno;
+    char prearrayInd[MAX_MESSAGE_LEN];
+    char arrayInd[MAX_MESSAGE_LEN];
+    char *arrVar;
 
-	if (argc != 3 && argc != 4 && argc != 5)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n", 0);
-		goto Pg_result_errReturn;
-	}
+    if (argc < 3 || argc > 5) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",0);
+	goto Pg_result_errReturn;
+    }
 
-	result = PgGetResultId(cd, argv[1]);
-	if (result == (PGresult *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid query result\n", 0);
-		return TCL_ERROR;
-	}
-
-	opt = argv[2];
-
-	if (strcmp(opt, "-status") == 0)
-	{
-		Tcl_AppendResult(interp, pgresStatus[PQresultStatus(result)], 0);
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-oid") == 0)
-	{
-		Tcl_AppendResult(interp, PQoidStatus(result), 0);
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-conn") == 0)
-	{
-		PgGetConnByResultId(cd, interp->result, argv[1]);
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-clear") == 0)
-	{
-		PgDelResultId(cd, argv[1]);
-		PQclear(result);
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-numTuples") == 0)
-	{
-		sprintf(interp->result, "%d", PQntuples(result));
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-assign") == 0)
-	{
-		if (argc != 4)
-		{
-			Tcl_AppendResult(interp, "-assign option must be followed by a variable name", 0);
-			return TCL_ERROR;
-		}
-		arrVar = argv[3];
-
-		/*
-		 * this assignment assigns the table of result tuples into a giant
-		 * array with the name given in the argument, the indices of the
-		 * array or (tupno,attrName)
-		 */
-		for (tupno = 0; tupno < PQntuples(result); tupno++)
-		{
-			for (i = 0; i < PQnfields(result); i++)
-			{
-				sprintf(arrayInd, "%d,%s", tupno, PQfname(result, i));
-				Tcl_SetVar2(interp, arrVar, arrayInd,
-#ifdef TCL_ARRAYS
-							tcl_value(PQgetvalue(result, tupno, i)),
-#else
-							PQgetvalue(result, tupno, i),
-#endif
-							TCL_LEAVE_ERR_MSG);
-			}
-		}
-		Tcl_AppendResult(interp, arrVar, 0);
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-assignbyidx") == 0)
-	{
-		if (argc != 4 && argc != 5)
-		{
-			Tcl_AppendResult(interp, "-assignbyidx requires the array name and takes one optional argument as an append string", 0);
-			return TCL_ERROR;
-		}
-		arrVar = argv[3];
-
-		/*
-		 * this assignment assigns the table of result tuples into a giant
-		 * array with the name given in the argument, the indices of the
-		 * array or (tupno,attrName)
-		 */
-		if (argc == 5)
-		{
-			appendstr = argv[4];
-		}
-		else
-		{
-			appendstr = "";
-		}
-		for (tupno = 0; tupno < PQntuples(result); tupno++)
-		{
-			sprintf(prearrayInd, "%s", PQgetvalue(result, tupno, 0));
-			for (i = 1; i < PQnfields(result); i++)
-			{
-				sprintf(arrayInd, "%s,%s%s", prearrayInd, PQfname(result, i),
-						appendstr);
-				Tcl_SetVar2(interp, arrVar, arrayInd,
-							PQgetvalue(result, tupno, i),
-							TCL_LEAVE_ERR_MSG);
-			}
-		}
-		Tcl_AppendResult(interp, arrVar, 0);
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-getTuple") == 0)
-	{
-		if (argc != 4)
-		{
-			Tcl_AppendResult(interp, "-getTuple option must be followed by a tuple number", 0);
-			return TCL_ERROR;
-		}
-		tupno = atoi(argv[3]);
-
-		if (tupno >= PQntuples(result))
-		{
-			Tcl_AppendResult(interp, "argument to getTuple cannot exceed number of tuples - 1", 0);
-			return TCL_ERROR;
-		}
-
-#ifdef TCL_ARRAYS
-		for (i = 0; i < PQnfields(result); i++)
-		{
-			Tcl_AppendElement(interp, PQgetvalue(result, tupno, i));
-		}
-#else
-/*		Tcl_AppendResult(interp, PQgetvalue(result,tupno,0),NULL); */
-		Tcl_AppendElement(interp, PQgetvalue(result, tupno, 0));
-		for (i = 1; i < PQnfields(result); i++)
-		{
-/*		  Tcl_AppendResult(interp, " ", PQgetvalue(result,tupno,i),NULL);*/
-			Tcl_AppendElement(interp, PQgetvalue(result, tupno, i));
-		}
-#endif
-
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-attributes") == 0)
-	{
-		Tcl_AppendResult(interp, PQfname(result, 0), NULL);
-		for (i = 1; i < PQnfields(result); i++)
-		{
-			Tcl_AppendResult(interp, " ", PQfname(result, i), NULL);
-		}
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-lAttributes") == 0)
-	{
-		char		buf[512];
-
-		Tcl_ResetResult(interp);
-		for (i = 0; i < PQnfields(result); i++)
-		{
-			sprintf(buf, "{%s} %ld %d", PQfname(result, i),
-					(long) PQftype(result, i),
-					PQfsize(result, i));
-			Tcl_AppendElement(interp, buf);
-		}
-		return TCL_OK;
-	}
-	else if (strcmp(opt, "-numAttrs") == 0)
-	{
-		sprintf(interp->result, "%d", PQnfields(result));
-		return TCL_OK;
-	}
-	else
-	{
-		Tcl_AppendResult(interp, "Invalid option", 0);
-		goto Pg_result_errReturn;
-	}
-
-
-Pg_result_errReturn:
-	Tcl_AppendResult(interp,
-					 "pg_result result ?option? where ?option is\n",
-					 "\t-status\n",
-					 "\t-conn\n",
-					 "\t-assign arrayVarName\n",
-					 "\t-assignbyidx arrayVarName ?appendstr?\n",
-					 "\t-numTuples\n",
-					 "\t-attributes\n"
-					 "\t-lAttributes\n"
-					 "\t-numAttrs\n"
-					 "\t-getTuple tupleNumber\n",
-					 "\t-clear\n",
-					 "\t-oid\n",
-					 0);
+    result = PgGetResultId(interp, argv[1]);
+    if (result == (PGresult *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid query result", 0);
 	return TCL_ERROR;
+    }
 
+    opt = argv[2];
+
+    if (strcmp(opt, "-status") == 0) {
+	Tcl_AppendResult(interp, pgresStatus[PQresultStatus(result)], 0);
+	return TCL_OK;
+    }
+    else if (strcmp(opt, "-oid") == 0) {
+	Tcl_AppendResult(interp, PQoidStatus(result), 0);
+	return TCL_OK;
+    }
+    else if (strcmp(opt, "-conn") == 0) {
+	return PgGetConnByResultId(interp, argv[1]);
+    }
+    else if (strcmp(opt, "-clear") == 0) {
+	PgDelResultId(interp, argv[1]);
+	PQclear(result);
+	return TCL_OK;
+    }
+    else if (strcmp(opt, "-numTuples") == 0) {
+	sprintf(interp->result, "%d", PQntuples(result));
+	return TCL_OK;
+    }
+    else if (strcmp(opt, "-assign") == 0) {
+	if (argc != 4) {
+	    Tcl_AppendResult(interp, "-assign option must be followed by a variable name",0);
+	    return TCL_ERROR;
+	}
+	arrVar = argv[3];
+	/* this assignment assigns the table of result tuples into a giant
+	   array with the name given in the argument,
+	   the indices of the array or (tupno,attrName)*/
+	for (tupno = 0; tupno<PQntuples(result); tupno++) {
+	    for (i=0;i<PQnfields(result);i++) {
+		sprintf(arrayInd, "%d,%s", tupno, PQfname(result,i));
+		Tcl_SetVar2(interp, arrVar, arrayInd, 
+#ifdef TCL_ARRAYS
+			    tcl_value(PQgetvalue(result,tupno,i)),
+#else
+			    PQgetvalue(result,tupno,i),
+#endif
+			    TCL_LEAVE_ERR_MSG);
+	    }
+	}
+	Tcl_AppendResult(interp, arrVar, 0);
+	return TCL_OK;
+    }
+    else if (strcmp(opt, "-assignbyidx") == 0) {
+      if (argc != 4) {
+          Tcl_AppendResult(interp, "-assignbyidx option must be followed by a variable name",0);
+          return TCL_ERROR;
+      }
+      arrVar = argv[3];
+      /* this assignment assigns the table of result tuples into a giant
+         array with the name given in the argument,
+         the indices of the array or (tupno,attrName)*/
+      for (tupno = 0; tupno<PQntuples(result); tupno++) {
+          sprintf(prearrayInd,"%s",PQgetvalue(result,tupno,0));
+          for (i=1;i<PQnfields(result);i++) {
+              sprintf(arrayInd, "%s,%s", prearrayInd, PQfname(result,i));
+              Tcl_SetVar2(interp, arrVar, arrayInd,
+                          PQgetvalue(result,tupno,i),
+                          TCL_LEAVE_ERR_MSG);
+          }
+      }
+      Tcl_AppendResult(interp, arrVar, 0);
+      return TCL_OK;
+    }
+    else if (strcmp(opt, "-getTuple") == 0) {
+	if (argc != 4) {
+	    Tcl_AppendResult(interp, "-getTuple option must be followed by a tuple number",0);
+	    return TCL_ERROR;
+	}
+	tupno = atoi(argv[3]);
+	
+	if (tupno >= PQntuples(result)) {
+	    Tcl_AppendResult(interp, "argument to getTuple cannot exceed number of tuples - 1",0);
+	    return TCL_ERROR;
+	}
+
+#ifdef TCL_ARRAYS
+	for (i=0; i<PQnfields(result); i++) {
+	    Tcl_AppendElement(interp, tcl_value(PQgetvalue(result,tupno,i)));
+	}
+#else
+/*	Tcl_AppendResult(interp, PQgetvalue(result,tupno,0),NULL); */
+        Tcl_AppendElement(interp, PQgetvalue(result,tupno,0));
+	for (i=1;i<PQnfields(result);i++) {
+/*	  Tcl_AppendResult(interp, " ", PQgetvalue(result,tupno,i),NULL);*/
+         Tcl_AppendElement(interp, PQgetvalue(result,tupno,i));
+	}
+#endif
+
+	return TCL_OK;
+    }
+    else if (strcmp(opt, "-tupleArray") == 0) {
+	if (argc != 5) {
+	    Tcl_AppendResult(interp, "-tupleArray option must be followed by a tuple number and array name",0);
+	    return TCL_ERROR;
+	}
+	tupno = atoi(argv[3]);
+	
+	if (tupno >= PQntuples(result)) {
+	    Tcl_AppendResult(interp, "argument to tupleArray cannot exceed number of tuples - 1",0);
+	    return TCL_ERROR;
+	}
+
+	for ( i = 0; i < PQnfields(result); i++) {
+	   if (Tcl_SetVar2(interp, argv[4], PQfname(result, i), PQgetvalue(result, tupno, i), TCL_LEAVE_ERR_MSG) == NULL) {
+	       return TCL_ERROR;
+	   }
+	}
+	return TCL_OK;
+    }
+    else if (strcmp(opt, "-attributes") == 0) {
+      Tcl_AppendResult(interp, PQfname(result,0),NULL);
+      for (i=1;i<PQnfields(result);i++) {
+	Tcl_AppendResult(interp, " ", PQfname(result,i), NULL);
+      }
+      return TCL_OK;
+    }
+    else if (strcmp(opt, "-lAttributes") == 0) {
+      char buf[512];
+      Tcl_ResetResult(interp);
+      for (i = 0; i < PQnfields(result); i++) {
+          sprintf(buf, "{%s} %ld %d", PQfname(result, i),
+	  			      (long) PQftype(result, i),
+				      PQfsize(result, i));
+          Tcl_AppendElement(interp, buf);
+      }
+      return TCL_OK;
+    }
+    else if (strcmp(opt, "-numAttrs") == 0) {
+      sprintf(interp->result, "%d", PQnfields(result));
+      return TCL_OK;
+    }
+    else   { 
+	Tcl_AppendResult(interp, "Invalid option",0);
+	goto Pg_result_errReturn;
+    }
+  
+
+ Pg_result_errReturn:
+    Tcl_AppendResult(interp, 
+		     "pg_result result ?option? where ?option is\n", 
+		     "\t-status\n",
+		     "\t-conn\n",
+		     "\t-assign arrayVarName\n",
+		     "\t-assignbyidx arrayVarName\n",
+		     "\t-numTuples\n",
+		     "\t-attributes\n"
+		     "\t-lAttributes\n"
+		     "\t-numAttrs\n"
+		     "\t-getTuple tupleNumber\n",
+		     "\t-tupleArray tupleNumber arrayVarName\n",
+		     "\t-clear\n",
+		     "\t-oid\n",
+		     (char*)0);
+    return TCL_ERROR;
+  
 
 }
 
 /**********************************
  * pg_lo_open
-	 open a large object
-
+     open a large object
+ 
  syntax:
- pg_lo_open conn objOid mode
+ pg_lo_open conn objOid mode 
 
  where mode can be either 'r', 'w', or 'rw'
 **********************/
 
 int
-Pg_lo_open(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_open(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	int			lobjId;
-	int			mode;
-	int			fd;
+    PGconn *conn;
+    int lobjId;
+    int mode;
+    int fd;
 
-	if (argc != 4)
+    if (argc != 4) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_open connection lobjOid mode", 0);
+	return TCL_ERROR;
+    }
+  
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    lobjId = atoi(argv[2]);
+    if (strlen(argv[3]) < 1 ||
+	strlen(argv[3]) > 2)
 	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_open connection lobjOid mode", 0);
-		return TCL_ERROR;
-	}
+	Tcl_AppendResult(interp,"mode argument must be 'r', 'w', or 'rw'",0);
+        return TCL_ERROR;
+    }
+    switch (argv[3][0]) {
+    case 'r':
+    case 'R':
+	mode = INV_READ;
+	break;
+    case 'w':
+    case 'W':
+	mode = INV_WRITE;
+	break;
+    default:
+	Tcl_AppendResult(interp,"mode argument must be 'r', 'w', or 'rw'",0);
+        return TCL_ERROR;
+   }
+    switch (argv[3][1]) {
+    case '\0':
+	break;
+    case 'r':
+    case 'R':
+	mode = mode & INV_READ;
+	break;
+    case 'w':
+    case 'W':
+	mode = mode & INV_WRITE;
+	break;
+    default:
+	Tcl_AppendResult(interp,"mode argument must be 'r', 'w', or 'rw'",0);
+        return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
-
-	lobjId = atoi(argv[2]);
-	if (strlen(argv[3]) < 1 ||
-		strlen(argv[3]) > 2)
-	{
-		Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
-		return TCL_ERROR;
-	}
-	switch (argv[3][0])
-	{
-		case 'r':
-		case 'R':
-			mode = INV_READ;
-			break;
-		case 'w':
-		case 'W':
-			mode = INV_WRITE;
-			break;
-		default:
-			Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
-			return TCL_ERROR;
-	}
-	switch (argv[3][1])
-	{
-		case '\0':
-			break;
-		case 'r':
-		case 'R':
-			mode = mode & INV_READ;
-			break;
-		case 'w':
-		case 'W':
-			mode = mode & INV_WRITE;
-			break;
-		default:
-			Tcl_AppendResult(interp, "mode argument must be 'r', 'w', or 'rw'", 0);
-			return TCL_ERROR;
-	}
-
-	fd = lo_open(conn, lobjId, mode);
-	sprintf(interp->result, "%d", fd);
-	return TCL_OK;
+    fd = lo_open(conn,lobjId,mode);
+    sprintf(interp->result,"%d",fd);
+    return TCL_OK;
 }
 
 /**********************************
  * pg_lo_close
-	 close a large object
-
+     close a large object
+ 
  syntax:
- pg_lo_close conn fd
+ pg_lo_close conn fd 
 
 **********************/
 int
-Pg_lo_close(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_close(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	int			fd;
+    PGconn *conn;
+    int fd;
 
-	if (argc != 3)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_close connection fd", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_close connection fd", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
-
-	fd = atoi(argv[2]);
-	sprintf(interp->result, "%d", lo_close(conn, fd));
-	return TCL_OK;
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    fd = atoi(argv[2]);
+    sprintf(interp->result,"%d",lo_close(conn,fd));
+    return TCL_OK;
 }
 
 /**********************************
  * pg_lo_read
-	 reads at most len bytes from a large object into a variable named
+     reads at most len bytes from a large object into a variable named
  bufVar
-
+ 
  syntax:
  pg_lo_read conn fd bufVar len
 
@@ -836,104 +803,96 @@ Pg_lo_close(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
 **********************/
 int
-Pg_lo_read(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_read(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	int			fd;
-	int			nbytes = 0;
-	char	   *buf;
-	char	   *bufVar;
-	int			len;
+    PGconn *conn;
+    int fd;
+    int nbytes = 0;
+    char *buf;
+    char *bufVar;
+    int len;
 
-	if (argc != 5)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 " pg_lo_read conn fd bufVar len", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 5) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 " pg_lo_read conn fd bufVar len", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    fd = atoi(argv[2]);
 
-	fd = atoi(argv[2]);
+    bufVar = argv[3];
 
-	bufVar = argv[3];
+    len = atoi(argv[4]);
 
-	len = atoi(argv[4]);
-
-	if (len <= 0)
-	{
-		sprintf(interp->result, "%d", nbytes);
-		return TCL_OK;
-	}
-	buf = malloc(sizeof(len + 1));
-
-	nbytes = lo_read(conn, fd, buf, len);
-
-	Tcl_SetVar(interp, bufVar, buf, TCL_LEAVE_ERR_MSG);
-	sprintf(interp->result, "%d", nbytes);
-	free(buf);
+    if (len <= 0) {
+	sprintf(interp->result,"%d",nbytes);
 	return TCL_OK;
+    }
+    buf = ckalloc(sizeof(len+1));
 
+    nbytes = lo_read(conn,fd,buf,len);
+
+    Tcl_SetVar(interp,bufVar,buf,TCL_LEAVE_ERR_MSG);
+    sprintf(interp->result,"%d",nbytes);
+    ckfree(buf);
+    return TCL_OK;
+    
 }
 
 /***********************************
 Pg_lo_write
-   write at most len bytes to a large object
+   write at most len bytes to a large object 
 
  syntax:
  pg_lo_write conn fd buf len
 
 ***********************************/
 int
-Pg_lo_write(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_write(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	char	   *buf;
-	int			fd;
-	int			nbytes = 0;
-	int			len;
+    PGconn *conn;
+    char *buf;
+    int fd;
+    int nbytes = 0;
+    int len;
 
-	if (argc != 5)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_write conn fd buf len", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 5) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_write conn fd buf len", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    fd = atoi(argv[2]);
 
-	fd = atoi(argv[2]);
+    buf = argv[3];
 
-	buf = argv[3];
+    len = atoi(argv[4]);
 
-	len = atoi(argv[4]);
-
-	if (len <= 0)
-	{
-		sprintf(interp->result, "%d", nbytes);
-		return TCL_OK;
-	}
-
-	nbytes = lo_write(conn, fd, buf, len);
-	sprintf(interp->result, "%d", nbytes);
+    if (len <= 0) {
+	sprintf(interp->result,"%d",nbytes);
 	return TCL_OK;
+    }
+
+    nbytes = lo_write(conn,fd,buf,len);
+    sprintf(interp->result,"%d",nbytes);
+    return TCL_OK;
 }
 
 /***********************************
 Pg_lo_lseek
-	seek to a certain position in a large object
+    seek to a certain position in a large object
 
 syntax
   pg_lo_lseek conn fd offset whence
@@ -942,54 +901,43 @@ whence can be either
 "SEEK_CUR", "SEEK_END", or "SEEK_SET"
 ***********************************/
 int
-Pg_lo_lseek(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_lseek(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	int			fd;
-	char	   *whenceStr;
-	int			offset,
-				whence;
+    PGconn *conn;
+    int fd;
+    char *whenceStr;
+    int offset, whence;
 
-	if (argc != 5)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_lseek conn fd offset whence", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 5) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_lseek conn fd offset whence", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    fd = atoi(argv[2]);
 
-	fd = atoi(argv[2]);
+    offset = atoi(argv[3]);
 
-	offset = atoi(argv[3]);
-
-	whenceStr = argv[4];
-	if (strcmp(whenceStr, "SEEK_SET") == 0)
-	{
-		whence = SEEK_SET;
-	}
-	else if (strcmp(whenceStr, "SEEK_CUR") == 0)
-	{
-		whence = SEEK_CUR;
-	}
-	else if (strcmp(whenceStr, "SEEK_END") == 0)
-	{
-		whence = SEEK_END;
-	}
-	else
-	{
-		Tcl_AppendResult(interp, "the whence argument to Pg_lo_lseek must be SEEK_SET, SEEK_CUR or SEEK_END", 0);
-		return TCL_ERROR;
-	}
-
-	sprintf(interp->result, "%d", lo_lseek(conn, fd, offset, whence));
-	return TCL_OK;
+    whenceStr = argv[4];
+    if (strcmp(whenceStr,"SEEK_SET") == 0) {
+	whence = SEEK_SET;
+    } else if (strcmp(whenceStr,"SEEK_CUR") == 0) {
+	whence = SEEK_CUR;
+    } else if (strcmp(whenceStr,"SEEK_END") == 0) {
+	whence = SEEK_END;
+    } else {
+	Tcl_AppendResult(interp, "the whence argument to Pg_lo_lseek must be SEEK_SET, SEEK_CUR or SEEK_END",0);
+	return TCL_ERROR;
+    }
+	
+    sprintf(interp->result,"%d",lo_lseek(conn,fd,offset,whence));
+    return TCL_OK;
 }
 
 
@@ -1000,113 +948,96 @@ Pg_lo_creat
  syntax:
    pg_lo_creat conn mode
 
-mode can be any OR'ing together of INV_READ, INV_WRITE
+mode can be any OR'ing together of INV_READ, INV_WRITE,
 for now, we don't support any additional storage managers.
 
 ***********************************/
 int
-Pg_lo_creat(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_creat(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	char	   *modeStr;
-	char	   *modeWord;
-	int			mode;
+    PGconn *conn;
+    char *modeStr;
+    char *modeWord;
+    int mode;
 
-	if (argc != 3)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_creat conn mode", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_creat conn mode", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    modeStr = argv[2];
 
-	modeStr = argv[2];
+    modeWord = strtok(modeStr,"|");
+    if (strcmp(modeWord,"INV_READ") == 0) {
+	mode = INV_READ;
+    } else if (strcmp(modeWord,"INV_WRITE") == 0) {
+	mode = INV_WRITE;
+    } else {
+	Tcl_AppendResult(interp,
+			 "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, and INV_WRITE",
+			 0);
+	return TCL_ERROR;
+    }
 
-	modeWord = strtok(modeStr, "|");
-	if (strcmp(modeWord, "INV_READ") == 0)
-	{
-		mode = INV_READ;
+    while ( (modeWord = strtok((char*)NULL, "|")) != NULL) {
+	if (strcmp(modeWord,"INV_READ") == 0) {
+	    mode |= INV_READ;
+	} else if (strcmp(modeWord,"INV_WRITE") == 0) {
+	    mode |= INV_WRITE;
+	} else {
+	    Tcl_AppendResult(interp,
+			     "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, INV_WRITE",
+			     0);
+	    return TCL_ERROR;
 	}
-	else if (strcmp(modeWord, "INV_WRITE") == 0)
-	{
-		mode = INV_WRITE;
-	}
-	else
-	{
-		Tcl_AppendResult(interp,
-						 "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, and INV_WRITE",
-						 0);
-		return TCL_ERROR;
-	}
-
-	while ((modeWord = strtok((char *) NULL, "|")) != NULL)
-	{
-		if (strcmp(modeWord, "INV_READ") == 0)
-		{
-			mode |= INV_READ;
-		}
-		else if (strcmp(modeWord, "INV_WRITE") == 0)
-		{
-			mode |= INV_WRITE;
-		}
-		else
-		{
-			Tcl_AppendResult(interp,
-							 "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, and INV_WRITE",
-							 0);
-			return TCL_ERROR;
-		}
-	}
-	sprintf(interp->result, "%d", lo_creat(conn, mode));
-	return TCL_OK;
+    }
+    sprintf(interp->result,"%d",lo_creat(conn,mode));
+    return TCL_OK;
 }
 
 /***********************************
 Pg_lo_tell
-	returns the current seek location of the large object
+    returns the current seek location of the large object
 
  syntax:
    pg_lo_tell conn fd
 
 ***********************************/
 int
-Pg_lo_tell(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_tell(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	int			fd;
+    PGconn *conn;
+    int fd;
 
-	if (argc != 3)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_tell conn fd", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_tell conn fd", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    fd = atoi(argv[2]);
 
-	fd = atoi(argv[2]);
-
-	sprintf(interp->result, "%d", lo_tell(conn, fd));
-	return TCL_OK;
+    sprintf(interp->result,"%d",lo_tell(conn,fd));
+    return TCL_OK;
 
 }
 
 /***********************************
 Pg_lo_unlink
-	unlink a file based on lobject id
+    unlink a file based on lobject id 
 
  syntax:
    pg_lo_unlink conn lobjId
@@ -1114,43 +1045,39 @@ Pg_lo_unlink
 
 ***********************************/
 int
-Pg_lo_unlink(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_unlink(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	int			lobjId;
-	int			retval;
+    PGconn *conn;
+    int lobjId;
+    int retval;
 
-	if (argc != 3)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_tell conn fd", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_tell conn fd", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    lobjId = atoi(argv[2]);
 
-	lobjId = atoi(argv[2]);
-
-	retval = lo_unlink(conn, lobjId);
-	if (retval == -1)
-	{
-		sprintf(interp->result, "Pg_lo_unlink of '%d' failed", lobjId);
-		return TCL_ERROR;
-	}
-
-	sprintf(interp->result, "%d", retval);
-	return TCL_OK;
+    retval = lo_unlink(conn,lobjId);
+    if (retval == -1) {
+	sprintf(interp->result,"Pg_lo_unlink of '%d' failed",lobjId);
+	return TCL_ERROR;
+    }
+	
+    sprintf(interp->result,"%d",retval);
+    return TCL_OK;
 }
 
 /***********************************
 Pg_lo_import
-	import a Unix file into an (inversion) large objct
+    import a Unix file into an (inversion) large objct
  returns the oid of that object upon success
  returns InvalidOid upon failure
 
@@ -1160,87 +1087,79 @@ Pg_lo_import
 ***********************************/
 
 int
-Pg_lo_import(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_import(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	char	   *filename;
-	Oid			lobjId;
+    PGconn *conn;
+    char* filename;
+    Oid lobjId;
 
-	if (argc != 3)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_import conn filename", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 3) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_import conn filename", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    filename = argv[2];
 
-	filename = argv[2];
-
-	lobjId = lo_import(conn, filename);
-	if (lobjId == InvalidOid)
-	{
-		sprintf(interp->result, "Pg_lo_import of '%s' failed", filename);
-		return TCL_ERROR;
-	}
-	sprintf(interp->result, "%d", lobjId);
-	return TCL_OK;
+    lobjId = lo_import(conn,filename);
+    if (lobjId == InvalidOid) {
+	sprintf(interp->result, "Pg_lo_import of '%s' failed",filename);
+	return TCL_ERROR;
+    }
+    sprintf(interp->result,"%d",lobjId);
+    return TCL_OK;
 }
 
 /***********************************
 Pg_lo_export
-	export an Inversion large object to a Unix file
-
+    export an Inversion large object to a Unix file
+    
  syntax:
    pg_lo_export conn lobjId filename
 
 ***********************************/
 
 int
-Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_lo_export(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	char	   *filename;
-	Oid			lobjId;
-	int			retval;
+    PGconn *conn;
+    char* filename;
+    Oid lobjId;
+    int retval;
 
-	if (argc != 4)
-	{
-		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_lo_export conn lobjId filename", 0);
-		return TCL_ERROR;
-	}
+    if (argc != 4) {
+	Tcl_AppendResult(interp, "Wrong # of arguments\n",
+			 "pg_lo_export conn lobjId filename", 0);
+	return TCL_ERROR;
+    }
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+  
+    lobjId = atoi(argv[2]);
+    filename = argv[3];
 
-	lobjId = atoi(argv[2]);
-	filename = argv[3];
-
-	retval = lo_export(conn, lobjId, filename);
-	if (retval == -1)
-	{
-		sprintf(interp->result, "Pg_lo_export %d %s failed", lobjId, filename);
-		return TCL_ERROR;
-	}
-	return TCL_OK;
+    retval = lo_export(conn,lobjId,filename);
+    if (retval == -1) {
+	sprintf(interp->result, "Pg_lo_export %d %s failed",lobjId, filename);
+	return TCL_ERROR;
+    }
+    return TCL_OK;
 }
 
 /**********************************
  * pg_select
  send a select query string to the backend connection
-
+ 
  syntax:
  pg_select connection query var proc
 
@@ -1250,7 +1169,7 @@ Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 
  Originally I was also going to update changes but that has turned out
  to be not so simple.  Instead, the caller should get the OID of any
- table they want to update and update it themself in the loop.	I may
+ table they want to update and update it themself in the loop.  I may
  try to write a simplified table lookup and update function to make
  that task a little easier.
 
@@ -1259,45 +1178,39 @@ Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
  **********************************/
 
 int
-Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
+Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	PGconn	   *conn;
-	PGresult   *result;
-	int			r;
-	size_t		tupno,
-				column,
-				ncols;
+	PGconn *conn;
+   	PGresult *result;
+    int r;
+    size_t tupno, column, ncols;
 	Tcl_DString headers;
-	char		buffer[2048];
-	struct
-	{
-		char	   *cname;
-		int			change;
-	}		   *info;
+	char	buffer[2048];
+	struct info_s {
+		char    *cname;
+		int     change;
+	} *info;
 
 	if (argc != 5)
 	{
 		Tcl_AppendResult(interp, "Wrong # of arguments\n",
-						 "pg_select connection queryString var proc", 0);
+			 "pg_select connection queryString var proc", 0);
 		return TCL_ERROR;
 	}
 
-	conn = PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
-
+    conn = PgGetConnectionId(interp, argv[1], (Pg_ConnectionId**)NULL);
+    if (conn == (PGconn *)NULL) {
+	return TCL_ERROR;
+    }
+  
 	if ((result = PQexec(conn, argv[2])) == 0)
-	{
+    {
 		/* error occurred during the query */
 		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
 		return TCL_ERROR;
-	}
+    }
 
-	if ((info = malloc(sizeof(*info) * (ncols = PQnfields(result)))) == NULL)
+	if ((info = (struct info_s *)ckalloc(sizeof(*info) * (ncols =  PQnfields(result)))) == NULL)
 	{
 		Tcl_AppendResult(interp, "Not enough memory", 0);
 		return TCL_ERROR;
@@ -1323,8 +1236,8 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 
 		for (column = 0; column < ncols; column++)
 		{
-			Tcl_SetVar2(interp, argv[3], info[column].cname,
-						PQgetvalue(result, tupno, column), 0);
+			strcpy(buffer, PQgetvalue(result, tupno, column));
+			Tcl_SetVar2(interp, argv[3], info[column].cname, buffer, 0);
 		}
 
 		Tcl_SetVar2(interp, argv[3], ".command", "update", 0);
@@ -1332,196 +1245,166 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 		if ((r = Tcl_Eval(interp, argv[4])) != TCL_OK && r != TCL_CONTINUE)
 		{
 			if (r == TCL_BREAK)
-			{
-
-				/*
-				 * I suppose that memory used by info and result must be
-				 * released
-				 */
-				free(info);
-				PQclear(result);
-				Tcl_UnsetVar(interp, argv[3], 0);
 				return TCL_OK;
-			}
+
 			if (r == TCL_ERROR)
 			{
-				char		msg[60];
+				char	msg[60];
 
 				sprintf(msg, "\n    (\"pg_select\" body line %d)",
-						interp->errorLine);
+								interp->errorLine);
 				Tcl_AddErrorInfo(interp, msg);
 			}
-			/* also, releasing memory used by info and result */
-			free(info);
-			PQclear(result);
-			Tcl_UnsetVar(interp, argv[3], 0);
+
 			return r;
 		}
 	}
 
-	free(info);
-	/* Release memory used by result */
-	PQclear(result);
+	ckfree((void*)info);
 	Tcl_UnsetVar(interp, argv[3], 0);
 	Tcl_AppendResult(interp, "", 0);
 	return TCL_OK;
 }
 
 int
-Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_listen(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	int			new;
-	char	   *relname;
-	char	   *callback = NULL;
-	Tcl_HashEntry *entry;
-	PGconn	   *conn;
-	PGresult   *result;
+    int new;
+    char *relname;
+    char *callback = NULL;
+    Tcl_HashEntry *entry;
+    Pg_ConnectionId *connid;
+    PGconn *conn;
+    PGresult *result;
 
-	if ((argc < 3) || (argc > 4))
-	{
-		Tcl_AppendResult(interp, "wrong # args, should be \"",
-						 argv[0], " connection relname ?callback?\"", 0);
-		return TCL_ERROR;
-	}
+    if ((argc < 3) || (argc > 4)) {
+	Tcl_AppendResult(interp, "wrong # args, should be \"",
+			 argv[0], " connection relname ?callback?\"", 0);
+	return TCL_ERROR;
+    }
 
-	/*
-	 * Get the command arguments. Note that relname will copied by
-	 * Tcl_CreateHashEntry while callback must be allocated.
-	 */
-	conn = (PGconn *) PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
-	}
-	relname = argv[2];
-	if ((argc > 3) && *argv[3])
-	{
-		callback = (char *) ckalloc((unsigned) (strlen(argv[3]) + 1));
-		strcpy(callback, argv[3]);
-	}
+    /*
+     * Get the command arguments. Note that relname will copied by
+     * Tcl_CreateHashEntry while callback must be allocated.
+     */
+    conn = PgGetConnectionId(interp, argv[1], &connid);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+    relname = argv[2];
+    if ((argc > 3) && *argv[3]) {
+	callback = (char *) ckalloc((unsigned) (strlen(argv[3])+1));
+	strcpy(callback, argv[3]);
+    }
 
-	/*
-	 * Set or update a callback for a relation;
-	 */
-	if (callback)
-	{
-		entry = Tcl_CreateHashEntry(&(cd->notify_hash), relname, &new);
-		if (new)
-		{
-			/* New callback, execute a listen command on the relation */
-			char	   *cmd = (char *) ckalloc((unsigned) (strlen(argv[2]) + 8));
-
-			sprintf(cmd, "LISTEN %s", relname);
-			result = PQexec(conn, cmd);
-			ckfree(cmd);
-			if (!result || (result->resultStatus != PGRES_COMMAND_OK))
-			{
-				/* Error occurred during the execution of command */
-				if (result)
-					PQclear(result);
-				ckfree(callback);
-				Tcl_DeleteHashEntry(entry);
-				Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
-				return TCL_ERROR;
-			}
-			PQclear(result);
-		}
-		else
-		{
-			/* Free the old callback string */
-			ckfree((char *) Tcl_GetHashValue(entry));
-		}
-		/* Store the new callback command */
-		Tcl_SetHashValue(entry, callback);
-	}
-
-	/*
-	 * Remove a callback for a relation.  There is no way to un-listen a
-	 * relation, simply remove the callback from the notify hash table.
-	 */
-	if (callback == NULL)
-	{
-		entry = Tcl_FindHashEntry(&(cd->notify_hash), relname);
-		if (entry == NULL)
-		{
-			Tcl_AppendResult(interp, "not listening on ", relname, 0);
-			return TCL_ERROR;
-		}
-		ckfree((char *) Tcl_GetHashValue(entry));
+    /*
+     * Set or update a callback for a relation;
+     */
+    if (callback) {
+	entry = Tcl_CreateHashEntry(&(connid->notify_hash), relname, &new);
+	if (new) {
+	    /* New callback, execute a listen command on the relation */
+	    char *cmd = (char *) ckalloc((unsigned) (strlen(argv[2])+8));
+	    sprintf(cmd, "LISTEN %s", relname);
+	    result = PQexec(conn, cmd);
+	    ckfree(cmd);
+	    if (!result || (result->resultStatus != PGRES_COMMAND_OK)) {
+		/* Error occurred during the execution of command */
+		if (result) PQclear(result);
+		ckfree(callback);
 		Tcl_DeleteHashEntry(entry);
+		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
+		return TCL_ERROR;
+	    }
+	    PQclear(result);
+	} else {
+	    /* Free the old callback string */
+	    ckfree((char *) Tcl_GetHashValue(entry));
 	}
+	/* Store the new callback command */
+	Tcl_SetHashValue(entry, callback);
+    }
 
-	return TCL_OK;
+    /*
+     * Remove a callback for a relation.  There is no way to
+     * un-listen a relation, simply remove the callback from
+     * the notify hash table.
+     */
+    if (callback == NULL) {
+	entry = Tcl_FindHashEntry(&(connid->notify_hash), relname);
+	if (entry == NULL) {
+	    Tcl_AppendResult(interp, "not listening on ", relname, 0);
+	    return TCL_ERROR;
+	}
+	ckfree((char *) Tcl_GetHashValue(entry));
+	Tcl_DeleteHashEntry(entry);
+    }
+
+    return TCL_OK;
 }
 
 int
-Pg_notifies(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
+Pg_notifies(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 {
-	Pg_clientData *cd = (Pg_clientData *) cData;
-	int			count;
-	char		buff[12];
-	char	   *callback;
-	Tcl_HashEntry *entry;
-	PGconn	   *conn;
-	PGresult   *result;
-	PGnotify   *notify;
+    int count;
+    char buff[12];
+    char *callback;
+    Tcl_HashEntry *entry;
+    Pg_ConnectionId *connid;
+    PGconn *conn;
+    PGresult *result;
+    PGnotify *notify;
 
-	if (argc != 2)
-	{
-		Tcl_AppendResult(interp, "wrong # args, should be \"",
-						 argv[0], " connection\"", 0);
-		return TCL_ERROR;
+    if (argc != 2) {
+	Tcl_AppendResult(interp, "wrong # args, should be \"",
+			 argv[0], " connection\"", 0);
+	return TCL_ERROR;
+    }
+
+    /*
+     * Get the connection argument.
+     */
+    conn = (PGconn*)PgGetConnectionId(interp, argv[1], &connid);
+    if (conn == (PGconn *)NULL) {
+	Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
+	return TCL_ERROR;
+    }
+
+    /* Execute an empty command to retrieve asynchronous notifications */
+    result = PQexec(conn, " ");
+    if (result == NULL) {
+      /* Error occurred during the execution of command */
+      Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
+      return TCL_ERROR;
+    }
+    PQclear(result);
+
+    /*
+     * Loop while there are pending notifies.
+     */
+    for (count=0; count < 999; count++) {
+	/* See if there is a pending notification */
+	notify = PQnotifies(conn);
+	if (notify == NULL) {
+	    break;
 	}
-
-	/*
-	 * Get the connection argument.
-	 */
-	conn = (PGconn *) PgGetConnectionId(cd, argv[1]);
-	if (conn == (PGconn *) NULL)
-	{
-		Tcl_AppendResult(interp, "First argument is not a valid connection\n", 0);
-		return TCL_ERROR;
+	entry = Tcl_FindHashEntry(&(connid->notify_hash), notify->relname);
+	if (entry != NULL) {
+	    callback = (char*)Tcl_GetHashValue(entry);
+	    if (callback) {
+		/* This should be a global eval, shouldn't it? */
+		Tcl_Eval(interp, callback);
+		/* And what if there's an error.  Bgerror should be called? */
+	    }
 	}
+	free(notify);
+    }
 
-	/* Execute an empty command to retrieve asynchronous notifications */
-	result = PQexec(conn, " ");
-	if (result == NULL)
-	{
-		/* Error occurred during the execution of command */
-		Tcl_SetResult(interp, conn->errorMessage, TCL_STATIC);
-		return TCL_ERROR;
-	}
-	PQclear(result);
-
-	/*
-	 * Loop while there are pending notifies.
-	 */
-	for (count = 0; count < 999; count++)
-	{
-		/* See if there is a pending notification */
-		notify = PQnotifies(conn);
-		if (notify == NULL)
-		{
-			break;
-		}
-		entry = Tcl_FindHashEntry(&(cd->notify_hash), notify->relname);
-		if (entry != NULL)
-		{
-			callback = Tcl_GetHashValue(entry);
-			if (callback)
-			{
-				Tcl_Eval(interp, callback);
-			}
-		}
-		free(notify);
-	}
-
-	/*
-	 * Return the number of notifications processed.
-	 */
-	sprintf(buff, "%d", count);
-	Tcl_SetResult(interp, buff, TCL_VOLATILE);
-	return TCL_OK;
+    /*
+     * Return the number of notifications processed.
+     */
+    sprintf(buff, "%d", count);
+    Tcl_SetResult(interp, buff, TCL_VOLATILE);
+    return TCL_OK;
 }

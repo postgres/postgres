@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.3 1998/02/13 05:09:57 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.4 1998/03/15 08:02:55 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ ifeq ($(PORTNAME), linux)
     install-shlib-dep	:= install-shlib
     shlib		:= libpgtcl.so.1
     CFLAGS		+= $(CFLAGS_SL)
-    LDFLAGS_SL		= -shared -L $(SRCDIR)/interfaces/libpq -lpq
+    LDFLAGS_SL		= -shared -L$(SRCDIR)/interfaces/libpq -lpq
   endif
 endif
 
@@ -53,14 +53,14 @@ endif
 ifeq ($(PORTNAME), i386_solaris)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
-  LDFLAGS_SL		= -G -z text -L $(SRCDIR)/interfaces/libpq -lpq
+  LDFLAGS_SL		= -G -z text -L$(SRCDIR)/interfaces/libpq -lpq
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
 ifeq ($(PORTNAME), univel)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
-  LDFLAGS_SL		= -G -z text -L $(SRCDIR)/interfaces/libpq -lpq
+  LDFLAGS_SL		= -G -z text -L$(SRCDIR)/interfaces/libpq -lpq
   CFLAGS		+= $(CFLAGS_SL)
 endif
 

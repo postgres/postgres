@@ -1,22 +1,47 @@
 /*-------------------------------------------------------------------------
- *
- * pgtclId.h--
- *	  useful routines to convert between strings and pointers
- *	Needed because everything in tcl is a string, but often, pointers
- *	to data structures are needed.
- *
- *
- * Copyright (c) 1994, Regents of the University of California
- *
- * $Id: pgtclId.h,v 1.5 1997/09/08 21:55:26 momjian Exp $
- *
- *-------------------------------------------------------------------------
- */
+*
+* pgtclId.h--
+*    useful routines to convert between strings and pointers
+*  Needed because everything in tcl is a string, but often, pointers
+*  to data structures are needed.
+*    
+*
+* Copyright (c) 1994, Regents of the University of California
+*
+* $Id: pgtclId.h,v 1.6 1998/03/15 08:03:00 scrappy Exp $
+*
+*-------------------------------------------------------------------------
+*/
+  
+extern void PgSetConnectionId(Tcl_Interp *interp, PGconn *conn);
 
-extern void PgSetConnectionId(Pg_clientData * cd, char *id, PGconn *conn);
-extern PGconn *PgGetConnectionId(Pg_clientData * cd, char *id);
-extern void PgDelConnectionId(Pg_clientData * cd, char *id);
-extern void PgSetResultId(Pg_clientData * cd, char *id, char *connid, PGresult *res);
-extern PGresult *PgGetResultId(Pg_clientData * cd, char *id);
-extern void PgDelResultId(Pg_clientData * cd, char *id);
-extern void PgGetConnByResultId(Pg_clientData * cd, char *id, char *resid);
+#if (TCL_MAJOR_VERSION == 7 && TCL_MINOR_VERSION == 5)
+# define DRIVER_DEL_PROTO ClientData cData, Tcl_Interp *interp, \
+ 	Tcl_File inFile, Tcl_File outFile
+# define DRIVER_OUTPUT_PROTO ClientData cData, Tcl_File outFile, char *buf, \
+	int bufSize, int *errorCodePtr
+# define DRIVER_INPUT_PROTO ClientData cData, Tcl_File inFile, char *buf, \
+	int bufSize, int *errorCodePtr
+#else
+# define DRIVER_OUTPUT_PROTO ClientData cData, char *buf, int bufSize, \
+	int *errorCodePtr
+# define DRIVER_INPUT_PROTO ClientData cData, char *buf, int bufSize, \
+	int *errorCodePtr
+# define DRIVER_DEL_PROTO ClientData cData, Tcl_Interp *interp
+#endif
+
+extern PGconn *PgGetConnectionId(Tcl_Interp *interp, char *id, \
+	Pg_ConnectionId **);
+extern PgDelConnectionId(DRIVER_DEL_PROTO);
+extern int PgOutputProc(DRIVER_OUTPUT_PROTO);
+extern PgInputProc(DRIVER_INPUT_PROTO);
+extern int PgSetResultId(Tcl_Interp *interp, char *connid, PGresult *res);
+extern PGresult *PgGetResultId(Tcl_Interp *interp, char *id);
+extern void PgDelResultId(Tcl_Interp *interp, char *id);
+extern int PgGetConnByResultId(Tcl_Interp *interp, char *resid);
+
+#if (TCL_MAJOR_VERSION < 8)
+extern Tcl_File PgGetFileProc(ClientData cData, int direction);
+#endif
+
+extern Tcl_ChannelType Pg_ConnType;

@@ -1,48 +1,173 @@
 /*-------------------------------------------------------------------------
  *
  * pgtclId.c--
- *	  useful routines to convert between strings and pointers
- *	Needed because everything in tcl is a string, but we want pointers
- *	to data structures
+ *    useful routines to convert between strings and pointers
+ *  Needed because everything in tcl is a string, but we want pointers
+ *  to data structures
  *
- *	ASSUMPTION:  sizeof(long) >= sizeof(void*)
+ *  ASSUMPTION:  sizeof(long) >= sizeof(void*)
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.7 1998/02/26 04:44:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.8 1998/03/15 08:03:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <tcl.h>
 
 #include "postgres.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
 
+int PgEndCopy(Pg_ConnectionId *connid, int *errorCodePtr)
+{
+    connid->res_copyStatus = RES_COPY_NONE;
+    if (PQendcopy(connid->conn)) {
+	connid->results[connid->res_copy]->resultStatus = PGRES_BAD_RESPONSE;
+	connid->res_copy = -1;
+	*errorCodePtr = EIO;
+	return -1;
+    } else {
+	connid->results[connid->res_copy]->resultStatus = PGRES_COMMAND_OK;
+	connid->res_copy = -1;
+	return 0;
+    }
+}
+
 /*
- * Create the Id for a new connection and hash it
+ *  Called when reading data (via gets) for a copy <rel> to stdout
+ */
+int PgInputProc(DRIVER_INPUT_PROTO)
+{
+    Pg_ConnectionId	*connid;
+    PGconn		*conn;
+    int			c;
+    int			avail;
+
+    connid = (Pg_ConnectionId *)cData;
+    conn = connid->conn;
+
+    if (connid->res_copy < 0 ||
+      connid->results[connid->res_copy]->resultStatus != PGRES_COPY_OUT) {
+	*errorCodePtr = EBUSY;
+	return -1;
+    }
+
+    if (connid->res_copyStatus == RES_COPY_FIN) {
+	return PgEndCopy(connid, errorCodePtr);
+    }
+
+    avail = bufSize;
+    while (avail > 0 &&
+	    (c = pqGetc(conn->Pfin, conn->Pfdebug)) != EOF) {
+	/* fprintf(stderr, "%d: got char %c\n", bufSize-avail, c); */
+	*buf++ = c;
+	--avail;
+	if (c == '\n' && bufSize-avail > 3) {
+	    if ((bufSize-avail == 3 || buf[-4] == '\n') &&
+		    buf[-3] == '\\' && buf[-2] == '.') {
+		avail += 3;
+		connid->res_copyStatus = RES_COPY_FIN;
+		break;
+	    }
+	}
+    }
+    /* fprintf(stderr, "returning %d chars\n", bufSize - avail); */
+    return bufSize - avail;
+}
+
+/*
+ *  Called when writing data (via puts) for a copy <rel> from stdin
+ */
+int PgOutputProc(DRIVER_OUTPUT_PROTO)
+{
+    Pg_ConnectionId	*connid;
+    PGconn		*conn;
+
+    connid = (Pg_ConnectionId *)cData;
+    conn = connid->conn;
+
+    if (connid->res_copy < 0 ||
+      connid->results[connid->res_copy]->resultStatus != PGRES_COPY_IN) {
+	*errorCodePtr = EBUSY;
+	return -1;
+    }
+
+    /*
+    fprintf(stderr, "PgOutputProc called: bufSize=%d: atend:%d <", bufSize,
+	strncmp(buf, "\\.\n", 3));
+    fwrite(buf, 1, bufSize, stderr);
+    fputs(">\n", stderr);
+    */
+    fwrite(buf, 1, bufSize, conn->Pfout);
+    if (bufSize > 2 && strncmp(&buf[bufSize-3], "\\.\n", 3) == 0) {
+	/* fprintf(stderr,"checking closure\n"); */
+	fflush(conn->Pfout);
+	if (PgEndCopy(connid, errorCodePtr) == -1)
+	    return -1;
+    }
+    return bufSize;
+}
+
+#if (TCL_MAJOR_VERSION == 7 && TCL_MINOR_VERSION == 6)
+Tcl_File
+PgGetFileProc(ClientData cData, int direction)
+{
+    return (Tcl_File)NULL;
+}
+#endif
+
+Tcl_ChannelType Pg_ConnType = {
+    "pgsql",			/* channel type */
+    NULL,			/* blockmodeproc */
+    PgDelConnectionId,		/* closeproc */
+    PgInputProc,		/* inputproc */
+    PgOutputProc,		/* outputproc */
+    /*  Note the additional stuff can be left NULL,
+	or is initialized during a PgSetConnectionId */
+};
+
+/*
+ * Create and register a new channel for the connection
  */
 void
-PgSetConnectionId(Pg_clientData * cd, char *id, PGconn *conn)
+PgSetConnectionId(Tcl_Interp *interp, PGconn *conn)
 {
-	Tcl_HashEntry *hent;
-	Pg_ConnectionId *connid;
-	int			hnew;
+    Tcl_Channel		conn_chan;
+    Pg_ConnectionId	*connid;
+    int			i;
 
-	connid = (Pg_ConnectionId *) ckalloc(sizeof(Pg_ConnectionId));
-	connid->conn = conn;
-	Tcl_InitHashTable(&(connid->res_hash), TCL_STRING_KEYS);
-	sprintf(connid->id, "pgc%ld", cd->dbh_count++);
-	strcpy(id, connid->id);
+    connid = (Pg_ConnectionId *)ckalloc(sizeof(Pg_ConnectionId));
+    connid->conn = conn;
+    connid->res_count = 0;
+    connid->res_last = -1;
+    connid->res_max = RES_START;
+    connid->res_hardmax = RES_HARD_MAX;
+    connid->res_copy = -1;
+    connid->res_copyStatus = RES_COPY_NONE;
+    connid->results = (PGresult**)ckalloc(sizeof(PGresult*) * RES_START);
+    for (i = 0; i < RES_START; i++) connid->results[i] = NULL;
+    Tcl_InitHashTable(&connid->notify_hash, TCL_STRING_KEYS);
 
-	hent = Tcl_CreateHashEntry(&(cd->dbh_hash), connid->id, &hnew);
-	Tcl_SetHashValue(hent, (ClientData) connid);
+    sprintf(connid->id, "pgsql%d", fileno(conn->Pfout));
+
+#if TCL_MAJOR_VERSION == 7 && TCL_MINOR_VERSION == 5
+    conn_chan = Tcl_CreateChannel(&Pg_ConnType, connid->id, conn->Pfin, conn->Pfout, (ClientData)connid);
+#else
+    conn_chan = Tcl_CreateChannel(&Pg_ConnType, connid->id, (ClientData)connid,
+	TCL_READABLE | TCL_WRITABLE);
+#endif
+
+    Tcl_SetChannelOption(interp, conn_chan, "-buffering", "line");
+    Tcl_SetResult(interp, connid->id, TCL_VOLATILE);
+    Tcl_RegisterChannel(interp, conn_chan);
 }
 
 
@@ -50,19 +175,22 @@ PgSetConnectionId(Pg_clientData * cd, char *id, PGconn *conn)
  * Get back the connection from the Id
  */
 PGconn *
-PgGetConnectionId(Pg_clientData * cd, char *id)
+PgGetConnectionId(Tcl_Interp *interp, char *id, Pg_ConnectionId **connid_p)
 {
-	Tcl_HashEntry *hent;
-	Pg_ConnectionId *connid;
+    Tcl_Channel conn_chan;
+    Pg_ConnectionId	*connid;
 
-	hent = Tcl_FindHashEntry(&(cd->dbh_hash), id);
-	if (hent == NULL)
-	{
-		return (PGconn *) NULL;
-	}
+    conn_chan = Tcl_GetChannel(interp, id, 0);
+    if(conn_chan == NULL || Tcl_GetChannelType(conn_chan) != &Pg_ConnType) {
+	Tcl_ResetResult(interp);
+	Tcl_AppendResult(interp, id, " is not a valid postgresql connection\n", 0);
+        return (PGconn *)NULL;
+    }
 
-	connid = (Pg_ConnectionId *) Tcl_GetHashValue(hent);
-	return connid->conn;
+    connid = (Pg_ConnectionId *)Tcl_GetChannelInstanceData(conn_chan);
+    if (connid_p)
+	*connid_p = connid;
+    return connid->conn;
 }
 
 
@@ -70,98 +198,139 @@ PgGetConnectionId(Pg_clientData * cd, char *id)
  * Remove a connection Id from the hash table and
  * close all portals the user forgot.
  */
-void
-PgDelConnectionId(Pg_clientData * cd, char *id)
+int PgDelConnectionId(DRIVER_DEL_PROTO)
 {
-	Tcl_HashEntry *hent;
-	Tcl_HashEntry *hent2;
-	Tcl_HashEntry *hent3;
-	Tcl_HashSearch hsearch;
-	Pg_ConnectionId *connid;
-	Pg_ResultId *resid;
+    Tcl_HashEntry	*entry;
+    char		*hval;
+    Tcl_HashSearch	hsearch;
+    Pg_ConnectionId	*connid;
+    int			i;
 
-	hent = Tcl_FindHashEntry(&(cd->dbh_hash), id);
-	if (hent == NULL)
-	{
-		return;
-	}
+    connid = (Pg_ConnectionId *)cData;
 
-	connid = (Pg_ConnectionId *) Tcl_GetHashValue(hent);
+    for (i = 0; i < connid->res_max; i++) {
+	if (connid->results[i])
+	    PQclear(connid->results[i]);
+    }
+    ckfree((void*)connid->results);
 
-	hent2 = Tcl_FirstHashEntry(&(connid->res_hash), &hsearch);
-	while (hent2 != NULL)
-	{
-		resid = (Pg_ResultId *) Tcl_GetHashValue(hent2);
-		PQclear(resid->result);
-		hent3 = Tcl_FindHashEntry(&(cd->res_hash), resid->id);
-		if (hent3 != NULL)
-		{
-			Tcl_DeleteHashEntry(hent3);
-		}
-		ckfree(resid);
-		hent2 = Tcl_NextHashEntry(&hsearch);
-	}
-	Tcl_DeleteHashTable(&(connid->res_hash));
-	Tcl_DeleteHashEntry(hent);
-	ckfree(connid);
+    for (entry = Tcl_FirstHashEntry(&(connid->notify_hash), &hsearch);
+	entry != NULL;
+	entry = Tcl_NextHashEntry(&hsearch))
+    {
+	hval = (char*)Tcl_GetHashValue(entry);
+	ckfree(hval);
+    }
+    
+    Tcl_DeleteHashTable(&connid->notify_hash);
+    PQfinish(connid->conn);
+    ckfree((void*)connid);
+    return 0;
 }
 
 
 /*
- * Create a new result Id and hash it
+ * Find a slot for a new result id.  If the table is full, expand it by
+ * a factor of 2.  However, do not expand past the hard max, as the client
+ * is probably just not clearing result handles like they should.
  */
-void
-PgSetResultId(Pg_clientData * cd, char *id, char *connid_c, PGresult *res)
+int
+PgSetResultId(Tcl_Interp *interp, char *connid_c, PGresult *res)
 {
-	Tcl_HashEntry *hent;
-	Pg_ConnectionId *connid;
-	Pg_ResultId *resid;
-	int			hnew;
+    Tcl_Channel		conn_chan;
+    Pg_ConnectionId	*connid;
+    int			resid, i;
+    char		buf[32];
 
-	hent = Tcl_FindHashEntry(&(cd->dbh_hash), connid_c);
-	if (hent == NULL)
+
+    conn_chan = Tcl_GetChannel(interp, connid_c, 0);
+    if(conn_chan == NULL)
+        return TCL_ERROR;
+    connid = (Pg_ConnectionId *)Tcl_GetChannelInstanceData(conn_chan);
+
+    for (resid = connid->res_last+1; resid != connid->res_last; resid++) {
+	if (resid == connid->res_max)
+	    resid = 0;
+	if (!connid->results[resid])
 	{
-		connid = NULL;
+	    connid->res_last = resid;
+	    break;
 	}
-	else
-	{
-		connid = (Pg_ConnectionId *) Tcl_GetHashValue(hent);
+    }
+
+    if (connid->results[resid]) {
+	if (connid->res_max == connid->res_hardmax) {
+	    Tcl_SetResult(interp, "hard limit on result handles reached",
+		TCL_STATIC);
+	    return TCL_ERROR;
 	}
+	connid->res_last = connid->res_max;
+	resid = connid->res_max;
+	connid->res_max *= 2;
+	if (connid->res_max > connid->res_hardmax)
+	    connid->res_max = connid->res_hardmax;
+	connid->results = (PGresult**)ckrealloc((void*)connid->results,
+	    sizeof(PGresult*) * connid->res_max);
+	for (i = connid->res_last; i < connid->res_max; i++)
+	    connid->results[i] = NULL;
+    }
 
-	resid = (Pg_ResultId *) ckalloc(sizeof(Pg_ResultId));
-	resid->result = res;
-	resid->connection = connid;
-	sprintf(resid->id, "pgr%ld", cd->res_count++);
-	strcpy(id, resid->id);
+    connid->results[resid] = res;
+    sprintf(buf, "%s.%d", connid_c, resid);
+    Tcl_SetResult(interp, buf, TCL_VOLATILE);
+    return resid;
+}
 
-	hent = Tcl_CreateHashEntry(&(cd->res_hash), resid->id, &hnew);
-	Tcl_SetHashValue(hent, (ClientData) resid);
+static int getresid(Tcl_Interp *interp, char *id, Pg_ConnectionId **connid_p)
+{
+    Tcl_Channel		conn_chan;
+    char		*mark;
+    int			resid;
+    Pg_ConnectionId	*connid;
 
-	if (connid != NULL)
-	{
-		hent = Tcl_CreateHashEntry(&(connid->res_hash), resid->id, &hnew);
-		Tcl_SetHashValue(hent, (ClientData) resid);
-	}
+    if (!(mark = strchr(id, '.')))
+	return -1;
+    *mark = '\0';
+    conn_chan = Tcl_GetChannel(interp, id, 0);
+    *mark = '.';
+    if(conn_chan == NULL || Tcl_GetChannelType(conn_chan) != &Pg_ConnType) {
+	Tcl_SetResult(interp, "Invalid connection handle", TCL_STATIC);
+        return -1;
+    }
+
+    if (Tcl_GetInt(interp, mark + 1, &resid) == TCL_ERROR) {
+	Tcl_SetResult(interp, "Poorly formated result handle", TCL_STATIC);
+	return -1;
+    }
+
+    connid = (Pg_ConnectionId *)Tcl_GetChannelInstanceData(conn_chan);
+
+    if (resid < 0 || resid > connid->res_max || connid->results[resid] == NULL) {
+	Tcl_SetResult(interp, "Invalid result handle", TCL_STATIC);
+	return -1;
+    }
+
+    *connid_p = connid;
+
+    return resid;
 }
 
 
 /*
  * Get back the result pointer from the Id
  */
-PGresult   *
-PgGetResultId(Pg_clientData * cd, char *id)
+PGresult *
+PgGetResultId(Tcl_Interp *interp, char *id)
 {
-	Tcl_HashEntry *hent;
-	Pg_ResultId *resid;
+    Pg_ConnectionId	*connid;
+    int			resid;
 
-	hent = Tcl_FindHashEntry(&(cd->res_hash), id);
-	if (hent == NULL)
-	{
-		return (PGresult *) NULL;
-	}
-
-	resid = (Pg_ResultId *) Tcl_GetHashValue(hent);
-	return resid->result;
+    if (!id)
+	return NULL;
+    resid = getresid(interp, id, &connid);
+    if (resid == -1)
+	return NULL;
+    return connid->results[resid];
 }
 
 
@@ -169,51 +338,41 @@ PgGetResultId(Pg_clientData * cd, char *id)
  * Remove a result Id from the hash tables
  */
 void
-PgDelResultId(Pg_clientData * cd, char *id)
+PgDelResultId(Tcl_Interp *interp, char *id)
 {
-	Tcl_HashEntry *hent;
-	Tcl_HashEntry *hent2;
-	Pg_ResultId *resid;
+    Pg_ConnectionId	*connid;
+    int			resid;
 
-	hent = Tcl_FindHashEntry(&(cd->res_hash), id);
-	if (hent == NULL)
-	{
-		return;
-	}
-
-	resid = (Pg_ResultId *) Tcl_GetHashValue(hent);
-	if (resid->connection != NULL)
-	{
-		hent2 = Tcl_FindHashEntry(&(resid->connection->res_hash), id);
-		if (hent2 != NULL)
-		{
-			Tcl_DeleteHashEntry(hent2);
-		}
-	}
-
-	Tcl_DeleteHashEntry(hent);
-	ckfree(resid);
+    resid = getresid(interp, id, &connid);
+    if (resid == -1)
+	return;
+    connid->results[resid] = 0;
 }
 
 
 /*
  * Get the connection Id from the result Id
  */
-void
-PgGetConnByResultId(Pg_clientData * cd, char *id, char *resid_c)
+int
+PgGetConnByResultId(Tcl_Interp *interp, char *resid_c)
 {
-	Tcl_HashEntry *hent;
-	Pg_ResultId *resid;
+    char		*mark;
+    Tcl_Channel		conn_chan;
 
-	hent = Tcl_FindHashEntry(&(cd->res_hash), id);
-	if (hent == NULL)
-	{
-		return;
-	}
+    if (!(mark = strchr(resid_c, '.')))
+	goto error_out;
+    *mark = '\0';
+    conn_chan = Tcl_GetChannel(interp, resid_c, 0);
+    *mark = '.';
+    if(conn_chan && Tcl_GetChannelType(conn_chan) != &Pg_ConnType) {
+	Tcl_SetResult(interp, Tcl_GetChannelName(conn_chan), TCL_VOLATILE);
+	return TCL_OK;
+    }
 
-	resid = (Pg_ResultId *) Tcl_GetHashValue(hent);
-	if (resid->connection != NULL)
-	{
-		strcpy(id, resid->connection->id);
-	}
+  error_out:
+    Tcl_ResetResult(interp);
+    Tcl_AppendResult(interp, resid_c, " is not a valid connection\n", 0);
+    return TCL_ERROR;
 }
+
+
