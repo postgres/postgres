@@ -43,7 +43,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 10:01:18 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA11295
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 11:01:17 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id KAA20310 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 10:39:18 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA61760;
 	Fri, 24 Dec 1999 10:31:13 -0500 (EST)
@@ -129,7 +129,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 18:31:03 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA26244
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:31:02 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id TAA12730 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 19:30:05 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA57851;
 	Fri, 24 Dec 1999 19:23:31 -0500 (EST)
@@ -212,7 +212,7 @@ From owner-pgsql-hackers@hub.org Fri Dec 24 21:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA02578
 	for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:31:09 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id WAA16641 for <pgman@candle.pha.pa.us>; Fri, 24 Dec 1999 22:18:56 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id WAA89135;
 	Fri, 24 Dec 1999 22:11:12 -0500 (EST)
@@ -486,7 +486,7 @@ From owner-pgsql-hackers@hub.org Sun Dec 26 08:31:09 1999
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA17976
 	for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:31:07 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id JAA23337 for <pgman@candle.pha.pa.us>; Sun, 26 Dec 1999 09:28:36 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id JAA90738;
 	Sun, 26 Dec 1999 09:21:58 -0500 (EST)
@@ -902,6 +902,103 @@ http://bach.towson.edu/oracledocs/DOC/server803/A54651_01/toc.htm
 -- 
 Aaron J. Seigo
 Sys Admin
+
+************
+
+From owner-pgsql-hackers@hub.org Thu Dec 30 08:01:09 1999
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA10317
+	for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 09:01:08 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id IAA02365 for <pgman@candle.pha.pa.us>; Thu, 30 Dec 1999 08:37:10 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id IAA87902;
+	Thu, 30 Dec 1999 08:34:22 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Thu, 30 Dec 1999 08:32:24 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id IAA85771
+	for pgsql-hackers-outgoing; Thu, 30 Dec 1999 08:31:27 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sandman.acadiau.ca (dcurrie@sandman.acadiau.ca [131.162.129.111])
+	by hub.org (8.9.3/8.9.3) with ESMTP id IAA85234
+	for <pgsql-hackers@postgresql.org>; Thu, 30 Dec 1999 08:31:10 -0500 (EST)
+	(envelope-from dcurrie@sandman.acadiau.ca)
+Received: (from dcurrie@localhost)
+	by sandman.acadiau.ca (8.8.8/8.8.8/Debian/GNU) id GAA18698;
+	Thu, 30 Dec 1999 06:30:58 -0400
+From: Duane Currie <dcurrie@sandman.acadiau.ca>
+Message-Id: <199912301030.GAA18698@sandman.acadiau.ca>
+Subject: Re: [HACKERS] database replication
+In-Reply-To: <OFD38C9424.B391F434-ON85256851.0054F41A@black-oak.COM> from "DWalker@black-oak.com" at "Dec 24, 99 10:27:59 am"
+To: DWalker@black-oak.com
+Date: Thu, 30 Dec 1999 10:30:58 +0000 (AST)
+Cc: pgsql-hackers@postgresql.org
+X-Mailer: ELM [version 2.4ME+ PL39 (25)]
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgresql.org
+Status: OR
+
+Hi Guys,
+
+Now for one of my REALLY rare posts.
+Having done a little bit of distributed data systems, I figured I'd
+pitch in a couple cents worth.
+
+> 2) The replication system will need to add at least one field to each 
+>    table in each database that needs to be re plicated. &nbsp;This 
+>    field will be a date/time stamp which identifies the &quot; last 
+>    update&quot; of the record. &nbsp;This field will be called PGR_TIME 
+>    for la ck of a better name. &nbsp;Because this field will be used 
+>    from within programs and triggers it can be longer so as to not 
+>    mistake it for a user field.
+
+I just started reading this thread, but I figured I'd throw in a couple
+suggestions for distributed data control  (a few idioms I've had to
+deal with b4):
+	- Never use time (not reliable from system to system).  Use
+	  a version number of some sort that can stay consistent across
+	  all replicas
+
+	  This way, if a system's time is or goes out of wack, it doesn't
+	  cause your database to disintegrate, and it's easier to track
+	  conflicts (see below.  If using time, the algorithm gets
+	  nightmarish)
+
+	- On an insert, set to version 1
+
+	- On an update, version++
+
+	- On a delete, mark deleted, and add a delete stub somewhere for the
+	  replicator process to deal with in sync'ing the databases.
+
+	- If two records have the same version but different data, there's
+	  a conflict.  A few choices:
+	  	1.  Pick one as the correct one (yuck!! invisible data loss)
+		2.  Store both copies, pick one as current, and alert 
+		    database owner of the conflict, so they can deal with
+		    it "manually."
+		3.  If possible, some conflicts can be merged.  If a disjoint
+		    set of fields were changed in each instance, these changes
+		    may both be applied and the record merged.  (Problem:
+		    takes a lot more space.  Requires a version number for
+		    every field, or persistent storage of some old records.
+		    However, this might help the "which fields changed" issue
+		    you were talking about in #6)
+
+	- A unique id across all systems should exist (or something that
+	  effectively simulates a unique id.  Maybe a composition of the
+	  originating oid (from the insert) and the originating database
+	  (oid of the database's record?) might do it.  Store this as
+	  an extra field in every record.  
+	  
+	  (Two extra fieldss so far: 'unique id' and 'version')
+
+I do like your approach:  triggers and a separate process. (Maintainable!! :)
+
+Anyway, just figured I'd throw in a few suggestions,
+Duane
 
 ************
 
