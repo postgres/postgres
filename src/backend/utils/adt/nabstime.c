@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.100 2002/10/04 17:34:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.100.2.1 2002/11/12 00:39:36 tgl Exp $
  *
  * NOTES
  *
@@ -289,21 +289,9 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	if ((!HasCTZSet) && (tzp != NULL))
-	{
 		tx = localtime((time_t *) &time);
-#ifdef NO_MKTIME_BEFORE_1970
-		if (tx->tm_year < 70 && tx->tm_isdst == 1)
-		{
-			time -= 3600;
-			tx = localtime((time_t *) &time);
-			tx->tm_isdst = 0;
-		}
-#endif
-	}
 	else
-	{
 		tx = gmtime((time_t *) &time);
-	};
 
 	tm->tm_year = tx->tm_year + 1900;
 	tm->tm_mon = tx->tm_mon + 1;
