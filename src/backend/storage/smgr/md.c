@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.82 2001/03/22 03:59:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.83 2001/04/02 23:20:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -983,7 +983,7 @@ _mdfd_getrelnfd(Relation reln)
 	if (fd < 0)
 	{
 		if ((fd = mdopen(reln)) < 0)
-			elog(ERROR, "cannot open relation %s",
+			elog(ERROR, "_mdfd_getrelnfd: cannot open relation %s: %m",
 				 RelationGetRelationName(reln));
 		reln->rd_fd = fd;
 	}
