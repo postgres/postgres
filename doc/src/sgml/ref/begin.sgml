@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.27 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.28 2004/01/10 02:21:08 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,6 +21,8 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 BEGIN [ WORK | TRANSACTION ]
+    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]
+    [ READ WRITE | READ ONLY ]
 </synopsis>
  </refsynopsisdiv>
  
@@ -49,6 +51,13 @@ BEGIN [ WORK | TRANSACTION ]
    other sessions will be unable to see the intermediate states
    wherein not all the related updates have been done.
   </para>
+
+  <para>
+   If the isolation level or read/write mode is specified, the new
+   transaction has those characteristics, as if
+   <xref linkend="sql-set-transaction" endterm="sql-set-transaction-title"> 
+   was executed.
+  </para>
  </refsect1>
   
  <refsect1>
@@ -65,6 +74,12 @@ BEGIN [ WORK | TRANSACTION ]
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   See under <xref linkend="sql-set-transaction"
+   endterm="sql-set-transaction-title"> about the meaning of the
+   other parameters.
+  </para>
  </refsect1>
   
  <refsect1>

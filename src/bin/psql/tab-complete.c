@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.97 2003/12/01 22:21:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.98 2004/01/10 02:21:08 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -723,6 +723,18 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev2_wd, "ANALYZE") == 0)
 		COMPLETE_WITH_CONST(";");
 
+/* BEGIN, COMMIT, ROLLBACK, ABORT, */
+	else if (strcasecmp(prev_wd, "BEGIN") == 0 ||
+	         strcasecmp(prev_wd, "END") == 0 ||
+	         strcasecmp(prev_wd, "COMMIT") == 0 ||
+	         strcasecmp(prev_wd, "ROLLBACK") == 0 ||
+	         strcasecmp(prev_wd, "ABORT") == 0)
+	{
+		static const char * const list_TRANS[] =
+		{"WORK", "TRANSACTION", NULL};
+
+		COMPLETE_WITH_LIST(list_TRANS);
+	}
 /* CLUSTER */
 	/* If the previous word is CLUSTER, produce list of indexes. */
 	else if (strcasecmp(prev_wd, "CLUSTER") == 0)
@@ -1099,9 +1111,13 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev_wd, "SHOW") == 0)
 		COMPLETE_WITH_LIST(pgsql_variables);
 	/* Complete "SET TRANSACTION" */
-	else if ((strcasecmp(prev2_wd, "SET") == 0
-			  && strcasecmp(prev_wd, "TRANSACTION") == 0)
+	else if ((strcasecmp(prev2_wd, "SET") == 0 &&
+			  strcasecmp(prev_wd, "TRANSACTION") == 0)
 			 || (strcasecmp(prev2_wd, "START") == 0
+				 && strcasecmp(prev_wd, "TRANSACTION") == 0)
+			 || (strcasecmp(prev2_wd, "BEGIN") == 0
+				 && strcasecmp(prev_wd, "WORK") == 0)
+			 || (strcasecmp(prev2_wd, "BEGIN") == 0
 				 && strcasecmp(prev_wd, "TRANSACTION") == 0)
 			 || (strcasecmp(prev4_wd, "SESSION") == 0
 				 && strcasecmp(prev3_wd, "CHARACTERISTICS") == 0

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.443 2004/01/07 18:56:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.444 2004/01/10 02:21:08 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3674,11 +3674,11 @@ TransactionStmt:
 					n->options = NIL;
 					$$ = (Node *)n;
 				}
-			| BEGIN_P opt_transaction
+			| BEGIN_P opt_transaction transaction_mode_list_or_empty
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
 					n->kind = TRANS_STMT_BEGIN;
-					n->options = NIL;
+					n->options = $3;
 					$$ = (Node *)n;
 				}
 			| START TRANSACTION transaction_mode_list_or_empty
