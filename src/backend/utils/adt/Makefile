@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.50 2001/07/11 22:14:02 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.51 2001/10/04 04:13:40 ishii Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -25,6 +25,8 @@ OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o \
 	network.o mac.o inet_net_ntop.o inet_net_pton.o \
 	ri_triggers.o pg_lzcompress.o pg_locale.o formatting.o \
 	ascii.o quote.o pgstatfuncs.o encode.o
+
+like.o: like.c like_match.c
 
 all: SUBSYS.o
 
