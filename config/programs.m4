@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.10 2002/04/10 22:46:33 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.11 2003/04/06 22:45:22 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -131,7 +131,7 @@ AC_TRY_LINK([#include <stdio.h>
 [rl_completion_append_character = 'x';],
 [AC_MSG_RESULT(yes)
 AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER, 1,
-          [Define if you have rl_completion_append_character])],
+          [Define to 1 if you have the global variable 'rl_completion_append_character'.])],
 [AC_MSG_RESULT(no)])])# PGAC_VAR_RL_COMPLETION_APPEND_CHARACTER
 
 
@@ -163,7 +163,7 @@ dnl FIXME: We should probably check for version >=0.10.36.
 
   AC_SUBST(localedir)
   AC_DEFINE_UNQUOTED(LOCALEDIR, ["$exp_localedir"],
-                     [location of locale files])
+                     [Define to the location of locale files.])
 ])# PGAC_CHECK_GETTEXT
 
 

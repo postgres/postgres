@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.6 2003/01/28 21:57:12 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.7 2003/04/06 22:45:22 petere Exp $
 
 
 # PGAC_C_SIGNED
@@ -12,7 +12,7 @@ AC_DEFUN([PGAC_C_SIGNED],
 [pgac_cv_c_signed=yes],
 [pgac_cv_c_signed=no])])
 if test x"$pgac_cv_c_signed" = xno ; then
-  AC_DEFINE(signed,, [Define empty if the C compiler does not understand signed types])
+  AC_DEFINE(signed,, [Define to empty if the C compiler does not understand signed types.])
 fi])# PGAC_C_SIGNED
 
 
@@ -62,7 +62,7 @@ AC_COMPILE_IFELSE([AC_LANG_BOOL_COMPILE_TRY([], [sizeof($1) == 8])],
 
 Ac_define=$Ac_cachevar
 if test x"$Ac_cachevar" = xyes ; then
-  AC_DEFINE(Ac_define,, [Set to 1 if `]$1[' is 64 bits])
+  AC_DEFINE(Ac_define,, [Define to 1 if `]$1[' works and is 64 bits.])
 fi
 undefine([Ac_define])dnl
 undefine([Ac_cachevar])dnl
@@ -92,5 +92,5 @@ else
 fi])dnl
 AC_DEFINE_UNQUOTED(AS_TR_CPP(alignof_$1),
                    [$AS_TR_SH([pgac_cv_alignof_$1])],
-                   [The alignment requirement of a `$1'])
+                   [The alignment requirement of a `$1'.])
 ])# PGAC_CHECK_ALIGNOF

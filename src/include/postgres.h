@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.62 2002/10/18 20:33:57 tgl Exp $
+ * $Id: postgres.h,v 1.63 2003/04/06 22:45:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ typedef struct varattrib
  */
 
 typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
+#define SIZEOF_DATUM SIZEOF_UNSIGNED_LONG
 typedef Datum *DatumPtr;
 
 #define GET_1_BYTE(datum)	(((Datum) (datum)) & 0x000000ff)

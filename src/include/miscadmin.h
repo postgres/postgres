@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.117 2003/03/20 04:51:44 momjian Exp $
+ * $Id: miscadmin.h,v 1.118 2003/04/06 22:45:23 petere Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -171,8 +171,10 @@ extern bool NetServer;
 extern bool EnableSSL;
 extern bool SilentMode;
 extern int	MaxBackends;
+#define DEF_MAXBACKENDS 32
 extern int	ReservedBackends;
 extern DLLIMPORT int	NBuffers;
+#define DEF_NBUFFERS (DEF_MAXBACKENDS > 8 ? DEF_MAXBACKENDS * 2 : 16)
 extern int	PostPortNumber;
 extern int	Unix_socket_permissions;
 extern char *Unix_socket_group;

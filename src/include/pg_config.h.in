@@ -1,802 +1,580 @@
-/*
- * PostgreSQL configuration-settings file.
- *
- * pg_config.h.in is processed by configure to produce pg_config.h.
- *
- * If you want to modify any of the tweakable settings in Part 2
- * of this file, you can do it in pg_config.h.in before running configure,
- * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
- * changes will be overwritten the next time you run configure.
- *
- * $Id: pg_config.h.in,v 1.43 2003/04/02 00:49:28 tgl Exp $
- */
+/* src/include/pg_config.h.in.  Generated from configure.in by autoheader.  */
 
-#ifndef PG_CONFIG_H
-#define PG_CONFIG_H
+/* Define to the type of arg 1 of 'accept' */
+#undef ACCEPT_TYPE_ARG1
 
+/* Define to the type of arg 2 of 'accept' */
+#undef ACCEPT_TYPE_ARG2
 
-/*
- *------------------------------------------------------------------------
- * Part 1: feature symbols and limits that are set by configure based on
- * user-supplied switches.  This is first so that stuff in Part 2 can
- * depend on these values.
- *
- * Beware of "fixing" configure-time mistakes by editing these values,
- * since configure may have inserted the settings in other files as well
- * as here.  Best to rerun configure if you forgot --enable-integer-datetimes
- * or whatever.
- *------------------------------------------------------------------------
- */
+/* Define to the type of arg 3 of 'accept' */
+#undef ACCEPT_TYPE_ARG3
 
-/* The version number is actually hard-coded into configure.in */
-#undef PG_VERSION
-/* A canonical string containing the version number, platform, and C compiler */
-#undef PG_VERSION_STR
+/* The alignment requirement of a `double'. */
+#undef ALIGNOF_DOUBLE
 
-/* Set to 1 if you want 64-bit integer timestamp and interval support (--enable-integer-datetimes) */
-#undef USE_INTEGER_DATETIMES
+/* The alignment requirement of a `int'. */
+#undef ALIGNOF_INT
 
-/* Set to 1 if you want single-byte recode (--enable-recode) */
+/* The alignment requirement of a `long'. */
+#undef ALIGNOF_LONG
+
+/* The alignment requirement of a `long long int'. */
+#undef ALIGNOF_LONG_LONG_INT
+
+/* The alignment requirement of a `short'. */
+#undef ALIGNOF_SHORT
+
+/* Define to 1 if you want single-byte recode support. (--enable-recode) */
 #undef CYR_RECODE
 
-/* Set to 1 if you want ASSERT checking (--enable-cassert) */
-#undef USE_ASSERT_CHECKING
-
-/* Define to build with Kerberos 4 support (--with-krb4[=DIR]) */
-#undef KRB4
-
-/* Define to build with Kerberos 5 support (--with-krb5[=DIR]) */
-#undef KRB5
-
-/* Kerberos name of the Postgres service principal (--with-krb-srvnam=NAME) */
-#undef PG_KRB_SRVNAM
-
-/* Define to build with (Open)SSL support (--with-openssl[=DIR]) */
-#undef USE_SSL
-
-/* Define to build with PAM Support */
-#undef USE_PAM
-
-/* 
- * DEF_PGPORT is the TCP port number on which the Postmaster listens and
- * which clients will try to connect to.  This is just a default value;
- * it can be overridden at postmaster or client startup.  It's awfully
- * convenient if your clients have the right default compiled in, though.
- * (--with-pgport=PORTNUM)
- */ 
+/* Define to the default TCP port number on which the server listens and to
+   which clients will try to connect to. This can be overridden at run-time,
+   but it's convenient if your clients have the right default compiled in.
+   (--with-pgport=PORTNUM) */
 #undef DEF_PGPORT
-/* ... and once more as a string constant instead */
+
+/* Define to the default TCP port number as string constant. */
 #undef DEF_PGPORT_STR
 
-/*
- * Default soft limit on number of backend server processes per postmaster;
- * this is just the default setting for the postmaster's -N switch.
- * (--with-maxbackends=N)
- */
-#undef DEF_MAXBACKENDS
-
-/* --enable-nls */
+/* Define to 1 if you want National Language Support. (--enable-nls) */
 #undef ENABLE_NLS
 
-/* location of locale files */
-#undef LOCALEDIR
-
-
-/*
- *------------------------------------------------------------------------
- * Part 2: feature symbols and limits that are user-configurable, but
- * only by editing this file ... there's no configure support for them.
- *
- * Editing this file and doing a full rebuild (and an initdb if noted)
- * should be sufficient to change any of these.
- *------------------------------------------------------------------------
- */
-
-/*
- * Default number of buffers in shared buffer pool (each of size BLCKSZ).
- * This is just the default setting for the postmaster's -B switch.
- * Perhaps it ought to be configurable from a configure switch.
- * NOTE: default setting corresponds to the minimum number of buffers
- * that postmaster.c will allow for the default MaxBackends value.
- */
-#define DEF_NBUFFERS (DEF_MAXBACKENDS > 8 ? DEF_MAXBACKENDS * 2 : 16)
-
-/*
- * Size of a disk block --- this also limits the size of a tuple.
- * You can set it bigger if you need bigger tuples (although TOAST
- * should reduce the need to have large tuples, since fields can now
- * be spread across multiple tuples).
- *
- * BLCKSZ must be a power of 2.
- * The maximum possible value of BLCKSZ is currently 2^15 (32768).
- * This is determined by the 15-bit widths of the lp_off and lp_len
- * fields in ItemIdData (see include/storage/itemid.h).
- *
- * CAUTION: changing BLCKSZ requires an initdb.
- */
-#define BLCKSZ	8192
-
-/*
- * RELSEG_SIZE is the maximum number of blocks allowed in one disk file.
- * Thus, the maximum size of a single file is RELSEG_SIZE * BLCKSZ;
- * relations bigger than that are divided into multiple files.
- *
- * CAUTION: RELSEG_SIZE * BLCKSZ must be less than your OS' limit on file
- * size.  This is typically 2Gb or 4Gb in a 32-bit operating system.  By
- * default, we make the limit 1Gb to avoid any possible integer-overflow
- * problems within the OS.  A limit smaller than necessary only means we
- * divide a large relation into more chunks than necessary, so it seems
- * best to err in the direction of a small limit.  (Besides, a power-of-2
- * value saves a few cycles in md.c.)
- *
- * CAUTION: changing RELSEG_SIZE requires an initdb.
- */
-#define RELSEG_SIZE	(0x40000000 / BLCKSZ)
-
-/*
- * Maximum number of columns in an index and maximum number of arguments
- * to a function. They must be the same value.
- *
- * The minimum value is 8 (index creation uses 8-argument functions).
- * There is no specific upper limit, although large values will waste
- * system-table space and processing time.
- *
- * CAUTION: changing these requires an initdb.
- *
- * BTW: if you need to call dynamically-loaded old-style C functions that
- * have more than 16 arguments, you will also need to add cases to the
- * switch statement in fmgr_oldstyle() in src/backend/utils/fmgr/fmgr.c.
- * But consider converting such functions to new-style instead...
- */
-#define INDEX_MAX_KEYS		32
-#define FUNC_MAX_ARGS		INDEX_MAX_KEYS
-
-/*
- * Define this to make libpgtcl's "pg_result -assign" command process C-style
- * backslash sequences in returned tuple data and convert Postgres array
- * attributes into Tcl lists.  CAUTION: this conversion is *wrong* unless
- * you install the routines in contrib/string/string_io to make the backend
- * produce C-style backslash sequences in the first place.
- */
-/* #define TCL_ARRAYS */
-
-/*
- * User locks are handled totally on the application side as long term
- * cooperative locks which extend beyond the normal transaction boundaries.
- * Their purpose is to indicate to an application that someone is `working'
- * on an item.  Define this flag to enable user locks.  You will need the
- * loadable module user-locks.c to use this feature.
- */
-#define USER_LOCKS
-
-/*
- * Define this if you want psql to _always_ ask for a username and a password
- * for password authentication.
- */
-/* #define PSQL_ALWAYS_GET_PASSWORDS */
-
-/*
- * Define this if you want to allow the lo_import and lo_export SQL functions
- * to be executed by ordinary users.  By default these functions are only
- * available to the Postgres superuser.  CAUTION: these functions are
- * SECURITY HOLES since they can read and write any file that the Postgres
- * backend has permission to access.  If you turn this on, don't say we
- * didn't warn you.
- */
-/* #define ALLOW_DANGEROUS_LO_FUNCTIONS */
-
-/*
- * MAXPGPATH: standard size of a pathname buffer in Postgres (hence,
- * maximum usable pathname length is one less).
- *
- * We'd use a standard system header symbol for this, if there weren't
- * so many to choose from: MAXPATHLEN, _POSIX_PATH_MAX, MAX_PATH, PATH_MAX
- * are all defined by different "standards", and often have different
- * values on the same platform!  So we just punt and use a reasonably
- * generous setting here.
- */
-#define MAXPGPATH		1024
-
-/*
- * DEFAULT_MAX_EXPR_DEPTH: default value of max_expr_depth SET variable.
- */
-#define DEFAULT_MAX_EXPR_DEPTH	10000
-
-/*
- * PG_SOMAXCONN: maximum accept-queue length limit passed to listen(2).
- * You'd think we should use SOMAXCONN from <sys/socket.h>, but on many
- * systems that symbol is much smaller than the kernel's actual limit.
- * In any case, this symbol need be twiddled only if you have a kernel
- * that refuses large limit values, rather than silently reducing the
- * value to what it can handle (which is what most if not all Unixen do).
- */
-#define PG_SOMAXCONN	10000
-
-/*
- * You can try changing this if you have a machine with bytes of another
- * size, but no guarantee...
- */
-#define BITS_PER_BYTE		8
-
-/*
- * Define this if your operating system supports AF_UNIX family sockets.
- */
-#if !defined(__QNX__) && !defined(__BEOS__)
-# define HAVE_UNIX_SOCKETS 1
-#endif
-
-/*
- * This is the default directory in which AF_UNIX socket files are placed.
- * Caution: changing this risks breaking your existing client applications,
- * which are likely to continue to look in the old directory.  But if you
- * just hate the idea of sockets in /tmp, here's where to twiddle it.
- * You can also override this at runtime with the postmaster's -k switch.
- */
-#define DEFAULT_PGSOCKET_DIR  "/tmp"
-
-
-/*
- *------------------------------------------------------------------------
- * These hand-configurable symbols are for enabling debugging code,
- * not for controlling user-visible features or resource limits.
- *------------------------------------------------------------------------
- */
-
-/* Define this to cause pfree()'d memory to be cleared immediately,
- * to facilitate catching bugs that refer to already-freed values.
- * XXX For 7.1 development, define this automatically if --enable-cassert.
- * In the long term it probably doesn't need to be on by default.
- */
-#ifdef USE_ASSERT_CHECKING
-#define CLOBBER_FREED_MEMORY
-#endif
-
-/* Define this to check memory allocation errors (scribbling on more
- * bytes than were allocated).
- * XXX For 7.1 development, define this automatically if --enable-cassert.
- * In the long term it probably doesn't need to be on by default.
- */
-#ifdef USE_ASSERT_CHECKING 
-#define MEMORY_CONTEXT_CHECKING
-#endif
-
-/* Define this to force all parse and plan trees to be passed through
- * copyObject(), to facilitate catching errors and omissions in copyObject().
- */
-/* #define COPY_PARSE_PLAN_TREES */
-
-/* Enable debugging print statements for lock-related operations. */
-/* #define LOCK_DEBUG */
-
-/*
- * Other debug #defines (documentation, anyone?)
- */
-/* #define IPORTAL_DEBUG  */
-/* #define HEAPDEBUGALL  */
-/* #define ISTRATDEBUG  */
-/* #define ACLDEBUG */
-/* #define RTDEBUG */
-/* #define GISTDEBUG */
-
-/*
- * defining unsafe floats will make float4 and float8 ops faster
- * by suppressing overflow/underflow checks.
- */
-/* #define UNSAFE_FLOATS */
-
-
-/*
- *------------------------------------------------------------------------
- * Part 3: system configuration information that is auto-detected by
- * configure.  In theory you shouldn't have to touch any of this stuff
- * by hand.  In the real world, configure might get it wrong...
- *------------------------------------------------------------------------
- */
-
-/* Define const as empty if your compiler doesn't grok const. */
-#undef const
-
-/* Define as your compiler's spelling of "inline", or empty if no inline. */
-#undef inline
-
-/* Define as empty if the C compiler doesn't understand "signed". */
-#undef signed
-
-/* Define as empty if the C compiler doesn't understand "volatile". */
-#undef volatile
-
-/* Define to 1 to make fseeko visible on some hosts. */
-#undef _LARGEFILE_SOURCE
-
-/* Define for large files, on AIX-style hosts. */
-#undef _LARGE_FILES
-
-/* Number of bits in a file offset, on hosts where this is settable. */
-#undef _FILE_OFFSET_BITS
-
-/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
-#undef HAVE_FSEEKO
-
-/* Define if your cpp understands the ANSI stringizing operators in macros */
-#undef HAVE_STRINGIZE
-
-/* Set to 1 if you have <crypt.h> */
-#undef HAVE_CRYPT_H
-
-/* Set to 1 if you have <dld.h> */
-#undef HAVE_DLD_H
-
-/* Set to 1 if you have <endian.h> */
-#undef HAVE_ENDIAN_H
-
-/* Set to 1 if you have <fp_class.h> */
-#undef HAVE_FP_CLASS_H
-
-/* Set to 1 if you have <getopt.h> */
-#undef HAVE_GETOPT_H
-
-/* Set to 1 if you have <history.h> */
-#undef HAVE_HISTORY_H
-
-/* Set to 1 if you have <ieeefp.h> */
-#undef HAVE_IEEEFP_H
-
-/* Set to 1 if you have <poll.h> */
-#undef HAVE_POLL_H
-
-/* Set to 1 if you have <sys/poll.h> */
-#undef HAVE_SYS_POLL_H
-
-/* Set to 1 if you have <netinet/tcp.h> */
-#undef HAVE_NETINET_TCP_H
-
-/* Set to 1 if you have <pam/pam_appl.h> */
-#undef HAVE_PAM_PAM_APPL_H
-
-/* Set to 1 if you have <readline.h> */
-#undef HAVE_READLINE_H
-
-/* Set to 1 if you have <readline/history.h> */
-#undef HAVE_READLINE_HISTORY_H
-
-/* Set to 1 if you have <readline/readline.h> */
-#undef HAVE_READLINE_READLINE_H
-
-/* Set to 1 if you have <editline/history.h> */
-#undef HAVE_EDITLINE_HISTORY_H
-
-/* Set to 1 if you have <editline/readline.h> */
-#undef HAVE_EDITLINE_READLINE_H
-
-/* Set to 1 if you have <security/pam_appl.h> */
-#undef HAVE_SECURITY_PAM_APPL_H
-
-/* Set to 1 if you have <sys/ipc.h> */
-#undef HAVE_SYS_IPC_H
-
-/* Set to 1 if  you have <sys/select.h> */
-#undef HAVE_SYS_SELECT_H
-
-/* Set to 1 if you have <sys/un.h> */
-#undef HAVE_SYS_UN_H
-
-/* Set to 1 if you have <sys/sem.h> */
-#undef HAVE_SYS_SEM_H
-
-/* Set to 1 if you have <sys/shm.h> */
-#undef HAVE_SYS_SHM_H
-
-/* Set to 1 if you have support for IPv6 */
-#undef HAVE_IPV6
-
-/* Set to 1 if you have <kernel/OS.h> */
-#undef HAVE_KERNEL_OS_H
-
-/* Set to 1 if you have <SupportDefs.h> */
-#undef HAVE_SUPPORTDEFS_H
-
-/* Set to 1 if you have <kernel/image.h> */
-#undef HAVE_KERNEL_IMAGE_H
-
-/* Set to 1 if you have <termios.h> */
-#undef HAVE_TERMIOS_H
-
-/* Set to 1 if you have <utime.h> */
-#undef HAVE_UTIME_H
-
-/* Set to 1 if you have <sys/pstat.h> */
-#undef HAVE_SYS_PSTAT_H
-
-/* Define to 1 if you have strings.h */
-#undef HAVE_STRINGS_H
-
-/* Define if you have the setproctitle function.  */
-#undef HAVE_SETPROCTITLE
-
-/* Define if you have the pstat function. */
-#undef HAVE_PSTAT
-
-/* Define if the PS_STRINGS thing exists. */
-#undef HAVE_PS_STRINGS
-
-/* Define if you have the stricmp function.  */
-#undef HAVE_STRICMP
-
-/* Set to 1 if you have <pwd.h> */
-#undef HAVE_PWD_H
-
-/* Set to 1 if you have gettimeofday(a) instead of gettimeofday(a,b) */
+/* Define to 1 if gettimeofday() takes only 1 argument. */
 #undef GETTIMEOFDAY_1ARG
 
 #ifdef GETTIMEOFDAY_1ARG
 # define gettimeofday(a,b) gettimeofday(a)
 #endif
 
-/* Set to 1 if you have snprintf() in the C library */
-#undef HAVE_SNPRINTF
-
-/* Set to 1 if your standard system headers declare snprintf() */
-#undef HAVE_DECL_SNPRINTF
-
-/* Set to 1 if you have vsnprintf() in the C library */
-#undef HAVE_VSNPRINTF
-
-/* Set to 1 if your standard system headers declare vsnprintf() */
-#undef HAVE_DECL_VSNPRINTF
-
-/* Set to 1 if you have strerror() */
-#undef HAVE_STRERROR
-
-/* Set to 1 if you have isinf() */
-#undef HAVE_ISINF
-
-/*
- *	These are all related to port/isinf.c 
- */
-#undef HAVE_FPCLASS
-#undef HAVE_FP_CLASS
-#undef HAVE_FP_CLASS_H
-#undef HAVE_FP_CLASS_D
-#undef HAVE_CLASS
-
-/* Set to 1 if you have getaddrinfo() */
-#undef HAVE_GETADDRINFO
-
-/* Set to 1 if you have gethostname() */
-#undef HAVE_GETHOSTNAME
-
-/* Set to 1 if you have getpeereid() */
-#undef HAVE_GETPEEREID
-
-/* Set to 1 if struct tm has a tm_zone member */
-#undef HAVE_TM_ZONE
-
-/* Set to 1 if you have int timezone.
- * NOTE: if both tm_zone and a global timezone variable exist,
- * using the tm_zone field should probably be preferred,
- * since global variables are inherently not thread-safe.
- */
-#undef HAVE_INT_TIMEZONE
-
-/* Set to 1 if you have cbrt() */
-#undef HAVE_CBRT
-
-/* Set to 1 if you have inet_aton() */
-#undef HAVE_INET_ATON
-
-/* Set to 1 if you have fcvt() */
-#undef HAVE_FCVT
-
-/* Set to 1 if you have rint() */
-#undef HAVE_RINT 
-
-/* Set to 1 if you have finite() */
-#undef HAVE_FINITE
-
-/* Set to 1 if you have memmove() */
-#undef HAVE_MEMMOVE
-
-/* Set to 1 if you have sigsetjmp() */
-#undef HAVE_SIGSETJMP
-
-/* Set to 1 if you have sysconf() */
-#undef HAVE_SYSCONF
-
-/* Set to 1 if you have getrusage() */
-#undef HAVE_GETRUSAGE
-
-/* Set to 1 if you have waitpid() */
-#undef HAVE_WAITPID
-
-/* Set to 1 if you have setsid() */
-#undef HAVE_SETSID
-
-/* Set to 1 if you have sigprocmask() */
-#undef HAVE_SIGPROCMASK
-
-/* Set to 1 if you have sigprocmask() */
-#undef HAVE_STRCASECMP
-
-/* Set to 1 if you have strtol() */
-#undef HAVE_STRTOL
-
-/* Set to 1 if you have strtoul() */
-#undef HAVE_STRTOUL
-
-/* Set to 1 if you have strdup() */
-#undef HAVE_STRDUP
-
-/* Set to 1 if you have random() */
-#undef HAVE_RANDOM
-
-/* Set to 1 if you have srandom() */
-#undef HAVE_SRANDOM
-
-/* The random() function is expected to yield values 0 .. MAX_RANDOM_VALUE */
-/* Currently, all known implementations yield 0..2^31-1, so we just hardwire
- * this constant.  We could do a configure test if it proves to be necessary.
- * CAUTION: Think not to replace this with RAND_MAX.  RAND_MAX defines the
- * maximum value of the older rand() function, which is often different from
- * --- and considerably inferior to --- random().
- */
-#define MAX_RANDOM_VALUE  (0x7FFFFFFF)
-
-/* Define if you have dlopen() */
-#undef HAVE_DLOPEN
-
-/* Define if you have fdatasync() */
-#undef HAVE_FDATASYNC
-
-/* Define if you have utime() */
-#undef HAVE_UTIME
-
-/* Define if you have utimes() */
-#undef HAVE_UTIMES
-
-/* Define if the standard header unistd.h declares fdatasync() */
-#undef HAVE_DECL_FDATASYNC
-
-/* Set to 1 if you have libz.a */
-#undef HAVE_LIBZ
-
-/* Set to 1 if you have libreadline.a */
-#undef HAVE_LIBREADLINE
-
-/* Set to 1 if your libreadline defines rl_completion_append_character */
-#undef HAVE_RL_COMPLETION_APPEND_CHARACTER
-
-/* Set to 1 if you have rl_completion_matches */
-#undef HAVE_RL_COMPLETION_MATCHES
-
-/* Set to 1 if you have rl_filename_completion_function */
-#undef HAVE_RL_FILENAME_COMPLETION_FUNCTION
-
-/* Set to 1 if you have replace_history_entry */
-#undef HAVE_REPLACE_HISTORY_ENTRY
-
-/* Set to 1 if you have getopt_long() (GNU long options) */
-#undef HAVE_GETOPT_LONG
-
-/* Set to 1 if you have union semun */
-#undef HAVE_UNION_SEMUN
-
-/* Set to 1 if you have struct cmsgcred */
-#undef HAVE_STRUCT_CMSGCRED
-
-/* Set to 1 if you have struct fcred */
-#undef HAVE_STRUCT_FCRED
-
-/* Set to 1 if you have struct sockcred */
-#undef HAVE_STRUCT_SOCKCRED
-
-/* Set to 1 if you have struct sockaddr_un */
-#undef HAVE_STRUCT_SOCKADDR_UN
-
-/* Set to 1 if you have struct addrinfo */
-#undef HAVE_STRUCT_ADDRINFO
-
-/* Set to 1 if you have krb5_ticket.enc_part2 */
-#undef HAVE_KRB5_TICKET_ENC_PART2
-
-/* Set to 1 if you have krb5_ticket.client */
-#undef HAVE_KRB5_TICKET_CLIENT
-
-/* Set to 1 if you have krb5_error.text.data */
-#undef HAVE_KRB5_ERROR_TEXT_DATA
-
-/* Set to 1 if you have krb5_ticket.e_data */
-#undef HAVE_KRB5_ERROR_E_DATA
-
-/* Set to 1 if type "long int" works and is 64 bits */
-#undef HAVE_LONG_INT_64
-
-/* Set to 1 if type "long long int" works and is 64 bits */
-#undef HAVE_LONG_LONG_INT_64
-
-/* Set to 1 if type "long long int" constants should be suffixed by LL */
-#undef HAVE_LL_CONSTANTS
-
-/* Define this as the appropriate snprintf format for 64-bit ints, if any */
-#undef INT64_FORMAT
-
-/*
- * We need a #define symbol for sizeof(Datum) for use in some #if tests.
- */
-#undef SIZEOF_DATUM
-
-/*
- * These must be defined as the alignment requirement (NOT the size) of
- * each of the basic C data types (except char, which we assume has align 1).
- * MAXIMUM_ALIGNOF is the largest alignment requirement for any C data type.
- * ALIGNOF_LONG_LONG_INT need only be defined if HAVE_LONG_LONG_INT_64 is.
- */
-#undef ALIGNOF_SHORT
-#undef ALIGNOF_INT
-#undef ALIGNOF_LONG
-#undef ALIGNOF_LONG_LONG_INT
-#undef ALIGNOF_DOUBLE
-#undef MAXIMUM_ALIGNOF
-
-/* Define as the type of the 3rd argument to accept() */
-#undef ACCEPT_TYPE_ARG3
-
-/* Define if POSIX signal interface is available */
-#undef HAVE_POSIX_SIGNALS
-
-/* Define if you have the optreset variable */
-#undef HAVE_INT_OPTRESET
-
-/* Define if you have strtoll() */
-#undef HAVE_STRTOLL
-
-/* Define if you have strtoq() */
-#undef HAVE_STRTOQ
-
-/* Define if you have strtoull() */
-#undef HAVE_STRTOULL
-
-/* Define if you have strtouq() */
-#undef HAVE_STRTOUQ
-
-/* Define if you have atexit() */
+/* Define to 1 if you have the `atexit' function. */
 #undef HAVE_ATEXIT
 
-/* Define if you have on_exit() */
+/* Define to 1 if you have the `cbrt' function. */
+#undef HAVE_CBRT
+
+/* Define to 1 if you have the `class' function. */
+#undef HAVE_CLASS
+
+/* Define to 1 if you have the <crypt.h> header file. */
+#undef HAVE_CRYPT_H
+
+/* Define to 1 if you have the declaration of `fdatasync', and to 0 if you
+   don't. */
+#undef HAVE_DECL_FDATASYNC
+
+/* Define to 1 if you have the declaration of `snprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL_SNPRINTF
+
+/* Define to 1 if you have the declaration of `vsnprintf', and to 0 if you
+   don't. */
+#undef HAVE_DECL_VSNPRINTF
+
+/* Define to 1 if you have the <dld.h> header file. */
+#undef HAVE_DLD_H
+
+/* Define to 1 if you have the `dlopen' function. */
+#undef HAVE_DLOPEN
+
+/* Define to 1 if you have the <editline/history.h> header file. */
+#undef HAVE_EDITLINE_HISTORY_H
+
+/* Define to 1 if you have the <editline/readline.h> header file. */
+#undef HAVE_EDITLINE_READLINE_H
+
+/* Define to 1 if you have the <endian.h> header file. */
+#undef HAVE_ENDIAN_H
+
+/* Define to 1 if you have the `fcvt' function. */
+#undef HAVE_FCVT
+
+/* Define to 1 if you have the `fdatasync' function. */
+#undef HAVE_FDATASYNC
+
+/* Define to 1 if you have finite(). */
+#undef HAVE_FINITE
+
+/* Define to 1 if you have the `fpclass' function. */
+#undef HAVE_FPCLASS
+
+/* Define to 1 if you have the `fp_class' function. */
+#undef HAVE_FP_CLASS
+
+/* Define to 1 if you have the `fp_class_d' function. */
+#undef HAVE_FP_CLASS_D
+
+/* Define to 1 if you have the <fp_class.h> header file. */
+#undef HAVE_FP_CLASS_H
+
+/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+#undef HAVE_FSEEKO
+
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
+/* Define to 1 if you have the `gethostname' function. */
+#undef HAVE_GETHOSTNAME
+
+/* Define to 1 if you have the <getopt.h> header file. */
+#undef HAVE_GETOPT_H
+
+/* Define to 1 if you have the `getopt_long' function. */
+#undef HAVE_GETOPT_LONG
+
+/* Define to 1 if you have the `getpeereid' function. */
+#undef HAVE_GETPEEREID
+
+/* Define to 1 if you have the `getrusage' function. */
+#undef HAVE_GETRUSAGE
+
+/* Define to 1 if you have the <history.h> header file. */
+#undef HAVE_HISTORY_H
+
+/* Define to 1 if you have the <ieeefp.h> header file. */
+#undef HAVE_IEEEFP_H
+
+/* Define to 1 if you have the `inet_aton' function. */
+#undef HAVE_INET_ATON
+
+/* Define to 1 if the system has the type `int64'. */
+#undef HAVE_INT64
+
+/* Define to 1 if the system has the type `int8'. */
+#undef HAVE_INT8
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the global variable 'int optreset'. */
+#undef HAVE_INT_OPTRESET
+
+/* Define to 1 if you have the global variable 'int timezone'. */
+#undef HAVE_INT_TIMEZONE
+
+/* Define to 1 if you have support for IPv6. */
+#undef HAVE_IPV6
+
+/* Define to 1 if you have isinf(). */
+#undef HAVE_ISINF
+
+/* Define to 1 if you have the <kernel/image.h> header file. */
+#undef HAVE_KERNEL_IMAGE_H
+
+/* Define to 1 if you have the <kernel/OS.h> header file. */
+#undef HAVE_KERNEL_OS_H
+
+/* Define to 1 if `e_data' is member of `krb5_error'. */
+#undef HAVE_KRB5_ERROR_E_DATA
+
+/* Define to 1 if `text.data' is member of `krb5_error'. */
+#undef HAVE_KRB5_ERROR_TEXT_DATA
+
+/* Define to 1 if `client' is member of `krb5_ticket'. */
+#undef HAVE_KRB5_TICKET_CLIENT
+
+/* Define to 1 if `enc_part2' is member of `krb5_ticket'. */
+#undef HAVE_KRB5_TICKET_ENC_PART2
+
+/* Define to 1 if you have the `bind' library (-lbind). */
+#undef HAVE_LIBBIND
+
+/* Define to 1 if you have the `BSD' library (-lBSD). */
+#undef HAVE_LIBBSD
+
+/* Define to 1 if you have the `compat' library (-lcompat). */
+#undef HAVE_LIBCOMPAT
+
+/* Define to 1 if you have the `crypto' library (-lcrypto). */
+#undef HAVE_LIBCRYPTO
+
+/* Define to 1 if you have the `cygipc' library (-lcygipc). */
+#undef HAVE_LIBCYGIPC
+
+/* Define to 1 if you have the `des' library (-ldes). */
+#undef HAVE_LIBDES
+
+/* Define to 1 if you have the `dl' library (-ldl). */
+#undef HAVE_LIBDL
+
+/* Define to 1 if you have the `dld' library (-ldld). */
+#undef HAVE_LIBDLD
+
+/* Define to 1 if you have the `gen' library (-lgen). */
+#undef HAVE_LIBGEN
+
+/* Define to 1 if you have the `IPC' library (-lIPC). */
+#undef HAVE_LIBIPC
+
+/* Define to 1 if you have the `krb' library (-lkrb). */
+#undef HAVE_LIBKRB
+
+/* Define to 1 if you have the `lc' library (-llc). */
+#undef HAVE_LIBLC
+
+/* Define to 1 if you have the `ld' library (-lld). */
+#undef HAVE_LIBLD
+
+/* Define to 1 if you have the `m' library (-lm). */
+#undef HAVE_LIBM
+
+/* Define to 1 if you have the `nsl' library (-lnsl). */
+#undef HAVE_LIBNSL
+
+/* Define to 1 if you have the `pam' library (-lpam). */
+#undef HAVE_LIBPAM
+
+/* Define to 1 if you have the `PW' library (-lPW). */
+#undef HAVE_LIBPW
+
+/* Define if you have a function readline library */
+#undef HAVE_LIBREADLINE
+
+/* Define to 1 if you have the `resolv' library (-lresolv). */
+#undef HAVE_LIBRESOLV
+
+/* Define to 1 if you have the `socket' library (-lsocket). */
+#undef HAVE_LIBSOCKET
+
+/* Define to 1 if you have the `ssl' library (-lssl). */
+#undef HAVE_LIBSSL
+
+/* Define to 1 if you have the `unix' library (-lunix). */
+#undef HAVE_LIBUNIX
+
+/* Define to 1 if you have the `util' library (-lutil). */
+#undef HAVE_LIBUTIL
+
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
+/* Define to 1 if constants of type 'long long int' should have the suffix LL.
+   */
+#undef HAVE_LL_CONSTANTS
+
+/* Define to 1 if `long int' works and is 64 bits. */
+#undef HAVE_LONG_INT_64
+
+/* Define to 1 if `long long int' works and is 64 bits. */
+#undef HAVE_LONG_LONG_INT_64
+
+/* Define to 1 if you have the `memmove' function. */
+#undef HAVE_MEMMOVE
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+#undef HAVE_NETINET_TCP_H
+
+/* Define to 1 if you have the `on_exit' function. */
 #undef HAVE_ON_EXIT
 
-/* Define if you have syslog() */
-#undef HAVE_SYSLOG
+/* Define to 1 if you have the <pam/pam_appl.h> header file. */
+#undef HAVE_PAM_PAM_APPL_H
 
-/* Define if you have poll() */
+/* Define to 1 if you have the `poll' function. */
 #undef HAVE_POLL
 
-/* Define if the corresponding types are defined in standard headers */
-#undef HAVE_INT8
-#undef HAVE_UINT8
-#undef HAVE_INT64
-#undef HAVE_UINT64
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
+
+/* Define to 1 if you have the POSIX signal interface. */
+#undef HAVE_POSIX_SIGNALS
+
+/* Define to 1 if you have the `pstat' function. */
+#undef HAVE_PSTAT
+
+/* Define to 1 if the PS_STRINGS thing exists. */
+#undef HAVE_PS_STRINGS
+
+/* Define to 1 if you have the <pwd.h> header file. */
+#undef HAVE_PWD_H
+
+/* Define to 1 if you have the `random' function. */
+#undef HAVE_RANDOM
+
+/* Define to 1 if you have the <readline.h> header file. */
+#undef HAVE_READLINE_H
+
+/* Define to 1 if you have the <readline/history.h> header file. */
+#undef HAVE_READLINE_HISTORY_H
+
+/* Define to 1 if you have the <readline/readline.h> header file. */
+#undef HAVE_READLINE_READLINE_H
+
+/* Define to 1 if you have the `replace_history_entry' function. */
+#undef HAVE_REPLACE_HISTORY_ENTRY
+
+/* Define to 1 if you have the `rint' function. */
+#undef HAVE_RINT
+
+/* Define to 1 if you have the global variable
+   'rl_completion_append_character'. */
+#undef HAVE_RL_COMPLETION_APPEND_CHARACTER
+
+/* Define to 1 if you have the `rl_completion_matches' function. */
+#undef HAVE_RL_COMPLETION_MATCHES
+
+/* Define to 1 if you have the `rl_filename_completion_function' function. */
+#undef HAVE_RL_FILENAME_COMPLETION_FUNCTION
+
+/* Define to 1 if you have the <security/pam_appl.h> header file. */
+#undef HAVE_SECURITY_PAM_APPL_H
+
+/* Define to 1 if you have the `setproctitle' function. */
+#undef HAVE_SETPROCTITLE
+
+/* Define to 1 if you have the `setsid' function. */
+#undef HAVE_SETSID
+
+/* Define to 1 if you have the `sigprocmask' function. */
+#undef HAVE_SIGPROCMASK
+
+/* Define to 1 if you have sigsetjmp(). */
+#undef HAVE_SIGSETJMP
+
+/* Define to 1 if the system has the type `sig_atomic_t'. */
 #undef HAVE_SIG_ATOMIC_T
 
-/* Define exactly one of these symbols to select semaphore implementation */
+/* Define to 1 if you have the `snprintf' function. */
+#undef HAVE_SNPRINTF
+
+/* Define to 1 if you have the `srandom' function. */
+#undef HAVE_SRANDOM
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `strcasecmp' function. */
+#undef HAVE_STRCASECMP
+
+/* Define to 1 if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define to 1 if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define to 1 if cpp supports the ANSI # stringizing operator. */
+#undef HAVE_STRINGIZE
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strtol' function. */
+#undef HAVE_STRTOL
+
+/* Define to 1 if you have the `strtoll' function. */
+#undef HAVE_STRTOLL
+
+/* Define to 1 if you have the `strtoq' function. */
+#undef HAVE_STRTOQ
+
+/* Define to 1 if you have the `strtoul' function. */
+#undef HAVE_STRTOUL
+
+/* Define to 1 if you have the `strtoull' function. */
+#undef HAVE_STRTOULL
+
+/* Define to 1 if you have the `strtouq' function. */
+#undef HAVE_STRTOUQ
+
+/* Define to 1 if the system has the type `struct addrinfo'. */
+#undef HAVE_STRUCT_ADDRINFO
+
+/* Define to 1 if the system has the type `struct cmsgcred'. */
+#undef HAVE_STRUCT_CMSGCRED
+
+/* Define to 1 if the system has the type `struct fcred'. */
+#undef HAVE_STRUCT_FCRED
+
+/* Define to 1 if the system has the type `struct sockaddr_un'. */
+#undef HAVE_STRUCT_SOCKADDR_UN
+
+/* Define to 1 if the system has the type `struct sockcred'. */
+#undef HAVE_STRUCT_SOCKCRED
+
+/* Define to 1 if `tm_zone' is member of `struct tm'. */
+#undef HAVE_STRUCT_TM_TM_ZONE
+
+/* Define to 1 if you have the <SupportDefs.h> header file. */
+#undef HAVE_SUPPORTDEFS_H
+
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the syslog interface. */
+#undef HAVE_SYSLOG
+
+/* Define to 1 if you have the <sys/ipc.h> header file. */
+#undef HAVE_SYS_IPC_H
+
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#undef HAVE_SYS_POLL_H
+
+/* Define to 1 if you have the <sys/pstat.h> header file. */
+#undef HAVE_SYS_PSTAT_H
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#undef HAVE_SYS_SELECT_H
+
+/* Define to 1 if you have the <sys/sem.h> header file. */
+#undef HAVE_SYS_SEM_H
+
+/* Define to 1 if you have the <sys/shm.h> header file. */
+#undef HAVE_SYS_SHM_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have the <sys/un.h> header file. */
+#undef HAVE_SYS_UN_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Define to 1 if your `struct tm' has `tm_zone'. Deprecated, use
+   `HAVE_STRUCT_TM_TM_ZONE' instead. */
+#undef HAVE_TM_ZONE
+
+/* Define to 1 if you don't have `tm_zone' but do have the external array
+   `tzname'. */
+#undef HAVE_TZNAME
+
+/* Define to 1 if the system has the type `uint64'. */
+#undef HAVE_UINT64
+
+/* Define to 1 if the system has the type `uint8'. */
+#undef HAVE_UINT8
+
+/* Define to 1 if the system has the type `union semun'. */
+#undef HAVE_UNION_SEMUN
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `utime' function. */
+#undef HAVE_UTIME
+
+/* Define to 1 if you have the `utimes' function. */
+#undef HAVE_UTIMES
+
+/* Define to 1 if you have the <utime.h> header file. */
+#undef HAVE_UTIME_H
+
+/* Define to 1 if you have the `vsnprintf' function. */
+#undef HAVE_VSNPRINTF
+
+/* Define to 1 if you have the `waitpid' function. */
+#undef HAVE_WAITPID
+
+/* Define to the appropriate snprintf format for 64-bit ints, if any. */
+#undef INT64_FORMAT
+
+/* Define to build with Kerberos 4 support. (--with-krb4) */
+#undef KRB4
+
+/* Define to build with Kerberos 5 support. (--with-krb5) */
+#undef KRB5
+
+/* Define to the location of locale files. */
+#undef LOCALEDIR
+
+/* Define as the maximum alignment requirement of any C data type. */
+#undef MAXIMUM_ALIGNOF
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to the name of the PostgreSQL service principal in Kerberos.
+   (--with-krb-srvnam=NAME) */
+#undef PG_KRB_SRVNAM
+
+/* PostgreSQL version */
+#undef PG_VERSION
+
+/* A string containing the version number, platform, and C compiler */
+#undef PG_VERSION_STR
+
+/* The size of a `unsigned long', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_LONG
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define to 1 if your <sys/time.h> declares `struct tm'. */
+#undef TM_IN_SYS_TIME
+
+/* Define to 1 to build with assertion checks. (--enable-cassert) */
+#undef USE_ASSERT_CHECKING
+
+/* Define to 1 if you want 64-bit integer timestamp and interval support.
+   (--enable-integer-datetimes) */
+#undef USE_INTEGER_DATETIMES
+
+/* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
-#undef USE_UNNAMED_POSIX_SEMAPHORES
+
+/* Define to 1 to build with PAM support. (--with-pam) */
+#undef USE_PAM
+
+/* Define to build with (Open)SSL support. (--with-openssl) */
+#undef USE_SSL
+
+/* Define to select SysV-style semaphores. */
 #undef USE_SYSV_SEMAPHORES
 
-/* Define exactly one of these symbols to select shared-mem implementation */
+/* Define to select SysV-style shared memory. */
 #undef USE_SYSV_SHARED_MEMORY
 
+/* Define to select unnamed POSIX semaphores. */
+#undef USE_UNNAMED_POSIX_SEMAPHORES
 
-/*
- *------------------------------------------------------------------------
- * Part 4: pull in system-specific declarations.
- *
- * This is still configure's responsibility, because it picks where
- * the "pg_config_os.h" symlink points...
- *------------------------------------------------------------------------
- */
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
 
-/*
- * Pull in OS-specific declarations (using link created by configure)
- */
+/* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
+#undef _LARGEFILE_SOURCE
 
-#include "pg_config_os.h"
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
 
-/*
- *------------------------------------------------------------------------
- * Part 5: provide default declarations for various things that should be
- * provided by the system headers or the port-specific pg_config_os.h file,
- * but sometimes aren't.
- *
- * This must be last so that pg_config_os.h can override the defaults.
- * In particular, we must not pull in any system header files until we
- * have read pg_config_os.h (largefile support tends to break otherwise).
- *------------------------------------------------------------------------
- */
+/* Define as `__inline' if that's what the C compiler calls it, or to nothing
+   if it is not supported. */
+#undef inline
 
-#ifndef DLLIMPORT
-#define DLLIMPORT				/* no special DLL markers on most ports */
-#endif
+/* Define to empty if the C compiler does not understand signed types. */
+#undef signed
 
-/*
- * The following is used as the arg list for signal handlers.  Any ports
- * that take something other than an int argument should override this in
- * their pg_config_os.h file.  Note that variable names are required
- * because it is used in both the prototypes as well as the definitions.
- * Note also the long name.  We expect that this won't collide with
- * other names causing compiler warnings.
- */ 
-
-#ifndef SIGNAL_ARGS
-#define SIGNAL_ARGS  int postgres_signal_arg
-#endif
-
-/*
- * Default "extern" declarations or macro substitutes for library routines.
- * When necessary, these routines are provided by files in src/port/.
- */
-#ifndef HAVE_FSEEKO
-#define fseeko(a, b, c) fseek((a), (b), (c))
-#define ftello(a) ftell((a))
-#endif
-
-#ifndef HAVE_ISINF
-extern int isinf(double x);
-#endif
-
-#ifndef HAVE_GETHOSTNAME
-extern int gethostname(char *name, int namelen);
-#endif
-
-#ifndef HAVE_INET_ATON
-# include <sys/types.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-extern int inet_aton(const char *cp, struct in_addr * addr);
-#endif
-
-/*
- * When there is no sigsetjmp, its functionality is provided by plain
- * setjmp. Incidentally, nothing provides setjmp's functionality in
- * that case.
- */
-#ifndef HAVE_SIGSETJMP
-# define sigjmp_buf jmp_buf
-# define sigsetjmp(x,y)	setjmp(x)
-# define siglongjmp longjmp
-#endif
-
-#ifndef HAVE_STRCASECMP
-extern int strcasecmp(char *s1, char *s2);
-#endif
-
-#ifndef HAVE_STRDUP
-extern char *strdup(char const *);
-#endif
-
-#ifndef HAVE_RANDOM
-extern long random(void);
-#endif
-
-#ifndef HAVE_SRANDOM
-extern void srandom(unsigned int seed);
-#endif
-
-#if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
-extern int fdatasync(int fildes);
-#endif
-
-/* If strtoq() exists, rename it to the more standard strtoll() */
-#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
-# define strtoll strtoq
-# define HAVE_STRTOLL 1
-#endif
-
-/* If strtouq() exists, rename it to the more standard strtoull() */
-#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
-# define strtoull strtouq
-# define HAVE_STRTOULL 1
-#endif
-
-
-#endif /* PG_CONFIG_H */
+/* Define to empty if the keyword `volatile' does not work. Warning: valid
+   code using `volatile' can become incorrect without. Disable with care. */
+#undef volatile

@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.16 2003/04/02 00:49:27 tgl Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.17 2003/04/06 22:45:22 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -14,7 +14,7 @@ int res;],
   [pgac_cv_var_int_timezone=yes],
   [pgac_cv_var_int_timezone=no])])
 if test x"$pgac_cv_var_int_timezone" = xyes ; then
-  AC_DEFINE(HAVE_INT_TIMEZONE,, [Set to 1 if you have the global variable timezone])
+  AC_DEFINE(HAVE_INT_TIMEZONE,, [Define to 1 if you have the global variable 'int timezone'.])
 fi])# PGAC_VAR_INT_TIMEZONE
 
 
@@ -32,8 +32,13 @@ gettimeofday(tp,tzp);],
 [pgac_cv_func_gettimeofday_1arg=no],
 [pgac_cv_func_gettimeofday_1arg=yes])])
 if test x"$pgac_cv_func_gettimeofday_1arg" = xyes ; then
-  AC_DEFINE(GETTIMEOFDAY_1ARG,, [Set to 1 if gettimeofday() takes only 1 argument])
-fi])# PGAC_FUNC_GETTIMEOFDAY_1ARG
+  AC_DEFINE(GETTIMEOFDAY_1ARG,, [Define to 1 if gettimeofday() takes only 1 argument.])
+fi
+AH_VERBATIM(GETTIMEOFDAY_1ARG_,
+[@%:@ifdef GETTIMEOFDAY_1ARG
+@%:@ define gettimeofday(a,b) gettimeofday(a)
+@%:@endif])dnl
+])# PGAC_FUNC_GETTIMEOFDAY_1ARG
 
 
 # PGAC_UNION_SEMUN
@@ -92,7 +97,7 @@ sigaction(0, &act, &oact);],
 [pgac_cv_func_posix_signals=yes],
 [pgac_cv_func_posix_signals=no])])
 if test x"$pgac_cv_func_posix_signals" = xyes ; then
-  AC_DEFINE(HAVE_POSIX_SIGNALS,, [Set to 1 if you have the POSIX signal interface])
+  AC_DEFINE(HAVE_POSIX_SIGNALS,, [Define to 1 if you have the POSIX signal interface.])
 fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS

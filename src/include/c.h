@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.136 2003/04/04 20:42:13 momjian Exp $
+ * $Id: c.h,v 1.137 2003/04/06 22:45:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,8 @@
  */
 
 #include "pg_config.h"
+#include "pg_config_manual.h"
+#include "pg_config_os.h"
 #include "postgres_ext.h"
 
 #include <stdio.h>
@@ -708,8 +710,7 @@ off_t ftello(FILE *stream);
 
 /*
  * Provide prototypes for routines not present in a particular machine's
- * standard C library.	It'd be better to put these in pg_config.h, but
- * in pg_config.h we haven't yet included anything that defines size_t...
+ * standard C library.
  */
 
 #if !HAVE_DECL_SNPRINTF
@@ -725,6 +726,89 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
 #if !defined(HAVE_MEMMOVE) && !defined(memmove)
 #define memmove(d, s, c)		bcopy(s, d, c)
+#endif
+
+#ifndef DLLIMPORT
+#define DLLIMPORT				/* no special DLL markers on most ports */
+#endif
+
+/*
+ * The following is used as the arg list for signal handlers.  Any ports
+ * that take something other than an int argument should override this in
+ * their pg_config_os.h file.  Note that variable names are required
+ * because it is used in both the prototypes as well as the definitions.
+ * Note also the long name.  We expect that this won't collide with
+ * other names causing compiler warnings.
+ */ 
+
+#ifndef SIGNAL_ARGS
+#define SIGNAL_ARGS  int postgres_signal_arg
+#endif
+
+/*
+ * Default "extern" declarations or macro substitutes for library routines.
+ * When necessary, these routines are provided by files in src/port/.
+ */
+#ifndef HAVE_FSEEKO
+#define fseeko(a, b, c) fseek((a), (b), (c))
+#define ftello(a) ftell((a))
+#endif
+
+#ifndef HAVE_ISINF
+extern int isinf(double x);
+#endif
+
+#ifndef HAVE_GETHOSTNAME
+extern int gethostname(char *name, int namelen);
+#endif
+
+#ifndef HAVE_INET_ATON
+# include <netinet/in.h>
+# include <arpa/inet.h>
+extern int inet_aton(const char *cp, struct in_addr * addr);
+#endif
+
+/*
+ * When there is no sigsetjmp, its functionality is provided by plain
+ * setjmp. Incidentally, nothing provides setjmp's functionality in
+ * that case.
+ */
+#ifndef HAVE_SIGSETJMP
+# define sigjmp_buf jmp_buf
+# define sigsetjmp(x,y)	setjmp(x)
+# define siglongjmp longjmp
+#endif
+
+#ifndef HAVE_STRCASECMP
+extern int strcasecmp(char *s1, char *s2);
+#endif
+
+#ifndef HAVE_STRDUP
+extern char *strdup(char const *);
+#endif
+
+#ifndef HAVE_RANDOM
+extern long random(void);
+#endif
+
+#ifndef HAVE_SRANDOM
+extern void srandom(unsigned int seed);
+#endif
+
+#if defined(HAVE_FDATASYNC) && !HAVE_DECL_FDATASYNC
+extern int fdatasync(int fildes);
+#endif
+
+/* If strtoq() exists, rename it to the more standard strtoll() */
+#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOLL) && defined(HAVE_STRTOQ)
+# define strtoll strtoq
+# define HAVE_STRTOLL 1
+#endif
+
+/* If strtouq() exists, rename it to the more standard strtoull() */
+#if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
+# define strtoull strtouq
+# define HAVE_STRTOULL 1
 #endif
 
 #endif   /* C_H */

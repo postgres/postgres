@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.309 2003/03/24 22:40:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.310 2003/04/06 22:45:22 petere Exp $
  *
  * NOTES
  *
@@ -143,13 +143,12 @@ char	   *VirtualHost;
 
 /*
  * MaxBackends is the limit on the number of backends we can start.
- * The default is established by configure, but it can be altered at
- * postmaster start with the postmaster's -N switch.  Note
- * that a larger MaxBackends value will increase the size of the shared
- * memory area as well as cause the postmaster to grab more kernel
- * semaphores, even if you never actually use that many backends.
+ * Note that a larger MaxBackends value will increase the size of the
+ * shared memory area as well as cause the postmaster to grab more
+ * kernel semaphores, even if you never actually use that many
+ * backends.
  */
-int			MaxBackends = DEF_MAXBACKENDS;
+int			MaxBackends;
 
 /*
  * ReservedBackends is the number of backends reserved for superuser use.
@@ -160,7 +159,7 @@ int			MaxBackends = DEF_MAXBACKENDS;
  * can make new connections" --- pre-existing superuser connections don't
  * count against the limit.
  */
-int			ReservedBackends = 2;
+int			ReservedBackends;
 
 
 static char *progname = (char *) NULL;
@@ -892,7 +891,7 @@ usage(const char *progname)
 #ifdef USE_ASSERT_CHECKING
 	printf(gettext("  -A 1|0          enable/disable run-time assert checking\n"));
 #endif
-	printf(gettext("  -B NBUFFERS     number of shared buffers (default %d)\n"), DEF_NBUFFERS);
+	printf(gettext("  -B NBUFFERS     number of shared buffers\n"));
 	printf(gettext("  -c NAME=VALUE   set run-time parameter\n"));
 	printf(gettext("  -d 1-5          debugging level\n"));
 	printf(gettext("  -D DATADIR      database directory\n"));
@@ -903,10 +902,9 @@ usage(const char *progname)
 #ifdef USE_SSL
 	printf(gettext("  -l              enable SSL connections\n"));
 #endif
-	printf(gettext("  -N MAX-CONNECT  maximum number of allowed connections (default %d)\n"),
-		   DEF_MAXBACKENDS);
+	printf(gettext("  -N MAX-CONNECT  maximum number of allowed connections\n"));
 	printf(gettext("  -o OPTIONS      pass 'OPTIONS' to each backend server\n"));
-	printf(gettext("  -p PORT         port number to listen on (default %d)\n"), DEF_PGPORT);
+	printf(gettext("  -p PORT         port number to listen on\n"));
 	printf(gettext("  -S              silent mode (start in background without logging output)\n"));
 	printf(gettext("  --help          show this help, then exit\n"));
 	printf(gettext("  --version       output version information, then exit\n"));
