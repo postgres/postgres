@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.34 2000/08/24 23:36:28 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -42,7 +42,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
      <thead>
       <row>
        <entry><productname>Postgres</productname> Type</entry>
-       <entry><acronym>SQL92</acronym> or <acronym>SQL3</acronym> Type</entry>
+       <entry><acronym>SQL92</acronym> or <acronym>SQL99</acronym> Type</entry>
        <entry>Description</entry>
       </row>
      </thead>
@@ -80,7 +80,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
       <row>
        <entry>decimal</entry>
        <entry>decimal(p,s)</entry>
-       <entry>exact numeric for p <= 9, s = 0</entry>
+       <entry>exact numeric with selectable precision</entry>
       </row>
       <row>
        <entry>float4</entry>
@@ -135,7 +135,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
       <row>
        <entry>numeric</entry>
        <entry>numeric(p,s)</entry>
-       <entry>exact numeric for p == 9, s = 0</entry>
+       <entry>exact numeric with selectable precision</entry>
       </row>
       <row>
        <entry>path</entry>
@@ -156,6 +156,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
        <entry>serial</entry>
        <entry></entry>
        <entry>unique id for indexing and cross-reference</entry>
+      </row>
+      <row>
+       <entry>text</entry>
+       <entry></entry>
+       <entry>variable-length character string</entry>
       </row>
       <row>
        <entry>time</entry>
@@ -234,7 +239,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
   <para>
    <productname>Postgres</productname> has features at the forefront of 
    <acronym>ORDBMS</acronym> development. In addition to
-   <acronym>SQL3</acronym> conformance, substantial portions 
+   <acronym>SQL99</acronym> conformance, substantial portions 
    of <acronym>SQL92</acronym> are also supported.
    Although we strive for <acronym>SQL92</acronym> compliance, 
    there are some aspects of the standard
@@ -275,7 +280,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
    <title>Numeric Types</title>
 
    <para>
-    Numeric types consist of two- and four-byte integers, four- and eight-byte
+    Numeric types consist of two-, four-, and eight-byte integers,
+    four- and eight-byte
     floating point numbers and fixed-precision decimals.
    </para>
 
@@ -297,7 +303,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
 	<entry>decimal</entry>
 	<entry>variable</entry>
 	<entry>User-specified precision</entry>
-	<entry>~8000 digits</entry>
+	<entry>no limit</entry>
        </row>
        <row>
 	<entry>float4</entry>
@@ -327,7 +333,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
 	<entry>int8</entry>
 	<entry>8 bytes</entry>
 	<entry>Very large range fixed-precision</entry>
-	<entry>+/- &gt; 18 decimal places</entry>
+	<entry>~18 decimal places</entry>
        </row>
        <row>
 	<entry>numeric</entry>
@@ -354,7 +360,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.33 2000/08/23 05:59:01 th
 
    <para>
     The <type>int8</type> type may not be available on all platforms since
-    it relies on compiler support for this.
+    it relies on compiler support for eight-byte integers.
    </para>
 
    <sect2>
@@ -483,7 +489,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </thead>
       <tbody>
        <row>
-	<entry>char</entry>
+	<entry>"char"</entry>
 	<entry>1 byte</entry>
 	<entry><acronym>SQL92</acronym>-compatible</entry>
 	<entry>Single character</entry>
@@ -502,7 +508,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
        </row>
        <row>
 	<entry>varchar(n)</entry>
-	<entry>(4+n) bytes</entry>
+	<entry>(4+x) bytes</entry>
 	<entry><acronym>SQL92</acronym>-compatible</entry>
 	<entry>Variable-length with limit</entry>
        </row>
@@ -1359,10 +1365,10 @@ January 8 04:05:06 1999 PST
 
    <para>
     <productname>Postgres</productname> supports <type>bool</type> as
-    the <acronym>SQL3</acronym> boolean type.
+    the <acronym>SQL99</acronym> boolean type.
     <type>bool</type> can have one of only two states: 'true' or 'false'. 
     A third state, 'unknown', is not
-    implemented and is not suggested in <acronym>SQL3</acronym>; 
+    implemented and is not suggested in <acronym>SQL99</acronym>; 
     <acronym>NULL</acronym> is an
     effective substitute. <type>bool</type> can be used in any boolean expression, 
     and boolean expressions

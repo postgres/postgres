@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.33 2000/07/22 04:30:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.34 2000/08/24 23:36:29 tgl Exp $
 Postgres documentation
 -->
 
@@ -248,11 +248,9 @@ ERROR:  DEFAULT: type mismatched
 
   <para>
    The new table is created as a heap with no initial data.
-   A table can have no more than 1600 columns (realistically,
-   this is limited by the fact that tuple sizes must
-   be less than 8192 bytes), but this limit may be configured
-   lower at some sites. A table cannot have the same name as
-   a system catalog table.
+   A table can have no more than 1600 columns (in practice, the
+   effective limit is lower because of tuple-length constraints).
+   A table cannot have the same name as a system catalog table.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.15 2000/07/22 04:30:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.16 2000/08/24 23:36:29 tgl Exp $
 Postgres documentation
 -->
 
@@ -31,7 +31,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
     AS <replaceable class="parameter">obj_file</replaceable> , <replaceable class="parameter">link_symbol</replaceable>  
-    LANGUAGE 'C'
+    LANGUAGE 'langname'
     [ WITH ( <replaceable class="parameter">attribute</replaceable> [, ...] ) ]
   </synopsis>
   
@@ -57,11 +57,11 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       <term><replaceable class="parameter">ftype</replaceable></term>
       <listitem>
        <para>
-	The data type of function arguments.
+	The data type(s) of the function's arguments, if any.
 	The input types may be base or complex types, or
 	<firstterm>opaque</firstterm>.
 	<literal>opaque</literal> indicates that the function
-	accepts arguments of an invalid type such as <type>char *</type>.
+	accepts arguments of a non-SQL type such as <type>char *</type>.
        </para>
       </listitem>
      </varlistentry>
@@ -84,14 +84,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       <listitem>
        <para>
         An optional piece of information about the function, used for
-	optimization.  The only attribute currently supported is
-	<literal>iscachable</literal>.
-	<literal>iscachable</literal> indicates that the function always
-	returns the same result when given the same input values (i.e.,
-	it does not do database lookups or otherwise use information not
-	directly present in its parameter list).  The optimizer uses
-	<literal>iscachable</literal> to know whether it is safe to
-	pre-evaluate a call of the function.
+	optimization.  See below for details.
        </para>
       </listitem>
      </varlistentry>
@@ -115,8 +108,8 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	function. The string <replaceable
 	class="parameter">obj_file</replaceable> is the name of the file
 	containing the dynamically loadable object, and <replaceable
-	class="parameter">link_symbol</replaceable>, is the object's link
-	symbol which is the same as the name of the function in the C
+	class="parameter">link_symbol</replaceable> is the object's link
+	symbol, that is the name of the function in the C
 	language source code.
        </para>
       </listitem>
@@ -125,8 +118,9 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
-	may be '<literal>C</literal>', '<literal>sql</literal>',
-	'<literal>internal</literal>'
+	may be '<literal>sql</literal>',
+	'<literal>C</literal>', '<literal>newC</literal>',
+	'<literal>internal</literal>', '<literal>newinternal</literal>',
 	or '<replaceable class="parameter">plname</replaceable>',
 	where '<replaceable class="parameter">plname</replaceable>'
 	is the name of a created procedural language. See
@@ -175,11 +169,57 @@ CREATE
    <command>CREATE FUNCTION</command> allows a
    <productname>Postgres</productname> user
    to register a function
-   with a database. Subsequently, this user is considered the
+   with the database. Subsequently, this user is considered the
    owner of the function.
   </para>
-  
+
   <refsect2 id="R2-SQL-CREATEFUNCTION-3">
+   <refsect2info>
+    <date>2000-08-24</date>
+   </refsect2info>
+   <title>
+    Function Attributes
+   </title>
+
+   <para>
+    The following items may appear in the WITH clause:
+
+    <variablelist>
+     <varlistentry>
+      <literal>iscachable</literal>
+      <listitem>
+       <para>
+	<literal>iscachable</literal> indicates that the function always
+	returns the same result when given the same argument values (i.e.,
+	it does not do database lookups or otherwise use information not
+	directly present in its parameter list).  The optimizer uses
+	<literal>iscachable</literal> to know whether it is safe to
+	pre-evaluate a call of the function.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <literal>isstrict</literal>
+      <listitem>
+       <para>
+	<literal>isstrict</literal> indicates that the function always
+	returns NULL whenever any of its arguments are NULL.  If this
+	attribute is specified, the function is not executed when there
+	are NULL arguments; instead a NULL result is assumed automatically.
+	When <literal>isstrict</literal> is not specified, the function will
+	be called for NULL inputs.  It is then the function author's
+	responsibility to check for NULLs if necessary and respond
+	appropriately.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+  </refsect2>
+
+  <refsect2 id="R2-SQL-CREATEFUNCTION-4">
    <refsect2info>
     <date>2000-03-25</date>
    </refsect2info>
@@ -201,25 +241,24 @@ CREATE
    </para>
 
    <para>
-    <productname>Postgres</productname> allows function "overloading";
-    that is, the same name can be used for several different functions
-    so long as they have distinct argument types.  This facility must
-    be used with caution for <literal>internal</literal> and
-    C-language functions, however.    
-   </para>
-
-   <para>
     The full <acronym>SQL92</acronym> type syntax is allowed for
     input arguments and return value. However, some details of the
     type specification (e.g. the precision field for
     <type>numeric</type> types) are the responsibility of the
     underlying function implementation and are silently swallowed
-    (e.g. not recognized or
+    (i.e., not recognized or
     enforced) by the <command>CREATE FUNCTION</command> command.
    </para>
 
    <para>
-    Two <literal>internal</literal>
+    <productname>Postgres</productname> allows function "overloading";
+    that is, the same name can be used for several different functions
+    so long as they have distinct argument types.  This facility must
+    be used with caution for internal and C-language functions, however.    
+   </para>
+
+   <para>
+    Two <literal>internal</literal> or <literal>newinternal</literal>
     functions cannot have the same C name without causing
     errors at link time.  To get around that, give them different C names
     (for example, use the argument types as part of the C names), then
@@ -229,18 +268,14 @@ CREATE
    </para>
 
    <para>
-    When overloading SQL functions with C-language functions, give
-    each C-language instance of the function a distinct name, and use
+    Similarly, when overloading SQL function names with multiple C-language
+    functions, give
+    each C-language instance of the function a distinct name, then use
     the alternative form of the <command>AS</command> clause in the
-    <command>CREATE FUNCTION</command> syntax to ensure that
-    overloaded SQL functions names are resolved to the correct
-    dynamically linked objects.
+    <command>CREATE FUNCTION</command> syntax to select the appropriate
+    C-language implementation of each overloaded SQL function.
    </para>
 
-
-   <para>
-    A C function cannot return a set of values.
-   </para>
   </refsect2>
  </refsect1>
   
@@ -291,7 +326,7 @@ CREATE TABLE product (
    function is implemented by a dynamically loaded object that was
    compiled from C source. For <productname>Postgres</productname> to
    find a type conversion function automatically, the sql function has
-   to have the same name as the return type, and overloading is
+   to have the same name as the return type, and so overloading is
    unavoidable.  The function name is overloaded by using the second
    form of the <command>AS</command> clause in the SQL definition:
   </para>
@@ -324,7 +359,7 @@ Point * complex_to_point (Complex *z)
    Compatibility
   </title>
 
-  <refsect2 id="R2-SQL-CREATEFUNCTION-4">
+  <refsect2 id="R2-SQL-CREATEFUNCTION-5">
    <refsect2info>
     <date>2000-03-25</date>
    </refsect2info>
@@ -338,7 +373,7 @@ Point * complex_to_point (Complex *z)
    </para>
   </refsect2>
 
-  <refsect2 id="R2-SQL-CREATEFUNCTION-5">
+  <refsect2 id="R2-SQL-CREATEFUNCTION-6">
    <refsect2info>
     <date>2000-03-25</date>
    </refsect2info>

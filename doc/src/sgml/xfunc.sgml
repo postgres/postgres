@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.18 2000/08/21 17:22:36 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.19 2000/08/24 23:36:28 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -64,10 +64,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.18 2000/08/21 17:22:36 tgl E
 
    <para>
     The body of a SQL function following AS
-    should be a list of queries separated by whitespace characters and
-    bracketed within quotation marks.  Note that quotation marks used in
-    the queries must be escaped, by preceding them with two
-    backslashes.
+    should be a list of queries separated by semicolons and
+    bracketed within single-quote marks.  Note that quote marks used in
+    the queries must be escaped, by preceding them with a backslash.
    </para>
 
    <para>
@@ -100,7 +99,7 @@ LANGUAGE 'sql';
      follows:
 
      <programlisting>
-select (x = TP1( 17,100.0));
+select TP1( 17,100.0);
      </programlisting>
     </para>
 
@@ -109,7 +108,7 @@ select (x = TP1( 17,100.0));
      EMP, and retrieves multiple results:
 
      <programlisting>
-select function hobbies (EMP) returns set of HOBBIES
+create function hobbies (EMP) returns setof HOBBIES
     as 'select HOBBIES.* from HOBBIES
         where $1.name = HOBBIES.person'
     language 'sql';
@@ -140,10 +139,9 @@ SELECT one() AS answer;
      </programlisting>
     </para>
     <para>
-     Notice that we defined a target list for  the  function
-     (with  the  name  RESULT),  but  the target list of the
-     query that invoked the function overrode the function's
-     target  list.   Hence,  the  result  is labelled answer
+     Notice that we defined a column name for  the  function's result
+     (with  the  name  RESULT),  but this column name is not visible
+     outside the function.  Hence,  the  result  is labelled answer
      instead of one.
     </para>
     <para>
@@ -204,7 +202,7 @@ WHERE EMP.cubicle ~= '(2,1)'::point;
      return  composite  types,  we  must first introduce the
      function notation for projecting attributes.  The  simple  way 
      to explain this is that we can usually use the
-     notation attribute(class)  and  class.attribute  interchangably:
+     notations attribute(class)  and  class.attribute  interchangably:
 
      <programlisting>
 --
@@ -252,17 +250,16 @@ LANGUAGE 'sql';
        <para>
 	The  target  list  order must be exactly the same as
 	that in which the attributes appear  in  the  CREATE
-	TABLE statement (or when you execute a .*  query).
+	TABLE statement that defined the composite type.
        </para>
       </listitem>
       <listitem>
        <para>
-	You must typecast the expressions (using ::) very carefully 
-	or you will see  the  following error:
-
+	You must typecast the expressions (using ::) to match the
+	composite type's definition, or you will get errors like this:
 	<programlisting>
 	 <computeroutput>
-NOTICE::function declared to return type EMP does not retrieve (EMP.*)
+ERROR:  function declared to return emp returns varchar instead of text at column 1
 	 </computeroutput>
 	</programlisting>
        </para>
@@ -366,6 +363,16 @@ SELECT clean_EMP();
     but a user could use <command>CREATE FUNCTION</command>
     to create additional alias names for an internal function.
    </para>
+
+   <para>
+    Internal functions are declared in <command>CREATE FUNCTION</command>
+    with language name <literal>internal</literal> or
+    <literal>newinternal</literal>, depending on whether they follow the
+    old (pre-7.1) or new (7.1 and later) function call conventions.
+    The details of the call conventions are the same as for
+    <literal>C</literal> and <literal>newC</literal> functions respectively;
+    see the next section for details.
+   </para>
   </sect1>
 
   <sect1>
@@ -373,50 +380,59 @@ SELECT clean_EMP();
 
    <para>
     Functions written in C can be compiled into dynamically loadable
-    objects, and used to implement user-defined SQL functions.  The
-    first time the user defined function is called inside the backend,
-    the dynamic loader loads the function's object code into memory,
-    and links the function with the running
-    <productname>Postgres</productname> executable.  The SQL syntax
-    for <command>CREATE FUNCTION</command>
-    links the SQL function
-    to the C source function in one of two ways. If the SQL function
-    has the same name as the C source function the first form of the
-    statement is used. The string argument in the AS clause is the
-    full pathname of the file that contains the dynamically loadable
-    compiled object.  If the name of the C function is different from the
-    desired name of the SQL function, then the second form is used. In this
-    form the AS clause takes two string arguments, the first is the
-    full pathname of the dynamically loadable object file, and the
-    second is the link symbol that the dynamic loader should search
-    for. This link symbol is just the function name in the C source
-    code.
+    objects (also called shared libraries), and used to implement user-defined
+    SQL functions.  The first time a user-defined function in a particular
+    loadable object file is called in a backend session,
+    the dynamic loader loads that object file into memory so that the
+    function can be called.  The <command>CREATE FUNCTION</command>
+    for a user-defined function must therefore specify two pieces of
+    information for the function: the name of the loadable
+    object file, and the C name (link symbol) of the specific function to call
+    within that object file.  If the C name is not explicitly specified then
+    it is assumed to be the same as the SQL function name.
 
     <note>
      <para>
-      After it is used for the first time, a dynamically loaded, user
+      After it is used for the first time, a dynamically loaded user
       function is retained in memory, and future calls to the function
-      only incur the small overhead of a symbol table lookup.
+      in the same session will only incur the small overhead of a symbol table
+      lookup.
      </para>
     </note>
    </para>
 
    <para>
-    The string which specifies the object file (the string in the AS
+    The string which specifies the object file (the first string in the AS
     clause) should be the <emphasis>full path</emphasis> of the object
     code file for the function, bracketed by quotation marks.  If a
-    link symbol is used in the AS clause, the link symbol should also be
+    link symbol is given in the AS clause, the link symbol should also be
     bracketed by single quotation marks, and should be exactly the
     same as the name of the function in the C source code. On Unix systems
     the command <command>nm</command> will print all of the link
     symbols in a dynamically loadable object.
-    (<productname>Postgres</productname> will not compile a function
-    automatically; it must be compiled before it is used in a CREATE
-    FUNCTION command.  See below for additional information.)
+
+    <note>
+     <para>
+      <productname>Postgres</productname> will not compile a function
+      automatically; it must be compiled before it is used in a CREATE
+      FUNCTION command.  See below for additional information.
+     </para>
+    </note>
+   </para>
+
+   <para>
+    Two different calling conventions are currently used for C functions.
+    The "old style" (pre-<productname>Postgres</productname>-7.1) method
+    is selected by writing language name '<literal>C</literal>' in the
+    <command>CREATE FUNCTION</command> command, while the "new style"
+    (7.1 and later) method is selecting by writing language name
+    '<literal>newC</literal>'.  Old-style functions are now deprecated
+    because of portability problems and lack of functionality, but they
+    are still supported for compatibility reasons.
    </para>
 
    <sect2>
-    <title>C Language Functions on Base Types</title>
+    <title>Base Types in C-Language Functions</title>
 
     <para>
      The following table gives the C type required for parameters in the C
@@ -484,7 +500,7 @@ SELECT clean_EMP();
 	</row>
 	<row>
 	 <entry>int2</entry>
-	 <entry>int2</entry>
+	 <entry>int2 or int16</entry>
 	 <entry>include/postgres.h</entry>
 	</row>
 	<row>
@@ -494,7 +510,7 @@ SELECT clean_EMP();
 	</row>
 	<row>
 	 <entry>int4</entry>
-	 <entry>int4</entry>
+	 <entry>int4 or int32</entry>
 	 <entry>include/postgres.h</entry>
 	</row>
 	<row>
@@ -654,6 +670,12 @@ typedef struct
     <para>
      Only  pointers  to  such types can be used when passing
      them in and out of <productname>Postgres</productname> functions.
+     To return a value of such a type, allocate the right amount of
+     memory with <literal>palloc()</literal>, fill in the allocated memory,
+     and return a pointer to it.
+    </para>
+
+    <para>
      Finally, all variable-length types must also be  passed
      by  reference.   All  variable-length  types must begin
      with a length field of exactly 4 bytes, and all data to
@@ -694,8 +716,24 @@ memmove(destination-&gt;data, buffer, 40);
 
     <para>
      Now that we've gone over all of the possible structures
-     for base types, we can show some examples of real functions. 
-     Suppose <filename>funcs.c</filename> look like:
+     for base types, we can show some examples of real functions.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Old-style Calling Conventions for C-Language Functions</title>
+
+    <para>
+     We present the "old style" calling convention first --- although
+     this approach is now deprecated, it's easier to get a handle on
+     initially.  In the "old style" method, the arguments and result
+     of the C function are just declared in normal C style, but being
+     careful to use the C representation of each SQL data type as shown
+     above.
+    </para>
+
+    <para>
+     Here are some examples:
 
      <programlisting>
 #include &lt;string.h&gt;
@@ -706,13 +744,23 @@ memmove(destination-&gt;data, buffer, 40);
 int
 add_one(int arg)
 {
-    return(arg + 1);
+    return arg + 1;
 }
 
 /* By Reference, Fixed Length */
 
+float8 *
+add_one_float8(float8 *arg)
+{
+    float8    *result = (float8 *) palloc(sizeof(float8));
+
+    *result = *arg + 1.0;
+       
+    return result;
+}
+
 Point *
-makepoint(Point *pointx, Point *pointy )
+makepoint(Point *pointx, Point *pointy)
 {
     Point     *new_point = (Point *) palloc(sizeof(Point));
 
@@ -731,15 +779,14 @@ copytext(text *t)
      * VARSIZE is the total size of the struct in bytes.
      */
     text *new_t = (text *) palloc(VARSIZE(t));
-    memset(new_t, 0, VARSIZE(t));
-    VARSIZE(new_t) = VARSIZE(t);
+    VARATT_SIZEP(new_t) = VARSIZE(t);
     /*
      * VARDATA is a pointer to the data region of the struct.
      */
     memcpy((void *) VARDATA(new_t), /* destination */
            (void *) VARDATA(t),     /* source */
-           VARSIZE(t)-VARHDRSZ);        /* how many bytes */
-    return(new_t);
+           VARSIZE(t)-VARHDRSZ);    /* how many bytes */
+    return new_t;
 }
 
 text *
@@ -749,40 +796,197 @@ concat_text(text *arg1, text *arg2)
     text *new_text = (text *) palloc(new_text_size);
 
     memset((void *) new_text, 0, new_text_size);
-    VARSIZE(new_text) = new_text_size;
+    VARATT_SIZEP(new_text) = new_text_size;
     strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
     strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
-    return (new_text);
+    return new_text;
 }
      </programlisting>
     </para>
 
     <para>
-     On <acronym>OSF/1</acronym> we would type:
+     Supposing that the above code has been prepared in file
+     <filename>funcs.c</filename> and compiled into a shared object,
+     we could define the functions to <productname>Postgres</productname>
+     with commands like this:
      
      <programlisting>
 CREATE FUNCTION add_one(int4) RETURNS int4
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     WITH (isStrict);
+
+-- note overloading of SQL function name add_one()
+CREATE FUNCTION add_one(float8) RETURNS float8
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so',
+        'add_one_float8'
+     LANGUAGE 'c' WITH (isStrict);
 
 CREATE FUNCTION makepoint(point, point) RETURNS point
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
-
-CREATE FUNCTION concat_text(text, text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     WITH (isStrict);
                          
 CREATE FUNCTION copytext(text) RETURNS text
-     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c';
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     WITH (isStrict);
+
+CREATE FUNCTION concat_text(text, text) RETURNS text
+     AS '<replaceable>PGROOT</replaceable>/tutorial/funcs.so' LANGUAGE 'c'
+     WITH (isStrict);
      </programlisting>
     </para>
 
     <para>
-     On  other  systems,  we might have to make the filename
-     end in .sl (to indicate that it's a shared library).
+     Here <replaceable>PGROOT</replaceable> stands for the full path to
+     the <productname>Postgres</productname> source tree.  Note that
+     depending on your system, the filename for a shared object might
+     not end in <literal>.so</literal>, but in <literal>.sl</literal>
+     or something else; adapt accordingly.
+    </para>
+
+    <para>
+     Notice that we have specified the functions as "strict", meaning that
+     the system should automatically assume a NULL result if any input
+     value is NULL.  By doing this, we avoid having to check for NULL inputs
+     in the function code.  Without this, we'd have to check for NULLs
+     explicitly, for example by checking for a null pointer for each
+     pass-by-reference argument.  (For pass-by-value arguments, we don't
+     even have a way to check!)
+    </para>
+
+    <para>
+     Although this old-style calling convention is simple to use,
+     it is not very portable; on some architectures there are problems
+     with passing smaller-than-int data types this way.  Also, there is
+     no simple way to return a NULL result, nor to cope with NULL arguments
+     in any way other than making the function strict.  The new-style
+     convention, presented next, overcomes these objections.
     </para>
    </sect2>
 
    <sect2>
-    <title>C Language Functions on Composite Types</title>
+    <title>New-style Calling Conventions for C-Language Functions</title>
+
+    <para>
+     The new-style calling convention relies on macros to suppress most
+     of the complexity of passing arguments and results.  The C declaration
+     of a new-style function is always
+     <programlisting>
+                Datum funcname(PG_FUNCTION_ARGS)
+     </programlisting>
+     Each actual argument is fetched using a PG_GETARG_xxx() macro that
+     corresponds to the argument's datatype, and the result is returned
+     using a PG_RETURN_xxx() macro for the return type.
+    </para>
+
+    <para>
+     Here we show the same functions as above, coded in new style:
+
+     <programlisting>
+#include &lt;string.h&gt;
+#include "postgres.h"
+#include "fmgr.h"
+
+/* By Value */
+         
+Datum
+add_one(PG_FUNCTION_ARGS)
+{
+    int32   arg = PG_GETARG_INT32(0);
+
+    PG_RETURN_INT32(arg + 1);
+}
+
+/* By Reference, Fixed Length */
+
+Datum
+add_one_float8(PG_FUNCTION_ARGS)
+{
+    /* The macros for FLOAT8 hide its pass-by-reference nature */
+    float8   arg = PG_GETARG_FLOAT8(0);
+
+    PG_RETURN_FLOAT8(arg + 1.0);
+}
+
+Datum
+makepoint(PG_FUNCTION_ARGS)
+{
+    Point     *pointx = PG_GETARG_POINT_P(0);
+    Point     *pointy = PG_GETARG_POINT_P(1);
+    Point     *new_point = (Point *) palloc(sizeof(Point));
+
+    new_point->x = pointx->x;
+    new_point->y = pointy->y;
+       
+    PG_RETURN_POINT_P(new_point);
+}
+
+/* By Reference, Variable Length */
+
+Datum
+copytext(PG_FUNCTION_ARGS)
+{
+    text     *t = PG_GETARG_TEXT_P(0);
+    /*
+     * VARSIZE is the total size of the struct in bytes.
+     */
+    text     *new_t = (text *) palloc(VARSIZE(t));
+    VARATT_SIZEP(new_t) = VARSIZE(t);
+    /*
+     * VARDATA is a pointer to the data region of the struct.
+     */
+    memcpy((void *) VARDATA(new_t), /* destination */
+           (void *) VARDATA(t),     /* source */
+           VARSIZE(t)-VARHDRSZ);        /* how many bytes */
+    PG_RETURN_TEXT_P(new_t);
+}
+
+Datum
+concat_text(PG_FUNCTION_ARGS)
+{
+    text  *arg1 = PG_GETARG_TEXT_P(0);
+    text  *arg2 = PG_GETARG_TEXT_P(1);
+    int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
+    text *new_text = (text *) palloc(new_text_size);
+
+    memset((void *) new_text, 0, new_text_size);
+    VARATT_SIZEP(new_text) = new_text_size;
+    strncpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
+    strncat(VARDATA(new_text), VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+    PG_RETURN_TEXT_P(new_text);
+}
+     </programlisting>
+    </para>
+
+    <para>
+     The <command>CREATE FUNCTION</command> commands are the same as
+     for the old-style equivalents, except that the language is specified
+     as '<literal>newC</literal>' not '<literal>C</literal>'.
+    </para>
+
+    <para>
+     At first glance, the new-style coding conventions may appear to be
+     just pointless obscurantism.  However, they do offer a number of
+     improvements, because the macros can hide unnecessary detail.
+     An example is that in coding add_one_float8, we no longer need to
+     be aware that float8 is a pass-by-reference type.  Another example
+     is that the GETARG macros for variable-length types hide the need
+     to deal with fetching "toasted" (compressed or out-of-line) values.
+     The old-style copytext and concat_text functions shown above are
+     actually wrong in the presence of toasted values, because they don't
+     call pg_detoast_datum() on their inputs.
+    </para>
+
+    <para>
+     The new-style function call conventions also make it possible to
+     test for NULL inputs to a non-strict function, return a NULL result
+     (from either strict or non-strict functions), return "set" results,
+     and implement trigger functions and procedural-language call handlers.
+     For more details see <filename>src/backend/utils/fmgr/README</filename>.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Composite Types in C-Language Functions</title>
 
     <para>
      Composite types do not  have  a  fixed  layout  like  C
@@ -811,14 +1015,33 @@ CREATE FUNCTION copytext(text) RETURNS text
 
 bool
 c_overpaid(TupleTableSlot *t, /* the current instance of EMP */
-           int4 limit)
+           int32 limit)
 {
-    bool isnull = false;
-    int4 salary;
-    salary = (int4) GetAttributeByName(t, "salary", &amp;isnull);
+    bool isnull;
+    int32 salary;
+
+    salary = DatumGetInt32(GetAttributeByName(t, "salary", &amp;isnull));
     if (isnull)
         return (false);
-    return(salary &gt; limit);
+    return salary &gt; limit;
+}
+
+/* In new-style coding, the above would look like this: */
+
+Datum
+c_overpaid(PG_FUNCTION_ARGS)
+{
+    TupleTableSlot  *t = (TupleTableSlot *) PG_GETARG_POINTER(0);
+    int32            limit = PG_GETARG_INT32(1);
+    bool isnull;
+    int32 salary;
+
+    salary = DatumGetInt32(GetAttributeByName(t, "salary", &amp;isnull));
+    if (isnull)
+        PG_RETURN_BOOL(false);
+    /* Alternatively, we might prefer to do PG_RETURN_NULL() for null salary */
+
+    PG_RETURN_BOOL(salary &gt; limit);
 }
      </programlisting>
     </para>
@@ -827,20 +1050,12 @@ c_overpaid(TupleTableSlot *t, /* the current instance of EMP */
      <function>GetAttributeByName</function> is the 
      <productname>Postgres</productname> system function that
      returns attributes out of the current instance.  It has
-     three arguments: the argument of type TUPLE passed into
+     three arguments: the argument of type TupleTableSlot* passed into
      the  function, the name of the desired attribute, and a
-     return parameter that describes whether  the  attribute
-     is  null.   <function>GetAttributeByName</function> will 
-     align data properly so you can cast its return value to 
-     the  desired  type. For  example, if you have an attribute 
-     name which is of the type name, the <function>GetAttributeByName</function> 
-     call would look like:
-
-     <programlisting>
-char *str;
-...
-str = (char *) GetAttributeByName(t, "name", &amp;isnull)
-     </programlisting>
+     return parameter that tells whether  the  attribute
+     is  null.   <function>GetAttributeByName</function> returns a Datum
+     value that you can convert to the proper datatype by using the
+     appropriate DatumGetXXX() macro.
     </para>
 
     <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.10 2000/05/29 01:59:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.11 2000/08/24 23:36:29 tgl Exp $
 Postgres documentation
 -->
 
@@ -48,8 +48,7 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable class="parameter">langname<
 	this keyword is omitted when registering the language,
 	only users with the <productname>Postgres</productname>
 	superuser privilege can use
-	this language to create new functions
-	(like the 'C' language).  
+	this language to create new functions.
        </para>
       </listitem>
      </varlistentry>
@@ -222,6 +221,11 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
     must be careful that <literal>flinfo-&gt;fn_extra</literal> is made to
     point at memory that will live at least until the end of the current
     query, since an FmgrInfo data structure could be kept that long.
+    One way to do this is to allocate the extra data in the memory context
+    specified by <literal>flinfo-&gt;fn_mcxt</literal>; such data will
+    normally have the same lifespan as the FmgrInfo itself.  But the handler
+    could also choose to use a longer-lived context so that it can cache
+    function definition information across queries.
    </para>
 
    <para>
@@ -262,20 +266,21 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
  lanplcallfoid | oid     |
  lancompiler   | text    |
 
- lanname  | lanispl | lanpltrusted | lanplcallfoid | lancompiler
-----------+---------+--------------+---------------+-------------
- internal | f       | f            |             0 | n/a
- C        | f       | f            |             0 | /bin/cc
- sql      | f       | f            |             0 | postgres
+   lanname   | lanispl | lanpltrusted | lanplcallfoid | lancompiler
+-------------+---------+--------------+---------------+-------------
+ internal    | f       | f            |             0 | n/a
+ newinternal | f       | f            |             0 | n/a
+ C           | f       | f            |             0 | /bin/cc
+ newC        | f       | f            |             0 | /bin/cc
+ sql         | f       | f            |             0 | postgres
 </computeroutput>
 </programlisting>
    </para>
 
    <para>
-    Since the call handler for a procedural language must be
-    registered with <productname>Postgres</productname> in the 'C' language,
-    it inherits
-    all the capabilities and restrictions of 'C' functions.
+    The call handler for a procedural language must normally be written
+    in C and registered as 'newinternal' or 'newC' language, depending
+    on whether it is linked into the backend or dynamically loaded.
    </para>
 
    <para> 

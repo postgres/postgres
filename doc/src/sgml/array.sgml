@@ -130,10 +130,12 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
 </Para>
 
 <Para>
-     It is not currently possible to resize an array value except by
-     complete replacement; for example, we couldn't change a four-
-     element array value to a five-element value with a single
-     assignment to array[5].
+     An array can be enlarged by assigning to an element adjacent to
+     those already present, or by assigning to a slice that is adjacent
+     to or overlaps the data already present.  Currently, this is only
+     allowed for one-dimensional arrays, not multidimensional arrays.
+     For example, if an array value currently has 4 elements, it will
+     have five elements after an update that assigns to array[5].
 </Para>
 
 <Para>

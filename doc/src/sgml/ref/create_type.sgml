@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.12 2000/03/27 17:14:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.13 2000/08/24 23:36:29 tgl Exp $
 Postgres documentation
 -->
 
@@ -24,11 +24,16 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <replaceable class="parameter">input_function</replaceable>, OUTPUT = <replaceable class="parameter">output_function</replaceable>
-      , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE } [ , EXTERNALLENGTH = { <replaceable class="parameter">externallength</replaceable> | VARIABLE } ]
+      , INTERNALLENGTH = { <replaceable
+      class="parameter">internallength</replaceable> | VARIABLE }
+    [ , EXTERNALLENGTH = { <replaceable class="parameter">externallength</replaceable> | VARIABLE } ]
     [ , DEFAULT = "<replaceable class="parameter">default</replaceable>" ]
     [ , ELEMENT = <replaceable class="parameter">element</replaceable> ] [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
     [ , SEND = <replaceable class="parameter">send_function</replaceable> ] [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
-    [ , PASSEDBYVALUE ] )
+    [ , PASSEDBYVALUE ]
+    [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
+    [ , STORAGE = <replaceable class="parameter">storage</replaceable> ]
+)
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATETYPE-1">
@@ -64,7 +69,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">externallength</replaceable></term>
       <listitem>
        <para>
-	A literal value, which specifies the external length of
+	A literal value, which specifies the external (displayed) length of
 	the new type.
        </para>
       </listitem>
@@ -86,7 +91,8 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">output_function</replaceable></term>
       <listitem>
        <para>
-	The name of a function, created by CREATE FUNCTION, which
+	The name of a function, created by
+	<command>CREATE FUNCTION</command>, which
 	converts data from its internal form to a form suitable
 	for display.
        </para>
@@ -107,7 +113,7 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">delimiter</replaceable></term>
       <listitem>
        <para>
-	The delimiter character for the array.
+	The delimiter character for the array elements.
        </para>
       </listitem>
      </varlistentry>
@@ -116,8 +122,8 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <term><replaceable class="parameter">default</replaceable></term>
       <listitem>
        <para>
-	The default text to be displayed to indicate "data
-	not present"
+	The default value for the datatype.  Usually this is omitted,
+	so that the default is NULL.
        </para>
       </listitem>
      </varlistentry>
@@ -138,6 +144,29 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
 	The name of a function, created by <command>CREATE FUNCTION</command>, which
 	converts data of this type from a form suitable for
 	transmission from another machine to internal form.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">alignment</replaceable></term>
+      <listitem>
+       <para>
+        Storage alignment requirement of the datatype.  If specified, must
+	be '<literal>int4</literal>' or '<literal>double</literal>';
+	the default is '<literal>int4</literal>'.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="parameter">storage</replaceable></term>
+      <listitem>
+       <para>
+        Storage technique for the datatype.  If specified, must
+	be '<literal>plain</literal>', '<literal>external</literal>',
+	'<literal>extended</literal>', or '<literal>main</literal>';
+	the default is '<literal>plain</literal>'.
        </para>
       </listitem>
      </varlistentry>
@@ -268,6 +297,24 @@ CREATE
   </para>
 
   <para>
+   The <replaceable class="parameter">storage</replaceable> keyword
+   allows selection of TOAST storage method for variable-length datatypes
+   (only <literal>plain</literal> is allowed for fixed-length types).
+   <literal>plain</literal> disables TOAST for the datatype: it will always
+   be stored in-line and not compressed.
+   <literal>extended</literal> is full TOAST capability: the system will
+   first try to compress a long data value, and will move the value out of
+   the main table row if it's still too long.
+   <literal>external</literal> allows the value to be moved out of the main
+   table, but the system will not try to compress it.
+   <literal>main</literal> allows compression, but discourages moving the
+   value out of the main table.  (Data items with this storage method may
+   still be moved out of the main table if there is no other way to make
+   a row fit, but they will be kept in the main table preferentially over
+   <literal>extended</literal> and <literal>external</literal> items.)
+  </para>
+
+  <para>
    For new base types, a user can define operators, functions
    and aggregates using the appropriate facilities  described
    in this section.
@@ -283,17 +330,6 @@ CREATE
    </para>
   </refsect2>
 
-  <refsect2>
-   <title>Large Object Types</title>
-   <para>
-    A "regular" Postgres  type  can  only  be  8192  bytes  in
-    length.  If you need a larger type you must create a Large
-    Object type.  The interface for these types  is  discussed
-    at  length  in the
-    <citetitle>PostgreSQL Programmer's Guide</citetitle>.
-    The length of all large object types is always VARIABLE.
-   </para>
-  </refsect2>
  </refsect1>
 
  <refsect1>
