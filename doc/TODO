@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 16 17:18:03 EDT 2001
+Last updated:		Wed Jul 18 11:37:27 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -219,7 +219,8 @@ REFERENTIAL INTEGRITY
 
 DEPENDENCY CHECKING
 
-* Add pg_depend table for dependency recording
+* Add pg_depend table for dependency recording; use sysrelid, oid,
+  depend_sysrelid, depend_oid, name
 * Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
   SERIAL type
 * Prevent column dropping if column is used by foreign key
