@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.40 1999/10/10 16:53:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.41 1999/11/06 17:01:28 momjian Exp $
  *
  * NOTES
  *
@@ -115,14 +115,13 @@ proc_exit(int code)
 	TPRINTF(TRACE_VERBOSE, "proc_exit(%d) [#%d]", code, proc_exit_inprogress);
 
 	/*
-	 * If proc_exit is called too many times something bad is happenig, so
-	 * exit immediately.
+	 * If proc_exit is called too many times something bad is happening, so
+	 * exit immediately.  This is crafted in two if's for a reason.
 	 */
-	if (proc_exit_inprogress > 9)
-	{
+	if (proc_exit_inprogress == 9)
 		elog(ERROR, "infinite recursion in proc_exit");
+	if (proc_exit_inprogress >= 9)
 		goto exit;
-	}
 
 	/* ----------------
 	 *	if proc_exit_inprocess is true, then it means that we
