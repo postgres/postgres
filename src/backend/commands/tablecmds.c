@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91 2003/10/13 22:47:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.91.2.1 2004/07/17 17:28:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1533,6 +1533,20 @@ update_ri_trigger_args(Oid relid,
 		simple_heap_update(tgrel, &tuple->t_self, tuple);
 
 		CatalogUpdateIndexes(tgrel, tuple);
+
+		/*
+		 * Invalidate trigger's relation's relcache entry so that other
+		 * backends (and this one too!) are sent SI message to make them
+		 * rebuild relcache entries.  (Ideally this should happen
+		 * automatically...)
+		 *
+		 * We can skip this for triggers on relid itself, since that
+		 * relcache flush will happen anyway due to the table or column
+		 * rename.  We just need to catch the far ends of RI relationships.
+		 */
+		pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		if (pg_trigger->tgrelid != relid)
+			CacheInvalidateRelcache(pg_trigger->tgrelid);
 
 		/* free up our scratch memory */
 		pfree(newtgargs);
