@@ -1,7 +1,6 @@
 subdir = contrib/dblink
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
-include $(top_builddir)/src/Makefile.shlib
 include_srcdir = $(top_builddir)/src/include
 
 
@@ -16,13 +15,14 @@ override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 OBJS	= $(NAME).o
 
+SHLIB_LINK= $(libpq)
+
 all: $(OBJS) $(SONAME) $(NAME).sql 
+
+include $(top_builddir)/src/Makefile.shlib
 
 $(OBJS):  $(NAME).c
 	$(CC) -o $@ -c $(CFLAGS) $<
-
-$(SONAME):  $(OBJS)
-	$(LD) -o $@ -Bshareable $(libpq) $<
 
 $(NAME).sql: $(NAME).sql.in
 	sed -e 's:MODULE_PATHNAME:$(libdir)/contrib/$(SONAME):g' < $< > $@

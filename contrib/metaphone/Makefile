@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/metaphone/Attic/Makefile,v 1.1 2001/05/09 23:00:44 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/metaphone/Attic/Makefile,v 1.2 2001/06/20 00:04:44 momjian Exp $
 #
 
 subdir = contrib/metaphone
@@ -11,6 +11,7 @@ SONAME	:= $(NAME)$(DLSUFFIX)
 
 override CPPFLAGS += -I$(srcdir)
 override CFLAGS += $(CFLAGS_SL)
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 all: $(SONAME) $(NAME).sql
 

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/Makefile,v 1.1 2001/05/31 18:27:18 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/Makefile,v 1.2 2001/06/20 00:04:44 momjian Exp $
 #
 
 subdir = contrib/rtree_gist
@@ -15,6 +15,7 @@ SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 OBJS= rtree_gist.o
 
