@@ -1,0 +1,147 @@
+From owner-pgsql-hackers@hub.org Sat Dec 18 17:22:09 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA10300
+	for <pgman@candle.pha.pa.us>; Sat, 18 Dec 1999 18:21:57 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id SAA74681;
+	Sat, 18 Dec 1999 18:17:56 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Sat, 18 Dec 1999 18:17:33 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id SAA74549
+	for pgsql-hackers-outgoing; Sat, 18 Dec 1999 18:16:38 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from biology.nmsu.edu (biology.NMSU.Edu [128.123.5.72])
+	by hub.org (8.9.3/8.9.3) with ESMTP id SAA74401
+	for <pgsql-hackers@postgreSQL.org>; Sat, 18 Dec 1999 18:15:20 -0500 (EST)
+	(envelope-from brook@biology.nmsu.edu)
+Received: (from brook@localhost)
+	by biology.nmsu.edu (8.8.8/8.8.8) id QAA03433;
+	Sat, 18 Dec 1999 16:14:50 -0700 (MST)
+Date: Sat, 18 Dec 1999 16:14:50 -0700 (MST)
+Message-Id: <199912182314.QAA03433@biology.nmsu.edu>
+X-Authentication-Warning: biology.nmsu.edu: brook set sender to brook@biology.nmsu.edu using -f
+From: Brook Milligan <brook@biology.nmsu.edu>
+To: pgman@candle.pha.pa.us
+CC: peter_e@gmx.net, pgsql-hackers@postgreSQL.org
+In-reply-to: <199912182026.PAA05926@candle.pha.pa.us> (message from Bruce
+	Momjian on Sat, 18 Dec 1999 15:26:15 -0500 (EST))
+Subject: Re: [HACKERS] Re: [PATCHES] Lock
+References:  <199912182026.PAA05926@candle.pha.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+   > > * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
+
+   Let me add to this.  One problem is that my description would sometimes
+   lock the tables in different orders, and that is a recipe for deadlock.
+
+   If you have to release earlier locks to wait on a later lock, once you
+   get the later lock, you must release it and then start from the
+   beginning, locking them in order again.  If you don't, the system could
+   report a deadlock at random times, which would be very bad.
+
+I'll add something, too. :) I think this derived from a suggestion I
+made long ago.  My idea was that when multiple tables need locking, a
+deadlock can occur in the process of doing them one at a time.  My
+suggested solution was based on an analogy with the way ethernet
+packets work.
+
+- go through the list locking tables along the way.
+
+- if a lock cannot be obtained within some time, release some (all?) locks,
+  and try again after some random time.
+
+- keep trying (and releasing as needed) until some other timeout
+  passes, and then punt.
+
+My thought was that if colliding locks are occuring, some sequence of
+relinquishing locks (not necessarily all of them with each trial),
+waiting, and reasserting them should work around the collisions.
+Introducing random components to this might reduce the overall waiting
+time, but I suppose a careful analysis of this needs to be done.
+Perhaps just releasing all of the locks, waiting a random time, and
+trying again is enough.
+
+Somehow there has to be a mechanism for atomically asserting locks on
+more than one table.
+
+Cheers,
+Brook
+
+************
+
+From owner-pgsql-patches@hub.org Sat Dec 18 22:51:06 1999
+Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA18409
+	for <pgman@candle.pha.pa.us>; Sat, 18 Dec 1999 23:51:05 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id XAA27570 for <pgman@candle.pha.pa.us>; Sat, 18 Dec 1999 23:49:19 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id XAA52323;
+	Sat, 18 Dec 1999 23:45:32 -0500 (EST)
+	(envelope-from owner-pgsql-patches@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Sat, 18 Dec 1999 23:44:37 +0000 (EST)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id XAA52107
+	for pgsql-patches-outgoing; Sat, 18 Dec 1999 23:43:37 -0500 (EST)
+	(envelope-from owner-pgsql-patches@postgreSQL.org)
+Received: from fw.wintelcom.net (bright@ns1.wintelcom.net [209.1.153.20])
+	by hub.org (8.9.3/8.9.3) with ESMTP id XAA52012
+	for <patches@postgreSQL.org>; Sat, 18 Dec 1999 23:42:44 -0500 (EST)
+	(envelope-from bright@wintelcom.net)
+Received: from localhost (bright@localhost)
+	by fw.wintelcom.net (8.9.3/8.9.3) with ESMTP id VAA19594;
+	Sat, 18 Dec 1999 21:12:09 -0800 (PST)
+Date: Sat, 18 Dec 1999 21:12:09 -0800 (PST)
+From: Alfred Perlstein <bright@wintelcom.net>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Peter Eisentraut <peter_e@gmx.net>, patches@postgreSQL.org
+Subject: Re: [PATCHES] Lock
+In-Reply-To: <199912181828.NAA01486@candle.pha.pa.us>
+Message-ID: <Pine.BSF.4.21.9912182107170.12109-100000@fw.wintelcom.net>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Sender: owner-pgsql-patches@postgreSQL.org
+Precedence: bulk
+Status: OR
+
+On Sat, 18 Dec 1999, Bruce Momjian wrote:
+
+> [Charset ISO-8859-1 unsupported, filtering to ASCII...]
+> > I was looking at this
+> > 
+> > * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison
+> > 
+> > but I'm not sure if my solution is really what was wanted, because it
+> > doesn't actually guarantee an all-or-nothing lock, it just locks each
+> > table in order. Thus it's more like a syntax simplification and reduces
+> > overhead.
+> > 
+> 
+> It took a few minutes, but I remember the use for this.  If you are
+> going to hang waiting to lock tab3, you don't want to lock tab1 and tab2
+> while you are waiting for tab3 lock.  The user wanted all tables to lock
+> in one operation without holding locks while waiting to complete all
+> locking.
+> 
+> Can you do the locks, and if one fails, not hang, but unlock the
+> previous tables, go lock/hang on the failure, and go back and lock the
+> others? Seems it would have to be some kind of lock/fail/unlock/wait
+> loop.
+> 
+> Does this make sense?  It did to me.
+
+Guys, have a look at:
+
+http://www.freebsd.org/~terry/iml.txt
+http://jazz.external.hp.com/training/sqltables/c5s17.html
+
+It's a way to do locking with deadlock detection, and without loosing
+your place in line for locks, very nifty imo.
+
+-Alfred
+
+
+************
+
+

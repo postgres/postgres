@@ -136,6 +136,7 @@ CLIENTS
 * Update reltuples from COPY command
 * fix array handling for ECPG
 * add pg_dump option to dump type names as standard ANSI types
+* make pg_dump dump in oid order, so dependencies are resolved
 * allow psql \d to show primary and foreign keys
 * allow psql \d to show temporary table schema
 
