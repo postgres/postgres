@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.15 2000/04/16 15:46:40 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.16 2000/12/03 15:39:38 petere Exp $
  */
 #include "postgres.h"
 #include "copy.h"
@@ -403,6 +403,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 	int			bufleft;
 	int			c = 0;
 	int			ret;
+	unsigned int linecount=0;
 
 #ifdef USE_ASSERT_CHECKING
 	assert(copy_in_state);
@@ -458,8 +459,10 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 			}
 		}
 		PQputline(conn, "\n");
+		linecount++;
 	}
 	ret = !PQendcopy(conn);
 	copy_in_state = false;
+	pset.lineno += linecount;
 	return ret;
 }
