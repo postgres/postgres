@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.65 2003/03/23 23:01:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.66 2003/03/24 21:42:33 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -311,7 +311,7 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	GET_SCAN_PROCEDURE(rescan, amrescan);
 
 	scan->kill_prior_tuple = false;		/* for safety */
-	scan->keys_are_unique = false;		/* may be set by amrescan */
+	scan->keys_are_unique = false;		/* may be set by index AM */
 	scan->got_tuple = false;
 	scan->unique_tuple_pos = 0;
 	scan->unique_tuple_mark = 0;
@@ -413,37 +413,70 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 	SCAN_CHECKS;
 
-	/*
-	 * Can skip entering the index AM if we already got a tuple and it
-	 * must be unique.  Instead, we need a "short circuit" path that
-	 * just keeps track of logical scan position (before/on/after tuple).
-	 *
-	 * Note that we hold the pin on the single tuple's buffer throughout
-	 * the scan once we are in this state.
-	 */
-	if (scan->keys_are_unique && scan->got_tuple)
-	{
-		if (ScanDirectionIsForward(direction))
-		{
-			if (scan->unique_tuple_pos <= 0)
-				scan->unique_tuple_pos++;
-		}
-		else if (ScanDirectionIsBackward(direction))
-		{
-			if (scan->unique_tuple_pos >= 0)
-				scan->unique_tuple_pos--;
-		}
-		if (scan->unique_tuple_pos == 0)
-			return heapTuple;
-		else
-			return NULL;
-	}
-
 	/* Release any previously held pin */
 	if (BufferIsValid(scan->xs_cbuf))
 	{
 		ReleaseBuffer(scan->xs_cbuf);
 		scan->xs_cbuf = InvalidBuffer;
+	}
+
+	/*
+	 * If we already got a tuple and it must be unique, there's no need
+	 * to make the index AM look through any additional tuples.  (This can
+	 * save a useful amount of work in scenarios where there are many dead
+	 * tuples due to heavy update activity.)
+	 *
+	 * To do this we must keep track of the logical scan position
+	 * (before/on/after tuple).  Also, we have to be sure to release scan
+	 * resources before returning NULL; if we fail to do so then a multi-index
+	 * scan can easily run the system out of free buffers.  We can release
+	 * index-level resources fairly cheaply by calling index_rescan.  This
+	 * means there are two persistent states as far as the index AM is
+	 * concerned: on-tuple and rescanned.  If we are actually asked to
+	 * re-fetch the single tuple, we have to go through a fresh indexscan
+	 * startup, which penalizes that (infrequent) case.
+	 */
+	if (scan->keys_are_unique && scan->got_tuple)
+	{
+		int		new_tuple_pos = scan->unique_tuple_pos;
+
+		if (ScanDirectionIsForward(direction))
+		{
+			if (new_tuple_pos <= 0)
+				new_tuple_pos++;
+		}
+		else
+		{
+			if (new_tuple_pos >= 0)
+				new_tuple_pos--;
+		}
+		if (new_tuple_pos == 0)
+		{
+			/*
+			 * We are moving onto the unique tuple from having been off it.
+			 * We just fall through and let the index AM do the work.  Note
+			 * we should get the right answer regardless of scan direction.
+			 */
+			scan->unique_tuple_pos = 0;	/* need to update position */
+		}
+		else
+		{
+			/*
+			 * Moving off the tuple; must do amrescan to release index-level
+			 * pins before we return NULL.  Since index_rescan will reset
+			 * my state, must save and restore...
+			 */
+			int		unique_tuple_mark = scan->unique_tuple_mark;
+
+			index_rescan(scan, NULL /* no change to key */);
+
+			scan->keys_are_unique = true;
+			scan->got_tuple = true;
+			scan->unique_tuple_pos = new_tuple_pos;
+			scan->unique_tuple_mark = unique_tuple_mark;
+
+			return NULL;
+		}
 	}
 
 	/* just make sure this is false... */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.37 2003/01/08 19:41:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.38 2003/03/24 21:42:33 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -91,7 +91,7 @@ RelationGetIndexScan(Relation indexRelation,
 
 	scan->kill_prior_tuple = false;
 	scan->ignore_killed_tuples = true;	/* default setting */
-	scan->keys_are_unique = false;		/* may be set by amrescan */
+	scan->keys_are_unique = false;		/* may be set by index AM */
 	scan->got_tuple = false;
 
 	scan->opaque = NULL;
