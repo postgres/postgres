@@ -66,7 +66,6 @@ static Tuplestorestate *build_tuplestore_recursively(char *key_fld,
 							 MemoryContext per_query_ctx,
 							 AttInMetadata *attinmeta,
 							 Tuplestorestate *tupstore);
-static char *quote_ident_cstr(char *rawstr);
 
 typedef struct
 {
@@ -776,12 +775,12 @@ build_tuplestore_recursively(char *key_fld,
 
 	/* Build initial sql statement */
 	appendStringInfo(sql, "SELECT %s, %s FROM %s WHERE %s = '%s' AND %s IS NOT NULL",
-					 quote_ident_cstr(key_fld),
-					 quote_ident_cstr(parent_key_fld),
-					 quote_ident_cstr(relname),
-					 quote_ident_cstr(parent_key_fld),
+					 key_fld,
+					 parent_key_fld,
+					 relname,
+					 parent_key_fld,
 					 start_with,
-					 quote_ident_cstr(key_fld));
+					 key_fld);
 
 	/* Retrieve the desired rows */
 	ret = SPI_exec(sql->data, 0);
@@ -1082,22 +1081,4 @@ make_crosstab_tupledesc(TupleDesc spi_tupdesc, int num_catagories)
 	}
 
 	return tupdesc;
-}
-
-/*
- * Return a properly quoted identifier.
- * Uses quote_ident in quote.c
- */
-static char *
-quote_ident_cstr(char *rawstr)
-{
-	text	   *rawstr_text;
-	text	   *result_text;
-	char	   *result;
-
-	rawstr_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(rawstr)));
-	result_text = DatumGetTextP(DirectFunctionCall1(quote_ident, PointerGetDatum(rawstr_text)));
-	result = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(result_text)));
-
-	return result;
 }

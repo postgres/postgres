@@ -15,28 +15,28 @@ SELECT avg(normal_rand)::int FROM normal_rand(100, 250, 0.2, EXTRACT(SECONDS FRO
 --
 -- crosstab()
 --
-CREATE TABLE ct(id int, rowclass text, rowid text, attribute text, value text);
+CREATE TABLE ct(id int, rowclass text, rowid text, attribute text, val text);
 \copy ct from 'data/ct.data'
 
-SELECT * FROM crosstab2('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;');
-SELECT * FROM crosstab3('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;');
-SELECT * FROM crosstab4('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;');
+SELECT * FROM crosstab2('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;');
+SELECT * FROM crosstab3('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;');
+SELECT * FROM crosstab4('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' and (attribute = ''att2'' or attribute = ''att3'') ORDER BY 1,2;');
 
-SELECT * FROM crosstab2('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
-SELECT * FROM crosstab3('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
-SELECT * FROM crosstab4('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
+SELECT * FROM crosstab2('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
+SELECT * FROM crosstab3('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
+SELECT * FROM crosstab4('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;');
 
-SELECT * FROM crosstab2('SELECT rowid, attribute, value FROM ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') ORDER BY 1,2;');
-SELECT * FROM crosstab3('SELECT rowid, attribute, value FROM ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') ORDER BY 1,2;');
-SELECT * FROM crosstab4('SELECT rowid, attribute, value FROM ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') ORDER BY 1,2;');
+SELECT * FROM crosstab2('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') ORDER BY 1,2;');
+SELECT * FROM crosstab3('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') ORDER BY 1,2;');
+SELECT * FROM crosstab4('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' and (attribute = ''att1'' or attribute = ''att2'') ORDER BY 1,2;');
 
-SELECT * FROM crosstab2('SELECT rowid, attribute, value FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
-SELECT * FROM crosstab3('SELECT rowid, attribute, value FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
-SELECT * FROM crosstab4('SELECT rowid, attribute, value FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
+SELECT * FROM crosstab2('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
+SELECT * FROM crosstab3('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
+SELECT * FROM crosstab4('SELECT rowid, attribute, val FROM ct where rowclass = ''group2'' ORDER BY 1,2;');
 
-SELECT * FROM crosstab('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 2) AS c(rowid text, att1 text, att2 text);
-SELECT * FROM crosstab('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 3) AS c(rowid text, att1 text, att2 text, att3 text);
-SELECT * FROM crosstab('SELECT rowid, attribute, value FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 4) AS c(rowid text, att1 text, att2 text, att3 text, att4 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 2) AS c(rowid text, att1 text, att2 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 3) AS c(rowid text, att1 text, att2 text, att3 text);
+SELECT * FROM crosstab('SELECT rowid, attribute, val FROM ct where rowclass = ''group1'' ORDER BY 1,2;', 4) AS c(rowid text, att1 text, att2 text, att3 text, att4 text);
 
 -- test connectby with text based hierarchy
 CREATE TABLE connectby_text(keyid text, parent_keyid text);
