@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.51 2000/11/25 22:34:14 momjian Exp $
+ * $Id: pqcomm.h,v 1.52 2000/11/30 23:19:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,24 +48,26 @@ typedef union SockAddr
 } SockAddr;
 
 
-/* Configure the UNIX socket address for the well known port. */
-
-#if defined(SUN_LEN)
-#define UNIXSOCK_LEN(sun) \
-        (SUN_LEN(&(sun)))
-#else
-#define UNIXSOCK_LEN(sun) \
-        (strlen((sun).sun_path)+ offsetof(struct sockaddr_un, sun_path))
-#endif
+/* Configure the UNIX socket location for the well known port. */
 
 #define UNIXSOCK_PATH(sun,port,defpath) \
-        (sprintf((sun).sun_path, "%s/.s.PGSQL.%d", ((defpath) && *(defpath) != '\0') ? (defpath) : "/tmp", (port)))
+		sprintf((sun).sun_path, "%s/.s.PGSQL.%d", \
+				((defpath) && *(defpath) != '\0') ? (defpath) : \
+				DEFAULT_PGSOCKET_DIR, \
+				(port))
 
 /*
  *		We do this because sun_len is in BSD's struct, while others don't.
  *		We never actually set BSD's sun_len, and I can't think of a
  *		platform-safe way of doing it, but the code still works. bjm
  */
+#if defined(SUN_LEN)
+#define UNIXSOCK_LEN(sun) \
+		(SUN_LEN(&(sun)))
+#else
+#define UNIXSOCK_LEN(sun) \
+		(strlen((sun).sun_path) + offsetof(struct sockaddr_un, sun_path))
+#endif
 
 /*
  * These manipulate the frontend/backend protocol version number.
