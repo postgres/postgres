@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.361 2002/08/27 04:55:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.362 2002/08/28 14:35:37 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -208,8 +208,8 @@ static void doNegateFloat(Value *v);
 				func_args_list, func_as, createfunc_opt_list
 				oper_argtypes, RuleActionList, RuleActionMulti,
 				opt_column_list, columnList, opt_name_list,
-				sort_clause, sortby_list, index_params, index_list,
-				name_list, from_clause, from_list, opt_array_bounds,
+				sort_clause, opt_sort_clause, sortby_list, index_params,
+				index_list,name_list, from_clause, from_list, opt_array_bounds,
 				qualified_name_list, any_name, any_name_list,
 				any_operator, expr_list, dotted_name, attrs,
 				target_list, update_target_list, insert_column_list,
@@ -4180,24 +4180,30 @@ select_with_parens:
 			| '(' select_with_parens ')'			{ $$ = $2; }
 		;
 
+/*
+ *	FOR UPDATE may be before or after LIMIT/OFFSET.
+ *	In <=7.2.X, LIMIT/OFFSET had to be after FOR UPDATE
+ *	We now support both orderings, but prefer LIMIT/OFFSET before FOR UPDATE
+ *	2002-08-28 bjm
+ */
 select_no_parens:
 			simple_select						{ $$ = $1; }
-			| select_clause sort_clause opt_for_update_clause opt_select_limit
+			| select_clause sort_clause
+				{
+					insertSelectOptions((SelectStmt *) $1, $2, NIL,
+										NULL, NULL);
+					$$ = $1;
+				}
+			| select_clause opt_sort_clause for_update_clause opt_select_limit
 				{
 					insertSelectOptions((SelectStmt *) $1, $2, $3,
 										nth(0, $4), nth(1, $4));
 					$$ = $1;
 				}
-			| select_clause for_update_clause opt_select_limit
+			| select_clause opt_sort_clause select_limit opt_for_update_clause
 				{
-					insertSelectOptions((SelectStmt *) $1, NIL, $2,
+					insertSelectOptions((SelectStmt *) $1, $2, $4,
 										nth(0, $3), nth(1, $3));
-					$$ = $1;
-				}
-			| select_clause select_limit
-				{
-					insertSelectOptions((SelectStmt *) $1, NIL, NIL,
-										nth(0, $2), nth(1, $2));
 					$$ = $1;
 				}
 		;
@@ -4332,6 +4338,11 @@ opt_distinct:
 			DISTINCT								{ $$ = makeList1(NIL); }
 			| DISTINCT ON '(' expr_list ')'			{ $$ = $4; }
 			| ALL									{ $$ = NIL; }
+			| /*EMPTY*/								{ $$ = NIL; }
+		;
+
+opt_sort_clause:
+			sort_clause								{ $$ = $1;}
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
 

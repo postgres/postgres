@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.56 2002/08/15 02:59:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.57 2002/08/28 14:35:37 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -28,9 +28,9 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
     [ { UNION | INTERSECT | EXCEPT } [ ALL ] <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
-    [ FOR UPDATE [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ] ]
     [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
+    [ FOR UPDATE [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ] ]
 
 where <replaceable class="PARAMETER">from_item</replaceable> can be:
 
@@ -107,9 +107,9 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
       <term><replaceable class="PARAMETER">select</replaceable></term>
       <listitem>
        <para>
-	A select statement with all features except the ORDER BY, FOR UPDATE,
-	and LIMIT clauses (even those can be used when the select is
-	parenthesized).
+	A select statement with all features except the ORDER BY, 
+	LIMIT/OFFSET, and FOR UPDATE clauses (even those can be used when the 
+	select is parenthesized).
        </para>
       </listitem>
      </varlistentry>
@@ -355,16 +355,16 @@ where <replaceable class="PARAMETER">from_item</replaceable> can be:
   </para>
    
   <para>
-   The FOR UPDATE clause allows the SELECT statement to perform 
-   exclusive locking of selected rows.
-  </para>
-   
-  <para>
    The LIMIT clause allows a subset of the rows produced by the query
    to be returned to the user.
    (See <xref linkend="sql-limit" endterm="sql-limit-title">.)
   </para>
 
+  <para>
+   The FOR UPDATE clause allows the SELECT statement to perform 
+   exclusive locking of selected rows.
+  </para>
+   
   <para>
    You must have SELECT privilege to a table to read its values
    (See the <command>GRANT</command>/<command>REVOKE</command> statements).
@@ -666,8 +666,8 @@ SELECT name FROM distributors ORDER BY code;
 
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY, FOR UPDATE,
-    or LIMIT clause.  (ORDER BY and LIMIT can be attached to a sub-expression
+    specifies any select expression without an ORDER BY, LIMIT, or FOR UPDATE
+    clause.  (ORDER BY and LIMIT can be attached to a sub-expression
     if it is enclosed in parentheses.  Without parentheses, these clauses
     will be taken to apply to the result of the UNION, not to its right-hand
     input expression.)
@@ -716,8 +716,8 @@ SELECT name FROM distributors ORDER BY code;
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY, FOR UPDATE,
-    or LIMIT clause.
+    specifies any select expression without an ORDER BY, LIMIT, or 
+    FOR UPDATE clause.
    </para>
 
    <para>
@@ -757,8 +757,8 @@ SELECT name FROM distributors ORDER BY code;
     
     where
     <replaceable class="PARAMETER">table_query</replaceable>
-    specifies any select expression without an ORDER BY, FOR UPDATE,
-    or LIMIT clause.
+    specifies any select expression without an ORDER BY, LIMIT,
+    or FOR UPDATE clause.
    </para>
 
    <para>
