@@ -133,7 +133,15 @@ QUERY: SELECT a/2, a/2 FROM test_missing_target
 
 QUERY: SELECT a/2, a/2 FROM test_missing_target
 	GROUP BY a/2;
-ERROR:  GROUP BY has ambiguous expression
+?column?|?column?
+--------+--------
+       0|       0
+       1|       1
+       2|       2
+       3|       3
+       4|       4
+(5 rows)
+
 QUERY: SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y
 	WHERE x.a = y.a
 	GROUP BY x.b;
@@ -169,19 +177,14 @@ count
     4
 (4 rows)
 
-QUERY: SELECT a%2, count(a) FROM test_missing_target GROUP BY test_missing_target.a%2;
+QUERY: SELECT a%2, count(b) FROM test_missing_target GROUP BY test_missing_target.a%2;
 ?column?|count
 --------+-----
        0|    5
        1|    5
 (2 rows)
 
-QUERY: /*
-	NOTE: as of 1998-08-01 a bug was detected unrelated to this feature which
-	requires the aggragate function argument to be the same as some non-agragate
-	in the target list.   (i.e. count(*) and count(b) crash the backend.)
-*/
-SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
+QUERY: SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
 count
 -----
     2

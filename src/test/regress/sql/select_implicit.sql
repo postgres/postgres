@@ -53,38 +53,38 @@ SELECT c, count(*) FROM test_missing_target GROUP BY 1;
 --   failure expected
 SELECT c, count(*) FROM test_missing_target GROUP BY 3;
 
---   group w/o existing GROUP BY and ORDER BY target under ambigious condition
+--   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
 SELECT count(*) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY b ORDER BY b;
 
---   order w/ target under ambigious condition
+--   order w/ target under ambiguous condition
 --   failure NOT expected
 SELECT a, a FROM test_missing_target
 	ORDER BY a;
 
---   order expression w/ target under ambigious condition
+--   order expression w/ target under ambiguous condition
 --   failure NOT expected
 SELECT a/2, a/2 FROM test_missing_target
 	ORDER BY a/2;
 
---   group expression w/ target under ambigious condition
---   failure expected
+--   group expression w/ target under ambiguous condition
+--   failure NOT expected
 SELECT a/2, a/2 FROM test_missing_target
 	GROUP BY a/2;
 
---   group w/ existing GROUP BY target under ambigious condition
+--   group w/ existing GROUP BY target under ambiguous condition
 SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY x.b;
 
---   group w/o existing GROUP BY target under ambigious condition
+--   group w/o existing GROUP BY target under ambiguous condition
 SELECT count(*) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY x.b;
 
---   group w/o existing GROUP BY target under ambigious condition
+--   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
 SELECT count(*) INTO TABLE test_missing_target2 
 FROM test_missing_target x, test_missing_target y 
@@ -96,12 +96,7 @@ SELECT * FROM test_missing_target2;
 --  Functions and expressions
 
 --   w/ existing GROUP BY target
-SELECT a%2, count(a) FROM test_missing_target GROUP BY test_missing_target.a%2;
-/*
-	NOTE: as of 1998-08-01 a bug was detected unrelated to this feature which 
-	requires the aggragate function argument to be the same as some non-agragate 
-	in the target list.   (i.e. count(*) and count(b) crash the backend.)
-*/
+SELECT a%2, count(b) FROM test_missing_target GROUP BY test_missing_target.a%2;
 
 --   w/o existing GROUP BY target using a relation name in GROUP BY clause
 SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
@@ -124,23 +119,24 @@ SELECT a FROM test_missing_target ORDER BY upper(d);
 SELECT count(b) FROM test_missing_target
 	GROUP BY (b + 1) / 2 ORDER BY (b + 1) / 2 desc;
 
---   group w/o existing GROUP BY and ORDER BY target under ambigious condition
+--   group w/o existing GROUP BY and ORDER BY target under ambiguous condition
 --   failure expected
 SELECT count(x.a) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY b/2 ORDER BY b/2;
 
---   group w/ existing GROUP BY target under ambigious condition
+--   group w/ existing GROUP BY target under ambiguous condition
 SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY x.b/2;
 
---   group w/o existing GROUP BY target under ambigious condition
+--   group w/o existing GROUP BY target under ambiguous condition
+--   failure expected due to ambiguous b in count(b)
 SELECT count(b) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
 	GROUP BY x.b/2;
 
---   group w/o existing GROUP BY target under ambigious condition
+--   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
 SELECT count(x.b) INTO TABLE test_missing_target3 
 FROM test_missing_target x, test_missing_target y 
