@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.62 2000/07/05 21:10:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.63 2000/08/27 21:48:00 tgl Exp $
  *
  * NOTES:
  *
@@ -182,7 +182,7 @@ static void Delete(File file);
 static void LruDelete(File file);
 static void Insert(File file);
 static int	LruInsert(File file);
-static void ReleaseLruFile(void);
+static bool ReleaseLruFile(void);
 static File AllocateVfd(void);
 static void FreeVfd(File file);
 
@@ -230,13 +230,16 @@ tryAgain:
 	if (fd >= 0)
 		return fd;				/* success! */
 
-	if ((errno == EMFILE || errno == ENFILE) && nfile > 0)
+	if (errno == EMFILE || errno == ENFILE)
 	{
+		int		save_errno = errno;
+
 		DO_DB(elog(DEBUG, "BasicOpenFile: not enough descs, retry, er= %d",
 				   errno));
 		errno = 0;
-		ReleaseLruFile();
-		goto tryAgain;
+		if (ReleaseLruFile())
+			goto tryAgain;
+		errno = save_errno;
 	}
 
 	return -1;					/* failure */
@@ -278,7 +281,7 @@ pg_nofile(void)
 #if defined(FDDEBUG)
 
 static void
-_dump_lru()
+_dump_lru(void)
 {
 	int			mru = VfdCache[0].lruLessRecently;
 	Vfd		   *vfdP = &VfdCache[mru];
@@ -389,7 +392,10 @@ LruInsert(File file)
 	if (FileIsNotOpen(file))
 	{
 		while (nfile + numAllocatedFiles >= pg_nofile())
-			ReleaseLruFile();
+		{
+			if (! ReleaseLruFile())
+				break;
+		}
 
 		/*
 		 * The open could still fail for lack of file descriptors, eg due
@@ -400,8 +406,7 @@ LruInsert(File file)
 								 vfdP->fileMode);
 		if (vfdP->fd < 0)
 		{
-			DO_DB(elog(DEBUG, "RE_OPEN FAILED: %d",
-					   errno));
+			DO_DB(elog(DEBUG, "RE_OPEN FAILED: %d", errno));
 			return vfdP->fd;
 		}
 		else
@@ -427,24 +432,26 @@ LruInsert(File file)
 	return 0;
 }
 
-static void
-ReleaseLruFile()
+static bool
+ReleaseLruFile(void)
 {
 	DO_DB(elog(DEBUG, "ReleaseLruFile. Opened %d", nfile));
 
-	if (nfile <= 0)
-		elog(ERROR, "ReleaseLruFile: No open files available to be closed");
-
-	/*
-	 * There are opened files and so there should be at least one used vfd
-	 * in the ring.
-	 */
-	Assert(VfdCache[0].lruMoreRecently != 0);
-	LruDelete(VfdCache[0].lruMoreRecently);
+	if (nfile > 0)
+	{
+		/*
+		 * There are opened files and so there should be at least one used
+		 * vfd in the ring.
+		 */
+		Assert(VfdCache[0].lruMoreRecently != 0);
+		LruDelete(VfdCache[0].lruMoreRecently);
+		return true;			/* freed a file */
+	}
+	return false;				/* no files available to free */
 }
 
 static File
-AllocateVfd()
+AllocateVfd(void)
 {
 	Index		i;
 	File		file;
@@ -631,7 +638,10 @@ fileNameOpenFile(FileName fileName,
 	vfdP = &VfdCache[file];
 
 	while (nfile + numAllocatedFiles >= pg_nofile())
-		ReleaseLruFile();
+	{
+		if (! ReleaseLruFile())
+			break;
+	}
 
 	vfdP->fd = BasicOpenFile(fileName, fileFlags, fileMode);
 
@@ -1027,26 +1037,31 @@ AllocateFile(char *name, char *mode)
 {
 	FILE	   *file;
 
-	DO_DB(elog(DEBUG, "AllocateFile: Allocated %d.", numAllocatedFiles));
+	DO_DB(elog(DEBUG, "AllocateFile: Allocated %d", numAllocatedFiles));
 
 	if (numAllocatedFiles >= MAX_ALLOCATED_FILES)
 		elog(ERROR, "AllocateFile: too many private FDs demanded");
 
 TryAgain:
-	if ((file = fopen(name, mode)) == NULL)
+	if ((file = fopen(name, mode)) != NULL)
 	{
-		if ((errno == EMFILE || errno == ENFILE) && nfile > 0)
-		{
-			DO_DB(elog(DEBUG, "AllocateFile: not enough descs, retry, er= %d",
-					   errno));
-			errno = 0;
-			ReleaseLruFile();
-			goto TryAgain;
-		}
-	}
-	else
 		allocatedFiles[numAllocatedFiles++] = file;
-	return file;
+		return file;
+	}
+
+	if (errno == EMFILE || errno == ENFILE)
+	{
+		int		save_errno = errno;
+
+		DO_DB(elog(DEBUG, "AllocateFile: not enough descs, retry, er= %d",
+				   errno));
+		errno = 0;
+		if (ReleaseLruFile())
+			goto TryAgain;
+		errno = save_errno;
+	}
+
+	return NULL;
 }
 
 void
@@ -1054,7 +1069,7 @@ FreeFile(FILE *file)
 {
 	int			i;
 
-	DO_DB(elog(DEBUG, "FreeFile: Allocated %d.", numAllocatedFiles));
+	DO_DB(elog(DEBUG, "FreeFile: Allocated %d", numAllocatedFiles));
 
 	/* Remove file from list of allocated files, if it's present */
 	for (i = numAllocatedFiles; --i >= 0;)
@@ -1079,7 +1094,7 @@ FreeFile(FILE *file)
  * change in the logical state of the VFDs.
  */
 void
-closeAllVfds()
+closeAllVfds(void)
 {
 	Index		i;
 
