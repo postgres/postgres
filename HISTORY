@@ -1,58 +1,122 @@
 
                                Release Notes
-                                      
+
                                Release 7.4.2
-                                      
-     Release date: 2004-03-??
-     
+
+     Release date: 2004-03-08
+
    This release contains a variety of fixes from 7.4.1.
      _________________________________________________________________
-   
-Migration to version 7.4.2
 
-   A dump/restore is *not* required for those running 7.4.X.
+                         Migration to version 7.4.2
+
+   A dump/restore is not required for those running 7.4.X. However, it
+   may be advisable as the easiest method of incorporating fixes for two
+   errors that have been found in the initial contents of 7.4.X system
+   catalogs. A dump/initdb/reload sequence using 7.4.2's initdb will
+   automatically correct these problems.
+
+   The more severe of the two errors is that data type anyarray has the
+   wrong alignment label; this is a problem because the pg_statistic
+   system catalog uses anyarray columns. The mislabeling can cause
+   planner misestimations and even crashes when planning queries that
+   involve WHERE clauses on double-aligned columns (such as float8 and
+   timestamp). It is strongly recommended that all installations repair
+   this error, either by initdb or by following the manual repair
+   procedure given below.
+
+   The lesser error is that the system view pg_settings ought to be
+   marked as having public update access, to allow UPDATE pg_settings to
+   be used as a substitute for "SET". This can also be fixed either by
+   initdb or manually, but it is not necessary to fix unless you want to
+   use UPDATE pg_settings.
+
+   If you wish not to do an initdb, the following procedure will work for
+   fixing pg_statistic. As the database superuser, do:
+-- clear out old data in pg_statistic:
+DELETE FROM pg_statistic;
+VACUUM pg_statistic;
+-- this should update 1 row:
+UPDATE pg_type SET typalign = 'd' WHERE oid = 2277;
+-- this should update 6 rows:
+UPDATE pg_attribute SET attalign = 'd' WHERE atttypid = 2277;
+--
+-- At this point you MUST start a fresh backend to avoid a crash!
+--
+-- repopulate pg_statistic:
+ANALYZE;
+
+   This can be done in a live database, but beware that all backends
+   running in the altered database must be restarted before it is safe to
+   repopulate pg_statistic.
+
+   To repair the pg_settings error, simply do:
+GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
+
+   The above procedures must be carried out in *each* database of an
+   installation, including template1, and ideally including template0 as
+   well. If you do not fix the template databases then any subsequently
+   created databases will contain the same errors. template1 can be fixed
+   in the same way as any other database, but fixing template0 requires
+   additional steps. First, from any database issue
+UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
+
+   Next connect to template0 and perform the above repair procedures.
+   Finally, do
+-- re-freeze template0:
+VACUUM FREEZE;
+-- and protect it against future alterations:
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
      _________________________________________________________________
-   
-Changes
 
-   As of 2004-03-02
-   
-     * Fix problems with ALTER TABLE during concurrent access (Tom)
-     * Improve hash build reliability (Tom)
-     * Fix statistics alignment bug that could affect optimizer, initdb
-       required (Tom)
-     * Optimizer improvements (Tom)
-     * Permission fix for view updates (Tom)
-     * Allow non-super users to update pg_settings (Tom)
-     * Fix for multibyte handling in position() (Korea PostgreSQL Users'
-       Group)
-     * Various multibyte fixes
-     * Fix problem with hitting open file limit, especially on OS X (Tom)
-     * Have pg_dump set client encoding on restore (Tom)
+                                  Changes
+
+   Release 7.4.2 incorporates all the fixes included in release 7.3.6,
+   plus the following fixes:
+
+     * Fix pg_statistics alignment bug that could crash optimizer
+       See above for details about this problem.
+     * Allow non-super users to update pg_settings
+     * Fix several optimizer bugs, most of which led to "variable not
+       found in subplan target lists" errors
+     * Avoid out-of-memory failure during startup of large multiple index
+       scan
+     * Fix multibyte problem that could lead to "out of memory" error
+       during "COPY IN"
+     * Fix problems with "SELECT INTO" / "CREATE TABLE AS" from tables
+       without OIDs
+     * Fix problems with "alter_table" regression test during parallel
+       testing
+     * Fix problems with hitting open file limit, especially on OS X
+       (Tom)
+     * Partial fix for Turkish-locale issues
+       initdb will succeed now in Turkish locale, but there are still
+       some inconveniences associated with the i/I problem.
+     * Make pg_dump set client encoding on restore
+     * Other minor pg_dump fixes
      * Allow ecpg to again use C keywords as column names (Michael)
      * Added ecpg WHENEVER NOT_FOUND to SELECT/INSERT/UPDATE/DELETE
        (Michael)
      * Fix ecpg crash for queries calling set-returning functions
        (Michael)
-     * Various ecpg fixes (Michael)
+     * Various other ecpg fixes (Michael)
      * Fixes for Borland compiler
      * Thread build improvements (Bruce)
-     * Fix for configure --disable-shared support (Tom)
-     * Various build fixes
-     * Various jdbc fixes
+     * Various other build fixes
+     * Various JDBC fixes
      _________________________________________________________________
-   
+
                                Release 7.4.1
-                                      
+
      Release date: 2003-12-22
-     
+
    This release contains a variety of fixes from 7.4.
      _________________________________________________________________
-   
-Migration to version 7.4.1
+
+                         Migration to version 7.4.1
 
    A dump/restore is *not* required for those running 7.4.
-   
+
    If you want to install the fixes in the information schema you need to
    reload it into the database. This is either accomplished by
    initializing a new cluster by running "initdb", or by running the
@@ -63,8 +127,8 @@ DROP SCHEMA information_schema CASCADE;
 
    Substitute your installation path in the second command.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Fixed bug in "CREATE SCHEMA" parsing in ECPG (Michael)
      * Fix compile error when "--enable-thread-safety" and "--with-perl"
@@ -121,16 +185,16 @@ Changes
        dbname (Bruce)
      * Fix local ident authentication on FreeBSD (Tom)
      _________________________________________________________________
-   
+
                                 Release 7.4
-                                      
+
      Release date: 2003-11-17
      _________________________________________________________________
-   
-Overview
+
+                                  Overview
 
    Major changes in this release:
-   
+
    IN / NOT IN subqueries are now much more efficient
           In previous releases, IN/NOT IN subqueries were joined to the
           upper query by sequentially scanning the subquery looking for a
@@ -139,46 +203,46 @@ Overview
           be as fast as or faster than an equivalent EXISTS subquery;
           this reverses the conventional wisdom that applied to previous
           releases.
-          
+
    Improved GROUP BY processing by using hash buckets
           In previous releases, rows to be grouped had to be sorted
           first. The 7.4 code can do GROUP BY without sorting, by
           accumulating results into a hash table with one entry per
           group. It will still use the sort technique, however, if the
           hash table is estimated to be too large to fit in sort_mem.
-          
+
    New multikey hash join capability
           In previous releases, hash joins could only occur on single
           keys. This release allows multicolumn hash joins.
-          
+
    Queries using the explicit JOIN syntax are now better optimized
           Prior releases evaluated queries using the explicit JOIN syntax
           only in the order implied by the syntax. 7.4 allows full
           optimization of these queries, meaning the optimizer considers
           all possible join orderings and chooses the most efficient.
           Outer joins, however, must still follow the declared ordering.
-          
+
    Faster and more powerful regular expression code
           The entire regular expression module has been replaced with a
           new version by Henry Spencer, originally written for Tcl. The
           code greatly improves performance and supports several flavors
           of regular expressions.
-          
+
    Function-inlining for simple SQL functions
           Simple SQL functions can now be inlined by including their SQL
           in the main query. This improves performance by eliminating
           per-call overhead. That means simple SQL functions now behave
           like macros.
-          
+
    Full support for IPv6 connections and IPv6 address data types
           Previous releases allowed only IPv4 connections, and the IP
           data types only supported IPv4 addresses. This release adds
           full IPv6 support in both of these areas.
-          
+
    Major improvements in SSL performance and reliability
           Several people very familiar with the SSL API have overhauled
           our SSL code to improve SSL key negotiation and error recovery.
-          
+
    Make free space map efficiently reuse empty index pages, and other
           free space management improvements
           In previous releases, B-tree index pages that were left empty
@@ -186,19 +250,19 @@ Overview
           values similar to the rows originally indexed on that page. In
           7.4, "VACUUM" records empty index pages and allows them to be
           reused for any future index rows.
-          
+
    SQL-standard information schema
           The information schema provides a standardized and stable way
           to access information about the schema objects defined in a
           database.
-          
+
    Cursors conform more closely to the SQL standard
           The commands "FETCH" and "MOVE" have been overhauled to conform
           more closely to the SQL standard.
-          
+
    Cursors can exist outside transactions
           These cursors are also called holdable cursors.
-          
+
    New client-to-server protocol
           The new protocol adds error codes, more status information,
           faster startup, better support for binary data transmission,
@@ -206,35 +270,35 @@ Overview
           statements available at the protocol level, and cleaner
           recovery from "COPY" failures. The older protocol is still
           supported by both server and clients.
-          
+
    libpq and ECPG applications are now fully thread-safe
           While previous libpq releases already supported threads, this
           release improves thread safety by fixing some non-thread-safe
           code that was used during database connection startup. The
           "configure" option "--enable-thread-safety" must be used to
           enable this feature.
-          
+
    New version of full-text indexing
           A new full-text indexing suite is available in
           "contrib/tsearch2".
-          
+
    New autovacuum tool
           The new autovacuum tool in "contrib/autovacuum" monitors the
           database statistics tables for "INSERT"/"UPDATE"/"DELETE"
           activity and automatically vacuums tables when needed.
-          
+
    Array handling has been improved and moved into the server core
           Many array limitations have been removed, and arrays behave
           more like fully-supported data types.
      _________________________________________________________________
-   
-Migration to version 7.4
+
+                          Migration to version 7.4
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.
-   
+
    Observe the following incompatibilities:
-   
+
      * The server-side autocommit setting was removed and reimplemented
        in client applications and languages. Server-side autocommit was
        causing too many problems with languages and applications that
@@ -291,13 +355,13 @@ Migration to version 7.4
        syntax problems when parameter placeholders ($n) are written
        adjacent to operators.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
    Below you will find a detailed account of the changes between release
    7.4 and the previous major release.
      _________________________________________________________________
-   
+
 Server Operation Changes
 
      * Allow IPv6 server connections (Nigel Kukard, Johan Jordaan, Bruce,
@@ -345,7 +409,7 @@ Server Operation Changes
      * New error message wording, error codes, and three levels of error
        detail (Tom, Joe, Peter)
      _________________________________________________________________
-   
+
 Performance Improvements
 
      * Add hashing for GROUP BY aggregates (Tom)
@@ -406,7 +470,7 @@ Performance Improvements
        numeric used to be stored in base 100. The new code uses base
        10000, for significantly better performance.
      _________________________________________________________________
-   
+
 Server Configuration Changes
 
      * Rename server parameter server_min_messages to log_min_messages
@@ -472,7 +536,7 @@ Server Configuration Changes
        processing (Tom)
      * Make "pg_ctl" better handle nonstandard ports (Greg)
      _________________________________________________________________
-   
+
 Query Changes
 
      * New SQL-standard information schema (Peter)
@@ -504,7 +568,7 @@ Query Changes
        expressions.
      * Implement CREATE TABLE AS EXECUTE (Neil, Peter)
      _________________________________________________________________
-   
+
 Object Manipulation Changes
 
      * Make "CREATE SEQUENCE" grammar more conforming to SQL 2003 (Neil)
@@ -542,7 +606,7 @@ Object Manipulation Changes
        This enabled "GRANT" to give other users the ability to grant
        privileges on a object.
      _________________________________________________________________
-   
+
 Utility Command Changes
 
      * Add ON COMMIT clause to "CREATE TABLE" for temporary tables
@@ -612,7 +676,7 @@ Utility Command Changes
        reindexing are the global system tables pg_database, pg_shadow,
        and pg_group.
      _________________________________________________________________
-   
+
 Data Type and Function Changes
 
      * New server parameter extra_float_digits to control precision
@@ -691,7 +755,7 @@ Data Type and Function Changes
      * Make pg_get_constraintdef to support unique, primary-key, and
        check constraints (Christopher)
      _________________________________________________________________
-   
+
 Server-Side Language Changes
 
      * Prevent PL/pgSQL crash when RETURN NEXT is used on a zero-row
@@ -718,7 +782,7 @@ Server-Side Language Changes
      * Fixed PL/Tcl's spi_prepare to accept fully qualified type names in
        the parameter type list (Jan)
      _________________________________________________________________
-   
+
 psql Changes
 
      * Add \pset pager always to always use pager (Greg)
@@ -745,7 +809,7 @@ psql Changes
      * New prompt escape sequence %x to show transaction status (Tom)
      * Long options for psql are now available on all platforms
      _________________________________________________________________
-   
+
 pg_dump Changes
 
      * Multiple pg_dump fixes, including tar format and large objects
@@ -768,7 +832,7 @@ pg_dump Changes
      * Long options for pg_dump are now available on all platforms
        PostgreSQL now includes its own long-option processing routines.
      _________________________________________________________________
-   
+
 libpq Changes
 
      * Add function PQfreemem for freeing memory on Windows, suggested
@@ -802,7 +866,7 @@ libpq Changes
      * Add function PQexecPrepared and PQsendQueryPrepared functions
        which perform bind/execute of previously prepared statements (Tom)
      _________________________________________________________________
-   
+
 JDBC Changes
 
      * Allow setNull on updateable result sets
@@ -811,7 +875,7 @@ JDBC Changes
      * Handle schema names in result sets (Paul Sorenson)
      * Add refcursor support (Nic Ferrier)
      _________________________________________________________________
-   
+
 Miscellaneous Interface Changes
 
      * Prevent possible memory leak or core dump during libpgtcl shutdown
@@ -827,7 +891,7 @@ Miscellaneous Interface Changes
        time.
      * Moved Python client PyGreSQL to http://www.pygresql.org (Marc)
      _________________________________________________________________
-   
+
 Source Code Changes
 
      * Prevent need for separate platform geometry regression result
@@ -858,7 +922,7 @@ Source Code Changes
        than silently using semaphores. This failure can be disabled with
        a new "configure" option.
      _________________________________________________________________
-   
+
 Contrib Changes
 
      * Change dbmirror license to BSD
@@ -887,20 +951,20 @@ Contrib Changes
        Márcio Smiderle)
      * Remove array module because features now included by default (Joe)
      _________________________________________________________________
-   
+
                                Release 7.3.6
-                                      
+
      Release date: 2004-03-02
-     
+
    This release contains a variety of fixes from 7.3.5.
      _________________________________________________________________
-   
-Migration to version 7.3.6
+
+                         Migration to version 7.3.6
 
    A dump/restore is *not* required for those running 7.3.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Revert erroneous changes in rule permissions checking
        A patch applied in 7.3.3 to fix a corner case in rule permissions
@@ -930,20 +994,20 @@ Changes
      * Fix index optimization and selectivity estimates for LIKE
        operations on bytea columns (Joe)
      _________________________________________________________________
-   
+
                                Release 7.3.5
-                                      
+
      Release date: 2003-12-03
-     
+
    This has a variety of fixes from 7.3.4.
      _________________________________________________________________
-   
-Migration to version 7.3.5
+
+                         Migration to version 7.3.5
 
    A dump/restore is *not* required for those running 7.3.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Force zero_damaged_pages to be on during recovery from WAL
      * Prevent some obscure cases of "variable not in subplan target
@@ -977,20 +1041,20 @@ Changes
      * Fix corner case for btree search in parallel with first root page
        split
      _________________________________________________________________
-   
+
                                Release 7.3.4
-                                      
+
      Release date: 2003-07-24
-     
+
    This has a variety of fixes from 7.3.3.
      _________________________________________________________________
-   
-Migration to version 7.3.4
+
+                         Migration to version 7.3.4
 
    A dump/restore is *not* required for those running 7.3.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Repair breakage in timestamp-to-date conversion for dates before
        2000
@@ -1004,20 +1068,20 @@ Changes
      * Properly escape jdbc setObject() strings to improve security
        (Barry)
      _________________________________________________________________
-   
+
                                Release 7.3.3
-                                      
+
      Release date: 2003-05-22
-     
+
    This release contains a variety of fixes for version 7.3.2.
      _________________________________________________________________
-   
-Migration to version 7.3.3
+
+                         Migration to version 7.3.3
 
    A dump/restore is *not* required for those running version 7.3.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Repair sometimes-incorrect computation of StartUpID after a crash
      * Avoid slowness with lots of deferred triggers in one transaction
@@ -1127,20 +1191,20 @@ Changes
      * Fixed problem with parsing table ACLs in JDBC
      * Better error message for character set conversion problems in JDBC
      _________________________________________________________________
-   
+
                                Release 7.3.2
-                                      
+
      Release date: 2003-02-04
-     
+
    This release contains a variety of fixes for version 7.3.1.
      _________________________________________________________________
-   
-Migration to version 7.3.2
+
+                         Migration to version 7.3.2
 
    A dump/restore is *not* required for those running version 7.3.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Restore creation of OID column in CREATE TABLE AS / SELECT INTO
      * Fix pg_dump core dump when dumping views having comments
@@ -1183,23 +1247,23 @@ Changes
      * Add casts between types lo and oid in contrib/lo
      * fastpath code now checks for privilege to call function
      _________________________________________________________________
-   
+
                                Release 7.3.1
-                                      
+
      Release date: 2002-12-18
-     
+
    This release contains a variety of fixes for version 7.3.
      _________________________________________________________________
-   
-Migration to version 7.3.1
+
+                         Migration to version 7.3.1
 
    A dump/restore is *not* required for those running version 7.3.
    However, it should be noted that the main PostgreSQL interface
    library, libpq, has a new major version number for this release, which
    may require recompilation of client code in certain cases.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Fix a core dump of COPY TO when client/server encodings don't
        match (Tom)
@@ -1221,59 +1285,59 @@ Changes
      * SSL fixes (Nathan Mueller)
      * Prevent composite column creation via ALTER TABLE (Tom)
      _________________________________________________________________
-   
+
                                 Release 7.3
-                                      
+
      Release date: 2002-11-27
      _________________________________________________________________
-   
-Overview
+
+                                  Overview
 
    Major changes in this release:
-   
+
    Schemas
           Schemas allow users to create objects in separate namespaces,
           so two people or applications can have tables with the same
           name. There is also a public schema for shared tables.
           Table/index creation can be restricted by removing privileges
           on the public schema.
-          
+
    Drop Column
           PostgreSQL now supports the ALTER TABLE ... DROP COLUMN
           functionality.
-          
+
    Table Functions
           Functions returning multiple rows and/or multiple columns are
           now much easier to use than before. You can call such a "table
           function" in the SELECT FROM clause, treating its output like a
           table. Also, PL/pgSQL functions can now return sets.
-          
+
    Prepared Queries
           PostgreSQL now supports prepared queries, for improved
           performance.
-          
+
    Dependency Tracking
           PostgreSQL now records object dependencies, which allows
           improvements in many areas. "DROP" statements now take either
           CASCADE or RESTRICT to control whether dependent objects are
           also dropped.
-          
+
    Privileges
           Functions and procedural languages now have privileges, and
           functions can be defined to run with the privileges of their
           creator.
-          
+
    Internationalization
           Both multibyte and locale support are now always enabled.
-          
+
    Logging
           A variety of logging options have been enhanced.
-          
+
    Interfaces
           A large number of interfaces have been moved to
           http://gborg.postgresql.org where they can be developed and
           released independently.
-          
+
    Functions/Identifiers
           By default, functions can now take up to 32 parameters, and
           identifiers can be up to 63 bytes long. Also, OPAQUE is now
@@ -1281,17 +1345,17 @@ Overview
           each of the former meanings of OPAQUE in function argument and
           result types.
      _________________________________________________________________
-   
-Migration to version 7.3
+
+                          Migration to version 7.3
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release. If your application examines the
    system catalogs, additional changes will be required due to the
    introduction of schemas in 7.3; for more information, see:
    http://developer.postgresql.org/~momjian/upgrade_tips_7.3.
-   
+
    Observe the following incompatibilities:
-   
+
      * Pre-6.3 clients are no longer supported.
      * "pg_hba.conf" now has a column for the user name and additional
        features. Existing files need to be adjusted.
@@ -1316,8 +1380,8 @@ Migration to version 7.3
      * An empty string ('') is no longer allowed as the input into an
        integer field. Formerly, it was silently interpreted as 0.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Server Operation
 
@@ -1328,7 +1392,7 @@ Server Operation
      * Reserve the last few backend slots for superusers, add parameter
        superuser_reserved_connections to control this (Nigel J. Andrews)
      _________________________________________________________________
-   
+
 Performance
 
      * Improve startup by calling localtime() only once (Tom)
@@ -1356,7 +1420,7 @@ Performance
        Marshall, Tom)
      * Improved WAL write concurrency (Tom)
      _________________________________________________________________
-   
+
 Privileges
 
      * Add privileges on functions and procedural languages (Peter)
@@ -1368,7 +1432,7 @@ Privileges
      * Allow functions to be executed with the privilege of the function
        owner (Peter)
      _________________________________________________________________
-   
+
 Server Configuration
 
      * Server log messages now tagged with LOG, not DEBUG (Bruce)
@@ -1398,7 +1462,7 @@ Server Configuration
      * Add param log_min_error_statement to print commands to logs on
        error (Gavin)
      _________________________________________________________________
-   
+
 Queries
 
      * Make cursors insensitive, meaning their contents do not change
@@ -1425,7 +1489,7 @@ Queries
      * Allow FOR UPDATE to appear after LIMIT/OFFSET (Bruce)
      * Add variable autocommit (Tom, David Van Wie)
      _________________________________________________________________
-   
+
 Object Manipulation
 
      * Make equals signs optional in CREATE DATABASE (Gavin Sherry)
@@ -1465,7 +1529,7 @@ Object Manipulation
      * Add /contrib/adddepend to handle pre-7.3 object dependencies (Rod)
      * Allow better casting when inserting/updating values (Tom)
      _________________________________________________________________
-   
+
 Utility Commands
 
      * Have COPY TO output embedded carriage returns and newlines as \r
@@ -1515,7 +1579,7 @@ Utility Commands
        (Tom)
      * Fix ALTER TABLE ... ADD COLUMN for inheritance (Alvaro Herrera)
      _________________________________________________________________
-   
+
 Data Types and Functions
 
      * Fix factorial(0) to return 1 (Bruce)
@@ -1575,7 +1639,7 @@ Data Types and Functions
      * Fix trigger/type/language functions returning OPAQUE to return
        proper type (Tom)
      _________________________________________________________________
-   
+
 Internationalization
 
      * Add additional encodings: Korean (JOHAB), Thai (WIN874),
@@ -1596,7 +1660,7 @@ Internationalization
        aware (Peter)
      * New and updated translations
      _________________________________________________________________
-   
+
 Server-side Languages
 
      * Allow recursive SQL function (Peter)
@@ -1609,7 +1673,7 @@ Server-side Languages
      * Make PL/pgSQL schema-aware (Joe)
      * Remove some memory leaks (Nigel J. Andrews, Tom)
      _________________________________________________________________
-   
+
 psql
 
      * Don't lowercase psql \connect database name for 7.2.0
@@ -1625,7 +1689,7 @@ psql
      * Have psql reports its version number on startup (Tom)
      * Allow \copy to specify column names (Tom)
      _________________________________________________________________
-   
+
 libpq
 
      * Add $HOME/.pgpass to store host/user password combinations (Alvaro
@@ -1640,7 +1704,7 @@ libpq
      * Fix for SSL with non-blocking connections (Jack Bates)
      * Add libpq connection timeout parameter (Denis A Ustimenko)
      _________________________________________________________________
-   
+
 JDBC
 
      * Allow JDBC to compile with JDK 1.4 (Dave)
@@ -1656,7 +1720,7 @@ JDBC
      * Fix MD5 encryption handling for multibyte servers (Jun Kawai)
      * Add support for prepared statements (Barry)
      _________________________________________________________________
-   
+
 Miscellaneous Interfaces
 
      * Fixed ECPG bug concerning octal numbers in single quotes (Michael)
@@ -1677,7 +1741,7 @@ Miscellaneous Interfaces
      * Add pg_on_connection_loss command to libpgtcl (Gerhard
        Hintermayer, Tom)
      _________________________________________________________________
-   
+
 Source Code
 
      * Fix for parallel make (Peter)
@@ -1739,7 +1803,7 @@ Source Code
        (Bruce)
      * Add version numbers to heap pages (Tom)
      _________________________________________________________________
-   
+
 Contrib
 
      * Allow inet arrays in /contrib/array (Neil)
@@ -1766,21 +1830,21 @@ Contrib
      * Fixes to /contrib/cube (Bruno Wolff)
      * Improve /contrib/fulltextindex (Christopher)
      _________________________________________________________________
-   
+
                                Release 7.2.4
-                                      
+
      Release date: 2003-01-30
-     
+
    This release contains a variety of fixes for version 7.2.3, including
    fixes to prevent possible data loss.
      _________________________________________________________________
-   
-Migration to version 7.2.4
+
+                         Migration to version 7.2.4
 
    A dump/restore is *not* required for those running version 7.2.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Fix some additional cases of VACUUM "No one parent tuple was
        found" error
@@ -1797,21 +1861,21 @@ Changes
      * Repair long-standing logic errors in lseg_eq(), lseg_ne(),
        lseg_center()
      _________________________________________________________________
-   
+
                                Release 7.2.3
-                                      
+
      Release date: 2002-10-01
-     
+
    This release contains a variety of fixes for version 7.2.2, including
    fixes to prevent possible data loss.
      _________________________________________________________________
-   
-Migration to version 7.2.3
+
+                         Migration to version 7.2.3
 
    A dump/restore is *not* required for those running version 7.2.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Prevent possible compressed transaction log loss (Tom)
      * Prevent non-superuser from increasing most recent vacuum info
@@ -1821,20 +1885,20 @@ Changes
      * Prevent spinlock hangs on SMP PPC machines (Tomoyuki Niijima)
      * Fix pg_dump to properly dump FULL JOIN USING (Tom)
      _________________________________________________________________
-   
+
                                Release 7.2.2
-                                      
+
      Release date: 2002-08-23
-     
+
    This release contains a variety of fixes for version 7.2.1.
      _________________________________________________________________
-   
-Migration to version 7.2.2
+
+                         Migration to version 7.2.2
 
    A dump/restore is *not* required for those running version 7.2.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)
      * Fix for compressed transaction log id wraparound (Tom)
@@ -1852,20 +1916,20 @@ Changes
      * Fix for crash with long DATA strings (Thomas, Neil)
      * Fix for repeat(), lpad(), rpad() and long strings (Neil)
      _________________________________________________________________
-   
+
                                Release 7.2.1
-                                      
+
      Release date: 2002-03-21
-     
+
    This release contains a variety of fixes for version 7.2.
      _________________________________________________________________
-   
-Migration to version 7.2.1
+
+                         Migration to version 7.2.1
 
    A dump/restore is *not* required for those running version 7.2.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
      * Ensure that sequence counters do not go backwards after a crash
        (Tom)
@@ -1889,57 +1953,57 @@ Changes
      * Fix for array subscripts handling (Tom)
      * Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/pgSQL (Tom)
      _________________________________________________________________
-   
+
                                 Release 7.2
-                                      
+
      Release date: 2002-02-04
      _________________________________________________________________
-   
-Overview
+
+                                  Overview
 
    This release improves PostgreSQL for use in high-volume applications.
-   
+
    Major changes in this release:
-   
+
    VACUUM
           Vacuuming no longer locks tables, thus allowing normal user
           access during the vacuum. A new "VACUUM FULL" command does
           old-style vacuum by locking the table and shrinking the on-disk
           copy of the table.
-          
+
    Transactions
           There is no longer a problem with installations that exceed
           four billion transactions.
-          
+
    OIDs
           OIDs are now optional. Users can now create tables without OIDs
           for cases where OID usage is excessive.
-          
+
    Optimizer
           The system now computes histogram column statistics during
           "ANALYZE", allowing much better optimizer choices.
-          
+
    Security
           A new MD5 encryption option allows more secure storage and
           transfer of passwords. A new Unix-domain socket authentication
           option is available on Linux and BSD systems.
-          
+
    Statistics
           Administrators can use the new table access statistics module
           to get fine-grained information about table and index usage.
-          
+
    Internationalization
           Program and library messages can now be displayed in several
           languages.
      _________________________________________________________________
-   
-Migration to version 7.2
+
+                          Migration to version 7.2
 
    A dump/restore using "pg_dump" is required for those wishing to
    migrate data from any previous release.
-   
+
    Observe the following incompatibilities:
-   
+
      * The semantics of the "VACUUM" command have changed in this
        release. You may wish to update your maintenance procedures
        accordingly.
@@ -1956,13 +2020,13 @@ Migration to version 7.2
        need to rewrite your applications.
      * The timestamp(), time(), and interval() functions are no longer
        available. Instead of timestamp(), use timestamp 'string' or CAST.
-       
+
    The SELECT ... LIMIT #,# syntax will be removed in the next release.
    You should change your queries to use separate LIMIT and OFFSET
    clauses, e.g. LIMIT 10 OFFSET 20.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Server Operation
 
@@ -1988,7 +2052,7 @@ Server Operation
      * Superuser ID now fixed at 1 (Peter E)
      * New pg_ctl "reload" option (Tom)
      _________________________________________________________________
-   
+
 Performance
 
      * Optimizer improvements (Tom)
@@ -2002,7 +2066,7 @@ Performance
      * R-tree performance improvements (Kenneth Been)
      * B-tree splits more efficient (Tom)
      _________________________________________________________________
-   
+
 Privileges
 
      * Change UPDATE, DELETE privileges to be distinct (Peter E)
@@ -2015,7 +2079,7 @@ Privileges
      * Disallow access to pg_statistic for non-superuser, add
        user-accessible views (Tom)
      _________________________________________________________________
-   
+
 Client Authentication
 
      * Fork postmaster before doing authentication to prevent hangs
@@ -2029,7 +2093,7 @@ Client Authentication
      * Load pg_hba.conf and pg_ident.conf only on startup and SIGHUP
        (Bruce)
      _________________________________________________________________
-   
+
 Server Configuration
 
      * Interpretation of some time zone abbreviations as Australian
@@ -2041,7 +2105,7 @@ Server Configuration
      * New parameter to set client authentication timeout (Tom)
      * New parameter to set maximum number of open files (Tom)
      _________________________________________________________________
-   
+
 Queries
 
      * Statements added by INSERT rules now execute after the INSERT
@@ -2056,7 +2120,7 @@ Queries
      * Fix for LIMIT, DISTINCT ON pushed into subqueries (Tom)
      * Fix nested EXCEPT/INTERSECT (Tom)
      _________________________________________________________________
-   
+
 Schema Manipulation
 
      * Fix SERIAL in temporary tables (Bruce)
@@ -2086,7 +2150,7 @@ Schema Manipulation
        Bartunov, Teodor Sigaev, Tom)
      * Enable partial indexes (Martijn van Oosterhout)
      _________________________________________________________________
-   
+
 Utility Commands
 
      * Add RESET ALL, SHOW ALL (Marko Kreen)
@@ -2102,7 +2166,7 @@ Utility Commands
      * Fix privilege checks for CREATE INDEX (Tom)
      * Disallow inappropriate use of CREATE/DROP INDEX/TRIGGER/VIEW (Tom)
      _________________________________________________________________
-   
+
 Data Types and Functions
 
      * SUM(), AVG(), COUNT() now uses int8 internally for speed (Tom)
@@ -2155,7 +2219,7 @@ Data Types and Functions
      * Some datatype() function calls now evaluated differently
      * Add support for Julian and ISO time specifications (Thomas)
      _________________________________________________________________
-   
+
 Internationalization
 
      * National language support in psql, pg_dump, libpq, and server
@@ -2171,7 +2235,7 @@ Internationalization
      * Make mic2ascii() non-ASCII aware (Tatsuo)
      * Reject invalid multibyte character sequences (Tatsuo)
      _________________________________________________________________
-   
+
 PL/pgSQL
 
      * Now uses portals for SELECT loops, allowing huge result sets (Jan)
@@ -2188,25 +2252,25 @@ PL/pgSQL
      * Memory leak fix (Jan, Tom)
      * Make trailing semicolon optional (Tom)
      _________________________________________________________________
-   
+
 PL/Perl
 
      * New untrusted PL/Perl (Alex Pilosov)
      * PL/Perl is now built on some platforms even if libperl is not
        shared (Peter E)
      _________________________________________________________________
-   
+
 PL/Tcl
 
      * Now reports errorInfo (Vsevolod Lobko)
      * Add spi_lastoid function (bob@redivi.com)
      _________________________________________________________________
-   
+
 PL/Python
 
      * ...is new (Andrew Bosma)
      _________________________________________________________________
-   
+
 psql
 
      * \d displays indexes in unique, primary groupings (Christopher
@@ -2218,7 +2282,7 @@ psql
        Tom)
      * Format the correct number of columns for Unicode (Patrice)
      _________________________________________________________________
-   
+
 libpq
 
      * New function PQescapeString() to escape quotes in command strings
@@ -2226,7 +2290,7 @@ libpq
      * New function PQescapeBytea() escapes binary strings for use as SQL
        string literals
      _________________________________________________________________
-   
+
 JDBC
 
      * Return OID of INSERT (Ken K)
@@ -2264,7 +2328,7 @@ JDBC
      * MD5 password encryption support (Jeremy Wohl)
      * Fix to actually use type cache (Ned Wolpert)
      _________________________________________________________________
-   
+
 ODBC
 
      * Remove query size limit (Hiroshi)
@@ -2278,7 +2342,7 @@ ODBC
      * MD5 password encryption support (Bruce)
      * Add more compatibility functions to odbc.sql (Peter E)
      _________________________________________________________________
-   
+
 ECPG
 
      * EXECUTE ... INTO implemented (Christof Petig)
@@ -2293,7 +2357,7 @@ ECPG
      * All function names with external linkage are now prefixed by ECPG
      * Fixes for arrays of structures (Michael)
      _________________________________________________________________
-   
+
 Misc. Interfaces
 
      * Python fix fetchone() (Gerhard Haring)
@@ -2303,7 +2367,7 @@ Misc. Interfaces
      * Prevent output of default index op class in pg_dump (Tom)
      * Fix libpgeasy memory leak (Bruce)
      _________________________________________________________________
-   
+
 Build and Install
 
      * Configure, dynamic loader, and shared library fixes (Peter E)
@@ -2323,7 +2387,7 @@ Build and Install
      * Rename config.h to pg_config.h (Peter E)
      * Reorganize installation layout of header files (Peter E)
      _________________________________________________________________
-   
+
 Source Code
 
      * Remove SEP_CHAR (Bruce)
@@ -2339,7 +2403,7 @@ Source Code
      * Add 'volatile' usage in spinlock structures
      * Improve signal handling logic (Tom)
      _________________________________________________________________
-   
+
 Contrib
 
      * New contrib/rtree_gist (Oleg Bartunov, Teodor Sigaev)
@@ -2355,18 +2419,18 @@ Contrib
      * New pg_upgrade utility (Bruce)
      * Add new pg_resetxlog options (Bruce, Tom)
      _________________________________________________________________
-   
+
                                Release 7.1.3
-                                      
+
      Release date: 2001-08-15
      _________________________________________________________________
-   
-Migration to version 7.1.3
+
+                         Migration to version 7.1.3
 
    A dump/restore is *not* required for those running 7.1.X.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Remove unused WAL segements of large transactions (Tom)
 Multiaction rule fix (Tom)
@@ -2380,20 +2444,20 @@ Disable COPY TO/FROM a view (Tom)
 Cygwin build (Jason Tishler)
 
      _________________________________________________________________
-   
+
                                Release 7.1.2
-                                      
+
      Release date: 2001-05-11
-     
+
    This has one fix from 7.1.1.
      _________________________________________________________________
-   
-Migration to version 7.1.2
+
+                         Migration to version 7.1.2
 
    A dump/restore is *not* required for those running 7.1.X.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Fix PL/pgSQL SELECTs when returning no rows
 Fix for psql backslash core dump
@@ -2402,20 +2466,20 @@ Optimizer fixes
 pg_dump cleanups
 
      _________________________________________________________________
-   
+
                                Release 7.1.1
-                                      
+
      Release date: 2001-05-05
-     
+
    This has a variety of fixes from 7.1.
      _________________________________________________________________
-   
-Migration to version 7.1.1
+
+                         Migration to version 7.1.1
 
    A dump/restore is *not* required for those running 7.1.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Fix for numeric MODULO operator (Tom)
 pg_dump fixes (Philip)
@@ -2433,16 +2497,16 @@ EXTRACT can now take string argument (Thomas)
 Python fixes (Darcy)
 
      _________________________________________________________________
-   
+
                                 Release 7.1
-                                      
+
      Release date: 2001-04-13
-     
+
    This release focuses on removing limitations that have existed in the
    PostgreSQL code for many years.
-   
+
    Major changes in this release:
-   
+
    Write-ahead Log (WAL)
           To maintain database consistency in case of an operating system
           crash, previous releases of PostgreSQL have forced all data
@@ -2451,25 +2515,25 @@ Python fixes (Darcy)
           performance. If you have been using -F in previous releases to
           disable disk flushes, you may want to consider discontinuing
           its use.
-          
+
    TOAST
           TOAST - Previous releases had a compiled-in row length limit,
           typically 8k - 32k. This limit made storage of long text fields
           difficult. With TOAST, long rows of any length can be stored
           with good performance.
-          
+
    Outer Joins
           We now support outer joins. The UNION/NOT IN workaround for
           outer joins is no longer required. We use the SQL92 outer join
           syntax.
-          
+
    Function Manager
           The previous C function manager did not handle null values
           properly, nor did it support 64-bit CPU's (Alpha). The new
           function manager does. You can continue using your old custom
           functions, but you may want to rewrite them in the future to
           use the new function manager call interface.
-          
+
    Complex Queries
           A large number of complex queries that were unsupported in
           previous releases now work. Many combinations of views,
@@ -2477,14 +2541,14 @@ Python fixes (Darcy)
           tables now work properly. Inherited tables are now accessed by
           default. Subqueries in FROM are now supported.
      _________________________________________________________________
-   
-Migration to version 7.1
+
+                          Migration to version 7.1
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -2673,20 +2737,20 @@ New contrib/pg_control utility (Oliver)
 New FreeBSD tools ipc_check, start-scripts/freebsd
 
      _________________________________________________________________
-   
+
                                Release 7.0.3
-                                      
+
      Release date: 2000-11-11
-     
+
    This has a variety of fixes from 7.0.2.
      _________________________________________________________________
-   
-Migration to version 7.0.3
+
+                         Migration to version 7.0.3
 
    A dump/restore is *not* required for those running 7.0.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Jdbc fixes (Peter)
 Large object fix (Tom)
@@ -2729,38 +2793,38 @@ Fix for inserting/copying longer multibyte strings into char() data
 Fix for crash of backend, on abort (Tom)
 
      _________________________________________________________________
-   
+
                                Release 7.0.2
-                                      
+
      Release date: 2000-06-05
-     
+
    This is a repackaging of 7.0.1 with added documentation.
      _________________________________________________________________
-   
-Migration to version 7.0.2
+
+                         Migration to version 7.0.2
 
    A dump/restore is *not* required for those running 7.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Added documentation to tarball.
 
      _________________________________________________________________
-   
+
                                Release 7.0.1
-                                      
+
      Release date: 2000-06-01
-     
+
    This is a cleanup release for 7.0.
      _________________________________________________________________
-   
-Migration to version 7.0.1
+
+                         Migration to version 7.0.1
 
    A dump/restore is *not* required for those running 7.0.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Fix many CLUSTER failures (Tom)
 Allow ALTER TABLE RENAME works on indexes (Tom)
@@ -2788,50 +2852,50 @@ JDBC ResultSet.getTimestamp() fix (Gregory Krasnow & Floyd Marinescu)
 ecpg changes (Michael)
 
      _________________________________________________________________
-   
+
                                 Release 7.0
-                                      
+
      Release date: 2000-05-08
-     
+
    This release contains improvements in many areas, demonstrating the
    continued growth of PostgreSQL. There are more improvements and fixes
    in 7.0 than in any previous release. The developers have confidence
    that this is the best release yet; we do our best to put out only
    solid releases, and this one is no exception.
-   
+
    Major changes in this release:
-   
+
    Foreign Keys
           Foreign keys are now implemented, with the exception of PARTIAL
           MATCH foreign keys. Many users have been asking for this
           feature, and we are pleased to offer it.
-          
+
    Optimizer Overhaul
           Continuing on work started a year ago, the optimizer has been
           improved, allowing better query plan selection and faster
           performance with less memory usage.
-          
+
    Updated psql
           psql, our interactive terminal monitor, has been updated with a
           variety of new features. See the psql manual page for details.
-          
+
    Join Syntax
           SQL92 join syntax is now supported, though only as INNER JOIN
           for this release. JOIN, NATURAL JOIN, JOIN/USING, and JOIN/ON
           are available, as are column correlation names.
      _________________________________________________________________
-   
-Migration to version 7.0
+
+                          Migration to version 7.0
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release of PostgreSQL. For those upgrading from
    6.5.*, you may instead use pg_upgrade to upgrade to this release;
    however, a full dump/reload installation is always the most robust
    method for upgrades.
-   
+
    Interface and compatibility issues to consider for the new release
    include:
-   
+
      * The date/time types datetime and timespan have been superseded by
        the SQL92-defined types timestamp and interval. Although there has
        been some effort to ease the transition by allowing PostgreSQL to
@@ -2851,8 +2915,8 @@ Migration to version 7.0
        in ambiguity with other types implementing LENGTH such as the
        geometric types.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -3176,42 +3240,42 @@ Fixes for Alpha compiles
 New multibyte encodings
 
      _________________________________________________________________
-   
+
                                Release 6.5.3
-                                      
+
      Release date: 1999-10-13
-     
+
    This is basically a cleanup release for 6.5.2. We have added a new
    PgAccess that was missing in 6.5.2, and installed an NT-specific fix.
      _________________________________________________________________
-   
-Migration to version 6.5.3
+
+                         Migration to version 6.5.3
 
    A dump/restore is *not* required for those running 6.5.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Updated version of pgaccess 0.98
 NT-specific patch
 Fix dumping rules on inherited tables
 
      _________________________________________________________________
-   
+
                                Release 6.5.2
-                                      
+
      Release date: 1999-09-15
-     
+
    This is basically a cleanup release for 6.5.1. We have fixed a variety
    of problems reported by 6.5.1 users.
      _________________________________________________________________
-   
-Migration to version 6.5.2
+
+                         Migration to version 6.5.2
 
    A dump/restore is *not* required for those running 6.5.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 subselect+CASE fixes(Tom)
 Add SHLIB_LINK setting for solaris_i386 and solaris_sparc ports(Daren Sefcik)
@@ -3241,21 +3305,21 @@ Repair incorrect cleanup of heap memory allocation during transaction abort(Tom
 Updated version of pgaccess 0.98
 
      _________________________________________________________________
-   
+
                                Release 6.5.1
-                                      
+
      Release date: 1999-07-15
-     
+
    This is basically a cleanup release for 6.5. We have fixed a variety
    of problems reported by 6.5 users.
      _________________________________________________________________
-   
-Migration to version 6.5.1
+
+                         Migration to version 6.5.1
 
    A dump/restore is *not* required for those running 6.5.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Add NT README file
 Portability fixes for linux_ppc, IRIX, linux_alpha, OpenBSD, alpha
@@ -3282,18 +3346,18 @@ Fix some compiler warnings (Tomoaki Nishiyama)
 Add Win1250 (Czech) support (Pavel Behal)
 
      _________________________________________________________________
-   
+
                                 Release 6.5
-                                      
+
      Release date: 1999-06-09
-     
+
    This release marks a major step in the development team's mastery of
    the source code we inherited from Berkeley. You will see we are now
    easily adding major features, thanks to the increasing size and
    experience of our world-wide development team.
-   
+
    Here is a brief summary of the more notable changes:
-   
+
    Multiversion concurrency control(MVCC)
           This removes our old table-level locking, and replaces it with
           a locking system that is superior to most commercial database
@@ -3307,38 +3371,38 @@ Add Win1250 (Czech) support (Pavel Behal)
           systems. So, basically, we no longer are restricted by simple
           table-level locking; we have something better than row-level
           locking.
-          
+
    Hot backups from pg_dump
           pg_dump takes advantage of the new MVCC features to give a
           consistent database dump/backup while the database stays online
           and available for queries.
-          
+
    Numeric data type
           We now have a true numeric data type, with user-specified
           precision.
-          
+
    Temporary tables
           Temporary tables are guaranteed to have unique names within a
           database session, and are destroyed on session exit.
-          
+
    New SQL features
           We now have CASE, INTERSECT, and EXCEPT statement support. We
           have new LIMIT/OFFSET, SET TRANSACTION ISOLATION LEVEL, SELECT
           ... FOR UPDATE, and an improved LOCK TABLE command.
-          
+
    Speedups
           We continue to speed up PostgreSQL, thanks to the variety of
           talents within our team. We have sped up memory allocation,
           optimization, table joins, and row transfer routines.
-          
+
    Ports
           We continue to expand our port list, this time including
           Windows NT/ix86 and NetBSD/arm32.
-          
+
    Interfaces
           Most interfaces have new versions, and existing functionality
           has been improved.
-          
+
    Documentation
           New and updated material is present throughout the
           documentation. New FAQs have been contributed for SGI and AIX
@@ -3352,20 +3416,20 @@ Add Win1250 (Czech) support (Pavel Behal)
           on obtaining the PostgreSQL source tree via anonymous CVS and
           CVSup.
      _________________________________________________________________
-   
-Migration to version 6.5
+
+                          Migration to version 6.5
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release of PostgreSQL. pg_upgrade can *not* be
    used to upgrade to this release because the on-disk structure of the
    tables has changed compared to previous releases.
-   
+
    The new Multiversion Concurrency Control (MVCC) features can give
    somewhat different behaviors in multiuser environments. *Read and
    understand the following section to ensure that your existing
    applications will give you the behavior you need.*
      _________________________________________________________________
-   
+
 Multiversion Concurrency Control
 
    Because readers in 6.5 don't lock data, regardless of transaction
@@ -3375,31 +3439,31 @@ Multiversion Concurrency Control
    sometime after the statement or transaction began) nor that the row is
    protected from being deleted or updated by concurrent transactions
    before the current transaction does a commit or rollback.
-   
+
    To ensure the actual existence of a row and protect it against
    concurrent updates one must use "SELECT FOR UPDATE" or an appropriate
    "LOCK TABLE" statement. This should be taken into account when porting
    applications from previous releases of PostgreSQL and other
    environments.
-   
+
    Keep the above in mind if you are using "contrib/refint.*" triggers
    for referential integrity. Additional techniques are required now. One
    way is to use "LOCK parent_table IN SHARE ROW EXCLUSIVE MODE" command
    if a transaction is going to update/delete a primary key and use "LOCK
    parent_table IN SHARE MODE" command if a transaction is going to
    update/insert a foreign key.
-   
+
      Note: Note that if you run a transaction in SERIALIZABLE mode then
      you must execute the "LOCK" commands above before execution of any
      DML statement ("SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO") in the
      transaction.
-     
+
    These inconveniences will disappear in the future when the ability to
    read dirty (uncommitted) data (regardless of isolation level) and true
    referential integrity will be implemented.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -3567,39 +3631,39 @@ Improve file handling to be more uniform, prevent file descriptor leak(Tom)
 New install commands for plpgsql(Jan)
 
      _________________________________________________________________
-   
+
                                Release 6.4.2
-                                      
+
      Release date: 1998-12-20
-     
+
    The 6.4.1 release was improperly packaged. This also has one
    additional bug fix.
      _________________________________________________________________
-   
-Migration to version 6.4.2
+
+                         Migration to version 6.4.2
 
    A dump/restore is *not* required for those running 6.4.*.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Fix for datetime constant problem on some platforms(Thomas)
      _________________________________________________________________
-   
+
                                Release 6.4.1
-                                      
+
      Release date: 1998-12-18
-     
+
    This is basically a cleanup release for 6.4. We have fixed a variety
    of problems reported by 6.4 users.
      _________________________________________________________________
-   
-Migration to version 6.4.1
+
+                         Migration to version 6.4.1
 
    A dump/restore is *not* required for those running 6.4.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Add pg_dump -N flag to force double quotes around identifiers.  This is
         the default(Thomas)
@@ -3632,16 +3696,16 @@ Add routines to help with single-byte (internal) character type(Thomas)
 Compilation of libpq for Windows fixes(Magnus)
 Upgrade to PyGreSQL 2.2(D'Arcy)
      _________________________________________________________________
-   
+
                                 Release 6.4
-                                      
+
      Release date: 1998-10-30
-     
+
    There are *many* new features and improvements in this release. Thanks
    to our developers and maintainers, nearly every aspect of the system
    has received some attention since the previous release. Here is a
    brief, incomplete summary:
-   
+
      * Views and rules are now functional thanks to extensive new code in
        the rewrite rules system from Jan Wieck. He also wrote a chapter
        on it for the Programmer's Guide.
@@ -3671,14 +3735,14 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
        some attention, and should be more robust for more platforms than
        it has ever been.
      _________________________________________________________________
-   
-Migration to version 6.4
+
+                          Migration to version 6.4
 
    A dump/restore using pg_dump or pg_dumpall is required for those
    wishing to migrate data from any previous release of PostgreSQL.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -3876,32 +3940,32 @@ smarter perl configuration(Brook)
 configure uses supplied install-sh if no install script found(Tom)
 new Makefile.shlib for shared library configuration(Tom)
      _________________________________________________________________
-   
+
                                Release 6.3.2
-                                      
+
      Release date: 1998-04-07
-     
+
    This is a bug-fix release for 6.3.x. Refer to the release notes for
    version 6.3 for a more complete summary of new features.
-   
+
    Summary:
-   
+
      * Repairs automatic configuration support for some platforms,
        including Linux, from breakage inadvertently introduced in version
        6.3.1.
      * Correctly handles function calls on the left side of BETWEEN and
        LIKE clauses.
-       
+
    A dump/restore is NOT required for those running 6.3 or 6.3.1. A make
    distclean, make, and make install is all that is required. This last
    step should be performed while the postmaster is not running. You
    should re-link any custom applications that use PostgreSQL libraries.
-   
+
    For upgrades from pre-6.3 installations, refer to the installation and
    migration instructions for version 6.3.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Configure detection improvements for tcl/tk(Brook Milligan, Alvin)
 Manual page improvements(Bruce)
@@ -3923,28 +3987,28 @@ Makefile dependency cleanup(Jeroen van Vianen)
 ASSERT fixes(Bruce)
 
      _________________________________________________________________
-   
+
                                Release 6.3.1
-                                      
+
      Release date: 1998-03-23
-     
+
    Summary:
-   
+
      * Additional support for multibyte character sets.
      * Repair byte ordering for mixed-endian clients and servers.
      * Minor updates to allowed SQL syntax.
      * Improvements to the configuration autodetection for installation.
-       
+
    A dump/restore is NOT required for those running 6.3. A make
    distclean, make, and make install is all that is required. This last
    step should be performed while the postmaster is not running. You
    should re-link any custom applications that use PostgreSQL libraries.
-   
+
    For upgrades from pre-6.3 installations, refer to the installation and
    migration instructions for version 6.3.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 ecpg cleanup/fixes, now version 1.1(Michael Meskes)
 pg_user cleanup(Bruce)
@@ -3975,14 +4039,14 @@ Solaris compile fix(Albert Chin-A-Young)
 Better identify tcl and tk libs and includes(Bruce)
 
      _________________________________________________________________
-   
+
                                 Release 6.3
-                                      
+
      Release date: 1998-03-01
-     
+
    There are *many* new features and improvements in this release. Here
    is a brief, incomplete summary:
-   
+
      * Many new SQL features, including full SQL92 subselect capability
        (everything is here but target-list subselects).
      * Support for client-side environment variables to specify time zone
@@ -3993,14 +4057,14 @@ Better identify tcl and tk libs and includes(Bruce)
        have changed.
      * Old-style time travel has been removed. Performance has been
        improved.
-       
+
      Note: Bruce Momjian wrote the following notes to introduce the new
      release.
-     
+
    There are some general 6.3 issues that I want to mention. These are
    only the big items that can not be described in one sentence. A review
    of the detailed changes list is still needed.
-   
+
    First, we now have subselects. Now that we have them, I would like to
    mention that without subselects, SQL is a very limited language.
    Subselects are a major feature, and you should review your code for
@@ -4009,12 +4073,12 @@ Better identify tcl and tk libs and includes(Bruce)
    may think. Vadim has put us on the big SQL map with subselects, and
    fully functional ones too. The only thing you can't do with subselects
    is to use them in the target list.
-   
+
    Second, 6.3 uses Unix domain sockets rather than TCP/IP by default. To
    enable connections from other machines, you have to use the new
    postmaster -i option, and of course edit "pg_hba.conf". Also, for this
    reason, the format of "pg_hba.conf" has changed.
-   
+
    Third, char() fields will now allow faster access than varchar() or
    text. Specifically, the text and varchar() have a penalty for access
    to any columns after the first column of this type. char() used to
@@ -4022,7 +4086,7 @@ Better identify tcl and tk libs and includes(Bruce)
    that you redesign some of your tables, especially if you have short
    character columns that you have defined as varchar() or text. This and
    other changes make 6.3 even faster than earlier releases.
-   
+
    We now have passwords definable independent of any Unix file. There
    are new SQL USER commands. See the Administrator's Guide for more
    information. There is a new table, pg_shadow, which is used to store
@@ -4030,40 +4094,40 @@ Better identify tcl and tk libs and includes(Bruce)
    SELECT-able by the postgres super-user. pg_user is now a view of
    pg_shadow, and is SELECT-able by PUBLIC. You should keep using pg_user
    in your application without changes.
-   
+
    User-created tables now no longer have SELECT privilege to PUBLIC by
    default. This was done because the ANSI standard requires it. You can
    of course GRANT any privileges you want after the table is created.
    System tables continue to be SELECT-able by PUBLIC.
-   
+
    We also have real deadlock detection code. No more sixty-second
    timeouts. And the new locking code implements a FIFO better, so there
    should be less resource starvation during heavy use.
-   
+
    Many complaints have been made about inadequate documentation in
    previous releases. Thomas has put much effort into many new manuals
    for this release. Check out the doc/ directory.
-   
+
    For performance reasons, time travel is gone, but can be implemented
    using triggers (see "pgsql/contrib/spi/README"). Please check out the
    new \d command for types, operators, etc. Also, views have their own
    privileges now, not based on the underlying tables, so privileges on
    them have to be set separately. Check "/pgsql/interfaces" for some new
    ways to talk to PostgreSQL.
-   
+
    This is the first release that really required an explanation for
    existing users. In many ways, this was necessary because the new
    release removes many limitations, and the work-arounds people were
    using are no longer needed.
      _________________________________________________________________
-   
-Migration to version 6.3
+
+                          Migration to version 6.3
 
    A dump/restore using pg_dump or pg_dumpall is required for those
    wishing to migrate data from any previous release of PostgreSQL.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -4233,33 +4297,33 @@ Add string functions to regression suite(Thomas)
 Expand a few function names formerly truncated to 16 characters(Thomas)
 Remove un-needed malloc() calls and replace with palloc()(Bruce)
      _________________________________________________________________
-   
+
                                Release 6.2.1
-                                      
+
      Release date: 1997-10-17
-     
+
    6.2.1 is a bug-fix and usability release on 6.2.
-   
+
    Summary:
-   
+
      * Allow strings to span lines, per SQL92.
      * Include example trigger function for inserting user names on table
        updates.
-       
+
    This is a minor bug-fix release on 6.2. For upgrades from pre-6.2
    systems, a full dump/reload is required. Refer to the 6.2 release
    notes for instructions.
      _________________________________________________________________
-   
-Migration from version 6.2 to version 6.2.1
+
+                Migration from version 6.2 to version 6.2.1
 
    This is a minor bug-fix release. A dump/reload is not required from
    version 6.2, but is required from any release prior to 6.2.
-   
+
    In upgrading from version 6.2, if you choose to dump/reload you will
    find that avg(money) is now calculated correctly. All other bug fixes
    take effect upon updating the executables.
-   
+
    Another way to avoid dump/reload is to use the following SQL command
    from "psql" to update the existing system table:
   update pg_aggregate set aggfinalfn = 'cash_div_flt8'
@@ -4268,8 +4332,8 @@ Migration from version 6.2 to version 6.2.1
    This will need to be done to every existing database, including
    template1.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Allow TIME and TYPE column names(Thomas)
 Allow larger range of true/false as boolean values(Thomas)
@@ -4284,31 +4348,31 @@ Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
 Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
 
      _________________________________________________________________
-   
+
                                 Release 6.2
-                                      
+
      Release date: 1997-10-02
-     
+
    A dump/restore is required for those wishing to migrate data from
    previous releases of PostgreSQL.
      _________________________________________________________________
-   
-Migration from version 6.1 to version 6.2
+
+                 Migration from version 6.1 to version 6.2
 
    This migration requires a complete dump of the 6.1 database and a
    restore of the database in 6.2.
-   
+
    Note that the "pg_dump" and "pg_dumpall" utility from 6.2 should be
    used to dump the 6.1 database.
      _________________________________________________________________
-   
-Migration from version 1.x to version 6.2
+
+                 Migration from version 1.x to version 6.2
 
    Those migrating from earlier 1.* releases should first upgrade to 1.09
    because the COPY output format was improved from the 1.02 release.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -4423,20 +4487,20 @@ Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
 Files moved to /src/tools directory(Bruce)
 SPI and Trigger programming guides (Vadim & D'Arcy)
      _________________________________________________________________
-   
+
                                Release 6.1.1
-                                      
+
      Release date: 1997-07-22
      _________________________________________________________________
-   
-Migration from version 6.1 to version 6.1.1
+
+                Migration from version 6.1 to version 6.1.1
 
    This is a minor bug-fix release. A dump/reload is not required from
    version 6.1, but is required from any release prior to 6.1. Refer to
    the release notes for 6.1 for more details.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 fix for SET with options (Thomas)
 allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
@@ -4457,20 +4521,20 @@ allow underscores in usernames(Bruce)
 pg_dumpall now returns proper status, portability fix(Bruce)
 
      _________________________________________________________________
-   
+
                                 Release 6.1
-                                      
+
      Release date: 1997-06-08
-     
+
    The regression tests have been adapted and extensively modified for
    the 6.1 release of PostgreSQL.
-   
+
    Three new data types (datetime, timespan, and circle) have been added
    to the native set of PostgreSQL types. Points, boxes, paths, and
    polygons have had their output formats made consistent across the data
    types. The polygon output in misc.out has only been spot-checked for
    correctness relative to the original regression output.
-   
+
    PostgreSQL 6.1 introduces a new, alternate optimizer which uses
    genetic algorithms. These algorithms introduce a random behavior in
    the ordering of query results when the query contains multiple
@@ -4481,32 +4545,32 @@ pg_dumpall now returns proper status, portability fix(Bruce)
    inherently unordered (e.g. points and time intervals) and tests
    involving those types are explicitly bracketed with "set geqo to
    'off'" and "reset geqo".
-   
+
    The interpretation of array specifiers (the curly braces around atomic
    values) appears to have changed sometime after the original regression
    tests were generated. The current "./expected/*.out" files reflect
    this new interpretation, which may not be correct!
-   
+
    The float8 regression test fails on at least some platforms. This is
    due to differences in implementations of pow() and exp() and the
    signaling mechanisms used for overflow and underflow conditions.
-   
+
    The "random" results in the random test should cause the "random" test
    to be "failed", since the regression tests are evaluated using a
    simple diff. However, "random" does not seem to produce random results
    on my test machine (Linux/gcc/i686).
      _________________________________________________________________
-   
-Migration to version 6.1
+
+                          Migration to version 6.1
 
    This migration requires a complete dump of the 6.0 database and a
    restore of the database in 6.1.
-   
+
    Those migrating from earlier 1.* releases should first upgrade to 1.09
    because the COPY output format was improved from the 1.02 release.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -4603,28 +4667,28 @@ c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
 DG/UX, Ultrix, IRIX, AIX portability fixes
      _________________________________________________________________
-   
+
                                 Release 6.0
-                                      
+
      Release date: 1997-01-29
-     
+
    A dump/restore is required for those wishing to migrate data from
    previous releases of PostgreSQL.
      _________________________________________________________________
-   
-Migration from version 1.09 to version 6.0
+
+                 Migration from version 1.09 to version 6.0
 
    This migration requires a complete dump of the 1.09 database and a
    restore of the database in 6.0.
      _________________________________________________________________
-   
-Migration from pre-1.09 to version 6.0
+
+                   Migration from pre-1.09 to version 6.0
 
    Those migrating from earlier 1.* releases should first upgrade to 1.09
    because the COPY output format was improved from the 1.02 release.
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Bug Fixes
 ---------
@@ -4732,33 +4796,33 @@ Restructured object file generation/location(Bryan, Marc)
 Restructured port-specific file locations(Bryan, Marc)
 Unused/uninialized variables corrected
      _________________________________________________________________
-   
+
                                 Release 1.09
-                                      
+
      Release date: 1996-11-04
-     
+
    Sorry, we didn't keep track of changes from 1.02 to 1.09. Some of the
    changes listed in 6.0 were actually included in the 1.02.1 to 1.09
    releases.
      _________________________________________________________________
-   
+
                                 Release 1.02
-                                      
+
      Release date: 1996-08-01
      _________________________________________________________________
-   
-Migration from version 1.02 to version 1.02.1
+
+               Migration from version 1.02 to version 1.02.1
 
    Here is a new migration file for 1.02.1. It includes the 'copy' change
    and a script to convert old ASCII files.
-   
+
      Note: The following notes are for the benefit of users who want to
      migrate databases from Postgres95 1.01 and 1.02 to Postgres95
      1.02.1.
-     
+
      If you are starting afresh with Postgres95 1.02.1 and do not need
      to migrate old databases, you do not need to read any further.
-     
+
    In order to upgrade older Postgres95 version 1.01 or 1.02 databases to
    version 1.02.1, the following steps are required:
     1. Start up a new 1.02.1 postmaster
@@ -4774,8 +4838,8 @@ Migration from version 1.02 to version 1.02.1
        the last two statements in the file because they are already
        present in 1.02. This is not a cause for concern.
      _________________________________________________________________
-   
-Dump/Reload Procedure
+
+                           Dump/Reload Procedure
 
    If you are trying to reload a pg_dump or text-mode, copy tablename to
    stdout generated with a previous version, you will need to run the
@@ -4798,8 +4862,8 @@ eq);
 create operator !~* (leftarg = varchar, rightarg = text, procedure = texticrege
 xne);
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Source code maintenance and development
  * worldwide team of volunteers
@@ -4827,20 +4891,20 @@ New Ports
  * added BSD/OS 2.1 port
  * added DG/UX port
      _________________________________________________________________
-   
+
                                 Release 1.01
-                                      
+
      Release date: 1996-02-23
      _________________________________________________________________
-   
-Migration from version 1.0 to version 1.01
+
+                 Migration from version 1.0 to version 1.01
 
    The following notes are for the benefit of users who want to migrate
    databases from Postgres95 1.0 to Postgres95 1.01.
-   
+
    If you are starting afresh with Postgres95 1.01 and do not need to
    migrate old databases, you do not need to read any further.
-   
+
    In order to Postgres95 version 1.01 with databases created with
    Postgres95 version 1.0, the following steps are required:
     1. Set the definition of NAMEDATALEN in "src/Makefile.global" to 16
@@ -4922,8 +4986,8 @@ create operator ~* (leftarg = text, rightarg = text, procedure = texticregexeq)
 create operator !~* (leftarg = text, rightarg = text, procedure = texticregexne
 );
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Incompatibilities:
  * 1.01 is backwards compatible with 1.0 database provided the user
@@ -4958,13 +5022,13 @@ Bug fixes:
  * psql now returns non-zero status on errors when using -c
  * applied public patches 1-14
      _________________________________________________________________
-   
+
                                 Release 1.0
-                                      
+
      Release date: 1995-09-05
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Copyright change:
  * The copyright of Postgres 1.0 has been loosened to be freely modifiable
@@ -5006,13 +5070,13 @@ Bug fixes:
  *  btrees with multiple index never worked, now we tell you they don't
    work when you try to use them
      _________________________________________________________________
-   
+
                           Postgres95 Release 0.03
-                                      
+
      Release date: 1995-07-21
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Incompatible changes:
  * BETA-0.3 IS INCOMPATIBLE WITH DATABASES CREATED WITH PREVIOUS VERSIONS
@@ -5120,13 +5184,13 @@ New utilities:
 New documentation:
  * the user manual has been revised and libpq documentation added.
      _________________________________________________________________
-   
+
                           Postgres95 Release 0.02
-                                      
+
      Release date: 1995-05-25
      _________________________________________________________________
-   
-Changes
+
+                                  Changes
 
 Incompatible changes:
  * The SQL statement for creating a database is 'CREATE DATABASE' instead
@@ -5162,9 +5226,9 @@ The following bugs have been fixed in postgres95-beta-0.02:
  * CREATE TYPE doesn't accept 'variable' as the internallength
  * wrong result using more than 1 aggregate in a SELECT
      _________________________________________________________________
-   
+
                           Postgres95 Release 0.01
-                                      
+
      Release date: 1995-05-01
-     
+
    Initial release.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.257 2004/03/05 19:51:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.258 2004/03/07 22:07:56 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.257 2004/03/05 19:51:56 momjian
 
    <note>
    <title>Release date</title>
-   <simpara>2004-03-??</simpara>
+   <simpara>2004-03-08</simpara>
    </note>
 
    <para>
@@ -22,37 +22,125 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.257 2004/03/05 19:51:56 momjian
     <title>Migration to version 7.4.2</title>
 
     <para>
-     A dump/restore is <emphasis>not</emphasis> required for those
-     running 7.4.X.
+     A dump/restore is not required for those running 7.4.X.  However,
+     it may be advisable as the easiest method of incorporating fixes for
+     two errors that have been found in the initial contents of 7.4.X system
+     catalogs.  A dump/initdb/reload sequence using 7.4.2's initdb will
+     automatically correct these problems.
     </para>
 
+    <para>
+     The more severe of the two errors is that data type <type>anyarray</>
+     has the wrong alignment label; this is a problem because the
+     <structname>pg_statistic</> system catalog uses <type>anyarray</>
+     columns.  The mislabeling can cause planner misestimations and even
+     crashes when planning queries that involve <literal>WHERE</> clauses on
+     double-aligned columns (such as <type>float8</> and <type>timestamp</>).
+     It is strongly recommended that all installations repair this error,
+     either by initdb or by following the manual repair procedure given
+     below.
+    </para>
+
+    <para>
+     The lesser error is that the system view <structname>pg_settings</>
+     ought to be marked as having public update access, to allow
+     <literal>UPDATE pg_settings</> to be used as a substitute for
+     <command>SET</>.  This can also be fixed either by initdb or manually,
+     but it is not necessary to fix unless you want to use <literal>UPDATE
+     pg_settings</>.
+    </para>
+
+    <para>
+     If you wish not to do an initdb, the following procedure will work
+     for fixing <structname>pg_statistic</>.  As the database superuser,
+     do:
+
+<programlisting>
+-- clear out old data in pg_statistic:
+DELETE FROM pg_statistic;
+VACUUM pg_statistic;
+-- this should update 1 row:
+UPDATE pg_type SET typalign = 'd' WHERE oid = 2277;
+-- this should update 6 rows:
+UPDATE pg_attribute SET attalign = 'd' WHERE atttypid = 2277;
+--     
+-- At this point you MUST start a fresh backend to avoid a crash!
+--
+-- repopulate pg_statistic:
+ANALYZE;
+</programlisting>
+
+     This can be done in a live database, but beware that all backends
+     running in the altered database must be restarted before it is safe to
+     repopulate <structname>pg_statistic</>.
+    </para>
+
+    <para>
+     To repair the <structname>pg_settings</> error, simply do:
+<programlisting>
+GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
+</programlisting>
+    </para>
+
+    <para>
+     The above procedures must be carried out in <emphasis>each</> database
+     of an installation, including <literal>template1</>, and ideally
+     including <literal>template0</> as well.  If you do not fix the
+     template databases then any subsequently created databases will contain
+     the same errors.  <literal>template1</> can be fixed in the same way
+     as any other database, but fixing <literal>template0</> requires
+     additional steps.  First, from any database issue
+<programlisting>
+UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
+</programlisting>
+      Next connect to <literal>template0</> and perform the above repair
+      procedures.  Finally, do
+<programlisting>
+-- re-freeze template0:
+VACUUM FREEZE;
+-- and protect it against future alterations:
+UPDATE pg_database SET datallowconn = false WHERE datname = 'template0';
+</programlisting>
+    </para>
    </sect2>
 
    <sect2>
     <title>Changes</title>
 
-<para>As of 2004-03-02</para>
+<para>
+    Release 7.4.2 incorporates all the fixes included in release 7.3.6,
+    plus the following fixes:
+</para>
 
 <itemizedlist>
-<listitem><para>Fix problems with ALTER TABLE during concurrent access (Tom)</para></listitem>
-<listitem><para>Improve hash build reliability (Tom)</para></listitem>
-<listitem><para>Fix statistics alignment bug that could affect optimizer, initdb required (Tom)</para></listitem>
-<listitem><para>Optimizer improvements (Tom)</para></listitem>
-<listitem><para>Permission fix for view updates (Tom)</para></listitem>
-<listitem><para>Allow non-super users to update pg_settings (Tom)</para></listitem>
-<listitem><para>Fix for multibyte handling in position() (Korea PostgreSQL Users' Group)</para></listitem>
-<listitem><para>Various multibyte fixes</para></listitem>
-<listitem><para>Fix problem with hitting open file limit, especially on OS X (Tom)</para></listitem>
-<listitem><para>Have pg_dump set client encoding on restore (Tom)</para></listitem>
+<listitem><para>Fix <structname>pg_statistics</> alignment bug that could crash optimizer</para>
+<para>See above for details about this problem.</para></listitem>
+<listitem><para>Allow non-super users to update <structname>pg_settings</></para></listitem>
+<listitem><para>Fix several optimizer bugs, most of which led to
+<quote>variable not found in subplan target lists</> errors</para></listitem>
+<listitem><para>Avoid out-of-memory failure during startup of large multiple
+index scan</para></listitem>
+<listitem><para>Fix multibyte problem that could lead to <quote>out of
+memory</> error during <command>COPY IN</></para></listitem>
+<listitem><para>Fix problems with <command>SELECT INTO</> / <command>CREATE
+TABLE AS</> from tables without OIDs</para></listitem>
+<listitem><para>Fix problems with <filename>alter_table</> regression test
+during parallel testing</para></listitem>
+<listitem><para>Fix problems with hitting open file limit, especially on OS X (Tom)</para></listitem>
+<listitem><para>Partial fix for Turkish-locale issues</para>
+<para>initdb will succeed now in Turkish locale, but there are still some
+inconveniences associated with the <literal>i/I</> problem.</para></listitem>
+<listitem><para>Make pg_dump set client encoding on restore</para></listitem>
+<listitem><para>Other minor pg_dump fixes</para></listitem>
 <listitem><para>Allow ecpg to again use C keywords as column names (Michael)</para></listitem>
-<listitem><para>Added ecpg WHENEVER NOT_FOUND to SELECT/INSERT/UPDATE/DELETE (Michael)</para></listitem>
+<listitem><para>Added ecpg <literal>WHENEVER NOT_FOUND</> to
+<literal>SELECT/INSERT/UPDATE/DELETE</> (Michael)</para></listitem> 
 <listitem><para>Fix ecpg crash for queries calling set-returning functions (Michael)</para></listitem>
-<listitem><para>Various ecpg fixes (Michael)</para></listitem>
+<listitem><para>Various other ecpg fixes (Michael)</para></listitem>
 <listitem><para>Fixes for Borland compiler</para></listitem>
 <listitem><para>Thread build improvements (Bruce)</para></listitem>
-<listitem><para>Fix for configure --disable-shared support (Tom)</para></listitem>
-<listitem><para>Various build fixes</para></listitem>
-<listitem><para>Various jdbc fixes</para></listitem>
+<listitem><para>Various other build fixes</para></listitem>
+<listitem><para>Various JDBC fixes</para></listitem>
 </itemizedlist>
 
   </sect2>
