@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.10 1998/02/02 02:12:34 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.11 1998/02/05 03:35:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,7 +728,7 @@ func_get_detail(char *funcname,
 							 funcname);
 						elog(NOTICE, "that satisfies the given argument types. you will have to");
 						elog(NOTICE, "retype your query using explicit typecasts.");
-						func_error("func_get_detail", funcname, nargs, oid_array);
+						func_error(funcname, nargs, oid_array);
 					}
 					else
 					{
@@ -758,7 +758,7 @@ func_get_detail(char *funcname,
 				elog(ERROR, "no such attribute or function \"%s\"",
 					 funcname);
 		}
-		func_error("func_get_detail", funcname, nargs, oid_array);
+		func_error(funcname, nargs, oid_array);
 	}
 	else
 	{
@@ -1276,7 +1276,7 @@ ParseComplexProjection(ParseState *pstate,
  * argument types
  */
 void
-func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
+func_error(char *funcname, int nargs, Oid *argtypes)
 {
 	char		p[(NAMEDATALEN + 2) * MAXFMGRARGS],
 			   *ptr;
@@ -1301,5 +1301,5 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 		ptr += strlen(ptr);
 	}
 
-	elog(ERROR, "%s: function %s(%s) does not exist", caller, funcname, p);
+	elog(ERROR, "function %s(%s) does not exist", funcname, p);
 }
