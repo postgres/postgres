@@ -97,7 +97,6 @@ range:
 	    ((SEG *)result)->l_ext = ( $1.ext ? $1.ext : '\0' );
 	    ((SEG *)result)->u_ext = '-';
           }
-      ;
       |
           RANGE boundary {
 	    ((SEG *)result)->lower = -HUGE;
