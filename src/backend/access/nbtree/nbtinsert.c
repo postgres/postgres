@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.49 1999/07/19 07:07:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.50 1999/08/09 01:39:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,17 +392,18 @@ _bt_insertonpg(Relation rel,
 		bool		is_root = lpageop->btpo_flags & BTP_ROOT;
 
 		/*
-		 * If we have to split leaf page in the chain of duplicates by new
-		 * duplicate then we try to look at our right sibling first.
+		 * Instead of splitting leaf page in the chain of duplicates 
+		 * by new duplicate, insert it into some right page.
 		 */
 		if ((lpageop->btpo_flags & BTP_CHAIN) &&
 			(lpageop->btpo_flags & BTP_LEAF) && keys_equal)
 		{
-			bool		use_left = true;
-
 			rbuf = _bt_getbuf(rel, lpageop->btpo_next, BT_WRITE);
 			rpage = BufferGetPage(rbuf);
 			rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
+			/* 
+			 * some checks 
+			 */
 			if (!P_RIGHTMOST(rpageop))	/* non-rightmost page */
 			{					/* If we have the same hikey here then
 								 * it's yet another page in chain. */
@@ -418,32 +419,20 @@ _bt_insertonpg(Relation rel,
 									 BTGreaterStrategyNumber))
 					elog(FATAL, "btree: hikey is out of order");
 				else if (rpageop->btpo_flags & BTP_CHAIN)
-
 					/*
 					 * If hikey > scankey then it's last page in chain and
 					 * BTP_CHAIN must be OFF
 					 */
 					elog(FATAL, "btree: lost last page in the chain of duplicates");
-
-				/* if there is room here then we use this page. */
-				if (PageGetFreeSpace(rpage) > itemsz)
-					use_left = false;
 			}
 			else
 /* rightmost page */
 			{
 				Assert(!(rpageop->btpo_flags & BTP_CHAIN));
-				/* if there is room here then we use this page. */
-				if (PageGetFreeSpace(rpage) > itemsz)
-					use_left = false;
 			}
-			if (!use_left)		/* insert on the right page */
-			{
-				_bt_relbuf(rel, buf, BT_WRITE);
-				return (_bt_insertonpg(rel, rbuf, stack, keysz,
-									   scankey, btitem, afteritem));
-			}
-			_bt_relbuf(rel, rbuf, BT_WRITE);
+			_bt_relbuf(rel, buf, BT_WRITE);
+			return (_bt_insertonpg(rel, rbuf, stack, keysz,
+								   scankey, btitem, afteritem));
 		}
 
 		/*
