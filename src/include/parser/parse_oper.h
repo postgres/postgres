@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.23 2002/11/29 21:39:12 tgl Exp $
+ * $Id: parse_oper.h,v 1.24 2003/04/08 23:20:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,5 +48,10 @@ extern Oid	ordering_oper_opid(Oid argtype);
 /* Extract operator OID or underlying-function OID from an Operator tuple */
 extern Oid	oprid(Operator op);
 extern Oid	oprfuncid(Operator op);
+
+/* Build expression tree for an operator invocation */
+extern Expr *make_op(List *opname, Node *ltree, Node *rtree);
+extern Expr *make_op_expr(Operator op, Node *ltree, Node *rtree,
+						  Oid ltypeId, Oid rtypeId);
 
 #endif   /* PARSE_OPER_H */

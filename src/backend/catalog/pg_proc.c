@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.95 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.96 2003/04/08 23:20:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,6 +85,29 @@ ProcedureCreate(const char *procedureName,
 	if (parameterCount < 0 || parameterCount > FUNC_MAX_ARGS)
 		elog(ERROR, "functions cannot have more than %d arguments",
 			 FUNC_MAX_ARGS);
+
+	/*
+	 * Do not allow return type ANYARRAY or ANYELEMENT unless at least one
+	 * argument is also ANYARRAY or ANYELEMENT
+	 */
+	if (returnType == ANYARRAYOID || returnType == ANYELEMENTOID)
+	{
+		bool	genericParam = false;
+
+		for (i = 0; i < parameterCount; i++)
+		{
+			if (parameterTypes[i] == ANYARRAYOID ||
+				parameterTypes[i] == ANYELEMENTOID)
+			{
+				genericParam = true;
+				break;
+			}
+		}
+
+		if (!genericParam)
+			elog(ERROR, "functions returning ANYARRAY or ANYELEMENT must " \
+						"have at least one argument of either type");
+	}
 
 	/* Make sure we have a zero-padded param type array */
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));

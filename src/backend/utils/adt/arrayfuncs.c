@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.86 2003/01/29 01:28:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.87 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,9 @@
 #include "catalog/pg_type.h"
 #include "parser/parse_coerce.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -763,7 +765,11 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	int32		len = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	FmgrInfo   *fmgr_info = fcinfo->flinfo;
-	FmgrInfo   *element_finfo;
+	typedef struct {
+		Oid			elemtype;
+		FmgrInfo	coerce_finfo;
+	} alc_extra;
+	alc_extra  *my_extra;
 	FunctionCallInfoData locfcinfo;
 
 	/* If no typmod is provided, shortcircuit the whole thing */
@@ -772,33 +778,38 @@ array_length_coerce(PG_FUNCTION_ARGS)
 
 	/*
 	 * We arrange to look up the element type's coercion function only
-	 * once per series of calls.
+	 * once per series of calls, assuming the element type doesn't change
+	 * underneath us.
 	 */
-	if (fmgr_info->fn_extra == NULL)
+	my_extra = (alc_extra *) fmgr_info->fn_extra;
+	if (my_extra == NULL)
+	{
+		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
+												 sizeof(alc_extra));
+		my_extra = (alc_extra *) fmgr_info->fn_extra;
+		my_extra->elemtype = InvalidOid;
+	}
+
+	if (my_extra->elemtype != ARR_ELEMTYPE(v))
 	{
 		Oid			funcId;
 		int			nargs;
 
-		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
-												 sizeof(FmgrInfo));
-		element_finfo = (FmgrInfo *) fmgr_info->fn_extra;
-
 		funcId = find_typmod_coercion_function(ARR_ELEMTYPE(v), &nargs);
 
 		if (OidIsValid(funcId))
-			fmgr_info_cxt(funcId, element_finfo, fmgr_info->fn_mcxt);
+			fmgr_info_cxt(funcId, &my_extra->coerce_finfo, fmgr_info->fn_mcxt);
 		else
-			element_finfo->fn_oid = InvalidOid;
+			my_extra->coerce_finfo.fn_oid = InvalidOid;
+		my_extra->elemtype = ARR_ELEMTYPE(v);
 	}
-	else
-		element_finfo = (FmgrInfo *) fmgr_info->fn_extra;
 
 	/*
 	 * If we didn't find a coercion function, return the array unmodified
 	 * (this should not happen in the normal course of things, but might
 	 * happen if this function is called manually).
 	 */
-	if (element_finfo->fn_oid == InvalidOid)
+	if (my_extra->coerce_finfo.fn_oid == InvalidOid)
 		PG_RETURN_ARRAYTYPE_P(v);
 
 	/*
@@ -807,7 +818,7 @@ array_length_coerce(PG_FUNCTION_ARGS)
 	 * Note: we pass isExplicit whether or not the function wants it ...
 	 */
 	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = element_finfo;
+	locfcinfo.flinfo = &my_extra->coerce_finfo;
 	locfcinfo.nargs = 3;
 	locfcinfo.arg[0] = PointerGetDatum(v);
 	locfcinfo.arg[1] = Int32GetDatum(len);
@@ -1617,9 +1628,9 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
  * NULL element values are not supported.
  *
  * NOTE: it would be cleaner to look up the elmlen/elmbval/elmalign info
- * from the system catalogs, given the elmtype.  However, in most current
- * uses the type is hard-wired into the caller and so we can save a lookup
- * cycle by hard-wiring the type info as well.
+ * from the system catalogs, given the elmtype.  However, the caller is
+ * in a better position to cache this info across multiple uses, or even
+ * to hard-wire values if the element type is hard-wired.
  *----------
  */
 ArrayType *
@@ -1627,9 +1638,53 @@ construct_array(Datum *elems, int nelems,
 				Oid elmtype,
 				int elmlen, bool elmbyval, char elmalign)
 {
+	int		dims[1];
+	int		lbs[1];
+
+	dims[0] = nelems;
+	lbs[0] = 1;
+
+	return construct_md_array(elems, 1, dims, lbs,
+							  elmtype, elmlen, elmbyval, elmalign);
+}
+
+/*----------
+ * construct_md_array	--- simple method for constructing an array object
+ *							with arbitrary dimensions
+ *
+ * elems: array of Datum items to become the array contents
+ * ndims: number of dimensions
+ * dims: integer array with size of each dimension
+ * lbs: integer array with lower bound of each dimension
+ * elmtype, elmlen, elmbyval, elmalign: info for the datatype of the items
+ *
+ * A palloc'd ndims-D array object is constructed and returned.  Note that
+ * elem values will be copied into the object even if pass-by-ref type.
+ * NULL element values are not supported.
+ *
+ * NOTE: it would be cleaner to look up the elmlen/elmbval/elmalign info
+ * from the system catalogs, given the elmtype.  However, the caller is
+ * in a better position to cache this info across multiple uses, or even
+ * to hard-wire values if the element type is hard-wired.
+ *----------
+ */
+ArrayType *
+construct_md_array(Datum *elems,
+				   int ndims,
+				   int *dims,
+				   int *lbs,
+				   Oid elmtype, int elmlen, bool elmbyval, char elmalign)
+{
 	ArrayType  *result;
 	int			nbytes;
 	int			i;
+	int			nelems;
+
+	if (ndims < 1 || ndims > MAXDIM)
+		elog(ERROR, "Number of array dimensions, %d, exceeds the maximum allowed (%d)",
+			 ndims, MAXDIM);
+
+	nelems = ArrayGetNItems(ndims, dims);
 
 	/* compute required space */
 	if (elmlen > 0)
@@ -1648,17 +1703,16 @@ construct_array(Datum *elems, int nelems,
 		}
 	}
 
-	/* Allocate and initialize 1-D result array */
-	nbytes += ARR_OVERHEAD(1);
+	/* Allocate and initialize ndims-D result array */
+	nbytes += ARR_OVERHEAD(ndims);
 	result = (ArrayType *) palloc(nbytes);
 
 	result->size = nbytes;
-	result->ndim = 1;
+	result->ndim = ndims;
 	result->flags = 0;
 	result->elemtype = elmtype;
-	ARR_DIMS(result)[0] = nelems;
-	ARR_LBOUND(result)[0] = 1;
-
+	memcpy((char *) ARR_DIMS(result), (char *) dims, ndims * sizeof(int));
+	memcpy((char *) ARR_LBOUND(result), (char *) lbs, ndims * sizeof(int));
 	CopyArrayEls(ARR_DATA_PTR(result), elems, nelems,
 				 elmlen, elmbyval, elmalign, false);
 
@@ -2034,4 +2088,83 @@ array_insert_slice(int ndim,
 
 	/* don't miss any data at the end */
 	memcpy(destPtr, origPtr, origEndpoint - origPtr);
+}
+
+/*
+ * array_type_coerce -- allow explicit or assignment coercion from
+ * one array type to another.
+ * 
+ * Caller should have already verified that the source element type can be
+ * coerced into the target element type.
+ */
+Datum
+array_type_coerce(PG_FUNCTION_ARGS)
+{
+	ArrayType  *src = PG_GETARG_ARRAYTYPE_P(0);
+	Oid			src_elem_type = ARR_ELEMTYPE(src);
+	FmgrInfo   *fmgr_info = fcinfo->flinfo;
+	typedef struct {
+		Oid			srctype;
+		Oid			desttype;
+		FmgrInfo	coerce_finfo;
+	} atc_extra;
+	atc_extra  *my_extra;
+	FunctionCallInfoData locfcinfo;
+
+	/*
+	 * We arrange to look up the coercion function only once per series of
+	 * calls, assuming the input data type doesn't change underneath us.
+	 * (Output type can't change.)
+	 */
+	my_extra = (atc_extra *) fmgr_info->fn_extra;
+	if (my_extra == NULL)
+	{
+		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
+												 sizeof(atc_extra));
+		my_extra = (atc_extra *) fmgr_info->fn_extra;
+		my_extra->srctype = InvalidOid;
+	}
+
+	if (my_extra->srctype != src_elem_type)
+	{
+		Oid			tgt_type = get_fn_expr_rettype(fcinfo);
+		Oid			tgt_elem_type;
+		Oid			funcId;
+
+		if (tgt_type == InvalidOid)
+			elog(ERROR, "Cannot determine target array type");
+		tgt_elem_type = get_element_type(tgt_type);
+		if (tgt_elem_type == InvalidOid)
+			elog(ERROR, "Target type is not an array");
+
+		if (!find_coercion_pathway(tgt_elem_type, src_elem_type,
+								   COERCION_EXPLICIT, &funcId))
+		{
+			/* should never happen, but check anyway */
+			elog(ERROR, "no conversion function from %s to %s",
+				 format_type_be(src_elem_type), format_type_be(tgt_elem_type));
+		}
+		if (OidIsValid(funcId))
+			fmgr_info_cxt(funcId, &my_extra->coerce_finfo, fmgr_info->fn_mcxt);
+		else
+			my_extra->coerce_finfo.fn_oid = InvalidOid;
+		my_extra->srctype = src_elem_type;
+		my_extra->desttype = tgt_elem_type;
+	}
+
+	/*
+	 * If it's binary-compatible, return the array unmodified.
+	 */
+	if (my_extra->coerce_finfo.fn_oid == InvalidOid)
+		PG_RETURN_ARRAYTYPE_P(src);
+
+	/*
+	 * Use array_map to apply the function to each array element.
+	 */
+	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
+	locfcinfo.flinfo = &my_extra->coerce_finfo;
+	locfcinfo.nargs = 1;
+	locfcinfo.arg[0] = PointerGetDatum(src);
+
+	return array_map(&locfcinfo, my_extra->srctype, my_extra->desttype);
 }

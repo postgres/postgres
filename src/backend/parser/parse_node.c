@@ -8,25 +8,21 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.76 2002/12/12 20:35:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.77 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/heapam.h"
-#include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_node.h"
-#include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
-#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/varbit.h"
 
@@ -47,99 +43,6 @@ make_parsestate(ParseState *parentParseState)
 
 	return pstate;
 }
-
-
-/* make_operand()
- * Ensure argument type match by forcing conversion of constants.
- */
-Node *
-make_operand(Node *tree, Oid orig_typeId, Oid target_typeId)
-{
-	Node	   *result;
-
-	if (tree != NULL)
-	{
-		/* must coerce? */
-		if (target_typeId != orig_typeId)
-			result = coerce_type(tree, orig_typeId, target_typeId,
-								 COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
-		else
-			result = tree;
-	}
-	else
-	{
-		/* otherwise, this is a NULL value */
-		result = (Node *) makeNullConst(target_typeId);
-	}
-
-	return result;
-}	/* make_operand() */
-
-
-/* make_op()
- * Operator construction.
- *
- * Transform operator expression ensuring type compatibility.
- * This is where some type conversion happens.
- */
-Expr *
-make_op(List *opname, Node *ltree, Node *rtree)
-{
-	Oid			ltypeId,
-				rtypeId;
-	Operator	tup;
-	Form_pg_operator opform;
-	Node	   *left,
-			   *right;
-	OpExpr	   *result;
-
-	ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
-	rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
-
-	/* right operator? */
-	if (rtree == NULL)
-	{
-		tup = right_oper(opname, ltypeId, false);
-		opform = (Form_pg_operator) GETSTRUCT(tup);
-		left = make_operand(ltree, ltypeId, opform->oprleft);
-		right = NULL;
-	}
-
-	/* left operator? */
-	else if (ltree == NULL)
-	{
-		tup = left_oper(opname, rtypeId, false);
-		opform = (Form_pg_operator) GETSTRUCT(tup);
-		right = make_operand(rtree, rtypeId, opform->oprright);
-		left = NULL;
-	}
-
-	/* otherwise, binary operator */
-	else
-	{
-		tup = oper(opname, ltypeId, rtypeId, false);
-		opform = (Form_pg_operator) GETSTRUCT(tup);
-		left = make_operand(ltree, ltypeId, opform->oprleft);
-		right = make_operand(rtree, rtypeId, opform->oprright);
-	}
-
-	result = makeNode(OpExpr);
-	result->opno = oprid(tup);
-	result->opfuncid = InvalidOid;
-	result->opresulttype = opform->oprresult;
-	result->opretset = get_func_retset(opform->oprcode);
-
-	if (!left)
-		result->args = makeList1(right);
-	else if (!right)
-		result->args = makeList1(left);
-	else
-		result->args = makeList2(left, right);
-
-	ReleaseSysCache(tup);
-
-	return (Expr *) result;
-}	/* make_op() */
 
 
 /*
@@ -193,10 +96,8 @@ transformArraySubscripts(ParseState *pstate,
 {
 	Oid			elementType,
 				resultType;
-	HeapTuple	type_tuple_array,
-				type_tuple_element;
-	Form_pg_type type_struct_array,
-				type_struct_element;
+	HeapTuple	type_tuple_array;
+	Form_pg_type type_struct_array;
 	bool		isSlice = forceSlice;
 	List	   *upperIndexpr = NIL;
 	List	   *lowerIndexpr = NIL;
@@ -216,15 +117,6 @@ transformArraySubscripts(ParseState *pstate,
 	if (elementType == InvalidOid)
 		elog(ERROR, "transformArraySubscripts: type %s is not an array",
 			 NameStr(type_struct_array->typname));
-
-	/* Get the type tuple for the array element type */
-	type_tuple_element = SearchSysCache(TYPEOID,
-										ObjectIdGetDatum(elementType),
-										0, 0, 0);
-	if (!HeapTupleIsValid(type_tuple_element))
-		elog(ERROR, "transformArraySubscripts: Cache lookup failed for array element type %u",
-			 elementType);
-	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple_element);
 
 	/*
 	 * A list containing only single subscripts refers to a single array
@@ -330,19 +222,15 @@ transformArraySubscripts(ParseState *pstate,
 	 * Ready to build the ArrayRef node.
 	 */
 	aref = makeNode(ArrayRef);
-	aref->refrestype = resultType;		/* XXX should save element type
-										 * OID too */
-	aref->refattrlength = type_struct_array->typlen;
-	aref->refelemlength = type_struct_element->typlen;
-	aref->refelembyval = type_struct_element->typbyval;
-	aref->refelemalign = type_struct_element->typalign;
+	aref->refrestype = resultType;
+	aref->refarraytype = arrayType;
+	aref->refelemtype = elementType;
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = (Expr *) arrayBase;
 	aref->refassgnexpr = (Expr *) assignFrom;
 
 	ReleaseSysCache(type_tuple_array);
-	ReleaseSysCache(type_tuple_element);
 
 	return aref;
 }

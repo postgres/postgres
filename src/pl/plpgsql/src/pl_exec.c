@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.84 2003/03/27 16:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.85 2003/04/08 23:20:04 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3600,6 +3600,16 @@ exec_simple_check_node(Node *node)
 				if (!exec_simple_check_node((Node *) when->expr))
 					return FALSE;
 				if (!exec_simple_check_node((Node *) when->result))
+					return FALSE;
+
+				return TRUE;
+			}
+
+		case T_ArrayExpr:
+			{
+				ArrayExpr   *expr = (ArrayExpr *) node;
+
+				if (!exec_simple_check_node((Node *) expr->elements))
 					return FALSE;
 
 				return TRUE;

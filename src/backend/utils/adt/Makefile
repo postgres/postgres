@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.53 2002/08/22 00:01:43 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.54 2003/04/08 23:20:02 tgl Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -15,8 +15,8 @@ override CFLAGS+= -mieee
 endif
 endif
 
-OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o \
-	date.o datetime.o datum.o float.o format_type.o \
+OBJS = acl.o arrayfuncs.o array_userfuncs.o arrayutils.o bool.o \
+	cash.o char.o date.o datetime.o datum.o float.o format_type.o \
 	geo_ops.o geo_selfuncs.o int.o int8.o like.o lockfuncs.o \
 	misc.o nabstime.o name.o not_in.o numeric.o numutils.o \
 	oid.o oracle_compat.o pseudotypes.o \

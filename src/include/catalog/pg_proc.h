@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.291 2003/04/04 03:03:54 tgl Exp $
+ * $Id: pg_proc.h,v 1.292 2003/04/08 23:20:03 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1000,6 +1000,22 @@ DATA(insert OID = 2091 (  array_lower	   PGNSP PGUID 12 f f t f i 2 23 "2277 23"
 DESCR("array lower dimension");
 DATA(insert OID = 2092 (  array_upper	   PGNSP PGUID 12 f f t f i 2 23 "2277 23" array_upper - _null_ ));
 DESCR("array upper dimension");
+DATA(insert OID = 377 (  singleton_array  PGNSP PGUID 12 f f t f i 1 2277 "2283" singleton_array - _null_ ));
+DESCR("create array from single element");
+DATA(insert OID = 378 (  array_append	   PGNSP PGUID 12 f f t f i 2 2277 "2277 2283" array_push - _null_ ));
+DESCR("append element onto end of array");
+DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 f f t f i 2 2277 "2283 2277" array_push - _null_ ));
+DESCR("prepend element onto front of array");
+DATA(insert OID = 380 (  array_accum	   PGNSP PGUID 12 f f f f i 2 2277 "2277 2283" array_accum - _null_ ));
+DESCR("push element onto end of array, creating array if needed");
+DATA(insert OID = 381 (  array_assign	   PGNSP PGUID 12 f f t f i 3 2277 "2277 23 2283" array_assign - _null_ ));
+DESCR("assign specific array element");
+DATA(insert OID = 382 (  array_subscript  PGNSP PGUID 12 f f t f i 2 2283 "2277 23" array_subscript - _null_ ));
+DESCR("return specific array element");
+DATA(insert OID = 383 (  array_cat	       PGNSP PGUID 12 f f t f i 2 2277 "2277 2277" array_cat - _null_ ));
+DESCR("concatenate two arrays");
+DATA(insert OID = 384  (  array_coerce	   PGNSP PGUID 12 f f t f i 1 2277 "2277" array_type_coerce - _null_ ));
+DESCR("coerce array type to another array type");
 
 DATA(insert OID = 760 (  smgrin			   PGNSP PGUID 12 f f t f s 1 210 "2275"  smgrin - _null_ ));
 DESCR("storage manager(internal)");
@@ -3127,10 +3143,15 @@ DATA(insert OID = 2306 (  opaque_in			PGNSP PGUID 12 f f t f i 1 2282 "2275"	opa
 DESCR("(internal)");
 DATA(insert OID = 2307 (  opaque_out		PGNSP PGUID 12 f f t f i 1 2275 "2282"	opaque_out - _null_ ));
 DESCR("(internal)");
+DATA(insert OID = 2312 (  anyelement_in		PGNSP PGUID 12 f f t f i 1 2283 "2275"	anyelement_in - _null_ ));
+DESCR("(internal)");
+DATA(insert OID = 2313 (  anyelement_out	PGNSP PGUID 12 f f t f i 1 2275 "2283"	anyelement_out - _null_ ));
+DESCR("(internal)");
 
 /* cryptographic */
 DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 f f t f i 1 25 "25"  md5_text - _null_ ));
 DESCR("calculates md5 hash");
+
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

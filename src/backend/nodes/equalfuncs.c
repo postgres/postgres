@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.190 2003/03/20 07:02:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.191 2003/04/08 23:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,10 +212,8 @@ static bool
 _equalArrayRef(ArrayRef *a, ArrayRef *b)
 {
 	COMPARE_SCALAR_FIELD(refrestype);
-	COMPARE_SCALAR_FIELD(refattrlength);
-	COMPARE_SCALAR_FIELD(refelemlength);
-	COMPARE_SCALAR_FIELD(refelembyval);
-	COMPARE_SCALAR_FIELD(refelemalign);
+	COMPARE_SCALAR_FIELD(refarraytype);
+	COMPARE_SCALAR_FIELD(refelemtype);
 	COMPARE_NODE_FIELD(refupperindexpr);
 	COMPARE_NODE_FIELD(reflowerindexpr);
 	COMPARE_NODE_FIELD(refexpr);
@@ -374,6 +372,17 @@ _equalCaseWhen(CaseWhen *a, CaseWhen *b)
 {
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(result);
+
+	return true;
+}
+
+static bool
+_equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
+{
+	COMPARE_SCALAR_FIELD(array_typeid);
+	COMPARE_SCALAR_FIELD(element_typeid);
+	COMPARE_NODE_FIELD(elements);
+	COMPARE_SCALAR_FIELD(ndims);
 
 	return true;
 }
@@ -1660,6 +1669,9 @@ equal(void *a, void *b)
 			break;
 		case T_CaseWhen:
 			retval = _equalCaseWhen(a, b);
+			break;
+		case T_ArrayExpr:
+			retval = _equalArrayExpr(a, b);
 			break;
 		case T_CoalesceExpr:
 			retval = _equalCoalesceExpr(a, b);

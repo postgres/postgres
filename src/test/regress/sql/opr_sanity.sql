@@ -69,10 +69,12 @@ WHERE p1.oid != p2.oid AND
 
 -- Look for uses of different type OIDs in the argument/result type fields
 -- for different aliases of the same built-in function.
--- This indicates that the types are being presumed to be binary-equivalent.
+-- This indicates that the types are being presumed to be binary-equivalent,
+-- or that the built-in function is prepared to deal with different types.
 -- That's not wrong, necessarily, but we make lists of all the types being
 -- so treated.  Note that the expected output of this part of the test will
--- need to be modified whenever new pairs of types are made binary-equivalent!
+-- need to be modified whenever new pairs of types are made binary-equivalent,
+-- or when new polymorphic built-in functions are added!
 -- Note: ignore aggregate functions here, since they all point to the same
 -- dummy built-in function.
 

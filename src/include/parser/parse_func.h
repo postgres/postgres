@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.43 2002/09/04 20:31:45 momjian Exp $
+ * $Id: parse_func.h,v 1.44 2003/04/08 23:20:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,10 @@ extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
 				bool *retset, Oid **true_typeids);
 
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
+
+extern void make_fn_arguments(List *fargs,
+							  Oid *actual_arg_types,
+							  Oid *declared_arg_types);
 
 extern void func_error(const char *caller, List *funcname,
 		   int nargs, const Oid *argtypes,

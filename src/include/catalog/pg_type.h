@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.139 2003/01/23 23:39:06 petere Exp $
+ * $Id: pg_type.h,v 1.140 2003/04/08 23:20:04 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -533,6 +533,8 @@ DATA(insert OID = 2281 ( internal		PGNSP PGUID  4 t p t \054 0 0 internal_in int
 #define INTERNALOID		2281
 DATA(insert OID = 2282 ( opaque			PGNSP PGUID  4 t p t \054 0 0 opaque_in opaque_out	i p f 0 -1 0 _null_ _null_ ));
 #define OPAQUEOID		2282
+DATA(insert OID = 2283 ( anyelement		PGNSP PGUID  4 t p t \054 0 0 anyelement_in anyelement_out	i p f 0 -1 0 _null_ _null_ ));
+#define ANYELEMENTOID	2283
 
 /*
  * prototypes for functions in pg_type.c

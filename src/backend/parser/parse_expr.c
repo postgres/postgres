@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.146 2003/02/16 02:30:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.147 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -395,7 +395,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					sublink->operOids = NIL;
 					sublink->useOr = FALSE;
 				}
-				else if (sublink->subLinkType == EXPR_SUBLINK)
+				else if (sublink->subLinkType == EXPR_SUBLINK ||
+						 sublink->subLinkType == ARRAY_SUBLINK)
 				{
 					List	   *tlist = qtree->targetList;
 
@@ -413,8 +414,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					}
 
 					/*
-					 * EXPR needs no lefthand or combining operator. These
-					 * fields should be NIL already, but make sure.
+					 * EXPR and ARRAY need no lefthand or combining operator.
+					 * These fields should be NIL already, but make sure.
 					 */
 					sublink->lefthand = NIL;
 					sublink->operName = NIL;
@@ -630,6 +631,98 @@ transformExpr(ParseState *pstate, Node *expr)
 				}
 
 				result = (Node *) newc;
+				break;
+			}
+
+		case T_ArrayExpr:
+			{
+				ArrayExpr  *a = (ArrayExpr *) expr;
+				ArrayExpr  *newa = makeNode(ArrayExpr);
+				List	   *newelems = NIL;
+				List	   *newcoercedelems = NIL;
+				List	   *typeids = NIL;
+				List	   *element;
+				Oid			array_type;
+				Oid			element_type;
+				int			ndims;
+
+				/* Transform the element expressions */
+				foreach(element, a->elements)
+				{
+					Node *e = (Node *) lfirst(element);
+					Node *newe;
+
+					newe = transformExpr(pstate, e);
+					newelems = lappend(newelems, newe);
+					typeids = lappendo(typeids, exprType(newe));
+				}
+
+				/* Select a common type for the elements */
+				element_type = select_common_type(typeids, "ARRAY");
+
+				/* Coerce arguments to common type if necessary */
+				foreach(element, newelems)
+				{
+					Node *e = (Node *) lfirst(element);
+					Node *newe;
+
+					newe = coerce_to_common_type(e, element_type, "ARRAY");
+					newcoercedelems = lappend(newcoercedelems, newe);
+				}
+
+				/* Do we have an array type to use? */
+				array_type = get_array_type(element_type);
+				if (array_type != InvalidOid)
+				{
+					/* Elements are presumably of scalar type */
+					ndims = 1;
+				}
+				else
+				{
+					/* Must be nested array expressions */
+					array_type = element_type;
+					element_type = get_element_type(array_type);
+					if (!OidIsValid(element_type))
+						elog(ERROR, "Cannot find array type for datatype %s",
+							 format_type_be(array_type));
+
+					/*
+					 * make sure the element expressions all have the same
+					 * number of dimensions
+					 */
+					ndims = 0;
+					foreach(element, newcoercedelems)
+					{
+						ArrayExpr  *e = (ArrayExpr *) lfirst(element);
+
+						if (!IsA(e, ArrayExpr))
+							elog(ERROR, "Multi-dimensional ARRAY[] must be built from nested array expressions");
+						if (ndims == 0)
+							ndims = e->ndims;
+						else if (e->ndims != ndims)
+							elog(ERROR, "Nested array expressions must have "
+								 "common number of dimensions");
+						if (e->element_typeid != element_type)
+							elog(ERROR, "Nested array expressions must have "
+								 "common element type");
+
+					}
+					/* increment the number of dimensions */
+					ndims++;
+
+					/* make sure we don't have too many dimensions now */
+					if (ndims > MAXDIM)
+						elog(ERROR, "Number of array dimensions, %d, "
+							 "exceeds the maximum allowed %d",
+							 ndims, MAXDIM);
+				}
+
+				newa->array_typeid = array_type;
+				newa->element_typeid = element_type;
+				newa->elements = newcoercedelems;
+				newa->ndims = ndims;
+
+				result = (Node *) newa;
 				break;
 			}
 
@@ -1018,7 +1111,8 @@ exprType(Node *expr)
 			{
 				SubLink    *sublink = (SubLink *) expr;
 
-				if (sublink->subLinkType == EXPR_SUBLINK)
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
 				{
 					/* get the type of the subselect's first target column */
 					Query	   *qtree = (Query *) sublink->subselect;
@@ -1029,7 +1123,15 @@ exprType(Node *expr)
 					tent = (TargetEntry *) lfirst(qtree->targetList);
 					Assert(IsA(tent, TargetEntry));
 					Assert(!tent->resdom->resjunk);
-					type = tent->resdom->restype;
+					if (sublink->subLinkType == EXPR_SUBLINK)
+						type = tent->resdom->restype;
+					else /* ARRAY_SUBLINK */
+					{
+						type = get_array_type(tent->resdom->restype);
+						if (!OidIsValid(type))
+							elog(ERROR, "Cannot find array type for datatype %s",
+								 format_type_be(tent->resdom->restype));
+					}
 				}
 				else
 				{
@@ -1047,7 +1149,8 @@ exprType(Node *expr)
 				 */
 				SubPlan    *subplan = (SubPlan *) expr;
 
-				if (subplan->subLinkType == EXPR_SUBLINK)
+				if (subplan->subLinkType == EXPR_SUBLINK ||
+					subplan->subLinkType == ARRAY_SUBLINK)
 				{
 					/* get the type of the subselect's first target column */
 					TargetEntry *tent;
@@ -1055,7 +1158,15 @@ exprType(Node *expr)
 					tent = (TargetEntry *) lfirst(subplan->plan->targetlist);
 					Assert(IsA(tent, TargetEntry));
 					Assert(!tent->resdom->resjunk);
-					type = tent->resdom->restype;
+					if (subplan->subLinkType == EXPR_SUBLINK)
+						type = tent->resdom->restype;
+					else /* ARRAY_SUBLINK */
+					{
+						type = get_array_type(tent->resdom->restype);
+						if (!OidIsValid(type))
+							elog(ERROR, "Cannot find array type for datatype %s",
+								 format_type_be(tent->resdom->restype));
+					}
 				}
 				else
 				{
@@ -1075,6 +1186,9 @@ exprType(Node *expr)
 			break;
 		case T_CaseWhen:
 			type = exprType((Node *) ((CaseWhen *) expr)->result);
+			break;
+		case T_ArrayExpr:
+			type = ((ArrayExpr *) expr)->array_typeid;
 			break;
 		case T_CoalesceExpr:
 			type = ((CoalesceExpr *) expr)->coalescetype;

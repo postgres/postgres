@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.36 2002/11/08 17:27:03 momjian Exp $
+ * $Id: array.h,v 1.37 2003/04/08 23:20:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,9 @@ extern Datum array_eq(PG_FUNCTION_ARGS);
 extern Datum array_dims(PG_FUNCTION_ARGS);
 extern Datum array_lower(PG_FUNCTION_ARGS);
 extern Datum array_upper(PG_FUNCTION_ARGS);
+extern Datum array_assign(PG_FUNCTION_ARGS);
+extern Datum array_subscript(PG_FUNCTION_ARGS);
+extern Datum array_type_coerce(PG_FUNCTION_ARGS);
 
 extern Datum array_ref(ArrayType *array, int nSubscripts, int *indx,
 		  int arraylen, int elmlen, bool elmbyval, char elmalign,
@@ -110,6 +113,11 @@ extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType);
 extern ArrayType *construct_array(Datum *elems, int nelems,
 				Oid elmtype,
 				int elmlen, bool elmbyval, char elmalign);
+extern ArrayType *construct_md_array(Datum *elems,
+				  int ndims,
+				  int *dims,
+				  int *lbs,
+				  Oid elmtype, int elmlen, bool elmbyval, char elmalign);
 extern void deconstruct_array(ArrayType *array,
 				  Oid elmtype,
 				  int elmlen, bool elmbyval, char elmalign,
@@ -127,5 +135,17 @@ extern void mda_get_range(int n, int *span, int *st, int *endp);
 extern void mda_get_prod(int n, int *range, int *prod);
 extern void mda_get_offset_values(int n, int *dist, int *prod, int *span);
 extern int	mda_next_tuple(int n, int *curr, int *span);
+
+/*
+ * prototypes for functions defined in array_userfuncs.c
+ */
+extern Datum singleton_array(PG_FUNCTION_ARGS);
+extern Datum array_push(PG_FUNCTION_ARGS);
+extern Datum array_accum(PG_FUNCTION_ARGS);
+extern Datum array_cat(PG_FUNCTION_ARGS);
+
+extern ArrayType *create_singleton_array(Oid element_type,
+										 Datum element,
+										 int ndims);
 
 #endif   /* ARRAY_H */

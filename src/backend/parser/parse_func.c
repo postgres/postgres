@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.144 2003/02/09 06:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.145 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,6 @@ static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
-static void make_arguments(int nargs,
-			   List *fargs,
-			   Oid *input_typeids,
-			   Oid *function_typeids);
 static int match_argtypes(int nargs,
 			   Oid *input_typeids,
 			   FuncCandidateList function_typeids,
@@ -81,8 +77,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	Node	   *first_arg = NULL;
 	int			nargs = length(fargs);
 	int			argn;
-	Oid			oid_array[FUNC_MAX_ARGS];
-	Oid		   *true_oid_array;
+	Oid			actual_arg_types[FUNC_MAX_ARGS];
+	Oid		   *declared_arg_types;
 	Node	   *retval;
 	bool		retset;
 	FuncDetailCode fdresult;
@@ -145,7 +141,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * function. Extract arg type info and transform RangeVar arguments
 	 * into varnodes of the appropriate form.
 	 */
-	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	MemSet(actual_arg_types, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 	argn = 0;
 	foreach(i, fargs)
@@ -238,7 +234,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		else
 			toid = exprType(arg);
 
-		oid_array[argn++] = toid;
+		actual_arg_types[argn++] = toid;
 	}
 
 	/*
@@ -248,16 +244,16 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	 * function's return value.  it also returns the true argument types
 	 * to the function.
 	 */
-	fdresult = func_get_detail(funcname, fargs, nargs, oid_array,
+	fdresult = func_get_detail(funcname, fargs, nargs, actual_arg_types,
 							   &funcid, &rettype, &retset,
-							   &true_oid_array);
+							   &declared_arg_types);
 	if (fdresult == FUNCDETAIL_COERCION)
 	{
 		/*
 		 * We can do it as a trivial coercion. coerce_type can handle
 		 * these cases, so why duplicate code...
 		 */
-		return coerce_type(lfirst(fargs), oid_array[0], rettype,
+		return coerce_type(lfirst(fargs), actual_arg_types[0], rettype,
 						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL);
 	}
 	else if (fdresult == FUNCDETAIL_NORMAL)
@@ -303,14 +299,24 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/*
 		 * Else generate a detailed complaint for a function
 		 */
-		func_error(NULL, funcname, nargs, oid_array,
+		func_error(NULL, funcname, nargs, actual_arg_types,
 				   "Unable to identify a function that satisfies the "
 				   "given argument types"
 				   "\n\tYou may need to add explicit typecasts");
 	}
 
+	/*
+	 * enforce consistency with ANYARRAY and ANYELEMENT argument and
+	 * return types, possibly adjusting return type or declared_arg_types
+	 * (which will be used as the cast destination by make_fn_arguments)
+	 */
+	rettype = enforce_generic_type_consistency(actual_arg_types,
+											   declared_arg_types,
+											   nargs,
+											   rettype);
+
 	/* perform the necessary typecasting of arguments */
-	make_arguments(nargs, fargs, oid_array, true_oid_array);
+	make_fn_arguments(fargs, actual_arg_types, declared_arg_types);
 
 	/* build the appropriate output structure */
 	if (fdresult == FUNCDETAIL_NORMAL)
@@ -1130,32 +1136,36 @@ typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId)
 }
 
 
-/* make_arguments()
- * Given the number and types of arguments to a function, and the
- *	actual arguments and argument types, do the necessary typecasting.
+/*
+ * make_fn_arguments()
+ *
+ * Given the actual argument expressions for a function, and the desired
+ * input types for the function, add any necessary typecasting to the
+ * expression tree.  Caller should already have verified that casting is
+ * allowed.
+ *
+ * Caution: given argument list is modified in-place.
  */
-static void
-make_arguments(int nargs,
-			   List *fargs,
-			   Oid *input_typeids,
-			   Oid *function_typeids)
+void
+make_fn_arguments(List *fargs,
+				  Oid *actual_arg_types,
+				  Oid *declared_arg_types)
 {
 	List	   *current_fargs;
-	int			i;
+	int			i = 0;
 
-	for (i = 0, current_fargs = fargs;
-		 i < nargs;
-		 i++, current_fargs = lnext(current_fargs))
+	foreach(current_fargs, fargs)
 	{
 		/* types don't match? then force coercion using a function call... */
-		if (input_typeids[i] != function_typeids[i])
+		if (actual_arg_types[i] != declared_arg_types[i])
 		{
 			lfirst(current_fargs) = coerce_type(lfirst(current_fargs),
-												input_typeids[i],
-												function_typeids[i],
+												actual_arg_types[i],
+												declared_arg_types[i],
 												COERCION_IMPLICIT,
 												COERCE_IMPLICIT_CAST);
 		}
+		i++;
 	}
 }
 

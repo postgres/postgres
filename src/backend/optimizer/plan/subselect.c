@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.73 2003/03/10 03:53:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.74 2003/04/08 23:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -264,9 +265,9 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	bms_free(tmpset);
 
 	/*
-	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, or
-	 * MULTIEXPR types can be used as initPlans.  For EXISTS or EXPR, we
-	 * just produce a Param referring to the result of evaluating the
+	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, ARRAY, or
+	 * MULTIEXPR types can be used as initPlans.  For EXISTS, EXPR, or ARRAY,
+	 * we just produce a Param referring to the result of evaluating the
 	 * initPlan.  For MULTIEXPR, we must build an AND or OR-clause of the
 	 * individual comparison operators, using the appropriate lefthand
 	 * side expressions and Params for the initPlan's target items.
@@ -287,6 +288,22 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 
 		Assert(!te->resdom->resjunk);
 		prm = generate_new_param(te->resdom->restype, te->resdom->restypmod);
+		node->setParam = makeListi1(prm->paramid);
+		PlannerInitPlan = lappend(PlannerInitPlan, node);
+		result = (Node *) prm;
+	}
+	else if (node->parParam == NIL && slink->subLinkType == ARRAY_SUBLINK)
+	{
+		TargetEntry *te = lfirst(plan->targetlist);
+		Oid			arraytype;
+		Param	   *prm;
+
+		Assert(!te->resdom->resjunk);
+		arraytype = get_array_type(te->resdom->restype);
+		if (!OidIsValid(arraytype))
+			elog(ERROR, "Cannot find array type for datatype %s",
+				 format_type_be(te->resdom->restype));
+		prm = generate_new_param(arraytype, -1);
 		node->setParam = makeListi1(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
@@ -441,9 +458,6 @@ convert_sublink_opers(List *lefthand, List *operOids,
 		TargetEntry *te = lfirst(targetlist);
 		Node	   *rightop;
 		Operator	tup;
-		Form_pg_operator opform;
-		Node	   *left,
-				   *right;
 
 		Assert(!te->resdom->resjunk);
 
@@ -470,28 +484,25 @@ convert_sublink_opers(List *lefthand, List *operOids,
 			rightop = (Node *) prm;
 		}
 
-		/* Look up the operator to get its declared input types */
+		/* Look up the operator to pass to make_op_expr */
 		tup = SearchSysCache(OPEROID,
 							 ObjectIdGetDatum(opid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for operator %u", opid);
-		opform = (Form_pg_operator) GETSTRUCT(tup);
 
 		/*
 		 * Make the expression node.
 		 *
-		 * Note: we use make_operand in case runtime type conversion
+		 * Note: we use make_op_expr in case runtime type conversion
 		 * function calls must be inserted for this operator!
 		 */
-		left = make_operand(leftop, exprType(leftop), opform->oprleft);
-		right = make_operand(rightop, te->resdom->restype, opform->oprright);
 		result = lappend(result,
-						 make_opclause(opid,
-									   opform->oprresult,
-									   false, /* set-result not allowed */
-									   (Expr *) left,
-									   (Expr *) right));
+						 make_op_expr(tup,
+									  leftop,
+									  rightop,
+									  exprType(leftop),
+									  te->resdom->restype));
 
 		ReleaseSysCache(tup);
 

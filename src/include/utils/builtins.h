@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.210 2003/03/21 23:18:51 tgl Exp $
+ * $Id: builtins.h,v 1.211 2003/04/08 23:20:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,6 +362,8 @@ extern Datum internal_in(PG_FUNCTION_ARGS);
 extern Datum internal_out(PG_FUNCTION_ARGS);
 extern Datum opaque_in(PG_FUNCTION_ARGS);
 extern Datum opaque_out(PG_FUNCTION_ARGS);
+extern Datum anyelement_in(PG_FUNCTION_ARGS);
+extern Datum anyelement_out(PG_FUNCTION_ARGS);
 
 /* regexp.c */
 extern Datum nameregexeq(PG_FUNCTION_ARGS);

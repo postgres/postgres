@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.80 2003/02/16 02:30:39 tgl Exp $
+ * $Id: primnodes.h,v 1.81 2003/04/08 23:20:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,14 +237,8 @@ typedef struct Aggref
  * reflowerindexpr must be the same length as refupperindexpr when it
  * is not NIL.
  *
- * Note: array types can be fixed-length (refattrlength > 0), but only
- * when the element type is itself fixed-length.  Otherwise they are
- * varlena structures and have refattrlength = -1.	In any case,
- * an array type is never pass-by-value.
- *
  * Note: refrestype is NOT the element type, but the array type,
- * when doing subarray fetch or either type of store.  It might be a good
- * idea to include a refelemtype field as well.
+ * when doing subarray fetch or either type of store.
  * ----------------
  */
 typedef struct ArrayRef
@@ -252,10 +246,8 @@ typedef struct ArrayRef
 	Expr		xpr;
 	Oid			refrestype;		/* type of the result of the ArrayRef
 								 * operation */
-	int			refattrlength;	/* typlen of array type */
-	int			refelemlength;	/* typlen of the array element type */
-	bool		refelembyval;	/* is the element type pass-by-value? */
-	char		refelemalign;	/* typalign of the element type */
+	Oid			refarraytype;	/* type of the array proper */
+	Oid			refelemtype;	/* type of the array elements */
 	List	   *refupperindexpr;/* expressions that evaluate to upper
 								 * array indexes */
 	List	   *reflowerindexpr;/* expressions that evaluate to lower
@@ -366,12 +358,15 @@ typedef struct BoolExpr
  *	ANY_SUBLINK			(lefthand) op ANY (SELECT ...)
  *	MULTIEXPR_SUBLINK	(lefthand) op (SELECT ...)
  *	EXPR_SUBLINK		(SELECT with single targetlist item ...)
+ *	ARRAY_SUBLINK		ARRAY(SELECT with single targetlist item ...)
  * For ALL, ANY, and MULTIEXPR, the lefthand is a list of expressions of the
  * same length as the subselect's targetlist.  MULTIEXPR will *always* have
  * a list with more than one entry; if the subselect has just one target
  * then the parser will create an EXPR_SUBLINK instead (and any operator
  * above the subselect will be represented separately).  Note that both
  * MULTIEXPR and EXPR require the subselect to deliver only one row.
+ * ARRAY requires just one target column, and creates an array of the target
+ * column's type using one or more rows resulting from the subselect.
  * ALL, ANY, and MULTIEXPR require the combining operators to deliver boolean
  * results.  These are reduced to one result per row using OR or AND semantics
  * depending on the "useOr" flag.  ALL and ANY combine the per-row results
@@ -390,14 +385,19 @@ typedef struct BoolExpr
  * And subselect is transformed to a Query.  This is the representation
  * seen in saved rules and in the rewriter.
  *
- * In EXISTS and EXPR SubLinks, lefthand, operName, and operOids are unused
- * and are always NIL.  useOr is not significant either for these sublink
- * types.
+ * In EXISTS, EXPR, and ARRAY SubLinks, lefthand, operName, and operOids are
+ * unused and are always NIL.  useOr is not significant either for these
+ * sublink types.
  * ----------------
  */
 typedef enum SubLinkType
 {
-	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, MULTIEXPR_SUBLINK, EXPR_SUBLINK
+	EXISTS_SUBLINK,
+	ALL_SUBLINK,
+	ANY_SUBLINK,
+	MULTIEXPR_SUBLINK,
+	EXPR_SUBLINK,
+	ARRAY_SUBLINK
 } SubLinkType;
 
 
@@ -536,6 +536,21 @@ typedef struct CaseWhen
 	Expr	   *expr;			/* condition expression */
 	Expr	   *result;			/* substitution result */
 } CaseWhen;
+
+/*
+ * ArrayExpr - an ARRAY[] expression
+ *
+ * Note: if ndims > 1, then the array elements are all ArrayExprs of the
+ * same type and ndims one less.
+ */
+typedef struct ArrayExpr
+{
+	Expr		xpr;
+	Oid			array_typeid;	/* type of expression result */
+	Oid			element_typeid;	/* common type of expression elements */
+	List	   *elements;		/* the array elements */
+	int			ndims;			/* number of array dimensions */
+} ArrayExpr;
 
 /*
  * CoalesceExpr - a COALESCE expression

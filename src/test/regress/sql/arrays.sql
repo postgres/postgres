@@ -83,3 +83,77 @@ SELECT a[1:3],
           c[1:2], 
           d[1:1][2:2]
    FROM arrtest;
+
+--
+-- array expressions and operators
+--
+
+-- table creation and INSERTs
+CREATE TEMP TABLE arrtest2 (i integer ARRAY[4], f float8[], n numeric[], t text[], d timestamp[]);
+INSERT INTO arrtest2 VALUES(
+  ARRAY[[[113,142],[1,147]]],
+  ARRAY[1.1,1.2,1.3]::float8[],
+  ARRAY[1.1,1.2,1.3],
+  ARRAY[[['aaa','aab'],['aba','abb'],['aca','acb']],[['baa','bab'],['bba','bbb'],['bca','bcb']]],
+  ARRAY['19620326','19931223','19970117']::timestamp[]
+);
+
+-- some more test data
+CREATE TEMP TABLE arrtest_f (f0 int, f1 text, f2 float8);
+insert into arrtest_f values(1,'cat1',1.21);
+insert into arrtest_f values(2,'cat1',1.24);
+insert into arrtest_f values(3,'cat1',1.18);
+insert into arrtest_f values(4,'cat1',1.26);
+insert into arrtest_f values(5,'cat1',1.15);
+insert into arrtest_f values(6,'cat2',1.15);
+insert into arrtest_f values(7,'cat2',1.26);
+insert into arrtest_f values(8,'cat2',1.32);
+insert into arrtest_f values(9,'cat2',1.30);
+
+CREATE TEMP TABLE arrtest_i (f0 int, f1 text, f2 int);
+insert into arrtest_i values(1,'cat1',21);
+insert into arrtest_i values(2,'cat1',24);
+insert into arrtest_i values(3,'cat1',18);
+insert into arrtest_i values(4,'cat1',26);
+insert into arrtest_i values(5,'cat1',15);
+insert into arrtest_i values(6,'cat2',15);
+insert into arrtest_i values(7,'cat2',26);
+insert into arrtest_i values(8,'cat2',32);
+insert into arrtest_i values(9,'cat2',30);
+
+-- expressions
+SELECT t.f[1][3][1] AS "131", t.f[2][2][1] AS "221" FROM (
+  SELECT ARRAY[[[111,112],[121,122],[131,132]],[[211,212],[221,122],[231,232]]] AS f
+) AS t;
+SELECT ARRAY[[[[[['hello'],['world']]]]]];
+SELECT ARRAY[ARRAY['hello'],ARRAY['world']];
+SELECT ARRAY(select f2 from arrtest_f order by f2) AS "ARRAY";
+
+-- functions
+SELECT singleton_array(42) AS "{42}";
+SELECT array_append(singleton_array(42), 6) AS "{42,6}";
+SELECT array_prepend(6, singleton_array(42)) AS "{6,42}";
+SELECT array_cat(ARRAY[1,2], ARRAY[3,4]) AS "{{1,2},{3,4}}";
+SELECT array_cat(ARRAY[1,2], ARRAY[[3,4],[5,6]]) AS "{{1,2},{3,4},{5,6}}";
+SELECT array_cat(ARRAY[[3,4],[5,6]], ARRAY[1,2]) AS "{{3,4},{5,6},{1,2}}";
+SELECT array_subscript(n, 2) AS "1.2" FROM arrtest2;
+SELECT array_assign(n, 2, 9.99) AS "{1.1,9.99,1.3}" FROM arrtest2;
+SELECT array_subscript(array_assign(n, 2, 9.99), 2) AS "9.99" FROM arrtest2;
+
+-- operators
+SELECT a FROM arrtest WHERE b = ARRAY[[[113,142],[1,147]]];
+SELECT NOT ARRAY[1.1,1.2,1.3] = ARRAY[1.1,1.2,1.3] AS "FALSE";
+SELECT ARRAY[1,2] || 3 AS "{1,2,3}";
+SELECT 0 || ARRAY[1,2] AS "{0,1,2}";
+SELECT ARRAY[1,2] || ARRAY[3,4] AS "{{1,2},{3,4}}";
+SELECT ARRAY[[['hello','world']]] || ARRAY[[['happy','birthday']]] AS "ARRAY";
+SELECT ARRAY[[1,2],[3,4]] || ARRAY[5,6] AS "{{1,2},{3,4},{5,6}}";
+SELECT ARRAY[0,0] || ARRAY[1,1] || ARRAY[2,2] AS "{{0,0},{1,1},{2,2}}";
+SELECT 0 || ARRAY[1,2] || 3 AS "{0,1,2,3}";
+
+-- array casts
+SELECT ARRAY[1,2,3]::text[]::int[]::float8[] AS "{1,2,3}";
+SELECT ARRAY[1,2,3]::text[]::int[]::float8[] is of (float8[]) as "TRUE";
+SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] AS "{{a,bc},{def,hijk}}";
+SELECT ARRAY[['a','bc'],['def','hijk']]::text[]::varchar[] is of (varchar[]) as "TRUE";
+SELECT CAST(ARRAY[[[[[['a','bb','ccc']]]]]] as text[]) as "{{{{{{a,bb,ccc}}}}}}";

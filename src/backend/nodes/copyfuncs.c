@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.247 2003/03/20 07:02:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.248 2003/04/08 23:20:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -738,10 +738,8 @@ _copyArrayRef(ArrayRef *from)
 	ArrayRef   *newnode = makeNode(ArrayRef);
 
 	COPY_SCALAR_FIELD(refrestype);
-	COPY_SCALAR_FIELD(refattrlength);
-	COPY_SCALAR_FIELD(refelemlength);
-	COPY_SCALAR_FIELD(refelembyval);
-	COPY_SCALAR_FIELD(refelemalign);
+	COPY_SCALAR_FIELD(refarraytype);
+	COPY_SCALAR_FIELD(refelemtype);
 	COPY_NODE_FIELD(refupperindexpr);
 	COPY_NODE_FIELD(reflowerindexpr);
 	COPY_NODE_FIELD(refexpr);
@@ -915,6 +913,22 @@ _copyCaseWhen(CaseWhen *from)
 
 	COPY_NODE_FIELD(expr);
 	COPY_NODE_FIELD(result);
+
+	return newnode;
+}
+
+/*
+ * _copyArrayExpr
+ */
+static ArrayExpr *
+_copyArrayExpr(ArrayExpr *from)
+{
+	ArrayExpr *newnode = makeNode(ArrayExpr);
+
+	COPY_SCALAR_FIELD(array_typeid);
+	COPY_SCALAR_FIELD(element_typeid);
+	COPY_NODE_FIELD(elements);
+	COPY_SCALAR_FIELD(ndims);
 
 	return newnode;
 }
@@ -2536,6 +2550,9 @@ copyObject(void *from)
 			break;
 		case T_CaseWhen:
 			retval = _copyCaseWhen(from);
+			break;
+		case T_ArrayExpr:
+			retval = _copyArrayExpr(from);
 			break;
 		case T_CoalesceExpr:
 			retval = _copyCoalesceExpr(from);

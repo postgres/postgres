@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.133 2003/03/22 01:49:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.134 2003/04/08 23:20:01 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -59,15 +59,17 @@ static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static bool contain_nonstrict_functions_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node, List *active_fns);
-static Expr *simplify_function(Oid funcid, List *args, bool allow_inline,
-							   List *active_fns);
-static Expr *evaluate_function(Oid funcid, List *args, HeapTuple func_tuple);
-static Expr *inline_function(Oid funcid, List *args, HeapTuple func_tuple,
-							 List *active_fns);
+static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
+							   bool allow_inline, List *active_fns);
+static Expr *evaluate_function(Oid funcid, Oid result_type, List *args,
+							   HeapTuple func_tuple);
+static Expr *inline_function(Oid funcid, Oid result_type, List *args,
+							 HeapTuple func_tuple, List *active_fns);
 static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 										  int *usecounts);
 static Node *substitute_actual_parameters_mutator(Node *node,
 					 substitute_actual_parameters_context *context);
+static Expr *evaluate_expr(Expr *expr, Oid result_type);
 
 
 /*****************************************************************************
@@ -464,6 +466,8 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, SubPlan))
 		return false;
+	if (IsA(node, ArrayExpr))
+		return false;
 	if (IsA(node, CoalesceExpr))
 		return false;
 	if (IsA(node, NullIfExpr))
@@ -722,6 +726,7 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, CaseExpr))
 		return true;
+	/* NB: ArrayExpr might someday be nonstrict */
 	if (IsA(node, CoalesceExpr))
 		return true;
 	if (IsA(node, NullIfExpr))
@@ -1028,7 +1033,8 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * Code for op/func reduction is pretty bulky, so split it out
 		 * as a separate function.
 		 */
-		simple = simplify_function(expr->funcid, args, true, active_fns);
+		simple = simplify_function(expr->funcid, expr->funcresulttype, args,
+								   true, active_fns);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
 		/*
@@ -1068,7 +1074,8 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * Code for op/func reduction is pretty bulky, so split it out
 		 * as a separate function.
 		 */
-		simple = simplify_function(expr->opfuncid, args, true, active_fns);
+		simple = simplify_function(expr->opfuncid, expr->opresulttype, args,
+								   true, active_fns);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
 		/*
@@ -1143,8 +1150,8 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			 * Code for op/func reduction is pretty bulky, so split it out
 			 * as a separate function.
 			 */
-			simple = simplify_function(expr->opfuncid, args,
-									   false, active_fns);
+			simple = simplify_function(expr->opfuncid, expr->opresulttype,
+									   args, false, active_fns);
 			if (simple)			/* successfully simplified it */
 			{
 				/*
@@ -1442,6 +1449,37 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		newcase->defresult = (Expr *) defresult;
 		return (Node *) newcase;
 	}
+	if (IsA(node, ArrayExpr))
+	{
+		ArrayExpr *arrayexpr = (ArrayExpr *) node;
+		ArrayExpr *newarray;
+		bool all_const = true;
+		List *newelems = NIL;
+		List *element;
+
+		foreach(element, arrayexpr->elements)
+		{
+			Node *e;
+
+			e = eval_const_expressions_mutator((Node *) lfirst(element),
+											   active_fns);
+			if (!IsA(e, Const))
+				all_const = false;
+			newelems = lappend(newelems, e);
+		}
+
+		newarray = makeNode(ArrayExpr);
+		newarray->array_typeid = arrayexpr->array_typeid;
+		newarray->element_typeid = arrayexpr->element_typeid;
+		newarray->elements = newelems;
+		newarray->ndims = arrayexpr->ndims;
+
+		if (all_const)
+			return (Node *) evaluate_expr((Expr *) newarray,
+										  newarray->array_typeid);
+
+		return (Node *) newarray;
+	}
 	if (IsA(node, CoalesceExpr))
 	{
 		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
@@ -1513,14 +1551,16 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
  * Subroutine for eval_const_expressions: try to simplify a function call
  * (which might originally have been an operator; we don't care)
  *
- * Inputs are the function OID and the pre-simplified argument list;
+ * Inputs are the function OID, actual result type OID (which is needed for
+ * polymorphic functions), and the pre-simplified argument list;
  * also a list of already-active inline function expansions.
  *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the function call.
  */
 static Expr *
-simplify_function(Oid funcid, List *args, bool allow_inline, List *active_fns)
+simplify_function(Oid funcid, Oid result_type, List *args,
+				  bool allow_inline, List *active_fns)
 {
 	HeapTuple	func_tuple;
 	Expr	   *newexpr;
@@ -1539,10 +1579,11 @@ simplify_function(Oid funcid, List *args, bool allow_inline, List *active_fns)
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
-	newexpr = evaluate_function(funcid, args, func_tuple);
+	newexpr = evaluate_function(funcid, result_type, args, func_tuple);
 
 	if (!newexpr && allow_inline)
-		newexpr = inline_function(funcid, args, func_tuple, active_fns);
+		newexpr = inline_function(funcid, result_type, args,
+								  func_tuple, active_fns);
 
 	ReleaseSysCache(func_tuple);
 
@@ -1560,21 +1601,14 @@ simplify_function(Oid funcid, List *args, bool allow_inline, List *active_fns)
  * simplify the function.
  */
 static Expr *
-evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
+evaluate_function(Oid funcid, Oid result_type, List *args,
+				  HeapTuple func_tuple)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	Oid			result_typeid = funcform->prorettype;
-	int16		resultTypLen;
-	bool		resultTypByVal;
 	bool		has_nonconst_input = false;
 	bool		has_null_input = false;
-	FuncExpr   *newexpr;
-	ExprState  *newexprstate;
-	EState	   *estate;
-	MemoryContext oldcontext;
-	Datum		const_val;
-	bool		const_is_null;
 	List	   *arg;
+	FuncExpr   *newexpr;
 
 	/*
 	 * Can't simplify if it returns a set.
@@ -1600,7 +1634,7 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 	 * and even if the function is not otherwise immutable.
 	 */
 	if (funcform->proisstrict && has_null_input)
-		return (Expr *) makeNullConst(result_typeid);
+		return (Expr *) makeNullConst(result_type);
 
 	/*
 	 * Otherwise, can simplify only if the function is immutable and
@@ -1614,61 +1648,16 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 	/*
 	 * OK, looks like we can simplify this operator/function.
 	 *
-	 * We use the executor's routine ExecEvalExpr() to avoid duplication of
-	 * code and ensure we get the same result as the executor would get.
-	 * To use the executor, we need an EState.
-	 */
-	estate = CreateExecutorState();
-
-	/* We can use the estate's working context to avoid memory leaks. */
-	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
-
-	/*
 	 * Build a new FuncExpr node containing the already-simplified arguments.
 	 */
 	newexpr = makeNode(FuncExpr);
 	newexpr->funcid = funcid;
-	newexpr->funcresulttype = result_typeid;
+	newexpr->funcresulttype = result_type;
 	newexpr->funcretset = false;
 	newexpr->funcformat = COERCE_EXPLICIT_CALL;	/* doesn't matter */
 	newexpr->args = args;
 
-	/*
-	 * Prepare it for execution.
-	 */
-	newexprstate = ExecPrepareExpr((Expr *) newexpr, estate);
-
-	/*
-	 * And evaluate it.
-	 *
-	 * It is OK to use a default econtext because none of the
-	 * ExecEvalExpr() code used in this situation will use econtext.  That
-	 * might seem fortuitous, but it's not so unreasonable --- a constant
-	 * expression does not depend on context, by definition, n'est ce pas?
-	 */
-	const_val = ExecEvalExprSwitchContext(newexprstate,
-										  GetPerTupleExprContext(estate),
-										  &const_is_null, NULL);
-
-	/* Get info needed about result datatype */
-	get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
-
-	/* Get back to outer memory context */
-	MemoryContextSwitchTo(oldcontext);
-
-	/* Must copy result out of sub-context used by expression eval */
-	if (!const_is_null)
-		const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
-
-	/* Release all the junk we just created */
-	FreeExecutorState(estate);
-
-	/*
-	 * Make the constant result node.
-	 */
-	return (Expr *) makeConst(result_typeid, resultTypLen,
-							  const_val, const_is_null,
-							  resultTypByVal);
+	return evaluate_expr((Expr *) newexpr, result_type);
 }
 
 /*
@@ -1693,11 +1682,10 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
  * simplify the function.
  */
 static Expr *
-inline_function(Oid funcid, List *args, HeapTuple func_tuple,
-				List *active_fns)
+inline_function(Oid funcid, Oid result_type, List *args,
+				HeapTuple func_tuple, List *active_fns)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	Oid			result_typeid = funcform->prorettype;
 	char		result_typtype;
 	char	   *src;
 	Datum		tmp;
@@ -1723,8 +1711,8 @@ inline_function(Oid funcid, List *args, HeapTuple func_tuple,
 		funcform->pronargs != length(args))
 		return NULL;
 
-	/* Forget it if return type is tuple or void */
-	result_typtype = get_typtype(result_typeid);
+	/* Forget it if declared return type is tuple or void */
+	result_typtype = get_typtype(funcform->prorettype);
 	if (result_typtype != 'b' &&
 		result_typtype != 'd')
 		return NULL;
@@ -1926,6 +1914,69 @@ substitute_actual_parameters_mutator(Node *node,
 	}
 	return expression_tree_mutator(node, substitute_actual_parameters_mutator,
 								   (void *) context);
+}
+
+/*
+ * evaluate_expr: pre-evaluate a constant expression
+ *
+ * We use the executor's routine ExecEvalExpr() to avoid duplication of
+ * code and ensure we get the same result as the executor would get.
+ */
+static Expr *
+evaluate_expr(Expr *expr, Oid result_type)
+{
+	EState	   *estate;
+	ExprState  *exprstate;
+	MemoryContext oldcontext;
+	Datum		const_val;
+	bool		const_is_null;
+	int16		resultTypLen;
+	bool		resultTypByVal;
+
+	/*
+	 * To use the executor, we need an EState.
+	 */
+	estate = CreateExecutorState();
+
+	/* We can use the estate's working context to avoid memory leaks. */
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+	/*
+	 * Prepare expr for execution.
+	 */
+	exprstate = ExecPrepareExpr(expr, estate);
+
+	/*
+	 * And evaluate it.
+	 *
+	 * It is OK to use a default econtext because none of the
+	 * ExecEvalExpr() code used in this situation will use econtext.  That
+	 * might seem fortuitous, but it's not so unreasonable --- a constant
+	 * expression does not depend on context, by definition, n'est ce pas?
+	 */
+	const_val = ExecEvalExprSwitchContext(exprstate,
+										  GetPerTupleExprContext(estate),
+										  &const_is_null, NULL);
+
+	/* Get info needed about result datatype */
+	get_typlenbyval(result_type, &resultTypLen, &resultTypByVal);
+
+	/* Get back to outer memory context */
+	MemoryContextSwitchTo(oldcontext);
+
+	/* Must copy result out of sub-context used by expression eval */
+	if (!const_is_null)
+		const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+
+	/* Release all the junk we just created */
+	FreeExecutorState(estate);
+
+	/*
+	 * Make the constant result node.
+	 */
+	return (Expr *) makeConst(result_type, resultTypLen,
+							  const_val, const_is_null,
+							  resultTypByVal);
 }
 
 
@@ -2159,6 +2210,8 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_ArrayExpr:
+			return walker(((ArrayExpr *) node)->elements, context);
 		case T_CoalesceExpr:
 			return walker(((CoalesceExpr *) node)->args, context);
 		case T_NullIfExpr:
@@ -2532,6 +2585,16 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, casewhen, CaseWhen);
 				MUTATE(newnode->expr, casewhen->expr, Expr *);
 				MUTATE(newnode->result, casewhen->result, Expr *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_ArrayExpr:
+			{
+				ArrayExpr *arrayexpr = (ArrayExpr *) node;
+				ArrayExpr *newnode;
+
+				FLATCOPY(newnode, arrayexpr, ArrayExpr);
+				MUTATE(newnode->elements, arrayexpr->elements, List *);
 				return (Node *) newnode;
 			}
 			break;

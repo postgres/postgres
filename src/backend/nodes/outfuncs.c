@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.201 2003/03/10 03:53:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.202 2003/04/08 23:20:01 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -607,10 +607,8 @@ _outArrayRef(StringInfo str, ArrayRef *node)
 	WRITE_NODE_TYPE("ARRAYREF");
 
 	WRITE_OID_FIELD(refrestype);
-	WRITE_INT_FIELD(refattrlength);
-	WRITE_INT_FIELD(refelemlength);
-	WRITE_BOOL_FIELD(refelembyval);
-	WRITE_CHAR_FIELD(refelemalign);
+	WRITE_OID_FIELD(refarraytype);
+	WRITE_OID_FIELD(refelemtype);
 	WRITE_NODE_FIELD(refupperindexpr);
 	WRITE_NODE_FIELD(reflowerindexpr);
 	WRITE_NODE_FIELD(refexpr);
@@ -751,6 +749,17 @@ _outCaseWhen(StringInfo str, CaseWhen *node)
 
 	WRITE_NODE_FIELD(expr);
 	WRITE_NODE_FIELD(result);
+}
+
+static void
+_outArrayExpr(StringInfo str, ArrayExpr *node)
+{
+	WRITE_NODE_TYPE("ARRAY");
+
+	WRITE_OID_FIELD(array_typeid);
+	WRITE_OID_FIELD(element_typeid);
+	WRITE_NODE_FIELD(elements);
+	WRITE_INT_FIELD(ndims);
 }
 
 static void
@@ -1609,6 +1618,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_CaseWhen:
 				_outCaseWhen(str, obj);
+				break;
+			case T_ArrayExpr:
+				_outArrayExpr(str, obj);
 				break;
 			case T_CoalesceExpr:
 				_outCoalesceExpr(str, obj);

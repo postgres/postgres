@@ -59,14 +59,6 @@ WHERE p1.typtype in ('b') AND p1.typname NOT LIKE '\\_%' AND NOT EXISTS
      WHERE p2.typname = ('_' || p1.typname)::name AND
            p2.typelem = p1.oid);
 
--- Look for array types that don't have an equality operator.
-
-SELECT p1.oid, p1.typname
-FROM pg_type as p1
-WHERE p1.typtype != 'c' AND p1.typname LIKE '\\_%' AND NOT EXISTS
-    (SELECT 1 FROM pg_operator
-     WHERE oprname = '=' AND oprleft = p1.oid AND oprright = p1.oid);
-
 -- Conversion routines must be provided except in 'c' entries.
 
 SELECT p1.oid, p1.typname

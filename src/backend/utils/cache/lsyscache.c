@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.91 2003/03/23 05:14:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.92 2003/04/08 23:20:02 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1263,6 +1263,87 @@ get_typ_typrelid(Oid typid)
 	}
 	else
 		return InvalidOid;
+}
+
+/*
+ * get_element_type
+ *
+ *		Given the type OID, get the typelem (InvalidOid if not an array type).
+ *
+ * NB: this only considers varlena arrays to be true arrays; InvalidOid is
+ * returned if the input is a fixed-length array type.
+ */
+Oid
+get_element_type(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		Oid			result;
+
+		if (typtup->typlen == -1)
+			result = typtup->typelem;
+		else
+			result = InvalidOid;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+/*
+ * get_array_type
+ *
+ *		Given the type OID, get the corresponding array type.
+ *		Returns InvalidOid if no array type can be found.
+ *
+ * NB: this only considers varlena arrays to be true arrays.
+ */
+Oid
+get_array_type(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		char	   *array_typename;
+		Oid			namespaceId;
+
+		array_typename = makeArrayTypeName(NameStr(typtup->typname));
+		namespaceId = typtup->typnamespace;
+		ReleaseSysCache(tp);
+
+		tp = SearchSysCache(TYPENAMENSP,
+							PointerGetDatum(array_typename),
+							ObjectIdGetDatum(namespaceId),
+							0, 0);
+
+		pfree(array_typename);
+
+		if (HeapTupleIsValid(tp))
+		{
+			Oid			result;
+
+			typtup = (Form_pg_type) GETSTRUCT(tp);
+			if (typtup->typlen == -1 && typtup->typelem == typid)
+				result = HeapTupleGetOid(tp);
+			else
+				result = InvalidOid;
+			ReleaseSysCache(tp);
+			return result;
+		}
+	}
+	return InvalidOid;
 }
 
 /*

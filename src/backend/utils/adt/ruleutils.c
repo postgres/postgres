@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.137 2003/03/20 18:58:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.138 2003/04/08 23:20:02 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2217,6 +2217,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				ArrayRef   *aref = (ArrayRef *) node;
 				bool		savevarprefix = context->varprefix;
+				bool		need_parens;
 				List	   *lowlist;
 				List	   *uplist;
 
@@ -2229,7 +2230,16 @@ get_rule_expr(Node *node, deparse_context *context,
 				 */
 				if (aref->refassgnexpr)
 					context->varprefix = false;
+				/*
+				 * Parenthesize the argument unless it's a simple Var.
+				 */
+				need_parens = (aref->refassgnexpr == NULL) &&
+					!IsA(aref->refexpr, Var);
+				if (need_parens)
+					appendStringInfoChar(buf, '(');
 				get_rule_expr((Node *) aref->refexpr, context, showimplicit);
+				if (need_parens)
+					appendStringInfoChar(buf, ')');
 				context->varprefix = savevarprefix;
 				lowlist = aref->reflowerindexpr;
 				foreach(uplist, aref->refupperindexpr)
@@ -2421,6 +2431,26 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
+		case T_ArrayExpr:
+			{
+				ArrayExpr *arrayexpr = (ArrayExpr *) node;
+				List *element;
+				char *sep;
+
+				appendStringInfo(buf, "ARRAY[");
+				sep = "";
+				foreach(element, arrayexpr->elements)
+				{
+					Node *e = (Node *) lfirst(element);
+
+					appendStringInfo(buf, sep);
+					get_rule_expr(e, context, true);
+					sep = ", ";
+				}
+				appendStringInfo(buf, "]");
+			}
+			break;
+			
 		case T_CoalesceExpr:
 			{
 				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
@@ -2906,7 +2936,10 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 	char	   *sep;
 	bool		need_paren;
 
-	appendStringInfoChar(buf, '(');
+	if (sublink->subLinkType == ARRAY_SUBLINK)
+		appendStringInfo(buf, "ARRAY(");
+	else
+		appendStringInfoChar(buf, '(');
 
 	if (sublink->lefthand != NIL)
 	{
@@ -2967,6 +3000,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 			break;
 
 		case EXPR_SUBLINK:
+		case ARRAY_SUBLINK:
 			need_paren = false;
 			break;
 

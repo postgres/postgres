@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.96 2003/03/09 02:19:13 tgl Exp $
+ * $Id: execnodes.h,v 1.97 2003/04/08 23:20:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,6 +427,10 @@ typedef struct AggrefExprState
 
 /* ----------------
  *		ArrayRefExprState node
+ *
+ * Note: array types can be fixed-length (typlen > 0), but only when the
+ * element type is itself fixed-length.  Otherwise they are varlena structures
+ * and have typlen = -1.  In any case, an array type is never pass-by-value.
  * ----------------
  */
 typedef struct ArrayRefExprState
@@ -436,6 +440,10 @@ typedef struct ArrayRefExprState
 	List	   *reflowerindexpr;
 	ExprState  *refexpr;
 	ExprState  *refassgnexpr;
+	int16		refattrlength;	/* typlen of array type */
+	int16		refelemlength;	/* typlen of the array element type */
+	bool		refelembyval;	/* is the element type pass-by-value? */
+	char		refelemalign;	/* typalign of the element type */
 } ArrayRefExprState;
 
 /* ----------------
@@ -539,6 +547,22 @@ typedef struct CaseWhenState
 	ExprState  *expr;			/* condition expression */
 	ExprState  *result;			/* substitution result */
 } CaseWhenState;
+
+/* ----------------
+ *		ArrayExprState node
+ *
+ * Note: ARRAY[] expressions always produce varlena arrays, never fixed-length
+ * arrays.
+ * ----------------
+ */
+typedef struct ArrayExprState
+{
+	ExprState	xprstate;
+	List	   *elements;		/* states for child nodes */
+	int16		elemlength;		/* typlen of the array element type */
+	bool		elembyval;		/* is the element type pass-by-value? */
+	char		elemalign;		/* typalign of the element type */
+} ArrayExprState;
 
 /* ----------------
  *		CoalesceExprState node

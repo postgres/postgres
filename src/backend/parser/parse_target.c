@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.98 2003/02/16 02:30:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.99 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,13 +470,19 @@ FigureColnameInternal(Node *node, char **name)
 			break;
 		case T_ExprFieldSelect:
 			{
-				char	   *fname = strVal(llast(((ExprFieldSelect *) node)->fields));
+				ExprFieldSelect *efs = (ExprFieldSelect *) node;
 
-				if (strcmp(fname, "*") != 0)
+				if (efs->fields)
 				{
-					*name = fname;
-					return 2;
+					char	   *fname = strVal(llast(efs->fields));
+
+					if (strcmp(fname, "*") != 0)
+					{
+						*name = fname;
+						return 2;
+					}
 				}
+				return FigureColnameInternal(efs->arg, name);
 			}
 			break;
 		case T_FuncCall:
@@ -518,6 +524,10 @@ FigureColnameInternal(Node *node, char **name)
 				return 1;
 			}
 			break;
+		case T_ArrayExpr:
+			/* make ARRAY[] act like a function */
+			*name = "array";
+			return 2;
 		case T_CoalesceExpr:
 			/* make coalesce() act like a regular function */
 			*name = "coalesce";

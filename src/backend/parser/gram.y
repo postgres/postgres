@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.410 2003/04/01 23:42:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.411 2003/04/08 23:20:01 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -265,8 +265,8 @@ static void doNegateFloat(Value *v);
 %type <defelt>	def_elem
 %type <node>	def_arg columnElem where_clause insert_column_item
 				a_expr b_expr c_expr r_expr AexprConst
-				in_expr having_clause func_table
-%type <list>	row row_descriptor type_list
+				in_expr having_clause func_table array_expr
+%type <list>	row row_descriptor type_list array_expr_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -323,7 +323,7 @@ static void doNegateFloat(Value *v);
 
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_P ABSOLUTE ACCESS ACTION ADD AFTER
-	AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY AS ASC
+	AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
@@ -4986,6 +4986,19 @@ Typename:	SimpleTypename opt_array_bounds
 					$$->arrayBounds = $3;
 					$$->setof = TRUE;
 				}
+			| SimpleTypename ARRAY '[' Iconst ']'
+				{
+					/* SQL99's redundant syntax */
+					$$ = $1;
+					$$->arrayBounds = makeList1(makeInteger($4));
+				}
+			| SETOF SimpleTypename ARRAY '[' Iconst ']'
+				{
+					/* SQL99's redundant syntax */
+					$$ = $2;
+					$$->arrayBounds = makeList1(makeInteger($5));
+					$$->setof = TRUE;
+				}
 		;
 
 opt_array_bounds:
@@ -6057,7 +6070,6 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->indirection = $3;
 					$$ = (Node *)n;
 				}
-			| '(' a_expr ')'						{ $$ = $2; }
 			| '(' a_expr ')' attrs opt_indirection
 				{
 					ExprFieldSelect *n = makeNode(ExprFieldSelect);
@@ -6065,6 +6077,19 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->fields = $4;
 					n->indirection = $5;
 					$$ = (Node *)n;
+				}
+			| '(' a_expr ')' opt_indirection
+				{
+					if ($4)
+					{
+						ExprFieldSelect *n = makeNode(ExprFieldSelect);
+						n->arg = $2;
+						n->fields = NIL;
+						n->indirection = $4;
+						$$ = (Node *)n;
+					}
+					else
+						$$ = $2;
 				}
 			| case_expr
 				{ $$ = $1; }
@@ -6509,6 +6534,17 @@ c_expr:		columnref								{ $$ = (Node *) $1; }
 					n->subselect = $2;
 					$$ = (Node *)n;
 				}
+			| ARRAY select_with_parens
+				{
+					SubLink *n = makeNode(SubLink);
+					n->subLinkType = ARRAY_SUBLINK;
+					n->lefthand = NIL;
+					n->operName = NIL;
+					n->subselect = $2;
+					$$ = (Node *)n;
+				}
+			| ARRAY array_expr
+				{	$$ = $2;	}
 		;
 
 /*
@@ -6556,6 +6592,26 @@ type_list:  type_list ',' Typename
 			| Typename
 				{
 					$$ = makeList1($1);
+				}
+		;
+
+array_expr_list: array_expr
+				{	$$ = makeList1($1);		}
+			| array_expr_list ',' array_expr
+				{	$$ = lappend($1, $3);	}
+		;
+
+array_expr: '[' expr_list ']'
+				{
+					ArrayExpr *n = makeNode(ArrayExpr);
+					n->elements = $2;
+					$$ = (Node *)n;
+				}
+			| '[' array_expr_list ']'
+				{
+					ArrayExpr *n = makeNode(ArrayExpr);
+					n->elements = $2;
+					$$ = (Node *)n;
 				}
 		;
 
@@ -7346,6 +7402,7 @@ reserved_keyword:
 			| ANALYZE
 			| AND
 			| ANY
+			| ARRAY
 			| AS
 			| ASC
 			| BOTH

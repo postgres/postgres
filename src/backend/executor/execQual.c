@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.127 2003/03/27 16:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.128 2003/04/08 23:20:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,9 @@ static Datum ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 						 bool *isNull);
 static Datum ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalArray(ArrayExprState *astate,
+						   ExprContext *econtext,
+						   bool *isNull);
 static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 							  ExprContext *econtext,
 							  bool *isNull);
@@ -246,38 +249,38 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 			resultArray = array_set(array_source, i,
 									upper.indx,
 									sourceData,
-									arrayRef->refattrlength,
-									arrayRef->refelemlength,
-									arrayRef->refelembyval,
-									arrayRef->refelemalign,
+									astate->refattrlength,
+									astate->refelemlength,
+									astate->refelembyval,
+									astate->refelemalign,
 									isNull);
 		else
 			resultArray = array_set_slice(array_source, i,
 										  upper.indx, lower.indx,
 							   (ArrayType *) DatumGetPointer(sourceData),
-										  arrayRef->refattrlength,
-										  arrayRef->refelemlength,
-										  arrayRef->refelembyval,
-										  arrayRef->refelemalign,
+										  astate->refattrlength,
+										  astate->refelemlength,
+										  astate->refelembyval,
+										  astate->refelemalign,
 										  isNull);
 		return PointerGetDatum(resultArray);
 	}
 
 	if (lIndex == NULL)
 		return array_ref(array_source, i, upper.indx,
-						 arrayRef->refattrlength,
-						 arrayRef->refelemlength,
-						 arrayRef->refelembyval,
-						 arrayRef->refelemalign,
+						 astate->refattrlength,
+						 astate->refelemlength,
+						 astate->refelembyval,
+						 astate->refelemalign,
 						 isNull);
 	else
 	{
 		resultArray = array_get_slice(array_source, i,
 									  upper.indx, lower.indx,
-									  arrayRef->refattrlength,
-									  arrayRef->refelemlength,
-									  arrayRef->refelembyval,
-									  arrayRef->refelemalign,
+									  astate->refattrlength,
+									  astate->refelemlength,
+									  astate->refelembyval,
+									  astate->refelemalign,
 									  isNull);
 		return PointerGetDatum(resultArray);
 	}
@@ -613,6 +616,7 @@ init_fcache(Oid foid, FuncExprState *fcache, MemoryContext fcacheCxt)
 
 	/* Initialize additional info */
 	fcache->setArgsValid = false;
+	fcache->func.fn_expr = (Node *) fcache->xprstate.expr;
 }
 
 /*
@@ -1427,6 +1431,158 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalArray - ARRAY[] expressions
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
+			  bool *isNull)
+{
+	ArrayExpr   *arrayExpr = (ArrayExpr *) astate->xprstate.expr;
+	ArrayType  *result;
+	List   *element;
+	Oid		element_type = arrayExpr->element_typeid;
+	int		ndims = arrayExpr->ndims;
+	int		dims[MAXDIM];
+	int		lbs[MAXDIM];
+
+	if (ndims == 1)
+	{
+		int		nelems;
+		Datum  *dvalues;
+		int		i = 0;
+
+		nelems = length(astate->elements);
+
+		/* Shouldn't happen here, but if length is 0, return NULL */
+		if (nelems == 0)
+		{
+			*isNull = true;
+			return (Datum) 0;
+		}
+
+		dvalues = (Datum *) palloc(nelems * sizeof(Datum));
+
+		/* loop through and build array of datums */
+		foreach(element, astate->elements)
+		{
+			ExprState  *e = (ExprState *) lfirst(element);
+			bool		eisnull;
+
+			dvalues[i++] = ExecEvalExpr(e, econtext, &eisnull, NULL);
+			if (eisnull)
+				elog(ERROR, "Arrays cannot have NULL elements");
+		}
+
+		/* setup for 1-D array of the given length */
+		dims[0] = nelems;
+		lbs[0] = 1;
+
+		result = construct_md_array(dvalues, ndims, dims, lbs,
+									element_type,
+									astate->elemlength,
+									astate->elembyval,
+									astate->elemalign);
+	}
+	else
+	{
+		char	   *dat = NULL;
+		Size		ndatabytes = 0;
+		int			nbytes;
+		int			outer_nelems = length(astate->elements);
+		int			elem_ndims = 0;
+		int		   *elem_dims = NULL;
+		int		   *elem_lbs = NULL;
+		bool		firstone = true;
+		int			i;
+
+		if (ndims <= 0 || ndims > MAXDIM)
+			elog(ERROR, "Arrays cannot have more than %d dimensions", MAXDIM);
+
+		/* loop through and get data area from each element */
+		foreach(element, astate->elements)
+		{
+			ExprState   *e = (ExprState *) lfirst(element);
+			bool		eisnull;
+			Datum		arraydatum;
+			ArrayType  *array;
+			int			elem_ndatabytes;
+
+			arraydatum = ExecEvalExpr(e, econtext, &eisnull, NULL);
+			if (eisnull)
+				elog(ERROR, "Arrays cannot have NULL elements");
+
+			array = DatumGetArrayTypeP(arraydatum);
+
+			if (firstone)
+			{
+				/* Get sub-array details from first member */
+				elem_ndims = ARR_NDIM(array);
+				elem_dims = (int *) palloc(elem_ndims * sizeof(int));
+				memcpy(elem_dims, ARR_DIMS(array), elem_ndims * sizeof(int));
+				elem_lbs = (int *) palloc(elem_ndims * sizeof(int));
+				memcpy(elem_lbs, ARR_LBOUND(array), elem_ndims * sizeof(int));
+				firstone = false;
+			}
+			else
+			{
+				/* Check other sub-arrays are compatible */
+				if (elem_ndims != ARR_NDIM(array))
+					elog(ERROR, "Multiple dimension arrays must have array "
+						 "expressions with matching number of dimensions");
+
+				if (memcmp(elem_dims, ARR_DIMS(array),
+						   elem_ndims * sizeof(int)) != 0)
+					elog(ERROR, "Multiple dimension arrays must have array "
+						 "expressions with matching dimensions");
+
+				if (memcmp(elem_lbs, ARR_LBOUND(array),
+						   elem_ndims * sizeof(int)) != 0)
+					elog(ERROR, "Multiple dimension arrays must have array "
+						 "expressions with matching dimensions");
+			}
+
+			elem_ndatabytes = ARR_SIZE(array) - ARR_OVERHEAD(elem_ndims);
+			ndatabytes += elem_ndatabytes;
+			if (dat == NULL)
+				dat = (char *) palloc(ndatabytes);
+			else
+				dat = (char *) repalloc(dat, ndatabytes);
+
+			memcpy(dat + (ndatabytes - elem_ndatabytes),
+				   ARR_DATA_PTR(array),
+				   elem_ndatabytes);
+		}
+
+		/* setup for multi-D array */
+		dims[0] = outer_nelems;
+		lbs[0] = 1;
+		for (i = 1; i < ndims; i++)
+		{
+			dims[i] = elem_dims[i - 1];
+			lbs[i] = elem_lbs[i - 1];
+		}
+
+		nbytes = ndatabytes + ARR_OVERHEAD(ndims);
+		result = (ArrayType *) palloc(nbytes);
+
+		result->size = nbytes;
+		result->ndim = ndims;
+		result->flags = 0;
+		result->elemtype = element_type;
+		memcpy(ARR_DIMS(result), dims, ndims * sizeof(int));
+		memcpy(ARR_LBOUND(result), lbs, ndims * sizeof(int));
+		if (ndatabytes > 0)
+			memcpy(ARR_DATA_PTR(result), dat, ndatabytes);
+
+		if (dat != NULL)
+			pfree(dat);
+	}
+
+	return PointerGetDatum(result);
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalCoalesce
  * ----------------------------------------------------------------
  */
@@ -1908,6 +2064,11 @@ ExecEvalExpr(ExprState *expression,
 									isNull,
 									isDone);
 			break;
+		case T_ArrayExpr:
+			retDatum = ExecEvalArray((ArrayExprState *) expression,
+									 econtext,
+									 isNull);
+			break;
 		case T_CoalesceExpr:
 			retDatum = ExecEvalCoalesce((CoalesceExprState *) expression,
 										econtext,
@@ -2060,6 +2221,12 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				astate->refexpr = ExecInitExpr(aref->refexpr, parent);
 				astate->refassgnexpr = ExecInitExpr(aref->refassgnexpr,
 													parent);
+				/* do one-time catalog lookups for type info */
+				astate->refattrlength = get_typlen(aref->refarraytype);
+				get_typlenbyvalalign(aref->refelemtype,
+									 &astate->refelemlength,
+									 &astate->refelembyval,
+									 &astate->refelemalign);
 				state = (ExprState *) astate;
 			}
 			break;
@@ -2172,6 +2339,30 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				Assert(caseexpr->arg == NULL);
 				cstate->defresult = ExecInitExpr(caseexpr->defresult, parent);
 				state = (ExprState *) cstate;
+			}
+			break;
+		case T_ArrayExpr:
+			{
+				ArrayExpr	   *arrayexpr = (ArrayExpr *) node;
+				ArrayExprState *astate = makeNode(ArrayExprState);
+				List		   *outlist = NIL;
+				List		   *inlist;
+
+				foreach(inlist, arrayexpr->elements)
+				{
+					Expr	   *e = (Expr *) lfirst(inlist);
+					ExprState  *estate;
+
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+				}
+				astate->elements = outlist;
+				/* do one-time catalog lookup for type info */
+				get_typlenbyvalalign(arrayexpr->element_typeid,
+									 &astate->elemlength,
+									 &astate->elembyval,
+									 &astate->elemalign);
+				state = (ExprState *) astate;
 			}
 			break;
 		case T_CoalesceExpr:

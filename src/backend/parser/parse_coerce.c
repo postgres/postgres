@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.93 2003/02/09 06:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.94 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,8 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 		ReleaseSysCache(targetType);
 	}
 	else if (targetTypeId == ANYOID ||
-			 targetTypeId == ANYARRAYOID)
+			 targetTypeId == ANYARRAYOID ||
+			 targetTypeId == ANYELEMENTOID)
 	{
 		/* assume can_coerce_type verified that implicit coercion is okay */
 		/* NB: we do NOT want a RelabelType here */
@@ -295,6 +296,7 @@ bool
 can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 				CoercionContext ccontext)
 {
+	bool		have_generics = false;
 	int			i;
 
 	/* run through argument list... */
@@ -329,29 +331,12 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		if (targetTypeId == ANYOID)
 			continue;
 
-		/*
-		 * if target is ANYARRAY and source is a varlena array type,
-		 * accept
-		 */
-		if (targetTypeId == ANYARRAYOID)
+		/* accept if target is ANYARRAY or ANYELEMENT, for now */
+		if (targetTypeId == ANYARRAYOID ||
+			targetTypeId == ANYELEMENTOID)
 		{
-			Oid			typOutput;
-			Oid			typElem;
-			bool		typIsVarlena;
-
-			if (getTypeOutputInfo(inputTypeId, &typOutput, &typElem,
-								  &typIsVarlena))
-			{
-				if (OidIsValid(typElem) && typIsVarlena)
-					continue;
-			}
-
-			/*
-			 * Otherwise reject; this assumes there are no explicit
-			 * coercion paths to ANYARRAY.  If we don't reject then
-			 * parse_coerce would have to repeat the above test.
-			 */
-			return false;
+			have_generics = true; /* do more checking later */
+			continue;
 		}
 
 		/*
@@ -372,6 +357,14 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		 * Else, cannot coerce at this argument position
 		 */
 		return false;
+	}
+
+	/* If we found any generic argument types, cross-check them */
+	if (have_generics)
+	{
+		if (!check_generic_type_consistency(input_typeids, target_typeids,
+											nargs))
+			return false;
 	}
 
 	return true;
@@ -644,6 +637,260 @@ coerce_to_common_type(Node *node, Oid targetTypeId, const char *context)
 	return node;
 }
 
+/*
+ * check_generic_type_consistency()
+ *		Are the actual arguments potentially compatible with a
+ *		polymorphic function?
+ *
+ * The argument consistency rules are:
+ *
+ * 1) All arguments declared ANYARRAY must have matching datatypes,
+ *	  and must in fact be varlena arrays.
+ * 2) All arguments declared ANYELEMENT must have matching datatypes.
+ * 3) If there are arguments of both ANYELEMENT and ANYARRAY, make sure
+ *    the actual ANYELEMENT datatype is in fact the element type for
+ *    the actual ANYARRAY datatype.
+ *
+ * If we have UNKNOWN input (ie, an untyped literal) for any ANYELEMENT
+ * or ANYARRAY argument, assume it is okay.
+ *
+ * We do not elog here, but just return FALSE if a rule is violated.
+ */
+bool
+check_generic_type_consistency(Oid *actual_arg_types,
+							   Oid *declared_arg_types,
+							   int nargs)
+{
+	int			j;
+	Oid			elem_typeid = InvalidOid;
+	Oid			array_typeid = InvalidOid;
+	Oid			array_typelem;
+
+	/*
+	 * Loop through the arguments to see if we have any that are
+	 * ANYARRAY or ANYELEMENT. If so, require the actual types to be
+	 * self-consistent
+	 */
+	for (j = 0; j < nargs; j++)
+	{
+		Oid		actual_type = actual_arg_types[j];
+
+		if (declared_arg_types[j] == ANYELEMENTOID)
+		{
+			if (actual_type == UNKNOWNOID)
+				continue;
+			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
+				return false;
+			elem_typeid = actual_type;
+		}
+		else if (declared_arg_types[j] == ANYARRAYOID)
+		{
+			if (actual_type == UNKNOWNOID)
+				continue;
+			if (OidIsValid(array_typeid) && actual_type != array_typeid)
+				return false;
+			array_typeid = actual_type;
+		}
+	}
+
+	/* Get the element type based on the array type, if we have one */
+	if (OidIsValid(array_typeid))
+	{
+		array_typelem = get_element_type(array_typeid);
+		if (!OidIsValid(array_typelem))
+			return false;		/* should be an array, but isn't */
+
+		if (!OidIsValid(elem_typeid))
+		{
+			/* if we don't have an element type yet, use the one we just got */
+			elem_typeid = array_typelem;
+		}
+		else if (array_typelem != elem_typeid)
+		{
+			/* otherwise, they better match */
+			return false;
+		}
+	}
+
+	/* Looks valid */
+	return true;
+}
+
+/*
+ * enforce_generic_type_consistency()
+ *		Make sure a polymorphic function is legally callable, and
+ *		deduce actual argument and result types.
+ *
+ * If ANYARRAY or ANYELEMENT is used for a function's arguments or
+ * return type, we make sure the actual data types are consistent with
+ * each other. The argument consistency rules are shown above for
+ * check_generic_type_consistency().
+ *
+ * If we have UNKNOWN input (ie, an untyped literal) for any ANYELEMENT
+ * or ANYARRAY argument, we attempt to deduce the actual type it should
+ * have.  If successful, we alter that position of declared_arg_types[]
+ * so that make_fn_arguments will coerce the literal to the right thing.
+ *
+ * Rules are applied to the function's return type (possibly altering it)
+ * if it is declared ANYARRAY or ANYELEMENT:
+ *
+ * 1) If return type is ANYARRAY, and any argument is ANYARRAY, use the
+ *    argument's actual type as the function's return type.
+ * 2) If return type is ANYARRAY, no argument is ANYARRAY, but any argument
+ *    is ANYELEMENT, use the actual type of the argument to determine
+ *    the function's return type, i.e. the element type's corresponding
+ *    array type.
+ * 3) If return type is ANYARRAY, no argument is ANYARRAY or ANYELEMENT,
+ *    generate an ERROR. This condition is prevented by CREATE FUNCTION
+ *    and is therefore not expected here.
+ * 4) If return type is ANYELEMENT, and any argument is ANYELEMENT, use the
+ *    argument's actual type as the function's return type.
+ * 5) If return type is ANYELEMENT, no argument is ANYELEMENT, but any
+ *    argument is ANYARRAY, use the actual type of the argument to determine
+ *    the function's return type, i.e. the array type's corresponding
+ *    element type.
+ * 6) If return type is ANYELEMENT, no argument is ANYARRAY or ANYELEMENT,
+ *    generate an ERROR. This condition is prevented by CREATE FUNCTION
+ *    and is therefore not expected here.
+ */
+Oid
+enforce_generic_type_consistency(Oid *actual_arg_types,
+								 Oid *declared_arg_types,
+								 int nargs,
+								 Oid rettype)
+{
+	int			j;
+	bool		have_generics = false;
+	bool		have_unknowns = false;
+	Oid			elem_typeid = InvalidOid;
+	Oid			array_typeid = InvalidOid;
+	Oid			array_typelem = InvalidOid;
+
+	/*
+	 * Loop through the arguments to see if we have any that are
+	 * ANYARRAY or ANYELEMENT. If so, require the actual types to be
+	 * self-consistent
+	 */
+	for (j = 0; j < nargs; j++)
+	{
+		Oid		actual_type = actual_arg_types[j];
+
+		if (declared_arg_types[j] == ANYELEMENTOID)
+		{
+			have_generics = true;
+			if (actual_type == UNKNOWNOID)
+			{
+				have_unknowns = true;
+				continue;
+			}
+			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
+				elog(ERROR, "Arguments declared ANYELEMENT are not all alike: %s vs %s",
+					 format_type_be(elem_typeid),
+					 format_type_be(actual_type));
+			elem_typeid = actual_type;
+		}
+		else if (declared_arg_types[j] == ANYARRAYOID)
+		{
+			have_generics = true;
+			if (actual_type == UNKNOWNOID)
+			{
+				have_unknowns = true;
+				continue;
+			}
+			if (OidIsValid(array_typeid) && actual_type != array_typeid)
+				elog(ERROR, "Arguments declared ANYARRAY are not all alike: %s vs %s",
+					 format_type_be(array_typeid),
+					 format_type_be(actual_type));
+			array_typeid = actual_type;
+		}
+	}
+
+	/*
+	 * Fast Track: if none of the arguments are ANYARRAY or ANYELEMENT,
+	 * return the unmodified rettype.
+	 */
+	if (!have_generics)
+		return rettype;
+
+	/* Get the element type based on the array type, if we have one */
+	if (OidIsValid(array_typeid))
+	{
+		array_typelem = get_element_type(array_typeid);
+		if (!OidIsValid(array_typelem))
+			elog(ERROR, "Argument declared ANYARRAY is not an array: %s",
+				 format_type_be(array_typeid));
+
+		if (!OidIsValid(elem_typeid))
+		{
+			/* if we don't have an element type yet, use the one we just got */
+			elem_typeid = array_typelem;
+		}
+		else if (array_typelem != elem_typeid)
+		{
+			/* otherwise, they better match */
+			elog(ERROR, "Argument declared ANYARRAY is not consistent with "
+				 "argument declared ANYELEMENT: %s vs %s",
+				 format_type_be(array_typeid),
+				 format_type_be(elem_typeid));
+		}
+	}
+	else if (!OidIsValid(elem_typeid))
+	{
+		/* Only way to get here is if all the generic args are UNKNOWN */
+		elog(ERROR, "Cannot determine ANYARRAY/ANYELEMENT type because input is UNKNOWN");
+	}
+
+	/*
+	 * If we had any unknown inputs, re-scan to assign correct types
+	 */
+	if (have_unknowns)
+	{
+		for (j = 0; j < nargs; j++)
+		{
+			Oid		actual_type = actual_arg_types[j];
+
+			if (actual_type != UNKNOWNOID)
+				continue;
+
+			if (declared_arg_types[j] == ANYELEMENTOID)
+			{
+				declared_arg_types[j] = elem_typeid;
+			}
+			else if (declared_arg_types[j] == ANYARRAYOID)
+			{
+				if (!OidIsValid(array_typeid))
+				{
+					array_typeid = get_array_type(elem_typeid);
+					if (!OidIsValid(array_typeid))
+						elog(ERROR, "Cannot find array type for datatype %s",
+							 format_type_be(elem_typeid));
+				}
+				declared_arg_types[j] = array_typeid;
+			}
+		}
+	}
+
+	/* if we return ANYARRAYOID use the appropriate argument type */
+	if (rettype == ANYARRAYOID)
+	{
+		if (!OidIsValid(array_typeid))
+		{
+			array_typeid = get_array_type(elem_typeid);
+			if (!OidIsValid(array_typeid))
+				elog(ERROR, "Cannot find array type for datatype %s",
+					 format_type_be(elem_typeid));
+		}
+		return array_typeid;
+	}
+
+	/* if we return ANYELEMENTOID use the appropriate argument type */
+	if (rettype == ANYELEMENTOID)
+		return elem_typeid;
+
+	/* we don't return a generic type; send back the original return type */
+	return rettype;
+}
+
 
 /* TypeCategory()
  * Assign a category to the specified OID.
@@ -727,6 +974,19 @@ TypeCategory(Oid inType)
 			result = UNKNOWN_TYPE;
 			break;
 
+		case (RECORDOID):
+		case (CSTRINGOID):
+		case (ANYOID):
+		case (ANYARRAYOID):
+		case (VOIDOID):
+		case (TRIGGEROID):
+		case (LANGUAGE_HANDLEROID):
+		case (INTERNALOID):
+		case (OPAQUEOID):
+		case (ANYELEMENTOID):
+			result = GENERIC_TYPE;
+			break;
+
 		default:
 			result = USER_TYPE;
 			break;
@@ -761,6 +1021,12 @@ PreferredType(CATEGORY category, Oid type)
 
 	switch (category)
 	{
+		case (INVALID_TYPE):
+		case (UNKNOWN_TYPE):
+		case (GENERIC_TYPE):
+			result = UNKNOWNOID;
+			break;
+
 		case (BOOLEAN_TYPE):
 			result = BOOLOID;
 			break;
@@ -797,16 +1063,20 @@ PreferredType(CATEGORY category, Oid type)
 			result = INTERVALOID;
 			break;
 
+		case (GEOMETRIC_TYPE):
+			result = type;
+			break;
+
 		case (NETWORK_TYPE):
 			result = INETOID;
 			break;
 
-		case (GEOMETRIC_TYPE):
 		case (USER_TYPE):
 			result = type;
 			break;
 
 		default:
+			elog(ERROR, "PreferredType: unknown category");
 			result = UNKNOWNOID;
 			break;
 	}
@@ -897,7 +1167,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 	if (sourceTypeId == targetTypeId)
 		return true;
 
-	/* Else look in pg_cast */
+	/* Look in pg_cast */
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourceTypeId),
 						   ObjectIdGetDatum(targetTypeId),
@@ -935,6 +1205,28 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		}
 
 		ReleaseSysCache(tuple);
+	}
+	else
+	{
+		/*
+		 * If there's no pg_cast entry, perhaps we are dealing with a
+		 * pair of array types.  If so, and if the element types have
+		 * a suitable cast, use array_type_coerce().
+		 */
+		Oid			targetElemType;
+		Oid			sourceElemType;
+		Oid			elemfuncid;
+
+		if ((targetElemType = get_element_type(targetTypeId)) != InvalidOid &&
+			(sourceElemType = get_element_type(sourceTypeId)) != InvalidOid)
+		{
+			if (find_coercion_pathway(targetElemType, sourceElemType,
+									  ccontext, &elemfuncid))
+			{
+				*funcid = F_ARRAY_TYPE_COERCE;
+				result = true;
+			}
+		}
 	}
 
 	return result;

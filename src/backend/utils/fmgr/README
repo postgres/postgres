@@ -67,6 +67,7 @@ typedef struct
     bool        fn_retset;  /* function returns a set (over multiple calls) */
     void       *fn_extra;   /* extra space for use by handler */
     MemoryContext fn_mcxt;  /* memory context to store fn_extra in */
+    Node       *fn_expr;    /* expression parse tree for call, or NULL */
 } FmgrInfo;
 
 For an ordinary built-in function, fn_addr is just the address of the C
@@ -80,7 +81,10 @@ a function handler could set it to avoid making repeated lookups of its
 own when the same FmgrInfo is used repeatedly during a query.)  fn_nargs
 is the number of arguments expected by the function, fn_strict is its
 strictness flag, and fn_retset shows whether it returns a set; all of
-these values come from the function's pg_proc entry.
+these values come from the function's pg_proc entry.  If the function is
+being called as part of a SQL expression, fn_expr will point to the
+expression parse tree for the function call; this can be used to extract
+parse-time knowledge about the actual arguments.
 
 FmgrInfo already exists in the current code, but has fewer fields.  This
 change should be transparent at the source-code level.

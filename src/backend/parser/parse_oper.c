@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.61 2002/11/29 21:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.62 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,15 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
 #include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
 
 static Oid binary_oper_exact(Oid arg1, Oid arg2,
 				  FuncCandidateList candidates);
@@ -1007,4 +1010,119 @@ unary_op_error(List *op, Oid arg, bool is_left_op)
 			   "\n\tYou may need to add parentheses or an explicit cast",
 				 NameListToString(op), format_type_be(arg));
 	}
+}
+
+
+/*
+ * make_op()
+ *		Operator expression construction.
+ *
+ * Transform operator expression ensuring type compatibility.
+ * This is where some type conversion happens.
+ */
+Expr *
+make_op(List *opname, Node *ltree, Node *rtree)
+{
+	Oid			ltypeId,
+				rtypeId;
+	Operator	tup;
+	Expr	   *result;
+
+	/* Select the operator */
+	if (rtree == NULL)
+	{
+		/* right operator */
+		ltypeId = exprType(ltree);
+		rtypeId = InvalidOid;
+		tup = right_oper(opname, ltypeId, false);
+	}
+	else if (ltree == NULL)
+	{
+		/* left operator */
+		rtypeId = exprType(rtree);
+		ltypeId = InvalidOid;
+		tup = left_oper(opname, rtypeId, false);
+	}
+	else
+	{
+		/* otherwise, binary operator */
+		ltypeId = exprType(ltree);
+		rtypeId = exprType(rtree);
+		tup = oper(opname, ltypeId, rtypeId, false);
+	}
+
+	/* Do typecasting and build the expression tree */
+	result = make_op_expr(tup, ltree, rtree, ltypeId, rtypeId);
+
+	ReleaseSysCache(tup);
+
+	return result;
+}
+
+
+/*
+ * make_op_expr()
+ *		Build operator expression using an already-looked-up operator.
+ */
+Expr *
+make_op_expr(Operator op, Node *ltree, Node *rtree,
+			 Oid ltypeId, Oid rtypeId)
+{
+	Form_pg_operator opform = (Form_pg_operator) GETSTRUCT(op);
+	Oid			actual_arg_types[2];
+	Oid			declared_arg_types[2];
+	int			nargs;
+	List	   *args;
+	Oid			rettype;
+	OpExpr	   *result;
+
+	if (rtree == NULL)
+	{
+		/* right operator */
+		args = makeList1(ltree);
+		actual_arg_types[0] = ltypeId;
+		declared_arg_types[0] = opform->oprleft;
+		nargs = 1;
+	}
+	else if (ltree == NULL)
+	{
+		/* left operator */
+		args = makeList1(rtree);
+		actual_arg_types[0] = rtypeId;
+		declared_arg_types[0] = opform->oprright;
+		nargs = 1;
+	}
+	else
+	{
+		/* otherwise, binary operator */
+		args = makeList2(ltree, rtree);
+		actual_arg_types[0] = ltypeId;
+		actual_arg_types[1] = rtypeId;
+		declared_arg_types[0] = opform->oprleft;
+		declared_arg_types[1] = opform->oprright;
+		nargs = 2;
+	}
+
+	/*
+	 * enforce consistency with ANYARRAY and ANYELEMENT argument and
+	 * return types, possibly adjusting return type or declared_arg_types
+	 * (which will be used as the cast destination by make_fn_arguments)
+	 */
+	rettype = enforce_generic_type_consistency(actual_arg_types,
+											   declared_arg_types,
+											   nargs,
+											   opform->oprresult);
+
+	/* perform the necessary typecasting of arguments */
+	make_fn_arguments(args, actual_arg_types, declared_arg_types);
+
+	/* and build the expression node */
+	result = makeNode(OpExpr);
+	result->opno = oprid(op);
+	result->opfuncid = InvalidOid;
+	result->opresulttype = rettype;
+	result->opretset = get_func_retset(opform->oprcode);
+	result->args = args;
+
+	return (Expr *) result;
 }

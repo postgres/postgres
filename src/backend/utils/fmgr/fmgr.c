@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.67 2002/12/05 04:04:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.68 2003/04/08 23:20:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_proc.h"
 #include "executor/functions.h"
 #include "miscadmin.h"
+#include "parser/parse_expr.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/lsyscache.h"
@@ -164,6 +165,7 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	finfo->fn_oid = InvalidOid;
 	finfo->fn_extra = NULL;
 	finfo->fn_mcxt = mcxt;
+	finfo->fn_expr = NULL;		/* caller may set this later */
 
 	if ((fbp = fmgr_isbuiltin(functionId)) != NULL)
 	{
@@ -1610,4 +1612,64 @@ pg_detoast_datum_slice(struct varlena * datum, int32 first, int32 count)
 {
 	/* Only get the specified portion from the toast rel */
 	return (struct varlena *) heap_tuple_untoast_attr_slice((varattrib *) datum, first, count);
+}
+
+/*-------------------------------------------------------------------------
+ *		Support routines for extracting info from fn_expr parse tree
+ *-------------------------------------------------------------------------
+ */
+
+/*
+ * Get the OID of the function return type
+ *
+ * Returns InvalidOid if information is not available
+ */
+Oid
+get_fn_expr_rettype(FunctionCallInfo fcinfo)
+{
+	Node   *expr;
+
+	/*
+	 * can't return anything useful if we have no FmgrInfo or if
+	 * its fn_expr node has not been initialized
+	 */
+	if (!fcinfo || !fcinfo->flinfo || !fcinfo->flinfo->fn_expr)
+		return InvalidOid;
+
+	expr = fcinfo->flinfo->fn_expr;
+
+	return exprType(expr);
+}
+
+/*
+ * Get the type OID of a specific function argument (counting from 0)
+ *
+ * Returns InvalidOid if information is not available
+ */
+Oid
+get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum)
+{
+	Node   *expr;
+	List   *args;
+
+	/*
+	 * can't return anything useful if we have no FmgrInfo or if
+	 * its fn_expr node has not been initialized
+	 */
+	if (!fcinfo || !fcinfo->flinfo || !fcinfo->flinfo->fn_expr)
+		return InvalidOid;
+
+	expr = fcinfo->flinfo->fn_expr;
+
+	if (IsA(expr, FuncExpr))
+		args = ((FuncExpr *) expr)->args;
+	else if (IsA(expr, OpExpr))
+		args = ((OpExpr *) expr)->args;
+	else
+		return InvalidOid;
+
+	if (argnum < 0 || argnum >= length(args))
+		return InvalidOid;
+
+	return exprType((Node *) nth(argnum, args));
 }
