@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.95 2003/03/21 17:18:34 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.96 2003/11/11 03:53:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -138,8 +138,12 @@ endif
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)
-	@rm -f $(DESTDIR)$(bindir)/postmaster
-	ln -s postgres$(X) $(DESTDIR)$(bindir)/postmaster
+ifneq ($(PORTNAME), win32)
+	@rm -f $(DESTDIR)$(bindir)/postmaster$(X)
+	ln -s postgres$(X) $(DESTDIR)$(bindir)/postmaster$(X)
+else
+	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postmaster$(X)
+endif
 ifeq ($(MAKE_EXPORTS), true)
 	$(INSTALL_DATA) $(POSTGRES_IMP) $(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)
 endif

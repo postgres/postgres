@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.37 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.38 2003/11/11 03:53:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,11 +49,22 @@ ValidateBinary(char *path)
 	uid_t		euid;
 	struct group *gp;
 	struct passwd *pwp;
+	char		path_exe[MAXPGPATH + 2 + strlen(".exe")];
 #endif
 	int			i;
 	int			is_r = 0;
 	int			is_x = 0;
 	int			in_grp = 0;
+
+#ifdef WIN32
+	/* Win32 requires a .exe suffix for stat() */
+	if (strlen(path) >= 4 && strcmp(path + strlen(path) - strlen(".exe"), ".exe") != 0)
+	{
+		strcpy(path_exe, path);
+		strcat(path_exe, ".exe");
+		path = path_exe;
+	}
+#endif
 
 	/*
 	 * Ensure that the file exists and is a regular file.
