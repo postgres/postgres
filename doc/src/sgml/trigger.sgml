@@ -5,9 +5,9 @@
    <productname>Postgres</productname> has various server-side function
    interfaces. Server-side functions can be written in SQL, PLPGSQL,
    TCL, or C. Trigger functions can be written in any of these
-   languages. Note that STATEMENT-level trigger events are not supported
-   in the current version. You can currently specify BEFORE or AFTER on
-   INSERT, DELETE or UPDATE of a tuple as a trigger event.
+   languages except SQL. Note that STATEMENT-level trigger events are not
+   supported in the current version. You can currently specify BEFORE or
+   AFTER on INSERT, DELETE or UPDATE of a tuple as a trigger event.
   </para>
 
   <sect1>
