@@ -2,13 +2,13 @@
  *
  * indxpath.c
  *	  Routines to determine which indices are usable for scanning a
- *	  given relation
+ *	  given relation, and create IndexPaths accordingly.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.61 1999/07/16 04:59:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.62 1999/07/23 03:34:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,16 +40,15 @@
 
 static void match_index_orclauses(RelOptInfo *rel, RelOptInfo *index, int indexkey,
 					  int xclass, List *restrictinfo_list);
-static bool match_index_to_operand(int indexkey, Expr *operand,
-					   RelOptInfo *rel, RelOptInfo *index);
 static List *match_index_orclause(RelOptInfo *rel, RelOptInfo *index, int indexkey,
 			 int xclass, List *or_clauses, List *other_matching_indices);
 static List *group_clauses_by_indexkey(RelOptInfo *rel, RelOptInfo *index,
 				  int *indexkeys, Oid *classes, List *restrictinfo_list);
 static List *group_clauses_by_ikey_for_joins(RelOptInfo *rel, RelOptInfo *index,
 								int *indexkeys, Oid *classes, List *join_cinfo_list, List *restr_cinfo_list);
-static RestrictInfo *match_clause_to_indexkey(RelOptInfo *rel, RelOptInfo *index, int indexkey,
-					  int xclass, RestrictInfo *restrictInfo, bool join);
+static bool match_clause_to_indexkey(RelOptInfo *rel, RelOptInfo *index,
+									 int indexkey, int xclass,
+									 Expr *clause, bool join);
 static bool pred_test(List *predicate_list, List *restrictinfo_list,
 		  List *joininfo_list);
 static bool one_pred_test(Expr *predicate, List *restrictinfo_list);
@@ -62,34 +61,28 @@ static List *index_innerjoin(Query *root, RelOptInfo *rel,
 				List *clausegroup_list, RelOptInfo *index);
 static List *create_index_path_group(Query *root, RelOptInfo *rel, RelOptInfo *index,
 						List *clausegroup_list, bool join);
-static List *add_index_paths(List *indexpaths, List *new_indexpaths);
+static bool match_index_to_operand(int indexkey, Expr *operand,
+								   RelOptInfo *rel, RelOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
 
 
-/* find_index_paths()
- *	  Finds all possible index paths by determining which indices in the
- *	  list 'indices' are usable.
+/*
+ * create_index_paths()
+ *	  Generate all interesting index paths for the given relation.
  *
- *	  To be usable, an index must match against either a set of
- *	  restriction clauses or join clauses.
+ *	  To be considered for an index scan, an index must match one or more
+ *	  restriction clauses or join clauses from the query's qual condition.
  *
- *	  Note that the current implementation requires that there exist
- *	  matching clauses for every key in the index (i.e., no partial
- *	  matches are allowed).
+ *	  Note: an index scan might also be used simply to order the result,
+ *	  either for use in a mergejoin or to satisfy an ORDER BY request.
+ *	  That possibility is handled elsewhere.
  *
- *	  If an index can't be used with restriction clauses, but its keys
- *	  match those of the result sort order (according to information stored
- *	  within 'sortkeys'), then the index is also considered.
- *
- * 'rel' is the relation entry to which these index paths correspond
- * 'indices' is a list of possible index paths
- * 'restrictinfo_list' is a list of restriction restrictinfo nodes for 'rel'
+ * 'rel' is the relation for which we want to generate index paths
+ * 'indices' is a list of available indexes for 'rel'
+ * 'restrictinfo_list' is a list of restrictinfo nodes for 'rel'
  * 'joininfo_list' is a list of joininfo nodes for 'rel'
- * 'sortkeys' is a node describing the result sort order (from
- *		(find_sortkeys))
  *
- * Returns a list of index nodes.
- *
+ * Returns a list of IndexPath access path descriptors.
  */
 List *
 create_index_paths(Query *root,
@@ -98,21 +91,18 @@ create_index_paths(Query *root,
 				   List *restrictinfo_list,
 				   List *joininfo_list)
 {
-	List	   *scanclausegroups = NIL;
-	List	   *scanpaths = NIL;
-	RelOptInfo *index = (RelOptInfo *) NULL;
-	List	   *joinclausegroups = NIL;
-	List	   *joinpaths = NIL;
 	List	   *retval = NIL;
 	List	   *ilist;
 
 	foreach(ilist, indices)
 	{
-		index = (RelOptInfo *) lfirst(ilist);
+		RelOptInfo *index = (RelOptInfo *) lfirst(ilist);
+		List	   *scanclausegroups;
+		List	   *joinclausegroups;
 
 		/*
-		 * If this is a partial index, return if it fails the predicate
-		 * test
+		 * If this is a partial index, we can only use it if it passes
+		 * the predicate test.
 		 */
 		if (index->indpred != NIL)
 			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list))
@@ -121,7 +111,7 @@ create_index_paths(Query *root,
 		/*
 		 * 1. Try matching the index against subclauses of an 'or' clause.
 		 * The fields of the restrictinfo nodes are marked with lists of
-		 * the matching indices.  No path are actually created.  We
+		 * the matching indices.  No paths are actually created.  We
 		 * currently only look to match the first key.	We don't find
 		 * multi-key index cases where an AND matches the first key, and
 		 * the OR matches the second key.
@@ -134,8 +124,8 @@ create_index_paths(Query *root,
 
 		/*
 		 * 2. If the keys of this index match any of the available
-		 * restriction clauses, then create pathnodes corresponding to
-		 * each group of usable clauses.
+		 * restriction clauses, then create a path using those clauses
+		 * as indexquals.
 		 */
 		scanclausegroups = group_clauses_by_indexkey(rel,
 													 index,
@@ -143,13 +133,13 @@ create_index_paths(Query *root,
 													 index->classlist,
 													 restrictinfo_list);
 
-		scanpaths = NIL;
 		if (scanclausegroups != NIL)
-			scanpaths = create_index_path_group(root,
-												rel,
-												index,
-												scanclausegroups,
-												false);
+			retval = nconc(retval,
+						   create_index_path_group(root,
+												   rel,
+												   index,
+												   scanclausegroups,
+												   false));
 
 		/*
 		 * 3. If this index can be used with any join clause, then create
@@ -158,36 +148,31 @@ create_index_paths(Query *root,
 		 * mergejoin, or if the index can possibly be used for scanning
 		 * the inner relation of a nestloop join.
 		 */
-		joinclausegroups = indexable_joinclauses(rel, index, joininfo_list, restrictinfo_list);
-		joinpaths = NIL;
+		joinclausegroups = indexable_joinclauses(rel, index,
+												 joininfo_list,
+												 restrictinfo_list);
 
 		if (joinclausegroups != NIL)
 		{
-			joinpaths = create_index_path_group(root, rel,
-												index,
-												joinclausegroups,
-												true);
+			retval = nconc(retval,
+						   create_index_path_group(root,
+												   rel,
+												   index,
+												   joinclausegroups,
+												   true));
 			rel->innerjoin = nconc(rel->innerjoin,
 								   index_innerjoin(root, rel,
-											   joinclausegroups, index));
+												   joinclausegroups,
+												   index));
 		}
-
-		/*
-		 * Some sanity checks to make sure that the indexpath is valid.
-		 */
-		if (joinpaths != NULL)
-			retval = add_index_paths(joinpaths, retval);
-		if (scanpaths != NULL)
-			retval = add_index_paths(scanpaths, retval);
 	}
 
 	return retval;
-
 }
 
 
 /****************************************************************************
- *		----  ROUTINES TO MATCH 'OR' CLAUSES  ----
+ *		----  ROUTINES TO PROCESS 'OR' CLAUSES  ----
  ****************************************************************************/
 
 
@@ -202,12 +187,9 @@ create_index_paths(Query *root,
  *
  * 'rel' is the node of the relation on which the index is defined.
  * 'index' is the index node.
- * 'indexkey' is the (single) key of the index
+ * 'indexkey' is the (single) key of the index that we will consider.
  * 'class' is the class of the operator corresponding to 'indexkey'.
  * 'restrictinfo_list' is the list of available restriction clauses.
- *
- * Returns nothing.
- *
  */
 static void
 match_index_orclauses(RelOptInfo *rel,
@@ -216,55 +198,26 @@ match_index_orclauses(RelOptInfo *rel,
 					  int xclass,
 					  List *restrictinfo_list)
 {
-	RestrictInfo *restrictinfo = (RestrictInfo *) NULL;
-	List	   *i = NIL;
+	List	   *i;
 
 	foreach(i, restrictinfo_list)
 	{
-		restrictinfo = (RestrictInfo *) lfirst(i);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
+
 		if (valid_or_clause(restrictinfo))
 		{
-
 			/*
 			 * Mark the 'or' clause with a list of indices which match
-			 * each of its subclauses.	The list is generated by adding
-			 * 'index' to the existing list where appropriate.
+			 * each of its subclauses.	We add entries to the existing
+			 * list, if any.
 			 */
-			restrictinfo->indexids = match_index_orclause(rel, index, indexkey,
-														  xclass,
-											  restrictinfo->clause->args,
-												 restrictinfo->indexids);
+			restrictinfo->indexids =
+				match_index_orclause(rel, index,
+									 indexkey, xclass,
+									 restrictinfo->clause->args,
+									 restrictinfo->indexids);
 		}
 	}
-}
-
-/* match_index_to_operand()
- *	  Generalize test for a match between an existing index's key
- *	  and the operand on the rhs of a restriction clause.  Now check
- *	  for functional indices as well.
- */
-static bool
-match_index_to_operand(int indexkey,
-					   Expr *operand,
-					   RelOptInfo *rel,
-					   RelOptInfo *index)
-{
-	bool		result;
-
-	/*
-	 * Normal index.
-	 */
-	if (index->indproc == InvalidOid)
-	{
-		result = match_indexkey_operand(indexkey, (Var *) operand, rel);
-		return result;
-	}
-
-	/*
-	 * functional index check
-	 */
-	result = function_index_operand(operand, rel, index);
-	return result;
 }
 
 /*
@@ -272,16 +225,16 @@ match_index_to_operand(int indexkey,
  *	  Attempts to match an index against the subclauses of an 'or' clause.
  *
  *	  A match means that:
- *	  (1) the operator within the subclause can be used with one
- *				of the index's operator classes, and
- *	  (2) there is a usable key that matches the variable within a
- *				searchable clause.
+ *	  (1) the operator within the subclause can be used with the
+ *				index's specified operator class, and
+ *	  (2) the variable on one side of the subclause matches the index key.
  *
- * 'or_clauses' are the remaining subclauses within the 'or' clause
+ * 'or_clauses' is the list of subclauses within the 'or' clause
  * 'other_matching_indices' is the list of information on other indices
  *		that have already been matched to subclauses within this
  *		particular 'or' clause (i.e., a list previously generated by
- *		this routine)
+ *		this routine), or NIL if this routine has not previously been
+ *	    run for this 'or' clause.
  *
  * Returns a list of the form ((a b c) (d e f) nil (g h) ...) where
  * a,b,c are nodes of indices that match the first subclause in
@@ -296,14 +249,14 @@ match_index_orclause(RelOptInfo *rel,
 					 List *or_clauses,
 					 List *other_matching_indices)
 {
-	Node	   *clause = NULL;
-	List	   *matching_indices = other_matching_indices;
-	List	   *index_list = NIL;
+	List	   *matching_indices;
+	List	   *index_list;
 	List	   *clist;
 
-	/* first time through, we create index list */
+	/* first time through, we create empty list of same length as OR clause */
 	if (!other_matching_indices)
 	{
+		matching_indices = NIL;
 		foreach(clist, or_clauses)
 			matching_indices = lcons(NIL, matching_indices);
 	}
@@ -314,22 +267,14 @@ match_index_orclause(RelOptInfo *rel,
 
 	foreach(clist, or_clauses)
 	{
-		clause = lfirst(clist);
+		Expr	   *clause = lfirst(clist);
 
-		if (is_opclause(clause))
+		if (match_clause_to_indexkey(rel, index, indexkey, xclass,
+									 clause, false))
 		{
-			Expr	   *left = (Expr *) get_leftop((Expr *) clause);
-			Expr	   *right = (Expr *) get_rightop((Expr *) clause);
-
-			if (left && right &&
-				op_class(((Oper *) ((Expr *) clause)->oper)->opno,
-						 xclass, index->relam) &&
-				((IsA(right, Const) &&
-				  match_index_to_operand(indexkey, left, rel, index)) ||
-				 (IsA(left, Const) &&
-				  match_index_to_operand(indexkey, right, rel, index))))
-				lfirst(matching_indices) = lcons(index,
-											   lfirst(matching_indices));
+			/* OK to add this index to sublist for this subclause */
+			lfirst(matching_indices) = lcons(index,
+											 lfirst(matching_indices));
 		}
 
 		matching_indices = lnext(matching_indices);
@@ -358,26 +303,26 @@ match_index_orclause(RelOptInfo *rel,
 
 /*
  * group_clauses_by_indexkey
- *	  Determines whether there are clauses which will match each and every
- *	  one of the remaining keys of an index.
+ *	  Generates a list of restriction clauses that can be used with an index.
  *
- * 'rel' is the node of the relation corresponding to the index.
- * 'indexkeys' are the remaining index keys to be matched.
+ * 'rel' is the node of the relation itself.
+ * 'index' is a index on 'rel'.
+ * 'indexkeys' are the index keys to be matched.
  * 'classes' are the classes of the index operators on those keys.
- * 'clauses' is either:
- *		(1) the list of available restriction clauses on a single
- *				relation, or
- *		(2) a list of join clauses between 'rel' and a fixed set of
- *				relations,
- *		depending on the value of 'join'.
+ * 'clauses' is the list of available restriction clauses for 'rel'.
  *
- *		NOTE: it works now for restriction clauses only. - vadim 03/18/97
+ * Returns NIL if no clauses can be used with this index.
+ * Otherwise, a list containing a single sublist is returned (indicating
+ * to create_index_path_group() that a single IndexPath should be created).
+ * The sublist is ordered by index key, and contains sublists of clauses
+ * that can be used with that index key.
  *
- * Returns all possible groups of clauses that will match (given that
- * one or more clauses can match any of the remaining keys).
- * E.g., if you have clauses A, B, and C, ((A B) (A C)) might be
- * returned for an index with 2 keys.
- *
+ * Note that in a multi-key index, we stop if we find a key that cannot be
+ * used with any clause.  For example, given an index on (A,B,C), we might
+ * return (((C1 C2) (C3 C4))) if we find that clauses C1 and C2 use column A,
+ * clauses C3 and C4 use column B, and no clauses use column C.  But if no
+ * clauses match B we will return (((C1 C2))), whether or not there are
+ * clauses matching column C, because the executor couldn't use them anyway.
  */
 static List *
 group_clauses_by_indexkey(RelOptInfo *rel,
@@ -386,60 +331,61 @@ group_clauses_by_indexkey(RelOptInfo *rel,
 						  Oid *classes,
 						  List *restrictinfo_list)
 {
-	List	   *curCinfo = NIL;
-	RestrictInfo *matched_clause = (RestrictInfo *) NULL;
-	List	   *clausegroup = NIL;
-	int			curIndxKey;
-	Oid			curClass;
+	List	   *clausegroup_list = NIL;
 
 	if (restrictinfo_list == NIL || indexkeys[0] == 0)
 		return NIL;
 
 	do
 	{
-		List	   *tempgroup = NIL;
-
-		curIndxKey = indexkeys[0];
-		curClass = classes[0];
+		int			curIndxKey = indexkeys[0];
+		Oid			curClass = classes[0];
+		List	   *clausegroup = NIL;
+		List	   *curCinfo;
 
 		foreach(curCinfo, restrictinfo_list)
 		{
-			RestrictInfo *temp = (RestrictInfo *) lfirst(curCinfo);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(curCinfo);
 
-			matched_clause = match_clause_to_indexkey(rel,
-													  index,
-													  curIndxKey,
-													  curClass,
-													  temp,
-													  false);
-			if (!matched_clause)
-				continue;
-
-			tempgroup = lappend(tempgroup, matched_clause);
+			if (match_clause_to_indexkey(rel,
+										 index,
+										 curIndxKey,
+										 curClass,
+										 rinfo->clause,
+										 false))
+				clausegroup = lappend(clausegroup, rinfo);
 		}
-		if (tempgroup == NIL)
+
+		/* If no clauses match this key, we're done; we don't want to
+		 * look at keys to its right.
+		 */
+		if (clausegroup == NIL)
 			break;
 
-		clausegroup = nconc(clausegroup, tempgroup);
+		clausegroup_list = nconc(clausegroup_list, clausegroup);
 
 		indexkeys++;
 		classes++;
 
 	} while (!DoneMatchingIndexKeys(indexkeys, index));
 
-	/* clausegroup holds all matched clauses ordered by indexkeys */
-
-	if (clausegroup != NIL)
-		return lcons(clausegroup, NIL);
+	/* clausegroup_list holds all matched clauses ordered by indexkeys */
+	if (clausegroup_list != NIL)
+		return lcons(clausegroup_list, NIL);
 	return NIL;
 }
 
 /*
  * group_clauses_by_ikey_for_joins
- *	  special edition of group_clauses_by_indexkey - will
- *	  match join & restriction clauses. See comment in indexable_joinclauses.
- *		- vadim 03/18/97
+ *    Generates a list of join clauses that can be used with an index.
  *
+ * This is much like group_clauses_by_indexkey(), but we consider both
+ * join and restriction clauses.  For each indexkey in the index, we
+ * accept both join and restriction clauses that match it (since both
+ * will make useful indexquals if the index is being used to scan the
+ * inner side of a join).  But there must be at least one matching
+ * join clause, or we return NIL indicating that this index isn't useful
+ * for joining.
  */
 static List *
 group_clauses_by_ikey_for_joins(RelOptInfo *rel,
@@ -449,11 +395,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 								List *join_cinfo_list,
 								List *restr_cinfo_list)
 {
-	List	   *curCinfo = NIL;
-	RestrictInfo *matched_clause = (RestrictInfo *) NULL;
-	List	   *clausegroup = NIL;
-	int			curIndxKey;
-	Oid			curClass;
+	List	   *clausegroup_list = NIL;
 	bool		jfound = false;
 
 	if (join_cinfo_list == NIL || indexkeys[0] == 0)
@@ -461,150 +403,146 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 
 	do
 	{
-		List	   *tempgroup = NIL;
-
-		curIndxKey = indexkeys[0];
-		curClass = classes[0];
+		int			curIndxKey = indexkeys[0];
+		Oid			curClass = classes[0];
+		List	   *clausegroup = NIL;
+		List	   *curCinfo;
 
 		foreach(curCinfo, join_cinfo_list)
 		{
-			RestrictInfo *temp = (RestrictInfo *) lfirst(curCinfo);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(curCinfo);
 
-			matched_clause = match_clause_to_indexkey(rel,
-													  index,
-													  curIndxKey,
-													  curClass,
-													  temp,
-													  true);
-			if (!matched_clause)
-				continue;
-
-			tempgroup = lappend(tempgroup, matched_clause);
-			jfound = true;
+			if (match_clause_to_indexkey(rel,
+										 index,
+										 curIndxKey,
+										 curClass,
+										 rinfo->clause,
+										 true))
+			{
+				clausegroup = lappend(clausegroup, rinfo);
+				jfound = true;
+			}
 		}
 		foreach(curCinfo, restr_cinfo_list)
 		{
-			RestrictInfo *temp = (RestrictInfo *) lfirst(curCinfo);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(curCinfo);
 
-			matched_clause = match_clause_to_indexkey(rel,
-													  index,
-													  curIndxKey,
-													  curClass,
-													  temp,
-													  false);
-			if (!matched_clause)
-				continue;
-
-			tempgroup = lappend(tempgroup, matched_clause);
+			if (match_clause_to_indexkey(rel,
+										 index,
+										 curIndxKey,
+										 curClass,
+										 rinfo->clause,
+										 false))
+				clausegroup = lappend(clausegroup, rinfo);
 		}
-		if (tempgroup == NIL)
+
+		/* If no clauses match this key, we're done; we don't want to
+		 * look at keys to its right.
+		 */
+		if (clausegroup == NIL)
 			break;
 
-		clausegroup = nconc(clausegroup, tempgroup);
+		clausegroup_list = nconc(clausegroup_list, clausegroup);
 
 		indexkeys++;
 		classes++;
 
 	} while (!DoneMatchingIndexKeys(indexkeys, index));
 
-	/* clausegroup holds all matched clauses ordered by indexkeys */
+	/* clausegroup_list holds all matched clauses ordered by indexkeys */
 
-	if (clausegroup != NIL)
+	if (clausegroup_list != NIL)
 	{
-
 		/*
-		 * if no one join clause was matched then there ain't clauses for
+		 * if no join clause was matched then there ain't clauses for
 		 * joins at all.
 		 */
 		if (!jfound)
 		{
-			freeList(clausegroup);
+			freeList(clausegroup_list);
 			return NIL;
 		}
-		return lcons(clausegroup, NIL);
+		return lcons(clausegroup_list, NIL);
 	}
 	return NIL;
 }
 
-/*
- * IndexScanableClause ()  MACRO
- *
- * Generalize condition on which we match a clause with an index.
- * Now we can match with functional indices.
- */
-#define IndexScanableOperand(opnd, indkeys, rel, index) \
-	((index->indproc == InvalidOid) ? \
-		match_indexkey_operand(indkeys, opnd, rel) : \
-		function_index_operand((Expr*)opnd,rel,index))
 
 /*
- * There was
- *		equal_indexkey_var(indkeys,opnd) : \
- * above, and now
- *		match_indexkey_operand(indkeys, opnd, rel) : \
- * - vadim 01/22/97
- */
-
-/* match_clause_to_indexkey()
- *	  Finds the first of a relation's available restriction clauses that
- *	  matches a key of an index.
+ * match_clause_to_indexkey()
+ *    Determines whether a restriction or join clause matches
+ *    a key of an index.
  *
  *	  To match, the clause must:
- *	  (1) be in the form (op var const) if the clause is a single-
- *				relation clause, and
+ *	  (1) be in the form (var op const) for a restriction clause,
+ *		  or (var op var) for a join clause, where the var or one
+ *		  of the vars matches the index key; and
  *	  (2) contain an operator which is in the same class as the index
- *				operator for this key.
+ *		  operator for this key.
  *
- *	  If the clause being matched is a join clause, then 'join' is t.
+ *	  In the restriction case, we can cope with (const op var) by commuting
+ *	  the clause to (var op const), if there is a commutator operator.
+ *	  XXX why do we bother to commute?  The executor doesn't care!!
  *
- * Returns a single restrictinfo node corresponding to the matching
- * clause.
+ *	  In the join case, later code will try to commute the clause if needed
+ *	  to put the inner relation's var on the right.  We have no idea here
+ *	  which relation might wind up on the inside, so we just accept
+ *	  a match for either var.
+ *	  XXX is this right?  We are making a list for this relation to
+ *	  be an inner join relation, so if there is any commuting then
+ *	  this rel must be on the right.  But again, it's not really clear
+ *	  that we have to commute at all!
  *
- * NOTE:  returns nil if clause is an or_clause.
+ * 'rel' is the relation of interest.
+ * 'index' is an index on 'rel'.
+ * 'indexkey' is a key of 'index'.
+ * 'xclass' is the corresponding operator class.
+ * 'clause' is the clause to be tested.
+ * 'join' is true if we are considering this clause for joins.
  *
+ * Returns true if the clause can be used with this index key.
+ *
+ * NOTE:  returns false if clause is an or_clause; that's handled elsewhere.
  */
-static RestrictInfo *
+static bool
 match_clause_to_indexkey(RelOptInfo *rel,
 						 RelOptInfo *index,
 						 int indexkey,
 						 int xclass,
-						 RestrictInfo *restrictInfo,
+						 Expr *clause,
 						 bool join)
 {
-	Expr	   *clause = restrictInfo->clause;
+	bool		isIndexable = false;
 	Var		   *leftop,
 			   *rightop;
-	Oid			join_op = InvalidOid;
-	Oid			restrict_op = InvalidOid;
-	bool		isIndexable = false;
 
-	if (or_clause((Node *) clause) ||
-		not_clause((Node *) clause) || single_node((Node *) clause))
-		return (RestrictInfo *) NULL;
-
+	if (! is_opclause((Node *) clause))
+		return false;
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
+	if (! leftop || ! rightop)
+		return false;
 
-	/*
-	 * If this is not a join clause, check for clauses of the form:
-	 * (operator var/func constant) and (operator constant var/func)
-	 */
 	if (!join)
 	{
+		/*
+		 * Not considering joins, so check for clauses of the form:
+		 * (var/func operator constant) and (constant operator var/func)
+		 */
+		Oid			restrict_op = InvalidOid;
 
 		/*
 		 * Check for standard s-argable clause
 		 */
-		if ((rightop && IsA(rightop, Const)) ||
-			(rightop && IsA(rightop, Param)))
+		if (IsA(rightop, Const) || IsA(rightop, Param))
 		{
 			restrict_op = ((Oper *) ((Expr *) clause)->oper)->opno;
 
 			isIndexable = (op_class(restrict_op, xclass, index->relam) &&
-						   IndexScanableOperand(leftop,
-												indexkey,
-												rel,
-												index));
+						   match_index_to_operand(indexkey,
+												  (Expr *) leftop,
+												  rel,
+												  index));
 
 #ifndef IGNORE_BINARY_COMPATIBLE_INDICES
 
@@ -614,11 +552,8 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			 */
 			if (!isIndexable)
 			{
-				Oid			ltype;
-				Oid			rtype;
-
-				ltype = exprType((Node *) leftop);
-				rtype = exprType((Node *) rightop);
+				Oid			ltype = exprType((Node *) leftop);
+				Oid			rtype = exprType((Node *) rightop);
 
 				/*
 				 * make sure we have two different binary-compatible
@@ -637,15 +572,16 @@ match_clause_to_indexkey(RelOptInfo *rel,
 						newop = NULL;
 
 					/* actually have a different operator to try? */
-					if (HeapTupleIsValid(newop) && (oprid(newop) != restrict_op))
+					if (HeapTupleIsValid(newop) &&
+						(oprid(newop) != restrict_op))
 					{
 						restrict_op = oprid(newop);
 
 						isIndexable = (op_class(restrict_op, xclass, index->relam) &&
-									   IndexScanableOperand(leftop,
-															indexkey,
-															rel,
-															index));
+									   match_index_to_operand(indexkey,
+															  (Expr *) leftop,
+															  rel,
+															  index));
 
 						if (isIndexable)
 							((Oper *) ((Expr *) clause)->oper)->opno = restrict_op;
@@ -658,15 +594,16 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		/*
 		 * Must try to commute the clause to standard s-arg format.
 		 */
-		else if ((leftop && IsA(leftop, Const)) ||
-				 (leftop && IsA(leftop, Param)))
+		else if (IsA(leftop, Const) || IsA(leftop, Param))
 		{
 			restrict_op = get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
 
 			isIndexable = ((restrict_op != InvalidOid) &&
 						   op_class(restrict_op, xclass, index->relam) &&
-						   IndexScanableOperand(rightop,
-												indexkey, rel, index));
+						   match_index_to_operand(indexkey,
+												  (Expr *) rightop,
+												  rel,
+												  index));
 
 #ifndef IGNORE_BINARY_COMPATIBLE_INDICES
 			if (!isIndexable)
@@ -697,10 +634,10 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 						isIndexable = ((restrict_op != InvalidOid) &&
 						   op_class(restrict_op, xclass, index->relam) &&
-									   IndexScanableOperand(rightop,
-															indexkey,
-															rel,
-															index));
+									   match_index_to_operand(indexkey,
+															  (Expr *) rightop,
+															  rel,
+															  index));
 
 						if (isIndexable)
 							((Oper *) ((Expr *) clause)->oper)->opno = oprid(newop);
@@ -720,42 +657,30 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			}
 		}
 	}
-
-	/*
-	 * Check for an indexable scan on one of the join relations. clause is
-	 * of the form (operator var/func var/func)
-	 */
 	else
 	{
-		if (rightop
-		&& match_index_to_operand(indexkey, (Expr *) rightop, rel, index))
-		{
-			join_op = get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
+		/*
+		 * Check for an indexable scan on one of the join relations.
+		 * clause is of the form (operator var/func var/func)
+		 *  XXX this does not seem right.  Should check other side
+		 * looks like var/func? do we really want to only consider
+		 * this rel on lefthand side??
+		 */
+		Oid			join_op = InvalidOid;
 
-		}
-		else if (leftop
-				 && match_index_to_operand(indexkey,
-										   (Expr *) leftop, rel, index))
+		if (match_index_to_operand(indexkey, (Expr *) leftop,
+								   rel, index))
 			join_op = ((Oper *) ((Expr *) clause)->oper)->opno;
+		else if (match_index_to_operand(indexkey, (Expr *) rightop,
+										rel, index))
+			join_op = get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
 
 		if (join_op && op_class(join_op, xclass, index->relam) &&
 			is_joinable((Node *) clause))
-		{
 			isIndexable = true;
-
-			/*
-			 * If we're using the operand's commutator we must commute the
-			 * clause.
-			 */
-			if (join_op != ((Oper *) ((Expr *) clause)->oper)->opno)
-				CommuteClause((Node *) clause);
-		}
 	}
 
-	if (isIndexable)
-		return restrictInfo;
-
-	return NULL;
+	return isIndexable;
 }
 
 /****************************************************************************
@@ -960,7 +885,8 @@ one_pred_clause_test(Expr *predicate, Node *clause)
  * this test should always be considered false.
  */
 
-StrategyNumber BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
+static StrategyNumber
+BT_implic_table[BTMaxStrategyNumber][BTMaxStrategyNumber] = {
 	{2, 2, 0, 0, 0},
 	{1, 2, 0, 0, 0},
 	{1, 2, 3, 4, 5},
@@ -1179,14 +1105,13 @@ static List *
 indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 					  List *joininfo_list, List *restrictinfo_list)
 {
-	JoinInfo   *joininfo = (JoinInfo *) NULL;
 	List	   *cg_list = NIL;
-	List	   *i = NIL;
-	List	   *clausegroups = NIL;
+	List	   *i;
 
 	foreach(i, joininfo_list)
 	{
-		joininfo = (JoinInfo *) lfirst(i);
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+		List	   *clausegroups;
 
 		if (joininfo->jinfo_restrictinfo == NIL)
 			continue;
@@ -1202,8 +1127,8 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 			List	   *clauses = lfirst(clausegroups);
 
 			((RestrictInfo *) lfirst(clauses))->restrictinfojoinid = joininfo->unjoined_relids;
+			cg_list = nconc(cg_list, clausegroups);
 		}
-		cg_list = nconc(cg_list, clausegroups);
 	}
 	return cg_list;
 }
@@ -1211,30 +1136,6 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 /****************************************************************************
  *				----  PATH CREATION UTILITIES  ----
  ****************************************************************************/
-
-/*
- * extract_restrict_clauses -
- *	  the list of clause info contains join clauses and restriction clauses.
- *	  This routine returns the restriction clauses only.
- */
-#ifdef NOT_USED
-static List *
-extract_restrict_clauses(List *clausegroup)
-{
-	List	   *restrict_cls = NIL;
-	List	   *l;
-
-	foreach(l, clausegroup)
-	{
-		RestrictInfo *cinfo = lfirst(l);
-
-		if (!is_joinable((Node *) cinfo->clause))
-			restrict_cls = lappend(restrict_cls, cinfo);
-	}
-	return restrict_cls;
-}
-
-#endif
 
 /*
  * index_innerjoin
@@ -1251,21 +1152,18 @@ static List *
 index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 				RelOptInfo *index)
 {
-	List	   *clausegroup = NIL;
-	List	   *cg_list = NIL;
-	List	   *i = NIL;
-	IndexPath  *pathnode = (IndexPath *) NULL;
-	Cost		temp_selec;
-	float		temp_pages;
+	List	   *path_list = NIL;
+	List	   *i;
 
 	foreach(i, clausegroup_list)
 	{
+		List	   *clausegroup = lfirst(i);
+		IndexPath  *pathnode = makeNode(IndexPath);
+		Cost		temp_selec;
+		float		temp_pages;
 		List	   *attnos,
 				   *values,
 				   *flags;
-
-		clausegroup = lfirst(i);
-		pathnode = makeNode(IndexPath);
 
 		get_joinvars(lfirsti(rel->relids), clausegroup,
 					 &attnos, &values, &flags);
@@ -1315,9 +1213,9 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		if (XfuncMode != XFUNC_OFF)
 			((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path *) pathnode);
 #endif
-		cg_list = lappend(cg_list, pathnode);
+		path_list = lappend(path_list, pathnode);
 	}
-	return cg_list;
+	return path_list;
 }
 
 /*
@@ -1341,41 +1239,69 @@ create_index_path_group(Query *root,
 						List *clausegroup_list,
 						bool join)
 {
-	List	   *clausegroup = NIL;
-	List	   *ip_list = NIL;
-	List	   *i = NIL;
-	List	   *j = NIL;
-	IndexPath  *temp_path;
+	List	   *path_list = NIL;
+	List	   *i;
 
 	foreach(i, clausegroup_list)
 	{
-		RestrictInfo *restrictinfo;
-		bool		temp = true;
+		List	   *clausegroup = lfirst(i);
+		bool		usable = true;
 
-		clausegroup = lfirst(i);
-
-		foreach(j, clausegroup)
+		if (join)
 		{
-			restrictinfo = (RestrictInfo *) lfirst(j);
-			if (!(is_joinable((Node *) restrictinfo->clause) &&
-				  equal_path_merge_ordering(index->ordering,
-										  restrictinfo->mergejoinorder)))
-				temp = false;
+			List	   *j;
+
+			foreach(j, clausegroup)
+			{
+				RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
+				if (!(is_joinable((Node *) restrictinfo->clause) &&
+					  equal_path_merge_ordering(index->ordering,
+												restrictinfo->mergejoinorder)))
+				{
+					usable = false;
+					break;
+				}
+			}
 		}
 
-		if (!join || temp)
-		{						/* restriction, ordering scan */
-			temp_path = create_index_path(root, rel, index, clausegroup, join);
-			ip_list = lappend(ip_list, temp_path);
+		if (usable)
+		{
+			path_list = lappend(path_list,
+								create_index_path(root, rel, index,
+												  clausegroup, join));
 		}
 	}
-	return ip_list;
+	return path_list;
 }
 
-static List *
-add_index_paths(List *indexpaths, List *new_indexpaths)
+/****************************************************************************
+ *				----  ROUTINES TO CHECK OPERANDS  ----
+ ****************************************************************************/
+
+/*
+ * match_index_to_operand()
+ *	  Generalized test for a match between an index's key
+ *	  and the operand on one side of a restriction or join clause.
+ *    Now check for functional indices as well.
+ */
+static bool
+match_index_to_operand(int indexkey,
+					   Expr *operand,
+					   RelOptInfo *rel,
+					   RelOptInfo *index)
 {
-	return nconc(indexpaths, new_indexpaths);
+	if (index->indproc == InvalidOid)
+	{
+		/*
+		 * Normal index.
+		 */
+		return match_indexkey_operand(indexkey, (Var *) operand, rel);
+	}
+
+	/*
+	 * functional index check
+	 */
+	return function_index_operand(operand, rel, index);
 }
 
 static bool
@@ -1408,7 +1334,6 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	 * refer to the right relatiion. 2. the args have the right attr.
 	 * numbers in the right order.
 	 *
-	 *
 	 * Check all args refer to the correct relation (i.e. the one with the
 	 * functional index defined on it (rel).  To do this we can simply
 	 * compare range table entry numbers, they must be the same.
@@ -1425,7 +1350,6 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	i = 0;
 	foreach(arg, funcargs)
 	{
-
 		if (indexKeys[i] == 0)
 			return false;
 
