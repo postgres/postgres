@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.35 2001/10/13 04:23:50 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.36 2002/01/21 03:27:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -48,6 +48,10 @@ else
 SHLIB_EXTRA_LIBS=
 endif
 endif
+
+# Suppress bogus soname switch that RedHat RPMs put into tclConfig.sh
+override TCL_SHLIB_LD := $(shell echo "$(TCL_SHLIB_LD)" | sed 's/-Wl,-soname[^ ]*//')
+
 
 %$(TCL_SHLIB_SUFFIX): %.o
 	$(TCL_SHLIB_LD) -o $@ $< $(TCL_LIB_SPEC) $(SHLIB_EXTRA_LIBS)
