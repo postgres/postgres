@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.9 1999/09/20 02:12:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.10 1999/09/20 22:28:05 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -66,12 +66,9 @@
  * Variables in the parser that shouldn't go into plpgsql.h
  * ----------
  */
-extern PLPGSQL_YYSTYPE plpgsql_yylval;
-extern char plpgsql_yytext[];
-
-/* We have to define this as non-extern somewhere for bsdi  bjm  1999/09/19 */
-int	plpgsql_yylineno;
-
+PLPGSQL_YYSTYPE plpgsql_yylval;
+char 		plpgsql_yytext[];
+int			plpgsql_yylineno;
 void		plpgsql_yyerror(const char *s);
 
 /* ----------
