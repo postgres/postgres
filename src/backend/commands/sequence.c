@@ -388,57 +388,57 @@ static SeqTable
 init_sequence(char *caller, char *name)
 {
 	SeqTable	elm,
-				priv = (SeqTable) NULL;
-	SeqTable	temp;
+				prev = (SeqTable) NULL;
+	Relation	seqrel;
 
-	for (elm = seqtab; elm != (SeqTable) NULL;)
+	/* Look to see if we already have a seqtable entry for name */
+	for (elm = seqtab; elm != (SeqTable) NULL; elm = elm->next)
 	{
 		if (strcmp(elm->name, name) == 0)
 			break;
-		priv = elm;
-		elm = elm->next;
+		prev = elm;
 	}
 
-	if (elm == (SeqTable) NULL) /* not found */
-	{
-		temp = (SeqTable) malloc(sizeof(SeqTableData));
-		temp->name = malloc(strlen(name) + 1);
-		strcpy(temp->name, name);
-		temp->rel = (Relation) NULL;
-		temp->cached = temp->last = temp->increment = 0;
-		temp->next = (SeqTable) NULL;
-	}
-	else
-/* found */
-	{
-		if (elm->rel != (Relation) NULL)		/* already opened */
-			return elm;
-		temp = elm;
-	}
+	/* If so, and if it's already been opened in this xact, just return it */
+	if (elm != (SeqTable) NULL && elm->rel != (Relation) NULL)
+		return elm;
 
-	temp->rel = heap_openr(name, AccessShareLock);
-
-	if (temp->rel->rd_rel->relkind != RELKIND_SEQUENCE)
+	/* Else open and check it */
+	seqrel = heap_openr(name, AccessShareLock);
+	if (seqrel->rd_rel->relkind != RELKIND_SEQUENCE)
 		elog(ERROR, "%s.%s: %s is not sequence !", name, caller, name);
 
-	if (elm != (SeqTable) NULL) /* we opened sequence from our */
-	{							/* SeqTable - check relid ! */
-		if (RelationGetRelid(elm->rel) != elm->relid)
+	if (elm != (SeqTable) NULL)
+	{
+		/* We are using a seqtable entry left over from a previous xact;
+		 * must check for relid change.
+		 */
+		elm->rel = seqrel;
+		if (RelationGetRelid(seqrel) != elm->relid)
 		{
 			elog(NOTICE, "%s.%s: sequence was re-created",
 				 name, caller, name);
+			elm->relid = RelationGetRelid(seqrel);
 			elm->cached = elm->last = elm->increment = 0;
-			elm->relid = RelationGetRelid(elm->rel);
 		}
 	}
 	else
 	{
-		elm = temp;
-		elm->relid = RelationGetRelid(elm->rel);
+		/* Time to make a new seqtable entry.  These entries live as long
+		 * as the backend does, so we use plain malloc for them.
+		 */
+		elm = (SeqTable) malloc(sizeof(SeqTableData));
+		elm->name = malloc(strlen(name) + 1);
+		strcpy(elm->name, name);
+		elm->rel = seqrel;
+		elm->relid = RelationGetRelid(seqrel);
+		elm->cached = elm->last = elm->increment = 0;
+		elm->next = (SeqTable) NULL;
+
 		if (seqtab == (SeqTable) NULL)
 			seqtab = elm;
 		else
-			priv->next = elm;
+			prev->next = elm;
 	}
 
 	return elm;
