@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.53 1999/03/30 01:37:28 momjian Exp $
+ * $Id: c.h,v 1.54 1999/04/02 05:10:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,10 @@
  *
  *	  section	description
  *	  -------	------------------------------------------------
- *		1)		bool, true, false, TRUE, FALSE
- *		2)		__STDC__, non-ansi C definitions:
- *				Pointer typedef, NULL
- *				cpp magic macros
+ *		1)		bool, true, false, TRUE, FALSE, NULL
+ *		2)		non-ansi C definitions:
  *				type prefixes: const, signed, volatile, inline
+ *				cpp magic macros
  *		3)		standard system types
  *		4)		datum type
  *		5)		IsValid macros for system types
@@ -31,7 +30,7 @@
  *		7)		exception handling definitions, Assert, Trap, etc macros
  *		8)		Min, Max, Abs, StrNCpy macros
  *		9)		externs
- *		10)		 Berkeley-specific defs
+ *		10)		Berkeley-specific defs
  *		11)		system-specific hacks
  *
  *	 NOTES
@@ -58,7 +57,7 @@
 #endif
 
 /* ----------------------------------------------------------------
- *				Section 1:	bool, true, false, TRUE, FALSE
+ *				Section 1:	bool, true, false, TRUE, FALSE, NULL
  * ----------------------------------------------------------------
  */
 /*
@@ -66,13 +65,13 @@
  *		Boolean value, either true or false.
  *
  */
-#define false	((char) 0)
-#define true	((char) 1)
 #ifndef __cplusplus
 #ifndef bool
 typedef char bool;
 #endif   /* ndef bool */
 #endif	 /* not C++ */
+#define false	((bool) 0)
+#define true	((bool) 1)
 typedef bool *BoolPtr;
 
 #ifndef TRUE
@@ -83,99 +82,43 @@ typedef bool *BoolPtr;
 #define FALSE	0
 #endif	 /* FALSE */
 
-/* ----------------------------------------------------------------
- *				Section 2: __STDC__, non-ansi C definitions:
- *
- *				cpp magic macros
- *				Pointer typedef, NULL
- *				type prefixes: const, signed, volatile, inline
- * ----------------------------------------------------------------
- */
-
-#ifdef	__STDC__				/* ANSI C */
-
-/*
- * Pointer 
- *		Variable holding address of any memory resident object.
- */
-
-/*
- *		XXX Pointer arithmetic is done with this, so it can't be void *
- *		under "true" ANSI compilers.
- */
-typedef char *Pointer;
-
-#ifndef NULL
 /*
  * NULL 
  *		Null pointer.
  */
+#ifndef NULL
 #define NULL	((void *) 0)
 #endif	 /* !defined(NULL) */
 
-#define HAVE_ANSI_CPP			/* all ANSI C compilers must have this! */
-#if defined(NEED_STD_HDRS)
-#undef NEED_STD_HDRS			/* all ANSI systems must have
-								 * stddef/stdlib */
-#endif	 /* NEED_STD_HDRS */
-
-#else	/* !defined(__STDC__) *//* NOT ANSI C */
-
-/*
- * Pointer 
- *		Variable containing address of any memory resident object.
- */
-typedef char *Pointer;
-
-#ifndef NULL
-/*
- * NULL 
- *		Null pointer.
- */
-#define NULL	0
-#endif	 /* !defined(NULL) */
-
-/*
- * const 
- *		Type modifier.	Identifies read only variables.
+/* ----------------------------------------------------------------
+ *				Section 2: non-ansi C definitions:
  *
- * Example:
- *		extern const Version	RomVersion;
+ *				type prefixes: const, signed, volatile, inline
+ *				cpp magic macros
+ * ----------------------------------------------------------------
  */
-#ifndef WIN32
-#define const					/* const */
-#endif
 
 /*
- * signed 
- *		Type modifier.	Identifies signed integral types.
+ * We used to define const, signed, volatile, and inline as empty
+ * if __STDC__ wasn't defined.  Now we let configure test whether
+ * those keywords work; config.h defines them as empty if not.
  */
-#define signed					/* signed */
-
-/*
- * volatile 
- *		Type modifier.	Identifies variables which may change in ways not
- *		noticeable by the compiler, e.g. via asynchronous interrupts.
- *
- * Example:
- *		extern volatile unsigned int	NumberOfInterrupts;
- */
-#define volatile				/* volatile */
-
-#endif	 /* !defined(__STDC__) */		/* NOT ANSI C */
 
 /*
  * CppAsString 
  *		Convert the argument to a string, using the C preprocessor.
  * CppConcat 
  *		Concatenate two arguments together, using the C preprocessor.
+ *
+ * Note: the standard Autoconf macro AC_C_STRINGIZE actually only checks
+ * whether #identifier works, but if we have that we likely have ## too.
  */
-#if defined(HAVE_ANSI_CPP)
+#if defined(HAVE_STRINGIZE)
 
 #define CppAsString(identifier) #identifier
 #define CppConcat(x, y)			x##y
 
-#else							/* !HAVE_ANSI_CPP */
+#else							/* !HAVE_STRINGIZE */
 
 #define CppAsString(identifier) "identifier"
 
@@ -190,38 +133,31 @@ typedef char *Pointer;
 #define _priv_CppIdentity(x)x
 #define CppConcat(x, y)			_priv_CppIdentity(x)y
 
-#endif	 /* !HAVE_ANSI_CPP */
+#endif	 /* !HAVE_STRINGIZE */
 
-#ifndef __GNUC__				/* GNU cc */
-#endif
-
-#ifndef __GNUC__				/* GNU cc */
-#define inline
 /*
  * dummyret is used to set return values in macros that use ?: to make
  * assignments.  gcc wants these to be void, other compilers like char
  */
-#define dummyret	char
-#else
+#ifdef __GNUC__				/* GNU cc */
 #define dummyret	void
+#else
+#define dummyret	char
 #endif
-
-#if defined(NEED_STD_HDRS)
-/*
- * You're doomed.  We've removed almost all of our own C library
- * extern declarations because they conflict on the different
- * systems.  You'll have to write your own stdlib.h.
- */
-#include "stdlib.h"
-#else							/* NEED_STD_HDRS */
-#include <stddef.h>
-#include <stdlib.h>
-#endif	 /* NEED_STD_HDRS */
 
 /* ----------------------------------------------------------------
  *				Section 3:	standard system types
  * ----------------------------------------------------------------
  */
+
+/*
+ * Pointer 
+ *		Variable holding address of any memory resident object.
+ *
+ *		XXX Pointer arithmetic is done with this, so it can't be void *
+ *		under "true" ANSI compilers.
+ */
+typedef char *Pointer;
 
 /*
  * intN 

@@ -583,14 +583,27 @@ dnl
 
 dnl Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-AC_TYPE_UID_T
 AC_C_INLINE
+AC_C_STRINGIZE
+AC_TYPE_UID_T
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_STRUCT_TM
 AC_STRUCT_TIMEZONE
+
+AC_MSG_CHECKING(for signed types)
+AC_TRY_COMPILE([],
+[signed char c; signed short s; signed int i;],
+[AC_MSG_RESULT(yes)],
+[AC_DEFINE(signed, ) AC_MSG_RESULT(no)])
+
+AC_MSG_CHECKING(for volatile)
+AC_TRY_COMPILE([],
+[extern volatile int i;],
+[AC_MSG_RESULT(yes)],
+[AC_DEFINE(volatile, ) AC_MSG_RESULT(no)])
 
 AC_MSG_CHECKING(for type of last arg to accept)
 AC_TRY_COMPILE([#include <stdlib.h>

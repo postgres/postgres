@@ -302,6 +302,21 @@ extern void srandom(unsigned int seed);
 #undef ALIGNOF_DOUBLE
 #undef MAXIMUM_ALIGNOF
 
+/* Define const as empty if your compiler doesn't grok const. */
+#undef const
+
+/* Define as your compiler's spelling of "inline", or empty if no inline. */
+#undef inline
+
+/* Define signed as empty if your compiler doesn't grok "signed char" etc */
+#undef signed
+
+/* Define volatile as empty if your compiler doesn't grok volatile. */
+#undef volatile
+
+/* Define if your cpp understands the ANSI stringizing operators in macros */
+#undef HAVE_STRINGIZE
+
 /* Define as the base type of the last arg to accept */
 #undef SOCKET_SIZE_TYPE
 
