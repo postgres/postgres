@@ -265,103 +265,68 @@
 
    <para>
     Numeric types consist of two- and four-byte integers and four- and eight-byte
-    floating point numbers.</para>
-
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Numeric Types</title>
-<titleabbrev>Numerics</titleabbrev>
-<tgroup cols="4">
-<thead>
-  <row>
-    <entry>Numeric Type</entry>
-    <entry>Storage</entry>
-    <entry>Description</entry>
-    <entry>Range</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>float4</entry>
-    <entry>4 bytes</entry>
-    <entry>Variable-precision</entry>
-    <entry>6 decimal places</entry>
-  </row>
-  <row>
-    <entry>float8</entry>
-    <entry>8 bytes</entry>
-    <entry>Variable-precision</entry>
-    <entry>15 decimal places</entry>
-  </row>
-  <row>
-    <entry>int2</entry>
-    <entry>2 bytes</entry>
-    <entry>Fixed-precision</entry>
-    <entry>-32768 to +32767</entry>
-  </row>
-  <row>
-    <entry>int4</entry>
-    <entry>4 bytes</entry>
-    <entry>Usual choice for fixed-precision</entry>
-    <entry>-2147483648 to +2147483647</entry>
-  </row>
-  <row>
-    <entry>int8</entry>
-    <entry>8 bytes</entry>
-    <entry>Very large range fixed-precision</entry>
-    <entry>+/- &gt; 18 decimal places</entry>
-  </row>
-  <row>
-    <entry>serial</entry>
-    <entry>4 bytes</entry>
-    <entry>Identifer or cross-reference</entry>
-    <entry>0 to +2147483647</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
-
-<para>
-The numeric types have a full set of corresponding arithmetic operators and
-functions. Refer to <xref endterm="math-opers" linkend="math-opers"> 
-and <xref endterm="math-funcs" linkend="math-funcs"> for more information.
+    floating point numbers.
    </para>
 
-<para>
-The <type>serial</type> type is a special-case type constructed by
-<productname>Postgres</productname> from other existing components.
-It is typically used to create unique identifiers for table entries.
-In the current implementation, specifying
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Numeric Types</title>
+     <titleabbrev>Numerics</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Numeric Type</entry>
+	<entry>Storage</entry>
+	<entry>Description</entry>
+	<entry>Range</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>float4</entry>
+	<entry>4 bytes</entry>
+	<entry>Variable-precision</entry>
+	<entry>6 decimal places</entry>
+       </row>
+       <row>
+	<entry>float8</entry>
+	<entry>8 bytes</entry>
+	<entry>Variable-precision</entry>
+	<entry>15 decimal places</entry>
+       </row>
+       <row>
+	<entry>int2</entry>
+	<entry>2 bytes</entry>
+	<entry>Fixed-precision</entry>
+	<entry>-32768 to +32767</entry>
+       </row>
+       <row>
+	<entry>int4</entry>
+	<entry>4 bytes</entry>
+	<entry>Usual choice for fixed-precision</entry>
+	<entry>-2147483648 to +2147483647</entry>
+       </row>
+       <row>
+	<entry>int8</entry>
+	<entry>8 bytes</entry>
+	<entry>Very large range fixed-precision</entry>
+	<entry>+/- &gt; 18 decimal places</entry>
+       </row>
+       <row>
+	<entry>serial</entry>
+	<entry>4 bytes</entry>
+	<entry>Identifer or cross-reference</entry>
+	<entry>0 to +2147483647</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-<programlisting>
-CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
-</programlisting>
-
-is equivalent to specifying:
-
-<programlisting>
-CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
-CREATE TABLE <replaceable class="parameter">tablename</replaceable>
-    (<replaceable class="parameter">colname</replaceable> INT4 DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq');
-CREATE UNIQUE INDEX <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_key on <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable>);
-</programlisting>
-
-<caution>
-<para>
-The implicit sequence created for the <type>serial</type> type will
-<emphasis>not</emphasis> be automatically removed when the table is dropped.
-So, the following commands executed in order will likely fail:
-
-<programlisting>
-CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
-DROP TABLE <replaceable class="parameter">tablename</replaceable>;
-CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
-</programlisting>
-
-The sequence will remain in the database until explicitly dropped using
-<command>DROP SEQUENCE</command>.</para>
-</caution>
+   <para>
+    The numeric types have a full set of corresponding arithmetic operators and
+    functions. Refer to <xref endterm="math-opers" linkend="math-opers"> 
+    and <xref endterm="math-funcs" linkend="math-funcs"> for more information.
    </para>
 
    <para>
@@ -369,143 +334,196 @@ The sequence will remain in the database until explicitly dropped using
     it relies on compiler support for this.
    </para>
 
-</sect1>
+   <sect2>
+    <title>The Serial Type</title>
 
-<sect1>
-<title>Monetary Type</title>
+    <para>
+     The <type>serial</type> type is a special-case type constructed by
+     <productname>Postgres</productname> from other existing components.
+     It is typically used to create unique identifiers for table entries.
+     In the current implementation, specifying
 
-<para>
-The <type>money</type> type supports US-style currency with 
-fixed decimal point representation.
-If <productname>Postgres</productname> is compiled with USE_LOCALE 
-then the money type should use the monetary conventions defined for
-<citetitle>locale(7)</citetitle>.
+     <programlisting>
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
+     </programlisting>
+
+     is equivalent to specifying:
+
+     <programlisting>
+CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
+CREATE TABLE <replaceable class="parameter">tablename</replaceable>
+    (<replaceable class="parameter">colname</replaceable> INT4 DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq');
+CREATE UNIQUE INDEX <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_key on <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable>);
+     </programlisting>
+
+     <caution>
+      <para>
+       The implicit sequence created for the <type>serial</type> type will
+       <emphasis>not</emphasis> be automatically removed when the
+       table is dropped.
+      </para>
+     </caution>
+
+     Implicit sequences supporting the <type>serial</type> are
+     not automatically dropped when a table containing a serial type
+     is dropped. So, the following commands executed in order will likely fail:
+
+     <programlisting>
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
+DROP TABLE <replaceable class="parameter">tablename</replaceable>;
+CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
+     </programlisting>
+
+     The sequence will remain in the database until explicitly dropped using
+     <command>DROP SEQUENCE</command>.
+    </para>
+   </sect2>
+
+  </sect1>
+
+  <sect1>
+   <title>Monetary Type</title>
+
+   <note>
+    <title>Obsolete Type</title>
+    <para>
+     The <type>money</type> is now obsolete. Use <type>numeric</type>
+     or <type>decimal</type> instead.
+    </para>
+   </note>
+
+   <para>
+    The <type>money</type> type supports US-style currency with 
+    fixed decimal point representation.
+    If <productname>Postgres</productname> is compiled with USE_LOCALE 
+    then the money type should use the monetary conventions defined for
+    <citetitle>locale(7)</citetitle>.
    </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Monetary Types</title>
-<titleabbrev>Money</titleabbrev>
-<tgroup cols="4">
-<thead>
-  <row>
-    <entry>Monetary Type</entry>
-    <entry>Storage</entry>
-    <entry>Description</entry>
-    <entry>Range</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>money</entry>
-    <entry>4 bytes</entry>
-    <entry>Fixed-precision</entry>
-    <entry>-21474836.48 to +21474836.47</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Monetary Types</title>
+     <titleabbrev>Money</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Monetary Type</entry>
+	<entry>Storage</entry>
+	<entry>Description</entry>
+	<entry>Range</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>money</entry>
+	<entry>4 bytes</entry>
+	<entry>Fixed-precision</entry>
+	<entry>-21474836.48 to +21474836.47</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
    <para>
     <type>numeric</type>
     will replace the money type, and should be preferred.
    </para>
 
-</sect1>
+  </sect1>
 
-<sect1>
-<title>Character Types</title>
+  <sect1>
+   <title>Character Types</title>
 
-<para>
-<acronym>SQL92</acronym> defines two primary character types:
- <type>char</type> and <type>varchar</type>. 
-<productname>Postgres</productname> supports these types, in
-addition to the more general <type>text</type> type, 
-which unlike <type>varchar</type>
-does not require an upper
-limit to be declared on the size of the field.
-</para>
+   <para>
+    <acronym>SQL92</acronym> defines two primary character types:
+    <type>char</type> and <type>varchar</type>. 
+    <productname>Postgres</productname> supports these types, in
+    addition to the more general <type>text</type> type, 
+    which unlike <type>varchar</type>
+    does not require an upper
+    limit to be declared on the size of the field.
+   </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Character Types</title>
-<titleabbrev>Characters</titleabbrev>
-<tgroup cols="4">
-<thead>
-  <row>
-    <entry>Character Type</entry>
-    <entry>Storage</entry>
-    <entry>Recommendation</entry>
-    <entry>Description</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>char</entry>
-    <entry>1 byte</entry>
-    <entry><acronym>SQL92</acronym>-compatible</entry>
-    <entry>Single character</entry>
-  </row>
-  <row>
-    <entry>char(n)</entry>
-    <entry>(4+n) bytes</entry>
-    <entry><acronym>SQL92</acronym>-compatible</entry>
-    <entry>Fixed-length blank padded</entry>
-  </row>
-  <row>
-    <entry>text</entry>
-    <entry>(4+x) bytes</entry>
-    <entry>Best choice</entry>
-    <entry>Variable-length</entry>
-  </row>
-  <row>
-    <entry>varchar(n)</entry>
-    <entry>(4+n) bytes</entry>
-    <entry><acronym>SQL92</acronym>-compatible</entry>
-    <entry>Variable-length with limit</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Character Types</title>
+     <titleabbrev>Characters</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Character Type</entry>
+	<entry>Storage</entry>
+	<entry>Recommendation</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>char</entry>
+	<entry>1 byte</entry>
+	<entry><acronym>SQL92</acronym>-compatible</entry>
+	<entry>Single character</entry>
+       </row>
+       <row>
+	<entry>char(n)</entry>
+	<entry>(4+n) bytes</entry>
+	<entry><acronym>SQL92</acronym>-compatible</entry>
+	<entry>Fixed-length blank padded</entry>
+       </row>
+       <row>
+	<entry>text</entry>
+	<entry>(4+x) bytes</entry>
+	<entry>Best choice</entry>
+	<entry>Variable-length</entry>
+       </row>
+       <row>
+	<entry>varchar(n)</entry>
+	<entry>(4+n) bytes</entry>
+	<entry><acronym>SQL92</acronym>-compatible</entry>
+	<entry>Variable-length with limit</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-<para>
-There is one other fixed-length character type. 
-The <type>name</type> type
-only has one purpose and that is to provide 
-<productname>Postgres</productname> with a
-special type to use for internal names.  
-It is not intended for use by the general user.
-It's length is currently defined as 32 chars 
-but should be reference using NAMEDATALEN.
-This is set at compile time and may change in a future release.
-</para>
+   <para>
+    There is one other fixed-length character type. 
+    The <type>name</type> type
+    only has one purpose and that is to provide 
+    <productname>Postgres</productname> with a
+    special type to use for internal names.  
+    It is not intended for use by the general user.
+    It's length is currently defined as 32 chars 
+    but should be reference using NAMEDATALEN.
+    This is set at compile time and may change in a future release.
+   </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Specialty Character Type</title>
-<titleabbrev>Specialty Characters</titleabbrev>
-<tgroup cols="3">
-<thead>
-  <row>
-    <entry>Character Type</entry>
-    <entry>Storage</entry>
-    <entry>Description</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>name</entry>
-    <entry>32 bytes</entry>
-    <entry>Thirty-two character internal type</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Specialty Character Type</title>
+     <titleabbrev>Specialty Characters</titleabbrev>
+     <tgroup cols="3">
+      <thead>
+       <row>
+	<entry>Character Type</entry>
+	<entry>Storage</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>name</entry>
+	<entry>32 bytes</entry>
+	<entry>Thirty-two character internal type</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-</sect1>
+  </sect1>
 
   <sect1>
    <title>Date/Time Types</title>
@@ -728,113 +746,113 @@ This is set at compile time and may change in a future release.
     </para>
    </sect2>
 
-<sect2>
-<title>Date/Time Styles</title>
-
-<para>
-Output formats can be set to one of four styles: 
-ISO-8601, <acronym>SQL</acronym> (Ingres), traditional
-Postgres, and German.
-
-<table tocentry="1">
-<title><productname>Postgres</productname> Date Styles</title>
-<titleabbrev>Styles</titleabbrev>
-<tgroup cols="3">
-<thead>
-  <row>
-    <entry>Style Specification</entry>
-    <entry>Description</entry>
-    <entry>Example</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>ISO</entry>
-    <entry>ISO-8601 standard</entry>
-    <entry>1997-12-17 07:37:16-08</entry>
-  </row>
-  <row>
-    <entry><acronym>SQL</acronym></entry>
-    <entry>Traditional style</entry>
-    <entry>12/17/1997 07:37:16.00 PST</entry>
-  </row>
-  <row>
-    <entry>Postgres</entry>
-    <entry>Original style</entry>
-    <entry>Wed Dec 17 07:37:16 1997 PST</entry>
-  </row>
-  <row>
-    <entry>German</entry>
-    <entry>Regional style</entry>
-    <entry>17.12.1997 07:37:16.00 PST</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
-
-<para>
-The <acronym>SQL</acronym> style has European and non-European (US) variants, 
-which determines whether month follows day or vica versa.
-
-<table tocentry="1">
-<title><productname>Postgres</productname> Date Order Conventions</title>
-<titleabbrev>Order</titleabbrev>
-<tgroup cols="3">
-<thead>
-  <row>
-    <entry>Style Specification</entry>
-    <entry>Description</entry>
-    <entry>Example</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>European</entry>
-    <entry>Regional convention</entry>
-    <entry>17/12/1997 15:37:16.00 MET</entry>
-  </row>
-  <row>
-    <entry>NonEuropean</entry>
-    <entry>Regional convention</entry>
-    <entry>12/17/1997 07:37:16.00 PST</entry>
-  </row>
-  <row>
-    <entry>US</entry>
-    <entry>Regional convention</entry>
-    <entry>12/17/1997 07:37:16.00 PST</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
-
-<para>
-There are several ways to affect the appearance of date/time types:
-
-<itemizedlist spacing="compact" mark="bullet">
-<listitem>
-<para>
-The PGDATESTYLE environment variable used by the backend directly 
-on postmaster startup.
-</para>
-</listitem>
-<listitem>
-<para>
-The PGDATESTYLE environment variable used by the frontend libpq 
-on session startup.
-</para>
-</listitem>
-<listitem>
-<para>
-<command>SET DATESTYLE</command> <acronym>SQL</acronym> command.
-</para>
-</listitem>
-</itemizedlist>
-</para>
+   <sect2>
+    <title>Date/Time Styles</title>
 
     <para>
-     For <productname>Postgres</productname> v6.4 (and earlier) 
+     Output formats can be set to one of four styles: 
+     ISO-8601, <acronym>SQL</acronym> (Ingres), traditional
+     Postgres, and German.
+
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Date Styles</title>
+      <titleabbrev>Styles</titleabbrev>
+      <tgroup cols="3">
+       <thead>
+	<row>
+	 <entry>Style Specification</entry>
+	 <entry>Description</entry>
+	 <entry>Example</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>ISO</entry>
+	 <entry>ISO-8601 standard</entry>
+	 <entry>1997-12-17 07:37:16-08</entry>
+	</row>
+	<row>
+	 <entry><acronym>SQL</acronym></entry>
+	 <entry>Traditional style</entry>
+	 <entry>12/17/1997 07:37:16.00 PST</entry>
+	</row>
+	<row>
+	 <entry>Postgres</entry>
+	 <entry>Original style</entry>
+	 <entry>Wed Dec 17 07:37:16 1997 PST</entry>
+	</row>
+	<row>
+	 <entry>German</entry>
+	 <entry>Regional style</entry>
+	 <entry>17.12.1997 07:37:16.00 PST</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     The <acronym>SQL</acronym> style has European and non-European (US) variants, 
+     which determines whether month follows day or vica versa.
+
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Date Order Conventions</title>
+      <titleabbrev>Order</titleabbrev>
+      <tgroup cols="3">
+       <thead>
+	<row>
+	 <entry>Style Specification</entry>
+	 <entry>Description</entry>
+	 <entry>Example</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>European</entry>
+	 <entry>Regional convention</entry>
+	 <entry>17/12/1997 15:37:16.00 MET</entry>
+	</row>
+	<row>
+	 <entry>NonEuropean</entry>
+	 <entry>Regional convention</entry>
+	 <entry>12/17/1997 07:37:16.00 PST</entry>
+	</row>
+	<row>
+	 <entry>US</entry>
+	 <entry>Regional convention</entry>
+	 <entry>12/17/1997 07:37:16.00 PST</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     There are several ways to affect the appearance of date/time types:
+
+     <itemizedlist spacing="compact" mark="bullet">
+      <listitem>
+       <para>
+	The <envar>PGDATESTYLE</envar> environment variable used by the backend directly 
+	on postmaster startup.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	The <envar>PGDATESTYLE</envar> environment variable used by the frontend libpq 
+	on session startup.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+	<command>SET DATESTYLE</command> <acronym>SQL</acronym> command.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </para>
+
+    <para>
+     For <productname>Postgres</productname> v6.5 (and earlier) 
      the default date/time style is
      "non-European traditional Postgres". 
      In future releases, the default may become "ISO" (compatible with ISO-8601),
@@ -901,7 +919,8 @@ on session startup.
 	sets the time zone for the session.
        </para>
       </listitem>
-     </itemizedlist></para>
+     </itemizedlist>
+    </para>
 
     <para>
      If an invalid time zone is specified,
@@ -1291,22 +1310,22 @@ on session startup.
    </sect2>
 
    <sect2>
-    <title>datetime</title>
+    <title><type>datetime</type></title>
 
-<para>
-General-use date and time is input using a wide range of
-styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, traditional
-<productname>Postgres</productname> (see section on "absolute time")
-and other permutations of date and time. Output styles can be ISO-compatible,
-<acronym>SQL</acronym>-compatible, or traditional 
-<productname>Postgres</productname>, with the default set to be compatible
-with <productname>Postgres</productname> v6.0.
-</para>
+    <para>
+     General-use date and time is input using a wide range of
+     styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, traditional
+     <productname>Postgres</productname> (see section on "absolute time")
+     and other permutations of date and time. Output styles can be ISO-compatible,
+     <acronym>SQL</acronym>-compatible, or traditional 
+     <productname>Postgres</productname>, with the default set to be compatible
+     with <productname>Postgres</productname> v6.0.
+    </para>
 
-<para>
-<type>datetime</type> is specified using the following syntax:
+    <para>
+     <type>datetime</type> is specified using the following syntax:
 
-<programlisting>
+     <programlisting>
 Year-Month-Day [ Hour : Minute : Second ]      [AD,BC] [ Timezone ]
   YearMonthDay [ Hour : Minute : Second ]      [AD,BC] [ Timezone ]
      Month Day [ Hour : Minute : Second ] Year [AD,BC] [ Timezone ]
@@ -1318,40 +1337,41 @@ where
     Minute is 00, 01, ..., 59
     Second is 00, 01, ..., 59 (60 for leap second)
     Timezone is 3 characters or ISO offset to GMT
-</programlisting>
+     </programlisting>
     </para>
 
-<para>
-Valid dates are from Nov 13 00:00:00 4013 BC GMT to far into the future.
-Timezones are either three characters (e.g. "GMT" or "PST") or ISO-compatible
-offsets to GMT (e.g. "-08" or "-08:00" when in Pacific Standard Time).
-Dates are stored internally in Greenwich Mean Time. Input and output routines 
-translate time to the local time zone of the server.
-</para></sect2>
+    <para>
+     Valid dates are from Nov 13 00:00:00 4013 BC GMT to far into the future.
+     Timezones are either three characters (e.g. "GMT" or "PST") or ISO-compatible
+     offsets to GMT (e.g. "-08" or "-08:00" when in Pacific Standard Time).
+     Dates are stored internally in Greenwich Mean Time. Input and output routines 
+     translate time to the local time zone of the server.
+    </para>
+   </sect2>
 
-<sect2>
-<title><type>timespan</type></title>
+   <sect2>
+    <title><type>timespan</type></title>
 
-<para>
-General-use time span is input using a wide range of
-syntaxes, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
-traditional
-<productname>Postgres</productname> (see section on "relative time")
- and other permutations of time span. Output formats can be ISO-compatible,
-<acronym>SQL</acronym>-compatible, or traditional 
-<productname>Postgres</productname>, 
-with the default set to be <productname>Postgres</productname>-compatible.
-Months and years are a "qualitative" time interval, and are stored separately
-from the other "quantitative" time intervals such as day or hour. 
-For date arithmetic,
-the qualitative time units are instantiated in the context of the 
-relevant date or time.
+    <para>
+     General-use time span is input using a wide range of
+     syntaxes, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
+     traditional
+     <productname>Postgres</productname> (see section on "relative time")
+     and other permutations of time span. Output formats can be ISO-compatible,
+     <acronym>SQL</acronym>-compatible, or traditional 
+     <productname>Postgres</productname>, 
+     with the default set to be <productname>Postgres</productname>-compatible.
+     Months and years are a "qualitative" time interval, and are stored separately
+     from the other "quantitative" time intervals such as day or hour. 
+     For date arithmetic,
+     the qualitative time units are instantiated in the context of the 
+     relevant date or time.
     </para>
 
-<para>
-Time span is specified with the following syntax:
+    <para>
+     Time span is specified with the following syntax:
 
-<programlisting>
+     <programlisting>
   Quantity Unit [Quantity Unit...] [Direction]
 @ Quantity Unit [Direction]
 where 	
@@ -1359,12 +1379,12 @@ where
     Unit is <literal>second</literal>, <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>, <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
       <literal>decade</literal>, <literal>century</literal>, <literal>millenium</literal>, or abbreviations or plurals of these units.
     Direction is <literal>ago</literal>.
-</programlisting>
-</para>
-</sect2>
+     </programlisting>
+    </para>
+   </sect2>
 
-<sect2>
-<title>abstime</title>
+   <sect2>
+    <title><type>abstime</type></title>
 
     <para>
      Absolute time (<type>abstime</type>) is a limited-range (+/- 68 years) and 
@@ -1373,10 +1393,10 @@ where
      covers a larger range with greater precision.
     </para>
 
-<para>
-Absolute time is specified using the following syntax:
+    <para>
+     Absolute time is specified using the following syntax:
 
-<programlisting>
+     <programlisting>
 Month  Day [ Hour : Minute : Second ]  Year [ Timezone ]
 where	
     Month is Jan, Feb, ..., Dec
@@ -1385,315 +1405,318 @@ where
     Minute is 00, 01, ..., 59
     Second is 00, 01, ..., 59
     Year is 1901, 1902, ..., 2038
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
+    <para>
      Valid dates are from <literal>Dec 13 20:45:53 1901 GMT</literal>
      to <literal>Jan 19 03:14:04 2038 GMT</literal>. 
 
-<note>
-<title>Historical Note</title>
-<para>
-As of Version 3.0, times are no longer read and written
-using Greenwich Mean Time; the input and output routines default to
-the local time zone.</para>
-</note>
+     <note>
+      <title>Historical Note</title>
+      <para>
+       As of Version 3.0, times are no longer read and written
+       using Greenwich Mean Time; the input and output routines default to
+       the local time zone.</para>
+     </note>
 
-All special values allowed for <type>datetime</type> are also 
-allowed for "absolute time".
-</para>
+     All special values allowed for <type>datetime</type> are also 
+     allowed for "absolute time".
+    </para>
 
-</sect2>
+   </sect2>
 
-<sect2>
-<title>reltime</title>
+   <sect2>
+    <title><type>reltime</type></title>
 
-<para>
-Relative time <type>reltime</type> is a limited-range (+/- 68 years)
- and limited-precision (1 sec) time span data type.
-<type>timespan</type> should be preferred, since it
-covers a larger range with greater precision and, more importantly, 
-can distinguish between
-relative units (months and years) and quantitative units (days, hours, etc). 
-Instead, reltime
-must force months to be exactly 30 days, so time arithmetic does not 
-always work as expected.
-     For example, adding one reltime <literal>year</literal> to abstime <literal>today</literal> does not 
-produce today's date one year from
-now, but rather a date 360 days from today.
-</para>
+    <para>
+     Relative time <type>reltime</type> is a limited-range (+/- 68 years)
+     and limited-precision (1 sec) time span data type.
+     <type>timespan</type> should be preferred, since it
+     covers a larger range with greater precision and, more importantly, 
+     can distinguish between
+     relative units (months and years) and quantitative units (days, hours, etc). 
+     Instead, reltime
+     must force months to be exactly 30 days, so time arithmetic does not 
+     always work as expected.
+     For example, adding one reltime <literal>year</literal> to
+     abstime <literal>today</literal> does not 
+     produce today's date one year from
+     now, but rather a date 360 days from today.
+    </para>
 
-<para>
-<type>reltime</type> shares input and output routines with the other 
-time span types.
-The section on <type>timespan</type> covers this in more detail.
-</para>
+    <para>
+     <type>reltime</type> shares input and output routines with the other 
+     time span types.
+     The section on <type>timespan</type> covers this in more detail.
+    </para>
 
-</sect2>
+   </sect2>
 
-<sect2>
-<title><type>timestamp</type></title>
+   <sect2>
+    <title><type>timestamp</type></title>
 
-<para>
-This is currently a limited-range absolute time which closely resembles the
-abstime
-data type. It shares the general input parser with the other date/time types.
-In future releases this type will absorb the capabilities of the 
-<type>datetime</type> type
-and will move toward <acronym>SQL92</acronym> compliance.
-</para>
+    <para>
+     This is currently a limited-range absolute time which closely resembles the
+     abstime
+     data type. It shares the general input parser with the other date/time types.
+     In future releases this type will absorb the capabilities of the 
+     <type>datetime</type> type
+     and will move toward <acronym>SQL92</acronym> compliance.
+    </para>
 
-<para>
-<type>timestamp</type> is specified using the same syntax as for 
-<type>datetime</type>.
-</para>
-</sect2>
+    <para>
+     <type>timestamp</type> is specified using the same syntax as for 
+     <type>datetime</type>.
+    </para>
+   </sect2>
 
-<sect2>
-<title><type>interval</type></title>
+   <sect2>
+    <title><type>interval</type></title>
 
-<para>
-<type>interval</type> is an <acronym>SQL92</acronym> data type which is
-currently mapped to the <type>timespan</type> 
-<productname>Postgres</productname> data type.
-</para>
-</sect2>
+    <para>
+     <type>interval</type> is an <acronym>SQL92</acronym> data type which is
+     currently mapped to the <type>timespan</type> 
+     <productname>Postgres</productname> data type.
+    </para>
+   </sect2>
 
-<sect2>
-<title>tinterval</title>
+   <sect2>
+    <title><type>tinterval</type></title>
 
-<para>
-Time ranges are specified as:
+    <para>
+     Time ranges are specified as:
 
-<programlisting>
+     <programlisting>
 [ 'abstime' 'abstime']
 where
     abstime is a time in the absolute time format.
-</programlisting>
+     </programlisting>
 
-Special abstime values such as 
-<literal>current', <literal>infinity' and <literal>-infinity' can be used.</literal></literal></literal>
-</para></sect2>
+     Special abstime values such as 
+     <literal>current</literal>, <literal>infinity</literal> and
+     <literal>-infinity</literal> can be used.
+    </para>
+   </sect2>
 
-</sect1>
+  </sect1>
 
-<sect1>
-<title>Boolean Type</title>
+  <sect1>
+   <title>Boolean Type</title>
 
-<para>
-<productname>Postgres</productname> supports <type>bool</type> as
-the <acronym>SQL3</acronym> boolean type.
-<type>bool</type> can have one of only two states: 'true' or 'false'. 
-A third state, 'unknown', is not
-implemented and is not suggested in <acronym>SQL3</acronym>; 
-<acronym>NULL</acronym> is an
-effective substitute. <type>bool</type> can be used in any boolean expression, 
-and boolean expressions
-always evaluate to a result compatible with this type.</para>
+   <para>
+    <productname>Postgres</productname> supports <type>bool</type> as
+    the <acronym>SQL3</acronym> boolean type.
+    <type>bool</type> can have one of only two states: 'true' or 'false'. 
+    A third state, 'unknown', is not
+    implemented and is not suggested in <acronym>SQL3</acronym>; 
+    <acronym>NULL</acronym> is an
+    effective substitute. <type>bool</type> can be used in any boolean expression, 
+    and boolean expressions
+    always evaluate to a result compatible with this type.</para>
 
-<para>
-<type>bool</type> uses 1 byte of storage.
-</para>
+   <para>
+    <type>bool</type> uses 1 byte of storage.
+   </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Boolean Type</title>
-<titleabbrev>Booleans</titleabbrev>
-<tgroup cols="3">
-<thead>
-  <row>
-    <entry>State</entry>
-    <entry>Output</entry>
-    <entry>Input</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>True</entry>
-    <entry>'t'</entry>
-    <entry>TRUE, 't', 'true', 'y', 'yes', '1'</entry>
-  </row>
-  <row>
-    <entry>False</entry>
-    <entry>'f'</entry>
-    <entry>FALSE, 'f', 'false', 'n', 'no', '0'</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
-</sect1>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Boolean Type</title>
+     <titleabbrev>Booleans</titleabbrev>
+     <tgroup cols="3">
+      <thead>
+       <row>
+	<entry>State</entry>
+	<entry>Output</entry>
+	<entry>Input</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>True</entry>
+	<entry>'t'</entry>
+	<entry>TRUE, 't', 'true', 'y', 'yes', '1'</entry>
+       </row>
+       <row>
+	<entry>False</entry>
+	<entry>'f'</entry>
+	<entry>FALSE, 'f', 'false', 'n', 'no', '0'</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+  </sect1>
 
-<sect1>
-<title>Geometric Types</title>
+  <sect1>
+   <title>Geometric Types</title>
 
-<para>
-Geometric types represent two-dimensional spatial objects. 
-The most fundamental type,
-the point, forms the basis for all of the other types.
-</para>
+   <para>
+    Geometric types represent two-dimensional spatial objects. 
+    The most fundamental type,
+    the point, forms the basis for all of the other types.
+   </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Geometric Types</title>
-<titleabbrev>Geometrics</titleabbrev>
-<tgroup cols="4">
-<thead>
-  <row>
-    <entry>Geometric Type</entry>
-    <entry>Storage</entry>
-    <entry>Representation</entry>
-    <entry>Description</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>point</entry>
-    <entry>16 bytes</entry>
-    <entry>(x,y)</entry>
-    <entry>Point in space</entry>
-  </row>
-  <row>
-    <entry>line</entry>
-    <entry>32 bytes</entry>
-    <entry>((x1,y1),(x2,y2))</entry>
-    <entry>Infinite line</entry>
-  </row>
-  <row>
-    <entry>lseg</entry>
-    <entry>32 bytes</entry>
-    <entry>((x1,y1),(x2,y2))</entry>
-    <entry>Finite line segment</entry>
-  </row>
-  <row>
-    <entry>box</entry>
-    <entry>32 bytes</entry>
-    <entry>((x1,y1),(x2,y2))</entry>
-    <entry>Rectangular box</entry>
-  </row>
-  <row>
-    <entry>path</entry>
-    <entry>4+32n bytes</entry>
-    <entry>((x1,y1),...)</entry>
-    <entry>Closed path (similar to polygon)</entry>
-  </row>
-  <row>
-    <entry>path</entry>
-    <entry>4+32n bytes</entry>
-    <entry>[(x1,y1),...]</entry>
-    <entry>Open path</entry>
-  </row>
-  <row>
-    <entry>polygon</entry>
-    <entry>4+32n bytes</entry>
-    <entry>((x1,y1),...)</entry>
-    <entry>Polygon (similar to closed path)</entry>
-  </row>
-  <row>
-    <entry>circle</entry>
-    <entry>24 bytes</entry>
-    <entry><(x,y),r></entry>
-    <entry>Circle (center and radius)</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname> Geometric Types</title>
+     <titleabbrev>Geometrics</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>Geometric Type</entry>
+	<entry>Storage</entry>
+	<entry>Representation</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>point</entry>
+	<entry>16 bytes</entry>
+	<entry>(x,y)</entry>
+	<entry>Point in space</entry>
+       </row>
+       <row>
+	<entry>line</entry>
+	<entry>32 bytes</entry>
+	<entry>((x1,y1),(x2,y2))</entry>
+	<entry>Infinite line</entry>
+       </row>
+       <row>
+	<entry>lseg</entry>
+	<entry>32 bytes</entry>
+	<entry>((x1,y1),(x2,y2))</entry>
+	<entry>Finite line segment</entry>
+       </row>
+       <row>
+	<entry>box</entry>
+	<entry>32 bytes</entry>
+	<entry>((x1,y1),(x2,y2))</entry>
+	<entry>Rectangular box</entry>
+       </row>
+       <row>
+	<entry>path</entry>
+	<entry>4+32n bytes</entry>
+	<entry>((x1,y1),...)</entry>
+	<entry>Closed path (similar to polygon)</entry>
+       </row>
+       <row>
+	<entry>path</entry>
+	<entry>4+32n bytes</entry>
+	<entry>[(x1,y1),...]</entry>
+	<entry>Open path</entry>
+       </row>
+       <row>
+	<entry>polygon</entry>
+	<entry>4+32n bytes</entry>
+	<entry>((x1,y1),...)</entry>
+	<entry>Polygon (similar to closed path)</entry>
+       </row>
+       <row>
+	<entry>circle</entry>
+	<entry>24 bytes</entry>
+	<entry><(x,y),r></entry>
+	<entry>Circle (center and radius)</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-<para>
-A rich set of functions and operators is available to perform various geometric
-operations such as scaling, translation, rotation, and determining 
-intersections.
-</para>
+   <para>
+    A rich set of functions and operators is available to perform various geometric
+    operations such as scaling, translation, rotation, and determining 
+    intersections.
+   </para>
 
-<sect2>
-<title>Point</title>
+   <sect2>
+    <title>Point</title>
 
     <para>
      Points are the fundamental two-dimensional building block for geometric types.
     </para>
 
-<para>
-<type>point</type> is specified using the following syntax:
+    <para>
+     <type>point</type> is specified using the following syntax:
 
-<programlisting>
+     <programlisting>
 ( x , y )
   x , y
 where
     x is the x-axis coordinate as a floating point number
     y is the y-axis coordinate as a floating point number
-</programlisting>
-</para>
-</sect2>
+     </programlisting>
+    </para>
+   </sect2>
 
-<sect2>
-<title>Line Segment</title>
+   <sect2>
+    <title>Line Segment</title>
 
-<para>
-Line segments (lseg) are represented by pairs of points.
-</para>
+    <para>
+     Line segments (<type>lseg</type>) are represented by pairs of points.
+    </para>
 
-<para>
-<type>lseg</type> is specified using the following syntax:
-<programlisting>
+    <para>
+     <type>lseg</type> is specified using the following syntax:
+     <programlisting>
 ( ( x1 , y1 ) , ( x2 , y2 ) )
   ( x1 , y1 ) , ( x2 , y2 )  
     x1 , y1   ,   x2 , y2    
 where
     (x1,y1) and (x2,y2) are the endpoints of the segment
-</programlisting>
-</para>
-</sect2>
+     </programlisting>
+    </para>
+   </sect2>
 
-<sect2>
-<title>Box</title>
+   <sect2>
+    <title>Box</title>
 
-<para>
-Boxes are represented by pairs of points which are opposite
-corners of the box.
-</para>
+    <para>
+     Boxes are represented by pairs of points which are opposite
+     corners of the box.
+    </para>
 
-<para>
+    <para>
      <type>box</type> is specified using the following syntax:
 
-<programlisting>
+     <programlisting>
 ( ( x1 , y1 ) , ( x2 , y2 ) )
   ( x1 , y1 ) , ( x2 , y2 )  
     x1 , y1   ,   x2 , y2    
 where
     (x1,y1) and (x2,y2) are opposite corners
-</programlisting>
+     </programlisting>
 
-Boxes are output using the first syntax.
-The corners are reordered on input to store
-the lower left corner first and the upper right corner last.
-Other corners of the box can be entered, but the lower
-left and upper right corners are determined from the input and stored.
-</para>
-</sect2>
+     Boxes are output using the first syntax.
+     The corners are reordered on input to store
+     the lower left corner first and the upper right corner last.
+     Other corners of the box can be entered, but the lower
+     left and upper right corners are determined from the input and stored.
+    </para>
+   </sect2>
 
-<sect2>
-<title>Path</title>
+   <sect2>
+    <title>Path</title>
 
-<para>
-Paths are represented by connected sets of points. Paths can be "open", where
-the first and last points in the set are not connected, and "closed",
-where the first and last point are connected. Functions
-<function>popen(p)</function>
-and
-<function>pclose(p)</function>
-are supplied to force a path to be open or closed, and functions
-<function>isopen(p)</function>
-and
-<function>isclosed(p)</function>
-are supplied to select either type in a query.
-</para>
+    <para>
+     Paths are represented by connected sets of points. Paths can be "open", where
+     the first and last points in the set are not connected, and "closed",
+     where the first and last point are connected. Functions
+     <function>popen(p)</function>
+     and
+     <function>pclose(p)</function>
+     are supplied to force a path to be open or closed, and functions
+     <function>isopen(p)</function>
+     and
+     <function>isclosed(p)</function>
+     are supplied to select either type in a query.
+    </para>
 
-<para>
-path is specified using the following syntax:
+    <para>
+     <type>path</type> is specified using the following syntax:
 
-<programlisting>
+     <programlisting>
 ( ( x1 , y1 ) , ... , ( xn , yn ) )
 [ ( x1 , y1 ) , ... , ( xn , yn ) ]
   ( x1 , y1 ) , ... , ( xn , yn )  
@@ -1703,60 +1726,61 @@ where
     (x1,y1),...,(xn,yn) are points 1 through n
     a leading "[" indicates an open path
     a leading "(" indicates a closed path
-</programlisting>
-Paths are output using the first syntax.
-Note that <productname>Postgres</productname> versions prior to
-v6.1 used a format for paths which had a single leading parenthesis, 
-a "closed" flag,
-an integer count of the number of points, then the list of points followed by a
-closing parenthesis. 
-The built-in function <function>upgradepath</function> is supplied to convert
-paths dumped and reloaded from pre-v6.1 databases.
-</para>
-</sect2>
+     </programlisting>
 
-<sect2>
-<title>Polygon</title>
+     Paths are output using the first syntax.
+     Note that <productname>Postgres</productname> versions prior to
+     v6.1 used a format for paths which had a single leading parenthesis, 
+     a "closed" flag,
+     an integer count of the number of points, then the list of points followed by a
+     closing parenthesis. 
+     The built-in function <function>upgradepath</function> is supplied to convert
+     paths dumped and reloaded from pre-v6.1 databases.
+    </para>
+   </sect2>
 
-<para>
-Polygons are represented by sets of points. Polygons should probably be
-considered equivalent to closed paths, but are stored differently 
-and have their own set of support routines.
-</para>
+   <sect2>
+    <title>Polygon</title>
 
-<para>
-<type>polygon</type> is specified using the following syntax:
+    <para>
+     Polygons are represented by sets of points. Polygons should probably be
+     considered equivalent to closed paths, but are stored differently 
+     and have their own set of support routines.
+    </para>
 
-<programlisting>
+    <para>
+     <type>polygon</type> is specified using the following syntax:
+
+     <programlisting>
 ( ( x1 , y1 ) , ... , ( xn , yn ) )
   ( x1 , y1 ) , ... , ( xn , yn )  
   ( x1 , y1   , ... ,   xn , yn )  
     x1 , y1   , ... ,   xn , yn    
 where
     (x1,y1),...,(xn,yn) are points 1 through n
-</programlisting>
+     </programlisting>
 
-Polygons are output using the first syntax.
-Note that <productname>Postgres</productname> versions prior to
-v6.1 used a format for polygons which had a single leading parenthesis, the list
-of x-axis coordinates, the list of y-axis coordinates, 
-followed by a closing parenthesis.
-The built-in function <function>upgradepoly</function> is supplied to convert
-polygons dumped and reloaded from pre-v6.1 databases.
-</para>
-</sect2>
+     Polygons are output using the first syntax.
+     Note that <productname>Postgres</productname> versions prior to
+     v6.1 used a format for polygons which had a single leading parenthesis, the list
+     of x-axis coordinates, the list of y-axis coordinates, 
+     followed by a closing parenthesis.
+     The built-in function <function>upgradepoly</function> is supplied to convert
+     polygons dumped and reloaded from pre-v6.1 databases.
+    </para>
+   </sect2>
 
-<sect2>
-<title>Circle</title>
+   <sect2>
+    <title>Circle</title>
 
-<para>
-Circles are represented by a center point and a radius.
-</para>
+    <para>
+     Circles are represented by a center point and a radius.
+    </para>
 
-<para>
-circle is specified using the following syntax:
+    <para>
+     <type>circle</type> is specified using the following syntax:
 
-<programlisting>
+     <programlisting>
 < ( x , y ) , r >
 ( ( x , y ) , r )
   ( x , y ) , r  
@@ -1764,70 +1788,73 @@ circle is specified using the following syntax:
 where
     (x,y) is the center of the circle
     r is the radius of the circle
-</programlisting>
+     </programlisting>
 
-Circles are output using the first syntax.
-</para>
-</sect2>
+     Circles are output using the first syntax.
+    </para>
+   </sect2>
 
-</sect1>
+  </sect1>
 
-<sect1>
-<title>IP Version 4 Networks and Host Addresses</title>
+  <sect1>
+   <title>IP Version 4 Networks and Host Addresses</title>
 
-<para>
-The <type>cidr</type> type stores networks specified 
-in <acronym>CIDR</acronym> (Classless Inter-Domain Routing) notation.
-The <type>inet</type> type stores hosts and networks in CIDR notation using a simple
-variation in representation to represent simple host TCP/IP addresses.
-</para>
+   <para>
+    The <type>cidr</type> type stores networks specified 
+    in <acronym>CIDR</acronym> (Classless Inter-Domain Routing) notation.
+    The <type>inet</type> type stores hosts and networks in CIDR notation using a simple
+    variation in representation to represent simple host TCP/IP addresses.
+   </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname>IP Version 4 Types</title>
-<titleabbrev>IPV4</titleabbrev>
-<tgroup cols="4">
-<thead>
-  <row>
-    <entry>IPV4 Type</entry>
-    <entry>Storage</entry>
-    <entry>Description</entry>
-    <entry>Range</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>cidr</entry>
-    <entry>variable</entry>
-    <entry>CIDR networks</entry>
-    <entry>Valid IPV4 CIDR blocks</entry>
-  </row>
-  <row>
-    <entry>inet</entry>
-    <entry>variable</entry>
-    <entry>nets and hosts</entry>
-    <entry>Valid IPV4 CIDR blocks</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+   <para>
+    <table tocentry="1">
+     <title><productname>Postgres</productname>IP Version 4 Types</title>
+     <titleabbrev>IPV4</titleabbrev>
+     <tgroup cols="4">
+      <thead>
+       <row>
+	<entry>IPV4 Type</entry>
+	<entry>Storage</entry>
+	<entry>Description</entry>
+	<entry>Range</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>cidr</entry>
+	<entry>variable</entry>
+	<entry>CIDR networks</entry>
+	<entry>Valid IPV4 CIDR blocks</entry>
+       </row>
+       <row>
+	<entry>inet</entry>
+	<entry>variable</entry>
+	<entry>nets and hosts</entry>
+	<entry>Valid IPV4 CIDR blocks</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
 
-<sect2>
-<title>CIDR</title>
+   <sect2>
+    <title>CIDR</title>
 
-<para>
-The <type>cidr</type> type holds a CIDR network.
-The format for specifying classless networks is <replaceable class="parameter">x.x.x.x/y</replaceable>
- where <replaceable class="parameter">x.x.x.x</replaceable> is the
-network and <replaceable class="parameter">/y</replaceable> is the number of bits in the netmask.
-If <replaceable class="parameter">/y</replaceable> omitted, it is calculated using assumptions from
-the older classfull naming system except that it is extended to include at least
-all of the octets in the input.
-</para>
+    <para>
+     The <type>cidr</type> type holds a CIDR network.
+     The format for specifying classless networks is 
+     <replaceable class="parameter">x.x.x.x/y</replaceable>
+     where <replaceable class="parameter">x.x.x.x</replaceable> is the
+     network and <replaceable class="parameter">/y</replaceable> is
+     the number of bits in the netmask.
+     If <replaceable class="parameter">/y</replaceable> omitted, it is
+     calculated using assumptions from
+     the older classfull naming system except that it is extended to include at least
+     all of the octets in the input.
+    </para>
 
-<para> 
-Here are some examples:
+    <para>
+     Here are some examples:
 
      <table tocentry="1">
       <title><productname>Postgres</productname>IP Types Examples</title>
@@ -1880,32 +1907,34 @@ Here are some examples:
    <sect2>
     <title id="inet-type"><type>inet</type></title>
 
-<para>
-The <type>inet</type> type is designed to hold, in one field, all of the information
-about a host including the CIDR-style subnet that it is in.
-Note that if you want to store proper CIDR networks,
-you should use the <type>cidr</type> type.
-The <type>inet</type> type is similar to the <type>cidr</type> type except that the bits in the
-host part can be non-zero.
-Functions exist to extract the various elements of the field.
-</para>
+    <para>
+     The <type>inet</type> type is designed to hold, in one field, all of the information
+     about a host including the CIDR-style subnet that it is in.
+     Note that if you want to store proper CIDR networks,
+     you should use the <type>cidr</type> type.
+     The <type>inet</type> type is similar to the <type>cidr</type>
+     type except that the bits in the
+     host part can be non-zero.
+     Functions exist to extract the various elements of the field.
+    </para>
 
-<para>  
+    <para>
      The input format for this function is
- <replaceable class="parameter">x.x.x.x/y</replaceable> 
-where <replaceable class="parameter">x.x.x.x</replaceable> is
-an internet host and <replaceable class="parameter">y</replaceable> 
-is the number of bits in the netmask.
-If the <replaceable class="parameter">/y</replaceable> part is left off, 
-it is treated as <literal>/32</literal>.
-On output, the <replaceable class="parameter">/y</replaceable> part is not printed 
-if it is <literal>/32</literal>.
-This allows the type to be used as a straight host type by just leaving off
-the bits part.
-</para></sect2>
-</sect1>
+     <replaceable class="parameter">x.x.x.x/y</replaceable> 
+     where <replaceable class="parameter">x.x.x.x</replaceable> is
+     an internet host and <replaceable class="parameter">y</replaceable> 
+     is the number of bits in the netmask.
+     If the <replaceable class="parameter">/y</replaceable> part is left off, 
+     it is treated as <literal>/32</literal>.
+     On output, the <replaceable class="parameter">/y</replaceable> part is not printed 
+     if it is <literal>/32</literal>.
+     This allows the type to be used as a straight host type by just leaving off
+     the bits part.
+    </para>
+   </sect2>
+  </sect1>
 
-</chapter>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
