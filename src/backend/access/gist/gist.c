@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.74 2001/05/14 21:53:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.75 2001/05/15 03:49:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1127,6 +1127,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 		elog(ERROR, "initGISTstate: index %u not found",
 			 RelationGetRelid(index));
 	itupform = (Form_pg_index) GETSTRUCT(htup);
+	giststate->haskeytype = itupform->indhaskeytype;
 	indexrelid = itupform->indexrelid;
 	ReleaseSysCache(htup);
 
