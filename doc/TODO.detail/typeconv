@@ -122,7 +122,7 @@ From tgl@sss.pgh.pa.us Sun May 14 17:30:56 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA05808
 	for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:30:52 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id RAA16657 for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:29:52 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id RAA16657 for <pgman@candle.pha.pa.us>; Sun, 14 May 2000 17:29:52 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id RAA20914;
 	Sun, 14 May 2000 17:29:30 -0400 (EDT)
@@ -451,4 +451,185 @@ Peter Eisentraut                  Sernanders väg 10:115
 peter_e@gmx.net                   75262 Uppsala
 http://yi.org/peter-e/            Sweden
 
+
+From tgl@sss.pgh.pa.us Tue Jun 13 04:58:20 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA24281
+	for <pgman@candle.pha.pa.us>; Tue, 13 Jun 2000 03:58:18 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id DAA02571;
+	Tue, 13 Jun 2000 03:58:43 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Proposal for fixing numeric type-resolution issues 
+In-reply-to: <200006130741.DAA23502@candle.pha.pa.us> 
+References: <200006130741.DAA23502@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Tue, 13 Jun 2000 03:41:56 -0400"
+Date: Tue, 13 Jun 2000 03:58:43 -0400
+Message-ID: <2568.960883123@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Again, anything to add to the TODO here?
+
+IIRC, there was some unhappiness with the proposal you quote, so I'm
+not sure we've quite agreed what to do... but clearly something must
+be done.
+
+			regards, tom lane
+
+
+>> We've got a collection of problems that are related to the parser's
+>> inability to make good type-resolution choices for numeric constants.
+>> In some cases you get a hard error; for example "NumericVar + 4.4"
+>> yields
+>> ERROR:  Unable to identify an operator '+' for types 'numeric' and 'float8'
+>> You will have to retype this query using an explicit cast
+>> because "4.4" is initially typed as float8 and the system can't figure
+>> out whether to use numeric or float8 addition.  A more subtle problem
+>> is that a query like "... WHERE Int2Var < 42" is unable to make use of
+>> an index on the int2 column: 42 is resolved as int4, so the operator
+>> is int24lt, which works but is not in the opclass of an int2 index.
+>> 
+>> Here is a proposal for fixing these problems.  I think we could get this
+>> done for 7.1 if people like it.
+>> 
+>> The basic problem is that there's not enough smarts in the type resolver
+>> about the interrelationships of the numeric datatypes.  All it has is
+>> a concept of a most-preferred type within the category of numeric types.
+>> (We are abusing the most-preferred-type mechanism, BTW, because both
+>> FLOAT8 and NUMERIC claim to be the most-preferred type in the numeric
+>> category!  This is in fact why the resolver can't make a choice for
+>> "numeric+float8".)  We need more intelligence than that.
+>> 
+>> I propose that we set up a strictly-ordered hierarchy of numeric
+>> datatypes, running from least preferred to most preferred:
+>> int2, int4, int8, numeric, float4, float8.
+>> Rather than simply considering coercions to the most-preferred type,
+>> the type resolver should use the following rules:
+>> 
+>> 1. No value will be down-converted (eg int4 to int2) except by an
+>> explicit conversion.
+>> 
+>> 2. If there is not an exact matching operator, numeric values will be
+>> up-converted to the highest numeric datatype present among the operator
+>> or function's arguments.  For example, given "int2 + int8" we'd up-
+>> convert the int2 to int8 and apply int8 addition.
+>> 
+>> The final piece of the puzzle is that the type initially assigned to
+>> an undecorated numeric constant should be NUMERIC if it contains a
+>> decimal point or exponent, and otherwise the smallest of int2, int4,
+>> int8, NUMERIC that will represent it.  This is a considerable change
+>> from the current lexer behavior, where you get either int4 or float8.
+>> 
+>> For example, given "NumericVar + 4.4", the constant 4.4 will initially
+>> be assigned type NUMERIC, we will resolve the operator as numeric plus,
+>> and everything's fine.  Given "Float8Var + 4.4", the constant is still
+>> initially numeric, but will be up-converted to float8 so that float8
+>> addition can be used.  The end result is the same as in traditional
+>> Postgres: you get float8 addition.  Given "Int2Var < 42", the constant
+>> is initially typed as int2, since it fits, and we end up selecting
+>> int2lt, thereby allowing use of an int2 index.  (On the other hand,
+>> given "Int2Var < 100000", we'd end up using int4lt, which is correct
+>> to avoid overflow.)
+>> 
+>> A couple of crucial subtleties here:
+>> 
+>> 1. We are assuming that the parser or optimizer will constant-fold
+>> any conversion functions that are introduced.  Thus, in the
+>> "Float8Var + 4.4" case, the 4.4 is represented as a float8 4.4 by the
+>> time execution begins, so there's no performance loss.
+>> 
+>> 2. We cannot lose precision by initially representing a constant as
+>> numeric and later converting it to float.  Nor can we exceed NUMERIC's
+>> range (the default 1000-digit limit is more than the range of IEEE
+>> float8 data).  It would not work as well to start out by representing
+>> a constant as float and then converting it to numeric.
+>> 
+>> Presently, the pg_proc and pg_operator tables contain a pretty fair
+>> collection of cross-datatype numeric operators, such as int24lt,
+>> float48pl, etc.  We could perhaps leave these in, but I believe that
+>> it is better to remove them.  For example, if int42lt is left in place,
+>> then it would capture cases like "Int4Var < 42", whereas we need that
+>> to be translated to int4lt so that an int4 index can be used.  Removing
+>> these operators will eliminate some code bloat and system-catalog bloat
+>> to boot.
+>> 
+>> As far as I can tell, this proposal is almost compatible with the rules
+>> given in SQL92: in particular, SQL92 specifies that an operator having
+>> both "approximate numeric" (float) and "exact numeric" (int or numeric)
+>> inputs should deliver an approximate-numeric result.  I propose
+>> deviating from SQL92 in a single respect: SQL92 specifies that a
+>> constant containing an exponent (eg 1.2E34) is approximate numeric,
+>> which implies that the result of an operator using it is approximate
+>> even if the other operand is exact.  I believe it's better to treat
+>> such a constant as exact (ie, type NUMERIC) and only convert it to
+>> float if the other operand is float.  Without doing that, an assignment
+>> like
+>> UPDATE tab SET NumericVar = 1.234567890123456789012345E34;
+>> will not work as desired because the constant will be prematurely
+>> coerced to float, causing precision loss.
+>> 
+>> Comments?
+>> 
+>> regards, tom lane
+>> 
+
+
+> -- 
+>   Bruce Momjian                        |  http://www.op.net/~candle
+>   pgman@candle.pha.pa.us               |  (610) 853-3000
+>   +  If your life is a hard drive,     |  830 Blythe Avenue
+>   +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+From tgl@sss.pgh.pa.us Mon Jun 12 14:09:45 2000
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id NAA01993
+	for <pgman@candle.pha.pa.us>; Mon, 12 Jun 2000 13:09:43 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id NAA01515;
+	Mon, 12 Jun 2000 13:10:01 -0400 (EDT)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>,
+        "Thomas G. Lockhart" <lockhart@alumni.caltech.edu>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Adding time to DATE type 
+In-reply-to: <Pine.LNX.4.21.0006110322150.9195-100000@localhost.localdomain> 
+References: <Pine.LNX.4.21.0006110322150.9195-100000@localhost.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Sun, 11 Jun 2000 13:41:24 +0200"
+Date: Mon, 12 Jun 2000 13:10:00 -0400
+Message-ID: <1512.960829800@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: ORr
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> Bruce Momjian writes:
+>> Can someone give me a TODO summary for this issue?
+
+> * make 'text' constants default to text type (not unknown)
+
+> (I think not everyone's completely convinced on this issue, but I don't
+> recall anyone being firmly opposed to it.)
+
+It would be a mistake to eliminate the distinction between unknown and
+text.  See for example my just-posted response to John Cochran on
+pgsql-general about why 'BOULEVARD'::text behaves differently from
+'BOULEVARD'::char.  If string literals are immediately assigned type
+text then we will have serious problems with char(n) fields.
+
+I think it's fine to assign string literals a type of 'unknown'
+initially.  What we need to do is add a phase of type resolution that
+considers treating them as text, but only after the existing logic fails
+to deduce a type.
+
+(BTW it might be better to treat string literals as defaulting to char(n)
+instead of text, allowing the normal promotion rules to replace char(n)
+with text if necessary.  Not sure if that would make things more or less
+confusing for operations that intermix fixed- and variable-width char
+types.)
+
+			regards, tom lane
 
