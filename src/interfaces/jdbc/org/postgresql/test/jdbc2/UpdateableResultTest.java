@@ -3,6 +3,12 @@ package org.postgresql.test.jdbc2;
 import java.sql.*;
 import junit.framework.TestCase;
 
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+
 import org.postgresql.test.TestUtil;
 /**
  * <p>Title: </p>
@@ -27,6 +33,7 @@ public class UpdateableResultTest extends TestCase
 		con = TestUtil.openDB();
 		TestUtil.createTable(con, "updateable", "id int primary key, name text, notselected text");
 		TestUtil.createTable(con, "second", "id1 int primary key, name1 text");
+		TestUtil.createTable(con, "stream", "id int primary key, asi text, chr text, bin bytea");
 
 		// put some dummy data into second
 		Statement st2 = con.createStatement();
@@ -39,6 +46,7 @@ public class UpdateableResultTest extends TestCase
 	{
 		TestUtil.dropTable(con, "updateable");
 		TestUtil.dropTable(con, "second");
+		TestUtil.dropTable(con, "stream");
 		TestUtil.closeDB(con);
 	}
 
@@ -110,6 +118,52 @@ public class UpdateableResultTest extends TestCase
 		st.close();
 	}
 
+	public void testUpdateStreams() throws SQLException, UnsupportedEncodingException
+	{
+		Statement stmt = con.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+		ResultSet rs = stmt.executeQuery("SELECT id, asi, chr, bin FROM stream");
+
+		rs.moveToInsertRow();
+		rs.updateInt(1, 1);
+		rs.updateAsciiStream("asi", null, 17);
+		rs.updateCharacterStream("chr", null, 81);
+		rs.updateBinaryStream("bin", null, 0);
+		rs.insertRow();
+
+		rs.beforeFirst();
+		rs.next();
+
+		assertEquals(1, rs.getInt(1));
+		assertNull(rs.getString(2));
+		assertNull(rs.getString(3));
+		assertNull(rs.getBytes(4));
+
+		String string = "Hello";
+		InputStream asi = new ByteArrayInputStream(string.getBytes("US-ASCII"));
+		Reader chr = new StringReader(string);
+		InputStream bin = new ByteArrayInputStream(string.getBytes("US-ASCII"));
+
+		rs.updateInt("id", 2);
+		rs.updateAsciiStream("asi", asi, 5);
+		rs.updateCharacterStream("chr", chr, 5);
+		rs.updateBinaryStream("bin", bin, 5);
+		rs.updateRow();
+
+		assertEquals(2, rs.getInt(1));
+		assertEquals(string, rs.getString(2));
+		assertEquals(string, rs.getString(3));
+		assertEquals(string, rs.getString(4));
+
+		rs.refreshRow();
+
+		assertEquals(2, rs.getInt(1));
+		assertEquals(string, rs.getString(2));
+		assertEquals(string, rs.getString(3));
+		assertEquals(string, rs.getString(4));
+
+		rs.close();
+		stmt.close();
+	}
 
 
 	public void testUpdateable() throws SQLException
