@@ -1,20 +1,9 @@
---
--- Uncomment the following commented lines to use original DEPRECATED functions
---
---CREATE OR REPLACE FUNCTION dblink (text,text)
---RETURNS setof int
---AS 'MODULE_PATHNAME','dblink'
---LANGUAGE 'C' WITH (isstrict);
---CREATE OR REPLACE FUNCTION dblink_tok (int,int)
---RETURNS text
---AS 'MODULE_PATHNAME','dblink_tok'
---LANGUAGE 'C' WITH (isstrict);
---CREATE OR REPLACE FUNCTION dblink_last_oid (int)
---RETURNS oid
---AS 'MODULE_PATHNAME','dblink_last_oid'
---LANGUAGE 'C' WITH (isstrict);
-
 CREATE OR REPLACE FUNCTION dblink_connect (text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_connect'
+LANGUAGE 'C' WITH (isstrict);
+
+CREATE OR REPLACE FUNCTION dblink_connect (text, text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_connect'
 LANGUAGE 'C' WITH (isstrict);
@@ -24,7 +13,17 @@ RETURNS text
 AS 'MODULE_PATHNAME','dblink_disconnect'
 LANGUAGE 'C' WITH (isstrict);
 
+CREATE OR REPLACE FUNCTION dblink_disconnect (text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_disconnect'
+LANGUAGE 'C' WITH (isstrict);
+
 CREATE OR REPLACE FUNCTION dblink_open (text,text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_open'
+LANGUAGE 'C' WITH (isstrict);
+
+CREATE OR REPLACE FUNCTION dblink_open (text,text,text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_open'
 LANGUAGE 'C' WITH (isstrict);
@@ -34,17 +33,21 @@ RETURNS setof record
 AS 'MODULE_PATHNAME','dblink_fetch'
 LANGUAGE 'C' WITH (isstrict);
 
+CREATE OR REPLACE FUNCTION dblink_fetch (text,text,int)
+RETURNS setof record
+AS 'MODULE_PATHNAME','dblink_fetch'
+LANGUAGE 'C' WITH (isstrict);
+
 CREATE OR REPLACE FUNCTION dblink_close (text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_close'
 LANGUAGE 'C' WITH (isstrict);
 
--- Note: if this is not a first time install of dblink, uncomment the
--- following DROP which prepares the database for the new, non-deprecated
--- version.
---DROP FUNCTION dblink (text,text);
+CREATE OR REPLACE FUNCTION dblink_close (text,text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_close'
+LANGUAGE 'C' WITH (isstrict);
 
--- Comment out the following 3 lines if the DEPRECATED functions are used.
 CREATE OR REPLACE FUNCTION dblink (text,text)
 RETURNS setof record
 AS 'MODULE_PATHNAME','dblink_record'

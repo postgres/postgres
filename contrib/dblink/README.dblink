@@ -4,8 +4,11 @@
  * Functions returning results from a remote database
  *
  * Joe Conway <mail@joeconway.com>
+ * And contributors:
+ * Darko Prenosil <Darko.Prenosil@finteh.hr>
+ * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * Copyright (c) 2001, 2002 by PostgreSQL Global Development Group
+ * Copyright (c) 2001, 2002, 2003 by PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  * 
  * Permission to use, copy, modify, and distribute this software and its
@@ -27,14 +30,16 @@
  *
  */
 
-Version 0.5 (25 August, 2002):
-  Major overhaul to work with new backend "table function" capability. Removed
-  dblink_strtok() and dblink_replace() functions because they are now
-  available as backend functions (split() and replace() respectively).
-  Tested under Linux (Red Hat 7.3) and PostgreSQL 7.3devel. This version
-  is no longer backwards portable to PostgreSQL 7.2.
+Version 0.6 (14 June, 2003):
+  Completely removed previously deprecated functions. Added ability
+  to create "named" persistent connections in addition to the single global
+  "unnamed" persistent connection.
+  Tested under Linux (Red Hat 9) and PostgreSQL 7.4devel.
 
 Release Notes:
+  Version 0.6
+    - functions deprecated in 0.5 have been removed
+    - added ability to create "named" persistent connections
   Version 0.5
     - dblink now supports use directly as a table function; this is the new
       preferred usage going forward
@@ -87,35 +92,51 @@ Installation:
      connection
      ------------
      dblink_connect(text) RETURNS text
-       - opens a connection that will persist for duration of current
+       - opens an unnamed connection that will persist for duration of
+         current backend or until it is disconnected
+     dblink_connect(text,text) RETURNS text
+       - opens a named connection that will persist for duration of current
          backend or until it is disconnected
      dblink_disconnect() RETURNS text
-       - disconnects a persistent connection
+       - disconnects the unnamed persistent connection
+     dblink_disconnect(text) RETURNS text
+       - disconnects a named persistent connection
 
      cursor
      ------------
      dblink_open(text,text) RETURNS text
-       - opens a cursor using connection already opened with dblink_connect()
-         that will persist for duration of current backend or until it is
-         closed
+       - opens a cursor using unnamed connection already opened with
+         dblink_connect() that will persist for duration of current backend
+         or until it is closed
+     dblink_open(text,text,text) RETURNS text
+       - opens a cursor using a named connection already opened with
+         dblink_connect() that will persist for duration of current backend
+         or until it is closed
      dblink_fetch(text, int) RETURNS setof record
-       - fetches data from an already opened cursor
+       - fetches data from an already opened cursor on the unnamed connection
+     dblink_fetch(text, text, int) RETURNS setof record
+       - fetches data from an already opened cursor on a named connection
      dblink_close(text) RETURNS text
-       - closes a cursor
+       - closes a cursor on the unnamed connection
+     dblink_close(text,text) RETURNS text
+       - closes a cursor on a named connection
 
      query
      ------------
      dblink(text,text) RETURNS setof record
-       - returns a set of results from remote SELECT query
-         (Note: comment out in dblink.sql to use deprecated version)
+       - returns a set of results from remote SELECT query; the first argument
+         is either a connection string, or the name of an already opened
+         persistant connection
      dblink(text) RETURNS setof record
-       - returns a set of results from remote SELECT query, using connection
-         already opened with dblink_connect()
+       - returns a set of results from remote SELECT query, using the unnamed
+         connection already opened with dblink_connect()
 
      execute
      ------------
      dblink_exec(text, text) RETURNS text
-       - executes an INSERT/UPDATE/DELETE query remotely
+       - executes an INSERT/UPDATE/DELETE query remotely; the first argument
+         is either a connection string, or the name of an already opened
+         persistant connection
      dblink_exec(text) RETURNS text
        - executes an INSERT/UPDATE/DELETE query remotely, using connection
          already opened with dblink_connect()
@@ -135,19 +156,6 @@ Installation:
      dblink_build_sql_update(text,int2vector,int2,_text,_text) RETURNS text
        - builds an update statement using a local tuple, replacing the
          selection key field values with alternate supplied values
-
-  Not installed by default
-     deprecated
-     ------------
-     dblink(text,text) RETURNS setof int
-       - *DEPRECATED* returns a resource id for results from remote query
-         (Note: must uncomment in dblink.sql to use)
-     dblink_tok(int,int) RETURNS text
-       - *DEPRECATED* extracts and returns individual field results; used
-         only in conjunction with the *DEPRECATED* form of dblink
-         (Note: must uncomment in dblink.sql to use)
-     dblink_last_oid(int) RETURNS oid
-       - *DEPRECATED* returns the last inserted oid
 
 Documentation:
 

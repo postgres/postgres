@@ -6,13 +6,21 @@ dblink_connect -- Opens a persistent connection to a remote database
 Synopsis
 
 dblink_connect(text connstr)
+dblink_connect(text connname, text connstr)
 
 Inputs
+
+  connname
+    if 2 arguments are given, the first is used as a name for a persistent
+    connection
 
   connstr
 
     standard libpq format connection string, 
     e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
+
+    if only one argument is given, the connection is unnamed; only one unnamed
+    connection can exist at a time
 
 Outputs
 
@@ -20,7 +28,13 @@ Outputs
 
 Example usage
 
-test=# select dblink_connect('dbname=template1');
+select dblink_connect('dbname=template1');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+select dblink_connect('myconn','dbname=template1');
  dblink_connect
 ----------------
  OK
@@ -29,15 +43,18 @@ test=# select dblink_connect('dbname=template1');
 ==================================================================
 Name
 
-dblink_disconnect -- Closes the persistent connection to a remote database
+dblink_disconnect -- Closes a persistent connection to a remote database
 
 Synopsis
 
 dblink_disconnect()
+dblink_disconnect(text connname)
 
 Inputs
 
-  none
+  connname
+    if an argument is given, it is used as a name for a persistent
+    connection to close; otherwiase the unnamed connection is closed
 
 Outputs
 
@@ -51,3 +68,8 @@ test=# select dblink_disconnect();
  OK
 (1 row)
 
+select dblink_disconnect('myconn');
+ dblink_disconnect
+-------------------
+ OK
+(1 row)

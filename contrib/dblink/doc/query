@@ -6,17 +6,19 @@ dblink -- Returns a set from a remote database
 Synopsis
 
 dblink(text connstr, text sql)
-- or -
+dblink(text connname, text sql)
 dblink(text sql)
 
 Inputs
 
+  connname
   connstr
+    If two arguments are present, the first is first assumed to be a specific
+    connection name to use. If the name is not found, the argument is then
+    assumed to be a valid connection string, of standard libpq format,
+    e.g.: "hostaddr=127.0.0.1 dbname=mydb user=postgres password=mypasswd"
 
-    standard libpq format connection string, 
-    e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
-    If the second form is used, then the dblink_connect(text connstr) must be
-    executed first.
+    If only one argument is used, then the unnamed connection is used.
 
   sql
 
@@ -29,7 +31,7 @@ Outputs
 
 Example usage
 
-test=# select * from dblink('dbname=template1','select proname, prosrc from pg_proc')
+select * from dblink('dbname=template1','select proname, prosrc from pg_proc')
  as t1(proname name, prosrc text) where proname like 'bytea%';
   proname   |   prosrc
 ------------+------------
@@ -47,13 +49,13 @@ test=# select * from dblink('dbname=template1','select proname, prosrc from pg_p
  byteaout   | byteaout
 (12 rows)
 
-test=# select dblink_connect('dbname=template1');
+select dblink_connect('dbname=template1');
  dblink_connect
 ----------------
  OK
 (1 row)
 
-test=# select * from dblink('select proname, prosrc from pg_proc')
+select * from dblink('select proname, prosrc from pg_proc')
  as t1(proname name, prosrc text) where proname like 'bytea%';
   proname   |   prosrc
 ------------+------------
@@ -70,6 +72,33 @@ test=# select * from dblink('select proname, prosrc from pg_proc')
  byteain    | byteain
  byteaout   | byteaout
 (12 rows)
+
+select dblink_connect('myconn','dbname=regression');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+select * from dblink('myconn','select proname, prosrc from pg_proc')
+ as t1(proname name, prosrc text) where proname like 'bytea%';
+  proname   |   prosrc
+------------+------------
+ bytearecv  | bytearecv
+ byteasend  | byteasend
+ byteale    | byteale
+ byteagt    | byteagt
+ byteage    | byteage
+ byteane    | byteane
+ byteacmp   | byteacmp
+ bytealike  | bytealike
+ byteanlike | byteanlike
+ byteacat   | byteacat
+ byteaeq    | byteaeq
+ bytealt    | bytealt
+ byteain    | byteain
+ byteaout   | byteaout
+(14 rows)
+
 
 ==================================================================
 A more convenient way to use dblink may be to create a view:

@@ -6,8 +6,13 @@ dblink_open -- Opens a cursor on a remote database
 Synopsis
 
 dblink_open(text cursorname, text sql)
+dblink_open(text connname, text cursorname, text sql)
 
 Inputs
+
+  connname
+    if three arguments are present, the first is taken as the specific
+    connection name to use; otherwise the unnamed connection is assumed
 
   cursorname
 
@@ -52,8 +57,13 @@ dblink_fetch -- Returns a set from an open cursor on a remote database
 Synopsis
 
 dblink_fetch(text cursorname, int32 howmany)
+dblink_fetch(text connname, text cursorname, int32 howmany)
 
 Inputs
+
+  connname
+    if three arguments are present, the first is taken as the specific
+    connection name to use; otherwise the unnamed connection is assumed
 
   cursorname
 
@@ -123,8 +133,13 @@ dblink_close -- Closes a cursor on a remote database
 Synopsis
 
 dblink_close(text cursorname)
+dblink_close(text connname, text cursorname)
 
 Inputs
+
+  connname
+    if two arguments are present, the first is taken as the specific
+    connection name to use; otherwise the unnamed connection is assumed
 
   cursorname
 
@@ -135,7 +150,8 @@ Outputs
   Returns status = "OK"
 
 Note
-  dblink_connect(text connstr) must be executed first.
+  dblink_connect(text connstr) or dblink_connect(text connname, text connstr)
+  must be executed first.
 
 Example usage
 
@@ -157,3 +173,20 @@ test=# select dblink_close('foo');
  OK
 (1 row)
 
+select dblink_connect('myconn','dbname=regression');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+select dblink_open('myconn','foo','select proname, prosrc from pg_proc');
+ dblink_open
+-------------
+ OK
+(1 row)
+
+select dblink_close('myconn','foo');
+ dblink_close
+--------------
+ OK
+(1 row)

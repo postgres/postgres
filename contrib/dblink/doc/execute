@@ -6,22 +6,23 @@ dblink_exec -- Executes an UPDATE/INSERT/DELETE on a remote database
 Synopsis
 
 dblink_exec(text connstr, text sql)
-- or -
+dblink_exec(text connname, text sql)
 dblink_exec(text sql)
 
 Inputs
 
+  connname
   connstr
+    If two arguments are present, the first is first assumed to be a specific
+    connection name to use. If the name is not found, the argument is then
+    assumed to be a valid connection string, of standard libpq format,
+    e.g.: "hostaddr=127.0.0.1 dbname=mydb user=postgres password=mypasswd"
 
-    standard libpq format connection string, 
-    e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
-    If the second form is used, then the dblink_connect(text connstr) must be
-    executed first.
+    If only one argument is used, then the unnamed connection is used.
 
   sql
 
     sql statement that you wish to execute on the remote host, e.g.:
-
        insert into foo values(0,'a','{"a0","b0","c0"}');
 
 Outputs
@@ -36,14 +37,26 @@ Notes
 
 Example usage
 
-test=# select dblink_connect('dbname=dblink_test_slave');
+select dblink_connect('dbname=dblink_test_slave');
  dblink_connect
 ----------------
  OK
 (1 row)
 
-test=# select dblink_exec('insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+select dblink_exec('insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
    dblink_exec
 -----------------
  INSERT 943366 1
+(1 row)
+
+select dblink_connect('myconn','dbname=regression');
+ dblink_connect
+----------------
+ OK
+(1 row)
+
+select dblink_exec('myconn','insert into foo values(21,''z'',''{"a0","b0","c0"}'');');
+   dblink_exec
+------------------
+ INSERT 6432584 1
 (1 row)

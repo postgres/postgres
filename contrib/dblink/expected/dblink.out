@@ -106,11 +106,11 @@ WHERE t.a > 7;
  9 | j | {a9,b9,c9}
 (2 rows)
 
--- should generate "no connection available" error
+-- should generate "connection not available" error
 SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
-ERROR:  dblink: no connection available
+ERROR:  dblink_record: connection not available
 -- create a persistent connection
 SELECT dblink_connect('dbname=regression');
  dblink_connect 
@@ -172,10 +172,10 @@ SELECT dblink_close('rmt_foo_cursor');
  OK
 (1 row)
 
--- should generate "cursor rmt_foo_cursor does not exist" error
+-- should generate "cursor not found: rmt_foo_cursor" error
 SELECT *
 FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
-ERROR:  dblink_fetch: cursor rmt_foo_cursor does not exist
+ERROR:  dblink_fetch: cursor not found: rmt_foo_cursor
 -- close the persistent connection
 SELECT dblink_disconnect();
  dblink_disconnect 
@@ -183,11 +183,12 @@ SELECT dblink_disconnect();
  OK
 (1 row)
 
--- should generate "no connection available" error
+-- should generate "no connection to the server" error
 SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
-ERROR:  dblink: no connection available
+ERROR:  dblink: sql error: no connection to the server
+
 -- put more data into our slave table, first using arbitrary connection syntax
 -- but truncate the actual return value so we can use diff to check for success
 SELECT substr(dblink_exec('dbname=regression','INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
@@ -268,3 +269,198 @@ SELECT dblink_disconnect();
  OK
 (1 row)
 
+--
+-- tests for the new named persistent connection syntax
+--
+-- should generate "missing "=" after "myconn" in connection info string" error
+SELECT *
+FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
+WHERE t.a > 7;
+ERROR:  dblink: connection error: missing "=" after "myconn" in connection info string
+
+-- create a named persistent connection
+SELECT dblink_connect('myconn','dbname=regression');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+-- use the named persistent connection
+SELECT *
+FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
+WHERE t.a > 7;
+ a  | b |       c       
+----+---+---------------
+  8 | i | {a8,b8,c8}
+  9 | j | {a9,b9,c9}
+ 10 | k | {a10,b10,c10}
+(3 rows)
+
+-- create a second named persistent connection
+-- should error with "cannot save named connection"
+SELECT dblink_connect('myconn','dbname=regression');
+NOTICE:  cannot use a connection name more than once
+ERROR:  dblink_connect: cannot save named connection
+-- create a second named persistent connection with a new name
+SELECT dblink_connect('myconn2','dbname=regression');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+-- use the second named persistent connection
+SELECT *
+FROM dblink('myconn2','SELECT * FROM foo') AS t(a int, b text, c text[])
+WHERE t.a > 7;
+ a  | b |       c       
+----+---+---------------
+  8 | i | {a8,b8,c8}
+  9 | j | {a9,b9,c9}
+ 10 | k | {a10,b10,c10}
+(3 rows)
+
+-- close the second named persistent connection
+SELECT dblink_disconnect('myconn2');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+-- open a cursor
+SELECT dblink_open('myconn','rmt_foo_cursor','SELECT * FROM foo');
+ dblink_open 
+-------------
+ OK
+(1 row)
+
+-- fetch some data
+SELECT *
+FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
+ a | b |     c      
+---+---+------------
+ 0 | a | {a0,b0,c0}
+ 1 | b | {a1,b1,c1}
+ 2 | c | {a2,b2,c2}
+ 3 | d | {a3,b3,c3}
+(4 rows)
+
+SELECT *
+FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
+ a | b |     c      
+---+---+------------
+ 4 | e | {a4,b4,c4}
+ 5 | f | {a5,b5,c5}
+ 6 | g | {a6,b6,c6}
+ 7 | h | {a7,b7,c7}
+(4 rows)
+
+-- this one only finds three rows left
+SELECT *
+FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
+ a  | b |       c       
+----+---+---------------
+  8 | i | {a8,b8,c8}
+  9 | j | {a9,b9,c9}
+ 10 | k | {a10,b10,c10}
+(3 rows)
+
+-- close the cursor
+SELECT dblink_close('myconn','rmt_foo_cursor');
+ dblink_close 
+--------------
+ OK
+(1 row)
+
+-- should generate "cursor not found: rmt_foo_cursor" error
+SELECT *
+FROM dblink_fetch('myconn','rmt_foo_cursor',4) AS t(a int, b text, c text[]);
+ERROR:  dblink_fetch: cursor not found: rmt_foo_cursor
+-- close the named persistent connection
+SELECT dblink_disconnect('myconn');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+-- should generate "missing "=" after "myconn" in connection info string" error
+SELECT *
+FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
+WHERE t.a > 7;
+ERROR:  dblink: connection error: missing "=" after "myconn" in connection info string
+
+-- create a named persistent connection
+SELECT dblink_connect('myconn','dbname=regression');
+ dblink_connect 
+----------------
+ OK
+(1 row)
+
+-- put more data into our slave table, using named persistent connection syntax
+-- but truncate the actual return value so we can use diff to check for success
+SELECT substr(dblink_exec('myconn','INSERT INTO foo VALUES(11,''l'',''{"a11","b11","c11"}'')'),1,6);
+ substr 
+--------
+ INSERT
+(1 row)
+
+-- let's see it
+SELECT *
+FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[]);
+ a  | b |       c       
+----+---+---------------
+  0 | a | {a0,b0,c0}
+  1 | b | {a1,b1,c1}
+  2 | c | {a2,b2,c2}
+  3 | d | {a3,b3,c3}
+  4 | e | {a4,b4,c4}
+  5 | f | {a5,b5,c5}
+  6 | g | {a6,b6,c6}
+  7 | h | {a7,b7,c7}
+  8 | i | {a8,b8,c8}
+  9 | j | {a9,b9,c9}
+ 10 | k | {a10,b10,c10}
+ 11 | l | {a11,b11,c11}
+(12 rows)
+
+-- change some data
+SELECT dblink_exec('myconn','UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
+ dblink_exec 
+-------------
+ UPDATE 1
+(1 row)
+
+-- let's see it
+SELECT *
+FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
+WHERE a = 11;
+ a  | b |       c       
+----+---+---------------
+ 11 | l | {a11,b99,c11}
+(1 row)
+
+-- delete some data
+SELECT dblink_exec('myconn','DELETE FROM foo WHERE f1 = 11');
+ dblink_exec 
+-------------
+ DELETE 1
+(1 row)
+
+-- let's see it
+SELECT *
+FROM dblink('myconn','SELECT * FROM foo') AS t(a int, b text, c text[])
+WHERE a = 11;
+ a | b | c 
+---+---+---
+(0 rows)
+
+-- close the named persistent connection
+SELECT dblink_disconnect('myconn');
+ dblink_disconnect 
+-------------------
+ OK
+(1 row)
+
+-- close the named persistent connection again
+-- should get "connection named "myconn" not found" error
+SELECT dblink_disconnect('myconn');
+ERROR:  dblink_disconnect: connection named "myconn" not found

@@ -4,8 +4,11 @@
  * Functions returning results from a remote database
  *
  * Joe Conway <mail@joeconway.com>
+ * And contributors:
+ * Darko Prenosil <Darko.Prenosil@finteh.hr>
+ * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * Copyright (c) 2001, 2002 by PostgreSQL Global Development Group
+ * Copyright (c) 2001, 2002, 2003 by PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
  * Permission to use, copy, modify, and distribute this software and its
@@ -31,35 +34,8 @@
 #define DBLINK_H
 
 /*
- * This struct holds the results of the remote query.
- * Use fn_extra to hold a pointer to it across calls
- */
-typedef struct
-{
-	/*
-	 * last tuple number accessed
-	 */
-	int			tup_num;
-
-	/*
-	 * resource index number for this context
-	 */
-	int			res_id_index;
-
-	/*
-	 * the actual query results
-	 */
-	PGresult   *res;
-}	dblink_results;
-
-/*
  * External declarations
  */
-/* deprecated */
-extern Datum dblink(PG_FUNCTION_ARGS);
-extern Datum dblink_tok(PG_FUNCTION_ARGS);
-
-/* supported */
 extern Datum dblink_connect(PG_FUNCTION_ARGS);
 extern Datum dblink_disconnect(PG_FUNCTION_ARGS);
 extern Datum dblink_open(PG_FUNCTION_ARGS);
@@ -68,7 +44,6 @@ extern Datum dblink_fetch(PG_FUNCTION_ARGS);
 extern Datum dblink_record(PG_FUNCTION_ARGS);
 extern Datum dblink_exec(PG_FUNCTION_ARGS);
 extern Datum dblink_get_pkey(PG_FUNCTION_ARGS);
-extern Datum dblink_last_oid(PG_FUNCTION_ARGS);
 extern Datum dblink_build_sql_insert(PG_FUNCTION_ARGS);
 extern Datum dblink_build_sql_delete(PG_FUNCTION_ARGS);
 extern Datum dblink_build_sql_update(PG_FUNCTION_ARGS);
