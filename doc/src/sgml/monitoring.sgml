@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.5 2001/11/29 20:26:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.6 2001/11/29 20:43:43 momjian Exp $
 -->
 
 <chapter id="monitoring">
@@ -81,7 +81,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   flags, not just one. In addition, your original invocation of the
   <application>postmaster</application> must have a shorter
   <command>ps</command> status display than that provided by each
-  backend.
+  backend.   If you fail to do all three things, the <command>ps</>
+  output for each backend will be the original <application>postmaster</>
+  command line.
   </para>
   </tip>
 
