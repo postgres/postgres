@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.28 2005/01/05 14:22:39 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.29 2005/01/09 05:57:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -154,6 +154,20 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
    AS</command> should explicitly specify <literal>WITH
    OIDS</literal> to ensure compatibility with future versions
    of <productname>PostgreSQL</productname>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a new table <literal>films_recent</literal> consisting of only
+   recent entries from the table <literal>films</literal>:
+
+<programlisting>
+CREATE TABLE films_recent AS
+  SELECT * FROM films WHERE date_prod &gt;= '2002-01-01';
+</programlisting>
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.32 2005/01/04 03:58:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.33 2005/01/09 05:57:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -106,6 +106,19 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
  </refsect1>
 
  <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Create a new table <literal>films_recent</literal> consisting of only
+   recent entries from the table <literal>films</literal>:
+
+<programlisting>
+SELECT * INTO films_recent FROM films WHERE date_prod &gt;= '2002-01-01';
+</programlisting>
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Compatibility</title>
 
   <para>
@@ -119,6 +132,14 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
    best to use <command>CREATE TABLE AS</command> for this purpose in
    new code.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtableas" endterm="sql-createtableas-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

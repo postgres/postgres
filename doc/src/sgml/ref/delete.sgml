@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.21 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.22 2005/01/09 05:57:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -101,6 +101,33 @@ DELETE <replaceable class="parameter">count</replaceable>
  </refsect1>
 
  <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <productname>PostgreSQL</productname> lets you reference columns of
+   other tables in the <literal>WHERE</> condition.  For example, to
+   delete all films produced by a given producer, one might do
+<programlisting>
+DELETE FROM films
+  WHERE producer_id = producers.id AND producers.name = 'foo';
+</programlisting>
+   What is essentially happening here is a join between <structname>films</>
+   and <structname>producers</>, with all successfully joined
+   <structname>films</> rows being marked for deletion.
+   This syntax is not standard.  A more standard way to do it is
+<programlisting>
+DELETE FROM films
+  WHERE producer_id IN (SELECT id FROM producers WHERE name = 'foo');
+</programlisting>
+   In some cases the join style is easier to write or faster to
+   execute than the sub-select style.  One objection to the join style
+   is that there is no explicit list of what tables are being used,
+   which makes the style somewhat error-prone; also it cannot handle
+   self-joins.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Examples</title>
 
   <para>
@@ -122,7 +149,9 @@ DELETE FROM films;
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the SQL standard.
+   This command conforms to the SQL standard, except that the ability to
+   reference other tables in the <literal>WHERE</> clause is a
+   <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 </refentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.28 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/insert.sgml,v 1.29 2005/01/09 05:57:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -162,7 +162,7 @@ INSERT INTO films VALUES
   </para>
 
   <para>
-   In this second example, the <literal>len</literal> column is
+   In this example, the <literal>len</literal> column is
    omitted and therefore it will have the default value:
 
 <programlisting>
@@ -172,7 +172,7 @@ INSERT INTO films (code, title, did, date_prod, kind)
   </para>
 
   <para>
-   The third example uses the <literal>DEFAULT</literal> clause for
+   This example uses the <literal>DEFAULT</literal> clause for
    the date columns rather than specifying a value:
 
 <programlisting>
@@ -184,11 +184,20 @@ INSERT INTO films (code, title, did, date_prod, kind)
   </para>
 
   <para>
-   This example inserts several rows into table
-   <literal>films</literal> from table <literal>tmp</literal>:
+   To insert a row consisting entirely of default values:
 
 <programlisting>
-INSERT INTO films SELECT * FROM tmp;
+INSERT INTO films DEFAULT VALUES;
+</programlisting>
+  </para>
+
+  <para>
+   This example inserts some rows into table
+   <literal>films</literal> from a table <literal>tmp_films</literal>
+   with the same column layout as <literal>films</literal>:
+
+<programlisting>
+INSERT INTO films SELECT * FROM tmp_films WHERE date_prod &lt; '2004-05-07';
 </programlisting>
   </para>
 

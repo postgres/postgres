@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.9 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_group.sgml,v 1.10 2005/01/09 05:57:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ DROP GROUP <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    <command>DROP GROUP</command> removes the specified group.  The
-   users in the group are not deleted.
+   users in the group are not removed.
   </para>
  </refsect1>
   

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.31 2005/01/04 03:58:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.32 2005/01/09 05:57:45 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -114,8 +114,9 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
       expressions. This is similar to the list of tables that can be
       specified in the <xref linkend="sql-from"
       endterm="sql-from-title"> of a <command>SELECT</command>
-      statement; for example, an alias for the table name can be
-      specified.
+      statement.  Note that the target table must not appear in the
+      <replaceable>fromlist</>, unless you intend a self-join (in which
+      case it must appear with an alias in the <replaceable>fromlist</>).
      </para>
     </listitem>
    </varlistentry>
@@ -154,10 +155,13 @@ UPDATE <replaceable class="parameter">count</replaceable>
   <title>Notes</title>
 
   <para>
-   When joining the target table to other tables using a <replaceable
-   class="PARAMETER">fromlist</replaceable>, be careful that the join
+   When a <literal>FROM</> clause is present, what essentially happens
+   is that the target table is joined to the tables mentioned in the
+   <replaceable>fromlist</replaceable>, and each output row of the join
+   represents an update operation for the target table.  When using
+   <literal>FROM</> you should ensure that the join
    produces at most one output row for each row to be modified.  In
-   other words, a target row mustn't join to more than one row from
+   other words, a target row shouldn't join to more than one row from
    the other table(s).  If it does, then only one of the join rows
    will be used to update the target row, but which one will be used
    is not readily predictable.
@@ -210,15 +214,18 @@ UPDATE employees SET sales_count = sales_count + 1 WHERE id =
 </programlisting>
 
    Attempt to insert a new stock item along with the quantity of stock. If
-   the item exists, update the stock count of the existing item. To do this,
-   use savepoints.
+   the item already exists, instead update the stock count of the existing
+   item. To do this without failing the entire transaction, use savepoints.
 <programlisting>
 BEGIN;
+-- other operations
 SAVEPOINT sp1;
 INSERT INTO wines VALUES('Chateau Lafite 2003', '24');
--- Check for unique violation on name
+-- Assume the above fails because of a unique key violation,
+-- so now we issue these commands:
 ROLLBACK TO sp1;
-UPDATE wines SET stock = stock + 24 WHERE winename='Chateau Lafite 2003';
+UPDATE wines SET stock = stock + 24 WHERE winename = 'Chateau Lafite 2003';
+-- continue with other operations, and eventually
 COMMIT;
 </programlisting>
   </para>
@@ -228,9 +235,17 @@ COMMIT;
   <title>Compatibility</title>
 
   <para>
-   This command conforms to the <acronym>SQL</acronym> standard.  The
-   <literal>FROM</literal> clause is a
+   This command conforms to the <acronym>SQL</acronym> standard, except
+   that the <literal>FROM</literal> clause is a
    <productname>PostgreSQL</productname> extension.
+  </para>
+
+  <para>
+   Some other database systems offer a <literal>FROM</> option in which
+   the target table is supposed to be listed again within <literal>FROM</>.
+   That is not how <productname>PostgreSQL</productname> interprets
+   <literal>FROM</>.  Be careful when porting applications that use this
+   extension.
   </para>
  </refsect1>
 </refentry>
