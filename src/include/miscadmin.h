@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.17 1997/11/07 06:38:29 thomas Exp $
+ * $Id: miscadmin.h,v 1.18 1997/12/04 23:58:01 thomas Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -63,6 +63,7 @@ extern short DebugLvl;
  *	USE_POSTGRES_DATES specifies traditional postgres format for output.
  *	USE_ISO_DATES specifies ISO-compliant format for output.
  *	USE_SQL_DATES specified Oracle/Ingres-compliant format for output.
+ *  USE_GERMAN_DATES specifies German-style dd.mm/yyyy date format.
  *
  * DateStyle specifies preference for date formatting for output.
  * EuroDates if client prefers dates interpreted and written w/European conventions.
@@ -78,6 +79,7 @@ extern short DebugLvl;
 #define USE_POSTGRES_DATES		0
 #define USE_ISO_DATES			1
 #define USE_SQL_DATES			2
+#define USE_GERMAN_DATES		3
 
 extern int	DateStyle;
 extern bool EuroDates;
