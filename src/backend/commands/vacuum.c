@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.198 2001/06/27 23:31:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.199 2001/06/29 16:34:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,7 +631,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				maxoff;
 	bool		pgchanged,
 				tupgone,
-				dobufrel,
 				notup;
 	char	   *relname;
 	VacPage		vacpage,
@@ -931,15 +930,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			}
 		}
 
-		if (pgchanged)
-		{
-			WriteBuffer(buf);
-			dobufrel = false;
-			changed_pages++;
-		}
-		else
-			dobufrel = true;
-
 		if (tempPage != (Page) NULL)
 		{						/* Some tuples are gone */
 			PageRepairFragmentation(tempPage, NULL);
@@ -955,8 +945,15 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			free_size += vacpage->free;
 			reap_page(vacuum_pages, vacpage);
 		}
-		if (dobufrel)
+
+		if (pgchanged)
+		{
+			WriteBuffer(buf);
+			changed_pages++;
+		}
+		else
 			ReleaseBuffer(buf);
+
 		if (notup)
 			empty_end_pages++;
 		else
