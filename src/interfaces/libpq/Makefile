@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.13 1996/11/08 06:02:25 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.14 1996/11/08 21:40:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -88,7 +88,7 @@ install: install-headers install-libpq $(install-shlib-dep)
 install-headers: beforeinstall-headers postgres.h c.h \
                  ../include/config.h ../include/libpq/pqcomm.h \
                  ../include/libpq/libpq-fs.h ../include/lib/dllist.h \
-                 ../include/utils/geo-decls.h libpq.fe.h
+                 ../include/utils/geo-decls.h libpq-fe.h
 	$(INSTALL) $(INSTLOPTS) ../include/config.h \
           $(HEADERDIR)/config.h
 	$(INSTALL) $(INSTLOPTS) ../include/libpq/pqcomm.h \
