@@ -16,8 +16,7 @@ public class JDBC2Tests extends TestSuite
 	 */
 	public static String getURL()
 	{
-		//return System.getProperty("database");
-    return "test";
+		return System.getProperty("database");
 	}
 
 	/*
@@ -25,8 +24,7 @@ public class JDBC2Tests extends TestSuite
 	 */
 	public static String getUser()
 	{
-    return "davec";
-		//return System.getProperty("username");
+		return System.getProperty("username");
 	}
 
 	/*
@@ -34,8 +32,7 @@ public class JDBC2Tests extends TestSuite
 	 */
 	public static String getPassword()
 	{
-    return null;
-		//return System.getProperty("password");
+		return System.getProperty("password");
 	}
 
 	/*
