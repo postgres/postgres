@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.92 2001/04/17 00:32:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.93 2001/05/03 17:47:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,9 +309,11 @@ ApplyRetrieveRule(Query *parsetree,
 	Assert(subrte->relid == relation->rd_id);
 	subrte->checkForRead = rte->checkForRead;
 	subrte->checkForWrite = rte->checkForWrite;
+	subrte->checkAsUser = rte->checkAsUser;
 
 	rte->checkForRead = false;	/* no permission check on subquery itself */
 	rte->checkForWrite = false;
+	rte->checkAsUser = InvalidOid;
 
 	/*
 	 * FOR UPDATE of view?
