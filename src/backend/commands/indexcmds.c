@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.16 1999/12/16 22:19:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.17 2000/01/10 17:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,7 +414,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 	}
 	*opOidP = tuple->t_data->t_oid;
 
-	MemSet(argTypes, 0, 8 * sizeof(Oid));
+	MemSet(argTypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 	/*
 	 * process the function arguments

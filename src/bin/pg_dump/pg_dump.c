@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.130 2000/01/10 16:13:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.131 2000/01/10 17:14:40 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -129,7 +129,7 @@ usage(const char *progname)
 
 #ifdef HAVE_GETOPT_LONG
 	fprintf(stderr,
-	
+
 	"    -a, --data-only         dump out only the data, no schema\n"
 	"    -c, --clean             clean(drop) schema prior to create\n"
 	"    -d, --insert-proper     dump data as proper insert strings\n"
@@ -146,11 +146,11 @@ usage(const char *progname)
 	"    -v, --verbose           verbose\n"
 	"    -x, --no-acl            do not dump ACL's (grant/revoke)\n"
 	"    -?, --help              show this help message\n"
-	
+
 	); /* fprintf */
 #else
 	fprintf(stderr,
-	
+
 	"    -a                      dump out only the data, no schema\n"
 	"    -c                      clean(drop) schema prior to create\n"
 	"    -d                      dump data as proper insert strings\n"
@@ -167,10 +167,10 @@ usage(const char *progname)
 	"    -v                      verbose\n"
 	"    -x                      do not dump ACL's (grant/revoke)\n"
 	"    -?                      show this help message\n"
-	
+
 	); /* fprintf */
 #endif
-	
+
 	fprintf(stderr,
 		"\nIf dbname is not supplied, then the DATABASE environment variable value is used.\n\n");
 
@@ -566,7 +566,7 @@ main(int argc, char **argv)
 		{"verbose", no_argument, NULL, 'v'},
 		{"no-acl", no_argument, NULL, 'x'},
 		{"help", no_argument, NULL, '?'},
-	};        
+	};
 	int		optindex;
 #endif
 
@@ -667,7 +667,7 @@ main(int argc, char **argv)
 				 "%s: The -z option(dump ACLs) is now the default, continuing.\n",
 					progname);
 				break;
-			case '?':	
+			case '?':
 			default:
 				usage(progname);
 				break;
@@ -681,7 +681,7 @@ main(int argc, char **argv)
 				progname);
 		exit(2);
 	}
-		
+
 	/* open the output file */
 	if (filename == NULL)
 		g_fout = stdout;
@@ -1069,7 +1069,7 @@ clearFuncInfo(FuncInfo *fun, int numFuncs)
 			free(fun[i].proname);
 		if (fun[i].usename)
 			free(fun[i].usename);
-		for (a = 0; a < 8; ++a)
+		for (a = 0; a < FUNC_MAX_ARGS ; ++a)
 			if (fun[i].argtypes[a])
 				free(fun[i].argtypes[a]);
 		if (fun[i].prorettype)
@@ -1122,8 +1122,8 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 			free(tblinfo[i].typnames);
 		if (tblinfo[i].notnull)
 			free(tblinfo[i].notnull);
-        if (tblinfo[i].primary_key)
-            free(tblinfo[i].primary_key);
+	if (tblinfo[i].primary_key)
+	    free(tblinfo[i].primary_key);
 	}
 	free(tblinfo);
 }
@@ -1611,48 +1611,48 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		else
 			tblinfo[i].check_expr = NULL;
 
-        /* Get primary key */
-        if (strcmp(PQgetvalue(res, i, i_relhasindex), "t")==0)
-        {
-            PGresult * res2;
-            char str[INDEX_MAX_KEYS * NAMEDATALEN + 3] = "";
-            int j;
+	/* Get primary key */
+	if (strcmp(PQgetvalue(res, i, i_relhasindex), "t")==0)
+	{
+	    PGresult * res2;
+	    char str[INDEX_MAX_KEYS * NAMEDATALEN + 3] = "";
+	    int j;
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
-                    "SELECT a.attname "
-                    "FROM pg_index i, pg_class c, pg_attribute a "
-                    "WHERE i.indisprimary AND i.indrelid = %s "
-                    "  AND i.indexrelid = c.oid AND a.attnum > 0 AND a.attrelid = c.oid "
-                    "ORDER BY a.attnum ",
-                    tblinfo[i].oid);
-            res2 = PQexec(g_conn, query->data);
+		    "SELECT a.attname "
+		    "FROM pg_index i, pg_class c, pg_attribute a "
+		    "WHERE i.indisprimary AND i.indrelid = %s "
+		    "  AND i.indexrelid = c.oid AND a.attnum > 0 AND a.attrelid = c.oid "
+		    "ORDER BY a.attnum ",
+		    tblinfo[i].oid);
+	    res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
 				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed.  Explanation from backend: %s",
-                        PQerrorMessage(g_conn));
+			PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
-            
-            for (j = 0; j < PQntuples(res2); j++)
-            {
-                if (strlen(str)>0)
-                    strcat(str, ", ");
-                strcat(str, fmtId(PQgetvalue(res2, j, 0), force_quotes));
-            }
 
-            if (strlen(str)>0) {
-                tblinfo[i].primary_key = strdup(str);
-                if (tblinfo[i].primary_key == NULL) {
-                    perror("strdup");
-                    exit(1);
-                }
-            }
-            else
-                tblinfo[i].primary_key = NULL;
-        }
-        else
-            tblinfo[i].primary_key = NULL;
+	    for (j = 0; j < PQntuples(res2); j++)
+	    {
+		if (strlen(str)>0)
+		    strcat(str, ", ");
+		strcat(str, fmtId(PQgetvalue(res2, j, 0), force_quotes));
+	    }
+
+	    if (strlen(str)>0) {
+		tblinfo[i].primary_key = strdup(str);
+		if (tblinfo[i].primary_key == NULL) {
+		    perror("strdup");
+		    exit(1);
+		}
+	    }
+	    else
+		tblinfo[i].primary_key = NULL;
+	}
+	else
+	    tblinfo[i].primary_key = NULL;
 
 		/* Get Triggers */
 		if (tblinfo[i].ntrig > 0)
@@ -2022,7 +2022,7 @@ getIndices(int *numIndices)
 	 */
 
 	appendPQExpBuffer(query,
-            "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
+	    "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
 			"i.indproc, i.indkey, i.indclass, "
 			"a.amname as indamname, i.indisunique "
 			"from pg_index i, pg_class t1, pg_class t2, pg_am a "
@@ -2849,14 +2849,14 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 						tblinfo[i].check_expr[k]);
 			}
 
-            /* PRIMARY KEY */
-            if (tblinfo[i].primary_key) {
-                if (actual_atts + tblinfo[i].ncheck > 0)
-                    appendPQExpBuffer(q, ",\n\t");
-                appendPQExpBuffer(q, "PRIMARY KEY (%s)", tblinfo[i].primary_key);
-            }
+	    /* PRIMARY KEY */
+	    if (tblinfo[i].primary_key) {
+		if (actual_atts + tblinfo[i].ncheck > 0)
+		    appendPQExpBuffer(q, ",\n\t");
+		appendPQExpBuffer(q, "PRIMARY KEY (%s)", tblinfo[i].primary_key);
+	    }
 
-            appendPQExpBuffer(q, "\n)");
+	    appendPQExpBuffer(q, "\n)");
 
 			if (numParents > 0)
 			{

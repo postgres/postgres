@@ -93,9 +93,11 @@
 #define INDEXSCAN_PATCH 
 
 /*
- * Maximum number of columns in an index.
+ * Maximum number of columns in an index and maximum number of args
+ * to a function. They must be the same value.
  */
 #define INDEX_MAX_KEYS		8
+#define FUNC_MAX_ARGS		INDEX_MAX_KEYS
 
 /*
  * Enables debugging print statements in the date/time support routines.

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.43 1999/12/27 15:42:44 momjian Exp $
+ * $Id: pg_dump.h,v 1.44 2000/01/10 17:14:40 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -61,7 +61,7 @@ typedef struct _funcInfo
 	char	   *proowner;
 	int			lang;
 	int			nargs;
-	char	   *argtypes[8];	/* should be derived from obj/fmgr.h
+	char	   *argtypes[FUNC_MAX_ARGS];	/* should be derived from obj/fmgr.h
 								 * instead of hardwired */
 	char	   *prorettype;
 	int			retset;			/* 1 if the function returns a set, 0

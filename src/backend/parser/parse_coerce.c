@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.26 1999/12/10 07:37:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.27 2000/01/10 17:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 	HeapTuple	ftup;
 	int			i;
 	Type		tp;
-	Oid			oid_array[MAXFARGS];
+	Oid			oid_array[FUNC_MAX_ARGS];
 
 	/* run through argument list... */
 	for (i = 0; i < nargs; i++)
@@ -170,7 +170,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			 */
 			else if (input_typeids[i] != UNKNOWNOID)
 			{
-				MemSet(oid_array, 0, MAXFARGS * sizeof(Oid));
+				MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 				oid_array[0] = input_typeids[i];
 
 				/*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.33 1999/11/22 17:56:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.34 2000/01/10 17:14:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,9 +44,9 @@ fmgr_pl(char *arg0,...)
 		values.data[0] = arg0;
 		if (n_arguments > 1)
 		{
-			if (n_arguments > MAXFMGRARGS)
+			if (n_arguments > FUNC_MAX_ARGS)
 				elog(ERROR, "fmgr_pl: function %u: too many arguments (%d > %d)",
-					 fmgr_pl_finfo->fn_oid, n_arguments, MAXFMGRARGS);
+					 fmgr_pl_finfo->fn_oid, n_arguments, FUNC_MAX_ARGS);
 			va_start(pvar, arg0);
 			for (i = 1; i < n_arguments; i++)
 				values.data[i] = va_arg(pvar, char *);
@@ -165,22 +165,93 @@ fmgr_c(FmgrInfo *finfo,
 									  values->data[6], values->data[7]);
 			break;
 		case 9:
-
-			/*
-			 * XXX Note that functions with >8 arguments can only be
-			 * called from inside the system, not from the user level,
-			 * since the catalogs only store 8 argument types for user
-			 * type-checking!
-			 */
 			returnValue = (*user_fn) (values->data[0], values->data[1],
 									  values->data[2], values->data[3],
 									  values->data[4], values->data[5],
 									  values->data[6], values->data[7],
 									  values->data[8]);
 			break;
+		case 10:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9]);
+			break;
+		case 11:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10]);
+			break;
+		case 12:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11]);
+			break;
+		case 13:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12]);
+			break;
+		case 14:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13]);
+			break;
+		case 15:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14]);
+			break;
+		case 16:
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15]);
+			break;
+		case 17:
+
+			/*
+			 * XXX Note that functions with >FUNC_MAX_ARGS arguments can only be
+			 * called from inside the system, not from the user level,
+			 * since the catalogs only store FUNC_MAX_ARGS argument types for user
+			 * type-checking!
+			 */
+			returnValue = (*user_fn) (values->data[0], values->data[1],
+									  values->data[2], values->data[3],
+									  values->data[4], values->data[5],
+									  values->data[6], values->data[7],
+									  values->data[8], values->data[9],
+									  values->data[10], values->data[11],
+									  values->data[12], values->data[13],
+									  values->data[14], values->data[15]);
+			break;
 		default:
 			elog(ERROR, "fmgr_c: function %u: too many arguments (%d > %d)",
-				 finfo->fn_oid, n_arguments, MAXFMGRARGS);
+				 finfo->fn_oid, n_arguments, FUNC_MAX_ARGS);
 			break;
 	}
 	return returnValue;
@@ -323,9 +394,9 @@ fmgr(Oid procedureId,...)
 	fmgr_info(procedureId, &finfo);
 	pronargs = finfo.fn_nargs;
 
-	if (pronargs > MAXFMGRARGS)
+	if (pronargs > FUNC_MAX_ARGS)
 		elog(ERROR, "fmgr: function %u: too many arguments (%d > %d)",
-			 procedureId, pronargs, MAXFMGRARGS);
+			 procedureId, pronargs, FUNC_MAX_ARGS);
 
 	va_start(pvar, procedureId);
 	for (i = 0; i < pronargs; ++i)
@@ -364,10 +435,10 @@ fmgr_ptr(FmgrInfo *finfo,...)
 	va_start(pvar, finfo);
 	n_arguments = va_arg(pvar, int);
 	local_finfo->fn_nargs = n_arguments;
-	if (n_arguments > MAXFMGRARGS)
+	if (n_arguments > FUNC_MAX_ARGS)
 	{
 		elog(ERROR, "fmgr_ptr: function %u: too many arguments (%d > %d)",
-			 func_id, n_arguments, MAXFMGRARGS);
+			 func_id, n_arguments, FUNC_MAX_ARGS);
 	}
 	for (i = 0; i < n_arguments; ++i)
 		values.data[i] = va_arg(pvar, char *);

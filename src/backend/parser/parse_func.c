@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.65 1999/12/16 22:19:48 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.66 2000/01/10 17:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	Oid			relid;
 	int			nargs = length(fargs);
 	Func	   *funcnode;
-	Oid			oid_array[MAXFARGS];
+	Oid			oid_array[FUNC_MAX_ARGS];
 	Oid		   *true_oid_array;
 	Node	   *retval;
 	bool		retset;
@@ -435,7 +435,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	 * transform relation name arguments into varnodes of the appropriate
 	 * form.
 	 */
-	MemSet(oid_array, 0, MAXFARGS * sizeof(Oid));
+	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 	nargs = 0;
 	foreach(i, fargs)
@@ -463,7 +463,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 					refname);
 #endif
 			}
-										 
+
 			relname = rte->relname;
 
 			vnum = refnameRangeTablePosn(pstate, rte->refname, NULL);
@@ -496,12 +496,12 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		}
 
 		/* Most of the rest of the parser just assumes that functions do not
-		 * have more than MAXFARGS parameters.  We have to test here to protect
+		 * have more than FUNC_MAX_ARGS parameters.  We have to test here to protect
 		 * against array overruns, etc.
 		 */
-		if (nargs >= MAXFARGS)
+		if (nargs >= FUNC_MAX_ARGS)
 			elog(ERROR, "Cannot pass more than %d arguments to a function",
-				 MAXFARGS);
+				 FUNC_MAX_ARGS);
 
 		oid_array[nargs++] = toid;
 	}
@@ -710,8 +710,8 @@ func_get_candidates(char *funcname, int nargs)
 					current_candidate = (CandidateList)
 						palloc(sizeof(struct _CandidateList));
 					current_candidate->args = (Oid *)
-						palloc(MAXFARGS * sizeof(Oid));
-					MemSet(current_candidate->args, 0, MAXFARGS * sizeof(Oid));
+						palloc(FUNC_MAX_ARGS * sizeof(Oid));
+					MemSet(current_candidate->args, 0, FUNC_MAX_ARGS * sizeof(Oid));
 					for (i = 0; i < nargs; i++)
 						current_candidate->args[i] = pgProcP->proargtypes[i];
 
@@ -1067,9 +1067,9 @@ argtype_inherit(int nargs, Oid *oid_array)
 {
 	Oid			relid;
 	int			i;
-	InhPaths	arginh[MAXFARGS];
+	InhPaths	arginh[FUNC_MAX_ARGS];
 
-	for (i = 0; i < MAXFARGS; i++)
+	for (i = 0; i < FUNC_MAX_ARGS; i++)
 	{
 		if (i < nargs)
 		{
@@ -1203,7 +1203,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	Oid		   *oneres;
 	int			i,
 				j;
-	int			cur[MAXFARGS];
+	int			cur[FUNC_MAX_ARGS];
 
 	nanswers = 1;
 	for (i = 0; i < nargs; i++)
@@ -1217,8 +1217,8 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	/* compute the cross product from right to left */
 	for (;;)
 	{
-		oneres = (Oid *) palloc(MAXFARGS * sizeof(Oid));
-		MemSet(oneres, 0, MAXFARGS * sizeof(Oid));
+		oneres = (Oid *) palloc(FUNC_MAX_ARGS * sizeof(Oid));
+		MemSet(oneres, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 		for (i = nargs - 1; i >= 0 && cur[i] > arginh[i].nsupers; i--)
 			continue;
@@ -1508,7 +1508,7 @@ ParseComplexProjection(ParseState *pstate,
 void
 func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg)
 {
-	char		p[(NAMEDATALEN + 2) * MAXFMGRARGS],
+	char		p[(NAMEDATALEN + 2) * FUNC_MAX_ARGS],
 			   *ptr;
 	int			i;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.46 2000/01/05 18:23:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.47 2000/01/10 17:14:31 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -482,7 +482,7 @@ OperatorDef(char *operatorName,
 	bool		rightDefined = false;
 	bool		selfCommutator = false;
 	char	   *name[4];
-	Oid			typeId[8];
+	Oid			typeId[FUNC_MAX_ARGS];
 	int			nargs;
 	NameData	oname;
 	TupleDesc	tupDesc;
@@ -556,7 +556,7 @@ OperatorDef(char *operatorName,
 	 * have to worry about deleting them later.
 	 * ----------------
 	 */
-	MemSet(typeId, 0, 8 * sizeof(Oid));
+	MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	if (!leftTypeName)
 	{
 		typeId[0] = rightTypeId;
@@ -592,7 +592,7 @@ OperatorDef(char *operatorName,
 	 */
 	if (restrictionName)
 	{							/* optional */
-		MemSet(typeId, 0, 8 * sizeof(Oid));
+		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = OIDOID;		/* operator OID */
 		typeId[1] = OIDOID;		/* relation OID */
 		typeId[2] = INT2OID;	/* attribute number */
@@ -617,7 +617,7 @@ OperatorDef(char *operatorName,
 	 */
 	if (joinName)
 	{							/* optional */
-		MemSet(typeId, 0, 8 * sizeof(Oid));
+		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = OIDOID;		/* operator OID */
 		typeId[1] = OIDOID;		/* relation OID 1 */
 		typeId[2] = INT2OID;	/* attribute number 1 */
@@ -923,11 +923,11 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 				setheapoverride(true);
 				heap_update(pg_operator_desc, &tup->t_self, tup, NULL);
 				setheapoverride(false);
-		
+
 				if (RelationGetForm(pg_operator_desc)->relhasindex)
 				{
 					Relation	idescs[Num_pg_operator_indices];
-			
+
 					CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
 					CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
 					CatalogCloseIndices(Num_pg_operator_indices, idescs);
@@ -961,7 +961,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		if (RelationGetForm(pg_operator_desc)->relhasindex)
 		{
 			Relation	idescs[Num_pg_operator_indices];
-	
+
 			CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
 			CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
 			CatalogCloseIndices(Num_pg_operator_indices, idescs);
@@ -1001,7 +1001,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		if (RelationGetForm(pg_operator_desc)->relhasindex)
 		{
 			Relation	idescs[Num_pg_operator_indices];
-	
+
 			CatalogOpenIndices(Num_pg_operator_indices, Name_pg_operator_indices, idescs);
 			CatalogIndexInsert(idescs, Num_pg_operator_indices, pg_operator_desc, tup);
 			CatalogCloseIndices(Num_pg_operator_indices, idescs);

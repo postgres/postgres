@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.30 1999/11/16 04:14:03 momjian Exp $
+ * $Id: rel.h,v 1.31 2000/01/10 17:14:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ typedef struct Trigger
 	bool		tgdeferrable;
 	bool		tginitdeferred;
 	int16		tgnargs;
-	int16		tgattr[8];
+	int16		tgattr[FUNC_MAX_ARGS];
 	char	  **tgargs;
 } Trigger;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.29 2000/01/10 16:13:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.30 2000/01/10 17:14:29 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -98,7 +98,7 @@ btoidvectorcmp(Oid *a, Oid *b)
 {
 	int			i;
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
 		/* we use this because we need the int4gt, etc */
 		if (!int4eq(a[i], b[i]))
 		{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.42 1999/12/16 22:19:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.43 2000/01/10 17:14:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,7 @@ SingleOpOperatorRemove(Oid typeOid)
 		  DeleteComments(tup->t_data->t_oid);
 
 		  heap_delete(rel, &tup->t_self, NULL);
-		  
+
 		}
 
 		heap_endscan(scan);
@@ -315,13 +315,13 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 {
 	Relation	relation;
 	HeapTuple	tup;
-	Oid			argList[8];
+	Oid			argList[FUNC_MAX_ARGS];
 	char	   *userName;
 	char	   *typename;
 	int			i;
 
 
-	MemSet(argList, 0, 8 * sizeof(Oid));
+	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	for (i = 0; i < nargs; i++)
 	{
 		typename = strVal(lfirst(argNameList));
@@ -444,7 +444,7 @@ RemoveAggregate(char *aggName, char *aggType)
 				 aggName);
 		}
 	}
-	
+
 	/*** Remove any comments related to this aggregate ***/
 
 	DeleteComments(tup->t_data->t_oid);

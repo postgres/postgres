@@ -50,7 +50,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	HeapTuple	langTup;
 	HeapTuple	procTup;
 
-	Oid			typev[8];
+	Oid			typev[FUNC_MAX_ARGS];
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
 	Relation	rel;
@@ -136,7 +136,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 		CatalogIndexInsert(idescs, Num_pg_language_indices, rel, tup);
 		CatalogCloseIndices(Num_pg_language_indices, idescs);
 	}
-	
+
 	heap_close(rel, RowExclusiveLock);
 }
 

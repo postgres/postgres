@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.36 1999/11/22 17:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.37 2000/01/10 17:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ ProcedureCreate(char *procedureName,
 	List	   *x;
 	List	   *querytree_list;
 	List	   *plan_list;
-	Oid			typev[8];
+	Oid			typev[FUNC_MAX_ARGS];
 	Oid			relid;
 	Oid			toid;
 	NameData	procname;
@@ -75,13 +75,13 @@ ProcedureCreate(char *procedureName,
 	Assert(PointerIsValid(probin));
 
 	parameterCount = 0;
-	MemSet(typev, 0, 8 * sizeof(Oid));
+	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	foreach(x, argList)
 	{
 		Value	   *t = lfirst(x);
 
-		if (parameterCount == 8)
-			elog(ERROR, "Procedures cannot take more than 8 arguments");
+		if (parameterCount == FUNC_MAX_ARGS)
+			elog(ERROR, "Procedures cannot take more than %d arguments",FUNC_MAX_ARGS);
 
 		if (strcmp(strVal(t), "opaque") == 0)
 		{

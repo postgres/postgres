@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.45 2000/01/09 00:26:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.46 2000/01/10 17:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,7 @@ intltsel(Oid opid,
 		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
 
 		/* Convert the constant to a uniform comparison scale. */
-		if (! convert_to_scale(value, 
+		if (! convert_to_scale(value,
 							   ((flag & SEL_RIGHT) ? rtype : ltype),
 							   &val))
 		{
@@ -310,7 +310,7 @@ intltsel(Oid opid,
 			 * stats are out of date and return a default...
 			 */
 			*result = DEFAULT_INEQ_SEL;
-        }
+	}
 		else if (val <= low || val >= high)
 		{
 			/* If given value is outside the statistical range, return a
@@ -512,10 +512,10 @@ convert_to_scale(Datum value, Oid typid,
 			/* See whether there is a registered type-conversion function,
 			 * namely a procedure named "float8" with the right signature.
 			 */
-			Oid			oid_array[MAXFARGS];
+			Oid			oid_array[FUNC_MAX_ARGS];
 			HeapTuple	ftup;
 
-			MemSet(oid_array, 0, MAXFARGS * sizeof(Oid));
+			MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 			oid_array[0] = typid;
 			ftup = SearchSysCacheTuple(PROCNAME,
 									   PointerGetDatum("float8"),

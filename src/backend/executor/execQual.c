@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.64 1999/11/12 06:39:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.65 2000/01/10 17:14:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -656,7 +656,7 @@ ExecMakeFunctionResult(Node *node,
 					   bool *isNull,
 					   bool *isDone)
 {
-	Datum		argV[MAXFMGRARGS];
+	Datum		argV[FUNC_MAX_ARGS];
 	FunctionCachePtr fcache;
 	Func	   *funcNode = NULL;
 	Oper	   *operNode = NULL;
@@ -690,7 +690,7 @@ ExecMakeFunctionResult(Node *node,
 	{
 		bool		argDone;
 
-		if (fcache->nargs > MAXFMGRARGS)
+		if (fcache->nargs > FUNC_MAX_ARGS)
 			elog(ERROR, "ExecMakeFunctionResult: too many arguments");
 
 		/*

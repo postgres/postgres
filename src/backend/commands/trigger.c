@@ -41,7 +41,7 @@ void
 CreateTrigger(CreateTrigStmt *stmt)
 {
 	int16		tgtype;
-	int16		tgattr[8] = {0};
+	int16		tgattr[FUNC_MAX_ARGS] = {0};
 	Datum		values[Natts_pg_trigger];
 	char		nulls[Natts_pg_trigger];
 	Relation	rel;
@@ -53,7 +53,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	Relation	idescs[Num_pg_trigger_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	MemoryContext oldcxt;
-	Oid			fargtypes[8];
+	Oid			fargtypes[FUNC_MAX_ARGS];
 	int			found = 0;
 	int			i;
 	char		constrtrigname[NAMEDATALEN];
@@ -144,7 +144,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	}
 	heap_endscan(tgscan);
 
-	MemSet(fargtypes, 0, 8 * sizeof(Oid));
+	MemSet(fargtypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	tuple = SearchSysCacheTuple(PROCNAME,
 								PointerGetDatum(stmt->funcname),
 								Int32GetDatum(0),
@@ -306,7 +306,7 @@ DropTrigger(DropTrigStmt *stmt)
 
 		  heap_delete(tgrel, &tuple->t_self, NULL);
 		  tgfound++;
-		  
+
 		}
 		else
 			found++;
@@ -368,7 +368,7 @@ RelationRemoveTriggers(Relation rel)
 	  /*** Delete any comments associated with this trigger ***/
 
 	  DeleteComments(tup->t_data->t_oid);
-	  
+
 	  heap_delete(tgrel, &tup->t_self, NULL);
 
 	}
@@ -473,7 +473,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgdeferrable = pg_trigger->tgdeferrable;
 		build->tginitdeferred = pg_trigger->tginitdeferred;
 		build->tgnargs = pg_trigger->tgnargs;
-		memcpy(build->tgattr, &(pg_trigger->tgattr), 8 * sizeof(int16));
+		memcpy(build->tgattr, &(pg_trigger->tgattr), FUNC_MAX_ARGS * sizeof(int16));
 		val = (struct varlena *) fastgetattr(&tuple,
 											 Anum_pg_trigger_tgargs,
 											 tgrel->rd_att, &isnull);
@@ -992,7 +992,7 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 	trigstate = (DeferredTriggerStatus)
 			palloc(sizeof(DeferredTriggerStatusData));
 	trigstate->dts_tgoid		= tgoid;
-	trigstate->dts_tgisdeferred	= 
+	trigstate->dts_tgisdeferred	=
 			((itemstate & TRIGGER_DEFERRED_INITDEFERRED) != 0);
 	deftrig_trigstates = lappend(deftrig_trigstates, trigstate);
 
@@ -1008,7 +1008,7 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
  *	Add a new trigger event to the queue.
  * ----------
  */
-static void 
+static void
 deferredTriggerAddEvent(DeferredTriggerEvent event)
 {
 	deftrig_events = lappend(deftrig_events, event);
@@ -1040,14 +1040,14 @@ deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
 		if (previous->dte_event & TRIGGER_DEFERRED_CANCELED)
 			continue;
 
-		if (ItemPointerGetBlockNumber(ctid) == 
+		if (ItemPointerGetBlockNumber(ctid) ==
 					ItemPointerGetBlockNumber(&(previous->dte_newctid)) &&
 					ItemPointerGetOffsetNumber(ctid) ==
 					ItemPointerGetOffsetNumber(&(previous->dte_newctid)))
 			return previous;
 	}
 
-	elog(ERROR, 
+	elog(ERROR,
 		"deferredTriggerGetPreviousEvent(): event for tuple %s not found",
 		tidout(ctid));
 	return NULL;
@@ -1107,26 +1107,26 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 		case TRIGGER_EVENT_INSERT:
 			SaveTriggerData.tg_trigtuple = &newtuple;
 			SaveTriggerData.tg_newtuple  = NULL;
-			SaveTriggerData.tg_trigger   = 
+			SaveTriggerData.tg_trigger   =
 					rel->trigdesc->tg_after_row[TRIGGER_EVENT_INSERT][itemno];
 			break;
 
 		case TRIGGER_EVENT_UPDATE:
 			SaveTriggerData.tg_trigtuple = &oldtuple;
 			SaveTriggerData.tg_newtuple  = &newtuple;
-			SaveTriggerData.tg_trigger   = 
+			SaveTriggerData.tg_trigger   =
 					rel->trigdesc->tg_after_row[TRIGGER_EVENT_UPDATE][itemno];
 			break;
 
 		case TRIGGER_EVENT_DELETE:
 			SaveTriggerData.tg_trigtuple = &oldtuple;
 			SaveTriggerData.tg_newtuple  = NULL;
-			SaveTriggerData.tg_trigger   = 
+			SaveTriggerData.tg_trigger   =
 					rel->trigdesc->tg_after_row[TRIGGER_EVENT_DELETE][itemno];
 			break;
 
 		default:
-	} 
+	}
 
 	/* ----------
 	 * Call the trigger and throw away an eventually returned
@@ -1195,10 +1195,10 @@ deferredTriggerInvokeEvents(bool immediate_only)
 		 * ----------
 		 */
 		event = (DeferredTriggerEvent) lfirst(el);
-		if (event->dte_event & (TRIGGER_DEFERRED_DONE | 
+		if (event->dte_event & (TRIGGER_DEFERRED_DONE |
 								TRIGGER_DEFERRED_CANCELED))
 			continue;
-	
+
 		/* ----------
 		 * Check each trigger item in the event.
 		 * ----------
@@ -1215,7 +1215,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 			 * ----------
 			 */
 			if (immediate_only && deferredTriggerCheckState(
-								event->dte_item[i].dti_tgoid, 
+								event->dte_item[i].dti_tgoid,
 								event->dte_item[i].dti_state))
 			{
 				still_deferred_ones = true;
@@ -1273,7 +1273,7 @@ DeferredTriggerBeginXact(void)
 	DeferredTriggerStatus	stat;
 
 	if (deftrig_cxt != NULL)
-		elog(FATAL, 
+		elog(FATAL,
 			"DeferredTriggerBeginXact() called while inside transaction");
 
 	/* ----------
@@ -1286,12 +1286,12 @@ DeferredTriggerBeginXact(void)
 
 	deftrig_all_isset		= deftrig_dfl_all_isset;
 	deftrig_all_isdeferred	= deftrig_dfl_all_isdeferred;
-	
+
 	deftrig_trigstates		= NIL;
 	foreach (l, deftrig_dfl_trigstates)
 	{
 		dflstat = (DeferredTriggerStatus) lfirst(l);
-		stat    = (DeferredTriggerStatus) 
+		stat    = (DeferredTriggerStatus)
 								palloc(sizeof(DeferredTriggerStatusData));
 
 		stat->dts_tgoid        = dflstat->dts_tgoid;
@@ -1530,7 +1530,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			 */
 			pg_trigger = (Form_pg_trigger) GETSTRUCT(&tuple);
 			if (stmt->deferred & !pg_trigger->tgdeferrable)
-				elog(ERROR, "Constraint '%s' is not deferrable", 
+				elog(ERROR, "Constraint '%s' is not deferrable",
 									(char *)lfirst(l));
 
 			constr_oid = tuple.t_data->t_oid;
@@ -1582,7 +1582,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 				state->dts_tgoid        = (Oid) lfirst(l);
 				state->dts_tgisdeferred = stmt->deferred;
 
-				deftrig_dfl_trigstates = 
+				deftrig_dfl_trigstates =
 									lappend(deftrig_dfl_trigstates, state);
 			}
 		}
@@ -1618,7 +1618,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 				state->dts_tgoid        = (Oid) lfirst(l);
 				state->dts_tgisdeferred = stmt->deferred;
 
-				deftrig_trigstates = 
+				deftrig_trigstates =
 									lappend(deftrig_trigstates, state);
 			}
 		}
@@ -1652,7 +1652,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	TriggerData				SaveTriggerData;
 
 	if (deftrig_cxt == NULL)
-		elog(ERROR, 
+		elog(ERROR,
 			"DeferredTriggerSaveEvent() called outside of transaction");
 
 	/* ----------
@@ -1681,7 +1681,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 		ItemPointerSetInvalid(&(newctid));
 
 	/* ----------
-	 * Create a new event 
+	 * Create a new event
 	 * ----------
 	 */
 	oldcxt = MemoryContextSwitchTo((MemoryContext) deftrig_cxt);
@@ -1691,7 +1691,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 
 	new_size  = sizeof(DeferredTriggerEventData) +
 				ntriggers * sizeof(DeferredTriggerEventItem);
-				
+
 	new_event = (DeferredTriggerEvent) palloc(new_size);
 	new_event->dte_event	= event & TRIGGER_EVENT_OPMASK;
 	new_event->dte_relid	= rel->rd_id;
@@ -1702,10 +1702,10 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	for (i = 0; i < ntriggers; i++)
 	{
 		new_event->dte_item[i].dti_tgoid = triggers[i]->tgoid;
-		new_event->dte_item[i].dti_state = 
-			((triggers[i]->tgdeferrable) ? 
+		new_event->dte_item[i].dti_state =
+			((triggers[i]->tgdeferrable) ?
 						TRIGGER_DEFERRED_DEFERRABLE : 0)	|
-			((triggers[i]->tginitdeferred) ? 
+			((triggers[i]->tginitdeferred) ?
 						TRIGGER_DEFERRED_INITDEFERRED : 0)	|
 			((rel->trigdesc->n_before_row[event] > 0) ?
 						TRIGGER_DEFERRED_HAS_BEFORE : 0);
@@ -1729,7 +1729,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 			if (oldtup->t_data->t_xmin != GetCurrentTransactionId())
 				prev_event = NULL;
 			else
-				prev_event = 
+				prev_event =
 					deferredTriggerGetPreviousEvent(rel->rd_id, &oldctid);
 
 			/* ----------
@@ -1759,7 +1759,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 					case F_RI_FKEY_SETDEFAULT_UPD:
 						is_ri_trigger = true;
 						break;
-					
+
 					default:
 						is_ri_trigger = false;
 						break;
@@ -1776,7 +1776,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 				CurrentTriggerData = &SaveTriggerData;
 				key_unchanged = RI_FKey_keyequal_upd();
 				CurrentTriggerData = NULL;
-				
+
 				if (key_unchanged)
 				{
 					/* ----------
@@ -1789,7 +1789,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 
 					if (prev_event)
 					{
-						if (prev_event->dte_event & 
+						if (prev_event->dte_event &
 									TRIGGER_DEFERRED_ROW_INSERTED)
 						{
 							/* ----------
@@ -1797,9 +1797,9 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 							 * So any key value is considered changed.
 							 * ----------
 							 */
-							new_event->dte_event |= 
+							new_event->dte_event |=
 											TRIGGER_DEFERRED_ROW_INSERTED;
-							new_event->dte_event |= 
+							new_event->dte_event |=
 											TRIGGER_DEFERRED_KEY_CHANGED;
 							new_event->dte_item[i].dti_state |=
 											TRIGGER_DEFERRED_KEY_CHANGED;

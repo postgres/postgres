@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.7 1999/07/16 04:58:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.8 2000/01/10 17:14:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,14 +695,14 @@ getParamTypes(TgElement * elem, Oid *typev)
 				j;
 
 	parameterCount = 0;
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < FUNC_MAX_ARGS; i++)
 		typev[i] = 0;
 	for (j = 0; j < elem->inTypes->num; j++)
 	{
-		if (parameterCount == 8)
+		if (parameterCount == FUNC_MAX_ARGS)
 		{
 			elog(ERROR,
-				 "getParamTypes: Ingredients cannot take > 8 arguments");
+				 "getParamTypes: Ingredients cannot take > %d arguments",FUNC_MAX_ARGS);
 		}
 		t = elem->inTypes->val[j];
 		if (strcmp(t, "opaque") == 0)
@@ -810,7 +810,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 {
 	TgElement  *elem;
 	char	   *funcName;
-	Oid			typev[8],		/* eight arguments maximum	*/
+	Oid			typev[FUNC_MAX_ARGS],		/* eight arguments maximum	*/
 				relid;
 	int			i,
 				parameterCount;

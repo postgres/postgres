@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.50 1999/12/10 07:37:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.51 2000/01/10 17:14:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,14 +318,14 @@ SizeTargetExpr(ParseState *pstate,
 			   int32 attrtypmod)
 {
 	char	   *funcname;
-	Oid			oid_array[MAXFARGS];
+	Oid			oid_array[FUNC_MAX_ARGS];
 	HeapTuple	ftup;
 	int			i;
 
 	funcname = typeidTypeName(attrtype);
 	oid_array[0] = attrtype;
 	oid_array[1] = INT4OID;
-	for (i = 2; i < MAXFARGS; i++)
+	for (i = 2; i < FUNC_MAX_ARGS; i++)
 		oid_array[i] = InvalidOid;
 
 	/* attempt to find with arguments exactly as specified... */

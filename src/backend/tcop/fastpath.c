@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.32 2000/01/10 16:13:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.33 2000/01/10 17:14:37 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -116,7 +116,7 @@ SendFunctionResult(Oid fid,		/* function id */
 /*
  * This structure saves enough state so that one can avoid having to
  * do catalog lookups over and over again.	(Each RPC can require up
- * to MAXFMGRARGS+2 lookups, which is quite tedious.)
+ * to FUNC_MAX_ARGS+2 lookups, which is quite tedious.)
  *
  * The previous incarnation of this code just assumed that any argument
  * of size <= 4 was by value; this is not correct.	There is no cheap
@@ -127,8 +127,8 @@ struct fp_info
 {
 	Oid			funcid;
 	int			nargs;
-	bool		argbyval[MAXFMGRARGS];
-	int32		arglen[MAXFMGRARGS];	/* signed (for varlena) */
+	bool		argbyval[FUNC_MAX_ARGS];
+	int32		arglen[FUNC_MAX_ARGS];	/* signed (for varlena) */
 	bool		retbyval;
 	int32		retlen;			/* signed (for varlena) */
 	TransactionId xid;
@@ -278,7 +278,7 @@ HandleFunctionRequest()
 	int			argsize;
 	int			nargs;
 	int			tmp;
-	char	   *arg[8];
+	char	   *arg[FUNC_MAX_ARGS];
 	char	   *retval;
 	int			i;
 	uint32		palloced;
@@ -317,7 +317,7 @@ HandleFunctionRequest()
 	 * need to remember, so that we pfree() it after the call.
 	 */
 	palloced = 0x0;
-	for (i = 0; i < 8; ++i)
+	for (i = 0; i < FUNC_MAX_ARGS; ++i)
 	{
 		if (i >= nargs)
 			arg[i] = (char *) NULL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.44 1999/12/16 22:19:39 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.45 2000/01/10 17:14:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,7 +305,7 @@ TypeCreate(char *typeName,
 	bool		defined;
 	NameData	name;
 	TupleDesc	tupDesc;
-	Oid			argList[8];
+	Oid			argList[FUNC_MAX_ARGS];
 
 	static ScanKeyData typeKey[1] = {
 		{0, Anum_pg_type_typname, F_NAMEEQ}
@@ -393,7 +393,7 @@ TypeCreate(char *typeName,
 		 * First look for a 1-argument func with all argtypes 0. This is
 		 * valid for all four kinds of procedure.
 		 */
-		MemSet(argList, 0, 8 * sizeof(Oid));
+		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 		tup = SearchSysCacheTuple(PROCNAME,
 								  PointerGetDatum(procname),

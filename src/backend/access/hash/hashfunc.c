@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.21 2000/01/10 16:13:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.22 2000/01/10 17:14:28 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -145,7 +145,7 @@ hashoidvector(Oid *key)
 	int			i;
 	uint32		result = 0;
 
-	for (i = 0; i < 8; i++)
+	for (i = 0; i < INDEX_MAX_KEYS; i++)
 		result = result ^ (~(uint32) key[i]);
 	return result;
 }

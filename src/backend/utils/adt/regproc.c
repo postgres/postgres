@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.48 2000/01/10 16:13:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.49 2000/01/10 17:14:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,6 @@ oidvectortypes(Oid *oidArray)
 	HeapTuple	typetup;
 	text	   *result;
 	int			num;
-	Oid		   *sp;
 
 	if (oidArray == NULL)
 	{
@@ -247,16 +246,16 @@ oidvectortypes(Oid *oidArray)
 		return result;
 	}
 
-	result = (text *) palloc(NAMEDATALEN * 8 + 8 + VARHDRSZ);
+	result = (text *) palloc(NAMEDATALEN * FUNC_MAX_ARGS +
+							 FUNC_MAX_ARGS + VARHDRSZ);
 	*VARDATA(result) = '\0';
 
-	sp = oidArray;
-	for (num = 8; num != 0; num--, sp++)
+	for (num = 0; num < FUNC_MAX_ARGS; num++)
 	{
-		if (*sp != InvalidOid)
+		if (oidArray[num] != InvalidOid)
 		{
 			typetup = SearchSysCacheTuple(TYPEOID,
-										  ObjectIdGetDatum(*sp),
+										  ObjectIdGetDatum(oidArray[num]),
 										  0, 0, 0);
 			if (HeapTupleIsValid(typetup))
 			{

@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.16 2000/01/05 18:23:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.17 2000/01/10 17:14:46 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -67,10 +67,10 @@ typedef struct pltcl_proc_desc
 	Oid			result_in_elem;
 	int			result_in_len;
 	int			nargs;
-	FmgrInfo	arg_out_func[MAXFMGRARGS];
-	Oid			arg_out_elem[MAXFMGRARGS];
-	int			arg_out_len[MAXFMGRARGS];
-	int			arg_is_rel[MAXFMGRARGS];
+	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
+	Oid			arg_out_elem[FUNC_MAX_ARGS];
+	int			arg_out_len[FUNC_MAX_ARGS];
+	int			arg_is_rel[FUNC_MAX_ARGS];
 }			pltcl_proc_desc;
 
 

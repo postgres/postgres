@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.20 1999/12/10 07:37:33 tgl Exp $
+ * $Id: parse_func.h,v 1.21 2000/01/10 17:14:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,9 +14,6 @@
 #define PARSER_FUNC_H
 
 #include "parser/parse_node.h"
-
-
-#define MAXFARGS 8				/* max # args to a c or postquel function */
 
 /*
  *	This structure is used to explore the inheritance hierarchy above

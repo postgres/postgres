@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.4 1999/07/17 20:18:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.5 2000/01/10 17:14:45 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -377,7 +377,7 @@ typedef struct PLpgSQL_function
 	bool		fn_retset;
 
 	int			fn_nargs;
-	int			fn_argvarnos[MAXFMGRARGS];
+	int			fn_argvarnos[FUNC_MAX_ARGS];
 	int			found_varno;
 	int			new_varno;
 	int			old_varno;

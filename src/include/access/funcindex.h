@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: funcindex.h,v 1.7 1999/02/13 23:20:50 momjian Exp $
+ * $Id: funcindex.h,v 1.8 2000/01/10 17:14:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 typedef struct
 {
 	int			nargs;
-	Oid			arglist[8];
+	Oid			arglist[FUNC_MAX_ARGS];
 	Oid			procOid;
 	NameData	funcName;
 } FuncIndexInfo;
