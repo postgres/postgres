@@ -1,62 +1,73 @@
-<chapter>
-<title>SQL Syntax</title>
+ <chapter>
+  <title>SQL Syntax</title>
 
-<sect1>
-<title>Key Words</title>
+  <abstract>
+   <para>
+    <acronym>SQL</acronym> manipulates sets of data. The language is
+    composed of various <firstterm>key words</firstterm>. Arithmetic
+    and procedural expressions are allowed. We will cover these topics
+    in this chapter; subsequent chapters will include details on data
+    types, functions, and operators.
+   </para>
+  </abstract>
 
-<para>
-<acronym>SQL92</acronym> defines <firstterm>key words</firstterm> 
-for the language
-which have specific meaning. Some key words are
-<firstterm>reserved</firstterm>, which indicates that they are
-restricted to appear in only certain contexts. Other key words are
-<firstterm>not restricted</firstterm>, which indicates that in certain 
-contexts they
-have a specific meaning but are not otherwise constrained.
-</para>
+  <sect1>
+   <title>Key Words</title>
 
-<para>
-<productname>Postgres</productname> implements an extended subset of the
-<acronym>SQL92</acronym> and <acronym>SQL3</acronym> languages. Some language
-elements are not as restricted in this implementation as is
-called for in the language standards, in part due
-to the extensibility features of <productname>Postgres</productname>. 
-</para>
+   <para>
+    <acronym>SQL92</acronym> defines <firstterm>key words</firstterm> 
+    for the language
+    which have specific meaning. Some key words are
+    <firstterm>reserved</firstterm>, which indicates that they are
+    restricted to appear in only certain contexts. Other key words are
+    <firstterm>not restricted</firstterm>, which indicates that in certain 
+    contexts they
+    have a specific meaning but are not otherwise constrained.
+   </para>
 
-<para>
-Information on <acronym>SQL92</acronym> and <acronym>SQL3</acronym> key words
-is derived from <xref linkend="DATE97" endterm="DATE97">.
-</para>
+   <para>
+    <productname>Postgres</productname> implements an extended subset of the
+    <acronym>SQL92</acronym> and <acronym>SQL3</acronym> languages. Some language
+    elements are not as restricted in this implementation as is
+    called for in the language standards, in part due
+    to the extensibility features of <productname>Postgres</productname>. 
+   </para>
 
-<sect2>
-<title>Reserved Key Words</title>
+   <para>
+    Information on <acronym>SQL92</acronym> and <acronym>SQL3</acronym> key words
+    is derived from <xref linkend="DATE97" endterm="DATE97">.
+   </para>
 
-<para>
-<acronym>SQL92</acronym> and <acronym>SQL3</acronym> have 
-<firstterm>reserved key words</firstterm> which are not allowed 
-as identifiers and not allowed in any usage other than as fundamental
-tokens in <acronym>SQL</acronym> statements.
-<productname>Postgres</productname> has additional key words
-which have similar restrictions. In particular, these key words
-are not allowed as column or table names, though in some cases
-they are allowed to be column labels (i.e. in AS clauses).
-</para>
+   <sect2>
+    <title>Reserved Key Words</title>
 
-<tip>
-<para>
-Any string can be specified as an identifier if surrounded by
-double quotes (<quote>like this!</quote>). Some care is required since
-such an identifier will be case sensitive
-and will retain embedded whitespace other special characters.</para>
-</tip>
+    <para>
+     <acronym>SQL92</acronym> and <acronym>SQL3</acronym> have 
+     <firstterm>reserved key words</firstterm> which are not allowed 
+     as identifiers and not allowed in any usage other than as fundamental
+     tokens in <acronym>SQL</acronym> statements.
+     <productname>Postgres</productname> has additional key words
+     which have similar restrictions. In particular, these key words
+     are not allowed as column or table names, though in some cases
+     they are allowed to be column labels (i.e. in AS clauses).
+    </para>
 
-<para>
-The following are <productname>Postgres</productname>
-reserved words which are neither <acronym>SQL92</acronym>
-nor <acronym>SQL3</acronym> reserved words. These are allowed
-to be present as column labels, but not as identifiers:
+    <tip>
+     <para>
+      Any string can be specified as an identifier if surrounded by
+      double quotes (<quote>like this!</quote>). Some care is required since
+      such an identifier will be case sensitive
+      and will retain embedded whitespace other special characters.
+     </para>
+    </tip>
 
-<programlisting>
+    <para>
+     The following are <productname>Postgres</productname>
+     reserved words which are neither <acronym>SQL92</acronym>
+     nor <acronym>SQL3</acronym> reserved words. These are allowed
+     to be present as column labels, but not as identifiers:
+
+     <programlisting>
 ABORT ANALYZE 
 BINARY 
 CLUSTER CONSTRAINT COPY
@@ -69,32 +80,33 @@ RESET
 SETOF SHOW
 UNLISTEN UNTIL 
 VACUUM VERBOSE
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
-The following are <productname>Postgres</productname>
-reserved words which are also <acronym>SQL92</acronym> 
-or <acronym>SQL3</acronym> reserved words, and which
-are allowed to be present as column labels, but not as identifiers:
+    <para>
+     The following are <productname>Postgres</productname>
+     reserved words which are also <acronym>SQL92</acronym> 
+     or <acronym>SQL3</acronym> reserved words, and which
+     are allowed to be present as column labels, but not as identifiers:
 
-<programlisting>
+     <programlisting>
 CASE COALESCE CROSS CURRENT 
 ELSE END
 FALSE FOREIGN 
-GROUP 
+GLOBAL GROUP 
+LOCAL
 NULLIF
 ORDER 
 POSITION PRECISION 
 TABLE THEN TRANSACTION TRUE
 WHEN
-</programlisting>
+     </programlisting>
 
-The following are <productname>Postgres</productname>
-reserved words which are also <acronym>SQL92</acronym> 
-or <acronym>SQL3</acronym> reserved words:
+     The following are <productname>Postgres</productname>
+     reserved words which are also <acronym>SQL92</acronym> 
+     or <acronym>SQL3</acronym> reserved words:
 
-<programlisting>
+     <programlisting>
 ADD ALL ALTER AND ANY AS ASC
 BEGIN BETWEEN BOTH BY
 CASCADE CAST CHAR CHARACTER CHECK CLOSE 
@@ -118,49 +130,49 @@ TO TRAILING TRIM
 UNION UNIQUE UPDATE USER USING
 VALUES VARCHAR VARYING VIEW
 WHERE WITH WORK 
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
-The following are <acronym>SQL92</acronym> reserved key words which
-are not <productname>Postgres</productname> reserved key words, but which
-if used as function names are always translated into the function
-<function>length</function>:
+    <para>
+     The following are <acronym>SQL92</acronym> reserved key words which
+     are not <productname>Postgres</productname> reserved key words, but which
+     if used as function names are always translated into the function
+     <function>length</function>:
 
-<programlisting>
+     <programlisting>
 CHAR_LENGTH CHARACTER_LENGTH
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
-The following are <acronym>SQL92</acronym> or <acronym>SQL3</acronym> 
-reserved key words which
-are not <productname>Postgres</productname> reserved key words, but
-if used as type names are always translated into an alternate, native type:
+    <para>
+     The following are <acronym>SQL92</acronym> or <acronym>SQL3</acronym> 
+     reserved key words which
+     are not <productname>Postgres</productname> reserved key words, but
+     if used as type names are always translated into an alternate, native type:
 
-<programlisting>
+     <programlisting>
 BOOLEAN DOUBLE FLOAT INT INTEGER INTERVAL REAL SMALLINT
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
-The following are either <acronym>SQL92</acronym>
-or <acronym>SQL3</acronym> reserved key words
-which are not key words in <productname>Postgres</productname>.
-These have no proscribed usage in <productname>Postgres</productname>
-at the time of writing (v6.4) but may become reserved key words in the
-future:
+    <para>
+     The following are either <acronym>SQL92</acronym>
+     or <acronym>SQL3</acronym> reserved key words
+     which are not key words in <productname>Postgres</productname>.
+     These have no proscribed usage in <productname>Postgres</productname>
+     at the time of writing (v6.5) but may become reserved key words in the
+     future:
 
-<note>
-<para>
-Some of these key words represent functions in <acronym>SQL92</acronym>.
-These functions are defined in <productname>Postgres</productname>,
-but the parser does not consider the names to be key words and they are allowed
-in other contexts.
-</para>
-</note>
+     <note>
+      <para>
+       Some of these key words represent functions in <acronym>SQL92</acronym>.
+       These functions are defined in <productname>Postgres</productname>,
+       but the parser does not consider the names to be key words and they are allowed
+       in other contexts.
+      </para>
+     </note>
 
-<programlisting>
+     <programlisting>
 ALLOCATE ARE ASSERTION AT AUTHORIZATION AVG 
 BIT BIT_LENGTH
 CASCADED CATALOG COLLATION CONNECT CONNECTION
@@ -168,7 +180,7 @@ CASCADED CATALOG COLLATION CONNECT CONNECTION
 DATE DEALLOCATE DEC DESCRIBE DESCRIPTOR DIAGNOSTICS DISCONNECT DOMAIN 
 END-EXEC ESCAPE EXCEPT EXCEPTION EXEC EXTERNAL 
 FIRST FOUND
-GET GLOBAL GO GOTO 
+GET GO GOTO 
 IDENTITY IMMEDIATE INDICATOR INITIALLY INPUT INTERSECT ISOLATION 
 LAST LEVEL LOWER 
 MAX MIN MODULE 
@@ -181,56 +193,56 @@ TEMPORARY TRANSLATE TRANSLATION
 UNKNOWN UPPER USAGE
 VALUE 
 WHENEVER WRITE
-</programlisting>
-</para>
-</sect2>
+     </programlisting>
+    </para>
+   </sect2>
 
-<sect2>
-<title>Non-reserved Keywords</title>
+   <sect2>
+    <title>Non-reserved Keywords</title>
 
-<para>
-<acronym>SQL92</acronym> and <acronym>SQL3</acronym> have 
-<firstterm>non-reserved keywords</firstterm> which have
-a proscribed meaning in the language but which are also allowed
-as identifiers.
-<productname>Postgres</productname> has additional keywords
-which allow similar unrestricted usage.
-In particular, these keywords
-are allowed as column or table names.
-</para>
+    <para>
+     <acronym>SQL92</acronym> and <acronym>SQL3</acronym> have 
+     <firstterm>non-reserved keywords</firstterm> which have
+     a proscribed meaning in the language but which are also allowed
+     as identifiers.
+     <productname>Postgres</productname> has additional keywords
+     which allow similar unrestricted usage.
+     In particular, these keywords
+     are allowed as column or table names.
+    </para>
 
-<para>
-The following are <productname>Postgres</productname>
-non-reserved key words which are neither <acronym>SQL92</acronym>
-nor <acronym>SQL3</acronym> non-reserved key words:
+    <para>
+     The following are <productname>Postgres</productname>
+     non-reserved key words which are neither <acronym>SQL92</acronym>
+     nor <acronym>SQL3</acronym> non-reserved key words:
 
-<programlisting>
-AFTER AGGREGATE 
+     <programlisting>
+ACCESS AFTER AGGREGATE 
 BACKWARD BEFORE 
 CACHE CREATEDB CREATEUSER CYCLE
 DATABASE DELIMITERS 
-EACH ENCODING 
+EACH ENCODING EXCLUSIVE
 FORWARD FUNCTION 
 HANDLER
 INCREMENT INDEX INHERITS INSENSITIVE INSTEAD ISNULL
 LANCOMPILER LOCATION 
-MAXVALUE MINVALUE
+MAXVALUE MINVALUE MODE
 NOCREATEDB NOCREATEUSER NOTHING NOTNULL 
 OIDS OPERATOR 
 PASSWORD PROCEDURAL
 RECIPE RENAME  RETURNS ROW RULE
-SEQUENCE SERIAL START STATEMENT STDIN STDOUT 
+SEQUENCE SERIAL SHARE START STATEMENT STDIN STDOUT 
 TRUSTED 
 VALID VERSION
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
-The following are <productname>Postgres</productname>
-non-reserved key words which are <acronym>SQL92</acronym>
-or <acronym>SQL3</acronym> reserved key words:
+    <para>
+     The following are <productname>Postgres</productname>
+     non-reserved key words which are <acronym>SQL92</acronym>
+     or <acronym>SQL3</acronym> reserved key words:
 
-<programlisting>
+     <programlisting>
 ABSOLUTE ACTION
 DAY
 HOUR
@@ -246,30 +258,30 @@ SCROLL SECOND
 TIME TIMESTAMP TIMEZONE_HOUR TIMEZONE_MINUTE TRIGGER 
 YEAR
 ZONE
-</programlisting>
-</para>
+     </programlisting>
+    </para>
 
-<para>
-The following are <productname>Postgres</productname>
-non-reserved key words which are also either <acronym>SQL92</acronym>
-or <acronym>SQL3</acronym> non-reserved key words:
+    <para>
+     The following are <productname>Postgres</productname>
+     non-reserved key words which are also either <acronym>SQL92</acronym>
+     or <acronym>SQL3</acronym> non-reserved key words:
 
-<programlisting>
-TYPE
-</programlisting>
-</para>
+     <programlisting>
+COMMITTED SERIALIZABLE TYPE
+     </programlisting>
+    </para>
 
-<para>
-The following are either <acronym>SQL92</acronym>
-or <acronym>SQL3</acronym> non-reserved key words which are not
-key words of any kind in <productname>Postgres</productname>:
+    <para>
+     The following are either <acronym>SQL92</acronym>
+     or <acronym>SQL3</acronym> non-reserved key words which are not
+     key words of any kind in <productname>Postgres</productname>:
 
-<programlisting>
+     <programlisting>
 ADA
 C CATALOG_NAME CHARACTER_SET_CATALOG CHARACTER_SET_NAME 
 CHARACTER_SET_SCHEMA CLASS_ORIGIN COBOL COLLATION_CATALOG
 COLLATION_NAME COLLATION_SCHEMA COLUMN_NAME
-COMMAND_FUNCTION COMMITTED CONDITION_NUMBER
+COMMAND_FUNCTION CONDITION_NUMBER
 CONNECTION_NAME CONSTRAINT_CATALOG CONSTRAINT_NAME
 CONSTRAINT_SCHEMA CURSOR_NAME
 DATA DATE_TIME_INTERVAL_CODE DATE_TIME_INTERVAL_PRECISION
@@ -281,15 +293,29 @@ NAME NULLABLE NUMBER
 PAD PASCAL PLI
 REPEATABLE RETURNED_LENGTH RETURNED_OCTET_LENGTH
 RETURNED_SQLSTATE ROW_COUNT
-SCALE SCHEMA_NAME SERIALIZABLE SERVER_NAME SPACE
+SCALE SCHEMA_NAME SERVER_NAME SPACE
 SUBCLASS_ORIGIN
 TABLE_NAME
 UNCOMMITTED UNNAMED
-</programlisting>
-</para>
-</sect2>
-</sect1>
-</chapter>
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
+
+  <sect1>
+   <title>Expressions</title>
+
+   <para>
+    <acronym>SQL92</acronym> allows <firstterm>expressions</firstterm>
+    to transform data in expressions. Expressions may contain operators
+    (see <xref linkend="operators-title" endterm="operators-title">
+    for more details) and functions
+    (<xref linkend="functions-title" endterm="functions-title"> has
+    more information).
+
+   </para>
+  </sect1>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

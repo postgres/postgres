@@ -1,271 +1,271 @@
-<chapter id="datatype">
-<title>Data Types</title>
+ <chapter id="datatype">
+  <title>Data Types</title>
 
-<abstract>
-<para>
-Describes the built-in data types available in 
-<productname>Postgres</productname>.
-</para>
-</abstract>
+  <abstract>
+   <para>
+    Describes the built-in data types available in 
+    <productname>Postgres</productname>.
+   </para>
+  </abstract>
 
-<para>
-<productname>Postgres</productname> has a rich set of native data 
-types available to users.
-Users may add new types to <productname>Postgres</productname> using the
-<command>DEFINE TYPE</command>
-command described elsewhere.
-</para>
+  <para>
+   <productname>Postgres</productname> has a rich set of native data 
+   types available to users.
+   Users may add new types to <productname>Postgres</productname> using the
+   <command>DEFINE TYPE</command>
+   command described elsewhere.
+  </para>
 
-<para>
-In the context of data types, the following sections will discuss 
-<acronym>SQL</acronym> standards compliance, porting issues, and usage.
+  <para>
+   In the context of data types, the following sections will discuss 
+   <acronym>SQL</acronym> standards compliance, porting issues, and usage.
 
-Some <productname>Postgres</productname> types correspond directly to 
-<acronym>SQL92</acronym>-compatible types. In other
-cases, data types defined by <acronym>SQL92</acronym> syntax are mapped directly
-into native <productname>Postgres</productname> types. 
+   Some <productname>Postgres</productname> types correspond directly to 
+   <acronym>SQL92</acronym>-compatible types. In other
+   cases, data types defined by <acronym>SQL92</acronym> syntax are mapped directly
+   into native <productname>Postgres</productname> types. 
 
-Many of the built-in types have obvious external formats. However, several
-types are either unique to <productname>Postgres</productname>, 
-such as open and closed paths, or have
-several possibilities for formats, such as the date and time types.
-</para>
+   Many of the built-in types have obvious external formats. However, several
+   types are either unique to <productname>Postgres</productname>, 
+   such as open and closed paths, or have
+   several possibilities for formats, such as the date and time types.
+  </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Data Types</title>
-<titleabbrev>Data Types</titleabbrev>
-<tgroup cols="3">
-<thead>
-  <row>
-    <entry><productname>Postgres</productname> Type</entry>
-    <entry><acronym>SQL92</acronym> or <acronym>SQL3</acronym> Type</entry>
-    <entry>Description</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>bool</entry>
-    <entry>boolean</entry>
-    <entry>logical boolean (true/false)</entry>
-  </row>
-  <row>
-    <entry>box</entry>
-    <entry></entry>
-    <entry>rectangular box in 2D plane</entry>
-  </row>
-  <row>
-    <entry>char(n)</entry>
-    <entry>character(n)</entry>
-    <entry>fixed-length character string</entry>
-  </row>
-  <row>
-    <entry>cidr</entry>
-    <entry></entry>
-    <entry>IP version 4 network or host address</entry>
-  </row>
-  <row>
-    <entry>circle</entry>
-    <entry></entry>
-    <entry>circle in 2D plane</entry>
-  </row>
-  <row>
-    <entry>date</entry>
-    <entry>date</entry>
-    <entry>calendar date without time of day</entry>
-  </row>
-  <row>
-    <entry>float4/8</entry>
-    <entry>float(p)</entry>
-    <entry>floating-point number with precision p</entry>
-  </row>
-  <row>
-    <entry>float8</entry>
-    <entry>real, double precision</entry>
-    <entry>double-precision floating-point number</entry>
-  </row>
-  <row>
-    <entry>inet</entry>
-    <entry></entry>
-    <entry>IP version 4 network or host address</entry>
-  </row>
-  <row>
-    <entry>int2</entry>
-    <entry>smallint</entry>
-    <entry>signed two-byte integer</entry>
-  </row>
-  <row>
-    <entry>int4</entry>
-    <entry>int, integer</entry>
-    <entry>signed 4-byte integer</entry>
-  </row>
-  <row>
-    <entry>int4</entry>
-    <entry>decimal(p,s)</entry>
-    <entry>exact numeric for p <= 9, s = 0</entry>
-  </row>
-  <row>
-    <entry>int4</entry>
-    <entry>numeric(p,s)</entry>
-    <entry>exact numeric for p == 9, s = 0</entry>
-  </row>
-  <row>
-    <entry>int8</entry>
-    <entry></entry>
-    <entry>signed 8-byte integer</entry>
-  </row>
-  <row>
-    <entry>line</entry>
-    <entry></entry>
-    <entry>infinite line in 2D plane</entry>
-  </row>
-  <row>
-    <entry>lseg</entry>
-    <entry></entry>
-    <entry>line segment in 2D plane</entry>
-  </row>
-  <row>
-    <entry>money</entry>
-    <entry>decimal(9,2)</entry>
-    <entry>US-style currency</entry>
-  </row>
-  <row>
-    <entry>path</entry>
-    <entry></entry>
-    <entry>open and closed geometric path in 2D plane</entry>
-  </row>
-  <row>
-    <entry>point</entry>
-    <entry></entry>
-    <entry>geometric point in 2D plane</entry>
-  </row>
-  <row>
-    <entry>polygon</entry>
-    <entry></entry>
-    <entry>closed geometric path in 2D plane</entry>
-  </row>
-  <row>
-    <entry>serial</entry>
-    <entry></entry>
-    <entry>unique id for indexing and cross-reference</entry>
-  </row>
-  <row>
-    <entry>time</entry>
-    <entry>time</entry>
-    <entry>time of day</entry>
-  </row>
-  <row>
-    <entry>timespan</entry>
-    <entry>interval</entry>
-    <entry>general-use time span</entry>
-  </row>
-  <row>
-    <entry>timestamp</entry>
-    <entry>timestamp with time zone</entry>
-    <entry>date/time</entry>
-  </row>
-  <row>
-    <entry>varchar(n)</entry>
-    <entry>character varying(n)</entry>
-    <entry>variable-length character string</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+  <para>
+   <table tocentry="1">
+    <title><productname>Postgres</productname> Data Types</title>
+    <titleabbrev>Data Types</titleabbrev>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry><productname>Postgres</productname> Type</entry>
+       <entry><acronym>SQL92</acronym> or <acronym>SQL3</acronym> Type</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>bool</entry>
+       <entry>boolean</entry>
+       <entry>logical boolean (true/false)</entry>
+      </row>
+      <row>
+       <entry>box</entry>
+       <entry></entry>
+       <entry>rectangular box in 2D plane</entry>
+      </row>
+      <row>
+       <entry>char(n)</entry>
+       <entry>character(n)</entry>
+       <entry>fixed-length character string</entry>
+      </row>
+      <row>
+       <entry>cidr</entry>
+       <entry></entry>
+       <entry>IP version 4 network or host address</entry>
+      </row>
+      <row>
+       <entry>circle</entry>
+       <entry></entry>
+       <entry>circle in 2D plane</entry>
+      </row>
+      <row>
+       <entry>date</entry>
+       <entry>date</entry>
+       <entry>calendar date without time of day</entry>
+      </row>
+      <row>
+       <entry>float4/8</entry>
+       <entry>float(p)</entry>
+       <entry>floating-point number with precision p</entry>
+      </row>
+      <row>
+       <entry>float8</entry>
+       <entry>real, double precision</entry>
+       <entry>double-precision floating-point number</entry>
+      </row>
+      <row>
+       <entry>inet</entry>
+       <entry></entry>
+       <entry>IP version 4 network or host address</entry>
+      </row>
+      <row>
+       <entry>int2</entry>
+       <entry>smallint</entry>
+       <entry>signed two-byte integer</entry>
+      </row>
+      <row>
+       <entry>int4</entry>
+       <entry>int, integer</entry>
+       <entry>signed 4-byte integer</entry>
+      </row>
+      <row>
+       <entry>int4</entry>
+       <entry>decimal(p,s)</entry>
+       <entry>exact numeric for p <= 9, s = 0</entry>
+      </row>
+      <row>
+       <entry>int4</entry>
+       <entry>numeric(p,s)</entry>
+       <entry>exact numeric for p == 9, s = 0</entry>
+      </row>
+      <row>
+       <entry>int8</entry>
+       <entry></entry>
+       <entry>signed 8-byte integer</entry>
+      </row>
+      <row>
+       <entry>line</entry>
+       <entry></entry>
+       <entry>infinite line in 2D plane</entry>
+      </row>
+      <row>
+       <entry>lseg</entry>
+       <entry></entry>
+       <entry>line segment in 2D plane</entry>
+      </row>
+      <row>
+       <entry>money</entry>
+       <entry>decimal(9,2)</entry>
+       <entry>US-style currency</entry>
+      </row>
+      <row>
+       <entry>path</entry>
+       <entry></entry>
+       <entry>open and closed geometric path in 2D plane</entry>
+      </row>
+      <row>
+       <entry>point</entry>
+       <entry></entry>
+       <entry>geometric point in 2D plane</entry>
+      </row>
+      <row>
+       <entry>polygon</entry>
+       <entry></entry>
+       <entry>closed geometric path in 2D plane</entry>
+      </row>
+      <row>
+       <entry>serial</entry>
+       <entry></entry>
+       <entry>unique id for indexing and cross-reference</entry>
+      </row>
+      <row>
+       <entry>time</entry>
+       <entry>time</entry>
+       <entry>time of day</entry>
+      </row>
+      <row>
+       <entry>timespan</entry>
+       <entry>interval</entry>
+       <entry>general-use time span</entry>
+      </row>
+      <row>
+       <entry>timestamp</entry>
+       <entry>timestamp with time zone</entry>
+       <entry>date/time</entry>
+      </row>
+      <row>
+       <entry>varchar(n)</entry>
+       <entry>character varying(n)</entry>
+       <entry>variable-length character string</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
 
-<para>
-<note>
-<para>
-The <type>cidr</type> and <type>inet</type> types are designed to handle any IP type 
-but only ipv4 is handled in the current implementation.  
-Everything here that talks about ipv4 will apply to ipv6 in a future release.</para>
-</note></para>
+  <para>
+   <note>
+    <para>
+     The <type>cidr</type> and <type>inet</type> types are designed to handle any IP type 
+     but only ipv4 is handled in the current implementation.  
+     Everything here that talks about ipv4 will apply to ipv6 in a future release.</para>
+   </note></para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Function Constants</title>
-<titleabbrev>Constants</titleabbrev>
-<tgroup cols="3">
-<thead>
-  <row>
-    <entry><productname>Postgres</productname> Function</entry>
-    <entry><acronym>SQL92</acronym> Constant</entry>
-    <entry>Description</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>getpgusername()</entry>
-    <entry>current_user</entry>
-    <entry>user name in current session</entry>
-  </row>
-  <row>
-    <entry>date('now')</entry>
-    <entry>current_date</entry>
-    <entry>date of current transaction</entry>
-  </row>
-  <row>
-    <entry>time('now')</entry>
-    <entry>current_time</entry>
-    <entry>time of current transaction</entry>
-  </row>
-  <row>
-    <entry>timestamp('now')</entry>
-    <entry>current_timestamp</entry>
-    <entry>date and time of current transaction</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+  <para>
+   <table tocentry="1">
+    <title><productname>Postgres</productname> Function Constants</title>
+    <titleabbrev>Constants</titleabbrev>
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry><productname>Postgres</productname> Function</entry>
+       <entry><acronym>SQL92</acronym> Constant</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>getpgusername()</entry>
+       <entry>current_user</entry>
+       <entry>user name in current session</entry>
+      </row>
+      <row>
+       <entry>date('now')</entry>
+       <entry>current_date</entry>
+       <entry>date of current transaction</entry>
+      </row>
+      <row>
+       <entry>time('now')</entry>
+       <entry>current_time</entry>
+       <entry>time of current transaction</entry>
+      </row>
+      <row>
+       <entry>timestamp('now')</entry>
+       <entry>current_timestamp</entry>
+       <entry>date and time of current transaction</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
 
-<para>
-<productname>Postgres</productname> has features at the forefront of 
-<acronym>ORDBMS</acronym> development. In addition to
-<acronym>SQL3</acronym> conformance, substantial portions 
-of <acronym>SQL92</acronym> are also supported.
-Although we strive for <acronym>SQL92</acronym> compliance, 
-there are some aspects of the standard
-which are ill considered and which should not live through subsequent standards.
-<productname>Postgres</productname> will not make great efforts to 
-conform to these features; however, these tend to apply in little-used 
-or obsure cases, and a typical user is not likely to run into them.</para>
+  <para>
+   <productname>Postgres</productname> has features at the forefront of 
+   <acronym>ORDBMS</acronym> development. In addition to
+   <acronym>SQL3</acronym> conformance, substantial portions 
+   of <acronym>SQL92</acronym> are also supported.
+   Although we strive for <acronym>SQL92</acronym> compliance, 
+   there are some aspects of the standard
+   which are ill considered and which should not live through subsequent standards.
+   <productname>Postgres</productname> will not make great efforts to 
+   conform to these features; however, these tend to apply in little-used 
+   or obsure cases, and a typical user is not likely to run into them.</para>
 
-<para>
-Most of the input and output functions corresponding to the
-base types (e.g., integers and floating point numbers) do some
-error-checking.
-Some of the operators and functions (e.g.,
-addition and multiplication) do not perform run-time error-checking in the
-interests of improving execution speed.
-On some systems, for example, the numeric operators for some data types may
-silently underflow or overflow.
-</para>
+  <para>
+   Most of the input and output functions corresponding to the
+   base types (e.g., integers and floating point numbers) do some
+   error-checking.
+   Some of the operators and functions (e.g.,
+   addition and multiplication) do not perform run-time error-checking in the
+   interests of improving execution speed.
+   On some systems, for example, the numeric operators for some data types may
+   silently underflow or overflow.
+  </para>
 
-<para>
-Note that some of the input and output functions are not invertible.  That is,
-the result of an output function may lose precision when compared to
-the original input.
+  <para>
+   Note that some of the input and output functions are not invertible.  That is,
+   the result of an output function may lose precision when compared to
+   the original input.
 
-<note>
-<para>
-The original <productname>Postgres</productname> v4.2 code received from
-Berkeley rounded all double precision floating point results to six digits for
-output. Starting with v6.1, floating point numbers are allowed to retain
-most of the intrinsic precision of the type (typically 15 digits for doubles, 
-6 digits for 4-byte floats). 
-Other types with underlying floating point fields (e.g. geometric
-types) carry similar precision.</para>
-</note>
-</para>
+   <note>
+    <para>
+     The original <productname>Postgres</productname> v4.2 code received from
+     Berkeley rounded all double precision floating point results to six digits for
+     output. Starting with v6.1, floating point numbers are allowed to retain
+     most of the intrinsic precision of the type (typically 15 digits for doubles, 
+     6 digits for 4-byte floats). 
+     Other types with underlying floating point fields (e.g. geometric
+     types) carry similar precision.</para>
+   </note>
+  </para>
 
-<sect1>
-<title>Numeric Types</title>
+  <sect1>
+   <title>Numeric Types</title>
 
-<para>
-Numeric types consist of two- and four-byte integers and four- and eight-byte
-floating point numbers.</para>
+   <para>
+    Numeric types consist of two- and four-byte integers and four- and eight-byte
+    floating point numbers.</para>
 
 <para>
 <table tocentry="1">
