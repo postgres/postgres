@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.50 2003/04/24 21:16:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.51 2003/05/14 03:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1711,11 +1711,11 @@ RemoveTempRelationsCallback(void)
 	{
 		/* Need to ensure we have a usable transaction. */
 		AbortOutOfAnyTransaction();
-		StartTransactionCommand(true);
+		StartTransactionCommand();
 
 		RemoveTempRelations(myTempNamespace);
 
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 	}
 }
 

@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.22 2002/10/20 19:38:10 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.23 2003/05/14 03:25:56 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -141,13 +141,6 @@ doConnect()
 	}
 
 	res = PQexec(con, "SET search_path = public");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "%s", PQerrorMessage(con));
-		exit(1);
-	}
-	PQclear(res);
-	res = PQexec(con, "SET autocommit TO 'on'");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "%s", PQerrorMessage(con));

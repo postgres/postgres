@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.76 2003/04/03 20:18:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.77 2003/05/14 03:26:02 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -493,7 +493,6 @@ psql_completion(char *text, int start, int end)
 		 * backend/utils/misc/guc.c.
 		 */
 		"australian_timezones",
-		"autocommit",
 		"client_encoding",
 		"client_min_messages",
 		"commit_delay",

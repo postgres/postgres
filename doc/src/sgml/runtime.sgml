@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.178 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.179 2003/05/14 03:26:00 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1289,56 +1289,6 @@ SET ENABLE_SEQSCAN TO OFF;
     <title>General Operation</title>
 
     <variablelist>
-     <varlistentry>
-      <term><varname>AUTOCOMMIT</varname> (<type>boolean</type>)</term>
-      <indexterm><primary>autocommit</></>
-      <listitem>
-       <para>
-        If set to true, <productname>PostgreSQL</productname> will
-	automatically do a <command>COMMIT</> after each successful command
-	that is not inside an explicit transaction block (that is, unless a
-	<command>BEGIN</> with no matching <command>COMMIT</> has been
-	given).
-	If set to false, <productname>PostgreSQL</productname> will
-	commit only upon receiving an explicit
-	<command>COMMIT</> command. This mode can also be thought of as
-	implicitly issuing <command>BEGIN</> whenever a command is
-	received that is not already inside a transaction block. The
-	default is true, for compatibility with historical
-	<productname>PostgreSQL</productname> behavior. However, for
-	maximum compatibility with the SQL specification, set it to
-	false.
-       </para>
-
-       <note>
-        <para>
-	 Even with <varname>autocommit</> set to false, <command>SET</>,
-	 <command>SHOW</>, and <command>RESET</> do not start new
-	 transaction blocks. They are run in their own transactions.
-	 Once another command is issued, a transaction block
-	 begins and any <command>SET</>, <command>SHOW</>, or
-	 <command>RESET</> commands are considered to be part of the
-	 transaction, i.e., they are committed or rolled back depending
-	 on the completion status of the transaction. To execute a
-	 <command>SET</>, <command>SHOW</>, or <command>RESET</>
-	 command at the start of a transaction block, use <command>BEGIN</>
-	 first.
-        </para>
-       </note>
-
-       <note>
-        <para>
-	 As of <productname>PostgreSQL</productname> 7.3, setting
-	 <varname>autocommit</> to false is not well-supported.
-	 This is a new feature and is not yet handled by all client
-	 libraries and applications.  Before making it the default
-	 setting in your installation, test carefully.
-        </para>
-       </note>
-
-      </listitem>
-     </varlistentry>
-
      <varlistentry>
       <term><varname>AUSTRALIAN_TIMEZONES</varname> (<type>boolean</type>)</term>
       <indexterm><primary>Australian time zones</></>

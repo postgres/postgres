@@ -1,6 +1,6 @@
 #!/bin/sh
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- #
-# Package : reindexdb                 Version : $Revision: 1.3 $
+# Package : reindexdb                 Version : $Revision: 1.4 $
 # Date    : 05/08/2002                Author  : Shaun Thomas
 # Req     : psql, sh, perl, sed         Type  : Utility
 #
@@ -193,11 +193,11 @@ fi
 
 # If index was set, reindex that index.
 if [ "$index" ]; then
-  $PSQL $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';REINDEX INDEX $index" -d $dbname
+  $PSQL $PSQLOPT $ECHOOPT -c "REINDEX INDEX $index" -d $dbname
 
 # Ok, no index.  Is there a specific table to reindex?
 elif [ "$table" ]; then
-    $PSQL $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';REINDEX TABLE \"$table\"" -d $dbname
+    $PSQL $PSQLOPT $ECHOOPT -c "REINDEX TABLE \"$table\"" -d $dbname
 
 # No specific table, no specific index, either we have a specific database,
 # or were told to do all databases.  Do it!
@@ -213,9 +213,9 @@ else
     # Ok, reindex every table in the database.  Use the same method
     # we used to get a list of databases, and get a list of tables in this
     # database that we may reindex.
-    tables=`$PSQL $PSQLOPT -q -t -A -d $db -c "SET autocommit TO 'on';$sql"`
+    tables=`$PSQL $PSQLOPT -q -t -A -d $db -c "$sql"`
     for tab in $tables; do
-        $PSQL $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';REINDEX TABLE \"$tab\"" -d $db
+        $PSQL $PSQLOPT $ECHOOPT -c "REINDEX TABLE \"$tab\"" -d $db
     done
 
   done

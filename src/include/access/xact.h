@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.51 2003/05/12 23:08:50 tgl Exp $
+ * $Id: xact.h,v 1.52 2003/05/14 03:26:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,8 +119,8 @@ extern AbsoluteTime GetCurrentTransactionStartTimeUsec(int *usec);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern bool CommandIdIsCurrentCommandId(CommandId cid);
 extern void CommandCounterIncrement(void);
-extern void StartTransactionCommand(bool preventChain);
-extern void CommitTransactionCommand(bool forceCommit);
+extern void StartTransactionCommand(void);
+extern void CommitTransactionCommand(void);
 extern void AbortCurrentTransaction(void);
 extern void BeginTransactionBlock(void);
 extern void EndTransactionBlock(void);

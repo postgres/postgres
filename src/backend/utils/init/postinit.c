@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.120 2003/04/25 19:45:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.121 2003/05/14 03:26:02 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -334,7 +334,7 @@ InitPostgres(const char *dbname, const char *username)
 
 	/* start a new transaction here before access to db */
 	if (!bootstrap)
-		StartTransactionCommand(true);
+		StartTransactionCommand();
 
 	/*
 	 * It's now possible to do real access to the system catalogs.
@@ -420,7 +420,7 @@ InitPostgres(const char *dbname, const char *username)
 
 	/* close the transaction we started above */
 	if (!bootstrap)
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 }
 
 /*

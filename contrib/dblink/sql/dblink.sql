@@ -8,7 +8,6 @@ SET search_path = public;
 -- Turn off echoing so that expected file does not depend on
 -- contents of dblink.sql.
 \set ECHO none
-SET autocommit TO 'on';
 \i dblink.sql
 \set ECHO all
 
@@ -113,21 +112,21 @@ WHERE t.a > 7;
 
 -- put more data into our slave table, first using arbitrary connection syntax
 -- but truncate the actual return value so we can use diff to check for success
-SELECT substr(dblink_exec('dbname=regression','SET autocommit TO ''on'';INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
+SELECT substr(dblink_exec('dbname=regression','INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);
 
 -- create a persistent connection
 SELECT dblink_connect('dbname=regression');
 
 -- put more data into our slave table, using persistent connection syntax
 -- but truncate the actual return value so we can use diff to check for success
-SELECT substr(dblink_exec('SET autocommit TO ''on'';INSERT INTO foo VALUES(11,''l'',''{"a11","b11","c11"}'')'),1,6);
+SELECT substr(dblink_exec('INSERT INTO foo VALUES(11,''l'',''{"a11","b11","c11"}'')'),1,6);
 
 -- let's see it
 SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[]);
 
 -- change some data
-SELECT dblink_exec('SET autocommit TO ''on'';UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
+SELECT dblink_exec('UPDATE foo SET f3[2] = ''b99'' WHERE f1 = 11');
 
 -- let's see it
 SELECT *
@@ -135,7 +134,7 @@ FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE a = 11;
 
 -- delete some data
-SELECT dblink_exec('SET autocommit TO ''on'';DELETE FROM foo WHERE f1 = 11');
+SELECT dblink_exec('DELETE FROM foo WHERE f1 = 11');
 
 -- let's see it
 SELECT *

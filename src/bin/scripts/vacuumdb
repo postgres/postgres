@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.26 2002/10/18 22:05:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.27 2003/05/14 03:26:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -172,7 +172,7 @@ fi
 for db in $dbname
 do
         [ "$alldb" -a "$quiet" -ne 1 ] && echo "Vacuuming $db"
-	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';VACUUM $full $verbose $analyze $table" -d $db
+	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "VACUUM $full $verbose $analyze $table" -d $db
 	if [ "$?" -ne 0 ]; then
 	    echo "$CMDNAME: vacuum $table $db failed" 1>&2
 	    exit 1

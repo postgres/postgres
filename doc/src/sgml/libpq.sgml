@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.122 2003/04/28 19:30:49 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.123 2003/05/14 03:25:58 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -866,8 +866,13 @@ returned by the server.
 maintain the <structname>PGresult</structname> abstraction.  Use the accessor functions below to get
 at the contents of <structname>PGresult</structname>.  Avoid directly referencing the fields of the
 <structname>PGresult</structname> structure because they are subject to change in the future.
-If <quote>autocommit</quote> is on, multiple queries sent in a single
-function call are processed in a single transaction.
+</para>
+
+<para>
+Multiple queries sent in a single
+function call are processed in a single transaction, unless there are explicit
+BEGIN/COMMIT commands included in the query string to divide it into multiple
+transactions.
 </para>
 
 <variablelist>

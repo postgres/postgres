@@ -105,6 +105,14 @@ WHERE	ambulkdelete != 0 AND
 ------+--------------
 (0 rows)
 
+SELECT	ctid, amvacuumcleanup 
+FROM	pg_catalog.pg_am fk 
+WHERE	amvacuumcleanup != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amvacuumcleanup);
+ ctid | amvacuumcleanup 
+------+-----------------
+(0 rows)
+
 SELECT	ctid, amcostestimate 
 FROM	pg_catalog.pg_am fk 
 WHERE	amcostestimate != 0 AND 
@@ -223,6 +231,22 @@ WHERE	reltoastidxid != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.reltoastidxid);
  ctid | reltoastidxid 
 ------+---------------
+(0 rows)
+
+SELECT	ctid, connamespace 
+FROM	pg_catalog.pg_constraint fk 
+WHERE	connamespace != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.connamespace);
+ ctid | connamespace 
+------+--------------
+(0 rows)
+
+SELECT	ctid, contypid 
+FROM	pg_catalog.pg_constraint fk 
+WHERE	contypid != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.contypid);
+ ctid | contypid 
+------+----------
 (0 rows)
 
 SELECT	ctid, connamespace 
@@ -551,5 +575,13 @@ WHERE	typsend != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.typsend);
  ctid | typsend 
 ------+---------
+(0 rows)
+
+SELECT	ctid, typbasetype 
+FROM	pg_catalog.pg_type fk 
+WHERE	typbasetype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typbasetype);
+ ctid | typbasetype 
+------+-------------
 (0 rows)
 

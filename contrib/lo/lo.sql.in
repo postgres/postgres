@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for LargeObjects
 --
---	$Id: lo.sql.in,v 1.9 2002/12/31 10:22:03 inoue Exp $
+--	$Id: lo.sql.in,v 1.10 2003/05/14 03:25:56 tgl Exp $
 --
 --
 --	Create the data type
@@ -11,8 +11,6 @@
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
-
-SET autocommit TO 'on';
 
 CREATE FUNCTION lo_in(cstring)
 RETURNS lo

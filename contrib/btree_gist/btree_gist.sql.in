@@ -1,8 +1,6 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-SET autocommit TO 'on';
-
 -- create type of int2 key
 CREATE FUNCTION int2key_in(cstring)
 RETURNS int2key

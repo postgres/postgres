@@ -53,6 +53,10 @@ SELECT	ctid, ambulkdelete
 FROM	pg_catalog.pg_am fk 
 WHERE	ambulkdelete != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.ambulkdelete);
+SELECT	ctid, amvacuumcleanup 
+FROM	pg_catalog.pg_am fk 
+WHERE	amvacuumcleanup != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amvacuumcleanup);
 SELECT	ctid, amcostestimate 
 FROM	pg_catalog.pg_am fk 
 WHERE	amcostestimate != 0 AND 
@@ -113,6 +117,14 @@ SELECT	ctid, reltoastidxid
 FROM	pg_catalog.pg_class fk 
 WHERE	reltoastidxid != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.reltoastidxid);
+SELECT	ctid, connamespace 
+FROM	pg_catalog.pg_constraint fk 
+WHERE	connamespace != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.connamespace);
+SELECT	ctid, contypid 
+FROM	pg_catalog.pg_constraint fk 
+WHERE	contypid != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.contypid);
 SELECT	ctid, connamespace 
 FROM	pg_catalog.pg_conversion fk 
 WHERE	connamespace != 0 AND 
@@ -277,3 +289,7 @@ SELECT	ctid, typsend
 FROM	pg_catalog.pg_type fk 
 WHERE	typsend != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.typsend);
+SELECT	ctid, typbasetype 
+FROM	pg_catalog.pg_type fk 
+WHERE	typbasetype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typbasetype);

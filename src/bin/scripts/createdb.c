@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/createdb.c,v 1.1 2003/03/18 22:19:46 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/createdb.c,v 1.2 2003/05/14 03:26:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 
 	initPQExpBuffer(&sql);
 
-	appendPQExpBuffer(&sql, "SET autocommit TO on;\nCREATE DATABASE %s",
+	appendPQExpBuffer(&sql, "CREATE DATABASE %s",
 					  fmtId(dbname));
 
 	if (owner)
@@ -181,7 +181,7 @@ main(int argc, char *argv[])
 
 	if (comment)
 	{
-		printfPQExpBuffer(&sql, "SET autocommit TO on;\nCOMMENT ON DATABASE %s IS ", fmtId(dbname));
+		printfPQExpBuffer(&sql, "COMMENT ON DATABASE %s IS ", fmtId(dbname));
 		appendStringLiteral(&sql, comment, false);
 		appendPQExpBuffer(&sql, ";\n");
 

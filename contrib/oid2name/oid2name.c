@@ -247,8 +247,6 @@ sql_conn(const char *dbName, struct options * my_opts)
 
 	sql_exec(conn, "SET search_path = public;", 0);
 
-	sql_exec(conn, "SET autocommit TO 'on';", 0);
-
 	/* return the conn if good */
 	return conn;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.17 2003/04/04 20:42:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.18 2003/05/14 03:26:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,6 @@ main(int argc, char *argv[])
 	printf("-- PostgreSQL database cluster dump\n");
 	printf("--\n\n");
 	printf("\\connect \"template1\"\n\n");
-	printf("SET autocommit TO 'on';\n\n");
 
 	dumpUsers(conn);
 	dumpGroups(conn);
@@ -550,8 +549,7 @@ dumpDatabases(PGconn *conn)
 		if (verbose)
 			fprintf(stderr, _("%s: dumping database \"%s\"...\n"), progname, dbname);
 
-		printf("\\connect %s\n", fmtId(dbname));
-		printf("SET autocommit TO 'on';\n\n");
+		printf("\\connect %s\n\n", fmtId(dbname));
 		ret = runPgDump(dbname);
 		if (ret != 0)
 		{
@@ -676,14 +674,6 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		}
 	}
 	PQclear(res);
-
-	if (server_version >= 70300)
-	{
-		PGresult   *res;
-
-		res = executeQuery(conn, "SET autocommit TO 'on';SELECT 1;");
-		PQclear(res);
-	}
 
 	return conn;
 }

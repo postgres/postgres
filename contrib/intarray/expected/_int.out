@@ -3,8 +3,8 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
-psql:_int.sql:15: NOTICE:  ProcedureCreate: type query_int is not yet defined
-psql:_int.sql:20: NOTICE:  Argument type "query_int" is only a shell
+psql:_int.sql:13: NOTICE:  ProcedureCreate: type query_int is not yet defined
+psql:_int.sql:18: NOTICE:  Argument type "query_int" is only a shell
 SELECT intset(1234);
  intset 
 --------

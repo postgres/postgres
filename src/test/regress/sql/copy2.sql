@@ -71,7 +71,6 @@ COPY x from stdin;
 2002	232	40	50	60	70	80
 \.
 
-SET autocommit TO 'on';
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 500000,x,45,80,90

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.95 2003/04/04 20:40:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.96 2003/05/14 03:26:02 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1460,12 +1460,8 @@ test_superuser(const char *username)
 	if (!username)
 		return false;
 
-	/*
-	 * Use begin/commit to avoid starting a transaction block if server
-	 * has autocommit off by default.
-	 */
 	initPQExpBuffer(&buf);
-	printfPQExpBuffer(&buf, "BEGIN; SELECT usesuper FROM pg_catalog.pg_user WHERE usename = '%s'; COMMIT", username);
+	printfPQExpBuffer(&buf, "SELECT usesuper FROM pg_catalog.pg_user WHERE usename = '%s'", username);
 	res = PSQLexec(buf.data, true);
 	termPQExpBuffer(&buf);
 

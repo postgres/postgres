@@ -46,7 +46,6 @@ CONTEXT:  COPY FROM, line 1
 COPY x from stdin;
 ERROR:  Extra data after last expected column
 CONTEXT:  COPY FROM, line 1
-SET autocommit TO 'on';
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 -- check results of copy in

@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: adddepend,v 1.3 2002/12/02 00:28:29 tgl Exp $
+# $Id: adddepend,v 1.4 2003/05/14 03:25:55 tgl Exp $
 
 # Project exists to assist PostgreSQL users with their structural upgrade 
 # from 7.2 (or prior) to 7.3 (possibly later).  Must be run against a 7.3
@@ -125,19 +125,12 @@ my $dbh = DBI->connect($dsn, $dbuser, $dbpass);
 # We want to control commits
 $dbh->{'AutoCommit'} = 0;
 
-# turn on autocommit
+# control where things get created
 my $sql = qq{
     SET search_path = public;
 };
 my $sth = $dbh->prepare($sql);
 $sth->execute();
-
-# turn on autocommit
-my $sql2 = qq{
-    SET autocommit TO 'on';
-};
-my $sth2 = $dbh->prepare($sql2);
-$sth2->execute();
 
 END {
 	$dbh->disconnect() if $dbh;

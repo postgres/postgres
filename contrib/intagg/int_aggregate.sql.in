@@ -1,8 +1,6 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-SET autocommit TO 'on';
-
 -- Internal function for the aggregate
 -- Is called for each item in an aggregation
 CREATE OR REPLACE FUNCTION int_agg_state (int4, int4)

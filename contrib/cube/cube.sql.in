@@ -4,8 +4,6 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-SET autocommit TO 'on';
-
 CREATE OR REPLACE FUNCTION cube_in(cstring)
 RETURNS cube
 AS 'MODULE_PATHNAME'

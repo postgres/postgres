@@ -43,7 +43,6 @@ DROP TABLE temptest;
 -- test temp table deletion
 CREATE TEMP TABLE temptest(col int);
 \c regression
-SET autocommit TO 'on';
 SELECT * FROM temptest;
 ERROR:  Relation "temptest" does not exist
 -- Test ON COMMIT DELETE ROWS

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.123 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.124 2003/05/14 03:26:02 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -69,7 +69,6 @@ extern bool Log_connections;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
 extern int	CheckPointTimeout;
-extern bool autocommit;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *preload_libraries_string;
@@ -92,6 +91,7 @@ static const char *assign_min_error_statement(const char *newval, bool doit,
 						   bool interactive);
 static const char *assign_msglvl(int *var, const char *newval,
 			  bool doit, bool interactive);
+static bool assign_phony_autocommit(bool newval, bool doit, bool interactive);
 
 
 /*
@@ -134,6 +134,7 @@ int			client_min_messages = NOTICE;
 static char *log_min_error_statement_str;
 static char *log_min_messages_str;
 static char *client_min_messages_str;
+static bool phony_autocommit;
 static double phony_random_seed;
 static char *client_encoding_string;
 static char *datestyle_string;
@@ -526,8 +527,12 @@ static struct config_bool
 		false, NULL, NULL
 	},
 	{
-		{"autocommit", PGC_USERSET}, &autocommit,
-		true, NULL, NULL
+		/*
+		 * This var doesn't do anything; it's just here so that we won't
+		 * choke on SET AUTOCOMMIT TO ON from 7.3-vintage clients.
+		 */
+		{"autocommit", PGC_USERSET, GUC_NO_SHOW_ALL}, &phony_autocommit,
+		true, assign_phony_autocommit, NULL
 	},
 	{
 		{"default_transaction_read_only", PGC_USERSET}, &DefaultXactReadOnly,
@@ -3427,6 +3432,18 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 	else
 		return NULL;			/* fail */
 	return newval;				/* OK */
+}
+
+static bool
+assign_phony_autocommit(bool newval, bool doit, bool interactive)
+{
+	if (!newval)
+	{
+		if (doit && interactive)
+			elog(ERROR, "SET AUTOCOMMIT TO OFF is no longer supported");
+		return false;
+	}
+	return true;
 }
 
 

@@ -1,8 +1,6 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-SET autocommit TO 'on';
-
 -- The earth functions rely on contrib/cube having been installed and loaded.
 
 -- earth() returns the radius of the earth in meters. This is the only

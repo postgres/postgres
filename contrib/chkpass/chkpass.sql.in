@@ -4,7 +4,7 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.3 2002/10/18 18:41:19 momjian Exp $
+--  $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.sql.in,v 1.4 2003/05/14 03:25:55 tgl Exp $
 --
 --  best viewed with tabs set to 4
 --
@@ -15,8 +15,6 @@
 
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
-
-SET autocommit TO 'on';
 
 CREATE FUNCTION chkpass_in(cstring)
 	RETURNS chkpass

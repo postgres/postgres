@@ -41,8 +41,6 @@ COPY basictest (testvarchar) FROM stdin; -- fail
 notsoshorttext
 \.
 
-SET autocommit TO 'on';
-
 COPY basictest (testvarchar) FROM stdin;
 short
 \.
@@ -105,8 +103,6 @@ INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 COPY nulltest FROM stdin; --fail
 a	b	\N	d	\N
 \.
-
-SET autocommit TO 'on';
 
 -- Last row is bad
 COPY nulltest FROM stdin;

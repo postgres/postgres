@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.147 2003/05/02 20:54:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.148 2003/05/14 03:26:00 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -212,14 +212,10 @@ int			XactIsoLevel;
 bool		DefaultXactReadOnly = false;
 bool		XactReadOnly;
 
-bool		autocommit = true;
-
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* number of concurrent xacts needed to
 								 * sleep */
 
-
-static bool suppressChain = false;
 
 static void (*_RollbackFunc) (void *) = NULL;
 static void *_RollbackData = NULL;
@@ -1125,22 +1121,11 @@ CleanupTransaction(void)
 
 /*
  *	StartTransactionCommand
- *
- *	preventChain, if true, forces autocommit behavior at the next
- *	CommitTransactionCommand call.
  */
 void
-StartTransactionCommand(bool preventChain)
+StartTransactionCommand(void)
 {
 	TransactionState s = CurrentTransactionState;
-
-	/*
-	 * Remember if caller wants to prevent autocommit-off chaining. This
-	 * is only allowed if not already in a transaction block.
-	 */
-	suppressChain = preventChain;
-	if (preventChain && s->blockState != TBLOCK_DEFAULT)
-		elog(ERROR, "StartTransactionCommand: can't prevent chain");
 
 	switch (s->blockState)
 	{
@@ -1217,44 +1202,20 @@ StartTransactionCommand(bool preventChain)
 
 /*
  *	CommitTransactionCommand
- *
- *	forceCommit = true forces autocommit behavior even when autocommit is off.
  */
 void
-CommitTransactionCommand(bool forceCommit)
+CommitTransactionCommand(void)
 {
 	TransactionState s = CurrentTransactionState;
 
 	switch (s->blockState)
 	{
 			/*
-			 * If we aren't in a transaction block, and we are doing
-			 * autocommit, just do our usual transaction commit.  But if
-			 * we aren't doing autocommit, start a transaction block
-			 * automatically by switching to INPROGRESS state.	(We handle
-			 * this choice here, and not earlier, so that an explicit
-			 * BEGIN issued in autocommit-off mode won't issue strange
-			 * warnings.)
-			 *
-			 * Autocommit mode is forced by either a true forceCommit
-			 * parameter to me, or a true preventChain parameter to the
-			 * preceding StartTransactionCommand call, or a
-			 * PreventTransactionChain call during the transaction.
-			 * (The parameters could be omitted, but it turns out most
-			 * callers of StartTransactionCommand/CommitTransactionCommand
-			 * want to force autocommit, so making them all call
-			 * PreventTransactionChain would just be extra notation.)
+			 * If we aren't in a transaction block, just do our usual
+			 * transaction commit.
 			 */
 		case TBLOCK_DEFAULT:
-			if (autocommit || forceCommit || suppressChain)
-				CommitTransaction();
-			else
-			{
-				BeginTransactionBlock();
-				Assert(s->blockState == TBLOCK_INPROGRESS);
-				/* This code must match the TBLOCK_INPROGRESS case below: */
-				CommandCounterIncrement();
-			}
+			CommitTransaction();
 			break;
 
 			/*
@@ -1323,10 +1284,7 @@ AbortCurrentTransaction(void)
 			 */
 		case TBLOCK_DEFAULT:
 			AbortTransaction();
-			if (autocommit || suppressChain)
-				CleanupTransaction();
-			else
-				s->blockState = TBLOCK_ABORT;
+			CleanupTransaction();
 			break;
 
 			/*
@@ -1396,9 +1354,7 @@ AbortCurrentTransaction(void)
  *	If we have already started a transaction block, issue an error; also issue
  *	an error if we appear to be running inside a user-defined function (which
  *	could issue more commands and possibly cause a failure after the statement
- *	completes).  In autocommit-off mode, we allow the statement if a block is
- *	not already started, and force the statement to be autocommitted despite
- *	the mode.
+ *	completes).
  *
  *	stmtNode: pointer to parameter block for statement; this is used in
  *	a very klugy way to determine whether we are inside a function.
@@ -1428,14 +1384,7 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 	/* If we got past IsTransactionBlock test, should be in default state */
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT)
 		elog(ERROR, "PreventTransactionChain: can't prevent chain");
-	/* okay to set the flag */
-	suppressChain = true;
-	/* If we're in autocommit-off node, generate a notice */
-	if (!autocommit)
-	{
-		/* translator: %s represents an SQL statement name */
-		elog(NOTICE, "%s will be committed automatically", stmtType);
-	}
+	/* all okay */
 }
 
 /*
@@ -1470,12 +1419,6 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 	 */
 	if (!MemoryContextContains(QueryContext, stmtNode))
 		return;
-	/*
-	 * If we are in autocommit-off mode then it's okay, because this
-	 * statement will itself start a transaction block.
-	 */
-	if (!autocommit && !suppressChain)
-		return;
 	/* translator: %s represents an SQL statement name */
 	elog(ERROR, "%s may only be used in begin/end transaction blocks",
 		 stmtType);
@@ -1507,10 +1450,7 @@ BeginTransactionBlock(void)
 	s->blockState = TBLOCK_BEGIN;
 
 	/*
-	 * do begin processing.  NOTE: if you put anything here, check that it
-	 * behaves properly in both autocommit-on and autocommit-off modes. In
-	 * the latter case we will already have done some work in the new
-	 * transaction.
+	 * do begin processing here.  Nothing to do at present.
 	 */
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.98 2003/05/02 20:54:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.99 2003/05/14 03:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,17 +769,16 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	heap_close(relationRelation, AccessShareLock);
 
 	/* Now reindex each rel in a separate transaction */
-	CommitTransactionCommand(true);
+	CommitTransactionCommand();
 	for (i = 0; i < relcnt; i++)
 	{
-		StartTransactionCommand(true);
+		StartTransactionCommand();
 		SetQuerySnapshot();		/* might be needed for functional index */
 		if (reindex_relation(relids[i], force))
 			elog(NOTICE, "relation %u was reindexed", relids[i]);
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 	}
-	/* Tell xact.c not to chain the upcoming commit */
-	StartTransactionCommand(true);
+	StartTransactionCommand();
 
 	MemoryContextDelete(private_context);
 }

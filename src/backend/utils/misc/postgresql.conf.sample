@@ -198,7 +198,6 @@
 #
 #	Misc
 #
-#autocommit = true
 #dynamic_library_path = '$libdir'
 #search_path = '$user,public'	# schema names
 #datestyle = 'iso, us'

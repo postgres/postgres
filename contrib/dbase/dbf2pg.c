@@ -861,8 +861,6 @@ main(int argc, char **argv)
 
 	PQexec(conn, "SET search_path = public");
 
-	PQexec(conn, "SET autocommit TO 'on'");
-
 /* Substitute field names */
 	do_substitute(subarg, dbh);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.19 2002/12/10 01:57:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.20 2003/05/14 03:25:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,17 +211,6 @@ vacuumlo(char *database, struct _param * param)
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
 		fprintf(stderr, "Failed to set search_path on:\n");
-		fprintf(stderr, "%s", PQerrorMessage(conn));
-		PQclear(res);
-		PQfinish(conn);
-		return -1;
-	}
-	PQclear(res);
-
-	res = PQexec(conn, "SET autocommit TO 'on'");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "Failed to set autocommit on:\n");
 		fprintf(stderr, "%s", PQerrorMessage(conn));
 		PQclear(res);
 		PQfinish(conn);

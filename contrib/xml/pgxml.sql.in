@@ -3,8 +3,6 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path TO public;
 
-SET autocommit TO on;
-
 CREATE OR REPLACE FUNCTION pgxml_parse(text) RETURNS boolean
     AS 'MODULE_PATHNAME' LANGUAGE c STRICT;
 

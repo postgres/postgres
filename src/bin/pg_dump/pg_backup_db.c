@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.46 2003/02/14 19:40:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.47 2003/05/14 03:26:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,12 +61,7 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 
 	myversion = _parse_version(AH, PG_VERSION);
 
-	/*
-	 *	Autocommit could be off.  We turn it on later but we have to check
-	 *	the database version first.
-	 */
-
-	res = PQexec(conn, "BEGIN;SELECT version();");
+	res = PQexec(conn, "SELECT version();");
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK ||
 		PQntuples(res) != 1)
@@ -75,12 +70,6 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	remoteversion_str = PQgetvalue(res, 0, 0);
 	remoteversion = _parse_version(AH, remoteversion_str + 11);
 
-	PQclear(res);
-
-	res = PQexec(conn, "COMMIT;");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-		die_horribly(AH, modulename, "could not get version from server: %s", PQerrorMessage(conn));
 	PQclear(res);
 
 	AH->public.remoteVersion = remoteversion;
@@ -216,18 +205,6 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	/* check for version mismatch */
 	_check_database_version(AH, true);
 
-	/* Turn autocommit on */
-	if (AH->public.remoteVersion >= 70300)
-	{
-		PGresult   *res;
-
-		res = PQexec(AH->connection, "SET autocommit TO 'on'");
-		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			die_horribly(AH, NULL, "SET autocommit TO 'on' failed: %s",
-						  PQerrorMessage(AH->connection));
-		PQclear(res);
-	}
-
 	PQsetNoticeProcessor(newConn, notice_processor, NULL);
 
 	return newConn;
@@ -300,18 +277,6 @@ ConnectDatabase(Archive *AHX,
 
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);
-
-	/* Turn autocommit on */
-	if (AH->public.remoteVersion >= 70300)
-	{
-		PGresult   *res;
-
-		res = PQexec(AH->connection, "SET autocommit TO 'on'");
-		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			die_horribly(AH, NULL, "SET autocommit TO 'on' failed: %s",
-						  PQerrorMessage(AH->connection));
-		PQclear(res);
-	}
 
 	PQsetNoticeProcessor(AH->connection, notice_processor, NULL);
 

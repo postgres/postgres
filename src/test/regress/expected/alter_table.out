@@ -996,7 +996,6 @@ ERROR:  Relation "test" has no column "........pg.dropped.1........"
 copy test from stdin;
 ERROR:  Extra data after last expected column
 CONTEXT:  COPY FROM, line 1
-SET autocommit TO 'on';
 select * from test;
  b | c 
 ---+---

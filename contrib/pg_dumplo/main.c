@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.15 2003/01/09 18:27:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.16 2003/05/14 03:25:56 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -190,8 +190,6 @@ main(int argc, char **argv)
 		index_file(pgLO);
 
 	PQexec(pgLO->conn, "SET search_path = public");
-
-	PQexec(pgLO->conn, "SET autocommit TO 'on'");
 
 	PQexec(pgLO->conn, "BEGIN");
 

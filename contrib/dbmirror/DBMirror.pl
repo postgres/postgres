@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $Id: DBMirror.pl,v 1.5 2002/12/05 21:03:51 momjian Exp $ 
+# $Id: DBMirror.pl,v 1.6 2003/05/14 03:25:55 tgl Exp $ 
 #
 ##############################################################################
 
@@ -135,15 +135,6 @@ sub Main() {
     die;
   }
     
-  my $setQuery2;
-  $setQuery2 = "SET autocommit TO 'on'";
-  my $setResult2 = $masterConn->exec($setQuery2);
-  if($setResult2->resultStatus!=PGRES_COMMAND_OK) { 
-    logErrorMessage($masterConn->errorMessage . "\n" . 
-		    $setQuery2);
-    die;
-  }
-    
   my $firstTime = 1;
   while(1) {
     if($firstTime == 0) {
@@ -158,7 +149,6 @@ sub Main() {
     
     
    
-    sendQueryToSlaves(undef,"SET autocommit TO 'on'");
     sendQueryToSlaves(undef,"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
     sendQueryToSlaves(undef,"SET CONSTRAINTS ALL DEFERRED");
     

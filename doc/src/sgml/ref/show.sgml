@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.26 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.27 2003/05/14 03:26:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -36,12 +36,6 @@ SHOW ALL
    application), or through command-line flags when starting the
    <command>postmaster</command>.  See <xref
    linkend="runtime-config"> for details.
-  </para>
-
-  <para>
-   Even with <varname>autocommit</> set to <literal>off</>, <command>SHOW</>
-   does not start a new transaction block. See the
-   <varname>autocommit</> section in <xref linkend="runtime-config"> for details.
   </para>
  </refsect1>
 

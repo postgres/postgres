@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.10 2003/03/20 18:53:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.11 2003/05/14 03:26:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -157,10 +157,10 @@ for db in $dbname
 do
 	[ "$alldb" ] && echo "Clustering $db"
 	if [ -z "$table" ]; then
-		${PATHNAME}psql $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';CLUSTER" -d $db
+		${PATHNAME}psql $PSQLOPT $ECHOOPT -c "CLUSTER" -d $db
 		[ "$?" -ne 0 ] && exit 1
 	else
-		${PATHNAME}psql $PSQLOPT $ECHOOPT -c "SET autocommit TO 'on';CLUSTER $table" -d $db
+		${PATHNAME}psql $PSQLOPT $ECHOOPT -c "CLUSTER $table" -d $db
 		[ "$?" -ne 0 ] && exit 1
 	fi
 done

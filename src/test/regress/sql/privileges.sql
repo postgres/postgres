@@ -147,7 +147,6 @@ SELECT * FROM atestv2; -- fail (even though regressuser2 can access underlying a
 
 -- switch to superuser
 \c -
-SET autocommit TO 'on';
 
 REVOKE ALL PRIVILEGES ON LANGUAGE sql FROM PUBLIC;
 GRANT USAGE ON LANGUAGE sql TO regressuser1; -- ok
@@ -184,7 +183,6 @@ SELECT testfunc1(5); -- ok
 DROP FUNCTION testfunc1(int); -- fail
 
 \c -
-SET autocommit TO 'on';
 
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
@@ -203,7 +201,6 @@ select has_table_privilege(1,'rule');
 
 -- superuser
 \c -
-SET autocommit TO 'on';
 
 select has_table_privilege(current_user,'pg_shadow','select');
 select has_table_privilege(current_user,'pg_shadow','insert');
@@ -323,7 +320,6 @@ SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION')
 -- clean up
 
 \c regression
-SET autocommit TO 'on';
 
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);

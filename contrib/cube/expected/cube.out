@@ -6,8 +6,8 @@
 -- does not depend on contents of cube.sql.
 --
 \set ECHO none
-psql:cube.sql:12: NOTICE:  ProcedureCreate: type cube is not yet defined
-psql:cube.sql:17: NOTICE:  Argument type "cube" is only a shell
+psql:cube.sql:10: NOTICE:  ProcedureCreate: type cube is not yet defined
+psql:cube.sql:15: NOTICE:  Argument type "cube" is only a shell
 --
 -- testing the input and output functions
 --

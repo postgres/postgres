@@ -6,8 +6,6 @@
 -- opclasses get created.
 SET search_path = public;
 
-SET autocommit TO 'on';
-
 -- Query type
 CREATE FUNCTION bqarr_in(cstring)
 RETURNS query_int

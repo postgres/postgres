@@ -6,8 +6,8 @@
 -- does not depend on contents of earthdistance.sql or cube.sql.
 --
 \set ECHO none
-psql:../cube/cube.sql:12: NOTICE:  ProcedureCreate: type cube is not yet defined
-psql:../cube/cube.sql:17: NOTICE:  Argument type "cube" is only a shell
+psql:../cube/cube.sql:10: NOTICE:  ProcedureCreate: type cube is not yet defined
+psql:../cube/cube.sql:15: NOTICE:  Argument type "cube" is only a shell
 --
 -- The radius of the Earth we are using.
 --

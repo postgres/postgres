@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.252 2003/05/02 20:54:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.253 2003/05/14 03:26:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ vacuum(VacuumStmt *vacstmt)
 		}
 
 		/* matches the StartTransaction in PostgresMain() */
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 	}
 
 	/*
@@ -303,7 +303,7 @@ vacuum(VacuumStmt *vacstmt)
 			 */
 			if (vacstmt->vacuum)
 			{
-				StartTransactionCommand(true);
+				StartTransactionCommand();
 				SetQuerySnapshot();	/* might be needed for functional index */
 			}
 			else
@@ -312,7 +312,7 @@ vacuum(VacuumStmt *vacstmt)
 			analyze_rel(relid, vacstmt);
 
 			if (vacstmt->vacuum)
-				CommitTransactionCommand(true);
+				CommitTransactionCommand();
 			else
 			{
 				MemoryContextSwitchTo(old_context);
@@ -330,11 +330,9 @@ vacuum(VacuumStmt *vacstmt)
 
 		/*
 		 * This matches the CommitTransaction waiting for us in
-		 * PostgresMain(). We tell xact.c not to chain the upcoming
-		 * commit, so that a VACUUM doesn't start a transaction block,
-		 * even when autocommit is off.
+		 * PostgresMain().
 		 */
-		StartTransactionCommand(true);
+		StartTransactionCommand();
 
 		/*
 		 * If it was a database-wide VACUUM, print FSM usage statistics
@@ -729,7 +727,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	bool		result;
 
 	/* Begin a transaction for vacuuming this relation */
-	StartTransactionCommand(true);
+	StartTransactionCommand();
 	SetQuerySnapshot();			/* might be needed for functional index */
 
 	/*
@@ -746,7 +744,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 							  ObjectIdGetDatum(relid),
 							  0, 0, 0))
 	{
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 		return true;			/* okay 'cause no data there */
 	}
 
@@ -778,7 +776,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		elog(WARNING, "Skipping \"%s\" --- only table or database owner can VACUUM it",
 			 RelationGetRelationName(onerel));
 		relation_close(onerel, lmode);
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 		return false;
 	}
 
@@ -791,7 +789,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 		elog(WARNING, "Skipping \"%s\" --- can not process indexes, views or special system tables",
 			 RelationGetRelationName(onerel));
 		relation_close(onerel, lmode);
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 		return false;
 	}
 
@@ -805,7 +803,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	if (isOtherTempNamespace(RelationGetNamespace(onerel)))
 	{
 		relation_close(onerel, lmode);
-		CommitTransactionCommand(true);
+		CommitTransactionCommand();
 		return true;			/* assume no long-lived data in temp tables */
 	}
 
@@ -843,7 +841,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	/*
 	 * Complete the transaction and free all temporary memory used.
 	 */
-	CommitTransactionCommand(true);
+	CommitTransactionCommand();
 
 	/*
 	 * If the relation has a secondary toast rel, vacuum that too while we

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.186 2003/03/21 01:58:04 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.187 2003/05/14 03:25:59 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,8 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+New frontend/backend protocol supports many long-requested features
+SET AUTOCOMMIT TO OFF is no longer supported
 Reimplementation of NUMERIC datatype for more speed
 New regular expression package, many more regexp features (most of Perl5)
 Can now do EXPLAIN ... EXECUTE to see plan used for a prepared query

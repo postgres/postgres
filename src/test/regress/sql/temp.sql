@@ -48,7 +48,6 @@ DROP TABLE temptest;
 CREATE TEMP TABLE temptest(col int);
 
 \c regression
-SET autocommit TO 'on';
 
 SELECT * FROM temptest;
 

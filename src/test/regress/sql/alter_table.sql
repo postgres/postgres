@@ -717,7 +717,6 @@ copy test("........pg.dropped.1........") to stdout;
 copy test from stdin;
 10	11	12
 \.
-SET autocommit TO 'on';
 select * from test;
 copy test from stdin;
 21	22

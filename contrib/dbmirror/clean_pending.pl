@@ -16,7 +16,7 @@
 #    GNU General Public License for more details.
 #
 ##############################################################################
-# $Id: clean_pending.pl,v 1.2 2002/10/18 18:41:19 momjian Exp $
+# $Id: clean_pending.pl,v 1.3 2003/05/14 03:25:55 tgl Exp $
 ##############################################################################
 
 
@@ -68,10 +68,6 @@ my $dbConn = Pg::connectdb($connectString);
 unless($dbConn->status == PGRES_CONNECTION_OK) {
     printf("Can't connect to database\n");
     die;
-}
-my $setresult = $dbConn->exec("SET autocommit TO 'on'");
-unless($setresult->resultStatus == PGRES_COMMAND_OK) {
-   die $dbConn->errorMessage;
 }
 my $result = $dbConn->exec("BEGIN");
 unless($result->resultStatus == PGRES_COMMAND_OK) {

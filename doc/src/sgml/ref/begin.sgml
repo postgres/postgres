@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.23 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.24 2003/05/14 03:26:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -97,12 +97,6 @@ BEGIN [ WORK | TRANSACTION ]
    Use <xref linkend="SQL-COMMIT" endterm="SQL-COMMIT-TITLE"> or
    <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE">
    to terminate a transaction.
-  </para>
-   
-  <para>
-   If you turn the configuration parameter <varname>autocommit</> off,
-   then <command>BEGIN</> is not required: any SQL command
-   automatically starts a transaction.
   </para>
  </refsect1>
 

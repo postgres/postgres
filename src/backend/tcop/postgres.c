@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.343 2003/05/12 16:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.344 2003/05/14 03:26:01 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -85,8 +85,6 @@ sigjmp_buf	Warn_restart;
 bool		Warn_restart_ready = false;
 bool		InError = false;
 
-extern bool	autocommit;
-
 /*
  * Flags for expensive function optimization -- JMH 3/9/92
  */
@@ -148,7 +146,7 @@ static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
 static void start_xact_command(void);
-static void finish_xact_command(bool forceCommit);
+static void finish_xact_command(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
 
@@ -861,20 +859,15 @@ exec_simple_query(const char *query_string)
 
 		PortalDrop(portal, false);
 
-
-		if (IsA(parsetree, TransactionStmt) ||
-			IsA(parsetree, VariableSetStmt) ||
-			IsA(parsetree, VariableShowStmt) ||
-			IsA(parsetree, VariableResetStmt))
+		if (IsA(parsetree, TransactionStmt))
 		{
 			/*
-			 * If this was a transaction control statement or a variable
-			 * set/show/reset statement, commit it.  We will start a
-			 * new xact command for the next command (if any).
+			 * If this was a transaction control statement, commit it.
+			 * We will start a new xact command for the next command (if any).
 			 */
-			finish_xact_command(true);
+			finish_xact_command();
 		}
-		else if (lnext(parsetree_item) == NIL || !autocommit)
+		else if (lnext(parsetree_item) == NIL)
 		{
 			/*
 			 * If this is the last parsetree of the query string, close down
@@ -886,7 +879,7 @@ exec_simple_query(const char *query_string)
 			 * historical Postgres behavior, we do not force a transaction
 			 * boundary between queries appearing in a single query string.
 			 */
-			finish_xact_command(false);
+			finish_xact_command();
 		}
 		else
 		{
@@ -908,17 +901,17 @@ exec_simple_query(const char *query_string)
 	}							/* end loop over parsetrees */
 
 	/*
+	 * Close down transaction statement, if one is open.
+	 */
+	finish_xact_command();
+
+	/*
 	 * If there were no parsetrees, return EmptyQueryResponse message.
 	 */
 	if (!parsetree_list)
 		NullCommand(dest);
 
 	QueryContext = NULL;
-
-	/*
-	 * Close down transaction statement, if one is open.
-	 */
-	finish_xact_command(false);
 
 	/*
 	 * Finish up monitoring.
@@ -1531,7 +1524,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 			 * If this was a transaction control statement, commit it.  We will
 			 * start a new xact command for the next command (if any).
 			 */
-			finish_xact_command(true);
+			finish_xact_command();
 		}
 		else
 		{
@@ -1657,7 +1650,7 @@ start_xact_command(void)
 	if (!xact_started)
 	{
 		elog(DEBUG2, "StartTransactionCommand");
-		StartTransactionCommand(false);
+		StartTransactionCommand();
 
 		/* Set statement timeout running, if any */
 		if (StatementTimeout > 0)
@@ -1668,7 +1661,7 @@ start_xact_command(void)
 }
 
 static void
-finish_xact_command(bool forceCommit)
+finish_xact_command(void)
 {
 	if (xact_started)
 	{
@@ -1681,7 +1674,7 @@ finish_xact_command(bool forceCommit)
 		/* Now commit the command */
 		elog(DEBUG2, "CommitTransactionCommand");
 
-		CommitTransactionCommand(forceCommit);
+		CommitTransactionCommand();
 
 #ifdef SHOW_MEMORY_STATS
 		/* Print mem stats at each commit for leak tracking */
@@ -2532,7 +2525,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.343 $ $Date: 2003/05/12 16:48:17 $\n");
+		puts("$Revision: 1.344 $ $Date: 2003/05/14 03:26:01 $\n");
 	}
 
 	/*
@@ -2810,7 +2803,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				}
 
 				/* commit the function-invocation transaction */
-				finish_xact_command(false);
+				finish_xact_command();
 
 				send_rfq = true;
 				break;
@@ -2894,7 +2887,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'S':				/* sync */
 				pq_getmsgend(input_message);
-				finish_xact_command(false);
+				finish_xact_command();
 				send_rfq = true;
 				break;
 

@@ -6,8 +6,6 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-SET autocommit TO 'on';
-
 CREATE OR REPLACE FUNCTION array_texteq(_text, text)
 RETURNS bool
 AS 'MODULE_PATHNAME' 

@@ -1,8 +1,6 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-SET autocommit TO 'on';
-
 DROP TYPE pgstattuple_type CASCADE;
 CREATE TYPE pgstattuple_type AS (
 	table_len BIGINT,		-- physical table length in bytes

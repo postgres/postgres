@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.88 2003/03/25 16:15:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.89 2003/05/14 03:26:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -88,9 +88,11 @@ PostgreSQL documentation
       select * from foo;" | psql</literal>.
       </para>
       <para>
-      If <quote>autocommit</quote> is on, multiple queries in a single
-      string are processed in a single transaction.
-
+       If the command string contains multiple SQL commands, they are
+       processed in a single transaction, unless there are explicit
+       BEGIN/COMMIT commands included in the string to divide it into
+       multiple transactions.  This is different from the behavior when
+       the same string is fed to psql's standard input.
       </para>
       </listitem>
     </varlistentry>

@@ -6,8 +6,8 @@
 -- does not depend on contents of seg.sql.
 --
 \set ECHO none
-psql:seg.sql:12: NOTICE:  ProcedureCreate: type seg is not yet defined
-psql:seg.sql:17: NOTICE:  Argument type "seg" is only a shell
+psql:seg.sql:10: NOTICE:  ProcedureCreate: type seg is not yet defined
+psql:seg.sql:15: NOTICE:  Argument type "seg" is only a shell
 --
 -- testing the input and output functions
 --
@@ -395,25 +395,25 @@ SELECT '100(+-)1'::seg AS seg;
 SELECT ''::seg AS seg;
 ERROR:  seg_in: can't parse an empty string
 SELECT 'ABC'::seg AS seg;
-ERROR:  parse error at or near position 1, character ('A', \101), input: 'ABC'
+ERROR:  syntax error at or near position 1, character ('A', \101), input: 'ABC'
 
 SELECT '1ABC'::seg AS seg;
-ERROR:  parse error at or near position 2, character ('A', \101), input: '1ABC'
+ERROR:  syntax error at or near position 2, character ('A', \101), input: '1ABC'
 
 SELECT '1.'::seg AS seg;
-ERROR:  parse error at or near position 2, character ('.', \056), input: '1.'
+ERROR:  syntax error at or near position 2, character ('.', \056), input: '1.'
 
 SELECT '1.....'::seg AS seg;
-ERROR:  parse error at or near position 6, character ('.', \056), input: '1.....'
+ERROR:  syntax error at or near position 6, character ('.', \056), input: '1.....'
 
 SELECT '.1'::seg AS seg;
-ERROR:  parse error at or near position 2, character ('1', \061), input: '.1'
+ERROR:  syntax error at or near position 2, character ('1', \061), input: '.1'
 
 SELECT '1..2.'::seg AS seg;
-ERROR:  parse error at or near position 5, character ('.', \056), input: '1..2.'
+ERROR:  syntax error at or near position 5, character ('.', \056), input: '1..2.'
 
 SELECT '1 e7'::seg AS seg;
-ERROR:  parse error at or near position 3, character ('e', \145), input: '1 e7'
+ERROR:  syntax error at or near position 3, character ('e', \145), input: '1 e7'
 
 SELECT '1e700'::seg AS seg;
 ERROR:  numeric value 1e700 unrepresentable
