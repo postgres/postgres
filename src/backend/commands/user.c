@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.138 2004/02/25 19:41:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.139 2004/03/16 05:05:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,10 +140,6 @@ write_group_file(Relation grel)
 	bufsize = strlen(filename) + 12;
 	tempname = (char *) palloc(bufsize);
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
-#if defined(WIN32) || defined(__CYGWIN__)
-	filename = repalloc(filename, strlen(filename) + 1 + strlen(".new"));
-	strcat(filename, ".new");
-#endif
 
 	oumask = umask((mode_t) 077);
 	fp = AllocateFile(tempname, "w");
@@ -291,10 +287,6 @@ write_user_file(Relation urel)
 	bufsize = strlen(filename) + 12;
 	tempname = (char *) palloc(bufsize);
 	snprintf(tempname, bufsize, "%s.%d", filename, MyProcPid);
-#if defined(WIN32) || defined(__CYGWIN__)
-	filename = repalloc(filename, strlen(filename) + 1 + strlen(".new"));
-	strcat(filename, ".new");
-#endif
 
 	oumask = umask((mode_t) 077);
 	fp = AllocateFile(tempname, "w");
@@ -466,18 +458,6 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 		user_file_update_needed = false;
 		write_user_file(urel);
 		heap_close(urel, NoLock);
-#if defined(WIN32) || defined(__CYGWIN__)
-		{
-			/* Rename active file while not holding an exclusive lock */
-			char *filename = user_getfilename(), *filename_new;
-
-			filename_new = palloc(strlen(filename) + 1 + strlen(".new"));
-			sprintf(filename_new, "%s.new", filename);
-			rename(filename_new, filename);
-			pfree(filename);
-			pfree(filename_new);
-		}
-#endif
 	}
 
 	if (group_file_update_needed)
@@ -485,18 +465,6 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 		group_file_update_needed = false;
 		write_group_file(grel);
 		heap_close(grel, NoLock);
-#if defined(WIN32) || defined(__CYGWIN__)
-		{
-			/* Rename active file while not holding an exclusive lock */
-			char *filename = group_getfilename(), *filename_new;
-
-			filename_new = palloc(strlen(filename) + 1 + strlen(".new"));
-			sprintf(filename_new, "%s.new", filename);
-			rename(filename_new, filename);
-			pfree(filename);
-			pfree(filename_new);
-		}
-#endif
 	}
 
 	/*
