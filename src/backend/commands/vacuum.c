@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.131 1999/12/16 22:19:42 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.132 1999/12/29 10:12:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2145,8 +2145,8 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
  *
  *	We compute the column min, max, null and non-null counts.
  *	Plus we attempt to find the count of the value that occurs most
- *	frequently in each column
- *	These figures are used to compute the selectivity of the column
+ *	frequently in each column.  These figures are used to compute
+ *	the selectivity of the column.
  *
  *	We use a three-bucked cache to get the most frequent item
  *	The 'guess' buckets count hits.  A cache miss causes guess1
