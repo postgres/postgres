@@ -875,7 +875,7 @@ QueryInfo qi;
 			*/
 		}
 		else {
-			self->errornumber = STMT_EXEC_ERROR;
+			self->errornumber = STMT_BAD_ERROR;
 			self->errormsg = "Error while executing the query";
 		}
 

@@ -111,7 +111,7 @@ int status;
                     strcpy(szSqlState, "00000");
                     // just information that is returned, no error
                     break;
-                case STMT_EXEC_ERROR:
+                case STMT_BAD_ERROR:
                     strcpy(szSqlState, "08S01");
                     // communication link failure
                     break;
@@ -195,6 +195,7 @@ int status;
 					strcpy(szSqlState, "S1011");
 					break;
 
+				case STMT_EXEC_ERROR:
 				default:
                     strcpy(szSqlState, "S1000");
                     // also a general error

@@ -74,6 +74,7 @@ typedef enum {
 #define STMT_VALUE_OUT_OF_RANGE 24
 #define STMT_OPERATION_INVALID 25
 #define STMT_PROGRAM_TYPE_OUT_OF_RANGE 26
+#define STMT_BAD_ERROR 27
 
 /* statement types */
 enum {
