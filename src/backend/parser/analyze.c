@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.166 2000/11/16 22:30:28 tgl Exp $
+ *	$Id: analyze.c,v 1.167 2000/11/18 16:17:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2890,6 +2890,10 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 			case NUMERICOID:
 				typename->typmod = VARHDRSZ +
 					((NUMERIC_DEFAULT_PRECISION << 16) | NUMERIC_DEFAULT_SCALE);
+				break;
+			case ZPBITOID:
+				/* 'bit' -> 'bit(1)' */
+				typename->typmod = 1;
 				break;
 		}
 	}
