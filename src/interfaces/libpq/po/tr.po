@@ -5,9 +5,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq-tr\n"
 "POT-Creation-Date: 2004-09-13 07:48+0100\n"
-"PO-Revision-Date: 2004-10-23 17:53+0300\n"
+"PO-Revision-Date: 2004-10-27 15:29+0300\n"
 "Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
-"Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
+"Language-Team: Turkish <http://developer.postgresql.org/~petere/nlsstatus/po-current/libpq-tr.po>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -303,7 +303,7 @@ msgstr "\"%s\" dosyasına yazılırken bir hata oluştu\n"
 
 #: fe-lobj.c:601
 msgid "query to initialize large object functions did not return data\n"
-msgstr ""
+msgstr "large object fonksiyonlarını ilklendirecek sorgu veri döndürmedi\n"
 
 #: fe-lobj.c:639
 msgid "cannot determine OID of function lo_open\n"
@@ -340,12 +340,12 @@ msgstr "lowrite fonksiyonunun OID'i belirlenemiyor\n"
 #: fe-misc.c:228
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt"
-msgstr ""
+msgstr "%lu büyüklüğündeki tamsayılar pqGetInt tarafından desteklenmez."
 
 #: fe-misc.c:264
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt"
-msgstr ""
+msgstr "%lu büyüklüğündeki tamsayılar pqPutInt tarafından desteklenmez."
 
 #: fe-misc.c:544 fe-misc.c:748
 msgid "connection not open\n"
@@ -362,6 +362,9 @@ msgid ""
 "\tThis probably means the server terminated abnormally\n"
 "\tbefore or while processing the request.\n"
 msgstr ""
+"sunucu bağlantıyı beklenmedik şekilde kapattı\n"
+"\tBu ileti sunucunun isteği işlemeden hemen önce ya da \n"
+"\tisteği işlerken kapatıldığı anlamına gelir.\n"
 
 #: fe-misc.c:803
 #, c-format
@@ -384,39 +387,43 @@ msgstr "select() başarısız oldu: %s\n"
 #: fe-protocol2.c:91
 #, c-format
 msgid "invalid setenv state %c, probably indicative of memory corruption\n"
-msgstr ""
+msgstr "Geçersizsetenv durumu %c, belleğin zarar görmesinin bir işareti olabilir\n"
 
 #: fe-protocol2.c:333
 #, c-format
 msgid "invalid state %c, probably indicative of memory corruption\n"
-msgstr ""
+msgstr "Geçersiz %c durumu, belleğin zarar görmesinin bir işareti olabilir\n"
 
 #: fe-protocol2.c:423 fe-protocol3.c:183
 #, c-format
 msgid "message type 0x%02x arrived from server while idle"
-msgstr ""
+msgstr "Sunucu boş durumdayken sunucudan 0x%02x ileti tipi geldi"
 
 #: fe-protocol2.c:462
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
-msgstr ""
+msgstr "Boş sorgu yanıtını takip eden geçersiz karakter:%c  (\"I\" ileti)"
 
 #: fe-protocol2.c:517
 msgid ""
 "server sent data (\"D\" message) without prior row description (\"T\" "
 "message)"
 msgstr ""
+"Sunucu öncelikli satır tanımı olmadan veri (\"D\" ileti) gönderdi (\"T\" "
+"ileti)"
 
 #: fe-protocol2.c:533
 msgid ""
 "server sent binary data (\"B\" message) without prior row description (\"T\" "
 "message)"
 msgstr ""
+"Sunucu öncelikli satır tanımı olmadan ikili veri (\"D\" ileti) gönderdi (\"T\" "
+"ileti)"
 
 #: fe-protocol2.c:548 fe-protocol3.c:335
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
-msgstr ""
+msgstr "sunucudan beklenmeyen bir yanıt alındı; alınan ilk karakter\"%c\" idi\n"
 
 #: fe-protocol2.c:760 fe-protocol3.c:568
 msgid "out of memory for query result\n"
@@ -441,20 +448,22 @@ msgid ""
 "server sent data (\"D\" message) without prior row description (\"T\" "
 "message)\n"
 msgstr ""
+"Sunucu öncelikli satır tanımı olmadan veri (\"D\" ileti) gönderdi (\"T\" "
+"ileti)\n"
 
 #: fe-protocol3.c:356
 #, c-format
 msgid "Message contents do not agree with length in message type \"%c\"\n"
-msgstr ""
+msgstr "İleti içeriği,\"%c\" ileti tipinin içindeki uzunlukla aynı değil\n"
 
 #: fe-protocol3.c:377
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
-msgstr ""
+msgstr "sunucu ile eşzamanlılık kayboldu: \"%c\" ileti tipi alındı, uzunluğu %d\n"
 
 #: fe-protocol3.c:513
 msgid "unexpected field count in D message\n"
-msgstr ""
+msgstr "D iletide beklenmeyen alan sayısı\n"
 
 #. translator: %s represents a digit string
 #: fe-protocol3.c:642 fe-protocol3.c:650
@@ -498,7 +507,7 @@ msgstr "%s:%s"
 
 #: fe-protocol3.c:986
 msgid "PQgetline: not doing text COPY OUT\n"
-msgstr ""
+msgstr "PQgetline: COPY OUT metnini yapmıyor\n"
 
 #: fe-secure.c:262
 #, c-format
@@ -540,12 +549,12 @@ msgstr "desteklenmeyen protokol\n"
 #: fe-secure.c:563
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
-msgstr ""
+msgstr "Sunucu ortak adı olan \"%s\"  %ld.%ld.%ld.%ld adresine çözülemiyor\n"
 
 #: fe-secure.c:570
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
-msgstr ""
+msgstr "Sunucu ortak adı olan \"%s\" eş (peer) adresine çözülemiyor\n"
 
 #: fe-secure.c:753
 msgid "could not get user information\n"
@@ -569,45 +578,45 @@ msgstr "Sertifika mevcut ancak özel anahtar mecvut değil (%s)\n"
 #: fe-secure.c:797
 #, c-format
 msgid "private key (%s) has wrong permissions\n"
-msgstr ""
+msgstr "Özel anahtar (%s) yanlış izinlere sahip\n"
 
 #: fe-secure.c:804
 #, c-format
 msgid "could not open private key file (%s): %s\n"
-msgstr ""
+msgstr "(%s) özel anahtarı açılamadı: %s\n"
 
 #: fe-secure.c:813
 #, c-format
 msgid "private key (%s) changed during execution\n"
-msgstr ""
+msgstr " (%s) özel anahtarı çalışma anında açılamadı\n"
 
 #: fe-secure.c:822
 #, c-format
 msgid "could not read private key (%s): %s\n"
-msgstr ""
+msgstr " (%s) özel anahtarı açılamadı: %s\n"
 
 #: fe-secure.c:837
 #, c-format
 msgid "certificate/private key mismatch (%s): %s\n"
-msgstr ""
+msgstr "certificate/private anahtar eşleşmiyor (%s): %s\n"
 
 #: fe-secure.c:921
 #, c-format
 msgid "could not create SSL context: %s\n"
-msgstr ""
+msgstr "SSL içeriği yaratılamadı: %s\n"
 
 #: fe-secure.c:966 fe-secure.c:976
 #, c-format
 msgid "could not read root certificate list (%s): %s\n"
-msgstr ""
+msgstr "kök sertifika listesi (%s) okunamadı: %s\n"
 
 #: fe-secure.c:1076
 #, c-format
 msgid "certificate could not be validated: %s\n"
-msgstr ""
+msgstr "sertifika doğrulanamadı: %s\n"
 
 #: fe-secure.c:1090
 #, c-format
 msgid "certificate could not be obtained: %s\n"
-msgstr ""
+msgstr "sertifika elde edilemedi: %s\n"
 
