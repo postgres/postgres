@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.49 2000/08/24 03:29:10 tgl Exp $
+ * $Id: executor.h,v 1.50 2000/08/24 23:34:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,9 +74,9 @@ extern void ExecEndNode(Plan *node, Plan *parent);
  */
 extern Datum ExecEvalParam(Param *expression, ExprContext *econtext,
 			  bool *isNull);
-extern char *GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno,
-				  bool *isNull);
-extern char *GetAttributeByName(TupleTableSlot *slot, char *attname,
+extern Datum GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno,
+							   bool *isNull);
+extern Datum GetAttributeByName(TupleTableSlot *slot, char *attname,
 								bool *isNull);
 extern Datum ExecMakeFunctionResult(FunctionCachePtr fcache,
 									List *arguments,

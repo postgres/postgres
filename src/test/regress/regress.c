@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.43 2000/07/30 20:43:54 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.44 2000/08/24 23:34:11 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -187,9 +187,9 @@ overpaid(PG_FUNCTION_ARGS)
 {
 	TUPLE		tuple = (TUPLE) PG_GETARG_POINTER(0);
 	bool		isnull;
-	long		salary;
+	int32		salary;
 
-	salary = (long) GetAttributeByName(tuple, "salary", &isnull);
+	salary = DatumGetInt32(GetAttributeByName(tuple, "salary", &isnull));
 	if (isnull)
 		PG_RETURN_NULL();
 	PG_RETURN_BOOL(salary > 699);

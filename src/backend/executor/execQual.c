@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.79 2000/08/24 03:29:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.80 2000/08/24 23:34:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -502,13 +502,8 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
  *		named attribute out of the tuple from the arg slot.  User defined
  *		C functions which take a tuple as an argument are expected
  *		to use this.  Ex: overpaid(EMP) might call GetAttributeByNum().
- *
- * XXX these two functions are misdeclared: they should be declared to
- * return Datum.  They are not used anywhere in the backend proper, and
- * exist only for use by user-defined functions.  Should we change their
- * definitions, at risk of breaking user code?
  */
-char *
+Datum
 GetAttributeByNum(TupleTableSlot *slot,
 				  AttrNumber attrno,
 				  bool *isNull)
@@ -527,7 +522,7 @@ GetAttributeByNum(TupleTableSlot *slot,
 	if (TupIsNull(slot))
 	{
 		*isNull = true;
-		return (char *) NULL;
+		return (Datum) 0;
 	}
 
 	retval = heap_getattr(slot->val,
@@ -535,11 +530,12 @@ GetAttributeByNum(TupleTableSlot *slot,
 						  slot->ttc_tupleDescriptor,
 						  isNull);
 	if (*isNull)
-		return (char *) NULL;
-	return (char *) retval;
+		return (Datum) 0;
+
+	return retval;
 }
 
-char *
+Datum
 GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 {
 	AttrNumber	attrno;
@@ -557,7 +553,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	if (TupIsNull(slot))
 	{
 		*isNull = true;
-		return (char *) NULL;
+		return (Datum) 0;
 	}
 
 	tupdesc = slot->ttc_tupleDescriptor;
@@ -581,8 +577,9 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 						  tupdesc,
 						  isNull);
 	if (*isNull)
-		return (char *) NULL;
-	return (char *) retval;
+		return (Datum) 0;
+
+	return retval;
 }
 
 /*
