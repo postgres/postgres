@@ -17,17 +17,17 @@ ac_help="$ac_help
 ac_help="$ac_help
   --with-libraries=DIR   site library directories for tk/tcl, etc in DIR"
 ac_help="$ac_help
-   --enable-locale	       enable locale support "
+  --enable-locale	       enable locale support "
 ac_help="$ac_help
-   --enable-recode	       enable cyrillic recode support "
+  --enable-recode	       enable cyrillic recode support "
 ac_help="$ac_help
-   --with-pgport=<portnum> change default startup port "
+  --with-pgport=<portnum> change default startup port "
 ac_help="$ac_help
-   --with-tcl	       use tcl "
+  --with-tcl	       use tcl "
 ac_help="$ac_help
-   --with-perl	       use perl "
+  --with-perl	       use perl "
 ac_help="$ac_help
-   --enable-cassert        enable assertion checks (debugging) "
+  --enable-cassert        enable assertion checks (debugging) "
 ac_help="$ac_help
   --with-x                use the X Window System"
 

@@ -191,7 +191,7 @@ dnl It defaults to disabled
 AC_MSG_CHECKING(setting USE_LOCALE)
 AC_ARG_ENABLE(
    locale,
-   [   --enable-locale	       enable locale support ],
+   [  --enable-locale	       enable locale support ],
    AC_DEFINE(USE_LOCALE) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
@@ -204,7 +204,7 @@ dnl It defaults to disabled
 AC_MSG_CHECKING(setting CYR_RECODE)
 AC_ARG_ENABLE(
    recode,
-   [   --enable-recode	       enable cyrillic recode support ],
+   [  --enable-recode	       enable cyrillic recode support ],
    AC_DEFINE(CYR_RECODE) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
@@ -214,7 +214,7 @@ dnl we over-ride it with --with-pgport=port then we bypass this piece
 AC_MSG_CHECKING(setting DEF_PGPORT)
 AC_ARG_WITH(
    pgport,
-   [   --with-pgport=<portnum> change default startup port ],
+   [  --with-pgport=<portnum> change default startup port ],
    AC_DEFINE_UNQUOTED(DEF_PGPORT, "${withval}") AC_MSG_RESULT($with_pgport),
    AC_DEFINE_UNQUOTED(DEF_PGPORT, "5432") AC_MSG_RESULT(5432)
 )
@@ -223,7 +223,7 @@ dnl We exclude tcl support unless we override it with --with-tcl
 AC_MSG_CHECKING(setting USE_TCL)
 AC_ARG_WITH(
    tcl,
-   [   --with-tcl	       use tcl ],
+   [  --with-tcl	       use tcl ],
    USE_TCL=true; AC_MSG_RESULT(enabled),
    USE_TCL=false; AC_MSG_RESULT(disabled)
 )
@@ -255,7 +255,7 @@ dnl We exclude perl support unless we override it with --with-perl
 AC_MSG_CHECKING(setting USE_PERL)
 AC_ARG_WITH(
    perl,
-   [   --with-perl	       use perl ],
+   [  --with-perl	       use perl ],
    USE_PERL=true; AC_MSG_RESULT(enabled),
    USE_PERL=false; AC_MSG_RESULT(disabled)
 )
@@ -279,7 +279,7 @@ dnl We need some explanatory text here.
 AC_MSG_CHECKING(setting ASSERT CHECKING)
 AC_ARG_ENABLE(
    cassert,
-   [   --enable-cassert        enable assertion checks (debugging) ],
+   [  --enable-cassert        enable assertion checks (debugging) ],
    AC_DEFINE(NO_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
