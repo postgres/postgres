@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.91 2000/04/25 08:29:02 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.92 2000/05/31 00:28:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -321,7 +321,6 @@ PG_HBA_SAMPLE="$PGLIB"/pg_hba.conf.sample
 
 TEMPLATE_DESCR="$PGLIB"/local1_template1.description
 GLOBAL_DESCR="$PGLIB"/global1.description
-PG_GEQO_SAMPLE="$PGLIB"/pg_geqo.sample
 PG_POSTMASTER_OPTS_DEFAULT_SAMPLE="$PGLIB"/postmaster.opts.default.sample
 
 if [ "$show_setting" -eq 1 ]
@@ -342,7 +341,6 @@ then
 	echo "  PG_HBA_SAMPLE:  $PG_HBA_SAMPLE"
 	echo "  TEMPLATE_DESCR: $TEMPLATE_DESCR"
 	echo "  GLOBAL_DESCR:   $GLOBAL_DESCR"
-	echo "  PG_GEQO_SAMPLE: $PG_GEQO_SAMPLE"
 	echo "  PG_POSTMASTER_OPTS_DEFAULT_SAMPLE: $PG_POSTMASTER_OPTS_DEFAULT_SAMPLE"
 	echo 
 	exit 0
@@ -461,7 +459,6 @@ then
     "$PGPATH"/pg_version "$PGDATA" || exit_nicely
 
     cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf     || exit_nicely
-    cp "$PG_GEQO_SAMPLE" "$PGDATA"/pg_geqo.sample || exit_nicely
     cp "$PG_POSTMASTER_OPTS_DEFAULT_SAMPLE" "$PGDATA"/postmaster.opts.default || exit_nicely
 
     echo "Adding template1 database to pg_database"
@@ -482,7 +479,7 @@ fi
 
 echo
 
-PGSQL_OPT="-o /dev/null -O -F -Q -D$PGDATA"
+PGSQL_OPT="-o /dev/null -O -F -D$PGDATA"
 
 # Create a trigger so that direct updates to pg_shadow will be written
 # to the flat password file pg_pwd

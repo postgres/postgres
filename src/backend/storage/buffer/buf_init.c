@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.34 2000/04/12 17:15:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.35 2000/05/31 00:28:26 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@ long	   *CurTraceBuf;
 #endif	 /* BMTRACE */
 int			ShowPinTrace = 0;
 
-int			NBuffers = DEF_NBUFFERS;	/* default is set in config.h */
 int			Data_Descriptors;
 int			Free_List_Descriptor;
 int			Lookup_List_Descriptor;

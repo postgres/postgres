@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.20 2000/01/26 05:56:33 momjian Exp $
+ * $Id: geqo_main.c,v 1.21 2000/05/31 00:28:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,28 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
+
+#include <time.h>
+#include <math.h>
+
 #include "optimizer/geqo.h"
 #include "optimizer/geqo_misc.h"
 #include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_selection.h"
+
+
+/*
+ * Configuration options
+ */
+int 	    Geqo_pool_size;
+int         Geqo_effort;
+int 		Geqo_generations;
+double		Geqo_selection_bias;
+int         Geqo_random_seed;
+
+
+static int	gimme_pool_size(int nr_rel);
+static int	gimme_number_generations(int pool_size, int effort);
 
 
 /* define edge recombination crossover [ERX] per default */
@@ -81,13 +99,16 @@ geqo(Query *root)
 	number_of_rels = length(root->base_rel_list);
 
 /* set GA parameters */
-	geqo_params(number_of_rels);/* read "$PGDATA/pg_geqo" file */
-	pool_size = PoolSize;
-	number_generations = Generations;
+	pool_size = gimme_pool_size(number_of_rels);
+	number_generations = gimme_number_generations(pool_size, Geqo_effort);
 	status_interval = 10;
 
 /* seed random number generator */
-	srandom(RandomSeed);
+/* XXX why is this done every time around? */
+    if (Geqo_random_seed >= 0)
+        srandom(Geqo_random_seed);
+    else
+        srandom(time(NULL));
 
 /* initialize plan evaluator */
 	geqo_eval_startup();
@@ -146,7 +167,7 @@ geqo(Query *root)
 	{
 
 		/* SELECTION */
-		geqo_selection(momma, daddy, pool, SelectionBias);		/* using linear bias
+		geqo_selection(momma, daddy, pool, Geqo_selection_bias);/* using linear bias
 																 * function */
 
 
@@ -262,4 +283,53 @@ print_plan(best_plan, root);
 	free_pool(pool);
 
 	return best_rel;
+}
+
+
+
+/*
+ * Return either configured pool size or
+ * a good default based on query size (no. of relations)
+ * = 2^(QS+1)
+ * also constrain between 128 and 1024
+ */
+static int
+gimme_pool_size(int nr_rel)
+{
+	double		size;
+
+    if (Geqo_pool_size != 0)
+    {
+        if (Geqo_pool_size < MIN_GEQO_POOL_SIZE)
+            return MIN_GEQO_POOL_SIZE;
+        else if (Geqo_pool_size > MAX_GEQO_POOL_SIZE)
+            return MAX_GEQO_POOL_SIZE;
+        else
+            return Geqo_pool_size;
+    }
+
+	size = pow(2.0, nr_rel + 1.0);
+
+	if (size < MIN_GEQO_POOL_SIZE)
+		return MIN_GEQO_POOL_SIZE;
+	else if (size > MAX_GEQO_POOL_SIZE)
+		return MAX_GEQO_POOL_SIZE;
+	else
+		return (int) ceil(size);
+}
+
+
+
+/*
+ * Return either configured number of generations or
+ * some reasonable default calculated on the fly.
+ * = Effort * Log2(PoolSize)
+ */
+static int
+gimme_number_generations(int pool_size, int effort)
+{
+    if (Geqo_generations <= 0)
+        return effort * (int) ceil(log((double) pool_size) / log(2.0));
+    else
+        return Geqo_generations;
 }

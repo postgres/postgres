@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.27 2000/04/12 17:16:53 momjian Exp $
+ * $Id: tcopprot.h,v 1.28 2000/05/31 00:28:39 petere Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -27,6 +27,9 @@ extern DLLIMPORT sigjmp_buf Warn_restart;
 extern bool Warn_restart_ready;
 extern bool InError;
 extern bool ExitAfterAbort;
+
+extern bool HostnameLookup;
+extern bool ShowPortNumber;
 
 #ifndef BOOTSTRAP_INCLUDE
 
@@ -50,5 +53,6 @@ extern int PostgresMain(int argc, char *argv[],
 			 int real_argc, char *real_argv[]);
 extern void ResetUsage(void);
 extern void ShowUsage(void);
+extern FILE * StatFp;
 
 #endif	 /* TCOPPROT_H */

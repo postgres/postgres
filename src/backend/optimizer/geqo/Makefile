@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.14 2000/05/29 05:44:48 tgl Exp $
+# $Id: Makefile,v 1.15 2000/05/31 00:28:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ CFLAGS+= -Wno-error
 endif
 
 OBJS =	geqo_copy.o geqo_eval.o geqo_main.o geqo_misc.o \
-	geqo_params.o geqo_pool.o geqo_recombination.o \
+	geqo_pool.o geqo_recombination.o \
 	geqo_selection.o \
 	geqo_erx.o geqo_pmx.o geqo_cx.o geqo_px.o geqo_ox1.o geqo_ox2.o
 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.54 2000/04/12 17:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.55 2000/05/31 00:28:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,11 +25,8 @@
 #include "catalog/index.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
-
-#ifdef BTREE_BUILD_STATS
-#define ShowExecutorStats pg_options[TRACE_EXECUTORSTATS]
-#endif
-
+#include "tcop/tcopprot.h"
+#include "utils/guc.h"
 
 bool		BuildingBtree = false;		/* see comment in btbuild() */
 bool		FastBuild = true;	/* use sort/build instead of insertion
@@ -96,9 +93,9 @@ btbuild(Relation heap,
 	usefast = (FastBuild && IsNormalProcessingMode());
 
 #ifdef BTREE_BUILD_STATS
-	if (ShowExecutorStats)
+	if (Show_btree_build_stats)
 		ResetUsage();
-#endif
+#endif /* BTREE_BUILD_STATS */
 
 	/* see if index is unique */
 	isunique = IndexIsUniqueNoCache(RelationGetRelid(index));
@@ -287,13 +284,13 @@ btbuild(Relation heap,
 	}
 
 #ifdef BTREE_BUILD_STATS
-	if (ShowExecutorStats)
+	if (Show_btree_build_stats)
 	{
-		fprintf(stderr, "! BtreeBuild Stats:\n");
+		fprintf(stderr, "BTREE BUILD STATS\n");
 		ShowUsage();
 		ResetUsage();
 	}
-#endif
+#endif /* BTREE_BUILD_STATS */
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats

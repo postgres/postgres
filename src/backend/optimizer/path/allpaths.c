@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.61 2000/05/30 00:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.62 2000/05/31 00:28:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,15 +21,8 @@
 #include "optimizer/paths.h"
 
 
-#ifdef GEQO
 bool		enable_geqo = true;
-
-#else
-bool		enable_geqo = false;
-
-#endif
-
-int			geqo_rels = GEQO_RELS;
+int			geqo_rels = DEFAULT_GEQO_RELS;
 
 
 static void set_base_rel_pathlist(Query *root);

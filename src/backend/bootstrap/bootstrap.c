@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.83 2000/05/30 04:24:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.84 2000/05/31 00:28:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,7 +267,7 @@ BootstrapMain(int argc, char *argv[])
 				Noversion = true;
 				break;
 			case 'F':
-				disableFsync = true;
+				enableFsync = false;
 				break;
 			case 'Q':
 				Quiet = true;

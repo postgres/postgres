@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.16 2000/04/12 17:16:54 momjian Exp $
+ * $Id: elog.h,v 1.17 2000/05/31 00:28:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,10 @@
 #define DEBUG	(-2)			/* debug message */
 #define LOG		DEBUG
 #define NOIND	(-3)			/* debug message, don't indent as far */
+
+#ifdef ENABLE_SYSLOG
+extern int Use_syslog;
+#endif
 
 #ifndef __GNUC__
 extern void elog(int lev, const char *fmt,...);

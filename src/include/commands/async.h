@@ -6,12 +6,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.13 2000/01/26 05:58:00 momjian Exp $
+ * $Id: async.h,v 1.14 2000/05/31 00:28:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ASYNC_H
 #define ASYNC_H
+
+extern bool Trace_notify;
 
 /* notify-related SQL statements */
 extern void Async_Notify(char *relname);

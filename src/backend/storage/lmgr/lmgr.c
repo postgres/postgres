@@ -8,17 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.39 2000/04/12 17:15:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.40 2000/05/31 00:28:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-/* #define LOCKDEBUGALL 1 */
-/* #define LOCKDEBUG	1 */
-
-#ifdef	LOCKDEBUGALL
-#define LOCKDEBUG		1
-#endif	 /* LOCKDEBUGALL */
-
 
 #include "postgres.h"
 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.56 2000/05/29 19:16:55 tgl Exp $
+ * $Id: miscadmin.h,v 1.57 2000/05/31 00:28:36 petere Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -27,7 +27,6 @@
 
 #include "postgres.h"
 
-#include "utils/trace.h"
 
 /*****************************************************************************
  *	  globals.h --															 *
@@ -102,11 +101,19 @@ extern char CTZName[];
 extern char FloatFormat[];
 extern char DateFormat[];
 
-#define disableFsync	pg_options[OPT_NOFSYNC]
+extern bool enableFsync;
 extern bool allowSystemTableMods;
 extern int	SortMem;
 
 extern Oid	LastOidProcessed;	/* for query rewrite */
+
+/* a few postmaster startup options are exported here so the
+   configuration file processor has access to them */
+
+extern bool NetServer;
+extern int MaxBackends;
+extern int NBuffers;
+extern int PostPortName;
 
 /*****************************************************************************
  *	  pdir.h --																 *

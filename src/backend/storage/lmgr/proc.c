@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.73 2000/05/30 00:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.74 2000/05/31 00:28:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.73 2000/05/30 00:49:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.74 2000/05/31 00:28:30 petere Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -66,13 +66,14 @@
 /* In Ultrix and QNX, sem.h must be included after ipc.h */
 #include <sys/sem.h>
 
+#include "storage/lock.h"
 #include "storage/proc.h"
 
 void		HandleDeadLock(SIGNAL_ARGS);
 static void ProcFreeAllSemaphores(void);
 static bool GetOffWaitqueue(PROC *);
 
-#define DeadlockCheckTimer pg_options[OPT_DEADLOCKTIMEOUT]
+int DeadlockTimeout = 1000;
 
 /* --------------------
  * Spin lock for manipulating the shared process data structure:
@@ -633,8 +634,8 @@ ins:;
 	 * --------------
 	 */
 	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = \
-		(DeadlockCheckTimer ? DeadlockCheckTimer : DEADLOCK_CHECK_TIMER);
+	timeval.it_value.tv_sec = DeadlockTimeout / 1000;
+	timeval.it_value.tv_usec = (DeadlockTimeout % 1000) * 1000;
 
 	SetWaitingForLock(true);
 	do
@@ -663,6 +664,7 @@ ins:;
 	 * ---------------
 	 */
 	timeval.it_value.tv_sec = 0;
+	timeval.it_value.tv_usec = 0;
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))
 		elog(FATAL, "ProcSleep: Unable to diable timer for process wakeup");
 
@@ -675,7 +677,7 @@ ins:;
 
 rt:;
 
-#ifdef LOCK_MGR_DEBUG
+#ifdef LOCK_DEBUG
 	/* Just to get meaningful debug messages from DumpLocks() */
 	MyProc->waitLock = (LOCK *) NULL;
 #endif
@@ -723,7 +725,6 @@ ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 {
 	PROC	   *proc;
 	int			count = 0;
-	int			trace_flag;
 	int			last_locktype = 0;
 	int			queue_size = queue->size;
 
@@ -783,14 +784,13 @@ ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 	else
 	{
 		/* Something is still blocking us.	May have deadlocked. */
-		trace_flag = (lock->tag.lockmethod == USER_LOCKMETHOD) ? \
-			TRACE_USERLOCKS : TRACE_LOCKS;
-		TPRINTF(trace_flag,
-				"ProcLockWakeup: lock(%x) can't wake up any process",
-				MAKE_OFFSET(lock));
-#ifdef DEADLOCK_DEBUG
-		if (pg_options[trace_flag] >= 2)
+#ifdef LOCK_DEBUG
+		if (lock->tag.lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
+		{
+			elog(DEBUG, "ProcLockWakeup: lock(%lx) can't wake up any process", MAKE_OFFSET(lock));
+			if (Debug_deadlocks)
 			DumpAllLocks();
+		}
 #endif
 		return STATUS_NOT_FOUND;
 	}
@@ -803,7 +803,7 @@ ProcAddLock(SHM_QUEUE *elem)
 }
 
 /* --------------------
- * We only get to this routine if we got SIGALRM after DEADLOCK_CHECK_TIMER
+ * We only get to this routine if we got SIGALRM after DeadlockTimeout
  * while waiting for a lock to be released by some other process.  If we have
  * a real deadlock, we must also indicate that I'm no longer waiting
  * on a lock so that other processes don't try to wake me up and screw
@@ -852,8 +852,9 @@ HandleDeadLock(SIGNAL_ARGS)
 		return;
 	}
 
-#ifdef DEADLOCK_DEBUG
-	DumpAllLocks();
+#ifdef LOCK_DEBUG
+    if (Debug_deadlocks)
+        DumpAllLocks();
 #endif
 
 	MyProc->errType = STATUS_NOT_FOUND;

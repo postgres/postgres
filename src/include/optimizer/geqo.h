@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.18 2000/01/26 05:58:20 momjian Exp $
+ * $Id: geqo.h,v 1.19 2000/05/31 00:28:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,31 +41,28 @@
  */
 #define ERX
 
-/* genetic algorithm parameters */
 
-#define GEQO_FILE "pg_geqo"		/* Name of the ga config file */
+/*
+ * Configuration options
+ */
+extern int  	    Geqo_pool_size;
+#define DEFAULT_GEQO_POOL_SIZE 0 /* = default based on no. of relations. */
+#define MIN_GEQO_POOL_SIZE 128
+#define MAX_GEQO_POOL_SIZE 1024
 
-#define MIN_POOL 128			/* minimum number of individuals */
-#define MAX_POOL 1024			/* maximum number of individuals */
+extern int          Geqo_effort; /* 1 .. inf, only used to calculate generations default */
+extern int  	    Geqo_generations; /* 1 .. inf, or 0 to use default based on pool size */
 
-#define LOW_EFFORT 1			/* optimization effort values */
-#define MEDIUM_EFFORT 40		/* are multipliers for computed */
-#define HIGH_EFFORT 80			/* number of generations */
+extern double 		Geqo_selection_bias;
+#define DEFAULT_GEQO_SELECTION_BIAS 2.0
+#define MIN_GEQO_SELECTION_BIAS 1.5
+#define MAX_GEQO_SELECTION_BIAS 2.0
 
-#define SELECTION_BIAS 2.0		/* selective pressure within population */
- /* should be 1.5 <= SELECTION_BIAS <= 2.0 */
+extern int          Geqo_random_seed; /* or negative to use current time */
 
-/* parameter values set in geqo_params.c */
-extern int	PoolSize;
-extern int	Generations;
-extern long RandomSeed;
-extern double SelectionBias;
 
 /* routines in geqo_main.c */
 extern RelOptInfo *geqo(Query *root);
-
-/* routines in geqo_params.c */
-extern void geqo_params(int string_length);
 
 /* routines in geqo_eval.c */
 extern void geqo_eval_startup(void);

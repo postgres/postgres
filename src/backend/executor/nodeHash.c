@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.45 2000/04/18 05:43:01 tgl Exp $
+ *	$Id: nodeHash.c,v 1.46 2000/05/31 00:28:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +27,8 @@
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
+#include "miscadmin.h"
 #include "utils/portal.h"
-
-extern int	SortMem;
 
 static int	hashFunc(Datum key, int len, bool byVal);
 

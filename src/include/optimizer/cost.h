@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.32 2000/04/12 17:16:42 momjian Exp $
+ * $Id: cost.h,v 1.33 2000/05/31 00:28:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,10 @@
 
 /* parameter variables and flags */
 extern double effective_cache_size;
-extern Cost random_page_cost;
-extern Cost cpu_tuple_cost;
-extern Cost cpu_index_tuple_cost;
-extern Cost cpu_operator_cost;
+extern double random_page_cost;
+extern double cpu_tuple_cost;
+extern double cpu_index_tuple_cost;
+extern double cpu_operator_cost;
 extern Cost disable_cost;
 extern bool enable_seqscan;
 extern bool enable_indexscan;

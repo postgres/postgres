@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.92 2000/05/26 01:26:19 tgl Exp $
+ *	$Id: pqcomm.c,v 1.93 2000/05/31 00:28:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@
 #include "postgres.h"
 
 #include "libpq/libpq.h"
-#include "utils/trace.h"		/* needed for HAVE_FCNTL_SETLK */
 #include "miscadmin.h"
 
 
@@ -130,7 +129,7 @@ pq_getport(void)
 
 	if (envport)
 		return atoi(envport);
-	return atoi(DEF_PGPORT);
+	return DEF_PGPORT;
 }
 
 /* --------------------------------
@@ -246,13 +245,8 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 			lck.l_whence = SEEK_SET;
 			lck.l_start = lck.l_len = 0;
 			lck.l_type = F_WRLCK;
-			if (fcntl(lock_fd, F_SETLK, &lck) == 0)
-			{
-				TPRINTF(TRACE_VERBOSE, "flock on %s, deleting", sock_path);
+			if (fcntl(lock_fd, F_SETLK, &lck) != -1)
 				unlink(sock_path);
-			}
-			else
-				TPRINTF(TRACE_VERBOSE, "flock failed for %s", sock_path);
 			close(lock_fd);
 		}
 #endif	 /* HAVE_FCNTL_SETLK */
@@ -305,7 +299,7 @@ StreamServerPort(char *hostName, unsigned short portName, int *fdP)
 			lck.l_start = lck.l_len = 0;
 			lck.l_type = F_WRLCK;
 			if (fcntl(lock_fd, F_SETLK, &lck) != 0)
-				TPRINTF(TRACE_VERBOSE, "flock error for %s", sock_path);
+				elog(DEBUG, "flock error on %s: %s", sock_path, strerror(errno));
 		}
 #endif	 /* HAVE_FCNTL_SETLK */
 	}

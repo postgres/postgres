@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.52 2000/04/12 17:14:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.53 2000/05/31 00:28:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,10 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "tcop/tcopprot.h"
+#include "utils/guc.h"
 #include "utils/tuplesort.h"
 
-
-#ifdef BTREE_BUILD_STATS
-#define ShowExecutorStats pg_options[TRACE_EXECUTORSTATS]
-#endif
 
 /*
  * turn on debugging output.
@@ -136,13 +134,13 @@ void
 _bt_leafbuild(BTSpool *btspool)
 {
 #ifdef BTREE_BUILD_STATS
-	if (ShowExecutorStats)
+	if (Show_btree_build_stats)
 	{
-		fprintf(stderr, "! BtreeBuild (Spool) Stats:\n");
+		fprintf(StatFp, "BTREE BUILD (Spool) STATISTICS\n");
 		ShowUsage();
 		ResetUsage();
 	}
-#endif
+#endif /* BTREE_BUILD_STATS */
 	tuplesort_performsort(btspool->sortstate);
 
 	_bt_load(btspool->index, btspool);

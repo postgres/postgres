@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.11 2000/01/26 05:58:33 momjian Exp $
+ * $Id: spin.h,v 1.12 2000/05/31 00:28:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,10 @@
  */
 
 typedef int SPINLOCK;
+
+#ifdef LOCK_DEBUG
+extern bool Trace_spinlocks;
+#endif
 
 extern void CreateSpinlocks(IPCKey key);
 extern void InitSpinLocks(void);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.30 2000/04/12 17:16:51 momjian Exp $
+ * $Id: proc.h,v 1.31 2000/05/31 00:28:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,9 @@
 
 #include "access/xlog.h"
 #include "storage/lock.h"
+
+/* configurable option */
+extern int DeadlockTimeout;
 
 typedef struct
 {

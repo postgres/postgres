@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.24 2000/04/12 17:15:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.25 2000/05/31 00:28:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 
 #include "storage/proc.h"
 #include "storage/s_lock.h"
+
 
 /* globals used in this file */
 IpcSemaphoreId SpinLockId;
@@ -84,14 +85,23 @@ InitSpinLocks(void)
 	return;
 }
 
-#ifdef LOCKDEBUG
-#define PRINT_LOCK(LOCK) \
-	TPRINTF(TRACE_SPINLOCKS, \
-			"(locklock = %d, flag = %d, nshlocks = %d, shlock = %d, " \
-			"exlock =%d)\n", LOCK->locklock, \
-			LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
-			LOCK->exlock)
-#endif
+
+#ifdef LOCK_DEBUG
+bool Trace_spinlocks = false;
+
+inline static void
+PRINT_SLDEBUG(const char * where, SPINLOCK lockid, const SLock * lock)
+{
+    if (Trace_spinlocks)
+        elog(DEBUG,
+             "%s: id=%d (locklock=%d, flag=%d, nshlocks=%d, shlock=%d, exlock=%d)",
+             where, lockid,
+             lock->locklock, lock->flag, lock->nshlocks, lock->shlock, lock->exlock);
+}
+#else  /* not LOCK_DEBUG */
+#define PRINT_SLDEBUG(a,b,c)
+#endif /* not LOCK_DEBUG */
+
 
 /* from ipc.c */
 extern SLock *SLockArray;
@@ -103,10 +113,7 @@ SpinAcquire(SPINLOCK lockid)
 
 	/* This used to be in ipc.c, but move here to reduce function calls */
 	slckP = &(SLockArray[lockid]);
-#ifdef LOCKDEBUG
-	TPRINTF(TRACE_SPINLOCKS, "SpinAcquire: %d", lockid);
-	PRINT_LOCK(slckP);
-#endif
+	PRINT_SLDEBUG("SpinAcquire", lockid, slckP);
 ex_try_again:
 	S_LOCK(&(slckP->locklock));
 	switch (slckP->flag)
@@ -116,10 +123,7 @@ ex_try_again:
 			S_LOCK(&(slckP->exlock));
 			S_LOCK(&(slckP->shlock));
 			S_UNLOCK(&(slckP->locklock));
-#ifdef LOCKDEBUG
-			TPRINTF(TRACE_SPINLOCKS, "OUT: ");
-			PRINT_LOCK(slckP);
-#endif
+            PRINT_SLDEBUG("OUT", lockid, slckP);
 			break;
 		case SHAREDLOCK:
 		case EXCLUSIVELOCK:
@@ -129,9 +133,7 @@ ex_try_again:
 			goto ex_try_again;
 	}
 	PROC_INCR_SLOCK(lockid);
-#ifdef LOCKDEBUG
-	TPRINTF(TRACE_SPINLOCKS, "SpinAcquire: got %d", lockid);
-#endif
+    PRINT_SLDEBUG("SpinAcquire/success", lockid, slckP);
 }
 
 void
@@ -142,23 +144,16 @@ SpinRelease(SPINLOCK lockid)
 	/* This used to be in ipc.c, but move here to reduce function calls */
 	slckP = &(SLockArray[lockid]);
 
-#ifdef USE_ASSERT_CHECKING
-
 	/*
 	 * Check that we are actually holding the lock we are releasing. This
 	 * can be done only after MyProc has been initialized.
 	 */
-	if (MyProc)
-		Assert(MyProc->sLocks[lockid] > 0);
+    Assert(!MyProc || MyProc->sLocks[lockid] > 0);
 	Assert(slckP->flag != NOLOCK);
-#endif
+
 
 	PROC_DECR_SLOCK(lockid);
-
-#ifdef LOCKDEBUG
-	TPRINTF("SpinRelease: %d\n", lockid);
-	PRINT_LOCK(slckP);
-#endif
+    PRINT_SLDEBUG("SpinRelease", lockid, slckP);
 	S_LOCK(&(slckP->locklock));
 	/* -------------
 	 *	give favor to read processes
@@ -178,13 +173,10 @@ SpinRelease(SPINLOCK lockid)
 		S_UNLOCK(&(slckP->shlock));
 	S_UNLOCK(&(slckP->exlock));
 	S_UNLOCK(&(slckP->locklock));
-#ifdef LOCKDEBUG
-	TPRINTF(TRACE_SPINLOCKS, "SpinRelease: released %d", lockid);
-	PRINT_LOCK(slckP);
-#endif
+    PRINT_SLDEBUG("SpinRelease/released", lockid, slckP);
 }
 
-#else							/* HAS_TEST_AND_SET */
+#else /* !HAS_TEST_AND_SET */
 /* Spinlocks are implemented using SysV semaphores */
 
 static bool AttachSpinLocks(IPCKey key);
@@ -290,4 +282,4 @@ InitSpinLocks(void)
 	return;
 }
 
-#endif	 /* HAS_TEST_AND_SET */
+#endif /* !HAS_TEST_AND_SET */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.61 2000/05/28 17:55:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.62 2000/05/31 00:28:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@
 #include "utils/fmgroids.h"
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
-#include "utils/trace.h"
+
 
 /* stuff that we really ought not be touching directly :-( */
 extern TransactionState CurrentTransactionState;
@@ -128,6 +128,8 @@ static void NotifyMyFrontEnd(char *relname, int32 listenerPID);
 static int	AsyncExistsPendingNotify(char *relname);
 static void ClearPendingNotifies(void);
 
+bool Trace_notify = false;
+
 
 /*
  *--------------------------------------------------------------
@@ -149,7 +151,8 @@ Async_Notify(char *relname)
 {
 	char	   *notifyName;
 
-	TPRINTF(TRACE_NOTIFY, "Async_Notify: %s", relname);
+	if (Trace_notify)
+		elog(DEBUG, "Async_Notify: %s", relname);
 
 	if (!pendingNotifies)
 		pendingNotifies = DLNewList();
@@ -202,7 +205,8 @@ Async_Listen(char *relname, int pid)
 	int			alreadyListener = 0;
 	TupleDesc	tupDesc;
 
-	TPRINTF(TRACE_NOTIFY, "Async_Listen: %s", relname);
+	if (Trace_notify)
+		elog(DEBUG, "Async_Listen: %s", relname);
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
@@ -304,7 +308,8 @@ Async_Unlisten(char *relname, int pid)
 		return;
 	}
 
-	TPRINTF(TRACE_NOTIFY, "Async_Unlisten %s", relname);
+	if (Trace_notify)
+		elog(DEBUG, "Async_Unlisten %s", relname);
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	/* Note we assume there can be only one matching tuple. */
@@ -346,7 +351,8 @@ Async_UnlistenAll()
 	HeapTuple	lTuple;
 	ScanKeyData key[1];
 
-	TPRINTF(TRACE_NOTIFY, "Async_UnlistenAll");
+	if (Trace_notify)
+		elog(DEBUG, "Async_UnlistenAll");
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
@@ -452,7 +458,8 @@ AtCommit_Notify()
 		return;
 	}
 
-	TPRINTF(TRACE_NOTIFY, "AtCommit_Notify");
+	if (Trace_notify)
+		elog(DEBUG, "AtCommit_Notify");
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
@@ -485,13 +492,16 @@ AtCommit_Notify()
 				 * be bad for applications that ignore self-notify
 				 * messages.
 				 */
-				TPRINTF(TRACE_NOTIFY, "AtCommit_Notify: notifying self");
+
+				if (Trace_notify)
+					elog(DEBUG, "AtCommit_Notify: notifying self");
+
 				NotifyMyFrontEnd(relname, listenerPID);
 			}
 			else
 			{
-				TPRINTF(TRACE_NOTIFY, "AtCommit_Notify: notifying pid %d",
-						listenerPID);
+				if (Trace_notify)
+					elog(DEBUG, "AtCommit_Notify: notifying pid %d", listenerPID);
 
 				/*
 				 * If someone has already notified this listener, we don't
@@ -551,7 +561,8 @@ AtCommit_Notify()
 
 	ClearPendingNotifies();
 
-	TPRINTF(TRACE_NOTIFY, "AtCommit_Notify: done");
+	if (Trace_notify)
+		elog(DEBUG, "AtCommit_Notify: done");
 }
 
 /*
@@ -624,10 +635,13 @@ Async_NotifyHandler(SIGNAL_ARGS)
 			if (notifyInterruptOccurred)
 			{
 				/* Here, it is finally safe to do stuff. */
-				TPRINTF(TRACE_NOTIFY,
-						"Async_NotifyHandler: perform async notify");
+				if (Trace_notify)
+					elog(DEBUG, "Async_NotifyHandler: perform async notify");
+
 				ProcessIncomingNotify();
-				TPRINTF(TRACE_NOTIFY, "Async_NotifyHandler: done");
+
+				if (Trace_notify)
+					elog(DEBUG, "Async_NotifyHandler: done");
 			}
 		}
 	}
@@ -693,10 +707,13 @@ EnableNotifyInterrupt(void)
 		notifyInterruptEnabled = 0;
 		if (notifyInterruptOccurred)
 		{
-			TPRINTF(TRACE_NOTIFY,
-					"EnableNotifyInterrupt: perform async notify");
+			if (Trace_notify)
+				elog(DEBUG, "EnableNotifyInterrupt: perform async notify");
+
 			ProcessIncomingNotify();
-			TPRINTF(TRACE_NOTIFY, "EnableNotifyInterrupt: done");
+
+			if (Trace_notify)
+				elog(DEBUG, "EnableNotifyInterrupt: done");
 		}
 	}
 }
@@ -751,7 +768,9 @@ ProcessIncomingNotify(void)
 	char	   *relname;
 	int32		sourcePID;
 
-	TPRINTF(TRACE_NOTIFY, "ProcessIncomingNotify");
+	if (Trace_notify)
+		elog(DEBUG, "ProcessIncomingNotify");
+
 	PS_SET_STATUS("async_notify");
 
 	notifyInterruptOccurred = 0;
@@ -784,8 +803,11 @@ ProcessIncomingNotify(void)
 			d = heap_getattr(lTuple, Anum_pg_listener_relname, tdesc, &isnull);
 			relname = (char *) DatumGetPointer(d);
 			/* Notify the frontend */
-			TPRINTF(TRACE_NOTIFY, "ProcessIncomingNotify: received %s from %d",
+
+			if (Trace_notify)
+				elog(DEBUG, "ProcessIncomingNotify: received %s from %d",
 					relname, (int) sourcePID);
+
 			NotifyMyFrontEnd(relname, sourcePID);
 			/* Rewrite the tuple with 0 in notification column */
 			rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);
@@ -820,7 +842,9 @@ ProcessIncomingNotify(void)
 	pq_flush();
 
 	PS_SET_STATUS("idle");
-	TPRINTF(TRACE_NOTIFY, "ProcessIncomingNotify: done");
+
+	if (Trace_notify)
+		elog(DEBUG, "ProcessIncomingNotify: done");
 }
 
 /* Send NOTIFY message to my front end. */

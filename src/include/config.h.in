@@ -8,11 +8,12 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.113 2000/05/12 13:58:25 scrappy Exp $
+ * $Id: config.h.in,v 1.114 2000/05/31 00:28:36 petere Exp $
  */
 
 #ifndef CONFIG_H
 #define CONFIG_H
+
 
 /*
  * Default runtime limit on number of backend server processes per postmaster;
@@ -62,14 +63,6 @@
 #define RELSEG_SIZE	(0x40000000 / BLCKSZ)
 
 /*
- * As soon as the backend blocks on a lock, it waits this number of seconds
- * before checking for a deadlock.
- * We don't check for deadlocks just before sleeping because a deadlock is
- * a rare event, and checking is an expensive operation.
- */
-#define DEADLOCK_CHECK_TIMER 1
-
-/*
  * Maximum number of columns in an index and maximum number of arguments
  * to a function. They must be the same value.
  *
@@ -113,16 +106,6 @@
  */
 #define USER_LOCKS
 
-/* Genetic Query Optimization (GEQO):
- * 
- * The GEQO module in PostgreSQL is intended for the solution of the
- * query optimization problem by means of a Genetic Algorithm (GA).
- * It allows the handling of large JOIN queries through non-exhaustive
- * search.
- * For further information see README.GEQO <utesch@aut.tu-freiberg.de>.
- */
-#define GEQO
-
 /*
  * Define this if you want psql to _always_ ask for a username and a password
  * for password authentication.
@@ -163,13 +146,7 @@
  */
 /* #define ELOG_TIMESTAMPS */
 
-/*
- * USE_SYSLOG: use syslog for elog and error messages printed by tprintf
- * and eprintf. This must be activated with the syslog flag in pg_options
- * (syslog=0 for stdio, syslog=1 for stdio+syslog, syslog=2 for syslog).
- * For information see backend/utils/misc/trace.c (Massimo Dal Zotto).
- */
-/* #define USE_SYSLOG */
+#undef ENABLE_SYSLOG
 
 /* Debug #defines */
 /* #define IPORTAL_DEBUG  */
@@ -183,6 +160,7 @@
 /* #define NO_BUFFERISVALID   */
 /* #define NO_SECURITY        */
 /* #define OLD_REWRITE        */
+/* #define LOCK_DEBUG */
 
 /*
  * MAXPGPATH: standard size of a pathname buffer in Postgres (hence,
@@ -225,7 +203,9 @@
  * default.  This can be overriden by command options, environment variables,
  * and the postconfig hook. (now set by configure script)
  */ 
-#undef DEF_PGPORT 
+#undef DEF_PGPORT
+/* ... and once more as a string constant instead */
+#undef DEF_PGPORT_STR
 
 /* Define const as empty if your compiler doesn't grok const. */
 #undef const

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.72 2000/05/29 05:44:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.73 2000/05/31 00:28:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,6 +176,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"nullif", NULLIF},
 	{"numeric", NUMERIC},
 	{"of", OF},
+	{"off", OFF},
 	{"offset", OFFSET},
 	{"oids", OIDS},
 	{"old", CURRENT},

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.60 2000/05/30 04:24:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.61 2000/05/31 00:28:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,11 +63,11 @@
 #define LOG6(x)  (log(x) / 1.79175946922805)
 
 
-double		effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
-Cost		random_page_cost = DEFAULT_RANDOM_PAGE_COST;
-Cost		cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
-Cost		cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
-Cost		cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
+double      effective_cache_size = DEFAULT_EFFECTIVE_CACHE_SIZE;
+double      random_page_cost = DEFAULT_RANDOM_PAGE_COST;
+double      cpu_tuple_cost = DEFAULT_CPU_TUPLE_COST;
+double      cpu_index_tuple_cost = DEFAULT_CPU_INDEX_TUPLE_COST;
+double      cpu_operator_cost = DEFAULT_CPU_OPERATOR_COST;
 
 Cost		disable_cost = 100000000.0;
 

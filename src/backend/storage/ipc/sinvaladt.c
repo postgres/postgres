@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.31 2000/05/30 00:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.32 2000/05/31 00:28:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,8 +268,8 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidData *data)
 	if (numMsgs == (MAXNUMMESSAGES * 70 / 100) &&
 		IsUnderPostmaster)
 	{
-		TPRINTF(TRACE_VERBOSE,
-		  "SIInsertDataEntry: table is 70%% full, signaling postmaster");
+		if (DebugLvl >= 1)
+			elog(DEBUG, "SIInsertDataEntry: table is 70%% full, signaling postmaster");
 		kill(getppid(), SIGUSR2);
 	}
 

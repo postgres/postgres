@@ -45,6 +45,13 @@ rm -f bootstrap_tokens.h bootparse.c bootscanner.c
 $MAKE bootstrap_tokens.h bootparse.c bootscanner.c
 cd ../..
 
+# Generate configuration file scanner
+
+cd backend/utils/misc
+rm -f guc-file.c lex.yy.c
+$MAKE guc-file.c
+cd ../../..
+
 # Generate ecpg preprocessor's yacc and lex files
 
 cd interfaces/ecpg/preproc

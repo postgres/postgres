@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.143 2000/05/26 01:38:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.144 2000/05/31 00:28:25 petere Exp $
  *
  * NOTES
  *
@@ -90,7 +90,7 @@
 #include "storage/proc.h"
 #include "access/xlog.h"
 #include "tcop/tcopprot.h"
-#include "utils/trace.h"
+#include "utils/guc.h"
 #include "version.h"
 
 /*
@@ -136,7 +136,7 @@ static Dllist *BackendList;
 /* list of ports associated with still open, but incomplete connections */
 static Dllist *PortList;
 
-static unsigned short PostPortName = 0;
+int PostPortName = DEF_PGPORT;
 
  /*
   * This is a boolean indicating that there is at least one backend that
@@ -167,7 +167,7 @@ static IpcMemoryKey ipc_key;
   * adding to this.
   */
 
-static int	MaxBackends = DEF_MAXBACKENDS;
+int	MaxBackends = DEF_MAXBACKENDS;
 
  /*
   * MaxBackends is the actual limit on the number of backends we will
@@ -184,6 +184,9 @@ static char **real_argv;
 static int	real_argc;
 
 static time_t tnow;
+
+/* flag to indicate that SIGHUP arrived during server loop */
+static volatile bool got_SIGHUP = false;
 
 /*
  * Default Values
@@ -217,8 +220,7 @@ static char ExtraOptions[MAXPGPATH];
 static bool Reinit = true;
 static int	SendStop = false;
 
-static bool NetServer = false;	/* if not zero, postmaster listen for
-								 * non-local connections */
+bool NetServer = false;	/* listen on TCP/IP */
 
 #ifdef USE_SSL
 static bool SecureNetServer = false;	/* if not zero, postmaster listens
@@ -256,7 +258,8 @@ extern int	optind,
 static void pmdaemonize(char *extraoptions);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
-static void reset_shared(unsigned short port);
+static void reset_shared(int port);
+static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
@@ -368,7 +371,6 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 int
 PostmasterMain(int argc, char *argv[])
 {
-	extern int	NBuffers;		/* from buffer/bufmgr.c */
 	int			opt;
 	char	   *hostName;
 	int			status;
@@ -431,6 +433,8 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	umask((mode_t) 0077);
 
+    ResetAllOptions();
+
 	if (!(hostName = getenv("PGHOST")))
 	{
 		if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
@@ -441,9 +445,38 @@ PostmasterMain(int argc, char *argv[])
 	MyProcPid = getpid();
 	DataDir = getenv("PGDATA"); /* default value */
 
-	opterr = 0;
+    /*
+     * First we must scan for a -D argument to get the data dir. Then
+     * read the config file. Finally, scan all the other arguments.
+     * (Command line switches override config file.)
+	 *
+	 * Note: The two lists of options must be exactly the same, even
+	 * though perhaps the first one would only have to be "D:" with
+	 * opterr turned off. But some versions of getopt (notably GNU)
+	 * are going to arbitrarily permute some "non-options" (according
+	 * to the local world view) which will result in some switches
+	 * being associated with the wrong argument. Death and destruction
+	 * will occur.
+     */
+	opterr = 1;
+	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
+    {
+        if (opt == 'D')
+            DataDir = optarg;
+    }
+
+    optind = 1; /* start over */
+	checkDataDir(DataDir, &DataDirOK);	/* issues error messages */
+	if (!DataDirOK)
+	{
+		fprintf(stderr, "No data directory -- can't proceed.\n");
+		exit(2);
+	}
+
+    ProcessConfigFile(PGC_POSTMASTER);
+
 	IgnoreSystemIndexes(false);
-	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:ilm:MN:no:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:d:Film:MN:no:p:Ss-:")) != EOF)
 	{
 		switch (opt)
 		{
@@ -464,15 +497,7 @@ PostmasterMain(int argc, char *argv[])
 				/* Can no longer set authentication method. */
 				break;
 			case 'B':
-
-				/*
-				 * The number of buffers to create.  Setting this option
-				 * means we have to start each backend with a -B # to make
-				 * sure they know how many buffers were allocated.
-				 */
 				NBuffers = atoi(optarg);
-				strcat(ExtraOptions, " -B ");
-				strcat(ExtraOptions, optarg);
 				break;
 			case 'b':
 				/* Set the backend executable file to use. */
@@ -486,8 +511,7 @@ PostmasterMain(int argc, char *argv[])
 				}
 				break;
 			case 'D':
-				/* Set PGDATA from the command line. */
-				DataDir = optarg;
+                /* already done above */
 				break;
 			case 'd':
 
@@ -496,8 +520,10 @@ PostmasterMain(int argc, char *argv[])
 				 * servers descended from it.
 				 */
 				DebugLvl = atoi(optarg);
-				pg_options[TRACE_VERBOSE] = DebugLvl;
 				break;
+            case 'F':
+                enableFsync = false;
+                break;
 			case 'i':
 				NetServer = true;
 				break;
@@ -545,7 +571,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'p':
 				/* Set PGPORT by hand. */
-				PostPortName = (unsigned short) atoi(optarg);
+				PostPortName = atoi(optarg);
 				break;
 			case 'S':
 
@@ -567,6 +593,21 @@ PostmasterMain(int argc, char *argv[])
 				 */
 				SendStop = true;
 				break;
+            case '-':
+            {
+                /* A little 'long argument' simulation */
+                size_t equal_pos = strcspn(optarg, "=");
+                char *cp;
+
+                if (optarg[equal_pos] != '=')
+                    elog(ERROR, "--%s requires argument", optarg);
+                optarg[equal_pos] = '\0';
+                for(cp = optarg; *cp; cp++)
+                    if (*cp == '-')
+                        *cp = '_';
+                SetConfigOption(optarg, optarg + equal_pos + 1, PGC_POSTMASTER);
+                break;
+            }
 			default:
 				/* usage() never returns */
 				usage(progname);
@@ -574,11 +615,8 @@ PostmasterMain(int argc, char *argv[])
 		}
 	}
 
-	/*
-	 * Select default values for switches where needed
-	 */
 	if (PostPortName == 0)
-		PostPortName = (unsigned short) pq_getport();
+		PostPortName = pq_getport();
 
 	/*
 	 * Check for invalid combinations of switches
@@ -594,13 +632,6 @@ PostmasterMain(int argc, char *argv[])
 		fprintf(stderr, "%s: -B must be at least twice -N and at least 16.\n",
 				progname);
 		exit(1);
-	}
-
-	checkDataDir(DataDir, &DataDirOK);	/* issues error messages */
-	if (!DataDirOK)
-	{
-		fprintf(stderr, "No data directory -- can't proceed.\n");
-		exit(2);
 	}
 
 	if (!Execfile[0] && FindExec(Execfile, argv[0], "postgres") < 0)
@@ -622,7 +653,7 @@ PostmasterMain(int argc, char *argv[])
 
 	if (NetServer)
 	{
-		status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
+		status = StreamServerPort(hostName, (unsigned short)PostPortName, &ServerSock_INET);
 		if (status != STATUS_OK)
 		{
 			fprintf(stderr, "%s: cannot create INET stream port\n",
@@ -632,7 +663,7 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #if !defined(__CYGWIN32__) && !defined(__QNX__)
-	status = StreamServerPort(NULL, PostPortName, &ServerSock_UNIX);
+	status = StreamServerPort(NULL, (unsigned short)PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
 		fprintf(stderr, "%s: cannot create UNIX stream port\n",
@@ -707,7 +738,7 @@ PostmasterMain(int argc, char *argv[])
 	PG_INITMASK();
 	PG_SETMASK(&BlockSig);
 
-	pqsignal(SIGHUP, pmdie);	/* send SIGHUP, don't die */
+	pqsignal(SIGHUP, SIGHUP_handler);	/* reread config file and have children do same */
 	pqsignal(SIGINT, pmdie);	/* send SIGTERM and ShutdownDataBase */
 	pqsignal(SIGQUIT, pmdie);	/* send SIGUSR1 and die */
 	pqsignal(SIGTERM, pmdie);	/* wait for children and ShutdownDataBase */
@@ -1066,6 +1097,12 @@ ServerLoop(void)
 
 			curr = next;
 		}
+
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
 	}
 }
 
@@ -1321,7 +1358,7 @@ ConnFree(Port *conn)
  * reset_shared -- reset shared memory and semaphores
  */
 static void
-reset_shared(unsigned short port)
+reset_shared(int port)
 {
 	ipc_key = port * 1000 + shmem_seq * 100;
 	CreateSharedMemoryAndSemaphores(ipc_key, MaxBackends);
@@ -1329,6 +1366,23 @@ reset_shared(unsigned short port)
 	if (shmem_seq >= 10)
 		shmem_seq -= 10;
 }
+
+
+/*
+ * set flag is SIGHUP was detected so config file can be reread in
+ * main loop
+ */
+static void
+SIGHUP_handler(SIGNAL_ARGS)
+{
+	got_SIGHUP = true;
+	if (Shutdown > SmartShutdown)
+		return;
+	got_SIGHUP = true;
+	SignalChildren(SIGHUP);
+}
+
+
 
 /*
  * pmdie -- signal handler for cleaning up after a kill signal.
@@ -1338,19 +1392,11 @@ pmdie(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
 
-	TPRINTF(TRACE_VERBOSE, "pmdie %d", postgres_signal_arg);
+	if (DebugLvl >= 1)
+		elog(DEBUG, "pmdie %d", postgres_signal_arg);
 
 	switch (postgres_signal_arg)
 	{
-		case SIGHUP:
-
-			/*
-			 * Send SIGHUP to all children (update options flags)
-			 */
-			if (Shutdown > SmartShutdown)
-				return;
-			SignalChildren(SIGHUP);
-			return;
 		case SIGUSR2:
 
 			/*
@@ -1679,9 +1725,10 @@ SignalChildren(int signal)
 
 		if (bp->pid != mypid)
 		{
-			TPRINTF(TRACE_VERBOSE,
-					"SignalChildren: sending signal %d to process %d",
-					signal, bp->pid);
+			if (DebugLvl >= 1)
+				elog(DEBUG, "SignalChildren: sending signal %d to process %d",
+					 signal, bp->pid);
+
 			kill(bp->pid, signal);
 		}
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.168 2000/05/25 22:42:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.169 2000/05/31 00:28:24 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -323,7 +323,8 @@ static void doNegateFloat(Value *v);
 		IMMEDIATE, INITIALLY,
 		PENDANT,
 		RESTRICT,
-		TRIGGER
+		TRIGGER,
+		OFF
 
 /* Keywords (in SQL92 non-reserved words) */
 %token	COMMITTED, SERIALIZABLE, TYPE_P
@@ -715,67 +716,63 @@ opt_level:  READ COMMITTED					{ $$ = "committed"; }
 		| SERIALIZABLE						{ $$ = "serializable"; }
 		;
 
-var_value:  Sconst
-				{
-					/* Plain old string (pointer to char) */
-					$$ = $1;
-				}
-		| FCONST
-				{
-					/* Floating numeric argument.
-					 * This recently changed to preserve "stringiness",
-					 * so we don't have any work to do at all. Nice.
-					 * - thomas 2000-03-29
-					 */
-					$$ = $1;
-				}
-		| Iconst
-				{
-					char	buf[64];
+var_value:  SCONST	{ $$ = $1; }
+	| ICONST
+		{
+			char	buf[64];
+			sprintf(buf, "%d", $1);
+			$$ = pstrdup(buf);
+		}
+	| '-' ICONST
+		{
+			char	buf[64];
+			sprintf(buf, "%d", -($2));
+			$$ = pstrdup(buf);
+		}
+	| FCONST	{ $$ = $1; }
+	| '-' FCONST
+		{
+			char * s = palloc(strlen($2)+2);
+			s[0] = '-';
+			strcpy(s + 1, $2);
+			$$ = s;
+		}
+	| TRUE_P	{ $$ = "true"; }
+	| FALSE_P	{ $$ = "false"; }
+	| ON		{ $$ = "on"; }
+	| OFF		{ $$ = "off"; }
 
-					/* Integer numeric argument.
-					 */
-					sprintf(buf, "%d", $1);
-					$$ = pstrdup(buf);
-				}
-		| name_list
-				{
-					List *n;
-					int slen = 0;
-					char *result;
+	| name_list
+		{
+			List *n;
+			int slen = 0;
+			char *result;
 
-					/* List of words? Then concatenate together */
-					if ($1 == NIL)
-						elog(ERROR, "SET must have at least one argument");
+			/* List of words? Then concatenate together */
+			if ($1 == NIL)
+				elog(ERROR, "SET must have at least one argument");
 
-					foreach (n, $1)
-					{
-						Value *p = (Value *) lfirst(n);
-						Assert(IsA(p, String));
-						/* keep track of room for string and trailing comma */
-						slen += (strlen(p->val.str) + 1);
-					}
-					result = palloc(slen + 1);
-					*result = '\0';
-					foreach (n, $1)
-					{
-						Value *p = (Value *) lfirst(n);
-						strcat(result, p->val.str);
-						strcat(result, ",");
-					}
-					/* remove the trailing comma from the last element */
-					*(result+strlen(result)-1) = '\0';
-					$$ = result;
-				}
-		/* "OFF" is not a token, so it is handled by the name_list production */
-		| ON
-				{
-					$$ = "on";
-				}
-		| DEFAULT
-				{
-					$$ = NULL;
-				}
+			foreach (n, $1)
+			{
+				Value *p = (Value *) lfirst(n);
+				Assert(IsA(p, String));
+				/* keep track of room for string and trailing comma */
+				slen += (strlen(p->val.str) + 1);
+			}
+			result = palloc(slen + 1);
+			*result = '\0';
+			foreach (n, $1)
+			{
+				Value *p = (Value *) lfirst(n);
+				strcat(result, p->val.str);
+				strcat(result, ",");
+			}
+			/* remove the trailing comma from the last element */
+			*(result+strlen(result)-1) = '\0';
+			$$ = result;
+		}
+
+	| DEFAULT	{ $$ = NULL; }
 		;
 
 zone_value:  Sconst			{ $$ = $1; }
@@ -5534,6 +5531,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| NULLIF						{ $$ = "nullif"; }
 		| NULL_P						{ $$ = "null"; }
 		| NUMERIC						{ $$ = "numeric"; }
+		| OFF							{ $$ = "off"; }
 		| OFFSET						{ $$ = "offset"; }
 		| ON							{ $$ = "on"; }
 		| OR							{ $$ = "or"; }

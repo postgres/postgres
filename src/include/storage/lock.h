@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.37 2000/04/12 17:16:51 momjian Exp $
+ * $Id: lock.h,v 1.38 2000/05/31 00:28:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCK_H_
 #define LOCK_H_
 
+#include "postgres.h"
 #include "storage/ipc.h"
 #include "storage/itemptr.h"
 #include "storage/shmem.h"
@@ -24,6 +25,15 @@ typedef int LOCKMASK;
 
 #define INIT_TABLE_SIZE			100
 #define MAX_TABLE_SIZE			1000
+
+
+#ifdef LOCK_DEBUG
+extern int  Trace_lock_oidmin;
+extern bool Trace_locks;
+extern bool Trace_userlocks;
+extern int  Trace_lock_table;
+extern bool Debug_deadlocks;
+#endif /* LOCK_DEBUG */
 
 
 /* ----------------------
@@ -259,10 +269,9 @@ extern int	LockShmemSize(int maxBackends);
 extern bool LockingDisabled(void);
 extern bool DeadLockCheck(void *proc, LOCK *findlock);
 
-#ifdef DEADLOCK_DEBUG
+#ifdef LOCK_DEBUG
 extern void DumpLocks(void);
 extern void DumpAllLocks(void);
-
 #endif
 
 #endif	 /* LOCK_H */

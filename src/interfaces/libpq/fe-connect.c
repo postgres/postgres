@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.127 2000/05/21 21:19:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.128 2000/05/31 00:28:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	"Database-Host-IPv4-Address", "", 15},		/* Room for
 												 * abc.def.ghi.jkl */
 
-	{"port", "PGPORT", DEF_PGPORT, NULL,
+	{"port", "PGPORT", DEF_PGPORT_STR, NULL,
 	"Database-Port", "", 6},
 
 	{"tty", "PGTTY", DefaultTty, NULL,
@@ -416,7 +416,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	if ((pgport == NULL) || pgport[0] == '\0')
 	{
 		if ((tmp = getenv("PGPORT")) == NULL)
-			tmp = DEF_PGPORT;
+			tmp = DEF_PGPORT_STR;
 		conn->pgport = strdup(tmp);
 	}
 	else

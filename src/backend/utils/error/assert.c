@@ -8,19 +8,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.17 2000/01/26 05:57:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.18 2000/05/31 00:28:31 petere Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
  *
  *-------------------------------------------------------------------------
  */
-#include <unistd.h>
-
 #include "postgres.h"
 
+#include <stdio.h>
+#include <unistd.h>
+
 #include "utils/exc.h"
-#include "utils/trace.h"
 
 int
 ExceptionalCondition(char *conditionName,
@@ -39,7 +39,7 @@ ExceptionalCondition(char *conditionName,
 		|| !PointerIsValid(fileName)
 		|| !PointerIsValid(exceptionP))
 	{
-		EPRINTF("TRAP: ExceptionalCondition: bad arguments\n");
+		fprintf(stderr, "TRAP: ExceptionalCondition: bad arguments\n");
 
 		ExcAbort(exceptionP,
 				 (ExcDetail) detail,
@@ -48,7 +48,7 @@ ExceptionalCondition(char *conditionName,
 	}
 	else
 	{
-		EPRINTF("TRAP: %s(\"%s:%s\", File: \"%s\", Line: %d)\n",
+		fprintf(stderr, "TRAP: %s(\"%s:%s\", File: \"%s\", Line: %d)\n",
 				exceptionP->message, conditionName,
 				(detail == NULL ? "" : detail),
 				fileName, lineNumber);

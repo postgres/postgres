@@ -1,0 +1,282 @@
+/* -*-pgsql-c-*- */
+/*
+ * Scanner for the configuration file
+ *
+ * Copyright 2000 by PostgreSQL Global Development Group
+ *
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.1 2000/05/31 00:28:34 petere Exp $
+ */
+
+%{
+
+#include "postgres.h"
+
+#include <string.h>
+#include <stdarg.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+
+#include "miscadmin.h"
+#include "storage/fd.h"
+#include "utils/elog.h"
+#include "utils/guc.h"
+
+static unsigned ConfigFileLineno;
+
+enum {
+	GUC_ID = 1,
+	GUC_STRING = 2,
+	GUC_INTEGER = 3,
+	GUC_REAL = 4,
+	GUC_EQUALS = 5,
+	GUC_EOL = 99,
+	GUC_ERROR = 100,
+};
+
+#if defined(yywrap)
+#undef yywrap
+#endif /* yywrap */
+
+#define YY_USER_INIT (ConfigFileLineno = 1)
+#define YY_NO_UNPUT
+
+%}
+
+SIGN            ("-"|"+")
+DIGIT           [0-9]
+HEXDIGIT        [0-9a-fA-F]
+
+INTEGER         {SIGN}?({DIGIT}+|0x{HEXDIGIT}+)
+
+EXPONENT        [Ee]{SIGN}?{DIGIT}+
+REAL            {SIGN}?{DIGIT}*"."{DIGIT}*{EXPONENT}?
+
+LETTER          [A-Za-z_\200-\377]
+LETTER_OR_DIGIT [A-Za-z_0-9\200-\377]
+
+ID              {LETTER}{LETTER_OR_DIGIT}*
+/*
+ * FIXME: This string syntax is nice and all but of course the quotes
+ * need to be stripped before we can make any use of the string value.
+ * There is a function in parser/scansup.c that does this but it uses
+ * palloc and there might be a little more magic needed to get it to
+ * work right. Now there are no string options, and if there were then
+ * the unquoted (`ID') tokens should still work. Of course this only
+ * affects the configuration file.
+ */
+STRING          \'([^'\n]|\\.)*'
+
+%%
+
+\n              ConfigFileLineno++; return GUC_EOL;
+[ \t\r]+        /* eat whitespace */
+#.*$            /* eat comment */
+
+{ID}            return GUC_ID;
+{STRING}        return GUC_STRING;
+{INTEGER}       return GUC_INTEGER;
+{REAL}          return GUC_REAL;
+=               return GUC_EQUALS;
+
+.               return GUC_ERROR;
+
+%%
+
+
+struct name_value_pair
+{
+	char       *name;
+	char       *value;
+	struct name_value_pair *next;
+};
+
+
+
+/*
+ * Free a list of name/value pairs, including the names and the values
+ */
+static void
+free_name_value_list(struct name_value_pair * list)
+{
+	struct name_value_pair *item;
+
+	item = list;
+	while (item)
+	{
+		struct name_value_pair *save;
+
+		save = item->next;
+		free(item->name);
+		free(item->value);
+		free(item);
+		item = save;
+	}
+}
+
+
+/*
+ * Official function to read and process the configuration file. The
+ * parameter indicates in what context the file is being read
+ * (postmaster startup, backend startup, or SIGHUP). All options
+ * mentioned in the configuration file are set to new values. This
+ * function does not return if an error occurs. If an error occurs, no
+ * values will be changed.
+ */
+void
+ProcessConfigFile(unsigned int context)
+{
+	int token, parse_state;
+	char *opt_name, *opt_value;
+	char *filename;
+	struct stat stat_buf;
+	struct name_value_pair *item, *head, *tail;
+	int elevel;
+	FILE * fp;
+
+	Assert(context == PGC_POSTMASTER || context == PGC_BACKEND || context == PGC_SIGHUP);
+	Assert(DataDir);
+	elevel = (context == PGC_SIGHUP) ? DEBUG : ERROR;
+
+	/*
+	 * Open file
+	 */
+	filename = malloc(strlen(DataDir) + 16);
+	if (filename == NULL)
+	{
+		elog(elevel, "out of memory");
+		return;
+	}
+	sprintf(filename, "%s/configuration", DataDir);
+
+    fp = AllocateFile(filename, "r");
+    if (!fp)
+    {
+		free(filename);
+        /* File not found is fine */
+        if (errno != ENOENT)
+            elog(elevel, "could not read configuration: %s", strerror(errno));
+		return;
+    }
+
+    /*
+     * Check if the file is group or world writeable. If so, reject.
+     */
+    if (fstat(fileno(fp), &stat_buf) == -1)
+	{
+		FreeFile(fp);
+		free(filename);
+        elog(elevel, "could not stat configuration file: %s", strerror(errno));
+		return;
+	}
+
+    if (stat_buf.st_mode & (S_IWGRP | S_IXGRP | S_IWOTH | S_IXOTH))
+	{
+		FreeFile(fp);
+		free(filename);
+        elog(elevel, "configuration file has wrong permissions");
+		return;
+	}
+
+	/*
+	 * Parse
+	 */
+	yyin = fp;
+    parse_state = 0;
+	head = tail = NULL;
+	opt_name = opt_value = NULL;
+
+    while((token = yylex()))
+        switch(parse_state)
+        {
+            case 0: /* no previous input */
+                if (token == GUC_EOL) /* empty line */
+                    continue;
+                if (token != GUC_ID)
+                    goto parse_error;
+                opt_name = strdup(yytext);
+				if (opt_name == NULL)
+					goto out_of_memory;
+                parse_state = 1;
+                break;
+
+            case 1: /* found name */
+                /* ignore equals sign */
+                if (token == GUC_EQUALS)
+                    token = yylex();
+
+                if (token != GUC_ID && token != GUC_STRING && token != GUC_INTEGER && token != GUC_REAL)
+                    goto parse_error;
+                opt_value = strdup(yytext);
+				if (opt_value == NULL)
+					goto out_of_memory;
+                parse_state = 2;
+                break;
+
+            case 2: /* now we'd like an end of line */
+				if (token != GUC_EOL)
+					goto parse_error;
+
+				/* append to list */
+				item = malloc(sizeof *item);
+				if (item == NULL)
+					goto out_of_memory;
+				item->name = opt_name;
+				item->value = opt_value;
+				item->next = NULL;
+
+				if (!head)
+					tail = head = item;
+				else
+				{
+					tail->next = item;
+					tail = item;
+				}
+
+                parse_state = 0;
+                break;
+        }
+
+	FreeFile(fp);
+	free(filename);
+
+	/*
+	 * Check if all options are valid
+	 */
+    for(item = head; item; item=item->next)
+	{
+		if (!set_config_option(item->name, item->value, context, false))
+			goto cleanup_exit;
+	}
+
+    /* If we got here all the options parsed okay. */
+	for(item = head; item; item=item->next)
+		set_config_option(item->name, item->value, context, true);
+
+ cleanup_exit:
+	free_name_value_list(head);
+	return;
+
+ parse_error:
+	FreeFile(fp);
+	free(filename);
+	free_name_value_list(head);
+	elog(elevel, "%s:%u: syntax error (ps:%d, t:%d)", filename,
+		 ConfigFileLineno, parse_state, token);
+	return;
+
+ out_of_memory:
+	FreeFile(fp);
+	free(filename);
+	free_name_value_list(head);
+	elog(elevel, "out of memory");
+	return;
+}
+
+
+
+int
+yywrap(void)
+{
+	return 1;
+}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.58 2000/05/30 00:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.59 2000/05/31 00:28:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,10 @@
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
-#ifdef USE_SYSLOG
-#include <syslog.h>
+#include <sys/time.h>
+#include <ctype.h>
+#ifdef ENABLE_SYSLOG
+# include <syslog.h>
 #endif
 
 #include "libpq/libpq.h"
@@ -40,19 +42,30 @@ extern int	sys_nerr;
 
 extern CommandDest whereToSendOutput;
 
-#ifdef USE_SYSLOG
+#ifdef ENABLE_SYSLOG
 /*
- * Global option to control the use of syslog(3) for logging:
- *
- *		0	stdout/stderr only
- *		1	stdout/stderr + syslog
- *		2	syslog only
+ * 0 = only stdout/stderr
+ * 1 = stdout+stderr and syslog
+ * 2 = syslog only
+ * ... in theory anyway
  */
-#define UseSyslog pg_options[OPT_SYSLOG]
-#define PG_LOG_FACILITY LOG_LOCAL0
+int Use_syslog = 0;
+
+static void write_syslog(int level, const char *line);
+
 #else
-#define UseSyslog 0
+# define Use_syslog 0
 #endif
+
+
+#ifdef ELOG_TIMESTAMPS
+static const char * print_timestamp(void);
+# define TIMESTAMP_SIZE 28
+#else
+# define TIMESTAMP_SIZE 0
+#endif
+
+
 
 static int	Debugfile = -1;
 static int	Err_file = -1;
@@ -182,7 +195,7 @@ elog(int lev, const char *fmt,...)
 		}
 	}
 #ifdef ELOG_TIMESTAMPS
-	strcpy(fmt_buf, tprintf_timestamp());
+	strcpy(fmt_buf, print_timestamp());
 	strcat(fmt_buf, prefix);
 #else
 	strcpy(fmt_buf, prefix);
@@ -265,7 +278,7 @@ elog(int lev, const char *fmt,...)
 			msg_buf = msg_fixedbuf;
 			lev = REALLYFATAL;
 #ifdef ELOG_TIMESTAMPS
-			strcpy(msg_buf, tprintf_timestamp());
+			strcpy(msg_buf, print_timestamp());
 			strcat(msg_buf, "FATAL:  elog: out of memory");
 #else
 			strcpy(msg_buf, "FATAL:  elog: out of memory");
@@ -278,35 +291,43 @@ elog(int lev, const char *fmt,...)
 	 * Message prepared; send it where it should go
 	 */
 
-#ifdef USE_SYSLOG
-	switch (lev)
+#ifdef ENABLE_SYSLOG
+	if (Use_syslog >= 1)
 	{
-		case NOIND:
-			log_level = LOG_DEBUG;
-			break;
-		case DEBUG:
-			log_level = LOG_DEBUG;
-			break;
-		case NOTICE:
-			log_level = LOG_NOTICE;
-			break;
-		case ERROR:
-			log_level = LOG_WARNING;
-			break;
-		case FATAL:
-		default:
-			log_level = LOG_ERR;
-			break;
+		int syslog_level;
+
+		switch (lev)
+		{
+			case NOIND:
+				syslog_level = LOG_DEBUG;
+				break;
+			case DEBUG:
+				syslog_level = LOG_DEBUG;
+				break;
+			case NOTICE:
+				syslog_level = LOG_NOTICE;
+				break;
+			case ERROR:
+				syslog_level = LOG_WARNING;
+				break;
+			case FATAL:
+				syslog_level = LOG_ERR;
+				break;
+			case REALLYFATAL:
+			default:
+				syslog_level = LOG_CRIT;
+		}
+
+		write_syslog(syslog_level, msg_buf + TIMESTAMP_SIZE);
 	}
-	write_syslog(log_level, msg_buf + TIMESTAMP_SIZE);
-#endif
+#endif /* ENABLE_SYSLOG */
 
 	/* syslog doesn't want a trailing newline, but other destinations do */
 	strcat(msg_buf, "\n");
 
 	len = strlen(msg_buf);
 
-	if (Debugfile >= 0 && UseSyslog <= 1)
+	if (Debugfile >= 0 && Use_syslog <= 1)
 		write(Debugfile, msg_buf, len);
 
 	/*
@@ -321,7 +342,7 @@ elog(int lev, const char *fmt,...)
 	 * does anyone still use ultrix?)
 	 */
 	if (lev > DEBUG && Err_file >= 0 &&
-		Debugfile != Err_file && UseSyslog <= 1)
+		Debugfile != Err_file && Use_syslog <= 1)
 	{
 		if (write(Err_file, msg_buf, len) < 0)
 		{
@@ -502,3 +523,124 @@ DebugFileOpen(void)
 }
 
 #endif
+
+
+#ifdef ELOG_TIMESTAMPS
+/*
+ * Return a timestamp string like "980119.17:25:59.902 [21974] "
+ */
+static const char *
+print_timestamp()
+{
+	struct timeval tv;
+	struct timezone tz = { 0, 0 };
+	struct tm  *time;
+	time_t		tm;
+	static char timestamp[32],
+				pid[8];
+
+	gettimeofday(&tv, &tz);
+	tm = tv.tv_sec;
+	time = localtime(&tm);
+
+	sprintf(pid, "[%d]", MyProcPid);
+	sprintf(timestamp, "%02d%02d%02d.%02d:%02d:%02d.%03d %7s ",
+			time->tm_year % 100, time->tm_mon + 1, time->tm_mday,
+			time->tm_hour, time->tm_min, time->tm_sec,
+			(int) (tv.tv_usec/1000), pid);
+
+	return timestamp;
+}
+#endif
+
+
+#ifdef ENABLE_SYSLOG
+
+/*
+ * Write a message line to syslog if the syslog option is set.
+ *
+ * Our problem here is that many syslog implementations don't handle
+ * long messages in an acceptable manner. While this function doesn't
+ * help that fact, it does work around by splitting up messages into
+ * smaller pieces.
+ */
+static void
+write_syslog(int level, const char *line)
+{
+#ifndef PG_SYSLOG_LIMIT
+# define PG_SYSLOG_LIMIT 128
+#endif
+
+	static bool	openlog_done = false;
+	static unsigned long seq = 0;
+	int len = strlen(line);
+
+	if (Use_syslog == 0)
+		return;
+
+	if (!openlog_done)
+	{
+		openlog("postgres", LOG_PID | LOG_NDELAY, LOG_LOCAL0);
+		openlog_done = true;
+	}
+
+	/*
+	 * We add a sequence number to each log message to suppress "same"
+	 * messages.
+	 */
+	seq++;
+
+	/* divide into multiple syslog() calls if message is too long */
+	if (len > PG_SYSLOG_LIMIT)
+	{
+		static char	buf[PG_SYSLOG_LIMIT+1];
+		int chunk_nr = 0;
+		int buflen;
+
+		while (len > 0)
+		{
+			int l;
+			int i;
+
+			strncpy(buf, line, PG_SYSLOG_LIMIT);
+			buf[PG_SYSLOG_LIMIT] = '\0';
+
+			l = strlen(buf);
+#ifdef MULTIBYTE
+			/* trim to multibyte letter boundary */ 
+			buflen = pg_mbcliplen(buf, l, l);
+			buf[buflen] = '\0';
+			l = strlen(buf);
+#endif
+			/* already word boundary? */
+			if (isspace(line[l]) || line[l] == '\0')
+				buflen = l;
+			else
+			{
+				/* try to divide in word boundary */
+				i = l - 1;
+				while(i > 0 && !isspace(buf[i]))
+					i--;
+
+				if (i <= 0)	/* couldn't divide word boundary */
+					buflen = l;
+				else
+				{
+					buflen = i;
+					buf[i] = '\0';
+				}
+			}
+
+			chunk_nr++;
+
+			syslog(level, "[%lu-%d] %s", seq, chunk_nr, buf);
+			line += buflen;
+			len -= buflen;
+		}
+	}
+	/* message short enough */
+	else
+		syslog(level, "[%lu] %s", seq, line);
+}
+
+#endif /* ENABLE_SYSLOG */

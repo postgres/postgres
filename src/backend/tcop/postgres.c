@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.156 2000/05/29 05:45:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.157 2000/05/31 00:28:31 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -58,39 +58,24 @@
 #include "storage/proc.h"
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
-#include "utils/trace.h"
+#include "utils/guc.h"
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 
-/*
- * Trace flags, see backend/utils/misc/trace.c
- */
-#define Verbose				pg_options[TRACE_VERBOSE]
-#define DebugPrintQuery		pg_options[TRACE_QUERY]
-#define DebugPrintPlan		pg_options[TRACE_PLAN]
-#define DebugPrintParse		pg_options[TRACE_PARSE]
-#define DebugPrintRewrittenParsetree \
-							pg_options[TRACE_REWRITTEN]
-#define DebugPPrintPlan		pg_options[TRACE_PRETTY_PLAN]
-#define DebugPPrintParse	pg_options[TRACE_PRETTY_PARSE]
-#define DebugPPrintRewrittenParsetree \
-							pg_options[TRACE_PRETTY_REWRITTEN]
-#define ShowParserStats		pg_options[TRACE_PARSERSTATS]
-#define ShowPlannerStats	pg_options[TRACE_PLANNERSTATS]
-#define ShowExecutorStats	pg_options[TRACE_EXECUTORSTATS]
-#ifdef LOCK_MGR_DEBUG
-#define LockDebug			pg_options[TRACE_LOCKS]
-#endif
-
-#define DeadlockCheckTimer	pg_options[OPT_DEADLOCKTIMEOUT]
-#define HostnameLookup		pg_options[OPT_HOSTLOOKUP]
-#define ShowPortNumber		pg_options[OPT_SHOWPORTNUMBER]
 
 /* ----------------
  *		global variables
  * ----------------
  */
+
+/*
+ * XXX For ps display. That stuff needs to be cleaned up.
+ */
+bool HostnameLookup;
+bool ShowPortNumber;
+
+bool Log_connections = false;
 
 CommandDest whereToSendOutput = Debug;
 
@@ -112,7 +97,6 @@ extern int	lockingOff;
 extern int	NBuffers;
 
 int			dontExecute = 0;
-static int	ShowStats;
 static bool IsEmptyQuery = false;
 
 /* note: these declarations had better match tcopprot.h */
@@ -155,6 +139,14 @@ static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
 static void pg_exec_query(char *query_string);
+static void SigHupHandler(SIGNAL_ARGS);
+
+/*
+ * Flag to mark SIGHUP. Whenever the main loop comes around it
+ * will reread the configuration file. (Better than doing the
+ * reading in the signal handler, ey?)
+ */
+static volatile bool got_SIGHUP = false;
 
 
 /* ----------------------------------------------------------------
@@ -240,11 +232,7 @@ InteractiveBackend(StringInfo inBuf)
 		}
 
 		if (end)
-		{
-			if (Verbose)
-				puts("EOF");
 			return EOF;
-		}
 
 		/* ----------------
 		 *	otherwise we have a user query so process it.
@@ -380,21 +368,21 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
 	Query	   *querytree;
 	List	   *new_list;
 
-	if (DebugPrintQuery)
-		TPRINTF(TRACE_QUERY, "query: %s", query_string);
+	if (Debug_print_query)
+		elog(DEBUG, "query: %s", query_string);
 
 	/* ----------------
 	 *	(1) parse the request string into a list of parse trees
 	 * ----------------
 	 */
-	if (ShowParserStats)
+	if (Show_parser_stats)
 		ResetUsage();
 
 	querytree_list = parser(query_string, typev, nargs);
 
-	if (ShowParserStats)
+	if (Show_parser_stats)
 	{
-		fprintf(stderr, "! Parser Stats:\n");
+		fprintf(StatFp, "PARSER STATISTICS\n");
 		ShowUsage();
 	}
 
@@ -410,18 +398,15 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
 	{
 		querytree = (Query *) lfirst(querytree_list_item);
 
-		if (DebugPrintParse || DebugPPrintParse)
+		if (Debug_print_parse)
 		{
-			if (DebugPPrintParse)
+			if (Debug_pretty_print)
 			{
-				TPRINTF(TRACE_PRETTY_PARSE, "parser outputs:");
+				elog(DEBUG, "parse tree:");
 				nodeDisplay(querytree);
 			}
 			else
-			{
-				TPRINTF(TRACE_PARSE, "parser outputs:");
-				printf("\n%s\n\n", nodeToString(querytree));
-			}
+				elog(DEBUG, "parse tree: %s", nodeToString(querytree));
 		}
 
 		if (querytree->commandType == CMD_UTILITY)
@@ -464,12 +449,11 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
 		}
 	}
 
-	if (DebugPrintRewrittenParsetree || DebugPPrintRewrittenParsetree)
+	if (Debug_print_rewritten)
 	{
-		if (DebugPPrintRewrittenParsetree)
+		if (Debug_pretty_print)
 		{
-			TPRINTF(TRACE_PRETTY_REWRITTEN, "after rewriting:");
-
+			elog(DEBUG, "rewritten parse tree:");
 			foreach(querytree_list_item, querytree_list)
 			{
 				querytree = (Query *) lfirst(querytree_list_item);
@@ -479,12 +463,12 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
 		}
 		else
 		{
-			TPRINTF(TRACE_REWRITTEN, "after rewriting:");
+			elog(DEBUG, "rewritten parse tree:");
 
 			foreach(querytree_list_item, querytree_list)
 			{
 				querytree = (Query *) lfirst(querytree_list_item);
-				printf("\n%s\n\n", nodeToString(querytree));
+				elog(DEBUG, "%s", nodeToString(querytree));
 			}
 		}
 	}
@@ -503,15 +487,15 @@ pg_plan_query(Query *querytree)
 	if (querytree->commandType == CMD_UTILITY)
 		return NULL;
 
-	if (ShowPlannerStats)
+	if (Show_planner_stats)
 		ResetUsage();
 
 	/* call that optimizer */
 	plan = planner(querytree);
 
-	if (ShowPlannerStats)
+	if (Show_planner_stats)
 	{
-		fprintf(stderr, "! Planner Stats:\n");
+		fprintf(stderr, "PLANNER STATISTICS\n");
 		ShowUsage();
 	}
 
@@ -519,18 +503,15 @@ pg_plan_query(Query *querytree)
 	 *	Print plan if debugging.
 	 * ----------------
 	 */
-	if (DebugPrintPlan || DebugPPrintPlan)
+	if (Debug_print_plan)
 	{
-		if (DebugPPrintPlan)
+		if (Debug_pretty_print)
 		{
-			TPRINTF(TRACE_PRETTY_PLAN, "plan:");
+			elog(DEBUG, "plan:");
 			nodeDisplay(plan);
 		}
 		else
-		{
-			TPRINTF(TRACE_PLAN, "plan:");
-			printf("\n%s\n\n", nodeToString(plan));
-		}
+			elog(DEBUG, "plan: %s", nodeToString(plan));
 	}
 
 	return plan;
@@ -607,10 +588,10 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			 *	 because that is done in ProcessUtility.
 			 * ----------------
 			 */
-			if (DebugPrintQuery)
-				TPRINTF(TRACE_QUERY, "ProcessUtility: %s", query_string);
-			else if (Verbose)
-				TPRINTF(TRACE_VERBOSE, "ProcessUtility");
+			if (Debug_print_query)
+				elog(DEBUG, "ProcessUtility: %s", query_string);
+			else if (DebugLvl > 1)
+				elog(DEBUG, "ProcessUtility");
 
 			ProcessUtility(querytree->utilityStmt, dest);
 		}
@@ -653,16 +634,16 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			/*
 			 * execute the plan
 			 */
-			if (ShowExecutorStats)
+			if (Show_executor_stats)
 				ResetUsage();
 
-			if (Verbose)
-				TPRINTF(TRACE_VERBOSE, "ProcessQuery");
+			if (DebugLvl > 1)
+				elog(DEBUG, "ProcessQuery");
 			ProcessQuery(querytree, plan, dest);
 
-			if (ShowExecutorStats)
+			if (Show_executor_stats)
 			{
-				fprintf(stderr, "! Executor Stats:\n");
+				fprintf(stderr, "EXECUTOR STATISTICS\n");
 				ShowUsage();
 			}
 		}
@@ -772,6 +753,12 @@ CancelQuery(void)
 	elog(ERROR, "Query was cancelled.");
 }
 
+static void
+SigHupHandler(SIGNAL_ARGS)
+{
+    got_SIGHUP = true;
+}
+
 
 static void
 usage(char *progname)
@@ -785,10 +772,7 @@ usage(char *progname)
 	fprintf(stderr, "\t-C \t\tsuppress version info\n");
 	fprintf(stderr, "\t-D dir\t\tdata directory\n");
 	fprintf(stderr, "\t-E \t\techo query before execution\n");
-	fprintf(stderr, "\t-F \t\tturn off fsync\n");
-#ifdef LOCK_MGR_DEBUG
-	fprintf(stderr, "\t-K lev\t\tset locking debug level [0|1|2]\n");
-#endif
+	fprintf(stderr, "\t-F \t\tturn fsync off\n");
 	fprintf(stderr, "\t-L \t\tturn off locking\n");
 	fprintf(stderr, "\t-N \t\tdon't use newline as interactive query delimiter\n");
 	fprintf(stderr, "\t-O \t\tallow system table structure changes\n");
@@ -844,26 +828,18 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 * Set default values for command-line options.
 	 */
 	IsUnderPostmaster = false;
-	ShowStats = 0;
-	ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
-	DeadlockCheckTimer = DEADLOCK_CHECK_TIMER;
 	Noversion = false;
 	EchoQuery = false;
 #ifdef LOCK_MGR_DEBUG
 	LockDebug = 0;
 #endif
 	DataDir = getenv("PGDATA");
+	StatFp = stderr;
 
 	SetProcessingMode(InitProcessing);
 
 	/* Check for PGDATESTYLE environment variable */
 	set_default_datestyle();
-
-	/*
-	 * Read default pg_options from file $DATADIR/pg_options.
-	 */
-	if (DataDir)
-		read_pg_options(0);
 
 	/* ----------------
 	 *	parse command line arguments
@@ -884,9 +860,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	optind = 1;					/* reset after postmaster's usage */
 
-	while ((flag = getopt(argc, argv,
-						  "A:B:CD:d:EeFf:iK:LNOPo:p:QS:sT:t:v:W:x:"))
-		   != EOF)
+	while ((flag = getopt(argc, argv,  "A:B:CD:d:Eef:FiLNOPo:p:S:st:v:W:x:-:")) != EOF)
 		switch (flag)
 		{
 			case 'A':
@@ -920,29 +894,21 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case 'D':			/* PGDATA directory */
 				if (secure)
-				{
-					if (!DataDir)
-					{
-						DataDir = optarg;
-						/* must be done after DataDir is defined */
-						read_pg_options(0);
-					}
 					DataDir = optarg;
-				}
 				break;
 
 			case 'd':			/* debug level */
 				DebugLvl = atoi(optarg);
-				if (DebugLvl >= 1)
-					Verbose = true;
+				if (DebugLvl >= 1);
+					Log_connections = true;
 				if (DebugLvl >= 2)
-					DebugPrintQuery = true;
+					Debug_print_query = true;
 				if (DebugLvl >= 3)
-					DebugPrintParse = true;
+					Debug_print_parse = true;
 				if (DebugLvl >= 4)
-					DebugPrintPlan = true;
+					Debug_print_plan = true;
 				if (DebugLvl >= 5)
-					DebugPPrintRewrittenParsetree = true;
+					Debug_print_rewritten = true;
 				break;
 
 			case 'E':
@@ -970,7 +936,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	to be "if (secure)".
 				 * --------------------
 				 */
-				disableFsync = true;
+				enableFsync = false;
 				break;
 
 			case 'f':
@@ -1005,14 +971,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case 'i':
 				dontExecute = 1;
-				break;
-
-			case 'K':
-#ifdef LOCK_MGR_DEBUG
-				LockDebug = atoi(optarg);
-#else
-				fprintf(stderr, "Lock debug not compiled in\n");
-#endif
 				break;
 
 			case 'L':
@@ -1074,14 +1032,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				}
 				break;
 
-			case 'Q':
-				/* ----------------
-				 *	Q - set Quiet mode (reduce debugging output)
-				 * ----------------
-				 */
-				Verbose = false;
-				break;
-
 			case 'S':
 				/* ----------------
 				 *	S - amount of sort memory to use in 1k bytes
@@ -1101,15 +1051,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	  s - report usage statistics (timings) after each query
 				 * ----------------
 				 */
-				ShowStats = 1;
-				break;
-
-			case 'T':
-				/* ----------------
-				 *	T - tracing options
-				 * ----------------
-				 */
-				parse_options(optarg, secure);
+				Show_query_stats = 1;
 				break;
 
 			case 't':
@@ -1127,14 +1069,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				{
 					case 'p':
 						if (optarg[1] == 'a')
-							ShowParserStats = 1;
+							Show_parser_stats = 1;
 						else if (optarg[1] == 'l')
-							ShowPlannerStats = 1;
+							Show_planner_stats = 1;
 						else
 							errs++;
 						break;
 					case 'e':
-						ShowExecutorStats = 1;
+						Show_executor_stats = 1;
 						break;
 					default:
 						errs++;
@@ -1188,6 +1130,23 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #endif
 				break;
 
+			case '-':
+			{
+				/* A little 'long argument' simulation */
+				/* (copy&pasted from PostmasterMain() */
+				size_t equal_pos = strcspn(optarg, "=");
+				char *cp;
+
+				if (optarg[equal_pos] != '=')
+					elog(ERROR, "--%s requires argument", optarg);
+				optarg[equal_pos] = '\0';
+				for(cp = optarg; *cp; cp++)
+					if (*cp == '-')
+						*cp = '_';
+				SetConfigOption(optarg, optarg + equal_pos + 1, PGC_BACKEND);
+				break;
+			}
+
 			default:
 				/* ----------------
 				 *	default: bad command line option
@@ -1197,11 +1156,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 		}
 
-	if (ShowStats &&
-		(ShowParserStats || ShowPlannerStats || ShowExecutorStats))
+	if (Show_query_stats &&
+		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
 	{
-		fprintf(stderr, "-s can not be used together with -t.\n");
-		proc_exit(0);
+        elog(NOTICE, "Query statistics are disabled because parser, planner, or executor statistics are on.");
+        Show_query_stats = false;
 	}
 
 	if (!DataDir)
@@ -1233,7 +1192,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	BlockSig &= ~(sigmask(SIGUSR1));
 #endif
 
-	pqsignal(SIGHUP, read_pg_options);	/* update pg_options from file */
+	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
 	pqsignal(SIGQUIT, handle_warn);		/* handle error */
 	pqsignal(SIGTERM, die);
@@ -1373,53 +1332,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		PS_SET_STATUS("startup");
 	}
 
-
-	/* ----------------
-	 *	print flags
-	 * ----------------
-	 */
-	if (Verbose)
-	{
-		if (Verbose)
-		{
-			TPRINTF(TRACE_VERBOSE, "started: host=%s user=%s database=%s",
-					remote_host, userName, DBName);
-		}
-		else
-		{
-			TPRINTF(TRACE_VERBOSE, "debug info:");
-			TPRINTF(TRACE_VERBOSE, "\tUser         = %s", userName);
-			TPRINTF(TRACE_VERBOSE, "\tRemoteHost   = %s", remote_host);
-			TPRINTF(TRACE_VERBOSE, "\tRemotePort   = %d", remote_port);
-			TPRINTF(TRACE_VERBOSE, "\tDatabaseName = %s", DBName);
-			TPRINTF(TRACE_VERBOSE, "\tDebug Level  = %d", DebugLvl);
-			TPRINTF(TRACE_VERBOSE, "\tNoversion    = %c", Noversion ? 't' : 'f');
-			TPRINTF(TRACE_VERBOSE, "\ttimings      = %c", ShowStats ? 't' : 'f');
-			TPRINTF(TRACE_VERBOSE, "\tdates        = %s",
-					EuroDates ? "European" : "Normal");
-			TPRINTF(TRACE_VERBOSE, "\tbufsize      = %d", NBuffers);
-			TPRINTF(TRACE_VERBOSE, "\tsortmem      = %d", SortMem);
-			TPRINTF(TRACE_VERBOSE, "\tquery echo   = %c", EchoQuery ? 't' : 'f');
-		}
-	}
-
+	if (Log_connections)
+		elog(DEBUG, "connection: host=%s user=%s database=%s",
+			 remote_host, userName, DBName);
 
 	/*
 	 * general initialization
 	 */
-
-	if (Verbose)
-		TPRINTF(TRACE_VERBOSE, "InitPostgres");
-
+	if (DebugLvl > 1)
+		elog(DEBUG, "InitPostgres");
 	InitPostgres(DBName);
 
 #ifdef MULTIBYTE
 	/* set default client encoding */
-	if (Verbose)
-		TPRINTF(TRACE_VERBOSE, "reset_client_encoding()..");
+	if (DebugLvl > 1)
+		elog(DEBUG, "reset_client_encoding");
 	reset_client_encoding();
-	if (Verbose)
-		TPRINTF(TRACE_VERBOSE, "reset_client_encoding() done.");
 #endif
 
 	on_shmem_exit(remove_all_temp_relations, NULL);
@@ -1450,7 +1378,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.156 $ $Date: 2000/05/29 05:45:16 $\n");
+		puts("$Revision: 1.157 $ $Date: 2000/05/31 00:28:31 $\n");
 	}
 
 	/*
@@ -1473,9 +1401,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		/* Make sure we are in a valid memory context */
 		MemoryContextSwitchTo(TopMemoryContext);
 
-		if (Verbose)
-			TPRINTF(TRACE_VERBOSE, "AbortCurrentTransaction");
-
+		if (DebugLvl >= 1)
+			elog(DEBUG, "AbortCurrentTransaction");
 		AbortCurrentTransaction();
 		InError = false;
 		if (ExitAfterAbort)
@@ -1497,6 +1424,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	{
 		PS_SET_STATUS("idle");
 
+		/* XXX this could be moved after ReadCommand below to get more
+		 * sensical behaviour */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
+
 		/* ----------------
 		 *	 (1) tell the frontend we're ready for a new query.
 		 *
@@ -1516,7 +1451,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		EnableNotifyInterrupt();
 
 		/* ----------------
-		 *	 (3) read a command.
+		 *	 (3) read a command (loop blocks here)
 		 * ----------------
 		 */
 		firstchar = ReadCommand(parser_input);
@@ -1544,8 +1479,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				IsEmptyQuery = false;
 
 				/* start an xact for this function invocation */
-				if (Verbose)
-					TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
+				if (DebugLvl >= 1)
+					elog(DEBUG, "StartTransactionCommand");
 				StartTransactionCommand();
 
 				if (HandleFunctionRequest() == EOF)
@@ -1577,12 +1512,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					 * ----------------
 					 */
 					IsEmptyQuery = false;
-					if (ShowStats)
+					if (Show_query_stats)
 						ResetUsage();
 
 					/* start an xact for this query */
-					if (Verbose)
-						TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
+					if (DebugLvl >= 1)
+						elog(DEBUG, "StartTransactionCommand");
 					StartTransactionCommand();
 
 					pg_exec_query(parser_input->data);
@@ -1593,8 +1528,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					 */
 					DeferredTriggerEndQuery();
 
-					if (ShowStats)
+					if (Show_query_stats)
+                    {
+                        fprintf(StatFp, "QUERY STATISTICS\n");
 						ShowUsage();
+                    }
 				}
 				break;
 
@@ -1625,8 +1563,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		 */
 		if (!IsEmptyQuery)
 		{
-			if (Verbose)
-				TPRINTF(TRACE_VERBOSE, "CommitTransactionCommand");
+			if (DebugLvl >= 1)
+				elog(DEBUG, "CommitTransactionCommand");
 			PS_SET_STATUS("commit");
 			CommitTransactionCommand();
 #ifdef SHOW_MEMORY_STATS
