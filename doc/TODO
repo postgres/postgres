@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Aug 18 00:00:34 EDT 2004
+Last updated:		Wed Aug 18 22:35:48 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -403,6 +403,7 @@ Commands
 
 	o Allow COPY to understand \x as a hex byte
 	o Have COPY return the number of rows loaded/unloaded (?)
+	o Allow COPY to optionally include column headings as the first line
 
 * CURSOR
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor
