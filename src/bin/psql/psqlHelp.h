@@ -5,15 +5,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.1.1.1 1996/07/09 06:22:15 scrappy Exp $
+ * $Id: psqlHelp.h,v 1.2 1996/07/28 07:08:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 struct _helpStruct {
-  char* cmd; /* the command name */
-  char* help; /* the help associated with it */
-  char* syntax; /* the syntax associated with it */
+  char *cmd; /* the command name */
+  char *help; /* the help associated with it */
+  char *syntax; /* the syntax associated with it */
 } ;
  
 static struct _helpStruct QL_HELP[] = {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.12 1996/07/28 06:59:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.13 1996/07/28 07:08:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,18 +60,18 @@ typedef struct _psqlSettings {
 } PsqlSettings;
 
 /* declarations for functions in this file */
-static void usage(char* progname);
+static void usage(char *progname);
 static void slashUsage();
 static void handleCopyOut(PGresult *res, bool quiet);
 static void handleCopyIn(PGresult *res, bool quiet);
 static int tableList(PsqlSettings *ps, bool deep_tablelist);
 static int tableDesc(PsqlSettings *ps, char *table);
 
-char* gets_noreadline(char* prompt, FILE* source);
-char* gets_readline(char* prompt, FILE* source);
-char* gets_fromFile(char* prompt, FILE* source);
+char *gets_noreadline(char *prompt, FILE *source);
+char *gets_readline(char *prompt, FILE *source);
+char *gets_fromFile(char *prompt, FILE *source);
 int listAllDbs(PsqlSettings *settings);
-int SendQuery(PsqlSettings *settings, char* query);
+int SendQuery(PsqlSettings *settings, char *query);
 int HandleSlashCmds(PsqlSettings *settings,
 		    char *line,
 		    char *query);
@@ -82,7 +82,7 @@ void PQprint(FILE *fp,
 		     PQprintOpt *po
 		     );
 
-FILE* setFout(PsqlSettings *ps, char *fname);
+FILE *setFout(PsqlSettings *ps, char *fname);
 
 /*
  * usage 
@@ -90,7 +90,7 @@ FILE* setFout(PsqlSettings *ps, char *fname);
  */
 
 static void  
-usage(char* progname)
+usage(char *progname)
 {
   fprintf(stderr,"Usage: %s [options] [dbname]\n",progname);
   fprintf(stderr,"\t -a authsvc              set authentication service\n"); 
@@ -187,7 +187,7 @@ int
 listAllDbs(PsqlSettings *ps)
 {
   PGresult *results;
-  char* query = "select * from pg_database;";
+  char *query = "select * from pg_database;";
 
   if (!(results=PSQLexec(ps, query)))
     return 1;
@@ -213,10 +213,10 @@ tableList (PsqlSettings *ps, bool deep_tablelist)
   char listbuf[256];
   int nColumns; 
   int i;
-  char* rk;
-  char* rr;
+  char *rk;
+  char *rr;
 
-  PGresult* res;
+  PGresult *res;
 
   listbuf[0] = '\0';
   strcat(listbuf,"SELECT usename, relname, relkind, relhasrules");
@@ -242,7 +242,7 @@ tableList (PsqlSettings *ps, bool deep_tablelist)
 	  if ( table == NULL )
 	      perror("malloc");
 	  
-	  /* load table table*/
+	  /* load table table */
 	  for (i=0; i < nColumns; i++) {
 	      table[i] = (char *) malloc(PQgetlength(res,i,1) * sizeof(char) + 1);
 	      if ( table[i] == NULL )
@@ -304,7 +304,7 @@ tableDesc (PsqlSettings *ps, char *table)
   int i;
   int rsize;
 
-  PGresult* res;
+  PGresult *res;
 
   /* Build the query */
 
@@ -380,13 +380,13 @@ tableDesc (PsqlSettings *ps, char *table)
   }
 }
 
-typedef char* (*READ_ROUTINE)(char* prompt, FILE* source);
+typedef char *(*READ_ROUTINE)(char *prompt, FILE *source);
 
 /* gets_noreadline  prompt source
       gets a line of input without calling readline, the source is ignored
 */
-char* 
-gets_noreadline(char* prompt, FILE* source)
+char *
+gets_noreadline(char *prompt, FILE *source)
 {
     fputs(prompt, stdout);
     fflush(stdout);
@@ -398,8 +398,8 @@ gets_noreadline(char* prompt, FILE* source)
  *   the routine to get input from GNU readline(), the source is ignored 
  * the prompt argument is used as the prompting string
  */
-char* 
-gets_readline(char* prompt, FILE* source)
+char *
+gets_readline(char *prompt, FILE *source)
 {
   return (readline(prompt));
 }
@@ -408,12 +408,12 @@ gets_readline(char* prompt, FILE* source)
  * gets_fromFile  prompt source
  *    
  * the routine to read from a file, the prompt argument is ignored
- * the source argument is a FILE* 
+ * the source argument is a FILE *
  */
-char* 
-gets_fromFile(char* prompt, FILE* source)
+char *
+gets_fromFile(char *prompt, FILE *source)
 {
-  char* line;
+  char *line;
   int len;
 
   line = malloc(MAX_QUERY_BUFFER+1);
@@ -440,8 +440,8 @@ gets_fromFile(char* prompt, FILE* source)
 int
 SendQuery(PsqlSettings *settings, char *query)
 {
-  PGresult* results;
-  PGnotify* notify;
+  PGresult *results;
+  PGnotify *notify;
   int status = 0;
 
   if (settings->singleStep)
@@ -610,7 +610,7 @@ decode(char *s)
 */
 int
 HandleSlashCmds(PsqlSettings *settings,
-		char* line, 
+		char *line, 
 		char *query)
 {
   int status = 1;
@@ -766,7 +766,7 @@ HandleSlashCmds(PsqlSettings *settings,
       break;
     case 'h':
       {
-	char* cmd;
+	char *cmd;
 	int i, numCmds;
 	int all_help = 0;
 
@@ -814,7 +814,7 @@ HandleSlashCmds(PsqlSettings *settings,
       }
     case 'i':     /* \i is include file */
       {
-	FILE* fd;
+	FILE *fd;
 
 	if (!optarg) {
 	  fprintf(stderr,"\\i must be followed by a file name\n");
@@ -852,7 +852,7 @@ HandleSlashCmds(PsqlSettings *settings,
       break;
     case 'r':
     {
-	FILE* fd;
+	FILE *fd;
 	static char *lastfile;
 	struct stat st, st2;
 	if (optarg)
@@ -974,9 +974,9 @@ HandleSlashCmds(PsqlSettings *settings,
 */
 
 int
-MainLoop(PsqlSettings *settings, FILE* source)
+MainLoop(PsqlSettings *settings, FILE *source)
 {
-  char* line;                   /* line of input*/
+  char *line;                   /* line of input */
   int len;                      /* length of the line */
   char query[MAX_QUERY_BUFFER]; /* multi-line query storage */
   int exitStatus = 0;
@@ -1028,7 +1028,7 @@ MainLoop(PsqlSettings *settings, FILE* source)
       /* filter out comment lines that begin with --,
          this could be incorrect if -- is part of a quoted string.
          But we won't go through the trouble of detecting that.  If you have
-	 -- in your quoted string, be careful and don't start a line with it*/
+	 -- in your quoted string, be careful and don't start a line with it */
       if (line[0] == '-' && line[1] == '-') {
 	  if (settings->singleStep) /* in single step mode, show comments */
 	      fprintf(stdout,"%s\n",line);
@@ -1106,20 +1106,20 @@ MainLoop(PsqlSettings *settings, FILE* source)
 } 
 
 int
-main(int argc, char** argv)
+main(int argc, char **argv)
 {
-  extern char* optarg;
+  extern char *optarg;
   extern int optind;
   
-  char* dbname = NULL;
-  char* host = NULL;
-  char* port = NULL;
-  char* qfilename = NULL;
+  char *dbname = NULL;
+  char *host = NULL;
+  char *port = NULL;
+  char *qfilename = NULL;
   char errbuf[ERROR_MSG_LENGTH];
 
   PsqlSettings settings;
 
-  char* singleQuery = NULL;
+  char *singleQuery = NULL;
 
   bool listDatabases = 0 ;
   int exitStatus = 0;
@@ -1358,10 +1358,10 @@ handleCopyIn(PGresult *res, bool quiet)
     PQendcopy(res->conn);
 }
 
-/* try to open fname and return a FILE*,
+/* try to open fname and return a FILE *,
    if it fails, use stdout, instead */
 
-FILE* 
+FILE *
 setFout(PsqlSettings *ps, char *fname)
 {
         if (ps->queryFout && ps->queryFout != stdout)

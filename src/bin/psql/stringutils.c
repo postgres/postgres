@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.1.1.1 1996/07/09 06:22:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.2 1996/07/28 07:08:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,9 @@
 
 /* removes whitespaces from the left, right and both sides of a string */
 /* MODIFIES the string passed in and returns the head of it */
-char* leftTrim(char* s)  
+char *leftTrim(char *s)  
 {
-  char* s2 = s;
+  char *s2 = s;
   int shift=0;
   int j=0;
 
@@ -38,9 +38,9 @@ char* leftTrim(char* s)
   return s2;
 }
 
-char* rightTrim(char* s)
+char *rightTrim(char *s)
 {
-  char* sEnd;
+  char *sEnd;
   sEnd = s+strlen(s)-1;
   while (isspace(*sEnd))
     sEnd--;
@@ -51,7 +51,7 @@ char* rightTrim(char* s)
   return s;
 }
 
-char* doubleTrim(char* s)
+char *doubleTrim(char *s)
 {
   strcpy(s,leftTrim(rightTrim(s)));
   return s;
@@ -59,10 +59,10 @@ char* doubleTrim(char* s)
 
 /* dupstr : copies a string, while allocating space for it. 
    the CALLER is responsible for freeing the space
-   returns NULL if the argument is NULL*/
-char* dupstr(char *s)
+   returns NULL if the argument is NULL */
+char *dupstr(char *s)
 {
-  char* result;
+  char *result;
 
   if (s == NULL)
     return NULL;
@@ -76,7 +76,7 @@ char* dupstr(char *s)
 #ifdef STRINGUTILS_TEST
 void testStringUtils()
 {
-  static char* tests[] = {" goodbye  \n", /* space on both ends */
+  static char *tests[] = {" goodbye  \n", /* space on both ends */
 			  "hello world",  /* no spaces to trim */
 			  "",		/* empty string */
 			  "a",		/* string with one char*/
@@ -86,7 +86,7 @@ void testStringUtils()
   int i=0;
   while (tests[i]!=NULL_STR)
     {
-      char* t;
+      char *t;
       t = dupstr(tests[i]);
       printf("leftTrim(%s) = ",t);
       printf("%sEND\n", leftTrim(t));
