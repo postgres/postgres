@@ -2,7 +2,6 @@
 #define SCO_ACCEPT_BUG
 
 #define HAS_TEST_AND_SET
-#define NEED_I386_TAS_ASM
 
 #define USE_UNIVEL_CC
 

@@ -1,5 +1,4 @@
 #define HAS_TEST_AND_SET
-#define NEED_I386_TAS_ASM
 
 /***************************************
  * Define this if you are compiling with

@@ -1,5 +1,4 @@
 #if defined(__i386__) || defined(__x86_64__)
-#define NEED_I386_TAS_ASM
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
 #endif

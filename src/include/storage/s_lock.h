@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.118 2003/12/22 23:36:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.119 2003/12/23 00:32:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,7 +345,7 @@ tas(volatile slock_t *lock)
  * All non-gcc inlines
  */
 
-#if defined(NEED_I386_TAS_ASM) && defined(USE_UNIVEL_CC)
+#if defined(USE_UNIVEL_CC)
 #define TAS(lock)	tas(lock)
 
 asm int
@@ -361,7 +361,7 @@ tas(volatile slock_t *s_lock)
 	popl %ebx
 }
 
-#endif	 /* defined(NEED_I386_TAS_ASM) && defined(USE_UNIVEL_CC) */
+#endif	 /* defined(USE_UNIVEL_CC) */
 
 #endif	 /* defined(__GNUC__) */
 

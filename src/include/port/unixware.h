@@ -1,5 +1,4 @@
 #define HAS_TEST_AND_SET
-#define NEED_I386_TAS_ASM
 
 /* see src/backend/libpq/pqcomm.c */
 #define SCO_ACCEPT_BUG
