@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.93 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.94 2002/12/13 19:45:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "commands/defrem.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
@@ -172,6 +173,8 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	indexInfo = makeNode(IndexInfo);
 	indexInfo->ii_Predicate = cnfPred;
+	indexInfo->ii_PredicateState = (List *)
+		ExecInitExpr((Expr *) cnfPred, NULL);
 	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = unique;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.23 2002/12/12 20:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.24 2002/12/13 19:45:52 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1244,7 +1244,8 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	Form_pg_type	typTup;
 	ExprContext *econtext;
 	char   *ccbin;
-	Node   *expr;
+	Expr   *expr;
+	ExprState *exprstate;
 	int		counter = 0;
 	Constraint *constr;
 
@@ -1336,10 +1337,11 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	 * Test all values stored in the attributes based on the domain
 	 * the constraint is being added to.
 	 */
-	expr = stringToNode(ccbin);
-	fix_opfuncids(expr);
+	expr = (Expr *) stringToNode(ccbin);
+	fix_opfuncids((Node *) expr);
+	exprstate = ExecInitExpr(expr, NULL);
 
-	/* Make an expression context for ExecQual */
+	/* Make an expression context for ExecEvalExpr */
 	econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
 	rels = get_rels_with_domain(domainoid);
@@ -1375,7 +1377,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 				econtext->domainValue_datum = d;
 				econtext->domainValue_isNull = isNull;
 
-				conResult = ExecEvalExpr(expr, econtext, &isNull, NULL);
+				conResult = ExecEvalExpr(exprstate, econtext, &isNull, NULL);
 
 				if (!isNull && !DatumGetBool(conResult))
 					elog(ERROR, "AlterDomainAddConstraint: Domain %s constraint %s failed",

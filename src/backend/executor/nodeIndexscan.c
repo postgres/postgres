@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.73 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.74 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,7 +283,7 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 	int			numIndices;
 	IndexScanDescPtr scanDescs;
 	ScanKey    *scanKeys;
-	int		  **runtimeKeyInfo;
+	ExprState ***runtimeKeyInfo;
 	int		   *numScanKeys;
 	Index		scanrelid;
 	int			i;
@@ -328,29 +328,18 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 	 */
 	if (runtimeKeyInfo)
 	{
-		List	   *indxqual;
-
-		indxqual = node->indxqual;
 		for (i = 0; i < numIndices; i++)
 		{
-			List	   *qual = lfirst(indxqual);
 			int			n_keys;
 			ScanKey		scan_keys;
-			int		   *run_keys;
-			List	   *listscan;
+			ExprState **run_keys;
 
-			indxqual = lnext(indxqual);
 			n_keys = numScanKeys[i];
 			scan_keys = scanKeys[i];
 			run_keys = runtimeKeyInfo[i];
 
-			listscan = qual;
 			for (j = 0; j < n_keys; j++)
 			{
-				Expr	   *clause = lfirst(listscan);
-
-				listscan = lnext(listscan);
-
 				/*
 				 * If we have a run-time key, then extract the run-time
 				 * expression and evaluate it with respect to the current
@@ -364,17 +353,12 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 				 * is wrong, we could copy the result into our context
 				 * explicitly, but I think that's not necessary...
 				 */
-				if (run_keys[j] != NO_OP)
+				if (run_keys[j] != NULL)
 				{
-					Node	   *scanexpr;
 					Datum		scanvalue;
 					bool		isNull;
 
-					scanexpr = (run_keys[j] == RIGHT_OP) ?
-						(Node *) get_rightop(clause) :
-						(Node *) get_leftop(clause);
-
-					scanvalue = ExecEvalExprSwitchContext(scanexpr,
+					scanvalue = ExecEvalExprSwitchContext(run_keys[j],
 														  econtext,
 														  &isNull,
 														  NULL);
@@ -424,7 +408,7 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 void
 ExecEndIndexScan(IndexScanState *node)
 {
-	int		  **runtimeKeyInfo;
+	ExprState ***runtimeKeyInfo;
 	ScanKey    *scanKeys;
 	int		   *numScanKeys;
 	int			numIndices;
@@ -585,7 +569,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	int		   *numScanKeys;
 	RelationPtr indexDescs;
 	IndexScanDescPtr scanDescs;
-	int		  **runtimeKeyInfo;
+	ExprState ***runtimeKeyInfo;
 	bool		have_runtime_keys;
 	RangeTblEntry *rtentry;
 	Index		relid;
@@ -610,16 +594,16 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * initialize child expressions
 	 */
 	indexstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->scan.plan.targetlist,
+		ExecInitExpr((Expr *) node->scan.plan.targetlist,
 					 (PlanState *) indexstate);
 	indexstate->ss.ps.qual = (List *)
-		ExecInitExpr((Node *) node->scan.plan.qual,
+		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) indexstate);
 	indexstate->indxqual = (List *)
-		ExecInitExpr((Node *) node->indxqual,
+		ExecInitExpr((Expr *) node->indxqual,
 					 (PlanState *) indexstate);
 	indexstate->indxqualorig = (List *)
-		ExecInitExpr((Node *) node->indxqualorig,
+		ExecInitExpr((Expr *) node->indxqualorig,
 					 (PlanState *) indexstate);
 
 #define INDEXSCAN_NSLOTS 2
@@ -672,7 +656,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * initialize space for runtime key info (may not be needed)
 	 */
 	have_runtime_keys = false;
-	runtimeKeyInfo = (int **) palloc(numIndices * sizeof(int *));
+	runtimeKeyInfo = (ExprState ***) palloc0(numIndices * sizeof(ExprState **));
 
 	/*
 	 * build the index scan keys from the index qualification
@@ -684,15 +668,15 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		List	   *qual;
 		int			n_keys;
 		ScanKey		scan_keys;
-		int		   *run_keys;
+		ExprState **run_keys;
 
 		qual = lfirst(indxqual);
 		indxqual = lnext(indxqual);
 		n_keys = length(qual);
 		scan_keys = (n_keys <= 0) ? (ScanKey) NULL :
 			(ScanKey) palloc(n_keys * sizeof(ScanKeyData));
-		run_keys = (n_keys <= 0) ? (int *) NULL :
-			(int *) palloc(n_keys * sizeof(int));
+		run_keys = (n_keys <= 0) ? (ExprState **) NULL :
+			(ExprState **) palloc(n_keys * sizeof(ExprState *));
 
 		CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
 
@@ -704,8 +688,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		for (j = 0; j < n_keys; j++)
 		{
 			OpExpr	   *clause; /* one clause of index qual */
-			Node	   *leftop; /* expr on lhs of operator */
-			Node	   *rightop;	/* expr on rhs ... */
+			Expr	   *leftop; /* expr on lhs of operator */
+			Expr	   *rightop;	/* expr on rhs ... */
 			bits16		flags = 0;
 
 			int			scanvar;	/* which var identifies varattno */
@@ -740,9 +724,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			 * which case we need to recalculate the index scan key at run
 			 * time.
 			 *
-			 * Hence, we set have_runtime_keys to true and then set the
-			 * appropriate flag in run_keys to LEFT_OP or RIGHT_OP. The
-			 * corresponding scan keys are recomputed at run time.
+			 * Hence, we set have_runtime_keys to true and place the
+			 * appropriate subexpression in run_keys. The corresponding
+			 * scan key values are recomputed at run time.
 			 *
 			 * XXX Although this code *thinks* it can handle an indexqual
 			 * with the indexkey on either side, in fact it cannot.
@@ -760,19 +744,20 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			 */
 
 			scanvar = NO_OP;
-			run_keys[j] = NO_OP;
+			run_keys[j] = NULL;
 
 			/*
 			 * determine information in leftop
 			 */
-			leftop = (Node *) get_leftop((Expr *) clause);
+			leftop = (Expr *) get_leftop((Expr *) clause);
 
 			if (leftop && IsA(leftop, RelabelType))
-				leftop = (Node *) ((RelabelType *) leftop)->arg;
+				leftop = ((RelabelType *) leftop)->arg;
 
 			Assert(leftop != NULL);
 
-			if (IsA(leftop, Var) &&var_is_rel((Var *) leftop))
+			if (IsA(leftop, Var) &&
+				var_is_rel((Var *) leftop))
 			{
 				/*
 				 * if the leftop is a "rel-var", then it means that it is
@@ -792,32 +777,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 				if (((Const *) leftop)->constisnull)
 					flags |= SK_ISNULL;
 			}
-			else if (IsA(leftop, Param))
-			{
-				bool		isnull;
-
-				/*
-				 * if the leftop is a Param node then it means it
-				 * identifies the value to place in our scan key.
-				 */
-
-				/* Life was so easy before ... subselects */
-				if (((Param *) leftop)->paramkind == PARAM_EXEC)
-				{
-					/* treat Param as runtime key */
-					have_runtime_keys = true;
-					run_keys[j] = LEFT_OP;
-				}
-				else
-				{
-					/* treat Param like a constant */
-					scanvalue = ExecEvalParam((Param *) leftop,
-										indexstate->ss.ps.ps_ExprContext,
-											  &isnull);
-					if (isnull)
-						flags |= SK_ISNULL;
-				}
-			}
 			else
 			{
 				/*
@@ -826,20 +785,21 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 				 * key.
 				 */
 				have_runtime_keys = true;
-				run_keys[j] = LEFT_OP;
+				run_keys[j] = ExecInitExpr(leftop, (PlanState *) indexstate);
 			}
 
 			/*
 			 * now determine information in rightop
 			 */
-			rightop = (Node *) get_rightop((Expr *) clause);
+			rightop = (Expr *) get_rightop((Expr *) clause);
 
 			if (rightop && IsA(rightop, RelabelType))
-				rightop = (Node *) ((RelabelType *) rightop)->arg;
+				rightop = ((RelabelType *) rightop)->arg;
 
 			Assert(rightop != NULL);
 
-			if (IsA(rightop, Var) &&var_is_rel((Var *) rightop))
+			if (IsA(rightop, Var) &&
+				var_is_rel((Var *) rightop))
 			{
 				/*
 				 * here we make sure only one op identifies the
@@ -867,32 +827,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 				if (((Const *) rightop)->constisnull)
 					flags |= SK_ISNULL;
 			}
-			else if (IsA(rightop, Param))
-			{
-				bool		isnull;
-
-				/*
-				 * if the rightop is a Param node then it means it
-				 * identifies the value to place in our scan key.
-				 */
-
-				/* Life was so easy before ... subselects */
-				if (((Param *) rightop)->paramkind == PARAM_EXEC)
-				{
-					/* treat Param as runtime key */
-					have_runtime_keys = true;
-					run_keys[j] = RIGHT_OP;
-				}
-				else
-				{
-					/* treat Param like a constant */
-					scanvalue = ExecEvalParam((Param *) rightop,
-										indexstate->ss.ps.ps_ExprContext,
-											  &isnull);
-					if (isnull)
-						flags |= SK_ISNULL;
-				}
-			}
 			else
 			{
 				/*
@@ -901,7 +835,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 				 * key.
 				 */
 				have_runtime_keys = true;
-				run_keys[j] = RIGHT_OP;
+				run_keys[j] = ExecInitExpr(rightop, (PlanState *) indexstate);
 			}
 
 			/*

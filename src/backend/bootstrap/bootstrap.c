@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.145 2002/11/14 23:53:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.146 2002/12/13 19:45:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/pg_type.h"
+#include "executor/executor.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
@@ -1142,6 +1143,8 @@ index_register(Oid heap,
 	/* predicate will likely be null, but may as well copy it */
 	newind->il_info->ii_Predicate = (List *)
 		copyObject(indexInfo->ii_Predicate);
+	newind->il_info->ii_PredicateState = (List *)
+		ExecInitExpr((Expr *) newind->il_info->ii_Predicate, NULL);
 
 	newind->il_next = ILHead;
 	ILHead = newind;

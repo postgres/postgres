@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.39 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.40 2002/12/13 19:45:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,10 +207,10 @@ ExecInitSeqScan(SeqScan *node, EState *estate)
 	 * initialize child expressions
 	 */
 	scanstate->ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->plan.targetlist,
+		ExecInitExpr((Expr *) node->plan.targetlist,
 					 (PlanState *) scanstate);
 	scanstate->ps.qual = (List *)
-		ExecInitExpr((Node *) node->plan.qual,
+		ExecInitExpr((Expr *) node->plan.qual,
 					 (PlanState *) scanstate);
 
 #define SEQSCAN_NSLOTS 2

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.69 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.70 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ ExecHash(HashState *node)
 	/*
 	 * set expression context
 	 */
-	hashkeys = ((Hash *) node->ps.plan)->hashkeys;
+	hashkeys = node->hashkeys;
 	econtext = node->ps.ps_ExprContext;
 
 	/*
@@ -138,10 +138,10 @@ ExecInitHash(Hash *node, EState *estate)
 	 * initialize child expressions
 	 */
 	hashstate->ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->plan.targetlist,
+		ExecInitExpr((Expr *) node->plan.targetlist,
 					 (PlanState *) hashstate);
 	hashstate->ps.qual = (List *)
-		ExecInitExpr((Node *) node->plan.qual,
+		ExecInitExpr((Expr *) node->plan.qual,
 					 (PlanState *) hashstate);
 
 	/*
@@ -554,7 +554,8 @@ ExecHashGetBucket(HashJoinTable hashtable,
 		/*
 		 * Get the join attribute value of the tuple
 		 */
-		keyval = ExecEvalExpr(lfirst(hk), econtext, &isNull, NULL);
+		keyval = ExecEvalExpr((ExprState *) lfirst(hk),
+							  econtext, &isNull, NULL);
 
 		/*
 		 * Compute the hash function

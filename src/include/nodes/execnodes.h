@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.83 2002/12/12 20:35:13 tgl Exp $
+ * $Id: execnodes.h,v 1.84 2002/12/13 19:45:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
  *							(ie, number of attrs from underlying relation)
  *		KeyAttrNumbers		underlying-rel attribute numbers used as keys
  *		Predicate			partial-index predicate, or NIL if none
+ *		PredicateState		exec state for predicate, or NIL if none
  *		FuncOid				OID of function, or InvalidOid if not f. index
  *		FuncInfo			fmgr lookup data for function, if FuncOid valid
  *		Unique				is it a unique index?
@@ -47,7 +48,8 @@ typedef struct IndexInfo
 	int			ii_NumIndexAttrs;
 	int			ii_NumKeyAttrs;
 	AttrNumber	ii_KeyAttrNumbers[INDEX_MAX_KEYS];
-	List	   *ii_Predicate;
+	List	   *ii_Predicate;	/* list of Expr */
+	List	   *ii_PredicateState; /* list of ExprState */
 	Oid			ii_FuncOid;
 	FmgrInfo	ii_FuncInfo;
 	bool		ii_Unique;
@@ -254,7 +256,7 @@ typedef struct JunkFilter
  *		IndexRelationInfo		array of key/attr info for indices
  *		TrigDesc				triggers to be fired, if any
  *		TrigFunctions			cached lookup info for trigger functions
- *		ConstraintExprs			array of constraint-checking expressions
+ *		ConstraintExprs			array of constraint-checking expr states
  *		junkFilter				for removing junk attributes from tuples
  * ----------------
  */
@@ -332,7 +334,178 @@ typedef struct EState
 
 
 /* ----------------------------------------------------------------
- *				 Executor State Information
+ *				 Expression State Trees
+ *
+ * Each executable expression tree has a parallel ExprState tree.
+ *
+ * Unlike PlanState, there is not an exact one-for-one correspondence between
+ * ExprState node types and Expr node types.  Many Expr node types have no
+ * need for node-type-specific run-time state, and so they can use plain
+ * ExprState or GenericExprState as their associated ExprState node type.
+ * ----------------------------------------------------------------
+ */
+
+/* ----------------
+ *		ExprState node
+ *
+ * ExprState is the common superclass for all ExprState-type nodes.
+ *
+ * It can also be instantiated directly for leaf Expr nodes that need no
+ * local run-time state (such as Var, Const, or Param).
+ * ----------------
+ */
+typedef struct ExprState
+{
+	NodeTag		type;
+	Expr	   *expr;			/* associated Expr node */
+} ExprState;
+
+/* ----------------
+ *		GenericExprState node
+ *
+ * This is used for Expr node types that need no local run-time state,
+ * but have one child Expr node.
+ * ----------------
+ */
+typedef struct GenericExprState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* state of my child node */
+} GenericExprState;
+
+/* ----------------
+ *		AggrefExprState node
+ * ----------------
+ */
+typedef struct AggrefExprState
+{
+	ExprState	xprstate;
+	ExprState  *target;			/* state of my child node */
+	int			aggno;			/* ID number for agg within its plan node */
+} AggrefExprState;
+
+/* ----------------
+ *		ArrayRefExprState node
+ * ----------------
+ */
+typedef struct ArrayRefExprState
+{
+	ExprState	xprstate;
+	List	   *refupperindexpr; /* states for child nodes */
+	List	   *reflowerindexpr;
+	ExprState  *refexpr;
+	ExprState  *refassgnexpr;
+} ArrayRefExprState;
+
+/* ----------------
+ *		FuncExprState node
+ *
+ * Although named for FuncExpr, this is also used for OpExpr and DistinctExpr
+ * nodes; be careful to check what xprstate.expr is actually pointing at!
+ * ----------------
+ */
+typedef struct FuncExprState
+{
+	ExprState	xprstate;
+	List	   *args;			/* states of argument expressions */
+
+	/*
+	 * Function manager's lookup info for the target function.  If func.fn_oid
+	 * is InvalidOid, we haven't initialized it yet.
+	 */
+	FmgrInfo	func;
+
+	/*
+	 * We also need to store argument values across calls when evaluating a
+	 * function-returning-set.
+	 *
+	 * setArgsValid is true when we are evaluating a set-valued function
+	 * and we are in the middle of a call series; we want to pass the same
+	 * argument values to the function again (and again, until it returns
+	 * ExprEndResult).
+	 */
+	bool		setArgsValid;
+
+	/*
+	 * Flag to remember whether we found a set-valued argument to the
+	 * function. This causes the function result to be a set as well.
+	 * Valid only when setArgsValid is true.
+	 */
+	bool		setHasSetArg;	/* some argument returns a set */
+
+	/*
+	 * Current argument data for a set-valued function; contains valid
+	 * data only if setArgsValid is true.
+	 */
+	FunctionCallInfoData setArgs;
+} FuncExprState;
+
+/* ----------------
+ *		BoolExprState node
+ * ----------------
+ */
+typedef struct BoolExprState
+{
+	ExprState	xprstate;
+	List	   *args;			/* states of argument expression(s) */
+} BoolExprState;
+
+/* ----------------
+ *		SubPlanExprState node
+ *
+ * Note: there is no separate ExprState node for the SubLink.  All it would
+ * need is the oper field, which we can just as easily put here.
+ * ----------------
+ */
+typedef struct SubPlanExprState
+{
+	ExprState	xprstate;
+	struct PlanState *planstate; /* subselect plan's state tree */
+	bool		needShutdown;	/* TRUE = need to shutdown subplan */
+	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
+	List	   *args;			/* states of argument expression(s) */
+	List	   *oper;			/* states for executable combining exprs */
+} SubPlanExprState;
+
+/* ----------------
+ *		CaseExprState node
+ * ----------------
+ */
+typedef struct CaseExprState
+{
+	ExprState	xprstate;
+	List	   *args;			/* the arguments (list of WHEN clauses) */
+	ExprState  *defresult;		/* the default result (ELSE clause) */
+} CaseExprState;
+
+/* ----------------
+ *		CaseWhenState node
+ * ----------------
+ */
+typedef struct CaseWhenState
+{
+	ExprState	xprstate;
+	ExprState  *expr;			/* condition expression */
+	ExprState  *result;			/* substitution result */
+} CaseWhenState;
+
+/* ----------------
+ *		ConstraintTestState node
+ * ----------------
+ */
+typedef struct ConstraintTestState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* input expression */
+	ExprState  *check_expr;		/* for CHECK test, a boolean expression */
+} ConstraintTestState;
+
+
+/* ----------------------------------------------------------------
+ *				 Executor State Trees
+ *
+ * An executing query has a PlanState tree paralleling the Plan tree
+ * that describes the plan.
  * ----------------------------------------------------------------
  */
 
@@ -365,9 +538,9 @@ typedef struct PlanState
 	List	   *qual;			/* implicitly-ANDed qual conditions */
 	struct PlanState *lefttree;	/* input plan tree(s) */
 	struct PlanState *righttree;
-	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated
+	List	   *initPlan;		/* Init SubPlanExprState nodes (un-correlated
 								 * expr subselects) */
-	List	   *subPlan;		/* SubPlanState nodes in my expressions */
+	List	   *subPlan;		/* SubPlanExprState nodes in my expressions */
 
 	/*
 	 * State for management of parameter-change-driven rescanning
@@ -403,7 +576,7 @@ typedef struct PlanState
 typedef struct ResultState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	Node	   *resconstantqual;
+	ExprState  *resconstantqual;
 	bool		rs_done;		/* are we done? */
 	bool		rs_checkqual;	/* do we need to check the qual? */
 } ResultState;
@@ -467,7 +640,8 @@ typedef ScanState SeqScanState;
  *		IndexPtr		   current index in use
  *		ScanKeys		   Skey structures to scan index rels
  *		NumScanKeys		   array of no of keys in each Skey struct
- *		RuntimeKeyInfo	   array of array of flags for Skeys evaled at runtime
+ *		RuntimeKeyInfo	   array of array of exprstates for Skeys
+ *						   that will be evaluated at runtime
  *		RuntimeContext	   expr context for evaling runtime Skeys
  *		RuntimeKeysReady   true if runtime Skeys have been computed
  *		RelationDescs	   ptr to array of relation descriptors
@@ -484,7 +658,7 @@ typedef struct IndexScanState
 	int			iss_MarkIndexPtr;
 	ScanKey    *iss_ScanKeys;
 	int		   *iss_NumScanKeys;
-	int		  **iss_RuntimeKeyInfo;
+	ExprState ***iss_RuntimeKeyInfo;
 	ExprContext *iss_RuntimeContext;
 	bool		iss_RuntimeKeysReady;
 	RelationPtr iss_RelationDescs;
@@ -502,6 +676,7 @@ typedef struct IndexScanState
 typedef struct TidScanState
 {
 	ScanState	ss;				/* its first field is NodeTag */
+	List	   *tss_tideval;	/* list of ExprState nodes */
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;
@@ -542,7 +717,7 @@ typedef struct FunctionScanState
 	ScanState	ss;				/* its first field is NodeTag */
 	TupleDesc	tupdesc;
 	Tuplestorestate *tuplestorestate;
-	Node	   *funcexpr;
+	ExprState  *funcexpr;
 } FunctionScanState;
 
 /* ----------------------------------------------------------------
@@ -597,9 +772,9 @@ typedef struct NestLoopState
 typedef struct MergeJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
-	List	   *mergeclauses;
-	List	   *mj_OuterSkipQual;
-	List	   *mj_InnerSkipQual;
+	List	   *mergeclauses;		/* list of ExprState nodes */
+	List	   *mj_OuterSkipQual;	/* list of ExprState nodes */
+	List	   *mj_InnerSkipQual;	/* list of ExprState nodes */
 	int			mj_JoinState;
 	bool		mj_MatchedOuter;
 	bool		mj_MatchedInner;
@@ -632,12 +807,12 @@ typedef struct MergeJoinState
 typedef struct HashJoinState
 {
 	JoinState	js;				/* its first field is NodeTag */
-	List	   *hashclauses;
+	List	   *hashclauses;	/* list of ExprState nodes */
 	HashJoinTable hj_HashTable;
 	int			hj_CurBucketNo;
 	HashJoinTuple hj_CurTuple;
-	List	   *hj_OuterHashKeys;
-	List	   *hj_InnerHashKeys;
+	List	   *hj_OuterHashKeys;	/* list of ExprState nodes */
+	List	   *hj_InnerHashKeys;	/* list of ExprState nodes */
 	TupleTableSlot *hj_OuterTupleSlot;
 	TupleTableSlot *hj_HashTupleSlot;
 	TupleTableSlot *hj_NullInnerTupleSlot;
@@ -757,6 +932,8 @@ typedef struct HashState
 {
 	PlanState	ps;				/* its first field is NodeTag */
 	HashJoinTable hashtable;	/* hash table for the hashjoin */
+	List	   *hashkeys;		/* list of ExprState nodes */
+	/* hashkeys is same as parent's hj_InnerHashKeys */
 } HashState;
 
 /* ----------------
@@ -804,8 +981,8 @@ typedef enum
 typedef struct LimitState
 {
 	PlanState	ps;				/* its first field is NodeTag */
-	Node	   *limitOffset;	/* OFFSET parameter, or NULL if none */
-	Node	   *limitCount;		/* COUNT parameter, or NULL if none */
+	ExprState  *limitOffset;	/* OFFSET parameter, or NULL if none */
+	ExprState  *limitCount;		/* COUNT parameter, or NULL if none */
 	long		offset;			/* current OFFSET value */
 	long		count;			/* current COUNT, if any */
 	bool		noCount;		/* if true, ignore count */
@@ -813,17 +990,5 @@ typedef struct LimitState
 	long		position;		/* 1-based index of last tuple returned */
 	TupleTableSlot *subSlot;	/* tuple last obtained from subplan */
 } LimitState;
-
-/* ---------------------
- *	 SubPlanState information
- * ---------------------
- */
-typedef struct SubPlanState
-{
-	PlanState	ps;				/* its first field is NodeTag */
-	PlanState  *planstate;		/* subselect plan's state tree */
-	bool		needShutdown;	/* TRUE = need to shutdown subplan */
-	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
-} SubPlanState;
 
 #endif   /* EXECNODES_H */

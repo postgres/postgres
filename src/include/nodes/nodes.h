@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.131 2002/12/12 20:35:14 tgl Exp $
+ * $Id: nodes.h,v 1.132 2002/12/13 19:46:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,12 +31,12 @@ typedef enum NodeTag
 	 * TAGS FOR EXECUTOR NODES (execnodes.h)
 	 */
 	T_IndexInfo = 10,
-	T_ResultRelInfo,
-	T_TupleTableSlot,
 	T_ExprContext,
 	T_ProjectionInfo,
 	T_JunkFilter,
+	T_ResultRelInfo,
 	T_EState,
+	T_TupleTableSlot,
 
 	/*
 	 * TAGS FOR PLAN NODES (plannodes.h)
@@ -89,7 +89,6 @@ typedef enum NodeTag
 	T_HashState,
 	T_SetOpState,
 	T_LimitState,
-	T_SubPlanState,
 
 	/*
 	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
@@ -123,9 +122,26 @@ typedef enum NodeTag
 	T_FromExpr,
 
 	/*
+	 * TAGS FOR EXPRESSION STATE NODES (execnodes.h)
+	 *
+	 * These correspond (not always one-for-one) to primitive nodes
+	 * derived from Expr.
+	 */
+	T_ExprState = 400,
+	T_GenericExprState,
+	T_AggrefExprState,
+	T_ArrayRefExprState,
+	T_FuncExprState,
+	T_BoolExprState,
+	T_SubPlanExprState,
+	T_CaseExprState,
+	T_CaseWhenState,
+	T_ConstraintTestState,
+
+	/*
 	 * TAGS FOR PLANNER NODES (relation.h)
 	 */
-	T_RelOptInfo = 400,
+	T_RelOptInfo = 500,
 	T_IndexOptInfo,
 	T_Path,
 	T_IndexPath,
@@ -144,13 +160,13 @@ typedef enum NodeTag
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
 	 */
-	T_MemoryContext = 500,
+	T_MemoryContext = 600,
 	T_AllocSetContext,
 
 	/*
 	 * TAGS FOR VALUE NODES (pg_list.h)
 	 */
-	T_Value = 600,
+	T_Value = 650,
 	T_List,
 	T_Integer,
 	T_Float,

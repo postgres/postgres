@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.36 2002/12/12 15:49:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.37 2002/12/13 19:45:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,12 @@
  * ----------------------------------------------------------------
  */
 Datum
-ExecSubPlan(SubPlanState *node, List *pvar,
-			ExprContext *econtext, bool *isNull)
+ExecSubPlan(SubPlanExprState *node,
+			ExprContext *econtext,
+			bool *isNull)
 {
 	PlanState  *planstate = node->planstate;
-	SubPlanExpr *subplan = (SubPlanExpr *) node->ps.plan;
+	SubPlanExpr *subplan = (SubPlanExpr *) node->xprstate.expr;
 	SubLink    *sublink = subplan->sublink;
 	SubLinkType subLinkType = sublink->subLinkType;
 	bool		useor = sublink->useor;
@@ -42,6 +43,7 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 	TupleTableSlot *slot;
 	Datum		result;
 	bool		found = false;	/* TRUE if got at least one subplan tuple */
+	List	   *pvar;
 	List	   *lst;
 
 	/*
@@ -56,6 +58,7 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 	/*
 	 * Set Params of this plan from parent plan correlation Vars
 	 */
+	pvar = node->args;
 	if (subplan->parParam != NIL)
 	{
 		foreach(lst, subplan->parParam)
@@ -64,7 +67,7 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 
 			prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
 			Assert(pvar != NIL);
-			prm->value = ExecEvalExprSwitchContext((Node *) lfirst(pvar),
+			prm->value = ExecEvalExprSwitchContext((ExprState *) lfirst(pvar),
 												   econtext,
 												   &(prm->isnull),
 												   NULL);
@@ -149,9 +152,10 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 		 * For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
 		 * operators for columns of tuple.
 		 */
-		foreach(lst, sublink->oper)
+		foreach(lst, node->oper)
 		{
-			OpExpr	   *expr = (OpExpr *) lfirst(lst);
+			ExprState  *exprstate = (ExprState *) lfirst(lst);
+			OpExpr	   *expr = (OpExpr *) exprstate->expr;
 			Param	   *prm = lsecond(expr->args);
 			ParamExecData *prmdata;
 			Datum		expresult;
@@ -194,7 +198,7 @@ ExecSubPlan(SubPlanState *node, List *pvar,
 			/*
 			 * Now we can eval the combining operator for this column.
 			 */
-			expresult = ExecEvalExprSwitchContext((Node *) expr, econtext,
+			expresult = ExecEvalExprSwitchContext(exprstate, econtext,
 												  &expnull, NULL);
 
 			/*
@@ -287,64 +291,57 @@ ExecSubPlan(SubPlanState *node, List *pvar,
  *		ExecInitSubPlan
  * ----------------------------------------------------------------
  */
-SubPlanState *
-ExecInitSubPlan(SubPlanExpr *node, EState *estate)
+void
+ExecInitSubPlan(SubPlanExprState *sstate, EState *estate)
 {
-	SubPlanState *subplanstate;
+	SubPlanExpr *expr = (SubPlanExpr *) sstate->xprstate.expr;
 	EState	   *sp_estate;
 
 	/*
 	 * Do access checking on the rangetable entries in the subquery.
 	 * Here, we assume the subquery is a SELECT.
 	 */
-	ExecCheckRTPerms(node->rtable, CMD_SELECT);
+	ExecCheckRTPerms(expr->rtable, CMD_SELECT);
 
 	/*
-	 * create state structure
+	 * initialize state
 	 */
-	subplanstate = makeNode(SubPlanState);
-	subplanstate->ps.plan = (Plan *) node;
-	subplanstate->ps.state = estate;
-
-	subplanstate->needShutdown = false;
-	subplanstate->curTuple = NULL;
-
-	/* XXX temporary hack */
-	node->pstate = subplanstate;
+	sstate->needShutdown = false;
+	sstate->curTuple = NULL;
 
 	/*
 	 * create an EState for the subplan
 	 */
 	sp_estate = CreateExecutorState();
 
-	sp_estate->es_range_table = node->rtable;
+	sp_estate->es_range_table = expr->rtable;
 	sp_estate->es_param_list_info = estate->es_param_list_info;
 	sp_estate->es_param_exec_vals = estate->es_param_exec_vals;
 	sp_estate->es_tupleTable =
-		ExecCreateTupleTable(ExecCountSlotsNode(node->plan) + 10);
+		ExecCreateTupleTable(ExecCountSlotsNode(expr->plan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
 	sp_estate->es_instrument = estate->es_instrument;
 
 	/*
 	 * Start up the subplan
 	 */
-	subplanstate->planstate = ExecInitNode(node->plan, sp_estate);
+	sstate->planstate = ExecInitNode(expr->plan, sp_estate);
 
-	subplanstate->needShutdown = true;	/* now we need to shutdown the subplan */
+	sstate->needShutdown = true;	/* now we need to shutdown the subplan */
 
 	/*
 	 * If this plan is un-correlated or undirect correlated one and want
 	 * to set params for parent plan then prepare parameters.
 	 */
-	if (node->setParam != NIL)
+	if (expr->setParam != NIL)
 	{
 		List	   *lst;
 
-		foreach(lst, node->setParam)
+		foreach(lst, expr->setParam)
 		{
 			ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(lst)]);
 
-			prm->execPlan = subplanstate;
+			prm->execPlan = sstate;
 		}
 
 		/*
@@ -353,8 +350,6 @@ ExecInitSubPlan(SubPlanExpr *node, EState *estate)
 		 * it, for others - it doesn't matter...
 		 */
 	}
-
-	return subplanstate;
 }
 
 /* ----------------------------------------------------------------
@@ -371,12 +366,11 @@ ExecInitSubPlan(SubPlanExpr *node, EState *estate)
  * ----------------------------------------------------------------
  */
 void
-ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
+ExecSetParamPlan(SubPlanExprState *node, ExprContext *econtext)
 {
 	PlanState  *planstate = node->planstate;
-	SubPlanExpr *subplan = (SubPlanExpr *) node->ps.plan;
-	SubLink    *sublink = subplan->sublink;
-	EState	   *estate = node->ps.state;
+	SubPlanExpr *subplan = (SubPlanExpr *) node->xprstate.expr;
+	SubLinkType	subLinkType = subplan->sublink->subLinkType;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	List	   *lst;
@@ -388,8 +382,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	 */
 	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
-	if (sublink->subLinkType == ANY_SUBLINK ||
-		sublink->subLinkType == ALL_SUBLINK)
+	if (subLinkType == ANY_SUBLINK ||
+		subLinkType == ALL_SUBLINK)
 		elog(ERROR, "ExecSetParamPlan: ANY/ALL subselect unsupported");
 
 	if (planstate->chgParam != NULL)
@@ -403,9 +397,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
 		int			i = 1;
 
-		if (sublink->subLinkType == EXISTS_SUBLINK)
+		if (subLinkType == EXISTS_SUBLINK)
 		{
-			ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(subplan->setParam)]);
+			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(subplan->setParam)]);
 
 			prm->execPlan = NULL;
 			prm->value = BoolGetDatum(true);
@@ -415,8 +409,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		}
 
 		if (found &&
-			(sublink->subLinkType == EXPR_SUBLINK ||
-			 sublink->subLinkType == MULTIEXPR_SUBLINK))
+			(subLinkType == EXPR_SUBLINK ||
+			 subLinkType == MULTIEXPR_SUBLINK))
 			elog(ERROR, "More than one tuple returned by a subselect used as an expression.");
 
 		found = true;
@@ -434,7 +428,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 		foreach(lst, subplan->setParam)
 		{
-			ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(lst)]);
+			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
 
 			prm->execPlan = NULL;
 			prm->value = heap_getattr(tup, i, tdesc, &(prm->isnull));
@@ -444,9 +438,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 	if (!found)
 	{
-		if (sublink->subLinkType == EXISTS_SUBLINK)
+		if (subLinkType == EXISTS_SUBLINK)
 		{
-			ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(subplan->setParam)]);
+			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(subplan->setParam)]);
 
 			prm->execPlan = NULL;
 			prm->value = BoolGetDatum(false);
@@ -456,7 +450,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		{
 			foreach(lst, subplan->setParam)
 			{
-				ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(lst)]);
+				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
 
 				prm->execPlan = NULL;
 				prm->value = (Datum) 0;
@@ -479,7 +473,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSubPlan(SubPlanState *node)
+ExecEndSubPlan(SubPlanExprState *node)
 {
 	if (node->needShutdown)
 	{
@@ -494,11 +488,11 @@ ExecEndSubPlan(SubPlanState *node)
 }
 
 void
-ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
+ExecReScanSetParamPlan(SubPlanExprState *node, PlanState *parent)
 {
 	PlanState  *planstate = node->planstate;
-	SubPlanExpr *subplan = (SubPlanExpr *) node->ps.plan;
-	EState	   *estate = node->ps.state;
+	SubPlanExpr *subplan = (SubPlanExpr *) node->xprstate.expr;
+	EState	   *estate = parent->state;
 	List	   *lst;
 
 	if (subplan->parParam != NULL)
@@ -509,8 +503,7 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 		elog(ERROR, "ExecReScanSetParamPlan: extParam list of plan is NULL");
 
 	/*
-	 * Don't actual re-scan: ExecSetParamPlan does re-scan if
-	 * subplan->plan->chgParam is not NULL... ExecReScan (planstate, NULL);
+	 * Don't actually re-scan: ExecSetParamPlan does it if needed.
 	 */
 
 	/*

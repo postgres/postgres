@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.66 2002/12/05 15:50:30 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.67 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,17 +61,19 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 
 		foreach(lst, node->initPlan)
 		{
-			PlanState  *splan = ((SubPlanState *) lfirst(lst))->planstate;
+			SubPlanExprState  *sstate = (SubPlanExprState *) lfirst(lst);
+			PlanState  *splan = sstate->planstate;
 
 			if (splan->plan->extParam != NIL)	/* don't care about child
 												 * locParam */
 				SetChangedParamList(splan, node->chgParam);
 			if (splan->chgParam != NIL)
-				ExecReScanSetParamPlan((SubPlanState *) lfirst(lst), node);
+				ExecReScanSetParamPlan(sstate, node);
 		}
 		foreach(lst, node->subPlan)
 		{
-			PlanState  *splan = ((SubPlanState *) lfirst(lst))->planstate;
+			SubPlanExprState  *sstate = (SubPlanExprState *) lfirst(lst);
+			PlanState  *splan = sstate->planstate;
 
 			if (splan->plan->extParam != NIL)
 				SetChangedParamList(splan, node->chgParam);

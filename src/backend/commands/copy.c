@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.185 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.186 2002/12/13 19:45:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -758,7 +758,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				num_defaults;
 	FmgrInfo   *in_functions;
 	Oid		   *elements;
-	Node	  **constraintexprs;
+	ExprState **constraintexprs;
 	bool		hasConstraints = false;
 	int			i;
 	List	   *cur;
@@ -772,7 +772,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	TupleTableSlot *slot;
 	bool		file_has_oids;
 	int		   *defmap;
-	Node	  **defexprs;		/* array of default att expressions */
+	ExprState **defexprs;		/* array of default att expressions */
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
 
@@ -812,8 +812,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	in_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
 	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
 	defmap = (int *) palloc(num_phys_attrs * sizeof(int));
-	defexprs = (Node **) palloc(num_phys_attrs * sizeof(Node *));
-	constraintexprs = (Node **) palloc0(num_phys_attrs * sizeof(Node *));
+	defexprs = (ExprState **) palloc(num_phys_attrs * sizeof(ExprState *));
+	constraintexprs = (ExprState **) palloc0(num_phys_attrs * sizeof(ExprState *));
 
 	for (i = 0; i < num_phys_attrs; i++)
 	{
@@ -837,10 +837,12 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		{
 			/* attribute is NOT to be copied */
 			/* use default value if one exists */
-			defexprs[num_defaults] = build_column_default(rel, i + 1);
-			if (defexprs[num_defaults] != NULL)
+			Node   *defexpr = build_column_default(rel, i + 1);
+
+			if (defexpr != NULL)
 			{
-				fix_opfuncids(defexprs[num_defaults]);
+				fix_opfuncids(defexpr);
+				defexprs[num_defaults] = ExecInitExpr((Expr *) defexpr, NULL);
 				defmap[num_defaults] = i;
 				num_defaults++;
 			}
@@ -872,7 +874,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			if (node != (Node *) prm)
 			{
 				fix_opfuncids(node);
-				constraintexprs[i] = node;
+				constraintexprs[i] = ExecInitExpr((Expr *) node, NULL);
 				hasConstraints = true;
 			}
 		}
@@ -1165,10 +1167,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 			for (i = 0; i < num_phys_attrs; i++)
 			{
-				Node	   *node = constraintexprs[i];
+				ExprState  *exprstate = constraintexprs[i];
 				bool		isnull;
 
-				if (node == NULL)
+				if (exprstate == NULL)
 					continue;	/* no constraint for this attr */
 
 				/* Insert current row's value into the Param value */
@@ -1180,7 +1182,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				 * to replace the value (consider e.g. a timestamp precision
 				 * restriction).
 				 */
-				values[i] = ExecEvalExpr(node, econtext,
+				values[i] = ExecEvalExpr(exprstate, econtext,
 										 &isnull, NULL);
 				nulls[i] = isnull ? 'n' : ' ';
 			}

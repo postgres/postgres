@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.12 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeLimit.c,v 1.13 2002/12/13 19:45:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,9 +301,9 @@ ExecInitLimit(Limit *node, EState *estate)
 	/*
 	 * initialize child expressions
 	 */
-	limitstate->limitOffset = ExecInitExpr(node->limitOffset,
+	limitstate->limitOffset = ExecInitExpr((Expr *) node->limitOffset,
 										   (PlanState *) limitstate);
-	limitstate->limitCount = ExecInitExpr(node->limitCount,
+	limitstate->limitCount = ExecInitExpr((Expr *) node->limitCount,
 										  (PlanState *) limitstate);
 
 #define LIMIT_NSLOTS 1

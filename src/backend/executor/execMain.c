@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.191 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.192 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1543,7 +1543,8 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 		{
 			qual = (List *) stringToNode(check[i].ccbin);
 			fix_opfuncids((Node *) qual);
-			resultRelInfo->ri_ConstraintExprs[i] = qual;
+			resultRelInfo->ri_ConstraintExprs[i] = (List *)
+				ExecInitExpr((Expr *) qual, NULL);
 		}
 		MemoryContextSwitchTo(oldContext);
 	}

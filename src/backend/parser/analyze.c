@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.256 2002/12/12 20:35:12 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.257 2002/12/13 19:45:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "commands/prepare.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parsetree.h"
@@ -2423,8 +2422,6 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 					 i,
 					 format_type_be(given_type_id),
 					 format_type_be(expected_type_id));
-
-			fix_opfuncids(expr);
 
 			lfirst(l) = expr;
 

@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.51 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.52 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,10 +168,10 @@ ExecInitGroup(Group *node, EState *estate)
 	 * initialize child expressions
 	 */
 	grpstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->plan.targetlist,
+		ExecInitExpr((Expr *) node->plan.targetlist,
 					 (PlanState *) grpstate);
 	grpstate->ss.ps.qual = (List *)
-		ExecInitExpr((Node *) node->plan.qual,
+		ExecInitExpr((Expr *) node->plan.qual,
 					 (PlanState *) grpstate);
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.188 2002/12/12 20:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.189 2002/12/13 19:45:56 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -214,8 +214,6 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 
 /*
  * print the basic stuff of all nodes that inherit from Plan
- *
- * NOTE: we deliberately omit the execution state (EState)
  */
 static void
 _outPlanInfo(StringInfo str, Plan *node)

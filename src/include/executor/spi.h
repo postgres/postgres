@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.33 2001/11/08 20:37:52 momjian Exp $
+ * $Id: spi.h,v 1.34 2002/12/13 19:45:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #include "tcop/utility.h"
 #include "tcop/dest.h"
 #include "nodes/params.h"
-#include "utils/fcache.h"
 #include "utils/datum.h"
 #include "utils/syscache.h"
 #include "utils/builtins.h"

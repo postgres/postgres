@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.142 2002/12/12 20:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.143 2002/12/13 19:45:56 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
  *	  never have occasion to read them in.  (There was once code here that
- *	  claimed to read them, but it was broken as well as unused.)
+ *	  claimed to read them, but it was broken as well as unused.)  We
+ *	  never read executor state trees, either.
  *
  *-------------------------------------------------------------------------
  */
@@ -439,8 +440,6 @@ _readFuncExpr(void)
 	READ_ENUM_FIELD(funcformat, CoercionForm);
 	READ_NODE_FIELD(args);
 
-	local_node->func_fcache = NULL;
-
 	READ_DONE();
 }
 
@@ -468,8 +467,6 @@ _readOpExpr(void)
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
 
-	local_node->op_fcache = NULL;
-
 	READ_DONE();
 }
 
@@ -496,8 +493,6 @@ _readDistinctExpr(void)
 	READ_OID_FIELD(opresulttype);
 	READ_BOOL_FIELD(opretset);
 	READ_NODE_FIELD(args);
-
-	local_node->op_fcache = NULL;
 
 	READ_DONE();
 }

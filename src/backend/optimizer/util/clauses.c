@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.117 2002/12/12 20:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.118 2002/12/13 19:45:56 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1315,7 +1315,18 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			simple = simplify_function(expr->opfuncid, args,
 									   false, active_fns);
 			if (simple)			/* successfully simplified it */
-				return (Node *) simple;
+			{
+				/*
+				 * Since the underlying operator is "=", must negate its
+				 * result
+				 */
+				Const  *csimple = (Const *) simple;
+
+				Assert(IsA(csimple, Const));
+				csimple->constvalue =
+					BoolGetDatum(!DatumGetBool(csimple->constvalue));
+				return (Node *) csimple;
+			}
 		}
 
 		/*
@@ -1672,6 +1683,7 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 	bool		has_nonconst_input = false;
 	bool		has_null_input = false;
 	FuncExpr   *newexpr;
+	ExprState  *newexprstate;
 	ExprContext *econtext;
 	Datum		const_val;
 	bool		const_is_null;
@@ -1738,7 +1750,9 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 	 */
 	econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
-	const_val = ExecEvalExprSwitchContext((Node *) newexpr, econtext,
+	newexprstate = ExecInitExpr((Expr *) newexpr, NULL);
+
+	const_val = ExecEvalExprSwitchContext(newexprstate, econtext,
 										  &const_is_null, NULL);
 
 	/* Must copy result out of sub-context used by expression eval */
@@ -1746,7 +1760,6 @@ evaluate_function(Oid funcid, List *args, HeapTuple func_tuple)
 		const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
 
 	FreeExprContext(econtext);
-	pfree(newexpr);
 
 	/*
 	 * Make the constant result node.

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.54 2002/09/04 20:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.55 2002/12/13 19:45:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
-#include "utils/fcache.h"
 #include "utils/fmgroids.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
@@ -143,7 +142,7 @@ Datum
 seteval(PG_FUNCTION_ARGS)
 {
 	Oid			funcoid = PG_GETARG_OID(0);
-	FunctionCachePtr fcache;
+	FuncExprState *fcache;
 	Datum		result;
 	bool		isNull;
 	ExprDoneCond isDone;
@@ -152,10 +151,27 @@ seteval(PG_FUNCTION_ARGS)
 	 * If this is the first call, we need to set up the fcache for the
 	 * target set's function.
 	 */
-	fcache = (FunctionCachePtr) fcinfo->flinfo->fn_extra;
+	fcache = (FuncExprState *) fcinfo->flinfo->fn_extra;
 	if (fcache == NULL)
 	{
-		fcache = init_fcache(funcoid, 0, fcinfo->flinfo->fn_mcxt);
+		MemoryContext	oldcontext;
+		FuncExpr   *func;
+
+		oldcontext = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
+
+		func = makeNode(FuncExpr);
+		func->funcid = funcoid;
+		func->funcresulttype = InvalidOid; /* nothing will look at this */
+		func->funcretset = true;
+		func->funcformat = COERCE_EXPLICIT_CALL;
+		func->args = NIL;		/* there are no arguments */
+
+		fcache = (FuncExprState *) ExecInitExpr((Expr *) func, NULL);
+
+		MemoryContextSwitchTo(oldcontext);
+
+		init_fcache(funcoid, fcache, fcinfo->flinfo->fn_mcxt);
+
 		fcinfo->flinfo->fn_extra = (void *) fcache;
 	}
 
@@ -169,21 +185,9 @@ seteval(PG_FUNCTION_ARGS)
 	isDone = ExprSingleResult;
 
 	result = ExecMakeFunctionResult(fcache,
-									NIL,
 									NULL,		/* no econtext, see above */
 									&isNull,
 									&isDone);
-
-	/*
-	 * If we're done with the results of this set function, get rid of its
-	 * func cache so that we will start from the top next time. (Can you
-	 * say "memory leak"?  This feature is a crock anyway...)
-	 */
-	if (isDone != ExprMultipleResult)
-	{
-		pfree(fcache);
-		fcinfo->flinfo->fn_extra = NULL;
-	}
 
 	/*
 	 * Return isNull/isDone status.

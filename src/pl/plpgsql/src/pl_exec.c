@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.73 2002/12/12 15:49:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.74 2002/12/13 19:46:01 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1981,6 +1981,7 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	PLpgSQL_recfield *recfield;
 	int			i;
 	int			fno;
+	_SPI_plan  *spi_plan;
 	void	   *plan;
 	Oid		   *argtypes;
 
@@ -2030,7 +2031,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 	if (plan == NULL)
 		elog(ERROR, "SPI_prepare() failed on \"%s\"", expr->query);
 	expr->plan = SPI_saveplan(plan);
-	expr->plan_argtypes = ((_SPI_plan *) expr->plan)->argtypes;
+	spi_plan = (_SPI_plan *) expr->plan;
+	expr->plan_argtypes = spi_plan->argtypes;
 	expr->plan_simple_expr = NULL;
 	exec_simple_check_plan(expr);
 
@@ -3642,6 +3644,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
 	Plan	   *plan;
 	TargetEntry *tle;
+	MemoryContext oldcontext;
 
 	expr->plan_simple_expr = NULL;
 
@@ -3688,10 +3691,13 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 		return;
 
 	/*
-	 * Yes - this is a simple expression. Remember the expression and the
-	 * return type
+	 * Yes - this is a simple expression.  Prepare to execute it, and
+	 * stash away the result type.  Put the expression state tree in the
+	 * plan context so it will have appropriate lifespan.
 	 */
-	expr->plan_simple_expr = (Node *) tle->expr;
+	oldcontext = MemoryContextSwitchTo(spi_plan->plancxt);
+	expr->plan_simple_expr = ExecInitExpr(tle->expr, NULL);
+	MemoryContextSwitchTo(oldcontext);
 	expr->plan_simple_type = exprType((Node *) tle->expr);
 }
 

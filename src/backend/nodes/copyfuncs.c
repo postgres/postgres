@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.231 2002/12/12 20:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.232 2002/12/13 19:45:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -710,7 +710,6 @@ _copyAggref(Aggref *from)
 	COPY_NODE_FIELD(target);
 	COPY_SCALAR_FIELD(aggstar);
 	COPY_SCALAR_FIELD(aggdistinct);
-	COPY_SCALAR_FIELD(aggno);	/* will go away soon */
 
 	return newnode;
 }
@@ -750,9 +749,6 @@ _copyFuncExpr(FuncExpr *from)
 	COPY_SCALAR_FIELD(funcformat);
 	COPY_NODE_FIELD(args);
 
-	/* Do not copy the run-time state, if any */
-	newnode->func_fcache = NULL;
-
 	return newnode;
 }
 
@@ -770,9 +766,6 @@ _copyOpExpr(OpExpr *from)
 	COPY_SCALAR_FIELD(opretset);
 	COPY_NODE_FIELD(args);
 
-	/* Do not copy the run-time state, if any */
-	newnode->op_fcache = NULL;
-
 	return newnode;
 }
 
@@ -789,9 +782,6 @@ _copyDistinctExpr(DistinctExpr *from)
 	COPY_SCALAR_FIELD(opresulttype);
 	COPY_SCALAR_FIELD(opretset);
 	COPY_NODE_FIELD(args);
-
-	/* Do not copy the run-time state, if any */
-	newnode->op_fcache = NULL;
 
 	return newnode;
 }

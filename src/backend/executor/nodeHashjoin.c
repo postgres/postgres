@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.43 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.44 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ ExecHashJoin(HashJoinState *node)
 			 * for this tuple from the hash table
 			 */
 			node->hj_CurBucketNo = ExecHashGetBucket(hashtable, econtext,
-														outerkeys);
+													 outerkeys);
 			node->hj_CurTuple = NULL;
 
 			/*
@@ -302,6 +302,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	HashJoinState *hjstate;
 	Plan	   *outerNode;
 	Hash	   *hashNode;
+	List	   *hclauses;
 	List	   *hcl;
 
 	/*
@@ -322,17 +323,17 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	 * initialize child expressions
 	 */
 	hjstate->js.ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->join.plan.targetlist,
+		ExecInitExpr((Expr *) node->join.plan.targetlist,
 					 (PlanState *) hjstate);
 	hjstate->js.ps.qual = (List *)
-		ExecInitExpr((Node *) node->join.plan.qual,
+		ExecInitExpr((Expr *) node->join.plan.qual,
 					 (PlanState *) hjstate);
 	hjstate->js.jointype = node->join.jointype;
 	hjstate->js.joinqual = (List *)
-		ExecInitExpr((Node *) node->join.joinqual,
+		ExecInitExpr((Expr *) node->join.joinqual,
 					 (PlanState *) hjstate);
 	hjstate->hashclauses = (List *)
-		ExecInitExpr((Node *) node->hashclauses,
+		ExecInitExpr((Expr *) node->hashclauses,
 					 (PlanState *) hjstate);
 
 	/*
@@ -402,15 +403,23 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 
 	/*
 	 * The planner already made a list of the inner hashkeys for us,
-	 * but we also need a list of the outer hashkeys.
+	 * but we also need a list of the outer hashkeys.  Each list of
+	 * exprs must then be prepared for execution.
 	 */
-	hjstate->hj_InnerHashKeys = hashNode->hashkeys;
-	hjstate->hj_OuterHashKeys = NIL;
+	hjstate->hj_InnerHashKeys = (List *)
+		ExecInitExpr((Expr *) hashNode->hashkeys,
+					 innerPlanState(hjstate));
+	((HashState *) innerPlanState(hjstate))->hashkeys =
+		hjstate->hj_InnerHashKeys;
+
+	hclauses = NIL;
 	foreach(hcl, node->hashclauses)
 	{
-		hjstate->hj_OuterHashKeys = lappend(hjstate->hj_OuterHashKeys,
-											get_leftop(lfirst(hcl)));
+		hclauses = lappend(hclauses, get_leftop(lfirst(hcl)));
 	}
+	hjstate->hj_OuterHashKeys = (List *)
+		ExecInitExpr((Expr *) hclauses,
+					 (PlanState *) hjstate);
 
 	hjstate->js.ps.ps_OuterTupleSlot = NULL;
 	hjstate->js.ps.ps_TupFromTlist = false;

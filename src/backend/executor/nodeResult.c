@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.22 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.23 2002/12/13 19:45:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,12 +205,12 @@ ExecInitResult(Result *node, EState *estate)
 	 * initialize child expressions
 	 */
 	resstate->ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->plan.targetlist,
+		ExecInitExpr((Expr *) node->plan.targetlist,
 					 (PlanState *) resstate);
 	resstate->ps.qual = (List *)
-		ExecInitExpr((Node *) node->plan.qual,
+		ExecInitExpr((Expr *) node->plan.qual,
 					 (PlanState *) resstate);
-	resstate->resconstantqual = ExecInitExpr(node->resconstantqual,
+	resstate->resconstantqual = ExecInitExpr((Expr *) node->resconstantqual,
 											 (PlanState *) resstate);
 
 	/*

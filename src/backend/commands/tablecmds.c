@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.59 2002/12/12 20:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.60 2002/12/13 19:45:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2718,6 +2718,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	HeapTuple	tuple;
 	RangeTblEntry *rte;
 	List	   *qual;
+	List	   *qualstate;
 	Node	   *expr;
 
 	/*
@@ -2769,6 +2770,9 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 
 	qual = makeList1(expr);
 
+	/* build execution state for qual */
+	qualstate = (List *) ExecInitExpr((Expr *) qual, NULL);
+
 	/* Make tuple slot to hold tuples */
 	slot = MakeTupleTableSlot();
 	ExecSetSlotDescriptor(slot, RelationGetDescr(rel), false);
@@ -2783,7 +2787,7 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		ExecStoreTuple(tuple, slot, InvalidBuffer, false);
-		if (!ExecQual(qual, econtext, true))
+		if (!ExecQual(qualstate, econtext, true))
 		{
 			successful = false;
 			break;
@@ -3820,6 +3824,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	indexInfo->ii_KeyAttrNumbers[0] = 1;
 	indexInfo->ii_KeyAttrNumbers[1] = 2;
 	indexInfo->ii_Predicate = NIL;
+	indexInfo->ii_PredicateState = NIL;
 	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = true;
 

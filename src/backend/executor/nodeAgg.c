@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.99 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.100 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,8 @@ typedef struct AggStatePerAggData
 	 * thereafter:
 	 */
 
-	/* Link to Aggref node this working state is for */
+	/* Links to Aggref expr and state nodes this working state is for */
+	AggrefExprState *aggrefstate;
 	Aggref	   *aggref;
 
 	/* Oids of transfer functions */
@@ -237,7 +238,7 @@ initialize_aggregates(AggState *aggstate,
 	{
 		AggStatePerAgg peraggstate = &peragg[aggno];
 		AggStatePerGroup pergroupstate = &pergroup[aggno];
-		Aggref	   *aggref = peraggstate->aggref;
+		Aggref *aggref = peraggstate->aggref;
 
 		/*
 		 * Start a fresh sort operation for each DISTINCT aggregate.
@@ -411,11 +412,12 @@ advance_aggregates(AggState *aggstate, AggStatePerGroup pergroup)
 	{
 		AggStatePerAgg peraggstate = &aggstate->peragg[aggno];
 		AggStatePerGroup pergroupstate = &pergroup[aggno];
+		AggrefExprState *aggrefstate = peraggstate->aggrefstate;
 		Aggref	   *aggref = peraggstate->aggref;
 		Datum		newVal;
 		bool		isNull;
 
-		newVal = ExecEvalExprSwitchContext((Node *) aggref->target, econtext,
+		newVal = ExecEvalExprSwitchContext(aggrefstate->target, econtext,
 										   &isNull, NULL);
 
 		if (aggref->aggdistinct)
@@ -1145,10 +1147,10 @@ ExecInitAgg(Agg *node, EState *estate)
 	 * particular order.
 	 */
 	aggstate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->plan.targetlist,
+		ExecInitExpr((Expr *) node->plan.targetlist,
 					 (PlanState *) aggstate);
 	aggstate->ss.ps.qual = (List *)
-		ExecInitExpr((Node *) node->plan.qual,
+		ExecInitExpr((Expr *) node->plan.qual,
 					 (PlanState *) aggstate);
 
 	/*
@@ -1227,7 +1229,8 @@ ExecInitAgg(Agg *node, EState *estate)
 	aggno = -1;
 	foreach(alist, aggstate->aggs)
 	{
-		Aggref	   *aggref = (Aggref *) lfirst(alist);
+		AggrefExprState *aggrefstate = (AggrefExprState *) lfirst(alist);
+		Aggref	   *aggref = (Aggref *) aggrefstate->xprstate.expr;
 		AggStatePerAgg peraggstate = &peragg[++aggno];
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
@@ -1236,10 +1239,11 @@ ExecInitAgg(Agg *node, EState *estate)
 					finalfn_oid;
 		Datum		textInitVal;
 
-		/* Mark Aggref node with its associated index in the result array */
-		aggref->aggno = aggno;
+		/* Mark Aggref state node with assigned index in the result array */
+		aggrefstate->aggno = aggno;
 
 		/* Fill in the peraggstate data */
+		peraggstate->aggrefstate = aggrefstate;
 		peraggstate->aggref = aggref;
 
 		aggTuple = SearchSysCache(AGGFNOID,

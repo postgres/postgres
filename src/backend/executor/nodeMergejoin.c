@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.53 2002/12/12 15:49:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.54 2002/12/13 19:45:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,23 +101,26 @@ static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
  * ----------------------------------------------------------------
  */
 static void
-MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals)
+MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
+				PlanState *parent)
 {
-	List	   *ltcdr,
+	List	   *ltexprs,
+			   *gtexprs,
+			   *ltcdr,
 			   *gtcdr;
 
 	/*
 	 * Make modifiable copies of the qualList.
 	 */
-	*ltQuals = (List *) copyObject((Node *) qualList);
-	*gtQuals = (List *) copyObject((Node *) qualList);
+	ltexprs = (List *) copyObject((Node *) qualList);
+	gtexprs = (List *) copyObject((Node *) qualList);
 
 	/*
 	 * Scan both lists in parallel, so that we can update the operators
 	 * with the minimum number of syscache searches.
 	 */
-	ltcdr = *ltQuals;
-	foreach(gtcdr, *gtQuals)
+	ltcdr = ltexprs;
+	foreach(gtcdr, gtexprs)
 	{
 		OpExpr	   *ltop = (OpExpr *) lfirst(ltcdr);
 		OpExpr	   *gtop = (OpExpr *) lfirst(gtcdr);
@@ -137,11 +140,15 @@ MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals)
 							  &gtop->opno,
 							  &ltop->opfuncid,
 							  &gtop->opfuncid);
-		ltop->op_fcache = NULL;
-		gtop->op_fcache = NULL;
 
 		ltcdr = lnext(ltcdr);
 	}
+
+	/*
+	 * Prepare both lists for execution.
+	 */
+	*ltQuals = (List *) ExecInitExpr((Expr *) ltexprs, parent);
+	*gtQuals = (List *) ExecInitExpr((Expr *) gtexprs, parent);
 }
 
 /* ----------------------------------------------------------------
@@ -193,8 +200,10 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 		 *
 		 * A NULL result is considered false.
 		 */
-		const_value = ExecEvalExpr((Node *) lfirst(clause), econtext,
-								   &isNull, NULL);
+		const_value = ExecEvalExpr((ExprState *) lfirst(clause),
+								   econtext,
+								   &isNull,
+								   NULL);
 
 		if (DatumGetBool(const_value) && !isNull)
 		{
@@ -208,7 +217,7 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 		 * key1 = key2 so we move on to the next pair of keys.
 		 *-----------
 		 */
-		const_value = ExecEvalExpr((Node *) lfirst(eqclause),
+		const_value = ExecEvalExpr((ExprState *) lfirst(eqclause),
 								   econtext,
 								   &isNull,
 								   NULL);
@@ -1409,17 +1418,17 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 	 * initialize child expressions
 	 */
 	mergestate->js.ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->join.plan.targetlist,
+		ExecInitExpr((Expr *) node->join.plan.targetlist,
 					 (PlanState *) mergestate);
 	mergestate->js.ps.qual = (List *)
-		ExecInitExpr((Node *) node->join.plan.qual,
+		ExecInitExpr((Expr *) node->join.plan.qual,
 					 (PlanState *) mergestate);
 	mergestate->js.jointype = node->join.jointype;
 	mergestate->js.joinqual = (List *)
-		ExecInitExpr((Node *) node->join.joinqual,
+		ExecInitExpr((Expr *) node->join.joinqual,
 					 (PlanState *) mergestate);
 	mergestate->mergeclauses = (List *)
-		ExecInitExpr((Node *) node->mergeclauses,
+		ExecInitExpr((Expr *) node->mergeclauses,
 					 (PlanState *) mergestate);
 
 	/*
@@ -1492,7 +1501,8 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 	 */
 	MJFormSkipQuals(node->mergeclauses,
 					&mergestate->mj_OuterSkipQual,
-					&mergestate->mj_InnerSkipQual);
+					&mergestate->mj_InnerSkipQual,
+					(PlanState *) mergestate);
 
 	MJ_printf("\nExecInitMergeJoin: OuterSkipQual is ");
 	MJ_nodeDisplay(mergestate->mj_OuterSkipQual);

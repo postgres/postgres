@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.206 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.207 2002/12/13 19:45:47 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -912,6 +912,7 @@ BuildIndexInfo(Form_pg_index indexStruct)
 
 	/*
 	 * If partial index, convert predicate into expression nodetree
+	 * and prepare an execution state nodetree for it
 	 */
 	if (VARSIZE(&indexStruct->indpred) > VARHDRSZ)
 	{
@@ -921,10 +922,15 @@ BuildIndexInfo(Form_pg_index indexStruct)
 								PointerGetDatum(&indexStruct->indpred)));
 		ii->ii_Predicate = stringToNode(predString);
 		fix_opfuncids((Node *) ii->ii_Predicate);
+		ii->ii_PredicateState = (List *)
+			ExecInitExpr((Expr *) ii->ii_Predicate, NULL);
 		pfree(predString);
 	}
 	else
+	{
 		ii->ii_Predicate = NIL;
+		ii->ii_PredicateState = NIL;
+	}
 
 	/* Other info */
 	ii->ii_Unique = indexStruct->indisunique;
@@ -1483,7 +1489,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
 	double		reltuples;
-	List	   *predicate = indexInfo->ii_Predicate;
+	List	   *predicate = indexInfo->ii_PredicateState;
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 	ExprContext *econtext;

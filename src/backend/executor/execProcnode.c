@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.32 2002/12/12 15:49:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.33 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,23 +229,29 @@ ExecInitNode(Plan *node, EState *estate)
 	foreach(subp, node->initPlan)
 	{
 		SubPlanExpr *subplan = (SubPlanExpr *) lfirst(subp);
+		SubPlanExprState *sstate;
 
 		Assert(IsA(subplan, SubPlanExpr));
-		subps = lappend(subps, ExecInitSubPlan(subplan, estate));
+		sstate = ExecInitExprInitPlan(subplan, result);
+		ExecInitSubPlan(sstate, estate);
+		subps = lappend(subps, sstate);
 	}
 	result->initPlan = subps;
 
 	/*
 	 * Initialize any subPlans present in this node.  These were found
-	 * by ExecInitExpr during initialization of the PlanState.
+	 * by ExecInitExpr during initialization of the PlanState.  Note we
+	 * must do this after initializing initPlans, in case their arguments
+	 * contain subPlans (is that actually possible? perhaps not).
 	 */
 	subps = NIL;
 	foreach(subp, result->subPlan)
 	{
-		SubPlanExpr *subplan = (SubPlanExpr *) lfirst(subp);
+		SubPlanExprState *sstate = (SubPlanExprState *) lfirst(subp);
 
-		Assert(IsA(subplan, SubPlanExpr));
-		subps = lappend(subps, ExecInitSubPlan(subplan, estate));
+		Assert(IsA(sstate, SubPlanExprState));
+		ExecInitSubPlan(sstate, estate);
+		subps = lappend(subps, sstate);
 	}
 	result->subPlan = subps;
 
@@ -492,14 +498,11 @@ ExecEndNode(PlanState *node)
 	if (node == NULL)
 		return;
 
-	if (node->instrument)
-		InstrEndLoop(node->instrument);
-
 	/* Clean up initPlans and subPlans */
 	foreach(subp, node->initPlan)
-		ExecEndSubPlan((SubPlanState *) lfirst(subp));
+		ExecEndSubPlan((SubPlanExprState *) lfirst(subp));
 	foreach(subp, node->subPlan)
-		ExecEndSubPlan((SubPlanState *) lfirst(subp));
+		ExecEndSubPlan((SubPlanExprState *) lfirst(subp));
 
 	if (node->chgParam != NIL)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.27 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.28 2002/12/13 19:45:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,14 +286,14 @@ ExecInitNestLoop(NestLoop *node, EState *estate)
 	 * initialize child expressions
 	 */
 	nlstate->js.ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->join.plan.targetlist,
+		ExecInitExpr((Expr *) node->join.plan.targetlist,
 					 (PlanState *) nlstate);
 	nlstate->js.ps.qual = (List *)
-		ExecInitExpr((Node *) node->join.plan.qual,
+		ExecInitExpr((Expr *) node->join.plan.qual,
 					 (PlanState *) nlstate);
 	nlstate->js.jointype = node->join.jointype;
 	nlstate->js.joinqual = (List *)
-		ExecInitExpr((Node *) node->join.joinqual,
+		ExecInitExpr((Expr *) node->join.joinqual,
 					 (PlanState *) nlstate);
 
 	/*

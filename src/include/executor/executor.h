@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.81 2002/12/05 15:50:36 tgl Exp $
+ * $Id: executor.h,v 1.82 2002/12/13 19:45:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,26 +73,27 @@ extern TupleDesc ExecGetTupType(PlanState *node);
 /*
  * prototypes from functions in execQual.c
  */
-extern Datum ExecEvalParam(Param *expression, ExprContext *econtext,
-			  bool *isNull);
 extern Datum GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno,
 				  bool *isNull);
 extern Datum GetAttributeByName(TupleTableSlot *slot, char *attname,
 				   bool *isNull);
-extern Datum ExecMakeFunctionResult(FunctionCachePtr fcache,
-					   List *arguments,
+extern void init_fcache(Oid foid, FuncExprState *fcache,
+						MemoryContext fcacheCxt);
+extern Datum ExecMakeFunctionResult(FuncExprState *fcache,
 					   ExprContext *econtext,
 					   bool *isNull,
 					   ExprDoneCond *isDone);
-extern Tuplestorestate *ExecMakeTableFunctionResult(Node *funcexpr,
+extern Tuplestorestate *ExecMakeTableFunctionResult(ExprState *funcexpr,
 							ExprContext *econtext,
 							TupleDesc expectedDesc,
 							TupleDesc *returnDesc);
-extern Datum ExecEvalExpr(Node *expression, ExprContext *econtext,
+extern Datum ExecEvalExpr(ExprState *expression, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
-extern Datum ExecEvalExprSwitchContext(Node *expression, ExprContext *econtext,
+extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
-extern Node *ExecInitExpr(Node *node, PlanState *parent);
+extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
+extern SubPlanExprState *ExecInitExprInitPlan(SubPlanExpr *node,
+											  PlanState *parent);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern int	ExecCleanTargetListLength(List *targetlist);

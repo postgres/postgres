@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.62 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.63 2002/12/13 19:45:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,6 +550,7 @@ ExecInitNullTupleSlot(EState *estate, TupleDesc tupType)
  *		ExecTypeFromTL
  *
  *		Generate a tuple descriptor for the result tuple of a targetlist.
+ *		(A parse/plan tlist must be passed, not an ExprState tlist.)
  *		Note that resjunk columns, if any, are included in the result.
  *
  *		Currently there are about 4 different places where we create

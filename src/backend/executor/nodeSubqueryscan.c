@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.14 2002/12/05 15:50:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.15 2002/12/13 19:45:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,10 +131,10 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	 * initialize child expressions
 	 */
 	subquerystate->ss.ps.targetlist = (List *)
-		ExecInitExpr((Node *) node->scan.plan.targetlist,
+		ExecInitExpr((Expr *) node->scan.plan.targetlist,
 					 (PlanState *) subquerystate);
 	subquerystate->ss.ps.qual = (List *)
-		ExecInitExpr((Node *) node->scan.plan.qual,
+		ExecInitExpr((Expr *) node->scan.plan.qual,
 					 (PlanState *) subquerystate);
 
 #define SUBQUERYSCAN_NSLOTS 1

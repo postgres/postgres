@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSubplan.h,v 1.13 2002/12/12 15:49:40 tgl Exp $
+ * $Id: nodeSubplan.h,v 1.14 2002/12/13 19:45:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,13 @@
 
 #include "nodes/execnodes.h"
 
-extern SubPlanState *ExecInitSubPlan(SubPlanExpr *node, EState *estate);
-extern Datum ExecSubPlan(SubPlanState *node, List *pvar, ExprContext *econtext,
-			bool *isNull);
-extern void ExecEndSubPlan(SubPlanState *node);
-extern void ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent);
+extern void ExecInitSubPlan(SubPlanExprState *sstate, EState *estate);
+extern Datum ExecSubPlan(SubPlanExprState *node,
+						 ExprContext *econtext,
+						 bool *isNull);
+extern void ExecEndSubPlan(SubPlanExprState *node);
+extern void ExecReScanSetParamPlan(SubPlanExprState *node, PlanState *parent);
 
-extern void ExecSetParamPlan(SubPlanState *node, ExprContext *econtext);
+extern void ExecSetParamPlan(SubPlanExprState *node, ExprContext *econtext);
 
 #endif   /* NODESUBPLAN_H */

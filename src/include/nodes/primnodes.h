@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.73 2002/12/12 20:35:16 tgl Exp $
+ * $Id: primnodes.h,v 1.74 2002/12/13 19:46:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,6 @@
 
 #include "access/attnum.h"
 #include "nodes/pg_list.h"
-
-/* FunctionCache is declared in utils/fcache.h */
-typedef struct FunctionCache *FunctionCachePtr;
 
 
 /* ----------------------------------------------------------------
@@ -221,9 +218,6 @@ typedef struct Aggref
 	Expr	   *target;			/* expression we are aggregating on */
 	bool		aggstar;		/* TRUE if argument was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
-
-	/* XXX this should move to AggrefExprState: */
-	int			aggno;			/* workspace for executor (see nodeAgg.c) */
 } Aggref;
 
 /* ----------------
@@ -307,8 +301,6 @@ typedef struct FuncExpr
 	bool		funcretset;		/* true if function returns set */
 	CoercionForm funcformat;	/* how to display this function call */
 	List	   *args;			/* arguments to the function */
-
-	FunctionCachePtr func_fcache;		/* XXX runtime state, or NULL */
 } FuncExpr;
 
 /*
@@ -328,8 +320,6 @@ typedef struct OpExpr
 	Oid			opresulttype;	/* PG_TYPE OID of result value */
 	bool		opretset;		/* true if operator returns set */
 	List	   *args;			/* arguments to the operator (1 or 2) */
-
-	FunctionCachePtr op_fcache; /* XXX runtime state, else NULL */
 } OpExpr;
 
 /*
@@ -463,8 +453,6 @@ typedef struct SubPlanExpr
 	SubLink    *sublink;		/* SubLink node from parser; holds info
 								 * about what to do with subselect's
 								 * results */
-
-	struct SubPlanState *pstate; /* XXX TEMPORARY HACK */
 } SubPlanExpr;
 
 /* ----------------

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.96 2002/12/12 15:49:24 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.97 2002/12/13 19:45:49 tgl Exp $
  *
  */
 
@@ -582,26 +582,24 @@ explain_outNode(StringInfo str,
 	if (plan->initPlan)
 	{
 		List	   *saved_rtable = es->rtable;
-		List	   *pslist = planstate->initPlan;
 		List	   *lst;
 
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
 		appendStringInfo(str, "  InitPlan\n");
-		foreach(lst, plan->initPlan)
+		foreach(lst, planstate->initPlan)
 		{
-			SubPlanExpr  *subplan = (SubPlanExpr *) lfirst(lst);
-			SubPlanState *subplanstate = (SubPlanState *) lfirst(pslist);
+			SubPlanExprState *sps = (SubPlanExprState *) lfirst(lst);
+			SubPlanExpr *sp = (SubPlanExpr *) sps->xprstate.expr;
 
-			es->rtable = subplan->rtable;
+			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, subplan->plan,
-							subplanstate->planstate,
+			explain_outNode(str, sp->plan,
+							sps->planstate,
 							NULL,
 							indent + 4, es);
-			pslist = lnext(pslist);
 		}
 		es->rtable = saved_rtable;
 	}
@@ -689,8 +687,8 @@ explain_outNode(StringInfo str,
 		appendStringInfo(str, "  SubPlan\n");
 		foreach(lst, planstate->subPlan)
 		{
-			SubPlanState *sps = (SubPlanState *) lfirst(lst);
-			SubPlanExpr *sp = (SubPlanExpr *) sps->ps.plan;
+			SubPlanExprState *sps = (SubPlanExprState *) lfirst(lst);
+			SubPlanExpr *sp = (SubPlanExpr *) sps->xprstate.expr;
 
 			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)

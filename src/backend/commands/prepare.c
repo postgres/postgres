@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.9 2002/12/05 15:50:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.10 2002/12/13 19:45:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include "commands/prepare.h"
 #include "executor/executor.h"
 #include "utils/guc.h"
+#include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
@@ -110,17 +111,22 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 	{
 		int			nargs = length(entry->argtype_list);
 		int			i = 0;
+		List	   *exprstates;
 		ExprContext *econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
 		/* Parser should have caught this error, but check */
 		if (nargs != length(stmt->params))
 			elog(ERROR, "ExecuteQuery: wrong number of arguments");
 
+		fix_opfuncids((Node *) stmt->params);
+
+		exprstates = (List *) ExecInitExpr((Expr *) stmt->params, NULL);
+
 		paramLI = (ParamListInfo) palloc0((nargs + 1) * sizeof(ParamListInfoData));
 
-		foreach(l, stmt->params)
+		foreach(l, exprstates)
 		{
-			Node	   *n = lfirst(l);
+			ExprState  *n = lfirst(l);
 			bool		isNull;
 
 			paramLI[i].value = ExecEvalExprSwitchContext(n,
