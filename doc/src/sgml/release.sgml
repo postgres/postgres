@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.297 2004/09/24 01:31:32 neilc Exp $
 -->
 
 <appendix id="release">
@@ -1124,7 +1124,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      GRANT/REVOKE behavior follows the SQL spec more closely
+      <command>GRANT</command>/<command>REVOKE</command> behavior
+      follows the SQL spec more closely
      </para>
     </listitem>
 
@@ -1187,14 +1188,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Add --pwfile option to initdb so the initial password can be set by GUI tools
-      (Magnus)
+      Add --pwfile option to <application>initdb</application> so the
+      initial password can be set by GUI tools (Magnus)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Detect locale/encoding mismatch in initdb (Peter)
+      Detect locale/encoding mismatch in
+      <application>initdb</application> (Peter)
      </para>
     </listitem>
 
@@ -1499,7 +1501,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Allow plpgsql parameter names to be referenced in the function (Dennis Bjorklund)
+      Allow PL/PgSQL parameter names to be referenced in the function (Dennis Bjorklund)
      </para>
      <para>
       This basically creates an automatic alias for each named parameter.
@@ -1508,7 +1510,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Do minimal syntax checking of plpgsql functions at creation time (Tom)
+      Do minimal syntax checking of PL/PgSQL functions at creation time (Tom)
      </para>
      <para>
       This allows us to catch simple syntax errors sooner.
@@ -1517,7 +1519,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      More support for composite types (row and record variables) in plpgsql
+      More support for composite types (row and record variables) in PL/PgSQL
      </para>
      <para>
       For example, it now works to pass a rowtype variable to another function
@@ -1527,14 +1529,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Default values for plpgsql variables can now reference previously
+      Default values for PL/PgSQL variables can now reference previously
       declared variables
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Improve parsing of plpgsql FOR loops (Tom)
+      Improve parsing of PL/PgSQL FOR loops (Tom)
      </para>
      <para>
       Parsing is now driven by presence of ".." rather than datatype of FOR
@@ -1545,7 +1547,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Major overhaul of plperl server-side language (Command Prompt, Andrew Dunstan)
+      Major overhaul of PL/Perl server-side language (Command Prompt, Andrew Dunstan)
      </para>
     </listitem>
 
@@ -1706,8 +1708,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Have pg_dump use ALTER OWNER rather than SET SESSION AUTHORIZATION 
-      by default (Christopher)
+      Have pg_dump use ALTER OWNER rather than SET SESSION
+      AUTHORIZATION by default (Christopher)
      </para>
     </listitem>
 
@@ -1876,7 +1878,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Improvements to the MAC OS-X startup scripts (Ray A.)
+      Improvements to the Mac OS X startup scripts (Ray A.)
      </para>
     </listitem>
 
@@ -1900,19 +1902,21 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      Remove pg_encoding; not needed anymore
+      Remove <application>pg_encoding</application>; not needed
+      anymore
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Remove pg_id; not needed anymore
+      Remove <application>pg_id</application>; not needed anymore
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Remove initlocation; not needed anymore
+      Remove <application>initlocation</application>; not needed
+      anymore
      </para>
     </listitem>
 
@@ -1947,11 +1951,12 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp
 
     <listitem>
      <para>
-      New linked list data structure implementation (Neil)
+      Reimplement the linked list data structure used throughout the
+      backend (Neil)
      </para>
      <para>
-      This improves performance by allowing list append operations to be
-      more efficient.
+      This improves performance by allowing list append and length
+      operations to be more efficient.
      </para>
     </listitem>
 
