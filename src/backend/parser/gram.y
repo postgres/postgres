@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.160 2000/03/20 00:24:37 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.161 2000/03/20 05:20:34 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4179,9 +4179,15 @@ a_expr:  c_expr
 		| '|' a_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
 		| ':' a_expr
-				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
+				{	$$ = makeA_Expr(OP, ":", NULL, $2);
+					elog(NOTICE, "The ':' operator is deprecated.  Use exp(x) instead."
+						 "\n\tThis operator will be removed in a future release.");
+				}
 		| ';' a_expr
-				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
+				{	$$ = makeA_Expr(OP, ";", NULL, $2);
+					elog(NOTICE, "The ';' operator is deprecated.  Use ln(x) instead."
+						 "\n\tThis operator will be removed in a future release.");
+				}
 		| a_expr '%'
 				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
 		| a_expr '^'
@@ -4397,9 +4403,15 @@ b_expr:  c_expr
 		| '|' b_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
 		| ':' b_expr
-				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
+				{	$$ = makeA_Expr(OP, ":", NULL, $2);
+					elog(NOTICE, "The ':' operator is deprecated.  Use exp(x) instead."
+						 "\n\tThis operator will be removed in a future release.");
+				}
 		| ';' b_expr
-				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
+				{	$$ = makeA_Expr(OP, ";", NULL, $2);
+					elog(NOTICE, "The ';' operator is deprecated.  Use ln(x) instead."
+						 "\n\tThis operator will be removed in a future release.");
+				}
 		| b_expr '%'
 				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
 		| b_expr '^'
