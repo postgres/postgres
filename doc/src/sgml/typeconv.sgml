@@ -1,9 +1,6 @@
 <chapter Id="typeconv">
 <title>Type Conversion</title>
 
- <sect1 id="typeconv-intro">
-  <title>Introduction</title>
-
 <para>
 <acronym>SQL</acronym> queries can, intentionally or not, require
 mixing of different data types in the same expression. 
@@ -29,10 +26,9 @@ operators.
 </para>
 
 <para>
-The <citetitle>Programmer's Guide</citetitle> has more details on the exact algorithms used for
+The &cite-programmer; has more details on the exact algorithms used for
 implicit type conversion and coercion.
 </para>
- </sect1>
 
 <sect1 id="typeconv-overview">
 <title>Overview</title>
@@ -41,7 +37,7 @@ implicit type conversion and coercion.
 <acronym>SQL</acronym> is a strongly typed language. That is, every data item
 has an associated data type which determines its behavior and allowed usage.
 <productname>PostgreSQL</productname> has an extensible type system that is
-much more general and flexible than other <acronym>RDBMS</acronym> implementations.
+much more general and flexible than other <acronym>SQL</acronym> implementations.
 Hence, most type conversion behavior in <productname>PostgreSQL</productname>
 should be governed by general rules rather than by <foreignphrase>ad hoc</> heuristics, to allow
 mixed-type expressions to be meaningful even with user-defined types.
@@ -142,13 +138,13 @@ conventions for the <acronym>SQL</acronym> standard native types such as
 </para>
 
 <para>
-The <productname>PostgreSQL</productname> parser uses the convention that all
-type conversion functions take a single argument of the source type and are
-named with the same name as the target type. Any function meeting these
-criteria is considered to be a valid conversion function, and may be used
-by the parser as such. This simple assumption gives the parser the power
-to explore type conversion possibilities without hardcoding, allowing
-extended user-defined types to use these same features transparently.
+The system catalogs store information about which conversions, called
+<firstterm>casts</firstterm>, between data types are valid, and how to
+perform those conversions.  Additional casts can be added by the user
+with the <command>CREATE CAST</command> command.  (This is usually
+done in conjunction with defining new data types.  The set of casts
+between the built-in types has been carefully crafted and should not
+be altered.)
 </para>
 
 <para>
@@ -169,7 +165,7 @@ types.
 <para>
 All type conversion rules are designed with several principles in mind:
 
-<itemizedlist mark="bullet" spacing="compact">
+<itemizedlist>
 <listitem>
 <para>
 Implicit conversions should never have surprising or unpredictable outcomes.

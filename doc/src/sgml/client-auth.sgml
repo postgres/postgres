@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.39 2002/09/21 18:32:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.40 2002/11/11 20:14:02 petere Exp $
 -->
 
 <chapter id="client-authentication">
@@ -62,7 +62,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.39 2002/09/21 18:32:52
   </para>
 
   <para>
-   The general format of the <filename>pg_hba.conf</filename> file is of
+   The general format of the <filename>pg_hba.conf</filename> file is
    a set of records, one per line. Blank lines are ignored, as is any
    text after the <quote>#</quote> comment character. A record is made
    up of a number of fields which are separated by spaces and/or tabs.
@@ -305,8 +305,9 @@ hostssl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <
          <para>
           If you use the map <literal>sameuser</literal>, the user
           names are assumed to be identical. If not, the map name is
-          looked up in the <literal>$PGDATA/pg_ident.conf</literal>
-          file. The connection is accepted if that file contains an
+          looked up in the file <filename>pg_ident.conf</filename>
+          in the same directory as <filename>pg_hba.conf</filename>.
+          The connection is accepted if that file contains an
           entry for this map name with the ident-supplied user name
           and the requested <productname>PostgreSQL</productname> user
           name.
@@ -473,7 +474,7 @@ local   db1,db2,@demodbs  all                                       md5
    <para>
     When <literal>trust</> authentication is specified,
     <productname>PostgreSQL</productname> assumes that anyone who can
-    connect to the postmaster is authorized to access the database as
+    connect to the server is authorized to access the database as
     whatever database user he specifies (including the database superuser).
     This method should only be used when there is adequate system-level
     protection on connections to the postmaster port.
@@ -504,7 +505,7 @@ local   db1,db2,@demodbs  all                                       md5
    <para>
     <literal>trust</> authentication is only suitable for TCP connections
     if you trust every user on every machine that is allowed to connect
-    to the postmaster by the <filename>pg_hba.conf</> lines that specify
+    to the server by the <filename>pg_hba.conf</> lines that specify
     <literal>trust</>.  It is seldom reasonable to use <literal>trust</>
     for any TCP connections other than those from <systemitem>localhost</> (127.0.0.1).
    </para>
@@ -538,14 +539,14 @@ local   db1,db2,@demodbs  all                                       md5
 
    <para>
     <productname>PostgreSQL</productname> database passwords are
-    separate from operating system user passwords. Ordinarily, the
-    password for each database user is stored in the pg_shadow system
+    separate from operating system user passwords. The password for
+    each database user is stored in the <literal>pg_shadow</> system
     catalog table. Passwords can be managed with the query language
     commands <command>CREATE USER</command> and <command>ALTER
     USER</command>, e.g., <userinput>CREATE USER foo WITH PASSWORD
-    'secret';</userinput>. By default, that is, if no password has been
-    set up, the stored password is <literal>NULL</literal> and password
-    authentication will always fail for that user.
+    'secret';</userinput>. By default, that is, if no password has
+    been set up, the stored password is null and
+    password authentication will always fail for that user.
    </para>
 
    <para>
@@ -554,8 +555,8 @@ local   db1,db2,@demodbs  all                                       md5
     file. The file should contain user names separated by commas or one
     user name per line, and be in the same directory as
     <filename>pg_hba.conf</>. Mention the (base) name of the file
-    preceded with <literal>@</>in the <literal>USER</> column. The
-    <literal>DATABASE</> column can similarly accept a list of values or
+    preceded with <literal>@</> in the user column. The
+    database column can similarly accept a list of values or
     a file name. You can also specify group names by preceding the group
     name with <literal>+</>.
    </para>
@@ -715,7 +716,7 @@ local   db1,db2,@demodbs  all                                       md5
     Unix-domain sockets (currently <systemitem
     class="osname">Linux</>, <systemitem class="osname">FreeBSD</>,
     <systemitem class="osname">NetBSD</>, and <systemitem
-    class="osname">BSD/OS</>, ident authentication can also be applied
+    class="osname">BSD/OS</>), ident authentication can also be applied
     to local connections. In this case, no security risk is added by
     using ident authentication; indeed it is a preferable choice for
     local connections on such systems.

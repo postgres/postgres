@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.18 2002/10/20 05:05:46 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.19 2002/11/11 20:14:03 petere Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -668,7 +668,7 @@ SELECT <replaceable>select_list</replaceable>
     order in which the columns are listed does not matter.  The
     purpose is to reduce each group of rows sharing common values into
     one group row that is representative of all rows in the group.
-    This is done to eliminate redundancy in the output and/or obtain
+    This is done to eliminate redundancy in the output and/or compute
     aggregates that apply to these groups.  For instance:
 <screen>
 <prompt>=></> <userinput>SELECT * FROM test1;</>
@@ -694,7 +694,12 @@ SELECT <replaceable>select_list</replaceable>
     In the second query, we could not have written <literal>SELECT *
     FROM test1 GROUP BY x</literal>, because there is no single value
     for the column <literal>y</> that could be associated with each
-    group.  In general, if a table is grouped, columns that are not
+    group.  The grouped-by columns can be referenced in the select list since
+    they have a known constant value per group.
+   </para>
+
+   <para>
+    In general, if a table is grouped, columns that are not
     used in the grouping cannot be referenced except in aggregate
     expressions.  An example with aggregate expressions is:
 <screen>
@@ -710,11 +715,6 @@ SELECT <replaceable>select_list</replaceable>
     computes a single value over the entire group.  More information
     about the available aggregate functions can be found in <xref
     linkend="functions-aggregate">.
-   </para>
-
-   <para>
-    The grouped-by columns can be referenced in the select list since
-    they have a known constant value per group.
    </para>
 
    <tip>
@@ -740,7 +740,7 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     in the <literal>GROUP BY</> clause since they are referenced in
     the query select list.  (Depending on how exactly the products
     table is set up, name and price may be fully dependent on the
-    product ID, so the additional groups could theoretically be
+    product ID, so the additional groupings could theoretically be
     unnecessary, but this is not implemented yet.)  The column
     <literal>s.units</> does not have to be in the <literal>GROUP
     BY</> list since it is only used in an aggregate expression
@@ -828,7 +828,7 @@ SELECT product_id, p.name, (sum(s.units) * (p.price - p.cost)) AS profit
   </para>
 
   <sect2 id="queries-select-list-items">
-   <title>Select List Items</title>
+   <title>Select-List Items</title>
 
    <para>
     The simplest kind of select list is <literal>*</literal> which

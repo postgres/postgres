@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.17 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.18 2002/11/11 20:14:04 petere Exp $
 -->
 
 <chapter id="user-manag">
@@ -129,7 +129,7 @@ dropuser <replaceable>name</replaceable>
        <para>
         A password is only significant if the client authentication
         method requires the user to supply a password when connecting
-        to the database. At present, the <option>password</>,
+        to the database. The <option>password</>,
         <option>md5</>, and <option>crypt</> authentication methods
         make use of passwords. Database passwords are separate from
         operating system passwords. Specify a password upon user
@@ -156,7 +156,7 @@ dropuser <replaceable>name</replaceable>
 ALTER USER myname SET enable_indexscan TO off;
 </programlisting>
    This will save the setting (but not set it immediately) and in
-   subsequent connections it will appear as though <literal>SET geqo
+   subsequent connections it will appear as though <literal>SET enable_indexscan
    TO off;</literal> had been called right before the session started.
    You can still alter this setting during the session; it will only
    be the default. To undo any such setting, use <literal>ALTER USER
@@ -205,7 +205,7 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
    <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For more
    information on the different types of privileges support by
    <productname>PostgreSQL</productname>, refer to the
-   <command>GRANT</command> reference manual. The right to modify or
+   <command>GRANT</command> page in the &cite-reference;. The right to modify or
    destroy an object is always the privilege of the owner only. To
    assign privileges, the <command>GRANT</command> command is
    used. So, if <literal>joe</literal> is an existing user, and

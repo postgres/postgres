@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.8 2002/10/24 21:10:58 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.9 2002/11/11 20:14:02 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -222,7 +222,7 @@ DROP TABLE products;
      <para>
       The identity (transaction ID) of the deleting transaction, or
       zero for an undeleted tuple.  It is possible for this field to
-      be nonzero in a visible tuple: that usually indicates that the
+      be nonzero in a visible tuple: That usually indicates that the
       deleting transaction hasn't committed yet, or that an attempted
       deletion was rolled back.
      </para>
@@ -353,7 +353,7 @@ CREATE TABLE products (
     price numeric <emphasis>CONSTRAINT positive_price</emphasis> CHECK (price > 0)
 );
 </programlisting>
-    To specify a named constraint, use the key word
+    So, to specify a named constraint, use the key word
     <literal>CONSTRAINT</literal> followed by an identifier followed
     by the constraint definition.
    </para>
@@ -382,7 +382,7 @@ CREATE TABLE products (
    </para>
 
    <para>
-    We say that the first two are column constraints, whereas the
+    We say that the first two constraints are column constraints, whereas the
     third one is a table constraint because it is written separately
     from the column definitions.  Column constraints can also be
     written as table constraints, while the reverse is not necessarily
@@ -931,7 +931,7 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    <para>
      In previous versions of <productname>PostgreSQL</productname>, the
      default was not to get access to child tables. This was found to
-     be error prone and is also in violation of SQL99. Under the old
+     be error prone and is also in violation of the SQL standard. Under the old
      syntax, to get the sub-tables you append <literal>*</literal> to the table name.
      For example
 <programlisting>
@@ -1609,7 +1609,7 @@ REVOKE CREATE ON public FROM PUBLIC;
     standard.  Therefore, many users consider qualified names to
     really consist of
     <literal><replaceable>username</>.<replaceable>tablename</></literal>.
-    This is also supported by PostgreSQL if you create a per-user
+    This is how PostgreSQL will effectively behave if you create a per-user
     schema for every user.
    </para>
 
@@ -1693,8 +1693,8 @@ DROP TABLE products CASCADE;
 </screen>
    and all the dependent objects will be removed.  In this case, it
    doesn't remove the orders table, it only removes the foreign key
-   constraint.  (If you want to check what DROP ... CASCADE will do,
-   run DROP without CASCADE and read the NOTICEs.)
+   constraint.  (If you want to check what <literal>DROP ... CASCADE</> will do,
+   run <command>DROP</> without <literal>CASCADE</> and read the <literal>NOTICE</> messages.)
   </para>
 
   <para>

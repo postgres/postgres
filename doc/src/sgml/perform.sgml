@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.21 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.22 2002/11/11 20:14:03 petere Exp $
 -->
 
  <chapter id="performance-tips">
@@ -32,30 +32,30 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.21 2002/09/21 18:32:53 pet
     <itemizedlist>
      <listitem>
       <para>
-       Estimated start-up cost (time expended before output scan can start,
-       e.g., time to do the sorting in a SORT node).
+       Estimated start-up cost (Time expended before output scan can start,
+       e.g., time to do the sorting in a sort node.)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated total cost (if all tuples are retrieved, which they may not
-       be --- a query with a LIMIT will stop short of paying the total cost,
-       for example).
+       Estimated total cost (If all rows are retrieved, which they may not
+       be --- a query with a <literal>LIMIT</> clause will stop short of paying the total cost,
+       for example.)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Estimated number of rows output by this plan node (again, only if
-       executed to completion).
+       Estimated number of rows output by this plan node (Again, only if
+       executed to completion.)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Estimated average width (in bytes) of rows output by this plan
-       node.
+       node
       </para>
      </listitem>
     </itemizedlist>
@@ -64,9 +64,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.21 2002/09/21 18:32:53 pet
    <para>
     The costs are measured in units of disk page fetches.  (CPU effort
     estimates are converted into disk-page units using some
-    fairly arbitrary fudge-factors. If you want to experiment with these
+    fairly arbitrary fudge factors. If you want to experiment with these
     factors, see the list of run-time configuration parameters in the
-    <citetitle>Administrator's Guide</citetitle>.)
+    &cite-admin;.)
    </para>
 
    <para>
@@ -74,17 +74,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.21 2002/09/21 18:32:53 pet
     the cost of all its child nodes.  It's also important to realize that
     the cost only reflects things that the planner/optimizer cares about.
     In particular, the cost does not consider the time spent transmitting
-    result tuples to the frontend --- which could be a pretty dominant
+    result rows to the frontend --- which could be a pretty dominant
     factor in the true elapsed time, but the planner ignores it because
     it cannot change it by altering the plan.  (Every correct plan will
-    output the same tuple set, we trust.)
+    output the same row set, we trust.)
    </para>
 
    <para>
     Rows output is a little tricky because it is <emphasis>not</emphasis> the
     number of rows
     processed/scanned by the query --- it is usually less, reflecting the
-    estimated selectivity of any WHERE-clause constraints that are being
+    estimated selectivity of any <literal>WHERE</>-clause constraints that are being
     applied at this node.  Ideally the top-level rows estimate will
     approximate the number of rows actually returned, updated, or deleted
     by the query.
@@ -92,44 +92,44 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.21 2002/09/21 18:32:53 pet
 
    <para>
     Here are some examples (using the regress test database after a
-    vacuum analyze, and 7.3 development sources):
+    <literal>VACUUM ANALYZE</>, and 7.3 development sources):
 
-    <programlisting>
+<programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1;
                          QUERY PLAN
 -------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     This is about as straightforward as it gets.  If you do
 
-    <programlisting>
+<programlisting>
 SELECT * FROM pg_class WHERE relname = 'tenk1';
-    </programlisting>
+</programlisting>
 
     you will find out that <classname>tenk1</classname> has 233 disk
-    pages and 10000 tuples.  So the cost is estimated at 233 page
-    reads, defined as 1.0 apiece, plus 10000 * <varname>cpu_tuple_cost</varname> which is
-    currently 0.01 (try <command>show cpu_tuple_cost</command>).
+    pages and 10000 rows.  So the cost is estimated at 233 page
+    reads, defined as costing 1.0 apiece, plus 10000 * <varname>cpu_tuple_cost</varname> which is
+    currently 0.01 (try <command>SHOW cpu_tuple_cost</command>).
    </para>
 
    <para>
-    Now let's modify the query to add a WHERE condition:
+    Now let's modify the query to add a <literal>WHERE</> condition:
 
-    <programlisting>
+<programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
                          QUERY PLAN
 ------------------------------------------------------------
  Seq Scan on tenk1  (cost=0.00..358.00 rows=1033 width=148)
    Filter: (unique1 &lt; 1000)
-    </programlisting>
+</programlisting>
 
-    The estimate of output rows has gone down because of the WHERE clause.
+    The estimate of output rows has gone down because of the <literal>WHERE</> clause.
     However, the scan will still have to visit all 10000 rows, so the cost
     hasn't decreased; in fact it has gone up a bit to reflect the extra CPU
-    time spent checking the WHERE condition.
+    time spent checking the <literal>WHERE</> condition.
    </para>
 
    <para>
@@ -144,26 +144,26 @@ regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 1000;
    <para>
     Modify the query to restrict the condition even more:
 
-    <programlisting>
+<programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50;
                                    QUERY PLAN
 -------------------------------------------------------------------------------
  Index Scan using tenk1_unique1 on tenk1  (cost=0.00..179.33 rows=49 width=148)
    Index Cond: (unique1 &lt; 50)
-    </programlisting>
+</programlisting>
 
-    and you will see that if we make the WHERE condition selective
+    and you will see that if we make the <literal>WHERE</> condition selective
     enough, the planner will
     eventually decide that an index scan is cheaper than a sequential scan.
-    This plan will only have to visit 50 tuples because of the index,
+    This plan will only have to visit 50 rows because of the index,
     so it wins despite the fact that each individual fetch is more expensive
     than reading a whole disk page sequentially.
    </para>
 
    <para>
-    Add another clause to the WHERE condition:
+    Add another clause to the <literal>WHERE</> condition:
 
-    <programlisting>
+<programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 50 AND
 regression-# stringu1 = 'xxx';
                                   QUERY PLAN
@@ -171,11 +171,11 @@ regression-# stringu1 = 'xxx';
  Index Scan using tenk1_unique1 on tenk1  (cost=0.00..179.45 rows=1 width=148)
    Index Cond: (unique1 &lt; 50)
    Filter: (stringu1 = 'xxx'::name)
-    </programlisting>
+</programlisting>
 
     The added clause <literal>stringu1 = 'xxx'</literal> reduces the
     output-rows estimate, but not the cost because we still have to visit the
-    same set of tuples.  Notice that the <literal>stringu1</> clause
+    same set of rows.  Notice that the <literal>stringu1</> clause
     cannot be applied as an index condition (since this index is only on
     the <literal>unique1</> column).  Instead it is applied as a filter on
     the rows retrieved by the index.  Thus the cost has actually gone up
@@ -185,7 +185,7 @@ regression-# stringu1 = 'xxx';
    <para>
     Let's try joining two tables, using the fields we have been discussing:
 
-    <programlisting>
+<programlisting>
 regression=# EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50
 regression-# AND t1.unique2 = t2.unique2;
                                QUERY PLAN
@@ -197,30 +197,30 @@ regression-# AND t1.unique2 = t2.unique2;
    -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
                                       (cost=0.00..3.01 rows=1 width=148)
          Index Cond: ("outer".unique2 = t2.unique2)
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
     In this nested-loop join, the outer scan is the same index scan we had
     in the example before last, and so its cost and row count are the same
-    because we are applying the <literal>unique1 &lt; 50</literal> WHERE clause at that node.
+    because we are applying the <literal>unique1 &lt; 50</literal> <literal>WHERE</> clause at that node.
     The <literal>t1.unique2 = t2.unique2</literal> clause is not relevant yet, so it doesn't
-    affect row count of the outer scan.  For the inner scan, the unique2 value of the
+    affect row count of the outer scan.  For the inner scan, the <literal>unique2</> value of the
     current
-    outer-scan tuple is plugged into the inner index scan
+    outer-scan row is plugged into the inner index scan
     to produce an index condition like
     <literal>t2.unique2 = <replaceable>constant</replaceable></literal>.  So we get the
-     same inner-scan plan and costs that we'd get from, say, <literal>explain select
-     * from tenk2 where unique2 = 42</literal>.  The costs of the loop node are then set
+     same inner-scan plan and costs that we'd get from, say, <literal>EXPLAIN SELECT
+     * FROM tenk2 WHERE unique2 = 42</literal>.  The costs of the loop node are then set
      on the basis of the cost of the outer scan, plus one repetition of the
-     inner scan for each outer tuple (49 * 3.01, here), plus a little CPU
+     inner scan for each outer row (49 * 3.01, here), plus a little CPU
      time for join processing.
    </para>
 
    <para>
     In this example the loop's output row count is the same as the product
     of the two scans' row counts, but that's not true in general, because
-    in general you can have WHERE clauses that mention both relations and
+    in general you can have <literal>WHERE</> clauses that mention both relations and
     so can only be applied at the join point, not to either input scan.
     For example, if we added <literal>WHERE ... AND t1.hundred &lt; t2.hundred</literal>,
     that would decrease the output row count of the join node, but not change
@@ -233,9 +233,9 @@ regression-# AND t1.unique2 = t2.unique2;
     flags for each plan type.  (This is a crude tool, but useful.  See
     also <xref linkend="explicit-joins">.)
 
-    <programlisting>
-regression=# set enable_nestloop = off;
-SET VARIABLE
+<programlisting>
+regression=# SET enable_nestloop = off;
+SET
 regression=# EXPLAIN SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 50
 regression-# AND t1.unique2 = t2.unique2;
                                QUERY PLAN
@@ -247,25 +247,25 @@ regression-# AND t1.unique2 = t2.unique2;
          -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
                                     (cost=0.00..179.33 rows=49 width=148)
                Index Cond: (unique1 &lt; 50)
-    </programlisting>
+</programlisting>
 
     This plan proposes to extract the 50 interesting rows of <classname>tenk1</classname>
     using ye same olde index scan, stash them into an in-memory hash table,
     and then do a sequential scan of <classname>tenk2</classname>, probing into the hash table
-    for possible matches of <literal>t1.unique2 = t2.unique2</literal> at each <classname>tenk2</classname> tuple.
+    for possible matches of <literal>t1.unique2 = t2.unique2</literal> at each <classname>tenk2</classname> row.
     The cost to read <classname>tenk1</classname> and set up the hash table is entirely start-up
-    cost for the hash join, since we won't get any tuples out until we can
+    cost for the hash join, since we won't get any rows out until we can
     start reading <classname>tenk2</classname>.  The total time estimate for the join also
-    includes a hefty charge for CPU time to probe the hash table
-    10000 times.  Note, however, that we are NOT charging 10000 times 179.33;
+    includes a hefty charge for the CPU time to probe the hash table
+    10000 times.  Note, however, that we are <emphasis>not</emphasis> charging 10000 times 179.33;
     the hash table setup is only done once in this plan type.
    </para>
 
    <para>
     It is possible to check on the accuracy of the planner's estimated costs
-    by using EXPLAIN ANALYZE.  This command actually executes the query,
+    by using <command>EXPLAIN ANALYZE</>.  This command actually executes the query,
     and then displays the true run time accumulated within each plan node
-    along with the same estimated costs that a plain EXPLAIN shows.
+    along with the same estimated costs that a plain <command>EXPLAIN</command> shows.
     For example, we might get a result like this:
 
 <screen>
@@ -296,7 +296,7 @@ regression-# WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
    <para>
     In some query plans, it is possible for a subplan node to be executed more
     than once.  For example, the inner index scan is executed once per outer
-    tuple in the above nested-loop plan.  In such cases, the
+    row in the above nested-loop plan.  In such cases, the
     <quote>loops</quote> value reports the
     total number of executions of the node, and the actual time and rows
     values shown are averages per-execution.  This is done to make the numbers
@@ -307,19 +307,19 @@ regression-# WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
 
    <para>
     The <literal>Total runtime</literal> shown by <command>EXPLAIN ANALYZE</command> includes
-    executor start-up and shutdown time, as well as time spent processing
-    the result tuples.  It does not include parsing, rewriting, or planning
-    time.  For a SELECT query, the total run time will normally be just a
+    executor start-up and shut-down time, as well as time spent processing
+    the result rows.  It does not include parsing, rewriting, or planning
+    time.  For a <command>SELECT</> query, the total run time will normally be just a
     little larger than the total time reported for the top-level plan node.
-    For INSERT, UPDATE, and DELETE queries, the total run time may be
+    For <command>INSERT</>, <command>UPDATE</>, and <command>DELETE</> commands, the total run time may be
     considerably larger, because it includes the time spent processing the
-    result tuples.  In these queries, the time for the top plan node
-    essentially is the time spent computing the new tuples and/or locating
+    result rows.  In these commands, the time for the top plan node
+    essentially is the time spent computing the new rows and/or locating
     the old ones, but it doesn't include the time spent making the changes.
    </para>
 
    <para>
-    It is worth noting that EXPLAIN results should not be extrapolated
+    It is worth noting that <command>EXPLAIN</> results should not be extrapolated
     to situations other than the one you are actually testing; for example,
     results on a toy-sized table can't be assumed to apply to large tables.
     The planner's cost estimates are not linear and so it may well choose
@@ -333,7 +333,7 @@ regression-# WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
   </sect1>
 
  <sect1 id="planner-stats">
-  <title>Statistics used by the Planner</title>
+  <title>Statistics Used by the Planner</title>
 
   <para>
    As we saw in the previous section, the query planner needs to estimate
@@ -351,8 +351,8 @@ regression-# WHERE t1.unique1 &lt; 50 AND t1.unique2 = t2.unique2;
    with queries similar to this one:
 
 <screen>
-regression=# select relname, relkind, reltuples, relpages from pg_class
-regression-# where relname like 'tenk1%';
+regression=# SELECT relname, relkind, reltuples, relpages FROM pg_class
+regression-# WHERE relname LIKE 'tenk1%';
     relname    | relkind | reltuples | relpages
 ---------------+---------+-----------+----------
  tenk1         | r       |     10000 |      233
@@ -382,10 +382,10 @@ regression-# where relname like 'tenk1%';
 
   <para>
    Most queries retrieve only a fraction of the rows in a table, due
-   to having WHERE clauses that restrict the rows to be examined.
+   to having <literal>WHERE</> clauses that restrict the rows to be examined.
    The planner thus needs to make an estimate of the
-   <firstterm>selectivity</> of WHERE clauses, that is, the fraction of
-   rows that match each clause of the WHERE condition.  The information
+   <firstterm>selectivity</> of <literal>WHERE</> clauses, that is, the fraction of
+   rows that match each clause of the <literal>WHERE</> condition.  The information
    used for this task is stored in the <structname>pg_statistic</structname>
    system catalog.  Entries in <structname>pg_statistic</structname> are
    updated by <command>ANALYZE</> and <command>VACUUM ANALYZE</> commands,
@@ -406,7 +406,7 @@ regression-# where relname like 'tenk1%';
    For example, we might do:
 
 <screen>
-regression=# select attname, n_distinct, most_common_vals from pg_stats where tablename = 'road';
+regression=# SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'road';
  attname | n_distinct |                                                                                                                                                                                  most_common_vals                                                                                                                                                                                   
 ---------+------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  name    |  -0.467008 | {"I- 580                        Ramp","I- 880                        Ramp","Sp Railroad                       ","I- 580                            ","I- 680                        Ramp","I- 80                         Ramp","14th                          St  ","5th                           St  ","Mission                       Blvd","I- 880                            "}
@@ -414,12 +414,14 @@ regression=# select attname, n_distinct, most_common_vals from pg_stats where ta
 (2 rows)
 regression=#
 </screen>
-
-   As of <productname>PostgreSQL</productname> 7.2 the following columns exist
-   in <structname>pg_stats</structname>:
   </para>
 
-  <table>
+  <para>
+   <xref linkend="planner-pg-stats-table"> shows the columns that
+   exist in <structname>pg_stats</structname>.
+  </para>
+
+  <table id="planner-pg-stats-table">
    <title><structname>pg_stats</structname> Columns</title>
 
    <tgroup cols=3>
@@ -435,7 +437,7 @@ regression=#
      <row>
       <entry><literal>tablename</literal></entry>
       <entry><type>name</type></entry>
-      <entry>Name of table containing column</entry>
+      <entry>Name of the table containing the column</entry>
      </row>
 
      <row>
@@ -447,13 +449,13 @@ regression=#
      <row>
       <entry><literal>null_frac</literal></entry>
       <entry><type>real</type></entry>
-      <entry>Fraction of column's entries that are NULL</entry>
+      <entry>Fraction of column's entries that are null</entry>
      </row>
 
      <row>
       <entry><literal>avg_width</literal></entry>
       <entry><type>integer</type></entry>
-      <entry>Average width in bytes of column's entries</entry>
+      <entry>Average width in bytes of the column's entries</entry>
      </row>
 
      <row>
@@ -462,7 +464,7 @@ regression=#
       <entry>If greater than zero, the estimated number of distinct values
       in the column.  If less than zero, the negative of the number of
       distinct values divided by the number of rows.  (The negated form
-      is used when ANALYZE believes that the number of distinct values
+      is used when <command>ANALYZE</> believes that the number of distinct values
       is likely to increase as the table grows; the positive form is used
       when the column seems to have a fixed number of possible values.)
       For example, -1 indicates a unique column in which the number of
@@ -481,7 +483,7 @@ regression=#
       <entry><literal>most_common_freqs</literal></entry>
       <entry><type>real[]</type></entry>
       <entry>A list of the frequencies of the most common values,
-      ie, number of occurrences of each divided by total number of rows.
+      i.e., number of occurrences of each divided by total number of rows.
      </entry>
      </row>
 
@@ -530,30 +532,32 @@ regression=#
   <title>Controlling the Planner with Explicit <literal>JOIN</> Clauses</title>
 
   <para>
-   Beginning with <productname>PostgreSQL</productname> 7.1 it is possible
-   to control the query planner to some extent by using explicit <literal>JOIN</>
+   Beginning with <productname>PostgreSQL</productname> 7.1 it has been possible
+   to control the query planner to some extent by using the explicit <literal>JOIN</>
    syntax.  To see why this matters, we first need some background.
   </para>
 
   <para>
    In a simple join query, such as
-    <programlisting>
-SELECT * FROM a,b,c WHERE a.id = b.id AND b.ref = c.id;
-    </programlisting>
-   the planner is free to join the given tables in any order.  For example,
-   it could generate a query plan that joins A to B, using the WHERE clause
-   a.id = b.id, and then joins C to this joined table, using the other
-   WHERE clause.  Or it could join B to C and then join A to that result.
-   Or it could join A to C and then join them with B --- but that would
-   be inefficient, since the full Cartesian product of A and C would have
-   to be formed, there being no applicable WHERE clause to allow optimization
-   of the join.
-   (All joins in the <productname>PostgreSQL</productname> executor happen
-   between two input tables, so it's necessary to build up the result in one
-   or another of these fashions.)  The important point is that these different
-   join possibilities give semantically equivalent results but may have hugely
-   different execution costs.  Therefore, the planner will explore all of them
-   to try to find the most efficient query plan.
+<programlisting>
+SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
+</programlisting>
+   the planner is free to join the given tables in any order.  For
+   example, it could generate a query plan that joins A to B, using
+   the <literal>WHERE</> condition <literal>a.id = b.id</>, and then
+   joins C to this joined table, using the other <literal>WHERE</>
+   condition.  Or it could join B to C and then join A to that result.
+   Or it could join A to C and then join them with B --- but that
+   would be inefficient, since the full Cartesian product of A and C
+   would have to be formed, there being no applicable condition in the
+   <literal>WHERE</> clause to allow optimization of the join.  (All
+   joins in the <productname>PostgreSQL</productname> executor happen
+   between two input tables, so it's necessary to build up the result
+   in one or another of these fashions.)  The important point is that
+   these different join possibilities give semantically equivalent
+   results but may have hugely different execution costs.  Therefore,
+   the planner will explore all of them to try to find the most
+   efficient query plan.
   </para>
 
   <para>
@@ -567,7 +571,7 @@ SELECT * FROM a,b,c WHERE a.id = b.id AND b.ref = c.id;
    search to a <firstterm>genetic</firstterm> probabilistic search
    through a limited number of possibilities.  (The switch-over threshold is
    set by the <varname>GEQO_THRESHOLD</varname> run-time
-   parameter described in the <citetitle>Administrator's Guide</citetitle>.)
+   parameter described in the &cite-admin;.)
    The genetic search takes less time, but it won't
    necessarily find the best possible plan.
   </para>
@@ -575,9 +579,9 @@ SELECT * FROM a,b,c WHERE a.id = b.id AND b.ref = c.id;
   <para>
    When the query involves outer joins, the planner has much less freedom
    than it does for plain (inner) joins. For example, consider
-    <programlisting>
+<programlisting>
 SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
-    </programlisting>
+</programlisting>
    Although this query's restrictions are superficially similar to the
    previous example, the semantics are different because a row must be
    emitted for each row of A that has no matching row in the join of B and C.
@@ -587,27 +591,27 @@ SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
   </para>
 
   <para>
-   In <productname>PostgreSQL</productname> 7.1, the planner treats all
-   explicit JOIN syntaxes as constraining the join order, even though
+   The <productname>PostgreSQL</productname> query planner treats all
+   explicit <literal>JOIN</> syntaxes as constraining the join order, even though
    it is not logically necessary to make such a constraint for inner
    joins.  Therefore, although all of these queries give the same result:
-    <programlisting>
-SELECT * FROM a,b,c WHERE a.id = b.id AND b.ref = c.id;
+<programlisting>
+SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
 SELECT * FROM a CROSS JOIN b CROSS JOIN c WHERE a.id = b.id AND b.ref = c.id;
 SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
-    </programlisting>
-   the second and third take less time to plan than the first.  This effect
+</programlisting>
+   but the second and third take less time to plan than the first.  This effect
    is not worth worrying about for only three tables, but it can be a
    lifesaver with many tables.
   </para>
 
   <para>
    You do not need to constrain the join order completely in order to
-   cut search time, because it's OK to use JOIN operators in a plain
-   FROM list.  For example,
-    <programlisting>
+   cut search time, because it's OK to use <literal>JOIN</> operators in a plain
+   <literal>FROM</> list.  For example,
+<programlisting>
 SELECT * FROM a CROSS JOIN b, c, d, e WHERE ...;
-    </programlisting>
+</programlisting>
    forces the planner to join A to B before joining them to other tables,
    but doesn't constrain its choices otherwise.  In this example, the
    number of possible join orders is reduced by a factor of 5.
@@ -617,22 +621,22 @@ SELECT * FROM a CROSS JOIN b, c, d, e WHERE ...;
    If you have a mix of outer and inner joins in a complex query, you
    might not want to constrain the planner's search for a good ordering
    of inner joins inside an outer join.  You can't do that directly in the
-   JOIN syntax, but you can get around the syntactic limitation by using
+   <literal>JOIN</> syntax, but you can get around the syntactic limitation by using
    subselects.  For example,
-    <programlisting>
+<programlisting>
 SELECT * FROM d LEFT JOIN
         (SELECT * FROM a, b, c WHERE ...) AS ss
         ON (...);
-    </programlisting>
+</programlisting>
    Here, joining D must be the last step in the query plan, but the
-   planner is free to consider various join orders for A,B,C.
+   planner is free to consider various join orders for A, B, C.
   </para>
 
   <para>
    Constraining the planner's search in this way is a useful technique
    both for reducing planning time and for directing the planner to a
    good query plan.  If the planner chooses a bad join order by default,
-   you can force it to choose a better order via JOIN syntax --- assuming
+   you can force it to choose a better order via <literal>JOIN</> syntax --- assuming
    that you know of a better order, that is.  Experimentation is recommended.
   </para>
  </sect1>
@@ -658,6 +662,10 @@ SELECT * FROM d LEFT JOIN
     If you allow each insertion to be committed separately,
     <productname>PostgreSQL</productname> is doing a lot of work for each
     record added.
+    An additional benefit of doing all insertions in one transaction
+    is that if the insertion of one record were to fail then the
+    insertion of all records inserted up to that point would be rolled
+    back, so you won't be stuck with partially loaded data.
    </para>
   </sect2>
 
@@ -696,7 +704,7 @@ SELECT * FROM d LEFT JOIN
   </sect2>
 
   <sect2 id="populate-analyze">
-   <title>ANALYZE Afterwards</title>
+   <title>Run ANALYZE Afterwards</title>
 
    <para>
     It's a good idea to run <command>ANALYZE</command> or <command>VACUUM

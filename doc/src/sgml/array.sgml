@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.23 2002/11/10 00:32:16 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.24 2002/11/11 20:14:02 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -21,7 +21,7 @@ CREATE TABLE sal_emp (
 </programlisting>
   As shown, an array data type is named by appending square brackets
   (<literal>[]</>) to the data type name of the array elements.
-  The above query will create a table named
+  The above command will create a table named
   <structname>sal_emp</structname> with columns including
   a <type>text</type> string (<structfield>name</structfield>),
   a one-dimensional array of type
@@ -68,7 +68,7 @@ SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
 
   The array subscript numbers are written within square brackets.
   By default <productname>PostgreSQL</productname> uses the
-  <quote>one-based</quote> numbering convention for arrays, that is,
+  one-based numbering convention for arrays, that is,
   an array of <replaceable>n</> elements starts with <literal>array[1]</literal> and
   ends with <literal>array[<replaceable>n</>]</literal>.
  </para>
@@ -90,10 +90,9 @@ SELECT pay_by_quarter[3] FROM sal_emp;
  <para>
   We can also access arbitrary rectangular slices of an array, or
   subarrays.  An array slice is denoted by writing
-  <literal><replaceable>lower subscript</replaceable> :
-  <replaceable>upper subscript</replaceable></literal> for one or more
-  array dimensions.  This query retrieves the first item on Bill's
-  schedule for the first two days of the week:
+  <literal><replaceable>lower-bound</replaceable>:<replaceable>upper-bound</replaceable></literal>
+  for one or more array dimensions.  This query retrieves the first
+  item on Bill's schedule for the first two days of the week:
      
 <programlisting>
 SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
@@ -112,9 +111,10 @@ SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
 
   with the same result.  An array subscripting operation is taken to
   represent an array slice if any of the subscripts are written in the
-  form <replaceable>lower</replaceable> <literal>:</literal>
-  <replaceable>upper</replaceable>.  A lower bound of 1 is assumed for
-  any subscript where only one value is specified.
+  form
+  <literal><replaceable>lower</replaceable>:<replaceable>upper</replaceable></literal>.
+  A lower bound of 1 is assumed for any subscript where only one value
+  is specified.
  </para>
 
  <para>
@@ -310,7 +310,7 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
 
  <tip>
   <para>
-   Remember that what you write in an SQL query will first be interpreted
+   Remember that what you write in an SQL command will first be interpreted
    as a string literal, and then as an array.  This doubles the number of
    backslashes you need.  For example, to insert a <type>text</> array
    value containing a backslash and a double quote, you'd need to write
@@ -323,7 +323,7 @@ INSERT ... VALUES ('{"\\\\","\\""}');
    become <literal>\</> and <literal>"</> respectively.  (If we were working
    with a data type whose input routine also treated backslashes specially,
    <type>bytea</> for example, we might need as many as eight backslashes
-   in the query to get one backslash into the stored array element.)
+   in the command to get one backslash into the stored array element.)
   </para>
  </tip>
 

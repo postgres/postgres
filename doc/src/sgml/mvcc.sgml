@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.29 2002/11/11 20:14:03 petere Exp $
 -->
 
  <chapter id="mvcc">
@@ -9,24 +9,23 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
    <primary>concurrency</primary>
   </indexterm>
 
-  <abstract>
-   <para>
-    Multiversion Concurrency Control
-    (MVCC)
-    is an advanced technique for improving database performance in a
-    multiuser environment. 
-    Vadim Mikheev (<email>vadim@krs.ru</email>) provided
-    the implementation for <productname>PostgreSQL</productname>.
-   </para>
-  </abstract>
+  <para>
+   This chapter describes the behavior of the PostgreSQL database
+   system when two or more sessions try to access the same data at the
+   same time.  The goals in that situation are to allow efficient
+   access for all sessions while maintaining strict data integrity.
+   Every developer of database applications should be familiar with
+   the topics covered in this chapter.
+  </para>
 
   <sect1 id="mvcc-intro">
    <title>Introduction</title>
 
    <para>
-    Unlike most other database systems which use locks for concurrency control,
+    Unlike traditional database systems which use locks for concurrency control,
     <productname>PostgreSQL</productname>
-    maintains data consistency by using a multiversion model. 
+    maintains data consistency by using a multiversion model
+    (Multiversion Concurrency Control, <acronym>MVCC</acronym>). 
     This means that while querying a database each transaction sees
     a snapshot of data (a <firstterm>database version</firstterm>)
     as it was some
@@ -56,7 +55,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
    <title>Transaction Isolation</title>
 
    <para>
-    The <acronym>ANSI</acronym>/<acronym>ISO</acronym> <acronym>SQL</acronym>
+    The <acronym>SQL</acronym>
     standard defines four levels of transaction
     isolation in terms of three phenomena that must be prevented 
     between concurrent transactions.
@@ -65,8 +64,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
     <variablelist>
      <varlistentry>
       <term>
-       dirty reads
-       <indexterm><primary>dirty reads</primary></indexterm>
+       dirty read
+       <indexterm><primary>dirty read</primary></indexterm>
       </term>
      <listitem>
       <para>
@@ -77,8 +76,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
 
      <varlistentry>
       <term>
-       non-repeatable reads
-       <indexterm><primary>non-repeatable reads</primary></indexterm>
+       nonrepeatable read
+       <indexterm><primary>nonrepeatable read</primary></indexterm>
       </term>
      <listitem>
       <para>
@@ -92,7 +91,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
      <varlistentry>
       <term>
        phantom read
-       <indexterm><primary>phantom reads</primary></indexterm>
+       <indexterm><primary>phantom read</primary></indexterm>
       </term>
      <listitem>
       <para>
@@ -111,6 +110,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
     </indexterm>
     The four transaction isolation levels and the corresponding
     behaviors are described in <xref linkend="mvcc-isolevel-table">.
+   </para>
 
     <table tocentry="1" id="mvcc-isolevel-table">
      <title><acronym>SQL</acronym> Transaction Isolation Levels</title>
@@ -125,7 +125,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
 	 Dirty Read
 	</entry>
 	<entry>
-	 Non-Repeatable Read
+	 Nonrepeatable Read
 	</entry>
 	<entry>
 	 Phantom Read
@@ -195,15 +195,13 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
       </tbody>
      </tgroup>
     </table>
-   </para>
 
    <para>
     <productname>PostgreSQL</productname>
     offers the read committed and serializable isolation levels.
    </para>
-  </sect1>
 
-  <sect1 id="xact-read-committed">
+  <sect2 id="xact-read-committed">
    <title>Read Committed Isolation Level</title>
 
    <indexterm>
@@ -229,7 +227,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.28 2002/09/21 18:32:53 petere
    </para>
 
    <para>
-    <command>UPDATE</command>, <command>DELETE</command> and <command>SELECT
+    <command>UPDATE</command>, <command>DELETE</command>, and <command>SELECT
     FOR UPDATE</command> commands behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
     that were committed as of the query start time.  However, such a target
@@ -287,9 +285,9 @@ COMMIT;
     be necessary to guarantee a more rigorously consistent view of the
     database than the Read Committed mode provides.
    </para>
-  </sect1>
+  </sect2>
 
-  <sect1 id="xact-serializable">
+  <sect2 id="xact-serializable">
    <title>Serializable Isolation Level</title>
 
    <indexterm>
@@ -316,13 +314,13 @@ COMMIT;
     committed.)  This is different from Read Committed in that the
     <command>SELECT</command>
     sees a snapshot as of the start of the transaction, not as of the start
-    of the current query within the transaction.  Successive
+    of the current query within the transaction.  Thus, successive
     <command>SELECT</command>s within a single transaction always see the same
     data.
    </para>
 
    <para>
-    <command>UPDATE</command>, <command>DELETE</command> and <command>SELECT
+    <command>UPDATE</command>, <command>DELETE</command>, and <command>SELECT
     FOR UPDATE</command> commands behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
     that were committed as of the transaction start time.  However, such a
@@ -370,7 +368,8 @@ ERROR:  Can't serialize access due to concurrent update
     a transaction performs several successive queries that must see
     identical views of the database.
    </para>
-  </sect1>
+  </sect2>
+ </sect1>
 
   <sect1 id="explicit-locking">
    <title>Explicit Locking</title>
@@ -421,8 +420,7 @@ ERROR:  Can't serialize access due to concurrent update
 	 To examine a list of the currently outstanding locks in a
 	 database server, use the <literal>pg_locks</literal> system
 	 view. For more information on monitoring the status of the lock
-	 manager subsystem, refer to the <citetitle>Administrator's
-	 Guide</citetitle>.
+	 manager subsystem, refer to the &cite-admin;.
 	</para>
 
      <variablelist>
@@ -647,14 +645,14 @@ ERROR:  Can't serialize access due to concurrent update
     <para>
      Use of explicit locking can cause <firstterm>deadlocks</>, wherein
      two (or more) transactions each hold locks that the other wants.
-     For example, if transaction 1 acquires exclusive lock on table A
-     and then tries to acquire exclusive lock on table B, while transaction
-     2 has already exclusive-locked table B and now wants exclusive lock
+     For example, if transaction 1 acquires an exclusive lock on table A
+     and then tries to acquire an exclusive lock on table B, while transaction
+     2 has already exclusive-locked table B and now wants an exclusive lock
      on table A, then neither one can proceed.
      <productname>PostgreSQL</productname> automatically detects deadlock
      situations and resolves them by aborting one of the transactions
      involved, allowing the other(s) to complete.  (Exactly which transaction
-     will be aborted is difficult to predict, and should not be relied on.)
+     will be aborted is difficult to predict and should not be relied on.)
     </para>
 
     <para>
@@ -678,7 +676,7 @@ ERROR:  Can't serialize access due to concurrent update
   </sect1>
 
   <sect1 id="applevel-consistency">
-   <title>Data consistency checks at the application level</title>
+   <title>Data Consistency Checks at the Application Level</title>
 
    <para>
     Because readers in <productname>PostgreSQL</productname>
@@ -718,11 +716,10 @@ ERROR:  Can't serialize access due to concurrent update
 
     <note>
      <para>
-      Before version 6.5 <productname>PostgreSQL</productname>
-      used read-locks and so the
-      above consideration is also the case
-      when upgrading to 6.5 (or higher) from previous
-      <productname>PostgreSQL</productname> versions.
+      Before version 6.5 <productname>PostgreSQL</productname> used
+      read locks, and so the above consideration is also the case when
+      upgrading from <productname>PostgreSQL</productname> versions
+      prior to 6.5.
      </para>
     </note>
    </para>
@@ -732,7 +729,7 @@ ERROR:  Can't serialize access due to concurrent update
     example, a banking application might wish to check that the sum of
     all credits in one table equals the sum of debits in another table,
     when both tables are being actively updated.  Comparing the results of two
-    successive SELECT SUM(...) commands will not work reliably under
+    successive <literal>SELECT SUM(...)</literal> commands will not work reliably under
     Read Committed mode, since the second query will likely include the results
     of transactions not counted by the first.  Doing the two sums in a
     single serializable transaction will give an accurate picture of the
@@ -758,7 +755,8 @@ ERROR:  Can't serialize access due to concurrent update
     the table are still running --- but if the snapshot seen by the
     transaction predates obtaining the lock, it may predate some now-committed
     changes in the table.  A serializable transaction's snapshot is actually
-    frozen at the start of its first query (SELECT/INSERT/UPDATE/DELETE), so
+    frozen at the start of its first query (<literal>SELECT</>, <literal>INSERT</>,
+    <literal>UPDATE</>, or <literal>DELETE</>), so
     it's possible to obtain explicit locks before the snapshot is
     frozen.
    </para>
@@ -781,12 +779,26 @@ ERROR:  Can't serialize access due to concurrent update
     <variablelist>
      <varlistentry>
       <term>
-       <acronym>GiST</acronym> and R-Tree indexes
+       B-tree indexes
+      </term>
+      <listitem>
+       <para>
+	Short-term share/exclusive page-level locks are used for
+	read/write access. Locks are released immediately after each
+	index tuple is fetched or inserted.  B-tree indexes provide
+	the highest concurrency without deadlock conditions.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       <acronym>GiST</acronym> and R-tree indexes
       </term>
       <listitem>
        <para>
 	Share/exclusive index-level locks are used for read/write access.
-	Locks are released after statement is done.
+	Locks are released after the statement (command) is done.
        </para>
       </listitem>
      </varlistentry>
@@ -797,31 +809,10 @@ ERROR:  Can't serialize access due to concurrent update
       </term>
       <listitem>
        <para>
-	Share/exclusive page-level locks are used for read/write access.
-	Locks are released after page is processed.
-       </para>
-
-       <para>
-	Page-level locks provide better concurrency than index-level ones
-	but are subject to deadlocks.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>
-       B-tree indexes
-      </term>
-      <listitem>
-       <para>
-	Short-term share/exclusive page-level locks are used for
-	read/write access. Locks are released immediately after each index
-	tuple is fetched/inserted.
-       </para>
-
-       <para>
-	B-tree indexes provide the highest concurrency without deadlock
-	conditions.
+	Share/exclusive page-level locks are used for read/write
+	access.  Locks are released after the page is processed.
+	Page-level locks provide better concurrency than index-level
+	ones but are liable to deadlocks.
        </para>
       </listitem>
      </varlistentry>
