@@ -14,10 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Log: md5.c,v $
- *	  Revision 1.5  2001/11/13 22:06:58  momjian
- *	  Remove md5.c check, add CVS log stamp.  Update comments.
- *
+ *	  $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/md5.c,v 1.6 2001/11/13 22:08:04 momjian Exp $
  */
 
 
