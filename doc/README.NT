@@ -31,7 +31,7 @@ It can be done by done by typing configure, make and make install.
 1. Download the Cygwin32 IPC Package by Ludovic LANGE 
    http://www.multione.capgemini.fr:80/tools/pack_ipc/current.tar.gz
 2. Untar the package and follow the readme instructions.
-3. Apply the patch pgsql/src/win32/ipc.patch to the cygipc sources
+3. Apply the patch at the end of this file to the cygipc sources
    before compiling the library.
 4. I tested 1.03.
 5. I used the \cygwin-b20\h-i568-cygwin32\i586-cygwin32\lib and
@@ -83,3 +83,292 @@ Joost
 
 PS: If you still have problems you can mail to Dan Horak <dan.horak@email.cz>
     who is the maintainer for the win32 port
+
+---------------------------------------------------------------------------
+
+*** ./ipc-daemon.c.orig	Tue Dec 01 00:04:24 1998
+--- ./ipc-daemon.c	Fri Sep 24 13:34:16 1999
+***************
+*** 270,285 ****
+         {
+          itoa(100*id+Index, LBuff) ;
+          LHandle = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, LBuff) ;
+! 	while (LAdrSem->current_nb[id].current_nb[Index] > 0 )
+! 	{
+!     	 WaitForSingleObject(LHandle, 0) ;
+! 	 LAdrSem->current_nb[id].current_nb[Index]-- ;
+! 	}
+! 	CloseHandle(LHandle) ;
+         }
+         LAdrSem->semary[id] = IPC_UNUSED ;
+         LAdrSem->state[id]  = 0 ;
+        }
+        else
+        {
+         for (Index = 0; Index < sma->sem_nsems; Index++)
+--- 270,284 ----
+         {
+          itoa(100*id+Index, LBuff) ;
+          LHandle = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, LBuff) ;
+!         while (WaitForSingleObject(LHandle, 0) == WAIT_OBJECT_0)
+!           ;
+!         LAdrSem->current_nb[id].current_nb[Index] = 0;
+!         CloseHandle(LHandle) ;
+         }
+         LAdrSem->semary[id] = IPC_UNUSED ;
+         LAdrSem->state[id]  = 0 ;
+        }
++ /*
+        else
+        {
+         for (Index = 0; Index < sma->sem_nsems; Index++)
+***************
+*** 288,293 ****
+--- 287,293 ----
+          LHandle = OpenSemaphore(SEMAPHORE_ALL_ACCESS, FALSE, LBuff) ;
+         }
+        }
++ */
+       }
+      }
+  
+*** ./msg.c.orig	Tue Dec 01 00:16:09 1998
+--- ./msg.c	Fri Sep 17 12:50:50 1999
+***************
+*** 57,62 ****
+--- 57,77 ----
+  static int		  GFirstMsg	 = 0;		/*PCPC*/
+  static int		  GFdMsg	    ;		/*PCPC*/
+  
++ /*****************************************/
++ /*	Initialization of static variables   */
++ /*****************************************/
++ static pid_t GProcessId = 0;
++ static void init_globals(void)
++ {
++ 	pid_t pid;
++ 
++ 	if (pid=getpid(), pid != GProcessId)
++ 	{
++ 		GFirstMsg = 0;
++ 		msgbytes = msghdrs = msg_seq = used_queues = max_msqid = 0;
++ 		GProcessId = pid;
++ 	}
++ }
+  /************************************************************************/
+  /* Demande d'acces a la zone partagee de gestion des semaphores		*/
+  /************************************************************************/
+***************
+*** 79,84 ****
+--- 94,100 ----
+  {
+   int LRet ;
+  
++  init_globals();
+   if( GFirstMsg == 0 )
+   {
+    if( IsGSemMsgExist() )
+*** ./sem.c.orig	Tue Dec 01 00:16:25 1998
+--- ./sem.c	Fri Sep 17 12:47:11 1999
+***************
+*** 58,63 ****
+--- 58,78 ----
+  static int		  GFirstSem	 = 0;		/*PCPC*/
+  static int		  GFdSem	    ;		/*PCPC*/
+  
++ static pid_t	GProcessId = 0;
++ 
++ static void	init_globals(void)
++ {
++ 	pid_t pid;
++ 
++ 	if (pid=getpid(), pid != GProcessId)
++ 	{
++ 		GFirstSem = 0;
++ 		used_sems = used_semids = max_semid = 0;
++ 		sem_seq = 0;
++ 		GProcessId = pid;
++ 	}
++ }
++ 
+  /************************************************************************/
+  /* Demande d'acces a la zone partagee de gestion des semaphores		*/
+  /************************************************************************/
+***************
+*** 77,82 ****
+--- 92,98 ----
+  {
+      int LRet ;
+  
++ 	init_globals();
+      if( GFirstSem == 0 )
+      {
+  	if( IsGSemSemExist() )
+***************
+*** 187,193 ****
+      {
+  	CloseHandle ( LHandle ) ;
+      }
+!     LHandle = CreateSemaphore(NULL, 0, 0x7FFFFFFF, LBuff) ;
+      if( LHandle == NULL )
+      {
+  	printf( "Creation de Semaphore \"Sem\" impossible\n" ) ;
+--- 203,209 ----
+      {
+  	CloseHandle ( LHandle ) ;
+      }
+!     LHandle = CreateSemaphore(NULL, 0, 1, LBuff) ;
+      if( LHandle == NULL )
+      {
+  	printf( "Creation de Semaphore \"Sem\" impossible\n" ) ;
+***************
+*** 357,371 ****
+  debug_printf("do_semop : return -EACCES\n");
+  			CYGWIN32_IPCNT_RETURN (-EACCES) ;
+  		    }
+! 		    ReleaseSemaphore(LHandle, sop->sem_op, &LVal) ;
+! 	    	    shareadrsem->current_nb[id].current_nb[sop->sem_num] +=
+! 					sop->sem_op ;
+  		    sem_deconnect() ;
+  		} else {
+  		    if( sop->sem_flg == IPC_NOWAIT )
+  		    {
+! 			LRet = WaitForSingleObject(LHandle, 0) ;
+! 			if( LRet == WAIT_TIMEOUT )
+  			{
+  debug_printf("do_semop : return -EAGAIN\n");
+  			    CYGWIN32_IPCNT_RETURN (-EAGAIN) ;
+--- 373,386 ----
+  debug_printf("do_semop : return -EACCES\n");
+  			CYGWIN32_IPCNT_RETURN (-EACCES) ;
+  		    }
+!     	    shareadrsem->current_nb[id].current_nb[sop->sem_num] +=
+! 				sop->sem_op ;
+  		    sem_deconnect() ;
++ 		    ReleaseSemaphore(LHandle, 1 , &LVal) ;
+  		} else {
+  		    if( sop->sem_flg == IPC_NOWAIT )
+  		    {
+! 			if( sop->sem_op + shareadrsem->current_nb[id].current_nb[sop->sem_num] <0 )
+  			{
+  debug_printf("do_semop : return -EAGAIN\n");
+  			    CYGWIN32_IPCNT_RETURN (-EAGAIN) ;
+***************
+*** 375,390 ****
+  debug_printf("do_semop : return -EACCES\n");
+  			    CYGWIN32_IPCNT_RETURN (-EACCES) ;
+  			}
+! 	    		shareadrsem->current_nb[id].current_nb[sop->sem_num] -= 1 ;
+  			sem_deconnect() ;
+  		    } else {
+! 			LRet = WaitForSingleObject(LHandle, INFINITE) ;
+  			if (sem_connect() == 0)
+  			{
+  debug_printf("do_semop : return -EACCES\n");
+  			    CYGWIN32_IPCNT_RETURN (-EACCES) ;
+  			}
+! 			    shareadrsem->current_nb[id].current_nb[sop->sem_num] -= 1 ;
+  			    sem_deconnect() ;
+  		    }
+  		}
+--- 390,407 ----
+  debug_printf("do_semop : return -EACCES\n");
+  			    CYGWIN32_IPCNT_RETURN (-EACCES) ;
+  			}
+! 	    		shareadrsem->current_nb[id].current_nb[sop->sem_num] += sop->sem_op;
+  			sem_deconnect() ;
+  		    } else {
+! 		    while(sop->sem_op + shareadrsem->current_nb[id].current_nb[sop->sem_num] <0)
+! 				LRet = WaitForSingleObject(LHandle, INFINITE) ;
+! 		    
+  			if (sem_connect() == 0)
+  			{
+  debug_printf("do_semop : return -EACCES\n");
+  			    CYGWIN32_IPCNT_RETURN (-EACCES) ;
+  			}
+! 			    shareadrsem->current_nb[id].current_nb[sop->sem_num] += sop->sem_op ;
+  			    sem_deconnect() ;
+  		    }
+  		}
+***************
+*** 435,441 ****
+  	char LBuff[100] ;
+  	HANDLE LHandle ;
+  	long LPrevious ;
+- 	int LIndex;
+  
+  debug_printf("semctl : semid=%X semnum=%X cmd=0x%02X arg=%p\n",semid,semnum,cmd,arg);
+  	if (semid < 0 || semnum < 0 || cmd < 0)
+--- 452,457 ----
+***************
+*** 568,589 ****
+  		if( LHandle != NULL )
+  		{
+  		    if( arg.val > shareadrsem->current_nb[id].current_nb[semnum] )
+! 		    {
+! 			ReleaseSemaphore(LHandle,
+! 			arg.val-shareadrsem->current_nb[id].current_nb[semnum],
+! 			&LPrevious) ;
+! 		    }
+! 		    else if (arg.val <
+! 		             shareadrsem->current_nb[id].current_nb[semnum] )
+! 		    {
+! 			for( LIndex = arg.val;
+! 			LIndex < shareadrsem->current_nb[id].current_nb[semnum];
+! 			LIndex++ )
+! 			{
+! 			    WaitForSingleObject(LHandle, 0) ;
+! 			}
+! 		    }
+!             	    shareadrsem->current_nb[id].current_nb[semnum] = arg.val ;
+  		}
+  debug_printf("semctl : SETVAL : return 0\n");
+  		CYGWIN32_IPCNT_RETURN_DECONNECT (0);
+--- 584,591 ----
+  		if( LHandle != NULL )
+  		{
+  		    if( arg.val > shareadrsem->current_nb[id].current_nb[semnum] )
+! 				ReleaseSemaphore(LHandle,1,&LPrevious) ;
+!             shareadrsem->current_nb[id].current_nb[semnum] = arg.val ;
+  		}
+  debug_printf("semctl : SETVAL : return 0\n");
+  		CYGWIN32_IPCNT_RETURN_DECONNECT (0);
+*** ./shm.c.orig	Fri Sep 17 12:46:24 1999
+--- ./shm.c	Fri Sep 17 12:47:11 1999
+***************
+*** 59,64 ****
+--- 59,81 ----
+  static int		  GFirstShm	 = 0;		/*PCPC*/
+  static int		  GFdShm	    ;		/*PCPC*/
+  
++ /*****************************************/
++ /*	Initialization of static variables   */
++ /*****************************************/
++ static pid_t GProcessId = 0;
++ static void init_globals(void)
++ {
++ 	pid_t pid;
++ 
++ 	if (pid=getpid(), pid != GProcessId)
++ 	{
++ 		GFirstShm = 0;
++ 		shm_rss = shm_swp = max_shmid = 0;
++ 		shm_seq = 0;
++ 		GProcessId = pid;
++ 	}
++ }
++ 
+  /************************************************************************/
+  /* Demande d'acces a la zone partagee de gestion des shm		*/
+  /************************************************************************/
+***************
+*** 82,87 ****
+--- 99,105 ----
+  {
+   int LRet ;
+  
++  init_globals();
+   if( GFirstShm == 0 )
+   {
+    if( IsGSemShmExist() )
+
