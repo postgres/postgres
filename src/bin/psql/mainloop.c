@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.51 2002/10/12 23:09:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.52 2003/03/20 06:00:12 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -92,8 +92,6 @@ MainLoop(FILE *source)
 	/* main loop to get queries and execute them */
 	while (1)
 	{
-#ifndef WIN32
-
 		/*
 		 * Welcome code for Control-C
 		 */
@@ -113,6 +111,7 @@ MainLoop(FILE *source)
 			cancel_pressed = false;
 		}
 
+#ifndef WIN32
 		if (sigsetjmp(main_loop_jmp, 1) != 0)
 		{
 			/* got here with longjmp */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.58 2003/03/20 04:49:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.59 2003/03/20 06:00:12 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -33,6 +33,25 @@
 #include "prompt.h"
 #include "print.h"
 #include "mainloop.h"
+
+
+/* Workarounds for Windows */
+/* Probably to be moved up the source tree in the future, perhaps to be replaced by
+ * more specific checks like configure-style HAVE_GETTIMEOFDAY macros.
+ */
+#ifndef WIN32
+
+typedef struct timeval TimevalStruct;
+#define GETTIMEOFDAY(T) gettimeofday(T, NULL)
+#define DIFF_MSEC(T, U) ((((T)->tv_sec - (U)->tv_sec) * 1000000.0 + (T)->tv_usec - (U)->tv_usec) / 1000.0)
+
+#else
+
+typedef struct _timeb TimevalStruct;
+#define GETTIMEOFDAY(T) _ftime(&T)
+#define DIFF_MSEC(T, U) ((((T)->time - (U)->time) * 1000.0 + (T)->millitm - (U)->millitm))
+
+#endif
 
 extern bool prompt_state;
 
@@ -110,10 +129,7 @@ setQFout(const char *fname)
 
 	/* Direct signals */
 #ifndef WIN32
-	if (pset.queryFoutPipe)
-		pqsignal(SIGPIPE, SIG_IGN);
-	else
-		pqsignal(SIGPIPE, SIG_DFL);
+	pqsignal(SIGPIPE, pset.queryFoutPipe ? SIG_IGN : SIG_DFL);
 #endif
 
 	return status;
@@ -165,8 +181,10 @@ NoticeProcessor(void *arg, const char *message)
  * so. We use write() to print to stdout because it's better to use simple
  * facilities in a signal handler.
  */
-PGconn	   *cancelConn;
-volatile bool cancel_pressed;
+static PGconn	   *volatile cancelConn = NULL;
+
+volatile bool cancel_pressed = false;
+
 
 #ifndef WIN32
 
@@ -196,6 +214,142 @@ handle_sigint(SIGNAL_ARGS)
 	errno = save_errno;			/* just in case the write changed it */
 }
 #endif   /* not WIN32 */
+
+
+
+/* ConnectionUp
+ *
+ * Returns whether our backend connection is still there.
+ */
+static bool 
+ConnectionUp()
+{
+	return PQstatus(pset.db) != CONNECTION_BAD;
+}
+
+
+
+/* CheckConnection
+ *
+ * Verify that we still have a good connection to the backend, and if not,
+ * see if it can be restored.
+ *
+ * Returns true if either the connection was still there, or it could be
+ * restored successfully; false otherwise.  If, however, there was no
+ * connection and the session is non-interactive, this will exit the program
+ * with a code of EXIT_BADCONN.
+ */
+static bool
+CheckConnection()
+{
+	bool OK;
+	
+	OK = ConnectionUp();
+	if (!OK)
+	{
+		if (!pset.cur_cmd_interactive)
+		{
+			psql_error("connection to server was lost\n");
+			exit(EXIT_BADCONN);
+		}
+
+		fputs(gettext("The connection to the server was lost. Attempting reset: "), stderr);
+		PQreset(pset.db);
+		OK = ConnectionUp();
+		if (!OK)
+		{
+			fputs(gettext("Failed.\n"), stderr);
+			PQfinish(pset.db);
+			pset.db = NULL;
+			ResetCancelConn();
+			SetVariable(pset.vars, "DBNAME", NULL);
+			SetVariable(pset.vars, "HOST", NULL);
+			SetVariable(pset.vars, "PORT", NULL);
+			SetVariable(pset.vars, "USER", NULL);
+			SetVariable(pset.vars, "ENCODING", NULL);
+		}
+		else
+			fputs(gettext("Succeeded.\n"), stderr);
+	}
+
+	return OK;
+}
+
+
+
+/*
+ * SetCancelConn
+ *
+ * Set cancelConn to point to the current database connection.
+ */
+static void SetCancelConn(void)
+{
+  cancelConn = pset.db;
+}
+
+
+/*
+ * ResetCancelConn
+ *
+ * Set cancelConn to NULL.  I don't know what this means exactly, but it saves
+ * having to export the variable.
+ */
+void ResetCancelConn(void)
+{
+  cancelConn = NULL;
+}
+
+
+/*
+ * AcceptResult
+ *
+ * Checks whether a result is valid, giving an error message if necessary;
+ * (re)sets copy_in_state and cancelConn as needed, and ensures that the
+ * connection to the backend is still up.
+ *
+ * Returns true for valid result, false for error state.
+ */
+static bool
+AcceptResult(const PGresult *result)
+{
+	bool OK = true;
+
+	ResetCancelConn();
+
+	if (!result)
+	{
+	  OK = false;
+	}
+	else switch (PQresultStatus(result))
+	{
+	  case PGRES_COPY_IN:
+		 copy_in_state = true;
+		 break;
+
+	  case PGRES_COMMAND_OK:
+	  case PGRES_TUPLES_OK:
+		 /* Fine, do nothing */
+		 break;
+
+	  case PGRES_COPY_OUT:
+		 /* keep cancel connection for copy out state */
+		 SetCancelConn();
+		 break;
+
+	  default:
+		 OK = false;
+		 break;
+	}
+
+	if (!OK) 
+	{
+		CheckConnection();
+		psql_error("%s", PQerrorMessage(pset.db));
+	}
+
+	return OK;
+}
+
 
 
 /*
@@ -239,156 +393,68 @@ PSQLexec(const char *query, bool ignore_command_ok)
 	while ((newres = PQgetResult(pset.db)) != NULL)
 		PQclear(newres);
 
-	cancelConn = pset.db;
-	if (PQsendQuery(pset.db, query))
+	SetCancelConn();
+	if (!PQsendQuery(pset.db, query))
 	{
-		while ((newres = PQgetResult(pset.db)) != NULL)
+	  psql_error("%s", PQerrorMessage(pset.db));
+	  ResetCancelConn();
+	  return NULL;
+	}
+
+	rstatus = PGRES_EMPTY_QUERY;
+
+	while (rstatus != PGRES_COPY_IN &&
+			 rstatus != PGRES_COPY_OUT &&
+			 (newres = PQgetResult(pset.db)))
 		{
 			rstatus = PQresultStatus(newres);
-			if (ignore_command_ok && rstatus == PGRES_COMMAND_OK)
+		if (!ignore_command_ok || rstatus != PGRES_COMMAND_OK)
 			{
-				PQclear(newres);
-				continue;
-			}
-			PQclear(res);
+		  PGresult *tempRes = res;
 			res = newres;
-			if (rstatus != PGRES_COPY_IN &&
-				rstatus != PGRES_COPY_OUT)
-				break;
+		  newres = tempRes;
 		}
+		PQclear(newres);
 	}
-	rstatus = PQresultStatus(res);
-	/* keep cancel connection for copy out state */
-	if (rstatus != PGRES_COPY_OUT)
-		cancelConn = NULL;
-	if (rstatus == PGRES_COPY_IN)
-		copy_in_state = true;
 
-	if (res && (rstatus == PGRES_COMMAND_OK ||
-				rstatus == PGRES_TUPLES_OK ||
-				rstatus == PGRES_COPY_IN ||
-				rstatus == PGRES_COPY_OUT))
-		return res;
-	else
+	if (!AcceptResult(res) && res)
 	{
-		psql_error("%s", PQerrorMessage(pset.db));
 		PQclear(res);
-
-		if (PQstatus(pset.db) == CONNECTION_BAD)
-		{
-			if (!pset.cur_cmd_interactive)
-			{
-				psql_error("connection to server was lost\n");
-				exit(EXIT_BADCONN);
-			}
-			fputs(gettext("The connection to the server was lost. Attempting reset: "), stderr);
-			PQreset(pset.db);
-			if (PQstatus(pset.db) == CONNECTION_BAD)
-			{
-				fputs(gettext("Failed.\n"), stderr);
-				PQfinish(pset.db);
-				pset.db = NULL;
-				SetVariable(pset.vars, "DBNAME", NULL);
-				SetVariable(pset.vars, "HOST", NULL);
-				SetVariable(pset.vars, "PORT", NULL);
-				SetVariable(pset.vars, "USER", NULL);
-				SetVariable(pset.vars, "ENCODING", NULL);
-			}
-			else
-				fputs(gettext("Succeeded.\n"), stderr);
+		res = NULL;
 		}
 
-		return NULL;
-	}
+	return res;
 }
 
 
 
 /*
- * SendQuery: send the query string to the backend
- * (and print out results)
+ * PrintNotifications: check for asynchronous notifications, and print them out
  *
- * Note: This is the "front door" way to send a query. That is, use it to
- * send queries actually entered by the user. These queries will be subject to
- * single step mode.
- * To send "back door" queries (generated by slash commands, etc.) in a
- * controlled way, use PSQLexec().
- *
- * Returns true if the query executed successfully, false otherwise.
  */
-bool
-SendQuery(const char *query)
+static void
+PrintNotifications(void)
 {
-	bool		success = false;
-	PGresult   *results;
 	PGnotify   *notify;
-#ifndef WIN32
-	struct timeval before,
-				after;
-#else
-	struct _timeb before,
-				after;
-#endif
 
-	if (!pset.db)
+	while ((notify = PQnotifies(pset.db)))
 	{
-		psql_error("You are currently not connected to a database.\n");
-		return false;
+		fprintf(pset.queryFout, gettext("Asynchronous NOTIFY '%s' from backend with pid %d received.\n"),
+				notify->relname, notify->be_pid);
+		free(notify);
+		fflush(pset.queryFout);
 	}
+}
 
-	if (GetVariableBool(pset.vars, "SINGLESTEP"))
-	{
-		char		buf[3];
 
-		printf(gettext("***(Single step mode: Verify query)*********************************************\n"
-					   "%s\n"
-					   "***(press return to proceed or enter x and return to cancel)********************\n"),
-			   query);
-		fflush(stdout);
-		if (fgets(buf, sizeof(buf), stdin) != NULL)
-			if (buf[0] == 'x')
-				return false;
-	}
-	else
-	{
-		const char *var = GetVariable(pset.vars, "ECHO");
-
-		if (var && strncmp(var, "queries", strlen(var)) == 0)
-			puts(query);
-	}
-
-	cancelConn = pset.db;
-
-#ifndef WIN32
-	if (pset.timing)
-		gettimeofday(&before, NULL);
-	results = PQexec(pset.db, query);
-	if (pset.timing)
-		gettimeofday(&after, NULL);
-#else
-	if (pset.timing)
-		_ftime(&before);
-	results = PQexec(pset.db, query);
-	if (pset.timing)
-		_ftime(&after);
-#endif
-
-	if (PQresultStatus(results) == PGRES_COPY_IN)
-		copy_in_state = true;
-	/* keep cancel connection for copy out state */
-	if (PQresultStatus(results) != PGRES_COPY_OUT)
-		cancelConn = NULL;
-
-	if (results == NULL)
-	{
-		fputs(PQerrorMessage(pset.db), pset.queryFout);
-		success = false;
-	}
-	else
-	{
-		switch (PQresultStatus(results))
-		{
-			case PGRES_TUPLES_OK:
+/*
+ * PrintQueryTuples: assuming query result is OK, print its tuples
+ *
+ * Returns true if successful, false otherwise.
+ */
+static bool 
+PrintQueryTuples(const PGresult *results)
+{
 				/* write output to \g argument, if any */
 				if (pset.gfname)
 				{
@@ -403,8 +469,7 @@ SendQuery(const char *query)
 					{
 						pset.queryFout = queryFout_copy;
 						pset.queryFoutPipe = queryFoutPipe_copy;
-						success = false;
-						break;
+			return false;
 					}
 
 					printQuery(results, &pset.popt, pset.queryFout);
@@ -417,14 +482,38 @@ SendQuery(const char *query)
 
 					free(pset.gfname);
 					pset.gfname = NULL;
-
-					success = true;
 				}
 				else
 				{
 					printQuery(results, &pset.popt, pset.queryFout);
-					success = true;
 				}
+
+	return true;
+}
+
+
+
+/*
+ * PrintQueryResults: analyze query results and print them out
+ *
+ * Note: Utility function for use by SendQuery() only.
+ *
+ * Returns true if the query executed successfully, false otherwise.
+ */
+static bool
+PrintQueryResults(PGresult *results, 
+		const TimevalStruct *before, 
+		const TimevalStruct *after)
+{
+	bool	success = false;
+
+	if (!results) 
+	  return false;
+
+	switch (PQresultStatus(results))
+	{
+		case PGRES_TUPLES_OK:
+			success = PrintQueryTuples(results);
 				break;
 			case PGRES_EMPTY_QUERY:
 				success = true;
@@ -453,64 +542,80 @@ SendQuery(const char *query)
 									   pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);
 				break;
 
-			case PGRES_NONFATAL_ERROR:
-			case PGRES_FATAL_ERROR:
-			case PGRES_BAD_RESPONSE:
-				success = false;
-				psql_error("%s", PQerrorMessage(pset.db));
+		default:
 				break;
 		}
 
 		fflush(pset.queryFout);
 
-		if (PQstatus(pset.db) == CONNECTION_BAD)
-		{
-			if (!pset.cur_cmd_interactive)
-			{
-				psql_error("connection to server was lost\n");
-				exit(EXIT_BADCONN);
-			}
-			fputs(gettext("The connection to the server was lost. Attempting reset: "), stderr);
-			PQreset(pset.db);
-			if (PQstatus(pset.db) == CONNECTION_BAD)
-			{
-				fputs(gettext("Failed.\n"), stderr);
-				PQfinish(pset.db);
-				PQclear(results);
-				pset.db = NULL;
-				SetVariable(pset.vars, "DBNAME", NULL);
-				SetVariable(pset.vars, "HOST", NULL);
-				SetVariable(pset.vars, "PORT", NULL);
-				SetVariable(pset.vars, "USER", NULL);
-				SetVariable(pset.vars, "ENCODING", NULL);
-				return false;
-			}
-			else
-				fputs(gettext("Succeeded.\n"), stderr);
-		}
-
-		/* check for asynchronous notification returns */
-		while ((notify = PQnotifies(pset.db)) != NULL)
-		{
-			fprintf(pset.queryFout, gettext("Asynchronous NOTIFY '%s' from backend with pid %d received.\n"),
-					notify->relname, notify->be_pid);
-			free(notify);
-			fflush(pset.queryFout);
-		}
-
-		if (results)
-			PQclear(results);
-	}
+	if (!CheckConnection()) return false;
 
 	/* Possible microtiming output */
 	if (pset.timing && success)
-#ifndef WIN32
-		printf(gettext("Time: %.2f ms\n"),
-			   ((after.tv_sec - before.tv_sec) * 1000000.0 + after.tv_usec - before.tv_usec) / 1000.0);
-#else
-		printf(gettext("Time: %.2f ms\n"),
-			   ((after.time - before.time) * 1000.0 + after.millitm - before.millitm));
-#endif
+		printf(gettext("Time: %.2f ms\n"), DIFF_MSEC(after, before));
 
 	return success;
+}
+
+
+
+/*
+ * SendQuery: send the query string to the backend
+ * (and print out results)
+ *
+ * Note: This is the "front door" way to send a query. That is, use it to
+ * send queries actually entered by the user. These queries will be subject to
+ * single step mode.
+ * To send "back door" queries (generated by slash commands, etc.) in a
+ * controlled way, use PSQLexec().
+ *
+ * Returns true if the query executed successfully, false otherwise.
+ */
+bool
+SendQuery(const char *query)
+{
+	PGresult   *results;
+	TimevalStruct before, after;
+	bool OK;
+
+	if (!pset.db)
+			{
+		psql_error("You are currently not connected to a database.\n");
+		return false;
+			}
+
+	if (GetVariableBool(pset.vars, "SINGLESTEP"))
+			{
+		char		buf[3];
+
+		printf(gettext("***(Single step mode: Verify query)*********************************************\n"
+					   "%s\n"
+					   "***(press return to proceed or enter x and return to cancel)********************\n"),
+			   query);
+		fflush(stdout);
+		if (fgets(buf, sizeof(buf), stdin) != NULL)
+			if (buf[0] == 'x')
+				return false;
+			}
+			else
+		{
+		const char *var = GetVariable(pset.vars, "ECHO");
+
+		if (var && strncmp(var, "queries", strlen(var)) == 0)
+			puts(query);
+	}
+
+	SetCancelConn();
+
+	if (pset.timing)
+		GETTIMEOFDAY(&before);
+	results = PQexec(pset.db, query);
+	if (pset.timing)
+		GETTIMEOFDAY(&after);
+
+	OK = (AcceptResult(results) && PrintQueryResults(results, &before, &after));
+	PQclear(results);
+
+	PrintNotifications();
+	return OK;
 }

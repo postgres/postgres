@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.22 2003/03/18 22:15:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.23 2003/03/20 06:00:12 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -28,6 +28,8 @@ extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 extern volatile bool cancel_pressed;
 extern PGconn *cancelConn;
+
+extern void ResetCancelConn(void);
 
 #ifndef WIN32
 extern void handle_sigint(SIGNAL_ARGS);

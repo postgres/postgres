@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.21 2002/09/06 02:33:46 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.22 2003/03/20 06:00:12 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -20,6 +20,15 @@
 #ifdef USE_READLINE
 static bool useReadline;
 static bool useHistory;
+
+enum histcontrol
+{
+  hctl_none = 0,
+  hctl_ignorespace = 1,
+  hctl_ignoredups = 2,
+  hctl_ignoreboth = hctl_ignorespace | hctl_ignoredups
+};
+
 #endif
 
 #ifdef HAVE_ATEXIT
@@ -33,6 +42,35 @@ static void finishInput(int, void *);
 #define PSQLHISTORY	".psql_history"
 
 
+#ifdef USE_READLINE
+static enum histcontrol
+GetHistControlConfig(void)
+{
+	enum histcontrol HC;
+	const char *var;
+
+	var = GetVariable(pset.vars, "HISTCONTROL");
+
+	if (!var) 												HC = hctl_none;
+	else if 	(strcmp(var, "ignorespace") == 0)	HC = hctl_ignorespace;
+	else if 	(strcmp(var, "ignoredups") == 0)		HC = hctl_ignoredups;
+	else if	(strcmp(var, "ignoreboth") == 0)		HC = hctl_ignoreboth;
+	else														HC = hctl_none;
+
+	return HC;
+}
+#endif
+
+
+static char *
+gets_basic(const char prompt[])
+{
+	fputs(prompt, stdout);
+	fflush(stdout);
+	return gets_fromFile(stdin);
+}
+
+
 /*
  * gets_interactive()
  *
@@ -40,45 +78,41 @@ static void finishInput(int, void *);
  * The result is malloced.
  */
 char *
-gets_interactive(char *prompt)
+gets_interactive(const char *prompt)
 {
+#ifdef USE_READLINE
 	char	   *s;
 
-#ifdef USE_READLINE
-	const char *var;
 	static char *prev_hist = NULL;
-#endif
 
-#ifdef USE_READLINE
 	if (useReadline)
 		s = readline(prompt);
 	else
-	{
-#endif
-		fputs(prompt, stdout);
-		fflush(stdout);
-		s = gets_fromFile(stdin);
-#ifdef USE_READLINE
-	}
-#endif
+		s = gets_basic(prompt);
 
-#ifdef USE_READLINE
-	if (useHistory && s && s[0] != '\0')
+	if (useHistory && s && s[0])
 	{
-		var = GetVariable(pset.vars, "HISTCONTROL");
-		if (!var || (var
-					 && !((strcmp(var, "ignorespace") == 0 || strcmp(var, "ignoreboth") == 0) && s[0] == ' ')
-					 && !((strcmp(var, "ignoredups") == 0 || strcmp(var, "ignoreboth") == 0) && prev_hist && strcmp(s, prev_hist) == 0)
-					 ))
+		enum histcontrol HC;
+
+		HC = GetHistControlConfig();
+
+		if (((HC & hctl_ignorespace) && s[0] == ' ') ||
+		    ((HC & hctl_ignoredups) && prev_hist && strcmp(s, prev_hist) == 0))
+	{
+		  /* Ignore this line as far as history is concerned */
+		}
+		else
 		{
 			free(prev_hist);
 			prev_hist = strdup(s);
 			add_history(s);
 		}
 	}
-#endif
 
 	return s;
+#else
+	return gets_basic(prompt);
+#endif
 }
 
 
@@ -126,17 +160,12 @@ void
 initializeInput(int flags)
 {
 #ifdef USE_READLINE
-	if (flags == 1)
-	{
-		useReadline = true;
-		initialize_readline();
-	}
-#endif
-
-#ifdef USE_READLINE
-	if (flags == 1)
+	if (flags & 1)
 	{
 		const char *home;
+
+		useReadline = true;
+		initialize_readline();
 
 		useHistory = true;
 		SetVariable(pset.vars, "HISTSIZE", "500");
@@ -172,18 +201,14 @@ saveHistory(char *fname)
 #ifdef USE_READLINE
 	if (useHistory && fname)
 	{
-		if (write_history(fname) != 0)
-		{
-			psql_error("could not save history to %s: %s\n", fname, strerror(errno));
-			return false;
-		}
+		if (write_history(fname) == 0)
 		return true;
+
+		psql_error("could not save history to %s: %s\n", fname, strerror(errno));
 	}
-	else
-		return false;
-#else
-	return false;
 #endif
+
+	return false;
 }
 
 

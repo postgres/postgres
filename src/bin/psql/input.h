@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.18 2003/02/19 04:04:04 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.19 2003/03/20 06:00:12 momjian Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -32,7 +32,8 @@
 #endif
 #endif
 
-char	   *gets_interactive(char *prompt);
+
+char	   *gets_interactive(const char *prompt);
 char	   *gets_fromFile(FILE *source);
 
 void		initializeInput(int flags);

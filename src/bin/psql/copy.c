@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.28 2002/10/19 00:22:14 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.29 2003/03/20 06:00:12 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -446,8 +446,6 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	char		copybuf[COPYBUFSIZ];
 	int			ret;
 
-	assert(cancelConn);
-
 	while (!copydone)
 	{
 		ret = PQgetline(conn, copybuf, COPYBUFSIZ);
@@ -476,7 +474,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 	}
 	fflush(copystream);
 	ret = !PQendcopy(conn);
-	cancelConn = NULL;
+	ResetCancelConn();
 	return ret;
 }
 
