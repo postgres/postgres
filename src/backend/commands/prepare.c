@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.16 2003/05/06 20:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.17 2003/05/06 21:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -391,6 +391,34 @@ FetchPreparedStatementParams(const char *stmt_name)
 	entry = FetchPreparedStatement(stmt_name, true);
 
 	return entry->argtype_list;
+}
+
+/*
+ * Given a prepared statement, determine the result tupledesc it will
+ * produce.  Returns NULL if the execution will not return tuples.
+ *
+ * Note: the result is created or copied into current memory context.
+ */
+TupleDesc
+FetchPreparedStatementResultDesc(PreparedStatement *stmt)
+{
+	Query  *query;
+
+	switch (ChoosePortalStrategy(stmt->query_list))
+	{
+		case PORTAL_ONE_SELECT:
+			query = (Query *) lfirst(stmt->query_list);
+			return ExecCleanTypeFromTL(query->targetList, false);
+
+		case PORTAL_UTIL_SELECT:
+			query = (Query *) lfirst(stmt->query_list);
+			return UtilityTupleDescriptor(query->utilityStmt);
+
+		case PORTAL_MULTI_QUERY:
+			/* will not return tuples */
+			break;
+	}
+	return NULL;
 }
 
 /*

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $Id: prepare.h,v 1.5 2003/05/06 20:26:27 tgl Exp $
+ * $Id: prepare.h,v 1.6 2003/05/06 21:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,5 +57,6 @@ extern PreparedStatement *FetchPreparedStatement(const char *stmt_name,
 												 bool throwError);
 extern void DropPreparedStatement(const char *stmt_name, bool showError);
 extern List *FetchPreparedStatementParams(const char *stmt_name);
+extern TupleDesc FetchPreparedStatementResultDesc(PreparedStatement *stmt);
 
 #endif   /* PREPARE_H */

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.34 2003/05/05 00:44:55 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.35 2003/05/06 21:51:41 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -149,7 +149,8 @@
     <firstterm>bind</> step, which creates a portal given a prepared
     statement and values for any needed parameters; and an
     <firstterm>execute</> step that runs a portal's query.  In the case of
-    a <command>SELECT</> query, the execute step can be told to fetch only
+    a query that returns rows (<command>SELECT</>, <command>SHOW</>, etc),
+    the execute step can be told to fetch only
     a limited number of rows, so that multiple execute steps may be needed
     to complete the operation.
    </para>
@@ -456,7 +457,7 @@
       <ListItem>
        <Para>
         Indicates that rows are about to be returned in response to
-	a <command>SELECT</command> or <command>FETCH</command> query.
+	a <command>SELECT</command>, <command>FETCH</command>, etc query.
 	The message contents describe the layout of the rows.  This
 	will be followed by a DataRow or BinaryRow message (depending on
 	whether a binary cursor was specified) for each row being returned
@@ -512,8 +513,8 @@
    </Para>
 
    <Para>
-    The response to a <command>SELECT</>, <command>FETCH</>, or
-    <command>SHOW</> query
+    The response to a <command>SELECT</> query (or other queries that
+    return rowsets, such as <command>EXPLAIN</> or <command>SHOW</>)
     normally consists of RowDescription, zero or more
     DataRow or BinaryRow messages, and then CommandComplete.
     <command>COPY</> to or from the frontend invokes special protocol
@@ -632,8 +633,8 @@
     unnamed portal), the desired output format (text or binary), and
     a maximum result-row count (zero meaning <quote>fetch all rows</>).
     The output format and result-row count are only meaningful for portals
-    containing SELECT commands; they are ignored for other types of commands.
-    The possible
+    containing commands that return rowsets; they are ignored for other types
+    of commands.  The possible
     responses to Execute are the same as those described above for queries
     issued via simple query protocol, except that Execute doesn't cause
     ReadyForQuery to be issued.  Also, the choice between text and binary
@@ -689,19 +690,26 @@
     portal (or an empty string for the unnamed portal).  The response is a
     RowDescription message describing the rows that will be returned by
     executing the portal; or a NoData message if the portal does not contain a
-    SELECT-type query; or ErrorResponse if there is no such portal.  In most
-    situations the frontend will want to issue this message before issuing
-    Execute, to obtain a description of the results it will get back.
+    query that will return rows; or ErrorResponse if there is no such portal.
    </para>
 
    <para>
     The Describe message (statement variant) specifies the name of an existing
     prepared statement (or an empty string for the unnamed prepared
     statement).  The response is a ParameterDescription message describing the
-    parameters needed by the statement.  ErrorResponse is issued if there is
-    no such prepared statement.  This message may be useful if the client
-    library is uncertain about the parameters needed by a prepared statement.
+    parameters needed by the statement (if any), followed by a RowDescription
+    message describing the rows that will be returned when the statement is
+    eventually executed (or NoData if the statement will not return rows).
+    ErrorResponse is issued if there is no such prepared statement.
    </para>
+
+   <tip>
+    <para>
+     In most scenarios the frontend should issue one or the other variant
+     of Describe before issuing Execute, to ensure that it knows how to
+     interpret the results it will get back.
+    </para>
+   </tip>
 
    <para>
     The Close message closes an existing prepared statement or portal
@@ -2563,7 +2571,7 @@ Execute (F)
 <ListItem>
 <Para>
                 Maximum number of rows to return, if portal contains
-		a SELECT or FETCH query (ignored otherwise).  Zero
+		a query that returns rows (ignored otherwise).  Zero
 		denotes <quote>no limit</>.
 </Para>
 </ListItem>

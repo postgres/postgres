@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.199 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.200 2003/05/06 21:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1052,11 +1052,6 @@ UtilityReturnsTuples(Node *parsetree)
 				portal = GetPortalByName(stmt->portalname);
 				if (!PortalIsValid(portal))
 					return false; /* not our business to raise error */
-				/*
-				 * Note: if portal contains multiple statements then it's
-				 * possible some of them will return tuples, but we don't
-				 * handle that case here.
-				 */
 				return portal->tupDesc ? true : false;
 			}
 
@@ -1077,7 +1072,7 @@ UtilityReturnsTuples(Node *parsetree)
 					case PORTAL_UTIL_SELECT:
 						return true;
 					case PORTAL_MULTI_QUERY:
-						/* can't figure it out, per note above */
+						/* will not return tuples */
 						break;
 				}
 				return false;
@@ -1124,25 +1119,13 @@ UtilityTupleDescriptor(Node *parsetree)
 			{
 				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
 				PreparedStatement *entry;
-				Query  *query;
 
 				if (stmt->into)
 					return NULL;
 				entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
 					return NULL; /* not our business to raise error */
-				switch (ChoosePortalStrategy(entry->query_list))
-				{
-					case PORTAL_ONE_SELECT:
-						query = (Query *) lfirst(entry->query_list);
-						return ExecCleanTypeFromTL(query->targetList, false);
-					case PORTAL_UTIL_SELECT:
-						query = (Query *) lfirst(entry->query_list);
-						return UtilityTupleDescriptor(query->utilityStmt);
-					case PORTAL_MULTI_QUERY:
-						break;
-				}
-				return NULL;
+				return FetchPreparedStatementResultDesc(entry);
 			}
 
 		case T_ExplainStmt:

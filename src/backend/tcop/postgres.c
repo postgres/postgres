@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.336 2003/05/06 20:26:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.337 2003/05/06 21:51:41 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1428,6 +1428,7 @@ static void
 exec_describe_statement_message(const char *stmt_name)
 {
 	PreparedStatement *pstmt;
+	TupleDesc	tupdesc;
 	List	   *l;
 	StringInfoData buf;
 
@@ -1445,6 +1446,9 @@ exec_describe_statement_message(const char *stmt_name)
 	if (whereToSendOutput != Remote)
 		return;					/* can't actually do anything... */
 
+	/*
+	 * First describe the parameters...
+	 */
 	pq_beginmessage(&buf, 't');		/* parameter description message type */
 	pq_sendint(&buf, length(pstmt->argtype_list), 4);
 
@@ -1455,6 +1459,24 @@ exec_describe_statement_message(const char *stmt_name)
 		pq_sendint(&buf, (int) ptype, 4);
 	}
 	pq_endmessage(&buf);
+
+	/*
+	 * Next send RowDescription or NoData to describe the result...
+	 */
+	tupdesc = FetchPreparedStatementResultDesc(pstmt);
+	if (tupdesc)
+	{
+		List   *targetlist;
+
+		if (ChoosePortalStrategy(pstmt->query_list) == PORTAL_ONE_SELECT)
+			targetlist = ((Query *) lfirst(pstmt->query_list))->targetList;
+		else
+			targetlist = NIL;
+		SendRowDescriptionMessage(tupdesc, targetlist);
+	}
+	else
+		pq_putemptymessage('n');	/* NoData */
+
 }
 
 /*
@@ -2359,7 +2381,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.336 $ $Date: 2003/05/06 20:26:27 $\n");
+		puts("$Revision: 1.337 $ $Date: 2003/05/06 21:51:41 $\n");
 	}
 
 	/*

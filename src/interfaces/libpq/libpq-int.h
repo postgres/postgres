@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.67 2003/05/05 00:44:56 tgl Exp $
+ * $Id: libpq-int.h,v 1.68 2003/05/06 21:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
  * pqcomm.h describe what the backend knows, not what libpq knows.
  */
 
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,106) /* XXX temporary value */
+#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,107) /* XXX temporary value */
 
 /*
  * POSTGRES backend dependent Constants.
