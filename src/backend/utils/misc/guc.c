@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.23 2000/11/25 04:13:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.24 2000/11/29 20:59:53 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -319,7 +319,7 @@ ConfigureNamesString[] =
 	{"unix_socket_directory",	  PGC_POSTMASTER,       &UnixSocketDir,
 	 "", NULL},
 
-	{"virtual_host",         		  PGC_POSTMASTER,       &Virtual_host,
+	{"virtual_host",			  PGC_POSTMASTER,		&VirtualHost,
 	 "", NULL},
 
 	{NULL, 0, NULL, NULL, NULL}

@@ -758,23 +758,6 @@ PGAC_VAR_INT_TIMEZONE
 AC_FUNC_ACCEPT_ARGTYPES
 PGAC_FUNC_GETTIMEOFDAY_1ARG
 
-AC_MSG_CHECKING([for fcntl(F_SETLK)])
-case $host_os in
-  linux*)       AC_MSG_RESULT([broken on Linux]) ;;
-  *)
-AC_TRY_LINK(
-[#include <stdio.h>
-#include <fcntl.h>
-],
-[struct flock lck;
-lck.l_whence = SEEK_SET; lck.l_start = lck.l_len = 0;
-lck.l_type = F_WRLCK;
-fcntl(0, F_SETLK, &lck);],
-[AC_DEFINE(HAVE_FCNTL_SETLK) AC_MSG_RESULT(yes)],
-[AC_MSG_RESULT(no)])
-        ;;
-esac
-
 AC_CHECK_FUNCS([fcvt getopt_long memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen])
 
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.113 2000/11/21 23:03:53 petere Exp $
+ *	$Id: pqcomm.c,v 1.114 2000/11/29 20:59:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ StreamDoUnlink(void)
 /*
  * StreamServerPort -- open a sock stream "listening" port.
  *
- * This initializes the Postmaster's connection-accepting port fdP.
+ * This initializes the Postmaster's connection-accepting port *fdP.
  *
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
@@ -183,9 +183,6 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				err;
 	size_t		len = 0;
 	int			one = 1;
-#ifdef HAVE_FCNTL_SETLK
-	int			lock_fd;
-#endif
 
 	Assert(family == AF_INET || family == AF_UNIX);
 
@@ -223,22 +220,15 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		len = UNIXSOCK_LEN(saddr.un);
 		strcpy(sock_path, saddr.un.sun_path);
 		/*
-		 * If the socket exists but nobody has an advisory lock on it we
-		 * can safely delete the file.
+		 * Grab an interlock file associated with the socket file.
 		 */
-#ifdef HAVE_FCNTL_SETLK
-		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | PG_BINARY, 0666)) >= 0)
-		{
-			struct flock lck;
-
-			lck.l_whence = SEEK_SET;
-			lck.l_start = lck.l_len = 0;
-			lck.l_type = F_WRLCK;
-			if (fcntl(lock_fd, F_SETLK, &lck) != -1)
-				unlink(sock_path);
-			close(lock_fd);
-		}
-#endif	 /* HAVE_FCNTL_SETLK */
+		if (! CreateSocketLockFile(sock_path, true))
+			return STATUS_ERROR;
+		/*
+		 * Once we have the interlock, we can safely delete any pre-existing
+		 * socket file to avoid failure at bind() time.
+		 */
+		unlink(sock_path);
 	}
 #endif /* HAVE_UNIX_SOCKETS */
 
@@ -274,8 +264,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 "FATAL: StreamServerPort: bind() failed: %s\n"
-			   "\tIs another postmaster already running on that port?\n",
-				 strerror(errno));
+				 "\tIs another postmaster already running on port %d?\n",
+				 strerror(errno), (int) portNumber);
 		if (family == AF_UNIX)
 			snprintf(PQerrormsg + strlen(PQerrormsg),
 					 PQERRORMSG_LENGTH - strlen(PQerrormsg),
@@ -293,41 +283,14 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 #ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
+		/* Arrange to unlink the socket file at exit */
 		on_proc_exit(StreamDoUnlink, 0);
 
 		/*
-		 * Open the socket file and get an advisory lock on it. The
-		 * lock_fd is left open to keep the lock.
+		 * Fix socket ownership/permission if requested.  Note we must
+		 * do this before we listen() to avoid a window where unwanted
+		 * connections could get accepted.
 		 */
-#ifdef HAVE_FCNTL_SETLK
-		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | PG_BINARY, 0666)) >= 0)
-		{
-			struct flock lck;
-
-			lck.l_whence = SEEK_SET;
-			lck.l_start = lck.l_len = 0;
-			lck.l_type = F_WRLCK;
-			if (fcntl(lock_fd, F_SETLK, &lck) != 0)
-				elog(DEBUG, "flock error on %s: %s", sock_path, strerror(errno));
-		}
-#endif	 /* HAVE_FCNTL_SETLK */
-	}
-#endif /* HAVE_UNIX_SOCKETS */
-
-	listen(fd, SOMAXCONN);
-
-	/*
-	 * MS: I took this code from Dillon's version.  It makes the listening
-	 * port non-blocking.  That is not necessary (and may tickle kernel
-	 * bugs).
-	 *
-	 * fcntl(fd, F_SETFD, 1); fcntl(fd, F_SETFL, FNDELAY);
-	 */
-
-	*fdP = fd;
-
-	if (family == AF_UNIX)
-	{
 		Assert(Unix_socket_group);
 		if (Unix_socket_group[0] != '\0')
 		{
@@ -379,6 +342,12 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			return STATUS_ERROR;
 		}
 	}
+#endif /* HAVE_UNIX_SOCKETS */
+
+	listen(fd, SOMAXCONN);
+
+	*fdP = fd;
+
 	return STATUS_OK;
 }
 

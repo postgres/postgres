@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.194 2000/11/28 23:27:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.195 2000/11/29 20:59:52 tgl Exp $
  *
  * NOTES
  *
@@ -104,8 +104,6 @@ typedef struct bkend
 	long		cancel_key;		/* cancel key for cancels for this backend */
 } Backend;
 
-Port	   *MyBackendPort = NULL;
-
 /* list of active backends.  For garbage collection only now. */
 static Dllist *BackendList;
 
@@ -114,8 +112,8 @@ static Dllist *PortList;
 
 /* The socket number we are listening for connections on */
 int PostPortNumber;
-char * UnixSocketDir;
-char * Virtual_host;
+char *UnixSocketDir;
+char *VirtualHost;
 
 /*
  * MaxBackends is the actual limit on the number of backends we will
@@ -216,6 +214,7 @@ static int	BackendStartup(Port *port);
 static int	readStartupPacket(void *arg, PacketLen len, void *pkt);
 static int	processCancelRequest(Port *port, PacketLen len, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
+static char *canAcceptConnections(void);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
 static void SignalChildren(SIGNAL_ARGS);
@@ -252,7 +251,7 @@ checkDataDir(const char *checkdir)
 				"database system either by specifying the -D invocation "
 				"option or by setting the PGDATA environment variable.\n\n",
 				progname);
-		exit(2);
+		ExitPostmaster(2);
 	}
 
 	snprintf(path, sizeof(path), "%s%cglobal%cpg_control",
@@ -265,7 +264,7 @@ checkDataDir(const char *checkdir)
 				"\n\tExpected to find it in the PGDATA directory \"%s\","
 				"\n\tbut unable to open file \"%s\": %s\n\n",
 				progname, checkdir, path, strerror(errno));
-		exit(2);
+		ExitPostmaster(2);
 	}
 
 	FreeFile(fp);
@@ -299,12 +298,12 @@ PostmasterMain(int argc, char *argv[])
 		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
 		{
 			usage(progname);
-			exit(0);
+			ExitPostmaster(0);
 		}
 		if (strcmp(argv[1], "--version")==0 || strcmp(argv[1], "-V")==0)
 		{
 			puts("postmaster (PostgreSQL) " PG_VERSION);
-			exit(0);
+			ExitPostmaster(0);
 		}
 	}		
 
@@ -367,7 +366,7 @@ PostmasterMain(int argc, char *argv[])
 
 			case '?':
 				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
-				exit(1);
+				ExitPostmaster(1);
 		}
 	}
 
@@ -378,7 +377,7 @@ PostmasterMain(int argc, char *argv[])
 	{
 		fprintf(stderr, "%s: invalid argument -- %s\n", progname, argv[optind]);
 		fprintf(stderr, "Try '%s --help' for more information.\n", progname);
-		exit(1);
+		ExitPostmaster(1);
 	}
 
 	checkDataDir(potential_DataDir);	/* issues error messages */
@@ -427,7 +426,7 @@ PostmasterMain(int argc, char *argv[])
 				enableFsync = false;
 				break;
 			case 'h':
-				Virtual_host = optarg;
+				VirtualHost = optarg;
 				break;
 			case 'i':
 				NetServer = true;
@@ -525,7 +524,7 @@ PostmasterMain(int argc, char *argv[])
 			default:
 				/* shouldn't get here */
 				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
-				exit(1);
+				ExitPostmaster(1);
 		}
 	}
 
@@ -542,7 +541,7 @@ PostmasterMain(int argc, char *argv[])
 		 */
 		fprintf(stderr, "%s: The number of buffers (-B) must be at least twice the number of allowed connections (-N) and at least 16.\n",
 				progname);
-		exit(1);
+		ExitPostmaster(1);
 	}
 
 	if (DebugLvl > 2)
@@ -559,6 +558,27 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	/*
+	 * Fork away from controlling terminal, if -S specified.
+	 *
+	 * Must do this before we grab any interlock files, else the interlocks
+	 * will show the wrong PID.
+	 */
+	if (SilentMode)
+		pmdaemonize(argc, argv);
+
+	/*
+	 * Create lockfile for data directory.
+	 *
+	 * We want to do this before we try to grab the input sockets, because
+	 * the data directory interlock is more reliable than the socket-file
+	 * interlock (thanks to whoever decided to put socket files in /tmp :-().
+	 * For the same reason, it's best to grab the TCP socket before the
+	 * Unix socket.
+	 */
+	if (! CreateDataDirLockFile(DataDir, true))
+		ExitPostmaster(1);
+
+	/*
 	 * Establish input sockets.
 	 */
 #ifdef USE_SSL
@@ -566,7 +586,7 @@ PostmasterMain(int argc, char *argv[])
 	{
 		fprintf(stderr, "%s: For SSL, TCP/IP connections must be enabled. See -? for help.\n",
 				progname);
-		exit(1);
+		ExitPostmaster(1);
 	}
 	if (EnableSSL)
 	        InitSSL();
@@ -574,7 +594,7 @@ PostmasterMain(int argc, char *argv[])
 
 	if (NetServer)
 	{
-		status = StreamServerPort(AF_INET, Virtual_host,
+		status = StreamServerPort(AF_INET, VirtualHost,
 						(unsigned short) PostPortNumber, UnixSocketDir,
 						&ServerSock_INET);
 		if (status != STATUS_OK)
@@ -586,7 +606,7 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef HAVE_UNIX_SOCKETS
-	status = StreamServerPort(AF_UNIX, Virtual_host,
+	status = StreamServerPort(AF_UNIX, VirtualHost,
 						(unsigned short) PostPortNumber, UnixSocketDir, 
 						&ServerSock_UNIX);
 	if (status != STATUS_OK)
@@ -599,7 +619,9 @@ PostmasterMain(int argc, char *argv[])
 
 	XLOGPathInit();
 
-	/* set up shared memory and semaphores */
+	/*
+	 * Set up shared memory and semaphores.
+	 */
 	reset_shared(PostPortNumber);
 
 	/*
@@ -609,35 +631,12 @@ PostmasterMain(int argc, char *argv[])
 	BackendList = DLNewList();
 	PortList = DLNewList();
 
-	if (SilentMode)
-		pmdaemonize(argc, argv);
-	else
-	{
-
-		/*
-		 * create pid file. if the file has already existed, exits.
-		 */
-		SetPidFname(DataDir);
-		if (SetPidFile(getpid()) == 0)
-		{
-			if (!CreateOptsFile(argc, argv))
-			{
-				UnlinkPidFile();
-				ExitPostmaster(1);
-				return 0;		/* not reached */
-			}
-		}
-		else
-		{
-			ExitPostmaster(1);
-			return 0;			/* not reached */
-		}
-
-		/*
-		 * register clean up proc
-		 */
-		on_proc_exit(UnlinkPidFile, 0);
-	}
+	/*
+	 * Record postmaster options.  We delay this till now to avoid recording
+	 * bogus options (eg, NBuffers too high for available memory).
+	 */
+	if (!CreateOptsFile(argc, argv))
+		ExitPostmaster(1);
 
 	/*
 	 * Set up signal handlers for the postmaster process.
@@ -658,11 +657,18 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
 	pqsignal(SIGWINCH, dumpstatus);		/* dump port status */
 
+	/*
+	 * We're ready to rock and roll...
+	 */
 	StartupPID = StartupDataBase();
 
 	status = ServerLoop();
 
+	/*
+	 * ServerLoop probably shouldn't ever return, but if it does, close down.
+	 */
 	ExitPostmaster(status != STATUS_OK);
+
 	return 0;					/* not reached */
 }
 
@@ -671,8 +677,6 @@ pmdaemonize(int argc, char *argv[])
 {
 	int			i;
 	pid_t		pid;
-
-	SetPidFname(DataDir);
 
 	pid = fork();
 	if (pid == -1)
@@ -683,36 +687,8 @@ pmdaemonize(int argc, char *argv[])
 	}
 	else if (pid)
 	{							/* parent */
-
-		/*
-		 * create pid file. if the file has already existed, exits.
-		 */
-		if (SetPidFile(pid) == 0)
-		{
-			if (!CreateOptsFile(argc, argv))
-			{
-
-				/*
-				 * Failed to create opts file. kill the child and exit
-				 * now.
-				 */
-				UnlinkPidFile();
-				kill(pid, SIGTERM);
-				ExitPostmaster(1);
-				return;			/* not reached */
-			}
-			_exit(0);
-		}
-		else
-		{
-
-			/*
-			 * Failed to create pid file. kill the child and exit now.
-			 */
-			kill(pid, SIGTERM);
-			ExitPostmaster(1);
-			return;				/* not reached */
-		}
+		/* Parent should just exit, without doing any atexit cleanup */
+		_exit(0);
 	}
 
 /* GH: If there's no setsid(), we hopefully don't need silent mode.
@@ -723,7 +699,7 @@ pmdaemonize(int argc, char *argv[])
 	{
 		fprintf(stderr, "%s: ", progname);
 		perror("cannot disassociate from controlling TTY");
-		exit(1);
+		ExitPostmaster(1);
 	}
 #endif
 	i = open(NULL_DEV, O_RDWR | PG_BINARY);
@@ -731,11 +707,6 @@ pmdaemonize(int argc, char *argv[])
 	dup2(i, 1);
 	dup2(i, 2);
 	close(i);
-
-	/*
-	 * register clean up proc
-	 */
-	on_proc_exit(UnlinkPidFile, 0);
 }
 
 
@@ -960,24 +931,19 @@ ServerLoop(void)
 
 			if (status == STATUS_OK && port->pktInfo.state == Idle)
 			{
-
 				/*
-				 * Can't start backend if max backend count is exceeded.
+				 * Can we accept a connection now?
 				 *
-				 * The same when data base is in startup/shutdown mode.
+				 * Even though readStartupPacket() already checked,
+				 * we have to check again in case conditions changed
+				 * while negotiating authentication.
 				 */
-				if (Shutdown > NoShutdown)
-					PacketSendError(&port->pktInfo,
-								"The Data Base System is shutting down");
-				else if (StartupPID)
-					PacketSendError(&port->pktInfo,
-								  "The Data Base System is starting up");
-				else if (FatalError)
-					PacketSendError(&port->pktInfo,
-							 "The Data Base System is in recovery mode");
-				else if (CountChildren() >= MaxBackends)
-					PacketSendError(&port->pktInfo,
-									"Sorry, too many clients already");
+				char   *rejectMsg = canAcceptConnections();
+
+				if (rejectMsg != NULL)
+				{
+					PacketSendError(&port->pktInfo, rejectMsg);
+				}
 				else
 				{
 
@@ -1066,6 +1032,7 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 {
 	Port	   *port;
 	StartupPacket *si;
+	char	   *rejectMsg;
 
 	port = (Port *) arg;
 	si = (StartupPacket *) pkt;
@@ -1158,6 +1125,19 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		return STATUS_OK;		/* don't close the connection yet */
 	}
 
+	/*
+	 * If we're going to reject the connection due to database state,
+	 * say so now instead of wasting cycles on an authentication exchange.
+	 * (This also allows a pg_ping utility to be written.)
+	 */
+	rejectMsg = canAcceptConnections();
+
+	if (rejectMsg != NULL)
+	{
+		PacketSendError(&port->pktInfo, rejectMsg);
+		return STATUS_OK;		/* don't close the connection yet */
+	}
+
 	/* Start the authentication itself. */
 
 	be_recvauth(port);
@@ -1226,6 +1206,28 @@ processCancelRequest(Port *port, PacketLen len, void *pkt)
 	return STATUS_ERROR;
 }
 
+/*
+ * canAcceptConnections --- check to see if database state allows connections.
+ *
+ * If we are open for business, return NULL, otherwise return an error message
+ * string suitable for rejecting a connection request.
+ */
+static char *
+canAcceptConnections(void)
+{
+	/* Can't start backends when in startup/shutdown/recovery state. */
+	if (Shutdown > NoShutdown)
+		return "The Data Base System is shutting down";
+	if (StartupPID)
+		return "The Data Base System is starting up";
+	if (FatalError)
+		return "The Data Base System is in recovery mode";
+	/* Can't start backend if max backend count is exceeded. */
+	if (CountChildren() >= MaxBackends)
+		return "Sorry, too many clients already";
+
+	return NULL;
+}
 
 /*
  * ConnCreate -- create a local connection data structure
@@ -1423,7 +1425,7 @@ pmdie(SIGNAL_ARGS)
 	}
 
 	/* exit postmaster */
-	proc_exit(0);
+	ExitPostmaster(0);
 }
 
 /*
@@ -1465,9 +1467,9 @@ reaper(SIGNAL_ARGS)
 			{
 				fprintf(stderr, "Shutdown failed - abort\n");
 				fflush(stderr);
-				proc_exit(1);
+				ExitPostmaster(1);
 			}
-			proc_exit(0);
+			ExitPostmaster(0);
 		}
 		if (StartupPID > 0)
 		{
@@ -1477,7 +1479,7 @@ reaper(SIGNAL_ARGS)
 			{
 				fprintf(stderr, "Startup failed - abort\n");
 				fflush(stderr);
-				proc_exit(1);
+				ExitPostmaster(1);
 			}
 			StartupPID = 0;
 			FatalError = false;
@@ -1507,7 +1509,7 @@ reaper(SIGNAL_ARGS)
 	{
 
 		/*
-		 * Wait for all children exit then StartupDataBase.
+		 * Wait for all children exit, then reset shmem and StartupDataBase.
 		 */
 		if (DLGetHead(BackendList))
 			return;
@@ -1518,8 +1520,10 @@ reaper(SIGNAL_ARGS)
 				"Reinitializing shared memory and semaphores\n",
 				ctime(&tnow));
 		fflush(stderr);
+
 		shmem_exit(0);
 		reset_shared(PostPortNumber);
+
 		StartupPID = StartupDataBase();
 		return;
 	}
@@ -1744,10 +1748,10 @@ BackendStartup(Port *port)
 		{
 			fprintf(stderr, "%s child[%d]: BackendStartup: backend startup failed\n",
 					progname, (int) getpid());
-			exit(1);
+			ExitPostmaster(1);
 		}
 		else
-			exit(0);
+			ExitPostmaster(0);
 	}
 
 	/* in parent */
@@ -1943,9 +1947,9 @@ DoBackend(Port *port)
 
 	/*
 	 * Release postmaster's working memory context so that backend can
-	 * recycle the space.  Note we couldn't do it earlier than here,
-	 * because port pointer is pointing into that space!  But now we
-	 * have copied all the interesting info into safe local storage.
+	 * recycle the space.  Note this does not trash *MyProcPort, because
+	 * ConnCreate() allocated that space with malloc() ... else we'd need
+	 * to copy the Port data here.
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 	MemoryContextDelete(PostmasterContext);
@@ -1968,6 +1972,8 @@ DoBackend(Port *port)
 
 /*
  * ExitPostmaster -- cleanup
+ *
+ * Do NOT call exit() directly --- always go through here!
  */
 static void
 ExitPostmaster(int status)
@@ -2099,24 +2105,24 @@ InitSSL(void)
 	if (!SSL_context)
 	{
 		fprintf(stderr, "Failed to create SSL context: %s\n", ERR_reason_error_string(ERR_get_error()));
-		exit(1);
+		ExitPostmaster(1);
 	}
 	snprintf(fnbuf, sizeof(fnbuf), "%s/server.crt", DataDir);
 	if (!SSL_CTX_use_certificate_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 	{
 		fprintf(stderr, "Failed to load server certificate (%s): %s\n", fnbuf, ERR_reason_error_string(ERR_get_error()));
-		exit(1);
+		ExitPostmaster(1);
 	}
 	snprintf(fnbuf, sizeof(fnbuf), "%s/server.key", DataDir);
 	if (!SSL_CTX_use_PrivateKey_file(SSL_context, fnbuf, SSL_FILETYPE_PEM))
 	{
 		fprintf(stderr, "Failed to load private key file (%s): %s\n", fnbuf, ERR_reason_error_string(ERR_get_error()));
-		exit(1);
+		ExitPostmaster(1);
 	}
 	if (!SSL_CTX_check_private_key(SSL_context))
 	{
 		fprintf(stderr, "Check of private key failed: %s\n", ERR_reason_error_string(ERR_get_error()));
-		exit(1);
+		ExitPostmaster(1);
 	}
 }
 
@@ -2178,7 +2184,7 @@ SSDataBase(int xlop)
 		PG_SETMASK(&BlockSig);
 
 		BootstrapMain(ac, av);
-		exit(0);
+		ExitPostmaster(0);
 	}
 
 	/* in parent */

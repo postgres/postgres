@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.191 2000/11/25 20:33:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.192 2000/11/29 20:59:52 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1514,16 +1514,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		}
 
 		/*
-		 * Try to create pid file.
+		 * Create lockfile for data directory.
 		 */
-		SetPidFname(DataDir);
-		if (SetPidFile(-getpid()))
-			proc_exit(0);
-
-		/*
-		 * Register clean up proc.
-		 */
-		on_proc_exit(UnlinkPidFile, 0);
+		if (! CreateDataDirLockFile(DataDir, false))
+			proc_exit(1);
 
 		XLOGPathInit();
 		BaseInit();
@@ -1635,7 +1629,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.191 $ $Date: 2000/11/25 20:33:52 $\n");
+		puts("$Revision: 1.192 $ $Date: 2000/11/29 20:59:52 $\n");
 	}
 
 	/*

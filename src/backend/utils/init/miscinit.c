@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * miscinit.c
- *	  miscellanious initialization support stuff
+ *	  miscellaneous initialization support stuff
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.58 2000/11/17 01:24:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.59 2000/11/29 20:59:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,6 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-static char *GetPidFname(void);
-
 
 #ifdef CYR_RECODE
 unsigned char RecodeForwTable[128];
@@ -42,6 +40,7 @@ unsigned char RecodeBackTable[128];
 #endif
 
 ProcessingMode Mode = InitProcessing;
+
 
 /* ----------------------------------------------------------------
  *		ignoring system indexes support stuff
@@ -99,10 +98,70 @@ SetDatabaseName(const char *name)
 	}
 }
 
-#ifndef MULTIBYTE
-/* even if MULTIBYTE is not enabled, these functions are necessary
- * since pg_proc.h has references to them.
+/*
+ * Set data directory, but make sure it's an absolute path.  Use this,
+ * never set DataDir directly.
  */
+void
+SetDataDir(const char *dir)
+{
+	char *new;
+
+	AssertArg(dir);
+	if (DataDir)
+		free(DataDir);
+
+	if (dir[0] != '/')
+	{
+		char *buf;
+		size_t buflen;
+
+		buflen = MAXPGPATH;
+		for (;;)
+		{
+			buf = malloc(buflen);
+			if (!buf)
+				elog(FATAL, "out of memory");
+
+			if (getcwd(buf, buflen))
+				break;
+			else if (errno == ERANGE)
+			{
+				free(buf);
+				buflen *= 2;
+				continue;
+			}
+			else
+			{
+				free(buf);
+				elog(FATAL, "cannot get current working directory: %m");
+			}
+		}
+
+		new = malloc(strlen(buf) + 1 + strlen(dir) + 1);
+		sprintf(new, "%s/%s", buf, dir);
+		free(buf);
+	}
+	else
+	{
+		new = strdup(dir);
+	}
+
+	if (!new)
+		elog(FATAL, "out of memory");
+	DataDir = new;		
+}
+
+
+/* ----------------------------------------------------------------
+ *				MULTIBYTE stub code
+ *
+ * Even if MULTIBYTE is not enabled, these functions are necessary
+ * since pg_proc.h has references to them.
+ * ----------------------------------------------------------------
+ */
+
+#ifndef MULTIBYTE
 
 Datum
 getdatabaseencoding(PG_FUNCTION_ARGS)
@@ -124,7 +183,13 @@ PG_char_to_encoding(PG_FUNCTION_ARGS)
 
 #endif
 
+/* ----------------------------------------------------------------
+ *				CYR_RECODE support
+ * ----------------------------------------------------------------
+ */
+
 #ifdef CYR_RECODE
+
 #define MAX_TOKEN	80
 
 /* Some standard C libraries, including GNU, have an isblank() function.
@@ -376,228 +441,189 @@ GetUserName(Oid userid)
 
 
 /*-------------------------------------------------------------------------
- * Set data directory, but make sure it's an absolute path.  Use this,
- * never set DataDir directly.
- *-------------------------------------------------------------------------
- */
-void
-SetDataDir(const char *dir)
-{
-	char *new;
-
-	AssertArg(dir);
-	if (DataDir)
-		free(DataDir);
-
-	if (dir[0] != '/')
-	{
-		char *buf;
-		size_t buflen;
-
-		buflen = MAXPGPATH;
-		for (;;)
-		{
-			buf = malloc(buflen);
-			if (!buf)
-				elog(FATAL, "out of memory");
-
-			if (getcwd(buf, buflen))
-				break;
-			else if (errno == ERANGE)
-			{
-				free(buf);
-				buflen *= 2;
-				continue;
-			}
-			else
-			{
-				free(buf);
-				elog(FATAL, "cannot get current working directory: %m");
-			}
-		}
-
-		new = malloc(strlen(buf) + 1 + strlen(dir) + 1);
-		sprintf(new, "%s/%s", buf, dir);
-	}
-	else
-	{
-		new = strdup(dir);
-	}
-
-	if (!new)
-		elog(FATAL, "out of memory");
-	DataDir = new;		
-}
-
-
-
-/*-------------------------------------------------------------------------
+ *				Interlock-file support
  *
- * postmaster pid file stuffs. $DATADIR/postmaster.pid is created when:
+ * These routines are used to create both a data-directory lockfile
+ * ($DATADIR/postmaster.pid) and a Unix-socket-file lockfile ($SOCKFILE.lock).
+ * Both kinds of files contain the same info:
  *
- *	(1) postmaster starts. In this case pid > 0.
- *	(2) postgres starts in standalone mode. In this case
- *		pid < 0
+ *		Owning process' PID
+ *		Data directory path
  *
- * to gain an interlock.
+ * By convention, the owning process' PID is negated if it is a standalone
+ * backend rather than a postmaster.  This is just for informational purposes.
+ * The path is also just for informational purposes (so that a socket lockfile
+ * can be more easily traced to the associated postmaster).
  *
- *	SetPidFname(datadir)
- *		Remember the the pid file name. This is neccesary
- *		UnlinkPidFile() is called from proc_exit().
- *
- *	GetPidFname(datadir)
- *		Get the pid file name. SetPidFname() should be called
- *		before GetPidFname() gets called.
- *
- *	UnlinkPidFile()
- *		This is called from proc_exit() and unlink the pid file.
- *
- *	SetPidFile(pid_t pid)
- *		Create the pid file. On failure, it checks if the process
- *		actually exists or not. SetPidFname() should be called
- *		in prior to calling SetPidFile().
- *
+ * On successful lockfile creation, a proc_exit callback to remove the
+ * lockfile is automatically created.
  *-------------------------------------------------------------------------
  */
 
 /*
- * Path to pid file. proc_exit() remember it to unlink the file.
+ * proc_exit callback to remove a lockfile.
  */
-static char PidFile[MAXPGPATH];
-
-/*
- * Remove the pid file. This function is called from proc_exit.
- */
-void
-UnlinkPidFile(void)
+static void
+UnlinkLockFile(int status, Datum filename)
 {
-	unlink(PidFile);
+	unlink((char *) DatumGetPointer(filename));
+	/* Should we complain if the unlink fails? */
 }
 
 /*
- * Set path to the pid file
+ * Create a lockfile, if possible
+ *
+ * Call CreateLockFile with the name of the lockfile to be created.  If
+ * successful, it returns zero.  On detecting a collision, it returns
+ * the PID or negated PID of the lockfile owner --- the caller is responsible
+ * for producing an appropriate error message.
  */
-void
-SetPidFname(char *datadir)
-{
-	snprintf(PidFile, sizeof(PidFile), "%s/%s", datadir, PIDFNAME);
-}
-
-/*
- * Get path to the pid file
- */
-static char *
-GetPidFname(void)
-{
-	return (PidFile);
-}
-
-/*
- * Create the pid file
- */
-int
-SetPidFile(pid_t pid)
+static int
+CreateLockFile(const char *filename, bool amPostmaster)
 {
 	int			fd;
-	char	   *pidfile;
-	char		pidstr[32];
+	char		buffer[MAXPGPATH + 32];
 	int			len;
-	pid_t		post_pid;
-	int			is_postgres = 0;
+	int			encoded_pid;
+	pid_t		other_pid;
+	pid_t		my_pid = getpid();
 
 	/*
-	 * Creating pid file
+	 * We need a loop here because of race conditions.
 	 */
-	pidfile = GetPidFname();
-	fd = open(pidfile, O_RDWR | O_CREAT | O_EXCL, 0600);
-	if (fd < 0)
+	for (;;)
 	{
+		/*
+		 * Try to create the lock file --- O_EXCL makes this atomic.
+		 */
+		fd = open(filename, O_RDWR | O_CREAT | O_EXCL, 0600);
+		if (fd >= 0)
+			break;				/* Success; exit the retry loop */
+		/*
+		 * Couldn't create the pid file. Probably it already exists.
+		 */
+		if (errno != EEXIST && errno != EACCES)
+			elog(FATAL, "Can't create lock file %s: %m", filename);
 
 		/*
-		 * Couldn't create the pid file. Probably it already exists. Read
-		 * the file to see if the process actually exists
+		 * Read the file to get the old owner's PID.  Note race condition
+		 * here: file might have been deleted since we tried to create it.
 		 */
-		fd = open(pidfile, O_RDONLY, 0600);
+		fd = open(filename, O_RDONLY, 0600);
 		if (fd < 0)
 		{
-			fprintf(stderr, "Can't open pid file: %s\n", pidfile);
-			fprintf(stderr, "Please check the permission and try again.\n");
-			return (-1);
+			if (errno == ENOENT)
+				continue;		/* race condition; try again */
+			elog(FATAL, "Can't read lock file %s: %m", filename);
 		}
-		if ((len = read(fd, pidstr, sizeof(pidstr) - 1)) < 0)
-		{
-			fprintf(stderr, "Can't read pid file: %s\n", pidfile);
-			fprintf(stderr, "Please check the permission and try again.\n");
-			close(fd);
-			return (-1);
-		}
+		if ((len = read(fd, buffer, sizeof(buffer) - 1)) <= 0)
+			elog(FATAL, "Can't read lock file %s: %m", filename);
 		close(fd);
+
+		buffer[len] = '\0';
+		encoded_pid = atoi(buffer);
+
+		/* if pid < 0, the pid is for postgres, not postmaster */
+		other_pid = (pid_t) (encoded_pid < 0 ? -encoded_pid : encoded_pid);
+
+		if (other_pid <= 0)
+			elog(FATAL, "Bogus data in lock file %s", filename);
 
 		/*
-		 * Check to see if the process actually exists
+		 * Check to see if the other process still exists
 		 */
-		pidstr[len] = '\0';
-		post_pid = (pid_t) atoi(pidstr);
-
-		/* if pid < 0, the pid is for postgres, not postmatser */
-		if (post_pid < 0)
+		if (other_pid != my_pid)
 		{
-			is_postgres++;
-			post_pid = -post_pid;
+			if (kill(other_pid, 0) == 0 ||
+				errno != ESRCH)
+				return encoded_pid;	/* lockfile belongs to a live process */
 		}
 
-		if (post_pid == 0 || (post_pid > 0 && kill(post_pid, 0) < 0))
-		{
-
-			/*
-			 * No, the process did not exist. Unlink the file and try to
-			 * create it
-			 */
-			if (unlink(pidfile) < 0)
-			{
-				fprintf(stderr, "Can't remove pid file: %s\n", pidfile);
-				fprintf(stderr, "The file seems accidently left, but I couldn't remove it.\n");
-				fprintf(stderr, "Please remove the file by hand and try again.\n");
-				return (-1);
-			}
-			fd = open(pidfile, O_RDWR | O_CREAT | O_EXCL, 0600);
-			if (fd < 0)
-			{
-				fprintf(stderr, "Can't create pid file: %s\n", pidfile);
-				fprintf(stderr, "Please check the permission and try again.\n");
-				return (-1);
-			}
-		}
-		else
-		{
-
-			/*
-			 * Another postmaster is running
-			 */
-			fprintf(stderr, "Can't create pid file: %s\n", pidfile);
-			if (is_postgres)
-				fprintf(stderr, "Is another postgres (pid: %d) running?\n", (int) post_pid);
-			else
-				fprintf(stderr, "Is another postmaster (pid: %s) running?\n", pidstr);
-			return (-1);
-		}
+		/*
+		 * No, the process did not exist. Unlink the file and try again to
+		 * create it.  Need a loop because of possible race condition against
+		 * other would-be creators.
+		 */
+		if (unlink(filename) < 0)
+			elog(FATAL, "Can't remove old lock file %s: %m"
+				 "\n\tThe file seems accidentally left, but I couldn't remove it."
+				 "\n\tPlease remove the file by hand and try again.",
+				 filename);
 	}
 
-	sprintf(pidstr, "%d", (int) pid);
-	if (write(fd, pidstr, strlen(pidstr)) != strlen(pidstr))
+	/*
+	 * Successfully created the file, now fill it.
+	 */
+	snprintf(buffer, sizeof(buffer), "%d\n%s\n",
+			 amPostmaster ? (int) my_pid : - ((int) my_pid),
+			 DataDir);
+	if (write(fd, buffer, strlen(buffer)) != strlen(buffer))
 	{
-		fprintf(stderr, "Write to pid file failed\n");
-		fprintf(stderr, "Please check the permission and try again.\n");
+		int		save_errno = errno;
+
 		close(fd);
-		unlink(pidfile);
-		return (-1);
+		unlink(filename);
+		errno = save_errno;
+		elog(FATAL, "Can't write lock file %s: %m", filename);
 	}
 	close(fd);
 
-	return (0);
+	/*
+	 * Arrange for automatic removal of lockfile at proc_exit.
+	 */
+	on_proc_exit(UnlinkLockFile, PointerGetDatum(strdup(filename)));
+
+	return 0;					/* Success! */
 }
 
+bool
+CreateDataDirLockFile(const char *datadir, bool amPostmaster)
+{
+	char	lockfile[MAXPGPATH];
+	int		encoded_pid;
 
+	snprintf(lockfile, sizeof(lockfile), "%s/postmaster.pid", datadir);
+	encoded_pid = CreateLockFile(lockfile, amPostmaster);
+	if (encoded_pid != 0)
+	{
+		fprintf(stderr, "Lock file \"%s\" already exists.\n", lockfile);
+		if (encoded_pid < 0)
+			fprintf(stderr, "Is another postgres (pid %d) running in \"%s\"?\n",
+					-encoded_pid, datadir);
+		else
+			fprintf(stderr, "Is another postmaster (pid %d) running in \"%s\"?\n",
+					encoded_pid, datadir);
+		return false;
+	}
+	return true;
+}
+
+bool
+CreateSocketLockFile(const char *socketfile, bool amPostmaster)
+{
+	char	lockfile[MAXPGPATH];
+	int		encoded_pid;
+
+	snprintf(lockfile, sizeof(lockfile), "%s.lock", socketfile);
+	encoded_pid = CreateLockFile(lockfile, amPostmaster);
+	if (encoded_pid != 0)
+	{
+		fprintf(stderr, "Lock file \"%s\" already exists.\n", lockfile);
+		if (encoded_pid < 0)
+			fprintf(stderr, "Is another postgres (pid %d) using \"%s\"?\n",
+					-encoded_pid, socketfile);
+		else
+			fprintf(stderr, "Is another postmaster (pid %d) using \"%s\"?\n",
+					encoded_pid, socketfile);
+		return false;
+	}
+	return true;
+}
+
+/*-------------------------------------------------------------------------
+ *				Version checking support
+ *-------------------------------------------------------------------------
+ */
 
 /*
  * Determine whether the PG_VERSION file in directory `path' indicates
@@ -628,12 +654,12 @@ ValidatePgVersion(const char *path)
 		if (errno == ENOENT)
 			elog(FATAL, "File %s is missing. This is not a valid data directory.", full_path);
 		else
-			elog(FATAL, "cannot open %s: %s", full_path, strerror(errno));
+			elog(FATAL, "cannot open %s: %m", full_path);
 	}
 
 	ret = fscanf(file, "%ld.%ld", &file_major, &file_minor);
 	if (ret == EOF)
-		elog(FATAL, "cannot read %s: %s", full_path, strerror(errno));
+		elog(FATAL, "cannot read %s: %m", full_path);
 	else if (ret != 2)
 		elog(FATAL, "`%s' does not have a valid format. You need to initdb.", full_path);
 

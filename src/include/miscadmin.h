@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.74 2000/11/25 22:34:13 momjian Exp $
+ * $Id: miscadmin.h,v 1.75 2000/11/29 20:59:54 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -114,7 +114,7 @@ extern int PostPortNumber;
 extern int Unix_socket_permissions;
 extern char *Unix_socket_group;
 extern char *UnixSocketDir;
-extern char *Virtual_host;
+extern char *VirtualHost;
 
 
 /*****************************************************************************
@@ -227,17 +227,8 @@ extern bool IsIgnoringSystemIndexes(void);
 extern bool IsCacheInitialized(void);
 extern void SetWaitingForLock(bool);
 
-/*
- * "postmaster.pid" is a file containing postmaster's pid, being
- * created uder $PGDATA upon postmaster's starting up. When postmaster
- * shuts down, it will be unlinked.
-*/
-#define PIDFNAME	"postmaster.pid"
-
-extern void SetPidFname(char *datadir);
-extern void UnlinkPidFile(void);
-extern int	SetPidFile(pid_t pid);
-
+extern bool CreateDataDirLockFile(const char *datadir, bool amPostmaster);
+extern bool CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 
 extern void ValidatePgVersion(const char *path);
 

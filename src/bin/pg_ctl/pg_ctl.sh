@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.15 2000/11/27 02:50:17 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.16 2000/11/29 20:59:53 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -187,7 +187,7 @@ PIDFILE=$PGDATA/postmaster.pid
 
 if [ $op = "status" ];then
     if [ -f $PIDFILE ];then
-	PID=`cat $PIDFILE`
+	PID=`head -1 $PIDFILE`
 	if [ $PID -lt 0 ];then
 	    PID=`expr 0 - $PID`
 	    echo "$CMDNAME: postgres is running (pid: $PID)"
@@ -205,7 +205,7 @@ fi
 
 if [ $op = "stop" -o $op = "restart" ];then
     if [ -f $PIDFILE ];then
-	PID=`cat $PIDFILE`
+	PID=`head -1 $PIDFILE`
 	if [ $PID -lt 0 ];then
 	    PID=`expr 0 - $PID`
 	    echo "$CMDNAME: Cannot restart postmaster. postgres is running (pid: $PID)"
@@ -213,7 +213,7 @@ if [ $op = "stop" -o $op = "restart" ];then
 	    exit 1
 	fi
 
-	kill $sig `cat $PIDFILE`
+	kill $sig $PID
 
 	# wait for postmaster shutting down
 	if [ "$wait" = 1 -o $op = "restart" ];then
@@ -253,7 +253,7 @@ fi
 if [ $op = "start" -o $op = "restart" ];then
     if [ -f $PIDFILE ];then
 	echo "$CMDNAME: It seems another postmaster is running. Trying to start postmaster anyway."
-	pid=`cat $PIDFILE`
+	pid=`head -1 $PIDFILE`
     fi
 
     # no -o given
@@ -275,7 +275,7 @@ if [ $op = "start" -o $op = "restart" ];then
     fi
 
     if [ -f $PIDFILE ];then
-	if [ "`cat $PIDFILE`" = "$pid" ];then
+	if [ "`head -1 $PIDFILE`" = "$pid" ];then
 	    echo "$CMDNAME: Cannot start postmaster. Is another postmaster is running?"
 	    exit 1
         fi
