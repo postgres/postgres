@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.93 2001/09/29 04:02:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.94 2001/10/19 17:03:08 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -221,13 +221,7 @@ InitPostgres(const char *dbname, const char *username)
 		char	   *fullpath,
 					datpath[MAXPGPATH];
 
-		/* Verify if DataDir is ok */
-		if (access(DataDir, F_OK) == -1)
-			elog(FATAL, "Database system not found.\n\t"
-				 "Data directory '%s' does not exist.",
-				 DataDir);
-
-		ValidatePgVersion(DataDir);
+		/* Formerly we validated DataDir here, but now that's done earlier. */
 
 		/*
 		 * Find oid and path of the database we're about to open. Since

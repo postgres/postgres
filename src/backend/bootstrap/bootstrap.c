@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.117 2001/09/29 04:02:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.118 2001/10/19 17:03:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,11 +303,13 @@ BootstrapMain(int argc, char *argv[])
 		}
 		SetDataDir(potential_DataDir);
 	}
+
+	/* Validate we have been given a reasonable-looking DataDir */
 	Assert(DataDir);
+	ValidatePgVersion(DataDir);
 
 	if (IsUnderPostmaster)
 	{
-
 		/*
 		 * Properly accept or ignore signals the postmaster might send us
 		 */

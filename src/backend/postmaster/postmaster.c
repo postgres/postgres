@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.246 2001/10/19 00:44:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.247 2001/10/19 17:03:08 tgl Exp $
  *
  * NOTES
  *
@@ -287,6 +287,9 @@ checkDataDir(const char *checkdir)
 		ExitPostmaster(2);
 	}
 
+	/* Look for PG_VERSION before looking for pg_control */
+	ValidatePgVersion(checkdir);
+
 	snprintf(path, sizeof(path), "%s/global/pg_control", checkdir);
 
 	fp = AllocateFile(path, PG_BINARY_R);
@@ -299,10 +302,7 @@ checkDataDir(const char *checkdir)
 				progname, checkdir, path, strerror(errno));
 		ExitPostmaster(2);
 	}
-
 	FreeFile(fp);
-
-	ValidatePgVersion(checkdir);
 }
 
 
@@ -2438,10 +2438,10 @@ SSDataBase(int xlop)
 
 		av[ac++] = "-d";
 
-		sprintf(nbbuf, "-B%u", NBuffers);
+		sprintf(nbbuf, "-B%d", NBuffers);
 		av[ac++] = nbbuf;
 
-		sprintf(xlbuf, "-x %d", xlop);
+		sprintf(xlbuf, "-x%d", xlop);
 		av[ac++] = xlbuf;
 
 		av[ac++] = "-p";

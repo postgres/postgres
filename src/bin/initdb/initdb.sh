@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.139 2001/10/16 20:51:35 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.140 2001/10/19 17:03:08 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -463,13 +463,17 @@ $ECHO_N "creating template1 database in $PGDATA/base/1... "$ECHO_C
 rm -rf "$PGDATA"/base/1 || exit_nicely
 mkdir "$PGDATA"/base/1 || exit_nicely
 
+# Top level PG_VERSION is checked by bootstrapper, so make it first
+echo "$short_version" > "$PGDATA/PG_VERSION" || exit_nicely
+
 cat "$POSTGRES_BKI" \
 | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
       -e "s/ENCODING/$MULTIBYTEID/g" \
 | "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BACKEND_TALK_ARG template1 \
 || exit_nicely
 
-echo $short_version > "$PGDATA"/base/1/PG_VERSION || exit_nicely
+# Make the per-database PGVERSION for template1 only after init'ing it
+echo "$short_version" > "$PGDATA/base/1/PG_VERSION" || exit_nicely
 
 echo "ok"
 
@@ -478,8 +482,6 @@ echo "ok"
 # CREATE CONFIG FILES
 
 $ECHO_N "creating configuration files... "$ECHO_C
-
-echo $short_version > "$PGDATA/PG_VERSION" || exit_nicely
 
 cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf              || exit_nicely
 cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely

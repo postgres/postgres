@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.235 2001/10/19 00:44:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.236 2001/10/19 17:03:08 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1584,6 +1584,12 @@ PostgresMain(int argc, char *argv[],
 		}
 
 		/*
+		 * Validate we have been given a reasonable-looking DataDir
+		 * (if under postmaster, assume postmaster did this already).
+		 */
+		ValidatePgVersion(DataDir);
+
+		/*
 		 * Create lockfile for data directory.
 		 */
 		if (!CreateDataDirLockFile(DataDir, false))
@@ -1645,7 +1651,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.235 $ $Date: 2001/10/19 00:44:08 $\n");
+		puts("$Revision: 1.236 $ $Date: 2001/10/19 17:03:08 $\n");
 	}
 
 	/*
