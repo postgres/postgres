@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.57 2002/03/26 19:16:58 tgl Exp $
+ * $Id: rel.h,v 1.58 2002/03/31 06:26:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,48 +239,14 @@ typedef Relation *RelationPtr;
 #define RelationGetIndexStrategy(relation) ((relation)->rd_istrat)
 
 /*
- * Handle temp relations
- */
-#define PG_TEMP_REL_PREFIX "pg_temp"
-#define PG_TEMP_REL_PREFIX_LEN 7
-
-#define is_temp_relname(relname) \
-		(strncmp(relname, PG_TEMP_REL_PREFIX, PG_TEMP_REL_PREFIX_LEN) == 0)
-
-/*
- * RelationGetPhysicalRelationName
- *
- *	  Returns the rel's physical name, ie, the name appearing in pg_class.
- *
- * While this name is unique across all rels in the database, it is not
- * necessarily useful for accessing the rel, since a temp table of the
- * same name might mask the rel.  It is useful mainly for determining if
- * the rel is a shared system rel or not.
- *
- * The macro is rather unfortunately named, since the pg_class name no longer
- * has anything to do with the file name used for physical storage of the rel.
- */
-#define RelationGetPhysicalRelationName(relation) \
-	(NameStr((relation)->rd_rel->relname))
-
-/*
  * RelationGetRelationName
  *
- *	  Returns the relation's logical name (as seen by the user).
+ *	  Returns the rel's name.
  *
- * If the rel is a temp rel, the temp name will be returned.  Therefore,
- * this name is not unique.  But it is the name to use in heap_openr(),
- * for example.
+ * Note that the name is only unique within the containing namespace.
  */
 #define RelationGetRelationName(relation) \
-(\
-	is_temp_relname(RelationGetPhysicalRelationName(relation)) \
-	? \
-		get_temp_rel_by_physicalname( \
-			RelationGetPhysicalRelationName(relation)) \
-	: \
-		RelationGetPhysicalRelationName(relation) \
-)
+	(NameStr((relation)->rd_rel->relname))
 
 /*
  * RelationGetNamespace
@@ -289,8 +255,5 @@ typedef Relation *RelationPtr;
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)
-
-/* added to prevent circular dependency.  bjm 1999/11/15 */
-extern char *get_temp_rel_by_physicalname(const char *relname);
 
 #endif   /* REL_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.100 2002/03/06 06:10:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.101 2002/03/31 06:26:32 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -39,7 +39,6 @@
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 
 static void ReverifyMyDatabase(const char *name);
@@ -386,19 +385,12 @@ InitPostgres(const char *dbname, const char *username)
 	RelationCacheInitializePhase3();
 
 	/*
-	 * Set up process-exit callbacks to remove temp relations and then do
-	 * pre-shutdown cleanup.  This should be last because we want
-	 * shmem_exit to call these routines before the exit callbacks that
-	 * are registered by buffer manager, lock manager, etc.  We need to
-	 * run this code before we close down database access!
+	 * Set up process-exit callback to do pre-shutdown cleanup.  This should
+	 * be last because we want shmem_exit to call this routine before the exit
+	 * callbacks that are registered by buffer manager, lock manager, etc.
+	 * We need to run this code before we close down database access!
 	 */
 	on_shmem_exit(ShutdownPostgres, 0);
-
-	/*
-	 * because callbacks are called in reverse order, this gets done
-	 * first:
-	 */
-	on_shmem_exit(remove_all_temp_relations, 0);
 
 	/* close the transaction we started above */
 	if (!bootstrap)

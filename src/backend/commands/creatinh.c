@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.94 2002/03/29 22:10:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.95 2002/03/31 06:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
+
 
 /* ----------------
  *		local stuff
@@ -157,11 +157,11 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		}
 	}
 
-	relationId = heap_create_with_catalog(relname, namespaceId,
+	relationId = heap_create_with_catalog(relname,
+										  namespaceId,
 										  descriptor,
 										  relkind,
 										  stmt->hasoids || parentHasOids,
-										  stmt->relation->istemp,
 										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -447,7 +447,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table",
 				 parent->relname);
 		/* Permanent rels cannot inherit from temporary ones */
-		if (!istemp && is_temp_rel_name(parent->relname))
+		if (!istemp && isTempNamespace(RelationGetNamespace(relation)))
 			elog(ERROR, "CREATE TABLE: cannot inherit from temp relation \"%s\"",
 				 parent->relname);
 

@@ -4,7 +4,7 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.15 2001/10/06 23:21:44 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.16 2002/03/31 06:26:31 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = catcache.o inval.o relcache.o syscache.o lsyscache.o \
-	fcache.o temprel.o
+	fcache.o
 
 all: SUBSYS.o
 

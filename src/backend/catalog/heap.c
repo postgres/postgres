@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.193 2002/03/29 19:05:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.194 2002/03/31 06:26:29 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -61,14 +61,12 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid, Oid new_type_oid,
-					char relkind, bool relhasoids,
-					char *temp_relname);
+					char relkind, bool relhasoids);
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
 static void DeleteTypeTuple(Relation rel);
@@ -205,34 +203,29 @@ SystemAttributeByName(const char *attname, bool relhasoids)
  *
  *		Remove the system relation specific code to elsewhere eventually.
  *
- * NOTE: if istemp is TRUE then heap_create will overwrite relname with
- * the unique "real" name chosen for the temp relation.
- *
  * If storage_create is TRUE then heap_storage_create is called here,
  * else caller must call heap_storage_create later.
  * ----------------------------------------------------------------
  */
 Relation
-heap_create(char *relname,
+heap_create(const char *relname,
 			Oid relnamespace,
 			TupleDesc tupDesc,
-			bool istemp,
 			bool storage_create,
 			bool allow_system_table_mods)
 {
-	static unsigned int uniqueId = 0;
-
 	Oid			relid;
 	Oid			dbid = MyDatabaseId;
-	RelFileNode	rnode;
 	bool		nailme = false;
+	RelFileNode	rnode;
 	Relation	rel;
 
 	/*
 	 * sanity checks
 	 */
-	if (relname && !allow_system_table_mods &&
-		IsSystemRelationName(relname) && IsNormalProcessingMode())
+	if (!allow_system_table_mods &&
+		IsSystemRelationName(relname) &&
+		IsNormalProcessingMode())
 		elog(ERROR, "invalid relation name \"%s\"; "
 			 "the 'pg_' name prefix is reserved for system catalogs",
 			 relname);
@@ -290,16 +283,6 @@ heap_create(char *relname,
 	}
 	else
 		relid = newoid();
-
-	if (istemp)
-	{
-		/*
-		 * replace relname of caller with a unique name for a temp
-		 * relation
-		 */
-		snprintf(relname, NAMEDATALEN, "%s_%d_%u",
-				 PG_TEMP_REL_PREFIX, (int) MyProcPid, uniqueId++);
-	}
 
 	/*
 	 * For now, the physical identifier of the relation is the same as the
@@ -528,8 +511,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Oid new_rel_oid,
 					Oid new_type_oid,
 					char relkind,
-					bool relhasoids,
-					char *temp_relname)
+					bool relhasoids)
 {
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
@@ -599,9 +581,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 */
 	heap_insert(pg_class_desc, tup);
 
-	if (temp_relname)
-		create_temp_relation(temp_relname, tup);
-
 	if (!IsIgnoringSystemIndexes())
 	{
 		/*
@@ -669,19 +648,17 @@ AddNewRelationType(const char *typeName,
  * --------------------------------
  */
 Oid
-heap_create_with_catalog(char *relname,
+heap_create_with_catalog(const char *relname,
 						 Oid relnamespace,
 						 TupleDesc tupdesc,
 						 char relkind,
 						 bool relhasoids,
-						 bool istemp,
 						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
 	Oid			new_rel_oid;
 	Oid			new_type_oid;
-	char	   *temp_relname = NULL;
 
 	/*
 	 * sanity checks
@@ -693,32 +670,17 @@ heap_create_with_catalog(char *relname,
 
 	CheckAttributeNames(tupdesc, relhasoids);
 
-	/* temp tables can mask non-temp tables */
-	if ((!istemp && get_relname_relid(relname, relnamespace)) ||
-		(istemp && is_temp_rel_name(relname)))
+	if (get_relname_relid(relname, relnamespace))
 		elog(ERROR, "Relation '%s' already exists", relname);
-
-	if (istemp)
-	{
-		/* save user relation name because heap_create changes it */
-		temp_relname = pstrdup(relname);		/* save original value */
-		relname = palloc(NAMEDATALEN);
-		strcpy(relname, temp_relname);	/* heap_create will change this */
-	}
 
 	/*
 	 * Tell heap_create not to create a physical file; we'll do that below
 	 * after all our catalog updates are done.	(This isn't really
 	 * necessary anymore, but we may as well avoid the cycles of creating
 	 * and deleting the file in case we fail.)
-	 *
-	 * Note: The call to heap_create() changes relname for temp tables; it
-	 * becomes the true physical relname. The call to
-	 * heap_storage_create() does all the "real" work of creating the disk
-	 * file for the relation.
 	 */
 	new_rel_desc = heap_create(relname, relnamespace, tupdesc,
-							   istemp, false, allow_system_table_mods);
+							   false, allow_system_table_mods);
 
 	/* Fetch the relation OID assigned by heap_create */
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
@@ -740,8 +702,7 @@ heap_create_with_catalog(char *relname,
 						new_rel_oid,
 						new_type_oid,
 						relkind,
-						relhasoids,
-						temp_relname);
+						relhasoids);
 
 	/*
 	 * since defining a relation also defines a complex type, we add a new
@@ -779,12 +740,6 @@ heap_create_with_catalog(char *relname,
 	 */
 	heap_close(new_rel_desc, NoLock);	/* do not unlock till end of xact */
 	heap_close(pg_class_desc, RowExclusiveLock);
-
-	if (istemp)
-	{
-		pfree(relname);
-		pfree(temp_relname);
-	}
 
 	return new_rel_oid;
 }
@@ -1226,26 +1181,19 @@ heap_drop_with_catalog(Oid rid,
 {
 	Relation	rel;
 	Oid			toasttableOid;
-	bool		has_toasttable;
-	bool		istemp;
 	int			i;
 
 	/*
 	 * Open and lock the relation.
 	 */
 	rel = heap_open(rid, AccessExclusiveLock);
-	has_toasttable = rel->rd_rel->reltoastrelid != InvalidOid;
 	toasttableOid = rel->rd_rel->reltoastrelid;
-	istemp = is_temp_rel_name(RelationGetRelationName(rel));
 
 	/*
 	 * prevent deletion of system relations
 	 */
-	/* allow temp of pg_class? Guess so. */
-	if (!istemp &&
-		!allow_system_table_mods &&
-		IsSystemRelationName(RelationGetRelationName(rel)) &&
-		!is_temp_relname(RelationGetRelationName(rel)))
+	if (!allow_system_table_mods &&
+		IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "System relation \"%s\" may not be dropped",
 			 RelationGetRelationName(rel));
 
@@ -1319,11 +1267,8 @@ heap_drop_with_catalog(Oid rid,
 	 */
 	RelationForgetRelation(rid);
 
-	/* and from the temp-table map */
-	if (istemp)
-		remove_temp_rel_by_relid(rid);
-
-	if (has_toasttable)
+	/* If it has a toast table, recurse to get rid of that too */
+	if (OidIsValid(toasttableOid))
 		heap_drop_with_catalog(toasttableOid, true);
 }
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.142 2002/03/29 22:10:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.143 2002/03/31 06:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,6 @@
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 #include "access/xlog.h"
 
 /*
@@ -128,8 +127,7 @@ CheckDropPermissions(RangeVar *rel, char rightkind)
 		elog(ERROR, "you do not own %s \"%s\"",
 			 rentry->name, rel->relname);
 
-	if (!allowSystemTableMods && IsSystemRelationName(rel->relname) &&
-		!is_temp_relname(rel->relname))
+	if (!allowSystemTableMods && IsSystemRelationName(rel->relname))
 		elog(ERROR, "%s \"%s\" is a system %s",
 			 rentry->name, rel->relname, rentry->name);
 

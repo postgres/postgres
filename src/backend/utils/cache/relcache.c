@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.158 2002/03/26 19:16:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.159 2002/03/31 06:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,6 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 
 /*
@@ -186,7 +185,7 @@ do { \
 	nodentry->reldesc = RELATION; \
 	if (RelationGetNamespace(RELATION) == PG_CATALOG_NAMESPACE) \
 	{ \
-		char *relname = RelationGetPhysicalRelationName(RELATION); \
+		char *relname = RelationGetRelationName(RELATION); \
 		RelNameCacheEnt *namehentry; \
 		namehentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
 												   relname, \
@@ -247,7 +246,7 @@ do { \
 		elog(WARNING, "trying to delete a reldesc that does not exist."); \
 	if (RelationGetNamespace(RELATION) == PG_CATALOG_NAMESPACE) \
 	{ \
-		char *relname = RelationGetPhysicalRelationName(RELATION); \
+		char *relname = RelationGetRelationName(RELATION); \
 		RelNameCacheEnt *namehentry; \
 		namehentry = (RelNameCacheEnt*)hash_search(RelationSysNameCache, \
 												   relname, \
@@ -1571,17 +1570,8 @@ RelationIdGetRelation(Oid relationId)
 Relation
 RelationSysNameGetRelation(const char *relationName)
 {
-	char	   *temprelname;
 	Relation	rd;
 	RelationBuildDescInfo buildinfo;
-
-	/*
-	 * if caller is looking for a temp relation, substitute its real name;
-	 * we only index temp rels by their real names.
-	 */
-	temprelname = get_temp_rel_by_username(relationName);
-	if (temprelname != NULL)
-		relationName = temprelname;
 
 	/*
 	 * first try and get a reldesc from the cache

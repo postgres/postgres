@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.224 2002/03/29 19:06:10 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.225 2002/03/31 06:26:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,6 @@
 #include "utils/fmgroids.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
-
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
@@ -2553,7 +2551,6 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			cxt.stmtType = "ALTER TABLE";
 			cxt.relation = stmt->relation;
 			cxt.inhRelations = NIL;
-			cxt.relation->istemp = is_temp_rel_name(stmt->relation->relname);
 			cxt.relOid = RangeVarGetRelid(stmt->relation, false);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
 											ObjectIdGetDatum(cxt.relOid),
@@ -2583,7 +2580,6 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			cxt.stmtType = "ALTER TABLE";
 			cxt.relation = stmt->relation;
 			cxt.inhRelations = NIL;
-			cxt.relation->istemp = is_temp_rel_name(stmt->relation->relname);
 			cxt.relOid = RangeVarGetRelid(stmt->relation, false);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
 											ObjectIdGetDatum(cxt.relOid),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.65 2002/03/26 19:15:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.66 2002/03/31 06:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
@@ -74,7 +73,6 @@ DefineIndex(RangeVar *heapRelation,
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
 	Oid			relationId;
-	bool		istemp = is_temp_rel_name(heapRelation->relname);
 	Relation	rel;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
@@ -191,7 +189,7 @@ DefineIndex(RangeVar *heapRelation,
 
 	index_create(relationId, indexRelationName,
 				 indexInfo, accessMethodId, classObjectId,
-				 istemp, primary, allowSystemTableMods);
+				 primary, allowSystemTableMods);
 
 	/*
 	 * We update the relation's pg_class tuple even if it already has

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.168 2002/03/30 01:02:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.169 2002/03/31 06:26:30 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -55,7 +55,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/relcache.h"
-#include "utils/temprel.h"
+
 
 static void drop_default(Oid relid, int16 attnum);
 static bool needs_toast_table(Relation rel);
@@ -1344,20 +1344,27 @@ AlterTableAddConstraint(Oid myrelid,
 					List	   *list;
 					int			count;
 
-					if (is_temp_rel_name(fkconstraint->pktable->relname) &&
-						!is_temp_rel_name(RelationGetRelationName(rel)))
-						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
-
 					/*
 					 * Grab an exclusive lock on the pk table, so that
 					 * someone doesn't delete rows out from under us.
+					 *
+					 * XXX wouldn't a lesser lock be sufficient?
 					 */
-
 					pkrel = heap_openrv(fkconstraint->pktable,
 										AccessExclusiveLock);
+
+					/*
+					 * Validity checks
+					 */
 					if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 						elog(ERROR, "referenced table \"%s\" not a relation",
 							 fkconstraint->pktable->relname);
+
+					if (isTempNamespace(RelationGetNamespace(pkrel)) &&
+						!isTempNamespace(RelationGetNamespace(rel)))
+						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
+
+					/* Don't need pkrel open anymore, but hold lock */
 					heap_close(pkrel, NoLock);
 
 					/*
@@ -1763,8 +1770,9 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   PG_TOAST_NAMESPACE,
 										   tupdesc,
-										   RELKIND_TOASTVALUE, false,
-										   false, true);
+										   RELKIND_TOASTVALUE,
+										   false,
+										   true);
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();
@@ -1794,7 +1802,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 
 	toast_idxid = index_create(toast_relid, toast_idxname, indexInfo,
 							   BTREE_AM_OID, classObjectId,
-							   false, true, true);
+							   true, true);
 
 	/*
 	 * Update toast rel's pg_class entry to show that it has an index. The
@@ -1971,7 +1979,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	}
 
 	/* Create the schema's namespace */
-	NamespaceCreate(schemaName);
+	NamespaceCreate(schemaName, owner_userid);
 
 	/* Let commands in the schema-element-list know about the schema */
 	CommandCounterIncrement();

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.41 2002/03/26 19:15:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.42 2002/03/31 06:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ Boot_CreateStmt:
 						reldesc = heap_create(LexIDStr($4),
 											  PG_CATALOG_NAMESPACE,
 											  tupdesc,
-											  false, true, true);
+											  true, true);
 						reldesc->rd_rel->relhasoids = ! ($3);
 						elog(DEBUG3, "bootstrap relation created");
 					}
@@ -199,7 +199,6 @@ Boot_CreateStmt:
 													  tupdesc,
 													  RELKIND_RELATION,
 													  ! ($3),
-													  false,
 													  true);
 						elog(DEBUG3, "relation created with oid %u", id);
 					}

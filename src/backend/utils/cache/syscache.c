@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.71 2002/03/29 19:06:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.72 2002/03/31 06:26:32 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -42,7 +42,6 @@
 #include "catalog/pg_type.h"
 #include "utils/catcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 #include "miscadmin.h"
 
 
@@ -500,29 +499,9 @@ SearchSysCache(int cacheId,
 			   Datum key3,
 			   Datum key4)
 {
-	if (cacheId < 0 || cacheId >= SysCacheSize)
-	{
+	if (cacheId < 0 || cacheId >= SysCacheSize ||
+		! PointerIsValid(SysCache[cacheId]))
 		elog(ERROR, "SearchSysCache: Bad cache id %d", cacheId);
-		return (HeapTuple) NULL;
-	}
-
-	Assert(PointerIsValid(SysCache[cacheId]));
-
-	/*
-	 * If someone tries to look up a relname, translate temp relation
-	 * names to real names.  Less obviously, apply the same translation to
-	 * type names, so that the type tuple of a temp table will be found
-	 * when sought.  This is a kluge ... temp table substitution should be
-	 * happening at a higher level ...
-	 */
-	if (cacheId == RELNAMENSP || cacheId == TYPENAMENSP)
-	{
-		char	   *nontemp_relname;
-
-		nontemp_relname = get_temp_rel_by_username(DatumGetCString(key1));
-		if (nontemp_relname != NULL)
-			key1 = CStringGetDatum(nontemp_relname);
-	}
 
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
 }

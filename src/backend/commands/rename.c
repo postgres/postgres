@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.66 2002/03/29 19:06:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.67 2002/03/31 06:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 
 #define RI_TRIGGER_PK	1		/* is a trigger on the PK relation */
@@ -269,13 +268,6 @@ renamerel(const RangeVar *relation, const char *newrelname)
 	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
 		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
 			 newrelname);
-
-	/*
-	 * Check for renaming a temp table, which only requires altering the
-	 * temp-table mapping, not the underlying table.
-	 */
-	if (rename_temp_relation(relation->relname, newrelname))
-		return;					/* all done... */
 
 	/*
 	 * Grab an exclusive lock on the target table or index, which we will

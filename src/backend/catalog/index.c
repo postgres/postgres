@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.174 2002/03/26 19:15:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.175 2002/03/31 06:26:29 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -33,6 +33,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -51,7 +52,6 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 
 /*
@@ -69,7 +69,7 @@ static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
 						 int numatts, AttrNumber *attNums,
 						 Oid *classObjectId);
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
-static void UpdateRelationRelation(Relation indexRelation, char *temp_relname);
+static void UpdateRelationRelation(Relation indexRelation);
 static void InitializeAttributeOids(Relation indexRelation,
 						int numatts, Oid indexoid);
 static void AppendAttributeTuples(Relation indexRelation, int numatts);
@@ -320,7 +320,8 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 	indexRelation->rd_rel->relowner = GetUserId();
 	indexRelation->rd_rel->relam = amoid;
 	indexRelation->rd_rel->relisshared =
-		IsSharedSystemRelationName(RelationGetPhysicalRelationName(indexRelation));
+		(RelationGetNamespace(indexRelation) == PG_CATALOG_NAMESPACE) &&
+		IsSharedSystemRelationName(RelationGetRelationName(indexRelation));
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
 	indexRelation->rd_rel->relhasoids = false;
 }
@@ -330,7 +331,7 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
  * ----------------------------------------------------------------
  */
 static void
-UpdateRelationRelation(Relation indexRelation, char *temp_relname)
+UpdateRelationRelation(Relation indexRelation)
 {
 	Relation	pg_class;
 	HeapTuple	tuple;
@@ -350,16 +351,12 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 	tuple->t_data->t_oid = RelationGetRelid(indexRelation);
 	heap_insert(pg_class, tuple);
 
-	if (temp_relname)
-		create_temp_relation(temp_relname, tuple);
-
 	/*
 	 * During normal processing, we need to make sure that the system
 	 * catalog indices are correct.  Bootstrap (initdb) time doesn't
 	 * require this, because we make sure that the indices are correct
 	 * just before exiting.
 	 */
-
 	if (!IsIgnoringSystemIndexes())
 	{
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
@@ -555,11 +552,10 @@ UpdateIndexRelation(Oid indexoid,
  */
 Oid
 index_create(Oid heapRelationId,
-			 char *indexRelationName,
+			 const char *indexRelationName,
 			 IndexInfo *indexInfo,
 			 Oid accessMethodObjectId,
 			 Oid *classObjectId,
-			 bool istemp,
 			 bool primary,
 			 bool allow_system_table_mods)
 {
@@ -568,7 +564,6 @@ index_create(Oid heapRelationId,
 	TupleDesc	indexTupDesc;
 	Oid			namespaceId;
 	Oid			indexoid;
-	char	   *temp_relname = NULL;
 
 	SetReindexProcessing(false);
 
@@ -591,8 +586,7 @@ index_create(Oid heapRelationId,
 		IsNormalProcessingMode())
 		elog(ERROR, "User-defined indexes on system catalogs are not supported");
 
-	if ((!istemp && get_relname_relid(indexRelationName, namespaceId)) ||
-		(istemp && is_temp_rel_name(indexRelationName)))
+	if (get_relname_relid(indexRelationName, namespaceId))
 		elog(ERROR, "index named \"%s\" already exists",
 			 indexRelationName);
 
@@ -608,22 +602,14 @@ index_create(Oid heapRelationId,
 											indexInfo->ii_KeyAttrNumbers,
 												classObjectId);
 
-	if (istemp)
-	{
-		/* save user relation name because heap_create changes it */
-		temp_relname = pstrdup(indexRelationName);		/* save original */
-		indexRelationName = palloc(NAMEDATALEN);
-		strcpy(indexRelationName, temp_relname);		/* heap_create will
-														 * change this */
-	}
-
 	/*
-	 * create the index relation
+	 * create the index relation (but don't create storage yet)
 	 */
 	indexRelation = heap_create(indexRelationName,
 								namespaceId,
 								indexTupDesc,
-								istemp, false, allow_system_table_mods);
+								false,
+								allow_system_table_mods);
 	indexoid = RelationGetRelid(indexRelation);
 
 	/*
@@ -645,7 +631,7 @@ index_create(Oid heapRelationId,
 	 *	  (append RELATION tuple)
 	 * ----------------
 	 */
-	UpdateRelationRelation(indexRelation, temp_relname);
+	UpdateRelationRelation(indexRelation);
 
 	/*
 	 * We create the disk file for this relation here
@@ -835,9 +821,6 @@ index_drop(Oid indexId)
 	heap_close(userHeapRelation, NoLock);
 
 	RelationForgetRelation(indexId);
-
-	/* if it's a temp index, clear the temp mapping table entry */
-	remove_temp_rel_by_relid(indexId);
 }
 
 /* ----------------------------------------------------------------

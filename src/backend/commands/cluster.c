@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.75 2002/03/29 22:10:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.76 2002/03/31 06:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,10 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 
-static Oid	copy_heap(Oid OIDOldHeap, char *NewName, bool istemp);
-static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName,
-					   bool istemp);
+static Oid	copy_heap(Oid OIDOldHeap, char *NewName);
+static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName);
 static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 
 /*
@@ -63,7 +61,6 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 				OIDNewHeap;
 	Relation	OldHeap,
 				OldIndex;
-	bool		istemp;
 	char		NewHeapName[NAMEDATALEN];
 	char		NewIndexName[NAMEDATALEN];
 	RangeVar   *NewHeap;
@@ -75,8 +72,6 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 	 */
 	OldHeap = heap_openrv(oldrelation, AccessExclusiveLock);
 	OIDOldHeap = RelationGetRelid(OldHeap);
-
-	istemp = is_temp_rel_name(oldrelation->relname);
 
 	/*
 	 * The index is expected to be in the same namespace as the relation.
@@ -105,7 +100,7 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 	 */
 	snprintf(NewHeapName, NAMEDATALEN, "temp_%u", OIDOldHeap);
 
-	OIDNewHeap = copy_heap(OIDOldHeap, NewHeapName, istemp);
+	OIDNewHeap = copy_heap(OIDOldHeap, NewHeapName);
 
 	/* We do not need CommandCounterIncrement() because copy_heap did it. */
 
@@ -120,7 +115,7 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 	/* Create new index over the tuples of the new heap. */
 	snprintf(NewIndexName, NAMEDATALEN, "temp_%u", OIDOldIndex);
 
-	copy_index(OIDOldIndex, OIDNewHeap, NewIndexName, istemp);
+	copy_index(OIDOldIndex, OIDNewHeap, NewIndexName);
 
 	CommandCounterIncrement();
 
@@ -145,7 +140,7 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 }
 
 static Oid
-copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
+copy_heap(Oid OIDOldHeap, char *NewName)
 {
 	TupleDesc	OldHeapDesc,
 				tupdesc;
@@ -166,7 +161,6 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 										  tupdesc,
 										  OldHeap->rd_rel->relkind,
 										  OldHeap->rd_rel->relhasoids,
-										  istemp,
 										  allowSystemTableMods);
 
 	/*
@@ -188,7 +182,7 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 }
 
 static void
-copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName, bool istemp)
+copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 {
 	Relation	OldIndex,
 				NewHeap;
@@ -209,7 +203,6 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName, bool istemp)
 				 indexInfo,
 				 OldIndex->rd_rel->relam,
 				 OldIndex->rd_index->indclass,
-				 istemp,
 				 OldIndex->rd_index->indisprimary,
 				 allowSystemTableMods);
 

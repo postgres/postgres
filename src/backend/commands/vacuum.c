@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.219 2002/03/21 23:27:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.220 2002/03/31 06:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,6 @@
 #include "utils/inval.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
-
 #include "pgstat.h"
 
 
@@ -351,16 +349,9 @@ getrels(Name VacRelP, const char *stmttype)
 		 * we could use the cache here, but it is clearer to use scankeys
 		 * for both vacuum cases, bjm 2000/01/19
 		 */
-		char	   *nontemp_relname;
-
-		/* We must re-map temp table names bjm 2000-04-06 */
-		nontemp_relname = get_temp_rel_by_username(NameStr(*VacRelP));
-		if (nontemp_relname == NULL)
-			nontemp_relname = NameStr(*VacRelP);
-
 		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,
 							   F_NAMEEQ,
-							   PointerGetDatum(nontemp_relname));
+							   PointerGetDatum(NameStr(*VacRelP)));
 	}
 	else
 	{
