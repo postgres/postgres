@@ -288,17 +288,17 @@ SELECT replace('yabadabadoo', 'ba', '123') AS "ya123da123doo";
 SELECT replace('yabadoo', 'bad', '') AS "yaoo";
 
 --
--- test split
+-- test split_part
 --
-select split('joeuser@mydatabase','@',0) AS "an error";
+select split_part('joeuser@mydatabase','@',0) AS "an error";
 
-select split('joeuser@mydatabase','@',1) AS "joeuser";
+select split_part('joeuser@mydatabase','@',1) AS "joeuser";
 
-select split('joeuser@mydatabase','@',2) AS "mydatabase";
+select split_part('joeuser@mydatabase','@',2) AS "mydatabase";
 
-select split('joeuser@mydatabase','@',3) AS "empty string";
+select split_part('joeuser@mydatabase','@',3) AS "empty string";
 
-select split('@joeuser@mydatabase@','@',2) AS "joeuser";
+select split_part('@joeuser@mydatabase@','@',2) AS "joeuser";
 
 --
 -- test to_hex

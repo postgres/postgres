@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.121 2002/09/11 02:56:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.122 2002/09/12 00:21:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1899,14 +1899,14 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><function>split</function>(<parameter>string</parameter> <type>text</type>,
+       <entry><function>split_part</function>(<parameter>string</parameter> <type>text</type>,
        <parameter>delimiter</parameter> <type>text</type>,
        <parameter>column</parameter> <type>integer</type>)</entry>
        <entry><type>text</type></entry>
        <entry>Split <parameter>string</parameter> on <parameter>delimiter</parameter>
         returning the resulting (one based) <parameter>column</parameter> number.
        </entry>
-       <entry><literal>split('abc~@~def~@~ghi','~@~',2)</literal></entry>
+       <entry><literal>split_part('abc~@~def~@~ghi','~@~',2)</literal></entry>
        <entry><literal>def</literal></entry>
       </row>
 
