@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "POT-Creation-Date: 2005-01-04 18:59+0000\n"
-"PO-Revision-Date: 2005-01-15 14:05+0200\n"
+"PO-Revision-Date: 2005-01-28 17:58+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -160,11 +160,11 @@ msgstr "\"%s\" indexi btree değildir."
 msgid "version mismatch in index \"%s\": file version %d, code version %d"
 msgstr "\"%s\" indexinde sürüm uyuşmazlığı: dosya sürümü %d, kod sürümü ise %d"
 
-#: access/rtree/rtree.c:646
+#: access/rtree/rtree.c:644
 msgid "variable-length rtree keys are not supported"
 msgstr "değişken uzunluklu rtree kayıtları desteklenmemektedir"
 
-#: access/rtree/rtree.c:786
+#: access/rtree/rtree.c:784
 #, c-format
 msgid "index row size %lu exceeds rtree maximum, %lu"
 msgstr "%lu index satır boyutu, rtree indexi için %lu olan en büyük satır büyüklüğünü aşmaktadır"
@@ -697,7 +697,7 @@ msgstr "\"%s\" tanınmayan recovery parametresi"
 #: access/transam/xlog.c:3756
 #, c-format
 msgid "syntax error in recovery command file: %s"
-msgstr "%s recovery komut dosyasında söz dizim hatası"
+msgstr "%s recovery komut dosyasında söz dizim hatası "
 
 #: access/transam/xlog.c:3758
 msgid "Lines should have the format parameter = 'value'."
@@ -1436,8 +1436,8 @@ msgstr "tablespace için geçersiz hak tipi %s"
 #: catalog/aclchk.c:1080
 #: commands/dbcommands.c:277
 #: commands/indexcmds.c:171
-#: commands/tablecmds.c:324
-#: commands/tablecmds.c:5435
+#: commands/tablecmds.c:325
+#: commands/tablecmds.c:5489
 #: commands/tablespace.c:425
 #: commands/tablespace.c:750
 #: commands/tablespace.c:817
@@ -1447,204 +1447,195 @@ msgstr "tablespace için geçersiz hak tipi %s"
 msgid "tablespace \"%s\" does not exist"
 msgstr "\"%s\" tablespace'i mevcut değil"
 
-#: catalog/aclchk.c:1229
-#: commands/user.c:1535
-#: commands/user.c:1772
-#: commands/user.c:1807
-#: libpq/pqcomm.c:501
-#, c-format
-msgid "group \"%s\" does not exist"
-msgstr "\"%s\" grubu mevcut değil"
-
-#: catalog/aclchk.c:1264
+#: catalog/aclchk.c:1242
 #, c-format
 msgid "permission denied for relation %s"
 msgstr "%s nesnesine erişim engellendi"
 
-#: catalog/aclchk.c:1266
+#: catalog/aclchk.c:1244
 #, c-format
 msgid "permission denied for database %s"
 msgstr "%s veritabanına erişim engellendi"
 
-#: catalog/aclchk.c:1268
+#: catalog/aclchk.c:1246
 #, c-format
 msgid "permission denied for function %s"
 msgstr "%s fonksiyonuna erişim engellendi"
 
-#: catalog/aclchk.c:1270
+#: catalog/aclchk.c:1248
 #, c-format
 msgid "permission denied for operator %s"
 msgstr "%s operatorüne erişim engellendi"
 
-#: catalog/aclchk.c:1272
+#: catalog/aclchk.c:1250
 #, c-format
 msgid "permission denied for type %s"
 msgstr "%s tipine erişim engellendi"
 
-#: catalog/aclchk.c:1274
+#: catalog/aclchk.c:1252
 #, c-format
 msgid "permission denied for language %s"
 msgstr "%s diline erişim engellendi"
 
-#: catalog/aclchk.c:1276
+#: catalog/aclchk.c:1254
 #, c-format
 msgid "permission denied for schema %s"
 msgstr "%s şemasına erişim engellendi"
 
-#: catalog/aclchk.c:1278
+#: catalog/aclchk.c:1256
 #, c-format
 msgid "permission denied for operator class %s"
 msgstr "%s operator sınıfına erişim engellendi"
 
-#: catalog/aclchk.c:1280
+#: catalog/aclchk.c:1258
 #, c-format
 msgid "permission denied for conversion %s"
 msgstr "%s dönüşümüne erişim engellendi"
 
-#: catalog/aclchk.c:1282
+#: catalog/aclchk.c:1260
 #, c-format
 msgid "permission denied for tablespace %s"
 msgstr "%s tablespace'ine erişim engellendi"
 
-#: catalog/aclchk.c:1288
+#: catalog/aclchk.c:1266
 #, c-format
 msgid "must be owner of relation %s"
 msgstr "%s nesnesinin sahibi olmalısınız"
 
-#: catalog/aclchk.c:1290
+#: catalog/aclchk.c:1268
 #, c-format
 msgid "must be owner of database %s"
 msgstr "%s veritabanının sahibi olmalısınız"
 
-#: catalog/aclchk.c:1292
+#: catalog/aclchk.c:1270
 #, c-format
 msgid "must be owner of function %s"
 msgstr "%s fonksiyonunun sahibi olmalısınız"
 
-#: catalog/aclchk.c:1294
+#: catalog/aclchk.c:1272
 #, c-format
 msgid "must be owner of operator %s"
 msgstr "%s operatörünün sahibi olmalısınız"
 
-#: catalog/aclchk.c:1296
+#: catalog/aclchk.c:1274
 #, c-format
 msgid "must be owner of type %s"
 msgstr "%s tipinin sahibi olmalısınız"
 
-#: catalog/aclchk.c:1298
+#: catalog/aclchk.c:1276
 #, c-format
 msgid "must be owner of language %s"
 msgstr "%s dilinin sahibi olmalısınız"
 
-#: catalog/aclchk.c:1300
+#: catalog/aclchk.c:1278
 #, c-format
 msgid "must be owner of schema %s"
 msgstr "%s şemasının sahibi olmalısınız"
 
-#: catalog/aclchk.c:1302
+#: catalog/aclchk.c:1280
 #, c-format
 msgid "must be owner of operator class %s"
 msgstr "%s operator sınıfının sahibi olmalısınız"
 
-#: catalog/aclchk.c:1304
+#: catalog/aclchk.c:1282
 #, c-format
 msgid "must be owner of conversion %s"
 msgstr "%s dönüşümünün sahibi olmalısınız"
 
-#: catalog/aclchk.c:1306
+#: catalog/aclchk.c:1284
 #, c-format
 msgid "must be owner of tablespace %s"
 msgstr "%s tablespace'inin sahibi olmalısınız"
 
-#: catalog/aclchk.c:1369
+#: catalog/aclchk.c:1347
 #, c-format
 msgid "user with ID %u does not exist"
 msgstr "ID'si %u olan kullanıcı mevcut değil"
 
-#: catalog/aclchk.c:1386
-#: catalog/aclchk.c:1889
+#: catalog/aclchk.c:1364
+#: catalog/aclchk.c:1867
 #, c-format
 msgid "relation with OID %u does not exist"
 msgstr "%u OID'li nesne mevcut değil"
 
-#: catalog/aclchk.c:1490
-#: catalog/aclchk.c:2107
+#: catalog/aclchk.c:1468
+#: catalog/aclchk.c:2085
 #, c-format
 msgid "database with OID %u does not exist"
 msgstr "%u OID'li veritabanı mevcut değil"
 
-#: catalog/aclchk.c:1548
-#: catalog/aclchk.c:1973
+#: catalog/aclchk.c:1526
+#: catalog/aclchk.c:1951
 #: tcop/fastpath.c:230
 #, c-format
 msgid "function with OID %u does not exist"
 msgstr "%u OID'li fonksiyon mevcut değil"
 
-#: catalog/aclchk.c:1604
+#: catalog/aclchk.c:1582
 #, c-format
 msgid "language with OID %u does not exist"
 msgstr "%u OID'li dil mevcut değil"
 
-#: catalog/aclchk.c:1689
-#: catalog/aclchk.c:2001
+#: catalog/aclchk.c:1667
+#: catalog/aclchk.c:1979
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "%u OID'li şema mevcut değil"
 
-#: catalog/aclchk.c:1761
-#: catalog/aclchk.c:2039
+#: catalog/aclchk.c:1739
+#: catalog/aclchk.c:2017
 #, c-format
 msgid "tablespace with OID %u does not exist"
 msgstr "%u OID'li tablespace mevcut değil"
 
-#: catalog/aclchk.c:1917
+#: catalog/aclchk.c:1895
 #, c-format
 msgid "type with OID %u does not exist"
 msgstr "%u OID'li tip mevcut değil"
 
-#: catalog/aclchk.c:1945
+#: catalog/aclchk.c:1923
 #, c-format
 msgid "operator with OID %u does not exist"
 msgstr "%u OID'li operatör mevcut değil"
 
-#: catalog/aclchk.c:2068
+#: catalog/aclchk.c:2046
 #, c-format
 msgid "operator class with OID %u does not exist"
 msgstr "%u OID'li operatör sınıfı mevcut değil"
 
-#: catalog/aclchk.c:2136
+#: catalog/aclchk.c:2114
 #, c-format
 msgid "conversion with OID %u does not exist"
 msgstr "%u OID'li dönüşüm mevcut değil"
 
-#: catalog/pg_aggregate.c:80
+#: catalog/pg_aggregate.c:83
 msgid "cannot determine transition data type"
 msgstr "geçiş veri tipi belirlenemedi"
 
-#: catalog/pg_aggregate.c:81
+#: catalog/pg_aggregate.c:84
 msgid "An aggregate using \"anyarray\" or \"anyelement\" as transition type must have one of them as its base type."
 msgstr "Transition tipi \"anyarray\" ya da \"anyelement\" olan aggregatın temel tipi onlardan biri olmalıdır."
 
-#: catalog/pg_aggregate.c:110
+#: catalog/pg_aggregate.c:113
 #, c-format
 msgid "return type of transition function %s is not %s"
 msgstr "%s geçiş fonksiyonunun tipi %s değildir"
 
-#: catalog/pg_aggregate.c:132
+#: catalog/pg_aggregate.c:135
 msgid "must not omit initial value when transition function is strict and transition type is not compatible with input type"
 msgstr "geçiş fonksiyonu strict olduğunda ve giriş parametresinin tipi uyumsuz olduğunda başlangıç değeri mutlaka verilmelidir"
 
-#: catalog/pg_aggregate.c:165
+#: catalog/pg_aggregate.c:168
 #: catalog/pg_proc.c:124
 #: executor/functions.c:1082
 msgid "cannot determine result data type"
 msgstr "sonuç veri tipi belirlenemiyor"
 
-#: catalog/pg_aggregate.c:166
+#: catalog/pg_aggregate.c:169
 msgid "An aggregate returning \"anyarray\" or \"anyelement\" must have one of them as its base type."
 msgstr "\"anyarray\" veya \"anyelement\" döndüren aggregatın temel tipi onlardan biri olmalıdır."
 
-#: catalog/pg_aggregate.c:281
+#: catalog/pg_aggregate.c:285
 #: commands/typecmds.c:919
 #: commands/typecmds.c:989
 #: commands/typecmds.c:1021
@@ -1656,13 +1647,13 @@ msgstr "\"anyarray\" veya \"anyelement\" döndüren aggregatın temel tipi onlar
 msgid "function %s does not exist"
 msgstr "%s fonksiyonu mevcut değildir"
 
-#: catalog/pg_aggregate.c:286
+#: catalog/pg_aggregate.c:290
 #, c-format
 msgid "function %s returns a set"
 msgstr "%s fonksiyonu bir küme döndürüyor"
 
-#: catalog/pg_aggregate.c:317
-#: catalog/pg_aggregate.c:326
+#: catalog/pg_aggregate.c:321
+#: catalog/pg_aggregate.c:330
 #, c-format
 msgid "function %s requires run-time type coercion"
 msgstr "%s fonksiyonu çalışma zamanı tip düzeltmesini gerektirir"
@@ -1677,9 +1668,9 @@ msgid "System catalog modifications are currently disallowed."
 msgstr "System catalog değişikliklerine şu anda izin verilmez."
 
 #: catalog/heap.c:382
-#: commands/tablecmds.c:697
-#: commands/tablecmds.c:1007
-#: commands/tablecmds.c:2927
+#: commands/tablecmds.c:723
+#: commands/tablecmds.c:1033
+#: commands/tablecmds.c:2954
 #, c-format
 msgid "tables can have at most %d columns"
 msgstr "bir tablo en fazla %d sütun içerebilir"
@@ -1710,7 +1701,7 @@ msgstr "\"%s\" sütunu %s pseudo-tipine sahip"
 
 #: catalog/heap.c:732
 #: catalog/index.c:514
-#: commands/tablecmds.c:1501
+#: commands/tablecmds.c:1527
 #, c-format
 msgid "relation \"%s\" already exists"
 msgstr "\"%s\" nesnesi zaten mevcut"
@@ -1721,7 +1712,7 @@ msgid "only table \"%s\" can be referenced in check constraint"
 msgstr "check constraint içerisinde sadece \"%s\" tablosu kullanılabilir"
 
 #: catalog/heap.c:1593
-#: commands/typecmds.c:1872
+#: commands/typecmds.c:1873
 msgid "cannot use subquery in check constraint"
 msgstr "check constraint içinde subquery kullanılamaz"
 
@@ -1730,7 +1721,7 @@ msgid "cannot use aggregate function in check constraint"
 msgstr "check constraint içinde aggregate function kullanılamaz"
 
 #: catalog/heap.c:1614
-#: commands/tablecmds.c:3722
+#: commands/tablecmds.c:3776
 #, c-format
 msgid "constraint \"%s\" for relation \"%s\" already exists"
 msgstr "\"%s\" constraint 'i \"%s\" nesnesi için zaten mevcut"
@@ -1772,14 +1763,28 @@ msgstr "\"%s\" kolonunun tipi %s'dır, ancak öntanımlı ifadenin tipi %s'dir."
 msgid "You will need to rewrite or cast the expression."
 msgstr "Bu ifadeyi yinden yazmalı ya da sonucunu cast etmelisiniz."
 
-#: catalog/heap.c:2076
+#: catalog/heap.c:2115
+msgid "unsupported ON COMMIT and foreign key combination"
+msgstr "desteklenmeyen ON COMMIT ve foreign key birleştirmesi"
+
+#: catalog/heap.c:2116
+#, c-format
+msgid "Table \"%s\" references \"%s\" via foreign key constraint \"%s\", but they do not have the same ON COMMIT setting."
+msgstr "\"%s\" tablosu \"%s\" tablosunu, \"%s\" bütünlük kısıtlayıcısı ile referans ediyor, ancak bu iki tablonun ON COMMIT ayarı farklıdır."
+
+#: catalog/heap.c:2123
 msgid "cannot truncate a table referenced in a foreign key constraint"
 msgstr "ikincil anahtar bütünlük kısıtlamasının refere ettiği tabloyu truncate edemezsiniz"
 
-#: catalog/heap.c:2077
+#: catalog/heap.c:2124
 #, c-format
 msgid "Table \"%s\" references \"%s\" via foreign key constraint \"%s\"."
 msgstr "\"%s\" tablosu \"%s\" tablosunu, \"%s\" bütünlük kısıtlayıcısı ile referans ediyor."
+
+#: catalog/heap.c:2128
+#, c-format
+msgid "Truncate table \"%s\" at the same time."
+msgstr "Aynı zamanda \"%s\" tablosunu da kısaltın."
 
 #: catalog/index.c:495
 msgid "user-defined indexes on system catalog tables are not supported"
@@ -1821,14 +1826,14 @@ msgid "no schema has been selected to create in"
 msgstr "oluşturma işlemi için şema adı belirtimemiş"
 
 #: catalog/namespace.c:1195
-#: parser/parse_expr.c:1171
+#: parser/parse_expr.c:463
 #: parser/parse_target.c:732
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "veritabanı-arası referanslar oluşturulamaz: %s"
 
 #: catalog/namespace.c:1201
-#: parser/parse_expr.c:1197
+#: parser/parse_expr.c:489
 #: parser/parse_target.c:741
 #: gram.y:2515
 #: gram.y:7425
@@ -1975,36 +1980,36 @@ msgstr "SQL fonksiyonları %s tipinde argümana sahip olamaz"
 msgid "SQL function \"%s\""
 msgstr " \"%s\" SQL fonksiyonu"
 
-#: catalog/pg_type.c:198
+#: catalog/pg_type.c:197
 #, c-format
 msgid "invalid type internal size %d"
 msgstr "tip dahili boyutu geçersiz :%d"
 
-#: catalog/pg_type.c:204
+#: catalog/pg_type.c:203
 #, c-format
 msgid "internal size %d is invalid for passed-by-value type"
 msgstr "passed-by-value tipler için %d dahili tip geçersizdir"
 
-#: catalog/pg_type.c:211
+#: catalog/pg_type.c:210
 msgid "fixed-size types must have storage PLAIN"
 msgstr "sabit-boyutlu tipler PLAIN storage özelliği ile tanımlanmalıdır"
 
-#: catalog/pg_type.c:293
-#: catalog/pg_type.c:525
+#: catalog/pg_type.c:292
+#: catalog/pg_type.c:522
 #, c-format
 msgid "type \"%s\" already exists"
 msgstr "\"%s\" tipi zaten mevcut"
 
-#: catalog/pg_type.c:517
+#: catalog/pg_type.c:514
 #: commands/functioncmds.c:110
-#: commands/tablecmds.c:4632
+#: commands/tablecmds.c:4686
 #: commands/typecmds.c:423
 #: commands/typecmds.c:809
 #: commands/typecmds.c:1167
-#: commands/typecmds.c:1288
-#: commands/typecmds.c:1400
-#: commands/typecmds.c:1487
-#: commands/typecmds.c:2072
+#: commands/typecmds.c:1289
+#: commands/typecmds.c:1401
+#: commands/typecmds.c:1488
+#: commands/typecmds.c:2076
 #: parser/parse_func.c:1401
 #: parser/parse_type.c:201
 #: parser/parse_type.c:227
@@ -2054,9 +2059,9 @@ msgstr "%s fonksiyonu \"%s\" şemasında zaten mevcut"
 #: commands/opclasscmds.c:954
 #: commands/operatorcmds.c:303
 #: commands/schemacmds.c:319
-#: commands/tablecmds.c:5228
+#: commands/tablecmds.c:5282
 #: commands/tablespace.c:839
-#: commands/typecmds.c:2103
+#: commands/typecmds.c:2107
 msgid "must be superuser to change owner"
 msgstr "Sahibini değiştirmek için superuser olmalısınız."
 
@@ -2086,7 +2091,7 @@ msgid "there is no previously clustered index for table \"%s\""
 msgstr "\"%s\" tablosunda daha önce cluster edilmiş index yoktur"
 
 #: commands/cluster.c:147
-#: commands/tablecmds.c:5377
+#: commands/tablecmds.c:5431
 #, c-format
 msgid "index \"%s\" for table \"%s\" does not exist"
 msgstr "\"%s\"indexi, \"%s\" tablosunda mevcut değil"
@@ -2148,8 +2153,8 @@ msgstr "\"%s\" bir sequence değildir"
 #: commands/indexcmds.c:137
 #: commands/indexcmds.c:951
 #: commands/lockcmds.c:68
-#: commands/tablecmds.c:544
-#: commands/tablecmds.c:2624
+#: commands/tablecmds.c:556
+#: commands/tablecmds.c:2650
 #: commands/trigger.c:141
 #: commands/trigger.c:546
 #: tcop/utility.c:78
@@ -2165,14 +2170,14 @@ msgid "\"%s\" is not a view"
 msgstr "\"%s\" bir view değildir"
 
 #: commands/comment.c:404
-#: commands/tablecmds.c:3100
-#: commands/tablecmds.c:3193
-#: commands/tablecmds.c:3245
-#: commands/tablecmds.c:3341
-#: commands/tablecmds.c:3402
-#: commands/tablecmds.c:3468
-#: commands/tablecmds.c:4608
-#: commands/tablecmds.c:4745
+#: commands/tablecmds.c:3154
+#: commands/tablecmds.c:3247
+#: commands/tablecmds.c:3299
+#: commands/tablecmds.c:3395
+#: commands/tablecmds.c:3456
+#: commands/tablecmds.c:3522
+#: commands/tablecmds.c:4662
+#: commands/tablecmds.c:4799
 #: parser/parse_relation.c:1641
 #: parser/parse_relation.c:1700
 #: parser/parse_relation.c:1913
@@ -3070,8 +3075,8 @@ msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "index yüklemindeki kullanılacak fonksiyon IMMUTABLE olarak tanımlanmaıldır"
 
 #: commands/indexcmds.c:475
-#: commands/tablecmds.c:1329
-#: parser/parse_expr.c:1098
+#: commands/tablecmds.c:1355
+#: parser/parse_expr.c:390
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "\"%s\" sütunu mevcut değil"
@@ -3200,21 +3205,21 @@ msgstr "\"%s\" portalı çalıştırılamıyor"
 msgid "could not reposition held cursor"
 msgstr "tutulan cursorun yerini değiştirilemez"
 
-#: commands/tablecmds.c:294
+#: commands/tablecmds.c:295
 msgid "ON COMMIT can only be used on temporary tables"
 msgstr "ON COMMIT sadece geçici tablolarda kullanılabilir"
 
-#: commands/tablecmds.c:399
+#: commands/tablecmds.c:400
 #, c-format
 msgid "duplicate check constraint name \"%s\""
 msgstr "mukerrer check constraint adı: \"%s\""
 
-#: commands/tablecmds.c:555
-#: commands/tablecmds.c:1274
-#: commands/tablecmds.c:1480
-#: commands/tablecmds.c:2636
-#: commands/tablecmds.c:3798
-#: commands/tablecmds.c:5427
+#: commands/tablecmds.c:567
+#: commands/tablecmds.c:1300
+#: commands/tablecmds.c:1506
+#: commands/tablecmds.c:2662
+#: commands/tablecmds.c:3852
+#: commands/tablecmds.c:5481
 #: commands/trigger.c:147
 #: commands/trigger.c:552
 #: tcop/utility.c:182
@@ -3223,49 +3228,49 @@ msgstr "mukerrer check constraint adı: \"%s\""
 msgid "permission denied: \"%s\" is a system catalog"
 msgstr "erişim engellendi: \"%s\" bir sistem kataloğudur"
 
-#: commands/tablecmds.c:566
+#: commands/tablecmds.c:578
 #, c-format
 msgid "cannot truncate system relation \"%s\""
 msgstr "sistem tablosu \"%s\" truncate edilemez"
 
-#: commands/tablecmds.c:576
+#: commands/tablecmds.c:588
 msgid "cannot truncate temporary tables of other sessions"
 msgstr "diğer oturumların geçici tablolarını truncate edemezsiniz"
 
-#: commands/tablecmds.c:719
+#: commands/tablecmds.c:745
 #, c-format
 msgid "column \"%s\" duplicated"
 msgstr "\"%s\" sütunu mukerrerdir"
 
-#: commands/tablecmds.c:744
+#: commands/tablecmds.c:770
 #: parser/analyze.c:1067
 #: parser/analyze.c:1273
 #, c-format
 msgid "inherited relation \"%s\" is not a table"
 msgstr "inherited relation \"%s\" bir tablo değildir"
 
-#: commands/tablecmds.c:750
+#: commands/tablecmds.c:776
 #, c-format
 msgid "cannot inherit from temporary relation \"%s\""
 msgstr "\"%s\" geçici nesnesinden inherit yapılamaz"
 
-#: commands/tablecmds.c:767
+#: commands/tablecmds.c:793
 #, c-format
 msgid "inherited relation \"%s\" duplicated"
 msgstr "inherited relation \"%s\" mukerrerdir"
 
-#: commands/tablecmds.c:821
+#: commands/tablecmds.c:847
 #, c-format
 msgid "merging multiple inherited definitions of column \"%s\""
 msgstr "\"%s\" sütununun birden fazla inherited tanımını birleştiriliyor"
 
-#: commands/tablecmds.c:828
+#: commands/tablecmds.c:854
 #, c-format
 msgid "inherited column \"%s\" has a type conflict"
 msgstr "\"%s\" inherited sütunu tip çakışması yaşıyor"
 
-#: commands/tablecmds.c:830
-#: commands/tablecmds.c:975
+#: commands/tablecmds.c:856
+#: commands/tablecmds.c:1001
 #: parser/parse_coerce.c:239
 #: parser/parse_coerce.c:1130
 #: parser/parse_coerce.c:1147
@@ -3274,283 +3279,283 @@ msgstr "\"%s\" inherited sütunu tip çakışması yaşıyor"
 msgid "%s versus %s"
 msgstr "%s versus %s"
 
-#: commands/tablecmds.c:966
+#: commands/tablecmds.c:992
 #, c-format
 msgid "merging column \"%s\" with inherited definition"
 msgstr "\"%s\" sütunu inherited tanımı ile birleştiriliyor"
 
-#: commands/tablecmds.c:973
+#: commands/tablecmds.c:999
 #, c-format
 msgid "column \"%s\" has a type conflict"
 msgstr "\"%s\" sütununda tip çakışması"
 
-#: commands/tablecmds.c:1024
+#: commands/tablecmds.c:1050
 #, c-format
 msgid "column \"%s\" inherits conflicting default values"
 msgstr "\"%s\" sütunu çakışan değerleri inherit ediyor"
 
-#: commands/tablecmds.c:1026
+#: commands/tablecmds.c:1052
 msgid "To resolve the conflict, specify a default explicitly."
 msgstr "Çakışmayı çözmek için varsayılan değeri açıkca belirtin."
 
-#: commands/tablecmds.c:1319
+#: commands/tablecmds.c:1345
 #, c-format
 msgid "inherited column \"%s\" must be renamed in child tables too"
 msgstr "\"%s\" inherited sütununun adı alt tablolarda da değiştirilmelidir"
 
-#: commands/tablecmds.c:1337
+#: commands/tablecmds.c:1363
 #, c-format
 msgid "cannot rename system column \"%s\""
 msgstr "\"%s\" sistem sütununun adı değiştirilemez"
 
-#: commands/tablecmds.c:1347
+#: commands/tablecmds.c:1373
 #, c-format
 msgid "cannot rename inherited column \"%s\""
 msgstr "\"%s\" inherited sütununun adı değiştirilemez"
 
-#: commands/tablecmds.c:1358
-#: commands/tablecmds.c:2919
+#: commands/tablecmds.c:1384
+#: commands/tablecmds.c:2946
 #, c-format
 msgid "column \"%s\" of relation \"%s\" already exists"
 msgstr "\"%2$s\" nesnesinin \"%1$s\" sütunu zaten mevcut"
 
-#: commands/tablecmds.c:2219
+#: commands/tablecmds.c:2245
 #, c-format
 msgid "cannot rewrite system relation \"%s\""
 msgstr "\"%s\" sistem tablosu yeniden yazılamaz"
 
-#: commands/tablecmds.c:2229
+#: commands/tablecmds.c:2255
 msgid "cannot rewrite temporary tables of other sessions"
 msgstr "diğer oturumların geçici tabloları yeniden yazılamaz"
 
-#: commands/tablecmds.c:2520
+#: commands/tablecmds.c:2546
 #, c-format
 msgid "check constraint \"%s\" is violated by some row"
 msgstr "\"%s\" bütünlük kısıtlaması bir(kaç) satır tarafından ihlal edilmiş"
 
-#: commands/tablecmds.c:2533
+#: commands/tablecmds.c:2559
 #, c-format
 msgid "column \"%s\" contains null values"
 msgstr "\"%s\" sütunu null değerleri içermektedir"
 
-#: commands/tablecmds.c:2618
+#: commands/tablecmds.c:2644
 #, c-format
 msgid "\"%s\" is not a table or view"
 msgstr "\"%s\" bir tablo veya view değildir"
 
-#: commands/tablecmds.c:2771
+#: commands/tablecmds.c:2797
 #, c-format
 msgid "cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype"
 msgstr "\"%2$s\".\"%3$s\" sütunu onun rowtype veri tipini kullandığı için \"%1$s\" tablosu değiştirilemez"
 
-#: commands/tablecmds.c:2837
+#: commands/tablecmds.c:2863
 msgid "column must be added to child tables too"
 msgstr "sütun, alt tablolarana da eklenmelidir"
 
-#: commands/tablecmds.c:2880
+#: commands/tablecmds.c:2907
 #, c-format
 msgid "child table \"%s\" has different type for column \"%s\""
 msgstr "\"%s\" alt tablosundaki  \"%s\" sütununun tipi farklıdır"
 
-#: commands/tablecmds.c:2892
+#: commands/tablecmds.c:2919
 #, c-format
 msgid "merging definition of column \"%s\" for child \"%s\""
 msgstr "\"%s\" sütunun tanımı \"%s\" alt tablo için birleştiriliyor"
 
-#: commands/tablecmds.c:3109
-#: commands/tablecmds.c:3202
-#: commands/tablecmds.c:3252
-#: commands/tablecmds.c:3348
-#: commands/tablecmds.c:3409
-#: commands/tablecmds.c:4617
+#: commands/tablecmds.c:3163
+#: commands/tablecmds.c:3256
+#: commands/tablecmds.c:3306
+#: commands/tablecmds.c:3402
+#: commands/tablecmds.c:3463
+#: commands/tablecmds.c:4671
 #, c-format
 msgid "cannot alter system column \"%s\""
 msgstr "\"%s\" sistem sütunu değiştirilemez"
 
-#: commands/tablecmds.c:3145
+#: commands/tablecmds.c:3199
 #, c-format
 msgid "column \"%s\" is in a primary key"
 msgstr "\"%s\" sütunu bir birincil anahtardır"
 
-#: commands/tablecmds.c:3295
-#: commands/tablecmds.c:5416
+#: commands/tablecmds.c:3349
+#: commands/tablecmds.c:5470
 #, c-format
 msgid "\"%s\" is not a table or index"
 msgstr "\"%s\" bir tablo veya index değil"
 
-#: commands/tablecmds.c:3322
+#: commands/tablecmds.c:3376
 #, c-format
 msgid "statistics target %d is too low"
 msgstr "statistics target %d çok düşüktür"
 
-#: commands/tablecmds.c:3330
+#: commands/tablecmds.c:3384
 #, c-format
 msgid "lowering statistics target to %d"
 msgstr "statistics target, %d değerine düşürülmektedir"
 
-#: commands/tablecmds.c:3390
+#: commands/tablecmds.c:3444
 #, c-format
 msgid "invalid storage type \"%s\""
 msgstr "geçersiz saklama tipi \"%s\""
 
-#: commands/tablecmds.c:3421
+#: commands/tablecmds.c:3475
 #, c-format
 msgid "column data type %s can only have storage PLAIN"
 msgstr "%s sütün veri tipleri sadece PLAIN depolama yöntemini kullanabilir"
 
-#: commands/tablecmds.c:3478
+#: commands/tablecmds.c:3532
 #, c-format
 msgid "cannot drop system column \"%s\""
 msgstr "\"%s\" sistem sütunu kaldırılamaz"
 
-#: commands/tablecmds.c:3485
+#: commands/tablecmds.c:3539
 #, c-format
 msgid "cannot drop inherited column \"%s\""
 msgstr "\"%s\" inherited sütunu kaldırılamaz"
 
-#: commands/tablecmds.c:3786
+#: commands/tablecmds.c:3840
 #, c-format
 msgid "referenced relation \"%s\" is not a table"
 msgstr " rerefans edilen \"%s\" nesnesi bir tablo değildir"
 
-#: commands/tablecmds.c:3820
+#: commands/tablecmds.c:3874
 msgid "cannot reference temporary table from permanent table constraint"
 msgstr "sürekli tablo kısıtlayıcısından geçici tablo referans edilemez"
 
-#: commands/tablecmds.c:3827
+#: commands/tablecmds.c:3881
 msgid "cannot reference permanent table from temporary table constraint"
 msgstr "geçeci tablo kısıtlayıcısından sürekli  tablo referans edilemez"
 
-#: commands/tablecmds.c:3872
-#: commands/tablecmds.c:4362
+#: commands/tablecmds.c:3926
+#: commands/tablecmds.c:4416
 msgid "number of referencing and referenced columns for foreign key disagree"
 msgstr "foreign key'in referans eden ve referans edilen sütun sayısı uyuşmuyor"
 
-#: commands/tablecmds.c:3893
+#: commands/tablecmds.c:3947
 #, c-format
 msgid "foreign key constraint \"%s\" cannot be implemented"
 msgstr "\"%s\" foreign key constrain oluşturulamaz"
 
-#: commands/tablecmds.c:3896
+#: commands/tablecmds.c:3950
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of incompatible types: %s and %s."
 msgstr "\"%s\" ve \"%s\" anahtar sütunların tipi farklı: %s ve %s."
 
-#: commands/tablecmds.c:3910
+#: commands/tablecmds.c:3964
 #, c-format
 msgid "foreign key constraint \"%s\" will require costly sequential scans"
 msgstr "\"%s\" foreign key constraint, parfomans düşüren sequential scan'lara sebep olacak"
 
-#: commands/tablecmds.c:3913
+#: commands/tablecmds.c:3967
 #, c-format
 msgid "Key columns \"%s\" and \"%s\" are of different types: %s and %s."
 msgstr "\"%s\" ve \"%s\" anahtar sütunların tipleri farklı: %s ve %s."
 
-#: commands/tablecmds.c:3998
+#: commands/tablecmds.c:4052
 #, c-format
 msgid "column \"%s\" referenced in foreign key constraint does not exist"
 msgstr "foreign key kısıtlaması tarafından referans edilen sütun \"%s\" mevcut değil"
 
-#: commands/tablecmds.c:4003
+#: commands/tablecmds.c:4057
 #, c-format
 msgid "cannot have more than %d keys in a foreign key"
 msgstr "foreign key kısıtlamasında %d'dan fazla anahtar olamaz"
 
-#: commands/tablecmds.c:4072
+#: commands/tablecmds.c:4126
 #, c-format
 msgid "there is no primary key for referenced table \"%s\""
 msgstr "referans edilen \"%s\" tablosunda primary key mevcut değil"
 
-#: commands/tablecmds.c:4190
+#: commands/tablecmds.c:4244
 #, c-format
 msgid "there is no unique constraint matching given keys for referenced table \"%s\""
 msgstr "\"%s\" referans edilen tablosunda belirtilen anahtarlara uyan bir unique constraint yok"
 
-#: commands/tablecmds.c:4574
+#: commands/tablecmds.c:4628
 #: commands/trigger.c:2785
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "constraint \"%s\" mevcut değil"
 
-#: commands/tablecmds.c:4579
+#: commands/tablecmds.c:4633
 #, c-format
 msgid "multiple constraints named \"%s\" were dropped"
 msgstr "\"%s\" adlı birden fazla constraint drop edilmiş"
 
-#: commands/tablecmds.c:4624
+#: commands/tablecmds.c:4678
 #, c-format
 msgid "cannot alter inherited column \"%s\""
 msgstr "\"%s\" inherited sütunu değiştirilemez"
 
-#: commands/tablecmds.c:4664
+#: commands/tablecmds.c:4718
 msgid "transform expression must not return a set"
 msgstr "transform ifadesi bir set döndürmemelidir"
 
-#: commands/tablecmds.c:4670
+#: commands/tablecmds.c:4724
 msgid "cannot use subquery in transform expression"
 msgstr "transform ifadesinde set kullanılamaz"
 
-#: commands/tablecmds.c:4674
+#: commands/tablecmds.c:4728
 msgid "cannot use aggregate function in transform expression"
 msgstr "transform ifadesinde aggregate function kullanılamaz"
 
-#: commands/tablecmds.c:4691
+#: commands/tablecmds.c:4745
 #, c-format
 msgid "column \"%s\" cannot be cast to type \"%s\""
 msgstr "\"%s\" sütunu \"%s\" tipine dönüştürülemez"
 
-#: commands/tablecmds.c:4717
+#: commands/tablecmds.c:4771
 #, c-format
 msgid "type of inherited column \"%s\" must be changed in child tables too"
 msgstr "\"%s\" inherinted sütununların tipi çocuk tablolarında da değiştirilmelidir"
 
-#: commands/tablecmds.c:4755
+#: commands/tablecmds.c:4809
 #, c-format
 msgid "cannot alter type of column \"%s\" twice"
 msgstr "\"%s\" sütununun tipini iki kez değiştirilemez"
 
-#: commands/tablecmds.c:4789
+#: commands/tablecmds.c:4843
 #, c-format
 msgid "default for column \"%s\" cannot be cast to type \"%s\""
 msgstr "\"%s\" sütunun varsayılan tipi \"%s\" tipine dönüştürülemez"
 
-#: commands/tablecmds.c:4889
+#: commands/tablecmds.c:4943
 msgid "cannot alter type of a column used by a view or rule"
 msgstr "view veya rule tarafından kullanılan sütunun tipini değiştirilemedi"
 
-#: commands/tablecmds.c:4890
+#: commands/tablecmds.c:4944
 #, c-format
 msgid "%s depends on column \"%s\""
 msgstr "%s sütunu \"%s\" sütununa bağlıdır"
 
-#: commands/tablecmds.c:5206
+#: commands/tablecmds.c:5260
 #, c-format
 msgid "\"%s\" is not a table, TOAST table, index, view, or sequence"
 msgstr "\"%s\" bir tablo, TOAST tablosu, index, view ya da sequence değildir"
 
-#: commands/tablecmds.c:5446
+#: commands/tablecmds.c:5500
 msgid "cannot have multiple SET TABLESPACE subcommands"
 msgstr "birden fazla SET TABLESPACE alt komutu veremezsiniz"
 
-#: commands/tablecmds.c:5476
+#: commands/tablecmds.c:5530
 #, c-format
 msgid "cannot move system relation \"%s\""
 msgstr "\"%s\" sistem nesnesi taşınamaz"
 
-#: commands/tablecmds.c:5486
+#: commands/tablecmds.c:5540
 msgid "cannot move temporary tables of other sessions"
 msgstr "diğer oturumların geçici tabloları taşınamaz"
 
-#: commands/tablecmds.c:5694
+#: commands/tablecmds.c:5748
 msgid "shared tables cannot be toasted after initdb"
 msgstr "initdb işleminden sonra paylaşılmış tablolar toast edilemez"
 
-#: commands/tablecmds.c:5709
+#: commands/tablecmds.c:5763
 #, c-format
 msgid "table \"%s\" already has a TOAST table"
 msgstr "\"%s\" tablosunun zaten bir TOAST tablosu vardır"
 
-#: commands/tablecmds.c:5726
+#: commands/tablecmds.c:5780
 #, c-format
 msgid "table \"%s\" does not need a TOAST table"
 msgstr "\"%s\" tablosunun TOAST tablosuna gereksinmesi yoktur"
@@ -4102,7 +4107,7 @@ msgid "\"%s\" is not a valid base type for a domain"
 msgstr "\"%s\" tipi bir domain için geçerli bir tip değildir"
 
 #: commands/typecmds.c:617
-#: commands/typecmds.c:1504
+#: commands/typecmds.c:1505
 msgid "foreign key constraints not possible for domains"
 msgstr "domainlerde için foreign key constraint kullanılamaz"
 
@@ -4116,22 +4121,22 @@ msgid "conflicting NULL/NOT NULL constraints"
 msgstr "çakışan NULL/NOT NULL constraint"
 
 #: commands/typecmds.c:695
-#: commands/typecmds.c:1522
+#: commands/typecmds.c:1523
 msgid "unique constraints not possible for domains"
 msgstr "domainlerde için unique constraint kullanılamaz"
 
 #: commands/typecmds.c:701
-#: commands/typecmds.c:1528
+#: commands/typecmds.c:1529
 msgid "primary key constraints not possible for domains"
 msgstr "domainlerde için primary key constraint kullanılamaz"
 
 #: commands/typecmds.c:710
-#: commands/typecmds.c:1537
+#: commands/typecmds.c:1538
 msgid "specifying constraint deferrability not supported for domains"
 msgstr "constraint srtelenebirliği domainlerde belirtilemez"
 
 #: commands/typecmds.c:831
-#: commands/typecmds.c:1780
+#: commands/typecmds.c:1781
 #, c-format
 msgid "\"%s\" is not a domain"
 msgstr "\"%s\" bir domain değildir"
@@ -4155,31 +4160,31 @@ msgstr "%s tipi analiz fonksiyonu \"boolean\" tipini döndürmelidir"
 msgid "composite type must have at least one attribute"
 msgstr "compisite tipinde en az bir öğe olmalıdır"
 
-#: commands/typecmds.c:1341
+#: commands/typecmds.c:1342
 #, c-format
 msgid "column \"%s\" of table \"%s\" contains null values"
 msgstr "\"%2$s\" tablosunun \"%1$s\" sütununda null değerler mevcut"
 
-#: commands/typecmds.c:1608
+#: commands/typecmds.c:1609
 #, c-format
 msgid "column \"%s\" of table \"%s\" contains values that violate the new constraint"
 msgstr "\"%2$s\" tablosunun \"%1$s\" sütununda yeni constrainti ihlal eden değerler mevcut"
 
-#: commands/typecmds.c:1814
+#: commands/typecmds.c:1815
 #, c-format
 msgid "constraint \"%s\" for domain \"%s\" already exists"
 msgstr "\"%2$s\" domain için \"%1$s\" constraint için zaten mevcut"
 
-#: commands/typecmds.c:1855
-#: commands/typecmds.c:1864
+#: commands/typecmds.c:1856
+#: commands/typecmds.c:1865
 msgid "cannot use table references in domain check constraint"
 msgstr "domain check constraintte tablo referansları kullanılamaz"
 
-#: commands/typecmds.c:1876
+#: commands/typecmds.c:1877
 msgid "cannot use aggregate in check constraint"
 msgstr "check constraint içinde aggregate kullanılamaz"
 
-#: commands/typecmds.c:2090
+#: commands/typecmds.c:2094
 #, c-format
 msgid "\"%s\" is a table's row type"
 msgstr "\"%s\" bir tablo satrır tipidir"
@@ -4237,7 +4242,7 @@ msgstr "kullanıcı ID %d zaten mevcut"
 #: commands/user.c:1104
 #: commands/user.c:1233
 #: commands/variable.c:664
-#: utils/cache/lsyscache.c:2044
+#: utils/cache/lsyscache.c:2045
 #: utils/init/miscinit.c:335
 #, c-format
 msgid "user \"%s\" does not exist"
@@ -4318,6 +4323,15 @@ msgstr "group ID %d zaten atanmış"
 #: commands/user.c:1518
 msgid "must be superuser to alter groups"
 msgstr "grupları değiştirmek için superuser olmalısınız"
+
+#: commands/user.c:1535
+#: commands/user.c:1772
+#: commands/user.c:1807
+#: libpq/pqcomm.c:501
+#: utils/cache/lsyscache.c:2074
+#, c-format
+msgid "group \"%s\" does not exist"
+msgstr "\"%s\" grubu mevcut değil"
 
 #: commands/user.c:1597
 #, c-format
@@ -4612,14 +4626,31 @@ msgstr "Son SELECT az satır döndürüyor."
 msgid "return type %s is not supported for SQL functions"
 msgstr "SQL fonksiyonların içinde %s dönüş tipi desteklenmemektedir"
 
-#: executor/nodeAgg.c:1330
+#: executor/nodeAgg.c:1360
 #, c-format
 msgid "aggregate %u needs to have compatible input type and transition type"
 msgstr "%u aggregate fonksiyonu uyumlu giriş ve geçiş tiplerine sahip olmalıdır"
 
-#: executor/nodeFunctionscan.c:93
-msgid "query-specified return row and actual function return row do not match"
+#: executor/nodeFunctionscan.c:368
+#: executor/nodeFunctionscan.c:382
+#: executor/nodeFunctionscan.c:392
+msgid "function return row and query-specified return row do not match"
 msgstr "sorgu-tanımlı sonuç satırı ve gerçek sonuç satırı uyuşmamaktadır"
+
+#: executor/nodeFunctionscan.c:369
+#, c-format
+msgid "Returned row contains %d attributes, but query expects %d."
+msgstr "Sorgu, döndürülen satırın %2$d sütundan oluşmasını beklerken, %1$d sürun geldi."
+
+#: executor/nodeFunctionscan.c:383
+#, c-format
+msgid "Returned type %s at ordinal position %d, but query expects %s."
+msgstr "Sorgu, %2$d adresine döndürme tipi %1$s iken,  %3$s bekliyor."
+
+#: executor/nodeFunctionscan.c:393
+#, c-format
+msgid "Physical storage mismatch on dropped attribute at ordinal position %d."
+msgstr "%d adresinde düşürülmüş sütunda fiziksel saklam uyuşmazlığı."
 
 #: executor/nodeHashjoin.c:571
 #: executor/nodeHashjoin.c:581
@@ -4674,7 +4705,7 @@ msgid "RIGHT JOIN is only supported with merge-joinable join conditions"
 msgstr "RIGHT JOIN ancak merge-join işlemine uygun şartlarında desteklenmektedir"
 
 #: executor/nodeMergejoin.c:1491
-#: optimizer/path/joinpath.c:839
+#: optimizer/path/joinpath.c:840
 msgid "FULL JOIN is only supported with merge-joinable join conditions"
 msgstr "FULL JOIN ancak merge-join işlemine uygun şartlarında desteklenmektedir"
 
@@ -5660,8 +5691,8 @@ msgstr "CREATE işleminin belirttiği şema (%s) yaratılacak (%s) olanından fa
 
 #: parser/analyze.c:3144
 #: parser/parse_coerce.c:221
-#: parser/parse_expr.c:116
-#: parser/parse_expr.c:122
+#: parser/parse_expr.c:516
+#: parser/parse_expr.c:522
 #, c-format
 msgid "there is no parameter $%d"
 msgstr "$%d parametresi yoktur"
@@ -5703,7 +5734,7 @@ msgstr "$%d parametresi için geçersiz tip bulundu"
 #: parser/parse_coerce.c:723
 #: parser/parse_coerce.c:739
 #: parser/parse_coerce.c:753
-#: parser/parse_expr.c:1671
+#: parser/parse_expr.c:1737
 #, c-format
 msgid "cannot cast type %s to %s"
 msgstr "%s tipi %s tipine dökülemiyor"
@@ -5777,9 +5808,9 @@ msgstr "giriş, \"unknown\" tipinde olduğu için anyarray/anyelement tipi belir
 #: parser/parse_coerce.c:1228
 #: parser/parse_coerce.c:1245
 #: parser/parse_coerce.c:1299
-#: parser/parse_expr.c:807
-#: parser/parse_expr.c:1364
-#: parser/parse_expr.c:1403
+#: parser/parse_expr.c:1159
+#: parser/parse_expr.c:1430
+#: parser/parse_expr.c:1469
 #: parser/parse_oper.c:920
 #, c-format
 msgid "could not find array type for data type %s"
@@ -5853,57 +5884,57 @@ msgstr "\"%s\" tablosu için subquery tanımında eksik FROM öğesi ekleniyor"
 msgid "adding missing FROM-clause entry for table \"%s\""
 msgstr "\"%s\" tablo öğesinde eksik FROM öğesi ekleniyor"
 
-#: parser/parse_expr.c:361
+#: parser/parse_expr.c:722
 msgid "NULLIF requires = operator to yield boolean"
 msgstr "boolean değerini almak için NULLIF, = işlemini kullanmalıdır"
 
-#: parser/parse_expr.c:486
+#: parser/parse_expr.c:966
 msgid "subquery must return a column"
 msgstr "subquery, sütün döndürmeli"
 
-#: parser/parse_expr.c:492
+#: parser/parse_expr.c:972
 msgid "subquery must return only one column"
 msgstr "subquery, bir tane sütun getirmelidir"
 
-#: parser/parse_expr.c:549
+#: parser/parse_expr.c:1028
 #, c-format
 msgid "row comparison cannot use operator %s"
 msgstr "satır kaşılaştırması %s işlemi kullanamıyor"
 
-#: parser/parse_expr.c:576
+#: parser/parse_expr.c:1054
 msgid "subquery has too many columns"
 msgstr "subquery çok fazla sütuna sahip"
 
-#: parser/parse_expr.c:594
+#: parser/parse_expr.c:1072
 #, c-format
 msgid "operator %s must return type boolean, not type %s"
 msgstr "%s operator %s tipini değil, boolean tipini döndürmelidir"
 
-#: parser/parse_expr.c:597
-#: parser/parse_expr.c:604
+#: parser/parse_expr.c:1075
+#: parser/parse_expr.c:1082
 msgid "The operator of a quantified predicate subquery must return type boolean."
 msgstr "Quantified predicate subquery işlemi boolean tipinde sonuç getirmelidir."
 
-#: parser/parse_expr.c:602
+#: parser/parse_expr.c:1080
 #, c-format
 msgid "operator %s must not return a set"
 msgstr "%s operatörü set döndürmemelidir"
 
-#: parser/parse_expr.c:614
+#: parser/parse_expr.c:1092
 msgid "subquery has too few columns"
 msgstr "subquery'de yetersiz sütun sayısı"
 
-#: parser/parse_expr.c:1705
-#: parser/parse_expr.c:1784
+#: parser/parse_expr.c:1771
+#: parser/parse_expr.c:1850
 msgid "unequal number of entries in row expression"
 msgstr "satır ifadesinde eşitsiz öğe sayısı"
 
-#: parser/parse_expr.c:1726
+#: parser/parse_expr.c:1792
 #, c-format
 msgid "operator %s is not supported for row expressions"
 msgstr "satır ifadelerinde %s işlemi kullanılamaz"
 
-#: parser/parse_expr.c:1821
+#: parser/parse_expr.c:1887
 msgid "IS DISTINCT FROM requires = operator to yield boolean"
 msgstr "boolean değerini almak için IS DISTINCT FROM, = işlemini kullanmalıdır"
 
@@ -6374,7 +6405,7 @@ msgstr "parse hatası; ayrıca vertual bellek de dolmuştur"
 #: gram.y:8242
 #: y.tab.c:19082
 msgid "syntax error"
-msgstr "söz dizim hatası"
+msgstr "söz dizim hatası "
 
 #: y.tab.c:19196
 msgid "parser stack overflow"
@@ -7858,7 +7889,11 @@ msgstr "\"%s\" bir tip değildir"
 msgid "Use DROP TYPE to remove a type."
 msgstr "Bir tipi kaldırmak için DROP TYPE kullanın."
 
-#: tcop/utility.c:973
+#: tcop/utility.c:809
+msgid "must be superuser to do LOAD"
+msgstr "LOAD yapmak için superuser olmalısınız"
+
+#: tcop/utility.c:977
 msgid "must be superuser to do CHECKPOINT"
 msgstr "CHECKPOINT yapmak için superuser olmalısınız"
 
@@ -8082,7 +8117,7 @@ msgid "wrong element type"
 msgstr "element tipi yanlış"
 
 #: utils/adt/arrayfuncs.c:1211
-#: utils/cache/lsyscache.c:1764
+#: utils/cache/lsyscache.c:1765
 #, c-format
 msgid "no binary input function available for type %s"
 msgstr "%s tipi için ikili giriş fonksiyonu mevcut değil"
@@ -8093,7 +8128,7 @@ msgid "improper binary format in array element %d"
 msgstr "%d dizi öğesi için geçersiz ikili biçimi"
 
 #: utils/adt/arrayfuncs.c:1383
-#: utils/cache/lsyscache.c:1800
+#: utils/cache/lsyscache.c:1801
 #, c-format
 msgid "no binary output function available for type %s"
 msgstr "%s tipi için ikili çıkış fonksiyonu mevcut değil"
@@ -9392,20 +9427,20 @@ msgstr "yeni bit 0 veya 1 olmalıdır"
 msgid "field position must be greater than zero"
 msgstr "alan yeri sıfırdan büyük olmalıdır"
 
-#: utils/cache/lsyscache.c:1687
-#: utils/cache/lsyscache.c:1723
-#: utils/cache/lsyscache.c:1759
-#: utils/cache/lsyscache.c:1795
+#: utils/cache/lsyscache.c:1688
+#: utils/cache/lsyscache.c:1724
+#: utils/cache/lsyscache.c:1760
+#: utils/cache/lsyscache.c:1796
 #, c-format
 msgid "type %s is only a shell"
 msgstr "%s tipi sadece bir shell"
 
-#: utils/cache/lsyscache.c:1692
+#: utils/cache/lsyscache.c:1693
 #, c-format
 msgid "no input function available for type %s"
 msgstr "%s tipi için giriş fonksiyonu mevcut değil"
 
-#: utils/cache/lsyscache.c:1728
+#: utils/cache/lsyscache.c:1729
 #, c-format
 msgid "no output function available for type %s"
 msgstr "%s tipi için çıkış fonksiyonu mevcut değil"

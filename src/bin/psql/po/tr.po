@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-tr\n"
 "POT-Creation-Date: 2004-11-05 07:30+0000\n"
-"PO-Revision-Date: 2005-01-15 14:11+0200\n"
+"PO-Revision-Date: 2005-01-28 18:00+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <http://developer.postgresql.org/~petere/nlsstatus/po-current/libpq-tr.po>\n"
 "MIME-Version: 1.0\n"
@@ -3073,12 +3073,12 @@ msgstr ""
 "    READ WRITE | READ ONLY"
 
 #: sql_help.h:417
-msgid "empty a table"
-msgstr "tabloyu boşalt"
+msgid "empty a table or set of tables"
+msgstr "bir veya birden fazla tabloyu kısalt"
 
 #: sql_help.h:418
-msgid "TRUNCATE [ TABLE ] name"
-msgstr "TRUNCATE [ TABLE ] tablo_adı"
+msgid "TRUNCATE [ TABLE ] name [, ...]"
+msgstr "TRUNCATE [ TABLE ] adı [, ...]"
 
 #: sql_help.h:421
 msgid "stop listening for a notification"
