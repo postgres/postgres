@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Jul 10 00:37:57 EDT 1999
+   Last updated: Tue Sep 28 01:06:15 EDT 1999
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -49,7 +49,7 @@
    3.2) How do I install PostgreSQL somewhere other than
    /usr/local/pgsql?
    3.3) When I start the postmaster, I get a Bad System Call or core
-   dumped message3. Why?
+   dumped message. Why?
    3.4) When I try to start the postmaster, I get IpcMemoryCreate
    errors3. Why?
    3.5) When I try to start the postmaster, I get IpcSemaphoreCreate
@@ -93,6 +93,9 @@
    4.19) Why do I get the error "FATAL: palloc failure: memory
    exhausted?"
    4.20) How do I tell what PostgreSQL version I am running?
+   4.21) My large-object operations get invalid large obj descriptor.
+   Why?
+   4.22) How do I create a column that will default to the current time?
    
                             Extending PostgreSQL
                                       
@@ -194,8 +197,9 @@
    The database server is now working on Windows NT using the Cygnus
    Unix/NT porting library. See pgsql/doc/README.NT in the distribution.
    
-   There is another port using U/Win at
-   http://surya.wipro.com/uwin/ported.html.
+   There is also a web page at
+   http://members.tripod.com/~kevlo/postgres/portNT.html. There is
+   another port using U/Win at http://surya.wipro.com/uwin/ported.html.
    
     1.5) Where can I get PostgreSQL?
     
@@ -213,7 +217,6 @@
    available for discussion of matters pertaining to PostgreSQL. To
    subscribe, send a mail with the lines in the body (not the subject
    line)
-
         subscribe
         end
 
@@ -221,7 +224,6 @@
    
    There is also a digest list available. To subscribe to this list, send
    email to: pgsql-general-digest-request@postgreSQL.org with a BODY of:
-
         subscribe
         end
 
@@ -231,7 +233,6 @@
    The bugs mailing list is available. To subscribe to this list, send
    email to bugs-request@postgreSQL.org with a BODY of:
    
-
         subscribe
         end
 
@@ -239,7 +240,6 @@
    subscribe to this list, send email to hackers-request@postgreSQL.org
    with a BODY of:
    
-
         subscribe
         end
 
@@ -256,7 +256,7 @@
    
     1.7) What is the latest release of PostgreSQL?
     
-   The latest release of PostgreSQL is version 6.5.
+   The latest release of PostgreSQL is version 6.5.2.
    
    We plan to have major releases every four months.
    
@@ -315,9 +315,9 @@
    
    Features
           PostgreSQL has most features present in large commercial
-          DBMS's, like transactions, subselects, and sophisticated
-          locking. We have some features they don't have, like
-          user-defined types, inheritance, rules, and multi-version
+          DBMS's, like transactions, subselects, triggers, views, and
+          sophisticated locking. We have some features they don't have,
+          like user-defined types, inheritance, rules, and multi-version
           concurrency control to reduce lock contention. We don't have
           foreign key referential integrity or outer joins, but are
           working on them for our next release.
@@ -325,21 +325,26 @@
    Performance
           PostgreSQL runs in two modes. Normal fsync mode flushes every
           completed transaction to disk, guaranteeing that if the OS
-          crashes or looses power in the next few seconds, all your data
+          crashes or loses power in the next few seconds, all your data
           is safely stored on disk. In this mode, we are slower than most
           commercial databases, partly because few of them do such
           conservative flushing to disk in their default modes. In
           no-fsync mode, we are usually faster than commercial databases,
           though in this mode, an OS crash could cause data corruption.
           We are working to provide an intermediate mode that suffers
-          from less performance overhead than full fsync mode, and will
-          allow data integrity within 30 seconds of an OS crash. The mode
-          is select-able by the database administrator.
-          
+          less performance overhead than full fsync mode, and will allow
+          data integrity within 30 seconds of an OS crash. The mode is
+          select-able by the database administrator.
           In comparison to MySQL or leaner database systems, we are
-          slower because we have transaction overhead. We are built for
-          flexibility and features, not speed, though we continue to
-          improve performance through profiling and source code analysis.
+          slower on inserts/updates because we have transaction overhead.
+          Of course, MySQL doesn't have any of the features mentioned in
+          the Features section above. We are built for flexibility and
+          features, though we continue to improve performance through
+          profiling and source code analysis.
+          We handle each user connection by creating a Unix process.
+          Backend processes share data buffers and locking information.
+          With multiple CPU's, multiple backends can easily run on
+          different CPU's.
           
    Reliability
           We realize that a DBMS must be reliable, or it is worthless. We
@@ -544,7 +549,6 @@
    Both postmaster and postgres have several debug options available.
    First, whenever you start the postmaster, make sure you send the
    standard output and error to a log file, like:
-
         cd /usr/local/pgsql
         ./bin/postmaster >server.log 2>&1 &
 
@@ -578,7 +582,7 @@
    You need to increase the postmaster's limit on how many concurrent
    backend processes it can start.
    
-   In Postgres 6.5, the default limit is 32 processes. You can increase
+   In Postgres 6.5.*, the default limit is 32 processes. You can increase
    it by restarting the postmaster with a suitable -N value. With the
    default configuration you can set -N as large as 1024; if you need
    more, increase MAXBACKENDS in include/config.h and rebuild. You can
@@ -615,7 +619,6 @@
     
    Currently, there is no easy interface to set up user groups. You have
    to explicitly insert/update the pg_group table. For example:
-
         jolly=> insert into pg_group (groname, grosysid, grolist)
         jolly=>     values ('posthackers', '1234', '{5443, 8261}');
         INSERT 548224
@@ -667,7 +670,6 @@
     4.5) How do you remove a column from a table?
     
    We do not support alter table drop column, but do this:
-
         SELECT ...  -- select all columns but the one you want to remove
         INTO TABLE new_table
         FROM old_table;
@@ -871,7 +873,6 @@ BYTEA           bytea           variable-length array of bytes
    It is possible you have run out of virtual memory on your system, or
    your kernel has a low limit for certain resources. Try this before
    starting the postmaster:
-
         ulimit -d 65536
         limit datasize 64m
 
@@ -885,6 +886,37 @@ BYTEA           bytea           variable-length array of bytes
     4.20) How do I tell what PostgreSQL version I am running?
     
    From psql, type select version();
+   
+    4.21) My large-object operations get invalid large obj descriptor. Why?
+    
+   You need to put BEGIN WORK and COMMIT around any use of a large object
+   handle, that is, surrounding lo_open ... lo_close.
+   
+   The documentation has always stated that lo_open must be wrapped in a
+   transaction, but PostgreSQL versions prior to 6.5 didn't enforce that
+   rule. Instead, they'd just fail occasionally if you broke it.
+   
+   Current PostgreSQL enforces the rule by closing large object handles
+   at transaction commit, which will be instantly upon completion of the
+   lo_open command if you are not inside a transaction. So the first
+   attempt to do anything with the handle will draw invalid large obj
+   descriptor. So code that used to work (at least most of the time) will
+   now generate that error message if you fail to use a transaction.
+   
+   If you are using a client interface like ODBC you may need to set
+   auto-commit off.
+   
+    4.22) How do I create a column that will default to the current time?
+    
+   The tempation is to do:
+        create table test (x int, modtime timestamp default 'now');
+
+   but this makes the column default to the time of table creation, not
+   the time of row insertion. Instead do:
+        create table test (x int, modtime timestamp default text 'now');
+
+   The casting of the value to text prevents the default value from being
+   computed at table creation time, and delays it until insertion time.
      _________________________________________________________________
    
                             Extending PostgreSQL
