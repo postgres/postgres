@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.15 1998/06/15 19:28:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.16 1998/07/18 04:22:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ xfunc_card_unreferenced(Query *queryInfo,
 */
 
 void
-xfunc_trypullup(Rel rel)
+xfunc_trypullup(RelOptInfo rel)
 {
 	LispValue	y;				/* list ptr */
 	CInfo		maxcinfo;		/* The CInfo to pull up, as calculated by
@@ -242,7 +242,7 @@ xfunc_shouldpull(Query *queryInfo,
 			/*
 			 * * we've left an expensive restriction below a join.  Since *
 			 * we may pullup this restriction in predmig.c, we'd best *
-			 * set the Rel of this join to be unpruneable
+			 * set the RelOptInfo of this join to be unpruneable
 			 */
 			set_pruneable(get_parent(parentpath), false);
 			/* and fall through */
@@ -256,8 +256,8 @@ xfunc_shouldpull(Query *queryInfo,
  ** xfunc_pullup --
  **    move clause from child pathnode to parent pathnode.	 This operation
  ** makes the child pathnode produce a larger relation than it used to.
- ** This means that we must construct a new Rel just for the childpath,
- ** although this Rel will not be added to the list of Rels to be joined up
+ ** This means that we must construct a new RelOptInfo just for the childpath,
+ ** although this RelOptInfo will not be added to the list of Rels to be joined up
  ** in the query; it's merely a parent for the new childpath.
  **    We also have to fix up the path costs of the child and parent.
  **
@@ -272,7 +272,7 @@ xfunc_pullup(Query *queryInfo,
 			 int clausetype)	/* whether clause to pull is join or local */
 {
 	Path		newkid;
-	Rel			newrel;
+	RelOptInfo			newrel;
 	Cost		pulled_selec;
 	Cost		cost;
 	CInfo		newinfo;
@@ -294,7 +294,7 @@ xfunc_pullup(Query *queryInfo,
 	}
 
 	/*
-	 * * give the new child path its own Rel node that reflects the * lack
+	 * * give the new child path its own RelOptInfo node that reflects the * lack
 	 * of the pulled-up predicate
 	 */
 	pulled_selec = compute_clause_selec(queryInfo,
@@ -400,7 +400,7 @@ xfunc_join_expense(Query *queryInfo, JoinPath path, int whichchild)
 	/*
 	 * * the second argument to xfunc_card_unreferenced reflects all the *
 	 * relations involved in the join clause, i.e. all the relids in the
-	 * Rel * of the join clause
+	 * RelOptInfo * of the join clause
 	 */
 	Count		card = 0;
 	Cost		cost = xfunc_expense_per_tuple(path, whichchild);
@@ -736,9 +736,9 @@ xfunc_card_unreferenced(Query *queryInfo,
 	/* find all relids of base relations referenced in query */
 	foreach(temp, queryInfo->base_relation_list_)
 	{
-		Assert(lnext(get_relids((Rel) lfirst(temp))) == LispNil);
+		Assert(lnext(get_relids((RelOptInfo) lfirst(temp))) == LispNil);
 		allrelids = lappend(allrelids,
-							lfirst(get_relids((Rel) lfirst(temp))));
+							lfirst(get_relids((RelOptInfo) lfirst(temp))));
 	}
 
 	/* find all relids referenced in query but not in clause */
@@ -758,7 +758,7 @@ xfunc_card_product(Query *queryInfo, Relid relids)
 {
 	LispValue	cinfonode;
 	LispValue	temp;
-	Rel			currel;
+	RelOptInfo			currel;
 	Cost		tuples;
 	Count		retval = 0;
 
@@ -1095,8 +1095,8 @@ xfunc_total_path_cost(JoinPath pathnode)
 Cost
 xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
 {
-	Rel			outerrel = get_parent((Path) get_outerjoinpath(joinnode));
-	Rel			innerrel = get_parent((Path) get_innerjoinpath(joinnode));
+	RelOptInfo			outerrel = get_parent((Path) get_outerjoinpath(joinnode));
+	RelOptInfo			innerrel = get_parent((Path) get_innerjoinpath(joinnode));
 	Count		outerwidth = get_width(outerrel);
 	Count		outers_per_page = ceil(BLCKSZ / (outerwidth + sizeof(HeapTupleData)));
 
@@ -1133,11 +1133,11 @@ xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
  ** nodes to point to the correct varno (either INNER or OUTER, depending
  ** on which child the clause was pulled from), and the right varattno in the
  ** target list of the child's former relation.  If the target list of the
- ** child Rel does not contain the attribute we need, we add it.
+ ** child RelOptInfo does not contain the attribute we need, we add it.
  */
 void
 xfunc_fixvars(LispValue clause, /* clause being pulled up */
-			  Rel rel,			/* rel it's being pulled from */
+			  RelOptInfo rel,			/* rel it's being pulled from */
 			  int varno)		/* whether rel is INNER or OUTER of join */
 {
 	LispValue	tmpclause;		/* temporary variable */
@@ -1426,9 +1426,9 @@ do { \
  **   Just like _copyRel, but doesn't copy the paths
  */
 bool
-xfunc_copyrel(Rel from, Rel *to)
+xfunc_copyrel(RelOptInfo from, RelOptInfo *to)
 {
-	Rel			newnode;
+	RelOptInfo			newnode;
 
 	Pointer		(*alloc) () = palloc;
 
@@ -1444,7 +1444,7 @@ xfunc_copyrel(Rel from, Rel *to)
 	}
 
 	/* COPY_NEW(c) */
-	newnode = (Rel) (*alloc) (classSize(Rel));
+	newnode = (RelOptInfo) (*alloc) (classSize(RelOptInfo));
 	if (newnode == NULL)
 		return false;
 

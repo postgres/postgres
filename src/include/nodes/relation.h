@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.7 1997/09/08 21:53:01 momjian Exp $
+ * $Id: relation.h,v 1.8 1998/07/18 04:22:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 typedef List *Relid;
 
 /*
- * Rel
+ * RelOptInfo
  *		Per-base-relation information
  *
  *		Parts of this data structure are specific to various scan and join
@@ -47,7 +47,7 @@ typedef List *Relid;
  *						leaves the tuples unordered)
  *		cheapestpath -	least expensive Path (regardless of final order)
  *		pruneable - flag to let the planner know whether it can prune the plan
- *					space of this Rel or not.  -- JMH, 11/11/92
+ *					space of this RelOptInfo or not.  -- JMH, 11/11/92
  *
  *	 * If the relation is a (secondary) index it will have the following
  *		three fields:
@@ -71,7 +71,7 @@ typedef List *Relid;
  *	   is always 0.								2/95 - ay
  */
 
-typedef struct Rel
+typedef struct RelOptInfo
 {
 	NodeTag		type;
 
@@ -106,7 +106,7 @@ typedef struct Rel
 	List	   *joininfo;		/* join clauses */
 	List	   *innerjoin;
 	List	   *superrels;
-} Rel;
+} RelOptInfo;
 
 extern Var *get_expr(TargetEntry *foo);
 
@@ -139,7 +139,7 @@ typedef struct Path
 {
 	NodeTag		type;
 
-	Rel		   *parent;
+	RelOptInfo		   *parent;
 	Cost		path_cost;
 
 	NodeTag		pathtype;

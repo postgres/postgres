@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.22 1998/06/15 19:28:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.23 1998/07/18 04:22:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ subplanner(Query *root,
 		   List *flat_tlist,
 		   List *qual)
 {
-	Rel		   *final_relation;
+	RelOptInfo		   *final_relation;
 	List	   *final_relation_list;
 
 	/*
@@ -274,9 +274,9 @@ subplanner(Query *root,
 									 root->base_relation_list_);
 
 	if (final_relation_list)
-		final_relation = (Rel *) lfirst(final_relation_list);
+		final_relation = (RelOptInfo *) lfirst(final_relation_list);
 	else
-		final_relation = (Rel *) NIL;
+		final_relation = (RelOptInfo *) NIL;
 
 #if 0							/* fix xfunc */
 

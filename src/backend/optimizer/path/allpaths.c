@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.16 1998/06/15 19:28:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.17 1998/07/18 04:22:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ static void
 find_rel_paths(Query *root, List *rels)
 {
 	List	   *temp;
-	Rel		   *rel;
+	RelOptInfo		   *rel;
 	List	   *lastpath;
 
 	foreach(temp, rels)
@@ -114,7 +114,7 @@ find_rel_paths(Query *root, List *rels)
 		List	   *rel_index_scan_list;
 		List	   *or_index_scan_list;
 
-		rel = (Rel *) lfirst(temp);
+		rel = (RelOptInfo *) lfirst(temp);
 		sequential_scan_list = lcons(create_seqscan_path(rel),
 									 NIL);
 
@@ -175,7 +175,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 {
 	List	   *x;
 	List	   *new_rels = NIL;
-	Rel		   *rel;
+	RelOptInfo		   *rel;
 
 	/*******************************************
 	 * genetic query optimizer entry point	   *
@@ -183,7 +183,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 	 *******************************************/
 
 	if ((_use_geqo_) && length(root->base_relation_list_) >= _use_geqo_rels_)
-		return lcons(geqo(root), NIL);	/* returns *one* Rel, so lcons it */
+		return lcons(geqo(root), NIL);	/* returns *one* RelOptInfo, so lcons it */
 
 	/*******************************************
 	 * rest will be deprecated in case of GEQO *
@@ -212,7 +212,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 		 */
 		if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
 			foreach(x, new_rels)
-				xfunc_trypullup((Rel *) lfirst(x));
+				xfunc_trypullup((RelOptInfo *) lfirst(x));
 #endif
 
 		prune_rel_paths(new_rels);
@@ -231,7 +231,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 
 		foreach(x, new_rels)
 		{
-			rel = (Rel *) lfirst(x);
+			rel = (RelOptInfo *) lfirst(x);
 			if (rel->size <= 0)
 				rel->size = compute_rel_size(rel);
 			rel->width = compute_rel_width(rel);
@@ -399,7 +399,7 @@ print_path(Query *root, Path *path, int indent)
 }
 
 static void
-debug_print_rel(Query *root, Rel *rel)
+debug_print_rel(Query *root, RelOptInfo *rel)
 {
 	List	   *l;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.8 1998/06/15 19:28:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.9 1998/07/18 04:22:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,12 +95,12 @@ product_selec(List *clauseinfo_list)
 void
 set_rest_relselec(Query *root, List *rel_list)
 {
-	Rel		   *rel;
+	RelOptInfo		   *rel;
 	List	   *x;
 
 	foreach(x, rel_list)
 	{
-		rel = (Rel *) lfirst(x);
+		rel = (RelOptInfo *) lfirst(x);
 		set_rest_selec(root, rel->clauseinfo);
 	}
 }

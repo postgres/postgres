@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.7 1998/02/26 04:42:33 momjian Exp $
+ * $Id: xfunc.h,v 1.8 1998/07/18 04:22:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ extern int	XfuncMode;			/* defined in tcop/postgres.c */
 #define is_join(pathnode) (length(get_relids(get_parent(pathnode))) > 1 ? 1 : 0)
 
 /* function prototypes from planner/path/xfunc.c */
-extern void xfunc_trypullup(Rel *rel);
+extern void xfunc_trypullup(RelOptInfo *rel);
 extern int
 xfunc_shouldpull(Path *childpath, JoinPath *parentpath,
 				 int whichchild, CInfo *maxcinfopt);
@@ -71,7 +71,7 @@ extern List *xfunc_primary_join(JoinPath *pathnode);
 extern Cost xfunc_get_path_cost(Path *pathnode);
 extern Cost xfunc_total_path_cost(JoinPath *pathnode);
 extern Cost xfunc_expense_per_tuple(JoinPath *joinnode, int whichchild);
-extern void xfunc_fixvars(Expr *clause, Rel *rel, int varno);
+extern void xfunc_fixvars(Expr *clause, RelOptInfo *rel, int varno);
 extern int	xfunc_cinfo_compare(void *arg1, void *arg2);
 extern int	xfunc_clause_compare(void *arg1, void *arg2);
 extern void xfunc_disjunct_sort(List *clause_list);
@@ -80,7 +80,7 @@ extern int	xfunc_func_width(RegProcedure funcid, List *args);
 extern int	xfunc_tuple_width(Relation rd);
 extern int	xfunc_num_join_clauses(JoinPath *path);
 extern List *xfunc_LispRemove(List *foo, List *bar);
-extern bool xfunc_copyrel(Rel *from, Rel **to);
+extern bool xfunc_copyrel(RelOptInfo *from, RelOptInfo **to);
 
 /*
  * function prototypes for path/predmig.c

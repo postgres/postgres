@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.5 1998/02/26 04:33:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.6 1998/07/18 04:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,17 +27,17 @@
  *	  necessary. This is for base relations.
  *
  */
-Rel *
+RelOptInfo *
 get_base_rel(Query *root, int relid)
 {
 	List	   *relids;
-	Rel		   *rel;
+	RelOptInfo		   *rel;
 
 	relids = lconsi(relid, NIL);
 	rel = rel_member(relids, root->base_relation_list_);
 	if (rel == NULL)
 	{
-		rel = makeNode(Rel);
+		rel = makeNode(RelOptInfo);
 		rel->relids = relids;
 		rel->indexed = false;
 		rel->pages = 0;
@@ -100,7 +100,7 @@ get_base_rel(Query *root, int relid)
  *	  creating a new one if necessary. This is for join relations.
  *
  */
-Rel *
+RelOptInfo *
 get_join_rel(Query *root, List *relid)
 {
 	return rel_member(relid, root->join_relation_list_);
@@ -114,7 +114,7 @@ get_join_rel(Query *root, List *relid)
  * Returns the corresponding entry in 'rels' if it is there.
  *
  */
-Rel *
+RelOptInfo *
 rel_member(List *relid, List *rels)
 {
 	List	   *temp = NIL;
@@ -124,9 +124,9 @@ rel_member(List *relid, List *rels)
 	{
 		foreach(temp, rels)
 		{
-			temprelid = ((Rel *) lfirst(temp))->relids;
+			temprelid = ((RelOptInfo *) lfirst(temp))->relids;
 			if (same(temprelid, relid))
-				return ((Rel *) (lfirst(temp)));
+				return ((RelOptInfo *) (lfirst(temp)));
 		}
 	}
 	return (NULL);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.10 1998/06/15 19:28:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.11 1998/07/18 04:22:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,18 +31,18 @@ bool		_use_right_sided_plans_ = false;
 
 #endif
 
-static List *find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list);
-static List *find_clauseless_joins(Rel *outer_rel, List *inner_rels);
-static Rel *init_join_rel(Rel *outer_rel, Rel *inner_rel, JInfo *joininfo);
+static List *find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list);
+static List *find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels);
+static RelOptInfo *init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JInfo *joininfo);
 static List *
 new_join_tlist(List *tlist, List *other_relids,
 			   int first_resdomno);
 static List *new_joininfo_list(List *joininfo_list, List *join_relids);
-static void add_superrels(Rel *rel, Rel *super_rel);
-static bool nonoverlap_rels(Rel *rel1, Rel *rel2);
+static void add_superrels(RelOptInfo *rel, RelOptInfo *super_rel);
+static bool nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2);
 static bool nonoverlap_sets(List *s1, List *s2);
 static void
-set_joinrel_size(Rel *joinrel, Rel *outer_rel, Rel *inner_rel,
+set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel,
 				 JInfo *jinfo);
 
 /*
@@ -67,7 +67,7 @@ find_join_rels(Query *root, List *outer_rels)
 
 	foreach(r, outer_rels)
 	{
-		Rel		   *outer_rel = (Rel *) lfirst(r);
+		RelOptInfo		   *outer_rel = (RelOptInfo *) lfirst(r);
 
 		if (!(joins = find_clause_joins(root, outer_rel, outer_rel->joininfo)))
 		{
@@ -99,7 +99,7 @@ find_join_rels(Query *root, List *outer_rels)
  * Returns a list of new join relations.
  */
 static List *
-find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list)
+find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 {
 	List	   *join_list = NIL;
 	List	   *i = NIL;
@@ -107,7 +107,7 @@ find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list)
 	foreach(i, joininfo_list)
 	{
 		JInfo	   *joininfo = (JInfo *) lfirst(i);
-		Rel		   *rel;
+		RelOptInfo		   *rel;
 
 		if (!joininfo->inactive)
 		{
@@ -158,16 +158,16 @@ find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list)
  * Returns a list of new join relations.
  */
 static List *
-find_clauseless_joins(Rel *outer_rel, List *inner_rels)
+find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 {
-	Rel		   *inner_rel;
+	RelOptInfo		   *inner_rel;
 	List	   *t_list = NIL;
 	List	   *temp_node = NIL;
 	List	   *i = NIL;
 
 	foreach(i, inner_rels)
 	{
-		inner_rel = (Rel *) lfirst(i);
+		inner_rel = (RelOptInfo *) lfirst(i);
 		if (nonoverlap_rels(inner_rel, outer_rel))
 		{
 			temp_node = lcons(init_join_rel(outer_rel,
@@ -192,10 +192,10 @@ find_clauseless_joins(Rel *outer_rel, List *inner_rels)
  *
  * Returns the new join relation node.
  */
-static Rel *
-init_join_rel(Rel *outer_rel, Rel *inner_rel, JInfo *joininfo)
+static RelOptInfo *
+init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JInfo *joininfo)
 {
-	Rel		   *joinrel = makeNode(Rel);
+	RelOptInfo		   *joinrel = makeNode(RelOptInfo);
 	List	   *joinrel_joininfo_list = NIL;
 	List	   *new_outer_tlist;
 	List	   *new_inner_tlist;
@@ -396,19 +396,19 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 
 	foreach(xjoinrel, joinrels)
 	{
-		Rel		   *joinrel = (Rel *) lfirst(xjoinrel);
+		RelOptInfo		   *joinrel = (RelOptInfo *) lfirst(xjoinrel);
 
 		foreach(xrelid, joinrel->relids)
 		{
 			Relid		relid = (Relid) lfirst(xrelid);
-			Rel		   *rel = get_join_rel(root, relid);
+			RelOptInfo		   *rel = get_join_rel(root, relid);
 
 			add_superrels(rel, joinrel);
 		}
 	}
 	foreach(xjoinrel, joinrels)
 	{
-		Rel		   *joinrel = (Rel *) lfirst(xjoinrel);
+		RelOptInfo		   *joinrel = (RelOptInfo *) lfirst(xjoinrel);
 
 		foreach(xjoininfo, joinrel->joininfo)
 		{
@@ -421,7 +421,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 			foreach(xrelid, other_rels)
 			{
 				Relid		relid = (Relid) lfirst(xrelid);
-				Rel		   *rel = get_join_rel(root, relid);
+				RelOptInfo		   *rel = get_join_rel(root, relid);
 				List	   *super_rels = rel->superrels;
 				List	   *xsuper_rel = NIL;
 				JInfo	   *new_joininfo = makeNode(JInfo);
@@ -436,7 +436,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 
 				foreach(xsuper_rel, super_rels)
 				{
-					Rel		   *super_rel = (Rel *) lfirst(xsuper_rel);
+					RelOptInfo		   *super_rel = (RelOptInfo *) lfirst(xsuper_rel);
 
 					if (nonoverlap_rels(super_rel, joinrel))
 					{
@@ -471,7 +471,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 	}
 	foreach(xrel, outerrels)
 	{
-		Rel		   *rel = (Rel *) lfirst(xrel);
+		RelOptInfo		   *rel = (RelOptInfo *) lfirst(xrel);
 
 		rel->superrels = NIL;
 	}
@@ -499,7 +499,7 @@ final_join_rels(List *join_rel_list)
 	 */
 	foreach(xrel, join_rel_list)
 	{
-		Rel		   *rel = (Rel *) lfirst(xrel);
+		RelOptInfo		   *rel = (RelOptInfo *) lfirst(xrel);
 		List	   *xjoininfo = NIL;
 		bool		final = true;
 
@@ -533,7 +533,7 @@ final_join_rels(List *join_rel_list)
  * Modifies the superrels field of rel
  */
 static void
-add_superrels(Rel *rel, Rel *super_rel)
+add_superrels(RelOptInfo *rel, RelOptInfo *super_rel)
 {
 	rel->superrels = lappend(rel->superrels, super_rel);
 }
@@ -548,7 +548,7 @@ add_superrels(Rel *rel, Rel *super_rel)
  * Returns non-nil if rel1 and rel2 do not overlap.
  */
 static bool
-nonoverlap_rels(Rel *rel1, Rel *rel2)
+nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2)
 {
 	return (nonoverlap_sets(rel1->relids, rel2->relids));
 }
@@ -569,7 +569,7 @@ nonoverlap_sets(List *s1, List *s2)
 }
 
 static void
-set_joinrel_size(Rel *joinrel, Rel *outer_rel, Rel *inner_rel, JInfo *jinfo)
+set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, JInfo *jinfo)
 {
 	int			ntuples;
 	float		selec;

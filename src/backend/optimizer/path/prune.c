@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.14 1998/06/15 19:28:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.15 1998/07/18 04:22:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *prune_joinrel(Rel *rel, List *other_rels);
+static List *prune_joinrel(RelOptInfo *rel, List *other_rels);
 
 /*
  * prune-joinrels--
@@ -44,7 +44,7 @@ prune_joinrels(List *rel_list)
 	 * deleted
 	 */
 	foreach(i, rel_list)
-		lnext(i) = prune_joinrel((Rel *) lfirst(i), lnext(i));
+		lnext(i) = prune_joinrel((RelOptInfo *) lfirst(i), lnext(i));
 }
 
 /*
@@ -59,14 +59,14 @@ prune_joinrels(List *rel_list)
  *
  */
 static List *
-prune_joinrel(Rel *rel, List *other_rels)
+prune_joinrel(RelOptInfo *rel, List *other_rels)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;
 
 	foreach(i, other_rels)
 	{
-		Rel	   *other_rel = (Rel *) lfirst(i);
+		RelOptInfo	   *other_rel = (RelOptInfo *) lfirst(i);
 		
 		if (same(rel->relids, other_rel->relids))
 		{
@@ -96,12 +96,12 @@ prune_rel_paths(List *rel_list)
 	List	   *x = NIL;
 	List	   *y = NIL;
 	Path	   *path = NULL;
-	Rel		   *rel = (Rel *) NULL;
+	RelOptInfo		   *rel = (RelOptInfo *) NULL;
 	JoinPath   *cheapest = (JoinPath *) NULL;
 
 	foreach(x, rel_list)
 	{
-		rel = (Rel *) lfirst(x);
+		rel = (RelOptInfo *) lfirst(x);
 		rel->size = 0;
 		foreach(y, rel->pathlist)
 		{
@@ -130,7 +130,7 @@ prune_rel_paths(List *rel_list)
  *
  */
 Path *
-prune_rel_path(Rel *rel, Path *unorderedpath)
+prune_rel_path(RelOptInfo *rel, Path *unorderedpath)
 {
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 
@@ -165,7 +165,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 
 	foreach(xrel, rel_list1)
 	{
-		Rel		   *rel = (Rel *) lfirst(xrel);
+		RelOptInfo		   *rel = (RelOptInfo *) lfirst(xrel);
 
 		rel_list2 = prune_joinrel(rel, rel_list2);
 	}
@@ -187,7 +187,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 List *
 prune_oldrels(List *old_rels)
 {
-	Rel		   *rel;
+	RelOptInfo		   *rel;
 	List	   *joininfo_list,
 			   *xjoininfo,
 			   *i,
@@ -195,7 +195,7 @@ prune_oldrels(List *old_rels)
 
 	foreach(i, old_rels)
 	{
-		rel = (Rel *) lfirst(i);
+		rel = (RelOptInfo *) lfirst(i);
 		joininfo_list = rel->joininfo;
 
 		if (joininfo_list == NIL)

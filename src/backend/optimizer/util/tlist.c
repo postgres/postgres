@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.13 1998/06/15 19:28:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.14 1998/07/18 04:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ matching_tlvar(Var *var, List *targetlist)
  * CREATES:  new var-node iff no matching var-node exists in targetlist
  */
 void
-add_tl_element(Rel *rel, Var *var)
+add_tl_element(RelOptInfo *rel, Var *var)
 {
 	Expr	   *oldvar = (Expr *) NULL;
 

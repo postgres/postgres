@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.8 1998/06/15 19:28:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.9 1998/07/18 04:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,13 +62,13 @@ path_is_cheaper(Path *path1, Path *path2)
  *
  */
 Path *
-set_cheapest(Rel *parent_rel, List *pathlist)
+set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 {
 	List	   *p;
 	Path	   *cheapest_so_far;
 
 	Assert(pathlist != NIL);
-	Assert(IsA(parent_rel, Rel));
+	Assert(IsA(parent_rel, RelOptInfo));
 
 	cheapest_so_far = (Path *) lfirst(pathlist);
 
@@ -99,7 +99,7 @@ set_cheapest(Rel *parent_rel, List *pathlist)
  *
  */
 List *
-add_pathlist(Rel *parent_rel, List *unique_paths, List *new_paths)
+add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
 {
 	List	   *x;
 	Path	   *new_path;
@@ -200,7 +200,7 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
  *
  */
 Path *
-create_seqscan_path(Rel *rel)
+create_seqscan_path(RelOptInfo *rel)
 {
 	int			relid = 0;
 
@@ -251,8 +251,8 @@ create_seqscan_path(Rel *rel)
  */
 IndexPath  *
 create_index_path(Query *root,
-				  Rel *rel,
-				  Rel *index,
+				  RelOptInfo *rel,
+				  RelOptInfo *index,
 				  List *restriction_clauses,
 				  bool is_join_scan)
 {
@@ -406,8 +406,8 @@ create_index_path(Query *root,
  *
  */
 JoinPath   *
-create_nestloop_path(Rel *joinrel,
-					 Rel *outer_rel,
+create_nestloop_path(RelOptInfo *joinrel,
+					 RelOptInfo *outer_rel,
 					 Path *outer_path,
 					 Path *inner_path,
 					 List *keys)
@@ -481,7 +481,7 @@ create_nestloop_path(Rel *joinrel,
  *
  */
 MergePath  *
-create_mergesort_path(Rel *joinrel,
+create_mergesort_path(RelOptInfo *joinrel,
 					  int outersize,
 					  int innersize,
 					  int outerwidth,
@@ -547,7 +547,7 @@ create_mergesort_path(Rel *joinrel,
  *
  */
 HashPath   *
-create_hashjoin_path(Rel *joinrel,
+create_hashjoin_path(RelOptInfo *joinrel,
 					 int outersize,
 					 int innersize,
 					 int outerwidth,

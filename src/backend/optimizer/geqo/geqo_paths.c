@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.9 1998/06/15 19:28:37 momjian Exp $
+ * $Id: geqo_paths.c,v 1.10 1998/07/18 04:22:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
 #include "optimizer/geqo_paths.h"
 
 
-static List *geqo_prune_rel(Rel *rel, List *other_rels);
-static Path *set_paths(Rel *rel, Path *unorderedpath);
+static List *geqo_prune_rel(RelOptInfo *rel, List *other_rels);
+static Path *set_paths(RelOptInfo *rel, Path *unorderedpath);
 
 /*
  * geqo-prune-rels--
@@ -47,7 +47,7 @@ geqo_prune_rels(List *rel_list)
 	if (rel_list != NIL)
 	{
 		temp_list = lcons(lfirst(rel_list),
-				 geqo_prune_rels(geqo_prune_rel((Rel *) lfirst(rel_list),
+				 geqo_prune_rels(geqo_prune_rel((RelOptInfo *) lfirst(rel_list),
 												lnext(rel_list))));
 	}
 	return (temp_list);
@@ -65,16 +65,16 @@ geqo_prune_rels(List *rel_list)
  *
  */
 static List *
-geqo_prune_rel(Rel *rel, List *other_rels)
+geqo_prune_rel(RelOptInfo *rel, List *other_rels)
 {
 	List	   *i = NIL;
 	List	   *t_list = NIL;
 	List	   *temp_node = NIL;
-	Rel		   *other_rel = (Rel *) NULL;
+	RelOptInfo		   *other_rel = (RelOptInfo *) NULL;
 
 	foreach(i, other_rels)
 	{
-		other_rel = (Rel *) lfirst(i);
+		other_rel = (RelOptInfo *) lfirst(i);
 		if (same(rel->relids, other_rel->relids))
 		{
 			rel->pathlist = add_pathlist(rel,
@@ -102,7 +102,7 @@ geqo_prune_rel(Rel *rel, List *other_rels)
  *
  */
 void
-geqo_rel_paths(Rel *rel)
+geqo_rel_paths(RelOptInfo *rel)
 {
 	List	   *y = NIL;
 	Path	   *path = (Path *) NULL;
@@ -134,7 +134,7 @@ geqo_rel_paths(Rel *rel)
  *
  */
 static Path *
-set_paths(Rel *rel, Path *unorderedpath)
+set_paths(RelOptInfo *rel, Path *unorderedpath)
 {
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 

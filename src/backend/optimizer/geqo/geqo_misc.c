@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.8 1998/06/15 19:28:35 momjian Exp $
+ * $Id: geqo_misc.c,v 1.9 1998/07/18 04:22:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 }
 
 void
-geqo_print_rel(Query *root, Rel *rel)
+geqo_print_rel(Query *root, RelOptInfo *rel)
 {
 	List	   *l;
 

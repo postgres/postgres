@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.24 1998/02/13 03:45:23 vadim Exp $
+ * $Id: nodes.h,v 1.25 1998/07/18 04:22:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ typedef enum NodeTag
 	 * TAGS FOR INNER PLAN NODES (relation.h)
 	 *---------------------
 	 */
-	T_Rel = 200,
+	T_RelOptInfo = 200,
 	T_Path,
 	T_IndexPath,
 	T_JoinPath,

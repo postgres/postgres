@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.6 1998/06/15 19:28:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.7 1998/07/18 04:22:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,11 +32,11 @@
 
 
 static void
-best_or_subclause_indices(Query *root, Rel *rel, List *subclauses,
+best_or_subclause_indices(Query *root, RelOptInfo *rel, List *subclauses,
 List *indices, List *examined_indexids, Cost subcost, List *selectivities,
 						  List **indexids, Cost *cost, List **selecs);
 static void
-best_or_subclause_index(Query *root, Rel *rel, Expr *subclause,
+best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclause,
 				   List *indices, int *indexid, Cost *cost, Cost *selec);
 
 
@@ -52,7 +52,7 @@ best_or_subclause_index(Query *root, Rel *rel, Expr *subclause,
  */
 List *
 create_or_index_paths(Query *root,
-					  Rel *rel, List *clauses)
+					  RelOptInfo *rel, List *clauses)
 {
 	List	   *t_list = NIL;
 
@@ -157,7 +157,7 @@ create_or_index_paths(Query *root,
  */
 static void
 best_or_subclause_indices(Query *root,
-						  Rel *rel,
+						  RelOptInfo *rel,
 						  List *subclauses,
 						  List *indices,
 						  List *examined_indexids,
@@ -212,7 +212,7 @@ best_or_subclause_indices(Query *root,
  */
 static void
 best_or_subclause_index(Query *root,
-						Rel *rel,
+						RelOptInfo *rel,
 						Expr *subclause,
 						List *indices,
 						int *retIndexid,		/* return value */
@@ -224,7 +224,7 @@ best_or_subclause_index(Query *root,
 		Datum		value;
 		int			flag = 0;
 		Cost		subcost;
-		Rel		   *index = (Rel *) lfirst(indices);
+		RelOptInfo		   *index = (RelOptInfo *) lfirst(indices);
 		AttrNumber	attno = (get_leftop(subclause))->varattno;
 		Oid			opno = ((Oper *) subclause->oper)->opno;
 		bool		constant_on_right = non_null((Expr *) get_rightop(subclause));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.40 1998/07/15 14:54:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.41 1998/07/18 04:22:26 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -990,11 +990,11 @@ _outEState(StringInfo str, EState *node)
  *	Stuff from relation.h
  */
 static void
-_outRel(StringInfo str, Rel *node)
+_outRel(StringInfo str, RelOptInfo *node)
 {
 	char		buf[500];
 
-	appendStringInfo(str, " REL ");
+	appendStringInfo(str, " RELOPTINFO ");
 
 	appendStringInfo(str, " :relids ");
 	_outIntList(str, node->relids);
@@ -1058,7 +1058,7 @@ _outRel(StringInfo str, Rel *node)
 static void
 _outTargetEntry(StringInfo str, TargetEntry *node)
 {
-	appendStringInfo(str, " TLE ");
+	appendStringInfo(str, " TARGETENTRY ");
 	appendStringInfo(str, " :resdom ");
 	_outNode(str, node->resdom);
 
@@ -1787,7 +1787,7 @@ _outNode(StringInfo str, void *obj)
 			case T_EState:
 				_outEState(str, obj);
 				break;
-			case T_Rel:
+			case T_RelOptInfo:
 				_outRel(str, obj);
 				break;
 			case T_TargetEntry:

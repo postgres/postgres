@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.43 1998/07/15 14:54:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.44 1998/07/18 04:22:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -998,10 +998,10 @@ _copyArrayRef(ArrayRef *from)
  ** planner/path/xfunc.c accordingly!!!
  **			-- JMH, 8/2/93
  */
-static Rel *
-_copyRel(Rel *from)
+static RelOptInfo *
+_copyRel(RelOptInfo *from)
 {
-	Rel		   *newnode = makeNode(Rel);
+	RelOptInfo		   *newnode = makeNode(RelOptInfo);
 	int			i,
 				len;
 
@@ -1734,7 +1734,7 @@ copyObject(void *from)
 			/*
 			 * RELATION NODES
 			 */
-		case T_Rel:
+		case T_RelOptInfo:
 			retval = _copyRel(from);
 			break;
 		case T_Path:

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.12 1998/06/15 19:28:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.13 1998/07/18 04:22:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ initialize_base_rels_list(Query *root, List *tlist)
 	{
 		Var		   *var;
 		Index		varno;
-		Rel		   *result;
+		RelOptInfo		   *result;
 
 		var = (Var *) lfirst(tvar);
 		varno = var->varno;
@@ -108,7 +108,7 @@ add_missing_vars_to_base_rels(Query *root, List *tlist)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 		List	   *relids;
-		Rel		   *result;
+		RelOptInfo		   *result;
 		Var		   *var;
 
 		relids = lconsi(varno, NIL);
@@ -187,7 +187,7 @@ add_clause_to_rels(Query *root, List *clause)
 
 	if (length(relids) == 1)
 	{
-		Rel		   *rel = get_base_rel(root, lfirsti(relids));
+		RelOptInfo		   *rel = get_base_rel(root, lfirsti(relids));
 
 		/*
 		 * There is only one relation participating in 'clause', so
@@ -302,7 +302,7 @@ add_vars_to_rels(Query *root, List *vars, List *join_relids)
 {
 	Var		   *var;
 	List	   *temp = NIL;
-	Rel		   *rel = (Rel *) NULL;
+	RelOptInfo		   *rel = (RelOptInfo *) NULL;
 	TargetEntry *tlistentry;
 
 	foreach(temp, vars)
@@ -337,14 +337,14 @@ initialize_join_clause_info(List *rel_list)
 	List	   *x,
 			   *y,
 			   *z;
-	Rel		   *rel;
+	RelOptInfo		   *rel;
 	JInfo	   *joininfo;
 	CInfo	   *clauseinfo;
 	Expr	   *clause;
 
 	foreach(x, rel_list)
 	{
-		rel = (Rel *) lfirst(x);
+		rel = (RelOptInfo *) lfirst(x);
 		foreach(y, rel->joininfo)
 		{
 			joininfo = (JInfo *) lfirst(y);

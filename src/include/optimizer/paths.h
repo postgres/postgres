@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.8 1998/02/26 04:42:17 momjian Exp $
+ * $Id: paths.h,v 1.9 1998/07/18 04:22:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ extern List *find_paths(Query *root, List *rels);
  *	  routines to generate index paths
  */
 extern List *
-find_index_paths(Query *root, Rel *rel, List *indices,
+find_index_paths(Query *root, RelOptInfo *rel, List *indices,
 				 List *clauseinfo_list,
 				 List *joininfo_list);
 
@@ -42,7 +42,7 @@ extern void find_all_join_paths(Query *root, List *joinrels);
 /*
  * orindxpath.h
  */
-extern List *create_or_index_paths(Query *root, Rel *rel, List *clauses);
+extern List *create_or_index_paths(Query *root, RelOptInfo *rel, List *clauses);
 
 /*
  * hashutils.h
@@ -94,7 +94,7 @@ extern List *final_join_rels(List *join_rel_list);
  */
 extern void prune_joinrels(List *rel_list);
 extern void prune_rel_paths(List *rel_list);
-extern Path *prune_rel_path(Rel *rel, Path *unorderedpath);
+extern Path *prune_rel_path(RelOptInfo *rel, Path *unorderedpath);
 extern List *merge_joinrels(List *rel_list1, List *rel_list2);
 extern List *prune_oldrels(List *old_rels);
 

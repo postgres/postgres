@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.7 1998/02/26 04:32:22 momjian Exp $
+ * $Id: geqo_main.c,v 1.8 1998/07/18 04:22:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@
  *	  similar to a constrained Traveling Salesman Problem (TSP)
  */
 
-Rel *
+RelOptInfo *
 geqo(Query *root)
 {
 	int			generation;
@@ -98,7 +98,7 @@ geqo(Query *root)
 				status_interval;
 
 	Gene	   *best_tour;
-	Rel		   *best_rel;
+	RelOptInfo		   *best_rel;
 
 /*	Plan *best_plan; */
 
@@ -254,7 +254,7 @@ geqo(Query *root)
 	best_tour = (Gene *) pool->data[0].string;
 
 /* root->join_relation_list_ will be modified during this ! */
-	best_rel = (Rel *) gimme_tree(root, best_tour, 0, pool->string_length, NULL);
+	best_rel = (RelOptInfo *) gimme_tree(root, best_tour, 0, pool->string_length, NULL);
 
 /* DBG: show the query plan
 print_plan(best_plan, root);

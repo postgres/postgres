@@ -7,7 +7,7 @@
 *
 *
 * IDENTIFICATION
-*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.5 1998/06/15 19:28:38 momjian Exp $
+*	 $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/Attic/minspantree.c,v 1.6 1998/07/18 04:22:29 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -41,7 +41,7 @@
 */
 
 void
-minspantree(Query *root, List *join_rels, Rel *garel)
+minspantree(Query *root, List *join_rels, RelOptInfo *garel)
 {
 	int			number_of_rels = length(root->base_relation_list_);
 	int			number_of_joins = length(join_rels);
@@ -70,28 +70,28 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 				id1,
 				id2;
 	List	   *r = NIL;
-	Rel		   *joinrel = NULL;
-	Rel		  **tmprel_array;
+	RelOptInfo		   *joinrel = NULL;
+	RelOptInfo		  **tmprel_array;
 
 
 	/* allocate memory for matrix tmprel_array[x][y] */
-	tmprel_array = (Rel **) palloc((number_of_rels + 1) * sizeof(Rel *));
+	tmprel_array = (RelOptInfo **) palloc((number_of_rels + 1) * sizeof(RelOptInfo *));
 	for (i = 0; i <= number_of_rels; i++)
-		(tmprel_array[i] = (Rel *) palloc((number_of_rels + 1) * sizeof(Rel)));
+		(tmprel_array[i] = (RelOptInfo *) palloc((number_of_rels + 1) * sizeof(RelOptInfo)));
 
 	/* read relations of join-relations into tmprel_array */
 
 	foreach(r, join_rels)
 	{
-		joinrel = (Rel *) lfirst(r);
+		joinrel = (RelOptInfo *) lfirst(r);
 		id1 = (int) lfirst(joinrel->relids);
 		id2 = (int) lsecond(joinrel->relids);
 
 		if (id1 > id2)
-			tmprel_array[id2][id1] = *(Rel *) joinrel;
+			tmprel_array[id2][id1] = *(RelOptInfo *) joinrel;
 		else
 		{
-			tmprel_array[id1][id2] = *(Rel *) joinrel;	/* ever reached? */
+			tmprel_array[id1][id2] = *(RelOptInfo *) joinrel;	/* ever reached? */
 		}
 	}
 
@@ -103,7 +103,7 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 		i = 1;
 		foreach(r, join_rels)
 		{
-			garel[i] = *(Rel *) lfirst(r);
+			garel[i] = *(RelOptInfo *) lfirst(r);
 			i++;
 		}
 	}
@@ -111,9 +111,9 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 
 	else if (number_of_joins == 3)
 	{
-		Rel		   *rel12 = (Rel *) &tmprel_array[1][2];
-		Rel		   *rel13 = (Rel *) &tmprel_array[1][3];
-		Rel		   *rel23 = (Rel *) &tmprel_array[2][3];
+		RelOptInfo		   *rel12 = (RelOptInfo *) &tmprel_array[1][2];
+		RelOptInfo		   *rel13 = (RelOptInfo *) &tmprel_array[1][3];
+		RelOptInfo		   *rel23 = (RelOptInfo *) &tmprel_array[2][3];
 
 		if (rel12->cheapestpath->path_cost > rel13->cheapestpath->path_cost)
 		{
@@ -159,9 +159,9 @@ minspantree(Query *root, List *join_rels, Rel *garel)
 				if (connectto[tempn] != 0)
 				{
 					if (n > tempn)
-						joinrel = (Rel *) &tmprel_array[tempn][n];
+						joinrel = (RelOptInfo *) &tmprel_array[tempn][n];
 					else
-						joinrel = (Rel *) &tmprel_array[n][tempn];
+						joinrel = (RelOptInfo *) &tmprel_array[n][tempn];
 					dist = joinrel->cheapestpath->path_cost;
 
 					if (dist < disttoconnect[tempn])

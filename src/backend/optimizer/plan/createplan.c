@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.28 1998/06/15 19:28:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.29 1998/07/18 04:22:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ create_plan(Path *best_path)
 {
 	List	   *tlist;
 	Plan	   *plan_node = (Plan *) NULL;
-	Rel		   *parent_rel;
+	RelOptInfo		   *parent_rel;
 	int			size;
 	int			width;
 	int			pages;

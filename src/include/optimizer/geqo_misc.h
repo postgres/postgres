@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.h,v 1.5 1997/11/26 01:13:28 momjian Exp $
+ * $Id: geqo_misc.h,v 1.6 1998/07/18 04:22:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ extern void print_pool(FILE *fp, Pool *pool, int start, int stop);
 extern void print_gen(FILE *fp, Pool *pool, int generation);
 extern void print_edge_table(FILE *fp, Edge *edge_table, int num_gene);
 
-extern void geqo_print_rel(Query *root, Rel *rel);
+extern void geqo_print_rel(Query *root, RelOptInfo *rel);
 extern void geqo_print_path(Query *root, Path *path, int indent);
 extern void geqo_print_joinclauses(Query *root, List *clauses);
 
