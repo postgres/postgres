@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.32 1998/02/11 21:38:08 momjian Exp $
+ * $Id: c.h,v 1.33 1998/02/11 21:45:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -708,20 +708,18 @@ typedef struct Exception
 /* Get a bit mask of the bits set in non-int32 aligned addresses */
 #define INT_ALIGN_MASK (sizeof(int32) - 1)
 
-/* This function gets call too often, so we inline it if we can */
+/*
+ *	This function gets call too often, so we inline it if we can.
+ *  Are we aligned for int32?
+ *	We have to cast the pointer to int so we can do the AND
+ *	We got the 64 number by testing this against the stock memset() on
+ *	BSD/OS 3.0.	Larger values were slower.
+ */
 #define MemSet(start, val, len) do \
-								{	/* are we aligned for int32? */ \
-									/* We have to cast the pointer to int \
-									   so we can do the AND */ \
+								{	
 									if (((long)(start) & INT_ALIGN_MASK) == 0 && \
 										((len) & INT_ALIGN_MASK) == 0 && \
 										(val) == 0 && \
-									/* \
-									 * We got this number by testing this \
-									 * against the stock memset() on \
-									 * bsd/os 3.0.	Larger values were \
-									 * slower. \
-									 */ \
 										(len) <= 64) \
 									{ \
 										int32 *_i = (int32 *)(start); \
