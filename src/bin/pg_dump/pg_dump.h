@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.3 1996/07/22 08:37:00 scrappy Exp $
+ * $Id: pg_dump.h,v 1.3.2.1 1996/08/24 20:54:43 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -142,6 +142,8 @@ extern char g_opaque_type[10]; /* name for the opaque type */
 */
 
 extern TableInfo* dumpSchema(FILE* fout, int *numTablesPtr, char *tablename);
+extern void dumpSchemaIdx(FILE* fout, int *numTablesPtr, char *tablename,
+				TableInfo* tblinfo, int numTables);
 
 extern char* findTypeByOid(TypeInfo* tinfo, int numTypes, char* oid);
 extern char* findOprByOid(OprInfo *oprinfo, int numOprs, char *oid);

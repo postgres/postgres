@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2 1996/07/23 02:23:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2.2.1 1996/08/24 20:53:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,13 @@
 #include "catalog/pg_index.h"
 #include "catalog/index.h"
 
+#include "storage/bufmgr.h"
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/funcindex.h"
+#include "access/transam.h"
 #include "access/tupdesc.h"
 #include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
@@ -50,8 +52,8 @@
 static bool reading_from_input = false;
 
 /* non-export function prototypes */
-static void CopyTo(Relation rel, bool binary, FILE *fp, char *delim);
-static void CopyFrom(Relation rel, bool binary, FILE *fp, char *delim);
+static void CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim);
+static void CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim);
 static Oid GetOutputFunction(Oid type);
 static Oid GetTypeElement(Oid type);
 static Oid GetInputFunction(Oid type);
@@ -59,14 +61,14 @@ static Oid IsTypeByVal(Oid type);
 static void GetIndexRelations(Oid main_relation_oid,
 			      int *n_indices,
 			      Relation **index_rels);
-static char *CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim);
+static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int CountTuples(Relation relation);
 
 extern FILE *Pfout, *Pfin;
 
 void
-DoCopy(char *relname, bool binary, bool from, bool pipe, char *filename, 
+DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe, char *filename, 
        char *delim)
 {
     FILE *fp;
@@ -86,7 +88,7 @@ DoCopy(char *relname, bool binary, bool from, bool pipe, char *filename,
 	if (fp == NULL) {
 	    elog(WARN, "COPY: file %s could not be open for reading", filename);
 	}
-	CopyFrom(rel, binary, fp, delim);
+	CopyFrom(rel, binary, oids, fp, delim);
     }else {
 	
 	mode_t oumask = umask((mode_t) 0);
@@ -102,7 +104,7 @@ DoCopy(char *relname, bool binary, bool from, bool pipe, char *filename,
 	if (fp == NULL)  {
 	    elog(WARN, "COPY: file %s could not be open for writing", filename);
 	}
-	CopyTo(rel, binary, fp, delim);
+	CopyTo(rel, binary, oids, fp, delim);
     }
     if (!pipe) {
 	fclose(fp);
@@ -113,7 +115,7 @@ DoCopy(char *relname, bool binary, bool from, bool pipe, char *filename,
 }
 
 static void
-CopyTo(Relation rel, bool binary, FILE *fp, char *delim)
+CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 {
     HeapTuple tuple;
     HeapScanDesc scandesc;
@@ -159,6 +161,11 @@ CopyTo(Relation rel, bool binary, FILE *fp, char *delim)
     for (tuple = heap_getnext(scandesc, 0, NULL);
          tuple != NULL; 
          tuple = heap_getnext(scandesc, 0, NULL)) {
+
+        if (oids && !binary) {
+            	fputs(oidout(tuple->t_oid),fp);
+		fputc(delim[0], fp);
+	}
 	
 	for (i = 0; i < attr_count; i++) {
 	    value = (Datum) 
@@ -194,6 +201,9 @@ CopyTo(Relation rel, bool binary, FILE *fp, char *delim)
 	    
 	    length = tuple->t_len - tuple->t_hoff;
 	    fwrite(&length, sizeof(int32), 1, fp);
+            if (oids)
+		fwrite((char *) &tuple->t_oid, sizeof(int32), 1, fp);
+
 	    fwrite(&null_ct, sizeof(int32), 1, fp);
 	    if (null_ct > 0) {
 		for (i = 0; i < attr_count; i++) {
@@ -219,7 +229,7 @@ CopyTo(Relation rel, bool binary, FILE *fp, char *delim)
 }
 
 static void
-CopyFrom(Relation rel, bool binary, FILE *fp, char *delim)
+CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 {
     HeapTuple tuple;
     IndexTuple ituple;
@@ -257,7 +267,8 @@ CopyFrom(Relation rel, bool binary, FILE *fp, char *delim)
     int n_indices;
     InsertIndexResult indexRes;
     TupleDesc tupDesc;
-
+    Oid loaded_oid;
+    
     tupDesc = RelationGetTupleDescriptor(rel);
     attr = tupDesc->attrs;
     attr_count = tupDesc->natts;
@@ -371,8 +382,18 @@ CopyFrom(Relation rel, bool binary, FILE *fp, char *delim)
     
     while (!done) {
 	if (!binary) {
+	    if (oids) {
+		string = CopyReadAttribute(fp, &isnull, delim);
+		if (string == NULL)
+		    done = 1;
+		else {
+		    loaded_oid = oidin(string);
+		    if (loaded_oid < BootstrapObjectIdData)
+			elog(WARN, "COPY TEXT: Invalid Oid");
+		}
+	    }
 	    for (i = 0; i < attr_count && !done; i++) {
-		string = CopyReadAttribute(i, fp, &isnull, delim);
+		string = CopyReadAttribute(fp, &isnull, delim);
 		if (isnull) {
 		    values[i] = PointerGetDatum(NULL);
 		    nulls[i] = 'n';
@@ -398,6 +419,11 @@ CopyFrom(Relation rel, bool binary, FILE *fp, char *delim)
 	    if (feof(fp)) {
 		done = 1;
 	    }else {
+		if (oids) {
+		    fread(&loaded_oid, sizeof(int32), 1, fp);
+		    if (loaded_oid < BootstrapObjectIdData)
+			elog(WARN, "COPY BINARY: Invalid Oid");
+		}
 		fread(&null_ct, sizeof(int32), 1, fp);
 		if (null_ct > 0) {
 		    for (i = 0; i < null_ct; i++) {
@@ -473,6 +499,8 @@ CopyFrom(Relation rel, bool binary, FILE *fp, char *delim)
 	    
 	tupDesc = CreateTupleDesc(attr_count, attr);
 	tuple = heap_formtuple(tupDesc, values, nulls);
+	if (oids)
+	    tuple->t_oid = loaded_oid;
 	heap_insert(rel, tuple);
 	    
 	if (has_index) {
@@ -696,7 +724,7 @@ inString(char c, char* s)
  */
 
 static char *
-CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim)
+CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 {
     static char attribute[EXT_ATTLEN];
     char c;

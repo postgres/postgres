@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.2 1996/07/23 02:23:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.2.2.1 1996/08/24 20:54:06 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -122,14 +122,14 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 
 %type <list>	queryblock, relation_name_list, OptTableElementList,
 	tableElementList, OptInherit, definition,
-	opt_with, def_args, def_name_list, func_argtypes, oper_argtypes,
+	opt_with_func, def_args, def_name_list, func_argtypes, oper_argtypes,
 	OptStmtList, OptStmtBlock, opt_column_list, columnList,
 	exprList, sort_clause, sortby_list, index_params, 
 	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
 	expr_list, attrs, res_target_list, res_target_list2, def_list,
 	opt_indirection, group_clause, groupby_list, explain_options
 
-%type <boolean>	opt_inh_star, opt_binary, opt_instead
+%type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy
 
 %type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation, 
 	def_type, opt_direction, remove_type, opt_column, event
@@ -176,7 +176,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, 
 	ISNULL, LANGUAGE, LIGHT, LISTEN, LOAD, MERGE, MOVE, NEW, 
 	NONE, NOT, NOTHING, NOTIFY, NOTNULL, 
-        ON, OPERATOR, OPTION, OR, ORDER, 
+        OIDS, ON, OPERATOR, OPTION, OR, ORDER, 
         PNULL, PRIVILEGES, PUBLIC, PURGE, P_TYPE, 
         RENAME, REPLACE, RETRIEVE, RETURNS, REVOKE, ROLLBACK, RULE, 
         SELECT, SET, SETOF, STDIN, STDOUT, STORE, 
@@ -305,14 +305,15 @@ ClosePortalStmt:  CLOSE opt_id
  *
  *****************************************************************************/
 
-CopyStmt:  COPY opt_binary relation_name copy_dirn copy_file_name copy_delimiter
+CopyStmt:  COPY opt_binary relation_name opt_with_copy copy_dirn copy_file_name copy_delimiter
 		{
 		    CopyStmt *n = makeNode(CopyStmt);
 		    n->binary = $2;
 		    n->relname = $3;
-		    n->direction = $4;
-		    n->filename = $5;
-		    n->delimiter = $6;
+		    n->oids = $4;
+		    n->direction = $5;
+		    n->filename = $6;
+		    n->delimiter = $7;
 		    $$ = (Node *)n;
 		}
 	;
@@ -335,6 +336,10 @@ copy_file_name:  Sconst				{ $$ = $1; }
 
 opt_binary: BINARY				{ $$ = TRUE; }
 	|  /*EMPTY*/				{ $$ = FALSE; }
+	;
+
+opt_with_copy:  WITH OIDS			{ $$ = TRUE; }
+	|  /* EMPTY */				{ $$ = FALSE; }
 	;
 
 /*
@@ -720,7 +725,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 ProcedureStmt:  CREATE FUNCTION def_name def_args 
-		   RETURNS def_arg opt_with AS Sconst LANGUAGE Sconst
+		   RETURNS def_arg opt_with_func AS Sconst LANGUAGE Sconst
                 {
 		    ProcedureStmt *n = makeNode(ProcedureStmt);
 		    n->funcname = $3;
@@ -732,7 +737,7 @@ ProcedureStmt:  CREATE FUNCTION def_name def_args
 		    $$ = (Node *)n;
 		};
 
-opt_with:  WITH definition			{ $$ = $2; }
+opt_with_func:  WITH definition			{ $$ = $2; }
 	|  /* EMPTY */				{ $$ = NIL; }
 	;
 

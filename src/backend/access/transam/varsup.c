@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.1.1.1 1996/07/09 06:21:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.1.1.1.2.1 1996/08/24 20:53:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,14 +27,6 @@
 #include "access/xact.h"	/* where the declarations go */
 
 #include "catalog/catname.h"
-
-/* ----------
- *      note: we reserve the first 16384 object ids for internal use.
- *      oid's less than this appear in the .bki files.  the choice of
- *      16384 is completely arbitrary.
- * ----------
- */
-#define BootstrapObjectIdData 16384
 
 /* ---------------------
  *	spin lock for oid generation
@@ -604,3 +596,62 @@ GetNewObjectId(Oid *oid_return)	/* place to return the new object id */
     next_prefetched_oid++;
     prefetched_oid_count--;
 }
+
+void
+CheckMaxObjectId(Oid assigned_oid)
+{
+Oid	pass_oid;
+
+
+    if (prefetched_oid_count == 0)   /* make sure next/max is set, or reload */
+	GetNewObjectId(&pass_oid);
+
+    /* ----------------
+     *  If we are below prefetched limits, do nothing
+     * ----------------
+     */
+    
+    if (assigned_oid < next_prefetched_oid)
+	return;
+
+    /* ----------------
+     *  If we are here, we are coming from a 'copy from' with oid's
+     *
+     *  If we are in the prefetched oid range, just bump it up
+     *
+     * ----------------
+     */
+    
+    if (assigned_oid <= next_prefetched_oid + prefetched_oid_count - 1)
+    {
+	prefetched_oid_count -= assigned_oid - next_prefetched_oid + 1;
+	next_prefetched_oid = assigned_oid + 1;
+	return;
+    }
+
+    /* ----------------
+     *  We have exceeded the prefetch oid range
+     *
+     *  We should lock the database and kill all other backends
+     *  but we are loading oid's that we can not guarantee are unique
+     *  anyway, so we must rely on the user
+     *
+     *
+     * We now:
+     *    set the variable relation with the new max oid
+     *    force the backend to reload its oid cache
+     *
+     * We use the oid cache so we don't have to update the variable
+     * relation every time
+     *
+     * ----------------
+     */
+
+    pass_oid = assigned_oid;
+    VariableRelationPutNextOid(&pass_oid); /* not modified */
+    prefetched_oid_count = 0;	/* force reload */
+    pass_oid = assigned_oid;
+    GetNewObjectId(&pass_oid);	/* throw away returned oid */
+
+}
+
