@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.52 2001/02/21 19:07:04 momjian Exp $
+ * $Id: nbtree.h,v 1.53 2001/02/22 21:48:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,9 @@
 
 /*
  *	BTPageOpaqueData -- At the end of every page, we store a pointer
- *	to both siblings in the tree.  See Lehman and Yao's paper for more
- *	info.  In addition, we need to know what sort of page this is
+ *	to both siblings in the tree.  This is used to do forward/backward
+ *  index scans.  See Lehman and Yao's paper for more
+ *	info.  In addition, we need to know what type of page this is
  *	(leaf or internal), and whether the page is available for reuse.
  *
  *	We also store a back-link to the parent page, but this cannot be trusted
@@ -32,31 +33,28 @@
 
 typedef struct BTPageOpaqueData
 {
-	BlockNumber btpo_prev;
-	BlockNumber btpo_next;
-	BlockNumber btpo_parent;
-	uint16		btpo_flags;
+	BlockNumber btpo_prev;		/* used for backward index scans */
+	BlockNumber btpo_next;		/* used for forward index scans */
+	BlockNumber btpo_parent;	/* pointer to parent, but not updated
+								   on parent split */
+	uint16		btpo_flags;		/* LEAF?, ROOT?, FREE?, META?, REORDER? */
 
 } BTPageOpaqueData;
 
 typedef BTPageOpaqueData *BTPageOpaque;
 
 /* Bits defined in btpo_flags */
-#define BTP_LEAF		(1 << 0)	/* It's a leaf page */
-#define BTP_ROOT		(1 << 1)	/* It's the root page (has no parent) */
-#define BTP_FREE		(1 << 2)	/* not currently used... */
-#define BTP_META		(1 << 3)	/* Set in the meta-page only */
-#define	BTP_REORDER		(1 << 4)	/* items must be re-ordered */
+#define BTP_LEAF		(1 << 0)	/* leaf page, if not internal page */
+#define BTP_ROOT		(1 << 1)	/* root page (has no parent) */
+#define BTP_FREE		(1 << 2)	/* page not in use */
+#define BTP_META		(1 << 3)	/* meta-page */
+#define	BTP_REORDER		(1 << 4)	/* items need reordering */
 
 
-#define BTREE_METAPAGE	0	/* first page is meta */
-#define BTREE_MAGIC		0x053162
-
-#define BTreeInvalidParent(opaque)	\
-	(opaque->btpo_parent == InvalidBlockNumber || \
-		opaque->btpo_parent == BTREE_METAPAGE)
-
-#define BTREE_VERSION	1
+/*
+ * The Meta page is always the first page in the btree index.
+ * Its primary purpose is to point to the location of the btree root page.
+ */
 
 typedef struct BTMetaPageData
 {
@@ -69,6 +67,15 @@ typedef struct BTMetaPageData
 #define BTPageGetMeta(p) \
 	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
 
+#define BTREE_METAPAGE	0	/* first page is meta */
+#define BTREE_MAGIC		0x053162	/* magic number of btree pages */
+
+#define BTreeInvalidParent(opaque)	\
+	(opaque->btpo_parent == InvalidBlockNumber || \
+		opaque->btpo_parent == BTREE_METAPAGE)
+
+#define BTREE_VERSION	1
+	
 /*
  *	BTScanOpaqueData is used to remember which buffers we're currently
  *	examining in the scan.	We keep these buffers pinned (but not locked,

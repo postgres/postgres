@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.29 2001/02/21 19:07:04 momjian Exp $
+ * $Id: itup.h,v 1.30 2001/02/22 21:48:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,14 @@ typedef struct IndexTupleData
 {
 	ItemPointerData t_tid;		/* reference TID to heap tuple */
 
-	/*
+	/* ---------------
 	 * t_info is layed out in the following fashion:
 	 *
-	 * 15th (leftmost) bit: "has nulls" bit 14th bit: "has varlenas" bit 13th
-	 * bit: "has rules" bit - (removed ay 11/94) bits 12-0 bit: size of
-	 * tuple.
+	 * 15th (high) bit: has nulls
+	 * 14th bit: has varlenas
+	 * 13th bit: unused
+	 * 12-0 bit: size of tuple
+	 * ---------------
 	 */
 
 	unsigned short t_info;		/* various info about tuple */
@@ -69,13 +71,14 @@ typedef RetrieveIndexResultData *RetrieveIndexResult;
 #define INDEX_SIZE_MASK 0x1FFF
 #define INDEX_NULL_MASK 0x8000
 #define INDEX_VAR_MASK	0x4000
+/* bit 0x2000 is not used */
 
-#define IndexTupleSize(itup)	((Size) (((IndexTuple) (itup))->t_info & 0x1FFF))
-#define IndexTupleDSize(itup)				  ((Size) ((itup).t_info & 0x1FFF))
-#define IndexTupleNoNulls(itup)  (!(((IndexTuple) (itup))->t_info & 0x8000))
-#define IndexTupleAllFixed(itup) (!(((IndexTuple) (itup))->t_info & 0x4000))
+#define IndexTupleSize(itup)		((Size) (((IndexTuple) (itup))->t_info & INDEX_SIZE_MASK))
+#define IndexTupleDSize(itup)		((Size) ((itup).t_info & INDEX_SIZE_MASK))
+#define IndexTupleHasNulls(itup) 	((((IndexTuple) (itup))->t_info & INDEX_NULL_MASK))
+#define IndexTupleHasVarlenas(itup)	((((IndexTuple) (itup))->t_info & INDEX_VAR_MASK))
 
-#define IndexTupleHasMinHeader(itup) (IndexTupleNoNulls(itup))
+#define IndexTupleHasMinHeader(itup) (!IndexTupleHasNulls(itup))
 
 /*
  * Takes an infomask as argument (primarily because this needs to be usable
@@ -107,7 +110,7 @@ typedef RetrieveIndexResultData *RetrieveIndexResult;
 ( \
 	AssertMacro(PointerIsValid(isnull) && (attnum) > 0), \
 	*(isnull) = false, \
-	IndexTupleNoNulls(tup) ? \
+	!IndexTupleHasNulls(tup) ? \
 	( \
 		(tupleDesc)->attrs[(attnum)-1]->attcacheoff >= 0 ? \
 		( \

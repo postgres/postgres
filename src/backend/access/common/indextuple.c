@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.51 2001/02/15 20:57:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.52 2001/02/22 21:48:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,7 @@ nocache_index_getattr(IndexTuple tup,
 
 	attnum--;
 
-	if (IndexTupleNoNulls(tup))
+	if (!IndexTupleHasNulls(tup))
 	{
 #ifdef IN_MACRO
 /* This is handled in the macro */
@@ -301,7 +301,7 @@ nocache_index_getattr(IndexTuple tup,
 			return fetchatt(att[attnum],
 							tp + att[attnum]->attcacheoff);
 		}
-		else if (!IndexTupleAllFixed(tup))
+		else if (IndexTupleHasVarlenas(tup))
 		{
 			int			j;
 
@@ -365,7 +365,7 @@ nocache_index_getattr(IndexTuple tup,
 
 		for (i = 0; i < attnum; i++)
 		{
-			if (!IndexTupleNoNulls(tup))
+			if (IndexTupleHasNulls(tup))
 			{
 				if (att_isnull(i, bp))
 				{

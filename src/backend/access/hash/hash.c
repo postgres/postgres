@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.48 2001/01/29 00:39:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.49 2001/02/22 21:48:49 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -170,7 +170,7 @@ hashbuild(PG_FUNCTION_ARGS)
 		 * of the way nulls are handled here.
 		 */
 
-		if (itup->t_info & INDEX_NULL_MASK)
+		if (IndexTupleHasNulls(itup))
 		{
 			pfree(itup);
 			continue;
@@ -256,7 +256,7 @@ hashinsert(PG_FUNCTION_ARGS)
 	itup = index_formtuple(RelationGetDescr(rel), datum, nulls);
 	itup->t_tid = *ht_ctid;
 
-	if (itup->t_info & INDEX_NULL_MASK)
+	if (IndexTupleHasNulls(itup))
 		PG_RETURN_POINTER((InsertIndexResult) NULL);
 
 	hitem = _hash_formitem(itup);
