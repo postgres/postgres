@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.15 1997/01/22 01:42:16 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.16 1997/01/24 23:48:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,12 +40,12 @@
 #include <commands/vacuum.h>
 #include <storage/bufpage.h>
 #include "storage/shmem.h"
-#ifdef NEED_RUSAGE
+#ifndef HAVE_RUSAGE
 # include <rusagestub.h>
-#else /* NEED_RUSAGE */
+#else 
 # include <sys/time.h>
 # include <sys/resource.h>
-#endif /* NEED_RUSAGE */
+#endif 
 
 bool VacuumRunning =	false;
 static int MESSLEV;	/* message level */

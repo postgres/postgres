@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.11 1997/01/08 08:31:07 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.12 1997/01/24 23:48:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,13 +290,13 @@ Async_NotifyAtCommit()
 #ifdef ASYNC_DEBUG
 			elog(DEBUG, "Notifying others");
 #endif
-#ifndef win32
+#ifdef HAVE_KILL
 			if (kill(DatumGetInt32(d), SIGUSR2) < 0) {
 			    if (errno == ESRCH) {
 				heap_delete(lRel, &lTuple->t_ctid);
 			    }
 			}
-#endif /* win32 */
+#endif 
 		    }
 		}
 		ReleaseBuffer(b);

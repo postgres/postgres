@@ -18,6 +18,7 @@
 #define HAVE_ISINF
 #define HAVE_CBRT
 #define HAVE_RINT
+#define HAVE_RUSAGE
 
 #if defined(aix)
 #  undef HAVE_SYS_SELECT_H
@@ -95,7 +96,7 @@
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  undef HAVE_ISINF 
-#  define NEED_RUSAGE 
+#  undef HAVE_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
@@ -167,7 +168,7 @@
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  undef HAVE_ISINF 
-#  define NEED_RUSAGE 
+#  undef HAVE_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
@@ -186,7 +187,7 @@ typedef unsigned char slock_t;
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  undef HAVE_ISINF 
-#  define NEED_RUSAGE 
+#  undef HAVE_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
