@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.15 1997/09/08 02:35:20 momjian Exp $
+ * $Id: pg_operator.h,v 1.16 1997/09/20 16:29:36 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -244,7 +244,7 @@ DATA(insert OID = 568 (  "<"	   PGUID 0 b t f 703 703  16 569 571 0 0 reltimelt 
 DATA(insert OID = 569 (  ">"	   PGUID 0 b t f 703 703  16 568 570 0 0 reltimegt - - ));
 DATA(insert OID = 570 (  "<="	   PGUID 0 b t f 703 703  16 571 569 0 0 reltimele - - ));
 DATA(insert OID = 571 (  ">="	   PGUID 0 b t f 703 703  16 570 568 0 0 reltimege - - ));
-DATA(insert OID = 572 (  "="	   PGUID 0 b t t 704 704  16 572   0   0   0 intervaleq - - ));
+DATA(insert OID = 572 (  "~="	   PGUID 0 b t t 704 704  16 572   0   0   0 intervalsame - - ));
 DATA(insert OID = 573 (  "<<"	   PGUID 0 b t f 704 704  16   0   0   0   0 intervalct - - ));
 DATA(insert OID = 574 (  "&&"	   PGUID 0 b t f 704 704  16   0   0   0   0 intervalov - - ));
 DATA(insert OID = 575 (  "#="	   PGUID 0 b t f 704 703  16   0 576   0 568 intervalleneq - - ));
@@ -399,6 +399,13 @@ DATA(insert OID =  807 (  "/"	   PGUID 0 b t f  603  600	603    0  0 0 0 box_div
 DATA(insert OID =  808 (  "?-"	   PGUID 0 b t f  600  600	 16  808  0 0 0 point_horiz - - ));
 DATA(insert OID =  809 (  "?|"	   PGUID 0 b t f  600  600	 16  809  0 0 0 point_vert - - ));
 
+DATA(insert OID = 811 (  "="	   PGUID 0 b t t 704 704  16 811   0   0   0 intervaleq - - ));
+DATA(insert OID = 812 (  "<>"	   PGUID 0 b t t 704 704  16 812   0   0   0 intervalne - - ));
+DATA(insert OID = 813 (  "<"	   PGUID 0 b t t 704 704  16 813   0   0   0 intervallt - - ));
+DATA(insert OID = 814 (  ">"	   PGUID 0 b t t 704 704  16 814   0   0   0 intervalgt - - ));
+DATA(insert OID = 815 (  "<="	   PGUID 0 b t t 704 704  16 815   0   0   0 intervalle - - ));
+DATA(insert OID = 816 (  ">="	   PGUID 0 b t t 704 704  16 816   0   0   0 intervalge - - ));
+
 DATA(insert OID = 830 (  "<"	   PGUID 0 b t f  810  810	16 834 833	0 0 oidint2lt intltsel intltjoinsel ));
 DATA(insert OID = 831 (  "<="	   PGUID 0 b t f  810  810	16 833 834	0 0 oidint2le intltsel intltjoinsel ));
 DATA(insert OID = 832 (  "="	   PGUID 0 b t f  810  810	16 832 835	0 0 oidint2eq intltsel intltjoinsel ));
@@ -419,8 +426,19 @@ DATA(insert OID = 904 (  "<="	   PGUID 0 b t f  790  790	16 905 903	0 0 cash_le 
 DATA(insert OID = 905 (  ">="	   PGUID 0 b t f  790  790	16 904 902	0 0 cash_ge intgtsel intgtjoinsel ));
 DATA(insert OID = 906 (  "+"	   PGUID 0 b t f  790  790	790 906   0   0   0 cash_pl - - ));
 DATA(insert OID = 907 (  "-"	   PGUID 0 b t f  790  790	790   0   0   0   0 cash_mi - - ));
-DATA(insert OID = 908 (  "*"	   PGUID 0 b t f  790  701	790 909   0   0   0 cash_mul - - ));
-DATA(insert OID = 909 (  "/"	   PGUID 0 b t f  790  701	790   0   0   0   0 cash_div - - ));
+DATA(insert OID = 908 (  "*"	   PGUID 0 b t f  790  701	790 916   0   0   0 cash_mul_flt8 - - ));
+DATA(insert OID = 909 (  "/"	   PGUID 0 b t f  790  701	790   0   0   0   0 cash_div_flt8 - - ));
+DATA(insert OID = 912 (  "*"	   PGUID 0 b t f  790  23	790 917   0   0   0 cash_mul_int4 - - ));
+DATA(insert OID = 913 (  "/"	   PGUID 0 b t f  790  23	790   0   0   0   0 cash_div_int4 - - ));
+DATA(insert OID = 914 (  "*"	   PGUID 0 b t f  790  21	790 918   0   0   0 cash_mul_int2 - - ));
+DATA(insert OID = 915 (  "/"	   PGUID 0 b t f  790  21	790   0   0   0   0 cash_div_int2 - - ));
+DATA(insert OID = 916 (  "*"	   PGUID 0 b t f  701  790	790 908   0   0   0 flt8_mul_cash - - ));
+DATA(insert OID = 917 (  "*"	   PGUID 0 b t f  23  790	790 912   0   0   0 int4_mul_cash - - ));
+DATA(insert OID = 918 (  "*"	   PGUID 0 b t f  21  790	790 914   0   0   0 int2_mul_cash - - ));
+
+DATA(insert OID = 950 (  "*"	   PGUID 0 b t f  790  700	790 988   0   0   0 cash_mul_flt4 - - ));
+DATA(insert OID = 951 (  "/"	   PGUID 0 b t f  790  700	790   0   0   0   0 cash_div_flt4 - - ));
+DATA(insert OID = 988 (  "*"	   PGUID 0 b t f  700  790	790 950   0   0   0 flt4_mul_cash - - ));
 
 DATA(insert OID = 930 (  "<"	   PGUID 0 b t f  910  910	16 934 933	0 0 oidint4lt intltsel intltjoinsel ));
 DATA(insert OID = 931 (  "<="	   PGUID 0 b t f  910  910	16 933 934	0 0 oidint4le intltsel intltjoinsel ));

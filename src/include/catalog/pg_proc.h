@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.30 1997/09/08 21:51:29 momjian Exp $
+ * $Id: pg_proc.h,v 1.31 1997/09/20 16:29:38 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -341,7 +341,7 @@ DATA(insert OID = 259 (  reltimelt		   PGUID 11 f t f 2 f 16 "703 703" 100 0 0 1
 DATA(insert OID = 260 (  reltimegt		   PGUID 11 f t f 2 f 16 "703 703" 100 0 0 100	foo bar ));
 DATA(insert OID = 261 (  reltimele		   PGUID 11 f t f 2 f 16 "703 703" 100 0 0 100	foo bar ));
 DATA(insert OID = 262 (  reltimege		   PGUID 11 f t f 2 f 16 "703 703" 100 0 0 100	foo bar ));
-DATA(insert OID = 263 (  intervaleq		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
+DATA(insert OID = 263 (  intervalsame	   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
 DATA(insert OID = 264 (  intervalct		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
 DATA(insert OID = 265 (  intervalov		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
 DATA(insert OID = 266 (  intervalleneq	   PGUID 11 f t f 2 f 16 "704 703" 100 0 0 100	foo bar ));
@@ -616,6 +616,13 @@ DATA(insert OID = 780 (  gistmarkpos	   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  f
 DATA(insert OID = 781 (  gistrestrpos	   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 782 (  gistbuild		   PGUID 11 f t f 9 f 23 "0" 100 0 0 100  foo bar ));
 
+DATA(insert OID = 784 (  intervaleq		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
+DATA(insert OID = 785 (  intervalne		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
+DATA(insert OID = 786 (  intervallt		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
+DATA(insert OID = 787 (  intervalgt		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
+DATA(insert OID = 788 (  intervalle		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
+DATA(insert OID = 789 (  intervalge		   PGUID 11 f t f 2 f 16 "704 704" 100 0 0 100	foo bar ));
+
 /* OIDS 800 - 899 */
 
 DATA(insert OID = 820 (  oidint2in		   PGUID 11 f t f 1 f 810 "0" 100 0 0 100  foo bar));
@@ -650,6 +657,17 @@ DATA(insert OID =  859 (  namenlike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 10
 DATA(insert OID =  860 (  char16like	   PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  861 (  char16nlike	   PGUID 11 f t f 2 f 16 "20 25" 100 0 0 100  foo bar ));
 
+DATA(insert OID =  846 (  cash_mul_flt4		   PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
+DATA(insert OID =  847 (  cash_div_flt4		   PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
+DATA(insert OID =  848 (  flt4_mul_cash		   PGUID 11 f t f 2 f 790 "700 790" 100 0 0 100  foo bar ));
+
+DATA(insert OID =  862 (  int4_mul_cash		   PGUID 11 f t f 2 f 790 "23 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  863 (  int2_mul_cash		   PGUID 11 f t f 2 f 790 "21 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  864 (  cash_mul_int4		   PGUID 11 f t f 2 f 790 "790 23" 100 0 0 100  foo bar ));
+DATA(insert OID =  865 (  cash_div_int4		   PGUID 11 f t f 2 f 790 "790 23" 100 0 0 100  foo bar ));
+DATA(insert OID =  866 (  cash_mul_int2		   PGUID 11 f t f 2 f 790 "790 21" 100 0 0 100  foo bar ));
+DATA(insert OID =  867 (  cash_div_int2		   PGUID 11 f t f 2 f 790 "790 21" 100 0 0 100  foo bar ));
+
 DATA(insert OID =  886 (  cash_in		   PGUID 11 f t f 1 f 790 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  887 (  cash_out		   PGUID 11 f t f 1 f  23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  888 (  cash_eq		   PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
@@ -660,10 +678,12 @@ DATA(insert OID =  892 (  cash_gt		   PGUID 11 f t f 2 f  16 "790 790" 100 0 0 1
 DATA(insert OID =  893 (  cash_ge		   PGUID 11 f t f 2 f  16 "790 790" 100 0 0 100  foo bar ));
 DATA(insert OID =  894 (  cash_pl		   PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
 DATA(insert OID =  895 (  cash_mi		   PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
-DATA(insert OID =  896 (  cash_mul		   PGUID 11 f t f 2 f 790 "790 701" 100 0 0 100  foo bar ));
-DATA(insert OID =  897 (  cash_div		   PGUID 11 f t f 2 f 790 "790 701" 100 0 0 100  foo bar ));
+DATA(insert OID =  896 (  cash_mul_flt8		   PGUID 11 f t f 2 f 790 "790 701" 100 0 0 100  foo bar ));
+DATA(insert OID =  897 (  cash_div_flt8		   PGUID 11 f t f 2 f 790 "790 701" 100 0 0 100  foo bar ));
 DATA(insert OID =  898 (  cashlarger	   PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
 DATA(insert OID =  899 (  cashsmaller	   PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
+
+DATA(insert OID =  919 (  flt8_mul_cash		   PGUID 11 f t f 2 f 790 "701 790" 100 0 0 100  foo bar ));
 
 /* OIDS 900 - 999 */
 DATA(insert OID = 920 (  oidint4in		   PGUID 11 f t f 1 f 910 "0" 100 0 0 100  foo bar));
@@ -730,6 +750,7 @@ DATA(insert OID = 984 (  path_n_eq		   PGUID 11 f t f 2 f 16 "602 602" 100 0 0 1
 DATA(insert OID = 985 (  path_n_le		   PGUID 11 f t f 2 f 16 "602 602" 100 0 0 100	foo bar ));
 DATA(insert OID = 986 (  path_n_ge		   PGUID 11 f t f 2 f 16 "602 602" 100 0 0 100	foo bar ));
 DATA(insert OID = 987 (  path_length	   PGUID 11 f t f 1 f 701 "602" 100 0 1 0  foo bar ));
+DATA(insert OID = 988 (  point_ne		   PGUID 11 f t f 2 f 16 "600 600" 100 0 0 100	foo bar ));
 DATA(insert OID = 989 (  point_vert		   PGUID 11 f t f 2 f 16 "600 600" 100 0 0 100	foo bar ));
 DATA(insert OID = 990 (  point_horiz	   PGUID 11 f t f 2 f 16 "600 600" 100 0 0 100	foo bar ));
 DATA(insert OID = 991 (  point_distance    PGUID 11 f t f 2 f 701 "600 600" 100 0 0 100  foo bar ));
