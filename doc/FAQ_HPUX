@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.1
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2001/04/30 23:55:26 $
+last updated:           $Date: 2002/10/22 13:46:59 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -87,7 +87,7 @@ The CVS server does not store prebuilt yacc output files.
 1.4)	Linking the main postgres executable fails, complaining that
 	there's no "alloca" function. 
 
-You're using an old version of GNU bison.  Update to 1.28 or later,
+You're using an old version of GNU bison.  Update to 1.50 or later,
 and re-make the bison output files.  Or build with gcc, or update to
 HPUX 10, either of which will provide support for alloca.
 

@@ -58,7 +58,7 @@ The following prerequisites exist for building PostgreSQL:
      pre-generated output files are included in released packages. You will
      need these programs only when building from a CVS tree or if you
      changed the actual scanner and parser definition files. If you need
-     them, be sure to get Flex 2.5.4 or later and Bison 1.28 or later. Other
+     them, be sure to get Flex 2.5.4 or later and Bison 1.50 or later. Other
      yacc programs can sometimes be used, but doing so requires extra effort
      and is not recommended. Other lex programs will definitely not work.
 
