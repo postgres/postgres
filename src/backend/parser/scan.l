@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.114 2004/02/21 00:34:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.115 2004/02/24 21:45:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 extern YYSTYPE yylval;
 
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
+static char    *dolqstart;      /* current $foo$ quote start string */
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -74,6 +75,7 @@ unsigned char unescape_single_char(unsigned char c);
 
 %option 8bit
 %option never-interactive
+%option nodefault
 %option nounput
 %option noyywrap
 %option prefix="base_yy"
@@ -94,6 +96,7 @@ unsigned char unescape_single_char(unsigned char c);
  *  <xd> delimited identifiers (double-quoted identifiers)
  *  <xh> hexadecimal numeric string
  *  <xq> quoted strings
+ *  <xdolq> $foo$ quoted strings
  */
 
 %x xb
@@ -101,6 +104,7 @@ unsigned char unescape_single_char(unsigned char c);
 %x xd
 %x xh
 %x xq
+%x xdolq
 
 /*
  * In order to make the world safe for Windows and Mac clients as well as
@@ -175,6 +179,17 @@ xqescape		[\\][^0-7]
 xqoctesc		[\\][0-7]{1,3}
 xqcat			{quote}{whitespace_with_newline}{quote}
 
+/* $foo$ style quotes ("dollar quoting")
+ * The quoted string starts with $foo$ where "foo" is an optional string
+ * in the form of an identifier, except that it may not contain "$", 
+ * and extends to the first occurrence of an identical string.  
+ * There is *no* processing of the quoted text.
+ */
+dolq_start		[A-Za-z\200-\377_]
+dolq_cont		[A-Za-z\200-\377_0-9]
+dolqdelim		\$({dolq_start}{dolq_cont}*)?\$
+dolqinside		[^$]+
+
 /* Double quote
  * Allows embedded spaces and other special characters into identifiers.
  */
@@ -242,7 +257,8 @@ param			\${integer}
 other			.
 
 /*
- * Quoted strings must allow some special characters such as single-quote
+ * Dollar quoted strings are totally opaque, and no escaping is done on them.
+ * Other quoted strings must allow some special characters such as single-quote
  *  and newline.
  * Embedded single-quotes are implemented both in the SQL standard
  *  style of two adjacent single quotes "''" and in the Postgres/Java style
@@ -388,7 +404,45 @@ other			.
 <xq>{xqcat}		{
 					/* ignore */
 				}
+<xq>.			{
+					/* This is only needed for \ just before EOF */
+					addlitchar(yytext[0]);
+				}
 <xq><<EOF>>		{ yyerror("unterminated quoted string"); }
+
+{dolqdelim}		{
+					token_start = yytext;
+					dolqstart = pstrdup(yytext);
+					BEGIN(xdolq);
+					startlit();
+				}
+<xdolq>{dolqdelim} {
+					if (strcmp(yytext, dolqstart) == 0)
+					{
+						pfree(dolqstart);
+						BEGIN(INITIAL);
+						yylval.str = litbufdup();
+						return SCONST;
+					}
+					else
+					{
+						/*
+						 * When we fail to match $...$ to dolqstart, transfer
+						 * the $... part to the output, but put back the final
+						 * $ for rescanning.  Consider $delim$...$junk$delim$
+						 */
+						addlit(yytext, yyleng-1);
+						yyless(yyleng-1);
+					}
+				}
+<xdolq>{dolqinside} {
+					addlit(yytext, yyleng);
+				}
+<xdolq>.		{
+					/* This is only needed for $ inside the quoted text */
+					addlitchar(yytext[0]);
+				}
+<xdolq><<EOF>>	{ yyerror("unterminated dollar-quoted string"); }
 
 {xdstart}		{
 					token_start = yytext;
@@ -407,7 +461,7 @@ other			.
 					yylval.str = ident;
 					return IDENT;
 				}
-<xd>{xddouble} {
+<xd>{xddouble}	{
 					addlitchar('"');
 				}
 <xd>{xdinside}	{

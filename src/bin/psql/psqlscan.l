@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.1 2004/02/19 19:40:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.2 2004/02/24 21:45:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,7 @@ typedef struct PsqlScanStateData
 	int			start_state;	/* saved YY_START */
 	int			paren_depth;	/* depth of nesting in parentheses */
 	int			xcdepth;		/* depth of nesting in slash-star comments */
+	char	   *dolqstart;		/* current $foo$ quote start string */
 } PsqlScanStateData;
 
 static PsqlScanState cur_state;	/* current state while active */
@@ -123,6 +124,7 @@ static void emit(const char *txt, int len);
 
 %option 8bit
 %option never-interactive
+%option nodefault
 %option nounput
 %option noyywrap
 
@@ -151,6 +153,7 @@ static void emit(const char *txt, int len);
  *  <xd> delimited identifiers (double-quoted identifiers)
  *  <xh> hexadecimal numeric string
  *  <xq> quoted strings
+ *  <xdolq> $foo$ quoted strings
  */
 
 %x xb
@@ -158,6 +161,7 @@ static void emit(const char *txt, int len);
 %x xd
 %x xh
 %x xq
+%x xdolq
 /* Additional exclusive states for psql only: lex backslash commands */
 %x xslashcmd
 %x xslasharg
@@ -241,6 +245,17 @@ xqescape		[\\][^0-7]
 xqoctesc		[\\][0-7]{1,3}
 xqcat			{quote}{whitespace_with_newline}{quote}
 
+/* $foo$ style quotes ("dollar quoting")
+ * The quoted string starts with $foo$ where "foo" is an optional string
+ * in the form of an identifier, except that it may not contain "$", 
+ * and extends to the first occurrence of an identical string.  
+ * There is *no* processing of the quoted text.
+ */
+dolq_start		[A-Za-z\200-\377_]
+dolq_cont		[A-Za-z\200-\377_0-9]
+dolqdelim		\$({dolq_start}{dolq_cont}*)?\$
+dolqinside		[^$]+
+
 /* Double quote
  * Allows embedded spaces and other special characters into identifiers.
  */
@@ -308,7 +323,8 @@ param			\${integer}
 other			.
 
 /*
- * Quoted strings must allow some special characters such as single-quote
+ * Dollar quoted strings are totally opaque, and no escaping is done on them.
+ * Other quoted strings must allow some special characters such as single-quote
  *  and newline.
  * Embedded single-quotes are implemented both in the SQL standard
  *  style of two adjacent single quotes "''" and in the Postgres/Java style
@@ -427,6 +443,41 @@ other			.
 <xq>{xqcat}		{
 					ECHO;
 				}
+<xq>.			{
+					/* This is only needed for \ just before EOF */
+					ECHO;
+				}
+
+{dolqdelim}		{
+					cur_state->dolqstart = pg_strdup(yytext);
+					BEGIN(xdolq);
+					ECHO;
+				}
+<xdolq>{dolqdelim} {
+					if (strcmp(yytext, cur_state->dolqstart) == 0)
+					{
+						free(cur_state->dolqstart);
+						cur_state->dolqstart = NULL;
+						BEGIN(INITIAL);
+					}
+					else
+					{
+						/*
+						 * When we fail to match $...$ to dolqstart, transfer
+						 * the $... part to the output, but put back the final
+						 * $ for rescanning.  Consider $delim$...$junk$delim$
+						 */
+						yyless(yyleng-1);
+					}
+					ECHO;
+				}
+<xdolq>{dolqinside} {
+					ECHO;
+				}
+<xdolq>.		{
+					/* This is only needed for $ inside the quoted text */
+					ECHO;
+				}
 
 {xdstart}		{
 					BEGIN(xd);
@@ -436,7 +487,7 @@ other			.
 					BEGIN(INITIAL);
 					ECHO;
 				}
-<xd>{xddouble} {
+<xd>{xddouble}	{
 					ECHO;
 				}
 <xd>{xdinside}	{
@@ -754,7 +805,7 @@ other			.
 
 "\\".			{ emit(yytext + 1, 1); }
 
-{other}			{ ECHO; }
+{other}|\n		{ ECHO; }
 
 }
 
@@ -766,7 +817,7 @@ other			.
 
 "`"				{ return LEXRES_OK; }
 
-{other}			{ ECHO; }
+{other}|\n		{ ECHO; }
 
 }
 
@@ -811,7 +862,7 @@ other			.
 					BEGIN(xslashdefaultarg);
 				}
 
-{other}			{ ECHO; }
+{other}|\n		{ ECHO; }
 
 }
 
@@ -833,7 +884,7 @@ other			.
 
 "\\\\"			{ return LEXRES_OK; }
 
-{other}			{
+{other}|\n		{
 					yyless(0);
 					return LEXRES_OK;
 				}
@@ -864,6 +915,8 @@ void
 psql_scan_destroy(PsqlScanState state)
 {
 	psql_scan_finish(state);
+
+	psql_scan_reset(state);
 
 	free(state);
 }
@@ -1008,6 +1061,10 @@ psql_scan(PsqlScanState state,
 					result = PSCAN_INCOMPLETE;
 					*prompt = PROMPT_SINGLEQUOTE;
 					break;
+				case xdolq:
+					result = PSCAN_INCOMPLETE;
+					*prompt = PROMPT_DOLLARQUOTE;
+					break;
 				default:
 					/* can't get here */
 					fprintf(stderr, "invalid YY_START\n");
@@ -1082,6 +1139,9 @@ psql_scan_reset(PsqlScanState state)
 	state->start_state = INITIAL;
 	state->paren_depth = 0;
 	state->xcdepth = 0;			/* not really necessary */
+	if (state->dolqstart)
+		free(state->dolqstart);
+	state->dolqstart = NULL;
 }
 
 /*

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.34 2004/01/25 03:07:22 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.35 2004/02/24 21:45:18 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -85,6 +85,7 @@ get_prompt(promptStatus_t status)
 		case PROMPT_CONTINUE:
 		case PROMPT_SINGLEQUOTE:
 		case PROMPT_DOUBLEQUOTE:
+		case PROMPT_DOLLARQUOTE:
 		case PROMPT_COMMENT:
 		case PROMPT_PAREN:
 			prompt_name = "PROMPT2";
@@ -198,6 +199,9 @@ get_prompt(promptStatus_t status)
 							break;
 						case PROMPT_DOUBLEQUOTE:
 							buf[0] = '"';
+							break;
+						case PROMPT_DOLLARQUOTE:
+							buf[0] = '$';
 							break;
 						case PROMPT_COMMENT:
 							buf[0] = '*';
