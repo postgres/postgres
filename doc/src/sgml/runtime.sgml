@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.217 2003/11/06 22:08:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.218 2003/11/14 15:43:22 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2825,7 +2825,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
        <row>
         <entry><varname>SEMVMX</></>
         <entry>Maximum value of semaphore</>
-        <entry>at least 255  (The default is often 32767, don't change unless asked to.)</>
+        <entry>at least 1000 (The default is often 32767, don't change unless asked to.)</>
        </row>
 
      </tbody>
