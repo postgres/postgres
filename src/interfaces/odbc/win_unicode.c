@@ -82,7 +82,7 @@ char *ucs2_to_utf8(const SQLWCHAR *ucs2str, Int4 ilen, UInt4 *olen)
 #define	byte3_m3	0x3f
 #define	byte2_m1	0x1f
 #define	byte2_m2	0x3f
-UInt4	utf8_to_ucs2(const char *utf8str, Int4 ilen, SQLWCHAR *ucs2str, UInt4 bufcount)
+UInt4	utf8_to_ucs2_lf(const char *utf8str, Int4 ilen, BOOL lfconv, SQLWCHAR *ucs2str, UInt4 bufcount)
 {
 	int	i;
 	UInt4	ocount, wcode;
@@ -102,6 +102,13 @@ UInt4	utf8_to_ucs2(const char *utf8str, Int4 ilen, SQLWCHAR *ucs2str, UInt4 bufc
 	{
 		if (iswascii(*str))
 		{
+			if (lfconv && *str == '\n' &&
+			    (i == 0 || str[-1] != '\r'))
+			{
+				if (ocount < bufcount)
+					ucs2str[ocount] = '\r';
+				ocount++;
+			}
 			if (ocount < bufcount)
 				ucs2str[ocount] = *str;
 			ocount++;

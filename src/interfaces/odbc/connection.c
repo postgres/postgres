@@ -952,6 +952,13 @@ another_version_retry:
 	 * Send any initial settings
 	 */
 
+	/* 
+	 * Get the version number first so we can check it before sending options
+	 * that are now obsolete. DJP 21/06/2002
+	 */
+
+	CC_lookup_pg_version(self);		/* Get PostgreSQL version for
+						   SQLGetInfo use */
 	/*
 	 * Since these functions allocate statements, and since the connection
 	 * is not established yet, it would violate odbc state transition
@@ -961,8 +968,6 @@ another_version_retry:
 	CC_send_settings(self);
 	CC_lookup_lo(self);			/* a hack to get the oid of
 						   our large object oid type */
-	CC_lookup_pg_version(self);		/* Get PostgreSQL version for
-						   SQLGetInfo use */
 
 	/*
 	 *	Multibyte handling is available ?
@@ -1802,8 +1807,8 @@ CC_send_settings(ConnectionClass *self)
 
 	}
 
-	/* KSQO */
-	if (ci->drivers.ksqo)
+	/* KSQO (not applicable to 7.1+ - DJP 21/06/2002) */
+	if (ci->drivers.ksqo && PG_VERSION_LT(self, 7.1))
 	{
 		result = PGAPI_ExecDirect(hstmt, "set ksqo to 'ON'", SQL_NTS);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))

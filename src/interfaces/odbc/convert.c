@@ -702,7 +702,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 #ifdef	UNICODE_SUPPORT
 					if (fCType == SQL_C_WCHAR)
 					{
-						len = utf8_to_ucs2(neut_str, -1, NULL, 0);
+						len = utf8_to_ucs2_lf(neut_str, -1, lf_conv, NULL, 0);
 						len *= 2;
 						wchanged = changed = TRUE;
 					}
@@ -728,7 +728,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 #ifdef	UNICODE_SUPPORT
 						if (fCType == SQL_C_WCHAR)
 						{
-							utf8_to_ucs2(neut_str, -1, (SQLWCHAR *) pbic->ttlbuf, len / 2);
+							utf8_to_ucs2_lf(neut_str, -1, lf_conv, (SQLWCHAR *) pbic->ttlbuf, len / 2);
 						}
 						else
 #endif /* UNICODE_SUPPORT */

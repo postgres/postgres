@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.67 2002/06/06 04:50:47 inoue Exp $
+ * $Id: psqlodbc.h,v 1.68 2002/06/28 02:44:15 inoue Exp $
  *
  */
 
@@ -255,7 +255,8 @@ void		logs_on_off(int cnopen, int, int);
 #ifdef	UNICODE_SUPPORT
 UInt4	ucs2strlen(const SQLWCHAR *ucs2str);
 char	*ucs2_to_utf8(const SQLWCHAR *ucs2str, Int4 ilen, UInt4 *olen);
-UInt4	utf8_to_ucs2(const char * utf8str, Int4 ilen, SQLWCHAR *ucs2str, UInt4 buflen);
+UInt4	utf8_to_ucs2_lf(const char * utf8str, Int4 ilen, BOOL lfconv, SQLWCHAR *ucs2str, UInt4 buflen);
+#define	utf8_to_ucs2(utf8str, ilen, ucs2str, buflen) utf8_to_ucs2_lf(utf8str, ilen, FALSE, ucs2str, buflen)
 #endif /* UNICODE_SUPPORT */
 /*#define	_MEMORY_DEBUG_ */
 #ifdef	_MEMORY_DEBUG_
