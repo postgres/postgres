@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar 21 10:45:54 EST 2001
+Last updated:		Fri Mar 23 12:09:01 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -192,7 +192,7 @@ COMMANDS
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow DELETE WHERE CURRENT OF cursor
 * -redesign UNION structures to have separarate target lists
-* Add BETWEEN [ASYMMETRIC|SYMMETRIC]
+* Add BETWEEN ASYMMETRIC/SYMMETRIC
 
 CLIENTS
 
