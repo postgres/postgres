@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.23 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.24 2001/10/29 06:45:32 ishii Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -251,11 +251,18 @@ print_aligned_text(const char *title, const char *const * headers,
 	for (ptr = cells; *ptr; ptr++)
 		cell_count++;
 
-	cell_w = calloc(cell_count, sizeof(*cell_w));
-	if (!cell_w)
+	if (cell_count > 0)
 	{
-		perror("calloc");
-		exit(EXIT_FAILURE);
+		cell_w = calloc(cell_count, sizeof(*cell_w));
+		if (!cell_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
+	}
+	else
+	{
+		cell_w = 0;
 	}
 #endif
 
@@ -462,11 +469,18 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	for (ptr = cells; *ptr; ptr++)
 		cell_count++;
 
-	cell_w = calloc(cell_count, sizeof(*cell_w));
-	if (!cell_w)
+	if (cell_count > 0)
 	{
-		perror("calloc");
-		exit(EXIT_FAILURE);
+		cell_w = calloc(cell_count, sizeof(*cell_w));
+		if (!cell_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
+	}
+	else
+	{
+		cell_w = 0;
 	}
 
 	/* find longest data cell */
