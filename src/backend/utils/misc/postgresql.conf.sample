@@ -89,8 +89,6 @@
 #enable_mergejoin = true
 #enable_hashjoin = true
 
-#ksqo = false
-
 #effective_cache_size = 1000	# default in 8k pages
 #random_page_cost = 4
 #cpu_tuple_cost = 0.01

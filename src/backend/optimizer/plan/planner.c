@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.120 2002/06/13 15:10:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.121 2002/06/16 00:09:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,11 +144,6 @@ subquery_planner(Query *parse, double tuple_fraction)
 	/* Set up for a new level of subquery */
 	PlannerQueryLevel++;
 	PlannerInitPlan = NIL;
-
-#ifdef ENABLE_KEY_SET_QUERY
-	/* this should go away sometime soon */
-	transformKeySetQuery(parse);
-#endif
 
 	/*
 	 * Check to see if any subqueries in the rangetable can be merged into

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.69 2002/05/17 20:32:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.70 2002/06/16 00:09:12 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -311,11 +311,6 @@ static struct config_bool
 	{
 		{ "enable_hashjoin", PGC_USERSET }, &enable_hashjoin,
 		true, NULL, NULL
-	},
-
-	{
-		{ "ksqo", PGC_USERSET }, &_use_keyset_query_optimizer,
-		false, NULL, NULL
 	},
 	{
 		{ "geqo", PGC_USERSET }, &enable_geqo,

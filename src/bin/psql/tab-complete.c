@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.49 2002/06/15 19:43:47 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.50 2002/06/16 00:09:12 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -226,7 +226,6 @@ psql_completion(char *text, int start, int end)
 		"enable_nestloop",
 		"enable_mergejoin",
 		"enable_hashjoin",
-		"ksqo",
 		"geqo",
 		"fsync",
 		"server_min_messages",
@@ -695,7 +694,7 @@ psql_completion(char *text, int start, int end)
 
 			COMPLETE_WITH_LIST(my_list);
 		}
-		else if (strcasecmp(prev2_wd, "GEQO") == 0 || strcasecmp(prev2_wd, "KSQO") == 0)
+		else if (strcasecmp(prev2_wd, "GEQO") == 0)
 		{
 			char	   *my_list[] = {"ON", "OFF", "DEFAULT", NULL};
 

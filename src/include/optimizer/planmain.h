@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.57 2002/05/18 02:25:50 tgl Exp $
+ * $Id: planmain.h,v 1.58 2002/06/16 00:09:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,12 +61,5 @@ extern List *join_references(List *clauses, List *rtable,
 							 List *outer_tlist, List *inner_tlist,
 							 Index acceptable_rel);
 extern void fix_opids(Node *node);
-
-/*
- * prep/prepkeyset.c
- */
-extern bool _use_keyset_query_optimizer;
-
-extern void transformKeySetQuery(Query *origNode);
 
 #endif   /* PLANMAIN_H */

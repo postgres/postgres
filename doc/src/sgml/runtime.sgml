@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.118 2002/06/15 19:58:53 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.119 2002/06/16 00:09:11 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -755,34 +755,6 @@ env PGOPTIONS='-c geqo=off' psql
         to use the deterministic, exhaustive planner. This parameter
         also controls how hard the optimizer will try to merge subquery
         <literal>FROM</literal> clauses into the upper query.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>KSQO</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        The <firstterm>Key Set Query Optimizer</firstterm>
-        (<acronym>KSQO</acronym>) causes the query planner to convert
-        queries whose <literal>WHERE</> clause contains many OR'ed AND
-        clauses (such as <literal>WHERE (a=1 AND b=2) OR (a=2 AND b=3)
-        ...</literal>) into a union query. This method can be faster
-        than the default implementation, but it doesn't necessarily give
-        exactly the same results, since <literal>UNION</> implicitly
-        adds a <literal>SELECT DISTINCT</> clause to eliminate identical
-        output rows. <acronym>KSQO</acronym> is commonly used when
-        working with products like <productname>Microsoft
-        Access</productname>, which tend to generate queries of this
-        form.
-       </para>
-
-       <para>
-        The <acronym>KSQO</acronym> algorithm used to be absolutely
-        essential for queries with many OR'ed AND clauses, but in
-        <productname>PostgreSQL</productname> 7.0 and later the standard
-        planner handles these queries fairly successfully; hence the
-        default is off.
        </para>
       </listitem>
      </varlistentry>

@@ -8,7 +8,9 @@
  *
  *-------------------------------------------------------------------------
  */
-
+ 
+/* THIS FILE WAS USED FOR KSQO, WHICH IS DISABLED NOW.  bjm  2002-06-15 */
+ 
 #include "postgres.h"
 #include "optimizer/planmain.h"
 
