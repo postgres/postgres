@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.14 2000/11/25 17:17:30 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.15 2000/11/27 02:50:17 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -84,9 +84,9 @@ fi
 
 # Check if needed programs actually exist in path
 if [ -x "$self_path/postmaster" ] && [ -x "$self_path/psql" ]; then
-    PGPATH=$self_path
+    PGPATH="$self_path"
 elif [ -x "$bindir/postmaster" ] && [ -x "$bindir/psql" ]; then
-    PGPATH=$bindir
+    PGPATH="$bindir"
 else
     echo "The programs 'postmaster' and 'psql' are needed by $CMDNAME but" 1>&2
     echo "were not found in the directory '$bindir'." 1>&2
@@ -94,7 +94,7 @@ else
     exit 1
 fi
 
-po_path=$PGPATH/postmaster
+po_path="$PGPATH/postmaster"
 
 # set default shutdown signal
 sig="-TERM"
@@ -287,7 +287,7 @@ if [ $op = "start" -o $op = "restart" ];then
 	$ECHO_N "Waiting for postmaster to start up.."$ECHO_C
 	while :
 	do
-	    if psql -l >/dev/null 2>&1
+	    if "$PGPATH/psql" -l >/dev/null 2>&1
 	    then
 		break;
 	    else
