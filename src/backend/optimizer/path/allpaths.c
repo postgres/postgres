@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.70 2001/01/24 19:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.71 2001/02/03 21:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,6 @@ set_base_rel_pathlists(Query *root)
 		if (rel->issubquery)
 		{
 			/* Subquery --- generate a separate plan for it */
-			List	   *upperrestrictlist;
-			List	   *lst;
 
 			/*
 			 * If there are any restriction clauses that have been attached
@@ -118,6 +116,11 @@ set_base_rel_pathlists(Query *root)
 			 * Currently, we do not push down clauses that contain subselects,
 			 * mainly because I'm not sure it will work correctly (the
 			 * subplan hasn't yet transformed sublinks to subselects).
+			 * Also, if the subquery contains set ops (UNION/INTERSECT/EXCEPT)
+			 * we do not push down any qual clauses, since the planner doesn't
+			 * support quals at the top level of a setop.  (With suitable
+			 * analysis we could try to push the quals down into the component
+			 * queries of the setop, but getting it right is not trivial.)
 			 * Non-pushed-down clauses will get evaluated as qpquals of
 			 * the SubqueryScan node.
 			 *
@@ -125,41 +128,48 @@ set_base_rel_pathlists(Query *root)
 			 * decision not to push down, because it'd result in a worse
 			 * plan?
 			 */
-			upperrestrictlist = NIL;
-			foreach(lst, rel->baserestrictinfo)
+			if (rte->subquery->setOperations == NULL)
 			{
-				RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lst);
-				Node		   *clause = (Node *) rinfo->clause;
+				/* OK to consider pushing down individual quals */
+				List	   *upperrestrictlist = NIL;
+				List	   *lst;
 
-				if (contain_subplans(clause))
+				foreach(lst, rel->baserestrictinfo)
 				{
-					/* Keep it in the upper query */
-					upperrestrictlist = lappend(upperrestrictlist, rinfo);
+					RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lst);
+					Node		   *clause = (Node *) rinfo->clause;
+
+					if (contain_subplans(clause))
+					{
+						/* Keep it in the upper query */
+						upperrestrictlist = lappend(upperrestrictlist, rinfo);
+					}
+					else
+					{
+						/*
+						 * We need to replace Vars in the clause (which must
+						 * refer to outputs of the subquery) with copies of
+						 * the subquery's targetlist expressions.  Note that
+						 * at this point, any uplevel Vars in the clause
+						 * should have been replaced with Params, so they
+						 * need no work.
+						 */
+						clause = ResolveNew(clause, rti, 0,
+											rte->subquery->targetList,
+											CMD_SELECT, 0);
+						rte->subquery->havingQual =
+							make_and_qual(rte->subquery->havingQual,
+										  clause);
+						/*
+						 * We need not change the subquery's hasAggs or
+						 * hasSublinks flags, since we can't be pushing down
+						 * any aggregates that weren't there before, and we
+						 * don't push down subselects at all.
+						 */
+					}
 				}
-				else
-				{
-					/*
-					 * We need to replace Vars in the clause (which must
-					 * refer to outputs of the subquery) with copies of the
-					 * subquery's targetlist expressions.  Note that at this
-					 * point, any uplevel Vars in the clause should have been
-					 * replaced with Params, so they need no work.
-					 */
-					clause = ResolveNew(clause, rti, 0,
-										rte->subquery->targetList,
-										CMD_SELECT, 0);
-					rte->subquery->havingQual =
-						make_and_qual(rte->subquery->havingQual,
-									  clause);
-					/*
-					 * We need not change the subquery's hasAggs or
-					 * hasSublinks flags, since we can't be pushing down
-					 * any aggregates that weren't there before, and we
-					 * don't push down subselects at all.
-					 */
-				}
+				rel->baserestrictinfo = upperrestrictlist;
 			}
-			rel->baserestrictinfo = upperrestrictlist;
 
 			/* Generate the plan for the subquery */
 			rel->subplan = subquery_planner(rte->subquery,
