@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.50 2003/04/26 22:21:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.51 2003/06/11 15:02:25 momjian Exp $
  *
  * ----------
  */
@@ -883,17 +883,6 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	old_row = trigdata->tg_trigtuple;
 
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
-	if (ri_Check_Pk_Match(pk_rel, fk_rel,
-						  old_row, trigdata->tg_trigger->tgoid,
-						  match_type, tgnargs, tgargs))
-	{
-		/*
-		 * There's either another row, or no row could match this one.  In
-		 * either case, we don't need to do the check.
-		 */
-		heap_close(fk_rel, RowShareLock);
-		return PointerGetDatum(NULL);
-	}
 
 	switch (match_type)
 	{
@@ -937,6 +926,18 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
 							 RI_KEYPAIR_PK_IDX))
 			{
+				heap_close(fk_rel, RowShareLock);
+				return PointerGetDatum(NULL);
+			}
+
+			if (ri_Check_Pk_Match(pk_rel, fk_rel,
+								  old_row, trigdata->tg_trigger->tgoid,
+								  match_type, tgnargs, tgargs))
+			{
+				/*
+				 * There's either another row, or no row could match this one.  In
+				 * either case, we don't need to do the check.
+				 */
 				heap_close(fk_rel, RowShareLock);
 				return PointerGetDatum(NULL);
 			}
