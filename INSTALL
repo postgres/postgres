@@ -1,19 +1,19 @@
-POSTGRES95 INSTALLATION INSTRUCTIONS
+POSTGRESQL INSTALLATION INSTRUCTIONS
 Copyright (c) 1996 Regents of the University of California
 
-This directory contains the source and documentation for Postgres95
-(version 2) Postgres95 is a derivative of POSTGRES 4.2 (the last
+This directory contains the source and documentation for PostgreSQL
+(version 1.09) PostgreSQL is a derivative of POSTGRES 4.2 (the last
 release of the UC Berkeley research project).  For copyright terms for
-postgres95, please see the file named COPYRIGHT.  This version was
+PostgreSQL, please see the file named COPYRIGHT.  This version was
 developed by a team of developers on the postgres developers mailing
 list.  Version 1 (through 1.01) was developed by Jolly Chen and Andrew
 Yu.
 
 
-REQUIREMENTS TO RUN POSTGRES95
+REQUIREMENTS TO RUN POSTGRESQL
 ------------------------------
 
-Postgres95 has been tested on the following platforms:
+PostgreSQL has been tested on the following platforms:
 
 	alpha		-	DEC Alpha AXP on OSF/1 2.0
 	hpux		-	HP PA-RISC on HP-UX 9.0
@@ -33,33 +33,33 @@ Postgres95 has been tested on the following platforms:
 	next		-	Motorola MC68K or Intel x86 on NeXTSTEP 3.2
   but these are guaranteed not to work as of yet.
 
-Postgres95 is also known to work on a number of other platforms that the
+PostgreSQL is also known to work on a number of other platforms that the
 authors have not personally tested.
 
 You should have at least 8 MB of memory and at least 30 MB of disk space to
 hold the source, binaries, and user databases.
 
 
-MIGRATING FROM POSTGRES VERSION 1
----------------------------------
+MIGRATING FROM POSTGRES VERSION 1.0
+-----------------------------------
 
-Version 2 is mostly backward compatible with Version 1, but the database
+Version 1.02 is mostly backward compatible with Version 1.0, but the database
 format is incompatible, so if you have databases that you use with Version
-1, you need to convert them before you can use them with Version 2.  Once
+1, you need to convert them before you can use them with Version 1.02.  Once
 you do that, you won't be able to use them with Version 1 anymore.
 
 For details on how to do this conversion, see the file MIGRATION_V1_TO_V2.
 
 
-INSTALLING POSTGRES95
+INSTALLING POSTGRESQL
 ---------------------
 
-Installing Postgres95 encompasses only installing the software on your system
+Installing PostgreSQL encompasses only installing the software on your system
 so you can use it to access (or create or manipulate) databases.  This
 step does not include actually creating any database or configuring your 
 system to use it.
 
-To install Postgres95 on UNIX platforms:
+To install PostgreSQL on UNIX platforms:
 
 1. Unpack the source distribution into a source directory.  We'll assume
    "/usr/src/postgres95" in this discussion.  This should be a new directory.
@@ -68,11 +68,12 @@ To install Postgres95 on UNIX platforms:
 
    cd /usr/src/postgres95
 
-3. Build Postgres95:
+3. Build PostgreSQL:
 
-   If you're installing Postgres95 on Ultrix 4.x or Linux, see the 
+   If you're installing PostgreSQL on Ultrix 4.x or Linux, see the 
    porting notes at the end for additional packages that you need to install
-   before installing Postgres95.
+   before installing PostgreSQL. For Linux and Irix, read the machine-
+   specific FAQs.
 
    If using Linux or Irix, you should also read the machine-specific FAQs.
 
@@ -84,12 +85,12 @@ To install Postgres95 on UNIX platforms:
    with the MIT X Window System distribution) 
 
    Customization can be done by editing src/Makefile.global. You may change
-   the various configuration options here, such as where the Postgres95
+   the various configuration options here, such as where the PostgreSQL
    executable files are installed and where postgres looks for the database
    directory.  The configuration switches are fairly self-explanatory, but we
    will go over some of the more commonly-changed options:
 
-     - PORTNAME specifies the platform on which Postgres95 is being build
+     - PORTNAME specifies the platform on which PostgreSQL is being build
        (BSD44_derived is the default). You might need to change it to reflect
        your platform. (sparc for SunOS 4.1.x, sparc_solaris for Solaris
        2.4, ultrix4 for Ultrix 4.4, and hpux for HP-UX 9.0)
@@ -97,7 +98,7 @@ To install Postgres95 on UNIX platforms:
      - SRCDIR specifies where the source files are located. (defaults to
        $(POSTGRESDIR)/src.)
 
-     - POSTGRESDIR specifies the top-level directory where Postgres95
+     - POSTGRESDIR specifies the top-level directory where PostgreSQL
        binaries, header files, libraries, and databases are installed.
 
      - NAMEDATALEN and OIDNAMELEN allows you to set the maximum length of
@@ -108,14 +109,14 @@ To install Postgres95 on UNIX platforms:
 
      - USE_READLINE specifies whether you want to use the GNU readline and
        history libraries for the psql interactive frontend program.  GNU
-       readline is not supplied with postgres95 and can be found in the
+       readline is not supplied with PostgreSQL and can be found in the
        usual ftp sites for GNU software.
 
      - HBA specifies whether you wish to use host-based authentication
-       for postgres95.  See the section "How to Create a Database System"
+       for PostgreSQL.  See the section "How to Create a Database System"
        for how to set up the HBA permissions if you decide to use HBA.
 
-   After editing src/Makefile.global, you are ready to compile Postgres95
+   After editing src/Makefile.global, you are ready to compile PostgreSQL
    (it takes about 10 minutes on a 133Mhz Pentium running linux):
 
      % cd src
@@ -125,7 +126,7 @@ To install Postgres95 on UNIX platforms:
    successfully made.  Ready to install."  If you don't get that, the make
    failed, and there should be error messages at the end detailing why.
 
-4. Install Postgres95
+4. Install PostgreSQL
 
    Installing just means placing all the files built in the previous step
    into their live locations on your system. 
@@ -137,7 +138,7 @@ To install Postgres95 on UNIX platforms:
    that they ended up where they belong.
 
    Any error messages indicate something is wrong and you probably have to
-   correct it before Postgres95 will work.
+   correct it before PostgreSQL will work.
 
 
 HOW TO CREATE A DATABASE SYSTEM
@@ -153,7 +154,7 @@ system and that user, for one thing, owns all the unix files that hold
 all the data for that database system.  It is usually a good idea to create
 a user for the sole purpose of being a postgres superuser.
 
-WARNING: Postgres95 is not secure.  Anyone who can connect to a database
+WARNING: PostgreSQL is not secure.  Anyone who can connect to a database
 system can easily assume all the unix privileges of its Postgres
 superuser.  The simplest way is by creating and running a C language
 function.  There are plans to remedy this in future developent.
@@ -203,7 +204,7 @@ This is a good daemon to start via system startup scripts, using su (be
 careful NOT to run the postmaster as the unix superuser by mistake).
 
 
-TESTING POSTGRES95
+TESTING POSTGRESQL
 ------------------
 
 We suggest you run the regression tests to make sure the release was
@@ -226,13 +227,13 @@ The regression test takes about half an hour to run on a Sparc 10.  You
 may want to use 'grep -v' to remove unsignificant differences.
 
 
-PLAYING WITH POSTGRES95
+PLAYING WITH POSTGRESQL
 -----------------------
 
-After Postgres95 is installed, a database system is created, a postmaster
+After PostgreSQL is installed, a database system is created, a postmaster
 daemon is running, and the regression tests have passed, you'll want to 
-see Postgres95 do something.  That's easy.  Invoke the interactive interface
-to Postgres95, psql, and start typing SQL:
+see PostgreSQL do something.  That's easy.  Invoke the interactive interface
+to PostgreSQL, psql, and start typing SQL:
 
   % psql -p 5432 template1
 
@@ -290,7 +291,7 @@ If you have a bug report to make, please send a filled out version of
 the file named "bug.template" to pg95-dev@ki.net.
 
 If you would like to help out with the development and maintenance of
-postgres95, send subscribe to the developers mailing list.  See
+PostgreSQL, send subscribe to the developers mailing list.  See
 README.support for more information
 
 ----------------------------------------------------------------------
@@ -317,6 +318,7 @@ Linux:
 
 	To compile with flex, you need a recent version (2.5.2 or
 	later). Otherwise, you will get a 'yy_flush_buffer' undefined error.
+        Note, however, that flex v2.5.3 has a bug. See the FAQs.
 
 BSD/OS:
 	For BSD/OS 2.0 and 2.01, you will need to get flex version 2.5.2
@@ -327,7 +329,7 @@ NeXT:
 	It requires a SysV IPC emulation library and header files for 
         shared libary and semaphore stuff.   Tom just happens to sell such 
         a product so contact him for information.  He has also indicated that
-        binary releases of postgres95 for NEXTSTEP will be made available to
+        binary releases of PostgreSQL for NEXTSTEP will be made available to
         the general public.  Contact Info@RnA.nl for information.
 
 
