@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.235 2005/01/22 22:56:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.236 2005/01/26 20:42:19 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6096,7 +6096,7 @@ SELECT TIMESTAMP 'now';
        <row>
         <entry><literal><function>circle</function>(<type>point</type>, <type>double precision</type>)</literal></entry>
         <entry><type>circle</type></entry>
-        <entry>point and radius to circle</entry>
+        <entry>center and radius to circle</entry>
         <entry><literal>circle(point '(0,0)', 2.0)</literal></entry>
        </row>
        <row>
@@ -6118,10 +6118,29 @@ SELECT TIMESTAMP 'now';
         <entry><literal>path(polygon '((0,0),(1,1),(2,0))')</literal></entry>
        </row>
        <row>
+        <entry><literal><function>point</function>(<type>double
+         precision</type>, <type>double precision</type>)</literal></entry>
+        <entry><type>point</type></entry>
+        <entry>construct point</entry>
+        <entry><literal>point(23.4, -44.5)</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>point</function>(<type>box</type>)</literal></entry>
+        <entry><type>point</type></entry>
+        <entry>center of box</entry>
+        <entry><literal>point(box '((-1,0),(1,0))')</literal></entry>
+       </row>
+       <row>
         <entry><literal><function>point</function>(<type>circle</type>)</literal></entry>
         <entry><type>point</type></entry>
         <entry>center of circle</entry>
         <entry><literal>point(circle '((0,0),2.0)')</literal></entry>
+       </row>
+       <row>
+        <entry><literal><function>point</function>(<type>lseg</type>)</literal></entry>
+        <entry><type>point</type></entry>
+        <entry>center of lseg</entry>
+        <entry><literal>point(lseg '((-1,0),(1,0))')</literal></entry>
        </row>
        <row>
         <entry><literal><function>point</function>(<type>lseg</type>, <type>lseg</type>)</literal></entry>
