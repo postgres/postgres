@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.68 2000/11/25 04:38:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.69 2000/11/25 19:09:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,6 @@ static const char * print_timestamp(void);
 static const char * print_pid(void);
 
 static int	Debugfile = -1;
-static int	Err_file = -1;
 static int	ElogDebugIndentLevel = 0;
 
 /*--------------------
@@ -329,6 +328,7 @@ elog(int lev, const char *fmt, ...)
 	 */
 
 #ifdef ENABLE_SYSLOG
+	/* Write to syslog, if enabled */
 	if (Use_syslog >= 1)
 	{
 		int syslog_level;
@@ -364,30 +364,10 @@ elog(int lev, const char *fmt, ...)
 
 	len = strlen(msg_buf);
 
+	/* Write to debug file, if open and enabled */
+	/* NOTE: debug file is typically pointed at stderr */
 	if (Debugfile >= 0 && Use_syslog <= 1)
 		write(Debugfile, msg_buf, len);
-
-	/*
-	 * If there's an error log file other than our channel to the
-	 * front-end program, write to it first.  This is important because
-	 * there's a bug in the socket code on ultrix.  If the front end has
-	 * gone away (so the channel to it has been closed at the other end),
-	 * then writing here can cause this backend to exit without warning
-	 * that is, write() does an exit(). In this case, our only hope of
-	 * finding out what's going on is if Err_file was set to some disk
-	 * log.  This is a major pain.	(It's probably also long-dead code...
-	 * does anyone still use ultrix?)
-	 */
-	if (lev > DEBUG && Err_file >= 0 &&
-		Debugfile != Err_file && Use_syslog <= 1)
-	{
-		if (write(Err_file, msg_buf, len) < 0)
-		{
-			write(open("/dev/console", O_WRONLY, 0666), msg_buf, len);
-			lev = REALLYFATAL;
-		}
-		fsync(Err_file);
-	}
 
 #ifndef PG_STANDALONE
 
@@ -429,9 +409,11 @@ elog(int lev, const char *fmt, ...)
 
 		/*
 		 * We are running as an interactive backend, so just send the
-		 * message to stderr.
+		 * message to stderr.  But don't send a duplicate if Debugfile
+		 * write, above, already sent to stderr.
 		 */
-		fputs(msg_buf, stderr);
+		if (Debugfile != fileno(stderr))
+			fputs(msg_buf, stderr);
 	}
 
 #endif	 /* !PG_STANDALONE */
@@ -511,11 +493,16 @@ DebugFileOpen(void)
 	int			fd,
 				istty;
 
-	Err_file = Debugfile = -1;
+	Debugfile = -1;
 	ElogDebugIndentLevel = 0;
 
 	if (OutputFileName[0])
 	{
+		/*
+		 * A debug-output file name was given.
+		 *
+		 * Make sure we can write the file, and find out if it's a tty.
+		 */
 		if ((fd = open(OutputFileName, O_CREAT | O_APPEND | O_WRONLY,
 					   0666)) < 0)
 			elog(FATAL, "DebugFileOpen: open of %s: %m",
@@ -524,20 +511,22 @@ DebugFileOpen(void)
 		close(fd);
 
 		/*
+		 * Redirect our stderr to the debug output file.
+		 */
+		if (!freopen(OutputFileName, "a", stderr))
+			elog(FATAL, "DebugFileOpen: %s reopen as stderr: %m",
+				 OutputFileName);
+		Debugfile = fileno(stderr);
+		/*
 		 * If the file is a tty and we're running under the postmaster,
 		 * try to send stdout there as well (if it isn't a tty then stderr
 		 * will block out stdout, so we may as well let stdout go wherever
 		 * it was going before).
 		 */
-		if (istty &&
-			IsUnderPostmaster &&
-			!freopen(OutputFileName, "a", stdout))
-			elog(FATAL, "DebugFileOpen: %s reopen as stdout: %m",
-				 OutputFileName);
-		if (!freopen(OutputFileName, "a", stderr))
-			elog(FATAL, "DebugFileOpen: %s reopen as stderr: %m",
-				 OutputFileName);
-		Err_file = Debugfile = fileno(stderr);
+		if (istty && IsUnderPostmaster)
+			if (!freopen(OutputFileName, "a", stdout))
+				elog(FATAL, "DebugFileOpen: %s reopen as stdout: %m",
+					 OutputFileName);
 		return Debugfile;
 	}
 
@@ -555,7 +544,7 @@ DebugFileOpen(void)
 	if (fd < 0)
 		elog(FATAL, "DebugFileOpen: could not open debugging file");
 
-	Err_file = Debugfile = fd;
+	Debugfile = fd;
 	return Debugfile;
 }
 
