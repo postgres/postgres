@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.53 1997/12/09 01:44:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.54 1997/12/16 15:45:46 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,7 +522,7 @@ printf("transformCreateStmt- found CHECK clause on column %s\n",column->colname)
 #endif
 								constraints = lappend(constraints, constraint);
 								if (constraint->name == NULL)
-									constraint->name = makeTableName(stmt->relname, ".", column->colname, NULL);
+									constraint->name = makeTableName(stmt->relname, column->colname, NULL);
 								break;
 
 							default:
