@@ -32,7 +32,7 @@ shmat(int memId, void *shmaddr, int flag)
 	/* TODO -- shmat needs to count # attached to shared mem */
 	void	   *lpmem = MapViewOfFileEx((HANDLE) memId,
 										FILE_MAP_WRITE | FILE_MAP_READ,
-				 0, 0, /* (DWORD)pshmdsc->segsize */ s_segsize, shmaddr);
+				 0, 0, /* (DWORD)pshmdsc->segsize */ 0 /* s_segsize */, shmaddr);
 
 	if (lpmem == NULL)
 	{

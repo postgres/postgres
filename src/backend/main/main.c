@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.72 2004/01/27 00:45:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.73 2004/02/02 00:11:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,11 @@ main(int argc, char *argv[])
 	 */
 	len = strlen(new_argv[0]);
 
-	if (len >= 10 && strcmp(new_argv[0] + len - 10, "postmaster") == 0)
+	if ((len >= 10 && strcmp(new_argv[0] + len - 10, "postmaster") == 0)
+#ifdef WIN32
+		|| (len >= 14 && strcmp(new_argv[0] + len - 14, "postmaster.exe") == 0)
+#endif
+		)
 	{
 		/* Called as "postmaster" */
 		exit(PostmasterMain(argc, new_argv));

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.97 2003/11/29 19:51:39 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.98 2004/02/02 00:11:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,12 +32,15 @@ endif
 all: submake-libpgport postgres $(POSTGRES_IMP)
 
 ifneq ($(PORTNAME), cygwin)
+ifneq ($(PORTNAME), win32)
 
 postgres: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $^ $(LIBS) -o $@
 
-else # cygwin
+endif
+endif
 
+ifeq ($(PORTNAME), cygwin)
 postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(LIBS)
@@ -52,6 +55,24 @@ libpostgres.a: postgres.def
 	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
 
 endif # cygwin
+
+ifeq ($(PORTNAME), win32)
+
+postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a
+	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(LIBS)
+	$(DLLTOOL) --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@$(X) $@.exp $(OBJS) $(LIBS)
+	rm -f $@.exp $@.base
+
+postgres.def: $(OBJS)
+	$(DLLTOOL) --export-all --output-def $@ $^
+
+libpostgres.a: postgres.def
+	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
+
+endif # win32
+
 
 ifeq ($(PORTNAME), aix)
 
@@ -131,6 +152,11 @@ ifeq ($(MAKE_DLL), true)
 	$(INSTALL_DATA) libpostgres.a $(DESTDIR)$(libdir)/libpostgres.a
 endif
 endif
+ifeq ($(PORTNAME), win32)
+ifeq ($(MAKE_DLL), true)
+	$(INSTALL_DATA) libpostgres.a $(DESTDIR)$(libdir)/libpostgres.a
+endif
+endif
 	$(MAKE) -C catalog install-data
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
@@ -157,6 +183,11 @@ ifeq ($(MAKE_DLL), true)
 	$(mkinstalldirs) $(DESTDIR)$(libdir)
 endif
 endif
+ifeq ($(PORTNAME), win32)
+ifeq ($(MAKE_DLL), true)
+	$(mkinstalldirs) $(DESTDIR)$(libdir)
+endif
+endif
 ifeq ($(MAKE_EXPORTS), true)
 	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
 endif
@@ -170,6 +201,11 @@ ifeq ($(MAKE_EXPORTS), true)
 	rm -f $(DESTDIR)$(pkglibdir)/$(POSTGRES_IMP)
 endif
 ifeq ($(PORTNAME), cygwin)
+ifeq ($(MAKE_DLL), true)
+	rm -f $(DESTDIR)$(libdir)/libpostgres.a
+endif
+endif
+ifeq ($(PORTNAME), win32)
 ifeq ($(MAKE_DLL), true)
 	rm -f $(DESTDIR)$(libdir)/libpostgres.a
 endif
@@ -188,6 +224,9 @@ clean:
 		$(top_srcdir)/src/include/parser/parse.h \
 		$(top_builddir)/src/include/utils/fmgroids.h
 ifeq ($(PORTNAME), cygwin)
+	rm -f postgres.dll postgres.def libpostgres.a
+endif
+ifeq ($(PORTNAME), win32)
 	rm -f postgres.dll postgres.def libpostgres.a
 endif
 	for i in $(DIRS); do $(MAKE) -C $$i clean || exit; done

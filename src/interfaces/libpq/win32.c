@@ -22,7 +22,9 @@
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 #define VC_EXTRALEAN
+#ifndef __MINGW32__
 #define NOGDI
+#endif
 #define NOCRYPT
 
 #include <windows.h>

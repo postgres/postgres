@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.21 2004/01/31 22:10:00 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.22 2004/02/02 00:11:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,11 +144,6 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 #define DEVNULL "/dev/null"
 #endif
 
-#ifdef WIN32
-#define PATHSEP ';'
-#else
-#define PATHSEP ':'
-#endif
 
 /* detected path to postgres and (we assume) friends */
 char	   *pgpath;

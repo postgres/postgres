@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.96 2003/11/30 06:09:50 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.97 2004/02/02 00:11:31 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,6 +33,9 @@ endif
 # shared library link.  (The order in which you list them here doesn't
 # matter.)
 SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(THREAD_LIBS)
+ifeq ($(PORTNAME), win32)
+SHLIB_LINK += -lwsock32 -lws2_32
+endif
 
 
 all: all-lib
