@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.60 2002/06/20 20:29:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.61 2002/07/15 22:48:54 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -548,6 +548,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				}
 				break;
 #ifndef HAVE_GETOPT_LONG
+			/* FreeBSD has a broken getopt that causes this test to fail. */
 			case '-':
 				fprintf(stderr,
 						gettext("%s was compiled without support for long options.\n"
