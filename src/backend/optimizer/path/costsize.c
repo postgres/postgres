@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.34 1999/04/05 02:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.35 1999/04/30 04:01:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,28 +129,36 @@ cost_index(Oid indexid,
 		   int indextuples,
 		   bool is_injoin)
 {
-	Cost		temp;
-	double		temp2;
-
-	temp = (Cost) 0;
+	Cost		temp = 0;
 
 	if (!_enable_indexscan_ && !is_injoin)
 		temp += _disable_cost_;
 
+	/* We want to be sure we estimate the cost of an index scan
+	 * as more than the cost of a sequential scan (when selec == 1.0),
+	 * even if we don't have good stats.  So, disbelieve zero index size.
+	 */
+	if (expected_indexpages <= 0)
+		expected_indexpages = 1;
+	if (indextuples <= 0)
+		indextuples = 1;
+
 	/* expected index relation pages */
 	temp += expected_indexpages;
 
-	/* expected base relation pages */
-	temp2 = (reltuples == 0) ? (double) 0 : (double) relpages / reltuples;
-	temp2 = temp2 * (double) selec *indextuples;
-
-	temp += Min(relpages, (int) ceil(temp2));
+	/* expected base relation pages
+	 * XXX this isn't really right, since we will access the table
+	 * nonsequentially and might have to fetch the same page
+	 * more than once.  This calculation assumes the buffer cache
+	 * will prevent that from happening...
+	 */
+	temp += ceil(((double) selec) * ((double) relpages));
 
 	/* per index tuples */
-	temp = temp + (_cpu_index_page_wight_ * selec * indextuples);
+	temp += _cpu_index_page_wight_ * selec * indextuples;
 
 	/* per heap tuples */
-	temp = temp + (_cpu_page_wight_ * selec * reltuples);
+	temp += _cpu_page_wight_ * selec * reltuples;
 
 	Assert(temp >= 0);
 	return temp;
@@ -168,8 +176,13 @@ cost_index(Oid indexid,
  * 'pathkeys' is a list of sort keys
  * 'tuples' is the number of tuples in the relation
  * 'width' is the average tuple width in bytes
- * 'noread' is a flag indicating that the sort result can remain on disk
- *				(i.e., the sort result is the result relation)
+ * 'noread' is a flag indicating that the cost of reading the sort
+ *				source data should not be included (i.e., the caller
+ *				will account for it separately).
+ *
+ * NOTE: some callers currently pass NULL for pathkeys because they
+ * can't conveniently supply sort keys.  Since this routine doesn't
+ * currently do anything with pathkeys anyway, that doesn't matter...
  *
  * Returns a flonum.
  *
@@ -179,28 +192,33 @@ cost_sort(List *pathkeys, int tuples, int width, bool noread)
 {
 	Cost		temp = 0;
 	int			npages = page_size(tuples, width);
-	Cost		pages = (Cost) npages;
-	Cost		numTuples = tuples;
+	double		log_npages;
 
 	if (!_enable_sort_)
 		temp += _disable_cost_;
-	if (tuples == 0 || pathkeys == NULL)
-	{
-		Assert(temp >= 0);
-		return temp;
-	}
-	temp += pages * base_log((double) pages, (double) 2.0);
+
+	/* We want to be sure the cost of a sort is never estimated as zero,
+	 * even if passed-in tuple count is zero.  Besides, mustn't do log(0)...
+	 */
+	if (npages <= 0)
+		npages = 1;
+
+	log_npages = ceil(base_log((double) npages, 2.0));
+	if (log_npages <= 0.0)
+		log_npages = 1.0;
+
+	temp += npages * log_npages;
 
 	/*
 	 * could be base_log(pages, NBuffers), but we are only doing 2-way
 	 * merges
 	 */
-	temp += _cpu_page_wight_ * numTuples *
-		base_log((double) pages, (double) 2.0);
+	temp += _cpu_page_wight_ * tuples * log_npages;
 
 	if (!noread)
-		temp = temp + cost_seqscan(_NONAME_RELATION_ID_, npages, tuples);
-	Assert(temp >= 0);
+		temp += cost_seqscan(_NONAME_RELATION_ID_, npages, tuples);
+
+	Assert(temp > 0);
 
 	return temp;
 }
@@ -290,9 +308,12 @@ cost_mergejoin(Cost outercost,
 
 	temp += outercost;
 	temp += innercost;
-	temp += cost_sort(outersortkeys, outersize, outerwidth, false);
-	temp += cost_sort(innersortkeys, innersize, innerwidth, false);
+	if (outersortkeys)			/* do we need to sort? */
+		temp += cost_sort(outersortkeys, outersize, outerwidth, true);
+	if (innersortkeys)			/* do we need to sort? */
+		temp += cost_sort(innersortkeys, innersize, innerwidth, true);
 	temp += _cpu_page_wight_ * (outersize + innersize);
+
 	Assert(temp >= 0);
 
 	return temp;
