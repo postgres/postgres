@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.2 1996/08/13 01:32:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.3 1996/08/27 07:42:13 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -38,11 +38,9 @@
 
 /* this is so the sparcstation debugger works */
 
-#ifndef NO_ASSERT_CHECKING
-#ifdef sparc
+#if !defined(NO_ASSERT_CHECKING) && defined(sparc)
 #define register
-#endif /* sparc */
-#endif /* NO_ASSERT_CHECKING */
+#endif /* !NO_ASSERT_CHECKING && sparc */
 
 /* ----------------------------------------------------------------
  *			misc support routines
