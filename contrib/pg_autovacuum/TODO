@@ -1,6 +1,8 @@
 Todo Items for pg_autovacuum client
 --------------------------------------------------------------------------
 
+_Add Startup Message (with datetime stamp) to Logfile when starting and logging 
+
 _create a FSM export function and see if I can use it for pg_autovacuum
 
 _look into possible benifits of pgstattuple contrib work
