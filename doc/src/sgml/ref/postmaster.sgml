@@ -6,7 +6,7 @@
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
  <refnamediv>
-  <refname id="postmaster">
+  <refname id="postmaster-ref">
    <application>postmaster</application>
   </refname>
   <refpurpose>
@@ -18,10 +18,9 @@
    <date>1999-05-19</date>
   </refsynopsisdivinfo>
   <synopsis>
-postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ]
-   [ -D <replaceable class="parameter">DataDir</replaceable> ] [-N <replaceable class="parameter">nBackends</replaceable> ] [ -S ]
-   [ -d [ <replaceable class="parameter">DebugLevel</replaceable> ] ]
-   [ -i ] [ -o <replaceable class="parameter">BackendOptions</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
+postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -i ]
+postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -N <replaceable class="parameter">nBackends</replaceable> ] [ -S ]
+   [ -d [ <replaceable class="parameter">DebugLevel</replaceable> ] [ -i ] [ -o <replaceable class="parameter">BackendOptions</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
 postmaster [ -n | -s ] ...
   </synopsis>
 
@@ -206,10 +205,8 @@ postmaster [ -n | -s ] ...
       </term>
       <listitem>
        <para>
-	If the <literal>-n</literal>
-	option is supplied, then the
 	<application>postmaster</application>
-	does not reinitialize shared data structures.  A knowledgable system
+	will not reinitialize shared data structures.  A knowledgable system
 	programmer can then use the
 	<application>shmemdoc</application>
 	program to examine shared memory and semaphore state.
@@ -235,7 +232,7 @@ postmaster [ -n | -s ] ...
    </para>
   </refsect2>
 
-  <refsect2 id="R2-APP-POSTMASTER-1">
+  <refsect2 id="R2-APP-POSTMASTER-2">
    <refsect2info>
     <date>1999-05-19</date>
    </refsect2info>
@@ -388,8 +385,9 @@ on BSD-based systems, or
    You can run more than one postmaster on a machine only if each one has a
    separate directory and port number.
   </para>
+ </refsect1>
 
- <refsect1 id="R1-APP-VACUUMDB-2">
+ <refsect1 id="R1-APP-POSTMASTER-2">
   <refsect1info>
    <date>1998-10-04</date>
   </refsect1info>
@@ -434,7 +432,7 @@ or its alternative form
   </para>
  </refsect1>
  
- <refsect1 id="R1-APP-VACUUMDB-3">
+ <refsect1 id="R1-APP-POSTMASTER-3">
   <refsect1info>
    <date>1998-10-04</date>
   </refsect1info>
@@ -478,7 +476,7 @@ or its alternative form
 % setenv PGPORT 1234
 % psql
    </programlisting>.
-
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,220 +1,479 @@
-.\" This is -*-nroff-*-
-.\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.1 1999/05/26 17:25:38 thomas Exp $
-.TH POSTGRESQL UNIX 05/19/99 PostgreSQL PostgreSQL
-.SH NAME
-postgres - the Postgres backend server
-.SH SYNOPSIS
-.BR "postgres"
-[\c
-.BR "-B"
-n_buffers]
-[\c
-.BR "-C"
-]
-[\c
-.BR "-D"
-data_directory]
-[\c
-.BR "-E"
-]
-[\c
-.BR "-F"
-]
-[\c
-.BR "-O"
-]
-[\c
-.BR "-Q"
-]
-[\c
-.BR "-S kbytes"
-]
-[\c
-.BR "-d"
-debug_level]
-[\c
-.BR "-e"
-]
-[\c
-.BR "-o"
-output_file]
-[\c
-.BR "-s"
-]
-[\c
-.BR "-v protocol"
-]
-[dbname]
-.in -5n
-.SH DESCRIPTION
-The Postgres backend server can be executed directly from the user shell.
-This should be done only while debugging by the DBA, and should not be
-done while other Postgres backends are being managed by a
-.IR postmaster
-on this set of databases.
-.PP
-Some of the switches explained in this man page can be passed to the backend
-through the "database options" field of a connection request, and thus can be
-set for a particular backend without going to the trouble of restarting the
-postmaster.  This is particularly handy for debugging-related switches.
-.PP
-The optional argument
-.IR dbname
-specifies the name of the database to be accessed.
-.IR Dbname
-defaults to the value of the
-.SM USER
-environment variable.
-.PP
-The 
-.IR postgres
-server understands the following command-line options:
-.TP
-.BR "-B" " n_buffers"
-If the backend is running under the 
-.IR postmaster ,
-.IR "n_buffers"
-is the number of shared-memory buffers that the
-.IR "postmaster"
-has allocated for the backend server processes that it starts.  If the
-backend is running standalone, this specifies the number of buffers to
-allocate.  This value defaults to 64 buffers, where each buffer is 8k bytes
-(or whatever BLCKSZ is set to in config.h).
-.TP
-.BR "-C"
-Do not show server version number.
-.TP
-.BR "-D" " data_directory"
-This option specifies the pathname of the directory that contains the
-database system data (the tables, the catalogs, etc.).  If you don't 
-specify this option, Postgres uses the value of the PGDATA environment
-variable.  You must either specify a -D option or set PGDATA.
- 
-The data directory pathname for a database system is normally determined when
-the database system is created with
-.IR initdb ,
-with a --pgdata option to
-.IR initdb .
-.TP
-.BR "-E"
-Echo all queries.
-.TP
-.BR "-F"
-Disable automatic fsync() call after each transaction.
-This option improves performance, but an operating system crash
-while a transaction is in progress will probably cause data loss.
-.TP
-.BR "-O"
-Override restrictions, so system table structures can be modified(pg_*).
-.TP
-.BR "-Q"
-Specifies \*(lqquiet\*(rq mode.
-.TP
-.BR "-S" " kbytes"
-Specifies the amount of memory to be used by internal sorts and hashes
-before resorting to temporary disk files.  The value is specified in
-kilobytes, and defaults to 512 kilobytes.  Note that for a complex query,
-several sorts and/or hashes might be running in parallel, and each one
-will be allowed to use as much as -S kilobytes before it starts to put
-data into temporary files.
-.TP
-.BR "-e"
-The
-.IR "-e"
-option controls how dates are input to and output from the database.
-.IP
-If the
-.IR "-e"
-option is supplied, then all dates passed to and from the frontend
-processes will be assumed to be in
-.IR "European"
-format ie.
-.IR "DD-MM-YYYY"
-otherwise dates are input and output in
-.IR "American"
-format ie.
-.IR "MM-DD-YYYY"
-.TP
-.BR "-d" " debug_level"
-Turns on debugging at the numeric level
-.IR "debug_level" .
-Turning on debugging will cause query, parse trees, and query plans to
-be displayed.
-.TP
-.BR "-o" " output_file"
-Sends all debugging and error output to 
-.IR output_file .
-If the backend is running under the 
-.IR postmaster ,
-error messages are still sent to the frontend process as well as to
-.IR output_file ,
-but debugging output is sent to the controlling tty of the
-.IR postmaster
-(since only one file descriptor can be sent to an actual file).
-.TP
-.BR "-s"
-Print time information and other statistics at the end of each query.
-This is useful for benchmarking or for use in tuning the number of
-buffers.
-.TP
-.BR "-v" " protocol"
-Specifies the number of the frontend/backend protocol to be used for this
-particular session.
-.SH "DEVELOPER COMMAND OPTIONS"
-There are several other options that may be specified, used mainly
-for debugging purposes.  These are listed here only for the use by
-Postgres system developers.
-.BR "Use of any of these options is highly discouraged" .
-Furthermore, any of these options may disappear or change at any time.
-.TP
-.BR "-A" "n|r|b|Q\fIn\fP|X\fIn\fP"
-.IP
-This option generates a tremendous amount of output.
-.TP
-.BR "-L"
-Turns off the locking system.
-.TP
-.BR "-N"
-Disables use of newline as a query delimiter.
-.TP
-.BR "-f"
-Forbids the use of particular scan and join methods:
-.IR s " and " i
-disable sequential and index scans respectively, while
-.IR n ", " m " and " h
-disable nested-loop, merge and hash joins respectively.
-(Neither sequential scans nor nested-loop joins can be disabled completely;
-the -fs and -fn options simply discourage the optimizer from using those
-plan types if it has any other alternative.)
-.TP
-.BR "-i"
-Prevents query execution, but shows the plan tree.
-.TP
-.BR "-p" " databasename"
-Indicates to the backend server that it has been started by a 
-.IR postmaster
-and make different assumptions about buffer pool management, file
-descriptors, etc.  Switches following -p are restricted to those
-considered "secure".
-.TP
-.BR "-t" "pa[rser]|pl[anner]|e[xecutor]"
-Print timing statistics for each query relating to each of the major
-system modules.  This option cannot be used with
-.BR "-s" .
-.SH "SEE ALSO"
-ipcclean(1),
-psql(1), 
-postmaster(1).
-.SH "DIAGNOSTICS"
-Of the nigh-infinite number of error messages you may see when you
-execute the backend server directly, the most common will probably be:
-.TP
-.BR "semget: No space left on device"
-If you see this message, you should run the
-.IR ipcclean
-command.  After doing this, try starting
-.IR postgres
-again.  If this still doesn't work, you probably need to configure
-your kernel for shared memory and semaphores as described in the
-installation notes.
+<refentry id="APP-POSTGRES">
+ <refmeta>
+  <refentrytitle>
+   <application>postgres</application>
+  </refentrytitle>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname id="postgres-ref">
+   <application>postgres</application>
+  </refname>
+  <refpurpose>
+   Run a <productname>Postgres</productname> single-user backend
+  </refpurpose>
+ </refnamediv>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1999-05-19</date>
+  </refsynopsisdivinfo>
+  <synopsis>
+postgres [ <replaceable class="parameter">dbname</replaceable> ]
+postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -D <replaceable class="parameter">DataDir</replaceable> ] [ -E ] [ -F ]
+   [ -O ] [ -Q ] [ -S <replaceable class="parameter">SortSize</replaceable> ] [ -d [ <replaceable class="parameter">DebugLevel</replaceable> ] ] [ -e ]
+   [ -o ] [ <replaceable class="parameter">OutputFile</replaceable> ] [ -s ] [ -v <replaceable class="parameter">protocol</replaceable> ] [ <replaceable class="parameter">dbname</replaceable> ]
+  </synopsis>
+
+  <refsect2 id="R2-APP-POSTGRES-1">
+   <refsect2info>
+    <date>1999-05-19</date>
+   </refsect2info>
+   <title>
+    Inputs
+   </title>
+   <para>
+    <application>postgres</application> accepts the following command line arguments:
+    
+    <variablelist>
+     <varlistentry>
+      <term>
+       <replaceable class="parameter">dbname</replaceable>
+      </term>
+      <listitem>
+       <para>
+	The optional argument
+	<replaceable class="parameter">dbname</replaceable>
+	specifies the name of the database to be accessed.
+	<replaceable class="parameter">dbname</replaceable>
+	defaults to the value of the
+	<envar>USER</envar>
+	environment variable.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -B <replaceable class="parameter">nBuffers</replaceable>
+      </term>
+      <listitem>
+       <para>
+	If the backend is running under the 
+	<application>postmaster</application>,
+	<replaceable class="parameter">nBuffers</replaceable>
+	is the number of shared-memory buffers that the
+	<application>postmaster</application>
+	has allocated for the backend server processes that it starts.  If the
+	backend is running standalone, this specifies the number of buffers to
+	allocate.  This value defaults to 64 buffers, where each buffer is 8k bytes
+	(or whatever BLCKSZ is set to in config.h).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -C
+      </term>
+      <listitem>
+       <para>
+	Do not show the server version number.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -D <replaceable class="parameter">DataDir</replaceable>
+      </term>
+      <listitem>
+       <para>
+	Specifies the directory to use as the root of the tree of database
+	directories.  If -D is not given, the default data directory name is
+	the value of the environment variable 
+	<envar>PGDATA</envar>.
+	If <envar>PGDATA</envar> is not set, then the directory used is
+	<filename>$POSTGRESHOME/data</filename>.
+	If neither environment variable is set and this command-line
+	option is not specified, the default directory that was
+	set at compile-time is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -E
+      </term>
+      <listitem>
+       <para>
+	Echo all queries.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -F
+      </term>
+      <listitem>
+       <para>
+	Disable an automatic <function>fsync()</function> call after each transaction.
+	This option improves performance, but an operating system crash
+	while a transaction is in progress may  cause the loss of
+	the most recently entered data. Without the <function>fsync()</function> call
+	the data is buffered by the operating system, and written to disk sometime later.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -O
+      </term>
+      <listitem>
+       <para>
+	Override restrictions, so system table structures can be modified.
+	These tables are typically those with a leading "pg_" in the table name.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -Q
+      </term>
+      <listitem>
+       <para>
+	Specifies "quiet" mode.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -S <replaceable class="parameter">SortSize</replaceable>
+      </term>
+      <listitem>
+       <para>
+	Specifies the amount of memory to be used by internal sorts and hashes
+	before resorting to temporary disk files.  The value is specified in
+	kilobytes, and defaults to 512 kilobytes.  Note that for a complex query,
+	several sorts and/or hashes might be running in parallel, and each one
+	will be allowed to use as much as
+	<replaceable class="parameter">SortSize</replaceable> kilobytes
+	before it starts to put data into temporary files.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -d [ <replaceable class="parameter">DebugLevel</replaceable> ]
+      </term>
+      <listitem>
+       <para>
+	The optional argument <replaceable class="parameter">DebugLevel</replaceable>
+	determines the amount of debugging output the backend servers will
+	produce.
+	If <replaceable class="parameter">DebugLevel</replaceable>
+	is one, the postmaster will trace all connection traffic,
+	and nothing else.
+	For levels two and higher,
+	debugging is turned on in the backend process and the postmaster
+	displays more information,
+	including the backend environment and process traffic.
+	Note that if no file is specified for backend servers to
+	send their debugging output then this output will appear on the
+	controlling tty of their parent <application>postmaster</application>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -e
+      </term>
+      <listitem>
+       <para>
+	This option controls how dates are interpreted upon
+	input to and output from the database.
+	If the <option>-e</option>
+	option is supplied, then dates passed to and from the frontend
+	processes will be assumed to be in "European"
+	format (<literal>DD-MM-YYYY</literal>),
+	otherwise dates are assumed to be in
+	"American" format (<literal>MM-DD-YYYY</literal>).
+	Dates are accepted by the backend in a wide variety of formats,
+	and for input dates this switch mostly affects the interpretation
+	for ambiguous cases. See <xref linkend="datatype" endterm="datatype">
+	for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -o <replaceable class="parameter">OutputFile</replaceable>
+      </term>
+      <listitem>
+       <para>
+	Sends all debugging and error output to 
+	<replaceable class="parameter">OutputFile</replaceable>.
+	If the backend is running under the <application>postmaster</application>,
+	error messages are still sent to the frontend process as well as to
+	<replaceable class="parameter">OutputFile</replaceable>,
+	but debugging output is sent to the controlling tty of the
+	<application>postmaster</application>
+	(since only one file descriptor can be sent to an actual file).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -s
+      </term>
+      <listitem>
+       <para>
+	Print time information and other statistics at the end of each query.
+	This is useful for benchmarking or for use in tuning the number of
+	buffers.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -v <replaceable class="parameter">protocol</replaceable>
+      </term>
+      <listitem>
+       <para>
+	Specifies the number of the frontend/backend protocol to be used for this
+	particular session.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+
+   <para>
+    There are several other options that may be specified, used mainly
+    for debugging purposes.  These are listed here only for the use by
+    <productname>Postgres</productname> system developers.
+    <emphasis>Use of any of these options is highly discouraged.</emphasis>
+    Furthermore, any of these options may disappear or change at any time.
+   </para>
+
+   <para>
+    These special-case options are:
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       -A n|r|b|Q\fIn\fP|X\fIn\fP
+      </term>
+      <listitem>
+       <para>
+	This option generates a tremendous amount of output.
+       </para>
+     </listitem>
+    </varlistentry>
+
+     <varlistentry>
+      <term>
+       -L
+      </term>
+      <listitem>
+       <para>
+	Turns off the locking system.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -N
+      </term>
+      <listitem>
+       <para>
+	Disables use of newline as a query delimiter.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -f [ s | i | m | n | h ]
+      </term>
+      <listitem>
+       <para>
+	Forbids the use of particular scan and join methods:
+	<literal>s</literal> and <literal>i</literal>
+	disable sequential and index scans respectively, while
+	<literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
+	disable nested-loop, merge and hash joins respectively.
+	
+	<note>
+	 <para>
+	  Neither sequential scans nor nested-loop joins can be disabled completely;
+	  the <literal>-fs</literal> and <literal>-fn</literal>
+	  options simply discourage the optimizer from using those
+	  plan types if it has any other alternative.
+	 </para>
+	</note>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -i
+      </term>
+      <listitem>
+       <para>
+	Prevents query execution, but shows the plan tree.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -p <replaceable class="parameter">dbname</replaceable>
+      </term>
+      <listitem>
+       <para>
+	Indicates to the backend server that it has been started by a 
+	<application>postmaster</application>
+	and make different assumptions about buffer pool management, file
+	descriptors, etc.  Switches following -p are restricted to those
+	considered "secure".
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>
+       -t pa[rser] | pl[anner] | e[xecutor]
+      </term>
+      <listitem>
+       <para>
+	Print timing statistics for each query relating to each of the major
+	system modules.  This option cannot be used with <option>-s</option>.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+
+  <refsect2 id="R2-APP-POSTGRES-2">
+   <refsect2info>
+    <date>1999-05-19</date>
+   </refsect2info>
+   <title>
+    Outputs
+   </title>
+   <para>
+    Of the nigh-infinite number of error messages you may see when you
+    execute the backend server directly, the most common will probably be:
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       semget: No space left on device
+      </term>
+      <listitem>
+       <para>
+	If you see this message, you should run the
+	<application>ipcclean</application>
+	command.  After doing this, try starting
+	<application>postmaster</application>
+	again.  If this still doesn't work, you probably need to configure
+	your kernel for shared memory and semaphores as described in the
+	installation notes.  If you have a kernel with particularly small shared memory
+	and/or semaphore limits, you may have to reconfigure your kernel to increase
+	its shared memory or semaphore parameters.
+
+	<tip>
+	 <para>
+	  You may be able to postpone
+	  reconfiguring your kernel by decreasing -B to reduce
+	  <productname>Postgres</productname>' shared memory
+	  consumption.
+	 </para>
+	</tip>
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+   </para>
+  </refsect2>
+ </refsynopsisdiv>
+
+ <refsect1 id="R1-APP-POSTGRES-1">
+  <refsect1info>
+   <date>1999-05-19</date>
+  </refsect1info>
+  <title>
+   Description
+  </title>
+
+  <para>
+   The Postgres backend server can be executed directly from the user shell.
+   This should be done only while debugging by the DBA, and should not be
+   done while other Postgres backends are being managed by a
+   <application>postmaster</application>
+   on this set of databases.
+  </para>
+
+  <para>
+   Some of the switches explained here can be passed to the backend
+   through the "database options" field of a connection request, and thus can be
+   set for a particular backend without going to the trouble of restarting the
+   postmaster.  This is particularly handy for debugging-related switches.
+  </para>
+
+  <para>
+   The optional argument <replaceable class="parameter">dbname</replaceable>
+   specifies the name of the database to be accessed.
+   <replaceable class="parameter">dbname</replaceable>
+   defaults to the value of the
+   <envar>USER</envar> environment variable.
+  </para>
+ </refsect1>
+
+ <refsect1 id="R1-APP-POSTGRES-2">
+  <refsect1info>
+   <date>1998-10-04</date>
+  </refsect1info>
+  <title>
+   Notes
+  </title>
+  
+  <para>
+   Useful utilities for dealing with shared memory problems include
+   <application>ipcs(1)</application>,
+   <application>ipcrm(1</application>), and
+   <application>ipcclean(1)</application>.
+   See also <xref linkend="postmaster-ref" endterm="postmaster-ref">.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
