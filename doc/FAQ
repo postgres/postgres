@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Mar 17 14:47:21 EST 2003
+   Last updated: Mon Mar 17 14:52:36 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -1060,10 +1060,8 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    
     4.25) How do I return multiple rows or columns from a function?
     
-   You can return result sets from PL/pgSQL functions using refcursors.
-   See
-   http://www.PostgreSQL.org/docs/view.php?version=current&idoc=1&file=pl
-   pgsql-cursors.html, section 23.7.3.3.
+   In 7.3, you can easily return multiple rows or columns from a
+   function, http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
     4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
     functions?
