@@ -16,8 +16,9 @@
 
 #elif defined(__ia64)
 
+/* HPUX runs IA64 in big-endian mode */
 #ifndef			BYTE_ORDER
-#define			BYTE_ORDER		LITTLE_ENDIAN
+#define			BYTE_ORDER		BIG_ENDIAN
 #endif
 
 #else
