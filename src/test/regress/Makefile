@@ -1,15 +1,15 @@
-From scrappy@ki.net Thu Jul 25 05:51:19 1996
+From scrappy@ki.net Fri Jul 26 05:15:00 1996
 Status: RO
 X-Status: 
-Received: from daemun.ilt.com ([204.247.102.21]) by ki.net (8.7.5/8.7.5) with ESMTP id FAA12531 for <scrappy@ki.net>; Thu, 25 Jul 1996 05:51:16 -0400 (EDT)
-From: postgres@madmax.ilt.com
-Received: from madmax.ilt.com (madmax [199.26.203.43]) by daemun.ilt.com (8.7.5/8.7.3) with SMTP id CAA09205 for <scrappy@ki.net>; Thu, 25 Jul 1996 02:50:12 -0700 (PDT)
-Received: by madmax.ilt.com (SMI-8.6/ILT-SVR4-1.1)
-	id CAA00419; Thu, 25 Jul 1996 02:45:47 -0700
-Date: Thu, 25 Jul 1996 02:45:47 -0700
-Message-Id: <199607250945.CAA00419@madmax.ilt.com>
+Received: from daemun.ilt.com ([204.247.102.21]) by ki.net (8.7.5/8.7.5) with ESMTP id FAA02010 for <scrappy@ki.net>; Fri, 26 Jul 1996 05:14:58 -0400 (EDT)
+Received: from darvish. ([199.26.203.37]) by daemun.ilt.com (8.7.5/8.7.3) with SMTP id CAA14746 for <scrappy@ki.net>; Fri, 26 Jul 1996 02:13:20 -0700 (PDT)
+Received: by darvish. (5.x/SMI-SVR4)
+	id AA07735; Thu, 25 Jul 1996 02:47:22 -0700
+Date: Thu, 25 Jul 1996 02:47:22 -0700
+From: postgres@darvish (POSTGRES)
+Message-Id: <9607250947.AA07735@darvish.>
 To: scrappy@ki.net
-Subject: /user/postgres95/src/test/regress/Makefile == revised
+Subject: /user/postgres95/src/test/regress/Makefile == revision 2
 
 #-------------------------------------------------------------------------
 #
@@ -20,7 +20,7 @@ Subject: /user/postgres95/src/test/regress/Makefile == revised
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.3 1996/07/25 19:56:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.4 1996/07/26 19:58:04 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
