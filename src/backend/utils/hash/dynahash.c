@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.44 2002/09/02 02:47:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.45 2002/10/31 21:59:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,7 +540,8 @@ hash_search(HTAB *hashp,
 		/*
 		 * Try to catch subsequent errors
 		 */
-		Assert(currBucket && !(saveState.currBucket = NULL));
+		Assert(currBucket);
+		saveState.currBucket = NULL;
 	}
 	else
 	{
