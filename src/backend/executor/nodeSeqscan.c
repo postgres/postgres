@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.23 2000/06/15 04:09:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.24 2000/07/12 02:37:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,7 @@
 #include "parser/parsetree.h"
 
 static Oid InitScanRelation(SeqScan *node, EState *estate,
-				 CommonScanState *scanstate, Plan *outerPlan);
-
+							CommonScanState *scanstate);
 static TupleTableSlot *SeqNext(SeqScan *node);
 
 /* ----------------------------------------------------------------
@@ -132,25 +131,11 @@ SeqNext(SeqScan *node)
 TupleTableSlot *
 ExecSeqScan(SeqScan *node)
 {
-	TupleTableSlot *slot;
-	Plan	   *outerPlan;
-
-	S_printf("ExecSeqScan: scanning node: ");
-	S_nodeDisplay(node);
-
 	/* ----------------
-	 * if there is an outer subplan, get a tuple from it
-	 * else, scan the relation
+	 *	use SeqNext as access method
 	 * ----------------
 	 */
-	if ((outerPlan = outerPlan((Plan *) node)) != NULL)
-		slot = ExecProcNode(outerPlan, (Plan *) node);
-	else
-		slot = ExecScan(node, SeqNext);
-
-	S1_printf("ExecSeqScan: returned tuple slot: %d\n", slot);
-
-	return slot;
+	return ExecScan(node, (ExecScanAccessMtd) SeqNext);
 }
 
 /* ----------------------------------------------------------------
@@ -162,7 +147,7 @@ ExecSeqScan(SeqScan *node)
  */
 static Oid
 InitScanRelation(SeqScan *node, EState *estate,
-				 CommonScanState *scanstate, Plan *outerPlan)
+				 CommonScanState *scanstate)
 {
 	Index		relid;
 	List	   *rangeTable;
@@ -173,83 +158,55 @@ InitScanRelation(SeqScan *node, EState *estate,
 	HeapScanDesc currentScanDesc;
 	RelationInfo *resultRelationInfo;
 
-	if (outerPlan == NULL)
-	{
-		/* ----------------
-		 * if the outer node is nil then we are doing a simple
-		 * sequential scan of a relation...
-		 *
-		 * get the relation object id from the relid'th entry
-		 * in the range table, open that relation and initialize
-		 * the scan state...
-		 * ----------------
-		 */
-		relid = node->scanrelid;
-		rangeTable = estate->es_range_table;
-		rtentry = rt_fetch(relid, rangeTable);
-		reloid = rtentry->relid;
-		direction = estate->es_direction;
-		resultRelationInfo = estate->es_result_relation_info;
-
-		ExecOpenScanR(reloid,	/* relation */
-					  0,		/* nkeys */
-					  NULL,		/* scan key */
-					  0,		/* is index */
-					  direction,/* scan direction */
-					  estate->es_snapshot,
-					  &currentRelation, /* return: rel desc */
-					  (Pointer *) &currentScanDesc);	/* return: scan desc */
-
-		scanstate->css_currentRelation = currentRelation;
-		scanstate->css_currentScanDesc = currentScanDesc;
-
-		ExecAssignScanType(scanstate,
-						   RelationGetDescr(currentRelation));
-	}
-	else
-	{
-		/* ----------------
-		 *	 otherwise we are scanning tuples from the
-		 *	 outer subplan so we initialize the outer plan
-		 *	 and nullify
-		 * ----------------
-		 */
-		ExecInitNode(outerPlan, estate, (Plan *) node);
-
-		node->scanrelid = 0;
-		scanstate->css_currentRelation = NULL;
-		scanstate->css_currentScanDesc = NULL;
-		ExecAssignScanType(scanstate, NULL);
-		reloid = InvalidOid;
-	}
-
 	/* ----------------
-	 *	return the relation
+	 * get the relation object id from the relid'th entry
+	 * in the range table, open that relation and initialize
+	 * the scan state...
 	 * ----------------
 	 */
+	relid = node->scanrelid;
+	rangeTable = estate->es_range_table;
+	rtentry = rt_fetch(relid, rangeTable);
+	reloid = rtentry->relid;
+	direction = estate->es_direction;
+	resultRelationInfo = estate->es_result_relation_info;
+
+	ExecOpenScanR(reloid,		/* relation */
+				  0,			/* nkeys */
+				  NULL,			/* scan key */
+				  0,			/* is index */
+				  direction,	/* scan direction */
+				  estate->es_snapshot,
+				  &currentRelation, /* return: rel desc */
+				  (Pointer *) &currentScanDesc); /* return: scan desc */
+
+	scanstate->css_currentRelation = currentRelation;
+	scanstate->css_currentScanDesc = currentScanDesc;
+
+	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation));
+
 	return reloid;
 }
 
 
 /* ----------------------------------------------------------------
  *		ExecInitSeqScan
- *
- * old comments
- *		Creates the run-time state information for the seqscan node
- *		and sets the relation id to contain relevant descriptors.
- *
- *		If there is a outer subtree (sort), the outer subtree
- *		is initialized and the relation id is set to the descriptors
- *		returned by the subtree.
  * ----------------------------------------------------------------
  */
 bool
 ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 {
 	CommonScanState *scanstate;
-	Plan	   *outerPlan;
 	Oid			reloid;
 	HeapScanDesc scandesc;
+
+	/* ----------------
+	 *	Once upon a time it was possible to have an outerPlan of a SeqScan,
+	 *	but not any more.
+	 * ----------------
+	 */
+	Assert(outerPlan((Plan *) node) == NULL);
+	Assert(innerPlan((Plan *) node) == NULL);
 
 	/* ----------------
 	 *	assign the node's execution state
@@ -265,13 +222,11 @@ ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 	node->scanstate = scanstate;
 
 	/* ----------------
-	 *	Miscellanious initialization
+	 *	Miscellaneous initialization
 	 *
-	 *		 +	assign node's base_id
 	 *		 +	create expression context for node
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, &scanstate->cstate, parent);
 	ExecAssignExprContext(estate, &scanstate->cstate);
 
 #define SEQSCAN_NSLOTS 3
@@ -283,12 +238,10 @@ ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 	ExecInitScanTupleSlot(estate, scanstate);
 
 	/* ----------------
-	 *	initialize scan relation or outer subplan
+	 *	initialize scan relation
 	 * ----------------
 	 */
-	outerPlan = outerPlan((Plan *) node);
-
-	reloid = InitScanRelation(node, estate, scanstate, outerPlan);
+	reloid = InitScanRelation(node, estate, scanstate);
 
 	scandesc = scanstate->css_currentScanDesc;
 	scanstate->cstate.cs_TupFromTlist = false;
@@ -315,15 +268,12 @@ ExecCountSlotsSeqScan(SeqScan *node)
  *		ExecEndSeqScan
  *
  *		frees any storage allocated through C routines.
- *|		...and also closes relations and/or shuts down outer subplan
- *|		-cim 8/14/89
  * ----------------------------------------------------------------
  */
 void
 ExecEndSeqScan(SeqScan *node)
 {
 	CommonScanState *scanstate;
-	Plan	   *outerPlan;
 
 	/* ----------------
 	 *	get information from node
@@ -341,19 +291,13 @@ ExecEndSeqScan(SeqScan *node)
 	 * ----------------
 	 */
 	ExecFreeProjectionInfo(&scanstate->cstate);
+	ExecFreeExprContext(&scanstate->cstate);
 
 	/* ----------------
 	 * close scan relation
 	 * ----------------
 	 */
 	ExecCloseR((Plan *) node);
-
-	/* ----------------
-	 * clean up outer subtree (does nothing if there is no outerPlan)
-	 * ----------------
-	 */
-	outerPlan = outerPlan((Plan *) node);
-	ExecEndNode(outerPlan, (Plan *) node);
 
 	/* ----------------
 	 *	clean out the tuple table
@@ -367,6 +311,7 @@ ExecEndSeqScan(SeqScan *node)
  *						Join Support
  * ----------------------------------------------------------------
  */
+
 /* ----------------------------------------------------------------
  *		ExecSeqReScan
  *
@@ -378,7 +323,6 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	CommonScanState *scanstate;
 	EState	   *estate;
-	Plan	   *outerPlan;
 	Relation	rel;
 	HeapScanDesc scan;
 	ScanDirection direction;
@@ -386,28 +330,18 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 	scanstate = node->scanstate;
 	estate = node->plan.state;
 
-	if ((outerPlan = outerPlan((Plan *) node)) != NULL)
+	/* If this is re-scanning of PlanQual ... */
+	if (estate->es_evTuple != NULL &&
+		estate->es_evTuple[node->scanrelid - 1] != NULL)
 	{
-		/* we are scanning a subplan */
-		outerPlan = outerPlan((Plan *) node);
-		ExecReScan(outerPlan, exprCtxt, parent);
+		estate->es_evTupleNull[node->scanrelid - 1] = false;
+		return;
 	}
-	else
-/* otherwise, we are scanning a relation */
-	{
-		/* If this is re-scanning of PlanQual ... */
-		if (estate->es_evTuple != NULL &&
-			estate->es_evTuple[node->scanrelid - 1] != NULL)
-		{
-			estate->es_evTupleNull[node->scanrelid - 1] = false;
-			return;
-		}
-		rel = scanstate->css_currentRelation;
-		scan = scanstate->css_currentScanDesc;
-		direction = estate->es_direction;
-		scan = ExecReScanR(rel, scan, direction, 0, NULL);
-		scanstate->css_currentScanDesc = scan;
-	}
+	rel = scanstate->css_currentRelation;
+	scan = scanstate->css_currentScanDesc;
+	direction = estate->es_direction;
+	scan = ExecReScanR(rel, scan, direction, 0, NULL);
+	scanstate->css_currentScanDesc = scan;
 }
 
 /* ----------------------------------------------------------------
@@ -420,33 +354,11 @@ void
 ExecSeqMarkPos(SeqScan *node)
 {
 	CommonScanState *scanstate;
-	Plan	   *outerPlan;
 	HeapScanDesc scan;
 
 	scanstate = node->scanstate;
-
-	/* ----------------
-	 *	if we are scanning a subplan then propagate
-	 *	the ExecMarkPos() request to the subplan
-	 * ----------------
-	 */
-	outerPlan = outerPlan((Plan *) node);
-	if (outerPlan)
-	{
-		ExecMarkPos(outerPlan);
-		return;
-	}
-
-	/* ----------------
-	 *	otherwise we are scanning a relation so mark the
-	 *	position using the access methods..
-	 *
-	 * ----------------
-	 */
 	scan = scanstate->css_currentScanDesc;
 	heap_markpos(scan);
-
-	return;
 }
 
 /* ----------------------------------------------------------------
@@ -459,28 +371,9 @@ void
 ExecSeqRestrPos(SeqScan *node)
 {
 	CommonScanState *scanstate;
-	Plan	   *outerPlan;
 	HeapScanDesc scan;
 
 	scanstate = node->scanstate;
-
-	/* ----------------
-	 *	if we are scanning a subplan then propagate
-	 *	the ExecRestrPos() request to the subplan
-	 * ----------------
-	 */
-	outerPlan = outerPlan((Plan *) node);
-	if (outerPlan)
-	{
-		ExecRestrPos(outerPlan);
-		return;
-	}
-
-	/* ----------------
-	 *	otherwise we are scanning a relation so restore the
-	 *	position using the access methods..
-	 * ----------------
-	 */
 	scan = scanstate->css_currentScanDesc;
 	heap_restrpos(scan);
 }

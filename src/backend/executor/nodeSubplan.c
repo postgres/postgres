@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.25 2000/04/12 17:15:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.26 2000/07/12 02:37:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,10 +37,18 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	SubLink    *sublink = node->sublink;
 	SubLinkType subLinkType = sublink->subLinkType;
 	bool		useor = sublink->useor;
+	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	Datum		result;
+	bool		isDone;
 	bool		found = false;	/* TRUE if got at least one subplan tuple */
 	List	   *lst;
+
+	/*
+	 * We are probably in a short-lived expression-evaluation context.
+	 * Switch to longer-lived per-query context.
+	 */
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 	if (node->setParam != NIL)
 		elog(ERROR, "ExecSubPlan: can't set parent params from subquery");
@@ -52,12 +60,16 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	{
 		foreach(lst, node->parParam)
 		{
-			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
+			ParamExecData *prm;
 
+			prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
 			Assert(pvar != NIL);
-			prm->value = ExecEvalExpr((Node *) lfirst(pvar),
-									  econtext,
-									  &(prm->isnull), NULL);
+			prm->value = ExecEvalExprSwitchContext((Node *) lfirst(pvar),
+												   econtext,
+												   &(prm->isnull),
+												   &isDone);
+			if (!isDone)
+				elog(ERROR, "ExecSubPlan: set values not supported for params");
 			pvar = lnext(pvar);
 		}
 		plan->chgParam = nconc(plan->chgParam, listCopy(node->parParam));
@@ -84,7 +96,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	 * return NULL.  Assuming we get a tuple, we just return its first
 	 * column (there can be only one non-junk column in this case).
 	 */
-	result = (Datum) (subLinkType == ALL_SUBLINK ? true : false);
+	result = BoolGetDatum(subLinkType == ALL_SUBLINK);
 	*isNull = false;
 
 	for (slot = ExecProcNode(plan, plan);
@@ -93,12 +105,16 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	{
 		HeapTuple	tup = slot->val;
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
-		Datum		rowresult = (Datum) (useor ? false : true);
+		Datum		rowresult = BoolGetDatum(! useor);
 		bool		rownull = false;
 		int			col = 1;
 
 		if (subLinkType == EXISTS_SUBLINK)
-			return (Datum) true;
+		{
+			found = true;
+			result = BoolGetDatum(true);
+			break;
+		}
 
 		if (subLinkType == EXPR_SUBLINK)
 		{
@@ -172,8 +188,10 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			/*
 			 * Now we can eval the combining operator for this column.
 			 */
-			expresult = ExecEvalExpr((Node *) expr, econtext, &expnull,
-									 (bool *) NULL);
+			expresult = ExecEvalExprSwitchContext((Node *) expr, econtext,
+												  &expnull, &isDone);
+			if (!isDone)
+				elog(ERROR, "ExecSubPlan: set values not supported for combining operators");
 
 			/*
 			 * Combine the result into the row result as appropriate.
@@ -188,9 +206,9 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 				/* combine within row per OR semantics */
 				if (expnull)
 					rownull = true;
-				else if (DatumGetInt32(expresult) != 0)
+				else if (DatumGetBool(expresult))
 				{
-					rowresult = (Datum) true;
+					rowresult = BoolGetDatum(true);
 					rownull = false;
 					break;		/* needn't look at any more columns */
 				}
@@ -200,9 +218,9 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 				/* combine within row per AND semantics */
 				if (expnull)
 					rownull = true;
-				else if (DatumGetInt32(expresult) == 0)
+				else if (! DatumGetBool(expresult))
 				{
-					rowresult = (Datum) false;
+					rowresult = BoolGetDatum(false);
 					rownull = false;
 					break;		/* needn't look at any more columns */
 				}
@@ -215,9 +233,9 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			/* combine across rows per OR semantics */
 			if (rownull)
 				*isNull = true;
-			else if (DatumGetInt32(rowresult) != 0)
+			else if (DatumGetBool(rowresult))
 			{
-				result = (Datum) true;
+				result = BoolGetDatum(true);
 				*isNull = false;
 				break;			/* needn't look at any more rows */
 			}
@@ -227,9 +245,9 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 			/* combine across rows per AND semantics */
 			if (rownull)
 				*isNull = true;
-			else if (DatumGetInt32(rowresult) == 0)
+			else if (! DatumGetBool(rowresult))
 			{
-				result = (Datum) false;
+				result = BoolGetDatum(false);
 				*isNull = false;
 				break;			/* needn't look at any more rows */
 			}
@@ -252,10 +270,12 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 		 */
 		if (subLinkType == EXPR_SUBLINK || subLinkType == MULTIEXPR_SUBLINK)
 		{
-			result = (Datum) false;
+			result = (Datum) 0;
 			*isNull = true;
 		}
 	}
+
+	MemoryContextSwitchTo(oldcontext);
 
 	return result;
 }
@@ -277,13 +297,13 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 		ExecCreateTupleTable(ExecCountSlotsNode(node->plan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
 
-	node->shutdown = false;
+	node->needShutdown = false;
 	node->curTuple = NULL;
 
 	if (!ExecInitNode(node->plan, sp_estate, NULL))
 		return false;
 
-	node->shutdown = true;		/* now we need to shutdown the subplan */
+	node->needShutdown = true;	/* now we need to shutdown the subplan */
 
 	/*
 	 * If this plan is un-correlated or undirect correlated one and want
@@ -317,13 +337,20 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
  * ----------------------------------------------------------------
  */
 void
-ExecSetParamPlan(SubPlan *node)
+ExecSetParamPlan(SubPlan *node, ExprContext *econtext)
 {
 	Plan	   *plan = node->plan;
 	SubLink    *sublink = node->sublink;
+	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	List	   *lst;
 	bool		found = false;
+
+	/*
+	 * We are probably in a short-lived expression-evaluation context.
+	 * Switch to longer-lived per-query context.
+	 */
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 	if (sublink->subLinkType == ANY_SUBLINK ||
 		sublink->subLinkType == ALL_SUBLINK)
@@ -345,7 +372,7 @@ ExecSetParamPlan(SubPlan *node)
 			ParamExecData *prm = &(plan->state->es_param_exec_vals[lfirsti(node->setParam)]);
 
 			prm->execPlan = NULL;
-			prm->value = (Datum) true;
+			prm->value = BoolGetDatum(true);
 			prm->isnull = false;
 			found = true;
 			break;
@@ -386,7 +413,7 @@ ExecSetParamPlan(SubPlan *node)
 			ParamExecData *prm = &(plan->state->es_param_exec_vals[lfirsti(node->setParam)]);
 
 			prm->execPlan = NULL;
-			prm->value = (Datum) false;
+			prm->value = BoolGetDatum(false);
 			prm->isnull = false;
 		}
 		else
@@ -396,16 +423,18 @@ ExecSetParamPlan(SubPlan *node)
 				ParamExecData *prm = &(plan->state->es_param_exec_vals[lfirsti(lst)]);
 
 				prm->execPlan = NULL;
-				prm->value = (Datum) NULL;
+				prm->value = (Datum) 0;
 				prm->isnull = true;
 			}
 		}
 	}
 
+	MemoryContextSwitchTo(oldcontext);
+
 	if (plan->extParam == NULL) /* un-correlated ... */
 	{
 		ExecEndNode(plan, plan);
-		node->shutdown = false;
+		node->needShutdown = false;
 	}
 }
 
@@ -416,10 +445,10 @@ ExecSetParamPlan(SubPlan *node)
 void
 ExecEndSubPlan(SubPlan *node)
 {
-	if (node->shutdown)
+	if (node->needShutdown)
 	{
 		ExecEndNode(node->plan, node->plan);
-		node->shutdown = false;
+		node->needShutdown = false;
 	}
 	if (node->curTuple)
 	{

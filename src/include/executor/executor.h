@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.45 2000/06/18 22:44:28 tgl Exp $
+ * $Id: executor.h,v 1.46 2000/07/12 02:37:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,19 +72,16 @@ extern void ExecEndNode(Plan *node, Plan *parent);
 /*
  * prototypes from functions in execQual.c
  */
-extern bool execConstByVal;
-extern int	execConstLen;
-
-extern Datum ExecExtractResult(TupleTableSlot *slot, AttrNumber attnum,
-				  bool *isNull);
 extern Datum ExecEvalParam(Param *expression, ExprContext *econtext,
 			  bool *isNull);
-
 extern char *GetAttributeByNum(TupleTableSlot *slot, AttrNumber attrno,
 				  bool *isNull);
-extern char *GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull);
-extern Datum ExecEvalExpr(Node *expression, ExprContext *econtext, bool *isNull,
-			 bool *isDone);
+extern char *GetAttributeByName(TupleTableSlot *slot, char *attname,
+								bool *isNull);
+extern Datum ExecEvalExpr(Node *expression, ExprContext *econtext,
+						  bool *isNull, bool *isDone);
+extern Datum ExecEvalExprSwitchContext(Node *expression, ExprContext *econtext,
+									   bool *isNull, bool *isDone);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo, bool *isDone);
@@ -92,7 +89,9 @@ extern TupleTableSlot *ExecProject(ProjectionInfo *projInfo, bool *isDone);
 /*
  * prototypes from functions in execScan.c
  */
-extern TupleTableSlot *ExecScan(Scan *node, TupleTableSlot *(*accessMtd) ());
+typedef TupleTableSlot *(*ExecScanAccessMtd) (Scan *node);
+
+extern TupleTableSlot *ExecScan(Scan *node, ExecScanAccessMtd accessMtd);
 
 /*
  * prototypes from functions in execTuples.c
@@ -121,8 +120,6 @@ extern void SetChangedParamList(Plan *node, List *newchg);
  * prototypes from functions in execUtils.c
  */
 extern void ResetTupleCount(void);
-extern void ExecAssignNodeBaseInfo(EState *estate, CommonState *basenode,
-					   Plan *parent);
 extern void ExecAssignExprContext(EState *estate, CommonState *commonstate);
 extern void ExecAssignResultType(CommonState *commonstate,
 					 TupleDesc tupDesc);
@@ -133,13 +130,19 @@ extern TupleDesc ExecGetResultType(CommonState *commonstate);
 extern void ExecAssignProjectionInfo(Plan *node, CommonState *commonstate);
 extern void ExecFreeProjectionInfo(CommonState *commonstate);
 extern void ExecFreeExprContext(CommonState *commonstate);
-extern void ExecFreeTypeInfo(CommonState *commonstate);
 extern TupleDesc ExecGetScanType(CommonScanState *csstate);
 extern void ExecAssignScanType(CommonScanState *csstate,
 				   TupleDesc tupDesc);
 extern void ExecAssignScanTypeFromOuterPlan(Plan *node,
 								CommonScanState *csstate);
 extern Form_pg_attribute ExecGetTypeInfo(Relation relDesc);
+
+extern ExprContext *MakeExprContext(TupleTableSlot *slot,
+									MemoryContext queryContext);
+extern void FreeExprContext(ExprContext *econtext);
+
+#define ResetExprContext(econtext) \
+	MemoryContextReset((econtext)->ecxt_per_tuple_memory)
 
 extern void ExecOpenIndices(RelationInfo *resultRelationInfo);
 extern void ExecCloseIndices(RelationInfo *resultRelationInfo);

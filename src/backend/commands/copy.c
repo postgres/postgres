@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.117 2000/07/05 23:11:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.118 2000/07/12 02:36:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -611,13 +611,11 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 	char	   *predString;
 	Node	  **indexPred = NULL;
 	TupleDesc	rtupdesc;
-	ExprContext *econtext = NULL;
 	EState	   *estate = makeNode(EState);		/* for ExecConstraints() */
-
 #ifndef OMIT_PARTIAL_INDEX
+	ExprContext *econtext = NULL;
 	TupleTable	tupleTable;
 	TupleTableSlot *slot = NULL;
-
 #endif
 	int			natts;
 	AttrNumber *attnumP;
@@ -651,7 +649,6 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 			finfo = (FuncIndexInfo *) palloc(n_indices * sizeof(FuncIndexInfo));
 			finfoP = (FuncIndexInfo **) palloc(n_indices * sizeof(FuncIndexInfo *));
 			indexPred = (Node **) palloc(n_indices * sizeof(Node *));
-			econtext = NULL;
 			for (i = 0; i < n_indices; i++)
 			{
 				itupdescArr[i] = RelationGetDescr(index_rels[i]);
@@ -680,36 +677,18 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 									PointerGetDatum(&pgIndexP[i]->indpred)));
 					indexPred[i] = stringToNode(predString);
 					pfree(predString);
+#ifndef OMIT_PARTIAL_INDEX
 					/* make dummy ExprContext for use by ExecQual */
 					if (econtext == NULL)
 					{
-#ifndef OMIT_PARTIAL_INDEX
 						tupleTable = ExecCreateTupleTable(1);
 						slot = ExecAllocTableSlot(tupleTable);
-						econtext = makeNode(ExprContext);
-						econtext->ecxt_scantuple = slot;
 						rtupdesc = RelationGetDescr(rel);
-						slot->ttc_tupleDescriptor = rtupdesc;
-
-						/*
-						 * There's no buffer associated with heap tuples
-						 * here, so I set the slot's buffer to NULL.
-						 * Currently, it appears that the only way a
-						 * buffer could be needed would be if the partial
-						 * index predicate referred to the "lock" system
-						 * attribute.  If it did, then heap_getattr would
-						 * call HeapTupleGetRuleLock, which uses the
-						 * buffer's descriptor to get the relation id.
-						 * Rather than try to fix this, I'll just disallow
-						 * partial indexes on "lock", which wouldn't be
-						 * useful anyway. --Nels, Nov '92
-						 */
-						/* SetSlotBuffer(slot, (Buffer) NULL); */
-						/* SetSlotShouldFree(slot, false); */
-						slot->ttc_buffer = (Buffer) NULL;
-						slot->ttc_shouldFree = false;
-#endif	 /* OMIT_PARTIAL_INDEX */
+						ExecSetSlotDescriptor(slot, rtupdesc);
+						econtext = MakeExprContext(slot,
+												   TransactionCommandContext);
 					}
+#endif	 /* OMIT_PARTIAL_INDEX */
 				}
 				else
 					indexPred[i] = NULL;
@@ -927,10 +906,9 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 			{
 				for (i = 0; i < n_indices; i++)
 				{
+#ifndef OMIT_PARTIAL_INDEX
 					if (indexPred[i] != NULL)
 					{
-#ifndef OMIT_PARTIAL_INDEX
-
 						/*
 						 * if tuple doesn't satisfy predicate, don't
 						 * update index
@@ -939,8 +917,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 						/* SetSlotContents(slot, tuple); */
 						if (!ExecQual((List *) indexPred[i], econtext, false))
 							continue;
-#endif	 /* OMIT_PARTIAL_INDEX */
 					}
+#endif	 /* OMIT_PARTIAL_INDEX */
 					FormIndexDatum(indexNatts[i],
 								(AttrNumber *) &(pgIndexP[i]->indkey[0]),
 								   tuple,

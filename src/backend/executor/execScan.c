@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.11 2000/01/26 05:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.12 2000/07/12 02:37:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
  *		returns the next qualifying tuple in the direction specified
  *		in the global variable ExecDirection.
  *		The access method returns the next tuple and execScan() is
- *		responisble for checking the tuple returned against the qual-clause.
+ *		responsible for checking the tuple returned against the qual-clause.
  *
  *		Conditions:
  *		  -- the "cursor" maintained by the AMI is positioned at the tuple
@@ -39,59 +39,50 @@
  *		Initial States:
  *		  -- the relation indicated is opened for scanning so that the
  *			 "cursor" is positioned before the first qualifying tuple.
- *
- *		May need to put startmmgr  and endmmgr in here.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
 ExecScan(Scan *node,
-		 TupleTableSlot *(*accessMtd) ())		/* function returning a
-												 * tuple */
+		 ExecScanAccessMtd accessMtd) /* function returning a tuple */
 {
 	CommonScanState *scanstate;
 	EState	   *estate;
 	List	   *qual;
 	bool		isDone;
-
-	TupleTableSlot *slot;
 	TupleTableSlot *resultSlot;
-	HeapTuple	newTuple;
-
 	ExprContext *econtext;
 	ProjectionInfo *projInfo;
 
-
 	/* ----------------
-	 *	initialize misc variables
+	 *	Fetch data from node
 	 * ----------------
 	 */
-	newTuple = NULL;
-	slot = NULL;
-
 	estate = node->plan.state;
 	scanstate = node->scanstate;
-
-	/* ----------------
-	 *	get the expression context
-	 * ----------------
-	 */
 	econtext = scanstate->cstate.cs_ExprContext;
+	qual = node->plan.qual;
 
 	/* ----------------
-	 *	initialize fields in ExprContext which don't change
-	 *	in the course of the scan..
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.
 	 * ----------------
 	 */
-	qual = node->plan.qual;
-	econtext->ecxt_relation = scanstate->css_currentRelation;
-	econtext->ecxt_relid = node->scanrelid;
+	ResetExprContext(econtext);
 
+	/* ----------------
+	 *	Check to see if we're still projecting out tuples from a previous
+	 *	scan tuple (because there is a function-returning-set in the
+	 *	projection expressions).  If so, try to project another one.
+	 * ----------------
+	 */
 	if (scanstate->cstate.cs_TupFromTlist)
 	{
 		projInfo = scanstate->cstate.cs_ProjInfo;
 		resultSlot = ExecProject(projInfo, &isDone);
 		if (!isDone)
 			return resultSlot;
+		/* Done with that source tuple... */
+		scanstate->cstate.cs_TupFromTlist = false;
 	}
 
 	/*
@@ -100,27 +91,23 @@ ExecScan(Scan *node,
 	 */
 	for (;;)
 	{
-		slot = (TupleTableSlot *) (*accessMtd) (node);
+		TupleTableSlot *slot;
+
+		slot = (*accessMtd) (node);
 
 		/* ----------------
 		 *	if the slot returned by the accessMtd contains
 		 *	NULL, then it means there is nothing more to scan
-		 *	so we just return the empty slot...
-		 *
-		 *	... with invalid TupleDesc (not the same as in
-		 *	projInfo->pi_slot) and break upper MergeJoin node.
-		 *	New code below do what ExecProject() does.	- vadim 02/26/98
+		 *	so we just return an empty slot, being careful to use
+		 *	the projection result slot so it has correct tupleDesc.
 		 * ----------------
 		 */
 		if (TupIsNull(slot))
 		{
-			scanstate->cstate.cs_TupFromTlist = false;
-			resultSlot = scanstate->cstate.cs_ProjInfo->pi_slot;
-			return (TupleTableSlot *)
-				ExecStoreTuple(NULL,
-							   resultSlot,
-							   InvalidBuffer,
-							   true);
+			return ExecStoreTuple(NULL,
+								  scanstate->cstate.cs_ProjInfo->pi_slot,
+								  InvalidBuffer,
+								  true);
 		}
 
 		/* ----------------
@@ -131,22 +118,28 @@ ExecScan(Scan *node,
 
 		/* ----------------
 		 *	check that the current tuple satisfies the qual-clause
-		 *	if our qualification succeeds then we
+		 *	if our qualification succeeds then we may
 		 *	leave the loop.
-		 * ----------------
-		 */
-
-		/*
-		 * add a check for non-nil qual here to avoid a function call to
+		 *
+		 * check for non-nil qual here to avoid a function call to
 		 * ExecQual() when the qual is nil ... saves only a few cycles,
 		 * but they add up ...
+		 * ----------------
 		 */
 		if (!qual || ExecQual(qual, econtext, false))
 			break;
+
+		/* ----------------
+		 *	Tuple fails qual, so free per-tuple memory and try again.
+		 * ----------------
+		 */
+		ResetExprContext(econtext);
 	}
 
 	/* ----------------
-	 *	form a projection tuple, store it in the result tuple
+	 *	Found a satisfactory scan tuple.
+	 *
+	 *	Form a projection tuple, store it in the result tuple
 	 *	slot and return it.
 	 * ----------------
 	 */

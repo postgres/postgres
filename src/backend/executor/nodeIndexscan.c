@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.51 2000/06/15 04:09:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.52 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@ IndexNext(IndexScan *node)
 	EState	   *estate;
 	CommonScanState *scanstate;
 	IndexScanState *indexstate;
+	ExprContext *econtext;
 	ScanDirection direction;
 	Snapshot	snapshot;
 	IndexScanDescPtr scanDescs;
@@ -89,7 +90,6 @@ IndexNext(IndexScan *node)
 	TupleTableSlot *slot;
 	Buffer		buffer = InvalidBuffer;
 	int			numIndices;
-
 	bool		bBackward;
 	int			indexNumber;
 
@@ -112,6 +112,7 @@ IndexNext(IndexScan *node)
 	scanDescs = indexstate->iss_ScanDescs;
 	heapRelation = scanstate->css_currentRelation;
 	numIndices = indexstate->iss_NumIndices;
+	econtext = scanstate->cstate.cs_ExprContext;
 	slot = scanstate->css_ScanTupleSlot;
 
 	/*
@@ -133,14 +134,15 @@ IndexNext(IndexScan *node)
 		slot->val = estate->es_evTuple[node->scan.scanrelid - 1];
 		slot->ttc_shouldFree = false;
 
-		scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
+		econtext->ecxt_scantuple = slot;
 
 		/* Does the tuple meet any of the OR'd indxqual conditions? */
+
+		ResetExprContext(econtext);
+
 		foreach(qual, node->indxqualorig)
 		{
-			if (ExecQual((List *) lfirst(qual),
-						 scanstate->cstate.cs_ExprContext,
-						 false))
+			if (ExecQual((List *) lfirst(qual), econtext, false))
 				break;
 		}
 		if (qual == NIL)		/* would not be returned by indices */
@@ -219,14 +221,13 @@ IndexNext(IndexScan *node)
 				 * and checking for failure with all previous
 				 * qualifications.
 				 */
-				scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
+				econtext->ecxt_scantuple = slot;
+				ResetExprContext(econtext);
 				qual = node->indxqualorig;
 				for (prev_index = 0; prev_index < indexstate->iss_IndexPtr;
 					 prev_index++)
 				{
-					if (ExecQual((List *) lfirst(qual),
-								 scanstate->cstate.cs_ExprContext,
-								 false))
+					if (ExecQual((List *) lfirst(qual), econtext, false))
 					{
 						prev_matches = true;
 						break;
@@ -234,7 +235,7 @@ IndexNext(IndexScan *node)
 					qual = lnext(qual);
 				}
 				if (!prev_matches)
-					return slot;/* OK to return tuple */
+					return slot; /* OK to return tuple */
 				/* Duplicate tuple, so drop it and loop back for another */
 				ExecClearTuple(slot);
 			}
@@ -284,7 +285,7 @@ ExecIndexScan(IndexScan *node)
 	 *	use IndexNext as access method
 	 * ----------------
 	 */
-	return ExecScan(&node->scan, IndexNext);
+	return ExecScan(&node->scan, (ExecScanAccessMtd) IndexNext);
 }
 
 /* ----------------------------------------------------------------
@@ -293,9 +294,8 @@ ExecIndexScan(IndexScan *node)
  *		Recalculates the value of the scan keys whose value depends on
  *		information known at runtime and rescans the indexed relation.
  *		Updating the scan key was formerly done separately in
- *		ExecUpdateIndexScanKeys. Integrating it into ReScan
- *		makes rescans of indices and
- *		relations/general streams more uniform.
+ *		ExecUpdateIndexScanKeys. Integrating it into ReScan makes
+ *		rescans of indices and relations/general streams more uniform.
  *
  * ----------------------------------------------------------------
  */
@@ -304,6 +304,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	EState	   *estate;
 	IndexScanState *indexstate;
+	ExprContext *econtext;
 	ScanDirection direction;
 	IndexScanDescPtr scanDescs;
 	ScanKey    *scanKeys;
@@ -311,8 +312,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	ScanKey		skey;
 	int			numIndices;
 	int			i;
-
-	Pointer    *runtimeKeyInfo;
+	int		  **runtimeKeyInfo;
 	int		   *numScanKeys;
 	List	   *indxqual;
 	List	   *qual;
@@ -326,22 +326,34 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	bool		isNull;
 	bool		isDone;
 
-	indexstate = node->indxstate;
 	estate = node->scan.plan.state;
+	indexstate = node->indxstate;
+	econtext = indexstate->iss_RuntimeContext; /* context for runtime keys */
 	direction = estate->es_direction;
 	numIndices = indexstate->iss_NumIndices;
 	scanDescs = indexstate->iss_ScanDescs;
 	scanKeys = indexstate->iss_ScanKeys;
-	runtimeKeyInfo = (Pointer *) indexstate->iss_RuntimeKeyInfo;
+	runtimeKeyInfo = indexstate->iss_RuntimeKeyInfo;
 	numScanKeys = indexstate->iss_NumScanKeys;
 	indexstate->iss_IndexPtr = -1;
 	if (ScanDirectionIsBackward(node->indxorderdir))
 		indexstate->iss_IndexPtr = numIndices;
 
-	/* If we are being passed an outer tuple, save it for runtime key calc */
-	if (exprCtxt != NULL)
-		node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
-			exprCtxt->ecxt_outertuple;
+	if (econtext)
+	{
+		/*
+		 * If we are being passed an outer tuple,
+		 * save it for runtime key calc
+		 */
+		if (exprCtxt != NULL)
+			econtext->ecxt_outertuple = exprCtxt->ecxt_outertuple;
+		/*
+		 * Reset the runtime-key context so we don't leak memory as
+		 * each outer tuple is scanned.  Note this assumes that we
+		 * will recalculate *all* runtime keys on each call.
+		 */
+		ResetExprContext(econtext);
+	}
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&
@@ -364,7 +376,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 
 		if (runtimeKeyInfo)
 		{
-			run_keys = (int *) runtimeKeyInfo[i];
+			run_keys = runtimeKeyInfo[i];
 			for (j = 0; j < n_keys; j++)
 			{
 
@@ -373,6 +385,13 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 				 * expression and evaluate it with respect to the current
 				 * outer tuple.  We then stick the result into the scan
 				 * key.
+				 *
+				 * Note: the result of the eval could be a pass-by-ref
+				 * value that's stored in the outer scan's tuple, not in
+				 * econtext->ecxt_per_tuple_memory.  We assume that the
+				 * outer tuple will stay put throughout our scan.  If this
+				 * is wrong, we could copy the result into our context
+				 * explicitly, but I think that's not necessary...
 				 */
 				if (run_keys[j] != NO_OP)
 				{
@@ -385,10 +404,10 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 					 * pass in isDone but ignore it.  We don't iterate in
 					 * quals
 					 */
-					scanvalue = (Datum)
-						ExecEvalExpr(scanexpr,
-							 node->scan.scanstate->cstate.cs_ExprContext,
-									 &isNull, &isDone);
+					scanvalue = ExecEvalExprSwitchContext(scanexpr,
+														  econtext,
+														  &isNull,
+														  &isDone);
 					scan_keys[j].sk_argument = scanvalue;
 					if (isNull)
 						scan_keys[j].sk_flags |= SK_ISNULL;
@@ -401,11 +420,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 		skey = scanKeys[i];
 		index_rescan(scan, direction, skey);
 	}
-	/* ----------------
-	 *	perhaps return something meaningful
-	 * ----------------
-	 */
-	return;
 }
 
 /* ----------------------------------------------------------------
@@ -421,7 +435,7 @@ ExecEndIndexScan(IndexScan *node)
 {
 	CommonScanState *scanstate;
 	IndexScanState *indexstate;
-	Pointer    *runtimeKeyInfo;
+	int		  **runtimeKeyInfo;
 	ScanKey    *scanKeys;
 	List	   *indxqual;
 	int		   *numScanKeys;
@@ -431,7 +445,7 @@ ExecEndIndexScan(IndexScan *node)
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
 	indxqual = node->indxqual;
-	runtimeKeyInfo = (Pointer *) indexstate->iss_RuntimeKeyInfo;
+	runtimeKeyInfo = indexstate->iss_RuntimeKeyInfo;
 
 	/* ----------------
 	 *	extract information from the node
@@ -451,6 +465,9 @@ ExecEndIndexScan(IndexScan *node)
 	 * ----------------
 	 */
 	ExecFreeProjectionInfo(&scanstate->cstate);
+	ExecFreeExprContext(&scanstate->cstate);
+	if (indexstate->iss_RuntimeContext)
+		FreeExprContext(indexstate->iss_RuntimeContext);
 
 	/* ----------------
 	 *	close the heap and index relations
@@ -474,12 +491,7 @@ ExecEndIndexScan(IndexScan *node)
 	{
 		for (i = 0; i < numIndices; i++)
 		{
-			List	   *qual;
-			int			n_keys;
-
-			qual = nth(i, indxqual);
-			n_keys = length(qual);
-			if (n_keys > 0)
+			if (runtimeKeyInfo[i] != NULL)
 				pfree(runtimeKeyInfo[i]);
 		}
 		pfree(runtimeKeyInfo);
@@ -491,7 +503,6 @@ ExecEndIndexScan(IndexScan *node)
 	 */
 	ExecClearTuple(scanstate->cstate.cs_ResultTupleSlot);
 	ExecClearTuple(scanstate->css_ScanTupleSlot);
-/*	  ExecClearTuple(scanstate->css_RawTupleSlot); */
 }
 
 /* ----------------------------------------------------------------
@@ -562,7 +573,7 @@ ExecIndexRestrPos(IndexScan *node)
  *
  * old comments
  *		Creates the run-time state information for the node and
- *		sets the relation id to contain relevant decriptors.
+ *		sets the relation id to contain relevant descriptors.
  *
  *		Parameters:
  *		  node: IndexNode node produced by the planner.
@@ -583,19 +594,16 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	int		   *numScanKeys;
 	RelationPtr relationDescs;
 	IndexScanDescPtr scanDescs;
-	Pointer    *runtimeKeyInfo;
+	int		  **runtimeKeyInfo;
 	bool		have_runtime_keys;
 	List	   *rangeTable;
 	RangeTblEntry *rtentry;
 	Index		relid;
 	Oid			reloid;
-
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
 	ScanDirection direction;
-	int			baseid;
-
-	List	   *execParam = NULL;
+	List	   *execParam = NIL;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -610,25 +618,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 * --------------------------------
 	 */
 	scanstate = makeNode(CommonScanState);
-/*
-	scanstate->ss_ProcOuterFlag = false;
-	scanstate->ss_OldRelId = 0;
-*/
-
 	node->scan.scanstate = scanstate;
 
 	/* ----------------
-	 *	assign node's base_id .. we don't use AssignNodeBaseid() because
-	 *	the increment is done later on after we assign the index scan's
-	 *	scanstate.	see below.
-	 * ----------------
-	 */
-	baseid = estate->es_BaseId;
-/*	  scanstate->csstate.cstate.bnode.base_id = baseid; */
-	scanstate->cstate.cs_base_id = baseid;
-
-	/* ----------------
-	 *	create expression context for node
+	 *	Miscellaneous initialization
+	 *
+	 *		 +	create expression context for node
 	 * ----------------
 	 */
 	ExecAssignExprContext(estate, &scanstate->cstate);
@@ -640,7 +635,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 */
 	ExecInitResultTupleSlot(estate, &scanstate->cstate);
 	ExecInitScanTupleSlot(estate, scanstate);
-/*	  ExecInitRawTupleSlot(estate, scanstate); */
 
 	/* ----------------
 	 *	initialize projection info.  result type comes from scan desc
@@ -661,18 +655,11 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_ScanKeys = NULL;
 	indexstate->iss_NumScanKeys = NULL;
 	indexstate->iss_RuntimeKeyInfo = NULL;
+	indexstate->iss_RuntimeContext = NULL;
 	indexstate->iss_RelationDescs = NULL;
 	indexstate->iss_ScanDescs = NULL;
 
 	node->indxstate = indexstate;
-
-	/* ----------------
-	 *	assign base id to index scan state also
-	 * ----------------
-	 */
-	indexstate->cstate.cs_base_id = baseid;
-	baseid++;
-	estate->es_BaseId = baseid;
 
 	/* ----------------
 	 *	get the index node information
@@ -696,12 +683,11 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	scanDescs = (IndexScanDescPtr) palloc(numIndices * sizeof(IndexScanDesc));
 
 	/* ----------------
-	 *	initialize runtime key info.
+	 *	initialize space for runtime key info (may not be needed)
 	 * ----------------
 	 */
 	have_runtime_keys = false;
-	runtimeKeyInfo = (Pointer *)
-		palloc(numIndices * sizeof(Pointer));
+	runtimeKeyInfo = (int **) palloc(numIndices * sizeof(int *));
 
 	/* ----------------
 	 *	build the index scan keys from the index qualification
@@ -719,9 +705,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		qual = lfirst(indxqual);
 		indxqual = lnext(indxqual);
 		n_keys = length(qual);
-		scan_keys = (n_keys <= 0) ? NULL :
+		scan_keys = (n_keys <= 0) ? (ScanKey) NULL :
 			(ScanKey) palloc(n_keys * sizeof(ScanKeyData));
-		run_keys = (n_keys <= 0) ? NULL :
+		run_keys = (n_keys <= 0) ? (int *) NULL :
 			(int *) palloc(n_keys * sizeof(int));
 
 		CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
@@ -966,12 +952,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		}
 
 		/* ----------------
-		 *	store the key information into our array.
+		 *	store the key information into our arrays.
 		 * ----------------
 		 */
 		numScanKeys[i] = n_keys;
 		scanKeys[i] = scan_keys;
-		runtimeKeyInfo[i] = (Pointer) run_keys;
+		runtimeKeyInfo[i] = run_keys;
 	}
 
 	indexstate->iss_NumIndices = numIndices;
@@ -988,12 +974,35 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 *	(one for each index) to arrays of flags (one for each key)
 	 *	which indicate that the qual needs to be evaluated at runtime.
 	 *	-cim 10/24/89
+	 *
+	 *	If we do have runtime keys, we need an ExprContext to evaluate them;
+	 *	the node's standard context won't do because we want to reset that
+	 *	context for every tuple.  So, build another context just like the
+	 *	other one...
+	 *	-tgl 7/11/00
 	 * ----------------
 	 */
 	if (have_runtime_keys)
-		indexstate->iss_RuntimeKeyInfo = (Pointer) runtimeKeyInfo;
+	{
+		ExprContext	   *stdecontext = scanstate->cstate.cs_ExprContext;
+
+		ExecAssignExprContext(estate, &scanstate->cstate);
+		indexstate->iss_RuntimeKeyInfo = runtimeKeyInfo;
+		indexstate->iss_RuntimeContext = scanstate->cstate.cs_ExprContext;
+		scanstate->cstate.cs_ExprContext = stdecontext;
+	}
 	else
+	{
 		indexstate->iss_RuntimeKeyInfo = NULL;
+		indexstate->iss_RuntimeContext = NULL;
+		/* Get rid of the speculatively-allocated flag arrays, too */
+		for (i = 0; i < numIndices; i++)
+		{
+			if (runtimeKeyInfo[i] != NULL)
+				pfree(runtimeKeyInfo[i]);
+		}
+		pfree(runtimeKeyInfo);
+	}
 
 	/* ----------------
 	 *	get the range table and direction information
@@ -1026,19 +1035,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	scanstate->css_currentRelation = currentRelation;
 	scanstate->css_currentScanDesc = currentScanDesc;
 
-
 	/* ----------------
 	 *	get the scan type from the relation descriptor.
 	 * ----------------
 	 */
 	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation));
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
-
-	/* ----------------
-	 *	index scans don't have subtrees..
-	 * ----------------
-	 */
-/*	  scanstate->ss_ProcOuterFlag = false; */
 
 	/* ----------------
 	 *	open the index relations and initialize
@@ -1066,10 +1068,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_RelationDescs = relationDescs;
 	indexstate->iss_ScanDescs = scanDescs;
 
-	indexstate->cstate.cs_TupFromTlist = false;
-
 	/*
-	 * if there are some PARAM_EXEC in skankeys then force index rescan on
+	 * if there are some PARAM_EXEC in scankeys then force index rescan on
 	 * first scan.
 	 */
 	((Plan *) node)->chgParam = execParam;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHash.h,v 1.16 2000/04/18 05:43:00 tgl Exp $
+ * $Id: nodeHash.h,v 1.17 2000/07/12 02:37:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,12 @@ extern int	ExecCountSlotsHash(Hash *node);
 extern void ExecEndHash(Hash *node);
 extern HashJoinTable ExecHashTableCreate(Hash *node);
 extern void ExecHashTableDestroy(HashJoinTable hashtable);
-extern void ExecHashTableInsert(HashJoinTable hashtable, ExprContext *econtext,
-					Var *hashkey);
-extern int ExecHashGetBucket(HashJoinTable hashtable, ExprContext *econtext,
-				  Var *hashkey);
+extern void ExecHashTableInsert(HashJoinTable hashtable,
+								ExprContext *econtext,
+								Node *hashkey);
+extern int ExecHashGetBucket(HashJoinTable hashtable,
+							 ExprContext *econtext,
+							 Node *hashkey);
 extern HeapTuple ExecScanHashBucket(HashJoinState *hjstate, List *hjclauses,
 				   ExprContext *econtext);
 extern void ExecHashTableReset(HashJoinTable hashtable, long ntuples);

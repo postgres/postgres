@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.93 2000/06/18 22:44:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.94 2000/07/12 02:37:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
 			  Plan *righttree);
 static HashJoin *make_hashjoin(List *tlist, List *qpqual,
 			  List *hashclauses, Plan *lefttree, Plan *righttree);
-static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
+static Hash *make_hash(List *tlist, Node *hashkey, Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist, List *qpqual,
 			   List *mergeclauses, Plan *righttree, Plan *lefttree);
 static void copy_path_costsize(Plan *dest, Path *src);
@@ -664,7 +664,7 @@ create_hashjoin_node(HashPath *best_path,
 	List	   *hashclauses;
 	HashJoin   *join_node;
 	Hash	   *hash_node;
-	Var		   *innerhashkey;
+	Node	   *innerhashkey;
 
 	/*
 	 * NOTE: there will always be exactly one hashclause in the list
@@ -694,7 +694,7 @@ create_hashjoin_node(HashPath *best_path,
 											   (Index) 0));
 
 	/* Now the righthand op of the sole hashclause is the inner hash key. */
-	innerhashkey = get_rightop(lfirst(hashclauses));
+	innerhashkey = (Node *) get_rightop(lfirst(hashclauses));
 
 	/*
 	 * Build the hash node and hash join node.
@@ -1103,7 +1103,7 @@ make_hashjoin(List *tlist,
 }
 
 static Hash *
-make_hash(List *tlist, Var *hashkey, Plan *lefttree)
+make_hash(List *tlist, Node *hashkey, Plan *lefttree)
 {
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;

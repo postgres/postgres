@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.60 2000/07/03 23:09:11 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.61 2000/07/12 02:36:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,11 +141,10 @@ gistbuild(PG_FUNCTION_ARGS)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, hd, InvalidBuffer);
+		ExecSetSlotDescriptor(slot, hd);
+		econtext = MakeExprContext(slot, TransactionCommandContext);
 	}
 	else
-/* shut the compiler up */
 	{
 		tupleTable = NULL;
 		slot = NULL;
@@ -161,13 +160,13 @@ gistbuild(PG_FUNCTION_ARGS)
 	{
 		nh++;
 
+#ifndef OMIT_PARTIAL_INDEX
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
 		 */
 		if (oldPred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
@@ -175,7 +174,6 @@ gistbuild(PG_FUNCTION_ARGS)
 				ni++;
 				continue;
 			}
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -184,13 +182,12 @@ gistbuild(PG_FUNCTION_ARGS)
 		 */
 		if (pred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (!ExecQual((List *) pred, econtext, false))
 				continue;
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 		ni++;
 
@@ -262,13 +259,13 @@ gistbuild(PG_FUNCTION_ARGS)
 	/* okay, all heap tuples are indexed */
 	heap_endscan(scan);
 
+#ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
 	{
-#ifndef OMIT_PARTIAL_INDEX
 		ExecDropTupleTable(tupleTable, true);
-		pfree(econtext);
-#endif	 /* OMIT_PARTIAL_INDEX */
+		FreeExprContext(econtext);
 	}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats

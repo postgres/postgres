@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.31 2000/06/18 22:44:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.32 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,17 +158,12 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	node->matstate = matstate;
 
 	/* ----------------
-	 *	Miscellanious initialization
-	 *
-	 *		 +	assign node's base_id
-	 *		 +	assign debugging hooks and
-	 *		 +	assign result tuple slot
+	 *	Miscellaneous initialization
 	 *
 	 *	Materialization nodes don't need ExprContexts because
-	 *	they never call ExecQual or ExecTargetList.
+	 *	they never call ExecQual or ExecProject.
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, &matstate->csstate.cstate, parent);
 
 #define MATERIAL_NSLOTS 1
 	/* ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.28 2000/07/09 04:17:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.29 2000/07/12 02:37:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,14 +255,10 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 	/* ----------------
 	 *	Miscellaneous initialization
 	 *
-	 *		 +	assign node's base_id
-	 *		 +	assign debugging hooks
-	 *
 	 *	Sort nodes don't initialize their ExprContexts because
-	 *	they never call ExecQual or ExecTargetList.
+	 *	they never call ExecQual or ExecProject.
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, &sortstate->csstate.cstate, parent);
 
 #define SORT_NSLOTS 1
 	/* ----------------

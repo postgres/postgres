@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.63 2000/07/06 05:48:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.64 2000/07/12 02:37:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,25 +436,38 @@ textpos(PG_FUNCTION_ARGS)
 /*
  *		texteq			- returns true iff arguments are equal
  *		textne			- returns true iff arguments are not equal
+ *
+ * Note: btree indexes need these routines not to leak memory; therefore,
+ * be careful to free working copies of toasted datums.  Most places don't
+ * need to be so careful.
  */
 Datum
 texteq(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
-	int			len;
-	char	   *a1p,
-			   *a2p;
+	bool		result;
 
 	if (VARSIZE(arg1) != VARSIZE(arg2))
-		PG_RETURN_BOOL(false);
+		result = false;
+	else
+	{
+		int			len;
+		char	   *a1p,
+				   *a2p;
 
-	len = VARSIZE(arg1) - VARHDRSZ;
+		len = VARSIZE(arg1) - VARHDRSZ;
 
-	a1p = VARDATA(arg1);
-	a2p = VARDATA(arg2);
+		a1p = VARDATA(arg1);
+		a2p = VARDATA(arg2);
 
-	PG_RETURN_BOOL(memcmp(a1p, a2p, len) == 0);
+		result = (memcmp(a1p, a2p, len) == 0);
+	}
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
@@ -462,19 +475,28 @@ textne(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
-	int			len;
-	char	   *a1p,
-			   *a2p;
+	bool		result;
 
 	if (VARSIZE(arg1) != VARSIZE(arg2))
-		PG_RETURN_BOOL(true);
+		result = true;
+	else
+	{
+		int			len;
+		char	   *a1p,
+				   *a2p;
 
-	len = VARSIZE(arg1) - VARHDRSZ;
+		len = VARSIZE(arg1) - VARHDRSZ;
 
-	a1p = VARDATA(arg1);
-	a2p = VARDATA(arg2);
+		a1p = VARDATA(arg1);
+		a2p = VARDATA(arg2);
 
-	PG_RETURN_BOOL(memcmp(a1p, a2p, len) != 0);
+		result = (memcmp(a1p, a2p, len) != 0);
+	}
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 /* varstr_cmp()
@@ -545,6 +567,10 @@ text_cmp(text *arg1, text *arg2)
 
 /*
  * Comparison functions for text strings.
+ *
+ * Note: btree indexes need these routines not to leak memory; therefore,
+ * be careful to free working copies of toasted datums.  Most places don't
+ * need to be so careful.
  */
 
 Datum
@@ -552,8 +578,14 @@ text_lt(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(text_cmp(arg1, arg2) < 0);
+	result = (text_cmp(arg1, arg2) < 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
@@ -561,8 +593,14 @@ text_le(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(text_cmp(arg1, arg2) <= 0);
+	result = (text_cmp(arg1, arg2) <= 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
@@ -570,8 +608,14 @@ text_gt(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(text_cmp(arg1, arg2) > 0);
+	result = (text_cmp(arg1, arg2) > 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
@@ -579,8 +623,14 @@ text_ge(PG_FUNCTION_ARGS)
 {
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
+	bool		result;
 
-	PG_RETURN_BOOL(text_cmp(arg1, arg2) >= 0);
+	result = (text_cmp(arg1, arg2) >= 0);
+
+	PG_FREE_IF_COPY(arg1, 0);
+	PG_FREE_IF_COPY(arg2, 1);
+
+	PG_RETURN_BOOL(result);
 }
 
 Datum
@@ -589,14 +639,8 @@ text_larger(PG_FUNCTION_ARGS)
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
 	text	   *result;
-	text	   *temp;
 
-	temp = ((text_cmp(arg1, arg2) > 0) ? arg1 : arg2);
-
-	/* Make a copy --- temporary hack until nodeAgg.c is smarter */
-
-	result = (text *) palloc(VARSIZE(temp));
-	memcpy((char *) result, (char *) temp, VARSIZE(temp));
+	result = ((text_cmp(arg1, arg2) > 0) ? arg1 : arg2);
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -607,14 +651,8 @@ text_smaller(PG_FUNCTION_ARGS)
 	text	   *arg1 = PG_GETARG_TEXT_P(0);
 	text	   *arg2 = PG_GETARG_TEXT_P(1);
 	text	   *result;
-	text	   *temp;
 
-	temp = ((text_cmp(arg1, arg2) < 0) ? arg1 : arg2);
-
-	/* Make a copy --- temporary hack until nodeAgg.c is smarter */
-
-	result = (text *) palloc(VARSIZE(temp));
-	memcpy((char *) result, (char *) temp, VARSIZE(temp));
+	result = ((text_cmp(arg1, arg2) < 0) ? arg1 : arg2);
 
 	PG_RETURN_TEXT_P(result);
 }

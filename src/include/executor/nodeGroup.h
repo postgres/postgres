@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.16 2000/04/12 17:16:33 momjian Exp $
+ * $Id: nodeGroup.h,v 1.17 2000/07/12 02:37:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,8 @@ extern bool execTuplesMatch(HeapTuple tuple1,
 				TupleDesc tupdesc,
 				int numCols,
 				AttrNumber *matchColIdx,
-				FmgrInfo *eqfunctions);
+				FmgrInfo *eqfunctions,
+				MemoryContext evalContext);
 extern FmgrInfo *execTuplesMatchPrepare(TupleDesc tupdesc,
 					   int numCols,
 					   AttrNumber *matchColIdx);

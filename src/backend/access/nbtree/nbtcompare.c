@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.38 2000/06/19 03:54:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.39 2000/07/12 02:36:48 tgl Exp $
  *
  * NOTES
  *
@@ -27,6 +27,10 @@
  *	that work on 32-bit or wider datatypes can't just return "a - b".
  *	That could overflow and give the wrong answer.
  *
+ *	NOTE: these routines must not leak memory, since memory allocated
+ *	during an index access won't be recovered till end of query.  This
+ *	primarily affects comparison routines for toastable datatypes;
+ *	they have to be careful to free any detoasted copy of an input datum.
  *-------------------------------------------------------------------------
  */
 
@@ -230,18 +234,23 @@ bttextcmp(PG_FUNCTION_ARGS)
 		} while (res == 0 && len != 0);
 	}
 
+	if (res == 0 && VARSIZE(a) != VARSIZE(b))
+	{
+		/*
+		 * The two strings are the same in the first len bytes,
+		 * and they are of different lengths.
+		 */
+		if (VARSIZE(a) < VARSIZE(b))
+			res = -1;
+		else
+			res = 1;
+	}
+
 #endif
 
-	if (res != 0 || VARSIZE(a) == VARSIZE(b))
-		PG_RETURN_INT32(res);
+	/* Avoid leaking memory when handed toasted input. */
+	PG_FREE_IF_COPY(a, 0);
+	PG_FREE_IF_COPY(b, 1);
 
-	/*
-	 * The two strings are the same in the first len bytes, and they are
-	 * of different lengths.
-	 */
-
-	if (VARSIZE(a) < VARSIZE(b))
-		PG_RETURN_INT32(-1);
-	else
-		PG_RETURN_INT32(1);
+	PG_RETURN_INT32(res);
 }

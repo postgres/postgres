@@ -8,15 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.72 2000/06/15 04:09:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.73 2000/07/12 02:37:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
  *		ExecEvalExpr	- evaluate an expression and return a datum
+ *		ExecEvalExprSwitchContext - same, but switch into eval memory context
  *		ExecQual		- return true/false if qualification is satisfied
- *		ExecTargetList	- form a new tuple by projecting the given tuple
+ *		ExecProject		- form a new tuple by projecting the given tuple
  *
  *	 NOTES
  *		ExecEvalExpr() and ExecEvalVar() are hotspots.	making these faster
@@ -24,7 +25,7 @@
  *		implemented recursively.  Eliminating the recursion is bound to
  *		improve the speed of the executor.
  *
- *		ExecTargetList() is used to make tuple projections.  Rather then
+ *		ExecProject() is used to make tuple projections.  Rather then
  *		trying to speed it up, the execution plan should be pre-processed
  *		to facilitate attribute sharing between nodes wherever possible,
  *		instead of doing needless copying.	-cim 5/31/91
@@ -44,31 +45,19 @@
 #include "utils/fcache2.h"
 
 
-/*
- *		externs and constants
- */
-
-/*
- * XXX Used so we can get rid of use of Const nodes in the executor.
- * Currently only used by ExecHashGetBucket and set only by ExecMakeVarConst
- * and by ExecEvalArrayRef.
- */
-bool		execConstByVal;
-int			execConstLen;
-
-/* static functions decls */
+/* static function decls */
 static Datum ExecEvalAggref(Aggref *aggref, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
 				 bool *isNull, bool *isDone);
-static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
+static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
+			 bool *isNull);
 static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
 			 bool *isNull, bool *isDone);
 static void ExecEvalFuncArgs(FunctionCachePtr fcache, ExprContext *econtext,
 							 List *argList, FunctionCallInfo fcinfo,
 							 bool *argIsDone);
 static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
-static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
-			 bool *isNull);
+static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum ExecMakeFunctionResult(Node *node, List *arguments,
@@ -100,10 +89,11 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 
 	if (arrayRef->refexpr != NULL)
 	{
-		array_scanner = (ArrayType *) ExecEvalExpr(arrayRef->refexpr,
-												   econtext,
-												   isNull,
-												   isDone);
+		array_scanner = (ArrayType *)
+			DatumGetPointer(ExecEvalExpr(arrayRef->refexpr,
+										 econtext,
+										 isNull,
+										 isDone));
 		/* If refexpr yields NULL, result is always NULL, for now anyway */
 		if (*isNull)
 			return (Datum) NULL;
@@ -128,10 +118,10 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 			elog(ERROR, "ExecEvalArrayRef: can only handle %d dimensions",
 				 MAXDIM);
 
-		upper.indx[i++] = (int32) ExecEvalExpr((Node *) lfirst(elt),
-											   econtext,
-											   isNull,
-											   &dummy);
+		upper.indx[i++] = DatumGetInt32(ExecEvalExpr((Node *) lfirst(elt),
+													 econtext,
+													 isNull,
+													 &dummy));
 		/* If any index expr yields NULL, result is NULL */
 		if (*isNull)
 			return (Datum) NULL;
@@ -145,10 +135,10 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 				elog(ERROR, "ExecEvalArrayRef: can only handle %d dimensions",
 					 MAXDIM);
 
-			lower.indx[j++] = (int32) ExecEvalExpr((Node *) lfirst(elt),
-												   econtext,
-												   isNull,
-												   &dummy);
+			lower.indx[j++] = DatumGetInt32(ExecEvalExpr((Node *) lfirst(elt),
+														 econtext,
+														 isNull,
+														 &dummy));
 			/* If any index expr yields NULL, result is NULL */
 			if (*isNull)
 				return (Datum) NULL;
@@ -170,9 +160,6 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 		/* For now, can't cope with inserting NULL into an array */
 		if (*isNull)
 			return (Datum) NULL;
-
-		execConstByVal = arrayRef->refelembyval;
-		execConstLen = arrayRef->refelemlength;
 
 		if (array_scanner == NULL)
 			return sourceData;	/* XXX do something else? */
@@ -198,9 +185,6 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 										   arrayRef->refelemlength,
 										   isNull));
 	}
-
-	execConstByVal = arrayRef->refelembyval;
-	execConstLen = arrayRef->refelemlength;
 
 	if (lIndex == NULL)
 		return array_ref(array_scanner, i,
@@ -325,7 +309,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		ExecSetSlotDescriptor(tempSlot, td);
 
 		ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);
-		return (Datum) tempSlot;
+		return PointerGetDatum(tempSlot);
 	}
 
 	result = heap_getattr(heapTuple,	/* tuple containing attribute */
@@ -338,7 +322,7 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	 * return null if att is null
 	 */
 	if (*isNull)
-		return (Datum) NULL;
+		return (Datum) 0;
 
 	/*
 	 * get length and type information.. ??? what should we do about
@@ -363,9 +347,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 		len = tuple_type->attrs[attnum - 1]->attlen;
 		byval = tuple_type->attrs[attnum - 1]->attbyval ? true : false;
 	}
-
-	execConstByVal = byval;
-	execConstLen = len;
 
 	return result;
 }
@@ -397,7 +378,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 Datum
 ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 {
-
 	char	   *thisParameterName;
 	int			thisParameterKind = expression->paramkind;
 	AttrNumber	thisParameterId = expression->paramid;
@@ -406,11 +386,15 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 
 	if (thisParameterKind == PARAM_EXEC)
 	{
-		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[thisParameterId]);
+		ParamExecData *prm;
 
+		prm = &(econtext->ecxt_param_exec_vals[thisParameterId]);
 		if (prm->execPlan != NULL)
-			ExecSetParamPlan(prm->execPlan);
-		Assert(prm->execPlan == NULL);
+		{
+			ExecSetParamPlan(prm->execPlan, econtext);
+			/* ExecSetParamPlan should have processed this param... */
+			Assert(prm->execPlan == NULL);
+		}
 		*isNull = prm->isnull;
 		return prm->value;
 	}
@@ -493,7 +477,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 	if (paramList->isnull)
 	{
 		*isNull = true;
-		return (Datum) NULL;
+		return (Datum) 0;
 	}
 
 	if (expression->param_tlist != NIL)
@@ -526,8 +510,12 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
  *		named attribute out of the tuple from the arg slot.  User defined
  *		C functions which take a tuple as an argument are expected
  *		to use this.  Ex: overpaid(EMP) might call GetAttributeByNum().
+ *
+ * XXX these two functions are misdeclared: they should be declared to
+ * return Datum.  They are not used anywhere in the backend proper, and
+ * exist only for use by user-defined functions.  Should we change their
+ * definitions, at risk of breaking user code?
  */
-/* static but gets called from external functions */
 char *
 GetAttributeByNum(TupleTableSlot *slot,
 				  AttrNumber attrno,
@@ -558,18 +546,6 @@ GetAttributeByNum(TupleTableSlot *slot,
 		return (char *) NULL;
 	return (char *) retval;
 }
-
-/* XXX name for catalogs */
-#ifdef NOT_USED
-char *
-att_by_num(TupleTableSlot *slot,
-		   AttrNumber attrno,
-		   bool *isNull)
-{
-	return GetAttributeByNum(slot, attrno, isNull);
-}
-
-#endif
 
 char *
 GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
@@ -617,15 +593,6 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	return (char *) retval;
 }
 
-/* XXX name for catalogs */
-#ifdef NOT_USED
-char *
-att_by_name(TupleTableSlot *slot, char *attname, bool *isNull)
-{
-	return GetAttributeByName(slot, attname, isNull);
-}
-
-#endif
 
 static void
 ExecEvalFuncArgs(FunctionCachePtr fcache,
@@ -732,9 +699,8 @@ ExecMakeFunctionResult(Node *node,
 		if (fcache->hasSetArg && argDone)
 		{
 			/* can only get here if input is an empty set. */
-			if (isDone)
-				*isDone = true;
 			*isNull = true;
+			*isDone = true;
 			return (Datum) 0;
 		}
 	}
@@ -817,8 +783,8 @@ ExecMakeFunctionResult(Node *node,
 			else
 			{
 				result = (Datum) 0;
-				*isDone = true;
 				*isNull = true;
+				*isDone = true;
 			}
 
 			if (!*isDone)
@@ -872,8 +838,8 @@ ExecMakeFunctionResult(Node *node,
 	else
 	{
 		/* A non-SQL function cannot return a set, at present. */
-		if (isDone)
-			*isDone = true;
+		*isDone = true;
+
 		/*
 		 * If function is strict, and there are any NULL arguments,
 		 * skip calling the function and return NULL.
@@ -904,15 +870,7 @@ ExecMakeFunctionResult(Node *node,
  *		ExecEvalFunc
  *
  *		Evaluate the functional result of a list of arguments by calling the
- *		function manager.  Note that in the case of operator expressions, the
- *		optimizer had better have already replaced the operator OID with the
- *		appropriate function OID or we're hosed.
- *
- * old comments
- *		Presumably the function manager will not take null arguments, so we
- *		check for null arguments before sending the arguments to (fmgr).
- *
- *		Returns the value of the functional expression.
+ *		function manager.
  * ----------------------------------------------------------------
  */
 
@@ -929,8 +887,6 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 	bool		isDone;
 
 	/*
-	 * an opclause is a list (op args).  (I think)
-	 *
 	 * we extract the oid of the function associated with the op and then
 	 * pass the work onto ExecMakeFunctionResult which evaluates the
 	 * arguments and returns the result of calling the function on the
@@ -954,7 +910,8 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 	 * call ExecMakeFunctionResult() with a dummy isDone that we ignore.
 	 * We don't have operator whose arguments are sets.
 	 */
-	return ExecMakeFunctionResult((Node *) op, argList, econtext, isNull, &isDone);
+	return ExecMakeFunctionResult((Node *) op, argList, econtext,
+								  isNull, &isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -973,8 +930,6 @@ ExecEvalFunc(Expr *funcClause,
 	FunctionCachePtr fcache;
 
 	/*
-	 * an funcclause is a list (func args).  (I think)
-	 *
 	 * we extract the oid of the function associated with the func node and
 	 * then pass the work onto ExecMakeFunctionResult which evaluates the
 	 * arguments and returns the result of calling the function on the
@@ -996,7 +951,8 @@ ExecEvalFunc(Expr *funcClause,
 		fcache = func->func_fcache;
 	}
 
-	return ExecMakeFunctionResult((Node *) func, argList, econtext, isNull, isDone);
+	return ExecMakeFunctionResult((Node *) func, argList, econtext,
+								  isNull, isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -1041,10 +997,7 @@ ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
 	 * evaluation of 'not' is simple.. expr is false, then return 'true'
 	 * and vice versa.
 	 */
-	if (DatumGetInt32(expr_value) == 0)
-		return (Datum) true;
-
-	return (Datum) false;
+	return BoolGetDatum(! DatumGetBool(expr_value));
 }
 
 /* ----------------------------------------------------------------
@@ -1094,13 +1047,13 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
 		 */
 		if (*isNull)
 			AnyNull = true;		/* remember we got a null */
-		else if (DatumGetInt32(clause_value) != 0)
+		else if (DatumGetBool(clause_value))
 			return clause_value;
 	}
 
 	/* AnyNull is true if at least one clause evaluated to NULL */
 	*isNull = AnyNull;
-	return (Datum) false;
+	return BoolGetDatum(false);
 }
 
 /* ----------------------------------------------------------------
@@ -1144,13 +1097,13 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
 		 */
 		if (*isNull)
 			AnyNull = true;		/* remember we got a null */
-		else if (DatumGetInt32(clause_value) == 0)
+		else if (! DatumGetBool(clause_value))
 			return clause_value;
 	}
 
 	/* AnyNull is true if at least one clause evaluated to NULL */
 	*isNull = AnyNull;
-	return (Datum) (!AnyNull);
+	return BoolGetDatum(!AnyNull);
 }
 
 /* ----------------------------------------------------------------
@@ -1195,7 +1148,7 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
 		 * case statement is satisfied.  A NULL result from the test is
 		 * not considered true.
 		 */
-		if (DatumGetInt32(clause_value) != 0 && !*isNull)
+		if (DatumGetBool(clause_value) && !*isNull)
 		{
 			return ExecEvalExpr(wclause->result,
 								econtext,
@@ -1221,19 +1174,15 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext, bool *isNull)
  *
  *		Recursively evaluate a targetlist or qualification expression.
  *
- *		This routine is an inner loop routine and should be as fast
+ *		The caller should already have switched into the temporary
+ *		memory context econtext->ecxt_per_tuple_memory.  The convenience
+ *		entry point ExecEvalExprSwitchContext() is provided for callers
+ *		who don't prefer to do the switch in an outer loop.  We do not
+ *		do the switch here because it'd be a waste of cycles during
+ *		recursive entries to ExecEvalExpr().
+ *
+ *		This routine is an inner loop routine and must be as fast
  *		as possible.
- *
- *		Node comparison functions were replaced by macros for speed and to plug
- *		memory leaks incurred by using the planner's Lispy stuff for
- *		comparisons.  Order of evaluation of node comparisons IS IMPORTANT;
- *		the macros do no checks.  Order of evaluation:
- *
- *		o an isnull check, largely to avoid coredumps since greg doubts this
- *		  routine is called with a null ptr anyway in proper operation, but is
- *		  not completely sure...
- *		o ExactNodeType checks.
- *		o clause checks or other checks where we look at the lfirst of something.
  * ----------------------------------------------------------------
  */
 Datum
@@ -1244,25 +1193,21 @@ ExecEvalExpr(Node *expression,
 {
 	Datum		retDatum;
 
+	/* Set default values for result flags: non-null, not a set result */
 	*isNull = false;
+	*isDone = true;
 
-	/*
-	 * Some callers don't care about is done and only want 1 result.  They
-	 * indicate this by passing NULL
-	 */
-	if (isDone)
-		*isDone = true;
+	/* Is this still necessary?  Doubtful... */
+	if (expression == NULL)
+	{
+		*isNull = true;
+		return (Datum) 0;
+	}
 
 	/*
 	 * here we dispatch the work to the appropriate type of function given
 	 * the type of our expression.
 	 */
-	if (expression == NULL)
-	{
-		*isNull = true;
-		return (Datum) true;
-	}
-
 	switch (nodeTag(expression))
 	{
 		case T_Var:
@@ -1350,8 +1295,27 @@ ExecEvalExpr(Node *expression,
 }	/* ExecEvalExpr() */
 
 
+/*
+ * Same as above, but get into the right allocation context explicitly.
+ */
+Datum
+ExecEvalExprSwitchContext(Node *expression,
+						  ExprContext *econtext,
+						  bool *isNull,
+						  bool *isDone)
+{
+	Datum		retDatum;
+	MemoryContext oldContext;
+
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
+	retDatum = ExecEvalExpr(expression, econtext, isNull, isDone);
+	MemoryContextSwitchTo(oldContext);
+	return retDatum;
+}
+
+
 /* ----------------------------------------------------------------
- *					 ExecQual / ExecTargetList
+ *					 ExecQual / ExecTargetList / ExecProject
  * ----------------------------------------------------------------
  */
 
@@ -1386,6 +1350,8 @@ ExecEvalExpr(Node *expression,
 bool
 ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 {
+	bool		result;
+	MemoryContext oldContext;
 	List	   *qlist;
 
 	/*
@@ -1396,6 +1362,11 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 	EV_printf("\n");
 
 	IncrProcessed();
+
+	/*
+	 * Run in short-lived per-tuple context while computing expressions.
+	 */
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * Evaluate the qual conditions one at a time.	If we find a FALSE
@@ -1409,6 +1380,7 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 	 * is NULL (one or more NULL subresult, with all the rest TRUE) and
 	 * the caller has specified resultForNull = TRUE.
 	 */
+	result = true;
 
 	foreach(qlist, qual)
 	{
@@ -1416,14 +1388,6 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 		Datum		expr_value;
 		bool		isNull;
 		bool		isDone;
-
-		/*
-		 * If there is a null clause, consider the qualification to fail.
-		 * XXX is this still correct for constraints?  It probably
-		 * shouldn't happen at all ...
-		 */
-		if (clause == NULL)
-			return false;
 
 		/*
 		 * pass isDone, but ignore it.	We don't iterate over multiple
@@ -1434,16 +1398,24 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 		if (isNull)
 		{
 			if (resultForNull == false)
-				return false;	/* treat NULL as FALSE */
+			{
+				result = false;	/* treat NULL as FALSE */
+				break;
+			}
 		}
 		else
 		{
-			if (DatumGetInt32(expr_value) == 0)
-				return false;	/* definitely FALSE */
+			if (! DatumGetBool(expr_value))
+			{
+				result = false;	/* definitely FALSE */
+				break;
+			}
 		}
 	}
 
-	return true;
+	MemoryContextSwitchTo(oldContext);
+
+	return result;
 }
 
 int
@@ -1481,6 +1453,7 @@ ExecTargetList(List *targetlist,
 			   ExprContext *econtext,
 			   bool *isDone)
 {
+	MemoryContext oldContext;
 	char		nulls_array[64];
 	bool		fjNullArray[64];
 	bool		itemIsDoneArray[64];
@@ -1505,6 +1478,11 @@ ExecTargetList(List *targetlist,
 	EV_printf("ExecTargetList: tl is ");
 	EV_nodeDisplay(targetlist);
 	EV_printf("\n");
+
+	/*
+	 * Run in short-lived per-tuple context while computing expressions.
+	 */
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/*
 	 * There used to be some klugy and demonstrably broken code here that
@@ -1563,10 +1541,10 @@ ExecTargetList(List *targetlist,
 			resdom = tle->resdom;
 			resind = resdom->resno - 1;
 
-			constvalue = (Datum) ExecEvalExpr(expr,
-											  econtext,
-											  &isNull,
-											  &itemIsDone[resind]);
+			constvalue = ExecEvalExpr(expr,
+									  econtext,
+									  &isNull,
+									  &itemIsDone[resind]);
 
 			values[resind] = constvalue;
 
@@ -1597,7 +1575,10 @@ ExecTargetList(List *targetlist,
 
 			/* this is probably wrong: */
 			if (*isDone)
-				return (HeapTuple) NULL;
+			{
+				newTuple = NULL;
+				goto exit;
+			}
 
 			/*
 			 * get the result from the inner node
@@ -1681,10 +1662,10 @@ ExecTargetList(List *targetlist,
 
 					if (IsA(expr, Iter) &&itemIsDone[resind])
 					{
-						constvalue = (Datum) ExecEvalExpr(expr,
-														  econtext,
-														  &isNull,
-													&itemIsDone[resind]);
+						constvalue = ExecEvalExpr(expr,
+												  econtext,
+												  &isNull,
+												  &itemIsDone[resind]);
 						if (itemIsDone[resind])
 						{
 
@@ -1710,8 +1691,10 @@ ExecTargetList(List *targetlist,
 	}
 
 	/*
-	 * form the new result tuple (in the "normal" context)
+	 * form the new result tuple (in the caller's memory context!)
 	 */
+	MemoryContextSwitchTo(oldContext);
+
 	newTuple = (HeapTuple) heap_formtuple(targettype, values, null_head);
 
 exit:
@@ -1725,6 +1708,9 @@ exit:
 		pfree(fjIsNull);
 		pfree(itemIsDone);
 	}
+
+	/* make sure we are in the right context if we did "goto exit" */
+	MemoryContextSwitchTo(oldContext);
 
 	return newTuple;
 }

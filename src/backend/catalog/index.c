@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.124 2000/07/05 23:11:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.125 2000/07/12 02:36:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1670,34 +1670,6 @@ UpdateStats(Oid relid, long reltuples, bool inplace)
 }
 
 
-/* -------------------------
- *		FillDummyExprContext
- *			Sets up dummy ExprContext and TupleTableSlot objects for use
- *			with ExecQual.
- *
- *			NOTE: buffer is passed for historical reasons; it should
- *			almost certainly always be InvalidBuffer.
- * -------------------------
- */
-void
-FillDummyExprContext(ExprContext *econtext,
-					 TupleTableSlot *slot,
-					 TupleDesc tupdesc,
-					 Buffer buffer)
-{
-	econtext->ecxt_scantuple = slot;
-	econtext->ecxt_innertuple = NULL;
-	econtext->ecxt_outertuple = NULL;
-	econtext->ecxt_param_list_info = NULL;
-	econtext->ecxt_range_table = NULL;
-
-	slot->ttc_tupleDescriptor = tupdesc;
-	slot->ttc_buffer = buffer;
-	slot->ttc_shouldFree = false;
-
-}
-
-
 /* ----------------
  *		DefaultBuild
  *
@@ -1777,14 +1749,14 @@ DefaultBuild(Relation heapRelation,
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, heapDescriptor, InvalidBuffer);
+		ExecSetSlotDescriptor(slot, heapDescriptor);
+		econtext = MakeExprContext(slot, TransactionCommandContext);
 	}
 	else
 	{
-		econtext = NULL;
-		tupleTable = 0;
+		tupleTable = NULL;
 		slot = NULL;
+		econtext = NULL;
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
@@ -1812,7 +1784,6 @@ DefaultBuild(Relation heapRelation,
 		reltuples++;
 
 #ifndef OMIT_PARTIAL_INDEX
-
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
@@ -1877,6 +1848,7 @@ DefaultBuild(Relation heapRelation,
 	{
 		/* parameter was 'false', almost certainly wrong --- tgl 9/21/99 */
 		ExecDropTupleTable(tupleTable, true);
+		FreeExprContext(econtext);
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 

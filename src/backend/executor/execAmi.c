@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.48 2000/06/18 22:44:03 tgl Exp $
+ *	$Id: execAmi.c,v 1.49 2000/07/12 02:37:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,8 +171,8 @@ ExecBeginScan(Relation relation,
 /* ----------------------------------------------------------------
  *		ExecCloseR
  *
- *		closes the relation and scan descriptor for a scan or sort
- *		node.  Also closes index relations and scans for index scans.
+ *		closes the relation and scan descriptor for a scan node.
+ *		Also closes index relations and scans for index scans.
  * ----------------------------------------------------------------
  */
 void
@@ -197,20 +197,12 @@ ExecCloseR(Plan *node)
 			state = ((IndexScan *) node)->scan.scanstate;
 			break;
 
-		case T_Sort:
-			state = &(((Sort *) node)->sortstate->csstate);
-			break;
-
-		case T_Agg:
-			state = &(((Agg *) node)->aggstate->csstate);
-			break;
-
 		case T_TidScan:
 			state = ((TidScan *) node)->scan.scanstate;
 			break;
 
 		default:
-			elog(DEBUG, "ExecCloseR: not a scan or sort node!");
+			elog(DEBUG, "ExecCloseR: not a scan node!");
 			return;
 	}
 
@@ -237,13 +229,12 @@ ExecCloseR(Plan *node)
 	if (IsA(node, IndexScan))
 	{
 		IndexScan  *iscan = (IndexScan *) node;
-		IndexScanState *indexstate;
+		IndexScanState *indexstate = iscan->indxstate;
 		int			numIndices;
 		RelationPtr indexRelationDescs;
 		IndexScanDescPtr indexScanDescs;
 		int			i;
 
-		indexstate = iscan->indxstate;
 		numIndices = indexstate->iss_NumIndices;
 		indexRelationDescs = indexstate->iss_RelationDescs;
 		indexScanDescs = indexstate->iss_ScanDescs;

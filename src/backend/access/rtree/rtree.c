@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.50 2000/06/17 23:41:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.51 2000/07/12 02:36:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,14 +136,14 @@ rtbuild(PG_FUNCTION_ARGS)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, hd, InvalidBuffer);
+		ExecSetSlotDescriptor(slot, hd);
+		econtext = MakeExprContext(slot, TransactionCommandContext);
 	}
 	else
 	{
-		econtext = NULL;
 		tupleTable = NULL;
 		slot = NULL;
+		econtext = NULL;
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
@@ -156,13 +156,13 @@ rtbuild(PG_FUNCTION_ARGS)
 	{
 		nh++;
 
+#ifndef OMIT_PARTIAL_INDEX
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
 		 */
 		if (oldPred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
@@ -170,7 +170,6 @@ rtbuild(PG_FUNCTION_ARGS)
 				ni++;
 				continue;
 			}
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -179,13 +178,12 @@ rtbuild(PG_FUNCTION_ARGS)
 		 */
 		if (pred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (!ExecQual((List *) pred, econtext, false))
 				continue;
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 		ni++;
 
@@ -239,13 +237,13 @@ rtbuild(PG_FUNCTION_ARGS)
 	/* okay, all heap tuples are indexed */
 	heap_endscan(scan);
 
+#ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
 	{
-#ifndef OMIT_PARTIAL_INDEX
 		ExecDropTupleTable(tupleTable, true);
-		pfree(econtext);
-#endif	 /* OMIT_PARTIAL_INDEX */
+		FreeExprContext(econtext);
 	}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats

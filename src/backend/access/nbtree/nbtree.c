@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.59 2000/06/17 23:41:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.60 2000/07/12 02:36:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,8 +121,8 @@ btbuild(PG_FUNCTION_ARGS)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, htupdesc, InvalidBuffer);
+		ExecSetSlotDescriptor(slot, htupdesc);
+		econtext = MakeExprContext(slot, TransactionCommandContext);
 
 		/*
 		 * we never want to use sort/build if we are extending an existing
@@ -151,14 +151,13 @@ btbuild(PG_FUNCTION_ARGS)
 	{
 		nhtups++;
 
+#ifndef OMIT_PARTIAL_INDEX
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
 		 */
 		if (oldPred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
-
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
@@ -166,7 +165,6 @@ btbuild(PG_FUNCTION_ARGS)
 				nitups++;
 				continue;
 			}
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -175,13 +173,12 @@ btbuild(PG_FUNCTION_ARGS)
 		 */
 		if (pred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (!ExecQual((List *) pred, econtext, false))
 				continue;
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 		nitups++;
 
@@ -260,13 +257,13 @@ btbuild(PG_FUNCTION_ARGS)
 	/* okay, all heap tuples are indexed */
 	heap_endscan(hscan);
 
+#ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
 	{
-#ifndef OMIT_PARTIAL_INDEX
 		ExecDropTupleTable(tupleTable, true);
-		pfree(econtext);
-#endif	 /* OMIT_PARTIAL_INDEX */
+		FreeExprContext(econtext);
 	}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/*
 	 * if we are doing bottom-up btree build, finish the build by (1)

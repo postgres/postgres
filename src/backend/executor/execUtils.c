@@ -1,22 +1,20 @@
 /*-------------------------------------------------------------------------
  *
  * execUtils.c
- *	  miscellanious executor utility routines
+ *	  miscellaneous executor utility routines
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.62 2000/07/05 23:11:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.63 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- *		ExecAssignNodeBaseInfo	\
- *		ExecAssignDebugHooks	 >	preforms misc work done in all the
- *		ExecAssignExprContext	/	init node routines.
+ *		ExecAssignExprContext	Common code for plan node init routines.
  *
  *		ExecGetTypeInfo			  |  old execCStructs interface
  *		ExecMakeTypeInfo		  |  code from the version 1
@@ -53,6 +51,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
@@ -137,57 +136,104 @@ DisplayTupleCount(FILE *statfp)
 #endif
 
 /* ----------------------------------------------------------------
- *				 miscellanious init node support functions
+ *				 miscellaneous node-init support functions
  *
- *		ExecAssignNodeBaseInfo	- assigns the baseid field of the node
- *		ExecAssignDebugHooks	- assigns the node's debugging hooks
  *		ExecAssignExprContext	- assigns the node's expression context
  * ----------------------------------------------------------------
  */
 
 /* ----------------
- *		ExecAssignNodeBaseInfo
- *
- *		as it says, this assigns the baseid field of the node and
- *		increments the counter in the estate.  In addition, it initializes
- *		the base_parent field of the basenode.
- * ----------------
- */
-void
-ExecAssignNodeBaseInfo(EState *estate, CommonState *cstate, Plan *parent)
-{
-	int			baseId;
-
-	baseId = estate->es_BaseId;
-	cstate->cs_base_id = baseId;
-	estate->es_BaseId = baseId + 1;
-}
-
-/* ----------------
  *		ExecAssignExprContext
  *
  *		This initializes the ExprContext field.  It is only necessary
- *		to do this for nodes which use ExecQual or ExecTargetList
- *		because those routines depend on econtext.	Other nodes which
- *		dont have to evaluate expressions don't need to do this.
+ *		to do this for nodes which use ExecQual or ExecProject
+ *		because those routines depend on econtext.	Other nodes that
+ *		don't have to evaluate expressions don't need to do this.
+ *
+ * Note: we assume CurrentMemoryContext is the correct per-query context.
+ * This should be true during plan node initialization.
  * ----------------
  */
 void
 ExecAssignExprContext(EState *estate, CommonState *commonstate)
 {
-	ExprContext *econtext;
+	ExprContext *econtext = makeNode(ExprContext);
 
-	econtext = makeNode(ExprContext);
-	econtext->ecxt_scantuple = NULL;	/* scan tuple slot */
-	econtext->ecxt_innertuple = NULL;	/* inner tuple slot */
-	econtext->ecxt_outertuple = NULL;	/* outer tuple slot */
-	econtext->ecxt_relation = NULL;		/* relation */
-	econtext->ecxt_relid = 0;	/* relid */
-	econtext->ecxt_param_list_info = estate->es_param_list_info;
+	econtext->ecxt_scantuple = NULL;
+	econtext->ecxt_innertuple = NULL;
+	econtext->ecxt_outertuple = NULL;
+	econtext->ecxt_per_query_memory = CurrentMemoryContext;
+	/*
+	 * Create working memory for expression evaluation in this context.
+	 */
+	econtext->ecxt_per_tuple_memory =
+		AllocSetContextCreate(CurrentMemoryContext,
+							  "PlanExprContext",
+							  ALLOCSET_DEFAULT_MINSIZE,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
 	econtext->ecxt_param_exec_vals = estate->es_param_exec_vals;
-	econtext->ecxt_range_table = estate->es_range_table;		/* range table */
+	econtext->ecxt_param_list_info = estate->es_param_list_info;
+	econtext->ecxt_aggvalues = NULL;
+	econtext->ecxt_aggnulls = NULL;
+	econtext->ecxt_range_table = estate->es_range_table;
 
 	commonstate->cs_ExprContext = econtext;
+}
+
+/* ----------------
+ *		MakeExprContext
+ *
+ *		Build an expression context for use outside normal plan-node cases.
+ *		A fake scan-tuple slot can be supplied (pass NULL if not needed).
+ *		A memory context sufficiently long-lived to use as fcache context
+ *		must be supplied as well.
+ * ----------------
+ */
+ExprContext *
+MakeExprContext(TupleTableSlot *slot,
+				MemoryContext queryContext)
+{
+	ExprContext *econtext = makeNode(ExprContext);
+
+	econtext->ecxt_scantuple = slot;
+	econtext->ecxt_innertuple = NULL;
+	econtext->ecxt_outertuple = NULL;
+	econtext->ecxt_per_query_memory = queryContext;
+	/*
+	 * We make the temporary context a child of current working context,
+	 * not of the specified queryContext.  This seems reasonable but I'm
+	 * not totally sure about it...
+	 *
+	 * Expression contexts made via this routine typically don't live long
+	 * enough to get reset, so specify a minsize of 0.  That avoids alloc'ing
+	 * any memory in the common case where expr eval doesn't use any.
+	 */
+	econtext->ecxt_per_tuple_memory =
+		AllocSetContextCreate(CurrentMemoryContext,
+							  "TempExprContext",
+							  0,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
+	econtext->ecxt_param_exec_vals = NULL;
+	econtext->ecxt_param_list_info = NULL;
+	econtext->ecxt_aggvalues = NULL;
+	econtext->ecxt_aggnulls = NULL;
+	econtext->ecxt_range_table = NIL;
+
+	return econtext;
+}
+
+/*
+ * Free an ExprContext made by MakeExprContext, including the temporary
+ * context used for expression evaluation.  Note this will cause any
+ * pass-by-reference expression result to go away!
+ */
+void
+FreeExprContext(ExprContext *econtext)
+{
+	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
+	pfree(econtext);
 }
 
 /* ----------------------------------------------------------------
@@ -390,6 +436,7 @@ ExecFreeExprContext(CommonState *commonstate)
 	 *	clean up memory used.
 	 * ----------------
 	 */
+	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
 	pfree(econtext);
 	commonstate->cs_ExprContext = NULL;
 }
@@ -398,6 +445,7 @@ ExecFreeExprContext(CommonState *commonstate)
  *		ExecFreeTypeInfo
  * ----------------
  */
+#ifdef NOT_USED
 void
 ExecFreeTypeInfo(CommonState *commonstate)
 {
@@ -414,6 +462,7 @@ ExecFreeTypeInfo(CommonState *commonstate)
 	FreeTupleDesc(tupDesc);
 	commonstate->cs_ResultTupleSlot->ttc_tupleDescriptor = NULL;
 }
+#endif
 
 /* ----------------------------------------------------------------
  *		the following scan type support functions are for
@@ -974,8 +1023,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		if (predicate != NULL)
 		{
 			if (econtext == NULL)
-				econtext = makeNode(ExprContext);
-			econtext->ecxt_scantuple = slot;
+				econtext = MakeExprContext(slot,
+										   TransactionCommandContext);
 
 			/* Skip this index-update if the predicate isn't satisfied */
 			if (!ExecQual((List *) predicate, econtext, false))
@@ -1023,7 +1072,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 			pfree(result);
 	}
 	if (econtext != NULL)
-		pfree(econtext);
+		FreeExprContext(econtext);
 }
 
 void

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.38 2000/06/18 22:44:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.39 2000/07/12 02:37:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -649,7 +649,7 @@ SS_finalize_plan(Plan *plan)
 			break;
 
 		case T_Hash:
-			finalize_primnode((Node *) ((Hash *) plan)->hashkey,
+			finalize_primnode(((Hash *) plan)->hashkey,
 							  &results);
 			break;
 

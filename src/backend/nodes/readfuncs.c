@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.91 2000/06/18 22:44:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.92 2000/07/12 02:37:06 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -608,7 +608,7 @@ _readHash()
 	_getPlan((Plan *) local_node);
 
 	token = lsptok(NULL, &length);		/* eat :hashkey */
-	local_node->hashkey = (Var *) nodeRead(true);
+	local_node->hashkey = nodeRead(true);
 
 	return local_node;
 }

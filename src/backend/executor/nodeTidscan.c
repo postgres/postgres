@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.9 2000/06/15 04:09:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.10 2000/07/12 02:37:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,12 +38,16 @@ TidListCreate(List *evalList, ExprContext *econtext, ItemPointer *tidList)
 	List	   *lst;
 	ItemPointer itemptr;
 	bool		isNull;
+	bool		isDone;
 	int			numTids = 0;
 
 	foreach(lst, evalList)
 	{
-		itemptr = (ItemPointer) ExecEvalExpr(lfirst(lst), econtext,
-											 &isNull, (bool *) 0);
+		itemptr = (ItemPointer)
+			DatumGetPointer(ExecEvalExprSwitchContext(lfirst(lst),
+													  econtext,
+													  &isNull,
+													  &isDone));
 		if (itemptr && ItemPointerIsValid(itemptr))
 		{
 			tidList[numTids] = itemptr;
@@ -243,7 +247,7 @@ ExecTidScan(TidScan *node)
 	 *	use TidNext as access method
 	 * ----------------
 	 */
-	return ExecScan(&node->scan, TidNext);
+	return ExecScan(&node->scan, (ExecScanAccessMtd) TidNext);
 }
 
 /* ----------------------------------------------------------------
@@ -319,6 +323,7 @@ ExecEndTidScan(TidScan *node)
 	 * ----------------
 	 */
 	ExecFreeProjectionInfo(&scanstate->cstate);
+	ExecFreeExprContext(&scanstate->cstate);
 
 	/* ----------------
 	 *	close the heap and tid relations
@@ -332,7 +337,6 @@ ExecEndTidScan(TidScan *node)
 	 */
 	ExecClearTuple(scanstate->cstate.cs_ResultTupleSlot);
 	ExecClearTuple(scanstate->css_ScanTupleSlot);
-/*	  ExecClearTuple(scanstate->css_RawTupleSlot); */
 }
 
 /* ----------------------------------------------------------------
@@ -394,11 +398,8 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	RangeTblEntry *rtentry;
 	Oid			relid;
 	Oid			reloid;
-
 	Relation	currentRelation;
-	int			baseid;
-
-	List	   *execParam = NULL;
+	List	   *execParam = NIL;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -413,25 +414,12 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	 * --------------------------------
 	 */
 	scanstate = makeNode(CommonScanState);
-/*
-	scanstate->ss_ProcOuterFlag = false;
-	scanstate->ss_OldRelId = 0;
-*/
-
 	node->scan.scanstate = scanstate;
 
 	/* ----------------
-	 *	assign node's base_id .. we don't use AssignNodeBaseid() because
-	 *	the increment is done later on after we assign the tid scan's
-	 *	scanstate.	see below.
-	 * ----------------
-	 */
-	baseid = estate->es_BaseId;
-/*	  scanstate->csstate.cstate.bnode.base_id = baseid; */
-	scanstate->cstate.cs_base_id = baseid;
-
-	/* ----------------
-	 *	create expression context for node
+	 *	Miscellaneous initialization
+	 *
+	 *		 +	create expression context for node
 	 * ----------------
 	 */
 	ExecAssignExprContext(estate, &scanstate->cstate);
@@ -443,7 +431,6 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	 */
 	ExecInitResultTupleSlot(estate, &scanstate->cstate);
 	ExecInitScanTupleSlot(estate, scanstate);
-/*	  ExecInitRawTupleSlot(estate, scanstate); */
 
 	/* ----------------
 	 *	initialize projection info.  result type comes from scan desc
@@ -460,14 +447,6 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	  */
 	tidstate = makeNode(TidScanState);
 	node->tidstate = tidstate;
-
-	/* ----------------
-	 *	assign base id to tid scan state also
-	 * ----------------
-	 */
-	tidstate->cstate.cs_base_id = baseid;
-	baseid++;
-	estate->es_BaseId = baseid;
 
 	/* ----------------
 	 *	get the tid node information
@@ -513,14 +492,6 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	 */
 	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation));
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
-
-	/* ----------------
-	 *	tid scans don't have subtrees..
-	 * ----------------
-	 */
-/*	  scanstate->ss_ProcOuterFlag = false; */
-
-	tidstate->cstate.cs_TupFromTlist = false;
 
 	/*
 	 * if there are some PARAM_EXEC in skankeys then force tid rescan on

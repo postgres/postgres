@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.35 2000/06/15 04:09:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.36 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,45 +202,53 @@ MJFormSkipQual(List *qualList, char *replaceopname)
 static bool
 MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 {
+	bool		result;
+	MemoryContext oldContext;
 	List	   *clause;
 	List	   *eqclause;
-	Datum		const_value;
-	bool		isNull;
-	bool		isDone;
 
-	/* ----------------
-	 *	if we have no compare qualification, return nil
-	 * ----------------
+	/*
+	 * Do expression eval in short-lived context.
 	 */
-	if (compareQual == NIL)
-		return false;
+	oldContext = MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 
 	/* ----------------
 	 *	for each pair of clauses, test them until
-	 *	our compare conditions are satisfied
+	 *	our compare conditions are satisfied.
+	 *	if we reach the end of the list, none of our key greater-than
+	 *	conditions were satisfied so we return false.
 	 * ----------------
 	 */
+	result = false;				/* assume 'false' result */
+
 	eqclause = eqQual;
 	foreach(clause, compareQual)
 	{
+		Datum		const_value;
+		bool		isNull;
+		bool		isDone;
+
 		/* ----------------
 		 *	 first test if our compare clause is satisfied.
-		 *	 if so then return true. ignore isDone, don't iterate in
-		 *	 quals.
+		 *	 if so then return true.
+		 *
+		 *	 A NULL result is considered false.
+		 *	 ignore isDone, don't iterate in quals.
 		 * ----------------
 		 */
-		const_value = (Datum)
-			ExecEvalExpr((Node *) lfirst(clause), econtext, &isNull, &isDone);
+		const_value = ExecEvalExpr((Node *) lfirst(clause), econtext,
+								   &isNull, &isDone);
 
-		if (DatumGetInt32(const_value) != 0)
-			return true;
+		if (DatumGetBool(const_value) && !isNull)
+		{
+			result = true;
+			break;
+		}
 
 		/* ----------------
 		 *	 ok, the compare clause failed so we test if the keys
 		 *	 are equal... if key1 != key2, we return false.
 		 *	 otherwise key1 = key2 so we move on to the next pair of keys.
-		 *
-		 *	 ignore isDone, don't iterate in quals.
 		 * ----------------
 		 */
 		const_value = ExecEvalExpr((Node *) lfirst(eqclause),
@@ -248,17 +256,15 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 								   &isNull,
 								   &isDone);
 
-		if (DatumGetInt32(const_value) == 0)
-			return false;
+		if (! DatumGetBool(const_value) || isNull)
+			break;				/* return false */
+
 		eqclause = lnext(eqclause);
 	}
 
-	/* ----------------
-	 *	if we get here then it means none of our key greater-than
-	 *	conditions were satisfied so we return false.
-	 * ----------------
-	 */
-	return false;
+	MemoryContextSwitchTo(oldContext);
+
+	return result;
 }
 
 /* ----------------------------------------------------------------
@@ -403,24 +409,18 @@ ExecMergeJoin(MergeJoin *node)
 	List	   *qual;
 	bool		qualResult;
 	bool		compareResult;
-
 	Plan	   *innerPlan;
 	TupleTableSlot *innerTupleSlot;
-
 	Plan	   *outerPlan;
 	TupleTableSlot *outerTupleSlot;
-
 	ExprContext *econtext;
-
 #ifdef ENABLE_OUTER_JOINS
-
 	/*
 	 * These should be set from the expression context! - thomas
 	 * 1999-02-20
 	 */
 	static bool isLeftJoin = true;
 	static bool isRightJoin = false;
-
 #endif
 
 	/* ----------------
@@ -448,20 +448,34 @@ ExecMergeJoin(MergeJoin *node)
 	}
 
 	/* ----------------
-	 *	ok, everything is setup.. let's go to work
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
+
+	/* ----------------
+	 *	Check to see if we're still projecting out tuples from a previous
+	 *	join tuple (because there is a function-returning-set in the
+	 *	projection expressions).  If so, try to project another one.
 	 * ----------------
 	 */
 	if (mergestate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
-		ProjectionInfo *projInfo;
 		bool		isDone;
 
-		projInfo = mergestate->jstate.cs_ProjInfo;
-		result = ExecProject(projInfo, &isDone);
+		result = ExecProject(mergestate->jstate.cs_ProjInfo, &isDone);
 		if (!isDone)
 			return result;
+		/* Done with that source tuple... */
+		mergestate->jstate.cs_TupFromTlist = false;
 	}
+
+	/* ----------------
+	 *	ok, everything is setup.. let's go to work
+	 * ----------------
+	 */
 	for (;;)
 	{
 		/* ----------------
@@ -547,6 +561,8 @@ ExecMergeJoin(MergeJoin *node)
 			case EXEC_MJ_JOINTEST:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTEST\n");
 
+				ResetExprContext(econtext);
+
 				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
@@ -565,6 +581,14 @@ ExecMergeJoin(MergeJoin *node)
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINTUPLES\n");
 				mergestate->mj_JoinState = EXEC_MJ_NEXTINNER;
 
+				/*
+				 * Check the qpqual to see if we actually want to return
+				 * this join tuple.  If not, can proceed with merge.
+				 *
+				 * (We don't bother with a ResetExprContext here, on the
+				 * assumption that we just did one before checking the merge
+				 * qual.  One per tuple should be sufficient.)
+				 */
 				qualResult = ExecQual((List *) qual, econtext, false);
 				MJ_DEBUG_QUAL(qual, qualResult);
 
@@ -693,6 +717,8 @@ ExecMergeJoin(MergeJoin *node)
 				innerTupleSlot = econtext->ecxt_innertuple;
 				econtext->ecxt_innertuple = mergestate->mj_MarkedTupleSlot;
 
+				ResetExprContext(econtext);
+
 				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
@@ -709,11 +735,7 @@ ExecMergeJoin(MergeJoin *node)
 					 */
 
 					ExecRestrPos(innerPlan);
-#if 0
-					mergestate->mj_JoinState = EXEC_MJ_JOINTEST;
-#endif
 					mergestate->mj_JoinState = EXEC_MJ_JOINTUPLES;
-
 				}
 				else
 				{
@@ -777,6 +799,8 @@ ExecMergeJoin(MergeJoin *node)
 				 *	we update the marked tuple and go join them.
 				 * ----------------
 				 */
+				ResetExprContext(econtext);
+
 				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
@@ -886,6 +910,8 @@ ExecMergeJoin(MergeJoin *node)
 				 *	we update the marked tuple and go join them.
 				 * ----------------
 				 */
+				ResetExprContext(econtext);
+
 				qualResult = ExecQual((List *) mergeclauses, econtext, false);
 				MJ_DEBUG_QUAL(mergeclauses, qualResult);
 
@@ -1142,12 +1168,9 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 	/* ----------------
 	 *	Miscellaneous initialization
 	 *
-	 *		 +	assign node's base_id
-	 *		 +	assign debugging hooks and
 	 *		 +	create expression context for node
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, &mergestate->jstate, parent);
 	ExecAssignExprContext(estate, &mergestate->jstate);
 
 #define MERGEJOIN_NSLOTS 2
@@ -1251,6 +1274,7 @@ ExecEndMergeJoin(MergeJoin *node)
 	 * ----------------
 	 */
 	ExecFreeProjectionInfo(&mergestate->jstate);
+	ExecFreeExprContext(&mergestate->jstate);
 
 	/* ----------------
 	 *	shut down the subplans

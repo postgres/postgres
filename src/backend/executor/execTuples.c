@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.37 2000/04/12 17:15:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.38 2000/07/12 02:37:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,7 @@
  *		  by the access methods into the scan tuple slot.
  *
  *		- ExecSeqScan() calls ExecStoreTuple() to take the result
- *		  tuple from ExecTargetList() and place it into the result tuple
- *		  slot.
+ *		  tuple from ExecProject() and place it into the result tuple slot.
  *
  *		- ExecutePlan() calls ExecRetrieve() which gets the tuple out of
  *		  the slot passed to it by calling ExecFetchTuple().  this tuple
@@ -182,8 +181,8 @@ ExecCreateTupleTable(int initialSize)	/* initial number of slots in
 /* --------------------------------
  *		ExecDropTupleTable
  *
- *		This pfrees the storage assigned to the tuple table and
- *		optionally pfrees the contents of the table also.
+ *		This frees the storage used by the tuple table itself
+ *		and optionally frees the contents of the table also.
  *		It is expected that this routine be called by EndPlan().
  * --------------------------------
  */
@@ -239,7 +238,6 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
 	 */
 	pfree(array);
 	pfree(table);
-
 }
 
 
@@ -252,13 +250,12 @@ ExecDropTupleTable(TupleTable table,	/* tuple table */
  *
  *		This routine is used to reserve slots in the table for
  *		use by the various plan nodes.	It is expected to be
- *		called by the node init routines (ex: ExecInitNestLoop).
+ *		called by the node init routines (ex: ExecInitNestLoop)
  *		once per slot needed by the node.  Not all nodes need
  *		slots (some just pass tuples around).
  * --------------------------------
  */
-TupleTableSlot *				/* return: the slot allocated in the tuple
-								 * table */
+TupleTableSlot *
 ExecAllocTableSlot(TupleTable table)
 {
 	int			slotnum;		/* new slot number */
@@ -283,22 +280,12 @@ ExecAllocTableSlot(TupleTable table)
 	 *	pointers into _freed_ memory.  This leads to bad ends.	We
 	 *	now count the number of slots we will need and create all the
 	 *	slots we will need ahead of time.  The if below should never
-	 *	happen now.  Give a WARN if it does.  -mer 4 Aug 1992
+	 *	happen now.  Fail if it does.  -mer 4 Aug 1992
 	 * ----------------
 	 */
 	if (table->next >= table->size)
-	{
-
-		/*
-		 * int newsize = NewTableSize(table->size);
-		 *
-		 * pfree(table->array); table->array = (Pointer) palloc(newsize *
-		 * TableSlotSize); bzero(table->array, newsize * TableSlotSize);
-		 * table->size =  newsize;
-		 */
-		elog(NOTICE, "Plan requires more slots than are available");
-		elog(ERROR, "send mail to your local executor guru to fix this");
-	}
+		elog(ERROR, "Plan requires more slots than are available"
+			 "\n\tsend mail to your local executor guru to fix this");
 
 	/* ----------------
 	 *	at this point, space in the table is guaranteed so we
@@ -427,7 +414,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 
 	slot->val = (HeapTuple) NULL;
 
-	slot->ttc_shouldFree = true;/* probably useless code... */
+	slot->ttc_shouldFree = true;	/* probably useless code... */
 
 	/* ----------------
 	 *	Drop the pin on the referenced buffer, if there is one.

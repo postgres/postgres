@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.40 2000/06/17 23:41:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.41 2000/07/12 02:36:46 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -102,15 +102,14 @@ hashbuild(PG_FUNCTION_ARGS)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, htupdesc, InvalidBuffer);
+		ExecSetSlotDescriptor(slot, htupdesc);
+		econtext = MakeExprContext(slot, TransactionCommandContext);
 	}
 	else
-/* quiet the compiler */
 	{
+		tupleTable = NULL;
+		slot = NULL;
 		econtext = NULL;
-		tupleTable = 0;
-		slot = 0;
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
@@ -122,9 +121,9 @@ hashbuild(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
 	{
-
 		nhtups++;
 
+#ifndef OMIT_PARTIAL_INDEX
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
@@ -132,14 +131,12 @@ hashbuild(PG_FUNCTION_ARGS)
 		if (oldPred != NULL)
 		{
 			/* SetSlotContents(slot, htup); */
-#ifndef OMIT_PARTIAL_INDEX
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
 				nitups++;
 				continue;
 			}
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -148,13 +145,12 @@ hashbuild(PG_FUNCTION_ARGS)
 		 */
 		if (pred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (!ExecQual((List *) pred, econtext, false))
 				continue;
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 		nitups++;
 
@@ -221,13 +217,13 @@ hashbuild(PG_FUNCTION_ARGS)
 	/* okay, all heap tuples are indexed */
 	heap_endscan(hscan);
 
+#ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
 	{
-#ifndef OMIT_PARTIAL_INDEX
 		ExecDropTupleTable(tupleTable, true);
-		pfree(econtext);
-#endif	 /* OMIT_PARTIAL_INDEX */
+		FreeExprContext(econtext);
 	}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats

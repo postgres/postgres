@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.35 2000/06/28 03:32:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.36 2000/07/12 02:37:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,6 @@ CreateExecutorState(void)
 	state->es_param_list_info = NULL;
 	state->es_param_exec_vals = NULL;
 
-	state->es_BaseId = 0;
 	state->es_tupleTable = NULL;
 
 	state->es_junkFilter = NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.30 2000/01/26 05:56:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.31 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,13 +51,12 @@ ExecHashJoin(HashJoin *node)
 	List	   *qual;
 	ScanDirection dir;
 	TupleTableSlot *inntuple;
-	Var		   *outerVar;
+	Node	   *outerVar;
 	ExprContext *econtext;
 	HashJoinTable hashtable;
 	HeapTuple	curtuple;
 	TupleTableSlot *outerTupleSlot;
 	TupleTableSlot *innerTupleSlot;
-	Var		   *innerhashkey;
 	int			i;
 	bool		hashPhaseDone;
 
@@ -73,7 +72,6 @@ ExecHashJoin(HashJoin *node)
 	hashNode = (Hash *) innerPlan(node);
 	outerNode = outerPlan(node);
 	hashPhaseDone = node->hashdone;
-
 	dir = estate->es_direction;
 
 	/* -----------------
@@ -81,13 +79,21 @@ ExecHashJoin(HashJoin *node)
 	 * -----------------
 	 */
 	hashtable = hjstate->hj_HashTable;
-
-	/* --------------------
-	 * initialize expression context
-	 * --------------------
-	 */
 	econtext = hjstate->jstate.cs_ExprContext;
 
+	/* ----------------
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
+
+	/* ----------------
+	 *	Check to see if we're still projecting out tuples from a previous
+	 *	join tuple (because there is a function-returning-set in the
+	 *	projection expressions).  If so, try to project another one.
+	 * ----------------
+	 */
 	if (hjstate->jstate.cs_TupFromTlist)
 	{
 		TupleTableSlot *result;
@@ -96,6 +102,8 @@ ExecHashJoin(HashJoin *node)
 		result = ExecProject(hjstate->jstate.cs_ProjInfo, &isDone);
 		if (!isDone)
 			return result;
+		/* Done with that source tuple... */
+		hjstate->jstate.cs_TupFromTlist = false;
 	}
 
 	/* ----------------
@@ -112,8 +120,7 @@ ExecHashJoin(HashJoin *node)
 			 */
 			hashtable = ExecHashTableCreate(hashNode);
 			hjstate->hj_HashTable = hashtable;
-			innerhashkey = hashNode->hashkey;
-			hjstate->hj_InnerHashKey = innerhashkey;
+			hjstate->hj_InnerHashKey = hashNode->hashkey;
 
 			/* ----------------
 			 * execute the Hash node, to build the hash table
@@ -139,7 +146,7 @@ ExecHashJoin(HashJoin *node)
 	 * ----------------
 	 */
 	outerTupleSlot = hjstate->jstate.cs_OuterTupleSlot;
-	outerVar = get_leftop(clause);
+	outerVar = (Node *) get_leftop(clause);
 
 	for (;;)
 	{
@@ -220,6 +227,10 @@ ExecHashJoin(HashJoin *node)
 									  InvalidBuffer,
 									  false);	/* don't pfree this tuple */
 			econtext->ecxt_innertuple = inntuple;
+
+			/* reset temp memory each time to avoid leaks from qpqual */
+			ResetExprContext(econtext);
+
 			/* ----------------
 			 * if we pass the qual, then save state for next call and
 			 * have ExecProject form the projection, store it
@@ -279,12 +290,9 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	/* ----------------
 	 *	Miscellaneous initialization
 	 *
-	 *		 +	assign node's base_id
-	 *		 +	assign debugging hooks and
 	 *		 +	create expression context for node
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, &hjstate->jstate, parent);
 	ExecAssignExprContext(estate, &hjstate->jstate);
 
 #define HASHJOIN_NSLOTS 2
@@ -343,10 +351,10 @@ ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent)
 	hjstate->hj_HashTable = (HashJoinTable) NULL;
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
-	hjstate->hj_InnerHashKey = (Var *) NULL;
+	hjstate->hj_InnerHashKey = (Node *) NULL;
 
 	hjstate->jstate.cs_OuterTupleSlot = (TupleTableSlot *) NULL;
-	hjstate->jstate.cs_TupFromTlist = (bool) false;
+	hjstate->jstate.cs_TupFromTlist = false;
 
 	return TRUE;
 }
@@ -396,6 +404,7 @@ ExecEndHashJoin(HashJoin *node)
 	 * ----------------
 	 */
 	ExecFreeProjectionInfo(&hjstate->jstate);
+	ExecFreeExprContext(&hjstate->jstate);
 
 	/* ----------------
 	 * clean up subtrees
@@ -510,7 +519,7 @@ ExecHashJoinNewBatch(HashJoinState *hjstate)
 	BufFile    *innerFile;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
-	Var		   *innerhashkey;
+	Node	   *innerhashkey;
 
 	if (newbatch > 1)
 	{
@@ -651,10 +660,10 @@ ExecReScanHashJoin(HashJoin *node, ExprContext *exprCtxt, Plan *parent)
 
 	hjstate->hj_CurBucketNo = 0;
 	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
-	hjstate->hj_InnerHashKey = (Var *) NULL;
+	hjstate->hj_InnerHashKey = (Node *) NULL;
 
 	hjstate->jstate.cs_OuterTupleSlot = (TupleTableSlot *) NULL;
-	hjstate->jstate.cs_TupFromTlist = (bool) false;
+	hjstate->jstate.cs_TupFromTlist = false;
 
 	/*
 	 * if chgParam of subnodes is not null then plans will be re-scanned

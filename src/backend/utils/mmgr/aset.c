@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.29 2000/07/11 14:30:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.30 2000/07/12 02:37:23 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -349,20 +349,21 @@ AllocSetReset(MemoryContext context)
 		if (block == set->keeper)
 		{
 			/* Reset the block, but don't return it to malloc */
-			block->next = NULL;
-			block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
+			char   *datastart = ((char *) block) + ALLOC_BLOCKHDRSZ;
+
 #ifdef CLOBBER_FREED_MEMORY
 			/* Wipe freed memory for debugging purposes */
-			memset(block->freeptr, 0x7F,
-				   ((char *) block->endptr) - ((char *) block->freeptr));
+			memset(datastart, 0x7F, ((char *) block->freeptr) - datastart);
 #endif
+			block->freeptr = datastart;
+			block->next = NULL;
 		}
 		else
 		{
 			/* Normal case, release the block */
 #ifdef CLOBBER_FREED_MEMORY
 			/* Wipe freed memory for debugging purposes */
-			memset(block, 0x7F, ((char *) block->endptr) - ((char *) block));
+			memset(block, 0x7F, ((char *) block->freeptr) - ((char *) block));
 #endif
 			free(block);
 		}

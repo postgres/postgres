@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.40 2000/06/18 22:44:31 tgl Exp $
+ * $Id: plannodes.h,v 1.41 2000/07/12 02:37:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,7 @@ typedef struct Unique
 typedef struct Hash
 {
 	Plan		plan;
-	Var		   *hashkey;
+	Node	   *hashkey;
 	HashState  *hashstate;
 } Hash;
 
@@ -370,7 +370,7 @@ typedef struct SubPlan
 	 * Remaining fields are working state for executor; not used in
 	 * planning
 	 */
-	bool		shutdown;		/* TRUE = need to shutdown plan */
+	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 } SubPlan;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.68 2000/05/30 00:49:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.69 2000/07/12 02:37:11 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -30,6 +30,7 @@
 #include "optimizer/var.h"
 #include "parser/parse_type.h"
 #include "parser/parsetree.h"
+#include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -1317,7 +1318,10 @@ simplify_op_or_func(Expr *expr, List *args)
 	HeapTuple	func_tuple;
 	Form_pg_proc funcform;
 	Type		resultType;
+	bool		resultTypByVal;
+	int			resultTypLen;
 	Expr	   *newexpr;
+	ExprContext *econtext;
 	Datum		const_val;
 	bool		has_nonconst_input = false;
 	bool		has_null_input = false;
@@ -1424,25 +1428,35 @@ simplify_op_or_func(Expr *expr, List *args)
 	newexpr->oper = expr->oper;
 	newexpr->args = args;
 
+	/* Get info needed about result datatype */
+	resultType = typeidType(result_typeid);
+	resultTypByVal = typeByVal(resultType);
+	resultTypLen = typeLen(resultType);
+
 	/*
-	 * It is OK to pass econtext = NULL because none of the ExecEvalExpr()
+	 * It is OK to pass a dummy econtext because none of the ExecEvalExpr()
 	 * code used in this situation will use econtext.  That might seem
 	 * fortuitous, but it's not so unreasonable --- a constant expression
 	 * does not depend on context, by definition, n'est ce pas?
 	 */
-	const_val = ExecEvalExpr((Node *) newexpr, NULL,
-							 &const_is_null, &isDone);
+	econtext = MakeExprContext(NULL, CurrentMemoryContext);
+
+	const_val = ExecEvalExprSwitchContext((Node *) newexpr, econtext,
+										  &const_is_null, &isDone);
 	Assert(isDone);				/* if this isn't set, we blew it... */
+
+	/* Must copy result out of sub-context used by expression eval */
+	const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
+
+	FreeExprContext(econtext);
 	pfree(newexpr);
 
 	/*
 	 * Make the constant result node.
 	 */
-	resultType = typeidType(result_typeid);
-	return (Expr *) makeConst(result_typeid, typeLen(resultType),
+	return (Expr *) makeConst(result_typeid, resultTypLen,
 							  const_val, const_is_null,
-							  typeByVal(resultType),
-							  false, false);
+							  resultTypByVal, false, false);
 }
 
 

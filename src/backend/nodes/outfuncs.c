@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.120 2000/06/18 22:44:05 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.121 2000/07/12 02:37:06 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1155,10 +1155,10 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
 static void
 _outDatum(StringInfo str, Datum value, Oid type)
 {
-	char	   *s;
-	Size		length,
-				typeLength;
 	bool		byValue;
+	int			typeLength;
+	Size		length;
+	char	   *s;
 	int			i;
 
 	/*
@@ -1167,12 +1167,12 @@ _outDatum(StringInfo str, Datum value, Oid type)
 	 */
 	byValue = get_typbyval(type);
 	typeLength = get_typlen(type);
-	length = datumGetSize(value, type, byValue, typeLength);
+	length = datumGetSize(value, byValue, typeLength);
 
 	if (byValue)
 	{
 		s = (char *) (&value);
-		appendStringInfo(str, " %d [ ", length);
+		appendStringInfo(str, " %u [ ", (unsigned int) length);
 		for (i = 0; i < (int) sizeof(Datum); i++)
 			appendStringInfo(str, "%d ", (int) (s[i]));
 		appendStringInfo(str, "] ");
@@ -1184,14 +1184,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 			appendStringInfo(str, " 0 [ ] ");
 		else
 		{
-
-			/*
-			 * length is unsigned - very bad to do < comparison to -1
-			 * without casting it to int first!! -mer 8 Jan 1991
-			 */
-			if (((int) length) <= -1)
-				length = VARSIZE(s);
-			appendStringInfo(str, " %d [ ", length);
+			appendStringInfo(str, " %u [ ", (unsigned int) length);
 			for (i = 0; i < (int) length; i++)
 				appendStringInfo(str, "%d ", (int) (s[i]));
 			appendStringInfo(str, "] ");

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.67 2000/06/29 07:35:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.68 2000/07/12 02:37:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,8 +184,8 @@ _equalConst(Const *a, Const *b)
 	 */
 	if (a->constisnull)
 		return true;
-	return (datumIsEqual(a->constvalue, b->constvalue,
-						 a->consttype, a->constbyval, a->constlen));
+	return datumIsEqual(a->constvalue, b->constvalue,
+						a->constbyval, a->constlen);
 }
 
 static bool

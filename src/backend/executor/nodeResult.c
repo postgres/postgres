@@ -3,21 +3,18 @@
  * nodeResult.c
  *	  support for constant nodes needing special code.
  *
- * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- *
  * DESCRIPTION
  *
- *		Example: in constant queries where no relations are scanned,
- *		the planner generates result nodes.  Examples of such queries are:
+ *		Result nodes are used in queries where no relations are scanned.
+ *		Examples of such queries are:
  *
  *				retrieve (x = 1)
  *		and
  *				append emp (name = "mike", salary = 15000)
  *
- *		Result nodes are also used to optimise queries
- *		with tautological qualifications like:
+ *		Result nodes are also used to optimise queries with constant
+ *		qualifications (ie, quals that do not depend on the scanned data),
+ *		such as:
  *
  *				retrieve (emp.all) where 2 > 1
  *
@@ -27,13 +24,22 @@
  *						/
  *				   SeqScan (emp.all)
  *
+ *		At runtime, the Result node evaluates the constant qual once.
+ *		If it's false, we can return an empty result set without running
+ *		the controlled plan at all.  If it's true, we run the controlled
+ *		plan normally and pass back the results.
+ *
+ *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.13 2000/01/26 05:56:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.14 2000/07/12 02:37:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
 
+#include "postgres.h"
 
 #include "executor/executor.h"
 #include "executor/nodeResult.h"
@@ -41,7 +47,7 @@
 /* ----------------------------------------------------------------
  *		ExecResult(node)
  *
- *		returns the tuples from the outer plan which satisify the
+ *		returns the tuples from the outer plan which satisfy the
  *		qualification clause.  Since result nodes with right
  *		subtrees are never planned, we ignore the right subtree
  *		entirely (for now).. -cim 10/7/89
@@ -67,15 +73,17 @@ ExecResult(Result *node)
 	 * ----------------
 	 */
 	resstate = node->resstate;
-
-	/* ----------------
-	 *	get the expression context
-	 * ----------------
-	 */
 	econtext = resstate->cstate.cs_ExprContext;
 
 	/* ----------------
-	 *	 check tautological qualifications like (2 > 1)
+	 *	Reset per-tuple memory context to free any expression evaluation
+	 *	storage allocated in the previous tuple cycle.
+	 * ----------------
+	 */
+	ResetExprContext(econtext);
+
+	/* ----------------
+	 *	 check constant qualifications like (2 > 1), if not already done
 	 * ----------------
 	 */
 	if (resstate->rs_checkqual)
@@ -92,74 +100,64 @@ ExecResult(Result *node)
 		}
 	}
 
+	/* ----------------
+	 *	Check to see if we're still projecting out tuples from a previous
+	 *	scan tuple (because there is a function-returning-set in the
+	 *	projection expressions).  If so, try to project another one.
+	 * ----------------
+	 */
 	if (resstate->cstate.cs_TupFromTlist)
 	{
-		ProjectionInfo *projInfo;
-
-		projInfo = resstate->cstate.cs_ProjInfo;
-		resultSlot = ExecProject(projInfo, &isDone);
+		resultSlot = ExecProject(resstate->cstate.cs_ProjInfo, &isDone);
 		if (!isDone)
 			return resultSlot;
+		/* Done with that source tuple... */
+		resstate->cstate.cs_TupFromTlist = false;
 	}
 
 	/* ----------------
-	 *	retrieve a tuple that satisfy the qual from the outer plan until
-	 *	there are no more.
-	 *
-	 *	if rs_done is 1 then it means that we were asked to return
-	 *	a constant tuple and we alread did the last time ExecResult()
-	 *	was called, so now we are through.
+	 *	if rs_done is true then it means that we were asked to return
+	 *	a constant tuple and we already did the last time ExecResult()
+	 *	was called, OR that we failed the constant qual check.
+	 *	Either way, now we are through.
 	 * ----------------
 	 */
-	outerPlan = outerPlan(node);
-
-	while (!resstate->rs_done)
+	if (!resstate->rs_done)
 	{
+		outerPlan = outerPlan(node);
 
-		/* ----------------
-		 *	  get next outer tuple if necessary.
-		 * ----------------
-		 */
 		if (outerPlan != NULL)
 		{
+			/* ----------------
+			 *	retrieve tuples from the outer plan until there are no more.
+			 * ----------------
+			 */
 			outerTupleSlot = ExecProcNode(outerPlan, (Plan *) node);
 
 			if (TupIsNull(outerTupleSlot))
 				return NULL;
 
 			resstate->cstate.cs_OuterTupleSlot = outerTupleSlot;
+
+			/* ----------------
+			 *	 XXX gross hack. use outer tuple as scan tuple for projection
+			 * ----------------
+			 */
+			econtext->ecxt_outertuple = outerTupleSlot;
+			econtext->ecxt_scantuple = outerTupleSlot;
 		}
 		else
 		{
-
 			/* ----------------
-			 *	if we don't have an outer plan, then it's probably
-			 *	the case that we are doing a retrieve or an append
-			 *	with a constant target list, so we should only return
-			 *	the constant tuple once or never if we fail the qual.
+			 *	if we don't have an outer plan, then we are just generating
+			 *	the results from a constant target list.  Do it only once.
 			 * ----------------
 			 */
-			resstate->rs_done = 1;
+			resstate->rs_done = true;
 		}
 
 		/* ----------------
-		 *	  get the information to place into the expr context
-		 * ----------------
-		 */
-		resstate = node->resstate;
-
-		outerTupleSlot = resstate->cstate.cs_OuterTupleSlot;
-
-		/* ----------------
-		 *	 fill in the information in the expression context
-		 *	 XXX gross hack. use outer tuple as scan tuple
-		 * ----------------
-		 */
-		econtext->ecxt_outertuple = outerTupleSlot;
-		econtext->ecxt_scantuple = outerTupleSlot;
-
-		/* ----------------
-		 *	 form the result tuple and pass it back using ExecProject()
+		 *	 form the result tuple using ExecProject(), and return it.
 		 * ----------------
 		 */
 		projInfo = resstate->cstate.cs_ProjInfo;
@@ -200,14 +198,11 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 	node->resstate = resstate;
 
 	/* ----------------
-	 *	Miscellanious initialization
+	 *	Miscellaneous initialization
 	 *
-	 *		 +	assign node's base_id
-	 *		 +	assign debugging hooks and
 	 *		 +	create expression context for node
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, &resstate->cstate, parent);
 	ExecAssignExprContext(estate, &resstate->cstate);
 
 #define RESULT_NSLOTS 1
@@ -247,7 +242,7 @@ ExecCountSlotsResult(Result *node)
 /* ----------------------------------------------------------------
  *		ExecEndResult
  *
- *		fees up storage allocated through C routines
+ *		frees up storage allocated through C routines
  * ----------------------------------------------------------------
  */
 void
@@ -266,9 +261,8 @@ ExecEndResult(Result *node)
 	 *		  is freed at end-transaction time.  -cim 6/2/91
 	 * ----------------
 	 */
-	ExecFreeExprContext(&resstate->cstate);		/* XXX - new for us - er1p */
-	ExecFreeTypeInfo(&resstate->cstate);		/* XXX - new for us - er1p */
 	ExecFreeProjectionInfo(&resstate->cstate);
+	ExecFreeExprContext(&resstate->cstate);
 
 	/* ----------------
 	 *	shut down subplans
@@ -301,5 +295,4 @@ ExecReScanResult(Result *node, ExprContext *exprCtxt, Plan *parent)
 	if (((Plan *) node)->lefttree &&
 		((Plan *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);
-
 }

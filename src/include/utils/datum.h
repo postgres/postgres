@@ -1,64 +1,49 @@
 /*-------------------------------------------------------------------------
  *
  * datum.h
- *	  POSTGRES abstract data type datum representation definitions.
+ *	  POSTGRES Datum (abstract data type) manipulation routines.
  *
+ * These routines are driven by the 'typbyval' and 'typlen' information,
+ * which must previously have been obtained by the caller for the datatype
+ * of the Datum.  (We do it this way because in most situations the caller
+ * can look up the info just once and use it for many per-datum operations.)
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.10 2000/01/26 05:58:37 momjian Exp $
+ * $Id: datum.h,v 1.11 2000/07/12 02:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DATUM_H
 #define DATUM_H
 
+/*
+ * datumGetSize - find the "real" length of a datum
+ */
+extern Size datumGetSize(Datum value, bool typByVal, int typLen);
 
-/*--------------------------------------------------------
- * SOME NOT VERY PORTABLE ROUTINES ???
- *--------------------------------------------------------
+/*
+ * datumCopy - make a copy of a datum.
  *
- * In the implementation of the next routines we assume the following:
+ * If the datatype is pass-by-reference, memory is obtained with palloc().
+ */
+extern Datum datumCopy(Datum value, bool typByVal, int typLen);
+
+/*
+ * datumFree - free a datum previously allocated by datumCopy, if any.
  *
- * A) if a type is "byVal" then all the information is stored in the
- * Datum itself (i.e. no pointers involved!). In this case the
- * length of the type is always greater than zero and less than
- * "sizeof(Datum)"
- * B) if a type is not "byVal" and it has a fixed length, then
- * the "Datum" always contain a pointer to a stream of bytes.
- * The number of significant bytes are always equal to the length of thr
- * type.
- * C) if a type is not "byVal" and is of variable length (i.e. it has
- * length == -1) then "Datum" always points to a "struct varlena".
- * This varlena structure has information about the actual length of this
- * particular instance of the type and about its value.
+ * Does nothing if datatype is pass-by-value.
  */
+extern void datumFree(Datum value, bool typByVal, int typLen);
 
-/*---------------
- * datumGetSize
- * find the "real" length of a datum
- */
-extern Size datumGetSize(Datum value, Oid type, bool byVal, Size len);
-
-/*---------------
- * datumCopy
- * make a copy of a datum.
- */
-extern Datum datumCopy(Datum value, Oid type, bool byVal, Size len);
-
-/*---------------
- * datumFree
- * free space that *might* have been palloced by "datumCopy"
- */
-extern void datumFree(Datum value, Oid type, bool byVal, Size len);
-
-/*---------------
+/*
  * datumIsEqual
- * return true if thwo datums are equal, false otherwise.
+ * return true if two datums of the same type are equal, false otherwise.
+ *
  * XXX : See comments in the code for restrictions!
  */
-extern bool datumIsEqual(Datum value1, Datum value2, Oid type,
-			 bool byVal, Size len);
+extern bool datumIsEqual(Datum value1, Datum value2,
+						 bool typByVal, int typLen);
 
 #endif	 /* DATUM_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.27 2000/07/04 06:11:54 tgl Exp $
+ * $Id: index.h,v 1.28 2000/07/12 02:37:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,6 @@ extern bool IndexesAreActive(Oid relid, bool comfirmCommitted);
 extern void setRelhasindexInplace(Oid relid, bool hasindex, bool immediate);
 extern bool SetReindexProcessing(bool processing);
 extern bool IsReindexProcessing(void);
-
-extern void FillDummyExprContext(ExprContext *econtext, TupleTableSlot *slot,
-					 TupleDesc tupdesc, Buffer buffer);
 
 extern void index_build(Relation heapRelation, Relation indexRelation,
 						int numberOfAttributes, AttrNumber *attributeNumber,

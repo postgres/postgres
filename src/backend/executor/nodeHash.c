@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.48 2000/06/28 03:31:34 tgl Exp $
+ *	$Id: nodeHash.c,v 1.49 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,8 @@
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
-
+#include "parser/parse_expr.h"
+#include "parser/parse_type.h"
 
 static int	hashFunc(Datum key, int len, bool byVal);
 
@@ -45,7 +46,7 @@ ExecHash(Hash *node)
 	EState	   *estate;
 	HashState  *hashstate;
 	Plan	   *outerNode;
-	Var		   *hashkey;
+	Node	   *hashkey;
 	HashJoinTable hashtable;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
@@ -139,12 +140,9 @@ ExecInitHash(Hash *node, EState *estate, Plan *parent)
 	/* ----------------
 	 *	Miscellaneous initialization
 	 *
-	 *		 +	assign node's base_id
-	 *		 +	assign debugging hooks and
 	 *		 +	create expression context for node
 	 * ----------------
 	 */
-	ExecAssignNodeBaseInfo(estate, &hashstate->cstate, parent);
 	ExecAssignExprContext(estate, &hashstate->cstate);
 
 	/* ----------------
@@ -204,6 +202,7 @@ ExecEndHash(Hash *node)
 	 * ----------------
 	 */
 	ExecFreeProjectionInfo(&hashstate->cstate);
+	ExecFreeExprContext(&hashstate->cstate);
 
 	/* ----------------
 	 *	shut down the subplan
@@ -236,6 +235,7 @@ ExecHashTableCreate(Hash *node)
 	int			totalbuckets;
 	int			bucketsize;
 	int			i;
+	Type		typeInfo;
 	MemoryContext oldcxt;
 
 	/* ----------------
@@ -347,6 +347,14 @@ ExecHashTableCreate(Hash *node)
 	hashtable->outerBatchSize = NULL;
 
 	/* ----------------
+	 *	Get info about the datatype of the hash key.
+	 * ----------------
+	 */
+	typeInfo = typeidType(exprType(node->hashkey));
+	hashtable->typByVal = typeByVal(typeInfo);
+	hashtable->typLen = typeLen(typeInfo);
+
+	/* ----------------
 	 *	Create temporary memory contexts in which to keep the hashtable
 	 *	working storage.  See notes in executor/hashjoin.h.
 	 * ----------------
@@ -448,7 +456,7 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 void
 ExecHashTableInsert(HashJoinTable hashtable,
 					ExprContext *econtext,
-					Var *hashkey)
+					Node *hashkey)
 {
 	int			bucketno = ExecHashGetBucket(hashtable, econtext, hashkey);
 	TupleTableSlot *slot = econtext->ecxt_innertuple;
@@ -508,43 +516,44 @@ ExecHashTableInsert(HashJoinTable hashtable,
 int
 ExecHashGetBucket(HashJoinTable hashtable,
 				  ExprContext *econtext,
-				  Var *hashkey)
+				  Node *hashkey)
 {
 	int			bucketno;
 	Datum		keyval;
 	bool		isNull;
+	bool		isDone;
 
 	/* ----------------
 	 *	Get the join attribute value of the tuple
 	 *
-	 * ...It's quick hack - use ExecEvalExpr instead of ExecEvalVar:
-	 * hashkey may be T_ArrayRef, not just T_Var.		- vadim 04/22/97
+	 *	We reset the eval context each time to avoid any possibility
+	 *	of memory leaks in the hash function.
 	 * ----------------
 	 */
-	keyval = ExecEvalExpr((Node *) hashkey, econtext, &isNull, NULL);
+	ResetExprContext(econtext);
 
-	/*
-	 * keyval could be null, so we better point it to something valid
-	 * before trying to run hashFunc on it. --djm 8/17/96
-	 */
-	if (isNull)
-	{
-		execConstByVal = 0;
-		execConstLen = 0;
-		keyval = (Datum) "";
-	}
+	keyval = ExecEvalExprSwitchContext(hashkey, econtext,
+									   &isNull, &isDone);
 
 	/* ------------------
 	 *	compute the hash function
 	 * ------------------
 	 */
-	bucketno = hashFunc(keyval, execConstLen, execConstByVal) % hashtable->totalbuckets;
+	if (isNull)
+	{
+		bucketno = 0;
+	}
+	else
+	{
+		bucketno = hashFunc(keyval, hashtable->typLen, hashtable->typByVal)
+			% hashtable->totalbuckets;
+	}
 
 #ifdef HJDEBUG
 	if (bucketno >= hashtable->nbuckets)
-		printf("hash(%d) = %d SAVED\n", keyval, bucketno);
+		printf("hash(%ld) = %d SAVED\n", (long) keyval, bucketno);
 	else
-		printf("hash(%d) = %d\n", keyval, bucketno);
+		printf("hash(%ld) = %d\n", (long) keyval, bucketno);
 #endif
 
 	return bucketno;
@@ -584,6 +593,9 @@ ExecScanHashBucket(HashJoinState *hjstate,
 								  InvalidBuffer,
 								  false);		/* do not pfree this tuple */
 		econtext->ecxt_innertuple = inntuple;
+
+		/* reset temp memory each time to avoid leaks from qual expression */
+		ResetExprContext(econtext);
 
 		if (ExecQual(hjclauses, econtext, false))
 		{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.42 2000/06/18 22:44:29 tgl Exp $
+ * $Id: execnodes.h,v 1.43 2000/07/12 02:37:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,29 +76,46 @@ typedef struct RelationInfo
  *		to an attribute in the current inner tuple then we need to know
  *		what the current inner tuple is and so we look at the expression
  *		context.
+ *
+ *	There are two memory contexts associated with an ExprContext:
+ *	* ecxt_per_query_memory is a relatively long-lived context (such as
+ *	  TransactionCommandContext); typically it's the same context the
+ *	  ExprContext node itself is allocated in.  This context can be
+ *	  used for purposes such as storing operator/function fcache nodes.
+ *	* ecxt_per_tuple_memory is a short-term context for expression results.
+ *	  As the name suggests, it will typically be reset once per tuple,
+ *	  before we begin to evaluate expressions for that tuple.  Each
+ *	  ExprContext normally has its very own per-tuple memory context.
+ *	CurrentMemoryContext should be set to ecxt_per_tuple_memory before
+ *	calling ExecEvalExpr() --- see ExecEvalExprSwitchContext().
  * ----------------
  */
 typedef struct ExprContext
 {
 	NodeTag		type;
+	/* Tuples that Var nodes in expression may refer to */
 	TupleTableSlot *ecxt_scantuple;
 	TupleTableSlot *ecxt_innertuple;
 	TupleTableSlot *ecxt_outertuple;
-	Relation	ecxt_relation;
-	Index		ecxt_relid;
-	ParamListInfo ecxt_param_list_info;
-	ParamExecData *ecxt_param_exec_vals;		/* this is for subselects */
-	List	   *ecxt_range_table;
+	/* Memory contexts for expression evaluation --- see notes above */
+	MemoryContext ecxt_per_query_memory;
+	MemoryContext ecxt_per_tuple_memory;
+	/* Values to substitute for Param nodes in expression */
+	ParamExecData *ecxt_param_exec_vals;	/* for PARAM_EXEC params */
+	ParamListInfo ecxt_param_list_info;		/* for other param types */
+	/* Values to substitute for Aggref nodes in expression */
 	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
+	/* Range table that Vars in expression refer to --- seldom needed */
+	List	   *ecxt_range_table;
 } ExprContext;
 
 /* ----------------
  *		ProjectionInfo node information
  *
- *		This is all the information needed to preform projections
+ *		This is all the information needed to perform projections
  *		on a tuple.  Nodes which need to do projections create one
- *		of these.  In theory, when a node wants to preform a projection
+ *		of these.  In theory, when a node wants to perform a projection
  *		it should just update this information as necessary and then
  *		call ExecProject().  -cim 6/3/91
  *
@@ -122,18 +139,16 @@ typedef struct ProjectionInfo
 /* ----------------
  *	  JunkFilter
  *
- *	  this class is used to store information regarding junk attributes.
+ *	  This class is used to store information regarding junk attributes.
  *	  A junk attribute is an attribute in a tuple that is needed only for
  *	  storing intermediate information in the executor, and does not belong
- *	  in the tuple proper.	For example, when we do a delete or replace
- *	  query, the planner adds an entry to the targetlist so that the tuples
- *	  returned to ExecutePlan() contain an extra attribute: the t_ctid of
- *	  the tuple to be deleted/replaced.  This is needed for amdelete() and
- *	  amreplace().	In doing a delete this does not make much of a
- *	  difference, but in doing a replace we have to make sure we disgard
- *	  all the junk in a tuple before calling amreplace().  Otherwise the
- *	  inserted tuple will not have the correct schema.	This solves a
- *	  problem with hash-join and merge-sort replace plans.	-cim 10/10/90
+ *	  in emitted tuples.	For example, when we do an UPDATE query,
+ *	  the planner adds a "junk" entry to the targetlist so that the tuples
+ *	  returned to ExecutePlan() contain an extra attribute: the ctid of
+ *	  the tuple to be updated.  This is needed to do the update, but we
+ *	  don't want the ctid to be part of the stored new tuple!  So, we
+ *	  apply a "junk filter" to remove the junk attributes and form the
+ *	  real output tuple.
  *
  *	  targetList:		the original target list (including junk attributes).
  *	  length:			the length of 'targetList'.
@@ -174,10 +189,6 @@ typedef struct JunkFilter
  *		param_list_info					information needed to transform
  *										Param nodes into Const nodes
  *
- *		BaseId							during InitPlan(), each node is
- *										given a number.  this is the next
- *										number to be assigned.
- *
  *		tupleTable						this is a pointer to an array
  *										of pointers to tuples used by
  *										the executor at any given moment.
@@ -185,11 +196,6 @@ typedef struct JunkFilter
  *		junkFilter						contains information used to
  *										extract junk attributes from a tuple.
  *										(see JunkFilter above)
- *
- *		refcount						local buffer refcounts used in
- *										an ExecMain cycle.	this is introduced
- *										to avoid ExecStart's unpinning each
- *										other's buffers when called recursively
  * ----------------
  */
 typedef struct EState
@@ -203,7 +209,6 @@ typedef struct EState
 	Relation	es_into_relation_descriptor;
 	ParamListInfo es_param_list_info;
 	ParamExecData *es_param_exec_vals;	/* this is for subselects */
-	int			es_BaseId;
 	TupleTable	es_tupleTable;
 	JunkFilter *es_junkFilter;
 	uint32		es_processed;	/* # of tuples processed */
@@ -249,27 +254,21 @@ typedef struct EState
  * ----------------------------------------------------------------
  */
 
-/* BaseNode removed -- base_id moved into CommonState		- jolly */
-
 /* ----------------
  *	 CommonState information
  *
- *|		this is a bogus class used to hold slots so other
- *|		nodes can inherit them...
+ *		Superclass for all executor node-state object types.
  *
  *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
  *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
+ *		ExprContext		   node's expression-evaluation context
  *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
- *
+ *		TupFromTlist	   state flag used by some node types (why kept here?)
  * ----------------
  */
 typedef struct CommonState
 {
 	NodeTag		type;			/* its first field is NodeTag */
-	int			cs_base_id;
 	TupleTableSlot *cs_OuterTupleSlot;
 	TupleTableSlot *cs_ResultTupleSlot;
 	ExprContext *cs_ExprContext;
@@ -288,15 +287,6 @@ typedef struct CommonState
  *
  *		done			   flag which tells us to quit when we
  *						   have already returned a constant tuple.
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct ResultState
@@ -319,15 +309,6 @@ typedef struct ResultState
  *		rtentries		range table for the current plan
  *		result_relation_info_list  array of each subplan's result relation info
  *		junkFilter_list  array of each subplan's junk filter
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct AppendState
@@ -349,22 +330,15 @@ typedef struct AppendState
 /* ----------------
  *	 CommonScanState information
  *
- *		CommonScanState is a class like CommonState, but is used more
- *		by the nodes like SeqScan and Sort which want to
- *		keep track of an underlying relation.
+ *		CommonScanState extends CommonState for node types that represent
+ *		scans of an underlying relation.  It can also be used for nodes
+ *		that scan the output of an underlying plan node --- in that case,
+ *		only ScanTupleSlot is actually useful, and it refers to the tuple
+ *		retrieved from the subplan.
  *
- *		currentRelation    relation being scanned
- *		currentScanDesc    current scan descriptor for scan
+ *		currentRelation    relation being scanned (NULL if none)
+ *		currentScanDesc    current scan descriptor for scan (NULL if none)
  *		ScanTupleSlot	   pointer to slot in tuple table holding scan tuple
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct CommonScanState
@@ -375,41 +349,39 @@ typedef struct CommonScanState
 	TupleTableSlot *css_ScanTupleSlot;
 } CommonScanState;
 
+/*
+ * SeqScan uses a bare CommonScanState as its state item, since it needs
+ * no additional fields.
+ */
+
 /* ----------------
  *	 IndexScanState information
  *
- *|		index scans don't use CommonScanState because
- *|		the underlying AM abstractions for heap scans and
- *|		index scans are too different..  It would be nice
- *|		if the current abstraction was more useful but ... -cim 10/15/89
+ *		Note that an IndexScan node *also* has a CommonScanState state item.
+ *		IndexScanState stores the info needed specifically for indexing.
+ *		There's probably no good reason why this is a separate node type
+ *		rather than an extension of CommonScanState.
  *
- *		IndexPtr		   current index in use
  *		NumIndices		   number of indices in this scan
+ *		IndexPtr		   current index in use
  *		ScanKeys		   Skey structures to scan index rels
  *		NumScanKeys		   array of no of keys in each Skey struct
  *		RuntimeKeyInfo	   array of array of flags for Skeys evaled at runtime
+ *		RuntimeContext	   expr context for evaling runtime Skeys
  *		RelationDescs	   ptr to array of relation descriptors
  *		ScanDescs		   ptr to array of scan descriptors
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct IndexScanState
 {
-	CommonState cstate;			/* its first field is NodeTag */
+	NodeTag		type;
 	int			iss_NumIndices;
 	int			iss_IndexPtr;
 	int			iss_MarkIndexPtr;
 	ScanKey    *iss_ScanKeys;
 	int		   *iss_NumScanKeys;
-	Pointer		iss_RuntimeKeyInfo;
+	int		  **iss_RuntimeKeyInfo;
+	ExprContext *iss_RuntimeContext;
 	RelationPtr iss_RelationDescs;
 	IndexScanDescPtr iss_ScanDescs;
 	HeapTupleData iss_htup;
@@ -418,28 +390,18 @@ typedef struct IndexScanState
 /* ----------------
  *	 TidScanState information
  *
- *|		tid scans don't use CommonScanState because
- *|		the underlying AM abstractions for heap scans and
- *|		tid scans are too different..  It would be nice
- *|		if the current abstraction was more useful but ... -cim 10/15/89
+ *		Note that a TidScan node *also* has a CommonScanState state item.
+ *		There's probably no good reason why this is a separate node type
+ *		rather than an extension of CommonScanState.
  *
- *		TidPtr		   current tid in use
  *		NumTids		   number of tids in this scan
- *		tidList		   evaluated item pointers
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
+ *		TidPtr		   current tid in use
+ *		TidList		   evaluated item pointers
  * ----------------
  */
 typedef struct TidScanState
 {
-	CommonState cstate;			/* its first field is NodeTag */
+	NodeTag		type;
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;
@@ -455,39 +417,19 @@ typedef struct TidScanState
 /* ----------------
  *	 JoinState information
  *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
+ *		Superclass for state items of join nodes.
+ *		Currently this is the same as CommonState.
  * ----------------
  */
 typedef CommonState JoinState;
 
 /* ----------------
  *	 NestLoopState information
- *
- *		PortalFlag		   Set to enable portals to work.
- *
- *	 JoinState information
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct NestLoopState
 {
 	JoinState	jstate;			/* its first field is NodeTag */
-	bool		nl_PortalFlag;
 } NestLoopState;
 
 /* ----------------
@@ -497,17 +439,6 @@ typedef struct NestLoopState
  *		InnerSkipQual	   outerKey1 > innerKey1 ...
  *		JoinState		   current "state" of join. see executor.h
  *		MarkedTupleSlot    pointer to slot in tuple table for marked tuple
- *
- *	 JoinState information
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct MergeJoinState
@@ -531,17 +462,6 @@ typedef struct MergeJoinState
  *		hj_InnerHashKey			the inner hash key in the hashjoin condition
  *		hj_OuterTupleSlot		tuple slot for outer tuples
  *		hj_HashTupleSlot		tuple slot for hashed tuples
- *
- *	 JoinState information
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct HashJoinState
@@ -550,7 +470,7 @@ typedef struct HashJoinState
 	HashJoinTable hj_HashTable;
 	int			hj_CurBucketNo;
 	HashJoinTuple hj_CurTuple;
-	Var		   *hj_InnerHashKey;
+	Node	   *hj_InnerHashKey;
 	TupleTableSlot *hj_OuterTupleSlot;
 	TupleTableSlot *hj_HashTupleSlot;
 } HashJoinState;
@@ -567,22 +487,9 @@ typedef struct HashJoinState
  *		materialize nodes are used to materialize the results
  *		of a subplan into a temporary file.
  *
+ *		csstate.css_ScanTupleSlot refers to output of underlying plan.
+ *
  *		tuplestorestate		private state of tuplestore.c
- *
- *	 CommonScanState information
- *
- *		currentRelation    relation descriptor of sorted relation
- *		currentScanDesc    current scan descriptor for scan
- *		ScanTupleSlot	   pointer to slot in tuple table holding scan tuple
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct MaterialState
@@ -594,12 +501,14 @@ typedef struct MaterialState
 /* ---------------------
  *	AggregateState information
  *
+ *	csstate.css_ScanTupleSlot refers to output of underlying plan.
+ *
  *	Note: the associated ExprContext contains ecxt_aggvalues and ecxt_aggnulls
  *	arrays, which hold the computed agg values for the current input group
  *	during evaluation of an Agg node's output tuple(s).
  * -------------------------
  */
-typedef struct AggStatePerAggData *AggStatePerAgg;		/* private in nodeAgg.c */
+typedef struct AggStatePerAggData *AggStatePerAgg;	/* private in nodeAgg.c */
 
 typedef struct AggState
 {
@@ -607,12 +516,14 @@ typedef struct AggState
 	List	   *aggs;			/* all Aggref nodes in targetlist & quals */
 	int			numaggs;		/* length of list (could be zero!) */
 	AggStatePerAgg peragg;		/* per-Aggref working state */
+	MemoryContext tup_cxt;		/* context for per-output-tuple expressions */
+	MemoryContext agg_cxt[2];	/* pair of expression eval memory contexts */
+	int			which_cxt;		/* 0 or 1, indicates current agg_cxt */
 	bool		agg_done;		/* indicates completion of Agg scan */
 } AggState;
 
 /* ---------------------
  *	GroupState information
- *
  * -------------------------
  */
 typedef struct GroupState
@@ -630,21 +541,6 @@ typedef struct GroupState
  *		sort_Done		indicates whether sort has been performed yet
  *		sort_Keys		scan key structures describing the sort keys
  *		tuplesortstate	private state of tuplesort.c
- *
- *	 CommonScanState information
- *
- *		currentRelation    relation descriptor of sorted relation
- *		currentScanDesc    current scan descriptor for scan
- *		ScanTupleSlot	   pointer to slot in tuple table holding scan tuple
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct SortState
@@ -664,15 +560,6 @@ typedef struct SortState
  *		with the previously fetched tuple stored in priorTuple.
  *		If the two are identical in all interesting fields, then
  *		we just fetch another tuple from the sort and try again.
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct UniqueState
@@ -680,6 +567,7 @@ typedef struct UniqueState
 	CommonState cstate;			/* its first field is NodeTag */
 	FmgrInfo   *eqfunctions;	/* per-field lookup data for equality fns */
 	HeapTuple	priorTuple;		/* most recently returned tuple, or NULL */
+	MemoryContext tempContext;	/* short-term context for comparisons */
 } UniqueState;
 
 
@@ -687,15 +575,6 @@ typedef struct UniqueState
  *	 HashState information
  *
  *		hashtable			hash table for the hashjoin
- *
- *	 CommonState information
- *
- *		OuterTupleSlot	   pointer to slot containing current "outer" tuple
- *		ResultTupleSlot    pointer to slot in tuple table for projected tuple
- *		ExprContext		   node's current expression context
- *		ProjInfo		   info this node uses to form tuple projections
- *		NumScanAttributes  size of ScanAttributes array
- *		ScanAttributes	   attribute numbers of interest in this tuple
  * ----------------
  */
 typedef struct HashState

@@ -1,13 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * fcache.h
+ *		Declarations for function cache records.
  *
- *
+ * The first time any Oper or Func node is evaluated, we compute a cache
+ * record for the function being invoked, and save a pointer to the cache
+ * record in the Oper or Func node.  This saves repeated lookup of info
+ * about the function.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.11 2000/05/28 17:56:20 tgl Exp $
+ * $Id: fcache.h,v 1.12 2000/07/12 02:37:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +34,11 @@ typedef struct
 	bool		hasSetArg;		/* true if func is part of a nested dot
 								 * expr whose argument is func returning a
 								 * set ugh! */
+
+	/* If additional info is added to an existing fcache, be sure to
+	 * allocate it in the fcacheCxt.
+	 */
+	MemoryContext fcacheCxt;	/* context the fcache lives in */
 
 	int			nargs;			/* actual number of arguments */
 	Oid		   *argOidVect;		/* oids of all the argument types */

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.24 2000/07/05 23:11:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.25 2000/07/12 02:37:39 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -47,17 +47,17 @@
 #include "plpgsql.h"
 #include "pl.tab.h"
 
-#include "executor/spi.h"
-#include "executor/spi_priv.h"
-#include "commands/trigger.h"
-#include "utils/builtins.h"
-#include "fmgr.h"
 #include "access/heapam.h"
-
-#include "tcop/tcopprot.h"
-#include "utils/syscache.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "commands/trigger.h"
+#include "executor/spi.h"
+#include "executor/spi_priv.h"
+#include "fmgr.h"
+#include "tcop/tcopprot.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 static PLpgSQL_function *error_info_func = NULL;
@@ -2205,7 +2205,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 * Create a simple expression context to hold the arguments
 	 * ----------
 	 */
-	econtext = makeNode(ExprContext);
+	econtext = MakeExprContext(NULL, TransactionCommandContext);
 	paramLI = (ParamListInfo) palloc((expr->nparams + 1) *
 									 sizeof(ParamListInfoData));
 	econtext->ecxt_param_list_info = paramLI;
@@ -2286,11 +2286,19 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 * ----------
 	 */
 	SPI_push();
-	retval = ExecEvalExpr(expr->plan_simple_expr,
-						  econtext,
-						  isNull,
-						  &isdone);
+	retval = ExecEvalExprSwitchContext(expr->plan_simple_expr,
+									   econtext,
+									   isNull,
+									   &isdone);
 	SPI_pop();
+
+	/*
+	 * Copy the result out of the expression-evaluation memory context,
+	 * so that we can free the expression context.
+	 */
+	retval = datumCopy(retval, get_typbyval(*rettype), get_typlen(*rettype));
+
+	FreeExprContext(econtext);
 
 	/* ----------
 	 * That's it.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.35 2000/06/28 03:31:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.36 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,20 +57,18 @@ ProjectAttribute(TupleDesc TD,
 				 HeapTuple tup,
 				 bool *isnullP)
 {
-	Datum		val,
-				valueP;
+	Datum		val;
 	Var		   *attrVar = (Var *) tlist->expr;
 	AttrNumber	attrno = attrVar->varattno;
 
 	val = heap_getattr(tup, attrno, TD, isnullP);
-	if (*isnullP)
-		return (Datum) NULL;
 
-	valueP = datumCopy(val,
-					   TD->attrs[attrno - 1]->atttypid,
-					   TD->attrs[attrno - 1]->attbyval,
-					   (Size) TD->attrs[attrno - 1]->attlen);
-	return valueP;
+	if (*isnullP)
+		return (Datum) 0;
+
+	return datumCopy(val,
+					 TD->attrs[attrno - 1]->attbyval,
+					 TD->attrs[attrno - 1]->attlen);
 }
 
 static execution_state *
@@ -351,9 +349,17 @@ postquel_function(FunctionCallInfo fcinfo,
 				  List *func_tlist,
 				  bool *isDone)
 {
+	MemoryContext oldcontext;
 	execution_state *es;
 	Datum		result = 0;
 	CommandId	savedId;
+
+	/*
+	 * Switch to context in which the fcache lives.  This ensures that
+	 * parsetrees, plans, etc, will have sufficient lifetime.  The
+	 * sub-executor is responsible for deleting per-tuple information.
+	 */
+	oldcontext = MemoryContextSwitchTo(fcache->fcacheCxt);
 
 	/*
 	 * Before we start do anything we must save CurrentScanCommandId to
@@ -416,6 +422,7 @@ postquel_function(FunctionCallInfo fcinfo,
 		 * Let caller know we're finished.
 		 */
 		*isDone = true;
+		MemoryContextSwitchTo(oldcontext);
 		return (fcache->oneResult) ? result : (Datum) NULL;
 	}
 
@@ -426,5 +433,8 @@ postquel_function(FunctionCallInfo fcinfo,
 	Assert(LAST_POSTQUEL_COMMAND(es));
 
 	*isDone = false;
+
+	MemoryContextSwitchTo(oldcontext);
+
 	return result;
 }

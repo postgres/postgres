@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.33 2000/07/05 23:11:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.34 2000/07/12 02:37:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,7 @@ init_fcache(Oid foid,
 
 	retval = (FunctionCachePtr) palloc(sizeof(FunctionCache));
 	MemSet(retval, 0, sizeof(FunctionCache));
+	retval->fcacheCxt = CurrentMemoryContext;
 
 	/* ----------------
 	 *	 get the procedure tuple corresponding to the given functionOid
@@ -256,22 +257,26 @@ init_fcache(Oid foid,
 void
 setFcache(Node *node, Oid foid, List *argList, ExprContext *econtext)
 {
-	Func	   *fnode;
-	Oper	   *onode;
+	MemoryContext oldcontext;
 	FunctionCachePtr fcache;
+
+	/* Switch to a context long-lived enough for the fcache entry */
+	oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 
 	fcache = init_fcache(foid, argList, econtext);
 
 	if (IsA(node, Oper))
 	{
-		onode = (Oper *) node;
+		Oper	   *onode = (Oper *) node;
 		onode->op_fcache = fcache;
 	}
 	else if (IsA(node, Func))
 	{
-		fnode = (Func *) node;
+		Func	   *fnode = (Func *) node;
 		fnode->func_fcache = fcache;
 	}
 	else
 		elog(ERROR, "init_fcache: node must be Oper or Func!");
+
+	MemoryContextSwitchTo(oldcontext);
 }

@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.121 2000/07/05 16:17:43 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.122 2000/07/12 02:37:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,9 +86,12 @@ static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation,
  *		This routine must be called at the beginning of any execution of any
  *		query plan
  *
- *		returns (AttrInfo*) which describes the attributes of the tuples to
+ *		returns a TupleDesc which describes the attributes of the tuples to
  *		be returned by the query.
  *
+ * NB: the CurrentMemoryContext when this is called must be the context
+ * to be used as the per-query context for the query plan.  ExecutorRun()
+ * and ExecutorEnd() must be called in this same memory context.
  * ----------------------------------------------------------------
  */
 TupleDesc
@@ -103,7 +106,8 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 	{
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
-		memset(estate->es_param_exec_vals, 0, queryDesc->plantree->nParamExec * sizeof(ParamExecData));
+		MemSet(estate->es_param_exec_vals, 0,
+			   queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 	}
 
 	/*
@@ -150,7 +154,6 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
  *			 EXEC_BACK: retrieve 'count' number of tuples in the backward dir
  *			 EXEC_RETONE: return one tuple but don't 'retrieve' it
  *						   used in postquel function processing
- *
  *
  * ----------------------------------------------------------------
  */
@@ -688,13 +691,6 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	estate->es_range_table = rangeTable;
 
 	/*
-	 * initialize the BaseId counter so node base_id's are assigned
-	 * correctly.  Someday baseid's will have to be stored someplace other
-	 * than estate because they should be unique per query planned.
-	 */
-	estate->es_BaseId = 1;
-
-	/*
 	 * initialize result relation stuff
 	 */
 
@@ -793,7 +789,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	/*
 	 * initialize the private state information for all the nodes in the
 	 * query tree.	This opens files, allocates storage and leaves us
-	 * ready to start processing tuples..
+	 * ready to start processing tuples.
 	 */
 	ExecInitNode(plan, estate, NULL);
 
@@ -1589,7 +1585,7 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 {
 	int			ndef = rel->rd_att->constr->num_defval;
 	AttrDefault *attrdef = rel->rd_att->constr->defval;
-	ExprContext *econtext = makeNode(ExprContext);
+	ExprContext *econtext = MakeExprContext(NULL, CurrentMemoryContext);
 	HeapTuple	newtuple;
 	Node	   *expr;
 	bool		isnull;
@@ -1600,23 +1596,13 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 	char	   *repl = NULL;
 	int			i;
 
-	econtext->ecxt_scantuple = NULL;	/* scan tuple slot */
-	econtext->ecxt_innertuple = NULL;	/* inner tuple slot */
-	econtext->ecxt_outertuple = NULL;	/* outer tuple slot */
-	econtext->ecxt_relation = NULL;		/* relation */
-	econtext->ecxt_relid = 0;	/* relid */
-	econtext->ecxt_param_list_info = NULL;		/* param list info */
-	econtext->ecxt_param_exec_vals = NULL;		/* exec param values */
-	econtext->ecxt_range_table = NULL;	/* range table */
 	for (i = 0; i < ndef; i++)
 	{
 		if (!heap_attisnull(tuple, attrdef[i].adnum))
 			continue;
 		expr = (Node *) stringToNode(attrdef[i].adbin);
 
-		val = ExecEvalExpr(expr, econtext, &isnull, &isdone);
-
-		pfree(expr);
+		val = ExecEvalExprSwitchContext(expr, econtext, &isnull, &isdone);
 
 		if (isnull)
 			continue;
@@ -1635,20 +1621,24 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 
 	}
 
-	pfree(econtext);
-
 	if (repl == NULL)
-		return tuple;
+	{
+		/* no changes needed */
+		newtuple = tuple;
+	}
+	else
+	{
+		newtuple = heap_modifytuple(tuple, rel, replValue, replNull, repl);
 
-	newtuple = heap_modifytuple(tuple, rel, replValue, replNull, repl);
+		pfree(repl);
+		pfree(replNull);
+		pfree(replValue);
+		heap_freetuple(tuple);
+	}
 
-	pfree(repl);
-	heap_freetuple(tuple);
-	pfree(replNull);
-	pfree(replValue);
+	FreeMemoryContext(econtext);
 
 	return newtuple;
-
 }
 
 #endif
@@ -1658,9 +1648,10 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 {
 	int			ncheck = rel->rd_att->constr->num_check;
 	ConstrCheck *check = rel->rd_att->constr->check;
-	ExprContext *econtext = makeNode(ExprContext);
 	TupleTableSlot *slot = makeNode(TupleTableSlot);
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	ExprContext *econtext = MakeExprContext(slot,
+											TransactionCommandContext);
 	List	   *rtlist;
 	List	   *qual;
 	int			i;
@@ -1677,17 +1668,21 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 	rte->relid = RelationGetRelid(rel);
 	/* inh, inFromCl, inJoinSet, skipAcl won't be used, leave them zero */
 	rtlist = lcons(rte, NIL);
-	econtext->ecxt_scantuple = slot;	/* scan tuple slot */
-	econtext->ecxt_innertuple = NULL;	/* inner tuple slot */
-	econtext->ecxt_outertuple = NULL;	/* outer tuple slot */
-	econtext->ecxt_relation = rel;		/* relation */
-	econtext->ecxt_relid = 0;	/* relid */
-	econtext->ecxt_param_list_info = NULL;		/* param list info */
-	econtext->ecxt_param_exec_vals = NULL;		/* exec param values */
-	econtext->ecxt_range_table = rtlist;		/* range table */
+	econtext->ecxt_range_table = rtlist; /* phony range table */
 
+	/*
+	 * Save the de-stringized constraint expressions in command-level
+	 * memory context.  XXX should build the above stuff there too,
+	 * instead of doing it over for each tuple.
+	 * XXX Is it sufficient to have just one es_result_relation_constraints
+	 * in an inherited insert/update?
+	 */
 	if (estate->es_result_relation_constraints == NULL)
 	{
+		MemoryContext oldContext;
+
+		oldContext = MemoryContextSwitchTo(TransactionCommandContext);
+
 		estate->es_result_relation_constraints =
 			(List **) palloc(ncheck * sizeof(List *));
 
@@ -1696,6 +1691,8 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 			qual = (List *) stringToNode(check[i].ccbin);
 			estate->es_result_relation_constraints[i] = qual;
 		}
+
+		MemoryContextSwitchTo(oldContext);
 	}
 
 	for (i = 0; i < ncheck; i++)
@@ -1714,16 +1711,15 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 	pfree(slot);
 	pfree(rte);
 	pfree(rtlist);
-	pfree(econtext);
+
+	FreeExprContext(econtext);
 
 	return (char *) NULL;
-
 }
 
 void
 ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
 {
-
 	Assert(rel->rd_att->constr);
 
 	if (rel->rd_att->constr->has_not_null)
@@ -1732,9 +1728,10 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
 
 		for (attrChk = 1; attrChk <= rel->rd_att->natts; attrChk++)
 		{
-			if (rel->rd_att->attrs[attrChk - 1]->attnotnull && heap_attisnull(tuple, attrChk))
+			if (rel->rd_att->attrs[attrChk-1]->attnotnull &&
+				heap_attisnull(tuple, attrChk))
 				elog(ERROR, "%s: Fail to add null value in not null attribute %s",
-					 caller, NameStr(rel->rd_att->attrs[attrChk - 1]->attname));
+					 caller, NameStr(rel->rd_att->attrs[attrChk-1]->attname));
 		}
 	}
 
@@ -1743,10 +1740,9 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
 		char	   *failed;
 
 		if ((failed = ExecRelCheck(rel, tuple, estate)) != NULL)
-			elog(ERROR, "%s: rejected due to CHECK constraint %s", caller, failed);
+			elog(ERROR, "%s: rejected due to CHECK constraint %s",
+				 caller, failed);
 	}
-
-	return;
 }
 
 TupleTableSlot *

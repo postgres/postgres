@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.36 2000/05/30 04:24:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.37 2000/07/12 02:37:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,13 +68,11 @@ ExecGroupEveryTuple(Group *node)
 	EState	   *estate;
 	ExprContext *econtext;
 	TupleDesc	tupdesc;
-
 	HeapTuple	outerTuple = NULL;
 	HeapTuple	firsttuple;
 	TupleTableSlot *outerslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
-
 	bool		isDone;
 
 	/* ---------------------
@@ -84,14 +82,16 @@ ExecGroupEveryTuple(Group *node)
 	grpstate = node->grpstate;
 	if (grpstate->grp_done)
 		return NULL;
-
 	estate = node->plan.state;
-
 	econtext = grpstate->csstate.cstate.cs_ExprContext;
-
 	tupdesc = ExecGetScanType(&grpstate->csstate);
 
-	/* if we haven't returned first tuple of new group yet ... */
+	/*
+	 *	We need not call ResetExprContext here because execTuplesMatch
+	 *	will reset the per-tuple memory context once per input tuple.
+	 */
+
+	/* if we haven't returned first tuple of a new group yet ... */
 	if (grpstate->grp_useFirstTuple)
 	{
 		grpstate->grp_useFirstTuple = FALSE;
@@ -130,7 +130,8 @@ ExecGroupEveryTuple(Group *node)
 			if (!execTuplesMatch(firsttuple, outerTuple,
 								 tupdesc,
 								 node->numCols, node->grpColIdx,
-								 grpstate->eqfunctions))
+								 grpstate->eqfunctions,
+								 econtext->ecxt_per_tuple_memory))
 			{
 
 				/*
@@ -179,13 +180,11 @@ ExecGroupOneTuple(Group *node)
 	EState	   *estate;
 	ExprContext *econtext;
 	TupleDesc	tupdesc;
-
 	HeapTuple	outerTuple = NULL;
 	HeapTuple	firsttuple;
 	TupleTableSlot *outerslot;
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
-
 	bool		isDone;
 
 	/* ---------------------
@@ -195,12 +194,14 @@ ExecGroupOneTuple(Group *node)
 	grpstate = node->grpstate;
 	if (grpstate->grp_done)
 		return NULL;
-
 	estate = node->plan.state;
-
 	econtext = node->grpstate->csstate.cstate.cs_ExprContext;
-
 	tupdesc = ExecGetScanType(&grpstate->csstate);
+
+	/*
+	 *	We need not call ResetExprContext here because execTuplesMatch
+	 *	will reset the per-tuple memory context once per input tuple.
+	 */
 
 	firsttuple = grpstate->grp_firstTuple;
 	if (firsttuple == NULL)
@@ -237,7 +238,8 @@ ExecGroupOneTuple(Group *node)
 		if (!execTuplesMatch(firsttuple, outerTuple,
 							 tupdesc,
 							 node->numCols, node->grpColIdx,
-							 grpstate->eqfunctions))
+							 grpstate->eqfunctions,
+							 econtext->ecxt_per_tuple_memory))
 			break;
 	}
 
@@ -296,10 +298,8 @@ ExecInitGroup(Group *node, EState *estate, Plan *parent)
 	grpstate->grp_firstTuple = NULL;
 
 	/*
-	 * assign node's base id and create expression context
+	 * create expression context
 	 */
-	ExecAssignNodeBaseInfo(estate, &grpstate->csstate.cstate,
-						   (Plan *) parent);
 	ExecAssignExprContext(estate, &grpstate->csstate.cstate);
 
 #define GROUP_NSLOTS 2
@@ -360,6 +360,7 @@ ExecEndGroup(Group *node)
 	grpstate = node->grpstate;
 
 	ExecFreeProjectionInfo(&grpstate->csstate.cstate);
+	ExecFreeExprContext(&grpstate->csstate.cstate);
 
 	outerPlan = outerPlan(node);
 	ExecEndNode(outerPlan, (Plan *) node);
@@ -406,6 +407,9 @@ ExecReScanGroup(Group *node, ExprContext *exprCtxt, Plan *parent)
  * numCols: the number of attributes to be examined
  * matchColIdx: array of attribute column numbers
  * eqFunctions: array of fmgr lookup info for the equality functions to use
+ * evalContext: short-term memory context for executing the functions
+ *
+ * NB: evalContext is reset each time!
  */
 bool
 execTuplesMatch(HeapTuple tuple1,
@@ -413,9 +417,16 @@ execTuplesMatch(HeapTuple tuple1,
 				TupleDesc tupdesc,
 				int numCols,
 				AttrNumber *matchColIdx,
-				FmgrInfo *eqfunctions)
+				FmgrInfo *eqfunctions,
+				MemoryContext evalContext)
 {
+	MemoryContext oldContext;
+	bool		result;
 	int			i;
+
+	/* Reset and switch into the temp context. */
+	MemoryContextReset(evalContext);
+	oldContext = MemoryContextSwitchTo(evalContext);
 
 	/*
 	 * We cannot report a match without checking all the fields, but we
@@ -423,6 +434,8 @@ execTuplesMatch(HeapTuple tuple1,
 	 * start comparing at the last field (least significant sort key).
 	 * That's the most likely to be different...
 	 */
+	result = true;
+
 	for (i = numCols; --i >= 0;)
 	{
 		AttrNumber	att = matchColIdx[i];
@@ -442,7 +455,10 @@ execTuplesMatch(HeapTuple tuple1,
 							 &isNull2);
 
 		if (isNull1 != isNull2)
-			return FALSE;		/* one null and one not; they aren't equal */
+		{
+			result = false;		/* one null and one not; they aren't equal */
+			break;
+		}
 
 		if (isNull1)
 			continue;			/* both are null, treat as equal */
@@ -451,10 +467,15 @@ execTuplesMatch(HeapTuple tuple1,
 
 		if (! DatumGetBool(FunctionCall2(&eqfunctions[i],
 										 attr1, attr2)))
-			return FALSE;
+		{
+			result = false;		/* they aren't equal */
+			break;
+		}
 	}
 
-	return TRUE;
+	MemoryContextSwitchTo(oldContext);
+
+	return result;
 }
 
 /*

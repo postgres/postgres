@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.115 2000/06/29 07:35:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.116 2000/07/12 02:37:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,7 +578,7 @@ _copySubPlan(SubPlan *from)
 	Node_Copy(from, newnode, sublink);
 
 	/* do not copy execution state */
-	newnode->shutdown = false;
+	newnode->needShutdown = false;
 	newnode->curTuple = NULL;
 
 	return newnode;
