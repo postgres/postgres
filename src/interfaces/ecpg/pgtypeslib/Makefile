@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.8 2003/06/19 09:52:11 meskes Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.9 2003/08/01 16:18:04 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 NAME= pgtypes
 SO_MAJOR_VERSION= 1
-SO_MINOR_VERSION= 0.0
+SO_MINOR_VERSION= 0
 
 override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(top_srcdir)/src/include/utils $(CPPFLAGS) -g
 
