@@ -280,7 +280,7 @@ New pgjindent utility to indent java code (Bruce)
 Replace strcasecmp() with strcmp() where appropriate (Peter E)
 Remove configure --enable-pltcl-utf option
 Make PL/PgSQL use the backends type coersion code (Tom)
-
+pgindent fixes, new pgjindent for java (Bruce, Tom)
 
 
   ------------------------------------------------------------------------
