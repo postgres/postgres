@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.73 1998/03/30 16:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.74 1998/03/31 23:31:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,6 +319,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
+
+	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	/* now the range table will not change */
@@ -784,7 +787,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
-        /***S*H***/
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;

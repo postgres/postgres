@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.20 1998/02/26 04:32:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.21 1998/03/31 23:30:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,9 @@ query_planner(Query *root,
 	 */
 	if (constant_qual)
 	{
-		subplan = (Plan *) make_result((!root->hasAggs && !root->groupClause)
+		subplan = (Plan *) make_result((!root->hasAggs &&
+									    !root->groupClause &&
+									    !root->havingQual)
 									   ? tlist : subplan->targetlist,
 									   (Node *) constant_qual,
 									   subplan);
@@ -195,7 +197,7 @@ query_planner(Query *root,
 		/*
 		 * Change all varno's of the Result's node target list.
 		 */
-		if (!root->hasAggs && !root->groupClause)
+		if (!root->hasAggs && !root->groupClause && !root->havingQual)
 			set_tlist_references(subplan);
 
 		return subplan;
@@ -216,7 +218,7 @@ query_planner(Query *root,
 	 */
 	else
 	{
-		if (!root->hasAggs && !root->groupClause)
+		if (!root->hasAggs && !root->groupClause && !root->havingQual)
 			subplan->targetlist = flatten_tlist_vars(tlist,
 													 subplan->targetlist);
 		return subplan;

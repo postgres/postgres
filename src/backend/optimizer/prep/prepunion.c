@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.22 1998/03/31 04:43:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.23 1998/03/31 23:30:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,6 +280,8 @@ plan_inherit_query(List *relids,
 		new_root->uniqueFlag = NULL;
 		new_root->sortClause = NULL;
 		new_root->groupClause = NULL;
+		new_root->havingQual = NULL;
+		
 		if (new_root->hasAggs)
 		{
 			new_root->hasAggs = false;
