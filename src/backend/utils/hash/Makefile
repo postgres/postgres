@@ -4,7 +4,7 @@
 #    Makefile for utils/hash
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.9 2000/08/31 16:10:51 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.10 2001/03/13 01:17:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/utils/hash
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = dynahash.o hashfn.o
+OBJS = dynahash.o hashfn.o pg_crc.o
 
 all: SUBSYS.o
 

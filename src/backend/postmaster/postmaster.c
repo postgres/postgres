@@ -6,12 +6,29 @@
  *	  to the Postmaster and the postmaster uses the info in the
  *	  message to setup a backend process.
  *
+ *	  The postmaster also manages system-wide operations such as
+ *	  startup, shutdown, and periodic checkpoints.  The postmaster
+ *	  itself doesn't do those operations, mind you --- it just forks
+ *	  off a subprocess to do them at the right times.  It also takes
+ *	  care of resetting the system if a backend crashes.
+ *
+ *	  The postmaster process creates the shared memory and semaphore
+ *	  pools during startup, but as a rule does not touch them itself.
+ *	  In particular, it is not a member of the PROC array of backends
+ *	  and so it cannot participate in lock-manager operations.  Keeping
+ *	  the postmaster away from shared memory operations makes it simpler
+ *	  and more reliable.  The postmaster is almost always able to recover
+ *	  from crashes of individual backends by resetting shared memory;
+ *	  if it did much with shared memory then it would be prone to crashing
+ *	  along with the backends.
+ *
+ *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.208 2001/02/20 01:34:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.209 2001/03/13 01:17:05 tgl Exp $
  *
  * NOTES
  *
@@ -21,15 +38,14 @@
  *		lock manager.
  *
  * Synchronization:
- *		The Postmaster shares memory with the backends and will have to lock
- *		the shared memory it accesses.	The Postmaster should never block
- *		on messages from clients.
+ *		The Postmaster shares memory with the backends but should avoid
+ *		touching shared memory, so as not to become stuck if a crashing
+ *		backend screws up locks or shared memory.  Likewise, the Postmaster
+ *		should never block on messages from frontend clients.
  *
  * Garbage Collection:
  *		The Postmaster cleans up after backends if they have an emergency
  *		exit and/or core dump.
- *
- * Communication:
  *
  *-------------------------------------------------------------------------
  */
@@ -194,8 +210,6 @@ extern char *optarg;
 extern int	optind,
 			opterr;
 
-extern void GetRedoRecPtr(void);
-
 /*
  * postmaster.c - function prototypes
  */
@@ -207,6 +221,7 @@ static void reset_shared(unsigned short port);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
+static void schedule_checkpoint(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static int	DoBackend(Port *port);
@@ -491,7 +506,7 @@ PostmasterMain(int argc, char *argv[])
 
 				/*
 				 * In the event that some backend dumps core, send
-				 * SIGSTOP, rather than SIGUSR1, to all its peers.	This
+				 * SIGSTOP, rather than SIGQUIT, to all its peers.	This
 				 * lets the wily post_hacker collect core dumps from
 				 * everyone.
 				 */
@@ -643,11 +658,11 @@ PostmasterMain(int argc, char *argv[])
 
 	pqsignal(SIGHUP, SIGHUP_handler);	/* reread config file and have children do same */
 	pqsignal(SIGINT, pmdie);	/* send SIGTERM and ShutdownDataBase */
-	pqsignal(SIGQUIT, pmdie);	/* send SIGUSR1 and die */
+	pqsignal(SIGQUIT, pmdie);	/* send SIGQUIT and die */
 	pqsignal(SIGTERM, pmdie);	/* wait for children and ShutdownDataBase */
 	pqsignal(SIGALRM, SIG_IGN); /* ignored */
 	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal(SIGUSR1, pmdie);	/* currently ignored, but see note in pmdie */
+	pqsignal(SIGUSR1, schedule_checkpoint);	/* start a background checkpoint */
 	pqsignal(SIGUSR2, pmdie);	/* send SIGUSR2, don't die */
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
@@ -773,25 +788,22 @@ ServerLoop(void)
 		struct timeval *timeout = NULL;
 		struct timeval	timeout_tv;
 
-		if (CheckPointPID == 0 && checkpointed && !FatalError)
+		if (CheckPointPID == 0 && checkpointed &&
+			Shutdown == NoShutdown && !FatalError)
 		{
 			time_t	now = time(NULL);
 
 			if (CheckPointTimeout + checkpointed > now)
 			{
+				/* Not time for checkpoint yet, so set a timeout for select */
 				timeout_tv.tv_sec = CheckPointTimeout + checkpointed - now;
 				timeout_tv.tv_usec = 0;
 				timeout = &timeout_tv;
 			}
 			else
 			{
+				/* Time to make the checkpoint... */
 				CheckPointPID = CheckPointDataBase();
-				/*
-				 * Since this code is executed periodically, it's a fine
-				 * place to do other actions that should happen every now
-				 * and then on no particular schedule.  Such as...
-				 */
-				TouchSocketLockFile();
 			}
 		}
 
@@ -1256,7 +1268,7 @@ ConnCreate(int serverFd)
 	{
 		fprintf(stderr, "%s: ConnCreate: malloc failed\n",
 				progname);
-		SignalChildren(SIGUSR1);
+		SignalChildren(SIGQUIT);
 		ExitPostmaster(1);
 	}
 
@@ -1374,7 +1386,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 
 
 /*
- * pmdie -- signal handler for cleaning up after a kill signal.
+ * pmdie -- signal handler for processing various postmaster signals.
  */
 static void
 pmdie(SIGNAL_ARGS)
@@ -1388,18 +1400,6 @@ pmdie(SIGNAL_ARGS)
 
 	switch (postgres_signal_arg)
 	{
-		case SIGUSR1:
-			/*
-			 * Currently the postmaster ignores SIGUSR1 (maybe it should
-			 * do something useful instead?)  But we must have some handler
-			 * installed for SIGUSR1, not just set it to SIG_IGN.  Else, a
-			 * freshly spawned backend would likewise have it set to SIG_IGN,
-			 * which would mean the backend would ignore any attempt to kill
-			 * it before it had gotten as far as setting up its own handler.
-			 */
-			errno = save_errno;
-			return;
-
 		case SIGUSR2:
 
 			/*
@@ -1419,7 +1419,7 @@ pmdie(SIGNAL_ARGS)
 			/*
 			 * Smart Shutdown:
 			 *
-			 * let children to end their work and ShutdownDataBase.
+			 * Wait for children to end their work and ShutdownDataBase.
 			 */
 			if (Shutdown >= SmartShutdown)
 			{
@@ -1458,7 +1458,7 @@ pmdie(SIGNAL_ARGS)
 			 * Fast Shutdown:
 			 *
 			 * abort all children with SIGTERM (rollback active transactions
-			 * and exit) and ShutdownDataBase.
+			 * and exit) and ShutdownDataBase when they are gone.
 			 */
 			if (Shutdown >= FastShutdown)
 			{
@@ -1509,7 +1509,7 @@ pmdie(SIGNAL_ARGS)
 			/*
 			 * Immediate Shutdown:
 			 *
-			 * abort all children with SIGUSR1 and exit without attempt to
+			 * abort all children with SIGQUIT and exit without attempt to
 			 * properly shutdown data base system.
 			 */
 			tnow = time(NULL);
@@ -1517,10 +1517,10 @@ pmdie(SIGNAL_ARGS)
 			fflush(stderr);
 			if (ShutdownPID > 0)
 				kill(ShutdownPID, SIGQUIT);
-			else if (StartupPID > 0)
+			if (StartupPID > 0)
 				kill(StartupPID, SIGQUIT);
-			else if (DLGetHead(BackendList))
-				SignalChildren(SIGUSR1);
+			if (DLGetHead(BackendList))
+				SignalChildren(SIGQUIT);
 			break;
 	}
 
@@ -1593,11 +1593,13 @@ reaper(SIGNAL_ARGS)
 			}
 
 			/*
-			 * Startup succeeded - remember its ID
-			 * and RedoRecPtr
+			 * Startup succeeded - remember its ID and RedoRecPtr
 			 */
 			SetThisStartUpID();
 
+			/*
+			 * Arrange for first checkpoint to occur after standard delay.
+			 */
 			CheckPointPID = 0;
 			checkpointed = time(NULL);
 
@@ -1697,6 +1699,7 @@ CleanupProc(int pid,
 			if (!FatalError)
 			{
 				checkpointed = time(NULL);
+				/* Update RedoRecPtr for future child backends */
 				GetRedoRecPtr();
 			}
 		}
@@ -1731,7 +1734,7 @@ CleanupProc(int pid,
 			 * This backend is still alive.  Unless we did so already,
 			 * tell it to commit hara-kiri.
 			 *
-			 * SIGUSR1 is the special signal that says exit without proc_exit
+			 * SIGQUIT is the special signal that says exit without proc_exit
 			 * and let the user know what's going on. But if SendStop is set
 			 * (-s on command line), then we send SIGSTOP instead, so that we
 			 * can get core dumps from all backends by hand.
@@ -1741,9 +1744,9 @@ CleanupProc(int pid,
 				if (DebugLvl)
 					fprintf(stderr, "%s: CleanupProc: sending %s to process %d\n",
 							progname,
-							(SendStop ? "SIGSTOP" : "SIGUSR1"),
+							(SendStop ? "SIGSTOP" : "SIGQUIT"),
 							bp->pid);
-				kill(bp->pid, (SendStop ? SIGSTOP : SIGUSR1));
+				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
 		else
@@ -1772,7 +1775,7 @@ CleanupProc(int pid,
 }
 
 /*
- * Send a signal to all chidren processes.
+ * Send a signal to all backend children.
  */
 static void
 SignalChildren(int signal)
@@ -2108,6 +2111,24 @@ ExitPostmaster(int status)
 	proc_exit(status);
 }
 
+/* Request to schedule a checkpoint (no-op if one is currently running) */
+static void
+schedule_checkpoint(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+
+	PG_SETMASK(&BlockSig);
+
+	/* Ignore request if checkpointing is currently disabled */
+	if (CheckPointPID == 0 && checkpointed &&
+		Shutdown == NoShutdown && !FatalError)
+	{
+		CheckPointPID = CheckPointDataBase();
+	}
+
+	errno = save_errno;
+}
+
 static void
 dumpstatus(SIGNAL_ARGS)
 {
@@ -2116,12 +2137,13 @@ dumpstatus(SIGNAL_ARGS)
 
 	PG_SETMASK(&BlockSig);
 
+	fprintf(stderr, "%s: dumpstatus:\n", progname);
+
 	curr = DLGetHead(PortList);
 	while (curr)
 	{
 		Port	   *port = DLE_VAL(curr);
 
-		fprintf(stderr, "%s: dumpstatus:\n", progname);
 		fprintf(stderr, "\tsock %d\n", port->sock);
 		curr = DLGetSucc(curr);
 	}
@@ -2240,6 +2262,9 @@ InitSSL(void)
 
 #endif
 
+/*
+ * Fire off a subprocess for startup/shutdown/checkpoint.
+ */
 static pid_t
 SSDataBase(int xlop)
 {
@@ -2273,7 +2298,7 @@ SSDataBase(int xlop)
 		/* Close the postmaster's sockets */
 		ClosePostmasterPorts(NULL);
 
-
+		/* Set up command-line arguments for subprocess */
 		av[ac++] = "postgres";
 
 		av[ac++] = "-d";
@@ -2292,14 +2317,6 @@ SSDataBase(int xlop)
 		av[ac] = (char *) NULL;
 
 		optind = 1;
-
-		pqsignal(SIGQUIT, SIG_DFL);
-#ifdef HAVE_SIGPROCMASK
-		sigdelset(&BlockSig, SIGQUIT);
-#else
-		BlockSig &= ~(sigmask(SIGQUIT));
-#endif
-		PG_SETMASK(&BlockSig);
 
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);
@@ -2320,19 +2337,31 @@ SSDataBase(int xlop)
 		ExitPostmaster(1);
 	}
 
-	if (xlop != BS_XLOG_CHECKPOINT)
-		return(pid);
-
-	if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
+	/*
+	 * The startup and shutdown processes are not considered normal backends,
+	 * but the checkpoint process is.  Checkpoint must be added to the list
+	 * of backends.
+	 */
+	if (xlop == BS_XLOG_CHECKPOINT)
 	{
-		fprintf(stderr, "%s: CheckPointDataBase: malloc failed\n",
-				progname);
-		ExitPostmaster(1);
-	}
+		if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
+		{
+			fprintf(stderr, "%s: CheckPointDataBase: malloc failed\n",
+					progname);
+			ExitPostmaster(1);
+		}
 
-	bn->pid = pid;
-	bn->cancel_key = 0;
-	DLAddHead(BackendList, DLNewElem(bn));
+		bn->pid = pid;
+		bn->cancel_key = PostmasterRandom();
+		DLAddHead(BackendList, DLNewElem(bn));
+
+		/*
+		 * Since this code is executed periodically, it's a fine
+		 * place to do other actions that should happen every now
+		 * and then on no particular schedule.  Such as...
+		 */
+		TouchSocketLockFile();
+	}
 
 	return (pid);
 }

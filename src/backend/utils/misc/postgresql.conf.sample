@@ -110,6 +110,7 @@
 #wal_debug = 0 # range 0-16
 #commit_delay = 0 # range 0-100000
 #commit_siblings = 5 # range 1-1000
+#checkpoint_segments = 3 # in logfile segments (16MB each), min 1
 #checkpoint_timeout = 300 # in seconds, range 30-3600
 
 

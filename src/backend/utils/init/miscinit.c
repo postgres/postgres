@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.61 2001/01/27 00:05:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.62 2001/03/13 01:17:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,8 @@ unsigned char RecodeBackTable[128];
 
 ProcessingMode Mode = InitProcessing;
 
-/* Note: we rely on this to initialize as zeroes */
+/* Note: we rely on these to initialize as zeroes */
+static char directoryLockFile[MAXPGPATH];
 static char socketLockFile[MAXPGPATH];
 
 
@@ -458,6 +459,9 @@ GetUserName(Oid userid)
  * The path is also just for informational purposes (so that a socket lockfile
  * can be more easily traced to the associated postmaster).
  *
+ * A data-directory lockfile can optionally contain a third line, containing
+ * the key and ID for the shared memory block used by this postmaster.
+ *
  * On successful lockfile creation, a proc_exit callback to remove the
  * lockfile is automatically created.
  *-------------------------------------------------------------------------
@@ -476,16 +480,18 @@ UnlinkLockFile(int status, Datum filename)
 /*
  * Create a lockfile, if possible
  *
- * Call CreateLockFile with the name of the lockfile to be created.  If
- * successful, it returns zero.  On detecting a collision, it returns
- * the PID or negated PID of the lockfile owner --- the caller is responsible
- * for producing an appropriate error message.
+ * Call CreateLockFile with the name of the lockfile to be created.
+ * Returns true if successful, false if not (with a message on stderr).
+ *
+ * amPostmaster is used to determine how to encode the output PID.
+ * isDDLock and refName are used to determine what error message to produce.
  */
-static int
-CreateLockFile(const char *filename, bool amPostmaster)
+static bool
+CreateLockFile(const char *filename, bool amPostmaster,
+			   bool isDDLock, const char *refName)
 {
 	int			fd;
-	char		buffer[MAXPGPATH + 32];
+	char		buffer[MAXPGPATH + 100];
 	int			len;
 	int			encoded_pid;
 	pid_t		other_pid;
@@ -539,11 +545,61 @@ CreateLockFile(const char *filename, bool amPostmaster)
 		{
 			if (kill(other_pid, 0) == 0 ||
 				errno != ESRCH)
-				return encoded_pid;	/* lockfile belongs to a live process */
+			{
+				/* lockfile belongs to a live process */
+				fprintf(stderr, "Lock file \"%s\" already exists.\n",
+						filename);
+				if (isDDLock)
+					fprintf(stderr,
+							"Is another %s (pid %d) running in \"%s\"?\n",
+							(encoded_pid < 0 ? "postgres" : "postmaster"),
+							other_pid, refName);
+				else
+					fprintf(stderr,
+							"Is another %s (pid %d) using \"%s\"?\n",
+							(encoded_pid < 0 ? "postgres" : "postmaster"),
+							other_pid, refName);
+				return false;
+			}
 		}
 
 		/*
-		 * No, the process did not exist. Unlink the file and try again to
+		 * No, the creating process did not exist.  However, it could be that
+		 * the postmaster crashed (or more likely was kill -9'd by a clueless
+		 * admin) but has left orphan backends behind.  Check for this by
+		 * looking to see if there is an associated shmem segment that is
+		 * still in use.
+		 */
+		if (isDDLock)
+		{
+			char	   *ptr;
+			unsigned long shmKey,
+						shmId;
+
+			ptr = strchr(buffer, '\n');
+			if (ptr != NULL &&
+				(ptr = strchr(ptr+1, '\n')) != NULL)
+			{
+				ptr++;
+				if (sscanf(ptr, "%lu %lu", &shmKey, &shmId) == 2)
+				{
+					if (SharedMemoryIsInUse((IpcMemoryKey) shmKey,
+											(IpcMemoryId) shmId))
+					{
+						fprintf(stderr,
+								"Found a pre-existing shared memory block (ID %d) still in use.\n"
+								"If you're sure there are no old backends still running,\n"
+								"remove the shared memory block with ipcrm(1), or just\n"
+								"delete \"%s\".\n",
+								(int) shmId, filename);
+						return false;
+					}
+				}
+			}
+		}
+
+		/*
+		 * Looks like nobody's home.  Unlink the file and try again to
 		 * create it.  Need a loop because of possible race condition against
 		 * other would-be creators.
 		 */
@@ -576,28 +632,19 @@ CreateLockFile(const char *filename, bool amPostmaster)
 	 */
 	on_proc_exit(UnlinkLockFile, PointerGetDatum(strdup(filename)));
 
-	return 0;					/* Success! */
+	return true;				/* Success! */
 }
 
 bool
 CreateDataDirLockFile(const char *datadir, bool amPostmaster)
 {
 	char	lockfile[MAXPGPATH];
-	int		encoded_pid;
 
 	snprintf(lockfile, sizeof(lockfile), "%s/postmaster.pid", datadir);
-	encoded_pid = CreateLockFile(lockfile, amPostmaster);
-	if (encoded_pid != 0)
-	{
-		fprintf(stderr, "Lock file \"%s\" already exists.\n", lockfile);
-		if (encoded_pid < 0)
-			fprintf(stderr, "Is another postgres (pid %d) running in \"%s\"?\n",
-					-encoded_pid, datadir);
-		else
-			fprintf(stderr, "Is another postmaster (pid %d) running in \"%s\"?\n",
-					encoded_pid, datadir);
+	if (! CreateLockFile(lockfile, amPostmaster, true, datadir))
 		return false;
-	}
+	/* Save name of lockfile for RecordSharedMemoryInLockFile */
+	strcpy(directoryLockFile, lockfile);
 	return true;
 }
 
@@ -605,21 +652,10 @@ bool
 CreateSocketLockFile(const char *socketfile, bool amPostmaster)
 {
 	char	lockfile[MAXPGPATH];
-	int		encoded_pid;
 
 	snprintf(lockfile, sizeof(lockfile), "%s.lock", socketfile);
-	encoded_pid = CreateLockFile(lockfile, amPostmaster);
-	if (encoded_pid != 0)
-	{
-		fprintf(stderr, "Lock file \"%s\" already exists.\n", lockfile);
-		if (encoded_pid < 0)
-			fprintf(stderr, "Is another postgres (pid %d) using \"%s\"?\n",
-					-encoded_pid, socketfile);
-		else
-			fprintf(stderr, "Is another postmaster (pid %d) using \"%s\"?\n",
-					encoded_pid, socketfile);
+	if (! CreateLockFile(lockfile, amPostmaster, false, socketfile))
 		return false;
-	}
 	/* Save name of lockfile for TouchSocketLockFile */
 	strcpy(socketLockFile, lockfile);
 	return true;
@@ -648,6 +684,78 @@ TouchSocketLockFile(void)
 			close(fd);
 		}
 	}
+}
+
+/*
+ * Append information about a shared memory segment to the data directory
+ * lock file (if we have created one).
+ *
+ * This may be called multiple times in the life of a postmaster, if we
+ * delete and recreate shmem due to backend crash.  Therefore, be prepared
+ * to overwrite existing information.  (As of 7.1, a postmaster only creates
+ * one shm seg anyway; but for the purposes here, if we did have more than
+ * one then any one of them would do anyway.)
+ */
+void
+RecordSharedMemoryInLockFile(IpcMemoryKey shmKey, IpcMemoryId shmId)
+{
+	int			fd;
+	int			len;
+	char	   *ptr;
+	char		buffer[BLCKSZ];
+
+	/*
+	 * Do nothing if we did not create a lockfile (probably because we
+	 * are running standalone).
+	 */
+	if (directoryLockFile[0] == '\0')
+		return;
+
+	fd = open(directoryLockFile, O_RDWR | PG_BINARY, 0);
+	if (fd < 0)
+	{
+		elog(DEBUG, "Failed to rewrite %s: %m", directoryLockFile);
+		return;
+	}
+	len = read(fd, buffer, sizeof(buffer) - 100);
+	if (len <= 0)
+	{
+		elog(DEBUG, "Failed to read %s: %m", directoryLockFile);
+		close(fd);
+		return;
+	}
+	buffer[len] = '\0';
+	/*
+	 * Skip over first two lines (PID and path).
+	 */
+	ptr = strchr(buffer, '\n');
+	if (ptr == NULL ||
+		(ptr = strchr(ptr+1, '\n')) == NULL)
+	{
+		elog(DEBUG, "Bogus data in %s", directoryLockFile);
+		close(fd);
+		return;
+	}
+	ptr++;
+	/*
+	 * Append shm key and ID.  Format to try to keep it the same length
+	 * always (trailing junk won't hurt, but might confuse humans).
+	 */
+	sprintf(ptr, "%9lu %9lu\n",
+			(unsigned long) shmKey, (unsigned long) shmId);
+	/*
+	 * And rewrite the data.  Since we write in a single kernel call,
+	 * this update should appear atomic to onlookers.
+	 */
+	len = strlen(buffer);
+	if (lseek(fd, (off_t) 0, SEEK_SET) != 0 ||
+		(int) write(fd, buffer, len) != len)
+	{
+		elog(DEBUG, "Failed to write %s: %m", directoryLockFile);
+		close(fd);
+		return;
+	}
+	close(fd);
 }
 
 

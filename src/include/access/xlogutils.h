@@ -1,3 +1,13 @@
+/*
+ * xlogutils.h
+ *
+ * PostgreSQL transaction log manager utility routines
+ *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $Id: xlogutils.h,v 1.6 2001/03/13 01:17:06 tgl Exp $
+ */
 #ifndef XLOG_UTILS_H
 #define	XLOG_UTILS_H
 

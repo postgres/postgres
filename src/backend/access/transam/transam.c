@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.39 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.40 2001/03/13 01:17:05 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -430,6 +430,7 @@ InitializeTransactionLog(void)
 		Assert(!IsUnderPostmaster && 
 				ShmemVariableCache->nextXid <= FirstTransactionId);
 		ShmemVariableCache->nextXid = FirstTransactionId;
+		ShmemVariableCache->xidCount = 0; /* force an XLOG rec right away */
 	}
 	else if (RecoveryCheckingEnabled())
 	{

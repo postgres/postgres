@@ -57,12 +57,25 @@ int* shmat(int memId,int m1,int m2)
 	}
 }
 
-/* Control a shared mem area : Used only to delete it */
-int shmctl(int shmid,int flag, struct shmid_ds* dummy)
+/* Control a shared mem area */
+int shmctl(int shmid, int flag, struct shmid_ds* dummy)
 {
-	/* Delete the area */
-	delete_area(shmid);
-	return 0;
+	if (flag == IPC_RMID)
+	{
+		/* Delete the area */
+		delete_area(shmid);
+		return 0;
+	}
+	if (flag == IPC_STAT)
+	{
+		/* Is there a way to check existence of an area given its ID?
+		 * For now, punt and assume it does not exist.
+		 */
+		errno = EINVAL;
+		return -1;
+	}
+	errno = EINVAL;
+	return -1;
 }
 
 /* Get an area based on the IPC key */

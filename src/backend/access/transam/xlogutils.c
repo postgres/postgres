@@ -6,10 +6,12 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.14 2001/03/13 01:17:05 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
+
 #include "access/xlog.h"
 #include "access/transam.h"
 #include "access/xact.h"

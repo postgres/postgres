@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.104 2001/01/24 19:42:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.105 2001/03/13 01:17:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,12 +18,11 @@
 #include <time.h>
 #include <signal.h>
 #include <setjmp.h>
-
-#define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
-
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
+
+#define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -146,8 +145,6 @@ static MemoryContext nogc = NULL; /* special no-gc mem context */
 
 extern int	optind;
 extern char *optarg;
-
-extern void SetRedoRecPtr(void);
 
 /*
  *	At bootstrap time, we first declare all the indices to be built, and
@@ -294,8 +291,16 @@ BootstrapMain(int argc, char *argv[])
 	else if (argc - optind == 1)
 		dbName = argv[optind];
 
-	SetProcessingMode(BootstrapProcessing);
-	IgnoreSystemIndexes(true);
+	if (dbName == NULL)
+	{
+		dbName = getenv("USER");
+		if (dbName == NULL)
+		{
+			fputs("bootstrap backend: failed, no db name specified\n", stderr);
+			fputs("          and no USER enviroment variable\n", stderr);
+			proc_exit(1);
+		}
+	}
 
 	if (!IsUnderPostmaster)
 	{
@@ -312,28 +317,51 @@ BootstrapMain(int argc, char *argv[])
 	}
 	Assert(DataDir);
 
-	if (dbName == NULL)
+	if (IsUnderPostmaster)
 	{
-		dbName = getenv("USER");
-		if (dbName == NULL)
-		{
-			fputs("bootstrap backend: failed, no db name specified\n", stderr);
-			fputs("          and no USER enviroment variable\n", stderr);
-			proc_exit(1);
-		}
+		/*
+		 * Properly accept or ignore signals the postmaster might send us
+		 */
+		pqsignal(SIGHUP, SIG_IGN);
+		pqsignal(SIGINT, SIG_IGN); /* ignore query-cancel */
+		pqsignal(SIGTERM, die);
+		pqsignal(SIGQUIT, quickdie);
+		pqsignal(SIGUSR1, SIG_IGN);
+		pqsignal(SIGUSR2, SIG_IGN);
+		/*
+		 * Reset some signals that are accepted by postmaster but not here
+		 */
+		pqsignal(SIGCHLD, SIG_IGN);
+		pqsignal(SIGTTIN, SIG_DFL);
+		pqsignal(SIGTTOU, SIG_DFL);
+		pqsignal(SIGCONT, SIG_DFL);
+		pqsignal(SIGWINCH, SIG_DFL);
+		/*
+		 * Unblock signals (they were blocked when the postmaster forked us)
+		 */
+		PG_SETMASK(&UnBlockSig);
 	}
-
-	XLOGPathInit();
-
-	BaseInit();
-
-	if (!IsUnderPostmaster)
+	else
 	{
+		/* Set up appropriately for interactive use */
 		pqsignal(SIGHUP, die);
 		pqsignal(SIGINT, die);
 		pqsignal(SIGTERM, die);
 		pqsignal(SIGQUIT, die);
+
+		/*
+		 * Create lockfile for data directory.
+		 */
+		if (! CreateDataDirLockFile(DataDir, false))
+			proc_exit(1);
 	}
+
+	SetProcessingMode(BootstrapProcessing);
+	IgnoreSystemIndexes(true);
+
+	XLOGPathInit();
+
+	BaseInit();
 
 	/*
 	 * XLOG operations

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.98 2001/02/26 00:50:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.99 2001/03/13 01:17:05 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -706,13 +706,17 @@ RecordTransactionCommit()
 		}
 
 		XLogFlush(recptr);
+
+		/* Break the chain of back-links in the XLOG records I output */
 		MyLastRecPtr.xrecoff = 0;
 
 		TransactionIdCommit(xid);
 
-		MyProc->logRec.xrecoff = 0;
 		END_CRIT_SECTION();
 	}
+
+	/* Show myself as out of the transaction in PROC array */
+	MyProc->logRec.xrecoff = 0;
 
 	if (leak)
 		ResetBufferPool(true);
@@ -802,6 +806,10 @@ RecordTransactionAbort(void)
 {
 	TransactionId xid = GetCurrentTransactionId();
 
+	/*
+	 * Double check here is to catch case that we aborted partway through
+	 * RecordTransactionCommit ...
+	 */
 	if (MyLastRecPtr.xrecoff != 0 && !TransactionIdDidCommit(xid))
 	{
 		XLogRecData		rdata;
@@ -815,12 +823,18 @@ RecordTransactionAbort(void)
 		rdata.next = NULL;
 
 		START_CRIT_SECTION();
+
 		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT, &rdata);
 
 		TransactionIdAbort(xid);
-		MyProc->logRec.xrecoff = 0;
+
 		END_CRIT_SECTION();
 	}
+
+	/* Break the chain of back-links in the XLOG records I output */
+	MyLastRecPtr.xrecoff = 0;
+	/* Show myself as out of the transaction in PROC array */
+	MyProc->logRec.xrecoff = 0;
 
 	/*
 	 * Tell bufmgr and smgr to release resources.
@@ -1187,10 +1201,6 @@ AbortTransaction(void)
 	AtEOXact_CatCache(false);
 	AtAbort_Memory();
 	AtEOXact_Files();
-
-	/* Here we'll rollback xaction changes */
-	MyLastRecPtr.xrecoff = 0;
-
 	AtAbort_Locks();
 
 	SharedBufferChanged = false; /* safest place to do it */

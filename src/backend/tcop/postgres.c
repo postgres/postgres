@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.209 2001/03/09 06:36:32 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.210 2001/03/13 01:17:06 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -128,7 +128,6 @@ static void start_xact_command(void);
 static void finish_xact_command(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
-static void quickdie(SIGNAL_ARGS);
 
 /*
  * Flag to mark SIGHUP. Whenever the main loop comes around it
@@ -895,12 +894,12 @@ finish_xact_command(void)
  */
 
 /*
- * quickdie() occurs when signalled SIGUSR1 by the postmaster.
+ * quickdie() occurs when signalled SIGQUIT by the postmaster.
  *
  * Some backend has bought the farm,
  * so we need to stop what we're doing and exit.
  */
-static void
+void
 quickdie(SIGNAL_ARGS)
 {
 	PG_SETMASK(&BlockSig);
@@ -917,7 +916,7 @@ quickdie(SIGNAL_ARGS)
 	 * Just nail the windows shut and get out of town.
 	 *
 	 * Note we do exit(1) not exit(0).  This is to force the postmaster
-	 * into a system reset cycle if some idiot DBA sends a manual SIGUSR1
+	 * into a system reset cycle if some idiot DBA sends a manual SIGQUIT
 	 * to a random backend.  This is necessary precisely because we don't
 	 * clean up our shared memory state.
 	 */
@@ -987,8 +986,8 @@ QueryCancelHandler(SIGNAL_ARGS)
 			InterruptHoldoffCount++;
 			if (LockWaitCancel())
 			{
-				InterruptHoldoffCount--;
 				DisableNotifyInterrupt();
+				InterruptHoldoffCount--;
 				ProcessInterrupts();
 			}
 			else
@@ -1205,9 +1204,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 			case 'D':			/* PGDATA directory */
 				if (secure)
-				{
 					potential_DataDir = optarg;
-				}
 				break;
 
 			case 'd':			/* debug level */
@@ -1243,13 +1240,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 			case 'F':
 				/* --------------------
 				 *	turn off fsync
-				 *
-				 *	7.0 buffer manager can support different backends running
-				 *	with different fsync settings, so this no longer needs
-				 *	to be "if (secure)".
 				 * --------------------
 				 */
-				enableFsync = false;
+				if (secure)
+					enableFsync = false;
 				break;
 
 			case 'f':
@@ -1504,13 +1498,18 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 * Note that postmaster blocked all signals before forking child process,
 	 * so there is no race condition whereby we might receive a signal before
 	 * we have set up the handler.
+	 *
+	 * Also note: it's best not to use any signals that are SIG_IGNored in
+	 * the postmaster.  If such a signal arrives before we are able to change
+	 * the handler to non-SIG_IGN, it'll get dropped.  If necessary, make a
+	 * dummy handler in the postmaster to reserve the signal.
 	 */
 
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, QueryCancelHandler); /* cancel current query */
 	pqsignal(SIGTERM, die);		/* cancel current query and exit */
-	pqsignal(SIGQUIT, die);		/* could reassign this sig for another use */
-	pqsignal(SIGALRM, HandleDeadLock);
+	pqsignal(SIGQUIT, quickdie); /* hard crash time */
+	pqsignal(SIGALRM, HandleDeadLock); /* check for deadlock after timeout */
 
 	/*
 	 * Ignore failure to write to frontend. Note: if frontend closes
@@ -1519,7 +1518,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 * midst of output during who-knows-what operation...
 	 */
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, quickdie);
+	pqsignal(SIGUSR1, SIG_IGN);	/* this signal available for use */
 	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
 	pqsignal(SIGFPE, FloatExceptionHandler);
 	pqsignal(SIGCHLD, SIG_IGN);	/* ignored (may get this in system() calls) */
@@ -1534,14 +1533,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 	pqinitmask();
 
-	/* We allow SIGUSR1 (quickdie) at all times */
+	/* We allow SIGQUIT (quickdie) at all times */
 #ifdef HAVE_SIGPROCMASK
-	sigdelset(&BlockSig, SIGUSR1);
+	sigdelset(&BlockSig, SIGQUIT);
 #else
-	BlockSig &= ~(sigmask(SIGUSR1));
+	BlockSig &= ~(sigmask(SIGQUIT));
 #endif
 
-	PG_SETMASK(&BlockSig);		/* block everything except SIGUSR1 */
+	PG_SETMASK(&BlockSig);		/* block everything except SIGQUIT */
 
 
 	if (IsUnderPostmaster)
@@ -1693,7 +1692,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.209 $ $Date: 2001/03/09 06:36:32 $\n");
+		puts("$Revision: 1.210 $ $Date: 2001/03/13 01:17:06 $\n");
 	}
 
 	/*

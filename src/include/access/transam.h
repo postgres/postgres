@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.29 2001/01/24 19:43:19 momjian Exp $
+ * $Id: transam.h,v 1.30 2001/03/13 01:17:06 tgl Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -79,7 +79,7 @@ typedef unsigned char XidStatus;/* (2 bits) */
  *		their numbering at 512.
  *
  *		The first 4 bytes of this relation store the version
- *		number of the transction system.
+ *		number of the transaction system.
  * ----------------
  */
 typedef struct LogRelationContentsData
@@ -100,13 +100,16 @@ typedef LogRelationContentsData *LogRelationContents;
  *		is updated in place whenever the variables change.
  *
  *		The first 4 bytes of this relation store the version
- *		number of the transction system.
+ *		number of the transaction system.
  *
  *		Currently, the relation has only one page and the next
  *		available xid, the last committed xid and the next
  *		available oid are stored there.
+ *
+ *		XXX As of 7.1, pg_variable isn't used anymore; this is dead code.
  * ----------------
  */
+#ifdef NOT_USED
 typedef struct VariableRelationContentsData
 {
 	XLogRecPtr	LSN;
@@ -117,6 +120,7 @@ typedef struct VariableRelationContentsData
 } VariableRelationContentsData;
 
 typedef VariableRelationContentsData *VariableRelationContents;
+#endif /* NOT_USED */
 
 /*
  * VariableCache is placed in shmem and used by
@@ -124,8 +128,9 @@ typedef VariableRelationContentsData *VariableRelationContents;
  */
 typedef struct VariableCacheData
 {
-	TransactionId	nextXid;
-	Oid				nextOid;
+	TransactionId	nextXid;	/* next XID to assign */
+	uint32			xidCount;	/* XIDs available before must do XLOG work */
+	Oid				nextOid;	/* and similarly for OIDs */
 	uint32			oidCount;
 } VariableCacheData;
 
@@ -184,7 +189,8 @@ extern int	RecoveryCheckingEnableState;
 extern bool AMI_OVERRIDE;
 
 /* in varsup.c */
-extern int	OidGenLockId;
+extern SPINLOCK OidGenLockId;
+extern SPINLOCK XidGenLockId;
 extern VariableCache ShmemVariableCache;
 
 #endif	 /* TRAMSAM_H */

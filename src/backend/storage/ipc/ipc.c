@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.62 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.63 2001/03/13 01:17:06 tgl Exp $
  *
  * NOTES
  *
@@ -626,6 +626,9 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 	/* Register on-exit routine to detach new segment before deleting */
 	on_shmem_exit(IpcMemoryDetach, PointerGetDatum(memAddress));
 
+	/* Record key and ID in lockfile for data directory. */
+	RecordSharedMemoryInLockFile(memKey, shmid);
+
 	return memAddress;
 }
 
@@ -659,6 +662,41 @@ IpcMemoryDelete(int status, Datum shmId)
 	 * pointless considering any client has long since disconnected ...
 	 */
 }
+
+/****************************************************************************/
+/*	SharedMemoryIsInUse(shmKey, shmId)	Is a shared memory segment in use?	*/
+/****************************************************************************/
+bool
+SharedMemoryIsInUse(IpcMemoryKey shmKey, IpcMemoryId shmId)
+{
+	struct shmid_ds		shmStat;
+
+	/*
+	 * We detect whether a shared memory segment is in use by seeing whether
+	 * it (a) exists and (b) has any processes are attached to it.
+	 *
+	 * If we are unable to perform the stat operation for a reason other than
+	 * nonexistence of the segment (most likely, because it doesn't belong to
+	 * our userid), assume it is in use.
+	 */
+	if (shmctl(shmId, IPC_STAT, &shmStat) < 0)
+	{
+		/*
+		 * EINVAL actually has multiple possible causes documented in the
+		 * shmctl man page, but we assume it must mean the segment no longer
+		 * exists.
+		 */
+		if (errno == EINVAL)
+			return false;
+		/* Else assume segment is in use */
+		return true;
+	}
+	/* If it has attached processes, it's in use */
+	if (shmStat.shm_nattch != 0)
+		return true;
+	return false;
+}
+
 
 /* ----------------------------------------------------------------
  *						private memory support

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.55 2001/02/18 05:30:12 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.56 2001/03/13 01:17:05 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -976,6 +976,11 @@ env PGOPTIONS='-c geqo=off' psql
 	fsyncs because of performance problems, you may wish to reconsider
 	your choice.
        </para>
+
+       <para>
+	This option can only be set at server start or in the
+	<filename>postgresql.conf</filename> file.
+       </para>
       </listitem>
      </varlistentry>
 
@@ -1193,10 +1198,24 @@ env PGOPTIONS='-c geqo=off' psql
 
     <variablelist>
      <varlistentry>
+      <term>CHECKPOINT_SEGMENTS (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Maximum distance between automatic WAL checkpoints, in logfile
+	segments (each segment is normally 16 megabytes).
+	This option can only be set at server start or in the
+	<filename>postgresql.conf</filename> file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>CHECKPOINT_TIMEOUT (<type>integer</type>)</term>
       <listitem>
        <para>
-        Frequency of automatic WAL checkpoints, in seconds.
+        Maximum time between automatic WAL checkpoints, in seconds.
+	This option can only be set at server start or in the
+	<filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>
@@ -1205,8 +1224,8 @@ env PGOPTIONS='-c geqo=off' psql
       <term>WAL_BUFFERS (<type>integer</type>)</term>
       <listitem>
        <para>
-        Number of buffers for WAL.  This option can only be set at
-        server start.
+        Number of disk-page buffers for WAL log.  This option can only be set
+	at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -1226,7 +1245,8 @@ env PGOPTIONS='-c geqo=off' psql
       <listitem>
        <para>
         Number of log files that are created in advance at checkpoint
-        time.  This option can only be set at server start.
+        time.  This option can only be set at server start or in the
+	<filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>
@@ -1909,7 +1929,7 @@ default:\
      <listitem>
       <para>
        This is the <firstterm>Immediate Shutdown</firstterm> which
-       will cause the postmaster to send a SIGUSR1 to all backends and
+       will cause the postmaster to send a SIGQUIT to all backends and
        exit immediately (without properly shutting down the database
        system). When WAL is implemented, this will lead to recovery on
        start-up. Right now it's not recommendable to use this option.
