@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.148 2000/05/19 03:22:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.148.2.1 2000/09/19 21:01:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,6 +645,19 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 		if (vacuum_pages.vpl_num_pages > 0)		/* Clean pages from
 												 * vacuum_pages list */
 			vc_vacheap(vacrelstats, onerel, &vacuum_pages);
+		else
+		{
+			/*
+			 * Flush dirty pages out to disk.  We must do this even if we
+			 * didn't do anything else, because we want to ensure that all
+			 * tuples have correct on-row commit status on disk (see
+			 * bufmgr.c's comments for FlushRelationBuffers()).
+			 */
+			i = FlushRelationBuffers(onerel, vacrelstats->num_pages);
+			if (i < 0)
+				elog(ERROR, "VACUUM (vc_vacone): FlushRelationBuffers returned %d",
+					 i);
+		}
 	}
 	if (reindex)
 		activate_indexes_of_a_table(relid, true);
@@ -1968,12 +1981,19 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 		pfree(Nvpl.vpl_pagedesc);
 	}
 
+	/*
+	 * Flush dirty pages out to disk.  We do this unconditionally, even if
+	 * we don't need to truncate, because we want to ensure that all tuples
+	 * have correct on-row commit status on disk (see bufmgr.c's comments
+	 * for FlushRelationBuffers()).
+	 */
+	i = FlushRelationBuffers(onerel, blkno);
+	if (i < 0)
+		elog(ERROR, "VACUUM (vc_repair_frag): FlushRelationBuffers returned %d", i);
+
 	/* truncate relation, after flushing any dirty pages out to disk */
 	if (blkno < nblocks)
 	{
-		i = FlushRelationBuffers(onerel, blkno);
-		if (i < 0)
-			elog(FATAL, "VACUUM (vc_repair_frag): FlushRelationBuffers returned %d", i);
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
 		Assert(blkno >= 0);
 		vacrelstats->num_pages = blkno; /* set new number of blocks */
@@ -2023,27 +2043,25 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages)
 		}
 	}
 
+	/*
+	 * Flush dirty pages out to disk.  We do this unconditionally, even if
+	 * we don't need to truncate, because we want to ensure that all tuples
+	 * have correct on-row commit status on disk (see bufmgr.c's comments
+	 * for FlushRelationBuffers()).
+	 */
+	Assert(vacrelstats->num_pages >= vacuum_pages->vpl_empty_end_pages);
+	nblocks = vacrelstats->num_pages - vacuum_pages->vpl_empty_end_pages;
+
+	i = FlushRelationBuffers(onerel, nblocks);
+	if (i < 0)
+		elog(ERROR, "VACUUM (vc_vacheap): FlushRelationBuffers returned %d", i);
+
 	/* truncate relation if there are some empty end-pages */
 	if (vacuum_pages->vpl_empty_end_pages > 0)
 	{
-		Assert(vacrelstats->num_pages >= vacuum_pages->vpl_empty_end_pages);
-		nblocks = vacrelstats->num_pages - vacuum_pages->vpl_empty_end_pages;
 		elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
 			 RelationGetRelationName(onerel),
 			 vacrelstats->num_pages, nblocks);
-
-		/*
-		 * We have to flush "empty" end-pages (if changed, but who knows
-		 * it) before truncation
-		 *
-		 * XXX is FlushBufferPool() still needed here?
-		 */
-		FlushBufferPool();
-
-		i = FlushRelationBuffers(onerel, nblocks);
-		if (i < 0)
-			elog(FATAL, "VACUUM (vc_vacheap): FlushRelationBuffers returned %d", i);
-
 		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
 		Assert(nblocks >= 0);
 		vacrelstats->num_pages = nblocks;		/* set new number of
