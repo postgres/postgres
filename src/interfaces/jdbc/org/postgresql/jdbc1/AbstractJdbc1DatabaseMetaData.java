@@ -2976,8 +2976,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		 */
 
 		if (connection.haveMinimumServerVersion("7.4")) {
-			String sql = "SELECT NULL::text AS PKTABLE_CAT, pkn.nspname AS PKTABLE_SCHEMA, pkc.relname AS PKTABLE_NAME, pka.attname AS PKCOLUMN_NAME, "+
-			"NULL::text AS FK_TABLE_CAT, fkn.nspname AS FKTABLE_SCHEMA, fkc.relname AS FKTABLE_NAME, fka.attname AS FKCOLUMN_NAME, "+
+			String sql = "SELECT NULL::text AS PKTABLE_CAT, pkn.nspname AS PKTABLE_SCHEM, pkc.relname AS PKTABLE_NAME, pka.attname AS PKCOLUMN_NAME, "+
+			"NULL::text AS FK_TABLE_CAT, fkn.nspname AS FKTABLE_SCHEM, fkc.relname AS FKTABLE_NAME, fka.attname AS FKCOLUMN_NAME, "+
 			"pos.n AS KEY_SEQ, "+
 			"CASE con.confupdtype "+
 				" WHEN 'c' THEN " + DatabaseMetaData.importedKeyCascade +
