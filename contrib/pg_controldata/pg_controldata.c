@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.5 2001/10/25 05:49:19 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_controldata/Attic/pg_controldata.c,v 1.6 2002/07/05 15:31:16 thomas Exp $
  */
 #include "postgres.h"
 
@@ -108,6 +108,10 @@ main(int argc, char *argv[])
 		   "Time of latest checkpoint:            %s\n"
 		   "Database block size:                  %u\n"
 		   "Blocks per segment of large relation: %u\n"
+		   "Maximum length of names:              %u\n"
+		   "Maximum number of function arguments: %u\n"
+		   "Date/time type storage:               %s\n"
+		   "Maximum length of locale name:        %u\n"
 		   "LC_COLLATE:                           %s\n"
 		   "LC_CTYPE:                             %s\n",
 
@@ -131,6 +135,11 @@ main(int argc, char *argv[])
 		   ckpttime_str,
 		   ControlFile.blcksz,
 		   ControlFile.relseg_size,
+		   ControlFile.nameDataLen,
+		   ControlFile.funcMaxArgs,
+		   (ControlFile.enableIntTimes?
+			"64-bit integers": "Floating point"),
+		   ControlFile.localeBuflen,
 		   ControlFile.lc_collate,
 		   ControlFile.lc_ctype);
 
