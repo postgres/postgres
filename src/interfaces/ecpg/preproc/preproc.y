@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.225 2003/05/29 13:59:26 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.226 2003/05/30 08:39:01 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -207,12 +207,12 @@ create_questionmarks(char *name, bool array)
 		SQL_CALL SQL_CARDINALITY SQL_CONNECT SQL_CONNECTION
 		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA 
 		SQL_DATETIME_INTERVAL_CODE
-		SQL_DATETIME_INTERVAL_PRECISION
+		SQL_DATETIME_INTERVAL_PRECISION SQL_DESCRIBE
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM SQL_FOUND
 		SQL_FREE SQL_GO SQL_GOTO SQL_IDENTIFIED
 		SQL_INDICATOR SQL_KEY_MEMBER SQL_LENGTH
 		SQL_LONG SQL_NAME SQL_NULLABLE SQL_OCTET_LENGTH
-		SQL_OPEN SQL_RELEASE SQL_REFERENCE
+		SQL_OPEN SQL_OUTPUT SQL_RELEASE SQL_REFERENCE
 		SQL_RETURNED_LENGTH SQL_RETURNED_OCTET_LENGTH SQL_SCALE
 		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQL SQL_SQLERROR
 		SQL_SQLPRINT SQL_SQLWARNING SQL_START SQL_STOP
@@ -369,7 +369,7 @@ create_questionmarks(char *name, bool array)
 %type  <str>	ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
 %type  <str>	opt_full func_arg OptWithOids opt_freeze opt_ecpg_into
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
-%type  <str>	index_list func_index index_elem opt_class access_method_clause
+%type  <str>	index_elem opt_class access_method_clause
 %type  <str>	index_opt_unique IndexStmt func_return ConstInterval
 %type  <str>	func_args_list func_args opt_with def_arg overlay_placing
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
@@ -439,12 +439,13 @@ create_questionmarks(char *name, bool array)
 %type  <str>	struct_union_type s_struct_union vt_declarations 
 %type  <str>	var_declaration type_declaration single_vt_declaration
 %type  <str>	ECPGSetAutocommit on_off variable_declarations
-%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol 
+%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_output
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval
 %type  <str>	col_name_keyword func_name_keyword precision opt_scale
 %type  <str>	ECPGTypeName variablelist ECPGColLabelCommon c_variable
-%type  <str>	inf_val_list inf_col_list
+%type  <str>	inf_val_list inf_col_list using_descriptor ECPGDescribe
+%type  <str>	into_descriptor 
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -614,6 +615,15 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		{
 			output_simple_statement($1);
 		}
+		| ECPGDescribe
+		{
+			if (connection)
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for describe statement.\n");
+
+			fprintf(yyout, "{ /* ECPGdescribe(__LINE__, %s) */;", $1);
+			/* whenever_action(2); */
+			free($1);
+		}
 		| ECPGDisconnect
 		{
 			if (connection)
@@ -679,7 +689,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		| ECPGPrepare
 		{
 			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for set connection statement.\n");
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for prepare statement.\n");
 
 			fprintf(yyout, "{ ECPGprepare(__LINE__, %s);", $1);
 			whenever_action(2);
@@ -1890,7 +1900,7 @@ function_with_argtypes: func_name func_args { $$ = cat2_str($1, $2); };
  *
  *		QUERY:
  *				create index <indexname> on <relname>
- *				  [ using <access> ] "(" (<col> with <op>)+ ")"
+ *				  [ using <access> ] "(" ( <col> | using <opclass> ] )+ ")"
  *				  [ where <predicate> ]
  *
  *****************************************************************************/
@@ -1910,23 +1920,17 @@ access_method_clause:  USING access_method
 			{ $$ = EMPTY; }
 		;
 
-index_params:  index_list	{ $$ = $1; }
-		| func_index		{ $$ = $1; }
-		;
-
-index_list:  index_list ',' index_elem
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
-		| index_elem
-			{ $$ = $1; }
-		;
-
-func_index:  func_name '(' name_list ')' opt_class
-			{ $$ = cat_str(5, $1, make_str("("), $3, ")", $5); }
+index_params:  index_elem			{ $$ = $1; }
+		| index_params ',' index_elem	{ $$ = $1; }
 		;
 
 index_elem:  attr_name opt_class
-			{ $$ = cat2_str($1, $2); }
-		;
+		{ $$ = cat2_str($1, $2); }
+	| func_name '(' expr_list ')' opt_class
+		{ $$ = cat_str(5, $1, make_str("("), $3, ")", $5); }
+	| '(' a_expr ')' opt_class
+		{ $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
+	;
 
 opt_class:	any_name 	{ $$ = $1; }
 		| USING any_name	{ $$ = cat2_str(make_str("using"), $2); }
@@ -3873,7 +3877,7 @@ name_list:  name
 		;
 
 
-name:					ColId			{ $$ = $1; };
+name:				ColId			{ $$ = $1; };
 database_name:			ColId			{ $$ = $1; };
 access_method:			ColId			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
@@ -5135,28 +5139,33 @@ ECPGFree:	SQL_FREE name	{ $$ = $2; };
 ECPGOpen: SQL_OPEN name opt_ecpg_using { $$ = $2; };
 
 opt_ecpg_using: /*EMPTY*/		{ $$ = EMPTY; }
-		| USING variablelist
-		{
-			/* mmerror ("open cursor with variables not implemented yet"); */
-			$$ = EMPTY;
-		}
+		| USING variablelist 	{ $$ = EMPTY; }
 		;
 
-opt_sql: /*EMPTY*/ | SQL_SQL;
-
-ecpg_into: INTO into_list
-		{
-			$$ = EMPTY;
-		}
-		| INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
+using_descriptor: USING opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
 		{
 			add_variable(&argsresult, descriptor_variable($4,0), &no_indicator);
 			$$ = EMPTY;
 		}
 		;
 
-opt_ecpg_into: /*EMPTY*/			{ $$ = EMPTY; }
-		| ecpg_into					{ $$ = $1; }
+into_descriptor: INTO opt_sql SQL_DESCRIPTOR quoted_ident_stringvar
+		{
+			add_variable(&argsresult, descriptor_variable($4,0), &no_indicator);
+			$$ = EMPTY;
+		}
+		;
+		
+opt_sql: /*EMPTY*/ | SQL_SQL;
+
+ecpg_into: INTO into_list		{ $$ = EMPTY; }
+		| into_descriptor	{ $$ = $1; }
+		| using_descriptor	{ $$ = $1; }
+		;
+
+opt_ecpg_into: /*EMPTY*/		{ $$ = EMPTY; }
+		| INTO into_list	{ $$ = EMPTY; }
+		| into_descriptor	{ $$ = $1; }
 		;
 
 c_variable: civarind | civar;
@@ -5166,11 +5175,36 @@ variablelist: c_variable | c_variable ',' variablelist;
 /*
  * As long as the prepare statement is not supported by the backend, we will
  * try to simulate it here so we get dynamic SQL
+ *
+ * It is supported now but not usable yet by ecpg.
  */
 ECPGPrepare: PREPARE name FROM execstring
 			{ $$ = cat2_str(make3_str(make_str("\""), $2, make_str("\",")), $4); }
 		;
+/* 
+ * We accept descibe but do nothing with it so far.
+ */
+ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor 
+	{ 
+		mmerror(PARSE_ERROR, ET_ERROR, "using unsupported describe statement.\n");
+		$$ = cat_str(3, make_str("input"), $3, $4);
+	}
+	| SQL_DESCRIBE opt_output name using_descriptor
+	{
+		mmerror(PARSE_ERROR, ET_ERROR, "using unsupported describe statement.\n");
+		$$ = cat_str(3, $2, $3, $4);
+	}
+	| SQL_DESCRIBE opt_output name into_descriptor
+	{
+		mmerror(PARSE_ERROR, ET_ERROR, "using unsupported describe statement.\n");
+		$$ = cat_str(3, $2, $3, $4);
+	}
+	;
 
+opt_output:	SQL_OUTPUT	{ $$ = make_str("output"); }
+	| 	/* EMPTY */	{ $$ = EMPTY; }
+	;
+	
 /*
  * dynamic SQL: descriptor based access
  *	written by Christof Petig <christof.petig@wtal.de>
@@ -5509,44 +5543,46 @@ ECPGKeywords: ECPGKeywords_vanames	{ $$ = $1; }
 		;
 
 ECPGKeywords_vanames:  SQL_BREAK		{ $$ = make_str("break"); }
-		| SQL_CALL				{ $$ = make_str("call"); }
+		| SQL_CALL			{ $$ = make_str("call"); }
 		| SQL_CARDINALITY		{ $$ = make_str("cardinality"); }
 		| SQL_CONTINUE			{ $$ = make_str("continue"); }
-		| SQL_COUNT				{ $$ = make_str("count"); }
-		| SQL_DATA				{ $$ = make_str("data"); }
+		| SQL_COUNT			{ $$ = make_str("count"); }
+		| SQL_DATA			{ $$ = make_str("data"); }
 		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
 		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
-		| SQL_FOUND				{ $$ = make_str("found"); }
-		| SQL_GO				{ $$ = make_str("go"); }
-		| SQL_GOTO				{ $$ = make_str("goto"); }
+		| SQL_FOUND			{ $$ = make_str("found"); }
+		| SQL_GO			{ $$ = make_str("go"); }
+		| SQL_GOTO			{ $$ = make_str("goto"); }
 		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
 		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
 		| SQL_KEY_MEMBER		{ $$ = make_str("key_member"); }
 		| SQL_LENGTH			{ $$ = make_str("length"); }
-		| SQL_NAME				{ $$ = make_str("name"); }
+		| SQL_NAME			{ $$ = make_str("name"); }
 		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
 		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
 		| SQL_RELEASE			{ $$ = make_str("release"); }
 		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
-		| SQL_RETURNED_OCTET_LENGTH { $$ = make_str("returned_octet_length"); }
-		| SQL_SCALE				{ $$ = make_str("scale"); }
+		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
+		| SQL_SCALE			{ $$ = make_str("scale"); }
 		| SQL_SECTION			{ $$ = make_str("section"); }
 		| SQL_SQLERROR			{ $$ = make_str("sqlerror"); }
 		| SQL_SQLPRINT			{ $$ = make_str("sqlprint"); }
 		| SQL_SQLWARNING		{ $$ = make_str("sqlwarning"); }
-		| SQL_STOP				{ $$ = make_str("stop"); }
+		| SQL_STOP			{ $$ = make_str("stop"); }
 		;
 		
 ECPGKeywords_rest:  SQL_CONNECT			{ $$ = make_str("connect"); }
+		| SQL_DESCRIBE			{ $$ = make_str("describe"); }
 		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
-		| SQL_OPEN				{ $$ = make_str("open"); }
-		| SQL_VAR				{ $$ = make_str("var"); }
+		| SQL_OPEN			{ $$ = make_str("open"); }
+		| SQL_VAR			{ $$ = make_str("var"); }
 		| SQL_WHENEVER			{ $$ = make_str("whenever"); }
 		;
 
 /* additional keywords that can be SQL type names (but not ECPGColLabels) */
 ECPGTypeName:  SQL_BOOL				{ $$ = make_str("bool"); }
 		| SQL_LONG			{ $$ = make_str("long"); }
+		| SQL_OUTPUT			{ $$ = make_str("output"); }
 		| SQL_SHORT			{ $$ = make_str("short"); }
 		| SQL_STRUCT			{ $$ = make_str("struct"); }
 		| SQL_SIGNED			{ $$ = make_str("signed"); }
@@ -5578,28 +5614,29 @@ ColId:	ident						{ $$ = $1; }
 
 /* Type identifier --- names that can be type names.
  */
-type_name:	ident						{ $$ = $1; }
+type_name:	ident					{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
-		| ECPGKeywords					{ $$ = $1; }
-		| ECPGTypeName					{ $$ = $1; }
+		| ECPGKeywords				{ $$ = $1; }
+		| ECPGTypeName				{ $$ = $1; }
 		;
 
 /* Function identifier --- names that can be function names.
  */
-function_name:	ident						{ $$ = $1; }
+function_name:	ident					{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
-		| func_name_keyword				{ $$ = $1; }
-		| ECPGKeywords					{ $$ = $1; }
+		| func_name_keyword			{ $$ = $1; }
+		| ECPGKeywords				{ $$ = $1; }
 		;
 
 /* Column label --- allowed labels in "AS" clauses.
  * This presently includes *all* Postgres keywords.
  */
-ColLabel:  ECPGColLabel					{ $$ = $1; }
-		| ECPGTypeName					{ $$ = $1; }
-		| CHAR_P						{ $$ = make_str("char"); }
-		| INT_P							{ $$ = make_str("int"); }
-		| UNION							{ $$ = make_str("union"); }
+ColLabel:  ECPGColLabel				{ $$ = $1; }
+		| ECPGTypeName			{ $$ = $1; }
+		| CHAR_P			{ $$ = make_str("char"); }
+		| INPUT_P			{ $$ = make_str("input"); }
+		| INT_P				{ $$ = make_str("int"); }
+		| UNION				{ $$ = make_str("union"); }
 		;
 
 ECPGColLabelCommon:  ident                              { $$ = $1; }
@@ -5693,7 +5730,6 @@ unreserved_keyword:
 		| INDEX				{ $$ = make_str("index"); }
 		| INHERITS			{ $$ = make_str("inherits"); }
 		| INOUT				{ $$ = make_str("inout"); }
-		| INPUT_P			{ $$ = make_str("input"); }
 		| INSENSITIVE			{ $$ = make_str("insensitive"); }
 		| INSERT			{ $$ = make_str("insert"); }
 		| INSTEAD			{ $$ = make_str("instead"); }

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.113 2003/05/29 13:59:26 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.114 2003/05/30 08:39:01 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,33 +569,36 @@ cppline			{space}*#(.*\\{space})+.*
 							}
 						}
 
-						/* Is it an SQL keyword? */
-						keyword = ScanKeywordLookup(yytext);
-						if (keyword != NULL)
-							return keyword->value;
-
-						/* Is it an ECPG keyword? */
-						keyword = ScanECPGKeywordLookup( yytext);
-						if (keyword != NULL)
-							return keyword->value;
-
-						/* Is it a C keyword? */
-						keyword = ScanCKeywordLookup(yytext);
-						if (keyword != NULL)
-							return keyword->value;
-
-						/*
-						 * None of the above.  Return it as an identifier.
-						 *
-						 * The backend would attempt to truncate and case-fold
-						 * the identifier, but I see no good reason for ecpg
-						 * to do so; that's just another way that ecpg could get
-						 * out of step with the backend.
-						 */
 						if (ptr == NULL)
 						{
-							yylval.str = mm_strdup(yytext);
-							return IDENT;
+							/* Is it an SQL keyword? */
+							keyword = ScanKeywordLookup(yytext);
+							if (keyword != NULL)
+								return keyword->value;
+
+							/* Is it an ECPG keyword? */
+							keyword = ScanECPGKeywordLookup( yytext);
+							if (keyword != NULL)
+								return keyword->value;
+
+							/* Is it a C keyword? */
+							keyword = ScanCKeywordLookup(yytext);
+							if (keyword != NULL)
+								return keyword->value;
+
+							/*
+							 * None of the above.  Return it as an identifier.
+							 *
+							 * The backend would attempt to truncate and case-fold
+							 * the identifier, but I see no good reason for ecpg
+							 * to do so; that's just another way that ecpg could get
+							 * out of step with the backend.
+							 */
+							if (ptr == NULL)
+							{
+								yylval.str = mm_strdup(yytext);
+								return IDENT;
+							}
 						}
 					}
 <SQL>{other}		{ return yytext[0]; }
