@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.262 2003/02/11 04:13:06 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.263 2003/02/13 20:45:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "commands/prepare.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parsetree.h"
@@ -1982,6 +1983,19 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 
 		Assert(length(selectList) == 1);
 		selectQuery = (Query *) lfirst(selectList);
+		Assert(IsA(selectQuery, Query));
+
+		/*
+		 * Check for bogus references to Vars on the current query level
+		 * (but upper-level references are okay).
+		 * Normally this can't happen because the namespace will be empty,
+		 * but it could happen if we are inside a rule.
+		 */
+		if (pstate->p_namespace)
+		{
+			if (contain_vars_of_level((Node *) selectQuery, 1))
+				elog(ERROR, "UNION/INTERSECT/EXCEPT member statement may not refer to other relations of same query level");
+		}
 
 		/*
 		 * Make the leaf query be a subquery in the top-level rangetable.

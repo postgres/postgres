@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.108 2003/02/13 05:53:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.109 2003/02/13 20:45:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,7 +383,6 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 static RangeTblRef *
 transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 {
-	List	   *save_namespace;
 	List	   *parsetrees;
 	Query	   *query;
 	RangeTblEntry *rte;
@@ -398,20 +397,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		elog(ERROR, "sub-select in FROM must have an alias");
 
 	/*
-	 * Analyze and transform the subquery.	This is a bit tricky because
-	 * we don't want the subquery to be able to see any FROM items already
-	 * created in the current query (per SQL92, the scope of a FROM item
-	 * does not include other FROM items).	But it does need to be able to
-	 * see any further-up parent states, so we can't just pass a null
-	 * parent pstate link.	So, temporarily make the current query level
-	 * have an empty namespace.
+	 * Analyze and transform the subquery.
 	 */
-	save_namespace = pstate->p_namespace;
-	pstate->p_namespace = NIL;
-
 	parsetrees = parse_analyze(r->subquery, pstate);
-
-	pstate->p_namespace = save_namespace;
 
 	/*
 	 * Check that we got something reasonable.	Some of these conditions
@@ -428,6 +416,25 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		elog(ERROR, "Expected SELECT query from subselect in FROM");
 	if (query->resultRelation != 0 || query->into != NULL || query->isPortal)
 		elog(ERROR, "Subselect in FROM may not have SELECT INTO");
+
+	/*
+	 * The subquery cannot make use of any variables from FROM items created
+	 * earlier in the current query.  Per SQL92, the scope of a FROM item
+	 * does not include other FROM items.  Formerly we hacked the namespace
+	 * so that the other variables weren't even visible, but it seems more
+	 * useful to leave them visible and give a specific error message.
+	 *
+	 * XXX this will need further work to support SQL99's LATERAL() feature,
+	 * wherein such references would indeed be legal.
+	 *
+	 * We can skip groveling through the subquery if there's not anything
+	 * visible in the current query.  Also note that outer references are OK.
+	 */
+	if (pstate->p_namespace)
+	{
+		if (contain_vars_of_level((Node *) query, 1))
+			elog(ERROR, "Subselect in FROM may not refer to other relations of same query level");
+	}
 
 	/*
 	 * OK, build an RTE for the subquery.
@@ -455,7 +462,6 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 {
 	Node	   *funcexpr;
 	char	   *funcname;
-	List	   *save_namespace;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
 
@@ -464,31 +470,24 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	funcname = strVal(llast(((FuncCall *) r->funccallnode)->funcname));
 
 	/*
-	 * Transform the raw FuncCall node.  This is a bit tricky because we
-	 * don't want the function expression to be able to see any FROM items
-	 * already created in the current query (compare to
-	 * transformRangeSubselect). But it does need to be able to see any
-	 * further-up parent states. So, temporarily make the current query
-	 * level have an empty namespace. NOTE: this code is OK only because
-	 * the expression can't legally alter the namespace by causing
-	 * implicit relation refs to be added.
+	 * Transform the raw FuncCall node.
 	 */
-	save_namespace = pstate->p_namespace;
-	pstate->p_namespace = NIL;
-
 	funcexpr = transformExpr(pstate, r->funccallnode);
 
-	pstate->p_namespace = save_namespace;
-
 	/*
-	 * We still need to check that the function parameters don't refer to
-	 * any other rels.	That could happen despite our hack on the
-	 * namespace if fully-qualified names are used.  So, check there are
-	 * no local Var references in the transformed expression.  (Outer
-	 * references are OK, and are ignored here.)
+	 * The function parameters cannot make use of any variables from other
+	 * FROM items.  (Compare to transformRangeSubselect(); the coding is
+	 * different though because we didn't parse as a sub-select with its own
+	 * level of namespace.)
+	 *
+	 * XXX this will need further work to support SQL99's LATERAL() feature,
+	 * wherein such references would indeed be legal.
 	 */
-	if (!bms_is_empty(pull_varnos(funcexpr)))
-		elog(ERROR, "FROM function expression may not refer to other relations of same query level");
+	if (pstate->p_namespace)
+	{
+		if (contain_vars_of_level(funcexpr, 0))
+			elog(ERROR, "FROM function expression may not refer to other relations of same query level");
+	}
 
 	/*
 	 * Disallow aggregate functions in the expression.	(No reason to
