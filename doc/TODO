@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Nov 17 14:52:59 EST 2001
+Last updated:		Sun Nov 18 10:32:35 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -97,7 +97,7 @@ MULTILANGUAGE SUPPORT
 * Allow setting database character set without multibyte enabled
 * Improve Unicode combined character handling
 * Optimize locale to have minimal performance impact when not used (Peter E)
-* Optimize textlength(), etc. for single-byte encodings
+* -Optimize textlength(), etc. for single-byte encodings (Tatsuo)
 
 VIEWS
 
