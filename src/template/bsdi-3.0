@@ -1,0 +1,10 @@
+AROPT:cq
+CFLAGS:
+SHARED_LIB:
+ALL:
+SRCH_INC:/usr/local/include
+SRCH_LIB:/usr/local/lib
+USE_LOCALE:no
+DLSUFFIX:.o
+YFLAGS:-d
+YACC:
