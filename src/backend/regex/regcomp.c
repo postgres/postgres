@@ -78,7 +78,7 @@ struct parse
 	sopno		pend[NPAREN];	/* -> ) ([0] unused) */
 };
 
-static void p_ere(struct parse * p, int stop);
+static void p_ere(struct parse * p, pg_wchar stop);
 static void p_ere_exp(struct parse * p);
 static void p_str(struct parse * p);
 static void p_bre(struct parse * p, int end1, int end2);
@@ -292,9 +292,9 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
  */
 static void
 p_ere(struct parse * p,
-	  int stop)					/* character this ERE should end at */
+	  pg_wchar stop)			/* character this ERE should end at */
 {
-	char		c;
+	pg_wchar	c;
 	sopno		prevback = 0;
 	sopno		prevfwd = 0;
 	sopno		conc;
