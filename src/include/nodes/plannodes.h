@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.22 1999/02/13 23:21:40 momjian Exp $
+ * $Id: plannodes.h,v 1.23 1999/03/01 00:10:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,9 +208,6 @@ typedef struct MergeJoin
 {
 	Join		join;
 	List	   *mergeclauses;
-	Oid			mergejoinop;
-	Oid		   *mergerightorder;/* inner sort operator */
-	Oid		   *mergeleftorder; /* outer sort operator */
 	MergeJoinState *mergestate;
 } MergeJoin;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.19 1999/02/15 03:22:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.20 1999/03/01 00:10:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,14 @@
  *	  it within a mergeinfo node containing other clause nodes with the same
  *	  mergejoin ordering.
  *
+ * XXX This is completely braindead: there is no reason anymore to segregate
+ * mergejoin clauses by join operator, since the executor can handle mergejoin
+ * clause sets with different operators in them.  Instead, we ought to be
+ * building a MergeInfo for each potentially useful ordering of the input
+ * relations.  But right now the optimizer's internal data structures do not
+ * support that (MergeInfo can only store one MergeOrder for a set of clauses).
+ * Something to fix next time...
+ *
  * 'restrictinfo_list' is the list of restrictinfo nodes
  * 'inner_relid' is the relid of the inner join relation
  *
@@ -38,7 +46,7 @@ group_clauses_by_order(List *restrictinfo_list,
 					   int inner_relid)
 {
 	List	   *mergeinfo_list = NIL;
-	List	   *xrestrictinfo = NIL;
+	List	   *xrestrictinfo;
 
 	foreach(xrestrictinfo, restrictinfo_list)
 	{
@@ -84,10 +92,10 @@ group_clauses_by_order(List *restrictinfo_list,
 									   mergeinfo_list);
 			}
 
-			((JoinMethod *) xmergeinfo)->clauses = lcons(clause,
-					  ((JoinMethod *) xmergeinfo)->clauses);
-			((JoinMethod *) xmergeinfo)->jmkeys = lcons(jmkeys,
-					  ((JoinMethod *) xmergeinfo)->jmkeys);
+			xmergeinfo->jmethod.clauses = lcons(clause,
+												xmergeinfo->jmethod.clauses);
+			xmergeinfo->jmethod.jmkeys = lcons(jmkeys,
+											   xmergeinfo->jmethod.jmkeys);
 		}
 	}
 	return mergeinfo_list;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.49 1999/02/21 03:48:45 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.50 1999/03/01 00:10:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@
 #define NONAME_MATERIAL	2
 
 static List *switch_outer(List *clauses);
+static Oid *generate_merge_input_sortorder(List *pathkeys,
+										   MergeOrder *mergeorder);
 static Scan *create_scan_node(Path *best_path, List *tlist);
 static Join *create_join_node(JoinPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
@@ -70,8 +72,7 @@ static HashJoin *make_hashjoin(List *tlist, List *qpqual,
 			  List *hashclauses, Plan *lefttree, Plan *righttree);
 static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist, List *qpqual,
-			   List *mergeclauses, Oid opcode, Oid *rightorder,
-			   Oid *leftorder, Plan *righttree, Plan *lefttree);
+			   List *mergeclauses, Plan *righttree, Plan *lefttree);
 static Material *make_material(List *tlist, Oid nonameid, Plan *lefttree,
 			  int keycount);
 
@@ -505,9 +506,6 @@ create_mergejoin_node(MergePath *best_path,
 {
 	List	   *qpqual,
 			   *mergeclauses;
-	RegProcedure opcode;
-	Oid		   *outer_order,
-			   *inner_order;
 	MergeJoin  *join_node;
 
 
@@ -528,27 +526,20 @@ create_mergejoin_node(MergePath *best_path,
 												outer_tlist,
 												inner_tlist));
 
-	opcode = get_opcode((best_path->jpath.path.pathorder->ord.merge)->join_operator);
-
-	outer_order = (Oid *) palloc(sizeof(Oid) * 2);
-	outer_order[0] = (best_path->jpath.path.pathorder->ord.merge)->left_operator;
-	outer_order[1] = 0;
-
-	inner_order = (Oid *) palloc(sizeof(Oid) * 2);
-	inner_order[0] = (best_path->jpath.path.pathorder->ord.merge)->right_operator;
-	inner_order[1] = 0;
-
 	/*
 	 * Create explicit sort paths for the outer and inner join paths if
 	 * necessary.  The sort cost was already accounted for in the path.
 	 */
 	if (best_path->outersortkeys)
 	{
+		Oid		   *outer_order = generate_merge_input_sortorder(
+								best_path->outersortkeys,
+								best_path->jpath.path.pathorder->ord.merge);
 		Noname	   *sorted_outer_node = make_noname(outer_tlist,
-												best_path->outersortkeys,
-												  outer_order,
-												  outer_node,
-												  NONAME_SORT);
+													best_path->outersortkeys,
+													outer_order,
+													outer_node,
+													NONAME_SORT);
 
 		sorted_outer_node->plan.cost = outer_node->cost;
 		outer_node = (Plan *) sorted_outer_node;
@@ -556,22 +547,22 @@ create_mergejoin_node(MergePath *best_path,
 
 	if (best_path->innersortkeys)
 	{
+		Oid		   *inner_order = generate_merge_input_sortorder(
+								best_path->innersortkeys,
+								best_path->jpath.path.pathorder->ord.merge);
 		Noname	   *sorted_inner_node = make_noname(inner_tlist,
 												best_path->innersortkeys,
 												  inner_order,
 												  inner_node,
 												  NONAME_SORT);
 
-		sorted_inner_node->plan.cost = outer_node->cost;
+		sorted_inner_node->plan.cost = outer_node->cost; /* XXX not inner_node? */
 		inner_node = (Plan *) sorted_inner_node;
 	}
 
 	join_node = make_mergejoin(tlist,
 							   qpqual,
 							   mergeclauses,
-							   opcode,
-							   inner_order,
-							   outer_order,
 							   inner_node,
 							   outer_node);
 
@@ -662,7 +653,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 					pos++;
 				}
 			}
-			newclause = copyObject((Node *) clause);
+			newclause = copyObject(clause);
 			((Var *) newclause)->varattno = pos + 1;
 			return newclause;
 		}
@@ -760,24 +751,22 @@ fix_indxqual_references(Node *clause, Path *index_path)
  * switch_outer
  *	  Given a list of merge clauses, rearranges the elements within the
  *	  clauses so the outer join variable is on the left and the inner is on
- *	  the right.
- *
- *	  Returns the rearranged list ?
- *
- *	  XXX Shouldn't the operator be commuted?!
+ *	  the right.  The original list is not touched; a modified list
+ *	  is returned.
  */
 static List *
 switch_outer(List *clauses)
 {
 	List	   *t_list = NIL;
-	Expr	   *temp = NULL;
-	List	   *i = NIL;
+	Expr	   *temp;
+	List	   *i;
 	Expr	   *clause;
 	Node	   *op;
 
 	foreach(i, clauses)
 	{
 		clause = lfirst(i);
+		Assert(is_opclause((Node*) clause));
 		op = (Node *) get_rightop(clause);
 		Assert(op != (Node*) NULL);
 		if (IsA(op, ArrayRef))
@@ -785,16 +774,61 @@ switch_outer(List *clauses)
 		Assert(IsA(op, Var));
 		if (var_is_outer((Var *) op))
 		{
+			/* Duplicate just enough of the structure to allow commuting
+			 * the clause without changing the original list.  Could use
+			 * copyObject, but a complete deep copy is overkill.
+			 */
 			temp = make_clause(clause->opType, clause->oper,
-							   lcons(get_rightop(clause),
-									 lcons(get_leftop(clause),
+							   lcons(get_leftop(clause),
+									 lcons(get_rightop(clause),
 										   NIL)));
+			/* Commute it --- note this modifies the temp node in-place. */
+			CommuteClause((Node *) temp);
 			t_list = lappend(t_list, temp);
 		}
 		else
 			t_list = lappend(t_list, clause);
 	}
 	return t_list;
+}
+
+/*
+ * generate_merge_input_sortorder
+ *
+ * Generate the list of sort ops needed to sort one of the input paths for
+ * a merge.  We may have to use either left or right sortop for each item,
+ * since the original mergejoin clause may or may not have been commuted
+ * (compare switch_outer above).
+ *
+ * XXX This is largely a crock.  It works only because group_clauses_by_order
+ * only groups together mergejoin clauses that have identical MergeOrder info,
+ * which means we can safely use a single MergeOrder input to deal with all
+ * the data.  There should be a more general data structure that allows coping
+ * with groups of mergejoin clauses that have different join operators.
+ */
+static Oid *
+generate_merge_input_sortorder(List *pathkeys, MergeOrder *mergeorder)
+{
+	int			listlength = length(pathkeys);
+	Oid		   *result = (Oid*) palloc(sizeof(Oid) * (listlength+1));
+	Oid		   *nextsortop = result;
+	List	   *p;
+
+	foreach(p, pathkeys)
+	{
+		Var		   *pkey = (Var*) lfirst((List*) lfirst(p));
+		Assert(IsA(pkey, Var));
+		if (pkey->vartype == mergeorder->left_type)
+			*nextsortop++ = mergeorder->left_operator;
+		else if (pkey->vartype == mergeorder->right_type)
+			*nextsortop++ = mergeorder->right_operator;
+		else
+			elog(ERROR,
+				 "generate_merge_input_sortorder: can't handle data type %d",
+				 pkey->vartype);
+	}
+	*nextsortop++ = InvalidOid;
+	return result;
 }
 
 /*
@@ -806,18 +840,16 @@ switch_outer(List *clauses)
  *				corresponding to vars in the target list that are to
  *				be sorted or hashed
  *	  'operators' is the corresponding list of N sort or hash operators
- *	  'keyno' is the first key number
- *	  XXX - keyno ? doesn't exist - jeff
  *
- *	  Returns the modified target list.
+ *	  Returns the modified-in-place target list.
  */
 static List *
 set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
 {
-	Node	   *pathkey = NULL;
 	int			keyno = 1;
-	Resdom	   *resdom = (Resdom *) NULL;
-	List	   *i = NIL;
+	Node	   *pathkey;
+	Resdom	   *resdom;
+	List	   *i;
 
 	foreach(i, pathkeys)
 	{
@@ -828,12 +860,9 @@ set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
 			/*
 			 * Order the resdom pathkey and replace the operator OID for each
 			 * key with the regproc OID.
-			 *
-			 * XXX Note that the optimizer only generates merge joins with 1
-			 * operator (see create_mergejoin_node)  - ay 2/95
 			 */
 			resdom->reskey = keyno;
-			resdom->reskeyop = get_opcode(operators[0]);
+			resdom->reskeyop = get_opcode(operators[keyno-1]);
 		}
 		keyno += 1;
 	}
@@ -1024,9 +1053,6 @@ static MergeJoin *
 make_mergejoin(List *tlist,
 			   List *qpqual,
 			   List *mergeclauses,
-			   Oid opcode,
-			   Oid *rightorder,
-			   Oid *leftorder,
 			   Plan *righttree,
 			   Plan *lefttree)
 {
@@ -1041,9 +1067,6 @@ make_mergejoin(List *tlist,
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->mergeclauses = mergeclauses;
-	node->mergejoinop = opcode;
-	node->mergerightorder = rightorder;
-	node->mergeleftorder = leftorder;
 
 	return node;
 }

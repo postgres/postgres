@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.14 1999/02/22 19:55:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.15 1999/03/01 00:10:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,9 +266,6 @@ _freeMergeJoin(MergeJoin *node)
 	 * ----------------
 	 */
 	freeObject(node->mergeclauses);
-
-	pfree(node->mergerightorder);
-	pfree(node->mergeleftorder);
 
 	pfree(node);
 }

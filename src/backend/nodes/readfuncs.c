@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.59 1999/02/18 00:49:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.60 1999/03/01 00:10:31 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -425,10 +425,6 @@ _readMergeJoin()
 	_getJoin((Join *) local_node);
 	token = lsptok(NULL, &length);		/* eat :mergeclauses */
 	local_node->mergeclauses = nodeRead(true);	/* now read it */
-
-	token = lsptok(NULL, &length);		/* eat :mergejoinop */
-	token = lsptok(NULL, &length);		/* get mergejoinop */
-	local_node->mergejoinop = atol(token);
 
 	return local_node;
 }

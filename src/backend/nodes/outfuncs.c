@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.76 1999/02/23 08:01:47 thomas Exp $
+ *  $Id: outfuncs.c,v 1.77 1999/03/01 00:10:31 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -371,12 +371,6 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 
 	appendStringInfo(str, " :mergeclauses ");
 	_outNode(str, node->mergeclauses);
-
-	appendStringInfo(str, 
-			" :mergejoinop %u :mergerightorder %u :mergeleftorder %u ",
-			node->mergejoinop, 
-			node->mergerightorder,
-			node->mergeleftorder);
 }
 
 /*
