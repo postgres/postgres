@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.64 2000/04/16 04:25:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.65 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
@@ -757,15 +758,8 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 static HeapTuple
 ExecCallTriggerFunc(Trigger *trigger)
 {
-
 	if (trigger->tgfunc.fn_addr == NULL)
 		fmgr_info(trigger->tgfoid, &trigger->tgfunc);
-
-	if (trigger->tgfunc.fn_plhandler != NULL)
-	{
-		return (HeapTuple) (*(trigger->tgfunc.fn_plhandler))
-			(&trigger->tgfunc);
-	}
 
 	return (HeapTuple) ((*fmgr_faddr(&trigger->tgfunc)) ());
 }

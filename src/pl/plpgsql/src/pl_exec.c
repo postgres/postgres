@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.21 2000/04/28 00:12:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.22 2000/05/28 17:56:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -141,8 +141,7 @@ static void exec_set_found(PLpgSQL_execstate * estate, bool state);
  * ----------
  */
 Datum
-plpgsql_exec_function(PLpgSQL_function * func,
-					  FmgrValues *args, bool *isNull)
+plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 {
 	PLpgSQL_execstate estate;
 	int			i;
@@ -302,21 +301,22 @@ plpgsql_exec_function(PLpgSQL_function * func,
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) estate.datums[n];
 
-					var->value = (Datum) (args->data[i]);
-					var->isnull = *isNull;
+					var->value = fcinfo->arg[i];
+					var->isnull = fcinfo->argnull[i];
 					var->shouldfree = false;
 				}
 				break;
 
 			case PLPGSQL_DTYPE_ROW:
 				{
+					PLpgSQL_row *row = (PLpgSQL_row *) estate.datums[n];
+					TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
 					HeapTuple	tup;
 					TupleDesc	tupdesc;
-					PLpgSQL_row *row = (PLpgSQL_row *) estate.datums[n];
 
-					tup = ((TupleTableSlot *) (args->data[i]))->val;
-					tupdesc = ((TupleTableSlot *) (args->data[i]))->ttc_tupleDescriptor;
-
+					Assert(slot != NULL && ! fcinfo->argnull[i]);
+					tup = slot->val;
+					tupdesc = slot->ttc_tupleDescriptor;
 					exec_move_row(&estate, NULL, row, tup, tupdesc);
 				}
 				break;
@@ -384,7 +384,7 @@ plpgsql_exec_function(PLpgSQL_function * func,
 	error_info_stmt = NULL;
 	error_info_text = "while casting return value to functions return type";
 
-	*isNull = estate.retisnull;
+	fcinfo->isnull = estate.retisnull;
 
 	if (!estate.retistuple)
 	{
@@ -393,14 +393,14 @@ plpgsql_exec_function(PLpgSQL_function * func,
 										&(func->fn_retinput),
 										func->fn_rettypelem,
 										-1,
-										isNull);
+										&fcinfo->isnull);
 
 		/* ----------
 		 * If the functions return type isn't by value,
 		 * copy the value into upper executor memory context.
 		 * ----------
 		 */
-		if (!*isNull && !func->fn_retbyval)
+		if (!fcinfo->isnull && !func->fn_retbyval)
 		{
 			int			len;
 			Datum		tmp;

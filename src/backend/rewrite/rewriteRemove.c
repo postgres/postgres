@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.36 2000/04/12 17:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.37 2000/05/28 17:56:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "commands/comment.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 /*-----------------------------------------------------------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.34 2000/04/12 17:15:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.35 2000/05/28 17:55:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 
 

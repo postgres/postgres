@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.49 2000/01/26 05:56:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.50 2000/05/28 17:55:54 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -26,6 +26,7 @@
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 

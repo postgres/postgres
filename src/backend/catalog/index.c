@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.110 2000/05/20 23:11:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.111 2000/05/28 17:55:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -42,6 +42,7 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
+#include "utils/fmgroids.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
@@ -688,11 +689,11 @@ UpdateIndexRelation(Oid indexoid,
 	if (predicate != NULL)
 	{
 		predString = nodeToString(predicate);
-		predText = (text *) fmgr(F_TEXTIN, predString);
+		predText = textin(predString);
 		pfree(predString);
 	}
 	else
-		predText = (text *) fmgr(F_TEXTIN, "");
+		predText = textin("");
 
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
@@ -832,11 +833,11 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	if (newPred != NULL)
 	{
 		predString = nodeToString(newPred);
-		predText = (text *) fmgr(F_TEXTIN, predString);
+		predText = textin(predString);
 		pfree(predString);
 	}
 	else
-		predText = (text *) fmgr(F_TEXTIN, "");
+		predText = textin("");
 
 	/* open the index system catalog relation */
 	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
@@ -2109,7 +2110,7 @@ reindex_index(Oid indexId, bool force)
 	/* If a valid where predicate, compute predicate Node */
 	if (VARSIZE(&index->indpred) != 0)
 	{
-		predString = fmgr(F_TEXTOUT, &index->indpred);
+		predString = textout(&index->indpred);
 		oldPred = stringToNode(predString);
 		pfree(predString);
 	}

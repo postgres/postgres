@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.81 2000/04/12 17:14:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.82 2000/05/28 17:55:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "miscadmin.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
 

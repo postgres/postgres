@@ -4,7 +4,7 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.17 2000/01/19 02:58:52 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.18 2000/05/28 17:55:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,11 +28,6 @@ all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
-
-be-dumpdata.o be-pqexec.o: ../fmgr.h
-
-../fmgr.h: 
-	$(MAKE) -C .. fmgr.h
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

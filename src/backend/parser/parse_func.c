@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.79 2000/05/26 03:56:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.80 2000/05/28 17:56:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "parser/parse_target.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 

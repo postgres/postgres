@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.3 1999/07/15 15:21:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.4 2000/05/28 17:56:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -45,43 +45,44 @@
 #include "plpgsql.h"
 #include "pl.tab.h"
 
-#include "executor/spi.h"
-#include "commands/trigger.h"
-#include "utils/builtins.h"
-#include "fmgr.h"
 #include "access/heapam.h"
-
-#include "utils/syscache.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
 
+/*
+ * Head of list of already-compiled functions
+ */
 static PLpgSQL_function *compiled_functions = NULL;
 
 
-Datum plpgsql_call_handler(FmgrInfo *proinfo,
-					 FmgrValues *proargs, bool *isNull);
-
-static Datum plpgsql_func_handler(FmgrInfo *proinfo,
-					 FmgrValues *proargs, bool *isNull);
-
-static HeapTuple plpgsql_trigger_handler(FmgrInfo *proinfo);
-
-
 /* ----------
- * plpgsql_call_handler		- This is the only visible function
- *				  of the PL interpreter. The PostgreSQL
- *				  function manager and trigger manager
- *				  call this function for execution of
- *				  PL/pgSQL procedures.
+ * plpgsql_call_handler
+ *
+ * This is the only visible function of the PL interpreter.
+ * The PostgreSQL function manager and trigger manager
+ * call this function for execution of PL/pgSQL procedures.
  * ----------
  */
 Datum
-plpgsql_call_handler(FmgrInfo *proinfo,
-					 FmgrValues *proargs,
-					 bool *isNull)
+plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata;
+	bool		isTrigger;
+	PLpgSQL_function *func;
 	Datum		retval;
+
+	/* ----------
+	 * Save the current trigger data local
+	 *
+	 * XXX this should go away in favor of using fcinfo->context
+	 * ----------
+	 */
+	trigdata = CurrentTriggerData;
+	CurrentTriggerData = NULL;
+	isTrigger = (trigdata != NULL);
 
 	/* ----------
 	 * Connect to SPI manager
@@ -91,14 +92,53 @@ plpgsql_call_handler(FmgrInfo *proinfo,
 		elog(ERROR, "plpgsql: cannot connect to SPI manager");
 
 	/* ----------
+	 * Check if we already compiled this function and saved the pointer
+	 * (ie, current FmgrInfo has been used before)
+	 * ----------
+	 */
+	func = (PLpgSQL_function *) fcinfo->flinfo->fn_extra;
+	if (func == NULL)
+	{
+		/* ----------
+		 * Check if we already compiled this function
+		 * ----------
+		 */
+		Oid		funcOid = fcinfo->flinfo->fn_oid;
+
+		for (func = compiled_functions; func != NULL; func = func->next)
+		{
+			if (funcOid == func->fn_oid)
+				break;
+		}
+
+		/* ----------
+		 * If not, do so and add it to the compiled ones
+		 * ----------
+		 */
+		if (func == NULL)
+		{
+			func = plpgsql_compile(funcOid,
+								   isTrigger ? T_TRIGGER : T_FUNCTION);
+			func->next = compiled_functions;
+			compiled_functions = func;
+		}
+
+		/* ----------
+		 * Save pointer in FmgrInfo to avoid search on subsequent calls
+		 * ----------
+		 */
+		fcinfo->flinfo->fn_extra = (void *) func;
+	}
+
+	/* ----------
 	 * Determine if called as function or trigger and
 	 * call appropriate subhandler
 	 * ----------
 	 */
-	if (CurrentTriggerData == NULL)
-		retval = plpgsql_func_handler(proinfo, proargs, isNull);
+	if (isTrigger)
+		retval = PointerGetDatum(plpgsql_exec_trigger(func, trigdata));
 	else
-		retval = (Datum) plpgsql_trigger_handler(proinfo);
+		retval = plpgsql_exec_function(func, fcinfo);
 
 	/* ----------
 	 * Disconnect from SPI manager
@@ -108,84 +148,4 @@ plpgsql_call_handler(FmgrInfo *proinfo,
 		elog(ERROR, "plpgsql: SPI_finish() failed");
 
 	return retval;
-}
-
-
-/* ----------
- * plpgsql_func_handler()	- Handler for regular function calls
- * ----------
- */
-static Datum
-plpgsql_func_handler(FmgrInfo *proinfo,
-					 FmgrValues *proargs,
-					 bool *isNull)
-{
-	PLpgSQL_function *func;
-
-	/* ----------
-	 * Check if we already compiled this function
-	 * ----------
-	 */
-	for (func = compiled_functions; func != NULL; func = func->next)
-	{
-		if (proinfo->fn_oid == func->fn_oid)
-			break;
-	}
-
-	/* ----------
-	 * If not, do so and add it to the compiled ones
-	 * ----------
-	 */
-	if (func == NULL)
-	{
-		func = plpgsql_compile(proinfo->fn_oid, T_FUNCTION);
-
-		func->next = compiled_functions;
-		compiled_functions = func;
-	}
-
-	return plpgsql_exec_function(func, proargs, isNull);
-}
-
-
-/* ----------
- * plpgsql_trigger_handler()	- Handler for trigger calls
- * ----------
- */
-static HeapTuple
-plpgsql_trigger_handler(FmgrInfo *proinfo)
-{
-	TriggerData *trigdata;
-	PLpgSQL_function *func;
-
-	/* ----------
-	 * Save the current trigger data local
-	 * ----------
-	 */
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
-
-	/* ----------
-	 * Check if we already compiled this trigger procedure
-	 * ----------
-	 */
-	for (func = compiled_functions; func != NULL; func = func->next)
-	{
-		if (proinfo->fn_oid == func->fn_oid)
-			break;
-	}
-
-	/* ----------
-	 * If not, do so and add it to the compiled ones
-	 * ----------
-	 */
-	if (func == NULL)
-	{
-		func = plpgsql_compile(proinfo->fn_oid, T_TRIGGER);
-
-		func->next = compiled_functions;
-		compiled_functions = func;
-	}
-
-	return plpgsql_exec_trigger(func, trigdata);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.38 2000/04/12 17:15:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.39 2000/05/28 17:56:04 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -76,11 +76,9 @@
  * ----------------
  */
 static void
-SendFunctionResult(Oid fid,		/* function id */
-				   char *retval,/* actual return value */
+SendFunctionResult(Datum retval, /* actual return value */
 				   bool retbyval,
-				   int retlen	/* the length according to the catalogs */
-)
+				   int retlen)	/* the length according to the catalogs */
 {
 	StringInfoData buf;
 
@@ -93,19 +91,21 @@ SendFunctionResult(Oid fid,		/* function id */
 		if (retbyval)
 		{						/* by-value */
 			pq_sendint(&buf, retlen, 4);
-			pq_sendint(&buf, (int) (Datum) retval, retlen);
+			pq_sendint(&buf, DatumGetInt32(retval), retlen);
 		}
 		else
 		{						/* by-reference ... */
 			if (retlen < 0)
 			{					/* ... varlena */
-				pq_sendint(&buf, VARSIZE(retval) - VARHDRSZ, VARHDRSZ);
-				pq_sendbytes(&buf, VARDATA(retval), VARSIZE(retval) - VARHDRSZ);
+				struct varlena *v = (struct varlena *) DatumGetPointer(retval);
+
+				pq_sendint(&buf, VARSIZE(v) - VARHDRSZ, VARHDRSZ);
+				pq_sendbytes(&buf, VARDATA(v), VARSIZE(v) - VARHDRSZ);
 			}
 			else
 			{					/* ... fixed */
 				pq_sendint(&buf, retlen, 4);
-				pq_sendbytes(&buf, retval, retlen);
+				pq_sendbytes(&buf, DatumGetPointer(retval), retlen);
 			}
 		}
 	}
@@ -127,12 +127,12 @@ SendFunctionResult(Oid fid,		/* function id */
 struct fp_info
 {
 	Oid			funcid;
-	int			nargs;
+	FmgrInfo	flinfo;			/* function lookup info for funcid */
 	bool		argbyval[FUNC_MAX_ARGS];
 	int32		arglen[FUNC_MAX_ARGS];	/* signed (for varlena) */
 	bool		retbyval;
 	int32		retlen;			/* signed (for varlena) */
-	TransactionId xid;
+	TransactionId xid;			/* when the lookup was done */
 	CommandId	cid;
 };
 
@@ -147,17 +147,17 @@ static struct fp_info last_fp = {InvalidOid};
  * valid_fp_info
  *
  * RETURNS:
- *		1 if the state in 'fip' is valid
- *		0 otherwise
+ *		T if the state in 'fip' is valid for the given func OID
+ *		F otherwise
  *
- * "valid" means:
+ * "invalid" means:
  * The saved state was either uninitialized, for another function,
  * or from a previous command.	(Commands can do updates, which
  * may invalidate catalog entries for subsequent commands.	This
  * is overly pessimistic but since there is no smarter invalidation
  * scheme...).
  */
-static int
+static bool
 valid_fp_info(Oid func_id, struct fp_info * fip)
 {
 	Assert(OidIsValid(func_id));
@@ -212,11 +212,10 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 			 func_id);
 	}
 	pp = (Form_pg_proc) GETSTRUCT(func_htp);
-	fip->nargs = pp->pronargs;
 	rettype = pp->prorettype;
 	argtypes = pp->proargtypes;
 
-	for (i = 0; i < fip->nargs; ++i)
+	for (i = 0; i < fip->flinfo.fn_nargs; ++i)
 	{
 		if (OidIsValid(argtypes[i]))
 		{
@@ -252,6 +251,8 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	fip->xid = GetCurrentTransactionId();
 	fip->cid = GetCurrentCommandId();
 
+	fmgr_info(func_id, &fip->flinfo);
+
 	/*
 	 * This must be last!
 	 */
@@ -279,11 +280,9 @@ HandleFunctionRequest()
 	int			argsize;
 	int			nargs;
 	int			tmp;
-	char	   *arg[FUNC_MAX_ARGS];
-	char	   *retval;
-	bool		isNull;
+	FunctionCallInfoData fcinfo;
+	Datum		retval;
 	int			i;
-	uint32		palloced;
 	char	   *p;
 	struct fp_info *fip;
 
@@ -305,89 +304,81 @@ HandleFunctionRequest()
 	 * XXX FIXME: elog() here means we lose sync with the frontend, since
 	 * we have not swallowed all of its input message.	What should happen
 	 * is we absorb all of the input message per protocol syntax, and
-	 * *then* do error checking and elog if appropriate.
+	 * *then* do error checking (including lookup of the given function ID)
+	 * and elog if appropriate.  Unfortunately, because we cannot even read
+	 * the message properly without knowing whether the data types are
+	 * pass-by-ref or pass-by-value, it's not all that easy to fix :-(.
+	 * This protocol is misdesigned.
 	 */
 
-	if (fip->nargs != nargs)
+	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
 	{
 		elog(ERROR, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
-			 nargs, fip->nargs);
+			 nargs, fip->flinfo.fn_nargs);
 	}
 
-	/*
-	 * Copy arguments into arg vector.	If we palloc() an argument, we
-	 * need to remember, so that we pfree() it after the call.
-	 */
-	palloced = 0x0;
-	for (i = 0; i < FUNC_MAX_ARGS; ++i)
-	{
-		if (i >= nargs)
-			arg[i] = (char *) NULL;
-		else
-		{
-			if (pq_getint(&argsize, 4))
-				return EOF;
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.flinfo = &fip->flinfo;
+	fcinfo.nargs = nargs;
 
-			Assert(argsize > 0);
-			if (fip->argbyval[i])
-			{					/* by-value */
-				Assert(argsize <= 4);
-				if (pq_getint(&tmp, argsize))
+	/*
+	 * Copy supplied arguments into arg vector.  Note there is no way for
+	 * frontend to specify a NULL argument --- more misdesign.
+	 */
+	for (i = 0; i < nargs; ++i)
+	{
+		if (pq_getint(&argsize, 4))
+			return EOF;
+		if (fip->argbyval[i])
+		{						/* by-value */
+			if (argsize < 1 || argsize > 4)
+				elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
+					 argsize);
+			/* XXX should we demand argsize == fip->arglen[i] ? */
+			if (pq_getint(&tmp, argsize))
+				return EOF;
+			fcinfo.arg[i] = (Datum) tmp;
+		}
+		else
+		{						/* by-reference ... */
+			if (fip->arglen[i] < 0)
+			{					/* ... varlena */
+				if (argsize < 0)
+					elog(ERROR, "HandleFunctionRequest: bogus argsize %d",
+						 argsize);
+				/* I suspect this +1 isn't really needed - tgl 5/2000 */
+				p = palloc(argsize + VARHDRSZ + 1);	/* Added +1 to solve
+													 * memory leak - Peter
+													 * 98 Jan 6 */
+				VARSIZE(p) = argsize + VARHDRSZ;
+				if (pq_getbytes(VARDATA(p), argsize))
 					return EOF;
-				arg[i] = (char *) tmp;
 			}
 			else
-			{					/* by-reference ... */
-				if (fip->arglen[i] < 0)
-				{				/* ... varlena */
-					if (!(p = palloc(argsize + VARHDRSZ + 1)))	/* Added +1 to solve
-																 * memory leak - Peter
-																 * 98 Jan 6 */
-						elog(ERROR, "HandleFunctionRequest: palloc failed");
-					VARSIZE(p) = argsize + VARHDRSZ;
-					if (pq_getbytes(VARDATA(p), argsize))
-						return EOF;
-				}
-				else
-				{				/* ... fixed */
-					/* XXX cross our fingers and trust "argsize" */
-					if (!(p = palloc(argsize + 1)))
-						elog(ERROR, "HandleFunctionRequest: palloc failed");
-					if (pq_getbytes(p, argsize))
-						return EOF;
-				}
-				palloced |= (1 << i);
-				arg[i] = p;
+			{					/* ... fixed */
+				if (argsize != fip->arglen[i])
+					elog(ERROR, "HandleFunctionRequest: bogus argsize %d, should be %d",
+						 argsize, fip->arglen[i]);
+				p = palloc(argsize + 1); /* +1 in case argsize is 0 */
+				if (pq_getbytes(p, argsize))
+					return EOF;
 			}
+			fcinfo.arg[i] = PointerGetDatum(p);
 		}
 	}
 
-#ifndef NO_FASTPATH
-	retval = fmgr_array_args(fid, nargs, arg, &isNull);
+#ifdef NO_FASTPATH
+	/* force a NULL return */
+	retval = (Datum) 0;
+	fcinfo.isnull = true;
 #else
-	retval = NULL;
+	retval = FunctionCallInvoke(&fcinfo);
 #endif	 /* NO_FASTPATH */
 
-	/* free palloc'ed arguments */
-	for (i = 0; i < nargs; ++i)
-	{
-		if (palloced & (1 << i))
-			pfree(arg[i]);
-	}
-
-	/*
-	 * If this is an ordinary query (not a retrieve portal p ...), then we
-	 * return the data to the user.  If the return value was palloc'ed,
-	 * then it must also be freed.
-	 */
-#ifndef NO_FASTPATH
-	SendFunctionResult(fid, retval, fip->retbyval, fip->retlen);
-#else
-	SendFunctionResult(fid, retval, fip->retbyval, 0);
-#endif	 /* NO_FASTPATH */
-
-	if (!fip->retbyval)
-		pfree(retval);
+	if (fcinfo.isnull)
+		SendFunctionResult(retval, fip->retbyval, 0);
+	else
+		SendFunctionResult(retval, fip->retbyval, fip->retlen);
 
 	return 0;
 }

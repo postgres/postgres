@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.39 2000/04/12 17:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.40 2000/05/28 17:56:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,14 +442,11 @@ make_const(Value *value)
 		case T_Float:
 			if (fitsInFloat(value))
 			{
-				float64		fltval = (float64) palloc(sizeof(float64data));
-
-				*fltval = floatVal(value);
-				val = Float64GetDatum(fltval);
+				val = Float8GetDatum(floatVal(value));
 
 				typeid = FLOAT8OID;
-				typelen = sizeof(float64data);
-				typebyval = false;
+				typelen = sizeof(float8);
+				typebyval = false; /* XXX might change someday */
 			}
 			else
 			{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.69 2000/04/12 17:15:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.70 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/fcache2.h"
 
 
@@ -64,7 +65,8 @@ static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
 			 bool *isNull, bool *isDone);
 static void ExecEvalFuncArgs(FunctionCachePtr fcache, ExprContext *econtext,
-				 List *argList, Datum argV[], bool *argIsDone);
+							 List *argList, FunctionCallInfo fcinfo,
+							 bool *argIsDone);
 static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
 			 bool *isNull);
@@ -614,14 +616,11 @@ static void
 ExecEvalFuncArgs(FunctionCachePtr fcache,
 				 ExprContext *econtext,
 				 List *argList,
-				 Datum argV[],
+				 FunctionCallInfo fcinfo,
 				 bool *argIsDone)
 {
 	int			i;
-	bool	   *nullVect;
 	List	   *arg;
-
-	nullVect = fcache->nullVect;
 
 	i = 0;
 	foreach(arg, argList)
@@ -632,16 +631,16 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 		 * as arguments but we make an exception in the case of nested dot
 		 * expressions.  We have to watch out for this case here.
 		 */
-		argV[i] = ExecEvalExpr((Node *) lfirst(arg),
-							   econtext,
-							   &nullVect[i],
-							   argIsDone);
+		fcinfo->arg[i] = ExecEvalExpr((Node *) lfirst(arg),
+									  econtext,
+									  &fcinfo->argnull[i],
+									  argIsDone);
 
 		if (!(*argIsDone))
 		{
 			if (i != 0)
 				elog(ERROR, "functions can only take sets in their first argument");
-			fcache->setArg = (char *) argV[0];
+			fcache->setArg = fcinfo->arg[0];
 			fcache->hasSetArg = true;
 		}
 		i++;
@@ -658,40 +657,45 @@ ExecMakeFunctionResult(Node *node,
 					   bool *isNull,
 					   bool *isDone)
 {
-	Datum		argV[FUNC_MAX_ARGS];
-	FunctionCachePtr fcache;
-	Func	   *funcNode = NULL;
-	Oper	   *operNode = NULL;
-	bool		funcisset = false;
+	FunctionCallInfoData	fcinfo;
+	FunctionCachePtr		fcache;
+	List				   *ftlist;
+	bool					funcisset;
+	Datum					result;
+	bool					argDone;
+
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
 
 	/*
 	 * This is kind of ugly, Func nodes now have targetlists so that we
 	 * know when and what to project out from postquel function results.
-	 * This means we have to pass the func node all the way down instead
-	 * of using only the fcache struct as before.  ExecMakeFunctionResult
-	 * becomes a little bit more of a dual personality as a result.
+	 * ExecMakeFunctionResult becomes a little bit more of a dual personality
+	 * as a result.
 	 */
 	if (IsA(node, Func))
 	{
-		funcNode = (Func *) node;
-		fcache = funcNode->func_fcache;
+		fcache = ((Func *) node)->func_fcache;
+		ftlist = ((Func *) node)->func_tlist;
+		funcisset = (((Func *) node)->funcid == F_SETEVAL);
 	}
 	else
 	{
-		operNode = (Oper *) node;
-		fcache = operNode->op_fcache;
+		fcache = ((Oper *) node)->op_fcache;
+		ftlist = NIL;
+		funcisset = false;
 	}
+
+	fcinfo.flinfo = &fcache->func;
+	fcinfo.nargs = fcache->nargs;
 
 	/*
 	 * arguments is a list of expressions to evaluate before passing to
-	 * the function manager. We collect the results of evaluating the
-	 * expressions into a datum array (argV) and pass this array to
-	 * arrayFmgr()
+	 * the function manager.  We collect the results of evaluating the
+	 * expressions into the FunctionCallInfo struct.  Note we assume that
+	 * fcache->nargs is the correct length of the arguments list!
 	 */
-	if (fcache->nargs != 0)
+	if (fcache->nargs > 0)
 	{
-		bool		argDone;
-
 		if (fcache->nargs > FUNC_MAX_ARGS)
 			elog(ERROR, "ExecMakeFunctionResult: too many arguments");
 
@@ -700,21 +704,23 @@ ExecMakeFunctionResult(Node *node,
 		 * returning a set of tuples (i.e. a nested dot expression).  We
 		 * don't want to evaluate the arguments again until the function
 		 * is done. hasSetArg will always be false until we eval the args
-		 * for the first time. We should set this in the parser.
+		 * for the first time.
 		 */
-		if ((fcache->hasSetArg) && fcache->setArg != NULL)
+		if (fcache->hasSetArg && fcache->setArg != (Datum) 0)
 		{
-			argV[0] = (Datum) fcache->setArg;
+			fcinfo.arg[0] = fcache->setArg;
 			argDone = false;
 		}
 		else
-			ExecEvalFuncArgs(fcache, econtext, arguments, argV, &argDone);
+			ExecEvalFuncArgs(fcache, econtext, arguments, &fcinfo, &argDone);
 
-		if ((fcache->hasSetArg) && (argDone))
+		if (fcache->hasSetArg && argDone)
 		{
+			/* can only get here if input is an empty set. */
 			if (isDone)
 				*isDone = true;
-			return (Datum) NULL;
+			*isNull = true;
+			return (Datum) 0;
 		}
 	}
 
@@ -731,27 +737,23 @@ ExecMakeFunctionResult(Node *node,
 	 * which defines this set.	So replace the existing funcid in the
 	 * funcnode with the set's OID.  Also, we want a new fcache which
 	 * points to the right function, so get that, now that we have the
-	 * right OID.  Also zero out the argV, since the real set doesn't take
+	 * right OID.  Also zero out fcinfo.arg, since the real set doesn't take
 	 * any arguments.
 	 */
-	if (((Func *) node)->funcid == F_SETEVAL)
+	if (funcisset)
 	{
-		funcisset = true;
 		if (fcache->setArg)
 		{
-			argV[0] = 0;
-
-			((Func *) node)->funcid = (Oid) PointerGetDatum(fcache->setArg);
-
+			((Func *) node)->funcid = DatumGetObjectId(fcache->setArg);
 		}
 		else
 		{
-			((Func *) node)->funcid = (Oid) argV[0];
-			setFcache(node, argV[0], NIL, econtext);
+			((Func *) node)->funcid = DatumGetObjectId(fcinfo.arg[0]);
+			setFcache(node, DatumGetObjectId(fcinfo.arg[0]), NIL, econtext);
 			fcache = ((Func *) node)->func_fcache;
-			fcache->setArg = (char *) argV[0];
-			argV[0] = (Datum) 0;
+			fcache->setArg = fcinfo.arg[0];
 		}
+		fcinfo.arg[0] = (Datum) 0;
 	}
 
 	/*
@@ -760,11 +762,6 @@ ExecMakeFunctionResult(Node *node,
 	 */
 	if (fcache->language == SQLlanguageId)
 	{
-		Datum		result;
-		bool		argDone;
-
-		Assert(funcNode);
-
 		/*--------------------
 		 * This loop handles the situation where we are iterating through
 		 * all results in a nested dot function (whose argument function
@@ -777,8 +774,37 @@ ExecMakeFunctionResult(Node *node,
 		 */
 		for (;;)
 		{
-			result = postquel_function(funcNode, (char **) argV,
-									   isNull, isDone);
+			/*
+			 * If function is strict, and there are any NULL arguments,
+			 * skip calling the function (at least for this set of args).
+			 */
+			bool	callit = true;
+
+			if (fcinfo.flinfo->fn_strict)
+			{
+				int		i;
+
+				for (i = 0; i < fcinfo.nargs; i++)
+				{
+					if (fcinfo.argnull[i])
+					{
+						callit = false;
+						break;
+					}
+				}
+			}
+
+			if (callit)
+			{
+				result = postquel_function(&fcinfo, fcache, ftlist, isDone);
+				*isNull = fcinfo.isnull;
+			}
+			else
+			{
+				result = (Datum) 0;
+				*isDone = true;
+				*isNull = true;
+			}
 
 			if (!*isDone)
 				break;			/* got a result from current argument */
@@ -786,7 +812,7 @@ ExecMakeFunctionResult(Node *node,
 				break;			/* input not a set, so done */
 
 			/* OK, get the next argument... */
-			ExecEvalFuncArgs(fcache, econtext, arguments, argV, &argDone);
+			ExecEvalFuncArgs(fcache, econtext, arguments, &fcinfo, &argDone);
 
 			if (argDone)
 			{
@@ -795,10 +821,11 @@ ExecMakeFunctionResult(Node *node,
 				 * End of arguments, so reset the setArg flag and say
 				 * "Done"
 				 */
-				fcache->setArg = (char *) NULL;
+				fcache->setArg = (Datum) 0;
 				fcache->hasSetArg = false;
 				*isDone = true;
-				result = (Datum) NULL;
+				*isNull = true;
+				result = (Datum) 0;
 				break;
 			}
 
@@ -826,21 +853,34 @@ ExecMakeFunctionResult(Node *node,
 			if (*isDone)
 				((Func *) node)->func_fcache = NULL;
 		}
-
-		return result;
 	}
 	else
 	{
-		int			i;
-
+		/* A non-SQL function cannot return a set, at present. */
 		if (isDone)
 			*isDone = true;
-		for (i = 0; i < fcache->nargs; i++)
-			if (fcache->nullVect[i] == true)
-				*isNull = true;
+		/*
+		 * If function is strict, and there are any NULL arguments,
+		 * skip calling the function and return NULL.
+		 */
+		if (fcinfo.flinfo->fn_strict)
+		{
+			int		i;
 
-		return (Datum) fmgr_c(&fcache->func, (FmgrValues *) argV, isNull);
+			for (i = 0; i < fcinfo.nargs; i++)
+			{
+				if (fcinfo.argnull[i])
+				{
+					*isNull = true;
+					return (Datum) 0;
+				}
+			}
+		}
+		result = FunctionCallInvoke(&fcinfo);
+		*isNull = fcinfo.isnull;
 	}
+
+	return result;
 }
 
 

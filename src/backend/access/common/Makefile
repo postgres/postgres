@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.16 2000/01/19 02:58:50 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.17 2000/05/28 17:55:52 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,12 +21,7 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-heaptuple.o heapvalid.o tupdesc.o: ../../fmgr.h
-
-../../fmgr.h:
-	$(MAKE) -C ../.. fmgr.h
-
-dep depend: ../../fmgr.h
+dep depend:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 

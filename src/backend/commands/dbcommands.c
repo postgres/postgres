@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.54 2000/05/25 06:53:43 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.55 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "storage/fd.h"			/* for closeAllVfds */
 #include "storage/sinval.h"		/* for DatabaseHasActiveBackends */
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/rel.h"

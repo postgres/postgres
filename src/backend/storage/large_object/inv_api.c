@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.67 2000/04/12 17:15:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.68 2000/05/28 17:56:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "miscadmin.h"
 #include "storage/large_object.h"
 #include "storage/smgr.h"
+#include "utils/fmgroids.h"
 #include "utils/relcache.h"
 
 /*

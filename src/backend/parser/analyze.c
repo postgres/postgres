@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.142 2000/04/12 17:15:26 momjian Exp $
+ *	$Id: analyze.c,v 1.143 2000/05/28 17:56:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/numeric.h"
 
 void		CheckSelectForUpdate(Query *qry);	/* no points for style... */

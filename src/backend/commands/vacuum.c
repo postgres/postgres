@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.148 2000/05/19 03:22:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.149 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"

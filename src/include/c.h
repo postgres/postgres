@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.69 2000/04/12 17:16:24 momjian Exp $
+ * $Id: c.h,v 1.70 2000/05/28 17:56:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,6 +250,28 @@ typedef struct
  */
 typedef signed int Offset;
 
+/*
+ * Common Postgres datatypes.
+ */
+typedef int16 int2;
+typedef int32 int4;
+typedef float float4;
+typedef double float8;
+
+#ifdef HAVE_LONG_INT_64
+/* Plain "long int" fits, use it */
+typedef long int int64;
+#else
+#ifdef HAVE_LONG_LONG_INT_64
+/* We have working support for "long long int", use that */
+typedef long long int int64;
+#else
+/* Won't actually work, but fall back to long int so that code compiles */
+typedef long int int64;
+#define INT64_IS_BUSTED
+#endif
+#endif
+
 /* ----------------------------------------------------------------
  *				Section 4:	datum type + support macros
  * ----------------------------------------------------------------
@@ -286,6 +308,24 @@ typedef Datum *DatumPtr;
 #define SET_1_BYTE(value)	(((Datum) (value)) & 0x000000ff)
 #define SET_2_BYTES(value)	(((Datum) (value)) & 0x0000ffff)
 #define SET_4_BYTES(value)	(((Datum) (value)) & 0xffffffff)
+
+/*
+ * DatumGetBool
+ *		Returns boolean value of a datum.
+ *
+ * Note: any nonzero value will be considered TRUE.
+ */
+
+#define DatumGetBool(X) ((bool) (((Datum) (X)) != 0))
+
+/*
+ * BoolGetDatum
+ *		Returns datum representation for a boolean.
+ *
+ * Note: any nonzero value will be considered TRUE.
+ */
+
+#define BoolGetDatum(X) ((Datum) ((X) ? 1 : 0))
 
 /*
  * DatumGetChar
@@ -407,24 +447,111 @@ typedef Datum *DatumPtr;
 #define PointerGetDatum(X) ((Datum) (X))
 
 /*
+ * DatumGetCString
+ *		Returns C string (null-terminated string) value of a datum.
+ *
+ * Note: C string is not a full-fledged Postgres type at present,
+ * but type input functions use this conversion for their inputs.
+ */
+
+#define DatumGetCString(X) ((char *) DatumGetPointer(X))
+
+/*
+ * CStringGetDatum
+ *		Returns datum representation for a C string (null-terminated string).
+ *
+ * Note: C string is not a full-fledged Postgres type at present,
+ * but type output functions use this conversion for their outputs.
+ * Note: CString is pass-by-reference; caller must ensure the pointed-to
+ * value has adequate lifetime.
+ */
+
+#define CStringGetDatum(X) PointerGetDatum(X)
+
+/*
  * DatumGetName
  *		Returns name value of a datum.
  */
 
-#define DatumGetName(X) ((Name) DatumGetPointer((Datum) (X)))
+#define DatumGetName(X) ((Name) DatumGetPointer(X))
 
 /*
  * NameGetDatum
  *		Returns datum representation for a name.
+ *
+ * Note: Name is pass-by-reference; caller must ensure the pointed-to
+ * value has adequate lifetime.
  */
 
-#define NameGetDatum(X) PointerGetDatum((Pointer) (X))
+#define NameGetDatum(X) PointerGetDatum(X)
+
+/*
+ * DatumGetInt64
+ *		Returns 64-bit integer value of a datum.
+ *
+ * Note: this macro hides the fact that int64 is currently a
+ * pass-by-reference type.  Someday it may be pass-by-value,
+ * at least on some platforms.
+ */
+
+#define DatumGetInt64(X) (* ((int64 *) DatumGetPointer(X)))
+
+/*
+ * Int64GetDatum
+ *		Returns datum representation for a 64-bit integer.
+ *
+ * Note: this routine returns a reference to palloc'd space.
+ */
+
+extern Datum Int64GetDatum(int64 X);
+
+/*
+ * DatumGetFloat4
+ *		Returns 4-byte floating point value of a datum.
+ *
+ * Note: this macro hides the fact that float4 is currently a
+ * pass-by-reference type.  Someday it may be pass-by-value.
+ */
+
+#define DatumGetFloat4(X) (* ((float4 *) DatumGetPointer(X)))
+
+/*
+ * Float4GetDatum
+ *		Returns datum representation for a 4-byte floating point number.
+ *
+ * Note: this routine returns a reference to palloc'd space.
+ */
+
+extern Datum Float4GetDatum(float4 X);
+
+/*
+ * DatumGetFloat8
+ *		Returns 8-byte floating point value of a datum.
+ *
+ * Note: this macro hides the fact that float8 is currently a
+ * pass-by-reference type.  Someday it may be pass-by-value,
+ * at least on some platforms.
+ */
+
+#define DatumGetFloat8(X) (* ((float8 *) DatumGetPointer(X)))
+
+/*
+ * Float8GetDatum
+ *		Returns datum representation for an 8-byte floating point number.
+ *
+ * Note: this routine returns a reference to palloc'd space.
+ */
+
+extern Datum Float8GetDatum(float8 X);
 
 
 /*
  * DatumGetFloat32
  *		Returns 32-bit floating point value of a datum.
  *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of DatumGetFloat4.
+ * It will eventually go away.
  */
 
 #define DatumGetFloat32(X) ((float32) DatumGetPointer(X))
@@ -433,14 +560,20 @@ typedef Datum *DatumPtr;
  * Float32GetDatum
  *		Returns datum representation for a 32-bit floating point number.
  *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of Float4GetDatum.
+ * It will eventually go away.
  */
 
-#define Float32GetDatum(X) PointerGetDatum((Pointer) (X))
+#define Float32GetDatum(X) PointerGetDatum(X)
 
 /*
  * DatumGetFloat64
  *		Returns 64-bit floating point value of a datum.
  *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of DatumGetFloat8.
+ * It will eventually go away.
  */
 
 #define DatumGetFloat64(X) ((float64) DatumGetPointer(X))
@@ -449,9 +582,12 @@ typedef Datum *DatumPtr;
  * Float64GetDatum
  *		Returns datum representation for a 64-bit floating point number.
  *		This is really a pointer, of course.
+ *
+ * XXX: this macro is now deprecated in favor of Float8GetDatum.
+ * It will eventually go away.
  */
 
-#define Float64GetDatum(X) PointerGetDatum((Pointer) (X))
+#define Float64GetDatum(X) PointerGetDatum(X)
 
 /* ----------------------------------------------------------------
  *				Section 5:	IsValid macros for system types

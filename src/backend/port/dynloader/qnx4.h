@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/qnx4.h,v 1.1 1999/12/16 01:25:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/qnx4.h,v 1.2 2000/05/28 17:56:02 tgl Exp $
  *
  *	NOTES
  *
@@ -15,6 +15,6 @@
  */
 /* System includes */
 void	   *pg_dlopen(char *filename);
-func_ptr	pg_dlsym(void *handle, char *funcname);
+PGFunction	pg_dlsym(void *handle, char *funcname);
 void		pg_dlclose(void *handle);
 char	   *pg_dlerror();

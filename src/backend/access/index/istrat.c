@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.42 2000/04/12 17:14:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.43 2000/05/28 17:55:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "miscadmin.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 #ifdef USE_ASSERT_CHECKING

@@ -32,7 +32,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.63 2000/04/12 17:15:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.64 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,8 +218,13 @@ static void
 advance_transition_functions(AggStatePerAgg peraggstate,
 							 Datum newVal, bool isNull)
 {
-	Datum		args[2];
+	FunctionCallInfoData	fcinfo;
 
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+
+	/*
+	 * XXX reconsider isNULL handling here
+	 */
 	if (OidIsValid(peraggstate->xfn1_oid) && !isNull)
 	{
 		if (peraggstate->noInitValue)
@@ -244,28 +249,48 @@ advance_transition_functions(AggStatePerAgg peraggstate,
 		else
 		{
 			/* apply transition function 1 */
-			args[0] = peraggstate->value1;
-			args[1] = newVal;
-			newVal = (Datum) fmgr_c(&peraggstate->xfn1,
-									(FmgrValues *) args,
-									&isNull);
-			if (!peraggstate->transtype1ByVal)
+			fcinfo.flinfo = &peraggstate->xfn1;
+			fcinfo.nargs = 2;
+			fcinfo.arg[0] = peraggstate->value1;
+			fcinfo.argnull[0] = peraggstate->value1IsNull;
+			fcinfo.arg[1] = newVal;
+			fcinfo.argnull[1] = isNull;
+			if (fcinfo.flinfo->fn_strict &&
+				(peraggstate->value1IsNull || isNull))
+			{
+				/* don't call a strict function with NULL inputs */
+				newVal = (Datum) 0;
+				fcinfo.isnull = true;
+			}
+			else
+				newVal = FunctionCallInvoke(&fcinfo);
+			if (!peraggstate->transtype1ByVal && !peraggstate->value1IsNull)
 				pfree(peraggstate->value1);
 			peraggstate->value1 = newVal;
+			peraggstate->value1IsNull = fcinfo.isnull;
 		}
 	}
 
 	if (OidIsValid(peraggstate->xfn2_oid))
 	{
 		/* apply transition function 2 */
-		args[0] = peraggstate->value2;
-		isNull = false;			/* value2 cannot be null, currently */
-		newVal = (Datum) fmgr_c(&peraggstate->xfn2,
-								(FmgrValues *) args,
-								&isNull);
-		if (!peraggstate->transtype2ByVal)
+		fcinfo.flinfo = &peraggstate->xfn2;
+		fcinfo.nargs = 1;
+		fcinfo.arg[0] = peraggstate->value2;
+		fcinfo.argnull[0] = peraggstate->value2IsNull;
+		fcinfo.isnull = false;	/* must reset after use by xfn1 */
+		if (fcinfo.flinfo->fn_strict && peraggstate->value2IsNull)
+		{
+			/* don't call a strict function with NULL inputs */
+			newVal = (Datum) 0;
+			fcinfo.isnull = true;
+		}
+		else
+			newVal = FunctionCallInvoke(&fcinfo);
+		if (!peraggstate->transtype2ByVal && !peraggstate->value2IsNull)
 			pfree(peraggstate->value2);
 		peraggstate->value2 = newVal;
+		peraggstate->value2IsNull = fcinfo.isnull;
 	}
 }
 
@@ -276,8 +301,10 @@ static void
 finalize_aggregate(AggStatePerAgg peraggstate,
 				   Datum *resultVal, bool *resultIsNull)
 {
-	Aggref	   *aggref = peraggstate->aggref;
-	char	   *args[2];
+	Aggref				   *aggref = peraggstate->aggref;
+	FunctionCallInfoData	fcinfo;
+
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
 
 	/*
 	 * If it's a DISTINCT aggregate, all we've done so far is to stuff the
@@ -337,21 +364,41 @@ finalize_aggregate(AggStatePerAgg peraggstate,
 	if (OidIsValid(peraggstate->finalfn_oid) &&
 		!peraggstate->noInitValue)
 	{
+		fcinfo.flinfo = &peraggstate->finalfn;
 		if (peraggstate->finalfn.fn_nargs > 1)
 		{
-			args[0] = (char *) peraggstate->value1;
-			args[1] = (char *) peraggstate->value2;
+			fcinfo.nargs = 2;
+			fcinfo.arg[0] = peraggstate->value1;
+			fcinfo.argnull[0] = peraggstate->value1IsNull;
+			fcinfo.arg[1] = peraggstate->value2;
+			fcinfo.argnull[1] = peraggstate->value2IsNull;
 		}
 		else if (OidIsValid(peraggstate->xfn1_oid))
-			args[0] = (char *) peraggstate->value1;
+		{
+			fcinfo.nargs = 1;
+			fcinfo.arg[0] = peraggstate->value1;
+			fcinfo.argnull[0] = peraggstate->value1IsNull;
+		}
 		else if (OidIsValid(peraggstate->xfn2_oid))
-			args[0] = (char *) peraggstate->value2;
+		{
+			fcinfo.nargs = 1;
+			fcinfo.arg[0] = peraggstate->value2;
+			fcinfo.argnull[0] = peraggstate->value2IsNull;
+		}
 		else
 			elog(ERROR, "ExecAgg: no valid transition functions??");
-		*resultIsNull = false;
-		*resultVal = (Datum) fmgr_c(&peraggstate->finalfn,
-									(FmgrValues *) args,
-									resultIsNull);
+		if (fcinfo.flinfo->fn_strict &&
+			(fcinfo.argnull[0] || fcinfo.argnull[1]))
+		{
+			/* don't call a strict function with NULL inputs */
+			*resultVal = (Datum) 0;
+			*resultIsNull = true;
+		}
+		else
+		{
+			*resultVal = FunctionCallInvoke(&fcinfo);
+			*resultIsNull = fcinfo.isnull;
+		}
 	}
 	else if (OidIsValid(peraggstate->xfn1_oid))
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: functions.h,v 1.11 2000/01/26 05:58:05 momjian Exp $
+ * $Id: functions.h,v 1.12 2000/05/28 17:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,11 @@
 #include "utils/syscache.h"
 
 extern Datum ProjectAttribute(TupleDesc TD, TargetEntry *tlist,
-				 HeapTuple tup, bool *isnullP);
+							  HeapTuple tup, bool *isnullP);
 
-extern Datum postquel_function(Func *funcNode, char **args,
-				  bool *isNull, bool *isDone);
+extern Datum postquel_function(FunctionCallInfo fcinfo,
+							   FunctionCachePtr fcache,
+							   List *func_tlist,
+							   bool *isDone);
 
 #endif	 /* FUNCTIONS_H */

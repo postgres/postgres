@@ -2,9 +2,6 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *			  procedural language (PL)
  *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.22 2000/05/23 01:59:05 tgl Exp $
- *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
  *	  The author hereby grants permission  to  use,  copy,	modify,
@@ -32,6 +29,9 @@
  *	  AN "AS IS" BASIS, AND THE AUTHOR	AND  DISTRIBUTORS  HAVE  NO
  *	  OBLIGATION   TO	PROVIDE   MAINTENANCE,	 SUPPORT,  UPDATES,
  *	  ENHANCEMENTS, OR MODIFICATIONS.
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.23 2000/05/28 17:56:29 tgl Exp $
  *
  **********************************************************************/
 
@@ -111,13 +111,11 @@ static void pltcl_init_load_unknown(void);
 
 #endif	 /* PLTCL_UNKNOWN_SUPPORT */
 
-Datum pltcl_call_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs, bool *isNull);
+Datum pltcl_call_handler(PG_FUNCTION_ARGS);
 
-static Datum pltcl_func_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs, bool *isNull);
+static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
-static HeapTuple pltcl_trigger_handler(FmgrInfo *proinfo);
+static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS);
 
 static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, char *argv[]);
@@ -368,9 +366,7 @@ pltcl_init_load_unknown(void)
 
 /* keep non-static */
 Datum
-pltcl_call_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs,
-				   bool *isNull)
+pltcl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
 
@@ -395,9 +391,9 @@ pltcl_call_handler(FmgrInfo *proinfo,
 	 * call appropriate subhandler
 	 ************************************************************/
 	if (CurrentTriggerData == NULL)
-		retval = pltcl_func_handler(proinfo, proargs, isNull);
+		retval = pltcl_func_handler(fcinfo);
 	else
-		retval = (Datum) pltcl_trigger_handler(proinfo);
+		retval = (Datum) pltcl_trigger_handler(fcinfo);
 
 	pltcl_call_level--;
 
@@ -408,13 +404,10 @@ pltcl_call_handler(FmgrInfo *proinfo,
  * pltcl_func_handler()		- Handler for regular function calls
  **********************************************************************/
 static Datum
-pltcl_func_handler(FmgrInfo *proinfo,
-				   FmgrValues *proargs,
-				   bool *isNull)
+pltcl_func_handler(PG_FUNCTION_ARGS)
 {
 	int			i;
 	char		internal_proname[512];
-	char	   *stroid;
 	Tcl_HashEntry *hashent;
 	int			hashnew;
 	pltcl_proc_desc *volatile prodesc;
@@ -427,10 +420,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 	/************************************************************
 	 * Build our internal proc name from the functions Oid
 	 ************************************************************/
-	stroid = oidout(proinfo->fn_oid);
-	strcpy(internal_proname, "__PLTcl_proc_");
-	strcat(internal_proname, stroid);
-	pfree(stroid);
+	sprintf(internal_proname, "__PLTcl_proc_%u", fcinfo->flinfo->fn_oid);
 
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
@@ -467,14 +457,14 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
 		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(proinfo->fn_oid),
+									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
 			free(prodesc);
 			elog(ERROR, "pltcl: cache lookup for proc %u failed",
-				 proinfo->fn_oid);
+				 fcinfo->flinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
@@ -508,9 +498,9 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		 * Get the required information for output conversion
 		 * of all procedure arguments
 		 ************************************************************/
-		prodesc->nargs = proinfo->fn_nargs;
+		prodesc->nargs = procStruct->pronargs;
 		proc_internal_args[0] = '\0';
-		for (i = 0; i < proinfo->fn_nargs; i++)
+		for (i = 0; i < prodesc->nargs; i++)
 		{
 			typeTup = SearchSysCacheTuple(TYPEOID,
 							ObjectIdGetDatum(procStruct->proargtypes[i]),
@@ -564,7 +554,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		Tcl_DStringAppend(&proc_internal_body, "upvar #0 ", -1);
 		Tcl_DStringAppend(&proc_internal_body, internal_proname, -1);
 		Tcl_DStringAppend(&proc_internal_body, " GD\n", -1);
-		for (i = 0; i < proinfo->fn_nargs; i++)
+		for (i = 0; i < fcinfo->nargs; i++)
 		{
 			if (!prodesc->arg_is_rel[i])
 				continue;
@@ -640,10 +630,12 @@ pltcl_func_handler(FmgrInfo *proinfo,
 			/**************************************************
 			 * For tuple values, add a list for 'array set ...'
 			 **************************************************/
+			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
+
+			Assert(slot != NULL && ! fcinfo->argnull[i]);
 			Tcl_DStringInit(&list_tmp);
-			pltcl_build_tuple_argument(
-							((TupleTableSlot *) (proargs->data[i]))->val,
-			((TupleTableSlot *) (proargs->data[i]))->ttc_tupleDescriptor,
+			pltcl_build_tuple_argument(slot->val,
+									   slot->ttc_tupleDescriptor,
 									   &list_tmp);
 			Tcl_DStringAppendElement(&tcl_cmd, Tcl_DStringValue(&list_tmp));
 			Tcl_DStringFree(&list_tmp);
@@ -655,14 +647,21 @@ pltcl_func_handler(FmgrInfo *proinfo,
 			 * Single values are added as string element
 			 * of their external representation
 			 **************************************************/
-			char	   *tmp;
+			if (fcinfo->argnull[i])
+			{
+				Tcl_DStringAppendElement(&tcl_cmd, "");
+			}
+			else
+			{
+				char	   *tmp;
 
-			tmp = (*fmgr_faddr(&(prodesc->arg_out_func[i])))
-				(proargs->data[i],
-				 prodesc->arg_out_elem[i],
-				 prodesc->arg_out_len[i]);
-			Tcl_DStringAppendElement(&tcl_cmd, tmp);
-			pfree(tmp);
+				tmp = (*fmgr_faddr(&(prodesc->arg_out_func[i])))
+					(fcinfo->arg[i],
+					 prodesc->arg_out_elem[i],
+					 prodesc->arg_out_len[i]);
+				Tcl_DStringAppendElement(&tcl_cmd, tmp);
+				pfree(tmp);
+			}
 		}
 	}
 	Tcl_DStringFree(&list_tmp);
@@ -719,10 +718,10 @@ pltcl_func_handler(FmgrInfo *proinfo,
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl: SPI_finish() failed");
 
-	retval = (Datum) (*fmgr_faddr(&prodesc->result_in_func))
-		(pltcl_safe_interp->result,
-		 prodesc->result_in_elem,
-		 -1);
+	retval = FunctionCall3(&prodesc->result_in_func,
+						   PointerGetDatum(pltcl_safe_interp->result),
+						   ObjectIdGetDatum(prodesc->result_in_elem),
+						   Int32GetDatum(-1));
 
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	return retval;
@@ -733,7 +732,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
  * pltcl_trigger_handler()	- Handler for trigger calls
  **********************************************************************/
 static HeapTuple
-pltcl_trigger_handler(FmgrInfo *proinfo)
+pltcl_trigger_handler(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata;
 	char		internal_proname[512];
@@ -767,10 +766,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	/************************************************************
 	 * Build our internal proc name from the functions Oid
 	 ************************************************************/
-	stroid = oidout(proinfo->fn_oid);
-	strcpy(internal_proname, "__PLTcl_proc_");
-	strcat(internal_proname, stroid);
-	pfree(stroid);
+	sprintf(internal_proname, "__PLTcl_proc_%u", fcinfo->flinfo->fn_oid);
 
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
@@ -800,14 +796,14 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
 		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(proinfo->fn_oid),
+									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
 			free(prodesc);
 			elog(ERROR, "pltcl: cache lookup for proc %u failed",
-				 proinfo->fn_oid);
+				 fcinfo->flinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 

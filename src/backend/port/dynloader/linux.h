@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: linux.h,v 1.8 2000/01/26 05:56:44 momjian Exp $
+ * $Id: linux.h,v 1.9 2000/05/28 17:56:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #define pg_dlsym(handle, funcname)		(NULL)
 #define pg_dlclose(handle)			   ({})
 #else
-#define pg_dlsym(handle, funcname)		((func_ptr) dld_get_func((funcname)))
+#define pg_dlsym(handle, funcname)		((PGFunction) dld_get_func((funcname)))
 #define pg_dlclose(handle)			   ({ dld_unlink_by_file(handle, 1); free(handle); })
 #endif
 #else

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.10 2000/01/26 05:58:38 momjian Exp $
+ * $Id: fcache.h,v 1.11 2000/05/28 17:56:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,22 +19,11 @@
 
 typedef struct
 {
-	int			typlen;			/* length of the return type */
-	int			typbyval;		/* true if return type is pass by value */
-	FmgrInfo	func;			/* address of function to call (for c
-								 * funcs) */
+	FmgrInfo	func;			/* info for fmgr call mechanism */
 	Oid			foid;			/* oid of the function in pg_proc */
 	Oid			language;		/* oid of the language in pg_language */
-	int			nargs;			/* number of arguments */
-
-	/* Might want to make these two arrays of size MAXFUNCARGS */
-
-	Oid		   *argOidVect;		/* oids of all the arguments */
-	bool	   *nullVect;		/* keep track of null arguments */
-
-	char	   *src;			/* source code of the function */
-	char	   *bin;			/* binary object code ?? */
-	char	   *func_state;		/* fuction_state struct for execution */
+	int			typlen;			/* length of the return type */
+	bool		typbyval;		/* true if return type is pass by value */
 
 	bool		oneResult;		/* true we only want 1 result from the
 								 * function */
@@ -42,17 +31,23 @@ typedef struct
 								 * expr whose argument is func returning a
 								 * set ugh! */
 
+	int			nargs;			/* actual number of arguments */
+	Oid		   *argOidVect;		/* oids of all the argument types */
+
+	char	   *src;			/* source code of the function */
+	char	   *bin;			/* binary object code ?? */
+	char	   *func_state;		/* function_state struct for execution */
+
 	Pointer		funcSlot;		/* if one result we need to copy it before
 								 * we end execution of the function and
 								 * free stuff */
 
-	char	   *setArg;			/* current argument for nested dot
+	Datum		setArg;			/* current argument for nested dot
 								 * execution Nested dot expressions mean
 								 * we have funcs whose argument is a set
 								 * of tuples */
+} FunctionCache;
 
-	bool		istrusted;		/* trusted fn? */
-} FunctionCache,
-		   *FunctionCachePtr;
+typedef FunctionCache *FunctionCachePtr;
 
 #endif	 /* FCACHE_H */

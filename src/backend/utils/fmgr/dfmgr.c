@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.39 2000/04/12 17:15:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.40 2000/05/28 17:56:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,190 +17,127 @@
 
 #include "postgres.h"
 
-#include "utils/dynamic_loader.h"
-
 #include "access/heapam.h"
-#include "catalog/catname.h"
 #include "catalog/pg_proc.h"
 #include "dynloader.h"
 #include "utils/builtins.h"
+#include "utils/dynamic_loader.h"
 #include "utils/syscache.h"
+
+
+/*
+ * List of dynamically loaded files.
+ */
+
+typedef struct df_files
+{
+	struct df_files *next;		/* List link */
+	dev_t		device;			/* Device file is on */
+	ino_t		inode;			/* Inode number of file */
+	void	   *handle;			/* a handle for pg_dl* functions */
+	char		filename[1];	/* Full pathname of file */
+	/* we allocate the block big enough for actual length of pathname.
+	 * filename[] must be last item in struct!
+	 */
+} DynamicFileList;
 
 static DynamicFileList *file_list = (DynamicFileList *) NULL;
 static DynamicFileList *file_tail = (DynamicFileList *) NULL;
 
-#define NOT_EQUAL(A, B) (((A).st_ino != (B).inode) \
-					  || ((A).st_dev != (B).device))
+#define SAME_INODE(A,B) ((A).st_ino == (B).inode && (A).st_dev == (B).device)
 
-static Oid	procedureId_save = -1;
-static int	pronargs_save;
-static func_ptr user_fn_save = (func_ptr) NULL;
-static func_ptr handle_load(char *filename, char *funcname);
 
-func_ptr
-fmgr_dynamic(Oid procedureId, int *pronargs)
+PGFunction
+fmgr_dynamic(Oid functionId)
 {
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
 	char	   *proname,
-			   *linksymbol,
+			   *prosrcstring,
 			   *probinstring;
-	char	   *prosrcstring = NULL;
-	Datum		probinattr;
-	Datum		prosrcattr;
-	func_ptr	user_fn;
-	Relation	rel;
+	Datum		prosrcattr,
+				probinattr;
+	PGFunction	user_fn;
 	bool		isnull;
 
-	/* Implement simple one-element cache for function lookups */
-	if (procedureId == procedureId_save)
-	{
-		*pronargs = pronargs_save;
-		return user_fn_save;
-	}
-
-	/*
-	 * The procedure isn't a builtin, so we'll have to do a catalog lookup
-	 * to find its pg_proc entry.  Moreover, since probin is varlena,
-	 * we're going to have to use heap_getattr, which means we need the
-	 * reldesc, which means we need to open the relation.  So we might as
-	 * well do that first and get the benefit of SI inval if needed.
-	 */
-	rel = heap_openr(ProcedureRelationName, AccessShareLock);
-
 	procedureTuple = SearchSysCacheTuple(PROCOID,
-										 ObjectIdGetDatum(procedureId),
+										 ObjectIdGetDatum(functionId),
 										 0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
-	{
-		elog(ERROR, "fmgr: Cache lookup failed for procedure %u\n",
-			 procedureId);
-		return (func_ptr) NULL;
-	}
-
+		elog(ERROR, "fmgr_dynamic: function %u: cache lookup failed",
+			 functionId);
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
+
 	proname = NameStr(procedureStruct->proname);
-	pronargs_save = *pronargs = procedureStruct->pronargs;
-	probinattr = heap_getattr(procedureTuple,
-							  Anum_pg_proc_probin,
-							  RelationGetDescr(rel), &isnull);
-	if (!PointerIsValid(probinattr) /* || isnull */ )
+
+	prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
+								 Anum_pg_proc_prosrc, &isnull);
+	if (isnull || !PointerIsValid(prosrcattr))
 	{
-		heap_close(rel, AccessShareLock);
-		elog(ERROR, "fmgr: Could not extract probin for %u from %s",
-			 procedureId, ProcedureRelationName);
-		return (func_ptr) NULL;
+		elog(ERROR, "fmgr: Could not extract prosrc for %u from pg_proc",
+			 functionId);
 	}
-	probinstring = textout((struct varlena *) probinattr);
+	prosrcstring = textout((text *) DatumGetPointer(prosrcattr));
 
-	prosrcattr = heap_getattr(procedureTuple,
-							  Anum_pg_proc_prosrc,
-							  RelationGetDescr(rel), &isnull);
-
-	if (isnull)
-	{							/* Use the proname for the link symbol */
-		linksymbol = proname;
+	probinattr = SysCacheGetAttr(PROCOID, procedureTuple,
+								 Anum_pg_proc_probin, &isnull);
+	if (isnull || !PointerIsValid(probinattr))
+	{
+		elog(ERROR, "fmgr: Could not extract probin for %u from pg_proc",
+			 functionId);
 	}
-	else if (!PointerIsValid(prosrcattr))
-	{							/* pg_proc must be messed up! */
-		heap_close(rel, AccessShareLock);
-		elog(ERROR, "fmgr: Could not extract prosrc for %u from %s",
-			 procedureId, ProcedureRelationName);
-		return (func_ptr) NULL;
-	}
-	else
-	{							/* The text in prosrcattr is either "-" or
-								 * a link symbol */
-		prosrcstring = textout((struct varlena *) prosrcattr);
-		if (strcmp(prosrcstring, "-") == 0)
-			linksymbol = proname;
-		else
-			linksymbol = prosrcstring;
-	}
+	probinstring = textout((text *) DatumGetPointer(probinattr));
 
-	heap_close(rel, AccessShareLock);
+	user_fn = load_external_function(probinstring, prosrcstring);
 
-	user_fn = handle_load(probinstring, linksymbol);
-
+	pfree(prosrcstring);
 	pfree(probinstring);
-	if (prosrcstring)
-		pfree(prosrcstring);
-
-	procedureId_save = procedureId;
-	user_fn_save = user_fn;
 
 	return user_fn;
 }
 
-static func_ptr
-handle_load(char *filename, char *funcname)
+PGFunction
+load_external_function(char *filename, char *funcname)
 {
-	DynamicFileList *file_scanner = (DynamicFileList *) NULL;
-	func_ptr	retval = (func_ptr) NULL;
+	DynamicFileList *file_scanner;
+	PGFunction	retval;
 	char	   *load_error;
 	struct stat stat_buf;
 
 	/*
-	 * Do this because loading files may screw up the dynamic function
-	 * manager otherwise.
+	 * Scan the list of loaded FILES to see if the file has been loaded.
 	 */
-	procedureId_save = -1;
-
-	/*
-	 * Scan the list of loaded FILES to see if the function has been
-	 * loaded.
-	 */
-
-	if (filename != (char *) NULL)
+	for (file_scanner = file_list;
+		 file_scanner != (DynamicFileList *) NULL &&
+			 strcmp(filename, file_scanner->filename) != 0;
+		 file_scanner = file_scanner->next)
+		;
+	if (file_scanner == (DynamicFileList *) NULL)
 	{
+		/*
+		 * Check for same files - different paths (ie, symlink or link)
+		 */
+		if (stat(filename, &stat_buf) == -1)
+			elog(ERROR, "stat failed on file '%s': %m", filename);
+
 		for (file_scanner = file_list;
-			 file_scanner != (DynamicFileList *) NULL
-			 && file_scanner->filename != (char *) NULL
-			 && strcmp(filename, file_scanner->filename) != 0;
+			 file_scanner != (DynamicFileList *) NULL &&
+				 !SAME_INODE(stat_buf, *file_scanner);
 			 file_scanner = file_scanner->next)
 			;
-		if (file_scanner == (DynamicFileList *) NULL)
-		{
-			if (stat(filename, &stat_buf) == -1)
-				elog(ERROR, "stat failed on file '%s': %m", filename);
-
-			for (file_scanner = file_list;
-				 file_scanner != (DynamicFileList *) NULL
-				 && (NOT_EQUAL(stat_buf, *file_scanner));
-				 file_scanner = file_scanner->next)
-				;
-
-			/*
-			 * Same files - different paths (ie, symlink or link)
-			 */
-			if (file_scanner != (DynamicFileList *) NULL)
-				strcpy(file_scanner->filename, filename);
-
-		}
 	}
-	else
-		file_scanner = (DynamicFileList *) NULL;
-
-	/*
-	 * File not loaded yet.
-	 */
 
 	if (file_scanner == (DynamicFileList *) NULL)
 	{
-		if (file_list == (DynamicFileList *) NULL)
-		{
-			file_list = (DynamicFileList *)
-				malloc(sizeof(DynamicFileList));
-			file_scanner = file_list;
-		}
-		else
-		{
-			file_tail->next = (DynamicFileList *)
-				malloc(sizeof(DynamicFileList));
-			file_scanner = file_tail->next;
-		}
-		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
+		/*
+		 * File not loaded yet.
+		 */
+		file_scanner = (DynamicFileList *)
+			malloc(sizeof(DynamicFileList) + strlen(filename));
+		if (file_scanner == NULL)
+			elog(FATAL, "Out of memory in load_external_function");
 
+		MemSet((char *) file_scanner, 0, sizeof(DynamicFileList));
 		strcpy(file_scanner->filename, filename);
 		file_scanner->device = stat_buf.st_dev;
 		file_scanner->inode = stat_buf.st_ino;
@@ -210,42 +147,36 @@ handle_load(char *filename, char *funcname)
 		if (file_scanner->handle == (void *) NULL)
 		{
 			load_error = (char *) pg_dlerror();
-			if (file_scanner == file_list)
-				file_list = (DynamicFileList *) NULL;
-			else
-				file_tail->next = (DynamicFileList *) NULL;
-
 			free((char *) file_scanner);
 			elog(ERROR, "Load of file %s failed: %s", filename, load_error);
 		}
 
-		/*
-		 * Just load the file - we are done with that so return.
-		 */
+		/* OK to link it into list */
+		if (file_list == (DynamicFileList *) NULL)
+			file_list = file_scanner;
+		else
+			file_tail->next = file_scanner;
 		file_tail = file_scanner;
-
-		if (funcname == (char *) NULL)
-			return (func_ptr) NULL;
 	}
 
-	retval = (func_ptr) pg_dlsym(file_scanner->handle, funcname);
+	/*
+	 * If funcname is NULL, we only wanted to load the file.
+	 */
+	if (funcname == (char *) NULL)
+		return (PGFunction) NULL;
 
-	if (retval == (func_ptr) NULL)
+	retval = pg_dlsym(file_scanner->handle, funcname);
+
+	if (retval == (PGFunction) NULL)
 		elog(ERROR, "Can't find function %s in file %s", funcname, filename);
 
 	return retval;
 }
 
 /*
- * This function loads files by the following:
- *
- * If the file is already loaded:
- * o  Zero out that file's loaded space (so it doesn't screw up linking)
- * o  Free all space associated with that file
- * o  Free that file's descriptor.
- *
- * Now load the file by calling handle_load with a NULL argument as the
- * function.
+ * This function loads a shlib file without looking up any particular
+ * function in it.  If the same shlib has previously been loaded,
+ * unload and reload it.
  */
 void
 load_file(char *filename)
@@ -253,7 +184,6 @@ load_file(char *filename)
 	DynamicFileList *file_scanner,
 			   *p;
 	struct stat stat_buf;
-	int			done = 0;
 
 	/*
 	 * We need to do stat() in order to determine whether this is the same
@@ -263,48 +193,32 @@ load_file(char *filename)
 	if (stat(filename, &stat_buf) == -1)
 		elog(ERROR, "LOAD: could not open file '%s': %m", filename);
 
-	if (file_list != (DynamicFileList *) NULL
-		&& !NOT_EQUAL(stat_buf, *file_list))
+	if (file_list != (DynamicFileList *) NULL)
 	{
-		file_scanner = file_list;
-		file_list = file_list->next;
-		pg_dlclose(file_scanner->handle);
-		free((char *) file_scanner);
-	}
-	else if (file_list != (DynamicFileList *) NULL)
-	{
-		file_scanner = file_list;
-		while (!done)
+		if (SAME_INODE(stat_buf, *file_list))
 		{
-			if (file_scanner->next == (DynamicFileList *) NULL)
-				done = 1;
-			else if (!NOT_EQUAL(stat_buf, *(file_scanner->next)))
-				done = 1;
-			else
-				file_scanner = file_scanner->next;
-		}
-
-		if (file_scanner->next != (DynamicFileList *) NULL)
-		{
-			p = file_scanner->next;
-			file_scanner->next = file_scanner->next->next;
-			pg_dlclose(file_scanner->handle);
+			p = file_list;
+			file_list = p->next;
+			pg_dlclose(p->handle);
 			free((char *) p);
 		}
+		else
+		{
+			for (file_scanner = file_list;
+				 file_scanner->next != (DynamicFileList *) NULL;
+				 file_scanner = file_scanner->next)
+			{
+				if (SAME_INODE(stat_buf, *(file_scanner->next)))
+				{
+					p = file_scanner->next;
+					file_scanner->next = p->next;
+					pg_dlclose(p->handle);
+					free((char *) p);
+					break;
+				}
+			}
+		}
 	}
-	handle_load(filename, (char *) NULL);
+
+	load_external_function(filename, (char *) NULL);
 }
-
-/* Is this used? bjm 1998/10/08   No. tgl 1999/02/07 */
-#ifdef NOT_USED
-func_ptr
-trigger_dynamic(char *filename, char *funcname)
-{
-	func_ptr	trigger_fn;
-
-	trigger_fn = handle_load(filename, funcname);
-
-	return trigger_fn;
-}
-
-#endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.96 2000/05/21 02:28:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.97 2000/05/28 17:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/catcache.h"
+#include "utils/fmgroids.h"
 #include "utils/relcache.h"
 #include "utils/temprel.h"
 

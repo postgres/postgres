@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.20 2000/04/12 17:16:55 momjian Exp $
+ * $Id: int8.h,v 1.21 2000/05/28 17:56:20 tgl Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
@@ -23,28 +23,6 @@
  */
 #ifndef INT8_H
 #define INT8_H
-
-#ifdef HAVE_LONG_INT_64
-/* Plain "long int" fits, use it */
-typedef long int int64;
-
-#else
-#ifdef HAVE_LONG_LONG_INT_64
-/* We have working support for "long long int", use that */
-typedef long long int int64;
-
-#else
-/* Won't actually work, but fall back to long int so that int8.c compiles */
-typedef long int int64;
-
-#define INT64_IS_BUSTED
-#endif
-#endif
-
-/* this should be set in config.h: */
-#ifndef INT64_FORMAT
-#define INT64_FORMAT "%ld"
-#endif
 
 
 extern int64 *int8in(char *str);

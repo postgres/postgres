@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.47 2000/05/11 17:46:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.48 2000/05/28 17:55:51 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source \
 				global1.description local1_template1.description
 
 ifneq ($(PORTNAME), win)
-postgres: fmgr.h $(OBJS) $(VERSIONOBJ)
+postgres: utils/fmgroids.h $(OBJS) $(VERSIONOBJ)
 	$(CC) $(CFLAGS) -o postgres $(OBJS) $(OBJS1) $(VERSIONOBJ) $(LDFLAGS)
 else
 postgres: $(DLLOBJS) $(SRCDIR)/utils/dllinit.o postgres.def libpostgres.a
@@ -126,15 +126,12 @@ parse.h: parser/parse.h
 parser/parse.h:
 	$(MAKE) -C parser parse.h
 
-fmgr.h: utils/fmgr.h
-	cp utils/fmgr.h .
-
-utils/fmgr.h:
-	$(MAKE) -C utils fmgr.h
+utils/fmgroids.h:
+	$(MAKE) -C utils fmgroids.h
 
 #############################################################################
 clean:
-	rm -f postgres$(X) $(POSTGRES_IMP) fmgr.h parse.h \
+	rm -f postgres$(X) $(POSTGRES_IMP) parse.h \
 	    global1.bki.source local1_template1.bki.source \
 	    global1.description local1_template1.description
 ifeq ($(PORTNAME), win)
@@ -205,7 +202,7 @@ install-templates: $(TEMPLATEDIR) \
 	$(INSTALL) $(INSTLOPTS) pg_options.sample \
 	  $(TEMPLATEDIR)/pg_options.sample
 
-install-headers: fmgr.h $(SRCDIR)/include/config.h
+install-headers: utils/fmgroids.h $(SRCDIR)/include/config.h
 	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 	-@if [ ! -d $(HEADERDIR)/port ]; then mkdir $(HEADERDIR)/port; fi
 	-@if [ ! -d $(HEADERDIR)/port/$(PORTNAME) ]; \
@@ -222,8 +219,6 @@ install-headers: fmgr.h $(SRCDIR)/include/config.h
 		then mkdir $(HEADERDIR)/executor; fi
 	-@if [ ! -d $(HEADERDIR)/commands ]; \
 		then mkdir $(HEADERDIR)/commands; fi
-	$(INSTALL) $(INSTLOPTS) fmgr.h \
-          $(HEADERDIR)/fmgr.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/os.h \
           $(HEADERDIR)/os.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/config.h \
@@ -244,6 +239,8 @@ install-headers: fmgr.h $(SRCDIR)/include/config.h
           $(HEADERDIR)/utils/geo_decls.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/elog.h \
           $(HEADERDIR)/utils/elog.h
+	$(INSTALL) $(INSTLOPTS) utils/fmgroids.h \
+          $(HEADERDIR)/utils/fmgroids.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/palloc.h \
           $(HEADERDIR)/utils/palloc.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/mcxt.h \

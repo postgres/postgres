@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.54 2000/04/12 17:15:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.55 2000/05/28 17:56:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 /*****************************************************************************

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.10 2000/01/26 05:57:57 momjian Exp $
+ * $Id: pg_language.h,v 1.11 2000/05/28 17:56:16 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -63,14 +63,20 @@ typedef FormData_pg_language *Form_pg_language;
  * ----------------
  */
 
-DATA(insert OID = 11 ( internal f 0 0 "n/a" ));
-DESCR("");
+DATA(insert OID = 11 ( internal f f 0 "n/a" ));
+DESCR("old-style built-in functions");
 #define INTERNALlanguageId 11
-DATA(insert OID = 13 ( "C" f 0 0 "/bin/cc" ));
-DESCR("");
+DATA(insert OID = 12 ( newinternal f f 0 "n/a" ));
+DESCR("new-style built-in functions");
+#define NEWINTERNALlanguageId 12
+DATA(insert OID = 13 ( "C" f f 0 "/bin/cc" ));
+DESCR("Dynamically-loaded old-style C functions");
 #define ClanguageId 13
-DATA(insert OID = 14 ( "sql" f 0 0 "postgres"));
-DESCR("");
+DATA(insert OID = 10 ( "newC" f f 0 "/bin/cc" ));
+DESCR("Dynamically-loaded new-style C functions");
+#define NEWClanguageId 10
+DATA(insert OID = 14 ( "sql" f f 0 "postgres"));
+DESCR("SQL-language functions");
 #define SQLlanguageId 14
 
 

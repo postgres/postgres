@@ -3,6 +3,12 @@
  * int8.c
  *	  Internal 64-bit integer operations
  *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.19 2000/05/28 17:56:05 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
@@ -17,6 +23,11 @@
 #endif
 
 #include "utils/int8.h"
+
+/* this should be set in config.h, but just in case it wasn't: */
+#ifndef INT64_FORMAT
+#define INT64_FORMAT "%ld"
+#endif
 
 #define MAXINT8LEN		25
 

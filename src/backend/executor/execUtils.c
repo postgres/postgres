@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.55 2000/04/12 17:15:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.56 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,8 @@
 #include "executor/execdebug.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/fmgroids.h"
 
 static void ExecGetIndexKeyInfo(Form_pg_index indexTuple, int *numAttsOutP,
 					AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);
@@ -843,7 +845,7 @@ ExecOpenIndices(Oid resultRelationOid,
 		 */
 		if (VARSIZE(&indexStruct->indpred) != 0)
 		{
-			predString = fmgr(F_TEXTOUT, &indexStruct->indpred);
+			predString = textout(&indexStruct->indpred);
 			predicate = (PredInfo *) stringToNode(predString);
 			pfree(predString);
 		}

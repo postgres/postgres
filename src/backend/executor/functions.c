@@ -2,14 +2,13 @@
  *
  * functions.c
  *	  Routines to handle functions called from the executor
- *	  Putting this stuff in fmgr makes the postmaster a mess....
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.33 2000/04/12 17:15:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.34 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +23,6 @@
 #include "tcop/utility.h"
 #include "utils/datum.h"
 
-#undef new
 
 typedef enum
 {
@@ -39,18 +37,18 @@ typedef struct local_es
 	ExecStatus	status;
 } execution_state;
 
-#define LAST_POSTQUEL_COMMAND(es) ((es)->next == (execution_state *)NULL)
+#define LAST_POSTQUEL_COMMAND(es) ((es)->next == (execution_state *) NULL)
 
 /* non-export function prototypes */
 static TupleDesc postquel_start(execution_state *es);
-static execution_state *init_execution_state(FunctionCachePtr fcache,
-					 char *args[]);
+static execution_state *init_execution_state(FunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
 static void postquel_end(execution_state *es);
-static void postquel_sub_params(execution_state *es, int nargs,
-					char *args[], bool *nullV);
-static Datum postquel_execute(execution_state *es, FunctionCachePtr fcache,
-				 List *fTlist, char **args, bool *isNull);
+static void postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo);
+static Datum postquel_execute(execution_state *es,
+							  FunctionCallInfo fcinfo,
+							  FunctionCachePtr fcache,
+							  List *func_tlist);
 
 
 Datum
@@ -64,7 +62,6 @@ ProjectAttribute(TupleDesc TD,
 	Var		   *attrVar = (Var *) tlist->expr;
 	AttrNumber	attrno = attrVar->varattno;
 
-
 	val = heap_getattr(tup, attrno, TD, isnullP);
 	if (*isnullP)
 		return (Datum) NULL;
@@ -77,8 +74,7 @@ ProjectAttribute(TupleDesc TD,
 }
 
 static execution_state *
-init_execution_state(FunctionCachePtr fcache,
-					 char *args[])
+init_execution_state(FunctionCachePtr fcache)
 {
 	execution_state *newes;
 	execution_state *nextes;
@@ -196,13 +192,10 @@ postquel_end(execution_state *es)
 }
 
 static void
-postquel_sub_params(execution_state *es,
-					int nargs,
-					char *args[],
-					bool *nullV)
+postquel_sub_params(execution_state *es, FunctionCallInfo fcinfo)
 {
-	ParamListInfo paramLI;
 	EState	   *estate;
+	ParamListInfo paramLI;
 
 	estate = es->estate;
 	paramLI = estate->es_param_list_info;
@@ -211,9 +204,9 @@ postquel_sub_params(execution_state *es,
 	{
 		if (paramLI->kind == PARAM_NUM)
 		{
-			Assert(paramLI->id <= nargs);
-			paramLI->value = (Datum) args[(paramLI->id - 1)];
-			paramLI->isnull = nullV[(paramLI->id - 1)];
+			Assert(paramLI->id <= fcinfo->nargs);
+			paramLI->value = fcinfo->arg[paramLI->id - 1];
+			paramLI->isnull = fcinfo->argnull[paramLI->id - 1];
 		}
 		paramLI++;
 	}
@@ -264,10 +257,9 @@ copy_function_result(FunctionCachePtr fcache,
 
 static Datum
 postquel_execute(execution_state *es,
+				 FunctionCallInfo fcinfo,
 				 FunctionCachePtr fcache,
-				 List *fTlist,
-				 char **args,
-				 bool *isNull)
+				 List *func_tlist)
 {
 	TupleTableSlot *slot;
 	Datum		value;
@@ -278,8 +270,8 @@ postquel_execute(execution_state *es,
 	 * ExecutorStart->ExecInitIndexScan->ExecEvalParam works ok. (But
 	 * note: I HOPE we can do it here). - vadim 01/22/97
 	 */
-	if (fcache->nargs > 0)
-		postquel_sub_params(es, fcache->nargs, args, fcache->nullVect);
+	if (fcinfo->nargs > 0)
+		postquel_sub_params(es, fcinfo);
 
 	if (es->status == F_EXEC_START)
 	{
@@ -293,7 +285,7 @@ postquel_execute(execution_state *es,
 	{
 		postquel_end(es);
 		es->status = F_EXEC_DONE;
-		*isNull = true;
+		fcinfo->isnull = true;
 
 		/*
 		 * If this isn't the last command for the function we have to
@@ -315,19 +307,20 @@ postquel_execute(execution_state *es,
 		 * logic and code redundancy here.
 		 */
 		resSlot = copy_function_result(fcache, slot);
-		if (fTlist != NIL)
+		if (func_tlist != NIL)
 		{
-			TargetEntry *tle = lfirst(fTlist);
+			TargetEntry *tle = lfirst(func_tlist);
 
 			value = ProjectAttribute(resSlot->ttc_tupleDescriptor,
 									 tle,
 									 resSlot->val,
-									 isNull);
+									 &fcinfo->isnull);
 		}
 		else
 		{
-			value = (Datum) resSlot;
-			*isNull = false;
+			/* XXX is this right?  Return whole tuple slot?? */
+			value = PointerGetDatum(resSlot);
+			fcinfo->isnull = false;
 		}
 
 		/*
@@ -353,11 +346,13 @@ postquel_execute(execution_state *es,
 }
 
 Datum
-postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
+postquel_function(FunctionCallInfo fcinfo,
+				  FunctionCachePtr fcache,
+				  List *func_tlist,
+				  bool *isDone)
 {
 	execution_state *es;
 	Datum		result = 0;
-	FunctionCachePtr fcache = funcNode->func_fcache;
 	CommandId	savedId;
 
 	/*
@@ -371,7 +366,7 @@ postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
 	es = (execution_state *) fcache->func_state;
 	if (es == NULL)
 	{
-		es = init_execution_state(fcache, args);
+		es = init_execution_state(fcache);
 		fcache->func_state = (char *) es;
 	}
 
@@ -388,14 +383,18 @@ postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
 	while (es != (execution_state *) NULL)
 	{
 		result = postquel_execute(es,
+								  fcinfo,
 								  fcache,
-								  funcNode->func_tlist,
-								  args,
-								  isNull);
+								  func_tlist);
 		if (es->status != F_EXEC_DONE)
 			break;
 		es = es->next;
 	}
+
+	/*
+	 * Restore outer command ID.
+	 */
+	SetScanCommandId(savedId);
 
 	/*
 	 * If we've gone through every command in this function, we are done.
@@ -417,17 +416,15 @@ postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
 		 * Let caller know we're finished.
 		 */
 		*isDone = true;
-		SetScanCommandId(savedId);
 		return (fcache->oneResult) ? result : (Datum) NULL;
 	}
 
 	/*
 	 * If we got a result from a command within the function it has to be
-	 * the final command.  All others shouldn't be returing anything.
+	 * the final command.  All others shouldn't be returning anything.
 	 */
 	Assert(LAST_POSTQUEL_COMMAND(es));
-	*isDone = false;
 
-	SetScanCommandId(savedId);
+	*isDone = false;
 	return result;
 }

@@ -32,6 +32,9 @@
  *	  OBLIGATION   TO	PROVIDE   MAINTENANCE,	 SUPPORT,  UPDATES,
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.7 2000/05/28 17:56:26 tgl Exp $
+ *
  **********************************************************************/
 
 
@@ -130,17 +133,15 @@ static Tcl_HashTable *plperl_query_hash = NULL;
 static void plperl_init_all(void);
 static void plperl_init_safe_interp(void);
 
-Datum plperl_call_handler(FmgrInfo *proinfo,
-					FmgrValues *proargs, bool *isNull);
+Datum plperl_call_handler(PG_FUNCTION_ARGS);
 
-static Datum plperl_func_handler(FmgrInfo *proinfo,
-					FmgrValues *proargs, bool *isNull);
+static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
 static SV  *plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(void);
 
 #ifdef REALLYHAVEITONTHEBALL
-static HeapTuple plperl_trigger_handler(FmgrInfo *proinfo);
+static HeapTuple plperl_trigger_handler(PG_FUNCTION_ARGS);
 
 static int plperl_elog(ClientData cdata, Tcl_Interp *interp,
 			int argc, char *argv[]);
@@ -258,9 +259,7 @@ plperl_init_safe_interp(void)
 
 /* keep non-static */
 Datum
-plperl_call_handler(FmgrInfo *proinfo,
-					FmgrValues *proargs,
-					bool *isNull)
+plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
 
@@ -285,13 +284,13 @@ plperl_call_handler(FmgrInfo *proinfo,
 	 * call appropriate subhandler
 	 ************************************************************/
 	if (CurrentTriggerData == NULL)
-		retval = plperl_func_handler(proinfo, proargs, isNull);
+		retval = plperl_func_handler(fcinfo);
 	else
 	{
 		elog(ERROR, "plperl: can't use perl in triggers yet.");
 
 		/*
-		 * retval = (Datum) plperl_trigger_handler(proinfo);
+		 * retval = (Datum) plperl_trigger_handler(fcinfo);
 		 */
 		/* make the compiler happy */
 		retval = (Datum) 0;
@@ -390,7 +389,7 @@ plperl_init_shared_libs(void)
  **********************************************************************/
 static
 SV *
-plperl_call_perl_func(plperl_proc_desc * desc, FmgrValues *pargs)
+plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
 {
 	dSP;
 
@@ -407,25 +406,34 @@ plperl_call_perl_func(plperl_proc_desc * desc, FmgrValues *pargs)
 	{
 		if (desc->arg_is_rel[i])
 		{
+			TupleTableSlot *slot = (TupleTableSlot *) fcinfo->arg[i];
+			SV		   *hashref;
 
+			Assert(slot != NULL && ! fcinfo->argnull[i]);
 			/*
 			 * plperl_build_tuple_argument better return a mortal SV.
 			 */
-			SV		   *hashref = plperl_build_tuple_argument(
-							  ((TupleTableSlot *) (pargs->data[i]))->val,
-			 ((TupleTableSlot *) (pargs->data[i]))->ttc_tupleDescriptor);
-
+			hashref = plperl_build_tuple_argument(slot->val,
+												  slot->ttc_tupleDescriptor);
 			XPUSHs(hashref);
 		}
 		else
 		{
-			char	   *tmp = (*fmgr_faddr(&(desc->arg_out_func[i])))
-			(pargs->data[i],
-			 desc->arg_out_elem[i],
-			 desc->arg_out_len[i]);
+			if (fcinfo->argnull[i])
+			{
+				XPUSHs(&PL_sv_undef);
+			}
+			else
+			{
+				char	   *tmp;
 
-			XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
-			pfree(tmp);
+				tmp = (*fmgr_faddr(&(desc->arg_out_func[i])))
+					(fcinfo->arg[i],
+					 desc->arg_out_elem[i],
+					 desc->arg_out_len[i]);
+				XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
+				pfree(tmp);
+			}
 		}
 	}
 	PUTBACK;
@@ -466,14 +474,11 @@ plperl_call_perl_func(plperl_proc_desc * desc, FmgrValues *pargs)
  * plperl_func_handler()		- Handler for regular function calls
  **********************************************************************/
 static Datum
-plperl_func_handler(FmgrInfo *proinfo,
-					FmgrValues *proargs,
-					bool *isNull)
+plperl_func_handler(PG_FUNCTION_ARGS)
 {
 	int			i;
 	char		internal_proname[512];
 	int			proname_len;
-	char	   *stroid;
 	plperl_proc_desc *prodesc;
 	SV		   *perlret;
 	Datum		retval;
@@ -482,10 +487,7 @@ plperl_func_handler(FmgrInfo *proinfo,
 	/************************************************************
 	 * Build our internal proc name from the functions Oid
 	 ************************************************************/
-	stroid = oidout(proinfo->fn_oid);
-	strcpy(internal_proname, "__PLperl_proc_");
-	strcat(internal_proname, stroid);
-	pfree(stroid);
+	sprintf(internal_proname, "__PLPerl_proc_%u", fcinfo->flinfo->fn_oid);
 	proname_len = strlen(internal_proname);
 
 	/************************************************************
@@ -518,14 +520,14 @@ plperl_func_handler(FmgrInfo *proinfo,
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
 		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(proinfo->fn_oid),
+									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
 			free(prodesc);
 			elog(ERROR, "plperl: cache lookup for proc %u failed",
-				 proinfo->fn_oid);
+				 fcinfo->flinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
@@ -560,8 +562,8 @@ plperl_func_handler(FmgrInfo *proinfo,
 		 * Get the required information for output conversion
 		 * of all procedure arguments
 		 ************************************************************/
-		prodesc->nargs = proinfo->fn_nargs;
-		for (i = 0; i < proinfo->fn_nargs; i++)
+		prodesc->nargs = procStruct->pronargs;
+		for (i = 0; i < prodesc->nargs; i++)
 		{
 			typeTup = SearchSysCacheTuple(TYPEOID,
 							ObjectIdGetDatum(procStruct->proargtypes[i]),
@@ -639,7 +641,7 @@ plperl_func_handler(FmgrInfo *proinfo,
 	/************************************************************
 	 * Call the Perl function
 	 ************************************************************/
-	perlret = plperl_call_perl_func(prodesc, proargs);
+	perlret = plperl_call_perl_func(prodesc, fcinfo);
 
 	/************************************************************
 	 * Disconnect from SPI manager and then create the return
@@ -650,10 +652,19 @@ plperl_func_handler(FmgrInfo *proinfo,
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "plperl: SPI_finish() failed");
 
-	retval = (Datum) (*fmgr_faddr(&prodesc->result_in_func))
-		(SvPV(perlret, na),
-		 prodesc->result_in_elem,
-		 prodesc->result_in_len);
+	/* XXX is this the approved way to check for an undef result? */
+	if (perlret == &PL_sv_undef)
+	{
+		retval = (Datum) 0;
+		fcinfo->isnull = true;
+	}
+	else
+	{
+		retval = FunctionCall3(&prodesc->result_in_func,
+							   PointerGetDatum(SvPV(perlret, na)),
+							   ObjectIdGetDatum(prodesc->result_in_elem),
+							   Int32GetDatum(prodesc->result_in_len));
+	}
 
 	SvREFCNT_dec(perlret);
 
@@ -674,7 +685,7 @@ plperl_func_handler(FmgrInfo *proinfo,
  * plperl_trigger_handler() - Handler for trigger calls
  **********************************************************************/
 static HeapTuple
-plperl_trigger_handler(FmgrInfo *proinfo)
+plperl_trigger_handler(PG_FUNCTION_ARGS)
 {
 	TriggerData *trigdata;
 	char		internal_proname[512];
@@ -708,10 +719,7 @@ plperl_trigger_handler(FmgrInfo *proinfo)
 	/************************************************************
 	 * Build our internal proc name from the functions Oid
 	 ************************************************************/
-	stroid = oidout(proinfo->fn_oid);
-	strcpy(internal_proname, "__PLTcl_proc_");
-	strcat(internal_proname, stroid);
-	pfree(stroid);
+	sprintf(internal_proname, "__PLPerl_proc_%u", fcinfo->flinfo->fn_oid);
 
 	/************************************************************
 	 * Lookup the internal proc name in the hashtable
@@ -741,14 +749,14 @@ plperl_trigger_handler(FmgrInfo *proinfo)
 		 * Lookup the pg_proc tuple by Oid
 		 ************************************************************/
 		procTup = SearchSysCacheTuple(PROCOID,
-									  ObjectIdGetDatum(proinfo->fn_oid),
+									  ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(procTup))
 		{
 			free(prodesc->proname);
 			free(prodesc);
 			elog(ERROR, "plperl: cache lookup for proc %u failed",
-				 proinfo->fn_oid);
+				 fcinfo->flinfo->fn_oid);
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.20 2000/01/26 05:57:51 momjian Exp $
+ * $Id: valid.h,v 1.21 2000/05/28 17:56:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ do \
 			break; \
 		} \
  \
-		if (__cur_keys->sk_func.fn_addr == (func_ptr) oideq)	/* optimization */ \
+		if (__cur_keys->sk_func.fn_addr == (PGFunction) oideq)	/* optimization */ \
 			__test = (__cur_keys->sk_argument == __atp); \
 		else if (__cur_keys->sk_flags & SK_COMMUTE) \
 			__test = (long) FMGR_PTR2(&__cur_keys->sk_func, \

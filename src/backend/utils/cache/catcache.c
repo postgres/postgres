@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.63 2000/04/12 17:15:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.64 2000/05/28 17:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/indexing.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/catcache.h"
 #include "utils/syscache.h"
 

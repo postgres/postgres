@@ -17,6 +17,7 @@
 #include "catalog/pg_shadow.h"
 #include "commands/proclang.h"
 #include "fmgr.h"
+#include "utils/builtins.h"
 #include "utils/syscache.h"
 
 
@@ -119,7 +120,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = Int8GetDatum((bool) 1);
 	values[i++] = Int8GetDatum(stmt->pltrusted);
 	values[i++] = ObjectIdGetDatum(procTup->t_data->t_oid);
-	values[i++] = (Datum) fmgr(F_TEXTIN, stmt->plcompiler);
+	values[i++] = (Datum) textin(stmt->plcompiler);
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);
 

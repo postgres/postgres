@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.26 2000/04/25 10:38:38 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.27 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"			/* ReindexDatabase() */
 #include "utils/portal.h"		/* ReindexDatabase() */
@@ -298,7 +299,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	{
 		char	   *predString;
 
-		predString = fmgr(F_TEXTOUT, &index->indpred);
+		predString = textout(&index->indpred);
 		oldPred = stringToNode(predString);
 		pfree(predString);
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: alpha.h,v 1.4 2000/01/26 05:56:44 momjian Exp $
+ * $Id: alpha.h,v 1.5 2000/05/28 17:56:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  *
  */
 #define  pg_dlopen(f)	dlopen(f, RTLD_LAZY)
-#define  pg_dlsym(h, f) ((func_ptr)dlsym(h, f))
+#define  pg_dlsym(h, f) ((PGFunction) dlsym(h, f))
 #define  pg_dlclose(h)	dlclose(h)
 #define  pg_dlerror()	dlerror()
 

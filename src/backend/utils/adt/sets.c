@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.30 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.31 2000/05/28 17:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,8 +56,9 @@ SetDefine(char *querystr, char *typename)
 							 "sql",		/* languageName */
 							 querystr,	/* sourceCode */
 							 fileName,	/* fileName */
-							 false,		/* canCache */
 							 true,		/* trusted */
+							 false,		/* canCache XXX appropriate? */
+							 false,		/* isStrict XXX appropriate? */
 							 100,		/* byte_pct */
 							 0, /* perbyte_cpu */
 							 0, /* percall_cpu */

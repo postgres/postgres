@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.42 2000/04/12 17:14:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.43 2000/05/28 17:55:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
@@ -24,7 +25,6 @@
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#include "utils/fmgrtab.h"
 #include "utils/lsyscache.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
@@ -41,8 +41,9 @@ ProcedureCreate(char *procedureName,
 				char *languageName,
 				char *prosrc,
 				char *probin,
-				bool canCache,
 				bool trusted,
+				bool canCache,
+				bool isStrict,
 				int32 byte_pct,
 				int32 perbyte_cpu,
 				int32 percall_cpu,
@@ -74,6 +75,15 @@ ProcedureCreate(char *procedureName,
 	Assert(PointerIsValid(prosrc));
 	Assert(PointerIsValid(probin));
 
+	tup = SearchSysCacheTuple(LANGNAME,
+							  PointerGetDatum(languageName),
+							  0, 0, 0);
+
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "ProcedureCreate: no such language '%s'", languageName);
+
+	languageObjectId = tup->t_data->t_oid;
+
 	parameterCount = 0;
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	foreach(x, argList)
@@ -86,7 +96,7 @@ ProcedureCreate(char *procedureName,
 
 		if (strcmp(strVal(t), "opaque") == 0)
 		{
-			if (strcmp(languageName, "sql") == 0)
+			if (languageObjectId == SQLlanguageId)
 				elog(ERROR, "ProcedureCreate: sql functions cannot take type \"opaque\"");
 			toid = 0;
 		}
@@ -120,7 +130,7 @@ ProcedureCreate(char *procedureName,
 		elog(ERROR, "ProcedureCreate: procedure %s already exists with same arguments",
 			 procedureName);
 
-	if (!strcmp(languageName, "sql"))
+	if (languageObjectId == SQLlanguageId)
 	{
 
 		/*
@@ -129,7 +139,7 @@ ProcedureCreate(char *procedureName,
 		 * matches a function already in pg_proc.  If so just return the
 		 * OID of the existing set.
 		 */
-		if (!strcmp(procedureName, GENERICSETNAME))
+		if (strcmp(procedureName, GENERICSETNAME) == 0)
 		{
 #ifdef SETS_FIXED
 			/* ----------
@@ -138,7 +148,7 @@ ProcedureCreate(char *procedureName,
 			 * have been removed. Instead a sequential heap scan
 			 * or something better must get implemented. The reason
 			 * for removing is that nbtree index crashes if sources
-			 * exceed 2K what's likely for procedural languages.
+			 * exceed 2K --- what's likely for procedural languages.
 			 *
 			 * 1999/09/30 Jan
 			 * ----------
@@ -158,18 +168,9 @@ ProcedureCreate(char *procedureName,
 		}
 	}
 
-	tup = SearchSysCacheTuple(LANGNAME,
-							  PointerGetDatum(languageName),
-							  0, 0, 0);
-
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "ProcedureCreate: no such language %s", languageName);
-
-	languageObjectId = tup->t_data->t_oid;
-
 	if (strcmp(returnTypeName, "opaque") == 0)
 	{
-		if (strcmp(languageName, "sql") == 0)
+		if (languageObjectId == SQLlanguageId)
 			elog(ERROR, "ProcedureCreate: sql functions cannot return type \"opaque\"");
 		typeObjectId = 0;
 	}
@@ -181,16 +182,10 @@ ProcedureCreate(char *procedureName,
 		{
 			elog(NOTICE, "ProcedureCreate: type '%s' is not yet defined",
 				 returnTypeName);
-#ifdef NOT_USED
-			elog(NOTICE, "ProcedureCreate: creating a shell for type '%s'",
-				 returnTypeName);
-#endif
 			typeObjectId = TypeShellMake(returnTypeName);
 			if (!OidIsValid(typeObjectId))
-			{
 				elog(ERROR, "ProcedureCreate: could not create type '%s'",
 					 returnTypeName);
-			}
 		}
 		else if (!defined)
 		{
@@ -219,7 +214,7 @@ ProcedureCreate(char *procedureName,
 	 * procedure's text in the prosrc attribute.
 	 */
 
-	if (strcmp(languageName, "sql") == 0)
+	if (languageObjectId == SQLlanguageId)
 	{
 		querytree_list = pg_parse_and_rewrite(prosrc, typev, parameterCount,
 											  FALSE);
@@ -237,16 +232,50 @@ ProcedureCreate(char *procedureName,
 	 * FUNCTION xyz AS '' LANGUAGE 'internal'.	To preserve some modicum
 	 * of backwards compatibility, accept an empty 'prosrc' value as
 	 * meaning the supplied SQL function name.
+	 *
+	 * XXX: we could treat "internal" and "newinternal" language specs
+	 * as equivalent, and take the actual language ID from the table of
+	 * known builtin functions.  Is that a better idea than making the
+	 * user specify the right thing?  Not sure.
 	 */
 
-	if (strcmp(languageName, "internal") == 0)
+	if (languageObjectId == INTERNALlanguageId ||
+		languageObjectId == NEWINTERNALlanguageId)
 	{
+		Oid			actualLangID;
+
 		if (strlen(prosrc) == 0)
 			prosrc = procedureName;
-		if (fmgr_lookupByName(prosrc) == (func_ptr) NULL)
+		actualLangID = fmgr_internal_language(prosrc);
+		if (actualLangID == InvalidOid)
 			elog(ERROR,
-			"ProcedureCreate: there is no builtin function named \"%s\"",
+				 "ProcedureCreate: there is no builtin function named \"%s\"",
 				 prosrc);
+		if (actualLangID != languageObjectId)
+			elog(ERROR,
+				 "ProcedureCreate: \"%s\" is not %s internal function",
+				 prosrc,
+				 ((languageObjectId == INTERNALlanguageId) ?
+				  "an old-style" : "a new-style"));
+	}
+
+	/*
+	 * If this is a dynamically loadable procedure, make sure that the
+	 * library file exists, is loadable, and contains the specified link
+	 * symbol.
+	 *
+	 * We used to perform these checks only when the function was first
+	 * called, but it seems friendlier to verify the library's validity
+	 * at CREATE FUNCTION time.
+	 */
+
+	if (languageObjectId == ClanguageId ||
+		languageObjectId == NEWClanguageId)
+	{
+		/* If link symbol is specified as "-", substitute procedure name */
+		if (strcmp(prosrc, "-") == 0)
+			prosrc = procedureName;
+		(void) load_external_function(probin, prosrc);
 	}
 
 	/*
@@ -265,9 +294,10 @@ ProcedureCreate(char *procedureName,
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = ObjectIdGetDatum(languageObjectId);
 	/* XXX isinherited is always false for now */
-	values[i++] = Int8GetDatum((bool) 0);
+	values[i++] = Int8GetDatum((bool) false);
 	values[i++] = Int8GetDatum(trusted);
 	values[i++] = Int8GetDatum(canCache);
+	values[i++] = Int8GetDatum(isStrict);
 	values[i++] = UInt16GetDatum(parameterCount);
 	values[i++] = Int8GetDatum(returnsSet);
 	values[i++] = ObjectIdGetDatum(typeObjectId);
@@ -276,8 +306,8 @@ ProcedureCreate(char *procedureName,
 	values[i++] = Int32GetDatum(perbyte_cpu);	/* properbyte_cpu */
 	values[i++] = Int32GetDatum(percall_cpu);	/* propercall_cpu */
 	values[i++] = Int32GetDatum(outin_ratio);	/* prooutin_ratio */
-	values[i++] = (Datum) fmgr(F_TEXTIN, prosrc);		/* prosrc */
-	values[i++] = (Datum) fmgr(F_TEXTIN, probin);		/* probin */
+	values[i++] = (Datum) textin(prosrc);		/* prosrc */
+	values[i++] = (Datum) textin(probin);		/* probin */
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 

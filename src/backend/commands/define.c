@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.42 2000/05/12 18:51:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.43 2000/05/28 17:55:55 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -35,8 +35,6 @@
  */
 #include <ctype.h>
 #include <math.h>
-#include <sys/stat.h>
-
 
 #include "postgres.h"
 
@@ -66,18 +64,20 @@ static void
 case_translate_language_name(const char *input, char *output)
 {
 /*-------------------------------------------------------------------------
-  Translate the input language name to lower case, except if it's C,
-  translate to upper case.
+  Translate the input language name to lower case, except if it's "C",
+  translate to upper case, or "newC", translate to that spelling.
 --------------------------------------------------------------------------*/
 	int			i;
 
-	for (i = 0; i < NAMEDATALEN && input[i]; ++i)
+	for (i = 0; i < NAMEDATALEN-1 && input[i]; ++i)
 		output[i] = tolower(input[i]);
 
 	output[i] = '\0';
 
 	if (strcmp(output, "c") == 0)
 		output[0] = 'C';
+	else if (strcmp(output, "newc") == 0)
+		output[3] = 'C';
 }
 
 
@@ -108,9 +108,10 @@ compute_return_type(const Node *returnType,
 
 
 static void
-compute_full_attributes(List *parameters, int32 *byte_pct_p,
-						int32 *perbyte_cpu_p, int32 *percall_cpu_p,
-						int32 *outin_ratio_p, bool *canCache_p)
+compute_full_attributes(List *parameters,
+						int32 *byte_pct_p, int32 *perbyte_cpu_p,
+						int32 *percall_cpu_p, int32 *outin_ratio_p,
+						bool *canCache_p, bool *isStrict_p)
 {
 /*--------------------------------------------------------------------------
   Interpret the parameters *parameters and return their contents as
@@ -119,14 +120,20 @@ compute_full_attributes(List *parameters, int32 *byte_pct_p,
   These parameters supply optional information about a function.
   All have defaults if not specified.
 
-  Note: as of version 6.6, canCache is used (if set, the optimizer's
-  constant-folder is allowed to pre-evaluate the function if all its
-  inputs are constant).  The other four are not used.  They used to be
+  Note: currently, only two of these parameters actually do anything:
+
+  * canCache means the optimizer's constant-folder is allowed to
+    pre-evaluate the function when all its inputs are constants.
+
+  * isStrict means the function should not be called when any NULL
+    inputs are present; instead a NULL result value should be assumed.
+
+  The other four parameters are not used anywhere.  They used to be
   used in the "expensive functions" optimizer, but that's been dead code
   for a long time.
 
-  Since canCache is useful for any function, we now allow attributes to be
-  supplied for all functions regardless of language.
+  Since canCache and isStrict are useful for any function, we now allow
+  attributes to be supplied for all functions regardless of language.
 ---------------------------------------------------------------------------*/
 	List	   *pl;
 
@@ -136,6 +143,7 @@ compute_full_attributes(List *parameters, int32 *byte_pct_p,
 	*percall_cpu_p = PERCALL_CPU;
 	*outin_ratio_p = OUTIN_RATIO;
 	*canCache_p = false;
+	*isStrict_p = false;
 
 	foreach(pl, parameters)
 	{
@@ -143,6 +151,8 @@ compute_full_attributes(List *parameters, int32 *byte_pct_p,
 
 		if (strcasecmp(param->defname, "iscachable") == 0)
 			*canCache_p = true;
+		else if (strcasecmp(param->defname, "isstrict") == 0)
+			*isStrict_p = true;
 		else if (strcasecmp(param->defname, "trusted") == 0)
 		{
 
@@ -182,24 +192,17 @@ static void
 interpret_AS_clause(const char *languageName, const List *as,
 					char **prosrc_str_p, char **probin_str_p)
 {
-	struct stat stat_buf;
-
 	Assert(as != NIL);
 
-	if (strcmp(languageName, "C") == 0)
+	if (strcmp(languageName, "C") == 0 ||
+		strcmp(languageName, "newC") == 0)
 	{
 
 		/*
 		 * For "C" language, store the file name in probin and, when
-		 * given, the link symbol name in prosrc. But first, stat the
-		 * file to make sure it's there!
+		 * given, the link symbol name in prosrc.
 		 */
-		
-		if (stat(strVal(lfirst(as)), &stat_buf) == -1)
-				elog(ERROR, "stat failed on file '%s': %m", strVal(lfirst(as)));
-
 		*probin_str_p = strVal(lfirst(as));
-
 		if (lnext(as) == NULL)
 			*prosrc_str_p = "-";
 		else
@@ -239,8 +242,8 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	char		languageName[NAMEDATALEN];
 
 	/*
-	 * name of language of function, with case adjusted: "C", "internal",
-	 * or "SQL"
+	 * name of language of function, with case adjusted: "C", "newC",
+	 * "internal", "newinternal", "sql", etc.
 	 */
 
 	bool		returnsSet;
@@ -257,19 +260,21 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 				perbyte_cpu,
 				percall_cpu,
 				outin_ratio;
-	bool		canCache;
-
+	bool		canCache,
+				isStrict;
 
 	case_translate_language_name(stmt->language, languageName);
 
 	if (strcmp(languageName, "C") == 0 ||
-		strcmp(languageName, "internal") == 0)
+		strcmp(languageName, "newC") == 0 ||
+		strcmp(languageName, "internal") == 0 ||
+		strcmp(languageName, "newinternal") == 0)
 	{
 		if (!superuser())
 			elog(ERROR,
 				 "Only users with Postgres superuser privilege are "
-				 "permitted to create a function "
-			  "in the '%s' language.  Others may use the 'sql' language "
+				 "permitted to create a function in the '%s' language.\n\t"
+				 "Others may use the 'sql' language "
 				 "or the created procedural languages.",
 				 languageName);
 	}
@@ -288,28 +293,23 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 											0, 0, 0);
 
 		if (!HeapTupleIsValid(languageTuple))
-		{
-
 			elog(ERROR,
 				 "Unrecognized language specified in a CREATE FUNCTION: "
-				 "'%s'.  Recognized languages are sql, C, internal "
-				 "and the created procedural languages.",
+				 "'%s'.\n\tRecognized languages are sql, C, newC, "
+				 "internal, newinternal, and created procedural languages.",
 				 languageName);
-		}
 
 		/* Check that this language is a PL */
 		languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 		if (!(languageStruct->lanispl))
-		{
 			elog(ERROR,
 				 "Language '%s' isn't defined as PL", languageName);
-		}
 
 		/*
 		 * Functions in untrusted procedural languages are restricted to
 		 * be defined by postgres superusers only
 		 */
-		if (languageStruct->lanpltrusted == false && !superuser())
+		if (!languageStruct->lanpltrusted && !superuser())
 		{
 			elog(ERROR, "Only users with Postgres superuser privilege "
 				 "are permitted to create a function in the '%s' "
@@ -324,7 +324,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 
 	compute_full_attributes(stmt->withClause,
 							&byte_pct, &perbyte_cpu, &percall_cpu,
-							&outin_ratio, &canCache);
+							&outin_ratio, &canCache, &isStrict);
 
 	interpret_AS_clause(languageName, stmt->as, &prosrc_str, &probin_str);
 
@@ -338,8 +338,9 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 					languageName,
 					prosrc_str, /* converted to text later */
 					probin_str, /* converted to text later */
-					canCache,
 					true,		/* (obsolete "trusted") */
+					canCache,
+					isStrict,
 					byte_pct,
 					perbyte_cpu,
 					percall_cpu,

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.55 2000/04/12 17:16:28 momjian Exp $
+ * $Id: pg_attribute.h,v 1.56 2000/05/28 17:56:16 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -294,16 +294,17 @@ DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
 { 1255, {"proisinh"},			16, 0,	1,	4, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1255, {"proistrusted"},		16, 0,	1,	5, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1255, {"proiscachable"},		16, 0,	1,	6, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
-{ 1255, {"pronargs"},			21, 0,	2,	7, 0, -1, -1, '\001', 'p', '\0', 's', '\0', '\0' }, \
-{ 1255, {"proretset"},			16, 0,	1,	8, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
-{ 1255, {"prorettype"},			26, 0,	4,	9, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"proargtypes"},		30, 0, INDEX_MAX_KEYS*4, 10, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"probyte_pct"},		23, 0,	4, 11, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"properbyte_cpu"},		23, 0,	4, 12, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"propercall_cpu"},		23, 0,	4, 13, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"prooutin_ratio"},		23, 0,	4, 14, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"prosrc"},				25, 0, -1,	15, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1255, {"probin"},				17, 0, -1,	16, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }
+{ 1255, {"proisstrict"},		16, 0,	1,	7, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
+{ 1255, {"pronargs"},			21, 0,	2,	8, 0, -1, -1, '\001', 'p', '\0', 's', '\0', '\0' }, \
+{ 1255, {"proretset"},			16, 0,	1,	9, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
+{ 1255, {"prorettype"},			26, 0,	4, 10, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"proargtypes"},		30, 0, INDEX_MAX_KEYS*4, 11, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"probyte_pct"},		23, 0,	4, 12, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"properbyte_cpu"},		23, 0,	4, 13, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"propercall_cpu"},		23, 0,	4, 14, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"prooutin_ratio"},		23, 0,	4, 15, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"prosrc"},				25, 0, -1, 16, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1255, {"probin"},				17, 0, -1, 17, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1255 proname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1255 proowner			23 0  4   2 0 -1 -1 t p f i f f));
@@ -311,16 +312,17 @@ DATA(insert OID = 0 ( 1255 prolang			26 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 proisinh			16 0  1   4 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1255 proistrusted		16 0  1   5 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1255 proiscachable	16 0  1   6 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1255 pronargs			21 0  2   7 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1255 proretset		16 0  1   8 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1255 prorettype		26 0  4   9 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 proargtypes		30 0 INDEX_MAX_KEYS*4 10 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1255 probyte_pct		23 0  4  11 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 properbyte_cpu	23 0  4  12 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 propercall_cpu	23 0  4  13 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 prooutin_ratio	23 0  4  14 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 prosrc			25 0 -1  15 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1255 probin			17 0 -1  16 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1255 proisstrict		16 0  1   7 0 -1 -1 t p f c f f));
+DATA(insert OID = 0 ( 1255 pronargs			21 0  2   8 0 -1 -1 t p f s f f));
+DATA(insert OID = 0 ( 1255 proretset		16 0  1   9 0 -1 -1 t p f c f f));
+DATA(insert OID = 0 ( 1255 prorettype		26 0  4  10 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1255 proargtypes		30 0 INDEX_MAX_KEYS*4 11 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1255 probyte_pct		23 0  4  12 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1255 properbyte_cpu	23 0  4  13 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1255 propercall_cpu	23 0  4  14 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1255 prooutin_ratio	23 0  4  15 0 -1 -1 t p f i f f));
+DATA(insert OID = 0 ( 1255 prosrc			25 0 -1  16 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1255 probin			17 0 -1  17 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1255 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1255 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

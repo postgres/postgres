@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.31 2000/03/17 02:36:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.32 2000/05/28 17:55:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,11 +42,11 @@ static char *strmake(char *str, int len);
  *		result_buf		: pointer to result buffer (&int if integer)
  *		result_len		: length of return value.
  *		result_is_int	: If the result is an integer, this must be non-zero
- *		args			: pointer to a NULL terminated arg array.
+ *		args			: pointer to an array of PQArgBlock items.
  *						  (length, if integer, and result-pointer)
  *		nargs			: # of arguments in args array.
  *
- *		This code scavanged from HandleFunctionRequest() in tcop/fastpath.h
+ *		This code scavenged from HandleFunctionRequest() in tcop/fastpath.h
  * ----------------
  */
 char *
@@ -57,46 +57,53 @@ PQfn(int fnid,
 	 PQArgBlock *args,
 	 int nargs)
 {
-	char	   *retval;			/* XXX - should be datum, maybe ? */
-	char	   *arg[FUNC_MAX_ARGS];
-	bool		isNull;
-	int			i;
+	FmgrInfo				flinfo;
+	FunctionCallInfoData	fcinfo;
+	Datum					retval;
+	int						i;
 
-	/* ----------------
-	 *	fill args[] array
-	 * ----------------
-	 */
 	if (nargs > FUNC_MAX_ARGS)
 		elog(ERROR, "functions cannot have more than %d arguments",
 			 FUNC_MAX_ARGS);
+
+	/* ----------------
+	 *	set up the argument block for the function manager
+	 * ----------------
+	 */
+	fmgr_info((Oid) fnid, &flinfo);
+
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+    fcinfo.flinfo = &flinfo;
+	fcinfo.nargs = nargs;
+
 	for (i = 0; i < nargs; i++)
 	{
 		if (args[i].len == VAR_LENGTH_ARG)
-			arg[i] = (char *) args[i].u.ptr;
+			fcinfo.arg[i] = (Datum) args[i].u.ptr;
 		else if ((Size) args[i].len > sizeof(int4))
 			elog(ERROR, "arg_length of argument %d too long", i);
 		else
-			arg[i] = (char *) args[i].u.integer;
+			fcinfo.arg[i] = (Datum) args[i].u.integer;
 	}
 
 	/* ----------------
 	 *	call the postgres function manager
 	 * ----------------
 	 */
-	retval = fmgr_array_args(fnid, nargs, arg, &isNull);
+	retval = FunctionCallInvoke(&fcinfo);
 
 	/* ----------------
 	 *	put the result in the buffer the user specified and
 	 *	return the proper code.
 	 * ----------------
 	 */
-	if (isNull)					/* void retval */
+	if (fcinfo.isnull)			/* void retval */
 		return "0";
 
 	if (result_is_int)
-		*result_buf = (int) retval;
+		*result_buf = DatumGetInt32(retval);
 	else
-		memmove(result_buf, retval, result_len);
+		memmove(result_buf, DatumGetPointer(retval), result_len);
 	return "G";
 }
 

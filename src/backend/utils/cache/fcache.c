@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.30 2000/04/12 17:15:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.31 2000/05/28 17:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,20 +24,9 @@
 
 static Oid	GetDynamicFuncArgType(Var *arg, ExprContext *econtext);
 static FunctionCachePtr init_fcache(Oid foid,
-			bool use_syscache,
-			List *argList,
-			ExprContext *econtext);
+									List *argList,
+									ExprContext *econtext);
 
-/*-----------------------------------------------------------------
- *
- * Initialize the 'FunctionCache' given the PG_PROC oid.
- *
- *
- * NOTE:  This function can be called when the system cache is being
- *		  initialized.	Therefore, use_syscache should ONLY be true
- *		  when the function return type is interesting (ie: set_fcache).
- *-----------------------------------------------------------------
- */
 #define FuncArgTypeIsDynamic(arg) \
 	(IsA(arg,Var) && ((Var*)arg)->varattno == InvalidAttrNumber)
 
@@ -53,7 +42,6 @@ GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 	rtid = ((Var *) arg)->varno;
 	relname = (char *) getrelname(rtid, econtext->ecxt_range_table);
 
-
 	tup = SearchSysCacheTuple(TYPENAME,
 							  PointerGetDatum(relname),
 							  0, 0, 0);
@@ -64,9 +52,14 @@ GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 	return tup->t_data->t_oid;
 }
 
+/*-----------------------------------------------------------------
+ *
+ * Initialize a 'FunctionCache' struct given the PG_PROC oid.
+ *
+ *-----------------------------------------------------------------
+ */
 static FunctionCachePtr
 init_fcache(Oid foid,
-			bool use_syscache,
 			List *argList,
 			ExprContext *econtext)
 {
@@ -79,16 +72,13 @@ init_fcache(Oid foid,
 	text	   *tmp;
 	bool		isNull;
 
+	retval = (FunctionCachePtr) palloc(sizeof(FunctionCache));
+	MemSet(retval, 0, sizeof(FunctionCache));
+
 	/* ----------------
 	 *	 get the procedure tuple corresponding to the given functionOid
 	 * ----------------
 	 */
-	retval = (FunctionCachePtr) palloc(sizeof(FunctionCache));
-	memset(retval, 0, sizeof(FunctionCache));
-
-	if (!use_syscache)
-		elog(ERROR, "what the ????, init the fcache without the catalogs?");
-
 	procedureTuple = SearchSysCacheTuple(PROCOID,
 										 ObjectIdGetDatum(foid),
 										 0, 0, 0);
@@ -114,8 +104,7 @@ init_fcache(Oid foid,
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/* ----------------
-	 *	 get the type length and by-value from the type tuple and
-	 *	 save the information in our one element cache.
+	 *	 get the type length and by-value flag from the type tuple
 	 * ----------------
 	 */
 	retval->typlen = typeStruct->typlen;
@@ -136,10 +125,9 @@ init_fcache(Oid foid,
 	retval->foid = foid;
 	retval->language = procedureStruct->prolang;
 	retval->func_state = (char *) NULL;
-	retval->setArg = NULL;
+	retval->setArg = (Datum) 0;
 	retval->hasSetArg = false;
 	retval->oneResult = !procedureStruct->proretset;
-	retval->istrusted = procedureStruct->proistrusted;
 
 	/*
 	 * If we are returning exactly one result then we have to copy tuples
@@ -162,9 +150,8 @@ init_fcache(Oid foid,
 		slot->ttc_tupleDescriptor = (TupleDesc) NULL;
 		slot->ttc_buffer = InvalidBuffer;
 		slot->ttc_whichplan = -1;
-		retval->funcSlot = (Pointer) slot;
 
-		relationTuple = (HeapTuple)
+		relationTuple =
 			SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(&typeStruct->typname),
 								0, 0, 0);
@@ -177,10 +164,12 @@ init_fcache(Oid foid,
 		else
 			td = CreateTemplateTupleDesc(1);
 
-		((TupleTableSlot *) retval->funcSlot)->ttc_tupleDescriptor = td;
+		slot->ttc_tupleDescriptor = td;
+
+		retval->funcSlot = (Pointer) slot;
 	}
 	else
-		retval->funcSlot = (char *) NULL;
+		retval->funcSlot = (Pointer) NULL;
 
 	nargs = procedureStruct->pronargs;
 	retval->nargs = nargs;
@@ -188,8 +177,6 @@ init_fcache(Oid foid,
 	if (nargs > 0)
 	{
 		Oid		   *argTypes;
-
-		retval->nullVect = (bool *) palloc(retval->nargs * sizeof(bool));
 
 		if (retval->language == SQLlanguageId)
 		{
@@ -218,7 +205,6 @@ init_fcache(Oid foid,
 	else
 	{
 		retval->argOidVect = (Oid *) NULL;
-		retval->nullVect = (BoolPtr) NULL;
 	}
 
 	if (procedureStruct->prolang == SQLlanguageId)
@@ -257,7 +243,7 @@ init_fcache(Oid foid,
 		retval->nargs = retval->func.fn_nargs;
 	}
 	else
-		retval->func.fn_addr = (func_ptr) NULL;
+		retval->func.fn_addr = (PGFunction) NULL;
 
 	return retval;
 }
@@ -269,7 +255,7 @@ setFcache(Node *node, Oid foid, List *argList, ExprContext *econtext)
 	Oper	   *onode;
 	FunctionCachePtr fcache;
 
-	fcache = init_fcache(foid, true, argList, econtext);
+	fcache = init_fcache(foid, argList, econtext);
 
 	if (IsA(node, Oper))
 	{

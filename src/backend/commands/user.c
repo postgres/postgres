@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.53 2000/05/04 20:06:07 tgl Exp $
+ * $Id: user.c,v 1.54 2000/05/28 17:55:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 static void CheckPgUserAclNotNull(void);

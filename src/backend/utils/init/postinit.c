@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.57 2000/04/12 17:16:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.58 2000/05/28 17:56:08 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -30,6 +30,7 @@
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/qnx4.c,v 1.1 1999/12/16 01:25:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/qnx4.c,v 1.2 2000/05/28 17:56:02 tgl Exp $
  *
  *	NOTES
  *
@@ -30,7 +30,7 @@ pg_dlopen(char *filename)
 	return (void *) NULL;
 }
 
-func_ptr
+PGFunction
 pg_dlsym(void *handle, char *funcname)
 {
 	return NULL;

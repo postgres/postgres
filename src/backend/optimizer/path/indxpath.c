@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.83 2000/04/16 04:41:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.84 2000/05/28 17:55:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.40 2000/04/12 17:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.41 2000/05/28 17:55:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,16 +530,12 @@ _freeFcache(FunctionCachePtr ptr)
 {
 	if (ptr->argOidVect)
 		pfree(ptr->argOidVect);
-	if (ptr->nullVect)
-		pfree(ptr->nullVect);
 	if (ptr->src)
 		pfree(ptr->src);
 	if (ptr->bin)
 		pfree(ptr->bin);
 	if (ptr->func_state)
 		pfree(ptr->func_state);
-	if (ptr->setArg)
-		pfree(ptr->setArg);
 
 	pfree(ptr);
 }

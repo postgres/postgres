@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.40 2000/04/12 17:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.41 2000/05/28 17:56:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 static Oid *oper_select_candidate(int nargs, Oid *input_typeids,

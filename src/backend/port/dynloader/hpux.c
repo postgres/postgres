@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.13 2000/04/26 23:35:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/hpux.c,v 1.14 2000/05/28 17:56:02 tgl Exp $
  *
  *	NOTES
  *		all functions are defined here -- it's impossible to trace the
@@ -39,13 +39,13 @@ pg_dlopen(char *filename)
 	return (void *) handle;
 }
 
-func_ptr
+PGFunction
 pg_dlsym(void *handle, char *funcname)
 {
-	func_ptr	f;
+	PGFunction	f;
 
 	if (shl_findsym((shl_t *) & handle, funcname, TYPE_PROCEDURE, &f) == -1)
-		f = (func_ptr) NULL;
+		f = (PGFunction) NULL;
 	return f;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.50 2000/04/12 17:14:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.51 2000/05/28 17:55:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
 
@@ -190,7 +191,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	/*
 	 * ... and fill typdefault with a bogus value
 	 */
-	values[i++] = (Datum) fmgr(F_TEXTIN, typeName);		/* 15 */
+	values[i++] = (Datum) textin(typeName);		/* 15 */
 
 	/* ----------------
 	 *	create a new type tuple with FormHeapTuple
@@ -449,10 +450,9 @@ TypeCreate(char *typeName,
 	 *	initialize the default value for this type.
 	 * ----------------
 	 */
-	values[i] = (Datum) fmgr(F_TEXTIN,	/* 16 */
-							 PointerIsValid(defaultTypeValue)
-							 ? defaultTypeValue : "-"); /* XXX default
-														 * typdefault */
+	values[i] = (Datum) textin(PointerIsValid(defaultTypeValue)	/* 16 */
+							   ? defaultTypeValue : "-"); /* XXX default
+														   * typdefault */
 
 	/* ----------------
 	 *	open pg_type and begin a scan for the type name.

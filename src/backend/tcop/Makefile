@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.21 2000/01/19 02:58:56 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.22 2000/05/28 17:56:04 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,18 +29,12 @@ SUBSYS.o: $(OBJS)
 # dependencies (because they don't even exist until you make them),
 # they are hardcoded here.
 
-utility.o: ../parse.h ../fmgr.h
-aclchk.o: ../fmgr.h
-fastpath.o: ../fmgr.h
-postgres.o: ../fmgr.h
+utility.o: ../parse.h
 
 ../parse.h: 
 	$(MAKE) -C .. parse.h
 
-../fmgr.h: 
-	$(MAKE) -C .. fmgr.h
-
-dep depend: ../parse.h ../fmgr.h
+dep depend: ../parse.h
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 

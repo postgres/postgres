@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.106 2000/05/18 01:52:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.107 2000/05/28 17:55:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -680,7 +680,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				indexNatts[i] = natts;
 				if (VARSIZE(&pgIndexP[i]->indpred) != 0)
 				{
-					predString = fmgr(F_TEXTOUT, &pgIndexP[i]->indpred);
+					predString = textout(&pgIndexP[i]->indpred);
 					indexPred[i] = stringToNode(predString);
 					pfree(predString);
 					/* make dummy ExprContext for use by ExecQual */

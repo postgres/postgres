@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.66 2000/05/26 17:19:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.67 2000/05/28 17:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -889,17 +889,17 @@ convert_numeric_to_scalar(Datum value, Oid typid)
 	switch (typid)
 	{
 		case BOOLOID:
-			return (double) DatumGetUInt8(value);
+			return (double) DatumGetBool(value);
 		case INT2OID:
 			return (double) DatumGetInt16(value);
 		case INT4OID:
 			return (double) DatumGetInt32(value);
 		case INT8OID:
-			return (double) (*i8tod((int64 *) DatumGetPointer(value)));
+			return (double) DatumGetInt64(value);
 		case FLOAT4OID:
-			return (double) (*DatumGetFloat32(value));
+			return (double) DatumGetFloat4(value);
 		case FLOAT8OID:
-			return (double) (*DatumGetFloat64(value));
+			return (double) DatumGetFloat8(value);
 		case NUMERICOID:
 			return (double) (*numeric_float8((Numeric) DatumGetPointer(value)));
 		case OIDOID:

@@ -27,11 +27,12 @@
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
+#include "parser/parse.h"
 #include "rewrite/rewriteRemove.h"
 #include "utils/acl.h"
+#include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
-#include "../backend/parser/parse.h"
 
 /*------------------------------------------------------------------
  * Static Function Prototypes --
@@ -153,7 +154,7 @@ CreateComments(Oid oid, char *comment)
 		}
 		i = 0;
 		values[i++] = ObjectIdGetDatum(oid);
-		values[i++] = (Datum) fmgr(F_TEXTIN, comment);
+		values[i++] = (Datum) textin(comment);
 	}
 
 	/*** Now, open pg_description and attempt to find the old tuple ***/
