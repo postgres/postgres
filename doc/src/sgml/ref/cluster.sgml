@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.18 2002/08/10 21:03:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.19 2002/08/11 02:43:57 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -73,19 +73,6 @@ CLUSTER
        </para>
       </listitem>
      </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exist!
-       </computeroutput></term>
-      <listitem>
-       <para>
-	<comment>
-	 The specified relation was not shown in the error message,
-	 which contained a random string instead of the relation name.
-	</comment>
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
    </para>
   </refsect2>
@@ -101,7 +88,7 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
   <para>
    <command>CLUSTER</command> instructs <productname>PostgreSQL</productname> 
    to cluster the table specified
-   by <replaceable class="parameter">table</replaceable> approximately
+   by <replaceable class="parameter">table</replaceable>
    based on the index specified by
    <replaceable class="parameter">indexname</replaceable>. The index must
    already have been defined on 
@@ -110,11 +97,11 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
 
   <para>
    When a table is clustered, it is physically reordered
-   based on the index information. The clustering is static.
-   In other words, as the table is updated, the changes are
-   not clustered. No attempt is made to keep new instances or
-   updated tuples clustered.  If one wishes, one can
-   re-cluster manually by issuing the command again.
+   based on the index information. Clustering is a one-time operation:
+   when the table is subsequently updated, the changes are
+   not clustered.  That is, no attempt is made to store new or
+   updated tuples according to their index order.  If one wishes, one can
+   periodically re-cluster by issuing the command again.
   </para>
 
   <refsect2 id="R2-SQL-CLUSTER-3">
@@ -146,18 +133,34 @@ ERROR: Relation <replaceable class="PARAMETER">table</replaceable> does not exis
    </para>
 
    <para>
-    There are two ways to cluster data. The first is with the
-    <command>CLUSTER</command> command, which reorders the original table with
+    During the cluster operation, a temporary copy of the table is created
+    that contains the table data in the index order.  Temporary copies of
+    each index on the table are created as well.  Therefore, you need free
+    space on disk at least equal to the sum of the table size and the index
+    sizes.
+   </para>
+
+   <para>
+    CLUSTER preserves GRANT, inheritance, index, foreign key, and other
+    ancillary information about the table.
+   </para>
+
+   <para>
+    Because the optimizer records statistics about the ordering of tables, it
+    is advisable to run <command>ANALYZE</command> on the newly clustered
+    table.  Otherwise, the optimizer may make poor choices of query plans.
+   </para>
+
+   <para>
+    There is another way to cluster data. The
+    <command>CLUSTER</command> command reorders the original table using
     the ordering of the index you specify. This can be slow
     on large tables because the rows are fetched from the heap
     in index order, and if the heap table is unordered, the
     entries are on random pages, so there is one disk page
-    retrieved for every row moved. <productname>PostgreSQL</productname> has a cache,
-    but the majority of a big table will not fit in the cache.
-   </para>
-
-   <para> 
-    Another way to cluster data is to use
+    retrieved for every row moved. (<productname>PostgreSQL</productname> has a cache,
+    but the majority of a big table will not fit in the cache.)
+    The other way to cluster a table is to use
 
     <programlisting>
 SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <replaceable class="parameter">newtable</replaceable>
@@ -165,30 +168,15 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
     </programlisting>
 
     which uses the <productname>PostgreSQL</productname> sorting code in 
-    the ORDER BY clause to match the index, and which is much faster for
+    the ORDER BY clause to create the desired order; this is usually much
+    faster than an indexscan for
     unordered data. You then drop the old table, use
     <command>ALTER TABLE...RENAME</command>
     to rename <replaceable class="parameter">newtable</replaceable> to the old name, and
-    recreate the table's indexes. The only problem is that <acronym>OID</acronym>s
-    will not be preserved. From then on, <command>CLUSTER</command> should be
-    fast because most of the heap data has already been
-    ordered, and the existing index is used.
-   </para>
-
-   <para>
-    During the cluster operation, a temporal table is created that contains
-    the table in the index order. Due to this, you need to have free space
-    on disk at least the size of the table itself, or the biggest index if
-    you have one that is larger than the table.
-   </para>
-
-   <para>
-    CLUSTER preserves GRANT, inheritance index, and foreign key information.
-   </para>
-
-   <para>
-    Because the optimizer records the cluster status of tables, it is 
-    advised to run <command>ANALYZE</command> on the newly clustered table.
+    recreate the table's indexes. However, this approach does not preserve
+    OIDs, constraints, foreign key relationships, granted privileges, and
+    other ancillary properties of the table --- all such items must be
+    manually recreated.
    </para>
 
   </refsect2>
@@ -199,7 +187,7 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
    Usage
   </title>
   <para>
-   Cluster the employees relation on the basis of its salary attribute:
+   Cluster the employees relation on the basis of its ID attribute:
   </para>
   <programlisting>
 CLUSTER emp_ind ON emp;
