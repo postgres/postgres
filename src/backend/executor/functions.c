@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.2 1996/09/16 05:36:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.3 1996/10/26 04:13:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "parser/parse_query.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
+#include "tcop/utility.h"
 #include "nodes/params.h"
 #include "fmgr.h"
 #include "utils/fcache.h"
@@ -352,7 +353,7 @@ Datum
 postquel_function(Func *funcNode, char **args, bool *isNull, bool *isDone)
 {
     execution_state  *es;
-    Datum            result;
+    Datum            result = 0;
     FunctionCachePtr fcache = funcNode->func_fcache;
     
     es = (execution_state *) fcache->func_state;

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.5 1996/10/23 07:40:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.6 1996/10/26 04:13:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "utils/acl.h"
 #include "parser/parsetree.h"		/* rt_fetch() */
 #include "storage/bufmgr.h"
+#include "storage/lmgr.h"
 #include "commands/async.h"
 /* #include "access/localam.h" */
 #include "optimizer/var.h"

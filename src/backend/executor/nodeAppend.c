@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.1.1.1 1996/07/09 06:21:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.2 1996/10/26 04:13:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 {
     AppendState *unionstate;
     int         nplans;
-    List        *resultList;
+    List        *resultList = NULL;
     List        *rtentries;
     List        *unionplans;
     bool        *initialized;
