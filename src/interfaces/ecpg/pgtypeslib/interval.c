@@ -782,12 +782,14 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 	if (dtype != DTK_DELTA)
 	{
 		errno = PGTYPES_INTVL_BAD_INTERVAL;
+		free(result);
 		return NULL;
 	}
 
 	if (tm2interval(tm, fsec, result) != 0)
 	{
 		errno = PGTYPES_INTVL_BAD_INTERVAL;
+		free(result);
 		return NULL;
 	}
 
