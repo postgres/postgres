@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.78 1999/10/26 03:48:58 momjian Exp $
+ * $Id: psqlHelp.h,v 1.79 1999/10/27 16:33:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static struct _helpStruct QL_HELP[] = {
   FUNCTION <func_name> (arg1, arg2, ...)|\n\
   OPERATOR <op> (leftoperand_type rightoperand_type) |\n\
   TRIGGER <trigger_name> ON <table_name>\n\
-] IS 'text'},
+] IS 'text'"},
 	{"commit work",
 		"commit a transaction",
 	"\
