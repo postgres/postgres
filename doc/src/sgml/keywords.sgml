@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.4 2001/11/17 13:27:16 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/keywords.sgml,v 2.5 2002/01/08 15:38:42 tgl Exp $ -->
 
 <appendix id="sql-keywords-appendix">
  <title><acronym>SQL</acronym> Key Words</title>
@@ -17,12 +17,13 @@
 
  <para>
   SQL distinguishes between <firstterm>reserved</firstterm> and
-  <firstterm>non-reserved</firstterm> key words.  Reserved key words
+  <firstterm>non-reserved</firstterm> key words.  According to the standard,
+  reserved key words
   are the only real key words; they are never allowed as identifiers.
   Non-reserved key words only have a special meaning in particular
   contexts and can be used as identifiers in other contexts.  Most
   non-reserved key words are actually the names of built-in tables
-  and functions specified by SQL and the concept of non-reserved key
+  and functions specified by SQL.  The concept of non-reserved key
   words essentially only exists to declare that some predefined meaning
   is attached to a word in some contexts.
  </para>
@@ -33,9 +34,9 @@
   ranging from those that can never be used as an identifier to those
   that have absolutely no special status in the parser as compared to
   an ordinary identifier.  (The latter is usually the case for
-  functions specified by SQL.)  SQL reserved key words are not
+  functions specified by SQL.)  Even reserved key words are not
   completely reserved in <productname>PostgreSQL</productname>, but
-  can be used as column label (as in <literal>SELECT 55 AS
+  can be used as column labels (for example, <literal>SELECT 55 AS
   CHECK</literal>, even though <token>CHECK</token> is a reserved key
   word).
  </para>
@@ -47,12 +48,12 @@
   known to the parser but are allowed in most or all contexts where an
   identifier is expected.  Some key words that are otherwise
   non-reserved cannot be used as function or data type names and are
-  marked accordingly.  (Some of these tokens represent built-in
+  marked accordingly.  (Most of these words represent built-in
   functions or data types with special syntax.  The function or type
   is still available but it cannot be redefined by the user.)  Labeled
   <quote>reserved</quote> are those tokens that are only allowed as
   <quote>AS</quote> column label names (and perhaps in very few other
-  contexts).  Some reserved key words are available as names for
+  contexts).  Some reserved key words are allowable as names for
   functions; this is also shown in the table.
  </para>
 
