@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.32 1997/04/23 18:02:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.33 1997/04/24 03:39:09 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -1270,7 +1270,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.32 $ $Date: 1997/04/23 18:02:43 $");
+        puts("$Revision: 1.33 $ $Date: 1997/04/24 03:39:09 $");
     }
     
     /* ----------------
@@ -1467,7 +1467,7 @@ PostgresMain(int argc, char *argv[])
   return 1;
 }
 
-#ifdef HAVE_GETRUSAGE
+#ifndef HAVE_GETRUSAGE
 #include "rusagestub.h"
 #else /* HAVE_GETRUSAGE */
 #include <sys/resource.h>
@@ -1535,7 +1535,7 @@ ShowUsage(void)
             (long int) user.tv_usec, 
             (long int) sys.tv_sec, 
             (long int) sys.tv_usec);
-#ifndef HAVE_GETRUSAGE
+#ifdef HAVE_GETRUSAGE
     fprintf(StatFp, 
             "!\t%ld/%ld [%ld/%ld] filesystem blocks in/out\n",
             r.ru_inblock - Save_r.ru_inblock,
