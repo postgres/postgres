@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.193 2004/03/24 22:40:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.194 2004/04/01 14:25:47 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2739,7 +2739,7 @@ set_config_option(const char *name, const char *value,
 								 errhint("Must be superuser to change this value to false.")));
 						return false;
 					}
-					/* Allow admin to override non-superuser setting */
+					/* Honor change to config file with SIGHUP */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
 						record->reset_source > PGC_S_UNPRIVILEGED &&
@@ -2836,11 +2836,11 @@ set_config_option(const char *name, const char *value,
 								 errhint("Must be superuser to increase this value or set it to zero.")));
 						return false;
 					}
-					/* Allow admin to override non-superuser setting */
+					/* Honor change to config file with SIGHUP */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
 						record->reset_source > PGC_S_UNPRIVILEGED &&
-						newval < conf->reset_val &&
+						newval < conf->reset_val && newval != 0 &&
 						!superuser())
 						changeVal = changeVal_orig;
 				}
@@ -2932,7 +2932,7 @@ set_config_option(const char *name, const char *value,
 								 errhint("Must be superuser to increase this value.")));
 						return false;
 					}
-					/* Allow admin to override non-superuser setting */
+					/* Honor change to config file with SIGHUP */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
 						record->reset_source > PGC_S_UNPRIVILEGED &&
@@ -3031,7 +3031,7 @@ set_config_option(const char *name, const char *value,
 								 errhint("Must be superuser to increase this value.")));
 							return false;
 						}
-						/* Allow admin to override non-superuser setting */
+						/* Honor change to config file with SIGHUP */
 						if (source < PGC_S_UNPRIVILEGED &&
 							record->reset_source > PGC_S_UNPRIVILEGED &&
 							newval < conf->reset_val &&
