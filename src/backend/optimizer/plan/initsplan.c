@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.97 2004/01/05 05:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.98 2004/02/27 21:42:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,11 +756,16 @@ process_implied_equality(Query *root,
 				 errmsg("equality operator for types %s and %s should be merge-joinable, but isn't",
 						format_type_be(ltype), format_type_be(rtype))));
 
+	/*
+	 * Now we can build the new clause.  Copy to ensure it shares no
+	 * substructure with original (this is necessary in case there are
+	 * subselects in there...)
+	 */
 	clause = make_opclause(oprid(eq_operator),	/* opno */
 						   BOOLOID,		/* opresulttype */
 						   false,		/* opretset */
-						   (Expr *) item1,
-						   (Expr *) item2);
+						   (Expr *) copyObject(item1),
+						   (Expr *) copyObject(item2));
 
 	ReleaseSysCache(eq_operator);
 
