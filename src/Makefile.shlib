@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.41 2001/02/10 16:51:39 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.42 2001/02/10 17:17:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -112,7 +112,8 @@ endif
 ifeq ($(PORTNAME), openbsd)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifdef ELF_SYSTEM
-    LINK.shared		= $(LD) -x -Bshareable -soname $(soname)
+    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
+    SHLIB_LINK		+= -lc
   else
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
@@ -121,7 +122,7 @@ endif
 ifeq ($(PORTNAME), bsdi)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifeq ($(DLSUFFIX), .so)
-    LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
+    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
     SHLIB_LINK		+= -lc
   endif
   ifeq ($(DLSUFFIX), .o)
@@ -132,7 +133,8 @@ endif
 ifeq ($(PORTNAME), freebsd)
   ifdef ELF_SYSTEM
     shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-    LINK.shared		= $(LD) -x -shared -soname $(soname)
+    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
+    SHLIB_LINK		+= -lc
   else
     shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
@@ -142,7 +144,7 @@ endif
 ifeq ($(PORTNAME), netbsd)
   shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifdef ELF_SYSTEM
-    LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
+    LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
   else
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif

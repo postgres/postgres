@@ -3,7 +3,7 @@ AROPT = cr
 ifdef ELF_SYSTEM
 export_dynamic = -Wl,-E
 rpath = -R$(libdir)
-shlib_symbolic = -Bsymbolic
+shlib_symbolic = -Wl,-Bsymbolic
 endif
 
 DLSUFFIX = .so
