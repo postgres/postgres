@@ -270,11 +270,10 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				free(line);
 				line = new;
                 continue; /* reparse the just substituted */
-            }                
-            
+            }
 
 			/* semicolon? then send query */
-			else if (line[i] == ';' && !was_bslash)
+			else if (line[i] == ';' && !was_bslash && !paren_level)
 			{
                 /* delete the old query buffer from last time around */
                 if (slashCmdStatus == CMD_SEND)
