@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.29 1997/10/28 15:10:39 vadim Exp $
+ * $Id: parsenodes.h,v 1.30 1997/11/07 06:38:38 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,6 +473,7 @@ typedef struct CreatedbStmt
 {
 	NodeTag		type;
 	char	   *dbname;			/* database to create */
+	char	   *dbpath;			/* location of database */
 }			CreatedbStmt;
 
 /* ----------------------

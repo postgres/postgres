@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.16 1997/09/18 14:42:22 vadim Exp $
+ * $Id: miscadmin.h,v 1.17 1997/11/07 06:38:29 thomas Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -106,6 +106,11 @@ extern Oid	LastOidProcessed;	/* for query rewrite */
  *	  pdir.h --																 *
  *			POSTGRES directory path definitions.							 *
  *****************************************************************************/
+
+/* in utils/misc/database.c */
+extern void GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path);
+extern int GetDatabaseInfo(char *name, Oid *owner, char *path);
+extern char *ExpandDatabasePath(char *path);
 
 /* now in utils/init/miscinit.c */
 extern char *GetDatabasePath(void);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.23 1997/10/25 01:10:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.24 1997/11/07 06:38:19 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,6 +480,7 @@ mdblindwrt(char *dbstr,
 		nchars = 0;
 
 	/* construct the path to the file and open it */
+	/* system table? then put in system area... */
 	if (dbid == (Oid) 0)
 	{
 		path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2 + nchars);
@@ -488,8 +489,10 @@ mdblindwrt(char *dbstr,
 		else
 			sprintf(path, "%s/%s.%d", DataDir, relstr, segno);
 	}
+	/* user table? then put in user database area... */
 	else
 	{
+#if FALSE
 		path = (char *) palloc(strlen(DataDir) + strlen("/base/") + 2 * sizeof(NameData) + 2 + nchars);
 		if (segno == 0)
 			sprintf(path, "%s/base/%s/%s", DataDir,
@@ -497,6 +500,12 @@ mdblindwrt(char *dbstr,
 		else
 			sprintf(path, "%s/base/%s/%s.%d", DataDir, dbstr,
 					relstr, segno);
+#endif
+		path = (char *) palloc(strlen(GetDatabasePath()) + 2 * sizeof(NameData) + 2 + nchars);
+		if (segno == 0)
+			sprintf(path, "%s%c%s", GetDatabasePath(), SEP_CHAR, relstr);
+		else
+			sprintf(path, "%s%c%s.%d", GetDatabasePath(), SEP_CHAR, relstr, segno);
 	}
 
 	if ((fd = open(path, O_RDWR, 0600)) < 0)

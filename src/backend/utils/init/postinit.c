@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.14 1997/09/08 02:31:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.15 1997/11/07 06:38:46 thomas Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -50,7 +50,7 @@
 #include "access/transam.h"		/* XXX dependency problem */
 #include "utils/tqual.h"
 #include "utils/syscache.h"
-#include "storage/bufpage.h"	/* for page layout, for InitMyDatabaseId() */
+#include "storage/bufpage.h"	/* for page layout, for InitMyDatabaseInfo() */
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 #include "storage/lmgr.h"
@@ -70,11 +70,15 @@
 #include "port-protos.h"
 #include "libpq/libpq-be.h"
 
+static void VerifySystemDatabase(void);
+static void VerifyMyDatabase(void);
 static void InitCommunication(void);
-static void InitMyDatabaseId(void);
+static void InitMyDatabaseInfo(char *name);
 static void InitStdio(void);
 static void InitUserid(void);
 
+extern char *ExpandDatabasePath(char *name);
+extern void GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path);
 
 static IPCKey PostgresIpcKey;
 
@@ -84,7 +88,7 @@ static IPCKey PostgresIpcKey;
  */
 
 /* --------------------------------
- *	InitMyDatabaseId() -- Find and record the OID of the database we are
+ *	InitMyDatabaseInfo() -- Find and record the OID of the database we are
  *						  to open.
  *
  *		The database's oid forms half of the unique key for the system
@@ -98,133 +102,38 @@ static IPCKey PostgresIpcKey;
  *		about the internal format of tuples on disk and the length of
  *		the datname attribute.	It knows the location of the pg_database
  *		file.
+ *		Actually, the code looks as though it is using the pg_database
+ *		tuple definition to locate the database name, so the above statement
+ *		seems to be no longer correct. - thomas 1997-11-01
  *
- *		This code is called from InitDatabase(), after we chdir() to the
- *		database directory but before we open any relations.
+ *		This code is called from InitPostgres(), before we chdir() to the
+ *		local database directory and before we open any relations.
+ *		Used to be called after the chdir(), but we now want to confirm
+ *		the location of the target database using pg_database info.
+ *		- thomas 1997-11-01
  * --------------------------------
  */
 static void
-InitMyDatabaseId()
+InitMyDatabaseInfo(char *name)
 {
-	int			dbfd;
-	int			fileflags;
-	int			nbytes;
-	int			max,
-				i;
-	HeapTuple	tup;
-	Page		pg;
-	PageHeader	ph;
-	char	   *dbfname;
-	Form_pg_database tup_db;
+	Oid			owner;
+	char	   *path,
+				myPath[MAXPGPATH+1];
 
-	/*
-	 * At bootstrap time, we don't need to check the oid of the database
-	 * in use, since we're not using shared memory.  This is lucky, since
-	 * the database may not be in the tables yet.
-	 */
-
-	if (IsBootstrapProcessingMode())
-	{
-		LockDisable(true);
-		return;
-	}
-
-	dbfname = (char *) palloc(strlen(DataDir) + strlen("pg_database") + 2);
-	sprintf(dbfname, "%s%cpg_database", DataDir, SEP_CHAR);
-	fileflags = O_RDONLY;
-
-	if ((dbfd = open(dbfname, O_RDONLY, 0)) < 0)
-		elog(FATAL, "Cannot open %s", dbfname);
-
-	pfree(dbfname);
-
-	/* ----------------
-	 *	read and examine every page in pg_database
-	 *
-	 *	Raw I/O! Read those tuples the hard way! Yow!
-	 *
-	 *	Why don't we use the access methods or move this code
-	 *	someplace else?  This is really pg_database schema dependent
-	 *	code.  Perhaps it should go in lib/catalog/pg_database?
-	 *	-cim 10/3/90
-	 *
-	 *	mao replies 4 apr 91:  yeah, maybe this should be moved to
-	 *	lib/catalog.  however, we CANNOT use the access methods since
-	 *	those use the buffer cache, which uses the relation cache, which
-	 *	requires that the dbid be set, which is what we're trying to do
-	 *	here.
-	 * ----------------
-	 */
-	pg = (Page) palloc(BLCKSZ);
-	ph = (PageHeader) pg;
-
-	while ((nbytes = read(dbfd, pg, BLCKSZ)) == BLCKSZ)
-	{
-		max = PageGetMaxOffsetNumber(pg);
-
-		/* look at each tuple on the page */
-		for (i = 0; i <= max; i++)
-		{
-			int			offset;
-
-			/* if it's a freed tuple, ignore it */
-			if (!(ph->pd_linp[i].lp_flags & LP_USED))
-				continue;
-
-			/* get a pointer to the tuple itself */
-			offset = (int) ph->pd_linp[i].lp_off;
-			tup = (HeapTuple) (((char *) pg) + offset);
-
-			/*
-			 * if the tuple has been deleted (the database was destroyed),
-			 * skip this tuple.  XXX warning, will robinson:  violation of
-			 * transaction semantics happens right here.  we should check
-			 * to be sure that the xact that deleted this tuple actually
-			 * committed.  only way to do this at init time is to paw over
-			 * the log relation by hand, too.  let's be optimistic.
-			 *
-			 * XXX This is an evil type cast.  tup->t_xmax is char[5] while
-			 * TransactionId is struct * { char data[5] }.	It works but
-			 * if data is ever moved and no longer the first field this
-			 * will be broken!! -mer 11 Nov 1991.
-			 */
-			if (TransactionIdIsValid((TransactionId) tup->t_xmax))
-				continue;
-
-			/*
-			 * Okay, see if this is the one we want. XXX 1 july 91:  mao
-			 * and mer discover that tuples now squash t_bits.	Why is
-			 * this?
-			 *
-			 * 24 july 92:	mer realizes that the t_bits field is only used
-			 * in the event of null values.  If no fields are null we
-			 * reduce the header size by doing the squash.	t_hoff tells
-			 * you exactly how big the header actually is. use the PC
-			 * means of getting at sys cat attrs.
-			 */
-			tup_db = (Form_pg_database) GETSTRUCT(tup);
-
-			if (strncmp(GetDatabaseName(),
-						&(tup_db->datname.data[0]),
-						16) == 0)
-			{
-				MyDatabaseId = tup->t_oid;
-				goto done;
-			}
-		}
-	}
-
-done:
-	close(dbfd);
-	pfree(pg);
+	SetDatabaseName(name);
+	GetRawDatabaseInfo(name, &owner, &MyDatabaseId, myPath);
 
 	if (!OidIsValid(MyDatabaseId))
 		elog(FATAL,
 			 "Database %s does not exist in %s",
 			 GetDatabaseName(),
 			 DatabaseRelationName);
-}
 
+	path = ExpandDatabasePath(myPath);
+	SetDatabasePath(path);
+
+	return;
+} /* InitMyDatabaseInfo() */
 
 
 /*
@@ -237,21 +146,21 @@ done:
  *
  * Arguments:
  *		Path and name are invalid if it invalid as a string.
- *		Path is "badly formated" if it is not a string containing a path
+ *		Path is "badly formatted" if it is not a string containing a path
  *		to a writable directory.
- *		Name is "badly formated" if it contains more than 16 characters or if
+ *		Name is "badly formatted" if it contains more than 16 characters or if
  *		it is a bad file name (e.g., it contains a '/' or an 8-bit character).
  *
  * Exceptions:
  *		BadState if called more than once.
- *		BadArg if both path and name are "badly formated" or invalid.
+ *		BadArg if both path and name are "badly formatted" or invalid.
  *		BadArg if path and name are both "inconsistent" and valid.
  *
  *		This routine is inappropriate in bootstrap mode, since the directories
  *		and version files need not exist yet if we're in bootstrap mode.
  */
 static void
-DoChdirAndInitDatabaseNameAndPath(char *name)
+VerifySystemDatabase()
 {
 	char	   *reason;
 
@@ -261,84 +170,87 @@ DoChdirAndInitDatabaseNameAndPath(char *name)
 
 	if ((fd = open(DataDir, O_RDONLY, 0)) == -1)
 		sprintf(errormsg, "Database system does not exist.  "
-				"PGDATA directory '%s' not found.  Normally, you "
+				"PGDATA directory '%s' not found.\n\tNormally, you "
 				"create a database system by running initdb.",
 				DataDir);
 	else
 	{
-		char		myPath[MAXPGPATH];	/* DatabasePath points here! */
-
 		close(fd);
-		if (strlen(DataDir) + strlen(name) + 10 > sizeof(myPath))
-			sprintf(errormsg, "Internal error in postinit.c: database "
-					"pathname exceeds maximum allowable length.");
-		else
-		{
-			sprintf(myPath, "%s/base/%s", DataDir, name);
-
-			if ((fd = open(myPath, O_RDONLY, 0)) == -1)
-				sprintf(errormsg,
-						"Database '%s' does not exist.  "
-						"(We know this because the directory '%s' "
-						"does not exist).  You can create a database "
-						"with the SQL command CREATE DATABASE.  To see "
-					  "what databases exist, look at the subdirectories "
-						"of '%s/base/'.",
-						name, myPath, DataDir);
-			else
-			{
-				close(fd);
-				ValidatePgVersion(DataDir, &reason);
-				if (reason != NULL)
-					sprintf(errormsg,
-					 "InitPostgres could not validate that the database "
-					   "system version is compatible with this level of "
-					   "Postgres.  You may need to run initdb to create "
-							"a new database system.  %s",
-							reason);
-				else
-				{
-					ValidatePgVersion(myPath, &reason);
-					if (reason != NULL)
-						sprintf(errormsg,
-							  "InitPostgres could not validate that the "
-						"database version is compatible with this level "
-						  "of Postgres, even though the database system "
-								"as a whole appears to be at a compatible level.  "
-						"You may need to recreate the database with SQL "
-						  "commands DROP DATABASE and CREATE DATABASE.  "
-								"%s",
-								reason);
-					else
-					{
-
-						/*
-						 * The directories and PG_VERSION files are in
-						 * order.
-						 */
-						int			rc; /* return code from some function
-										 * we call */
-
-						SetDatabasePath(myPath);
-						SetDatabaseName(name);
-						rc = chdir(myPath);
-						if (rc < 0)
-							sprintf(errormsg,
-									"InitPostgres unable to change "
-							"current directory to '%s', errno = %s (%d).",
-									myPath, strerror(errno), errno);
-						else
-							errormsg[0] = '\0';
-					}
-				}
-			}
-		}
+		ValidatePgVersion(DataDir, &reason);
+		if (reason != NULL)
+			sprintf(errormsg,
+			 "InitPostgres could not validate that the database"
+			   " system version is compatible with this level of"
+			   " Postgres.\n\tYou may need to run initdb to create"
+			   " a new database system.\n\t%s", reason);
 	}
 	if (errormsg[0] != '\0')
 		elog(FATAL, errormsg);
 	/* Above does not return */
-}
+} /* VerifySystemDatabase() */
 
+
+static void
+VerifyMyDatabase()
+{
+	char	   *name;
+	char	   *myPath;
+
+	/* Failure reason returned by some function.  NULL if no failure */
+	char	   *reason;
+	int			fd;
+	char		errormsg[1000];
+
+	name = GetDatabaseName();
+	myPath = GetDatabasePath();
+
+	if ((fd = open(myPath, O_RDONLY, 0)) == -1)
+		sprintf(errormsg,
+			"Database '%s' does not exist."
+			"\n\tWe know this because the directory '%s' does not exist."
+			"\n\tYou can create a database with the SQL command"
+			" CREATE DATABASE.\n\tTo see what databases exist,"
+			" look at the subdirectories of '%s/base/'.",
+			name, myPath, DataDir);
+	else
+	{
+		close(fd);
+		ValidatePgVersion(myPath, &reason);
+		if (reason != NULL)
+			sprintf(errormsg,
+				"InitPostgres could not validate that the database"
+				 " version is compatible with this level of Postgres"
+				 "\n\teven though the database system as a whole"
+				 " appears to be at a compatible level."
+				 "\n\tYou may need to recreate the database with SQL"
+				 " commands DROP DATABASE and CREATE DATABASE."
+				 "\n\t%s", reason);
+		else
+		{
+			/*
+			 * The directories and PG_VERSION files are in order.
+			 */
+			int rc; /* return code from some function we call */
+
+#ifdef FILEDEBUG
+printf("Try changing directory for database %s to %s\n", name, myPath);
+#endif
+
+			rc = chdir(myPath);
+			if (rc < 0)
+				sprintf(errormsg,
+					"InitPostgres unable to change "
+					"current directory to '%s', errno = %s (%d).",
+					myPath, strerror(errno), errno);
+			else
+				errormsg[0] = '\0';
+		}
+	}
+
+	if (errormsg[0] != '\0')
+		elog(FATAL, errormsg);
+	/* Above does not return */
+} /* VerifyMyDatabase() */
 
 
 /* --------------------------------
@@ -569,34 +481,43 @@ InitPostgres(char *name)		/* database name */
 	if (!TransactionFlushEnabled())
 		on_exitpg(FlushBufferPool, (caddr_t) NULL);
 
-	if (bootstrap)
-	{
-		SetDatabasePath(".");
-		SetDatabaseName(name);
-	}
-	else
-	{
-		DoChdirAndInitDatabaseNameAndPath(name);
-	}
-
-	/*
-	 * ******************************** code after this point assumes we
-	 * are in the proper directory! ********************************
-	 *
-	 */
-
 	/* ----------------
 	 *	initialize the database id used for system caches and lock tables
 	 * ----------------
 	 */
-	InitMyDatabaseId();
+	if (bootstrap)
+	{
+		SetDatabasePath(ExpandDatabasePath(name));
+		SetDatabaseName(name);
+		LockDisable(true);
+	}
+	else
+	{
+		VerifySystemDatabase();
+		InitMyDatabaseInfo(name);
+		VerifyMyDatabase();
+	}
 
+	/*
+	 * ********************************
+	 * code after this point assumes we are in the proper directory!
+	 *
+	 * So, how do we implement alternate locations for databases?
+	 * There are two possible locations for tables and we need to look
+	 * in DataDir/pg_database to find the true location of an
+	 * individual database. We can brute-force it as done in
+	 * InitMyDatabaseInfo(), or we can be patient and wait until we
+	 * open pg_database gracefully. Will try that, but may not work...
+	 * - thomas 1997-11-01
+	 * ********************************
+	 */
+
+	/*  Does not touch files (?) - thomas 1997-11-01 */
 	smgrinit();
 
 	/* ----------------
-	 *	initialize the transaction system and the relation descriptor
-	 *	cache.	Note we have to make certain the lock manager is off while
-	 *	we do this.
+	 *	initialize the transaction system and the relation descriptor cache.
+	 *	Note we have to make certain the lock manager is off while we do this.
 	 * ----------------
 	 */
 	AmiTransactionOverride(IsBootstrapProcessingMode());
@@ -610,8 +531,7 @@ InitPostgres(char *name)		/* database name */
 	 * after initdb is done. -mer 15 June 1992
 	 */
 	RelationInitialize();		/* pre-allocated reldescs created here */
-	InitializeTransactionSystem();		/* pg_log,etc init/crash recovery
-										 * here */
+	InitializeTransactionSystem();	/* pg_log,etc init/crash recovery here */
 
 	LockDisable(false);
 
@@ -641,6 +561,7 @@ InitPostgres(char *name)		/* database name */
 
 	/* ----------------
 	 *	initialize the access methods.
+	 *  Does not touch files (?) - thomas 1997-11-01
 	 * ----------------
 	 */
 	initam();
@@ -650,6 +571,9 @@ InitPostgres(char *name)		/* database name */
 	 * ----------------
 	 */
 	zerocaches();
+	/*  Does not touch files since all routines are builtins (?)
+	 *  - thomas 1997-11-01
+	 */
 	InitCatalogCache();
 
 	/* ----------------

@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.9 1997/09/08 21:46:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/dbcommands.c,v 1.10 1997/11/07 06:37:55 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <sys/stat.h>
 
 #include "postgres.h"
 #include "miscadmin.h"			/* for DataDir */
@@ -36,41 +37,58 @@
 
 /* non-export function prototypes */
 static void
-check_permissions(char *command, char *dbname,
+check_permissions(char *command, char *dbpath, char *dbname,
 				  Oid *dbIdP, Oid *userIdP);
 static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
-static void stop_vacuum(char *dbname);
+static void stop_vacuum(char *dbpath, char *dbname);
 
 void
-createdb(char *dbname)
+createdb(char *dbname, char *dbpath)
 {
 	Oid			db_id,
 				user_id;
 	char		buf[512];
+	char	   *lp,
+				loc[512];
 
 	/*
 	 * If this call returns, the database does not exist and we're allowed
 	 * to create databases.
 	 */
-	check_permissions("createdb", dbname, &db_id, &user_id);
+	check_permissions("createdb", dbpath, dbname, &db_id, &user_id);
 
 	/* close virtual file descriptors so we can do system() calls */
 	closeAllVfds();
 
-	sprintf(buf, "mkdir %s%cbase%c%s", DataDir, SEP_CHAR, SEP_CHAR, dbname);
-	system(buf);
-	sprintf(buf, "%s %s%cbase%ctemplate1%c* %s%cbase%c%s",
-			COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, DataDir,
-			SEP_CHAR, SEP_CHAR, dbname);
+	/* Now create directory for this new database */
+	if ((dbpath != NULL) && (strcmp(dbpath,dbname) != 0))
+	{
+		if (*(dbpath+strlen(dbpath)-1) == SEP_CHAR)
+			*(dbpath+strlen(dbpath)-1) = '\0';
+		sprintf(loc, "%s%c%s", dbpath, SEP_CHAR, dbname);
+	}
+	else
+	{
+		strcpy(loc, dbname);
+	}
+
+	lp = ExpandDatabasePath(loc);
+
+	if (mkdir(lp,S_IRWXU) != 0)
+		elog(WARN,"Unable to create database directory %s",lp);
+
+	sprintf(buf, "%s %s%cbase%ctemplate1%c* %s",
+			COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
 	system(buf);
 
-/*	  sprintf(buf, "insert into pg_database (datname, datdba, datpath) \
+#if FALSE
+	sprintf(buf, "insert into pg_database (datname, datdba, datpath) \
                   values (\'%s\'::char16, \'%d\'::oid, \'%s\'::text);",
 			dbname, user_id, dbname);
-*/
-	sprintf(buf, "insert into pg_database (datname, datdba, datpath) \
-                  values (\'%s\', \'%d\', \'%s\');",
-			dbname, user_id, dbname);
+#endif
+
+	sprintf(buf, "insert into pg_database (datname, datdba, datpath)"
+		" values (\'%s\', \'%d\', \'%s\');", dbname, user_id, loc);
 
 	pg_eval(buf, (char **) NULL, (Oid *) NULL, 0);
 }
@@ -80,13 +98,20 @@ destroydb(char *dbname)
 {
 	Oid			user_id,
 				db_id;
+	char	   *path;
+	char		dbpath[MAXPGPATH+1];
 	char		buf[512];
+	char		loc[512];
+	text	   *dbtext;
+
+	Relation	dbrel;
+	HeapTuple	dbtup;
 
 	/*
 	 * If this call returns, the database exists and we're allowed to
 	 * remove it.
 	 */
-	check_permissions("destroydb", dbname, &db_id, &user_id);
+	check_permissions("destroydb", dbpath, dbname, &db_id, &user_id);
 
 	if (!OidIsValid(db_id))
 	{
@@ -94,7 +119,36 @@ destroydb(char *dbname)
 	}
 
 	/* stop the vacuum daemon */
-	stop_vacuum(dbname);
+	stop_vacuum(dbpath, dbname);
+
+#if FALSE
+	dbrel = heap_openr(DatabaseRelationName);
+	if (!RelationIsValid(dbrel))
+		elog(FATAL, "%s: cannot open relation \"%-.*s\"",
+			 "destroydb", DatabaseRelationName);
+
+	dbtup = get_pg_dbtup("destroydb", dbname, dbrel);
+
+	if (!HeapTupleIsValid(dbtup))
+		elog(NOTICE,"destroydb: pg_database entry not found %s",dbname);
+
+	dbtext = (text *) heap_getattr(dbtup, InvalidBuffer,
+								 Anum_pg_database_datpath,
+								 RelationGetTupleDescriptor(dbrel),
+								 (char *) NULL);
+	memcpy(loc, VARDATA(dbtext), (VARSIZE(dbtext)-VARHDRSZ));
+	*(loc+(VARSIZE(dbtext)-VARHDRSZ)) = '\0';
+
+#if FALSE
+	if (*loc != SEP_CHAR)
+	{
+		sprintf(buf, "%s/base/%s", DataDir, loc);
+		strcpy(loc, buf);
+	}
+#endif
+
+	heap_close(dbrel);
+#endif
 
 	/*
 	 * remove the pg_database tuple FIRST, this may fail due to
@@ -108,7 +162,9 @@ destroydb(char *dbname)
 	 * remove the data directory. If the DELETE above failed, this will
 	 * not be reached
 	 */
-	sprintf(buf, "rm -r %s/base/%s", DataDir, dbname);
+	path = ExpandDatabasePath(dbpath);
+
+	sprintf(buf, "rm -r %s", path);
 	system(buf);
 
 	/* drop pages for this database that are in the shared buffer cache */
@@ -160,6 +216,7 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 
 static void
 check_permissions(char *command,
+				  char *dbpath,
 				  char *dbname,
 				  Oid *dbIdP,
 				  Oid *userIdP)
@@ -172,6 +229,8 @@ check_permissions(char *command,
 	bool		dbfound;
 	bool		use_super;
 	char	   *userName;
+	text	   *dbtext;
+	char		path[MAXPGPATH+1];
 
 	userName = GetPgUserName();
 	utup = SearchSysCacheTuple(USENAME, PointerGetDatum(userName),
@@ -228,6 +287,13 @@ check_permissions(char *command,
 									 RelationGetTupleDescriptor(dbrel),
 									 (char *) NULL);
 		*dbIdP = dbtup->t_oid;
+		dbtext = (text *) heap_getattr(dbtup, InvalidBuffer,
+								 Anum_pg_database_datpath,
+								 RelationGetTupleDescriptor(dbrel),
+								 (char *) NULL);
+
+		strncpy(path, VARDATA(dbtext), (VARSIZE(dbtext)-VARHDRSZ));
+		 *(path+VARSIZE(dbtext)-VARHDRSZ) = '\0';
 	}
 	else
 	{
@@ -259,21 +325,31 @@ check_permissions(char *command,
 		elog(WARN, "%s: database %s is not owned by you.", command, dbname);
 
 	}
-}
+
+	if (dbfound && !strcmp(command, "destroydb"))
+		strcpy(dbpath, path);
+} /* check_permissions() */
 
 /*
- *	stop_vacuum() -- stop the vacuum daemon on the database, if one is
- *					 running.
+ *	stop_vacuum() -- stop the vacuum daemon on the database, if one is running.
  */
 static void
-stop_vacuum(char *dbname)
+stop_vacuum(char *dbpath, char *dbname)
 {
 	char		filename[256];
 	FILE	   *fp;
 	int			pid;
 
-	sprintf(filename, "%s%cbase%c%s%c%s.vacuum", DataDir, SEP_CHAR, SEP_CHAR,
+	if (strchr(dbpath, SEP_CHAR) != 0)
+	{
+		sprintf(filename, "%s%cbase%c%s%c%s.vacuum", DataDir, SEP_CHAR, SEP_CHAR,
 			dbname, SEP_CHAR, dbname);
+	}
+	else
+	{
+		sprintf(filename, "%s%c%s.vacuum", dbpath, SEP_CHAR, dbname);
+	}
+
 	if ((fp = AllocateFile(filename, "r")) != NULL)
 	{
 		fscanf(fp, "%d", &pid);
