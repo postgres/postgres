@@ -637,7 +637,7 @@ ECPGexecute(struct statement * stmt)
 						if (var->offset==sizeof(char))
 							for (element = 0; element < var->arrsize; element++)
 								sprintf(mallocedval + strlen(mallocedval), "%c,", (((char *) var->value)[element]) ? 't' : 'f');
-						// this is necessary since sizeof(C++'s bool)==sizeof(int)
+						/* this is necessary since sizeof(C++'s bool)==sizeof(int) */
 						else if (var->offset==sizeof(int))
 							for (element = 0; element < var->arrsize; element++)
 								sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
@@ -1024,7 +1024,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.17 2001/01/31 16:12:34 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.18 2001/02/12 13:56:37 momjian Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);
