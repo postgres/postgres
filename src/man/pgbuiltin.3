@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.4 1997/09/16 03:01:43 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.5 1997/09/27 04:37:33 thomas Exp $
 .TH PGBUILTIN INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -37,12 +37,9 @@ described in this section.
 	date	ANSI SQL date type
 	datetime	general-use date and time
 	filename	large object filename
-	int	alias for int4
-	integer	alias for int4
 	int2	two-byte signed integer
 	int28	array of 8 int2
 	int4	four-byte signed integer
-	float	alias for float4
 	float4	single-precision floating-point number
 	float8	double-precision floating-point number
 	lseg	2-dimensional line segment
@@ -57,11 +54,9 @@ described in this section.
 	point	2-dimensional geometric point
 	polygon	2-dimensional polygon (same as a closed path)
 	circle	2-dimensional circle (center and radius)
-	real	alias for float4
 	regproc	registered procedure
 	reltime	(relative) date and time span (duration)
 	smgr	storage manager
-	smallint	alias for int2
 	text	variable length array of characters
 	tid	tuple identifier type
 	time 	ANSI SQL time type
@@ -70,6 +65,52 @@ described in this section.
 	tinterval	time interval (start and stop abstime)
 	varchar	variable-length characters
 	xid	transaction identifier type
+
+.fi
+.in
+.PP
+There are some data types defined by SQL/92 syntax which are mapped directly
+into native Postgres types. Note that the "exact numerics"
+.IR decimal
+and
+.IR numeric
+have fully implemented syntax but currently (postgres v6.2) support only a limited 
+range of the values allowed by SQL/92.
+
+.SH "List of SQL/92 types"
+.PP
+.if n .ta 5 +15 +25 +40
+.if t .ta 0.5i +1.5i +3.0i
+.in 0
+.nf
+	\fBPOSTGRES Type\fP	\fBSQL/92 Type\fP	\fBMeaning\fP
+	char(n)	character(n)	fixed-length character string
+	varchar(n)	character varying(n)	variable-length character string
+	float4/8	float(p)	floating-point number with precision p
+	float8	double precision	double-precision floating-point number
+	float8	real	double-precision floating-point number
+	int2	smallint	signed two-byte integer
+	int4	int	signed 4-byte integer
+	int4	integer	signed 4-byte integer
+	int4	decimal(p,s)	exact numeric for p <= 9, s = 0
+	int4	numeric(p,s)	exact numeric for p == 9, s = 0
+	timestamp	timestamp with time zone	date/time
+	timespan	interval	general-use time span
+
+.fi
+.in
+.PP
+There are some constants and functions defined in SQL/92.
+.SH "List of SQL/92 constants"
+.PP
+.if n .ta 5 +20 +40
+.if t .ta 0.5i +1.5i +3.0i +4.0i
+.in 0
+.nf
+	\fBSQL/92 Function\fP	\fBMeaning\fP
+	current_date	date of current transaction
+	current_time	time of current transaction
+	current_timestamp	date and time of current transaction
 
 .fi
 .in
@@ -83,8 +124,11 @@ Most date and time types share code for data input. For those types (
 .IR datetime ,
 .IR abstime ,
 .IR timestamp ,
-.IR timespan and
-.IR reltime )
+.IR timespan ,
+.IR reltime ,
+.IR date ,
+and
+.IR time )
 the input can have any of a wide variety of styles. For numeric date representations,
 European and US conventions can differ, and the proper interpretation is obtained
 by using the
@@ -96,6 +140,11 @@ Postgres (see section on
 .IR "absolute time" )
 with the SQL style having European and US variants (see
 .IR set (l)).
+
+In future releases, the number of date/time types will decrease, with the current
+implementation of datetime becoming timestamp, timespan becoming interval,
+and (possibly) abstime
+and reltime being deprecated in favor of timestamp and interval.
 
 .SH "DATETIME"
 General-use date and time is input using a wide range of
@@ -531,7 +580,11 @@ tinterval
 
 .SH "FUNCTIONS"
 Many data types have functions available for conversion to other related types.
-In addition, there are some type-specific functions.
+In addition, there are some type-specific functions. Functions which are also
+available through operators are documented as operators only.
+
+.PP
+Some functions defined for text are also available for char() and varchar().
 .PP
 For the
 date_part() and date_trunc()
@@ -545,6 +598,23 @@ to return day of week and `epoch' to return seconds since 1970.
 
 .nf
 Functions:
+
+integer
+    float8   float(int)                convert integer to floating point
+    float4   float4(int)               convert integer to floating point
+
+float
+    int      integer(float)            convert floating point to integer
+
+text
+    text     lower(text)               convert text to lower case
+    text     lpad(text,int,text)       left pad string to specified length
+    text     ltrim(text,text)          left trim characters from text
+    text     position(text,text)       extract specified substring
+    text     rpad(text,int,text)       right pad string to specified length
+    text     rtrim(text,text)          right trim characters from text
+    text     substr(text,int[,int])    extract specified substring
+    text     upper(text)               convert text to upper case
 
 abstime
 	bool     isfinite(abstime)         TRUE if this is a finite time
@@ -587,6 +657,22 @@ circle
 	float8   radius(circle)            radius of circle
 	float8   diameter(circle)          diameter of circle
 	float8   area(circle)              area of circle
+
+.fi
+.PP
+SQL/92 defines functions with specific syntax. Some of these
+are implemented using other Postgres functions.
+
+.nf
+SQL/92 Functions:
+
+text
+    text     position(text in text)    extract specified substring
+    text     substring(text [from int] [for int])
+                                       extract specified substring
+    text     trim([leading|trailing|both] [text] from text)
+                                       trim characters from text
+
 .fi
 
 .SH "BINARY OPERATORS"
@@ -819,8 +905,8 @@ bool     |lseg      |line      |?#     |inter_sl
 bool     |lseg      |line      |@      |on_sl              
 bool     |lseg      |lseg      |=      |lseg_eq            
 bool     |lseg      |lseg      |?#     |lseg_intersect     
-bool     |lseg      |lseg      |?-\|   |lseg_perp          
-bool     |lseg      |lseg      |?\|\|  |lseg_parallel      
+bool     |lseg      |lseg      |?-|    |lseg_perp          
+bool     |lseg      |lseg      |?||    |lseg_parallel      
 bool     |money     |money     |<      |cash_lt            
 bool     |money     |money     |<=     |cash_le            
 bool     |money     |money     |<>     |cash_ne            
@@ -876,14 +962,14 @@ bool     |point     |box       |@      |on_pb
 bool     |point     |circle    |@      |pt_contained_circle
 bool     |point     |line      |@      |on_pl              
 bool     |point     |lseg      |@      |on_ps              
-bool     |point     |path      |@      |pt_contained_path  
 bool     |point     |path      |@      |on_ppath           
+bool     |point     |path      |@      |pt_contained_path  
 bool     |point     |point     |<<     |point_left         
 bool     |point     |point     |<^     |point_below        
 bool     |point     |point     |>>     |point_right        
 bool     |point     |point     |>^     |point_above        
 bool     |point     |point     |?-     |point_horiz        
-bool     |point     |point     |?\|    |point_vert         
+bool     |point     |point     |?|     |point_vert         
 bool     |point     |point     |~=     |point_eq           
 bool     |point     |polygon   |@      |pt_contained_poly  
 bool     |polygon   |point     |~      |poly_contain_pt    
@@ -939,8 +1025,14 @@ bool     |tinterval |reltime   |#>     |intervallengt
 bool     |tinterval |reltime   |#>=    |intervallenge      
 bool     |tinterval |tinterval |&&     |intervalov         
 bool     |tinterval |tinterval |<      |intervalct         
+bool     |tinterval |tinterval |<      |intervallt         
 bool     |tinterval |tinterval |<<     |intervalct         
+bool     |tinterval |tinterval |<=     |intervalle         
+bool     |tinterval |tinterval |<>     |intervalne         
 bool     |tinterval |tinterval |=      |intervaleq         
+bool     |tinterval |tinterval |>      |intervalgt         
+bool     |tinterval |tinterval |>=     |intervalge         
+bool     |tinterval |tinterval |~=     |intervalsame       
 bool     |varchar   |text      |!~     |textregexne        
 bool     |varchar   |text      |!~*    |texticregexne      
 bool     |varchar   |text      |!~~    |textnlike          
@@ -996,8 +1088,8 @@ float8   |lseg      |box       |<->    |dist_sb
 float8   |lseg      |line      |<->    |dist_sl            
 float8   |lseg      |lseg      |<->    |lseg_distance      
 float8   |path      |path      |<->    |path_distance      
-float8   |point     |box       |<->    |dist_pl            
 float8   |point     |box       |<->    |dist_pb            
+float8   |point     |box       |<->    |dist_pl            
 float8   |point     |lseg      |<->    |dist_ps            
 float8   |point     |path      |<->    |dist_ppath         
 float8   |point     |point     |<->    |point_distance     
@@ -1035,8 +1127,18 @@ int4     |int4      |int4      |*      |int4mul
 int4     |int4      |int4      |+      |int4pl             
 int4     |int4      |int4      |-      |int4mi             
 int4     |int4      |int4      |/      |int4div            
-money    |money     |float8    |*      |cash_mul           
-money    |money     |float8    |/      |cash_div           
+money    |float4    |money     |*      |flt4_mul_cash      
+money    |float8    |money     |*      |flt8_mul_cash      
+money    |int2      |money     |*      |int2_mul_cash      
+money    |int4      |money     |*      |int4_mul_cash      
+money    |money     |float4    |*      |cash_mul_flt4      
+money    |money     |float4    |/      |cash_div_flt4      
+money    |money     |float8    |*      |cash_mul_flt8      
+money    |money     |float8    |/      |cash_div_flt8      
+money    |money     |int2      |*      |cash_mul_int2      
+money    |money     |int2      |/      |cash_div_int2      
+money    |money     |int4      |*      |cash_mul_int4      
+money    |money     |int4      |/      |cash_div_int4      
 money    |money     |money     |+      |cash_pl            
 money    |money     |money     |-      |cash_mi            
 path     |path      |path      |+      |path_add           
@@ -1064,7 +1166,7 @@ timespan |timespan  |timespan  |+      |timespan_pl
 timespan |timespan  |timespan  |-      |timespan_mi        
 timespan |timespan  |timespan  |/      |timespan_div       
 tinterval|abstime   |abstime   |<#>    |mktinterval        
-(446 rows)
+(462 rows)
 
 .ec
 .fi
@@ -1089,28 +1191,28 @@ left_unary|operand  |return_type
 ----------+---------+-----------
 @@        |box      |point      
 @@        |circle   |point      
-@         |float4   |float4     
 -         |float4   |float4     
-\|/       |float8   |float8     
-@         |float8   |float8     
-;         |float8   |float8     
-:         |float8   |float8     
-%         |float8   |float8     
-\|\|/     |float8   |float8     
+@         |float4   |float4     
 -         |float8   |float8     
+@         |float8   |float8     
+|/        |float8   |float8     
+||/       |float8   |float8     
+%         |float8   |float8     
+:         |float8   |float8     
+;         |float8   |float8     
 -         |int2     |int2       
--         |int4     |int4       
 !!        |int4     |int4       
-?-        |lseg     |bool       
-?\|       |lseg     |bool       
+-         |int4     |int4       
 @@        |lseg     |point      
-??        |path     |float8     
+?-        |lseg     |bool       
+?|        |lseg     |bool       
 #         |path     |int4       
+??        |path     |float8     
 @@        |path     |point      
 @@        |polygon  |point      
 #         |polygon  |int4       
 -         |timespan |timespan   
-\|        |tinterval|abstime    
+|         |tinterval|abstime    
 (24 rows)
 
 .ec
@@ -1150,7 +1252,8 @@ This list was generated from the Postgres system catalogs with the query:
 
 .nf
 .eo
-SELECT   a.aggname, t.typname
+SELECT   a.aggname AS aggname,
+         t.typname AS typname
 FROM     pg_aggregate a, pg_type t
 WHERE    a.aggbasetype = t.oid
 ORDER BY aggname, typname;
