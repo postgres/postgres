@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.116 2003/05/22 14:39:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.117 2003/06/26 18:23:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,8 @@ static ControlFileData *ControlFile = NULL;
  * For XLByteToSeg, do the computation at face value.  For XLByteToPrevSeg,
  * a boundary byte is taken to be in the previous segment.	This is suitable
  * for deciding which segment to write given a pointer to a record end,
- * for example.
+ * for example.  (We can assume xrecoff is not zero, since no valid recptr
+ * can have that.)
  */
 #define XLByteToSeg(xlrp, logId, logSeg)	\
 	( logId = (xlrp).xlogid, \
