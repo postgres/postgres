@@ -202,7 +202,7 @@ QUERY: SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 WARN:	Bad float8 input format -- overflow
 
 QUERY: SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
-WARN:	Bad float8 input format -- overflow
+WARN:pow() returned a floating point out of the range
 
 QUERY: SELECT '' AS bad, (; (f.f1)) from FLOAT8_TBL f where f.f1 = '0.0' ;
 WARN:can't take log of 0!
