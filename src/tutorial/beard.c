@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/tutorial/C-code/Attic/beard.c,v 1.5 1998/01/07 21:07:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.1 1998/03/01 04:51:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
