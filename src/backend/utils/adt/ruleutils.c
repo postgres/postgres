@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.125 2002/11/15 02:50:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.126 2002/11/25 21:29:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2243,8 +2243,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				switch (param->paramkind)
 				{
 					case PARAM_NAMED:
-					case PARAM_NEW:
-					case PARAM_OLD:
 						appendStringInfo(buf, "$%s", param->paramname);
 						break;
 					case PARAM_NUM:

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.73 2002/11/15 02:50:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.74 2002/11/25 21:29:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,9 +293,7 @@ transformArraySubscripts(ParseState *pstate,
 											 sizeof(int32),
 											 Int32GetDatum(1),
 											 false,
-											 true,		/* pass by value */
-											 false,
-											 false);
+											 true);		/* pass by value */
 			}
 			lowerIndexpr = lappend(lowerIndexpr, subexpr);
 		}
@@ -444,8 +442,6 @@ make_const(Value *value)
 							-1,
 							(Datum) NULL,
 							true,
-							false,
-							false,
 							false);
 			return con;
 	}
@@ -454,9 +450,7 @@ make_const(Value *value)
 					typelen,
 					val,
 					false,
-					typebyval,
-					false,		/* not a set */
-					false);		/* not coerced */
+					typebyval);
 
 	return con;
 }

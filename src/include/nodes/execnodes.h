@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.79 2002/11/22 22:10:01 tgl Exp $
+ * $Id: execnodes.h,v 1.80 2002/11/25 21:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,14 +281,15 @@ typedef struct ResultRelInfo
  *
  *		direction						direction of the scan
  *
+ *		snapshot						time qual to use
+ *
  *		range_table						array of scan relation information
  *
  *		result_relation information		for insert/update/delete queries
  *
  *		into_relation_descriptor		relation being retrieved "into"
  *
- *		param_list_info					information needed to transform
- *										Param nodes into Const nodes
+ *		param_list_info					information about Param values
  *
  *		tupleTable						this is a pointer to an array
  *										of pointers to tuples used by
@@ -307,8 +308,8 @@ typedef struct EState
 												 * elt */
 	JunkFilter *es_junkFilter;	/* currently active junk filter */
 	Relation	es_into_relation_descriptor;
-	ParamListInfo es_param_list_info;
-	ParamExecData *es_param_exec_vals;	/* this is for subselects */
+	ParamListInfo es_param_list_info;	/* values of external params */
+	ParamExecData *es_param_exec_vals;	/* values of internal params */
 	TupleTable	es_tupleTable;
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
@@ -322,6 +323,7 @@ typedef struct EState
 	 * needed.
 	 */
 	ExprContext *es_per_tuple_exprcontext;
+
 	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
 	struct Plan *es_origPlan;
 	Pointer		es_evalPlanQual;

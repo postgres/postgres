@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.125 2002/11/24 21:52:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.126 2002/11/25 21:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2167,7 +2167,7 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 	op = makeOper(opr1oid, InvalidOid, BOOLOID, false);
 	expr = make_opclause(op, leftop,
 						 (Var *) makeConst(datatype, -1, opr1right,
-										   false, false, false, false));
+										   false, false));
 	result = makeList1(expr);
 
 	/* create clause "key <= network_scan_last( rightop )" */
@@ -2182,7 +2182,7 @@ network_prefix_quals(Var *leftop, Oid expr_op, Datum rightop)
 	op = makeOper(opr2oid, InvalidOid, BOOLOID, false);
 	expr = make_opclause(op, leftop,
 						 (Var *) makeConst(datatype, -1, opr2right,
-										   false, false, false, false));
+										   false, false));
 	result = lappend(result, expr);
 
 	return result;
@@ -2233,5 +2233,5 @@ string_to_const(const char *str, Oid datatype)
 	Datum		conval = string_to_datum(str, datatype);
 
 	return makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
-					 conval, false, false, false, false);
+					 conval, false, false);
 }

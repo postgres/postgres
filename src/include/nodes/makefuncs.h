@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.41 2002/09/18 21:35:24 tgl Exp $
+ * $Id: makefuncs.h,v 1.42 2002/11/25 21:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,7 @@ extern Const *makeConst(Oid consttype,
 		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
-		  bool constbyval,
-		  bool constisset,
-		  bool constiscast);
+		  bool constbyval);
 
 extern Const *makeNullConst(Oid consttype);
 

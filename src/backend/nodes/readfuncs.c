@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.139 2002/11/25 18:12:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.140 2002/11/25 21:29:38 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -390,7 +390,6 @@ _readConst(void)
 	READ_INT_FIELD(constlen);
 	READ_BOOL_FIELD(constbyval);
 	READ_BOOL_FIELD(constisnull);
-	/* XXX what about constisset, constiscast? */
 
 	token = pg_strtok(&length); /* skip :constvalue */
 	if (local_node->constisnull)

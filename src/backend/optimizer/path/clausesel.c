@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.52 2002/10/19 02:56:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.53 2002/11/25 21:29:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,7 @@
 
 /* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
 #define MAKEBOOLCONST(val,isnull) \
-	((Node *) makeConst(BOOLOID, 1, (Datum) (val), \
-						(isnull), true, false, false))
+	((Node *) makeConst(BOOLOID, 1, (Datum) (val), (isnull), true))
 
 
 /*

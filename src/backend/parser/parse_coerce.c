@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.86 2002/11/15 02:50:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.87 2002/11/25 21:29:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,6 @@ coerce_type(Node *node, Oid inputTypeId, Oid targetTypeId,
 		newcon->constlen = typeLen(targetType);
 		newcon->constbyval = typeByVal(targetType);
 		newcon->constisnull = con->constisnull;
-		newcon->constisset = false;
 
 		if (!con->constisnull)
 		{
@@ -553,9 +552,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 						 sizeof(int32),
 						 Int32GetDatum(targetTypMod),
 						 false,
-						 true,
-						 false,
-						 false);
+						 true);
 
 		args = makeList2(node, cons);
 
@@ -566,9 +563,7 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 							 sizeof(bool),
 							 BoolGetDatum(cformat != COERCE_IMPLICIT_CAST),
 							 false,
-							 true,
-							 false,
-							 false);
+							 true);
 
 			args = lappend(args, cons);
 		}

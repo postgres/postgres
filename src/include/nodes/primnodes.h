@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.68 2002/09/18 21:35:24 tgl Exp $
+ * $Id: primnodes.h,v 1.69 2002/11/25 21:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,20 +267,16 @@ typedef struct Var
 typedef struct Const
 {
 	NodeTag		type;
-	Oid			consttype;		/* PG_TYPE OID of the constant's value */
-	int			constlen;		/* length in bytes of the constant's value */
+	Oid			consttype;		/* PG_TYPE OID of the constant's datatype */
+	int			constlen;		/* typlen of the constant's datatype */
 	Datum		constvalue;		/* the constant's value */
 	bool		constisnull;	/* whether the constant is null (if true,
-								 * the other fields are undefined) */
-	bool		constbyval;		/* whether the information in constvalue
-								 * if passed by value.	If true, then all
-								 * the information is stored in the datum.
-								 * If false, then the datum contains a
+								 * constvalue is undefined) */
+	bool		constbyval;		/* whether this datatype is passed by value.
+								 * If true, then all the information is
+								 * stored in the Datum.
+								 * If false, then the Datum contains a
 								 * pointer to the information. */
-	bool		constisset;		/* whether the const represents a set. The
-								 * const value corresponding will be the
-								 * query that defines the set. */
-	bool		constiscast;
 } Const;
 
 /* ----------------
@@ -290,31 +286,24 @@ typedef struct Const
  *
  *		PARAM_NAMED: The parameter has a name, i.e. something
  *				like `$.salary' or `$.foobar'.
- *				In this case field `paramname' must be a valid Name.
+ *				In this case field `paramname' must be a valid name.
  *
  *		PARAM_NUM:	 The parameter has only a numeric identifier,
  *				i.e. something like `$1', `$2' etc.
  *				The number is contained in the `paramid' field.
  *
- *		PARAM_NEW:	 Used in PRS2 rule, similar to PARAM_NAMED.
- *					 The `paramname' and `paramid' refer to the "NEW" tuple
- *					 The `pramname' is the attribute name and `paramid'
- *					 is the attribute number.
+ *		PARAM_EXEC:	 The parameter is an internal executor parameter.
+ *				It has a number contained in the `paramid' field.
  *
- *		PARAM_OLD:	 Same as PARAM_NEW, but in this case we refer to
- *				the "OLD" tuple.
  * ----------------
  */
 typedef struct Param
 {
 	NodeTag		type;
-	int			paramkind;		/* specifies the kind of parameter.  See
-								 * above */
-	AttrNumber	paramid;		/* numeric identifier for literal-constant
-								 * parameters ("$1") */
-	char	   *paramname;		/* attribute name for tuple-substitution
-								 * parameters ("$.foo") */
-	Oid			paramtype;		/* PG_TYPE OID of the parameter's value */
+	int			paramkind;		/* kind of parameter. See above */
+	AttrNumber	paramid;		/* numeric ID for parameter ("$1") */
+	char	   *paramname;		/* name for parameter ("$.foo") */
+	Oid			paramtype;		/* PG_TYPE OID of parameter's datatype */
 } Param;
 
 /*

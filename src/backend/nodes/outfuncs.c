@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.182 2002/11/25 18:12:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.183 2002/11/25 21:29:36 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -735,7 +735,6 @@ _outConst(StringInfo str, Const *node)
 	WRITE_INT_FIELD(constlen);
 	WRITE_BOOL_FIELD(constbyval);
 	WRITE_BOOL_FIELD(constisnull);
-	/* XXX what about constisset, constiscast? */
 
 	appendStringInfo(str, " :constvalue ");
 	if (node->constisnull)

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * params.h
- *	  Declarations/definitions of stuff needed to handle parameterized plans.
+ *	  Declarations of stuff needed to handle parameterized plans.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.17 2002/06/20 20:29:51 momjian Exp $
+ * $Id: params.h,v 1.18 2002/11/25 21:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,66 +16,55 @@
 
 #include "access/attnum.h"
 
-/* ----------------------------------------------------------------
- *
+
+/* ----------------
  * The following are the possible values for the 'paramkind'
  * field of a Param node.
  *
  * PARAM_NAMED: The parameter has a name, i.e. something
  *				like `$.salary' or `$.foobar'.
- *				In this case field `paramname' must be a valid Name.
- *				and field `paramid' must be == 0.
+ *				In this case field `paramname' must be a valid name.
  *
  * PARAM_NUM:	The parameter has only a numeric identifier,
  *				i.e. something like `$1', `$2' etc.
- *				The number is contained in the `parmid' field.
+ *				The number is contained in the `paramid' field.
  *
- * PARAM_NEW:	Used in PRS2 rule, similar to PARAM_NAMED.
- *				The `paramname' & `paramid' refer to the "NEW" tuple
- *				`paramname' is the attribute name and `paramid' its
- *				attribute number.
+ * PARAM_EXEC:	The parameter is an internal executor parameter.
+ *				It has a number contained in the `paramid' field.
  *
- * PARAM_OLD:	Same as PARAM_NEW, but in this case we refer to
- *				the "OLD" tuple.
+ * PARAM_INVALID should never appear in a Param node; it's used to mark
+ * the end of a ParamListInfo array.
  *
- * PARAM_EXEC:	Evaluated by executor. Used for subselect...
- *
+ * NOTE: As of PostgreSQL 7.3, named parameters aren't actually used and
+ * so the code that handles PARAM_NAMED cases is dead code.  We leave it
+ * in place since it might be resurrected someday.
+ * ----------------
  */
 
 #define PARAM_NAMED		11
 #define PARAM_NUM		12
-#define PARAM_NEW		13
-#define PARAM_OLD		14
 #define PARAM_EXEC		15
 #define PARAM_INVALID	100
 
 
-/* ----------------------------------------------------------------
+/* ----------------
  *	  ParamListInfo
  *
- *	  Information needed in order for the executor to handle
- *	  parameterized plans (you know,  $.salary, $.name etc. stuff...).
+ *	  ParamListInfo entries are used to pass parameters into the executor
+ *	  for parameterized plans.  Each entry in the array defines the value
+ *	  to be substituted for a PARAM_NAMED or PARAM_NUM parameter.
  *
- *	  ParamListInfoData contains information needed when substituting a
- *	  Param node with a Const node.
- *
- *		kind   : the kind of parameter.
- *		name   : the parameter name (valid if kind == PARAM_NAMED,
- *				 PARAM_NEW or PARAM_OLD)
+ *		kind   : the kind of parameter (PARAM_NAMED or PARAM_NUM)
+ *		name   : the parameter name (valid if kind == PARAM_NAMED)
  *		id	   : the parameter id (valid if kind == PARAM_NUM)
- *				 or the attrno (if kind == PARAM_NEW or PARAM_OLD)
- *		type   : PG_TYPE OID of the value
- *		length : length in bytes of the value
- *		isnull : true if & only if the value is null (if true then
- *				 the fields 'length' and 'value' are undefined).
+ *		isnull : true if the value is null (if so 'value' is undefined)
  *		value  : the value that has to be substituted in the place
  *				 of the parameter.
  *
  *	 ParamListInfo is to be used as an array of ParamListInfoData
- *	 records. An 'InvalidName' in the name field of such a record
- *	 indicates that this is the last record in the array.
- *
- * ----------------------------------------------------------------
+ *	 records.  A dummy record with kind == PARAM_INVALID marks the end
+ *	 of the array.
+ * ----------------
  */
 
 typedef struct ParamListInfoData
@@ -83,19 +72,33 @@ typedef struct ParamListInfoData
 	int			kind;
 	char	   *name;
 	AttrNumber	id;
-	Oid			type;
-	Size		length;
 	bool		isnull;
-	bool		byval;
 	Datum		value;
 } ParamListInfoData;
 
 typedef ParamListInfoData *ParamListInfo;
 
+
+/* ----------------
+ *	  ParamExecData
+ *
+ *	  ParamExecData entries are used for executor internal parameters
+ *	  (that is, values being passed into or out of a sub-query).  The
+ *	  paramid of a PARAM_EXEC Param is a (zero-based) index into an
+ *	  array of ParamExecData records, which is referenced through
+ *	  es_param_exec_vals or ecxt_param_exec_vals.
+ *
+ *	  If execPlan is not NULL, it points to a SubPlan node that needs to
+ *	  be executed to produce the value.  (This is done so that we can have
+ *	  lazy evaluation of InitPlans: they aren't executed until/unless a
+ *	  result value is needed.)  Otherwise the value is assumed to be valid
+ *	  when needed.
+ * ----------------
+ */
+
 typedef struct ParamExecData
 {
-	void	   *execPlan;		/* plan must be executed to get param
-								 * value */
+	void	   *execPlan;		/* should be "SubPlan *" */
 	Datum		value;
 	bool		isnull;
 } ParamExecData;

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.222 2002/11/25 03:33:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.223 2002/11/25 21:29:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -769,8 +769,6 @@ _copyConst(Const *from)
 
 	COPY_SCALAR_FIELD(constisnull);
 	COPY_SCALAR_FIELD(constbyval);
-	COPY_SCALAR_FIELD(constisset);
-	COPY_SCALAR_FIELD(constiscast);
 
 	return newnode;
 }

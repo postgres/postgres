@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.111 2002/11/15 02:50:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.112 2002/11/25 21:29:40 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -36,8 +36,7 @@
 
 /* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
 #define MAKEBOOLCONST(val,isnull) \
-	((Node *) makeConst(BOOLOID, 1, (Datum) (val), \
-						(isnull), true, false, false))
+	((Node *) makeConst(BOOLOID, 1, (Datum) (val), (isnull), true))
 
 typedef struct
 {
@@ -666,7 +665,8 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 
 	if (node == NULL)
 		return false;
-	if (IsA(node, Const) ||IsA(node, Param))
+	if (IsA(node, Const) ||
+		IsA(node, Param))
 		return false;			/* constants are always acceptable */
 
 	/*
@@ -1286,8 +1286,8 @@ eval_const_expressions_mutator(Node *node, void *context)
 						 * Make the constant result node.
 						 */
 						return (Node *) makeConst(result_typeid, resultTypLen,
-												const_val, const_is_null,
-										   resultTypByVal, false, false);
+												  const_val, const_is_null,
+												  resultTypByVal);
 					}
 					break;
 				}
@@ -1734,7 +1734,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	 */
 	return (Expr *) makeConst(result_typeid, resultTypLen,
 							  const_val, const_is_null,
-							  resultTypByVal, false, false);
+							  resultTypByVal);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.109 2002/11/15 02:50:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.110 2002/11/25 21:29:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,40 +392,32 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
  *		Returns the value of a parameter.  A param node contains
  *		something like ($.name) and the expression context contains
  *		the current parameter bindings (name = "sam") (age = 34)...
- *		so our job is to replace the param node with the datum
- *		containing the appropriate information ("sam").
+ *		so our job is to find and return the appropriate datum ("sam").
  *
  *		Q: if we have a parameter ($.foo) without a binding, i.e.
  *		   there is no (foo = xxx) in the parameter list info,
  *		   is this a fatal error or should this be a "not available"
- *		   (in which case we shoud return a Const node with the
- *			isnull flag) ?	-cim 10/13/89
- *
- *		Minor modification: Param nodes now have an extra field,
- *		`paramkind' which specifies the type of parameter
- *		(see params.h). So while searching the paramList for
- *		a paramname/value pair, we have also to check for `kind'.
- *
- *		NOTE: The last entry in `paramList' is always an
- *		entry with kind == PARAM_INVALID.
+ *		   (in which case we could return NULL)?	-cim 10/13/89
  * ----------------------------------------------------------------
  */
 Datum
 ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 {
-	char	   *thisParameterName;
-	int			thisParameterKind = expression->paramkind;
-	AttrNumber	thisParameterId = expression->paramid;
-	int			matchFound;
-	ParamListInfo paramList;
+	int			thisParamKind = expression->paramkind;
+	AttrNumber	thisParamId = expression->paramid;
 
-	if (thisParameterKind == PARAM_EXEC)
+	if (thisParamKind == PARAM_EXEC)
 	{
+		/*
+		 * PARAM_EXEC params (internal executor parameters) are stored in
+		 * the ecxt_param_exec_vals array, and can be accessed by array index.
+		 */
 		ParamExecData *prm;
 
-		prm = &(econtext->ecxt_param_exec_vals[thisParameterId]);
+		prm = &(econtext->ecxt_param_exec_vals[thisParamId]);
 		if (prm->execPlan != NULL)
 		{
+			/* Parameter not evaluated yet, so go do it */
 			ExecSetParamPlan(prm->execPlan, econtext);
 			/* ExecSetParamPlan should have processed this param... */
 			Assert(prm->execPlan == NULL);
@@ -433,82 +425,56 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 		*isNull = prm->isnull;
 		return prm->value;
 	}
-
-	thisParameterName = expression->paramname;
-	paramList = econtext->ecxt_param_list_info;
-
-	*isNull = false;
-
-	/*
-	 * search the list with the parameter info to find a matching name. An
-	 * entry with an InvalidName denotes the last element in the array.
-	 */
-	matchFound = 0;
-	if (paramList != NULL)
+	else
 	{
 		/*
-		 * search for an entry in 'paramList' that matches the
-		 * `expression'.
+		 * All other parameter types must be sought in ecxt_param_list_info.
+		 * NOTE: The last entry in the param array is always an
+		 * entry with kind == PARAM_INVALID.
 		 */
-		while (paramList->kind != PARAM_INVALID && !matchFound)
+		ParamListInfo paramList = econtext->ecxt_param_list_info;
+		char	   *thisParamName = expression->paramname;
+		bool		matchFound = false;
+
+		if (paramList != NULL)
 		{
-			switch (thisParameterKind)
+			while (paramList->kind != PARAM_INVALID && !matchFound)
 			{
-				case PARAM_NAMED:
-					if (thisParameterKind == paramList->kind &&
-						strcmp(paramList->name, thisParameterName) == 0)
-						matchFound = 1;
-					break;
-				case PARAM_NUM:
-					if (thisParameterKind == paramList->kind &&
-						paramList->id == thisParameterId)
-						matchFound = 1;
-					break;
-				case PARAM_OLD:
-				case PARAM_NEW:
-					if (thisParameterKind == paramList->kind &&
-						paramList->id == thisParameterId)
+				if (thisParamKind == paramList->kind)
+				{
+					switch (thisParamKind)
 					{
-						matchFound = 1;
-
-						/*
-						 * sanity check
-						 */
-						if (strcmp(paramList->name, thisParameterName) != 0)
-						{
-							elog(ERROR,
-								 "ExecEvalParam: new/old params with same id & diff names");
-						}
+						case PARAM_NAMED:
+							if (strcmp(paramList->name, thisParamName) == 0)
+								matchFound = true;
+							break;
+						case PARAM_NUM:
+							if (paramList->id == thisParamId)
+								matchFound = true;
+							break;
+						default:
+							elog(ERROR, "ExecEvalParam: invalid paramkind %d",
+								 thisParamKind);
 					}
-					break;
-				default:
+				}
+				if (!matchFound)
+					paramList++;
+			} /* while */
+		} /* if */
 
-					/*
-					 * oops! this is not supposed to happen!
-					 */
-					elog(ERROR, "ExecEvalParam: invalid paramkind %d",
-						 thisParameterKind);
-			}
-			if (!matchFound)
-				paramList++;
-		}						/* while */
-	}							/* if */
+		if (!matchFound)
+		{
+			if (thisParamKind == PARAM_NAMED)
+				elog(ERROR, "ExecEvalParam: Unknown value for parameter %s",
+					 thisParamName);
+			else
+				elog(ERROR, "ExecEvalParam: Unknown value for parameter %d",
+					 thisParamId);
+		}
 
-	if (!matchFound)
-	{
-		/*
-		 * ooops! we couldn't find this parameter in the parameter list.
-		 * Signal an error
-		 */
-		elog(ERROR, "ExecEvalParam: Unknown value for parameter %s",
-			 thisParameterName);
+		*isNull = paramList->isnull;
+		return paramList->value;
 	}
-
-	/*
-	 * return the value.
-	 */
-	*isNull = paramList->isnull;
-	return paramList->value;
 }
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.181 2002/11/23 03:59:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.182 2002/11/25 21:29:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,9 +860,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 							attr[i]->attlen,
 							(Datum) 0,
 							true,		 /* is null */
-							attr[i]->attbyval,
-							false,		/* not a set */
-							false);		/* not coerced */
+							attr[i]->attbyval);
 
 			node = coerce_type_constraints((Node *) con, attr[i]->atttypid,
 										   COERCE_IMPLICIT_CAST);

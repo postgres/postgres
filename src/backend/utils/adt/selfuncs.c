@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.121 2002/11/19 23:21:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.122 2002/11/25 21:29:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3730,7 +3730,7 @@ string_to_const(const char *str, Oid datatype)
 	Datum		conval = string_to_datum(str, datatype);
 
 	return makeConst(datatype, ((datatype == NAMEOID) ? NAMEDATALEN : -1),
-					 conval, false, false, false, false);
+					 conval, false, false);
 }
 
 /*-------------------------------------------------------------------------

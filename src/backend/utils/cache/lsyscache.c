@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.85 2002/09/19 23:40:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.86 2002/11/25 21:29:42 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1047,9 +1047,7 @@ get_typdefault(Oid typid)
 									  type->typlen,
 									  datum,
 									  false,
-									  type->typbyval,
-									  false,	/* not a set */
-									  false);
+									  type->typbyval);
 			pfree(strDefaultVal);
 		}
 		else

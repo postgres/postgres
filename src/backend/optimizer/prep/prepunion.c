@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.80 2002/09/18 21:35:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.81 2002/11/25 21:29:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,9 +448,7 @@ generate_setop_tlist(List *colTypes, int flag,
 								  sizeof(int4),
 								  Int32GetDatum(flag),
 								  false,
-								  true,
-								  false,
-								  false);
+								  true);
 		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
 	}
 

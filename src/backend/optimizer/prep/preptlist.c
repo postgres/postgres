@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.57 2002/09/18 21:35:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.58 2002/11/25 21:29:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,9 +183,7 @@ expand_targetlist(List *tlist, int command_type,
 												  att_tup->attlen,
 												  (Datum) 0,
 												  true, /* isnull */
-												  att_tup->attbyval,
-												  false,		/* not a set */
-												  false);
+												  att_tup->attbyval);
 					if (!att_tup->attisdropped)
 						new_expr = coerce_type_constraints(new_expr,
 														   atttype,
@@ -198,9 +196,7 @@ expand_targetlist(List *tlist, int command_type,
 													  att_tup->attlen,
 													  (Datum) 0,
 													  true,		/* isnull */
-													  att_tup->attbyval,
-													  false,	/* not a set */
-													  false);
+													  att_tup->attbyval);
 					else
 						new_expr = (Node *) makeVar(result_relation,
 													attrno,

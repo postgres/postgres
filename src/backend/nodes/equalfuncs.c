@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.168 2002/11/25 03:33:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.169 2002/11/25 21:29:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,6 @@ _equalConst(Const *a, Const *b)
 	COMPARE_SCALAR_FIELD(constlen);
 	COMPARE_SCALAR_FIELD(constisnull);
 	COMPARE_SCALAR_FIELD(constbyval);
-	/* XXX What about constisset and constiscast? */
 
 	/*
 	 * We treat all NULL constants of the same type as equal. Someday this
@@ -212,18 +211,11 @@ _equalParam(Param *a, Param *b)
 	switch (a->paramkind)
 	{
 		case PARAM_NAMED:
-		case PARAM_NEW:
-		case PARAM_OLD:
 			COMPARE_STRING_FIELD(paramname);
 			break;
 		case PARAM_NUM:
 		case PARAM_EXEC:
 			COMPARE_SCALAR_FIELD(paramid);
-			break;
-		case PARAM_INVALID:
-			/*
-			 * XXX: Hmmm... What are we supposed to return in this case ??
-			 */
 			break;
 		default:
 			elog(ERROR, "_equalParam: Invalid paramkind value: %d",
