@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.5 2001/02/20 22:27:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.6 2001/02/24 12:40:27 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -23,6 +23,10 @@
 
 (define %refentry-xref-manvolnum% #f)
 (define %section-autolabel% #t)
+(define %callout-graphics% #f)
+
+(define %content-title-end-punct% 
+  '(#\. #\! #\? #\:))
 
 (element lineannotation ($italic-seq$))
 (element structfield ($mono-seq$))
@@ -41,6 +45,8 @@
 (define (toc-depth nd)
   (cond ((string=? (gi nd) (normalize "book")) 3)
 	((string=? (gi nd) (normalize "set")) 2)
+	((string=? (gi nd) (normalize "part")) 2)
+	((string=? (gi nd) (normalize "chapter")) 2)
 	(else 1)))
 
 ;; Put date of creation into header

@@ -1,19 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.18 2000/12/22 21:51:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.19 2001/02/24 12:40:27 petere Exp $
 -->
 
  <chapter id="jdbc">
-  <title>JDBC Interface</title>
+  <title><acronym>JDBC</acronym> Interface</title>
 
-  <para>
-   <note>
-    <title>Author</title>
-    <para>
-     Written by Peter T. Mount (<email>peter@retep.org.uk</email>), the
-     author of the <acronym>JDBC</acronym> driver.
-    </para>
-   </note>
-  </para>
+  <note>
+   <title>Author</title>
+   <para>
+    Written by Peter T. Mount (<email>peter@retep.org.uk</email>), the
+    author of the <acronym>JDBC</acronym> driver.
+   </para>
+  </note>
 
   <para>
    <acronym>JDBC</acronym> is a core <acronym>API</acronym> of Java 1.1 and later.
@@ -22,148 +20,185 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.18 2000/12/22 21:51:58 
   </para>
 
   <para>
-   <application>Postgres</application> provides 
-   a <firstterm>type 4</firstterm> <acronym>JDBC</acronym> Driver.
-   Type 4 indicates that the driver
-   is written in Pure Java, and communicates in the database's own network
-   protocol. Because of this, the driver is platform independent. Once compiled,
-   the driver can be used on any platform.
+   <application>Postgres</application> provides a <firstterm>type
+   4</firstterm> <acronym>JDBC</acronym> Driver.  Type 4 indicates
+   that the driver is written in Pure Java, and communicates in the
+   database system's own network protocol. Because of this, the driver
+   is platform independent; once compiled, the driver can be used on
+   any system.
   </para>
 
-  <sect1 id="jdbc-build">
-   <title>Building the <acronym>JDBC</acronym> Interface</title>
+  <para>
+   This chapter is not intended as a complete guide to
+   <acronym>JDBC</acronym> programming, but should help to get you
+   started. For more information refer to the standard
+   <acronym>JDBC</acronym> <acronym>API</acronym> documentation.
+   Also, take a look at the examples included with the source. The
+   basic example is used here.
+  </para>
 
-   <sect2>
-    <title>Compiling the Driver</title>
+ <sect1 id="jdbc-setup">
+  <title>Setting up the <acronym>JDBC</acronym> Driver</title>
 
+  <sect2 id="jdbc-build">
+   <title>Building the Driver</title>
+
+   <para>
+    Precompiled versions of the driver are regularly made available on
+    the <ulink
+    url="http://jdbc.postgresql.org"><productname>PostgreSQL</productname>
+    <acronym>JDBC</acronym> web site</ulink>.  Here we describe how to
+    build the driver manually.
+   </para>
+
+   <para>
+    Starting with <productname>PostgreSQL</productname> version 7.1,
+    the preferred way to build the <acronym>JDBC</acronym> driver is
+    using <productname>Ant</productname>, a special tool for building
+    Java-based packages.  You should download
+    <productname>Ant</productname> from the <ulink
+    url="http://jakarta.apache.org/ant/index.html"><productname>Ant</productname>
+    web site</ulink> and install it before proceeding.
+   </para>
+
+   <para>
+    The build the driver, issue the command
+<screen>
+<prompt>$</prompt> <userinput>ant</userinput>
+</screen>
+    in the top level directory of the
+    <productname>PostgreSQL</productname> source distribution.
+   </para>
+
+   <para>
+    To install the driver, enter the command
+<screen>
+<prompt>$</prompt> <userinput>ant -Dinstall.directory=<replaceable>mydir</replaceable> install</userinput>
+</screen>
+    Replace <replaceable>mydir</replaceable> with a directory name of
+    your choice; the directory will be created if necessary.  The
+    <productname>PostgreSQL</productname> <acronym>JDBC</acronym>
+    driver consists of a <filename>postgresql.jar</filename> file that
+    will be copied to that directory.
+   </para>
+
+   <para>
+    Alternatively, you can use the old <command>make</command>-based
+    interface.  The driver's source is located in the <filename
+    class="directory">src/interfaces/jdbc</filename> directory of the
+    source tree. To compile, simply change directory to that
+    directory, and type:
+<screen>
+<prompt>$</prompt> <userinput>gmake</userinput>
+</screen>
+    (Remember to use <acronym>GNU</acronym> make.)  Upon completion,
+    you will find the archive <filename>postgresql.jar</filename> in
+    the current directory. This is the <acronym>JDBC</acronym> driver,
+    which you can copy to an appropriate directory in your system.
+   </para>
+
+   <note>
     <para>
-     The driver's source is located in the <filename>src/interfaces/jdbc</filename>
-     directory of the
-     source tree. To compile simply change directory to that directory, and type:
-
-     <programlisting>
-% make
-     </programlisting>
+     You must not use <command>javac</command> directly, as the
+     driver uses some dynamic loading techniques for performance
+     reasons, and <command>javac</command> cannot cope.
     </para>
+   </note>
+  </sect2>
 
+  <sect2 id="jdbc-classpath">
+   <title>Setting up the Class Path</title>
+
+   <para>
+    To use the driver, the jar archive
+    <filename>postgresql.jar</filename> needs to be included in the
+    class path, either by putting it in the <envar>CLASSPATH</envar>
+    environment variable, or by using flags on the
+    <command>java</command> command line.
+   </para>
+
+   <informalexample>
     <para>
-     Upon completion, you will find the archive <filename>postgresql.jar</filename>
-     in the current
-     directory. This is the <acronym>JDBC</acronym> driver.
-
-     <note>
-      <para>
-       You must use <application>make</application>,
-       not <application>javac</application>, 
-       as the driver uses some dynamic
-       loading techniques for performance reasons, 
-       and <application>javac</application> cannot cope.
-       The <filename>Makefile</filename> will generate the jar archive.
-      </para>
-     </note>
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>Installing the Driver</title>
-
-    <para>
-     To use the driver, the jar archive postgresql.jar needs to be included in
-     the <envar>CLASSPATH</envar>.
-    </para>
-
-    <sect3>
-     <title>Example</title>
-
-     <para>
-      I have an application that uses the <acronym>JDBC</acronym> driver to access a large database
-      containing astronomical objects. I have the application and the jdbc driver
-      installed in the /usr/local/lib directory, and the java jdk installed in /usr/local/jdk1.1.6.
-     </para>
-
-     <para>
-      To run the application, I would use:
-
-      <programlisting>
-export CLASSPATH = /usr/local/lib/finder.jar:/usr/local/lib/postgresql.jar:.
+     For instance, I have an application that uses the
+     <acronym>JDBC</acronym> driver to access a large database
+     containing astronomical objects. I have the application and the
+     <acronym>JDBC</acronym> driver installed in the <filename
+     class="directory">/usr/local/lib</filename> directory, and the
+     Java <acronym>JDK</acronym> installed in
+     <filename>/usr/local/jdk1.1.6</filename>.  To run the
+     application, I would use:
+<programlisting>
+export CLASSPATH=/usr/local/lib/finder.jar<co id="co.jdbc-finder">:/usr/local/lib/postgresql.jar:.
 java uk.org.retep.finder.Main
-      </programlisting>
-     </para>
+</programlisting>
+     <calloutlist>
+      <callout arearefs="co.jdbc-finder">
+       <para>
+        <filename>finder.jar</filename> contains my application.
+       </para>
+      </callout>
+     </calloutlist>
+    </para>
 
-     <para>
-      Loading the driver is covered later on in this chapter.
-     </para>
-    </sect3>
-   </sect2>
-  </sect1>
+    <para>
+     Loading the driver from within the application is covered in
+     <xref linkend="jdbc-use">.
+    </para>
+   </informalexample>
+  </sect2>
 
-  <sect1 id="jdbc-prepare">
+  <sect2 id="jdbc-prepare">
    <title>Preparing the Database for <acronym>JDBC</acronym></title>
 
    <para>
-    Because Java can only use TCP/IP connections, the <application>Postgres</application> postmaster
-    must be running with the -i flag.
+    Because Java can only use TCP/IP connections, the
+    <application>Postgres</application> server must be configured to
+    accept TCP/IP connections, for instance by supplying the
+    <option>-i</option> option flag when starting the
+    <command>postmaster</command>.
    </para>
 
    <para>
-    Also, the <filename>pg_hba.conf</filename> file must be configured. It's located in the PGDATA
-    directory. In a default installation, this file permits access only by Unix
-    domain sockets. For the <acronym>JDBC</acronym> driver to connect to the same localhost, you need
-    to add something like:
-
-    <programlisting>
-host         all         127.0.0.1     255.255.255.255   password
-    </programlisting>
-
-    Here access to all databases are possible from the local machine 
-    with <acronym>JDBC</acronym>.
+    Also, the client authentication setup in the
+    <filename>pg_hba.conf</filename> file may need to be configured.
+    Refer to the <citetitle>Administrator's Guide</citetitle> for
+    details.  The <acronym>JDBC</acronym> Driver supports trust,
+    ident, password, and crypt authentication methods.
    </para>
+  </sect2>
+ </sect1>
 
-   <para>
-    The <acronym>JDBC</acronym> Driver supports trust, ident, 
-    password and crypt authentication methods.
-   </para>
-  </sect1>
+ <sect1 id="jdbc-use">
+  <title>Using the Driver</title>
 
-  <sect1 id="jdbc-use">
-   <title>Using the Driver</title>
-
-   <para>
-    This section is not intended as a complete guide to 
-    <acronym>JDBC</acronym> programming, but
-    should help to get you started. For more information refer to the standard
-    <acronym>JDBC</acronym> <acronym>API</acronym> documentation.
-    Also, take a look at the examples included with the source. The basic
-    example is used here.
-   </para>
-  </sect1>
-
-  <sect1 id="jdbc-import">
+  <sect2 id="jdbc-import">
    <title>Importing <acronym>JDBC</acronym></title>
 
    <para>
-    Any source that uses <acronym>JDBC</acronym>
-    needs to import the java.sql package, using:
+    Any source that uses <acronym>JDBC</acronym> needs to import the
+    <literal>java.sql</literal> package, using:
 
-    <programlisting>
+<programlisting>
 import java.sql.*;
-    </programlisting>
+</programlisting>
 
     <important>
      <para>
-      Do not import the postgresql package. If you do, your source will not
-      compile, as javac will get confused.
+      Do not import the <literal>org.postgresql</literal> package. If
+      you do, your source will not compile, as
+      <command>javac</command> will get confused.
      </para>
     </important>
    </para>
-  </sect1>
+  </sect2>
 
-  <sect1 id="jdbc-load">
+  <sect2 id="jdbc-load">
    <title>Loading the Driver</title>
 
    <para>
-    Before you can connect to a database, you need to load the driver. There
-    are two methods available, and it depends on your code to the best one to use.
+    Before you can connect to a database, you need to load the
+    driver. There are two methods available, and it depends on your
+    code which is the best one to use.
    </para>
 
    <para>
@@ -171,80 +206,84 @@ import java.sql.*;
     <function>Class.forName()</function> method.
     For <application>Postgres</application>, you would use:
 
-    <programlisting>
+<programlisting>
 Class.forName("org.postgresql.Driver");
-    </programlisting>
+</programlisting>
 
     This will load the driver, and while loading, the driver will automatically
     register itself with <acronym>JDBC</acronym>.
+
+    <note>
+     <para>
+      The <function>forName()</function> method can throw a
+      <classname>ClassNotFoundException</classname> if the driver is
+      not available.
+     </para>
+    </note>
    </para>
 
    <para>
-    Note: The <function>forName()</function> method
-    can throw a <literal>ClassNotFoundException</literal>, so you will
-    need to catch it if the driver is not available.
+    This is the most common method to use, but restricts your code to
+    use just <productname>Postgres</productname>.  If your code may
+    access another database system in the future, and you do not use
+    any <productname>Postgres</productname>-specific extensions, then
+    the second method is advisable.
    </para>
 
    <para>
-    This is the most common method to use, but restricts your code to use just
-    <application>Postgres</application>. 
-    If your code may access another database in the future, and you
-    don't use our extensions, then the second method is advisable.
+    The second method passes the driver as a parameter to the
+    <acronym>JVM</acronym> as it starts, using the <option>-D</option>
+    argument. Example:
+<programlisting>
+java -Djdbc.drivers=org.postgresql.Driver example.ImageViewer
+</programlisting>
+    In this example, the <acronym>JVM</acronym> will attempt to load
+    the driver as part of its initialization. Once done, the
+    <classname>ImageViewer</classname> is started.
    </para>
 
    <para>
-    The second method passes the driver as a parameter to the JVM as it starts,
-    using the -D argument. Example:
-
-    <programlisting>
-% java -Djdbc.drivers=org.postgresql.Driver example.ImageViewer
-    </programlisting>
-
-    In this example, the JVM will attempt to load the driver as part of it's
-    initialisation. Once done, the ImageViewer is started.
+    Now, this method is the better one to use because it allows your
+    code to be used with other database packages without recompiling
+    the code. The only thing that would also change is the connection
+    <acronym>URL</acronym>, which is covered next.
    </para>
 
    <para>
-    Now, this method is the better one to use because it allows your code to
-    be used with other databases, without recompiling the code. The only thing
-    that would also change is the URL, which is covered next.
+    One last thing: When your code then tries to open a
+    <classname>Connection</classname>, and you get a <errorname>No
+    driver available</errorname> <classname>SQLException</classname>
+    being thrown, this is probably caused by the driver not being in
+    the class path, or the value in the parameter not being correct.
    </para>
+  </sect2>
 
-   <para>
-    One last thing. When your code then tries to open a Connection, and you get
-    a <literal>No driver available</literal> SQLException being thrown,
-    this is probably
-    caused by the driver not being in the classpath, or the value in the parameter
-    not being correct.
-   </para>
-  </sect1>
-
-  <sect1 id="jdbc-connect">
+  <sect2 id="jdbc-connect">
    <title>Connecting to the Database</title>
 
    <para>
-    With <acronym>JDBC</acronym>, a database is represented by a URL 
-    (Uniform Resource Locator).
-    With <application>Postgres</application>, this takes one of the following
-    forms:
+    With <acronym>JDBC</acronym>, a database is represented by a
+    <acronym>URL</acronym> (Uniform Resource Locator).  With
+    <application>Postgres</application>, this takes one of the
+    following forms:
 
     <itemizedlist>
      <listitem>
-      <para>
-       jdbc:postgresql:<replaceable class="parameter">database</replaceable>
-      </para>
+<synopsis>
+jdbc:postgresql:<replaceable class="parameter">database</replaceable>
+</synopsis>
      </listitem>
 
      <listitem>
-      <para>
-       jdbc:postgresql://<replaceable class="parameter">host</replaceable>/<replaceable class="parameter">database</replaceable>
-      </para>
+<synopsis>
+jdbc:postgresql://<replaceable class="parameter">host</replaceable>/<replaceable class="parameter">database</replaceable>
+</synopsis>
      </listitem>
 
      <listitem>
-      <para>
-       jdbc:postgresql://<replaceable class="parameter">host</replaceable><replaceable class="parameter">port</replaceable>/<replaceable class="parameter">database</replaceable>
-      </para>
+<synopsis>
+jdbc:postgresql://<replaceable class="parameter">host</replaceable>:<replaceable class="parameter">port</replaceable>/<replaceable class="parameter">database</replaceable>
+</synopsis>
      </listitem>
     </itemizedlist>
 
@@ -257,7 +296,7 @@ Class.forName("org.postgresql.Driver");
       </term>
       <listitem>
        <para>
-	The hostname of the server. Defaults to "localhost".
+        The host name of the server. Defaults to <literal>localhost</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -268,8 +307,8 @@ Class.forName("org.postgresql.Driver");
       </term>
       <listitem>
        <para>
-	The port number the server is listening on. Defaults to the Postgres
-	standard port number (5432).
+        The port number the server is listening on. Defaults to the
+        Postgres standard port number (5432).
        </para>
       </listitem>
      </varlistentry>
@@ -280,7 +319,7 @@ Class.forName("org.postgresql.Driver");
       </term>
       <listitem>
        <para>
-	The database name.
+        The database name.
        </para>
       </listitem>
      </varlistentry>
@@ -288,53 +327,95 @@ Class.forName("org.postgresql.Driver");
    </para>
 
    <para>
-    To connect, you need to get a Connection instance from 
+    To connect, you need to get a <classname>Connection</classname> instance from 
     <acronym>JDBC</acronym>. To do this,
-    you would use the DriverManager.getConnection() method:
+    you would use the <function>DriverManager.getConnection()</function> method:
 
-    <programlisting>
-Connection db = DriverManager.getConnection(url,user,pwd);
-    </programlisting>
+<programlisting>
+Connection db = DriverManager.getConnection(url, username, password);
+</programlisting>
    </para>
-  </sect1>
+  </sect2>
+
+  <sect2 id="jdbc-disconnect">
+   <title>Closing the Connection</title>
+
+   <para>
+    To close the database connection, simply call the
+    <function>close()</function> method to the <classname>Connection</classname>:
+<programlisting>
+db.close();
+</programlisting>
+   </para>
+  </sect2>
+ </sect1>
+
 
   <sect1 id="jdbc-query">
    <title>Issuing a Query and Processing the Result</title>
 
    <para>
-    Any time you want to issue SQL statements to the database, you require a
-    Statement instance. Once you have a Statement, you can use the executeQuery()
-    method to issue a query. This will return a ResultSet instance, which contains
-    the entire result.
+    Any time you want to issue <acronym>SQL</acronym> statements to
+    the database, you require a <classname>Statement</classname>
+    instance. Once you have a <classname>Statement</classname>, you
+    can use the <function>executeQuery()</function> method to issue a
+    query. This will return a <classname>ResultSet</classname>
+    instance, which contains the entire result.  <xref
+    linkend="jdbc-query-example"> illustrates this process.
    </para>
 
-   <sect2>
-    <title>Using the Statement Interface</title>
+   <example id="jdbc-query-example">
+    <title>Processing a Simple Query in <acronym>JDCB</acronym></title>
 
     <para>
-     The following must be considered when using the Statement interface:
+     This example with issue a simple query and print out the first
+     column of each row.
+<programlisting>
+Statement st = db.createStatement();
+ResultSet rs = st.executeQuery("SELECT * FROM mytable");
+while(rs.next()) {
+    System.out.print("Column 1 returned ");
+    System.out.println(rs.getString(1));
+}
+rs.close();
+st.close();
+</programlisting>
+    </para>
+   </example>
+
+   <sect2>
+    <title>Using the <classname>Statement</classname> Interface</title>
+
+    <para>
+     The following must be considered when using the
+     <classname>Statement</classname> interface:
 
      <itemizedlist>
       <listitem>
        <para>
-	You can use a Statement instance as many times as you want. You could
-	create one as soon as you open the connection, and use it for the connections
-	lifetime. You have to remember that only one ResultSet can exist per Statement.
+        You can use a single <classname>Statement</classname> instance
+        as many times as you want. You could create one as soon as you
+        open the connection and use it for the connection's
+        lifetime. But you have to remember that only one
+        <classname>ResultSet</classname> can exist per
+        <classname>Statement</classname>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	If you need to perform a query while processing a ResultSet, you can
-	simply create and use another Statement.
+        If you need to perform a query while processing a
+        <classname>ResultSet</classname>, you can simply create and
+        use another <classname>Statement</classname>.
        </para>
       </listitem>
+
       <listitem>
        <para>
-	If you are using Threads, and several are using the database, you must
-	use a separate Statement for each thread. Refer to the sections covering
-	Threads and Servlets later in this document if you are thinking of using them,
-	as it covers some important points.
+        If you are using threads, and several are using the database,
+        you must use a separate <classname>Statement</classname> for
+        each thread. Refer to <xref linkend="jdbc-thread"> if you are
+        thinking of using threads, as it covers some important points.
        </para>
       </listitem>
      </itemizedlist>
@@ -342,57 +423,49 @@ Connection db = DriverManager.getConnection(url,user,pwd);
    </sect2>
 
    <sect2>
-    <title>Using the ResultSet Interface</title>
+    <title>Using the <classname>ResultSet</classname> Interface</title>
 
     <para>
-     The following must be considered when using the ResultSet interface:
+     The following must be considered when using the
+     <classname>ResultSet</classname> interface:
 
      <itemizedlist>
       <listitem>
        <para>
-	Before reading any values, you must call <function>next()</function>. This returns true if
-	there is a result, but more importantly, it prepares the row for processing.
+        Before reading any values, you must call
+        <function>next()</function>. This returns true if there is a
+        result, but more importantly, it prepares the row for
+        processing.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Under the <acronym>JDBC</acronym> spec, you should access a
-	field only once. It's safest to stick to this rule, although
-	at the current time, the <application>Postgres</application> driver
-	will allow you to access a field as many times as you want.
+        Under the <acronym>JDBC</acronym> specification, you should
+        access a field only once. It is safest to stick to this rule,
+        although at the current time, the
+        <productname>Postgres</productname> driver will allow you to
+        access a field as many times as you want.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	You must close a ResultSet by calling
-	<function>close()</function> once you have finished with it.
+        You must close a <classname>ResultSet</classname> by calling
+        <function>close()</function> once you have finished using it.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	Once you request another query with the Statement used to create a
-	ResultSet, the currently open instance is closed.
+        Once you make another query with the
+        <classname>Statement</classname> used to create a
+        <classname>ResultSet</classname>, the currently open
+        <classname>ResultSet</classname> instance is closed
+        automatically.
        </para>
       </listitem>
      </itemizedlist>
-    </para>
-
-    <para>
-     An example is as follows:
-
-     <programlisting>
-Statement st = db.createStatement();
-ResultSet rs = st.executeQuery("select * from mytable");
-while(rs.next()) {
-    System.out.print("Column 1 returned ");
-    System.out.println(rs.getString(1));
-}
-rs.close();
-st.close();
-     </programlisting>
     </para>
    </sect2>
   </sect1>
@@ -401,114 +474,113 @@ st.close();
    <title>Performing Updates</title>
 
    <para>
-    To perform an update (or any other SQL statement that does not return a
-    result), you simply use the <function>executeUpdate()</function> method:
+    To perform an update (or any other <acronym>SQL</acronym>
+    statement that does not return a result), you simply use the
+    <function>executeUpdate()</function> method:
 
-    <programlisting>
-st.executeUpdate("create table basic (a int2, b int2)");
-    </programlisting>
+<programlisting>
+st.executeUpdate("CREATE TABLE basic (a int, b int)");
+</programlisting>
    </para>
   </sect1>
 
-  <sect1 id="jdbc-disconnect">
-   <title>Closing the Connection</title>
+ <sect1 id="jdbc-lo">
+  <title>Using Large Objects</title>
 
+  <para>
+   In <application>Postgres</application>, <firstterm>Large
+   Objects</firstterm> (also known as <acronym>BLOB</acronym>s) are
+   used to hold data in the database that cannot be stored in a normal
+   SQL table. They are stored in a separate table in a special format,
+   and are referred to from your own tables by an OID value.
+  </para>
+
+  <important>
    <para>
-    To close the database connection, simply call the close() method to the Connection:
-
-    <programlisting>
-db.close();
-    </programlisting>
-   </para>
-  </sect1>
-
-  <sect1 id="jdbc-lo">
-   <title>Using Large Objects</title>
-
-   <para>
-    In <application>Postgres</application>, 
-    large objects (also known as <firstterm>blobs</firstterm>) are used to hold data in
-    the database that cannot be stored in a normal SQL table. They are stored as a
-    Table/Index pair, and are referred to from your own tables by an OID value.
-   </para>
-
-   <para>
-    <important>
-     <para>
-      For <productname>Postgres</productname>, you must access large
-      objects within an SQL transaction. Although this has always been 
-      true in principle, it was not strictly enforced until the
-      release of version 6.5. You would open a transaction by using the
-      <function>setAutoCommit()</function> method with an input
-      parameter of <literal>false</literal>:
-
-      <programlisting>
+    For <productname>Postgres</productname>, you must access Large
+    Objects within an <acronym>SQL</acronym> transaction.  You would
+    open a transaction by using the
+    <function>setAutoCommit()</function> method with an input
+    parameter of <literal>false</literal>:
+<programlisting>
 Connection mycon;
 ...
 mycon.setAutoCommit(false);
-... now use Large Objects
-      </programlisting>
-     </para>
-    </important>
+... // now use Large Objects
+</programlisting>
    </para>
+  </important>
 
    <para>
-    Now, there are two methods of using Large Objects. The first is the
+    There are two methods of using Large Objects. The first is the
     standard <acronym>JDBC</acronym> way, and is documented here. The
-    other, uses our own extension
-    to the api, which presents the libpq large object
-    <acronym>API</acronym> to Java, providing even
-    better access to large objects than the standard. Internally, the driver uses
-    the extension to provide large object support.
+    other, uses <productname>PostgreSQL</productname> extensions to
+    the <acronym>API</acronym>, which presents the libpq large object
+    <acronym>API</acronym> to Java, providing even better access to
+    large objects than the standard. Internally, the driver uses the
+    extension to provide large object support.
    </para>
 
    <para>
-    In <acronym>JDBC</acronym>, the standard way to access them is using the getBinaryStream()
-    method in ResultSet, and setBinaryStream() method in PreparedStatement. These
-    methods make the large object appear as a Java stream, allowing you to use the
-    java.io package, and others, to manipulate the object.
+    In <acronym>JDBC</acronym>, the standard way to access Large
+    Objects is using the <function>getBinaryStream()</function> method
+    in <classname>ResultSet</classname>, and
+    <function>setBinaryStream()</function> method in
+    <classname>PreparedStatement</classname>. These methods make the
+    large object appear as a Java stream, allowing you to use the
+    <literal>java.io</literal> package, and others, to manipulate the
+    object.  <xref linkend="jdbc-lo-example"> illustrates the usage of
+    this approach.
    </para>
 
-   <para>
-    For example, suppose
-    you have a table containing the file name of an image, and a large object
-    containing that image:
+  <example id="jdbc-lo-example">
+   <title>Using the <acronym>JDBC</acronym> Large Object Interface</title>
 
-    <programlisting>
-create table images (imgname name,imgoid oid);
-    </programlisting>
+   <para>
+    For example, suppose you have a table containing the file name of
+    an image and you have a large object containing that image:
+<programlisting>
+CREATE TABLE images (imgname text, imgoid oid);
+</programlisting>
    </para>
 
    <para>
     To insert an image, you would use:
-
-    <programlisting>
+<programlisting>
 File file = new File("myimage.gif");
 FileInputStream fis = new FileInputStream(file);
-PreparedStatement ps = conn.prepareStatement("insert into images values (?,?)");
-ps.setString(1,file.getName());
-ps.setBinaryStream(2,fis,file.length());
+PreparedStatement ps = conn.prepareStatement("INSERT INTO images VALUES (?, ?)"); <co id="co.jdbc-qmark">
+ps.setString(1, file.getName());
+ps.setBinaryStream(2, fis, file.length());
 ps.executeUpdate();
 ps.close();
 fis.close();
-    </programlisting>
+</programlisting>
+    <calloutlist>
+     <callout arearefs="co.jdbc-qmark">
+      <para>
+       The question marks must appear literally.  The actual data is
+       substituted by the next lines.
+      </para>
+     </callout>
+    </calloutlist>
+    Here, <function>setBinaryStream</function> transfers a set number
+    of bytes from a stream into a Large Object, and stores the OID
+    into the field holding a reference to it.  Notice that the
+    creation of the Large Object itself in the database happens
+    transparently.
    </para>
 
    <para>
-    Now in this example, setBinaryStream transfers a set number of bytes from a
-    stream into a large object, and stores the OID into the field holding a
-    reference to it.
-   </para>
+    Retrieving an image is even easier.  (We use
+    <classname>PreparedStatement</classname> here, but the
+    <classname>Statement</classname> class can equally be used.)
 
-   <para>
-    Retrieving an image is even easier (I'm using PreparedStatement here, but
-    Statement can equally be used):
-
-    <programlisting>
-PreparedStatement ps = con.prepareStatement("select oid from images where name=?");
-ps.setString(1,"myimage.gif");
+<programlisting>
+PreparedStatement ps = con.prepareStatement("SELECT oid FROM images WHERE name=?");
+ps.setString(1, "myimage.gif");
 ResultSet rs = ps.executeQuery();
-if(rs!=null) {
+if (rs != null) {
     while(rs.next()) {
         InputStream is = rs.getBinaryInputStream(1);
         // use the stream in some way here
@@ -517,418 +589,593 @@ if(rs!=null) {
     rs.close();
 }
 ps.close();
-    </programlisting>
+</programlisting>
    </para>
 
    <para>
-    Now here you can see where the Large Object is retrieved as an InputStream.
-    You'll also notice that we close the stream before processing the next row in
-    the result. This is part of the <acronym>JDBC</acronym> Specification, which states that any
-    InputStream returned is closed when ResultSet.next() or ResultSet.close() is called.
+    Here you can see how the Large Object is retrieved as an
+    <classname>InputStream</classname>.  You will also notice that we
+    close the stream before processing the next row in the
+    result. This is part of the <acronym>JDBC</acronym> specification,
+    which states that any <classname>InputStream</classname> returned
+    is closed when <function>ResultSet.next()</function> or
+    <function>ResultSet.close()</function> is called.
    </para>
-  </sect1>
+  </example>
+ </sect1>
 
-  <sect1 id="jdbc-ext">
-   <title><application>Postgres</application> Extensions to the
+
+ <sect1 id="jdbc-ext">
+  <title><application>PostgreSQL</application> Extensions to the
     <acronym>JDBC</acronym> <acronym>API</acronym></title>
 
+  <para>
+   <productname>Postgres</productname> is an extensible database
+   system.  You can add your own functions to the backend, which can
+   then be called from queries, or even add your own data types.  As
+   these are facilities unique to <productname>Postgres</productname>,
+   we support them from Java, with a set of extension
+   <acronym>API</acronym>'s. Some features within the core of the
+   standard driver actually use these extensions to implement Large
+   Objects, etc.
+  </para>
+
+  <sect2>
+   <title>Accessing the Extensions</title>
+
    <para>
-    <application>Postgres</application> is an extensible database system. 
-    You can add your own functions
-    to the backend, which can then be called from queries, or even add your own
-    data types.
+    To access some of the extensions, you need to use some extra
+    methods in the <classname>org.postgresql.Connection</classname>
+    class. In this case, you would need to case the return value of
+    <function>Driver.getConnection()</function>.  For example:
+<programlisting>
+Connection db = Driver.getConnection(url, username, password);
+// ...
+// later on
+Fastpath fp = ((org.postgresql.Connection)db).getFastpathAPI();
+</programlisting>
    </para>
 
-   <para>
-    Now, as these are facilities unique to us, we support them from Java, with
-    a set of extension <acronym>API</acronym>'s. Some features within 
-    the core of the standard driver
-    actually use these extensions to implement Large Objects, etc.
+   <sect3>
+    <title>Class <classname>org.postgresql.Connection</classname></title>
 
-<!--
-************************************************************
-Nothing marked up from here on. It looks like it will be tricky:
-what do we want to do with the class inheritance diagrams?
-- thomas 1998-10-23
-************************************************************
--->
+<synopsis>
+public class Connection extends Object implements Connection
+
+java.lang.Object
+   |
+   +----org.postgresql.Connection
+</synopsis>
+
+    <para>
+     These are the extra methods used to gain access to
+     <productname>PostgreSQL</productname>'s extensions. Methods
+     defined by <classname>java.sql.Connection</classname> are not
+     listed.
+    </para>
+
+    <sect4>
+     <title>Methods</title>
+
+     <itemizedlist>
+      <listitem>
+<synopsis>
+public Fastpath getFastpathAPI() throws SQLException
+</synopsis>
+       <para>
+        This returns the Fastpath <acronym>API</acronym> for the
+        current connection.  It is primarily used by the Large Object
+        <acronym>API</acronym>.
+       </para>
+
+       <para>
+        The best way to use this is as follows:
+<programlisting>
+import org.postgresql.fastpath.*;
+...
+Fastpath fp = ((org.postgresql.Connection)myconn).getFastpathAPI();
+</programlisting>
+        where myconn is an open Connection to <productname>PostgreSQL</productname>.
+       </para>
+
+       <formalpara>
+        <title>Returns:</title>
+        <para>
+         Fastpath object allowing access to functions on the
+         <productname>PostgreSQL</productname> backend.
+        </para>
+       </formalpara>
+
+       <formalpara>
+        <title>Throws:</title>
+        <para>
+         SQLException by Fastpath when initializing for first time
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+       <para>
+<synopsis>
+public LargeObjectManager getLargeObjectAPI() throws SQLException
+</synopsis>
+        This returns the Large Object <acronym>API</acronym> for the
+        current connection.
+       </para>
+
+       <para>
+        The best way to use this is as follows:
+<programlisting>
+import org.postgresql.largeobject.*;
+...
+LargeObjectManager lo = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
+</programlisting>
+        where myconn is an open Connection to
+        <productname>PostgreSQL</productname>.
+       </para>
+
+       <formalpara>
+        <title>Returns:</title>
+        <para>
+         LargeObject object that implements the <acronym>API</acronym>
+        </para>
+       </formalpara>
+
+       <formalpara>
+        <title>Throws:</title>
+        <para>
+         SQLException by LargeObject when initializing for first time
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+       <para>
+<synopsis>
+public void addDataType(String type, String name)
+</synopsis>
+        This allows client code to add a handler for one of
+        PostgreSQL's more unique data types. Normally, a data type not
+        known by the driver is returned by ResultSet.getObject() as a
+        PGobject instance.  This method allows you to write a class
+        that extends PGobject, and tell the driver the type name, and
+        class name to use. The down side to this, is that you must
+        call this method each time a connection is made.
+       </para>
+
+       <para>
+        The best way to use this is as follows:
+<programlisting>
+ ...
+((org.postgresql.Connection)myconn).addDataType("mytype","my.class.name");
+ ...
+</programlisting>
+        where myconn is an open Connection to
+        <productname>PostgreSQL</productname>.  The handling class must
+        extend <classname>org.postgresql.util.PGobject</classname>.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </sect4>
+   </sect3>
+
+
+   <sect3>
+    <title>Class <classname>org.postgresql.Fastpath</classname></title>
+
+<synopsis>
+public class Fastpath extends Object
+
+java.lang.Object
+   |
+   +----org.postgresql.fastpath.Fastpath
+</synopsis>
+
+    <para>
+     <classname>Fastpath</classname> is an <acronym>API</acronym> that
+     exists within the libpq C interface, and allows a client machine
+     to execute a function on the database backend.  Most client code
+     will not need to use this method, but it is provided because the
+     Large Object <acronym>API</acronym> uses it.
+    </para>
+
+    <para>
+     To use, you need to import the
+     <classname>org.postgresql.fastpath</classname> package, using the
+     line:
+<programlisting>
+import org.postgresql.fastpath.*;
+</programlisting>
+     Then, in your code, you need to get a
+     <classname>FastPath</classname> object:
+<programlisting>
+Fastpath fp = ((org.postgresql.Connection)conn).getFastpathAPI();
+</programlisting>
+     This will return an instance associated with the database
+     connection that you can use to issue commands. The casing of
+     <classname>Connection</classname> to
+     <classname>org.postgresql.Connection</classname> is required, as
+     the <function>getFastpathAPI()</function> is an extension method,
+     not part of <acronym>JDBC</acronym>.  Once you have a
+     <classname>Fastpath</classname> instance, you can use the
+     <function>fastpath()</function> methods to execute a backend
+     function.
+    </para>
+
+    <formalpara>
+     <title>See Also:</title>
+     <para>
+      <classname>FastpathFastpathArg</classname>, <classname>LargeObject</classname>
+     </para>
+    </formalpara>
+
+    <sect4>
+     <title>Methods</title>
+
+     <itemizedlist>
+      <listitem>
+<synopsis>
+public Object fastpath(int fnid,
+                       boolean resulttype,
+                       FastpathArg args[]) throws SQLException
+</synopsis>
+       <para>
+        Send a function call to the PostgreSQL backend.
+       </para>
+
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+                fnid - Function id
+                resulttype - True if the result is an integer, false 
+for
+                other results
+                args - FastpathArguments to pass to fastpath
+        </para>
+       </formalpara>
+
+       <formalpara>
+        <title>Returns:</title>
+        <para>
+         null if no data, Integer if an integer result, or byte[]
+         otherwise
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public Object fastpath(String name,
+                       boolean resulttype,
+                       FastpathArg args[]) throws SQLException
+</synopsis>
+       <para>
+        Send a function call to the PostgreSQL backend by name.
+       </para>
+
+       <note>
+        <para>
+         The mapping for the procedure name to function id needs to
+         exist, usually to an earlier call to addfunction(). This is
+         the preferred method to call, as function id's can/may change
+         between versions of the backend. For an example of how this
+         works, refer to org.postgresql.LargeObject
+        </para>
+       </note>
+
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+                name - Function name
+                resulttype - True if the result is an integer, false 
+for
+                other results
+                args - FastpathArguments to pass to fastpath
+        </para>
+       </formalpara>
+
+       <formalpara>
+        <title>Returns:</title>
+        <para>
+         null if no data, Integer if an integer result, or byte[]
+         otherwise
+        </para>
+       </formalpara>
+
+       <formalpara>
+        <title>See Also:</title>
+        <para><classname>LargeObject</classname></para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>          
+public int getInteger(String name,
+                      FastpathArg args[]) throws SQLException
+</synopsis>
+       <para>
+        This convenience method assumes that the return value is an Integer
+       </para>
+
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+                name - Function name
+                args - Function arguments
+        </para>
+       </formalpara>
+
+       <formalpara>
+        <title>Returns:</title>
+        <para>integer result</para>
+       </formalpara>
+
+       <formalpara>
+        <title>Throws:</title>
+        <para>
+         SQLException if a database-access error occurs or no result
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public byte[] getData(String name,
+                      FastpathArg args[]) throws SQLException
+</synopsis>
+       <para>
+        This convenience method assumes that the return value is binary
+        data.
+       </para>
+
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+                name - Function name
+                args - Function arguments
+        </para>
+       </formalpara>
+
+       <formalpara>
+        <title>Returns:</title>
+        <para>byte[] array containing result</para>
+       </formalpara>
+
+       <formalpara>
+        <title>Throws:</title>
+        <para>
+         SQLException if a database-access error occurs or no result
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public void addFunction(String name,
+                        int fnid)
+</synopsis>
+       <para>
+        This adds a function to our look-up table.  User code should
+        use the <function>addFunctions</function> method, which is based upon a query,
+        rather than hard coding the oid. The oid for a function is not
+        guaranteed to remain static, even on different servers of the
+        same version.
+       </para>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public void addFunctions(ResultSet rs) throws SQLException
+</synopsis>
+       <para>
+        This takes a <classname>ResultSet</classname> containing two columns. Column 1
+        contains the function name, Column 2 the oid.  It reads the
+        entire <classname>ResultSet</classname>, loading the values into the function table.
+       </para>
+
+       <important>
+        <para>
+         Remember to <function>close()</function> the
+         <classname>ResultSet</classname> after calling this!
+        </para>
+       </important>
+
+       <note>
+        <title>Implementation note about function name look-ups</title>
+
+        <para>
+         PostgreSQL stores the function id's and their corresponding
+         names in the pg_proc table. To speed things up locally,
+         instead of querying each function from that table when
+         required, a <classname>Hashtable</classname> is used. Also, only the function's
+         required are entered into this table, keeping connection
+         times as fast as possible.
+        </para>
+
+        <para>
+         The <classname>org.postgresql.LargeObject</classname> class
+         performs a query upon its start-up, and passes the returned
+         <classname>ResultSet</classname> to the
+         <function>addFunctions()</function> method here.  Once this
+         has been done, the Large Object <acronym>API</acronym> refers
+         to the functions by name.
+        </para>
+
+        <para>
+         Do not think that manually converting them to the oid's will
+         work. Okay, they will for now, but they can change during
+         development (there was some discussion about this for V7.0),
+         so this is implemented to prevent any unwarranted headaches
+         in the future.
+        </para>
+       </note>
+
+       <formalpara>
+        <title>See Also:</title>
+        <para>
+         <classname>LargeObjectManager</classname>
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public int getID(String name) throws SQLException
+</synopsis>
+       <para>
+        This returns the function id associated by its name If
+        addFunction() or addFunctions() have not been called for this
+        name, then an SQLException is thrown.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </sect4>
+   </sect3>
+
+
+   <sect3>
+    <title>Class <classname>org.postgresql.fastpath.FastpathArg</classname></title>
+
+<synopsis>
+public class FastpathArg extends Object
+
+java.lang.Object
+   |
+   +----org.postgresql.fastpath.FastpathArg
+</synopsis>
+
+    <para>
+     Each fastpath call requires an array of arguments, the number and
+     type dependent on the function being called.  This class
+     implements methods needed to provide this capability.
+    </para>
+
+    <para>
+     For an example on how to use this, refer to the
+     <classname>org.postgresql.LargeObject</classname> package.
+    </para>
+
+    <formalpara>
+     <title>See Also:</title>
+     <para>
+      <classname>Fastpath</classname>, <classname>LargeObjectManager</classname>, <classname>LargeObject</classname>
+     </para>
+    </formalpara>
+
+    <sect4>
+     <title>Constructors</title>
+
+     <itemizedlist>
+      <listitem>
+<synopsis>
+public FastpathArg(int value)
+</synopsis>
+       <para>
+        Constructs an argument that consists of an integer value
+       </para>
+
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+         value - int value to set
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public FastpathArg(byte bytes[])
+</synopsis>
+       <para>
+        Constructs an argument that consists of an array of bytes
+       </para>
+
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+         bytes - array to store
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public FastpathArg(byte buf[],
+                   int off,
+                   int len)
+</synopsis>
+       <para>
+        Constructs an argument that consists of part of a byte array
+       </para>
+
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+         <variablelist>
+          <varlistentry>
+           <term>buf</term>
+           <listitem>
+            <simpara>source array</simpara>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>off</term>
+           <listitem>
+            <simpara>offset within array</simpara>
+           </listitem>
+          </varlistentry>
+
+          <varlistentry>
+           <term>len</term>
+           <listitem>
+            <simpara>length of data to include</simpara>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </formalpara>
+      </listitem>
+
+      <listitem>
+<synopsis>
+public FastpathArg(String s)
+</synopsis>
+       <para>
+        Constructs an argument that consists of a String.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </sect4>
+   </sect3>
+  </sect2>
+
+
+  <sect2>
+   <title>Geometric Data Types</title>
+
+   <para>
+    <productname>PostgreSQL</productname> has a set of data types that
+    can store geometric features into a table. These include single
+    points, lines, and polygons.  We support these types in Java with
+    the org.postgresql.geometric package.  It contains classes that
+    extend the org.postgresql.util.PGobject class.  Refer to that
+    class for details on how to implement your own data type handlers.
+   </para>
 
 <programlisting>
-Accessing the extensions
-
-To access some of the extensions, you need to use some extra methods 
-in the postgresql.Connection class. In this case, you would need to 
-case the return value of Driver.getConnection().
-
-For example:
-
-    Connection db = Driver.getConnection(url,user,pass);
-
-    // later on
-    Fastpath fp = ((postgresql.Connection)db).getFastpathAPI();
-
-Class postgresql.Connection
-                                
-java.lang.Object
-   |
-   +----postgresql.Connection
-
-   public class Connection extends Object implements Connection
-
-These are the extra methods used to gain access to our extensions. I 
-have not listed the methods defined by java.sql.Connection.
-
- public Fastpath getFastpathAPI() throws SQLException
-
-          This returns the Fastpath <acronym>API</acronym> for the current connection.
-
-          NOTE: This is not part of <acronym>JDBC</acronym>, but allows access to 
-functions on the postgresql backend itself.
-
-          It is primarily used by the LargeObject <acronym>API</acronym>
-
-          The best way to use this is as follows:
-
- import postgresql.fastpath.*;
- ...
- Fastpath fp = ((postgresql.Connection)myconn).getFastpathAPI();
-
-          where myconn is an open Connection to postgresql.
-
-        Returns:
-                Fastpath object allowing access to functions on the 
-postgresql backend.
-
-        Throws: SQLException
-                by Fastpath when initialising for first time
-          
- public LargeObjectManager getLargeObjectAPI() throws SQLException
-
-          This returns the LargeObject <acronym>API</acronym> for the current connection.
-
-          NOTE: This is not part of <acronym>JDBC</acronym>, but allows access to 
-functions on the postgresql backend itself.
-   
-          The best way to use this is as follows:
-
- import postgresql.largeobject.*;
- ...
- LargeObjectManager lo = 
-((postgresql.Connection)myconn).getLargeObjectAPI();
-
-          where myconn is an open Connection to postgresql.
-
-        Returns:
-                LargeObject object that implements the <acronym>API</acronym>
-
-        Throws: SQLException
-                by LargeObject when initialising for first time
-
- public void addDataType(String type,
-                         String name)
-
-          This allows client code to add a handler for one of 
-postgresql's more unique data types. Normally, a data type not known 
-by the driver is returned by ResultSet.getObject() as a PGobject 
-instance.
-
-This method allows you to write a class that extends PGobject, and 
-tell the driver the type name, and class name to use.
-
-The down side to this, is that you must call this method each time a 
-connection is made.
-
-          NOTE: This is not part of <acronym>JDBC</acronym>, but an extension.
-
-          The best way to use this is as follows:
-
- ...
- ((postgresql.Connection)myconn).addDataType("mytype","my.class.name"-
-);
- ...
-
-          where myconn is an open Connection to postgresql.
-
-          The handling class must extend postgresql.util.PGobject
-
-        See Also:
-                PGobject
-
-Fastpath
-
-Fastpath is an <acronym>API</acronym> that exists within the libpq C interface, and 
-allows a client machine to execute a function on the database backend. 
-Most client code will not need to use this method, but it's provided 
-because the Large Object <acronym>API</acronym> uses it.
-
-To use, you need to import the postgresql.fastpath package, using the 
-line:
-     import postgresql.fastpath.*;
-
-Then, in your code, you need to get a FastPath object:
-     Fastpath fp = ((postgresql.Connection)conn).getFastpathAPI();
-
-This will return an instance associated with the database connection 
-that you can use to issue commands. The casing of Connection to 
-postgresql.Connection is required, as the getFastpathAPI() is one of 
-our own methods, not <acronym>JDBC</acronym>'s.
-
-Once you have a Fastpath instance, you can use the fastpath() methods 
-to execute a backend function.
-
-Class postgresql.fastpath.Fastpath
+Class org.postgresql.geometric.PGbox
 
 java.lang.Object
    |
-   +----postgresql.fastpath.Fastpath
-
-   public class Fastpath
-
-   extends Object
-
-   This class implements the Fastpath api.
-
-   This is a means of executing functions imbeded in the postgresql 
-backend from within a java application.
-
-   It is based around the file src/interfaces/libpq/fe-exec.c
-
-   See Also:
-          FastpathFastpathArg, LargeObject
-
-Methods
-
- public Object fastpath(int fnid,
-                        boolean resulttype,
-                        FastpathArg args[]) throws SQLException
-
-          Send a function call to the PostgreSQL backend
-          
-        Parameters:
-                fnid - Function id
-                resulttype - True if the result is an integer, false 
-for
-                other results
-                args - FastpathArguments to pass to fastpath
-
-        Returns:
-                null if no data, Integer if an integer result, or 
-byte[]
-                otherwise
-         
-        Throws: SQLException
-                if a database-access error occurs.
-
- public Object fastpath(String name,
-                        boolean resulttype,
-                        FastpathArg args[]) throws SQLException
-
-          Send a function call to the PostgreSQL backend by name. 
-
-Note:
-          the mapping for the procedure name to function id needs to 
-exist, usually to an earlier call to addfunction(). This is the 
-prefered method to call, as function id's can/may change between 
-versions of the backend. For an example of how this works, refer to 
-postgresql.LargeObject
-
-        Parameters:
-                name - Function name
-                resulttype - True if the result is an integer, false 
-for
-                other results
-                args - FastpathArguments to pass to fastpath
-
-        Returns:
-                null if no data, Integer if an integer result, or 
-byte[]
-                otherwise
-
-        Throws: SQLException
-                if name is unknown or if a database-access error 
-occurs.
-
-        See Also:
-                LargeObject
-          
- public int getInteger(String name,
-                       FastpathArg args[]) throws SQLException
-
-          This convenience method assumes that the return value is an 
-Integer
-
-        Parameters:
-                name - Function name
-                args - Function arguments
-
-        Returns:
-                integer result
-
-        Throws: SQLException
-                if a database-access error occurs or no result
-
- public byte[] getData(String name,
-                       FastpathArg args[]) throws SQLException
-
-          This convenience method assumes that the return value is 
-binary data
-
-        Parameters:
-                name - Function name
-                args - Function arguments
-
-        Returns:
-                byte[] array containing result
-
-        Throws: SQLException
-                if a database-access error occurs or no result
-
- public void addFunction(String name,
-                         int fnid)
-
-          This adds a function to our lookup table.
-
-          User code should use the addFunctions method, which is based 
-upon a query, rather than hard coding the oid. The oid for a function 
-is not guaranteed to remain static, even on different servers of the 
-same version.
-
-        Parameters:
-                name - Function name
-                fnid - Function id
-
- public void addFunctions(ResultSet rs) throws SQLException
-                       
-          This takes a ResultSet containing two columns. Column 1 
-contains the function name, Column 2 the oid.
-
-          It reads the entire ResultSet, loading the values into the 
-function table.
-
-          REMEMBER to close() the resultset after calling this!!
-
-          Implementation note about function name lookups:
-          
-          PostgreSQL stores the function id's and their corresponding 
-names in the pg_proc table. To speed things up locally, instead of 
-querying each function from that table when required, a Hashtable is 
-used. Also, only the function's required are entered into this table, 
-keeping connection times as fast as possible.
-
-          The postgresql.LargeObject class performs a query upon it's 
-start-up, and passes the returned ResultSet to the addFunctions() 
-method here.
-       
-          Once this has been done, the LargeObject api refers to the 
-functions by name.
-          
-          Dont think that manually converting them to the oid's will 
-work. Ok, they will for now, but they can change during development 
-(there was some discussion about this for V7.0), so this is 
-implemented to prevent any unwarranted headaches in the future.
-
-        Parameters:
-                rs - ResultSet
-
-        Throws: SQLException
-                if a database-access error occurs.
-          
-        See Also:
-                LargeObjectManager
-
- public int getID(String name) throws SQLException
-          
-          This returns the function id associated by its name
-          
-          If addFunction() or addFunctions() have not been called for 
-this name, then an SQLException is thrown.
-
-        Parameters:
-                name - Function name to lookup
-
-        Returns:
-                Function ID for fastpath call
-
-        Throws: SQLException
-                is function is unknown.
-
-Class postgresql.fastpath.FastpathArg
-
-java.lang.Object
-   |
-   +----postgresql.fastpath.FastpathArg
-
-   public class FastpathArg extends Object
-        
-   Each fastpath call requires an array of arguments, the number and 
-type dependent on the function being called.
-
-   This class implements methods needed to provide this capability.
-
-   For an example on how to use this, refer to the 
-postgresql.largeobject package
-
-   See Also:
-          Fastpath, LargeObjectManager, LargeObject
-
-Constructors
-
- public FastpathArg(int value)
- 
-          Constructs an argument that consists of an integer value
-
-        Parameters:
-                value - int value to set
-
- public FastpathArg(byte bytes[])
-          
-          Constructs an argument that consists of an array of bytes
-
-        Parameters:
-                bytes - array to store
-
- public FastpathArg(byte buf[],
-                    int off,
-                    int len)
-
-           Constructs an argument that consists of part of a byte 
-array
-
-        Parameters:
-                buf - source array
-                off - offset within array
-                len - length of data to include
-
- public FastpathArg(String s)
-          
-          Constructs an argument that consists of a String.
-      
-        Parameters:
-                s - String to store
-
-Geometric Data Types
-
-PostgreSQL has a set of datatypes that can store geometric features 
-into a table. These range from single points, lines, and polygons.
-
-We support these types in Java with the postgresql.geometric package.
-
-It contains classes that extend the postgresql.util.PGobject class. 
-Refer to that class for details on how to implement your own data type 
-handlers.
-
-Class postgresql.geometric.PGbox
-
-java.lang.Object
-   |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.geometric.PGbox
+           +----org.postgresql.geometric.PGbox
 
    public class PGbox extends PGobject implements Serializable, 
 Cloneable
 
-   This represents the box datatype within postgresql.
+   This represents the box data type within <productname>PostgreSQL</productname>.
 
 Variables
 
@@ -973,7 +1220,7 @@ Methods
  public void setValue(String value) throws SQLException
                 
           This method sets the value of this object. It should be 
-overidden, but still called by subclasses.
+overridden, but still called by subclasses.
                             
         Parameters:
                 value - a string representation of the value of the 
@@ -997,7 +1244,7 @@ object
 
  public Object clone()
         
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class PGobject
@@ -1005,30 +1252,31 @@ object
  public String getValue()
         
         Returns:
-                the PGbox in the syntax expected by postgresql
+                the PGbox in the syntax expected by <productname>PostgreSQL</productname>
 
         Overrides:
                 getValue in class PGobject
 
-Class postgresql.geometric.PGcircle
+<!-- **************************************************************** -->
+Class org.postgresql.geometric.PGcircle
 
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.geometric.PGcircle
+           +----org.postgresql.geometric.PGcircle
         
    public class PGcircle extends PGobject implements Serializable, 
 Cloneable
                
-   This represents postgresql's circle datatype, consisting of a point 
+   This represents <productname>PostgreSQL</productname>'s circle data type, consisting of a point 
 and a radius
 
 Variables
 
  public PGpoint center
            
-          This is the centre point
+          This is the center point
  
 public double radius
            
@@ -1041,15 +1289,15 @@ Constructors
                  double r)
           
         Parameters:
-               x - coordinate of centre
-                y - coordinate of centre
+               x - coordinate of center
+                y - coordinate of center
                 r - radius of circle
 
  public PGcircle(PGpoint c,
                  double r)
           
         Parameters:
-                c - PGpoint describing the circle's centre
+                c - PGpoint describing the circle's center
                 r - radius of circle
 
  public PGcircle(String s) throws SQLException
@@ -1090,7 +1338,7 @@ Methods
 
  public Object clone()
 
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class PGobject
@@ -1098,18 +1346,19 @@ Methods
  public String getValue()
 
         Returns:
-                the PGcircle in the syntax expected by postgresql
+                the PGcircle in the syntax expected by <productname>PostgreSQL</productname>
         
         Overrides:
                 getValue in class PGobject
 
-Class postgresql.geometric.PGline
+<!-- **************************************************************** -->
+Class org.postgresql.geometric.PGline
 
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.geometric.PGline
+           +----org.postgresql.geometric.PGline
 
    public class PGline extends PGobject implements Serializable, 
 Cloneable
@@ -1154,7 +1403,7 @@ Constructors
 
  public PGline()
 
-          reuired by the driver
+          required by the driver
                
 Methods
 
@@ -1183,7 +1432,7 @@ syntax
 
  public Object clone()
         
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class PGobject
@@ -1191,18 +1440,19 @@ syntax
  public String getValue()
    
         Returns:
-                the PGline in the syntax expected by postgresql
+                the PGline in the syntax expected by <productname>PostgreSQL</productname>
         
         Overrides:
                 getValue in class PGobject
 
-Class postgresql.geometric.PGlseg
+<!-- **************************************************************** -->
+Class org.postgresql.geometric.PGlseg
              
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.geometric.PGlseg
+           +----org.postgresql.geometric.PGlseg
           
    public class PGlseg extends PGobject implements Serializable, 
 Cloneable
@@ -1246,7 +1496,7 @@ Constructors
 
  public PGlseg()
 
-          reuired by the driver
+          required by the driver
                
 Methods    
    
@@ -1275,7 +1525,7 @@ syntax
    
  public Object clone()
 
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                clone in class PGobject
@@ -1283,18 +1533,19 @@ syntax
  public String getValue()
 
         Returns:
-                the PGlseg in the syntax expected by postgresql
+                the PGlseg in the syntax expected by <productname>PostgreSQL</productname>
         
         Overrides:
                 getValue in class PGobject
 
-Class postgresql.geometric.PGpath
+<!-- **************************************************************** -->
+Class org.postgresql.geometric.PGpath
                                 
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.geometric.PGpath
+           +----org.postgresql.geometric.PGpath
           
    public class PGpath extends PGobject implements Serializable, 
 Cloneable
@@ -1359,7 +1610,7 @@ Methods
 
  public Object clone()
 
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class PGobject
@@ -1367,7 +1618,7 @@ Methods
  public String getValue()
 
           This returns the polygon in the syntax expected by 
-postgresql
+<productname>PostgreSQL</productname>
 
         Overrides:
                 getValue in class PGobject
@@ -1388,13 +1639,14 @@ postgresql
 
      Marks the path as open
 
-Class postgresql.geometric.PGpoint
+<!-- **************************************************************** -->
+Class org.postgresql.geometric.PGpoint
                                 
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.geometric.PGpoint
+           +----org.postgresql.geometric.PGpoint
           
    public class PGpoint extends PGobject implements Serializable, 
 Cloneable
@@ -1402,7 +1654,7 @@ Cloneable
    This implements a version of java.awt.Point, except it uses double 
 to represent the coordinates.
 
-   It maps to the point datatype in postgresql.
+   It maps to the point data type in <productname>PostgreSQL</productname>.
 
 Variables
 
@@ -1426,7 +1678,7 @@ Constructors
  public PGpoint(String value) throws SQLException
      
           This is called mainly from the other geometric types, when a 
-point is imbeded within their definition.
+point is embedded within their definition.
              
         Parameters:
                 value - Definition of this point in PostgreSQL's 
@@ -1462,7 +1714,7 @@ Methods
 
  public Object clone()
                 
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class PGobject
@@ -1470,7 +1722,7 @@ Methods
  public String getValue()       
     
         Returns:
-                the PGpoint in the syntax expected by postgresql
+                the PGpoint in the syntax expected by <productname>PostgreSQL</productname>
 
         Overrides:
                 getValue in class PGobject
@@ -1535,18 +1787,19 @@ public void move(double x,
         See Also:
                 Point
 
-Class postgresql.geometric.PGpolygon
+<!-- **************************************************************** -->
+Class org.postgresql.geometric.PGpolygon
                                 
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.geometric.PGpolygon
+           +----org.postgresql.geometric.PGpolygon
 
    public class PGpolygon extends PGobject implements Serializable, 
 Cloneable
                
-   This implements the polygon datatype within PostgreSQL.
+   This implements the polygon data type within PostgreSQL.
 
 Variables
 
@@ -1601,7 +1854,7 @@ Methods
 
  public Object clone()
         
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class PGobject
@@ -1609,133 +1862,224 @@ Methods
  public String getValue()
 
         Returns:
-                the PGpolygon in the syntax expected by postgresql
+                the PGpolygon in the syntax expected by <productname>PostgreSQL</productname>
 
         Overrides:
                 getValue in class PGobject
+</programlisting>
+  </sect2>
 
-Large Objects
 
-Large objects are supported in the standard <acronym>JDBC</acronym> specification. 
-However, that interface is limited, and the api provided by PostgreSQL 
-allows for random access to the objects contents, as if it was a local 
-file.
+  <sect2>
+   <title>Large Objects</title>
 
-The postgresql.largeobject package profides to Java the libpq C 
-interface's large object <acronym>API</acronym>. It consists of two classes, 
-LargeObjectManager, which deals with creating, opening and deleting 
-large obejects, and LargeObject which deals with an individual object.
+   <para>
+    Large objects are supported in the standard
+    <acronym>JDBC</acronym> specification.  However, that interface is
+    limited, and the <acronym>API</acronym> provided by PostgreSQL allows for random
+    access to the objects contents, as if it was a local file.
+   </para>
 
-Class postgresql.largeobject.LargeObject
+   <para>
+    The org.postgresql.largeobject package provides to Java the libpq
+    C interface's large object <acronym>API</acronym>. It consists of
+    two classes, <classname>LargeObjectManager</classname>, which deals with creating,
+    opening and deleting large objects, and <classname>LargeObject</classname> which deals
+    with an individual object.
+   </para>
+
+   <sect3>
+    <title>Class <classname>org.postgresql.largeobject.LargeObject</classname></title>
+
+<synopsis>
+public class LargeObject extends Object
 
 java.lang.Object
    |
-   +----postgresql.largeobject.LargeObject
+   +----org.postgresql.largeobject.LargeObject
+</synopsis>
 
-public class LargeObject extends Object
+    <para>
+     This class implements the large object interface to
+     <productname>PostgreSQL</productname>.
+    </para>
 
-This class implements the large object interface to postgresql.
+    <para>
+     It provides the basic methods required to run the interface, plus
+     a pair of methods that provide <classname>InputStream</classname> and <classname>OutputStream</classname>
+     classes for this object.
+    </para>
 
-   It provides the basic methods required to run the interface, plus a 
-pair of methods that provide InputStream and OutputStream classes for 
-this object.
+    <para>
+     Normally, client code would use the getAsciiStream,
+     getBinaryStream, or getUnicodeStream methods in <classname>ResultSet</classname>, or
+     setAsciiStream, setBinaryStream, or setUnicodeStream methods in
+     <classname>PreparedStatement</classname> to access Large Objects.
+    </para>
 
-   Normally, client code would use the getAsciiStream, 
-getBinaryStream, or getUnicodeStream methods in ResultSet, or 
-setAsciiStream, setBinaryStream, or setUnicodeStream methods in 
-PreparedStatement to access Large Objects.
+    <para>
+     However, sometimes lower level access to Large Objects are
+     required, that are not supported by the <acronym>JDBC</acronym>
+     specification.
+    </para>
 
-   However, sometimes lower level access to Large Objects are 
-required, that are not supported by the <acronym>JDBC</acronym> specification.
+    <para>
+     Refer to org.postgresql.largeobject.LargeObjectManager on how to
+     gain access to a Large Object, or how to create one.
+    </para>
 
-   Refer to postgresql.largeobject.LargeObjectManager on how to gain 
-access to a Large Object, or how to create one.
+    <formalpara>
+     <title>See Also:</title>
+     <para><classname>LargeObjectManager</classname></para>
+    </formalpara>
 
-   See Also:
-          LargeObjectManager
+    <sect4>
+     <title>Variables</title>
 
-Variables
+     <variablelist>
+      <varlistentry>
+       <term>public static final int SEEK_SET</term>
+       <listitem>
+        <para>Indicates a seek from the beginning of a file</para>
+       </listitem>
+      </varlistentry>
 
- public static final int SEEK_SET
+      <varlistentry>
+       <term>public static final int SEEK_CUR</term>
+       <listitem>
+        <para>Indicates a seek from the current position</para>
+       </listitem>
+      </varlistentry>
 
-          Indicates a seek from the begining of a file
+      <varlistentry>
+       <term>public static final int SEEK_END</term>
+       <listitem>
+        <para>Indicates a seek from the end of a file</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </sect4>
 
- public static final int SEEK_CUR
+    <sect4>
+     <title>Methods</title>
 
-          Indicates a seek from the current position
+     <itemizedlist>
+      <listitem>
+<synopsis>
+public int getOID()
+</synopsis>
+       <para>
+        Returns the OID of this <classname>LargeObject</classname>
+       </para>
+      </listitem>
 
- public static final int SEEK_END
+      <listitem>
+<synopsis>
+public void close() throws SQLException
+</synopsis>
+       <para>
+        This method closes the object. You must not call methods in
+        this object after this is called.
+       </para>
+      </listitem>
 
-          Indicates a seek from the end of a file
+      <listitem>
+<synopsis>
+public byte[] read(int len) throws SQLException
+</synopsis>
+       <para>
+        Reads some data from the object, and return as a byte[] array
+       </para>
+      </listitem>
 
-Methods
+      <listitem>
+<synopsis>
+public void read(byte buf[],
+                 int off,
+                 int len) throws SQLException
+</synopsis>
+       <para>
+        Reads some data from the object into an existing array
+       </para>
 
- public int getOID()
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+         <variablelist>
+          <varlistentry>
+           <term>buf</term>
+           <listitem>
+            <simpara>destination array</simpara>
+           </listitem>
+          </varlistentry>
 
-        Returns:
-                the OID of this LargeObject
+          <varlistentry>
+           <term>off</term>
+           <listitem>
+            <simpara>offset within array</simpara>
+           </listitem>
+          </varlistentry>
 
- public void close() throws SQLException
+          <varlistentry>
+           <term>len</term>
+           <listitem>
+            <simpara>number of bytes to read</simpara>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </formalpara>
+      </listitem>
 
-          This method closes the object. You must not call methods in 
-this object after this is called.
+      <listitem>
+<synopsis>
+public void write(byte buf[]) throws SQLException
+</synopsis>
+       <para>
+        Writes an array to the object
+       </para>
+      </listitem>
 
-    Throws: SQLException
-                if a database-access error occurs.
-
- public byte[] read(int len) throws SQLException
-
-          Reads some data from the object, and return as a byte[] 
-array
-
-        Parameters:
-                len - number of bytes to read
-
-        Returns:
-                byte[] array containing data read
-
-        Throws: SQLException
-                if a database-access error occurs.
-
- public void read(byte buf[],
+      <listitem>
+<synopsis>
+public void write(byte buf[],
                   int off,
                   int len) throws SQLException
+</synopsis>
+       <para>
+        Writes some data from an array to the object
+       </para>
 
-          Reads some data from the object into an existing array
+       <formalpara>
+        <title>Parameters:</title>
+        <para>
+         <variablelist>
+          <varlistentry>
+           <term>buf</term>
+           <listitem>
+            <simpara>destination array</simpara>
+           </listitem>
+          </varlistentry>
 
-        Parameters:
-                buf - destination array
-                off - offset within array
-                len - number of bytes to read
+          <varlistentry>
+           <term>off</term>
+           <listitem>
+            <simpara>offset within array</simpara>
+           </listitem>
+          </varlistentry>
 
-        Throws: SQLException
-                if a database-access error occurs.
+          <varlistentry>
+           <term>len</term>
+           <listitem>
+            <simpara>number of bytes to write</simpara>
+           </listitem>
+          </varlistentry>
+         </variablelist>
+        </para>
+       </formalpara>
+      </listitem>
 
- public void write(byte buf[]) throws SQLException
-
-          Writes an array to the object
-
-
-        Parameters:
-                buf - array to write
-
-        Throws: SQLException
-                if a database-access error occurs.
-
- public void write(byte buf[],
-                   int off,
-                   int len) throws SQLException
-
-          Writes some data from an array to the object
-
-        Parameters:
-                buf - destination array
-                off - offset within array
-                len - number of bytes to write
-
-        Throws: SQLException
-                if a database-access error occurs.
-
+<!--
  public void seek(int pos,
                   int ref) throws SQLException
 
@@ -1804,151 +2148,170 @@ requires an OutputStream.
 
         Throws: SQLException
                 if a database-access error occurs.
+-->
+     </itemizedlist>
+    </sect4>
+   </sect3>
 
-Class postgresql.largeobject.LargeObjectManager
-                                
-java.lang.Object
-   |
-   +----postgresql.largeobject.LargeObjectManager
 
+   <sect3>
+    <title>Class <classname>org.postgresql.largeobject.LargeObjectManager</classname></title>
+
+<synopsis>                                
 public class LargeObjectManager extends Object
 
-This class implements the large object interface to postgresql.
-        
-   It provides methods that allow client code to create, open and 
-delete large objects from the database. When opening an object, an 
-instance of postgresql.largeobject.LargeObject is returned, and its 
-methods then allow access to the object.
+java.lang.Object
+   |
+   +----org.postgresql.largeobject.LargeObjectManager
+</synopsis>
 
-This class can only be created by postgresql.Connection
+    <para>
+     This class implements the large object interface to
+     <productname>PostgreSQL</productname>.  It provides methods that
+     allow client code to create, open and delete large objects from
+     the database. When opening an object, an instance of
+     <classname>org.postgresql.largeobject.LargeObject</classname> is
+     returned, and its methods then allow access to the object.
+    </para>
 
-To get access to this class, use the following segment of code:
+    <para>
+     This class can only be created by org.postgresql.Connection.  To
+     get access to this class, use the following segment of code:
+<programlisting>
+import org.postgresql.largeobject.*;
+Connection  conn;
+LargeObjectManager lobj;
+// ... code that opens a connection ...
+lobj = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
+</programlisting>
+    </para>
 
- import postgresql.largeobject.*;
- Connection  conn;
- LargeObjectManager lobj;
- ... code that opens a connection ...
- lobj = ((postgresql.Connection)myconn).getLargeObjectAPI();
+    <para>
+     Normally, client code would use the getAsciiStream,
+     getBinaryStream, or getUnicodeStream methods in ResultSet, or
+     setAsciiStream, setBinaryStream, or setUnicodeStream methods in
+     PreparedStatement to access Large Objects.  However, sometimes
+     lower level access to Large Objects are required, that are not
+     supported by the <acronym>JDBC</acronym> specification.
+    </para>
 
-Normally, client code would use the getAsciiStream, getBinaryStream, 
-or getUnicodeStream methods in ResultSet, or setAsciiStream, 
-setBinaryStream, or setUnicodeStream methods in PreparedStatement to 
-access Large Objects.
+    <para>
+     Refer to org.postgresql.largeobject.LargeObject on how to
+     manipulate the contents of a Large Object.
+    </para>
 
-   However, sometimes lower level access to Large Objects are 
-required, that are not supported by the <acronym>JDBC</acronym> specification.
+    <sect4>
+     <title>Variables</title>
 
-   Refer to postgresql.largeobject.LargeObject on how to manipulate 
-the contents of a Large Object.
+     <variablelist>
+      <varlistentry>
+       <term>public static final int WRITE</term>
+       <listitem>
+        <simpara>This mode indicates we want to write to an object.</simpara>
+       </listitem>
+      </varlistentry>
 
-   See Also:
-          LargeObject
+      <varlistentry>
+       <term>public static final int READ</term>
+       <listitem>
+        <simpara>This mode indicates we want to read an object.</simpara>
+       </listitem>
+      </varlistentry>
 
-Variables
+      <varlistentry>
+       <term>public static final int READWRITE</term>
+       <listitem>
+        <simpara>This mode is the default. It indicates we want read and write access to a large object.</simpara>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </sect4>
 
- public static final int WRITE
+    <sect4>
+     <title>Methods</title>
 
-          This mode indicates we want to write to an object
+     <itemizedlist>
+      <listitem>
+<synopsis>
+public LargeObject open(int oid) throws SQLException
+</synopsis>
+       <para>
+        This opens an existing large object, based on its OID. This
+        method assumes that READ and WRITE access is required (the
+        default).
+       </para>
+      </listitem>
 
- public static final int READ
+      <listitem>
+<synopsis>
+public LargeObject open(int oid,
+                        int mode) throws SQLException
+</synopsis>
+       <para>
+        This opens an existing large object, based on its OID, and
+        allows setting the access mode.
+       </para>
+      </listitem>
 
-          This mode indicates we want to read an object
+      <listitem>
+<synopsis>
+public int create() throws SQLException
+</synopsis>
+       <para>
+        This creates a large object, returning its OID.
+        It defaults to READWRITE for the new object's attributes.
+       </para>
+      </listitem>
 
- public static final int READWRITE
+      <listitem>
+<synopsis>
+public int create(int mode) throws SQLException
+</synopsis>
+       <para>
+        This creates a large object, returning its OID, and sets the
+        access mode.
+       </para>
+      </listitem>
 
-          This mode is the default. It indicates we want read and 
-write access to a large object
+      <listitem>
+<synopsis>
+public void delete(int oid) throws SQLException
+</synopsis>
+       <para>          
+        This deletes a large object.
+       </para>
+      </listitem>
 
-Methods
+      <listitem>
+<synopsis>
+public void unlink(int oid) throws SQLException
+</synopsis>
+       <para>
+        This deletes a large object.  It is identical to the delete
+        method, and is supplied as the C <acronym>API</acronym> uses
+        <quote>unlink</quote>.
+       </para>
+      </listitem>
+     </itemizedlist>
+    </sect4>
+   </sect3>
+  </sect2>
 
- public LargeObject open(int oid) throws SQLException
-          
-          This opens an existing large object, based on its OID. This
-          method assumes that READ and WRITE access is required (the 
-default).
 
-        Parameters:
-                oid - of large object
+  <sect2>
+   <title>Object Serialization</title>
 
-        Returns:
-                LargeObject instance providing access to the object
+   <para>
+    <productname>PostgreSQL</productname> is not a normal
+    <acronym>SQL</acronym> database.  It is more extensible than most
+    other databases, and does support object oriented features that
+    are unique to it.
+   </para>
 
-        Throws: SQLException
-                on error
-
- public LargeObject open(int oid,
-                         int mode) throws SQLException
-          
-          This opens an existing large object, based on its OID
-  
-        Parameters:
-                oid - of large object
-                mode - mode of open
-
-        Returns:
-                LargeObject instance providing access to the object
-
-        Throws: SQLException
-                on error
-
- public int create() throws SQLException
-
-          This creates a large object, returning its OID.
-
-          It defaults to READWRITE for the new object's attributes.
-
-        Returns:
-                oid of new object
-
-        Throws: SQLException
-                on error
-
- public int create(int mode) throws SQLException
-
-          This creates a large object, returning its OID
-
-        Parameters:
-                mode - a bitmask describing different attributes of 
-the
-                new object
-
-        Returns:
-                oid of new object
-
-        Throws: SQLException
-                on error
-
- public void delete(int oid) throws SQLException
-          
-          This deletes a large object.
-          
-        Parameters:
-                oid - describing object to delete
-
-        Throws: SQLException
-                on error
-
- public void unlink(int oid) throws SQLException
-
-          This deletes a large object.
-
-          It is identical to the delete method, and is supplied as the 
-C <acronym>API</acronym> uses unlink.
-
-        Parameters:
-                oid - describing object to delete
-
-        Throws: SQLException
-                on error
-
-Object Serialisation
-PostgreSQL is not a normal SQL Database. It is far more extensible 
-than most other databases, and does support Object Oriented features 
-that are unique to it. 
-
-One of the consequences of this, is that you can have one table refer 
-to a row in another table. For example:
-
+   <para>
+    One of the consequences of this, is that you can have one table
+    refer to a row in another table.  For example:
+<screen>
 test=> create table users (username name,fullname text);
 CREATE
 test=> create table server (servername name,adminuser users);
@@ -1968,58 +2331,80 @@ servername|adminuser
 ----------+---------
 maidast   |  2610132
 (1 row)
+</screen>
+    Okay, the above example shows that we can use a table name as a
+    field, and the row's oid value is stored in that field.
+   </para>
 
-Ok, the above example shows that we can use a table name as a field, 
-and the row's oid value is stored in that field.
+   <para>
+    What does this have to do with Java?
+   </para>
 
-What does this have to do with Java?
+   <para>
+    In Java, you can store an object to a Stream as long as it's class
+    implements the java.io.Serializable interface. This process, known
+    as Object Serialization, can be used to store complex objects into
+    the database.
+   </para>
 
-In Java, you can store an object to a Stream as long as it's class 
-implements the java.io.Serializable interface. This process, known as 
-Object Serialization, can be used to store complex objects into the 
-database.
+   <para>
+    Now, under <acronym>JDBC</acronym>, you would have to use a
+    Large Object to store them.  However, you cannot perform queries on
+    those objects.
+   </para>
 
-Now, under <acronym>JDBC</acronym>, you would have to use a LargeObject to store them. 
-However, you cannot perform queries on those objects.
+   <para>
+    What the org.postgresql.util.Serialize class does, is provide a
+    means of storing an object as a table, and to retrieve that object
+    from a table. In most cases, you would not need to access this
+    class direct, but you would use the PreparedStatement.setObject()
+    and ResultSet.getObject() methods. Those methods will check the
+    objects class name against the table's in the database. If a match
+    is found, it assumes that the object is a Serialized object, and
+    retrieves it from that table. As it does so, if the object
+    contains other serialized objects, then it recurses down the tree.
+   </para>
 
-What the postgresql.util.Serialize class does, is provide a means of 
-storing an object as a table, and to retrieve that object from a 
-table. In most cases, you would not need to access this class direct, 
-but you would use the PreparedStatement.setObject() and 
-ResultSet.getObject() methods. Those methods will check the objects 
-class name against the table's in the database. If a match is found, 
-it assumes that the object is a Serialized object, and retrieves it 
-from that table. As it does so, if the object contains other 
-serialized objects, then it recurses down the tree.
+   <para>
+    Sound's complicated? In fact, it's simpler than what I wrote -
+    it's just difficult to explain.
+   </para>
 
-Sound's complicated? In fact, it's simpler than what I wrote - it's 
-just difficult to explain.
+   <para>
+    The only time you would access this class, is to use the create()
+    methods. These are not used by the driver, but issue one or more
+    "create table" statements to the database, based on a Java Object
+    or Class that you want to serialize.
+   </para>
 
-The only time you would access this class, is to use the create() 
-methods. These are not used by the driver, but issue one or more 
-"create table" statements to the database, based on a Java Object or 
-Class that you want to serialize.
+   <para>
+    Oh, one last thing. If your object contains a line like:
+<programlisting>
+public int oid;
+</programlisting>
+    then, when the object is retrieved from the table, it is set to
+    the oid within the table. Then, if the object is modified, and re-
+    serialized, the existing entry is updated.
+   </para>
 
-Oh, one last thing. If your object contains a line like:
+   <para>
+    If the oid variable is not present, then when the object is
+    serialized, it is always inserted into the table, and any existing
+    entry in the table is preserved.
+   </para>
 
-     public int oid;
+   <para>
+    Setting oid to 0 before serialization, will also cause the object
+    to be inserted. This enables an object to be duplicated in the
+    database.
+   </para>
 
-then, when the object is retrieved from the table, it is set to the 
-oid within the table. Then, if the object is modified, and re-
-serialized, the existing entry is updated.
-
-If the oid variable is not present, then when the object is 
-serialized, it is always inserted into the table, and any existing 
-entry in the table is preserved.
-
-Setting oid to 0 before serialization, will also cause the object to 
-be inserted. This enables an object to be duplicated in the database.
-
-Class postgresql.util.Serialize
+<programlisting>
+Class org.postgresql.util.Serialize
 
 java.lang.Object
    |
-   +----postgresql.util.Serialize
+   +----org.postgresql.util.Serialize
 
    public class Serialize extends Object
 
@@ -2036,7 +2421,7 @@ Constructors
                   String type) throws SQLException
 
           This creates an instance that can be used to serialize 
-ordeserialize a Java object from a PostgreSQL table.
+or deserialize a Java object from a PostgreSQL table.
 
 Methods
 
@@ -2147,7 +2532,7 @@ serializing any objects.
 
  public static String toPostgreSQL(String name) throws SQLException
           
-          This converts a Java Class name to a postgresql table, by
+          This converts a Java Class name to a <productname>PostgreSQL</productname> table, by
           replacing . with _
 
           Because of this, a Class name may not have _ in the name.
@@ -2167,7 +2552,7 @@ forced by PostgreSQL).
           
  public static String toClassName(String name) throws SQLException
 
-          This converts a postgresql table to a Java Class name, by
+          This converts a <productname>PostgreSQL</productname> table to a Java Class name, by
           replacing _ with .
 
         Parameters:
@@ -2178,19 +2563,19 @@ forced by PostgreSQL).
 
         Throws: SQLException
                 on error
-
+<!-- **************************************************************** -->
 Utility Classes
 
-The postgresql.util package contains classes used by the internals of 
+The org.postgresql.util package contains classes used by the internals of 
 the main driver, and the other extensions.
 
-Class postgresql.util.PGmoney
+Class org.postgresql.util.PGmoney
                                 
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
            |
-           +----postgresql.util.PGmoney
+           +----org.postgresql.util.PGmoney
 
    public class PGmoney extends PGobject implements Serializable, 
 Cloneable
@@ -2249,7 +2634,7 @@ Methods
 
  public Object clone()
                 
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class PGobject
@@ -2257,16 +2642,17 @@ Methods
  public String getValue()
 
         Returns:
-                the PGpoint in the syntax expected by postgresql
+                the PGpoint in the syntax expected by <productname>PostgreSQL</productname>
 
         Overrides:
                 getValue in class PGobject
 
-Class postgresql.util.PGobject
+<!-- **************************************************************** -->
+Class org.postgresql.util.PGobject
 
 java.lang.Object
    |
-   +----postgresql.util.PGobject
+   +----org.postgresql.util.PGobject
 
    public class PGobject extends Object implements Serializable, 
 Cloneable
@@ -2274,18 +2660,18 @@ Cloneable
    This class is used to describe data types that are unknown by
      <acronym>JDBC</acronym> 
 Standard.
-    A call to postgresql.Connection permits a class that extends this 
+    A call to org.postgresql.Connection permits a class that extends this 
 class to be associated with a named type. This is how the 
-postgresql.geometric package operates.
+org.postgresql.geometric package operates.
     ResultSet.getObject() will return this class for any type that is 
-not recognised on having it's own handler. Because of this, any 
-postgresql data type is supported.
+not recognized on having it's own handler. Because of this, any 
+<productname>PostgreSQL</productname> data type is supported.
 
 Constructors
 
  public PGobject()
 
-          This is called by postgresql.Connection.getObject() to 
+          This is called by org.postgresql.Connection.getObject() to 
 create the object.
 
 Methods
@@ -2302,7 +2688,7 @@ Methods
  public void setValue(String value) throws SQLException
 
           This method sets the value of this object. It must be 
-overidden.
+overridden.
 
         Parameters:
                 value - a string representation of the value of the
@@ -2321,15 +2707,15 @@ final.
 
  public String getValue()
 
-          This must be overidden, to return the value of the object, 
-in the form required by postgresql.
+          This must be overridden, to return the value of the object, 
+in the form required by <productname>PostgreSQL</productname>.
 
         Returns:
                 the value of this object
 
  public boolean equals(Object obj)
 
-          This must be overidden to allow comparisons of objects
+          This must be overridden to allow comparisons of objects
 
         Parameters:
                 obj - Object to compare with
@@ -2342,38 +2728,39 @@ in the form required by postgresql.
 
  public Object clone()
 
-          This must be overidden to allow the object to be cloned
+          This must be overridden to allow the object to be cloned
 
         Overrides:
                 clone in class Object
 
  public String toString()
 
-          This is defined here, so user code need not overide it.
+          This is defined here, so user code need not override it.
           
         Returns:
                 the value of this object, in the syntax expected by 
-postgresql
+<productname>PostgreSQL</productname>
 
         Overrides:
                 toString in class Object
 
-Class postgresql.util.PGtokenizer
+<!-- **************************************************************** -->
+Class org.postgresql.util.PGtokenizer
 
 java.lang.Object
    |
-   +----postgresql.util.PGtokenizer
+   +----org.postgresql.util.PGtokenizer
 
    public class PGtokenizer extends Object
 
-   This class is used to tokenize the text output of postgres.
+   This class is used to tokenize the text output of <productname>PostgreSQL</productname>.
 
    We could have used StringTokenizer to do this, however, we needed 
 to handle nesting of '(' ')' '[' ']' '<' and '>' as these are used by 
 the geometric data types.
 
    It's mainly used by the geometric classes, but is useful in parsing 
-any output from custom data types output from postgresql.
+any output from custom data types output from <productname>PostgreSQL</productname>.
                  
    See Also:
           PGbox, PGcircle, PGlseg, PGpath, PGpoint, PGpolygon
@@ -2383,7 +2770,7 @@ Constructors
  public PGtokenizer(String string,
                     char delim)
 
-          Create a tokeniser.
+          Create a tokenizer.
 
         Parameters:
                 string - containing tokens
@@ -2418,7 +2805,7 @@ delimiter.
                                   char delim)
 
           This returns a new tokenizer based on one of our tokens. The 
-geometric datatypes use this to process nested tokens (usually 
+geometric data types use this to process nested tokens (usually 
 PGpoint).
 
         Parameters:
@@ -2502,15 +2889,16 @@ PGpoint).
         Returns:
                 String without the < or >
 
-Class postgresql.util.Serialize
+<!-- **************************************************************** -->
+Class org.postgresql.util.Serialize
 
-This was documented earlier under Object Serialisation.
+This was documented earlier under Object Serialization.
 
-Class postgresql.util.UnixCrypt
+Class org.postgresql.util.UnixCrypt
               
 java.lang.Object
    |
-   +----postgresql.util.UnixCrypt
+   +----org.postgresql.util.UnixCrypt
 
    public class UnixCrypt extends Object
 
@@ -2529,7 +2917,7 @@ Methods
  public static final String crypt(String salt,
                                   String original)
 
-          Encrypt a password given the cleartext password and a 
+          Encrypt a password given the clear-text password and a 
 "salt".
    
         Parameters:
@@ -2537,7 +2925,7 @@ Methods
 used
                 to iterate the encryption engine in lots of different
                 ways. If you are generating a new encryption then this
-                value should be randomised.
+                value should be randomized.
                 original - The password to be encrypted.
 
         Returns:
@@ -2547,7 +2935,7 @@ by
               
  public static final String crypt(String original)
 
-          Encrypt a password given the cleartext password. This method 
+          Encrypt a password given the clear-text password. This method 
 generates a random salt using the 'java.util.Random' class.
 
         Parameters:
@@ -2568,83 +2956,98 @@ by
 two characters are assumed to be the salt. This string would be the 
 same as one found in a Unix /etc/passwd file.
                 enteredPassword - The password as entered by the user 
-(or otherwise aquired).
+(or otherwise acquired).
 
         Returns:
                 true if the password should be considered correct.
-
-Using the driver in a multi Threaded or Servlet environment
-
-A problem with many <acronym>JDBC</acronym> drivers, is that only one thread can use a 
-Connection at any one time - otherwise a thread could send a query 
-while another one is receiving results, and this would be a bad thing 
-for the database engine.
-
-PostgreSQL 6.4, brings thread safety to the entire driver. Standard 
-<acronym>JDBC</acronym> was thread safe in 6.3.x, but the Fastpath
-     <acronym>API</acronym> wasn't.
-
-So, if your application uses multiple threads (which most decent ones 
-would), then you don't have to worry about complex schemes to ensure 
-only one uses the database at any time.
-
-If a thread attempts to use the connection while another is using it, 
-it will wait until the other thread has finished it's current 
-operation.
-
-If it's a standard SQL statement, then the operation is sending the 
-statement, and retrieving any ResultSet (in full).
-
-If it's a Fastpath call (ie: reading a block from a LargeObject), then 
-it's the time to send, and retrieve that block.
-
-This is fine for applications & applets, but can cause a performance 
-problem with servlets.
-
-With servlets, you can have a heavy load on the connection. If you 
-have several threads performing queries, then each one will pause, 
-which may not be what you are after.
-
-To solve this, you would be advised to create a pool of Connections.
-
-When ever a thread needs to use the database, it asks a manager class 
-for a Connection. It hands a free connection to the thread, and marks 
-it as busy. If a free connection is not available, it opens one.
-
-Once the thread has finished with it, it returns it to the manager, 
-who can then either close it, or add it to the pool. The manager would 
-also check that the connection is still alive, and remove it from the 
-pool if it's dead.
-
-So, with servlets, it's up to you to use either a single connection, 
-or a pool. The plus side for a pool is that threads will not be hit by 
-the bottle neck caused by a single network connection. The down side, 
-is that it increases the load on the server, as a backend is created 
-for each Connection.
-
-It's up to you, and your applications requirements.
 </programlisting>
-</para>
-</sect1>
+  </sect2>
 
-<sect1 id="jdbc-reading">
-<title>Further Reading</title>
+ </sect1>
+<!-- **************************************************************** -->
 
-<para>
-If you have not yet read it, I'd advise you read the <acronym>JDBC</acronym>
- <acronym>API</acronym> 
-Documentation (supplied with Sun's <acronym>JDK</acronym>),
- and the <acronym>JDBC</acronym> Specification. 
-Both are available on 
-<ulink url="http://www.javasoft.com">JavaSoft's web site</ulink>.
-</para>
+ <sect1 id="jdbc-thread">
+  <title>Using the driver in a multi-threaded or a servlet environment</title>
 
-<para>
-<ulink url="http://www.retep.org.uk">My own web site</ulink>
- contains updated information not included in this 
-document, and also includes precompiled drivers for versions 6.4 and earlier.
-</para>
-</sect1>
+  <para>
+   A problem with many <acronym>JDBC</acronym> drivers is that only
+   one thread can use a <classname>Connection</classname> at any one
+   time -- otherwise a thread could send a query while another one is
+   receiving results, and this would be a bad thing for the database
+   engine.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname> 6.4 brought thread safety to
+   the entire driver.  (Standard <acronym>JDBC</acronym> was thread
+   safe in 6.3, but the Fastpath <acronym>API</acronym> was not.)
+   Consequently, if your application uses multiple threads then you do
+   not have to worry about complex algorithms to ensure that only one
+   uses the database at any time.
+  </para>
+
+  <para>
+   If a thread attempts to use the connection while another one is
+   using it, it will wait until the other thread has finished its
+   current operation.  If it is a regular <acronym>SQL</acronym>
+   statement, then the operation consists of sending the statement and
+   retrieving any <classname>ResultSet</classname> (in full).  If it
+   is a <classname>Fastpath</classname> call (e.g., reading a block
+   from a <classname>LargeObject</classname>) then it is the time to
+   send and retrieve that block.
+  </para>
+
+  <para>
+   This is fine for applications and applets but can cause a
+   performance problem with servlets.  With servlets you can have a
+   heavy load on the connection. If you have several threads
+   performing queries then each but one will pause, which may not be what
+   you are after.
+  </para>
+
+  <para>
+   To solve this, you would be advised to create a pool of
+   connections.  When ever a thread needs to use the database, it asks
+   a manager class for a <classname>Connection</classname>. The
+   manager hands a free connection to the thread and marks it as
+   busy. If a free connection is not available, it opens one.  Once
+   the thread has finished with it, it returns it to the manager who
+   can then either close it or add it to the pool. The manager would
+   also check that the connection is still alive and remove it from
+   the pool if it is dead.
+  </para>
+
+  <para>
+   So, with servlets, it is up to you to use either a single
+   connection, or a pool. The plus side for a pool is that threads
+   will not be hit by the bottle neck caused by a single network
+   connection. The down side is that it increases the load on the
+   server, as a backend process is created for each
+   <classname>Connection</classname>.  It is up to you and your
+   applications requirements.
+  </para>
+ </sect1>
+
+
+ <sect1 id="jdbc-reading">
+  <title>Further Reading</title>
+
+  <para>
+   If you have not yet read it, I'd advise you read the
+   <acronym>JDBC</acronym> <acronym>API</acronym> Documentation
+   (supplied with Sun's <acronym>JDK</acronym>), and the
+   <acronym>JDBC</acronym> Specification.  Both are available from
+   <ulink
+   url="http://java.sun.com/products/jdbc/index.html">http://java.sun.com/products/jdbc/index.html</ulink>.
+  </para>
+
+  <para>
+   <ulink
+   url="http://jdbc.postgresql.org">http://jdbc.postgresql.org</ulink>
+   contains updated information not included in this document, and
+   also includes precompiled drivers.
+  </para>
+ </sect1>
 </chapter>
 
 <!-- Keep this comment at the end of the file
