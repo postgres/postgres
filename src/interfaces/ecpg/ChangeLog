@@ -1023,5 +1023,11 @@ Thu Nov  9 14:40:18 CET 2000
 Sat Nov 18 16:28:11 CET 2000
 
 	- Synced gram.y and preproc.y.         
+
+Mon Dec 18 12:27:52 CET 2000
+
+	- Synced gram.y and preproc.y.
+	- Synced keyword.c.
+	- Added several small patches from Christof.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

@@ -251,7 +251,6 @@ next_insert(char *text)
 	char	   *ptr = text;
 	bool		string = false;
 
-printf("%s\n", text);
 	for (; *ptr != '\0' && (*ptr != '?' || string); ptr++)
 	{
 		if (*ptr == '\\') /* escape character */
@@ -261,7 +260,6 @@ printf("%s\n", text);
 				string = string ? false : true;
 	}
 
-printf("%s\n", ptr);
 	return (*ptr == '\0') ? NULL : ptr;
 }
 
@@ -1007,7 +1005,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.14 2000/11/20 15:56:14 petere Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.15 2000/12/18 11:33:54 meskes Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

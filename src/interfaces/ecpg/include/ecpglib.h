@@ -3,19 +3,21 @@
  * definitions into ecpg programs
  */
 
+#include <stdio.h>
+
 #ifndef __BEOS__
 #ifndef __cplusplus
 #ifndef bool
 #define bool char
 #endif   /* ndef bool */
-#endif   /* not C++ */
 
 #ifndef true
 #define true    ((bool) 1)
-#endif
+#endif /* ndef true */
 #ifndef false    
-#define bool char
-#endif   /* ndef bool */
+#define false	((bool) 0)    
+#endif   /* ndef false */
+#endif   /* not C++ */   
 #else /* __BEOS__ */
 #include <SupportDefs.h>
 #endif /* __BEOS__ */

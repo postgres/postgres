@@ -236,12 +236,16 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 				{
 					if (pval[0] == 'f' && pval[1] == '\0')
 					{
-						((char *) var)[act_tuple] = false;
+						if (offset==sizeof(char)) ((char *) var)[act_tuple] = false;
+						else if (offset==sizeof(int)) ((int *) var)[act_tuple] = false;
+						else ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
 						break;
 					}
 					else if (pval[0] == 't' && pval[1] == '\0')
 					{
-						((char *) var)[act_tuple] = true;
+						if (offset==sizeof(char)) ((char *) var)[act_tuple] = true;
+						else if (offset==sizeof(int)) ((int *) var)[act_tuple] = true;
+						else ECPGraise(lineno, ECPG_CONVERT_BOOL, "different size");
 						break;
 					}
 					else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))

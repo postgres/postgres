@@ -27,8 +27,6 @@
  * This is a typically recursive definition. A structure of typed list elements
  * would probably work fine:
  */
-#include <stdio.h>
-
 #ifdef __cplusplus
 extern		"C"
 {

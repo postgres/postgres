@@ -344,7 +344,7 @@ make_name(void)
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
-%type  <str>    SessionList SessionClause SetSessionStmt IntConst PosIntConst
+%type  <str>    IntConst PosIntConst
 %type  <str>    select_limit opt_for_update_clause CheckPointStmt
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
@@ -444,7 +444,6 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 							output_statement($1, 1, NULL, connection);
 					}
 		| RuleStmt		{ output_statement($1, 0, NULL, connection); }
-		| SetSessionStmt	{ output_statement($1, 0, NULL, connection); }
 		| TransactionStmt	{
 						fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 						whenever_action(2);
@@ -778,43 +777,6 @@ DropSchemaStmt:  DROP SCHEMA UserId
 
 /*****************************************************************************
  *
- * Manipulate a postgresql session
- *
- *
- *****************************************************************************/
- 
-SetSessionStmt:  SET SESSION CHARACTERISTICS AS SessionList 
-		{
-			$$ = cat2_str(make_str("set session characteristics as"), $5);
-		}
-		;
-
-SessionList:  SessionList ',' SessionClause
-		{
-			$$ = cat_str(3, $1, make_str(","), $3);
-		}
-	| SessionClause 
-		{
-			$$ = $1;
-		}
-		;
-
-SessionClause:  TRANSACTION COMMIT opt_boolean 
-		{
-			$$ = cat2_str(make_str("transaction commit"), $3);
-		}
-		| TIME ZONE zone_value 
- 		{
-			$$ = cat2_str(make_str("time zone"), $3);
-		}
-		| TRANSACTION ISOLATION LEVEL opt_level   
-		{
-			$$ = cat2_str(make_str("transaction isolation level"), $4);
-		}
-		;
-
-/*****************************************************************************
- *
  * Set PG internal variable
  *	  SET name TO 'var_value'
  * Include SQL92 syntax (thomas 1997-10-22):
@@ -837,6 +799,10 @@ VariableSetStmt:  SET ColId TO var_value
 		| SET TRANSACTION ISOLATION LEVEL opt_level
 				{
 					$$ = cat2_str(make_str("set transaction isolation level"), $5);
+				}
+		| SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
+				{
+					$$ = cat2_str(make_str("set session characteristics as transaction isolation level"), $8);
 				}
 		| SET NAMES opt_encoding
                                 {
@@ -3599,26 +3565,36 @@ position_list:  b_expr IN b_expr
 				{	$$ = EMPTY; }
 		;
 
-substr_list:  expr_list substr_from substr_for
+substr_list:  a_expr substr_from substr_for
 				{
 					$$ = cat_str(3, $1, $2, $3);
 				}
-		| /* EMPTY */
-				{	$$ = EMPTY; }
-		;
-
-substr_from:  FROM expr_list
-				{	$$ = cat2_str(make_str("from"), $2); }
-		| /* EMPTY */
+		| a_expr substr_for substr_from 
 				{
-					$$ = EMPTY;
+                                        $$ = cat_str(3, $1, $2, $3);
+                                }  
+		| a_expr substr_from  
+				{
+                                        $$ = cat2_str($1, $2);
+                                }  
+		| a_expr substr_for
+				{
+                                        $$ = cat2_str($1, $2);
+                                }  
+		| expr_list
+				{
+					$$ = $1;
 				}
-		;
-
-substr_for:  FOR expr_list
-				{	$$ = cat2_str(make_str("for"), $2); }
 		| /* EMPTY */
 				{	$$ = EMPTY; }
+		;
+
+substr_from:  FROM a_expr
+				{	$$ = cat2_str(make_str("from"), $2); }
+		;
+
+substr_for:  FOR a_expr
+				{	$$ = cat2_str(make_str("for"), $2); }
 		;
 
 trim_list:  a_expr FROM expr_list
@@ -3783,6 +3759,7 @@ relation_name:	SpecialRuleRelation
 				}
 		;
 
+name:				ColId			{ $$ = $1; };
 database_name:			ColId			{ $$ = $1; };
 access_method:			ColId			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
@@ -3793,8 +3770,17 @@ index_name:				ColId			{ $$ = $1; };
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
  */
-name:					ColId			{ $$ = $1; };
-func_name:				ColId			{ $$ = $1; };
+func_name:	ColId			{ $$ = $1; };
+		| BETWEEN 		{ $$ = make_str("between");}
+		| ILIKE			{ $$ = make_str("ilike");}
+		| IN			{ $$ = make_str("in");}
+		| IS			{ $$ = make_str("is");}
+		| ISNULL		{ $$ = make_str("isnull");}
+		| LIKE			{ $$ = make_str("like");}
+		| NOTNULL		{ $$ = make_str("notnull");}
+		| OVERLAPS		{ $$ = make_str("overlaps");}
+		;
+
 
 file_name:				StringConst			{ $$ = $1; };
 
@@ -4967,12 +4953,6 @@ opt_symbol:	symbol		{ $$ = $1; }
 
 symbol:		ColLabel	{ $$ = $1; };
 
-/* Any tokens which show up as operators will screw up the parsing if
- * allowed as identifiers, but are acceptable as ColLabels:
- * BETWEEN, IN, IS, ISNULL, NOTNULL, OVERLAPS
- * Thanks to Tom Lane for pointing this out. - thomas 2000-03-29
- */
-
 /* Parser tokens to be used as identifiers.
  * Tokens involving data types should appear in ColId only,
  * since they will conflict with real TypeName productions.
@@ -4991,6 +4971,7 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| CACHE				{ $$ = make_str("cache"); }
 	| CASCADE			{ $$ = make_str("cascade"); }
 	| CHAIN				{ $$ = make_str("chain"); }
+	| CHARACTERISTICS		{ $$ = make_str("characteristics"); }
 	| CHECKPOINT			{ $$ = make_str("checkpoint"); }
 	| CLOSE				{ $$ = make_str("close"); }
 	| COMMENT			{ $$ = make_str("comment"); } 
@@ -5017,7 +4998,6 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| FUNCTION			{ $$ = make_str("function"); }
 	| GRANT				{ $$ = make_str("grant"); }
 	| HANDLER			{ $$ = make_str("handler"); }
-	| ILIKE				{ $$ = make_str("ilike"); }
 	| IMMEDIATE			{ $$ = make_str("immediate"); } 
 	| INCREMENT			{ $$ = make_str("increment"); }
 	| INDEX				{ $$ = make_str("index"); }
@@ -5030,7 +5010,6 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| LANGUAGE			{ $$ = make_str("language"); }
 	| LANCOMPILER			{ $$ = make_str("lancompiler"); }
 	| LEVEL				{ $$ = make_str("level"); }
-	| LIKE				{ $$ = make_str("like"); }
 	| LOCATION			{ $$ = make_str("location"); }
 	| MATCH				{ $$ = make_str("match"); }
 	| MAXVALUE			{ $$ = make_str("maxvalue"); }
@@ -5165,6 +5144,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| GLOBAL	{ $$ = make_str("global"); }
 		| GROUP		{ $$ = make_str("group"); }
 		| HAVING	{ $$ = make_str("having"); }
+		| ILIKE		{ $$ = make_str("ilike"); }
 		| INITIALLY	{ $$ = make_str("initially"); }
 		| INNER_P	{ $$ = make_str("inner"); }
 		| INTERSECT	{ $$ = make_str("intersect"); }
@@ -5173,6 +5153,8 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| JOIN		{ $$ = make_str("join"); }
 		| LEADING	{ $$ = make_str("leading"); }
 		| LEFT		{ $$ = make_str("left"); }
+		| LIKE		{ $$ = make_str("like"); }
+		| LIMIT		{ $$ = make_str("limit"); }
 		| LISTEN	{ $$ = make_str("listen"); }
 		| LOAD		{ $$ = make_str("load"); }
 		| LOCK_P	{ $$ = make_str("lock"); }
