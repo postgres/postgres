@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.65 2004/12/31 21:59:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.66 2005/01/24 23:21:57 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1929,6 +1929,9 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
  * This is called by the executor during plan startup for a CoerceToDomain
  * expression node.  The given constraints will be checked for each value
  * passed through the node.
+ *
+ * We allow this to be called for non-domain types, in which case the result
+ * is always NIL.
  */
 List *
 GetDomainConstraints(Oid typeOid)
@@ -1953,6 +1956,13 @@ GetDomainConstraints(Oid typeOid)
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for type %u", typeOid);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
+
+		if (typTup->typtype != 'd')
+		{
+			/* Not a domain, so done */
+			ReleaseSysCache(tup);
+			break;
+		}
 
 		/* Test for NOT NULL Constraint */
 		if (typTup->typnotnull)
@@ -2010,14 +2020,7 @@ GetDomainConstraints(Oid typeOid)
 
 		systable_endscan(scan);
 
-		if (typTup->typtype != 'd')
-		{
-			/* Not a domain, so done */
-			ReleaseSysCache(tup);
-			break;
-		}
-
-		/* else loop to next domain in stack */
+		/* loop to next domain in stack */
 		typeOid = typTup->typbasetype;
 		ReleaseSysCache(tup);
 	}
