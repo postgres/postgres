@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Mar 10 22:45:28 EST 2005
+Last updated:		Sat Mar 12 00:25:49 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -740,10 +740,7 @@ Vacuum
   write lock. However, the read lock promotion to write lock could lead
   to deadlock situations.
 
-* Allow free space map to be auto-sized or warn when it is too small
-
-  The free space map is in shared memory so resizing is difficult.
-
+* -Add a warning when the free space map is too small
 * Maintain a map of recently-expired rows
 
   This allows vacuum to reclaim free space without requiring
