@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.52 2003/10/03 20:10:59 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.52.2.1 2004/02/24 03:35:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,6 @@ typedef struct _archiveHandle
 	/* these vars track state to avoid sending redundant SET commands */
 	char	   *currUser;		/* current username */
 	char	   *currSchema;		/* current schema */
-	bool		chk_fn_bodies;	/* current state of check_function_bodies */
 
 	void	   *lo_buf;
 	size_t		lo_buf_used;

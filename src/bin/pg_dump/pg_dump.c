@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.2 2004/01/22 19:09:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.3 2004/02/24 03:35:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,7 @@ static char *myFormatType(const char *typname, int32 typmod);
 static const char *fmtQualifiedId(const char *schema, const char *id);
 static int	dumpBlobs(Archive *AH, char *, void *);
 static int	dumpDatabase(Archive *AH);
+static void dumpEncoding(Archive *AH);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
 
@@ -546,6 +547,9 @@ main(int argc, char **argv)
 		if (g_verbose)
 			write_msg(NULL, "last built-in OID is %u\n", g_last_builtin_oid);
 	}
+
+	/* First the special encoding entry. */
+	dumpEncoding(g_fout);
 
 	/* Dump the database definition */
 	if (!dataOnly)
@@ -1241,6 +1245,61 @@ dumpDatabase(Archive *AH)
 	destroyPQExpBuffer(creaQry);
 
 	return 1;
+}
+
+
+/*
+ * dumpEncoding: put the correct encoding into the archive
+ */
+static void
+dumpEncoding(Archive *AH)
+{
+	PQExpBuffer qry;
+	PGresult   *res;
+
+	/* Can't read the encoding from pre-7.3 servers (SHOW isn't a query) */
+	if (AH->remoteVersion < 70300)
+		return;
+
+	if (g_verbose)
+		write_msg(NULL, "saving encoding\n");
+
+	qry = createPQExpBuffer();
+
+	appendPQExpBuffer(qry, "SHOW client_encoding");
+
+	res = PQexec(g_conn, qry->data);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK ||
+		PQntuples(res) != 1)
+	{
+		write_msg(NULL, "SQL command failed\n");
+		write_msg(NULL, "Error message from server: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "The command was: %s\n", qry->data);
+		exit_nicely();
+	}
+
+	resetPQExpBuffer(qry);
+
+	appendPQExpBuffer(qry, "SET client_encoding = ");
+	appendStringLiteral(qry, PQgetvalue(res, 0, 0), true);
+	appendPQExpBuffer(qry, ";\n");
+
+	ArchiveEntry(AH, "0",		/* OID */
+				 "ENCODING",	/* Name */
+				 NULL,			/* Namespace */
+				 "",			/* Owner */
+				 "ENCODING",	/* Desc */
+				 NULL,			/* Deps */
+				 qry->data,		/* Create */
+				 "",			/* Del */
+				 NULL,			/* Copy */
+				 NULL,			/* Dumper */
+				 NULL);			/* Dumper Arg */
+
+	PQclear(res);
+
+	destroyPQExpBuffer(qry);
 }
 
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.79.2.1 2004/01/04 04:02:22 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.79.2.2 2004/02/24 03:35:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
 
+static void _doSetFixedOutputState(ArchiveHandle *AH);
 static void _doSetSessionAuth(ArchiveHandle *AH, const char *user);
 static void _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user);
 static void _becomeUser(ArchiveHandle *AH, const char *user);
@@ -203,6 +204,11 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		sav = SetOutput(AH, ropt->filename, ropt->compression);
 
 	ahprintf(AH, "--\n-- PostgreSQL database dump\n--\n\n");
+
+	/*
+	 * Establish important parameter values right away.
+	 */
+	_doSetFixedOutputState(AH);
 
 	/*
 	 * Drop the items at the start, in reverse order
@@ -1703,7 +1709,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->currUser = strdup("");	/* So it's valid, but we can free() it
 								 * later if necessary */
 	AH->currSchema = strdup("");	/* ditto */
-	AH->chk_fn_bodies = true;	/* assumed default state */
 
 	AH->toc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!AH->toc)
@@ -1935,6 +1940,10 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 {
 	teReqs		res = 3;		/* Schema = 1, Data = 2, Both = 3 */
 
+	/* ENCODING objects are dumped specially, so always reject here */
+	if (strcmp(te->desc, "ENCODING") == 0)
+		return 0;
+
 	/* If it's an ACL, maybe ignore it */
 	if (ropt->aclsSkip && strcmp(te->desc, "ACL") == 0)
 		return 0;
@@ -2020,6 +2029,33 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 }
 
 /*
+ * Issue SET commands for parameters that we want to have set the same way
+ * at all times during execution of a restore script.
+ */
+static void
+_doSetFixedOutputState(ArchiveHandle *AH)
+{
+	TocEntry   *te;
+
+	/* If we have an encoding setting, emit that */
+	te = AH->toc->next;
+	while (te != AH->toc)
+	{
+		if (strcmp(te->desc, "ENCODING") == 0)
+		{
+			ahprintf(AH, "%s", te->defn);
+			break;
+		}
+		te = te->next;
+	}
+
+	/* Make sure function checking is disabled */
+	ahprintf(AH, "SET check_function_bodies = false;\n");
+
+	ahprintf(AH, "\n");
+}
+
+/*
  * Issue a SET SESSION AUTHORIZATION command.  Caller is responsible
  * for updating state if appropriate.  If user is NULL or an empty string,
  * the specification DEFAULT will be used.
@@ -2100,7 +2136,8 @@ _reconnectToDB(ArchiveHandle *AH, const char *dbname, const char *user)
 		free(AH->currSchema);
 	AH->currSchema = strdup("");
 
-	AH->chk_fn_bodies = true;	/* assumed default state */
+	/* re-establish fixed state */
+	_doSetFixedOutputState(AH);
 }
 
 /*
@@ -2195,13 +2232,6 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	/* Select owner and schema as necessary */
 	_becomeOwner(AH, te);
 	_selectOutputSchema(AH, te->namespace);
-
-	/* If it's a function, make sure function checking is disabled */
-	if (AH->chk_fn_bodies && strcmp(te->desc, "FUNCTION") == 0)
-	{
-		ahprintf(AH, "SET check_function_bodies = false;\n\n");
-		AH->chk_fn_bodies = false;
-	}
 
 	if (isData)
 		pfx = "Data for ";
