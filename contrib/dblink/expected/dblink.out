@@ -185,13 +185,11 @@ SELECT dblink_disconnect();
  OK
 (1 row)
 
--- should generate "no connection to the server" error
+-- should generate "connection not available" error
 SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
-ERROR:  sql error
-DETAIL:  no connection to the server
-
+ERROR:  connection not available
 -- put more data into our slave table, first using arbitrary connection syntax
 -- but truncate the actual return value so we can use diff to check for success
 SELECT substr(dblink_exec('dbname=regression','INSERT INTO foo VALUES(10,''k'',''{"a10","b10","c10"}'')'),1,6);

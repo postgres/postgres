@@ -256,6 +256,8 @@ dblink_disconnect(PG_FUNCTION_ARGS)
 		deleteConnection(conname);
 		pfree(rcon);
 	}
+	else
+		persistent_conn = NULL;
 
 	PG_RETURN_TEXT_P(GET_TEXT("OK"));
 }
