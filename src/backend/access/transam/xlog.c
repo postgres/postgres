@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.174 2004/10/14 20:23:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.175 2004/10/29 00:16:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,8 +442,9 @@ static int	XLogFileOpen(uint32 log, uint32 seg);
 static int	XLogFileRead(uint32 log, uint32 seg, int emode);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
-static void PreallocXlogFiles(XLogRecPtr endptr);
-static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr);
+static int	PreallocXlogFiles(XLogRecPtr endptr);
+static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
+							int *nsegsremoved, int *nsegsrecycled);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr, int whichChkpt);
@@ -2067,9 +2068,10 @@ RestoreArchivedFile(char *path, const char *xlogfname,
  * Preallocate log files beyond the specified log endpoint, according to
  * the XLOGfile user parameter.
  */
-static void
+static int
 PreallocXlogFiles(XLogRecPtr endptr)
 {
+	int			nsegsadded = 0;
 	uint32		_logId;
 	uint32		_logSeg;
 	int			lf;
@@ -2083,7 +2085,10 @@ PreallocXlogFiles(XLogRecPtr endptr)
 		use_existent = true;
 		lf = XLogFileInit(_logId, _logSeg, &use_existent, true);
 		close(lf);
+		if (!use_existent)
+			nsegsadded++;
 	}
+	return nsegsadded;
 }
 
 /*
@@ -2093,7 +2098,8 @@ PreallocXlogFiles(XLogRecPtr endptr)
  * whether we want to recycle rather than delete no-longer-wanted log files.
  */
 static void
-MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
+MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
+				int *nsegsremoved, int *nsegsrecycled)
 {
 	uint32		endlogId;
 	uint32		endlogSeg;
@@ -2101,6 +2107,9 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 	struct dirent *xlde;
 	char		lastoff[MAXFNAMELEN];
 	char		path[MAXPGPATH];
+
+	*nsegsremoved = 0;
+	*nsegsrecycled = 0;
 
 	XLByteToPrevSeg(endptr, endlogId, endlogSeg);
 
@@ -2152,17 +2161,19 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 										   true, XLOGfileslop,
 										   true))
 				{
-					ereport(DEBUG1,
+					ereport(DEBUG2,
 						  (errmsg("recycled transaction log file \"%s\"",
 								  xlde->d_name)));
+					(*nsegsrecycled)++;
 				}
 				else
 				{
 					/* No need for any more future segments... */
-					ereport(DEBUG1,
+					ereport(DEBUG2,
 						  (errmsg("removing transaction log file \"%s\"",
 								  xlde->d_name)));
 					unlink(path);
+					(*nsegsremoved)++;
 				}
 
 				XLogArchiveCleanup(xlde->d_name);
@@ -4470,7 +4481,7 @@ StartupXLOG(void)
 	/*
 	 * Preallocate additional log files, if wanted.
 	 */
-	PreallocXlogFiles(EndOfLog);
+	(void) PreallocXlogFiles(EndOfLog);
 
 	/*
 	 * Okay, we're officially UP.
@@ -4694,6 +4705,9 @@ CreateCheckPoint(bool shutdown, bool force)
 	uint32		freespace;
 	uint32		_logId;
 	uint32		_logSeg;
+	int			nsegsadded = 0;
+	int			nsegsremoved = 0;
+	int			nsegsrecycled = 0;
 
 	/*
 	 * Acquire CheckpointLock to ensure only one checkpoint happens at a
@@ -4861,6 +4875,10 @@ CreateCheckPoint(bool shutdown, bool force)
 	 */
 	END_CRIT_SECTION();
 
+	if (!shutdown)
+		ereport(DEBUG1,
+				(errmsg("checkpoint starting")));
+
 	CheckPointCLOG();
 	CheckPointSUBTRANS();
 	FlushBufferPool();
@@ -4936,7 +4954,8 @@ CreateCheckPoint(bool shutdown, bool force)
 	if (_logId || _logSeg)
 	{
 		PrevLogSeg(_logId, _logSeg);
-		MoveOfflineLogs(_logId, _logSeg, recptr);
+		MoveOfflineLogs(_logId, _logSeg, recptr,
+						&nsegsremoved, &nsegsrecycled);
 	}
 
 	/*
@@ -4945,7 +4964,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * necessary.)
 	 */
 	if (!shutdown)
-		PreallocXlogFiles(recptr);
+		nsegsadded = PreallocXlogFiles(recptr);
 
 	/*
 	 * Truncate pg_subtrans if possible.  We can throw away all data
@@ -4956,6 +4975,11 @@ CreateCheckPoint(bool shutdown, bool force)
 	 */
 	if (!InRecovery)
 		TruncateSUBTRANS(GetOldestXmin(true));
+
+	if (!shutdown)
+		ereport(DEBUG1,
+				(errmsg("checkpoint complete; %d transaction log file(s) added, %d removed, %d recycled",
+						nsegsadded, nsegsremoved, nsegsrecycled)));
 
 	LWLockRelease(CheckpointLock);
 }
