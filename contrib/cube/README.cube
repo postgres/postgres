@@ -29,12 +29,8 @@ To install the type, run
 	make
 	make install
 
-For this to work, make sure that:
-
-. the cube source directory is in the postgres contrib directory
-. the user running "make install" has postgres administrative authority
-. this user's environment defines the PGLIB and PGDATA variables and has
-  postgres binaries in the PATH.
+The user running "make install" may need root access; depending on how you
+configured the PostgreSQL installation paths.
 
 This only installs the type implementation and documentation.  To make the
 type available in any particular database, as a postgres superuser do:
