@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.62 2003/03/27 17:10:55 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.63 2003/04/02 02:33:52 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -3844,6 +3844,8 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 	NUMProc		_Np,
 			   *Np = &_Np;
 
+	MemSet(Np, 0, sizeof(NUMProc));
+
 	Np->Num = Num;
 	Np->type = type;
 	Np->number = number;
@@ -3891,7 +3893,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 		if (IS_PLUS(Np->Num) || IS_MINUS(Np->Num))
 		{
 			if (IS_PLUS(Np->Num) && IS_MINUS(Np->Num)==FALSE)
-				Np->sign_wrote = FALSE;
+				Np->sign_wrote = FALSE;		/* need sign */
+			else
+				Np->sign_wrote = TRUE;		/* needn't sign */
 		}
 		else
 		{
