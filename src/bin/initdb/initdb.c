@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.46 2004/08/01 06:19:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.47 2004/08/09 20:20:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2227,6 +2227,7 @@ main(int argc, char *argv[])
 	/* store binary directory */
 	strcpy(bin_path, backend_exec);
 	*last_dir_separator(bin_path) = '\0';
+	canonicalize_path(bin_path);
 
 	if (!share_path)
 	{

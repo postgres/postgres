@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.26 2004/08/01 06:56:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.27 2004/08/09 20:20:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,11 +116,33 @@ canonicalize_path(char *path)
 #endif
 
 	/*
-	 *	Removing the trailing slash on a path means we never get
-	 *	ugly double slashes.  Don't remove a leading slash, though.
-	 *	Also, Win32 can't stat() a directory with a trailing slash.
+	 * Removing the trailing slash on a path means we never get ugly double
+	 * slashes.  Also, Win32 can't stat() a directory with a trailing slash.
+	 * Don't remove a leading slash, though.
 	 */
 	trim_trailing_separator(path);
+
+	/*
+	 * Remove any trailing uses of "." or "..", too.
+	 */
+	for (;;)
+	{
+		int		len = strlen(path);
+
+		if (len >= 2 && strcmp(path + len - 2, "/.") == 0)
+		{
+			trim_directory(path);
+			trim_trailing_separator(path);
+		}
+		else if (len >= 3 && strcmp(path + len - 3, "/..") == 0)
+		{
+			trim_directory(path);
+			trim_directory(path);
+			trim_trailing_separator(path);
+		}
+		else
+			break;
+	}
 }
 
 
@@ -444,7 +466,7 @@ trim_trailing_separator(char *path)
 #ifdef WIN32
 	/*
 	 *	Skip over network and drive specifiers for win32.
-	 *	Set 'path' to point to the last character to keep.
+	 *	Set 'path' to point to the last character we must keep.
 	 */
     if (strlen(path) >= 2)
     {
