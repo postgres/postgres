@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.1 1996/10/31 07:10:14 scrappy Exp $
+ * $Id: postgres.h,v 1.2 1996/11/04 06:35:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "config.h"
 #include "c.h"
 #include "utils/elog.h"
+#include "utils/palloc.h"
 
 /* ----------------------------------------------------------------
  *		Section 1:  simple type definitions
