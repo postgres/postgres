@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.311 2002/05/02 18:44:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.312 2002/05/03 00:32:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -269,12 +269,12 @@ static void doNegateFloat(Value *v);
 %type <range>	relation_expr
 %type <target>	target_el, insert_target_el, update_target_el
 
-%type <typnam>	Typename, SimpleTypename, ConstTypename
-				GenericType, Numeric, Character, ConstDatetime, ConstInterval, Bit
-%type <str>		character, bit
+%type <typnam>	Typename, SimpleTypename, ConstTypename,
+				GenericType, Numeric, opt_float, Character,
+				ConstDatetime, ConstInterval, Bit
+%type <str>		character
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
-%type <str>		opt_float
 %type <ival>	opt_numeric, opt_decimal
 %type <boolean>	opt_varying, opt_timezone
 
@@ -331,14 +331,16 @@ static void doNegateFloat(Value *v);
 		ELSE, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
-		IN, INNER_P, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
-		ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
+		IN, INNER_P, INSENSITIVE, INSERT, INT, INTEGER, INTERSECT, INTERVAL,
+		INTO, IS, ISOLATION,
+		JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
 		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
 		OF, OLD, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE,
-		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
-		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
+		READ, REAL, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
+		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET,
+		SMALLINT, SOME, SUBSTRING,
 		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP,
 		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UPDATE, USAGE, USER, USING,
@@ -346,7 +348,8 @@ static void doNegateFloat(Value *v);
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL99 reserved words) */
-%token <keyword>	ASSERTION, CHAIN, CHARACTERISTICS,
+%token <keyword>	ASSERTION, BINARY, BIT, BOOLEAN,
+		CHAIN, CHARACTERISTICS,
 		DEFERRABLE, DEFERRED,
 		IMMEDIATE, INITIALLY, INOUT,
 		OFF, OUT,
@@ -365,7 +368,7 @@ static void doNegateFloat(Value *v);
  * - Todd A. Brandys 1998-01-01?
  */
 %token <keyword>	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
-		BACKWARD, BEFORE, BINARY, BIT,
+		BACKWARD, BEFORE, BIGINT,
 		CACHE, CHECKPOINT, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN,
@@ -4335,7 +4338,7 @@ ConstTypename:  GenericType
 
 GenericType:  type_name
 				{
-					$$ = makeTypeName(xlateSqlType($1));
+					$$ = makeTypeName($1);
 				}
 		;
 
@@ -4344,28 +4347,52 @@ GenericType:  type_name
  * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  * - thomas 1997-09-18
  */
-Numeric:  FLOAT opt_float
+Numeric:  INT
 				{
-					$$ = makeTypeName($2); /* already xlated */
+					$$ = SystemTypeName("int4");
+				}
+		| INTEGER
+				{
+					$$ = SystemTypeName("int4");
+				}
+		| SMALLINT
+				{
+					$$ = SystemTypeName("int2");
+				}
+		| BIGINT
+				{
+					$$ = SystemTypeName("int8");
+				}
+		| REAL
+				{
+					$$ = SystemTypeName("float4");
+				}
+		| FLOAT opt_float
+				{
+					$$ = $2;
 				}
 		| DOUBLE PRECISION
 				{
-					$$ = makeTypeName(xlateSqlType("float8"));
+					$$ = SystemTypeName("float8");
 				}
 		| DECIMAL opt_decimal
 				{
-					$$ = makeTypeName(xlateSqlType("decimal"));
+					$$ = SystemTypeName("numeric");
 					$$->typmod = $2;
 				}
 		| DEC opt_decimal
 				{
-					$$ = makeTypeName(xlateSqlType("decimal"));
+					$$ = SystemTypeName("numeric");
 					$$->typmod = $2;
 				}
 		| NUMERIC opt_numeric
 				{
-					$$ = makeTypeName(xlateSqlType("numeric"));
+					$$ = SystemTypeName("numeric");
 					$$->typmod = $2;
+				}
+		| BOOLEAN
+				{
+					$$ = SystemTypeName("bool");
 				}
 		;
 
@@ -4374,15 +4401,15 @@ opt_float:  '(' Iconst ')'
 					if ($2 < 1)
 						elog(ERROR, "precision for FLOAT must be at least 1");
 					else if ($2 < 7)
-						$$ = xlateSqlType("float4");
+						$$ = SystemTypeName("float4");
 					else if ($2 < 16)
-						$$ = xlateSqlType("float8");
+						$$ = SystemTypeName("float8");
 					else
 						elog(ERROR, "precision for FLOAT must be less than 16");
 				}
 		| /*EMPTY*/
 				{
-					$$ = xlateSqlType("float8");
+					$$ = SystemTypeName("float8");
 				}
 		;
 
@@ -4443,35 +4470,33 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
  * SQL92 bit-field data types
  * The following implements BIT() and BIT VARYING().
  */
-Bit:  bit '(' Iconst ')'
+Bit:  BIT opt_varying '(' Iconst ')'
 				{
-					$$ = makeTypeName($1);
-					if ($3 < 1)
+					char *typname;
+
+					typname = $2 ? "varbit" : "bit";
+					$$ = SystemTypeName(typname);
+					if ($4 < 1)
 						elog(ERROR, "length for type '%s' must be at least 1",
-							 $1);
-					else if ($3 > (MaxAttrSize * BITS_PER_BYTE))
+							 typname);
+					else if ($4 > (MaxAttrSize * BITS_PER_BYTE))
 						elog(ERROR, "length for type '%s' cannot exceed %d",
-							 $1, (MaxAttrSize * BITS_PER_BYTE));
-					$$->typmod = $3;
+							 typname, (MaxAttrSize * BITS_PER_BYTE));
+					$$->typmod = $4;
 				}
-		| bit
+		| BIT opt_varying
 				{
-					$$ = makeTypeName($1);
 					/* bit defaults to bit(1), varbit to no limit */
-					if (strcmp($1, "bit") == 0)
-						$$->typmod = 1;
-					else
+					if ($2)
+					{
+						$$ = SystemTypeName("varbit");
 						$$->typmod = -1;
-				}
-		;
-
-bit:  BIT opt_varying
-				{
-					char *type;
-
-					if ($2) type = xlateSqlType("varbit");
-					else type = xlateSqlType("bit");
-					$$ = type;
+					}
+					else
+					{
+						$$ = SystemTypeName("bit");
+						$$->typmod = 1;
+					}
 				}
 		;
 
@@ -4490,10 +4515,10 @@ Character:  character '(' Iconst ')' opt_charset
 						strcpy(type, $1);
 						strcat(type, "_");
 						strcat(type, $5);
-						$1 = xlateSqlType(type);
+						$1 = type;
 					}
 
-					$$ = makeTypeName($1);
+					$$ = SystemTypeName($1);
 
 					if ($3 < 1)
 						elog(ERROR, "length for type '%s' must be at least 1",
@@ -4519,10 +4544,10 @@ Character:  character '(' Iconst ')' opt_charset
 						strcpy(type, $1);
 						strcat(type, "_");
 						strcat(type, $2);
-						$1 = xlateSqlType(type);
+						$1 = type;
 					}
 
-					$$ = makeTypeName($1);
+					$$ = SystemTypeName($1);
 
 					/* char defaults to char(1), varchar to no limit */
 					if (strcmp($1, "bpchar") == 0)
@@ -4532,12 +4557,12 @@ Character:  character '(' Iconst ')' opt_charset
 				}
 		;
 
-character:  CHARACTER opt_varying				{ $$ = xlateSqlType($2 ? "varchar": "bpchar"); }
-		| CHAR opt_varying						{ $$ = xlateSqlType($2 ? "varchar": "bpchar"); }
-		| VARCHAR								{ $$ = xlateSqlType("varchar"); }
-		| NATIONAL CHARACTER opt_varying		{ $$ = xlateSqlType($3 ? "varchar": "bpchar"); }
-		| NATIONAL CHAR opt_varying				{ $$ = xlateSqlType($3 ? "varchar": "bpchar"); }
-		| NCHAR opt_varying						{ $$ = xlateSqlType($2 ? "varchar": "bpchar"); }
+character:  CHARACTER opt_varying				{ $$ = $2 ? "varchar": "bpchar"; }
+		| CHAR opt_varying						{ $$ = $2 ? "varchar": "bpchar"; }
+		| VARCHAR								{ $$ = "varchar"; }
+		| NATIONAL CHARACTER opt_varying		{ $$ = $3 ? "varchar": "bpchar"; }
+		| NATIONAL CHAR opt_varying				{ $$ = $3 ? "varchar": "bpchar"; }
+		| NCHAR opt_varying						{ $$ = $2 ? "varchar": "bpchar"; }
 		;
 
 opt_varying:  VARYING							{ $$ = TRUE; }
@@ -4555,9 +4580,9 @@ opt_collate:  COLLATE ColId						{ $$ = $2; }
 ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone
 				{
 					if ($5)
-						$$ = makeTypeName(xlateSqlType("timestamptz"));
+						$$ = SystemTypeName("timestamptz");
 					else
-						$$ = makeTypeName(xlateSqlType("timestamp"));
+						$$ = SystemTypeName("timestamp");
 					/* XXX the timezone field seems to be unused
 					 * - thomas 2001-09-06
 					 */
@@ -4570,9 +4595,9 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone
 		| TIMESTAMP opt_timezone
 				{
 					if ($2)
-						$$ = makeTypeName(xlateSqlType("timestamptz"));
+						$$ = SystemTypeName("timestamptz");
 					else
-						$$ = makeTypeName(xlateSqlType("timestamp"));
+						$$ = SystemTypeName("timestamp");
 					/* XXX the timezone field seems to be unused
 					 * - thomas 2001-09-06
 					 */
@@ -4589,9 +4614,9 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone
 		| TIME '(' Iconst ')' opt_timezone
 				{
 					if ($5)
-						$$ = makeTypeName(xlateSqlType("timetz"));
+						$$ = SystemTypeName("timetz");
 					else
-						$$ = makeTypeName(xlateSqlType("time"));
+						$$ = SystemTypeName("time");
 					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
 						elog(ERROR, "TIME(%d)%s precision must be between %d and %d",
 							 $3, ($5 ? " WITH TIME ZONE": ""), 0, MAX_TIME_PRECISION);
@@ -4600,9 +4625,9 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone
 		| TIME opt_timezone
 				{
 					if ($2)
-						$$ = makeTypeName(xlateSqlType("timetz"));
+						$$ = SystemTypeName("timetz");
 					else
-						$$ = makeTypeName(xlateSqlType("time"));
+						$$ = SystemTypeName("time");
 					/* SQL99 specified a default precision of zero.
 					 * See comments for timestamp above on why we will
 					 * leave this unspecified for now. - thomas 2001-12-07
@@ -4613,7 +4638,7 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone
 
 ConstInterval:  INTERVAL
 				{
-					$$ = makeTypeName(xlateSqlType("interval"));
+					$$ = SystemTypeName("interval");
 				}
 		;
 
@@ -5246,9 +5271,9 @@ c_expr:  columnref
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = makeTypeName(xlateSqlType("text"));
+					s->typename = SystemTypeName("text");
 
-					d = makeTypeName(xlateSqlType("date"));
+					d = SystemTypeName("date");
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -5263,9 +5288,9 @@ c_expr:  columnref
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = makeTypeName(xlateSqlType("text"));
+					s->typename = SystemTypeName("text");
 
-					d = makeTypeName(xlateSqlType("timetz"));
+					d = SystemTypeName("timetz");
 					/* SQL99 mandates a default precision of zero for TIME
 					 * fields in schemas. However, for CURRENT_TIME
 					 * let's preserve the microsecond precision we
@@ -5286,8 +5311,8 @@ c_expr:  columnref
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = makeTypeName(xlateSqlType("text"));
-					d = makeTypeName(xlateSqlType("timetz"));
+					s->typename = SystemTypeName("text");
+					d = SystemTypeName("timetz");
 					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
 						elog(ERROR, "CURRENT_TIME(%d) precision must be between %d and %d",
 							 $3, 0, MAX_TIME_PRECISION);
@@ -5306,9 +5331,9 @@ c_expr:  columnref
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = makeTypeName(xlateSqlType("text"));
+					s->typename = SystemTypeName("text");
 
-					d = makeTypeName(xlateSqlType("timestamptz"));
+					d = SystemTypeName("timestamptz");
 					/* SQL99 mandates a default precision of 6 for timestamp.
 					 * Also, that is about as precise as we will get since
 					 * we are using a microsecond time interface.
@@ -5329,9 +5354,9 @@ c_expr:  columnref
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
-					s->typename = makeTypeName(xlateSqlType("text"));
+					s->typename = SystemTypeName("text");
 
-					d = makeTypeName(xlateSqlType("timestamptz"));
+					d = SystemTypeName("timestamptz");
 					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
 						elog(ERROR, "CURRENT_TIMESTAMP(%d) precision must be between %d and %d",
 							 $3, 0, MAX_TIMESTAMP_PRECISION);
@@ -5841,7 +5866,7 @@ index_name:				ColId			{ $$ = $1; };
 file_name:				Sconst			{ $$ = $1; };
 
 func_name: function_name
-			{ $$ = makeList1(makeString(xlateSqlFunc($1))); }
+			{ $$ = makeList1(makeString($1)); }
 		| dotted_name
 			{ $$ = $1; }
 		;
@@ -5929,7 +5954,7 @@ AexprConst:  Iconst
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = "t";
-					n->typename = makeTypeName(xlateSqlType("bool"));
+					n->typename = SystemTypeName("bool");
 					$$ = (Node *)n;
 				}
 		| FALSE_P
@@ -5937,7 +5962,7 @@ AexprConst:  Iconst
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = "f";
-					n->typename = makeTypeName(xlateSqlType("bool"));
+					n->typename = SystemTypeName("bool");
 					$$ = (Node *)n;
 				}
 		| NULL_P
@@ -6174,7 +6199,9 @@ unreserved_keyword:
  * looks too much like a function call for an LR(1) parser.
  */
 col_name_keyword:
-		  BIT
+		  BIGINT
+		| BIT
+		| BOOLEAN
 		| CHAR
 		| CHARACTER
 		| COALESCE
@@ -6183,13 +6210,17 @@ col_name_keyword:
 		| EXISTS
 		| EXTRACT
 		| FLOAT
+		| INT
+		| INTEGER
 		| INTERVAL
 		| NCHAR
 		| NONE
 		| NULLIF
 		| NUMERIC
 		| POSITION
+		| REAL
 		| SETOF
+		| SMALLINT
 		| SUBSTRING
 		| TIME
 		| TIMESTAMP
@@ -6365,7 +6396,7 @@ makeIntConst(int val)
 	A_Const *n = makeNode(A_Const);
 	n->val.type = T_Integer;
 	n->val.val.ival = val;
-	n->typename = makeTypeName(xlateSqlType("integer"));
+	n->typename = SystemTypeName("int4");
 
 	return (Node *)n;
 }
@@ -6377,7 +6408,7 @@ makeFloatConst(char *str)
 
 	n->val.type = T_Float;
 	n->val.val.str = str;
-	n->typename = makeTypeName(xlateSqlType("float"));
+	n->typename = SystemTypeName("float8");
 
 	return (Node *)n;
 }
@@ -6524,75 +6555,6 @@ makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg)
 	return (Node *) n;
 }
 
-/* xlateSqlFunc()
- * Convert alternate function names to internal Postgres functions.
- *
- * NOTE: these conversions are only applied to unqualified function names.
- *
- * Do not convert "float", since that is handled elsewhere
- *  for FLOAT(p) syntax.
- *
- * Converting "datetime" to "timestamp" and "timespan" to "interval"
- * is a temporary expedient for pre-7.0 to 7.0 compatibility;
- * these should go away for v7.1.
- */
-char *
-xlateSqlFunc(char *name)
-{
-	if (strcmp(name,"character_length") == 0)
-		return "char_length";
-	else if (strcmp(name,"datetime") == 0)
-		return "timestamp";
-	else if (strcmp(name,"timespan") == 0)
-		return "interval";
-	else
-		return name;
-} /* xlateSqlFunc() */
-
-/* xlateSqlType()
- * Convert alternate type names to internal Postgres types.
- *
- * NOTE: these conversions are only applied to unqualified type names.
- *
- * NB: do NOT put "char" -> "bpchar" here, because that renders it impossible
- * to refer to our single-byte char type, even with quotes.  (Without quotes,
- * CHAR is a keyword, and the code above produces "bpchar" for it.)
- *
- * Convert "datetime" and "timespan" to allow a transition to SQL92 type names.
- * Remove this translation for v7.1 - thomas 2000-03-25
- *
- * Convert "lztext" to "text" to allow forward compatibility for anyone using
- * the undocumented "lztext" type in 7.0.  This can go away in 7.2 or later
- * - tgl 2000-07-30
- */
-char *
-xlateSqlType(char *name)
-{
-	if ((strcmp(name,"int") == 0)
-		|| (strcmp(name,"integer") == 0))
-		return "int4";
-	else if (strcmp(name, "smallint") == 0)
-		return "int2";
-	else if (strcmp(name, "bigint") == 0)
-		return "int8";
-	else if (strcmp(name, "real") == 0)
-		return "float4";
-	else if (strcmp(name, "float") == 0)
-		return "float8";
-	else if (strcmp(name, "decimal") == 0)
-		return "numeric";
-	else if (strcmp(name, "datetime") == 0)
-		return "timestamp";
-	else if (strcmp(name, "timespan") == 0)
-		return "interval";
-	else if (strcmp(name, "lztext") == 0)
-		return "text";
-	else if (strcmp(name, "boolean") == 0)
-		return "bool";
-	else
-		return name;
-} /* xlateSqlType() */
-
 /* SystemFuncName()
  *	Build a properly-qualified reference to a built-in function.
  */
@@ -6602,7 +6564,26 @@ SystemFuncName(char *name)
 	return makeList2(makeString("pg_catalog"), makeString(name));
 }
 
-void parser_init(Oid *typev, int nargs)
+/* SystemTypeName()
+ *	Build a properly-qualified reference to a built-in type.
+ *
+ * typmod is defaulted, but may be changed afterwards by caller.
+ */
+TypeName *
+SystemTypeName(char *name)
+{
+	TypeName   *n = makeNode(TypeName);
+
+	n->names = makeList2(makeString("pg_catalog"), makeString(name));
+	n->typmod = -1;
+	return n;
+}
+
+/*
+ * Initialize to parse one query string
+ */
+void
+parser_init(Oid *typev, int nargs)
 {
 	QueryIsRule = FALSE;
 	/*
@@ -6613,7 +6594,11 @@ void parser_init(Oid *typev, int nargs)
 	pfunc_num_args = nargs;
 }
 
-Oid param_type(int t)
+/*
+ * Fetch a parameter type previously passed to parser_init
+ */
+Oid
+param_type(int t)
 {
 	if ((t > pfunc_num_args) || (t <= 0))
 		return InvalidOid;

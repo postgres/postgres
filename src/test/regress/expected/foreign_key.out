@@ -747,12 +747,12 @@ DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
 -- This should fail, because we just chose really odd types
-CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
+CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  Unable to identify an operator '=' for types 'cidr' and 'integer'
 	You will have to retype this query using an explicit cast
 -- Again, so should this...
-CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
+CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  Unable to identify an operator '=' for types 'cidr' and 'integer'
 	You will have to retype this query using an explicit cast

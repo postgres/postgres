@@ -46,9 +46,9 @@ ALTER TABLE tmp ADD COLUMN t box;
 
 ALTER TABLE tmp ADD COLUMN u tinterval;
 
-ALTER TABLE tmp ADD COLUMN v datetime;
+ALTER TABLE tmp ADD COLUMN v timestamp;
 
-ALTER TABLE tmp ADD COLUMN w timespan;
+ALTER TABLE tmp ADD COLUMN w interval;
 
 ALTER TABLE tmp ADD COLUMN x float8[];
 
@@ -115,9 +115,9 @@ ALTER TABLE tmp ADD COLUMN t box;
 
 ALTER TABLE tmp ADD COLUMN u tinterval;
 
-ALTER TABLE tmp ADD COLUMN v datetime;
+ALTER TABLE tmp ADD COLUMN v timestamp;
 
-ALTER TABLE tmp ADD COLUMN w timespan;
+ALTER TABLE tmp ADD COLUMN w interval;
 
 ALTER TABLE tmp ADD COLUMN x float8[];
 
@@ -256,11 +256,11 @@ DROP TABLE fktable;
 CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
                            PRIMARY KEY(ptest1, ptest2));
 -- This should fail, because we just chose really odd types
-CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
+CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
 -- Again, so should this...
 DROP TABLE FKTABLE;
-CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
+CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
 -- This fails because we mixed up the column ordering

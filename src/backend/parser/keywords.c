@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.108 2002/05/02 18:44:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.109 2002/05/03 00:32:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,10 @@ static const ScanKeyword ScanKeywords[] = {
 	{"before", BEFORE},
 	{"begin", BEGIN_TRANS},
 	{"between", BETWEEN},
+	{"bigint", BIGINT},
 	{"binary", BINARY},
 	{"bit", BIT},
+	{"boolean", BOOLEAN},
 	{"both", BOTH},
 	{"by", BY},
 	{"cache", CACHE},
@@ -142,6 +144,8 @@ static const ScanKeyword ScanKeywords[] = {
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
+	{"int", INT},
+	{"integer", INTEGER},
 	{"intersect", INTERSECT},
 	{"interval", INTERVAL},
 	{"into", INTO},
@@ -213,6 +217,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"procedural", PROCEDURAL},
 	{"procedure", PROCEDURE},
 	{"read", READ},
+	{"real", REAL},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
 	{"relative", RELATIVE},
@@ -238,6 +243,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"setof", SETOF},
 	{"share", SHARE},
 	{"show", SHOW},
+	{"smallint", SMALLINT},
 	{"some", SOME},
 	{"start", START},
 	{"statement", STATEMENT},

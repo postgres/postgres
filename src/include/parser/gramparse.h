@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.21 2002/04/20 21:56:15 petere Exp $
+ * $Id: gramparse.h,v 1.22 2002/05/03 00:32:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #define GRAMPARSE_H
 
 #include "lib/stringinfo.h"
+#include "nodes/parsenodes.h"
 
 /* from parser.c */
 extern int	yylex(void);
@@ -30,9 +31,8 @@ extern void yyerror(const char *message);
 extern void parser_init(Oid *typev, int nargs);
 extern Oid	param_type(int t);
 extern int	yyparse(void);
-extern char *xlateSqlFunc(char *name);
-extern char *xlateSqlType(char *name);
 extern List *SystemFuncName(char *name);
-bool		exprIsNullConstant(Node *arg);
+extern TypeName *SystemTypeName(char *name);
+extern bool	exprIsNullConstant(Node *arg);
 
 #endif   /* GRAMPARSE_H */

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.40 2002/03/29 19:06:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.41 2002/05/03 00:32:18 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -889,7 +889,7 @@ plpgsql_parse_wordtype(char *word)
 	 *
 	 * XXX this should be improved to handle qualified-type-name references.
 	 */
-	typeOid = LookupTypeName(makeTypeName(xlateSqlType(cp)));
+	typeOid = LookupTypeName(makeTypeName(cp));
 	if (OidIsValid(typeOid))
 	{
 		HeapTuple	typeTup;

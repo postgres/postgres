@@ -448,9 +448,9 @@ DROP TABLE PKTABLE;
 -- Two columns, two tables
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
 -- This should fail, because we just chose really odd types
-CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
+CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
 -- Again, so should this...
-CREATE TABLE FKTABLE (ftest1 cidr, ftest2 datetime, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
+CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
 -- This fails because we mixed up the column ordering
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable);
 -- As does this...

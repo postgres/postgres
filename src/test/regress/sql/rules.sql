@@ -591,7 +591,7 @@ SELECT * FROM shoe_ready WHERE total_avail >= 2;
         sl_name    char(10),      -- shoelace changed
         sl_avail   integer,       -- new available value
         log_who    name,          -- who did it
-        log_when   datetime       -- when
+        log_when   timestamp      -- when
     );
 
 -- Want "log_who" to be CURRENT_USER,
