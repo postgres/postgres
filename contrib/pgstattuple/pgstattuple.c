@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.9 2002/09/04 20:31:08 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.10 2003/06/12 08:02:53 momjian Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -33,8 +33,12 @@
 
 
 PG_FUNCTION_INFO_V1(pgstattuple);
+PG_FUNCTION_INFO_V1(pgstattuplebyid);
 
 extern Datum pgstattuple(PG_FUNCTION_ARGS);
+extern Datum pgstattuplebyid(PG_FUNCTION_ARGS);
+
+static Datum pgstattuple_real(Relation rel);
 
 /* ----------
  * pgstattuple:
@@ -46,7 +50,7 @@ extern Datum pgstattuple(PG_FUNCTION_ARGS);
  * ----------
  */
 
-#define DUMMY_TUPLE "pgstattuple_type"
+#define DUMMY_TUPLE "public.pgstattuple_type"
 #define NCOLUMNS 9
 #define NCHARS 32
 
@@ -56,6 +60,41 @@ pgstattuple(PG_FUNCTION_ARGS)
 	text	   *relname = PG_GETARG_TEXT_P(0);
 	RangeVar   *relrv;
 	Relation	rel;
+	Datum		result;
+
+	/* open relation */
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
+														 "pgstattuple"));
+	rel = heap_openrv(relrv, AccessShareLock);
+
+	result = pgstattuple_real(rel);
+
+	PG_RETURN_DATUM(result);
+}
+
+Datum
+pgstattuplebyid(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	Relation	rel;
+	Datum		result;
+
+	/* open relation */
+	rel = heap_open(relid, AccessShareLock);
+
+	result = pgstattuple_real(rel);
+
+	PG_RETURN_DATUM(result);
+}
+
+/*
+ * pgstattuple_real
+ *
+ * The real work occurs here
+ */
+static Datum
+pgstattuple_real(Relation rel)
+{
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	BlockNumber nblocks;
@@ -91,11 +130,6 @@ pgstattuple(PG_FUNCTION_ARGS)
 	 * C strings
 	 */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
-
-	/* open relation */
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
-														 "pgstattuple"));
-	rel = heap_openrv(relrv, AccessShareLock);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
 	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
@@ -187,5 +221,5 @@ pgstattuple(PG_FUNCTION_ARGS)
 		pfree(values[i]);
 	pfree(values);
 
-	PG_RETURN_DATUM(result);
+	return(result);
 }

@@ -16,15 +16,17 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: getaddrinfo.h,v 1.3 2003/06/12 07:36:51 momjian Exp $
+ * $Id: getaddrinfo.h,v 1.4 2003/06/12 08:02:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef GETADDRINFO_H
 #define GETADDRINFO_H
 
+#if !defined(WIN32) || (!defined(_MSC_VER) && !defined(__BORLANDC__))
 #include <sys/socket.h>
 #include <netdb.h>
+#endif
 
 
 #ifndef HAVE_STRUCT_ADDRINFO

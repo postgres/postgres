@@ -8,7 +8,7 @@ pgstattuple README			2002/08/29 Tatsuo Ishii
 
 test=# \x
 Expanded display is on.
-test=# select * from pgstattuple('pg_proc');
+test=# select * from pgstattuple('pg_catalog.pg_proc');
 -[ RECORD 1 ]------+-------
 table_len          | 458752
 tuple_count        | 1470
@@ -45,9 +45,14 @@ free_percent		-- free space in %
 
    CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuple'
-     LANGUAGE 'c' WITH (isstrict);
+     LANGUAGE 'c' STRICT;
 
-   The argument is the table name.  Note that pgstattuple only returns
+   CREATE OR REPLACE FUNCTION pgstattuple(oid) RETURNS pgstattuple_type
+     AS 'MODULE_PATHNAME', 'pgstattuplebyid'
+     LANGUAGE 'c' STRICT;
+
+   The argument is the table name (optionally it may be qualified)
+   or the OID of the table.  Note that pgstattuple only returns
    one row.
 
 4. Notes
