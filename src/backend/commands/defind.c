@@ -7,37 +7,34 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.7 1996/11/06 06:47:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.8 1996/11/06 08:21:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "access/attnum.h"
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "utils/builtins.h"
-#include "utils/syscache.h"
-#include "catalog/index.h"
-#include "catalog/pg_index.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_opclass.h"
-#include "nodes/plannodes.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
-#include "utils/palloc.h"
-#include "utils/relcache.h"
-#include "utils/lsyscache.h"
-
-#include "commands/defrem.h"
-#include "parser/parsetree.h"		/* for getrelid() */
-
-#include "optimizer/prep.h"
-#include "optimizer/clauses.h"
-#include "storage/lmgr.h"
-#include "fmgr.h"
+#include <access/attnum.h>
+#include <access/genam.h>
+#include <access/heapam.h>
+#include <utils/builtins.h>
+#include <utils/syscache.h>
+#include <catalog/index.h>
+#include <catalog/pg_index.h>
+#include <catalog/pg_proc.h>
+#include <catalog/pg_opclass.h>
+#include <nodes/plannodes.h>
+#include <nodes/primnodes.h>
+#include <nodes/relation.h>
+#include <utils/relcache.h>
+#include <utils/lsyscache.h>
+#include <commands/defrem.h>
+#include <parser/parsetree.h>		/* for getrelid() */
+#include <optimizer/prep.h>
+#include <optimizer/clauses.h>
+#include <storage/lmgr.h>
+#include <fmgr.h>
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
 

@@ -14,50 +14,37 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.7 1996/11/03 23:57:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.8 1996/11/06 08:21:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
+#include <postgres.h>
 
-#include "postgres.h"
-
-#include "access/heapam.h"
-#include "access/genam.h"
-#include "access/htup.h"
-#include "access/skey.h"
-#include "access/xact.h"
-
-#include "catalog/catname.h"
-#include "utils/syscache.h"
-#include "catalog/index.h"
-#include "catalog/indexing.h"
-#include "catalog/pg_type.h"
-
-#include "commands/copy.h"
-#include "commands/cluster.h"
-#include "commands/rename.h"
-
-#include "storage/bufmgr.h"
-
-#include "miscadmin.h"
-#include "tcop/dest.h"
-#include "commands/command.h"
-
-#include "utils/builtins.h"
-#include "utils/excid.h"
-#include "utils/mcxt.h"
-#include "utils/palloc.h"
-
-#include "catalog/pg_proc.h"
-#include "catalog/pg_class.h"
-
-#include "optimizer/internal.h"
-
+#include <catalog/pg_index.h>
+#include <catalog/heap.h>
+#include <access/heapam.h>
+#include <access/genam.h>
+#include <access/xact.h>
+#include <catalog/catname.h>
+#include <utils/syscache.h>
+#include <catalog/index.h>
+#include <catalog/indexing.h>
+#include <catalog/pg_type.h>
+#include <commands/copy.h>
+#include <commands/cluster.h>
+#include <commands/rename.h>
+#include <storage/bufmgr.h>
+#include <miscadmin.h>
+#include <tcop/dest.h>
+#include <commands/command.h>
+#include <utils/builtins.h>
+#include <utils/excid.h>
+#include <utils/mcxt.h>
+#include <catalog/pg_proc.h>
+#include <catalog/pg_class.h>
+#include <optimizer/internal.h>
 #ifndef NO_SECURITY
-#include "utils/acl.h"
-#include "utils/syscache.h"
+#include <utils/acl.h>
 #endif /* !NO_SECURITY */
 
 /*

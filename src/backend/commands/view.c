@@ -7,25 +7,26 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.3 1996/11/03 23:57:43 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.4 1996/11/06 08:21:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>	/* for sprintf() */
-#include "postgres.h"
-#include "access/heapam.h"
-#include "access/xact.h"
-#include "utils/builtins.h"
-#include "utils/palloc.h"
-#include "nodes/relation.h"
-#include "nodes/parsenodes.h"
-#include "parser/catalog_utils.h"
-#include "parser/parse_query.h"
-#include "rewrite/rewriteDefine.h"
-#include "rewrite/rewriteHandler.h"
-#include "rewrite/rewriteManip.h"
-#include "rewrite/rewriteRemove.h"
-#include "commands/creatinh.h"
+
+#include <postgres.h>
+
+#include <catalog/heap.h>
+#include <access/heapam.h>
+#include <access/xact.h>
+#include <utils/builtins.h>
+#include <nodes/relation.h>
+#include <parser/catalog_utils.h>
+#include <parser/parse_query.h>
+#include <rewrite/rewriteDefine.h>
+#include <rewrite/rewriteHandler.h>
+#include <rewrite/rewriteManip.h>
+#include <rewrite/rewriteRemove.h>
+#include <commands/creatinh.h>
 
 /*---------------------------------------------------------------------
  * DefineVirtualRelation

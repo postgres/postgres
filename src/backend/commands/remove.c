@@ -7,30 +7,31 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.5 1996/11/06 06:47:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.6 1996/11/06 08:21:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
+#include <postgres.h>
 
-#include "postgres.h"
-
-#include "access/heapam.h"
-#include "utils/builtins.h"
-#include "utils/tqual.h"	/* for NowTimeQual */
-#include "utils/syscache.h"
-#include "catalog/catname.h"
-#include "commands/defrem.h"
-
-#include "miscadmin.h"
-
-#include "catalog/pg_aggregate.h"
-#include "catalog/pg_language.h"
-#include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
-#include "parser/catalog_utils.h"
-#include "storage/bufmgr.h"
-#include "fmgr.h"
+#include <utils/acl.h>
+#include <access/heapam.h>
+#include <utils/builtins.h>
+#include <utils/syscache.h>
+#include <catalog/catname.h>
+#include <commands/defrem.h>
+#include <miscadmin.h>
+#include <catalog/pg_aggregate.h>
+#include <catalog/pg_language.h>
+#include <catalog/pg_operator.h>
+#include <catalog/pg_proc.h>
+#include <parser/catalog_utils.h>
+#include <storage/bufmgr.h>
+#include <fmgr.h>
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 /*
  * RemoveOperator --

@@ -6,56 +6,32 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.13 1996/11/06 06:47:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.14 1996/11/06 08:21:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <string.h>
+#include <unistd.h>
+
 #include <postgres.h>
 
 #include <access/heapam.h>
-
-#include <stdio.h>
-
 #include <tcop/dest.h>
-
 #include <fmgr.h>
-
-#include <utils/palloc.h>
-
 #include <miscadmin.h>
-
 #include <utils/builtins.h>
-
 #include <utils/acl.h>
-
 #include <sys/stat.h>
-
 #include <catalog/pg_index.h>
-
 #include <utils/syscache.h>
-
-#include <nodes/params.h>
-#include <executor/hashjoin.h>
-#include <nodes/primnodes.h>  
-#include <nodes/memnodes.h>
-#include <executor/tuptable.h>
-#include <nodes/execnodes.h> 
-
 #include <utils/memutils.h>
-
 #include <executor/executor.h>
-
 #include <access/transam.h>
-
 #include <catalog/index.h>
-
 #include <access/genam.h>
-
 #include <catalog/pg_type.h>
-
 #include <catalog/catname.h>
-
 #include <catalog/pg_user.h>
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.4 1996/11/03 23:57:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.5 1996/11/06 08:21:30 scrappy Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -20,53 +20,25 @@
  *	
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
+#include <postgres.h>
 
-#include "access/relscan.h"
-
-#include "nodes/memnodes.h"
-#include "nodes/parsenodes.h"
-#include "nodes/params.h"
-#include "access/sdir.h"
-#include "executor/hashjoin.h"
-#include "executor/tuptable.h"
-#include "access/funcindex.h"
-#include "nodes/execnodes.h"
-#include "nodes/plannodes.h"
-#include "tcop/dest.h"  
-#include "executor/execdesc.h"
-#include "utils/portal.h"  
-
-#include "commands/command.h"
-
-#include "utils/mcxt.h"
-
-#include "executor/executor.h"
-
-#include "executor/execdefs.h"
-
-#include "catalog/indexing.h"
-
-#include "utils/syscache.h"
-
-#include "catalog/catalog.h"
-
-#include "access/heapam.h"  
-
-#include "utils/array.h"
-#include "utils/acl.h"
-
-#include "optimizer/prep.h"
-
-#include "catalog/catname.h"
-
-#include "catalog/pg_proc.h"
-
-#include "utils/palloc.h"
-
-#include "catalog/pg_type.h"
-
-#include "utils/builtins.h"
+#include <access/relscan.h>
+#include <utils/portal.h>  
+#include <commands/command.h>
+#include <utils/mcxt.h>
+#include <executor/executor.h>
+#include <executor/execdefs.h>
+#include <catalog/indexing.h>
+#include <utils/syscache.h>
+#include <catalog/catalog.h>
+#include <access/heapam.h>  
+#include <utils/array.h>
+#include <utils/acl.h>
+#include <optimizer/prep.h>
+#include <catalog/catname.h>
+#include <catalog/pg_proc.h>
+#include <catalog/pg_type.h>
+#include <utils/builtins.h>
 
 /* ----------------
  * 	PortalExecutorHeapMemory stuff

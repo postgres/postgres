@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.2 1996/11/03 23:57:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.3 1996/11/06 08:21:36 scrappy Exp $
  *
  * Note:
  *	XXX There are many instances of int32 instead of ...Time.  These
@@ -15,18 +15,16 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
+#include <postgres.h>
 
-#include "access/heapam.h"
-#include "access/xact.h"
-#include "utils/tqual.h"	/* for NowTimeQual */
-#include "catalog/catname.h"
-#include "catalog/indexing.h"
-#include "fmgr.h"
-#include "utils/palloc.h"
-
-#include "commands/purge.h"
-#include "utils/builtins.h"	/* for isreltime() */
+#include <access/heapam.h>
+#include <access/xact.h>
+#include <utils/tqual.h>	/* for NowTimeQual */
+#include <catalog/catname.h>
+#include <catalog/indexing.h>
+#include <fmgr.h>
+#include <commands/purge.h>
+#include <utils/builtins.h>	/* for isreltime() */
 
 static char	cmdname[] = "RelationPurge";
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.5 1996/11/03 23:57:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.6 1996/11/06 08:21:34 scrappy Exp $
  *
  * DESCRIPTION
  *    The "DefineFoo" routines take the parse tree and pick out the
@@ -32,8 +32,10 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
+#include <stdio.h>
 #include <ctype.h>
+#include <string.h>
+#include <math.h>
 
 #include <postgres.h>
 
@@ -44,17 +46,12 @@
 #include <catalog/pg_proc.h>
 #include <catalog/pg_type.h>
 #include <utils/syscache.h>
-#include <nodes/parsenodes.h>
 #include <fmgr.h>               /* for fmgr */
-
 #include <utils/builtins.h>     /* prototype for textin() */
-
-#include <utils/palloc.h>
 #include <commands/defrem.h>
 #include <optimizer/xfunc.h>
 #include <tcop/dest.h>
-
-#include "catalog/pg_user.h"
+#include <catalog/pg_user.h>
 
 static char *defGetString(DefElem *def);
 static int  defGetTypeLength(DefElem *def);

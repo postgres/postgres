@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.7 1996/11/06 06:47:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.8 1996/11/06 08:21:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,36 +18,28 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include "postgres.h"
-#include "utils/portal.h"
+#include <postgres.h>
 
-#include "access/genam.h"
-#include "access/heapam.h"
-#include "access/xact.h"
-#include "storage/bufmgr.h"
-#include "access/transam.h"
-#include "utils/tqual.h"
-
-#include "catalog/pg_index.h"
-#include "catalog/catname.h"
-#include "catalog/pg_class.h"
-#include "catalog/pg_proc.h"
-
-#include "storage/smgr.h"
-#include "storage/lmgr.h"
-
-#include "utils/mcxt.h"
-#include "utils/palloc.h"
-
-#include "commands/vacuum.h"
-
-#include "storage/bufpage.h"
-
+#include <utils/portal.h>
+#include <access/genam.h>
+#include <access/heapam.h>
+#include <access/xact.h>
+#include <storage/bufmgr.h>
+#include <access/transam.h>
+#include <catalog/pg_index.h>
+#include <catalog/catname.h>
+#include <catalog/pg_class.h>
+#include <catalog/pg_proc.h>
+#include <storage/smgr.h>
+#include <storage/lmgr.h>
+#include <utils/mcxt.h>
+#include <commands/vacuum.h>
+#include <storage/bufpage.h>
 #ifdef NEED_RUSAGE
-#include "rusagestub.h"
+# include <rusagestub.h>
 #else /* NEED_RUSAGE */
-#include <sys/time.h>
-#include <sys/resource.h>
+# include <sys/time.h>
+# include <sys/resource.h>
 #endif /* NEED_RUSAGE */
 
 bool VacuumRunning =	false;
