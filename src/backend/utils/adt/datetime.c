@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.5 1997/05/11 15:11:31 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.6 1997/05/16 07:19:50 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,19 @@ static int	day_tab[2][12] = {
 
 #define isleap(y) (((y % 4) == 0 && (y % 100) != 0) || (y % 400) == 0)
 
+#define UTIME_MINYEAR (1901)
+#define UTIME_MINMONTH (12)
+#define UTIME_MINDAY (14)
+#define UTIME_MAXYEAR (2038)
+#define UTIME_MAXMONTH (01)
+#define UTIME_MAXDAY (18)
+
+#define IS_VALID_UTIME(y,m,d) (((y > UTIME_MINYEAR) \
+ || ((y == UTIME_MINYEAR) && ((m > UTIME_MINMONTH) \
+  || ((m == UTIME_MINMONTH) && (d >= UTIME_MINDAY))))) \
+ && ((y < UTIME_MAXYEAR) \
+ || ((y == UTIME_MAXYEAR) && ((m < UTIME_MAXMONTH) \
+  || ((m == UTIME_MAXMONTH) && (d <= UTIME_MAXDAY))))))
 
 /*****************************************************************************
  *   Date ADT
@@ -104,7 +117,7 @@ printf( "date_in- input string is %s\n", str);
 
 #if USE_NEW_DATE
 
-    date = (date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1));
+    date = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000,1,1));
 
     return(date);
 
@@ -142,7 +155,7 @@ date_out(int4 dateVal)
 
 #if USE_NEW_DATE
 
-    j2date( (((int) date) + date2j(2000,1,1)), &year, &month, &day);
+    j2date( (date + date2j(2000,1,1)), &year, &month, &day);
 
 #else
 
@@ -157,8 +170,7 @@ date_out(int4 dateVal)
     else
         sprintf(buf, "%02d-%02d-%04d", month, day, year);
 
-    if (!PointerIsValid(result = PALLOC(strlen(buf)+1)))
-	elog(WARN,"Memory allocation failed, can't output date",NULL);
+    result = PALLOC(strlen(buf)+1);
 
     strcpy( result, buf);
 
@@ -166,6 +178,8 @@ date_out(int4 dateVal)
 } /* date_out() */
 
 #if USE_NEW_DATE
+
+int date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn);
 
 bool
 date_eq(DateADT dateVal1, DateADT dateVal2)
@@ -253,15 +267,26 @@ date_mii(DateADT dateVal, int4 days)
  * Convert date to datetime data type.
  */
 DateTime *
-date_datetime(int4 dateVal)
+date_datetime(DateADT dateVal)
 {
     DateTime *result;
+    struct tm tt, *tm = &tt;
+    int tz;
+    double fsec = 0;
+    char *tzn;
 
-    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	elog(WARN,"Memory allocation failed, can't convert date to datetime",NULL);
+    result = PALLOCTYPE(DateTime);
 
-    *result = (dateVal - date2j( 2000, 1, 1));
-    *result *= 86400;
+    if (date2tm( dateVal, &tz, tm, &fsec, &tzn) != 0)
+	elog(WARN,"Unable to convert date to datetime",NULL);
+
+#ifdef DATEDEBUG
+printf( "date_datetime- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
+printf( "date_datetime- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, tm->tm_sec, *fsec);
+#endif
+
+    if (tm2datetime( tm, fsec, &tz, result) != 0)
+	elog(WARN,"Datetime out of range",NULL);
 
     return(result);
 } /* date_datetime() */
@@ -274,11 +299,29 @@ DateADT
 datetime_date(DateTime *datetime)
 {
     DateADT result;
+    struct tm tt, *tm = &tt;
+    int tz;
+    double fsec;
+    char *tzn;
 
     if (!PointerIsValid(datetime))
 	elog(WARN,"Unable to convert null datetime to date",NULL);
 
-    result = (*datetime / 86400);
+    if (DATETIME_NOT_FINITE(*datetime))
+	elog(WARN,"Unable to convert datetime to date",NULL);
+
+    if (DATETIME_IS_EPOCH(*datetime)) {
+	datetime2tm( SetDateTime(*datetime), NULL, tm, &fsec, NULL);
+
+    } else if (DATETIME_IS_CURRENT(*datetime)) {
+	datetime2tm( SetDateTime(*datetime), &tz, tm, &fsec, &tzn);
+
+    } else {
+	if (datetime2tm( *datetime, &tz, tm, &fsec, &tzn) != 0)
+	    elog(WARN,"Unable to convert datetime to date",NULL);
+    };
+
+    result = (date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j( 2000, 1, 1));
 
     return(result);
 } /* datetime_date() */
@@ -291,14 +334,15 @@ DateADT
 abstime_date(AbsoluteTime abstime)
 {
     DateADT result;
-    struct tt, *tm = &tt;
+    struct tm tt, *tm = &tt;
+    int tz;
 
     switch (abstime) {
     case INVALID_ABSTIME:
     case NOSTART_ABSTIME:
     case NOEND_ABSTIME:
 	elog(WARN,"Unable to convert reserved abstime value to date",NULL);
-	break;
+	/* pretend to drop through to make compiler think that result will be set */
 
     case EPOCH_ABSTIME:
 	result = date2j(1970,1,1) - date2j(2000,1,1);
@@ -306,23 +350,97 @@ abstime_date(AbsoluteTime abstime)
 
     case CURRENT_ABSTIME:
 	GetCurrentTime(tm);
-	result = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1);
+	result = date2j( tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000,1,1);
 	break;
 
     default:
-#if FALSE
-	tm = localtime((time_t *) &abstime);
-	tm->tm_year += 1900;
-	tm->tm_mon += 1;
-	/* XXX must shift to local time before converting - tgl 97/04/01 */
-#endif
-	abstime2tm(abstime, &CTimeZone, tm);
+	abstime2tm(abstime, &tz, tm);
 	result = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1);
 	break;
     };
 
     return(result);
 } /* abstime_date() */
+
+
+/* date2tm()
+ * Convert date to time structure.
+ * Note that date is an implicit local time, but the system calls assume
+ *  that everything is GMT. So, convert to GMT, rotate to local time,
+ *  and then convert again to try to get the time zones correct.
+ */
+int
+date2tm(DateADT dateVal, int *tzp, struct tm *tm, double *fsec, char **tzn)
+{
+    struct tm *tx;
+    time_t utime;
+    *fsec = 0;
+
+    j2date( (dateVal + date2j( 2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+    tm->tm_hour = 0;
+    tm->tm_min = 0;
+    tm->tm_sec = 0;
+    tm->tm_isdst = -1;
+
+    if (IS_VALID_UTIME( tm->tm_year, tm->tm_mon, tm->tm_mday)) {
+
+	/* convert to system time */
+	utime = ((dateVal + (date2j(2000,1,1)-date2j(1970,1,1)))*86400);
+	utime += (12*60*60);	/* rotate to noon to get the right day in time zone */
+
+#ifdef USE_POSIX_TIME
+	tx = localtime(&utime);
+
+#ifdef DATEDEBUG
+printf( "date2tm- (localtime) %d.%02d.%02d %02d:%02d:%02.0f %s %s dst=%d\n",
+ tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, sec,
+ tzname[0], tzname[1], tx->tm_isdst);
+#endif
+	tm->tm_year = tx->tm_year + 1900;
+	tm->tm_mon = tx->tm_mon + 1;
+	tm->tm_mday = tx->tm_mday;
+#if FALSE
+	tm->tm_hour = tx->tm_hour;
+	tm->tm_min = tx->tm_min;
+	tm->tm_sec = tx->tm_sec;
+#endif
+	tm->tm_isdst = tx->tm_isdst;
+
+#ifdef HAVE_INT_TIMEZONE
+	*tzp = (tm->tm_isdst? (timezone - 3600): timezone);
+	if (tzn != NULL) *tzn = tzname[(tm->tm_isdst > 0)];
+
+#else /* !HAVE_INT_TIMEZONE */
+	*tzp = (tm->tm_isdst? (tm->tm_gmtoff - 3600): tm->tm_gmtoff); /* tm_gmtoff is Sun/DEC-ism */
+	if (tzn != NULL) *tzn = tm->tm_zone;
+#endif
+
+#else /* !USE_POSIX_TIME */
+	*tzp = CTimeZone;	/* V7 conventions; don't know timezone? */
+	if (tzn != NULL) *tzn = CTZName;
+#endif
+
+    /* otherwise, outside of timezone range so convert to GMT... */
+    } else {
+#if FALSE
+	j2date( (dateVal + date2j( 2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+	tm->tm_hour = 0;
+	tm->tm_min = 0;
+	tm->tm_sec = 0;
+#endif
+
+#ifdef DATEDEBUG
+printf( "date2tm- convert %d-%d-%d %d:%d%d to datetime\n",
+ tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+#endif
+
+	*tzp = 0;
+	tm->tm_isdst = 0;
+	if (tzn != NULL) *tzn = NULL;
+    };
+
+    return 0;
+} /* date2tm() */
 
 #else
 
@@ -502,11 +620,22 @@ date_datetime(int4 dateVal)
     DateTime *result;
     DateADT *date = (DateADT *) &dateVal;
 
-    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	elog(WARN,"Memory allocation failed, can't convert date to datetime",NULL);
+    int tz;
+    double fsec;
+    char *tzn;
+    struct tm tt, *tm = &tt;
+
+    result = PALLOCTYPE(DateTime);
 
     *result = (date2j(date->year, date->month, date->day) - date2j( 2000, 1, 1));
     *result *= 86400;
+    *result += (12*60*60);
+
+    datetime2tm( *result, &tz, tm, &fsec, &tzn);
+    tm->tm_hour = 0;
+    tm->tm_min = 0;
+    tm->tm_sec = 0;
+    tm2datetime( tm, fsec, &tz, result);
 
 #ifdef DATEDEBUG
 printf( "date_datetime- convert %04d-%02d-%02d to %f\n",
@@ -520,16 +649,32 @@ int4
 datetime_date(DateTime *datetime)
 {
     int4 result;
-    int year, month, day;
+    int tz;
+    double fsec;
+    char *tzn;
+    struct tm tt, *tm = &tt;
     DateADT *date = (DateADT *) &result;
 
     if (!PointerIsValid(datetime))
 	elog(WARN,"Unable to convert null datetime to date",NULL);
 
-    j2date( ((*datetime / 86400) + date2j( 2000, 1, 1)), &year, &month, &day);
-    date->year = year;
-    date->month = month;
-    date->day = day;
+    if (DATETIME_NOT_FINITE(*datetime))
+	elog(WARN,"Unable to convert datetime to date",NULL);
+
+    if (DATETIME_IS_EPOCH(*datetime)) {
+	datetime2tm( SetDateTime(*datetime), NULL, tm, &fsec, NULL);
+
+    } else if (DATETIME_IS_CURRENT(*datetime)) {
+	datetime2tm( SetDateTime(*datetime), &tz, tm, &fsec, &tzn);
+
+    } else {
+	if (datetime2tm( *datetime, &tz, tm, &fsec, &tzn) != 0)
+	    elog(WARN,"Unable to convert datetime to date",NULL);
+    };
+
+    date->year = tm->tm_year;
+    date->month = tm->tm_mon;
+    date->day = tm->tm_mday;
 
     return(result);
 } /* datetime_date() */
@@ -539,6 +684,7 @@ abstime_date(AbsoluteTime abstime)
 {
     int4 result;
     DateADT *date = (DateADT *) &result;
+    int tz;
     struct tm tt, *tm = &tt;
 
     switch (abstime) {
@@ -555,11 +701,8 @@ abstime_date(AbsoluteTime abstime)
 	break;
 
     case CURRENT_ABSTIME:
-#if FALSE
-	GetCurrentTime(tm);
-#endif
 	abstime = GetCurrentTransactionStartTime();
-	abstime2tm(abstime, &CTimeZone, tm);
+	abstime2tm(abstime, &tz, tm);
 	date->year = tm->tm_year;
 	date->month = tm->tm_mon;
 	date->day = tm->tm_mday;
@@ -571,7 +714,7 @@ abstime_date(AbsoluteTime abstime)
 	tm->tm_year += 1900;
 	tm->tm_mon += 1;
 #endif
-	abstime2tm(abstime, &CTimeZone, tm);
+	abstime2tm(abstime, &tz, tm);
 	date->year = tm->tm_year;
 	date->month = tm->tm_mon;
 	date->day = tm->tm_mday;
@@ -617,8 +760,7 @@ time_in(char *str)
     if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
 	elog(WARN,"Second must be limited to values 0 through < 60 in '%s'",str);
 
-    if (!PointerIsValid(time = PALLOCTYPE(TimeADT)))
-	elog(WARN,"Memory allocation failed, can't input time '%s'",str);
+    time = PALLOCTYPE(TimeADT);
 
 #if USE_NEW_TIME
 
@@ -640,10 +782,35 @@ char *
 time_out(TimeADT *time)
 {
     char *result;
+#if USE_NEW_TIME
+    int hour, min, sec;
+    double fsec;
+#endif
     char buf[32];
 
     if (!PointerIsValid(time))
 	return NULL;
+
+#if USE_NEW_TIME
+
+    hour = (*time / (60*60));
+    min = (((int) (*time / 60)) % 60);
+    sec = (((int) *time) % 60);
+
+    fsec = 0;
+
+    if (sec == 0.0) {
+	sprintf(buf, "%02d:%02d", hour, min);
+
+    } else {
+	if (fsec == 0) {
+	    sprintf(buf, "%02d:%02d:%02d", hour, min, sec);
+	} else {
+	    sprintf(buf, "%02d:%02d:%05.2f", hour, min, (sec+fsec));
+	};
+    };
+
+#else
 
     if (time->sec == 0.0) {
 	sprintf(buf, "%02d:%02d", (int)time->hr, (int)time->min);
@@ -657,8 +824,9 @@ time_out(TimeADT *time)
 	};
     };
 
-    if (!PointerIsValid(result = PALLOC(strlen(buf)+1)))
-	elog(WARN,"Memory allocation failed, can't output time",NULL);
+#endif
+
+    result = PALLOC(strlen(buf)+1);
 
     strcpy( result, buf);
 
@@ -738,9 +906,7 @@ datetime_datetime(DateADT date, TimeADT *time)
     DateTime *result;
 
     if (!PointerIsValid(time)) {
-	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	    elog(WARN,"Memory allocation failed, can't convert to datetime",NULL);
-
+	result = PALLOCTYPE(DateTime);
 	DATETIME_INVALID(*result);
 
     } else {
@@ -828,9 +994,7 @@ datetime_datetime(int4 dateVal, TimeADT *time)
 #endif
 
     if (!PointerIsValid(time)) {
-	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-	    elog(WARN,"Memory allocation failed, can't convert to datetime",NULL);
-
+	result = PALLOCTYPE(DateTime);
 	DATETIME_INVALID(*result);
 
     } else {
