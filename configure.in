@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.343 2004/04/30 16:08:01 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.344 2004/05/05 21:18:29 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -858,7 +858,7 @@ else
   AC_CHECK_FUNCS([fpclass fp_class fp_class_d class], [break])
 fi
 
-AC_REPLACE_FUNCS([crypt fseeko getopt getrusage inet_aton random rint srandom strcasecmp strdup strerror strtol strtoul])
+AC_REPLACE_FUNCS([crypt fseeko getopt getrusage inet_aton random rint srandom strcasecmp strdup strerror strtol strtoul unsetenv])
 
 # system's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h
