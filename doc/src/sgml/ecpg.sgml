@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.24 2001/10/11 20:25:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.25 2001/10/18 20:32:58 momjian Exp $
 -->
 
  <chapter id="ecpg">
@@ -195,11 +195,11 @@ struct sqlca
     </para>
 
     <para>
-     If an error occurred in the last <acronym>SQL</acronym> statement.
-     <parameter>sqlca.sqlcode</parameter> will be non-zero. If
-     <parameter>sqlca.sqlcode</parameter> is less that 0, this is a
+     If an no error occurred in the last <acronym>SQL</acronym> statement.
+     <parameter>sqlca.sqlcode</parameter> will be 0 (ECPG_NO_ERROR). If
+     <parameter>sqlca.sqlcode</parameter> is less that zero, this is a
      serious error, like the database definition does not match the
-     query. If it is greater than 0, it is a normal error like the
+     query. If it is greater than zero, it is a normal error like the
      table did not contain the requested row.
     </para>
 
@@ -210,7 +210,7 @@ struct sqlca
     </para>
 
     <para>
-     List of errors that can occur:
+     These are the errors that can occur:
 
      <variablelist>
       <varlistentry>
@@ -224,7 +224,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-200, Unsupported type %s on line %d.</computeroutput></term>
+       <term><computeroutput>-200 (ECPG_UNSUPPORTED), Unsupported type %s on line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 Should not normally occur. This indicates the preprocessor has
@@ -236,7 +236,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-201, Too many arguments line %d.</computeroutput></term>
+       <term><computeroutput>-201 (ECPG_TOO_MANY_ARGUMENTS), Too many arguments line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means that <productname>Postgres</productname> has
@@ -248,7 +248,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-202, Too few arguments line %d.</computeroutput></term>
+       <term><computeroutput>-202 (ECPG_TOO_FEW_ARGUMENTS), Too few arguments line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means that <productname>Postgres</productname> has
@@ -260,7 +260,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-203, Too many matches line %d.</computeroutput></term>
+       <term><computeroutput>-203 (ECPG_TOO_MANY_MATCHES), Too many matches line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the query has returned several rows but the
@@ -271,7 +271,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-204, Not correctly formatted int type: %s line %d.</computeroutput></term>
+       <term><computeroutput>-204 (ECPG_INT_FORMAT), Not correctly formatted int type: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>int</type> and
@@ -284,7 +284,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-205, Not correctly formatted unsigned type: %s line %d.</computeroutput></term>
+       <term><computeroutput>-205 (ECPG_UINT_FORMAT), Not correctly formatted unsigned type: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>unsigned
@@ -298,7 +298,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-206, Not correctly formatted floating point type: %s line %d.</computeroutput></term>
+       <term><computeroutput>-206 (ECPG_FLOAT_FORMAT), Not correctly formatted floating point type: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>float</type> and
@@ -311,7 +311,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-207, Unable to convert %s to bool on line %d.</computeroutput></term>
+       <term><computeroutput>-207 (ECPG_CONVERT_BOOL), Unable to convert %s to bool on line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This means the host variable is of type <type>bool</type> and
@@ -322,7 +322,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-208, Empty query line %d.</computeroutput></term>
+       <term><computeroutput>-208 (ECPG_EMPTY), Empty query line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 <productname>Postgres</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
@@ -332,7 +332,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-209, NULL value without indicator in line %d.</computeroutput></term>
+       <term><computeroutput>-209 (ECPG_MISSING_INDICATOR), NULL value without indicator in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 <productname>Postgres</productname> returned <symbol>ECPG_MISSING_INDICATOR</symbol>
@@ -342,7 +342,29 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-220, No such connection %s in line %d.</computeroutput></term>
+       <term><computeroutput>-210 (ECPG_NO_ARRAY), Variable is not an array in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 <productname>Postgres</productname> returned <symbol>ECPG_NO_ARRAY</symbol>
+	 because an ordinary variable was used in a place that requires
+	 an array.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-211 (ECPG_DATA_NOT_ARRAY), Data read from backend is not an array in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 <productname>Postgres</productname> returned <symbol>ECPG_DATA_NOT_ARRAY</symbol>
+	 because the database returned an ordinary variable in a place
+	 that requires array value.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-220 (ECPG_NO_CONN), No such connection %s in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 The program tried to access a connection that does not exist.
@@ -351,7 +373,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-221, Not connected in line %d.</computeroutput></term>
+       <term><computeroutput>-221 (ECPG_NOT_CONN), Not connected in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 The program tried to access a connection that does exist but is
@@ -361,7 +383,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-230, Invalid statement name %s in line %d.</computeroutput></term>
+       <term><computeroutput>-230 (ECPG_INVALID_STMT), Invalid statement name %s in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 The statement you are trying to use has not been prepared.
@@ -370,7 +392,54 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-400, Postgres error: %s line %d.</computeroutput></term>
+       <term><computeroutput>-240 (ECPG_UNKNOWN_DESCRIPTOR), Descriptor %s not found in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 The descriptor specified was not foundstatement you are trying to use has not been prepared.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-241 (ECPG_INVALID_DESCRIPTOR_INDEX), Descriptor index out of range in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 The descriptor index specified was out of range.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-242 (ECPG_UNKNOWN_DESCRIPTOR_ITEM), Descriptor %s not found in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 The descriptor specified was not foundstatement you are trying to use has not been prepared.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-243 (ECPG_VAR_NOT_NUMERIC), Variable is not a numeric type in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 The database returned a numeric value and the variable was not
+	 numeric.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-244 (ECPG_VAR_NOT_CHAR), Variable is not a character type in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 The database returned a non-numeric value and the variable was
+	 numeric.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-400 (ECPG_PGSQL), Postgres error: %s line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 Some <productname>Postgres</productname> error. 
@@ -381,7 +450,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-401, Error in transaction processing line %d.</computeroutput></term>
+       <term><computeroutput>-401 (ECPG_TRANS), Error in transaction processing line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 <productname>Postgres</productname> signaled that we cannot start,
@@ -391,7 +460,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>-402, connect: could not open database %s.</computeroutput></term>
+       <term><computeroutput>-402 (ECPG_CONNECT), Could not connect to database %s in line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 The connect to the database did not work.
@@ -400,7 +469,7 @@ struct sqlca
       </varlistentry>
 
       <varlistentry>
-       <term><computeroutput>100, Data not found line %d.</computeroutput></term>
+       <term><computeroutput>100 (ECPG_NOT_FOUND), Data not found line %d.</computeroutput></term>
        <listitem>
 	<para>
 	 This is a <quote>normal</quote> error that tells you that what you are querying cannot
