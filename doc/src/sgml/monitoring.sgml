@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.19 2003/03/25 16:15:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.20 2003/04/04 03:03:53 tgl Exp $
 -->
 
 <chapter id="monitoring">
@@ -208,9 +208,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       which the current query began execution. The columns that report
       data on the current query are only available if the parameter
       <varname>stats_command_string</varname> has been turned on.
-      Furthermore, these columns can only be accessed by
-      superusers; or when the user examining the view is the same as the user
-      in the row; for others it reads as null.  (Note that because of the 
+      Furthermore, these columns read as null unless the user examining
+      the view is a superuser or the same as the user owning the process
+      being reported on.  (Note that because of the 
       collector's reporting delay, current query will only be up-to-date for 
       long-running queries.)</entry>
      </row>
@@ -540,15 +540,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
      <row>
       <entry><literal><function>pg_stat_get_backend_activity_start</function>(<type>integer</type>)</literal></entry>
-      <entry><type>text</type></entry>
+      <entry><type>timestamp with time zone</type></entry>
       <entry>
-       The time at which the specified backend process' currently
-       executing query was started (null if the current user is not a
-       superuser, or <varname>stats_command_string</varname> is not
-       on)
+       The time at which the given backend process' currently
+       executing query was started (null if the
+       current user is not a superuser nor the same user as that of
+       the session being queried, or
+       <varname>stats_command_string</varname> is not on)
       </entry>
      </row>
-
 
      <row>
       <entry><literal><function>pg_stat_reset</function>()</literal></entry>

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.187 2003/03/25 16:15:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.188 2003/04/04 03:03:53 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -954,7 +954,7 @@ CREATE VIEW pg_stat_activity AS \
             pg_stat_get_backend_userid(S.backendid) AS usesysid, \
             U.usename AS usename, \
             pg_stat_get_backend_activity(S.backendid) AS current_query, \
-			pg_stat_get_backend_activity_start(S.backendid) AS query_start \
+            pg_stat_get_backend_activity_start(S.backendid) AS query_start \
     FROM pg_database D, \
             (SELECT pg_stat_get_backend_idset() AS backendid) AS S, \
             pg_shadow U \

@@ -308,14 +308,14 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 	int32				 beid;
 	AbsoluteTime		 sec;
 	int					 usec;
-	Timestamp			 result;
+	TimestampTz			 result;
 
 	beid = PG_GETARG_INT32(0);
 
-	if (!superuser())
+	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
 		PG_RETURN_NULL();
 
-	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+	if (!superuser() && beentry->userid != GetUserId())
 		PG_RETURN_NULL();
 
 	sec = beentry->activity_start_sec;
@@ -341,7 +341,7 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 										date2j(1970, 1, 1)) * 86400));
 #endif
 
-	PG_RETURN_TIMESTAMP(result);
+	PG_RETURN_TIMESTAMPTZ(result);
 }
 
 

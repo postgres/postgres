@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.290 2003/03/21 21:54:29 momjian Exp $
+ * $Id: pg_proc.h,v 1.291 2003/04/04 03:03:54 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2745,7 +2745,7 @@ DATA(insert OID = 1939 (  pg_stat_get_backend_userid	PGNSP PGUID 12 f f t f s 1 
 DESCR("Statistics: User ID of backend");
 DATA(insert OID = 1940 (  pg_stat_get_backend_activity	PGNSP PGUID 12 f f t f s 1 25 "23"	pg_stat_get_backend_activity - _null_ ));
 DESCR("Statistics: Current query of backend");
-DATA(insert OID = 2094 (  pg_stat_get_backend_activity_start PGNSP PGUID 12 f f t f s 1 1114 "23"  pg_stat_get_backend_activity_start - _null_));
+DATA(insert OID = 2094 (  pg_stat_get_backend_activity_start PGNSP PGUID 12 f f t f s 1 1184 "23"  pg_stat_get_backend_activity_start - _null_));
 DESCR("Statistics: Start time for current query of backend");
 DATA(insert OID = 1941 (  pg_stat_get_db_numbackends	PGNSP PGUID 12 f f t f s 1 23 "26"	pg_stat_get_db_numbackends - _null_ ));
 DESCR("Statistics: Number of backends in database");

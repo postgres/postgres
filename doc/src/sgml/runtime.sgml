@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.176 2003/04/03 23:32:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.177 2003/04/04 03:03:53 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1176,8 +1176,9 @@ SET ENABLE_SEQSCAN TO OFF;
         Enables the collection of statistics on the currently
         executing command of each session, along with the time at
         which that command began execution. This option is off by
-        default. Note that even when enabled, this information is only
-        visible to the superuser, so it should not represent a
+        default. Note that even when enabled, this information is not
+	visible to all users, only to superusers and the user owning
+	the session being reported on; so it should not represent a
         security risk. This data can be accessed via the
         <structname>pg_stat_activity</structname> system view; refer
         to <xref linkend="monitoring"> for more information.
