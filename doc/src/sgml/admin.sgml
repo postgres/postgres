@@ -1,46 +1,17 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.31 2001/01/24 23:15:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.32 2001/02/03 19:03:26 petere Exp $
 -->
 
 <book id="admin">
 
 <!-- Title information -->
 
- <title><![%single-book;[PostgreSQL &version;]]> Administrator's Guide</title>
+ <title>PostgreSQL &version; Administrator's Guide</title>
+
  <bookinfo>
   <corpauthor>The PostgreSQL Global Development Group</corpauthor>
-
-  <editor>
-   <firstname>Thomas</firstname>
-   <surname>Lockhart</surname>
-   <affiliation>
-    <orgname>Caltech/JPL</orgname>
-   </affiliation>
-  </editor>
-
-  <legalnotice>
-   <para>
-    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2001
-    by PostgreSQL Global Development Group
-   </para>
-  </legalnotice>
-
+  &legal;
  </bookinfo>
-
- <preface id="ag-preface">
-  <title>Summary</title>
-
-  <para>
-   <productname>Postgres</productname>, 
-   developed originally in the UC Berkeley Computer Science Department,
-   pioneered many of the object-relational concepts
-   now becoming available in some commercial databases.
-   It provides SQL92/SQL99 language support,
-   transaction integrity, and type extensibility.
-   <productname>PostgreSQL</productname> is an open-source descendant
-   of this original Berkeley code.
-  </para>
- </preface>
 
 <!--
   Disable these extra intro chapters since some elements (e.g. y2k
@@ -48,8 +19,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.31 2001/01/24 23:15:19
   included twice.
 -->
 <![%single-book;[
-  &intro-ag;
+  &intro;
 ]]>
+
   &installation;
   &installw;
   &runtime;
@@ -62,6 +34,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.31 2001/01/24 23:15:19
   &recovery;
   &regress;
   &release;
+
 <![%single-book;[
   &biblio;
 ]]>

@@ -1,33 +1,39 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.13 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.14 2001/02/03 19:03:27 petere Exp $
 -->
 
- <chapter id="intro">
-  <title>Introduction</title>
-
-  <para>
-   This document is the user  manual  for  the  
-   <ulink url="http://postgresql.org/"><productname>PostgreSQL</productname></ulink>
-   database  management system, originally developed at the University
-   of California at  Berkeley.   
-
-   <productname>PostgreSQL</productname>  is  based  on
-   <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/postgres.html">
-    <productname>Postgres release 4.2</productname></ulink>. 
-   The <productname>Postgres</productname> project, 
-   led by Professor Michael Stonebraker, was sponsored  by  the
-   Defense  Advanced Research Projects Agency
-   (<acronym>DARPA</acronym>), the
-   Army Research Office (<acronym>ARO</acronym>), the National Science  
-   Foundation (<acronym>NSF</acronym>), and ESL, Inc.
-  </para>
+ <preface id="preface">
+  <title>Preface</title>
 
   <sect1 id="intro-whatis">
-   <title> What is <productname>Postgres</productname>?</title>
+   <title> What is <productname>PostgreSQL</productname>?</title>
 
    <para>
+    <productname>PostgreSQL</productname> is an object-relational
+    database management system (<acronym>ORDBMS</acronym>) based on
+    <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/postgres.html">
+    <productname>POSTGRES, Version 4.2</productname></ulink>,
+    developed at the University of California at Berkeley Computer
+    Science Department.  The <productname>POSTGRES</productname>
+    project, led by Professor Michael Stonebraker, was sponsored by
+    the Defense Advanced Research Projects Agency
+    (<acronym>DARPA</acronym>), the Army Research Office
+    (<acronym>ARO</acronym>), the National Science Foundation
+    (<acronym>NSF</acronym>), and ESL, Inc.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> is an open-source descendant of
+    this original Berkeley code.  It provides SQL92/SQL99 language support
+    and other modern features.
+   </para>
+
+   <para>
+    <productname>POSTGRES</productname> pioneered many of the
+    object-relational concepts now becoming available in some commercial
+    databases.
     Traditional   relational  database  management  systems
-    (DBMSs) support a data model consisting of a collection
+    (<acronym>RDBMS</acronym>) support a data model consisting of a collection
     of named relations, containing attributes of a specific
     type.  In current commercial  systems,  possible  types
     include  floating  point  numbers,  integers, character
@@ -35,18 +41,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.13 2001/01/13 23:58:55 peter
     that  this model is inadequate for future data 
     processing applications.
     The relational  model  successfully  replaced  previous
-    models  in  part  because  of its "Spartan simplicity".
+    models  in  part  because  of its <quote>Spartan simplicity</quote>.
     However, as mentioned, this simplicity often makes  the
     implementation  of  certain applications very difficult.
     <productname>Postgres</productname> offers  substantial additional
-    power  by  incorporating  the following four additional
-    basic concepts in such a way that  users  can  easily
+    power  by  incorporating  the following additional
+    concepts in such a way that  users  can  easily
     extend the system:
 
     <simplelist>
-     <member>tables</member>
      <member>inheritance</member>
-     <member>types</member>
+     <member>data types</member>
      <member>functions</member>
     </simplelist>
    </para>
@@ -78,14 +83,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.13 2001/01/13 23:58:55 peter
   </sect1>
 
    &history;
-   &about;
    &info;
    &notation;
    &problems;
    &y2k;
-   &legal;
 
- </chapter>
+ </preface>
 
 <!-- Keep this comment at the end of the file
 Local variables:

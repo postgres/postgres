@@ -1,6 +1,5 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.6 2001/01/24 23:15:19 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.7 2001/02/03 19:03:26 petere Exp $ -->
 
-<!entity about      SYSTEM "about.sgml">
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
 <!entity legal      SYSTEM "legal.sgml">
@@ -45,7 +44,6 @@
 <!entity backup        SYSTEM "backup.sgml">
 <!entity charset       SYSTEM "charset.sgml">
 <!entity client-auth   SYSTEM "client-auth.sgml">
-<!entity intro-ag      SYSTEM "intro-ag.sgml">
 <!entity installation  SYSTEM "installation.sgml">
 <!entity installw      SYSTEM "install-win32.sgml">
 <!entity manage-ag     SYSTEM "manage-ag.sgml">
@@ -63,7 +61,6 @@
 <!entity extend     SYSTEM "extend.sgml">
 <!entity func-ref   SYSTEM "func-ref.sgml">
 <!entity gist       SYSTEM "gist.sgml">
-<!entity intro-pg   SYSTEM "intro-pg.sgml">
 <!entity indexcost  SYSTEM "indexcost.sgml">
 <!entity jdbc       SYSTEM "jdbc.sgml">
 <!entity libpgeasy  SYSTEM "libpgeasy.sgml">

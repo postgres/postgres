@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.44 2000/11/24 17:44:21 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.45 2001/02/03 19:03:27 petere Exp $
 -->
 
 <!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -26,6 +26,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.44 2000/11/24 17:44:21 pe
 
  <setinfo>
   <corpauthor>The PostgreSQL Global Development Group</corpauthor>
+  &legal;
  </setinfo>
 
  &tutorial;

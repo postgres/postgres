@@ -1,21 +1,15 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.13 2001/01/24 19:42:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.14 2001/02/03 19:03:27 petere Exp $
 
 PostgreSQL Reference Manual
 -->
 
 <book id="reference">
 
- <title><![%single-book;[PostgreSQL &version;]]> Reference Manual</title>
+ <title>PostgreSQL &version; Reference Manual</title>
  <bookinfo>
   <corpauthor>The PostgreSQL Global Development Group</corpauthor>
-
-  <legalnotice>
-   <para>
-    <productname>PostgreSQL</productname> is &copy; 1998-2000
-    by PostgreSQL Global Development Group
-   </para>
-  </legalnotice>
+  &legal;
  </bookinfo>
 
  <reference id="sql-commands">

@@ -1,22 +1,22 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.12 2000/12/22 21:51:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.13 2001/02/03 19:03:26 petere Exp $
 -->
 
 <sect1 id="history">
  <title>A Short History of <productname>Postgres</productname></title>
 
  <para>
-  The Object-Relational Database Management System now known as 
+  The object-relational database management system now known as 
   <productname>PostgreSQL</productname> (and briefly called
   <productname>Postgres95</productname>) is derived from the
-  <productname>Postgres</productname> package written at Berkeley.
-  With over a decade of
+  <productname>Postgres</productname> package written at the University of
+  California at Berkeley.  With over a decade of
   development behind it, <productname>PostgreSQL</productname> 
   is the most advanced open-source database available anywhere,
   offering multi-version concurrency control, supporting almost
   all SQL constructs (including subselects, transactions, and
   user-defined types and functions), and having a wide range of
-  language bindings available (including C, C++, Java, perl, tcl, and python).
+  language bindings available (including C, C++, Java, Perl, Tcl, and Python).
  </para>
 
  <sect2>

@@ -1,44 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.13 2001/01/24 19:42:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.14 2001/02/03 19:03:27 petere Exp $
 -->
 
 <book id="tutorial">
 
- <title><![%single-book;[PostgreSQL &version;]]> Tutorial</title>
+ <title>PostgreSQL &version; Tutorial</title>
  <bookinfo>
   <corpauthor>The PostgreSQL Global Development Group</corpauthor>
-
-  <editor>
-   <firstname>Thomas</firstname>
-   <surname>Lockhart</surname>
-   <affiliation>
-    <orgname>Caltech/JPL</orgname>
-   </affiliation>
-  </editor>
-
-  <legalnotice>
-   <para>
-    <productname>PostgreSQL</productname> is Copyright &copy; 1996-2001
-    by PostgreSQL Global Development Group
-   </para>
-  </legalnotice>
-
+  &legal;
  </bookinfo>
-
- <preface id="tutorial-preface">
-  <title>Summary</title>
-
-  <para>
-   <productname>Postgres</productname>, 
-   developed originally in the UC Berkeley Computer Science Department,
-   pioneered many of the object-relational concepts
-   now becoming available in some commercial databases.
-   It provides SQL92/SQL99 language support,
-   transaction integrity, and type extensibility.
-   <productname>PostgreSQL</productname> is an open-source descendant
-   of this original Berkeley code.
-  </para>
- </preface>
 
 <![%single-book;[
   &intro;

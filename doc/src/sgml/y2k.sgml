@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.8 2000/12/22 21:51:58 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.9 2001/02/03 19:03:27 petere Exp $
 -->
 
 <sect1 id="y2k">
@@ -16,8 +16,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.8 2000/12/22 21:51:58 pe
  </note>
 
  <para>
-  The <productname>PostgreSQL</productname> Global Development Team provides
-  the <productname>Postgres</productname> software code tree as a public service,
+  The <productname>PostgreSQL</productname> Global Development Group provides
+  the <productname>PostgreSQL</productname> software code tree as a public service,
   without warranty and without liability for it's behavior or performance.
   However, at the time of writing:
  </para>
@@ -48,8 +48,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.8 2000/12/22 21:51:58 pe
    <para>
     To the best of the author's knowledge, the
     assumptions Postgres makes about dates specified with a two-digit year
-    are documented in the current 
-    <ulink url="http://www.postgresql.org/docs/user/datatype.htm">User's Guide</ulink>
+    are documented in the current <citetitle>User's Guide</citetitle>
     in the chapter on data types.
     For two-digit years, the significant transition year is 1970, not 2000;
     e.g. "<literal>70-01-01</literal>" is interpreted as 1970-01-01,

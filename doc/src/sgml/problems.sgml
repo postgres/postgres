@@ -1,9 +1,9 @@
-<sect1 id="problem-reporting">
- <title>Problem Reporting Guidelines</title>
+<sect1 id="bug-reporting">
+ <title>Bug Reporting Guidelines</title>
 
  <para>
-  When you encounter a problem in <productname>PostgreSQL</productname> we want to
-  hear about it. Your bug reports are an important part in making
+  When you find a bug in <productname>PostgreSQL</productname> we want to
+  hear about it. Your bug reports play an important part in making
   <productname>PostgreSQL</productname> more reliable because even the utmost
   care cannot guarantee that every part of PostgreSQL will work on every
   platform under every circumstance.
@@ -21,7 +21,7 @@
   could also happen that we tell you to update to a newer version to see if the
   bug happens there. Or we might decide that the bug
   cannot be fixed before some major rewrite we might be planning is done. Or
-  perhaps it's simply too hard and there are more important things on the agenda.
+  perhaps it is simply too hard and there are more important things on the agenda.
   If you need help immediately, consider obtaining a commercial support contract.
  </para>
 
@@ -29,21 +29,21 @@
   <title>Identifying Bugs</title>
 
   <para>
-   Before you ask "Is this a bug?", please read and re-read the
+   Before you report a bug, please read and re-read the
    documentation to verify that you can really do whatever it is you are
    trying. If it is not clear from the documentation whether you can do
-   something or not, please report that too; it's a bug in the documentation.
+   something or not, please report that too; it is a bug in the documentation.
    If it turns out that the program does something different from what the
-   documentation says, that's a bug. That might include, but is not limited to,
+   documentation says, that is a bug. That might include, but is not limited to,
    the following circumstances:
 
    <itemizedlist>
     <listitem>
      <para>
       A program terminates with a fatal signal or an operating system
-      error message that would point to a problem in the program (a
-      counterexample might be a "disk full" message,
-      since that must be fixed outside of <productname>Postgres</productname>).
+      error message that would point to a problem in the program. (A
+      counterexample might be a <quote>disk full</quote> message,
+      since you have to fix that yourself.)
      </para>
     </listitem>
 
@@ -55,13 +55,15 @@
 
     <listitem>
      <para>
-      A program refuses to accept valid input.
+      A program refuses to accept valid input (as defined in the documentation).
      </para>
     </listitem>
 
     <listitem>
      <para>
       A program accepts invalid input without a notice or error message.
+      Keep in mind that your idea of invalid input might be our idea of
+      an extension or compatibility with traditional practice.
      </para>
     </listitem>
 
@@ -73,7 +75,7 @@
     </listitem>
    </itemizedlist>
 
-   Here "<literal>program</literal>" refers to any executable, not only the backend server.
+   Here <quote>program</quote> refers to any executable, not only the backend server.
   </para>
 
   <para>
@@ -85,7 +87,7 @@
 
   <para>
    Before you continue, check on the TODO list and in the FAQ to see if your bug is
-   already known. If you can't decode the information on the TODO list, report your
+   already known. If you cannot decode the information on the TODO list, report your
    problem. The least we can do is make the TODO list clearer.
   </para>
  </sect2>
@@ -104,7 +106,7 @@
    Reporting the bare facts
    is relatively straightforward (you can probably copy and paste them from the
    screen) but all too often important details are left out because someone
-   thought it doesn't matter or the report would be understood
+   thought it does not matter or the report would be understood
    anyway.
   </para>
 
@@ -127,11 +129,11 @@
       that shows the problem. (Be sure to not have anything in your
       <filename>~/.psqlrc</filename> start-up file.) You are encouraged to
       minimize the size of your example, but this is not absolutely necessary.
-      If the bug is reproduceable, we'll find it either way.
+      If the bug is reproduceable, we will find it either way.
      </para>
      <para>
       If your application uses some other client interface, such as PHP, then
-      please try to isolate the offending queries. We probably won't set up a
+      please try to isolate the offending queries. We will probably not set up a
       web server to reproduce your problem. In any case remember to provide
       the exact input files, do not guess that the problem happens for
       "large files" or "mid-size databases", etc. since this
@@ -141,9 +143,9 @@
 
     <listitem>
      <para>
-      The output you got. Please do not say that it "didn't work" or
-      "failed". If there is an error message,
-      show it, even if you don't understand it. If the program terminates with
+      The output you got. Please do not say that it <quote>didn't work</quote> or
+      <quote>crashed</quote>. If there is an error message,
+      show it, even if you do not understand it. If the program terminates with
       an operating system error, say which. If nothing at all happens, say so.
       Even if the result of your test case is a program crash or otherwise obvious
       it might not happen on our platform. The easiest thing is to copy the output
@@ -164,7 +166,7 @@
       The output you expected is very important to state. If you just write
       "This command gives me that output." or "This is not
       what I expected.", we might run it ourselves, scan the output, and
-      think it looks okay and is exactly what we expected. We shouldn't have to
+      think it looks okay and is exactly what we expected. We should not have to
       spend the time to decode the exact semantics behind your commands.
       Especially refrain from merely saying that "This is not what SQL says/Oracle
       does." Digging out the correct behavior from <acronym>SQL</acronym>
@@ -194,18 +196,25 @@
      <para>
       The <productname>PostgreSQL</productname> version. You can run the command
       <literal>SELECT version();</literal> to
-      find out what version you are currently running.
-      If this function does not exist, say so, then we know that
-      your version is old enough. If you can't start up the server or a
-      client, look into the README file in the source directory or at the
-      name of your distribution file or package name. If your version is older
-      than 7.0 we will almost certainly tell you to upgrade. There are tons
-      of bug fixes in each new version, that's why we write them.
-     </para>
-     <para>
+      find out the version of the server you are connected to.  Most executable
+      programs also support a <option>--version</option> option; at least
+      <literal>postmaster --version</literal> and <literal>psql --version</literal>
+      should work.
+      If the function or the options do not exist then your version is probably
+      old enough.  You can also look into the <filename>README</filename> file
+      in the source directory or at the
+      name of your distribution file or package name.
       If you run a pre-packaged version, such as RPMs, say so, including any
       subversion the package may have. If you are talking about a CVS
       snapshot, mention that, including its date and time.
+     </para>
+
+     <para>
+      If your version is older than &version; we will almost certainly tell
+      you to upgrade. There are tons
+      of bug fixes in each new release, that is why we make new releases.
+     </para>
+     <para>
      </para>
     </listitem>
 
@@ -222,7 +231,7 @@
    </itemizedlist>
 
    Do not be afraid if your bug report becomes rather lengthy. That is a fact of life.
-   It's better to report everything the first time than us having to squeeze the
+   It is better to report everything the first time than us having to squeeze the
    facts out of you. On the other hand, if your input files are huge, it is
    fair to ask first whether somebody is interested in looking into it.
   </para>
@@ -230,9 +239,9 @@
   <para>
    Do not spend all your time to figure out which changes in the input make
    the problem go away. This will probably not help solving it. If it turns
-   out that the bug can't be fixed right away, you will still have time to
+   out that the bug cannot be fixed right away, you will still have time to
    find and share your work around. Also, once again, do not waste your time
-   guessing why the bug exists. We'll find that out soon enough.
+   guessing why the bug exists. We will find that out soon enough.
   </para>
 
   <para>
@@ -240,7 +249,7 @@
    The software package as such is called "PostgreSQL",
    sometimes "Postgres" for short. (Sometimes
    the abbreviation "Pgsql" is used but don't do that.) When you
-   are specifically talking about the backend server, mention that, don't
+   are specifically talking about the backend server, mention that, do not
    just say "Postgres crashes". The interactive frontend is called
    "psql" and is for all intends and purposes completely separate
    from the backend.

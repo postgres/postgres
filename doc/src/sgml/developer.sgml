@@ -1,18 +1,19 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.3 2000/11/29 20:15:59 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.4 2001/02/03 19:03:26 petere Exp $ -->
 <!-- PostgreSQL Developer's Guide -->
 
 <book id="developer">
- <title><![%single-book;[PostgreSQL &version;]]> Developer's Guide</title>
+ <title>PostgreSQL &version; Developer's Guide</title>
 
  <bookinfo>
+  <corpauthor>The PostgreSQL Global Development Group</corpauthor>
+  &legal;
+
   <abstract>
    <simpara>
     This document contains assorted information that can be of use to
     <productname>PostgreSQL</> developers.
    </simpara>
   </abstract>
-
-  <corpauthor>The PostgreSQL Global Development Group</corpauthor>
  </bookinfo>
  
  &sources;

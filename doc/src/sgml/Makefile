@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.28 2001/01/06 16:54:16 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.29 2001/02/03 19:03:26 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -85,7 +85,7 @@ man: $(ALLSGML)
 ## HTML
 ##
 
-JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(HDSL) -V %use-id-as-filename% -t sgml
+JADE.html = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) -d $(HDSL) -V %use-id-as-filename% -V %generate-legalnotice-link% -t sgml
 
 postgres.html: postgres.sgml $(ALLSGML)
 	@rm -f *.htm
