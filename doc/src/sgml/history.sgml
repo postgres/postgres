@@ -1,6 +1,18 @@
 <Sect1>
 <Title>A Short History of <ProductName>Postgres</ProductName></Title>
 
+<Para>
+The Object-Relational Database Management System now known as 
+<ProductName>PostgreSQL</ProductName> was originally called
+<ProductName>Postgres</ProductName>, and briefly called
+<ProductName>Postgres95</ProductName>.  With over a decade of
+development behind it, <ProductName>PostgreSQL</ProductName> 
+is the most advanced open-source database available anywhere,
+offering multi-version concurrency control and supporting almost
+all SQL constructs, including subselects, transactions, and
+user-defined types and functions.
+</Para>
+
 <Sect2>
 <Title>The Berkeley <ProductName>Postgres</ProductName> Project</Title>
 
@@ -37,8 +49,8 @@ and  Version  2  was
      Version 3 appeared in 1991 and added support for  multiple
      storage  managers,  an  improved  query executor, and a
      rewritten rewrite rule  system.   For  the  most  part,
-     releases  since  then  have  focused on portability and
-     reliability.
+     releases  until <ProductName>Postgres95</ProductName> (see below)
+     focused on portability and reliability.
 </Para>
 
 <Para>
@@ -70,7 +82,7 @@ and  Version  2  was
      ended with Version 4.2.
 </Para>
 </Sect2>
-     
+
 <Sect2>
 <Title><ProductName>Postgres95</ProductName></Title>
 
@@ -79,77 +91,75 @@ In 1994,
 <ULink url="mailto:ayu@informix.com">Andrew Yu</ULink>
 and
 <ULink url="http://http.cs.berkeley.edu/~jolly/">Jolly Chen</ULink>
-added a SQL language interpreter to <ProductName>Postgres</ProductName>, 
-and the code was subsequently released to
-the Web to find its own way in the world. 
-<ProductName>Postgres95</ProductName> was a public-domain, open source descendant
-of this original Berkeley code.
+added a SQL language interpreter to <ProductName>Postgres</ProductName>.
+<ProductName>Postgres95</ProductName> was subsequently released to
+the Web to find its own way in the world as a public-domain,
+open source descendant of the original <ProductName>Postgres</ProductName>
+Berkeley code.
 </Para>
 
 <Para>
-<ProductName>Postgres95</ProductName> is a derivative of the last official release
-of  <ProductName>Postgres</ProductName>  (version 4.2). The code is now completely
-     ANSI C and the code size has been trimmed by 25%. There
-     are  a lot of internal changes that improve performance
-and code maintainability. 
-<ProductName>Postgres95</ProductName> v1.0.x runs about  30-50%
-     faster  on  the  Wisconsin  Benchmark compared to v4.2.
-     Apart from bug fixes, these are the major enhancements:
+     <ProductName>Postgres95</ProductName> code was completely
+     ANSI C and trimmed in size by 25%. Many
+     internal changes improved performance and maintainability. 
+<ProductName>Postgres95</ProductName> v1.0.x ran about  30-50%
+     faster  on  the  Wisconsin  Benchmark compared to 
+<ProductName>Postgres</ProductName> v4.2.
+     Apart from bug fixes, these were the major enhancements:
 
 <ItemizedList>
 <ListItem>
 <Para>
-      	The query language <ProductName>Postquel</ProductName> has been replaced with
-        	<Acronym>SQL</Acronym> (implemented in the server). We do  not yet support
-        	subqueries  (which can be imitated with user defined
-        	<Acronym>SQL</Acronym> functions). Aggregates  have  been
-        	re-implemented.  We also added support for ``GROUP BY''.
-        	The <FileName>libpq</FileName> interface is still available  for  <Acronym>C</Acronym>  
+      	The query language <ProductName>Postquel</ProductName> was replaced with
+        	<Acronym>SQL</Acronym> (implemented in the server). Subqueries were not supported until <ProductName>PostgreSQL</ProductName> (see below), but they
+could be imitated in <ProductName>Postgres95</ProductName> with user-defined
+        	<Acronym>SQL</Acronym> functions. Aggregates were
+        	re-implemented.  Support for ``GROUP BY'' was also added.
+        	The <FileName>libpq</FileName> interface remained available  for  <Acronym>C</Acronym>  
         	programs.
 </Para>
 </ListItem>
 <ListItem>
 <Para>
-      	In addition to the monitor program, we provide a new
-        	program (<Application>psql</Application>) which supports <Acronym>GNU</Acronym> <FileName>readline</FileName>.
+In addition to the monitor program, a new program
+(<Application>psql</Application>) was provided for interactive SQL queries
+using <Acronym>GNU</Acronym> <FileName>readline</FileName>.
 </Para>
 </ListItem>
 <ListItem>
 <Para>
-      	We added a new  front-end  library,  <FileName>libpgtcl</FileName>,  that
-        	supports  <Acronym>Tcl</Acronym>-based  clients.   A sample shell, 
-        	pgtclsh, provides new Tcl  commands  to  interface  <Application>tcl</Application>
+      	A new  front-end  library,  <FileName>libpgtcl</FileName>,
+        	supported  <Acronym>Tcl</Acronym>-based  clients.   A sample shell, 
+        	pgtclsh, provided new Tcl  commands  to  interface  <Application>tcl</Application>
         	programs with the <ProductName>Postgres95</ProductName> backend.
 </Para>
 </ListItem>
 <ListItem>
 <Para>
-      	The  large  object interface has been overhauled. We
-        	kept Inversion large objects as the  only  mechanism
-        	for  storing  large objects. (This is not to be 
-        	confused with the Inversion file system which has  been
-        	removed.)
+The  large  object interface was overhauled. The Inversion large objects were
+the  only  mechanism for  storing  large objects.
+(The Inversion file system was removed.)
 </Para>
 </ListItem>
 <ListItem>
 <Para>
-      	The  instance-level  rule  system  has been removed.
-        	Rules are still available as rewrite rules.
+      	The  instance-level  rule  system  was removed.
+        	Rules were still available as rewrite rules.
 </Para>
 </ListItem>
 <ListItem>
 <Para>
       	A short tutorial introducing regular <Acronym>SQL</Acronym> features as
-        	well as those of ours is distributed with the source
-        	code.
+        	well as those of <ProductName>Postgres95</ProductName> was
+ distributed with the source code.
 </Para>
 </ListItem>
 <ListItem>
 <Para>
-      	<Acronym>GNU</Acronym> make (instead of  <Acronym>BSD</Acronym>  make)  is  used  for  the
-        	build.  Also,  <ProductName>Postgres95</ProductName>  can  be  compiled with an
-        	unpatched <ProductName>gcc</ProductName> (data alignment of  doubles  has  been
-        	fixed).
+<Acronym>GNU</Acronym> make (instead of  <Acronym>BSD</Acronym>  make)  was  used
+for  the build.  Also,  <ProductName>Postgres95</ProductName>  could  be
+compiled with an unpatched <ProductName>gcc</ProductName>
+(data alignment of  doubles  was fixed).
 </Para>
 </ListItem>
 </ItemizedList>
@@ -160,34 +170,37 @@ and code maintainability.
 <Title><ProductName>PostgreSQL</ProductName></Title>
 
 <Para>
-By 1996, it became clear that the name <Quote>Postgres95</Quote> would not stand
-the test of time. A new name, <ProductName>PostgreSQL</ProductName>, 
-was chosen to reflect the
-relationship between original <ProductName>Postgres</ProductName> 
-and the more recent
-versions with <Acronym>SQL</Acronym> capability. 
-At the same time, the version numbering
-was reset to start at 6.0, 
-putting the numbers back into the sequence originally begun by
-the <ProductName>Postgres</ProductName> Project.
+By 1996, it became clear that the name <Quote>Postgres95</Quote> would
+not stand the test of time. We chose a new name,
+<ProductName>PostgreSQL</ProductName>, to reflect the relationship
+between the original <ProductName>Postgres</ProductName> and the more
+recent versions with <Acronym>SQL</Acronym> capability.  At the same
+time, we set the version numbering to start at 6.0, putting the
+numbers back into the sequence originally begun by the
+<ProductName>Postgres</ProductName> Project.
 </Para>
 
 <Para>
-The emphasis on development for the v1.0.x releases of 
-<ProductName>Postgres95</ProductName>
-was on stabilizing the backend code.
-With the v6.x series of <ProductName>PostgreSQL</ProductName>, 
-the emphasis has shifted from
-identifying and understanding existing problems in the backend 
-to augmenting features and capabilities, although
+The emphasis during development of <ProductName>Postgres95</ProductName>
+was on identifying and understanding existing problems in the backend code.
+With <ProductName>PostgreSQL</ProductName>, 
+the emphasis has shifted to augmenting features and capabilities, although
 work continues in all areas.
 </Para>
 
 <Para>
-Major enhancements include:
+Major enhancements in <ProductName>PostgreSQL</ProductName> include:
 </Para>
 
 <ItemizedList>
+<ListItem>
+<Para>
+Table-level locking has been replaced with multi-version concurrency control,
+which allows readers to continue reading consistent data during writer activity
+and enables hot backups from pg_dump while the database stays available for
+queries.
+</Para>
+</ListItem>
 <ListItem>
 <Para>
 Important backend features, including subselects, defaults, 
