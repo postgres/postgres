@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.61 2004/10/12 21:54:42 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.62 2004/10/15 04:31:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2268,18 +2268,24 @@ main(int argc, char *argv[])
 	if ((ret = find_other_exec(argv[0], "postgres", PG_VERSIONSTR,
 							   backend_exec)) < 0)
 	{
+		char full_path[MAXPGPATH];
+
+		if (find_my_exec(argv[0], full_path) < 0)
+			StrNCpy(full_path, progname, MAXPGPATH);
+
 		if (ret == -1)
 			fprintf(stderr,
 					_("The program \"postgres\" is needed by %s "
-				   "but was not found in the same directory as \"%s\".\n"
+					  "but was not found in the\n"
+					  "same directory as \"%s\".\n"
 					  "Check your installation.\n"),
-					progname, progname);
+					progname, full_path);
 		else
 			fprintf(stderr,
-					_("The program \"postgres\" was found by %s "
-					  "but was not the same version as \"%s\".\n"
+					_("The program \"postgres\" was found by \"%s\"\n"
+					  "but was not the same version as %s.\n"
 					  "Check your installation.\n"),
-					progname, progname);
+					full_path, progname);
 		exit(1);
 	}
 

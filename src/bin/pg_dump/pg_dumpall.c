@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.52 2004/10/06 17:02:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.53 2004/10/15 04:32:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,18 +139,24 @@ main(int argc, char *argv[])
 	if ((ret = find_other_exec(argv[0], "pg_dump", PG_VERSIONSTR,
 							   pg_dump_bin)) < 0)
 	{
+		char full_path[MAXPGPATH];
+
+		if (find_my_exec(argv[0], full_path) < 0)
+			StrNCpy(full_path, progname, MAXPGPATH);
+
 		if (ret == -1)
 			fprintf(stderr,
 					_("The program \"pg_dump\" is needed by %s "
-				   "but was not found in the same directory as \"%s\".\n"
+					  "but was not found in the\n"
+					  "same directory as \"%s\".\n"
 					  "Check your installation.\n"),
-					progname, progname);
+					progname, full_path);
 		else
 			fprintf(stderr,
-					_("The program \"pg_dump\" was found by %s "
-					  "but was not the same version as \"%s\".\n"
+					_("The program \"pg_dump\" was found by \"%s\"\n"
+					  "but was not the same version as %s.\n"
 					  "Check your installation.\n"),
-					progname, progname);
+					full_path, progname);
 		exit(1);
 	}
 
