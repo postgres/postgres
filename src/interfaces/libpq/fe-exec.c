@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.1.1.1 1996/07/09 06:22:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.2 1996/07/12 04:53:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -358,11 +358,19 @@ PQexec(PGconn* conn, char* query)
   char cmdStatus[MAX_MESSAGE_LEN];
   char pname[MAX_MESSAGE_LEN]; /* portal name */
   PGnotify *newNotify;
-  FILE *Pfin = conn->Pfin;
-  FILE *Pfout = conn->Pfout;
-  FILE* Pfdebug = conn->Pfdebug;
+  FILE *Pfin, *Pfout, *Pfdebug;
 
   pname[0]='\0';
+
+  if (!conn) return NULL;
+  if (!query) {
+    sprintf(conn->errorMessage, "PQexec() -- query pointer is null.");
+    return NULL;
+  }
+
+  Pfin = conn->Pfin;
+  Pfout = conn->Pfout;
+  Pfdebug = conn->Pfdebug;
 
   /*clear the error string */
   conn->errorMessage[0] = '\0';
@@ -500,6 +508,9 @@ PGnotify*
 PQnotifies(PGconn *conn)
 {
     Dlelem *e;
+
+    if (!conn) return NULL;
+
     if (conn->status != CONNECTION_OK) 
 	return NULL;
     /* RemHead returns NULL if list is empy */
@@ -531,6 +542,8 @@ int
 PQgetline(PGconn *conn, char *s, int maxlen)
 {
     int c = '\0';
+
+    if (!conn) return EOF;
     
     if (!conn->Pfin || !s || maxlen <= 1)
 	return(EOF);
@@ -561,7 +574,7 @@ PQgetline(PGconn *conn, char *s, int maxlen)
 void
 PQputline(PGconn *conn, char *s)
 {
-    if (conn->Pfout) {
+    if (conn && (conn->Pfout)) {
 	(void) fputs(s, conn->Pfout);
 	fflush(conn->Pfout);
     }
@@ -580,8 +593,12 @@ int
 PQendcopy(PGconn *conn)
 {
     char id;
-    FILE *Pfin = conn->Pfin;
-    FILE* Pfdebug = conn->Pfdebug;
+    FILE *Pfin, *Pfdebug;
+
+    if (!conn) return (int)NULL;
+
+    Pfin = conn->Pfin;
+    Pfdebug = conn->Pfdebug;
 
     if ( (id = pqGetc(Pfin,Pfdebug)) > 0)
 	return(0);
@@ -836,11 +853,15 @@ PQfn(PGconn *conn,
      PQArgBlock *args,
      int nargs)
 {
-    FILE *Pfin = conn->Pfin;
-    FILE *Pfout = conn->Pfout;
-    FILE* Pfdebug = conn->Pfdebug;
+    FILE *Pfin, *Pfout, *Pfdebug;
     int id;
     int i;
+
+    if (!conn) return NULL;
+
+    Pfin = conn->Pfin;
+    Pfout = conn->Pfout;
+    Pfdebug = conn->Pfdebug;
 
     /* clear the error string */
     conn->errorMessage[0] = '\0';
@@ -916,18 +937,33 @@ PQfn(PGconn *conn,
 ExecStatusType 
 PQresultStatus(PGresult* res)
 { 
+    if (!res) {	
+	fprintf(stderr, "PQresultStatus() -- pointer to PQresult is null");
+	return PGRES_NONFATAL_ERROR;
+    }
+
     return res->resultStatus; 
 }
 
 int 
 PQntuples(PGresult *res) 
 {
+    if (!res) { 
+	fprintf(stderr, "PQntuples() -- pointer to PQresult is null");
+	return (int)NULL; 
+    }
+
     return res->ntups;
 }
 
 int
 PQnfields(PGresult *res) 
 {
+    if (!res) { 
+	fprintf(stderr, "PQnfields() -- pointer to PQresult is null");
+	return (int)NULL;
+    }
+
     return res->numAttributes;
 }
 
@@ -937,6 +973,12 @@ PQnfields(PGresult *res)
 char* 
 PQfname(PGresult *res, int field_num) 
 {
+
+    if (!res) { 
+	fprintf(stderr, "PQfname() -- pointer to PQresult is null");
+	return NULL; 
+    }
+
     if (field_num > (res->numAttributes - 1))  {
 	fprintf(stderr,
 		"PQfname: ERROR! name of field %d(of %d) is not available", 
@@ -957,6 +999,11 @@ PQfnumber(PGresult *res, char* field_name)
 {
   int i;
 
+  if (!res) { 
+    fprintf(stderr, "PQfnumber() -- pointer to PQresult is null");
+    return -1;
+  }
+
   if (field_name == NULL ||
       field_name[0] == '\0' ||
       res->attDescs == NULL)
@@ -973,6 +1020,11 @@ PQfnumber(PGresult *res, char* field_name)
 Oid
 PQftype(PGresult *res, int field_num) 
 {
+    if (!res) { 
+	fprintf(stderr, "PQftype() -- pointer to PQresult is null");
+	return InvalidOid;
+    }
+
     if (field_num > (res->numAttributes - 1))  {
 	fprintf(stderr,
 		"PQftype: ERROR! type of field %d(of %d) is not available", 
@@ -987,6 +1039,11 @@ PQftype(PGresult *res, int field_num)
 int2
 PQfsize(PGresult *res, int field_num) 
 {
+    if (!res) { 
+	fprintf(stderr, "PQfsize() -- pointer to PQresult is null");
+	return (int2)NULL;
+    }
+
     if (field_num > (res->numAttributes - 1))  {
 	fprintf(stderr,
 		"PQfsize: ERROR! size of field %d(of %d) is not available", 
@@ -999,6 +1056,11 @@ PQfsize(PGresult *res, int field_num)
 }
 
 char* PQcmdStatus(PGresult *res) {
+  if (!res) { 
+    fprintf(stderr, "PQcmdStatus() -- pointer to PQresult is null");
+    return NULL;
+  }
+
   return res->cmdStatus;
 }
 
@@ -1008,6 +1070,11 @@ char* PQcmdStatus(PGresult *res) {
     if not, return ""
 */
 char* PQoidStatus(PGresult *res) {
+  if (!res) {
+    fprintf(stderr, "PQoidStatus() -- pointer to PQresult is null");
+    return NULL;
+  }
+
   if (!res->cmdStatus)
     return "";
 
@@ -1031,6 +1098,11 @@ char* PQoidStatus(PGresult *res) {
 char* 
 PQgetvalue(PGresult *res, int tup_num, int field_num)
 {
+    if (!res) {	
+	fprintf(stderr, "PQgetvalue() -- pointer to PQresult is null");
+	return NULL;
+    }
+	
     if (tup_num > (res->ntups - 1) ||
 	field_num > (res->numAttributes - 1))  {
 	fprintf(stderr,
@@ -1050,6 +1122,11 @@ PQgetvalue(PGresult *res, int tup_num, int field_num)
 int
 PQgetlength(PGresult *res, int tup_num, int field_num)
 {
+    if (!res) { 
+	fprintf(stderr, "PQgetlength() -- pointer to PQresult is null");
+        return (int)NULL;
+    }
+
     if (tup_num > (res->ntups - 1 )||
 	field_num > (res->numAttributes - 1))  {
 	fprintf(stderr,

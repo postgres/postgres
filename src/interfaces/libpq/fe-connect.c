@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.1.1.1 1996/07/09 06:22:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.2 1996/07/12 04:53:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,12 @@ PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
     char *tmp;
 
     conn = (PGconn*)malloc(sizeof(PGconn));
-
+    
+    if (!conn) {
+	fprintf(stderr,"FATAL: pqsetdb() -- unable to allocate memory for a PGconn");
+	return (PGconn*)NULL;
+    }
+	
     conn->Pfout = NULL;
     conn->Pfin = NULL;
     conn->Pfdebug = NULL;
@@ -307,9 +312,13 @@ closePGconn(PGconn *conn)
 void
 PQfinish(PGconn *conn)
 {
-  if (conn->status == CONNECTION_OK)
-    closePGconn(conn);
-  freePGconn(conn);
+  if (!conn) {
+    fprintf(stderr,"PQfinish() -- pointer to PGconn is null");
+  } else {
+    if (conn->status == CONNECTION_OK)
+	closePGconn(conn);
+    freePGconn(conn);
+  }
 }
 
 /* PQreset :
@@ -319,8 +328,12 @@ PQfinish(PGconn *conn)
 void
 PQreset(PGconn *conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQreset() -- pointer to PGconn is null");
+  } else {
     closePGconn(conn);
     conn->status = connectDB(conn);
+  }
 }
 
 /*
@@ -395,42 +408,77 @@ startup2PacketBuf(StartupInfo* s, PacketBuf* res)
 char* 
 PQdb(PGconn* conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQdb() -- pointer to PGconn is null");
+    return (char *)NULL;
+  }
+
   return conn->dbName;
 }
 
 char* 
 PQhost(PGconn* conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQhost() -- pointer to PGconn is null");
+    return (char *)NULL;
+  }
+
   return conn->pghost;
 }
 
 char* 
 PQoptions(PGconn* conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQoptions() -- pointer to PGconn is null");
+    return (char *)NULL;
+  }
+
   return conn->pgoptions;
 }
 
 char* 
 PQtty(PGconn* conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQtty() -- pointer to PGconn is null");
+    return (char *)NULL;
+  }
+
   return conn->pgtty;
 }
 
 char*
 PQport(PGconn* conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQport() -- pointer to PGconn is null");
+    return (char *)NULL;
+  }
+
   return conn->pgport;
 }
 
 ConnStatusType
 PQstatus(PGconn* conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQstatus() -- pointer to PGconn is null");
+    return CONNECTION_BAD;
+  }
+
   return conn->status;
 }
 
 char* 
 PQerrorMessage(PGconn* conn)
 {
+  if (!conn) {
+    fprintf(stderr,"PQerrorMessage() -- pointer to PGconn is null");
+    return (char *)NULL;
+  }
+
   return conn->errorMessage;
 }
 
