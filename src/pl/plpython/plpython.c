@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26.2.5 2003/06/11 18:33:46 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26.2.6 2003/09/17 18:40:11 tgl Exp $
  *
  *********************************************************************
  */
@@ -586,9 +586,6 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 	plkeys = PyDict_Keys(plntup);
 	natts = PyList_Size(plkeys);
 
-	if (natts != proc->result.out.r.natts)
-		elog(ERROR, "plpython: TD[\"new\"] has an incorrect number of keys.");
-
 	modattrs = palloc(natts * sizeof(int));
 	modvalues = palloc(natts * sizeof(Datum));
 	for (i = 0; i < natts; i++)
@@ -622,7 +619,7 @@ PLy_modify_tuple(PLyProcedure * proc, PyObject * pltd, TriggerData *tdata,
 
 		Py_INCREF(plval);
 
-		if (plval != Py_None)
+		if (plval != Py_None && !tupdesc->attrs[atti]->attisdropped)
 		{
 			plstr = PyObject_Str(plval);
 			src = PyString_AsString(plstr);
@@ -1363,6 +1360,9 @@ PLy_input_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
 
+		if (desc->attrs[i]->attisdropped)
+			continue;
+
 		datum = ObjectIdGetDatum(desc->attrs[i]->atttypid);
 		typeTup = SearchSysCache(TYPEOID, datum, 0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
@@ -1402,6 +1402,9 @@ PLy_output_tuple_funcs(PLyTypeInfo * arg, TupleDesc desc)
 	{
 		HeapTuple	typeTup;
 		Form_pg_type typeStruct;
+
+		if (desc->attrs[i]->attisdropped)
+			continue;
 
 		datum = ObjectIdGetDatum(desc->attrs[i]->atttypid);
 		typeTup = SearchSysCache(TYPEOID, datum, 0, 0, 0);
@@ -1593,6 +1596,9 @@ PLyDict_FromTuple(PLyTypeInfo * info, HeapTuple tuple, TupleDesc desc)
 					vdat;
 		bool		is_null;
 		PyObject   *value;
+
+		if (desc->attrs[i]->attisdropped)
+			continue;
 
 		key = NameStr(desc->attrs[i]->attname);
 		vattr = heap_getattr(tuple, (i + 1), desc, &is_null);
