@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.10 1999/07/22 15:09:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.11 1999/07/30 00:59:50 momjian Exp $
 Postgres documentation
 -->
 
@@ -475,8 +475,7 @@ testdb=>
        Specifies that
        <application>psql</application>
        should do its work quietly.  By default, it
-       prints welcome and exit messages and prompts for each query, and prints
-       out the number of rows returned from a query.
+       prints welcome and exit messages and prompts for each query.
        If this option is used, none of this happens. This is useful with the
        <option>-c</option> option.
       </para>
@@ -507,7 +506,7 @@ testdb=>
      <term>-t</term>
      <listitem>
       <para>
-       Turn off printing of column names.
+       Turn off printing of column names and result row count.
        This is useful with the
        <option>-c</option>
        option in shell scripts.
