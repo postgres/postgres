@@ -81,13 +81,13 @@ find_struct(char *name, char *next)
 		if (p->type->typ != ECPGt_array)
 		{
 			sprintf(errortext, "variable %s is not a pointer", name);
-			mmerror(ET_FATAL, errortext);
+			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
 		if (p->type->u.element->typ != ECPGt_struct && p->type->u.element->typ != ECPGt_union)
 		{
 			sprintf(errortext, "variable %s is not a pointer to a structure or a union", name);
-			mmerror(ET_FATAL, errortext);
+			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
 		/* restore the name, we will need it later on */
@@ -101,7 +101,7 @@ find_struct(char *name, char *next)
 		if (p->type->typ != ECPGt_struct && p->type->typ != ECPGt_union)
 		{
 			sprintf(errortext, "variable %s is neither a structure nor a union", name);
-			mmerror(ET_FATAL, errortext);
+			mmerror(PARSE_ERROR, ET_FATAL, errortext);
 		}
 
 		/* restore the name, we will need it later on */
@@ -143,7 +143,7 @@ find_variable(char *name)
 	if (p == NULL)
 	{
 		sprintf(errortext, "The variable %s is not declared", name);
-		mmerror(ET_FATAL, errortext);
+		mmerror(PARSE_ERROR, ET_FATAL, errortext);
 	}
 
 	return (p);
@@ -277,7 +277,7 @@ check_indicator(struct ECPGtype * var)
 			check_indicator(var->u.element);
 			break;
 		default:
-			mmerror(ET_ERROR, "indicator variable must be integer type");
+			mmerror(PARSE_ERROR, ET_ERROR, "indicator variable must be integer type");
 			break;
 	}
 }
@@ -291,7 +291,7 @@ get_typedef(char *name)
 	if (!this)
 	{
 		sprintf(errortext, "invalid datatype '%s'", name);
-		mmerror(ET_FATAL, errortext);
+		mmerror(PARSE_ERROR, ET_FATAL, errortext);
 	}
 
 	return (this);
@@ -303,7 +303,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	if (type_index >= 0)
 	{
 		if (*length >= 0)
-			mmerror(ET_FATAL, "No multi-dimensional array support");
+			mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 		*length = type_index;
 	}
@@ -311,7 +311,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	if (type_dimension >= 0)
 	{
 		if (*dimension >= 0 && *length >= 0)
-			mmerror(ET_FATAL, "No multi-dimensional array support");
+			mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 		if (*dimension >= 0)
 			*length = *dimension;
@@ -321,17 +321,17 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 	
 	if (pointer_len>2)
 	{	sprintf(errortext, "No multilevel (more than 2) pointer supported %d",pointer_len);
-	    mmerror(ET_FATAL, errortext);
-/*		mmerror(ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);*/
+	    mmerror(PARSE_ERROR, ET_FATAL, errortext);
+/*		mmerror(PARSE_ERROR, ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);*/
 	}
 	if (pointer_len>1 && type_enum!=ECPGt_char && type_enum!=ECPGt_unsigned_char)
-		mmerror(ET_FATAL, "No pointer to pointer supported for this type");
+		mmerror(PARSE_ERROR, ET_FATAL, "No pointer to pointer supported for this type");
 
 	if (pointer_len>1 && (*length >= 0 || *dimension >= 0))
-		mmerror(ET_FATAL, "No multi-dimensional array support");
+		mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 	if (*length >= 0 && *dimension >= 0 && pointer_len)
-		mmerror(ET_FATAL, "No multi-dimensional array support");
+		mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 	switch (type_enum)
 	{
@@ -345,7 +345,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 			}
 
 			if (*length >= 0)
-				mmerror(ET_FATAL, "No multi-dimensional array support for structures");
+				mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support for structures");
 
 			break;
 		case ECPGt_varchar:
@@ -390,7 +390,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 			}
 
 			if (*length >= 0)
-				mmerror(ET_FATAL, "No multi-dimensional array support for simple data types");
+				mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support for simple data types");
 
 			break;
 	}

@@ -60,7 +60,7 @@ ECPGnumeric_lvalue(FILE *f, char *name)
 		default:
 			snprintf(errortext, sizeof errortext, "variable %s: numeric type needed"
 					 ,name);
-			mmerror(ET_ERROR, errortext);
+			mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			break;
 	}
 }
@@ -121,7 +121,7 @@ drop_descriptor(char *name, char *connection)
 		}
 	}
 	snprintf(errortext, sizeof errortext, "unknown descriptor %s", name);
-	mmerror(ET_NOTICE, errortext);
+	mmerror(PARSE_ERROR, ET_NOTICE, errortext);
 }
 
 struct descriptor
@@ -144,7 +144,7 @@ lookup_descriptor(char *name, char *connection)
 		}
 	}
 	snprintf(errortext, sizeof errortext, "unknown descriptor %s", name);
-	mmerror(ET_NOTICE, errortext);
+	mmerror(PARSE_ERROR, ET_NOTICE, errortext);
 	return NULL;
 }
 
@@ -161,7 +161,7 @@ output_get_descr_header(char *desc_name)
 		else
 		{
 			snprintf(errortext, sizeof errortext, "unknown descriptor header item '%d'", results->value);
-			mmerror(ET_NOTICE, errortext);
+			mmerror(PARSE_ERROR, ET_NOTICE, errortext);
 		}
 	}
 
@@ -183,10 +183,10 @@ output_get_descr(char *desc_name, char *index)
 		switch (results->value)
 		{
 			case ECPGd_nullable:
-				mmerror(ET_NOTICE, "nullable is always 1");
+				mmerror(PARSE_ERROR, ET_NOTICE, "nullable is always 1");
 				break;
 			case ECPGd_key_member:
-				mmerror(ET_NOTICE, "key_member is always 0");
+				mmerror(PARSE_ERROR, ET_NOTICE, "key_member is always 0");
 				break;
 			default:
 				break;
