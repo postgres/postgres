@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.27 1999/09/18 19:07:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.28 1999/09/27 17:46:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,7 +239,10 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 
 	rte = refnameRangeTableEntry(pstate, refname);
 	if (rte == NULL)
+	{
 		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
+		elog(NOTICE,"Auto-creating query reference to table %s", refname);
+	}
 
 	rel = heap_open(rte->relid, AccessShareLock);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.55 1999/09/18 19:07:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.56 1999/09/27 17:46:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,10 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
-				rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE);
+			{
+				rte = addRangeTableEntry(pstate, refname, refname,FALSE, FALSE);
+				elog(NOTICE,"Auto-creating query reference to table %s", refname);
+			}
 
 			relname = rte->relname;
 			relid = rte->relid;
@@ -429,8 +432,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
-				rte = addRangeTableEntry(pstate, refname, refname,
-										 FALSE, FALSE);
+			{
+				rte = addRangeTableEntry(pstate, refname, refname,FALSE, FALSE);
+				elog(NOTICE,"Auto-creating query reference to table %s", refname);
+			}
+										 
 			relname = rte->relname;
 
 			vnum = refnameRangeTablePosn(pstate, rte->refname, NULL);
