@@ -16,7 +16,7 @@ endif
 # add -L command to make that happen.
 # (CAUTION: you need PHSS_4630 to have a working version of rint() on 9!)
 ifneq ($(HPUXMATHLIB),)
-   LDFLAGS:= -L /lib/pa1.1 $(LDFLAGS)
+   LDFLAGS:= -L/lib/pa1.1 $(LDFLAGS)
 endif
 
 # Embed 'libdir' as the shared library search path so that the executables
