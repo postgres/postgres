@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.3 2002/12/14 18:39:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15.2.4 2002/12/18 13:20:00 pgsql Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -587,7 +587,7 @@ initialize_SSL(void)
 	{
 		SSL_library_init();
 		SSL_load_error_strings();
-		SSL_context = SSL_CTX_new(TLSv1_method());
+		SSL_context = SSL_CTX_new(SSLv23_method());
 		if (!SSL_context)
 		{
 			postmaster_error("failed to create SSL context: %s",
