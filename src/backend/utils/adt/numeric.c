@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.8 1999/01/04 17:51:58 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.9 1999/01/05 11:10:45 wieck Exp $
  *
  * ----------
  */
@@ -555,7 +555,6 @@ numeric_round(Numeric num, int32 scale)
 	 * ----------
 	 */
 	precision = MAX(0, num->n_weight) + scale;
-	precision = MIN(precision, NUMERIC_MAX_PRECISION);
 	typmod = (((precision + 2) << 16) | scale) + VARHDRSZ;
 	return numeric(num, typmod);
 }
