@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.118 2003/12/18 03:46:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.119 2004/01/04 03:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1625,15 +1625,12 @@ cost_qual_eval_walker(Node *node, QualCost *total)
  *		The input can be either an implicitly-ANDed list of boolean
  *		expressions, or a list of RestrictInfo nodes (typically the latter).
  *
- * The "quick" part comes from caching the selectivity estimates so we can
- * avoid recomputing them later.  (Since the same clauses are typically
- * examined over and over in different possible join trees, this makes a
- * big difference.)
- *
- * The "dirty" part comes from the fact that the selectivities of multiple
- * clauses are estimated independently and multiplied together.  Now
+ * This is quick-and-dirty because we bypass clauselist_selectivity, and
+ * simply multiply the independent clause selectivities together.  Now
  * clauselist_selectivity often can't do any better than that anyhow, but
- * for some situations (such as range constraints) it is smarter.
+ * for some situations (such as range constraints) it is smarter.  However,
+ * we can't effectively cache the results of clauselist_selectivity, whereas
+ * the individual clause selectivities can be and are cached.
  *
  * Since we are only using the results to estimate how many potential
  * output tuples are generated and passed through qpqual checking, it
@@ -1648,33 +1645,9 @@ approx_selectivity(Query *root, List *quals, JoinType jointype)
 	foreach(l, quals)
 	{
 		Node	   *qual = (Node *) lfirst(l);
-		Selectivity selec;
 
-		/*
-		 * RestrictInfo nodes contain a this_selec field reserved for this
-		 * routine's use, so that it's not necessary to evaluate the qual
-		 * clause's selectivity more than once.  If the clause's
-		 * selectivity hasn't been computed yet, the field will contain
-		 * -1.
-		 */
-		if (qual && IsA(qual, RestrictInfo))
-		{
-			RestrictInfo *restrictinfo = (RestrictInfo *) qual;
-
-			if (restrictinfo->this_selec < 0)
-				restrictinfo->this_selec =
-					clause_selectivity(root,
-									   (Node *) restrictinfo->clause,
-									   0,
-									   jointype);
-			selec = restrictinfo->this_selec;
-		}
-		else
-		{
-			/* If it's a bare expression, must always do it the hard way */
-			selec = clause_selectivity(root, qual, 0, jointype);
-		}
-		total *= selec;
+		/* Note that clause_selectivity will be able to cache its result */
+		total *= clause_selectivity(root, qual, 0, jointype);
 	}
 	return total;
 }
@@ -1702,10 +1675,10 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 	Assert(rel->relid > 0);
 
 	temp = rel->tuples *
-		restrictlist_selectivity(root,
-								 rel->baserestrictinfo,
-								 rel->relid,
-								 JOIN_INNER);
+		clauselist_selectivity(root,
+							   rel->baserestrictinfo,
+							   0,
+							   JOIN_INNER);
 
 	/*
 	 * Force estimate to be at least one row, to make explain output look
@@ -1765,10 +1738,10 @@ set_joinrel_size_estimates(Query *root, RelOptInfo *rel,
 	 * not double-counting them because they were not considered in
 	 * estimating the sizes of the component rels.
 	 */
-	selec = restrictlist_selectivity(root,
-									 restrictlist,
-									 0,
-									 jointype);
+	selec = clauselist_selectivity(root,
+								   restrictlist,
+								   0,
+								   jointype);
 
 	/*
 	 * Basically, we multiply size of Cartesian product by selectivity.
@@ -1875,10 +1848,10 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 
 	/* Now estimate number of output rows */
 	temp = rel->tuples *
-		restrictlist_selectivity(root,
-								 rel->baserestrictinfo,
-								 rel->relid,
-								 JOIN_INNER);
+		clauselist_selectivity(root,
+							   rel->baserestrictinfo,
+							   0,
+							   JOIN_INNER);
 
 	/*
 	 * Force estimate to be at least one row, to make explain output look

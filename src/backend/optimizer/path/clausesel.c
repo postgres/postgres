@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.62 2003/12/29 21:44:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.63 2004/01/04 03:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,32 +55,12 @@ static void addRangeClause(RangeQueryClause **rqlist, Node *clause,
  ****************************************************************************/
 
 /*
- * restrictlist_selectivity -
- *	  Compute the selectivity of an implicitly-ANDed list of RestrictInfo
- *	  clauses.
- *
- * This is the same as clauselist_selectivity except for the representation
- * of the clause list.
- */
-Selectivity
-restrictlist_selectivity(Query *root,
-						 List *restrictinfo_list,
-						 int varRelid,
-						 JoinType jointype)
-{
-	List	   *clauselist = get_actual_clauses(restrictinfo_list);
-	Selectivity result;
-
-	result = clauselist_selectivity(root, clauselist, varRelid, jointype);
-	freeList(clauselist);
-	return result;
-}
-
-/*
  * clauselist_selectivity -
  *	  Compute the selectivity of an implicitly-ANDed list of boolean
  *	  expression clauses.  The list can be empty, in which case 1.0
- *	  must be returned.
+ *	  must be returned.  List elements may be either RestrictInfos
+ *	  or bare expression clauses --- the former is preferred since
+ *	  it allows caching of results.
  *
  * See clause_selectivity() for the meaning of the additional parameters.
  *
@@ -133,64 +113,80 @@ clauselist_selectivity(Query *root,
 	foreach(clist, clauses)
 	{
 		Node	   *clause = (Node *) lfirst(clist);
+		RestrictInfo *rinfo;
 		Selectivity s2;
+
+		/* Always compute the selectivity using clause_selectivity */
+		s2 = clause_selectivity(root, clause, varRelid, jointype);
+
+		/*
+		 * Check for being passed a RestrictInfo.
+		 */
+		if (IsA(clause, RestrictInfo))
+		{
+			rinfo = (RestrictInfo *) clause;
+			clause = (Node *) rinfo->clause;
+		}
+		else
+			rinfo = NULL;
 
 		/*
 		 * See if it looks like a restriction clause with a pseudoconstant
 		 * on one side.  (Anything more complicated than that might not
-		 * behave in the simple way we are expecting.)
-		 *
-		 * NB: for consistency of results, this fragment of code had better
-		 * match what clause_selectivity() would do in the cases it
-		 * handles.
+		 * behave in the simple way we are expecting.)  Most of the tests
+		 * here can be done more efficiently with rinfo than without.
 		 */
-		if (is_opclause(clause) &&
-			(varRelid != 0 || NumRelids(clause) == 1))
+		if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
 		{
 			OpExpr	   *expr = (OpExpr *) clause;
+			bool		varonleft = true;
+			bool		ok;
 
-			if (length(expr->args) == 2)
+			if (rinfo)
 			{
-				bool		varonleft = true;
+				ok = (bms_membership(rinfo->clause_relids) == BMS_SINGLETON) &&
+					(is_pseudo_constant_clause_relids(lsecond(expr->args),
+													  rinfo->right_relids) ||
+					 (varonleft = false,
+					  is_pseudo_constant_clause_relids(lfirst(expr->args),
+													   rinfo->left_relids)));
+			}
+			else
+			{
+				ok = (NumRelids(clause) == 1) &&
+					(is_pseudo_constant_clause(lsecond(expr->args)) ||
+					 (varonleft = false,
+					  is_pseudo_constant_clause(lfirst(expr->args))));
+			}
 
-				if (is_pseudo_constant_clause(lsecond(expr->args)) ||
-					(varonleft = false,
-					 is_pseudo_constant_clause(lfirst(expr->args))))
+			if (ok)
+			{
+				/*
+				 * If it's not a "<" or ">" operator, just merge the
+				 * selectivity in generically.  But if it's the
+				 * right oprrest, add the clause to rqlist for later
+				 * processing.
+				 */
+				switch (get_oprrest(expr->opno))
 				{
-					Oid			opno = expr->opno;
-					RegProcedure oprrest = get_oprrest(opno);
-
-					s2 = restriction_selectivity(root, opno,
-												 expr->args, varRelid);
-
-					/*
-					 * If we reach here, we have computed the same result
-					 * that clause_selectivity would, so we can just use
-					 * s2 if it's the wrong oprrest.  But if it's the
-					 * right oprrest, add the clause to rqlist for later
-					 * processing.
-					 */
-					switch (oprrest)
-					{
-						case F_SCALARLTSEL:
-							addRangeClause(&rqlist, clause,
-										   varonleft, true, s2);
-							break;
-						case F_SCALARGTSEL:
-							addRangeClause(&rqlist, clause,
-										   varonleft, false, s2);
-							break;
-						default:
-							/* Just merge the selectivity in generically */
-							s1 = s1 * s2;
-							break;
-					}
-					continue;	/* drop to loop bottom */
+					case F_SCALARLTSEL:
+						addRangeClause(&rqlist, clause,
+									   varonleft, true, s2);
+						break;
+					case F_SCALARGTSEL:
+						addRangeClause(&rqlist, clause,
+									   varonleft, false, s2);
+						break;
+					default:
+						/* Just merge the selectivity in generically */
+						s1 = s1 * s2;
+						break;
 				}
+				continue;		/* drop to loop bottom */
 			}
 		}
+
 		/* Not the right form, so treat it generically. */
-		s2 = clause_selectivity(root, clause, varRelid, jointype);
 		s1 = s1 * s2;
 	}
 
@@ -352,10 +348,38 @@ addRangeClause(RangeQueryClause **rqlist, Node *clause,
 	*rqlist = rqelem;
 }
 
+/*
+ * bms_is_subset_singleton
+ *
+ * Same result as bms_is_subset(s, bms_make_singleton(x)),
+ * but a little faster and doesn't leak memory.
+ *
+ * Is this of use anywhere else?  If so move to bitmapset.c ...
+ */
+static bool
+bms_is_subset_singleton(const Bitmapset *s, int x)
+{
+	switch (bms_membership(s))
+	{
+		case BMS_EMPTY_SET:
+			return true;
+		case BMS_SINGLETON:
+			return bms_is_member(x, s);
+		case BMS_MULTIPLE:
+			return false;
+	}
+	/* can't get here... */
+	return false;
+}
+
 
 /*
  * clause_selectivity -
  *	  Compute the selectivity of a general boolean expression clause.
+ *
+ * The clause can be either a RestrictInfo or a plain expression.  If it's
+ * a RestrictInfo, we try to cache the selectivity for possible re-use,
+ * so passing RestrictInfos is preferred.
  *
  * varRelid is either 0 or a rangetable index.
  *
@@ -379,9 +403,37 @@ clause_selectivity(Query *root,
 				   JoinType jointype)
 {
 	Selectivity s1 = 1.0;		/* default for any unhandled clause type */
+	RestrictInfo *rinfo = NULL;
+	bool		cacheable = false;
 
-	if (clause == NULL)
+	if (clause == NULL)			/* can this still happen? */
 		return s1;
+
+	if (IsA(clause, RestrictInfo))
+	{
+		rinfo = (RestrictInfo *) clause;
+
+		/*
+		 * If possible, cache the result of the selectivity calculation for
+		 * the clause.  We can cache if varRelid is zero or the clause
+		 * contains only vars of that relid --- otherwise varRelid will affect
+		 * the result, so mustn't cache.  We ignore the possibility that
+		 * jointype will affect the result, which should be okay because outer
+		 * join clauses will always be examined with the same jointype value.
+		 */
+		if (varRelid == 0 ||
+			bms_is_subset_singleton(rinfo->clause_relids, varRelid))
+		{
+			/* Cacheable --- do we already have the result? */
+			if (rinfo->this_selec >= 0)
+				return rinfo->this_selec;
+			cacheable = true;
+		}
+
+		/* Proceed with examination of contained clause */
+		clause = (Node *) rinfo->clause;
+	}
+
 	if (IsA(clause, Var))
 	{
 		Var		   *var = (Var *) clause;
@@ -448,9 +500,10 @@ clause_selectivity(Query *root,
 	else if (or_clause(clause))
 	{
 		/*
-		 * Selectivities for an 'or' clause are computed as s1+s2 - s1*s2
-		 * to account for the probable overlap of selected tuple sets. XXX
-		 * is this too conservative?
+		 * Selectivities for an OR clause are computed as s1+s2 - s1*s2
+		 * to account for the probable overlap of selected tuple sets.
+		 *
+		 * XXX is this too conservative?
 		 */
 		List	   *arg;
 
@@ -483,9 +536,13 @@ clause_selectivity(Query *root,
 		{
 			/*
 			 * Otherwise, it's a join if there's more than one relation
-			 * used.
+			 * used.  We can optimize this calculation if an rinfo was passed.
 			 */
-			is_join_clause = (NumRelids(clause) > 1);
+			if (rinfo)
+				is_join_clause = (bms_membership(rinfo->clause_relids) ==
+								  BMS_MULTIPLE);
+			else
+				is_join_clause = (NumRelids(clause) > 1);
 		}
 
 		if (is_join_clause)
@@ -558,6 +615,10 @@ clause_selectivity(Query *root,
 								varRelid,
 								jointype);
 	}
+
+	/* Cache the result if possible */
+	if (cacheable)
+		rinfo->this_selec = s1;
 
 #ifdef SELECTIVITY_DEBUG
 	elog(DEBUG4, "clause_selectivity: s1 %f", s1);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.70 2003/12/30 23:53:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/clauses.h,v 1.71 2004/01/04 03:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,6 @@ extern List *pull_constant_clauses(List *quals, List **constantQual);
 
 extern bool has_distinct_on_clause(Query *query);
 
-extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
 extern void CommuteClause(OpExpr *clause);
 

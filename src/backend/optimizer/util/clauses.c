@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.158 2003/12/30 23:53:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.159 2004/01/04 03:51:52 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -927,51 +927,6 @@ has_distinct_on_clause(Query *query)
  *		General clause-manipulating routines								 *
  *																			 *
  *****************************************************************************/
-
-/*
- * clause_get_relids_vars
- *	  Retrieves distinct relids and vars appearing within a clause.
- *
- * '*relids' is set to the set of all distinct "varno"s appearing
- *		in Vars within the clause.
- * '*vars' is set to a list of all distinct Vars appearing within the clause.
- *		Var nodes are considered distinct if they have different varno
- *		or varattno values.  If there are several occurrences of the same
- *		varno/varattno, you get a randomly chosen one...
- *
- * Note that upper-level vars are ignored, since they normally will
- * become Params with respect to this query level.
- */
-void
-clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
-{
-	List	   *clvars = pull_var_clause(clause, false);
-	Relids		varnos = NULL;
-	List	   *var_list = NIL;
-	List	   *i;
-
-	foreach(i, clvars)
-	{
-		Var		   *var = (Var *) lfirst(i);
-		List	   *vi;
-
-		varnos = bms_add_member(varnos, var->varno);
-		foreach(vi, var_list)
-		{
-			Var		   *in_list = (Var *) lfirst(vi);
-
-			if (in_list->varno == var->varno &&
-				in_list->varattno == var->varattno)
-				break;
-		}
-		if (vi == NIL)
-			var_list = lcons(var, var_list);
-	}
-	freeList(clvars);
-
-	*relids = varnos;
-	*vars = var_list;
-}
 
 /*
  * NumRelids

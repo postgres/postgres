@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.95 2004/01/04 00:07:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.96 2004/01/04 03:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,15 +375,15 @@ distribute_qual_to_rels(Query *root, Node *clause,
 						Relids qualscope)
 {
 	Relids		relids;
-	List	   *vars;
 	bool		can_be_equijoin;
 	RestrictInfo *restrictinfo;
 	RelOptInfo *rel;
+	List	   *vars;
 
 	/*
-	 * Retrieve all relids and vars contained within the clause.
+	 * Retrieve all relids mentioned within the clause.
 	 */
-	clause_get_relids_vars(clause, &relids, &vars);
+	relids = pull_varnos(clause);
 
 	/*
 	 * Cross-check: clause should contain no relids not within its scope.
@@ -571,7 +571,9 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 * that scan those relations (else they won't be available at
 			 * the join node!).
 			 */
+			vars = pull_var_clause(clause, false);
 			add_vars_to_targetlist(root, vars, relids);
+			freeList(vars);
 			break;
 		default:
 

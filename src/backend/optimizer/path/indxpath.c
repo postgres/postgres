@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.152 2004/01/04 00:07:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.153 2004/01/04 03:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1449,7 +1449,7 @@ make_innerjoin_index_path(Query *root,
 	 * the full set of clauses that must be considered to compute the
 	 * correct selectivity.  (Without the union operation, we might have
 	 * some restriction clauses appearing twice, which'd mislead
-	 * restrictlist_selectivity into double-counting their selectivity.
+	 * clauselist_selectivity into double-counting their selectivity.
 	 * However, since RestrictInfo nodes aren't copied when linking them
 	 * into different lists, it should be sufficient to use pointer
 	 * comparison to remove duplicates.)
@@ -1459,10 +1459,10 @@ make_innerjoin_index_path(Query *root,
 	 */
 	allclauses = set_ptrUnion(rel->baserestrictinfo, allclauses);
 	pathnode->rows = rel->tuples *
-		restrictlist_selectivity(root,
-								 allclauses,
-								 rel->relid,
-								 JOIN_INNER);
+		clauselist_selectivity(root,
+							   allclauses,
+							   rel->relid,		/* do not use 0! */
+							   JOIN_INNER);
 	/* Like costsize.c, force estimate to be at least one row */
 	if (pathnode->rows < 1.0)
 		pathnode->rows = 1.0;

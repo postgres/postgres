@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.22 2004/01/04 00:07:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.23 2004/01/04 03:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,11 +47,15 @@ make_restrictinfo(Expr *clause, bool ispusheddown)
 
 	/*
 	 * If it's a binary opclause, set up left/right relids info.
+	 * In any case set up the total clause relids info.
 	 */
 	if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
 	{
 		restrictinfo->left_relids = pull_varnos(get_leftop(clause));
 		restrictinfo->right_relids = pull_varnos(get_rightop(clause));
+
+		restrictinfo->clause_relids = bms_union(restrictinfo->left_relids,
+												restrictinfo->right_relids);
 
 		/*
 		 * Does it look like a normal join clause, i.e., a binary operator
@@ -67,9 +71,11 @@ make_restrictinfo(Expr *clause, bool ispusheddown)
 	}
 	else
 	{
-		/* Not a binary opclause, so mark both relid sets as empty */
+		/* Not a binary opclause, so mark left/right relid sets as empty */
 		restrictinfo->left_relids = NULL;
 		restrictinfo->right_relids = NULL;
+		/* and get the total relid set the hard way */
+		restrictinfo->clause_relids = pull_varnos((Node *) clause);
 	}
 
 	/*
@@ -328,9 +334,13 @@ join_clause_is_redundant(Query *root,
 		bool		redundant = false;
 		List	   *refitem;
 
+		/* do the cheap test first: is it a "var = const" clause? */
+		if (bms_is_empty(rinfo->left_relids) ||
+			bms_is_empty(rinfo->right_relids))
+			return false;		/* var = const, so not redundant */
+
 		cache_mergeclause_pathkeys(root, rinfo);
 
-		/* do the cheap tests first */
 		foreach(refitem, reference_list)
 		{
 			RestrictInfo *refrinfo = (RestrictInfo *) lfirst(refitem);
@@ -347,13 +357,7 @@ join_clause_is_redundant(Query *root,
 		}
 
 		if (redundant)
-		{
-			/* It looks redundant, but check for "var = const" case */
-			if (!bms_is_empty(rinfo->left_relids) &&
-				!bms_is_empty(rinfo->right_relids))
-				return true;	/* var = var, so redundant */
-			/* else var = const, not redundant */
-		}
+			return true;		/* var = var, so redundant */
 	}
 
 	/* otherwise, not redundant */

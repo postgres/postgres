@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.58 2003/11/29 22:41:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.59 2004/01/04 03:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,6 @@ extern void set_function_size_estimates(Query *root, RelOptInfo *rel);
  * prototypes for clausesel.c
  *	  routines to compute clause selectivities
  */
-extern Selectivity restrictlist_selectivity(Query *root,
-						 List *restrictinfo_list,
-						 int varRelid,
-						 JoinType jointype);
 extern Selectivity clauselist_selectivity(Query *root,
 					   List *clauses,
 					   int varRelid,
