@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 27 22:38:49 EST 2000
+Last updated:		Thu Jan 27 22:45:01 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -24,14 +24,11 @@ RESOURCES
 
 PARSER
 
-* Disallow inherited columns with the same name as new columns
 * -INSERT INTO ... SELECT with AS columns matching result columns problem
 * SELECT pg_class FROM pg_class generates strange error
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
-* Do not allow bpchar column creation without length
 * -Select a[1] FROM test fails, it needs test.a[1](Tom)
 * -Array index references without table name cause problems [array](Tom)
-* Update table SET table.value = 3 fails(SQL standard says this is OK)
 * Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
 * -INSERT ... SELECT ... GROUP BY groups by target columns not source columns(Tom)
@@ -43,9 +40,8 @@ PARSER
 * -CREATE TABLE x AS SELECT 1 UNION SELECT 2 fails
 * -CREATE TABLE test(col char(2) DEFAULT user) fails in length restriction
 * -mismatched types in CREATE TABLE ... DEFAULT causes problems [default]
-* SELECT ... UNION ... ORDER BY fails when sort expr not in result list
+* -SELECT ... UNION ... ORDER BY fails when sort expr not in result list
 * Be smarter about promoting types when UNION merges different data types
-* SELECT ... UNION ... GROUP BY fails if column types disagree
 * redesign INSERT ... SELECT to have two levels of target list
 * -select * from pg_class where oid in (0,-1)
 * have INTERSECT/EXCEPT prevent duplicates unless ALL is specified
@@ -120,7 +116,7 @@ TYPES
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
-* Allow user to define char1 column
+* -Allow user to define char1 column
 * Add support for & operator
 * Allow LOCALE on a per-column basis, default to ASCII
 * -Allow LOCALE to use indexes in regular expression searches(Tom)
@@ -218,7 +214,7 @@ MISC
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * -Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
 * Overhaul bufmgr/lockmgr/transaction manager
-* Add PL/Perl(Mark Hollomon)
+* -Add PL/Perl(Mark Hollomon)
 * -Add option for postgres user have a password by default(Peter E)
 * Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
@@ -293,7 +289,7 @@ SOURCE CODE
 * -Make configure --enable-debug add -g on compile line
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option if OR processing is improved(Tom)
-* Pre-generate lex and yacc output so not required for install
+* -Pre-generate lex and yacc output so not required for install
 
 ---------------------------------------------------------------------------
 

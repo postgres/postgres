@@ -267,3 +267,83 @@ misleading success response code is not my idea of proper behavior.
 			regards, tom lane
 
 
+From owner-pgsql-hackers@hub.org Mon Jan 24 23:46:25 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA25453
+	for <pgman@candle.pha.pa.us>; Mon, 24 Jan 2000 23:46:24 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id XAA81794;
+	Mon, 24 Jan 2000 23:01:22 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Mon, 24 Jan 2000 22:59:46 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id WAA80721
+	for pgsql-hackers-outgoing; Mon, 24 Jan 2000 22:58:59 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id WAA80619
+	for <pgsql-hackers@postgreSQL.org>; Mon, 24 Jan 2000 22:58:33 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id WAA11576;
+	Mon, 24 Jan 2000 22:57:12 -0500 (EST)
+To: Don Baccus <dhogaza@pacifier.com>
+cc: "Hiroshi Inoue" <Inoue@tpf.co.jp>, "Peter Eisentraut" <peter_e@gmx.net>,
+        "PostgreSQL Development" <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Happy column dropping 
+In-reply-to: <3.0.1.32.20000124184137.01069490@mail.pacifier.com> 
+References: <001001bf66d7$b531ba00$2801007e@tpf.co.jp> <001001bf66d7$b531ba00$2801007e@tpf.co.jp> <3.0.1.32.20000124184137.01069490@mail.pacifier.com>
+Comments: In-reply-to Don Baccus <dhogaza@pacifier.com>
+	message dated "Mon, 24 Jan 2000 18:41:37 -0800"
+Date: Mon, 24 Jan 2000 22:57:12 -0500
+Message-ID: <11573.948772632@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: RO
+
+Don Baccus <dhogaza@pacifier.com> writes:
+> Just a reality check for my learning of the internals.  Out of curiousity
+> I coincidently have spent the last hour looking to see how add column's
+> implemented.  It doesn't appear to do anything other than the new attribute
+> to the proper system table.  heap_getattr() just returns null if you ask
+> for an attribute past the end of the tuple.  
+
+> This would appear to be (at least one reason) why you can't add a "not null"
+> constraint to a column you're adding to an existing relation, or set the
+> new column to some non-null default value.
+
+> Correct?  (again, to see if my eyeballs and brain are working in synch
+> tonight)
+
+Yup, that's about the size of it.  ADD COLUMN doesn't actually touch the
+table itself, so it can only add a column that's initially all NULLs.
+And even this depends on some uncomfortable assumptions about the
+robustness of heap_getattr().  I have always wondered whether it works
+if you ADD COLUMN a 33'rd column (or anything that is just past the
+next padding boundary for the null-values bitmap).
+
+Another problem with it is seen when you do a recursive ADD COLUMN in
+an inheritance tree.  The added column has the first free column number
+in each table, which generally means that it has different numbers in
+the children than in the parent.  There are some kluges to make this
+sort-of-work for simple cases, but a lot of stuff fails unpleasantly
+--- Chris Bitmead can show you some scars from that, IIRC.
+
+> Does your comment imply that it's planned to change this, i.e. actually
+> add the new column to each tuple in the relation rather than use the
+> existing, somewhat elegant hack?
+
+That's what I would like to see: all the children should have the
+same column numbers for all columns that they inherit from the parent.
+
+(Now, this would mean not only physically altering the tuples of
+the children, but also renumbering their added columns, which has
+implications on stored rules and triggers and so forth.  It'd be
+painful, no doubt about it.  Still, I'd rather pay the price in the
+seldom-used ADD COLUMN case than try to deal with out-of-sync column
+numbers in many other, more commonly exercised, code paths.)
+
+			regards, tom lane
+
+************
+
