@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92 2002/09/04 20:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.92.2.1 2003/04/23 18:19:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1684,8 +1684,8 @@ replace_text(PG_FUNCTION_ARGS)
 		left_text = LEFT(buf_text, from_sub_text);
 		right_text = RIGHT(buf_text, from_sub_text, from_sub_text_len);
 
-		appendStringInfo(str, PG_TEXT_GET_STR(left_text));
-		appendStringInfo(str, to_sub_str);
+		appendStringInfo(str, "%s", PG_TEXT_GET_STR(left_text));
+		appendStringInfo(str, "%s", to_sub_str);
 
 		pfree(buf_text);
 		pfree(left_text);
@@ -1693,7 +1693,7 @@ replace_text(PG_FUNCTION_ARGS)
 		curr_posn = TEXTPOS(buf_text, from_sub_text);
 	}
 
-	appendStringInfo(str, PG_TEXT_GET_STR(buf_text));
+	appendStringInfo(str, "%s", PG_TEXT_GET_STR(buf_text));
 	pfree(buf_text);
 
 	ret_text = PG_STR_GET_TEXT(str->data);
