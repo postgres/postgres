@@ -22,9 +22,13 @@ refers to data that is stored in <productname>PostgreSQL</productname> tables.
 </para>
 
 <para>
-<xref linkend="page-table"> shows how pages in both normal <productname>PostgreSQL</productname> tables
- and <productname>PostgreSQL</productname> indexes
-(e.g., a B-tree index) are structured.
+
+<xref linkend="page-table"> shows how pages in both normal
+ <productname>PostgreSQL</productname> tables and
+ <productname>PostgreSQL</productname> indexes (e.g., a B-tree index)
+are structured. This structure is also used for toast tables and sequences.
+There are five parts to each page.
+
 </para>
 
 <table tocentry="1" id="page-table">
@@ -43,113 +47,255 @@ Item
 <tbody>
 
 <row>
+ <entry>PageHeaderData</entry>
+ <entry>20 bytes long. Contains general information about the page to allow to access it.</entry>
+</row>
+
+<row>
 <entry>itemPointerData</entry>
+<entry>List of (offset,length) pairs pointing to the actual item.</entry>
 </row>
 
 <row>
-<entry>filler</entry>
+<entry>Free space</entry>
+<entry>The unallocated space. All new tuples are allocated from here, generally from the end.</entry>
 </row>
 
 <row>
-<entry>itemData...</entry>
-</row>
-
-<row>
-<entry>Unallocated Space</entry>
-</row>
-
-<row>
-<entry>ItemContinuationData</entry>
+<entry>items</entry>
+<entry>The actual items themselves. Different access method have different data here.</entry>
 </row>
 
 <row>
 <entry>Special Space</entry>
-</row>
-
-<row>
-<entry><quote>ItemData 2</quote></entry>
-</row>
-
-<row>
-<entry><quote>ItemData 1</quote></entry>
-</row>
-
-<row>
-<entry>ItemIdData</entry>
-</row>
-
-<row>
-<entry>PageHeaderData</entry>
+<entry>Access method specific data. Different method store different data. Unused by normal tables.</entry>
 </row>
 
 </tbody>
 </tgroup>
 </table>
 
-<!--
-.\" Running
-.\" .q .../bin/dumpbpages
-.\" or
-.\" .q .../src/support/dumpbpages
-.\" as the postgres superuser
-.\" with the file paths associated with
-.\" (heap or B-tree index) classes,
-.\" .q .../data/base/<database-name>/<class-name>,
-.\" will display the page structure used by the classes.
-.\" Specifying the
-.\" .q -r
-.\" flag will cause the classes to be
-.\" treated as heap classes and for more information to be displayed.
--->
+ <para>
 
-<para>
-The first 8 bytes of each page consists of a page header
-(PageHeaderData).
-Within the header, the first three 2-byte integer fields
-(<firstterm>lower</firstterm>,
-<firstterm>upper</firstterm>,
-and
-<firstterm>special</firstterm>)
-represent byte offsets to the start of unallocated space, to the end
-of unallocated space, and to the start of <firstterm>special space</firstterm>.
-Special space is a region at the end of the page that is allocated at
-page initialization time and contains information specific to an
-access method.  The last 2 bytes of the page header,
-<firstterm>opaque</firstterm>,
-encode the page size and information on the internal fragmentation of
-the page.  Page size is stored in each page because frames in the
-buffer pool may be subdivided into equal sized pages on a frame by
-frame basis within a table.  The internal fragmentation information is
-used to aid in determining when page reorganization should occur.
-</para>
+  The first 20 bytes of each page consists of a page header
+  (PageHeaderData). It's format is detailed in <xref
+  linkend="pageheaderdata-table">. The first two fields deal with WAL
+  related stuff. This is followed by three 2-byte integer fields
+  (<firstterm>lower</firstterm>, <firstterm>upper</firstterm>, and
+  <firstterm>special</firstterm>). These represent byte offsets to the start
+  of unallocated space, to the end of unallocated space, and to the start of
+  the special space. 
+  
+ </para>
+ 
+ <table tocentry="1" id="pageheaderdata-table">
+ <title>PageHeaderData Layout</title>
+ <titleabbrev>PageHeaderData Layout</titleabbrev>
+ <tgroup cols="4">   
+ <thead>
+  <row> 
+   <entry>Field</entry>
+   <entry>Type</entry>
+   <entry>Length</entry>
+   <entry>Description</entry>
+  </row>
+ </thead>
+ <tbody>
+  <row>
+   <entry>pd_lsn</entry>
+   <entry>XLogRecPtr</entry>
+   <entry>6 bytes</entry>
+   <entry>LSN: next byte after last byte of xlog</entry>
+  </row>
+  <row>
+   <entry>pd_sui</entry>
+   <entry>StartUpID</entry>
+   <entry>4 bytes</entry>
+   <entry>SUI of last changes (currently it's used by heap AM only)</entry>
+  </row>
+  <row>
+   <entry>pd_lower</entry>
+   <entry>LocationIndex</entry>
+   <entry>2 bytes</entry>
+   <entry>Offset to start of free space.</entry>
+  </row>
+  <row>
+   <entry>pd_upper</entry>
+   <entry>LocationIndex</entry>
+   <entry>2 bytes</entry>
+   <entry>Offset to end of free space.</entry>
+  </row>
+  <row>
+   <entry>pd_special</entry>
+   <entry>LocationIndex</entry>
+   <entry>2 bytes</entry>
+   <entry>Offset to start of special space.</entry>
+  </row>
+  <row>
+   <entry>pd_opaque</entry>
+   <entry>OpaqueData</entry>
+   <entry>2 bytes</entry>
+   <entry>AM-generic information. Currently just stores the page size.</entry>
+  </row>
+ </tbody>
+ </tgroup>
+ </table>
 
-<para>
-Following the page header are item identifiers
-(<firstterm>ItemIdData</firstterm>).
-New item identifiers are allocated from the first four bytes of
-unallocated space.  Because an item identifier is never moved until it
-is freed, its index may be used to indicate the location of an item on
-a page.  In fact, every pointer to an item
-(<firstterm>ItemPointer</firstterm>)
-created by <productname>PostgreSQL</productname> consists of a frame number and an index of an item
-identifier.  An item identifier contains a byte-offset to the start of
-an item, its length in bytes, and a set of attribute bits which affect
-its interpretation.
-</para>
+ <para>  
+  Special space is a region at the end of the page that is allocated at page
+  initialization time and contains information specific to an access method. 
+  The last 2 bytes of the page header, <firstterm>opaque</firstterm>,
+  currently only stores the page size.  Page size is stored in each page
+  because frames in the buffer pool may be subdivided into equal sized pages
+  on a frame by frame basis within a table (is this true? - mvo).
 
-<para>
-The items themselves are stored in space allocated backwards from
-the end of unallocated space.  Usually, the items are not interpreted.
-However when the item is too long to be placed on a single page or
-when fragmentation of the item is desired, the item is divided and
-each piece is handled as distinct items in the following manner.  The
-first through the next to last piece are placed in an item
-continuation structure
-(<firstterm>ItemContinuationData</firstterm>).
-This structure contains
-itemPointerData
-which points to the next piece and the piece itself.  The last piece
-is handled normally.
-</para>
+ </para>
 
+ <para>
+
+  Following the page header are item identifiers
+  (<firstterm>ItemIdData</firstterm>).  New item identifiers are allocated
+  from the first four bytes of unallocated space.  Because an item
+  identifier is never moved until it is freed, its index may be used to
+  indicate the location of an item on a page.  In fact, every pointer to an
+  item (<firstterm>ItemPointer</firstterm>, also know as
+  <firstterm>CTID</firstterm>) created by
+  <productname>PostgreSQL</productname> consists of a frame number and an
+  index of an item identifier.  An item identifier contains a byte-offset to
+  the start of an item, its length in bytes, and a set of attribute bits
+  which affect its interpretation.
+
+ </para>
+
+ <para>
+ 
+  The items themselves are stored in space allocated backwards from the end
+  of unallocated space.  The exact structure varies depending on what the
+  table is to contain. Sequences and tables both use a structure named
+  <firstterm>HeapTupleHeaderData</firstterm>, describe below.
+
+ </para>
+ 
+ <para>
+ 
+  The final section is the "special section" which may contain anything the
+  access method wishes to store. Ordinary tables do not use this at all
+  (indicated by setting the offset to the pagesize).
+  
+ </para>
+ 
+ <para>
+
+  All tuples are structured the same way. A header of around 31 bytes
+  followed by an optional null bitmask and the data. The header is detailed
+  below in <xref linkend="heaptupleheaderdata-table">.  The null bitmask is
+  only present if the <firstterm>HEAP_HASNULL</firstterm> bit is set in the
+  <firstterm>t_infomask</firstterm>. If it is present it takes up the space
+  between the end of the header and the beginning of the data, as indicated
+  by the <firstterm>t_hoff</firstterm> field. In this list of bits, a 1 bit
+  indicates not-null, a 0 bit is a null.
+  
+ </para>
+ 
+ <table tocentry="1" id="heaptupleheaderdata-table">
+ <title>HeapTupleHeaderData Layout</title>
+ <titleabbrev>HeapTupleHeaderData Layout</titleabbrev>
+ <tgroup cols="4">   
+ <thead>
+  <row> 
+   <entry>Field</entry>
+   <entry>Type</entry>
+   <entry>Length</entry>
+   <entry>Description</entry>
+  </row>
+ </thead>
+ <tbody>
+  <row>
+   <entry>t_oid</entry>
+   <entry>Oid</entry>
+   <entry>4 bytes</entry>
+   <entry>OID of this tuple</entry>
+  </row>
+  <row>
+   <entry>t_cmin</entry>
+   <entry>CommandId</entry>
+   <entry>4 bytes</entry>
+   <entry>insert CID stamp</entry>
+  </row>
+  <row>
+   <entry>t_cmax</entry>
+   <entry>CommandId</entry>
+   <entry>4 bytes</entry>
+   <entry>delete CID stamp</entry>
+  </row>
+  <row>
+   <entry>t_xmin</entry>
+   <entry>TransactionId</entry>
+   <entry>4 bytes</entry>
+   <entry>insert XID stamp</entry>
+  </row>
+  <row>
+   <entry>t_xmax</entry>
+   <entry>TransactionId</entry>
+   <entry>4 bytes</entry>
+   <entry>delete XID stamp</entry>
+  </row>
+  <row>
+   <entry>t_ctid</entry>
+   <entry>ItemPointerData</entry>
+   <entry>6 bytes</entry>
+   <entry>current TID of this or newer tuple</entry>
+  </row>
+  <row>
+   <entry>t_natts</entry>
+   <entry>int16</entry>
+   <entry>2 bytes</entry>
+   <entry>number of attributes</entry>
+  </row>
+  <row>
+   <entry>t_infomask</entry>
+   <entry>uint16</entry>
+   <entry>2 bytes</entry>
+   <entry>Various flags</entry>
+  </row>
+  <row>
+   <entry>t_hoff</entry>
+   <entry>uint8</entry>
+   <entry>1 byte</entry>
+   <entry>length of tuple header. Also offset of data.</entry>
+  </row>
+ </tbody>
+ </tgroup>
+ </table>
+
+ <para>
+ 
+  All the details may be found in src/include/storage/bufpage.h.
+  
+ </para>
+
+ <para>
+ 
+  Interpreting the actual data can only be done with information obtained
+  from other tables, mostly <firstterm>pg_attribute</firstterm>. The
+  particular fields are <firstterm>attlen</firstterm> and
+  <firstterm>attalign</firstterm>. There is no way to directly get a
+  particular attribute, except when there are only fixed width fields and no
+  NULLs. All this trickery is wrapped up in the functions
+  <firstterm>heap_getattr</firstterm>, <firstterm>fastgetattr</firstterm>
+  and <firstterm>heap_getsysattr</firstterm>.
+  
+ </para>
+ <para>
+
+  To read the data you need to examine each attribute in turn. First check
+  whether the field is NULL according to the null bitmap. If it is, go to
+  the next. Then make sure you have the right alignment.  If the field is a
+  fixed width field, then all the bytes are simply placed. If it's a
+  variable length field (attlen == -1) then it's a bit more complicated,
+  using the variable length structure <firstterm>varattrib</firstterm>.
+  Depending on the flags, the data may be either inline, compressed or in
+  another table (TOAST).
+  
+ </para>
 </chapter>
