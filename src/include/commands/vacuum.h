@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.27 2000/04/12 17:16:32 momjian Exp $
+ * $Id: vacuum.h,v 1.28 2000/05/29 15:44:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,8 +125,6 @@ typedef struct VRelStats
 	Size		min_tlen;
 	Size		max_tlen;
 	bool		hasindex;
-	int			va_natts;		/* number of attrs being analyzed */
-	VacAttrStats *vacattrstats;
 	int			num_vtlinks;
 	VTupleLink	vtlinks;
 } VRelStats;

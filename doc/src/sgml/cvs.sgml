@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.8 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.9 2000/05/29 15:44:54 momjian Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -184,7 +184,7 @@ cvs commit
      Do an initial login to the <productname>CVS</productname> server:
 
      <programlisting>
-$ cvs -d :pserver:anoncvs@postgresql.org:/usr/local/cvsroot login
+$ cvs -d :pserver:anoncvs@postgresql.org:/home/projects/pgsql/cvsroot login
      </programlisting>
 
      You will be prompted for a password; enter '<literal>postgresql</literal>'.
@@ -197,7 +197,7 @@ $ cvs -d :pserver:anoncvs@postgresql.org:/usr/local/cvsroot login
     <para>
      Fetch the <productname>Postgres</productname> sources:
      <programlisting>
-cvs -z3 -d :pserver:anoncvs@postgresql.org:/usr/local/cvsroot co -P pgsql
+cvs -z3 -d :pserver:anoncvs@postgresql.org:/home/projects/pgsql/cvsroot co -P pgsql
      </programlisting>
 
      which installs the <productname>Postgres</productname> sources into a 

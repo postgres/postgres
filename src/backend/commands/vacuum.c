@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.151 2000/05/29 01:55:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.152 2000/05/29 15:44:55 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -77,15 +77,17 @@ static void vacuum_shutdown(void);
 static void vac_vacuum(NameData *VacRelP, bool analyze, List *va_cols);
 static VRelList getrels(NameData *VacRelP);
 static void vacuum_rel(Oid relid, bool analyze, List *va_cols);
+static void analyze_rel(Oid relid, List *va_cols);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages, VPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages, VPageList fraged_pages, int nindices, Relation *Irel);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel, VPageList vpl);
 static void vacuum_page(Page page, VPageDescr vpd);
 static void vacuum_index(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples);
 static void scan_index(Relation indrel, int num_tuples);
-static void attr_stats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple);
+static void attr_stats(Relation onerel, int attr_cnt, VacAttrStats *vacattrstats, HeapTuple tuple);
 static void bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len);
-static void update_stats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
+static void update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
+static void update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats);
 static void del_stats(Oid relid, int attcnt, int *attnums);
 static VPageDescr tid_reaped(ItemPointer itemptr, VPageList vpl);
 static void reap_page(VPageList vpl, VPageDescr vpc);
@@ -100,63 +102,7 @@ static int	vac_cmp_offno(const void *left, const void *right);
 static int	vac_cmp_vtlinks(const void *left, const void *right);
 static bool enough_space(VPageDescr vpd, Size len);
 static char *show_rusage(struct rusage * ru0);
-
-
-/*
- * This routines handle a special cross-transaction portal.
- * However it is automatically closed in case of abort.
- */
-void
-CommonSpecialPortalOpen(void)
-{
-	char	   *pname;
-
-
-	if (CommonSpecialPortalInUse)
-		elog(ERROR, "CommonSpecialPortal is in use");
-
-	/*
-	 * Create a portal for safe memory across transactions. We need to
-	 * palloc the name space for it because our hash function expects the
-	 * name to be on a longword boundary.  CreatePortal copies the name to
-	 * safe storage for us.
-	 */
-	pname = pstrdup(VACPNAME);
-	vac_portal = CreatePortal(pname);
-	pfree(pname);
-
-	/*
-	 * Set flag to indicate that vac_portal must be removed after an error.
-	 * This global variable is checked in the transaction manager on xact
-	 * abort, and the routine CommonSpecialPortalClose() is called if
-	 * necessary.
-	 */
-	CommonSpecialPortalInUse = true;
-}
-
-void
-CommonSpecialPortalClose(void)
-{
-	/* Clear flag first, to avoid recursion if PortalDrop elog's */
-	CommonSpecialPortalInUse = false;
-
-	/*
-	 * Release our portal for cross-transaction memory.
-	 */
-	PortalDrop(&vac_portal);
-}
-
-PortalVariableMemory
-CommonSpecialPortalGetMemory(void)
-{
-	return PortalGetVariableMemory(vac_portal);
-}
-
-bool
-CommonSpecialPortalIsOpen(void)
-{
-	return CommonSpecialPortalInUse;
-}
+/* CommonSpecialPortal function at the bottom */
 
 void
 vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
@@ -299,6 +245,11 @@ vac_vacuum(NameData *VacRelP, bool analyze, List *va_cols)
 	/* vacuum each heap relation */
 	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
 		vacuum_rel(cur->vrl_relid, analyze, va_cols);
+
+	/* analyze separately so locking is minimized */
+	if (analyze)
+		for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
+			analyze_rel(cur->vrl_relid, va_cols);
 }
 
 static VRelList
@@ -410,8 +361,7 @@ getrels(NameData *VacRelP)
 static void
 vacuum_rel(Oid relid, bool analyze, List *va_cols)
 {
-	HeapTuple	tuple,
-				typetuple;
+	HeapTuple	tuple;
 	Relation	onerel;
 	VPageListData vacuum_pages; /* List of pages to vacuum and/or clean
 								 * indices */
@@ -474,125 +424,6 @@ vacuum_rel(Oid relid, bool analyze, List *va_cols)
 	vacrelstats->num_pages = vacrelstats->num_tuples = 0;
 	vacrelstats->hasindex = false;
 
-	/*
-	 * we can VACUUM ANALYZE any table except pg_statistic; see
-	 * update_stats
-	 */
-	if (analyze &&
-	 strcmp(RelationGetRelationName(onerel), StatisticRelationName) != 0)
-	{
-		int			attr_cnt,
-				   *attnums = NULL;
-		Form_pg_attribute *attr;
-
-		attr_cnt = onerel->rd_att->natts;
-		attr = onerel->rd_att->attrs;
-
-		if (va_cols != NIL)
-		{
-			int			tcnt = 0;
-			List	   *le;
-
-			if (length(va_cols) > attr_cnt)
-				elog(ERROR, "vacuum: too many attributes specified for relation %s",
-					 RelationGetRelationName(onerel));
-			attnums = (int *) palloc(attr_cnt * sizeof(int));
-			foreach(le, va_cols)
-			{
-				char	   *col = (char *) lfirst(le);
-
-				for (i = 0; i < attr_cnt; i++)
-				{
-					if (namestrcmp(&(attr[i]->attname), col) == 0)
-						break;
-				}
-				if (i < attr_cnt)		/* found */
-					attnums[tcnt++] = i;
-				else
-				{
-					elog(ERROR, "vacuum: there is no attribute %s in %s",
-						 col, RelationGetRelationName(onerel));
-				}
-			}
-			attr_cnt = tcnt;
-		}
-
-		vacrelstats->vacattrstats = (VacAttrStats *) palloc(attr_cnt * sizeof(VacAttrStats));
-
-		for (i = 0; i < attr_cnt; i++)
-		{
-			Operator	func_operator;
-			Form_pg_operator pgopform;
-			VacAttrStats *stats;
-
-			stats = &vacrelstats->vacattrstats[i];
-			stats->attr = palloc(ATTRIBUTE_TUPLE_SIZE);
-			memmove(stats->attr, attr[((attnums) ? attnums[i] : i)], ATTRIBUTE_TUPLE_SIZE);
-			stats->best = stats->guess1 = stats->guess2 = 0;
-			stats->max = stats->min = 0;
-			stats->best_len = stats->guess1_len = stats->guess2_len = 0;
-			stats->max_len = stats->min_len = 0;
-			stats->initialized = false;
-			stats->best_cnt = stats->guess1_cnt = stats->guess1_hits = stats->guess2_hits = 0;
-			stats->max_cnt = stats->min_cnt = stats->null_cnt = stats->nonnull_cnt = 0;
-
-			func_operator = oper("=", stats->attr->atttypid, stats->attr->atttypid, true);
-			if (func_operator != NULL)
-			{
-				pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
-				fmgr_info(pgopform->oprcode, &(stats->f_cmpeq));
-			}
-			else
-				stats->f_cmpeq.fn_addr = NULL;
-
-			func_operator = oper("<", stats->attr->atttypid, stats->attr->atttypid, true);
-			if (func_operator != NULL)
-			{
-				pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
-				fmgr_info(pgopform->oprcode, &(stats->f_cmplt));
-				stats->op_cmplt = oprid(func_operator);
-			}
-			else
-			{
-				stats->f_cmplt.fn_addr = NULL;
-				stats->op_cmplt = InvalidOid;
-			}
-
-			func_operator = oper(">", stats->attr->atttypid, stats->attr->atttypid, true);
-			if (func_operator != NULL)
-			{
-				pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
-				fmgr_info(pgopform->oprcode, &(stats->f_cmpgt));
-			}
-			else
-				stats->f_cmpgt.fn_addr = NULL;
-
-			typetuple = SearchSysCacheTuple(TYPEOID,
-								 ObjectIdGetDatum(stats->attr->atttypid),
-											0, 0, 0);
-			if (HeapTupleIsValid(typetuple))
-			{
-				stats->outfunc = ((Form_pg_type) GETSTRUCT(typetuple))->typoutput;
-				stats->typelem = ((Form_pg_type) GETSTRUCT(typetuple))->typelem;
-			}
-			else
-			{
-				stats->outfunc = InvalidOid;
-				stats->typelem = InvalidOid;
-			}
-		}
-		vacrelstats->va_natts = attr_cnt;
-		/* delete existing pg_statistic rows for relation */
-		del_stats(relid, ((attnums) ? attr_cnt : 0), attnums);
-		if (attnums)
-			pfree(attnums);
-	}
-	else
-	{
-		vacrelstats->va_natts = 0;
-		vacrelstats->vacattrstats = (VacAttrStats *) NULL;
-	}
-
 	GetXmaxRecent(&XmaxRecent);
 
 	/* scan it */
@@ -631,7 +462,7 @@ vacuum_rel(Oid relid, bool analyze, List *va_cols)
 				vacuum_index(&vacuum_pages, Irel[i], vacrelstats->num_tuples, 0);
 		}
 		else
-/* just scan indices to update statistic */
+		/* just scan indices to update statistic */
 		{
 			for (i = 0; i < nindices; i++)
 				scan_index(Irel[i], vacrelstats->num_tuples);
@@ -662,14 +493,194 @@ vacuum_rel(Oid relid, bool analyze, List *va_cols)
 			pfree(fraged_pages.vpl_pagedesc);
 	}
 
-	/* update statistics in pg_class */
-	update_stats(vacrelstats->relid, vacrelstats->num_pages,
-			vacrelstats->num_tuples, vacrelstats->hasindex, vacrelstats);
-
 	/* all done with this class, but hold lock until commit */
 	heap_close(onerel, NoLock);
 
+	/* update statistics in pg_class */
+	update_relstats(vacrelstats->relid, vacrelstats->num_pages,
+			vacrelstats->num_tuples, vacrelstats->hasindex, vacrelstats);
+
 	/* next command frees attribute stats */
+	CommitTransactionCommand();
+}
+
+/*
+ *	analyze_rel() -- analyze relation
+ */
+static void
+analyze_rel(Oid relid, List *va_cols)
+{
+	HeapTuple	tuple,
+				typetuple;
+	Relation	onerel;
+	int32		i;
+	int			attr_cnt,
+			   *attnums = NULL;
+	Form_pg_attribute *attr;
+	VacAttrStats *vacattrstats;
+	HeapScanDesc scan;
+
+	StartTransactionCommand();
+
+	/*
+	 * Check for user-requested abort.	Note we want this to be inside a
+	 * transaction, so xact.c doesn't issue useless NOTICE.
+	 */
+	if (QueryCancel)
+		CancelQuery();
+
+	/*
+	 * Race condition -- if the pg_class tuple has gone away since the
+	 * last time we saw it, we don't need to vacuum it.
+	 */
+	tuple = SearchSysCacheTuple(RELOID,
+								ObjectIdGetDatum(relid),
+								0, 0, 0);
+	/*
+	 * We can VACUUM ANALYZE any table except pg_statistic.
+	 * see update_relstats
+	 */
+	if (!HeapTupleIsValid(tuple) ||
+		strcmp(NameStr(((Form_pg_class) GETSTRUCT(tuple))->relname),
+				StatisticRelationName) == 0)
+	{
+		CommitTransactionCommand();
+		return;
+	}
+
+	/*
+	 * Open the class, get an exclusive lock on it, and check permissions.
+	 *
+	 * Note we choose to treat permissions failure as a NOTICE and keep
+	 * trying to vacuum the rest of the DB --- is this appropriate?
+	 */
+	onerel = heap_open(relid, AccessShareLock);
+
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(GetPgUserName(), RelationGetRelationName(onerel),
+					   RELNAME))
+	{
+		/* we already did an elog during vacuum
+		elog(NOTICE, "Skipping \"%s\" --- only table owner can VACUUM it",
+			 RelationGetRelationName(onerel));
+		*/
+		heap_close(onerel, AccessExclusiveLock);
+		CommitTransactionCommand();
+		return;
+	}
+#endif
+
+	attr_cnt = onerel->rd_att->natts;
+	attr = onerel->rd_att->attrs;
+
+	if (va_cols != NIL)
+	{
+		int			tcnt = 0;
+		List	   *le;
+
+		if (length(va_cols) > attr_cnt)
+			elog(ERROR, "vacuum: too many attributes specified for relation %s",
+				 RelationGetRelationName(onerel));
+		attnums = (int *) palloc(attr_cnt * sizeof(int));
+		foreach(le, va_cols)
+		{
+			char	   *col = (char *) lfirst(le);
+
+			for (i = 0; i < attr_cnt; i++)
+			{
+				if (namestrcmp(&(attr[i]->attname), col) == 0)
+					break;
+			}
+			if (i < attr_cnt)		/* found */
+				attnums[tcnt++] = i;
+			else
+			{
+				elog(ERROR, "vacuum: there is no attribute %s in %s",
+					 col, RelationGetRelationName(onerel));
+			}
+		}
+		attr_cnt = tcnt;
+	}
+
+	vacattrstats = (VacAttrStats *) palloc(attr_cnt * sizeof(VacAttrStats));
+
+	for (i = 0; i < attr_cnt; i++)
+	{
+		Operator	func_operator;
+		Form_pg_operator pgopform;
+		VacAttrStats *stats;
+
+		stats = &vacattrstats[i];
+		stats->attr = palloc(ATTRIBUTE_TUPLE_SIZE);
+		memmove(stats->attr, attr[((attnums) ? attnums[i] : i)], ATTRIBUTE_TUPLE_SIZE);
+		stats->best = stats->guess1 = stats->guess2 = 0;
+		stats->max = stats->min = 0;
+		stats->best_len = stats->guess1_len = stats->guess2_len = 0;
+		stats->max_len = stats->min_len = 0;
+		stats->initialized = false;
+		stats->best_cnt = stats->guess1_cnt = stats->guess1_hits = stats->guess2_hits = 0;
+		stats->max_cnt = stats->min_cnt = stats->null_cnt = stats->nonnull_cnt = 0;
+
+		func_operator = oper("=", stats->attr->atttypid, stats->attr->atttypid, true);
+		if (func_operator != NULL)
+		{
+			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
+			fmgr_info(pgopform->oprcode, &(stats->f_cmpeq));
+		}
+		else
+			stats->f_cmpeq.fn_addr = NULL;
+
+		func_operator = oper("<", stats->attr->atttypid, stats->attr->atttypid, true);
+		if (func_operator != NULL)
+		{
+			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
+			fmgr_info(pgopform->oprcode, &(stats->f_cmplt));
+			stats->op_cmplt = oprid(func_operator);
+		}
+		else
+		{
+			stats->f_cmplt.fn_addr = NULL;
+			stats->op_cmplt = InvalidOid;
+		}
+
+		func_operator = oper(">", stats->attr->atttypid, stats->attr->atttypid, true);
+		if (func_operator != NULL)
+		{
+			pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
+			fmgr_info(pgopform->oprcode, &(stats->f_cmpgt));
+		}
+		else
+			stats->f_cmpgt.fn_addr = NULL;
+
+		typetuple = SearchSysCacheTuple(TYPEOID,
+							 ObjectIdGetDatum(stats->attr->atttypid),
+										0, 0, 0);
+		if (HeapTupleIsValid(typetuple))
+		{
+			stats->outfunc = ((Form_pg_type) GETSTRUCT(typetuple))->typoutput;
+			stats->typelem = ((Form_pg_type) GETSTRUCT(typetuple))->typelem;
+		}
+		else
+		{
+			stats->outfunc = InvalidOid;
+			stats->typelem = InvalidOid;
+		}
+	}
+	/* delete existing pg_statistic rows for relation */
+	del_stats(relid, ((attnums) ? attr_cnt : 0), attnums);
+
+	scan = heap_beginscan(onerel, false, SnapshotNow, 0, NULL);
+
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		attr_stats(onerel, attr_cnt, vacattrstats, tuple);
+
+	heap_endscan(scan);
+
+	heap_close(onerel, AccessShareLock);
+
+	/* update statistics in pg_class */
+	update_attstats(relid, attr_cnt, vacattrstats);
+
 	CommitTransactionCommand();
 }
 
@@ -979,7 +990,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					min_tlen = tuple.t_len;
 				if (tuple.t_len > max_tlen)
 					max_tlen = tuple.t_len;
-				attr_stats(onerel, vacrelstats, &tuple);
 			}
 		}
 
@@ -2106,7 +2116,7 @@ scan_index(Relation indrel, int num_tuples)
 
 	/* now update statistics in pg_class */
 	nipages = RelationGetNumberOfBlocks(indrel);
-	update_stats(RelationGetRelid(indrel), nipages, nitups, false, NULL);
+	update_relstats(RelationGetRelid(indrel), nipages, nitups, false, NULL);
 
 	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u. %s",
 		 RelationGetRelationName(indrel), nipages, nitups,
@@ -2183,7 +2193,7 @@ vacuum_index(VPageList vpl, Relation indrel, int num_tuples, int keep_tuples)
 
 	/* now update statistics in pg_class */
 	num_pages = RelationGetNumberOfBlocks(indrel);
-	update_stats(RelationGetRelid(indrel), num_pages, num_index_tuples, false, NULL);
+	update_relstats(RelationGetRelid(indrel), num_pages, num_index_tuples, false, NULL);
 
 	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %u: Deleted %u. %s",
 		 RelationGetRelationName(indrel), num_pages,
@@ -2263,11 +2273,9 @@ tid_reaped(ItemPointer itemptr, VPageList vpl)
  *
  */
 static void
-attr_stats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple)
+attr_stats(Relation onerel, int attr_cnt, VacAttrStats *vacattrstats, HeapTuple tuple)
 {
-	int			i,
-				attr_cnt = vacrelstats->va_natts;
-	VacAttrStats *vacattrstats = vacrelstats->vacattrstats;
+	int			i;
 	TupleDesc	tupDesc = onerel->rd_att;
 	Datum		value;
 	bool		isnull;
@@ -2387,7 +2395,7 @@ bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
 }
 
 /*
- *	update_stats() -- update statistics for one relation
+ *	update_relstats() -- update statistics for one relation
  *
  *		Statistics are stored in several places: the pg_class row for the
  *		relation has stats about the whole relation, the pg_attribute rows
@@ -2408,29 +2416,15 @@ bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int *bucket_len)
  *		Updating pg_class's own statistics would be especially tricky.
  *		Of course, this only works for fixed-size never-null columns, but
  *		these are.
- *
- *		Updates of pg_attribute statistics are handled in the same way
- *		for the same reasons.
- *
- *		To keep things simple, we punt for pg_statistic, and don't try
- *		to compute or store rows for pg_statistic itself in pg_statistic.
- *		This could possibly be made to work, but it's not worth the trouble.
  */
 static void
-update_stats(Oid relid, int num_pages, int num_tuples, bool hasindex,
+update_relstats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 			VRelStats *vacrelstats)
 {
-	Relation	rd,
-				ad,
-				sd;
-	HeapScanDesc scan;
+	Relation	rd;
 	HeapTupleData rtup;
-	HeapTuple	ctup,
-				atup,
-				stup;
+	HeapTuple	ctup;
 	Form_pg_class pgcform;
-	ScanKeyData askey;
-	Form_pg_attribute attp;
 	Buffer		buffer;
 
 	/*
@@ -2461,202 +2455,217 @@ update_stats(Oid relid, int num_pages, int num_tuples, bool hasindex,
 	WriteBuffer(buffer);
 
 	heap_close(rd, RowExclusiveLock);
+}
 
-	if (vacrelstats != NULL && vacrelstats->va_natts > 0)
+/*
+ *	update_attstats() -- update attribute statistics for one relation
+ *
+ *		Updates of pg_attribute statistics are handled by over-write.
+ *		for reasons described above.
+ *
+ *		To keep things simple, we punt for pg_statistic, and don't try
+ *		to compute or store rows for pg_statistic itself in pg_statistic.
+ *		This could possibly be made to work, but it's not worth the trouble.
+ */
+static void
+update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
+{
+	Relation	ad,
+				sd;
+	HeapScanDesc scan;
+	HeapTuple	atup,
+				stup;
+	ScanKeyData askey;
+	Form_pg_attribute attp;
+
+	ad = heap_openr(AttributeRelationName, RowExclusiveLock);
+	sd = heap_openr(StatisticRelationName, RowExclusiveLock);
+
+	/* Find pg_attribute rows for this relation */
+	ScanKeyEntryInitialize(&askey, 0, Anum_pg_attribute_attrelid,
+						   F_INT4EQ, relid);
+
+	scan = heap_beginscan(ad, false, SnapshotNow, 1, &askey);
+
+	while (HeapTupleIsValid(atup = heap_getnext(scan, 0)))
 	{
-		VacAttrStats *vacattrstats = vacrelstats->vacattrstats;
-		int			natts = vacrelstats->va_natts;
+		int			i;
+		VacAttrStats *stats;
 
-		ad = heap_openr(AttributeRelationName, RowExclusiveLock);
-		sd = heap_openr(StatisticRelationName, RowExclusiveLock);
+		attp = (Form_pg_attribute) GETSTRUCT(atup);
+		if (attp->attnum <= 0)		/* skip system attributes for now */
+			continue;
 
-		/* Find pg_attribute rows for this relation */
-		ScanKeyEntryInitialize(&askey, 0, Anum_pg_attribute_attrelid,
-							   F_INT4EQ, relid);
-
-		scan = heap_beginscan(ad, false, SnapshotNow, 1, &askey);
-
-		while (HeapTupleIsValid(atup = heap_getnext(scan, 0)))
+		for (i = 0; i < natts; i++)
 		{
-			int			i;
-			VacAttrStats *stats;
+			if (attp->attnum == vacattrstats[i].attr->attnum)
+				break;
+		}
+		if (i >= natts)
+			continue;		/* skip attr if no stats collected */
+		stats = &(vacattrstats[i]);
 
-			attp = (Form_pg_attribute) GETSTRUCT(atup);
-			if (attp->attnum <= 0)		/* skip system attributes for now */
-				continue;
+		if (VacAttrStatsEqValid(stats))
+		{
+			float32data selratio;	/* average ratio of rows selected
+									 * for a random constant */
 
-			for (i = 0; i < natts; i++)
+			/* Compute disbursion */
+			if (stats->nonnull_cnt == 0 && stats->null_cnt == 0)
 			{
-				if (attp->attnum == vacattrstats[i].attr->attnum)
-					break;
+
+				/*
+				 * empty relation, so put a dummy value in
+				 * attdisbursion
+				 */
+				selratio = 0;
 			}
-			if (i >= natts)
-				continue;		/* skip attr if no stats collected */
-			stats = &(vacattrstats[i]);
-
-			if (VacAttrStatsEqValid(stats))
+			else if (stats->null_cnt <= 1 && stats->best_cnt == 1)
 			{
-				float32data selratio;	/* average ratio of rows selected
-										 * for a random constant */
-
-				/* Compute disbursion */
-				if (stats->nonnull_cnt == 0 && stats->null_cnt == 0)
+				/*
+				 * looks like we have a unique-key attribute --- flag
+				 * this with special -1.0 flag value.
+				 *
+				 * The correct disbursion is 1.0/numberOfRows, but since
+				 * the relation row count can get updated without
+				 * recomputing disbursion, we want to store a
+				 * "symbolic" value and figure 1.0/numberOfRows on the
+				 * fly.
+				 */
+				selratio = -1;
+			}
+			else
+			{
+				if (VacAttrStatsLtGtValid(stats) &&
+				stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
 				{
 
 					/*
-					 * empty relation, so put a dummy value in
-					 * attdisbursion
+					 * exact result when there are just 1 or 2
+					 * values...
 					 */
-					selratio = 0;
-				}
-				else if (stats->null_cnt <= 1 && stats->best_cnt == 1)
-				{
+					double		min_cnt_d = stats->min_cnt,
+								max_cnt_d = stats->max_cnt,
+								null_cnt_d = stats->null_cnt;
+					double		total = ((double) stats->nonnull_cnt) + null_cnt_d;
 
-					/*
-					 * looks like we have a unique-key attribute --- flag
-					 * this with special -1.0 flag value.
-					 *
-					 * The correct disbursion is 1.0/numberOfRows, but since
-					 * the relation row count can get updated without
-					 * recomputing disbursion, we want to store a
-					 * "symbolic" value and figure 1.0/numberOfRows on the
-					 * fly.
-					 */
-					selratio = -1;
+					selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) / (total * total);
 				}
 				else
 				{
-					if (VacAttrStatsLtGtValid(stats) &&
-					stats->min_cnt + stats->max_cnt == stats->nonnull_cnt)
-					{
+					double		most = (double) (stats->best_cnt > stats->null_cnt ? stats->best_cnt : stats->null_cnt);
+					double		total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
 
-						/*
-						 * exact result when there are just 1 or 2
-						 * values...
-						 */
-						double		min_cnt_d = stats->min_cnt,
-									max_cnt_d = stats->max_cnt,
-									null_cnt_d = stats->null_cnt;
-						double		total = ((double) stats->nonnull_cnt) + null_cnt_d;
-
-						selratio = (min_cnt_d * min_cnt_d + max_cnt_d * max_cnt_d + null_cnt_d * null_cnt_d) / (total * total);
-					}
-					else
-					{
-						double		most = (double) (stats->best_cnt > stats->null_cnt ? stats->best_cnt : stats->null_cnt);
-						double		total = ((double) stats->nonnull_cnt) + ((double) stats->null_cnt);
-
-						/*
-						 * we assume count of other values are 20% of best
-						 * count in table
-						 */
-						selratio = (most * most + 0.20 * most * (total - most)) / (total * total);
-					}
-					/* Make sure calculated values are in-range */
-					if (selratio < 0.0)
-						selratio = 0.0;
-					else if (selratio > 1.0)
-						selratio = 1.0;
+					/*
+					 * we assume count of other values are 20% of best
+					 * count in table
+					 */
+					selratio = (most * most + 0.20 * most * (total - most)) / (total * total);
 				}
+				/* Make sure calculated values are in-range */
+				if (selratio < 0.0)
+					selratio = 0.0;
+				else if (selratio > 1.0)
+					selratio = 1.0;
+			}
 
-				/* overwrite the existing statistics in the tuple */
-				attp->attdisbursion = selratio;
+			/* overwrite the existing statistics in the tuple */
+			attp->attdisbursion = selratio;
 
-				/* invalidate the tuple in the cache and write the buffer */
-				RelationInvalidateHeapTuple(ad, atup);
-				WriteNoReleaseBuffer(scan->rs_cbuf);
+			/* invalidate the tuple in the cache and write the buffer */
+			RelationInvalidateHeapTuple(ad, atup);
+			WriteNoReleaseBuffer(scan->rs_cbuf);
 
-				/*
-				 * Create pg_statistic tuples for the relation, if we have
-				 * gathered the right data.  del_stats() previously
-				 * deleted all the pg_statistic tuples for the rel, so we
-				 * just have to insert new ones here.
-				 *
-				 * Note vacuum_rel() has seen to it that we won't come here
-				 * when vacuuming pg_statistic itself.
+			/*
+			 * Create pg_statistic tuples for the relation, if we have
+			 * gathered the right data.  del_stats() previously
+			 * deleted all the pg_statistic tuples for the rel, so we
+			 * just have to insert new ones here.
+			 *
+			 * Note vacuum_rel() has seen to it that we won't come here
+			 * when vacuuming pg_statistic itself.
+			 */
+			if (VacAttrStatsLtGtValid(stats) && stats->initialized)
+			{
+				float32data nullratio;
+				float32data bestratio;
+				FmgrInfo	out_function;
+				char	   *out_string;
+				double		best_cnt_d = stats->best_cnt,
+							null_cnt_d = stats->null_cnt,
+							nonnull_cnt_d = stats->nonnull_cnt;		/* prevent overflow */
+				Datum		values[Natts_pg_statistic];
+				char		nulls[Natts_pg_statistic];
+
+				nullratio = null_cnt_d / (nonnull_cnt_d + null_cnt_d);
+				bestratio = best_cnt_d / (nonnull_cnt_d + null_cnt_d);
+
+				fmgr_info(stats->outfunc, &out_function);
+
+				for (i = 0; i < Natts_pg_statistic; ++i)
+					nulls[i] = ' ';
+
+				/* ----------------
+				 *	initialize values[]
+				 * ----------------
 				 */
-				if (VacAttrStatsLtGtValid(stats) && stats->initialized)
+				i = 0;
+				values[i++] = (Datum) relid;		/* starelid */
+				values[i++] = (Datum) attp->attnum; /* staattnum */
+				values[i++] = (Datum) stats->op_cmplt;		/* staop */
+				/* hack: this code knows float4 is pass-by-ref */
+				values[i++] = PointerGetDatum(&nullratio);	/* stanullfrac */
+				values[i++] = PointerGetDatum(&bestratio);	/* stacommonfrac */
+				out_string = (*fmgr_faddr(&out_function)) (stats->best, stats->typelem, stats->attr->atttypmod);
+				values[i++] = PointerGetDatum(textin(out_string));	/* stacommonval */
+				pfree(out_string);
+				out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->typelem, stats->attr->atttypmod);
+				values[i++] = PointerGetDatum(textin(out_string));	/* staloval */
+				pfree(out_string);
+				out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->typelem, stats->attr->atttypmod);
+				values[i++] = PointerGetDatum(textin(out_string));	/* stahival */
+				pfree(out_string);
+
+				stup = heap_formtuple(sd->rd_att, values, nulls);
+
+				/* ----------------
+				 *	Watch out for oversize tuple, which can happen if
+				 *	all three of the saved data values are long.
+				 *	Our fallback strategy is just to not store the
+				 *	pg_statistic tuple at all in that case.  (We could
+				 *	replace the values by NULLs and still store the
+				 *	numeric stats, but presently selfuncs.c couldn't
+				 *	do anything useful with that case anyway.)
+				 *
+				 *	We could reduce the probability of overflow, but not
+				 *	prevent it, by storing the data values as compressed
+				 *	text; is that worth doing?	The problem should go
+				 *	away whenever long tuples get implemented...
+				 * ----------------
+				 */
+				if (MAXALIGN(stup->t_len) <= MaxTupleSize)
 				{
-					float32data nullratio;
-					float32data bestratio;
-					FmgrInfo	out_function;
-					char	   *out_string;
-					double		best_cnt_d = stats->best_cnt,
-								null_cnt_d = stats->null_cnt,
-								nonnull_cnt_d = stats->nonnull_cnt;		/* prevent overflow */
-					Datum		values[Natts_pg_statistic];
-					char		nulls[Natts_pg_statistic];
+					/* OK, store tuple and update indexes too */
+					Relation	irelations[Num_pg_statistic_indices];
 
-					nullratio = null_cnt_d / (nonnull_cnt_d + null_cnt_d);
-					bestratio = best_cnt_d / (nonnull_cnt_d + null_cnt_d);
-
-					fmgr_info(stats->outfunc, &out_function);
-
-					for (i = 0; i < Natts_pg_statistic; ++i)
-						nulls[i] = ' ';
-
-					/* ----------------
-					 *	initialize values[]
-					 * ----------------
-					 */
-					i = 0;
-					values[i++] = (Datum) relid;		/* starelid */
-					values[i++] = (Datum) attp->attnum; /* staattnum */
-					values[i++] = (Datum) stats->op_cmplt;		/* staop */
-					/* hack: this code knows float4 is pass-by-ref */
-					values[i++] = PointerGetDatum(&nullratio);	/* stanullfrac */
-					values[i++] = PointerGetDatum(&bestratio);	/* stacommonfrac */
-					out_string = (*fmgr_faddr(&out_function)) (stats->best, stats->typelem, stats->attr->atttypmod);
-					values[i++] = PointerGetDatum(textin(out_string));	/* stacommonval */
-					pfree(out_string);
-					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->typelem, stats->attr->atttypmod);
-					values[i++] = PointerGetDatum(textin(out_string));	/* staloval */
-					pfree(out_string);
-					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->typelem, stats->attr->atttypmod);
-					values[i++] = PointerGetDatum(textin(out_string));	/* stahival */
-					pfree(out_string);
-
-					stup = heap_formtuple(sd->rd_att, values, nulls);
-
-					/* ----------------
-					 *	Watch out for oversize tuple, which can happen if
-					 *	all three of the saved data values are long.
-					 *	Our fallback strategy is just to not store the
-					 *	pg_statistic tuple at all in that case.  (We could
-					 *	replace the values by NULLs and still store the
-					 *	numeric stats, but presently selfuncs.c couldn't
-					 *	do anything useful with that case anyway.)
-					 *
-					 *	We could reduce the probability of overflow, but not
-					 *	prevent it, by storing the data values as compressed
-					 *	text; is that worth doing?	The problem should go
-					 *	away whenever long tuples get implemented...
-					 * ----------------
-					 */
-					if (MAXALIGN(stup->t_len) <= MaxTupleSize)
-					{
-						/* OK, store tuple and update indexes too */
-						Relation	irelations[Num_pg_statistic_indices];
-
-						heap_insert(sd, stup);
-						CatalogOpenIndices(Num_pg_statistic_indices, Name_pg_statistic_indices, irelations);
-						CatalogIndexInsert(irelations, Num_pg_statistic_indices, sd, stup);
-						CatalogCloseIndices(Num_pg_statistic_indices, irelations);
-					}
-
-					/* release allocated space */
-					pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval - 1]));
-					pfree(DatumGetPointer(values[Anum_pg_statistic_staloval - 1]));
-					pfree(DatumGetPointer(values[Anum_pg_statistic_stahival - 1]));
-					heap_freetuple(stup);
+					heap_insert(sd, stup);
+					CatalogOpenIndices(Num_pg_statistic_indices, Name_pg_statistic_indices, irelations);
+					CatalogIndexInsert(irelations, Num_pg_statistic_indices, sd, stup);
+					CatalogCloseIndices(Num_pg_statistic_indices, irelations);
 				}
+
+				/* release allocated space */
+				pfree(DatumGetPointer(values[Anum_pg_statistic_stacommonval - 1]));
+				pfree(DatumGetPointer(values[Anum_pg_statistic_staloval - 1]));
+				pfree(DatumGetPointer(values[Anum_pg_statistic_stahival - 1]));
+				heap_freetuple(stup);
 			}
 		}
-		heap_endscan(scan);
-		/* close rels, but hold locks till upcoming commit */
-		heap_close(ad, NoLock);
-		heap_close(sd, NoLock);
 	}
+	heap_endscan(scan);
+	/* close rels, but hold locks till upcoming commit */
+	heap_close(ad, NoLock);
+	heap_close(sd, NoLock);
 }
 
 /*
@@ -2865,6 +2874,62 @@ vac_cmp_vtlinks(const void *left, const void *right)
 		return 1;
 	return 0;
 
+}
+
+/*
+ * This routines handle a special cross-transaction portal.
+ * However it is automatically closed in case of abort.
+ */
+void
+CommonSpecialPortalOpen(void)
+{
+	char	   *pname;
+
+
+	if (CommonSpecialPortalInUse)
+		elog(ERROR, "CommonSpecialPortal is in use");
+
+	/*
+	 * Create a portal for safe memory across transactions. We need to
+	 * palloc the name space for it because our hash function expects the
+	 * name to be on a longword boundary.  CreatePortal copies the name to
+	 * safe storage for us.
+	 */
+	pname = pstrdup(VACPNAME);
+	vac_portal = CreatePortal(pname);
+	pfree(pname);
+
+	/*
+	 * Set flag to indicate that vac_portal must be removed after an error.
+	 * This global variable is checked in the transaction manager on xact
+	 * abort, and the routine CommonSpecialPortalClose() is called if
+	 * necessary.
+	 */
+	CommonSpecialPortalInUse = true;
+}
+
+void
+CommonSpecialPortalClose(void)
+{
+	/* Clear flag first, to avoid recursion if PortalDrop elog's */
+	CommonSpecialPortalInUse = false;
+
+	/*
+	 * Release our portal for cross-transaction memory.
+	 */
+	PortalDrop(&vac_portal);
+}
+
+PortalVariableMemory
+CommonSpecialPortalGetMemory(void)
+{
+	return PortalGetVariableMemory(vac_portal);
+}
+
+bool
+CommonSpecialPortalIsOpen(void)
+{
+	return CommonSpecialPortalInUse;
 }
 
 static void
