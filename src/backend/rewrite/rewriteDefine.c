@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.77 2002/08/05 03:29:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.78 2002/09/02 02:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,24 +48,23 @@ InsertRule(char *rulname,
 		   AttrNumber evslot_index,
 		   bool evinstead,
 		   Node *event_qual,
-		   List *action)
+		   List *action,
+		   bool replace)
 {
 	char	   *evqual = nodeToString(event_qual);
 	char	   *actiontree = nodeToString((Node *) action);
 	int			i;
 	Datum		values[Natts_pg_rewrite];
 	char		nulls[Natts_pg_rewrite];
+	char		replaces[Natts_pg_rewrite];
 	NameData	rname;
 	Relation	pg_rewrite_desc;
-	TupleDesc	tupDesc;
-	HeapTuple	tup;
+	HeapTuple	tup,
+				oldtup;
 	Oid			rewriteObjectId;
 	ObjectAddress	myself,
 					referenced;
-
-	if (IsDefinedRewriteRule(eventrel_oid, rulname))
-		elog(ERROR, "Attempt to insert rule \"%s\" failed: already exists",
-			 rulname);
+	bool		is_update = false;
 
 	/*
 	 * Set up *nulls and *values arrays
@@ -83,21 +82,60 @@ InsertRule(char *rulname,
 	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));	/* ev_action */
 
 	/*
-	 * create a new pg_rewrite tuple
+	 * Ready to store new pg_rewrite tuple
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName, RowExclusiveLock);
 
-	tupDesc = pg_rewrite_desc->rd_att;
+	/*
+	 * Check to see if we are replacing an existing tuple
+	 */
+	oldtup = SearchSysCache(RULERELNAME,
+							ObjectIdGetDatum(eventrel_oid),
+							PointerGetDatum(rulname),
+							0, 0);
 
-	tup = heap_formtuple(tupDesc,
-						 values,
-						 nulls);
+	if (HeapTupleIsValid(oldtup))
+	{
+		if (!replace)
+			elog(ERROR,"Attempt to insert rule \"%s\" failed: already exists",
+				 rulname);
 
-	rewriteObjectId = simple_heap_insert(pg_rewrite_desc, tup);
+		/*
+		 * When replacing, we don't need to replace every attribute
+		 */
+		MemSet(replaces, ' ', sizeof(replaces));
+		replaces[Anum_pg_rewrite_ev_attr - 1] = 'r';
+		replaces[Anum_pg_rewrite_ev_type - 1] = 'r';
+		replaces[Anum_pg_rewrite_is_instead - 1] = 'r';
+		replaces[Anum_pg_rewrite_ev_qual - 1] = 'r';
+		replaces[Anum_pg_rewrite_ev_action - 1] = 'r';
 
+		tup = heap_modifytuple(oldtup, pg_rewrite_desc,
+							   values, nulls, replaces);
+
+		simple_heap_update(pg_rewrite_desc, &tup->t_self, tup);
+
+		ReleaseSysCache(oldtup);
+
+		rewriteObjectId = HeapTupleGetOid(tup);
+		is_update = true;
+	}
+	else
+	{
+		tup = heap_formtuple(pg_rewrite_desc->rd_att, values, nulls);
+
+		rewriteObjectId = simple_heap_insert(pg_rewrite_desc, tup);
+	}
+
+	/* Need to update indexes in either case */
 	CatalogUpdateIndexes(pg_rewrite_desc, tup);
 
 	heap_freetuple(tup);
+
+	/* If replacing, get rid of old dependencies and make new ones */
+	if (is_update)
+		deleteDependencyRecordsFor(RelationGetRelid(pg_rewrite_desc),
+								   rewriteObjectId);
 
 	/*
 	 * Install dependency on rule's relation to ensure it will go away
@@ -114,13 +152,14 @@ InsertRule(char *rulname,
 	referenced.objectSubId = 0;
 
 	recordDependencyOn(&myself, &referenced,
-		(evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
+					   (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
 	/*
 	 * Also install dependencies on objects referenced in action and qual.
 	 */
 	recordDependencyOnExpr(&myself, (Node *) action, NIL,
 						   DEPENDENCY_NORMAL);
+
 	if (event_qual != NULL)
 	{
 		/* Find query containing OLD/NEW rtable entries */
@@ -143,6 +182,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	Node	   *event_qual = stmt->whereClause;
 	CmdType		event_type = stmt->event;
 	bool		is_instead = stmt->instead;
+	bool		replace = stmt->replace;
 	List	   *action = stmt->actions;
 	Relation	event_relation;
 	Oid			ev_relid;
@@ -232,7 +272,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * event relation, ...
 		 */
 		i = 0;
-		foreach(tllist, query->targetList)
+		foreach (tllist, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tllist);
 			Resdom	   *resdom = tle->resdom;
@@ -282,7 +322,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * ... there must not be another ON SELECT rule already ...
 		 */
-		if (event_relation->rd_rules != NULL)
+		if (!replace && event_relation->rd_rules != NULL)
 		{
 			for (i = 0; i < event_relation->rd_rules->numLocks; i++)
 			{
@@ -364,7 +404,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 							event_attno,
 							is_instead,
 							event_qual,
-							action);
+							action,
+							replace);
 
 		/*
 		 * Set pg_class 'relhasrules' field TRUE for event relation. If

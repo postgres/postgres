@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.364 2002/08/29 00:17:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.365 2002/09/02 02:13:01 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3346,18 +3346,19 @@ opt_column: COLUMN									{ $$ = COLUMN; }
  *
  *****************************************************************************/
 
-RuleStmt:	CREATE RULE name AS
+RuleStmt:	CREATE opt_or_replace RULE name AS
 			{ QueryIsRule=TRUE; }
 			ON event TO qualified_name where_clause
 			DO opt_instead RuleActionList
 				{
 					RuleStmt *n = makeNode(RuleStmt);
-					n->relation = $9;
-					n->rulename = $3;
-					n->whereClause = $10;
-					n->event = $7;
-					n->instead = $12;
-					n->actions = $13;
+					n->replace = $2;
+					n->relation = $10;
+					n->rulename = $4;
+					n->whereClause = $11;
+					n->event = $8;
+					n->instead = $13;
+					n->actions = $14;
 					$$ = (Node *)n;
 					QueryIsRule=FALSE;
 				}
@@ -3537,12 +3538,14 @@ opt_trans:	WORK									{}
  *
  *****************************************************************************/
 
-ViewStmt:	CREATE VIEW qualified_name opt_column_list AS SelectStmt
+ViewStmt:	CREATE opt_or_replace VIEW qualified_name opt_column_list 
+				AS SelectStmt
 				{
 					ViewStmt *n = makeNode(ViewStmt);
-					n->view = $3;
-					n->aliases = $4;
-					n->query = (Query *) $6;
+					n->replace = $2;
+					n->view = $4;
+					n->aliases = $5;
+					n->query = (Query *) $7;
 					$$ = (Node *)n;
 				}
 		;

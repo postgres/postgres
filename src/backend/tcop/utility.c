@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.175 2002/08/30 19:23:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.176 2002/09/02 02:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,7 +595,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ViewStmt   *stmt = (ViewStmt *) parsetree;
 
-				DefineView(stmt->view, stmt->query);
+				DefineView(stmt->view, stmt->query, stmt->replace);
 			}
 			break;
 

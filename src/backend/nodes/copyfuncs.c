@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.209 2002/08/31 22:10:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.210 2002/09/02 02:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2173,6 +2173,7 @@ _copyRuleStmt(RuleStmt *from)
 	Node_Copy(from, newnode, whereClause);
 	newnode->event = from->event;
 	newnode->instead = from->instead;
+	newnode->replace = from->replace;
 	Node_Copy(from, newnode, actions);
 
 	return newnode;
@@ -2238,6 +2239,7 @@ _copyViewStmt(ViewStmt *from)
 	Node_Copy(from, newnode, view);
 	Node_Copy(from, newnode, aliases);
 	Node_Copy(from, newnode, query);
+	newnode->replace = from->replace;
 
 	return newnode;
 }

@@ -6,43 +6,43 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.68 2002/08/30 19:23:19 tgl Exp $
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.69 2002/09/02 02:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/xact.h"
+#include "access/heapam.h"
 #include "catalog/dependency.h"
-#include "catalog/heap.h"
 #include "catalog/namespace.h"
 #include "commands/tablecmds.h"
 #include "commands/view.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_relation.h"
-#include "parser/parse_type.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
-#include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
-#include "utils/syscache.h"
+#include "utils/acl.h"
+#include "utils/lsyscache.h"
 
 
 /*---------------------------------------------------------------------
  * DefineVirtualRelation
  *
- * Create the "view" relation.
- * `DefineRelation' does all the work, we just provide the correct
- * arguments!
- *
- * If the relation already exists, then 'DefineRelation' will abort
- * the xact...
+ * Create the "view" relation. `DefineRelation' does all the work,
+ * we just provide the correct arguments ... at least when we're
+ * creating a view.  If we're updating an existing view, we have to
+ * work harder.
  *---------------------------------------------------------------------
  */
 static Oid
-DefineVirtualRelation(const RangeVar *relation, List *tlist)
+DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 {
+	Oid			viewOid,
+				namespaceId;
 	CreateStmt *createStmt = makeNode(CreateStmt);
 	List	   *attrList,
 			   *t;
@@ -52,7 +52,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist)
 	 * the (non-junk) targetlist items from the view's SELECT list.
 	 */
 	attrList = NIL;
-	foreach(t, tlist)
+	foreach (t, tlist)
 	{
 		TargetEntry *entry = lfirst(t);
 		Resdom	   *res = entry->resdom;
@@ -83,23 +83,74 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist)
 		elog(ERROR, "attempted to define virtual relation with no attrs");
 
 	/*
-	 * now create the parameters for keys/inheritance etc. All of them are
-	 * nil...
+	 * Check to see if we want to replace an existing view.
 	 */
-	createStmt->relation = (RangeVar *) relation;
-	createStmt->tableElts = attrList;
-	createStmt->inhRelations = NIL;
-	createStmt->constraints = NIL;
-	createStmt->hasoids = false;
+	namespaceId = RangeVarGetCreationNamespace(relation);
+	viewOid = get_relname_relid(relation->relname, namespaceId);
 
-	/*
-	 * finally create the relation...
-	 */
-	return DefineRelation(createStmt, RELKIND_VIEW);
+	if (OidIsValid(viewOid) && replace)
+	{
+		Relation	rel;
+		TupleDesc	descriptor;
+
+		/*
+		 * Yes.  Get exclusive lock on the existing view ...
+		 */
+		rel = relation_open(viewOid, AccessExclusiveLock);
+
+		/*
+		 * Make sure it *is* a view, and do permissions checks.
+		 */
+		if (rel->rd_rel->relkind != RELKIND_VIEW)
+			elog(ERROR, "%s is not a view",
+				 RelationGetRelationName(rel));
+
+		if (!pg_class_ownercheck(viewOid, GetUserId()))
+			aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+		/*
+		 * Create a tuple descriptor to compare against the existing view,
+		 * and verify it matches.
+		 *
+		 * XXX the error message is a bit cheesy here: would be useful to
+		 * give a more specific complaint about the difference in the
+		 * descriptors.  No time for it at the moment though.
+		 */
+	    descriptor = BuildDescForRelation(attrList);
+		if (!equalTupleDescs(descriptor, rel->rd_att))
+			elog(ERROR, "Cannot change column set of existing view %s",
+				 RelationGetRelationName(rel));
+
+		/*
+		 * Seems okay, so return the OID of the pre-existing view.
+		 */
+		relation_close(rel, NoLock); /* keep the lock! */
+
+		return viewOid;
+	}
+	else
+	{
+		/*
+		 * now create the parameters for keys/inheritance etc. All of them are
+		 * nil...
+		 */
+		createStmt->relation = (RangeVar *) relation;
+		createStmt->tableElts = attrList;
+		createStmt->inhRelations = NIL;
+		createStmt->constraints = NIL;
+		createStmt->hasoids = false;
+	
+		/*
+		 * finally create the relation (this will error out if there's
+		 * an existing view, so we don't need more code to complain
+		 * if "replace" is false).
+		 */
+		return DefineRelation(createStmt, RELKIND_VIEW);
+	}
 }
 
 static RuleStmt *
-FormViewRetrieveRule(const RangeVar *view, Query *viewParse)
+FormViewRetrieveRule(const RangeVar *view, Query *viewParse, bool replace)
 {
 	RuleStmt   *rule;
 
@@ -114,12 +165,13 @@ FormViewRetrieveRule(const RangeVar *view, Query *viewParse)
 	rule->event = CMD_SELECT;
 	rule->instead = true;
 	rule->actions = makeList1(viewParse);
+	rule->replace = replace;
 
 	return rule;
 }
 
 static void
-DefineViewRules(const RangeVar *view, Query *viewParse)
+DefineViewRules(const RangeVar *view, Query *viewParse, bool replace)
 {
 	RuleStmt   *retrieve_rule;
 
@@ -129,10 +181,9 @@ DefineViewRules(const RangeVar *view, Query *viewParse)
 	RuleStmt   *delete_rule;
 #endif
 
-	retrieve_rule = FormViewRetrieveRule(view, viewParse);
+	retrieve_rule = FormViewRetrieveRule(view, viewParse, replace);
 
 #ifdef NOTYET
-
 	replace_rule = FormViewReplaceRule(view, viewParse);
 	append_rule = FormViewAppendRule(view, viewParse);
 	delete_rule = FormViewDeleteRule(view, viewParse);
@@ -221,16 +272,18 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
  *-------------------------------------------------------------------
  */
 void
-DefineView(const RangeVar *view, Query *viewParse)
+DefineView(const RangeVar *view, Query *viewParse, bool replace)
 {
 	Oid			viewOid;
 
 	/*
 	 * Create the view relation
 	 *
-	 * NOTE: if it already exists, the xact will be aborted.
+	 * NOTE: if it already exists and replace is false, the xact will 
+	 * be aborted.
 	 */
-	viewOid = DefineVirtualRelation(view, viewParse->targetList);
+
+	viewOid = DefineVirtualRelation(view, viewParse->targetList, replace);
 
 	/*
 	 * The relation we have just created is not visible to any other
@@ -248,7 +301,7 @@ DefineView(const RangeVar *view, Query *viewParse)
 	/*
 	 * Now create the rules associated with the view.
 	 */
-	DefineViewRules(view, viewParse);
+	DefineViewRules(view, viewParse, replace);
 }
 
 /*

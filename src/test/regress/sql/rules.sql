@@ -765,3 +765,21 @@ SELECT viewname, definition FROM pg_views ORDER BY viewname;
 SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;
 
+--
+-- CREATE OR REPLACE RULE
+--
+
+CREATE TABLE ruletest_tbl (a int, b int);
+CREATE TABLE ruletest_tbl2 (a int, b int);
+
+CREATE OR REPLACE RULE myrule AS ON INSERT TO ruletest_tbl
+	DO INSTEAD INSERT INTO ruletest_tbl2 VALUES (10, 10);
+
+INSERT INTO ruletest_tbl VALUES (99, 99);
+
+CREATE OR REPLACE RULE myrule AS ON INSERT TO ruletest_tbl
+	DO INSTEAD INSERT INTO ruletest_tbl2 VALUES (1000, 1000);
+
+INSERT INTO ruletest_tbl VALUES (99, 99);
+
+SELECT * FROM ruletest_tbl2;

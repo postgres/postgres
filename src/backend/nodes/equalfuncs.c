@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.157 2002/08/31 22:10:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.158 2002/09/02 02:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1003,6 +1003,8 @@ _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 		return false;
 	if (a->instead != b->instead)
 		return false;
+	if (a->replace != b->replace)
+		return false;
 	if (!equal(a->actions, b->actions))
 		return false;
 
@@ -1066,6 +1068,8 @@ _equalViewStmt(ViewStmt *a, ViewStmt *b)
 	if (!equal(a->aliases, b->aliases))
 		return false;
 	if (!equal(a->query, b->query))
+		return false;
+	if (a->replace != b->replace)
 		return false;
 
 	return true;

@@ -15,3 +15,43 @@ CREATE VIEW iexit AS
 CREATE VIEW toyemp AS
    SELECT name, age, location, 12*salary AS annualsal
    FROM emp;
+--
+-- CREATE OR REPLACE VIEW
+--
+CREATE TABLE viewtest_tbl (a int, b int);
+COPY viewtest_tbl FROM stdin;
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT * FROM viewtest_tbl;
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT * FROM viewtest_tbl WHERE a > 10;
+SELECT * FROM viewtest;
+ a  | b  
+----+----
+ 15 | 20
+ 20 | 25
+(2 rows)
+
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b FROM viewtest_tbl WHERE a > 5 ORDER BY b DESC;
+SELECT * FROM viewtest;
+ a  | b  
+----+----
+ 20 | 25
+ 15 | 20
+ 10 | 15
+(3 rows)
+
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a FROM viewtest_tbl WHERE a <> 20;
+ERROR:  Cannot change column set of existing view viewtest
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT 1, * FROM viewtest_tbl;
+ERROR:  Cannot change column set of existing view viewtest
+-- should fail
+CREATE OR REPLACE VIEW viewtest AS
+	SELECT a, b::numeric FROM viewtest_tbl;
+ERROR:  Cannot change column set of existing view viewtest
+DROP VIEW viewtest;
+DROP TABLE viewtest_tbl;

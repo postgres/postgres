@@ -1343,3 +1343,21 @@ SELECT tablename, rulename, definition FROM pg_rules
  shoelace_ok   | shoelace_ok_ins | CREATE RULE shoelace_ok_ins AS ON INSERT TO shoelace_ok DO INSTEAD UPDATE shoelace SET sl_avail = (shoelace.sl_avail + new.ok_quant) WHERE (shoelace.sl_name = new.ok_name);
 (29 rows)
 
+--
+-- CREATE OR REPLACE RULE
+--
+CREATE TABLE ruletest_tbl (a int, b int);
+CREATE TABLE ruletest_tbl2 (a int, b int);
+CREATE OR REPLACE RULE myrule AS ON INSERT TO ruletest_tbl
+	DO INSTEAD INSERT INTO ruletest_tbl2 VALUES (10, 10);
+INSERT INTO ruletest_tbl VALUES (99, 99);
+CREATE OR REPLACE RULE myrule AS ON INSERT TO ruletest_tbl
+	DO INSTEAD INSERT INTO ruletest_tbl2 VALUES (1000, 1000);
+INSERT INTO ruletest_tbl VALUES (99, 99);
+SELECT * FROM ruletest_tbl2;
+  a   |  b   
+------+------
+   10 |   10
+ 1000 | 1000
+(2 rows)
+

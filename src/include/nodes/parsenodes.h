@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.204 2002/08/31 22:10:47 tgl Exp $
+ * $Id: parsenodes.h,v 1.205 2002/09/02 02:13:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1371,6 +1371,7 @@ typedef struct RuleStmt
 	CmdType		event;			/* SELECT, INSERT, etc */
 	bool		instead;		/* is a 'do instead'? */
 	List	   *actions;		/* the action statements */
+	bool		replace;		/* OR REPLACE */
 } RuleStmt;
 
 /* ----------------------
@@ -1436,6 +1437,7 @@ typedef struct ViewStmt
 	RangeVar   *view;			/* the view to be created */
 	List	   *aliases;		/* target column names */
 	Query	   *query;			/* the SQL statement */
+	bool		replace;		/* replace an existing view? */
 } ViewStmt;
 
 /* ----------------------
