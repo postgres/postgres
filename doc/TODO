@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Feb 18 16:41:58 EST 2004
+Last updated:		Fri Feb 20 13:35:13 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -50,6 +50,7 @@ Administration
 * Allow pooled connections to close all open WITH HOLD cursors
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade
 * Have SHOW ALL and pg_settings show descriptions for server-side variables(Joe)
+* Allow external interfaces to extend the GUC variable set
 
 
 Data Types
