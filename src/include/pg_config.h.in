@@ -554,6 +554,9 @@
 /* Define as the maximum alignment requirement of any C data type. */
 #undef MAXIMUM_ALIGNOF
 
+/* Define if non *_r libc functions are not thread safe */
+#undef NEED_REENTRANT_FUNCS
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
