@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.150 2002/07/18 04:30:36 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.151 2002/07/19 17:35:10 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -352,6 +352,7 @@ INET_ATON   = @INET_ATON@
 ISINF       = @ISINF@
 MEMCMP      = @MEMCMP@
 MISSING_RANDOM = @MISSING_RANDOM@
+QSORT       = @QSORT@
 SNPRINTF    = @SNPRINTF@
 SRANDOM     = @SRANDOM@
 STRCASECMP  = @STRCASECMP@
@@ -360,7 +361,7 @@ STRERROR    = @STRERROR@
 STRTOL      = @STRTOL@
 STRTOUL     = @STRTOUL@
 
-# Used by the backend
+# Not really standard libc functions, used by the backend.
 DLLINIT     = @DLLINIT@
 TAS         = @TAS@
 

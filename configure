@@ -11902,6 +11902,13 @@ case $host_os in
 esac
 
 
+# Set path of qsort for solaris, which has a very slow qsort in certain cases.
+QSORT=""
+case $host_os in
+  solaris*) DLLINIT='$(top_builddir)/src/backend/port/qsort.o' ;;
+esac
+
+
 # On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
 # this hackery with HPUXMATHLIB allows us to cope.
 HPUXMATHLIB=""
@@ -17584,6 +17591,7 @@ s,@STRTOL@,$STRTOL,;t t
 s,@STRTOUL@,$STRTOUL,;t t
 s,@STRCASECMP@,$STRCASECMP,;t t
 s,@DLLINIT@,$DLLINIT,;t t
+s,@QSORT@,$QSORT,;t t
 s,@HPUXMATHLIB@,$HPUXMATHLIB,;t t
 s,@HAVE_POSIX_SIGNALS@,$HAVE_POSIX_SIGNALS,;t t
 s,@MSGFMT@,$MSGFMT,;t t
