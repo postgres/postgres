@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.8 1996/10/03 04:20:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.9 1996/10/04 20:07:10 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,28 +57,34 @@ noclean=0
 template_only=0
 POSTGRES_SUPERUSERNAME=$USER
 
-while [ "$#" -gt 0 ]
-do
-    if [ "$1" = "-d" ]; then
+for ARG ; do
+# We would normally use e.g. ${ARG#--username=} to parse the options, but
+# there is a bug in some shells that makes that not work (BSD4.4 sh,
+# September 1996 -- supposed to be fixed in later release).  So we bypass
+# the bug with this sed mess.
+
+    username_sed=`echo $ARG | sed s/^--username=//`
+    pgdata_sed=`echo $ARG | sed s/^--pgdata=//`
+
+    if [ $ARG = "--debug" -o $ARG = "-d" ]; then
         debug=1
         echo "Running with debug mode on."
-    elif [ "$1" = "-n" ]; then
+    elif [ $ARG = "--noclean" -o $ARG = "-n" ]; then
         noclean=1
         echo "Running with noclean mode on.  Mistakes will not be cleaned up."
-    elif [ "$1" = "-t" ]; then
+    elif [ $ARG = "--template" ]; then
         template_only=1
         echo "updating template1 database only."
-    elif [ "$1" = "-u" ]; then
-	shift
-        POSTGRES_SUPERUSERNAME="$1"
-    elif [ "$1" = "-r" ]; then
-	shift
-        PGDATA=$1
+    elif [ $username_sed. != $ARG. ]; then
+        POSTGRES_SUPERUSERNAME=$username_sed
+    elif [ $pgdata_sed. != $ARG. ]; then
+        PGDATA=$pgdata_sed
     else    
-        echo "initdb [-t] [-d] [-n] [-u superuser] [-r datadir]" 1>&2
-	exit 1
+        echo "Unrecognized option '$ARG'.  Syntax is:"
+        echo "initdb [--template] [--debug] [--noclean]" \
+             "[--username=SUPERUSER] [--pgdata=DATADIR]"
+        exit 100
     fi
-    shift
 done
 
 if [ "$debug" -eq 1 ]; then
@@ -108,6 +114,7 @@ if [ $template_only -eq 0 ]; then
     echo "$CMDNAME: using $GLOBAL as input to create the global classes."
     echo "$CMDNAME: using $PG_HBA_SAMPLE as the host-based authentication" \
          "control file."
+    echo
 fi  
 
 #---------------------------------------------------------------------------
@@ -143,6 +150,7 @@ echo "We are initializing the database system with username" \
 echo "Please be aware that Postgres is not secure.  Anyone who can connect"
 echo "to the database can act as user $POSTGRES_SUPERUSERNAME" \
      "with very little effort."
+echo
 
 # -----------------------------------------------------------------------
 # Create the data directory if necessary
@@ -165,11 +173,13 @@ if [ -d "$PGDATA" ]; then
 else
     if [ ! -d $PGDATA ]; then
         echo "Creating Postgres database system directory $PGDATA"
+        echo
         mkdir $PGDATA
         if [ $? -ne 0 ]; then exit 5; fi
     fi
     if [ ! -d $PGDATA/base ]; then
         echo "Creating Postgres database system directory $PGDATA/base"
+        echo
         mkdir $PGDATA/base
         if [ $? -ne 0 ]; then exit 5; fi
     fi
@@ -203,6 +213,8 @@ if [ $? -ne 0 ]; then
     exit 1;
 fi
 
+echo
+
 pg_version $PGDATA/base/template1
 
 #----------------------------------------------------------------------------
@@ -210,8 +222,6 @@ pg_version $PGDATA/base/template1
 #----------------------------------------------------------------------------
 
 if [ $template_only -eq 0 ]; then
-    echo "$CMDNAME: creating global classes in $PGDATA"
-
     echo "Creating global classes in $PG_DATA/base"
     echo "Running: postgres $BACKENDARGS template1"
 
@@ -233,6 +243,8 @@ if [ $template_only -eq 0 ]; then
         fi
         exit 1;
     fi
+
+    echo
 
     pg_version $PGDATA
 
@@ -262,10 +274,10 @@ if [ $template_only -eq 0 ]; then
     rm -f /tmp/create.$$
 fi
 
+echo
+
 if [ $debug -eq 0 ]; then
     echo "vacuuming template1"
 
     echo "vacuum" | postgres -F -Q template1 > /dev/null
 fi
-
-

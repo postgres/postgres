@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.5 1996/10/03 20:09:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.6 1996/10/04 20:07:04 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
@@ -34,7 +34,9 @@ endif
 	$(MAKE) -C bin $@
 	$(MAKE) -C ../doc $@
 	@-chown -R $(POSTGRESLOGIN) $(POSTGRESDIR) 2>/dev/null
-	@echo All of Postgres95 is successfully made.  Ready to install.
+	@if test $@. = all. -o $@. = .; then \
+	echo All of Postgres95 is successfully made.  Ready to install. ;\
+        fi
 
 TAGS:
 	rm -f TAGS; \
