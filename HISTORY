@@ -46,7 +46,7 @@
    Function-inlining for simple SQL functions
           Simple SQL functions can now be inlined by including their SQL
           in the main query. This improves performance by eliminating
-          per-call overhead. That means, simple SQL functions now behave
+          per-call overhead. That means simple SQL functions now behave
           like macros.
           
    Full support for IPv6 connections and IPv6 address data types
@@ -58,11 +58,11 @@
           Several people very familiar with the SSL API have overhauled
           our SSL code to improve SSL key negotiation and error recovery.
           
-   Make free space map to efficiently reuse empty index pages, and other
+   Make free space map efficiently reuse empty index pages, and other
           free space management improvements
           In previous releases, B-tree index pages that were left empty
           because of deleted rows could only be reused by rows with index
-          values similar to the original rows indexed on that page. In
+          values similar to the rows originally indexed on that page. In
           7.4, "VACUUM" records empty index pages and allows them to be
           reused for any future index rows.
           
@@ -71,12 +71,12 @@
           to access information about the schema objects defined in a
           database.
           
-   Cursors conform more closely with the SQL standard
+   Cursors conform more closely to the SQL standard
           The commands "FETCH" and "MOVE" have been overhauled to conform
           more closely to the SQL standard.
           
    Cursors can exist outside transactions
-          These cursors are also called holdable cursors
+          These cursors are also called holdable cursors.
           
    New client-to-server protocol
           The new protocol adds error codes, more status information,
@@ -124,7 +124,7 @@
        Significant effort was invested to make the messages more
        consistent and user-oriented. If your applications try to detect
        different error conditions by parsing the error message, you are
-       strongly encourage to use the new error code facility.
+       strongly encouraged to use the new error code facility instead.
      * Inner joins using the explicit JOIN syntax may behave differently
        because they are now better optimized.
      * A number of server configuration parameters have been renamed for
@@ -238,8 +238,8 @@ Performance Improvements
        of function-allocated memory when the function call completes,
        reducing the total memory used by functions.
      * Improve GEQO optimizer performance (Tom)
-       There were several inefficiencies in the way the GEQO optimizer
-       managed potential query paths. This release fixes this.
+       This release fixes several inefficiencies in the way the GEQO
+       optimizer manages potential query paths.
      * Allow IN/NOT IN to be handled via hash tables (Tom)
      * Improve NOT IN (subquery) performance (Tom)
      * Allow most IN subqueries to be processed as joins (Tom)
@@ -430,8 +430,9 @@ Utility Command Changes
        deleted on transaction commit.
      * Allow cursors outside transactions using WITH HOLD (Neil)
        In previous releases, cursors were removed at the end of the
-       transaction. Using WITH HOLD, the current release allows cursors
-       to remain readable after the creating transaction.
+       transaction that created them. Cursors can now be created with the
+       WITH HOLD option, which allows them to continue to be accessed
+       after the creating transaction has committed.
      * FETCH 0 and MOVE 0 now do nothing (Bruce)
        In previous releases, FETCH 0 fetched all remaining rows, and MOVE
        0 moved to the end of the cursor.
@@ -441,10 +442,12 @@ Utility Command Changes
        In prior releases, the row count returned by "FETCH" and "MOVE"
        did not accurately reflect the number of rows processed.
      * Properly handle SCROLL with cursors, or report an error (Neil)
-       Certain cursors can not be fetched backwards optimally. By
-       specifying SCROLL, extra work will be performed to guarantee that
-       the cursor can be fetched in reverse or random order.
-     * Implement SQL-compatible option FIRST, LAST, ABSOLUTE n, RELATIVE
+       Allowing random access (both forward and backward scrolling) to
+       some kinds of queries cannot be done without some additional work.
+       If SCROLL is specified when the cursor is created, this additional
+       work will be performed. Furthermore, if the cursor has been
+       created with NO SCROLL, no random access is allowed.
+     * Implement SQL-compatible options FIRST, LAST, ABSOLUTE n, RELATIVE
        n for "FETCH" and "MOVE" (Tom)
      * Allow "EXPLAIN" on "DECLARE CURSOR" (Tom)
      * Allow "CLUSTER" to use index marked as pre-clustered by default
@@ -460,8 +463,9 @@ Utility Command Changes
      * Recover from "COPY" failure cleanly (Tom)
      * Prevent possible memory leaks in "COPY" (Tom)
      * Make "TRUNCATE" transaction-safe (Rod)
-       "TRUNCATE" can now be used inside a transaction, and rolled back
-       if the transaction aborts.
+       "TRUNCATE" can now be used inside a transaction. If the
+       transaction aborts, the changes made by the "TRUNCATE" are
+       automatically rolled back.
      * Allow prepare/bind of utility commands like "FETCH" and "EXPLAIN"
        (Tom)
      * Add "EXPLAIN EXECUTE" (Neil)
@@ -758,8 +762,8 @@ Contrib Changes
      * Fix bug in metaphone() in fuzzystrmatch
      * Improve adddepend (Rod)
      * Update spi/timetravel (Böjthe Zoltán)
-     * Fix dbase "-s" option and improve non-ASCII handling (Thomas
-       Behr, Márcio Smiderle)
+     * Fix dbase "-s" option and improve non-ASCII handling (Thomas Behr,
+       Márcio Smiderle)
      * Remove array module because features now included by default (Joe)
      _________________________________________________________________
    
