@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.178 2000/10/07 00:58:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.179 2000/10/07 04:00:41 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -597,10 +597,9 @@ pg_plan_query(Query *querytree)
  *
  * Assumptions:
  *
- * Caller is responsible for calling StartTransactionCommand() beforehand
- * and CommitTransactionCommand() afterwards (if successful).
+ * At call, we are not inside a transaction command.
  *
- * The CurrentMemoryContext at entry references a context that is
+ * The CurrentMemoryContext after starting a transaction command must be
  * appropriate for execution of individual queries (typically this will be
  * TransactionCommandContext).  Note that this routine resets that context
  * after each individual query, so don't store anything there that
@@ -608,7 +607,7 @@ pg_plan_query(Query *querytree)
  *
  * parse_context references a context suitable for holding the
  * parse/rewrite trees (typically this will be QueryContext).
- * This context *must* be longer-lived than the CurrentMemoryContext!
+ * This context *must* be longer-lived than the transaction context!
  * In fact, if the query string might contain BEGIN/COMMIT commands,
  * parse_context had better outlive TopTransactionContext!
  *
@@ -635,7 +634,7 @@ pg_exec_query_string(char *query_string,	/* string to execute */
 	 * query_string will be in this same command block, *unless* we find
 	 * a BEGIN/COMMIT/ABORT statement; we have to force a new xact command
 	 * after one of those, else bad things will happen in xact.c.
-	 * (Note that this will possibly change execution memory context.)
+	 * (Note that this will possibly change current memory context.)
 	 */
 	start_xact_command();
 	xact_started = true;
@@ -838,11 +837,6 @@ pg_exec_query_string(char *query_string,	/* string to execute */
 				CommandCounterIncrement();
 
 			/*
-			 * Invoke IMMEDIATE constraint triggers
-			 */
-			DeferredTriggerEndQuery();
-
-			/*
 			 * Clear the execution context to recover temporary
 			 * memory used by the query.  NOTE: if query string contains
 			 * BEGIN/COMMIT transaction commands, execution context may
@@ -888,12 +882,17 @@ start_xact_command(void)
 static void
 finish_xact_command(void)
 {
+	/* Invoke IMMEDIATE constraint triggers */
+	DeferredTriggerEndQuery();
+
+	/* Now commit the command */
 	if (DebugLvl >= 1)
 		elog(DEBUG, "CommitTransactionCommand");
 	set_ps_display("commit");	/* XXX probably the wrong place to do this */
 	CommitTransactionCommand();
+
 #ifdef SHOW_MEMORY_STATS
-	/* print mem stats at each commit for leak tracking */
+	/* Print mem stats at each commit for leak tracking */
 	if (ShowStats)
 		MemoryContextStats(TopMemoryContext);
 #endif
@@ -1614,7 +1613,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.178 $ $Date: 2000/10/07 00:58:18 $\n");
+		puts("$Revision: 1.179 $ $Date: 2000/10/07 04:00:41 $\n");
 	}
 
 	/*
