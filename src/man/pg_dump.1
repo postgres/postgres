@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.6 1997/01/23 06:01:00 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_dump.1,v 1.7 1997/10/30 03:59:59 momjian Exp $
 .TH PG_DUMP UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 pg_dump \(em dumps out a Postgres database into a script file
@@ -11,7 +11,7 @@ pg_dump \(em dumps out a Postgres database into a script file
 filename
 ]
 [\c
-.BR "-H"
+.BR "-h"
 hostname
 ]
 [\c
@@ -65,7 +65,7 @@ pg_dump understands the following options:
 .BR "-f" " filename"
 Specifies the output file
 .TP
-.BR "-H" " hostname"
+.BR "-h" " hostname"
 Specifies the server host name
 .TP
 .BR "-p" " port"

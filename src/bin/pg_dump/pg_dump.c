@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.50 1997/10/16 04:14:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.51 1997/10/30 03:59:46 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -113,7 +113,7 @@ usage(const char *progname)
 	fprintf(stderr,
 			"\t -f filename \t\t script output filename\n");
 	fprintf(stderr,
-			"\t -H hostname \t\t server host name\n");
+			"\t -h hostname \t\t server host name\n");
 	fprintf(stderr,
 			"\t -p port     \t\t server port number\n");
 	fprintf(stderr,
@@ -483,14 +483,14 @@ main(int argc, char **argv)
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "f:H:p:t:vSDdDaoz")) != EOF)
+	while ((c = getopt(argc, argv, "f:h:p:t:vSDdDaoz")) != EOF)
 	{
 		switch (c)
 		{
 			case 'f':			/* output file name */
 				filename = optarg;
 				break;
-			case 'H':			/* server host */
+			case 'h':			/* server host */
 				pghost = optarg;
 				break;
 			case 'p':			/* server port */
