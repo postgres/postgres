@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.14 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.15 2001/03/24 13:21:14 petere Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -160,7 +160,7 @@ Disable this chapter until we have more functions documented.
    &ipcclean;
    &pgCtl;
    &pgPasswd;
-   &pgUpgrade;
+<!--   &pgUpgrade; -->
    &postgres;
    &postmaster;
 
