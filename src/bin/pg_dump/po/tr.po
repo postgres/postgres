@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_dump-tr\n"
 "POT-Creation-Date: 2004-09-13 07:40+0100\n"
-"PO-Revision-Date: 2004-11-09 15:16+0200\n"
+"PO-Revision-Date: 2004-12-11 13:25+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
@@ -225,11 +225,11 @@ msgstr "  -o, --oids               dump içinde OIDleri de içer\n"
 
 #: pg_dump.c:685
 msgid ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
+"  -O, --no-owner           skip restoration of object ownership\n"
 "                           in plain text format\n"
 msgstr ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
-"                           in plain text format\n"
+"  -O, --no-owner           düz metin biçiminde nesne sahipliğini \n"
+"                          ayarlayan komutlarının oluşturmasını engelle\n"
 
 #: pg_dump.c:687
 #: pg_dumpall.c:353
@@ -1443,76 +1443,76 @@ msgstr "large-object %u geri yükleniyor\n"
 msgid "could not write null block at end of tar archive\n"
 msgstr "arşivin sonunda null blok yazılamadı\n"
 
-#: pg_backup_tar.c:1023
+#: pg_backup_tar.c:1027
 msgid "archive member too large for tar format\n"
 msgstr "tar biçimi için arşiv öğesi çok büyük\n"
 
-#: pg_backup_tar.c:1033
+#: pg_backup_tar.c:1037
 #, c-format
 msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
 msgstr "tar arşivine ekleme yapılırken yazma hatası (yazılan: %lu, yazmak istenilen: %lu)\n"
 
-#: pg_backup_tar.c:1039
+#: pg_backup_tar.c:1043
 #, c-format
 msgid "could not close tar member: %s\n"
 msgstr "tar öğesini kapatma hatası: %s\n"
 
-#: pg_backup_tar.c:1048
+#: pg_backup_tar.c:1052
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "gerçek dosya uzunluğu (%s) beklenen uzunluğu (%s) ile uyuşmamaktadır\n"
 
-#: pg_backup_tar.c:1056
+#: pg_backup_tar.c:1060
 msgid "could not output padding at end of tar member\n"
 msgstr "tar öğesinin arkasına doldurma alanı eklenemedi\n"
 
-#: pg_backup_tar.c:1085
+#: pg_backup_tar.c:1089
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "dosya içerisinde %s yerinden bir sonraki %s yerine geçiş yapılamıyor\n"
 
-#: pg_backup_tar.c:1096
+#: pg_backup_tar.c:1100
 #, c-format
 msgid "now at file position %s\n"
 msgstr "şu an dosyanın %s yerinde\n"
 
-#: pg_backup_tar.c:1105
-#: pg_backup_tar.c:1132
+#: pg_backup_tar.c:1109
+#: pg_backup_tar.c:1136
 #, c-format
 msgid "could not find header for file %s in tar archive\n"
 msgstr "tar arşivinde %s dosyası için başlık bulunamadı\n"
 
-#: pg_backup_tar.c:1116
+#: pg_backup_tar.c:1120
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "%s tar öğesi atlandı\n"
 
-#: pg_backup_tar.c:1120
+#: pg_backup_tar.c:1124
 #, c-format
 msgid "dumping data out of order is not supported in this archive format: %s is required, but comes before %s in the archive file.\n"
 msgstr "bu arşiv biçinide sıra dışı veri aktarımı desteklenmemektedir: %s bekleniyor ancak arşiv dosyasında ondan önce %s gelmektedir.\n"
 
-#: pg_backup_tar.c:1168
+#: pg_backup_tar.c:1172
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "gerçek ile beklenilen dosya pozisyonunda uyumsuzluk (%s ile %s)\n"
 
-#: pg_backup_tar.c:1183
+#: pg_backup_tar.c:1187
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
 msgstr "eksik tar başlığı bulundu (%lu bayt)\n"
 
-#: pg_backup_tar.c:1218
+#: pg_backup_tar.c:1222
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "%2$s adresinde %1$s TOC Girişi (uzunluk %3$lu, checksum %4$d)\n"
 
-#: pg_backup_tar.c:1228
+#: pg_backup_tar.c:1232
 #, c-format
 msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
 msgstr "%s dosyasında bozuk tar başlığı (beklenen: %d, hesaplanan: %d) dosya pozisyonu %s\n"
 
-#: pg_backup_tar.c:1321
+#: pg_backup_tar.c:1325
 msgid "could not write tar header\n"
 msgstr "tar başlığı yazma hatası\n"
 
@@ -1541,8 +1541,8 @@ msgid "  %s [OPTION]... [FILE]\n"
 msgstr "  %s [SEÇENEK]... [DOSYA]\n"
 
 #: pg_restore.c:363
-msgid "  -d, --dbname=NAME        target database name\n"
-msgstr "  -d, --dbname=NAME        hedef veritabanı adı\n"
+msgid "  -d, --dbname=NAME        connect to database name\n"
+msgstr "  -d, --dbname=NAME        bağlanacak veritabanının adı\n"
 
 #: pg_restore.c:365
 msgid "  -F, --format=c|t         specify backup file format\n"
@@ -1569,8 +1569,8 @@ msgid "  -a, --data-only          restore only the data, no schema\n"
 msgstr "  -s, --schema-only        sadece şemayı aktar, veriyi aktarma\n"
 
 #: pg_restore.c:375
-msgid "  -C, --create             issue commands to create the database\n"
-msgstr "  -C, --create             dump'ın içinde veritabanını yaratmak için komutları da ekle\n"
+msgid "  -C, --create             create the target database\n"
+msgstr "  -C, --create             hedef veritabanını oluştur\n"
 
 #: pg_restore.c:376
 msgid "  -I, --index=NAME         restore named index\n"
@@ -1584,9 +1584,10 @@ msgstr ""
 "  -L, --use-list=FILENAME  bu dosyadan çıkışını sıralamak için belirli bir\n"
 "                           içerik tablosuınu kullan\n"
 
+#: pg_dumpall.c:352
 #: pg_restore.c:379
-msgid "  -O, --no-owner           do not issue commands to set object ownership\n"
-msgstr "  -O, --no-owner           nesne sahipliğini ayarlayan komutları oluşturmayı engelle\n"
+msgid "  -O, --no-owner           skip restoration of object ownership\n"
+msgstr "  -O, --no-owner           nesne sahipliğini ayarlayan komutlarının oluşturmasını engelle\n"
 
 #: pg_restore.c:380
 msgid ""
@@ -1686,10 +1687,6 @@ msgstr "  -c, --clean              şemayı yaratmadan önce onu temizle (kaldı
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr "  -g, --globals-only       sadece global nesneleri aktarıyor, veritabanları aktarmıyor\n"
 
-#: pg_dumpall.c:352
-msgid "  -O, --no-owner           do not output commands to set object ownership\n"
-msgstr "  -O, --no-owner           nesne sahipliğini ayarlayan komutları oluşturmayı engelle\n"
-
 #: pg_dumpall.c:354
 msgid "  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"
 msgstr ""
@@ -1765,4 +1762,37 @@ msgstr "%s: sorgu başarısız oldu: %s"
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: sorgu şu idi: %s\n"
+
+#: ../../port/exec.c:193
+#: ../../port/exec.c:307
+#: ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "geçerli dizin tespit edilemedi: %s"
+
+#: ../../port/exec.c:323
+#: ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "symbolic link \"%s\" okuma hatası"
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"
 
