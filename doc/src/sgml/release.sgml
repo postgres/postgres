@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.58 2000/08/29 20:02:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.59 2000/09/12 21:12:44 momjian Exp $
 -->
 
  <chapter id="release">
@@ -585,7 +585,7 @@ Performance
 Prevent exponential space consumption with many AND's and OR's (Tom)
 Collect attribute selectivity values for system columns (Tom)
 Reduce memory usage of aggregates (Tom)
-Fix for LIKE optimization to use indexes with multi-byte encodings (Tom)
+Fix for LIKE optimization to use indexes with multibyte encodings (Tom)
 Fix r-tree index optimizer selectivity (Thomas)
 Improve optimizer selectivity computations and functions (Tom)
 Optimize btree searching for cases where many equal keys exist (Tom)
@@ -1144,7 +1144,7 @@ New moddatetime contrib(Terry)
 Update to pgaccess 0.96(Constantin)
 Add routines for single-byte "char" type(Thomas)
 Improved substr() function(Thomas)
-Improved multi-byte handling(Tatsuo)
+Improved multibyte handling(Tatsuo)
 Multi-version concurrency control/MVCC(Vadim)
 New Serialized mode(Vadim)
 Fix for tables over 2gigs(Peter)
@@ -1335,7 +1335,7 @@ Change exp() behavior to generate error on underflow(Thomas)
 pg_dump fixes for memory leak, inheritance constraints, layout change
 update pgaccess to 0.93
 Fix prototype for 64-bit platforms
-Multi-byte fixes(Tatsuo)
+Multibyte fixes(Tatsuo)
 New ecpg man page
 Fix memory overruns(Tatsuo)
 Fix for lo_import() crash(Bruce)
@@ -1489,7 +1489,7 @@ Enhancements
 Upgrade ecpg and ecpglib,see src/interfaces/ecpc/ChangeLog(Michael)
 Show the index used in an EXPLAIN(Zeugswetter)
 EXPLAIN  invokes  rule system and shows plan(s) for rewritten queries(Jan)
-Multi-byte awareness of many data types and functions, via configure(Tatsuo)
+Multibyte awareness of many data types and functions, via configure(Tatsuo)
 New configure --with-mb option(Tatsuo)
 New initdb --pgencoding option(Tatsuo)
 New createdb -E multibyte option(Tatsuo)
@@ -1535,7 +1535,7 @@ Add -error option to libpgtcl's pg_result command(Tom)
 New locale patch, see docs/README/locale(Oleg)
 Fix for pg_dump so CONSTRAINT and CHECK syntax is correct(ccb)
 New contrib/lo code for large object orphan removal(Peter)
-New psql command "SET CLIENT_ENCODING TO 'encoding'" for multi-bytes
+New psql command "SET CLIENT_ENCODING TO 'encoding'" for multibytes
 feature, see /doc/README.mb(Tatsuo)
 /contrib/noupdate code to revoke update permission on a column
 Libpq can now be compiled on win32(Magnus)
@@ -1628,7 +1628,7 @@ Source Tree Changes
 Inline some small functions called for every row(Bruce)
 Alpha/linux fixes
 Hp/UX cleanups(Tom)
-Multi-byte regression tests(Soonmyung.)
+Multibyte regression tests(Soonmyung.)
 Remove --disabled options from configure
 Define PGDOC to use POSTGRESDIR by default
 Make regression optional
@@ -1759,7 +1759,7 @@ ASSERT fixes(Bruce)
 <itemizedlist>
 <listitem>
 <para>
-Additional support for multi-byte character sets.
+Additional support for multibyte character sets.
 </para>
 </listitem>
 
@@ -1807,7 +1807,7 @@ fix for redefining builtin functions(Thomas)
 ultrix4 cleanup
 upgrade to pg_access 0.83
 updated CLUSTER manual page
-multi-byte character set support, see doc/README.mb(Tatsuo)
+multibyte character set support, see doc/README.mb(Tatsuo)
 configure --with-pgport fix
 pg_ident fix
 big-endian fix for backend communications(Kataoka)

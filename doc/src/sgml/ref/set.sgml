@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.48 2000/08/29 20:02:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.49 2000/09/12 21:12:45 momjian Exp $
 Postgres documentation
 -->
 
@@ -59,7 +59,7 @@ SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL 
      <term>NAMES</term>
      <listitem>
       <para>
-       Sets the multi-byte client encoding. The specified encoding
+       Sets the multibyte client encoding. The specified encoding
        must be supported by the backend.
       </para>
 
@@ -220,7 +220,7 @@ SELECT setseed(<replaceable>value</replaceable>);
       <term>SERVER_ENCODING</term>
       <listitem>
        <para>
-	Sets the multi-byte server encoding.
+	Sets the multibyte server encoding.
        </para>
 
        <para>
