@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.17 1997/09/08 21:43:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.18 1997/11/17 16:10:06 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,7 +498,8 @@ be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo *sp)
 				pqdebug("%s", PQerrormsg);
 				return (STATUS_ERROR);
 			}
-			if (pg_krb4_recvauth(port->sock, &port->laddr, &port->raddr,
+			if (pg_krb4_recvauth(port->sock, (struct sockaddr_in *) &port->laddr,
+								 (struct sockaddr_in *) &port->raddr,
 								 username) != STATUS_OK)
 			{
 				sprintf(PQerrormsg,
@@ -517,7 +518,8 @@ be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo *sp)
 				pqdebug("%s", PQerrormsg);
 				return (STATUS_ERROR);
 			}
-			if (pg_krb5_recvauth(port->sock, &port->laddr, &port->raddr,
+			if (pg_krb5_recvauth(port->sock, (struct sockaddr_in *) &port->laddr,
+								 (struct sockaddr_in *) &port->raddr,
 								 username) != STATUS_OK)
 			{
 				sprintf(PQerrormsg,
