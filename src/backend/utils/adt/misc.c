@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.4 1996/10/31 10:23:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.5 1996/11/14 08:23:31 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,15 +17,7 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 
-#if !defined(aix) && \
-    !defined(BSD44_derived) && \
-    !defined(bsdi) && \
-    !defined(bsdi_2_1) && \
-    !defined(irix5) && \
-    !defined(linux)
-extern int random();
-extern int srandom(unsigned);
-#endif
+#include "port-protos.h"  /* For random(), sometimes */
 
 
 /*-------------------------------------------------------------------------
