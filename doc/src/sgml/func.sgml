@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.73 2001/09/20 16:41:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.74 2001/09/28 08:15:35 thomas Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -26,10 +26,9 @@
   the functions and operators described in this chapter, with the
   exception of the most trivial arithmetic and comparison operators
   and some explicitly marked functions, are not specified by the <acronym>SQL</acronym>
-  standard.  However, many other <acronym>RDBMS</acronym> packages provide a lot of the
-  same or similar functions, and some of the ones provided in
-  <productname>Postgres</productname> have in fact been inspired by
-  other implementations.
+  standard. Some of this extended functionality is present in other
+  <acronym>RDBMS</acronym> products, and in many cases this
+  functionality is compatible and consistant between various products.
  </para>
 
 
@@ -302,8 +301,16 @@
  <sect1 id="functions-math">
   <title>Mathematical Functions and Operators</title>
 
+  <para>
+   Mathematical operators are provided for many
+   <productname>PostgreSQL</productname> types. For types without
+   common mathematical conventions for all possible permutations 
+   (e.g. date/time types) we
+   describe the actual behavior in subsequent sections.
+  </para>
+
   <table>
-   <title>Mathematical Operators</TITLE>
+   <title>Mathematical Operators</title>
 
    <tgroup cols="4">
     <thead>
@@ -1542,7 +1549,7 @@
 
 
   <sect1 id="functions-formatting">
-   <title>Formatting Functions</title>
+   <title>Multi-type Formatting Functions</title>
 
    <indexterm zone="functions-formatting">
     <primary>formatting</primary>
@@ -2252,17 +2259,98 @@
 
 
   <sect1 id="functions-datetime">
-   <title>Date/Time Functions</title>
+   <title>Date/Time Functions and Operators</title>
 
    <para>
     <xref linkend="functions-datetime-table"> shows the available
-    functions for date/time value processing.  The basic arithmetic
-    operators (<literal>+</literal>, <literal>*</literal>, etc.) are
-    also available.  For formatting functions, refer to <xref
+    functions for date/time value processing.  
+    <xref linkend="operators-datetime-table"> illustrates the
+    behaviors of the basic arithmetic
+    operators (<literal>+</literal>, <literal>*</literal>, etc.).
+    For formatting functions, refer to <xref
     linkend="functions-formatting">.  You should be familiar with the
     background information on date/time data types (see <xref
     linkend="datatype-datetime">).
    </para>
+
+   <para>
+    The date/time operators described below behave similarly for types
+    involving time zones as well as those without.
+
+    <table id="operators-datetime-table">
+     <title>Date/Time Operators</title>
+
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Name</entry>
+        <entry>Example</entry>
+        <entry>Result</entry>
+       </row>
+      </thead>
+
+      <tbody>
+       <row>
+        <entry> <type><literal>+</literal> </entry>
+        <entry><type>timestamp</type> '2001-09-28 01:00' + <type>interval</type> '23 hours'</entry>
+        <entry><type>timestamp</type> '2001-09-29 00:00'</entry>
+       </row>
+
+       <row>
+        <entry> <type><literal>+</literal> </entry>
+        <entry><type>date</type> '2001-09-28' + <type>interval</type> '1 hour'</entry>
+        <entry><type>timestamp</type> '2001-09-28 01:00'</entry>
+       </row>
+
+       <row>
+        <entry> <type><literal>+</literal> </entry>
+        <entry><type>time</type> '01:00' + <type>interval</type> '3 hours'</entry>
+        <entry><type>time</type> '04:00'</entry>
+       </row>
+
+       <row>
+        <entry> <type><literal>-</literal> </entry>
+        <entry><type>timestamp</type> '2001-09-28 23:00' - <type>interval</type> '23 hours'</entry>
+        <entry><type>timestamp</type> '2001-09-28'</entry>
+       </row>
+
+       <row>
+        <entry> <type><literal>-</literal> </entry>
+        <entry><type>date</type> '2001-09-28' + <type>interval</type> '1 hour'</entry>
+        <entry><type>timestamp</type> '2001-09-27 23:00'</entry>
+       </row>
+
+       <row>
+        <entry> <type><literal>-</literal> </entry>
+        <entry><type>time</type> '05:00' + <type>interval</type> '2 hours'</entry>
+        <entry><type>time</type> '03:00'</entry>
+       </row>
+
+       <row>
+        <entry> <type><literal>-</literal> </entry>
+        <entry><type>interval</type> '2 hours' - <type>time</type> '05:00'</entry>
+        <entry><type>time</type> '03:00:00'</entry>
+       </row>
+
+       <row>
+        <entry> <literal>*</literal> </entry>
+        <entry><type>interval</type> '1 hour' * <type>int</type> '3'</entry>
+        <entry><type>interval</type> '03:00'</entry>
+       </row>
+
+       <row>
+        <entry> <literal>/</literal> </entry>
+        <entry><type>interval</type> '1 hour' / <type>int</type> '3'</entry>
+        <entry><type>interval</type> '00:20'</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    The date/time functions are summarized below, with additional
+    details in subsequent sections.
 
     <table id="functions-datetime-table">
      <title>Date/Time Functions</title>
@@ -2431,7 +2519,7 @@
       </tbody>
      </tgroup>
     </table>
-
+   </para>
 
   <sect2 id="functions-datetime-extract">
    <title><function>EXTRACT</function>, <function>date_part</function></title>
@@ -2546,7 +2634,7 @@ SELECT EXTRACT(DOY FROM TIMESTAMP '2001-02-16 20:38:40');
       <listitem>
        <para>
         For <type>date</type> and <type>timestamp</type> values, the
-        number of seconds since 1970-01-01 00:00:00 (Result may be
+        number of seconds since 1970-01-01 00:00:00-00 (Result may be
         negative.); for <type>interval</type> values, the total number
         of seconds in the interval
        </para>

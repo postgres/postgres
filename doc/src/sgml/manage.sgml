@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.16 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.17 2001/09/28 08:15:35 thomas Exp $
 -->
 
  <Chapter Id="manage">
@@ -31,7 +31,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.16 2001/09/13 15:55:2
    <Title>Database Creation</Title>
 
    <Para>
-    Databases are created by the <Command>create database</Command> issued from
+    Databases are created by the <Command>CREATE DATABASE</Command> issued from
     within <ProductName>Postgres</ProductName>. <Application>createdb</Application> is a command-line
     utility provided to give the same functionality from outside <ProductName>Postgres</ProductName>.
    </Para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.63 2001/09/13 15:55:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.64 2001/09/28 08:15:35 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -229,13 +229,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.63 2001/09/13 15:55:22 pe
 
       <row>
        <entry><type>time with time zone</type></entry>
-       <entry></entry>
+       <entry>timetz</entry>
        <entry>time of day, including time zone</entry>
       </row>
 
       <row>
+       <entry><type>timestamp without time zone</type></entry>
+       <entry>timestamp</entry>
+       <entry>date and time</entry>
+      </row>
+
+      <row>
        <entry><type>timestamp [ with time zone ]</type></entry>
-       <entry></entry>
+       <entry>timestamptz</entry>
        <entry>date and time</entry>
       </row>
      </tbody>
@@ -981,7 +987,7 @@ SELECT b, char_length(b) FROM test2;
       </thead>
       <tbody>
        <row>
-        <entry><type>timestamp</type></entry>
+        <entry><type>timestamp without time zone</type></entry>
         <entry>both date and time</entry>
         <entry>8 bytes</entry>
         <entry>4713 BC</entry>
@@ -990,10 +996,10 @@ SELECT b, char_length(b) FROM test2;
        </row>
        <row>
         <entry><type>timestamp [ with time zone ]</type></entry>
-        <entry>date and time with time zone</entry>
+        <entry>both date and time</entry>
         <entry>8 bytes</entry>
-        <entry>1903 AD</entry>
-        <entry>2037 AD</entry>
+        <entry>4713 BC</entry>
+        <entry>AD 1465001</entry>
         <entry>1 microsecond / 14 digits</entry>
        </row>
        <row>
@@ -1034,21 +1040,37 @@ SELECT b, char_length(b) FROM test2;
 
     <note>
      <para>
-      To ensure compatibility to earlier versions of <productname>Postgres</productname>
-      we also continue to provide <type>datetime</type> (equivalent to <type>timestamp</type>) and
-      <type>timespan</type> (equivalent to <type>interval</type>),
-      however support for these is now restricted to having an
-      implicit translation to <type>timestamp</type> and
-      <type>interval</type>.
-      The types <type>abstime</type>
-      and <type>reltime</type> are lower precision types which are used internally.
-      You are discouraged from using any of these types in new
-      applications and are encouraged to move any old
-      ones over when appropriate. Any or all of these internal types might disappear in a future release.
+      Time zones, and time zone conventions, are influenced by
+      political conventions, not just physical effects. Time zones have
+      become somewhat standardized during the 1900's, but continue to
+      be prone to arbitrary changes with time.
+      <productname>PostgreSQL</productname> uses your operating
+      system's underlying features to provide time zone
+      support, and these systems usually contain information for only
+      the time period 1902 through 2038 (corresponding to the full
+      range of conventional Unix system time).
+      <type>timestamp with time zone</type> will use time zone
+      information only within that year range, and assumes that times
+      are in UTC outside that range.
      </para>
     </note>
    </para>
 
+   <para>
+    To ensure compatibility to earlier versions of <productname>Postgres</productname>
+    we also continue to provide <type>datetime</type>
+    (equivalent to <type>timestamp</type>) and
+    <type>timespan</type> (equivalent to <type>interval</type>),
+    however support for these is now restricted to having an
+    implicit translation to <type>timestamp</type> and
+    <type>interval</type>.
+    The types <type>abstime</type>
+    and <type>reltime</type> are lower precision types which are used internally.
+    You are discouraged from using any of these types in new
+    applications and are encouraged to move any old
+    ones over when appropriate. Any or all of these internal types
+    might disappear in a future release.
+   </para>
 
    <sect2 id="datatype-datetime-input">
     <title>Date/Time Input</title>
@@ -1266,6 +1288,10 @@ SELECT b, char_length(b) FROM test2;
       <primary>time</primary>
       <secondary>data type</secondary>
      </indexterm>
+     <indexterm>
+      <primary>time without time zone</primary>
+      <secondary>time</secondary>
+     </indexterm>
 
      <para>
       Per SQL99, this type can be referenced as <type>time</type> and
@@ -1330,11 +1356,21 @@ SELECT b, char_length(b) FROM test2;
     <sect3>
      <title><type>time with time zone</type></title>
 
+     <indexterm>
+      <primary>time with time zone</primary>
+      <secondary>data type</secondary>
+     </indexterm>
+     <indexterm>
+      <primary>time</primary>
+      <secondary>data type</secondary>
+     </indexterm>
+
      <para>
       This type is defined by SQL92, but the definition exhibits
-      fundamental deficiencies that render the type nearly useless. In
+      properties which lead to questionable usefulness. In
       most cases, a combination of <type>date</type>,
-      <type>time</type>, and <type>timestamp</type>
+      <type>time</type>, <type>timestamp without time zone</type>
+      and <type>timestamp with time zone</type>
       should provide a complete range of date/time functionality
       required by any application.
      </para>
@@ -1382,7 +1418,44 @@ SELECT b, char_length(b) FROM test2;
     </sect3>
 
     <sect3>
-    <title><type>timestamp</type></title>
+    <title><type>timestamp without time zone</type></title>
+
+    <indexterm>
+     <primary>timestamp without time zone</primary>
+     <secondary>data type</secondary>
+    </indexterm>
+
+     <para>
+      Valid input for the <type>timestamp without time zone</type>
+      type consists of a concatenation
+      of a date and a time, followed by an optional <literal>AD</literal> or
+      <literal>BC</literal>, followed by an optional time zone. (See below.)
+      Thus
+
+      <programlisting>
+1999-01-08 04:05:06
+      </programlisting>
+
+      is a valid <type>timestamp without time zone</type> value that
+      is <acronym>ISO</acronym>-compliant.
+      In addition, the wide-spread format
+
+      <programlisting>
+January 8 04:05:06 1999 PST
+      </programlisting>
+      is supported.
+     </para>
+
+     <para>
+      For <type>timestamp without time zone</type>, any explicit time
+      zone specified in the input is silently swallowed. That is, the
+      resulting date/time value is derived from the explicit date/time
+      fields in the input value, and is not adjusted for time zone.
+     </para>
+    </sect3>
+
+    <sect3>
+    <title><type>timestamp with time zone</type></title>
 
     <indexterm>
      <primary>timestamp</primary>
@@ -1500,10 +1573,12 @@ January 8 04:05:06 1999 PST
 	</row>
        </thead>
        <tbody>
+<!--
 	<row>
 	 <entry>current</entry>
 	 <entry>Current transaction time, deferred</entry>
 	</row>
+-->
 	<row>
 	 <entry>epoch</entry>
 	 <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>

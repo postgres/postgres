@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.21 2001/09/13 15:55:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.22 2001/09/28 08:15:35 thomas Exp $
 Date/time details
 -->
 
@@ -14,7 +14,7 @@ Date/time details
   </indexterm>
 
   <para>
-   <productname>Postgres</productname> must have internal tabular
+   <productname>Postgres</productname> contains internal tabular
    information for time zone decoding, since there is no *nix standard
    system interface to provide access to general, cross-timezone
    information. The underlying OS <emphasis>is</emphasis> used to
