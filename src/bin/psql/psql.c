@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.62 1997/05/22 23:57:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.63 1997/05/23 00:20:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -848,7 +848,7 @@ do_connect(const char *new_dbname,
 	    	free(userenv);
 	    userenv = malloc(strlen("PGUSER=") + strlen(new_user) + 1);
 	    sprintf(userenv,"PGUSER=%s",new_user);
-	    putenv(userenv); /* putenv() continues to use memory in env. */
+	    putenv(userenv); /*Solaris putenv() continues to use memory in env*/
 	}
 	settings->db = PQsetdb(PQhost(olddb), PQport(olddb),
 			       NULL, NULL, new_dbname);
