@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/database.c,v 1.59 2003/11/29 19:52:03 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/database.c,v 1.60 2004/01/22 20:57:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,91 +26,6 @@
 
 
 static bool PhonyHeapTupleSatisfiesNow(HeapTupleHeader tuple);
-
-
-/*
- * ExpandDatabasePath resolves a proposed database path (obtained from
- * pg_database.datpath) to a full absolute path for further consumption.
- * NULL means an error, which the caller should process. One reason for
- * such an error would be an absolute alternative path when no absolute
- * paths are allowed.
- */
-
-char *
-ExpandDatabasePath(const char *dbpath)
-{
-	char		buf[MAXPGPATH];
-	const char *cp;
-	int			len;
-
-	AssertArg(dbpath);
-	Assert(DataDir);
-
-	if (strlen(dbpath) >= MAXPGPATH)
-		return NULL;			/* ain't gonna fit nohow */
-
-	/* leading path delimiter? then already absolute path */
-	if (is_absolute_path(dbpath))
-	{
-#ifdef ALLOW_ABSOLUTE_DBPATHS
-		cp = last_path_separator(dbpath);
-		len = cp - dbpath;
-		strncpy(buf, dbpath, len);
-		snprintf(&buf[len], MAXPGPATH - len, "/base/%s", (cp + 1));
-#else
-		return NULL;
-#endif
-	}
-	/* path delimiter somewhere? then has leading environment variable */
-	else if ((cp = first_path_separator(dbpath)) != NULL)
-	{
-		const char *envvar;
-
-		len = cp - dbpath;
-		strncpy(buf, dbpath, len);
-		buf[len] = '\0';
-		envvar = getenv(buf);
-		if (envvar == NULL)
-			return NULL;
-
-		snprintf(buf, sizeof(buf), "%s/base/%s", envvar, (cp + 1));
-	}
-	else
-	{
-		/* no path delimiter? then add the default path prefix */
-		snprintf(buf, sizeof(buf), "%s/base/%s", DataDir, dbpath);
-	}
-
-	/*
-	 * check for illegal characters in dbpath these should really throw an
-	 * error, shouldn't they? or else all callers need to test for NULL
-	 */
-	for (cp = buf; *cp; cp++)
-	{
-		/*
-		 * The following characters will not be allowed anywhere in the
-		 * database path. (Do not include the slash  or '.' here.)
-		 */
-		char		illegal_dbpath_chars[] =
-		"\001\002\003\004\005\006\007\010"
-		"\011\012\013\014\015\016\017\020"
-		"\021\022\023\024\025\026\027\030"
-		"\031\032\033\034\035\036\037"
-		"'`";
-
-		const char *cx;
-
-		for (cx = illegal_dbpath_chars; *cx; cx++)
-			if (*cp == *cx)
-				return NULL;
-		/* don't allow access to parent dirs */
-		if (strncmp(cp, "/../", 4) == 0)
-			return NULL;
-	}
-
-	return pstrdup(buf);
-}	/* ExpandDatabasePath() */
-
 
 
 /* --------------------------------

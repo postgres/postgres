@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.144 2004/01/09 23:29:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.145 2004/01/22 20:57:39 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -231,7 +231,6 @@ extern char *DatabasePath;
 
 /* in utils/misc/database.c */
 extern void GetRawDatabaseInfo(const char *name, Oid *db_id, char *path);
-extern char *ExpandDatabasePath(const char *path);
 
 /* now in utils/init/miscinit.c */
 extern void SetDatabasePath(const char *path);
