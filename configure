@@ -3,7 +3,7 @@
 
 
 
-# $Header: /cvsroot/pgsql/configure,v 1.65 2000/10/21 22:36:10 petere Exp $
+# $Header: /cvsroot/pgsql/configure,v 1.66 2000/10/23 16:47:48 momjian Exp $
 
 
 # PGAC_PATH_FLEX
@@ -17,7 +17,7 @@
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/configure,v 1.65 2000/10/21 22:36:10 petere Exp $
+# $Header: /cvsroot/pgsql/configure,v 1.66 2000/10/23 16:47:48 momjian Exp $
 #
 
 # PGAC_PROG_PYTHON
@@ -36,7 +36,7 @@
 # the build of the shared module. Future project.
 # PGAC_PATH_PYTHONDIR
 
-# $Header: /cvsroot/pgsql/configure,v 1.65 2000/10/21 22:36:10 petere Exp $
+# $Header: /cvsroot/pgsql/configure,v 1.66 2000/10/23 16:47:48 momjian Exp $
 
 # Autoconf macros to check for Tcl related things
 
@@ -2599,7 +2599,7 @@ INSTALL_SHLIB="\${INSTALL} $INSTL_SHLIB_OPTS"
 
 
 
-for ac_prog in gawk mawk nawk awk
+for ac_prog in mawk gawk nawk awk
 do
 # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -4521,7 +4521,7 @@ fi
 ##
 ## Header files
 ##
-for ac_hdr in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h xti.h netinet/tcp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/types.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h
+for ac_hdr in crypt.h dld.h endian.h fp_class.h getopt.h ieeefp.h netinet/tcp.h pwd.h sys/ipc.h sys/pstat.h sys/select.h sys/sem.h sys/socket.h sys/shm.h sys/types.h sys/un.h termios.h kernel/OS.h kernel/image.h SupportDefs.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
