@@ -845,3 +845,21 @@ where relname in ('p1','p2','c1','gc1') and attnum > 0 and not attisdropped
 order by relname, attnum;
 
 drop table p1, p2 cascade;
+
+-- test that operations with a dropped column do not try to reference
+-- its datatype
+
+create domain mytype as text;
+create temp table foo (f1 text, f2 mytype, f3 text);
+
+insert into foo values('aa','bb','cc');
+select * from foo;
+
+drop domain mytype cascade;
+
+select * from foo;
+insert into foo values('qq','rr');
+select * from foo;
+update foo set f3 = 'zz';
+select * from foo;
+select f3,max(f1) from foo group by f3;
