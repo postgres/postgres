@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.12 1997/09/08 21:55:06 momjian Exp $
+ * $Id: geo_decls.h,v 1.13 1997/09/20 16:25:28 thomas Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -158,6 +158,7 @@ extern bool point_below(Point *pt1, Point *pt2);
 extern bool point_vert(Point *pt1, Point *pt2);
 extern bool point_horiz(Point *pt1, Point *pt2);
 extern bool point_eq(Point *pt1, Point *pt2);
+extern bool point_ne(Point *pt1, Point *pt2);
 extern int32 pointdist(Point *p1, Point *p2);
 extern double *point_distance(Point *pt1, Point *pt2);
 extern double *point_slope(Point *pt1, Point *pt2);
