@@ -1,8 +1,8 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.12 2004/09/14 03:39:48 tgl Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.13 2005/03/21 05:17:16 neilc Exp $
 #
 
-# either 'builtin', 'mhash', 'openssl'
+# either 'builtin', 'openssl'
 cryptolib = builtin
 
 # either 'builtin', 'system'
@@ -32,12 +32,6 @@ ifeq ($(cryptolib), openssl)
 CRYPTO_CFLAGS = -I/usr/include/openssl
 CRYPTO_LDFLAGS = -lcrypto
 SRCS = openssl.c
-endif
-
-ifeq ($(cryptolib), mhash)
-CRYPTO_CFLAGS = -I/usr/local/include
-CRYPTO_LDFLAGS = -L/usr/local/lib -lmcrypt -lmhash -lltdl
-SRCS = mhash.c
 endif
 
 ifeq ($(cryptsrc), builtin)

@@ -186,17 +186,6 @@ OpenSSL (0.9.6):
     Url:	http://www.openssl.org/
 
 
-mhash (0.8.9) + mcrypt (2.4.16):
-    Hashes:	MD5, SHA1, CRC32, CRC32B, GOST, TIGER, RIPEMD160,
-		HAVAL(256,224,192,160,128)
-    Ciphers:	DES, DES3, CAST-128(CAST5), CAST-256, xTEA, 3-way,
-    		SKIPJACK, Blowfish, Twofish, LOKI97, RC2, RC4, RC6,
-		Rijndael-128/192/256, MARS, PANAMA, WAKE, Serpent, IDEA, GOST,
-		SAFER, SAFER+, Enigma
-    License:	LGPL
-    Url:	http://mcrypt.sourceforge.org/
-    Url:	http://mhash.sourceforge.org/
-
 CREDITS
 =======
 
