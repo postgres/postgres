@@ -1,4 +1,4 @@
-Thanks to thilo@eevolute.com for this README and the RPM
+Thanks to thilo@eevolute.com and others for this README and the RPM
 
 Note: The precompiled RPM package is not available at www.eevolute.com.
   You may use the spec file provided with PyGreSQL to build your
@@ -35,4 +35,12 @@ bash$ su                # Yow! Seems to work - now install it properly
 bash# cp _pg.so /usr/lib/python1.5/lib-dynload 
 
 done!
+
+Oliver White (ojw@muzak.iinet.net.au) sent me the following information
+about installing on Debian.
+
+Hi, I thought you might want to upgrade your documentation for PyGreSQL
+to let people know they can get it by simply typing 'apt-get install
+python-pygresql', on debian (duh). This would have saved me a lot of
+trouble.
 

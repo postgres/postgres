@@ -24,7 +24,7 @@ optional_libs=['pq']
 from distutils.core import setup
 
 setup (name = "PyGreSQL",
-    version = "3.0",
+    version = "3.1",
     description = "Python PostgreSQL Interfaces",
     author = "D'Arcy J. M. Cain",
     author_email = "darcy@druid.net",

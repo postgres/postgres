@@ -13,21 +13,30 @@ def _quote(d, t):
 	if d == None:
 		return "NULL"
 
-	if t in ['int', 'decimal', 'seq']:
-		if d == "": return 0
+	if t in ['int', 'seq']:
+		if d == "": return "NULL"
 		return "%d" % int(d)
 
+	if t == 'decimal':
+		if d == "": return "NULL"
+		return "%f" % float(d)
+
 	if t == 'money':
-		if d == "": return '0.00'
+		if d == "": return "NULL"
 		return "'%.2f'" % float(d)
 
 	if t == 'bool':
-		if string.upper(d) in ['T', 'TRUE', 'Y', 'YES', 1, '1', 'ON']:
+		# Can't run upper() on these
+		if d in (0, 1): return ('f', 't')[d]
+
+		if string.upper(d) in ['T', 'TRUE', 'Y', 'YES', '1', 'ON']:
 			return "'t'"
 		else:
 			return "'f'"
 
-	if d == "": return "null"
+	if t == 'date' and d == '': return "NULL"
+	if t in ('inet', 'cidr') and d == '': return "NULL"
+
 	return "'%s'" % string.strip(re.sub("'", "''", \
 							 re.sub("\\\\", "\\\\\\\\", "%s" %d)))
 
@@ -68,7 +77,11 @@ class DB:
 			print self.debug % qstr
 		return self.db.query(qstr)
 
-	def pkey(self, cl):
+	# If third arg supplied set primary key to it
+	def pkey(self, cl, newpkey = None):
+		if newpkey:
+			self.__pkeys__[cl] = newpkey
+
 		# will raise an exception if primary key doesn't exist
 		return self.__pkeys__[cl]
 
@@ -115,6 +128,8 @@ class DB:
 				l[attname] = 'date'
 			elif re.match("^date", typname):
 				l[attname] = 'date'
+			elif re.match("^timestamp", typname):
+				l[attname] = 'date'
 			elif re.match("^bool", typname):
 				l[attname] = 'bool'
 			elif re.match("^float", typname):
@@ -129,15 +144,20 @@ class DB:
 
 	# return a tuple from a database
 	def get(self, cl, arg, keyname = None, view = 0):
-		if keyname == None:			# use the primary key by default
-			keyname = self.__pkeys__[cl]
+		if cl[-1] == '*':			# need parent table name
+			xcl = cl[:-1]
+		else:
+			xcl = cl
 
-		fnames = self.get_attnames(cl)
+		if keyname == None:			# use the primary key by default
+			keyname = self.__pkeys__[xcl]
+
+		fnames = self.get_attnames(xcl)
 
 		if type(arg) == type({}):
 			# To allow users to work with multiple tables we munge the
 			# name when the key is "oid"
-			if keyname == 'oid': k = arg['oid_%s' % cl]
+			if keyname == 'oid': k = arg['oid_%s' % xcl]
 			else: k = arg[keyname]
 		else:
 			k = arg
@@ -151,7 +171,7 @@ class DB:
 				(cl, keyname, _quote(k, fnames[keyname]))
 		else:
 			q = "SELECT oid AS oid_%s, %s FROM %s WHERE %s = %s" % \
-				(cl, string.join(fnames.keys(), ','),\
+				(xcl, string.join(fnames.keys(), ','),\
 					cl, keyname, _quote(k, fnames[keyname]))
 
 		if self.debug != None: print self.debug % q
@@ -175,8 +195,7 @@ class DB:
 		n = []
 		for f in fnames.keys():
 			if a.has_key(f):
-				if a[f] == "": l.append("null")
-				else: l.append(_quote(a[f], fnames[f]))
+				l.append(_quote(a[f], fnames[f]))
 				n.append(f)
 
 		try:
@@ -197,44 +216,37 @@ class DB:
 	# otherwise use the primary key.  Fail if neither.
 	def update(self, cl, a):
 		foid = 'oid_%s' % cl
-		pk = self.__pkeys__[cl]
 		if a.has_key(foid):
 			where = "oid = %s" % a[foid]
-		elif a.has_key(pk):
-			where = "%s = '%s'" % (pk, a[pk])
+		elif self.__pkeys__.has_key(cl) and a.has_key(self.__pkeys__[cl]):
+			where = "%s = '%s'" % (self.__pkeys__[cl], a[self.__pkeys__[cl]])
 		else:
-			raise error, "Update needs key (%s) or oid as %s" % (pk, foid)
-
-		q = "SELECT oid FROM %s WHERE %s" % (cl, where)
-		if self.debug != None: print self.debug % q
-		res = self.db.query(q).getresult()
-
-		if len(res) < 1:
-			raise error,  "No record in %s where %s (%s)" % \
-						(cl, where, sys.exc_value)
-		else: a[foid] = res[0][0]
+			raise error, "Update needs primary key or oid as %s" % foid
 
 		v = []
 		k = 0
 		fnames = self.get_attnames(cl)
 
 		for ff in fnames.keys():
-			if a.has_key(ff) and a[ff] != res[0][k]:
+			if a.has_key(ff):
 				v.append("%s = %s" % (ff, _quote(a[ff], fnames[ff])))
 
 		if v == []:
 			return None
 
 		try:
-			q = "UPDATE %s SET %s WHERE oid = %s" % \
-							(cl, string.join(v, ','), a[foid])
+			q = "UPDATE %s SET %s WHERE %s" % \
+							(cl, string.join(v, ','), where)
 			if self.debug != None: print self.debug % q
 			self.db.query(q)
 		except:
 			raise error, "Can't update %s: %s" % (cl, sys.exc_value)
 
 		# reload the dictionary to catch things modified by engine
-		return self.get(cl, a, 'oid')
+		if a.has_key(foid):
+			return self.get(cl, a, 'oid')
+		else:
+			return self.get(cl, a)
 
 	# At some point we will need a way to get defaults from a table
 	def clear(self, cl, a = {}):

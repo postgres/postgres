@@ -120,6 +120,8 @@ class pgdbTypeCache:
 			pass
 		elif typ == BINARY:
 			pass
+		elif typ == BOOL:
+			value = (value[:1] in ['t','T'])
 		elif typ == INTEGER:
 			value = int(value)
 		elif typ == LONG:
@@ -322,7 +324,7 @@ def connect(dsn = None, user = None, password = None, host = None, database = No
 		try:
 			params = string.split(host, ":")
 			dbhost = params[0]
-			dbport = params[1]
+			dbport = int(params[1])
 		except:
 			pass
 

@@ -89,6 +89,9 @@ version of PyGreSQL works with PostgreSQL 6.5 and Python 1.5.2.
   that uses RPMs, then you can pick up an RPM at 
   ftp://ftp.druid.net/pub/distrib/pygresql.i386.rpm
 
+* Note that if you are using the DB-API module you must also install
+  mxDateTime from http://starship.python.net/~lemburg/mxDateTime.html.
+
 * Also, check out setup.py for an alternate method of installing the package.
 
 You have two options.  You can compile PyGreSQL as a stand-alone module 
@@ -114,7 +117,7 @@ GENERAL
 STAND-ALONE
 
 * In the directory containing pgmodule.c, run the following command
-  cc -fpic -shared -o _pg.so -I[pyInc] -I[pgInc] -L[pgLib] -lpq # -lcrypt # needed on some systems
+  cc -fpic -shared -o _pg.so -I[pyInc] -I[pgInc] -L[pgLib] -lpq pgmodule.c
   where:
     [pyInc] = path of the Python include (usually Python.h)
     [pgInc] = path of the PostgreSQL include (usually postgres.h)
@@ -125,6 +128,9 @@ STAND-ALONE
     -DNO_LARGE    - no large object support
     -DNO_SNPRINTF - if running a system with no snprintf call
     -DNO_PQSOCKET - if running an older PostgreSQL
+
+  On some systems you may need to include -lcrypt in the list of libraries
+  to make it compile.
 
   Define NO_PQSOCKET if you are using a version of PostgreSQL before 6.4
   that does not have the PQsocket function.  The other options will be
@@ -1049,6 +1055,8 @@ An update query should return the number of rows affected.
 The C module needs to be cleaned up and redundant code merged.
 
 The DB-API module needs to be documented.
+
+The fetch method should use real cursers.
 
 
 6. Future directions

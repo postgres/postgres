@@ -1,8 +1,8 @@
 
-Announce: Release of PyGreSQL version 3.0
+Announce: Release of PyGreSQL version 3.1
 ===============================================
 
-PyGreSQL v3.0 has been released.
+PyGreSQL v3.1 has been released.
 It is available at: ftp://ftp.druid.net/pub/distrib/PyGreSQL.tgz.  If
 you are running NetBSD, look in the packages directory under databases.
 There is also a package in the FreeBSD ports collection.              
@@ -25,16 +25,11 @@ PyGreSQL is a python module that interfaces to a PostgreSQL database. It
 embeds the PostgreSQL query library to allow easy use of the powerful
 PostgreSQL features from a Python script.
 
-This release of PyGreSQL is the first DB-SIG API.  That's why we have
-a bump in the major number.  There is also a potential problem in
-backwards compatibility.  Previously when there was a NULL in a returned
-field it was returned as a blank.  Now it is more properly returned as
-a Python None.  Any scripts that expect NULLs to be blanks will have
-problems with this.
+This release fixes a few bugs, adds a few minor features and makes a
+few speedups in the code.
 
-Due to the fact that the DB-API is brand new, it is expected that there
-will be a 3.1 release shortly with corrections once many people have
-had a chance to test it.
+The next release (unless serious bugs are found) will be to match PyGreSQL
+to version 2.0 of Python.
 
 See the other changes below or in the Changelog file.
 
@@ -44,7 +39,22 @@ andre@chimay.via.ecp.fr.  I changed the version to 2.0 and updated the
 code for Python 1.5 and PostgreSQL 6.2.1.  While I was at it I upgraded
 the code to use full ANSI style prototypes and changed the order of
 arguments to connect.  Later versions are fixes and enhancements to that.
-The latest version of PyGreSQL works with Python 1.5.2 and PostgreSQL 6.5.
+The latest version of PyGreSQL works with Python 1.5.2 and PostgreSQL 7.0.x
+
+Important changes from PyGreSQL 3.0 to PyGreSQL 3.1
+  - Fix some quoting functions.  In particular handle NULLs better.
+  - Use a method to add primary key information rather than direct
+    manipulation of the class structures.
+  - Break decimal out in _quote (in pg.py) and treat it as float.
+  - Treat timestamp like date for quoting purposes.
+  - Remove a redundant SELECT from the get method speeding it, and insert
+    since it calls get, up a little.
+  - Add test for BOOL type in typecast method to pgdbTypeCache class.
+    (tv@beamnet.de)
+  - Fix pgdb.py to send port as integer to lower level function
+    (dildog@l0pht.com)
+  - Change pg.py to speed up some operations
+  - Allow updates on tables with no primary keys.
 
 Important changes from PyGreSQL 2.4 to PyGreSQL 3.0:
   - Remove strlen() call from pglarge_write() and get size from object.

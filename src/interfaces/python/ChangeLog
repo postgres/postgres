@@ -5,6 +5,21 @@ This software is copyright (c) 1995, Pascal Andre (andre@via.ecp.fr)
 Further copyright 1997, 1998 and 1999 by D'Arcy J.M. Cain (darcy@druid.net)
 See file README for copyright information.
 
+Version 3.1
+  - Fix some quoting functions.  In particular handle NULLs better.
+  - Use a method to add primary key information rather than direct
+    manipulation of the class structures.
+  - Break decimal out in _quote (in pg.py) and treat it as float.
+  - Treat timestamp like date for quoting purposes.
+  - Remove a redundant SELECT from the get method speeding it, and insert
+    since it calls get, up a little.
+  - Add test for BOOL type in typecast method to pgdbTypeCache class.
+    (tv@beamnet.de)
+  - Fix pgdb.py to send port as integer to lower level function
+    (dildog@l0pht.com)
+  - Change pg.py to speed up some operations
+  - Allow updates on tables with no primary keys.
+
 Version 3.0
   - Remove strlen() call from pglarge_write() and get size from object.
     (Richard@Bouska.cz)

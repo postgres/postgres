@@ -10,7 +10,7 @@ MODULE BASICS.PY : BASIC POSTGRES SQL COMMANDS TUTORIAL
 This module is designed for being imported from python prompt
     
 In order to run the samples included here, first create a connection
-using :                        cnx = advanced.DB(...)
+using :                        cnx = basics.DB(...)
   
 The "..." should be replaced with whatever arguments you need to open an
 existing database.  Usually all you need is the name of the database and,

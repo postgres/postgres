@@ -44,7 +44,7 @@
 #define	CASHOID		790
 
 static PyObject		*PGError;
-static const char	*PyPgVersion = "3.0";
+static const char	*PyPgVersion = "3.1";
 
 /* taken from fileobject.c */
 #define BUF(v) PyString_AS_STRING((PyStringObject *)(v))
@@ -1502,7 +1502,7 @@ pgconnect(pgobject *self, PyObject *args, PyObject *dict)
 
 	if (pgport != -1)
 	{
-		bzero(port_buffer, sizeof(port_buffer));
+		memset(port_buffer, 0, sizeof(port_buffer));
 		sprintf(port_buffer, "%d", pgport);
 		npgobj->cnx = PQsetdbLogin(pghost, port_buffer, pgopt, pgtty, pgdbname,
 					pguser, pgpasswd);
@@ -2976,8 +2976,7 @@ pgsetdefpasswd(PyObject * self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "z", &temp))
 	{
 		PyErr_SetString(PyExc_TypeError,
-				"set_defpasswd(password), with password (string/
-None).");
+				"set_defpasswd(password), with password (string/None).");
 		return NULL;
 	}
 
