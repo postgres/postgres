@@ -928,7 +928,7 @@ AC_TRY_LINK([#include <stdio.h>
 AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER)],
 [AC_MSG_RESULT(no)])
 
-AC_CHECK_FUNCS([rl_completion_matches])
+AC_CHECK_FUNCS([rl_completion_matches rl_filename_completion_function])
 
 
 dnl Cannot use AC_CHECK_FUNC because finite may be a macro

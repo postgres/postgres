@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.32 2001/05/08 21:06:43 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.33 2001/06/11 22:12:48 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -60,7 +60,9 @@
 #include "common.h"
 #include "settings.h"
 
-extern char *filename_completion_function();
+#ifdef HAVE_RL_FILENAME_COMPLETION_FUNCTION
+#define filename_completion_function rl_filename_completion_function
+#endif
 
 #ifdef HAVE_RL_COMPLETION_MATCHES
 #define completion_matches(x, y) rl_completion_matches((x), ((rl_compentry_func_t *)(y)))
