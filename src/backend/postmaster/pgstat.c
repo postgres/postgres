@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.28 2002/09/05 18:26:18 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.29 2002/09/25 20:31:40 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -313,6 +313,8 @@ pgstat_start(void)
 #endif
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+
+	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/* Lose the postmaster's on-exit routines */
 	on_exit_reset();
@@ -1189,6 +1191,8 @@ pgstat_main(void)
 	 * to call system() here...)
 	 */
 	pqsignal(SIGCHLD, SIG_DFL);
+
+	MyProcPid = getpid();		/* reset MyProcPid */
 
 	/*
 	 * Identify myself via ps

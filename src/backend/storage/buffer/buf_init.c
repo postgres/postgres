@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.52 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.53 2002/09/25 20:31:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,6 @@
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
-
-static void ShutdownBufferPoolAccess(void);
 
 /*
  *	if BMTRACE is defined, we trace the last 200 buffer allocations and
@@ -219,6 +217,10 @@ InitBufferPool(void)
  * This is called during backend startup (whether standalone or under the
  * postmaster).  It sets up for this backend's access to the already-existing
  * buffer pool.
+ *
+ * NB: this is called before InitProcess(), so we do not have a PGPROC and
+ * cannot do LWLockAcquire; hence we can't actually access the bufmgr's
+ * shared memory yet.  We are only initializing local data here.
  */
 void
 InitBufferPoolAccess(void)
@@ -238,27 +240,6 @@ InitBufferPoolAccess(void)
 	 */
 	for (i = 0; i < NBuffers; i++)
 		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
-
-	/*
-	 * Now that buffer access is initialized, set up a callback to shut it
-	 * down again at backend exit.
-	 */
-	on_shmem_exit(ShutdownBufferPoolAccess, 0);
-}
-
-/*
- * Shut down buffer manager at backend exit.
- *
- * This is needed mainly to ensure that we don't leave any buffer reference
- * counts set during an error exit.
- */
-static void
-ShutdownBufferPoolAccess(void)
-{
-	/* Release any buffer context locks we are holding */
-	UnlockBuffers();
-	/* Release any buffer reference counts we are holding */
-	AtEOXact_Buffers(false);
 }
 
 /* -----------------------------------------------------

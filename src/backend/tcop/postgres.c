@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.293 2002/09/20 03:45:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.294 2002/09/25 20:31:40 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1164,6 +1164,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 
 	/*
+	 * initialize globals (already done if under postmaster, but not if
+	 * standalone; cheap enough to do over)
+	 */
+
+	MyProcPid = getpid();
+
+	/*
 	 * Fire up essential subsystems: error and memory management
 	 *
 	 * If we are running under the postmaster, this is done already.
@@ -1691,7 +1698,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.293 $ $Date: 2002/09/20 03:45:08 $\n");
+		puts("$Revision: 1.294 $ $Date: 2002/09/25 20:31:40 $\n");
 	}
 
 	/*

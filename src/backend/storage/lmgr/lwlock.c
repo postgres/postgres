@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.13 2002/09/04 20:31:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.14 2002/09/25 20:31:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,6 +202,13 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	int			extraWaits = 0;
 
 	PRINT_LWDEBUG("LWLockAcquire", lockid, lock);
+
+	/*
+	 * We can't wait if we haven't got a PGPROC.  This should only occur
+	 * during bootstrap or shared memory initialization.  Put an Assert
+	 * here to catch unsafe coding practices.
+	 */
+	Assert(!(proc == NULL && IsUnderPostmaster));
 
 	/*
 	 * Lock out cancel/die interrupts until we exit the code section
