@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.15 2002/04/21 19:02:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.16 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,59 +8,56 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPDATABASE-TITLE">DROP DATABASE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP DATABASE
-  </refname>
-  <refpurpose>
-   remove a database
-  </refpurpose>
+  <refname>DROP DATABASE</refname>
+  <refpurpose>remove a database</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-12-11</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
-  </synopsis>
+</synopsis>
+ </refsynopsisdiv>
+ 
+ <refsect1>
+  <title>Description</title>
 
-  <refsect2 id="R2-SQL-DROPDATABASE-1">
-   <refsect2info>
-    <date>1999-12-11</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
+  <para>
+   <command>DROP DATABASE</command> drops a database. It removes the
+   catalog entries for the database and deletes the directory
+   containing the data.  It can only be executed by the database owner.
+  </para>
+
+  <para>
+   <command>DROP DATABASE</command> cannot be undone.  Use it with care!
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the database to remove.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
     <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name of an existing database to remove.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPDATABASE-2">
-   <refsect2info>
-    <date>1999-12-11</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-
      <varlistentry>
       <term><computeroutput>DROP DATABASE</computeroutput></term>
       <listitem>
        <para>
-	This message is returned if the command is successful.
+        This message is returned if the command was successful.
        </para>
       </listitem>
      </varlistentry>
@@ -84,72 +81,34 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
        </para>
       </listitem>
      </varlistentry>
-
     </variablelist>
-   </para>
-  </refsect2>
- </refsynopsisdiv>
- 
- <refsect1 id="R1-SQL-DROPDATABASE-1">
-  <refsect1info>
-   <date>1999-12-11</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   <command>DROP DATABASE</command> removes the catalog entries for an existing
-   database and deletes the directory containing the data.
-   It can only be executed by the database owner (usually the user that created
-   it).
-  </para>
-
-  <para>
-   <command>DROP DATABASE</command> cannot be undone.  Use it with care!
-  </para>
-
-  <refsect2 id="R2-SQL-DROPDATABASE-3">
-   <refsect2info>
-    <date>1999-12-11</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-    This command cannot be executed while connected to the target
-    database. Thus, it might be more convenient to use the shell
-    script <xref linkend="app-dropdb" endterm="app-dropdb-title">,
-    which is a wrapper around this command, instead.
-   </para>
-
-   <para>
-    Refer to
-    <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">
-    for information on how to create a database.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPDATABASE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Notes</title>
 
-  <refsect2 id="R2-SQL-DROPDATABASE-4">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
+  <para>
+   This command cannot be executed while connected to the target
+   database. Thus, it might be more convenient to use the program
+   <xref linkend="app-dropdb" endterm="app-dropdb-title"> instead,
+   which is a wrapper around this command.
+  </para>
+ </refsect1>
 
-   <para>
-    <command>DROP DATABASE</command> statement is a
-    <productname>PostgreSQL</productname> language extension;
-    there is no such command in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The is no <command>DROP DATABASE</command> statement in the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createdatabase" endterm="sql-createdatabase-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

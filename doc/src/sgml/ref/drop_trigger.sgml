@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.14 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.15 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,124 +8,102 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPTRIGGER-TITLE">DROP TRIGGER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP TRIGGER
-  </refname>
-  <refpurpose>
-   remove a trigger
-  </refpurpose> 
+  <refname>DROP TRIGGER</refname>
+  <refpurpose>remove a trigger</refpurpose> 
  </refnamediv>            
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1998-09-22</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP TRIGGER <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">table</replaceable> [ CASCADE | RESTRICT ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-DROPTRIGGER-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name of an existing trigger.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of a table.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the trigger.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the trigger if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPTRIGGER-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP TRIGGER
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the trigger is successfully dropped.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: DropTrigger: there is no trigger <replaceable class="PARAMETER">name</replaceable> on relation "<replaceable class="parameter">table</replaceable>"
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the trigger specified does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPTRIGGER-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>DROP TRIGGER</command> will remove an existing
-   trigger definition. To execute this command the current
+   trigger definition. To execute this command, the current
    user must be the owner of the table for which the trigger is defined.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the trigger to remove.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">table</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of a table for which the
+      trigger is defined.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the trigger.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the trigger if any objects depend on it.  This is
+      the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP TRIGGER</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the trigger was successfully dropped.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR: DropTrigger: there is no trigger <replaceable class="PARAMETER">name</replaceable> on relation "<replaceable class="parameter">table</replaceable>"</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the specified trigger does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 id="SQL-DROPTRIGGER-examples">
   <title>Examples</title>
 
   <para>
-   Destroy the <literal>if_dist_exists</literal> trigger
-   on table <literal>films</literal>:
+   Destroy the trigger <literal>if_dist_exists</literal> on the table
+   <literal>films</literal>:
 
 <programlisting>
 DROP TRIGGER if_dist_exists ON films;
@@ -136,30 +114,13 @@ DROP TRIGGER if_dist_exists ON films;
  <refsect1 id="SQL-DROPTRIGGER-compatibility">
   <title>Compatibility</title>
   
-  <variablelist>
-   <varlistentry>
-    <term>SQL92</term>
-    <listitem>
-     <para>
-      There is no <command>DROP TRIGGER</command> statement in
-      <acronym>SQL92</acronym>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>SQL99</term>
-    <listitem>
-     <para>
-      The <command>DROP TRIGGER</command> statement in
-      <productname>PostgreSQL</productname> is incompatible with
-      SQL99.  In SQL99, trigger names are not local to tables, so the
-      command is simply <literal>DROP TRIGGER
-      <replaceable>name</replaceable></literal>.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
+  <para>
+   The <command>DROP TRIGGER</command> statement in
+   <productname>PostgreSQL</productname> is incompatible with the SQL
+   standard.  In the SQL standard, trigger names are not local to
+   tables, so the command is simply <literal>DROP TRIGGER
+   <replaceable>name</replaceable></literal>.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -169,6 +130,7 @@ DROP TRIGGER if_dist_exists ON films;
    <member><xref linkend="sql-createtrigger" endterm="sql-createtrigger-title"></member>
   </simplelist>
  </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

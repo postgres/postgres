@@ -1,9 +1,5 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.8 2003/02/19 04:06:28 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.9 2003/05/04 02:23:16 petere Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
- <docinfo>
-  <date>2001-04-21</date>
- </docinfo>
-
  <refmeta>
   <refentrytitle id="sql-set-session-authorization-title">SET SESSION AUTHORIZATION</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
@@ -16,7 +12,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-SET [ SESSION | LOCAL ] SESSION AUTHORIZATION <replaceable class="PARAMETER">username</replaceable>
+SET [ SESSION | LOCAL ] SESSION AUTHORIZATION <replaceable class="parameter">username</replaceable>
 SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT
 RESET SESSION AUTHORIZATION
 </synopsis>
@@ -28,11 +24,10 @@ RESET SESSION AUTHORIZATION
   <para>
    This command sets the session user identifier and the current user
    identifier of the current SQL-session context to be <replaceable
-   class="PARAMETER">username</replaceable>.  The user name may be
-   written as either an identifier or a string literal.  The session
-   user identifier is valid for the duration of a connection; for
-   example, it is possible to temporarily become an unprivileged user
-   and later switch back to become a superuser.
+   class="parameter">username</replaceable>.  The user name may be
+   written as either an identifier or a string literal.  Using this
+   command, it is possible, for example, to temporarily become an
+   unprivileged user and later switch back to become a superuser.
   </para>
 
   <para>
@@ -52,7 +47,7 @@ RESET SESSION AUTHORIZATION
   </para>
 
   <para>
-   The <option>SESSION</> and <option>LOCAL</> modifiers act the same
+   The <literal>SESSION</> and <literal>LOCAL</> modifiers act the same
    as for the regular <xref linkend="SQL-SET" endterm="SQL-SET-title">
    command.
   </para>
@@ -60,9 +55,8 @@ RESET SESSION AUTHORIZATION
   <para>
    The <literal>DEFAULT</> and <literal>RESET</> forms reset the session
    and current user identifiers to be the originally authenticated user
-   name.  These forms are always accepted.
+   name.  These forms may be executed by any user.
   </para>
-
  </refsect1>
 
  <refsect1>
@@ -88,18 +82,16 @@ SELECT SESSION_USER, CURRENT_USER;
  <refsect1>
   <title>Compatibility</title>
 
-  <simpara>SQL99</simpara>
-
   <para>
-   SQL99 allows some other expressions to appear in place of the
-   literal <parameter>username</parameter> which are not important in
-   practice.  <application>PostgreSQL</application> allows identifier
-   syntax (<literal>"username"</literal>), which SQL does not.  SQL
-   does not allow this command during a transaction;
-   <application>PostgreSQL</application> does not make
-   this restriction because there is no reason to.  The
-   privileges necessary to execute this command are left
-   implementation-defined by the standard.
+   The SQL standard allows some other expressions to appear in place
+   of the literal <replaceable>username</replaceable> which are not
+   important in practice.  <application>PostgreSQL</application>
+   allows identifier syntax (<literal>"username"</literal>), which SQL
+   does not.  SQL does not allow this command during a transaction;
+   <application>PostgreSQL</application> does not make this
+   restriction because there is no reason to.  The privileges
+   necessary to execute this command are left implementation-defined
+   by the standard.
   </para>
  </refsect1>
 </refentry>

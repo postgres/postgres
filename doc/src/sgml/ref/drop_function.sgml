@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.23 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.24 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,129 +8,96 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPFUNCTION-TITLE">DROP FUNCTION</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP FUNCTION
-  </refname>
-  <refpurpose>
-   remove a user-defined function
-  </refpurpose>
+  <refname>DROP FUNCTION</refname>
+  <refpurpose>remove a user-defined function</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">type</replaceable> [, ...] ] ) [ CASCADE | RESTRICT ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-DROPFUNCTION-1">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing function.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">type</replaceable></term>
-      <listitem>
-       <para>
-	The type of a parameter of the function.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the function
-	(such as operators or triggers).
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the function if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPFUNCTION-2">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP FUNCTION
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the command completes successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  RemoveFunction: Function "<replaceable class="parameter">name</replaceable>" ("<replaceable class="parameter">types</replaceable>") does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message is given if the function specified does not
-	exist in the current database.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPFUNCTION-1">
-  <refsect1info>
-   <date>1998-04-15</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   DROP FUNCTION will remove the definition of an existing
+   <command>DROP FUNCTION</command> removes the definition of an existing
    function. To execute this command the user must be the
-   owner of the function. The input argument types to the
+   owner of the function. The argument types to the
    function must be specified, since several different functions
    may exist with the same name and different argument lists.
   </para>
  </refsect1>
 
- <refsect1 id="SQL-DROPFUNCTION-notes">
-  <title>Notes</title>
+ <refsect1>
+  <title>Parameters</title>
 
-   <para>
-    Refer to
-    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
-    for information on creating functions.
-   </para>
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">type</replaceable></term>
+    <listitem>
+     <para>
+      The data type of an argument of the function.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the function (such as
+      operators or triggers).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the function if any objects depend on it.  This
+      is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP FUNCTION</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the command completes successfully.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  RemoveFunction: Function <replaceable class="parameter">name</replaceable> (<replaceable class="parameter">types</replaceable>) does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      This message is output if the function specified does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 id="SQL-DROPFUNCTION-examples">
@@ -149,8 +116,8 @@ DROP FUNCTION sqrt(integer);
   <title>Compatibility</title>
   
   <para>
-   A <command>DROP FUNCTION</command> statement is defined in SQL99.  One of
-   its syntax forms is similar to PostgreSQL's.
+   A <command>DROP FUNCTION</command> statement is defined in the SQL
+   standard, but it is not compatible with this command.
   </para>
  </refsect1>
 
@@ -161,6 +128,7 @@ DROP FUNCTION sqrt(integer);
    <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
   </simplelist>
  </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.21 2003/03/27 16:51:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.22 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,112 +8,74 @@ PostgreSQL documentation
   <refentrytitle id="SQL-MOVE-TITLE">MOVE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   MOVE
-  </refname>
-  <refpurpose>
-   reposition a cursor
-  </refpurpose>
- </refnamediv>                
+  <refname>MOVE</refname>
+  <refpurpose>reposition a cursor</refpurpose>
+ </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <replaceable class="PARAMETER">cursor</replaceable>
-  </synopsis>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-MOVE-1">
-  <refsect1info>
-   <date>1998-09-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>MOVE</command> repositions a cursor without retrieving any data.
    <command>MOVE</command> works exactly like the <command>FETCH</command>
    command, except it only repositions the cursor and does not return rows.
   </para>
+
   <para>
    Refer to 
    <xref linkend="sql-fetch" endterm="sql-fetch-title">
    for details on syntax and usage.
   </para>
-
-  <refsect2 id="R2-SQL-MOVE-3">
-   <refsect2info>
-    <date>1998-09-24</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-
-   <para>
-    The count returned in <command>MOVE</command>'s status string is the
-    count of the number of rows that would have been returned by the
-    equivalent <command>FETCH</command> command.
-   </para>
-
-   <para>
-    Refer to
-    <xref linkend="sql-fetch" endterm="sql-fetch-title">
-    for a description of valid arguments.
-    Refer to 
-    <xref linkend="sql-declare" endterm="sql-declare-title">
-    to define a cursor.
-   </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-MOVE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Diagnostics</title>
+
   <para>
-   Set up and use a cursor:
+   The count returned in <command>MOVE</command>'s status string is
+   the count of the number of rows that would have been returned by
+   the equivalent <command>FETCH</command> command.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
 
 <programlisting>
 BEGIN WORK;
 DECLARE liahona CURSOR FOR SELECT * FROM films;
--- Skip first 5 rows:
+
+-- Skip the first 5 rows:
 MOVE FORWARD 5 IN liahona;
-<computeroutput>
 MOVE 5
-</computeroutput>
--- Fetch 6th row in the cursor liahona:
-FETCH 1 IN liahona;
-<computeroutput>
- code  | title  | did | date_prod | kind   | len
--------+--------+-----+-----------+--------+-------
- P_303 | 48 Hrs | 103 | 1982-10-22| Action | 01:37
+
+-- Fetch the 6th row from the cursor liahona:
+FETCH 1 FROM liahona;
+ code  | title  | did | date_prod  |  kind  |  len
+-------+--------+-----+------------+--------+-------
+ P_303 | 48 Hrs | 103 | 1982-10-22 | Action | 01:37
 (1 row)
-</computeroutput>
--- close the cursor liahona and commit work:
+
+-- Close the cursor liahona and end the transaction:
 CLOSE liahona;
 COMMIT WORK;
 </programlisting>
-  </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-MOVE-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 	
-  <refsect2 id="R2-SQL-MOVE-4">
-   <refsect2info>
-    <date>1998-09-01</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <acronym>SQL92</acronym> <command>MOVE</command> statement. 
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>MOVE</command> statement in the SQL standard.
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.17 2002/07/14 22:47:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.18 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,158 +8,126 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPTABLE-TITLE">DROP TABLE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP TABLE
-  </refname>
-  <refpurpose>
-   remove a table
-  </refpurpose>
+  <refname>DROP TABLE</refname>
+  <refpurpose>remove a table</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
-
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-DROPTABLE-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing table to drop.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the table
-	(such as views).
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the table if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPTABLE-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP TABLE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the command completes successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: table "<replaceable class="parameter">name</replaceable>" does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	If the specified table does not exist in the database.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
  
- <refsect1 id="R1-SQL-DROPTABLE-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>DROP TABLE</command> removes tables from the database.
-   Only its owner may destroy a table. A table may be emptied of rows, but not
-   destroyed, by using <command>DELETE</command>.
+   Only its owner may destroy a table.  To empty a table of rows,
+   without destroying the table, use <command>DELETE</command>.
   </para>
+
   <para>
    <command>DROP TABLE</command> always removes any indexes, rules,
-   triggers, and constraints that exist for the target table.  However,
-   to drop a table that is referenced by a foreign-key constraint of another
-   table, CASCADE must be specified. (CASCADE will remove the foreign-key
-   constraint, not the other table itself.)
+   triggers, and constraints that exist for the target table.
+   However, to drop a table that is referenced by a foreign-key
+   constraint of another table, <literal>CASCADE</> must be
+   specified. (<literal>CASCADE</> will remove the foreign-key
+   constraint, not the other table entirely.)
   </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
 
-  <refsect2 id="R2-SQL-DROPTABLE-3">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    Refer to <command>CREATE TABLE</command> and
-    <command>ALTER TABLE</command> for information on
-    how to create or modify tables.
-   </para>
-  </refsect2>
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the table to drop.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the table (such as
+      views).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the table if any objects depend on it.  This is
+      the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPTABLE-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP TABLE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the command completes successfully.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR: table "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the specified table does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    To destroy two tables, <literal>films</literal> and 
    <literal>distributors</literal>:
 
-   <programlisting>
+<programlisting>
 DROP TABLE films, distributors;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-DROPTABLE-3">
-   <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-DROPTABLE-4">
-   <title>
-    SQL92
-   </title>
-   <para>
-   </para>
-   </refsect2>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   This command conforms to the SQL standard.
+  </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altertable" endterm="sql-altertable-title"></member>
+   <member><xref linkend="sql-createtable" endterm="sql-createtable-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

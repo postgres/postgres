@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.2 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.3 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,162 +8,118 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPOPCLASS-TITLE">DROP OPERATOR CLASS</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP OPERATOR CLASS
-  </refname>
-  <refpurpose>
-   remove a user-defined operator class
-  </refpurpose>
+  <refname>DROP OPERATOR CLASS</refname>
+  <refpurpose>remove a user-defined operator class</refpurpose>
  </refnamediv>
   
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2002-07-28</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-DROP OPERATOR CLASS <replaceable class="PARAMETER">name</replaceable> USING <replaceable class="PARAMETER">access_method</replaceable> [ CASCADE | RESTRICT ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-DROPOPCLASS-1">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">name</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing operator class.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">access_method</replaceable></term>
-      <listitem>
-       <para>
-	The name of the index access method the operator class is for.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the operator class.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the operator class if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPOPCLASS-2">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP OPERATOR CLASS
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the command is successful.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+DROP OPERATOR CLASS <replaceable class="PARAMETER">name</replaceable> USING <replaceable class="PARAMETER">index_method</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPOPCLASS-1">
-  <refsect1info>
-   <date>2002-07-28</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>DROP OPERATOR CLASS</command> drops an existing operator class
-   from the database.
+   <command>DROP OPERATOR CLASS</command> drops an existing operator class.
    To execute this command you must be the owner of the operator class.
   </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
 
-  <refsect2 id="R2-SQL-DROPOPCLASS-3">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    The <command>DROP OPERATOR CLASS</command> statement is a 
-    <productname>PostgreSQL</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to
-    <xref linkend="sql-createopclass" endterm="sql-createopclass-title">
-    for information on how to create operator classes.
-   </para>
-  </refsect2>
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing operator class.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">index_method</replaceable></term>
+    <listitem>
+     <para>
+      The name of the index access method the operator class is for.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the operator class.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the operator class if any objects depend on it.
+      This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPOPCLASS-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP OPERATOR CLASS</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the command was successful.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
-   Remove B-tree operator class <literal>widget_ops</literal>:
+   Remove the B-tree operator class <literal>widget_ops</literal>:
 
-   <programlisting>
+<programlisting>
 DROP OPERATOR CLASS widget_ops USING btree;
-   </programlisting>
+</programlisting>
 
-   This command will not execute if there are any existing indexes
+   This command will not succeed if there are any existing indexes
    that use the operator class.  Add <literal>CASCADE</> to drop
    such indexes along with the operator class.
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-DROPOPCLASS-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-DROPOPCLASS-4">
-   <refsect2info>
-    <date>2002-07-28</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>DROP OPERATOR CLASS</command> in
-    <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>DROP OPERATOR CLASS</command> statement in the
+   SQL standard.
+  </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

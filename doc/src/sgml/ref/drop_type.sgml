@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.20 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.21 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,118 +8,91 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPTYPE-TITLE">DROP TYPE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP TYPE
-  </refname>
-  <refpurpose>
-   remove a user-defined data type
-  </refpurpose>
+  <refname>DROP TYPE</refname>
+  <refpurpose>remove a user-defined data type</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP TYPE <replaceable class="PARAMETER">typename</replaceable> [, ...] [ CASCADE | RESTRICT ]
-
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-DROPTYPE-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">typename</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing type.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the type
-	(such as table columns, functions, operators, etc).
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the type if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPTYPE-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP TYPE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the command is successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>' does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the specified type is not found.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPTYPE-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>DROP TYPE</command> will remove a user type from the
-   system catalogs.
-  </para>
-  <para>
+   <command>DROP TYPE</command> will remove a user-defined data type.
    Only the owner of a type can remove it.
   </para>
  </refsect1>
   
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">typename</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the data type to remove.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the type (such as
+      table columns, functions, operators).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the type if any objects depend on it.  This is
+      the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP TYPE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the command was successful.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR:  RemoveType: type '<replaceable class="parameter">typename</replaceable>' does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the specified type does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+  
  <refsect1 id="SQL-DROPTYPE-examples">
   <title>Examples</title>
-  <para>
-   To remove the <type>box</type> type:
 
+  <para>
+   To remove the data type <type>box</type>:
 <programlisting>
 DROP TYPE box;
 </programlisting>
@@ -130,9 +103,10 @@ DROP TYPE box;
   <title>Compatibility</title>
 
   <para>
-   Note that the <command>CREATE TYPE</command> command and the data
-   type extension mechanisms in <productname>PostgreSQL</productname>
-   differ from SQL99.
+   This command is similar to the corresponding command in the SQL
+   standard, but note that the <command>CREATE TYPE</command> command
+   and the data type extension mechanisms in
+   <productname>PostgreSQL</productname> differ from the SQL standard.
   </para>
  </refsect1>
 
@@ -143,6 +117,7 @@ DROP TYPE box;
    <member><xref linkend="sql-createtype" endterm="sql-createtype-title"></member>
   </simplelist>
  </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

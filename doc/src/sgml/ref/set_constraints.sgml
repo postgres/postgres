@@ -1,20 +1,19 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.5 2002/08/17 12:15:48 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.6 2003/05/04 02:23:16 petere Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
   <refname>SET CONSTRAINTS</refname>
   <refpurpose>set the constraint mode of the current transaction</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2000-06-01</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> [, ...] } { DEFERRED | IMMEDIATE }
-  </synopsis>
+</synopsis>
  </refsynopsisdiv>
 
  <refsect1>
@@ -22,39 +21,26 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> 
 
   <para>
    <command>SET CONSTRAINTS</command> sets the behavior of constraint
-   evaluation in the current transaction. In <option>IMMEDIATE
-   </option> mode, constraints are checked at the end of each
-   statement. In <option>DEFERRED</option> mode, constraints are not
-   checked until transaction commit.
+   evaluation in the current transaction. In
+   <literal>IMMEDIATE</literal> mode, constraints are checked at the
+   end of each statement. In <literal>DEFERRED</literal> mode,
+   constraints are not checked until transaction commit.
   </para>
 
-  <note>
-   <para>
-	This command only alters the behavior of constraints within the
-	current transaction. Thus, if you execute this command outside
-	of an explicit transaction block (such as one started with
-	<command>BEGIN</command>), it will not appear to have any effect.
-	If you wish to change the behavior of a constraint without needing
-	to issue a <command>SET CONSTRAINTS</command> command in every
-	transaction, specify <option>INITIALLY DEFERRED</option> or
-	<option>INITIALLY IMMEDIATE</option> when you create the constraint.
-   </para>
-  </note>
-
   <para>
-   When you change the mode of a constraint to be <option>IMMEDIATE
-   </option>, the new constraint mode takes effect retroactively:
-   any outstanding data modifications that would have been checked
-   at the end of the transaction (when using
-   <option>DEFERRED</option>) are instead checked during the
+   When you change the mode of a constraint to be
+   <literal>IMMEDIATE</literal>, the new constraint mode takes effect
+   retroactively: any outstanding data modifications that would have
+   been checked at the end of the transaction (when using
+   <literal>DEFERRED</literal>) are instead checked during the
    execution of the <command>SET CONSTRAINTS</command> command.
   </para>
 
   <para>
    Upon creation, a constraint is always give one of three
-   characteristics: <option>INITIALLY DEFERRED</option>,
-   <option>INITIALLY IMMEDIATE DEFERRABLE</option>, or
-   <option>INITIALLY IMMEDIATE NOT DEFERRABLE</option>. The third
+   characteristics: <literal>INITIALLY DEFERRED</literal>,
+   <literal>INITIALLY IMMEDIATE DEFERRABLE</literal>, or
+   <literal>INITIALLY IMMEDIATE NOT DEFERRABLE</literal>. The third
    class is not affected by the <command>SET CONSTRAINTS</command>
    command.
   </para>
@@ -66,21 +52,30 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> 
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-SET-CONSTRAINT-3">
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   This command only alters the behavior of constraints within the
+   current transaction. Thus, if you execute this command outside of a
+   transaction block
+   (<command>BEGIN</command>/<command>COMMIT</command> pair), it will
+   not appear to have any effect.  If you wish to change the behavior
+   of a constraint without needing to issue a <command>SET
+   CONSTRAINTS</command> command in every transaction, specify
+   <literal>INITIALLY DEFERRED</literal> or <literal>INITIALLY
+   IMMEDIATE</literal> when you create the constraint.
+  </para>
+ </refsect1>
+
+ <refsect1>
   <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-SET-CONSTRAINT-4">
-   <title>SQL92, SQL99</title>
-
-   <para>
-    <command>SET CONSTRAINTS</command> is defined in
-    <acronym>SQL92</acronym> and <acronym>SQL99</acronym>. The
-    implementation in <productname>PostgreSQL</productname> complies
-    with the behavior defined in the standard, except for the
-    <productname>PostgreSQL</productname> limitation that <command>SET
-    CONSTRAINTS</command> cannot be applied to check or unique constraints.
-   </para>
-  </refsect2>
+  <para>
+   This command complies with the behavior defined in the SQL
+   standard, except for the limitation that, in PostgreSQL, it only
+   applies to foreign-key constraints.
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.177 2003/04/04 03:03:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.178 2003/05/04 02:23:16 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1384,9 +1384,10 @@ SET ENABLE_SEQSCAN TO OFF;
       <indexterm><primary>date style</></>
       <listitem>
        <para>
-        Sets the display format for date and time values, as well as the rules for
-	interpreting ambiguous date input values.
-        The default is <literal>ISO, US</>.
+        Sets the display format for date and time values, as well as
+        the rules for interpreting ambiguous date input values.  See
+        <xref linkend="datatype-datetime"> for more information.  The
+        default is <literal>ISO, US</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1556,7 +1557,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         This parameter adjusts the number of digits displayed for
 	floating-point values, including <type>float4</>, <type>float8</>,
-	and geometric datatypes.  The parameter value is added to the
+	and geometric data types.  The parameter value is added to the
 	standard number of digits (<literal>FLT_DIG</> or <literal>DBL_DIG</>
 	as appropriate).  The value can be set as high as 2, to include
 	partially-significant digits; this is especially useful for dumping
@@ -1813,26 +1814,28 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <indexterm><primary>preload_libraries</></>
       <listitem>
        <para>
-        This variable specifies one or more shared libraries that are to be
-	preloaded at Postmaster start. An initialization function can also be
-	optionally specified by adding a colon followed by the name of the
-	initialization function after the library name. For example
-	<literal>'$libdir/mylib:init_mylib'</literal> would cause <literal>mylib</>
-    to be preloaded and <literal>init_mylib</> to be executed. If more than
-	one library is to be loaded, they must be delimited with a comma.
+        This variable specifies one or more shared libraries that are
+        to be preloaded at server start. An initialization function
+        can also be optionally specified by adding a colon followed by
+        the name of the initialization function after the library
+        name. For example
+        <literal>'$libdir/mylib:init_mylib'</literal> would cause
+        <literal>mylib</> to be preloaded and <literal>init_mylib</>
+        to be executed. If more than one library is to be loaded, they
+        must be delimited with a comma.
        </para>
 
        <para>
-        If <literal>mylib</> is not found, the postmaster will fail to start.
-	However, if <literal>init_mylib</> is not found, <literal>mylib</> will
-	still be preloaded without executing the initialization function.
+        If <literal>mylib</> is not found, the server will fail to
+        start.  However, if <literal>init_mylib</> is not found,
+        <literal>mylib</> will still be preloaded without executing
+        the initialization function.
        </para>
 
        <para>
-        By preloading a shared library (and initializing it if applicable),
-	the library startup time is avoided when the library is used later in a
-	specific backend. However there is a cost in terms of memory duplication
-	as every backend is forked, whether or not the library is used.
+        By preloading a shared library (and initializing it if
+        applicable), the library startup time is avoided when the
+        library is first used.
        </para>
       </listitem>
      </varlistentry>
@@ -2057,9 +2060,10 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <indexterm><primary>time zone</></>
       <listitem>
        <para>
-        Sets the time zone for displaying and interpreting time stamps.
-	The default is to use whatever the system environment
-	specifies as the time zone.
+        Sets the time zone for displaying and interpreting time
+        stamps.  The default is to use whatever the system environment
+        specifies as the time zone.  See <xref
+        linkend="datatype-datetime"> for more information.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.16 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.17 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,154 +8,113 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPVIEW-TITLE">DROP VIEW</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP VIEW
-  </refname>
-  <refpurpose>
-   remove a view
-  </refpurpose>
+  <refname>DROP VIEW</refname>
+  <refpurpose>remove a view</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-DROPVIEW-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing view.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the view
-	(such as other views).
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the view if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPVIEW-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP VIEW
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the command is successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: view <replaceable class="parameter">name</replaceable> does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the specified view does not exist in
-	the database.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPVIEW-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   <command>DROP VIEW</command> drops an existing view from the database.
-   To execute this command you must be the owner of the
-   view.
-  </para>
+ <refsect1>
+  <title>Description</title>
 
-  <refsect2 id="R2-SQL-DROPVIEW-3">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    Refer to <xref linkend="sql-createview" endterm="sql-createview-title">
-    for information on how to create views.
-   </para>
-  </refsect2>
+  <para>
+   <command>DROP VIEW</command> drops an existing view.  To execute
+   this command you must be the owner of the view.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of the view to remove.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the view (such as
+      other views).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the view if any objects depend on it.  This is
+      the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPVIEW-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP VIEW</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the command was successful.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR: view <replaceable class="parameter">name</replaceable> does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the specified view does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    This command will remove the view called <literal>kinds</literal>:
-  </para>
-  <programlisting>
+<programlisting>
 DROP VIEW kinds;
-  </programlisting>
+</programlisting>
+  </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-DROPVIEW-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-DROPVIEW-4">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   This command conforms to the SQL standard.
+  </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createview" endterm="sql-createview-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.2 2002/08/11 17:44:12 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_cast.sgml,v 1.3 2003/05/04 02:23:16 petere Exp $ -->
 
 <refentry id="SQL-DROPCAST">
  <refmeta>
@@ -13,8 +13,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-DROP CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>)
-    [ CASCADE | RESTRICT ]
+DROP CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</replaceable>) [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
   
@@ -30,10 +29,12 @@ DROP CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</rep
    data type.  These are the same privileges that are required to
    create a cast.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
 
    <variablelist>
-    <title>Parameters</title>
-
     <varlistentry>
      <term><replaceable>sourcetype</replaceable></term>
 
@@ -66,17 +67,7 @@ DROP CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</rep
      </listitem>
     </varlistentry>
    </variablelist>
-
  </refsect1>
-
- <refsect1 id="sql-dropcast-notes">
-  <title>Notes</title>
-
-  <para>
-   Use <command>CREATE CAST</command> to create user-defined casts.
-  </para>
- </refsect1>
-
 
  <refsect1 id="sql-dropcast-examples">
   <title>Examples</title>
@@ -84,27 +75,25 @@ DROP CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</rep
   <para>
    To drop the cast from type <type>text</type> to type <type>int</type>:
 <programlisting>
-DROP CAST (text AS int4);
+DROP CAST (text AS int);
 </programlisting>
   </para>
  </refsect1>
-
  
  <refsect1 id="sql-dropcast-compat">
   <title>Compatibility</title>
 
   <para>
-   The <command>DROP CAST</command> command conforms to SQL99.
+   The <command>DROP CAST</command> command conforms to the SQL standard.
   </para>
  </refsect1>
 
-
- <refsect1 id="sql-dropcast-seealso">
+ <refsect1>
   <title>See Also</title>
 
-  <para>
-   <xref linkend="sql-createcast" endterm="sql-createcast-title">
-  </para>
+  <simplelist type="inline">
+   <member><xref linkend="sql-createcast" endterm="sql-createcast-title"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

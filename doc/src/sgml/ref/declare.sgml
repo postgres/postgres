@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.23 2003/04/29 03:21:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.24 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,222 +8,23 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DECLARE-TITLE">DECLARE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DECLARE
-  </refname>
-  <refpurpose>
-   define a cursor
-  </refpurpose>
+  <refname>DECLARE</refname>
+  <refpurpose>define a cursor</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]
     CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">query</replaceable>
-    [ FOR { READ ONLY | UPDATE [ OF <replaceable class="parameter">column</replaceable> [, ...] ] ]
-  </synopsis>
-  <refsect2 id="R2-SQL-DECLARE-1">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">cursorname</replaceable></term>
-      <listitem>
-       <para>
-	The name of the cursor to be used in subsequent
-	<command>FETCH</command> operations.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>BINARY</term>
-      <listitem>
-       <para>
-	Causes the cursor to return data in binary rather than in text format.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>INSENSITIVE</term>
-      <listitem>
-       <para>
-	<acronym>SQL92</acronym> keyword indicating that data retrieved
-	from the cursor should be unaffected by updates from other
-	processes or cursors.  By default, all cursors are insensitive.
-	This keyword currently has no effect and is present for
-	compatibility with the SQL standard.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>NO SCROLL</term>
-      <listitem>
-       <para>
-        Specifies that the cursor cannot be used to retrieve rows in a
-        nonsequential fashion (e.g., backward).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>SCROLL</term>
-      <listitem>
-       <para>
-	Specifies that the cursor may be used to retrieve rows in a
-	nonsequential fashion (e.g., backward). Depending upon the
-	complexity of the query's execution plan, specifying
-	<literal>SCROLL</literal> may impose a performance penalty
-	on the query's execution time.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>WITHOUT HOLD</term>
-      <listitem>
-       <para>
-        Specifies that the cursor cannot be used outside of the
-        transaction that created it. If neither <literal>WITHOUT
-        HOLD</literal> nor <literal>WITH HOLD</literal> is specified,
-        <literal>WITHOUT HOLD</literal> is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>WITH HOLD</term>
-      <listitem>
-       <para>
-        Specifies that the cursor may continue to be used after the
-	transaction that creates it successfully commits.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">query</replaceable></term>
-      <listitem>
-       <para>
-	A <command>SELECT</> query which will provide the rows to be
-	returned by the cursor.
-	Refer to <xref linkend="sql-select" endterm="sql-select-title">
-	for further information about valid arguments.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>READ ONLY</term>
-      <listitem>
-       <para>
-	<acronym>SQL92</acronym> keyword indicating that the cursor will be used
-	in a read only mode. Since this is the only cursor access mode
-	available in <productname>PostgreSQL</productname> this keyword has no effect.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>UPDATE</term>
-      <listitem>
-       <para>
-	<acronym>SQL92</acronym> keyword indicating that the cursor will be used
-	to update tables. Since cursor updates are not currently
-	supported in <productname>PostgreSQL</productname> this keyword
-	provokes an informational error message.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">column</replaceable></term>
-      <listitem>
-       <para>
-	Column(s) to be updated.
-	Since cursor updates are not currently
-	supported in <productname>PostgreSQL</productname> the UPDATE clause
-	provokes an informational error message.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-   </para>
-
-   <para>
-    The <literal>BINARY</literal>, <literal>INSENSITIVE</literal>,
-    and <literal>SCROLL</literal> keywords may appear in any order.
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DECLARE-2">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DECLARE CURSOR
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the <command>SELECT</command> is run successfully.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-WARNING:  Closing pre-existing portal "<replaceable class="parameter">cursorname</replaceable>"
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message is reported if a cursor with the same name already
-	exists. The previous definition is discarded.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This error occurs if the cursor is not declared within a
-	transaction block, and <literal>WITH HOLD</literal> is not
-	specified.
-       </para>
-      </listitem>
-     </varlistentry>     
-    </variablelist>
-   </para>
-  </refsect2>
+    [ FOR { READ ONLY | UPDATE [ OF <replaceable class="parameter">column</replaceable> [, ...] ] } ]
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DECLARE-1">
-  <refsect1info>
-   <date>1998-09-04</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
    <command>DECLARE</command> allows a user to create cursors, which
    can be used to retrieve
@@ -236,51 +37,195 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
    Normal cursors return data in text format, the same as a
    <command>SELECT</> would produce.  Since data is stored natively in
    binary format, the system must do a conversion to produce the text
-   format. In addition, text formats are often larger in size than the
-   corresponding binary format.  Once the information comes back in
-   text form, the client application may need to convert it to a
-   binary format to manipulate it.  BINARY cursors give you back the
-   data in the native binary representation.
+   format.  Once the information comes back in text form, the client
+   application may need to convert it to a binary format to manipulate
+   it.  In addition, data in the text format is often larger in size
+   than in the binary format.  Binary cursors return the data in the
+   native binary representation.  Nevertheless, if you intend to
+   display the data as text anyway, retrieving it in text form will
+   save you some effort on the client side.
   </para>
 
   <para>
    As an example, if a query returns a value of one from an integer column,
    you would get a string of <literal>1</> with a default cursor
    whereas with a binary cursor you would get
-   a 4-byte value equal to control-A (<literal>^A</literal>).
+   a 4-byte value containing the internal representation of the value.
   </para>
 
   <para>
-   BINARY cursors should be used carefully. User applications such
-   as <application>psql</application> are not aware of binary cursors
-   and expect data to come back in a text format.
+   Binary cursors should be used carefully.  Many applications,
+   including <application>psql</application>, are not prepared to
+   handle binary cursors and expect data to come back in the text
+   format.
   </para>
 
   <para>
-   String representation is architecture-neutral whereas binary
+   The string representation is architecture-neutral whereas binary
    representation can differ between different machine architectures.
    <emphasis><productname>PostgreSQL</productname> does not resolve
-    byte ordering or representation issues for binary cursors</emphasis>.
-   Therefore, if your client machine and server machine use different
-   representations (e.g., <quote>big-endian</quote> versus <quote>little-endian</quote>),
-   you will probably not want your data returned in
-   binary format.
-
-   <tip>
-    <para>
-     If you intend to display the data as text, retrieving it in text form
-     will save you some effort on the client side.
-    </para>
-   </tip>
+   byte ordering or representation issues for binary
+   cursors.</emphasis>  Therefore, if your client machine and server
+   machine use different representations (e.g.,
+   <quote>big-endian</quote> versus <quote>little-endian</quote>), you
+   will probably not want your data returned in binary format.
   </para>
+ </refsect1>
 
-  <refsect2 id="R2-SQL-DECLARE-3">
-   <refsect2info>
-    <date>1998-09-04</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">cursorname</replaceable></term>
+    <listitem>
+     <para>
+      The name of the cursor to be used in subsequent
+      <command>FETCH</command> operations.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>BINARY</literal></term>
+    <listitem>
+     <para>
+      Causes the cursor to return data in binary rather than in text format.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>INSENSITIVE</literal></term>
+    <listitem>
+     <para>
+      Indicates that data retrieved from the cursor should be
+      unaffected by updates to the tables underlying the cursor while
+      the cursor exists.  In PostgreSQL, all cursors are insensitive;
+      this key word currently has no effect and is present for
+      compatibility with the SQL standard.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SCROLL</literal></term>
+    <term><literal>NO SCROLL</literal></term>
+    <listitem>
+     <para>
+      <literal>SCROLL</literal> specifies that the cursor may be used
+      to retrieve rows in a nonsequential fashion (e.g.,
+      backward). Depending upon the complexity of the query's
+      execution plan, specifying <literal>SCROLL</literal> may impose
+      a performance penalty on the query's execution time.
+      <literal>NO SCROLL</literal> specifies that the cursor cannot be
+      used to retrieve rows in a nonsequential fashion.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>WITH HOLD</literal></term>
+    <term><literal>WITHOUT HOLD</literal></term>
+    <listitem>
+     <para>
+      <literal>WITH HOLD</literal> specifies that the cursor may
+      continue to be used after the transaction that created it
+      successfully commits.  <literal>WITHOUT HOLD</literal> specifies
+      that the cursor cannot be used outside of the transaction that
+      created it. If neither <literal>WITHOUT HOLD</literal> nor
+      <literal>WITH HOLD</literal> is specified, <literal>WITHOUT
+      HOLD</literal> is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">query</replaceable></term>
+    <listitem>
+     <para>
+      A <command>SELECT</> command that will provide the rows to be
+      returned by the cursor.  Refer to <xref linkend="sql-select"
+      endterm="sql-select-title"> for further information about valid
+      queries.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FOR READ ONLY</literal></term>
+    <term><literal>FOR UPDATE</literal></term>
+    <listitem>
+     <para>
+      <literal>FOR READ ONLY</literal> indicates that the cursor will
+      be used in a read-only mode.  <literal>FOR UPDATE</literal>
+      indicates that the cursor will be used to update tables.  Since
+      cursor updates are not currently supported in
+      <productname>PostgreSQL</productname>, specifying <literal>FOR
+      UPDATE</literal> will cause an error message and specifying
+      <literal>FOR READ ONLY</literal> has no effect.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">column</replaceable></term>
+    <listitem>
+     <para>
+      Column(s) to be updated by the cursor.  Since cursor updates are
+      not currently supported in
+      <productname>PostgreSQL</productname>, the <literal>FOR
+      UPDATE</literal> clause provokes an error message.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   The key words <literal>BINARY</literal>,
+   <literal>INSENSITIVE</literal>, and <literal>SCROLL</literal> may
+   appear in any order.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DECLARE CURSOR</computeroutput></term>
+    <listitem>
+     <para>
+      The message returned if the cursor was successfully defined.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>WARNING:  Closing pre-existing portal "<replaceable class="parameter">cursorname</replaceable>"</computeroutput></term>
+    <listitem>
+     <para>
+      This message is reported if a cursor with the same name already
+      exists. The previous definition is discarded.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks</computeroutput></term>
+    <listitem>
+     <para>
+      This error occurs if the cursor is not declared within a
+      transaction block, and <literal>WITH HOLD</literal> is not
+      specified.
+     </para>
+    </listitem>
+   </varlistentry>     
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
    <para>
     If <literal>WITH HOLD</literal> is not specified, the cursor
@@ -295,87 +240,73 @@ ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks
 
    <para>
     If <literal>WITH HOLD</literal> is specified and the transaction
-    that created the cursor successfully commits, the cursor can be
-    continue to be accessed by subsequent transactions in the same session.
-    (But if the creating
-    transaction is aborted, the cursor is removed.) A cursor created
-    with <literal>WITH HOLD</literal> is closed when an explicit
-    <command>CLOSE</command> command is issued on it, or when the client
-    connection is terminated.  In the current implementation, the rows
-    represented by a held cursor are copied into a temporary file or
-    memory area so that they remain available for subsequent transactions.
+    that created the cursor successfully commits, the cursor can
+    continue to be accessed by subsequent transactions in the same
+    session.  (But if the creating transaction is aborted, the cursor
+    is removed.)  A cursor created with <literal>WITH HOLD</literal>
+    is closed when an explicit <command>CLOSE</command> command is
+    issued on it, or the session ends.  In the current implementation,
+    the rows represented by a held cursor are copied into a temporary
+    file or memory area so that they remain available for subsequent
+    transactions.
    </para>
 
    <para>
     The <literal>SCROLL</> option should be specified when defining a
     cursor that will be used to fetch backwards.  This is required by
-    <acronym>SQL92</acronym>.  However, for compatibility with earlier
+    the SQL standard.  However, for compatibility with earlier
     versions, <productname>PostgreSQL</productname> will allow
     backward fetches without <literal>SCROLL</>, if the cursor's query
     plan is simple enough that no extra overhead is needed to support
     it. However, application developers are advised not to rely on
     using backward fetches from a cursor that has not been created
-    with <literal>SCROLL</literal>.  If <literal>NO SCROLL</> is specified,
-    then backward fetches are disallowed in any case.
+    with <literal>SCROLL</literal>.  If <literal>NO SCROLL</> is
+    specified, then backward fetches are disallowed in any case.
    </para>
 
    <para>
-    In <acronym>SQL92</acronym> cursors are only available in
-    embedded <acronym>SQL</acronym> (<acronym>ESQL</acronym>) applications. 
-    The <productname>PostgreSQL</productname> backend
-    does not implement an explicit <command>OPEN cursor</command>
-    statement; a cursor is considered to be open when it is declared.
-    However, <application>ecpg</application>, the
-    embedded SQL preprocessor for <productname>PostgreSQL</productname>,
-    supports the <acronym>SQL92</acronym> cursor conventions, including those
-    involving <command>DECLARE</command> and <command>OPEN</command> statements.
+    The SQL standard only makes provisions for cursors in embedded
+    <acronym>SQL</acronym>.  The <productname>PostgreSQL</productname>
+    server does not implement an <command>OPEN</command> statement for
+    cursors; a cursor is considered to be open when it is declared.
+    However, <application>ECPG</application>, the embedded SQL
+    preprocessor for <productname>PostgreSQL</productname>, supports
+    the standard SQL cursor conventions, including those involving
+    <command>DECLARE</command> and <command>OPEN</command> statements.
    </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-DECLARESTATEMENT-2">
-  <title>
-   Usage
-  </title>
+ <refsect1>
+  <title>Examples</title>
+
   <para>
    To declare a cursor:
-
-   <programlisting>
-DECLARE liahona CURSOR
-    FOR SELECT * FROM films;
-   </programlisting>
+<programlisting>
+DECLARE liahona CURSOR FOR SELECT * FROM films;
+</programlisting>
+   See <xref linkend="sql-fetch" endterm="sql-fetch-title"> for more
+   examples of cursor usage.
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-DECLARESTATEMENT-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-DECLARESTATEMENT-4">
-   <refsect2info>
-    <date>1998-04-15</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    <acronym>SQL92</acronym> allows cursors only in embedded
-    <acronym>SQL</acronym> and in modules. <productname>PostgreSQL</>
-    permits cursors to be used interactively.
-   </para>
+  <para>
+   The SQL standard allows cursors only in embedded
+   <acronym>SQL</acronym> and in modules. <productname>PostgreSQL</>
+   permits cursors to be used interactively.
+  </para>
 
-   <para>
-    <acronym>SQL92</acronym> allows embedded or modular cursors to
-    update database information. All <productname>PostgreSQL</>
-    cursors are read only.
-   </para>
+  <para>
+   The SQL standard allows cursors to update table data. All
+   <productname>PostgreSQL</> cursors are read only.
+  </para>
 
-   <para>
-    The <literal>BINARY</literal> keyword is a
-    <productname>PostgreSQL</productname> extension.
-   </para>
-  </refsect2>
+  <para>
+   Binary cursors are a <productname>PostgreSQL</productname>
+   extension.
+  </para>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.18 2002/07/29 22:14:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.19 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,216 +8,169 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPOPERATOR-TITLE">DROP OPERATOR</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP OPERATOR
-  </refname>
-  <refpurpose>
-   remove a user-defined operator
-  </refpurpose>
+  <refname>DROP OPERATOR</refname>
+  <refpurpose>remove a user-defined operator</refpurpose>
  </refnamediv>
   
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable class="PARAMETER">lefttype</replaceable> | NONE , <replaceable class="PARAMETER">righttype</replaceable> | NONE ) [ CASCADE | RESTRICT ]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-DROPOPERATOR-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="parameter">id</replaceable></term>
-      <listitem>
-       <para>
-	The identifier (optionally schema-qualified) of an existing operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">lefttype</replaceable></term>
-      <listitem>
-       <para>
-	The type of the operator's left argument; write <literal>NONE</literal> if the
-	operator has no left argument.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">righttype</replaceable></term>
-      <listitem>
-       <para>
-	The type of the operator's right argument; write <literal>NONE</literal> if the
-	operator has no right argument.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the operator.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the operator if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPOPERATOR-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP OPERATOR
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the command is successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  RemoveOperator: binary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">lefttype</replaceable>' and '<replaceable class="PARAMETER">righttype</replaceable>' does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the specified binary operator does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: RemoveOperator: left unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">lefttype</replaceable>' does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the left unary operator
-	specified does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: RemoveOperator: right unary operator '<replaceable class="PARAMETER">oper</replaceable>' taking '<replaceable class="PARAMETER">righttype</replaceable>' does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the right unary operator
-	specified does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+DROP OPERATOR <replaceable class="PARAMETER">name</replaceable> ( <replaceable class="PARAMETER">lefttype</replaceable> | NONE , <replaceable class="PARAMETER">righttype</replaceable> | NONE ) [ CASCADE | RESTRICT ]
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPOPERATOR-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   <command>DROP OPERATOR</command> drops an existing operator from the
-   database.
-   To execute this command you must be the owner of the operator.
-  </para>
-  <para>
-   The left or right type of a left or right unary
-   operator, respectively, must be specified as <literal>NONE</literal>.
-  </para>
+ <refsect1>
+  <title>Description</title>
 
-  <refsect2 id="R2-SQL-DROPOPERATOR-3">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    The <command>DROP OPERATOR</command> statement is a 
-    <productname>PostgreSQL</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to
-    <xref linkend="sql-createoperator" endterm="sql-createoperator-title">
-    for information on how to create operators.
-   </para>
-  </refsect2>
+  <para>
+   <command>DROP OPERATOR</command> drops an existing operator from
+   the database system.  To execute this command you must be the owner
+   of the operator.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing operator.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">lefttype</replaceable></term>
+    <listitem>
+     <para>
+      The data type of the operator's left operand; write
+      <literal>NONE</literal> if the operator has no left operand.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">righttype</replaceable></term>
+    <listitem>
+     <para>
+      The data type of the operator's right operand; write
+      <literal>NONE</literal> if the operator has no right operand.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the operator.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the operator if any objects depend on it.  This
+      is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPOPERATOR-2">
-  <title>
-   Usage
-  </title>
-  <para>
-   Remove power operator <literal>a^n</literal> for <literal>int4</literal>:
+ <refsect1>
+  <title>Diagnostics</title>
 
-   <programlisting>
-DROP OPERATOR ^ (int4, int4);
-   </programlisting>
-  </para>
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP OPERATOR</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the command was successful.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR:  RemoveOperator: binary operator '<replaceable class="PARAMETER">name</replaceable>' taking '<replaceable class="PARAMETER">lefttype</replaceable>' and '<replaceable class="PARAMETER">righttype</replaceable>' does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      This message is returned if the specified binary operator does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR: RemoveOperator: left unary operator '<replaceable class="PARAMETER">name</replaceable>' taking '<replaceable class="PARAMETER">lefttype</replaceable>' does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      This message is returned if the specified left unary operator
+      does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR: RemoveOperator: right unary operator '<replaceable class="PARAMETER">name</replaceable>' taking '<replaceable class="PARAMETER">righttype</replaceable>' does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      This message is returned if the specified right unary operator
+      does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
   <para>
-   Remove left unary negation operator (<literal>! b</literal>) for <type>boolean</type>:
-   <programlisting>
-DROP OPERATOR ! (none, bool);
-   </programlisting>
+   Remove the power operator <literal>a^b</literal> for type <type>integer</type>:
+<programlisting>
+DROP OPERATOR ^ (integer, integer);
+</programlisting>
   </para>
+
   <para>
-   Remove right unary factorial operator (<literal>i !</literal>) for
-   <literal>int4</literal>:
-   <programlisting>
-DROP OPERATOR ! (int4, none);
-   </programlisting>
+   Remove the left unary bitwise complement operator
+   <literal>~b</literal> for type <type>bit</type>:
+<programlisting>
+DROP OPERATOR ~ (none, bit);
+</programlisting>
+  </para>
+
+  <para>
+   Remove the right unary factorial operator <literal>x!</literal>
+   for type <type>integer</type>:
+<programlisting>
+DROP OPERATOR ! (integer, none);
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-DROPOPERATOR-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1>
+  <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-DROPOPERATOR-4">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>DROP OPERATOR</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+  <para>
+   There is no <command>DROP OPERATOR</command> statement in the SQL standard.
+  </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createoperator" endterm="sql-createoperator-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

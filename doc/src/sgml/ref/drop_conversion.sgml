@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.3 2002/09/21 18:32:54 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.4 2003/05/04 02:23:16 petere Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -13,8 +13,7 @@
 
  <refsynopsisdiv>
 <synopsis>
-DROP CONVERSION <replaceable>conversion_name</replaceable>
-    [ CASCADE | RESTRICT ]
+DROP CONVERSION <replaceable>conversion_name</replaceable> [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
   
@@ -23,15 +22,14 @@ DROP CONVERSION <replaceable>conversion_name</replaceable>
 
   <para>
    <command>DROP CONVERSION</command> removes a previously defined conversion.
-  </para>
-
-  <para>
    To be able to drop a conversion, you must own the conversion.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
 
    <variablelist>
-    <title>Parameters</title>
-
     <varlistentry>
      <term><replaceable>conversion_name</replaceable></term>
 
@@ -55,22 +53,7 @@ DROP CONVERSION <replaceable>conversion_name</replaceable>
      </listitem>
     </varlistentry>
    </variablelist>
-
  </refsect1>
-
- <refsect1 id="sql-dropconversion-notes">
-  <title>Notes</title>
-
-  <para>
-   Use <command>CREATE CONVERSION</command> to create user-defined conversions.
-  </para>
-
-  <para>
-   The privileges required to drop a conversion may be changed in a future
-   release.
-  </para>
- </refsect1>
-
 
  <refsect1 id="sql-dropconversion-examples">
   <title>Examples</title>
@@ -83,25 +66,21 @@ DROP CONVERSION myname;
   </para>
  </refsect1>
 
- 
  <refsect1 id="sql-dropconversion-compat">
   <title>Compatibility</title>
 
   <para>
-    <command>DROP CONVERSION</command>
-    is a <productname>PostgreSQL</productname> extension.
-    There is no <command>DROP CONVERSION</command>
-    statement in <acronym>SQL99</acronym>.
+   There is no <command>DROP CONVERSION</command> statement in the SQL
+   standard.
   </para>
  </refsect1>
 
-
- <refsect1 id="sql-dropconversion-seealso">
+ <refsect1>
   <title>See Also</title>
 
-  <para>
-   <xref linkend="sql-createconversion" endterm="sql-createconversion-title">
-  </para>
+  <simplelist type="inline">
+   <member><xref linkend="sql-createconversion" endterm="sql-createconversion-title"></member>
+  </simplelist>
  </refsect1>
 
 </refentry>

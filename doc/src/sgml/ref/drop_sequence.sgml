@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.16 2002/07/18 15:49:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.17 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,160 +8,112 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPSEQUENCE-TITLE">DROP SEQUENCE</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP SEQUENCE
-  </refname>
-  <refpurpose>
-   remove a sequence
-  </refpurpose>
+  <refname>DROP SEQUENCE</refname>
+  <refpurpose>remove a sequence</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP SEQUENCE <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
-
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-DROPSEQUENCE-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of a sequence.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>CASCADE</term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the sequence.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>RESTRICT</term>
-      <listitem>
-       <para>
-        Refuse to drop the sequence if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPSEQUENCE-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP SEQUENCE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the sequence is successfully dropped.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR: sequence "<replaceable class="parameter">name</replaceable>" does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the specified sequence does not exist.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPSEQUENCE-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   <command>DROP SEQUENCE</command> removes sequence number generators from the
-   data base. With the current implementation of sequences as
-   special tables it works just like the <command>DROP TABLE</command>
-   statement.
-  </para>
+ <refsect1>
+  <title>Description</title>
 
-  <refsect2 id="R2-SQL-DROPSEQUENCE-3">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
-   <para>
-    The <command>DROP SEQUENCE</command> statement is a
-    <productname>PostgreSQL</productname>
-    language extension.
-   </para>
-   <para>
-    Refer to the <command>CREATE SEQUENCE</command> statement for
-    information on how to create a sequence.
-   </para>
-  </refsect2>
+  <para>
+   <command>DROP SEQUENCE</command> removes sequence number generators.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of a sequence.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the sequence.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the sequence if any objects depend on it.  This
+      is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
- <refsect1 id="R1-SQL-DROPSEQUENCE-2">
-  <title>
-   Usage
-  </title>
-  <para>
-   To remove sequence <literal>serial</literal> from database:
+ <refsect1>
+  <title>Diagnostics</title>
 
-   <programlisting>
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP SEQUENCE</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the sequence was successfully dropped.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR: sequence "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the specified sequence does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To remove the sequence <literal>serial</literal>:
+
+<programlisting>
 DROP SEQUENCE serial;
-   </programlisting>
+</programlisting>
   </para>
  </refsect1>
  
- <refsect1 id="R1-SQL-DROPSEQUENCE-3">
-  <title>
-   Compatibility
-  </title>
-  
-  <refsect2 id="R2-SQL-DROPSEQUENCE-4">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    There is no <command>DROP SEQUENCE</command> in <acronym>SQL92</acronym>.
-   </para>
-  </refsect2>
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>DROP SEQUENCE</command> statement in the SQL standard.
+  </para>
  </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createsequence" endterm="sql-createsequence-title"></member>
+  </simplelist>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.19 2003/03/25 16:15:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.20 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,95 +8,97 @@ PostgreSQL documentation
   <refentrytitle id="SQL-RESET-TITLE">RESET</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
   <refname>RESET</refname>
-  <refpurpose>restore the value of a run-time parameter to a default value</refpurpose>
+  <refpurpose>restore the value of a run-time parameter to the default value</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <synopsis>
-RESET <replaceable class="PARAMETER">variable</replaceable>
-  </synopsis>
-  <synopsis>
+<synopsis>
+RESET <replaceable class="PARAMETER">parameter</replaceable>
+</synopsis>
+<synopsis>
 RESET ALL
-  </synopsis>
-
-  <refsect2 id="R2-SQL-RESET-1">
-   <title>Inputs</title>
-   <para>		
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">variable</replaceable></term>
-      <listitem>
-       <para>
-	The name of a run-time parameter. See <xref
-	linkend="sql-set" endterm="sql-set-title"> for a list.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term>ALL</term>
-      <listitem>
-       <para>
-        Resets all settable run-time parameters to default values.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
+</synopsis>
  </refsynopsisdiv>
   
  <refsect1>
   <title>Description</title>
+
   <para>
    <command>RESET</command> restores run-time parameters to their
-   default values. Refer to
-   <xref linkend="sql-set" endterm="sql-set-title">
-   for details. <command>RESET</command> is an alternate spelling for
-
-   <synopsis>
-SET <replaceable class="parameter">variable</replaceable> TO DEFAULT
-   </synopsis>
-
-   The default value is defined as the value that the variable would
-   have had, had no <command>SET</> ever been issued for it in the
-   current session.  The actual source of this value might be a
-   compiled-in default, the postmaster's configuration file or command-line
-   switches, or per-database or per-user default settings.  See
-   <xref linkend="runtime-config"> for details.
+   default values.  <command>RESET</command> is an alternative
+   spelling for
+<synopsis>
+SET <replaceable class="parameter">parameter</replaceable> TO DEFAULT
+</synopsis>
+   Refer to <xref linkend="sql-set" endterm="sql-set-title"> for
+   details.
   </para>
 
   <para>
-   See the <command>SET</> manual page for details on the transaction
-   behavior of <command>RESET</>.
+   The default value is defined as the value that the parameter would
+   have had, had no <command>SET</> ever been issued for it in the
+   current session.  The actual source of this value might be a
+   compiled-in default, the configuration file, command-line options,
+   or per-database or per-user default settings.  See <xref
+   linkend="runtime-config"> for details.
   </para>
 
+  <para>
+   See the <command>SET</> reference page for details on the
+   transaction behavior of <command>RESET</>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">parameter</replaceable></term>
+    <listitem>
+     <para>
+      The name of a run-time parameter. See <xref linkend="sql-set"
+      endterm="sql-set-title"> for a list.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALL</literal></term>
+    <listitem>
+     <para>
+      Resets all settable run-time parameters to default values.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>
   <title>Diagnostics</title>
+
   <para>
-   See under the <xref linkend="sql-set"
-   endterm="sql-set-title"> command.
+   See under the <xref linkend="sql-set" endterm="sql-set-title">.
   </para>
  </refsect1>
 
  <refsect1>
   <title>Examples</title>
-  <para>
-   Set <varname>DateStyle</> to its default value:
 
+  <para>
+   Set <varname>datestyle</> to its default value:
 <screen>
-RESET DateStyle;
+RESET datestyle;
 </screen>
   </para>
 
   <para>
    Set <varname>geqo</> to its default value:
-
-<screen>   
-RESET GEQO;
+<screen>
+RESET geqo;
 </screen>
   </para>
  </refsect1>

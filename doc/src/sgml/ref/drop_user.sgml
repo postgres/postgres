@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.15 2002/02/27 21:14:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.16 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,6 +8,7 @@ PostgreSQL documentation
   <refentrytitle id="SQL-DROPUSER-TITLE">DROP USER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
   <refname>DROP USER</refname>
   <refpurpose>remove a database user account</refpurpose>
@@ -23,40 +24,36 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>DROP USER</command> removes the specified user from the database.
+   <command>DROP USER</command> removes the specified user.
    It does not remove tables, views, or other objects owned by the user. If the
    user owns any database, an error is raised.
   </para>
+ </refsect1>
 
-  <refsect2>
-   <title>Parameters</title>
+ <refsect1>
+  <title>Parameters</title>
 
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">name</replaceable></term>
-      <listitem>
-       <para>
-	The name of an existing user.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the user to remove.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1>
   <title>Diagnostics</title>
 
-  <para>
    <variablelist>
     <varlistentry>
      <term><computeroutput>DROP USER</computeroutput></term>
      <listitem>
       <para>
-       The message returned if the user is successfully deleted.
+       Message returned if the user was successfully deleted.
       </para>
      </listitem>
     </varlistentry>
@@ -65,7 +62,7 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
      <term><computeroutput>ERROR:  DROP USER: user "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
      <listitem>
       <para>
-       This message occurs if the user name is not found.
+       Message returned if the specified user does not exist.
       </para>
      </listitem>
     </varlistentry>
@@ -78,18 +75,13 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
       </para>
      </listitem>
     </varlistentry>
-
    </variablelist>
-  </para>
  </refsect1>
 
  <refsect1>
   <title>Notes</title>
 
   <para>
-   Use <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
-   to add new users, and <xref linkend="SQL-ALTERUSER"
-   endterm="SQL-ALTERUSER-title"> to change a user's attributes.
    <productname>PostgreSQL</productname> includes a program <xref
    linkend="APP-DROPUSER" endterm="APP-DROPUSER-title"> that has the
    same functionality as this command (in fact, it calls this command)
@@ -122,9 +114,8 @@ DROP USER jonathan;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
    <member><xref linkend="sql-alteruser" endterm="sql-alteruser-title"></member>
-   <member><xref linkend="app-dropuser"></member>
+   <member><xref linkend="sql-createuser" endterm="sql-createuser-title"></member>
   </simplelist>
  </refsect1>
 

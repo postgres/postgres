@@ -1,126 +1,98 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.9 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.10 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
 <refentry id="SQL-DROPDOMAIN">
  <refmeta>
-  <refentrytitle id="SQL-DROPDOMAIN-TITLE">
-   DROP DOMAIN
-  </refentrytitle>
+  <refentrytitle id="SQL-DROPDOMAIN-TITLE">DROP DOMAIN</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   DROP DOMAIN
-  </refname>
-  <refpurpose>
-   remove a user-defined domain
-  </refpurpose>
+  <refname>DROP DOMAIN</refname>
+  <refpurpose>remove a domain</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
+<synopsis>
 DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]  [ CASCADE | RESTRICT ]
-  </synopsis>
-
-  <refsect2 id="R2-SQL-DROPDOMAIN-1">
-   <refsect2info>
-    <date>2002-02-24</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">domainname</replaceable></term>
-      <listitem>
-       <para>
-	The name (optionally schema-qualified) of an existing domain.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>CASCADE</></term>
-      <listitem>
-       <para>
-        Automatically drop objects that depend on the domain
-	(such as table columns).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><literal>RESTRICT</></term>
-      <listitem>
-       <para>
-        Refuse to drop the domain if there are any dependent objects.
-	This is the default.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-DROPDOMAIN-2">
-   <refsect2info>
-    <date>2002-02-24</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-DROP DOMAIN
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The message returned if the command is successful.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  RemoveDomain: type '<replaceable class="parameter">domainname</replaceable>' does not exist
-       </computeroutput></term>
-      <listitem>
-       <para>
-	This message occurs if the specified domain (or type) is not found.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-DROPDOMAIN-1">
-  <refsect1info>
-   <date>2002-02-24</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1>
+  <title>Description</title>
+
   <para>
-   <command>DROP DOMAIN</command> will remove a user domain from the
-   system catalogs.
+   <command>DROP DOMAIN</command> will remove a domain.  Only the
+   owner of a domain can remove it.
   </para>
-  <para>
-   Only the owner of a domain can remove it.
-  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="PARAMETER">domainname</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing domain.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the domain (such as
+      table columns).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</></term>
+    <listitem>
+     <para>
+      Refuse to drop the domain if any objects depend on it.  This is
+      the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><computeroutput>DROP DOMAIN</computeroutput></term>
+    <listitem>
+     <para>
+      Message returned if the command was successful.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><computeroutput>ERROR:  RemoveDomain: type '<replaceable class="parameter">domainname</replaceable>' does not exist</computeroutput></term>
+    <listitem>
+     <para>
+      This message occurs if the specified domain does not exist.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </refsect1>
 
  <refsect1 id="SQL-DROPDOMAIN-examples">
   <title>Examples</title>
+
   <para>
-   To remove the <type>box</type> domain:
+   To remove the domain <type>box</type>:
 
 <programlisting>
 DROP DOMAIN box;
@@ -131,13 +103,9 @@ DROP DOMAIN box;
  <refsect1 id="SQL-DROPDOMAIN-compatibility">
   <title>Compatibility</title>
   
-  <refsect2 id="R2-SQL-DROPDOMAIN-sql92">
-   <title>
-    SQL92
-   </title>
-
-   <para></para>
-  </refsect2>
+  <para>
+   This command conforms to the SQL standard.
+  </para>
  </refsect1>
 
  <refsect1 id="SQL-DROPDOMAIN-see-also">

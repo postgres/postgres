@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.74 2003/04/25 19:45:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.75 2003/05/04 02:23:16 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8,73 +8,20 @@ PostgreSQL documentation
   <refentrytitle id="SQL-SET-TITLE">SET</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
   <refname>SET</refname>
   <refpurpose>change a run-time parameter</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <synopsis>
+<synopsis>
 SET [ SESSION | LOCAL ] <replaceable class="PARAMETER">variable</replaceable> { TO | = } { <replaceable class="PARAMETER">value</replaceable> | '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
 SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</replaceable> | LOCAL | DEFAULT }
-  </synopsis>
-
-  <refsect2 id="R2-SQL-SET-1">
-   <title>Inputs</title>
-   <para>
-    <variablelist>
-
-     <varlistentry>
-      <term><option>SESSION</></term>
-      <listitem>
-       <para>
-        Specifies that the command takes effect for the current session.
-        (This is the default if neither <option>SESSION</> nor
-        <option>LOCAL</> appears.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>LOCAL</></term>
-      <listitem>
-       <para>
-        Specifies that the command takes effect for only the current
-        transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
-        the session-level setting takes effect again.  Note that
-        <command>SET LOCAL</> will appear to have no effect if it's
-        executed outside a <command>BEGIN</> block, since the transaction
-        will end immediately.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">variable</replaceable></term>
-      <listitem>
-       <para>
-        Name of a settable run-time parameter.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">value</replaceable></term>
-      <listitem>
-       <para>
-        New value of parameter.  <option>DEFAULT</option> can be
-        used to specify resetting the parameter to its default
-        value. Lists of strings are allowed, but more complex
-        constructs may need to be single or double quoted.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
+</synopsis>
  </refsynopsisdiv>
  
- <refsect1 id="R1-SQL-SET-1">
+ <refsect1>
   <title>Description</title>
 
   <para>
@@ -83,7 +30,7 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    <xref linkend="runtime-config"> can be changed on-the-fly with
    <command>SET</command>.
    (But some require superuser privileges to change, and others cannot
-   be changed after server or session start.)  Note that
+   be changed after server or session start.)
    <command>SET</command> only affects the value used by the current
    session.
   </para>
@@ -114,236 +61,153 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    does not start a new transaction block. See the
    <varname>autocommit</> section in <xref linkend="runtime-config"> for details.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>SESSION</></term>
+    <listitem>
+     <para>
+      Specifies that the command takes effect for the current session.
+      (This is the default if neither <literal>SESSION</> nor
+      <literal>LOCAL</> appears.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>LOCAL</></term>
+    <listitem>
+     <para>
+      Specifies that the command takes effect for only the current
+      transaction.  After <command>COMMIT</> or <command>ROLLBACK</>,
+      the session-level setting takes effect again.  Note that
+      <command>SET LOCAL</> will appear to have no effect if it is
+      executed outside a <command>BEGIN</> block, since the
+      transaction will end immediately.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">variable</replaceable></term>
+    <listitem>
+     <para>
+      Name of a settable run-time parameter.  Available parameters are
+      documented in <xref linkend="runtime-config"> and below.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">value</replaceable></term>
+    <listitem>
+     <para>
+      New value of parameter.  Values can be specified as string
+      constants, identifiers, numbers, or comma-separated lists of
+      these.  <literal>DEFAULT</literal> can be used to specify
+      resetting the parameter to its default value.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
 
   <para>
-   Here are additional details about a few of the parameters that can be set:
+   Besides the configuration parameters documented in <xref
+   linkend="runtime-config">, there are a few that can only be
+   adjusted using the <command>SET</command> command or that have a
+   special syntax:
 
    <variablelist>
     <varlistentry>
-     <term><varname>DATESTYLE</></term>
+     <term><literal>NAMES</literal></term>
      <listitem>
       <para>
-       Choose the date/time representation style. Two separate
-       settings are involved: the default date/time output format and the
-       interpretation of ambiguous input.
+       <literal>>SET NAMES <replaceable>value</></> is an alias for
+       <literal>SET client_encoding TO <replaceable>value</></>.
       </para>
-
-      <para>
-       The following are date/time output styles:
-
-       <variablelist>
-        <varlistentry>
-         <term><literal>ISO</></term>
-         <listitem>
-          <para>
-           Use ISO 8601-style dates and times (<literal>YYYY-MM-DD
-            HH:MM:SS</literal>). This is the default.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry>
-         <term><literal>SQL</></term>
-         <listitem>
-          <para>
-           Use Oracle/Ingres-style dates and times. Note that this
-           style has nothing to do with SQL (which mandates ISO 8601
-           style); the naming of this option is a historical accident.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry>
-         <term><literal>PostgreSQL</></term>
-         <listitem>
-          <para>
-           Use traditional <productname>PostgreSQL</productname> format.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry>
-         <term><literal>German</></term>
-         <listitem>
-          <para>
-           Use <literal>dd.mm.yyyy</literal> for numeric date representations.
-          </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
-      </para>
-
-      <para>
-       The following two options determine both a substyle of the
-       <quote>SQL</quote> and <quote>PostgreSQL</quote> output formats
-       and the preferred interpretation of ambiguous date input.
-
-       <variablelist>
-        <varlistentry>
-         <term><literal>European</></term>
-         <listitem>
-          <para>
-           Use <literal>dd/mm/yyyy</literal> for numeric date representations.
-          </para>
-         </listitem>
-        </varlistentry>
-
-        <varlistentry>
-         <term><literal>NonEuropean</></term>
-         <term><literal>US</></term>
-         <listitem>
-          <para>
-           Use <literal>mm/dd/yyyy</literal> for numeric date representations.
-          </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
-      </para>
-
-      <para>
-       A value for <command>SET DATESTYLE</command> can be one from
-       the first list (output styles), or one from the second list
-       (substyles), or one from each separated by a comma.
-      </para>
-
-      <para>
-       <command>SET DATESTYLE</command> affects interpretation of
-       input and provides several standard output formats. For
-       applications needing different variations or tighter control
-       over input or output, consider using
-       the <function>to_char</function> family of
-       functions.
-      </para>
-
-      <para>
-       There are several now-deprecated means for setting the date style
-       in addition to the normal methods of setting it via <command>SET</> or
-       a configuration-file entry:
-       <simplelist>
-        <member>
-         Setting the postmaster's <envar>PGDATESTYLE</envar> environment
-         variable.  (This will be overridden by any of the other methods.)
-        </member>
-        <member>
-         Running postmaster using the option <option>-o -e</option> to
-         set dates to the <literal>European</literal> convention.
-         (This overrides environment variables and configuration-file
-         entries.)
-        </member>
-        <member>
-         Setting the client's <envar>PGDATESTYLE</envar> environment variable.
-         If <envar>PGDATESTYLE</envar> is set in the frontend environment of a client
-         based on <application>libpq</>, <application>libpq</> will automatically set <varname>DATESTYLE</> to the
-         value of <envar>PGDATESTYLE</envar> during connection start-up.  This is
-         equivalent to a manually issued <command>SET DATESTYLE</>.
-        </member>
-       </simplelist>
-      </para>
-
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>NAMES</term>
+     <term><literal>SEED</literal></term>
      <listitem>
       <para>
-       <command>SET NAMES</> is an alias for <command>SET CLIENT_ENCODING</>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-     <varlistentry>
-      <term>SEED</term>
-      <listitem>
-       <para>
-       Sets the internal seed for the random number generator.
-	
-       <variablelist>
-        <varlistentry>
-         <term><replaceable class="parameter">value</replaceable></term>
-         <listitem>
-          <para>
-           The value for the seed to be used by the
-           <function>random</function> function. Allowed
-           values are floating-point numbers between 0 and 1, which
-           are then multiplied by 2<superscript>31</>-1.
-          </para>
-         </listitem>
-        </varlistentry>
-       </variablelist>
+       Sets the internal seed for the random number generator (the
+       function <function>random</function>).  Allowed values are
+       floating-point numbers between 0 and 1, which are then
+       multiplied by 2<superscript>31</>-1.
       </para>
 
       <para>
-       The seed can also be set by invoking the
-       <function>setseed</function> SQL function:
-
-       <programlisting>
+       The seed can also be set by invoking the function
+       <function>setseed</function>:
+<programlisting>
 SELECT setseed(<replaceable>value</replaceable>);
-       </programlisting>
+</programlisting>
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>TIME ZONE</term>
-     <term>TIMEZONE</term>
+     <term><literal>TIME ZONE</literal></term>
      <listitem>
       <para>
-       Sets the default time zone for your session. Arguments can be
-       an SQL time interval constant, an integer or double precision
-       constant, or a string representing a time zone name recognized
-       by the host operating system.
-      </para>
-
-      <para>
-       Here are some typical values for time zone settings:
+       <literal>>SET TIME ZONE <replaceable>value</></> is an alias
+       for <literal>SET timezone TO <replaceable>value</></>.  The
+       syntax <literal>>SET TIME ZONE</literal> allows special syntax
+       for the time zone specification.  Here are examples of valid
+       values:
 
        <variablelist>
         <varlistentry>
-         <term>'PST8PDT'</term>
+         <term><literal>'PST8PDT'</literal></term>
          <listitem>
           <para>
-           Set the time zone for Berkeley, California.
+           The time zone for Berkeley, California.
           </para>
          </listitem>
         </varlistentry>
         <varlistentry>
-         <term>'Portugal'</term>
+         <term><literal>'Portugal'</literal></term>
          <listitem>
           <para>
-           Set the time zone for Portugal.
+           The time zone for Portugal.
           </para>
          </listitem>
         </varlistentry>
         <varlistentry>
-         <term>'Europe/Rome'</term>
+         <term><literal>'Europe/Rome'</literal></term>
          <listitem>
           <para>
-           Set the time zone for Italy.
+           The time zone for Italy.
           </para>
          </listitem>
         </varlistentry>
         <varlistentry>
-         <term>7</term>
+         <term><literal>7</literal></term>
          <listitem>
           <para>
-           Set the time zone to 7 hours offset west from GMT (equivalent
+           The time zone to 7 hours offset west from UTC (equivalent
            to PDT).
           </para>
          </listitem>
         </varlistentry>
         <varlistentry>
-         <term>INTERVAL '08:00' HOUR TO MINUTE</term>
+         <term><literal>INTERVAL '08:00' HOUR TO MINUTE</literal></term>
          <listitem>
           <para>
-           Set the time zone to 8 hours offset west from GMT (equivalent
+           The time zone to 8 hours offset west from UTC (equivalent
            to PST).
           </para>
          </listitem>
         </varlistentry>
         <varlistentry>
-         <term>LOCAL</term>
-         <term>DEFAULT</term>
+         <term><literal>LOCAL</literal></term>
+         <term><literal>DEFAULT</literal></term>
          <listitem>
           <para>
            Set the time zone to your local time zone (the one that
@@ -352,43 +216,19 @@ SELECT setseed(<replaceable>value</replaceable>);
          </listitem>
         </varlistentry>
        </variablelist>
-      </para>
 
-      <para>
-       The available time zone names depend on your operating
-       system. For example, on Linux
-       <filename>/usr/share/zoneinfo</filename> contains the database
-       of time zones; the names of the files in that directory can be
-       used as parameters to this command.
-      </para>
-
-      <para>
-       If an invalid time zone is specified, the time zone
-       becomes GMT (on most systems anyway).
-      </para>
-
-      <para>
-       If the <envar>PGTZ</envar> environment variable is set in the frontend
-       environment of a client based on <application>libpq</>, <application>libpq</> will automatically
-       <command>SET TIMEZONE</command> to the value of
-       <envar>PGTZ</envar> during connection start-up. 
+       See <xref linkend="datatype-datetime"> for more information
+       about time zones.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
   </para>
-
-  <para>
-   Use <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title"> to show the
-   current setting of a parameter.
-  </para>
-  
  </refsect1>
 
  <refsect1>
   <title>Diagnostics</title>
-  <para>
-    
+
    <variablelist>
     <varlistentry>
      <term><computeroutput>SET</computeroutput></term>
@@ -400,8 +240,7 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>' is not a
-	 valid option name</computeroutput></term>
+     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>' is not a valid option name</computeroutput></term>
      <listitem>
       <para>
        The parameter you tried to set does not exist.
@@ -410,8 +249,7 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>':
-	 permission denied</computeroutput></term>
+     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>': permission denied</computeroutput></term>
      <listitem>
       <para>
        You must be a superuser to alter certain settings.
@@ -420,17 +258,14 @@ SELECT setseed(<replaceable>value</replaceable>);
     </varlistentry>
      
     <varlistentry>
-     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>' cannot
-	 be changed after server start</computeroutput></term>
+     <term><computeroutput>ERROR:  '<replaceable>name</replaceable>' cannot be changed after server start</computeroutput></term>
      <listitem>
       <para>
        Some parameters are fixed once the server is started.
       </para>
      </listitem>
     </varlistentry>
-     
    </variablelist>
-  </para>
  </refsect1>
 
  <refsect1>
@@ -438,81 +273,61 @@ SELECT setseed(<replaceable>value</replaceable>);
 
   <para>
    The function <function>set_config</function> provides equivalent
-   capability. See <xref linkend="functions-misc">.
+   functionality. See <xref linkend="functions-misc">.
   </para>
  </refsect1>
  
  <refsect1>
   <title>Examples</title>
+
+  <para>
+   Set the schema search path:
+<programlisting>
+SET search_path TO my_schema, public;
+</programlisting>
+  </para>
+
   <para>
    Set the style of date to traditional
-   <productname>PostgreSQL</productname> with European conventions:
-   <screen>
-SET DATESTYLE TO PostgreSQL,European;
-   </screen>
+   <productname>POSTGRES</productname> with European conventions:
+<screen>
+SET datestyle TO postgres,european;
+</screen>
   </para>
 
   <para>
    Set the time zone for Berkeley, California, using quotes to
-   preserve the uppercase spelling of the time zone name (note
-   that the date style is <literal>PostgreSQL</literal> for this
-   example): 
-
-   <screen>
+   preserve the uppercase spelling of the time zone name:
+<screen>
 SET TIME ZONE 'PST8PDT';
-SELECT CURRENT_TIMESTAMP AS today;
-               today                
-------------------------------------
- Tue Feb 26 07:32:21.42834 2002 PST
-   </screen>
-  </para>
+SELECT current_timestamp AS today;
 
-  <para>
-   Set the time zone for Italy (note the required single quotes to handle 
-   the special characters):
-
-   <screen>
-SET TIME ZONE 'Europe/Rome';
-SELECT CURRENT_TIMESTAMP AS today;
-
-             today             
+             today
 -------------------------------
- 2002-10-08 05:39:35.008271+02
-   </screen>
+ 2003-04-29 15:02:01.218622-07
+</screen>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-SET-3">
+ <refsect1>
   <title>Compatibility</title>
 
-  <refsect2 id="R2-SQL-SET-4">
-   <title>
-    SQL92
-   </title>
-
-   <para>
-    <literal>SET TIME ZONE</literal>
-    extends syntax defined in
-    <acronym>SQL9x</acronym>. <acronym>SQL9x</acronym> allows
-    only numeric time zone offsets while
-    <productname>PostgreSQL</productname> allows full time zone
-    specifier strings as well. All other <literal>SET</literal>
-    features are
-    <productname>PostgreSQL</productname> extensions.
-   </para>
-  </refsect2>
+  <para>
+   <literal>SET TIME ZONE</literal> extends syntax defined in the SQL
+   standard.  The standard allows only numeric time zone offsets while
+   <productname>PostgreSQL</productname> allows more flexible
+   time-zone specifications.  All other <literal>SET</literal>
+   features are <productname>PostgreSQL</productname> extensions.
+  </para>
  </refsect1>
 
  <refsect1>
   <title>See Also</title>
 
-  <simpara>
-   <xref linkend="SQL-SHOW" endterm="SQL-SHOW-title">,
-   <xref linkend="SQL-RESET" endterm="SQL-RESET-title">,
-   <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title">,
-   <xref linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title">,
-   <xref linkend="sql-set-transaction" endterm="sql-set-transaction-title">
-  </simpara>
+  <simplelist type="inline">
+   <member><xref linkend="SQL-RESET" endterm="SQL-RESET-title"></member>
+   <member><xref linkend="SQL-SHOW" endterm="SQL-SHOW-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 
