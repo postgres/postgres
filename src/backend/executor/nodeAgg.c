@@ -11,7 +11,7 @@
  *	  SQL aggregates. (Do not expect POSTQUEL semantics.)	 -- ay 2/95
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.58 1999/10/30 01:18:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.59 1999/10/30 02:35:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,11 +434,15 @@ ExecAgg(Agg *node)
 
 				tupType = aggstate->csstate.css_ScanTupleSlot->ttc_tupleDescriptor;
 				tupValue = projInfo->pi_tupValue;
-				null_array = (char *) palloc(sizeof(char) * tupType->natts);
-				for (attnum = 0; attnum < tupType->natts; attnum++)
-					null_array[attnum] = 'n';
-				inputTuple = heap_formtuple(tupType, tupValue, null_array);
-				pfree(null_array);
+				/* watch out for null input tuples, though... */
+				if (tupType && tupValue)
+				{
+					null_array = (char *) palloc(sizeof(char)*tupType->natts);
+					for (attnum = 0; attnum < tupType->natts; attnum++)
+						null_array[attnum] = 'n';
+					inputTuple = heap_formtuple(tupType, tupValue, null_array);
+					pfree(null_array);
+				}
 			}
 		}
 
