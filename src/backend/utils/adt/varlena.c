@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.106.2.2 2003/12/19 04:56:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.106.2.3 2004/01/31 00:45:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -761,9 +761,6 @@ text_position(Datum str, Datum search_str, int matchnum)
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
 
-	/* no use in searching str past point where search_str will fit */
-	px = (len1 - len2);
-
 	if (eml == 1)				/* simple case - single byte encoding */
 	{
 		char	   *p1,
@@ -771,6 +768,9 @@ text_position(Datum str, Datum search_str, int matchnum)
 
 		p1 = VARDATA(t1);
 		p2 = VARDATA(t2);
+
+		/* no use in searching str past point where search_str will fit */
+		px = (len1 - len2);
 
 		for (p = 0; p <= px; p++)
 		{
@@ -798,6 +798,9 @@ text_position(Datum str, Datum search_str, int matchnum)
 		ps2 = p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
 		(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t2), p2, len2);
 		len2 = pg_wchar_strlen(p2);
+
+		/* no use in searching str past point where search_str will fit */
+		px = (len1 - len2);
 
 		for (p = 0; p <= px; p++)
 		{
