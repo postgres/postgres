@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.6 2004/09/07 14:31:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.7 2004/10/06 09:35:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ pgwin32_poll_signals(void)
 	return 0;
 }
 
-static int
+int
 pgwin32_waitforsinglesocket(SOCKET s, int what)
 {
 	static HANDLE waitevent = INVALID_HANDLE_VALUE;

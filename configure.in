@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.379 2004/10/01 02:00:41 neilc Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.380 2004/10/06 09:35:19 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -672,8 +672,13 @@ fi
 
 if test "$with_openssl" = yes ; then
   dnl Order matters!
-  AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
-  AC_CHECK_LIB(ssl,    SSL_library_init, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
+  if test "$PORTNAME" != "win32"; then
+     AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
+     AC_CHECK_LIB(ssl,    SSL_library_init, [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
+  else
+     AC_CHECK_LIB(eay32, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'eay32' is required for OpenSSL])])
+     AC_CHECK_LIB(ssleay32,    SSL_library_init, [], [AC_MSG_ERROR([library 'ssleay32' is required for OpenSSL])])
+  fi
 fi
 
 if test "$with_pam" = yes ; then

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.51 2004/09/26 22:51:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.52 2004/10/06 09:35:20 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -268,6 +268,11 @@ rloop:
 				break;
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
+#ifdef WIN32
+				pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
+					(err==SSL_ERROR_WANT_READ) ?
+						FD_READ|FD_CLOSE : FD_WRITE|FD_CLOSE);
+#endif
 				goto rloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
@@ -356,6 +361,11 @@ wloop:
 				break;
 			case SSL_ERROR_WANT_READ:
 			case SSL_ERROR_WANT_WRITE:
+#ifdef WIN32
+				pgwin32_waitforsinglesocket(SSL_get_fd(port->ssl),
+					(err==SSL_ERROR_WANT_READ) ?
+						FD_READ|FD_CLOSE : FD_WRITE|FD_CLOSE);
+#endif
 				goto wloop;
 			case SSL_ERROR_SYSCALL:
 				if (n == -1)
@@ -717,6 +727,38 @@ initialize_SSL(void)
 	return 0;
 }
 
+#ifdef WIN32
+/*
+ *	Win32 socket code uses nonblocking sockets. We ned to deal with that
+ *	by waiting on the socket if the SSL accept operation didn't complete
+ *	right away.
+ */
+static int pgwin32_SSL_accept(SSL *ssl)
+{
+	int r;
+
+	while (1)
+	{
+		int rc;
+		int waitfor;
+
+		printf("uhh\n");fflush(stdout);
+		r = SSL_accept(ssl);
+		if (r == 1)
+			return 1;
+
+		rc = SSL_get_error(ssl, r);
+		if (rc != SSL_ERROR_WANT_READ && rc != SSL_ERROR_WANT_WRITE)
+			return r;
+
+		waitfor = (rc == SSL_ERROR_WANT_READ)?FD_READ|FD_CLOSE|FD_ACCEPT:FD_WRITE|FD_CLOSE;
+		if (pgwin32_waitforsinglesocket(SSL_get_fd(ssl), waitfor) == 0)
+			return -1;
+	}
+}
+#define SSL_accept(ssl) pgwin32_SSL_accept(ssl)
+#endif
+
 /*
  *	Destroy global SSL context.
  */
@@ -736,12 +778,11 @@ destroy_SSL(void)
 static int
 open_server_SSL(Port *port)
 {
+	int r;
 	Assert(!port->ssl);
 	Assert(!port->peer);
 
-	if (!(port->ssl = SSL_new(SSL_context)) ||
-		!SSL_set_fd(port->ssl, port->sock) ||
-		SSL_accept(port->ssl) <= 0)
+	if (!(port->ssl = SSL_new(SSL_context)))
 	{
 		ereport(COMMERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -750,6 +791,25 @@ open_server_SSL(Port *port)
 		close_SSL(port);
 		return -1;
 	}
+	if (!SSL_set_fd(port->ssl, port->sock))
+	{
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not set SSL socket: %s",
+						SSLerrmessage())));
+		close_SSL(port);
+		return -1;
+	}
+	if ((r=SSL_accept(port->ssl)) <= 0)
+	{
+		ereport(COMMERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+				 errmsg("could not accept SSL connection: %i",
+						SSL_get_error(port->ssl,r))));
+		close_SSL(port);
+		return -1;
+	}
+
 	port->count = 0;
 
 	/* get client certificate, if available. */

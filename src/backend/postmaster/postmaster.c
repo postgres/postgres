@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.425 2004/09/09 00:59:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.426 2004/10/06 09:35:21 momjian Exp $
  *
  * NOTES
  *
@@ -2980,6 +2980,16 @@ SubPostmasterMain(int argc, char *argv[])
 
 		/* Attach process to shared segments */
 		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
+
+#ifdef USE_SSL
+		/*
+		 *	Need to reinitialize the SSL library in the backend,
+		 *	since the context structures contain function pointers
+		 *	and cannot be passed through the parameter file.
+		 */
+		if (EnableSSL)
+			secure_initialize();
+#endif
 
 		Assert(argc == 3);		/* shouldn't be any more args */
 		proc_exit(BackendRun(&port));

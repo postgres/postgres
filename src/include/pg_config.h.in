@@ -227,6 +227,9 @@
 /* Define to 1 if you have the `dld' library (-ldld). */
 #undef HAVE_LIBDLD
 
+/* Define to 1 if you have the `eay32' library (-leay32). */
+#undef HAVE_LIBEAY32
+
 /* Define to 1 if you have the `gen' library (-lgen). */
 #undef HAVE_LIBGEN
 
@@ -265,6 +268,9 @@
 
 /* Define to 1 if you have the `ssl' library (-lssl). */
 #undef HAVE_LIBSSL
+
+/* Define to 1 if you have the `ssleay32' library (-lssleay32). */
+#undef HAVE_LIBSSLEAY32
 
 /* Define to 1 if you have the `unix' library (-lunix). */
 #undef HAVE_LIBUNIX
