@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.36 1997/06/07 17:34:35 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.37 1997/07/28 00:53:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <sys/types.h>
 #include <sys/file.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>

@@ -20,6 +20,7 @@ nextstep*) PORTNAME='nextstep';;
     irix*) PORTNAME='irix5';;
     hpux*) PORTNAME='hpux';;
      osf*) PORTNAME='alpha';;
+     sco*) PORTNAME='sco';;
    sysv4*) PORTNAME='svr4';;
  sysv4.2*) 
        case "$host_vendor" in
@@ -258,8 +259,7 @@ dnl AC_SUBST(HAVECXX)
 dnl ****************************************************************
 HAVECXX='HAVE_Cplusplus=false'
 AC_SUBST(HAVECXX)
-
-AC_PATH_PROGS(INSTALL, ginstall installbsd install bsdinst, NONE, $PATH)
+AC_PATH_PROGS(INSTALL, ginstall installbsd install bsdinst, scoinst, NONE, $PATH)
 if test $INSTALL = "NONE"
 then
    echo "- No Install Script found - aborting."
@@ -271,7 +271,7 @@ INSTL_EXE_OPTS="-m 555"
 INSTL_LIB_OPTS="-m 664"
 
 case "`basename $INSTALL`" in
- install|installbsd)
+ install|installbsd|scoinst)
 	INSTLOPTS="-c $INSTLOPTS"
 	INSTL_EXE_OPTS="-c $INSTL_EXE_OPTS"
 	INSTL_LIB_OPTS="-c $INSTL_LIB_OPTS";;
@@ -312,6 +312,19 @@ AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROG(ipcs, ipcs)
 AC_PATH_PROG(ipcrm, ipcrm)
 AC_PATH_PROGS(TR, trbsd tr, NOT_FOUND)
+
+dnl Check tr flags to convert from lower to upper case
+TRSTRINGS=`echo ABCdef | $TR "'[[a-z]]' '[[A-Z]]'" | grep ABCDEF`
+TRCLASS=`echo ABCdef | $TR "[[:lower:]]" "[[:upper:]]" | grep ABCDEF`
+
+if test "$TRSTRINGS" = "ABCDEF"; then
+  TRARGS="'[[a-z]]' '[[A-Z]]'"
+elif test "$TRCLASS" = "ABCDEF"; then
+  TRARGS="\"[[:lower:]]\" \"[[:upper:]]\""
+else
+  AC_MSG_ERROR("Can\'t find method to covert from upper to lower case with tr")
+fi
+AC_SUBST(TRARGS)
 
 dnl Changes to look for YACC.  We have three choices (in order of pref.)
 dnl (1) We specify in YACC and YFLAGS what we want
@@ -357,6 +370,7 @@ AC_CHECK_LIB(compat,   main)
 AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(crypt,      main)
 AC_CHECK_LIB(gen,      main)
+AC_CHECK_LIB(PW,      main)
 
 dnl Checks for header files.
 AC_HEADER_STDC

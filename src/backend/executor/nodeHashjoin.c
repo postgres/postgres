@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.3 1996/11/06 06:47:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.4 1997/07/28 00:54:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <sys/types.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 

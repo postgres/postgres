@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.16 1997/04/17 20:38:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.17 1997/07/28 00:54:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,7 +493,9 @@ pq_regoob(void (*fptr)())
     int fd = fileno(Pfout);
 #if defined(hpux)
     ioctl(fd, FIOSSAIOOWN, getpid());
-#else /* hpux */
+#elif defined(sco)
+    ioctl(fd, SIOCSPGRP, getpid());
+#else
     fcntl(fd, F_SETOWN, getpid());
 #endif /* hpux */
     (void) pqsignal(SIGURG,fptr);

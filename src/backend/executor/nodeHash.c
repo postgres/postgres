@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.8 1997/04/22 03:32:38 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.9 1997/07/28 00:53:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,11 @@
  *
  */
 
+#include <sys/types.h>
 #include <stdio.h>	/* for sprintf() */
 #include <math.h>
 #include <string.h>
 #include <sys/file.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 

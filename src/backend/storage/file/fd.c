@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Id: fd.c,v 1.18 1997/05/23 02:56:48 vadim Exp $
+ *    $Id: fd.c,v 1.19 1997/07/28 00:54:52 momjian Exp $
  *
  * NOTES:
  *
@@ -37,6 +37,7 @@
  *-------------------------------------------------------------------------
  */
 
+#include <sys/types.h>
 #include <stdio.h>
 #include <sys/file.h>
 #include <sys/param.h>
@@ -44,7 +45,6 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <fcntl.h>
 
 #include "postgres.h"

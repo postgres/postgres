@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.9 1997/06/04 08:56:51 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.10 1997/07/28 00:56:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
  *	careful....
  *
  */
+#include <sys/types.h>
 #include <stdio.h>		/* for sprintf() */
 #include <errno.h>
 #include <sys/file.h>

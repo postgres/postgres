@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.16 1997/06/03 13:58:06 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.17 1997/07/28 00:55:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1446,7 +1446,8 @@ static int isinf(x)
 }
 #endif /* alpha */
 
-#if defined(sparc_solaris) || defined(i386_solaris)  || defined(svr4)
+#if defined(sparc_solaris) || defined(i386_solaris)  || defined(svr4) || \
+    defined(sco)
 #include <ieeefp.h>
 static int
     isinf(d)

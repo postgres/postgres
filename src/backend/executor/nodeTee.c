@@ -15,11 +15,12 @@
  *	ExecEndTee
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.5 1996/11/10 03:00:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.6 1997/07/28 00:54:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include <sys/types.h>
 #include <sys/file.h>
 #include "postgres.h"
 

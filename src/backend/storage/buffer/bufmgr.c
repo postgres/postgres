@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.14 1997/07/24 20:13:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.15 1997/07/28 00:54:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
  * 	freelist.c -- chooses victim for buffer replacement 
  *	buf_table.c -- manages the buffer lookup table
  */
+#include <sys/types.h>
 #include <sys/file.h>
 #include <stdio.h>
 #include <string.h>
