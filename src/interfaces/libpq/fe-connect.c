@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.235 2003/04/24 21:16:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.236 2003/04/25 01:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -956,7 +956,7 @@ retry1:
 		/* ignore connect() failure if we have more addrs to try */
 		if (addr_cur->ai_next != NULL)
 		{
-			close(conn->sock);
+			closesocket(conn->sock);
 			conn->sock = -1;
 			continue;
 		}
@@ -1015,11 +1015,7 @@ retry2:
 			if (conn->Pfdebug)
 				fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
 			pqsecure_close(conn);
-#ifdef WIN32
 			closesocket(conn->sock);
-#else
-			close(conn->sock);
-#endif
 			conn->sock = -1;
 			conn->allow_ssl_try = FALSE;
 			return connectDBStart(conn);
@@ -1056,11 +1052,7 @@ connect_errReturn:
 	if (conn->sock >= 0)
 	{
 		pqsecure_close(conn);
-#ifdef WIN32
 		closesocket(conn->sock);
-#else
-		close(conn->sock);
-#endif
 		conn->sock = -1;
 	}
 	conn->status = CONNECTION_BAD;
@@ -1928,11 +1920,7 @@ freePGconn(PGconn *conn)
 	if (conn->sock >= 0)
 	{
 		pqsecure_close(conn);
-#ifdef WIN32
 		closesocket(conn->sock);
-#else
-		close(conn->sock);
-#endif
 	}
 	if (conn->pghost)
 		free(conn->pghost);
@@ -2003,11 +1991,7 @@ closePGconn(PGconn *conn)
 	if (conn->sock >= 0)
 	{
 		pqsecure_close(conn);
-#ifdef WIN32
 		closesocket(conn->sock);
-#else
-		close(conn->sock);
-#endif
 	}
 	conn->sock = -1;
 	conn->status = CONNECTION_BAD;		/* Well, not really _bad_ - just
@@ -2187,11 +2171,10 @@ retry4:
 	}
 
 	/* Sent it, done */
-#ifdef WIN32
 	closesocket(tmpsock);
+#ifdef WIN32
 	WSASetLastError(save_errno);
 #else
-	close(tmpsock);
 	errno = save_errno;
 #endif
 
@@ -2203,11 +2186,10 @@ cancel_errReturn:
 	conn->errorMessage.len = strlen(conn->errorMessage.data);
 	if (tmpsock >= 0)
 	{
-#ifdef WIN32
 		closesocket(tmpsock);
+#ifdef WIN32
 		WSASetLastError(save_errno);
 #else
-		close(tmpsock);
 		errno = save_errno;
 #endif
 	}

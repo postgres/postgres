@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.90 2003/04/22 00:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.91 2003/04/25 01:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,11 +681,7 @@ definitelyFailed:
 						 "\tbefore or while processing the request.\n"));
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 	pqsecure_close(conn);
-#ifdef WIN32
 	closesocket(conn->sock);
-#else
-	close(conn->sock);
-#endif
 	conn->sock = -1;
 
 	return -1;

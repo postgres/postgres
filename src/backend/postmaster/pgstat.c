@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.32 2003/03/20 03:34:56 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.33 2003/04/25 01:24:00 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -235,7 +235,7 @@ pgstat_init(void)
 
 startup_failed:
 	if (pgStatSock >= 0)
-		close(pgStatSock);
+		closesocket(pgStatSock);
 	pgStatSock = -1;
 
 	/* Adjust GUC variables to suppress useless activity */
@@ -359,10 +359,10 @@ void
 pgstat_close_sockets(void)
 {
 	if (pgStatPmPipe[0] >= 0)
-		close(pgStatPmPipe[0]);
+		closesocket(pgStatPmPipe[0]);
 	pgStatPmPipe[0] = -1;
 	if (pgStatPmPipe[1] >= 0)
-		close(pgStatPmPipe[1]);
+		closesocket(pgStatPmPipe[1]);
 	pgStatPmPipe[1] = -1;
 }
 
@@ -1120,7 +1120,7 @@ pgstat_main(void)
 	 * Close the writing end of the postmaster pipe, so we'll see it
 	 * closing when the postmaster terminates and can terminate as well.
 	 */
-	close(pgStatPmPipe[1]);
+	closesocket(pgStatPmPipe[1]);
 	pgStatPmPipe[1] = -1;
 
 	/*
@@ -1167,13 +1167,13 @@ pgstat_main(void)
 
 		case 0:
 			/* child becomes collector process */
-			close(pgStatPipe[1]);
-			close(pgStatSock);
+			closesocket(pgStatPipe[1]);
+			closesocket(pgStatSock);
 			break;
 
 		default:
 			/* parent becomes buffer process */
-			close(pgStatPipe[0]);
+			closesocket(pgStatPipe[0]);
 			pgstat_recvbuffer();
 			exit(0);
 	}

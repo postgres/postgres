@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.99 2003/04/17 22:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.100 2003/04/25 01:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1212,7 +1212,7 @@ ident_inet(const struct in_addr remote_ip_addr,
 															ident_user);
 				}
 			}
-			close(sock_fd);
+			closesocket(sock_fd);
 		}
 	}
 	return ident_return;

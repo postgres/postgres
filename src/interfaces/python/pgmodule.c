@@ -2405,10 +2405,10 @@ pg_inserttable(pgobject * self, PyObject * args)
 				n = j;		/* never used before this assignment */
 		}
 		if (n)
-		{	
+		{
 			/* allocate buffer */
 			if (!(buffer = malloc(MAX_BUFFER_SIZE)))
-			{		
+			{
 				PyErr_SetString(PyExc_MemoryError,
 					"can't allocate insert buffer.");
 				return NULL;
@@ -2438,7 +2438,7 @@ pg_inserttable(pgobject * self, PyObject * args)
 					getsubitem = PyTuple_GetItem;
 				else
 					getsubitem = PyList_GetItem;
-	
+
 				/* builds insert line */
 				bufpt=buffer;
 				bufsiz = MAX_BUFFER_SIZE - 1;
@@ -2527,7 +2527,7 @@ pg_inserttable(pgobject * self, PyObject * args)
 					{
 						*bufpt++ = '\t'; --bufsiz;
 					}
-			
+
 					if (bufsiz <= 0)
 					{
 						free(buffer);
@@ -2543,7 +2543,7 @@ pg_inserttable(pgobject * self, PyObject * args)
 				/* sends data */
 				PQputline(self->cnx, buffer);
 			}
-	
+
 			/* ends query */
 			PQputline(self->cnx, "\\.\n");
 			PQendcopy(self->cnx);

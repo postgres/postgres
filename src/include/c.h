@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.139 2003/04/22 02:18:09 momjian Exp $
+ * $Id: c.h,v 1.140 2003/04/25 01:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,6 +721,13 @@ int pgunlink(const char *path);
 #define unlink(from, to)	pgunlink(from, to)
 #endif
 
+/*
+ *	Win32 requires a special close for sockets and pipes, while on Unix
+ *	close() does them all.
+ */
+#ifndef WIN32
+#define	closesocket close
+#endif
   
 /* These are for things that are one way on Unix and another on NT */
 #define NULL_DEV		"/dev/null"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.131 2003/04/24 21:16:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.132 2003/04/25 01:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1161,11 +1161,7 @@ handleSyncLoss(PGconn *conn, char id, int msgLength)
 					  id, msgLength);
 	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 	pqsecure_close(conn);
-#ifdef WIN32
 	closesocket(conn->sock);
-#else
-	close(conn->sock);
-#endif
 	conn->sock = -1;
 }
 
