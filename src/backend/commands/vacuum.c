@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.286 2004/08/06 04:15:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.287 2004/08/23 23:22:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -810,9 +810,8 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 		return;
 	}
 
-	/* Truncate CLOG and SUBTRANS to the oldest vacuumxid */
+	/* Truncate CLOG to the oldest vacuumxid */
 	TruncateCLOG(vacuumXID);
-	TruncateSUBTRANS(vacuumXID);
 
 	/* Give warning about impending wraparound problems */
 	if (frozenAlreadyWrapped)

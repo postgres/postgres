@@ -15,14 +15,13 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.21 2004/07/01 00:50:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.22 2004/08/23 23:22:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/clog.h"
-#include "access/subtrans.h"
+#include "access/slru.h"
 #include "storage/lwlock.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
@@ -109,11 +108,11 @@ NumLWLocks(void)
 	/* bufmgr.c needs two for each shared buffer */
 	numLocks += 2 * NBuffers;
 
-	/* clog.c needs one per CLOG buffer + one control lock */
-	numLocks += NUM_CLOG_BUFFERS + 1;
+	/* clog.c needs one per CLOG buffer */
+	numLocks += NUM_SLRU_BUFFERS;
 
-	/* subtrans.c needs one per SubTrans buffer + one control lock */
-	numLocks += NUM_SUBTRANS_BUFFERS + 1;
+	/* subtrans.c needs one per SubTrans buffer */
+	numLocks += NUM_SLRU_BUFFERS;
 
 	/* Perhaps create a few more for use by user-defined modules? */
 

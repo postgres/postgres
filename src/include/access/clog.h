@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.9 2004/07/01 00:51:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/clog.h,v 1.10 2004/08/23 23:22:45 tgl Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H
@@ -27,9 +27,6 @@ typedef int XidStatus;
 #define TRANSACTION_STATUS_ABORTED			0x02
 #define TRANSACTION_STATUS_SUB_COMMITTED	0x03
 
-/* exported because lwlock.c needs it */
-#define NUM_CLOG_BUFFERS	8
-
 
 extern void TransactionIdSetStatus(TransactionId xid, XidStatus status);
 extern XidStatus TransactionIdGetStatus(TransactionId xid);
@@ -42,6 +39,12 @@ extern void ShutdownCLOG(void);
 extern void CheckPointCLOG(void);
 extern void ExtendCLOG(TransactionId newestXact);
 extern void TruncateCLOG(TransactionId oldestXact);
-extern void clog_zeropage_redo(int pageno);
+
+/* XLOG stuff */
+#define CLOG_ZEROPAGE		0x00
+
+extern void clog_redo(XLogRecPtr lsn, XLogRecord *record);
+extern void clog_undo(XLogRecPtr lsn, XLogRecord *record);
+extern void clog_desc(char *buf, uint8 xl_info, char *rec);
 
 #endif   /* CLOG_H */

@@ -1,23 +1,66 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * slru.h
+ *		Simple LRU buffering for transaction status logfiles
  *
- * Simple LRU
- *
- * Portions Copyright (c) 2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.7 2004/07/01 00:51:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/slru.h,v 1.8 2004/08/23 23:22:45 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 #ifndef SLRU_H
 #define SLRU_H
 
-#include "access/xlog.h"
 #include "storage/lwlock.h"
 
 
-/* Opaque structs known only in slru.c */
-typedef struct SlruSharedData *SlruShared;
-typedef struct SlruFlushData *SlruFlush;
+/*
+ * Number of page buffers.  Ideally this could be different for CLOG and
+ * SUBTRANS, but the benefit doesn't seem to be worth any additional
+ * notational cruft.
+ */
+#define NUM_SLRU_BUFFERS	8
+
+/* Page status codes */
+typedef enum
+{
+	SLRU_PAGE_EMPTY,			/* buffer is not in use */
+	SLRU_PAGE_READ_IN_PROGRESS, /* page is being read in */
+	SLRU_PAGE_CLEAN,			/* page is valid and not dirty */
+	SLRU_PAGE_DIRTY,			/* page is valid but needs write */
+	SLRU_PAGE_WRITE_IN_PROGRESS /* page is being written out */
+} SlruPageStatus;
+
+/*
+ * Shared-memory state
+ */
+typedef struct SlruSharedData
+{
+	LWLockId	ControlLock;
+
+	/*
+	 * Info for each buffer slot.  Page number is undefined when status is
+	 * EMPTY.  lru_count is essentially the number of page switches since
+	 * last use of this page; the page with highest lru_count is the best
+	 * candidate to replace.
+	 */
+	char	   *page_buffer[NUM_SLRU_BUFFERS];
+	SlruPageStatus page_status[NUM_SLRU_BUFFERS];
+	int			page_number[NUM_SLRU_BUFFERS];
+	unsigned int page_lru_count[NUM_SLRU_BUFFERS];
+	LWLockId	buffer_locks[NUM_SLRU_BUFFERS];
+
+	/*
+	 * latest_page_number is the page number of the current end of the
+	 * log; this is not critical data, since we use it only to avoid
+	 * swapping out the latest page.
+	 */
+	int			latest_page_number;
+} SlruSharedData;
+
+typedef SlruSharedData *SlruShared;
 
 /*
  * SlruCtlData is an unshared structure that points to the active information
@@ -27,13 +70,11 @@ typedef struct SlruCtlData
 {
 	SlruShared	shared;
 
-	LWLockId	ControlLock;
-
 	/*
-	 * Dir is set during SimpleLruInit and does not change thereafter.
-	 * Since it's always the same, it doesn't need to be in shared memory.
+	 * This flag tells whether to fsync writes (true for pg_clog,
+	 * false for pg_subtrans).
 	 */
-	char		Dir[MAXPGPATH];
+	bool		do_fsync;
 
 	/*
 	 * Decide which of two page numbers is "older" for truncation purposes.
@@ -42,27 +83,27 @@ typedef struct SlruCtlData
 	 */
 	bool		(*PagePrecedes) (int, int);
 
+	/*
+	 * Dir is set during SimpleLruInit and does not change thereafter.
+	 * Since it's always the same, it doesn't need to be in shared memory.
+	 */
+	char		Dir[MAXPGPATH];
 } SlruCtlData;
 
 typedef SlruCtlData *SlruCtl;
 
+/* Opaque struct known only in slru.c */
+typedef struct SlruFlushData *SlruFlush;
+
 
 extern int	SimpleLruShmemSize(void);
-extern void SimpleLruInit(SlruCtl ctl, const char *name, const char *subdir);
+extern void SimpleLruInit(SlruCtl ctl, const char *name,
+						  LWLockId ctllock, const char *subdir);
 extern int	SimpleLruZeroPage(SlruCtl ctl, int pageno);
-extern char *SimpleLruReadPage(SlruCtl ctl, int pageno,
-							   TransactionId xid, bool forwrite);
+extern int	SimpleLruReadPage(SlruCtl ctl, int pageno, TransactionId xid);
 extern void SimpleLruWritePage(SlruCtl ctl, int slotno, SlruFlush fdata);
-extern void SimpleLruSetLatestPage(SlruCtl ctl, int pageno);
 extern void SimpleLruFlush(SlruCtl ctl, bool checkpoint);
 extern void SimpleLruTruncate(SlruCtl ctl, int cutoffPage);
-
-/* XLOG stuff */
-#define CLOG_ZEROPAGE		0x00
-#define SUBTRANS_ZEROPAGE	0x10
-
-extern void slru_redo(XLogRecPtr lsn, XLogRecord *record);
-extern void slru_undo(XLogRecPtr lsn, XLogRecord *record);
-extern void slru_desc(char *buf, uint8 xl_info, char *rec);
+extern bool SlruScanDirectory(SlruCtl ctl, int cutoffPage, bool doDeletions);
 
 #endif   /* SLRU_H */

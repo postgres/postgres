@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.69 2004/08/22 02:41:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.70 2004/08/23 23:22:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -661,6 +661,9 @@ result_known:
  * FALSE is sufficient for non-shared relations, since only backends in my
  * own database could ever see the tuples in them.
  *
+ * This is also used to determine where to truncate pg_subtrans.  allDbs
+ * must be TRUE for that case.
+ *
  * Note: we include the currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
  * when it does set the snapshot it cannot set xmin less than what we compute.
@@ -673,7 +676,17 @@ GetOldestXmin(bool allDbs)
 	TransactionId result;
 	int			index;
 
-	result = GetTopTransactionId();
+	/*
+	 * Normally we start the min() calculation with our own XID.  But
+	 * if called by checkpointer, we will not be inside a transaction,
+	 * so use next XID as starting point for min() calculation.  (Note
+	 * that if there are no xacts running at all, that will be the subtrans
+	 * truncation point!)
+	 */
+	if (IsTransactionState())
+		result = GetTopTransactionId();
+	else
+		result = ReadNewTransactionId();
 
 	LWLockAcquire(SInvalLock, LW_SHARED);
 
