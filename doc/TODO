@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 27 16:15:36 EST 2000
+Last updated:		Sat Dec  9 18:25:43 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -108,6 +108,7 @@ TYPES
 * Update macaddr manufacturer numbers, or remove the function macaddr_manuf()
 * Add btree index support for reltime, tinterval, regproc, bit, varbit
 * Add rtree index support for line, lseg, path, point
+* Make file in/out interface to TOAST columns
 
 VIEWS
 
