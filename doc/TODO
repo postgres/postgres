@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu May 10 13:29:36 EDT 2001
+Last updated:		Thu May 10 16:26:24 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -57,13 +57,13 @@ ADMIN
 * Remove unused files during database vacuum or postmaster startup
 * Add table name mapping for numeric file names
 * Overhaul pg_hba.conf host-based authentication
+* Incremental backups
 
 TYPES
 
 * Add domain capability
 * Add IPv6 capability to INET/CIDR types
 * Add conversion function from text to inet
-* Make a separate SERIAL type?
 * Store binary-compatible type information in the system
 * Allow nulls in arrays
 * Allow arrays to be ORDER'ed
@@ -107,125 +107,11 @@ INDEXES
   [inheritance]
 * Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Add UNIQUE capability to non-btree indexes
-* Certain indexes will not shrink, i.e. oid indexes with many inserts (Vadim)
+* Certain indexes will not shrink, e.g. oid indexes with many inserts (Vadim)
 * Have UPDATE/DELETE clean out indexes
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
-
-COMMANDS
-
-* ALTER TABLE ADD COLUMN to inherited table put column in wrong place 
-  [inheritance]
-* Add ALTER TABLE DROP COLUMN feature [drop]
-* Add ALTER FUNCTION 
-* Add ALTER TABLE ... DROP CONSTRAINT
-* Automatically drop constraints/functions when object is dropped
-* CLUSTER
-	* cluster all tables at once
-	* prevent lose of indexes, permissions, inheritance
-	* Automatically keep clustering on a table
-	* Keep statistics about clustering, perhaps during VACUUM ANALYZE
-	  [optimizer]
-* Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
-* Auto-destroy sequence on DROP of table with SERIAL (Ryan)
-* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
-* Allow INSERT/UPDATE of system-generated oid value for a row
-* Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
-* Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
-* Allow RULE recompilation
-* Allow BINARY option to SELECT, like we do with DECLARE
-* MOVE 0 should not move to end of cursor
-* Add SHOW command to display locks
-* Bring INSERT ... VALUES up to full SQL92 spec, disallow missing
-  columns, allow DEFAULT
-* Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
-* Allow DELETE WHERE CURRENT OF cursor
-* Add BETWEEN ASYMMETRIC/SYMMETRIC
-* Add SET or BEGIN timeout parameter to cancel query if waiting too long
-* Change LIMIT val,val to offset,limit to match MySQL
-* Allow Pl/PgSQL's RAISE function to take expressions
-
-CLIENTS
-
-* Make NULL's come out at the beginning or end depending on the
-  ORDER BY direction
-* COPY
-	* Update reltuples in COPY
-	* Allow specification of column names
-	* Allow dump/load of CSV format
-* fix array handling for ECPG
-* have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
-  or multiple SELECTS to avoid bad system catalog entries
-* allow psql \d to show primary and foreign keys
-* allow psql \d to show temporary table structure
-* add XML interface capability
-* Add a global RESET command for use with connection pooling
-* Remove <=6.3 version compatibility in ODBC?
-* Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
-
-REFERENTIAL INTEGRITY
-
-* Add MATCH PARTIAL referential integrity
-* Check that primary key exists at foreign key definition time
-* Prevent column dropping if column is used by foreign key
-* Propagate column or table renaming to foreign key constraints
-* Add deferred trigger queue file (Jan)
-* Allow oid to act as a foreign key
-* Implement dirty reads and use them in RI triggers
-* Enforce referential integrity for system tables
-* INSERT & UPDATE/DELETE in transaction of primary key fails with 
-  deferredTriggerGetPreviousEvent or "change violation" [foreign]
-* Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
-  switch to pg_shadow.oid as user id
-* Add unique indexes on pg_database
-* Check all system tables and add unique indexes as needed
-* Make constraints clearer in dump file
-* Change foreign key constraint for array -> element to mean element
-   in array
-
-EXOTIC FEATURES
-
-* Add sql3 recursive unions
-* Add the concept of dataspaces/tablespaces [tablespaces]
-* Allow queries across multiple databases
-* Allow nested transactions (Vadim)
-* Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
-* Add pre-parsing phase that convets non-ANSI features to supported features
-* SQL*Net listener that makes PostgreSQL appear as an Oracle database 
-  to clients
-* Incremental backups
-* Allow SQL92 schemas
-* Handle transaction rollover [transactions]
-
-MISCELLANEOUS
-
-* Increase identifier length(NAMEDATALEN) if small performance hit
-* Create a background process for each database that runs while
-  database is idle, finding superceeded rows, gathering stats and vacuuming
-* Implement UNDO using transaction log
-* Populate backend status area and write program to dump status data
-* Put sort files in their own directory
-* Allow autocommit so always in a transaction block
-* Show location of syntax error in query [yacc]
-* Overhaul bufmgr/lockmgr/transaction manager
-* Encrpyt passwords in pg_shadow table using MD5 (Vince)
-* Allow Java server-side programming [java]
-* Add sed-like regular expression search/replace capability
-* Change representation of whole-tuple parameters to functions
-
-PERFORMANCE
------------
-
--FSYNC
-
-* Delay fsync() when other backends are about to commit too [fsync]
-	* Determine optimal commit_delay value
-* Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
-	* Allow multiple blocks to be written to WAL with one write()
-
-INDEXES
-
-* Use indexes to find min() and max()
+* Use indexes for min() and max()
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
@@ -235,7 +121,130 @@ INDEXES
 * Be smarter about insertion of already-ordered data into btree index
 * Gather more accurate dispersion statistics using indexes
 * Add deleted bit to index tuples to reduce heap access
-* Prevent index uniqueness checks when UPDATE does not modify column
+* Prevent index uniqueness checks when UPDATE does not modifying column
+* System Tables
+	* Add unique indexes to pg_shadow.usename and pg_shadow.usesysid or
+	  switch to pg_shadow.oid as user id
+	* Add unique indexes on pg_database
+	* Check all system tables and add unique indexes as needed
+	* Remove pg_listener index
+	* Remove unused pg_variable, pg_inheritproc, pg_ipl tables
+
+COMMANDS
+
+* ALTER
+	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place 
+	  [inheritance]
+	* Add ALTER TABLE DROP COLUMN feature [drop]
+	* Add ALTER FUNCTION 
+	* Add ALTER TABLE DROP CONSTRAINT
+* CLUSTER
+	* cluster all tables at once
+	* prevent lose of indexes, permissions, inheritance
+	* Automatically keep clustering on a table
+	* Keep statistics about clustering, perhaps during VACUUM ANALYZE
+	  [optimizer]
+* COPY
+	* Update reltuples in COPY
+	* Allow specification of column names
+	* Allow dump/load of CSV format
+* CURSOR
+	* Allow BINARY option to SELECT, like we do with DECLARE
+	* MOVE 0 should not move to end of cursor
+	* Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
+	* Allow DELETE WHERE CURRENT OF cursor
+* INSERT
+	* Allow INSERT/UPDATE of system-generated oid value for a row
+	* Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
+	* Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
+	* Disallow missing columns in INSERT ... VALUES, per ANSI
+	* Allow INSERT/UPDATE ... RETURNING new.col or old.col (Philip)
+* Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
+* Auto-destroy sequence on DROP of table with SERIAL, perhaps with a separate 
+  SERIAL type
+* Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
+* Allow RULE recompilation
+* Add BETWEEN ASYMMETRIC/SYMMETRIC
+* SHOW/SET
+	* Add SHOW command to display locks
+	* Add a global RESET command for use with connection pooling
+	* Add SET or BEGIN timeout parameter to cancel query if waiting too long
+	* Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
+	* Remove SET KSQO option now that OR processing is improved (Tom)
+	* Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
+	  ANALYZE, and CLUSTER
+* Change LIMIT val,val to offset,limit to match MySQL
+* Allow Pl/PgSQL's RAISE function to take expressions
+
+CLIENTS
+
+* Make NULL's come out at the beginning or end depending on the
+  ORDER BY direction
+* fix array handling in ECPG
+* have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
+  or multiple SELECTS to avoid bad system catalog entries
+* allow psql \d to show primary and foreign keys
+* allow psql \d to show temporary table structure
+* add XML interface capability
+* Remove <=6.3 version compatibility in ODBC?
+
+REFERENTIAL INTEGRITY
+
+* Add MATCH PARTIAL referential integrity
+* -Check that primary key exists at foreign key definition time
+* Prevent column dropping if column is used by foreign key
+* Propagate column or table renaming to foreign key constraints
+* Add deferred trigger queue file (Jan)
+* Allow oid to act as a foreign key
+* Implement dirty reads and use them in RI triggers
+* Enforce referential integrity for system tables
+* INSERT & UPDATE/DELETE in transaction of primary key fails with 
+  deferredTriggerGetPreviousEvent or "change violation" [foreign]
+* Make constraints clearer in dump file
+* Change foreign key constraint for array -> element to mean element
+   in array
+* Automatically drop constraints/functions when object is dropped
+
+TRANSACTIONS
+
+* Implement UNDO using transaction log
+* Allow autocommit so always in a transaction block
+* Overhaul bufmgr/lockmgr/transaction manager
+* Allow nested transactions (Vadim)
+* Handle transaction rollover [transactions]
+
+EXOTIC FEATURES
+
+* Add sql3 recursive unions
+* Add the concept of dataspaces/tablespaces [tablespaces]
+* Allow SQL92 schemas
+* Allow queries across multiple databases
+* Add pre-parsing phase that converts non-ANSI features to supported features
+* SQL*Net listener that makes PostgreSQL appear as an Oracle database 
+  to clients
+
+MISCELLANEOUS
+
+* Increase identifier length(NAMEDATALEN) if small performance hit
+* Create a background process for each database that runs while
+  database is idle, finding superceeded rows, gathering stats and vacuuming
+* Populate backend status area and write program to dump status data
+* Put sort files in their own directory
+* Show location of syntax error in query [yacc]
+* Encrpyt passwords in pg_shadow table using MD5 (Vince)
+* Allow Java server-side programming [java]
+* Add sed-like regular expression search/replace capability
+* Change representation of whole-tuple parameters to functions
+
+PERFORMANCE
+-----------
+
+FSYNC
+
+* Delay fsync() when other backends are about to commit too [fsync]
+	* Determine optimal commit_delay value
+* Determine optimal fdatasync/fsync, O_SYNC/O_DSYNC options
+	* Allow multiple blocks to be written to WAL with one write()
 
 CACHE
 
@@ -247,14 +256,15 @@ VACUUM
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
-* Make ANALYZE a separate command
-* Allow ANALYZE to ESTIMATE based on certain random precentage of rows
+* -Make ANALYZE a separate command
+* -Allow ANALYZE to ESTIMATE based on certain random precentage of rows
 * Add LAZY VACUUM (Vadim)
 
 MISCELLANEOUS
 
 * Allow compression of log and meta data
 * Do async I/O to do better read-ahead of data
+* Experiment with multi-threaded backend [thread]
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?) [mmap]
@@ -263,15 +273,11 @@ MISCELLANEOUS
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation (Tom)
 * allow configuration of maximum number of open files
-* Remove pg_listener index
-* Improve statistics storage in pg_class [performance]
+* -Improve statistics storage in pg_class [performance]
 * Add connection pooling [pool]
 * Allow persistent backends [persistent]
 * Create a transaction processor to aid in persistent connections and
   connection pooling
-* Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
-  ANALYZE, and CLUSTER
-* Force transactions that commit at near the same time use a single fsync()
 * Make blind writes go through the file descriptor cache
 * Allow logging of query durations
 
@@ -279,10 +285,7 @@ SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
 * Does Mariposa source contain any other bug fixes?
-* Remove SET KSQO option now that OR processing is improved (Tom)
 * Convert remaining fprintf(stderr,...)/perror() to elog()
-* Remove unused pg_variable, pg_inheritproc, pg_ipl tables
-* Experiment with multi-threaded backend [thread]
 * Fix problems with libpq non-blocking/async code [async]
 * Merge global and template BKI files (Peter E)
 * Fix username/password length limits in all areas
@@ -293,12 +296,12 @@ SOURCE CODE
 * Add version file format stamp to heap and other table types
 * Make elog(LOG) in WAL its own output type, distinct from DEBUG
 * Rename some /contrib modules from pg* to pg_*
-* Remove warnings created by -Wcast-align
-* Move platform-specific ps status display info from ps_status.c to ports
-* Decide on spelling of indexes/indices
-* Allow ps status display to work on Solaris/SVr4-based systems
 * Move some things from /contrib into main tree, like soundex
 * Allow plug-in modules to emulate features from other databases
+* Remove warnings created by -Wcast-align
+* Move platform-specific ps status display info from ps_status.c to ports
+* Allow ps status display to work on Solaris/SVr4-based systems
+* Decide on spelling of indexes/indices
 * Add mention of VACUUM, log rotation to Administrator's Guide
 * Add PL/Python documentation
 
