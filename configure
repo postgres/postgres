@@ -9906,6 +9906,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
@@ -10030,6 +10031,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ucred.h>
 
@@ -10089,6 +10091,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ucred.h>
 
@@ -10148,6 +10151,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ucred.h>
 

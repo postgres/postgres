@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.20 2003/06/12 07:36:51 momjian Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.21 2003/06/12 16:05:10 tgl Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -104,7 +104,8 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
 # it is missing then one could define it.
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
 [AC_CHECK_TYPES([struct sockaddr_storage], [], [],
-[#ifdef HAVE_SYS_SOCKET_H
+[#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
 ])])# PGAC_STRUCT_SOCKADDR_STORAGE
