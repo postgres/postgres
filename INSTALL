@@ -1,9 +1,8 @@
+
 PostgreSQL Installation Guide
 by The PostgreSQL Development Team
-Edited by Thomas Lockhart
 
-PostgreSQL is © 1996-9 by the Postgres Global Development Group.
-
+PostgreSQL is © 1998-9 by the Postgres Global Development Group.
 Table of Contents
 
        Summary                                            
@@ -32,12 +31,6 @@ Table of Contents
              Migration to v6.5                            
                  Multi-Version Concurrency Control        
              Detailed Change List                         
-
-List of Tables
-
-       2-1. Supported Platforms                           
-       2-2. Possibly Incompatible Platforms               
-       4-1. Kerberos Parameter Examples                   
 
 Summary
 
@@ -76,76 +69,80 @@ Currently Supported Platforms
        Table 2-1. Supported Platforms
        OS          Processor   Version    Reported    Remarks
        AIX 4.3.2   RS6000      v6.5       1999-05-26  (Andreas Zeugswetter 
-                                                      (mailto:Andreas.Zeugswetter@telecom.at))
+                                       (mailto:Andreas.Zeugswetter@telecom.at))
        BSDI        x86         v6.5       1999-05-25  (Bruce Momjian 
-                                                      (mailto:maillist@candle.pha.pa.us)
+                                          (mailto:maillist@candle.pha.pa.us)
        FreeBSD     x86         v6.5       1999-05-25  (Tatsuo Ishii 
-       2.2.x-4.0                                      (mailto:t-ishii@sra.co.jp), 
-                                                      Marc Fournier 
-                                                      (mailto:scrappy@hub.org))
-       DGUX        m88k        v6.3       1998-03-01  v6.4 probably OK. Needs new 
-       5.4R4.11                                       maintainer. (Brian E Gallew 
-                                                      (mailto:geek+@cmu.edu))
+       2.2.x-4.0                          (mailto:t-ishii@sra.co.jp), 
+                                          Marc Fournier
+                                          (mailto:scrappy@hub.org))
+       DGUX        m88k        v6.3       1998-03-01  v6.4 probably OK.
+       5.4R4.11                           Needs new maintainer.
+                                          (Brian E Gallew 
+                                          (mailto:geek+@cmu.edu))
        Digital     Alpha       v6.4       1998-10-29  Minor patchable problems 
        Unix 4.0                                       (Pedro J. Lobo 
-                                                      (mailto:pjlobo@euitt.upm.es))
-       HPUX        PA-RISC     v6.4       1998-10-25  Both 9.0x and 10.20 (Tom Lane 
-                                                      (mailto:tgl@sss.pgh.pa.us), 
-                                                      Stan Brown 
-                                                      (mailto:stanb@awod.com))
-       IRIX 6.5    MIPS        v6.4       1998-12-29  IRIX 5.x is different (Mark Dalphin 
-                                                      (mdalphin@amgen.com))
+                                          (mailto:pjlobo@euitt.upm.es))
+       HPUX        PA-RISC     v6.4       1998-10-25  Both 9.0x and 10.20
+                                          (Tom Lane (mailto:tgl@sss.pgh.pa.us), 
+                                           Stan Brown (mailto:stanb@awod.com))
+       IRIX 6.5    MIPS        v6.4       1998-12-29  IRIX 5.x is different
+                                          (Mark Dalphin (mdalphin@amgen.com))
        linux       Alpha       v6.3.2     1998-04-16  Mostly successful. Needs 
-       2.0.x                                          work for v6.4. (Ryan Kirkpatrick 
-                                                      (mailto:rkirkpat@nag.cs.colorado.edu))
+       2.0.x                                          work for v6.4.
+                                          (Ryan Kirkpatrick 
+                                       (mailto:rkirkpat@nag.cs.colorado.edu))
        linux       x86         v6.4       1998-10-27  (Thomas Lockhart 
-       2.0.x/libc5                                    (mailto:lockhart@alumni.caltech.edu))
-       linux       x86         v6.5       1999-05-24  (Thomas Lockhart 
-       2.0.x/glibc                                    (mailto:lockhart@alumni.caltech.edu))
+       2.0.x/libc5                        (mailto:lockhart@alumni.caltech.edu))
+       linux       x86         v6.4       1999-05-24  (Thomas Lockhart 
+       2.0.x/glibc2                       (mailto:lockhart@alumni.caltech.edu))
        linux       MIPS        v6.4       1998-12-16  Cobalt Qube (Tatsuo Ishii 
-       2.0.x                                          (mailto:t-ishii@sra.co.jp))
+       2.0.x                              (mailto:t-ishii@sra.co.jp))
        linux       Sparc       v6.4       1998-10-25  (Tom Szybist 
-       2.0.x                                          (mailto:szybist@boxhill.com))
-       linuxPPC    PPC603e     v6.4       1998-10-26  Powerbook 2400c (Tatsuo Ishii
-       2.1.24                                         (mailto:t-ishii@sra.co.jp))
-       mklinux DR3 PPC750      v6.4       1998-09-16  PowerMac 7600 (Tatsuo Ishii 
-                                                      (mailto:t-ishii@sra.co.jp))
+       2.0.x                              (mailto:szybist@boxhill.com))
+       linuxPPC    PPC603e     v6.4       1998-10-26  Powerbook 2400c
+       2.1.24                                         (Tatsuo Ishii 
+                                          (mailto:t-ishii@sra.co.jp))
+       mklinux     PPC750      v6.4       1998-09-16  PowerMac 7600
+       DR3                                (Tatsuo Ishii
+                                          (mailto:t-ishii@sra.co.jp))
        NetBSD      arm32       v6.5       1999-04-14  (Andrew McMurry 
-                                                      (mailto:a.mcmurry1@physics.oxford.ac.uk))
+                                      (mailto:a.mcmurry1@physics.oxford.ac.uk))
        NetBSD/i3-  x86         v6.4       1998-10-25  (Brook Milligan 
-       86 1.3.2                                       (mailto:brook@trillium.NMSU.Edu))
+       86 1.3.2                           (mailto:brook@trillium.NMSU.Edu))
        NetBSD      m68k        v6.4.2     1998-12-28  Mac SE/30 (Mr. Mutsuki 
                                                       Nakajima, Tatsuo Ishii 
-                                                      (mailto:t-ishii@sra.co.jp))
-       NetBSD-     NS32532     v6.4       1998-10-27  small problems in date/time 
-       current                                        math (Jon Buller 
-                                                      (mailto:jonb@metronet.com))
+                                          (mailto:t-ishii@sra.co.jp))
+       NetBSD-     NS32532     v6.4       1998-10-27  small problems
+       current                            in date/time math (Jon Buller 
+                                          (mailto:jonb@metronet.com))
        NetBSD/sp-  Sparc       v6.4       1998-10-27  (Tom I Helbekkmo 
-       arc 1.3H                                       (mailto:tih@hamartun.priv.no))
+       arc 1.3H                           (mailto:tih@hamartun.priv.no))
        NetBSD 1.3  VAX         v6.3       1998-03-01  (Tom I Helbekkmo 
-                                                      (mailto:tih@hamartun.priv.no))
+                                          (mailto:tih@hamartun.priv.no))
        SCO         x86         v6.5       1999-05-25  (Andrew Merrill 
-       OpenServer 5                                   (mailto:andrew@compclass.com))
+       OpenServer 5                       (mailto:andrew@compclass.com))
        SCO         x86         v6.5       1999-05-25  (Andrew Merrill 
-       UnixWare 7                                     (mailto:andrew@compclass.com))
+       UnixWare 7                         (mailto:andrew@compclass.com))
        Solaris     x86         v6.4       1998-10-28  (Marc Fournier 
-                                                      (mailto:scrappy@hub.org))
+                                          (mailto:scrappy@hub.org))
        Solaris     Sparc       v6.4       1998-10-28  (Tom Szybist 
-       2.6-2.7                                        (mailto:szybist@boxhill.com),
-                                                      Frank Ridderbusch 
-                                                      (mailto:ridderbusch.pad@sni.de))
-       SunOS       Sparc       v6.3       1998-03-01  Patches submitted (Tatsuo Ishii
-       4.1.4                                          (mailto:t-ishii@sra.co.jp))
+       2.6-2.7                            (mailto:szybist@boxhill.com),
+                                           Frank Ridderbusch 
+                                          (mailto:ridderbusch.pad@sni.de))
+       SunOS       Sparc       v6.3       1998-03-01  Patches submitted
+       4.1.4                              (Tatsuo Ishii 
+                                          (mailto:t-ishii@sra.co.jp))
        SVR4        MIPS        v6.4       1998-10-28  No 64-bit int compiler 
-                                                      support (Frank Ridderbusch 
-                                                      (mailto:ridderbusch.pad@sni.de))
-       Windows     x86         v6.4       1999-01-06  Client-side libraries or 
-                                                      ODBC/JDBC. No server yet. 
-                                                      (Magnus Hagander 
-                                                      (mha@sollentuna.net)
+                                          support (Frank Ridderbusch 
+                                          (mailto:ridderbusch.pad@sni.de))
+       Windows     x86         v6.4       1999-01-06  Client-side libraries
+                                          or ODBC/JDBC. No server yet. 
+                                          (Magnus Hagander 
+                                          (mha@sollentuna.net)
        Windows NT  x86         v6.5       1999-05-26  Working with the Cygwin 
-                                                      library. (Daniel Horak 
-                                                      (mailto:Dan.Horak@email.cz)) 
+                                          library. (Daniel Horak 
+                                          (mailto:Dan.Horak@email.cz)) 
 
 
         
@@ -168,19 +165,20 @@ Unsupported Platforms
        Table 2-2. Possibly Incompatible Platforms
        OS          Processor   Version    Reported    Remarks
        MacOS       all         v6.3       1998-03-01  Not library compatible; 
-                                                      use ODBC/JDBC
+                                          use ODBC/JDBC
        NextStep    x86         v6.x       1998-03-01  Client-only support; 
-                                                      v1.0.9 worked with 
-                                                      patches (David Wetzel 
-                                                      (mailto:dave@turbocat.de))
-       SVR4 4.4    m88k        v6.2.1     1998-03-01  Confirmed with patching; 
-                                                      v6.4.x will need TAS 
-                                                      spinlock code (Doug Winterburn 
-                                                      (mailto:dlw@seavme.xroads.com))
-       Ultrix      MIPS,VAX?   v6.x       1998-03-01  No recent reports; obsolete?
+                                          v1.0.9 worked with patches 
+                                          (David Wetzel 
+                                          (mailto:dave@turbocat.de))
+       SVR4 4.4    m88k        v6.2.1     1998-03-01  Confirmed
+                                          with patching; 
+                                          v6.4.x will need TAS 
+                                          spinlock code (Doug 
+                                          Winterburn 
+                                          (mailto:dlw@seavme.xroads.com))
+       Ultrix      MIPS,VAX?   v6.x       1998-03-01  No recent reports; 
+                                                      obsolete?
 
-
-        
 
 Chapter 3. Installation
 
@@ -194,8 +192,10 @@ Chapter 3. Installation
        o  Commands are Unix-compatible. See note below. 
        o  Defaults are used except where noted. 
        o  User postgres is the Postgres superuser. 
-       o  The source path is /usr/src/pgsql (other paths are possible). 
-       o  The runtime path is /usr/local/pgsql (other paths are possible). 
+       o  The source path is /usr/src/pgsql (other paths are 
+        possible). 
+       o  The runtime path is /usr/local/pgsql (other paths 
+        are possible). 
         
         Commands were tested on RedHat Linux version 5.2 
        using the tcsh shell. Except where noted, they will 
@@ -243,6 +243,7 @@ Requirements to Run Postgres
 
        $ df -k
            
+
         
 
 Installation Procedure
@@ -281,8 +282,11 @@ Installation Procedure
          the remaining steps in the installation will 
          happen in this account.
        4. Ftp file 
-         ftp://ftp.postgresql.org/pub/postgresql-v6.5.tar.gz 
-         from the Internet. Store it in your home directory.
+         ftp://ftp.postgresql.org/pub/postgresql-v6.5.tar.-
+         gz 
+         (ftp://ftp.postgresql.org/pub/postgresql-v6.5.tar-
+         .gz) from the Internet. Store it in your home 
+         directory.
        5. Some platforms use flex. If your system uses flex 
          then make sure you have a good version. To check, 
          type 
@@ -479,29 +483,46 @@ Installation Procedure
               configuration. To see them all, type 
                    ./configure --help
                Some of the more commonly used ones are: 
-                     --prefix=BASEDIR   Selects a different base directory for the
-                                        installation of the Postgres configuration.
-                                        The default is /usr/local/pgsql.
+                     --prefix=BASEDIR   Selects a different 
+              base directory for the
+                                        installation of the 
+              Postgres configuration.
+                                        The default is 
+              /usr/local/pgsql.
                      --with-template=TEMPLATE
-                                        Use template file TEMPLATE - the template
-                                        files are assumed to be in the directory
-                                        src/template, so look there for proper values.
-                     --with-tcl         Build interface libraries and programs requiring
-                                        Tcl/Tk, including libpgtcl, pgtclsh, and pgtksh.
-                     --with-perl        Build the Perl interface library.
-                     --with-odbc        Build the ODBC driver package.
-                     --enable-hba       Enables Host Based Authentication (DEFAULT)
-                     --disable-hba      Disables Host Based Authentication
+                                        Use template file 
+              TEMPLATE - the template
+                                        files are assumed 
+              to be in the directory
+                                        src/template, so 
+              look there for proper values.
+                     --with-tcl         Build interface 
+              libraries and programs requiring
+                                        Tcl/Tk, including 
+              libpgtcl, pgtclsh, and pgtksh.
+                     --with-perl        Build the Perl 
+              interface library.
+                     --with-odbc        Build the ODBC 
+              driver package.
+                     --enable-hba       Enables Host Based 
+              Authentication (DEFAULT)
+                     --disable-hba      Disables Host Based 
+              Authentication
                      --enable-locale    Enables USE_LOCALE
-                     --enable-cassert   Enables ASSERT_CHECKING
+                     --enable-cassert   Enables 
+              ASSERT_CHECKING
                      --with-CC=compiler
-                                        Use a specific C compiler that the configure
+                                        Use a specific C 
+              compiler that the configure
                                         script cannot find.
                      --with-CXX=compiler
                      --without-CXX
-                                        Use a specific C++ compiler that the configure
-                                        script cannot find, or exclude C++ compilation
-                                        altogether.   (This only affects libpq++ at
+                                        Use a specific C++ 
+              compiler that the configure
+                                        script cannot find, 
+              or exclude C++ compilation
+                                        altogether.   (This 
+              only affects libpq++ at
                                         present.)
             c. Here is the configure script used on a Sparc 
               Solaris 2.5 system with /opt/postgres 
@@ -703,7 +724,7 @@ Installation Procedure
          o  Edit file rc.local on NetBSD or file rc2.d on 
            SPARC Solaris 2.5.1 to contain the following 
            single line: 
-           su postgres -c "/usr/local/pgsql/bin/postmaster \
+           su postgres -c "/usr/local/pgsql/bin/postmaster 
            -S -D /usr/local/pgsql/data"
          o  In FreeBSD 2.2-RELEASE edit 
            /usr/local/etc/rc.d/pgsql.sh to contain the 
@@ -712,10 +733,10 @@ Installation Procedure
            #!/bin/sh
            [ -x /usr/local/pgsql/bin/postmaster ] && {
                su -l pgsql -c 'exec 
-                 /usr/local/pgsql/bin/postmaster \
-                   -D/usr/local/pgsql/data \
-                   -S -o -F > /usr/local/pgsql/errlog' \
-                 & echo -n ' pgsql'
+           /usr/local/pgsql/bin/postmaster
+                   -D/usr/local/pgsql/data
+                   -S -o -F > /usr/local/pgsql/errlog' &
+               echo -n ' pgsql'
            }
             You may put the line breaks as shown above. The 
            shell is smart enough to keep parsing beyond 
@@ -730,9 +751,9 @@ Installation Procedure
          o  In RedHat Linux edit file /etc/inittab to add the 
            following as a single line: 
            pg:2345:respawn:/bin/su - postgres -c
-               "/usr/local/pgsql/bin/postmaster \
-           -D/usr/local/pgsql/data \
-               >> /usr/local/pgsql/server.log 2>&1 \
+               "/usr/local/pgsql/bin/postmaster 
+           -D/usr/local/pgsql/data
+               >> /usr/local/pgsql/server.log 2>&1 
            </dev/null"
             (The author of this example says this example 
            will revive the postmaster if it dies, but he 
@@ -825,8 +846,10 @@ Installation Procedure
          polygon geometric data types, then you will need 
          to upgrade any columns containing those types. To 
          do so, type (from within psql) 
-         UPDATE FirstTable SET PathCol = UpgradePath(PathCol);
-         UPDATE SecondTable SET PathCol = UpgradePath(PathCol);
+         UPDATE FirstTable SET PathCol = 
+         UpgradePath(PathCol);
+         UPDATE SecondTable SET PathCol = 
+         UpgradePath(PathCol);
          ...
          VACUUM;
           UpgradePath() checks to see that a path value is 
@@ -841,7 +864,8 @@ Installation Procedure
        26.     Clean up after yourself. Type 
          $ rm -rf /usr/src/pgsql_6_5
          $ rm -rf /usr/local/pgsql_6_5
-         # Also delete old database directory tree if it is not in
+         # Also delete old database directory tree if it is 
+         not in
          #  /usr/local/pgsql_6_5/data
          $ rm ~/postgresql-v6.5.tar.gz
        27.     You will probably want to print out the 
@@ -857,7 +881,8 @@ Installation Procedure
          $ alias gshp='gs -sDEVICE=laserjet -r300 
          -dNOPAUSE'
          $ export 
-         GS_LIB=/usr/share/ghostscript:/usr/share/ghostscript/fonts
+         GS_LIB=/usr/share/ghostscript:/usr/share/ghostscr-
+         ipt/fonts
          $ gunzip user.ps.gz
          $ gshp -sOUTPUTFILE=user.hp user.ps
          $ gzip user.ps
@@ -940,12 +965,18 @@ Playing with Postgres
        foo=> \d bar
 
        Table    = bar
-       +--------------+---------------+-------+
-       |    Field     |     Type      | Length|
-       +--------------+---------------+-------+
-       | i            | int4          |     4 |
-       | c            | (bp)char      |    16 |
-       +--------------+---------------+-------+
+       +----------------------------------+-----------------
+       ------------------+-------+
+       |              Field               |              
+       Type                | Length|
+       +----------------------------------+-----------------
+       ------------------+-------+
+       | i                                | int4                             
+       |     4 |
+       | c                                | (bp)char                         
+       |    16 |
+       +----------------------------------+-----------------
+       ------------------+-------+
 
        And so on. You get the idea.
 
@@ -982,36 +1013,52 @@ Parameters for Configuration (configure)
        installers: 
 
        Directory and file names:
-         --prefix=PREFIX         install architecture-independent files in PREFIX
+         --prefix=PREFIX         install 
+       architecture-independent files in PREFIX
                                  [/usr/local/pgsql]
-         --bindir=DIR            user executables in DIR [EPREFIX/bin]
-         --libdir=DIR            object code libraries in DIR [EPREFIX/lib]
-         --includedir=DIR        C header files in DIR [PREFIX/include]
-         --mandir=DIR            man documentation in DIR [PREFIX/man]
+         --bindir=DIR            user executables in DIR 
+       [EPREFIX/bin]
+         --libdir=DIR            object code libraries in 
+       DIR [EPREFIX/lib]
+         --includedir=DIR        C header files in DIR 
+       [PREFIX/include]
+         --mandir=DIR            man documentation in DIR 
+       [PREFIX/man]
        Features and packages:
-         --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+         --disable-FEATURE       do not include FEATURE 
+       (same as --enable-FEATURE=no)
          --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
          --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
-         --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+         --without-PACKAGE       do not use PACKAGE (same as 
+       --with-PACKAGE=no)
        --enable and --with options recognized:
          --with-template=template
-                                 use operating system template file
+                                 use operating system 
+       template file
                                      see template directory
-         --with-includes=incdir  site header files for tk/tcl, etc in DIR
-         --with-libs=incdir      also search for libraries in DIR
-         --with-libraries=libdir also search for libraries in DIR
+         --with-includes=incdir  site header files for 
+       tk/tcl, etc in DIR
+         --with-libs=incdir      also search for libraries 
+       in DIR
+         --with-libraries=libdir also search for libraries 
+       in DIR
          --enable-locale         enable locale support
-         --enable-recode         enable cyrillic recode support
+         --enable-recode         enable cyrillic recode 
+       support
          --with-mb=encoding    enable multi-byte support
          --with-pgport=portnum change default startup port
          --with-maxbackends=n  set default maximum number of 
        server processes 
-         --with-tcl              build Tcl interfaces and pgtclsh
-         --with-tclconfig=tcldir tclConfig.sh and tkConfig.sh are in DIR
+         --with-tcl              build Tcl interfaces and 
+       pgtclsh
+         --with-tclconfig=tcldir tclConfig.sh and 
+       tkConfig.sh are in DIR
          --with-perl             build Perl interface
          --with-odbc             build ODBC driver package
-         --with-odbcinst=odbcdir change default directory for odbcinst.ini
-         --enable-cassert        enable assertion checks (debugging)
+         --with-odbcinst=odbcdir change default directory 
+       for odbcinst.ini
+         --enable-cassert        enable assertion checks 
+       (debugging)
          --with-CC=compiler      use specific C compiler
          --with-CXX=compiler     use specific C++ compiler
          --without-CXX           prevent building C++ code 
@@ -1101,11 +1148,15 @@ Parameters for Building (make)
 
        POSTGRESDIR= /opt/postgres/current
        CFLAGS+= -m486 # -g -O0
+       USE_TCL= true
+       TCL_LIB= -ltcl
+       X_LIBS= -L/usr/X11/lib
+       TK_LIB= -ltk
 
        # documentation
 
-       HSTYLE= /home/lockhart/SGML/db118.d/docbook/html
-       PSTYLE= /home/lockhart/SGML/db118.d/docbook/print
+       HSTYLE= /home/tgl/SGML/db118.d/docbook/html
+       PSTYLE= /home/tgl/SGML/db118.d/docbook/print
           
 
         
@@ -1270,12 +1321,10 @@ Operation
         
 
        Table 4-1. Kerberos Parameter Examples
-        Parameter                     Example 
-        user                          frew@S2K.ORG 
-        user                          aoki/HOST=miyu.S2K.Berkel-
-                                     ey.EDU@S2K.ORG 
-        host                          postgres_dbms/ucbvax@S2K.-
-                                     ORG 
+        Parameter   Example 
+        user        frew@S2K.ORG 
+        user        aoki/HOST=miyu.S2K.Berkeley.EDU@S2K.ORG 
+        host        postgres_dbms/ucbvax@S2K.ORG 
 
 
         
@@ -1339,19 +1388,6 @@ Release 6.5
           Most interfaces have new versions, and existing 
          functionality has been improved. 
         
-        Documentation
-          New and updated material is present throughout the
-         documentation. New FAQs have been contributed for SGI
-         and AIX platforms. The Tutorial has introductory
-         information on SQL from Stefan Simkovics. For the User's
-         Guide, there are reference pages covering the postmaster
-         and more utility programs, and a new appendix contains
-         details on date/time behavior. The Administrator's Guide
-         has a new chapter on troubleshooting from Tom Lane. And
-         the Programmer's Guide has a description of query
-         processing, also from Stefan, and details on obtaining
-         the Postgres source tree via anonymous CVS and CVSup.
-
 
 Migration to v6.5
 
