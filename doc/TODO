@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 17 21:49:18 EST 2003
+Last updated:		Mon Feb 17 22:47:31 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -74,6 +74,7 @@ Data Types
 * Have sequence dependency track use of DEFAULT sequences, seqname.nextval
 * Disallow changing default expression of a SERIAL column
 * Allow infinite dates just like infinite timestamps
+* Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
 
 
 * CONVERSION
