@@ -14,7 +14,7 @@ Installation
 ------------
 
 The current build process will only work if the files are in
-contrib/xml2 in a PostgreSQL 7.3 or 7.4 source tree which has been
+contrib/xml2 in a PostgreSQL 7.3 or later source tree which has been
 configured and built (If you alter the subdir value in the Makefile
 you can place it in a different directory in a PostgreSQL tree).
 
