@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.1.1.1 1996/07/09 06:22:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.2 1996/11/03 06:54:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,9 @@
 # include	"postgres.h"
 # include	"utils/hsearch.h"
 #ifndef FRONTEND
-# include	"nodes/memnodes.h"
 # include	"utils/mcxt.h"
 #endif /* !FRONTEND */
 # include	"utils/palloc.h"
-# include	"utils/elog.h"
 
 /*
  * Fast arithmetic, relying on powers of 2,

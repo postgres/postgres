@@ -11,12 +11,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.1.1.1 1996/07/09 06:22:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.2 1996/11/03 06:52:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
+#include "postgres.h"
 #include "tioga/tgRecipe.h"
 
 #include "catalog/catalog.h" /*for newoid() */

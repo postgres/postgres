@@ -7,12 +7,10 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.2 1996/08/27 07:32:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.3 1996/11/03 06:53:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-#include "config.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -21,7 +19,8 @@
 #endif /* WIN32 */
 
 #include <sys/param.h>
-#include "utils/elog.h"
+
+#include "postgres.h"
 #include "utils/palloc.h"
 #include "utils/builtins.h"	/* where function declarations go */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.1.1.1 1996/07/09 06:21:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqsignal.c,v 1.2 1996/11/03 06:52:14 scrappy Exp $
  *
  * NOTES
  *	This shouldn't be in libpq, but the monitor and some other
@@ -16,6 +16,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include "libpq/pqsignal.h"
 
 pqsigfunc

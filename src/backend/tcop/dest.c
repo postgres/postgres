@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.2 1996/11/03 06:52:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,6 @@
 #include "libpq/libpq-be.h"
 #include "access/printtup.h"
 #include "utils/portal.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 #include "executor/executor.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.1.1.1 1996/07/09 06:22:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.2 1996/11/03 06:54:38 scrappy Exp $
  *
  * NOTES
  *	Sorts the first relation into the second relation.  The sort may
@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "c.h"
+#include "postgres.h"
 
 #include "executor/execdebug.h"
 #include "access/heapam.h"
@@ -34,7 +34,6 @@
 #include "storage/buf.h"
 #include "storage/bufmgr.h"	/* for BLCKSZ */
 #include "utils/portal.h"	/* for {Start,End}PortalAllocMode */
-#include "utils/elog.h"
 #include "utils/rel.h"
 
 #include "utils/psort.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.1.1.1 1996/07/09 06:22:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.2 1996/11/03 06:54:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,12 +76,11 @@
 #include <stdio.h>		/* for sprintf() */
 #include <string.h>	/* for strlen, strncpy */
 
-#include "c.h"
+#include "postgres.h"
 
 #include "lib/hasht.h"
 #include "utils/module.h"
 #include "utils/excid.h"	/* for Unimplemented */
-#include "utils/elog.h"
 #include "utils/mcxt.h"
 #include "utils/hsearch.h"
 

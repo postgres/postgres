@@ -7,11 +7,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.1.1.1 1996/07/09 06:22:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.2 1996/11/03 06:53:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
+#include "postgres.h"
 #include "utils/palloc.h"
 #include "utils/builtins.h"		/* where function declarations go */
 

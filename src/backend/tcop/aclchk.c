@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.2 1996/10/31 05:55:24 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.3 1996/11/03 06:52:29 scrappy Exp $
  *
  * NOTES
  *    See acl.h.
@@ -15,12 +15,13 @@
  *-------------------------------------------------------------------------
  */
 #include <string.h>
+#include "postgres.h"
+
 #include "utils/acl.h"		/* where declarations for this file goes */
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tupmacs.h"
 #include "utils/builtins.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "catalog/indexing.h"
 #include "catalog/catalog.h"

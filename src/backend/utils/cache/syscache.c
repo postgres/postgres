@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.2 1996/08/15 07:42:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.3 1996/11/03 06:53:19 scrappy Exp $
  *
  * NOTES
  *    These routines allow the parser/planner/executor to perform
@@ -17,13 +17,12 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
+#include "postgres.h"
  
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "catalog/catname.h"
 #include "utils/catcache.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "nodes/pg_list.h"
  

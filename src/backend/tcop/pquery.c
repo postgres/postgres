@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.2 1996/07/30 07:41:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.3 1996/11/03 06:52:35 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,8 +15,8 @@
 
 #include "tcop/tcopdebug.h"
 
-#include "utils/elog.h"
 #include "utils/palloc.h"
+#include "nodes/nodes.h"
 #include "utils/mcxt.h"
 #include "miscadmin.h"
 #include "utils/portal.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-ops.c,v 1.2 1996/07/22 21:56:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/geo-ops.c,v 1.3 1996/11/03 06:53:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,9 @@
 #include <stdio.h>	/* for sprintf proto, etc. */
 #include <string.h>
 
+#include "postgres.h"
+
 #include "utils/geo-decls.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 #define LDELIM		'('

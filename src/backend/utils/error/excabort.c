@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.1.1.1 1996/07/09 06:22:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excabort.c,v 1.2 1996/11/03 06:53:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "postgres.h"
+
 #include "utils/exc.h"		/* where function declarations go */
 
 void

@@ -7,11 +7,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.2 1996/11/03 06:53:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
+#include "postgres.h"
 #include "access/htup.h"
 #include "utils/catcache.h"
 #include "utils/syscache.h"
@@ -22,7 +22,6 @@
 #include "parser/parsetree.h"		/* for getrelname() */
 #include "utils/builtins.h"
 #include "utils/fcache.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "nodes/primnodes.h"
 #include "nodes/execnodes.h"

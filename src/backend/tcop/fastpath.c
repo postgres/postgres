@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.2 1996/11/03 06:52:32 scrappy Exp $
  *
  * NOTES
  *    This cruft is the server side of PQfn.
@@ -63,7 +63,6 @@
 
 #include "utils/palloc.h"
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "utils/builtins.h"	/* for oideq */
 #include "tcop/fastpath.h"
 #include "libpq/libpq.h"

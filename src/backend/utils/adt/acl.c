@@ -7,23 +7,19 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.2 1996/08/27 07:32:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.3 1996/11/03 06:53:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-#include "config.h"
-
 #include <ctype.h>
 #include <string.h>
 #include "postgres.h"
-#include "c.h"
 #include "utils/acl.h"
 #include "access/htup.h"
 #include "catalog/pg_user.h"
 #include "utils/syscache.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
+#include "miscadmin.h"
 
 static char *getid(char *s, char *n);
 static int32 aclitemeq(AclItem *a1, AclItem *a2);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.4 1996/11/02 02:03:13 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.5 1996/11/03 06:52:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,6 @@
 
 #include "nodes/parsenodes.h"
 #include "parse.h"
-#include "utils/elog.h"
 #include "utils/builtins.h"
 #include "utils/acl.h"
 #include "utils/palloc.h"

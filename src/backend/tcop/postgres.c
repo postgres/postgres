@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.12 1996/10/31 10:20:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.13 1996/11/03 06:52:33 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -65,7 +65,6 @@
 
 #include "storage/bufmgr.h"
 #include "fmgr.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/rel.h"
 
@@ -1265,7 +1264,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.12 $ $Date: 1996/10/31 10:20:56 $");
+	puts("$Revision: 1.13 $ $Date: 1996/11/03 06:52:33 $");
     }
     
     /* ----------------

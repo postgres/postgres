@@ -4,16 +4,14 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.2 1996/10/31 05:55:23 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.3 1996/11/03 06:52:27 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. \
-              -I../port/$(PORTNAME) \
-              -I../include \
+INCLUDE_OPT = -I../port/$(PORTNAME) \
               -I../../include
 
 CFLAGS+=$(INCLUDE_OPT)
