@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.54 2001/11/05 17:46:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.54.2.1 2002/05/14 02:08:22 ishii Exp $
  */
 #include "postgres_fe.h"
 
@@ -361,6 +361,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		{"expanded", no_argument, NULL, 'x'},
 		{"no-psqlrc", no_argument, NULL, 'X'},
 		{"help", no_argument, NULL, '?'},
+		{NULL, 0, NULL, 0}
 	};
 
 	int			optindex;

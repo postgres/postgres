@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241 2002/02/11 00:18:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241.2.1 2002/05/14 02:08:22 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,7 +701,8 @@ main(int argc, char **argv)
 		 * the following options don't have an equivalent short option
 		 * letter, but are available as '-X long-name'
 		 */
-		{"use-set-session-authorization", no_argument, &use_setsessauth, 1}
+		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+		{NULL, 0, NULL, 0}
 	};
 	int			optindex;
 #endif
