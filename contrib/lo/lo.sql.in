@@ -1,0 +1,59 @@
+--
+--	PostgreSQL code for LargeObjects
+--
+--	$Id: lo.sql.in,v 1.1 1998/06/16 07:07:11 momjian Exp $
+--
+
+load '_OBJWD_/lo_DLSUFFIX_';
+
+--
+--	Create the data type
+--
+
+-- used by the lo type, it takes an oid and returns an lo object
+create function lo_in(opaque)
+	returns opaque
+	as '_OBJWD_/lo_DLSUFFIX_'
+	language 'c';
+
+-- used by the lo type, it returns the oid of the object
+create function lo_out(opaque)
+	returns opaque
+	as '_OBJWD_/lo_DLSUFFIX_'
+	language 'c';
+
+-- finally the type itself
+create type lo (
+	internallength = 4,
+	externallength = variable,
+	input = lo_in,
+	output = lo_out
+);
+
+-- this returns the oid associated with a lo object
+create function lo_oid(lo)
+	returns oid
+	as '_OBJWD_/lo_DLSUFFIX_'
+	language 'c';
+
+-- this allows us to convert an oid to a managed lo object
+-- ie: insert into test values (lo_import('/fullpath/file')::lo);
+create function lo(oid)
+	returns lo
+	as '_OBJWD_/lo_DLSUFFIX_'
+	language 'c';
+
+-- This is used in triggers
+create function lo_manage()
+	returns opaque
+	as '_OBJWD_/lo_DLSUFFIX_'
+	language 'c';
+
+-- This allows us to map lo to oid
+--
+-- eg:
+--    create table a (image lo);
+--    select image::oid from a;
+--
+create function oid(lo) returns oid as 'select lo_oid($1)' language 'sql';
+
