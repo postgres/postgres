@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.155 2002/03/06 20:34:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.156 2002/03/07 16:35:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -512,12 +512,8 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 			   (char *) attp,
 			   ATTRIBUTE_TUPLE_SIZE);
 
-
-
-		/*
-		 * Update constraint/default info
-		 */
-       if (attp->attnotnull)
+		/* Update constraint/default info */
+		if (attp->attnotnull)
 			constr->has_not_null = true;
 
 		if (attp->atthasdef)

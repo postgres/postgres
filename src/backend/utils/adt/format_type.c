@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.25 2002/03/06 20:34:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.26 2002/03/07 16:35:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,6 @@ format_type_internal(Oid type_oid, int32 typemod,
 	bool		is_array;
 	char	   *name;
 	char	   *buf;
-	char		typtype;
 
 	if (type_oid == InvalidOid && allow_invalid)
 		return pstrdup("-");
@@ -145,31 +144,6 @@ format_type_internal(Oid type_oid, int32 typemod,
 
 	array_base_type = ((Form_pg_type) GETSTRUCT(tuple))->typelem;
 	typlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
-	typtype = ((Form_pg_type) GETSTRUCT(tuple))->typtype;
-
-	/*
-	 * Domains look alot like arrays, so lets process them first, and return
-	 * back to avoid the array and 'standard' formatting procedures that are
-	 * use for base types.
-	 */
-	if (typtype == 'd') {
-		name = NameStr(((Form_pg_type) GETSTRUCT(tuple))->typname);
-
-		/*
-		 * Double-quote the name if it's not a standard identifier.
-		 * Note this is *necessary* for ruleutils.c's use.
-		 */
-		if (strspn(name, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(name)
-			|| isdigit((unsigned char) name[0]))
-				buf = psnprintf(strlen(name) + 3, "\"%s\"", name);
-		else
-			buf = pstrdup(name);
-
-		ReleaseSysCache(tuple);
-
-		return buf;
-	}
-
 	if (array_base_type != InvalidOid && typlen < 0)
 	{
 		/* Switch our attention to the array element type */

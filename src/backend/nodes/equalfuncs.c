@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.114 2002/03/06 20:34:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.115 2002/03/07 16:35:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1096,17 +1096,6 @@ _equalLoadStmt(LoadStmt *a, LoadStmt *b)
 }
 
 static bool
-_equalCreateDomainStmt(CreateDomainStmt *a, CreateDomainStmt *b)
-{
-	if (!equalstr(a->domainname, b->domainname))
-		return false;
-	if (!equal(a->typename, b->typename))
-		return false;
-
-	return true;
-}
-
-static bool
 _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 {
 	if (!equalstr(a->dbname, b->dbname))
@@ -2021,9 +2010,6 @@ equal(void *a, void *b)
 			break;
 		case T_LoadStmt:
 			retval = _equalLoadStmt(a, b);
-			break;
-		case T_CreateDomainStmt:
-			retval = _equalCreateDomainStmt(a, b);
 			break;
 		case T_CreatedbStmt:
 			retval = _equalCreatedbStmt(a, b);

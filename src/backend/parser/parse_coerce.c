@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.65 2002/03/06 20:34:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.66 2002/03/07 16:35:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			Oid targetTypeId, int32 atttypmod)
 {
 	Node	   *result;
-
 
 	if (targetTypeId == inputTypeId ||
 		targetTypeId == InvalidOid ||
@@ -606,32 +605,3 @@ PreferredType(CATEGORY category, Oid type)
 	}
 	return result;
 }	/* PreferredType() */
-
-
-/*
- * If the targetTypeId is a domain, we really want to coerce
- * the tuple to the domain type -- not the domain itself
- */
-Oid
-getBaseType(Oid inType)
-{
-	HeapTuple	tup;
-	Form_pg_type typTup;
-
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(inType),
-						 0, 0, 0);
-
-	typTup = ((Form_pg_type) GETSTRUCT(tup));
-
-	/*
-	 * Assume that typbasetype exists and is a base type, where inType
-	 * was a domain
-	 */
-	if (typTup->typtype == 'd')
-		inType = typTup->typbasetype;
-
-	ReleaseSysCache(tup);
-
-	return inType;
-}

@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.32 2002/03/06 20:34:43 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.33 2002/03/07 16:35:32 momjian Exp $
  -->
 
 <chapter id="catalogs">
@@ -2507,53 +2507,6 @@
        Note that 'm' fields can also be moved out to secondary
        storage, but only as a last resort ('e' and 'x' fields are
        moved first).
-      </para></entry>
-     </row>
-
-     <row>
-      <entry>typbasetype</entry>
-      <entry><type>oid</type></entry>
-      <entry></entry>
-      <entry><para>
-       <structfield>typbasetype</structfield> is the type that this one is based
-       off of.  Normally references the domains parent type, and is 0 otherwise.
-      </para></entry>
-     </row>
-
-	 <row>
-	  <entry>typnotnull</entry>
-	  <entry><type>boolean</type></entry>
-	  <entry></entry>
-	  <entry><para>
-	   <structfield>typnotnull</structfield> represents a NOT NULL
-	   constraint on a type.  Normally used only for domains.
-	  </para></entry>
-	 </row>
-
-     <row>
-      <entry>typmod</entry>
-      <entry><type>integer</type></entry>
-      <entry></entry>
-      <entry><para>
-       <structfield>typmod</structfield> records type-specific data
-       supplied at table creation time (for example, the maximum
-       length of a <type>varchar</type> column).  It is passed to
-       type-specific input and output functions as the third
-       argument. The value will generally be -1 for types that do not
-       need typmod.  This data is copied to
-       <structfield>pg_attribute.atttypmod</structfield> on creation
-       of a table using a domain as it's field type.
-       </para></entry>
-     </row>
-
-     <row>
-      <entry>typdefaultbin</entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry><para>
-       <structfield>typdefaultbin</structfield> is NULL for types without a
-       default value.  If it's not NULL, it contains the internal string
-       representation of the default expression node.
       </para></entry>
      </row>
 

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.47 2002/03/06 20:34:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.48 2002/03/07 16:35:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,6 +355,7 @@ build_column_default(Relation rel, int attrno)
 	Form_pg_attribute att_tup = rd_att->attrs[attrno - 1];
 	Oid			atttype = att_tup->atttypid;
 	int32		atttypmod = att_tup->atttypmod;
+	bool		hasdefault;
 	Datum		typedefault;
 	int16		typlen;
 	bool		typbyval;
@@ -391,7 +392,7 @@ build_column_default(Relation rel, int attrno)
 				if (type_id != atttype)
 				{
 					expr = CoerceTargetExpr(NULL, expr, type_id,
-											getBaseType(atttype), atttypmod);
+											atttype, atttypmod);
 
 					/*
 					 * This really shouldn't fail; should have checked the
@@ -429,53 +430,41 @@ build_column_default(Relation rel, int attrno)
 		 * element type is, and the element type's default is irrelevant
 		 * too.
 		 */
+		hasdefault = false;
+		typedefault = (Datum) 0;
 		typlen = sizeof(Oid);
 		typbyval = true;
-
-		expr = (Node *) makeConst(atttype,
-								  typlen,
-								  (Datum) 0,
-								  true,
-								  typbyval,
-								  false,           /* not a set */
-								  false);
 	}
 	else
 	{
 #ifdef	_DROP_COLUMN_HACK__
 		if (COLUMN_IS_DROPPED(att_tup))
 		{
-
-			expr = (Node *) makeConst(atttype,
-									  typlen,
-									  (Datum) 0,
-									  true,
-									  typbyval,
-									  false,           /* not a set */
-									  false);
+			hasdefault = false;
+			typedefault = (Datum) 0;
 		}
 		else
 #endif   /* _DROP_COLUMN_HACK__ */
-			expr = get_typdefault(atttype, atttypmod);
+			hasdefault = get_typdefault(atttype, &typedefault);
 
-		if (expr == NULL) {
-				expr = (Node *) makeConst(atttype,
-										  typlen,
-										  (Datum) 0,
-										  true,
-										  typbyval,
-										  false,		/* not a set */
-										  false);
-		}
 		get_typlenbyval(atttype, &typlen, &typbyval);
 	}
 
+	expr = (Node *) makeConst(atttype,
+							  typlen,
+							  typedefault,
+							  !hasdefault,
+							  typbyval,
+							  false,	/* not a set */
+							  false);
+
 	/*
 	 * If the column is a fixed-length type, it may need a length coercion
-	 * as well as a type coercion, as well as direction to the final type.
+	 * as well as a type coercion.	But NULLs don't need that.
 	 */
-	expr = coerce_type_typmod(NULL, expr,
-							  atttype, atttypmod);
+	if (hasdefault)
+		expr = coerce_type_typmod(NULL, expr,
+								  atttype, atttypmod);
 
 	return expr;
 }
