@@ -65,6 +65,7 @@
 
 /* for ntohl/htonl */
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #define _PASSWORD_EFMT1 '_'
 

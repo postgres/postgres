@@ -2,16 +2,12 @@
  * Header file for pg_autovacuum.c
  * (c) 2003 Matthew T. O'Connor
  */
+#include "postgres_fe.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-
-/* Includes that I added */
-#include <string.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <sys/time.h>
-#include "../../interfaces/libpq/libpq-fe.h"
+
+#include "libpq-fe.h"
 #include "lib/dllist.h"
 
 #define AUTOVACUUM_DEBUG    1
