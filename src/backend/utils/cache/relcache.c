@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.25 1997/09/18 20:22:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.26 1997/10/25 05:38:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -763,7 +763,7 @@ RelationBuildRuleLock(Relation relation)
 
 		ruleaction =
 			heap_getattr(pg_rewrite_tuple, InvalidBuffer,
-						 Anum_pg_rewrite_action, pg_rewrite_tupdesc,
+						 Anum_pg_rewrite_ev_action, pg_rewrite_tupdesc,
 						 &isnull);
 		rule_evqual_string =
 			heap_getattr(pg_rewrite_tuple, InvalidBuffer,

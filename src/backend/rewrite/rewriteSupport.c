@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.10 1997/09/12 04:08:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.11 1997/10/25 05:35:55 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ RuleIdGetActionInfo(Oid ruleoid, bool *instead_flag, Query **parseTrees)
 
 	ruleaction = (char *)heap_getattr(ruletuple,
 									  InvalidBuffer,
-									  Anum_pg_rewrite_action,
+									  Anum_pg_rewrite_ev_action,
 									  ruleTupdesc,
 									  &action_is_null);
 	rule_evqual_string = (char *)heap_getattr(ruletuple, InvalidBuffer,
