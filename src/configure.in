@@ -9,7 +9,7 @@ case "$host_os" in
         esac ;;
    linux*) PORTNAME='linux' ;;
     bsdi*) PORTNAME='bsdi' ;;
- freebsd*) PORTNAME='BSD44_derived' ;;
+ freebsd*|netbsd*) PORTNAME='BSD44_derived' ;;
     dgux*) PORTNAME='dgux';;
      aix*) PORTNAME='aix';;
 nextstep*) PORTNAME='nextstep';;
