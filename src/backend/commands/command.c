@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.18 1997/09/20 16:14:05 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.19 1997/09/29 05:56:10 vadim Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -99,7 +99,7 @@ PerformPortalFetch(char *name,
 {
 	Portal		portal;
 	int			feature;
-	QueryDesc  *queryDesc;
+	QueryDesc	queryDesc;
 	MemoryContext context;
 
 	/* ----------------
@@ -147,9 +147,11 @@ PerformPortalFetch(char *name,
 	 *	tell the destination to prepare to recieve some tuples
 	 * ----------------
 	 */
-	queryDesc = PortalGetQueryDesc(portal);
+	memcpy (&queryDesc, PortalGetQueryDesc(portal), sizeof (queryDesc));
+	queryDesc.dest = dest;
+	
 	BeginCommand(name,
-				 queryDesc->operation,
+				 queryDesc.operation,
 				 portal->attinfo,		/* QueryDescGetTypeInfo(queryDesc),
 										 * */
 				 false,			/* portal fetches don't end up in
@@ -166,7 +168,7 @@ PerformPortalFetch(char *name,
 	PortalExecutorHeapMemory = (MemoryContext)
 		PortalGetHeapMemory(portal);
 
-	ExecutorRun(queryDesc, PortalGetState(portal), feature, count);
+	ExecutorRun(&queryDesc, PortalGetState(portal), feature, count);
 
 	/* ----------------
 	 * Note: the "end-of-command" tag is returned by higher-level

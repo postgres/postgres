@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.52 1997/09/26 15:09:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.53 1997/09/29 05:58:12 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -107,7 +107,7 @@ static char *FlattenStringList(List *list);
 		AddAttrStmt, ClosePortalStmt,
 		CopyStmt, CreateStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
-		IndexStmt, MoveStmt, ListenStmt, OptimizableStmt,
+		IndexStmt, ListenStmt, OptimizableStmt,
 		ProcedureStmt, PurgeStmt,
 		RecipeStmt, RemoveAggrStmt, RemoveOperStmt, RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
@@ -162,7 +162,7 @@ static char *FlattenStringList(List *list);
 %type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation,
 		def_type, opt_direction, remove_type, opt_column, event
 
-%type <ival>	OptLocation, opt_move_where, fetch_how_many
+%type <ival>	OptLocation, fetch_how_many
 
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
@@ -299,7 +299,6 @@ stmt :	  AddAttrStmt
 		| FetchStmt
 		| GrantStmt
 		| IndexStmt
-		| MoveStmt
 		| ListenStmt
 		| ProcedureStmt
 		| PurgeStmt
@@ -995,7 +994,7 @@ DestroyStmt:	DROP TABLE relation_name_list
 /*****************************************************************************
  *
  *		QUERY:
- *				fetch [forward | backward] [number | all ] [ in <portalname> ]
+ *			fetch/move [forward | backward] [number | all ] [ in <portalname> ]
  *
  *****************************************************************************/
 
@@ -1005,6 +1004,16 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
 					n->direction = $2;
 					n->howMany = $3;
 					n->portalname = $4;
+					n->ismove = false;
+					$$ = (Node *)n;
+				}
+		|	MOVE opt_direction fetch_how_many opt_portal_name
+				{
+					FetchStmt *n = makeNode(FetchStmt);
+					n->direction = $2;
+					n->howMany = $3;
+					n->portalname = $4;
+					n->ismove = true;
 					$$ = (Node *)n;
 				}
 		;
@@ -1019,6 +1028,10 @@ fetch_how_many:  Iconst
 				 if ($1 <= 0) elog(WARN,"Please specify nonnegative count for fetch",NULL); }
 		|  ALL							{ $$ = 0; /* 0 means fetch all tuples*/}
 		|  /*EMPTY*/					{ $$ = 1; /*default*/ }
+		;
+
+opt_portal_name: IN name				{ $$ = $2;}
+		| /*EMPTY*/						{ $$ = NULL; }
 		;
 
 /*****************************************************************************
@@ -1118,42 +1131,6 @@ RevokeStmt: REVOKE privileges ON relation_name_list FROM grantee
 					free($6);
 				}
 		;
-
-/*****************************************************************************
- *
- *		QUERY:
- *				move [<dirn>] [<whereto>] [<portalname>]
- *
- *****************************************************************************/
-
-MoveStmt:  MOVE opt_direction opt_move_where opt_portal_name
-				{
-					MoveStmt *n = makeNode(MoveStmt);
-					n->direction = $2;
-					n->to = FALSE;
-					n->where = $3;
-					n->portalname = $4;
-					$$ = (Node *)n;
-				}
-		|  MOVE opt_direction TO Iconst opt_portal_name
-				{
-					MoveStmt *n = makeNode(MoveStmt);
-					n->direction = $2;
-					n->to = TRUE;
-					n->where = $4;
-					n->portalname = $5;
-					$$ = (Node *)n;
-				}
-		;
-
-opt_move_where: Iconst					{ $$ = $1; }
-		| /*EMPTY*/						{ $$ = 1; /* default */ }
-		;
-
-opt_portal_name: IN name				{ $$ = $2;}
-		| /*EMPTY*/						{ $$ = NULL; }
-		;
-
 
 /*****************************************************************************
  *
