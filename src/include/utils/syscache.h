@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.41 2002/03/29 19:06:26 tgl Exp $
+ * $Id: syscache.h,v 1.42 2002/04/06 06:59:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,5 +78,10 @@ extern Oid GetSysCacheOid(int cacheId,
 
 extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber, bool *isNull);
+
+/* list-search interface.  Users of this must import catcache.h too */
+extern struct catclist *SearchSysCacheList(int cacheId, int nkeys,
+			   Datum key1, Datum key2, Datum key3, Datum key4);
+#define ReleaseSysCacheList(x)  ReleaseCatCacheList(x)
 
 #endif   /* SYSCACHE_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.73 2002/04/05 00:31:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.74 2002/04/06 06:59:23 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -625,4 +625,19 @@ SysCacheGetAttr(int cacheId, HeapTuple tup,
 	return heap_getattr(tup, attributeNumber,
 						SysCache[cacheId]->cc_tupdesc,
 						isNull);
+}
+
+/*
+ * List-search interface
+ */
+struct catclist *
+SearchSysCacheList(int cacheId, int nkeys,
+				   Datum key1, Datum key2, Datum key3, Datum key4)
+{
+	if (cacheId < 0 || cacheId >= SysCacheSize ||
+		! PointerIsValid(SysCache[cacheId]))
+		elog(ERROR, "SearchSysCacheList: Bad cache id %d", cacheId);
+
+	return SearchCatCacheList(SysCache[cacheId], nkeys,
+							  key1, key2, key3, key4);
 }

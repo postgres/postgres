@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.123 2002/04/05 00:31:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.124 2002/04/06 06:59:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
@@ -40,7 +41,6 @@ static Node *ParseComplexProjection(ParseState *pstate,
 static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
-static CandidateList func_get_candidates(char *funcname, int nargs);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static void make_arguments(ParseState *pstate,
 			   int nargs,
@@ -48,14 +48,15 @@ static void make_arguments(ParseState *pstate,
 			   Oid *input_typeids,
 			   Oid *function_typeids);
 static int match_argtypes(int nargs,
-			   Oid *input_typeids,
-			   CandidateList function_typeids,
-			   CandidateList *candidates);
+						  Oid *input_typeids,
+						  FuncCandidateList function_typeids,
+						  FuncCandidateList *candidates);
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
-static Oid *func_select_candidate(int nargs, Oid *input_typeids,
-					  CandidateList candidates);
-static int	agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidates);
-static Oid	agg_select_candidate(Oid typeid, CandidateList candidates);
+static FuncCandidateList func_select_candidate(int nargs, Oid *input_typeids,
+								  FuncCandidateList candidates);
+static int	agg_get_candidates(char *aggname, Oid typeId,
+							   FuncCandidateList *candidates);
+static Oid	agg_select_candidate(Oid typeid, FuncCandidateList candidates);
 
 
 /*
@@ -170,7 +171,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	{
 		Oid			basetype = exprType(lfirst(fargs));
 		int			ncandidates;
-		CandidateList candidates;
+		FuncCandidateList candidates;
 
 		/* try for exact match first... */
 		if (SearchSysCacheExists(AGGNAME,
@@ -374,7 +375,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 static int
 agg_get_candidates(char *aggname,
 				   Oid typeId,
-				   CandidateList *candidates)
+				   FuncCandidateList *candidates)
 {
 	Relation	pg_aggregate_desc;
 	SysScanDesc	pg_aggregate_scan;
@@ -398,11 +399,10 @@ agg_get_candidates(char *aggname,
 	while (HeapTupleIsValid(tup = systable_getnext(pg_aggregate_scan)))
 	{
 		Form_pg_aggregate agg = (Form_pg_aggregate) GETSTRUCT(tup);
-		CandidateList current_candidate;
+		FuncCandidateList current_candidate;
 
-		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-		current_candidate->args = (Oid *) palloc(sizeof(Oid));
-
+		current_candidate = (FuncCandidateList)
+			palloc(sizeof(struct _FuncCandidateList));
 		current_candidate->args[0] = agg->aggbasetype;
 		current_candidate->next = *candidates;
 		*candidates = current_candidate;
@@ -422,10 +422,10 @@ agg_get_candidates(char *aggname,
  * if successful, else InvalidOid.
  */
 static Oid
-agg_select_candidate(Oid typeid, CandidateList candidates)
+agg_select_candidate(Oid typeid, FuncCandidateList candidates)
 {
-	CandidateList current_candidate;
-	CandidateList last_candidate;
+	FuncCandidateList current_candidate;
+	FuncCandidateList last_candidate;
 	Oid			current_typeid;
 	int			ncandidates;
 	CATEGORY	category,
@@ -498,91 +498,37 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 }	/* agg_select_candidate() */
 
 
-/* func_get_candidates()
- * get a list of all argument type vectors for which a function named
- * funcname taking nargs arguments exists
- */
-static CandidateList
-func_get_candidates(char *funcname, int nargs)
-{
-	Relation	heapRelation;
-	ScanKeyData skey[2];
-	HeapTuple	tuple;
-	SysScanDesc	funcscan;
-	CandidateList candidates = NULL;
-	int			i;
-
-	heapRelation = heap_openr(ProcedureRelationName, AccessShareLock);
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) Anum_pg_proc_proname,
-						   (RegProcedure) F_NAMEEQ,
-						   PointerGetDatum(funcname));
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) Anum_pg_proc_pronargs,
-						   (RegProcedure) F_INT2EQ,
-						   Int16GetDatum(nargs));
-
-	funcscan = systable_beginscan(heapRelation, ProcedureNameNspIndex, true,
-								  SnapshotNow, 2, skey);
-
-	while (HeapTupleIsValid(tuple = systable_getnext(funcscan)))
-	{
-		Form_pg_proc pgProcP = (Form_pg_proc) GETSTRUCT(tuple);
-		CandidateList current_candidate;
-
-		current_candidate = (CandidateList)
-			palloc(sizeof(struct _CandidateList));
-		current_candidate->args = (Oid *)
-			palloc(FUNC_MAX_ARGS * sizeof(Oid));
-		MemSet(current_candidate->args, 0, FUNC_MAX_ARGS * sizeof(Oid));
-		for (i = 0; i < nargs; i++)
-			current_candidate->args[i] = pgProcP->proargtypes[i];
-
-		current_candidate->next = candidates;
-		candidates = current_candidate;
-	}
-
-	systable_endscan(funcscan);
-	heap_close(heapRelation, AccessShareLock);
-
-	return candidates;
-}
-
-
 /* match_argtypes()
+ *
  * Given a list of possible typeid arrays to a function and an array of
  * input typeids, produce a shortlist of those function typeid arrays
  * that match the input typeids (either exactly or by coercion), and
- * return the number of such arrays
+ * return the number of such arrays.
+ *
+ * NB: okay to modify input list structure, as long as we find at least
+ * one match.
  */
 static int
 match_argtypes(int nargs,
 			   Oid *input_typeids,
-			   CandidateList function_typeids,
-			   CandidateList *candidates)		/* return value */
+			   FuncCandidateList function_typeids,
+			   FuncCandidateList *candidates) /* return value */
 {
-	CandidateList current_candidate;
-	CandidateList matching_candidate;
-	Oid		   *current_typeids;
+	FuncCandidateList current_candidate;
+	FuncCandidateList next_candidate;
 	int			ncandidates = 0;
 
 	*candidates = NULL;
 
 	for (current_candidate = function_typeids;
 		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
+		 current_candidate = next_candidate)
 	{
-		current_typeids = current_candidate->args;
-		if (can_coerce_type(nargs, input_typeids, current_typeids))
+		next_candidate = current_candidate->next;
+		if (can_coerce_type(nargs, input_typeids, current_candidate->args))
 		{
-			matching_candidate = (CandidateList)
-				palloc(sizeof(struct _CandidateList));
-			matching_candidate->args = current_typeids;
-			matching_candidate->next = *candidates;
-			*candidates = matching_candidate;
+			current_candidate->next = *candidates;
+			*candidates = current_candidate;
 			ncandidates++;
 		}
 	}
@@ -593,8 +539,8 @@ match_argtypes(int nargs,
 
 /* func_select_candidate()
  * Given the input argtype array and more than one candidate
- * for the function argtype array, attempt to resolve the conflict.
- * Returns the selected argtype array if the conflict can be resolved,
+ * for the function, attempt to resolve the conflict.
+ * Returns the selected candidate if the conflict can be resolved,
  * otherwise returns NULL.
  *
  * By design, this is pretty similar to oper_select_candidate in parse_oper.c.
@@ -602,13 +548,13 @@ match_argtypes(int nargs,
  * already pruned away "candidates" that aren't actually coercion-compatible
  * with the input types, whereas oper_select_candidate must do that itself.
  */
-static Oid *
+static FuncCandidateList
 func_select_candidate(int nargs,
 					  Oid *input_typeids,
-					  CandidateList candidates)
+					  FuncCandidateList candidates)
 {
-	CandidateList current_candidate;
-	CandidateList last_candidate;
+	FuncCandidateList current_candidate;
+	FuncCandidateList last_candidate;
 	Oid		   *current_typeids;
 	Oid			current_type;
 	int			i;
@@ -662,7 +608,7 @@ func_select_candidate(int nargs,
 		last_candidate->next = NULL;
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates;
 
 	/*
 	 * Still too many candidates? Run through all candidates and keep
@@ -709,7 +655,7 @@ func_select_candidate(int nargs,
 		last_candidate->next = NULL;
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates;
 
 	/*
 	 * Still too many candidates? Now look for candidates which are
@@ -755,7 +701,7 @@ func_select_candidate(int nargs,
 		last_candidate->next = NULL;
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates;
 
 	/*
 	 * Still too many candidates? Try assigning types for the unknown
@@ -888,7 +834,7 @@ func_select_candidate(int nargs,
 	}
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates;
 
 	return NULL;				/* failed to determine a unique candidate */
 }	/* func_select_candidate() */
@@ -925,22 +871,24 @@ func_get_detail(char *funcname,
 				bool *retset,	/* return value */
 				Oid **true_typeids)		/* return value */
 {
-	HeapTuple	ftup;
-	CandidateList function_typeids;
+	FuncCandidateList function_typeids;
+	FuncCandidateList best_candidate;
 
-	/* attempt to find with arguments exactly as specified... */
-	ftup = SearchSysCache(PROCNAME,
-						  PointerGetDatum(funcname),
-						  Int32GetDatum(nargs),
-						  PointerGetDatum(argtypes),
-						  0);
+	/* Get list of possible candidates from namespace search */
+	function_typeids = FuncnameGetCandidates(makeList1(makeString(funcname)), nargs);
 
-	if (HeapTupleIsValid(ftup))
+	/*
+	 * See if there is an exact match
+	 */
+	for (best_candidate = function_typeids;
+		 best_candidate != NULL;
+		 best_candidate = best_candidate->next)
 	{
-		/* given argument types are the right ones */
-		*true_typeids = argtypes;
+		if (memcmp(argtypes, best_candidate->args, nargs * sizeof(Oid)) == 0)
+			break;
 	}
-	else
+
+	if (best_candidate == NULL)
 	{
 		/*
 		 * If we didn't find an exact match, next consider the possibility
@@ -1001,10 +949,6 @@ func_get_detail(char *funcname,
 		 * didn't find an exact match, so now try to match up
 		 * candidates...
 		 */
-
-		function_typeids = func_get_candidates(funcname, nargs);
-
-		/* found something, so let's look through them... */
 		if (function_typeids != NULL)
 		{
 			Oid		  **input_typeid_vector = NULL;
@@ -1019,7 +963,7 @@ func_get_detail(char *funcname,
 
 			do
 			{
-				CandidateList current_function_typeids;
+				FuncCandidateList current_function_typeids;
 				int			ncandidates;
 
 				ncandidates = match_argtypes(nargs, current_input_typeids,
@@ -1029,13 +973,7 @@ func_get_detail(char *funcname,
 				/* one match only? then run with it... */
 				if (ncandidates == 1)
 				{
-					*true_typeids = current_function_typeids->args;
-					ftup = SearchSysCache(PROCNAME,
-										  PointerGetDatum(funcname),
-										  Int32GetDatum(nargs),
-										  PointerGetDatum(*true_typeids),
-										  0);
-					Assert(HeapTupleIsValid(ftup));
+					best_candidate = current_function_typeids;
 					break;
 				}
 
@@ -1045,25 +983,15 @@ func_get_detail(char *funcname,
 				 */
 				if (ncandidates > 1)
 				{
-					*true_typeids = func_select_candidate(nargs,
+					best_candidate = func_select_candidate(nargs,
 												   current_input_typeids,
 											   current_function_typeids);
 
-					if (*true_typeids != NULL)
-					{
-						/* was able to choose a best candidate */
-						ftup = SearchSysCache(PROCNAME,
-											  PointerGetDatum(funcname),
-											  Int32GetDatum(nargs),
-										  PointerGetDatum(*true_typeids),
-											  0);
-						Assert(HeapTupleIsValid(ftup));
-						break;
-					}
-
 					/*
-					 * otherwise, ambiguous function call, so fail by
-					 * exiting loop with ftup still NULL.
+					 * If we were able to choose a best candidate, we're
+					 * done.  Otherwise, ambiguous function call, so fail
+					 * by exiting loop with best_candidate still NULL.
+					 * Either way, we're outta here.
 					 */
 					break;
 				}
@@ -1082,11 +1010,20 @@ func_get_detail(char *funcname,
 		}
 	}
 
-	if (HeapTupleIsValid(ftup))
+	if (best_candidate)
 	{
-		Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
+		HeapTuple	ftup;
+		Form_pg_proc pform;
 
-		*funcid = ftup->t_data->t_oid;
+		*funcid = best_candidate->oid;
+		*true_typeids = best_candidate->args;
+
+		ftup = SearchSysCache(PROCOID,
+							  ObjectIdGetDatum(best_candidate->oid),
+							  0, 0, 0);
+		if (!HeapTupleIsValid(ftup)) /* should not happen */
+			elog(ERROR, "function %u not found", best_candidate->oid);
+		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
 		ReleaseSysCache(ftup);

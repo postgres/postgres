@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.5 2002/04/01 03:34:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.6 2002/04/06 06:59:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
@@ -33,6 +34,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
+#include "utils/catcache.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -299,6 +301,174 @@ TypenameGetTypid(const char *typname)
 
 	/* Not found in path */
 	return InvalidOid;
+}
+
+/*
+ * FuncnameGetCandidates
+ *		Given a possibly-qualified function name and argument count,
+ *		retrieve a list of the possible matches.
+ *
+ * We search a single namespace if the function name is qualified, else
+ * all namespaces in the search path.  The return list will never contain
+ * multiple entries with identical argument types --- in the multiple-
+ * namespace case, we arrange for entries in earlier namespaces to mask
+ * identical entries in later namespaces.
+ */
+FuncCandidateList
+FuncnameGetCandidates(List *names, int nargs)
+{
+	FuncCandidateList resultList = NULL;
+	char	   *catalogname;
+	char	   *schemaname = NULL;
+	char	   *funcname = NULL;
+	Oid			namespaceId;
+	CatCList   *catlist;
+	int			i;
+
+	/* deconstruct the name list */
+	switch (length(names))
+	{
+		case 1:
+			funcname = strVal(lfirst(names));
+			break;
+		case 2:
+			schemaname = strVal(lfirst(names));
+			funcname = strVal(lsecond(names));
+			break;
+		case 3:
+			catalogname = strVal(lfirst(names));
+			schemaname = strVal(lsecond(names));
+			funcname = strVal(lfirst(lnext(lnext(names))));
+			/*
+			 * We check the catalog name and then ignore it.
+			 */
+			if (strcmp(catalogname, DatabaseName) != 0)
+				elog(ERROR, "Cross-database references are not implemented");
+			break;
+		default:
+			elog(ERROR, "Improper qualified name (too many dotted names)");
+			break;
+	}
+
+	if (schemaname)
+	{
+		/* use exact schema given */
+		namespaceId = GetSysCacheOid(NAMESPACENAME,
+									 CStringGetDatum(schemaname),
+									 0, 0, 0);
+		if (!OidIsValid(namespaceId))
+			elog(ERROR, "Namespace \"%s\" does not exist",
+				 schemaname);
+	}
+	else
+	{
+		/* flag to indicate we need namespace search */
+		namespaceId = InvalidOid;
+	}
+
+	/* Search syscache by name and nargs only */
+	catlist = SearchSysCacheList(PROCNAME, 2,
+								 CStringGetDatum(funcname),
+								 Int16GetDatum(nargs),
+								 0, 0);
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	proctup = &catlist->members[i]->tuple;
+		Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
+		int			pathpos = 0;
+		FuncCandidateList newResult;
+
+		if (OidIsValid(namespaceId))
+		{
+			/* Consider only procs in specified namespace */
+			if (procform->pronamespace != namespaceId)
+				continue;
+			/* No need to check args, they must all be different */
+		}
+		else
+		{
+			/* Consider only procs that are in the search path */
+			if (pathContainsSystemNamespace ||
+				procform->pronamespace != PG_CATALOG_NAMESPACE)
+			{
+				List	   *nsp;
+
+				foreach(nsp, namespaceSearchPath)
+				{
+					pathpos++;
+					if (procform->pronamespace == (Oid) lfirsti(nsp))
+						break;
+				}
+				if (nsp == NIL)
+					continue;	/* proc is not in search path */
+			}
+
+			/*
+			 * Okay, it's in the search path, but does it have the same
+			 * arguments as something we already accepted?  If so, keep
+			 * only the one that appears earlier in the search path.
+			 *
+			 * If we have an ordered list from SearchSysCacheList (the
+			 * normal case), then any conflicting proc must immediately
+			 * adjoin this one in the list, so we only need to look at
+			 * the newest result item.  If we have an unordered list,
+			 * we have to scan the whole result list.
+			 */
+			if (resultList)
+			{
+				FuncCandidateList	prevResult;
+
+				if (catlist->ordered)
+				{
+					if (memcmp(procform->proargtypes, resultList->args,
+							   nargs * sizeof(Oid)) == 0)
+						prevResult = resultList;
+					else
+						prevResult = NULL;
+				}
+				else
+				{
+					for (prevResult = resultList;
+						 prevResult;
+						 prevResult = prevResult->next)
+					{
+						if (memcmp(procform->proargtypes, prevResult->args,
+								   nargs * sizeof(Oid)) == 0)
+							break;
+					}
+				}
+				if (prevResult)
+				{
+					/* We have a match with a previous result */
+					Assert(pathpos != prevResult->pathpos);
+					if (pathpos > prevResult->pathpos)
+						continue; /* keep previous result */
+					/* replace previous result */
+					prevResult->pathpos = pathpos;
+					prevResult->oid = proctup->t_data->t_oid;
+					continue;	/* args are same, of course */
+				}
+			}
+		}
+
+		/*
+		 * Okay to add it to result list
+		 */
+		newResult = (FuncCandidateList)
+			palloc(sizeof(struct _FuncCandidateList) - sizeof(Oid)
+				   + nargs * sizeof(Oid));
+		newResult->pathpos = pathpos;
+		newResult->oid = proctup->t_data->t_oid;
+		memcpy(newResult->args, procform->proargtypes, nargs * sizeof(Oid));
+
+		newResult->next = resultList;
+		resultList = newResult;
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	return resultList;
 }
 
 /*
