@@ -86,7 +86,7 @@ WSADATA wsaData;
 	UNREFERENCED_PARAMETER(lpReserved);                                         
 }
 
-#else	/* WIN32 */
+#else	/* not WIN32 */
 
 #ifndef TRUE
 #define TRUE	(BOOL)1
@@ -107,7 +107,7 @@ init(void)
 	return TRUE;
 }
 
-#else
+#else /* not __GNUC__ */
 
 /* These two functions do shared library initialziation on UNIX, well at least
  * on Linux. I don't know about other systems.
@@ -125,7 +125,9 @@ _fini(void)
 	return TRUE;
 }
 
-#endif
+#endif /* not __GNUC__ */
+
+#endif /* not WIN32 */
 
 /*	This function is used to cause the Driver Manager to
 	call functions by number rather than name, which is faster.
