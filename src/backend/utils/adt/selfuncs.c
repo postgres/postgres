@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.147.2.3 2004/02/27 21:44:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.147.2.4 2004/12/02 02:45:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3218,6 +3218,8 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	char	   *match;
 	int			pos,
 				match_pos,
+				prev_pos,
+				prev_match_pos,
 				paren_depth;
 	char	   *patt;
 	char	   *rest;
@@ -3278,11 +3280,13 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 
 	/* OK, allocate space for pattern */
 	match = palloc(strlen(patt) + 1);
-	match_pos = 0;
+	prev_match_pos = match_pos = 0;
 
 	/* note start at pos 1 to skip leading ^ */
-	for (pos = 1; patt[pos]; pos++)
+	for (prev_pos = pos = 1; patt[pos]; )
 	{
+		int		len;
+
 		/*
 		 * Check for characters that indicate multiple possible matches
 		 * here. XXX I suspect isalpha() is not an adequately
@@ -3297,6 +3301,14 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 			break;
 
 		/*
+		 * In AREs, backslash followed by alphanumeric is an escape, not
+		 * a quoted character.  Must treat it as having multiple possible
+		 * matches.
+		 */
+		if (patt[pos] == '\\' && isalnum((unsigned char) patt[pos + 1]))
+			break;
+
+		/*
 		 * Check for quantifiers.  Except for +, this means the preceding
 		 * character is optional, so we must remove it from the prefix
 		 * too!
@@ -3305,14 +3317,13 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 			patt[pos] == '?' ||
 			patt[pos] == '{')
 		{
-			if (match_pos > 0)
-				match_pos--;
-			pos--;
+			match_pos = prev_match_pos;
+			pos = prev_pos;
 			break;
 		}
 		if (patt[pos] == '+')
 		{
-			pos--;
+			pos = prev_pos;
 			break;
 		}
 		if (patt[pos] == '\\')
@@ -3322,7 +3333,14 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 			if (patt[pos] == '\0')
 				break;
 		}
-		match[match_pos++] = patt[pos];
+		/* save position in case we need to back up on next loop cycle */
+		prev_match_pos = match_pos;
+		prev_pos = pos;
+		/* must use encoding-aware processing here */
+		len = pg_mblen(&patt[pos]);
+		memcpy(&match[match_pos], &patt[pos], len);
+		match_pos += len;
+		pos += len;
 	}
 
 	match[match_pos] = '\0';
