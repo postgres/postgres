@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.130 2004/06/05 01:55:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.131 2004/06/10 21:02:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,11 +189,12 @@ cost_seqscan(Path *path, Query *root,
  * for now by assuming we are given an effective_cache_size parameter.
  *
  * Given a guesstimated cache size, we estimate the actual I/O cost per page
- * with the entirely ad-hoc equations:
- *	if relpages >= effective_cache_size:
- *		random_page_cost * (1 - (effective_cache_size/relpages)/2)
- *	if relpages < effective_cache_size:
- *		1 + (random_page_cost/2-1) * (relpages/effective_cache_size) ** 2
+ * with the entirely ad-hoc equations (writing relsize for
+ * relpages/effective_cache_size):
+ *	if relsize >= 1:
+ *		random_page_cost - (random_page_cost-1)/2 * (1/relsize)
+ *	if relsize < 1:
+ *		1 + ((random_page_cost-1)/2) * relsize ** 2
  * These give the right asymptotic behavior (=> 1.0 as relpages becomes
  * small, => random_page_cost as it becomes large) and meet in the middle
  * with the estimate that the cache is about 50% effective for a relation
@@ -213,9 +214,9 @@ cost_nonsequential_access(double relpages)
 	relsize = relpages / effective_cache_size;
 
 	if (relsize >= 1.0)
-		return random_page_cost * (1.0 - 0.5 / relsize);
+		return random_page_cost - (random_page_cost - 1.0) * 0.5 / relsize;
 	else
-		return 1.0 + (random_page_cost * 0.5 - 1.0) * relsize * relsize;
+		return 1.0 + (random_page_cost - 1.0) * 0.5 * relsize * relsize;
 }
 
 /*
