@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4.2.1 1996/08/19 13:23:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4.2.2 1996/08/19 13:40:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,7 +239,7 @@ connectDB(PGconn *conn)
 
 /*    pacBuf = startup2PacketBuf(&startup);*/
     startup2PacketBuf(&startup, &pacBuf);
-    pacBuf.msgtype = htonl(msgtype);
+    pacBuf.msgtype = (MsgType) htonl(msgtype);
     status = packetSend(port, &pacBuf, sizeof(PacketBuf), BLOCKING);
     
     if (status == STATUS_ERROR)
