@@ -9,7 +9,11 @@ ifdef REFINT_VERBOSE
 CFLAGS+= -DREFINT_VERBOSE
 endif
 
-TARGETS= refint$(DLSUFFIX) refint.sql
+TARGETS= refint$(DLSUFFIX) refint.sql \
+         timetravel$(DLSUFFIX) timetravel.sql \
+         autoinc$(DLSUFFIX) autoinc.sql \
+         moddatetime$(DLSUFFIX) moddatetime.sql \
+         insert_username$(DLSUFFIX) insert_username.sql
 
 CLEANFILES+= $(TARGETS)
 
@@ -21,5 +25,5 @@ all:: $(TARGETS)
 	sed -e "s:_OBJWD_:$$C:g" \
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" < $< > $@
 
-clean: 
-	rm -f $(TARGETS)
+clean:
+	rm -f $(TARGETS) *.o
