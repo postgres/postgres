@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.103 2001/03/23 04:49:56 momjian Exp $
+ * $Id: pg_type.h,v 1.104 2001/05/03 16:18:02 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -314,7 +314,7 @@ DATA(insert OID = 791 (  _money    PGUID  -1 -1 f b t \054 0  790 array_in array
 
 /* OIDS 800 - 899 */
 DATA(insert OID = 829 ( macaddr    PGUID  6 -1 f b t \054 0 0 macaddr_in macaddr_out macaddr_in macaddr_out i p _null_ ));
-DESCR("XX:XX:XX:XX:XX, MAC address");
+DESCR("XX:XX:XX:XX:XX:XX, MAC address");
 DATA(insert OID = 869 ( inet	   PGUID  -1 -1 f b t \054 0 0 inet_in inet_out inet_in inet_out i p _null_ ));
 DESCR("IP address/netmask, host address, netmask optional");
 #define INETOID 869
