@@ -3224,7 +3224,7 @@ else
 fi
 rm -f conftest*
 
-if test $ac_cv_prog_gcc = yes; then
+if test x$ac_cv_prog_gcc = xyes; then
     echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
 echo "configure:3230: checking whether ${CC-cc} needs -traditional" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
