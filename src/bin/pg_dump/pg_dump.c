@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.279 2002/08/02 18:15:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.280 2002/08/04 05:03:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5378,6 +5378,8 @@ dumpIndexes(Archive *fout, TableInfo *tblinfo, int numTables)
 							 q->data, "",
 							 NULL, NULL, NULL);
 
+				for (k = 0; k < indnkeys; k++)
+					free(indkeys[k]);
 				free(indkeys);
 			}
 			else
