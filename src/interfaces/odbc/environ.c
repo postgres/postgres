@@ -187,6 +187,9 @@ int status;
                     strcpy(szSqlState, "S1109");
                     break;
                 
+				case STMT_VALUE_OUT_OF_RANGE:
+					strcpy(szSqlState, "22003");
+					break;
 				default:
                     strcpy(szSqlState, "S1000");
                     // also a general error
@@ -238,6 +241,10 @@ int status;
 				case CONN_OPTION_VALUE_CHANGED:
                     strcpy(szSqlState, "01S02");
 					break;
+                case STMT_TRUNCATED:
+                    strcpy(szSqlState, "01004");
+                    // data truncated
+                    break;
                 case CONN_INIREAD_ERROR:
                     strcpy(szSqlState, "IM002");
                     // data source not found
@@ -277,6 +284,12 @@ int status;
 				case STMT_NOT_IMPLEMENTED_ERROR:
                     strcpy(szSqlState, "S1C00");
                     break;
+
+				case CONN_VALUE_OUT_OF_RANGE:
+				case STMT_VALUE_OUT_OF_RANGE:
+					strcpy(szSqlState, "22003");
+					break;
+
                 default:
                     strcpy(szSqlState, "S1000");
                     // general error

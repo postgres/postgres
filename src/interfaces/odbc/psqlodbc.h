@@ -33,7 +33,20 @@ typedef double SDOUBLE;
 
 typedef UInt4 Oid;
 
-# define ODBCVER   0x0200
+/* Driver stuff */
+#define ODBCVER				0x0200
+#define DRIVER_ODBC_VER		"02.00"
+
+#define DRIVERNAME             "PostgreSQL ODBC"
+#define DBMS_NAME              "PostgreSQL"
+#define DBMS_VERSION           "06.40.0002 PostgreSQL 6.4"
+#define POSTGRESDRIVERVERSION  "06.40.0002"
+
+#ifdef WIN32
+#define DRIVER_FILE_NAME		"PSQLODBC.DLL"
+#else
+#define DRIVER_FILE_NAME		"libpsqlodbc.so"
+#endif
 
 /* Limits */
 #define MAX_MESSAGE_LEN				8192
@@ -67,17 +80,6 @@ typedef UInt4 Oid;
 #define MAX_KEYLEN			512			//	max key of the form "date+outlet+invoice"
 #define MAX_STATEMENT_LEN	MAX_MESSAGE_LEN
 
-/* Driver stuff */
-#define DRIVERNAME             "PostgreSQL ODBC"
-#define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.40.0002 PostgreSQL 6.4"
-#define POSTGRESDRIVERVERSION  "06.40.0002"
-
-#ifdef WIN32
-#define DRIVER_FILE_NAME		"PSQLODBC.DLL"
-#else
-#define DRIVER_FILE_NAME		"libpsqlodbc.so"
-#endif
 
 #define PG62	"6.2"		/* "Protocol" key setting to force Postgres 6.2 */
 #define PG63	"6.3"		/* "Protocol" key setting to force postgres 6.3 */

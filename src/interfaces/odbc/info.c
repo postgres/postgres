@@ -69,7 +69,9 @@ RETCODE SQL_API SQLGetInfo(
 static char *func = "SQLGetInfo";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
-char *p;
+char *p = NULL;
+int len = 0, value = 0;
+RETCODE result;
 
 	mylog( "%s: entering...fInfoType=%d\n", func, fInfoType);
 
@@ -78,71 +80,46 @@ char *p;
 		return SQL_INVALID_HANDLE;
 	}
 
-    if (NULL == (char *)rgbInfoValue) {
-		CC_log_error(func, "Bad rgbInfoValue", conn);
-        return SQL_INVALID_HANDLE;
-	}
-
 	ci = &conn->connInfo;
 
     switch (fInfoType) {
     case SQL_ACCESSIBLE_PROCEDURES: /* ODBC 1.0 */
-        // can the user call all functions returned by SQLProcedures?
-        // I assume access permissions could prevent this in some cases(?)
-        // anyway, SQLProcedures doesn't exist yet.
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		p = "N";
         break;
 
     case SQL_ACCESSIBLE_TABLES: /* ODBC 1.0 */
-        // is the user guaranteed "SELECT" on every table?
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		p = "N";
         break;
 
     case SQL_ACTIVE_CONNECTIONS: /* ODBC 1.0 */
-        // how many simultaneous connections do we support?
-        *((WORD *)rgbInfoValue) = MAX_CONNECTIONS;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        len = 2;
+        value = MAX_CONNECTIONS;
         break;
 
     case SQL_ACTIVE_STATEMENTS: /* ODBC 1.0 */
-        // no limit on the number of active statements.
-        *((WORD *)rgbInfoValue) = (WORD)0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        len = 2;
+        value = 0;
         break;
 
     case SQL_ALTER_TABLE: /* ODBC 2.0 */
-        // what does 'alter table' support? (bitmask)
-        // postgres doesn't seem to let you drop columns.
-        *((DWORD *)rgbInfoValue) = SQL_AT_ADD_COLUMN;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+        len = 4;
+        value = SQL_AT_ADD_COLUMN;
         break;
 
     case SQL_BOOKMARK_PERSISTENCE: /* ODBC 2.0 */
-        // through what operations do bookmarks persist? (bitmask)
-        // bookmarks don't exist yet, so they're not very persistent.
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+        len = 4;
+        value = 0;
         break;
 
     case SQL_COLUMN_ALIAS: /* ODBC 2.0 */
-        // do we support column aliases?  guess not.
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		p = "N";
         break;
 
     case SQL_CONCAT_NULL_BEHAVIOR: /* ODBC 1.0 */
-        // how does concatenation work with NULL columns?
-        // not sure how you do concatentation, but this way seems
-        // more reasonable
-        *((WORD *)rgbInfoValue) = SQL_CB_NON_NULL;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        len = 2;
+        value = SQL_CB_NON_NULL;
         break;
 
-        // which types of data-conversion do we support?
-        // currently we don't support any, except converting a type
-        // to itself.
     case SQL_CONVERT_BIGINT:
     case SQL_CONVERT_BINARY:
     case SQL_CONVERT_BIT:
@@ -162,570 +139,448 @@ char *p;
     case SQL_CONVERT_TINYINT:
     case SQL_CONVERT_VARBINARY:
     case SQL_CONVERT_VARCHAR: /* ODBC 1.0 */
-        // only return the type we were called with (bitmask)
-        *((DWORD *)rgbInfoValue) = fInfoType;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = fInfoType;
         break;
 
     case SQL_CONVERT_FUNCTIONS: /* ODBC 1.0 */
-        // which conversion functions do we support? (bitmask)
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_CORRELATION_NAME: /* ODBC 1.0 */
-        // I don't know what a correlation name is, so I guess we don't
-        // support them.
 
-        // *((WORD *)rgbInfoValue) = (WORD)SQL_CN_NONE;
-
-        // well, let's just say we do--otherwise Query won't work.
-        *((WORD *)rgbInfoValue) = (WORD)SQL_CN_ANY;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
-
+		/*	Saying no correlation name makes Query not work right.
+			value = SQL_CN_NONE;
+		*/
+		len = 2;
+        value = SQL_CN_ANY;
         break;
 
     case SQL_CURSOR_COMMIT_BEHAVIOR: /* ODBC 1.0 */
-        // postgres definitely closes cursors when a transaction ends,
-        // but you shouldn't have to re-prepare a statement after
-        // commiting a transaction (I don't think)
-        *((WORD *)rgbInfoValue) = (WORD)SQL_CB_CLOSE;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        len = 2;
+        value = SQL_CB_CLOSE;
         break;
 
     case SQL_CURSOR_ROLLBACK_BEHAVIOR: /* ODBC 1.0 */
-        // see above
-        *((WORD *)rgbInfoValue) = (WORD)SQL_CB_CLOSE;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        len = 2;
+        value = SQL_CB_CLOSE;
         break;
 
     case SQL_DATA_SOURCE_NAME: /* ODBC 1.0 */
 		p = CC_get_DSN(conn);
-		if (pcbInfoValue) *pcbInfoValue = strlen(p);
-		strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
         break;
 
     case SQL_DATA_SOURCE_READ_ONLY: /* ODBC 1.0 */
-        if (pcbInfoValue) *pcbInfoValue = 1;
-		sprintf((char *)rgbInfoValue, "%c", CC_is_readonly(conn) ? 'Y' : 'N');
+		p = CC_is_readonly(conn) ? "Y" : "N";
         break;
 
     case SQL_DATABASE_NAME: /* Support for old ODBC 1.0 Apps */
-        // case SQL_CURRENT_QUALIFIER:
-        // this tag doesn't seem to be in ODBC 2.0, and it conflicts
-        // with a valid tag (SQL_TIMEDATE_ADD_INTERVALS).
 
 		/*	Returning the database name causes problems in MS Query.
 			It generates query like: "SELECT DISTINCT a FROM byronncrap3 crap3"
+
+			p = CC_get_database(conn);
 		*/
-		p = "";    // CC_get_database(conn);
-		if (pcbInfoValue) *pcbInfoValue = strlen(p);
-		strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
+		p = "";    
 		break;
 
     case SQL_DBMS_NAME: /* ODBC 1.0 */
-        if (pcbInfoValue) *pcbInfoValue = strlen(DBMS_NAME);
-        strncpy_null((char *)rgbInfoValue, DBMS_NAME, (size_t)cbInfoValueMax);
+		p = DBMS_NAME;
         break;
 
     case SQL_DBMS_VER: /* ODBC 1.0 */
-        if (pcbInfoValue) *pcbInfoValue = 25;
-        strncpy_null((char *)rgbInfoValue, DBMS_VERSION, (size_t)cbInfoValueMax);
+		p = DBMS_VERSION;
         break;
 
     case SQL_DEFAULT_TXN_ISOLATION: /* ODBC 1.0 */
-        // are dirty reads, non-repeatable reads, and phantoms possible? (bitmask)
-        // by direct experimentation they are not.  postgres forces
-        // the newer transaction to wait before doing something that
-        // would cause one of these problems.
-        *((DWORD *)rgbInfoValue) = SQL_TXN_READ_COMMITTED; //SQL_TXN_SERIALIZABLE;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = SQL_TXN_READ_COMMITTED; //SQL_TXN_SERIALIZABLE;
         break;
 
     case SQL_DRIVER_NAME: /* ODBC 1.0 */
-        // this should be the actual filename of the driver
         p = DRIVER_FILE_NAME;
-        if (pcbInfoValue)  *pcbInfoValue = strlen(p);
-        strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
         break;
 
     case SQL_DRIVER_ODBC_VER:
-        if (pcbInfoValue) *pcbInfoValue = 5;
-        strncpy_null((char *)rgbInfoValue, "02.00", (size_t)cbInfoValueMax);
+		p = DRIVER_ODBC_VER;
         break;
 
     case SQL_DRIVER_VER: /* ODBC 1.0 */
         p = POSTGRESDRIVERVERSION;
-        if (pcbInfoValue) *pcbInfoValue = strlen(p);
-        strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
         break;
 
     case SQL_EXPRESSIONS_IN_ORDERBY: /* ODBC 1.0 */
-        // can you have expressions in an 'order by' clause?
-        // not sure about this.  say no for now.
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		p = "N";
         break;
 
     case SQL_FETCH_DIRECTION: /* ODBC 1.0 */
-        // which fetch directions are supported? (bitmask)
-        *((DWORD *)rgbInfoValue) = globals.use_declarefetch ? (SQL_FD_FETCH_NEXT) : (SQL_FD_FETCH_NEXT |
+		len = 4;
+        value = globals.use_declarefetch ? (SQL_FD_FETCH_NEXT) : (SQL_FD_FETCH_NEXT |
                                    SQL_FD_FETCH_FIRST |
                                    SQL_FD_FETCH_LAST |
                                    SQL_FD_FETCH_PRIOR |
                                    SQL_FD_FETCH_ABSOLUTE |
 								   SQL_FD_FETCH_RELATIVE);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
         break;
 
     case SQL_FILE_USAGE: /* ODBC 2.0 */
-        // we are a two-tier driver, not a file-based one.
-        *((WORD *)rgbInfoValue) = (WORD)SQL_FILE_NOT_SUPPORTED;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = SQL_FILE_NOT_SUPPORTED;
         break;
 
     case SQL_GETDATA_EXTENSIONS: /* ODBC 2.0 */
-        // (bitmask)
-        *((DWORD *)rgbInfoValue) = (SQL_GD_ANY_COLUMN | SQL_GD_ANY_ORDER | SQL_GD_BOUND | SQL_GD_BLOCK);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = (SQL_GD_ANY_COLUMN | SQL_GD_ANY_ORDER | SQL_GD_BOUND | SQL_GD_BLOCK);
         break;
 
     case SQL_GROUP_BY: /* ODBC 2.0 */
-        // how do the columns selected affect the columns you can group by?
-        *((WORD *)rgbInfoValue) = SQL_GB_GROUP_BY_EQUALS_SELECT;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = SQL_GB_GROUP_BY_EQUALS_SELECT;
         break;
 
     case SQL_IDENTIFIER_CASE: /* ODBC 1.0 */
-        // are identifiers case-sensitive (yes, but only when quoted.  If not quoted, they
-		// default to lowercase)
-        *((WORD *)rgbInfoValue) = SQL_IC_LOWER;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        /*	are identifiers case-sensitive (yes, but only when quoted.  If not quoted, they
+			default to lowercase)
+		*/
+		len = 2;
+        value = SQL_IC_LOWER;
         break;
 
     case SQL_IDENTIFIER_QUOTE_CHAR: /* ODBC 1.0 */
-        // the character used to quote "identifiers" (what are they?)
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, PROTOCOL_62(ci) ? " " : "\"", (size_t)cbInfoValueMax);
+        /* the character used to quote "identifiers" */
+		p = PROTOCOL_62(ci) ? " " : "\"";
         break;
 
     case SQL_KEYWORDS: /* ODBC 2.0 */
-        // do this later
-        conn->errormsg = "SQL_KEYWORDS parameter to SQLGetInfo not implemented.";
-        conn->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
-		CC_log_error(func, "", conn);
-        return SQL_ERROR;
+		p = "";
         break;
 
     case SQL_LIKE_ESCAPE_CLAUSE: /* ODBC 2.0 */
-        // is there a character that escapes '%' and '_' in a LIKE clause?
-        // not as far as I can tell
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		/*	is there a character that escapes '%' and '_' in a LIKE clause?
+			not as far as I can tell
+		*/
+        p = "N";
         break;
 
     case SQL_LOCK_TYPES: /* ODBC 2.0 */
-        // which lock types does SQLSetPos support? (bitmask)
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_LCK_NO_CHANGE | SQL_LCK_EXCLUSIVE | SQL_LCK_UNLOCK) : SQL_LCK_NO_CHANGE;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = globals.lie ? (SQL_LCK_NO_CHANGE | SQL_LCK_EXCLUSIVE | SQL_LCK_UNLOCK) : SQL_LCK_NO_CHANGE;
         break;
 
     case SQL_MAX_BINARY_LITERAL_LEN: /* ODBC 2.0 */
-        // the maximum length of a query is 2k, so maybe we should
-        // set the maximum length of all these literals to that value?
-        // for now just use zero for 'unknown or no limit'
-
-        // maximum length of a binary literal
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_MAX_CHAR_LITERAL_LEN: /* ODBC 2.0 */
-        // maximum length of a character literal
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_MAX_COLUMN_NAME_LEN: /* ODBC 1.0 */
-        // maximum length of a column name
-        *((WORD *)rgbInfoValue) = MAX_COLUMN_LEN;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = MAX_COLUMN_LEN;
         break;
 
     case SQL_MAX_COLUMNS_IN_GROUP_BY: /* ODBC 2.0 */
-        // maximum number of columns in a 'group by' clause
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_COLUMNS_IN_INDEX: /* ODBC 2.0 */
-        // maximum number of columns in an index
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_COLUMNS_IN_ORDER_BY: /* ODBC 2.0 */
-        // maximum number of columns in an ORDER BY statement
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_COLUMNS_IN_SELECT: /* ODBC 2.0 */
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_COLUMNS_IN_TABLE: /* ODBC 2.0 */
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_CURSOR_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = MAX_CURSOR_LEN;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = MAX_CURSOR_LEN;
         break;
 
     case SQL_MAX_INDEX_SIZE: /* ODBC 2.0 */
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_MAX_OWNER_NAME_LEN: /* ODBC 1.0 */
-        // the maximum length of a table owner's name.  (0 == none)
-        // (maybe this should be 8)
-        *((WORD *)rgbInfoValue) = (WORD)0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_PROCEDURE_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_QUALIFIER_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_ROW_SIZE: /* ODBC 2.0 */
-        // the maximum size of one row
-        // here I do know a definite value
-        *((DWORD *)rgbInfoValue) = 8192;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 8192;
         break;
 
     case SQL_MAX_ROW_SIZE_INCLUDES_LONG: /* ODBC 2.0 */
-        // does the preceding value include LONGVARCHAR and LONGVARBINARY
-        // fields?   Well, it does include longvarchar, but not longvarbinary.
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
+        /*	does the preceding value include LONGVARCHAR and LONGVARBINARY
+			fields?   Well, it does include longvarchar, but not longvarbinary.
+		*/
+		p = "Y";
         break;
 
     case SQL_MAX_STATEMENT_LEN: /* ODBC 2.0 */
-        // there should be a definite value here (2k?)
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+        /* maybe this should be 8192? */
+		len = 4;
+        value = 0;
         break;
 
     case SQL_MAX_TABLE_NAME_LEN: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = MAX_TABLE_LEN;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = MAX_TABLE_LEN;
         break;
 
     case SQL_MAX_TABLES_IN_SELECT: /* ODBC 2.0 */
-        *((WORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MAX_USER_NAME_LEN:
-        *(SWORD FAR *)rgbInfoValue = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = 0;
         break;
 
     case SQL_MULT_RESULT_SETS: /* ODBC 1.0 */
-        // do we support multiple result sets?  Not really, but say yes anyway?
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
+        /* Don't support multiple result sets but say yes anyway? */
+		p = "Y";
         break;
 
     case SQL_MULTIPLE_ACTIVE_TXN: /* ODBC 1.0 */
-        // do we support multiple simultaneous transactions?
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
+		p = "Y";
         break;
 
     case SQL_NEED_LONG_DATA_LEN: /* ODBC 2.0 */
-        if (pcbInfoValue) *pcbInfoValue = 1;
 		/*	Dont need the length, SQLPutData can handle any size and multiple calls */
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		p = "N";
         break;
 
     case SQL_NON_NULLABLE_COLUMNS: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = (WORD)SQL_NNC_NON_NULL;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = SQL_NNC_NON_NULL;
         break;
 
     case SQL_NULL_COLLATION: /* ODBC 2.0 */
-        // where are nulls sorted?
-        *((WORD *)rgbInfoValue) = (WORD)SQL_NC_END;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        /* where are nulls sorted? */
+		len = 2;
+        value = SQL_NC_END;
         break;
 
     case SQL_NUMERIC_FUNCTIONS: /* ODBC 1.0 */
-        // what numeric functions are supported? (bitmask)
-        // I'm not sure if any of these are actually supported
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_ODBC_API_CONFORMANCE: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = SQL_OAC_LEVEL1;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = SQL_OAC_LEVEL1;
         break;
 
     case SQL_ODBC_SAG_CLI_CONFORMANCE: /* ODBC 1.0 */
-        // can't find any reference to SAG in the ODBC reference manual
-        // (although it's in the index, it doesn't actually appear on
-        // the pages referenced)
-        *((WORD *)rgbInfoValue) = SQL_OSCC_NOT_COMPLIANT;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = SQL_OSCC_NOT_COMPLIANT;
         break;
 
     case SQL_ODBC_SQL_CONFORMANCE: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = SQL_OSC_CORE;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = SQL_OSC_CORE;
         break;
 
     case SQL_ODBC_SQL_OPT_IEF: /* ODBC 1.0 */
-        // do we support the "Integrity Enhancement Facility" (?)
-        // (something to do with referential integrity?)
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		p = "N";
         break;
 
     case SQL_ORDER_BY_COLUMNS_IN_SELECT: /* ODBC 2.0 */
-        // do the columns sorted by have to be in the list of
-        // columns selected?
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
+		p = "Y";
         break;
 
     case SQL_OUTER_JOINS: /* ODBC 1.0 */
-        // do we support outer joins?
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
+		p = "N";
         break;
 
     case SQL_OWNER_TERM: /* ODBC 1.0 */
-        // what we call an owner
-        if (pcbInfoValue) *pcbInfoValue = 5;
-        strncpy_null((char *)rgbInfoValue, "owner", (size_t)cbInfoValueMax);
+		p = "owner";
         break;
 
     case SQL_OWNER_USAGE: /* ODBC 2.0 */
-        // in which statements can "owners be used"?  (what does that mean?
-        // specifying 'owner.table' instead of just 'table' or something?)
-        // (bitmask)
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_POS_OPERATIONS: /* ODBC 2.0 */
-        // what functions does SQLSetPos support? (bitmask)
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = globals.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
         break;
 
     case SQL_POSITIONED_STATEMENTS: /* ODBC 2.0 */
-        // what 'positioned' functions are supported? (bitmask)
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_PS_POSITIONED_DELETE | 
-											SQL_PS_POSITIONED_UPDATE | 
-											SQL_PS_SELECT_FOR_UPDATE) : 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = globals.lie ? (SQL_PS_POSITIONED_DELETE | 
+								SQL_PS_POSITIONED_UPDATE | 
+								SQL_PS_SELECT_FOR_UPDATE) : 0;
         break;
 
     case SQL_PROCEDURE_TERM: /* ODBC 1.0 */
-        // what do we call a procedure?
-        if (pcbInfoValue) *pcbInfoValue = 9;
-        strncpy_null((char *)rgbInfoValue, "procedure", (size_t)cbInfoValueMax);
+        p = "procedure";
         break;
 
     case SQL_PROCEDURES: /* ODBC 1.0 */
-        // do we support procedures?
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
+		p = "Y";
         break;
 
     case SQL_QUALIFIER_LOCATION: /* ODBC 2.0 */
-        // where does the qualifier go (before or after the table name?)
-        // we don't really use qualifiers, so...
-        *((WORD *)rgbInfoValue) = SQL_QL_START;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+		len = 2;
+        value = SQL_QL_START;
         break;
 
     case SQL_QUALIFIER_NAME_SEPARATOR: /* ODBC 1.0 */
-        // not really too sure what a qualifier is supposed to do either
-        // (specify the name of a database in certain cases?), so nix
-        // on that, too.
-        if (pcbInfoValue) *pcbInfoValue = 0;
-        strncpy_null((char *)rgbInfoValue, "", (size_t)cbInfoValueMax);
+		p = "";
         break;
 
     case SQL_QUALIFIER_TERM: /* ODBC 1.0 */
-        // what we call a qualifier
-        if (pcbInfoValue) *pcbInfoValue = 0;
-        strncpy_null((char *)rgbInfoValue, "", (size_t)cbInfoValueMax);
+		p = "";
         break;
 
     case SQL_QUALIFIER_USAGE: /* ODBC 2.0 */
-        // where can qualifiers be used? (bitmask)
-        // nowhere
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_QUOTED_IDENTIFIER_CASE: /* ODBC 2.0 */
-        // are "quoted" identifiers case-sensitive?  YES
-        *((WORD *)rgbInfoValue) = SQL_IC_SENSITIVE;
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        /* are "quoted" identifiers case-sensitive?  YES! */
+		len = 2;
+        value = SQL_IC_SENSITIVE;
         break;
 
     case SQL_ROW_UPDATES: /* ODBC 1.0 */
-        //  Driver doesn't support keyset-driven or mixed cursors, so
-		//	not much point in saying row updates are supported
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, globals.lie ? "Y" : "N", (size_t)cbInfoValueMax);
+        /*  Driver doesn't support keyset-driven or mixed cursors, so
+			not much point in saying row updates are supported
+		*/
+        p = globals.lie ? "Y" : "N";
         break;
 
     case SQL_SCROLL_CONCURRENCY: /* ODBC 1.0 */
-        // what concurrency options are supported BY THE CURSOR? (bitmask)
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_SCCO_READ_ONLY | 
-									SQL_SCCO_LOCK | 
-									SQL_SCCO_OPT_ROWVER | 
-									SQL_SCCO_OPT_VALUES) : (SQL_SCCO_READ_ONLY);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = globals.lie ? (SQL_SCCO_READ_ONLY | 
+								SQL_SCCO_LOCK | 
+								SQL_SCCO_OPT_ROWVER | 
+								SQL_SCCO_OPT_VALUES) : (SQL_SCCO_READ_ONLY);
         break;
 
     case SQL_SCROLL_OPTIONS: /* ODBC 1.0 */
-        // what options are supported for scrollable cursors? (bitmask)
-		// for declare/fetch, only FORWARD scrolling is allowed
-		// otherwise, the result set is STATIC (to SQLExtendedFetch for example)
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_SO_FORWARD_ONLY | 
-									SQL_SO_STATIC | 
-									SQL_SO_KEYSET_DRIVEN | 
-									SQL_SO_DYNAMIC | 
-									SQL_SO_MIXED) : (globals.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = globals.lie ? (SQL_SO_FORWARD_ONLY | 
+								SQL_SO_STATIC | 
+								SQL_SO_KEYSET_DRIVEN | 
+								SQL_SO_DYNAMIC | 
+								SQL_SO_MIXED) : (globals.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
         break;
 
     case SQL_SEARCH_PATTERN_ESCAPE: /* ODBC 1.0 */
-        // this is supposed to be the character that escapes '_' or '%'
-        // in LIKE clauses.  as far as I can tell postgres doesn't have one
-        // (backslash generates an error).  returning an empty string means
-        // no escape character is supported.
-        if (pcbInfoValue) *pcbInfoValue = 0;
-        strncpy_null((char *)rgbInfoValue, "", (size_t)cbInfoValueMax);
+		p = "";
         break;
 
     case SQL_SERVER_NAME: /* ODBC 1.0 */
 		p = CC_get_server(conn);
-		if (pcbInfoValue)  *pcbInfoValue = strlen(p);
-		strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
         break;
 
     case SQL_SPECIAL_CHARACTERS: /* ODBC 2.0 */
-        // what special characters can be used in table and column names, etc.?
-        // probably more than just this...
-        if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "_", (size_t)cbInfoValueMax);
+        p = "_";
         break;
 
     case SQL_STATIC_SENSITIVITY: /* ODBC 2.0 */
-        // can changes made inside a cursor be detected? (or something like that)
-        // (bitmask)
-        // only applies to SQLSetPos, which doesn't exist yet.
-        *((DWORD *)rgbInfoValue) = globals.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = globals.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
         break;
 
     case SQL_STRING_FUNCTIONS: /* ODBC 1.0 */
-        // what string functions exist? (bitmask)
-        *((DWORD *)rgbInfoValue) = (SQL_FN_STR_CONCAT |
-			                        SQL_FN_STR_LCASE | 
-									SQL_FN_STR_LENGTH | 
-									SQL_FN_STR_LOCATE | 
-									SQL_FN_STR_LTRIM | 
-									SQL_FN_STR_RTRIM |
-									SQL_FN_STR_SUBSTRING |
-									SQL_FN_STR_UCASE);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = (SQL_FN_STR_CONCAT |
+				SQL_FN_STR_LCASE | 
+				SQL_FN_STR_LENGTH | 
+				SQL_FN_STR_LOCATE | 
+				SQL_FN_STR_LTRIM | 
+				SQL_FN_STR_RTRIM |
+				SQL_FN_STR_SUBSTRING |
+				SQL_FN_STR_UCASE);
         break;
 
     case SQL_SUBQUERIES: /* ODBC 2.0 */
 		/* postgres 6.3 supports subqueries */
-        *((DWORD *)rgbInfoValue) = (SQL_SQ_QUANTIFIED |
-			                        SQL_SQ_IN |
-                                    SQL_SQ_EXISTS |
-								    SQL_SQ_COMPARISON);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = (SQL_SQ_QUANTIFIED |
+				SQL_SQ_IN |
+				SQL_SQ_EXISTS |
+				SQL_SQ_COMPARISON);
         break;
 
     case SQL_SYSTEM_FUNCTIONS: /* ODBC 1.0 */
-        // what system functions are supported? (bitmask)
-        // none of these seem to be supported, either
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+		value = 0;
         break;
 
     case SQL_TABLE_TERM: /* ODBC 1.0 */
-        // what we call a table
-        if (pcbInfoValue) *pcbInfoValue = 5;
-        strncpy_null((char *)rgbInfoValue, "table", (size_t)cbInfoValueMax);
+		p = "table";
         break;
 
     case SQL_TIMEDATE_ADD_INTERVALS: /* ODBC 2.0 */
-        // what resolutions are supported by the "TIMESTAMPADD scalar
-        // function" (whatever that is)? (bitmask)
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_TIMEDATE_DIFF_INTERVALS: /* ODBC 2.0 */
-        // what resolutions are supported by the "TIMESTAMPDIFF scalar
-        // function" (whatever that is)? (bitmask)
-        *((DWORD *)rgbInfoValue) = 0;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = 0;
         break;
 
     case SQL_TIMEDATE_FUNCTIONS: /* ODBC 1.0 */
-        // what time and date functions are supported? (bitmask)
-        *((DWORD *)rgbInfoValue) = (SQL_FN_TD_NOW);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = (SQL_FN_TD_NOW);
         break;
 
     case SQL_TXN_CAPABLE: /* ODBC 1.0 */
-        *((WORD *)rgbInfoValue) = (WORD)SQL_TC_ALL;
-        // Postgres can deal with create or drop table statements in a transaction
-        if(pcbInfoValue) { *pcbInfoValue = 2; }
+        /* Postgres can deal with create or drop table statements in a transaction */
+		len = 2;
+        value = SQL_TC_ALL;
         break;
 
     case SQL_TXN_ISOLATION_OPTION: /* ODBC 1.0 */
-        // what transaction isolation options are available? (bitmask)
-        // only the default--serializable transactions.
-        *((DWORD *)rgbInfoValue) = SQL_TXN_READ_COMMITTED; // SQL_TXN_SERIALIZABLE;
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = SQL_TXN_READ_COMMITTED; // SQL_TXN_SERIALIZABLE;
         break;
 
     case SQL_UNION: /* ODBC 2.0 */
 		/*  unions with all supported in postgres 6.3 */
-        *((DWORD *)rgbInfoValue) = (SQL_U_UNION | SQL_U_UNION_ALL);
-        if(pcbInfoValue) { *pcbInfoValue = 4; }
+		len = 4;
+        value = (SQL_U_UNION | SQL_U_UNION_ALL);
         break;
 
     case SQL_USER_NAME: /* ODBC 1.0 */
 		p = CC_get_username(conn);
-        if (pcbInfoValue) *pcbInfoValue = strlen(p);
-        strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
         break;
 
     default:
@@ -736,7 +591,43 @@ char *p;
         return SQL_ERROR;
     }
 
-    return SQL_SUCCESS;
+	result = SQL_SUCCESS;
+
+	mylog("SQLGetInfo: p='%s', len=%d, value=%d, cbMax=%d\n", p?p:"<NULL>", len, value, cbInfoValueMax);
+
+	/*	NOTE, that if rgbInfoValue is NULL, then no warnings or errors should
+		result and just pcbInfoValue is returned, which indicates what length 
+		would be required if a real buffer had been passed in.
+	*/
+	if (p) {  /* char/binary data */
+		len = strlen(p);
+
+		if (rgbInfoValue) {
+			strncpy_null((char *)rgbInfoValue, p, (size_t)cbInfoValueMax);
+
+			if (len >= cbInfoValueMax)  {
+				result = SQL_SUCCESS_WITH_INFO;
+				conn->errornumber = STMT_TRUNCATED;
+				conn->errormsg = "The buffer was too small for the result.";
+			}
+		}
+	}
+
+	else {	/* numeric data */
+		
+		if (rgbInfoValue) {
+		
+			if (len == 2 ) 
+				*((WORD *)rgbInfoValue) = (WORD) value;
+			else if (len == 4)
+				*((DWORD *)rgbInfoValue) = (DWORD) value;
+		}
+	}
+
+	if (pcbInfoValue) 
+		*pcbInfoValue = len;
+
+	return result;
 }
 
 //      -       -       -       -       -       -       -       -       -

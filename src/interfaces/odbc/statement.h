@@ -70,6 +70,7 @@ typedef enum {
 #define STMT_ROW_OUT_OF_RANGE 21
 #define STMT_OPERATION_CANCELLED 22
 #define STMT_INVALID_CURSOR_POSITION 23
+#define STMT_VALUE_OUT_OF_RANGE 24
 
 /* statement types */
 enum {

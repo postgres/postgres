@@ -63,6 +63,7 @@ typedef enum {
 #define CONN_UNABLE_TO_LOAD_DLL 212
 
 #define CONN_OPTION_VALUE_CHANGED 213
+#define CONN_VALUE_OUT_OF_RANGE 214
 
 /* Conn_status defines */
 #define CONN_IN_AUTOCOMMIT 0x01
