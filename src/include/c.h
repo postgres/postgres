@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.7 1997/02/08 20:39:50 momjian Exp $
+ * $Id: c.h,v 1.8 1997/02/09 04:50:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -754,7 +754,6 @@ extern char *form(char *fmt, ...);
 
 #if defined(WIN32)
 #include "port/win32/nt.h"
-#include "port/win32/machine.h"
 #endif /* WIN32 */
 
 /* ----------------
