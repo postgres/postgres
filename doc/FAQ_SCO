@@ -1,15 +1,15 @@
 ============================================================
-Frequently Asked Questions (FAQ) for PostgreSQL 7.2
+Frequently Asked Questions (FAQ) for PostgreSQL 7.3
 SCO UnixWare and OpenServer specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:           $Date: 2001/08/29 19:14:39 $
+last updated:           $Date: 2002/11/08 16:49:50 $
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
 
 
-PostgreSQL 7.1 can be built on SCO UnixWare 7 and SCO OpenServer 5.
+PostgreSQL 7.3 can be built on SCO UnixWare 7 and SCO OpenServer 5.
 On OpenServer, you can use either the OpenServer Development Kit or 
 the Universal Development Kit.
 
@@ -22,6 +22,7 @@ Topics:
 *) Using the UDK on OpenServer
 *) Compiling PostgreSQL using the UDK
 *) Reading the PostgreSQL man pages
+*) C99 Issues with the 7.1.1b Feature Supplement 
 
 
 ***************************************************************************
@@ -137,3 +138,15 @@ variable in /etc/default/man.  I use:
 On OpenServer, some extra research needs to be invested to make the
 man pages usable, because the man system is a bit different from other
 platforms.  Currently, PostgreSQL will not install them at all.
+
+
+***************************************************************************
+*) C99 Issues with the 7.1.1b Feature Supplement 
+
+For compilers earlier than the one released with OpenUNIX 8.0.0(UnixWare
+7.1.2), Including the 7.1.1b Feature Supplement, you may need to specify -Xb
+ in CFLAGS or the  CC environment variable.  The indication of this is an
+error in compiling tuplesort.c referencing inline functions. 
+
+Apparently there was a change in the 7.1.2(8.0.0) compiler and beyond.
+
