@@ -34,9 +34,9 @@
 <Para>
      A single  <Application>postmaster</Application>  manages  a  given  collection  of
      databases  on  a  single  host.   Such  a collection of
-     databases is called an installation or site.   Frontend
+     databases is called a cluster (of databases).   Frontend
      applications  that  wish  to  access  a  given database
-     within an installation make calls to the   library.
+     within a cluster make calls to the   library.
      The library sends user requests over the network to the
      <Application>postmaster</Application>
 (<XRef LinkEnd="PGARCH-CONNECTIONS" EndTerm="PGARCH-CONNECTIONS">(a)), 

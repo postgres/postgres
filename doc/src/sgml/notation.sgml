@@ -1,21 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.11 2000/12/21 22:55:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.12 2000/12/22 19:31:56 petere Exp $
 -->
 
 <sect1 id="terminology">
  <title>Terminology</title>
-
- <para>
-  In the following documentation,
-  <firstterm>site</firstterm>
-  may be interpreted as the host machine on which 
-  <Productname>Postgres</Productname> is installed.
-  Since it is possible to install more than one set of 
-  <Productname>Postgres</Productname>
-  databases on a single host, this term more precisely denotes any
-  particular set of installed 
-  <Productname>Postgres</Productname> binaries and databases.
- </para>
 
  <para>
   The 

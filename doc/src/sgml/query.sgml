@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.15 2000/12/22 18:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/query.sgml,v 1.16 2000/12/22 19:31:56 petere Exp $
 -->
 
  <chapter id="query">
@@ -88,8 +88,8 @@ mydb=> \i basics.sql
     are <firstterm>attributes</firstterm>.
     As  previously  discussed,  classes  are  grouped  into
     databases,  and  a collection of databases managed by a
-    single <application>postmaster</application> process constitutes  an  installation
-    or site.
+    single <application>postmaster</application> process constitutes  a
+    database cluster.
    </para>
   </sect1>
 
