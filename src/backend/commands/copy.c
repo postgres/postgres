@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.106 2000/05/18 01:52:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.106.2.1 2000/06/05 11:13:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,7 +309,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	if (from)
 	{							/* copy from file to database */
 		if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-			elog(ERROR, "You can't change sequence relation %s", relname);
+			elog(ERROR, "You cannot change sequence relation %s", relname);
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
