@@ -90,6 +90,12 @@ To upgrade to PostgreSQL v6.1 do the following:
      is 2.5.3 or before 2.5.2 then you will have to upgrade flex.  You may
      get it at ftp://prep.ai.mit.edu/pub/gnu/flex-2.5.4.tar.gz.
 
+     If you need flex and don't have it or have the wrong version, then
+     you will be told so when you attempt to compile the program.  Feel
+     free to skip this step if you aren't sure you need it.  If you do
+     need it then you will be told to install/upgrade flex when you try to
+     compile.
+
      To install it, type the following:
         cd
         gunzip -c flex-2.5.4.tar.gz | tar xvf -
@@ -105,10 +111,6 @@ To upgrade to PostgreSQL v6.1 do the following:
      This will update files /usr/man/man1/flex.1, /usr/bin/flex,
      /usr/lib/libfl.a, /usr/include/FlexLexer.h and will add link
      /usr/bin/flex++ which points to flex.
-
-     If you have flex v2.5.3 and do not have handy access to the
-     internet, you can apply the patch in /usr/src/pgsql/doc/README.flex
-     instead.
 
   6) If you are upgrading an existing system from any version before
      version 6.1 beta release 970512 then back up the current
@@ -162,12 +164,10 @@ To upgrade to PostgreSQL v6.1 do the following:
         su
         cd /usr/src
         mkdir pgsql
-        chown postgres pgsql
-        chgrp postgres pgsql
+        chown postgres:postgres pgsql
         cd /usr/local
         mkdir pgsql
-        chown postgres pgsql
-        chgrp postgres pgsql
+        chown postgres:postgres pgsql
         exit
 
  10) Unzip and untar the new source file.  Type
@@ -316,7 +316,10 @@ To upgrade to PostgreSQL v6.1 do the following:
      your old database on top of the one in your new database, rather than
      redoing this from scratch.
 
- 18) Start the postmaster in preparation for the regression tests.  First,
+ 18) If you wish to skip the regression tests then skip to step 21.
+     However, we think skipping the tests is a BAD idea!
+
+     Start the postmaster in preparation for the regression tests.  First,
      set the timezone for Berkley, California.  On some systems you may do
      this by setting environment variable TZ.  I.e., using bash, type
         export TZ=PST8PDT7,M04.01.0,M10.0503
@@ -338,11 +341,30 @@ To upgrade to PostgreSQL v6.1 do the following:
      You should get on the screen (and also written to file ./regress.out)
      a series of statements stating which tests passed and which tests
      failed.  Please note that it is normal for some of the tests to
-     "fail".  For the failed tests, use diff to compare the files in
-     directories ./results and ./expected.  "Failed" tests may have
-     failed due to slightly different error messages, output formatting,
-     failure to set the timezone correctly for your platform, etc.
-     "Failures" of this type do not indicate a problem with PostgreSQL.
+     "fail".
+
+     For the tests that failed, i.e. if float8 failed, type something like:
+        cd /usr/src/pgsql/src/test/regress
+        diff -w expected/float8.out results
+     Now do some intelligent interpretation of what you see before
+     deciding if you have detected a bug in PostgreSQL as it compiled on
+     you platform.
+
+     For example.  On a SPARC/Linux-elf platform using the 970516 beta
+     version of PostgreSQL v6.1 the following tests "failed".  float8
+     and geometry "failed" due to minor precision differences in floating
+     point numbers.  timespan and horology had different values from the
+     expected "14 secs ago".  (This may be a real bug.  It may simply be
+     problems with convincing the back end what timezone and time to
+     use.)  datetime, abstime and tinterval failed because it used GMT
+     where it should have used PST and PDT.  (Same comment.)  select_views
+     failed for unknown reasons.  Conclusion?  There may be some real
+     bugs exhibited here but will they effect what you intend to use
+     PostgreSQL for?  (Note:  Most of these bugs also occur on the
+     i86/Linux platform.  Also note that there will be significant
+     changes made to the date and time types immediately after the
+     v6.1 release so if you do need these functions, monitor the HACKERS
+     and PORTS mailing lists to see what is going on.)
 
      After running the tests, type
         cd /usr/src/pgsql/src/test/regress
@@ -387,13 +409,21 @@ To upgrade to PostgreSQL v6.1 do the following:
           postmaster if it dies, but he doesn't know if there are other side
           effects.)
 
-       c) In FreeBSD edit /usr/local/etc/rc.d/pgsql.sh to contain the
-          following two lines, and make it 755 root:bin :
+       c) In FreeBSD 2.2-RELEASE edit /usr/local/etc/rc.d/pgsql.sh to
+          contain the following lines and make it chmod 755 and chown
+          root:bin.
              #!/bin/sh
-             [ -x /usr/local/pgsql/bin/postmaster ] &&
-               su -l pgsql -c '/usr/local/pgsql/bin/postmaster
-               -D/usr/local/pgsql/data -o -F > /usr/local/pgsql/errlog
-               &' && echo -n ' pgsql'
+             [ -x /usr/local/pgsql/bin/postmaster ] && {
+               su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
+                       -D/usr/local/pgsql/data
+                       -S -o -F > /usr/local/pgsql/errlog' &
+               echo -n ' pgsql'
+             }
+          You may put the line breaks as shown above.  The shell is smart
+          enough to keep parsing beyond end-of-line if there is an
+          expression unfinished.  The exec saves one layer of shell under
+          the postmaster process so the parent is init.  Note:  Unlike the
+          other examples, this one has been tested.
 
        d) In RedHat v4.0 Linux create file /etc/rc.d/init.d/postgres.init to
           contain the following single line:
@@ -550,4 +580,30 @@ NeXT:
         a product so contact him for information.  He has also indicated that
         binary releases of PostgreSQL for NEXTSTEP will be made available to
         the general public.  Contact Info@RnA.nl for information.
+
+SPARC Linux-elf:
+        There was not time to finish adding support for this in the v6.1
+        release.  However, if you are running RedHat Linux v4.0 on a
+        SPARC platform then install flex v2.5.4 and tell configure you
+        have a Linux-elf platform.  Between configuring and compiling
+        PostgreSQL, edit the following files:
+          1) Edit src/GNUmakefile to comment out the call to lexflex and
+             the if-then-else test that follows it.  (This may not be
+             necessary by the time v6.1 gets released.)
+          2) Edit src/Makefile.global to change "-O2" to "-O".
+          3) Edit src/backend/libpq/pqcomprim.c, near the start to replace
+                #ifdef        HAVE_ENDIAN_H
+                #  include    <endian.h>
+                #endif
+             with
+                /*
+                #ifdef        HAVE_ENDIAN_H
+                #  include    <endian.h>
+                #endif
+                */
+                #define BYTE_ORDER LITTLE_ENDIAN 
+        If you want to know the reasonilng behind the above instructions
+        then look in ftp://ftp.postgresql.org/pub/majordomo/ports for a
+        May 16, 1997 mail message called "regression tests on a
+        SPARC/Linux platform".
 
