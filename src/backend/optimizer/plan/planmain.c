@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.23 1998/07/18 04:22:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.24 1998/08/07 05:02:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "nodes/pg_list.h"
 #include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
+#include "nodes/print.h"
 #include "nodes/relation.h"
 #include "nodes/makefuncs.h"
 
@@ -85,7 +86,11 @@ query_planner(Query *root,
 		qual = (List *) SS_process_sublinks((Node *) qual);
 
 	qual = cnfify((Expr *) qual, true);
-
+#ifdef OPTIMIZER_DEBUG
+	printf("After cnfify()\n");
+	pprint(qual);
+#endif
+	
 	/*
 	 * A command without a target list or qualification is an error,
 	 * except for "delete foo".
@@ -250,8 +255,8 @@ subplanner(Query *root,
 		   List *flat_tlist,
 		   List *qual)
 {
-	RelOptInfo		   *final_relation;
-	List	   *final_relation_list;
+	RelOptInfo	*final_relation;
+	List	    *final_relation_list;
 
 	/*
 	 * Initialize the targetlist and qualification, adding entries to

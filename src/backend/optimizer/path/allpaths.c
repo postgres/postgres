@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.18 1998/08/04 00:42:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.19 1998/08/07 05:02:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@ int32		_use_geqo_rels_ = GEQO_RELS;
 
 static void find_rel_paths(Query *root, List *rels);
 static List *find_join_paths(Query *root, List *outer_rels, int levels_needed);
+static void debug_print_rel(Query *root, RelOptInfo *rel);
 
 /*
  * find-paths--
@@ -173,7 +174,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 {
 	List	   *x;
 	List	   *new_rels = NIL;
-	RelOptInfo		   *rel;
+	RelOptInfo *rel;
 
 	/*******************************************
 	 * genetic query optimizer entry point	   *
@@ -236,7 +237,7 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 
 			/* #define OPTIMIZER_DEBUG */
 #ifdef OPTIMIZER_DEBUG
-			printf("levels left: %d\n", levels_left);
+			printf("levels left: %d\n", levels_needed);
 			debug_print_rel(root, rel);
 #endif
 		}

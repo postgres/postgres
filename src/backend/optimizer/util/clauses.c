@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.17 1998/06/15 19:28:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.18 1998/08/07 05:02:22 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -349,8 +349,6 @@ pull_constant_clauses(List *quals, List **constantQual)
  *	  through the left and right operands of a clause.
  *
  * Returns the list of relids and vars.
- *
- * XXX take the nreverse's out later
  *
  */
 void

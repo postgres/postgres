@@ -9,6 +9,7 @@ planner()
   preprocess target list
   preprocess qualifications(WHERE)
 --query_planner()
+   cnfify qualification, so qual are expressions (were AND's) and OR clauses
    pull out constants from target list
    get a target list that only contains column names, no expressions
    if none, then return

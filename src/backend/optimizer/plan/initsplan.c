@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.14 1998/08/04 16:44:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.15 1998/08/07 05:02:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,7 @@
 extern int	Quiet;
 
 static void add_clause_to_rels(Query *root, List *clause);
-static void
-add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo,
+static void add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo,
 							 List *join_relids);
 static void add_vars_to_rels(Query *root, List *vars, List *join_relids);
 
@@ -182,8 +181,6 @@ add_clause_to_rels(Query *root, List *clause)
 	clauseinfo->indexids = NIL;
 	clauseinfo->mergejoinorder = (MergeOrder *) NULL;
 	clauseinfo->hashjoinoperator = (Oid) 0;
-
-
 
 	if (length(relids) == 1)
 	{
