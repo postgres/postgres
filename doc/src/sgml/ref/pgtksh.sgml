@@ -1,35 +1,32 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgadmin-ref.sgml,v 1.4 1999/08/06 13:50:31 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgtksh.sgml,v 1.1 1999/08/06 13:50:31 thomas Exp $
 Postgres documentation
 -->
 
-<refentry id="APP-PGADMIN">
+<refentry id="APP-PGTKSH">
  <refmeta>
-  <refentrytitle id="app-pgadmin-title">
-   <application>pgadmin</application>
+  <refentrytitle id="app-pgtksh-title">
+   <application>pgtksh</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
  </refmeta>
  <refnamediv>
   <refname>
-   <application>pgadmin</application>
+   <application>pgtksh</application>
   </refname>
   <refpurpose>
-   <productname>Postgres</productname> graphical interactive client
+   <productname>Postgres</productname> graphical TCL/TK shell
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-05-19</date>
+   <date>1999-08-03</date>
   </refsynopsisdivinfo>
   <synopsis>
-pgadmin [ <replaceable class="parameter">dbname</replaceable> ]
+pgtksh [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
-  <refsect2 id="R2-APP-PGADMIN-1">
-   <refsect2info>
-    <date>1999-05-19</date>
-   </refsect2info>
+  <refsect2 id="R2-APP-PGTKSH-1">
    <title>
     Inputs
    </title>
@@ -48,10 +45,7 @@ pgadmin [ <replaceable class="parameter">dbname</replaceable> ]
    </para>
   </refsect2>
 
-  <refsect2 id="R2-APP-PGADMIN-2">
-   <refsect2info>
-    <date>1999-05-19</date>
-   </refsect2info>
+  <refsect2 id="R2-APP-PGTKSH-2">
    <title>
     Outputs
    </title>
@@ -60,20 +54,21 @@ pgadmin [ <replaceable class="parameter">dbname</replaceable> ]
   </refsect2>
  </refsynopsisdiv>
 
- <refsect1 id="R1-APP-PGADMIN-1">
-  <refsect1info>
-   <date>1999-05-19</date>
-  </refsect1info>
+ <refsect1 id="R1-APP-PGTKSH-1">
   <title>
    Description
   </title>
   <para>
-   <note>
-    <title>Editor's Note</title>
-    <para>
-     This should be transcribed from other pgadmin info. Volunteers?
-    </para>
-   </note>
+   <application>pgtksh</application> provides a graphical TCL/TK shell interface
+   for <productname>Postgres</productname>.
+  </para>
+
+  <para>
+   Another way of accessing <productname>Postgres</productname>
+   through <acronym>TCL</acronym> is to use
+   <xref linkend="app-pgtclsh" endterm="app-pgtclsh-title">
+   or
+   <xref linkend="app-pgaccess" endterm="app-pgaccess-title">.
   </para>
  </refsect1>
 </refentry>

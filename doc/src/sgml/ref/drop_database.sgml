@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.6 1999/07/22 15:09:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.7 1999/08/06 13:50:30 thomas Exp $
 Postgres documentation
 -->
 
-<refentry id="SQL-DROPDATABASE">
+<refentry id="SQL-DROPDATABASE" xreflabel="drop_database">
  <refmeta>
   <refentrytitle id="SQL-DROPDATABASE-TITLE">
    DROP DATABASE
@@ -117,14 +117,14 @@ WARN: destroydb: database "<replaceable class="parameter">name</replaceable>" do
    <para>
     This query cannot be executed while connected to the target
     database. It is usually preferable to use
-    <xref linkend="app-destroydb-title" endterm="app-destroydb-title">
+    <xref linkend="app-destroydb" endterm="app-destroydb-title">
     instead.
    </para>
 
    <para>
     Refer to
-    <xref linkend="app-createdb-title" endterm="app-createdb-title"> and
-    <xref linkend="sql-createdatabase-title" endterm="sql-createdatabase-title">
+    <xref linkend="app-createdb" endterm="app-createdb-title"> and
+    <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">
     for information on how to create a database.
    </para>
   </refsect2>

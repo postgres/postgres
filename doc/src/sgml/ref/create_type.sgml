@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.10 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.11 1999/08/06 13:50:30 thomas Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-CREATETYPE">
  <refmeta>
-  <refentrytitle>
+  <refentrytitle id="sql-createtype-title">
    CREATE TYPE
   </refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>

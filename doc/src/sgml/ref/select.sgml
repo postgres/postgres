@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.21 1999/07/22 15:09:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.22 1999/08/06 13:50:31 thomas Exp $
 Postgres documentation
 -->
 
@@ -197,7 +197,7 @@ SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable>
    <command>SELECT</command> will return rows from one or more tables.
    Candidates for selection are rows which satisfy the WHERE condition;
    if WHERE is omitted, all rows are candidates.
-   (See <xref linkend="where-title" endterm="where-title">.)
+   (See <xref linkend="sql-where" endterm="sql-where-title">.)
   </para>
 
   <para>
@@ -214,37 +214,37 @@ SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable>
   <para>
    The GROUP BY clause allows a user to divide a table
    conceptually into groups.
-   (See <xref linkend="group-by-title" endterm="group-by-title">.)
+   (See <xref linkend="sql-groupby" endterm="sql-groupby-title">.)
   </para>
 
   <para>
    The HAVING clause specifies a grouped table derived by the
    elimination of groups from the result of the previously
    specified clause.
-   (See <xref linkend="having-title" endterm="having-title">.)
+   (See <xref linkend="sql-having" endterm="sql-having-title">.)
   </para>
    
   <para>
    The ORDER BY clause allows a user to specify that he/she
    wishes the rows sorted according to the ASCending or 
    DESCending mode operator.
-   (See <xref linkend="order-by-title" endterm="order-by-title">.)
+   (See <xref linkend="sql-orderby-title" endterm="sql-orderby-title">.)
   </para>
    
   <para>
    The UNION clause allows the result to be the collection of rows
    returned by the queries involved.
-   (See <xref linkend="union-title" endterm="union-title">.)
+   (See <xref linkend="sql-union" endterm="sql-union-title">.)
   </para>
    
   <para>
    The INTERSECT give you the rows that are common to both queries.
-   (See <xref linkend="intersect-title" endterm="intersect-title">.)
+   (See <xref linkend="sql-intersect" endterm="sql-intersect-title">.)
   </para>
    
   <para>
    The EXCEPT give you the rows in the upper query not in the lower query.
-   (See <xref linkend="except-title" endterm="except-title">.)
+   (See <xref linkend="sql-except" endterm="sql-except-title">.)
   </para>
    
   <para>
@@ -262,11 +262,11 @@ SELECT [ ALL | DISTINCT [ ON <replaceable class="PARAMETER">column</replaceable>
    (See the <command>GRANT</command>/<command>REVOKE</command> statements).
   </para>
    
-  <refsect2 id="R2-SQL-WHERE-2">
+  <refsect2 id="SQL-WHERE">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title id="where-title">
+   <title id="sql-where-title">
     WHERE Clause
    </title>
 
@@ -303,11 +303,11 @@ WHERE <replaceable class="PARAMETER">boolean_expr</replaceable>
    </para>
   </refsect2>
   
-  <refsect2 id="R2-SQL-GROUPBY-2">
+  <refsect2 id="SQL-GROUPBY">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title id="group-by-title">
+   <title id="sql-groupby-title">
     GROUP BY Clause
    </title>
    <para>
@@ -328,11 +328,11 @@ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
    </para>
   </refsect2>
 
-  <refsect2 id="R2-SQL-HAVING-2">
+  <refsect2 id="SQL-HAVING">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title id="having-title">
+   <title id="sql-having-title">
     HAVING Clause
    </title>
    <para>
@@ -358,11 +358,11 @@ HAVING <replaceable class="PARAMETER">cond_expr</replaceable>
    </para>
   </refsect2>
   
-  <refsect2 id="R2-SQL-ORDERBYCLAUSE-2">
+  <refsect2 id="SQL-ORDERBY">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title id="order-by-title">
+   <title id="sql-orderby-title">
     ORDER BY Clause
    </title>
    <para>
@@ -401,11 +401,11 @@ SELECT name FROM distributors ORDER BY code;
    </para>
   </refsect2>
   
-  <refsect2 id="R2-SQL-UNION-2">
+  <refsect2 id="SQL-UNION">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title id="union-title">
+   <title id="sql-union-title">
     UNION Clause
    </title>
    <para>
@@ -441,11 +441,11 @@ SELECT name FROM distributors ORDER BY code;
 
   </refsect2>
 
-  <refsect2 id="R2-SQL-INTERSECT-2">
+  <refsect2 id="SQL-INTERSECT">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title id="intersect-title">
+   <title id="sql-intersect-title">
     INTERSECT Clause
    </title>
    <para>
@@ -473,11 +473,11 @@ SELECT name FROM distributors ORDER BY code;
    </para>
   </refsect2>
 
-  <refsect2 id="R2-SQL-EXCEPT-2">
+  <refsect2 id="SQL-EXCEPT">
    <refsect2info>
     <date>1998-09-24</date>
    </refsect2info>
-   <title id="except-title">
+   <title id="sql-except-title">
     EXCEPT Clause
    </title>
    <para>

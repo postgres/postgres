@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.5 1999/07/22 15:09:09 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.6 1999/08/06 13:50:30 thomas Exp $
 Postgres documentation
 -->
 
-<refentry id="APP-CREATEDB">
+<refentry id="APP-CREATEDB" xreflabel="createdb">
  <refmeta>
   <refentrytitle id="APP-CREATEDB-TITLE">
    <application>createdb</application>
@@ -229,7 +229,8 @@ createdb: database creation failed on <replaceable class="parameter">dbname</rep
    <envar>PGREALM</envar>
    environment variables will be passed on to
    <application>psql</application>
-   and processed as described in <xref endterm="app-psql-title" linkend="app-psql-title">.
+   and processed as described in
+   <xref linkend="app-psql-title" endterm="app-psql-title">.
   </para>
  </refsect1>
 

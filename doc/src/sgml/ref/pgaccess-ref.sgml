@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.3 1999/07/22 15:09:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.4 1999/08/06 13:50:30 thomas Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-PGACCESS">
  <refmeta>
-  <refentrytitle id="pgaccess-ref">
+  <refentrytitle id="app-pgaccess-title">
    <application>pgaccess</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -20,16 +20,13 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-05-19</date>
+   <date>1999-08-03</date>
   </refsynopsisdivinfo>
   <synopsis>
 pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
   <refsect2 id="R2-APP-PGACCESS-1">
-   <refsect2info>
-    <date>1999-05-19</date>
-   </refsect2info>
    <title>
     Inputs
    </title>
@@ -49,9 +46,6 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
   </refsect2>
 
   <refsect2 id="R2-APP-PGACCESS-2">
-   <refsect2info>
-    <date>1999-05-19</date>
-   </refsect2info>
    <title>
     Outputs
    </title>
@@ -61,19 +55,346 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
  </refsynopsisdiv>
 
  <refsect1 id="R1-APP-PGACCESS-1">
-  <refsect1info>
-   <date>1999-05-19</date>
-  </refsect1info>
   <title>
    Description
   </title>
   <para>
-   <note>
-    <title>Editor's Note</title>
-    <para>
-     This should be transcribed from other pgaccess info. Volunteers?
-    </para>
-   </note>
+   <application>pgaccess</application> provides a graphical interface
+   for <productname>Postgres</productname>
+   where you
+   can manage your tables, edit them, define queries, sequences and
+   functions.
+  </para>
+
+  <para>
+   Another way of accessing <productname>Postgres</productname>
+   through tcl is to use
+   <xref linkend="app-pgtclsh" endterm="app-pgtclsh-title">
+   or
+   <xref linkend="app-pgtksh" endterm="app-pgtksh-title">.
+  </para>
+
+  <para>
+   <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Opens any database on a specified host at the specified port,
+      username and password.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Execute <xref linkend="sql-vacuum" endterm="sql-vacuum-title">.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Saves preferences in <filename>~/.pgaccessrc</filename> file.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For tables, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Open multiple tables for viewing, max n records (configurable).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Resize columns by dragging the vertical grid lines.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Wrap text in cells.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Dynamically adjust row height when editing.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Save table layout for every table.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Import/export to external files (SDF,CSV).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use filter capabilities; enter filter like price>3.14.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Specify sort order; enter manually the sort field(s).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Edit in place; double click the text you want to change.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Delete records; point to the record, press Del key.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Add new records; save new row with right-button-click.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Create tables with an assistant.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Rename and delete (drop) tables.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Retrieve information on tables, including owner, field information, indices.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For queries, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Define, edit and store <firstterm>user defined queries</firstterm>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Save view layouts.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Store queries as views.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Execute with optional user input parameters; e.g.
+      <programlisting>
+select * from invoices where year=[parameter "Year of selection"]
+      </programlisting>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      View any select query result.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Run action queries (insert, update, delete).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Construct queries using a visual query builder
+      with drag & drop support, table aliasing.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For sequences, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Define new instances.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Inspect existing instances.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Delete.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For views, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Define them by saving queries as views.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      View them, with filtering and sorting capabilities.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Design new views.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Delete (drop) existing views.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For functions, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Define.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Inspect.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Delete.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For reports, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Generate simple reports from a table (beta stage).
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Change font, size and style of fields and labels.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Load and save reports from the database.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Preview tables, sample postscript print.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For forms, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Open user defined forms.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use a form design module.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Access record sets using a query widget.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   For scripts, <application>pgaccess</application> can:
+
+   <itemizedlist mark="bullet" spacing="compact">
+    <listitem>
+     <para>
+      Define.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Modify.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Call user defined scripts.
+     </para>
+    </listitem>
+   </itemizedlist>
   </para>
  </refsect1>
 </refentry>

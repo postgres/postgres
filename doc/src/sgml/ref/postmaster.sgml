@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.4 1999/07/22 15:09:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.5 1999/08/06 13:50:31 thomas Exp $
 Postgres documentation
 -->
 
@@ -460,7 +460,7 @@ or its alternative form
    <programlisting>
 % setenv PGPORT 1234
 % psql
-   </programlisting>.
+   </programlisting>
   </para>
  </refsect1>
 </refentry>
