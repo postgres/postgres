@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.31 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.32 2002/01/06 17:54:14 momjian Exp $
 -->
 
  <chapter id="ecpg">
@@ -568,90 +568,6 @@ struct sqlca
     works internally. It contains valuable information to help users
     understand how to use <application>ecpg</application>.
    </para>
-
-   <sect2>
-    <title>ToDo List</title>
-
-    <para>
-     This version of the preprocessor has some flaws:
-
-     <variablelist>
-      <varlistentry>
-       <term>Library functions</term>
-       <listitem>
-        <para>
-         to_date et al. does not exist. However,
-         <productname>PostgreSQL</productname> has some good conversion
-         routines so you probably won't miss them.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term>Structures and unions</term>
-       <listitem>
-        <para>
-         Structures and unions have to be defined in the
-         <command>declare</> section.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term>Missing statements</term>
-       <listitem>
-        <para>
-         The following statements are not implemented thus far:
-
-         <itemizedlist>
-          <listitem>
-           <para>
-            <literal>exec sql allocate</>
-           </para>
-          </listitem>
-
-          <listitem>
-           <para>
-            <literal>exec sql deallocate</>
-           </para>
-          </listitem>
- 
-          <listitem>
-           <para>
-            <literal>SQLSTATE</>
-           </para>
-          </listitem>
-         </itemizedlist>
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term>message 'no data found'</term>
-       <listitem>
-        <para>
-         The error message for <quote>no data</quote> in:
-         <programlisting>
-exec sql insert select from statement
-        </programlisting>
-         has to be <literal>100</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><literal>sqlwarn[6]</literal></term>
-       <listitem>
-        <para>
-         <literal>sqlwarn[6]</literal> should be <literal>W</> if the <command>PRECISION</>
-         or <command>SCALE</> value specified in a <command>SET
-         DESCRIPTOR</> statement was ignored.
-        </para>
-       </listitem>
-      </varlistentry>
-     </variablelist>
-    </para>
-   </sect2>
 
    <sect2>
     <title>The Preprocessor</title>
