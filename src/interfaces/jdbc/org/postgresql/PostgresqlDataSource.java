@@ -40,7 +40,7 @@
  *
  * Copyright 1999 (C) Exoffice Technologies Inc. All Rights Reserved.
  *
- * $Id: PostgresqlDataSource.java,v 1.1 2000/10/12 08:55:24 peter Exp $
+ * $Id: PostgresqlDataSource.java,v 1.2 2000/11/10 22:06:26 momjian Exp $
  */
 
 
@@ -64,9 +64,12 @@ import javax.naming.Context;
 import javax.naming.Name;
 import javax.naming.NamingException;
 import javax.naming.spi.ObjectFactory;
-import postgresql.util.PSQLException;
-import postgresql.xa.XADataSourceImpl;
-
+// FIXME
+//import postgresql.util.PSQLException;
+//import postgresql.xa.XADataSourceImpl;
+import org.postgresql.util.PSQLException;
+import org.postgresql.xa.XADataSourceImpl;
+//---------
 
 /**
  * Implements a JDBC 2.0 {@link javax.sql.DataSource} for the
@@ -191,8 +194,10 @@ public class PostgresqlDataSource
      * Each datasource maintains it's own driver, in case of
      * driver-specific setup (e.g. pools, log writer).
      */
-    private transient postgresql.Driver _driver;
-
+// FIXME
+//    private transient postgresql.Driver _driver;
+private transient org.postgresql.Driver _driver;
+//---------
 
 
 
@@ -223,8 +228,15 @@ public class PostgresqlDataSource
 		// Constructs a driver for use just by this data source
 		// which will produce TwoPhaseConnection-s. This driver
 		// is not registered with the driver manager.
-		_driver = new postgresql.Driver();
-		_driver.setLogWriter( _logWriter );
+// FIXME
+//		_driver = new postgresql.Driver();
+_driver = new org.postgresql.Driver();
+//-----------
+
+//FIXME
+//		_driver.setLogWriter( _logWriter );
+// Method seems to be unavailable. Just commented it out.
+//----------
 	    } catch ( SQLException except ) {
 		if ( _logWriter != null )
 		    _logWriter.println( "DataSource: Failed to initialize JDBC driver: " + except );
@@ -260,7 +272,10 @@ public class PostgresqlDataSource
 	// attempt or a failure.
 	try {
 	    conn = _driver.connect( url, info );
-	    if ( ! ( conn instanceof postgresql.jdbc2.Connection ) ) {
+// FIXME
+//	    if ( ! ( conn instanceof postgresql.jdbc2.Connection ) ) {
+if ( ! ( conn instanceof org.postgresql.jdbc2.Connection ) ) {
+//--------
 		if ( _logWriter != null )
 		    _logWriter.println( "DataSource: JDBC 1 connections not supported" );
 		throw new PSQLException( "postgresql.ds.onlyjdbc2" );
@@ -289,7 +304,10 @@ public class PostgresqlDataSource
 	// synchronizing.
 	if ( writer != null ) {
 	    if ( _driver != null )
-		_driver.setLogWriter( writer );
+// FIXME
+//		_driver.setLogWriter( writer );
+// Method seems to be unavailable. Commented it out.
+//----------
 	    _logWriter = writer;
 	}
     }

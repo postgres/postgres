@@ -468,9 +468,20 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     // This works, but it's commented out because Michael Stephenson's
     // solution is better still:
     //SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    
-    // Michael Stephenson's solution:
+// Modification by Jan Thomae
+    String sub = s.substring(s.length() - 3, s.length()-2);
+    if (sub.equals("+") || sub.equals("-")) {
+            s = s.substring(0, s.length()-3) + "GMT"+ s.substring(s.length()-3, s.length())+":00";
+    }
+// -------
+       // Michael Stephenson's solution:
     SimpleDateFormat df = null;
+
+// Modification by Jan Thomae
+    if (s.length()>27) {
+    df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");  
+    } else              
+// -------
     if (s.length()>21 && s.indexOf('.') != -1) {
 	df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSzzz");
     } else if (s.length()>19 && s.indexOf('.') == -1) {
@@ -839,14 +850,14 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
 	//if index<0, count from the end of the result set, but check
 	//to be sure that it is not beyond the first index
-	if (index<0) {
+	if (index<0) 
 	    if (index>=-rows.size())
 		internalIndex=rows.size()+index;
 	    else {
 		beforeFirst();
 		return false;
 	    }
-	} else {
+		
 	//must be the case that index>0, 
 	//find the correct place, assuming that 
 	//the index is not too large
@@ -855,7 +866,6 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	else {
 	    afterLast();
 	    return false;
-	}
 	}
 
 	current_row=internalIndex;
