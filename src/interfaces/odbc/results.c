@@ -628,7 +628,7 @@ inolog("COLUMN_NULLABLE=%d\n", value);
 			break;
 
 		case SQL_COLUMN_OWNER_NAME: /* == SQL_DESC_SCHEMA_NAME */
-			p = "";
+			p = fi && (fi->ti) ? fi->ti->schema : "";
 			break;
 
 		case SQL_COLUMN_PRECISION: /* in 2.x */
@@ -744,6 +744,10 @@ inolog("COLUMN_TYPE=%d\n", value);
 			value = (fi && !fi->name[0] && !fi->alias[0]) ? SQL_UNNAMED : SQL_NAMED;
 			break;
 #endif /* ODBCVER */
+		case 1212:
+			stmt->errornumber = STMT_OPTION_NOT_FOR_THE_DRIVER;
+			stmt->errormsg = "this request may be for MS SQL Server";
+			return SQL_ERROR;
 		default:
 			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
 			stmt->errormsg = "ColAttribute for this type not implemented yet";
@@ -1293,9 +1297,10 @@ PGAPI_ExtendedFetch(
 
 	/* increment the base row in the tuple cache */
 	QR_set_rowset_size(res, opts->rowset_size);
-	/* QR_inc_base(res, stmt->last_fetch_count); */
-	/* Is inc_base right ? */
-	res->base = stmt->rowset_start;
+	if (SC_is_fetchcursor(stmt))
+		QR_inc_base(res, stmt->last_fetch_count);
+	else
+		res->base = stmt->rowset_start;
 
 	/* Physical Row advancement occurs for each row fetched below */
 

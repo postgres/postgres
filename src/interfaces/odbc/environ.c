@@ -281,6 +281,9 @@ PGAPI_StmtError(	HSTMT hstmt,
 			case STMT_INVALID_OPTION_IDENTIFIER:
 				strcpy(szSqlState, "HY092");
 				break;
+			case STMT_OPTION_NOT_FOR_THE_DRIVER:
+				strcpy(szSqlState, "HYC00");
+				break;
 			case STMT_EXEC_ERROR:
 			default:
 				strcpy(szSqlState, "S1000");

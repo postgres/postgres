@@ -209,6 +209,19 @@ set_statement_option(ConnectionClass *conn,
 				conn->stmtOptions.use_bookmarks = vParam;
 			break;
 
+		case 1227:
+		case 1228:
+			if (stmt)
+			{
+				stmt->errornumber = STMT_OPTION_NOT_FOR_THE_DRIVER;
+				stmt->errormsg = "The option may be for MS SQL Server(Set)";
+			}
+			else if (conn)
+			{
+				conn->errornumber = STMT_OPTION_NOT_FOR_THE_DRIVER;
+				conn->errormsg = "The option may be for MS SQL Server(Set)";
+			}
+			return SQL_ERROR;
 		default:
 			{
 				char		option[64];

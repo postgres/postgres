@@ -79,6 +79,7 @@ typedef enum
 #define STMT_RETURN_NULL_WITHOUT_INDICATOR				29
 #define STMT_ERROR_IN_ROW						30
 #define STMT_INVALID_DESCRIPTOR_IDENTIFIER				31
+#define STMT_OPTION_NOT_FOR_THE_DRIVER					32
 
 /* statement types */
 enum
