@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.66 2004/07/01 00:51:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.67 2004/07/11 18:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,6 +423,8 @@ typedef HeapTupleData *HeapTuple;
 #define XLOG_HEAP_UPDATE	0x20
 #define XLOG_HEAP_MOVE		0x30
 #define XLOG_HEAP_CLEAN		0x40
+#define XLOG_HEAP_NEWPAGE	0x50
+/* opcodes 0x60, 0x70 still free */
 #define XLOG_HEAP_OPMASK	0x70
 /*
  * When we insert 1st item on new page in INSERT/UPDATE
@@ -491,7 +493,7 @@ typedef struct xl_heap_update
 
 #define SizeOfHeapUpdate	(offsetof(xl_heap_update, newtid) + SizeOfIptrData)
 
-/* This is what we need to know about page cleanup */
+/* This is what we need to know about vacuum page cleanup */
 typedef struct xl_heap_clean
 {
 	RelFileNode node;
@@ -500,5 +502,16 @@ typedef struct xl_heap_clean
 } xl_heap_clean;
 
 #define SizeOfHeapClean (offsetof(xl_heap_clean, block) + sizeof(BlockNumber))
+
+/* This is for replacing a page's contents in toto */
+/* NB: this is used for indexes as well as heaps */
+typedef struct xl_heap_newpage
+{
+	RelFileNode node;
+	BlockNumber blkno;			/* location of new page */
+	/* entire page contents follow at end of record */
+} xl_heap_newpage;
+
+#define SizeOfHeapNewpage	(offsetof(xl_heap_newpage, blkno) + sizeof(BlockNumber))
 
 #endif   /* HTUP_H */

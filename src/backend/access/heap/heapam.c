@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.169 2004/06/18 06:13:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.170 2004/07/11 18:01:44 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2190,6 +2190,39 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 }
 
 static void
+heap_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
+{
+	xl_heap_newpage *xlrec = (xl_heap_newpage *) XLogRecGetData(record);
+	Relation	reln;
+	Buffer		buffer;
+	Page		page;
+
+	/*
+	 * Note: the NEWPAGE log record is used for both heaps and indexes,
+	 * so do not do anything that assumes we are touching a heap.
+	 */
+
+	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
+		return;
+
+	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->node);
+	if (!RelationIsValid(reln))
+		return;
+	buffer = XLogReadBuffer(true, reln, xlrec->blkno);
+	if (!BufferIsValid(buffer))
+		elog(PANIC, "heap_newpage_redo: no block");
+	page = (Page) BufferGetPage(buffer);
+
+	Assert(record->xl_len == SizeOfHeapNewpage + BLCKSZ);
+	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
+
+	PageSetLSN(page, lsn);
+	PageSetSUI(page, ThisStartUpID);
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
+}
+
+static void
 heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_delete *xlrec = (xl_heap_delete *) XLogRecGetData(record);
@@ -2603,6 +2636,8 @@ heap_redo(XLogRecPtr lsn, XLogRecord *record)
 		heap_xlog_update(true, lsn, record, true);
 	else if (info == XLOG_HEAP_CLEAN)
 		heap_xlog_clean(true, lsn, record);
+	else if (info == XLOG_HEAP_NEWPAGE)
+		heap_xlog_newpage(true, lsn, record);
 	else
 		elog(PANIC, "heap_redo: unknown op code %u", info);
 }
@@ -2623,6 +2658,8 @@ heap_undo(XLogRecPtr lsn, XLogRecord *record)
 		heap_xlog_update(false, lsn, record, true);
 	else if (info == XLOG_HEAP_CLEAN)
 		heap_xlog_clean(false, lsn, record);
+	else if (info == XLOG_HEAP_NEWPAGE)
+		heap_xlog_newpage(false, lsn, record);
 	else
 		elog(PANIC, "heap_undo: unknown op code %u", info);
 }
@@ -2676,6 +2713,14 @@ heap_desc(char *buf, uint8 xl_info, char *rec)
 		sprintf(buf + strlen(buf), "clean: rel %u/%u/%u; blk %u",
 				xlrec->node.spcNode, xlrec->node.dbNode,
 				xlrec->node.relNode, xlrec->block);
+	}
+	else if (info == XLOG_HEAP_NEWPAGE)
+	{
+		xl_heap_newpage *xlrec = (xl_heap_newpage *) rec;
+
+		sprintf(buf + strlen(buf), "newpage: rel %u/%u/%u; blk %u",
+				xlrec->node.spcNode, xlrec->node.dbNode,
+				xlrec->node.relNode, xlrec->blkno);
 	}
 	else
 		strcat(buf, "UNKNOWN");

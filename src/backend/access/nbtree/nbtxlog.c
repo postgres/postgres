@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.14 2004/06/18 06:13:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.15 2004/07/11 18:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,34 +669,6 @@ btree_xlog_newmeta(bool redo, XLogRecPtr lsn, XLogRecord *record)
 					 xlrec->meta.fastroot, xlrec->meta.fastlevel);
 }
 
-static void
-btree_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
-{
-	xl_btree_newpage *xlrec = (xl_btree_newpage *) XLogRecGetData(record);
-	Relation	reln;
-	Buffer		buffer;
-	Page		page;
-
-	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
-		return;
-
-	reln = XLogOpenRelation(redo, RM_BTREE_ID, xlrec->node);
-	if (!RelationIsValid(reln))
-		return;
-	buffer = XLogReadBuffer(true, reln, xlrec->blkno);
-	if (!BufferIsValid(buffer))
-		elog(PANIC, "btree_newpage_redo: block unfound");
-	page = (Page) BufferGetPage(buffer);
-
-	Assert(record->xl_len == SizeOfBtreeNewpage + BLCKSZ);
-	memcpy(page, (char *) xlrec + SizeOfBtreeNewpage, BLCKSZ);
-
-	PageSetLSN(page, lsn);
-	PageSetSUI(page, ThisStartUpID);
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
-}
-
 
 void
 btree_redo(XLogRecPtr lsn, XLogRecord *record)
@@ -740,9 +712,6 @@ btree_redo(XLogRecPtr lsn, XLogRecord *record)
 			break;
 		case XLOG_BTREE_NEWMETA:
 			btree_xlog_newmeta(true, lsn, record);
-			break;
-		case XLOG_BTREE_NEWPAGE:
-			btree_xlog_newpage(true, lsn, record);
 			break;
 		default:
 			elog(PANIC, "btree_redo: unknown op code %u", info);
@@ -791,9 +760,6 @@ btree_undo(XLogRecPtr lsn, XLogRecord *record)
 			break;
 		case XLOG_BTREE_NEWMETA:
 			btree_xlog_newmeta(false, lsn, record);
-			break;
-		case XLOG_BTREE_NEWPAGE:
-			btree_xlog_newpage(false, lsn, record);
 			break;
 		default:
 			elog(PANIC, "btree_undo: unknown op code %u", info);
@@ -919,15 +885,6 @@ btree_desc(char *buf, uint8 xl_info, char *rec)
 						xlrec->node.relNode,
 						xlrec->meta.root, xlrec->meta.level,
 						xlrec->meta.fastroot, xlrec->meta.fastlevel);
-				break;
-			}
-		case XLOG_BTREE_NEWPAGE:
-			{
-				xl_btree_newpage *xlrec = (xl_btree_newpage *) rec;
-
-				sprintf(buf + strlen(buf), "newpage: rel %u/%u/%u; page %u",
-						xlrec->node.spcNode, xlrec->node.dbNode,
-						xlrec->node.relNode, xlrec->blkno);
 				break;
 			}
 		default:

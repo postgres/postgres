@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.82 2004/06/02 17:28:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.83 2004/07/11 18:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,8 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 	/* XLOG stuff */
 	if (wstate->btws_use_wal)
 	{
-		xl_btree_newpage xlrec;
+		/* We use the heap NEWPAGE record type for this */
+		xl_heap_newpage xlrec;
 		XLogRecPtr	recptr;
 		XLogRecData rdata[2];
 
@@ -292,7 +293,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBtreeNewpage;
+		rdata[0].len = SizeOfHeapNewpage;
 		rdata[0].next = &(rdata[1]);
 
 		rdata[1].buffer = InvalidBuffer;
@@ -300,7 +301,7 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 		rdata[1].len = BLCKSZ;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWPAGE, rdata);
+		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
