@@ -244,22 +244,18 @@ PostgreSQL:
                           installation of the PostgreSQL configuration.
                           The default is /usr/local/pgsql.
 
-       --enable-hba       Enables Host Based Authentication
+       --enable-hba       Enables Host Based Authentication (DEFAULT)
 
        --disable-hba      Disables Host Based Authentication
 
        --enable-locale    Enables USE_LOCALE
 
-       --disable-locale   Disables USE_LOCALE
+       --disable-locale   Disables USE_LOCALE (DEFAULT)
 
        --enable-cassert   Enables ASSERT_CHECKING
 
-       --disable-cassert  Disables ASSERT_CHECKING
+       --disable-cassert  Disables ASSERT_CHECKING (DEFAULT)
 
-                          The default for ASSERT_CHECKING is normally
-                          enabled for development versions and
-                          disabled for release versions of PostgreSQL.
-		
        --with-template=TEMPLATE
                           Use template file TEMPLATE - the template
                           files are assumed to be in the directory
