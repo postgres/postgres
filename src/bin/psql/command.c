@@ -524,6 +524,7 @@ exec_command(const char *cmd,
 			puts(query_buf->data);
 		else if (!GetVariableBool(pset->vars, "quiet"))
 			puts("Query buffer is empty.");
+		fflush(stdout);
 	}
 
 	/* \pset -- set printing parameters */
