@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.39 2001/09/06 02:56:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.40 2001/10/01 15:33:31 momjian Exp $
  *
  **********************************************************************/
 
@@ -59,18 +59,39 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_type.h"
 
-#if defined(ENABLE_PLTCL_UTF) && TCL_MAJOR_VERSION == 8 \
+#if defined(UNICODE_CONVERSION) && TCL_MAJOR_VERSION == 8 \
 	&& TCL_MINOR_VERSION > 0
-#	define UTF_BEGIN	do { Tcl_DString _pltcl_ds_tmp
-#       define UTF_END		Tcl_DStringFree(&_pltcl_ds_tmp); } while (0)
-#       define UTF_U2E(x)	(Tcl_UtfToExternalDString(NULL,(x),-1,&_pltcl_ds_tmp))
-#	define UTF_E2U(x)	(Tcl_ExternalToUtfDString(NULL,(x),-1,&_pltcl_ds_tmp))
-#else /* ENABLE_PLTCL_UTF */
+
+#include "mb/pg_wchar.h"
+
+static pg_enconv *tcl_enconv;
+
+static unsigned char *
+utf_u2e(unsigned char *src) {
+	return pg_do_encoding_conversion(src,strlen(src),
+		NULL,tcl_enconv->from_unicode);
+}
+
+static unsigned char *
+utf_e2u(unsigned char *src) {
+	return pg_do_encoding_conversion(src,strlen(src),
+		tcl_enconv->to_unicode,NULL);
+}
+
+#	define PLTCL_UTF
+#	define UTF_BEGIN	do { \
+					unsigned char *_pltcl_utf_src; \
+					unsigned char *_pltcl_utf_dst
+#       define UTF_END		if (_pltcl_utf_src!=_pltcl_utf_dst) \
+					pfree(_pltcl_utf_dst); } while (0)
+#       define UTF_U2E(x)	(_pltcl_utf_dst=utf_u2e(_pltcl_utf_src=(x)))
+#       define UTF_E2U(x)	(_pltcl_utf_dst=utf_e2u(_pltcl_utf_src=(x)))
+#else /* PLTCL_UTF */
 #	define	UTF_BEGIN
 #	define	UTF_END
 #	define	UTF_U2E(x)	(x)
 #	define	UTF_E2U(x)	(x)
-#endif /* ENABLE_PLTCL_UTF */
+#endif /* PLTCL_UTF */
 
 /**********************************************************************
  * The information we cache about loaded procedures
@@ -196,6 +217,14 @@ pltcl_init_all(void)
 	 ************************************************************/
 	if (!pltcl_firstcall)
 		return;
+
+#ifdef PLTCL_UTF
+	/************************************************************
+	 * Do unicode conversion initialization
+	 ************************************************************/
+
+	tcl_enconv=pg_get_enconv_by_encoding(GetDatabaseEncoding());
+#endif
 
 	/************************************************************
 	 * Create the dummy hold interpreter to prevent close of

@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.7 2001/09/22 22:54:32 petere Exp $
+ * $Id: pg_config.h.in,v 1.8 2001/10/01 15:33:31 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -88,9 +88,6 @@
 
 /* --enable-pltcl-unknown */
 #undef ENABLE_PLTCL_UNKNOWN
-
-/* --enable-pltcl-utf */
-#undef ENABLE_PLTCL_UTF
 
 /* --enable-nls */
 #undef ENABLE_NLS
