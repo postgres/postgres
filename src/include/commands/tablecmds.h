@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tablecmds.h,v 1.3 2002/04/26 19:29:47 tgl Exp $
+ * $Id: tablecmds.h,v 1.4 2002/04/30 01:24:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #define TABLECMDS_H
 
 #include "nodes/parsenodes.h"
-#include "utils/inval.h"
 
 extern void AlterTableAddColumn(Oid myrelid, bool inherits,
 								ColumnDef *colDef);

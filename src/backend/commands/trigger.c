@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.116 2002/04/27 03:45:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.117 2002/04/30 01:24:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,8 +514,7 @@ RelationRemoveTriggers(Relation rel)
  *				for name conflict (within rel)
  *				for original trigger (if not arg)
  *		modify tgname in trigger tuple
- *		insert modified trigger in trigger catalog
- *		delete original trigger from trigger catalog
+ *		update row in catalog
  */
 void
 renametrig(Oid relid,
@@ -526,8 +525,7 @@ renametrig(Oid relid,
 	Relation	tgrel;
 	HeapTuple	tuple;
 	SysScanDesc	tgscan;
-	ScanKeyData key;
-	bool		found = FALSE;
+	ScanKeyData key[2];
 	Relation	idescs[Num_pg_trigger_indices];
 
 	/*
@@ -550,69 +548,68 @@ renametrig(Oid relid,
 	/*
 	 * First pass -- look for name conflict
 	 */
-	ScanKeyEntryInitialize(&key, 0,
+	ScanKeyEntryInitialize(&key[0], 0,
 						   Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
+	ScanKeyEntryInitialize(&key[1], 0,
+						   Anum_pg_trigger_tgname,
+						   F_NAMEEQ,
+						   PointerGetDatum(newname));
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
-								SnapshotNow, 1, &key);
-	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-	{
-		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-
-		if (namestrcmp(&(pg_trigger->tgname), newname) == 0)
-			elog(ERROR, "renametrig: trigger %s already defined on relation %s",
-				 newname, RelationGetRelationName(targetrel));
-	}
+								SnapshotNow, 2, key);
+	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+		elog(ERROR, "renametrig: trigger %s already defined on relation %s",
+			 newname, RelationGetRelationName(targetrel));
 	systable_endscan(tgscan);
 
 	/*
 	 * Second pass -- look for trigger existing with oldname and update
 	 */
-	ScanKeyEntryInitialize(&key, 0,
+	ScanKeyEntryInitialize(&key[0], 0,
 						   Anum_pg_trigger_tgrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
+	ScanKeyEntryInitialize(&key[1], 0,
+						   Anum_pg_trigger_tgname,
+						   F_NAMEEQ,
+						   PointerGetDatum(oldname));
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndex, true,
-								SnapshotNow, 1, &key);
-	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+								SnapshotNow, 2, key);
+	if (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
-		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		/*
+		 * Update pg_trigger tuple with new tgname.
+		 */
+		tuple = heap_copytuple(tuple); /* need a modifiable copy */
 
-		if (namestrcmp(&(pg_trigger->tgname), oldname) == 0)
-		{
-			/*
-			 * Update pg_trigger tuple with new tgname.
-			 * (Scribbling on tuple is OK because it's a copy...)
-			 */
-			namestrcpy(&(pg_trigger->tgname), newname);
-			simple_heap_update(tgrel, &tuple->t_self, tuple);
+		namestrcpy(&((Form_pg_trigger) GETSTRUCT(tuple))->tgname, newname);
 
-			/*
-			 * keep system catalog indices current
-			 */
-			CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
-			CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
-			CatalogCloseIndices(Num_pg_trigger_indices, idescs);
+		simple_heap_update(tgrel, &tuple->t_self, tuple);
 
-			/*
-			 * Invalidate relation's relcache entry so that other
-			 * backends (and this one too!) are sent SI message to make them
-			 * rebuild relcache entries.
-			 */
-			CacheInvalidateRelcache(relid);
+		/*
+		 * keep system catalog indices current
+		 */
+		CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
+		CatalogCloseIndices(Num_pg_trigger_indices, idescs);
 
-			found = TRUE;
-			break;
-		}
+		/*
+		 * Invalidate relation's relcache entry so that other backends (and
+		 * this one too!) are sent SI message to make them rebuild relcache
+		 * entries.  (Ideally this should happen automatically...)
+		 */
+		CacheInvalidateRelcache(relid);
 	}
+	else
+	{
+		elog(ERROR, "renametrig: trigger %s not defined on relation %s",
+			 oldname, RelationGetRelationName(targetrel));
+	}
+
 	systable_endscan(tgscan);
 
 	heap_close(tgrel, RowExclusiveLock);
-
-	if (!found)
-		elog(ERROR, "renametrig: trigger %s not defined on relation %s",
-			 oldname, RelationGetRelationName(targetrel));
 
 	/*
 	 * Close rel, but keep exclusive lock!
