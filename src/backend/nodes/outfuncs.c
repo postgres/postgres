@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.89 1999/07/17 20:17:07 momjian Exp $
+ *	$Id: outfuncs.c,v 1.90 1999/07/18 19:02:49 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -718,7 +718,7 @@ static void
 _outArrayRef(StringInfo str, ArrayRef *node)
 {
 	appendStringInfo(str,
-		" ARRAYREF :refelemtype %u :refattrlength $d :refelemlength %d ",
+		" ARRAYREF :refelemtype %u :refattrlength %d :refelemlength %d ",
 					 node->refelemtype,
 					 node->refattrlength,
 					 node->refelemlength);
