@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.8 1996/11/16 08:09:15 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.9 1997/03/12 21:17:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@
 #include <libpq/libpq.h>
 #include <libpq/libpq-be.h>
 #include <libpq/hba.h>
+#include <libpq/password.h>
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines
@@ -113,10 +114,11 @@ static struct authsvc authsvcs[] = {
     { "krb4",     STARTUP_KRB4_MSG, 1 },
     { "krb5",     STARTUP_KRB5_MSG, 1 },
 #if defined(KRB5) 
-    { "kerberos", STARTUP_KRB5_MSG, 1 }
+    { "kerberos", STARTUP_KRB5_MSG, 1 },
 #else
-    { "kerberos", STARTUP_KRB4_MSG, 1 }
+    { "kerberos", STARTUP_KRB4_MSG, 1 },
 #endif
+    { "password", STARTUP_PASSWORD_MSG, 1 }
 };
 
 static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
@@ -403,6 +405,26 @@ return(STATUS_ERROR);
 }
 #endif /* KRB5 */
 
+static int
+pg_password_recvauth(Port *port, char *database, char *DataDir)
+{
+    PacketBuf buf;
+    char *user, *password;
+
+    if(PacketReceive(port, &buf, BLOCKING) != STATUS_OK) {
+	sprintf(PQerrormsg,
+		"pg_password_recvauth: failed to receive authentication packet.\n");
+	fputs(PQerrormsg, stderr);
+	pqdebug("%s", PQerrormsg);
+	return STATUS_ERROR;
+    }
+
+    user = buf.data;
+    password = buf.data + strlen(user) + 1;
+
+    return verify_password(user, password, port, database, DataDir);
+}
+
 /*
  * be_recvauth -- server demux routine for incoming authentication information
  */
@@ -418,8 +440,8 @@ be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo* sp)
        */
     if (msgtype_arg == STARTUP_MSG && useHostBasedAuth)
         msgtype = STARTUP_HBA_MSG;
-    else 
-        msgtype = STARTUP_UNAUTH_MSG;
+    else
+        msgtype = msgtype_arg;
 
     if (!username) {
         (void) sprintf(PQerrormsg,
@@ -490,6 +512,21 @@ be_recvauth(MsgType msgtype_arg, Port *port, char *username, StartupInfo* sp)
             return(STATUS_ERROR);
           }
         break;
+    case STARTUP_PASSWORD_MSG:
+        if(!be_getauthsvc(msgtype)) {
+	    sprintf(PQerrormsg, 
+		    "be_recvauth: "
+		    "plaintext password authentication disallowed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+	}
+	if(pg_password_recvauth(port, sp->database, DataDir) != STATUS_OK) {
+	    /* pg_password_recvauth or lower-level routines have already set */
+  	    /* the error message                                             */
+            return(STATUS_ERROR);
+	}
+	break;
     default:
         (void) sprintf(PQerrormsg,
                        "be_recvauth: unrecognized message type: %d\n",

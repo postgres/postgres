@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.23 1997/02/13 08:32:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.24 1997/03/12 21:23:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "postgres.h"
 #include "libpq/pqcomm.h" /* for decls of MsgType, PacketBuf, StartupInfo */
 #include "fe-auth.h"
+#include "fe-connect.h"
 #include "libpq-fe.h"
 
 #ifndef HAVE_STRDUP
@@ -38,8 +39,6 @@
 /* use a local version instead of the one found in pqpacket.c */
 static ConnStatusType connectDB(PGconn *conn);
 
-static int packetSend(Port *port, PacketBuf *buf, PacketLen len,
-		      bool nonBlocking);
 static void startup2PacketBuf(StartupInfo* s, PacketBuf* res);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
@@ -73,8 +72,14 @@ static PQconninfoOption PQconninfoOptions[] = {
 /*    Option-name	Environment-Var	Compiled-in	Current value	*/
 /*			Label				Disp-Char	*/
 /*    ----------------- --------------- --------------- --------------- */
+    { "authtype",       "PGAUTHTYPE",   NULL,           NULL,
+                        "Database-Authtype",            "", 20  },
+
     { "user",		"PGUSER",	NULL,		NULL,
     			"Database-User",		"", 20	},
+
+    { "password",       "PGPASSWORD",   NULL,           NULL,
+                        "Database-Password",            "", 20  },
 
     { "dbname",		"PGDATABASE",	NULL,		NULL,
     			"Database-Name",		"", 20	},
@@ -187,6 +192,8 @@ PQconnectdb(const char *conninfo)
     conn->pgtty     = strdup(conninfo_getval("tty"));
     conn->pgoptions = strdup(conninfo_getval("options"));
     conn->pguser    = strdup(conninfo_getval("user"));
+    conn->pgpass    = strdup(conninfo_getval("password"));
+    conn->pgauth    = strdup(conninfo_getval("authtype"));
     conn->dbName    = strdup(conninfo_getval("dbname"));
 
     /* ----------
@@ -194,6 +201,13 @@ PQconnectdb(const char *conninfo)
      * ----------
      */
     conninfo_free();
+
+    /*
+     * try to set the auth service if one was specified
+     */
+    if(conn->pgauth) {
+      fe_setauthsvc(conn->pgauth, conn->errorMessage);
+    }
 
     /* ----------
      * Connect to the database
@@ -259,6 +273,8 @@ PQconndefaults(void)
  *                 NULL or a null string.
  *
  *    PGUSER       Postgres username to associate with the connection.
+ *
+ *    PGPASSWORD   The user's password.
  *
  *    PGDATABASE   name of database to which to connect if <pgdatabase> 
  *                 argument is NULL or a null string
@@ -334,6 +350,12 @@ PQsetdb(const char *pghost, const char* pgport, const char* pgoptions, const cha
         error = FALSE;
         conn->pguser = tmp;
       }
+    }
+
+    if((tmp = getenv("PGPASSWORD"))) {
+      conn->pgpass = strdup(tmp);
+    } else {
+      conn->pgpass = 0;
     }
 
     if (!error) {
@@ -467,11 +489,17 @@ connectDB(PGconn *conn)
 
     /* authenticate as required*/
     if (fe_sendauth(msgtype, port, conn->pghost, 
+		    conn->pguser, conn->pgpass,
 		    conn->errorMessage) != STATUS_OK) {
       (void) sprintf(conn->errorMessage,
 	     "connectDB() --  authentication failed with %s\n",
 	       conn->pghost);
       goto connect_errReturn;	
+    }
+    
+    /* free the password so it's not hanging out in memory forever */
+    if(conn->pgpass) {
+      free(conn->pgpass);
     }
     
     /* set up the socket file descriptors */
@@ -595,7 +623,7 @@ PQreset(PGconn *conn)
  *	buffer management.  For now, we're not going to do it.
  *
 */
-static int
+int
 packetSend(Port *port,
 	   PacketBuf *buf,
 	   PacketLen len,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.57 1997/02/13 08:31:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.58 1997/03/12 21:19:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,9 @@
 #include "psqlHelp.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
+#endif
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
 #endif
 
 #ifdef HAVE_LIBREADLINE
@@ -67,6 +70,7 @@ typedef struct _psqlSettings {
     bool            singleStep;	/* prompt before for each query */
     bool            singleLineMode;	/* query terminated by newline */
     bool            useReadline;/* use libreadline routines */
+    bool            getPassword;/* prompt the user for a username and password */
 }               PsqlSettings;
 
 /* declarations for functions in this file */
@@ -78,6 +82,9 @@ handleCopyIn(PGresult * res, const bool mustprompt,
 	     FILE * copystream);
 static int      tableList(PsqlSettings * ps, bool deep_tablelist);
 static int      tableDesc(PsqlSettings * ps, char *table);
+static void     prompt_for_password(char *username, char *password);
+static char *   make_connect_string(char *host, char *port, char *dbname,
+				    char *username, char *password);
 
 char           *gets_noreadline(char *prompt, FILE * source);
 char           *gets_readline(char *prompt, FILE * source);
@@ -125,6 +132,7 @@ usage(char *progname)
     fprintf(stderr, "\t -s                      single step mode (prompts for each query)\n");
     fprintf(stderr, "\t -S                      single line mode (i.e. query terminated by newline)\n");
     fprintf(stderr, "\t -t                      turn off printing of headings and row count\n");
+    fprintf(stderr, "\t -u                      ask for a username and password for authentication\n");
     fprintf(stderr, "\t -T html                 set html3.0 table command options (cf. -H)\n");
     fprintf(stderr, "\t -x                      turn on expanded output (field names on left)\n");
     exit(1);
@@ -1463,8 +1471,13 @@ main(int argc, char **argv)
     else
 	settings.useReadline = 1;
 #endif
+#ifdef PSQL_ALWAYS_GET_PASSWORDS
+    settings.getPassword = 1;
+#else
+    settings.getPassword = 0;
+#endif
 
-    while ((c = getopt(argc, argv, "Aa:c:d:ef:F:lh:Hnso:p:qStT:x")) != EOF) {
+    while ((c = getopt(argc, argv, "Aa:c:d:ef:F:lh:Hnso:p:qStT:ux")) != EOF) {
 	switch (c) {
 	case 'A':
 	    settings.opt.align = 0;
@@ -1523,6 +1536,9 @@ main(int argc, char **argv)
 	case 'T':
 	    settings.opt.tableOpt = optarg;
 	    break;
+	case 'u':
+	    settings.getPassword = 1;
+	    break;
 	case 'x':
 	    settings.opt.expanded = 1;
 	    break;
@@ -1538,7 +1554,21 @@ main(int argc, char **argv)
     if (listDatabases)
 	dbname = "template1";
 
-    settings.db = PQsetdb(host, port, NULL, NULL, dbname);
+    if(settings.getPassword) {
+	char username[9];
+	char password[9];
+	char *connect_string;
+
+	prompt_for_password(username, password);
+
+	/* now use PQconnectdb so we can pass these options */
+	connect_string = make_connect_string(host, port, dbname, username, password);
+	settings.db = PQconnectdb(connect_string);
+	free(connect_string);
+    } else {
+	settings.db = PQsetdb(host, port, NULL, NULL, dbname);
+    }
+
     dbname = PQdb(settings.db);
 
     if (PQstatus(settings.db) == CONNECTION_BAD) {
@@ -1711,3 +1741,87 @@ setFout(PsqlSettings * ps, char *fname)
     }
     return ps->queryFout;
 }
+
+static void prompt_for_password(char *username, char *password)
+{
+    int length;
+#ifdef HAVE_TERMIOS_H
+    struct termios t_orig, t;
+#endif
+
+    printf("Username: ");
+    fgets(username, 9, stdin);
+    length = strlen(username);
+    if(length > 0 && username[length-1] == '\n') username[length-1] = '\0';
+
+    printf("Password: ");
+#ifdef HAVE_TERMIOS_H
+    tcgetattr(0, &t);
+    t_orig = t;
+    t.c_lflag &= ~ECHO;
+    tcsetattr(0, TCSADRAIN, &t);
+#endif
+    fgets(password, 9, stdin);
+#ifdef HAVE_TERMIOS_H
+    tcsetattr(0, TCSADRAIN, &t_orig);
+#endif
+
+    length = strlen(password);
+    if(length > 0 && password[length-1] == '\n') password[length-1] = '\0';
+
+    printf("\n\n");
+}
+
+static char *make_connect_string(char *host, char *port, char *dbname,
+				 char *username, char *password)
+{
+    int connect_string_len = 0;
+    char *connect_string;
+    
+    if(host)
+	connect_string_len += 6 + strlen(host);       /* 6 == "host=" + " " */
+    if(username) 
+	connect_string_len += 6 + strlen(username);   /* 6 == "user=" + " " */
+    if(password)
+	connect_string_len += 10 + strlen(password);  /* 10 == "password=" + " " */
+    if(port)
+	connect_string_len += 6 + strlen(port);       /* 6 == "port=" + " " */
+    if(dbname)
+	connect_string_len += 8 + strlen(dbname);     /* 8 == "dbname=" + " " */
+    connect_string_len += 18;   /* "authtype=password" + null */
+    
+    connect_string = (char *)malloc(connect_string_len);
+    if(!connect_string) {
+	return 0;
+    }
+    connect_string[0] = '\0';
+    if(host) {
+	strcat(connect_string, "host=");
+	strcat(connect_string, host);
+	strcat(connect_string, " ");
+    }
+    if(username) {
+	strcat(connect_string, "user=");
+	strcat(connect_string, username);
+	strcat(connect_string, " ");
+    }
+    if(password) {
+	strcat(connect_string, "password=");
+	strcat(connect_string, password);
+	strcat(connect_string, " ");
+    }
+    if(port) {
+	strcat(connect_string, "port=");
+	strcat(connect_string, port);
+	strcat(connect_string, " ");
+    }
+    if(dbname) {
+	strcat(connect_string, "dbname=");
+	strcat(connect_string, dbname);
+	strcat(connect_string, " ");
+    }
+    strcat(connect_string, "authtype=password");
+
+    return connect_string;
+}
+    

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.17 1997/01/06 10:11:11 bryanh Exp $
+ * $Id: libpq-fe.h,v 1.18 1997/03/12 21:23:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,8 @@ typedef struct pg_conn{
   int asyncNotifyWaiting;
   Dllist* notifyList;
   char *pguser;  /* Postgres username of user who is connected */
+  char *pgpass;
+  char *pgauth;
   PGlobjfuncs *lobjfuncs; /* Backend function OID's for large object access */
 } PGconn;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.43 1997/03/02 02:17:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.44 1997/03/12 21:18:38 scrappy Exp $
  *
  * NOTES
  *
@@ -660,8 +660,8 @@ ConnStartup(Port *port, int *status,
             char buffer[200 + sizeof(namebuf)];
             sprintf(buffer, 
                     "Failed to authenticate client as Postgres user '%s' "
-                    "using authentication scheme %d.",
-                    namebuf, msgType);
+                    "using %s: %s",
+                    namebuf, name_of_authentication_type(msgType), PQerrormsg);
             strncpy(errormsg, buffer, errormsg_len);
             *status = STATUS_ERROR;
         } else {

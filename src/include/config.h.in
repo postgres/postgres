@@ -266,8 +266,11 @@
  */
 /*#define GEQO */ /* backend/optimizer/path/allpaths.c */
 
-
-
+/*
+ * Define this if you want psql to _always_ ask for a username and a password
+ * for password authentication.
+ */
+/* #define PSQL_ALWAYS_GET_PASSWORDS */
 
 /* Undocumented "features"? */
 #define FASTBUILD /* access/nbtree/nbtsort.c */

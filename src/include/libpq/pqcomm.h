@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.7 1997/02/11 15:37:18 momjian Exp $
+ * $Id: pqcomm.h,v 1.8 1997/03/12 21:22:19 scrappy Exp $
  *
  * NOTES
  *    Some of this should move to libpq.h
@@ -52,9 +52,14 @@ typedef enum _MsgType {
     STARTUP_KRB4_MSG=10,	/* krb4 session follows startup packet */
     STARTUP_KRB5_MSG=11,      	/* krb5 session follows startup packet */
     STARTUP_HBA_MSG=12,         /* use host-based authentication */
-    STARTUP_UNAUTH_MSG=13       /* use unauthenticated connection */
+    STARTUP_UNAUTH_MSG=13,      /* use unauthenticated connection */
+    STARTUP_PASSWORD_MSG=14     /* use plaintext password authentication */
     /* insert new values here -- DO NOT REORDER OR DELETE ENTRIES */
+    /* also change LAST_AUTHENTICATION_TYPE below and add to the */
+    /* authentication_type_name[] array in pqcomm.c */
 } MsgType;
+
+#define LAST_AUTHENTICATION_TYPE 14
 
 typedef char *Addr;
 typedef int PacketLen;	/* packet length */
@@ -126,6 +131,6 @@ extern int PacketSend(Port *port, PacketBuf *buf,
 		      PacketLen len, char nonBlocking);
 /* extern PacketBuf* StartupInfo2PacketBuf(StartupInfo*); */
 /* extern StartupInfo* PacketBuf2StartupInfo(PacketBuf*); */
-
+extern char *name_of_authentication_type(int type);
 
 #endif	/* PQCOMM_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.6 1996/11/03 07:14:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.7 1997/03/12 21:23:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 
 #include "libpq-fe.h"
 #include "fe-auth.h"
+#include "fe-connect.h"
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines
@@ -79,7 +80,8 @@ static struct authsvc authsvcs[] = {
 #else /* !(KRB4 || KRB5) */
 	  1
 #endif /* !(KRB4 || KRB5) */
-    }
+    },
+    { "password", STARTUP_PASSWORD_MSG, 0 }
 };
 
 static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
@@ -431,12 +433,30 @@ pg_krb5_sendauth(const char* PQerrormsg,int sock,
 
 #endif /* KRB5 */
 
+static int
+pg_password_sendauth(Port *port, const char *user, const char *password)
+{
+    PacketBuf buf;
+    char *tmp;
+
+    buf.len = htonl(sizeof(PacketBuf));
+    buf.msgtype = STARTUP_PASSWORD_MSG;
+    buf.data[0] = '\0';
+
+    tmp = buf.data;
+    strncpy(tmp, user, strlen(user)+1);
+    tmp += strlen(user)+1;
+    strncpy(tmp, password, strlen(password)+1);
+
+    return packetSend(port, &buf, sizeof(PacketBuf), BLOCKING);
+}
 
 /*
  * fe_sendauth -- client demux routine for outgoing authentication information
  */
 int
-fe_sendauth(MsgType msgtype, Port *port, const char *hostname, const char* PQerrormsg)
+fe_sendauth(MsgType msgtype, Port *port, const char *hostname, 
+	    const char *user, const char *password, const char* PQerrormsg)
 {
     switch (msgtype) {
 #ifdef KRB4
@@ -464,6 +484,8 @@ fe_sendauth(MsgType msgtype, Port *port, const char *hostname, const char* PQerr
 #endif
     case STARTUP_MSG:
 	break;
+    case STARTUP_PASSWORD_MSG:
+        pg_password_sendauth(port, user, password);
     default:
 	break;
     }

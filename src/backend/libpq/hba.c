@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.15 1997/01/14 01:56:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.16 1997/03/12 21:17:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,31 +29,6 @@
 #include <libpq/hba.h>
 #include <port/inet_aton.h>    /* For inet_aton() */
 
-
-#define CONF_FILE "pg_hba.conf"             
-  /* Name of the config file  */
-
-#define MAP_FILE "pg_ident.conf"
-  /* Name of the usermap file */
-
-#define OLD_CONF_FILE "pg_hba"
-  /* Name of the config file in prior releases of Postgres. */
-
-#define MAX_LINES 255                    
-  /* Maximum number of config lines that can apply to one database    */
-
-#define MAX_TOKEN 80                    
-/* Maximum size of one token in the configuration file  */
-
-#define USERMAP_NAME_SIZE 16  /* Max size of a usermap name */
-
-#define IDENT_PORT 113
-  /* Standard TCP port number for Ident service.  Assigned by IANA */
-
-#define IDENT_USERNAME_MAX 512  
-  /* Max size of username ident server can return */
-
-enum Userauth {Trust, Ident};
 
 /* Some standard C libraries, including GNU, have an isblank() function.
    Others, including Solaris, do not.  So we have our own.
@@ -108,7 +83,7 @@ read_through_eol(FILE *file) {
 
 static void
 read_hba_entry2(FILE *file, enum Userauth *userauth_p, char usermap_name[], 
-                bool *error_p) {
+                bool *error_p, bool *matches_p, bool find_password_entries) {
 /*--------------------------------------------------------------------------
   Read from file FILE the rest of a host record, after the mask field,
   and return the interpretation of it as *userauth_p, usermap_name, and
@@ -120,34 +95,47 @@ read_hba_entry2(FILE *file, enum Userauth *userauth_p, char usermap_name[],
 
   /* Get authentication type token. */
   next_token(file, buf, sizeof(buf));
+  userauth_valid = false;
   if (buf[0] == '\0') {
     *error_p = true;
-    read_through_eol(file);
   } else {
-    if (strcmp(buf, "trust") == 0) {
-      userauth_valid = true;
+    userauth_valid = true;
+    if(strcmp(buf, "trust") == 0) {
       *userauth_p = Trust;
-    } else if (strcmp(buf, "ident") == 0) {
-      userauth_valid = true;
+    } else if(strcmp(buf, "ident") == 0) {
       *userauth_p = Ident;
-    } else userauth_valid = false;
+    } else if(strcmp(buf, "password") == 0) {
+      *userauth_p = Password;
+    } else {
+      userauth_valid = false;
+    }
+
+    if((find_password_entries && strcmp(buf, "password") == 0) ||
+       (!find_password_entries && strcmp(buf, "password") != 0)) {
+      *matches_p = true;
+    } else {
+      *matches_p = false;
+    }
+  }
+
+  if(!userauth_valid || !*matches_p || *error_p) {
     if (!userauth_valid) {
       *error_p = true;
-      read_through_eol(file);
+    }
+    read_through_eol(file);
+  } else {
+    /* Get the map name token, if any */
+    next_token(file, buf, sizeof(buf));
+    if (buf[0] == '\0') {
+      *error_p = false;
+      usermap_name[0] = '\0';
     } else {
-      /* Get the map name token, if any */
+      strncpy(usermap_name, buf, USERMAP_NAME_SIZE);
       next_token(file, buf, sizeof(buf));
-      if (buf[0] == '\0') {
-        *error_p = false;
-        usermap_name[0] = '\0';
-      } else {
-        strncpy(usermap_name, buf, USERMAP_NAME_SIZE);
-        next_token(file, buf, sizeof(buf));
-        if (buf[0] != '\0') {
-          *error_p = true;
-          read_through_eol(file);
-        } else *error_p = false;
-      }
+      if (buf[0] != '\0') {
+	*error_p = true;
+	read_through_eol(file);
+      } else *error_p = false;
     }
   }
 }
@@ -158,7 +146,8 @@ static void
 process_hba_record(FILE *file, 
                    const struct in_addr ip_addr, const char database[],
                    bool *matches_p, bool *error_p, 
-                   enum Userauth *userauth_p, char usermap_name[] ) {
+                   enum Userauth *userauth_p, char usermap_name[],
+		   bool find_password_entries) {
 /*---------------------------------------------------------------------------
   Process the non-comment record in the config file that is next on the file.
   See if it applies to a connection to a host with IP address "ip_addr"
@@ -221,8 +210,7 @@ process_hba_record(FILE *file,
                        the rest of the info from it.
                        */
                     read_hba_entry2(file, userauth_p, usermap_name,
-                                    error_p);
-                    *matches_p = true;
+                                    error_p, matches_p, find_password_entries);
                     if (*error_p) {
                       sprintf(PQerrormsg,
                               "process_hba_record: invalid syntax in "
@@ -249,7 +237,7 @@ static void
 process_open_config_file(FILE *file, 
                          const struct in_addr ip_addr, const char database[],
                          bool *host_ok_p, enum Userauth *userauth_p, 
-                         char usermap_name[] ) {
+                         char usermap_name[], bool find_password_entries) {
 /*---------------------------------------------------------------------------
   This function does the same thing as find_hba_entry, only with
   the config file already open on stream descriptor "file".
@@ -274,7 +262,8 @@ process_open_config_file(FILE *file,
       if (c == '#') read_through_eol(file);
       else {
         process_hba_record(file, ip_addr, database, 
-                           &found_entry, &error, userauth_p, usermap_name);
+                           &found_entry, &error, userauth_p, usermap_name,
+			   find_password_entries);
       }
     }    
   }
@@ -286,11 +275,11 @@ process_open_config_file(FILE *file,
 
 
 
-static void
+void
 find_hba_entry(const char DataDir[], const struct in_addr ip_addr, 
                const char database[],
                bool *host_ok_p, enum Userauth *userauth_p, 
-               char usermap_name[] ) {
+               char usermap_name[], bool find_password_entries) {
 /*--------------------------------------------------------------------------
   Read the config file and find an entry that allows connection from
   host "ip_addr" to database "database".  If not found, return 
@@ -360,7 +349,7 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
       pqdebug("%s", PQerrormsg);
     } else {
       process_open_config_file(file, ip_addr, database, host_ok_p, userauth_p,
-                               usermap_name);
+                               usermap_name, find_password_entries);
       fclose(file);
     }
     free(conf_file);
@@ -731,7 +720,8 @@ hba_recvauth(const Port *port, const char database[], const char user[],
 
 
   find_hba_entry(DataDir, port->raddr.sin_addr, database, 
-                 &host_ok, &userauth, usermap_name);
+                 &host_ok, &userauth, usermap_name, 
+		 false /* don't find password entries of type 'password' */);
   
   if (!host_ok) retvalue = STATUS_ERROR;
   else {
