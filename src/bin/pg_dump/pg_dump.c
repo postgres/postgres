@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.275 2002/07/24 19:11:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.276 2002/07/25 20:52:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2897,7 +2897,7 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	if (fout->remoteVersion >= 70300)
 	{
 		/* regproc result is correctly quoted in 7.3 */
-		appendPQExpBuffer(q, " input = %s, output = %s, ",
+		appendPQExpBuffer(q, " input = %s, output = %s",
 						  typinput, typoutput);
 	}
 	else
@@ -2906,7 +2906,7 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 		/* cannot combine these because fmtId uses static result area */
 		appendPQExpBuffer(q, " input = %s,",
 						  fmtId(typinput, force_quotes));
-		appendPQExpBuffer(q, " output = %s,",
+		appendPQExpBuffer(q, " output = %s",
 						  fmtId(typoutput, force_quotes));
 	}
 
