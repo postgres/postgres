@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun 18 21:48:15 EDT 2004
+Last updated:		Wed Jun 23 05:53:52 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -24,7 +24,6 @@ Urgent
 	o Queries across databases or servers (two-phase commit)
 	o Allow replication over unreliable or non-persistent links
 * Point-in-time data recovery using backup and write-ahead log,
-  http://momjian.postgresql.org/main/writings/pgsql/project/pitr.html
 * Create native Win32 port, http://momjian.postgresql.org/main/writings/pgsql/project/win32.html
 
 
