@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.sql.*;
 import org.postgresql.*;
 import org.postgresql.util.PSQLException;
+import org.postgresql.jdbc1.AbstractJdbc1Connection;
+import org.postgresql.jdbc1.AbstractJdbc1ResultSet;
+import org.postgresql.jdbc1.AbstractJdbc1Statement;
 
 /*
  * Executes a query on the backend.
@@ -13,35 +16,69 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.17 2002/11/14 05:35:45 barry Exp $
+ * $Id: QueryExecutor.java,v 1.18 2003/02/04 09:20:08 barry Exp $
  */
 
 public class QueryExecutor
 {
-
-	private final String[] m_sqlFrags;
-	private final Object[] m_binds;
-	private final java.sql.Statement statement;
-	private final PG_Stream pg_stream;
-	private final org.postgresql.jdbc1.AbstractJdbc1Connection connection;
-
-	public QueryExecutor(String[] p_sqlFrags, Object[] p_binds,
-						 java.sql.Statement statement,
-						 PG_Stream pg_stream,
-						 java.sql.Connection connection)
+	//This version of execute does not take an existing result set, but 
+    //creates a new one for the results of the query
+	public static ResultSet execute (String[] p_sqlFrags,
+				    Object[] p_binds,
+				    java.sql.Statement statement)
 	throws SQLException
 	{
-		this.m_sqlFrags = p_sqlFrags;
-		this.m_binds = p_binds;
-		this.statement = statement;
-		this.pg_stream = pg_stream;
-		this.connection = (org.postgresql.jdbc1.AbstractJdbc1Connection)connection;
-
+		QueryExecutor qe = new QueryExecutor();
+		qe.m_sqlFrags = p_sqlFrags;
+		qe.m_binds = p_binds;
+		qe.statement = statement;
 		if (statement != null)
-			maxRows = statement.getMaxRows();
+			qe.maxRows = statement.getMaxRows();
 		else
-			maxRows = 0;
+			qe.maxRows = 0;
+
+        qe.connection = (AbstractJdbc1Connection)((AbstractJdbc1Statement)statement).getPGConnection();
+		qe.pg_stream = 	qe.connection.getPGStream();
+
+		return qe.execute();
 	}
+
+	//This version of execute reuses an existing result set for the query 
+    //results, this is used when a result set is backed by a cursor and 
+	//more results are fetched
+	public static void execute (String[] p_sqlFrags,
+				    Object[] p_binds,
+				    java.sql.ResultSet rs)
+	throws SQLException
+	{
+		QueryExecutor qe = new QueryExecutor();
+		qe.m_sqlFrags = p_sqlFrags;
+		qe.m_binds = p_binds;
+		qe.rs = rs;
+		qe.statement = (java.sql.Statement)((AbstractJdbc1ResultSet)qe.rs).getPGStatement();
+		if (qe.statement != null)
+			qe.maxRows = qe.statement.getMaxRows();
+		else
+			qe.maxRows = 0;
+
+        qe.connection = (AbstractJdbc1Connection)((AbstractJdbc1Statement)qe.statement).getPGConnection();
+		qe.pg_stream = 	qe.connection.getPGStream();
+
+		qe.execute();
+	}
+
+
+	private QueryExecutor ()
+	{
+	}
+
+   	private String[] m_sqlFrags;
+	private Object[] m_binds;
+	private java.sql.Statement statement;
+	private java.sql.ResultSet rs;
+
+   	private AbstractJdbc1Connection connection;
+   	private PG_Stream pg_stream;
 
 	private Field[] fields = null;
 	private Vector tuples = new Vector();
@@ -51,10 +88,12 @@ public class QueryExecutor
 	private long insert_oid = 0;
 	private int maxRows;
 
+
 	/*
 	 * Execute a query on the backend.
+	 *
 	 */
-	public java.sql.ResultSet execute() throws SQLException
+	private java.sql.ResultSet execute() throws SQLException
 	{
 
 		StringBuffer errorMessage = null;
@@ -130,7 +169,18 @@ public class QueryExecutor
 			if ( errorMessage != null )
 				throw new SQLException( errorMessage.toString() );
 
-			return connection.getResultSet(statement, fields, tuples, status, update_count, insert_oid, binaryCursor);
+
+			//if an existing result set was passed in reuse it, else
+			//create a new one
+			if (rs != null) 
+			{
+				((org.postgresql.jdbc1.AbstractJdbc1ResultSet)rs).reInit(fields, tuples, status, update_count, insert_oid, binaryCursor);
+			}
+			else 
+			{
+				rs = ((AbstractJdbc1Statement)statement).createResultSet(fields, tuples, status, update_count, insert_oid, binaryCursor);
+			}
+			return rs;
 		}
 	}
 
@@ -145,10 +195,12 @@ public class QueryExecutor
 			for (int i = 0 ; i < m_binds.length ; ++i)
 			{
 				if (m_binds[i] == null)
-					throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
+					throw new PSQLException("postgresql.prep.param (" + i + ")", new Integer(i + 1));
+
 				pg_stream.Send(connection.getEncoding().encode(m_sqlFrags[i]));
 				pg_stream.Send(connection.getEncoding().encode(m_binds[i].toString()));
 			}
+
 			pg_stream.Send(connection.getEncoding().encode(m_sqlFrags[m_binds.length]));
 			pg_stream.SendChar(0);
 			pg_stream.flush();

@@ -6,7 +6,7 @@ import java.util.Vector;
 import java.util.Hashtable;
 import org.postgresql.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/Jdbc3Connection.java,v 1.2 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/Jdbc3Connection.java,v 1.3 2003/02/04 09:20:10 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC3.
  * However most of the implementation is really done in
  * org.postgresql.jdbc3.AbstractJdbc3Connection or one of it's parents
@@ -46,16 +46,4 @@ public class Jdbc3Connection extends org.postgresql.jdbc3.AbstractJdbc3Connectio
 		return metadata;
 	}
 
-	public java.sql.ResultSet getResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
-	{
-		return new Jdbc3ResultSet(this, statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
-	}
-
-	public java.sql.ResultSet getResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException
-	{
-		return new Jdbc3ResultSet(this, statement, fields, tuples, status, updateCount, 0, false);
-	}
-
 }
-
-

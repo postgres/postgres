@@ -1915,7 +1915,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		}
 		rs.close();
 
-		return connection.getResultSet(null, f, v, "OK", 1);
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	/*
@@ -2206,7 +2206,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			tuple[0] = types[i].getBytes();
 			v.addElement(tuple);
 		}
-		return connection.getResultSet(null, f, v, "OK", 1);
+
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	/*
@@ -2380,7 +2381,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		}
 		rs.close();
 
-		return connection.getResultSet(null, f, v, "OK", 1);
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	/*
@@ -2492,7 +2493,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			}
 		}
 		rs.close();
-		return connection.getResultSet(null, f, v, "OK", 1);
+
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	/*
@@ -2594,7 +2596,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		}
 		rs.close();
 
-		return connection.getResultSet(null, f, v, "OK", 1);
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	private static void sortStringArray(String s[]) {
@@ -2787,7 +2789,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			tuple[7] = Integer.toString(java.sql.DatabaseMetaData.bestRowNotPseudo).getBytes();
 			v.addElement(tuple);
 		}
-		return connection.getResultSet(null, f, v, "OK", 1);
+
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	/*
@@ -2857,7 +2860,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		/* Perhaps we should check that the given
 		 * catalog.schema.table actually exists. -KJ
 		 */
-		return connection.getResultSet(null, f, v, "OK", 1);
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	/*
@@ -3180,7 +3183,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			tuples.addElement(tuple);
 		}
 
-		return connection.getResultSet(null, f, tuples, "OK", 1);
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, tuples, "OK", 1, 0, false);
 	}
 
 	/*
@@ -3465,7 +3468,8 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			v.addElement(tuple);
 		}
 		rs.close();
-		return connection.getResultSet(null, f, v, "OK", 1);
+
+		return ((AbstractJdbc1Statement)connection.createStatement()).createResultSet(f, v, "OK", 1, 0, false);
 	}
 
 	/*

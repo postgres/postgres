@@ -343,7 +343,8 @@ public class Array implements java.sql.Array
 			default:
 				throw org.postgresql.Driver.notImplemented();
 		}
-		return ((AbstractJdbc2Connection)conn).getResultSet(null, fields, rows, "OK", 1 );
+		java.sql.Statement stat = ((AbstractJdbc2Connection)conn).createStatement();
+		return ((AbstractJdbc2Statement)stat).createResultSet(fields, rows, "OK", 1, 0, false);
 	}
 
 	public String toString()

@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.14 2002/11/20 07:34:32 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.15 2003/02/04 09:20:08 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -19,11 +19,18 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	// The connection who created us
 	protected AbstractJdbc1Connection connection;
 
+	public org.postgresql.PGConnection getPGConnection() {
+		return connection;
+	}
+
 	/** The warnings chain. */
 	protected SQLWarning warnings = null;
 
 	/** Maximum number of rows to return, 0 = unlimited */
 	protected int maxrows = 0;
+
+	/** Number of rows to get in a batch. */
+	protected int fetchSize = 0;
 
 	/** Timeout (in seconds) for a query (not used) */
 	protected int timeout = 0;
@@ -47,8 +54,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	private String[] m_origSqlFragments;
 	private String[] m_executeSqlFragments;
 	protected Object[] m_binds = new Object[0];
+
 	protected String[] m_bindTypes = new String[0];
-	private String m_statementName = null;
+	protected String m_statementName = null;
+
 	private boolean m_useServerPrepare = false;
 	private static int m_preparedCount = 1;
 
@@ -67,6 +76,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	protected Object callResult;
 
 
+	public abstract java.sql.ResultSet createResultSet(org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
 
 	public AbstractJdbc1Statement (AbstractJdbc1Connection connection)
 	{
@@ -117,7 +127,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 	}
 
-
+  
 	/*
 	 * Execute a SQL statement that retruns a single ResultSet
 	 *
@@ -132,11 +142,21 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		m_binds = new Object[0];
 		//If we have already created a server prepared statement, we need
 		//to deallocate the existing one
-		if (m_statementName != null) {
-			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
-			m_statementName = null;
-			m_origSqlFragments = null;
-			m_executeSqlFragments = null;
+		if (m_statementName != null)
+		{
+			try
+			{
+				((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
+			}
+			catch (Exception e)
+			{
+			}
+			finally
+			{
+				m_statementName = null;
+				m_origSqlFragments = null;
+				m_executeSqlFragments = null;
+			}
 		}
 		return executeQuery();
 	}
@@ -150,7 +170,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException
 	{
-		this.execute();
+		if (fetchSize > 0)
+			this.executeWithCursor();
+		else
+			this.execute();
+	
 		while (result != null && !((AbstractJdbc1ResultSet)result).reallyResultSet())
 			result = ((AbstractJdbc1ResultSet)result).getNext();
 		if (result == null)
@@ -175,7 +199,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		//If we have already created a server prepared statement, we need
 		//to deallocate the existing one
 		if (m_statementName != null) {
-			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+			((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
 			m_statementName = null;
 			m_origSqlFragments = null;
 			m_executeSqlFragments = null;
@@ -219,7 +243,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		//If we have already created a server prepared statement, we need
 		//to deallocate the existing one
 		if (m_statementName != null) {
-			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+			((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
 			m_statementName = null;
 			m_origSqlFragments = null;
 			m_executeSqlFragments = null;
@@ -317,7 +341,9 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 
 		// New in 7.1, pass Statement so that ExecSQL can customise to it
-		result = ((AbstractJdbc1Connection)connection).ExecSQL(m_sqlFragments, m_binds, (java.sql.Statement)this);
+		result = org.postgresql.core.QueryExecutor.execute(m_sqlFragments,
+									   m_binds,
+									   (java.sql.Statement)this);
 
 		//If we are executing a callable statement function set the return data
 		if (isFunction)
@@ -341,6 +367,102 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 	}
 
+	/** version of execute which converts the query to a cursor.
+	 */
+	public boolean executeWithCursor() throws SQLException
+	{
+		if (isFunction && !returnTypeSet)
+			throw new PSQLException("postgresql.call.noreturntype");
+		if (isFunction)
+		{ // set entry 1 to dummy entry..
+			m_binds[0] = ""; // dummy entry which ensured that no one overrode
+			m_bindTypes[0] = PG_TEXT;
+			// and calls to setXXX (2,..) really went to first arg in a function call..
+		}
+
+		// New in 7.1, if we have a previous resultset then force it to close
+		// This brings us nearer to compliance, and helps memory management.
+		// Internal stuff will call ExecSQL directly, bypassing this.
+		if (result != null)
+		{
+			java.sql.ResultSet rs = getResultSet();
+			if (rs != null)
+				rs.close();
+		}
+
+		// I've pretty much ignored server prepared statements... can declare and prepare be
+		// used together?
+		// It's trivial to change this: you just have to resolve this issue
+		// of how to work out whether there's a function call. If there isn't then the first
+		// element of the array must be the bit that you extend to become the cursor
+		// decleration.
+		// The last thing that can go wrong is when the user supplies a cursor statement
+		// directly: the translation takes no account of that. I think we should just look
+		// for declare and stop the translation if we find it.
+
+		// The first thing to do is transform the statement text into the cursor form.
+		String[] origSqlFragments = m_sqlFragments;
+		m_sqlFragments = new String[origSqlFragments.length];
+		System.arraycopy(origSqlFragments, 0, m_sqlFragments, 0, origSqlFragments.length);
+		// Pinch the prepared count for our own nefarious purposes.
+		m_statementName = "JDBC_CURS_" + m_preparedCount++;
+		// The static bit to prepend to all querys.
+		String cursDecl = "BEGIN; DECLARE " + m_statementName + " CURSOR FOR ";
+		String endCurs = " FETCH FORWARD " + fetchSize + " FROM " + m_statementName + ";";
+
+		// Add the real query to the curs decleration.
+		// This is the bit that really makes the presumption about
+		// m_sqlFragments not being a function call.
+		if (m_sqlFragments.length < 1)
+			m_sqlFragments[0] = cursDecl + "SELECT NULL;";
+		
+		else if (m_sqlFragments.length < 2)
+		{
+			if (m_sqlFragments[0].endsWith(";"))
+				m_sqlFragments[0] = cursDecl + m_sqlFragments[0] + endCurs;
+			else
+				m_sqlFragments[0] = cursDecl + m_sqlFragments[0] + ";" + endCurs;
+		}
+		else
+		{
+			m_sqlFragments[0] = cursDecl + m_sqlFragments[0];
+			if (m_sqlFragments[m_sqlFragments.length - 1].endsWith(";"))
+				m_sqlFragments[m_sqlFragments.length - 1] += endCurs;
+			else
+				m_sqlFragments[m_sqlFragments.length - 1] += (";" + endCurs);
+		}
+
+		result = org.postgresql.core.QueryExecutor.execute(m_sqlFragments,
+									   m_binds,
+									   (java.sql.Statement)this);
+
+		//If we are executing a callable statement function set the return data
+		if (isFunction)
+		{
+			if (!((AbstractJdbc1ResultSet)result).reallyResultSet())
+				throw new PSQLException("postgresql.call.noreturnval");
+			if (!result.next ())
+				throw new PSQLException ("postgresql.call.noreturnval");
+			callResult = result.getObject(1);
+			int columnType = result.getMetaData().getColumnType(1);
+			if (columnType != functionReturnType)
+			{
+				Object[] arr =
+					{ "java.sql.Types=" + columnType,
+					  "java.sql.Types=" + functionReturnType
+					};
+				throw new PSQLException ("postgresql.call.wrongrtntype",arr);
+			}
+			result.close ();
+			return true;
+		}
+		else
+		{
+			return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
+		}
+	}
+
+	
 	/*
 	 * setCursorName defines the SQL cursor name that will be used by
 	 * subsequent execute methods.	This name can then be used in SQL
@@ -593,7 +715,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 		// If using server prepared statements deallocate them
 		if (m_useServerPrepare && m_statementName != null) {
-			((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+			((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
 		}
 
 		// Disasociate it from us (For Garbage Collection)
@@ -1690,7 +1812,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public byte[] getBytes(int parameterIndex) throws SQLException
 	{
-		checkIndex (parameterIndex, Types.VARBINARY, "Bytes");
+		checkIndex (parameterIndex, Types.VARBINARY, Types.BINARY, "Bytes");
 		return ((byte [])callResult);
 	}
 
@@ -1847,7 +1969,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		String l_sql = p_sql;
 		int index = l_sql.indexOf ("="); // is implied func or proc?
 		boolean isValid = true;
-		if (index != -1)
+		if (index > -1)
 		{
 			isFunction = true;
 			isValid = l_sql.indexOf ("?") < index; // ? before =
@@ -1875,9 +1997,22 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		// sure that the parameter numbers are the same as in the original
 		// sql we add a dummy parameter in this case
 		l_sql = (isFunction ? "?" : "") + l_sql.substring (index + 4);
-
 		l_sql = "select " + l_sql + " as " + RESULT_COLUMN + ";";
 		return l_sql;
+	}
+
+	/** helperfunction for the getXXX calls to check isFunction and index == 1
+	 * Compare BOTH type fields against the return type.
+	 */
+	protected void checkIndex (int parameterIndex, int type1, int type2, String getName)
+	throws SQLException
+	{
+		checkIndex (parameterIndex);		
+		if (type1 != this.testReturn && type2 != this.testReturn)
+			throw new PSQLException("postgresql.call.wrongget",
+						new Object[]{"java.sql.Types=" + testReturn,
+							     getName,
+							     "java.sql.Types=" + type1});
 	}
 
 	/** helperfunction for the getXXX calls to check isFunction and index == 1
@@ -1888,10 +2023,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		checkIndex (parameterIndex);
 		if (type != this.testReturn)
 			throw new PSQLException("postgresql.call.wrongget",
-									new Object[]{"java.sql.Types=" + testReturn,
-												 getName,
-												 "java.sql.Types=" + type});
+						new Object[]{"java.sql.Types=" + testReturn,
+							     getName,
+							     "java.sql.Types=" + type});
 	}
+
 	/** helperfunction for the getXXX calls to check isFunction and index == 1
 	 * @param parameterIndex index of getXXX (index)
 	 * check to make sure is a function and index == 1
@@ -1912,7 +2048,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			//If turning server prepared statements off deallocate statement
 			//and reset statement name
 			if (m_useServerPrepare != flag && !flag)
-				((AbstractJdbc1Connection)connection).ExecSQL("DEALLOCATE " + m_statementName);
+				((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
 			m_statementName = null;
 			m_useServerPrepare = flag;
 		} else {

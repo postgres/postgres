@@ -11,5 +11,9 @@ public class Jdbc2CallableStatement extends org.postgresql.jdbc2.AbstractJdbc2St
 		super(connection, sql);
 	}
 
+	public java.sql.ResultSet createResultSet (org.postgresql.Field[] fields, java.util.Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
+	{
+		return new Jdbc2ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
+	}
 }
 

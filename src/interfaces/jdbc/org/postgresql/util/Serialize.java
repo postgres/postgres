@@ -405,7 +405,7 @@ public class Serialize
 
 			if (Driver.logDebug)
 				Driver.debug("Serialize.store: " + sb.toString() );
-			ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL(sb.toString());
+			ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).execSQL(sb.toString());
 
 			// fetch the OID for returning
 			if (update)

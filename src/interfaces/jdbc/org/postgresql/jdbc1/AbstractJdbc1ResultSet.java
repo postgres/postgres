@@ -13,16 +13,21 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.8 2003/01/14 09:13:51 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.9 2003/02/04 09:20:08 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
  * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
  */
-public abstract class AbstractJdbc1ResultSet
+public abstract class AbstractJdbc1ResultSet 
 {
 
 	protected Vector rows;			// The results
 	protected Statement statement;
+
+    public org.postgresql.PGStatement getPGStatement() {
+		return (org.postgresql.PGStatement) statement;
+	}
+
 	protected Field fields[];		// The field descriptions
 	protected String status;		// Status of the result
 	protected boolean binaryCursor = false; // is the data binary or Strings
@@ -42,11 +47,35 @@ public abstract class AbstractJdbc1ResultSet
 	public byte[][] rowBuffer = null;
 
 
-	public AbstractJdbc1ResultSet(org.postgresql.PGConnection conn, Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
+	public AbstractJdbc1ResultSet(Statement statement,
+				      Field[] fields,
+				      Vector tuples,
+				      String status,
+				      int updateCount,
+				      long insertOID, 
+					  boolean binaryCursor)
 	{
-		this.connection = conn;
+		this.connection = ((org.postgresql.jdbc1.AbstractJdbc1Statement)statement).getPGConnection();
 		this.statement = statement;
 		this.fields = fields;
+		this.rows = tuples;
+		this.status = status;
+		this.updateCount = updateCount;
+
+		this.insertOID = insertOID;
+		this.this_row = null;
+		this.current_row = -1;
+		this.binaryCursor = binaryCursor;
+	}
+
+
+	//method to reinitialize a result set with more data
+	public void reInit (Field[] fields, Vector tuples, String status,
+			  int updateCount, long insertOID, boolean binaryCursor)
+	{
+		this.fields = fields;
+		// on a reinit the size of this indicates how many we pulled
+		// back. If it's 0 then the res set has ended.
 		this.rows = tuples;
 		this.status = status;
 		this.updateCount = updateCount;
@@ -55,7 +84,7 @@ public abstract class AbstractJdbc1ResultSet
 		this.current_row = -1;
 		this.binaryCursor = binaryCursor;
 	}
-
+  
 
 	public boolean next() throws SQLException
 	{
@@ -63,7 +92,30 @@ public abstract class AbstractJdbc1ResultSet
 			throw new PSQLException("postgresql.con.closed");
 
 		if (++current_row >= rows.size())
-			return false;
+		{
+			int fetchSize = ((AbstractJdbc1Statement)statement).fetchSize;
+			// Must be false if we weren't batching.
+			if (fetchSize == 0)
+				return false;
+			// Use the ref to the statement to get
+			// the details we need to do another cursor
+			// query - it will use reinit() to repopulate this
+			// with the right data.
+			String[] sql = new String[1];
+			String[] binds = new String[0];
+			// Is this the correct query???
+			String cursorName = ((AbstractJdbc1Statement)statement).m_statementName;
+			sql[0] = "FETCH FORWARD " + fetchSize + " FROM " + cursorName;
+			org.postgresql.core.QueryExecutor.execute(sql,
+								  binds,
+								  (java.sql.ResultSet)this);
+
+			// Test the new rows array.
+			if (rows.size() == 0)
+				return false;
+			// Otherwise reset the counter and let it go on...
+			current_row = 0;
+		}
 
 		this_row = (byte [][])rows.elementAt(current_row);
 

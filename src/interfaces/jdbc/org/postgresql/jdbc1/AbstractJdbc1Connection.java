@@ -14,7 +14,7 @@ import org.postgresql.largeobject.LargeObjectManager;
 import org.postgresql.util.*;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.13 2002/11/14 05:35:45 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.14 2003/02/04 09:20:08 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
  * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
@@ -22,8 +22,12 @@ import org.postgresql.util.*;
 public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnection
 {
 	// This is the network stream associated with this connection
-	public PG_Stream pg_stream;
+	private PG_Stream pg_stream;
 
+	public PG_Stream getPGStream() {
+		return pg_stream;
+	}
+  
 	protected String PG_HOST;
 	protected int PG_PORT;
 	protected String PG_USER;
@@ -83,7 +87,6 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 
 
 	public abstract java.sql.Statement createStatement() throws SQLException;
-
 
 	/*
 	 * This method actually opens the connection. It is called by Driver.
@@ -350,9 +353,10 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		// Set datestyle and fetch db encoding in a single call, to avoid making
 		// more than one round trip to the backend during connection startup.
 
-		java.sql.ResultSet resultSet =
-			ExecSQL("set datestyle to 'ISO'; select version(), " + encodingQuery + ";");
 
+		java.sql.ResultSet resultSet
+			= execSQL("set datestyle to 'ISO'; select version(), " + encodingQuery + ";");
+		
 		if (! resultSet.next())
 		{
 			throw new PSQLException("postgresql.con.failed", "failed getting backend encoding");
@@ -373,7 +377,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		if (haveMinimumServerVersion("7.3")) 
 		{
 			java.sql.ResultSet acRset =
-				ExecSQL("set client_encoding = 'UNICODE'; show autocommit");
+				execSQL("set client_encoding = 'UNICODE'; show autocommit");
 
 			//set encoding to be unicode
 			encoding = Encoding.getEncoding("UNICODE", null);
@@ -388,7 +392,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 			//to make the setting permanent
 			if (acRset.getString(1).equals("off"))
 			{
-				ExecSQL("set autocommit = on; commit;");
+				execSQL("set autocommit = on; commit;");
 			}
 		}
 
@@ -409,13 +413,6 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		return this_driver;
 	}
 
-	// These methods used to be in the main Connection implementation. As they
-	// are common to all implementations (JDBC1 or 2), they are placed here.
-	// This should make it easy to maintain the two specifications.
-
-	public abstract java.sql.ResultSet getResultSet(Statement statement, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
-
-	public abstract java.sql.ResultSet getResultSet(Statement statement, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount) throws SQLException;
 
 	/*
 	 * This adds a warning to the warning chain.
@@ -445,64 +442,15 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		//}
 	}
 
-	/*
-	 * Send a query to the backend.  Returns one of the ResultSet
-	 * objects.
-	 *
-	 * <B>Note:</B> there does not seem to be any method currently
-	 * in existance to return the update count.
-	 *
-	 * @param sql the SQL statement to be executed
-	 * @return a ResultSet holding the results
-	 * @exception SQLException if a database error occurs
+	/** Simple query execution.
 	 */
-	public java.sql.ResultSet ExecSQL(String sql) throws SQLException
+	public java.sql.ResultSet execSQL (String s) throws SQLException
 	{
-		return ExecSQL(sql, null);
-	}
-
-	/*
-	 * Send a query to the backend.  Returns one of the ResultSet
-	 * objects.
-	 *
-	 * <B>Note:</B> there does not seem to be any method currently
-	 * in existance to return the update count.
-	 *
-	 * @param sql the SQL statement to be executed
-	 * @param stat The Statement associated with this query (may be null)
-	 * @return a ResultSet holding the results
-	 * @exception SQLException if a database error occurs
-	 */
-	public java.sql.ResultSet ExecSQL(String sql, java.sql.Statement stat) throws SQLException
-	{
-		if (isClosed())
-		{
-			throw new PSQLException("postgresql.con.closed");
-		}
-		return new QueryExecutor(new String[] {sql}, EMPTY_OBJECT_ARRAY, stat, pg_stream, (java.sql.Connection)this).execute();
-	}
-	private static final Object[] EMPTY_OBJECT_ARRAY = new Object[0];
-
-	/*
-	 * Send a query to the backend.  Returns one of the ResultSet
-	 * objects.
-	 *
-	 * <B>Note:</B> there does not seem to be any method currently
-	 * in existance to return the update count.
-	 *
-	 * @param p_sqlFragmentss the SQL statement parts to be executed
-	 * @param p_binds the SQL bind values
-	 * @param stat The Statement associated with this query (may be null)
-	 * @return a ResultSet holding the results
-	 * @exception SQLException if a database error occurs
-	 */
-	public java.sql.ResultSet ExecSQL(String[] p_sqlFragments, Object[] p_binds, java.sql.Statement stat) throws SQLException
-	{
-		if (isClosed())
-		{
-			throw new PSQLException("postgresql.con.closed");
-		}
-		return new QueryExecutor(p_sqlFragments, p_binds, stat, pg_stream, (java.sql.Connection)this).execute();
+		final Object[] nullarr = new Object[0];
+		java.sql.Statement stat = createStatement();
+		return QueryExecutor.execute(new String[] { s }, 
+									 nullarr, 
+									 stat);
 	}
 
 	/*
@@ -939,27 +887,27 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
                 //We do the select to ensure a transaction is in process
 				//before we do the commit to avoid warning messages
 				//from issuing a commit without a transaction in process
-				ExecSQL("select 1; commit; set autocommit = on;");
+				execSQL("select 1; commit; set autocommit = on;");
 			}
 			else
 			{
-				ExecSQL("end");				
+				execSQL("end");				
 			}
 		}
 		else
 		{
 			if (haveMinimumServerVersion("7.3"))
 			{
-				ExecSQL("set autocommit = off; " + getIsolationLevelSQL());
+				execSQL("set autocommit = off; " + getIsolationLevelSQL());
 			}
 			else if (haveMinimumServerVersion("7.1"))
 			{
-				ExecSQL("begin;" + getIsolationLevelSQL());
+				execSQL("begin;" + getIsolationLevelSQL());
 			}
 			else
 			{
-				ExecSQL("begin");
-				ExecSQL(getIsolationLevelSQL());
+				execSQL("begin");
+				execSQL(getIsolationLevelSQL());
 			}
 		}
 		this.autoCommit = autoCommit;
@@ -993,17 +941,17 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 			return ;
 		if (haveMinimumServerVersion("7.3"))
 		{
-			ExecSQL("commit; " + getIsolationLevelSQL());
+			execSQL("commit; " + getIsolationLevelSQL());
 		}
 		else if (haveMinimumServerVersion("7.1"))
 		{
-			ExecSQL("commit;begin;" + getIsolationLevelSQL());
+			execSQL("commit;begin;" + getIsolationLevelSQL());
 		}
 		else
 		{
-			ExecSQL("commit");
-			ExecSQL("begin");
-			ExecSQL(getIsolationLevelSQL());
+			execSQL("commit");
+			execSQL("begin");
+			execSQL(getIsolationLevelSQL());
 		}
 	}
 
@@ -1024,17 +972,17 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 			//we don't automatically start a transaction 
 			//but let the server functionality automatically start
 			//one when the first statement is executed
-			ExecSQL("rollback; " + getIsolationLevelSQL());
+			execSQL("rollback; " + getIsolationLevelSQL());
 		}
 		else if (haveMinimumServerVersion("7.1"))
 		{
-			ExecSQL("rollback; begin;" + getIsolationLevelSQL());
+			execSQL("rollback; begin;" + getIsolationLevelSQL());
 		}
 		else
 		{
-			ExecSQL("rollback");
-			ExecSQL("begin");
-			ExecSQL(getIsolationLevelSQL());
+			execSQL("rollback");
+			execSQL("begin");
+			execSQL(getIsolationLevelSQL());
 		}
 	}
 
@@ -1049,14 +997,14 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		String sql = "show transaction isolation level";
 		String level = null;
 		if (haveMinimumServerVersion("7.3")) {
-			ResultSet rs = ExecSQL(sql);
+			ResultSet rs = execSQL(sql);
 			if (rs.next()) {
 				level = rs.getString(1);
 			}
 			rs.close();
 		} else {
 			clearWarnings();
-			ExecSQL(sql);
+			execSQL(sql);
 			SQLWarning warning = getWarnings();
 			if (warning != null)
 			{
@@ -1121,7 +1069,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 											new Integer(isolationLevel));
 			}
 		}
-		ExecSQL(isolationLevelSQL);
+		execSQL(isolationLevelSQL);
 	}
 
 	/*
@@ -1264,7 +1212,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 				} else {
 					sql = "SELECT typname FROM pg_type WHERE oid = " +oid;
 				}
-				ResultSet result = ExecSQL(sql);
+				ResultSet result = execSQL(sql);
 				if (((AbstractJdbc1ResultSet)result).getColumnCount() != 1 || ((AbstractJdbc1ResultSet)result).getTupleCount() != 1) {
 					throw new PSQLException("postgresql.unexpected");
 				}
@@ -1305,7 +1253,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 				} else {
 					sql = "SELECT oid FROM pg_type WHERE typname='" + typeName + "'";
 				}
-				ResultSet result = ExecSQL(sql);
+				ResultSet result = execSQL(sql);
 				if (((AbstractJdbc1ResultSet)result).getColumnCount() != 1 || ((AbstractJdbc1ResultSet)result).getTupleCount() != 1)
 					throw new PSQLException("postgresql.unexpected");
 				result.next();
@@ -1413,21 +1361,21 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 * Tip: keep these grouped together by the Types. value
 	 */
 	private static final int jdbc1Typei[] = {
-												Types.SMALLINT,
-												Types.INTEGER, Types.INTEGER,
-												Types.BIGINT,
-												Types.DOUBLE, Types.DOUBLE,
-												Types.NUMERIC,
-												Types.REAL,
-												Types.DOUBLE,
-												Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR,
-												Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
-												Types.BINARY,
-												Types.BIT,
-												Types.DATE,
-												Types.TIME,
-												Types.TIMESTAMP, Types.TIMESTAMP, Types.TIMESTAMP
-											};
+		Types.SMALLINT,
+		Types.INTEGER, Types.INTEGER,
+		Types.BIGINT,
+		Types.DOUBLE, Types.DOUBLE,
+		Types.NUMERIC,
+		Types.REAL,
+		Types.DOUBLE,
+		Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR, Types.CHAR,
+		Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
+		Types.BINARY,
+		Types.BIT,
+		Types.DATE,
+		Types.TIME,
+		Types.TIMESTAMP, Types.TIMESTAMP, Types.TIMESTAMP
+	};
 
 	//Methods to support postgres notifications
 	public void addNotification(org.postgresql.PGNotification p_notification)

@@ -11,4 +11,8 @@ public class Jdbc1PreparedStatement extends AbstractJdbc1Statement implements Pr
 		super(connection, sql);
 	}
 
+	public java.sql.ResultSet createResultSet (org.postgresql.Field[] fields, java.util.Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
+	{
+		return new Jdbc1ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
+	}
 }

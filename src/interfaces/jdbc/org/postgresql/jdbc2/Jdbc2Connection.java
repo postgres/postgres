@@ -6,7 +6,7 @@ import java.util.Vector;
 import java.util.Hashtable;
 import org.postgresql.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2Connection.java,v 1.5 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/Jdbc2Connection.java,v 1.6 2003/02/04 09:20:10 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC2.
  * However most of the implementation is really done in
  * org.postgresql.jdbc2.AbstractJdbc2Connection or one of it's parents
@@ -45,17 +45,6 @@ public class Jdbc2Connection extends org.postgresql.jdbc2.AbstractJdbc2Connectio
 			metadata = new org.postgresql.jdbc2.Jdbc2DatabaseMetaData(this);
 		return metadata;
 	}
-
-	public java.sql.ResultSet getResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
-	{
-		return new Jdbc2ResultSet(this, statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
-	}
-
-	public java.sql.ResultSet getResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException
-	{
-		return new Jdbc2ResultSet(this, statement, fields, tuples, status, updateCount, 0, false);
-	}
-
 
 }
 

@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.12 2003/01/23 18:49:22 davec Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.13 2003/02/04 09:20:10 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -38,11 +38,10 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	protected PreparedStatement deleteStatement = null;
 	private PreparedStatement selectStatement = null;
 
-
-
-	public AbstractJdbc2ResultSet(org.postgresql.PGConnection conn, Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
+  
+	public AbstractJdbc2ResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
-		super (conn, statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
+		super (statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}
 
 	public java.net.URL getURL(int columnIndex) throws SQLException
@@ -366,9 +365,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 	public int getFetchSize() throws SQLException
 	{
-		// In this implementation we return the entire result set, so
-		// here return the number of rows we have. Sub-classes can return a proper
-		// value
+		// Returning the current batch size seems the right thing to do.
 		return rows.size();
 	}
 
@@ -754,7 +751,6 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		}
 
 		updateValue(columnIndex, theData);
-
 	}
 
 
@@ -787,7 +783,6 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			throw new PSQLException("postgresql.updateable.ioerror" + ie);
 		}
 		updateValue(columnIndex, theData);
-
 	}
 
 

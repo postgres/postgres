@@ -6,7 +6,7 @@ import java.sql.*;
 import org.postgresql.Field;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.5 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.6 2003/02/04 09:20:10 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC1.
  * However most of the implementation is really done in
  * org.postgresql.jdbc1.AbstractJdbc1Connection
@@ -34,16 +34,6 @@ public class Jdbc1Connection extends org.postgresql.jdbc1.AbstractJdbc1Connectio
 		if (metadata == null)
 			metadata = new org.postgresql.jdbc1.Jdbc1DatabaseMetaData(this);
 		return metadata;
-	}
-
-	public java.sql.ResultSet getResultSet(java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
-	{
-		return new Jdbc1ResultSet(this, stat, fields, tuples, status, updateCount, insertOID, binaryCursor);
-	}
-
-	public java.sql.ResultSet getResultSet(java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException
-	{
-		return new Jdbc1ResultSet(this, stat, fields, tuples, status, updateCount, 0, false);
 	}
 
 }

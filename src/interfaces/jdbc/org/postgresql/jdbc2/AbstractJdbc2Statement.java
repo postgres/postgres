@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.10 2002/11/20 20:37:53 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.11 2003/02/04 09:20:10 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -133,7 +133,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public int getFetchSize() throws SQLException
 	{
-		return 0;
+		return super.fetchSize;
 	}
 
 	public int getResultSetConcurrency() throws SQLException
@@ -148,12 +148,14 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public void setFetchDirection(int direction) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		// I don't think this should happen, since it's a hint it should just
+		// fail quietly.
+		//   throw org.postgresql.Driver.notImplemented();
 	}
 
 	public void setFetchSize(int rows) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		super.fetchSize = rows;
 	}
 
 	public void setResultSetConcurrency(int value) throws SQLException

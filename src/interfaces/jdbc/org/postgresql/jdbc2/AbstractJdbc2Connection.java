@@ -6,7 +6,7 @@ import java.net.ConnectException;
 import java.sql.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Connection.java,v 1.2 2002/09/06 21:23:06 momjian Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Connection.java,v 1.3 2003/02/04 09:20:10 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Connection which provides the jdbc1
  * methods.  The real Connection class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Connection
@@ -17,7 +17,7 @@ public abstract class AbstractJdbc2Connection extends org.postgresql.jdbc1.Abstr
 	 * The current type mappings
 	 */
 	protected java.util.Map typemap;
-
+ 
 	public java.sql.Statement createStatement() throws SQLException
 	{
 		// The spec says default of TYPE_FORWARD_ONLY but everyone is used to
