@@ -838,7 +838,6 @@ Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-integer-datetimes  enable 64-bit integer date/time support
-  --enable-recode         enable single-byte recode support
   --enable-nls[=LANGUAGES]  enable Native Language Support
   --disable-shared        do not build shared libraries
   --disable-rpath         do not embed shared library search path in executables
@@ -1595,43 +1594,6 @@ fi;
 
 echo "$as_me:$LINENO: result: $enable_integer_datetimes" >&5
 echo "${ECHO_T}$enable_integer_datetimes" >&6
-
-
-# Character set recode (--enable-recode)
-#
-echo "$as_me:$LINENO: checking whether to build with recode support" >&5
-echo $ECHO_N "checking whether to build with recode support... $ECHO_C" >&6
-
-
-# Check whether --enable-recode or --disable-recode was given.
-if test "${enable_recode+set}" = set; then
-  enableval="$enable_recode"
-
-  case $enableval in
-    yes)
-
-cat >>confdefs.h <<\_ACEOF
-#define CYR_RECODE 1
-_ACEOF
-
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --enable-recode option" >&5
-echo "$as_me: error: no argument expected for --enable-recode option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  enable_recode=no
-
-fi;
-
-echo "$as_me:$LINENO: result: $enable_recode" >&5
-echo "${ECHO_T}$enable_recode" >&6
 
 
 #

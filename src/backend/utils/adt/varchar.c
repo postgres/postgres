@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.101 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.102 2003/08/04 04:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,10 +130,6 @@ bpcharin(PG_FUNCTION_ARGS)
 	for (; i < maxlen; i++)
 		*r++ = ' ';
 
-#ifdef CYR_RECODE
-	convertstr(VARDATA(result), len, 0);
-#endif
-
 	PG_RETURN_BPCHAR_P(result);
 }
 
@@ -153,10 +149,6 @@ bpcharout(PG_FUNCTION_ARGS)
 	result = (char *) palloc(len + 1);
 	memcpy(result, VARDATA(s), len);
 	result[len] = '\0';
-
-#ifdef CYR_RECODE
-	convertstr(result, len, 1);
-#endif
 
 	PG_RETURN_CSTRING(result);
 }
@@ -396,10 +388,6 @@ varcharin(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(result) = len + VARHDRSZ;
 	memcpy(VARDATA(result), s, len);
 
-#ifdef CYR_RECODE
-	convertstr(VARDATA(result), len, 0);
-#endif
-
 	PG_RETURN_VARCHAR_P(result);
 }
 
@@ -419,10 +407,6 @@ varcharout(PG_FUNCTION_ARGS)
 	result = palloc(len + 1);
 	memcpy(result, VARDATA(s), len);
 	result[len] = '\0';
-
-#ifdef CYR_RECODE
-	convertstr(result, len, 1);
-#endif
 
 	PG_RETURN_CSTRING(result);
 }

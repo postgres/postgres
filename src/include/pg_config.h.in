@@ -24,9 +24,6 @@
 /* The alignment requirement of a `short'. */
 #undef ALIGNOF_SHORT
 
-/* Define to 1 if you want single-byte recode support. (--enable-recode) */
-#undef CYR_RECODE
-
 /* Define to the default TCP port number on which the server listens and to
    which clients will try to connect to. This can be overridden at run-time,
    but it's convenient if your clients have the right default compiled in.
@@ -604,7 +601,7 @@
 #undef USE_SYSV_SHARED_MEMORY
 
 /* Define to 1 to build libpq and ecpg to be thread-safe.
-   (--enable-thread-safeness) */
+   (--enable-thread-safety) */
 #undef USE_THREADS
 
 /* Define to select unnamed POSIX semaphores. */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.104 2003/08/04 02:40:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.105 2003/08/04 04:03:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,10 +268,6 @@ textin(PG_FUNCTION_ARGS)
 
 	memcpy(VARDATA(result), inputText, len);
 
-#ifdef CYR_RECODE
-	convertstr(VARDATA(result), len, 0);
-#endif
-
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -289,10 +285,6 @@ textout(PG_FUNCTION_ARGS)
 	result = (char *) palloc(len + 1);
 	memcpy(result, VARDATA(t), len);
 	result[len] = '\0';
-
-#ifdef CYR_RECODE
-	convertstr(result, len, 1);
-#endif
 
 	PG_RETURN_CSTRING(result);
 }

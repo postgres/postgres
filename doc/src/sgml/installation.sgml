@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.137 2003/08/01 03:10:04 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.138 2003/08/04 04:03:03 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -695,19 +695,6 @@ JAVACMD=$JAVA_HOME/bin/java
         </para>
         <para>
          Example: <literal>--with-libraries=/opt/gnu/lib:/usr/sup/lib</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--enable-recode</option></term>
-       <listitem>
-        <para>
-         Enables single-byte character set recode support. See
-         <![%standalone-include[the documentation]]> <![%standalone-ignore[<xref
-         linkend="recode">]]> about this feature.  Note that a more
-         general form of character set conversion is supported in the
-         default configuration; this feature is obsolete.
         </para>
        </listitem>
       </varlistentry>

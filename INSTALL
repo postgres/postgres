@@ -342,13 +342,6 @@ are encouraged to read in any case.
             installed in non-standard locations.
             Example: --with-libraries=/opt/gnu/lib:/usr/sup/lib.
 
-        --enable-recode
-
-            Enables single-byte character set recode support. See the
-            Administrator's Guide about this feature. Note that a more general
-            form of character set conversion is supported in the default
-            configuration; this feature is obsolete.
-
         --enable-nls[=LANGUAGES]
 
             Enables Native Language Support (NLS), that is, the ability to

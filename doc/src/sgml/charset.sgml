@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.36 2003/05/15 15:50:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.37 2003/08/04 04:03:03 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -7,7 +7,7 @@
   This chapter describes the available localization features from the
   point of view of the administrator.
   <productname>PostgreSQL</productname> supports localization with
-  three approaches:
+  two approaches:
 
    <itemizedlist>
     <listitem>
@@ -23,15 +23,8 @@
       Providing a number of different character sets defined in the
       <productname>PostgreSQL</productname> server, including
       multiple-byte character sets, to support storing text in all
-      kinds of languages, and providing character set recoding between
+      kinds of languages, and providing character set translation between
       client and server.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Single-byte character recoding provides a more light-weight
-      solution for users of multiple, yet single-byte character sets.
      </para>
     </listitem>
    </itemizedlist>
@@ -883,75 +876,6 @@ RESET CLIENT_ENCODING;
    </sect2>
 
   </sect1>
-
-
- <sect1 id="recode">
-  <title>Single-Byte Character Set Recoding</>
-
-  <para>
-   You can set up this feature with the <option>--enable-recode</> option
-   to <filename>configure</>. This option was formerly described as
-   <quote>Cyrillic recode support</> which doesn't express all its
-   power. It can be used for <emphasis>any</> single-byte character
-   set recoding.
-  </para>
-
-  <para>
-   This method uses a file <filename>charset.conf</> file located in
-   the data directory for configuration.  It's a typical
-   configuration text file where spaces and newlines separate fields
-   and records and <literal>#</> starts a comment.  Three key words with the
-   following syntax are recognized here:
-<synopsis>
-BaseCharset <replaceable>server_charset</>
-RecodeTable <replaceable>from_charset</> <replaceable>to_charset</> <replaceable>file_name</>
-HostCharset <replaceable>host_spec</>    <replaceable>host_charset</>
-</synopsis>
-  </para>
-
-  <para>
-   <token>BaseCharset</> defines the character set of the database server.
-   All character set names are only used for mapping inside of
-   <filename>charset.conf</> so you can freely use typing-friendly
-   names.
-  </para>
-
-  <para>
-   <token>RecodeTable</> records specify conversion tables between
-   server and client.  The file name is relative to the
-   data directory.  The table file format is very
-   simple. There are no key words, and character mappings are represented by a
-   pair of decimal or hexadecimal (prefixed by <literal>0x</>) values on single
-   lines:
-<synopsis>
-<replaceable>char_value</>   <replaceable>converted_char_value</>
-</synopsis>
-   In the <filename>src/data/</> directory in the source distribution you can find an
-   example <filename>charset.conf</> and a few recoding tables.
-  </para>
-
-  <para>
-   <token>HostCharset</> records define the client character set by IP
-   address. You can use a single IP address, an IP mask range starting
-   from the given address or an IP interval (e.g., <literal>127.0.0.1</>,
-   <literal>192.168.1.100/24</>, <literal>192.168.1.20-192.168.1.40</>).
-  </para>
-
-  <para>
-   The <filename>charset.conf</> file is always processed to the
-   end, so you can easily specify exceptions from preceding rules.
-  </para>
-
-  <para>
-   As this solution is based on the client's IP address there are
-   obviously some restrictions as well. You cannot use different
-   character sets on the same host at the same time. It is also
-   inconvenient when you boot your client hosts into multiple
-   operating systems.  Nevertheless, when these restrictions are not
-   limiting and you do not need multibyte characters then it is a
-   simple and effective solution.
-  </para>
- </sect1>
 
 </chapter>
 
