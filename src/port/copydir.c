@@ -6,6 +6,11 @@
 
 #include "postgres.h"
 
+#undef mkdir	/* no reason to use that macro because we ignore the 2nd arg */
+
+#include "dirent.h"
+
+
 int
 copydir(char *fromdir,char *todir)
 {

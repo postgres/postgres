@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.146 2003/05/15 23:39:27 tgl Exp $
+ * $Id: c.h,v 1.147 2003/05/16 01:57:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,9 @@
 
 #include "pg_config.h"
 #include "pg_config_manual.h"	/* must be after pg_config.h */
+#ifndef WIN32
 #include "pg_config_os.h"		/* must be before any system header files */
+#endif
 #include "postgres_ext.h"
 
 #include <stdio.h>
@@ -69,6 +71,11 @@
 #include <fcntl.h>			/* ensure O_BINARY is available */
 #ifdef HAVE_SUPPORTDEFS_H
 #include <SupportDefs.h>
+#endif
+
+#ifdef WIN32
+/* We have to redefine some system functions after they are included above */
+#include "pg_config_os.h"
 #endif
 
 /* Must be before gettext() games below */
