@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.38 1998/06/27 15:47:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.39 1998/06/30 02:33:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.38 1998/06/27 15:47:46 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.39 1998/06/30 02:33:32 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -580,7 +580,7 @@ ProcWakeup(PROC *proc, int errType)
  *		released.
  */
 int
-ProcLockWakeup(PROC_QUEUE *queue, char *ltable, char *lock)
+ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 {
 	PROC	   *proc;
 	int			count;
@@ -590,8 +590,8 @@ ProcLockWakeup(PROC_QUEUE *queue, char *ltable, char *lock)
 
 	proc = (PROC *) MAKE_PTR(queue->links.prev);
 	count = 0;
-	while ((LockResolveConflicts((LOCKTAB *) ltable,
-								 (LOCK *) lock,
+	while ((LockResolveConflicts(lockmethod,
+								 lock,
 								 proc->token,
 								 proc->xid) == STATUS_OK))
 	{
@@ -602,7 +602,7 @@ ProcLockWakeup(PROC_QUEUE *queue, char *ltable, char *lock)
 		 * between the time we release the lock master (spinlock) and the
 		 * time that the awoken process begins executing again.
 		 */
-		GrantLock((LOCK *) lock, proc->token);
+		GrantLock(lock, proc->token);
 		queue->size--;
 
 		/*

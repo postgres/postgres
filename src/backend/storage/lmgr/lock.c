@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.31 1998/06/28 21:17:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.32 1998/06/30 02:33:31 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -18,7 +18,7 @@
  *
  *	Interface:
  *
- *	LockAcquire(), LockRelease(), LockTableInit().
+ *	LockAcquire(), LockRelease(), LockMethodTableInit().
  *
  *	LockReplace() is called only within this module and by the
  *		lkchain module.  It releases a lock without looking
@@ -51,8 +51,7 @@
 #include "access/transam.h"
 
 static int
-WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
-		   LOCKTYPE locktype);
+WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode);
 
 /*#define LOCK_MGR_DEBUG*/
 
@@ -134,8 +133,8 @@ SPINLOCK	LockMgrLock;		/* in Shmem or created in
 
 /* This is to simplify/speed up some bit arithmetic */
 
-static MASK BITS_OFF[MAX_LOCKTYPES];
-static MASK BITS_ON[MAX_LOCKTYPES];
+static MASK BITS_OFF[MAX_LOCKMODES];
+static MASK BITS_ON[MAX_LOCKMODES];
 
 /* -----------------
  * XXX Want to move this to this file
@@ -144,16 +143,12 @@ static MASK BITS_ON[MAX_LOCKTYPES];
 static bool LockingIsDisabled;
 
 /* -------------------
- * map from tableId to the lock table structure
+ * map from lockmethod to the lock table structure
  * -------------------
  */
-static LOCKTAB *AllTables[MAX_TABLES];
+static LOCKMETHODTABLE *LockMethodTable[MAX_LOCK_METHODS];
 
-/* -------------------
- * no zero-th table
- * -------------------
- */
-static int	NumTables;
+static int	NumLockMethods;
 
 /* -------------------
  * InitLocks -- Init the lock module.  Create a private data
@@ -168,10 +163,10 @@ InitLocks()
 
 	bit = 1;
 	/* -------------------
-	 * remember 0th locktype is invalid
+	 * remember 0th lockmode is invalid
 	 * -------------------
 	 */
-	for (i = 0; i < MAX_LOCKTYPES; i++, bit <<= 1)
+	for (i = 0; i < MAX_LOCKMODES; i++, bit <<= 1)
 	{
 		BITS_ON[i] = bit;
 		BITS_OFF[i] = ~bit;
@@ -190,30 +185,30 @@ LockDisable(int status)
 
 
 /*
- * LockTypeInit -- initialize the lock table's lock type
+ * LockMethodInit -- initialize the lock table's lock type
  *		structures
  *
  * Notes: just copying.  Should only be called once.
  */
 static void
-LockTypeInit(LOCKTAB *ltable,
+LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
 			 MASK *conflictsP,
 			 int *prioP,
-			 int ntypes)
+			 int numModes)
 {
 	int			i;
 
-	ltable->ctl->nLockTypes = ntypes;
-	ntypes++;
-	for (i = 0; i < ntypes; i++, prioP++, conflictsP++)
+	lockMethodTable->ctl->numLockModes = numModes;
+	numModes++;
+	for (i = 0; i < numModes; i++, prioP++, conflictsP++)
 	{
-		ltable->ctl->conflictTab[i] = *conflictsP;
-		ltable->ctl->prio[i] = *prioP;
+		lockMethodTable->ctl->conflictTab[i] = *conflictsP;
+		lockMethodTable->ctl->prio[i] = *prioP;
 	}
 }
 
 /*
- * LockTableInit -- initialize a lock table structure
+ * LockMethodTableInit -- initialize a lock table structure
  *
  * Notes:
  *		(a) a lock table has four separate entries in the shmem index
@@ -222,23 +217,23 @@ LockTypeInit(LOCKTAB *ltable,
  *		is wasteful, in this case, but not much space is involved.
  *
  */
-LockTableId
-LockTableInit(char *tabName,
+LOCKMETHOD
+LockMethodTableInit(char *tabName,
 			MASK *conflictsP,
 			int *prioP,
-			int ntypes)
+			int numModes)
 {
-	LOCKTAB    *ltable;
+	LOCKMETHODTABLE    *lockMethodTable;
 	char	   *shmemName;
 	HASHCTL		info;
 	int			hash_flags;
 	bool		found;
 	int			status = TRUE;
 
-	if (ntypes > MAX_LOCKTYPES)
+	if (numModes > MAX_LOCKMODES)
 	{
-		elog(NOTICE, "LockTableInit: too many lock types %d greater than %d",
-			 ntypes, MAX_LOCKTYPES);
+		elog(NOTICE, "LockMethodTableInit: too many lock types %d greater than %d",
+			 numModes, MAX_LOCKMODES);
 		return (INVALID_TABLEID);
 	}
 
@@ -246,15 +241,15 @@ LockTableInit(char *tabName,
 	shmemName = (char *) palloc((unsigned) (strlen(tabName) + 32));
 	if (!shmemName)
 	{
-		elog(NOTICE, "LockTableInit: couldn't malloc string %s \n", tabName);
+		elog(NOTICE, "LockMethodTableInit: couldn't malloc string %s \n", tabName);
 		return (INVALID_TABLEID);
 	}
 
 	/* each lock table has a non-shared header */
-	ltable = (LOCKTAB *) palloc((unsigned) sizeof(LOCKTAB));
-	if (!ltable)
+	lockMethodTable = (LOCKMETHODTABLE *) palloc((unsigned) sizeof(LOCKMETHODTABLE));
+	if (!lockMethodTable)
 	{
-		elog(NOTICE, "LockTableInit: couldn't malloc lock table %s\n", tabName);
+		elog(NOTICE, "LockMethodTableInit: couldn't malloc lock table %s\n", tabName);
 		pfree(shmemName);
 		return (INVALID_TABLEID);
 	}
@@ -272,16 +267,20 @@ LockTableInit(char *tabName,
 	 * -----------------------
 	 */
 	sprintf(shmemName, "%s (ctl)", tabName);
-	ltable->ctl = (LOCKCTL *)
-		ShmemInitStruct(shmemName, (unsigned) sizeof(LOCKCTL), &found);
+	lockMethodTable->ctl = (LOCKMETHODCTL *)
+		ShmemInitStruct(shmemName, (unsigned) sizeof(LOCKMETHODCTL), &found);
 
-	if (!ltable->ctl)
+	if (!lockMethodTable->ctl)
 	{
-		elog(FATAL, "LockTableInit: couldn't initialize %s", tabName);
+		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 		status = FALSE;
 	}
 
-	NumTables = 1;
+	/* -------------------
+	 * no zero-th table
+	 * -------------------
+	 */
+	NumLockMethods = 1;
 
 	/* ----------------
 	 * we're first - initialize
@@ -289,18 +288,18 @@ LockTableInit(char *tabName,
 	 */
 	if (!found)
 	{
-		MemSet(ltable->ctl, 0, sizeof(LOCKCTL));
-		ltable->ctl->masterLock = LockMgrLock;
-		ltable->ctl->tableId = NumTables;
+		MemSet(lockMethodTable->ctl, 0, sizeof(LOCKMETHODCTL));
+		lockMethodTable->ctl->masterLock = LockMgrLock;
+		lockMethodTable->ctl->lockmethod = NumLockMethods;
 	}
 
 	/* --------------------
-	 * other modules refer to the lock table by a tableId
+	 * other modules refer to the lock table by a lockmethod
 	 * --------------------
 	 */
-	AllTables[NumTables] = ltable;
-	NumTables++;
-	Assert(NumTables <= MAX_TABLES);
+	LockMethodTable[NumLockMethods] = lockMethodTable;
+	NumLockMethods++;
+	Assert(NumLockMethods <= MAX_LOCK_METHODS);
 
 	/* ----------------------
 	 * allocate a hash table for the lock tags.  This is used
@@ -313,14 +312,14 @@ LockTableInit(char *tabName,
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
 	sprintf(shmemName, "%s (lock hash)", tabName);
-	ltable->lockHash = (HTAB *) ShmemInitHash(shmemName,
+	lockMethodTable->lockHash = (HTAB *) ShmemInitHash(shmemName,
 										 INIT_TABLE_SIZE, MAX_TABLE_SIZE,
 											  &info, hash_flags);
 
-	Assert(ltable->lockHash->hash == tag_hash);
-	if (!ltable->lockHash)
+	Assert(lockMethodTable->lockHash->hash == tag_hash);
+	if (!lockMethodTable->lockHash)
 	{
-		elog(FATAL, "LockTableInit: couldn't initialize %s", tabName);
+		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 		status = FALSE;
 	}
 
@@ -335,31 +334,31 @@ LockTableInit(char *tabName,
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
 	sprintf(shmemName, "%s (xid hash)", tabName);
-	ltable->xidHash = (HTAB *) ShmemInitHash(shmemName,
+	lockMethodTable->xidHash = (HTAB *) ShmemInitHash(shmemName,
 										 INIT_TABLE_SIZE, MAX_TABLE_SIZE,
 											 &info, hash_flags);
 
-	if (!ltable->xidHash)
+	if (!lockMethodTable->xidHash)
 	{
-		elog(FATAL, "LockTableInit: couldn't initialize %s", tabName);
+		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 		status = FALSE;
 	}
 
 	/* init ctl data structures */
-	LockTypeInit(ltable, conflictsP, prioP, ntypes);
+	LockMethodInit(lockMethodTable, conflictsP, prioP, numModes);
 
 	SpinRelease(LockMgrLock);
 
 	pfree(shmemName);
 
 	if (status)
-		return (ltable->ctl->tableId);
+		return (lockMethodTable->ctl->lockmethod);
 	else
 		return (INVALID_TABLEID);
 }
 
 /*
- * LockTableRename -- allocate another tableId to the same
+ * LockMethodTableRename -- allocate another lockmethod to the same
  *		lock table.
  *
  * NOTES: Both the lock module and the lock chain (lchain.c)
@@ -367,28 +366,27 @@ LockTableInit(char *tabName,
  *		kinds of locks.  Short term and long term locks look
  *		the same to the lock table, but are handled differently
  *		by the lock chain manager.	This function allows the
- *		client to use different tableIds when acquiring/releasing
+ *		client to use different lockmethods when acquiring/releasing
  *		short term and long term locks.
  */
 #ifdef NOT_USED
-LockTableId
-LockTableRename(LockTableId tableId)
+LOCKMETHOD
+LockMethodTableRename(LOCKMETHOD lockmethod)
 {
-	LockTableId newTableId;
+	LOCKMETHOD newLockMethod;
 
-	if (NumTables >= MAX_TABLES)
+	if (NumLockMethods >= MAX_LOCK_METHODS)
 		return (INVALID_TABLEID);
-	if (AllTables[tableId] == INVALID_TABLEID)
+	if (LockMethodTable[lockmethod] == INVALID_TABLEID)
 		return (INVALID_TABLEID);
 
-	/* other modules refer to the lock table by a tableId */
-	newTableId = NumTables;
-	NumTables++;
+	/* other modules refer to the lock table by a lockmethod */
+	newLockMethod = NumLockMethods;
+	NumLockMethods++;
 
-	AllTables[newTableId] = AllTables[tableId];
-	return (newTableId);
+	LockMethodTable[newLockMethod] = LockMethodTable[lockmethod];
+	return (newLockMethod);
 }
-
 #endif
 
 /*
@@ -423,13 +421,13 @@ LockTableRename(LockTableId tableId)
  *		acquired if already held by another process.  They must be
  *		released explicitly by the application but they are released
  *		automatically when a backend terminates.
- *		They are indicated by a dummy tableId 0 which doesn't have
+ *		They are indicated by a dummy lockmethod 0 which doesn't have
  *		any table allocated but uses the normal lock table, and are
  *		distinguished from normal locks for the following differences:
  *
  *										normal lock		user lock
  *
- *		tableId							1				0
+ *		lockmethod						1				0
  *		tag.relId						rel oid			0
  *		tag.ItemPointerData.ip_blkid	block id		lock id2
  *		tag.ItemPointerData.ip_posid	tuple offset	lock id1
@@ -437,7 +435,7 @@ LockTableRename(LockTableId tableId)
  *		xid.xid							current xid		0
  *		persistence						transaction		user or backend
  *
- *		The locktype parameter can have the same values for normal locks
+ *		The lockmode parameter can have the same values for normal locks
  *		although probably only WRITE_LOCK can have some practical use.
  *
  *														DZ - 4 Oct 1996
@@ -445,7 +443,7 @@ LockTableRename(LockTableId tableId)
  */
 
 bool
-LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
+LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 {
 	XIDLookupEnt *result,
 				item;
@@ -453,50 +451,50 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 	bool		found;
 	LOCK	   *lock = NULL;
 	SPINLOCK	masterLock;
-	LOCKTAB    *ltable;
+	LOCKMETHODTABLE    *lockMethodTable;
 	int			status;
 	TransactionId myXid;
 
 #ifdef USER_LOCKS
 	int			is_user_lock;
 
-	is_user_lock = (tableId == 0);
+	is_user_lock = (lockmethod == 0);
 	if (is_user_lock)
 	{
-		tableId = 1;
+		lockmethod = 1;
 #ifdef USER_LOCKS_DEBUG
 		elog(NOTICE, "LockAcquire: user lock tag [%u,%u] %d",
-			 lockName->tupleId.ip_posid,
-			 ((lockName->tupleId.ip_blkid.bi_hi << 16) +
-			  lockName->tupleId.ip_blkid.bi_lo),
-			 locktype);
+			 locktag->tupleId.ip_posid,
+			 ((locktag->tupleId.ip_blkid.bi_hi << 16) +
+			  locktag->tupleId.ip_blkid.bi_lo),
+			 lockmode);
 #endif
 	}
 #endif
 
-	Assert(tableId < NumTables);
-	ltable = AllTables[tableId];
-	if (!ltable)
+	Assert(lockmethod < NumLockMethods);
+	lockMethodTable = LockMethodTable[lockmethod];
+	if (!lockMethodTable)
 	{
-		elog(NOTICE, "LockAcquire: bad lock table %d", tableId);
+		elog(NOTICE, "LockAcquire: bad lock table %d", lockmethod);
 		return (FALSE);
 	}
 
 	if (LockingIsDisabled)
 		return (TRUE);
 
-	LOCK_PRINT("Acquire", lockName, locktype);
-	masterLock = ltable->ctl->masterLock;
+	LOCK_PRINT("Acquire", locktag, lockmode);
+	masterLock = lockMethodTable->ctl->masterLock;
 
 	SpinAcquire(masterLock);
 
-	Assert(ltable->lockHash->hash == tag_hash);
-	lock = (LOCK *) hash_search(ltable->lockHash, (Pointer) lockName, HASH_ENTER, &found);
+	Assert(lockMethodTable->lockHash->hash == tag_hash);
+	lock = (LOCK *) hash_search(lockMethodTable->lockHash, (Pointer) locktag, HASH_ENTER, &found);
 
 	if (!lock)
 	{
 		SpinRelease(masterLock);
-		elog(FATAL, "LockAcquire: lock table %d is corrupted", tableId);
+		elog(FATAL, "LockAcquire: lock table %d is corrupted", lockmethod);
 		return (FALSE);
 	}
 
@@ -508,13 +506,13 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 	{
 		lock->mask = 0;
 		ProcQueueInit(&(lock->waitProcs));
-		MemSet((char *) lock->holders, 0, sizeof(int) * MAX_LOCKTYPES);
-		MemSet((char *) lock->activeHolders, 0, sizeof(int) * MAX_LOCKTYPES);
+		MemSet((char *) lock->holders, 0, sizeof(int) * MAX_LOCKMODES);
+		MemSet((char *) lock->activeHolders, 0, sizeof(int) * MAX_LOCKMODES);
 		lock->nHolding = 0;
 		lock->nActive = 0;
 
 		Assert(BlockIdEquals(&(lock->tag.tupleId.ip_blkid),
-							 &(lockName->tupleId.ip_blkid)));
+							 &(locktag->tupleId.ip_blkid)));
 
 	}
 
@@ -523,7 +521,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 	 * locks at end of transaction.
 	 * ------------------
 	 */
-	xidTable = ltable->xidHash;
+	xidTable = lockMethodTable->xidHash;
 	myXid = GetCurrentTransactionId();
 
 	/* ------------------
@@ -561,7 +559,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 		XID_PRINT("LockAcquire: queueing XidEnt", result);
 		ProcAddLock(&result->queue);
 		result->nHolding = 0;
-		MemSet((char *) result->holders, 0, sizeof(int) * MAX_LOCKTYPES);
+		MemSet((char *) result->holders, 0, sizeof(int) * MAX_LOCKMODES);
 	}
 
 	/* ----------------
@@ -571,7 +569,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 	 * ----------------
 	 */
 	lock->nHolding++;
-	lock->holders[locktype]++;
+	lock->holders[lockmode]++;
 
 	/* --------------------
 	 * If I'm the only one holding a lock, then there
@@ -582,19 +580,19 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 	 */
 	if (result->nHolding == lock->nActive)
 	{
-		result->holders[locktype]++;
+		result->holders[lockmode]++;
 		result->nHolding++;
-		GrantLock(lock, locktype);
+		GrantLock(lock, lockmode);
 		SpinRelease(masterLock);
 		return (TRUE);
 	}
 
 	Assert(result->nHolding <= lock->nActive);
 
-	status = LockResolveConflicts(ltable, lock, locktype, myXid);
+	status = LockResolveConflicts(lockmethod, lock, lockmode, myXid);
 
 	if (status == STATUS_OK)
-		GrantLock(lock, locktype);
+		GrantLock(lock, lockmode);
 	else if (status == STATUS_FOUND)
 	{
 #ifdef USER_LOCKS
@@ -611,7 +609,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 				hash_search(xidTable, (Pointer) &item, HASH_REMOVE, &found);
 			}
 			lock->nHolding--;
-			lock->holders[locktype]--;
+			lock->holders[lockmode]--;
 			SpinRelease(masterLock);
 #ifdef USER_LOCKS_DEBUG
 			elog(NOTICE, "LockAcquire: user lock failed");
@@ -619,7 +617,7 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 			return (FALSE);
 		}
 #endif
-		status = WaitOnLock(ltable, tableId, lock, locktype);
+		status = WaitOnLock(lockmethod, lock, lockmode);
 		XID_PRINT("Someone granted me the lock", result);
 	}
 
@@ -645,23 +643,23 @@ LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
  * ----------------------------
  */
 int
-LockResolveConflicts(LOCKTAB *ltable,
+LockResolveConflicts(LOCKMETHOD lockmethod,
 					 LOCK *lock,
-					 LOCKTYPE locktype,
+					 LOCKMODE lockmode,
 					 TransactionId xid)
 {
 	XIDLookupEnt *result,
 				item;
 	int		   *myHolders;
-	int			nLockTypes;
+	int			numLockModes;
 	HTAB	   *xidTable;
 	bool		found;
 	int			bitmask;
 	int			i,
 				tmpMask;
 
-	nLockTypes = ltable->ctl->nLockTypes;
-	xidTable = ltable->xidHash;
+	numLockModes = LockMethodTable[lockmethod]->ctl->numLockModes;
+	xidTable = LockMethodTable[lockmethod]->xidHash;
 
 	/* ---------------------
 	 * read my own statistics from the xid table.  If there
@@ -693,7 +691,7 @@ LockResolveConflicts(LOCKTAB *ltable,
 		 * the lock stats.
 		 * ---------------
 		 */
-		MemSet(result->holders, 0, nLockTypes * sizeof(*(lock->holders)));
+		MemSet(result->holders, 0, numLockModes * sizeof(*(lock->holders)));
 		result->nHolding = 0;
 	}
 
@@ -703,7 +701,7 @@ LockResolveConflicts(LOCKTAB *ltable,
 		 * do not continue and share the lock, even if we can.	bjm
 		 * ------------------------
 		 */
-		int			myprio = ltable->ctl->prio[locktype];
+		int			myprio = LockMethodTable[lockmethod]->ctl->prio[lockmode];
 		PROC_QUEUE *waitQueue = &(lock->waitProcs);
 		PROC	   *topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
@@ -716,15 +714,15 @@ LockResolveConflicts(LOCKTAB *ltable,
 	 * with mine, then I get the lock.
 	 *
 	 * Checking for conflict: lock->mask represents the types of
-	 * currently held locks.  conflictTable[locktype] has a bit
+	 * currently held locks.  conflictTable[lockmode] has a bit
 	 * set for each type of lock that conflicts with mine.	Bitwise
 	 * compare tells if there is a conflict.
 	 * ----------------------------
 	 */
-	if (!(ltable->ctl->conflictTab[locktype] & lock->mask))
+	if (!(LockMethodTable[lockmethod]->ctl->conflictTab[lockmode] & lock->mask))
 	{
 
-		result->holders[locktype]++;
+		result->holders[lockmode]++;
 		result->nHolding++;
 
 		XID_PRINT("Conflict Resolved: updated xid entry stats", result);
@@ -740,7 +738,7 @@ LockResolveConflicts(LOCKTAB *ltable,
 	 */
 	bitmask = 0;
 	tmpMask = 2;
-	for (i = 1; i <= nLockTypes; i++, tmpMask <<= 1)
+	for (i = 1; i <= numLockModes; i++, tmpMask <<= 1)
 	{
 		if (lock->activeHolders[i] != myHolders[i])
 			bitmask |= tmpMask;
@@ -753,12 +751,12 @@ LockResolveConflicts(LOCKTAB *ltable,
 	 * conflict and I have to sleep.
 	 * ------------------------
 	 */
-	if (!(ltable->ctl->conflictTab[locktype] & bitmask))
+	if (!(LockMethodTable[lockmethod]->ctl->conflictTab[lockmode] & bitmask))
 	{
 
 		/* no conflict. Get the lock and go on */
 
-		result->holders[locktype]++;
+		result->holders[lockmode]++;
 		result->nHolding++;
 
 		XID_PRINT("Conflict Resolved: updated xid entry stats", result);
@@ -771,11 +769,13 @@ LockResolveConflicts(LOCKTAB *ltable,
 }
 
 static int
-WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKTYPE locktype)
+WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
+	LOCKMETHODTABLE    *lockMethodTable = LockMethodTable[lockmethod];
+	int			prio = lockMethodTable->ctl->prio[lockmode];
 
-	int			prio = ltable->ctl->prio[locktype];
+	Assert(lockmethod < NumLockMethods);
 
 	/*
 	 * the waitqueue is ordered by priority. I insert myself according to
@@ -785,10 +785,10 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKTYPE locktype)
 	 * synchronization for this queue.	That will not be true if/when
 	 * people can be deleted from the queue by a SIGINT or something.
 	 */
-	LOCK_DUMP_AUX("WaitOnLock: sleeping on lock", lock, locktype);
+	LOCK_DUMP_AUX("WaitOnLock: sleeping on lock", lock, lockmode);
 	if (ProcSleep(waitQueue,
-				  ltable->ctl->masterLock,
-				  locktype,
+				  lockMethodTable->ctl->masterLock,
+				  lockmode,
 				  prio,
 				  lock) != NO_ERROR)
 	{
@@ -799,18 +799,18 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKTYPE locktype)
 		 * -------------------
 		 */
 		lock->nHolding--;
-		lock->holders[locktype]--;
-		LOCK_DUMP_AUX("WaitOnLock: aborting on lock", lock, locktype);
-		SpinRelease(ltable->ctl->masterLock);
+		lock->holders[lockmode]--;
+		LOCK_DUMP_AUX("WaitOnLock: aborting on lock", lock, lockmode);
+		SpinRelease(lockMethodTable->ctl->masterLock);
 		elog(ERROR, "WaitOnLock: error on wakeup - Aborting this transaction");
 	}
 
-	LOCK_DUMP_AUX("WaitOnLock: wakeup on lock", lock, locktype);
+	LOCK_DUMP_AUX("WaitOnLock: wakeup on lock", lock, lockmode);
 	return (STATUS_OK);
 }
 
 /*
- * LockRelease -- look up 'lockName' in lock table 'tableId' and
+ * LockRelease -- look up 'locktag' in lock table 'lockmethod' and
  *		release it.
  *
  * Side Effects: if the lock no longer conflicts with the highest
@@ -820,12 +820,12 @@ WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock, LOCKTYPE locktype)
  *		come along and request the lock).
  */
 bool
-LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
+LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 {
 	LOCK	   *lock = NULL;
 	SPINLOCK	masterLock;
 	bool		found;
-	LOCKTAB    *ltable;
+	LOCKMETHODTABLE    *lockMethodTable;
 	XIDLookupEnt *result,
 				item;
 	HTAB	   *xidTable;
@@ -834,41 +834,41 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 #ifdef USER_LOCKS
 	int			is_user_lock;
 
-	is_user_lock = (tableId == 0);
+	is_user_lock = (lockmethod == 0);
 	if (is_user_lock)
 	{
-		tableId = 1;
+		lockmethod = 1;
 #ifdef USER_LOCKS_DEBUG
 		elog(NOTICE, "LockRelease: user lock tag [%u,%u] %d",
-			 lockName->tupleId.ip_posid,
-			 ((lockName->tupleId.ip_blkid.bi_hi << 16) +
-			  lockName->tupleId.ip_blkid.bi_lo),
-			 locktype);
+			 locktag->tupleId.ip_posid,
+			 ((locktag->tupleId.ip_blkid.bi_hi << 16) +
+			  locktag->tupleId.ip_blkid.bi_lo),
+			 lockmode);
 #endif
 	}
 #endif
 
-	Assert(tableId < NumTables);
-	ltable = AllTables[tableId];
-	if (!ltable)
+	Assert(lockmethod < NumLockMethods);
+	lockMethodTable = LockMethodTable[lockmethod];
+	if (!lockMethodTable)
 	{
-		elog(NOTICE, "ltable is null in LockRelease");
+		elog(NOTICE, "lockMethodTable is null in LockRelease");
 		return (FALSE);
 	}
 
 	if (LockingIsDisabled)
 		return (TRUE);
 
-	LOCK_PRINT("Release", lockName, locktype);
+	LOCK_PRINT("Release", locktag, lockmode);
 
-	masterLock = ltable->ctl->masterLock;
-	xidTable = ltable->xidHash;
+	masterLock = lockMethodTable->ctl->masterLock;
+	xidTable = lockMethodTable->xidHash;
 
 	SpinAcquire(masterLock);
 
-	Assert(ltable->lockHash->hash == tag_hash);
+	Assert(lockMethodTable->lockHash->hash == tag_hash);
 	lock = (LOCK *)
-		hash_search(ltable->lockHash, (Pointer) lockName, HASH_FIND_SAVE, &found);
+		hash_search(lockMethodTable->lockHash, (Pointer) locktag, HASH_FIND_SAVE, &found);
 
 #ifdef USER_LOCKS
 
@@ -919,9 +919,9 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 		 * fix the general lock stats
 		 */
 		lock->nHolding--;
-		lock->holders[locktype]--;
+		lock->holders[lockmode]--;
 		lock->nActive--;
-		lock->activeHolders[locktype]--;
+		lock->activeHolders[lockmode]--;
 
 		Assert(lock->nActive >= 0);
 
@@ -933,8 +933,8 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 			 * Delete it from the lock table.
 			 * ------------------
 			 */
-			Assert(ltable->lockHash->hash == tag_hash);
-			lock = (LOCK *) hash_search(ltable->lockHash,
+			Assert(lockMethodTable->lockHash->hash == tag_hash);
+			lock = (LOCK *) hash_search(lockMethodTable->lockHash,
 										(Pointer) &(lock->tag),
 										HASH_REMOVE_SAVED,
 										&found);
@@ -992,7 +992,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 	 * now check to see if I have any private locks.  If I do, decrement
 	 * the counts associated with them.
 	 */
-	result->holders[locktype]--;
+	result->holders[lockmode]--;
 	result->nHolding--;
 
 	XID_PRINT("LockRelease updated xid stats", result);
@@ -1038,9 +1038,9 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 		 * fix the general lock stats
 		 */
 		lock->nHolding--;
-		lock->holders[locktype]--;
+		lock->holders[lockmode]--;
 		lock->nActive--;
-		lock->activeHolders[locktype]--;
+		lock->activeHolders[lockmode]--;
 
 		Assert(lock->nActive >= 0);
 
@@ -1052,8 +1052,8 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 			 * Delete it from the lock table.
 			 * ------------------
 			 */
-			Assert(ltable->lockHash->hash == tag_hash);
-			lock = (LOCK *) hash_search(ltable->lockHash,
+			Assert(lockMethodTable->lockHash->hash == tag_hash);
+			lock = (LOCK *) hash_search(lockMethodTable->lockHash,
 										(Pointer) &(lock->tag),
 										HASH_REMOVE,
 										&found);
@@ -1069,10 +1069,10 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 	 * with the remaining locks.
 	 * --------------------------
 	 */
-	if (!(lock->activeHolders[locktype]))
+	if (!(lock->activeHolders[lockmode]))
 	{
 		/* change the conflict mask.  No more of this lock type. */
-		lock->mask &= BITS_OFF[locktype];
+		lock->mask &= BITS_OFF[lockmode];
 	}
 
 	if (wakeupNeeded)
@@ -1083,7 +1083,7 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 		 * himself.
 		 * --------------------------
 		 */
-		ProcLockWakeup(&(lock->waitProcs), (char *) ltable, (char *) lock);
+		ProcLockWakeup(&(lock->waitProcs), lockmethod, lock);
 	}
 
 	SpinRelease(masterLock);
@@ -1091,15 +1091,15 @@ LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKTYPE locktype)
 }
 
 /*
- * GrantLock -- udpate the lock data structure to show
+ * GrantLock -- update the lock data structure to show
  *		the new lock holder.
  */
 void
-GrantLock(LOCK *lock, LOCKTYPE locktype)
+GrantLock(LOCK *lock, LOCKMODE lockmode)
 {
 	lock->nActive++;
-	lock->activeHolders[locktype]++;
-	lock->mask |= BITS_ON[locktype];
+	lock->activeHolders[lockmode]++;
+	lock->mask |= BITS_ON[lockmode];
 }
 
 #ifdef USER_LOCKS
@@ -1110,12 +1110,12 @@ GrantLock(LOCK *lock, LOCKTYPE locktype)
  *		 same queue of user locks which can't be removed from the
  *		 normal lock queue at the end of a transaction. They must
  *		 however be removed when the backend exits.
- *		 A dummy tableId 0 is used to indicate that we are releasing
+ *		 A dummy lockmethod 0 is used to indicate that we are releasing
  *		 the user locks, from the code added to ProcKill().
  */
 #endif
 bool
-LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
+LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 {
 	PROC_QUEUE *waitQueue;
 	int			done;
@@ -1123,9 +1123,9 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 	XIDLookupEnt *tmp = NULL;
 	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
 	SPINLOCK	masterLock;
-	LOCKTAB    *ltable;
+	LOCKMETHODTABLE    *lockMethodTable;
 	int			i,
-				nLockTypes;
+				numLockModes;
 	LOCK	   *lock;
 	bool		found;
 
@@ -1134,21 +1134,21 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 				count,
 				nskip;
 
-	is_user_lock_table = (tableId == 0);
+	is_user_lock_table = (lockmethod == 0);
 #ifdef USER_LOCKS_DEBUG
-	elog(NOTICE, "LockReleaseAll: tableId=%d, pid=%d", tableId, MyProcPid);
+	elog(NOTICE, "LockReleaseAll: lockmethod=%d, pid=%d", lockmethod, MyProcPid);
 #endif
 	if (is_user_lock_table)
-		tableId = 1;
+		lockmethod = 1;
 #endif
 
-	Assert(tableId < NumTables);
-	ltable = AllTables[tableId];
-	if (!ltable)
+	Assert(lockmethod < NumLockMethods);
+	lockMethodTable = LockMethodTable[lockmethod];
+	if (!lockMethodTable)
 		return (FALSE);
 
-	nLockTypes = ltable->ctl->nLockTypes;
-	masterLock = ltable->ctl->masterLock;
+	numLockModes = lockMethodTable->ctl->numLockModes;
+	masterLock = lockMethodTable->ctl->masterLock;
 
 	if (SHMQueueEmpty(lockQueue))
 		return TRUE;
@@ -1254,7 +1254,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 			lock->nHolding -= xidLook->nHolding;
 			lock->nActive -= xidLook->nHolding;
 			Assert(lock->nActive >= 0);
-			for (i = 1; i <= nLockTypes; i++)
+			for (i = 1; i <= numLockModes; i++)
 			{
 				lock->holders[i] -= xidLook->holders[i];
 				lock->activeHolders[i] -= xidLook->holders[i];
@@ -1278,7 +1278,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 #ifdef USER_LOCKS
 		SHMQueueDelete(&xidLook->queue);
 #endif
-		if ((!hash_search(ltable->xidHash, (Pointer) xidLook, HASH_REMOVE, &found))
+		if ((!hash_search(lockMethodTable->xidHash, (Pointer) xidLook, HASH_REMOVE, &found))
 			|| !found)
 		{
 			SpinRelease(masterLock);
@@ -1294,9 +1294,9 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 			 * --------------------
 			 */
 
-			Assert(ltable->lockHash->hash == tag_hash);
+			Assert(lockMethodTable->lockHash->hash == tag_hash);
 			lock = (LOCK *)
-				hash_search(ltable->lockHash, (Pointer) &(lock->tag), HASH_REMOVE, &found);
+				hash_search(lockMethodTable->lockHash, (Pointer) &(lock->tag), HASH_REMOVE, &found);
 			if ((!lock) || (!found))
 			{
 				SpinRelease(masterLock);
@@ -1313,7 +1313,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 			 * --------------------
 			 */
 			waitQueue = &(lock->waitProcs);
-			ProcLockWakeup(waitQueue, (char *) ltable, (char *) lock);
+			ProcLockWakeup(waitQueue, lockmethod, lock);
 		}
 
 #ifdef USER_LOCKS
@@ -1352,7 +1352,7 @@ LockShmemSize()
 	nXidSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
 
 	size += MAXALIGN(NBACKENDS * sizeof(PROC)); /* each MyProc */
-	size += MAXALIGN(NBACKENDS * sizeof(LOCKCTL));		/* each ltable->ctl */
+	size += MAXALIGN(NBACKENDS * sizeof(LOCKMETHODCTL)); /* each lockMethodTable->ctl */
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 
 	size += MAXALIGN(my_log2(NLOCKENTS) * sizeof(void *));
@@ -1404,7 +1404,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
 	LOCK	   *lock;
 
-	LOCKTAB    *ltable;
+	LOCKMETHODTABLE    *lockMethodTable;
 	XIDLookupEnt *result,
 				item;
 	HTAB	   *xidTable;
@@ -1420,8 +1420,8 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 		checked_procs[0] = MyProc;
 		nprocs = 1;
 
-		ltable = AllTables[1];
-		xidTable = ltable->xidHash;
+		lockMethodTable = LockMethodTable[1];
+		xidTable = lockMethodTable->xidHash;
 
 		MemSet(&item, 0, XID_TAGSIZE);
 		TransactionIdStore(MyProc->xid, &item.tag.xid);
@@ -1499,8 +1499,8 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					Assert(skip_check);
 					Assert(MyProc->prio == 2);
 
-					ltable = AllTables[1];
-					xidTable = ltable->xidHash;
+					lockMethodTable = LockMethodTable[1];
+					xidTable = lockMethodTable->xidHash;
 
 					MemSet(&item, 0, XID_TAGSIZE);
 					TransactionIdStore(proc->xid, &item.tag.xid);
@@ -1575,12 +1575,12 @@ DumpLocks()
 	XIDLookupEnt *tmp = NULL;
 	SHMEM_OFFSET end;
 	SPINLOCK	masterLock;
-	int			nLockTypes;
+	int			numLockModes;
 	LOCK	   *lock;
 
 	count;
-	int			tableId = 1;
-	LOCKTAB    *ltable;
+	int			lockmethod = 1;
+	LOCKMETHODTABLE    *lockMethodTable;
 
 	ShmemPIDLookup(MyProcPid, &location);
 	if (location == INVALID_OFFSET)
@@ -1590,13 +1590,13 @@ DumpLocks()
 		return;
 	lockQueue = &proc->lockQueue;
 
-	Assert(tableId < NumTables);
-	ltable = AllTables[tableId];
-	if (!ltable)
+	Assert(lockmethod < NumLockMethods);
+	lockMethodTable = LockMethodTable[lockmethod];
+	if (!lockMethodTable)
 		return;
 
-	nLockTypes = ltable->ctl->nLockTypes;
-	masterLock = ltable->ctl->masterLock;
+	numLockModes = lockMethodTable->ctl->numLockModes;
+	masterLock = lockMethodTable->ctl->masterLock;
 
 	if (SHMQueueEmpty(lockQueue))
 		return;

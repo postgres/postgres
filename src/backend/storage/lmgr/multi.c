@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.18 1998/06/28 21:17:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.19 1998/06/30 02:33:31 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -30,10 +30,10 @@
 #include "miscadmin.h"			/* MyDatabaseId */
 
 static bool
-MultiAcquire(LockTableId tableId, LOCKTAG *tag, LOCKTYPE locktype,
+MultiAcquire(LOCKMETHOD lockmethod, LOCKTAG *tag, LOCKMODE lockmode,
 			 PG_LOCK_LEVEL level);
 static bool
-MultiRelease(LockTableId tableId, LOCKTAG *tag, LOCKTYPE locktype,
+MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag, LOCKMODE lockmode,
 			 PG_LOCK_LEVEL level);
 
 /*
@@ -78,25 +78,27 @@ static int	MultiPrios[] = {
  * Lock table identifier for this lock table.  The multi-level
  * lock table is ONE lock table, not three.
  */
-LockTableId MultiTableId = (LockTableId) NULL;
-LockTableId ShortTermTableId = (LockTableId) NULL;
+LOCKMETHOD MultiTableId = (LOCKMETHOD) NULL;
+#ifdef NOT_USED
+LOCKMETHOD ShortTermTableId = (LOCKMETHOD) NULL;
+#endif
 
 /*
  * Create the lock table described by MultiConflicts and Multiprio.
  */
-LockTableId
+LOCKMETHOD
 InitMultiLevelLocks()
 {
-	int			tableId;
+	int			lockmethod;
 
-	tableId = LockTableInit("LockTable", MultiConflicts, MultiPrios, 5);
-	MultiTableId = tableId;
+	lockmethod = LockMethodTableInit("MultiLevelLockTable", MultiConflicts, MultiPrios, 5);
+	MultiTableId = lockmethod;
 	if (!(MultiTableId))
 		elog(ERROR, "InitMultiLocks: couldnt initialize lock table");
 	/* -----------------------
 	 * No short term lock table for now.  -Jeff 15 July 1991
 	 *
-	 * ShortTermTableId = LockTableRename(tableId);
+	 * ShortTermTableId = LockTableRename(lockmethod);
 	 * if (! (ShortTermTableId)) {
 	 *	 elog(ERROR,"InitMultiLocks: couldnt rename lock table");
 	 * }
@@ -111,7 +113,7 @@ InitMultiLevelLocks()
  * Returns: TRUE if the lock can be set, FALSE otherwise.
  */
 bool
-MultiLockReln(LockInfo linfo, LOCKTYPE locktype)
+MultiLockReln(LockInfo linfo, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -122,7 +124,7 @@ MultiLockReln(LockInfo linfo, LOCKTYPE locktype)
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
-	return (MultiAcquire(MultiTableId, &tag, locktype, RELN_LEVEL));
+	return (MultiAcquire(MultiTableId, &tag, lockmode, RELN_LEVEL));
 }
 
 /*
@@ -134,7 +136,7 @@ MultiLockReln(LockInfo linfo, LOCKTYPE locktype)
  *		at the page and relation level.
  */
 bool
-MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
+MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -149,14 +151,14 @@ MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
 
 	/* not locking any valid Tuple, just the page */
 	tag.tupleId = *tidPtr;
-	return (MultiAcquire(MultiTableId, &tag, locktype, TUPLE_LEVEL));
+	return (MultiAcquire(MultiTableId, &tag, lockmode, TUPLE_LEVEL));
 }
 
 /*
  * same as above at page level
  */
 bool
-MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
+MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -179,7 +181,7 @@ MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
-	return (MultiAcquire(MultiTableId, &tag, locktype, PAGE_LEVEL));
+	return (MultiAcquire(MultiTableId, &tag, lockmode, PAGE_LEVEL));
 }
 
 /*
@@ -189,12 +191,12 @@ MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
  * Side Effects:
  */
 static bool
-MultiAcquire(LockTableId tableId,
+MultiAcquire(LOCKMETHOD lockmethod,
 			 LOCKTAG *tag,
-			 LOCKTYPE locktype,
+			 LOCKMODE lockmode,
 			 PG_LOCK_LEVEL level)
 {
-	LOCKTYPE		locks[N_LEVELS];
+	LOCKMODE		locks[N_LEVELS];
 	int			i,
 				status;
 	LOCKTAG		xxTag,
@@ -213,19 +215,19 @@ MultiAcquire(LockTableId tableId,
 	switch (level)
 	{
 		case RELN_LEVEL:
-			locks[0] = locktype;
+			locks[0] = lockmode;
 			locks[1] = NO_LOCK;
 			locks[2] = NO_LOCK;
 			break;
 		case PAGE_LEVEL:
-			locks[0] = locktype + INTENT;
-			locks[1] = locktype;
+			locks[0] = lockmode + INTENT;
+			locks[1] = lockmode;
 			locks[2] = NO_LOCK;
 			break;
 		case TUPLE_LEVEL:
-			locks[0] = locktype + INTENT;
-			locks[1] = locktype + INTENT;
-			locks[2] = locktype;
+			locks[0] = lockmode + INTENT;
+			locks[1] = lockmode + INTENT;
+			locks[2] = lockmode;
 			break;
 		default:
 			elog(ERROR, "MultiAcquire: bad lock level");
@@ -274,7 +276,7 @@ MultiAcquire(LockTableId tableId,
 					break;
 			}
 
-			status = LockAcquire(tableId, tmpTag, locks[i]);
+			status = LockAcquire(lockmethod, tmpTag, locks[i]);
 			if (!status)
 			{
 
@@ -285,7 +287,7 @@ MultiAcquire(LockTableId tableId,
 				 * the last level lock we successfully acquired
 				 */
 				retStatus = FALSE;
-				MultiRelease(tableId, tag, locktype, i);
+				MultiRelease(lockmethod, tag, lockmode, i);
 				/* now leave the loop.	Don't try for any more locks */
 				break;
 			}
@@ -300,7 +302,7 @@ MultiAcquire(LockTableId tableId,
  */
 #ifdef NOT_USED
 bool
-MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
+MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -316,7 +318,7 @@ MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
 	tag.dbId = linfo->lRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
 
-	return (MultiRelease(MultiTableId, &tag, locktype, PAGE_LEVEL));
+	return (MultiRelease(MultiTableId, &tag, lockmode, PAGE_LEVEL));
 }
 
 #endif
@@ -326,7 +328,7 @@ MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKTYPE locktype)
  * ------------------
  */
 bool
-MultiReleaseReln(LockInfo linfo, LOCKTYPE locktype)
+MultiReleaseReln(LockInfo linfo, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
@@ -340,7 +342,7 @@ MultiReleaseReln(LockInfo linfo, LOCKTYPE locktype)
 	tag.relId = linfo->lRelId.relId;
 	tag.dbId = linfo->lRelId.dbId;
 
-	return (MultiRelease(MultiTableId, &tag, locktype, RELN_LEVEL));
+	return (MultiRelease(MultiTableId, &tag, lockmode, RELN_LEVEL));
 }
 
 /*
@@ -349,12 +351,12 @@ MultiReleaseReln(LockInfo linfo, LOCKTYPE locktype)
  * Returns: TRUE if successful, FALSE otherwise.
  */
 static bool
-MultiRelease(LockTableId tableId,
+MultiRelease(LOCKMETHOD lockmethod,
 			 LOCKTAG *tag,
-			 LOCKTYPE locktype,
+			 LOCKMODE lockmode,
 			 PG_LOCK_LEVEL level)
 {
-	LOCKTYPE		locks[N_LEVELS];
+	LOCKMODE		locks[N_LEVELS];
 	int			i,
 				status;
 	LOCKTAG		xxTag,
@@ -366,22 +368,22 @@ MultiRelease(LockTableId tableId,
 	switch (level)
 	{
 		case RELN_LEVEL:
-			locks[0] = locktype;
+			locks[0] = lockmode;
 			locks[1] = NO_LOCK;
 			locks[2] = NO_LOCK;
 			break;
 		case PAGE_LEVEL:
-			locks[0] = locktype + INTENT;
-			locks[1] = locktype;
+			locks[0] = lockmode + INTENT;
+			locks[1] = lockmode;
 			locks[2] = NO_LOCK;
 			break;
 		case TUPLE_LEVEL:
-			locks[0] = locktype + INTENT;
-			locks[1] = locktype + INTENT;
-			locks[2] = locktype;
+			locks[0] = lockmode + INTENT;
+			locks[1] = lockmode + INTENT;
+			locks[2] = lockmode;
 			break;
 		default:
-			elog(ERROR, "MultiRelease: bad locktype");
+			elog(ERROR, "MultiRelease: bad lockmode");
 	}
 
 	/*
@@ -423,7 +425,7 @@ MultiRelease(LockTableId tableId,
 					ItemPointerCopy(&tmpTag->tupleId, &tag->tupleId);
 					break;
 			}
-			status = LockRelease(tableId, tmpTag, locks[i]);
+			status = LockRelease(lockmethod, tmpTag, locks[i]);
 			if (!status)
 				elog(ERROR, "MultiRelease: couldn't release after error");
 		}

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.11 1998/02/26 04:43:31 momjian Exp $
+ * $Id: proc.h,v 1.12 1998/06/30 02:33:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int
 ProcSleep(PROC_QUEUE *queue, SPINLOCK spinlock, int token,
 		  int prio, LOCK *lock);
-extern int	ProcLockWakeup(PROC_QUEUE *queue, char *ltable, char *lock);
+extern int	ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock);
 extern void ProcAddLock(SHM_QUEUE *elem);
 extern void ProcReleaseSpins(PROC *proc);
 extern void ProcFreeAllSemaphores(void);
