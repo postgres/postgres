@@ -240,7 +240,7 @@ select has_table_privilege(NULL,'pg_shadow','select');
 (1 row)
 
 select has_table_privilege('pg_shad','select');
-ERROR:  has_table_privilege: relation "pg_shad" does not exist
+ERROR:  Relation "pg_shad" does not exist
 select has_table_privilege('nosuchuser','pg_shadow','select');
 ERROR:  user "nosuchuser" does not exist
 select has_table_privilege('pg_shadow','sel');

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.10 2002/04/25 02:56:56 tgl Exp $
+ * $Id: namespace.h,v 1.11 2002/04/26 01:24:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,5 +78,7 @@ extern char *namespace_search_path;
 extern bool check_search_path(const char *proposed);
 extern void assign_search_path(const char *newval);
 extern void InitializeSearchPath(void);
+
+extern List *fetch_search_path(void);
 
 #endif   /* NAMESPACE_H */

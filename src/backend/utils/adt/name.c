@@ -12,14 +12,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.33 2001/10/28 06:25:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.34 2002/04/26 01:24:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/namespace.h"
 #include "miscadmin.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
+
 
 /*****************************************************************************
  *	 USER I/O ROUTINES (none)												 *
@@ -209,7 +213,9 @@ namestrcmp(Name name, const char *str)
 }
 
 
-/* SQL-functions CURRENT_USER and SESSION_USER */
+/*
+ * SQL-functions CURRENT_USER, SESSION_USER
+ */
 Datum
 current_user(PG_FUNCTION_ARGS)
 {
@@ -220,6 +226,52 @@ Datum
 session_user(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(GetUserName(GetSessionUserId()))));
+}
+
+
+/*
+ * SQL-functions CURRENT_SCHEMA, CURRENT_SCHEMAS
+ */
+Datum
+current_schema(PG_FUNCTION_ARGS)
+{
+	List   *search_path = fetch_search_path();
+	char   *nspname;
+
+	if (search_path == NIL)
+		PG_RETURN_NULL();
+	nspname = get_namespace_name((Oid) lfirsti(search_path));
+	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(nspname)));
+}
+
+Datum
+current_schemas(PG_FUNCTION_ARGS)
+{
+	List   *search_path = fetch_search_path();
+	int		nnames = length(search_path);
+	Datum  *names;
+	int		i;
+	ArrayType *array;
+
+	/* +1 here is just to avoid palloc(0) error */
+	names = (Datum *) palloc((nnames + 1) * sizeof(Datum));
+	i = 0;
+	while (search_path)
+	{
+		char   *nspname;
+
+		nspname = get_namespace_name((Oid) lfirsti(search_path));
+		names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
+		i++;
+		search_path = lnext(search_path);
+	}
+
+	array = construct_array(names, nnames,
+							false, /* Name is not by-val */
+							NAMEDATALEN, /* sizeof(Name) */
+							'i'); /* alignment of Name */
+
+	PG_RETURN_POINTER(array);
 }
 
 

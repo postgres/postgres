@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.71 2002/04/21 00:26:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.72 2002/04/26 01:24:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,7 @@ static bool aclitemeq(const AclItem *a1, const AclItem *a2);
 static bool aclitemgt(const AclItem *a1, const AclItem *a2);
 
 static AclMode convert_priv_string(text *priv_type_text);
-static bool has_table_privilege_cname_cname(char *username, char *relname,
-								text *priv_type_text);
-static bool has_table_privilege_cname_id(char *username, Oid reloid,
-							 text *priv_type_text);
-static bool has_table_privilege_id_cname(int32 usesysid, char *relname,
-							 text *priv_type_text);
+static Oid convert_rel_name(text *relname);
 
 
 /*
@@ -653,7 +648,7 @@ aclcontains(PG_FUNCTION_ARGS)
 /*
  * has_table_privilege_name_name
  *		Check user privileges on a relation given
- *		name username, name relname, and text priv name.
+ *		name username, text relname, and text priv name.
  *
  * RETURNS
  *		a boolean value
@@ -664,22 +659,41 @@ Datum
 has_table_privilege_name_name(PG_FUNCTION_ARGS)
 {
 	Name		username = PG_GETARG_NAME(0);
-	Name		relname = PG_GETARG_NAME(1);
+	text	   *relname = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	bool		result;
+	int32		usesysid;
+	Oid			reloid;
+	AclMode		mode;
+	int32		aclresult;
 
-	result = has_table_privilege_cname_cname(NameStr(*username),
-											 NameStr(*relname),
-											 priv_type_text);
+	/*
+	 * Lookup userid based on username
+	 */
+	usesysid = get_usesysid(NameStr(*username));
 
-	PG_RETURN_BOOL(result);
+	/*
+	 * Lookup rel OID based on relname
+	 */
+	reloid = convert_rel_name(relname);
+
+	/*
+	 * Convert priv_type_text to an AclMode
+	 */
+	mode = convert_priv_string(priv_type_text);
+
+	/*
+	 * Check for the privilege
+	 */
+	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
 
 /*
  * has_table_privilege_name
  *		Check user privileges on a relation given
- *		name relname and text priv name.
+ *		text relname and text priv name.
  *		current_user is assumed
  *
  * RETURNS
@@ -690,18 +704,31 @@ has_table_privilege_name_name(PG_FUNCTION_ARGS)
 Datum
 has_table_privilege_name(PG_FUNCTION_ARGS)
 {
-	Name		relname = PG_GETARG_NAME(0);
+	text	   *relname = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
 	int32		usesysid;
-	bool		result;
+	Oid			reloid;
+	AclMode		mode;
+	int32		aclresult;
 
 	usesysid = GetUserId();
 
-	result = has_table_privilege_id_cname(usesysid,
-										  NameStr(*relname),
-										  priv_type_text);
+	/*
+	 * Lookup rel OID based on relname
+	 */
+	reloid = convert_rel_name(relname);
 
-	PG_RETURN_BOOL(result);
+	/*
+	 * Convert priv_type_text to an AclMode
+	 */
+	mode = convert_priv_string(priv_type_text);
+
+	/*
+	 * Check for the privilege
+	 */
+	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
 
@@ -721,13 +748,26 @@ has_table_privilege_name_id(PG_FUNCTION_ARGS)
 	Name		username = PG_GETARG_NAME(0);
 	Oid			reloid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	bool		result;
+	int32		usesysid;
+	AclMode		mode;
+	int32		aclresult;
 
-	result = has_table_privilege_cname_id(NameStr(*username),
-										  reloid,
-										  priv_type_text);
+	/*
+	 * Lookup userid based on username
+	 */
+	usesysid = get_usesysid(NameStr(*username));
 
-	PG_RETURN_BOOL(result);
+	/*
+	 * Convert priv_type_text to an AclMode
+	 */
+	mode = convert_priv_string(priv_type_text);
+
+	/*
+	 * Check for the privilege
+	 */
+	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
 
@@ -749,7 +789,7 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
 	int32		usesysid;
 	AclMode		mode;
-	int32		result;
+	int32		aclresult;
 
 	usesysid = GetUserId();
 
@@ -761,19 +801,16 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 	/*
 	 * Check for the privilege
 	 */
-	result = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
 
-	if (result == ACLCHECK_OK)
-		PG_RETURN_BOOL(true);
-	else
-		PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
 
 /*
  * has_table_privilege_id_name
  *		Check user privileges on a relation given
- *		usesysid, name relname, and priv name.
+ *		usesysid, text relname, and priv name.
  *
  * RETURNS
  *		a boolean value
@@ -784,15 +821,28 @@ Datum
 has_table_privilege_id_name(PG_FUNCTION_ARGS)
 {
 	int32		usesysid = PG_GETARG_INT32(0);
-	Name		relname = PG_GETARG_NAME(1);
+	text	   *relname = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	bool		result;
+	Oid			reloid;
+	AclMode		mode;
+	int32		aclresult;
 
-	result = has_table_privilege_id_cname(usesysid,
-										  NameStr(*relname),
-										  priv_type_text);
+	/*
+	 * Lookup rel OID based on relname
+	 */
+	reloid = convert_rel_name(relname);
 
-	PG_RETURN_BOOL(result);
+	/*
+	 * Convert priv_type_text to an AclMode
+	 */
+	mode = convert_priv_string(priv_type_text);
+
+	/*
+	 * Check for the privilege
+	 */
+	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
 
@@ -813,7 +863,7 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 	Oid			reloid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
-	int32		result;
+	int32		aclresult;
 
 	/*
 	 * Convert priv_type_text to an AclMode
@@ -823,17 +873,28 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
 	/*
 	 * Check for the privilege
 	 */
-	result = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
 
-	if (result == ACLCHECK_OK)
-		PG_RETURN_BOOL(true);
-	else
-		PG_RETURN_BOOL(false);
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
 /*
  *		Internal functions.
  */
+
+/*
+ * Given a relation name expressed as a string, look it up and return Oid
+ */
+static Oid
+convert_rel_name(text *relname)
+{
+	RangeVar   *relrv;
+
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
+													"has_table_privilege"));
+
+	return RangeVarGetRelid(relrv, false);
+}
 
 /*
  * convert_priv_string
@@ -843,11 +904,13 @@ has_table_privilege_id_id(PG_FUNCTION_ARGS)
  * RETURNS
  *		AclMode
  */
-
 static AclMode
 convert_priv_string(text *priv_type_text)
 {
-	char	   *priv_type = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(priv_type_text)));
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(priv_type_text)));
 
 	/*
 	 * Return mode from priv_type string
@@ -879,115 +942,4 @@ convert_priv_string(text *priv_type_text)
 	 * We should never get here, but stop the compiler from complaining
 	 */
 	return ACL_NO_RIGHTS;
-}
-
-/*
- * has_table_privilege_cname_cname
- *		Check user privileges on a relation given
- *		char *usename, char *relname, and text priv name.
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
- */
-static bool
-has_table_privilege_cname_cname(char *username, char *relname,
-								text *priv_type_text)
-{
-	int32		usesysid;
-
-	/*
-	 * Lookup userid based on username
-	 */
-	usesysid = get_usesysid(username);
-
-	/*
-	 * Make use of has_table_privilege_id_cname. It accepts the arguments
-	 * we now have.
-	 */
-	return has_table_privilege_id_cname(usesysid, relname, priv_type_text);
-}
-
-
-/*
- * has_table_privilege_cname_id
- *		Check user privileges on a relation given
- *		char *usename, rel oid, and text priv name.
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
- */
-static bool
-has_table_privilege_cname_id(char *username, Oid reloid,
-							 text *priv_type_text)
-{
-	int32		usesysid;
-	AclMode		mode;
-	int32		result;
-
-	/*
-	 * Lookup userid based on username
-	 */
-	usesysid = get_usesysid(username);
-
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
-
-	/*
-	 * Finally, check for the privilege
-	 */
-	result = pg_class_aclcheck(reloid, usesysid, mode);
-
-	if (result == ACLCHECK_OK)
-		return true;
-	else
-		return false;
-}
-
-
-/*
- * has_table_privilege_id_cname
- *		Check user privileges on a relation given
- *		usesysid, char *relname, and text priv name.
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
- */
-static bool
-has_table_privilege_id_cname(int32 usesysid, char *relname,
-							 text *priv_type_text)
-{
-	Oid			reloid;
-	AclMode		mode;
-	int32		result;
-
-	/*
-	 * Convert relname to rel OID.
-	 */
-	reloid = RelnameGetRelid(relname);
-	if (!OidIsValid(reloid))
-		elog(ERROR, "has_table_privilege: relation \"%s\" does not exist",
-			 relname);
-
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
-
-	/*
-	 * Finally, check for the privilege
-	 */
-	result = pg_class_aclcheck(reloid, usesysid, mode);
-
-	if (result == ACLCHECK_OK)
-		return true;
-	else
-		return false;
 }

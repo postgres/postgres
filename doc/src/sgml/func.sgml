@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.95 2002/04/18 20:01:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.96 2002/04/26 01:24:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -3929,6 +3929,12 @@ nextval('foo')      <lineannotation>operates on sequence </><literal>foo</>
 nextval('FOO')      <lineannotation>operates on sequence </><literal>foo</>
 nextval('"Foo"')    <lineannotation>operates on sequence </><literal>Foo</>
 </programlisting>
+   The sequence name can be schema-qualified if necessary:
+<programlisting>
+nextval('myschema.foo') <lineannotation>operates on </><literal>myschema.foo</>
+nextval('"myschema".foo') <lineannotation>same as above</>
+nextval('foo')      <lineannotation>searches search path for </><literal>foo</>
+</programlisting>
    Of course, the text argument can be the result of an expression,
    not only a simple literal, which is occasionally useful.
   </para>
@@ -4212,17 +4218,27 @@ SELECT NULLIF(value, '(none)') ...
       <row>
        <entry><function>current_user</></entry>
        <entry><type>name</></entry>
-       <entry>user name of current execution context</>
+       <entry>user name of current execution context</entry>
       </row>
       <row>
        <entry><function>session_user</></entry>
        <entry><type>name</></entry>
-       <entry>session user name</>
+       <entry>session user name</entry>
       </row>
       <row>
        <entry><function>user</></entry>
        <entry><type>name</></entry>
-       <entry>equivalent to <function>current_user</></>
+       <entry>equivalent to <function>current_user</></entry>
+      </row>
+      <row>
+       <entry><function>current_schema()</></entry>
+       <entry><type>name</></entry>
+       <entry>name of current schema</entry>
+      </row>
+      <row>
+       <entry><function>current_schemas()</></entry>
+       <entry><type>name[]</></entry>
+       <entry>names of schemas in search path</entry>
       </row>
      </tbody>
     </tgroup>
@@ -4230,6 +4246,16 @@ SELECT NULLIF(value, '(none)') ...
 
    <indexterm zone="functions-misc">
     <primary>user</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>schema</primary>
+    <secondary>current</secondary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
+    <primary>search path</primary>
     <secondary>current</secondary>
    </indexterm>
 
@@ -4244,10 +4270,13 @@ SELECT NULLIF(value, '(none)') ...
     and the current user is the <quote>effective user</>.
    </para>
 
-   <para>
-    Note that these functions have special syntactic status in <acronym>SQL</>:
-    they must be called without trailing parentheses.
-   </para>
+   <note>
+    <para>
+     <function>current_user</>, <function>session_user</>, and
+     <function>user</> have special syntactic status in <acronym>SQL</>:
+     they must be called without trailing parentheses.
+    </para>
+   </note>
 
    <note>
     <title>Deprecated</>
@@ -4256,6 +4285,17 @@ SELECT NULLIF(value, '(none)') ...
      of <function>current_user</>.
     </para>
    </note>
+
+   <para>
+    <function>current_schema</> returns the name of the schema that is
+    at the front of the search path (or NULL if the search path is
+    empty).  This is the schema that will be used for any tables or
+    other named objects that are created without specifying a target schema.
+    <function>current_schemas</> returns an array of the names of all
+    schemas presently in the search path.  Note that these functions show
+    only schemas that are explicitly part of the path; when a system schema
+    is being searched implicitly, it is not listed.
+   </para>
 
    <table>
     <title>System Information Functions</>
@@ -4323,11 +4363,17 @@ SELECT NULLIF(value, '(none)') ...
     <function>current_user</> is assumed.  The table can be specified
     by name or by OID.  (Thus, there are actually six variants of
     <function>has_table_privilege</>, which can be distinguished by
-    the number and types of their arguments.)  The desired access type
+    the number and types of their arguments.)  When specifying by name,
+    the name can be schema-qualified if necessary.
+    The desired access type
     is specified by a text string, which must evaluate to one of the
     values <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</>,
     <literal>DELETE</>, <literal>RULE</>, <literal>REFERENCES</>, or
     <literal>TRIGGER</>.  (Case of the string is not significant, however.)
+    An example is:
+<programlisting>
+SELECT has_table_privilege('myschema.mytable', 'select');
+</programlisting>
    </para>
 
    <table>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.233 2002/04/25 02:56:56 tgl Exp $
+ * $Id: pg_proc.h,v 1.234 2002/04/26 01:24:08 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1751,6 +1751,11 @@ DESCR("convert varchar to name");
 DATA(insert OID = 1401 (  varchar	   PGNSP PGUID 12 f t t t f i 1 1043 "19" 100 0 0 100  name_text - _null_ ));
 DESCR("convert name to varchar");
 
+DATA(insert OID = 1402 (  current_schema	PGNSP PGUID 12 f t f t f s 0    19 "0" 100 0 0 100	current_schema - _null_ ));
+DESCR("current schema name");
+DATA(insert OID = 1403 (  current_schemas	PGNSP PGUID 12 f t f t f s 0  1003 "0" 100 0 0 100	current_schemas - _null_ ));
+DESCR("current schema search list");
+
 DATA(insert OID = 1406 (  isvertical		PGNSP PGUID 12 f t f t f i 2	16 "600 600" 100 0 0 100  point_vert - _null_ ));
 DESCR("vertically aligned?");
 DATA(insert OID = 1407 (  ishorizontal		PGNSP PGUID 12 f t f t f i 2	16 "600 600" 100 0 0 100  point_horiz - _null_ ));
@@ -2663,15 +2668,15 @@ DESCR("unary plus");
 DATA(insert OID = 1915 (  numeric_uplus    PGNSP PGUID 12 f t f t f i 1 1700 "1700" 100 0 0 100  numeric_uplus - _null_ ));
 DESCR("unary plus");
 
-DATA(insert OID = 1922 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 3 16 "19 19 25" 100 0 0 100  has_table_privilege_name_name - _null_ ));
+DATA(insert OID = 1922 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 3 16 "19 25 25" 100 0 0 100  has_table_privilege_name_name - _null_ ));
 DESCR("user privilege on relation by username, relname");
 DATA(insert OID = 1923 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 3 16 "19 26 25" 100 0 0 100  has_table_privilege_name_id - _null_ ));
 DESCR("user privilege on relation by username, rel oid");
-DATA(insert OID = 1924 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 3 16 "23 19 25" 100 0 0 100  has_table_privilege_id_name - _null_ ));
+DATA(insert OID = 1924 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 3 16 "23 25 25" 100 0 0 100  has_table_privilege_id_name - _null_ ));
 DESCR("user privilege on relation by usesysid, relname");
 DATA(insert OID = 1925 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 3 16 "23 26 25" 100 0 0 100  has_table_privilege_id_id - _null_ ));
 DESCR("user privilege on relation by usesysid, rel oid");
-DATA(insert OID = 1926 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 2 16 "19 25" 100 0 0 100	has_table_privilege_name - _null_ ));
+DATA(insert OID = 1926 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 2 16 "25 25" 100 0 0 100	has_table_privilege_name - _null_ ));
 DESCR("current user privilege on relation by relname");
 DATA(insert OID = 1927 (  has_table_privilege		   PGNSP PGUID 12 f t f t f s 2 16 "26 25" 100 0 0 100	has_table_privilege_id - _null_ ));
 DESCR("current user privilege on relation by rel oid");

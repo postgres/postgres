@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.179 2002/04/25 02:56:56 tgl Exp $
+ * $Id: builtins.h,v 1.180 2002/04/26 01:24:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,6 +164,8 @@ extern int	namestrcpy(Name name, const char *str);
 extern int	namestrcmp(Name name, const char *str);
 extern Datum current_user(PG_FUNCTION_ARGS);
 extern Datum session_user(PG_FUNCTION_ARGS);
+extern Datum current_schema(PG_FUNCTION_ARGS);
+extern Datum current_schemas(PG_FUNCTION_ARGS);
 
 /* numutils.c */
 extern int32 pg_atoi(char *s, int size, int c);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.113 2002/04/15 22:33:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.114 2002/04/26 01:24:08 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1251,6 +1251,15 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 	namespace named <literal>public</>, but no private namespaces.
 	The administrator may choose to restrict permissions on
 	<literal>public</> or even remove it, if that suits his purposes.
+       </para>
+
+       <para>
+        The current effective value of the search path can be examined
+	via the SQL function <function>current_schemas()</>.  This is not
+	quite the same as examining the value of
+	<varname>search_path</varname>, since <function>current_schemas()</>
+	shows how the requests appearing in <varname>search_path</varname>
+	were resolved.
        </para>
       </listitem>
      </varlistentry>

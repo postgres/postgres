@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.12 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.13 2002/04/26 01:24:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1469,4 +1469,15 @@ InitializeSearchPath(void)
 			namespaceSearchPath == NIL)
 			assign_search_path(namespace_search_path);
 	}
+}
+
+/*
+ * Fetch the active search path, expressed as a List of OIDs.
+ *
+ * NB: caller must treat the list as read-only!
+ */
+List *
+fetch_search_path(void)
+{
+	return namespaceSearchPath;
 }
