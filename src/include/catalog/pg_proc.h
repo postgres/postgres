@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.84 1998/11/17 14:36:51 thomas Exp $
+ * $Id: pg_proc.h,v 1.85 1998/12/08 06:18:11 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -435,11 +435,11 @@ DESCR("subtract");
 DATA(insert OID = 207 (  float4abs		   PGUID 11 f t f 1 f 700 "700 700" 100 0 0 100  foo bar ));
 DESCR("absolute value");
 DATA(insert OID = 208 (  float4inc		   PGUID 11 f t f 1 f 700 "700" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("increment");
 DATA(insert OID = 209 (  float4larger	   PGUID 11 f t f 2 f 700 "700 700" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID = 211 (  float4smaller	   PGUID 11 f t f 2 f 700 "700 700" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("smaller of two");
 
 DATA(insert OID = 212 (  int4um			   PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
 DESCR("subtract");
@@ -463,11 +463,11 @@ DESCR("subtract");
 DATA(insert OID = 221 (  float8abs		   PGUID 11 f t f 1 f 701 "701" 100 0 0 100  foo bar ));
 DESCR("absolute value");
 DATA(insert OID = 222 (  float8inc		   PGUID 11 f t f 1 f 701 "701" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("increment");
 DATA(insert OID = 223 (  float8larger	   PGUID 11 f t f 2 f 701 "701 701" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID = 224 (  float8smaller	   PGUID 11 f t f 2 f 701 "701 701" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("smaller of two");
 
 DATA(insert OID = 225 (  lseg_center	   PGUID 11 f t f 1 f 600 "601" 100 0 0 100  foo bar ));
 DESCR("center of");
@@ -827,14 +827,18 @@ DATA(insert OID = 452 (  hashfloat8		   PGUID 11 f t f 2 f 23 "701 701" 100 0 0 
 DESCR("hash");
 DATA(insert OID = 453 (  hashoid		   PGUID 11 f t f 2 f 23 "26 26" 100 0 0 100  foo bar ));
 DESCR("hash");
-DATA(insert OID = 457 (  hashoid8		   PGUID 11 f t f 2 f 23 "30 30" 100 0 0 100  foo bar ));
-DESCR("hash");
 DATA(insert OID = 454 (  hashchar		   PGUID 11 f t f 2 f 23 "18 18" 100 0 0 100  foo bar ));
 DESCR("hash");
 DATA(insert OID = 455 (  hashname		   PGUID 11 f t f 2 f 23 "19 19" 100 0 0 100  foo bar ));
 DESCR("hash");
 DATA(insert OID = 456 (  hashtext		   PGUID 11 f t f 2 f 23 "25 25" 100 0 0 100  foo bar ));
 DESCR("hash");
+DATA(insert OID = 457 (  hashoid8		   PGUID 11 f t f 2 f 23 "30 30" 100 0 0 100  foo bar ));
+DESCR("hash");
+DATA(insert OID = 458 (  text_larger	   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
+DESCR("larger of two");
+DATA(insert OID = 459 (  text_smaller	   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
+DESCR("smaller of two");
 
 DATA(insert OID = 460 (  int8in			   PGUID 11 f t f 1 f 20 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
@@ -1011,9 +1015,9 @@ DATA(insert OID = 765 (  lo_export		   PGUID 11 f t f 2 f 23 "26 25" 100 0 0 100
 DESCR("large object export");
 
 DATA(insert OID = 766 (  int4inc		   PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("increment");
 DATA(insert OID = 767 (  int2inc		   PGUID 11 f t f 1 f 21 "21" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("increment");
 DATA(insert OID = 768 (  int4larger		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
 DESCR("larger of two");
 DATA(insert OID = 769 (  int4smaller	   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
@@ -1153,9 +1157,9 @@ DESCR("multiply");
 DATA(insert OID =  897 (  cash_div_flt8		   PGUID 11 f t f 2 f 790 "790 701" 100 0 0 100  foo bar ));
 DESCR("divide");
 DATA(insert OID =  898 (  cashlarger	   PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID =  899 (  cashsmaller	   PGUID 11 f t f 2 f 790 "790 790" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("smaller of two");
 
 DATA(insert OID =  919 (  flt8_mul_cash		   PGUID 11 f t f 2 f 790 "701 790" 100 0 0 100  foo bar ));
 DESCR("multiply");
@@ -1352,9 +1356,9 @@ DESCR("not equal");
 DATA(insert OID = 1107 (  time_cmp		   PGUID 11 f t f 2 f 23 "1083 1083" 100 0 0 100  foo bar ));
 DESCR("less-equal-greater");
 DATA(insert OID = 1138 (  date_larger	   PGUID 11 f t f 2 f 1082 "1082 1082" 100 0 0 100	foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID = 1139 (  date_smaller	   PGUID 11 f t f 2 f 1082 "1082 1082" 100 0 0 100	foo bar ));
-DESCR("");
+DESCR("smaller of two");
 DATA(insert OID = 1140 (  date_mi		   PGUID 11 f t f 2 f 23 "1082 1082" 100 0 0 100  foo bar ));
 DESCR("subtract");
 DATA(insert OID = 1141 (  date_pli		   PGUID 11 f t f 2 f 1082 "1082 23" 100 0 0 100  foo bar ));
@@ -1457,13 +1461,13 @@ DESCR("convert");
 DATA(insert OID = 1194 (  timespan_reltime	 PGUID 11 f t f 1 f  703 "1186" 100 0 0 100  foo bar ));
 DESCR("convert");
 DATA(insert OID = 1195 (  datetime_smaller	 PGUID 11 f t f 2 f 1184 "1184 1184" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("smaller of two");
 DATA(insert OID = 1196 (  datetime_larger	 PGUID 11 f t f 2 f 1184 "1184 1184" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID = 1197 (  timespan_smaller	 PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("smaller of two");
 DATA(insert OID = 1198 (  timespan_larger	 PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID = 1199 (  datetime_age		 PGUID 11 f t f 2 f 1186 "1184 1184" 100 0 0 100  foo bar ));
 DESCR("date difference preserving months and years");
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.70 1998/11/17 14:36:37 thomas Exp $
+ * $Id: builtins.h,v 1.71 1998/12/08 06:18:34 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -447,6 +447,8 @@ extern bool text_lt(text *arg1, text *arg2);
 extern bool text_le(text *arg1, text *arg2);
 extern bool text_gt(text *arg1, text *arg2);
 extern bool text_ge(text *arg1, text *arg2);
+extern text *text_larger(text *arg1, text *arg2);
+extern text *text_smaller(text *arg1, text *arg2);
 extern int32 textlen(text *arg);
 extern int32 textoctetlen(text *arg);
 extern int32 textpos(text *arg1, text *arg2);

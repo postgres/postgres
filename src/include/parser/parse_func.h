@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * catalog_utils.h--
+ * parse_func.h--
  *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.12 1998/10/08 18:30:38 momjian Exp $
+ * $Id: parse_func.h,v 1.13 1998/12/08 06:18:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,12 +42,14 @@ typedef struct _CandidateList
 	struct _CandidateList *next;
 }		   *CandidateList;
 
-extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
+extern Node *
+ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 						int *curr_resno, int precedence);
-extern Node *ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
+extern Node *
+ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				  int *curr_resno, int precedence);
 
 extern void
-			func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg);
+func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg);
 
 #endif	 /* PARSE_FUNC_H */
