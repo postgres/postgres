@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.81 2002/09/04 20:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.82 2002/10/19 02:08:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,10 +129,10 @@ static void CheckFloat8Val(double val);
 
 
 /*
-   check to see if a float4 val is outside of
-   the FLOAT4_MIN, FLOAT4_MAX bounds.
-
-   raise an elog warning if it is
+ * check to see if a float4 val is outside of
+ * the FLOAT4_MIN, FLOAT4_MAX bounds.
+ *
+ * raise an elog warning if it is
 */
 static void
 CheckFloat4Val(double val)
@@ -153,11 +153,11 @@ CheckFloat4Val(double val)
 }
 
 /*
-   check to see if a float8 val is outside of
-   the FLOAT8_MIN, FLOAT8_MAX bounds.
-
-   raise an elog warning if it is
-*/
+ * check to see if a float8 val is outside of
+ * the FLOAT8_MIN, FLOAT8_MAX bounds.
+ *
+ * raise an elog error if it is
+ */
 static void
 CheckFloat8Val(double val)
 {
@@ -172,7 +172,6 @@ CheckFloat8Val(double val)
 		elog(ERROR, "Bad float8 input format -- overflow");
 	if (val != 0.0 && fabs(val) < FLOAT8_MIN)
 		elog(ERROR, "Bad float8 input format -- underflow");
-	return;
 #endif   /* UNSAFE_FLOATS */
 }
 
@@ -1039,6 +1038,50 @@ dround(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(result);
 }
 
+/*
+ *		dceil			- returns the smallest integer greater than or
+ *						  equal to the specified float
+ */
+Datum
+dceil(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+
+	PG_RETURN_FLOAT8(ceil(arg1));
+}
+
+/*
+ *		dfloor			- returns the largest integer lesser than or
+ *						  equal to the specified float
+ */
+Datum
+dfloor(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+
+	PG_RETURN_FLOAT8(floor(arg1));
+}
+
+/*
+ *		dsign			- returns -1 if the argument is less than 0, 0
+ *						  if the argument is equal to 0, and 1 if the
+ *						  argument is greater than zero.
+ */
+Datum
+dsign(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	if (arg1 > 0)
+		result = 1.0;
+	else if (arg1 < 0)
+		result = -1.0;
+	else
+		result = 0.0;
+
+	PG_RETURN_FLOAT8(result);
+}
 
 /*
  *		dtrunc			- returns truncation-towards-zero of arg1,

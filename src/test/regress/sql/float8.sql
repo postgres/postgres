@@ -60,9 +60,18 @@ SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
 SELECT '' AS five, f.f1, f.f1 % AS round_f1
    FROM FLOAT8_TBL f;
 
-SELECT sqrt(float8 '64') AS eight;
+-- ceil
+select ceil(f1) as ceil_f1 from float8_tbl f;
+
+-- floor
+select floor(f1) as floor_f1 from float8_tbl f;
+
+-- sign
+select sign(f1) as sign_f1 from float8_tbl f;
 
 -- square root 
+SELECT sqrt(float8 '64') AS eight;
+
 SELECT |/ float8 '64' AS eight;
 
 SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1

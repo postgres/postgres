@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.273 2002/09/22 17:27:23 tgl Exp $
+ * $Id: pg_proc.h,v 1.274 2002/10/19 02:08:18 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -473,6 +473,12 @@ DATA(insert OID = 228 (  dround			   PGNSP PGUID 12 f f t f i 1 701 "701"  droun
 DESCR("round to nearest integer");
 DATA(insert OID = 229 (  dtrunc			   PGNSP PGUID 12 f f t f i 1 701 "701"  dtrunc - _null_ ));
 DESCR("truncate to integer");
+DATA(insert OID = 2308 ( ceil			   PGNSP PGUID 12 f f t f i 1 701 "701"  dceil - _null_ ));
+DESCR("smallest integer >= value");
+DATA(insert OID = 2309 ( floor			   PGNSP PGUID 12 f f t f i 1 701 "701"  dfloor - _null_ ));
+DESCR("largest integer <= value");
+DATA(insert OID = 2310 ( sign			   PGNSP PGUID 12 f f t f i 1 701 "701"  dsign - _null_ ));
+DESCR("sign of value");
 DATA(insert OID = 230 (  dsqrt			   PGNSP PGUID 12 f f t f i 1 701 "701"  dsqrt - _null_ ));
 DESCR("square root");
 DATA(insert OID = 231 (  dcbrt			   PGNSP PGUID 12 f f t f i 1 701 "701"  dcbrt - _null_ ));

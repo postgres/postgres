@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.202 2002/09/22 17:27:25 tgl Exp $
+ * $Id: builtins.h,v 1.203 2002/10/19 02:08:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,6 +261,9 @@ extern Datum text_float4(PG_FUNCTION_ARGS);
 extern Datum float8_text(PG_FUNCTION_ARGS);
 extern Datum float4_text(PG_FUNCTION_ARGS);
 extern Datum dround(PG_FUNCTION_ARGS);
+extern Datum dceil(PG_FUNCTION_ARGS);
+extern Datum dfloor(PG_FUNCTION_ARGS);
+extern Datum dsign(PG_FUNCTION_ARGS);
 extern Datum dtrunc(PG_FUNCTION_ARGS);
 extern Datum dsqrt(PG_FUNCTION_ARGS);
 extern Datum dcbrt(PG_FUNCTION_ARGS);
