@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.3 2004/06/06 18:06:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.4 2004/08/04 19:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ record_in(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	HeapTuple	tuple;
 	RecordIOData *my_extra;
+	bool		needComma = false;
 	int			ncolumns;
 	int			i;
 	char	   *ptr;
@@ -131,6 +132,26 @@ record_in(PG_FUNCTION_ARGS)
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = tupdesc->attrs[i]->atttypid;
 
+		/* Ignore dropped columns in datatype, but fill with nulls */
+		if (tupdesc->attrs[i]->attisdropped)
+		{
+			values[i] = (Datum) 0;
+			nulls[i] = 'n';
+			continue;
+		}
+
+		if (needComma)
+		{
+			/* Skip comma that separates prior field from this one */
+			if (*ptr == ',')
+				ptr++;
+			else				/* *ptr must be ')' */
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+						 errmsg("malformed record literal: \"%s\"", string),
+						 errdetail("Too few columns.")));
+		}
+
 		/* Check for null: completely empty input means null */
 		if (*ptr == ',' || *ptr == ')')
 		{
@@ -203,27 +224,9 @@ record_in(PG_FUNCTION_ARGS)
 		/*
 		 * Prep for next column
 		 */
-		if (*ptr == ',')
-		{
-			if (i == ncolumns-1)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("malformed record literal: \"%s\"", string),
-						 errdetail("Too many columns.")));
-			ptr++;
-		}
-		else
-		{
-			/* *ptr must be ')' */
-			if (i < ncolumns-1)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-						 errmsg("malformed record literal: \"%s\"", string),
-						 errdetail("Too few columns.")));
-		}
+		needComma = true;
 	}
 
-	/* The check for ')' here is redundant except when ncolumns == 0 */
 	if (*ptr++ != ')')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -259,6 +262,7 @@ record_out(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;
 	HeapTupleData tuple;
 	RecordIOData *my_extra;
+	bool		needComma = false;
 	int			ncolumns;
 	int			i;
 	Datum	   *values;
@@ -333,8 +337,13 @@ record_out(PG_FUNCTION_ARGS)
 		char	*tmp;
 		bool	nq;
 
-		if (i > 0)
+		/* Ignore dropped columns in datatype */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
+		if (needComma)
 			appendStringInfoChar(&buf, ',');
+		needComma = true;
 
 		if (nulls[i] == 'n')
 		{
@@ -414,6 +423,8 @@ record_recv(PG_FUNCTION_ARGS)
 	HeapTuple	tuple;
 	RecordIOData *my_extra;
 	int			ncolumns;
+	int			usercols;
+	int			validcols;
 	int			i;
 	Datum	   *values;
 	char	   *nulls;
@@ -463,13 +474,21 @@ record_recv(PG_FUNCTION_ARGS)
 	values = (Datum *) palloc(ncolumns * sizeof(Datum));
 	nulls = (char *) palloc(ncolumns * sizeof(char));
 
-	/* Verify number of columns */
-	i = pq_getmsgint(buf, 4);
-	if (i != ncolumns)
+	/* Fetch number of columns user thinks it has */
+	usercols = pq_getmsgint(buf, 4);
+
+	/* Need to scan to count nondeleted columns */
+	validcols = 0;
+	for (i = 0; i < ncolumns; i++)
+	{
+		if (!tupdesc->attrs[i]->attisdropped)
+			validcols++;
+	}
+	if (usercols != validcols)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("wrong number of columns: %d, expected %d",
-						i, ncolumns)));
+						usercols, validcols)));
 
 	/* Process each column */
 	for (i = 0; i < ncolumns; i++)
@@ -479,13 +498,21 @@ record_recv(PG_FUNCTION_ARGS)
 		Oid			coltypoid;
 		int			itemlen;
 
+		/* Ignore dropped columns in datatype, but fill with nulls */
+		if (tupdesc->attrs[i]->attisdropped)
+		{
+			values[i] = (Datum) 0;
+			nulls[i] = 'n';
+			continue;
+		}
+
 		/* Verify column datatype */
 		coltypoid = pq_getmsgint(buf, sizeof(Oid));
 		if (coltypoid != column_type)
-		ereport(ERROR,
-				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("wrong data type: %u, expected %u",
-						coltypoid, column_type)));
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("wrong data type: %u, expected %u",
+							coltypoid, column_type)));
 
 		/* Get and check the item length */
 		itemlen = pq_getmsgint(buf, 4);
@@ -570,6 +597,7 @@ record_send(PG_FUNCTION_ARGS)
 	HeapTupleData tuple;
 	RecordIOData *my_extra;
 	int			ncolumns;
+	int			validcols;
 	int			i;
 	Datum	   *values;
 	char	   *nulls;
@@ -633,13 +661,24 @@ record_send(PG_FUNCTION_ARGS)
 	/* And build the result string */
 	pq_begintypsend(&buf);
 
-	pq_sendint(&buf, ncolumns, 4);
+	/* Need to scan to count nondeleted columns */
+	validcols = 0;
+	for (i = 0; i < ncolumns; i++)
+	{
+		if (!tupdesc->attrs[i]->attisdropped)
+			validcols++;
+	}
+	pq_sendint(&buf, validcols, 4);
 
 	for (i = 0; i < ncolumns; i++)
 	{
 		ColumnIOData *column_info = &my_extra->columns[i];
 		Oid			column_type = tupdesc->attrs[i]->atttypid;
 		bytea	   *outputbytes;
+
+		/* Ignore dropped columns in datatype */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
 
 		pq_sendint(&buf, column_type, sizeof(Oid));
 
