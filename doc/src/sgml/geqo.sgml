@@ -1,3 +1,13 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.4 1998/08/15 06:55:05 thomas Exp $
+Genetic Optimizer
+
+$Log: geqo.sgml,v $
+Revision 1.4  1998/08/15 06:55:05  thomas
+Change Id field in chapter tag to change html output file name.
+
+-->
+
 <Chapter Id="geqo">
 <DocInfo>
 <Author>
@@ -274,7 +284,7 @@ Suggestions are welcome :-(
 Enable bushy query tree processing within <ProductName>Postgres</ProductName>;
 that may improve the quality of query plans.
 
-<BIBLIOGRAPHY Id="geqo-references">
+<BIBLIOGRAPHY Id="geqo-biblio">
 <TITLE>
 References
 </TITLE>
