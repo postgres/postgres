@@ -1,8 +1,8 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.1 2005/02/27 00:49:28 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.2 2005/02/27 01:17:34 momjian Exp $
 -->
 
-<chapter id="planner-stats">
+<chapter id="planner-stats-details">
  <title>How the Planner Uses Statistics</title>
 
   <para>
