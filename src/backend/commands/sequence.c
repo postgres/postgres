@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.80 2002/06/15 19:54:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.81 2002/06/15 19:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,8 +468,7 @@ nextval(PG_FUNCTION_ARGS)
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
-	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ERROR, "%s.nextval: WriteBuffer failed", sequence->relname);
+	WriteBuffer(buf);
 
 	relation_close(seqrel, NoLock);
 
@@ -581,8 +580,7 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 
 	LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
-	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ERROR, "%s.setval: WriteBuffer failed", sequence->relname);
+	WriteBuffer(buf);
 
 	relation_close(seqrel, NoLock);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.55 2002/06/15 19:55:38 momjian Exp $
+ * $Id: buf_internals.h,v 1.56 2002/06/15 19:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ extern BufferDesc *LocalBufferDescriptors;
 
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				 bool *foundPtr);
-extern int	WriteLocalBuffer(Buffer buffer, bool release);
+extern void	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool sync, bool release);
 extern void LocalBufferSync(void);
 extern void ResetLocalBufferPool(void);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.124 2002/06/15 19:55:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.125 2002/06/15 19:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,7 @@ static int	ReleaseBufferWithBufferLock(Buffer buffer);
 static int	BufferReplace(BufferDesc *bufHdr);
 void		PrintBufferDescs(void);
 
+static void write_buffer(Buffer buffer, bool unpin);
 
 /*
  * ReadBuffer -- returns a buffer containing the requested
@@ -558,6 +559,36 @@ BufferAlloc(Relation reln,
 }
 
 /*
+ * write_buffer -- common functionality for
+ *                 WriteBuffer and WriteNoReleaseBuffer
+ */
+static void
+write_buffer(Buffer buffer, bool release)
+{
+	BufferDesc *bufHdr;
+
+	if (BufferIsLocal(buffer))
+	{
+		WriteLocalBuffer(buffer, release);
+		return;
+	}
+
+	if (BAD_BUFFER_ID(buffer))
+		elog(ERROR, "write_buffer: bad buffer %d", buffer);
+
+	bufHdr = &BufferDescriptors[buffer - 1];
+
+	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+	Assert(bufHdr->refcount > 0);
+
+	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+
+	if (release)
+		UnpinBuffer(bufHdr);
+	LWLockRelease(BufMgrLock);
+}
+
+/*
  * WriteBuffer
  *
  *		Marks buffer contents as dirty (actual write happens later).
@@ -571,55 +602,20 @@ BufferAlloc(Relation reln,
 
 #undef WriteBuffer
 
-int
+void
 WriteBuffer(Buffer buffer)
 {
-	BufferDesc *bufHdr;
-
-	if (BufferIsLocal(buffer))
-		return WriteLocalBuffer(buffer, TRUE);
-
-	if (BAD_BUFFER_ID(buffer))
-		return FALSE;
-
-	bufHdr = &BufferDescriptors[buffer - 1];
-
-	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-	Assert(bufHdr->refcount > 0);
-
-	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-
-	UnpinBuffer(bufHdr);
-	LWLockRelease(BufMgrLock);
-
-	return TRUE;
+	write_buffer(buffer, true);
 }
 
 /*
  * WriteNoReleaseBuffer -- like WriteBuffer, but do not unpin the buffer
  *						   when the operation is complete.
  */
-int
+void
 WriteNoReleaseBuffer(Buffer buffer)
 {
-	BufferDesc *bufHdr;
-
-	if (BufferIsLocal(buffer))
-		return WriteLocalBuffer(buffer, FALSE);
-
-	if (BAD_BUFFER_ID(buffer))
-		return STATUS_ERROR;
-
-	bufHdr = &BufferDescriptors[buffer - 1];
-
-	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-	Assert(bufHdr->refcount > 0);
-
-	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
-
-	LWLockRelease(BufMgrLock);
-
-	return STATUS_OK;
+	write_buffer(buffer, false);
 }
 
 

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.42 2002/05/03 17:42:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.43 2002/06/15 19:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
  * WriteLocalBuffer -
  *	  writes out a local buffer
  */
-int
+void
 WriteLocalBuffer(Buffer buffer, bool release)
 {
 	int			bufid;
@@ -174,8 +174,6 @@ WriteLocalBuffer(Buffer buffer, bool release)
 		Assert(LocalRefCount[bufid] > 0);
 		LocalRefCount[bufid]--;
 	}
-
-	return true;
 }
 
 /*
