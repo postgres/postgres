@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.71.2.1 2003/11/04 00:34:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.71.2.2 2004/09/13 01:59:35 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -190,7 +190,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
         the default behavior.  (In releases before 7.1,
         <literal>ONLY</> was the default behavior.)  The default
         behavior can be modified by changing the
-        <varname>sql_interitance</varname> configuration option.
+        <varname>sql_inheritance</varname> configuration option.
        </para>
       </listitem>
      </varlistentry>
