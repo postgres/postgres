@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.94 2002/03/06 06:10:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.95 2002/04/04 04:43:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,11 +359,11 @@ elog(int lev, const char *fmt,...)
 
 		switch (lev)
 		{
-			case DEBUG1:
-			case DEBUG2:
-			case DEBUG3:
-			case DEBUG4:
 			case DEBUG5:
+			case DEBUG4:
+			case DEBUG3:
+			case DEBUG2:
+			case DEBUG1:
 				syslog_level = LOG_DEBUG;
 				break;
 			case LOG:
@@ -845,16 +845,16 @@ bool
 check_server_min_messages(const char *lev)
 {
 	if (strcasecmp(lev, "debug") == 0 ||
-		strcasecmp(lev, "debug1") == 0 ||
-		strcasecmp(lev, "debug2") == 0 ||
-		strcasecmp(lev, "debug3") == 0 ||
-		strcasecmp(lev, "debug4") == 0 ||
 		strcasecmp(lev, "debug5") == 0 ||
-		strcasecmp(lev, "log") == 0 ||
+		strcasecmp(lev, "debug4") == 0 ||
+		strcasecmp(lev, "debug3") == 0 ||
+		strcasecmp(lev, "debug2") == 0 ||
+		strcasecmp(lev, "debug1") == 0 ||
 		strcasecmp(lev, "info") == 0 ||
 		strcasecmp(lev, "notice") == 0 ||
 		strcasecmp(lev, "warning") == 0 ||
 		strcasecmp(lev, "error") == 0 ||
+		strcasecmp(lev, "log") == 0 ||
 		strcasecmp(lev, "fatal") == 0 ||
 		strcasecmp(lev, "panic") == 0)
 		return true;
@@ -865,19 +865,17 @@ void
 assign_server_min_messages(const char *lev)
 {
 	if (strcasecmp(lev, "debug") == 0)
-		server_min_messages = DEBUG1;
-	else if (strcasecmp(lev, "debug1") == 0)
-		server_min_messages = DEBUG1;
-	else if (strcasecmp(lev, "debug2") == 0)
-		server_min_messages = DEBUG2;
-	else if (strcasecmp(lev, "debug3") == 0)
-		server_min_messages = DEBUG3;
-	else if (strcasecmp(lev, "debug4") == 0)
-		server_min_messages = DEBUG4;
+		server_min_messages = DEBUG5;
 	else if (strcasecmp(lev, "debug5") == 0)
 		server_min_messages = DEBUG5;
-	else if (strcasecmp(lev, "log") == 0)
-		server_min_messages = LOG;
+	else if (strcasecmp(lev, "debug4") == 0)
+		server_min_messages = DEBUG4;
+	else if (strcasecmp(lev, "debug3") == 0)
+		server_min_messages = DEBUG3;
+	else if (strcasecmp(lev, "debug2") == 0)
+		server_min_messages = DEBUG2;
+	else if (strcasecmp(lev, "debug1") == 0)
+		server_min_messages = DEBUG1;
 	else if (strcasecmp(lev, "info") == 0)
 		server_min_messages = INFO;
 	else if (strcasecmp(lev, "notice") == 0)
@@ -886,6 +884,8 @@ assign_server_min_messages(const char *lev)
 		server_min_messages = WARNING;
 	else if (strcasecmp(lev, "error") == 0)
 		server_min_messages = ERROR;
+	else if (strcasecmp(lev, "log") == 0)
+		server_min_messages = LOG;
 	else if (strcasecmp(lev, "fatal") == 0)
 		server_min_messages = FATAL;
 	else if (strcasecmp(lev, "panic") == 0)
@@ -899,12 +899,13 @@ bool
 check_client_min_messages(const char *lev)
 {
 	if (strcasecmp(lev, "debug") == 0 ||
-		strcasecmp(lev, "debug1") == 0 ||
-		strcasecmp(lev, "debug2") == 0 ||
-		strcasecmp(lev, "debug3") == 0 ||
-		strcasecmp(lev, "debug4") == 0 ||
 		strcasecmp(lev, "debug5") == 0 ||
+		strcasecmp(lev, "debug4") == 0 ||
+		strcasecmp(lev, "debug3") == 0 ||
+		strcasecmp(lev, "debug2") == 0 ||
+		strcasecmp(lev, "debug1") == 0 ||
 		strcasecmp(lev, "log") == 0 ||
+		strcasecmp(lev, "info") == 0 ||
 		strcasecmp(lev, "notice") == 0 ||
 		strcasecmp(lev, "warning") == 0 ||
 		strcasecmp(lev, "error") == 0)
@@ -916,19 +917,21 @@ void
 assign_client_min_messages(const char *lev)
 {
 	if (strcasecmp(lev, "debug") == 0)
-		client_min_messages = DEBUG1;
-	else if (strcasecmp(lev, "debug1") == 0)
-		client_min_messages = DEBUG1;
-	else if (strcasecmp(lev, "debug2") == 0)
-		client_min_messages = DEBUG2;
-	else if (strcasecmp(lev, "debug3") == 0)
-		client_min_messages = DEBUG3;
-	else if (strcasecmp(lev, "debug4") == 0)
-		client_min_messages = DEBUG4;
+		client_min_messages = DEBUG5;
 	else if (strcasecmp(lev, "debug5") == 0)
 		client_min_messages = DEBUG5;
+	else if (strcasecmp(lev, "debug4") == 0)
+		client_min_messages = DEBUG4;
+	else if (strcasecmp(lev, "debug3") == 0)
+		client_min_messages = DEBUG3;
+	else if (strcasecmp(lev, "debug2") == 0)
+		client_min_messages = DEBUG2;
+	else if (strcasecmp(lev, "debug1") == 0)
+		client_min_messages = DEBUG1;
 	else if (strcasecmp(lev, "log") == 0)
 		client_min_messages = LOG;
+	else if (strcasecmp(lev, "info") == 0)
+		client_min_messages = INFO;
 	else if (strcasecmp(lev, "notice") == 0)
 		client_min_messages = NOTICE;
 	else if (strcasecmp(lev, "warning") == 0)
