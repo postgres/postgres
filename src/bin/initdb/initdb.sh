@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.102 2000/08/06 04:39:22 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.103 2000/09/01 13:15:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -37,8 +37,10 @@ exit_nicely(){
     echo
     echo "$CMDNAME failed."
     if [ "$noclean" != yes ]; then
-        echo "Removing $PGDATA."
-        rm -rf "$PGDATA" || echo "Failed."
+        if [ "$template_only" != yes ] && [ "$made_new_pgdata" = yes ]; then
+            echo "Removing $PGDATA."
+            rm -rf "$PGDATA" || echo "Failed."
+        fi
         echo "Removing temp file $TEMPFILE."
         rm -rf "$TEMPFILE" || echo "Failed."
     else
@@ -51,13 +53,13 @@ exit_nicely(){
 CMDNAME=`basename $0`
 
 # Placed here during build
-VERSION=__VERSION__
-bindir='__bindir__'
+VERSION='@VERSION@'
+bindir='@bindir@'
 # Note that "datadir" is not the directory we're initializing, it's
 # merely how Autoconf names PREFIX/share.
-datadir='__datadir__'
+datadir='@datadir@'
 # as set by configure --enable-multibyte[=XXX].
-MULTIBYTE=__MULTIBYTE__
+MULTIBYTE='@MULTIBYTE@'
 
 if [ "$TMPDIR" ]; then
     TEMPFILE="$TMPDIR/initdb.$$"
@@ -107,7 +109,7 @@ for prog in postgres pg_id
 do
         if [ ! -x "$PGPATH/$prog" ]
 	then
-                echo "The program $prog needed by $CMDNAME could not be found. It was"
+                echo "The program \`$prog' needed by $CMDNAME could not be found. It was"
                 echo "expected at:"
                 echo "    $PGPATH/$prog"
                 echo "If this is not the correct directory, please start $CMDNAME"
@@ -368,24 +370,23 @@ echo
 # umask must disallow access to group, other for files and dirs
 umask 077
 
-if [ -f "$PGDATA"/PG_VERSION ]
+# find out if directory is empty
+pgdata_contents=`ls -A "$PGDATA" 2>/dev/null`
+if [ x"$pgdata_contents" != x ]
 then
     if [ "$template_only" != yes ]
     then
-        echo "$CMDNAME: The file $PGDATA/PG_VERSION already exists."
-        echo "This probably means initdb has already been run and the"
-        echo "database system already exists."
-        echo 
-        echo "If you want to create a new database system, either remove"
-        echo "the directory $PGDATA or run initdb with a --pgdata argument"
+        echo "$CMDNAME: The directory $PGDATA is exists but is not empty."
+        echo "If you want to create a new database system, either remove or empty"
+        echo "the directory $PGDATA or run initdb with an argument"
         echo "other than $PGDATA."
         exit 1
     fi
 else
-    if [ ! -d "$PGDATA" ]
-	then
+    if [ ! -d "$PGDATA" ]; then
         echo "Creating directory $PGDATA"
         mkdir "$PGDATA" || exit_nicely
+        made_new_pgdata=yes
     else
         echo "Fixing permissions on existing directory $PGDATA"
 	chmod go-rwx "$PGDATA" || exit_nicely
