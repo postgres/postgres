@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.52 1998/04/26 04:09:10 momjian Exp $
+ * $Id: pg_proc.h,v 1.53 1998/04/27 04:08:07 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -128,8 +128,6 @@ DATA(insert OID =  45 (  regprocout		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  f
 DESCR("(internal)");
 DATA(insert OID =  46 (  textin			   PGUID 11 f t f 1 f 25 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
-#define TextInRegProcedure 46
-
 DATA(insert OID =  47 (  textout		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
 DATA(insert OID =  48 (  tidin			   PGUID 11 f t f 1 f 27 "0" 100 0 0 100  foo bar ));
@@ -156,28 +154,18 @@ DATA(insert OID =  60 (  booleq			   PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  
 DESCR("equals");
 DATA(insert OID =  61 (  chareq			   PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
 DESCR("equals");
-#define		  CharacterEqualRegProcedure	  61
-
 DATA(insert OID =  62 (  nameeq			   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  foo bar ));
 DESCR("equals");
-#define NameEqualRegProcedure			62
-
 DATA(insert OID =  63 (  int2eq			   PGUID 11 f t f 2 f 16 "21 21" 100 0 0 100  foo bar ));
 DESCR("equals");
-#define Integer16EqualRegProcedure		63
-
 DATA(insert OID =  64 (  int2lt			   PGUID 11 f t f 2 f 16 "21 21" 100 0 0 100  foo bar ));
 DESCR("less-than");
 DATA(insert OID =  65 (  int4eq			   PGUID 11 f t f 2 f 16 "23 23" 100 0 0 100  foo bar ));
 DESCR("equals");
-#define Integer32EqualRegProcedure		65
-
 DATA(insert OID =  66 (  int4lt			   PGUID 11 f t f 2 f 16 "23 23" 100 0 0 100  foo bar ));
 DESCR("less-than");
 DATA(insert OID =  67 (  texteq			   PGUID 11 f t f 2 f 16 "25 25" 100 0 0 0	foo bar ));
 DESCR("equals");
-#define TextEqualRegProcedure			67
-
 DATA(insert OID =  68 (  xideq			   PGUID 11 f t f 2 f 16 "28 28" 100 0 0 100  foo bar ));
 DESCR("equals");
 DATA(insert OID =  69 (  cideq			   PGUID 11 f t f 2 f 16 "29 29" 100 0 0 100  foo bar ));
@@ -229,8 +217,6 @@ DATA(insert OID = 1270 (  btreenpage	   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23
 DESCR("btree");
 DATA(insert OID = 1272 (  eqsel			   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
 DESCR("general selectivity");
-#define EqualSelectivityProcedure 1272
-
 DATA(insert OID = 102 (  neqsel			   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
 DESCR("not-equals selectivity");
 DATA(insert OID = 103 (  intltsel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  foo bar ));
@@ -326,7 +312,6 @@ DATA(insert OID = 149 (  int4le			   PGUID 11 f t f 2 f 16 "23 23" 100 0 0 100  
 DESCR("less-than-or-equals");
 DATA(insert OID = 150 (  int4ge			   PGUID 11 f t f 2 f 16 "23 23" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equals");
-#define INT4GE_PROC_OID 150
 DATA(insert OID = 151 (  int2ge			   PGUID 11 f t f 2 f 16 "21 21" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equals");
 DATA(insert OID = 152 (  int2mul		   PGUID 11 f t f 2 f 21 "21 21" 100 0 0 100  foo bar ));
@@ -395,8 +380,6 @@ DATA(insert OID = 183 (  int42mi		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  
 DESCR("subtract");
 DATA(insert OID = 184 (  oideq			   PGUID 11 f t f 2 f 16 "26 26" 100 0 0 100  foo bar ));
 DESCR("equals");
-#define ObjectIdEqualRegProcedure		184
-
 DATA(insert OID = 185 (  oidne			   PGUID 11 f t f 2 f 16 "26 26" 100 0 0 100  foo bar ));
 DESCR("not equal");
 DATA(insert OID = 186 (  box_same		   PGUID 11 f t f 2 f 16 "603 603" 100 0 0 100	foo bar ));
@@ -1015,9 +998,6 @@ DATA(insert OID = 823 (  oidint2le		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 1
 DESCR("less-than-or-equals");
 DATA(insert OID = 824 (  oidint2eq		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
 DESCR("equals");
-
-#define OidInt2EqRegProcedure 824
-
 DATA(insert OID = 825 (  oidint2ge		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
 DESCR("greater-than-or-equals");
 DATA(insert OID = 826 (  oidint2gt		   PGUID 11 f t f 2 f 16 "810 810" 100 0 0 100	foo bar));
@@ -1106,9 +1086,6 @@ DATA(insert OID = 923 (  oidint4le		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 1
 DESCR("less-than-or-equals");
 DATA(insert OID = 924 (  oidint4eq		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
 DESCR("equals");
-
-#define OidInt4EqRegProcedure 924
-
 DATA(insert OID = 925 (  oidint4ge		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
 DESCR("greater-than-or-equals");
 DATA(insert OID = 926 (  oidint4gt		   PGUID 11 f t f 2 f 16 "910 910" 100 0 0 100	foo bar));
@@ -1140,9 +1117,6 @@ DATA(insert OID = 943 (  oidnamele		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 1
 DESCR("less-than-or-equals");
 DATA(insert OID = 944 (  oidnameeq		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
 DESCR("equals");
-
-#define OidNameEqRegProcedure 944
-
 DATA(insert OID = 945 (  oidnamege		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
 DESCR("greater-than-or-equals");
 DATA(insert OID = 946 (  oidnamegt		   PGUID 11 f t f 2 f 16 "911 911" 100 0 0 100	foo bar));
@@ -1245,10 +1219,8 @@ DESCR("equals");
 
 DATA(insert OID = 1029 (  nullvalue		   PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
-#define NullValueRegProcedure 1029
 DATA(insert OID = 1030 (  nonnullvalue	   PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
-#define NonNullValueRegProcedure 1030
 DATA(insert OID = 1031 (  aclitemin		   PGUID 11 f t f 1 f 1033 "0" 100 0 0 100	foo bar ));
 DESCR("(internal)");
 DATA(insert OID = 1032 (  aclitemout	   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
@@ -1261,8 +1233,6 @@ DATA(insert OID = 1037 (  aclcontains	   PGUID 11 f t f 2 f 16 "1034 1033" 100 0
 DESCR("matches regex., case-sensitive");
 DATA(insert OID = 1038 (  seteval		   PGUID 11 f t f 1 f 23 "26" 100 0 0 100  foo bar ));
 DESCR("");
-#define SetEvalRegProcedure 1038
-
 DATA(insert OID = 1044 (  bpcharin		   PGUID 11 f t f 3 f 1042 "0" 100 0 0 100	foo bar ));
 DESCR("(internal)");
 DATA(insert OID = 1045 (  bpcharout		   PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
@@ -1938,8 +1908,6 @@ DATA(insert OID =  1317 (  nextval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  fo
 DESCR("sequence next value");
 DATA(insert OID =  1319 (  currval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
 DESCR("sequence current value");
-#define SeqNextValueRegProcedure 1317
-#define SeqCurrValueRegProcedure 1319
 
 /*
  * prototypes for functions pg_proc.c

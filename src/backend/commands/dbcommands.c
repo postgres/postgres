@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.12 1998/04/26 04:06:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.13 1998/04/27 04:05:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,22 +17,22 @@
 #include <sys/stat.h>
 
 #include "postgres.h"
-#include "miscadmin.h"			/* for DataDir */
+
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/relscan.h"
-#include "utils/rel.h"
-#include "utils/elog.h"
 #include "catalog/catname.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_shadow.h"
 #include "catalog/pg_database.h"
-#include "utils/syscache.h"
+#include "catalog/pg_shadow.h"
 #include "commands/dbcommands.h"
-#include "tcop/tcopprot.h"
+#include "fmgr.h"
+#include "miscadmin.h"			/* for DataDir */
 #include "storage/bufmgr.h"
-#include "storage/lmgr.h"
 #include "storage/fd.h"
+#include "storage/lmgr.h"
+#include "tcop/tcopprot.h"
+#include "utils/rel.h"
+#include "utils/syscache.h"
 
 
 /* non-export function prototypes */
@@ -157,7 +157,7 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 	ScanKeyData scanKey;
 
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
-						   NameEqualRegProcedure, NameGetDatum(dbname));
+						   F_NAMEEQ, NameGetDatum(dbname));
 
 	scan = heap_beginscan(dbrel, 0, false, 1, &scanKey);
 	if (!HeapScanIsValid(scan))

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.12 1998/01/15 19:45:09 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.13 1998/04/27 04:07:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,18 +17,19 @@
 #include <string.h>
 
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "access/xact.h"
 #include "catalog/pg_proc.h"	/* for Form_pg_proc */
-#include "utils/syscache.h"		/* for PROOID */
 #include "catalog/catname.h"	/* for ProcedureRelationName */
 #include "catalog/indexing.h"	/* for Num_pg_proc_indices */
-#include "storage/lmgr.h"
-#include "utils/sets.h"			/* for GENERICSETNAME	   */
-#include "utils/tqual.h"
-#include "tcop/dest.h"
 #include "fmgr.h"
+#include "storage/lmgr.h"
+#include "tcop/dest.h"
+#include "utils/sets.h"			/* for GENERICSETNAME	   */
+#include "utils/syscache.h"		/* for PROOID */
+#include "utils/tqual.h"
 
 extern CommandDest whereToSendOutput;	/* defined in tcop/postgres.c */
 
@@ -60,7 +61,7 @@ SetDefine(char *querystr, char *typename)
 	ItemPointerData ipdata;
 
 	static ScanKeyData oidKey[1] = {
-	{0, ObjectIdAttributeNumber, ObjectIdEqualRegProcedure}};
+	{0, ObjectIdAttributeNumber, F_OIDEQ}};
 
 
 	setoid = ProcedureCreate(procname,	/* changed below, after oid known */
@@ -116,7 +117,7 @@ SetDefine(char *querystr, char *typename)
 		/* change the pg_proc tuple */
 		procrel = heap_openr(ProcedureRelationName);
 		RelationSetLockForWrite(procrel);
-		fmgr_info(ObjectIdEqualRegProcedure,
+		fmgr_info(F_OIDEQ,
 				  &oidKey[0].sk_func);
 		oidKey[0].sk_nargs = oidKey[0].sk_func.fn_nargs;
 		oidKey[0].sk_argument = ObjectIdGetDatum(setoid);

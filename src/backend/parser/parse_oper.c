@@ -7,20 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.9 1998/02/26 04:33:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.10 1998/04/27 04:06:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
 #include "postgres.h"
-#include <fmgr.h>
+
 #include "access/heapam.h"
 #include "access/relscan.h"
 #include "catalog/catname.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "fmgr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "storage/bufmgr.h"
@@ -89,12 +89,12 @@ binary_oper_get_candidates(char *opname,
 
 	ScanKeyEntryInitialize(&opKey[0], 0,
 						   Anum_pg_operator_oprname,
-						   NameEqualRegProcedure,
+						   F_NAMEEQ,
 						   NameGetDatum(opname));
 
 	ScanKeyEntryInitialize(&opKey[1], 0,
 						   Anum_pg_operator_oprkind,
-						   CharacterEqualRegProcedure,
+						   F_CHAREQ,
 						   CharGetDatum('b'));
 
 
@@ -110,7 +110,7 @@ binary_oper_get_candidates(char *opname,
 
 			ScanKeyEntryInitialize(&opKey[2], 0,
 								   Anum_pg_operator_oprright,
-								   ObjectIdEqualRegProcedure,
+								   F_OIDEQ,
 								   ObjectIdGetDatum(rightTypeId));
 		}
 	}
@@ -120,7 +120,7 @@ binary_oper_get_candidates(char *opname,
 
 		ScanKeyEntryInitialize(&opKey[2], 0,
 							   Anum_pg_operator_oprleft,
-							   ObjectIdEqualRegProcedure,
+							   F_OIDEQ,
 							   ObjectIdGetDatum(leftTypeId));
 	}
 	else
@@ -399,14 +399,14 @@ unary_oper_get_candidates(char *op,
 	int			ncandidates = 0;
 
 	static ScanKeyData opKey[2] = {
-		{0, Anum_pg_operator_oprname, NameEqualRegProcedure},
-	{0, Anum_pg_operator_oprkind, CharacterEqualRegProcedure}};
+		{0, Anum_pg_operator_oprname, F_NAMEEQ},
+	{0, Anum_pg_operator_oprkind, F_CHAREQ}};
 
 	*candidates = NULL;
 
-	fmgr_info(NameEqualRegProcedure, (FmgrInfo *) &opKey[0].sk_func);
+	fmgr_info(F_NAMEEQ, (FmgrInfo *) &opKey[0].sk_func);
 	opKey[0].sk_argument = NameGetDatum(op);
-	fmgr_info(CharacterEqualRegProcedure, (FmgrInfo *) &opKey[1].sk_func);
+	fmgr_info(F_CHAREQ, (FmgrInfo *) &opKey[1].sk_func);
 	opKey[1].sk_argument = CharGetDatum(rightleft);
 
 	/* currently, only "unknown" can be coerced */

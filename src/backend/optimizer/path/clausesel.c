@@ -7,29 +7,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.6 1998/02/26 04:32:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.7 1998/04/27 04:05:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/pg_operator.h"
+#include "fmgr.h"
 #include "nodes/pg_list.h"
-#include "nodes/relation.h"
 #include "nodes/primnodes.h"
-
-#include "optimizer/internal.h"
+#include "nodes/relation.h"
 #include "optimizer/clauses.h"
 #include "optimizer/clauseinfo.h"
 #include "optimizer/cost.h"
+#include "optimizer/internal.h"
 #include "optimizer/plancat.h"
-
 #include "parser/parsetree.h"	/* for getrelid() */
-
-#include "catalog/pg_proc.h"
-#include "catalog/pg_operator.h"
-
-#include "utils/elog.h"
 #include "utils/lsyscache.h"
+
 
 static Cost compute_selec(Query *root, List *clauses, List *or_selectivities);
 
@@ -254,7 +250,7 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 		 * of that info.
 		 */
 
-		s1 = restriction_selectivity(EqualSelectivityProcedure,
+		s1 = restriction_selectivity(F_EQSEL,
 									 BooleanEqualOperator,
 									 relid,
 									 ((Var *) clause)->varoattno,

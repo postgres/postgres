@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.28 1998/02/10 04:02:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.29 1998/04/27 04:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,7 @@
 #include <sys/stat.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
-#include "libpq/libpq-fs.h"
+
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/relscan.h"
@@ -29,25 +28,26 @@
 #include "access/xact.h"
 #include "access/nbtree.h"
 #include "access/tupdesc.h"
-#include "catalog/index.h"		/* for index_create() */
 #include "catalog/catalog.h"	/* for newoid() */
+#include "catalog/heap.h"
+#include "catalog/index.h"		/* for index_create() */
 #include "catalog/pg_am.h"		/* for BTREE_AM_OID */
 #include "catalog/pg_type.h"	/* for INT4OID */
 #include "catalog/pg_opclass.h" /* for INT4_OPS_OID */
-#include "catalog/pg_proc.h"	/* for INT4GE_PROC_OID */
+#include "fmgr.h"
+#include "libpq/libpq-fs.h"
+#include "miscadmin.h"
+#include "nodes/pg_list.h"
 #include "storage/itemptr.h"
 #include "storage/bufpage.h"
 #include "storage/bufmgr.h"
-#include "storage/smgr.h"
-#include "utils/rel.h"
-#include "utils/relcache.h"
-#include "utils/palloc.h"
 #include "storage/large_object.h"
 #include "storage/lmgr.h"
-#include "utils/syscache.h"
+#include "storage/smgr.h"
 #include "utils/builtins.h"		/* for namestrcpy() */
-#include "catalog/heap.h"
-#include "nodes/pg_list.h"
+#include "utils/rel.h"
+#include "utils/relcache.h"
+#include "utils/syscache.h"
 
 /*
  *	Warning, Will Robinson...  In order to pack data into an inversion
@@ -401,7 +401,7 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 	else
 	{
 
-		ScanKeyEntryInitialize(&skey, 0x0, 1, INT4GE_PROC_OID,
+		ScanKeyEntryInitialize(&skey, 0x0, 1, F_INT4GE,
 							   Int32GetDatum(offset));
 
 		obj_desc->iscan = index_beginscan(obj_desc->index_r,
@@ -593,7 +593,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 		{
 			ScanKeyData skey;
 
-			ScanKeyEntryInitialize(&skey, 0x0, 1, INT4GE_PROC_OID,
+			ScanKeyEntryInitialize(&skey, 0x0, 1, F_INT4GE,
 								   Int32GetDatum(0));
 			obj_desc->iscan =
 				index_beginscan(obj_desc->index_r,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.37 1998/02/26 04:37:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.38 1998/04/27 04:07:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,6 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
-
-#include <storage/smgr.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -47,45 +44,42 @@
 #include "access/istrat.h"
 #include "access/itup.h"
 #include "access/skey.h"
-#include "utils/builtins.h"
 #include "access/tupdesc.h"
 #include "access/tupmacs.h"
 #include "access/xact.h"
-
-#include "storage/buf.h"
-#include "storage/fd.h"			/* for SEEK_ */
-#include "storage/lmgr.h"
-#include "storage/bufmgr.h"
-
-#include "lib/hasht.h"
-
-#include "utils/memutils.h"
-#include "utils/mcxt.h"
-#include "utils/rel.h"
-#include "utils/relcache.h"
-#include "utils/hsearch.h"
-#include "utils/relcache.h"
-#include "utils/catcache.h"
-
-#include "catalog/catname.h"
 #include "catalog/catalog.h"
-#include "utils/syscache.h"
-
-#include "catalog/pg_attribute.h"
+#include "catalog/catname.h"
+#include "catalog/index.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_aggregate.h"
+#include "catalog/pg_attrdef.h"
+#include "catalog/pg_attribute.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_log.h"
+#include "catalog/pg_relcheck.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
-
 #include "catalog/pg_variable.h"
-#include "catalog/pg_log.h"
-#include "catalog/pg_attrdef.h"
-#include "catalog/pg_relcheck.h"
-#include "catalog/indexing.h"
-#include "catalog/index.h"
 #include "fmgr.h"
+#include "lib/hasht.h"
+#include "miscadmin.h"
+#include "storage/buf.h"
+#include "storage/bufmgr.h"
+#include "storage/fd.h"			/* for SEEK_ */
+#include "storage/lmgr.h"
+#include "storage/smgr.h"
+#include "utils/builtins.h"
+#include "utils/catcache.h"
+#include "utils/hsearch.h"
+#include "utils/mcxt.h"
+#include "utils/memutils.h"
+#include "utils/rel.h"
+#include "utils/relcache.h"
+#include "utils/relcache.h"
+#include "utils/syscache.h"
+
 
 static void
 RelationFlushRelation(Relation *relationPtr,
@@ -360,14 +354,14 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 		case INFO_RELID:
 			ScanKeyEntryInitialize(&key, 0,
 								   ObjectIdAttributeNumber,
-								   ObjectIdEqualRegProcedure,
+								   F_OIDEQ,
 								   ObjectIdGetDatum(buildinfo.i.info_id));
 			break;
 
 		case INFO_RELNAME:
 			ScanKeyEntryInitialize(&key, 0,
 								   Anum_pg_class_relname,
-								   NameEqualRegProcedure,
+								   F_NAMEEQ,
 								   NameGetDatum(buildinfo.i.info_name));
 			break;
 
@@ -547,7 +541,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 */
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_attribute_attrelid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(relation->rd_id));
 
 	/* ----------------
@@ -718,7 +712,7 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_rewrite_ev_class,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(relation->rd_id));
 
 	/* ----------------
@@ -1714,7 +1708,7 @@ AttrDefaultFetch(Relation relation)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(relation->rd_id));
 
 	adrel = heap_openr(AttrDefaultRelationName);
@@ -1803,7 +1797,7 @@ RelCheckFetch(Relation relation)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(relation->rd_id));
 
 	rcrel = heap_openr(RelCheckRelationName);

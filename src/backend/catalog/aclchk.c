@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.8 1998/02/26 04:30:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.9 1998/04/27 04:04:36 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -21,23 +21,22 @@
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tupmacs.h"
-#include "utils/builtins.h"
-#include "utils/memutils.h"
-#include "utils/palloc.h"
 #include "catalog/indexing.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_type.h"
+#include "fmgr.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_func.h"
+#include "utils/builtins.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
-#include "fmgr.h"
 
 static int32 aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 
@@ -99,7 +98,7 @@ ChangeAcl(char *relname,
 			   *new_acl;
 	Relation	relation;
 	static ScanKeyData relkey[1] = {
-		{0, Anum_pg_class_relname, NameEqualRegProcedure}
+		{0, Anum_pg_class_relname, F_NAMEEQ}
 	};
 	HeapScanDesc hsdp;
 	HeapTuple	htp;
@@ -122,7 +121,7 @@ ChangeAcl(char *relname,
 	if (!RelationIsValid(relation))
 		elog(ERROR, "ChangeAcl: could not open '%s'??",
 			 RelationRelationName);
-	fmgr_info(NameEqualRegProcedure, &relkey[0].sk_func);
+	fmgr_info(F_NAMEEQ, &relkey[0].sk_func);
 	relkey[0].sk_nargs = relkey[0].sk_func.fn_nargs;
 	relkey[0].sk_argument = NameGetDatum(relname);
 	hsdp = heap_beginscan(relation,
@@ -480,7 +479,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 #else
 	{							/* This is why the syscache is great... */
 		static ScanKeyData relkey[1] = {
-			{0, Anum_pg_class_relname, NameEqualRegProcedure}
+			{0, Anum_pg_class_relname, F_NAMEEQ}
 		};
 		HeapScanDesc hsdp;
 
@@ -491,7 +490,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 				 RelationRelationName);
 			return ACLCHECK_NO_CLASS;
 		}
-		fmgr_info(NameEqualRegProcedure,
+		fmgr_info(F_NAMEEQ,
 				  &relkey[0].sk_func,
 				  &relkey[0].sk_nargs);
 		relkey[0].sk_argument = NameGetDatum(relname);

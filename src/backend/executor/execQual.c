@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.30 1998/04/26 04:06:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.31 1998/04/27 04:05:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,29 +32,26 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "fmgr.h"
 
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
-
-#include "optimizer/clauses.h"
-
-#include "nodes/memnodes.h"
+#include "access/heapam.h"
 #include "catalog/pg_language.h"
-#include "catalog/pg_proc.h"
-#include "executor/executor.h"
 #include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/execFlatten.h"
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
-#include "access/heapam.h"
-#include "utils/memutils.h"
+#include "fmgr.h"
+#include "nodes/memnodes.h"
+#include "nodes/primnodes.h"
+#include "nodes/relation.h"
+#include "optimizer/clauses.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
-#include "utils/palloc.h"
 #include "utils/fcache.h"
 #include "utils/fcache2.h"
-#include "utils/array.h"
 #include "utils/mcxt.h"
+#include "utils/memutils.h"
+
 
 /* ----------------
  *		externs and constants
@@ -751,7 +748,7 @@ ExecMakeFunctionResult(Node *node,
 	 * right OID.  Also zero out the argv, since the real set doesn't take
 	 * any arguments.
 	 */
-	if (((Func *) node)->funcid == SetEvalRegProcedure)
+	if (((Func *) node)->funcid == F_SETEVAL)
 	{
 		funcisset = true;
 		if (fcache->setArg)
@@ -817,7 +814,7 @@ ExecMakeFunctionResult(Node *node,
 			 * assume that the set function in pg_proc must be a Postquel
 			 * function - the funcid is not reset below for C functions.
 			 */
-			((Func *) node)->funcid = SetEvalRegProcedure;
+			((Func *) node)->funcid = F_SETEVAL;
 
 			/*
 			 * If we're done with the results of this function, get rid of

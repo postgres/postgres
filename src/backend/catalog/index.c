@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.39 1998/02/26 04:30:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.40 1998/04/27 04:04:55 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -24,7 +24,6 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "fmgr.h"
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -39,6 +38,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "fmgr.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
@@ -177,7 +177,7 @@ RelationNameGetObjectId(char *relationName,
 	 * ----------------
 	 */
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_class_relname,
-						   NameEqualRegProcedure,
+						   F_NAMEEQ,
 						   PointerGetDatum(relationName));
 
 	pg_class_scan = heap_beginscan(pg_class, 0, false, 1, &key);
@@ -502,7 +502,7 @@ AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId)
 	 * ----------------
 	 */
 	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(accessMethodObjectId));
 
 	/* ----------------
@@ -950,7 +950,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	pg_index = heap_openr(IndexRelationName);
 
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_index_indexrelid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(indexoid));
 
 	scan = heap_beginscan(pg_index, 0, false, 1, &entry);
@@ -1246,7 +1246,7 @@ index_destroy(Oid indexId)
 	catalogRelation = heap_openr(RelationRelationName);
 
 	ScanKeyEntryInitialize(&entry, 0x0, ObjectIdAttributeNumber,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(indexId));;
 
 	scan = heap_beginscan(catalogRelation, 0, false, 1, &entry);
@@ -1371,13 +1371,13 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	Relation	idescs[Num_pg_class_indices];
 
 	static ScanKeyData key[1] = {
-		{0, ObjectIdAttributeNumber, ObjectIdEqualRegProcedure}
+		{0, ObjectIdAttributeNumber, F_OIDEQ}
 	};
 	Datum		values[Natts_pg_class];
 	char		nulls[Natts_pg_class];
 	char		replace[Natts_pg_class];
 
-	fmgr_info(ObjectIdEqualRegProcedure, &key[0].sk_func);
+	fmgr_info(F_OIDEQ, &key[0].sk_func);
 	key[0].sk_nargs = key[0].sk_func.fn_nargs;
 
 	/* ----------------
@@ -1822,7 +1822,7 @@ IndexIsUniqueNoCache(Oid indexId)
 
 	ScanKeyEntryInitialize(&skey[0], (bits16) 0x0,
 						   Anum_pg_index_indexrelid,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(indexId));
 
 	scandesc = heap_beginscan(pg_index, 0, true, 1, skey);

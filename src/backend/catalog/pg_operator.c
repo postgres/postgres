@@ -7,27 +7,28 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.23 1998/04/01 15:35:04 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.24 1998/04/27 04:05:00 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <catalog/pg_proc.h>
-#include <utils/syscache.h>
-#include <utils/tqual.h>
-#include <utils/builtins.h>
-#include <access/heapam.h>
-#include <catalog/catname.h>
-#include <catalog/pg_operator.h>
-#include <catalog/pg_type.h>
-#include <parser/parse_oper.h>
-#include <storage/bufmgr.h>
-#include <fmgr.h>
-#include <miscadmin.h>
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "fmgr.h"
+#include "miscadmin.h"
+#include "parser/parse_oper.h"
+#include "storage/bufmgr.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
+#include "utils/tqual.h"
+
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
 #else
@@ -93,14 +94,14 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	HeapTuple	tup;
 
 	static ScanKeyData opKey[3] = {
-		{0, Anum_pg_operator_oprname, NameEqualRegProcedure},
-		{0, Anum_pg_operator_oprleft, ObjectIdEqualRegProcedure},
-		{0, Anum_pg_operator_oprright, ObjectIdEqualRegProcedure},
+		{0, Anum_pg_operator_oprname, F_NAMEEQ},
+		{0, Anum_pg_operator_oprleft, F_OIDEQ},
+		{0, Anum_pg_operator_oprright, F_OIDEQ},
 	};
 
-	fmgr_info(NameEqualRegProcedure, &opKey[0].sk_func);
-	fmgr_info(ObjectIdEqualRegProcedure, &opKey[1].sk_func);
-	fmgr_info(ObjectIdEqualRegProcedure, &opKey[2].sk_func);
+	fmgr_info(F_NAMEEQ, &opKey[0].sk_func);
+	fmgr_info(F_OIDEQ, &opKey[1].sk_func);
+	fmgr_info(F_OIDEQ, &opKey[2].sk_func);
 	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
 	opKey[1].sk_nargs = opKey[1].sk_func.fn_nargs;
 	opKey[2].sk_nargs = opKey[2].sk_func.fn_nargs;
@@ -481,14 +482,14 @@ OperatorDef(char *operatorName,
 	TupleDesc	tupDesc;
 
 	static ScanKeyData opKey[3] = {
-		{0, Anum_pg_operator_oprname, NameEqualRegProcedure},
-		{0, Anum_pg_operator_oprleft, ObjectIdEqualRegProcedure},
-		{0, Anum_pg_operator_oprright, ObjectIdEqualRegProcedure},
+		{0, Anum_pg_operator_oprname, F_NAMEEQ},
+		{0, Anum_pg_operator_oprleft, F_OIDEQ},
+		{0, Anum_pg_operator_oprright, F_OIDEQ},
 	};
 
-	fmgr_info(NameEqualRegProcedure, &opKey[0].sk_func);
-	fmgr_info(ObjectIdEqualRegProcedure, &opKey[1].sk_func);
-	fmgr_info(ObjectIdEqualRegProcedure, &opKey[2].sk_func);
+	fmgr_info(F_NAMEEQ, &opKey[0].sk_func);
+	fmgr_info(F_OIDEQ, &opKey[1].sk_func);
+	fmgr_info(F_OIDEQ, &opKey[2].sk_func);
 	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
 	opKey[1].sk_nargs = opKey[1].sk_func.fn_nargs;
 	opKey[2].sk_nargs = opKey[2].sk_func.fn_nargs;
@@ -783,10 +784,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	Datum		values[Natts_pg_operator];
 
 	static ScanKeyData opKey[1] = {
-		{0, ObjectIdAttributeNumber, ObjectIdEqualRegProcedure},
+		{0, ObjectIdAttributeNumber, F_OIDEQ},
 	};
 
-	fmgr_info(ObjectIdEqualRegProcedure, &opKey[0].sk_func);
+	fmgr_info(F_OIDEQ, &opKey[0].sk_func);
 	opKey[0].sk_nargs = opKey[0].sk_func.fn_nargs;
 
 	for (i = 0; i < Natts_pg_operator; ++i)

@@ -8,23 +8,22 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.18 1998/04/06 17:27:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.19 1998/04/27 04:04:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <catalog/pg_proc.h>
-#include <catalog/pg_operator.h>
-#include <catalog/catname.h>
-#include <catalog/pg_index.h>
-#include <catalog/pg_amop.h>
-#include <catalog/pg_amproc.h>
-#include <utils/memutils.h>		/* could have been access/itup.h */
-#include <access/heapam.h>
-#include <access/istrat.h>
-#include <fmgr.h>
+#include "access/heapam.h"
+#include "access/istrat.h"
+#include "catalog/catname.h"
+#include "catalog/pg_amop.h"
+#include "catalog/pg_amproc.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_operator.h"
+#include "fmgr.h"
+#include "utils/memutils.h"		/* could have been access/itup.h */
 
 #ifdef USE_ASSERT_CHECKING
 static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);
@@ -505,7 +504,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 	ScanKeyEntryInitialize(&scanKeyData, 0,
 						   ObjectIdAttributeNumber,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(operatorObjectId));
 
 	scan = heap_beginscan(operatorRelation, false, false,
@@ -561,7 +560,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	maxStrategyNumber = AMStrategies(maxStrategyNumber);
 
 	ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_index_indexrelid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(indexObjectId));
 
 	relation = heap_openr(IndexRelationName);
@@ -601,11 +600,11 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	{
 
 		ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_amproc_amid,
-							   ObjectIdEqualRegProcedure,
+							   F_OIDEQ,
 							   ObjectIdGetDatum(accessMethodObjectId));
 
 		ScanKeyEntryInitialize(&entry[1], 0, Anum_pg_amproc_amopclaid,
-							   ObjectIdEqualRegProcedure, 0);
+							   F_OIDEQ, 0);
 
 /*		relation = heap_openr(Name_pg_amproc); */
 		relation = heap_openr(AccessMethodProcedureRelationName);
@@ -646,12 +645,12 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 	ScanKeyEntryInitialize(&entry[0], 0,
 						   Anum_pg_amop_amopid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(accessMethodObjectId));
 
 	ScanKeyEntryInitialize(&entry[1], 0,
 						   Anum_pg_amop_amopclaid,
-						   ObjectIdEqualRegProcedure, 0);
+						   F_OIDEQ, 0);
 
 	relation = heap_openr(AccessMethodOperatorRelationName);
 	operatorRelation = heap_openr(OperatorRelationName);

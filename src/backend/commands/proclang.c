@@ -7,16 +7,17 @@
  */
 #include <ctype.h>
 #include <string.h>
+
 #include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
-#include "catalog/pg_shadow.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_language.h"
-#include "utils/syscache.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_shadow.h"
 #include "commands/proclang.h"
 #include "fmgr.h"
+#include "utils/syscache.h"
 
 
 static void
@@ -120,7 +121,7 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = Int8GetDatum((bool) 1);
 	values[i++] = Int8GetDatum(stmt->pltrusted);
 	values[i++] = ObjectIdGetDatum(procTup->t_oid);
-	values[i++] = (Datum) fmgr(TextInRegProcedure, stmt->plcompiler);
+	values[i++] = (Datum) fmgr(F_TEXTIN, stmt->plcompiler);
 
 	rdesc = heap_openr(LanguageRelationName);
 

@@ -7,25 +7,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.22 1998/04/01 15:35:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.23 1998/04/27 04:05:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <utils/syscache.h>
-#include <catalog/pg_proc.h>
-#include <access/heapam.h>
-#include <access/relscan.h>
-#include <utils/builtins.h>
-#include <utils/tqual.h>
-#include <fmgr.h>
-#include <catalog/catname.h>
-#include <catalog/indexing.h>
-#include <catalog/pg_type.h>
-#include <parser/parse_func.h>
-#include <storage/lmgr.h>
-#include <miscadmin.h>
+#include "access/heapam.h"
+#include "access/relscan.h"
+#include "catalog/catname.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_type.h"
+#include "fmgr.h"
+#include "miscadmin.h"
+#include "parser/parse_func.h"
+#include "storage/lmgr.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
+#include "utils/tqual.h"
+
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
 #else
@@ -55,14 +55,14 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	HeapTuple	tup;
 
 	static ScanKeyData typeKey[1] = {
-		{0, Anum_pg_type_typname, NameEqualRegProcedure}
+		{0, Anum_pg_type_typname, F_NAMEEQ}
 	};
 
 	/* ----------------
 	 *	initialize the scan key and begin a scan of pg_type
 	 * ----------------
 	 */
-	fmgr_info(NameEqualRegProcedure, &typeKey[0].sk_func);
+	fmgr_info(F_NAMEEQ, &typeKey[0].sk_func);
 	typeKey[0].sk_nargs = typeKey[0].sk_func.fn_nargs;
 	typeKey[0].sk_argument = PointerGetDatum(typeName);
 
@@ -199,7 +199,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	 * ... and fill typdefault with a bogus value
 	 */
 	values[i++] =
-		(Datum) fmgr(TextInRegProcedure, typeName);		/* 15 */
+		(Datum) fmgr(F_TEXTIN, typeName);		/* 15 */
 
 	/* ----------------
 	 *	create a new type tuple with FormHeapTuple
@@ -322,10 +322,10 @@ TypeCreate(char *typeName,
 	Oid			argList[8];
 
 	static ScanKeyData typeKey[1] = {
-		{0, Anum_pg_type_typname, NameEqualRegProcedure}
+		{0, Anum_pg_type_typname, F_NAMEEQ}
 	};
 
-	fmgr_info(NameEqualRegProcedure, &typeKey[0].sk_func);
+	fmgr_info(F_NAMEEQ, &typeKey[0].sk_func);
 	typeKey[0].sk_nargs = typeKey[0].sk_func.fn_nargs;
 
 	/* ----------------
@@ -455,7 +455,7 @@ TypeCreate(char *typeName,
 	 *	initialize the default value for this type.
 	 * ----------------
 	 */
-	values[i] = (Datum) fmgr(TextInRegProcedure,		/* 16 */
+	values[i] = (Datum) fmgr(F_TEXTIN,		/* 16 */
 							 PointerIsValid(defaultTypeValue)
 							 ? defaultTypeValue : "-"); /* XXX default
 														 * typdefault */

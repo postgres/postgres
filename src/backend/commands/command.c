@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.26 1998/02/26 04:30:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.27 1998/04/27 04:05:10 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -20,25 +20,25 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/relscan.h>
-#include <utils/portal.h>
-#include <commands/command.h>
-#include <utils/mcxt.h>
-#include <executor/executor.h>
-#include <executor/execdefs.h>
-#include <catalog/indexing.h>
-#include <utils/syscache.h>
-#include <catalog/catalog.h>
-#include <access/heapam.h>
-#include <utils/array.h>
-#include <utils/acl.h>
-#include <optimizer/prep.h>
-#include <catalog/catname.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_type.h>
-#include <utils/builtins.h>
+#include "access/heapam.h"
+#include "access/relscan.h"
+#include "catalog/indexing.h"
+#include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/pg_type.h"
+#include "commands/command.h"
+#include "executor/execdefs.h"
+#include "executor/executor.h"
+#include "fmgr.h"
+#include "optimizer/prep.h"
+#include "utils/acl.h"
+#include "utils/array.h"
+#include "utils/builtins.h"
+#include "utils/mcxt.h"
+#include "utils/portal.h"
+#include "utils/syscache.h"
 
 /* ----------------
  *		PortalExecutorHeapMemory stuff
@@ -409,13 +409,13 @@ PerformAddAttribute(char *relationName,
 	ScanKeyEntryInitialize(&key[0],
 						   (bits16) NULL,
 						   (AttrNumber) Anum_pg_attribute_attrelid,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   (Datum) reltup->t_oid);
 
 	ScanKeyEntryInitialize(&key[1],
 						   (bits16) NULL,
 						   (AttrNumber) Anum_pg_attribute_attname,
-						   (RegProcedure) NameEqualRegProcedure,
+						   (RegProcedure) F_NAMEEQ,
 						   (Datum) NULL);
 
 	attributeD.attrelid = reltup->t_oid;

@@ -8,19 +8,20 @@
 #include <string.h>
 #include "postgres.h"
 
-#include "nodes/parsenodes.h"
-#include "nodes/memnodes.h"
-#include "commands/trigger.h"
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
-#include "catalog/indexing.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_language.h"
-#include "catalog/pg_trigger.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/valid.h"
 #include "access/xact.h"
+#include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_language.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_trigger.h"
+#include "commands/trigger.h"
+#include "fmgr.h"
+#include "nodes/memnodes.h"
+#include "nodes/parsenodes.h"
 #include "storage/lmgr.h"
 #include "storage/bufmgr.h"
 #include "utils/mcxt.h"
@@ -117,7 +118,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   ObjectIdEqualRegProcedure, rel->rd_id);
+						   F_OIDEQ, rel->rd_id);
 	tgscan = heap_beginscan(tgrel, 0, false, 1, &key);
 	while (tuple = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tuple))
 	{
@@ -277,7 +278,7 @@ DropTrigger(DropTrigStmt *stmt)
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   ObjectIdEqualRegProcedure, rel->rd_id);
+						   F_OIDEQ, rel->rd_id);
 	tgscan = heap_beginscan(tgrel, 0, false, 1, &key);
 	while (tuple = heap_getnext(tgscan, 0, (Buffer *) NULL), PointerIsValid(tuple))
 	{
@@ -341,7 +342,7 @@ RelationRemoveTriggers(Relation rel)
 	tgrel = heap_openr(TriggerRelationName);
 	RelationSetLockForWrite(tgrel);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   ObjectIdEqualRegProcedure, rel->rd_id);
+						   F_OIDEQ, rel->rd_id);
 
 	tgscan = heap_beginscan(tgrel, 0, false, 1, &key);
 
@@ -379,7 +380,7 @@ RelationBuildTriggers(Relation relation)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(relation->rd_id));
 
 	tgrel = heap_openr(TriggerRelationName);

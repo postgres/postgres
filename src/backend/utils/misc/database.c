@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.7 1998/02/26 04:38:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.8 1998/04/27 04:07:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,20 +18,18 @@
 #include <fcntl.h>
 
 #include "postgres.h"
-#include "miscadmin.h"
 
-#include "utils/elog.h"
+#include "access/heapam.h"
+#include "access/xact.h"
+#include "catalog/catname.h"
+#include "catalog/pg_database.h"
+#include "fmgr.h"
+#include "miscadmin.h"
+#include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#include "access/heapam.h"
-#include "storage/bufmgr.h"
-#include "catalog/catname.h"
-#include "catalog/pg_proc.h"
-#include "catalog/pg_database.h"
-
-#include "access/xact.h"
-#include "storage/bufpage.h"
 
 /* GetDatabaseInfo()
  * Pull database information from pg_database.
@@ -57,7 +55,7 @@ GetDatabaseInfo(char *name, Oid *owner, char *path)
 			 DatabaseRelationName);
 
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
-						   NameEqualRegProcedure, NameGetDatum(name));
+						   F_NAMEEQ, NameGetDatum(name));
 
 	scan = heap_beginscan(dbrel, 0, false, 1, &scanKey);
 	if (!HeapScanIsValid(scan))

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.63 1998/02/26 04:31:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.64 1998/04/27 04:05:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,35 +18,34 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <fmgr.h>
-#include <utils/portal.h>
-#include <access/genam.h>
-#include <access/heapam.h>
-#include <access/xact.h>
-#include <storage/bufmgr.h>
-#include <access/transam.h>
-#include <catalog/pg_index.h>
-#include <catalog/index.h>
-#include <catalog/catname.h>
-#include <catalog/catalog.h>
-#include <catalog/pg_class.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_statistic.h>
-#include <catalog/pg_type.h>
-#include <catalog/pg_operator.h>
-#include <parser/parse_oper.h>
-#include <storage/smgr.h>
-#include <storage/lmgr.h>
-#include <utils/inval.h>
-#include <utils/mcxt.h>
-#include <utils/inval.h>
-#include <utils/syscache.h>
-#include <utils/builtins.h>
-#include <commands/vacuum.h>
-#include <storage/bufpage.h>
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "access/transam.h"
+#include "access/xact.h"
+#include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/index.h"
+#include "catalog/pg_class.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_operator.h"
+#include "catalog/pg_statistic.h"
+#include "catalog/pg_type.h"
+#include "commands/vacuum.h"
+#include "fmgr.h"
+#include "parser/parse_oper.h"
+#include "storage/bufmgr.h"
+#include "storage/bufpage.h"
 #include "storage/shmem.h"
+#include "storage/smgr.h"
+#include "storage/lmgr.h"
+#include "utils/builtins.h"
+#include "utils/inval.h"
+#include "utils/mcxt.h"
+#include "utils/portal.h"
+#include "utils/syscache.h"
+
 #ifndef HAVE_GETRUSAGE
 #include <rusagestub.h>
 #else
@@ -279,13 +278,13 @@ vc_getrels(NameData *VacRelP)
 	if (VacRelP->data)
 	{
 		ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relname,
-							   NameEqualRegProcedure,
+							   F_NAMEEQ,
 							   PointerGetDatum(VacRelP->data));
 	}
 	else
 	{
 		ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relkind,
-						  CharacterEqualRegProcedure, CharGetDatum('r'));
+						  F_CHAREQ, CharGetDatum('r'));
 	}
 
 	portalmem = PortalGetVariableMemory(vc_portal);
@@ -398,7 +397,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	StartTransactionCommand();
 
 	ScanKeyEntryInitialize(&pgckey, 0x0, ObjectIdAttributeNumber,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 
 	pgclass = heap_openr(RelationRelationName);
@@ -1776,7 +1775,7 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 	 * update number of tuples and number of pages in pg_class
 	 */
 	ScanKeyEntryInitialize(&rskey, 0x0, ObjectIdAttributeNumber,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 
 	rd = heap_openr(RelationRelationName);
@@ -1890,10 +1889,10 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 					values[i++] = (Datum) InvalidOid;	/* 3 */
 					fmgr_info(stats->outfunc, &out_function);
 					out_string = (*fmgr_faddr(&out_function)) (stats->min, stats->attr->atttypid);
-					values[i++] = (Datum) fmgr(TextInRegProcedure, out_string);
+					values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
 					pfree(out_string);
 					out_string = (char *) (*fmgr_faddr(&out_function)) (stats->max, stats->attr->atttypid);
-					values[i++] = (Datum) fmgr(TextInRegProcedure, out_string);
+					values[i++] = (Datum) fmgr(F_TEXTIN, out_string);
 					pfree(out_string);
 
 					sdesc = sd->rd_att;
@@ -1948,7 +1947,7 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 	if (relid != InvalidOid)
 	{
 		ScanKeyEntryInitialize(&pgskey, 0x0, Anum_pg_statistic_starelid,
-							   ObjectIdEqualRegProcedure,
+							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
 		pgsscan = heap_beginscan(pgstatistic, false, false, 1, &pgskey);
 	}
@@ -2159,7 +2158,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 	pgidesc = RelationGetTupleDescriptor(pgindex);
 
 	ScanKeyEntryInitialize(&pgikey, 0x0, Anum_pg_index_indrelid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 
 	pgiscan = heap_beginscan(pgindex, false, false, 1, &pgikey);

@@ -8,42 +8,37 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.14 1998/02/26 04:32:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.15 1998/04/27 04:05:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <math.h>
+
 #include "postgres.h"
+
 #include "access/attnum.h"
 #include "access/heapam.h"
 #include "access/nbtree.h"
-
-#include "nodes/pg_list.h"
-#include "nodes/relation.h"
-#include "nodes/makefuncs.h"
-#include "nodes/nodeFuncs.h"
-
-#include "utils/lsyscache.h"
-#include "utils/elog.h"
-
-#include "optimizer/internal.h"
-#include "optimizer/paths.h"
-#include "optimizer/clauses.h"
-#include "optimizer/clauseinfo.h"
-#include "optimizer/plancat.h"
-#include "optimizer/keys.h"
-#include "optimizer/cost.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/xfunc.h"
-#include "optimizer/ordering.h"
-
-
 #include "catalog/catname.h"
 #include "catalog/pg_amop.h"
-#include "catalog/pg_proc.h"
-
 #include "executor/executor.h"
+#include "fmgr.h"
+#include "nodes/makefuncs.h"
+#include "nodes/nodeFuncs.h"
+#include "nodes/pg_list.h"
+#include "nodes/relation.h"
+#include "optimizer/clauses.h"
+#include "optimizer/clauseinfo.h"
+#include "optimizer/cost.h"
+#include "optimizer/internal.h"
+#include "optimizer/keys.h"
+#include "optimizer/ordering.h"
+#include "optimizer/paths.h"
+#include "optimizer/plancat.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/xfunc.h"
 #include "parser/parsetree.h"	/* for getrelid() */
+#include "utils/lsyscache.h"
 
 
 static void
@@ -970,12 +965,12 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	/* XXX - hardcoded amopid value 403 to find "btree" operator classes */
 	ScanKeyEntryInitialize(&entry[0], 0,
 						   Anum_pg_amop_amopid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(403));
 
 	ScanKeyEntryInitialize(&entry[1], 0,
 						   Anum_pg_amop_amopopr,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(pred_op));
 
 	relation = heap_openr(AccessMethodOperatorRelationName);
@@ -1011,12 +1006,12 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	 */
 	ScanKeyEntryInitialize(&entry[1], 0,
 						   Anum_pg_amop_amopclaid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(opclass_id));
 
 	ScanKeyEntryInitialize(&entry[2], 0,
 						   Anum_pg_amop_amopopr,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(clause_op));
 
 	scan = heap_beginscan(relation, false, false, 3, entry);
@@ -1048,7 +1043,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 
 	ScanKeyEntryInitialize(&entry[2], 0,
 						   Anum_pg_amop_amopstrategy,
-						   Integer16EqualRegProcedure,
+						   F_INT2EQ,
 						   Int16GetDatum(test_strategy));
 
 	scan = heap_beginscan(relation, false, false, 3, entry);

@@ -8,28 +8,29 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.16 1997/11/20 23:20:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.17 1998/04/27 04:04:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <utils/builtins.h>
-#include <utils/oidcompos.h>
-#include <access/heapam.h>
-#include <access/genam.h>
-#include <storage/bufmgr.h>
-#include <nodes/execnodes.h>
-#include <catalog/catalog.h>
-#include <catalog/catname.h>
-#include <catalog/pg_index.h>
-#include <catalog/pg_proc.h>
-#include <utils/syscache.h>
-#include <catalog/indexing.h>
-#include <catalog/index.h>
-#include <miscadmin.h>
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/index.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_proc.h"
+#include "fmgr.h"
+#include "miscadmin.h"
+#include "nodes/execnodes.h"
+#include "storage/bufmgr.h"
+#include "utils/builtins.h"
+#include "utils/oidcompos.h"
+#include "utils/syscache.h"
 
 /*
  * Names of indices on the following system catalogs:
@@ -280,7 +281,7 @@ AttributeNameIndexScan(Relation heapRelation,
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) OidNameEqRegProcedure,
+						   (RegProcedure) F_OIDNAMEEQ,
 						   (Datum) keyarg);
 
 	idesc = index_openr(AttributeNameIndex);
@@ -306,7 +307,7 @@ AttributeNumIndexScan(Relation heapRelation,
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) OidInt2EqRegProcedure,
+						   (RegProcedure) F_OIDINT2EQ,
 						   (Datum) keyarg);
 
 	idesc = index_openr(AttributeNumIndex);
@@ -328,7 +329,7 @@ ProcedureOidIndexScan(Relation heapRelation, Oid procId)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   (Datum) procId);
 
 	idesc = index_openr(ProcedureOidIndex);
@@ -371,7 +372,7 @@ ProcedureNameIndexScan(Relation heapRelation,
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) NameEqualRegProcedure,
+						   (RegProcedure) F_NAMEEQ,
 						   (Datum) procName);
 
 	idesc = index_openr(ProcedureNameIndex);
@@ -447,7 +448,7 @@ ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) Anum_pg_proc_prosrc,
-						   (RegProcedure) TextEqualRegProcedure,
+						   (RegProcedure) F_TEXTEQ,
 						   (Datum) procSrc);
 
 	idesc = index_openr(ProcedureSrcIndex);
@@ -486,7 +487,7 @@ TypeOidIndexScan(Relation heapRelation, Oid typeId)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   (Datum) typeId);
 
 	idesc = index_openr(TypeOidIndex);
@@ -507,7 +508,7 @@ TypeNameIndexScan(Relation heapRelation, char *typeName)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) NameEqualRegProcedure,
+						   (RegProcedure) F_NAMEEQ,
 						   (Datum) typeName);
 
 	idesc = index_openr(TypeNameIndex);
@@ -528,7 +529,7 @@ ClassNameIndexScan(Relation heapRelation, char *relName)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) NameEqualRegProcedure,
+						   (RegProcedure) F_NAMEEQ,
 						   (Datum) relName);
 
 	idesc = index_openr(ClassNameIndex);
@@ -549,7 +550,7 @@ ClassOidIndexScan(Relation heapRelation, Oid relId)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) ObjectIdEqualRegProcedure,
+						   (RegProcedure) F_OIDEQ,
 						   (Datum) relId);
 
 	idesc = index_openr(ClassOidIndex);

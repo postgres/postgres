@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.47 1998/02/26 04:30:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.48 1998/04/27 04:04:47 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -25,38 +25,38 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <miscadmin.h>
-#include <fmgr.h>
-#include <access/heapam.h>
-#include <catalog/catalog.h>
-#include <catalog/catname.h>
-#include <catalog/heap.h>
-#include <catalog/index.h>
-#include <catalog/indexing.h>
-#include <catalog/pg_attrdef.h>
-#include <catalog/pg_index.h>
-#include <catalog/pg_inherits.h>
-#include <catalog/pg_ipl.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_relcheck.h>
-#include <catalog/pg_type.h>
-#include <commands/trigger.h>
-#include <nodes/plannodes.h>
-#include <optimizer/tlist.h>
-#include <parser/parse_expr.h>
-#include <parser/parse_node.h>
-#include <parser/parse_type.h>
-#include <rewrite/rewriteRemove.h>
-#include <storage/bufmgr.h>
-#include <storage/lmgr.h>
-#include <storage/smgr.h>
-#include <tcop/tcopprot.h>
-#include <utils/builtins.h>
-#include <utils/mcxt.h>
-#include <utils/relcache.h>
-#include <utils/tqual.h>
+#include "access/heapam.h"
+#include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/heap.h"
+#include "catalog/index.h"
+#include "catalog/indexing.h"
+#include "catalog/pg_attrdef.h"
+#include "catalog/pg_index.h"
+#include "catalog/pg_inherits.h"
+#include "catalog/pg_ipl.h"
+#include "catalog/pg_relcheck.h"
+#include "catalog/pg_type.h"
+#include "commands/trigger.h"
+#include "fmgr.h"
+#include "miscadmin.h"
+#include "nodes/plannodes.h"
+#include "optimizer/tlist.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_node.h"
+#include "parser/parse_type.h"
+#include "rewrite/rewriteRemove.h"
+#include "storage/bufmgr.h"
+#include "storage/lmgr.h"
+#include "storage/smgr.h"
+#include "tcop/tcopprot.h"
+#include "utils/builtins.h"
+#include "utils/mcxt.h"
+#include "utils/relcache.h"
+#include "utils/tqual.h"
+
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
 #else
@@ -494,7 +494,7 @@ RelationAlreadyExists(Relation pg_class_desc, char relname[])
 	ScanKeyEntryInitialize(&key,
 						   0,
 						   (AttrNumber) Anum_pg_class_relname,
-						   (RegProcedure) NameEqualRegProcedure,
+						   (RegProcedure) F_NAMEEQ,
 						   (Datum) relname);
 
 	/* ----------------
@@ -892,7 +892,7 @@ RelationRemoveInheritance(Relation relation)
 	 * ----------------
 	 */
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_inherits_inhparent,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 					  ObjectIdGetDatum(RelationGetRelationId(relation)));
 
 	scan = heap_beginscan(catalogRelation,
@@ -987,7 +987,7 @@ RelationRemoveIndexes(Relation relation)
 	indexRelation = heap_openr(IndexRelationName);
 
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_index_indrelid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 					  ObjectIdGetDatum(RelationGetRelationId(relation)));
 
 	scan = heap_beginscan(indexRelation,
@@ -1654,7 +1654,7 @@ RemoveAttrDefault(Relation rel)
 	adrel = heap_openr(AttrDefaultRelationName);
 
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_attrdef_adrelid,
-						   ObjectIdEqualRegProcedure, rel->rd_id);
+						   F_OIDEQ, rel->rd_id);
 
 	RelationSetLockForWrite(adrel);
 
@@ -1681,7 +1681,7 @@ RemoveRelCheck(Relation rel)
 	rcrel = heap_openr(RelCheckRelationName);
 
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_relcheck_rcrelid,
-						   ObjectIdEqualRegProcedure, rel->rd_id);
+						   F_OIDEQ, rel->rd_id);
 
 	RelationSetLockForWrite(rcrel);
 

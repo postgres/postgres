@@ -7,27 +7,28 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.22 1998/02/11 19:10:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.23 1998/04/27 04:05:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <postgres.h>
+#include "postgres.h"
 
-#include <utils/acl.h>
-#include <access/heapam.h>
-#include <utils/builtins.h>
-#include <utils/syscache.h>
-#include <catalog/catname.h>
-#include <commands/defrem.h>
-#include <miscadmin.h>
-#include <catalog/pg_aggregate.h>
-#include <catalog/pg_language.h>
-#include <catalog/pg_operator.h>
-#include <catalog/pg_proc.h>
-#include <catalog/pg_type.h>
-#include <parser/parse_func.h>
-#include <storage/bufmgr.h>
-#include <fmgr.h>
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "catalog/pg_aggregate.h"
+#include "catalog/pg_language.h"
+#include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
+#include "commands/defrem.h"
+#include "fmgr.h"
+#include "miscadmin.h"
+#include "parser/parse_func.h"
+#include "storage/bufmgr.h"
+#include "utils/acl.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
+
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
 #else
@@ -82,17 +83,17 @@ RemoveOperator(char *operatorName,		/* operator name */
 
 	ScanKeyEntryInitialize(&operatorKey[0], 0x0,
 						   Anum_pg_operator_oprname,
-						   NameEqualRegProcedure,
+						   F_NAMEEQ,
 						   PointerGetDatum(operatorName));
 
 	ScanKeyEntryInitialize(&operatorKey[1], 0x0,
 						   Anum_pg_operator_oprleft,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(typeId1));
 
 	ScanKeyEntryInitialize(&operatorKey[2], 0x0,
 						   Anum_pg_operator_oprright,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(typeId2));
 
 	relation = heap_openr(OperatorRelationName);
@@ -159,7 +160,7 @@ SingleOpOperatorRemove(Oid typeOid)
 	int			i;
 
 	ScanKeyEntryInitialize(&key[0],
-					   0, 0, ObjectIdEqualRegProcedure, (Datum) typeOid);
+					   0, 0, F_OIDEQ, (Datum) typeOid);
 	rdesc = heap_openr(OperatorRelationName);
 	for (i = 0; i < 3; ++i)
 	{
@@ -207,7 +208,7 @@ AttributeAndRelationRemove(Oid typeOid)
 	 */
 
 	ScanKeyEntryInitialize(&key[0],
-					   0, 3, ObjectIdEqualRegProcedure, (Datum) typeOid);
+					   0, 3, F_OIDEQ, (Datum) typeOid);
 
 	oidptr = (struct oidlist *) palloc(sizeof(*oidptr));
 	oidptr->next = NULL;
@@ -228,7 +229,7 @@ AttributeAndRelationRemove(Oid typeOid)
 
 	ScanKeyEntryInitialize(&key[0], 0,
 						   ObjectIdAttributeNumber,
-						   ObjectIdEqualRegProcedure, (Datum) 0);
+						   F_OIDEQ, (Datum) 0);
 	optr = oidptr;
 	rdesc = heap_openr(RelationRelationName);
 	while (PointerIsValid((char *) optr->next))
@@ -264,7 +265,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 	Oid			typeOid;
 	ItemPointerData itemPointerData;
 	static ScanKeyData typeKey[1] = {
-		{0, Anum_pg_type_typname, NameEqualRegProcedure}
+		{0, Anum_pg_type_typname, F_NAMEEQ}
 	};
 	char	   *shadow_type;
 	char	   *userName;
@@ -342,7 +343,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	Form_pg_proc the_proc = NULL;
 	ItemPointerData itemPointerData;
 	static ScanKeyData key[3] = {
-		{0, Anum_pg_proc_proname, NameEqualRegProcedure}
+		{0, Anum_pg_proc_proname, F_NAMEEQ}
 	};
 	char	   *userName;
 	char	   *typename;
@@ -489,12 +490,12 @@ RemoveAggregate(char *aggName, char *aggType)
 
 	ScanKeyEntryInitialize(&aggregateKey[0], 0x0,
 						   Anum_pg_aggregate_aggname,
-						   NameEqualRegProcedure,
+						   F_NAMEEQ,
 						   PointerGetDatum(aggName));
 
 	ScanKeyEntryInitialize(&aggregateKey[1], 0x0,
 						   Anum_pg_aggregate_aggbasetype,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(basetypeID));
 
 	relation = heap_openr(AggregateRelationName);

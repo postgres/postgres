@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.30 1998/02/26 04:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.31 1998/04/27 04:05:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,23 +41,21 @@
  */
 
 #include "postgres.h"
-#include "fmgr.h"
 
-#include "executor/executor.h"
-#include "executor/execdebug.h"
-#include "access/itup.h"
-#include "access/heapam.h"
 #include "access/genam.h"
-#include "optimizer/clauses.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
-#include "utils/lsyscache.h"
-#include "commands/command.h"
-#include "catalog/index.h"
+#include "access/heapam.h"
+#include "access/itup.h"
 #include "catalog/catname.h"
-#include "catalog/pg_proc.h"
+#include "catalog/index.h"
 #include "catalog/pg_type.h"
+#include "commands/command.h"
+#include "executor/execdebug.h"
+#include "executor/executor.h"
+#include "fmgr.h"
+#include "optimizer/clauses.h"
 #include "parser/parsetree.h"
+#include "utils/lsyscache.h"
+#include "utils/mcxt.h"
 
 static void
 ExecGetIndexKeyInfo(IndexTupleForm indexTuple, int *numAttsOutP,
@@ -744,7 +742,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	 * ----------------
 	 */
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_index_indrelid,
-						   ObjectIdEqualRegProcedure,
+						   F_OIDEQ,
 						   ObjectIdGetDatum(resultRelationOid));
 
 	/* ----------------

@@ -7,21 +7,20 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.18 1998/01/15 19:42:15 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.19 1998/04/27 04:04:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <access/genam.h>
-#include <fmgr.h>
-#include <storage/bufpage.h>
-#include <access/nbtree.h>
-#include <access/istrat.h>
-#include <access/iqual.h>
-#include <catalog/pg_proc.h>
-#include <executor/execdebug.h>
+#include "access/genam.h"
+#include "access/iqual.h"
+#include "access/istrat.h"
+#include "access/nbtree.h"
+#include "executor/execdebug.h"
+#include "fmgr.h"
+#include "storage/bufpage.h"
 
 extern int	NIndexTupleProcessed;
 
@@ -54,7 +53,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
 		if (null)
 		{
-			proc = NullValueRegProcedure;
+			proc = F_NULLVALUE;
 			flag = SK_ISNULL;
 		}
 		else

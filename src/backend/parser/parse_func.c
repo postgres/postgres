@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.15 1998/02/26 04:33:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.16 1998/04/27 04:06:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 
 #include "postgres.h"
+
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/itup.h"
@@ -356,7 +357,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		 * This function is then called (instead of SetEval) and "name" is
 		 * projected from its result.
 		 */
-		funcid = SetEvalRegProcedure;
+		funcid = F_SETEVAL;
 		rettype = toid;
 		retset = true;
 		true_oid_array = oid_array;
@@ -415,8 +416,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	/*
 	 * Sequence handling.
 	 */
-	if (funcid == SeqNextValueRegProcedure ||
-		funcid == SeqCurrValueRegProcedure)
+	if (funcid == F_NEXTVAL ||
+		funcid == F_CURRVAL)
 	{
 		Const	   *seq;
 		char	   *seqrel;
@@ -434,14 +435,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		seqrel = textout(seqname);
 
 		if ((aclcheck_result = pg_aclcheck(seqrel, GetPgUserName(),
-			   ((funcid == SeqNextValueRegProcedure) ? ACL_WR : ACL_RD)))
+			   ((funcid == F_NEXTVAL) ? ACL_WR : ACL_RD)))
 			!= ACLCHECK_OK)
 			elog(ERROR, "%s.%s: %s",
 			  seqrel, funcname, aclcheck_error_strings[aclcheck_result]);
 
 		pfree(seqrel);
 
-		if (funcid == SeqNextValueRegProcedure && pstate->p_in_where_clause)
+		if (funcid == F_NEXTVAL && pstate->p_in_where_clause)
 			elog(ERROR, "nextval of a sequence in WHERE disallowed");
 	}
 
@@ -513,7 +514,7 @@ func_get_candidates(char *funcname, int nargs)
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure) NameEqualRegProcedure,
+						   (RegProcedure) F_NAMEEQ,
 						   (Datum) funcname);
 
 	idesc = index_openr(ProcedureNameIndex);
@@ -873,7 +874,7 @@ find_inheritors(Oid relid, Oid **supervec)
 	do
 	{
 		ScanKeyEntryInitialize(&skey, 0x0, Anum_pg_inherits_inhrel,
-							   ObjectIdEqualRegProcedure,
+							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
 
 		inhscan = heap_beginscan(inhrel, 0, false, 1, &skey);

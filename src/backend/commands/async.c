@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.30 1998/04/01 03:13:37 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.31 1998/04/27 04:05:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,25 +65,24 @@
 #include <sys/types.h>			/* Needed by in.h on Ultrix */
 #include <netinet/in.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <miscadmin.h>
-#include <utils/syscache.h>
-#include <access/relscan.h>
-#include <access/xact.h>
-#include <lib/dllist.h>
-#include <tcop/dest.h>
-#include <catalog/pg_proc.h>
-#include <catalog/catname.h>
-#include <catalog/pg_listener.h>
-#include <access/heapam.h>
-#include <storage/bufmgr.h>
-#include <nodes/memnodes.h>
-#include <utils/mcxt.h>
-#include <commands/async.h>
-#include <libpq/libpq.h>
-
-#include <storage/lmgr.h>
+#include "access/heapam.h"
+#include "access/relscan.h"
+#include "access/xact.h"
+#include "catalog/catname.h"
+#include "catalog/pg_listener.h"
+#include "commands/async.h"
+#include "fmgr.h"
+#include "lib/dllist.h"
+#include "libpq/libpq.h"
+#include "miscadmin.h"
+#include "nodes/memnodes.h"
+#include "storage/bufmgr.h"
+#include "storage/lmgr.h"
+#include "tcop/dest.h"
+#include "utils/mcxt.h"
+#include "utils/syscache.h"
 
 static int	notifyFrontEndPending = 0;
 static int	notifyIssued = 0;
@@ -199,7 +198,7 @@ Async_Notify(char *relname)
 
 	ScanKeyEntryInitialize(&key, 0,
 						   Anum_pg_listener_relname,
-						   NameEqualRegProcedure,
+						   F_NAMEEQ,
 						   PointerGetDatum(notifyName));
 
 	lRel = heap_openr(ListenerRelationName);
@@ -281,7 +280,7 @@ Async_NotifyAtCommit()
 #endif
 			ScanKeyEntryInitialize(&key, 0,
 								   Anum_pg_listener_notify,
-								   Integer32EqualRegProcedure,
+								   F_INT4EQ,
 								   Int32GetDatum(1));
 			lRel = heap_openr(ListenerRelationName);
 			RelationSetLockForWrite(lRel);
@@ -584,11 +583,11 @@ Async_NotifyFrontEnd()
 	StartTransactionCommand();
 	ScanKeyEntryInitialize(&key[0], 0,
 						   Anum_pg_listener_notify,
-						   Integer32EqualRegProcedure,
+						   F_INT4EQ,
 						   Int32GetDatum(1));
 	ScanKeyEntryInitialize(&key[1], 0,
 						   Anum_pg_listener_pid,
-						   Integer32EqualRegProcedure,
+						   F_INT4EQ,
 						   Int32GetDatum(MyProcPid));
 	lRel = heap_openr(ListenerRelationName);
 	RelationSetLockForWrite(lRel);
