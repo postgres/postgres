@@ -9,9 +9,11 @@
 #define BLCKSZ	8192
 
 /* Found in catalog/catalog.c, but doesn't seem to do anything in there */
+#if !defined(sparc_solaris)
 #ifndef MAXPATHLEN
 #define MAXPATHLEN      80
 #endif
+#endif /* !defined(sparc_solaris) */
 
 #define HAVE_MEMMOVE
 
@@ -62,7 +64,7 @@
 #  define NEED_UNION_SEMUN 
 #endif
 
-#if defined(sparc)
+#if defined(sparc) && !defined(sparc_solaris)
 #  define USE_POSIX_TIME
 #  undef HAVE_MEMMOVE
 #endif
