@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.13 2002/09/22 20:57:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.14 2002/09/26 04:41:55 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -726,10 +726,14 @@ initialize_SSL(PGconn *conn)
 				 pwd->pw_dir);
 		if (stat(fnbuf, &buf) == -1)
 		{
+			return 0;
+#ifdef NOT_USED
+			/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
 			printfPQExpBuffer(&conn->errorMessage,
 				 libpq_gettext("could not read root certificate list (%s): %s\n"),
 							  fnbuf, strerror(errno));
 			return -1;
+#endif
 		}
 		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
 		{
@@ -789,6 +793,8 @@ open_client_SSL(PGconn *conn)
 
 	/* check the certificate chain of the server */
 
+#ifdef NOT_USED
+	/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
 	/*
 	 * this eliminates simple man-in-the-middle attacks and simple
 	 * impersonations
@@ -802,6 +808,7 @@ open_client_SSL(PGconn *conn)
 		close_SSL(conn);
 		return -1;
 	}
+#endif
 
 	/* pull out server distinguished and common names */
 	conn->peer = SSL_get_peer_certificate(conn->ssl);
@@ -824,6 +831,8 @@ open_client_SSL(PGconn *conn)
 
 	/* verify that the common name resolves to peer */
 
+#ifdef NOT_USED
+	/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
 	/*
 	 * this is necessary to eliminate man-in-the-middle attacks and
 	 * impersonations where the attacker somehow learned the server's
@@ -834,6 +843,7 @@ open_client_SSL(PGconn *conn)
 		close_SSL(conn);
 		return -1;
 	}
+#endif
 
 	return 0;
 }

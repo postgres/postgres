@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.14 2002/09/04 23:31:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.15 2002/09/26 04:41:54 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -642,9 +642,13 @@ initialize_SSL(void)
 	snprintf(fnbuf, sizeof fnbuf, "%s/root.crt", DataDir);
 	if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, CA_PATH))
 	{
+		return 0;
+#ifdef NOT_USED
+		/* CLIENT CERTIFICATES NOT REQUIRED  bjm 2002-09-26 */
 		postmaster_error("could not read root cert file (%s): %s",
 						 fnbuf, SSLerrmessage());
 		ExitPostmaster(1);
+#endif
 	}
 	SSL_CTX_set_verify(SSL_context,
 					SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_cb);
