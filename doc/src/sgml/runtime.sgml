@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.275 2004/08/08 20:17:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.276 2004/08/12 19:03:17 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1435,16 +1435,24 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>archive_command</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        The shell command to execute to archive a completed segment of the
-	WAL file series.  If this is an empty string (which is the default),
-	WAL archiving is disabled.  Any <literal>%p</> in the string is
-	replaced 
-	by the absolute path of the file to archive, while any <literal>%f</>
-	is replaced by the file name only.  Write <literal>%%</> if you need
-	to embed an actual <literal>%</> character in the command.  For more
-	information see <xref linkend="backup-archiving-wal">.  This option
-	can only be set at server start or in the
-	<filename>postgresql.conf</filename> file.
+        The shell command to execute to archive a completed segment of
+        the WAL file series. If this is an empty string (the default),
+        WAL archiving is disabled. Any <literal>%p</> in the string is
+        replaced by the absolute path of the file to archive, and any
+        <literal>%f</> is replaced by the file name only. Use
+        <literal>%%</> to embed an actual <literal>%</> character in the
+        command. For more information see <xref
+        linkend="backup-archiving-wal">. This option can only be set at
+        server start or in the <filename>postgresql.conf</filename>
+        file.
+       </para>
+       <para>
+        It is important for the command to return a zero exit status only if
+	it succeeds.  Examples:
+<programlisting>
+archive_command = 'cp "%p" /mnt/server/archivedir/"%f"'
+archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
+</programlisting>
        </para>
       </listitem>
      </varlistentry>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.28 2004/08/12 18:32:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.29 2004/08/12 19:03:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,8 +88,17 @@ last_dir_separator(const char *filename)
 
 
 /*
- *	make_native_path
- *	On WIN32, change / to \ in the path.
+ *	make_native_path - on WIN32, change / to \ in the path
+ *
+ *	This is required because WIN32 COPY is an internal CMD.EXE
+ *	command and doesn't process forward slashes in the same way
+ *	as external commands.  Quoting the first argument to COPY
+ *	does not convert forward to backward slashes, but COPY does
+ *	properly process quoted forward slashes in the second argument.
+ *
+ *	COPY works with quoted forward slashes in the first argument
+ *	only if the current directory is the same as the directory
+ *	of the first argument.
  */
 void
 make_native_path(char *filename)
