@@ -1,0 +1,505 @@
+From pgsql-performance-owner+M3897@postgresql.org Sat Oct  4 19:50:57 2003
+Return-path: <pgsql-performance-owner+M3897@postgresql.org>
+Received: from svr5.postgresql.org (svr5.postgresql.org [64.117.225.181])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h94NotQ08911
+	for <pgman@candle.pha.pa.us>; Sat, 4 Oct 2003 19:50:56 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id DB0F072DC9E; Sat,  4 Oct 2003 23:50:50 +0000 (GMT)
+X-Original-To: pgsql-performance-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 70DDDD1B4EC
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>; Sat,  4 Oct 2003 23:50:42 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 14368-03
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>;
+	Sat,  4 Oct 2003 20:49:56 -0300 (ADT)
+Received: from news.hub.org (unknown [64.117.224.194])
+	by svr1.postgresql.org (Postfix) with ESMTP id 2FBF7D1B4F0
+	for <pgsql-performance@postgresql.org>; Sat,  4 Oct 2003 20:49:53 -0300 (ADT)
+Received: from news.hub.org (host-64-117-224-194.altec1.com [64.117.224.194] (may be forged))
+	by news.hub.org (8.12.9/8.12.9) with ESMTP id h94NnqQh076664
+	for <pgsql-performance@postgresql.org>; Sat, 4 Oct 2003 23:49:52 GMT
+	(envelope-from news@news.hub.org)
+Received: (from news@localhost)
+	by news.hub.org (8.12.9/8.12.9/Submit) id h94NaQEP075478
+	for pgsql-performance@postgresql.org; Sat, 4 Oct 2003 23:36:26 GMT
+From: Christopher Browne <cbbrowne@acm.org>
+X-Newsgroups: comp.databases.postgresql.performance
+Subject: Re: [PERFORM] count(*) slow on large tables
+Date: Sat, 04 Oct 2003 19:33:46 -0400
+Organization: cbbrowne Computing Inc
+Lines: 77
+Message-ID: <m3u16ovaqt.fsf@wolfe.cbbrowne.com>
+References: <200310041556.h94Fuek24423@candle.pha.pa.us> <6743.1065286173@sss.pgh.pa.us>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+X-Complaints-To: usenet@news.hub.org
+X-message-flag: Outlook is rather hackable, isn't it?
+X-Home-Page: http://www.cbbrowne.com/info/
+X-Affero: http://svcs.affero.net/rm.php?r=cbbrowne
+User-Agent: Gnus/5.1003 (Gnus v5.10.3) XEmacs/21.4 (Reasonable Discussion, linux)
+Cancel-Lock: sha1:lLXE17xNVoXrMYZPn8CzzK9g1mc=
+To: pgsql-performance@postgresql.org
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-performance
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: OR
+
+Quoth tgl@sss.pgh.pa.us (Tom Lane):
+> Bruce Momjian <pgman@candle.pha.pa.us> writes:
+>> We do have a TODO item:
+>> 	* Consider using MVCC to cache count(*) queries with no WHERE clause
+>
+>> The idea is to cache a recent count of the table, then have
+>> insert/delete add +/- records to the count.  A COUNT(*) would get the
+>> main cached record plus any visible +/- records.  This would allow the
+>> count to return the proper value depending on the visibility of the
+>> requesting transaction, and it would require _no_ heap or index scan.
+>
+> ... and it would give the wrong answers.  Unless the cache is somehow
+> snapshot-aware, so that it can know which other transactions should be
+> included in your count.
+
+[That's an excellent summary that Bruce did of what came out of the
+previous discussion...]
+
+If this "cache" was a table, itself, the visibility of its records
+should be identical to that of the visibility of the "real" records.
++/- records would become visible when the transaction COMMITed, at the
+very same time the source records became visible.
+
+I thought, at one point, that it would be a slick idea for "record
+compression" to take place automatically; when you do a COUNT(*), the
+process would include compressing multiple records down to one.
+Unfortunately, that turns out to be Tremendously Evil if the same
+COUNT(*) were being concurrently processed in multiple transactions.
+Both would repeat much the same work, and this would ultimately lead
+to one of the transactions aborting.  [I recently saw this effect
+occur, um, a few times...]
+
+For this not to have Evil Effects on unsuspecting transactions, we
+would instead require some process analagous to VACUUM, where a single
+transaction would be used to compress the "counts table" down to one
+record per table.  Being independent of "user transactions," it could
+safely compress the data without injuring unsuspecting transactions.
+
+But in most cases, the cost of this would be pretty prohibitive.
+Every transaction that adds a record to a table leads to a record
+being added to table "pg_exact_row_counts".  If transactions typically
+involve adding ONE row to any given table, this effectively doubles
+the update traffic.  Ouch.  That means that in a _real_
+implementation, it would make sense to pick and choose the tables that
+would be so managed.
+
+In my earlier arguing of "You don't really want that!", while I may
+have been guilty of engaging in a _little_ hyperbole, I was certainly
+_not_ being facetious overall.  At work, we tell the developers "avoid
+doing COUNT(*) inside ordinary transactions!", and that is certainly
+NOT facetious comment.  I recall a case a while back where system
+performance was getting brutalized by a lurking COUNT(*).  (Combined
+with some other pathological behaviour, of course!)  And note that
+this wasn't a query that the TODO item could address; it was of the
+form "SELECT COUNT(*) FROM SOME_TABLE WHERE OWNER = VALUE;"
+
+As you have commented elsewhere in the thread, much of the time, the
+point of asking for COUNT(*) is often to get some idea of table size,
+where the precise number isn't terribly important in comparison with
+getting general magnitude.  Improving the ability to get approximate
+values would be of some value.
+
+I would further argue that "SELECT COUNT(*) FROM TABLE" isn't
+particularly useful even when precision _is_ important.  If I'm
+working on reports that would be used to reconcile things, the queries
+I use are a whole lot more involved than that simple form.  It is far
+more likely that I'm using a GROUP BY.
+
+It is legitimate to get wishful and imagine that it would be nice if
+we could get the value of that query "instantaneously."  It is also
+legitimate to think that the effort required to implement that might
+be better used on improving other things.
+-- 
+(reverse (concatenate 'string "ac.notelrac.teneerf" "@" "454aa"))
+http://www3.sympatico.ca/cbbrowne/
+"very few people approach me in real life and insist on proving they
+are drooling idiots."  -- Erik Naggum, comp.lang.lisp
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From josh@agliodbs.com Sun Oct  5 14:59:07 2003
+Return-path: <josh@agliodbs.com>
+Received: from davinci.ethosmedia.com (vista1-228.percepticon.net [209.128.84.228] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h95Ix5Q17861
+	for <pgman@candle.pha.pa.us>; Sun, 5 Oct 2003 14:59:06 -0400 (EDT)
+Received: from [63.195.55.98] (HELO spooky)
+  by davinci.ethosmedia.com (CommuniGate Pro SMTP 4.0.2)
+  with ESMTP id 3728969; Sun, 05 Oct 2003 11:59:26 -0700
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Josh Berkus <josh@agliodbs.com>
+Organization: Aglio Database Solutions
+To: Bruce Momjian <pgman@candle.pha.pa.us>, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [PERFORM] count(*) slow on large tables
+Date: Sun, 5 Oct 2003 11:57:21 -0700
+User-Agent: KMail/1.4.3
+cc: Christopher Browne <cbbrowne@libertyrms.info>,
+   pgsql-performance@postgresql.org
+References: <200310041819.h94IJkV07596@candle.pha.pa.us>
+In-Reply-To: <200310041819.h94IJkV07596@candle.pha.pa.us>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Message-ID: <200310051157.21555.josh@agliodbs.com>
+Status: OR
+
+Bruce,
+
+> OK, I beefed up the TODO:
+>
+> 	* Use a fixed row count and a +/- count with MVCC visibility rules
+> 	  to allow fast COUNT(*) queries with no WHERE clause(?)
+>
+> I can always give the details if someone asks.  It doesn't seem complex
+> enough for a separate TODO.detail item.
+
+Hmmm ... this doesn't seem effort-worthy to me.   How often does anyone do 
+COUNT with no where clause, except GUIs that give you a record count?  (of 
+course, as always, if someone wants to code it, feel free ...)
+
+And for those GUIs, wouldn't it be 97% as good to run an ANALYZE and give the 
+approximate record counts for large tables?
+
+As for counts with a WHERE clause, this is obviously up to the user.  Joe 
+Conway and I tested using a C trigger to track some COUNT ... GROUP BY values 
+for large tables based on additive numbers.   It worked fairly well for 
+accuracy, but the performance penalty on data writes was significant ... 8% 
+to 25% penalty for UPDATES, depending on the frequency and batch size (> 
+frequency > batch size -->  > penalty)
+
+It's possible that this could be improved through some mechanism more tightly 
+integrated with the source code.   However,the coding effort would be 
+significant ( 12-20 hours ) and it's possible that there would be no 
+improvement, which is why we didn't do it.
+
+We also discussed an asynchronous aggregates collector that would work 
+something like the statistics collector, and keep pre-programmmed aggregate 
+data, updating during "low-activity" periods.  This would significantly 
+reduce the performance penalty, but at the cost of accuracy ... that is, a 
+1%-5% variance on high-activity tables would be unavoidable, and all cached 
+aggregates would have to be recalculated on database restart, significantly 
+slowing down startup.   Again, we felt that the effort-result payoff was not 
+worthwhile.
+
+Overall, I think the stuff we already have planned ... the hash aggregates in 
+7.4 and Tom's suggestion of adding an indexable flag to pg_aggs ... are far 
+more likely to yeild useful fruit than any caching plan.
+
+-- 
+Josh Berkus
+Aglio Database Solutions
+San Francisco
+
+From pgsql-performance-owner+M3915@postgresql.org Mon Oct  6 02:08:33 2003
+Return-path: <pgsql-performance-owner+M3915@postgresql.org>
+Received: from svr5.postgresql.org (svr5.postgresql.org [64.117.225.181])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h9668VQ15914
+	for <pgman@candle.pha.pa.us>; Mon, 6 Oct 2003 02:08:32 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id DC70672E71E; Mon,  6 Oct 2003 06:08:24 +0000 (GMT)
+X-Original-To: pgsql-performance-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id BFA49D1B4F6
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>; Mon,  6 Oct 2003 06:07:33 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 90800-06
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>;
+	Mon,  6 Oct 2003 03:06:44 -0300 (ADT)
+Received: from smtp.pspl.co.in (unknown [202.54.11.65])
+	by svr1.postgresql.org (Postfix) with ESMTP id 9033ED1B4EB
+	for <pgsql-performance@postgresql.org>; Mon,  6 Oct 2003 03:06:41 -0300 (ADT)
+Received: (from root@localhost)
+	by smtp.pspl.co.in (8.12.9/8.12.9) id h966AmTk013993
+	for <pgsql-performance@postgresql.org>; Mon, 6 Oct 2003 11:40:49 +0530
+Received: from persistent.co.in (daithan.intranet.pspl.co.in [192.168.7.161])
+	(authenticated bits=0)
+	by persistent.co.in (8.12.9/8.12.9) with ESMTP id h966AlYM013922
+	for <pgsql-performance@postgresql.org>; Mon, 6 Oct 2003 11:40:48 +0530
+Message-ID: <3F81066C.90402@persistent.co.in>
+Date: Mon, 06 Oct 2003 11:36:36 +0530
+From: Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
+Organization: Persistent Systems Pvt. Ltd.
+User-Agent: Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.5b) Gecko/20030917 Thunderbird/0.3a
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: pgsql-performance@postgresql.org
+Subject: Re: [PERFORM] count(*) slow on large tables
+References: <200310041819.h94IJkV07596@candle.pha.pa.us>
+In-Reply-To: <200310041819.h94IJkV07596@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-performance
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: OR
+
+Bruce Momjian wrote:
+> OK, I beefed up the TODO:
+> 
+> 	* Use a fixed row count and a +/- count with MVCC visibility rules
+> 	  to allow fast COUNT(*) queries with no WHERE clause(?)
+> 
+> I can always give the details if someone asks.  It doesn't seem complex
+> enough for a separate TODO.detail item.
+
+May I propose alternate approach for this optimisation?
+
+- Postgresql allows to maintain user defined variables in shared memory.
+- These variables obey transactions but do not get written to disk at all.
+- There should be a facility to detect whether such a variable is initialized or 
+not.
+
+How it will help? This is in addition to trigger proposal that came up earlier. 
+With  triggers it's not possible to make values visible across backends unless 
+trigger updates a table, which eventually leads to vacuum/dead tuples problem.
+
+1. User creates a trigger to check updates/inserts for certain conditions.
+2. It updates the count as and when required.
+3. If the trigger detects the count is not initialized, it would issue the same 
+query first time. There is no avoiding this issue.
+
+Besides providing facility of resident variables could be used imaginatively as 
+well.
+
+Does this make sense? IMO this is more generalised approach over all.
+
+Just a thought.
+
+  Shridhar
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+From pgsql-performance-owner+M3938@postgresql.org Mon Oct  6 16:04:10 2003
+Return-path: <pgsql-performance-owner+M3938@postgresql.org>
+Received: from svr5.postgresql.org (svr5.postgresql.org [64.117.225.181])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h96K49i20610
+	for <pgman@candle.pha.pa.us>; Mon, 6 Oct 2003 16:04:10 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr5.postgresql.org (Postfix) with ESMTP
+	id 9B73272DC4D; Mon,  6 Oct 2003 20:04:08 +0000 (GMT)
+X-Original-To: pgsql-performance-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id 3770CD1B567
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>; Mon,  6 Oct 2003 15:11:08 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 81338-08
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>;
+	Mon,  6 Oct 2003 12:10:22 -0300 (ADT)
+Received: from main.gmane.org (main.gmane.org [80.91.224.249])
+	by svr1.postgresql.org (Postfix) with ESMTP id E71D7D1B51E
+	for <pgsql-performance@postgresql.org>; Mon,  6 Oct 2003 12:10:21 -0300 (ADT)
+Received: from root by main.gmane.org with local (Exim 3.35 #1 (Debian))
+	id 1A6X08-0003KO-00
+	for <pgsql-performance@postgresql.org>; Mon, 06 Oct 2003 17:10:20 +0200
+X-Injected-Via-Gmane: http://gmane.org/
+To: pgsql-performance@postgresql.org
+Received: from sea.gmane.org ([80.91.224.252])
+	by main.gmane.org with esmtp (Exim 3.35 #1 (Debian))
+	id 1A6Wxn-0003Hh-00
+	for <gmane-comp-db-postgresql-performance@m.gmane.org>; Mon, 06 Oct 2003 17:07:55 +0200
+Received: from news by sea.gmane.org with local (Exim 3.35 #1 (Debian))
+	id 1A6Wxn-0006U8-00
+	for <gmane-comp-db-postgresql-performance@m.gmane.org>; Mon, 06 Oct 2003 17:07:55 +0200
+From: Harald Fuchs <nospam@sap.com>
+Subject: Re: [PERFORM] count(*) slow on large tables
+Date: 06 Oct 2003 17:08:36 +0200
+Organization: Linux Private Site
+Lines: 21
+Message-ID: <pupthae74b.fsf@srv.protecting.net>
+References: <20031002191547.GZ87525@rlx11.zapatec.com> <20031002193905.GD18417@wolff.to> <3F7C98B8.C892D0E5@nsd.ca> <60brszcng5.fsf@dev6.int.libertyrms.info> <20031002223313.GE87525@rlx11.zapatec.com> <m3vfr7f4z1.fsf@wolfe.cbbrowne.com> <20031003042754.GH87525@rlx11.zapatec.com> <3F7D172E.3060107@persistent.co.in>
+Reply-To: hf99@protecting.net
+MIME-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+X-Complaints-To: usenet@sea.gmane.org
+X-No-Archive: yes
+User-Agent: Gnus/5.0808 (Gnus v5.8.8) Emacs/20.7
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-performance
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: OR
+
+In article <3F7D172E.3060107@persistent.co.in>,
+Shridhar Daithankar <shridhar_daithankar@persistent.co.in> writes:
+
+> Dror Matalon wrote:
+>> I smell a religious war in the aii:-). Can you go several days in a
+>> row without doing select count(*) on any
+>> of your tables? I suspect that this is somewhat a domain specific
+>> issue. In some areas
+>> you don't need to know the total number of rows in your tables, in
+>> others you do.
+
+> If I were you, I would have an autovacuum daemon running and rather
+> than doing select count(*), I would look at stats generated by
+> vacuums. They give approximate number of tuples and it should be good
+> enough it is accurate within a percent.
+
+The stats might indeed be a good estimate presumed there were not many
+changes since the last VACUUM.  But how about a variant of COUNT(*)
+using an index?  It would not be quite exact since it might contain
+tuples not visible in the current transaction, but it might be a much
+better estimate than the stats.
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-performance-owner+M3930@postgresql.org Mon Oct  6 13:03:02 2003
+Return-path: <pgsql-performance-owner+M3930@postgresql.org>
+Received: from svr4.postgresql.org (svr4.postgresql.org [64.117.224.192])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id h96H30Q06466
+	for <pgman@candle.pha.pa.us>; Mon, 6 Oct 2003 13:03:00 -0400 (EDT)
+Received: from postgresql.org (svr1.postgresql.org [64.117.224.193])
+	by svr4.postgresql.org (Postfix) with ESMTP
+	id 314A01CB46D6; Mon,  6 Oct 2003 17:02:55 +0000 (GMT)
+X-Original-To: pgsql-performance-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [64.117.224.130])
+	by svr1.postgresql.org (Postfix) with ESMTP id E83D7D1B4F2
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>; Mon,  6 Oct 2003 17:02:38 +0000 (GMT)
+Received: from svr1.postgresql.org ([64.117.224.193])
+	by localhost (neptune.hub.org [64.117.224.130]) (amavisd-new, port 10024)
+	with ESMTP id 03671-08
+	for <pgsql-performance-postgresql.org@localhost.postgresql.org>;
+	Mon,  6 Oct 2003 14:01:53 -0300 (ADT)
+Received: from perrin.nxad.com (internal.nxad.com [69.1.70.251])
+	by svr1.postgresql.org (Postfix) with ESMTP id DEADDD1B4EC
+	for <pgsql-performance@postgresql.org>; Mon,  6 Oct 2003 14:01:51 -0300 (ADT)
+Received: by perrin.nxad.com (Postfix, from userid 1001)
+	id 64CEC21068; Mon,  6 Oct 2003 10:01:36 -0700 (PDT)
+Date: Mon, 6 Oct 2003 10:01:36 -0700
+From: Sean Chittenden <sean@chittenden.org>
+To: Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
+cc: pgsql-performance@postgresql.org
+Subject: Re: [PERFORM] count(*) slow on large tables
+Message-ID: <20031006170136.GB94718@perrin.nxad.com>
+References: <200310041819.h94IJkV07596@candle.pha.pa.us> <3F81066C.90402@persistent.co.in>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <3F81066C.90402@persistent.co.in>
+X-PGP-Key: finger seanc@FreeBSD.org
+X-PGP-Fingerprint: 3849 3760 1AFE 7B17 11A0  83A6 DD99 E31F BC84 B341
+X-Web-Homepage: http://sean.chittenden.org/
+User-Agent: Mutt/1.5.4i
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-performance
+Precedence: bulk
+Sender: pgsql-performance-owner@postgresql.org
+Status: OR
+
+> How it will help? This is in addition to trigger proposal that came
+> up earlier. With triggers it's not possible to make values visible
+> across backends unless trigger updates a table, which eventually
+> leads to vacuum/dead tuples problem.
+> 
+> 1. User creates a trigger to check updates/inserts for certain conditions.
+> 2. It updates the count as and when required.
+> 3. If the trigger detects the count is not initialized, it would issue the 
+> same query first time. There is no avoiding this issue.
+> 
+> Besides providing facility of resident variables could be used
+> imaginatively as well.
+> 
+> Does this make sense? IMO this is more generalised approach over all.
+
+I do this _VERY_ frequently in my databases, only I have my stored
+procs do the aggregate in a predefined MVCC table that's always there.
+Here's a denormalized version for public consumption/thought:
+
+CREATE TABLE global.dba_aggregate_cache (
+  dbl TEXT NOT NULL,        -- The database location, doesn't need to be
+                            -- qualified (ex: schema.table.col)
+  op TEXT NOT NULL,         -- The operation, SUM, COUNT, etc.
+  qual TEXT,                -- Any kind of conditional, such as a where clause
+  val_int INT,              -- Whatever the value is, of type INT
+  val_bigint BIGINT,        -- Whatever the value is, of type BIGINT
+  val_text TEXT,            -- Whatever the value is, of type TEXT
+  val_bytea BYTEA,          -- Whatever the value is, of type BYTEA
+);
+CREATE UNIQUE INDEX dba_aggregate_cache_dbl_op_udx ON global.dba_aggregate_cache(dbl,op);
+
+Then, I use a function to retrieve this value instead of a SELECT
+COUNT(*).
+
+SELECT public.cache_count('dbl','qual');  -- In this case, the op is COUNT
+SELECT public.cache_count('dbl');         -- Returns the COUNT for the table listed in the dbl
+
+Then, I create 4 or 5 functions (depends on the op I'm performing):
+
+1) A private function that _doesn't_ run as security definer, that
+   populates the global.dba_aggregate_cache row if it's empty.
+2) A STABLE function for SELECTs, if the row doesn't exist, then it
+   calls function #1 to populate its existence.
+3) A STABLE function for INSERTs, if the row doesn't exist, then it
+   calls function #1 to populate its existence, then adds the
+   necessary bits to make it accurate.
+4) A STABLE function for DELETEs, if the row doesn't exist, then it
+   calls function #1 to populate its existence, then deletes the
+   necessary bits to make it accurate.
+5) A STABLE function for UPDATEs, if the row doesn't exist, then it
+   calls function #1 to populate its existence, then updates the
+   necessary bits to make it accurate.  It's not uncommon for me to
+   not have an UPDATE function/trigger.
+
+Create triggers for functions 2-5, and test away.  It's MVCC,
+searching through a table that's INDEX'ed for a single row is
+obviously vastly faster than a seqscan/aggregate.  If I need any kind
+of an aggregate to be fast, I use this system with a derivation of the
+above table.  The problem with it being that I have to retrain others
+to use cache_count(), or some other function instead of using
+COUNT(*).
+
+That said, it'd be nice if there were a way to tell PostgreSQL to do
+the above for you and teach COUNT(*), SUM(*), or other aggregates to
+use an MVCC backed cache similar to the above.  If people want their
+COUNT's to be fast, then they have to live with the INSERT, UPDATE,
+DELETE cost.  The above doesn't work with anything complex such as
+join's, but it's certainly a start and I think satisfies everyone's
+gripes other than the tuple churn that _does_ happen (*nudge nudge*,
+pg_autovacuum could be integrated into the backend to handle this).
+Those worried about performance, the pages that are constantly being
+recycled would likely stay in disk cache (PG or the OS).  There's
+still some commit overhead, but still... no need to over optimize by
+requiring the table to be stored in the out dated, slow, and over used
+shm (also, *nudge nudge*).
+
+Anyway, let me throw that out there as a solution that I use and it
+works quite well.  I didn't explain the use of the qual column, but I
+think those who grasp the above way of handling things probably grok
+how to use the qual column in a dynamically executed query.
+
+CREATE AGGREGATE CACHE anyone?
+
+-sc
+
+-- 
+Sean Chittenden
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
