@@ -37,6 +37,7 @@ A dump/restore is <emphasis>not</emphasis> required for those running
 <programlisting>
 Updated version of pgaccess 0.98
 NT-specific patch
+Fix dumping rules on inherited tables
 </programlisting>
 </para>
 </sect2>
