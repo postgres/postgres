@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.40 2003/07/17 00:55:37 tgl Exp $
+ * $Id: datetime.h,v 1.41 2003/07/17 22:28:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,17 +237,21 @@ extern int	day_tab[2][13];
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
 
 /* Julian date support for date2j() and j2date()
- * Set the minimum year to one greater than the year of the first valid day
- *	to avoid having to check year and day both. - tgl 97/05/08
+ *
+ * IS_VALID_JULIAN checks the minimum date exactly, but is a bit sloppy
+ * about the maximum, since it's far enough out to not be especially
+ * interesting.
  */
 
 #define JULIAN_MINYEAR (-4713)
 #define JULIAN_MINMONTH (11)
 #define JULIAN_MINDAY (24)
+#define JULIAN_MAXYEAR (5874898)
 
-#define IS_VALID_JULIAN(y,m,d) (((y) > JULIAN_MINYEAR) \
- || (((y) == JULIAN_MINYEAR) && (((m) > JULIAN_MINMONTH) \
-  || (((m) == JULIAN_MINMONTH) && ((d) >= JULIAN_MINDAY)))))
+#define IS_VALID_JULIAN(y,m,d) ((((y) > JULIAN_MINYEAR) \
+  || (((y) == JULIAN_MINYEAR) && (((m) > JULIAN_MINMONTH) \
+  || (((m) == JULIAN_MINMONTH) && ((d) >= JULIAN_MINDAY))))) \
+ && ((y) < JULIAN_MAXYEAR))
 
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)
