@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.1.1.1 1996/07/09 06:21:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.2 1996/08/19 13:32:14 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,7 +589,7 @@ _copyResdom(Resdom *from)
 static Fjoin *
 _copyFjoin(Fjoin *from)
 {
-    Fjoin	*newnode;
+    Fjoin	*newnode = makeNode(Fjoin);
     
     /* ----------------
      *	copy node superclass fields
