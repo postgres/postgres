@@ -139,7 +139,7 @@ ERROR:  parser: parse error at or near ";"
 QUERY: drop rule 314159;
 ERROR:  parser: parse error at or near "314159"
 QUERY: drop rule nonesuch;
-ERROR:  RewriteGetRuleEventRel: rule "nonesuch" not found
+ERROR:  Rule or view 'nonesuch' not found
 QUERY: drop tuple rule nonesuch;
 ERROR:  parser: parse error at or near "tuple"
 QUERY: drop instance rule nonesuch;

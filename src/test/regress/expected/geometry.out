@@ -87,7 +87,7 @@ one|f1
 
 QUERY: SELECT '' AS count, p.f1, l.s, l.s # p.f1 AS intersection
    FROM LSEG_TBL l, POINT_TBL p;
-ERROR:  There is more than one possible operator '#' for types 'lseg' and 'point'
+ERROR:  Unable to identify an operator '#' for types 'lseg' and 'point'
 	You will have to retype this query using an explicit cast
 QUERY: SELECT '' AS thirty, p.f1, l.s, p.f1 ## l.s AS closest
    FROM LSEG_TBL l, POINT_TBL p;
