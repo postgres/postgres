@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 11 22:50:35 EDT 2001
+Last updated:		Fri Oct 12 12:07:24 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -325,11 +325,7 @@ MISCELLANEOUS
 * Add hash for evaluating GROUP BY aggregates
 * -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
 * Make secondary WAL page write()'s write only modified data
-* Improve spinlock code [performance]
-	o use SysV semaphores or queue of backends waiting on the lock
-	o wakeup sleeper or sleep for less than one clock tick
-	o spin for lock on multi-cpu machines, yield on single cpu machines
-	o read/write locks
+* -Improve spinlock code [performance] (Tom)
 
 SOURCE CODE
 -----------
