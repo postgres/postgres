@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.24 1999/04/14 14:02:00 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.25 1999/04/25 21:56:19 tgl Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -56,9 +56,12 @@ fi
 echo "=============== running regression queries...         ================="
 echo "" > regression.diffs
 if [ -n "$MULTIBYTE" ];then
-	mbtests=`echo $MULTIBYTE|tr "[A-Z]" "[a-z]"`
+	mbtests=`echo $MULTIBYTE | tr "[A-Z]" "[a-z]"`
+	PGCLIENTENCODING="$MULTIBYTE"
+	export PGCLIENTENCODING
 else
 	mbtests=""
+	unset PGCLIENTENCODING
 fi
 for i in `cat sql/tests` $mbtests
 do
