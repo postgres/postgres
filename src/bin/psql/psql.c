@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.1.1.1 1996/07/09 06:22:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.2 1996/07/16 06:37:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,8 +762,13 @@ HandleSlashCmds(PGconn** db_ptr,
 	if (query) {
 	    fputs(query, stdout);
 	    fputc('\n', stdout);
+	    status = 1;
 	}
 	break;
+    case 'r':
+        query[0] = '\0';
+        status = 1;
+        break;          
     case 'q': /* \q is quit */
       status = 2;
       break;
