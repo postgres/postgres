@@ -16,66 +16,63 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
-#include "storage/lock.h"
+#include "storage/lmgr.h"
 #include "storage/proc.h"
-#include "storage/multilev.h"
 #include "utils/elog.h"
 
 #include "user_locks.h"
 
 int
-user_lock(unsigned int id1, unsigned int id2, LOCKMODE lockmode)
+user_lock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
 	memset(&tag, 0, sizeof(LOCKTAG));
 	tag.dbId = MyDatabaseId;
 	tag.relId = 0;
-	tag.tupleId.ip_blkid.bi_hi = id2 >> 16;
-	tag.tupleId.ip_blkid.bi_lo = id2 & 0xffff;
-	tag.tupleId.ip_posid = (unsigned short) (id1 & 0xffff);
+	tag.objId.blkno = (BlockNumber) id2;
+	tag.offnum = (OffsetNumber) (id1 & 0xffff);
 
 	return LockAcquire(USER_LOCKMETHOD, &tag, lockmode);
 }
 
 int
-user_unlock(unsigned int id1, unsigned int id2, LOCKMODE lockmode)
+user_unlock(uint32 id1, uint32 id2, LOCKMODE lockmode)
 {
 	LOCKTAG		tag;
 
 	memset(&tag, 0, sizeof(LOCKTAG));
 	tag.dbId = MyDatabaseId;
 	tag.relId = 0;
-	tag.tupleId.ip_blkid.bi_hi = id2 >> 16;
-	tag.tupleId.ip_blkid.bi_lo = id2 & 0xffff;
-	tag.tupleId.ip_posid = (unsigned short) (id1 & 0xffff);
+	tag.objId.blkno = (BlockNumber) id2;
+	tag.offnum = (OffsetNumber) (id1 & 0xffff);
 
 	return LockRelease(USER_LOCKMETHOD, &tag, lockmode);
 }
 
 int
-user_write_lock(unsigned int id1, unsigned int id2)
+user_write_lock(uint32 id1, uint32 id2)
 {
-	return user_lock(id1, id2, WRITE_LOCK);
+	return user_lock(id1, id2, ExclusiveLock);
 }
 
 
 int
-user_write_unlock(unsigned int id1, unsigned int id2)
+user_write_unlock(uint32 id1, uint32 id2)
 {
-	return user_unlock(id1, id2, WRITE_LOCK);
+	return user_unlock(id1, id2, ExclusiveLock);
 }
 
 int
 user_write_lock_oid(Oid oid)
 {
-	return user_lock(0, oid, WRITE_LOCK);
+	return user_lock(0, oid, ExclusiveLock);
 }
 
 int
 user_write_unlock_oid(Oid oid)
 {
-	return user_unlock(0, oid, WRITE_LOCK);
+	return user_unlock(0, oid, ExclusiveLock);
 }
 
 int

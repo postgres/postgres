@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.29 1999/05/29 06:14:42 vadim Exp $
+ * $Id: lock.h,v 1.30 1999/06/01 09:35:39 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,14 +61,19 @@ typedef int LOCKMETHOD;
 
 typedef struct LTAG
 {
-	Oid			relId;
-	Oid			dbId;
+	Oid				relId;
+	Oid				dbId;
 	union
 	{
-		BlockNumber blkno;
-		TransactionId xid;
-	}			objId;
-	uint16		lockmethod;		/* needed by user locks */
+		BlockNumber		blkno;
+		TransactionId	xid;
+	}				objId;
+	/* 
+	 * offnum should be part of objId.tupleId above, but would increase 
+	 * sizeof(LOCKTAG) and so moved here; currently used by userlocks only.
+	 */
+	OffsetNumber	offnum;
+	uint16			lockmethod;		/* needed by userlocks */
 } LOCKTAG;
 
 #define TAGSIZE (sizeof(LOCKTAG))
