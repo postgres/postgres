@@ -1,19 +1,18 @@
-# ru.po
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/Attic/ru.po,v 1.7 2003/10/05 21:52:37 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/Attic/ru.po,v 1.8 2003/10/13 21:38:37 petere Exp $
 #
 # ChangeLog:
-#   - July 26 - October 5, 2003: Update for 7.4.x; <mokhov@cs.concordia.ca>
+#   - July 26 - October 12, 2003: Update for 7.4.x; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post-7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
-#   - August 2001 - August 2002: Transaltion and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - August 2001 - August 2002: Initial transaltion and maintenance, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2003-10-05 07:24-0300\n"
-"PO-Revision-Date: 2003-10-05 13:00-0500\n"
+"Project-Id-Version: PostgreSQL 7.4\n"
+"POT-Creation-Date: 2003-10-07 01:23-0300\n"
+"PO-Revision-Date: 2003-10-12 22:58-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -82,7 +81,7 @@ msgstr "История записана в файл \"%s\".\n"
 #: command.c:1149
 #: command.c:1246
 #: command.c:1964
-#: common.c:81
+#: common.c:86
 #: copy.c:88
 #: copy.c:116
 #: describe.c:51
@@ -117,7 +116,7 @@ msgstr "Cекундомер выключен."
 #: command.c:1658
 #: command.c:1680
 #: command.c:1710
-#: common.c:130
+#: common.c:135
 #: copy.c:378
 #, c-format
 msgid "%s: %s\n"
@@ -142,10 +141,10 @@ msgid "Password: "
 msgstr "Пароль: "
 
 #: command.c:1389
-#: common.c:176
-#: common.c:346
-#: common.c:400
-#: common.c:614
+#: common.c:181
+#: common.c:351
+#: common.c:405
+#: common.c:652
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -284,38 +283,38 @@ msgstr "\\pset: неизвестная опция: %s\n"
 msgid "\\!: failed\n"
 msgstr "\\!: неудачно\n"
 
-#: common.c:74
+#: common.c:79
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: xstrdup: не возможно сделать копию нулевого указателя (внутренняя ошибка)\n"
 
-#: common.c:258
+#: common.c:263
 msgid "connection to server was lost\n"
 msgstr "подсоединение к серверу было потеряно\n"
 
-#: common.c:262
+#: common.c:267
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Подсоединение к серверу было потеряно. Попытка переустановить: "
 
-#: common.c:267
+#: common.c:272
 msgid "Failed.\n"
 msgstr "Безуспешно.\n"
 
-#: common.c:274
+#: common.c:279
 msgid "Succeeded.\n"
 msgstr "Успешно.\n"
 
-#: common.c:376
-#: common.c:582
+#: common.c:381
+#: common.c:620
 msgid "You are currently not connected to a database.\n"
 msgstr "В данный момент вы не подсоединены к базе данных.\n"
 
-#: common.c:431
+#: common.c:436
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Получено асинхронное оповещение \"%s\" от процесса-сервера с PID %d.\n"
 
-#: common.c:534
+#: common.c:516
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -323,12 +322,7 @@ msgstr ""
 "Введите данные для копирования с последующим символом новой строки (newline).\n"
 "Закончите с обратным слешем и точкой на самой линии."
 
-#: common.c:553
-#, c-format
-msgid "Time: %.2f ms\n"
-msgstr "Время: %.2f тс\n"
-
-#: common.c:590
+#: common.c:628
 #, c-format
 msgid ""
 "***(Single step mode: verify command)*******************************************\n"
@@ -338,6 +332,11 @@ msgstr ""
 "***(Пошаговый режим: проверка команды)******************************************\n"
 "%s\n"
 "***(нажмите ввод для продолжения или наберите x и ввод для отмены)**************\n"
+
+#: common.c:679
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Время: %.3f мс\n"
 
 #: copy.c:110
 msgid "\\copy: arguments required\n"
@@ -1593,6 +1592,19 @@ msgid ""
 "ALTER USER name SET parameter { TO | = } { value | DEFAULT }\n"
 "ALTER USER name RESET parameter"
 msgstr ""
+"ALTER USER имя [ [ WITH ] опция [ ... ] ]\n"
+"\n"
+"где опция может быть:\n"
+"\n"
+"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль' \n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER \n"
+"    | VALID UNTIL 'abstime'\n"
+"\n"
+"ALTER USER имя RENAME TO новоеимя\n"
+"\n"
+"ALTER USER имя SET параметр { TO | = } { значение | DEFAULT }\n"
+"ALTER USER имя RESET параметр"
 
 #: sql_help.h:77
 msgid "collect statistics about a database"
@@ -1629,7 +1641,7 @@ msgstr "CLOSE имя"
 
 #: sql_help.h:93
 msgid "cluster a table according to an index"
-msgstr ""
+msgstr "перегруппировать таблицу согласно индексу"
 
 #: sql_help.h:94
 msgid ""
@@ -1637,10 +1649,13 @@ msgid ""
 "CLUSTER tablename\n"
 "CLUSTER"
 msgstr ""
+"CLUSTER имяиндекса ON имятаблицы\n"
+"CLUSTER имятаблицы\n"
+"CLUSTER"
 
 #: sql_help.h:97
 msgid "define or change the comment of an object"
-msgstr ""
+msgstr "добавить или поменять комментарий об объекте"
 
 #: sql_help.h:98
 msgid ""
@@ -1663,6 +1678,24 @@ msgid ""
 "  VIEW object_name\n"
 "} IS 'text'"
 msgstr ""
+"COMMENT ON\n"
+"{\n"
+"  TABLE имя_объекта |\n"
+"  COLUMN имя_таблицы.имя_колонки |\n"
+"  AGGREGATE имя_агрегата (тип_агрегата) |\n"
+"  CONSTRAINT имя_констрейнта ON имя_таблицы |\n"
+"  DATABASE имя_объекта |\n"
+"  DOMAIN имя_объекта |\n"
+"  FUNCTION func_name (тип_аргумента1, тип_аргумента2, ...) |\n"
+"  INDEX имя_объекта |\n"
+"  OPERATOR оп (тип_оператора_слева, тип_оператора_справа) |\n"
+"  RULE имя_правила ON имя_таблицы |\n"
+"  SCHEMA имя_объекта |\n"
+"  SEQUENCE имя_объекта |\n"
+"  TRIGGER имя_триггера ON имя_таблицы |\n"
+"  TYPE имя_объекта |\n"
+"  VIEW имя_объекта\n"
+"} IS 'текст'"
 
 #: sql_help.h:101
 #: sql_help.h:281
@@ -1675,7 +1708,7 @@ msgstr "COMMIT [ WORK | TRANSACTION ]"
 
 #: sql_help.h:105
 msgid "copy data between a file and a table"
-msgstr ""
+msgstr "копировать данные между файлом и таблицей"
 
 #: sql_help.h:106
 msgid ""
@@ -1695,6 +1728,21 @@ msgid ""
 "          [ DELIMITER [ AS ] 'delimiter' ]\n"
 "          [ NULL [ AS ] 'null string' ] ]"
 msgstr ""
+"COPY имятаблицы [ ( колонка [, ...] ) ]\n"
+"    FROM { 'имяфайла' | STDIN }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ] \n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'раделитель' ]\n"
+"          [ NULL [ AS ] 'пустая строка' ] ]\n"
+"\n"
+"COPY имятаблицы [ ( колонка [, ...] ) ]\n"
+"    TO { 'имяфайла' | STDOUT }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'раделитель' ]\n"
+"          [ NULL [ AS ] 'пустая строка' ] ]"
 
 #: sql_help.h:109
 msgid "define a new aggregate function"
@@ -1710,10 +1758,17 @@ msgid ""
 "    [ , INITCOND = initial_condition ]\n"
 ")"
 msgstr ""
+"CREATE AGGREGATE имя (\n"
+"    BASETYPE = входной_тип_данных,\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = тип_данных_состояния\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = начальное_условие ]\n"
+")"
 
 #: sql_help.h:113
 msgid "define a new cast"
-msgstr ""
+msgstr "создать новую конверсию типов"
 
 #: sql_help.h:114
 msgid ""
@@ -1725,10 +1780,17 @@ msgid ""
 "    WITHOUT FUNCTION\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 msgstr ""
+"CREATE CAST (исходный_тип AS тип_назначения)\n"
+"    WITH FUNCTION имя_функции (тип_аргумента)\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (исходный_тип AS тип_назначения)\n"
+"    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]"
 
 #: sql_help.h:117
 msgid "define a new constraint trigger"
-msgstr ""
+msgstr "создать новый констрейнтный триггер"
 
 #: sql_help.h:118
 msgid ""
@@ -1737,6 +1799,10 @@ msgid ""
 "    tablename constraint attributes\n"
 "    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
 msgstr ""
+"CREATE CONSTRAINT TRIGGER имя\n"
+"    AFTER события ON\n"
+"    имя_таблицы контсрейнт атрибуиты\n"
+"    FOR EACH ROW EXECUTE PROCEDURE имя_функции ( аргументы )"
 
 #: sql_help.h:121
 msgid "define a new conversion"
@@ -1747,6 +1813,8 @@ msgid ""
 "CREATE [DEFAULT] CONVERSION name\n"
 "    FOR source_encoding TO dest_encoding FROM funcname"
 msgstr ""
+"CREATE [DEFAULT] CONVERSION имя\n"
+"    FOR исходная_кодировка TO кодировка_назначения FROM имя_функции"
 
 #: sql_help.h:125
 msgid "create a new database"
@@ -1760,10 +1828,15 @@ msgid ""
 "           [ TEMPLATE [=] template ]\n"
 "           [ ENCODING [=] encoding ] ]"
 msgstr ""
+"CREATE DATABASE имя\n"
+"    [ [ WITH ] [ OWNER [=] владелец_базы ]\n"
+"           [ LOCATION [=] 'путь_к_базе' ]\n"
+"           [ TEMPLATE [=] шаблон ]\n"
+"           [ ENCODING [=] кодировка ] ]"
 
 #: sql_help.h:129
 msgid "define a new domain"
-msgstr ""
+msgstr "создать новый домен"
 
 #: sql_help.h:130
 msgid ""
@@ -1776,10 +1849,18 @@ msgid ""
 "[ CONSTRAINT constraint_name ]\n"
 "{ NOT NULL | NULL | CHECK (expression) }"
 msgstr ""
+"CREATE DOMAIN имя [AS] тип_данных\n"
+"    [ DEFAULT выражение ]\n"
+"    [ констрейнт [ ... ] ]\n"
+"\n"
+"где констрейнт:\n"
+"\n"
+"[ CONSTRAINT имя_констрейнта ]\n"
+"{ NOT NULL | NULL | CHECK (выражение) }"
 
 #: sql_help.h:133
 msgid "define a new function"
-msgstr ""
+msgstr "создать функцию"
 
 #: sql_help.h:134
 msgid ""
@@ -1794,10 +1875,20 @@ msgid ""
 "  } ...\n"
 "    [ WITH ( attribute [, ...] ) ]"
 msgstr ""
+"CREATE [ OR REPLACE ] FUNCTION имя ( [ тип_аргумента [, ...] ] )\n"
+"    RETURNS тип_возврата\n"
+"  { LANGUAGE имя_языка\n"
+"    | IMMUTABLE | STABLE | VOLATILE\n"
+"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    | [EXTERNAL] SECURITY INVOKER | [EXTERNAL] SECURITY DEFINER\n"
+"    | AS 'определение'\n"
+"    | AS 'объектный_файл', 'символ_линковки'\n"
+"  } ...\n"
+"    [ WITH ( атрибут [, ...] ) ]"
 
 #: sql_help.h:137
 msgid "define a new user group"
-msgstr ""
+msgstr "создать группу пользователей"
 
 #: sql_help.h:138
 msgid ""
@@ -1808,10 +1899,16 @@ msgid ""
 "     SYSID gid\n"
 "   | USER  username [, ...]"
 msgstr ""
+"CREATE GROUP имя [ [ WITH ] опция [ ... ] ]\n"
+"\n"
+"где опция может быть:\n"
+"\n"
+"     SYSID gid\n"
+"   | USER  пользователь [, ...]"
 
 #: sql_help.h:141
 msgid "define a new index"
-msgstr ""
+msgstr "создать индекс"
 
 #: sql_help.h:142
 msgid ""
@@ -1819,20 +1916,25 @@ msgid ""
 "    ( { column | ( expression ) } [ opclass ] [, ...] )\n"
 "    [ WHERE predicate ]"
 msgstr ""
+"CREATE [ UNIQUE ] INDEX имя ON таблица [ USING метод ]\n"
+"    ( { колонка | ( выражение ) } [ класс_операторов ] [, ...] )\n"
+"    [ WHERE предикат ]"
 
 #: sql_help.h:145
 msgid "define a new procedural language"
-msgstr ""
+msgstr "создать новый процедурный язык"
 
 #: sql_help.h:146
 msgid ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
 "    HANDLER call_handler [ VALIDATOR valfunction ]"
 msgstr ""
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE имя\n"
+"    HANDLER обработчик [ VALIDATOR функция_валидатор ]"
 
 #: sql_help.h:149
 msgid "define a new operator class"
-msgstr ""
+msgstr "созать класс операторов"
 
 #: sql_help.h:150
 msgid ""
@@ -1842,10 +1944,15 @@ msgid ""
 "   | STORAGE storage_type\n"
 "  } [, ... ]"
 msgstr ""
+"CREATE OPERATOR CLASS имя [ DEFAULT ] FOR TYPE тип_данных USING метод_индексирования AS\n"
+"  {  OPERATOR номер_стратегии имя_оператора [ ( тип_оператора, тип_оператора ) ] [ RECHECK ]\n"
+"   | FUNCTION номер_поддержки имя_функции ( тип_аргкмента [, ...] )\n"
+"   | STORAGE тип_хранилища\n"
+"  } [, ... ]"
 
 #: sql_help.h:153
 msgid "define a new operator"
-msgstr ""
+msgstr "создать оператор"
 
 #: sql_help.h:154
 msgid ""
@@ -1859,10 +1966,19 @@ msgid ""
 "    [, LTCMP = less_than_op ] [, GTCMP = greater_than_op ]\n"
 ")"
 msgstr ""
+"CREATE OPERATOR имя (\n"
+"    PROCEDURE = имя_функции\n"
+"    [, LEFTARG = тип_слева ] [, RIGHTARG = тип_справа ]\n"
+"    [, COMMUTATOR = коммутатор_оп ] [, NEGATOR = оп_отрицания ]\n"
+"    [, RESTRICT = res_proc ] [, JOIN = join_proc ]\n"
+"    [, HASHES ] [, MERGES ]\n"
+"    [, SORT1 = оп_сортировки_слева ] [, SORT2 = оп_сортировки_справа ]\n"
+"    [, LTCMP = оп_меньше ] [, GTCMP = оп_больше ]\n"
+")"
 
 #: sql_help.h:157
 msgid "define a new rewrite rule"
-msgstr ""
+msgstr "создать новое правило перезаписи"
 
 #: sql_help.h:158
 msgid ""
@@ -1870,20 +1986,25 @@ msgid ""
 "    TO table [ WHERE condition ]\n"
 "    DO [ INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
 msgstr ""
+"CREATE [ OR REPLACE ] RULE имя AS ON событие\n"
+"    TO таблица [ WHERE условие ]\n"
+"    DO [ INSTEAD ] { NOTHING | команда | ( команда ; команда ... ) }"
 
 #: sql_help.h:161
 msgid "define a new schema"
-msgstr ""
+msgstr "создать схему"
 
 #: sql_help.h:162
 msgid ""
 "CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element [ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 msgstr ""
+"CREATE SCHEMA имя_схемы [ AUTHORIZATION пользователь ] [ элемент_схемы [ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION пользователь [ элемент_схемы [ ... ] ]"
 
 #: sql_help.h:165
 msgid "define a new sequence generator"
-msgstr ""
+msgstr "создать генератор последовательностей"
 
 #: sql_help.h:166
 msgid ""
@@ -1891,10 +2012,13 @@ msgid ""
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
 "    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 msgstr ""
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE имя [ INCREMENT [ BY ] шаг ]\n"
+"    [ MINVALUE минимум | NO MINVALUE ] [ MAXVALUE максимум | NO MAXVALUE ]\n"
+"    [ START [ WITH ] начало ] [ CACHE кэш ] [ [ NO ] CYCLE ]"
 
 #: sql_help.h:169
 msgid "define a new table"
-msgstr ""
+msgstr "создать таблицу"
 
 #: sql_help.h:170
 msgid ""
@@ -1926,21 +2050,50 @@ msgid ""
 "    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE имя_таблицы (\n"
+"    { имя_колонки тип_данных [ DEFAULT выр_по_умолчанию ] [ констрейнт_на_колонку [, ... ] ]\n"
+"    | констрейнт_на_таблицу\n"
+"    | LIKE таблица_родитель [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+")\n"
+"[ INHERITS ( таблица_родитель [, ... ] ) ]\n"
+"[ WITH OIDS | WITHOUT OIDS ]\n"
+"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"\n"
+"где констрейнт_на_колонку:\n"
+"\n"
+"[ CONSTRAINT имя_констрейнта ]\n"
+"{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
+"  CHECK (выражение) |\n"
+"  REFERENCES реф_таблица [ ( реф_колонка ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"    [ ON DELETE действие ] [ ON UPDATE действие ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"\n"
+"и констрейнт_на_таблицу:\n"
+"\n"
+"[ CONSTRAINT имя_констрейнта ]\n"
+"{ UNIQUE ( имя_колонки [, ... ] ) |\n"
+"  PRIMARY KEY ( имя_колонки [, ... ] ) |\n"
+"  CHECK ( выражение ) |\n"
+"  FOREIGN KEY ( имя_колонки [, ... ] ) REFERENCES реф_таблица [ ( реф_колонка [, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE действие ] [ ON UPDATE действие ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:173
 #: sql_help.h:349
 msgid "create a new table from the results of a query"
-msgstr ""
+msgstr "создать таблицу из результатов запроса"
 
 #: sql_help.h:174
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name [ (column_name [, ...] ) ]\n"
 "    AS query"
 msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE имя_таблицы [ (имя_колонки [, ...] ) ]\n"
+"    AS запрос"
 
 #: sql_help.h:177
 msgid "define a new trigger"
-msgstr ""
+msgstr "создать триггер"
 
 #: sql_help.h:178
 msgid ""
@@ -1948,10 +2101,13 @@ msgid ""
 "    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
 "    EXECUTE PROCEDURE funcname ( arguments )"
 msgstr ""
+"CREATE TRIGGER имя { BEFORE | AFTER } { событие [ OR ... ] }\n"
+"    ON таблица [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE имя_фунции ( аргументы )"
 
 #: sql_help.h:181
 msgid "define a new data type"
-msgstr ""
+msgstr "создать новый тип данных"
 
 #: sql_help.h:182
 msgid ""
@@ -1972,10 +2128,26 @@ msgid ""
 "    [ , DELIMITER = delimiter ]\n"
 ")"
 msgstr ""
+"CREATE TYPE имя AS\n"
+"    ( имя_атрибута тип_данных [, ... ] )\n"
+"\n"
+"CREATE TYPE имя (\n"
+"    INPUT = функция_ввода,\n"
+"    OUTPUT = функция_вывода\n"
+"    [ , RECEIVE = функция_отправки ]\n"
+"    [ , SEND = функция_получения ]\n"
+"    [ , INTERNALLENGTH = { внутр_длина | VARIABLE } ]\n"
+"    [ , PASSEDBYVALUE ]\n"
+"    [ , ALIGNMENT = выравнивание ]\n"
+"    [ , STORAGE = хранение ]\n"
+"    [ , DEFAULT = по_умолчанию ]\n"
+"    [ , ELEMENT = элемент ]\n"
+"    [ , DELIMITER = разделитель ]\n"
+")"
 
 #: sql_help.h:185
 msgid "define a new database user account"
-msgstr ""
+msgstr "создать аккаунт пользователя базы"
 
 #: sql_help.h:186
 msgid ""
@@ -1990,26 +2162,36 @@ msgid ""
 "    | IN GROUP groupname [, ...]\n"
 "    | VALID UNTIL 'abstime'"
 msgstr ""
+"CREATE USER имя [ [ WITH ] опция [ ... ] ]\n"
+"\n"
+"где опция может быть:\n"
+"    \n"
+"      SYSID uid \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'пароль'\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | IN GROUP имя_группы [, ...]\n"
+"    | VALID UNTIL 'abstime'"
 
 #: sql_help.h:189
 msgid "define a new view"
-msgstr ""
+msgstr "создать вид"
 
 #: sql_help.h:190
 msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
-msgstr ""
+msgstr "CREATE [ OR REPLACE ] VIEW имя [ ( имя_колонки [, ...] ) ] AS запрос"
 
 #: sql_help.h:193
 msgid "deallocate a prepared statement"
-msgstr ""
+msgstr "удалить заготовленную команду"
 
 #: sql_help.h:194
 msgid "DEALLOCATE [ PREPARE ] plan_name"
-msgstr ""
+msgstr "DEALLOCATE [ PREPARE ] имя_плана"
 
 #: sql_help.h:197
 msgid "define a cursor"
-msgstr ""
+msgstr "создать курсор"
 
 #: sql_help.h:198
 msgid ""
@@ -2017,14 +2199,17 @@ msgid ""
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query\n"
 "    [ FOR { READ ONLY | UPDATE [ OF column [, ...] ] } ]"
 msgstr ""
+"DECLARE имя [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR запрос\n"
+"    [ FOR { READ ONLY | UPDATE [ OF колонка [, ...] ] } ]"
 
 #: sql_help.h:201
 msgid "delete rows of a table"
-msgstr ""
+msgstr "удалить записи таблицы"
 
 #: sql_help.h:202
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
-msgstr ""
+msgstr "DELETE FROM [ ONLY ] таблица [ WHERE условие ]"
 
 #: sql_help.h:205
 msgid "remove an aggregate function"
@@ -2032,15 +2217,15 @@ msgstr "удалить агрегатную функцию"
 
 #: sql_help.h:206
 msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP AGGREGATE имя ( тип ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:209
 msgid "remove a cast"
-msgstr ""
+msgstr "удалить конверсию типов"
 
 #: sql_help.h:210
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP CAST (исходный_тип AS тип_назначения) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:213
 msgid "remove a conversion"
@@ -2048,7 +2233,7 @@ msgstr "удалить конверсию"
 
 #: sql_help.h:214
 msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP CONVERSION имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:217
 msgid "remove a database"
@@ -2060,11 +2245,11 @@ msgstr "DROP DATABASE имя"
 
 #: sql_help.h:221
 msgid "remove a domain"
-msgstr ""
+msgstr "удалить домен"
 
 #: sql_help.h:222
 msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP DOMAIN имя [, ...]  [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:225
 msgid "remove a function"
@@ -2072,11 +2257,11 @@ msgstr "удалить функцию"
 
 #: sql_help.h:226
 msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP FUNCTION функцию ( [ тип [, ...] ] ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:229
 msgid "remove a user group"
-msgstr ""
+msgstr "удалить пользовательскую группу"
 
 #: sql_help.h:230
 msgid "DROP GROUP name"
@@ -2084,27 +2269,27 @@ msgstr "DROP GROUP имя"
 
 #: sql_help.h:233
 msgid "remove an index"
-msgstr ""
+msgstr "удалить индекс"
 
 #: sql_help.h:234
 msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP INDEX имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:237
 msgid "remove a procedural language"
-msgstr ""
+msgstr "удалить процедурный язык"
 
 #: sql_help.h:238
 msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP [ PROCEDURAL ] LANGUAGE имя [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:241
 msgid "remove an operator class"
-msgstr ""
+msgstr "удалить класс операторов"
 
 #: sql_help.h:242
 msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP OPERATOR CLASS имя USING метод_индексирования [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:245
 msgid "remove an operator"
@@ -2112,19 +2297,19 @@ msgstr "удалить оператор"
 
 #: sql_help.h:246
 msgid "DROP OPERATOR name ( lefttype | NONE , righttype | NONE ) [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP OPERATOR имя ( тип_слева | NONE , тип_справа | NONE ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:249
 msgid "remove a rewrite rule"
-msgstr ""
+msgstr "удалить правило перезаписи"
 
 #: sql_help.h:250
 msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP RULE имя ON связь [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:253
 msgid "remove a schema"
-msgstr ""
+msgstr "удалить схему"
 
 #: sql_help.h:254
 msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
@@ -2136,7 +2321,7 @@ msgstr "удалить последовательность"
 
 #: sql_help.h:258
 msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP SEQUENCE имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:261
 msgid "remove a table"
@@ -2144,7 +2329,7 @@ msgstr "удалить таблицу"
 
 #: sql_help.h:262
 msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP TABLE имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:265
 msgid "remove a trigger"
@@ -2152,7 +2337,7 @@ msgstr "удалить триггер"
 
 #: sql_help.h:266
 msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
-msgstr ""
+msgstr "DROP TRIGGER имя ON таблица [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:269
 msgid "remove a data type"
@@ -2164,7 +2349,7 @@ msgstr "DROP TYPE имя [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:273
 msgid "remove a database user account"
-msgstr ""
+msgstr "удалить аккаунт пользователя базы"
 
 #: sql_help.h:274
 msgid "DROP USER name"
@@ -2184,15 +2369,15 @@ msgstr "END [ WORK | TRANSACTION ]"
 
 #: sql_help.h:285
 msgid "execute a prepared statement"
-msgstr ""
+msgstr "выполнить заготовленную команду"
 
 #: sql_help.h:286
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
-msgstr ""
+msgstr "EXECUTE имя_плана [ (параметр [, ...] ) ]"
 
 #: sql_help.h:289
 msgid "show the execution plan of a statement"
-msgstr ""
+msgstr "показать план выполнения команды"
 
 #: sql_help.h:290
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
@@ -2200,7 +2385,7 @@ msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] команда"
 
 #: sql_help.h:293
 msgid "retrieve rows from a query using a cursor"
-msgstr ""
+msgstr "показать записи из запроса используя курсор"
 
 #: sql_help.h:294
 msgid ""
@@ -2223,6 +2408,24 @@ msgid ""
 "    BACKWARD count\n"
 "    BACKWARD ALL"
 msgstr ""
+"FETCH [ направление { FROM | IN } ] имя_курсора\n"
+"\n"
+"где направление может быть пустым или одно из:\n"
+"\n"
+"    NEXT\n"
+"    PRIOR\n"
+"    FIRST\n"
+"    LAST\n"
+"    ABSOLUTE счётчик\n"
+"    RELATIVE счётчик\n"
+"    счётчик\n"
+"    ALL\n"
+"    FORWARD\n"
+"    FORWARD счётчик\n"
+"    FORWARD ALL\n"
+"    BACKWARD\n"
+"    BACKWARD счётчик\n"
+"    BACKWARD ALL"
 
 #: sql_help.h:297
 msgid "define access privileges"
@@ -2251,20 +2454,42 @@ msgid ""
 "    ON SCHEMA schemaname [, ...]\n"
 "    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
 msgstr ""
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] имя_таблицы [, ...]\n"
+"    TO { пользователь | GROUP имя_группы | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE имя_базы [, ...]\n"
+"    TO { пользователь | GROUP имя_группы | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ([type, ...]) [, ...]\n"
+"    TO { пользователь | GROUP имя_группы | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE имя_языка [, ...]\n"
+"    TO { пользователь | GROUP имя_группы | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA имя_схемы [, ...]\n"
+"    TO { пользователь | GROUP имя_группы | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
 
 #: sql_help.h:301
 msgid "create new rows in a table"
-msgstr ""
+msgstr "создать запись в таблице"
 
 #: sql_help.h:302
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
 msgstr ""
+"INSERT INTO таблица [ ( колонка [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { выражение | DEFAULT } [, ...] ) | запрос }"
 
 #: sql_help.h:305
 msgid "listen for a notification"
-msgstr ""
+msgstr "слушать и ждать оповещения"
 
 #: sql_help.h:306
 msgid "LISTEN name"
@@ -2272,15 +2497,15 @@ msgstr "LISTEN имя"
 
 #: sql_help.h:309
 msgid "load or reload a shared library file"
-msgstr ""
+msgstr "загрузить или перезагрузить файл shared-библиотеки"
 
 #: sql_help.h:310
 msgid "LOAD 'filename'"
-msgstr ""
+msgstr "LOAD 'имя_файла'"
 
 #: sql_help.h:313
 msgid "lock a table"
-msgstr ""
+msgstr "заблокировать таблицу"
 
 #: sql_help.h:314
 msgid ""
@@ -2291,18 +2516,24 @@ msgid ""
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 msgstr ""
+"LOCK [ TABLE ] имя [, ...] [ IN режим_блокировки MODE ]\n"
+"\n"
+"где режим_блокировки один из:\n"
+"\n"
+"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
+"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 
 #: sql_help.h:317
 msgid "position a cursor"
-msgstr ""
+msgstr "установить курсор"
 
 #: sql_help.h:318
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
-msgstr ""
+msgstr "MOVE [ направление { FROM | IN } ] имя_курсора"
 
 #: sql_help.h:321
 msgid "generate a notification"
-msgstr ""
+msgstr "сгенерировать оповещение"
 
 #: sql_help.h:322
 msgid "NOTIFY name"
@@ -2310,15 +2541,15 @@ msgstr "NOTIFY имя"
 
 #: sql_help.h:325
 msgid "prepare a statement for execution"
-msgstr ""
+msgstr "приготовить команду для запуска"
 
 #: sql_help.h:326
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
-msgstr ""
+msgstr "PREPARE имя_плана [ (тип_данных [, ...] ) ] AS команда"
 
 #: sql_help.h:329
 msgid "rebuild indexes"
-msgstr ""
+msgstr "перестроить индексы"
 
 #: sql_help.h:330
 msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
@@ -2326,7 +2557,7 @@ msgstr "REINDEX { DATABASE | TABLE | INDEX } имя [ FORCE ]"
 
 #: sql_help.h:333
 msgid "restore the value of a run-time parameter to the default value"
-msgstr ""
+msgstr "восстановить значение параметра выполнения в начальное значение"
 
 #: sql_help.h:334
 msgid ""
@@ -2373,6 +2604,36 @@ msgid ""
 "    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] имя_таблицы [, ...]\n"
+"    FROM { пользователь | GROUP имя_группы | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE имя_базы [, ...]\n"
+"    FROM { пользователь | GROUP имя_группы | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION имя_фунции ([тип, ...]) [, ...]\n"
+"    FROM { пользователь | GROUP имя_группы | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE имя_языка [, ...]\n"
+"    FROM { пользователь | GROUP имя_группы | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA имя_схемы [, ...]\n"
+"    FROM { пользователь | GROUP имя_группы | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:342
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
@@ -2380,7 +2641,7 @@ msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
 #: sql_help.h:345
 msgid "retrieve rows from a table or view"
-msgstr ""
+msgstr "извлечь записи из таблицы"
 
 #: sql_help.h:346
 msgid ""
@@ -2404,6 +2665,25 @@ msgid ""
 "    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
 "    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
 msgstr ""
+"SELECT [ ALL | DISTINCT [ ON ( выражение [, ...] ) ] ]\n"
+"    * | выражение [ AS имя_вывода ] [, ...]\n"
+"    [ FROM элемент_из [, ...] ]\n"
+"    [ WHERE условие ]\n"
+"    [ GROUP BY выражение [, ...] ]\n"
+"    [ HAVING условие [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] подзапрос ]\n"
+"    [ ORDER BY выражение [ ASC | DESC | USING оператор ] [, ...] ]\n"
+"    [ LIMIT { счётчик | ALL } ]\n"
+"    [ OFFSET начало ]\n"
+"    [ FOR UPDATE [ OF имя_таблицы [, ...] ] ]\n"
+"\n"
+"где элемент_из может быть один из:\n"
+"\n"
+"    [ ONLY ] имя_таблицы [ * ] [ [ AS ] алиас [ ( алиас_колонки [, ...] ) ] ]\n"
+"    ( подзапрос ) [ AS ] алиас [ ( алиас_колонки [, ...] ) ]\n"
+"    имя_функции ( [ аргумент [, ...] ] ) [ AS ] алиас [ ( алиас_колонки [, ...] | определение_колонки [, ...] ) ]\n"
+"    имя_функции ( [ аргумент [, ...] ] ) AS ( определение_колонки [, ...] )\n"
+"    элемент_из [ NATURAL ] тип_join элемент_из [ ON условие_join | USING ( колонка_join [, ...] ) ]"
 
 #: sql_help.h:350
 msgid ""
@@ -2420,28 +2700,42 @@ msgid ""
 "    [ OFFSET start ]\n"
 "    [ FOR UPDATE [ OF tablename [, ...] ] ]"
 msgstr ""
+"SELECT [ ALL | DISTINCT [ ON ( выражение [, ...] ) ] ]\n"
+"    * | выражение [ AS имя_вывода ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] новая_таблица\n"
+"    [ FROM элемент_из [, ...] ]\n"
+"    [ WHERE условие ]\n"
+"    [ GROUP BY выражение [, ...] ]\n"
+"    [ HAVING условие [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] подзапрос ]\n"
+"    [ ORDER BY выражение [ ASC | DESC | USING оператор ] [, ...] ]\n"
+"    [ LIMIT { счётчик | ALL } ]\n"
+"    [ OFFSET начало ]\n"
+"    [ FOR UPDATE [ OF имя_таблицы [, ...] ] ]"
 
 #: sql_help.h:353
 msgid "change a run-time parameter"
-msgstr ""
+msgstr "изменение параметра среды выполнения"
 
 #: sql_help.h:354
 msgid ""
 "SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
 msgstr ""
+"SET [ SESSION | LOCAL ] имя { TO | = } { значение | 'значение' | DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { временная_зона | LOCAL | DEFAULT }"
 
 #: sql_help.h:357
 msgid "set the constraint mode of the current transaction"
-msgstr ""
+msgstr "установить режим ограничений текущей транзанции"
 
 #: sql_help.h:358
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
-msgstr ""
+msgstr "SET CONSTRAINTS { ALL | имя [, ...] } { DEFERRED | IMMEDIATE }"
 
 #: sql_help.h:361
 msgid "set the session user identifier and the current user identifier of the current session"
-msgstr ""
+msgstr "установить идентификатор пользователя сессии и текущий идентификатор пользователя текущей сессии"
 
 #: sql_help.h:362
 msgid ""
@@ -2449,10 +2743,13 @@ msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 msgstr ""
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION пользователь\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
+"RESET SESSION AUTHORIZATION"
 
 #: sql_help.h:365
 msgid "set the characteristics of the current transaction"
-msgstr ""
+msgstr "установить характеристики текущей транзакции"
 
 #: sql_help.h:366
 msgid ""
@@ -2461,10 +2758,14 @@ msgid ""
 "SET SESSION CHARACTERISTICS AS TRANSACTION\n"
 "    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]"
 msgstr ""
+"SET TRANSACTION\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION\n"
+"    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]"
 
 #: sql_help.h:369
 msgid "show the value of a run-time parameter"
-msgstr ""
+msgstr "показать значение параметра среды выполнения"
 
 #: sql_help.h:370
 msgid ""
@@ -2476,11 +2777,11 @@ msgstr ""
 
 #: sql_help.h:374
 msgid "START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]"
-msgstr ""
+msgstr "START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | READ ONLY ]"
 
 #: sql_help.h:377
 msgid "empty a table"
-msgstr ""
+msgstr "очистить таблицу"
 
 #: sql_help.h:378
 msgid "TRUNCATE [ TABLE ] name"
@@ -2488,7 +2789,7 @@ msgstr "TRUNCATE [ TABLE ] имя"
 
 #: sql_help.h:381
 msgid "stop listening for a notification"
-msgstr ""
+msgstr "прекратить прослушивание в ожидании оповещения"
 
 #: sql_help.h:382
 msgid "UNLISTEN { name | * }"
@@ -2496,7 +2797,7 @@ msgstr "UNLISTEN { имя | * }"
 
 #: sql_help.h:385
 msgid "update rows of a table"
-msgstr ""
+msgstr "обновить записи таблицы"
 
 #: sql_help.h:386
 msgid ""
@@ -2504,6 +2805,9 @@ msgid ""
 "    [ FROM fromlist ]\n"
 "    [ WHERE condition ]"
 msgstr ""
+"UPDATE [ ONLY ] таблица SET колонка = { выражение | DEFAULT } [, ...]\n"
+"    [ FROM список_from ]\n"
+"    [ WHERE условие ]"
 
 #: sql_help.h:389
 msgid "garbage-collect and optionally analyze a database"
