@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.11 2000/07/21 14:51:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.12 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -173,7 +173,7 @@ postmaster [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -D <re
 	environment variable, or if <envar>PGPORT</envar>
 	is not set, then defaults to the value established when Postgres was
 	compiled (normally 5432).  If you specify a port other than the
-	default port then all frontend applications (including
+	default port, then all frontend applications (including
 	<application>psql</application>) must specify the same
 	port using either command-line options or
 	<envar>PGPORT</envar>.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.11 2000/05/02 20:02:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.12 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -148,7 +148,7 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
       <listitem>
        <para>
 	By default, when <application>initdb</application>
-	determines that error prevent it from completely creating the database
+	determines that an error prevented it from completely creating the database
 	system, it removes any files it may have created before determining
 	that it can't finish the job. This option inhibits any tidying-up and is
 	thus useful for debugging.
@@ -212,7 +212,7 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
    database.  When you create a new database, everything in the
    <literal>template1</literal> database is copied.
    It contains catalog tables filled in for things like the
-   builtin types.
+   built-in types.
   </para>
 
   <para>
@@ -220,7 +220,8 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
    because you cannot run the database server as root either, but the
    server needs to have access to the files <application>initdb</application>
    creates. Furthermore, during the initialization phase, when there are no
-   users and no access controls installed, postgres will only connect with
+   users and no access controls installed, <productname>Postgres</productname>
+   will only connect with
    the name of the current Unix user, so you must log in under the account
    that will own the server process.
   </para>

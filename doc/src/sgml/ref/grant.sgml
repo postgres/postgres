@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.8 2000/04/09 12:14:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.9 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -161,7 +161,7 @@ GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...] ON <replace
       </term>
       <listitem>
        <para>
-	The name of a user to whom grant privileges. PUBLIC is a short form
+	The name of a user to whom to grant privileges. PUBLIC is a short form
 	representing all users.
        </para>
       </listitem>
@@ -242,7 +242,7 @@ ERROR:  ChangeAcl: class "<replaceable class="PARAMETER">object</replaceable>" n
 
    <para>
     Currently, to grant privileges in <productname>Postgres</productname>
-    to only few columns, you must
+    to only a few columns, you must
     create a view having desired columns and then grant privileges
     to that view.
    </para>
@@ -325,7 +325,7 @@ GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...]
    </para>
 
    <para>
-    Fields are compatible with the those in the <acronym>Postgres</acronym>
+    Fields are compatible with those in the <acronym>Postgres</acronym>
     implementation, with the following additions:
 
     <variablelist>

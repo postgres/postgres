@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.15 2000/09/12 20:52:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.16 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -305,7 +305,7 @@ ERROR: Cannot create index: 'index_name' already exists.
       <literal>bigbox_ops</literal> both support rtree indices on the
       <literal>box</literal> data type.
       The difference between them is that <literal>bigbox_ops</literal>
-      scales box coordinates down, to avoid floating point exceptions from
+      scales box coordinates down, to avoid floating-point exceptions from
       doing multiplication, addition, and subtraction on very large
       floating-point coordinates.  If the field on which your rectangles lie
       is about 20,000 units square or larger, you should use

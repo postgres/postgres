@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.4 1999/08/06 13:50:30 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.5 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -80,7 +80,7 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
    <itemizedlist mark="bullet" spacing="compact">
     <listitem>
      <para>
-      Opens any database on a specified host at the specified port,
+      Open any database on a specified host at the specified port,
       username and password.
      </para>
     </listitem>
@@ -93,7 +93,7 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
 
     <listitem>
      <para>
-      Saves preferences in <filename>~/.pgaccessrc</filename> file.
+      Save preferences in <filename>~/.pgaccessrc</filename> file.
      </para>
     </listitem>
    </itemizedlist>
@@ -213,10 +213,10 @@ pgaccess [ <replaceable class="parameter">dbname</replaceable> ]
 
     <listitem>
      <para>
-      Execute with optional user input parameters; e.g.
+      Execute with optional user input parameters; e.g.,
       <programlisting>
 select * from invoices where year=[parameter "Year of selection"]
-      </programlisting>
+      </programlisting>.
      </para>
     </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.32 2000/07/22 04:30:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.33 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -321,7 +321,7 @@ WHERE <replaceable class="PARAMETER">boolean_expr</replaceable>
     where <replaceable class="PARAMETER">cond_op</replaceable>
     can be one of: =, &lt;, &lt;=, &gt;, &gt;= or &lt;&gt;,
     a conditional operator like ALL, ANY, IN, LIKE, or a
-    locally-defined operator, 
+    locally defined operator, 
     and <replaceable class="PARAMETER">log_op</replaceable> can be one 
     of: AND, OR, NOT.
     SELECT will ignore all rows for which the WHERE condition does not return
@@ -584,7 +584,7 @@ SELECT name FROM distributors ORDER BY code;
    <para>
     When using LIMIT, it is a good idea to use an ORDER BY clause that
     constrains the result rows into a unique order.  Otherwise you will get
-    an unpredictable subset of the query's rows --- you may be asking for
+    an unpredictable subset of the query's rows---you may be asking for
     the tenth through twentieth rows, but tenth through twentieth in what
     ordering?  You don't know what ordering, unless you specified ORDER BY.
    </para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.66 2000/09/29 18:21:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.67 2000/10/05 19:48:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,7 +522,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'restrict_clauses' are the RestrictInfo nodes to apply at the join
  * 'hashclauses' is a list of the hash join clause (always a 1-element list)
  *		(this should be a subset of the restrict_clauses list)
- * 'innerdisbursion' is an estimate of the disbursion of the inner hash key
+ * 'innerdispersion' is an estimate of the dispersion of the inner hash key
  *
  */
 HashPath   *
@@ -532,7 +532,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 					 Path *inner_path,
 					 List *restrict_clauses,
 					 List *hashclauses,
-					 Selectivity innerdisbursion)
+					 Selectivity innerdispersion)
 {
 	HashPath   *pathnode = makeNode(HashPath);
 
@@ -550,7 +550,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 				  outer_path,
 				  inner_path,
 				  restrict_clauses,
-				  innerdisbursion);
+				  innerdispersion);
 
 	return pathnode;
 }

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.21 2000/10/05 16:57:23 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.22 2000/10/05 19:48:16 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ APPLICATIONS= createdb.sgml createlang.sgml createuser.sgml \
 	pgaccess-ref.sgml \
 	pgadmin-ref.sgml \
 	pg-config-ref.sgml \
-	pgctl-ref.sgml \
+	pg_ctl-ref.sgml \
 	pgtclsh.sgml \
 	pgtksh.sgml \
 	postgres-ref.sgml \

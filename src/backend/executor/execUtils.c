@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.66 2000/09/12 21:06:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.67 2000/10/05 19:48:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,7 +567,7 @@ ExecSetTypeInfo(int index,
 
 	att->atttypid = typeID;
 	att->attdefrel = 0;			/* dummy value */
-	att->attdisbursion = 0;		/* dummy value */
+	att->attdispersion = 0;		/* dummy value */
 	att->atttyparg = 0;			/* dummy value */
 	att->attlen = attLen;
 	att->attnum = attNum;

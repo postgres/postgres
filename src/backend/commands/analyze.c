@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.6 2000/09/06 14:15:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.7 2000/10/05 19:48:22 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -439,13 +439,13 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 			float4	selratio;	/* average ratio of rows selected
 								 * for a random constant */
 
-			/* Compute disbursion */
+			/* Compute dispersion */
 			if (stats->nonnull_cnt == 0 && stats->null_cnt == 0)
 			{
 
 				/*
 				 * empty relation, so put a dummy value in
-				 * attdisbursion
+				 * attdispersion
 				 */
 				selratio = 0;
 			}
@@ -455,9 +455,9 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 				 * looks like we have a unique-key attribute --- flag
 				 * this with special -1.0 flag value.
 				 *
-				 * The correct disbursion is 1.0/numberOfRows, but since
+				 * The correct dispersion is 1.0/numberOfRows, but since
 				 * the relation row count can get updated without
-				 * recomputing disbursion, we want to store a
+				 * recomputing dispersion, we want to store a
 				 * "symbolic" value and figure 1.0/numberOfRows on the
 				 * fly.
 				 */
@@ -499,7 +499,7 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 			}
 
 			/* overwrite the existing statistics in the tuple */
-			attp->attdisbursion = selratio;
+			attp->attdispersion = selratio;
 
 			/* invalidate the tuple in the cache and write the buffer */
 			RelationInvalidateHeapTuple(ad, atup);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.49 2000/09/12 21:12:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.50 2000/10/05 19:48:19 momjian Exp $
 Postgres documentation
 -->
 
@@ -236,13 +236,13 @@ SELECT setseed(<replaceable>value</replaceable>);
       <term>TIMEZONE</term>
       <listitem>
        <para>
-	The possible values for timezone depends on your operating
+	The possible values for time zone depends on your operating
 	system. For example, on Linux
 	<filename>/usr/share/zoneinfo</filename> contains the database
 	of time zones.
        </para>
        <para>
-	Here are some valid values for timezone:
+	Here are some valid values for time zone:
 				
 	<variablelist>
 	 <varlistentry>
@@ -362,7 +362,7 @@ SELECT setseed(<replaceable>value</replaceable>);
 SET DATESTYLE TO Postgres,European;
 </screen>
 
-   Set the timezone for Berkeley, California, using double quotes to
+   Set the time zone for Berkeley, California, using double quotes to
    preserve the uppercase attributes of the time zone specifier (note
    that the date/time format is ISO here):
 
@@ -375,7 +375,7 @@ SELECT CURRENT_TIMESTAMP AS today;
  1998-03-31 07:41:21-08
 </screen>
 
-   Set the timezone for Italy (note the required single or double quotes to handle 
+   Set the time zone for Italy (note the required single or double quotes to handle 
    the special characters):
 
 <screen> 

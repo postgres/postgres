@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.12 2000/07/22 04:30:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.13 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -42,7 +42,7 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
       <listitem>
        <para>
 	<replaceable class="PARAMETER">selector</replaceable>
-	defines the fetch direction. It can be one
+	defines the fetch direction. It can be one of
 	the following:
 
 	<variablelist>
@@ -88,7 +88,7 @@ FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</repl
 	  <term><replaceable class="PARAMETER">#</replaceable></term>
 	  <listitem>
 	   <para>
-	    A signed integer that specify how many rows to fetch.
+	    A signed integer that specifies how many rows to fetch.
 	    Note that a negative integer is equivalent to changing the sense of
 	    FORWARD and BACKWARD.
 	   </para>
@@ -190,7 +190,7 @@ ERROR:  FETCH/RELATIVE at current position is not supported
 	<acronym>SQL92</acronym> allows one to repetitively retrieve the cursor
 	at its "current position" using the syntax
 	<synopsis>
-FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
+FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>.
 	</synopsis>
        </para>
 
@@ -198,7 +198,7 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
 	<productname>Postgres</productname> does not currently support
 	this notion; in fact the value zero is reserved to indicate that
 	all rows should be retrieved and is equivalent to specifying the ALL keyword.
-	If the RELATIVE keyword has been used, the <productname>Postgres</productname> 
+	If the RELATIVE keyword has been used, <productname>Postgres</productname> 
 	assumes that the user intended <acronym>SQL92</acronym> behavior
 	and returns this error message.
        </para>
@@ -295,7 +295,7 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
    The following examples traverses a table using a cursor.
 
 <programlisting>
--- set up and use a cursor:
+-- Set up and use a cursor:
 
 BEGIN WORK;
 DECLARE liahona CURSOR FOR SELECT * FROM films;

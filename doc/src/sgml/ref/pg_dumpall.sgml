@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.9 2000/07/21 18:51:24 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -106,7 +106,7 @@ pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replac
       <term>-v</term>
       <listitem>
        <para>
-	Specifies verbose mode
+	Specifies verbose mode.
        </para>
       </listitem>
      </varlistentry>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.63 2000/08/06 04:39:33 tgl Exp $
+ * $Id: pg_attribute.h,v 1.64 2000/10/05 19:48:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -54,15 +54,15 @@ CATALOG(pg_attribute) BOOTSTRAP
 	 * Postgres will fail.
 	 */
 
-	float4		attdisbursion;
+	float4		attdispersion;
 
 	/*
-	 * attdisbursion is the disbursion statistic of the column (0.0 to
+	 * attdispersion is the dispersion statistic of the column (0.0 to
 	 * 1.0), or zero if the statistic has not been calculated, or -1.0 if
 	 * VACUUM found that the column contains no duplicate entries (in
-	 * which case the disbursion should be taken as 1.0/numberOfRows for
+	 * which case the dispersion should be taken as 1.0/numberOfRows for
 	 * the current table size).  The -1.0 hack is useful because the
-	 * number of rows may be updated more often than attdisbursion is. We
+	 * number of rows may be updated more often than attdispersion is. We
 	 * assume that the column will retain its no-duplicate-entry property.
 	 * (Perhaps this should be driven off the existence of a UNIQUE index
 	 * for the column, instead of being a statistical guess?)
@@ -178,7 +178,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 #define Anum_pg_attribute_attrelid		1
 #define Anum_pg_attribute_attname		2
 #define Anum_pg_attribute_atttypid		3
-#define Anum_pg_attribute_attdisbursion 4
+#define Anum_pg_attribute_attdispersion 4
 #define Anum_pg_attribute_attlen		5
 #define Anum_pg_attribute_attnum		6
 #define Anum_pg_attribute_attnelems		7
@@ -381,7 +381,7 @@ DATA(insert OID = 0 ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1249, {"attrelid"},	  26, 0,	4,	1, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attname"},	  19, 0, NAMEDATALEN,	2, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
 { 1249, {"atttypid"},	  26, 0,	4,	3, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
-{ 1249, {"attdisbursion"}, 700, 0,	4,	4, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
+{ 1249, {"attdispersion"}, 700, 0,	4,	4, 0, -1, -1, '\0', 'p', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attlen"},		  21, 0,	2,	5, 0, -1, -1, '\001', 'p', '\0', 's', '\0', '\0' }, \
 { 1249, {"attnum"},		  21, 0,	2,	6, 0, -1, -1, '\001', 'p', '\0', 's', '\0', '\0' }, \
 { 1249, {"attnelems"},	  23, 0,	4,	7, 0, -1, -1, '\001', 'p', '\0', 'i', '\0', '\0' }, \
@@ -397,7 +397,7 @@ DATA(insert OID = 0 ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1249 attrelid			26 0  4   1 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1249 attname			19 0 NAMEDATALEN  2 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1249 atttypid			26 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 attdisbursion   700 0  4   4 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1249 attdispersion   700 0  4   4 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1249 attlen			21 0  2   5 0 -1 -1 t p f s f f));
 DATA(insert OID = 0 ( 1249 attnum			21 0  2   6 0 -1 -1 t p f s f f));
 DATA(insert OID = 0 ( 1249 attnelems		23 0  4   7 0 -1 -1 t p f i f f));

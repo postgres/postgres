@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.1 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.2 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -80,7 +80,7 @@ semget: No space left on device
    is running, the shared memory and semaphores allocated by the
    <application>postmaster</application>
    will be deleted.  This will result in a general failure of the
-   backends servers started by that
+   backend servers started by that
    <application>postmaster</application>.
   </para>
 

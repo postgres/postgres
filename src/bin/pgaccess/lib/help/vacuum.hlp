@@ -17,7 +17,7 @@ VACUUM \[ VERBOSE \] ANALYZE \[ table \[ (column \[, ...\] ) \] \]
 	Prints a detailed vacuum activity report for each table. 
 
 " {} "ANALYZE" {italic} "
-	Updates column statistics used by the optimizer to determine the most efficient way to execute a query. The statistics represent the disbursion of the data in each column. This information is valuable when several execution paths are possible. 
+	Updates column statistics used by the optimizer to determine the most efficient way to execute a query. The statistics represent the dispersion of the data in each column. This information is valuable when several execution paths are possible. 
 
 " {} "table" {italic} "
 	The name of a specific table to vacuum. Defaults to all tables. 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.9 2000/06/28 03:30:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -40,7 +40,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <term><replaceable class="parameter">cursorname</replaceable></term>
       <listitem>
        <para>
-	The name of the cursor to be used in subsequent FETCH operations..
+	The name of the cursor to be used in subsequent FETCH operations.
        </para>
       </listitem>
      </varlistentry>
@@ -96,7 +96,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
       <listitem>
        <para>
 	<acronym>SQL92</acronym> keyword indicating that the cursor will be used
-	in a readonly mode. Since this is the only cursor access mode
+	in a read only mode. Since this is the only cursor access mode
 	available in <productname>Postgres</productname> this keyword has no effect.
        </para>
       </listitem>
@@ -227,7 +227,7 @@ ERROR:  Named portals may only be used in begin/end transaction blocks
    and <emphasis><productname>Postgres</productname> does not resolve
     byte ordering or representation issues for binary cursors</emphasis>.
    Therefore, if your client machine and server machine use different
-   representations (e.g. "big-endian" versus "little-endian"),
+   representations (e.g., "big-endian" versus "little-endian"),
    you will probably not want your data returned in
    binary format.
    However, binary cursors may be a
@@ -306,7 +306,7 @@ DECLARE liahona CURSOR
     interactively.
     <acronym>SQL92</acronym> allows embedded or modular cursors to
     update database information.
-    All <productname>Postgres</productname> cursors are readonly.
+    All <productname>Postgres</productname> cursors are read only.
     The BINARY keyword is a <productname>Postgres</productname> extension.
    </para>
   </refsect2>

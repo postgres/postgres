@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.126 2000/07/14 22:17:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.127 2000/10/05 19:48:21 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -305,7 +305,7 @@ ConstructTupleDescriptor(Oid heapoid,
 		 */
 		((Form_pg_attribute) to)->attnum = i + 1;
 
-		((Form_pg_attribute) to)->attdisbursion = 0.0;
+		((Form_pg_attribute) to)->attdispersion = 0.0;
 		((Form_pg_attribute) to)->attnotnull = false;
 		((Form_pg_attribute) to)->atthasdef = false;
 		((Form_pg_attribute) to)->attcacheoff = -1;

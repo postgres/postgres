@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.57 2000/09/29 18:21:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.58 2000/10/05 19:48:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static void hash_inner_and_outer(Query *root, RelOptInfo *joinrel,
 								 List *restrictlist, JoinType jointype);
 static Path *best_innerjoin(List *join_paths, List *outer_relid,
 							JoinType jointype);
-static Selectivity estimate_disbursion(Query *root, Var *var);
+static Selectivity estimate_dispersion(Query *root, Var *var);
 static List *select_mergejoin_clauses(RelOptInfo *joinrel,
 									  RelOptInfo *outerrel,
 									  RelOptInfo *innerrel,
@@ -637,7 +637,7 @@ hash_inner_and_outer(Query *root,
 				   *right,
 				   *inner;
 		List	   *hashclauses;
-		Selectivity innerdisbursion;
+		Selectivity innerdispersion;
 
 		if (restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
@@ -667,8 +667,8 @@ hash_inner_and_outer(Query *root,
 		/* always a one-element list of hash clauses */
 		hashclauses = makeList1(restrictinfo);
 
-		/* estimate disbursion of inner var for costing purposes */
-		innerdisbursion = estimate_disbursion(root, inner);
+		/* estimate dispersion of inner var for costing purposes */
+		innerdispersion = estimate_dispersion(root, inner);
 
 		/*
 		 * We consider both the cheapest-total-cost and
@@ -682,7 +682,7 @@ hash_inner_and_outer(Query *root,
 									  innerrel->cheapest_total_path,
 									  restrictlist,
 									  hashclauses,
-									  innerdisbursion));
+									  innerdispersion));
 		if (outerrel->cheapest_startup_path != outerrel->cheapest_total_path)
 			add_path(joinrel, (Path *)
 					 create_hashjoin_path(joinrel,
@@ -691,7 +691,7 @@ hash_inner_and_outer(Query *root,
 										  innerrel->cheapest_total_path,
 										  restrictlist,
 										  hashclauses,
-										  innerdisbursion));
+										  innerdispersion));
 	}
 }
 
@@ -759,7 +759,7 @@ best_innerjoin(List *join_paths, Relids outer_relids, JoinType jointype)
 }
 
 /*
- * Estimate disbursion of the specified Var
+ * Estimate dispersion of the specified Var
  *
  * We use a default of 0.1 if we can't figure out anything better.
  * This will typically discourage use of a hash rather strongly,
@@ -768,7 +768,7 @@ best_innerjoin(List *join_paths, Relids outer_relids, JoinType jointype)
  * seem much worse).
  */
 static Selectivity
-estimate_disbursion(Query *root, Var *var)
+estimate_dispersion(Query *root, Var *var)
 {
 	Oid			relid;
 
@@ -780,7 +780,7 @@ estimate_disbursion(Query *root, Var *var)
 	if (relid == InvalidOid)
 		return 0.1;
 
-	return (Selectivity) get_attdisbursion(relid, var->varattno, 0.1);
+	return (Selectivity) get_attdispersion(relid, var->varattno, 0.1);
 }
 
 /*

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.18 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.19 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -71,7 +71,7 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <listitem>
        <para>
 	Any SQL WHERE clause, <literal>new</literal> or
-	<literal>old</literal> can appear instead of an instance
+	<literal>old</literal>, can appear instead of an instance
 	variable whenever an instance variable is permissible in SQL.
        </para>
       </listitem>
@@ -81,7 +81,7 @@ CREATE RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable
       <listitem>
        <para>
 	Any SQL statement, <literal>new</literal> or
-	<literal>old</literal> can appear instead of an instance
+	<literal>old</literal>, can appear instead of an instance
 	variable whenever an instance variable is permissible in SQL.
        </para>
       </listitem>
@@ -133,7 +133,7 @@ CREATE
 
   <para>
    The semantics of a rule is that at the time an individual instance is
-   accessed, inserted, updated, or deleted, there is a old instance (for
+   accessed, inserted, updated, or deleted, there is an old instance (for
    selects, updates and deletes) and a new instance (for inserts and
   updates).
   If the <replaceable class="parameter">event</replaceable>
@@ -190,7 +190,7 @@ ON UPDATE TO emp-1.salary WHERE emp-2.name = "Joe"
     <replaceable class="parameter">condition</replaceable> part of the rule
     occurs. Alternately, the
     <replaceable class="parameter">action</replaceable> part will be done
-    instead of the user command. In this later case, the
+    instead of the user command. In this latter case, the
     <replaceable class="parameter">action</replaceable> can be the keyword
     <literal>NOTHING</literal>.
    </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.14 2000/09/12 20:52:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.15 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -237,7 +237,7 @@ CREATE
    in  which  case Postgres assumes that the new type has the
    same format
    as the Postgres-supplied  data  type, "<literal>text</literal>".
-   To  indicate that a type is variable-length, set
+   To  indicate that a type is variable length, set
    <replaceable class="parameter">internallength</replaceable>
    to <option>VARIABLE</option>.
    The external representation is  similarly specified using the
@@ -249,7 +249,7 @@ CREATE
    To indicate that a type is an array and to indicate that a
    type has array elements, indicate the type  of  the  array
    element using the element keyword.  For example, to define
-   an array of 4 byte integers ("int4"), specify
+   an array of 4-byte integers ("int4"), specify
    <programlisting>ELEMENT = int4</programlisting>
   </para>
 

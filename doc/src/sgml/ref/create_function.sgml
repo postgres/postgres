@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.17 2000/08/25 15:17:50 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.18 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -60,7 +60,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	The data type(s) of the function's arguments, if any.
 	The input types may be base or complex types, or
 	<firstterm>opaque</firstterm>.
-	<literal>opaque</literal> indicates that the function
+	<literal>Opaque</literal> indicates that the function
 	accepts arguments of a non-SQL type such as <type>char *</type>.
        </para>
       </listitem>
@@ -71,7 +71,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
        <para>
 	The return data type.
 	The output type may be specified as a base type, complex type, 
-	<option>setof <replaceable class="parameter">type</replaceable></option>,
+	<option>setof type</option>,
 	or <option>opaque</option>.
 	The <option>setof</option>
 	modifier indicates that the function will return a set of items,
@@ -103,7 +103,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       <listitem>
        <para>
 	This form of the <command>AS</command> clause is used for
-	dynamically-linked, C language functions when the function name in
+	dynamically linked, C language functions when the function name in
 	the C language source code is not the same as the name of the SQL
 	function. The string <replaceable
 	class="parameter">obj_file</replaceable> is the name of the file
@@ -118,7 +118,7 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
       <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
-	may be '<literal>sql</literal>',
+	May be '<literal>sql</literal>',
 	'<literal>C</literal>', '<literal>newC</literal>',
 	'<literal>internal</literal>', '<literal>newinternal</literal>',
 	or '<replaceable class="parameter">plname</replaceable>',
@@ -189,7 +189,7 @@ CREATE
       <term>iscachable</term>
       <listitem>
        <para>
-	<option>iscachable</option> indicates that the function always
+	<option>Iscachable</option> indicates that the function always
 	returns the same result when given the same argument values (i.e.,
 	it does not do database lookups or otherwise use information not
 	directly present in its parameter list).  The optimizer uses
@@ -243,7 +243,7 @@ CREATE
    <para>
     The full <acronym>SQL92</acronym> type syntax is allowed for
     input arguments and return value. However, some details of the
-    type specification (e.g. the precision field for
+    type specification (e.g., the precision field for
     <type>numeric</type> types) are the responsibility of the
     underlying function implementation and are silently swallowed
     (i.e., not recognized or
@@ -263,7 +263,7 @@ CREATE
     errors at link time.  To get around that, give them different C names
     (for example, use the argument types as part of the C names), then
     specify those names in the AS clause of <command>CREATE FUNCTION</command>.
-    If the AS clause is left empty then <command>CREATE FUNCTION</command>
+    If the AS clause is left empty, then <command>CREATE FUNCTION</command>
     assumes the C name of the function is the same as the SQL name.
    </para>
 
@@ -322,7 +322,7 @@ CREATE TABLE product (
 
   <para>
    This example creates a function that does type conversion between the
-   user defined type complex, and the internal type point.  The
+   user-defined type complex, and the internal type point.  The
    function is implemented by a dynamically loaded object that was
    compiled from C source. For <productname>Postgres</productname> to
    find a type conversion function automatically, the sql function has

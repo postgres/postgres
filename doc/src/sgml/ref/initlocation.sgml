@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.9 2000/05/26 15:47:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -80,7 +80,7 @@ initlocation <replaceable class="parameter">directory</replaceable>
   </para>
   <para>
    In order to use this command you must be logged in (using 'su', for example)
-   the database superuser.
+   as the database superuser.
   </para>
  </refsect1>
 

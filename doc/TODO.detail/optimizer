@@ -518,7 +518,7 @@ cat << \SHAR_EOF > 'selfuncs.c.diff'
   		{
   			float32data nvals;
   
-  			nvals = getattdisbursion(relid, (int) attno);
+  			nvals = getattdispersion(relid, (int) attno);
 ! 			if (nvals == 0)
   				*result = 1.0 / 3.0;
   			else
@@ -534,7 +534,7 @@ cat << \SHAR_EOF > 'selfuncs.c.diff'
   		{
   			float32data nvals;
   
-  			nvals = getattdisbursion(relid, (int) attno);
+  			nvals = getattdispersion(relid, (int) attno);
 ! 			if (nvals == 0) {
   				*result = 1.0 / 3.0;
 + 			}
@@ -1059,7 +1059,7 @@ From owner-pgsql-hackers@hub.org Thu Jan 20 18:45:32 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA00672
 	for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:45:30 -0500 (EST)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.14 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.15 $) with ESMTP id TAA01989 for <pgman@candle.pha.pa.us>; Thu, 20 Jan 2000 19:39:15 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id TAA00957;
 	Thu, 20 Jan 2000 19:35:19 -0500 (EST)

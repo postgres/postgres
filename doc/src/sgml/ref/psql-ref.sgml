@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.37 2000/09/27 11:56:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.38 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -72,7 +72,7 @@ Postgres documentation
     If an argument is found that does not belong to any option it will be interpreted
     as the database name (or the user name, if the database name is also
 	 given). Not all these options are required, defaults do apply.
-    If you omit the host name psql will connect via a UNIX domain socket
+    If you omit the host name psql will connect via a Unix domain socket
     to a server on the
     local host. The default port number is compile-time determined. Since the database
     server uses the same default, you will not have to specify the port in most
@@ -153,8 +153,8 @@ testdb=>
     <para>
     The format of a <application>psql</application> command is the backslash, 
     followed immediately by a command verb, then any arguments. The arguments
-    are separated from the command verb and each other by any number of white
-    space characters.
+    are separated from the command verb and each other by any number of 
+    whitespace characters.
     </para>
 
     <para>
@@ -252,7 +252,7 @@ testdb=>
 	</para>
 
 	<para>
-	If the connection attempt failed (wrong username, access denied, etc.) the
+	If the connection attempt failed (wrong username, access denied, etc.), the
 	previous connection will be kept if and only if <application>psql</application> is
 	in interactive mode. When executing a non-interactive script, processing
 	will immediately stop with an error. This distinction was chosen as a user
@@ -405,7 +405,7 @@ testdb=>
         If <replaceable class="parameter">pattern</replaceable>
         (a regular expression) is specified, only matching functions are shown.
         If the form <literal>\df+</literal> is used, additional information about
-        each function, including language and description is shown.
+        each function, including language and description, is shown.
         </para>
         </listitem>
       </varlistentry>
@@ -424,7 +424,7 @@ testdb=>
 
 	<para>
 	If <replaceable class="parameter">pattern</replaceable> is specified,
-	it is a regular expression restricts the listing to those objects
+	it is a regular expression that restricts the listing to those objects
 	whose name matches. If one appends a <quote>+</quote> to the command name,
 	each object is listed with its associated description, if any.
 	</para>
@@ -741,7 +741,7 @@ lo_import 152801
         <listitem>
         <para>
         Saves future query results to the file
-	<replaceable class="parameter">filename</replaceable> or pipe future
+	<replaceable class="parameter">filename</replaceable> or pipes future
         results into a separate Unix shell to execute
 	<replaceable class="parameter">command</replaceable>.
         If no arguments are specified, the query output will be reset to
@@ -1174,7 +1174,7 @@ Access permissions for database "test"
         <term><literal>\?</literal></term>
         <listitem>
         <para>
-        Get help information about the slash (<quote>\</quote>) commands.
+        Get help information about the backslash (<quote>\</quote>) commands.
         </para>
         </listitem>
       </varlistentry>
@@ -1288,7 +1288,7 @@ Access permissions for database "test"
       Use the file <replaceable class="parameter">filename</replaceable>
       as the source of queries instead of reading queries interactively.
       After the file is processed, <application>psql</application> terminates.
-      This in many ways equivalent to the internal command <command>\i</command>.
+      This is in many ways equivalent to the internal command <command>\i</command>.
       </para>
       <para>
       Using this option is subtly different from writing
@@ -1772,8 +1772,8 @@ bar
         documentation of the large object interface for more information.) Since
         <application>psql</application> has no way to tell if you already
         have a transaction in progress when you call one of its internal
-        commands <command>\lo_export</command>, <command>\lo_import</command>,
-        <command>\lo_unlink</command> it must take some arbitrary action. This
+        commands (<command>\lo_export</command>, <command>\lo_import</command>,
+        <command>\lo_unlink</command>) it must take some arbitrary action. This
         action could either be to roll back any transaction that might already
         be in progress, or to commit any such transaction, or to do nothing at
         all. In the last case you must provide your own
@@ -1900,7 +1900,7 @@ testdb=> <userinput>SELECT * FROM :foo;</userinput>
 
     <para>
     A popular application of this facility is to refer to the last inserted
-    <acronym>OID</acronym> in subsequent statement to build a foreign key
+    <acronym>OID</acronym> in subsequent statements to build a foreign key
     scenario.
     Another possible use of this mechanism is to copy the contents of a file
     into a field. First load the file into a variable and then proceed as above.
@@ -2021,7 +2021,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
         <term><literal>%</literal><replaceable class="parameter">digits</replaceable></term>
 	<listitem><para>
 	If <replaceable class="parameter">digits</replaceable> starts with
-        <literal>0x</literal> the rest of the characters are interpreted at a
+        <literal>0x</literal> the rest of the characters are interpreted as a
         hexadecimal digit and the character with the corresponding code is
         substituted. If the first digit is <literal>0</literal> the characters are
         interpreted as on octal number and the corresponding character is
@@ -2184,7 +2184,6 @@ peter@localhost testdb=> SELECT * FROM my_table;
 (4 rows)
 
 </programlisting>
-  Notice how the int4 columns in right aligned while the text column in left aligned.
   You can make this table look differently by using the <command>\pset</command>
   command:
 <programlisting>
@@ -2271,9 +2270,9 @@ second | four
       if you get strange messages, keep this in mind. For example
 <programlisting>
 testdb=> <userinput>\foo</userinput>
-Field separator is "oo".
+Field separator is "oo",
 </programlisting>
-      is perhaps not what one would expect.
+      which is perhaps not what one would expect.
       </para>
       </listitem>
 

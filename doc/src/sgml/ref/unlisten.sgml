@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.11 2000/07/21 04:49:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.12 2000/10/05 19:48:19 momjian Exp $
 Postgres documentation
 -->
 
@@ -72,7 +72,7 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
        </computeroutput></term>
       <listitem>
        <para>
-	Acknowledgement that statement has executed.
+	Acknowledgment that statement has executed.
        </para>
       </listitem>
      </varlistentry>
@@ -115,7 +115,7 @@ UNLISTEN { <replaceable class="PARAMETER">notifyname</replaceable> | * }
    </title>
    <para>
     <replaceable class="PARAMETER">classname</replaceable>
-    needs not to be a valid class name but can be any string valid
+    need not be a valid class name but can be any string valid
     as a name up to 32 characters long.
    </para>
    <para>

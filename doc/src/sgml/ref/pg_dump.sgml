@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.19 2000/07/22 04:45:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.20 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -69,7 +69,7 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
       <term>-c</term>
       <listitem>
        <para>
-	Clean(drop) schema prior to create.
+	Clean (drop) schema prior to create.
        </para>
       </listitem>
      </varlistentry>
@@ -171,7 +171,7 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
       <term>-v</term>
       <listitem>
        <para>
-	Specifies verbose mode
+	Specifies verbose mode.
        </para>
       </listitem>
      </varlistentry>
@@ -199,7 +199,7 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
 	Specifies the hostname of the machine on which the 
 	<application>postmaster</application>
 	is running.  Defaults to using a local Unix domain socket
-	rather than an IP connection..
+	rather than an IP connection.
        </para>
       </listitem>
      </varlistentry>

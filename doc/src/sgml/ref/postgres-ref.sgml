@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.13 2000/07/22 04:45:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.14 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -325,7 +325,7 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
        <para>
 	Indicates to the backend server that it has been started by a 
 	<application>postmaster</application>
-	and make different assumptions about buffer pool management, file
+	and makes different assumptions about buffer pool management, file
 	descriptors, etc.  Switches following -p are restricted to those
 	considered "secure".
        </para>

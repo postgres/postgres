@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.14 2000/05/02 20:02:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.15 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -115,7 +115,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
       <listitem>
        <para>
         The expansion of the specified <replaceable class="parameter">dbpath</replaceable>
-        (see below how) failed. Check the path you entered or make sure that the
+        (see below) failed. Check the path you entered or make sure that the
         environment variable you are referencing does exist.
        </para>
       </listitem>
@@ -138,7 +138,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
        <para>
         These are most likely related to insufficient permissions on the data
         directory, a full disk, or other file system problems. The user under
-        which the database server is running, must have access to the location.
+        which the database server is running must have access to the location.
        </para>
       </listitem>
      </varlistentry>
@@ -177,7 +177,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable> [ WITH LOCATIO
    If the server is compiled with <literal>ALLOW_ABSOLUTE_DBPATHS</literal>
    (not so by default), absolute path names, as identified by
    a leading slash
-   (e.g. '<filename>/usr/local/pgsql/data</filename>'),
+   (e.g., '<filename>/usr/local/pgsql/data</filename>'),
    are allowed as well.
   </para>
 

@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgctl-ref.sgml,v 1.7 2000/08/29 20:02:09 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.1 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
-<refentry id="app-pgctl">
+<refentry id="app-pg_ctl">
  <refmeta>
-  <refentrytitle id="app-pgctl-title">
+  <refentrytitle id="app-pg_ctl-title">
    <application>pg_ctl</application>
   </refentrytitle>
   <refmiscinfo>Application</refmiscinfo>
@@ -44,7 +44,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
       <term>-w</term>
       <listitem>
        <para>
-	Wait for the database server comes up, by
+	Wait for the database server to come up, by
 	watching for creation of the pid file (PGDATA/postmaster.pid).
 	Times out after 60 seconds.
        </para>
@@ -77,7 +77,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
 	<application>postmaster</application>.
        </para>
        <para>
-	The parameters are usually surrounded by single- or double
+	The parameters are usually surrounded by single or double
 	quotes to ensure that they are passed through as a group.
        </para>
       </listitem>
@@ -106,7 +106,7 @@ pg_ctl [-D <replaceable class="parameter">datadir</replaceable>] status
 	  <term>f</term>
 	  <listitem>
 	   <para>
-	    Fast mode sends SIGTERM to the backends, that means
+	    Fast mode sends SIGTERM to the backends; that means
 	    active transactions get rolled back.
 	   </para>
 	  </listitem>
@@ -221,7 +221,7 @@ $ pg_ctl start
    </para>
 
    <para>
-    If -w is supplied, pg_ctl waits for the database server comes up, by
+    If -w is supplied, pg_ctl waits for the database server to come up, by
     watching for creation of the pid file (PGDATA/postmaster.pid), for up
     to 60 seconds.
    </para>
@@ -333,7 +333,7 @@ $ pg_ctl stop
     <option>-w</option>, <option>-D</option>, <option>-m</option>,
     <option>-fast</option>, <option>-immediate</option> and
     <option>-o</option> 
-    can also be used in the restarting mode and they have same meanings as
+    can also be used in the restarting mode and they have the same meanings as
     described above.
    </para>
 

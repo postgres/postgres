@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.9 2000/08/25 15:17:50 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -130,7 +130,7 @@ INSERT 0 <replaceable>#</replaceable>
   <para>
    <command>INSERT</command> allows one to insert new rows into a
    class or table. One can insert
-   a single row at time or several rows as a result of a query.
+   a single row at a time or several rows as a result of a query.
    The columns in the target list may be listed in any order.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.4 2000/09/12 20:58:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.5 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -248,7 +248,7 @@ EXEC SQL INCLUDE sqlca;
       from C statements, sqlca (which includes the sqlca.h 
       header file) MUST be lowercase.  This is because the EXEC SQL
       prefix indicates that this INCLUDE will be parsed by ecpg.
-      ecpg observes case sensitivity (SQLCA.h will not be found.)
+      ecpg observes case sensitivity (SQLCA.h will not be found).
       <command>EXEC SQL INCLUDE</command>
       can be used to include other header files
       as long as case sensitivity is observed.

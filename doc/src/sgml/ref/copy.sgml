@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.17 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.18 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -210,7 +210,7 @@ ERROR: <replaceable>reason</replaceable>
     You must have <firstterm>select access</firstterm> on any table
     whose values are read by
     <command>COPY</command>, and either
-    <firstterm>insert or update access</firstterm> to a
+    <firstterm>insert</firstterm> or <firstterm>update access</firstterm> to a
     table into which values are being inserted by <command>COPY</command>.
     The backend also needs appropriate Unix permissions for any file read
     or written by <command>COPY</command>.
@@ -293,7 +293,7 @@ ERROR: <replaceable>reason</replaceable>
    <para>
     The actual format for each instance is
     <programlisting>
-&lt;attr1&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr2&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;...&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr<replaceable class="parameter">n</replaceable>&gt;&lt;newline&gt;
+&lt;attr1&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr2&gt;&lt;<replaceable class=parameter>separator</replaceable>&gt;...&lt;<replaceable class=parameter>separator</replaceable>&gt;&lt;attr<replaceable class="parameter">n</replaceable>&gt;&lt;newline&gt;.
     </programlisting>
     The oid is placed on the beginning of the line
     if WITH OIDS is specified.
@@ -331,7 +331,7 @@ ERROR: <replaceable>reason</replaceable>
     In the case of <command>COPY BINARY</command>, the first four
     bytes in the file will be the number of instances in the file.  If
     this number is zero, the <command>COPY BINARY</command> command
-    will read until end of file is encountered.  Otherwise, it will
+    will read until end-of-file is encountered.  Otherwise, it will
     stop reading when this number of instances has been read.
     Remaining data in the file will be ignored.
    </para>
@@ -414,7 +414,7 @@ The following example copies a table to standard output,
 COPY country TO <filename>stdout</filename> USING DELIMITERS '|';
   </programlisting>
   <para>
-   To copy data from a Unix file into a table "country":
+   To copy data from a Unix file into a table country:
   </para>
   <programlisting>
 COPY country FROM '/usr1/proj/bray/sql/country_data';
@@ -434,7 +434,7 @@ has the termination sequence on the last line):
    \.
   </programlisting>
   <para>
-   The same data, output in binary format on a Linux/i586 machine.
+   The following is the same data, output in binary format on a Linux/i586 machine.
    The data is shown after filtering through
  the Unix utility <command>od -c</command>. The table has
    three fields; the first is <classname>char(2)</classname>

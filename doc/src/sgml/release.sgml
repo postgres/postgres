@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.60 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.61 2000/10/05 19:48:16 momjian Exp $
 -->
 
  <chapter id="release">
@@ -2388,7 +2388,7 @@ enclose unused functions in #ifdef NOT_USED(Bruce)
 Remove call to difftime() in timestamp support to fix SunOS(Bruce & Thomas)
 Changes for Digital Unix
 Portability fix for pg_dumpall(Bruce)
-Rename pg_attribute.attnvals to attdisbursion(Bruce)
+Rename pg_attribute.attnvals to attdispersion(Bruce)
 "intro/unix" manual page now "pgintro"(Bruce)
 "built-in" manual page now "pgbuiltin"(Bruce)
 "drop" manual page now "drop_table"(Bruce)

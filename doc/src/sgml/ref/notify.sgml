@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.12 2000/07/21 04:42:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.13 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -136,7 +136,7 @@ NOTIFY
    the notify event will not be delivered to its connected frontend until just
    after the transaction is completed (either committed or aborted).  Again, the
    reasoning is that if a notify were delivered within a transaction that was
-   later aborted, one would want the notification to be undone somehow --- but
+   later aborted, one would want the notification to be undone somehow---but
    the backend cannot "take back" a notify once it has sent it to the frontend.
    So notify events are only delivered between transactions.  The upshot of this
    is that applications using <command>NOTIFY</command> for real-time signaling
@@ -156,7 +156,7 @@ NOTIFY
    It is common for a frontend that sends <command>NOTIFY</command> to be
    listening on the same notify name itself.  In that case it will get back a
    notify event, just like all the other listening frontends.  Depending on the
-   application logic, this could result in useless work --- for example,
+   application logic, this could result in useless work---for example,
    re-reading a database table to find the same updates that that frontend just
    wrote out.  In <productname>Postgres</productname> 6.4 and later, it is
    possible to avoid such extra work by noticing whether the notifying backend

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.21 2000/07/22 04:30:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.22 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -74,7 +74,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <note>
        <para>
 	 Automatically acquired by <command>SELECT...FOR UPDATE</command>.
-	 While it is a shared lock, may be upgrade later to a ROW EXCLUSIVE lock.
+	 While it is a shared lock, may be upgraded later to a ROW EXCLUSIVE lock.
 	</para>
        </note>
 
@@ -170,7 +170,7 @@ LOCK [ TABLE ] <replaceable class="PARAMETER">name</replaceable> IN SHARE ROW EX
        <note>
 	<para>
 	 This lock mode is also acquired by an unqualified
-	 <command>LOCK TABLE</command> (i.e. the command without an explicit
+	 <command>LOCK TABLE</command> (i.e., the command without an explicit
 	 lock mode option).
 	</para>
        </note>
@@ -230,7 +230,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
    for the duration of a transaction.
    <productname>Postgres</productname> always uses the least restrictive
    lock mode whenever possible. <command>LOCK TABLE</command> 
-   provided for cases when you might need more restrictive locking.
+   provides for cases when you might need more restrictive locking.
   </para>
 
   <para>
@@ -298,7 +298,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
     <para>
      To read data in their real current state when running a transaction
      at the SERIALIZABLE isolation level you have to execute a LOCK TABLE
-     statement before execution any DML statement, when the transaction defines
+     statement before executing any DML statement, when the transaction defines
      what concurrent changes will be visible to itself.
     </para>
    </note>
@@ -306,15 +306,15 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
   
   <para>
    In addition to the requirements above, if a transaction is going to
-   change data in a table then SHARE ROW EXCLUSIVE lock mode should
+   change data in a table, then SHARE ROW EXCLUSIVE lock mode should
    be acquired to prevent deadlock conditions when two concurrent
    transactions attempt to lock the table in SHARE mode and then
    try to change data in this table, both (implicitly) acquiring 
-   ROW EXCLUSIVE lock mode that conflicts with concurrent SHARE lock.
+   ROW EXCLUSIVE lock mode that conflicts with a concurrent SHARE lock.
   </para>
   
   <para>
-   To continue with the deadlock (when two transaction wait one another)
+   To continue with the deadlock (when two transaction wait for one another)
    issue raised above, you should follow two general rules to prevent 
    deadlock conditions:
   </para>
@@ -337,7 +337,7 @@ ERROR <replaceable class="PARAMETER">name</replaceable>: Table does not exist.
    <listitem>
     <para>
      Transactions should acquire two conflicting lock modes only if
-     one of them is self-conflicting (i.e. may be held by one
+     one of them is self-conflicting (i.e., may be held by one
      transaction at time only). If multiple lock modes are involved,
      then transactions should always acquire the  most restrictive mode first.
     </para>

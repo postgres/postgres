@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.34 2000/08/24 23:36:29 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.35 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -123,7 +123,7 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table</replacea
 	PRIMARY KEY clause may be specified for a table;
 	PRIMARY KEY <replaceable>column</replaceable> (a table
 	constraint) and PRIMARY KEY (a column constraint)
-	are mutually exclusive.. See the table constraint clause for
+	are mutually exclusive. See the table constraint clause for
 	more information.
        </para>
       </listitem>
@@ -177,7 +177,7 @@ ERROR
 	<computeroutput>
 ERROR:  Relation '<replaceable class="parameter">table</replaceable>' already exists
 	</computeroutput>
-	which occurs at runtime, if the table specified already exists
+	, which occurs at runtime if the table specified already exists
 	in the database.
        </para>
       </listitem>
@@ -696,7 +696,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
      NOT NULL constraint, does not violate a UNIQUE constraint. (This
      deviates from the <acronym>SQL92</acronym> definition, but is a
      more sensible convention. See the section on compatibility for more
-     details.).
+     details.)
     </para>
     <para>
      Each UNIQUE column constraint must name a column that is
@@ -853,7 +853,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
        </computeroutput></term>
       <listitem>
        <para>
-	This occurs at run-time if one tries to insert a duplicate value into
+	This occurs at runtime if one tries to insert a duplicate value into
 	a column subject to a PRIMARY KEY constraint.
        </para>
       </listitem>
@@ -882,7 +882,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
     <para>
      <productname>Postgres</productname> automatically creates
      a unique index to assure
-     data integrity. (See CREATE INDEX statement)
+     data integrity (see CREATE INDEX statement).
     </para>
     <para>
      The PRIMARY KEY constraint should name a set of columns that is
@@ -1157,7 +1157,7 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
      values in a referenced column of a referenced table.
     </para>
     <para>
-     A value added to this column are matched against the values of the
+     A value added to this column is matched against the values of the
      referenced table and referenced column using the given match type.
      In addition, when the referenced column data is changed, actions
      are run upon this column's matching data.
@@ -1420,8 +1420,8 @@ CREATE TABLE distributors (
     <title>Description</title>
     <para>
      The PRIMARY KEY constraint specifies a rule that a group of one
-     or more distinct columns of a table may contain only unique,
-     (non duplicate), non-null values. The column definitions of
+     or more distinct columns of a table may contain only unique
+     (nonduplicate), non-null values. The column definitions of
      the specified columns do not have to include a NOT NULL
      constraint to be included in a PRIMARY KEY constraint.
     </para>
@@ -1505,7 +1505,7 @@ CREATE TABLE distributors (
          default match type if none is specified. MATCH FULL will not
          allow one column of a multi-column foreign key to be NULL
          unless all foreign key columns are NULL. The default MATCH type
-         allows a some foreign key columns to be NULL while other parts
+         allows some foreign key columns to be NULL while other parts
          of the foreign key are not NULL. MATCH PARTIAL is currently not
 	 supported.
         </para>
@@ -1696,7 +1696,7 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
     <title>Description</title>
     <para>
      The FOREIGN KEY constraint specifies a rule that a group of one
-     or more distinct columns of a table are related to a group
+     or more distinct columns of a table is related to a group
      of distinct columns in the referenced table.
     </para>
 
@@ -1853,7 +1853,7 @@ CREATE TABLE distributors (
     SQL92
    </title>
    <para>
-    In addition to the locally-visible temporary table, SQL92 also defines a
+    In addition to the locally visible temporary table, SQL92 also defines a
     CREATE GLOBAL TEMPORARY TABLE statement, and optionally an 
     ON COMMIT clause:
    <synopsis>
@@ -1981,7 +1981,7 @@ DEFAULT niladic_user_function | niladic_datetime_function | NULL
      </note>
     </para>
     <para>
-     An assertion is a special type of integrity constraint and share
+     An assertion is a special type of integrity constraint and shares
      the same namespace as other constraints. However, an assertion is
      not necessarily dependent on one particular base table as
      constraints are, so SQL-92 provides the CREATE ASSERTION statement
@@ -2052,10 +2052,10 @@ CREATE ASSERTION <replaceable>name</replaceable> CHECK ( <replaceable>condition<
        </listitem>
       </varlistentry>
      </variablelist>
-    </para>
-    <para>
-     SET CONSTRAINT changes the foreign key constraint mode only for
-     the current transaction.
+     <para>  
+     <term>SET CONSTRAINT</term> changes the foreign key constraint mode
+	only for the current transaction.
+     </para>
      <variablelist>
       <varlistentry>
        <term>INITIALLY IMMEDIATE</term>

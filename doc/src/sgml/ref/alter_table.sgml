@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.14 2000/07/22 02:39:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.15 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -273,7 +273,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable> DROP CONSTRAINT <
       <para>
        Removes a table constraint (such as a check constraint,
        unique constraint, or foreign key constraint). To 
-       remove a unique constraint, drop a unique index,
+       remove a unique constraint, drop a unique index.
        To remove other kinds of constraints you need to recreate
        and reload the table, using other parameters to the
        <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">

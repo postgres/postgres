@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.13 2000/07/21 04:25:05 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.14 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -109,7 +109,7 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT
 	The <option>CACHE <replaceable class="parameter">cache</replaceable></option> option
 	enables sequence numbers to be preallocated
 	and stored in memory for faster access. The  minimum
-	value is 1 (only one value can be generated at a time, i.e. no cache)
+	value is 1 (only one value can be generated at a time, i.e., no cache)
 	and this is also the default.
        </para>
       </listitem>

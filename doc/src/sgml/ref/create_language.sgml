@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.11 2000/08/24 23:36:29 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.12 2000/10/05 19:48:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -169,7 +169,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
 
    <para>
     The call handler for a procedural language must be written
-    in a compiled language such as 'C' and registered with
+    in a compiled language such as C and registered with
     <productname>Postgres</productname> as a function taking
     no arguments and returning the
     <type>opaque</type> type, a placeholder for unspecified or undefined types.
@@ -206,7 +206,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
     <filename>pg_proc</filename> table entry. This may be the
     source text in the procedural
     language itself (like for PL/Tcl), a pathname to a
-    file or anything else that tells the call handler what to
+    file, or anything else that tells the call handler what to
     do in detail.
    </para>
 
@@ -295,7 +295,7 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
    Usage
   </title>
   <para>
-   This is a template for a PL handler written in 'C':
+   This is a template for a PL handler written in C:
    <programlisting>
 #include "executor/spi.h"
 #include "commands/trigger.h"

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.6 1999/07/22 15:09:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.7 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -62,7 +62,7 @@ DROP
        </computeroutput></term>
       <listitem>
        <para>
-	Message returned if successfully.
+	Message returned if successful.
        </para>
       </listitem>
      </varlistentry>

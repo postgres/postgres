@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.45 2000/08/13 02:50:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.46 2000/10/05 19:48:29 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -168,9 +168,9 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 }
 
 /*
- * get_attdisbursion
+ * get_attdispersion
  *
- *	  Retrieve the disbursion statistic for an attribute,
+ *	  Retrieve the dispersion statistic for an attribute,
  *	  or produce an estimate if no info is available.
  *
  * min_estimate is the minimum estimate to return if insufficient data
@@ -180,11 +180,11 @@ get_atttypmod(Oid relid, AttrNumber attnum)
  * estimating the number of tuples produced by an equijoin.)
  */
 double
-get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
+get_attdispersion(Oid relid, AttrNumber attnum, double min_estimate)
 {
 	HeapTuple	atp;
 	Form_pg_attribute att_tup;
-	double		disbursion;
+	double		dispersion;
 	int32		ntuples;
 
 	atp = SearchSysCacheTuple(ATTNUM,
@@ -194,18 +194,18 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 	if (!HeapTupleIsValid(atp))
 	{
 		/* this should not happen */
-		elog(ERROR, "get_attdisbursion: no attribute tuple %u %d",
+		elog(ERROR, "get_attdispersion: no attribute tuple %u %d",
 			 relid, attnum);
 		return min_estimate;
 	}
 	att_tup = (Form_pg_attribute) GETSTRUCT(atp);
 
-	disbursion = att_tup->attdisbursion;
-	if (disbursion > 0.0)
-		return disbursion;		/* we have a specific estimate from VACUUM */
+	dispersion = att_tup->attdispersion;
+	if (dispersion > 0.0)
+		return dispersion;		/* we have a specific estimate from VACUUM */
 
 	/*
-	 * Special-case boolean columns: the disbursion of a boolean is highly
+	 * Special-case boolean columns: the dispersion of a boolean is highly
 	 * unlikely to be anywhere near 1/numtuples, instead it's probably
 	 * more like 0.5.
 	 *
@@ -215,7 +215,7 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 		return 0.5;
 
 	/*
-	 * Disbursion is either 0 (no data available) or -1 (disbursion is
+	 * Dispersion is either 0 (no data available) or -1 (dispersion is
 	 * 1/numtuples).  Either way, we need the relation size.
 	 */
 
@@ -225,7 +225,7 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 	if (!HeapTupleIsValid(atp))
 	{
 		/* this should not happen */
-		elog(ERROR, "get_attdisbursion: no relation tuple %u", relid);
+		elog(ERROR, "get_attdispersion: no relation tuple %u", relid);
 		return min_estimate;
 	}
 
@@ -234,11 +234,11 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 	if (ntuples == 0)
 		return min_estimate;	/* no data available */
 
-	if (disbursion < 0.0)		/* VACUUM thinks there are no duplicates */
+	if (dispersion < 0.0)		/* VACUUM thinks there are no duplicates */
 		return 1.0 / (double) ntuples;
 
 	/*
-	 * VACUUM ANALYZE does not compute disbursion for system attributes,
+	 * VACUUM ANALYZE does not compute dispersion for system attributes,
 	 * but some of them can reasonably be assumed unique anyway.
 	 */
 	if (attnum == ObjectIdAttributeNumber ||
@@ -252,11 +252,11 @@ get_attdisbursion(Oid relid, AttrNumber attnum, double min_estimate)
 	 * = 1/numtuples.  This may produce unreasonably small estimates for
 	 * large tables, so limit the estimate to no less than min_estimate.
 	 */
-	disbursion = 1.0 / (double) ntuples;
-	if (disbursion < min_estimate)
-		disbursion = min_estimate;
+	dispersion = 1.0 / (double) ntuples;
+	if (dispersion < min_estimate)
+		dispersion = min_estimate;
 
-	return disbursion;
+	return dispersion;
 }
 
 /*				---------- INDEX CACHE ----------						 */

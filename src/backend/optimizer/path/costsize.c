@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.63 2000/09/29 18:21:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.64 2000/10/05 19:48:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -571,7 +571,7 @@ cost_mergejoin(Path *path,
  * 'outer_path' is the path for the outer relation
  * 'inner_path' is the path for the inner relation
  * 'restrictlist' are the RestrictInfo nodes to be applied at the join
- * 'innerdisbursion' is an estimate of the disbursion statistic
+ * 'innerdispersion' is an estimate of the dispersion statistic
  *				for the inner hash key.
  */
 void
@@ -579,7 +579,7 @@ cost_hashjoin(Path *path,
 			  Path *outer_path,
 			  Path *inner_path,
 			  List *restrictlist,
-			  Selectivity innerdisbursion)
+			  Selectivity innerdispersion)
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
@@ -609,12 +609,12 @@ cost_hashjoin(Path *path,
 	 * average bucket loading of NTUP_PER_BUCKET, but that goal will
 	 * be reached only if data values are uniformly distributed among
 	 * the buckets.  To be conservative, we scale up the target bucket
-	 * size by the number of inner rows times inner disbursion, giving
+	 * size by the number of inner rows times inner dispersion, giving
 	 * an estimate of the typical number of duplicates of each value.
 	 * We then charge one cpu_operator_cost per tuple comparison.
 	 */
 	run_cost += cpu_operator_cost * outer_path->parent->rows *
-		NTUP_PER_BUCKET * ceil(inner_path->parent->rows * innerdisbursion);
+		NTUP_PER_BUCKET * ceil(inner_path->parent->rows * innerdispersion);
 
 	/*
 	 * Estimate the number of tuples that get through the hashing filter
@@ -649,7 +649,7 @@ cost_hashjoin(Path *path,
 	/*
 	 * Bias against putting larger relation on inside.	We don't want an
 	 * absolute prohibition, though, since larger relation might have
-	 * better disbursion --- and we can't trust the size estimates
+	 * better dispersion --- and we can't trust the size estimates
 	 * unreservedly, anyway.  Instead, inflate the startup cost by the
 	 * square root of the size ratio.  (Why square root?  No real good
 	 * reason, but it seems reasonable...)

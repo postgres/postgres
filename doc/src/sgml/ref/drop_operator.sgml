@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.6 1999/07/22 15:09:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.7 2000/10/05 19:48:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -92,7 +92,7 @@ ERROR:  RemoveOperator: left unary operator '<replaceable class="PARAMETER">oper
        </computeroutput></term>
       <listitem>
        <para>
-	This message occurs if the specified left unary operator
+	This message occurs if the left unary operator
 	specified does not exist.
        </para>
       </listitem>
@@ -103,7 +103,7 @@ ERROR:  RemoveOperator: right unary operator '<replaceable class="PARAMETER">ope
        </computeroutput></term>
       <listitem>
        <para>
-	This message occurs if the specified right unary operator
+	This message occurs if the right unary operator
 	specified does not exist.
        </para>
       </listitem>

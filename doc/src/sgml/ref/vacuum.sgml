@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.10 2000/09/12 21:12:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.11 2000/10/05 19:48:19 momjian Exp $
 Postgres documentation
 -->
 
@@ -159,7 +159,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
 
   <para>
    <command>VACUUM ANALYZE</command> collects statistics representing the
-   disbursion of the data in each column.
+   dispersion of the data in each column.
    This information is valuable when several query execution paths are possible.
   </para>
 

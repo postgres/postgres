@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.146 2000/09/30 18:28:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.147 2000/10/05 19:48:21 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -360,7 +360,7 @@ heap_storage_create(Relation rel)
  *		work?  Is it automatic now?  Expects the caller to have
  *		attname, atttypid, atttyparg, attproc, and attlen domains filled.
  *		Create fills the attnum domains sequentually from zero,
- *		fills the attdisbursion domains with zeros, and fills the
+ *		fills the attdispersion domains with zeros, and fills the
  *		attrelid fields with the relid.
  *
  *		scan relation catalog for name conflict
@@ -564,7 +564,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	for (i = 0; i < natts; i++)
 	{
 		(*dpp)->attrelid = new_rel_oid;
-		(*dpp)->attdisbursion = 0;
+		(*dpp)->attdispersion = 0;
 
 		tup = heap_addheader(Natts_pg_attribute,
 							 ATTRIBUTE_TUPLE_SIZE,
@@ -587,7 +587,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
 	{
 		(*dpp)->attrelid = new_rel_oid;
-		/* (*dpp)->attdisbursion = 0;	   unneeded */
+		/* (*dpp)->attdispersion = 0;	   unneeded */
 
 		tup = heap_addheader(Natts_pg_attribute,
 							 ATTRIBUTE_TUPLE_SIZE,

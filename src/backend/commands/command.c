@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.104 2000/09/29 18:21:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.105 2000/10/05 19:48:22 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -459,7 +459,7 @@ AlterTableAddColumn(const char *relationName,
 		namestrcpy(&(attribute->attname), colDef->colname);
 		attribute->atttypid = typeTuple->t_data->t_oid;
 		attribute->attlen = tform->typlen;
-		attribute->attdisbursion = 0;
+		attribute->attdispersion = 0;
 		attribute->attcacheoff = -1;
 		attribute->atttypmod = colDef->typename->typmod;
 		attribute->attnum = i;
