@@ -444,7 +444,10 @@ else
 fi
 
 AC_CHECK_LIB(sfio,     main)
-AC_CHECK_LIB(curses,   main)
+for curses in ncurses curses ; do
+	AC_CHECK_LIB(${curses}, main,
+		[LIBS="-l${curses} $LIBS"; break])
+done
 AC_CHECK_LIB(termcap,  main)
 AC_CHECK_LIB(history,  main)
 AC_CHECK_LIB(readline, main)
