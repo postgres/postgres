@@ -1,0 +1,8 @@
+AROPT:crs
+BACKEND:
+SHARED_LIB:-fpic -DPIC
+ALL:-O2 -m486 -pipe
+SRCH_INC:/usr/local/include
+SRCH_LIB:/usr/local/lib
+USE_LOCALE:no
+DLSUFFIX:.so

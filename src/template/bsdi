@@ -1,0 +1,8 @@
+AROPT:crs
+BACKEND:-DPRE_BSDI_2_1
+SHARED_LIB:
+ALL:
+SRCH_INC:/usr/local/include
+SRCH_LIB:/usr/local/lib
+USE_LOCALE:no
+DLSUFFIX:.o

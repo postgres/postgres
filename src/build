@@ -13,23 +13,53 @@ else
         ECHO_C='\c'
 fi
 
-$ECHO_N "Additional directories to search for .h files []: $ECHO_C"
+ls template
+TEMPLATE=generic
+$ECHO_N "Appropriate template file [$TEMPLATE]: $ECHO_C"
 read a
-if [ "$a." = "." ]
+if [ "$a." = " ." ]
 then
-        ADD_INC_DIRS=
+	echo "You must choose an appropriate template file"
+	exit
 else
-        ADD_INC_DIRS=`echo "$a" | sed 's@  *@ @g; s@^\([^ ]\)@-I\1@; s@ \([^ ]\)@ -I\1@g'`
-        INC_CFLAGS="$ADD_INC_DIRS"
-        CPPFLAGS="$ADD_INC_DIRS" ; export CPPFLAGS
+	if [ "$a." = "." ]; then 
+		TEMPLATE=template/$TEMPLATE
+	else
+		TEMPLATE=template/$a
+	fi
+	AROPT=`grep AROPT $TEMPLATE | awk -F: '{print $2}'`
+	SHARED_LIBS=`grep SHARED_LIBS $TEMPLATE | awk -F: '{print $2}'`
+	ALL=`grep ALL $TEMPLATE | awk -F: '{print $2}'`
+	BACKEND=`grep BACKEND $TEMPLATE | awk -F: '{print $2}'`
+	SRCH_INC=`grep SRCH_INC $TEMPLATE | awk -F: '{print $2}'`
+	SRCH_LIB=`grep SRCH_LIB $TEMPLATE | awk -F: '{print $2}'`
+	USE_LOCALE=`grep USE_LOCALE $TEMPLATE | awk -F: '{print $2}'`
 fi
 
-$ECHO_N "Additional directories to search for library files []: $ECHO_C"
+$ECHO_N "Additional directories to search for .h files [$SRCH_INC]: $ECHO_C"
 read a
-if [ "$a." != "." ]
+if [ "$a." = " ." ]
 then
-        ADD_LIB_DIRS=`echo "$a" | sed 's@  *@ @g; s@^\([^ ]\)@-L\1@; s@ \([^ ]\)@ -L\1@g'`
-        LDFLAGS="$ADD_LIB_DIRS" ; export LDFLAGS
+        CPPFLAGS=
+else
+	if [ "$a." != "." ]; then
+		SRCH_INC = $a
+	fi
+	echo $a
+        CPPFLAGS=`echo "$SRCH_INC" | sed 's@  *@ @g; s@^\([^ ]\)@-I\1@; s@ \([^ ]\)@ -I\1@g'`
+fi
+
+echo ""
+$ECHO_N "Additional directories to search for library files [$SRCH_LIB]: $ECHO_C"
+read a
+if [ "$a." != " ." ]
+then
+	LDFLAGS=
+else
+        if [ "$a." != "." ]; then
+                SRCH_LIB = $a
+        fi
+        LDFLAGS=`echo "$SRCH_LIB" | sed 's@  *@ @g; s@^\([^ ]\)@-L\1@; s@ \([^ ]\)@ -L\1@g'`
 fi
 
 IDIR=/usr/local/pgsql
@@ -40,13 +70,16 @@ then
         IDIR=${a}
 fi
 
-USE_LOCALE=no
 echo "Define USE_LOCALE to get Postgres work (sort, search)"
 $ECHO_N "with national alphabet. [$USE_LOCALE]: $ECHO_C"
 read a
-if [ "$a." != "." ]
+if [ "$a." != " ." ]
 then
-	USE_LOCALE=${a}
+	USE_LOCALE=no
+else
+        if [ "$a." != "." ]; then
+                USE_LOCALE=$a
+        fi
 fi
 
 DEF_PGPORT=5432
@@ -72,7 +105,8 @@ then
         NOHBA=${a}
 fi
 
-export BUILDRUN USE_LOCALE DEF_PGPORT NOHBA
+export BUILDRUN USE_LOCALE DEF_PGPORT NOHBA AROPT 
+export SHARED_LIBS CFLAGS CPPFLAGS LDFLAGS
 
 ./configure --prefix=${IDIR}
 

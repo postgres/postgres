@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.16 1997/04/03 21:25:59 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.17 1997/04/04 07:57:45 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -243,60 +243,22 @@ ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
 include $(SRCDIR)/Makefile.custom
 endif
 
-#############################################################################
-# include port specific rules and variables.
-#
-#
-# HISTORY: Before October 1996, this file included the following line:
-#     -include $(MKDIR)/port/postgres.mk.$(PORTNAME)
-# Now, we instead have all the former contents of those .mk files inline
-# with ifeq ($(PORTNAME) ...).  This makes it easier to read the make
-# files and to make certain updates.  It should also help with the migration
-# to autoconf.  -Bryan
-
-# Since there are no longer separate files for each platform, much of the
-# commonality among the platforms ought to be factored out of the following.
-
-##############################################################################
-#
-#  AR
-
-ifneq (,$(findstring /$(PORTNAME)/, /BSD44_derived/bsdi/sparc/))
-  AROPT = cq
-else
-  AROPT = crs
-endif
-
-##############################################################################
-#
-# Shared libraries.
-# This is overridden for many PORTNAMEs below.
-
-DLSUFFIX= .so
-
-#
-# CC
-#
+#-------------------------------------------------------------
+# See the subdirectory template for default settings for these
+#-------------------------------------------------------------
 CC= @CC@
-
-#
-# LEX
-#
 LEX= @LEX@
-
-CFLAGS= @CPPFLAGS@
+AROPT= @AROPT@
+CFLAGS= @CPPFLAGS@ @ALL@
+CFLAGS_SL= @SHARED_LIBS@
+CFLAGS_BE= @BACKEND@
 LDFLAGS= @LDFLAGS@
 LDADD_BE= @LIBS@
 LD_ADD= $(LDADD_BE)
+DLSUFFIX= @DLSUFFIX@
 
 #----------------------------------------------------------------------
 ifeq ($(PORTNAME), BSD44_derived)
-# cc is gcc, but never mind about that...
-
-# FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
-
-CFLAGS_SL= -fpic -DPIC
-
 %.so: %.o
 	$(LD) -x -r -o $<.obj $<
 	@echo building shared object $@
@@ -315,17 +277,6 @@ ifeq ($(PORTNAME), aix)
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
-
-#
-# Random things that must be passed everywhere to enable 
-# everything to compile.  :-/
-#
-# The -qmaxmem is because of optimizer limits.
-# The HAVE_ANSI_CPP flag indicates that cc isn't ANSI but also doesn't
-# have a Reiser (pcc-style) cpp.
-#
-CFLAGS_BE= -qchars=signed -qmaxmem=4000
-
 
 EXPSUFF= .exp
 
@@ -349,57 +300,13 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), alpha)
-# NOFIXADE disallows unaligned access.
-#   on Ultrix and OSF/1 it invokes an explicit syscall.
-#   on HP-UX it turns off certain compiler options.
-# This is defined here because a bunch of clients include tmp/c.h,
-# which is where the work is done on HP-UX.  It only affects the
-# backend on Ultrix and OSF/1.
-ifdef ENFORCE_ALIGNMENT
-CFLAGS_BE= -DNOFIXADE
-else
-CFLAGS_BE= -DNOPRINTADE
-endif
-
-# use the regex library
-USE_REGEX= 1
-
 %.so:  %.o
 	$(LD) -shared -expect_unresolved '*' -o $@ $<
-
-DASH_N=
-BACKSLASH_C= '\\\\c'
-
-endif
-
-#---------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), bsdi)
-
-PRE_BSDI_2_1= false
-ifeq ($(shell uname -r), 2.0)
-PRE_BSDI_2_1= true
-endif
-ifeq ($(shell uname -r), 2.01)
-PRE_BSDI_2_1= true
-endif
-
-ifeq ($(PRE_BSDI_2_1), true)
-# cc is gcc v1.42
-# gcc is gcc v2.6.3
-# use the regex library
-  USE_REGEX= 1
-  CFLAGS_BE= -DPRE_BSDI_2_1
-endif
-
-DLSUFFIX= .o
-
 endif
 
 #--------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), dgux)
-CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
 
@@ -410,49 +317,28 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), hpux)
-# -W l,-E	export symbols for linking with the shared libraries 
-#		dynamic loader
 
-ifeq ($(CC), cc)
-  CFLAGS_BE= -W l,-E
-  LDFLAGS_BE= -W l,-E
-endif
-ifeq ($(CC), gcc)
-  LDADD_BE+= /usr/lib/libdld.sl
-endif
-
-ifdef ENFORCE_ALIGNMENT
-   CFLAGS_BE= -DNOFIXADE
-else
-   HPUX_VERS:= $(shell uname -r)
-   HPUX_MAJOR= ${HPUX_VERS:R:E}
-   HPUX_MINOR= ${HPUX_VERS:E}
-   ifeq ($(HPUX_MAJOR), 08)
-      CFLAGS_BE+= +u -DHP_S500_ALIGN
-      LDFLAGS_BE+= +u
-   else
-   ifeq ($(HPUX_MAJOR), 09)
-      ifeq ($(CC), cc)
-         CFLAGS_BE+= +u4 
-         LDFLAGS_BE+= +u4
-      endif
-   endif
-   endif
-endif
-
-# (extended) ANSI flag for cc (-Ae is same as -Aa -D_HPUX_SOURCE)
-ifeq ($(CC), cc)
-CFLAGS_BE+= -Ae
-endif
-
-CFLAGS_SL= +z
-DLSUFFIX= .sl
+#ifdef ENFORCE_ALIGNMENT
+#   CFLAGS_BE= -DNOFIXADE
+#else
+#   HPUX_VERS:= $(shell uname -r)
+#   HPUX_MAJOR= ${HPUX_VERS:R:E}
+#   HPUX_MINOR= ${HPUX_VERS:E}
+#   ifeq ($(HPUX_MAJOR), 08)
+#      CFLAGS_BE+= +u -DHP_S500_ALIGN
+#      LDFLAGS_BE+= +u
+#   else
+#   ifeq ($(HPUX_MAJOR), 09)
+#      ifeq ($(CC), cc)
+#         CFLAGS_BE+= +u4 
+#         LDFLAGS_BE+= +u4
+#      endif
+#   endif
+#   endif
+#endif
 
 %.sl: %.o
 	$(LD) -b -o $@ $<
-
-DASH_N= ''
-BACKSLASH_C= '\\\\c'
 
 endif
 
@@ -461,26 +347,8 @@ endif
 ifeq ($(PORTNAME), i386_solaris)
 # cc won't work!
 
-#
-# Random things that must be passed everywhere to enable
-# everything to compile.  :-/
-#
-# The extra -I flag is to scoop up extra BSD-emulating headers.
-# This needs to be fixed.  Things other than the backend should not be
-# accessing headers in the backend directory.
-CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
-
-ifeq ($(CC), cc)
-CFLAGS_SL= -K PIC
-else
-CFLAGS_SL= -fPIC
-endif
-
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
-
-DASH_N=''
-BACKSLASH_C='\\\\c'
 
 endif
 
@@ -494,26 +362,16 @@ RANLIB= touch
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $< $(LD_ADD)
 
-DASH_N=''
-BACKSLASH_C='\\\\c'
-
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), linux)
-ifndef LINUX_ELF
-DLSUFFIX= .o
-else
-DLSUFFIX= .so
+ifdef LINUX_ELF
 LDFLAGS_BE= -rdynamic
 endif
 MK_NO_LORDER= true
 
-# use the regex library
-USE_REGEX= 1
-
-CFLAGS_SL= -fpic
 %.so: %.o
 	$(CC) -shared -o $@ $<
 
@@ -522,13 +380,6 @@ endif
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sunos4)
-
-ifeq ($(CC), cc)
-CFLAGS_SL= -PIC
-else
-CFLAGS_SL= -fPIC
-endif
-
 %.so: %.o
 	$(LD) -dc -dp -Bdynamic -o $@ $<
 endif
@@ -536,66 +387,34 @@ endif
 #----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), sparc_solaris)
-#
-# Random things that must be passed everywhere to enable 
-# everything to compile.  :-/
-#
-# The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE= -I$(SRCDIR)/backend/port/sparc_solaris
-
-ifeq ($(CC), cc)
-CFLAGS_SL= -K PIC
-else
-CFLAGS_SL= -fPIC
-endif
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
-
-DASH_N= ''
-BACKSLASH_C= '\\\\c'
 
 endif
 
 #-----------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), svr4)
-CFLAGS+= -W0
 YACC= bison -y
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
 
-#
-# Random things that must be passed everywhere to enable
-# everything to compile.  :-/
-#
-# The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -I$(SRCDIR)/backend/port/svr4
 LDADD_BE+= /usr/ucblib/libucb.a 
 LDFLAGS_BE= -LD-Blargedynsym
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
 
-DASH_N= ''
-BACKSLASH_C= '\\\\c'
 endif
 
 #---------------------------------------------------------------------------
 
 ifeq ($(PORTNAME), ultrix4)
-ifdef ENFORCE_ALIGNMENT
-CFLAGS_BE= -DNOFIXADE
-endif
-
 # install creates intermediate directories
 NO_BEFOREINSTL= true
-
-CFLAGS_SL= -G 0
-DLSUFFIX= .o
-
 endif
 
 
@@ -605,10 +424,6 @@ endif
 #	The univel port is almost guaranteed NOT to work yet.
 #
 ifeq ($(PORTNAME), univel)
-#CFLAGS+= -DHAVE_RUSAGE -DTRACEDEBUG -DASYNC_DEBUG
-CFLAGS+= -DHAVE_RUSAGE -m486 -Dsvr4
-CFLAGS_SL= -fPIC
-
 YACC= bison -y
 
 #
@@ -621,27 +436,11 @@ LDADD= $(LD_ADD)
 # symbol names to tell them what to export/import.
 #MAKE_EXPORTS= true
 
-#
-# Random things that must be passed everywhere to enable
-# everything to compile.  :-/
-#
-# The extra -I flag is to scoop up extra BSD-emulating headers.
-CFLAGS_BE+= -I$(SRCDIR)/backend/port/univel
-
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
 
-DASH_N= ''
-BACKSLASH_C= '\\\\c'
-
 INSTALL= /usr/ucb/install
 
-endif
-
-#---------------------------------------------------------------------------
-ifeq ($(PORTNAME), nextstep)
-AROPT= rc
-DLSUFFIX= .o
 endif
 
 # This goes here so that customization in Makefile.custom is effective

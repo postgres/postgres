@@ -43,18 +43,23 @@ nextstep*) PORTNAME='nextstep';;
    echo ""
    exit;;
 esac
-AC_LINK_FILES(port/${PORTNAME}.h, include/os.h)
-AC_SUBST(PORTNAME)
-AC_SUBST(TR)
-AC_SUBST(LDFLAGS)
-AC_SUBST(CPPFLAGS)
-
-
 AC_CONFIG_HEADER(include/config.h)
 
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CPP
+
+AC_LINK_FILES(port/${PORTNAME}.h, include/os.h)
+AC_SUBST(PORTNAME)
+AC_SUBST(TR)
+AC_SUBST(LDFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(AROPT)
+AC_SUBST(SHARED_LIBS)
+AC_SUBST(ALL)
+AC_SUBST(BACKEND)
+
+
 
 dnl ****************************************************************
 dnl Hold off on the C++ stuff until we can figure out why it doesn't 

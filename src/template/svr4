@@ -1,0 +1,8 @@
+AROPT:cq
+BACKEND:-I$(SRCDIR)/backend/port/svr4
+SHARED_LIB:
+ALL:+W0
+SRCH_INC:
+SRCH_LIB:
+USE_LOCALE:no
+DLSUFFIX:.so

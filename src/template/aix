@@ -1,0 +1,8 @@
+AROPT:cq
+BACKEND:-qchars=signed -qmaxmem=4000
+SHARED_LIB:
+ALL:
+SRCH_INC:
+SRCH_LIB:
+USE_LOCALE:no
+DLSUFFIX:.so
