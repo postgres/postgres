@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.56 2000/07/21 22:14:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.57 2000/08/10 02:33:20 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ static void _bt_sortaddtup(Page page, Size itemsize,
 						   BTItem btitem, OffsetNumber itup_off);
 static void _bt_buildadd(Relation index, BTPageState *state, BTItem bti);
 static void _bt_uppershutdown(Relation index, BTPageState *state);
-static void _bt_load(Relation index, BTSpool *btspool);
+static void _bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2);
 
 
 /*
@@ -153,7 +153,7 @@ _bt_spool(BTItem btitem, BTSpool *btspool)
  * create an entire btree.
  */
 void
-_bt_leafbuild(BTSpool *btspool)
+_bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 {
 #ifdef BTREE_BUILD_STATS
 	if (Show_btree_build_stats)
@@ -165,7 +165,9 @@ _bt_leafbuild(BTSpool *btspool)
 #endif /* BTREE_BUILD_STATS */
 	tuplesort_performsort(btspool->sortstate);
 
-	_bt_load(btspool->index, btspool);
+	if (btspool2)
+		tuplesort_performsort(btspool2->sortstate);
+	_bt_load(btspool->index, btspool, btspool2);
 }
 
 
@@ -523,28 +525,106 @@ _bt_uppershutdown(Relation index, BTPageState *state)
  * btree leaves.
  */
 static void
-_bt_load(Relation index, BTSpool *btspool)
+_bt_load(Relation index, BTSpool *btspool, BTSpool *btspool2)
 {
 	BTPageState *state = NULL;
+	bool		merge = (btspool2 != NULL);
+	BTItem		bti, bti2 = NULL;
+	bool		should_free, should_free2, load1;
+	TupleDesc	tupdes = RelationGetDescr(index);
+	int		i, keysz = RelationGetNumberOfAttributes(index);
+	ScanKey		indexScanKey = NULL;
 
-	for (;;)
+	if (merge)
 	{
-		BTItem		bti;
-		bool		should_free;
+		/*
+	 	 * Another BTSpool for dead tuples exists.
+	 	 * Now we have to merge btspool and btspool2.
+	 	 */
+		ScanKey	entry;
+		Datum	attrDatum1, attrDatum2;
+		bool	isFirstNull, isSecondNull;
+		int32	compare;
 
-		bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true,
-											   &should_free);
-		if (bti == (BTItem) NULL)
-			break;
+		/* the preparation of merge */
+		bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free);
+		bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate, true, &should_free2);
+		indexScanKey = _bt_mkscankey_nodata(index);
+		for (;;)
+		{
+			load1 = true; /* load BTSpool next ? */
+			if (NULL == bti2)
+			{
+				if (NULL == bti)
+					break;
+			}
+			else if (NULL != bti)
+			{
 
-		/* When we see first tuple, create first index page */
-		if (state == NULL)
-			state = _bt_pagestate(index, BTP_LEAF, 0);
+				for (i = 1; i <= keysz; i++)
+				{
+					entry = indexScanKey + i - 1;
+					attrDatum1 = index_getattr((IndexTuple)bti, i, tupdes, &isFirstNull);
+					attrDatum2 = index_getattr((IndexTuple)bti2, i, tupdes, &isSecondNull);
+					if (isFirstNull)
+					{
+						if (!isSecondNull)
+						{
+							load1 = false;
+							break;
+						}
+					}
+					else if (isSecondNull)
+						break;
+					else
+					{
+						compare = DatumGetInt32(FunctionCall2(&entry->sk_func, attrDatum1, attrDatum2));
+						if (compare > 0)
+						{
+							load1 = false;
+							break;
+						}
+						else if (compare < 0)
+							break;
+					}	
+				}
+			}
+			else
+				load1 = false;
 
-		_bt_buildadd(index, state, bti);
+			/* When we see first tuple, create first index page */
+			if (state == NULL)
+				state = _bt_pagestate(index, BTP_LEAF, 0);
 
-		if (should_free)
-			pfree((void *) bti);
+			if (load1)
+			{
+				_bt_buildadd(index, state, bti);
+				if (should_free)
+					pfree((void *) bti);
+				bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free);
+			}
+			else
+			{
+				_bt_buildadd(index, state, bti2);
+				if (should_free2)
+					pfree((void *) bti2);
+				bti2 = (BTItem) tuplesort_getindextuple(btspool2->sortstate, true, &should_free2);
+			}
+		}
+		_bt_freeskey(indexScanKey);
+	}
+	else	/* merge is unnecessary */
+	{
+		while (bti = (BTItem) tuplesort_getindextuple(btspool->sortstate, true, &should_free), bti != (BTItem) NULL)
+		{
+			/* When we see first tuple, create first index page */
+			if (state == NULL)
+				state = _bt_pagestate(index, BTP_LEAF, 0);
+
+			_bt_buildadd(index, state, bti);
+			if (should_free)
+				pfree((void *) bti);
+		}
 	}
 
 	/* Close down final pages, if we had any data at all */

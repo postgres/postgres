@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.62 2000/07/21 06:42:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.63 2000/08/10 02:33:20 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/index.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "storage/sinval.h"
 
 
 bool		BuildingBtree = false;		/* see comment in btbuild() */
@@ -70,6 +71,16 @@ btbuild(PG_FUNCTION_ARGS)
 	BTSpool    *spool = NULL;
 	BTItem		btitem;
 	bool		usefast;
+	Snapshot	snapshot;
+	TransactionId	XmaxRecent;
+	/*
+	 * spool2 is needed only when the index is an unique index.
+	 * Dead tuples are put into spool2 instead of spool in
+	 * order to avoid uniqueness check.
+	 */
+	BTSpool		*spool2 = NULL;
+	bool		tupleIsAlive;
+	int		dead_count;
 
 	/* note that this is a new btree */
 	BuildingBtree = true;
@@ -135,13 +146,41 @@ btbuild(PG_FUNCTION_ARGS)
 	nhtups = nitups = 0;
 
 	if (usefast)
+	{
 		spool = _bt_spoolinit(index, indexInfo->ii_Unique);
+		/*
+	 	 * Different from spool,the uniqueness isn't checked
+		 * for spool2.
+	 	 */
+		if (indexInfo->ii_Unique)
+			spool2 = _bt_spoolinit(index, false);
+	}
 
 	/* start a heap scan */
-	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
+	dead_count = 0;
+	snapshot = (IsBootstrapProcessingMode() ? SnapshotNow : SnapshotAny);
+	hscan = heap_beginscan(heap, 0, snapshot, 0, (ScanKey) NULL);
+	XmaxRecent = 0;
+	if (snapshot == SnapshotAny)
+		GetXmaxRecent(&XmaxRecent);
 
 	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
 	{
+		if (snapshot == SnapshotAny)
+		{
+			tupleIsAlive = HeapTupleSatisfiesNow(htup->t_data);
+			if (!tupleIsAlive)
+			{
+				if ((htup->t_data->t_infomask & HEAP_XMIN_INVALID) != 0)
+					continue;
+				if (htup->t_data->t_infomask & HEAP_XMAX_COMMITTED &&
+					htup->t_data->t_xmax < XmaxRecent)
+					continue;
+			}
+		}
+		else
+			tupleIsAlive = true;
+		
 		MemoryContextReset(econtext->ecxt_per_tuple_memory);
 
 		nhtups++;
@@ -222,7 +261,15 @@ btbuild(PG_FUNCTION_ARGS)
 		 * into the btree.
 		 */
 		if (usefast)
-			_bt_spool(btitem, spool);
+		{
+			if (tupleIsAlive || !spool2)
+				_bt_spool(btitem, spool);
+			else /* dead tuples are put into spool2 */
+			{
+				dead_count++;
+				_bt_spool(btitem, spool2);
+			}
+		}
 		else
 			res = _bt_doinsert(index, btitem, indexInfo->ii_Unique, heap);
 
@@ -234,6 +281,11 @@ btbuild(PG_FUNCTION_ARGS)
 
 	/* okay, all heap tuples are indexed */
 	heap_endscan(hscan);
+	if (spool2 && !dead_count) /* spool2 was found to be unnecessary */
+	{
+		_bt_spooldestroy(spool2);
+		spool2 = NULL;
+	}
 
 #ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
@@ -250,8 +302,10 @@ btbuild(PG_FUNCTION_ARGS)
 	 */
 	if (usefast)
 	{
-		_bt_leafbuild(spool);
+		_bt_leafbuild(spool, spool2);
 		_bt_spooldestroy(spool);
+		if (spool2)
+			_bt_spooldestroy(spool2);
 	}
 
 #ifdef BTREE_BUILD_STATS

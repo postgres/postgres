@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.40 2000/07/25 04:47:57 tgl Exp $
+ * $Id: nbtree.h,v 1.41 2000/08/10 02:33:19 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,6 +289,6 @@ typedef struct BTSpool BTSpool; /* opaque type known only within nbtsort.c */
 extern BTSpool *_bt_spoolinit(Relation index, bool isunique);
 extern void _bt_spooldestroy(BTSpool *btspool);
 extern void _bt_spool(BTItem btitem, BTSpool *btspool);
-extern void _bt_leafbuild(BTSpool *btspool);
+extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
 
 #endif	 /* NBTREE_H */
