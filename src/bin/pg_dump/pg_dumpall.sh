@@ -6,9 +6,9 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.16 2002/02/24 21:57:23 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.17 2002/04/11 04:56:21 momjian Exp $
 
-CMDNAME=`basename $0`
+CMDNAME="`basename $0`"
 
 # substituted at build
 VERSION='@VERSION@'
@@ -21,7 +21,7 @@ bindir='@bindir@'
 PGPATH=
 if echo "$0" | grep '/' > /dev/null 2>&1 ; then
     # explicit dir name given
-    PGPATH=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+    PGPATH=`echo "$0" | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
     # look for it in PATH ('which' command is not portable)
     for dir in `echo "$PATH" | sed 's/:/ /g'` ; do
@@ -78,7 +78,7 @@ globals_only=
 
 
 while [ "$#" -gt 0 ] ; do
-    case $1 in
+    case "$1" in
         --help)
                 usage=t
                 break
@@ -94,7 +94,7 @@ while [ "$#" -gt 0 ] ; do
                 connectopts="$connectopts $1"
                 ;;
         --host=*)
-                connectopts="$connectopts -h "`echo $1 | sed 's/^--host=//'`
+                connectopts="$connectopts -h `echo $1 | sed 's/^--host=//'`"
                 ;;
 	--port|-p)
 		connectopts="$connectopts -p $2"
@@ -103,7 +103,7 @@ while [ "$#" -gt 0 ] ; do
                 connectopts="$connectopts $1"
                 ;;
         --port=*)
-                connectopts="$connectopts -p "`echo $1 | sed 's/^--port=//'`
+                connectopts="$connectopts -p `echo $1 | sed 's/^--port=//'`"
                 ;;
 	--user|--username|-U)
 		connectopts="$connectopts -U $2"
@@ -112,7 +112,7 @@ while [ "$#" -gt 0 ] ; do
 		connectopts="$connectopts $1"
 		;;
 	--user=*|--username=*)
-		connectopts="$connectopts -U "`echo $1 | sed 's/^--user[^=]*=//'`
+		connectopts="$connectopts -U `echo $1 | sed 's/^--user[^=]*=//'`"
 		;;
 	-W|--password)
 		connectopts="$connectopts -W"
@@ -124,6 +124,10 @@ while [ "$#" -gt 0 ] ; do
                 ;;
         -g|--globals-only)
                 globals_only=yes
+                ;;
+        -F*|--format=*|-f|--file=*|-t|--table=*)
+                echo "pg_dump can not process option $1, exiting" 1>&2
+                exit 1
                 ;;
         *)
                 pgdumpextraopts="$pgdumpextraopts $1"
@@ -214,12 +218,9 @@ exec 4<&0
 # We skip databases marked not datallowconn, since we'd be unable to
 # connect to them anyway (and besides, we don't want to dump template0).
 
-DATABASES=""
-
 $PSQL -d template1 -At -F ' ' \
   -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
 while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
-    DATABASES="$DATABASES $DATABASE"
 
     if [ "$DATABASE" != template1 ] ; then
 	echo
@@ -242,7 +243,9 @@ while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
     fi
 done
 
-for DATABASE in $DATABASES; do
+$PSQL -d template1 -At -F ' ' \
+  -c "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;" | \
+while read DATABASE; do
     echo "dumping database \"$DATABASE\"..." 1>&2
     echo
     echo "--"
