@@ -177,36 +177,36 @@ slashUsage(PsqlSettings *pset)
 
 	/* if you add/remove a line here, change the row test above */
 	fprintf(fout, " \\?           -- help\n");
-	fprintf(fout, " \\c[onnect] [<dbname>|- [<user>|?]] -- connect to new database (now '%s')\n", PQdb(pset->db));
+	fprintf(fout, " \\c[onnect] [dbname|- [user|?]] -- connect to new database (now '%s')\n", PQdb(pset->db));
 	fprintf(fout, " \\copy [binary] <table> [with oids] {from|to} <fname>[using delimiters '<char>']\n");
 	fprintf(fout, " \\copyright   -- show PostgreSQL copyright\n");
 	fprintf(fout, " \\d           -- list tables, views, and sequences\n");
 	fprintf(fout, " \\d{i|s|t|v|S}-- list only indices/sequences/tables/views/system tables\n");
 	fprintf(fout, " \\da          -- list aggregates\n");
-	fprintf(fout, " \\dd [<object>]- list comment for table, type, function, or operator\n");
+	fprintf(fout, " \\dd [object] -- list comment for table, type, function, or operator\n");
 	fprintf(fout, " \\df          -- list functions\n");
 	fprintf(fout, " \\do          -- list operators\n");
 	fprintf(fout, " \\dT          -- list data types\n");
-	fprintf(fout, " \\e [<fname>] -- edit the current query buffer or <fname> with external editor\n");
+	fprintf(fout, " \\e [fname]   -- edit the current query buffer or <fname> with external editor\n");
 	fprintf(fout, " \\echo <text> -- write text to stdout\n");
-	fprintf(fout, " \\g [<fname>] -- send query to backend (and results in <fname> or |pipe)\n");
-	fprintf(fout, " \\h [<cmd>]   -- help on syntax of sql commands, * for all commands\n");
+	fprintf(fout, " \\g [fname]   -- send query to backend (and results in <fname> or |pipe)\n");
+	fprintf(fout, " \\h [cmd]     -- help on syntax of sql commands, * for all commands\n");
 	fprintf(fout, " \\i <fname>   -- read and execute queries from filename\n");
 	fprintf(fout, " \\l           -- list all databases\n");
 	fprintf(fout, " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink -- large object operations\n");
-	fprintf(fout, " \\o [<fname>] -- send all query results to <fname>, or |pipe\n");
+	fprintf(fout, " \\o [fname]   -- send all query results to <fname>, or |pipe\n");
 	fprintf(fout, " \\p           -- print the content of the current query buffer\n");
 	fprintf(fout, " \\pset        -- set table output options\n");
 	fprintf(fout, " \\q           -- quit\n");
 	fprintf(fout, " \\qecho <text>-- write text to query output stream (see \\o)\n");
 	fprintf(fout, " \\r           -- reset (clear) the query buffer\n");
-	fprintf(fout, " \\s [<fname>] -- print history or save it in <fname>\n");
-	fprintf(fout, " \\set <var> [<value>] -- set/unset internal variable\n");
+	fprintf(fout, " \\s [fname]   -- print history or save it in <fname>\n");
+	fprintf(fout, " \\set <var> [value] -- set/unset internal variable\n");
 	fprintf(fout, " \\t           -- don't show table headers or footers (now %s)\n", ON(pset->popt.topt.tuples_only));
 	fprintf(fout, " \\x           -- toggle expanded output (now %s)\n", ON(pset->popt.topt.expanded));
 	fprintf(fout, " \\w <fname>   -- write current query buffer to a file\n");
 	fprintf(fout, " \\z           -- list table access permissions\n");
-	fprintf(fout, " \\! [<cmd>]   -- shell escape or command\n");
+	fprintf(fout, " \\! [cmd]     -- shell escape or command\n");
 
 	if (usePipe)
 	{
