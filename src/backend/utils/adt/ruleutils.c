@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.25 1999/09/02 03:04:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.26 1999/10/02 01:07:51 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,6 +40,7 @@
 
 #include "postgres.h"
 #include "executor/spi.h"
+#include "lib/stringinfo.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "utils/lsyscache.h"
@@ -47,7 +48,6 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
 
-#define BUFSIZE 8192
 
 /* ----------
  * Local data types
@@ -92,21 +92,29 @@ NameData   *pg_get_userbyid(int4 uid);
 
 /* ----------
  * Local functions
+ *
+ * Most of these functions used to use fixed-size buffers to build their
+ * results.  Now, they take an (already initialized) StringInfo object
+ * as a parameter, and append their text output to its contents.
  * ----------
  */
-static char *make_ruledef(HeapTuple ruletup, TupleDesc rulettc);
-static char *make_viewdef(HeapTuple ruletup, TupleDesc rulettc);
-static char *get_query_def(Query *query, QryHier *parentqh);
-static char *get_select_query_def(Query *query, QryHier *qh);
-static char *get_insert_query_def(Query *query, QryHier *qh);
-static char *get_update_query_def(Query *query, QryHier *qh);
-static char *get_delete_query_def(Query *query, QryHier *qh);
+static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
+static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
+static void get_query_def(StringInfo buf, Query *query, QryHier *parentqh);
+static void get_select_query_def(StringInfo buf, Query *query, QryHier *qh);
+static void get_insert_query_def(StringInfo buf, Query *query, QryHier *qh);
+static void get_update_query_def(StringInfo buf, Query *query, QryHier *qh);
+static void get_delete_query_def(StringInfo buf, Query *query, QryHier *qh);
 static RangeTblEntry *get_rte_for_var(Var *var, QryHier *qh);
-static char *get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
-static char *get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix);
-static char *get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix);
-static char *get_const_expr(Const *constval);
-static char *get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix);
+static void get_rule_expr(StringInfo buf, QryHier *qh, int rt_index,
+						  Node *node, bool varprefix);
+static void get_func_expr(StringInfo buf, QryHier *qh, int rt_index,
+						  Expr *expr, bool varprefix);
+static void get_tle_expr(StringInfo buf, QryHier *qh, int rt_index,
+						 TargetEntry *tle, bool varprefix);
+static void get_const_expr(StringInfo buf, Const *constval);
+static void get_sublink_expr(StringInfo buf, QryHier *qh, int rt_index,
+							 Node *node, bool varprefix);
 static char *get_relation_name(Oid relid);
 static char *get_attribute_name(Oid relid, int2 attnum);
 static bool check_if_rte_used(Node *node, Index rt_index, int levelsup);
@@ -129,7 +137,7 @@ pg_get_ruledef(NameData *rname)
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
-	char	   *tmp;
+	StringInfoData	buf;
 	int			len;
 
 	/* ----------
@@ -190,11 +198,13 @@ pg_get_ruledef(NameData *rname)
 	 * Get the rules definition and put it into executors memory
 	 * ----------
 	 */
-	tmp = make_ruledef(ruletup, rulettc);
-	len = strlen(tmp) + VARHDRSZ;
+	initStringInfo(&buf);
+	make_ruledef(&buf, ruletup, rulettc);
+	len = buf.len + VARHDRSZ;
 	ruledef = SPI_palloc(len);
 	VARSIZE(ruledef) = len;
-	memcpy(VARDATA(ruledef), tmp, len - VARHDRSZ);
+	memcpy(VARDATA(ruledef), buf.data, buf.len);
+	pfree(buf.data);
 
 	/* ----------
 	 * Disconnect from SPI manager
@@ -225,7 +235,7 @@ pg_get_viewdef(NameData *rname)
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
-	char	   *tmp;
+	StringInfoData	buf;
 	int			len;
 	char		name1[NAMEDATALEN + 5];
 	char		name2[NAMEDATALEN + 5];
@@ -276,8 +286,9 @@ pg_get_viewdef(NameData *rname)
 	spirc = SPI_execp(plan_getview, args, nulls, 1);
 	if (spirc != SPI_OK_SELECT)
 		elog(ERROR, "failed to get pg_rewrite tuple for view %s", rulename);
+	initStringInfo(&buf);
 	if (SPI_processed != 1)
-		tmp = "Not a view";
+		appendStringInfo(&buf, "Not a view");
 	else
 	{
 		/* ----------
@@ -286,12 +297,13 @@ pg_get_viewdef(NameData *rname)
 		 */
 		ruletup = SPI_tuptable->vals[0];
 		rulettc = SPI_tuptable->tupdesc;
-		tmp = make_viewdef(ruletup, rulettc);
+		make_viewdef(&buf, ruletup, rulettc);
 	}
-	len = strlen(tmp) + VARHDRSZ;
+	len = buf.len + VARHDRSZ;
 	ruledef = SPI_palloc(len);
 	VARSIZE(ruledef) = len;
-	memcpy(VARDATA(ruledef), tmp, len - VARHDRSZ);
+	memcpy(VARDATA(ruledef), buf.data, buf.len);
+	pfree(buf.data);
 
 	/* ----------
 	 * Disconnect from SPI manager
@@ -309,8 +321,7 @@ pg_get_viewdef(NameData *rname)
 
 
 /* ----------
- * get_viewdef			- Mainly the same thing, but we
- *				  only return the SELECT part of a view
+ * get_indexdef			- Get the definition of an index
  * ----------
  */
 text *
@@ -331,8 +342,8 @@ pg_get_indexdef(Oid indexrelid)
 	int			spirc;
 	int			len;
 	int			keyno;
-	char		buf[BUFSIZE];
-	char		keybuf[BUFSIZE];
+	StringInfoData	buf;
+	StringInfoData	keybuf;
 	char	   *sep;
 
 	/* ----------
@@ -415,37 +426,37 @@ pg_get_indexdef(Oid indexrelid)
 	 * Start the index definition
 	 * ----------
 	 */
-	sprintf(buf, "CREATE %sINDEX \"%s\" ON \"%s\" USING %s (",
-			idxrec->indisunique ? "UNIQUE " : "",
-			nameout(&(idxrelrec->relname)),
-			nameout(&(indrelrec->relname)),
-			SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+	initStringInfo(&buf);
+	appendStringInfo(&buf, "CREATE %sINDEX \"%s\" ON \"%s\" USING %s (",
+					 idxrec->indisunique ? "UNIQUE " : "",
+					 nameout(&(idxrelrec->relname)),
+					 nameout(&(indrelrec->relname)),
+					 SPI_getvalue(spi_tup, spi_ttc, spi_fno));
 
 	/* ----------
 	 * Collect the indexed attributes
 	 * ----------
 	 */
+	initStringInfo(&keybuf);
 	sep = "";
-	keybuf[0] = '\0';
 	for (keyno = 0; keyno < INDEX_MAX_KEYS; keyno++)
 	{
 		if (idxrec->indkey[keyno] == InvalidAttrNumber)
 			break;
 
-		strcat(keybuf, sep);
+		appendStringInfo(&keybuf, sep);
 		sep = ", ";
 
 		/* ----------
 		 * Add the indexed field name
 		 * ----------
 		 */
-		strcat(keybuf, "\"");
 		if (idxrec->indkey[keyno] == ObjectIdAttributeNumber - 1)
-			strcat(keybuf, "oid");
+			appendStringInfo(&keybuf, "\"oid\"");
 		else
-			strcat(keybuf, get_attribute_name(idxrec->indrelid,
-											  idxrec->indkey[keyno]));
-		strcat(keybuf, "\"");
+			appendStringInfo(&keybuf, "\"%s\"",
+							 get_attribute_name(idxrec->indrelid,
+												idxrec->indkey[keyno]));
 
 		/* ----------
 		 * If not a functional index, add the operator class name
@@ -464,9 +475,8 @@ pg_get_indexdef(Oid indexrelid)
 			spi_tup = SPI_tuptable->vals[0];
 			spi_ttc = SPI_tuptable->tupdesc;
 			spi_fno = SPI_fnumber(spi_ttc, "opcname");
-			strcat(keybuf, " \"");
-			strcat(keybuf, SPI_getvalue(spi_tup, spi_ttc, spi_fno));
-			strcat(keybuf, "\"");
+			appendStringInfo(&keybuf, " \"%s\"",
+							 SPI_getvalue(spi_tup, spi_ttc, spi_fno));
 		}
 	}
 
@@ -485,11 +495,9 @@ pg_get_indexdef(Oid indexrelid)
 			elog(ERROR, "cache lookup for proc %u failed", idxrec->indproc);
 
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-		strcat(buf, "\"");
-		strcat(buf, nameout(&(procStruct->proname)));
-		strcat(buf, "\" (");
-		strcat(buf, keybuf);
-		strcat(buf, ") ");
+		appendStringInfo(&buf, "\"%s\" (%s) ",
+						 nameout(&(procStruct->proname)),
+						 keybuf.data);
 
 		spi_args[0] = ObjectIdGetDatum(idxrec->indclass[0]);
 		spi_nulls[0] = ' ';
@@ -502,31 +510,32 @@ pg_get_indexdef(Oid indexrelid)
 		spi_tup = SPI_tuptable->vals[0];
 		spi_ttc = SPI_tuptable->tupdesc;
 		spi_fno = SPI_fnumber(spi_ttc, "opcname");
-		strcat(buf, "\"");
-		strcat(buf, SPI_getvalue(spi_tup, spi_ttc, spi_fno));
-		strcat(buf, "\"");
+		appendStringInfo(&buf, "\"%s\"",
+						 SPI_getvalue(spi_tup, spi_ttc, spi_fno));
 	}
 	else
 		/* ----------
 		 * For the others say 'attr opclass [, ...]'
 		 * ----------
 		 */
-		strcat(buf, keybuf);
+		appendStringInfo(&buf, "%s", keybuf.data);
 
 	/* ----------
 	 * Finish
 	 * ----------
 	 */
-	strcat(buf, ")");
+	appendStringInfo(&buf, ")");
 
 	/* ----------
 	 * Create the result in upper executor memory
 	 * ----------
 	 */
-	len = strlen(buf) + VARHDRSZ;
+	len = buf.len + VARHDRSZ;
 	indexdef = SPI_palloc(len);
 	VARSIZE(indexdef) = len;
-	memcpy(VARDATA(indexdef), buf, len - VARHDRSZ);
+	memcpy(VARDATA(indexdef), buf.data, buf.len);
+	pfree(buf.data);
+	pfree(keybuf.data);
 
 	/* ----------
 	 * Disconnect from SPI manager
@@ -581,10 +590,9 @@ pg_get_userbyid(int4 uid)
  *				  for a given pg_rewrite tuple
  * ----------
  */
-static char *
-make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
+static void
+make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 {
-	char	   *buf;
 	char		ev_type;
 	Oid			ev_class;
 	int2		ev_attr;
@@ -594,12 +602,6 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 	List	   *actions = NIL;
 	int			fno;
 	bool		isnull;
-
-	/* ----------
-	 * Allocate space for the returned rule definition text
-	 * ----------
-	 */
-	buf = palloc(BUFSIZE);
 
 	/* ----------
 	 * Get the attribute values from the rules tuple
@@ -630,29 +632,25 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 	 * Build the rules definition text
 	 * ----------
 	 */
-	strcpy(buf, "CREATE RULE \"");
-
-	/* The rule name */
-	strcat(buf, rulename);
-	strcat(buf, "\" AS ON ");
+	appendStringInfo(buf, "CREATE RULE \"%s\" AS ON ", rulename);
 
 	/* The event the rule is fired for */
 	switch (ev_type)
 	{
 		case '1':
-			strcat(buf, "SELECT TO \"");
+			appendStringInfo(buf, "SELECT");
 			break;
 
 		case '2':
-			strcat(buf, "UPDATE TO \"");
+			appendStringInfo(buf, "UPDATE");
 			break;
 
 		case '3':
-			strcat(buf, "INSERT TO \"");
+			appendStringInfo(buf, "INSERT");
 			break;
 
 		case '4':
-			strcat(buf, "DELETE TO \"");
+			appendStringInfo(buf, "DELETE");
 			break;
 
 		default:
@@ -662,14 +660,10 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 	}
 
 	/* The relation the rule is fired on */
-	strcat(buf, get_relation_name(ev_class));
-	strcat(buf, "\"");
+	appendStringInfo(buf, " TO \"%s\"", get_relation_name(ev_class));
 	if (ev_attr > 0)
-	{
-		strcat(buf, ".\"");
-		strcat(buf, get_attribute_name(ev_class, ev_attr));
-		strcat(buf, "\"");
-	}
+		appendStringInfo(buf, ".\"%s\"",
+						 get_attribute_name(ev_class, ev_attr));
 
 	/* If the rule has an event qualification, add it */
 	if (ev_qual == NULL)
@@ -685,15 +679,15 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 		qh.parent = NULL;
 		qh.query = query;
 
-		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(&qh, 0, qual, TRUE));
+		appendStringInfo(buf, " WHERE ");
+		get_rule_expr(buf, &qh, 0, qual, TRUE);
 	}
 
-	strcat(buf, " DO ");
+	appendStringInfo(buf, " DO ");
 
 	/* The INSTEAD keyword (if so) */
 	if (is_instead)
-		strcat(buf, "INSTEAD ");
+		appendStringInfo(buf, "INSTEAD ");
 
 	/* Finally the rules actions */
 	if (length(actions) > 1)
@@ -701,36 +695,30 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 		List	   *action;
 		Query	   *query;
 
-		strcat(buf, "(");
+		appendStringInfo(buf, "(");
 		foreach(action, actions)
 		{
 			query = (Query *) lfirst(action);
-			strcat(buf, get_query_def(query, NULL));
-			strcat(buf, "; ");
+			get_query_def(buf, query, NULL);
+			appendStringInfo(buf, "; ");
 		}
-		strcat(buf, ");");
+		appendStringInfo(buf, ");");
 	}
 	else
 	{
 		if (length(actions) == 0)
 		{
-			strcat(buf, "NOTHING;");
+			appendStringInfo(buf, "NOTHING;");
 		}
 		else
 		{
 			Query	   *query;
 
 			query = (Query *) lfirst(actions);
-			strcat(buf, get_query_def(query, NULL));
-			strcat(buf, ";");
+			get_query_def(buf, query, NULL);
+			appendStringInfo(buf, ";");
 		}
 	}
-
-	/* ----------
-	 * That's it
-	 * ----------
-	 */
-	return buf;
 }
 
 
@@ -739,10 +727,9 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
  *				  view rewrite rule
  * ----------
  */
-static char *
-make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
+static void
+make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 {
-	char		buf[BUFSIZE];
 	Query	   *query;
 	char		ev_type;
 	Oid			ev_class;
@@ -779,21 +766,21 @@ make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
 		actions = (List *) stringToNode(ev_action);
 
 	if (length(actions) != 1)
-		return "Not a view";
+	{
+		appendStringInfo(buf, "Not a view");
+		return;
+	}
 
 	query = (Query *) lfirst(actions);
 
 	if (ev_type != '1' || ev_attr >= 0 || !is_instead || strcmp(ev_qual, "<>"))
-		return "Not a view";
+	{
+		appendStringInfo(buf, "Not a view");
+		return;
+	}
 
-	strcpy(buf, get_query_def(query, NULL));
-	strcat(buf, ";");
-
-	/* ----------
-	 * That's it
-	 * ----------
-	 */
-	return pstrdup(buf);
+	get_query_def(buf, query, NULL);
+	appendStringInfo(buf, ";");
 }
 
 
@@ -803,8 +790,8 @@ make_viewdef(HeapTuple ruletup, TupleDesc rulettc)
  *					  list
  * ----------
  */
-static char *
-get_query_def(Query *query, QryHier *parentqh)
+static void
+get_query_def(StringInfo buf, Query *query, QryHier *parentqh)
 {
 	QryHier		qh;
 
@@ -814,23 +801,23 @@ get_query_def(Query *query, QryHier *parentqh)
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
-			return get_select_query_def(query, &qh);
+			get_select_query_def(buf, query, &qh);
 			break;
 
 		case CMD_UPDATE:
-			return get_update_query_def(query, &qh);
+			get_update_query_def(buf, query, &qh);
 			break;
 
 		case CMD_INSERT:
-			return get_insert_query_def(query, &qh);
+			get_insert_query_def(buf, query, &qh);
 			break;
 
 		case CMD_DELETE:
-			return get_delete_query_def(query, &qh);
+			get_delete_query_def(buf, query, &qh);
 			break;
 
 		case CMD_NOTHING:
-			return "NOTHING";
+			appendStringInfo(buf, "NOTHING");
 			break;
 
 		default:
@@ -838,8 +825,6 @@ get_query_def(Query *query, QryHier *parentqh)
 				 rulename, query->commandType);
 			break;
 	}
-
-	return NULL;
 }
 
 
@@ -847,10 +832,9 @@ get_query_def(Query *query, QryHier *parentqh)
  * get_select_query_def			- Parse back a SELECT parsetree
  * ----------
  */
-static char *
-get_select_query_def(Query *query, QryHier *qh)
+static void
+get_select_query_def(StringInfo buf, Query *query, QryHier *qh)
 {
-	char		buf[BUFSIZE];
 	char	   *sep;
 	TargetEntry *tle;
 	RangeTblEntry *rte;
@@ -908,7 +892,7 @@ get_select_query_def(Query *query, QryHier *qh)
 	 * Build up the query string - first we say SELECT
 	 * ----------
 	 */
-	strcpy(buf, "SELECT");
+	appendStringInfo(buf, "SELECT");
 
 	/* Then we tell what to select (the targetlist) */
 	sep = " ";
@@ -917,10 +901,10 @@ get_select_query_def(Query *query, QryHier *qh)
 		bool		tell_as = FALSE;
 
 		tle = (TargetEntry *) lfirst(l);
-		strcat(buf, sep);
+		appendStringInfo(buf, sep);
 		sep = ", ";
 
-		strcat(buf, get_tle_expr(qh, 0, tle, (rt_numused > 1)));
+		get_tle_expr(buf, qh, 0, tle, (rt_numused > 1));
 
 		/* Check if we must say AS ... */
 		if (! IsA(tle->expr, Var))
@@ -938,17 +922,13 @@ get_select_query_def(Query *query, QryHier *qh)
 
 		/* and do if so */
 		if (tell_as)
-		{
-			strcat(buf, " AS \"");
-			strcat(buf, tle->resdom->resname);
-			strcat(buf, "\"");
-		}
+			appendStringInfo(buf, " AS \"%s\"", tle->resdom->resname);
 	}
 
 	/* If we need other tables that *NEW* or *CURRENT* add the FROM clause */
 	if (!rt_constonly && rt_numused > 0)
 	{
-		strcat(buf, " FROM");
+		appendStringInfo(buf, " FROM");
 
 		i = 0;
 		sep = " ";
@@ -964,17 +944,11 @@ get_select_query_def(Query *query, QryHier *qh)
 				if (!strcmp(rte->refname, "*CURRENT*"))
 					continue;
 
-				strcat(buf, sep);
+				appendStringInfo(buf, sep);
 				sep = ", ";
-				strcat(buf, "\"");
-				strcat(buf, rte->relname);
-				strcat(buf, "\"");
+				appendStringInfo(buf, "\"%s\"", rte->relname);
 				if (strcmp(rte->relname, rte->refname) != 0)
-				{
-					strcat(buf, " \"");
-					strcat(buf, rte->refname);
-					strcat(buf, "\"");
-				}
+					appendStringInfo(buf, " \"%s\"", rte->refname);
 			}
 		}
 	}
@@ -982,14 +956,14 @@ get_select_query_def(Query *query, QryHier *qh)
 	/* Add the WHERE clause if given */
 	if (query->qual != NULL)
 	{
-		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(qh, 0, query->qual, (rt_numused > 1)));
+		appendStringInfo(buf, " WHERE ");
+		get_rule_expr(buf, qh, 0, query->qual, (rt_numused > 1));
 	}
 
 	/* Add the GROUP BY CLAUSE */
 	if (query->groupClause != NULL)
 	{
-		strcat(buf, " GROUP BY ");
+		appendStringInfo(buf, " GROUP BY ");
 		sep = "";
 		foreach(l, query->groupClause)
 		{
@@ -998,17 +972,11 @@ get_select_query_def(Query *query, QryHier *qh)
 
 			groupexpr = get_sortgroupclause_expr(grp,
 												 query->targetList);
-			strcat(buf, sep);
-			strcat(buf, get_rule_expr(qh, 0, groupexpr, (rt_numused > 1)));
+			appendStringInfo(buf, sep);
+			get_rule_expr(buf, qh, 0, groupexpr, (rt_numused > 1));
 			sep = ", ";
 		}
 	}
-
-	/* ----------
-	 * Copy the query string into allocated space and return it
-	 * ----------
-	 */
-	return pstrdup(buf);
 }
 
 
@@ -1016,10 +984,9 @@ get_select_query_def(Query *query, QryHier *qh)
  * get_insert_query_def			- Parse back an INSERT parsetree
  * ----------
  */
-static char *
-get_insert_query_def(Query *query, QryHier *qh)
+static void
+get_insert_query_def(StringInfo buf, Query *query, QryHier *qh)
 {
-	char		buf[BUFSIZE];
 	char	   *sep;
 	TargetEntry *tle;
 	RangeTblEntry *rte;
@@ -1072,9 +1039,7 @@ get_insert_query_def(Query *query, QryHier *qh)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	strcpy(buf, "INSERT INTO \"");
-	strcat(buf, rte->relname);
-	strcat(buf, "\"");
+	appendStringInfo(buf, "INSERT INTO \"%s\"", rte->relname);
 
 	/* Add the target list */
 	sep = " (";
@@ -1082,37 +1047,29 @@ get_insert_query_def(Query *query, QryHier *qh)
 	{
 		tle = (TargetEntry *) lfirst(l);
 
-		strcat(buf, sep);
+		appendStringInfo(buf, sep);
 		sep = ", ";
-		strcat(buf, "\"");
-		strcat(buf, tle->resdom->resname);
-		strcat(buf, "\"");
+		appendStringInfo(buf, "\"%s\"", tle->resdom->resname);
 	}
-	strcat(buf, ") ");
+	appendStringInfo(buf, ") ");
 
 	/* Add the VALUES or the SELECT */
 	if (rt_constonly && query->qual == NULL)
 	{
-		strcat(buf, "VALUES (");
+		appendStringInfo(buf, "VALUES (");
 		sep = "";
 		foreach(l, query->targetList)
 		{
 			tle = (TargetEntry *) lfirst(l);
 
-			strcat(buf, sep);
+			appendStringInfo(buf, sep);
 			sep = ", ";
-			strcat(buf, get_tle_expr(qh, 0, tle, (rt_numused > 1)));
+			get_tle_expr(buf, qh, 0, tle, (rt_numused > 1));
 		}
-		strcat(buf, ")");
+		appendStringInfo(buf, ")");
 	}
 	else
-		strcat(buf, get_select_query_def(query, qh));
-
-	/* ----------
-	 * Copy the query string into allocated space and return it
-	 * ----------
-	 */
-	return pstrdup(buf);
+		get_select_query_def(buf, query, qh);
 }
 
 
@@ -1120,10 +1077,9 @@ get_insert_query_def(Query *query, QryHier *qh)
  * get_update_query_def			- Parse back an UPDATE parsetree
  * ----------
  */
-static char *
-get_update_query_def(Query *query, QryHier *qh)
+static void
+get_update_query_def(StringInfo buf, Query *query, QryHier *qh)
 {
-	char		buf[BUFSIZE];
 	char	   *sep;
 	TargetEntry *tle;
 	RangeTblEntry *rte;
@@ -1134,9 +1090,7 @@ get_update_query_def(Query *query, QryHier *qh)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	strcpy(buf, "UPDATE ");
-	strcat(buf, rte->relname);
-	strcat(buf, " SET ");
+	appendStringInfo(buf, "UPDATE \"%s\" SET ", rte->relname);
 
 	/* Add the comma separated list of 'attname = value' */
 	sep = "";
@@ -1144,28 +1098,18 @@ get_update_query_def(Query *query, QryHier *qh)
 	{
 		tle = (TargetEntry *) lfirst(l);
 
-		strcat(buf, sep);
+		appendStringInfo(buf, sep);
 		sep = ", ";
-		strcat(buf, "\"");
-		strcat(buf, tle->resdom->resname);
-		strcat(buf, "\" = ");
-		strcat(buf, get_tle_expr(qh, query->resultRelation,
-								 tle, TRUE));
+		appendStringInfo(buf, "\"%s\" = ", tle->resdom->resname);
+		get_tle_expr(buf, qh, query->resultRelation, tle, TRUE);
 	}
 
 	/* Finally add a WHERE clause if given */
 	if (query->qual != NULL)
 	{
-		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(qh, query->resultRelation,
-								  query->qual, TRUE));
+		appendStringInfo(buf, " WHERE ");
+		get_rule_expr(buf, qh, query->resultRelation, query->qual, TRUE);
 	}
-
-	/* ----------
-	 * Copy the query string into allocated space and return it
-	 * ----------
-	 */
-	return pstrdup(buf);
 }
 
 
@@ -1173,10 +1117,9 @@ get_update_query_def(Query *query, QryHier *qh)
  * get_delete_query_def			- Parse back a DELETE parsetree
  * ----------
  */
-static char *
-get_delete_query_def(Query *query, QryHier *qh)
+static void
+get_delete_query_def(StringInfo buf, Query *query, QryHier *qh)
 {
-	char		buf[BUFSIZE];
 	RangeTblEntry *rte;
 
 	/* ----------
@@ -1184,22 +1127,14 @@ get_delete_query_def(Query *query, QryHier *qh)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	strcpy(buf, "DELETE FROM \"");
-	strcat(buf, rte->relname);
-	strcat(buf, "\"");
+	appendStringInfo(buf, "DELETE FROM \"%s\"", rte->relname);
 
 	/* Add a WHERE clause if given */
 	if (query->qual != NULL)
 	{
-		strcat(buf, " WHERE ");
-		strcat(buf, get_rule_expr(qh, 0, query->qual, FALSE));
+		appendStringInfo(buf, " WHERE ");
+		get_rule_expr(buf, qh, 0, query->qual, FALSE);
 	}
-
-	/* ----------
-	 * Copy the query string into allocated space and return it
-	 * ----------
-	 */
-	return pstrdup(buf);
 }
 
 /*
@@ -1221,28 +1156,26 @@ get_rte_for_var(Var *var, QryHier *qh)
  * get_rule_expr			- Parse back an expression
  * ----------
  */
-static char *
-get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
+static void
+get_rule_expr(StringInfo buf, QryHier *qh, int rt_index,
+			  Node *node, bool varprefix)
 {
-	char		buf[BUFSIZE];
-
 	if (node == NULL)
-		return pstrdup("");
-
-	buf[0] = '\0';
+		return;
 
 	/* ----------
-	 * Each level of get_rule_expr must return an indivisible term
+	 * Each level of get_rule_expr must emit an indivisible term
 	 * (parenthesized if necessary) to ensure result is reparsed into
 	 * the same expression tree.
 	 *
-	 * There might be some work left here to support additional node types...
+	 * There might be some work left here to support additional node types.
+	 * Can we ever see Param nodes here?
 	 * ----------
 	 */
 	switch (nodeTag(node))
 	{
 		case T_Const:
-			return get_const_expr((Const *) node);
+			get_const_expr(buf, (Const *) node);
 			break;
 
 		case T_Var:
@@ -1251,20 +1184,14 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				RangeTblEntry *rte = get_rte_for_var(var, qh);
 
 				if (!strcmp(rte->refname, "*NEW*"))
-					strcat(buf, "new.");
+					appendStringInfo(buf, "new.");
 				else if (!strcmp(rte->refname, "*CURRENT*"))
-					strcat(buf, "old.");
+					appendStringInfo(buf, "old.");
 				else
-				{
-					strcat(buf, "\"");
-					strcat(buf, rte->refname);
-					strcat(buf, "\".");
-				}
-				strcat(buf, "\"");
-				strcat(buf, get_attribute_name(rte->relid, var->varattno));
-				strcat(buf, "\"");
-
-				return pstrdup(buf);
+					appendStringInfo(buf, "\"%s\".", rte->refname);
+				appendStringInfo(buf, "\"%s\"",
+								 get_attribute_name(rte->relid,
+													var->varattno));
 			}
 			break;
 
@@ -1280,22 +1207,18 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				switch (expr->opType)
 				{
 					case OP_EXPR:
-						strcat(buf, "(");
+						appendStringInfo(buf, "(");
 						if (length(args) == 2)
 						{
 							/* binary operator */
-							strcat(buf,
-								   get_rule_expr(qh, rt_index,
-												 (Node *) lfirst(args),
-												 varprefix));
-							strcat(buf, " ");
-							strcat(buf,
-								   get_opname(((Oper *) expr->oper)->opno));
-							strcat(buf, " ");
-							strcat(buf,
-								   get_rule_expr(qh, rt_index,
-												 (Node *) lsecond(args),
-												 varprefix));
+							get_rule_expr(buf, qh, rt_index,
+										  (Node *) lfirst(args),
+										  varprefix);
+							appendStringInfo(buf, " %s ",
+									get_opname(((Oper *) expr->oper)->opno));
+							get_rule_expr(buf, qh, rt_index,
+										  (Node *) lsecond(args),
+										  varprefix);
 						}
 						else
 						{
@@ -1312,82 +1235,76 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 							switch (optup->oprkind)
 							{
 								case 'l':
-									strcat(buf, get_opname(opno));
-									strcat(buf, " ");
-									strcat(buf,
-										   get_rule_expr(qh, rt_index,
-														 (Node *) lfirst(args),
-														 varprefix));
+									appendStringInfo(buf, "%s ",
+													 get_opname(opno));
+									get_rule_expr(buf, qh, rt_index,
+												  (Node *) lfirst(args),
+												  varprefix);
 									break;
 								case 'r':
-									strcat(buf,
-										   get_rule_expr(qh, rt_index,
-														 (Node *) lfirst(args),
-														 varprefix));
-									strcat(buf, " ");
-									strcat(buf, get_opname(opno));
+									get_rule_expr(buf, qh, rt_index,
+												  (Node *) lfirst(args),
+												  varprefix);
+									appendStringInfo(buf, " %s",
+													 get_opname(opno));
 									break;
 								default:
 									elog(ERROR, "get_rule_expr: bogus oprkind");
 							}
 						}
-						strcat(buf, ")");
-						return pstrdup(buf);
+						appendStringInfo(buf, ")");
 						break;
 
 					case OR_EXPR:
-						strcat(buf, "(");
-						strcat(buf, get_rule_expr(qh, rt_index,
-												  (Node *) lfirst(args),
-												  varprefix));
+						appendStringInfo(buf, "(");
+						get_rule_expr(buf, qh, rt_index,
+									  (Node *) lfirst(args),
+									  varprefix);
 						/* It's not clear that we can ever see N-argument
 						 * OR/AND clauses here, but might as well cope...
 						 */
 						while ((args = lnext(args)) != NIL)
 						{
-							strcat(buf, " OR ");
-							strcat(buf, get_rule_expr(qh, rt_index,
-													  (Node *) lfirst(args),
-													  varprefix));
+							appendStringInfo(buf, " OR ");
+							get_rule_expr(buf, qh, rt_index,
+										  (Node *) lfirst(args),
+										  varprefix);
 						}
-						strcat(buf, ")");
-						return pstrdup(buf);
+						appendStringInfo(buf, ")");
 						break;
 
 					case AND_EXPR:
-						strcat(buf, "(");
-						strcat(buf, get_rule_expr(qh, rt_index,
-												  (Node *) lfirst(args),
-												  varprefix));
+						appendStringInfo(buf, "(");
+						get_rule_expr(buf, qh, rt_index,
+									  (Node *) lfirst(args),
+									  varprefix);
 						while ((args = lnext(args)) != NIL)
 						{
-							strcat(buf, " AND ");
-							strcat(buf, get_rule_expr(qh, rt_index,
-													  (Node *) lfirst(args),
-													  varprefix));
+							appendStringInfo(buf, " AND ");
+							get_rule_expr(buf, qh, rt_index,
+										  (Node *) lfirst(args),
+										  varprefix);
 						}
-						strcat(buf, ")");
-						return pstrdup(buf);
+						appendStringInfo(buf, ")");
 						break;
 
 					case NOT_EXPR:
-						strcat(buf, "(NOT ");
-						strcat(buf, get_rule_expr(qh, rt_index,
-											   (Node *) get_leftop(expr),
-												  varprefix));
-						strcat(buf, ")");
-						return pstrdup(buf);
+						appendStringInfo(buf, "(NOT ");
+						get_rule_expr(buf, qh, rt_index,
+									  (Node *) lfirst(args),
+									  varprefix);
+						appendStringInfo(buf, ")");
 						break;
 
 					case FUNC_EXPR:
-						return get_func_expr(qh, rt_index,
-											 (Expr *) node,
-											 varprefix);
+						get_func_expr(buf, qh, rt_index,
+									  (Expr *) node,
+									  varprefix);
 						break;
 
 					default:
-						printf("\n%s\n", nodeToString(node));
-						elog(ERROR, "get_rule_expr: expr type not supported");
+						elog(ERROR, "get_rule_expr: expr opType %d not supported",
+							 expr->opType);
 				}
 			}
 			break;
@@ -1396,14 +1313,16 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 			{
 				Aggref	   *aggref = (Aggref *) node;
 
-				strcat(buf, "\"");
-				strcat(buf, aggref->aggname);
-				strcat(buf, "\"(");
-				strcat(buf, get_rule_expr(qh, rt_index,
-								  (Node *) (aggref->target), varprefix));
-				strcat(buf, ")");
-				return pstrdup(buf);
+				appendStringInfo(buf, "\"%s\"(", aggref->aggname);
+				get_rule_expr(buf, qh, rt_index,
+							  (Node *) (aggref->target), varprefix);
+				appendStringInfo(buf, ")");
 			}
+			break;
+
+		case T_Iter:
+			get_rule_expr(buf, qh, rt_index,
+						  ((Iter *) node)->iterexpr, varprefix);
 			break;
 
 		case T_ArrayRef:
@@ -1412,27 +1331,26 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				List	   *lowlist;
 				List	   *uplist;
 
-				strcat(buf, get_rule_expr(qh, rt_index,
-										  aref->refexpr, varprefix));
+				get_rule_expr(buf, qh, rt_index,
+							  aref->refexpr, varprefix);
 				lowlist = aref->reflowerindexpr;
 				foreach(uplist, aref->refupperindexpr)
 				{
-					strcat(buf, "[");
+					appendStringInfo(buf, "[");
 					if (lowlist)
 					{
-						strcat(buf, get_rule_expr(qh, rt_index,
-												  (Node *) lfirst(lowlist),
-												  varprefix));
-						strcat(buf, ":");
+						get_rule_expr(buf, qh, rt_index,
+									  (Node *) lfirst(lowlist),
+									  varprefix);
+						appendStringInfo(buf, ":");
 						lowlist = lnext(lowlist);
 					}
-					strcat(buf, get_rule_expr(qh, rt_index,
-											  (Node *) lfirst(uplist),
-											  varprefix));
-					strcat(buf, "]");
+					get_rule_expr(buf, qh, rt_index,
+								  (Node *) lfirst(uplist),
+								  varprefix);
+					appendStringInfo(buf, "]");
 				}
 				/* XXX need to do anything with refassgnexpr? */
-				return pstrdup(buf);
 			}
 			break;
 
@@ -1441,28 +1359,27 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 				List	   *temp;
 
-				strcat(buf, "CASE");
+				appendStringInfo(buf, "CASE");
 				foreach(temp, caseexpr->args)
 				{
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
 
-					strcat(buf, " WHEN ");
-					strcat(buf, get_rule_expr(qh, rt_index,
-											  when->expr, varprefix));
-					strcat(buf, " THEN ");
-					strcat(buf, get_rule_expr(qh, rt_index,
-											  when->result, varprefix));
+					appendStringInfo(buf, " WHEN ");
+					get_rule_expr(buf, qh, rt_index,
+								  when->expr, varprefix);
+					appendStringInfo(buf, " THEN ");
+					get_rule_expr(buf, qh, rt_index,
+								  when->result, varprefix);
 				}
-				strcat(buf, " ELSE ");
-				strcat(buf, get_rule_expr(qh, rt_index,
-										  caseexpr->defresult, varprefix));
-				strcat(buf, " END");
-				return pstrdup(buf);
+				appendStringInfo(buf, " ELSE ");
+				get_rule_expr(buf, qh, rt_index,
+							  caseexpr->defresult, varprefix);
+				appendStringInfo(buf, " END");
 			}
 			break;
 
 		case T_SubLink:
-			return get_sublink_expr(qh, rt_index, node, varprefix);
+			get_sublink_expr(buf, qh, rt_index, node, varprefix);
 			break;
 
 		default:
@@ -1471,8 +1388,6 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				 rulename, nodeTag(node));
 			break;
 	}
-
-	return FALSE;
 }
 
 
@@ -1480,10 +1395,10 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
  * get_func_expr			- Parse back a Func node
  * ----------
  */
-static char *
-get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
+static void
+get_func_expr(StringInfo buf, QryHier *qh, int rt_index,
+			  Expr *expr, bool varprefix)
 {
-	char		buf[BUFSIZE];
 	HeapTuple	proctup;
 	Form_pg_proc procStruct;
 	List	   *l;
@@ -1503,23 +1418,24 @@ get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 	proname = nameout(&(procStruct->proname));
 
+	/*
+	 * nullvalue() and nonnullvalue() should get turned into special syntax
+	 */
 	if (procStruct->pronargs == 1 && procStruct->proargtypes[0] == InvalidOid)
 	{
 		if (!strcmp(proname, "nullvalue"))
 		{
-			strcpy(buf, "(");
-			strcat(buf, get_rule_expr(qh, rt_index, lfirst(expr->args),
-									  varprefix));
-			strcat(buf, " ISNULL)");
-			return pstrdup(buf);
+			appendStringInfo(buf, "(");
+			get_rule_expr(buf, qh, rt_index, lfirst(expr->args), varprefix);
+			appendStringInfo(buf, " ISNULL)");
+			return;
 		}
 		if (!strcmp(proname, "nonnullvalue"))
 		{
-			strcpy(buf, "(");
-			strcat(buf, get_rule_expr(qh, rt_index, lfirst(expr->args),
-									  varprefix));
-			strcat(buf, " NOTNULL)");
-			return pstrdup(buf);
+			appendStringInfo(buf, "(");
+			get_rule_expr(buf, qh, rt_index, lfirst(expr->args), varprefix);
+			appendStringInfo(buf, " NOTNULL)");
+			return;
 		}
 	}
 
@@ -1527,40 +1443,31 @@ get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 	 * Build a string of proname(args)
 	 * ----------
 	 */
-	strcpy(buf, "\"");
-	strcat(buf, proname);
-	strcat(buf, "\"(");
+	appendStringInfo(buf, "\"%s\"(", proname);
 	sep = "";
 	foreach(l, expr->args)
 	{
-		strcat(buf, sep);
+		appendStringInfo(buf, sep);
 		sep = ", ";
-		strcat(buf, get_rule_expr(qh, rt_index, lfirst(l), varprefix));
+		get_rule_expr(buf, qh, rt_index, lfirst(l), varprefix);
 	}
-	strcat(buf, ")");
-
-	/* ----------
-	 * Copy the function call string into allocated space and return it
-	 * ----------
-	 */
-	return pstrdup(buf);
+	appendStringInfo(buf, ")");
 }
 
 
 /* ----------
- * get_tle_expr				- A target list expression is a bit
- *					  different from a normal expression.
- *					  If the target column has an
- *					  an atttypmod, the parser usually
- *					  puts a padding-/cut-function call
- *					  around the expression itself. We
- *					  we must get rid of it, otherwise
- *					  dump/reload/dump... would blow up
- *					  the expressions.
+ * get_tle_expr
+ *
+ *		A target list expression is a bit different from a normal expression.
+ *		If the target column has an atttypmod, the parser usually puts a
+ *		padding-/cut-function call around the expression itself.
+ *		We must get rid of it, otherwise dump/reload/dump... would blow up
+ *		the expressions.
  * ----------
  */
-static char *
-get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
+static void
+get_tle_expr(StringInfo buf, QryHier *qh, int rt_index,
+			 TargetEntry *tle, bool varprefix)
 {
 	Expr	   *expr = (Expr *) (tle->expr);
 	Func	   *func;
@@ -1577,7 +1484,10 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	if (tle->resdom->restypmod < 0 ||
 		! IsA(expr, Expr) ||
 		expr->opType != FUNC_EXPR)
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
+	{
+		get_rule_expr(buf, qh, rt_index, tle->expr, varprefix);
+		return;
+	}
 
 	func = (Func *) (expr->oper);
 
@@ -1600,7 +1510,10 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	if (procStruct->pronargs != 2 ||
 		procStruct->prorettype != procStruct->proargtypes[0] ||
 		procStruct->proargtypes[1] != INT4OID)
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
+	{
+		get_rule_expr(buf, qh, rt_index, tle->expr, varprefix);
+		return;
+	}
 
 	/*
 	 * Furthermore, the name of the function must be the same
@@ -1615,47 +1528,57 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	typeStruct = (Form_pg_type) GETSTRUCT(tup);
 	if (strncmp(procStruct->proname.data, typeStruct->typname.data,
 				NAMEDATALEN) != 0)
-        return get_rule_expr(qh, rt_index, tle->expr, varprefix);
+	{
+		get_rule_expr(buf, qh, rt_index, tle->expr, varprefix);
+		return;
+	}
 
 	/* ----------
 	 * Finally (to be totally safe) the second argument must be a
 	 * const and match the value in the results atttypmod.
 	 * ----------
 	 */
-	second_arg = (Const *) nth(1, expr->args);
+	second_arg = (Const *) lsecond(expr->args);
 	if (! IsA(second_arg, Const) ||
-		((int4) second_arg->constvalue) != tle->resdom->restypmod)
-		return get_rule_expr(qh, rt_index, tle->expr, varprefix);
+		DatumGetInt32(second_arg->constvalue) != tle->resdom->restypmod)
+	{
+		get_rule_expr(buf, qh, rt_index, tle->expr, varprefix);
+		return;
+	}
 
 	/* ----------
 	 * Whow - got it. Now get rid of the padding function
 	 * ----------
 	 */
-	return get_rule_expr(qh, rt_index, lfirst(expr->args), varprefix);
+	get_rule_expr(buf, qh, rt_index, lfirst(expr->args), varprefix);
 }
 
 
 /* ----------
- * get_const_expr			- Make a string representation
- *					  with the type cast out of a Const
+ * get_const_expr
+ *
+ *	Make a string representation with the type cast out of a Const
  * ----------
  */
-static char *
-get_const_expr(Const *constval)
+static void
+get_const_expr(StringInfo buf, Const *constval)
 {
 	HeapTuple	typetup;
 	Form_pg_type typeStruct;
 	FmgrInfo	finfo_output;
 	char	   *extval;
+	char	   *valptr;
 	bool		isnull = FALSE;
-	char		buf[BUFSIZE];
-	char		namebuf[64];
 
 	if (constval->constisnull)
-		return pstrdup("NULL");
+	{
+		appendStringInfo(buf, "NULL");
+		return;
+	}
 
 	typetup = SearchSysCacheTuple(TYPOID,
-						 ObjectIdGetDatum(constval->consttype), 0, 0, 0);
+								  ObjectIdGetDatum(constval->consttype),
+								  0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
 		elog(ERROR, "cache lookup of type %u failed", constval->consttype);
 
@@ -1665,11 +1588,34 @@ get_const_expr(Const *constval)
 	extval = (char *) (*fmgr_faddr(&finfo_output)) (constval->constvalue,
 													&isnull, -1);
 
-	sprintf(namebuf, "::\"%s\"", nameout(&(typeStruct->typname)));
-	if (strcmp(namebuf, "::unknown") == 0)
-		namebuf[0] = '\0';
-	sprintf(buf, "'%s'%s", extval, namebuf);
-	return pstrdup(buf);
+	/*
+	 * We must quote any funny characters in the constant's representation.
+	 * XXX Any MULTIBYTE considerations here?
+	 */
+	appendStringInfoChar(buf, '\'');
+	for (valptr = extval; *valptr; valptr++)
+	{
+		char	ch = *valptr;
+		if (ch == '\'' || ch == '\\')
+		{
+			appendStringInfoChar(buf, '\\');
+			appendStringInfoChar(buf, ch);
+		}
+		else if (ch >= 0 && ch < ' ')
+		{
+			appendStringInfo(buf, "\\%03o", ch);
+		}
+		else
+			appendStringInfoChar(buf, ch);
+	}
+	appendStringInfoChar(buf, '\'');
+	pfree(extval);
+
+	extval = (char *) nameout(&(typeStruct->typname));
+	/* probably would be better to recognize UNKNOWN by OID... */
+	if (strcmp(extval, "unknown") != 0)
+		appendStringInfo(buf, "::\"%s\"", extval);
+	pfree(extval);
 }
 
 
@@ -1677,75 +1623,67 @@ get_const_expr(Const *constval)
  * get_sublink_expr			- Parse back a sublink
  * ----------
  */
-static char *
-get_sublink_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
+static void
+get_sublink_expr(StringInfo buf, QryHier *qh, int rt_index,
+				 Node *node, bool varprefix)
 {
 	SubLink    *sublink = (SubLink *) node;
 	Query	   *query = (Query *) (sublink->subselect);
 	Oper	   *oper;
 	List	   *l;
 	char	   *sep;
-	char		buf[BUFSIZE];
 
-	buf[0] = '\0';
-
-	strcat(buf, "(");
+	appendStringInfo(buf, "(");
 
 	if (sublink->lefthand != NULL)
 	{
 		if (length(sublink->lefthand) > 1)
-			strcat(buf, "(");
+			appendStringInfo(buf, "(");
 
 		sep = "";
 		foreach(l, sublink->lefthand)
 		{
-			strcat(buf, sep);
+			appendStringInfo(buf, sep);
 			sep = ", ";
-			strcat(buf, get_rule_expr(qh, rt_index,
-									  lfirst(l), varprefix));
+			get_rule_expr(buf, qh, rt_index, lfirst(l), varprefix);
 		}
 
 		if (length(sublink->lefthand) > 1)
-			strcat(buf, ") ");
+			appendStringInfo(buf, ") ");
 		else
-			strcat(buf, " ");
+			appendStringInfo(buf, " ");
 	}
 
 	switch (sublink->subLinkType)
 	{
 		case EXISTS_SUBLINK:
-			strcat(buf, "EXISTS ");
+			appendStringInfo(buf, "EXISTS ");
 			break;
 
 		case ANY_SUBLINK:
 			oper = (Oper *) lfirst(sublink->oper);
-			strcat(buf, get_opname(oper->opno));
-			strcat(buf, " ANY ");
+			appendStringInfo(buf, "%s ANY ", get_opname(oper->opno));
 			break;
 
 		case ALL_SUBLINK:
 			oper = (Oper *) lfirst(sublink->oper);
-			strcat(buf, get_opname(oper->opno));
-			strcat(buf, " ALL ");
+			appendStringInfo(buf, "%s ALL ", get_opname(oper->opno));
 			break;
 
 		case EXPR_SUBLINK:
 			oper = (Oper *) lfirst(sublink->oper);
-			strcat(buf, get_opname(oper->opno));
-			strcat(buf, " ");
+			appendStringInfo(buf, "%s ", get_opname(oper->opno));
 			break;
 
 		default:
-			elog(ERROR, "unupported sublink type %d",
+			elog(ERROR, "get_sublink_expr: unsupported sublink type %d",
 				 sublink->subLinkType);
 			break;
 	}
 
-	strcat(buf, "(");
-	strcat(buf, get_query_def(query, qh));
-	strcat(buf, "))");
-
-	return pstrdup(buf);
+	appendStringInfo(buf, "(");
+	get_query_def(buf, query, qh);
+	appendStringInfo(buf, "))");
 }
 
 
