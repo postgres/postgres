@@ -3,9 +3,8 @@
 	(c) 1999, Pascal Andre <andre@via.ecp.fr>.
 	See package documentation for further information on copyright.
 
-	Even though this file is distributed with a release version of
-	PyGreSQL, this is beta software. Inline documentation is sparse.
-	See DB-SIG 2.0 specification for usage information.
+	Inline documentation is sparse.  See DB-SIG 2.0 specification for
+	usage information.
 
 		basic usage:
 
