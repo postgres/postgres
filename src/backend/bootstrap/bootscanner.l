@@ -2,13 +2,13 @@
 /*-------------------------------------------------------------------------
  *
  * bootscanner.lex--
- *    a lexical scanner for the bootstrap parser
+ *	  a lexical scanner for the bootstrap parser
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.6 1997/01/10 20:16:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.7 1997/09/08 03:19:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 #include "storage/fd.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
-#include "nodes/nodes.h"  
+#include "nodes/nodes.h"
 #include "rewrite/prs2lock.h"
 #include "access/skey.h"
 #include "access/strat.h"
@@ -38,7 +38,7 @@
 
 #include "nodes/primnodes.h"
 #include "utils/nabstime.h"
-#include "access/htup.h"  
+#include "access/htup.h"
 #include "utils/tqual.h"
 #include "nodes/parsenodes.h"
 
@@ -46,82 +46,82 @@
 
 #include "bootstrap_tokens.h"
 
-#define		YY_NO_UNPUT
+#define			YY_NO_UNPUT
 
 /* some versions of lex define this as a macro */
 #if defined(yywrap)
 #undef yywrap
 #endif /* yywrap */
 
-YYSTYPE	yylval;
-int	yyline;  /* keep track of the line number for error reporting */
+YYSTYPE yylval;
+int		yyline;  /* keep track of the line number for error reporting */
 
 %}
 
-D	[0-9]
-oct     \\{D}{D}{D}
-Exp	[Ee][-+]?{D}+
-id      ([A-Za-z0-9_]|{oct}|\-)+
-sid     \"([^\"])*\"
-arrayid	[A-Za-z0-9_]+\[{D}*\]
+D		[0-9]
+oct		\\{D}{D}{D}
+Exp		[Ee][-+]?{D}+
+id		([A-Za-z0-9_]|{oct}|\-)+
+sid		\"([^\"])*\"
+arrayid [A-Za-z0-9_]+\[{D}*\]
 
 %%
 
-open       	{ return(OPEN); }
+open			{ return(OPEN); }
 
-close		{ return(XCLOSE); }
+close			{ return(XCLOSE); }
 
-create		{ return(XCREATE); }
+create			{ return(XCREATE); }
 
-OID             { return(OBJ_ID); }
-bootstrap	{ return(XBOOTSTRAP); }
-_null_		{ return(NULLVAL); }
+OID				{ return(OBJ_ID); }
+bootstrap		{ return(XBOOTSTRAP); }
+_null_			{ return(NULLVAL); }
 
-insert		{ return(INSERT_TUPLE); }
+insert			{ return(INSERT_TUPLE); }
 
-","     	{ return(COMMA); }
-"="		{ return(EQUALS); }
-"("		{ return(LPAREN); }
-")"		{ return(RPAREN); }
+","				{ return(COMMA); }
+"="				{ return(EQUALS); }
+"("				{ return(LPAREN); }
+")"				{ return(RPAREN); }
 
-[\n]      	{ yyline++; }
-[\t]		;
-" "		; 
+[\n]			{ yyline++; }
+[\t]			;
+" "				;
 
 ^\#[^\n]* ; /* drop everything after "#" for comments */
 
 
-"declare"	{ return(XDECLARE); }
-"build"		{ return(XBUILD); }
-"indices"	{ return(INDICES); }
-"index"		{ return(INDEX); }
-"on"		{ return(ON); }
-"using"		{ return(USING); }
-{arrayid}	{
-		    yylval.ival = EnterString(MapArrayTypeName((char*)yytext));
-		    return(ID);
-		}
-{id}	 	{ 
-		    yylval.ival = EnterString(scanstr((char*)yytext));
-		    return(ID);
-		}
-{sid}		{
-		    yytext[strlen(yytext)-1] = '\0'; /* strip off quotes */
-		    yylval.ival = EnterString(scanstr((char*)yytext+1));
-		    yytext[strlen(yytext)] = '"'; /* restore quotes */
-		    return(ID);
-		}
+"declare"		{ return(XDECLARE); }
+"build"			{ return(XBUILD); }
+"indices"		{ return(INDICES); }
+"index"			{ return(INDEX); }
+"on"			{ return(ON); }
+"using"			{ return(USING); }
+{arrayid}		{
+					yylval.ival = EnterString(MapArrayTypeName((char*)yytext));
+					return(ID);
+				}
+{id}			{
+					yylval.ival = EnterString(scanstr((char*)yytext));
+					return(ID);
+				}
+{sid}			{
+					yytext[strlen(yytext)-1] = '\0'; /* strip off quotes */
+					yylval.ival = EnterString(scanstr((char*)yytext+1));
+					yytext[strlen(yytext)] = '"'; /* restore quotes */
+					return(ID);
+				}
 
-(-)?{D}+"."{D}*({Exp})?	|
-(-)?{D}*"."{D}+({Exp})?	|
-(-)?{D}+{Exp}		{
-			    yylval.ival = EnterString((char*)yytext);
-			    return(CONST);
-			}
+(-)?{D}+"."{D}*({Exp})? |
+(-)?{D}*"."{D}+({Exp})? |
+(-)?{D}+{Exp}			{
+							yylval.ival = EnterString((char*)yytext);
+							return(CONST);
+						}
 
-.		{
-		    printf("syntax error %d : -> %s\n", yyline, yytext);
-		}
+.				{
+					printf("syntax error %d : -> %s\n", yyline, yytext);
+				}
 
 
 
@@ -130,11 +130,11 @@ insert		{ return(INSERT_TUPLE); }
 int
 yywrap(void)
 {
-    return 1;
+	return 1;
 }
 
 void
 yyerror(const char *str)
 {
-    fprintf(stderr,"\tsyntax error %d : %s",yyline, str);
+	fprintf(stderr,"\tsyntax error %d : %s",yyline, str);
 }
