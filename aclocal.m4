@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
 # This comes from the official Autoconf macro archive at
 # <http://research.cys.de/autoconf-archive/>
 # (I removed the $ before the Id CVS keyword below.)
@@ -29,6 +29,9 @@ dnl
 # use the macro to define a corresponding variable. We also make the
 # reasonable(?) assumption that you can use arg3 for getsocktype etc.
 # as well (i.e., anywhere POSIX.2 has socklen_t).
+#
+# arg2 can also be `const' (e.g., RH 4.2). Change the order of tests
+# for arg3 so that `int' is first, in case there is no prototype at all.
 
 AC_DEFUN(AC_FUNC_ACCEPT_ARGTYPES,
 [AC_MSG_CHECKING([types of arguments for accept()])
@@ -36,35 +39,33 @@ AC_DEFUN(AC_FUNC_ACCEPT_ARGTYPES,
  [AC_CACHE_VAL(ac_cv_func_accept_arg2,dnl
   [AC_CACHE_VAL(ac_cv_func_accept_arg3,dnl
    [for ac_cv_func_accept_arg1 in 'int' 'unsigned int'; do
-     for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'void *'; do
-      for ac_cv_func_accept_arg3 in 'socklen_t' 'size_t' 'unsigned int' 'int'; do
-       AC_TRY_COMPILE(dnl
+     for ac_cv_func_accept_arg2 in 'struct sockaddr *' 'const struct sockaddr *' 'void *'; do
+      for ac_cv_func_accept_arg3 in 'int' 'size_t' 'socklen_t' 'unsigned int'; do
+       AC_TRY_COMPILE(
 [#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-extern accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);],,dnl
-        [ac_not_found=no ; break 3], ac_not_found=yes)
+extern accept ($ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *);],
+        [], [ac_not_found=no; break 3], [ac_not_found=yes])
       done
      done
     done
+    if test "$ac_not_found" = yes; then
+      AC_MSG_ERROR([could not determine argument types])
+    fi
    ])dnl AC_CACHE_VAL
   ])dnl AC_CACHE_VAL
  ])dnl AC_CACHE_VAL
- if test "$ac_not_found" = yes; then
-  ac_cv_func_accept_arg1=int
-  ac_cv_func_accept_arg2='struct sockaddr *'
-  ac_cv_func_accept_arg3='socklen_t'
- fi
  AC_MSG_RESULT([$ac_cv_func_accept_arg1, $ac_cv_func_accept_arg2, $ac_cv_func_accept_arg3 *])
  AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG1,$ac_cv_func_accept_arg1)
  AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG2,$ac_cv_func_accept_arg2)
  AC_DEFINE_UNQUOTED(ACCEPT_TYPE_ARG3,$ac_cv_func_accept_arg3)
 ])
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
 
 
 # PGAC_C_SIGNED
@@ -184,7 +185,7 @@ undefine([AC_TYPE_NAME])dnl
 undefine([AC_CV_NAME])dnl
 ])# PGAC_CHECK_ALIGNOF
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -263,7 +264,7 @@ fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
 # Macros to detect certain C++ features
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
 
 
 # PGAC_CLASS_STRING
@@ -332,7 +333,7 @@ fi])# PGAC_CXX_NAMESPACE_STD
 #
 # Autoconf macros for configuring the build of Python extension modules
 #
-# $Header: /cvsroot/pgsql/aclocal.m4,v 1.3 2000/06/14 18:17:24 petere Exp $
+# $Header: /cvsroot/pgsql/aclocal.m4,v 1.4 2000/08/26 21:11:44 petere Exp $
 #
 
 # PGAC_PROG_PYTHON
