@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.122 2000/07/12 02:37:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.123 2000/08/06 04:26:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1296,10 +1296,6 @@ ExecAppend(TupleTableSlot *slot,
 	resultRelationInfo = estate->es_result_relation_info;
 	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
 
-	/*
-	 * have to add code to preform unique checking here. cim -12/1/89
-	 */
-
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelationDesc->trigdesc &&
 	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
@@ -1320,18 +1316,20 @@ ExecAppend(TupleTableSlot *slot,
 	}
 
 	/*
-	 * Check the constraints of a tuple
+	 * Check the constraints of the tuple
 	 */
 
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecAppend", resultRelationDesc, tuple, estate);
+		ExecConstraints("ExecAppend", resultRelationDesc, slot, estate);
 
 	/*
 	 * insert the tuple
 	 */
-	newId = heap_insert(resultRelationDesc,		/* relation desc */
-						tuple); /* heap tuple */
+	newId = heap_insert(resultRelationDesc, tuple);
+
 	IncrAppended();
+	(estate->es_processed)++;
+	estate->es_lastoid = newId;
 
 	/*
 	 * process indices
@@ -1343,8 +1341,6 @@ ExecAppend(TupleTableSlot *slot,
 	numIndices = resultRelationInfo->ri_NumIndices;
 	if (numIndices > 0)
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
-	(estate->es_processed)++;
-	estate->es_lastoid = newId;
 
 	/* AFTER ROW INSERT Triggers */
 	if (resultRelationDesc->trigdesc)
@@ -1466,7 +1462,7 @@ ExecReplace(TupleTableSlot *slot,
 	 */
 	if (IsBootstrapProcessingMode())
 	{
-		elog(DEBUG, "ExecReplace: replace can't run without transactions");
+		elog(NOTICE, "ExecReplace: replace can't run without transactions");
 		return;
 	}
 
@@ -1480,12 +1476,6 @@ ExecReplace(TupleTableSlot *slot,
 	 */
 	resultRelationInfo = estate->es_result_relation_info;
 	resultRelationDesc = resultRelationInfo->ri_RelationDesc;
-
-	/*
-	 * have to add code to preform unique checking here. in the event of
-	 * unique tuples, this becomes a deletion of the original tuple
-	 * affected by the replace. cim -12/1/89
-	 */
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelationDesc->trigdesc &&
@@ -1507,11 +1497,11 @@ ExecReplace(TupleTableSlot *slot,
 	}
 
 	/*
-	 * Check the constraints of a tuple
+	 * Check the constraints of the tuple
 	 */
 
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecReplace", resultRelationDesc, tuple, estate);
+		ExecConstraints("ExecReplace", resultRelationDesc, slot, estate);
 
 	/*
 	 * replace the heap tuple
@@ -1555,9 +1545,9 @@ lreplace:;
 	/*
 	 * Note: instead of having to update the old index tuples associated
 	 * with the heap tuple, all we do is form and insert new index
-	 * tuples..  This is because replaces are actually deletes and inserts
-	 * and index tuple deletion is done automagically by the vaccuum
-	 * deamon.. All we do is insert new index tuples.  -cim 9/27/89
+	 * tuples.  This is because replaces are actually deletes and inserts
+	 * and index tuple deletion is done automagically by the vacuum
+	 * daemon. All we do is insert new index tuples.  -cim 9/27/89
 	 */
 
 	/*
@@ -1579,109 +1569,55 @@ lreplace:;
 		ExecARUpdateTriggers(estate, tupleid, tuple);
 }
 
-#ifdef NOT_USED
-static HeapTuple
-ExecAttrDefault(Relation rel, HeapTuple tuple)
-{
-	int			ndef = rel->rd_att->constr->num_defval;
-	AttrDefault *attrdef = rel->rd_att->constr->defval;
-	ExprContext *econtext = MakeExprContext(NULL, CurrentMemoryContext);
-	HeapTuple	newtuple;
-	Node	   *expr;
-	bool		isnull;
-	bool		isdone;
-	Datum		val;
-	Datum	   *replValue = NULL;
-	char	   *replNull = NULL;
-	char	   *repl = NULL;
-	int			i;
-
-	for (i = 0; i < ndef; i++)
-	{
-		if (!heap_attisnull(tuple, attrdef[i].adnum))
-			continue;
-		expr = (Node *) stringToNode(attrdef[i].adbin);
-
-		val = ExecEvalExprSwitchContext(expr, econtext, &isnull, &isdone);
-
-		if (isnull)
-			continue;
-
-		if (repl == NULL)
-		{
-			repl = (char *) palloc(rel->rd_att->natts * sizeof(char));
-			replNull = (char *) palloc(rel->rd_att->natts * sizeof(char));
-			replValue = (Datum *) palloc(rel->rd_att->natts * sizeof(Datum));
-			MemSet(repl, ' ', rel->rd_att->natts * sizeof(char));
-		}
-
-		repl[attrdef[i].adnum - 1] = 'r';
-		replNull[attrdef[i].adnum - 1] = ' ';
-		replValue[attrdef[i].adnum - 1] = val;
-
-	}
-
-	if (repl == NULL)
-	{
-		/* no changes needed */
-		newtuple = tuple;
-	}
-	else
-	{
-		newtuple = heap_modifytuple(tuple, rel, replValue, replNull, repl);
-
-		pfree(repl);
-		pfree(replNull);
-		pfree(replValue);
-		heap_freetuple(tuple);
-	}
-
-	FreeMemoryContext(econtext);
-
-	return newtuple;
-}
-
-#endif
-
 static char *
-ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
+ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 {
 	int			ncheck = rel->rd_att->constr->num_check;
 	ConstrCheck *check = rel->rd_att->constr->check;
-	TupleTableSlot *slot = makeNode(TupleTableSlot);
-	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	ExprContext *econtext = MakeExprContext(slot,
-											TransactionCommandContext);
-	List	   *rtlist;
+	MemoryContext oldContext;
+	ExprContext *econtext;
 	List	   *qual;
 	int			i;
 
-	slot->val = tuple;
-	slot->ttc_shouldFree = false;
-	slot->ttc_descIsNew = true;
-	slot->ttc_tupleDescriptor = rel->rd_att;
-	slot->ttc_buffer = InvalidBuffer;
-	slot->ttc_whichplan = -1;
-	rte->relname = RelationGetRelationName(rel);
-	rte->ref = makeNode(Attr);
-	rte->ref->relname = rte->relname;
-	rte->relid = RelationGetRelid(rel);
-	/* inh, inFromCl, inJoinSet, skipAcl won't be used, leave them zero */
-	rtlist = lcons(rte, NIL);
-	econtext->ecxt_range_table = rtlist; /* phony range table */
+	/*
+	 * Make sure econtext, expressions, etc are placed in appropriate context.
+	 */
+	oldContext = MemoryContextSwitchTo(TransactionCommandContext);
 
 	/*
-	 * Save the de-stringized constraint expressions in command-level
-	 * memory context.  XXX should build the above stuff there too,
-	 * instead of doing it over for each tuple.
-	 * XXX Is it sufficient to have just one es_result_relation_constraints
-	 * in an inherited insert/update?
+	 * Create or reset the exprcontext for evaluating constraint expressions.
 	 */
-	if (estate->es_result_relation_constraints == NULL)
-	{
-		MemoryContext oldContext;
+	econtext = estate->es_constraint_exprcontext;
+	if (econtext == NULL)
+		estate->es_constraint_exprcontext = econtext =
+			MakeExprContext(NULL, TransactionCommandContext);
+	else
+		ResetExprContext(econtext);
 
-		oldContext = MemoryContextSwitchTo(TransactionCommandContext);
+	/*
+	 * If first time through for current result relation, set up econtext's
+	 * range table to refer to result rel, and build expression nodetrees
+	 * for rel's constraint expressions.  All this stuff is kept in
+	 * TransactionCommandContext so it will still be here next time through.
+	 *
+	 * NOTE: if there are multiple result relations (eg, due to inheritance)
+	 * then we leak storage for prior rel's expressions and rangetable.
+	 * This should not be a big problem as long as result rels are processed
+	 * sequentially within a command.
+	 */
+	if (econtext->ecxt_range_table == NIL ||
+		getrelid(1, econtext->ecxt_range_table) != RelationGetRelid(rel))
+	{
+		RangeTblEntry *rte = makeNode(RangeTblEntry);
+
+		rte->relname = RelationGetRelationName(rel);
+		rte->ref = makeNode(Attr);
+		rte->ref->relname = rte->relname;
+		rte->relid = RelationGetRelid(rel);
+		/* inh, inFromCl, inJoinSet, skipAcl won't be used, leave them zero */
+
+		/* Set up single-entry range table */
+		econtext->ecxt_range_table = lcons(rte, NIL);
 
 		estate->es_result_relation_constraints =
 			(List **) palloc(ncheck * sizeof(List *));
@@ -1691,10 +1627,15 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 			qual = (List *) stringToNode(check[i].ccbin);
 			estate->es_result_relation_constraints[i] = qual;
 		}
-
-		MemoryContextSwitchTo(oldContext);
 	}
 
+	/* Done with building long-lived items */
+	MemoryContextSwitchTo(oldContext);
+
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
+
+	/* And evaluate the constraints */
 	for (i = 0; i < ncheck; i++)
 	{
 		qual = estate->es_result_relation_constraints[i];
@@ -1708,25 +1649,25 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 			return check[i].ccname;
 	}
 
-	pfree(slot);
-	pfree(rte);
-	pfree(rtlist);
-
-	FreeExprContext(econtext);
-
+	/* NULL result means no error */
 	return (char *) NULL;
 }
 
 void
-ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
+ExecConstraints(char *caller, Relation rel,
+				TupleTableSlot *slot, EState *estate)
 {
-	Assert(rel->rd_att->constr);
+	HeapTuple	tuple = slot->val;
+	TupleConstr *constr = rel->rd_att->constr;
 
-	if (rel->rd_att->constr->has_not_null)
+	Assert(constr);
+
+	if (constr->has_not_null)
 	{
+		int			natts = rel->rd_att->natts;
 		int			attrChk;
 
-		for (attrChk = 1; attrChk <= rel->rd_att->natts; attrChk++)
+		for (attrChk = 1; attrChk <= natts; attrChk++)
 		{
 			if (rel->rd_att->attrs[attrChk-1]->attnotnull &&
 				heap_attisnull(tuple, attrChk))
@@ -1735,11 +1676,11 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple, EState *estate)
 		}
 	}
 
-	if (rel->rd_att->constr->num_check > 0)
+	if (constr->num_check > 0)
 	{
 		char	   *failed;
 
-		if ((failed = ExecRelCheck(rel, tuple, estate)) != NULL)
+		if ((failed = ExecRelCheck(rel, slot, estate)) != NULL)
 			elog(ERROR, "%s: rejected due to CHECK constraint %s",
 				 caller, failed);
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.119 2000/07/14 22:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.120 2000/08/06 04:26:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,9 +827,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 			 * Check the constraints of the tuple
 			 * ----------------
 			 */
+			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
 			if (rel->rd_att->constr)
-				ExecConstraints("CopyFrom", rel, tuple, estate);
+				ExecConstraints("CopyFrom", rel, slot, estate);
 
 			/* ----------------
 			 * OK, store the tuple and create index entries for it
@@ -838,10 +839,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 			heap_insert(rel, tuple);
 
 			if (relationInfo->ri_NumIndices > 0)
-			{
-				ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
-			}
 
 			/* AFTER ROW INSERT Triggers */
 			if (rel->trigdesc &&

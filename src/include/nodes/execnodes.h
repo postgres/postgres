@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.44 2000/07/14 22:17:58 tgl Exp $
+ * $Id: execnodes.h,v 1.45 2000/08/06 04:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,6 @@ typedef struct EState
 	Snapshot	es_snapshot;
 	List	   *es_range_table;
 	RelationInfo *es_result_relation_info;
-	List	  **es_result_relation_constraints;
 	Relation	es_into_relation_descriptor;
 	ParamListInfo es_param_list_info;
 	ParamExecData *es_param_exec_vals;	/* this is for subselects */
@@ -224,6 +223,9 @@ typedef struct EState
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMark;		/* not good place, but there is no other */
+	/* these two fields are storage space for ExecConstraints(): */
+	List	  **es_result_relation_constraints;
+	ExprContext *es_constraint_exprcontext;
 	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
 	struct Plan *es_origPlan;
 	Pointer		es_evalPlanQual;
