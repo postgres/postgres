@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.60 2004/12/28 22:47:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.61 2005/01/07 05:43:28 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -1610,8 +1610,11 @@ ECPG = ecpg
 
    <listitem>
     <para>
-     <function>ECPGstatus()</function> returns true if you
-     are connected to a database and false if not.
+     <function>ECPGstatus(int <replaceable>lineno</replaceable>,
+     const char* <replaceable>connection_name</replaceable>)</function>
+     returns true if you are connected to a database and false if not.
+     <replaceable>connection_name</replaceable> can be <literal>NULL</> 
+     if a single connection is being used.
     </para>
    </listitem>
   </itemizedlist>
