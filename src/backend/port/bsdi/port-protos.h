@@ -18,14 +18,17 @@
 
 /* dynloader.c */
 
-#ifndef LINUX_ELF
-#define pg_dlsym(handle, funcname)	((func_ptr) dld_get_func((funcname)))
-#define pg_dlclose(handle)		({ dld_unlink_by_file(handle, 1); free(handle); })
+#include <sys/param.h>
+
+#if _BSDI_VERSION >= 199510
+#  include <dlfcn.h>
+#  define	pg_dlopen(f)	dlopen(f, 1)
+#  define	pg_dlsym	dlsym
+#  define	pg_dlclose	dlclose
+#  define	pg_dlerror	dlerror
 #else
-#define	pg_dlopen(f)	dlopen(f, 1)
-#define	pg_dlsym	dlsym
-#define	pg_dlclose	dlclose
-#define	pg_dlerror	dlerror
+#  define pg_dlsym(handle, funcname)	((func_ptr) dld_get_func((funcname)))
+#  define pg_dlclose(handle)		({ dld_unlink_by_file(handle, 1); free(handle); })
 #endif
 
 /* port.c */

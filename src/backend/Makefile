@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.11 1996/10/31 07:25:15 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.12 1996/11/01 01:46:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,11 +64,11 @@ LDADD+= -lln
 endif
 
 ifeq ($(PORTNAME), bsdi)
-LDADD+= -ldld -lipc
-endif
-
-ifeq ($(PORTNAME), bsdi_2_1)
-LDADD+= -ldl -lipc
+  ifeq ($(PRE_BSDI_2_1), N)
+    LDADD+= -ldl -lipc
+  else
+    LDADD+= -ldld -lipc
+  endif
 endif
 
 ifeq ($(PORTNAME), hpux)

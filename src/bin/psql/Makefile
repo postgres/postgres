@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.6 1996/08/21 04:06:01 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Makefile,v 1.7 1996/11/01 01:46:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -47,12 +47,8 @@ ifeq ($(USE_READLINE), true)
    ifeq ($(PORTNAME), bsdi)
    LD_ADD += -ltermcap
    else
-   ifeq ($(PORTNAME), bsdi_2_1)
-   LD_ADD += -ltermcap
-   else
    ifeq ($(PORTNAME), BSD44_derived)
    LD_ADD += -ltermcap
-   endif
    endif
    endif
    endif

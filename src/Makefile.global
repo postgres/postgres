@@ -1,3 +1,4 @@
+X=$(shell sleep 4)
 #----------------------------------------------------------------------------
 #
 # Makefile.global--
@@ -7,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.44 1996/10/31 05:53:10 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.45 1996/11/01 01:45:52 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -46,8 +47,7 @@
 #	linux		-	Intel x86 on Linux 1.2 and Linux ELF
 #				(For non-ELF Linux, see LINUX_ELF below).
 #	BSD44_derived	-	OSs derived from 4.4-lite BSD (NetBSD, FreeBSD)
-#       bsdi            -       BSD/OS 2.0 and 2.01
-#       bsdi_2_1        -       BSD/OS 2.1
+#       bsdi            -       BSD/OS 2.0, 2.01, 2.1
 #	aix		-	IBM on AIX 3.2.5
 #	irix5		-	SGI MIPS on IRIX 5.3
 #	dgux            -       DG/UX 5.4R3.10
@@ -423,54 +423,37 @@ endif
 ifeq ($(PORTNAME), bsdi)
 MK_PORT=	bsdi
 
-# cc is gcc v1.42
-# gcc is gcc v2.6.3
 CC=			gcc
 
-LEX=		flex
-AROPT=		cq
-
-# use the regex library
-USE_REGEX = 1
-
-LDADD_BE= -ldld -lcompat
-
-#
-# for postgres.user.mk
-#
-SLSUFF=		.o
-
-#
-# for postgres.mk
-#
-CFLAGS_OPT=	-g -DUSE_POSIX_SIGNALS # -O2
-
+PRE_BSDI_2_1=N
+ifeq ($(shell uname -r), 2.0)
+PRE_BSDI_2_1=Y
+endif
+ifeq ($(shell uname -r), 2.01)
+PRE_BSDI_2_1=Y
 endif
 
-#--------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), bsdi_2_1)
-MK_PORT=	bsdi_2_1
-
+ifeq ($(PRE_BSDI_2_1), N)
 # cc is gcc v1.42
 # gcc is gcc v2.7.2
-CC=			gcc
+  LEX=		lex
+  LD_ADD+=	-ltermcap
+  CFLAGS_BE = -DPRE_BSDI_2_1
+else
+# cc is gcc v1.42
+# gcc is gcc v2.6.3
+  LEX=		flex
+# use the regex library
+  USE_REGEX = 1
+  LDADD_BE = -ldld -lcompat
+endif
 
-LEX=		lex
 AROPT=		cq
-
-LD_ADD+=	-ltermcap
 
 #
 # for postgres.user.mk
 #
 SLSUFF=		.o
-
-#
-# for postgres.mk
-#
-CFLAGS_OPT=	-O2 -m486
-CFLAGS_BE = -DUSE_POSIX_SIGNALS
 
 endif
 

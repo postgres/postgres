@@ -102,17 +102,13 @@
 #endif /* WIN32 */
 
 #if defined(BSD44_derived) || \
-    defined(bsdi_2_1)
+    defined(bsdi)
 #  define USE_LIMITS_H
 #  define USE_POSIX_TIME
 #  define NEED_CBRT
-#endif
-
-#if defined(bsdi)
-#  define NEED_UNION_SEMUN 
-#  define USE_LIMITS_H
-#  define USE_POSIX_TIME
-#  define NEED_CBRT
+#  ifdef PRE_BSDI_2_1
+#    define NEED_UNION_SEMUN 
+#  endif
 #endif
 
 #if defined(aix)
