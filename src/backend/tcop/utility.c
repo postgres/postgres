@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.57 1999/02/25 17:25:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.58 1999/03/16 03:24:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,9 @@
 #include "utils/syscache.h"
 #endif
 
-void		DefineUser(CreateUserStmt *stmt);
-void		AlterUser(AlterUserStmt *stmt);
-void		RemoveUser(char *username);
+void		DefineUser(CreateUserStmt *stmt, CommandDest);
+void		AlterUser(AlterUserStmt *stmt, CommandDest);
+void		RemoveUser(char *username, CommandDest);
 
 /* ----------------
  *		CHECK_IF_ABORTED() is used to avoid doing unnecessary
@@ -557,7 +557,7 @@ ProcessUtility(Node *parsetree,
 
 				PS_SET_STATUS(commandTag = "CREATEDB");
 				CHECK_IF_ABORTED();
-				createdb(stmt->dbname, stmt->dbpath, stmt->encoding);
+				createdb(stmt->dbname, stmt->dbpath, stmt->encoding, dest);
 			}
 			break;
 
@@ -567,7 +567,7 @@ ProcessUtility(Node *parsetree,
 
 				PS_SET_STATUS(commandTag = "DESTROYDB");
 				CHECK_IF_ABORTED();
-				destroydb(stmt->dbname);
+				destroydb(stmt->dbname, dest);
 			}
 			break;
 
@@ -749,21 +749,21 @@ ProcessUtility(Node *parsetree,
 			PS_SET_STATUS(commandTag = "CREATE USER");
 			CHECK_IF_ABORTED();
 
-			DefineUser((CreateUserStmt *) parsetree);
+			DefineUser((CreateUserStmt *) parsetree, dest);
 			break;
 
 		case T_AlterUserStmt:
 			PS_SET_STATUS(commandTag = "ALTER USER");
 			CHECK_IF_ABORTED();
 
-			AlterUser((AlterUserStmt *) parsetree);
+			AlterUser((AlterUserStmt *) parsetree, dest);
 			break;
 
 		case T_DropUserStmt:
 			PS_SET_STATUS(commandTag = "DROP USER");
 			CHECK_IF_ABORTED();
 
-			RemoveUser(((DropUserStmt *) parsetree)->user);
+			RemoveUser(((DropUserStmt *) parsetree)->user, dest);
 			break;
 
 		case T_LockStmt:

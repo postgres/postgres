@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.24 1999/02/13 23:15:11 momjian Exp $
+ * $Id: user.c,v 1.25 1999/03/16 03:24:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ static void CheckPgUserAclNotNull(void);
  */
 static
 void
-UpdatePgPwdFile(char *sql)
+UpdatePgPwdFile(char *sql, CommandDest dest)
 {
 
 	char	*filename,
@@ -71,7 +71,7 @@ UpdatePgPwdFile(char *sql)
 	snprintf(sql, SQL_LENGTH, 
 			"copy %s to '%s' using delimiters %s", 
 			ShadowRelationName, tempname, CRYPT_PWD_FILE_SEPCHAR);
-	pg_exec_query(sql);
+	pg_exec_query_dest(sql, dest, false);
 	rename(tempname, filename);
 	pfree((void *) tempname);
 
@@ -92,7 +92,7 @@ UpdatePgPwdFile(char *sql)
  *---------------------------------------------------------------------
  */
 void
-DefineUser(CreateUserStmt *stmt)
+DefineUser(CreateUserStmt *stmt, CommandDest dest)
 {
 
 	char					*pg_shadow,
@@ -175,13 +175,13 @@ DefineUser(CreateUserStmt *stmt)
 			stmt->password ? stmt->password : "''",
 			stmt->validUntil ? stmt->validUntil : "");
 
-	pg_exec_query(sql);
+	pg_exec_query_dest(sql, dest, false);
 
 	/*
 	 * Add the stuff here for groups.
 	 */
 
-	UpdatePgPwdFile(sql);
+	UpdatePgPwdFile(sql, dest);
 
 	/*
 	 * This goes after the UpdatePgPwdFile to be certain that two backends
@@ -196,7 +196,7 @@ DefineUser(CreateUserStmt *stmt)
 
 
 extern void
-AlterUser(AlterUserStmt *stmt)
+AlterUser(AlterUserStmt *stmt, CommandDest dest)
 {
 
 	char			*pg_shadow,
@@ -282,11 +282,11 @@ AlterUser(AlterUserStmt *stmt)
 
 	snprintf(sql, SQL_LENGTH, "%s where usename = '%s'", sql, stmt->user);
 
-	pg_exec_query(sql);
+	pg_exec_query_dest(sql, dest, false);
 
 	/* do the pg_group stuff here */
 
-	UpdatePgPwdFile(sql);
+	UpdatePgPwdFile(sql, dest);
 
 	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 	heap_close(pg_shadow_rel);
@@ -297,7 +297,7 @@ AlterUser(AlterUserStmt *stmt)
 
 
 extern void
-RemoveUser(char *user)
+RemoveUser(char *user, CommandDest dest)
 {
 
 	char	   *pg_shadow;
@@ -390,7 +390,7 @@ RemoveUser(char *user)
 		elog(NOTICE, "Dropping database %s", dbase[ndbase]);
 		snprintf(sql, SQL_LENGTH, "drop database %s", dbase[ndbase]);
 		pfree((void *) dbase[ndbase]);
-		pg_exec_query(sql);
+		pg_exec_query_dest(sql, dest, false);
 	}
 	if (dbase)
 		pfree((void *) dbase);
@@ -418,9 +418,9 @@ RemoveUser(char *user)
 	 */
 	snprintf(sql, SQL_LENGTH, 
 			"delete from %s where usename = '%s'", ShadowRelationName, user);
-	pg_exec_query(sql);
+	pg_exec_query_dest(sql, dest, false);
 
-	UpdatePgPwdFile(sql);
+	UpdatePgPwdFile(sql, dest);
 
 	UnlockRelation(pg_shadow_rel, AccessExclusiveLock);
 	heap_close(pg_shadow_rel);

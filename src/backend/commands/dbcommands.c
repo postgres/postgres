@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.31 1999/03/15 14:07:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.32 1999/03/16 03:24:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,13 +24,13 @@
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
-#include "commands/dbcommands.h"
 #include "fmgr.h"
 #include "miscadmin.h"			/* for DataDir */
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/lmgr.h"
 #include "tcop/tcopprot.h"
+#include "commands/dbcommands.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
 
@@ -42,7 +42,7 @@ static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
 static void stop_vacuum(char *dbpath, char *dbname);
 
 void
-createdb(char *dbname, char *dbpath, int encoding)
+createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 {
 	Oid			db_id;
 	int4		user_id;
@@ -87,11 +87,11 @@ createdb(char *dbname, char *dbpath, int encoding)
 			"insert into pg_database (datname, datdba, encoding, datpath)"
 			" values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding, loc);
 
-	pg_exec_query(buf);
+	pg_exec_query_dest(buf, dest, false);
 }
 
 void
-destroydb(char *dbname)
+destroydb(char *dbname, CommandDest dest)
 {
 	int4		user_id;
 	Oid			db_id;
@@ -123,7 +123,7 @@ destroydb(char *dbname)
 	 */
 	snprintf(buf, 512, 
 			"delete from pg_database where pg_database.oid = \'%d\'::oid", db_id);
-	pg_exec_query(buf);
+	pg_exec_query_dest(buf ,dest, false);
 
 	/* drop pages for this database that are in the shared buffer cache */
 	DropBuffers(db_id);
