@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.54 2001/05/21 16:54:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.55 2001/05/22 16:37:15 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -2276,30 +2276,52 @@ SELECT * FROM test1 WHERE a;
     Bit strings are strings of 1's and 0's.  They can be used to store
     or visualize bit masks.  There are two SQL bit types:
     <type>BIT(<replaceable>x</replaceable>)</type> and <type>BIT
-    VARYING(<replaceable>x</replaceable>)</type>; the
-    <replaceable>x</replaceable> specifies the maximum length.
-    <type>BIT</type> type data is automatically padded with 0's on the
-    right to the maximum length, <type>BIT VARYING</type> is of
-    variable length.  <type>BIT</type> without length is equivalent
-    to <literal>BIT(1)</literal>, <type>BIT VARYING</type> means
-    unlimited length.  Input data that is longer than the allowed
-    length will be truncated.  Refer to <xref
+    VARYING(<replaceable>x</replaceable>)</type>; where
+    <replaceable>x</replaceable> is a positive integer.
+   </para>
+
+   <para>
+    <type>BIT</type> type data must match the length
+    <replaceable>x</replaceable> exactly; it is an error to attempt to
+    store shorter or longer bit strings.  <type>BIT VARYING</type> is
+    of variable length up to the maximum length
+    <replaceable>x</replaceable>; longer strings will be rejected.
+    <type>BIT</type> without length is equivalent to
+    <literal>BIT(1)</literal>, <type>BIT VARYING</type> without length
+    specification means unlimited length.
+   </para>
+
+   <note>
+    <para>
+     Prior to PostgreSQL 7.2, <type>BIT</type> type data was
+     zero-padded on the right.  This was changed to comply with the
+     SQL standard.  To implement zero-padded bit strings, a
+     combination of the concatenation operator and the
+     <function>substring</function> function can be used.
+    </para>
+   </note>
+
+   <para>
+    Refer to <xref
     linkend="sql-syntax-bit-strings"> for information about the syntax
     of bit string constants.  Bit-logical operators and string
     manipulation functions are available; see <xref
     linkend="functions">.
    </para>
 
-   <informalexample>
-    <para>
-     Some examples:
+   <example>
+    <title>Using the bit string types</title>
+
 <programlisting>
 CREATE TABLE test (a BIT(3), b BIT VARYING(5));
 INSERT INTO test VALUES (B'101', B'00');
+INSERT INTO test VALUES (B'10', B'101');
+<computeroutput>
+ERROR:  bit string length does not match type bit(3)
+</computeroutput>
 SELECT SUBSTRING(b FROM 1 FOR 2) FROM test;
 </programlisting>
-    </para>
-   </informalexample>
+   </example>
 
   </sect1>
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.12 2001/05/18 22:54:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.13 2001/05/22 16:37:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,7 @@ format_type_internal(Oid type_oid, int32 typemod)
 				buf = pstrdup("character varying");
 			break;
 
-		case ZPBITOID:
+		case BITOID:
 			if (with_typemod)
 				buf = psnprintf(5 + MAX_INT32_LEN + 1, "bit(%d)",
 								(int) typemod);
@@ -262,7 +262,7 @@ type_maximum_size(Oid type_oid, int32 typemod)
 			break;
 
 		case VARBITOID:
-		case ZPBITOID:
+		case BITOID:
 			/* typemod is the (max) number of bits */
 			return (typemod + (BITS_PER_BYTE - 1)) / BITS_PER_BYTE
 				+ 2 * sizeof(int32);

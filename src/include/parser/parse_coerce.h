@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.27 2001/03/22 04:00:57 momjian Exp $
+ * $Id: parse_coerce.h,v 1.28 2001/05/22 16:37:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ typedef enum CATEGORY
 		|| ((t) == CIRCLEOID) \
 		|| ((t) == INETOID) \
 		|| ((t) == CIDROID) \
-		|| ((t) == ZPBITOID) \
+		|| ((t) == BITOID) \
 		|| ((t) == VARBITOID) )
 
 
@@ -101,8 +101,8 @@ typedef enum CATEGORY
 		|| ((a) == INT4OID && (b) == RELTIMEOID) \
 		|| ((a) == INETOID && (b) == CIDROID) \
 		|| ((a) == CIDROID && (b) == INETOID) \
-		|| ((a) == ZPBITOID && (b) == VARBITOID) \
-		|| ((a) == VARBITOID && (b) == ZPBITOID))
+		|| ((a) == BITOID && (b) == VARBITOID) \
+		|| ((a) == VARBITOID && (b) == BITOID))
 
 /* IS_HIGHER_TYPE()
  * These types are the most general in each of the type categories.

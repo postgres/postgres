@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.17 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.18 2001/05/22 16:37:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,10 +25,6 @@
 
 
 /*----------
- *	Prefixes:
- *	 zp    -- zero-padded fixed length bit string
- *	 var   -- varying bit string
- *
  *	attypmod -- contains the length of the bit string in bits, or for
  *			   varying bits the maximum length.
  *
@@ -42,13 +38,13 @@
  */
 
 /*
- * zpbit_in -
+ * bit_in -
  *	  converts a char string to the internal representation of a bitstring.
  *		  The length is determined by the number of bits required plus
  *		  VARHDRSZ bytes or from atttypmod.
  */
 Datum
-zpbit_in(PG_FUNCTION_ARGS)
+bit_in(PG_FUNCTION_ARGS)
 {
 	char	   *input_string = PG_GETARG_CSTRING(0);
 
@@ -64,8 +60,7 @@ zpbit_in(PG_FUNCTION_ARGS)
 				bitlen,			/* Number of bits in the bit string   */
 				slen;			/* Length of the input string		  */
 	bool		bit_not_hex;	/* false = hex string  true = bit string */
-	int			bc,
-				ipad;
+	int			bc;
 	bits8		x = 0;
 
 	/* Check that the first character is a b or an x */
@@ -99,15 +94,12 @@ zpbit_in(PG_FUNCTION_ARGS)
 
 	/*
 	 * Sometimes atttypmod is not supplied. If it is supplied we need to
-	 * make sure that the bitstring fits. Note that the number of infered
-	 * bits can be larger than the number of actual bits needed, but only
-	 * if we are reading a hex string and not by more than 3 bits, as a
-	 * hex string gives an accurate length up to 4 bits
+	 * make sure that the bitstring fits.
 	 */
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
-	else if (bit_not_hex ? (bitlen > atttypmod) : (bitlen > atttypmod + 3))
-		elog(ERROR, "zpbit_in: bit string too long for bit(%d)",
+	else if (bitlen != atttypmod)
+		elog(ERROR, "bit string length does not match type bit(%d)",
 			 atttypmod);
 
 	len = VARBITTOTALLEN(atttypmod);
@@ -128,7 +120,7 @@ zpbit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				elog(ERROR, "Cannot parse %c as a binary digit", *sp);
+				elog(ERROR, "cannot parse %c as a binary digit", *sp);
 			x >>= 1;
 			if (x == 0)
 			{
@@ -149,7 +141,7 @@ zpbit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				elog(ERROR, "Cannot parse %c as a hex digit", *sp);
+				elog(ERROR, "cannot parse %c as a hex digit", *sp);
 			if (bc)
 			{
 				*r++ |= x;
@@ -163,31 +155,12 @@ zpbit_in(PG_FUNCTION_ARGS)
 		}
 	}
 
-	if (bitlen > atttypmod)
-	{
-		/* Check that this fitted */
-		r = VARBITEND(result) - 1;
-		ipad = VARBITPAD(result);
-
-		/*
-		 * The bottom ipad bits of the byte pointed to by r need to be
-		 * zero
-		 */
-		if (((*r << (BITS_PER_BYTE - ipad)) & BITMASK) != 0)
-			elog(ERROR, "zpbit_in: bit string too long for bit(%d)",
-				 atttypmod);
-	}
-
 	PG_RETURN_VARBIT_P(result);
 }
 
-/* zpbit_out -
- *	  for the time being we print everything as hex strings, as this is likely
- *	  to be more compact than bit strings, and consequently much more efficient
- *	  for long strings
- */
+
 Datum
-zpbit_out(PG_FUNCTION_ARGS)
+bit_out(PG_FUNCTION_ARGS)
 {
 #if 1
 	/* same as varbit output */
@@ -228,69 +201,59 @@ zpbit_out(PG_FUNCTION_ARGS)
 #endif
 }
 
-/* zpbit()
+/* bit()
  * Converts a bit() type to a specific internal length.
  * len is the bitlength specified in the column definition.
  */
 Datum
-zpbit(PG_FUNCTION_ARGS)
+bit(PG_FUNCTION_ARGS)
 {
 	VarBit	   *arg = PG_GETARG_VARBIT_P(0);
 	int32		len = PG_GETARG_INT32(1);
-	VarBit	   *result;
-	int			rlen;
 
 	/* No work if typmod is invalid or supplied data matches it already */
 	if (len <= 0 || len == VARBITLEN(arg))
 		PG_RETURN_VARBIT_P(arg);
-
-	rlen = VARBITTOTALLEN(len);
-	result = (VarBit *) palloc(rlen);
-	/* set to 0 so that result is zero-padded if input is shorter */
-	memset(result, 0, rlen);
-	VARATT_SIZEP(result) = rlen;
-	VARBITLEN(result) = len;
-
-	memcpy(VARBITS(result), VARBITS(arg),
-		   Min(VARBITBYTES(result), VARBITBYTES(arg)));
-
-	PG_RETURN_VARBIT_P(result);
+	else
+		elog(ERROR, "bit string length does not match type bit(%d)",
+			 len);
+	return 0;					/* quiet compiler */
 }
 
-/* _zpbit()
+/* _bit()
  * Converts an array of bit() elements to a specific internal length.
  * len is the bitlength specified in the column definition.
  */
 Datum
-_zpbit(PG_FUNCTION_ARGS)
+_bit(PG_FUNCTION_ARGS)
 {
 	ArrayType  *v = (ArrayType *) PG_GETARG_VARLENA_P(0);
 	int32		len = PG_GETARG_INT32(1);
 	FunctionCallInfoData locfcinfo;
 
 	/*
-	 * Since zpbit() is a built-in function, we should only need to look
+	 * Since bit() is a built-in function, we should only need to look
 	 * it up once per run.
 	 */
-	static FmgrInfo zpbit_finfo;
+	static FmgrInfo bit_finfo;
 
-	if (zpbit_finfo.fn_oid == InvalidOid)
-		fmgr_info(F_ZPBIT, &zpbit_finfo);
+	if (bit_finfo.fn_oid == InvalidOid)
+		fmgr_info(F_BIT, &bit_finfo);
 
 	MemSet(&locfcinfo, 0, sizeof(locfcinfo));
-	locfcinfo.flinfo = &zpbit_finfo;
+	locfcinfo.flinfo = &bit_finfo;
 	locfcinfo.nargs = 2;
 	/* We assume we are "strict" and need not worry about null inputs */
 	locfcinfo.arg[0] = PointerGetDatum(v);
 	locfcinfo.arg[1] = Int32GetDatum(len);
 
-	return array_map(&locfcinfo, ZPBITOID, ZPBITOID);
+	return array_map(&locfcinfo, BITOID, BITOID);
 }
 
 /*
  * varbit_in -
  *	  converts a string to the internal representation of a bitstring.
- *		This is the same as zpbit_in except that atttypmod is taken as
+ *		This is the same as bit_in except that atttypmod is taken as
  *		the maximum length, not the exact length to force the bitstring to.
  */
 Datum
@@ -310,8 +273,7 @@ varbit_in(PG_FUNCTION_ARGS)
 				bitlen,			/* Number of bits in the bit string   */
 				slen;			/* Length of the input string		  */
 	bool		bit_not_hex;	/* false = hex string  true = bit string */
-	int			bc,
-				ipad;
+	int			bc;
 	bits8		x = 0;
 
 	/* Check that the first character is a b or an x */
@@ -340,15 +302,12 @@ varbit_in(PG_FUNCTION_ARGS)
 
 	/*
 	 * Sometimes atttypmod is not supplied. If it is supplied we need to
-	 * make sure that the bitstring fits. Note that the number of infered
-	 * bits can be larger than the number of actual bits needed, but only
-	 * if we are reading a hex string and not by more than 3 bits, as a
-	 * hex string gives an accurate length up to 4 bits
+	 * make sure that the bitstring fits.
 	 */
 	if (atttypmod <= 0)
 		atttypmod = bitlen;
-	else if (bit_not_hex ? (bitlen > atttypmod) : (bitlen > atttypmod + 3))
-		elog(ERROR, "varbit_in: bit string too long for bit varying(%d)",
+	else if (bitlen > atttypmod)
+		elog(ERROR, "bit string too long for type bit varying(%d)",
 			 atttypmod);
 
 	len = VARBITTOTALLEN(bitlen);
@@ -369,7 +328,7 @@ varbit_in(PG_FUNCTION_ARGS)
 			if (*sp == '1')
 				*r |= x;
 			else if (*sp != '0')
-				elog(ERROR, "Cannot parse %c as a binary digit", *sp);
+				elog(ERROR, "cannot parse %c as a binary digit", *sp);
 			x >>= 1;
 			if (x == 0)
 			{
@@ -390,7 +349,7 @@ varbit_in(PG_FUNCTION_ARGS)
 			else if (*sp >= 'a' && *sp <= 'f')
 				x = (bits8) (*sp - 'a') + 10;
 			else
-				elog(ERROR, "Cannot parse %c as a hex digit", *sp);
+				elog(ERROR, "cannot parse %c as a hex digit", *sp);
 			if (bc)
 			{
 				*r++ |= x;
@@ -402,21 +361,6 @@ varbit_in(PG_FUNCTION_ARGS)
 				bc = 1;
 			}
 		}
-	}
-
-	if (bitlen > atttypmod)
-	{
-		/* Check that this fitted */
-		r = VARBITEND(result) - 1;
-		ipad = VARBITPAD(result);
-
-		/*
-		 * The bottom ipad bits of the byte pointed to by r need to be
-		 * zero
-		 */
-		if (((*r << (BITS_PER_BYTE - ipad)) & BITMASK) != 0)
-			elog(ERROR, "varbit_in: bit string too long for bit varying(%d)",
-				 atttypmod);
 	}
 
 	PG_RETURN_VARBIT_P(result);
@@ -476,6 +420,9 @@ varbit(PG_FUNCTION_ARGS)
 	/* No work if typmod is invalid or supplied data matches it already */
 	if (len <= 0 || len >= VARBITLEN(arg))
 		PG_RETURN_VARBIT_P(arg);
+
+	if (len < VARBITLEN(arg))
+		elog(ERROR, "bit string too long for type bit varying(%d)", len);
 
 	rlen = VARBITTOTALLEN(len);
 	result = (VarBit *) palloc(rlen);
@@ -868,7 +815,7 @@ bitand(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "bitand: Cannot AND bitstrings of different sizes");
+		elog(ERROR, "cannot AND bit strings of different sizes");
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -906,7 +853,7 @@ bitor(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "bitor: Cannot OR bitstrings of different sizes");
+		elog(ERROR, "cannot OR bit strings of different sizes");
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -950,7 +897,7 @@ bitxor(PG_FUNCTION_ARGS)
 	bitlen1 = VARBITLEN(arg1);
 	bitlen2 = VARBITLEN(arg2);
 	if (bitlen1 != bitlen2)
-		elog(ERROR, "bitxor: Cannot XOR bitstrings of different sizes");
+		elog(ERROR, "cannot XOR bit strings of different sizes");
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -1165,7 +1112,7 @@ bittoint4(PG_FUNCTION_ARGS)
 
 	/* Check that the bit string is not too long */
 	if (VARBITLEN(arg) > sizeof(int4) * BITS_PER_BYTE)
-		elog(ERROR, "Bit string is too large to fit in an int4");
+		elog(ERROR, "bit string is too large to fit in type integer");
 	result = 0;
 	for (r = VARBITS(arg); r < VARBITEND(arg); r++)
 	{

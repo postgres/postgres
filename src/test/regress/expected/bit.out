@@ -4,23 +4,23 @@
 --
 -- Build tables for testing
 --
-CREATE TABLE ZPBIT_TABLE(b BIT(11));
-INSERT INTO ZPBIT_TABLE VALUES (B'');
-INSERT INTO ZPBIT_TABLE VALUES (B'0');
-INSERT INTO ZPBIT_TABLE VALUES (B'11011');
-INSERT INTO ZPBIT_TABLE VALUES (B'01010101010');
-INSERT INTO ZPBIT_TABLE VALUES (B'101011111010'); -- too long
---INSERT INTO ZPBIT_TABLE VALUES ('X554');
---INSERT INTO ZPBIT_TABLE VALUES ('X555');
-SELECT * FROM ZPBIT_TABLE; 
+CREATE TABLE BIT_TABLE(b BIT(11));
+INSERT INTO BIT_TABLE VALUES (B'10'); -- too short
+ERROR:  bit string length does not match type bit(11)
+INSERT INTO BIT_TABLE VALUES (B'00000000000');
+INSERT INTO BIT_TABLE VALUES (B'11011000000');
+INSERT INTO BIT_TABLE VALUES (B'01010101010');
+INSERT INTO BIT_TABLE VALUES (B'101011111010'); -- too long
+ERROR:  bit string length does not match type bit(11)
+--INSERT INTO BIT_TABLE VALUES ('X554');
+--INSERT INTO BIT_TABLE VALUES ('X555');
+SELECT * FROM BIT_TABLE; 
       b      
 -------------
  00000000000
- 00000000000
  11011000000
  01010101010
- 10101111101
-(5 rows)
+(3 rows)
 
 CREATE TABLE VARBIT_TABLE(v BIT VARYING(11));
 INSERT INTO VARBIT_TABLE VALUES (B'');
@@ -28,6 +28,7 @@ INSERT INTO VARBIT_TABLE VALUES (B'0');
 INSERT INTO VARBIT_TABLE VALUES (B'010101');
 INSERT INTO VARBIT_TABLE VALUES (B'01010101010');
 INSERT INTO VARBIT_TABLE VALUES (B'101011111010'); -- too long
+ERROR:  bit string too long for type bit varying(11)
 --INSERT INTO VARBIT_TABLE VALUES ('X554');
 --INSERT INTO VARBIT_TABLE VALUES ('X555');
 SELECT * FROM VARBIT_TABLE; 
@@ -37,53 +38,37 @@ SELECT * FROM VARBIT_TABLE;
  0
  010101
  01010101010
- 10101111101
-(5 rows)
+(4 rows)
 
 -- Concatenation
 SELECT v, b, (v || b) AS concat
-       FROM ZPBIT_TABLE, VARBIT_TABLE 
+       FROM BIT_TABLE, VARBIT_TABLE 
        ORDER BY 3;
       v      |      b      |         concat         
 -------------+-------------+------------------------
              | 00000000000 | 00000000000
-             | 00000000000 | 00000000000
- 0           | 00000000000 | 000000000000
  0           | 00000000000 | 000000000000
  0           | 01010101010 | 001010101010
  010101      | 00000000000 | 01010100000000000
- 010101      | 00000000000 | 01010100000000000
              | 01010101010 | 01010101010
- 01010101010 | 00000000000 | 0101010101000000000000
  01010101010 | 00000000000 | 0101010101000000000000
  01010101010 | 01010101010 | 0101010101001010101010
  010101      | 01010101010 | 01010101010101010
- 01010101010 | 10101111101 | 0101010101010101111101
  01010101010 | 11011000000 | 0101010101011011000000
- 010101      | 10101111101 | 01010110101111101
  010101      | 11011000000 | 01010111011000000
- 0           | 10101111101 | 010101111101
  0           | 11011000000 | 011011000000
-             | 10101111101 | 10101111101
- 10101111101 | 00000000000 | 1010111110100000000000
- 10101111101 | 00000000000 | 1010111110100000000000
- 10101111101 | 01010101010 | 1010111110101010101010
- 10101111101 | 10101111101 | 1010111110110101111101
- 10101111101 | 11011000000 | 1010111110111011000000
              | 11011000000 | 11011000000
-(25 rows)
+(12 rows)
 
 -- Length
 SELECT b, length(b) AS lb
-       FROM ZPBIT_TABLE;
+       FROM BIT_TABLE;
       b      | lb 
 -------------+----
  00000000000 | 11
- 00000000000 | 11
  11011000000 | 11
  01010101010 | 11
- 10101111101 | 11
-(5 rows)
+(3 rows)
 
 SELECT v, length(v) AS lv
        FROM VARBIT_TABLE;
@@ -93,23 +78,20 @@ SELECT v, length(v) AS lv
  0           |  1
  010101      |  6
  01010101010 | 11
- 10101111101 | 11
-(5 rows)
+(4 rows)
 
 -- Substring
 SELECT b,
        SUBSTRING(b FROM 2 FOR 4) AS sub_2_4,
        SUBSTRING(b FROM 7 FOR 13) AS sub_7_13,
        SUBSTRING(b FROM 6) AS sub_6
-       FROM ZPBIT_TABLE;
+       FROM BIT_TABLE;
       b      | sub_2_4 | sub_7_13 | sub_6  
 -------------+---------+----------+--------
  00000000000 | 0000    | 00000    | 000000
- 00000000000 | 0000    | 00000    | 000000
  11011000000 | 1011    | 00000    | 000000
  01010101010 | 1010    | 01010    | 101010
- 10101111101 | 0101    | 11101    | 111101
-(5 rows)
+(3 rows)
 
 SELECT v,
        SUBSTRING(v FROM 2 FOR 4) AS sub_2_4,
@@ -122,8 +104,7 @@ SELECT v,
  0           |         |          | 
  010101      | 1010    |          | 1
  01010101010 | 1010    | 01010    | 101010
- 10101111101 | 0101    | 11101    | 111101
-(5 rows)
+(4 rows)
 
 --- Bit operations
 DROP TABLE varbit_table;
@@ -178,11 +159,11 @@ SELECT a,a<<4 AS "a<<4",b,b>>2 AS "b>>2" FROM varbit_table;
 
 DROP TABLE varbit_table;
 --- Bit operations
-DROP TABLE zpbit_table;
-CREATE TABLE zpbit_table (a BIT(16), b BIT(16));
-COPY zpbit_table FROM stdin;
+DROP TABLE bit_table;
+CREATE TABLE bit_table (a BIT(16), b BIT(16));
+COPY bit_table FROM stdin;
 SELECT a,b,~a AS "~ a",a & b AS "a & b", 
-	a|b AS "a | b", a # b AS "a # b" FROM zpbit_table;
+	a|b AS "a | b", a # b AS "a # b" FROM bit_table;
         a         |        b         |       ~ a        |      a & b       |      a | b       |      a # b       
 ------------------+------------------+------------------+------------------+------------------+------------------
  0000111100000000 | 0001000000000000 | 1111000011111111 | 0000000000000000 | 0001111100000000 | 0001111100000000
@@ -198,7 +179,7 @@ SELECT a,b,~a AS "~ a",a & b AS "a & b",
 (10 rows)
 
 SELECT a,b,a<b AS "a<b",a<=b AS "a<=b",a=b AS "a=b",
-        a>=b AS "a>=b",a>b AS "a>b",a<>b AS "a<>b" FROM zpbit_table;
+        a>=b AS "a>=b",a>b AS "a>b",a<>b AS "a<>b" FROM bit_table;
         a         |        b         | a<b | a<=b | a=b | a>=b | a>b | a<>b 
 ------------------+------------------+-----+------+-----+------+-----+------
  0000111100000000 | 0001000000000000 | t   | t    | f   | f    | f   | t
@@ -213,7 +194,7 @@ SELECT a,b,a<b AS "a<b",a<=b AS "a<=b",a=b AS "a=b",
  0001001000110100 | 1111111111110101 | t   | t    | f   | f    | f   | t
 (10 rows)
 
-SELECT a,a<<4 AS "a<<4",b,b>>2 AS "b>>2" FROM zpbit_table;
+SELECT a,a<<4 AS "a<<4",b,b>>2 AS "b>>2" FROM bit_table;
         a         |       a<<4       |        b         |       b>>2       
 ------------------+------------------+------------------+------------------
  0000111100000000 | 1111000000000000 | 0001000000000000 | 0000010000000000
@@ -228,14 +209,14 @@ SELECT a,a<<4 AS "a<<4",b,b>>2 AS "b>>2" FROM zpbit_table;
  0001001000110100 | 0010001101000000 | 1111111111110101 | 0011111111111101
 (10 rows)
 
-DROP TABLE zpbit_table;
+DROP TABLE bit_table;
 -- The following should fail
 select B'001' & B'10';
-ERROR:  bitand: Cannot AND bitstrings of different sizes
+ERROR:  cannot AND bit strings of different sizes
 select B'0111' | B'011';
-ERROR:  bitor: Cannot OR bitstrings of different sizes
+ERROR:  cannot OR bit strings of different sizes
 select B'0010' # B'011101';
-ERROR:  bitxor: Cannot XOR bitstrings of different sizes
+ERROR:  cannot XOR bit strings of different sizes
 -- More position tests, checking all the boundary cases
 SELECT POSITION(B'1010' IN B'0000101');   -- 0
  position 
@@ -466,16 +447,16 @@ SELECT POSITION(B'0000000000011101011111010110' IN B'000000000011101011111010110
 (1 row)
 
 -- Shifting
-CREATE TABLE ZPBIT_SHIFT_TABLE(b BIT(16));
-INSERT INTO ZPBIT_SHIFT_TABLE VALUES (B'11011');
-INSERT INTO ZPBIT_SHIFT_TABLE SELECT b>>1 FROM ZPBIT_SHIFT_TABLE;
-INSERT INTO ZPBIT_SHIFT_TABLE SELECT b>>2 FROM ZPBIT_SHIFT_TABLE;
-INSERT INTO ZPBIT_SHIFT_TABLE SELECT b>>4 FROM ZPBIT_SHIFT_TABLE;
-INSERT INTO ZPBIT_SHIFT_TABLE SELECT b>>8 FROM ZPBIT_SHIFT_TABLE;
-SELECT POSITION(B'1101'IN b),
+CREATE TABLE BIT_SHIFT_TABLE(b BIT(16));
+INSERT INTO BIT_SHIFT_TABLE VALUES (B'1101100000000000');
+INSERT INTO BIT_SHIFT_TABLE SELECT b>>1 FROM BIT_SHIFT_TABLE;
+INSERT INTO BIT_SHIFT_TABLE SELECT b>>2 FROM BIT_SHIFT_TABLE;
+INSERT INTO BIT_SHIFT_TABLE SELECT b>>4 FROM BIT_SHIFT_TABLE;
+INSERT INTO BIT_SHIFT_TABLE SELECT b>>8 FROM BIT_SHIFT_TABLE;
+SELECT POSITION(B'1101' IN b),
        POSITION(B'11011' IN b),
        b 
-       FROM ZPBIT_SHIFT_TABLE ;
+       FROM BIT_SHIFT_TABLE ;
  position | position |        b         
 ----------+----------+------------------
         1 |        1 | 1101100000000000
@@ -496,35 +477,35 @@ SELECT POSITION(B'1101'IN b),
         0 |        0 | 0000000000000001
 (16 rows)
 
-CREATE TABLE VARBIT_SHIFT_TABLE(v BIT VARYING(18));
+CREATE TABLE VARBIT_SHIFT_TABLE(v BIT VARYING(20));
 INSERT INTO VARBIT_SHIFT_TABLE VALUES (B'11011');
-INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v AS BIT(6)) >>1 FROM VARBIT_SHIFT_TABLE;
-INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v AS BIT(8)) >>2 FROM VARBIT_SHIFT_TABLE;
-INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v AS BIT(12)) >>4 FROM VARBIT_SHIFT_TABLE;
-INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v AS BIT(20)) >>8 FROM VARBIT_SHIFT_TABLE;
+INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v || B'0' AS BIT VARYING(6)) >>1 FROM VARBIT_SHIFT_TABLE;
+INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v || B'00' AS BIT VARYING(8)) >>2 FROM VARBIT_SHIFT_TABLE;
+INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v || B'0000' AS BIT VARYING(12)) >>4 FROM VARBIT_SHIFT_TABLE;
+INSERT INTO VARBIT_SHIFT_TABLE SELECT CAST(v || B'00000000' AS BIT VARYING(20)) >>8 FROM VARBIT_SHIFT_TABLE;
 SELECT POSITION(B'1101' IN v),
        POSITION(B'11011' IN v),
        v 
        FROM VARBIT_SHIFT_TABLE ;
- position | position |         v          
-----------+----------+--------------------
+ position | position |          v           
+----------+----------+----------------------
         1 |        1 | 11011
         2 |        2 | 011011
-        3 |        3 | 00110110
+        3 |        3 | 0011011
         4 |        4 | 00011011
-        5 |        5 | 000011011000
-        6 |        6 | 000001101100
-        7 |        7 | 000000110110
+        5 |        5 | 000011011
+        6 |        6 | 0000011011
+        7 |        7 | 00000011011
         8 |        8 | 000000011011
-        9 |        9 | 000000001101100000
-       10 |       10 | 000000000110110000
-       11 |       11 | 000000000011011000
-       12 |       12 | 000000000001101100
-       13 |       13 | 000000000000110110
+        9 |        9 | 0000000011011
+       10 |       10 | 00000000011011
+       11 |       11 | 000000000011011
+       12 |       12 | 0000000000011011
+       13 |       13 | 00000000000011011
        14 |       14 | 000000000000011011
-       15 |        0 | 000000000000001101
-        0 |        0 | 000000000000000110
+       15 |       15 | 0000000000000011011
+       16 |       16 | 00000000000000011011
 (16 rows)
 
-DROP TABLE ZPBIT_SHIFT_TABLE;
+DROP TABLE BIT_SHIFT_TABLE;
 DROP TABLE VARBIT_SHIFT_TABLE;

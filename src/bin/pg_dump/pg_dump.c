@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.208 2001/05/17 21:12:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.209 2001/05/22 16:37:16 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -556,7 +556,7 @@ dumpClasses_dumpData(Archive *fout, char *oid, void *dctxv)
 					archprintf(fout, "%s",
 							   PQgetvalue(res, tuple, field));
 					break;
-				case ZPBITOID:
+				case BITOID:
 				case VARBITOID:
 					archprintf(fout, "B'%s'",
 							   PQgetvalue(res, tuple, field));

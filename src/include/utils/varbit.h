@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: varbit.h,v 1.10 2001/03/22 04:01:15 momjian Exp $
+ * $Id: varbit.h,v 1.11 2001/05/22 16:37:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,12 +61,12 @@ typedef struct
 #define BITHIGH 0x80
 
 
-extern Datum zpbit_in(PG_FUNCTION_ARGS);
-extern Datum zpbit_out(PG_FUNCTION_ARGS);
+extern Datum bit_in(PG_FUNCTION_ARGS);
+extern Datum bit_out(PG_FUNCTION_ARGS);
 extern Datum varbit_in(PG_FUNCTION_ARGS);
 extern Datum varbit_out(PG_FUNCTION_ARGS);
-extern Datum zpbit(PG_FUNCTION_ARGS);
-extern Datum _zpbit(PG_FUNCTION_ARGS);
+extern Datum bit(PG_FUNCTION_ARGS);
+extern Datum _bit(PG_FUNCTION_ARGS);
 extern Datum varbit(PG_FUNCTION_ARGS);
 extern Datum _varbit(PG_FUNCTION_ARGS);
 extern Datum biteq(PG_FUNCTION_ARGS);

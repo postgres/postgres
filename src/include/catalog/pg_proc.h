@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.186 2001/05/20 20:28:19 tgl Exp $
+ * $Id: pg_proc.h,v 1.187 2001/05/22 16:37:16 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1975,9 +1975,9 @@ DESCR("# points in path");
 DATA(insert OID = 1556 (  npoints			PGUID 12 f t t t 1 f	23 "604" 100 0 0 100  poly_npoints - ));
 DESCR("number of points in polygon");
 
-DATA(insert OID = 1564 (  zpbit_in			PGUID 12 f t t t 1 f 1560 "0" 100 0 0 100  zpbit_in - ));
+DATA(insert OID = 1564 (  bit_in			PGUID 12 f t t t 1 f 1560 "0" 100 0 0 100  bit_in - ));
 DESCR("(internal)");
-DATA(insert OID = 1565 (  zpbit_out			PGUID 12 f t t t 1 f   23 "0" 100 0 0 100  zpbit_out - ));
+DATA(insert OID = 1565 (  bit_out			PGUID 12 f t t t 1 f   23 "0" 100 0 0 100  bit_out - ));
 DESCR("(internal)");
 
 DATA(insert OID = 1569 (  like				PGUID 12 f t t t 2 f 16 "25 25" 100 0 0 100  textlike - ));
@@ -2214,9 +2214,9 @@ DESCR("int4 to bitstring");
 DATA(insert OID = 1684 (  bittoint4			PGUID 12 f t t t 1 f 23 "1560" 100 0 0 100	bittoint4 - ));
 DESCR("bitstring to int4");
 
-DATA(insert OID = 1685 (  bit			   PGUID 12 f t t t 2 f 1560 "1560 23" 100 0 0 100	zpbit - ));
+DATA(insert OID = 1685 (  bit			   PGUID 12 f t t t 2 f 1560 "1560 23" 100 0 0 100	bit - ));
 DESCR("adjust bit() to typmod length");
-DATA(insert OID = 1686 (  _bit			   PGUID 12 f t t t 2 f 1561 "1561 23" 100 0 0 100	_zpbit - ));
+DATA(insert OID = 1686 (  _bit			   PGUID 12 f t t t 2 f 1561 "1561 23" 100 0 0 100	_bit - ));
 DESCR("adjust bit()[] to typmod length");
 DATA(insert OID = 1687 (  varbit		   PGUID 12 f t t t 2 f 1562 "1562 23" 100 0 0 100	varbit - ));
 DESCR("adjust varbit() to typmod length");

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.186 2001/05/18 21:24:19 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.187 2001/05/22 16:37:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3086,7 +3086,7 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 				typename->typmod = VARHDRSZ +
 					((NUMERIC_DEFAULT_PRECISION << 16) | NUMERIC_DEFAULT_SCALE);
 				break;
-			case ZPBITOID:
+			case BITOID:
 				/* 'bit' -> 'bit(1)' */
 				typename->typmod = 1;
 				break;

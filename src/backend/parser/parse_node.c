@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.53 2001/03/22 03:59:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.54 2001/05/22 16:37:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,11 +473,11 @@ make_const(Value *value)
 			break;
 
 		case T_BitString:
-			val = DirectFunctionCall3(zpbit_in,
+			val = DirectFunctionCall3(bit_in,
 									  CStringGetDatum(strVal(value)),
 									  ObjectIdGetDatum(InvalidOid),
 									  Int32GetDatum(-1));
-			typeid = ZPBITOID;
+			typeid = BITOID;
 			typelen = -1;
 			typebyval = false;
 			break;
