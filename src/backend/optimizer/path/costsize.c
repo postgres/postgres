@@ -41,7 +41,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.69 2001/03/22 03:59:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.70 2001/04/25 22:04:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,14 +443,22 @@ cost_nestloop(Path *path,
 	/* cost of source data */
 
 	/*
-	 * NOTE: we assume that the inner path's startup_cost is paid once,
-	 * not over again on each restart.	This is certainly correct if the
-	 * inner path is materialized.	Are there any cases where it is wrong?
+	 * NOTE: clearly, we must pay both outer and inner paths' startup_cost
+	 * before we can start returning tuples, so the join's startup cost
+	 * is their sum.  What's not so clear is whether the inner path's
+	 * startup_cost must be paid again on each rescan of the inner path.
+	 * This is not true if the inner path is materialized, but probably
+	 * is true otherwise.  Since we don't yet have clean handling of the
+	 * decision whether to materialize a path, we can't tell here which
+	 * will happen.  As a compromise, charge 50% of the inner startup cost
+	 * for each restart.
 	 */
 	startup_cost += outer_path->startup_cost + inner_path->startup_cost;
 	run_cost += outer_path->total_cost - outer_path->startup_cost;
 	run_cost += outer_path->parent->rows *
 		(inner_path->total_cost - inner_path->startup_cost);
+	if (outer_path->parent->rows > 1)
+		run_cost += (outer_path->parent->rows - 1) * inner_path->startup_cost;
 
 	/*
 	 * Number of tuples processed (not number emitted!).  If inner path is
