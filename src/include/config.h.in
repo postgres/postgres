@@ -210,14 +210,16 @@ extern void srandom(int seed);
    code seems broken without it, Bruce Momjian */
 /* #define LOARRAY */
 
-/* This is the time, in seconds, at which a given backend server
- * will wait on a lock before deciding to abort the transaction
- * (this is what we do in lieu of deadlock detection).
- *
- * Low numbers are not recommended as they will tend to cause
- * false aborts if many transactions are long-lived.
+/*
+ * As soon as the backend blocks on a lock, it waits this number of seconds
+ * before checking for a deadlock.  If not, it keeps checking every this
+ * number of seconds.
+ * We don't check for deadlocks just before sleeping because a deadlock is
+ * a rare event, and checking is an expensive operation.
+ * We only detect deadlocks between two processes, not three or more, but
+ * these are the most common.
  */
-#define DEADLOCK_TIMEOUT 60
+#define DEADLOCK_CHECK_TIMER 60
 
 /*
  * This flag enables the use of idexes in plans generated for function

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.28 1998/01/25 05:14:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.29 1998/01/27 03:00:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.28 1998/01/25 05:14:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.29 1998/01/27 03:00:29 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -442,7 +442,7 @@ ProcQueueInit(PROC_QUEUE *queue)
  * NOTES: The process queue is now a priority queue for locking.
  */
 int
-ProcSleep(PROC_QUEUE *queue,
+ProcSleep(PROC_QUEUE *waitQueue,
 		  SPINLOCK spinlock,
 		  int token,
 		  int prio,
@@ -453,8 +453,8 @@ ProcSleep(PROC_QUEUE *queue,
 	struct itimerval timeval,
 				dummy;
 
-	proc = (PROC *) MAKE_PTR(queue->links.prev);
-	for (i = 0; i < queue->size; i++)
+	proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
+	for (i = 0; i < waitQueue->size; i++)
 	{
 		if (proc->prio >= prio)
 			proc = (PROC *) MAKE_PTR(proc->links.prev);
@@ -478,36 +478,38 @@ ProcSleep(PROC_QUEUE *queue,
 	 * -------------------
 	 */
 	SHMQueueInsertTL(&(proc->links), &(MyProc->links));
-	queue->size++;
+	waitQueue->size++;
 
 	SpinRelease(spinlock);
 
 	/* --------------
-	 * Postgres does not have any deadlock detection code and for this
-	 * reason we must set a timer to wake up the process in the event of
-	 * a deadlock.	For now the timer is set for 1 minute and we assume that
-	 * any process which sleeps for this amount of time is deadlocked and will
-	 * receive a SIGALRM signal.  The handler should release the processes
-	 * semaphore and abort the current transaction.
+	 * We set this so we can wake up periodically and check for a deadlock.
+	 * If a deadlock is detected, the handler releases the processes
+	 * semaphore and aborts the current transaction.
 	 *
 	 * Need to zero out struct to set the interval and the micro seconds fields
 	 * to 0.
 	 * --------------
 	 */
 	MemSet(&timeval, 0, sizeof(struct itimerval));
-	timeval.it_value.tv_sec = DEADLOCK_TIMEOUT;
+	timeval.it_value.tv_sec = DEADLOCK_CHECK_TIMER;
 
-	if (setitimer(ITIMER_REAL, &timeval, &dummy))
-		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
+	do
+	{
+		MyProc->errType = NO_ERROR; /* reset flag after deadlock check */
 
-	/* --------------
-	 * if someone wakes us between SpinRelease and IpcSemaphoreLock,
-	 * IpcSemaphoreLock will not block.  The wakeup is "saved" by
-	 * the semaphore implementation.
-	 * --------------
-	 */
-	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, IpcExclusiveLock);
+		if (setitimer(ITIMER_REAL, &timeval, &dummy))
+			elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 
+		/* --------------
+		 * if someone wakes us between SpinRelease and IpcSemaphoreLock,
+		 * IpcSemaphoreLock will not block.  The wakeup is "saved" by
+		 * the semaphore implementation.
+		 * --------------
+		 */
+		IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum, IpcExclusiveLock);
+	} while (MyProc->errType == STATUS_NOT_FOUND); /* sleep after deadlock check */
+	
 	/* ---------------
 	 * We were awoken before a timeout - now disable the timer
 	 * ---------------
@@ -615,10 +617,9 @@ ProcAddLock(SHM_QUEUE *elem)
 }
 
 /* --------------------
- * We only get to this routine if we got SIGALRM after DEADLOCK_TIMEOUT
- * while waiting for a lock to be released by some other process.  After
- * the one minute deadline we assume we have a deadlock and must abort
- * this transaction.  We must also indicate that I'm no longer waiting
+ * We only get to this routine if we got SIGALRM after DEADLOCK_CHECK_TIMER
+ * while waiting for a lock to be released by some other process.  If we have
+ * a real deadlock, we must also indicate that I'm no longer waiting
  * on a lock so that other processes don't try to wake me up and screw
  * up my semaphore.
  * --------------------
@@ -665,11 +666,18 @@ HandleDeadLock(int sig)
 		return;
 	}
 
-	mywaitlock = MyProc->waitLock;
-
 #ifdef DEADLOCK_DEBUG
 	DumpLocks();
 #endif
+
+	if (!DeadLockCheck(&(MyProc->lockQueue), MyProc->waitLock, true))
+	{
+		UnlockLockTable();
+		MyProc->errType = STATUS_NOT_FOUND;
+		return;
+	}
+
+	mywaitlock = MyProc->waitLock;
 
 	/* ------------------------
 	 * Get this process off the lock's wait queue
@@ -701,8 +709,7 @@ HandleDeadLock(int sig)
 	 */
 	UnlockLockTable();
 
-	elog(NOTICE, "Timeout interval reached -- possible deadlock.");
-	elog(NOTICE, "See the lock(l) manual page for a possible cause.");
+	elog(NOTICE, "Deadlock detected -- See the lock(l) manual page for a possible cause.");
 	return;
 }
 

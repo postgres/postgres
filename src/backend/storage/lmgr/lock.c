@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.21 1998/01/25 05:14:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.22 1998/01/27 03:00:28 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1201,7 +1201,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 		done = (xidLook->queue.next == end);
 		lock = (LOCK *) MAKE_PTR(xidLook->tag.lock);
 
-		LOCK_PRINT("ReleaseAll", (&lock->tag), 0);
+		LOCK_PRINT("LockReleaseAll", (&lock->tag), 0);
 
 #ifdef USER_LOCKS
 
@@ -1307,11 +1307,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 			|| !found)
 		{
 			SpinRelease(masterLock);
-#ifdef USER_LOCKS
 			elog(NOTICE, "LockReleaseAll: xid table corrupted");
-#else
-			elog(NOTICE, "LockReplace: xid table corrupted");
-#endif
 			return (FALSE);
 		}
 
@@ -1329,11 +1325,7 @@ LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue)
 			if ((!lock) || (!found))
 			{
 				SpinRelease(masterLock);
-#ifdef USER_LOCKS
 				elog(NOTICE, "LockReleaseAll: cannot remove lock from HTAB");
-#else
-				elog(NOTICE, "LockReplace: cannot remove lock from HTAB");
-#endif
 				return (FALSE);
 			}
 		}
@@ -1413,6 +1405,86 @@ bool
 LockingDisabled()
 {
 	return LockingIsDisabled;
+}
+
+/*
+ * DeadlockCheck -- Checks for deadlocks for a given process
+ *
+ * We can't block on user locks, so no sense testing for deadlock
+ * because there is no blocking, and no timer for the block.
+ *
+ * This code takes a list of locks a process holds, and the lock that
+ * the process is sleeping on, and tries to find if any of the processes
+ * waiting on its locks hold the lock it is waiting for.
+ *
+ * We have already locked the master lock before being called.
+ */
+bool
+DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
+{
+	int			done;
+	XIDLookupEnt *xidLook = NULL;
+	XIDLookupEnt *tmp = NULL;
+	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
+	LOCK	   *lock;
+
+	if (SHMQueueEmpty(lockQueue))
+		return false;
+
+	SHMQueueFirst(lockQueue, (Pointer *) &xidLook, &xidLook->queue);
+
+	XID_PRINT("DeadLockCheck", xidLook);
+
+	for (;;)
+	{
+		/* ---------------------------
+		 * XXX Here we assume the shared memory queue is circular and
+		 * that we know its internal structure.  Should have some sort of
+		 * macros to allow one to walk it.	mer 20 July 1991
+		 * ---------------------------
+		 */
+		done = (xidLook->queue.next == end);
+		lock = (LOCK *) MAKE_PTR(xidLook->tag.lock);
+
+		LOCK_PRINT("DeadLockCheck", (&lock->tag), 0);
+
+		/*
+		 * This is our only check to see if we found the lock we want.
+		 *
+		 * The lock we are waiting for is already in MyProc->lockQueue
+		 * so we need to skip it here.  We are trying to find it in
+		 * someone else's lockQueue.
+		 */
+		if (lock == findlock && !skip_check)
+			return true;
+		else if (lock != findlock || !skip_check)
+		{
+			PROC_QUEUE  *waitQueue = &(lock->waitProcs);
+			PROC		*proc;
+			int			i;
+			
+			proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
+			for (i = 0; i < waitQueue->size; i++)
+			{
+				/* prevent endless loops */
+				if (proc != MyProc && skip_check)
+				{
+					/* If we found a deadlock, we can stop right now */
+					if (DeadLockCheck(&(proc->lockQueue), findlock, false))
+						return true;
+				}
+				proc = (PROC *) MAKE_PTR(proc->links.prev);
+			}
+		}
+			
+		if (done)
+			break;
+		SHMQueueFirst(&xidLook->queue, (Pointer *) &tmp, &tmp->queue);
+		xidLook = tmp;
+	}
+
+	/* if we got here, no deadlock */
+	return false;
 }
 
 #ifdef DEADLOCK_DEBUG
