@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.50 2001/01/24 19:43:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.51 2001/01/28 02:57:06 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -86,10 +86,8 @@ findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts)
 		}
 	}
 
-	/* should never get here */
-	fprintf(stderr, "failed sanity check, type with oid %s was not found\n",
-			oid);
-	exit(2);
+	/* no suitable type name was found */
+	return(NULL);
 }
 
 /*
@@ -114,7 +112,9 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 	/* should never get here */
 	fprintf(stderr, "failed sanity check, opr with oid %s was not found\n",
 			oid);
-	exit(2);
+
+	/* no suitable operator name was found */
+	return(NULL);
 }
 
 

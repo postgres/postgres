@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.188 2001/01/24 19:43:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.189 2001/01/28 02:57:06 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2928,6 +2928,15 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 			char	   *elemType;
 
 			elemType = findTypeByOid(tinfo, numTypes, tinfo[i].typelem, zeroAsOpaque);
+			if (elemType == NULL)
+			{
+				fprintf(stderr, "Notice: array type %s - type for elements (oid %s) is not dumped.\n",
+						tinfo[i].typname, tinfo[i].typelem);
+				resetPQExpBuffer(q);
+				resetPQExpBuffer(delq);
+				continue;
+			}
+
 			appendPQExpBuffer(q, ", element = %s, delimiter = ", elemType);
 			formatStringLiteral(q, tinfo[i].typdelim);
 		}
@@ -3086,6 +3095,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	char		*listSep;
 	char		*listSepComma = ",";
 	char		*listSepNone = "";
+	char		*rettypename;
 
 	if (finfo[i].dumped)
 		return;
@@ -3147,6 +3157,21 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 		char			*typname;
 
 		typname = findTypeByOid(tinfo, numTypes, finfo[i].argtypes[j], zeroAsOpaque);
+		if (typname == NULL)
+		{
+			fprintf(stderr, "Notice: function \"%s\" is not dumped.\n",
+					finfo[i].proname);
+
+			fprintf(stderr, "Reason: the %d th argument type name (oid %s) not found.\n",
+					j, finfo[i].argtypes[j]);
+			resetPQExpBuffer(q);
+			resetPQExpBuffer(fn);
+			resetPQExpBuffer(delqry);
+			resetPQExpBuffer(fnlist);
+			resetPQExpBuffer(asPart);
+			return;
+		}
+
 		appendPQExpBuffer(fn, "%s%s", 
 							(j > 0) ? "," : "", 
 							typname);
@@ -3159,11 +3184,28 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	resetPQExpBuffer(delqry);
 	appendPQExpBuffer(delqry, "DROP FUNCTION %s;\n", fn->data );
 
+	rettypename = findTypeByOid(tinfo, numTypes, finfo[i].prorettype, zeroAsOpaque);
+
+	if (rettypename == NULL)
+	{
+		fprintf(stderr, "Notice: function \"%s\" is not dumped.\n",
+				finfo[i].proname);
+
+		fprintf(stderr, "Reason: return type name (oid %s) not found.\n",
+				finfo[i].prorettype);
+			resetPQExpBuffer(q);
+			resetPQExpBuffer(fn);
+			resetPQExpBuffer(delqry);
+			resetPQExpBuffer(fnlist);
+			resetPQExpBuffer(asPart);
+			return;
+	}
+
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", fn->data );
 	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE ",
 					  (finfo[i].retset) ? "SETOF " : "",
-					  findTypeByOid(tinfo, numTypes, finfo[i].prorettype, zeroAsOpaque),
+					  rettypename,
 					  asPart->data);
 	formatStringLiteral(q, func_lang);
 
@@ -3208,6 +3250,12 @@ void
 dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 		 TypeInfo *tinfo, int numTypes)
 {
+#define OPR_NOTICE(arg) {\
+		fprintf(stderr, "Notice: operator \"%s\"(oid %s) is not dumped.\n",oprinfo[i].oprname, oprinfo[i].oid);\
+	fprintf(stderr, "Reason: " CppAsString(arg));\
+	fprintf (stderr, " (oid %s) not found.\n",oprinfo[i].arg);\
+	}
+
 	int			i;
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
@@ -3222,6 +3270,7 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 
 	for (i = 0; i < numOperators; i++)
 	{
+	    char *name;
 
 		resetPQExpBuffer(leftarg);
 		resetPQExpBuffer(rightarg);
@@ -3250,22 +3299,50 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 		if (strcmp(oprinfo[i].oprkind, "r") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-			appendPQExpBuffer(leftarg, ",\n\tLEFTARG = %s ",
-								findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft, zeroAsOpaque) );
+		    name = findTypeByOid(tinfo, numTypes, 
+								  oprinfo[i].oprleft, zeroAsOpaque);
+			if (name == NULL)
+			{
+				OPR_NOTICE(oprleft);
+				continue;
+			}
+			appendPQExpBuffer(leftarg, ",\n\tLEFTARG = %s ",name);
 		}
+
 		if (strcmp(oprinfo[i].oprkind, "l") == 0 ||
 			strcmp(oprinfo[i].oprkind, "b") == 0)
 		{
-			appendPQExpBuffer(rightarg, ",\n\tRIGHTARG = %s ",
-							  findTypeByOid(tinfo, numTypes, oprinfo[i].oprright, zeroAsOpaque) );
+		    name = findTypeByOid(tinfo, numTypes, 
+								  oprinfo[i].oprright, zeroAsOpaque);
+			if (name == NULL)
+			{
+				OPR_NOTICE(oprright);
+				continue;
+			}
+			appendPQExpBuffer(rightarg, ",\n\tRIGHTARG = %s ", name);
 		}
+
 		if (!(strcmp(oprinfo[i].oprcom, "0") == 0))
-			appendPQExpBuffer(commutator, ",\n\tCOMMUTATOR = %s ",
-				 findOprByOid(oprinfo, numOperators, oprinfo[i].oprcom));
+		{
+			name = findOprByOid(oprinfo, numOperators, oprinfo[i].oprcom);
+			if (name == NULL)
+			{
+				OPR_NOTICE(oprcom);
+				continue;
+			}
+			appendPQExpBuffer(commutator, ",\n\tCOMMUTATOR = %s ", name);
+		}
 
 		if (!(strcmp(oprinfo[i].oprnegate, "0") == 0))
-			appendPQExpBuffer(negator, ",\n\tNEGATOR = %s ",
-			  findOprByOid(oprinfo, numOperators, oprinfo[i].oprnegate));
+		{
+			name = findOprByOid(oprinfo, numOperators, oprinfo[i].oprnegate);
+			if (name == NULL)
+			{
+				OPR_NOTICE(oprnegate);
+				continue;
+			}
+			appendPQExpBuffer(negator, ",\n\tNEGATOR = %s ", name);
+		}
 
 		if (!(strcmp(oprinfo[i].oprrest, "-") == 0))
 			appendPQExpBuffer(restrictor, ",\n\tRESTRICT = %s ", oprinfo[i].oprrest);
@@ -3274,16 +3351,30 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 			appendPQExpBuffer(join, ",\n\tJOIN = %s ", oprinfo[i].oprjoin);
 
 		if (!(strcmp(oprinfo[i].oprlsortop, "0") == 0))
-			appendPQExpBuffer(sort1, ",\n\tSORT1 = %s ",
-			 findOprByOid(oprinfo, numOperators, oprinfo[i].oprlsortop));
+		{
+			name = 	findOprByOid(oprinfo, numOperators, oprinfo[i].oprlsortop);
+			if (name == NULL)
+			{
+				OPR_NOTICE(oprlsortop);
+				continue;
+			}
+			appendPQExpBuffer(sort1, ",\n\tSORT1 = %s ", name);
+		}
 
 		if (!(strcmp(oprinfo[i].oprrsortop, "0") == 0))
-			appendPQExpBuffer(sort2, ",\n\tSORT2 = %s ",
-			 findOprByOid(oprinfo, numOperators, oprinfo[i].oprrsortop));
+		{
+			name = 	findOprByOid(oprinfo, numOperators, oprinfo[i].oprrsortop);
+			if (name == NULL)
+			{
+				OPR_NOTICE(oprrsortop);
+				continue;
+			}
+			appendPQExpBuffer(sort2, ",\n\tSORT2 = %s ", name);
+		}
 
 		resetPQExpBuffer(delq);
 		appendPQExpBuffer(delq, "DROP OPERATOR %s (%s", oprinfo[i].oprname,
-				findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft, zeroAsOpaque) );
+					findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft, zeroAsOpaque) );
 		appendPQExpBuffer(delq, ", %s);\n",
 					findTypeByOid(tinfo, numTypes, oprinfo[i].oprright, zeroAsOpaque) );
 
@@ -3317,6 +3408,12 @@ void
 dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		 TypeInfo *tinfo, int numTypes)
 {
+#define AGG_NOTICE(arg) {\
+		fprintf(stderr, "Notice: aggregate \"%s\"(oid %s) is not dumped.\n",agginfo[i].aggname, agginfo[i].oid);\
+	fprintf(stderr, "Reason: " CppAsString(arg) );\
+	fprintf (stderr, " (oid %s) not found.\n",agginfo[i].arg);\
+	}
+
 	int			i;
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
@@ -3325,20 +3422,31 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 
 	for (i = 0; i < numAggs; i++)
 	{
+		char *name;
+
 		resetPQExpBuffer(details);
 
 		/* skip all the builtin oids */
 		if (atooid(agginfo[i].oid) <= g_last_builtin_oid)
 			continue;
 
-		appendPQExpBuffer(details,
-						  "BASETYPE = %s, ",
-						  findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsAny + useBaseTypeName));
+		name = findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsAny + useBaseTypeName);
+		if (name == NULL)
+		{
+			AGG_NOTICE(aggbasetype);
+			continue;
+		}
+		appendPQExpBuffer(details, "BASETYPE = %s, ", name);
 
+		name = findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype, zeroAsOpaque + useBaseTypeName);
+		if (name == NULL)
+		{
+			AGG_NOTICE(aggtranstype);
+			continue;
+		}
 		appendPQExpBuffer(details,
 						  "SFUNC = %s, STYPE = %s",
-						  agginfo[i].aggtransfn,
-						  findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype, zeroAsOpaque + useBaseTypeName));
+						  agginfo[i].aggtransfn, name);
 
 		if (agginfo[i].agginitval)
 		{
