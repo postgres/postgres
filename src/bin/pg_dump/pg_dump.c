@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.100 1999/01/21 22:53:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.101 1999/02/08 01:46:28 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -321,51 +321,41 @@ static void
 dumpClasses_dumpData(FILE *fout, const char *classname,
 					 const TableInfo tblinfo, bool oids)
 {
-
 	PGresult	*res;
-	char		query[255];
-	int		actual_atts;	/* number of attrs in this a table */
-	char		expandbuf[COPYBUFSIZ];
 	char		q[MAXQUERYLEN];
-	int		tuple;
-	int		field;
+	int			tuple;
+	int			field;
+	char	   *expsrc;
+	char	   *expdest;
 
-	sprintf(query, "SELECT * FROM %s", fmtId(classname, force_quotes));
-	res = PQexec(g_conn, query);
+	sprintf(q, "SELECT * FROM %s", fmtId(classname, force_quotes));
+	res = PQexec(g_conn, q);
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		fprintf(stderr, "dumpClasses(): command failed\n");
 		exit_nicely(g_conn);
 	}
-	tuple = 0;
-	while (tuple < PQntuples(res))
+	for (tuple = 0; tuple < PQntuples(res); tuple++)
 	{
 		fprintf(fout, "INSERT INTO %s ", fmtId(classname, force_quotes));
 		if (attrNames)
 		{
-			int			j;
-
-			actual_atts = 0;
 			sprintf(q, "(");
-			for (j = 0; j < tblinfo.numatts; j++)
+			for (field = 0; field < PQnfields(res); field++)
 			{
-				if (tblinfo.inhAttrs[j] == 0)
-				{
-					sprintf(q, "%s%s%s",
-							q,
-							(actual_atts > 0) ? "," : "",
-							fmtId(tblinfo.attnames[j], force_quotes));
-					actual_atts++;
-				}
+				if (field > 0)
+					strcat(q, ",");
+				strcat(q, fmtId(PQfname(res, field), force_quotes));
 			}
-			sprintf(q, "%s%s", q, ") ");
-			fprintf(fout, q);
+			strcat(q, ") ");
+			fprintf(fout, "%s", q);
 		}
 		fprintf(fout, "values (");
-		field = 0;
-		do
+		for (field = 0; field < PQnfields(res); field++)
 		{
+			if (field > 0)
+				fprintf(fout, ",");
 			if (PQgetisnull(res, tuple, field))
 				fprintf(fout, "NULL");
 			else
@@ -377,41 +367,44 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
 					case OIDOID:		/* int types */
 					case FLOAT4OID:
 					case FLOAT8OID:		/* float types */
+						/* These types are printed without quotes */
 						fprintf(fout, "%s",
 								PQgetvalue(res, tuple, field));
 						break;
 					default:
+						/* All other types are printed as string literals,
+						 * with appropriate escaping of special characters.
+						 * Quote mark ' goes to '' per SQL standard,
+						 * other stuff goes to \ sequences.
+						 */
+						expsrc = PQgetvalue(res, tuple, field);
+						expdest = q;
+						for (; *expsrc; expsrc++)
 						{
-							char	   *expsrc,
-									   *expdest;
-
-							/*
-							 * Before outputting string value, expand all
-							 * single quotes to twin single quotes - dhb -
-							 * 6/11/96
-							 */
-							expsrc = PQgetvalue(res, tuple, field);
-							expdest = expandbuf;
-							while (*expsrc)
+							char ch = *expsrc;
+							if (ch == '\\' || ch == '\'')
 							{
-								*expdest++ = *expsrc;
-								if (*expsrc == (char) 0x27)		/* single quote */
-									*expdest++ = *expsrc;
-								expsrc++;
+								*expdest++ = ch; /* double it */
+								*expdest++ = ch;
 							}
-							*expdest = *expsrc; /* null term. */
-
-							fprintf(fout, "'%s'", expandbuf);
+							else if (ch < '\040')
+							{
+								/* generate octal escape for control chars */
+								*expdest++ = '\\';
+								*expdest++ = ((ch >> 6) & 3) + '0';
+								*expdest++ = ((ch >> 3) & 7) + '0';
+								*expdest++ = (ch & 7) + '0';
+							}
+							else
+								*expdest++ = ch;
 						}
+						*expdest = '\0';
+						fprintf(fout, "'%s'", q);
 						break;
 				}
 			}
-			field++;
-			if (field != PQnfields(res))
-				fprintf(fout, ",");
-		} while (field < PQnfields(res));
+		}
 		fprintf(fout, ");\n");
-		tuple++;
 	}
 	PQclear(res);
 }
