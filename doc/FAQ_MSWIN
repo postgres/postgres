@@ -1,6 +1,6 @@
-Installing PostgreSQL on Windows NT or Windows 2000
-===================================================
-$Date: 2000/10/17 03:29:30 $
+How do I installing PostgreSQL on Windows NT or Windows 2000?
+=============================================================
+$Date: 2000/10/18 21:14:56 $
 
 1.  Install the Cygwin package.
 
