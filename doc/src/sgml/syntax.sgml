@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.40 2001/02/24 18:09:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.41 2001/02/25 16:05:21 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -905,17 +905,17 @@ sqrt(2)
     you will sometimes need to add parentheses when using combinations
     of binary and unary operators.  For instance
 <programlisting>
-SELECT 5 ! + 6;
+SELECT 5 ! - 6;
 </programlisting>
    will be parsed as
 <programlisting>
-SELECT 5 ! (+ 6);
+SELECT 5 ! (- 6);
 </programlisting>
     because the parser has no idea -- until it is too late -- that
     <token>!</token> is defined as a postfix operator, not an infix one.
     To get the desired behavior in this case, you must write
 <programlisting>
-SELECT (5 !) + 6;
+SELECT (5 !) - 6;
 </programlisting>
     This is the price one pays for extensibility.
    </para>
