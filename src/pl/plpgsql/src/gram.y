@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.12 2000/09/05 09:02:18 wieck Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.13 2001/01/06 01:39:01 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -378,13 +378,15 @@ decl_rowtype	: T_ROW
 
 decl_varname	: T_WORD
 		    {
-		        $$.name = plpgsql_tolower(strdup(yytext));
-			$$.lineno  = yylineno;
+				/* name should be malloc'd for use as varname */
+				$$.name = strdup(plpgsql_tolower(yytext));
+				$$.lineno  = yylineno;
 		    }
 		;
 
 decl_renname	: T_WORD
 		    {
+				/* the result must be palloc'd, see plpgsql_ns_rename */
 		        $$ = plpgsql_tolower(yytext);
 		    }
 		;
