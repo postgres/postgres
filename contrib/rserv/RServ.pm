@@ -19,7 +19,7 @@ my %Stables = ();
 
 sub PrepareSnapshot
 {
-	my ($conn, $outf, $server, $onlytables) = @_; # (@_[0], @_[1], @_[2]);
+	my ($conn, $outf, $server) = @_; # (@_[0], @_[1], @_[2]);
 
 	my $result = $conn->exec("BEGIN");
 	if ($result->resultStatus ne PGRES_COMMAND_OK)
@@ -52,10 +52,6 @@ sub PrepareSnapshot
 	while (@row = $result->fetchrow)
 	{
 	#	printf "$row[0], $row[1], $row[2]\n";
-		if (ref($onlytables) eq 'HASH') {
-			next unless (exists $onlytables->{$row[1]});
-			$onlytables->{$row[1]} = $row[0] unless ($onlytables->{$row[1]});
-		}
 		push @{$Mtables{$row[0]}}, $row[1], $row[2];
 	}
 
@@ -236,7 +232,7 @@ sub GetSYNCID
 
 sub CleanLog
 {
-	my ($conn, $howold, $onlytables) = @_; # (@_[0], @_[1]);
+	my ($conn, $howold) = @_; # (@_[0], @_[1]);
 
 	my $result = $conn->exec("BEGIN");
 	if ($result->resultStatus ne PGRES_COMMAND_OK)
@@ -278,11 +274,6 @@ sub CleanLog
 	my $alist = join(',', keys %active);
 	my $sinfo = "logid < $maxid";
 	$sinfo .= " and logid not in ($alist)" if $alist ne '';
-	#if (ref($onlytables) eq 'HASH') {
-	#	foreach my $onlytable (keys %{$onlytables}) {
-	#		$sinfo
-	#	}
-	#}
 	
 	$sql = "delete from _RSERV_LOG_ where " . 
 		"logtime < now() - '$howold second'::interval and $sinfo";
@@ -311,7 +302,7 @@ sub CleanLog
 
 sub ApplySnapshot
 {
-	my ($conn, $inpf, $onlytables) = @_; # (@_[0], @_[1]);
+	my ($conn, $inpf) = @_; # (@_[0], @_[1]);
 
 	my $result = $conn->exec("BEGIN");
 	if ($result->resultStatus ne PGRES_COMMAND_OK)
@@ -345,10 +336,6 @@ sub ApplySnapshot
 	while (@row = $result->fetchrow)
 	{
 	#	printf "	%s	%s\n", $row[1], $row[0];
-		if (ref($onlytables) eq 'HASH') {
-			next unless (exists $onlytables->{$row[1]});
-			$onlytables->{$row[1]} = $row[0] unless ($onlytables->{$row[1]});
-		}
 		push @{$Stables{$row[1]}}, $row[0], $row[2], $row[3];
 	}
 
