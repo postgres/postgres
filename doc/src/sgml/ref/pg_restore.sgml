@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.26 2002/07/04 03:04:54 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.27 2002/07/10 02:57:31 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -28,7 +28,8 @@
    <arg> -d <replaceable class="parameter">dbname</replaceable> </arg>
    <arg> -f <replaceable class="parameter">output-file</replaceable> </arg>
    <arg> -F <replaceable class="parameter">format</replaceable> </arg>
-   <arg> -i  <replaceable class="parameter">index</replaceable> </arg>
+   <arg> -i </arg>
+   <arg> -I  <replaceable class="parameter">index</replaceable> </arg>
    <arg> -l </arg>
    <arg> -L <replaceable class="parameter">contents-file</replaceable> </arg>
    <group> <arg> -N </arg> <arg> -o </arg> <arg> -r </arg> </group>
@@ -210,11 +211,11 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-i <replaceable class="parameter">index</replaceable></option></term>
-      <term><option>--index=<replaceable class="parameter">index</replaceable></option></term>
+      <term><option>-i </term>
+      <term><option>--ignore-version</term>
       <listitem>
        <para>
-	Restore definition for named <replaceable class="parameter">index</replaceable> only.
+	Ignore database version checks.
        </para>
       </listitem>
      </varlistentry>
