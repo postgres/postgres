@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.2 2002/10/20 05:05:46 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.2.2.1 2002/11/10 12:45:42 petere Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -23,10 +23,10 @@
   <para>
    When a table is created, it contains no data.  The first thing to
    do before a database can be of much use is to insert data.  Data is
-   inserted one row at a time.  This does not mean that there are no
-   means to <quote>bulk load</quote> many rows efficiently.  But there
-   is no way to insert less than one row at a time.  Even if you know
-   only some column values, a complete row must be created.
+   conceptually inserted one row at a time.  Of course you can also
+   insert more than one row, but there is no way to insert less than
+   one row at a time.  Even if you know only some column values, a
+   complete row must be created.
   </para>
 
   <para>
@@ -84,6 +84,15 @@ INSERT INTO products (product_no, name, price) VALUES (1, 'Cheese', DEFAULT);
 INSERT INTO products DEFAULT VALUES;
 </programlisting>
   </para>
+
+  <tip>
+   <para>
+    To do <quote>bulk loads</quote>, that is, inserting a lot of data,
+    take a look at the <command>COPY</command> command (see
+    &cite-reference;).  It is not as flexible as the
+    <command>INSERT</command> command, but more efficient.
+   </para>
+  </tip>
  </sect1>
 
  <sect1 id="dml-update">

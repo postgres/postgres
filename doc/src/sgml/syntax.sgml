@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.72 2002/10/24 17:48:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.72.2.1 2002/11/10 12:45:42 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -121,7 +121,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     characters of an identifier; longer names can be written in
     commands, but they will be truncated.  By default,
     <symbol>NAMEDATALEN</symbol> is 64 so the maximum identifier length
-    is 63 (but at the time the system is built,
+    is 63 (but at the time PostgreSQL is built,
     <symbol>NAMEDATALEN</symbol> can be changed in
     <filename>src/include/postgres_ext.h</filename>).
    </para>
@@ -170,8 +170,9 @@ UPDATE "my_table" SET "a" = 5;
 
    <para>
     Quoted identifiers can contain any character other than a double
-    quote itself.  This allows constructing table or column names that
-    would otherwise not be possible, such as ones containing spaces or
+    quote itself.  To include a double quote, write two double quotes.
+    This allows constructing table or column names that would
+    otherwise not be possible, such as ones containing spaces or
     ampersands.  The length limitation still applies.
    </para>
 
@@ -272,7 +273,7 @@ SELECT 'foobar';
 SELECT 'foo'      'bar';
 </programlisting>
      is not valid syntax.  (This slightly bizarre behavior is specified
-     by <acronym>SQL9x</acronym>; <productname>PostgreSQL</productname> is
+     by <acronym>SQL</acronym>; <productname>PostgreSQL</productname> is
      following the standard.)
     </para>
    </sect3>
@@ -298,7 +299,7 @@ SELECT 'foo'      'bar';
      Alternatively, bit-string constants can be specified in hexadecimal
      notation, using a leading <literal>X</literal> (upper or lower case),
      e.g., <literal>X'1FF'</literal>.  This notation is equivalent to
-     a bit-string constant with four binary digits for each hex digit.
+     a bit-string constant with four binary digits for each hexadecimal digit.
     </para>
 
     <para>
@@ -328,7 +329,7 @@ SELECT 'foo'      'bar';
      decimal point, if one is used.  At least one digit must follow the
      exponent marker (<literal>e</literal>), if one is present.
      There may not be any spaces or other characters embedded in the
-     constant.  Notice that any leading plus or minus sign is not actually
+     constant.  Note that any leading plus or minus sign is not actually
      considered part of the constant; it is an operator applied to the
      constant.
     </para>
@@ -650,13 +651,16 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </indexterm>
 
    <para>
-    The precedence and associativity of the operators is hard-wired
-    into the parser.  Most operators have the same precedence and are
-    left-associative.  This may lead to non-intuitive behavior; for
-    example the Boolean operators <literal>&lt;</> and <literal>&gt;</> have a different
-    precedence than the Boolean operators <literal>&lt;=</> and <literal>&gt;=</>.  Also,
-    you will sometimes need to add parentheses when using combinations
-    of binary and unary operators.  For instance
+    <xref linkend="sql-precedence-table"> shows the precedence and
+    associativity of the operators in PostgreSQL.  Most operators have
+    the same precedence and are left-associative.  The precedence and
+    associativity of the operators is hard-wired into the parser.
+    This may lead to non-intuitive behavior; for example the Boolean
+    operators <literal>&lt;</> and <literal>&gt;</> have a different
+    precedence than the Boolean operators <literal>&lt;=</> and
+    <literal>&gt;=</>.  Also, you will sometimes need to add
+    parentheses when using combinations of binary and unary operators.
+    For instance
 <programlisting>
 SELECT 5 ! - 6;
 </programlisting>
@@ -673,7 +677,7 @@ SELECT (5 !) - 6;
     This is the price one pays for extensibility.
    </para>
 
-   <table tocentry="1">
+   <table id="sql-precedence-table">
     <title>Operator Precedence (decreasing)</title>
 
     <tgroup cols="3">
@@ -825,7 +829,7 @@ SELECT (5 !) - 6;
 SELECT 3 OPERATOR(pg_catalog.+) 4;
 </programlisting>
     the <literal>OPERATOR</> construct is taken to have the default precedence
-    shown above for <quote>any other</> operator.  This is true no matter
+    shown in <xref linkend="sql-precedence-table"> for <quote>any other</> operator.  This is true no matter
     which specific operator name appears inside <literal>OPERATOR()</>.
    </para>
   </sect2>
@@ -901,9 +905,8 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     </listitem>
 
     <listitem>
-<synopsis>( <replaceable>expression</replaceable> )</synopsis>
      <para>
-      Parentheses are used to group subexpressions and override precedence.
+      Another value expression in parentheses, useful to group subexpressions and override precedence.
      </para>
     </listitem>
    </itemizedlist>
@@ -928,21 +931,30 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
    <title>Column References</title>
 
    <para>
-    A column can be referenced in the form:
+    A column can be referenced in the form
 <synopsis>
-<replaceable>correlation</replaceable>.<replaceable>columnname</replaceable> `['<replaceable>subscript</replaceable>`]'
+<replaceable>correlation</replaceable>.<replaceable>columnname</replaceable>
 </synopsis>
+    or
+<synopsis>
+<replaceable>correlation</replaceable>.<replaceable>columnname</replaceable>[<replaceable>subscript</replaceable>]
+</synopsis>
+    (Here, the brackets <literal>[ ]</literal> are meant to appear literally.)
+   </para>
 
+   <para>
     <replaceable>correlation</replaceable> is the name of a
     table (possibly qualified), or an alias for a table defined by means of a
-    FROM clause, or 
+    <literal>FROM</literal> clause, or 
     the key words <literal>NEW</literal> or <literal>OLD</literal>.
-    (NEW and OLD can only appear in rules,
+    (<literal>NEW</literal> and <literal>OLD</literal> can only appear in rewrite rules,
     while other correlation names can be used in any SQL statement.)
     The correlation name and separating dot may be omitted if the column name
-    is unique 
-    across all the tables being used in the current query.  If
-    <replaceable>column</replaceable> is of an array type, then the
+    is unique across all the tables being used in the current query.  (See also <xref linkend="queries">.)
+   </para>
+
+   <para>
+    If <replaceable>column</replaceable> is of an array type, then the
     optional <replaceable>subscript</replaceable> selects a specific
     element or elements in the array.  If no subscript is provided, then the
     whole array is selected.  (See <xref linkend="arrays"> for more about
@@ -968,9 +980,9 @@ $<replaceable>number</replaceable>
     <function>dept</function>, as
 
 <programlisting>
-CREATE FUNCTION dept (text) RETURNS dept
-  AS 'SELECT * FROM dept WHERE name = $1'
-  LANGUAGE SQL;
+CREATE FUNCTION dept(text) RETURNS dept
+    AS 'SELECT * FROM dept WHERE name = $1'
+    LANGUAGE SQL;
 </programlisting>
 
     Here the <literal>$1</literal> will be replaced by the first
@@ -993,7 +1005,7 @@ CREATE FUNCTION dept (text) RETURNS dept
     keywords <token>AND</token>, <token>OR</token>, and
     <token>NOT</token>, or is a qualified operator name
 <synopsis>
-    <literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operatorname</><literal>)</>
+<literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operatorname</><literal>)</>
 </synopsis>
     Which particular operators exist and whether
     they are unary or binary depends on what operators have been
@@ -1042,12 +1054,12 @@ sqrt(2)
     output value, such as the sum or average of the inputs.  The
     syntax of an aggregate expression is one of the following:
 
-    <simplelist>
-     <member><replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable>)</member>
-     <member><replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable>)</member>
-     <member><replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable>)</member>
-     <member><replaceable>aggregate_name</replaceable> ( * )</member>
-    </simplelist>
+<synopsis>
+<replaceable>aggregate_name</replaceable> (<replaceable>expression</replaceable>)
+<replaceable>aggregate_name</replaceable> (ALL <replaceable>expression</replaceable>)
+<replaceable>aggregate_name</replaceable> (DISTINCT <replaceable>expression</replaceable>)
+<replaceable>aggregate_name</replaceable> ( * )
+</synopsis>
 
     where <replaceable>aggregate_name</replaceable> is a previously
     defined aggregate (possibly a qualified name), and
@@ -1101,7 +1113,7 @@ sqrt(2)
 CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> )
 <replaceable>expression</replaceable>::<replaceable>type</replaceable>
 </synopsis>
-    The <literal>CAST</> syntax conforms to SQL92; the syntax with
+    The <literal>CAST</> syntax conforms to SQL; the syntax with
     <literal>::</literal> is historical <productname>PostgreSQL</productname>
     usage.
    </para>
@@ -1123,8 +1135,8 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     to the type that a value expression must produce (for example, when it is
     assigned to a table column); the system will automatically apply a
     type cast in such cases.  However, automatic casting is only done for
-    cast functions that are marked <quote>OK to apply implicitly</>
-    in the system catalogs.  Other cast functions must be invoked with
+    casts that are marked <quote>OK to apply implicitly</>
+    in the system catalogs.  Other casts must be invoked with
     explicit casting syntax.  This restriction is intended to prevent
     surprising conversions from being applied silently.
    </para>
@@ -1143,6 +1155,13 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     double-quoted, because of syntactic conflicts.  Therefore, the use of
     the function-like cast syntax leads to inconsistencies and should
     probably be avoided in new applications.
+
+    (The function-like syntax is in fact just a function call.  When
+    one of the two standard cast syntaxes is used to do a run-time
+    conversion, it will internally invoke a registered function to
+    perform the conversion.  By convention, these conversion functions
+    have the same name as their output type, but this is not something
+    that a portable application should rely on.)
    </para>
   </sect2>
 
@@ -1151,8 +1170,9 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
 
    <para>
     A scalar subquery is an ordinary
-    <command>SELECT</command> in parentheses that returns exactly one
-    row with one column.  The <command>SELECT</command> query is executed
+    <command>SELECT</command> query in parentheses that returns exactly one
+    row with one column.  (See <xref linkend="queries"> for information about writing queries.)
+    The <command>SELECT</command> query is executed
     and the single returned value is used in the surrounding value expression.
     It is an error to use a query that
     returns more than one row or more than one column as a scalar subquery.
@@ -1168,7 +1188,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     state:
 <programlisting>
 SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
-FROM states;
+    FROM states;
 </programlisting>
    </para>
   </sect2>
@@ -1202,25 +1222,26 @@ SELECT somefunc() OR true;
    <para>
     As a consequence, it is unwise to use functions with side effects
     as part of complex expressions.  It is particularly dangerous to
-    rely on side effects or evaluation order in WHERE and HAVING clauses,
+    rely on side effects or evaluation order in <literal>WHERE</> and <literal>HAVING</> clauses,
     since those clauses are extensively reprocessed as part of
     developing an execution plan.  Boolean
-    expressions (AND/OR/NOT combinations) in those clauses may be reorganized
+    expressions (<literal>AND</>/<literal>OR</>/<literal>NOT</> combinations) in those clauses may be reorganized
     in any manner allowed by the laws of Boolean algebra.
    </para>
 
    <para>
-    When it is essential to force evaluation order, a CASE construct may
-    be used.  For example, this is an untrustworthy way of trying to
-    avoid division by zero in a WHERE clause:
+    When it is essential to force evaluation order, a <literal>CASE</>
+    construct (see <xref linkend="functions-conditional">) may be
+    used.  For example, this is an untrustworthy way of trying to
+    avoid division by zero in a <literal>WHERE</> clause:
 <programlisting>
 SELECT ... WHERE x &lt;&gt; 0 AND y/x &gt; 1.5;
 </programlisting>
-    but this is safe:
+    But this is safe:
 <programlisting>
 SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
 </programlisting>
-    A CASE construct used in this fashion will defeat optimization attempts,
+    A <literal>CASE</> construct used in this fashion will defeat optimization attempts,
     so it should only be done when necessary.
    </para>
   </sect2>

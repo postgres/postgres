@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.37 2002/09/21 18:32:53 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.37.2.1 2002/11/10 12:45:42 petere Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -432,172 +432,6 @@ SELECT am.amname AS acc_method,
  </sect1>
 
 
-  <sect1 id="keys">
-   <title id="keys-title">Keys</title>
-
-   <para>
-    <note>
-     <title>Author</title>
-     <para>
-      Written by Herouth Maoz (<email>herouth@oumail.openu.ac.il</email>).
-      This originally appeared on the User's Mailing List on 1998-03-02
-      in response to the question:
-      "What is the difference between PRIMARY KEY and UNIQUE constraints?".
-     </para>
-    </note>
-   </para>
-
-   <para>
-<literallayout>
-Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
-
-        What's the difference between:
-
-              PRIMARY KEY(fields,...) and
-              UNIQUE (fields,...)
-
-       - Is this an alias?
-       - If PRIMARY KEY is already unique, then why
-         is there another kind of key named UNIQUE?
-</literallayout>
-   </para>
-
-   <para>
-    A primary key is the field(s) used to identify a specific row. For example,
-    Social Security numbers identifying a person.
-   </para>
-
-   <para>
-    A simply UNIQUE combination of fields has nothing to do with identifying
-    the row. It's simply an integrity constraint. For example, I have
-    collections of links. Each collection is identified by a unique number,
-    which is the primary key. This key is used in relations.
-   </para>
-
-   <para>
-    However, my application requires that each collection will also have a
-    unique name. Why? So that a human being who wants to modify a collection
-    will be able to identify it. It's much harder to know, if you have two
-    collections named <quote>Life Science</quote>, the one tagged 24433 is the one you
-    need, and the one tagged 29882 is not.
-   </para>
-
-   <para>
-    So, the user selects the collection by its name. We therefore make sure,
-    within the database, that names are unique. However, no other table in the
-    database relates to the collections table by the collection Name. That
-    would be very inefficient.
-   </para>
-
-   <para>
-    Moreover, despite being unique, the collection name does not actually
-    define the collection! For example, if somebody decided to change the name
-    of the collection from <quote>Life Science</quote> to <quote>Biology</quote>, it will still be the
-    same collection, only with a different name. As long as the name is unique,
-    that's OK.
-   </para>
-
-   <para>
-    So:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       Primary key:
-       <itemizedlist spacing="compact" mark="bullet">
-	<listitem>
-	 <para>
-	  Is used for identifying the row and relating to it.
-	 </para>
-	</listitem>
-	<listitem>
-	 <para>
-	  Is impossible (or hard) to update.
-	 </para>
-	</listitem>
-	<listitem>
-	 <para>
-	  Should not allow null values.
-	 </para>
-	</listitem>
-       </itemizedlist>
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Unique field(s):
-       <itemizedlist spacing="compact" mark="bullet">
-	<listitem>
-	 <para>
-	  Are used as an alternative access to the row.
-	 </para>
-	</listitem>
-	<listitem>
-	 <para>
-	  Are updatable, so long as they are kept unique.
-	 </para>
-	</listitem>
-	<listitem>
-	 <para>
-	  Null values are acceptable.
-	 </para>
-	</listitem>
-       </itemizedlist>
-      </para>
-     </listitem>
-    </itemizedlist>
-   </para>
-
-   <para>
-    As for why no non-unique keys are defined explicitly in standard
-    <acronym>SQL</acronym> syntax? Well, you
-    must understand that indexes are implementation-dependent.
-    <acronym>SQL</acronym> does not
-    define the implementation, merely the relations between data in the
-    database. <productname>PostgreSQL</productname> does allow
-    non-unique indexes, but indexes
-    used to enforce <acronym>SQL</acronym> keys are always unique.
-   </para>
-
-   <para>
-    Thus, you may query a table by any combination of its columns, despite the
-    fact that you don't have an index on these columns. The indexes are merely
-    an implementation aid that each <acronym>RDBMS</acronym> offers
-    you, in order to cause
-    commonly used queries to be done more efficiently.
-    Some <acronym>RDBMS</acronym> may give you
-    additional measures, such as keeping a key stored in main memory. They will
-    have a special command, for example
-<synopsis>
-CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</replaceable>
-</synopsis>
-    (This is not an existing command, just an example.)
-   </para>
-
-   <para>
-    In fact, when you create a primary key or a unique combination of fields,
-    nowhere in the <acronym>SQL</acronym> specification does it say
-    that an index is created, nor that
-    the retrieval of data by the key is going to be more efficient than a
-    sequential scan!
-   </para>
-
-   <para>
-    So, if you want to use a combination of fields that is not unique as a
-    secondary key, you really don't have to specify anything - just start
-    retrieving by that combination! However, if you want to make the retrieval
-    efficient, you'll have to resort to the means your
-    <acronym>RDBMS</acronym> provider gives you
-    - be it an index, my imaginary <literal>MEMSTORE</literal> command, or an intelligent
-    <acronym>RDBMS</acronym>
-    that creates indexes without your knowledge based on the fact that you have
-    sent it many queries based on a specific combination of keys... (It learns
-    from experience).
-   </para>
-  </sect1>
-
-
  <sect1 id="indexes-partial">
   <title>Partial Indexes</title>
 
@@ -876,8 +710,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
     <para>
      When indexes are not used, it can be useful for testing to force
      their use.  There are run-time parameters that can turn off
-     various plan types (described in the <citetitle>Administrator's
-     Guide</citetitle>).  For instance, turning off sequential scans
+     various plan types (described in the &cite-admin;).
+     For instance, turning off sequential scans
      (<varname>enable_seqscan</>) and nested-loop joins
      (<varname>enable_nestloop</>), which are the most basic plans,
      will force the system to use a different plan.  If the system
@@ -906,8 +740,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
      again, two possibilities.  The total cost is computed from the
      per-row costs of each plan node times the selectivity estimate of
      the plan node.  The costs of the plan nodes can be tuned with
-     run-time parameters (described in the <citetitle>Administrator's
-     Guide</citetitle>).  An inaccurate selectivity estimate is due to
+     run-time parameters (described in the &cite-admin;).
+     An inaccurate selectivity estimate is due to
      insufficient statistics.  It may be possible to help this by
      tuning the statistics-gathering parameters (see <command>ALTER
      TABLE</command> reference).
