@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.7 1997/01/26 00:45:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.8 1997/03/28 07:04:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,8 @@ extern IpcSemaphoreId      WaitIOSemId;
 
 long	*PrivateRefCount;	/* also used in freelist.c */
 long	*LastRefCount;  /* refcounts of last ExecMain level */
+long    *CommitInfoNeedsSave;  /* to write buffers where we have filled in */
+                               /* t_tmin (or t_tmax)                       */
 
 /*
  * Data Structures:
@@ -236,6 +238,7 @@ InitBufferPool(IPCKey key)
 #endif
     PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
     LastRefCount = (long *) calloc(NBuffers, sizeof(long));
+    CommitInfoNeedsSave = (long *) calloc(NBuffers, sizeof(long));
 }
 
 /* -----------------------------------------------------

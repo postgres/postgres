@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.10 1997/01/23 19:43:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.11 1997/03/28 07:05:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -848,6 +848,10 @@ ReleaseAndReadBuffer(Buffer buffer,
 		    AddBufferToFreelist(bufHdr);
 		    bufHdr->flags |= BM_FREE;
 		}
+		if(CommitInfoNeedsSave[buffer - 1]) {
+		    bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+		    CommitInfoNeedsSave[buffer - 1] = 0;
+		}
 		retbuf = ReadBufferWithBufferLock(relation, blockNum, true);
 		return retbuf;
 	    }
@@ -1083,6 +1087,7 @@ ResetBufferPool()
 {
     register int i;
     for (i=1; i<=NBuffers; i++) {
+	CommitInfoNeedsSave[i - 1] = 0;
 	if (BufferIsValid(i)) {
 	    while(PrivateRefCount[i - 1] > 0) {
 		ReleaseBuffer(i);
@@ -1498,6 +1503,10 @@ ReleaseBuffer(Buffer buffer)
 	    AddBufferToFreelist(bufHdr);
 	    bufHdr->flags |= BM_FREE;
 	}
+	if(CommitInfoNeedsSave[buffer - 1]) {
+	    bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
+	    CommitInfoNeedsSave[buffer - 1] = 0;
+	}
 	SpinRelease(BufMgrLock);
     }
     
@@ -1733,4 +1742,9 @@ int SetBufferWriteMode (int mode)
     old = WriteMode;
     WriteMode = mode;
     return (old);
+}
+
+void SetBufferCommitInfoNeedsSave(Buffer buffer)
+{
+    CommitInfoNeedsSave[buffer - 1]++;
 }

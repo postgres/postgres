@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.9 1997/01/16 07:53:27 vadim Exp $
+ * $Id: bufmgr.h,v 1.10 1997/03/28 07:06:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,7 @@ extern int ReleaseAndReadBuffer_Debug(char *file,
 extern void BufferRefCountReset(int *refcountsave);
 extern void BufferRefCountRestore(int *refcountsave);
 extern int SetBufferWriteMode (int mode);
+extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 
 #endif	/* !defined(BufMgrIncluded) */
 

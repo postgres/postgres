@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.11 1997/01/25 03:09:33 momjian Exp $
+ * $Id: buf_internals.h,v 1.12 1997/03/28 07:06:48 scrappy Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -216,6 +216,7 @@ extern BufferDesc 	*BufferDescriptors;
 extern BufferBlock 	BufferBlocks;
 extern long		*PrivateRefCount;
 extern long		*LastRefCount;
+extern long             *CommitInfoNeedsSave;
 extern SPINLOCK		BufMgrLock;
 
 /* localbuf.c */

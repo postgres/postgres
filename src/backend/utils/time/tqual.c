@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.1.1.1 1996/07/09 06:22:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.2 1997/03/28 07:05:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,6 +478,8 @@ HeapTupleSatisfiesTimeQual(HeapTuple tuple, TimeQual qual)
 /*
  * HeapTupleSatisfiesItself --
  *	True iff heap tuple is valid for "itself."
+ *      "{it}self" means valid as of everything that's happened
+ *      in the current transaction, _including_ the current command.
  *
  * Note:
  *	Assumes heap tuple is valid.
@@ -485,11 +487,15 @@ HeapTupleSatisfiesTimeQual(HeapTuple tuple, TimeQual qual)
 /*
  * The satisfaction of "itself" requires the following:
  *
- * ((Xmin == my-transaction && (Xmax is null [|| Xmax != my-transaction)])
+ * ((Xmin == my-transaction &&              the row was updated by the current transaction, and
+ *      (Xmax is null                       it was not deleted
+ *       [|| Xmax != my-transaction)])          [or it was deleted by another transaction]
  * ||
  *
- * (Xmin is committed &&
- *	(Xmax is null || (Xmax != my-transaction && Xmax is not committed)))
+ * (Xmin is committed &&                    the row was modified by a committed transaction, and
+ *	(Xmax is null ||                    the row has not been deleted, or
+ *          (Xmax != my-transaction &&          the row was deleted by another transaction
+ *           Xmax is not committed)))           that has not been committed
  */
 static bool
 HeapTupleSatisfiesItself(HeapTuple tuple)
@@ -508,6 +514,8 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
 	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
 	    return (false);
 	}
+
+	tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);	
     }
     /* the tuple was inserted validly */
     
@@ -522,13 +530,23 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
     if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax)) {
 	return (false);
     }
+
+    if (!TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
+	return (true);
+    }
     
-    return ((bool)!TransactionIdDidCommit((TransactionId)tuple->t_xmax));
+    /* by here, deleting transaction has committed */
+    tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
+
+    return (false);
 }
 
 /*
  * HeapTupleSatisfiesNow --
  *	True iff heap tuple is valid "now."
+ *      "now" means valid including everything that's happened
+ *       in the current transaction _up to, but not including,_
+ *       the current command.
  *
  * Note:
  *	Assumes heap tuple is valid.
@@ -536,13 +554,19 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
 /*
  * The satisfaction of "now" requires the following:
  *
- * ((Xmin == my-transaction && Cmin != my-command &&
- *	(Xmax is null || (Xmax == my-transaction && Cmax != my-command)))
- * ||
+ * ((Xmin == my-transaction &&              changed by the current transaction
+ *   Cmin != my-command &&                  but not by this command, and
+ *      (Xmax is null ||                        the row has not been deleted, or
+ *          (Xmax == my-transaction &&          it was deleted by the current transaction
+ *           Cmax != my-command)))              but not by this command,
+ * ||                                       or
  *
- * (Xmin is committed &&
- *	(Xmax is null || (Xmax == my-transaction && Cmax == my-command) ||
- *		(Xmax is not committed && Xmax != my-transaction))))
+ *  (Xmin is committed &&                   the row was modified by a committed transaction, and
+ *      (Xmax is null ||                    the row has not been deleted, or
+ *          (Xmax == my-transaction &&          the row is being deleted by this command, or
+ *           Cmax == my-command) ||
+ *	    (Xmax is not committed &&           the row was deleted by another transaction
+ *           Xmax != my-transaction))))         that has not been committed
  *
  *	mao says 17 march 1993:  the tests in this routine are correct;
  *	if you think they're not, you're wrong, and you should think
@@ -605,6 +629,13 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
 	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
 	    return (false);
 	}
+
+	/* 
+	 * the transaction has been committed--store the commit time _now_
+	 * instead of waiting for a vacuum so we avoid the expensive call
+	 * next time.
+	 */
+	tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);	
     }
     
     /* by here, the inserting transaction has committed */
@@ -615,12 +646,18 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
     if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax)) {
 	return (false);
     }
-    
-    if (!TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
-	return (true);
+
+    if (AbsoluteTimeIsBackwardCompatiblyReal(tuple->t_tmax)) {
+	return (false);
     }
-    
-    /* by here, deleting transaction has committed */
+
+    if (!TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
+       return (true);
+    }
+
+    /* xmax transaction committed, but no tmax set.  so set it. */
+    tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
+
     return (false);
 }
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.3 1996/11/05 10:37:07 scrappy Exp $
+ * $Id: valid.h,v 1.4 1997/03/28 07:05:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,9 @@ extern bool heap_keytest(HeapTuple t, TupleDesc tupdesc,
 			 int nkeys, ScanKey keys);
 
 extern HeapTuple heap_tuple_satisfies(ItemId itemId, Relation relation,
-       PageHeader disk_page, TimeQual qual, int nKeys, ScanKey key);
+				      Buffer buffer, PageHeader disk_page, 
+				      TimeQual qual, int nKeys, 
+				      ScanKey key);
 
 extern bool TupleUpdatedByCurXactAndCmd(HeapTuple t);
 

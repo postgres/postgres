@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.10 1997/01/23 05:59:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.11 1997/03/28 07:04:11 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -388,7 +388,7 @@ heapgettup(Relation relation,
 	     *	if current tuple qualifies, return it.
 	     * ----------------
 	     */
-	    if ((rtup = heap_tuple_satisfies(lpp, relation, (PageHeader) dp,
+	    if ((rtup = heap_tuple_satisfies(lpp, relation, *b, (PageHeader) dp,
 					     timeQual, nkeys, key)) != NULL) {
 		ItemPointer iptr = &(rtup->t_ctid); 
 		if (ItemPointerGetBlockNumber(iptr) != page) {
@@ -1009,7 +1009,7 @@ heap_fetch(Relation relation,
      * ----------------
      */
     
-    tuple = heap_tuple_satisfies(lp, relation, dp,
+    tuple = heap_tuple_satisfies(lp, relation, buffer, dp,
 				 timeQual, 0,(ScanKey)NULL);
     
     if (tuple == NULL)
@@ -1154,7 +1154,7 @@ heap_delete(Relation relation, ItemPointer tid)
      *	check that we're deleteing a valid item
      * ----------------
      */
-    if (!(tp = heap_tuple_satisfies(lp, relation, dp,
+    if (!(tp = heap_tuple_satisfies(lp, relation, b, dp,
 				    NowTimeQual, 0, (ScanKey) NULL))) {
 	
 	/* XXX call something else */
@@ -1282,6 +1282,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
      */
     if (!heap_tuple_satisfies(lp,
 			      relation,
+			      buffer,
 			      (PageHeader)dp,
 			      NowTimeQual,
 			      0,

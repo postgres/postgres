@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.12 1996/11/10 02:56:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.13 1997/03/28 07:03:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include <storage/bufpage.h>
 #include <utils/rel.h>
 #include <utils/tqual.h>
+#include <storage/bufmgr.h>
 
 /* ----------------
  *	heap_keytest
@@ -89,14 +90,16 @@ heap_keytest(HeapTuple t,
 HeapTuple
 heap_tuple_satisfies(ItemId itemId,
 		     Relation relation,
+		     Buffer buffer,
 		     PageHeader disk_page,
 		     TimeQual	qual,
 		     int nKeys,
 		     ScanKey key)
 {
-    HeapTuple	tuple;
+    HeapTuple	tuple, result;
     bool res;
-    
+    TransactionId old_tmin, old_tmax;
+
     if (! ItemIdIsUsed(itemId))
 	return NULL;
     
@@ -107,12 +110,26 @@ heap_tuple_satisfies(ItemId itemId,
 			   nKeys, key);
     else
 	res = TRUE;
-    
-    if (res && (relation->rd_rel->relkind == RELKIND_UNCATALOGED
-		|| HeapTupleSatisfiesTimeQual(tuple,qual)))
-	return tuple;
-    
-    return (HeapTuple) NULL;
+
+    result = (HeapTuple)NULL;
+    if (res) {
+	if(relation->rd_rel->relkind == RELKIND_UNCATALOGED) {
+	    result = tuple;
+	} else {
+	    old_tmin = tuple->t_tmin;
+	    old_tmax = tuple->t_tmax;
+	    res = HeapTupleSatisfiesTimeQual(tuple,qual);
+	    if(tuple->t_tmin != old_tmin ||
+	       tuple->t_tmax != old_tmax) {
+		SetBufferCommitInfoNeedsSave(buffer);
+	    }
+	    if(res) {
+		result = tuple;
+	    }
+	}
+    }
+
+    return result;
 }
 
 /*
