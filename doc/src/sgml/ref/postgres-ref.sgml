@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.8 2000/05/03 07:33:44 inoue Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.9 2000/05/08 16:19:56 thomas Exp $
 Postgres documentation
 -->
 
@@ -125,7 +125,8 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
       <listitem>
        <para>
 	Override restrictions, so system table structures can be modified.
-	These tables are typically those with a leading "pg_" in the table name.
+	These tables are typically those with a leading
+	"<literal>pg_</literal>" in the table name.
        </para>
       </listitem>
      </varlistentry>
@@ -134,9 +135,11 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
       <term>-P</term>
       <listitem>
        <para>
-	Ignore system indexes to scan/update system tuples. Reindex command
-	for system table/indexes requires this option. System tables are
-	typically those with a leading "pg_" in the table name.
+	Ignore system indexes to scan/update system
+	tuples. <command>REINDEX</command> for system tables/indexes
+	requires this option. System tables are
+	typically those with a leading "<literal>pg_</literal>" in the
+	table name.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.11 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.12 2000/05/08 16:19:56 thomas Exp $
 Postgres documentation
 -->
 
@@ -210,7 +210,7 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
   </title>
   <para>
    <command>CREATE SEQUENCE</command> will enter a new sequence number generator
-   into the current data base. This involves creating and initialising a
+   into the current data base. This involves creating and initializing a
    new single-row
    table with the name <replaceable class="parameter">seqname</replaceable>.
    The generator will be "owned" by the user issuing the command.
@@ -238,20 +238,19 @@ ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceabl
    Use a query like
 
    <programlisting>
-SELECT * FROM sequence_name;
+SELECT * FROM <replaceable>seqname</replaceable>;
    </programlisting>
 
    to get the parameters of a sequence.
 
-   Aside from fetching the original
-   parameters, you can use
+   As an alternative to fetching the
+   parameters from the original definition as above, you can use
 
    <programlisting>
-SELECT last_value FROM sequence_name;
+SELECT last_value FROM <replaceable>seqname</replaceable>;
    </programlisting>
 
    to obtain the last value allocated by any backend.
-   parameters, you can use
   </para>
 
   <para>
@@ -263,7 +262,7 @@ SELECT last_value FROM sequence_name;
    <para>
     Unexpected results may be obtained if a cache setting greater than one
     is used for a sequence object that will be used concurrently by multiple
-    backends.  Each backend will allocate "cache" successive sequence values
+    backends.  Each backend will allocate and cache successive sequence values
     during one access to the sequence object and increase the sequence
     object's last_value accordingly.  Then, the next cache-1 uses of nextval
     within that backend simply return the preallocated values without touching
@@ -291,7 +290,7 @@ SELECT last_value FROM sequence_name;
     Notes
    </title>
    <para>
-    Refer to the <command>DROP SEQUENCE</command> statement to remove a sequence.
+    Use <command>DROP SEQUENCE</command> to remove a sequence.
    </para>
    <para>
     Each backend uses its own cache to store allocated numbers.
