@@ -13,7 +13,7 @@ lextest: lextest.c scan.l
 	$(CC) -c lex.yy.c
 	$(CC) -c lextest.c
 	$(CC) -o lextest lex.yy.o lextest.o
-	@echo "If this fails, flex is broken" | lextest || echo "You have a buggy version of flex.  Read INSTALL and search for flex for a fix.";exit
+	@echo "If this fails, flex is broken" | ./lextest || rm -f lextest
 
 clean:
 	rm -f lextest lex.yy.c lex.yy.o lextest.o

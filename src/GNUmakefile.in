@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.14 1997/05/14 04:46:32 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.15 1997/05/16 01:59:51 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,6 +31,14 @@ all:
         else true;\
 	fi
 	$(MAKE) -C lextest all
+	@if test ! -f lextest/lextest; then \
+	  echo "";\
+	  echo "You have a buggy version of flex.  Read INSTALL and search for flex for a fix.";\
+	  echo "";\
+	  false;\
+	else \
+	  true;\
+	fi
 	$(MAKE) -C utils all
 	$(MAKE) -C backend all
 	$(MAKE) -C libpq all
