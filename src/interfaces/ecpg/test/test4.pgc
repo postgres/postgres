@@ -8,7 +8,7 @@ int
 main ()
 {
 EXEC SQL BEGIN DECLARE SECTION;
-	int i = 3;
+	int i = 1;
 	int *did = &i;
 	int a[10] = {9,8,7,6,5,4,3,2,1,0};
 	char text[10] = "klmnopqrst";
@@ -31,7 +31,7 @@ EXEC SQL END DECLARE SECTION;
 
 	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10), b bool);
 
-	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(404.90,1,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij', 'f');
+	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(404.90,3,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij', 'f');
 
 	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(140787.0,2,:a,:text,'t');
 	
@@ -48,7 +48,7 @@ EXEC SQL END DECLARE SECTION;
 
 	printf("Found f=%f text=%10.10s b=%d\n", f, text, b);
 
-	f=14.07;
+	f=140787;
 	EXEC SQL SELECT a,text
 	 INTO :a,:t
 	 FROM test

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include <ecpgtype.h>
 #include <ecpglib.h>
@@ -26,8 +27,18 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, NULL);
 			return (false);
 		}
-		else
-			++pval;
+
+		switch (type)
+		{
+			case ECPGt_char:
+		        case ECPGt_unsigned_char:
+		        case ECPGt_varchar:
+		 		break;
+		
+		        default:
+		                pval++;
+		                break;
+		}
 	}
 
 	/* We will have to decode the value */
@@ -144,7 +155,14 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			case ECPGt_double:
 				if (pval)
 				{
-					dres = strtod(pval, &scan_length);
+					if (isarray && *pval == '"')
+						dres = strtod(pval + 1, &scan_length);
+					else
+						dres = strtod(pval, &scan_length);
+					
+					if (isarray && *scan_length == '"')
+					        scan_length++;
+					
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
 						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 					{

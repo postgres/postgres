@@ -6,13 +6,13 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.65 2000/03/30 11:41:34 meskes Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.66 2000/05/17 06:03:13 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
 NAME= ecpg
 SO_MAJOR_VERSION= 3
-SO_MINOR_VERSION= 1.0
+SO_MINOR_VERSION= 1.1
 
 SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global

@@ -919,4 +919,9 @@ Mon May 15 10:51:31 CEST 2000
 	- Added patch by SAKAIDA Masaaki <sakaida@psn.co.jp> to fix segfault.
 	- Set ecpg version to 2.7.1.
 
+Wed May 17 07:52:59 CEST 2000
+
+	- Added patch by SAKAIDA Masaaki <sakaida@psn.co.jp> to fix array
+	  handling.
+	- Set library version to 3.1.1.
 

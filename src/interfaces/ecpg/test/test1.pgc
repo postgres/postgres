@@ -1,5 +1,3 @@
-
-
 exec sql include sqlca;
 
 exec sql whenever sqlerror do PrintAndStop(msg);
@@ -88,8 +86,9 @@ exec sql end declare section;
 	strcpy(msg, "commit");
 	exec sql commit;
 
-	/* Stop automatic transactioning for connection pm. */
-	exec sql at pm set autocommit to off;
+	/* Start automatic transactioning for connection pm. */
+	exec sql at pm set autocommit to on;
+	exec sql at pm begin transaction;
 
         strcpy(msg, "select");
         exec sql select name, amount, letter into :name, :amount, :letter from "Test";
@@ -117,13 +116,16 @@ exec sql end declare section;
         for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
             printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, name[i], i, amount[i],i, letter[i][0]);
         
-	strcpy(msg, "drop");
-	exec sql drop table "Test";
-	exec sql at pm drop table "Test";
-
 	strcpy(msg, "commit");
 	exec sql commit;
 	exec sql at pm commit;
+
+	/* Start automatic transactioning for connection main. */
+	exec sql set autocommit to on;
+
+	strcpy(msg, "drop");
+	exec sql drop table "Test";
+	exec sql at pm drop table "Test";
 
 	strcpy(msg, "disconnect"); 
         exec sql disconnect main;
