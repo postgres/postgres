@@ -3,7 +3,7 @@
 * geqo_erx.c--
 *    edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.1 1997/02/19 12:56:55 scrappy Exp $
+* $Id: geqo_erx.c,v 1.2 1997/06/06 00:37:23 scrappy Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -278,7 +278,7 @@ gimme_gene (Edge edge, Edge *edge_table)
  int  i;
  Gene friend;
  int  minimum_edges;
- int  minimum_count;
+ int  minimum_count = -1;
  int  rand_decision;
 
  /* no point has edges to more than 4 other points
@@ -299,18 +299,27 @@ gimme_gene (Edge edge, Edge *edge_table)
 	if (friend < 0) return ( (Gene) Abs(friend));
       
 
-	/* give priority to candidates with fewest remaining unused edges;
-      find out what the minimum number of unused edges is (minimum_edges);
-      if there is more than one cadidate with the minimum number
-      of unused edges keep count of this number (minimum_count); */
-   
+        /* give priority to candidates with fewest remaining unused edges;
+           find out what the minimum number of unused edges is (minimum_edges);
+           if there is more than one cadidate with the minimum number
+           of unused edges keep count of this number (minimum_count); */
+  
+        /* The test for minimum_count can probably be removed at some
+           point but comments should probably indicate exactly why it
+           is guaranteed that the test will always succeed the first
+           time around.  If it can fail then the code is in error */
+
+ 
 	if (edge_table[(int) friend].unused_edges < minimum_edges) {
 		minimum_edges = edge_table[(int) friend].unused_edges;
 		minimum_count = 1;
 		}
-	else
-		if (edge_table[(int) friend].unused_edges == minimum_edges)
-			minimum_count++;
+        else 
+          if (minimum_count == -1)
+            elog(WARN, "gimme_gene: Internal error - minimum_count not set");
+          else
+            if (edge_table[(int) friend].unused_edges == minimum_edges)
+               minimum_count++;
 
 	} /* for (i=0; i<edge.unused_edges; i++) */
  
@@ -332,6 +341,7 @@ gimme_gene (Edge edge, Edge *edge_table)
 
  /* ... should never be reached */
  elog(WARN,"gimme_gene: neither shared nor minimum number nor random edge found");
+ return 0;	/* to keep the compiler quiet */
 }
 
 /* edge_failure--
@@ -420,5 +430,6 @@ edge_failure (Gene *gene, int index, Edge *edge_table, int num_gene)
 
 /* ... should never be reached */
  elog(WARN,"edge_failure: no edge detected");
+ return 0;	/* to keep the compiler quiet */
 }
 
