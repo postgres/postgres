@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.118 2000/06/14 18:17:32 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.119 2000/06/16 05:27:02 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1385,10 +1385,14 @@ _outConstraint(StringInfo str, Constraint *node)
 static void
 _outCaseExpr(StringInfo str, CaseExpr *node)
 {
-	appendStringInfo(str, "CASE ");
+	appendStringInfo(str, " CASE :casetype %u :arg ",
+					 node->casetype);
+	_outNode(str, node->arg);
+
+	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
 
-	appendStringInfo(str, " :default ");
+	appendStringInfo(str, " :defresult ");
 	_outNode(str, node->defresult);
 }
 

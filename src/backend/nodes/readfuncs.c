@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.89 2000/05/30 00:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.90 2000/06/16 05:27:03 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -670,7 +670,7 @@ _readResdom()
 
 	token = lsptok(NULL, &length);		/* eat :restype */
 	token = lsptok(NULL, &length);		/* get restype */
-	local_node->restype = atol(token);
+	local_node->restype = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* eat :restypmod */
 	token = lsptok(NULL, &length);		/* get restypmod */
@@ -762,8 +762,17 @@ _readCaseExpr()
 
 	local_node = makeNode(CaseExpr);
 
+	token = lsptok(NULL, &length);		/* eat :casetype */
+	token = lsptok(NULL, &length);		/* get casetype */
+	local_node->casetype = (Oid) atol(token);
+
+	token = lsptok(NULL, &length);		/* eat :arg */
+	local_node->arg = nodeRead(true);
+
+	token = lsptok(NULL, &length);		/* eat :args */
 	local_node->args = nodeRead(true);
-	token = lsptok(NULL, &length);		/* eat :default */
+
+	token = lsptok(NULL, &length);		/* eat :defresult */
 	local_node->defresult = nodeRead(true);
 
 	return local_node;
@@ -824,15 +833,15 @@ _readVar()
 
 	token = lsptok(NULL, &length);		/* eat :varlevelsup */
 	token = lsptok(NULL, &length);		/* get varlevelsup */
-	local_node->varlevelsup = (Oid) atol(token);
+	local_node->varlevelsup = (Index) atoi(token);
 
 	token = lsptok(NULL, &length);		/* eat :varnoold */
 	token = lsptok(NULL, &length);		/* get varnoold */
-	local_node->varnoold = (Oid) atol(token);
+	local_node->varnoold = (Index) atoi(token);
 
 	token = lsptok(NULL, &length);		/* eat :varoattno */
 	token = lsptok(NULL, &length);		/* eat :varoattno */
-	local_node->varoattno = (int) atol(token);
+	local_node->varoattno = atoi(token);
 
 	return local_node;
 }
@@ -942,7 +951,7 @@ _readConst()
 
 	token = lsptok(NULL, &length);		/* get :consttype */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->consttype = atol(token);
+	local_node->consttype = (Oid) atol(token);
 
 
 	token = lsptok(NULL, &length);		/* get :constlen */
@@ -1001,11 +1010,11 @@ _readFunc()
 
 	token = lsptok(NULL, &length);		/* get :funcid */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->funcid = atol(token);
+	local_node->funcid = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :functype */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->functype = atol(token);
+	local_node->functype = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :funcisindex */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1051,15 +1060,15 @@ _readOper()
 
 	token = lsptok(NULL, &length);		/* get :opno */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->opno = atol(token);
+	local_node->opno = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :opid */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->opid = atol(token);
+	local_node->opid = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :opresulttype */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->opresulttype = atol(token);
+	local_node->opresulttype = (Oid) atol(token);
 
 	/*
 	 * NOTE: Alternatively we can call 'replace_opid' which initializes
@@ -1102,8 +1111,8 @@ _readParam()
 
 	token = lsptok(NULL, &length);		/* get :paramtype */
 	token = lsptok(NULL, &length);		/* now read it */
+	local_node->paramtype = (Oid) atol(token);
 
-	local_node->paramtype = atol(token);
 	token = lsptok(NULL, &length);		/* get :param_tlist */
 	local_node->param_tlist = nodeRead(true);	/* now read it */
 
@@ -1711,7 +1720,7 @@ _readPathKeyItem()
 	token = lsptok(NULL, &length);		/* get :sortop */
 	token = lsptok(NULL, &length);		/* now read it */
 
-	local_node->sortop = atol(token);
+	local_node->sortop = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :key */
 	local_node->key = nodeRead(true);	/* now read it */
@@ -1742,19 +1751,19 @@ _readRestrictInfo()
 
 	token = lsptok(NULL, &length);		/* get :mergejoinoperator */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->mergejoinoperator = atol(token);
+	local_node->mergejoinoperator = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :left_sortop */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->left_sortop = atol(token);
+	local_node->left_sortop = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :right_sortop */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->right_sortop = atol(token);
+	local_node->right_sortop = (Oid) atol(token);
 
 	token = lsptok(NULL, &length);		/* get :hashjoinoperator */
 	token = lsptok(NULL, &length);		/* now read it */
-	local_node->hashjoinoperator = atol(token);
+	local_node->hashjoinoperator = (Oid) atol(token);
 
 	return local_node;
 }
