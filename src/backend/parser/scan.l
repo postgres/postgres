@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.110 2003/08/04 02:40:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.111 2003/10/09 19:13:23 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ xhcat			{quote}{whitespace_with_newline}{quote}
 xnstart			[nN]{quote}
 
 /* Extended quote
- * xqdouble implements SQL92 embedded quote
+ * xqdouble implements embedded quote
  * xqcat allows strings to cross input lines
  */
 quote			'
@@ -166,8 +166,7 @@ xdinside		[^"]+
  * 2. In the operator rule, check for slash-star within the operator, and
  *    if found throw it back with yyless().  This handles the plus-slash-star
  *    problem.
- * SQL92-style comments, which start with dash-dash, have similar interactions
- * with the operator rule.
+ * Dash-dash comments have similar interactions with the operator rule.
  */
 xcstart			\/\*{op_chars}*
 xcstop			\*+\/
@@ -210,8 +209,8 @@ param			\${integer}
  * In order to make the world safe for Windows and Mac clients as well as
  * Unix ones, we accept either \n or \r as a newline.  A DOS-style \r\n
  * sequence will be seen as two successive newlines, but that doesn't cause
- * any problems.  SQL92-style comments, which start with -- and extend to the
- * next newline, are treated as equivalent to a single whitespace character.
+ * any problems.  Comments that start with -- and extend to the next
+ * newline are treated as equivalent to a single whitespace character.
  *
  * NOTE a fine point: if there is no newline following --, we will absorb
  * everything to the end of the input as a comment.  This is correct.  Older
@@ -231,21 +230,22 @@ comment			("--"{non_newline}*)
 whitespace		({space}+|{comment})
 
 /*
- * SQL92 requires at least one newline in the whitespace separating
+ * SQL requires at least one newline in the whitespace separating
  * string literals that are to be concatenated.  Silly, but who are we
  * to argue?  Note that {whitespace_with_newline} should not have * after
  * it, whereas {whitespace} should generally have a * after it...
  */
 
-horiz_whitespace	({horiz_space}|{comment})
-whitespace_with_newline	({horiz_whitespace}*{newline}{whitespace}*)
+special_whitespace		({space}+|{comment}{newline})
+horiz_whitespace		({horiz_space}|{comment})
+whitespace_with_newline	({horiz_whitespace}*{newline}{special_whitespace}*)
 
 other			.
 
 /*
  * Quoted strings must allow some special characters such as single-quote
  *  and newline.
- * Embedded single-quotes are implemented both in the SQL92-standard
+ * Embedded single-quotes are implemented both in the SQL standard
  *  style of two adjacent single quotes "''" and in the Postgres/Java style
  *  of escaped-quote "\'".
  * Other embedded escaped characters are matched explicitly and the leading
@@ -448,12 +448,12 @@ other			.
 						nchars = slashstar - yytext;
 
 					/*
-					 * For SQL92 compatibility, '+' and '-' cannot be the
+					 * For SQL compatibility, '+' and '-' cannot be the
 					 * last char of a multi-char operator unless the operator
-					 * contains chars that are not in SQL92 operators.
+					 * contains chars that are not in SQL operators.
 					 * The idea is to lex '=-' as two operators, but not
 					 * to forbid operator names like '?-' that could not be
-					 * sequences of SQL92 operators.
+					 * sequences of SQL operators.
 					 */
 					while (nchars > 1 &&
 						   (yytext[nchars-1] == '+' ||
@@ -547,7 +547,7 @@ other			.
 					 * if necessary.
 					 *
 					 * Note: here we use a locale-dependent case conversion,
-					 * which seems appropriate under SQL99 rules, whereas
+					 * which seems appropriate under standard SQL rules, whereas
 					 * the keyword comparison was NOT locale-dependent.
 					 */
 					ident = pstrdup(yytext);
