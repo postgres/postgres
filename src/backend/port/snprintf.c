@@ -74,7 +74,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.26 1999/08/31 01:28:37 tgl Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.27 1999/09/09 03:13:22 tgl Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
@@ -104,9 +104,6 @@ vsnprintf(char *str, size_t count, const char *fmt, va_list args)
 	dopr(str, fmt, args);
 	if (count > 0)
 		end[0] = '\0';
-	if (SnprfOverflow)
-		elog(DEBUG, "vsnprintf overflow, len = %d, str = %s",
-			 count, str);
 	return strlen(str);
 }
 
