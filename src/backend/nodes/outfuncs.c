@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.136 2001/01/07 01:08:47 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.137 2001/01/08 00:31:43 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -26,6 +26,8 @@
 #include "parser/parse.h"
 #include "utils/datum.h"
 
+
+#define booltostr(x)  ((x) ? "true" : "false")
 
 static void _outDatum(StringInfo str, Datum value, int typlen, bool typbyval);
 static void _outNode(StringInfo str, void *obj);
@@ -56,7 +58,8 @@ _outToken(StringInfo str, char *s)
 		*s == '\"' ||
 		*s == '@' ||
 		isdigit((unsigned char) *s) ||
-		(*s == '-' && isdigit((unsigned char) s[1])))
+		((*s == '+' || *s == '-') &&
+		 (isdigit((unsigned char) s[1]) || s[1] == '.')))
 		appendStringInfoChar(str, '\\');
 	while (*s)
 	{
@@ -84,6 +87,21 @@ _outIntList(StringInfo str, List *list)
 	appendStringInfoChar(str, ')');
 }
 
+/*
+ * _outOidList -
+ *	   converts a List of OIDs
+ */
+static void
+_outOidList(StringInfo str, List *list)
+{
+	List	   *l;
+
+	appendStringInfoChar(str, '(');
+	foreach(l, list)
+		appendStringInfo(str, " %u", (Oid) lfirsti(l));
+	appendStringInfoChar(str, ')');
+}
+
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
@@ -91,7 +109,7 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	_outToken(str, node->relname);
 
 	appendStringInfo(str, " :istemp %s ",
-					 node->istemp ? "true" : "false");
+					 booltostr(node->istemp));
 
 	appendStringInfo(str, "	:columns ");
 	_outNode(str, node->tableElts);
@@ -125,8 +143,8 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	_outNode(str, node->rangetable);
 
 	appendStringInfo(str, " :unique %s :primary %s ",
-					 node->unique ? "true" : "false",
-					 node->primary ? "true" : "false");
+					 booltostr(node->unique),
+					 booltostr(node->primary));
 }
 
 static void
@@ -145,8 +163,8 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
 	appendStringInfo(str, " :agg_star %s :agg_distinct %s ",
-					 node->agg_star ? "true" : "false",
-					 node->agg_distinct ? "true" : "false");
+					 booltostr(node->agg_star),
+					 booltostr(node->agg_distinct));
 }
 
 static void
@@ -157,8 +175,8 @@ _outColumnDef(StringInfo str, ColumnDef *node)
 	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
 	appendStringInfo(str, " :is_not_null %s :is_sequence %s :raw_default ",
-					 node->is_not_null ? "true" : "false",
-					 node->is_sequence ? "true" : "false");
+					 booltostr(node->is_not_null),
+					 booltostr(node->is_sequence));
 	_outNode(str, node->raw_default);
 	appendStringInfo(str, " :cooked_default ");
 	_outToken(str, node->cooked_default);
@@ -172,8 +190,8 @@ _outTypeName(StringInfo str, TypeName *node)
 	appendStringInfo(str, " TYPENAME :name ");
 	_outToken(str, node->name);
 	appendStringInfo(str, " :timezone %s :setof %s typmod %d :arrayBounds ",
-					 node->timezone ? "true" : "false",
-					 node->setof ? "true" : "false",
+					 booltostr(node->timezone),
+					 booltostr(node->setof),
 					 node->typmod);
 	_outNode(str, node->arrayBounds);
 }
@@ -245,11 +263,11 @@ _outQuery(StringInfo str, Query *node)
 
 	appendStringInfo(str, " :isPortal %s :isBinary %s :isTemp %s"
 					 " :hasAggs %s :hasSubLinks %s :rtable ",
-					 node->isPortal ? "true" : "false",
-					 node->isBinary ? "true" : "false",
-					 node->isTemp ? "true" : "false",
-					 node->hasAggs ? "true" : "false",
-					 node->hasSubLinks ? "true" : "false");
+					 booltostr(node->isPortal),
+					 booltostr(node->isBinary),
+					 booltostr(node->isTemp),
+					 booltostr(node->hasAggs),
+					 booltostr(node->hasSubLinks));
 	_outNode(str, node->rtable);
 
 	appendStringInfo(str, " :jointree ");
@@ -289,14 +307,14 @@ _outQuery(StringInfo str, Query *node)
 static void
 _outSortClause(StringInfo str, SortClause *node)
 {
-	appendStringInfo(str, " SORTCLAUSE :tleSortGroupRef %d :sortop %u ",
+	appendStringInfo(str, " SORTCLAUSE :tleSortGroupRef %u :sortop %u ",
 					 node->tleSortGroupRef, node->sortop);
 }
 
 static void
 _outGroupClause(StringInfo str, GroupClause *node)
 {
-	appendStringInfo(str, " GROUPCLAUSE :tleSortGroupRef %d :sortop %u ",
+	appendStringInfo(str, " GROUPCLAUSE :tleSortGroupRef %u :sortop %u ",
 					 node->tleSortGroupRef, node->sortop);
 }
 
@@ -305,12 +323,12 @@ _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 {
 	appendStringInfo(str, " SETOPERATIONSTMT :op %d :all %s :larg ",
 					 (int) node->op,
-					 node->all ? "true" : "false");
+					 booltostr(node->all));
 	_outNode(str, node->larg);
 	appendStringInfo(str, " :rarg ");
 	_outNode(str, node->rarg);
 	appendStringInfo(str, " :colTypes ");
-	_outIntList(str, node->colTypes);
+	_outOidList(str, node->colTypes);
 }
 
 /*
@@ -384,7 +402,7 @@ _outAppend(StringInfo str, Append *node)
 	_outNode(str, node->appendplans);
 
 	appendStringInfo(str, " :isTarget %s ",
-					 node->isTarget ? "true" : "false");
+					 booltostr(node->isTarget));
 }
 
 /*
@@ -453,7 +471,7 @@ _outSubPlan(StringInfo str, SubPlan *node)
 	appendStringInfo(str, " SUBPLAN :plan ");
 	_outNode(str, node->plan);
 
-	appendStringInfo(str, " :planid %u :rtable ", node->plan_id);
+	appendStringInfo(str, " :planid %d :rtable ", node->plan_id);
 	_outNode(str, node->rtable);
 
 	appendStringInfo(str, " :setprm ");
@@ -500,7 +518,7 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	appendStringInfo(str, " :scanrelid %u :indxid ", node->scan.scanrelid);
-	_outIntList(str, node->indxid);
+	_outOidList(str, node->indxid);
 
 	appendStringInfo(str, " :indxqual ");
 	_outNode(str, node->indxqual);
@@ -578,7 +596,7 @@ _outGroup(StringInfo str, Group *node)
 	/* the actual Group fields */
 	appendStringInfo(str, " :numCols %d :tuplePerGroup %s ",
 					 node->numCols,
-					 node->tuplePerGroup ? "true" : "false");
+					 booltostr(node->tuplePerGroup));
 }
 
 static void
@@ -654,11 +672,11 @@ _outResdom(StringInfo str, Resdom *node)
 					 node->restype,
 					 node->restypmod);
 	_outToken(str, node->resname);
-	appendStringInfo(str, " :reskey %d :reskeyop %u :ressortgroupref %d :resjunk %s ",
+	appendStringInfo(str, " :reskey %u :reskeyop %u :ressortgroupref %u :resjunk %s ",
 					 node->reskey,
 					 node->reskeyop,
 					 node->ressortgroupref,
-					 node->resjunk ? "true" : "false");
+					 booltostr(node->resjunk));
 }
 
 static void
@@ -667,7 +685,7 @@ _outFjoin(StringInfo str, Fjoin *node)
 	int			i;
 
 	appendStringInfo(str, " FJOIN :initialized %s :nNodes %d ",
-					 node->fj_initialized ? "true" : "false",
+					 booltostr(node->fj_initialized),
 					 node->fj_nNodes);
 
 	appendStringInfo(str, " :innerNode ");
@@ -677,7 +695,8 @@ _outFjoin(StringInfo str, Fjoin *node)
 					 node->fj_results);
 
 	for (i = 0; i < node->fj_nNodes; i++)
-		appendStringInfo(str, (node->fj_alwaysDone[i]) ? "true" : "false");
+		appendStringInfo(str,
+						 booltostr(node->fj_alwaysDone[i]));
 }
 
 /*
@@ -728,13 +747,13 @@ static void
 _outVar(StringInfo str, Var *node)
 {
 	appendStringInfo(str,
-				" VAR :varno %d :varattno %d :vartype %u :vartypmod %d ",
+				" VAR :varno %u :varattno %d :vartype %u :vartypmod %d ",
 					 node->varno,
 					 node->varattno,
 					 node->vartype,
 					 node->vartypmod);
 
-	appendStringInfo(str, " :varlevelsup %u :varnoold %d :varoattno %d",
+	appendStringInfo(str, " :varlevelsup %u :varnoold %u :varoattno %d",
 					 node->varlevelsup,
 					 node->varnoold,
 					 node->varoattno);
@@ -751,8 +770,8 @@ _outConst(StringInfo str, Const *node)
 					 " :constisnull %s :constvalue ",
 					 node->consttype,
 					 node->constlen,
-					 node->constbyval ? "true" : "false",
-					 node->constisnull ? "true" : "false");
+					 booltostr(node->constbyval),
+					 booltostr(node->constisnull));
 
 	if (node->constisnull)
 		appendStringInfo(str, "<>");
@@ -773,8 +792,8 @@ _outAggref(StringInfo str, Aggref *node)
 	_outNode(str, node->target);
 
 	appendStringInfo(str, " :aggstar %s :aggdistinct %s ",
-					 node->aggstar ? "true" : "false",
-					 node->aggdistinct ? "true" : "false");
+					 booltostr(node->aggstar),
+					 booltostr(node->aggdistinct));
 	/* aggno is not dumped */
 }
 
@@ -787,7 +806,7 @@ _outSubLink(StringInfo str, SubLink *node)
 	appendStringInfo(str,
 					 " SUBLINK :subLinkType %d :useor %s :lefthand ",
 					 node->subLinkType,
-					 node->useor ? "true" : "false");
+					 booltostr(node->useor));
 	_outNode(str, node->lefthand);
 
 	appendStringInfo(str, " :oper ");
@@ -916,7 +935,7 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 {
 	appendStringInfo(str, " JOINEXPR :jointype %d :isNatural %s :larg ",
 					 (int) node->jointype,
-					 node->isNatural ? "true" : "false");
+					 booltostr(node->isNatural));
 	_outNode(str, node->larg);
 	appendStringInfo(str, " :rarg ");
 	_outNode(str, node->rarg);
@@ -955,9 +974,9 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	_outNode(str, node->cheapest_total_path);
 
 	appendStringInfo(str, " :pruneable %s :issubquery %s :indexed %s :pages %ld :tuples %.0f :subplan ",
-					 node->pruneable ? "true" : "false",
-					 node->issubquery ? "true" : "false",
-					 node->indexed ? "true" : "false",
+					 booltostr(node->pruneable),
+					 booltostr(node->issubquery),
+					 booltostr(node->indexed),
 					 node->pages,
 					 node->tuples);
 	_outNode(str, node->subplan);
@@ -1010,10 +1029,10 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 	_outNode(str, node->eref);
 	appendStringInfo(str, " :inh %s :inFromCl %s :checkForRead %s"
 					 " :checkForWrite %s :checkAsUser %u",
-					 node->inh ? "true" : "false",
-					 node->inFromCl ? "true" : "false",
-					 node->checkForRead ? "true" : "false",
-					 node->checkForWrite ? "true" : "false",
+					 booltostr(node->inh),
+					 booltostr(node->inFromCl),
+					 booltostr(node->checkForRead),
+					 booltostr(node->checkForWrite),
 					 node->checkAsUser);
 }
 
@@ -1045,7 +1064,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	_outNode(str, node->path.pathkeys);
 
 	appendStringInfo(str, " :indexid ");
-	_outIntList(str, node->indexid);
+	_outOidList(str, node->indexid);
 
 	appendStringInfo(str, " :indexqual ");
 	_outNode(str, node->indexqual);
@@ -1055,7 +1074,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
 	_outIntList(str, node->joinrelids);
 
 	appendStringInfo(str, " :alljoinquals %s :rows %.2f ",
-					 node->alljoinquals ? "true" : "false",
+					 booltostr(node->alljoinquals),
 					 node->rows);
 }
 
@@ -1192,7 +1211,7 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	_outNode(str, node->clause);
 
 	appendStringInfo(str, " :ispusheddown %s :subclauseindices ",
-					 node->ispusheddown ? "true" : "false");
+					 booltostr(node->ispusheddown));
 	_outNode(str, node->subclauseindices);
 
 	appendStringInfo(str, " :mergejoinoperator %u ", node->mergejoinoperator);
@@ -1313,7 +1332,7 @@ _outValue(StringInfo str, Value *value)
 {
 	switch (value->type)
 	{
-			case T_Integer:
+		case T_Integer:
 			appendStringInfo(str, " %ld ", value->val.ival);
 			break;
 		case T_Float:
