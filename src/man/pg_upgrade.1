@@ -1,12 +1,12 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_upgrade.1,v 1.2 1998/08/30 05:25:47 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_upgrade.1,v 1.3 1998/08/30 13:14:00 momjian Exp $
 .TH pg_upgrade UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 pg_upgrade - allows upgrade from a previous release without reloading data
 .SH SYNOPSIS
 .BR pg_upgrade 
-[-f input_file] database
+[-f input_file] old_data_dir database
 .SH DESCRIPTION
 .IR "pg_upgrade"
 is a utility for upgrading from a previous PostgreSQL release
@@ -23,7 +23,7 @@ while perserving the max system oid.
 .PP
 Then rename (using
 .IR mv )
-your old pgsql /data directory to /data.upgrade and do a
+your old pgsql /data directory to /data.old and do a
 .IR "make install"
 to install the new binaries.
 Then run
@@ -35,21 +35,21 @@ database containing the system tables for the new release.
 to the pgsql main directory, and type:
 .nf
 
-	pg_upgrade -f db.out template1
+	pg_upgrade -f db.out data.old template1
 
 .fi
 The system will do some checking to make sure everything is properly
 configured, and run your
 .IR db.out
 script to create all the databases and tables you had, but with no data.
-It will then move the data files from /data.upgrade into the proper
+It will then move the data files from /data.old into the proper
 .IR /data
 directory.
 You can then start the
 .IR postmaster
 and check out the data.
 You can delete the
-.IR /data.upgrade
+.IR /data.old
 directory when you are finished.
 .PP
 It can also be used for individual databases. 
