@@ -18,7 +18,7 @@
 #ifdef ELOG_TIMESTAMPS
 char	   *tprintf_timestamp(void);
 
-#define TIMESTAMP_SIZE 28
+#define TIMESTAMP_SIZE 30
 #else
 #define TIMESTAMP_SIZE 0
 #endif
