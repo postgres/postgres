@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $Id: pg_config_manual.h,v 1.5 2003/08/04 00:43:29 momjian Exp $
+ * $Id: pg_config_manual.h,v 1.6 2003/09/21 17:57:21 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -125,6 +125,14 @@
  * another size, but no guarantee...
  */
 #define BITS_PER_BYTE		8
+
+/*
+ * Preferred alignment for disk I/O buffers.  On some CPUs, copies between
+ * user space and kernel space are significantly faster if the user buffer
+ * is aligned on a larger-than-MAXALIGN boundary.  Ideally this should be
+ * a platform-dependent value, but for now we just hard-wire it.
+ */
+#define ALIGNOF_BUFFER	32
 
 /*
  * Disable UNIX sockets for those operating system.

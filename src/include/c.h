@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.152 2003/08/04 02:40:10 momjian Exp $
+ * $Id: c.h,v 1.153 2003/09/21 17:57:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,13 +522,16 @@ typedef NameData *Name;
  * ----------------
  */
 
-#define TYPEALIGN(ALIGNVAL,LEN) (((long)(LEN) + (ALIGNVAL-1)) & ~(ALIGNVAL-1))
+#define TYPEALIGN(ALIGNVAL,LEN)  \
+	(((long) (LEN) + (ALIGNVAL-1)) & ~((long) (ALIGNVAL-1)))
 
 #define SHORTALIGN(LEN)			TYPEALIGN(ALIGNOF_SHORT, (LEN))
 #define INTALIGN(LEN)			TYPEALIGN(ALIGNOF_INT, (LEN))
 #define LONGALIGN(LEN)			TYPEALIGN(ALIGNOF_LONG, (LEN))
 #define DOUBLEALIGN(LEN)		TYPEALIGN(ALIGNOF_DOUBLE, (LEN))
 #define MAXALIGN(LEN)			TYPEALIGN(MAXIMUM_ALIGNOF, (LEN))
+/* MAXALIGN covers only built-in types, not buffers */
+#define BUFFERALIGN(LEN)		TYPEALIGN(ALIGNOF_BUFFER, (LEN))
 
 
 /* ----------------------------------------------------------------
