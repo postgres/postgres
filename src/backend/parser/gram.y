@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.167 2000/04/07 13:39:34 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.168 2000/05/25 22:42:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4153,7 +4153,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->oper = lcons("=", NIL);
+					n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
 					n->useor = false;
 					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $6;
@@ -4163,7 +4163,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->oper = lcons("<>", NIL);
+					n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
 					n->useor = true;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $7;
@@ -4173,8 +4173,8 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->oper = lcons($4, NIL);
-					if (strcmp($4,"<>") == 0)
+					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
+					if (strcmp($4, "<>") == 0)
 						n->useor = true;
 					else
 						n->useor = false;
@@ -4186,8 +4186,8 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->oper = lcons($4, NIL);
-					if (strcmp($4,"<>") == 0)
+					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
+					if (strcmp($4, "<>") == 0)
 						n->useor = true;
 					else
 						n->useor = false;
@@ -4436,7 +4436,7 @@ a_expr:  c_expr
 					{
 							SubLink *n = (SubLink *)$4;
 							n->lefthand = lcons($1, NIL);
-							n->oper = lcons("=", NIL);
+							n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
 							n->useor = false;
 							n->subLinkType = ANY_SUBLINK;
 							$$ = (Node *)n;
@@ -4463,7 +4463,7 @@ a_expr:  c_expr
 					{
 						SubLink *n = (SubLink *)$5;
 						n->lefthand = lcons($1, NIL);
-						n->oper = lcons("<>", NIL);
+						n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
 						n->useor = false;
 						n->subLinkType = ALL_SUBLINK;
 						$$ = (Node *)n;
@@ -4487,7 +4487,7 @@ a_expr:  c_expr
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NIL);
-					n->oper = lcons($2, NIL);
+					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
 					n->useor = false; /* doesn't matter since only one col */
 					n->subLinkType = $3;
 					n->subselect = $5;

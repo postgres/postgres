@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.41 2000/04/12 17:16:40 momjian Exp $
+ * $Id: primnodes.h,v 1.42 2000/05/25 22:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,8 +350,8 @@ typedef struct Aggref
  * NOTE: lefthand and oper have varying meanings depending on where you look
  * in the parse/plan pipeline:
  * 1. gram.y delivers a list of the (untransformed) lefthand expressions in
- *	  lefthand, and sets oper to a one-element list containing the string
- *	  name of the operator.
+ *	  lefthand, and sets oper to a single A_Expr (not a list!) containing
+ *	  the string name of the operator, but no arguments.
  * 2. The parser's expression transformation transforms lefthand normally,
  *	  and replaces oper with a list of Oper nodes, one per lefthand
  *	  expression.  These nodes represent the parser's resolution of exactly
