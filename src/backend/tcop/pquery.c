@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.21 1999/02/13 23:18:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.22 1999/03/23 05:41:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,8 +190,7 @@ ProcessPortal(char *portalName,
 	 *	do what is possible across transaction boundries. -hirohama
 	 * ----------------
 	 */
-	portalContext = (MemoryContext)
-		PortalGetHeapMemory(GetPortalByName(NULL));
+	portalContext = (MemoryContext) PortalGetHeapMemory(GetPortalByName(NULL));
 
 	MemoryContextSwitchTo(portalContext);
 
