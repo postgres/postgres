@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Dec 20 20:23:20 EST 2004
+Last updated:		Mon Dec 27 17:44:39 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -696,6 +696,11 @@ Cache
   Larger local buffer cache sizes requires more efficient handling of
   local cache lookups.
 
+* Improve the background writer
+
+  Allow the background writer to more efficiently write dirty buffers
+  from the end of the LRU cache and use a clock sweep algorithm to
+  write other dirty buffers to reduced checkpoint I/O
 
 Vacuum
 ======
