@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.29 2001/10/12 00:07:14 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.30 2001/10/22 18:14:47 petere Exp $
 Postgres documentation
 -->
 
@@ -161,15 +161,14 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
   <para>
    <command>ALTER TABLE</command> changes the definition of an existing table.
    The <literal>ADD COLUMN</literal> form adds a new column to the table
-   using the same syntax as <xref linkend="SQL-CREATETABLE"
-   endterm="SQL-CREATETABLE-title">.
+   using the same syntax as <xref linkend="SQL-CREATETABLE">.
    The <literal>ALTER COLUMN SET/DROP DEFAULT</literal> forms
    allow you to set or remove the default for the column. Note that defaults
    only apply to subsequent <command>INSERT</command> commands; they do not
    cause rows already in the table to change.
    The <literal>ALTER COLUMN SET STATISTICS</literal> form allows you to
    set the statistics-gathering target for subsequent
-   <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
+   <xref linkend="sql-analyze"> operations.
    The <literal>RENAME</literal> clause causes the name of a table or column
    to change without changing any of the data contained in
    the affected table. Thus, the table or column will
@@ -177,7 +176,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    executed.
    The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
    adds a new constraint to the table using the same syntax as <xref
-   linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">. 
+   linkend="SQL-CREATETABLE">. 
    The DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> clause 
    drops all CHECK constraints on the table (and its children) that match <replaceable class="PARAMETER">constraint</replaceable>.
    The OWNER clause changes the owner of the table to the user <replaceable class="PARAMETER">
@@ -205,18 +204,17 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     You can use the <literal>SET DEFAULT</literal> form
     of <command>ALTER TABLE</command> to set the default later.
     (You may also want to update the already existing rows to the
-    new default value, using <xref linkend="sql-update"
-    endterm="sql-update-title">.)
+    new default value, using <xref linkend="sql-update">.)
    </para>
 
 	<para>
     Currently only CHECK constraints can be dropped from a table.  The RESTRICT
 	 keyword is required, although dependencies are not checked.  The CASCADE
 	 option is unsupported.  To remove a PRIMARY or UNIQUE constraint, drop the 
-	 relevant index using the <xref linkend="SQL-DROPINDEX" endterm="SQL-DROPINDEX-TITLE"> command.
+	 relevant index using the <xref linkend="SQL-DROPINDEX"> command.
     To remove FOREIGN KEY constraints you need to recreate
     and reload the table, using other parameters to the
-    <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">
+    <xref linkend="SQL-CREATETABLE">
     command.
    </para>
    <para>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.14 2001/10/09 18:46:00 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.15 2001/10/22 18:14:47 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -122,6 +122,16 @@
 
 ;;; XXX The above is very ugly.  It might be better to run 'tidy' on
 ;;; the resulting *.html files.
+
+
+;; Format multiple terms in varlistentry vertically, instead
+;; of comma-separated.
+(element (varlistentry term)
+  (make sequence
+    (process-children-trim)
+    (if (not (last-sibling?))
+        (make empty-element gi: "BR")
+        (empty-sosofo))))
 
 ]]> <!-- %output-html -->
 

@@ -1,112 +1,26 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.7 2001/09/03 12:57:49 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.8 2001/10/22 18:14:47 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-CREATETABLEAS">
  <refmeta>
-  <refentrytitle id="SQL-CREATETABLEAS-TITLE">
-   CREATE TABLE AS
-  </refentrytitle>
+  <refentrytitle>CREATE TABLE AS</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   CREATE TABLE AS
-  </refname>
-  <refpurpose>
-   create a new table from the results of a query
-  </refpurpose>
+  <refname>CREATE TABLE AS</refname>
+  <refpurpose>create a new table from the results of a query</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>2001-03-03</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-CREATE [ TEMPORARY | TEMP ] TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceable> [, ...] ) ]
-     AS <replaceable>select_clause</replaceable>
+<synopsis>
+CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name</replaceable> [ (<replaceable>column_name</replaceable> [, ...] ) ]
+    AS <replaceable>query</replaceable>
   </synopsis>
-  
-  <refsect2>
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-   
-   <variablelist>
-     <varlistentry>
-      <term>TEMPORARY or TEMP</term>
-      <listitem>
-       <para>
-	If specified, the table is created only within this session, and is
-	automatically dropped on session exit.
-	Existing permanent tables with the same name are not visible
-	(in this session) while the temporary table exists.
-	Any indexes created on a temporary table are automatically
-	temporary as well.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    <varlistentry>
-     <term><replaceable>table</replaceable></term>
-     <listitem>
-      <para>
-        The name of the new table to be created.
-	This table must not already exist.  However, a temporary table
-	can be created that has the same name as an existing permanent
-	table.
-      </para>
-     </listitem>
-    </varlistentry>
-
-     <varlistentry>
-      <term><replaceable>column</replaceable></term>
-      <listitem>
-       <para>
-	The name of a column. Multiple column names can be specified using
-	a comma-delimited list of column names.  If column names are not
-	provided, they are taken from the output column names of the
-	SELECT query.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable>select_clause</replaceable></term>
-      <listitem>
-       <para>
-	A valid query statement. Refer to
-	<xref linkend="sql-select" endterm="sql-select-title">
-	for a description of the allowed syntax.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2>
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-
-   <para>
-    Refer to
-    <xref linkend="sql-createtable" endterm="sql-createtable-title">
-    and
-    <xref linkend="sql-select" endterm="sql-select-title">
-    for a summary of possible output messages.
-   </para>
-  </refsect2>
  </refsynopsisdiv>
- 
+  
  <refsect1>
   <refsect1info>
    <date>2001-03-20</date>
@@ -117,28 +31,135 @@ CREATE [ TEMPORARY | TEMP ] TABLE <replaceable>table</replaceable> [ (<replaceab
   <para>
    <command>CREATE TABLE AS</command> creates a table and fills it
    with data computed by a <command>SELECT</command> command.  The
-   table columns have the names and datatypes associated with the
+   table columns have the names and data types associated with the
    output columns of the <command>SELECT</command> (except that you
-   can override the <command>SELECT</command> column names by giving
-   an explicit list of column names).
+   can override the column names by giving an explicit list of new
+   column names).
   </para>
 
   <para>
-   <command>CREATE TABLE AS</command> bears some resemblance to creating
-   a view, but it is really quite different: it creates a new table and
-   evaluates the <command>SELECT</command> just once to fill the new table
-   initially.  The new table will not track subsequent changes to
-   the source tables of the <command>SELECT</command>.  In contrast,
-   a view re-evaluates the given <command>SELECT</command> whenever queried.
-  </para>
-
-  <para>
-   This command is functionally equivalent to
-   <xref linkend="sql-selectinto" endterm="sql-selectinto-title">,
-   but it is preferred since it is less likely to be confused with
-   other uses of the <command>SELECT ... INTO</command> syntax.
+   <command>CREATE TABLE AS</command> bears some resemblance to
+   creating a view, but it is really quite different: it creates a new
+   table and evaluates the query just once to fill the new table
+   initially.  The new table will not track subsequent changes to the
+   source tables of the query.  In contrast, a view re-evaluates the
+   underlying <command>SELECT</command> statements whenever it is
+   queried.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+   
+  <variablelist>
+   <varlistentry>
+    <term><literal>[LOCAL] TEMPORARY</> or <literal>[LOCAL] TEMP</></term>
+    <listitem>
+     <para>
+      If specified, the table is created as a temporary table.
+      Temporary tables are automatically dropped at the end of a
+      session.  Existing persistent tables with the same name are not
+      visible to the current session while the temporary table exists.
+      Any indexes created on a temporary table are automatically
+      temporary as well.
+     </para>
+
+     <para>
+      The <literal>LOCAL</literal> word is optional.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>table_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the new table to be created.  This table must not
+      already exist.  However, a temporary table can be created that
+      has the same name as an existing permanent table.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>column_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a column in the new table. Multiple column names can
+      be specified using a comma-delimited list of column names.  If
+      column names are not provided, they are taken from the output
+      column names of the query.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>query</replaceable></term>
+    <listitem>
+     <para>
+      A query statement (that is, a <command>SELECT</command>
+      command).  Refer to
+      <xref linkend="sql-select">
+      for a description of the allowed syntax.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Diagnostics</title>
+
+  <para>
+   Refer to <xref linkend="sql-createtable"> and
+   <xref linkend="sql-select">
+   for a summary of possible output messages.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   This command is functionally equivalent to <xref
+   linkend="sql-selectinto">, but it is preferred since it is less
+   likely to be confused with other uses of the <command>SELECT
+   ... INTO</command> syntax.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   This command is modeled after an <productname>Oracle</productname>
+   feature.  There is no command with equivalent functionality in
+   SQL92 or SQL99.  However, a combination of <literal>CREATE
+   TABLE</literal> and <literal>INSERT ... SELECT</literal> can
+   accomplish the same thing with little more effort.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>History</title>
+
+  <para>
+   The <command>CREATE TABLE AS</command> command has been available
+   since <productname>PostgreSQL</productname> 6.3.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtable"></member>
+   <member><xref linkend="sql-createview"></member>
+   <member><xref linkend="sql-select"></member>
+   <member><xref linkend="sql-selectinto"></member>
+  </simplelist>
+ </refsect1>
+ 
 </refentry>
 
 <!-- Keep this comment at the end of the file
