@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.76 1999/05/17 00:31:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.77 1999/05/17 01:01:06 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2592,17 +2592,17 @@ DeleteStmt:  DELETE FROM relation_name
 				}
 		;
 
-LockStmt:	LOCK_P opt_table relation_name IN opt_lock
+LockStmt:	LOCK_P opt_table relation_name opt_lock
 				{
 					LockStmt *n = makeNode(LockStmt);
 
 					n->relname = $3;
-					n->mode = $5;
+					n->mode = $4;
 					$$ = (Node *)n;
 				}
 		;
 
-opt_lock:  lock_type MODE		{ $$ = $1; }
+opt_lock:  IN lock_type MODE		{ $$ = $2; }
 		| /*EMPTY*/				{ $$ = AccessExclusiveLock; }
 		;
 
