@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.162 2000/03/21 06:00:40 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.163 2000/03/24 23:34:19 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3969,7 +3969,7 @@ Character:  character '(' Iconst ')'
 character:  CHARACTER opt_varying opt_charset
 				{
 					char *type, *c;
-					if (($3 == NULL) || (strcasecmp($3, "sql_text") == 0)) {
+					if (($3 == NULL) || (strcmp($3, "sql_text") == 0)) {
 						if ($2) type = xlateSqlType("varchar");
 						else type = xlateSqlType("bpchar");
 					} else {
@@ -5544,11 +5544,11 @@ mapTargetColumns(List *src, List *dst)
 static char *
 xlateSqlFunc(char *name)
 {
-	if (!strcasecmp(name,"character_length"))
+	if (!strcmp(name,"character_length"))
 		return "char_length";
-	else if (!strcasecmp(name,"datetime"))
+	else if (!strcmp(name,"datetime"))
 		return "timestamp";
-	else if (!strcasecmp(name,"timespan"))
+	else if (!strcmp(name,"timespan"))
 		return "interval";
 	else
 		return name;
@@ -5564,21 +5564,21 @@ xlateSqlFunc(char *name)
 static char *
 xlateSqlType(char *name)
 {
-	if (!strcasecmp(name,"int")
-	 || !strcasecmp(name,"integer"))
+	if (!strcmp(name,"int")
+	 || !strcmp(name,"integer"))
 		return "int4";
-	else if (!strcasecmp(name, "smallint"))
+	else if (!strcmp(name, "smallint"))
 		return "int2";
-	else if (!strcasecmp(name, "real")
-	 || !strcasecmp(name, "float"))
+	else if (!strcmp(name, "real")
+	 || !strcmp(name, "float"))
 		return "float8";
-	else if (!strcasecmp(name, "decimal"))
+	else if (!strcmp(name, "decimal"))
 		return "numeric";
-	else if (!strcasecmp(name, "datetime"))
+	else if (!strcmp(name, "datetime"))
 		return "timestamp";
-	else if (!strcasecmp(name, "timespan"))
+	else if (!strcmp(name, "timespan"))
 		return "interval";
-	else if (!strcasecmp(name, "boolean"))
+	else if (!strcmp(name, "boolean"))
 		return "bool";
 	else
 		return name;

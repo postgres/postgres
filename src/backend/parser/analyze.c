@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.140 2000/03/14 23:06:30 thomas Exp $
+ *	$Id: analyze.c,v 1.141 2000/03/24 23:34:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,7 +570,7 @@ CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
 		foreach(ilist, indices)
 		{
 			IndexStmt  *index = lfirst(ilist);
-			if (strcasecmp(iname, index->idxname) == 0)
+			if (strcmp(iname, index->idxname) == 0)
 				break;
 		}
 		/* ran through entire list? then no name conflict found so done */
@@ -679,7 +679,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					constraint->name = sname;
 					constraint->raw_expr = (Node *) funccallnode;
 					constraint->cooked_expr = NULL;
-					constraint->keys = NULL;
+					constraint->keys = NIL;
 					column->constraints = lappend(column->constraints,
 												  constraint);
 
@@ -766,7 +766,11 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							if (constraint->name == NULL)
 								constraint->name = makeObjectName(stmt->relname, NULL, "pkey");
 							if (constraint->keys == NIL)
-								constraint->keys = lappend(constraint->keys, column);
+							{
+								key = makeNode(Ident);
+								key->name = pstrdup(column->colname);
+								constraint->keys = lcons(key, NIL);
+							}
 							dlist = lappend(dlist, constraint);
 							break;
 
@@ -774,7 +778,11 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							if (constraint->name == NULL)
 								constraint->name = makeObjectName(stmt->relname, column->colname, "key");
 							if (constraint->keys == NIL)
-								constraint->keys = lappend(constraint->keys, column);
+							{
+								key = makeNode(Ident);
+								key->name = pstrdup(column->colname);
+								constraint->keys = lcons(key, NIL);
+							}
 							dlist = lappend(dlist, constraint);
 							break;
 
@@ -890,23 +898,21 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		index->withClause = NIL;
 		index->whereClause = NULL;
 
-		keys = constraint->keys;
-		while (keys != NIL)
+		foreach(keys, constraint->keys)
 		{
-			key = lfirst(keys);
-			columns = stmt->tableElts;
+			key = (Ident *) lfirst(keys);
+			Assert(IsA(key, Ident));
 			column = NULL;
-			while (columns != NIL)
+			foreach(columns, stmt->tableElts)
 			{
 				column = lfirst(columns);
-				if (strcasecmp(column->colname, key->name) == 0)
+				Assert(IsA(column, ColumnDef));
+				if (strcmp(column->colname, key->name) == 0)
 					break;
-				else
-					column = NULL;
-				columns = lnext(columns);
 			}
-			if (column == NULL)
-				elog(ERROR, "CREATE TABLE column '%s' in key does not exist", key->name);
+			if (columns == NIL)	/* fell off end of list? */
+				elog(ERROR, "CREATE TABLE: column '%s' named in key does not exist",
+					 key->name);
 
 			if (constraint->contype == CONSTR_PRIMARY)
 				column->is_not_null = TRUE;
@@ -919,8 +925,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 			if (index->idxname == NULL)
 				index->idxname = CreateIndexName(stmt->relname, iparam->name, "key", ilist);
-
-			keys = lnext(keys);
 		}
 
 		if (index->idxname == NULL)	/* should not happen */
