@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.114 1999/05/29 10:25:31 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.115 1999/06/03 04:01:16 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1419,7 +1419,9 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 * ordering by oid is important so that we always process the parent
 	 * tables before the child tables when traversing the tblinfo*
 	 *
-	 * we ignore tables that start with xinv
+	 * we ignore tables that are not type 'r' (ordinary relation)
+	 * or 'S' (sequence) --- in particular, Large Object relations
+	 * (type 'l') are ignored.
 	 */
 
 	sprintf(query,
@@ -1918,7 +1920,7 @@ getIndices(int *numIndices)
 	 * find all the user-defined indices. We do not handle partial
 	 * indices.
 	 *
-	 * skip 'xinx*' - indices on inversion objects
+	 * Notice we skip indices on inversion objects (relkind 'l')
 	 *
 	 * this is a 4-way join !!
 	 */
@@ -1930,7 +1932,7 @@ getIndices(int *numIndices)
 			"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 			"where t1.oid = i.indexrelid and t2.oid = i.indrelid "
 			"and t1.relam = a.oid and i.indexrelid > '%u'::oid "
-			"and t2.relname !~ '^pg_' and t1.relkind != 'l'",
+			"and t2.relname !~ '^pg_' and t2.relkind != 'l'",
 			g_last_builtin_oid);
 
 	res = PQexec(g_conn, query);
