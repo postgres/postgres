@@ -144,11 +144,11 @@ Various indices could be created to speed up execution of operations:
   * GiST index over ltree:
     <, <=, =, =>, >, @>, <@, @, ~
     Example:
-    create index path_gist_idx on test using gist_ltree_ops (path);
+    create index path_gist_idx on test using gist (path);
   * GiST index over ltree[]:
     ltree[]<@ ltree, ltree @> ltree[], @, ~.
     Example:
-    create index path_gist_idx on test using gist__ltree_ops (array_path);
+    create index path_gist_idx on test using gist (array_path);
     Notices: This index is lossy.
 
 FUNCTIONS
