@@ -6,4 +6,4 @@ CFLAGS_SL = -K PIC
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
 
-INSTALL= /usr/ucb/install
+sqlmansect = 5

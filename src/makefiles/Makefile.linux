@@ -8,3 +8,5 @@ CFLAGS_SL = -fpic
 
 %.so: %.o
 	$(CC) -shared -o $@ $<
+
+sqlmansect = 7

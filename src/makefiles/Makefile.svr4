@@ -10,3 +10,5 @@ CFLAGS_SL =
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
+
+sqlmansect = 5

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.13 2001/05/25 15:48:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.14 2001/08/29 19:14:40 petere Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
@@ -33,3 +33,5 @@ override CPPFLAGS+= -DUSE_DL_IMPORT
 endif
 
 override javadir := '$(shell cygpath -w $(javadir))'
+
+sqlmansect = 7

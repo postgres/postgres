@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.6 2000/12/16 18:14:25 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.7 2001/08/29 19:14:40 petere Exp $
 
 AROPT = crs
 
@@ -24,3 +24,5 @@ endif
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
+
+sqlmansect = 5sql

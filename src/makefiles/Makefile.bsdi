@@ -22,3 +22,5 @@ endif
 
 %.so: %.o
 	$(CC) -shared -o $@ $<
+
+sqlmansect = 7

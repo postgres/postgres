@@ -16,3 +16,4 @@ endif
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
+sqlmansect = 7

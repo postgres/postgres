@@ -52,3 +52,5 @@ endif
 # shlib ... should go away, since this is not really enough knowledge)
 %.sl: %.o
 	$(LD) -b -o $@ $<
+
+sqlmansect = 5

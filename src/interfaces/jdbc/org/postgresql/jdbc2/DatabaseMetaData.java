@@ -1196,7 +1196,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
   /**
    * What is the maximum number of columns in a table? From the
-   * create_table(l) manual page...
+   * CREATE TABLE reference page...
    *
    * <p>"The new class is created as a heap with no initial data.  A
    * class can have no more than 1600 attributes (realistically,

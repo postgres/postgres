@@ -15,3 +15,5 @@ CFLAGS_SL =
 
 override CXXFLAGS +=-I/usr/local/include/g++
 override CFLAGS +=-I/usr/local/include
+
+sqlmansect = 7

@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.18 2001/03/27 16:34:14 momjian Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.19 2001/08/29 19:14:39 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -60,7 +60,7 @@ postgres.tar:
 
 man.tar:
 	$(MAKE) -C sgml man
-	$(TAR) -cf $@ -C sgml man1 manl
+	$(TAR) -cf $@ -C sgml man1 man$(sqlmansect_dummy)
 
 # Generic production rules
 

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.37 2001/05/12 22:51:34 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.38 2001/08/29 19:14:39 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ CATALOG = $(DOCBOOKSTYLE)/catalog
 
 .PHONY: man
 
-DEFAULTSECTION := l
+DEFAULTSECTION := $(sqlmansect_dummy)
 
 man: $(ALLSGML)
 	$(NSGMLS) $(NSGMLS_FLAGS) $(srcdir)/book-decl.sgml $(srcdir)/reference.sgml \

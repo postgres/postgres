@@ -22,3 +22,5 @@ else
 	$(LD) -x -Bshareable -Bforcearchive \
 	  -o $@ $@.pic
 endif
+
+sqlmansect = 7

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.92 2001/08/23 23:06:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.93 2001/08/29 19:14:39 petere Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -64,8 +64,6 @@ static char *lock_mode_names[] =
 	"ExclusiveLock",
 	"AccessExclusiveLock"
 };
-
-static char *DeadLockMessage = "Deadlock detected.\n\tSee the lock(l) manual page for a possible cause.";
 
 
 #ifdef LOCK_DEBUG
@@ -953,7 +951,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
 		SpinRelease(lockMethodTable->ctl->masterLock);
-		elog(ERROR, DeadLockMessage);
+		elog(ERROR, "deadlock detected");
 		/* not reached */
 	}
 

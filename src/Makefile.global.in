@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.135 2001/08/28 14:20:26 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.136 2001/08/29 19:14:39 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -88,6 +88,7 @@ includedir_server = $(pkgincludedir)/server
 includedir_internal = $(pkgincludedir)/internal
 
 mandir := @mandir@
+sqlmansect_dummy = l
 
 docdir := @docdir@
 ifeq "$(findstring pgsql, $(docdir))" ""

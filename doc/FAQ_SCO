@@ -1,9 +1,9 @@
 ============================================================
-Frequently Asked Questions (FAQ) for PostgreSQL  V7.1
+Frequently Asked Questions (FAQ) for PostgreSQL 7.2
 SCO UnixWare and OpenServer specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:           $Date: 2001/03/13 20:52:04 $
+last updated:           $Date: 2001/08/29 19:14:39 $
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
@@ -21,7 +21,7 @@ Topics:
 *) Readline
 *) Using the UDK on OpenServer
 *) Compiling PostgreSQL using the UDK
-*) Reading the PostgreSQL man pages on UnixWare
+*) Reading the PostgreSQL man pages
 
 
 ***************************************************************************
@@ -125,52 +125,15 @@ This compiler bug seems to be fixed at least in
 
 
 ***************************************************************************
-*) Reading the PostgreSQL man pages on UnixWare
+*) Reading the PostgreSQL man pages
 
-By default, the PostgreSQL man pages are installed into /usr/local/pgsql/man.
-By default, UnixWare does not look there for man pages, so you will not be
-able to read them.
-
-You need to make the following changes to access the PostgreSQL man pages
-from UnixWare.
-
-1) You need to modify the MANPATH variable in /etc/default/man.  I use:
+By default, the PostgreSQL man pages are installed into
+/usr/local/pgsql/man.  By default, UnixWare does not look there for
+man pages.  To be able to read them you need to modify the MANPATH
+variable in /etc/default/man.  I use:
 
 	MANPATH=/usr/lib/scohelp/%L/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp:/usr/local/man:/usr/local/pgsql/man
 
-2) Add a line that says '1sql' to /etc/default/manSection.
-
-3) The man pages for SQL commands are, by default, placed in section 'l'
-   (normally used for "l"ocal pages).  UnixWare does not support the 'l'
-   section.
-
-The solution I use is to move all these pages from section 'l' to a section
-named '1sql'.  To following KSH script will perform the move and change the
-section names in the man page:
-
-------------------------------8< CUT HERE >8------------------------------
-#!/bin/ksh
-cd /usr/local/pgsql/man
-mv man1 man.1
-mkdir man.1sql
-
-cd /usr/local/pgsql/man/manl
-for i in *.l
-do
-	sed -e '/^\.TH/s/"l"/"1sql"/'	\
-		-e 's/\\fR(l)/\\fR(1sql)/' $i >../man.1sql/${i%.l}.1sql
-done
-cd /usr/local/pgsql/man
-rm -rf manl
-/usr/ucb/catman -M /usr/local/pgsql/man 1
-/usr/ucb/catman -M /usr/local/pgsql/man 1sql
-------------------------------8< CUT HERE >8------------------------------
-
-After running this script, you can view the man pages using the 'man'
-command.  They will not be usable from the scohelp system.
-
-I am working on integrating the man pages into the scohelp system.  When I
-generate a PostgreSQL package for UnixWare 7.x, the man pages will be
-integrated into the scohelp system.
-
-I have not tried using the PostgreSQL man pages on OpenServer.  Volunteers??
+On OpenServer, some extra research needs to be invested to make the
+man pages usable, because the man system is a bit different from other
+platforms.  Currently, PostgreSQL will not install them at all.

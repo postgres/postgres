@@ -16,3 +16,5 @@ ifneq ($(GCC), yes)
 CFLAGS += -woff 1164,1171,1185,1195,1552
 endif
 LDFLAGS += -Wl,-woff,15 -Wl,-woff,84
+
+sqlmansect = 5sql

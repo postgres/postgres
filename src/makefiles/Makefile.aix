@@ -43,3 +43,5 @@ endif
 %$(DLSUFFIX): %.o %$(EXPSUFF)
 	@echo Making shared library $@ from $*.o, $*$(EXPSUFF) and postgres.imp
 	$(CC) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:$*$(EXPSUFF) -o $@ $*.o $(LDFLAGS) $(LIBS) $(LDFLAGS_SL)
+
+sqlmansect = 7
