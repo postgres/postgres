@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.25 1996/11/14 10:24:01 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.26 1996/11/24 04:07:00 bryanh Exp $
  *
  * NOTES
  *
@@ -40,7 +40,6 @@
 
 #include "postgres.h"
 
-#include <signal.h>             /* for other stuff */
 #include "libpq/pqsignal.h"     /* substitute for <signal.h> */
 #include <string.h>
 #include <stdlib.h>
