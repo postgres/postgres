@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.45 2002/07/12 18:43:12 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.46 2002/07/22 20:23:19 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -64,6 +64,11 @@
      <row>
       <entry>pg_attribute</entry>
       <entry>table columns (<quote>attributes</quote>, <quote>fields</quote>)</entry>
+     </row>
+
+     <row>
+      <entry>pg_cast</entry>
+      <entry>casts (data type conversions)</entry>
      </row>
 
      <row>
@@ -518,6 +523,65 @@
   </table>
  </sect1>
 
+
+ <sect1 id="catalog-pg-cast">
+  <title>pg_cast</title>
+
+  <para>
+   <structname>pg_cast</structname> stores data type conversion paths
+   defined with <command>CREATE CAST</command> plus the built-in
+   conversions.
+  </para>
+
+  <table>
+   <title>pg_cast Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>castsource</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>OID of the source data type</entry>
+     </row>
+
+     <row>
+      <entry>casttarget</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_type.oid</entry>
+      <entry>OID of the target data type</entry>
+     </row>
+
+     <row>
+      <entry>castfunc</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>
+       The OID of the function to use to perform this cast.  A 0 is
+       stored if the data types are binary compatible (that is, no
+       function is needed to perform the cast).
+      </entry>
+     </row>
+
+     <row>
+      <entry>castimplicit</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Indication whether this cast can be invoked implicitly</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
 
  <sect1 id="catalog-pg-class">
   <title>pg_class</title>

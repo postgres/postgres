@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.11 2002/07/20 05:37:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.12 2002/07/22 20:23:19 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -31,6 +31,7 @@
  */
 #include "postgres.h"
 
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
@@ -693,7 +694,7 @@ CreateCast(CreateCastStmt *stmt)
 		if (procstruct->proisagg)
 			elog(ERROR, "cast function must not be an aggregate function");
 		if (procstruct->proretset)
-			elog(ERROR, "cast function must be not return a set");
+			elog(ERROR, "cast function must not return a set");
 
 		ReleaseSysCache(tuple);
 	}
@@ -727,7 +728,7 @@ CreateCast(CreateCastStmt *stmt)
 		CatalogCloseIndices(Num_pg_cast_indices, idescs);
 	}
 
-	myself.classId = get_system_catalog_relid(CastRelationName);
+	myself.classId = RelationGetRelid(relation);
 	myself.objectId = HeapTupleGetOid(tuple);
 	myself.objectSubId = 0;
 
@@ -819,21 +820,25 @@ DropCast(DropCastStmt *stmt)
 void
 DropCastById(Oid castOid)
 {
-	Relation	relation;
+	Relation	relation,
+				index;
 	ScanKeyData scankey;
-	HeapScanDesc scan;
+	IndexScanDesc scan;
 	HeapTuple	tuple;
 
 	relation = heap_openr(CastRelationName, RowExclusiveLock);
+	index = index_openr(CastOidIndex);
+
 	ScanKeyEntryInitialize(&scankey, 0x0,
-						   ObjectIdAttributeNumber, F_OIDEQ,
-						   ObjectIdGetDatum(castOid));
-	scan = heap_beginscan(relation, SnapshotNow, 1, &scankey);
-	tuple = heap_getnext(scan, ForwardScanDirection);
+						   1, F_OIDEQ, ObjectIdGetDatum(castOid));
+	scan = index_beginscan(relation, index, SnapshotNow, 1, &scankey);
+	tuple = index_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple))
 		simple_heap_delete(relation, &tuple->t_self);
 	else
 		elog(ERROR, "could not find tuple for cast %u", castOid);
-	heap_endscan(scan);
+	index_endscan(scan);
+
+	index_close(index);
 	heap_close(relation, RowExclusiveLock);
 }
