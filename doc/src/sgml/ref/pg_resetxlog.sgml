@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.4 2002/08/17 20:24:51 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.5 2002/08/29 22:19:03 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <arg> -f </arg>
    <arg> -n </arg>
    <arg> -x <replaceable class="parameter">xid</replaceable> </arg>
-   <arg> -l <replaceable class="parameter">fileid</replaceable> <replaceable class="parameter">seg</replaceable> </arg>
+   <arg> -l <replaceable class="parameter">fileid</replaceable>,<replaceable class="parameter">seg</replaceable> </arg>
    <arg choice="plain"><replaceable>datadir</replaceable></arg>
   </cmdsynopsis>
  </refsynopsisdiv>

@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.14 2002/07/03 14:38:19 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.15 2002/08/29 22:19:03 petere Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -461,7 +461,7 @@ fi
 
 # Set checkpoint location of new database
 
-pg_resetxlog -l "$LOG_ID" "$SEG_ID" "$PGDATA"
+pg_resetxlog -l "$LOG_ID","$SEG_ID" "$PGDATA"
 if [ "$?" -ne 0 ]
 then	echo "Unable to set new log file/segment id.  Exiting." 1>&2
 	exit 1

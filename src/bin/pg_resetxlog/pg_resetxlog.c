@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.2 2002/08/17 15:12:07 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.3 2002/08/29 22:19:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <dirent.h>
-#ifdef USE_LOCALE
 #include <locale.h>
-#endif
 
 #include "access/xlog.h"
 #include "catalog/catversion.h"
@@ -65,8 +63,8 @@
 
 /******************** end of stuff copied from xlog.c ********************/
 
+#define _(x) gettext((x))
 
-static char *DataDir;			/* locations of important stuff */
 static char XLogDir[MAXPGPATH];
 static char ControlFilePath[MAXPGPATH];
 
@@ -74,6 +72,182 @@ static ControlFileData ControlFile;		/* pg_control values */
 static uint32 newXlogId,
 			newXlogSeg;			/* ID/Segment of new XLOG segment */
 static bool guessed = false;	/* T if we had to guess at any values */
+static char *progname;
+
+static bool ReadControlFile(void);
+static void GuessControlValues(void);
+static void PrintControlValues(bool guessed);
+static void RewriteControlFile(void);
+static void KillExistingXLOG(void);
+static void WriteEmptyXLOG(void);
+static void usage(void);
+
+
+
+int
+main(int argc, char *argv[])
+{
+	int			c;
+	bool		force = false;
+	bool		noupdate = false;
+	TransactionId set_xid = 0;
+	uint32		minXlogId = 0,
+				minXlogSeg = 0;
+	char	   *DataDir;
+	int			fd;
+	char		path[MAXPGPATH];
+
+	setlocale(LC_ALL, "");
+#ifdef ENABLE_NLS
+	bindtextdomain("pg_resetxlog", LOCALEDIR);
+	textdomain("pg_resetxlog");
+#endif
+
+	if (!strrchr(argv[0], '/'))
+		progname = argv[0];
+	else
+		progname = strrchr(argv[0], '/') + 1;
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+		{
+			usage();
+			exit(0);
+		}
+		if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+		{
+			puts("pg_resetxlog (PostgreSQL) " PG_VERSION);
+			exit(0);
+		}
+	}
+
+
+	while ((c = getopt(argc, argv, "fl:nx:")) != -1)
+	{
+		switch (c)
+		{
+			case 'f':
+				force = true;
+				break;
+
+			case 'n':
+				noupdate = true;
+				break;
+
+			case 'x':
+				set_xid = strtoul(optarg, NULL, 0);
+				if (set_xid == 0)
+				{
+					fprintf(stderr, _("%s: transaction ID (-x) must not be 0\n"), progname);
+					exit(1);
+				}
+				break;
+
+			case 'l':
+				if (sscanf(optarg, "%u,%u", &minXlogId, &minXlogSeg) != 2)
+				{
+					fprintf(stderr, _("%s: invalid argument for -l option\n"), progname);
+					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					exit(1);
+				}
+				break;
+
+			default:
+				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				exit(1);
+		}
+	}
+
+	if (optind == argc)
+	{
+		fprintf(stderr, _("%s: no data directory specified\n"), progname);
+		fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+		exit(1);
+	}
+
+	DataDir = argv[optind];
+	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
+
+	/*
+	 * Check for a postmaster lock file --- if there is one, refuse to
+	 * proceed, on grounds we might be interfering with a live
+	 * installation.
+	 */
+	snprintf(path, MAXPGPATH, "%s/postmaster.pid", DataDir);
+
+	if ((fd = open(path, O_RDONLY)) < 0)
+	{
+		if (errno != ENOENT)
+		{
+			fprintf(stderr, _("%s: could not open %s for reading: %s\n"), progname, path, strerror(errno));
+			exit(1);
+		}
+	}
+	else
+	{
+		fprintf(stderr, _("%s: lock file %s exists\n"
+						  "Is a server running? If not, delete the lock file and try again.\n"),
+				progname, path);
+		exit(1);
+	}
+
+	/*
+	 * Attempt to read the existing pg_control file
+	 */
+	if (!ReadControlFile())
+		GuessControlValues();
+
+	/*
+	 * If we had to guess anything, and -f was not given, just print the
+	 * guessed values and exit.  Also print if -n is given.
+	 */
+	if ((guessed && !force) || noupdate)
+	{
+		PrintControlValues(guessed);
+		if (!noupdate)
+		{
+			printf(_("\nIf these values seem acceptable, use -f to force reset.\n"));
+			exit(1);
+		}
+		else
+			exit(0);
+	}
+
+	/*
+	 * Don't reset from a dirty pg_control without -f, either.
+	 */
+	if (ControlFile.state != DB_SHUTDOWNED && !force)
+	{
+		printf(_("The database server was not shut down cleanly.\n"
+				 "Resetting the transaction log may cause data to be lost.\n"
+				 "If you want to proceed anyway, use -f to force reset.\n"));
+		exit(1);
+	}
+
+	/*
+	 * Else, do the dirty deed.
+	 *
+	 * First adjust fields if required by switches.
+	 */
+	if (set_xid != 0)
+		ControlFile.checkPointCopy.nextXid = set_xid;
+
+	if (minXlogId > ControlFile.logId ||
+		(minXlogId == ControlFile.logId && minXlogSeg > ControlFile.logSeg))
+	{
+		ControlFile.logId = minXlogId;
+		ControlFile.logSeg = minXlogSeg;
+	}
+
+	RewriteControlFile();
+	KillExistingXLOG();
+	WriteEmptyXLOG();
+
+	printf(_("Transaction log reset\n"));
+	return 0;
+}
 
 
 /*
@@ -97,11 +271,13 @@ ReadControlFile(void)
 		 * odds are we've been handed a bad DataDir path, so give up. User
 		 * can do "touch pg_control" to force us to proceed.
 		 */
-		perror("Failed to open $PGDATA/global/pg_control for reading");
+		fprintf(stderr, _("%s: could not open %s for reading: %s\n"),
+				progname, ControlFilePath, strerror(errno));
 		if (errno == ENOENT)
-			fprintf(stderr, "If you're sure the PGDATA path is correct, do\n"
-					"  touch %s\n"
-					"and try again.\n", ControlFilePath);
+			fprintf(stderr, _("If you are sure the data directory path is correct, do\n"
+							  "  touch %s\n"
+							  "and try again.\n"),
+					ControlFilePath);
 		exit(1);
 	}
 
@@ -111,7 +287,8 @@ ReadControlFile(void)
 	len = read(fd, buffer, BLCKSZ);
 	if (len < 0)
 	{
-		perror("Failed to read $PGDATA/global/pg_control");
+		fprintf(stderr, _("%s: could not read %s: %s\n"),
+				progname, ControlFilePath, strerror(errno));
 		exit(1);
 	}
 	close(fd);
@@ -133,7 +310,8 @@ ReadControlFile(void)
 			return true;
 		}
 
-		fprintf(stderr, "pg_control exists but has invalid CRC; proceed with caution.\n");
+		fprintf(stderr, _("%s: pg_control exists but has invalid CRC; proceed with caution\n"),
+				progname);
 		/* We will use the data anyway, but treat it as guessed. */
 		memcpy(&ControlFile, buffer, sizeof(ControlFile));
 		guessed = true;
@@ -141,7 +319,8 @@ ReadControlFile(void)
 	}
 
 	/* Looks like it's a mess. */
-	fprintf(stderr, "pg_control exists but is broken or unknown version; ignoring it.\n");
+	fprintf(stderr, _("%s: pg_control exists but is broken or unknown version; ignoring it\n"),
+			progname);
 	return false;
 }
 
@@ -152,9 +331,7 @@ ReadControlFile(void)
 static void
 GuessControlValues(void)
 {
-#ifdef USE_LOCALE
 	char	   *localeptr;
-#endif
 
 	/*
 	 * Set up a completely default set of pg_control values.
@@ -181,25 +358,20 @@ GuessControlValues(void)
 
 	ControlFile.blcksz = BLCKSZ;
 	ControlFile.relseg_size = RELSEG_SIZE;
-#ifdef USE_LOCALE
 	localeptr = setlocale(LC_COLLATE, "");
 	if (!localeptr)
 	{
-		fprintf(stderr, "Invalid LC_COLLATE setting\n");
+		fprintf(stderr, _("%s: invalid LC_COLLATE setting\n"), progname);
 		exit(1);
 	}
 	StrNCpy(ControlFile.lc_collate, localeptr, LOCALE_NAME_BUFLEN);
 	localeptr = setlocale(LC_CTYPE, "");
 	if (!localeptr)
 	{
-		fprintf(stderr, "Invalid LC_CTYPE setting\n");
+		fprintf(stderr, _("%s: invalid LC_CTYPE setting\n"), progname);
 		exit(1);
 	}
 	StrNCpy(ControlFile.lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
-#else
-	strcpy(ControlFile.lc_collate, "C");
-	strcpy(ControlFile.lc_ctype, "C");
-#endif
 
 	/*
 	 * XXX eventually, should try to grovel through old XLOG to develop
@@ -217,31 +389,22 @@ GuessControlValues(void)
 static void
 PrintControlValues(bool guessed)
 {
-	printf("%spg_control values:\n\n"
-		   "pg_control version number:            %u\n"
-		   "Catalog version number:               %u\n"
-		   "Current log file id:                  %u\n"
-		   "Next log file segment:                %u\n"
-		   "Latest checkpoint's StartUpID:        %u\n"
-		   "Latest checkpoint's NextXID:          %u\n"
-		   "Latest checkpoint's NextOID:          %u\n"
-		   "Database block size:                  %u\n"
-		   "Blocks per segment of large relation: %u\n"
-		   "LC_COLLATE:                           %s\n"
-		   "LC_CTYPE:                             %s\n",
+	if (guessed)
+		printf(_("Guessed pg_control values:\n\n"));
+	else
+		printf(_("pg_control values:\n\n"));
 
-		   (guessed ? "Guessed-at " : ""),
-		   ControlFile.pg_control_version,
-		   ControlFile.catalog_version_no,
-		   ControlFile.logId,
-		   ControlFile.logSeg,
-		   ControlFile.checkPointCopy.ThisStartUpID,
-		   ControlFile.checkPointCopy.nextXid,
-		   ControlFile.checkPointCopy.nextOid,
-		   ControlFile.blcksz,
-		   ControlFile.relseg_size,
-		   ControlFile.lc_collate,
-		   ControlFile.lc_ctype);
+	printf(_("pg_control version number:            %u\n"), ControlFile.pg_control_version);
+	printf(_("Catalog version number:               %u\n"), ControlFile.catalog_version_no);
+	printf(_("Current log file ID:                  %u\n"), ControlFile.logId);
+	printf(_("Next log file segment:                %u\n"), ControlFile.logSeg);
+	printf(_("Latest checkpoint's StartUpID:        %u\n"), ControlFile.checkPointCopy.ThisStartUpID);
+	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
+	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
+	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
+	printf(_("Blocks per segment of large relation: %u\n"), ControlFile.relseg_size);
+	printf(_("LC_COLLATE:                           %s\n"), ControlFile.lc_collate);
+	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
 }
 
 
@@ -293,7 +456,9 @@ RewriteControlFile(void)
 	 */
 	if (sizeof(ControlFileData) > BLCKSZ)
 	{
-		fprintf(stderr, "sizeof(ControlFileData) is too large ... fix xlog.c\n");
+		fprintf(stderr,
+				_("%s: internal error -- sizeof(ControlFileData) is too large ... fix xlog.c\n"),
+				progname);
 		exit(1);
 	}
 
@@ -305,7 +470,8 @@ RewriteControlFile(void)
 	fd = open(ControlFilePath, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, S_IRUSR | S_IWUSR);
 	if (fd < 0)
 	{
-		perror("RewriteControlFile failed to create pg_control file");
+		fprintf(stderr, _("%s: could not create pg_control file: %s\n"),
+				progname, strerror(errno));
 		exit(1);
 	}
 
@@ -315,13 +481,14 @@ RewriteControlFile(void)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		perror("RewriteControlFile failed to write pg_control file");
+		fprintf(stderr, _("%s: could not write pg_control file: %s\n"),
+				progname, strerror(errno));
 		exit(1);
 	}
 
 	if (fsync(fd) != 0)
 	{
-		perror("fsync");
+		fprintf(stderr, _("%s: fsync error: %s\n"), progname, strerror(errno));
 		exit(1);
 	}
 
@@ -342,7 +509,8 @@ KillExistingXLOG(void)
 	xldir = opendir(XLogDir);
 	if (xldir == NULL)
 	{
-		perror("KillExistingXLOG: cannot open $PGDATA/pg_xlog directory");
+		fprintf(stderr, _("%s: could not open directory %s: %s\n"),
+				progname, XLogDir, strerror(errno));
 		exit(1);
 	}
 
@@ -355,15 +523,18 @@ KillExistingXLOG(void)
 			snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
 			if (unlink(path) < 0)
 			{
-				perror(path);
+				fprintf(stderr, _("%s: could not delete file %s: %s\n"),
+						progname, path, strerror(errno));
 				exit(1);
 			}
 		}
 		errno = 0;
 	}
+
 	if (errno)
 	{
-		perror("KillExistingXLOG: cannot read $PGDATA/pg_xlog directory");
+		fprintf(stderr, _("%s: could not read from directory %s: %s\n"),
+				progname, XLogDir, strerror(errno));
 		exit(1);
 	}
 	closedir(xldir);
@@ -425,7 +596,8 @@ WriteEmptyXLOG(void)
 			  S_IRUSR | S_IWUSR);
 	if (fd < 0)
 	{
-		perror(path);
+		fprintf(stderr, _("%s: could not open %s: %s\n"),
+				progname, path, strerror(errno));
 		exit(1);
 	}
 
@@ -435,7 +607,8 @@ WriteEmptyXLOG(void)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		perror("WriteEmptyXLOG: failed to write xlog file");
+		fprintf(stderr, _("%s: could not write %s: %s\n"),
+				progname, path, strerror(errno));
 		exit(1);
 	}
 
@@ -448,14 +621,15 @@ WriteEmptyXLOG(void)
 		{
 			if (errno == 0)
 				errno = ENOSPC;
-			perror("WriteEmptyXLOG: failed to write xlog file");
+			fprintf(stderr, _("%s: could not write %s: %s\n"),
+					progname, path, strerror(errno));
 			exit(1);
 		}
 	}
 
 	if (fsync(fd) != 0)
 	{
-		perror("fsync");
+		fprintf(stderr, _("%s: fsync error: %s\n"), progname, strerror(errno));
 		exit(1);
 	}
 
@@ -466,146 +640,12 @@ WriteEmptyXLOG(void)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: pg_resetxlog [-f] [-n] [-x xid] [ -l fileid seg ] PGDataDirectory\n"
-			"  -f\t\tforce update to be done\n"
-			"  -n\t\tno update, just show extracted pg_control values (for testing)\n"
-			"  -x xid\tset next transaction ID\n"
-			"  -l fileid seg\tforce minimum WAL starting location for new xlog\n");
-	exit(1);
-}
-
-
-int
-main(int argc, char **argv)
-{
-	int			argn;
-	bool		force = false;
-	bool		noupdate = false;
-	TransactionId set_xid = 0;
-	uint32		minXlogId = 0,
-				minXlogSeg = 0;
-	int			fd;
-	char		path[MAXPGPATH];
-
-	for (argn = 1; argn < argc; argn++)
-	{
-		if (argv[argn][0] != '-')
-			break;				/* end of switches */
-		if (strcmp(argv[argn], "-f") == 0)
-			force = true;
-		else if (strcmp(argv[argn], "-n") == 0)
-			noupdate = true;
-		else if (strcmp(argv[argn], "-x") == 0)
-		{
-			argn++;
-			if (argn == argc)
-				usage();
-			set_xid = strtoul(argv[argn], NULL, 0);
-			if (set_xid == 0)
-			{
-				fprintf(stderr, "XID can not be 0.\n");
-				exit(1);
-			}
-		}
-		else if (strcmp(argv[argn], "-l") == 0)
-		{
-			argn++;
-			if (argn == argc)
-				usage();
-			minXlogId = strtoul(argv[argn], NULL, 0);
-			argn++;
-			if (argn == argc)
-				usage();
-			minXlogSeg = strtoul(argv[argn], NULL, 0);
-		}
-		else
-			usage();
-	}
-
-	if (argn != argc - 1)		/* one required non-switch argument */
-		usage();
-
-	DataDir = argv[argn++];
-
-	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
-
-	snprintf(ControlFilePath, MAXPGPATH, "%s/global/pg_control", DataDir);
-
-	/*
-	 * Check for a postmaster lock file --- if there is one, refuse to
-	 * proceed, on grounds we might be interfering with a live
-	 * installation.
-	 */
-	snprintf(path, MAXPGPATH, "%s/postmaster.pid", DataDir);
-
-	if ((fd = open(path, O_RDONLY)) < 0)
-	{
-		if (errno != ENOENT)
-		{
-			perror("Failed to open $PGDATA/postmaster.pid for reading");
-			exit(1);
-		}
-	}
-	else
-	{
-		fprintf(stderr, "Lock file '%s' exists --- is a postmaster running?\n"
-				"If not, delete the lock file and try again.\n",
-				path);
-		exit(1);
-	}
-
-	/*
-	 * Attempt to read the existing pg_control file
-	 */
-	if (!ReadControlFile())
-		GuessControlValues();
-
-	/*
-	 * If we had to guess anything, and -f was not given, just print the
-	 * guessed values and exit.  Also print if -n is given.
-	 */
-	if ((guessed && !force) || noupdate)
-	{
-		PrintControlValues(guessed);
-		if (!noupdate)
-		{
-			printf("\nIf these values seem acceptable, use -f to force reset.\n");
-			exit(1);
-		}
-		else
-			exit(0);
-	}
-
-	/*
-	 * Don't reset from a dirty pg_control without -f, either.
-	 */
-	if (ControlFile.state != DB_SHUTDOWNED && !force)
-	{
-		printf("The database was not shut down cleanly.\n"
-			   "Resetting the xlog may cause data to be lost!\n"
-			   "If you want to proceed anyway, use -f to force reset.\n");
-		exit(1);
-	}
-
-	/*
-	 * Else, do the dirty deed.
-	 *
-	 * First adjust fields if required by switches.
-	 */
-	if (set_xid != 0)
-		ControlFile.checkPointCopy.nextXid = set_xid;
-
-	if (minXlogId > ControlFile.logId ||
-		(minXlogId == ControlFile.logId && minXlogSeg > ControlFile.logSeg))
-	{
-		ControlFile.logId = minXlogId;
-		ControlFile.logSeg = minXlogSeg;
-	}
-
-	RewriteControlFile();
-	KillExistingXLOG();
-	WriteEmptyXLOG();
-
-	printf("XLOG reset.\n");
-	return 0;
+	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
+    printf(_("Usage:\n  %s [OPTIONS] DATADIR\n\n"), progname);
+	printf(_("Options:\n"));
+	printf(_("  -f                force update to be done\n"));
+	printf(_("  -l FILEID,SEG     force minimum WAL starting location for new transaction log\n"));
+	printf(_("  -n                no update, just show extracted control values (for testing)\n"));
+	printf(_("  -x XID            set next transaction ID\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
