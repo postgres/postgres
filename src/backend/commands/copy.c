@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.106.2.1 2000/06/05 11:13:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.106.2.2 2000/06/28 06:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,8 +484,10 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 
 		if (oids && !binary)
 		{
-			CopySendString(oidout(tuple->t_data->t_oid), fp);
+			string = oidout(tuple->t_data->t_oid);
+			CopySendString(string, fp);
 			CopySendChar(delim[0], fp);
+			pfree(string);
 		}
 
 		for (i = 0; i < attr_count; i++)
