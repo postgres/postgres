@@ -1,3 +1,9 @@
+Sun Jun 27 12:00:00 BST 1999
+	- Fixed typo in postgresql.Driver that prevented compilation
+	- Implemented getTimestamp() fix submitted by Philipp Matthias Hahn
+	  <pmhahn@titan.lahn.de>
+	- Cleaned up some comments in Connection
+
 Wed Jun 23 06:50:00 BST 1999
 	- Fixed error in errors.properties where the arguments are 0 based not
 	  1 based

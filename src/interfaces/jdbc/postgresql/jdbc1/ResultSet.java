@@ -434,24 +434,16 @@ public class ResultSet extends postgresql.ResultSet implements java.sql.ResultSe
   public Timestamp getTimestamp(int columnIndex) throws SQLException
   {
     String s = getString(columnIndex);
+    if(s==null)
+	return null;
+    
     SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzz");
     
-    if (s != null)
-      {
-	int TZ = new Float(s.substring(19)).intValue();
-	TZ = TZ * 60 * 60 * 1000;
-	TimeZone zone = TimeZone.getDefault();
-	zone.setRawOffset(TZ);
-	String nm = zone.getID();
-	s = s.substring(0,19) + nm;
-	try {
-	  java.util.Date d = df.parse(s);
-	  return new Timestamp(d.getTime());
-	} catch (ParseException e) {
-	  throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
-	}
-      }
-    return null;                // SQL NULL
+    try {
+	return new Timestamp(df.parse(s).getTime());
+    } catch(ParseException e) {
+	throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
+    }
   }
   
   /**
