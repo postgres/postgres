@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.46 2004/08/16 17:52:06 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.47 2004/09/24 18:54:14 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1073,10 +1073,12 @@ END;
 PERFORM <replaceable>query</replaceable>;
 </synopsis>
 
-     This executes <replaceable>query</replaceable>, which must be a
-     <command>SELECT</command> statement, and discards the
-     result. <application>PL/pgSQL</application> variables are
-     substituted in the query as usual.  Also, the special variable
+     This executes <replaceable>query</replaceable> and discards the
+     result.  Write the <replaceable>query</replaceable> the same
+     way as you would in an SQL <command>SELECT</> command, but replace the
+     initial keyword <command>SELECT</> with <command>PERFORM</command>.
+     <application>PL/pgSQL</application> variables will be
+     substituted into the query as usual.  Also, the special variable
      <literal>FOUND</literal> is set to true if the query produced at
      least one row or false if it produced no rows.
     </para>
