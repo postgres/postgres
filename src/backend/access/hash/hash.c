@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.74 2004/11/11 00:32:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.75 2004/11/17 03:13:37 neilc Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -397,9 +397,8 @@ hashmarkpos(PG_FUNCTION_ARGS)
 	/* bump pin count on currentItemData and copy to currentMarkData */
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
-		so->hashso_mrkbuf = _hash_getbuf(rel,
-								 BufferGetBlockNumber(so->hashso_curbuf),
-										 HASH_NOLOCK);
+		IncrBufferRefCount(so->hashso_curbuf);
+		so->hashso_mrkbuf = so->hashso_curbuf;
 		scan->currentMarkData = scan->currentItemData;
 	}
 
@@ -425,9 +424,8 @@ hashrestrpos(PG_FUNCTION_ARGS)
 	/* bump pin count on currentMarkData and copy to currentItemData */
 	if (ItemPointerIsValid(&(scan->currentMarkData)))
 	{
-		so->hashso_curbuf = _hash_getbuf(rel,
-								 BufferGetBlockNumber(so->hashso_mrkbuf),
-										 HASH_NOLOCK);
+		IncrBufferRefCount(so->hashso_mrkbuf);
+		so->hashso_curbuf = so->hashso_mrkbuf;
 		scan->currentItemData = scan->currentMarkData;
 	}
 
