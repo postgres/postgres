@@ -12,27 +12,30 @@
 # utesch@aut.tu-freiberg.de   * Freiberg, Germany                   *
 #*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
 
-# this file should be '$PGDATA/pg_geqo', but it doesn't have
-# to exist
+# To make this file do something, copy it to '$PGDATA/pg_geqo'
+# and edit parameters to taste.
+# If '$PGDATA/pg_geqo' doesn't exist, the system will use default parameters.
+# The file is re-read for every GEQO optimization, if it does exist.
 
 # comment character is '#'
 #
 # separator between recognized tag and possible value
 # must be white space
 
-# qs: means query size, which is the number of relations
+# QS: means query size, which is the number of relations
 #     contained in a query
 
 #=================+===================+=============================+
 # RECOGNIZED TAGS |  POSSIBLE VALUES  |          DEFAULTS           |
 #=================+===================+=============================+
-# 'Pool_Size'     | positive int      | 2^(qs+1)                    |
+# 'Pool_Size'     | positive int      | 2^(QS+1), but not less than |
+#                 |                   | 128 nor more than 1024.     |
 #-----------------+-------------------+-----------------------------+
 # 'Effort'        | [low,medium,high] | medium                      |
 #-----------------+-------------------+-----------------------------+
-# 'Generations'   | positive int      | 'Effort' * log2('Pool_Size')|
+# 'Generations'   | positive int      | Effort * log2(Pool_Size)    |
 #-----------------+-------------------+-----------------------------+
-# 'Selection_Bias'| [1.50; 2.00]      | 2.0                         |
+# 'Selection_Bias'| [1.50 .. 2.00]    | 2.0                         |
 #-----------------+-------------------+-----------------------------+
 # 'Random_Seed'   | positive long     | time(NULL)                  |
 #=================+===================+=============================+
@@ -41,15 +44,20 @@
 # It gives us the number of individuals within one population.
 #
 # 'Effort' 'low' means integer value of 1, 'medium' 40, and 'high' 80.
+# Note: Effort is *only* used to derive a default value for Generations
+# --- if you specify Generations then Effort does not matter.
 #
-# 'Generations' gives us the stopping criterion for the number
-# of iterations within the genetic algorithm.
+# 'Generations' specifies the number of iterations in the genetic algorithm.
+#
+# GEQO runtime is roughly proportional to Pool_Size + Generations.
 #
 # 'Selection_Bias' gives us the selective pressure within the
 # population.
 #
 # 'Random_Seed' is the random seed for the random() function.
-# You don't have to set it.
+# You don't have to set it.  If you do set it, then successive GEQO
+# runs will produce repeatable results, whereas if you don't set it
+# there will be some randomness in the results...
 
 # All parameters will be computed within the GEQO module when they
 # are not set in the pg_geqo file.
