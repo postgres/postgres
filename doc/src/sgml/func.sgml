@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.190 2004/03/04 20:09:29 dennis Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.191 2004/03/05 02:41:14 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5309,6 +5309,7 @@ date_trunc('<replaceable>field</replaceable>', <replaceable>source</replaceable>
      <member><literal>minute</literal></member>
      <member><literal>hour</literal></member>
      <member><literal>day</literal></member>
+     <member><literal>week</literal></member>
      <member><literal>month</literal></member>
      <member><literal>year</literal></member>
      <member><literal>decade</literal></member>

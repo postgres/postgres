@@ -145,6 +145,8 @@ SELECT '' AS "49", d1 FROM TIMESTAMPTZ_TBL
 SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
    FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
+SELECT '' AS date_trunc_week, date_trunc( 'week', timestamp with time zone '2004-02-29 15:44:17.71393' ) AS week_trunc;
+
 -- Test casting within a BETWEEN qualifier
 SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
   FROM TIMESTAMPTZ_TBL

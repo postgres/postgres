@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.99 2004/02/14 20:16:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.100 2004/03/05 02:41:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2564,6 +2564,13 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 
 		switch (val)
 		{
+			case DTK_WEEK:
+				isoweek2date( date2isoweek( tm->tm_year, tm->tm_mon, tm->tm_mday ), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday) );
+				tm->tm_hour = 0;
+				tm->tm_min = 0;
+				tm->tm_sec = 0;
+				fsec = 0;
+				break;
 			case DTK_MILLENNIUM:
 				tm->tm_year = (tm->tm_year / 1000) * 1000;
 			case DTK_CENTURY:
@@ -2672,6 +2679,13 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 
 		switch (val)
 		{
+			case DTK_WEEK:
+				isoweek2date( date2isoweek( tm->tm_year, tm->tm_mon, tm->tm_mday ), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday) );
+				tm->tm_hour = 0;
+				tm->tm_min = 0;
+				tm->tm_sec = 0;
+				fsec = 0;
+				break;
 			case DTK_MILLENNIUM:
 				tm->tm_year = (tm->tm_year / 1000) * 1000;
 			case DTK_CENTURY:

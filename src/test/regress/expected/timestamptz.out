@@ -494,6 +494,12 @@ SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
     | @ 1460 days 17 hours 32 mins 1 sec
 (54 rows)
 
+SELECT '' AS date_trunc_week, date_trunc( 'week', timestamp with time zone '2004-02-29 15:44:17.71393' ) AS week_trunc;
+ date_trunc_week |          week_trunc          
+-----------------+------------------------------
+                 | Mon Feb 23 00:00:00 2004 PST
+(1 row)
+
 -- Test casting within a BETWEEN qualifier
 SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
   FROM TIMESTAMPTZ_TBL
@@ -1317,9 +1323,9 @@ SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. H
            | 2001 A.D. 2001 a.d. 2001 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
 (64 rows)
 
-SELECT '' AS to_char_10, to_char(d1, 'YYYY WW IYYY IYY IY I IW')
+SELECT '' AS to_char_10, to_char(d1, 'YYYY WW IYYY IYY IY I IW') 
    FROM TIMESTAMPTZ_TBL;
- to_char_10 |     to_char
+ to_char_10 |         to_char          
 ------------+--------------------------
             | 
             | 

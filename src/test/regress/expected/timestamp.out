@@ -499,6 +499,12 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
     | @ 1460 days 17 hours 32 mins 1 sec
 (54 rows)
 
+SELECT '' AS date_trunc_week, date_trunc( 'week', timestamp '2004-02-29 15:44:17.71393' ) AS week_trunc;
+ date_trunc_week |        week_trunc        
+-----------------+--------------------------
+                 | Mon Feb 23 00:00:00 2004
+(1 row)
+
 -- Test casting within a BETWEEN qualifier
 SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
   FROM TIMESTAMP_TBL
