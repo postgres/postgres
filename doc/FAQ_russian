@@ -165,7 +165,7 @@
    
    Sistema Upravleniya Bazami Dannyh PostgreSQL
    
-   Portion copyright (c) 1996-2004, PostgreSQL Global Development Group
+   Portions copyright (c) 1996-2004, PostgreSQL Global Development Group
    Portions Copyright (c) 1994-6 Regents of the University of California
    
    Predostavlyayutsya prava na ispol'zovanie, kopirovanie, izmenenie i
@@ -573,7 +573,7 @@
     proizvoditel'nosti?
     
    Nesomnenno, indeksy mogut uvelichit' skorost' vypolneniya zaprosov.
-   Komanda EXPLAIN ANALIZE pozvolyaet vam posmotret' kak PostgreSQL
+   Komanda EXPLAIN ANALYZE pozvolyaet vam posmotret' kak PostgreSQL
    interpretiruet vash zapros i kakie indeksy ispol'zuyutsya.
    
    Esli vy vypolnyaete mnogo operatorov INSERT, rassmotrite vozmozhnost'
