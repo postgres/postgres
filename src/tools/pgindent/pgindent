@@ -1292,7 +1292,7 @@ int	pgindent_func_no_var_fix;\
 # pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 # add space after comments that start on tab stops
-	sed 's:\([;,)]\)/\*.*\*/\)$:\1	\2:' |
+	sed 's:\([;,)/]\)/\*.*\*/\)$:\1	\2:' |
 # work around #else indenting next line if #ifdef defines variables at top
 # work around misindenting of function with no variables defined
 	awk '

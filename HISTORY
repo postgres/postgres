@@ -82,7 +82,8 @@ Have psql \d display indexes in unique, primary groupings (Christopher Kings-Lyn
 Improve PL/pgSQL error reporting (Tom)
 Add DROP CONSTRAINT for CHECK constraints (Christopher Kings-Lynne)
 PL/pgSQL Allow IS and FOR in cursors (Bruce)
-Native language error messages, psql, pg_dump, libpq, configure --enable-nls (Peter E)
+Native language error messages, psql, pg_dump, libpq, configure --enable-nls
+  (Peter E, Serguei A. Mokhov, Weiping He, Forth)
 Allow NULL to appear at beginning/end based on ORDER BY (Tom)
 Add %TYPE capability to CREATE TYPE (Ian Lance Taylor)
 Truncate extra-long sequence names to a reasonable value (Tom)
@@ -131,8 +132,12 @@ New postgresql.conf option to enable/disable "col = NULL" comparisons
 New postgresql.conf parameter to control memory usage by VACUUM (Tom)
 New postgresql.conf time out parameter for client authentication (Tom)
 New pg_ctl 'reload' option (Tom)
-Add /contrib/intarray boolean queries, fixes (Oleg Bartunov)
+Add /contrib/intarray boolean queries, binary search, fixes (Oleg Bartunov)
 New postgresql.conf to set maximum open files (Tom)
+New CREATE OR REPLACE FUNCTION that preserves function oid (Gavin Sherry)
+DROP AGGREGATE and COMMENT ON AGGREGATE now accept an aggtype (Tom)
+Prevent output of default index op class in pg_dump (Tom)
+Allow trailing semicolons in psql backslash commands (Greg Sabino Mullane)
 
 Types
 -----
@@ -140,18 +145,27 @@ CHAR(n)/VARCHAR(n) represents letters, not bytes (Tatsuo)
 CHAR(), VARCHAR() now returns error on storage of too long string (Peter E)
 BIT, BIT VARYING now returns error on too long input (Peter E)
 New function bit_length() (Peter E)
-inet, cidr text conversion functions (Alex Pilosov)
-inet, cidr operators << and <<= indexable (Alex Pilosov)
+INET, CIDR text conversion functions (Alex Pilosov)
+INET, CIDR operators << and <<= indexable (Alex Pilosov)
 Bytea comparison improvements, \### now requires three octal digits (Joe Conway)
 Make trim/ltrim/rtrim/btrim/lpad/rpad/translate() multibyte aware (Tatsuo)
 Add pg_database_encoding_max_length() (Tatsuo)
+Add pg_client_encoding() function (Tatsuo)
 Make mic2ascii() non-ASCII aware (Tatsuo)
 Measure transaction times in milliseconds (Thomas)
 now() returns time in milliseconds (Thomas)
 New TIMEZONE WITHOUT TIMEZONE data types (Thomas)
 Add ISO date/time specification with 'T', yyyy-mm-ddThh:mm:ss (Thomas)
 New xid/int comparison functions (Hiroshi)
-Fix TID sequential scans (H
+Fix TID sequential scans (Hiroshi)
+Add precision to TIME and TIMESTAMP data types (Thomas)
+Cachability fixes (Thomas, Tom)
+PL/TCL now reports errorInfo (Vsevolod Lobko)
+Modify type coersion logic to attempt binary-compatible functions first (Tom)
+Allow optional () after current_user, session_user, user, etc. (Peter E)
+Add compatibility functions to odbc.sql (Peter E)
+Force new password prompt when changing user and database in psql (Tatsuo, Tom)
+
 Performance
 -----------
 Optimizer improvements (Tom)
@@ -163,6 +177,9 @@ Load pg_hba.conf only on startup and SIGHUP (Bruce)
 Rtree performance improvements (Kenneth Been)
 Improve lock manager to reduce lock contention (Tom)
 Btree splits more efficient (Tom)
+Dynahash portability improvements (Tom)
+Keep relcache entries for index access support functions (Tom)
+Make ALTER TABLE RENAME COLUMN update column names of indexes (Brent Verner)
 
 Interfaces
 ----------
@@ -194,6 +211,7 @@ JDBC
 	Add bytea type capability (Barry Lind)
 	Add isNullable() (Rene Pijlman)
 	JDBC date/time test suite fixes (Liam Stewart)
+	Fix for SELECT 'id' AS xxx FROM table (Dave Cramer)
 ODBC
 	Remove query limit (Hiroshi)
 	Remove text field size limit (Hiroshi)
@@ -250,6 +268,8 @@ Remove compile-time limit on number of backends (Tom)
 Enable SIGTERM, SIGQUIT to kill backends (Jan)
 New pgjindent utility to indent java code (Bruce)
 Replace strcasecmp() with strcmp() where appropriate (Peter E)
+Remove configure --enable-pltcl-utf option
+Make PL/PgSQL use the backends type coersion code (Tom)
 
 
 
