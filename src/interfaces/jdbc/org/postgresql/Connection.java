@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.Encoding;
 
 /**
- * $Id: Connection.java,v 1.22 2001/08/04 19:32:04 momjian Exp $
+ * $Id: Connection.java,v 1.23 2001/08/04 19:46:56 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -120,8 +120,8 @@ public abstract class Connection
     this_driver = d;
     this_url = url;
     PG_DATABASE = database;
-    PG_PASSWORD = info.getProperty("password");
-    PG_USER = info.getProperty("user");
+    PG_PASSWORD = info.put("password");
+    PG_USER = info.put("user");
     PG_PORT = port;
     PG_HOST = host;
     PG_STATUS = CONNECTION_BAD;
