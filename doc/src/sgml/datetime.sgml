@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.12 2000/09/29 20:21:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.13 2000/10/20 13:57:10 thomas Exp $
 Date/time details
 -->
 
@@ -94,14 +94,14 @@ Date/time details
        <entry>Central Australia Std Time</entry>
       </row>
       <row>
+       <entry>SAST</entry>
+       <entry>+09:30 </entry>
+       <entry>South Australia Std Time</entry>
+      </row>
+      <row>
        <entry>CAST</entry>
        <entry>+09:30 </entry>
        <entry>Central Australia Std Time</entry>
-      </row>
-      <row>
-       <entry>SAT</entry>
-       <entry>+9:30</entry>
-       <entry>South Australian Std Time</entry>
       </row>
       <row>
        <entry>AWSST</entry>
@@ -224,11 +224,6 @@ Date/time details
        <entry>Dansk Normal Tid</entry>
       </row>
       <row>
-       <entry>DST</entry>
-       <entry>+1:00 </entry>
-       <entry>Dansk Standard Time (?)</entry>
-      </row>
-      <row>
        <entry>FST</entry>
        <entry>+1:00 </entry>
        <entry>French Summer Time</entry>
@@ -313,11 +308,13 @@ Date/time details
        <entry>-4:00 </entry>
        <entry>Eastern Daylight Time</entry>
       </row>
+<!--
       <row>
        <entry>ZP4</entry>
        <entry>-4:00</entry>
        <entry>GMT +4 hours</entry>
       </row>
+-->
       <row>
        <entry>CDT</entry>
        <entry>-5:00 </entry>
@@ -328,11 +325,13 @@ Date/time details
        <entry>-5:00 </entry>
        <entry>Eastern Standard Time</entry>
       </row>
+<!--
       <row>
        <entry>ZP5</entry>
        <entry>-5:00</entry>
        <entry>GMT +5  hours</entry>
       </row>
+-->
       <row>
        <entry>CST</entry>
        <entry>-6:00 </entry>
@@ -343,11 +342,13 @@ Date/time details
        <entry>-6:00</entry>
        <entry>Mountain Daylight Time</entry>
       </row>
+<!--
       <row>
        <entry>ZP6</entry>
        <entry>-6:00</entry>
        <entry>GMT +6  hours</entry>
       </row>
+-->
       <row>
        <entry>MST</entry>
        <entry>-7:00</entry>
@@ -416,8 +417,11 @@ Date/time details
 
    <para>
     If the compiler option USE_AUSTRALIAN_RULES is set 
-    then <literal>CST</literal> and <literal>EST</literal> will be
-    interpreted using Australian conventions.
+    then <literal>CST</literal>, <literal>EST</literal>, and
+    <literal>SAT</literal> will be
+    interpreted using Australian conventions. Without this option,
+    <literal>SAT</literal> is interpreted as a noise word indicating
+    "<literal>Saturday</literal>".
 
     <table tocentry="1">
      <title><productname>Postgres</productname> Australian Time Zones</title>
@@ -440,6 +444,11 @@ Date/time details
 	<entry>EST</entry>
 	<entry>+10:00</entry>
 	<entry>Australian Eastern Standard Time</entry>
+       </row>
+       <row>
+	<entry>SAT</entry>
+	<entry>+9:30</entry>
+	<entry>South Australian Std Time</entry>
        </row>
       </tbody>
      </tgroup>
@@ -652,9 +661,9 @@ Date/time details
    Gregorian calendar.
    
    In the Julian calendar, the tropical year is approximated as 365 1/4
-   days = 365.25 days. This gives an error of 1 day in approximately
-   128 days.
-   The accumulating calendar error prompted  pope Gregory XIII 
+   days = 365.25 days. This gives an error of about 1 day in 
+   128 years.
+   The accumulating calendar error prompted  Pope Gregory XIII 
    to reform the calendar in accordance with instructions
    from the Council of Trent.
   </para>
