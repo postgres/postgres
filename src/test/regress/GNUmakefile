@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.7 1997/04/27 02:56:03 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.8 1997/06/06 01:35:57 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -41,8 +41,8 @@ endif
 # prepare to run the test (including clean-up after the last run)
 #
 all: $(INFILES)
-	cd input; gmake all; cd ..
-	cd output; gmake all; cd ..
+	cd input; $(MAKE) all; cd ..
+	cd output; $(MAKE) all; cd ..
 
 #
 # run the test
