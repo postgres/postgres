@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.204.2.2 2004/04/29 19:56:35 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.204.2.3 2004/05/05 16:09:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -621,6 +621,8 @@ if [ "$debug" = yes ]
 then
     BOOTSTRAP_TALK_ARG="-d 5"
 fi
+
+unset PGCLIENTENCODING
 
 $ECHO_N "creating template1 database in $PGDATA/base/1... "$ECHO_C
 
