@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.212 2002/10/16 04:38:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.213 2002/10/24 23:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,6 +506,9 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		conn->pgpass = tmp;
 	else
 		conn->pgpass = strdup(DefaultPassword);
+
+	if ((tmp = getenv("PGCONNECT_TIMEOUT")) != NULL)
+		conn->connect_timeout = strdup(tmp);
 
 #ifdef USE_SSL
 	if ((tmp = getenv("PGREQUIRESSL")) != NULL)
@@ -1051,32 +1054,29 @@ static int
 connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
-
-	time_t			finish_time = -1;
+	time_t			finish_time = ((time_t) -1);
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
 	/*
-	 * Prepare to time calculations, if connect_timeout isn't zero.
+	 * Set up a time limit, if connect_timeout isn't zero.
 	 */
 	if (conn->connect_timeout != NULL)
 	{
 		int timeout = atoi(conn->connect_timeout);
 
-		if (timeout == 0)
+		if (timeout > 0)
 		{
-			conn->status = CONNECTION_BAD;
-			return 0;
+			/* Rounding could cause connection to fail; need at least 2 secs */
+			if (timeout < 2)
+				timeout = 2;
+			/* calculate the finish time based on start + timeout */
+			finish_time = time(NULL) + timeout;
 		}
-		/* Rounding could cause connection to fail;we need at least 2 secs */
-		if (timeout == 1)
-			timeout++;
-		/* calculate the finish time based on start + timeout */
-		finish_time = time(NULL) + timeout;
 	}
 
-	while (finish_time == -1 || time(NULL) < finish_time)
+	for (;;)
 	{
 		/*
 		 * Wait, if necessary.	Note that the initial state (just after
@@ -1118,8 +1118,6 @@ connectDBComplete(PGconn *conn)
 		 */
 		flag = PQconnectPoll(conn);
 	}
-	conn->status = CONNECTION_BAD;
-	return 0;
 }
 
 /* ----------------

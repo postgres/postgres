@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.84 2002/10/16 02:55:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.85 2002/10/24 23:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,18 +779,27 @@ pqFlush(PGconn *conn)
 int
 pqWait(int forRead, int forWrite, PGconn *conn)
 {
-	return pqWaitTimed(forRead, forWrite, conn, -1);
+	return pqWaitTimed(forRead, forWrite, conn, (time_t) -1);
 }
 
+/*
+ * pqWaitTimed: wait, but not past finish_time.
+ *
+ * If finish_time is exceeded then we return failure (EOF).  This is different
+ * from the response for a kernel exception (return 0) because we don't want
+ * the caller to try to read/write in that case.
+ *
+ * finish_time = ((time_t) -1) disables the wait limit.
+ */
 int
 pqWaitTimed(int forRead, int forWrite, PGconn *conn, time_t finish_time)
 {
 	fd_set		input_mask;
 	fd_set		output_mask;
 	fd_set		except_mask;
-
 	struct timeval tmp_timeout;
 	struct timeval *ptmp_timeout = NULL;
+	int			selresult;
 
 	if (conn->sock < 0)
 	{
@@ -820,30 +829,38 @@ retry5:
 			FD_SET(conn->sock, &output_mask);
 		FD_SET(conn->sock, &except_mask);
 
-		if (finish_time != -1)
+		if (finish_time != ((time_t) -1))
 		{
 			/*
-			 * 	select() may modify timeout argument on some platforms so
-			 *	use copy.
-			 *	XXX Do we really want to do that?  If select() returns
-			 *	the number of seconds remaining, we are resetting
-			 *	the timeout to its original value.  This will yeild
-			 *	incorrect timings when select() is interrupted.
-			 *	bjm 2002-10-14
+			 * Set up delay.  Assume caller incremented finish_time
+			 * so that we can error out as soon as time() passes it.
+			 * Note we will recalculate delay each time through the loop.
 			 */
-			if ((tmp_timeout.tv_sec = finish_time - time(NULL)) < 0)
-				tmp_timeout.tv_sec = 0;  /* possible? */
+			time_t	now = time(NULL);
+
+			if (finish_time > now)
+				tmp_timeout.tv_sec = finish_time - now;
+			else
+				tmp_timeout.tv_sec = 0;
 			tmp_timeout.tv_usec = 0;
 			ptmp_timeout = &tmp_timeout;
 		}
-		if (select(conn->sock + 1, &input_mask, &output_mask,
-				   &except_mask, ptmp_timeout) < 0)
+
+		selresult = select(conn->sock + 1, &input_mask, &output_mask,
+						   &except_mask, ptmp_timeout);
+		if (selresult < 0)
 		{
 			if (SOCK_ERRNO == EINTR)
 				goto retry5;
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("select() failed: %s\n"),
 							  SOCK_STRERROR(SOCK_ERRNO));
+			return EOF;
+		}
+		if (selresult == 0)
+		{
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext("timeout expired\n"));
 			return EOF;
 		}
 	}
