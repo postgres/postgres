@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.114 1999/12/20 10:40:40 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.115 2000/01/16 19:57:00 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -27,7 +27,6 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "miscadmin.h"
 
 #include "access/heapam.h"
 #include "access/genam.h"
@@ -48,6 +47,7 @@
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/trigger.h"
+#include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
@@ -67,8 +67,9 @@
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-				  Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
-					char relkind, char *temp_relname);
+								Relation new_rel_desc, Oid new_rel_oid,
+								int natts,
+								char relkind, char *temp_relname);
 static void AddToNoNameRelList(Relation r);
 
 static void DeleteAttributeTuples(Relation rel);
@@ -199,7 +200,8 @@ heap_create(char *relname,
 	 */
 	AssertArg(natts > 0);
 
-	if (relname && !allowSystemTableMods && IsSystemRelationName(relname) && IsNormalProcessingMode())
+	if (relname && !allowSystemTableMods &&
+		IsSystemRelationName(relname) && IsNormalProcessingMode())
 	{
 		elog(ERROR, "Illegal class name '%s'"
 			 "\n\tThe 'pg_' name prefix is reserved for system catalogs",
@@ -361,7 +363,7 @@ heap_storage_create(Relation rel)
  *		   descriptor contains a valid set of attribute names
  *
  *		2) pg_class is opened and RelationFindRelid()
- *		   preforms a scan to ensure that no relation with the
+ *		   performs a scan to ensure that no relation with the
  *		   same name already exists.
  *
  *		3) heap_create_with_catalog() is called to create the new relation
@@ -474,8 +476,7 @@ CheckAttributeNames(TupleDesc tupdesc)
 /* --------------------------------
  *		RelnameFindRelid
  *
- *		this preforms a scan of pg_class to ensure that
- *		no relation with the same name already exists.
+ *		Find any existing relation of the given name.
  * --------------------------------
  */
 Oid
@@ -580,14 +581,10 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 
 	/* ----------------
-	 *	initialize tuple descriptor.  Note we use setheapoverride()
-	 *	so that we can see the effects of our TypeDefine() done
-	 *	previously.
+	 *	initialize tuple descriptor.
 	 * ----------------
 	 */
-	setheapoverride(true);
 	fillatt(tupdesc);
-	setheapoverride(false);
 
 	/* ----------------
 	 *	first we add the user attributes..
@@ -655,7 +652,7 @@ static void
 AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid,
-					unsigned natts,
+					int natts,
 					char relkind,
 					char *temp_relname)
 {
@@ -669,8 +666,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 * ----------------
 	 */
 	new_rel_reltup = new_rel_desc->rd_rel;
-
-	/* CHECK should get new_rel_oid first via an insert then use XXX */
 
 	/* ----------------
 	 * Here we insert bogus estimates of the size of the new relation.
@@ -791,7 +786,7 @@ heap_create_with_catalog(char *relname,
 	 * ----------------
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
-	if (natts == 0 || natts > MaxHeapAttributeNumber)
+	if (natts <= 0 || natts > MaxHeapAttributeNumber)
 		elog(ERROR, "Number of attributes is out of range"
 			 "\n\tFrom 1 to %d attributes may be specified",
 			 MaxHeapAttributeNumber);
@@ -1856,6 +1851,12 @@ StoreConstraints(Relation rel)
 	if (!constr)
 		return;
 
+	/* deparsing of constraint expressions will fail unless the just-created
+	 * pg_attribute tuples for this relation are made visible.  So, bump
+	 * the command counter.
+	 */
+	CommandCounterIncrement();
+
 	for (i = 0; i < constr->num_defval; i++)
 		StoreAttrDefault(rel, constr->defval[i].adnum,
 						 constr->defval[i].adbin, false);
@@ -1882,7 +1883,9 @@ StoreConstraints(Relation rel)
  * expression.
  *
  * NB: caller should have opened rel with AccessExclusiveLock, and should
- * hold that lock till end of transaction.
+ * hold that lock till end of transaction.  Also, we assume the caller has
+ * done a CommandCounterIncrement if necessary to make the relation's catalog
+ * tuples visible.
  */
 void
 AddRelationRawConstraints(Relation rel,
