@@ -3614,9 +3614,29 @@ PGAPI_Procedures(
 			  SWORD cbProcName)
 {
 	static char *func = "PGAPI_Procedures";
+	StatementClass	*stmt = (StatementClass *) hstmt;
+	Int2		result_cols;
 
 	mylog("%s: entering...\n", func);
 
+	/*
+ 	* a statement is actually executed, so we'll have to do this
+ 	* ourselves.
+ 	*/
+	result_cols = 8;
+	extend_bindings(stmt, result_cols);
+
+	/* set the field names */
+	QR_set_num_fields(stmt->result, result_cols);
+	QR_set_field_info(stmt->result, 0, "PROCEDURE_CAT", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 1, "PROCEDURE_SCHEM", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 2, "PROCEDURE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 3, "NUM_INPUT_PARAMS", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 4, "NUM_OUTPUT_PARAMS", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 5, "NUM_RESULT_SET", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 6, "REMARKS", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 7, "PROCEDURE_TYPE", PG_TYPE_INT2, 2);
+                                                             
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
 }

@@ -92,6 +92,8 @@ PGAPI_Error(
 {
 	char	   *msg;
 	int			status;
+	BOOL	once_again = FALSE;
+	SWORD	msglen;
 
 	mylog("**** PGAPI_Error: henv=%u, hdbc=%u, hstmt=%u <%d>\n", henv, hdbc, hstmt, cbErrorMsgMax);
 
@@ -101,8 +103,6 @@ PGAPI_Error(
 	{
 		/* CC: return an error of a hstmt  */
 		StatementClass *stmt = (StatementClass *) hstmt;
-		SWORD	msglen;
-		BOOL	once_again = FALSE;
 
 		if (SC_get_error(stmt, &status, &msg))
 		{
@@ -306,8 +306,15 @@ PGAPI_Error(
 				return SQL_NO_DATA_FOUND;
 			}
 
+			msglen = strlen(msg);
 			if (NULL != pcbErrorMsg)
-				*pcbErrorMsg = (SWORD) strlen(msg);
+			{
+				*pcbErrorMsg = msglen;
+				if (cbErrorMsgMax == 0)
+					once_again = TRUE;
+				else if (msglen >= cbErrorMsgMax)
+					*pcbErrorMsg = cbErrorMsgMax - 1;
+			}
 			if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
 				strncpy_null(szErrorMsg, msg, cbErrorMsgMax);
 			if (NULL != pfNativeError)
@@ -391,7 +398,13 @@ PGAPI_Error(
 			return SQL_NO_DATA_FOUND;
 		}
 
-		return SQL_SUCCESS;
+		if (once_again)
+		{
+			conn->errornumber = status;
+			return SQL_SUCCESS_WITH_INFO;
+		}
+		else
+			return SQL_SUCCESS;
 	}
 	else if (SQL_NULL_HENV != henv)
 	{

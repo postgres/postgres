@@ -1674,12 +1674,19 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 				if (buf)
 				{
-					CVT_APPEND_DATA(buf, used);
+					switch (used)
+					{
+						case SQL_NULL_DATA:
+							break;
+						case SQL_NTS:
+							CVT_APPEND_STR(buf);
+							break;
+						default:
+							CVT_APPEND_DATA(buf, used);
+					}
 				}
 				else
-				{
 					CVT_APPEND_STR(param_string);
-				}
 
 				if (param_sqltype == SQL_BIT)
 					CVT_APPEND_CHAR('\'');		/* Close Quote */
