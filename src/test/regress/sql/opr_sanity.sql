@@ -132,12 +132,15 @@ WHERE (p1.oprleft = 0 and p1.oprkind != 'l') OR
     (p1.oprright = 0 and p1.oprkind != 'r') OR
     (p1.oprright != 0 and p1.oprkind = 'r');
 
--- Hash operators should be commutative binary ops returning bool.
+-- Hashing only works on simple equality operators "type = sametype",
+-- since the hash itself depends on the bitwise representation of the type.
+-- Check that allegedly hashable operators look like they might be "=".
 
 SELECT p1.oid, p1.oprname
 FROM pg_operator as p1
 WHERE p1.oprcanhash AND NOT
-    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprcom != 0);
+    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprleft = p1.oprright AND
+     p1.oprname = '=' AND p1.oprcom = p1.oid);
 
 -- Look for conflicting operator definitions (same names and input datatypes).
 

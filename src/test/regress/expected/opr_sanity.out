@@ -135,10 +135,13 @@ oid|oprname
 QUERY: SELECT p1.oid, p1.oprname
 FROM pg_operator as p1
 WHERE p1.oprcanhash AND NOT
-    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprcom != 0);
-oid|oprname
----+-------
-(0 rows)
+    (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprleft = p1.oprright AND
+     p1.oprname = '=' AND p1.oprcom = p1.oid);
+ oid|oprname
+----+-------
+1136|=      
+1137|=      
+(2 rows)
 
 QUERY: SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
 FROM pg_operator AS p1, pg_operator AS p2
