@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.7 1999/10/06 03:00:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.8 1999/10/13 16:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ int PgDatabase::CmdTuples()
 char *a;
 
   a = (char *)PQcmdTuples(pgResult);
-  if(NULL == a) return -1;
+  if(!a[0]) return -1;
 
 return atoi(a);
 }
