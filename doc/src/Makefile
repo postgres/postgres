@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.27 2001/11/23 17:56:13 momjian Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.28 2001/11/25 22:17:27 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -32,9 +32,9 @@ sources:
 sources.tar:
 	$(TAR) -cf $@ sgml graphics
 
+# Build twice to resolve index entries
 $(addsuffix .tar, $(BOOKS)):
 	$(MAKE) -C sgml clean
-	# build index entries first
 	$(MAKE) -C sgml $(basename $@).html
 	$(MAKE) -C sgml $(basename $@).html JADEFLAGS='-V html-manifest'
 	cd sgml && $(TAR) -cf ../$@ `cat HTML.manifest` `echo *.gif | grep -v '\*'` *.css
