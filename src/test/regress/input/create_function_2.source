@@ -28,8 +28,9 @@ CREATE FUNCTION equipment(hobbies_r)
 CREATE FUNCTION user_relns()
    RETURNS setof name
    AS 'select relname 
-       from pg_class 
-       where relname !~ ''pg_.*'' and
+       from pg_class c, pg_namespace n
+       where relnamespace = n.oid and
+             (nspname !~ ''pg_.*'' and nspname <> ''information_schema'') and
              relkind <> ''i'' '
    LANGUAGE 'sql';
 

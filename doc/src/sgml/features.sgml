@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.12 2002/12/14 00:24:23 petere Exp $
 -->
 
 <appendix id="features">
@@ -656,6 +656,48 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 mo
         <entry></entry>
        </row>
        <row>
+        <entry>F021</entry>
+        <entry>Core</entry>
+        <entry>Basic information schema</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-01</entry>
+        <entry>Core</entry>
+        <entry>COLUMNS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-02</entry>
+        <entry>Core</entry>
+        <entry>TABLES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-03</entry>
+        <entry>Core</entry>
+        <entry>VIEWS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-04</entry>
+        <entry>Core</entry>
+        <entry>TABLE_CONSTRAINTS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-05</entry>
+        <entry>Core</entry>
+        <entry>REFERENTIAL_CONSTRAINTS view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F021-06</entry>
+        <entry>Core</entry>
+        <entry>CHECK_CONSTRAINTS view</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry>F031</entry>
         <entry>Core</entry>
         <entry>Basic schema manipulation</entry>
@@ -906,6 +948,30 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 mo
         <entry></entry>
        </row>
        <row>
+        <entry>F231</entry>
+        <entry></entry>
+        <entry>Privilege Tables</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F231-01</entry>
+        <entry></entry>
+        <entry>TABLE_PRIVILEGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F231-02</entry>
+        <entry></entry>
+        <entry>COLUMN_PRIVILEGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F231-03</entry>
+        <entry></entry>
+        <entry>USAGE_PRIVILEGES view</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry>F251</entry>
         <entry></entry>
         <entry>Domain support</entry>
@@ -1131,6 +1197,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 mo
         <entry>F491</entry>
         <entry>Enhanced integrity management</entry>
         <entry>Constraint management</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>F501-03</entry>
+        <entry>Core</entry>
+        <entry>SQL_LANGUAGES view</entry>
         <entry></entry>
        </row>
        <row>
@@ -1558,48 +1630,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 mo
         <entry></entry>
        </row>
        <row>
-        <entry>F021</entry>
-        <entry>Core</entry>
-        <entry>Basic information schema</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-01</entry>
-        <entry>Core</entry>
-        <entry>COLUMNS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-02</entry>
-        <entry>Core</entry>
-        <entry>TABLES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-03</entry>
-        <entry>Core</entry>
-        <entry>VIEWS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-04</entry>
-        <entry>Core</entry>
-        <entry>TABLE_CONSTRAINTS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-05</entry>
-        <entry>Core</entry>
-        <entry>REFERENTIAL_CONSTRAINTS view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F021-06</entry>
-        <entry>Core</entry>
-        <entry>CHECK_CONSTRAINTS view</entry>
-        <entry></entry>
-       </row>
-       <row>
         <entry>F031-19</entry>
         <entry>Core</entry>
         <entry>REVOKE statement: RESTRICT clause</entry>
@@ -1665,30 +1695,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 mo
         <entry>F121-02</entry>
         <entry></entry>
         <entry>SET TRANSACTION statement: DIAGNOSTICS SIZE clause</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F231</entry>
-        <entry></entry>
-        <entry>Privilege Tables</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F231-01</entry>
-        <entry></entry>
-        <entry>TABLE_PRIVILEGES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F231-02</entry>
-        <entry></entry>
-        <entry>COLUMN_PRIVILEGES view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F231-03</entry>
-        <entry></entry>
-        <entry>USAGE_PRIVILEGES view</entry>
         <entry></entry>
        </row>
        <row>
@@ -1767,12 +1773,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.11 2002/12/06 05:07:12 mo
         <entry>F501-02</entry>
         <entry>Core</entry>
         <entry>SQL_SIZING view</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>F501-03</entry>
-        <entry>Core</entry>
-        <entry>SQL_LANGUAGES view</entry>
         <entry></entry>
        </row>
        <row>

@@ -763,7 +763,7 @@ drop table cchild;
 --
 -- Check that ruleutils are working
 --
-SELECT viewname, definition FROM pg_views ORDER BY viewname;
+SELECT viewname, definition FROM pg_views WHERE schemaname <> 'information_schema' ORDER BY viewname;
 
 SELECT tablename, rulename, definition FROM pg_rules 
 	ORDER BY tablename, rulename;

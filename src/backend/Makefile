@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.88 2002/10/09 16:21:54 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.89 2002/12/14 00:24:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -131,7 +131,7 @@ ifeq ($(MAKE_DLL), true)
 	$(INSTALL_DATA) libpostgres.a $(DESTDIR)$(libdir)/libpostgres.a
 endif
 endif
-	$(MAKE) -C catalog install-bki
+	$(MAKE) -C catalog install-data
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
@@ -170,7 +170,7 @@ ifeq ($(MAKE_DLL), true)
 	rm -f $(DESTDIR)$(libdir)/libpostgres.a
 endif
 endif
-	$(MAKE) -C catalog uninstall-bki
+	$(MAKE) -C catalog uninstall-data
 	rm -f $(DESTDIR)$(datadir)/pg_hba.conf.sample \
 	      $(DESTDIR)$(datadir)/pg_ident.conf.sample \
 	      $(DESTDIR)$(datadir)/postgresql.conf.sample

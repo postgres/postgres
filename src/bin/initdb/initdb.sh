@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.177 2002/11/25 21:41:46 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.178 2002/12/14 00:24:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1040,6 +1040,10 @@ $ECHO_N "setting privileges on built-in objects... "$ECHO_C
 EOF
 ) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+echo "ok"
+
+$ECHO_N "creating information schema... "$ECHO_C
+"$PGPATH"/postgres $PGSQL_OPT -N template1 > /dev/null < "$datadir"/information_schema.sql || exit_nicely
 echo "ok"
 
 $ECHO_N "vacuuming database template1... "$ECHO_C
