@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.28 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.29 2002/05/24 18:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,10 @@ _hash_search(Relation rel,
  *	_hash_next() -- Get the next item in a scan.
  *
  *		On entry, we have a valid currentItemData in the scan, and a
- *		read lock on the page that contains that item.	We do not have
- *		the page pinned.  We return the next item in the scan.	On
- *		exit, we have the page containing the next item locked but not
- *		pinned.
+ *		pin and read lock on the page that contains that item.
+ *		We find the next item in the scan, if any.
+ *		On success exit, we have the page containing the next item
+ *		pinned and locked.
  */
 bool
 _hash_next(IndexScanDesc scan, ScanDirection dir)
@@ -74,25 +74,12 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 
 	rel = scan->indexRelation;
 	so = (HashScanOpaque) scan->opaque;
-	current = &(scan->currentItemData);
-
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
-
-	/*
-	 * XXX 10 may 91:  somewhere there's a bug in our management of the
-	 * cached buffer for this scan.  wei discovered it.  the following is
-	 * a workaround so he can work until i figure out what's going on.
-	 */
-
-	if (!BufferIsValid(so->hashso_curbuf))
-	{
-		so->hashso_curbuf = _hash_getbuf(rel,
-									  ItemPointerGetBlockNumber(current),
-										 HASH_READ);
-	}
 
 	/* we still have the buffer pinned and locked */
 	buf = so->hashso_curbuf;
+	Assert(BufferIsValid(buf));
+
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 
 	/*
 	 * step to next valid tuple.  note that _hash_step releases our lock

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.58 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.59 2002/05/24 18:57:55 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -204,7 +204,8 @@ index_insert(Relation indexRelation,
 			 Datum *datums,
 			 char *nulls,
 			 ItemPointer heap_t_ctid,
-			 Relation heapRelation)
+			 Relation heapRelation,
+			 bool check_uniqueness)
 {
 	RegProcedure procedure;
 	InsertIndexResult specificResult;
@@ -216,12 +217,13 @@ index_insert(Relation indexRelation,
 	 * have the am's insert proc do all the work.
 	 */
 	specificResult = (InsertIndexResult)
-		DatumGetPointer(OidFunctionCall5(procedure,
+		DatumGetPointer(OidFunctionCall6(procedure,
 										 PointerGetDatum(indexRelation),
 										 PointerGetDatum(datums),
 										 PointerGetDatum(nulls),
 										 PointerGetDatum(heap_t_ctid),
-										 PointerGetDatum(heapRelation)));
+										 PointerGetDatum(heapRelation),
+										 BoolGetDatum(check_uniqueness)));
 
 	/* must be pfree'ed */
 	return specificResult;
@@ -303,6 +305,10 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(rescan, amrescan);
 
+	scan->kill_prior_tuple = false;	/* for safety */
+	scan->keys_are_unique = false; /* may be set by amrescan */
+	scan->got_tuple = false;
+
 	OidFunctionCall2(procedure,
 					 PointerGetDatum(scan),
 					 PointerGetDatum(key));
@@ -369,6 +375,9 @@ index_restrpos(IndexScanDesc scan)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(restrpos, amrestrpos);
 
+	scan->kill_prior_tuple = false;	/* for safety */
+	scan->got_tuple = false;
+
 	OidFunctionCall1(procedure, PointerGetDatum(scan));
 }
 
@@ -385,7 +394,7 @@ index_restrpos(IndexScanDesc scan)
 HeapTuple
 index_getnext(IndexScanDesc scan, ScanDirection direction)
 {
-	bool found;
+	HeapTuple	heapTuple = &scan->xs_ctup;
 
 	SCAN_CHECKS;
 
@@ -396,8 +405,21 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		scan->xs_cbuf = InvalidBuffer;
 	}
 
+	/* just make sure this is false... */
+	scan->kill_prior_tuple = false;
+
+	/*
+	 * Can skip entering the index AM if we already got a tuple
+	 * and it must be unique.
+	 */
+	if (scan->keys_are_unique && scan->got_tuple)
+		return NULL;
+
 	for (;;)
 	{
+		bool		found;
+		uint16		sv_infomask;
+
 		pgstat_count_index_scan(&scan->xs_pgstat_info);
 
 		/*
@@ -407,32 +429,62 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		found = DatumGetBool(FunctionCall2(&scan->fn_getnext,
 										   PointerGetDatum(scan),
 										   Int32GetDatum(direction)));
+
+		/* Reset kill flag immediately for safety */
+		scan->kill_prior_tuple = false;
+
 		if (!found)
 			return NULL;		/* failure exit */
+
 		/*
 		 * Fetch the heap tuple and see if it matches the snapshot.
 		 */
-		heap_fetch(scan->heapRelation, scan->xs_snapshot,
-				   &scan->xs_ctup, &scan->xs_cbuf,
-				   &scan->xs_pgstat_info);
-		if (scan->xs_ctup.t_data != NULL)
+		if (heap_fetch(scan->heapRelation, scan->xs_snapshot,
+					   heapTuple, &scan->xs_cbuf, true,
+					   &scan->xs_pgstat_info))
 			break;
+
 		/*
-		 * XXX here, consider whether we can kill the index tuple.
+		 * If we can't see it, maybe no one else can either.  Check to see
+		 * if the tuple is dead to all transactions.  If so, signal the
+		 * index AM to not return it on future indexscans.
+		 *
+		 * We told heap_fetch to keep a pin on the buffer, so we can
+		 * re-access the tuple here.  But we must re-lock the buffer first.
+		 * Also, it's just barely possible for an update of hint bits to
+		 * occur here.
 		 */
+		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
+		sv_infomask = heapTuple->t_data->t_infomask;
+
+		if (HeapTupleSatisfiesVacuum(heapTuple->t_data, RecentGlobalXmin) ==
+			HEAPTUPLE_DEAD)
+			scan->kill_prior_tuple = true;
+
+		if (sv_infomask != heapTuple->t_data->t_infomask)
+			SetBufferCommitInfoNeedsSave(scan->xs_cbuf);
+		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(scan->xs_cbuf);
+		scan->xs_cbuf = InvalidBuffer;
 	}
 
 	/* Success exit */
+	scan->got_tuple = true;
+
 	pgstat_count_index_getnext(&scan->xs_pgstat_info);
 
-	return &scan->xs_ctup;
+	return heapTuple;
 }
 
 /* ----------------
  *		index_getnext_indexitem - get the next index tuple from a scan
  *
- * Finds the next index tuple satisfying the scan keys.  Note that no
- * time qual (snapshot) check is done; indeed the heap tuple is not accessed.
+ * Finds the next index tuple satisfying the scan keys.  Note that the
+ * corresponding heap tuple is not accessed, and thus no time qual (snapshot)
+ * check is done, other than the index AM's internal check for killed tuples
+ * (which most callers of this routine will probably want to suppress by
+ * setting scan->ignore_killed_tuples = false).
+ *
  * On success (TRUE return), the found index TID is in scan->currentItemData,
  * and its heap TID is in scan->xs_ctup.t_self.  scan->xs_cbuf is untouched.
  * ----------------
@@ -444,6 +496,9 @@ index_getnext_indexitem(IndexScanDesc scan,
 	bool found;
 
 	SCAN_CHECKS;
+
+	/* just make sure this is false... */
+	scan->kill_prior_tuple = false;
 
 	/*
 	 * have the am's gettuple proc do all the work. index_beginscan

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.70 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.71 2002/05/24 18:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,7 +425,8 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 bool
 _bt_first(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation	rel;
+	Relation	rel = scan->indexRelation;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Buffer		buf;
 	Page		page;
 	BTStack		stack;
@@ -437,7 +438,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	StrategyNumber strat;
 	bool		res;
 	int32		result;
-	BTScanOpaque so;
 	bool		scanFromEnd;
 	bool		continuescan;
 	ScanKey		scankeys = NULL;
@@ -447,14 +447,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				j;
 	StrategyNumber strat_total;
 
-	rel = scan->indexRelation;
-	so = (BTScanOpaque) scan->opaque;
-
 	/*
 	 * Order the scan keys in our canonical fashion and eliminate any
 	 * redundant keys.
 	 */
-	_bt_orderkeys(rel, so);
+	_bt_orderkeys(scan);
 
 	/*
 	 * Quit now if _bt_orderkeys() discovered that the scan keys can never

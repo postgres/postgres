@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.57 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.58 2002/05/24 18:57:55 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -166,8 +166,8 @@ hashinsert(PG_FUNCTION_ARGS)
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
+	bool		checkUnique = PG_GETARG_BOOL(5);
 #endif
-
 	InsertIndexResult res;
 	HashItem	hitem;
 	IndexTuple	itup;
@@ -210,6 +210,9 @@ hashgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	Page		page;
+	OffsetNumber offnum;
 	bool res;
 
 	/*
@@ -217,11 +220,48 @@ hashgettuple(PG_FUNCTION_ARGS)
 	 * the appropriate direction.  If we haven't done so yet, we call a
 	 * routine to get the first item in the scan.
 	 */
-
 	if (ItemPointerIsValid(&(scan->currentItemData)))
+	{
+		/*
+		 * Check to see if we should kill the previously-fetched tuple.
+		 */
+		if (scan->kill_prior_tuple)
+		{
+			/*
+			 * Yes, so mark it by setting the LP_DELETE bit in the item flags.
+			 */
+			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
+			page = BufferGetPage(so->hashso_curbuf);
+			PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
+			/*
+			 * Since this can be redone later if needed, it's treated the
+			 * same as a commit-hint-bit status update for heap tuples:
+			 * we mark the buffer dirty but don't make a WAL log entry.
+			 */
+			SetBufferCommitInfoNeedsSave(so->hashso_curbuf);
+		}
+		/*
+		 * Now continue the scan.
+		 */
 		res = _hash_next(scan, dir);
+	}
 	else
 		res = _hash_first(scan, dir);
+
+	/*
+	 * Skip killed tuples if asked to.
+	 */
+	if (scan->ignore_killed_tuples)
+	{
+		while (res)
+		{
+			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
+			page = BufferGetPage(so->hashso_curbuf);
+			if (!ItemIdDeleted(PageGetItemId(page, offnum)))
+				break;
+			res = _hash_next(scan, dir);
+		}
+	}
 
 	PG_RETURN_BOOL(res);
 }
@@ -418,6 +458,8 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 
 	/* walk through the entire index */
 	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
+	/* including killed tuples */
+	iscan->ignore_killed_tuples = false;
 
 	while (index_getnext_indexitem(iscan, ForwardScanDirection))
 	{

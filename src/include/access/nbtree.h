@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.60 2002/05/20 23:51:43 tgl Exp $
+ * $Id: nbtree.h,v 1.61 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,7 +383,7 @@ extern ScanKey _bt_mkscankey(Relation rel, IndexTuple itup);
 extern ScanKey _bt_mkscankey_nodata(Relation rel);
 extern void _bt_freeskey(ScanKey skey);
 extern void _bt_freestack(BTStack stack);
-extern void _bt_orderkeys(Relation relation, BTScanOpaque so);
+extern void _bt_orderkeys(IndexScanDesc scan);
 extern bool _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 			  ScanDirection dir, bool *continuescan);
 extern BTItem _bt_formitem(IndexTuple itup);

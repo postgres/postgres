@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.40 2002/05/21 22:59:01 tgl Exp $
+ * $Id: tqual.h,v 1.41 2002/05/24 18:57:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,8 @@ typedef SnapshotData *Snapshot;
 extern DLLIMPORT Snapshot SnapshotDirty;
 extern DLLIMPORT Snapshot QuerySnapshot;
 extern DLLIMPORT Snapshot SerializableSnapshot;
+
+extern TransactionId RecentGlobalXmin;
 
 extern bool ReferentialIntegritySnapshotOverride;
 

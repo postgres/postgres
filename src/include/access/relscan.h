@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.26 2002/05/20 23:51:43 tgl Exp $
+ * $Id: relscan.h,v 1.27 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,15 @@ typedef struct IndexScanDescData
 	int			numberOfKeys;	/* number of scan keys */
 	ScanKey		keyData;		/* array of scan key descriptors */
 
+	/* signaling to index AM about killing index tuples */
+	bool		kill_prior_tuple;		/* last-returned tuple is dead */
+	bool		ignore_killed_tuples;	/* do not return killed entries */
+
+	/* set by index AM if scan keys satisfy index's uniqueness constraint */
+	bool		keys_are_unique;
+
 	/* scan current state */
+	bool		got_tuple;		/* true after successful index_getnext */
 	void	   *opaque;			/* access-method-specific info */
 	ItemPointerData currentItemData;	/* current index pointer */
 	ItemPointerData currentMarkData;	/* marked position, if any */

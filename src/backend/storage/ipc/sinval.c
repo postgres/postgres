@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.46 2002/05/21 22:05:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.47 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,6 +297,10 @@ GetOldestXmin(bool allDbs)
  *		it is considered running or not.
  * This ensures that the set of transactions seen as "running" by the
  * current xact will not change after it takes the snapshot.
+ *
+ * Also, we compute the current global xmin (oldest xmin across all running
+ * transactions) and save it in RecentGlobalXmin.  This is the same
+ * computation done by GetOldestXmin(TRUE).
  *----------
  */
 Snapshot
@@ -305,6 +309,9 @@ GetSnapshotData(bool serializable)
 	Snapshot	snapshot = (Snapshot) malloc(sizeof(SnapshotData));
 	SISeg	   *segP = shmInvalBuffer;
 	ProcState  *stateP = segP->procState;
+	TransactionId xmin;
+	TransactionId xmax;
+	TransactionId globalxmin;
 	int			index;
 	int			count = 0;
 
@@ -321,7 +328,7 @@ GetSnapshotData(bool serializable)
 	if (snapshot->xip == NULL)
 		elog(ERROR, "Memory exhausted in GetSnapshotData");
 
-	snapshot->xmin = GetCurrentTransactionId();
+	globalxmin = xmin = GetCurrentTransactionId();
 
 	/*
 	 * If we are going to set MyProc->xmin then we'd better get exclusive
@@ -356,7 +363,7 @@ GetSnapshotData(bool serializable)
 	 *--------------------
 	 */
 
-	snapshot->xmax = ReadNewTransactionId();
+	xmax = ReadNewTransactionId();
 
 	for (index = 0; index < segP->lastBackend; index++)
 	{
@@ -374,28 +381,48 @@ GetSnapshotData(bool serializable)
 			 * running a transaction, and xacts started since we read the
 			 * next transaction ID.  There's no need to store XIDs above
 			 * what we got from ReadNewTransactionId, since we'll treat
-			 * them as running anyway.
+			 * them as running anyway.  We also assume that such xacts can't
+			 * compute an xmin older than ours, so they needn't be considered
+			 * in computing globalxmin.
 			 */
 			if (proc == MyProc ||
 				!TransactionIdIsNormal(xid) ||
-				TransactionIdFollowsOrEquals(xid, snapshot->xmax))
+				TransactionIdFollowsOrEquals(xid, xmax))
 				continue;
 
-			if (TransactionIdPrecedes(xid, snapshot->xmin))
-				snapshot->xmin = xid;
+			if (TransactionIdPrecedes(xid, xmin))
+				xmin = xid;
 			snapshot->xip[count] = xid;
 			count++;
+
+			/* Update globalxmin to be the smallest valid xmin */
+			xid = proc->xmin;
+			if (TransactionIdIsNormal(xid))
+				if (TransactionIdPrecedes(xid, globalxmin))
+					globalxmin = xid;
 		}
 	}
 
 	if (serializable)
-		MyProc->xmin = snapshot->xmin;
+		MyProc->xmin = xmin;
 
 	LWLockRelease(SInvalLock);
 
 	/* Serializable snapshot must be computed before any other... */
 	Assert(TransactionIdIsValid(MyProc->xmin));
 
+	/*
+	 * Update globalxmin to include actual process xids.  This is a slightly
+	 * different way of computing it than GetOldestXmin uses, but should give
+	 * the same result.
+	 */
+	if (TransactionIdPrecedes(xmin, globalxmin))
+		globalxmin = xmin;
+
+	RecentGlobalXmin = globalxmin;
+
+	snapshot->xmin = xmin;
+	snapshot->xmax = xmax;
 	snapshot->xcnt = count;
 
 	snapshot->curcid = GetCurrentCommandId();

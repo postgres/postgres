@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.135 2002/05/21 22:05:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.136 2002/05/24 18:57:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -306,6 +306,8 @@ heapgettup(Relation relation,
 		{
 			if (ItemIdIsUsed(lpp))
 			{
+				bool	valid;
+
 				tuple->t_datamcxt = NULL;
 				tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 				tuple->t_len = ItemIdGetLength(lpp);
@@ -315,8 +317,8 @@ heapgettup(Relation relation,
 				 * if current tuple qualifies, return it.
 				 */
 				HeapTupleSatisfies(tuple, relation, *buffer, (PageHeader) dp,
-								   snapshot, nkeys, key);
-				if (tuple->t_data != NULL)
+								   snapshot, nkeys, key, valid);
+				if (valid)
 				{
 					LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 					return;
@@ -864,32 +866,37 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 	return ((scan->rs_ctup.t_data == NULL) ? NULL : &(scan->rs_ctup));
 }
 
-/* ----------------
- *		heap_fetch		- retrieve tuple with given tid
+/*
+ *	heap_fetch		- retrieve tuple with given tid
  *
- * On entry, tuple->t_self is the TID to fetch.
+ * On entry, tuple->t_self is the TID to fetch.  We pin the buffer holding
+ * the tuple, fill in the remaining fields of *tuple, and check the tuple
+ * against the specified snapshot.
  *
- * If successful (ie, tuple found and passes snapshot time qual),
- * then the rest of *tuple is filled in, and *userbuf is set to the
- * buffer holding the tuple.  A pin is obtained on the buffer; the
- * caller must BufferRelease the buffer when done with the tuple.
+ * If successful (tuple passes snapshot time qual), then *userbuf is set to
+ * the buffer holding the tuple and TRUE is returned.  The caller must
+ * unpin the buffer when done with the tuple.
  *
- * If not successful, tuple->t_data is set to NULL and *userbuf is set to
- * InvalidBuffer.
- * ----------------
+ * If the tuple fails the time qual check, then FALSE will be returned.
+ * When the caller specifies keep_buf = true, we retain the pin on the
+ * buffer and return it in *userbuf (so the caller can still access the
+ * tuple); when keep_buf = false, the pin is released and *userbuf is set
+ * to InvalidBuffer.
  */
-void
+bool
 heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   HeapTuple tuple,
 		   Buffer *userbuf,
+		   bool keep_buf,
 		   PgStat_Info *pgstat_info)
 {
+	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
 	Buffer		buffer;
 	PageHeader	dp;
-	ItemPointer tid = &(tuple->t_self);
 	OffsetNumber offnum;
+	bool		valid;
 
 	/*
 	 * increment access statistics
@@ -901,14 +908,16 @@ heap_fetch(Relation relation,
 	 * get the buffer from the relation descriptor. Note that this does a
 	 * buffer pin.
 	 */
-
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(buffer))
-		elog(ERROR, "heap_fetch: %s relation: ReadBuffer(%ld) failed",
+		elog(ERROR, "heap_fetch: ReadBuffer(%s, %lu) failed",
 			 RelationGetRelationName(relation),
-			 (long) ItemPointerGetBlockNumber(tid));
+			 (unsigned long) ItemPointerGetBlockNumber(tid));
 
+	/*
+	 * Need share lock on buffer to examine tuple commit status.
+	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
 	/*
@@ -921,38 +930,34 @@ heap_fetch(Relation relation,
 	/*
 	 * more sanity checks
 	 */
-
 	if (!ItemIdIsUsed(lp))
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
-		*userbuf = InvalidBuffer;
-		tuple->t_datamcxt = NULL;
-		tuple->t_data = NULL;
-		return;
+
+		elog(ERROR, "heap_fetch: invalid tuple id (%s, %lu, %u)",
+			 RelationGetRelationName(relation),
+			 (unsigned long) ItemPointerGetBlockNumber(tid),
+			 offnum);
 	}
 
+	/*
+	 * fill in *tuple fields
+	 */
 	tuple->t_datamcxt = NULL;
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
 	tuple->t_tableOid = relation->rd_id;
 
 	/*
-	 * check time qualification of tid
+	 * check time qualification of tuple, then release lock
 	 */
-
 	HeapTupleSatisfies(tuple, relation, buffer, dp,
-					   snapshot, 0, (ScanKey) NULL);
+					   snapshot, 0, (ScanKey) NULL, valid);
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
-	if (tuple->t_data == NULL)
-	{
-		/* Tuple failed time check, so we can release now. */
-		ReleaseBuffer(buffer);
-		*userbuf = InvalidBuffer;
-	}
-	else
+	if (valid)
 	{
 		/*
 		 * All checks passed, so return the tuple as valid. Caller is now
@@ -968,13 +973,28 @@ heap_fetch(Relation relation,
 			pgstat_count_heap_fetch(pgstat_info);
 		else
 			pgstat_count_heap_fetch(&relation->pgstat_info);
+
+		return true;
 	}
+
+	/* Tuple failed time qual, but maybe caller wants to see it anyway. */
+	if (keep_buf)
+	{
+		*userbuf = buffer;
+
+		return false;
+	}
+
+	/* Okay to release pin on buffer. */
+	ReleaseBuffer(buffer);
+
+	*userbuf = InvalidBuffer;
+
+	return false;
 }
 
-/* ----------------
+/*
  *	heap_get_latest_tid -  get the latest tid of a specified tuple
- *
- * ----------------
  */
 ItemPointer
 heap_get_latest_tid(Relation relation,
@@ -989,7 +1009,8 @@ heap_get_latest_tid(Relation relation,
 	HeapTupleHeader t_data;
 	ItemPointerData ctid;
 	bool		invalidBlock,
-				linkend;
+				linkend,
+				valid;
 
 	/*
 	 * get the buffer from the relation descriptor Note that this does a
@@ -1038,7 +1059,7 @@ heap_get_latest_tid(Relation relation,
 	 */
 
 	HeapTupleSatisfies(&tp, relation, buffer, dp,
-					   snapshot, 0, (ScanKey) NULL);
+					   snapshot, 0, (ScanKey) NULL, valid);
 
 	linkend = true;
 	if ((t_data->t_infomask & HEAP_XMIN_COMMITTED) != 0 &&
@@ -1048,7 +1069,7 @@ heap_get_latest_tid(Relation relation,
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	ReleaseBuffer(buffer);
 
-	if (tp.t_data == NULL)
+	if (!valid)
 	{
 		if (linkend)
 			return NULL;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.92 2002/05/20 23:51:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.93 2002/05/24 18:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,9 +294,9 @@ gistinsert(PG_FUNCTION_ARGS)
 	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
-
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
+	bool		checkUnique = PG_GETARG_BOOL(5);
 #endif
 	InsertIndexResult res;
 	IndexTuple	itup;
@@ -1607,6 +1607,8 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 	/* walk through the entire index */
 	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
+	/* including killed tuples */
+	iscan->ignore_killed_tuples = false;
 
 	while (index_getnext_indexitem(iscan, ForwardScanDirection))
 	{

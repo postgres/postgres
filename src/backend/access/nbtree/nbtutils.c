@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.48 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.49 2002/05/24 18:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 #include "access/nbtree.h"
 #include "catalog/catalog.h"
 #include "executor/execdebug.h"
+
+
+static int _bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map);
 
 
 /*
@@ -174,6 +177,11 @@ _bt_formitem(IndexTuple itup)
  * attribute, which can be seen to be correct by considering the above
  * example.
  *
+ * Furthermore, we detect the case where the index is unique and we have
+ * equality quals for all columns.  In this case there can be at most one
+ * (visible) matching tuple.  index_getnext uses this to avoid uselessly
+ * continuing the scan after finding one match.
+ *
  * The initial ordering of the keys is expected to be by attribute already
  * (see group_clauses_by_indexkey() in indxpath.c).  The task here is to
  * standardize the appearance of multiple keys for the same attribute.
@@ -191,8 +199,10 @@ _bt_formitem(IndexTuple itup)
  *----------
  */
 void
-_bt_orderkeys(Relation relation, BTScanOpaque so)
+_bt_orderkeys(IndexScanDesc scan)
 {
+	Relation	relation = scan->indexRelation;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	ScanKeyData xform[BTMaxStrategyNumber];
 	bool		init[BTMaxStrategyNumber];
 	int			numberOfKeys = so->numberOfKeys;
@@ -208,6 +218,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 
 	so->qual_ok = true;
 	so->numberOfRequiredKeys = 0;
+	scan->keys_are_unique = false;
 
 	if (numberOfKeys < 1)
 		return;					/* done if qual-less scan */
@@ -228,6 +239,17 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		 */
 		if (cur->sk_flags & SK_ISNULL)
 			so->qual_ok = false;
+		else if (relation->rd_index->indisunique &&
+				 relation->rd_rel->relnatts == 1)
+		{
+			/* it's a unique index, do we have an equality qual? */
+			map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
+											  BTMaxStrategyNumber,
+											  1);
+			j = _bt_getstrategynumber(cur->sk_procedure, map);
+			if (j == (BTEqualStrategyNumber - 1))
+				scan->keys_are_unique = true;
+		}
 		so->numberOfRequiredKeys = 1;
 		return;
 	}
@@ -390,17 +412,8 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 			MemSet(init, 0, sizeof(init));
 		}
 
-		/*
-		 * OK, figure out which strategy this key corresponds to
-		 */
-		for (j = BTMaxStrategyNumber; --j >= 0;)
-		{
-			if (cur->sk_procedure == map->entry[j].sk_procedure)
-				break;
-		}
-		if (j < 0)
-			elog(ERROR, "_bt_orderkeys: unable to identify operator %u",
-				 cur->sk_procedure);
+		/* figure out which strategy this key's operator corresponds to */
+		j = _bt_getstrategynumber(cur->sk_procedure, map);
 
 		/* have we seen one of these before? */
 		if (init[j])
@@ -424,6 +437,34 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	}
 
 	so->numberOfKeys = new_numberOfKeys;
+
+	/*
+	 * If unique index and we have equality keys for all columns,
+	 * set keys_are_unique flag for higher levels.
+	 */
+	if (allEqualSoFar && relation->rd_index->indisunique &&
+		relation->rd_rel->relnatts == new_numberOfKeys)
+		scan->keys_are_unique = true;
+}
+
+/*
+ * Determine which btree strategy an operator procedure matches.
+ *
+ * Result is strategy number minus 1.
+ */
+static int
+_bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map)
+{
+	int			j;
+
+	for (j = BTMaxStrategyNumber; --j >= 0;)
+	{
+		if (sk_procedure == map->entry[j].sk_procedure)
+			return j;
+	}
+	elog(ERROR, "_bt_getstrategynumber: unable to identify operator %u",
+		 sk_procedure);
+	return -1;					/* keep compiler quiet */
 }
 
 /*

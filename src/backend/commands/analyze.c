@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.34 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.35 2002/05/24 18:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -655,8 +655,8 @@ pageloop:;
 				goto pageloop;
 			}
 			ItemPointerSet(&targtuple.t_self, targblock, targoffset);
-			heap_fetch(onerel, SnapshotNow, &targtuple, &tupbuffer, NULL);
-			if (targtuple.t_data != NULL)
+			if (heap_fetch(onerel, SnapshotNow, &targtuple, &tupbuffer,
+						   false, NULL))
 			{
 				/*
 				 * Found a suitable tuple, so save it, replacing one old

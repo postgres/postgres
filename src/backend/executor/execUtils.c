@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.81 2002/05/12 20:10:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.82 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -599,7 +599,7 @@ void
 ExecInsertIndexTuples(TupleTableSlot *slot,
 					  ItemPointer tupleid,
 					  EState *estate,
-					  bool is_update)
+					  bool is_vacuum)
 {
 	HeapTuple	heapTuple;
 	ResultRelInfo *resultRelInfo;
@@ -667,11 +667,17 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 					   datum,
 					   nullv);
 
+		/*
+		 * The index AM does the rest.  Note we suppress unique-index
+		 * checks if we are being called from VACUUM, since VACUUM may
+		 * need to move dead tuples that have the same keys as live ones.
+		 */
 		result = index_insert(relationDescs[i], /* index relation */
 							  datum,	/* array of heaptuple Datums */
 							  nullv,	/* info on nulls */
 							  &(heapTuple->t_self),		/* tid of heap tuple */
-							  heapRelation);
+							  heapRelation,
+							  relationDescs[i]->rd_uniqueindex && !is_vacuum);
 
 		/*
 		 * keep track of index inserts for debugging

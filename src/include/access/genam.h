@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.34 2002/05/20 23:51:43 tgl Exp $
+ * $Id: genam.h,v 1.35 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@ extern void index_close(Relation relation);
 extern InsertIndexResult index_insert(Relation indexRelation,
 			 Datum *datums, char *nulls,
 			 ItemPointer heap_t_ctid,
-			 Relation heapRelation);
+			 Relation heapRelation,
+			 bool check_uniqueness);
 
 extern IndexScanDesc index_beginscan(Relation heapRelation,
 									 Relation indexRelation,

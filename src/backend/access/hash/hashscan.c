@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.26 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.27 2002/05/24 18:57:55 tgl Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -32,8 +32,6 @@
 
 #include "access/hash.h"
 
-static void _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
-static bool _hash_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
 
 typedef struct HashScanListData
 {
@@ -44,6 +42,10 @@ typedef struct HashScanListData
 typedef HashScanListData *HashScanList;
 
 static HashScanList HashScans = (HashScanList) NULL;
+
+
+static void _hash_scandel(IndexScanDesc scan,
+						  BlockNumber blkno, OffsetNumber offno);
 
 
 /*
@@ -129,63 +131,51 @@ static void
 _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 {
 	ItemPointer current;
+	ItemPointer mark;
 	Buffer		buf;
 	Buffer		metabuf;
 	HashScanOpaque so;
 
-	if (!_hash_scantouched(scan, blkno, offno))
-		return;
-
-	metabuf = _hash_getbuf(scan->indexRelation, HASH_METAPAGE, HASH_READ);
-
 	so = (HashScanOpaque) scan->opaque;
-	buf = so->hashso_curbuf;
-
 	current = &(scan->currentItemData);
+	mark = &(scan->currentMarkData);
+
 	if (ItemPointerIsValid(current)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
 	{
+		metabuf = _hash_getbuf(scan->indexRelation, HASH_METAPAGE, HASH_READ);
+		buf = so->hashso_curbuf;
 		_hash_step(scan, &buf, BackwardScanDirection, metabuf);
-		so->hashso_curbuf = buf;
 	}
 
-	current = &(scan->currentMarkData);
-	if (ItemPointerIsValid(current)
-		&& ItemPointerGetBlockNumber(current) == blkno
-		&& ItemPointerGetOffsetNumber(current) >= offno)
+	if (ItemPointerIsValid(mark)
+		&& ItemPointerGetBlockNumber(mark) == blkno
+		&& ItemPointerGetOffsetNumber(mark) >= offno)
 	{
-		ItemPointerData tmp;
+		/*
+		 * The idea here is to exchange the current and mark positions,
+		 * then step backwards (affecting current), then exchange again.
+		 */
+		ItemPointerData tmpitem;
+		Buffer tmpbuf;
 
-		tmp = *current;
-		*current = scan->currentItemData;
-		scan->currentItemData = tmp;
+		tmpitem = *mark;
+		*mark = *current;
+		*current = tmpitem;
+		tmpbuf = so->hashso_mrkbuf;
+		so->hashso_mrkbuf = so->hashso_curbuf;
+		so->hashso_curbuf = tmpbuf;
+
+		metabuf = _hash_getbuf(scan->indexRelation, HASH_METAPAGE, HASH_READ);
+		buf = so->hashso_curbuf;
 		_hash_step(scan, &buf, BackwardScanDirection, metabuf);
-		so->hashso_mrkbuf = buf;
-		tmp = *current;
-		*current = scan->currentItemData;
-		scan->currentItemData = tmp;
+
+		tmpitem = *mark;
+		*mark = *current;
+		*current = tmpitem;
+		tmpbuf = so->hashso_mrkbuf;
+		so->hashso_mrkbuf = so->hashso_curbuf;
+		so->hashso_curbuf = tmpbuf;
 	}
-}
-
-static bool
-_hash_scantouched(IndexScanDesc scan,
-				  BlockNumber blkno,
-				  OffsetNumber offno)
-{
-	ItemPointer current;
-
-	current = &(scan->currentItemData);
-	if (ItemPointerIsValid(current)
-		&& ItemPointerGetBlockNumber(current) == blkno
-		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return true;
-
-	current = &(scan->currentMarkData);
-	if (ItemPointerIsValid(current)
-		&& ItemPointerGetBlockNumber(current) == blkno
-		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return true;
-
-	return false;
 }

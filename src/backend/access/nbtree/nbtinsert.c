@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.90 2002/03/06 06:09:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.91 2002/05/24 18:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,6 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 	Page		page;
 	BTPageOpaque opaque;
 	Buffer		nbuf = InvalidBuffer;
-	bool		chtup = true;
 
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -194,70 +193,85 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 	for (;;)
 	{
 		HeapTupleData htup;
-		Buffer		buffer;
+		Buffer		hbuffer;
+		ItemId		curitemid;
 		BTItem		cbti;
 		BlockNumber nblkno;
 
 		/*
-		 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's how we
-		 * handling NULLs - and so we must not use _bt_compare in real
-		 * comparison, but only for ordering/finding items on pages. -
-		 * vadim 03/24/97
-		 *
 		 * make sure the offset points to an actual key before trying to
 		 * compare it...
 		 */
 		if (offset <= maxoff)
 		{
+			/*
+			 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's how we
+			 * handling NULLs - and so we must not use _bt_compare in real
+			 * comparison, but only for ordering/finding items on pages. -
+			 * vadim 03/24/97
+			 */
 			if (!_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
 				break;			/* we're past all the equal tuples */
 
+			curitemid = PageGetItemId(page, offset);
 			/*
-			 * Have to check is inserted heap tuple deleted one (i.e. just
-			 * moved to another place by vacuum)!  We only need to do this
-			 * once, but don't want to do it at all unless we see equal
-			 * tuples, so as not to slow down unequal case.
+			 * We can skip the heap fetch if the item is marked killed.
 			 */
-			if (chtup)
+			if (!ItemIdDeleted(curitemid))
 			{
-				htup.t_self = btitem->bti_itup.t_tid;
-				heap_fetch(heapRel, SnapshotDirty, &htup, &buffer, NULL);
-				if (htup.t_data == NULL)		/* YES! */
-					break;
-				/* Live tuple is being inserted, so continue checking */
-				ReleaseBuffer(buffer);
-				chtup = false;
-			}
-
-			cbti = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
-			htup.t_self = cbti->bti_itup.t_tid;
-			heap_fetch(heapRel, SnapshotDirty, &htup, &buffer, NULL);
-			if (htup.t_data != NULL)	/* it is a duplicate */
-			{
-				TransactionId xwait =
-				(TransactionIdIsValid(SnapshotDirty->xmin)) ?
-				SnapshotDirty->xmin : SnapshotDirty->xmax;
-
-				/*
-				 * If this tuple is being updated by other transaction
-				 * then we have to wait for its commit/abort.
-				 */
-				ReleaseBuffer(buffer);
-				if (TransactionIdIsValid(xwait))
+				cbti = (BTItem) PageGetItem(page, curitemid);
+				htup.t_self = cbti->bti_itup.t_tid;
+				if (heap_fetch(heapRel, SnapshotDirty, &htup, &hbuffer,
+							   true, NULL))
 				{
-					if (nbuf != InvalidBuffer)
-						_bt_relbuf(rel, nbuf);
-					/* Tell _bt_doinsert to wait... */
-					return xwait;
-				}
+					/* it is a duplicate */
+					TransactionId xwait =
+						(TransactionIdIsValid(SnapshotDirty->xmin)) ?
+						SnapshotDirty->xmin : SnapshotDirty->xmax;
 
-				/*
-				 * Otherwise we have a definite conflict.
-				 */
-				elog(ERROR, "Cannot insert a duplicate key into unique index %s",
-					 RelationGetRelationName(rel));
+					ReleaseBuffer(hbuffer);
+					/*
+					 * If this tuple is being updated by other transaction
+					 * then we have to wait for its commit/abort.
+					 */
+					if (TransactionIdIsValid(xwait))
+					{
+						if (nbuf != InvalidBuffer)
+							_bt_relbuf(rel, nbuf);
+						/* Tell _bt_doinsert to wait... */
+						return xwait;
+					}
+
+					/*
+					 * Otherwise we have a definite conflict.
+					 */
+					elog(ERROR, "Cannot insert a duplicate key into unique index %s",
+						 RelationGetRelationName(rel));
+				}
+				else
+				{
+					/*
+					 * Hmm, if we can't see the tuple, maybe it can be
+					 * marked killed.  This logic should match index_getnext
+					 * and btgettuple.
+					 */
+					uint16		sv_infomask;
+
+					LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
+					sv_infomask = htup.t_data->t_infomask;
+					if (HeapTupleSatisfiesVacuum(htup.t_data,
+												 RecentGlobalXmin) ==
+						HEAPTUPLE_DEAD)
+					{
+						curitemid->lp_flags |= LP_DELETE;
+						SetBufferCommitInfoNeedsSave(buf);
+					}
+					if (sv_infomask != htup.t_data->t_infomask)
+						SetBufferCommitInfoNeedsSave(hbuffer);
+					LockBuffer(hbuffer, BUFFER_LOCK_UNLOCK);
+					ReleaseBuffer(hbuffer);
+				}
 			}
-			/* htup null so no buffer to release */
 		}
 
 		/*

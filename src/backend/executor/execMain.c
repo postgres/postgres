@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.163 2002/05/21 22:59:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.164 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1489,7 +1489,7 @@ lreplace:;
 
 	numIndices = resultRelInfo->ri_NumIndices;
 	if (numIndices > 0)
-		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, true);
+		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW UPDATE Triggers */
 	if (resultRelInfo->ri_TrigDesc)
@@ -1639,8 +1639,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	{
 		Buffer		buffer;
 
-		heap_fetch(relation, SnapshotDirty, &tuple, &buffer, NULL);
-		if (tuple.t_data != NULL)
+		if (heap_fetch(relation, SnapshotDirty, &tuple, &buffer, false, NULL))
 		{
 			TransactionId xwait = SnapshotDirty->xmax;
 

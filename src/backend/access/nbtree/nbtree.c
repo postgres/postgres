@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.89 2002/05/20 23:51:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.90 2002/05/24 18:57:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,6 +271,7 @@ btinsert(PG_FUNCTION_ARGS)
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
+	bool		checkUnique = PG_GETARG_BOOL(5);
 	InsertIndexResult res;
 	BTItem		btitem;
 	IndexTuple	itup;
@@ -280,7 +281,7 @@ btinsert(PG_FUNCTION_ARGS)
 	itup->t_tid = *ht_ctid;
 	btitem = _bt_formitem(itup);
 
-	res = _bt_doinsert(rel, btitem, rel->rd_uniqueindex, heapRel);
+	res = _bt_doinsert(rel, btitem, checkUnique, heapRel);
 
 	pfree(btitem);
 	pfree(itup);
@@ -296,14 +297,16 @@ btgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
-	bool res;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	Page		page;
+	OffsetNumber offnum;
+	bool		res;
 
 	/*
 	 * If we've already initialized this scan, we can just advance it in
 	 * the appropriate direction.  If we haven't done so yet, we call a
 	 * routine to get the first item in the scan.
 	 */
-
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
 		/*
@@ -312,10 +315,46 @@ btgettuple(PG_FUNCTION_ARGS)
 		 * buffer, too.
 		 */
 		_bt_restscan(scan);
+		/*
+		 * Check to see if we should kill the previously-fetched tuple.
+		 */
+		if (scan->kill_prior_tuple)
+		{
+			/*
+			 * Yes, so mark it by setting the LP_DELETE bit in the item flags.
+			 */
+			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
+			page = BufferGetPage(so->btso_curbuf);
+			PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
+			/*
+			 * Since this can be redone later if needed, it's treated the
+			 * same as a commit-hint-bit status update for heap tuples:
+			 * we mark the buffer dirty but don't make a WAL log entry.
+			 */
+			SetBufferCommitInfoNeedsSave(so->btso_curbuf);
+		}
+		/*
+		 * Now continue the scan.
+		 */
 		res = _bt_next(scan, dir);
 	}
 	else
 		res = _bt_first(scan, dir);
+
+	/*
+	 * Skip killed tuples if asked to.
+	 */
+	if (scan->ignore_killed_tuples)
+	{
+		while (res)
+		{
+			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
+			page = BufferGetPage(so->btso_curbuf);
+			if (!ItemIdDeleted(PageGetItemId(page, offnum)))
+				break;
+			res = _bt_next(scan, dir);
+		}
+	}
 
 	/*
 	 * Save heap TID to use it in _bt_restscan.  Then release the read

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.225 2002/05/20 23:51:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.226 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,7 +458,9 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	/* get the buffer cache tuple */
 	rtup.t_self = ctup->t_self;
 	ReleaseSysCache(ctup);
-	heap_fetch(rd, SnapshotNow, &rtup, &buffer, NULL);
+	if (!heap_fetch(rd, SnapshotNow, &rtup, &buffer, false, NULL))
+		elog(ERROR, "pg_class entry for relid %u vanished during vacuuming",
+			 relid);
 
 	/* overwrite the existing statistics in the tuple */
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);

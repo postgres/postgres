@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.75 2002/05/21 22:05:55 tgl Exp $
+ * $Id: heapam.h,v 1.76 2002/05/24 18:57:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,8 +152,8 @@ extern void heap_rescan(HeapScanDesc scan, ScanKey key);
 extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scan, ScanDirection direction);
 
-extern void heap_fetch(Relation relation, Snapshot snapshot,
-					   HeapTuple tuple, Buffer *userbuf,
+extern bool heap_fetch(Relation relation, Snapshot snapshot,
+					   HeapTuple tuple, Buffer *userbuf, bool keep_buf,
 					   PgStat_Info *pgstat_info);
 
 extern ItemPointer heap_get_latest_tid(Relation relation, Snapshot snapshot,
