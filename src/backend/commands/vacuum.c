@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110.2.4 2000/01/04 17:27:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110.2.5 2000/01/10 04:16:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1253,6 +1253,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				{
 					if (!vc_enough_space(to_vpd, tlen))
 					{
+#if 0							/* this code is broken */
 						if (to_vpd != last_fraged_page &&
 						 !vc_enough_space(to_vpd, vacrelstats->min_tlen))
 						{
@@ -1263,6 +1264,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 							num_fraged_pages--;
 							Assert(last_fraged_page == fraged_pages->vpl_pagedesc[num_fraged_pages - 1]);
 						}
+#endif
 						for (i = 0; i < num_fraged_pages; i++)
 						{
 							if (vc_enough_space(fraged_pages->vpl_pagedesc[i], tlen))
@@ -1517,6 +1519,7 @@ moving chain: failed to add item with len = %u to page %u",
 					WriteBuffer(cur_buffer);
 					cur_buffer = InvalidBuffer;
 
+#if 0							/* this code is broken */
 					/*
 					 * If no one tuple can't be added to this page -
 					 * remove page from fraged_pages. - vadim 11/27/96
@@ -1534,6 +1537,7 @@ moving chain: failed to add item with len = %u to page %u",
 						num_fraged_pages--;
 						Assert(last_fraged_page == fraged_pages->vpl_pagedesc[num_fraged_pages - 1]);
 					}
+#endif
 				}
 				for (i = 0; i < num_fraged_pages; i++)
 				{
