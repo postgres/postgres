@@ -7,7 +7,7 @@ int my_fun (void)
 	EXEC SQL END DECLARE SECTION;	
 	FILE *dbgs;
 
-	if ((dbgs = fopen("/tmp/log", "w")) != NULL)
+	if ((dbgs = fopen("log", "w")) != NULL)
                 ECPGdebug(1, dbgs);
 
 	EXEC SQL WHENEVER SQLERROR GOTO Error;

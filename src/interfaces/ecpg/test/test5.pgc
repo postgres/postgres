@@ -51,6 +51,8 @@ static void ErrorExit (void)
 	
 	sqlprint();
 
+	EXEC SQL ROLLBACK;
+
 	EXEC SQL DROP TABLE tab;
 	EXEC SQL DROP FUNCTION my_fun ();
 	EXEC SQL COMMIT;

@@ -24,6 +24,7 @@ int	struct_level = 0;
 char	errortext[128];
 static char	*connection = NULL;
 static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
+static int	FoundSort = 0;
 static int	initializer = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
@@ -655,7 +656,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 		COALESCE, COLLATE, COLUMN, COMMIT, 
                 CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT, CURRENT_DATE,
                 CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
-                DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
+                DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
                 ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
                 FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
                 GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
@@ -666,7 +667,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
                 OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
-                SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
+                SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SUBSTRING,
                 TABLE, TEMP, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
@@ -746,11 +747,11 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
-%type  <str>    ConstraintElem key_actions ColPrimaryKey
-%type  <str>    target_list target_el update_target_list ColConstraintList
+%type  <str>    ConstraintElem key_actions ColPrimaryKey ColQualList
+%type  <str>    target_list target_el update_target_list alias_clause
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
-%type  <str>    file_name AexprConst ParamNo TypeId com_expr
+%type  <str>    file_name AexprConst ParamNo TypeId c_expr ColQualListWithNull
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_action
@@ -760,10 +761,10 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
 %type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
 %type  <str>	SelectStmt SubSelect result OptTemp OptTempType OptTempScope
-%type  <str>	opt_table opt_all sort_clause sortby_list
+%type  <str>	opt_table opt_all sort_clause sortby_list ColQualifier
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause opt_distinct
-%type  <str>	table_list join_outer where_clause relation_expr sub_type
+%type  <str>	join_outer where_clause relation_expr sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
 %type  <str>    NotifyStmt columnElem copy_dirn UnlistenStmt copy_null
@@ -776,13 +777,13 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList opt_using
-%type  <str>	RuleActionStmtOrEmpty RuleActionMulti join_list func_as
+%type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
-%type  <str>    VariableResetStmt AlterTableStmt DropUserStmt
+%type  <str>    VariableResetStmt AlterTableStmt DropUserStmt from_list
 %type  <str>    user_passwd_clause user_createdb_clause opt_trans
 %type  <str>    user_createuser_clause user_list user_group_clause
 %type  <str>    CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
@@ -792,20 +793,27 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
 %type  <str>    ViewStmt LoadStmt CreatedbStmt createdb_opt_encoding
 %type  <str>	createdb_opt_location opt_encoding AlterTableStmt
-%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt
+%type  <str>    DropdbStmt ClusterStmt grantee RevokeStmt table_expr
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
 %type  <str>    select_clause opt_select_limit select_limit_value
-%type  <str>    select_offset_value table_list using_expr join_expr
-%type  <str>	using_list from_expr table_expr join_clause join_type
+%type  <str>    select_offset_value using_expr join_expr
+%type  <str>	using_list from_expr join_clause join_type
 %type  <str>	join_qual update_list join_clause join_clause_with_union
 %type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
 %type  <str>    OptConstrFromTable comment_op ConstraintAttributeSpec
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	ConstraintDeferrabilitySpec ConstraintTimeSpec 
-%type  <str>	CreateGroupStmt, AlterGroupStmt, DropGroupStmt
+%type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt
+%type  <str>	ColConstraintWithNull ColConstraintElemWithNull
+%type  <str>	join_expr_with_union
+/***
+#ifdef ENABLE_ORACLE_JOIN_SYNTAX
+%type  <str>   oracle_list oracle_expr oracle_outer
+#endif
+***/
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using
@@ -1039,18 +1047,19 @@ CreateUserStmt: CREATE USER UserId
 
 /*****************************************************************************
  *
- * Alter a postresql DBMS user
+ * Alter a postgresql DBMS user
  *
  *
  *****************************************************************************/
 
 AlterUserStmt:  ALTER USER UserId user_createdb_clause
-		user_createuser_clause user_valid_clause
+				user_createuser_clause user_valid_clause
 				{
 					$$ = cat_str(5, make_str("alter user"), $3, $4, $5, $6);
 				}
-		|ALTER USER UserId WITH PASSWORD Sconst
-		user_createdb_clause user_createuser_clause user_valid_clause
+			| ALTER USER UserId WITH PASSWORD Sconst
+				user_createdb_clause
+				user_createuser_clause user_valid_clause
 				{
 					$$ = cat_str(7, make_str("alter user"), $3, make_str("with password"), $6, $7, $8, $9);
 				}
@@ -1058,7 +1067,7 @@ AlterUserStmt:  ALTER USER UserId user_createdb_clause
 
 /*****************************************************************************
  *
- * Drop a postresql DBMS user
+ * Drop a postgresql DBMS user
  *
  *
  *****************************************************************************/
@@ -1126,7 +1135,7 @@ user_valid_clause:  VALID UNTIL Sconst			{ $$ = cat2_str(make_str("valid until")
 
 /*****************************************************************************
  *
- * Create a postresql group
+ * Create a postgresql group
  *
  *
  ****************************************************************************/
@@ -1147,7 +1156,7 @@ users_in_new_group_clause:  USER user_list   { $$ = cat2_str(make_str("user"), $
 
 /*****************************************************************************
  *
- * Alter a postresql group
+ * Alter a postgresql group
  *
  *
  *****************************************************************************/
@@ -1155,8 +1164,7 @@ AlterGroupStmt: ALTER GROUP UserId ADD USER user_list
                 {
 			$$ = cat_str(4, make_str("alter group"), $3, make_str("add user"), $6);
                 }
-                |
-                ALTER GROUP UserId DROP USER user_list
+                | ALTER GROUP UserId DROP USER user_list
                 {
 			$$ = cat_str(4, make_str("alter group"), $3, make_str("drop user"), $6);
                 }
@@ -1164,7 +1172,7 @@ AlterGroupStmt: ALTER GROUP UserId ADD USER user_list
 
 /*****************************************************************************
  *
- * Drop a postresql group
+ * Drop a postgresql group
  *
  *
  *****************************************************************************/
@@ -1459,7 +1467,7 @@ OptTableElement:  columnDef		{ $$ = $1; }
 			| TableConstraint	{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColConstraintList
+columnDef:  ColId Typename ColQualifier
 				{
 					$$ = cat_str(3, $1, $2, $3);
 				}
@@ -1469,10 +1477,20 @@ columnDef:  ColId Typename ColConstraintList
 		}
 		;
 
-ColConstraintList:  ColConstraintList ColConstraint	{ $$ = cat2_str($1,$2); }
-			| /* EMPTY */		{ $$ = EMPTY; }
+ColQualifier:	ColQualList			{ $$ = $1; }
+		| NULL_P ColQualListWithNull    { $$ = cat2_str(make_str("null"), $2); }
+                | NULL_P			{ $$ = make_str("null"); }
+                | /*EMPTY*/           		{ $$ = EMPTY; }
 		;
 
+ColQualList:  ColQualList ColConstraint	{ $$ = cat2_str($1,$2); }
+			| ColConstraint	{ $$ = $1; }
+		;
+
+ColQualListWithNull:  ColQualListWithNull ColConstraintWithNull
+			{ $$ = cat2_str($1, $2); }
+		|  ColConstraintWithNull
+			{ $$ = $1; }
 ColPrimaryKey:  PRIMARY KEY
                 {
 			$$ = make_str("primary key");
@@ -1492,9 +1510,15 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
-/*
- * DEFAULT NULL is already the default for Postgres.
- * Bue define it here and carry it forward into the system
+ColConstraintWithNull:
+		CONSTRAINT name ColConstraintElemWithNull
+			{ $$ = cat_str(3, make_str("constraint"), $2, $3); }
+		| ColConstraintElemWithNull
+			{ $$ = $1; }
+		;
+
+/* DEFAULT NULL is already the default for Postgres.
+ * But define it here and carry it forward into the system
  * to make it explicit.
  * - thomas 1998-09-13
  *
@@ -1508,7 +1532,26 @@ ColConstraint:
  * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
  * or be part of a_expr NOT LIKE or similar constructs).
  */
-ColConstraintElem:  CHECK '(' a_expr ')'
+ColConstraintElem:  ColConstraintElemWithNull
+                                {
+                                        $$ = $1;
+                                }
+                        | NOT NULL_P
+                                {
+                                        $$ = make_str("not null");
+                                }
+                        | UNIQUE
+				{
+					$$ = make_str("unique");
+				}
+			| PRIMARY KEY
+				{
+					$$ = make_str("primary key");
+				}
+			;
+
+
+ColConstraintElemWithNull:  CHECK '(' a_expr ')'
 				{
 					$$ = cat_str(3, make_str("check("), $3, make_str(")"));
 				}
@@ -1519,18 +1562,6 @@ ColConstraintElem:  CHECK '(' a_expr ')'
 			| DEFAULT b_expr
 				{
 					$$ = cat2_str(make_str("default"), $2);
-				}
-			| NOT NULL_P
-				{
-					$$ = make_str("not null");
-				}
-			| UNIQUE
-				{
-					$$ = make_str("unique");
-				}
-			| PRIMARY KEY
-				{
-					$$ = make_str("primary key");
 				}
 			| REFERENCES ColId opt_column_list key_match key_actions
 				{
@@ -1811,9 +1842,7 @@ OptConstrFromTable:                     /* Empty */
                                 }
                 ;
 
-ConstraintAttributeSpec: /* Empty */
-		{	$$ = EMPTY; }
-	| ConstraintDeferrabilitySpec
+ConstraintAttributeSpec: ConstraintDeferrabilitySpec
                 { 	$$ = $1; }
 	| ConstraintDeferrabilitySpec ConstraintTimeSpec
 		{
@@ -1831,6 +1860,8 @@ ConstraintAttributeSpec: /* Empty */
 
                 	$$ = cat2_str($1, $2);
 		}
+	| /* Empty */
+                       { $$ = 0; }
 	;
 
 ConstraintDeferrabilitySpec: NOT DEFERRABLE
@@ -1942,7 +1973,7 @@ DropStmt:  DROP TABLE relation_name_list
  *                             truncate table relname
  *
  *****************************************************************************/
-TruncateStmt:  TRUNCATE TABLE relation_name
+TruncateStmt:  TRUNCATE opt_table relation_name
                                {
 					$$ = cat2_str(make_str("drop table"), $3);
                                }
@@ -2560,6 +2591,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
 			{
 				if (strlen($5) == 0 || strlen($6) == 0) 
 					mmerror(ET_ERROR, "CREATE DATABASE WITH requires at least an option");
+
 				$$ = cat_str(5, make_str("create database"), $3, make_str("with"), $5, $6);
 			}
 		| CREATE DATABASE database_name
@@ -2639,7 +2671,7 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 		| VACUUM opt_verbose opt_analyze relation_name opt_va_list
 				{
 					if ( strlen($5) > 0 && strlen($4) == 0 )
-						mmerror(ET_ERROR, "parser: syntax error at or near \"(\"");
+						mmerror(ET_ERROR, "VACUUM syntax error at or near \"(\"\n\tRelations name must be specified");
 					$$ = cat_str(5, make_str("vacuum"), $2, $3, $4, $5);
 				}
 		;
@@ -2723,8 +2755,14 @@ insert_rest:  VALUES '(' target_list ')'
 				{
 					$$ = make_str("default values");
 				}
+/* We want the full power of SelectStatements including INTERSECT and EXCEPT
+ * for insertion.  However, we can't support sort or limit clauses.
+ */
 		| SelectStmt
 				{
+					if (FoundSort != 0)
+						mmerror(ET_ERROR, "ORDER BY is not allowed in INSERT/SELECT");
+
 					$$ = $1;
 				}
 		| '(' columnList ')' VALUES '(' target_list ')'
@@ -2733,6 +2771,9 @@ insert_rest:  VALUES '(' target_list ')'
 				}
 		| '(' columnList ')' SelectStmt
 				{
+					if (FoundSort != 0)
+						mmerror(ET_ERROR, "ORDER BY is not all owed in INSERT/SELECT");
+
 					$$ = cat_str(4, make_str("("), $2, make_str(")"), $4);
 				}
 		;
@@ -2865,14 +2906,16 @@ opt_cursor:  BINARY             	{ $$ = make_str("binary"); }
  * unionClause and intersectClause (NIL if no set operations were present)
  */
 
-SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
-				{
-					if (strlen($3) > 0 && ForUpdateNotAllowed != 0)
-							mmerror(ET_ERROR, "FOR UPDATE is not allowed in this context");
+SelectStmt:      select_clause
+			{ FoundSort = 0; }
+		 sort_clause for_update_clause opt_select_limit
+			{
+				if (strlen($4) > 0 && ForUpdateNotAllowed != 0)
+						mmerror(ET_ERROR, "FOR UPDATE is not allowed in this context");
 
-					ForUpdateNotAllowed = 0;
-					$$ = cat_str(4, $1, $2, $3, $4);
-				}
+				ForUpdateNotAllowed = 0;
+				$$ = cat_str(4, $1, $3, $4, $5);
+			}
 
 /* This rule parses Select statements including UNION INTERSECT and EXCEPT.
  * '(' and ')' can be used to specify the order of the operations 
@@ -2938,8 +2981,11 @@ opt_distinct:  DISTINCT					{ $$ = make_str("distinct"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-sort_clause:  ORDER BY sortby_list			{ $$ = cat2_str(make_str("order by"), $3); }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+sort_clause:  ORDER BY sortby_list	{ 
+						FoundSort = 1;
+						$$ = cat2_str(make_str("order by"), $3);
+					}
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
 sortby_list:  sortby					{ $$ = $1; }
@@ -3037,82 +3083,92 @@ update_list:  OF va_list
 /*****************************************************************************
  *
  *	clauses common to all Optimizable Stmts:
- *		from_clause		-
- *		where_clause	-
+ *		from_clause	- allow list of both JOIN expressions and table names
+ *		where_clause	- qualifications for joins or restrictions
  *
  *****************************************************************************/
 
-from_clause:  FROM from_expr
-		{
-			$$ = cat2_str(make_str("from"), $2);
-		}
-		| /* EMPTY */
-		{
-			$$ = EMPTY;
-		}
+from_clause:    FROM from_list		{ $$ = cat2_str(make_str("from"), $2); }
+/***
+#ifdef ENABLE_ORACLE_JOIN_SYNTAX
+		| FROM oracle_list 	{ $$ = cat2_str(make_str("from"), $2); }
+#endif
+***/
+		| FROM from_expr	{ $$ = cat2_str(make_str("from"), $2); }
+		| /* EMPTY */		{ $$ = EMPTY; }
+		;
 
+from_list:  from_list ',' table_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
+                | table_expr		{ $$ = $1; }
+                ;
 
-from_expr:  '(' join_clause_with_union ')'
-                                { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
+/***********
+ * This results in one shift/reduce conflict, presumably due to the trailing "(
+ * - Thomas 1999-09-20
+ *
+#ifdef ENABLE_ORACLE_JOIN_SYNTAX
+oracle_list:  oracle_expr	{ $$ = $1; }
+                ;
+
+oracle_expr:  ColId ',' ColId oracle_outer
+		{
+			mmerror(ET_ERROR, "Oracle OUTER JOIN not yet supported");
+			$$ = cat_str(3, $1, make_str(","), $3); }
+		}
+		|  oracle_outer ColId ',' ColId
+		{
+			mmerror(ET_ERROR, "Oracle OUTER JOIN not yet supported");
+			$$ = cat_str(4, $1, $2, make_str(","), $3); } 
+		}
+		;
+
+oracle_outer:  '(' '+' ')'	{ $$ = make_str("(+)"); }
+                ;
+#endif
+*************/
+
+from_expr:  '(' join_clause_with_union ')' alias_clause
+                                { $$ = cat_str(4, make_str("("), $2, make_str(")"), $4); }
                 | join_clause
                                 { $$ = $1; }
-                | table_list
-                                { $$ = $1; }
                 ;
 
-table_list:  table_list ',' table_expr
-                                { $$ = cat_str(3, $1, make_str(","), $3); }
-                | table_expr
-                                { $$ = $1; }
-                ;
-
-table_expr:  relation_expr AS ColLabel
-                                {
-                                        $$ = cat_str(3, $1, make_str("as"), $3);
-                                }
-                | relation_expr ColId
+table_expr:  relation_expr alias_clause
                                 {
                                         $$ = cat2_str($1, $2);
                                 }
-                | relation_expr
-                                {
-                                        $$ = $1;
-                                }
                 ;
+
+alias_clause:  AS ColId '(' name_list ')'
+			{ $$ = cat_str(5, make_str("as"), $2, make_str("("), $4, make_str(")")); }
+		| AS ColId
+			{ $$ = cat2_str(make_str("as"), $2); }
+		| ColId '(' name_list ')'
+			{ $$ = cat_str(4, $1, make_str("("), $3, make_str(")")); }
+		| ColId
+			{ $$ = $1; }
+		| /*EMPTY*/
+			{ $$ = EMPTY; }
+		;
 
 /* A UNION JOIN is the same as a FULL OUTER JOIN which *omits*
  * all result rows which would have matched on an INNER JOIN.
- * Let's reject this for now. - thomas 1999-01-08
+ * Syntactically, must enclose the UNION JOIN in parens to avoid
+ * conflicts with SELECT/UNION.
  */
-join_clause_with_union:  join_clause
-                                {       $$ = $1; }
-                | table_expr UNION JOIN table_expr
-                                {       mmerror(ET_ERROR, "UNION JOIN not yet implemented"); }
-                ;
-
-join_clause:  table_expr join_list
-                                {
-					$$ = cat2_str($1, $2);
-                                }
-                ;
-
-join_list:  join_list join_expr
-                                {
-                                        $$ = cat2_str($1, $2);
-                                }
-                | join_expr
-                                {
-                                        $$ = $1;
-                                }
+join_clause:  join_clause join_expr
+			{ $$ = cat2_str($1, $2); }
+		| table_expr join_expr
+			{ $$ = cat2_str($1, $2); }
                 ;
 
 /* This is everything but the left side of a join.
  * Note that a CROSS JOIN is the same as an unqualified
  * inner join, so just pass back the right-side table.
  * A NATURAL JOIN implicitly matches column names between
- * tables, so we'll collect those during the later transformation.
+ * tables, and the shape is determined by which columns are
+ * in common. We'll collect columns during the later transformations.
  */
-
 join_expr:  join_type JOIN table_expr join_qual
                                 {
 					$$ = cat_str(4, $1, make_str("join"), $3, $4);
@@ -3125,36 +3181,26 @@ join_expr:  join_type JOIN table_expr join_qual
                                 { 	$$ = cat2_str(make_str("cross join"), $3); }
                 ;
 
-/* OUTER is just noise... */
-join_type:  FULL join_outer
-                                {
-                                        $$ = cat2_str(make_str("full"), $2);
-					mmerror(ET_WARN, "FULL OUTER JOIN not yet implemented");
-                                }
-                | LEFT join_outer
-                                {
-                                        $$ = cat2_str(make_str("left"), $2);
-					mmerror(ET_WARN, "LEFT OUTER JOIN not yet implemented");
-                                }
-                | RIGHT join_outer
-                                {
-                                        $$ = cat2_str(make_str("right"), $2);
-					mmerror(ET_WARN, "RIGHT OUTER JOIN not yet implemented");
-                                }
-                | OUTER_P
-                                {
-                                        $$ = make_str("outer");
-					mmerror(ET_WARN, "OUTER JOIN not yet implemented");
-                                }
-                | INNER_P
-                                {
-                                        $$ = make_str("inner");
-				}
-                | /* EMPTY */
-                                {
-                                        $$ = EMPTY;
-				}
+join_clause_with_union:  join_clause_with_union join_expr_with_union
+                                { $$ = cat2_str($1, $2); }
+                | table_expr join_expr_with_union 
+                                { $$ = cat2_str($1, $2); }
+                ;
 
+join_expr_with_union:  join_expr
+                                { $$ = $1; }
+                | UNION JOIN table_expr
+				{ $$ = cat2_str(make_str("union join"), $3); }
+		;
+
+/* OUTER is just noise... */
+join_type:  FULL join_outer		{ $$ = cat2_str(make_str("full"), $2); }
+		| LEFT join_outer	{ $$ = cat2_str(make_str("left"), $2); }
+                | RIGHT join_outer      { $$ = cat2_str(make_str("right"), $2); }
+                | OUTER_P               { $$ = make_str("outer"); }
+                | INNER_P               { $$ = make_str("inner"); }
+                | /* EMPTY */           { $$ = EMPTY; }
+		;
 
 join_outer:  OUTER_P				{ $$ = make_str("outer"); }
 		| /*EMPTY*/			{ $$ = EMPTY;  /* no qualifiers */ }
@@ -3314,6 +3360,10 @@ Numeric:  FLOAT opt_float
 		| DECIMAL opt_decimal
 				{
 					$$ = cat2_str(make_str("decimal"), $2);
+				}
+		| DEC opt_decimal
+				{
+					$$ = cat2_str(make_str("dec"), $2);
 				}
 		| NUMERIC opt_numeric
 				{
@@ -3580,11 +3630,11 @@ MathOp:	'+'				{ $$ = make_str("+"); }
  * Note that '(' a_expr ')' is a b_expr, so an unrestricted expression can
  * always be used by surrounding it with parens.
  *
- * com_expr is all the productions that are common to a_expr and b_expr;
+ * c_expr is all the productions that are common to a_expr and b_expr;
  * it's factored out just to eliminate redundant coding.
  */
 
-a_expr:  com_expr
+a_expr:  c_expr
 				{	$$ = $1; }
 		| a_expr TYPECAST Typename
 				{	$$ = cat_str(3, $1, make_str("::"), $3); }
@@ -3720,7 +3770,7 @@ a_expr:  com_expr
  * cause trouble in the places where b_expr is used.  For simplicity, we
  * just eliminate all the boolean-keyword-operator productions from b_expr.
  */
-b_expr:  com_expr
+b_expr:  c_expr
 				{
 					$$ = $1;
 				}
@@ -3789,7 +3839,7 @@ b_expr:  com_expr
  * inside parentheses, such as function arguments; that cannot introduce
  * ambiguity to the b_expr syntax.
  */
-com_expr:  attr
+c_expr:  attr
 				{	$$ = $1;  }
 		| ColId opt_indirection
 				{	$$ = cat2_str($1, $2);	}
@@ -3837,6 +3887,8 @@ com_expr:  attr
 				}
 		| CURRENT_USER
 				{	$$ = make_str("current_user"); }
+		| SESSION_USER
+				{       $$ = make_str("session_user"); }
 		| USER
 				{       $$ = make_str("user"); }
 		| EXTRACT '(' extract_list ')'
@@ -4316,6 +4368,8 @@ ColLabel:  ColId			{ $$ = $1; }
 		| CONSTRAINT		{ $$ = make_str("constraint"); }
 		| COPY			{ $$ = make_str("copy"); }
 		| CURRENT		{ $$ = make_str("current"); }
+		| CURRENT_USER		{ $$ = make_str("current_user"); }
+		| DEC			{ $$ = make_str("dec"); }
 		| DECIMAL		{ $$ = make_str("decimal"); }
 		| DO			{ $$ = make_str("do"); }
 		| ELSE                  { $$ = make_str("else"); }
@@ -4339,12 +4393,14 @@ ColLabel:  ColId			{ $$ = $1; }
 		| POSITION		{ $$ = make_str("position"); }
 		| PRECISION		{ $$ = make_str("precision"); }
 		| RESET			{ $$ = make_str("reset"); }
+		| SESSION_USER		{ $$ = make_str("session_user"); }
 		| SETOF			{ $$ = make_str("setof"); }
 		| SHOW			{ $$ = make_str("show"); }
 		| TABLE			{ $$ = make_str("table"); }
 		| THEN                  { $$ = make_str("then"); }
 		| TRANSACTION		{ $$ = make_str("transaction"); }
 		| TRUE_P		{ $$ = make_str("true"); }
+		| USER			{ $$ = make_str("user"); }
 		| VACUUM		{ $$ = make_str("vacuum"); }
 		| VERBOSE		{ $$ = make_str("verbose"); }
 		| WHEN                  { $$ = make_str("when"); }
@@ -5214,7 +5270,7 @@ action : SQL_CONTINUE {
 /* some other stuff for ecpg */
 /*
  * no longer used
-ecpg_expr:  com_expr 
+ecpg_expr:  c_expr 
 				{	$$ = $1; }
 		| a_expr TYPECAST Typename
 				{	$$ = cat_str(3, $1, make_str("::"), $3); }
