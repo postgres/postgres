@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.21 2001/01/24 19:43:27 momjian Exp $
+ * $Id: parse_relation.h,v 1.22 2001/02/14 21:35:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,15 +19,11 @@
 extern Node *refnameRangeOrJoinEntry(ParseState *pstate,
 									 char *refname,
 									 int *sublevels_up);
-extern RangeTblEntry *refnameRangeTableEntry(ParseState *pstate,
-											 char *refname);
-extern int refnameRangeTablePosn(ParseState *pstate,
-								 char *refname,
-								 int *sublevels_up);
+extern void checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
+									Node *namespace2);
 extern int RTERangeTablePosn(ParseState *pstate,
 							 RangeTblEntry *rte,
 							 int *sublevels_up);
-extern JoinExpr *scanJoinListForRefname(Node *jtnode, char *refname);
 extern Node *colnameToVar(ParseState *pstate, char *colname);
 extern Node *qualifiedNameToVar(ParseState *pstate, char *refname,
 								char *colname, bool implicitRTEOK);
@@ -40,7 +36,8 @@ extern RangeTblEntry *addRangeTableEntryForSubquery(ParseState *pstate,
 													Query *subquery,
 													Attr *alias,
 													bool inFromCl);
-extern void addRTEtoJoinList(ParseState *pstate, RangeTblEntry *rte);
+extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
+						  bool addToJoinList, bool addToNameSpace);
 extern RangeTblEntry *addImplicitRTE(ParseState *pstate, char *relname);
 extern void expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					  List **colnames, List **colvars);

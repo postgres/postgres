@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.51 2001/01/24 19:43:26 momjian Exp $
+ * $Id: primnodes.h,v 1.52 2001/02/14 21:35:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ typedef struct FunctionCache *FunctionCachePtr;
  * ----------------------------------------------------------------
  */
 
-/*
+/*--------------------
  * Resdom (Result Domain)
  *
  * Notes:
@@ -50,7 +50,7 @@ typedef struct FunctionCache *FunctionCachePtr;
  *
  * Both reskey and reskeyop are typically zero during parse/plan stages.
  * The executor does not pay any attention to ressortgroupref.
- *
+ *--------------------
  */
 typedef struct Resdom
 {
@@ -129,7 +129,6 @@ typedef struct Expr
  * list.  But varnoold/varoattno continue to hold the original values.
  * The code doesn't really need varnoold/varoattno, but they are very useful
  * for debugging and interpreting completed plans, so we keep them around.
- * ----------------
  */
 #define    INNER		65000
 #define    OUTER		65001
@@ -153,7 +152,7 @@ typedef struct Var
 	AttrNumber	varoattno;	/* original value of varattno */
 } Var;
 
-/*
+/*--------------------
  * Oper
  *
  * NOTE: in the good old days 'opno' used to be both (or either, or
@@ -169,7 +168,7 @@ typedef struct Var
  * Note also that opid is not necessarily filled in immediately on creation
  * of the node.  The planner makes sure it is valid before passing the node
  * tree to the executor, but during parsing/planning opid is typically 0.
- *
+ *--------------------
  */
 typedef struct Oper
 {
@@ -499,10 +498,14 @@ typedef struct RangeTblRef
  * are not equivalent to ON() since they also affect the output column list.
  *
  * alias is an Attr node representing the AS alias-clause attached to the
- * join expression, or NULL if no clause.  During parse analysis, colnames
- * is filled with a list of String nodes giving the column names (real or
- * alias) of the output of the join, and colvars is filled with a list of
- * expressions that can be copied to reference the output columns.
+ * join expression, or NULL if no clause.  NB: presence or absence of the
+ * alias has a critical impact on semantics, because a join with an alias
+ * restricts visibility of the tables/columns inside it.
+ *
+ * During parse analysis, colnames is filled with a list of String nodes
+ * giving the column names (real or alias) of the output of the join,
+ * and colvars is filled with a list of expressions that can be copied to
+ * reference the output columns.
  *----------
  */
 typedef struct JoinExpr

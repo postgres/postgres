@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.120 2001/01/29 00:39:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.121 2001/02/14 21:35:00 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1136,10 +1136,9 @@ AlterTableAddConstraint(char *relationName,
 					 * the expression we can pass to ExecQual
 					 */
 					pstate = make_parsestate(NULL);
-					makeRangeTable(pstate, NULL);
 					rte = addRangeTableEntry(pstate, relationName, NULL,
 											 false, true);
-					addRTEtoJoinList(pstate, rte);
+					addRTEtoQuery(pstate, rte, true, true);
 
 					/* Convert the A_EXPR in raw_expr into an EXPR */
 					expr = transformExpr(pstate, constr->raw_expr,

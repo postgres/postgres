@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.159 2001/02/12 20:07:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.160 2001/02/14 21:34:59 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1533,7 +1533,6 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 				 bool updatePgAttribute)
 {
 	Node	   *expr;
-	RangeTblEntry *rte;
 	char	   *adsrc;
 	Relation	adrel;
 	Relation	idescs[Num_pg_attrdef_indices];
@@ -1551,16 +1550,12 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	expr = stringToNode(adbin);
 
 	/*
-	 * deparse_expression needs a RangeTblEntry list, so make one
+	 * deparse it
 	 */
-	rte = makeNode(RangeTblEntry);
-	rte->relname = RelationGetRelationName(rel);
-	rte->relid = RelationGetRelid(rel);
-	rte->eref = makeNode(Attr);
-	rte->eref->relname = RelationGetRelationName(rel);
-	rte->inh = false;
-	rte->inFromCl = true;
-	adsrc = deparse_expression(expr, makeList1(makeList1(rte)), false);
+	adsrc = deparse_expression(expr,
+							   deparse_context_for(RelationGetRelationName(rel),
+												   RelationGetRelid(rel)),
+							   false);
 
 	values[Anum_pg_attrdef_adrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_attrdef_adnum - 1] = attnum;
@@ -1619,7 +1614,6 @@ static void
 StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 {
 	Node	   *expr;
-	RangeTblEntry *rte;
 	char	   *ccsrc;
 	Relation	rcrel;
 	Relation	idescs[Num_pg_relcheck_indices];
@@ -1634,16 +1628,12 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	expr = (Node *) make_ands_explicit((List *) expr);
 
 	/*
-	 * deparse_expression needs a RangeTblEntry list, so make one
+	 * deparse it
 	 */
-	rte = makeNode(RangeTblEntry);
-	rte->relname = RelationGetRelationName(rel);
-	rte->relid = RelationGetRelid(rel);
-	rte->eref = makeNode(Attr);
-	rte->eref->relname = RelationGetRelationName(rel);
-	rte->inh = false;
-	rte->inFromCl = true;
-	ccsrc = deparse_expression(expr, makeList1(makeList1(rte)), false);
+	ccsrc = deparse_expression(expr,
+							   deparse_context_for(RelationGetRelationName(rel),
+												   RelationGetRelid(rel)),
+							   false);
 
 	values[Anum_pg_relcheck_rcrelid - 1] = RelationGetRelid(rel);
 	values[Anum_pg_relcheck_rcname - 1] = DirectFunctionCall1(namein,
@@ -1764,9 +1754,8 @@ AddRelationRawConstraints(Relation rel,
 	 * sole rangetable entry.  We need a ParseState for transformExpr.
 	 */
 	pstate = make_parsestate(NULL);
-	makeRangeTable(pstate, NULL);
 	rte = addRangeTableEntry(pstate, relname, NULL, false, true);
-	addRTEtoJoinList(pstate, rte);
+	addRTEtoQuery(pstate, rte, true, true);
 
 	/*
 	 * Process column default expressions.

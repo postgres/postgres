@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.89 2001/01/24 19:43:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.90 2001/02/14 21:35:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -541,7 +541,8 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 {
 	if (indirection == NIL)
 		return basenode;
-	return (Node *) transformArraySubscripts(pstate, basenode,
+	return (Node *) transformArraySubscripts(pstate,
+											 basenode, exprType(basenode),
 											 indirection, false, NULL);
 }
 
@@ -558,13 +559,14 @@ static Node *
 transformIdent(ParseState *pstate, Ident *ident, int precedence)
 {
 	Node	   *result = NULL;
+	int			sublevels_up;
 
 	/*
 	 * try to find the ident as a relation ... but not if subscripts
 	 * appear
 	 */
 	if (ident->indirection == NIL &&
-		refnameRangeTableEntry(pstate, ident->name) != NULL)
+		refnameRangeOrJoinEntry(pstate, ident->name, &sublevels_up) != NULL)
 	{
 		ident->isRel = TRUE;
 		result = (Node *) ident;

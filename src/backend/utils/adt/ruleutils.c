@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.71 2001/01/03 22:01:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.72 2001/02/14 21:35:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -35,10 +35,10 @@
  *
  **********************************************************************/
 
+#include "postgres.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-
-#include "postgres.h"
 
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
@@ -52,6 +52,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 
 
@@ -59,12 +60,29 @@
  * Local data types
  * ----------
  */
+
+/* Context info needed for invoking a recursive querytree display routine */
 typedef struct
 {
 	StringInfo	buf;			/* output buffer to append to */
-	List	   *rangetables;	/* List of List of RangeTblEntry */
+	List	   *namespaces;		/* List of deparse_namespace nodes */
 	bool		varprefix;		/* TRUE to print prefixes on Vars */
 } deparse_context;
+
+/*
+ * Each level of query context around a subtree needs a level of Var namespace.
+ * The rangetable is the list of actual RTEs, and the namespace indicates
+ * which parts of the rangetable are accessible (and under what aliases)
+ * in the expression currently being looked at.  A Var having varlevelsup=N
+ * refers to the N'th item (counting from 0) in the current context's
+ * namespaces list.
+ */
+typedef struct
+{
+	List	   *rtable;			/* List of RangeTblEntry nodes */
+	List	   *namespace;		/* List of joinlist items (RangeTblRef and
+								 * JoinExpr nodes) */
+} deparse_namespace;
 
 
 /* ----------
@@ -92,7 +110,7 @@ static char *query_getopclass = "SELECT * FROM pg_opclass WHERE oid = $1";
  */
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
-static void get_query_def(Query *query, StringInfo buf, List *parentrtables);
+static void get_query_def(Query *query, StringInfo buf, List *parentnamespace);
 static void get_select_query_def(Query *query, deparse_context *context);
 static void get_insert_query_def(Query *query, deparse_context *context);
 static void get_update_query_def(Query *query, deparse_context *context);
@@ -102,7 +120,14 @@ static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
 							deparse_context *context, bool toplevel);
 static bool simple_distinct(List *distinctClause, List *targetList);
-static RangeTblEntry *get_rte_for_var(Var *var, deparse_context *context);
+static void get_names_for_var(Var *var, deparse_context *context,
+							  char **refname, char **attname);
+static bool get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
+							   char **refname, char **attname);
+static bool find_alias_in_namespace(Node *nsnode, Node *expr,
+									List *rangetable, int levelsup,
+									char **refname, char **attname);
+static bool phony_equal(Node *expr1, Node *expr2, int levelsup);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
 static void get_tle_expr(TargetEntry *tle, deparse_context *context);
@@ -599,36 +624,67 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
  * expr is the node tree to be deparsed.  It must be a transformed expression
  * tree (ie, not the raw output of gram.y).
  *
- * rangetables is a List of Lists of RangeTblEntry nodes: first sublist is for
- * varlevelsup = 0, next for varlevelsup = 1, etc.	In each sublist the first
- * item is for varno = 1, next varno = 2, etc.	(Each sublist has the same
- * format as the rtable list of a parsetree or query.)
+ * dpcontext is a list of deparse_namespace nodes representing the context
+ * for interpreting Vars in the node tree.
  *
  * forceprefix is TRUE to force all Vars to be prefixed with their table names.
- * Otherwise, a prefix is printed only if there's more than one table involved
- * (and someday the code might try to print one only if there's ambiguity).
  *
  * The result is a palloc'd string.
  * ----------
  */
 char *
-deparse_expression(Node *expr, List *rangetables, bool forceprefix)
+deparse_expression(Node *expr, List *dpcontext, bool forceprefix)
 {
 	StringInfoData buf;
 	deparse_context context;
 
 	initStringInfo(&buf);
 	context.buf = &buf;
-	context.rangetables = rangetables;
-	context.varprefix = (forceprefix ||
-						 length(rangetables) != 1 ||
-						 length((List *) lfirst(rangetables)) != 1);
+	context.namespaces = dpcontext;
+	context.varprefix = forceprefix;
 
 	rulename = "";				/* in case of errors */
 
 	get_rule_expr(expr, &context);
 
 	return buf.data;
+}
+
+/* ----------
+ * deparse_context_for			- Build deparse context for a single relation
+ *
+ * Given the name and OID of a relation, build deparsing context for an
+ * expression referencing only that relation (as varno 1, varlevelsup 0).
+ * This is presently sufficient for the external uses of deparse_expression.
+ * ----------
+ */
+List *
+deparse_context_for(char *relname, Oid relid)
+{
+	deparse_namespace *dpns;
+	RangeTblEntry *rte;
+	RangeTblRef *rtr;
+
+	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
+
+	/* Build a minimal RTE for the rel */
+	rte = makeNode(RangeTblEntry);
+	rte->relname = relname;
+	rte->relid = relid;
+	rte->eref = makeNode(Attr);
+	rte->eref->relname = relname;
+	rte->inh = false;
+	rte->inFromCl = true;
+	/* Build one-element rtable */
+	dpns->rtable = makeList1(rte);
+
+	/* Build a namespace list referencing this RTE only */
+	rtr = makeNode(RangeTblRef);
+	rtr->rtindex = 1;
+	dpns->namespace = makeList1(rtr);
+
+	/* Return a one-deep namespace stack */
+	return makeList1(dpns);
 }
 
 /* ----------
@@ -722,6 +778,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		Node	   *qual;
 		Query	   *query;
 		deparse_context context;
+		deparse_namespace dpns;
 
 		appendStringInfo(buf, " WHERE ");
 
@@ -729,8 +786,10 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		query = (Query *) lfirst(actions);
 
 		context.buf = buf;
-		context.rangetables = makeList1(query->rtable);
+		context.namespaces = makeList1(&dpns);
 		context.varprefix = (length(query->rtable) != 1);
+		dpns.rtable = query->rtable;
+		dpns.namespace = query->jointree ? query->jointree->fromlist : NIL;
 
 		get_rule_expr(qual, &context);
 	}
@@ -844,14 +903,17 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
  * ----------
  */
 static void
-get_query_def(Query *query, StringInfo buf, List *parentrtables)
+get_query_def(Query *query, StringInfo buf, List *parentnamespace)
 {
 	deparse_context context;
+	deparse_namespace dpns;
 
 	context.buf = buf;
-	context.rangetables = lcons(query->rtable, parentrtables);
-	context.varprefix = (parentrtables != NIL ||
+	context.namespaces = lcons(&dpns, parentnamespace);
+	context.varprefix = (parentnamespace != NIL ||
 						 length(query->rtable) != 1);
+	dpns.rtable = query->rtable;
+	dpns.namespace = query->jointree ? query->jointree->fromlist : NIL;
 
 	switch (query->commandType)
 	{
@@ -1025,11 +1087,10 @@ get_basic_select_query(Query *query, deparse_context *context)
 		else
 		{
 			Var		   *var = (Var *) (tle->expr);
-			RangeTblEntry *rte;
+			char	   *refname;
 			char	   *attname;
 
-			rte = get_rte_for_var(var, context);
-			attname = get_rte_attribute_name(rte, var->varattno);
+			get_names_for_var(var, context, &refname, &attname);
 			tell_as = (strcmp(attname, tle->resdom->resname) != 0);
 		}
 
@@ -1088,7 +1149,7 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		Query  *subquery = rte->subquery;
 
 		Assert(subquery != NULL);
-		get_query_def(subquery, buf, context->rangetables);
+		get_query_def(subquery, buf, context->namespaces);
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
@@ -1336,20 +1397,277 @@ get_utility_query_def(Query *query, deparse_context *context)
 
 
 /*
- * Find the RTE referenced by a (possibly nonlocal) Var.
+ * Get the relation refname and attname for a (possibly nonlocal) Var.
+ *
+ * This is trickier than it ought to be because of the possibility of aliases
+ * and limited scope of refnames.  We have to try to return the correct alias
+ * with respect to the current namespace given by the context.
  */
-static RangeTblEntry *
-get_rte_for_var(Var *var, deparse_context *context)
+static void
+get_names_for_var(Var *var, deparse_context *context,
+				  char **refname, char **attname)
 {
-	List	   *rtlist = context->rangetables;
+	List	   *nslist = context->namespaces;
 	int			sup = var->varlevelsup;
+	deparse_namespace *dpns;
+	RangeTblEntry *rte;
 
-	while (sup-- > 0)
-		rtlist = lnext(rtlist);
+	/* Find appropriate nesting depth */
+	while (sup-- > 0 && nslist != NIL)
+		nslist = lnext(nslist);
+	if (nslist == NIL)
+		elog(ERROR, "get_names_for_var: bogus varlevelsup %d",
+			 var->varlevelsup);
+	dpns = (deparse_namespace *) lfirst(nslist);
 
-	return rt_fetch(var->varno, (List *) lfirst(rtlist));
+	/* Scan namespace to see if we can find an alias for the var */
+	if (find_alias_in_namespace((Node *) dpns->namespace, (Node *) var,
+								dpns->rtable, var->varlevelsup,
+								refname, attname))
+		return;
+
+	/*
+	 * Otherwise, fall back on the rangetable entry.  This should happen
+	 * only for uses of special RTEs like *NEW* and *OLD*, which won't
+	 * get placed in our namespace.
+	 */
+	rte = rt_fetch(var->varno, dpns->rtable);
+	*refname = rte->eref->relname;
+	*attname = get_rte_attribute_name(rte, var->varattno);
 }
 
+/*
+ * Check to see if a CASE expression matches a FULL JOIN's output expression.
+ * If so, return the refname and alias it should be expressed as.
+ */
+static bool
+get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
+				   char **refname, char **attname)
+{
+	List	   *nslist;
+	int			sup;
+
+	/*
+	 * This could be done more efficiently if we first groveled through the
+	 * CASE to find varlevelsup values, but it's probably not worth the
+	 * trouble.  All this code will go away someday anyway ...
+	 */
+
+	sup = 0;
+	foreach(nslist, context->namespaces)
+	{
+		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
+
+		if (find_alias_in_namespace((Node *) dpns->namespace,
+									(Node *) caseexpr,
+									dpns->rtable, sup,
+									refname, attname))
+			return true;
+		sup++;
+	}
+	return false;
+}
+
+/*
+ * Recursively scan a namespace (same representation as a jointree) to see
+ * if we can find an alias for the given expression.  If so, return the
+ * correct alias refname and attname.  The expression may be either a plain
+ * Var or a CASE expression (which may be a FULL JOIN reference).
+ */
+static bool
+find_alias_in_namespace(Node *nsnode, Node *expr,
+						List *rangetable, int levelsup,
+						char **refname, char **attname)
+{
+	if (nsnode == NULL)
+		return false;
+	if (IsA(nsnode, RangeTblRef))
+	{
+		if (IsA(expr, Var))
+		{
+			Var		   *var = (Var *) expr;
+			int			rtindex = ((RangeTblRef *) nsnode)->rtindex;
+
+			if (var->varno == rtindex && var->varlevelsup == levelsup)
+			{
+				RangeTblEntry *rte = rt_fetch(rtindex, rangetable);
+
+				*refname = rte->eref->relname;
+				*attname = get_rte_attribute_name(rte, var->varattno);
+				return true;
+			}
+		}
+	}
+	else if (IsA(nsnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) nsnode;
+
+		if (j->alias)
+		{
+			List	   *vlist;
+			List	   *nlist;
+
+			/*
+			 * Does the expr match any of the output columns of the join?
+			 *
+			 * We can't just use equal() here, because the given expr may
+			 * have nonzero levelsup, whereas the saved expression in the
+			 * JoinExpr should have zero levelsup.
+			 */
+			nlist = j->colnames;
+			foreach(vlist, j->colvars)
+			{
+				if (phony_equal(lfirst(vlist), expr, levelsup))
+				{
+					*refname = j->alias->relname;
+					*attname = strVal(lfirst(nlist));
+					return true;
+				}
+				nlist = lnext(nlist);
+			}
+			/*
+			 * Tables within an aliased join are invisible from outside
+			 * the join, according to the scope rules of SQL92 (the join
+			 * is considered a subquery).  So, stop here.
+			 */
+			return false;
+		}
+		if (find_alias_in_namespace(j->larg, expr,
+									rangetable, levelsup,
+									refname, attname))
+			return true;
+		if (find_alias_in_namespace(j->rarg, expr,
+									rangetable, levelsup,
+									refname, attname))
+			return true;
+	}
+	else if (IsA(nsnode, List))
+	{
+		List	   *l;
+
+		foreach(l, (List *) nsnode)
+		{
+			if (find_alias_in_namespace(lfirst(l), expr,
+										rangetable, levelsup,
+										refname, attname))
+				return true;
+		}
+	}
+	else
+		elog(ERROR, "find_alias_in_namespace: unexpected node type %d",
+			 nodeTag(nsnode));
+	return false;
+}
+
+/*
+ * Check for equality of two expressions, with the proviso that all Vars in
+ * expr1 should have varlevelsup = 0, while all Vars in expr2 should have
+ * varlevelsup = levelsup.
+ *
+ * In reality we only need to support equality checks on Vars and the type
+ * of CASE expression that is used for FULL JOIN outputs, so not all node
+ * types need be handled here.
+ *
+ * Otherwise, this code is a straight ripoff from equalfuncs.c.
+ */
+static bool
+phony_equal(Node *expr1, Node *expr2, int levelsup)
+{
+	if (expr1 == NULL || expr2 == NULL)
+		return (expr1 == expr2);
+	if (nodeTag(expr1) != nodeTag(expr2))
+		return false;
+	if (IsA(expr1, Var))
+	{
+		Var	   *a = (Var *) expr1;
+		Var	   *b = (Var *) expr2;
+
+		if (a->varno != b->varno)
+			return false;
+		if (a->varattno != b->varattno)
+			return false;
+		if (a->vartype != b->vartype)
+			return false;
+		if (a->vartypmod != b->vartypmod)
+			return false;
+		if (a->varlevelsup != 0 || b->varlevelsup != levelsup)
+			return false;
+		if (a->varnoold != b->varnoold)
+			return false;
+		if (a->varoattno != b->varoattno)
+			return false;
+		return true;
+	}
+	if (IsA(expr1, CaseExpr))
+	{
+		CaseExpr	   *a = (CaseExpr *) expr1;
+		CaseExpr	   *b = (CaseExpr *) expr2;
+
+		if (a->casetype != b->casetype)
+			return false;
+		if (!phony_equal(a->arg, b->arg, levelsup))
+			return false;
+		if (!phony_equal((Node *) a->args, (Node *) b->args, levelsup))
+			return false;
+		if (!phony_equal(a->defresult, b->defresult, levelsup))
+			return false;
+		return true;
+	}
+	if (IsA(expr1, CaseWhen))
+	{
+		CaseWhen	   *a = (CaseWhen *) expr1;
+		CaseWhen	   *b = (CaseWhen *) expr2;
+
+		if (!phony_equal(a->expr, b->expr, levelsup))
+			return false;
+		if (!phony_equal(a->result, b->result, levelsup))
+			return false;
+		return true;
+	}
+	if (IsA(expr1, Expr))
+	{
+		Expr	   *a = (Expr *) expr1;
+		Expr	   *b = (Expr *) expr2;
+
+		if (a->opType != b->opType)
+			return false;
+		if (!phony_equal(a->oper, b->oper, levelsup))
+			return false;
+		if (!phony_equal((Node *) a->args, (Node *) b->args, levelsup))
+			return false;
+		return true;
+	}
+	if (IsA(expr1, Func))
+	{
+		Func	   *a = (Func *) expr1;
+		Func	   *b = (Func *) expr2;
+
+		if (a->funcid != b->funcid)
+			return false;
+		if (a->functype != b->functype)
+			return false;
+		return true;
+	}
+	if (IsA(expr1, List))
+	{
+		List	   *la = (List *) expr1;
+		List	   *lb = (List *) expr2;
+		List	   *l;
+
+		if (length(la) != length(lb))
+			return false;
+		foreach(l, la)
+		{
+			if (!phony_equal(lfirst(l), lfirst(lb), levelsup))
+				return false;
+			lb = lnext(lb);
+		}
+		return true;
+	}
+	/* If we get here, there was something weird in a JOIN's colvars list */
+	elog(ERROR, "phony_equal: unexpected node type %d", nodeTag(expr1));
+	return false;
+}
 
 /* ----------
  * get_rule_expr			- Parse back an expression
@@ -1381,21 +1699,21 @@ get_rule_expr(Node *node, deparse_context *context)
 		case T_Var:
 			{
 				Var		   *var = (Var *) node;
-				RangeTblEntry *rte = get_rte_for_var(var, context);
+				char	   *refname;
+				char	   *attname;
 
+				get_names_for_var(var, context, &refname, &attname);
 				if (context->varprefix)
 				{
-					if (strcmp(rte->eref->relname, "*NEW*") == 0)
+					if (strcmp(refname, "*NEW*") == 0)
 						appendStringInfo(buf, "new.");
-					else if (strcmp(rte->eref->relname, "*OLD*") == 0)
+					else if (strcmp(refname, "*OLD*") == 0)
 						appendStringInfo(buf, "old.");
 					else
 						appendStringInfo(buf, "%s.",
-									quote_identifier(rte->eref->relname));
+										 quote_identifier(refname));
 				}
-				appendStringInfo(buf, "%s",
-						  quote_identifier(get_rte_attribute_name(rte,
-														var->varattno)));
+				appendStringInfo(buf, "%s", quote_identifier(attname));
 			}
 			break;
 
@@ -1606,6 +1924,19 @@ get_rule_expr(Node *node, deparse_context *context)
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 				List	   *temp;
+				char	   *refname;
+				char	   *attname;
+
+				/* Hack for providing aliases for FULL JOIN outputs */
+				if (get_alias_for_case(caseexpr, context,
+									   &refname, &attname))
+				{
+					if (context->varprefix)
+						appendStringInfo(buf, "%s.",
+										 quote_identifier(refname));
+					appendStringInfo(buf, "%s", quote_identifier(attname));
+					break;
+				}
 
 				appendStringInfo(buf, "CASE");
 				foreach(temp, caseexpr->args)
@@ -1645,6 +1976,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Func	   *func = (Func *) (expr->oper);
+	Oid			funcoid = func->funcid;
 	HeapTuple	proctup;
 	Form_pg_proc procStruct;
 	char	   *proname;
@@ -1653,40 +1985,35 @@ get_func_expr(Expr *expr, deparse_context *context)
 	char	   *sep;
 
 	/*
-	 * Get the functions pg_proc tuple
-	 */
-	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(func->funcid),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
-
-	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
-	proname = NameStr(procStruct->proname);
-
-	/*
 	 * nullvalue() and nonnullvalue() should get turned into special
 	 * syntax
 	 */
-	if (procStruct->pronargs == 1 && procStruct->proargtypes[0] == InvalidOid)
+	if (funcoid == F_NULLVALUE)
 	{
-		if (strcmp(proname, "nullvalue") == 0)
-		{
-			appendStringInfoChar(buf, '(');
-			get_rule_expr((Node *) lfirst(expr->args), context);
-			appendStringInfo(buf, " ISNULL)");
-			ReleaseSysCache(proctup);
-			return;
-		}
-		if (strcmp(proname, "nonnullvalue") == 0)
-		{
-			appendStringInfoChar(buf, '(');
-			get_rule_expr((Node *) lfirst(expr->args), context);
-			appendStringInfo(buf, " NOTNULL)");
-			ReleaseSysCache(proctup);
-			return;
-		}
+		appendStringInfoChar(buf, '(');
+		get_rule_expr((Node *) lfirst(expr->args), context);
+		appendStringInfo(buf, " ISNULL)");
+		return;
 	}
+	if (funcoid == F_NONNULLVALUE)
+	{
+		appendStringInfoChar(buf, '(');
+		get_rule_expr((Node *) lfirst(expr->args), context);
+		appendStringInfo(buf, " NOTNULL)");
+		return;
+	}
+
+	/*
+	 * Get the functions pg_proc tuple
+	 */
+	proctup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(funcoid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup for proc %u failed", funcoid);
+
+	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
+	proname = NameStr(procStruct->proname);
 
 	/*
 	 * Check to see if function is a length-coercion function for some
@@ -1968,7 +2295,7 @@ get_sublink_expr(Node *node, deparse_context *context)
 	if (need_paren)
 		appendStringInfoChar(buf, '(');
 
-	get_query_def(query, buf, context->rangetables);
+	get_query_def(query, buf, context->namespaces);
 
 	if (need_paren)
 		appendStringInfo(buf, "))");
@@ -2024,6 +2351,16 @@ static void
 get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
+	deparse_namespace *dpns;
+	List	   *sv_namespace;
+
+	/*
+	 * FROM-clause items have limited visibility of query's namespace.
+	 * Save and restore the outer namespace setting while we munge it.
+	 */
+	dpns = (deparse_namespace *) lfirst(context->namespaces);
+	sv_namespace = dpns->namespace;
+	dpns->namespace = NIL;
 
 	if (IsA(jtnode, RangeTblRef))
 	{
@@ -2042,7 +2379,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			/* Subquery RTE */
 			Assert(rte->subquery != NULL);
 			appendStringInfoChar(buf, '(');
-			get_query_def(rte->subquery, buf, context->rangetables);
+			get_query_def(rte->subquery, buf, context->namespaces);
 			appendStringInfoChar(buf, ')');
 		}
 		if (rte->alias != NULL)
@@ -2053,7 +2390,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			{
 				List	   *col;
 
-				appendStringInfo(buf, " (");
+				appendStringInfo(buf, "(");
 				foreach(col, rte->alias->attrs)
 				{
 					if (col != rte->alias->attrs)
@@ -2116,6 +2453,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			}
 			else if (j->quals)
 			{
+				dpns->namespace = makeList2(j->larg, j->rarg);
 				appendStringInfo(buf, " ON (");
 				get_rule_expr(j->quals, context);
 				appendStringInfoChar(buf, ')');
@@ -2131,7 +2469,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			{
 				List	   *col;
 
-				appendStringInfo(buf, " (");
+				appendStringInfo(buf, "(");
 				foreach(col, j->alias->attrs)
 				{
 					if (col != j->alias->attrs)
@@ -2146,6 +2484,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	else
 		elog(ERROR, "get_from_clause_item: unexpected node type %d",
 			 nodeTag(jtnode));
+
+	dpns->namespace = sv_namespace;
 }
 
 

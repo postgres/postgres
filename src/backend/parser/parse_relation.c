@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.51 2001/01/24 19:43:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.52 2001/02/14 21:35:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <ctype.h>
-
 #include "postgres.h"
+
+#include <ctype.h>
 
 #include "access/heapam.h"
 #include "access/htup.h"
@@ -30,6 +30,8 @@
 #include "utils/lsyscache.h"
 
 
+static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
+									 char *refname);
 static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 							  char *colname);
 static Node *scanJoinForColumn(JoinExpr *join, char *colname,
@@ -93,25 +95,13 @@ refnameRangeOrJoinEntry(ParseState *pstate,
 
 	while (pstate != NULL)
 	{
-		List	   *temp;
-		JoinExpr   *join;
+		Node	   *rte;
 
-		/*
-		 * Check the rangetable for RTEs; if no match, recursively scan
-		 * the joinlist for join tables.  We assume that no duplicate
-		 * entries have been made in any one nesting level.
-		 */
-		foreach(temp, pstate->p_rtable)
-		{
-			RangeTblEntry *rte = lfirst(temp);
-
-			if (strcmp(rte->eref->relname, refname) == 0)
-				return (Node *) rte;
-		}
-
-		join = scanJoinListForRefname((Node *) pstate->p_joinlist, refname);
-		if (join)
-			return (Node *) join;
+		rte = scanNameSpaceForRefname(pstate,
+									  (Node *) pstate->p_namespace,
+									  refname);
+		if (rte)
+			return rte;
 
 		pstate = pstate->parentParseState;
 		if (sublevels_up)
@@ -123,108 +113,129 @@ refnameRangeOrJoinEntry(ParseState *pstate,
 }
 
 /*
- * Recursively search a joinlist for a joinexpr with given refname
+ * Recursively search a namespace for an RTE or joinexpr with given refname.
  *
- * Note that during parse analysis, we don't expect to find a FromExpr node
- * in p_joinlist; its top level is just a bare List.
+ * The top level of p_namespace is a list, and we recurse into any joins
+ * that are not subqueries.  It is also possible to pass an individual
+ * join subtree (useful when checking for name conflicts within a scope).
+ *
+ * Note: we do not worry about the possibility of multiple matches;
+ * we assume the code that built the namespace checked for duplicates.
  */
-JoinExpr *
-scanJoinListForRefname(Node *jtnode, char *refname)
+static Node *
+scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
+						char *refname)
 {
-	JoinExpr   *result = NULL;
+	Node	   *result = NULL;
 
-	if (jtnode == NULL)
+	if (nsnode == NULL)
 		return NULL;
-	if (IsA(jtnode, List))
+	if (IsA(nsnode, RangeTblRef))
+	{
+		int			varno = ((RangeTblRef *) nsnode)->rtindex;
+		RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
+
+		if (strcmp(rte->eref->relname, refname) == 0)
+			result = (Node *) rte;
+	}
+	else if (IsA(nsnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) nsnode;
+
+		if (j->alias)
+		{
+			if (strcmp(j->alias->relname, refname) == 0)
+				return (Node *) j; /* matched a join alias */
+			/*
+			 * Tables within an aliased join are invisible from outside
+			 * the join, according to the scope rules of SQL92 (the join
+			 * is considered a subquery).  So, stop here.
+			 */
+			return NULL;
+		}
+		result = scanNameSpaceForRefname(pstate, j->larg, refname);
+		if (! result)
+			result = scanNameSpaceForRefname(pstate, j->rarg, refname);
+	}
+	else if (IsA(nsnode, List))
 	{
 		List	   *l;
 
-		foreach(l, (List *) jtnode)
+		foreach(l, (List *) nsnode)
 		{
-			result = scanJoinListForRefname(lfirst(l), refname);
+			result = scanNameSpaceForRefname(pstate, lfirst(l), refname);
 			if (result)
 				break;
 		}
 	}
-	else if (IsA(jtnode, RangeTblRef))
-	{
-		/* ignore ... */
-	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		if (j->alias && strcmp(j->alias->relname, refname) == 0)
-			return j;
-		result = scanJoinListForRefname(j->larg, refname);
-		if (! result)
-			result = scanJoinListForRefname(j->rarg, refname);
-	}
 	else
-		elog(ERROR, "scanJoinListForRefname: unexpected node type %d",
-			 nodeTag(jtnode));
+		elog(ERROR, "scanNameSpaceForRefname: unexpected node type %d",
+			 nodeTag(nsnode));
 	return result;
 }
 
-/*
- * given refname, return a pointer to the range table entry.
- *
- * NOTE that this routine will ONLY find RTEs, not join tables.
- */
-RangeTblEntry *
-refnameRangeTableEntry(ParseState *pstate, char *refname)
+/* Convenience subroutine for checkNameSpaceConflicts */
+static void
+scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
+						 char *refname)
 {
-	List	   *temp;
-
-	while (pstate != NULL)
-	{
-		foreach(temp, pstate->p_rtable)
-		{
-			RangeTblEntry *rte = lfirst(temp);
-
-			if (strcmp(rte->eref->relname, refname) == 0)
-				return rte;
-		}
-		pstate = pstate->parentParseState;
-	}
-	return NULL;
+	if (scanNameSpaceForRefname(pstate, nsnode, refname) != NULL)
+		elog(ERROR, "Table name \"%s\" specified more than once", refname);
 }
 
 /*
- * given refname, return RT index (starting with 1) of the relation,
- * and optionally get its nesting depth (0 = current).	If sublevels_up
- * is NULL, only consider rels at the current nesting level.
- * A zero result means name not found.
+ * Recursively check for refname conflicts between two namespaces or
+ * namespace subtrees.  Raise an error if any is found.
  *
- * NOTE that this routine will ONLY find RTEs, not join tables.
+ * Works by recursively scanning namespace1 in the same way that
+ * scanNameSpaceForRefname does, and then looking in namespace2 for
+ * a match to each refname found in namespace1.
+ *
+ * Note: we assume that each given argument does not contain conflicts
+ * itself; we just want to know if the two can be merged together.
  */
-int
-refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
+void
+checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
+						Node *namespace2)
 {
-	int			index;
-	List	   *temp;
-
-	if (sublevels_up)
-		*sublevels_up = 0;
-
-	while (pstate != NULL)
+	if (namespace1 == NULL)
+		return;
+	if (IsA(namespace1, RangeTblRef))
 	{
-		index = 1;
-		foreach(temp, pstate->p_rtable)
-		{
-			RangeTblEntry *rte = lfirst(temp);
+		int			varno = ((RangeTblRef *) namespace1)->rtindex;
+		RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
-			if (strcmp(rte->eref->relname, refname) == 0)
-				return index;
-			index++;
-		}
-		pstate = pstate->parentParseState;
-		if (sublevels_up)
-			(*sublevels_up)++;
-		else
-			break;
+		scanNameSpaceForConflict(pstate, namespace2, rte->eref->relname);
 	}
-	return 0;
+	else if (IsA(namespace1, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) namespace1;
+
+		if (j->alias)
+		{
+			scanNameSpaceForConflict(pstate, namespace2, j->alias->relname);
+			/*
+			 * Tables within an aliased join are invisible from outside
+			 * the join, according to the scope rules of SQL92 (the join
+			 * is considered a subquery).  So, stop here.
+			 */
+			return;
+		}
+		checkNameSpaceConflicts(pstate, j->larg, namespace2);
+		checkNameSpaceConflicts(pstate, j->rarg, namespace2);
+	}
+	else if (IsA(namespace1, List))
+	{
+		List	   *l;
+
+		foreach(l, (List *) namespace1)
+		{
+			checkNameSpaceConflicts(pstate, lfirst(l), namespace2);
+		}
+	}
+	else
+		elog(ERROR, "checkNameSpaceConflicts: unexpected node type %d",
+			 nodeTag(namespace1));
 }
 
 /*
@@ -257,6 +268,7 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
 		else
 			break;
 	}
+
 	elog(ERROR, "RTERangeTablePosn: RTE not found (internal error)");
 	return 0;					/* keep compiler quiet */
 }
@@ -369,21 +381,21 @@ colnameToVar(ParseState *pstate, char *colname)
 
 	while (pstate != NULL)
 	{
-		List	   *jt;
+		List	   *ns;
 
 		/*
-		 * We want to look only at top-level jointree items, and even for
+		 * We need to look only at top-level namespace items, and even for
 		 * those, ignore RTEs that are marked as not inFromCl and not
 		 * the query's target relation.
 		 */
-		foreach(jt, pstate->p_joinlist)
+		foreach(ns, pstate->p_namespace)
 		{
-			Node   *jtnode = (Node *) lfirst(jt);
+			Node   *nsnode = (Node *) lfirst(ns);
 			Node   *newresult = NULL;
 
-			if (IsA(jtnode, RangeTblRef))
+			if (IsA(nsnode, RangeTblRef))
 			{
-				int			varno = ((RangeTblRef *) jtnode)->rtindex;
+				int			varno = ((RangeTblRef *) nsnode)->rtindex;
 				RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
 				if (! rte->inFromCl &&
@@ -393,15 +405,15 @@ colnameToVar(ParseState *pstate, char *colname)
 				/* use orig_pstate here to get the right sublevels_up */
 				newresult = scanRTEForColumn(orig_pstate, rte, colname);
 			}
-			else if (IsA(jtnode, JoinExpr))
+			else if (IsA(nsnode, JoinExpr))
 			{
-				JoinExpr   *j = (JoinExpr *) jtnode;
+				JoinExpr   *j = (JoinExpr *) nsnode;
 
 				newresult = scanJoinForColumn(j, colname, levels_up);
 			}
 			else
 				elog(ERROR, "colnameToVar: unexpected node type %d",
-					 nodeTag(jtnode));
+					 nodeTag(nsnode));
 
 			if (newresult)
 			{
@@ -451,7 +463,7 @@ qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
 								  colname);
 	else if (IsA(rteorjoin, JoinExpr))
 		result = scanJoinForColumn((JoinExpr *) rteorjoin,
-								  colname, sublevels_up);
+								   colname, sublevels_up);
 	else
 	{
 		elog(ERROR, "qualifiedNameToVar: unexpected node type %d",
@@ -465,10 +477,11 @@ qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
 /*
  * Add an entry for a relation to the pstate's range table (p_rtable).
  *
- * If the specified refname is already present, raise error.
+ * If pstate is NULL, we just build an RTE and return it without adding it
+ * to an rtable list.
  *
- * If pstate is NULL, we just build an RTE and return it without worrying
- * about membership in an rtable list.
+ * Note: formerly this checked for refname conflicts, but that's wrong.
+ * Caller is responsible for checking for conflicts in the appropriate scope.
  */
 RangeTblEntry *
 addRangeTableEntry(ParseState *pstate,
@@ -477,26 +490,14 @@ addRangeTableEntry(ParseState *pstate,
 				   bool inh,
 				   bool inFromCl)
 {
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	char	   *refname = alias ? alias->relname : relname;
 	LOCKMODE	lockmode;
 	Relation	rel;
-	RangeTblEntry *rte;
 	Attr	   *eref;
 	int			maxattrs;
 	int			numaliases;
 	int			varattno;
-
-	/* Check for conflicting RTE or jointable alias (at level 0 only) */
-	if (pstate != NULL)
-	{
-		Node   *rteorjoin = refnameRangeOrJoinEntry(pstate, refname, NULL);
-
-		if (rteorjoin)
-			elog(ERROR, "Table name \"%s\" specified more than once",
-				 refname);
-	}
-
-	rte = makeNode(RangeTblEntry);
 
 	rte->relname = relname;
 	rte->alias = alias;
@@ -559,7 +560,8 @@ addRangeTableEntry(ParseState *pstate,
 	rte->checkAsUser = InvalidOid; /* not set-uid by default, either */
 
 	/*
-	 * Add completed RTE to range table list.
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -579,24 +581,12 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 							  Attr *alias,
 							  bool inFromCl)
 {
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	char	   *refname = alias->relname;
-	RangeTblEntry *rte;
 	Attr	   *eref;
 	int			numaliases;
 	int			varattno;
 	List	   *tlistitem;
-
-	/* Check for conflicting RTE or jointable alias (at level 0 only) */
-	if (pstate != NULL)
-	{
-		Node   *rteorjoin = refnameRangeOrJoinEntry(pstate, refname, NULL);
-
-		if (rteorjoin)
-			elog(ERROR, "Table name \"%s\" specified more than once",
-				 refname);
-	}
-
-	rte = makeNode(RangeTblEntry);
 
 	rte->relname = NULL;
 	rte->relid = InvalidOid;
@@ -647,7 +637,8 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->checkAsUser = InvalidOid;
 
 	/*
-	 * Add completed RTE to range table list.
+	 * Add completed RTE to pstate's range table list, but not to join list
+	 * nor namespace --- caller must do that if appropriate.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -691,37 +682,30 @@ isForUpdate(ParseState *pstate, char *relname)
 }
 
 /*
- * Add the given RTE as a top-level entry in the pstate's join list,
- * unless there already is an entry for it.
+ * Add the given RTE as a top-level entry in the pstate's join list
+ * and/or name space list.  (We assume caller has checked for any
+ * namespace conflict.)
  */
 void
-addRTEtoJoinList(ParseState *pstate, RangeTblEntry *rte)
+addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
+			  bool addToJoinList, bool addToNameSpace)
 {
 	int			rtindex = RTERangeTablePosn(pstate, rte, NULL);
-	List	   *jt;
-	RangeTblRef *rtr;
+	RangeTblRef *rtr = makeNode(RangeTblRef);
 
-	foreach(jt, pstate->p_joinlist)
-	{
-		Node	   *n = (Node *) lfirst(jt);
-
-		if (IsA(n, RangeTblRef))
-		{
-			if (rtindex == ((RangeTblRef *) n)->rtindex)
-				return;			/* it's already being joined to */
-		}
-	}
-
-	/* Not present, so add it */
-	rtr = makeNode(RangeTblRef);
 	rtr->rtindex = rtindex;
-	pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+
+	if (addToJoinList)
+		pstate->p_joinlist = lappend(pstate->p_joinlist, rtr);
+	if (addToNameSpace)
+		pstate->p_namespace = lappend(pstate->p_namespace, rtr);
 }
 
 /*
  * Add a POSTQUEL-style implicit RTE.
  *
- * We assume caller has already checked that there is no such RTE now.
+ * We assume caller has already checked that there is no RTE or join with
+ * a conflicting name.
  */
 RangeTblEntry *
 addImplicitRTE(ParseState *pstate, char *relname)
@@ -729,7 +713,7 @@ addImplicitRTE(ParseState *pstate, char *relname)
 	RangeTblEntry *rte;
 
 	rte = addRangeTableEntry(pstate, relname, NULL, false, false);
-	addRTEtoJoinList(pstate, rte);
+	addRTEtoQuery(pstate, rte, true, true);
 	warnAutoRange(pstate, relname);
 
 	return rte;
@@ -922,6 +906,11 @@ expandNamesVars(ParseState *pstate, List *names, List *vars)
  * This is unlike get_attname() because we use aliases if available.
  * In particular, it will work on an RTE for a subselect, whereas
  * get_attname() only works on real relations.
+ *
+ * XXX Actually, this is completely bogus, because refnames of RTEs are
+ * not guaranteed unique, and may not even have scope across the whole
+ * query.  Cleanest fix would be to add refname/attname to Var nodes and
+ * just print those, rather than indulging in this hack.
  * ----------
  */
 char *
@@ -1088,4 +1077,3 @@ warnAutoRange(ParseState *pstate, char *refname)
 			 pstate->parentParseState != NULL ? " in subquery" : "",
 			 refname);
 }
-

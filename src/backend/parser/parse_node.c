@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.51 2001/01/24 19:43:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.52 2001/02/14 21:35:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,20 +229,22 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
  *
  * pstate		Parse state
  * arrayBase	Already-transformed expression for the array as a whole
+ *				(may be NULL if we are handling an INSERT)
+ * arrayType	OID of array's datatype
  * indirection	Untransformed list of subscripts (must not be NIL)
  * forceSlice	If true, treat subscript as array slice in all cases
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
-ArrayRef   *
+ArrayRef *
 transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,
+						 Oid arrayType,
 						 List *indirection,
 						 bool forceSlice,
 						 Node *assignFrom)
 {
-	Oid			typearray,
-				typeelement,
-				typeresult;
+	Oid			elementType,
+				resultType;
 	HeapTuple	type_tuple_array,
 				type_tuple_element;
 	Form_pg_type type_struct_array,
@@ -254,28 +256,26 @@ transformArraySubscripts(ParseState *pstate,
 	ArrayRef   *aref;
 
 	/* Get the type tuple for the array */
-	typearray = exprType(arrayBase);
-
 	type_tuple_array = SearchSysCache(TYPEOID,
-									  ObjectIdGetDatum(typearray),
+									  ObjectIdGetDatum(arrayType),
 									  0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple_array))
 		elog(ERROR, "transformArraySubscripts: Cache lookup failed for array type %u",
-			 typearray);
+			 arrayType);
 	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple_array);
 
-	typeelement = type_struct_array->typelem;
-	if (typeelement == InvalidOid)
+	elementType = type_struct_array->typelem;
+	if (elementType == InvalidOid)
 		elog(ERROR, "transformArraySubscripts: type %s is not an array",
 			 NameStr(type_struct_array->typname));
 
 	/* Get the type tuple for the array element type */
 	type_tuple_element = SearchSysCache(TYPEOID,
-										ObjectIdGetDatum(typeelement),
+										ObjectIdGetDatum(elementType),
 										0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple_element))
 		elog(ERROR, "transformArraySubscripts: Cache lookup failed for array element type %u",
-			 typeelement);
+			 elementType);
 	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple_element);
 
 	/*
@@ -308,9 +308,9 @@ transformArraySubscripts(ParseState *pstate,
 	 * array type if we are fetching a slice or storing.
 	 */
 	if (isSlice || assignFrom != NULL)
-		typeresult = typearray;
+		resultType = arrayType;
 	else
-		typeresult = typeelement;
+		resultType = elementType;
 
 	/*
 	 * Transform the subscript expressions.
@@ -359,7 +359,7 @@ transformArraySubscripts(ParseState *pstate,
 	if (assignFrom != NULL)
 	{
 		Oid			typesource = exprType(assignFrom);
-		Oid			typeneeded = isSlice ? typearray : typeelement;
+		Oid			typeneeded = isSlice ? arrayType : elementType;
 
 		if (typesource != InvalidOid)
 		{
@@ -385,7 +385,7 @@ transformArraySubscripts(ParseState *pstate,
 	aref = makeNode(ArrayRef);
 	aref->refattrlength = type_struct_array->typlen;
 	aref->refelemlength = type_struct_element->typlen;
-	aref->refelemtype = typeresult;		/* XXX should save element type
+	aref->refelemtype = resultType;		/* XXX should save element type
 										 * too */
 	aref->refelembyval = type_struct_element->typbyval;
 	aref->refupperindexpr = upperIndexpr;

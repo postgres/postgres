@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.64 2001/01/24 19:43:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.65 2001/02/14 21:35:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,29 +212,37 @@ updateTargetListEntry(ParseState *pstate,
 	 */
 	if (indirection)
 	{
-		Attr	   *att = makeAttr(pstrdup(RelationGetRelationName(rd)),
-								   colname);
 		Node	   *arrayBase;
 		ArrayRef   *aref;
 
-		arrayBase = ParseNestedFuncOrColumn(pstate, att, EXPR_COLUMN_FIRST);
-		aref = transformArraySubscripts(pstate, arrayBase,
-										indirection,
-										pstate->p_is_insert,
-										tle->expr);
 		if (pstate->p_is_insert)
 		{
-
 			/*
 			 * The command is INSERT INTO table (arraycol[subscripts]) ...
 			 * so there is not really a source array value to work with.
 			 * Let the executor do something reasonable, if it can. Notice
-			 * that we forced transformArraySubscripts to treat the
-			 * subscripting op as an array-slice op above, so the source
-			 * data will have been coerced to array type.
+			 * that we force transformArraySubscripts to treat the
+			 * subscripting op as an array-slice op below, so the source
+			 * data will have been coerced to the array type.
 			 */
-			aref->refexpr = NULL;		/* signal there is no source array */
+			arrayBase = NULL;	/* signal there is no source array */
 		}
+		else
+		{
+			/*
+			 * Build a Var for the array to be updated.
+			 */
+			arrayBase = (Node *) make_var(pstate,
+										  pstate->p_target_rangetblentry,
+										  attrno);
+		}
+
+		aref = transformArraySubscripts(pstate,
+										arrayBase,
+										attrtype,
+										indirection,
+										pstate->p_is_insert,
+										tle->expr);
 		tle->expr = (Node *) aref;
 	}
 	else
@@ -385,22 +393,19 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 /* ExpandAllTables()
  * Turns '*' (in the target list) into a list of targetlist entries.
  *
- * tlist entries are generated for each relation appearing in the FROM list,
- * which by now has been transformed into a joinlist.
+ * tlist entries are generated for each relation appearing at the top level
+ * of the query's namespace, except for RTEs marked not inFromCl.  (These
+ * may include NEW/OLD pseudo-entries, implicit RTEs, etc.)
  */
 static List *
 ExpandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
-	List	   *jt;
+	List	   *ns;
 
-	/* SELECT *; */
-	if (pstate->p_joinlist == NIL)
-		elog(ERROR, "Wildcard with no tables specified not allowed");
-
-	foreach(jt, pstate->p_joinlist)
+	foreach(ns, pstate->p_namespace)
 	{
-		Node	   *n = (Node *) lfirst(jt);
+		Node	   *n = (Node *) lfirst(ns);
 
 		if (IsA(n, RangeTblRef))
 		{
@@ -430,6 +435,10 @@ ExpandAllTables(ParseState *pstate)
 			elog(ERROR, "ExpandAllTables: unexpected node (internal error)"
 				 "\n\t%s", nodeToString(n));
 	}
+
+	/* Check for SELECT *; */
+	if (target == NIL)
+		elog(ERROR, "Wildcard with no tables specified not allowed");
 
 	return target;
 }

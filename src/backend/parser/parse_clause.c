@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.75 2001/01/24 19:43:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.76 2001/02/14 21:35:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,26 +58,30 @@ static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
 
 
 /*
- * makeRangeTable -
- *	  Build the initial range table from the FROM clause.
+ * transformFromClause -
+ *	  Process the FROM clause and add items to the query's range table,
+ *	  joinlist, and namespace.
  *
- * The range table constructed here may grow as we transform the expressions
- * in the query's quals and target list. (Note that this happens because in
- * POSTQUEL, we allow references to relations not specified in the
+ * Note: we assume that pstate's p_rtable, p_joinlist, and p_namespace lists
+ * were initialized to NIL when the pstate was created.  We will add onto
+ * any entries already present --- this is needed for rule processing, as
+ * well as for UPDATE and DELETE.
+ *
+ * The range table may grow still further when we transform the expressions
+ * in the query's quals and target list. (This is possible because in
+ * POSTQUEL, we allowed references to relations not specified in the
  * from-clause.  PostgreSQL keeps this extension to standard SQL.)
- *
- * Note: we assume that pstate's p_rtable and p_joinlist lists were
- * initialized to NIL when the pstate was created.  We will add onto
- * any entries already present --- this is needed for rule processing!
  */
 void
-makeRangeTable(ParseState *pstate, List *frmList)
+transformFromClause(ParseState *pstate, List *frmList)
 {
 	List	   *fl;
 
 	/*
 	 * The grammar will have produced a list of RangeVars, RangeSubselects,
-	 * and/or JoinExprs. Transform each one, and then add it to the joinlist.
+	 * and/or JoinExprs. Transform each one (possibly adding entries to the
+	 * rtable), check for duplicate refnames, and then add it to the joinlist
+	 * and namespace.
 	 */
 	foreach(fl, frmList)
 	{
@@ -85,27 +89,41 @@ makeRangeTable(ParseState *pstate, List *frmList)
 		List	   *containedRels;
 
 		n = transformFromClauseItem(pstate, n, &containedRels);
+		checkNameSpaceConflicts(pstate, (Node *) pstate->p_namespace, n);
 		pstate->p_joinlist = lappend(pstate->p_joinlist, n);
+		pstate->p_namespace = lappend(pstate->p_namespace, n);
 	}
 }
 
 /*
- * lockTargetTable
- *	  Find the target relation of INSERT/UPDATE/DELETE and acquire write
- *	  lock on it.  This must be done before building the range table,
- *	  in case the target is also mentioned as a source relation --- we
- *	  want to be sure to grab the write lock before any read lock.
+ * setTargetTable
+ *	  Add the target relation of INSERT/UPDATE/DELETE to the range table,
+ *	  and make the special links to it in the ParseState.
  *
- * The ParseState's link to the target relcache entry is also set here.
+ *	  We also open the target relation and acquire a write lock on it.
+ *	  This must be done before processing the FROM list, in case the target
+ *	  is also mentioned as a source relation --- we want to be sure to grab
+ *	  the write lock before any read lock.
+ *
+ *	  If alsoSource is true, add the target to the query's joinlist and
+ *	  namespace.  For INSERT, we don't want the target to be joined to;
+ *	  it's a destination of tuples, not a source.	For UPDATE/DELETE,
+ *	  we do need to scan or join the target.  (NOTE: we do not bother
+ *	  to check for namespace conflict; we assume that the namespace was
+ *	  initially empty in these cases.)
+ *
+ *	  Returns the rangetable index of the target relation.
  */
-void
-lockTargetTable(ParseState *pstate, char *relname)
+int
+setTargetTable(ParseState *pstate, char *relname,
+			   bool inh, bool alsoSource)
 {
+	RangeTblEntry *rte;
+	int			rtindex;
+
 	/* Close old target; this could only happen for multi-action rules */
 	if (pstate->p_target_relation != NULL)
 		heap_close(pstate->p_target_relation, NoLock);
-	pstate->p_target_relation = NULL;
-	pstate->p_target_rangetblentry = NULL; /* setTargetTable will set this */
 
 	/*
 	 * Open target rel and grab suitable lock (which we will hold till
@@ -115,62 +133,36 @@ lockTargetTable(ParseState *pstate, char *relname)
 	 * but *not* release the lock.
 	 */
 	pstate->p_target_relation = heap_openr(relname, RowExclusiveLock);
-}
 
-/*
- * setTargetTable
- *	  Add the target relation of INSERT/UPDATE/DELETE to the range table,
- *	  and make the special links to it in the ParseState.
- *
- *	  inJoinSet says whether to add the target to the join list.
- *	  For INSERT, we don't want the target to be joined to; it's a
- *	  destination of tuples, not a source.	For UPDATE/DELETE, we do
- *	  need to scan or join the target.
- */
-void
-setTargetTable(ParseState *pstate, char *relname, bool inh, bool inJoinSet)
-{
-	RangeTblEntry *rte;
+	/*
+	 * Now build an RTE.
+	 */
+	rte = addRangeTableEntry(pstate, relname, NULL, inh, false);
+	pstate->p_target_rangetblentry = rte;
 
-	/* look for relname only at current nesting level... */
-	if (refnameRangeTablePosn(pstate, relname, NULL) == 0)
-	{
-		rte = addRangeTableEntry(pstate, relname, NULL, inh, false);
-		/*
-		 * Since the rel wasn't in the rangetable already, it's not being
-		 * read; override addRangeTableEntry's default checkForRead.
-		 *
-		 * If we find an explicit reference to the rel later during
-		 * parse analysis, scanRTEForColumn will change checkForRead
-		 * to 'true' again.  That can't happen for INSERT but it is
-		 * possible for UPDATE and DELETE.
-		 */
-		rte->checkForRead = false;
-	}
-	else
-	{
-		rte = refnameRangeTableEntry(pstate, relname);
-		/*
-		 * Since the rel was in the rangetable already, it's being read
-		 * as well as written.  Therefore, leave checkForRead true.
-		 *
-		 * Force inh to the desired setting for the target (XXX is this
-		 * reasonable?  It's *necessary* that INSERT target not be marked
-		 * inheritable, but otherwise not too clear what to do if conflict?)
-		 */
-		rte->inh = inh;
-	}
+	/* assume new rte is at end */
+	rtindex = length(pstate->p_rtable);
+	Assert(rte == rt_fetch(rtindex, pstate->p_rtable));
 
-	/* Mark target table as requiring write access. */
+	/*
+	 * Override addRangeTableEntry's default checkForRead, and instead
+	 * mark target table as requiring write access.
+	 *
+	 * If we find an explicit reference to the rel later during
+	 * parse analysis, scanRTEForColumn will change checkForRead
+	 * to 'true' again.  That can't happen for INSERT but it is
+	 * possible for UPDATE and DELETE.
+	 */
+	rte->checkForRead = false;
 	rte->checkForWrite = true;
 
-	if (inJoinSet)
-		addRTEtoJoinList(pstate, rte);
+	/*
+	 * If UPDATE/DELETE, add table to joinlist and namespace.
+	 */
+	if (alsoSource)
+		addRTEtoQuery(pstate, rte, true, true);
 
-	/* lockTargetTable should have been called earlier */
-	Assert(pstate->p_target_relation != NULL);
-
-	pstate->p_target_rangetblentry = rte;
+	return rtindex;
 }
 
 /*
@@ -313,22 +305,21 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 					  List *containedRels)
 {
 	Node	   *result;
-	List	   *sv_joinlist;
+	List	   *save_namespace;
 	List	   *clause_varnos,
 			   *l;
 
 	/*
-	 * This is a tad tricky, for two reasons.  First, at the point where
-	 * we're called, the two subtrees of the JOIN node aren't yet part of
-	 * the pstate's joinlist, which means that transformExpr() won't resolve
-	 * unqualified references to their columns correctly.  We fix this in a
-	 * slightly klugy way: temporarily make the pstate's joinlist consist of
-	 * just those two subtrees (which creates exactly the namespace the ON
-	 * clause should see).  This is OK only because the ON clause can't
-	 * legally alter the joinlist by causing relation refs to be added.
+	 * This is a tad tricky, for two reasons.  First, the namespace that
+	 * the join expression should see is just the two subtrees of the JOIN
+	 * plus any outer references from upper pstate levels.  So, temporarily
+	 * set this pstate's namespace accordingly.  (We need not check for
+	 * refname conflicts, because transformFromClauseItem() already did.)
+	 * NOTE: this code is OK only because the ON clause can't legally alter
+	 * the namespace by causing implicit relation refs to be added.
 	 */
-	sv_joinlist = pstate->p_joinlist;
-	pstate->p_joinlist = makeList2(j->larg, j->rarg);
+	save_namespace = pstate->p_namespace;
+	pstate->p_namespace = makeList2(j->larg, j->rarg);
 
 	/* This part is just like transformWhereClause() */
 	result = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
@@ -338,14 +329,14 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 			 typeidTypeName(exprType(result)));
 	}
 
-	pstate->p_joinlist = sv_joinlist;
+	pstate->p_namespace = save_namespace;
 
 	/*
 	 * Second, we need to check that the ON condition doesn't refer to any
 	 * rels outside the input subtrees of the JOIN.  It could do that despite
-	 * our hack on the joinlist if it uses fully-qualified names.  So, grovel
+	 * our hack on the namespace if it uses fully-qualified names.  So, grovel
 	 * through the transformed clause and make sure there are no bogus
-	 * references.
+	 * references.  (Outer references are OK, and are ignored here.)
 	 */
 	clause_varnos = pull_varnos(result);
 	foreach(l, clause_varnos)
@@ -384,8 +375,8 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 							 interpretInhOption(r->inhOpt), true);
 
 	/*
-	 * We create a RangeTblRef, but we do not add it to the joinlist here.
-	 * makeRangeTable will do so, if we are at top level of the FROM clause.
+	 * We create a RangeTblRef, but we do not add it to the joinlist or
+	 * namespace; our caller must do that if appropriate.
 	 */
 	rtr = makeNode(RangeTblRef);
 	/* assume new rte is at end */
@@ -402,8 +393,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 static RangeTblRef *
 transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 {
-	List	   *save_rtable;
-	List	   *save_joinlist;
+	List	   *save_namespace;
 	List	   *parsetrees;
 	Query	   *query;
 	RangeTblEntry *rte;
@@ -424,15 +414,12 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * does not include other FROM items).  But it does need to be able to
 	 * see any further-up parent states, so we can't just pass a null parent
 	 * pstate link.  So, temporarily make the current query level have an
-	 * empty rtable and joinlist.
+	 * empty namespace.
 	 */
-	save_rtable = pstate->p_rtable;
-	save_joinlist = pstate->p_joinlist;
-	pstate->p_rtable = NIL;
-	pstate->p_joinlist = NIL;
+	save_namespace = pstate->p_namespace;
+	pstate->p_namespace = NIL;
 	parsetrees = parse_analyze(r->subquery, pstate);
-	pstate->p_rtable = save_rtable;
-	pstate->p_joinlist = save_joinlist;
+	pstate->p_namespace = save_namespace;
 
 	/*
 	 * Check that we got something reasonable.  Some of these conditions
@@ -456,8 +443,8 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	rte = addRangeTableEntryForSubquery(pstate, query, r->name, true);
 
 	/*
-	 * We create a RangeTblRef, but we do not add it to the joinlist here.
-	 * makeRangeTable will do so, if we are at top level of the FROM clause.
+	 * We create a RangeTblRef, but we do not add it to the joinlist or
+	 * namespace; our caller must do that if appropriate.
 	 */
 	rtr = makeNode(RangeTblRef);
 	/* assume new rte is at end */
@@ -472,7 +459,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
  * transformFromClauseItem -
  *	  Transform a FROM-clause item, adding any required entries to the
  *	  range table list being built in the ParseState, and return the
- *	  transformed item ready to include in the joinlist.
+ *	  transformed item ready to include in the joinlist and namespace.
  *	  This routine can recurse to handle SQL92 JOIN expressions.
  *
  *	  Aside from the primary return value (the transformed joinlist item)
@@ -524,6 +511,13 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 * Generate combined list of relation indexes
 		 */
 		*containedRels = nconc(l_containedRels, r_containedRels);
+
+		/*
+		 * Check for conflicting refnames in left and right subtrees.  Must
+		 * do this because higher levels will assume I hand back a self-
+		 * consistent namespace subtree.
+		 */
+		checkNameSpaceConflicts(pstate, j->larg, j->rarg);
 
 		/*
 		 * Extract column name and var lists from both subtrees
@@ -733,23 +727,9 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 
 		/*
 		 * Process alias (AS clause), if any.
-		 *
-		 * The given table alias must be unique in the current nesting level,
-		 * ie it cannot match any RTE refname or jointable alias.  This is
-		 * a bit painful to check because my own child joins are not yet in
-		 * the pstate's joinlist, so they have to be scanned separately.
 		 */
 		if (j->alias)
 		{
-			/* Check against previously created RTEs and joinlist entries */
-			if (refnameRangeOrJoinEntry(pstate, j->alias->relname, NULL))
-				elog(ERROR, "Table name \"%s\" specified more than once",
-					 j->alias->relname);
-			/* Check children */
-			if (scanJoinListForRefname(j->larg, j->alias->relname) ||
-				scanJoinListForRefname(j->rarg, j->alias->relname))
-				elog(ERROR, "Table name \"%s\" specified more than once",
-					 j->alias->relname);
 			/*
 			 * If a column alias list is specified, substitute the alias
 			 * names into my output-column list

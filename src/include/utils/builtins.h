@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.146 2001/01/24 19:43:28 momjian Exp $
+ * $Id: builtins.h,v 1.147 2001/02/14 21:35:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,8 +325,9 @@ extern Datum pg_get_ruledef(PG_FUNCTION_ARGS);
 extern Datum pg_get_viewdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
 extern Datum pg_get_userbyid(PG_FUNCTION_ARGS);
-extern char *deparse_expression(Node *expr, List *rangetables,
+extern char *deparse_expression(Node *expr, List *dpcontext,
 				   bool forceprefix);
+extern List *deparse_context_for(char *relname, Oid relid);
 
 /* selfuncs.c */
 extern Datum eqsel(PG_FUNCTION_ARGS);

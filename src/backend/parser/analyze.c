@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.178 2001/01/27 07:23:48 tgl Exp $
+ *	$Id: analyze.c,v 1.179 2001/02/14 21:35:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,11 +257,10 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 
 	qry->commandType = CMD_DELETE;
 
-	/* set up a range table */
-	lockTargetTable(pstate, stmt->relname);
-	makeRangeTable(pstate, NIL);
-	setTargetTable(pstate, stmt->relname,
-				   interpretInhOption(stmt->inhOpt), true);
+	/* set up range table with just the result rel */
+	qry->resultRelation = setTargetTable(pstate, stmt->relname,
+										 interpretInhOption(stmt->inhOpt),
+										 true);
 
 	qry->distinctClause = NIL;
 
@@ -271,7 +270,6 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
-	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
@@ -289,6 +287,8 @@ static Query *
 transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
+	List	   *sub_rtable;
+	List	   *sub_namespace;
 	List	   *icolumns;
 	List	   *attrnos;
 	List	   *attnos;
@@ -300,11 +300,35 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	pstate->p_is_insert = true;
 
 	/*
-	 * Must get write lock on target table before scanning SELECT,
-	 * else we will grab the wrong kind of initial lock if the target
-	 * table is also mentioned in the SELECT part.
+	 * If a non-nil rangetable/namespace was passed in, and we are doing
+	 * INSERT/SELECT, arrange to pass the rangetable/namespace down to the
+	 * SELECT.  This can only happen if we are inside a CREATE RULE,
+	 * and in that case we want the rule's OLD and NEW rtable entries to
+	 * appear as part of the SELECT's rtable, not as outer references for
+	 * it.  (Kluge!)  The SELECT's joinlist is not affected however.
+	 * We must do this before adding the target table to the INSERT's rtable.
 	 */
-	lockTargetTable(pstate, stmt->relname);
+	if (stmt->selectStmt)
+	{
+		sub_rtable = pstate->p_rtable;
+		pstate->p_rtable = NIL;
+		sub_namespace = pstate->p_namespace;
+		pstate->p_namespace = NIL;
+	}
+	else
+	{
+		sub_rtable = NIL;		/* not used, but keep compiler quiet */
+		sub_namespace = NIL;
+	}
+
+	/*
+	 * Must get write lock on INSERT target table before scanning SELECT,
+	 * else we will grab the wrong kind of initial lock if the target
+	 * table is also mentioned in the SELECT part.  Note that the target
+	 * table is not added to the joinlist or namespace.
+	 */
+	qry->resultRelation = setTargetTable(pstate, stmt->relname,
+										 false, false);
 
 	/*
 	 * Is it INSERT ... SELECT or INSERT ... VALUES?
@@ -323,15 +347,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * otherwise the behavior of SELECT within INSERT might be different
 		 * from a stand-alone SELECT. (Indeed, Postgres up through 6.5 had
 		 * bugs of just that nature...)
-		 *
-		 * If a non-nil rangetable was passed in, pass it down to the SELECT.
-		 * This can only happen if we are inside a CREATE RULE, and in that
-		 * case we want the rule's OLD and NEW rtable entries to appear as
-		 * part of the SELECT's rtable, not as outer references for it.
 		 */
-		sub_pstate->p_rtable = pstate->p_rtable;
-		pstate->p_rtable = NIL;
+		sub_pstate->p_rtable = sub_rtable;
+		sub_pstate->p_namespace = sub_namespace;
+
 		selectQuery = transformStmt(sub_pstate, stmt->selectStmt);
+
 		release_pstate_resources(sub_pstate);
 		pfree(sub_pstate);
 
@@ -341,7 +362,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			elog(ERROR, "INSERT ... SELECT may not specify INTO");
 		/*
 		 * Make the source be a subquery in the INSERT's rangetable,
-		 * and add it to the joinlist.
+		 * and add it to the INSERT's joinlist.
 		 */
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
@@ -400,13 +421,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/*
 	 * Now we are done with SELECT-like processing, and can get on with
 	 * transforming the target list to match the INSERT target columns.
-	 *
-	 * In particular, it's time to add the INSERT target to the rangetable.
-	 * (We didn't want it there until now since it shouldn't be visible in
-	 * the SELECT part.)  Note that the INSERT target is NOT added to the
-	 * joinlist, since we don't want to join over it.
 	 */
-	setTargetTable(pstate, stmt->relname, false, false);
 
 	/* Prepare to assign non-conflicting resnos to resjunk attributes */
 	if (pstate->p_last_resno <= pstate->p_target_relation->rd_rel->relnatts)
@@ -495,7 +510,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, NULL);
-	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
@@ -1565,27 +1579,27 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	oldrte->checkForRead = false;
 	newrte->checkForRead = false;
 	/*
-	 * They must be in the joinlist too for lookup purposes, but only add
+	 * They must be in the namespace too for lookup purposes, but only add
 	 * the one(s) that are relevant for the current kind of rule.  In an
 	 * UPDATE rule, quals must refer to OLD.field or NEW.field to be
 	 * unambiguous, but there's no need to be so picky for INSERT & DELETE.
 	 * (Note we marked the RTEs "inFromCl = true" above to allow unqualified
-	 * references to their fields.)
+	 * references to their fields.)  We do not add them to the joinlist.
 	 */
 	switch (stmt->event)
 	{
 		case CMD_SELECT:
-			addRTEtoJoinList(pstate, oldrte);
+			addRTEtoQuery(pstate, oldrte, false, true);
 			break;
 		case CMD_UPDATE:
-			addRTEtoJoinList(pstate, oldrte);
-			addRTEtoJoinList(pstate, newrte);
+			addRTEtoQuery(pstate, oldrte, false, true);
+			addRTEtoQuery(pstate, newrte, false, true);
 			break;
 		case CMD_INSERT:
-			addRTEtoJoinList(pstate, newrte);
+			addRTEtoQuery(pstate, newrte, false, true);
 			break;
 		case CMD_DELETE:
-			addRTEtoJoinList(pstate, oldrte);
+			addRTEtoQuery(pstate, oldrte, false, true);
 			break;
 		default:
 			elog(ERROR, "transformRuleStmt: unexpected event type %d",
@@ -1638,8 +1652,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			 * Set up OLD/NEW in the rtable for this statement.  The entries
 			 * are marked not inFromCl because we don't want them to be
 			 * referred to by unqualified field names nor "*" in the rule
-			 * actions.  We don't need to add them to the joinlist for
-			 * qualified-name lookup, either (see qualifiedNameToVar()).
+			 * actions.  We must add them to the namespace, however, or they
+			 * won't be accessible at all.  We decide later whether to put
+			 * them in the joinlist.
 			 */
 			oldrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
 										makeAttr("*OLD*", NULL),
@@ -1649,6 +1664,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 										false, false);
 			oldrte->checkForRead = false;
 			newrte->checkForRead = false;
+			addRTEtoQuery(sub_pstate, oldrte, false, true);
+			addRTEtoQuery(sub_pstate, newrte, false, true);
 
 			/* Transform the rule action statement */
 			top_subqry = transformStmt(sub_pstate, lfirst(actions));
@@ -1712,10 +1729,10 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 			 */
 			if (has_old || (has_new && stmt->event == CMD_UPDATE))
 			{
-				/* hack so we can use addRTEtoJoinList() */
+				/* hack so we can use addRTEtoQuery() */
 				sub_pstate->p_rtable = sub_qry->rtable;
 				sub_pstate->p_joinlist = sub_qry->jointree->fromlist;
-				addRTEtoJoinList(sub_pstate, oldrte);
+				addRTEtoQuery(sub_pstate, oldrte, true, false);
 				sub_qry->jointree->fromlist = sub_pstate->p_joinlist;
 			}
 
@@ -1779,8 +1796,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	/* make FOR UPDATE clause available to addRangeTableEntry */
 	pstate->p_forUpdate = stmt->forUpdate;
 
-	/* set up a range table */
-	makeRangeTable(pstate, stmt->fromClause);
+	/* process the FROM clause */
+	transformFromClause(pstate, stmt->fromClause);
 
 	/* transform targetlist and WHERE */
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
@@ -2055,7 +2072,6 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	if (isLeaf)
 	{
 		/* Process leaf SELECT */
-		List   *save_rtable;
 		List   *selectList;
 		Query  *selectQuery;
 		char	selectName[32];
@@ -2063,16 +2079,13 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		RangeTblRef *rtr;
 
 		/*
-		 * Transform SelectStmt into a Query.  We do not want any previously
-		 * transformed leaf queries to be visible in the outer context of
-		 * this sub-query, so temporarily make the top-level pstate have an
-		 * empty rtable.  (We needn't do the same with the joinlist because
-		 * we aren't entering anything in the top-level joinlist.)
+		 * Transform SelectStmt into a Query.
+		 *
+		 * Note: previously transformed sub-queries don't affect the parsing
+		 * of this sub-query, because they are not in the toplevel pstate's
+		 * namespace list.
 		 */
-		save_rtable = pstate->p_rtable;
-		pstate->p_rtable = NIL;
 		selectList = parse_analyze((Node *) stmt, pstate);
-		pstate->p_rtable = save_rtable;
 
 		Assert(length(selectList) == 1);
 		selectQuery = (Query *) lfirst(selectList);
@@ -2202,19 +2215,15 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
 
+	qry->resultRelation = setTargetTable(pstate, stmt->relname,
+										 interpretInhOption(stmt->inhOpt),
+										 true);
+
 	/*
 	 * the FROM clause is non-standard SQL syntax. We used to be able to
 	 * do this with REPLACE in POSTQUEL so we keep the feature.
-	 *
-	 * Note: it's critical here that we process FROM before adding the
-	 * target table to the rtable --- otherwise, if the target is also
-	 * used in FROM, we'd fail to notice that it should be marked
-	 * checkForRead as well as checkForWrite.  See setTargetTable().
 	 */
-	lockTargetTable(pstate, stmt->relname);
-	makeRangeTable(pstate, stmt->fromClause);
-	setTargetTable(pstate, stmt->relname,
-				   interpretInhOption(stmt->inhOpt), true);
+	transformFromClause(pstate, stmt->fromClause);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
@@ -2222,7 +2231,6 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 	qry->rtable = pstate->p_rtable;
 	qry->jointree = makeFromExpr(pstate->p_joinlist, qual);
-	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
