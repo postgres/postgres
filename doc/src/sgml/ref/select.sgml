@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.41 2001/05/27 09:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.42 2001/05/30 04:32:30 tgl Exp $
 Postgres documentation
 -->
 
@@ -950,7 +950,7 @@ table to do the select from.  A less obvious use is to abbreviate a
 normal select from one or more tables:
 
   <programlisting>
-SELECT distributors.* WHERE name = 'Westward';
+SELECT distributors.* WHERE distributors.name = 'Westward';
 
  did | name
 -----+----------
