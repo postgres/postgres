@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.48 2004/05/23 22:20:10 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.49 2004/08/06 18:09:15 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -769,7 +769,7 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 /*************************/
-/* LaTeX				 */
+/* LaTeX		 */
 /*************************/
 
 
@@ -789,6 +789,9 @@ latex_escaped_print(const char *in, FILE *fout)
 				break;
 			case '$':
 				fputs("\\$", fout);
+				break;
+			case '_':
+				fputs("\\_", fout);
 				break;
 			case '{':
 				fputs("\\{", fout);
@@ -817,7 +820,6 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	const char *cp;
 	const char *const * ptr;
 
 
@@ -829,42 +831,39 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		fputs("\n\\end{center}\n\n", fout);
 	}
 
+	/* count columns */
+	for (ptr = headers; *ptr; ptr++)
+		col_count++;
+
 	/* begin environment and set alignments and borders */
 	fputs("\\begin{tabular}{", fout);
-	if (opt_border == 0)
-		fputs(opt_align, fout);
-	else if (opt_border == 1)
+
+	if (opt_border == 2)
+	  fputs("| ", fout);
+        for (i = 0; i < col_count; i++)
 	{
-		for (cp = opt_align; *cp; cp++)
-		{
-			if (cp != opt_align)
-				fputc('|', fout);
-			fputc(*cp, fout);
-		}
+	  fputc(*(opt_align + i), fout);
+	  if (opt_border != 0 && i < col_count - 1)
+	    fputs (" | ", fout);
 	}
-	else if (opt_border == 2)
-	{
-		for (cp = opt_align; *cp; cp++)
-		{
-			fputc('|', fout);
-			fputc(*cp, fout);
-		}
-		fputc('|', fout);
-	}
+	if (opt_border == 2)
+	  fputs(" |", fout);
+
 	fputs("}\n", fout);
 
 	if (!opt_barebones && opt_border == 2)
 		fputs("\\hline\n", fout);
 
 	/* print headers and count columns */
-	for (i = 0, ptr = headers; *ptr; i++, ptr++)
+	for (i = 0, ptr = headers; i < col_count; i++, ptr++)
 	{
-		col_count++;
 		if (!opt_barebones)
 		{
 			if (i != 0)
 				fputs(" & ", fout);
+                        fputs("\\textit{", fout);
 			latex_escaped_print(*ptr, fout);
+                        fputc('}', fout);
 		}
 	}
 
@@ -888,7 +887,7 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 	if (opt_border == 2)
 		fputs("\\hline\n", fout);
 
-	fputs("\\end{tabular}\n\n", fout);
+	fputs("\\end{tabular}\n\n\\noindent ", fout);
 
 
 	/* print footers */
@@ -951,8 +950,12 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 			if (!opt_barebones)
 			{
 				if (opt_border == 2)
+				{
 					fputs("\\hline\n", fout);
-				fprintf(fout, "\\multicolumn{2}{c}{Record %d} \\\\\n", record++);
+					fprintf(fout, "\\multicolumn{2}{|c|}{\\textit{Record %d}} \\\\\n", record++);
+				}
+				else
+					fprintf(fout, "\\multicolumn{2}{c}{\\textit{Record %d}} \\\\\n", record++);
 			}
 			if (opt_border >= 1)
 				fputs("\\hline\n", fout);
@@ -967,7 +970,7 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 	if (opt_border == 2)
 		fputs("\\hline\n", fout);
 
-	fputs("\\end{tabular}\n\n", fout);
+	fputs("\\end{tabular}\n\n\\noindent ", fout);
 
 
 	/* print footers */
