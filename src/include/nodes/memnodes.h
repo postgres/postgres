@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.18 2000/07/11 14:30:34 momjian Exp $
+ * $Id: memnodes.h,v 1.19 2000/12/01 18:14:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,27 +60,6 @@ typedef struct MemoryContextData
 } MemoryContextData;
 
 /* utils/palloc.h contains typedef struct MemoryContextData *MemoryContext */
-
-
-/*
- * AllocSetContext is our standard implementation of MemoryContext.
- */
-typedef struct AllocBlockData *AllocBlock; /* internal to aset.c */
-typedef struct AllocChunkData *AllocChunk;
-
-typedef struct AllocSetContext
-{
-	MemoryContextData header;		/* Standard memory-context fields */
-	/* Info about storage allocated in this context: */
-	AllocBlock	blocks;				/* head of list of blocks in this set */
-#define ALLOCSET_NUM_FREELISTS	8
-	AllocChunk	freelist[ALLOCSET_NUM_FREELISTS]; /* free chunk lists */
-	/* Allocation parameters for this context: */
-	Size		initBlockSize;		/* initial block size */
-	Size		maxBlockSize;		/* maximum block size */
-	AllocBlock	keeper;				/* if not NULL, keep this block
-									 * over resets */
-} AllocSetContext;
 
 
 /*
