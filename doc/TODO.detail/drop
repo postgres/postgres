@@ -2,7 +2,7 @@ From pgsql-hackers-owner+M3040@hub.org Thu Jun  8 00:31:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA13157
 	for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:31:00 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA01089 for <pgman@candle.pha.pa.us>; Thu, 8 Jun 2000 00:17:19 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5846ib99782;
 	Thu, 8 Jun 2000 00:06:44 -0400 (EDT)
@@ -280,7 +280,7 @@ From Inoue@tpf.co.jp Sat Jun 10 01:01:01 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10355
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:01:00 -0400 (EDT)
-Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id AAA25467 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 00:41:32 -0400 (EDT)
 Received: from mcadnote1 (ppm110.noc.fukui.nsk.ne.jp [210.161.188.29] (may be forged))
           by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
    id NAA03125; Sat, 10 Jun 2000 13:40:40 +0900
@@ -411,7 +411,7 @@ From tgl@sss.pgh.pa.us Sat Jun 10 01:31:04 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA10922
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:31:03 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id BAA27265 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 01:16:07 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA06206;
 	Sat, 10 Jun 2000 01:14:37 -0400 (EDT)
@@ -457,7 +457,7 @@ From dhogaza@pacifier.com Sat Jun 10 09:30:59 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA25987
 	for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:30:58 -0400 (EDT)
-Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
+Received: from smtp.pacifier.com (comet.pacifier.com [199.2.117.155]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id JAA18716 for <pgman@candle.pha.pa.us>; Sat, 10 Jun 2000 09:15:08 -0400 (EDT)
 Received: from desktop (dsl-dhogaza.pacifier.net [207.202.226.68])
 	by smtp.pacifier.com (8.9.3/8.9.3pop) with SMTP id GAA15799;
 	Sat, 10 Jun 2000 06:14:28 -0700 (PDT)
@@ -509,7 +509,7 @@ From tgl@sss.pgh.pa.us Sun Jun 11 12:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA05771
 	for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:31:01 -0400 (EDT)
-Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2]) by renoir.op.net (o1/$Revision: 1.3 $) with ESMTP id MAA19315 for <pgman@candle.pha.pa.us>; Sun, 11 Jun 2000 12:24:06 -0400 (EDT)
 Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
 	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id MAA09503;
 	Sun, 11 Jun 2000 12:22:42 -0400 (EDT)
@@ -777,4 +777,65 @@ Dynamic Works
 jdavis@dynworks.com
 http://dynworks.com
 
+
+From owner-pgsql-hackers@hub.org Sat Feb 26 01:07:45 2000
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA17776
+	for <pgman@candle.pha.pa.us>; Sat, 26 Feb 2000 01:07:43 -0500 (EST)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id BAA06232;
+	Sat, 26 Feb 2000 01:03:53 -0500 (EST)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Sat, 26 Feb 2000 01:03:26 -0500
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id BAA05808
+	for pgsql-hackers-outgoing; Sat, 26 Feb 2000 01:02:28 -0500 (EST)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss2.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id BAA05426
+	for <pgsql-hackers@postgreSQL.org>; Sat, 26 Feb 2000 01:01:46 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss2.sss.pgh.pa.us (8.9.3/8.9.3) with ESMTP id BAA14228;
+	Sat, 26 Feb 2000 01:01:34 -0500 (EST)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] ALTER TABLE DROP COLUMN 
+In-reply-to: <200002260412.XAA14752@candle.pha.pa.us> 
+References: <200002260412.XAA14752@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Fri, 25 Feb 2000 23:12:26 -0500"
+Date: Sat, 26 Feb 2000 01:01:33 -0500
+Message-ID: <14225.951544893@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: ORr
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> You can exclusively lock the table, then do a heap_getnext() scan over
+> the entire table, remove the dropped column, do a heap_insert(), then a
+> heap_delete() on the current tuple, making sure to skip over the tuples
+> inserted by the current transaction.  When completed, remove the column
+> from pg_attribute, mark the transaction as committed (if desired), and
+> run vacuum over the table to remove the deleted rows.
+
+Hmm, that would work --- the new tuples commit at the same instant that
+the schema updates commit, so it should be correct.  You have the 2x
+disk usage problem, but there's no way around that without losing
+rollback ability.
+
+A potentially tricky bit will be persuading the tuple-reading and tuple-
+writing subroutines to pay attention to different versions of the tuple
+structure for the same table.  I haven't looked to see if this will be
+difficult or not.  If you can pass the TupleDesc explicitly then it
+shouldn't be a problem.
+
+I'd suggest that the cleanup vacuum *not* be an automatic part of
+the operation; just recommend that people do it ASAP after dropping
+a column.  Consider needing to drop several columns...
+
+			regards, tom lane
+
+************
 
