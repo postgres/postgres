@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.24 2004/08/30 02:54:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.25 2004/09/01 16:21:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -822,8 +822,11 @@ identify_system_timezone(void)
 {
 	int			i;
 	char		tzname[128];
+	char        localtzname[256];
 	time_t		t = time(NULL);
 	struct tm  *tm = localtime(&t);
+	HKEY        rootKey;
+	int         idx;
 
 	if (!tm)
 	{
@@ -843,6 +846,110 @@ identify_system_timezone(void)
 			elog(DEBUG4, "TZ \"%s\" matches Windows timezone \"%s\"",
 				 win32_tzmap[i].pgtzname, tzname);
 			return win32_tzmap[i].pgtzname;
+		}
+	}
+
+	/*
+	 * Localized Windows versions return localized names for the
+	 * timezone. Scan the registry to find the English name,
+	 * and then try matching against our table again.
+	 */
+	memset(localtzname, 0, sizeof(localtzname));
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+					 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones",
+					 0,
+					 KEY_READ,
+					 &rootKey) != ERROR_SUCCESS)
+	{
+		ereport(WARNING,
+				(errmsg_internal("could not open registry key to identify Windows timezone: %i", (int)GetLastError())));
+		return NULL;
+	}
+	
+	for (idx = 0; ; idx++) 
+	{
+		char keyname[256];
+		char zonename[256];
+		DWORD namesize;
+		FILETIME lastwrite;
+		HKEY key;
+		LONG r;
+		
+		memset(keyname, 0, sizeof(keyname));
+		namesize = sizeof(keyname);
+		if ((r=RegEnumKeyEx(rootKey,
+							idx,
+							keyname,
+							&namesize,
+							NULL,
+							NULL,
+							NULL,
+							&lastwrite)) != ERROR_SUCCESS)
+		{
+			if (r == ERROR_NO_MORE_ITEMS)
+				break;
+			ereport(WARNING,
+					(errmsg_internal("could not enumerate registry subkeys to identify Windows timezone: %i", (int)r)));
+			break;
+		}
+
+		if ((r=RegOpenKeyEx(rootKey,keyname,0,KEY_READ,&key)) != ERROR_SUCCESS)
+		{
+			ereport(WARNING,
+					(errmsg_internal("could not open registry subkey to identify Windows timezone: %i", (int)r)));
+			break;
+		}
+		
+		memset(zonename, 0, sizeof(zonename));
+		namesize = sizeof(zonename);
+		if ((r=RegQueryValueEx(key, "Std", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
+		{
+			ereport(WARNING,
+					(errmsg_internal("could not query value for 'std' to identify Windows timezone: %i", (int)r)));
+			RegCloseKey(key);
+			break;
+		}
+		if (strcmp(tzname, zonename) == 0)
+		{
+			/* Matched zone */
+			strcpy(localtzname, keyname);
+			RegCloseKey(key);
+			break;
+		}
+		memset(zonename, 0, sizeof(zonename));
+		namesize = sizeof(zonename);
+		if ((r=RegQueryValueEx(key, "Dlt", NULL, NULL, zonename, &namesize)) != ERROR_SUCCESS)
+		{
+			ereport(WARNING,
+					(errmsg_internal("could not query value for 'dlt' to identify Windows timezone: %i", (int)r)));
+			RegCloseKey(key);
+			break;
+		}
+		if (strcmp(tzname, zonename) == 0)
+		{
+			/* Matched DST zone */
+			strcpy(localtzname, keyname);
+			RegCloseKey(key);
+			break;
+		}
+
+		RegCloseKey(key);
+	}
+
+	RegCloseKey(rootKey);
+
+	if (localtzname[0])
+	{
+		/* Found a localized name, so scan for that one too */
+		for (i = 0; win32_tzmap[i].stdname != NULL; i++)
+		{
+			if (strcmp(localtzname, win32_tzmap[i].stdname) == 0 ||
+				strcmp(localtzname, win32_tzmap[i].dstname) == 0)
+			{
+				elog(DEBUG4, "TZ \"%s\" matches localized Windows timezone \"%s\" (\"%s\")",
+					 win32_tzmap[i].pgtzname, tzname, localtzname);
+				return win32_tzmap[i].pgtzname;
+			}
 		}
 	}
 
