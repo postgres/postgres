@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.12 1999/07/08 00:15:03 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.13 1999/07/15 02:03:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -129,6 +129,7 @@ ifeq ($(PORTNAME), solaris_i386)
   install-shlib-dep	:= install-shlib
   shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
+  SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
   CFLAGS			+= $(CFLAGS_SL)
 endif
 
@@ -136,6 +137,7 @@ ifeq ($(PORTNAME), solaris_sparc)
   install-shlib-dep	:= install-shlib
   shlib				:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL		:= -G
+  SHLIB_LINK		+= -ldl -lsocket -lresolv -lnsl -lm -lc
   CFLAGS			+= $(CFLAGS_SL)
 endif
 
