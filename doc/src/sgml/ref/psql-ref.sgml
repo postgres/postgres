@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.107 2004/03/22 03:38:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.108 2004/03/24 03:27:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -490,8 +490,9 @@ PostgreSQL documentation
     not belong to any option it will be interpreted as the database name
     (or the user name, if the database name is also given). Not all
     these options are required, defaults do apply. If you omit the host
-    name, <application>psql</> will connect via a Unix domain socket to a server on the
-    local host. The default port number is compile-time determined.
+    name, <application>psql</> will connect via a Unix domain socket 
+    to a server on the local host, or via TCP/IP to <literal>localhost</> on machines
+    that don't have unix domain sockets. The default port number is compile-time determined.
     Since the database server uses the same default, you will not have
     to specify the port in most cases. The default user name is your
     Unix user name, as is the default database name. Note that you can't
