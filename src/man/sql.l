@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.4 1997/08/03 02:38:47 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.5 1997/08/26 17:00:23 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
 .SH "Section 4 \(em SQL Commands (COMMANDS)"
 .SH "General Information"
@@ -183,7 +183,7 @@ indicated, then all array elements are returned.
 .SH "Operators"
 Any built-in system, or user-defined operator may be used in SQL.
 For the list of built-in and system operators consult
-.BR "introduction" "(3)."
+.BR "pgbuiltin" "(3)."
 For a list of user-defined operators consult your system administrator
 or run a query on the pg_operator class.  Parentheses may be used for
 arbitrary grouping of operators.
