@@ -859,7 +859,7 @@ Optional Packages:
   --with-libraries=DIRS   look for additional libraries in DIRS
   --with-libs=DIRS        alternative spelling of --with-libraries
   --with-pgport=PORTNUM   change default port number 5432
-  --with-tcl              build Tcl and Tk interfaces
+  --with-tcl              build Tcl modules (PL/Tcl)
   --with-tclconfig=DIR    tclConfig.sh is in DIR
   --with-perl             build Perl modules (PL/Perl)
   --with-python           build Python modules (PL/Python)
@@ -2995,7 +2995,7 @@ echo "${ECHO_T}$enable_thread_safety" >&6
 
 
 #
-# Tcl/Tk
+# Optionally build Tcl modules (PL/Tcl)
 #
 echo "$as_me:$LINENO: checking whether to build with Tcl" >&5
 echo $ECHO_N "checking whether to build with Tcl... $ECHO_C" >&6

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.297 2004/09/24 01:31:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.298 2004/10/01 02:00:43 neilc Exp $
 -->
 
 <appendix id="release">
@@ -1501,7 +1501,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.297 2004/09/24 01:31:32 neilc E
 
     <listitem>
      <para>
-      Allow PL/PgSQL parameter names to be referenced in the function (Dennis Bjorklund)
+      Allow PL/pgSQL parameter names to be referenced in the function (Dennis Bjorklund)
      </para>
      <para>
       This basically creates an automatic alias for each named parameter.
@@ -1510,7 +1510,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.297 2004/09/24 01:31:32 neilc E
 
     <listitem>
      <para>
-      Do minimal syntax checking of PL/PgSQL functions at creation time (Tom)
+      Do minimal syntax checking of PL/pgSQL functions at creation time (Tom)
      </para>
      <para>
       This allows us to catch simple syntax errors sooner.
@@ -1519,7 +1519,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.297 2004/09/24 01:31:32 neilc E
 
     <listitem>
      <para>
-      More support for composite types (row and record variables) in PL/PgSQL
+      More support for composite types (row and record variables) in PL/pgSQL
      </para>
      <para>
       For example, it now works to pass a rowtype variable to another function
@@ -1529,14 +1529,14 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.297 2004/09/24 01:31:32 neilc E
 
     <listitem>
      <para>
-      Default values for PL/PgSQL variables can now reference previously
+      Default values for PL/pgSQL variables can now reference previously
       declared variables
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Improve parsing of PL/PgSQL FOR loops (Tom)
+      Improve parsing of PL/pgSQL FOR loops (Tom)
      </para>
      <para>
       Parsing is now driven by presence of ".." rather than datatype of FOR

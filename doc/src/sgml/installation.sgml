@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.204 2004/09/23 00:30:13 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.205 2004/10/01 02:00:43 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -137,11 +137,12 @@ su - postgres
    <itemizedlist>
     <listitem>
      <para>
-      To build the server programming language PL/Perl you need a full
+      To build the server programming language
+      <application>PL/Perl</application> you need a full
       <productname>Perl</productname> installation, including the
       <filename>libperl</filename> library and the header files.
-      Since PL/Perl will be a shared library, the
-      <indexterm><primary>libperl</primary></indexterm>
+      Since <application>PL/Perl</application> will be a shared
+      library, the <indexterm><primary>libperl</primary></indexterm>
       <filename>libperl</filename> library must be a shared library
       also on most platforms.  This appears to be the default in
       recent <productname>Perl</productname> versions, but it was not
@@ -158,28 +159,30 @@ su - postgres
 *** the documentation for details.
 </screen>
       (If you don't follow the on-screen output you will merely notice
-      that the PL/Perl library object, <filename>plperl.so</filename>
-      or similar, will not be installed.)  If you see this, you will
-      have to rebuild and install <productname>Perl</productname>
-      manually to be able to build PL/Perl.  During the configuration
-      process for <productname>Perl</productname>, request a shared
-      library.
+      that the <application>PL/Perl</application> library object,
+      <filename>plperl.so</filename> or similar, will not be
+      installed.)  If you see this, you will have to rebuild and
+      install <productname>Perl</productname> manually to be able to
+      build <application>PL/Perl</application>.  During the
+      configuration process for <productname>Perl</productname>,
+      request a shared library.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      To build the PL/Python server programming language, you need a
-      <productname>Python</productname> installation with the header
-      files and the distutils module.  The distutils module is
-      included by default with <productname>Python</productname> 1.6
-      and later; users of earlier versions of
-      <productname>Python</productname> will need to install it.
+      To build the <application>PL/Python</> server programming
+      language, you need a <productname>Python</productname>
+      installation with the header files and the distutils module.
+      The distutils module is included by default with
+      <productname>Python</productname> 1.6 and later; users of
+      earlier versions of <productname>Python</productname> will need
+      to install it.
      </para>
 
      <para>
-      Since PL/Python will be a shared library, the
-      <indexterm><primary>libpython</primary></indexterm>
+      Since <application>PL/Python</application> will be a shared
+      library, the <indexterm><primary>libpython</primary></indexterm>
       <filename>libpython</filename> library must be a shared library
       also on most platforms.  This is not the case in a default
       <productname>Python</productname> installation.  If after
@@ -209,8 +212,8 @@ su - postgres
 
     <listitem>
      <para>
-      If you want to build Tcl or Tk components (clients and the
-      PL/Tcl language) you of course need a Tcl installation.
+      If you want to build the <application>PL/Tcl</application>
+      procedural language, you of course need a Tcl installation.
      </para>
     </listitem>
 
@@ -723,7 +726,7 @@ su - postgres
        <term><option>--with-perl</option></term>
        <listitem>
         <para>
-         Build the PL/Perl server-side language.
+         Build the <application>PL/Perl</> server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -732,7 +735,7 @@ su - postgres
        <term><option>--with-python</option></term>
        <listitem>
         <para>
-         Build the PL/Python server-side language.
+         Build the <application>PL/Python</> server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -741,36 +744,21 @@ su - postgres
        <term><option>--with-tcl</option></term>
        <listitem>
         <para>
-         Build <application>PL/Tcl</>, which requires Tcl/Tk
-         <option>--without-tk</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--without-tk</option></term>
-       <listitem>
-        <para>
-         If you specify <option>--with-tcl</> and this option, then
-         the program that requires <productname>Tk</>
-         (<application>pgtksh</>) will be
-         excluded.
+         Build the <application>PL/Tcl</> server-side language.
         </para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
        <term><option>--with-tclconfig=<replaceable>DIRECTORY</replaceable></option></term>
-       <term><option>--with-tkconfig=<replaceable>DIRECTORY</replaceable></option></term>
        <listitem>
         <para>
-         Tcl/Tk installs the files <filename>tclConfig.sh</filename> and
-         <filename>tkConfig.sh</filename>, which contain
-         configuration information needed to build modules
-         interfacing to Tcl or Tk. These files are normally found
-         automatically at their well-known locations, but if you want to
-         use a different version of Tcl or Tk you can specify the
-         directory in which to find them.
+         Tcl installs the file <filename>tclConfig.sh</filename>, which
+         contains configuration information needed to build modules
+         interfacing to Tcl. This file is normally found automatically
+         at a well-known location, but if you want to use a different
+         version of Tcl you can specify the directory in which to look
+         for it.
         </para>
        </listitem>
       </varlistentry>

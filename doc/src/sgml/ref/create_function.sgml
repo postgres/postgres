@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.61 2004/09/20 22:48:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.62 2004/10/01 02:00:44 neilc Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -402,7 +402,8 @@ CREATE FUNCTION add(integer, integer) RETURNS integer
   </para>
 
   <para>
-   Increment an integer, making use of an argument name, in PL/PgSQL:
+   Increment an integer, making use of an argument name, in
+   <application>PL/pgSQL</application>:
 
 <programlisting>
 CREATE OR REPLACE FUNCTION increment(i integer) RETURNS integer AS '

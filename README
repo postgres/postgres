@@ -7,12 +7,11 @@ database management system.
 PostgreSQL is an advanced object-relational database management system
 that supports an extended subset of the SQL standard, including
 transactions, foreign keys, subqueries, triggers, user-defined types
-and functions.  This distribution also contains several language
-bindings, including C and Tcl.
+and functions.  This distribution also contains C language bindings.
 
-The JDBC, ODBC, C++, and Python interfaces have been moved to the PostgreSQL
-Projects Web Site at http://gborg.postgresql.org for separate maintenance.
-A Perl DBI/DBD driver is available from CPAN.
+The JDBC, ODBC, C++, Python, and Tcl interfaces have been moved to the
+PostgreSQL Projects Web Site at http://gborg.postgresql.org for separate
+maintenance.  A Perl DBI/DBD driver is available from CPAN.
 
 See the file INSTALL for instructions on how to build and install
 PostgreSQL.  That file also lists supported operating systems and
