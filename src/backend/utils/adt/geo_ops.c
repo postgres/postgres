@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.72 2002/11/29 19:25:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.73 2002/12/30 02:18:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2043,8 +2043,8 @@ lseg_center(PG_FUNCTION_ARGS)
 
 	result = (Point *) palloc(sizeof(Point));
 
-	result->x = (lseg->p[0].x - lseg->p[1].x) / 2.0;
-	result->y = (lseg->p[0].y - lseg->p[1].y) / 2.0;
+	result->x = (lseg->p[0].x + lseg->p[1].x) / 2.0;
+	result->y = (lseg->p[0].y + lseg->p[1].y) / 2.0;
 
 	PG_RETURN_POINT_P(result);
 }
