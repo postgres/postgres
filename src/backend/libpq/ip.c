@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.24 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/ip.c,v 1.25 2004/04/24 20:10:34 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -67,8 +67,11 @@ static int getnameinfo_unix(const struct sockaddr_un * sa, int salen,
  */
 int
 getaddrinfo_all(const char *hostname, const char *servname,
-				const struct addrinfo * hintp, struct addrinfo ** result)
+				const struct addrinfo *hintp, struct addrinfo **result)
 {
+	/* not all versions of getaddrinfo() zero *result on failure */
+	*result = NULL;
+
 #ifdef HAVE_UNIX_SOCKETS
 	if (hintp != NULL && hintp->ai_family == AF_UNIX)
 		return getaddrinfo_unix(servname, hintp, result);
