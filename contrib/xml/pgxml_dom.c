@@ -87,10 +87,10 @@ pgxml_parse(PG_FUNCTION_ARGS)
 	doctree = xmlParseMemory((char *) VARDATA(t), docsize);
 	if (doctree == NULL)
 	{
-		/* xmlCleanupParser(); */
+		 xmlCleanupParser();
 		PG_RETURN_BOOL(false);	/* i.e. not well-formed */
 	}
-	/* xmlCleanupParser(); */
+	xmlCleanupParser(); 
 	xmlFreeDoc(doctree);
 	PG_RETURN_BOOL(true);
 }
@@ -202,7 +202,8 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 
 	doctree = xmlParseMemory((char *) VARDATA(t), docsize);
 	if (doctree == NULL)
-	{							/* not well-formed */
+	{	       /* not well-formed */
+	  xmlCleanupParser();
 		PG_RETURN_NULL();
 	}
 
@@ -216,6 +217,7 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 		elog(WARNING, "XPath syntax error");
 		xmlFreeDoc(doctree);
 		pfree((void *) xpath);
+		xmlCleanupParser();
 		PG_RETURN_NULL();
 	}
 
@@ -227,6 +229,7 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 	{
 		xmlFreeDoc(doctree);
 		pfree((void *) xpath);
+		xmlCleanupParser();
 		PG_RETURN_NULL();		/* seems appropriate */
 	}
 	/* now we dump this node, ?surrounding by tags? */
@@ -257,6 +260,6 @@ pgxml_xpath(PG_FUNCTION_ARGS)
 	xmlFreeDoc(doctree);
 	pfree((void *) xpath);
 	xmlFree(xpresstr);
-
+	xmlCleanupParser();
 	PG_RETURN_TEXT_P(xpres);
 }
