@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.39 2003/02/14 14:05:00 momjian Exp $
+ * $Id: pg_config.h.in,v 1.40 2003/02/19 04:04:04 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -356,6 +356,12 @@
 /* Set to 1 if you have <readline/readline.h> */
 #undef HAVE_READLINE_READLINE_H
 
+/* Set to 1 if you have <editline/history.h> */
+#undef HAVE_EDITLINE_HISTORY_H
+
+/* Set to 1 if you have <editline/readline.h> */
+#undef HAVE_EDITLINE_READLINE_H
+
 /* Set to 1 if you have <security/pam_appl.h> */
 #undef HAVE_SECURITY_PAM_APPL_H
 
@@ -552,6 +558,9 @@
 
 /* Set to 1 if you have rl_filename_completion_function */
 #undef HAVE_RL_FILENAME_COMPLETION_FUNCTION
+
+/* Set to 1 if you have replace_history_entry */
+#undef HAVE_REPLACE_HISTORY_ENTRY
 
 /* Set to 1 if you have getopt_long() (GNU long options) */
 #undef HAVE_GETOPT_LONG

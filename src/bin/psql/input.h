@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.17 2002/09/04 20:31:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.18 2003/02/19 04:04:04 momjian Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -18,11 +18,15 @@
 #define USE_READLINE 1
 #if defined(HAVE_READLINE_READLINE_H)
 #include <readline/readline.h>
+#elif defined(HAVE_EDITLINE_READLINE_H)
+#include <editline/readline.h>
 #elif defined(HAVE_READLINE_H)
 #include <readline.h>
 #endif
 #if defined(HAVE_READLINE_HISTORY_H)
 #include <readline/history.h>
+#elif defined(HAVE_EDITLINE_HISTORY_H)
+#include <editline/history.h>
 #elif defined(HAVE_HISTORY_H)
 #include <history.h>
 #endif
