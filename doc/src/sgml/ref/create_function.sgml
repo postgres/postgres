@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.52 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.53 2003/10/26 04:34:05 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -355,9 +355,15 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    </para>
 
   <para>
-   To be able to define a function, the user must have the
-   <literal>USAGE</literal> privilege on the language.
+   Any single quotes or backslashes in the function definition must be
+   escaped by doubling them.
   </para>
+
+   <para>
+    To be able to define a function, the user must have the
+    <literal>USAGE</literal> privilege on the language.
+   </para>
+
  </refsect1>
 
  <refsect1 id="sql-createfunction-examples">
