@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.71 1999/09/06 18:13:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.72 1999/09/06 19:33:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1264,9 +1264,12 @@ RelationFlushRelation(Relation *relationPtr,
 	 */
 	smgrclose(DEFAULT_SMGR, relation);
 
-	if (relation->rd_isnailed)
+	if (relation->rd_isnailed || relation->rd_myxactonly)
 	{
-		/* this is a nailed special relation for bootstrapping */
+		/* Do not flush relation cache entry if it is a nailed-in system
+		 * relation or it is marked transaction-local.
+		 * (To delete a local relation, caller must clear rd_myxactonly!)
+		 */
 		return;
 	}
 
@@ -1364,6 +1367,8 @@ RelationForgetRelation(Oid rid)
 			MemoryContextSwitchTo(oldcxt);
 		}
 
+		relation->rd_myxactonly = false; /* so it can be flushed */
+
 		RelationFlushRelation(&relation, false);
 	}
 }
@@ -1454,6 +1459,9 @@ RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
  *	 Will blow away either all the cached relation descriptors or
  *	 those that have a zero reference count.
  *
+ *	 This is currently used only to recover from SI message buffer overflow,
+ *	 so onlyFlushReferenceCountZero is always false.  We do not blow away
+ *	 transaction-local relations, since they cannot be targets of SI updates.
  */
 void
 RelationCacheInvalidate(bool onlyFlushReferenceCountZero)
@@ -1461,14 +1469,17 @@ RelationCacheInvalidate(bool onlyFlushReferenceCountZero)
 	HashTableWalk(RelationNameCache, (HashtFunc) RelationFlushRelation,
 				  onlyFlushReferenceCountZero);
 
-	/*
-	 * nailed-in reldescs will still be in the cache... 6 hardwired heaps
-	 * + 3 hardwired indices == 9 total.
-	 */
 	if (!onlyFlushReferenceCountZero)
 	{
-		Assert(RelationNameCache->hctl->nkeys == 9);
-		Assert(RelationIdCache->hctl->nkeys == 9);
+		/*
+		 * Debugging check: what's left should be transaction-local relations
+		 * plus nailed-in reldescs.  There should be 6 hardwired heaps
+		 * + 3 hardwired indices == 9 total.
+		 */
+		int		numRels = length(newlyCreatedRelns) + 9;
+
+		Assert(RelationNameCache->hctl->nkeys == numRels);
+		Assert(RelationIdCache->hctl->nkeys == numRels);
 	}
 }
 
@@ -1580,7 +1591,7 @@ RelationPurgeLocalRelation(bool xactCommitted)
 				smgrunlink(DEFAULT_SMGR, reln);
 		}
 
-		reln->rd_myxactonly = FALSE;
+		reln->rd_myxactonly = false; /* so it can be flushed */
 
 		if (!IsBootstrapProcessingMode())
 			RelationFlushRelation(&reln, false);
