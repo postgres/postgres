@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.10 2002/03/22 19:20:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.11 2002/09/18 20:09:32 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -6,90 +6,42 @@
  <indexterm zone="plpython"><primary>PL/Python</></>
  <indexterm zone="plpython"><primary>Python</></>
 
- <sect1 id="plpython-intro">
-  <title>Introduction</title>
+ <para>
+  The <application>PL/Python</application> procedural language allows
+  <productname>PostgreSQL</productname> functions to be written in the
+  <ulink url="http://www.python.org">Python</ulink> language.
+ </para>
 
+ <para>
+  To install PL/Python in a particular database, use
+  <literal>createlang plpython <replaceable>dbname</></literal>.
+ </para>
+
+ <note>
   <para>
-   The <application>PL/Python</application> procedural language allows
-   <productname>PostgreSQL</productname> functions to be written in
-   the <ulink url="http://www.python.org">Python</ulink> language.
+   Users of source packages must specially enable the build of
+   PL/Python during the installation process (refer to the
+   installation instructions for more information).  Users of binary
+   packages might find PL/Python in a separate subpackage.
   </para>
+ </note>
+
+ <sect1 id="plpython-funcs">
+  <title>PL/Python Functions</title>
 
   <para>
-   The current version of <application>PL/Python</application>
-   functions as a trusted language only; access to the file system and
-   other local resources is disabled.  Specifically,
-   <application>PL/Python</application> uses the Python restricted
-   execution environment, further restricts it to prevent the use of
-   the file <function>open</> call, and allows only modules from a
-   specific list to be imported.  Presently, that list includes:
-   array, bisect, binascii, calendar, cmath, codecs, errno, marshal,
-   math, md5, mpz, operator, pcre, pickle, random, re, regex, sre,
-   sha, string, StringIO, struct, time, whrandom, and zlib.
-  </para>
-
-  <para>
-   In the current version, any database error encountered while
-   running a <application>PL/Python</application> function will result
-   in the immediate termination of that function by the server.  It is
-   not possible to trap error conditions using Python <literal>try
-   ... catch</literal> constructs.  For example, a syntax error in an
-   SQL statement passed to the <literal>plpy.execute()</literal> call
-   will terminate the function.  This behavior may be changed in a
-   future release.
-  </para>
- </sect1>
-
- <sect1 id="plpython-install">
-  <title>Installation</title>
-
-  <para>
-   To build PL/Python, the <option>--with-python</option> option needs
-   to be specified when running <filename>configure</filename>.  If
-   after building and installing you have a file called
-   <filename>plpython.so</filename> (possibly a different extension),
-   then everything went well.  Otherwise you should have seen a notice
-   like this flying by:
-<screen>
-*** Cannot build PL/Python because libpython is not a shared library.
-*** You might have to rebuild your Python installation.  Refer to
-*** the documentation for details.
-</screen>
-   That means you have to rebuild (part of) your Python installation
-   to supply this shared library.
-  </para>
-
-  <para>
-   The catch is that the Python distribution or the Python maintainers
-   do not provide any direct way to do this.  The closest thing we can
-   offer you is the information in <ulink
-   url="http://www.python.org/doc/FAQ.html#3.30">Python FAQ
-   3.30</ulink>.  On some operating systems you don't really have to
-   build a shared library, but then you will have to convince the
-   PostgreSQL build system of this.  Consult the
-   <filename>Makefile</filename> in the
-   <filename>src/pl/plpython</filename> directory for details.
-  </para>
- </sect1>
-
- <sect1 id="plpython-using">
-  <title>Using PL/Python</title>
-
-  <para>
-   There are sample functions in
-   <filename>plpython_function.sql</filename>.  The Python code you
-   write gets transformed into a function.  E.g.,
+   The Python code you write gets transformed into a function.  E.g.,
 <programlisting>
-CREATE FUNCTION myfunc(text) RETURNS text AS
-'return args[0]'
-LANGUAGE 'plpython';
+CREATE FUNCTION myfunc(text) RETURNS text
+    AS 'return args[0]'
+    LANGUAGE 'plpython';
 </programlisting>
 
    gets transformed into
 
 <programlisting>
 def __plpython_procedure_myfunc_23456():
-	return args[0]
+        return args[0]
 </programlisting>
 
    where 23456 is the OID of the function.
@@ -98,51 +50,68 @@ def __plpython_procedure_myfunc_23456():
   <para>
    If you do not provide a return value, Python returns the default
    <symbol>None</symbol> which may or may not be what you want.  The
-   language module translates Python's None into SQL NULL.
+   language module translates Python's <symbol>None</symbol> into the
+   SQL null value.
   </para>
 
   <para>
-   <productname>PostgreSQL</> function variables are available in the global
-   <varname>args</varname> list.  In the <function>myfunc</function>
-   example, <varname>args[0]</> contains whatever was passed in as the text
-   argument.  For <literal>myfunc2(text, integer)</literal>, <varname>args[0]</>
-   would contain the <type>text</type> variable and <varname>args[1]</varname> the <type>integer</type> variable.
+   The <productname>PostgreSQL</> function parameters are available in
+   the global <varname>args</varname> list.  In the
+   <function>myfunc</function> example, <varname>args[0]</> contains
+   whatever was passed in as the text argument.  For
+   <literal>myfunc2(text, integer)</literal>, <varname>args[0]</>
+   would contain the <type>text</type> variable and
+   <varname>args[1]</varname> the <type>integer</type> variable.
   </para>
 
   <para>
-   The global dictionary SD is available to store data between
-   function calls.  This variable is private static data.  The global
-   dictionary GD is public data, available to all python functions
-   within a backend.  Use with care.
+   The global dictionary <varname>SD</varname> is available to store
+   data between function calls.  This variable is private static data.
+   The global dictionary <varname>GD</varname> is public data,
+   available to all Python functions within a session.  Use with care.
   </para>
 
   <para>
    Each function gets its own restricted execution object in the
    Python interpreter, so that global data and function arguments from
    <function>myfunc</function> are not available to
-   <function>myfunc2</function>.  The exception is the data in the GD
-   dictionary, as mentioned above.
+   <function>myfunc2</function>.  The exception is the data in the
+   <varname>GD</varname> dictionary, as mentioned above.
+  </para>
+ </sect1>
+
+ <sect1 id="plpython-trigger">
+  <title>Trigger Functions</title>
+
+  <para>
+   When a function is used in a trigger, the dictionary
+   <literal>TD</literal> contains trigger-related values.  The trigger
+   rows are in <literal>TD["new"]</> and/or <literal>TD["old"]</>
+   depending on the trigger event.  <literal>TD["event"]</> contains
+   the event as a string (<literal>INSERT</>, <literal>UPDATE</>,
+   <literal>DELETE</>, or <literal>UNKNOWN</>).
+   <literal>TD["when"]</> contains one of <literal>BEFORE</>,
+   <literal>AFTER</>, and <literal>UNKNOWN</>.
+   <literal>TD["level"]</> contains one of <literal>ROW</>,
+   <literal>STATEMENT</>, and <literal>UNKNOWN</>.
+   <literal>TD["name"]</> contains the trigger name, and
+   <literal>TD["relid"]</> contains the relation ID of the table on
+   which the trigger occurred.  If the trigger was called with
+   arguments they are available in <literal>TD["args"][0]</> to
+   <literal>TD["args"][(n-1)]</>.
   </para>
 
   <para>
-   When a function is used in a trigger, the dictionary TD contains
-   transaction related values.  The trigger tuples are in <literal>TD["new"]</>
-   and/or <literal>TD["old"]</> depending on the trigger event.  <literal>TD["event"]</>
-   contains the event as a string (<literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>, or
-   <literal>UNKNOWN</>).  TD["when"] contains one of (<literal>BEFORE</>, <literal>AFTER</>, or
-   <literal>UNKNOWN</>).  <literal>TD["level"]</> contains one of <literal>ROW</>, <literal>STATEMENT</>, or
-   <literal>UNKNOWN</>.  <literal>TD["name"]</> contains the trigger name, and <literal>TD["relid"]</>
-   contains the relation id of the table on which the trigger occurred.
-   If the trigger was called with arguments they are available
-   in <literal>TD["args"][0]</> to <literal>TD["args"][(n -1)]</>.
+   If the <literal>TD["when"]</literal> is <literal>BEFORE</>, you may
+   return <literal>None</literal> or <literal>"OK"</literal> from the
+   Python function to indicate the row is unmodified,
+   <literal>"SKIP"</> to abort the event, or <literal>"MODIFIED"</> to
+   indicate you've modified the row.
   </para>
+ </sect1>
 
-  <para>
-   If the trigger <quote>when</quote> is <literal>BEFORE</>, you may return <literal>None</literal> or <literal>"OK"</literal>
-   from the Python function to indicate the tuple is unmodified,
-   <literal>"SKIP"</> to abort the event, or <literal>"MODIFIED"</> to indicate you've
-   modified the tuple.
-  </para>
+ <sect1 id="plpython-database">
+  <title>Database Access</title>
 
   <para>
    The PL/Python language module automatically imports a Python module
@@ -150,59 +119,80 @@ def __plpython_procedure_myfunc_23456():
    this module are available to you in the Python code as
    <literal>plpy.<replaceable>foo</replaceable></literal>.  At present
    <literal>plpy</literal> implements the functions
-   <literal>plpy.debug("msg")</literal>, 
+   <literal>plpy.debug("msg")</literal>,
    <literal>plpy.log("msg")</literal>,
    <literal>plpy.info("msg")</literal>,
    <literal>plpy.notice("msg")</literal>,
    <literal>plpy.warning("msg")</literal>,
    <literal>plpy.error("msg")</literal>, and
    <literal>plpy.fatal("msg")</literal>.  They are mostly equivalent
-   to calling <literal>elog(<replaceable>LEVEL</>, "msg")</literal>.
-   <function>plpy.error</function> and <function>plpy.fatal</function>
-   actually raise a Python exception which, if uncaught, causes the
-   PL/Python module to call <literal>elog(ERROR, msg)</literal> when
-   the function handler returns from the Python interpreter.  Long
-   jumping out of the Python interpreter is probably not good.
-   <literal>raise plpy.ERROR("msg")</literal> and <literal>raise
+   to calling <literal>elog(<replaceable>LEVEL</>, "msg")</literal>
+   from C code.  <function>plpy.error</function> and
+   <function>plpy.fatal</function> actually raise a Python exception
+   which, if uncaught, causes the PL/Python module to call
+   <literal>elog(ERROR, msg)</literal> when the function handler
+   returns from the Python interpreter.  Long-jumping out of the
+   Python interpreter is probably not good.  <literal>raise
+   plpy.ERROR("msg")</literal> and <literal>raise
    plpy.FATAL("msg")</literal> are equivalent to calling
-   <function>plpy.error</function> or <function>plpy.fatal</function>.
+   <function>plpy.error</function> and
+   <function>plpy.fatal</function>, respectively.
   </para>
 
   <para>
-   Additionally, the <literal>plpy</literal> module provides two functions called
-   <function>execute</function> and <function>prepare</function>.
-   Calling <function>plpy.execute</function> with a query string, and
-   an optional limit argument, causes that query to be run, and the
-   result returned in a result object.  The result object emulates a
+   Additionally, the <literal>plpy</literal> module provides two
+   functions called <function>execute</function> and
+   <function>prepare</function>.  Calling
+   <function>plpy.execute</function> with a query string and an
+   optional limit argument causes that query to be run and the result
+   to be returned in a result object.  The result object emulates a
    list or dictionary object.  The result object can be accessed by
-   row number, and field name.  It has these additional methods:
+   row number and field name.  It has these additional methods:
    <function>nrows()</function> which returns the number of rows
    returned by the query, and <function>status</function> which is the
    <function>SPI_exec</function> return variable.  The result object
    can be modified.
+  </para>
 
+  <para>
+   For example,
 <programlisting>
 rv = plpy.execute("SELECT * FROM my_table", 5)
 </programlisting>
-   returns up to 5 rows from my_table.  Ff my_table has a column
-   my_field it would be accessed as
+   returns up to 5 rows from <literal>my_table</literal>.  If
+   <literal>my_table</literal> has a column
+   <literal>my_field</literal>, it would be accessed as
 <programlisting>
 foo = rv[i]["my_field"]
 </programlisting>
+  </para>
+
+  <para>
    The second function <function>plpy.prepare</function> is called
-   with a query string, and a list of argument types if you have bind
-   variables in the query.
+   with a query string and a list of argument types if you have bind
+   variables in the query.  For example:
 <programlisting>
 plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", [ "text" ])
 </programlisting>
-   text is the type of the variable you will be passing as $1.  After
-   preparing you use the function <function>plpy.execute</function> to
-   run it.
+   <literal>text</literal> is the type of the variable you will be
+   passing as <literal>$1</literal>.  After preparing a statement, you
+   use the function <function>plpy.execute</function> to run it:
 <programlisting>
 rv = plpy.execute(plan, [ "name" ], 5)
 </programlisting>
    The limit argument is optional in the call to
    <function>plpy.execute</function>.
+  </para>
+
+  <para>
+   In the current version, any database error encountered while
+   running a <application>PL/Python</application> function will result
+   in the immediate termination of that function by the server; it is
+   not possible to trap error conditions using Python <literal>try
+   ... catch</literal> constructs.  For example, a syntax error in an
+   SQL statement passed to the <literal>plpy.execute()</literal> call
+   will terminate the function.  This behavior may be changed in a
+   future release.
   </para>
 
   <para>
@@ -217,6 +207,23 @@ plan = plpy.prepare("SOME OTHER QUERY")
    you are leaking memory, as I know of no way to free a saved plan.
    The alternative of using unsaved plans it even more painful (for
    me).
+  </para>
+ </sect1>
+
+ <sect1 id="plpython-trusted">
+  <title>Restricted Environment</title>
+
+  <para>
+   The current version of <application>PL/Python</application>
+   functions as a trusted language only; access to the file system and
+   other local resources is disabled.  Specifically,
+   <application>PL/Python</application> uses the Python restricted
+   execution environment, further restricts it to prevent the use of
+   the file <function>open</> call, and allows only modules from a
+   specific list to be imported.  Presently, that list includes:
+   array, bisect, binascii, calendar, cmath, codecs, errno, marshal,
+   math, md5, mpz, operator, pcre, pickle, random, re, regex, sre,
+   sha, string, StringIO, struct, time, whrandom, and zlib.
   </para>
  </sect1>
 

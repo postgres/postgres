@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.36 2002/03/22 19:20:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.37 2002/09/18 20:09:31 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -51,92 +51,34 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.36 2002/03/22 19:20:11 
    </para>
 
    <para>
-    Alternatively you can build the driver from source.  Although you 
-    should only need to do this if you are making changes to the source
-    code.
+    Alternatively you can build the driver from source, but you
+    should only need to do this if you are making changes to the
+    source code.  For details, refer to the PostgreSQL installation
+    instructions.  After installation, the driver should be found in
+    <filename><replaceable>PREFIX</>/share/java/postgresql.jar</filename>.
+    The resulting driver will be built for the version of Java you are
+    running.  If you build with a 1.1 JDK you will build a version
+    that supports the JDBC 1 specification, if you build with a Java 2
+    JDK (e.g., JDK 1.2 or JDK 1.3) you will build a version that
+    supports the JDBC 2 specification.
    </para>
-
-   <para>
-    Starting with <productname>PostgreSQL</productname> version 7.1,
-    the <acronym>JDBC</acronym> driver is built using
-    <application>Ant</application>, a special tool for building
-    Java-based packages.  You should download
-    <application>Ant</application> from the <ulink
-    url="http://jakarta.apache.org/ant/index.html"><application>Ant</application>
-    web site</ulink> and install it before proceeding.  Precompiled
-    <application>Ant</application> distributions are typically set up
-    to read a file <filename>.antrc</filename> in the current user's
-    home directory for configuration.  For example, to use a different
-    <acronym>JDK</acronym> than the default, this may work:
-<programlisting>
-JAVA_HOME=/usr/local/sun-jdk1.3
-JAVACMD=$JAVA_HOME/bin/java
-</programlisting>
-   </para>
-
-   <para>
-    To build the driver, add the <option>--with-java</option> option to your
-    <filename>configure</filename> command line, e.g.,
-<screen>
-<prompt>$</prompt> <userinput>./configure --prefix=<replaceable>xxx</replaceable> --with-java ...</userinput>
-</screen>
-    This will build and install the driver along with the rest of the
-    <productname>PostgreSQL</productname> package when you issue the
-    <literal>make/gmake</literal> and <literal>make/gmake install</literal>
-    commands.  If you only want to build the driver and not the rest
-    of <productname>PostgreSQL</productname>, change into the
-    directory <filename
-    class="directory">src/interfaces/jdbc</filename> and issue the
-    respective <literal>make/gmake</literal> command there.  Refer to the
-    <productname>PostgreSQL</productname> installation instructions
-    for more information about the configuration and build process.
-   </para>
-
-   <para>When building the driver from source the jar file that is created
-    will be named <filename>postgresql.jar</filename>.  The build will 
-    create this file in the <filename>src/interfaces/jdbc/jars</filename>
-    directory.  The resulting driver will be built for the version of 
-    Java you are running.  If you build with a 1.1 JDK you will build
-    a version that supports the jdbc1 specification, if you build with a 
-    Java2 JDK (i.e. JDK1.2 or JDK1.3) you will build a version that 
-    supports the jdbc2 specification. 
-   </para>
- 
-   <note>
-    <para>
-     Do not try to build the driver by calling <command>javac</command> 
-     directly, as the driver uses some dynamic loading techniques for
-     performance reasons, and <command>javac</command> cannot cope.
-     Do not try to run <command>ant</command> directly either, because
-     some configuration information is communicated through the
-     makefiles.  Running <command>ant</command> directly without
-     providing these parameters will result in a broken driver.
-    </para>
-   </note>
   </sect2>
 
   <sect2 id="jdbc-classpath">
    <title>Setting up the Class Path</title>
 
    <para>
-    To use the driver, the jar archive (named
+    To use the driver, the JAR archive (named
     <filename>postgresql.jar</filename> if you built from source, otherwise
     it will likely be named <filename>jdbc7.2-1.1.jar</filename> or 
-    <filename>jdbc7.2-1.2.jar</filename> for the jdbc1 and jdbc2 versions
+    <filename>jdbc7.2-1.2.jar</filename> for the JDBC 1 and JDBC 2 versions
     respectively)
     needs to be included in the
     class path, either by putting it in the <envar>CLASSPATH</envar>
     environment variable, or by using flags on the
-    <command>java</command> command line.  By default, the jar archive
-    is installed in the directory <filename
-    class="directory">/usr/local/pgsql/share/java</filename>.  You may
-    have it in a different directory if you used the
-    <option>--prefix</option> option when you ran
-    <filename>configure</filename>, or if you are using a binary distribution
-    that places it in some different location.
+    <command>java</command> command line.
    </para>
 
-   <informalexample>
     <para>
      For instance, I have an application that uses the
      <acronym>JDBC</acronym> driver to access a large database
@@ -163,7 +105,6 @@ java Finder
      Loading the driver from within the application is covered in
      <xref linkend="jdbc-use">.
     </para>
-   </informalexample>
   </sect2>
 
   <sect2 id="jdbc-prepare">
@@ -183,7 +124,7 @@ java Finder
     Also, the client authentication setup in the
     <filename>pg_hba.conf</filename> file may need to be configured.
     Refer to the <citetitle>Administrator's Guide</citetitle> for
-    details.  The <acronym>JDBC</acronym> Driver supports trust,
+    details.  The <acronym>JDBC</acronym> Driver supports the trust,
     ident, password, md5, and crypt authentication methods.
    </para>
   </sect2>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.80 2002/09/08 02:33:08 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.81 2002/09/18 20:09:31 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -47,7 +47,9 @@ su - postgres
   </para>
 
   <para>
-   The following prerequisites exist for building <productname>PostgreSQL</>:
+   The following software packages are required for building
+   <productname>PostgreSQL</>:
+
    <itemizedlist>
     <listitem>
      <para>
@@ -106,33 +108,6 @@ su - postgres
     <listitem>
      <para>
       <indexterm>
-       <primary>flex</primary>
-      </indexterm>
-      <indexterm>
-       <primary>bison</primary>
-      </indexterm>
-      <indexterm>
-       <primary>yacc</primary>
-      </indexterm>
-
-      <acronym>GNU</> <application>Flex</> and <application>Bison</> are
-      needed to build from scratch, but they are
-      <emphasis>not</> required when building from a released source
-      package because pre-generated output files are included in released
-      packages. You will
-      need these programs only when building from a CVS tree or if you
-      changed the actual scanner and parser definition files. If
-      you need them, be sure to get <application>Flex</> 2.5.4 or
-      later and <application>Bison</> 1.28 or later. Other <application>yacc</>
-      programs can sometimes be used, but doing so requires extra
-      effort and is not recommended. Other <application>lex</> programs will
-      definitely not work.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
        <primary>installation</primary>
        <secondary>on Windows</secondary>
       </indexterm>
@@ -145,7 +120,180 @@ su - postgres
     </listitem>
    </itemizedlist>
   </para>
- 
+
+  <para>
+   The following packages are optional.  They are not required in the
+   default configuration, but they are needed when certain build
+   options are enabled, as explained below.
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      To build the server programming language PL/Perl you need a full
+      Perl installation, including the <filename>libperl</filename>
+      library and the header files.  Since PL/Perl is a shared
+      library, the <indexterm><primary>libperl</primary></indexterm>
+      <filename>libperl</filename> library must be a shared library
+      also on most platforms.  At the time of this writing, this is
+      almost never the case in prebuilt Perl packages.
+     </para>
+
+     <para>
+      If this difficulty arises in your situation, a message like this
+      will appear during the build to point out this fact:
+<screen>
+*** Cannot build PL/Perl because libperl is not a shared library.
+*** You might have to rebuild your Perl installation.  Refer to
+*** the documentation for details.
+</screen>
+      (If you don't follow the onscreen output you will merely notice
+      the the PL/Perl library object will not be installed.)  If you
+      see this, you will have to re-build and install
+      <productname>Perl</productname> manually to be able to build
+      PL/Perl.  During the configuration process for
+      <productname>Perl</productname>, request a shared library.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      To build the Python interface module or the PL/Python server
+      programming language, you need a Python installation, including
+      the header files.
+     </para>
+
+     <para>
+      Since PL/Python is a shared library, the
+      <indexterm><primary>libpython</primary></indexterm>
+      <filename>libpython</filename> library must be a shared library
+      also on most platforms.  This is not the case in a default
+      Python installation.  If after building and installing you have
+      a file called <filename>plpython.so</filename> (possibly a
+      different extension), then everything went well.  Otherwise you
+      should have seen a notice like this flying by:
+<screen>
+*** Cannot build PL/Python because libpython is not a shared library.
+*** You might have to rebuild your Python installation.  Refer to
+*** the documentation for details.
+</screen>
+      That means you have to rebuild (part of) your Python
+      installation to supply this shared library.
+     </para>
+
+     <para>
+      The catch is that the Python distribution or the Python
+      maintainers do not provide any direct way to do this.  The
+      closest thing we can offer you is the information in <ulink
+      url="http://www.python.org/doc/FAQ.html#3.30">Python FAQ
+      3.30</ulink>.  On some operating systems you don't really have
+      to build a shared library, but then you will have to convince
+      the PostgreSQL build system of this.  Consult the
+      <filename>Makefile</filename> in the
+      <filename>src/pl/plpython</filename> directory for details.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If you want to build Tcl or Tk components (clients and the
+      PL/Tcl language) you of course need a Tcl installation.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      To build the JDBC driver, you need
+      <application>Ant</application> 1.5 or higher and a
+      <acronym>JDK</acronym>.  <application>Ant</application> is a
+      special tool for building Java-based packages.  It can be
+      downloaded from the <ulink
+      url="http://jakarta.apache.org/ant/index.html"><application>Ant</application>
+      web site</ulink>.
+     </para>
+
+     <para>
+      If you have several Java compilers installed, it depends on the
+      Ant configuration which one gets used.  Precompiled
+      <application>Ant</application> distributions are typically set
+      up to read a file <filename>.antrc</filename> in the current
+      user's home directory for configuration.  For example, to use a
+      different <acronym>JDK</acronym> than the default, this may
+      work:
+<programlisting>
+JAVA_HOME=/usr/local/sun-jdk1.3
+JAVACMD=$JAVA_HOME/bin/java
+</programlisting>
+     </para>
+
+     <note>
+      <para>
+       Do not try to build the driver by calling
+       <command>ant</command> or even <command>javac</command>
+       directly.  This will not work.  Run <command>gmake</command>
+       normally as described below.
+      </para>
+     </note>
+    </listitem>
+
+    <listitem>
+     <para>
+      To enable Native Language Support (<acronym>NLS</acronym>), that
+      is, the ability to display a program's messages in a language
+      other than English, you need an implementation of the Gettext
+      <acronym>API</acronym>.  Some operating systems have this
+      built-in (e.g., <systemitem class="osname">Linux</>, <systemitem
+      class="osname">NetBSD</>, <systemitem
+      class="osname">Solaris</>), for other systems you can download
+      an add-on package from here: <ulink
+      url="http://www.postgresql.org/~petere/gettext.html" ></ulink>.
+      If you are using the <application>gettext</> implementation in
+      the GNU C library then you will additionally need the
+      <productname>GNU Gettext</productname> package for some utility
+      programs.  For any of the other implementations you will not
+      need it.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Kerberos, OpenSSL, or PAM, if you want to support
+      authentication using these services.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   If you are build from a CVS tree instead of using a released source
+   package, or if you want to do development, you also need the
+   following packages:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>flex</primary>
+      </indexterm>
+      <indexterm>
+       <primary>bison</primary>
+      </indexterm>
+      <indexterm>
+       <primary>yacc</primary>
+      </indexterm>
+
+      <acronym>GNU</> <application>Flex</> and <application>Bison</>
+      are needed to build a CVS checkout or if you changed the actual
+      scanner and parser definition files. If you need them, be sure
+      to get <application>Flex</> 2.5.4 or later and
+      <application>Bison</> 1.28 or later. Other <application>yacc</>
+      programs can sometimes be used, but doing so requires extra
+      effort and is not recommended. Other <application>lex</>
+      programs will definitely not work.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
   <para>
    If you need to get a <acronym>GNU</acronym> package, you can find
    it at your local <acronym>GNU</acronym> mirror site (see <ulink
@@ -156,12 +304,13 @@ su - postgres
 
   <para>
    Also check that you have sufficient disk space. You will need about
-   30 MB for the source tree during compilation and about 10 MB for the
-   installation directory. An empty database cluster takes about 20 MB, databases
-   take about five times the amount of space that a flat text file
-   with the same data would take. If you are going to run the
-   regression tests you will temporarily need an extra 20 MB. Use the
-   <command>df</command> command to check for disk space.
+   65 MB for the source tree during compilation and about 15 MB for
+   the installation directory. An empty database cluster takes about
+   25 MB, databases take about five times the amount of space that a
+   flat text file with the same data would take. If you are going to
+   run the regression tests you will temporarily need up to an extra
+   90 MB. Use the <command>df</command> command to check for disk
+   space.
   </para>
  </sect1>
 
@@ -335,8 +484,10 @@ su - postgres
 </screen>
     This script will run a number of tests to guess values for various
     system dependent variables and detect some quirks of your
-    operating system, and finally will create several files in the build
-    tree to record what it found.
+    operating system, and finally will create several files in the
+    build tree to record what it found.  (You can also run
+    <filename>configure</filename> in a directory outside the source
+    tree if you want to keep the build directory separate.)
    </para>
 
    <para>
@@ -480,9 +631,7 @@ su - postgres
        prefix, the documentation will be installed in
        <filename>/usr/local/doc/postgresql</filename>, but if the
        prefix is <filename>/opt/postgres</filename>, then it will be
-       in <filename>/opt/postgres/doc</filename>.  Second, the
-       installation layout of the C and C++ header files has been
-       reorganized in the 7.2 release.  The public header files of the
+       in <filename>/opt/postgres/doc</filename>.  The public C header files of the
        client interfaces are installed into
        <varname>includedir</varname> and are namespace-clean.  The
        internal header files and the server header files are installed
@@ -537,27 +686,11 @@ su - postgres
        <listitem>
         <para>
          Enables single-byte character set recode support. See
-         <![%standalone-include[the <citetitle>Administrator's Guide</citetitle>]]>
-         <![%standalone-ignore[<xref linkend="recode">]]> about this feature.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--enable-multibyte</option></term>
-       <listitem>
-        <para>
-         Allows the use of multibyte character encodings (including Unicode)
-         and character set encoding conversion. Read 
-         <![%standalone-include[the <citetitle>Administrator's Guide</citetitle>]]>
-         <![%standalone-ignore[<xref linkend="multibyte">]]>
-         for details.
-        </para>
-
-        <para>
-         Note that some interfaces (such as Tcl or Java) expect all character
-         strings to be in Unicode, so this option will be required to correctly
-         support these interfaces.
+         <![%standalone-include[the <citetitle>Administrator's
+         Guide</citetitle>]]> <![%standalone-ignore[<xref
+         linkend="recode">]]> about this feature.  Note that a more
+         general form of character set conversion is supported in the
+         default configuration; this feature is obsolete.
         </para>
        </listitem>
       </varlistentry>
@@ -566,38 +699,22 @@ su - postgres
        <term><option>--enable-nls<optional>=<replaceable>LANGUAGES</replaceable></optional></option></term>
        <listitem>
         <para>
-         Enables Native Language Support (<acronym>NLS</acronym>), that is, the ability
-         to display a program's messages in a language other than
-         English.  <replaceable>LANGUAGES</replaceable> is a space
-         separated list of codes of the languages that you want
-         supported, for example <literal>--enable-nls='de fr'</>.
-         (The intersection between your list and the set
-         of actually provided translations will be computed
-         automatically.)  If you do not specify a list, then all available
-         translations are installed.
+         Enables Native Language Support (<acronym>NLS</acronym>),
+         that is, the ability to display a program's messages in a
+         language other than English.
+         <replaceable>LANGUAGES</replaceable> is a space separated
+         list of codes of the languages that you want supported, for
+         example <literal>--enable-nls='de fr'</>.  (The intersection
+         between your list and the set of actually provided
+         translations will be computed automatically.)  If you do not
+         specify a list, then all available translations are
+         installed.
         </para>
-
-        <comment>
-         The list of provided translations should be shown somewhere.
-        </comment>
 
         <para>
          To use this option, you will need an implementation of the
-         <application>gettext</> API.  Some operating systems have this built-in
-         (e.g., <systemitem class="osname">Linux</>, <systemitem class="osname">NetBSD</>, <systemitem class="osname">Solaris</>), for other systems you can download
-         an add-on package from here:  <ulink
-         url="http://www.postgresql.org/~petere/gettext.html"
-         ></ulink>.  If
-         you are using the <application>gettext</> implementation in the GNU C library
-         then you will additionally need the <productname>GNU gettext</productname> package for
-         some utility programs.  For any of the other implementations
-         you will not need it.
+         <application>gettext</> API; see above.
         </para>
-
-        <comment>
-         The download location should be moved.
-        </comment>
-
        </listitem>
       </varlistentry>
 
@@ -617,15 +734,6 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--with-CXX</option></term>
-       <listitem>
-        <para>
-         Build the C++ interface library.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--with-perl</option></term>
        <listitem>
         <para>
@@ -638,9 +746,9 @@ su - postgres
        <term><option>--with-python</option></term>
        <listitem>
         <para>
-         Build the Python interface module. You need to have root
-         access to be able to install the Python module at its default
-         place
+         Build the Python interface module and the PL/Python
+         server-side language. You need to have root access to be able
+         to install the Python module at its default place
          (<filename>/usr/lib/python<replaceable>x</>.<replaceable>y</></>).
          To be able to use this option, you must have Python installed
          and your system needs to support shared libraries. If you
@@ -692,68 +800,11 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
-       <term><option>--enable-odbc</option></term>
-       <listitem>
-        <para>
-         Build the ODBC driver.  By default, the driver will be independent
-         of a driver manager.  To work better with a driver manager already
-         installed on your system, use one of the following options in addition
-         to this one.  More information can be found in the
-         <citetitle>Programmer's Guide</citetitle>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--with-iodbc</option></term>
-       <listitem>
-        <para>
-         Build the ODBC driver for use with <productname>iODBC</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--with-unixodbc</option></term>
-       <listitem>
-        <para>
-         Build the ODBC driver for use with <productname>unixODBC</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--with-odbcinst=<replaceable>DIRECTORY</></option></term>
-       <listitem>
-        <para>
-         Specifies the directory where the ODBC driver will expect its
-         <filename>odbcinst.ini</> configuration file. The default is
-         <filename>/usr/local/pgsql/etc</filename> or whatever you
-         specified as <option>--sysconfdir</option>. It should be
-         arranged that the driver reads the same file as the driver
-         manager.
-        </para>
-
-        <para>
-         If either the option <option>--with-iodbc</option> or the
-         option <option>--with-unixodbc</option> is used, this option
-         will be ignored because in that case the driver manager
-         handles the location of the configuration file.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
        <term><option>--with-java</option></term>
        <listitem>
         <para>
          Build the <acronym>JDBC</acronym> driver and associated Java
-         packages.  This option requires
-         <application>Ant</application> to be installed (as well as a
-         <acronym>JDK</acronym>, of course).  Refer to the
-         <acronym>JDBC</acronym> driver documentation in the
-         <citetitle>Programmer's Guide</citetitle> for more
-         information.
+         packages.
         </para>
        </listitem>
       </varlistentry>
@@ -826,19 +877,6 @@ su - postgres
         <para>
 	 Build with <acronym>PAM</> (Pluggable Authentication Modules)
 	 support.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--enable-syslog</option></term>
-       <listitem>
-        <para>
-         Enables the <productname>PostgreSQL</> server to use the
-         <systemitem>syslog</> logging facility. (Using this option does not mean
-         that you must log with <systemitem>syslog</> or even that it will be done
-         by default, it simply makes it possible to turn that option
-         on at run time.)
         </para>
        </listitem>
       </varlistentry>
@@ -917,20 +955,26 @@ su - postgres
       </varlistentry>
 
      </variablelist>
-   </para>
+    </para>
 
-   <para>
-    If you prefer a C or C++ compiler different from the one
-    <filename>configure</filename> picks then you can set the
-    environment variables <envar>CC</> or <envar>CXX</envar>,
-    respectively, to the program of your choice.  Similarly, you can
-    override the default compiler flags with the <envar>CFLAGS</envar>
-    and <envar>CXXFLAGS</envar> variables.  For example:
+    <para>
+     If you prefer a C compiler different from the one
+     <filename>configure</filename> picks then you can set the
+     environment variable <envar>CC</> to the program of your choice.
+     By default, <filename>configure</filename> will pick
+     <filename>gcc</filename> unless this is inappropriate for the
+     platform.  Similarly, you can override the default compiler flags
+     with the <envar>CFLAGS</envar> variable.
+    </para>
+
+    <para>
+     You can specify environment variables on the
+     <filename>configure</filename> command line, for example:
 <screen>
-<userinput>env CC=/opt/bin/gcc CFLAGS='-O2 -pipe' ./configure</>
+<userinput>./configure CC=/opt/bin/gcc CFLAGS='-O2 -pipe'</>
 </screen>
-   </para>
-  </step>
+    </para>
+   </step>
 
   <step>
    <title>Build</title>
@@ -1057,34 +1101,40 @@ All of PostgreSQL is successfully made. Ready to install.
 </screen>
     </para>
    </formalpara>
+  </step>
+  </procedure>
 
+  <formalpara>
+   <title>Uninstall:</title>
    <para>
     To undo the installation use the command <command>gmake
     uninstall</>. However, this will not remove any created directories.
    </para>
-  </step>
-  </procedure>
+  </formalpara>
+
+  <formalpara>
+   <title>Cleaning:</title>
+
+   <para>
+    After the installation you can make room by removing the built
+    files from the source tree with the command <command>gmake
+    clean</>. This will preserve the files made by the configure
+    program, so that you can rebuild everything with <command>gmake</>
+    later on. To reset the source tree to the state in which it was
+    distributed, use <command>gmake distclean</>. If you are going to
+    build for several platforms from the same source tree you must do
+    this and re-configure for each build.
+   </para>
+  </formalpara>
 
   <para>
-   After the installation you can make room by removing the built
-   files from the source tree with the <command>gmake clean</>
-   command. This will preserve the files made by the configure
-   program, so that you can rebuild everything with <command>gmake</>
-   later on. To reset the source tree to the state in which it was
-   distributed, use <command>gmake distclean</>. If you are going to
-   build for several platforms from the same source tree you must do
-   this and re-configure for each build.
-  </para>
-
-  <para>
-   If you perform a build and then discover that your configure options
-   were wrong, or if you change anything that configure investigates
-   (for example, you install GNU <application>Readline</>), then it's
-   a good idea to do <command>gmake distclean</> before reconfiguring
-   and rebuilding.  Without this, your changes in configuration choices
+   If you perform a build and then discover that your configure
+   options were wrong, or if you change anything that configure
+   investigates (for example, software upgrades), then it's a good
+   idea to do <command>gmake distclean</> before reconfiguring and
+   rebuilding.  Without this, your changes in configuration choices
    may not propagate everywhere they need to.
   </para>
-
  </sect1>
 
  <sect1 id="install-post">
@@ -1139,17 +1189,13 @@ setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
     building.
    </para>
 
-<!--
    <para>
-    On Linux systems the following is the preferred method, but you
-    must have root access. Edit the file <filename>/etc/ld.so.conf</>
-    to add a line
-<programlisting>
-<filename>/usr/local/pgsql/lib</>
-</programlisting>
-    Then run command <command>/sbin/ldconfig</>.
+    On <systemitem class="osname">Cygwin</systemitem>, put the library
+    directory on the <envar>PATH</envar> or move the
+    <filename>.dll</filename> files into the <filename>bin/</filename>
+    directory.
    </para>
--->
+
    <para>
     If in doubt, refer to the manual pages of your system (perhaps
     <command>ld.so</command> or <command>rld</command>). If you later
@@ -1194,14 +1240,21 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
 
    <para>
     If you installed into <filename>/usr/local/pgsql</> or some other
-    location that is not searched for programs by default, you need to
+    location that is not searched for programs by default, you should
     add <filename>/usr/local/pgsql/bin</> (or whatever you set
     <option><literal>--bindir</></> to in <xref linkend="configure">)
-    into your <envar>PATH</>. To do this, add the following to your
-    shell start-up file, such as <filename>~/.bash_profile</> (or
-    <filename>/etc/profile</>, if you want it to affect every user):
+    into your <envar>PATH</>.  Strictly speaking, this is not
+    necessary, but it will make the use of PostgreSQL much more
+    convenient.
+   </para>
+
+   <para>
+    To do this, add the following to your shell start-up file, such as
+    <filename>~/.bash_profile</> (or <filename>/etc/profile</>, if you
+    want it to affect every user):
 <programlisting>
 PATH=/usr/local/pgsql/bin:$PATH
+export PATH
 </programlisting>
     If you are using <command>csh</> or <command>tcsh</>, then use this command:
 <programlisting>
@@ -1216,9 +1269,11 @@ set path = ( /usr/local/pgsql/bin $path )
     </indexterm>
     To enable your system to find the <application>man</>
     documentation, you need to add a line like the following to a
-    shell start-up file:
+    shell start-up file unless you installed into a location that is
+    searched by default.
 <programlisting>
 MANPATH=/usr/local/pgsql/man:$MANPATH
+export MANPATH
 </programlisting>
    </para>
 

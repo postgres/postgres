@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.27 2002/08/14 02:45:09 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.28 2002/09/18 20:09:31 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -886,30 +886,6 @@ RESET CLIENT_ENCODING;
       </listitem>
 
      </itemizedlist>
-    </para>
-   </sect2>
-
-   <sect2>
-    <title>About Unicode</title>
-
-    <indexterm><primary>Unicode</></>
-
-    <para>
-     An automatic encoding translation between Unicode and other
-     encodings has been supported since <productname>PostgreSQL</> 7.1.
-     For 7.1 it was not enabled by default.
-     To enable this feature, run configure with the
-     <option>--enable-unicode-conversion</option> option. Note that this requires
-     the <option>--enable-multibyte</option> option also.
-    </para>
-    <para>
-    For 7.2, <option>--enable-unicode-conversion</option> is not necessary.
-    The Unicode conversion functionality is automatically enabled
-    if <option>--enable-multibyte</option> is specified.
-    </para>
-    <para>
-    For 7.3, <option>--enable-unicode-conversion</option> nor
-    <option>--enable-multibyte</option> is needed.
     </para>
    </sect2>
 

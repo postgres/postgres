@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.16 2002/03/06 19:05:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.17 2002/09/18 20:09:32 petere Exp $
 -->
 
  <chapter id="plperl">
@@ -14,96 +14,15 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.16 2002/03/06 19:05:57 momj
   </indexterm>
 
   <para>
-   PL/Perl is a loadable procedural language
-   that enables the <ulink url="http://www.perl.com">Perl</ulink> programming
-   language to be used to write 
-   <productname>PostgreSQL</productname> functions.
-  </para>
-
-  <!-- **** PL/Perl overview **** -->
-
-  <sect1 id="plperl-overview">
-   <title>Overview</title>
-
-   <para>
-    Normally, PL/Perl is installed as a <quote>trusted</> programming
-    language named <literal>plperl</>.  In this setup, certain Perl
-    operations are disabled to preserve security.  In general, the operations
-    that are restricted are those that interact with the environment. This
-    includes file handle operations, <literal>require</literal>, and
-    <literal>use</literal> (for external modules).
-    There is no way to access internals of the
-    database backend or to gain OS-level access under the permissions of the
-    <productname>PostgreSQL</productname> user ID, as a C function can do.
-    Thus, any unprivileged database user may be
-    permitted to use this language.
-   </para>
-   <para>
-    Sometimes it is desirable to write Perl functions that are not restricted
-    --- for example, one might want a Perl function that sends
-    mail.  To handle these cases, PL/Perl can also be installed as an
-    <quote>untrusted</> language (usually named <literal>plperlu</>).
-    In this case the full Perl language is available.  The writer of a PL/PerlU
-    function must take care that the function cannot be used to do anything
-    unwanted, since it will be able to do anything that could be done by
-    a user logged in as the database administrator.  Note that the database
-    system allows only database superusers to create functions in untrusted
-    languages.
-   </para>
- </sect1>
-
- <sect1 id="plperl-install">
-  <title>Building and Installing PL/Perl</title>
-
-  <para>
-   If the <option>--with-perl</option> option was supplied to the
-   <indexterm><primary><filename>configure</filename></primary></indexterm>
-   <filename>configure</filename> script,
-   the <productname>PostgreSQL</productname> build process will attempt to
-   build the PL/Perl shared library and install it in the 
-   <productname>PostgreSQL</productname> library directory.
+   PL/Perl is a loadable procedural language that enables you to write
+   <productname>PostgreSQL</productname> functions in the <ulink
+   url="http://www.perl.com">Perl</ulink> programming language.
   </para>
 
   <para>
-   On most platforms, since PL/Perl is a shared library, the
-   <indexterm><primary>libperl</primary></indexterm>
-   <filename>libperl</filename> library must be a shared library also.
-   At the time of this writing, this is almost never the case in prebuilt
-   Perl packages.  If this difficulty arises in your situation, a
-   message like this will appear during the build to point out this
-   fact:
-<screen>
-<computeroutput>
-*** Cannot build PL/Perl because libperl is not a shared library.
-*** You might have to rebuild your Perl installation.  Refer to
-*** the documentation for details.
-</computeroutput>
-</screen>
-   If you see this, you will have to re-build and install
-   <productname>Perl</productname> manually to be able to build
-   PL/Perl.  During the configuration process for
-   <productname>Perl</productname>, request a shared library.
+   To install PL/Perl in a particular database, use
+   <literal>createlang plperl <replaceable>dbname</></literal>.
   </para>
-
-  <para>
-   After having reinstalled Perl, change to the directory
-   <filename>src/pl/plperl</filename> in the
-   <productname>PostgreSQL</productname> source tree and issue the commands
-<programlisting>
-gmake clean
-gmake all
-gmake install
-</programlisting>
-   to complete the build and installation of the PL/Perl shared library.
-  </para>
-
-   <para>
-    To install
-    PL/Perl and/or PL/PerlU in a particular database, use the
-    <filename>createlang</filename> script, for example
-    <literal>createlang plperl <replaceable>dbname</></literal> or
-    <literal>createlang plperlu <replaceable>dbname</></literal>.
-   </para>
 
   <tip>
    <para>
@@ -111,57 +30,59 @@ gmake install
     created databases will have the language installed automatically.
    </para>
   </tip>
-  </sect1>
 
-  <!-- **** PL/Perl description **** -->
+  <note>
+   <para>
+    Users of source packages must specially enable the build of
+    PL/Perl during the installation process (refer to the installation
+    instructions for more information).  Users of binary packages
+    might find PL/Perl in a separate subpackage.
+   </para>
+  </note>
 
-  <sect1 id="plperl-description">
-   <title>Description</title>
+ <sect1 id="plperl-funcs">
+  <title>PL/Perl Functions and Arguments</title>
 
-   <sect2>
-    <title>PL/Perl Functions and Arguments</title>
-
-    <para>
-     To create a function in the PL/Perl language, use the standard syntax
-
-     <programlisting>
+  <para>
+   To create a function in the PL/Perl language, use the standard syntax:
+<programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS '
     # PL/Perl function body
 ' LANGUAGE plperl;
-     </programlisting>
+</programlisting>
+   The body of the function is ordinary Perl code.
+  </para>
 
-     PL/PerlU is the same, except that the language should be specified as
-     <literal>plperlu</>.
-    </para>
+  <para>
+   Arguments and results are handled as in any other Perl subroutine:
+   Arguments are passed in <varname>@_</varname>, and a result value
+   is returned with <literal>return</> or as the last expression
+   evaluated in the function.  For example, a function returning the
+   greater of two integer values could be defined as:
 
-    <para>
-     The body of the function is ordinary Perl code.  Arguments and
-     results are handled as in any other Perl subroutine: arguments
-     are passed in <varname>@_</varname>, and a result value is returned
-     with <literal>return</> or as the last expression evaluated in the
-     function.  For example, a function
-     returning the greater of two integer values could be defined as:
-
-     <programlisting>
+<programlisting>
 CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
     if ($_[0] > $_[1]) { return $_[0]; }
     return $_[1];
 ' LANGUAGE plperl;
-     </programlisting>
+</programlisting>
+  </para>
 
-     If a NULL is passed to a function, the argument value will appear
-     as <quote>undefined</> in Perl.  The above function definition will
-     not behave very nicely with NULL inputs (in fact, it will act as
-     though they are zeroes).  We could add <literal>WITH (isStrict)</>
-     to the function definition to make <productname>PostgreSQL</productname>
-     do something more reasonable: if a NULL is passed, the
-     function will not be called at all, but will just return a NULL
-     result automatically.  Alternatively, we could check for undefined
-     inputs in the function body.  For example, suppose that we wanted perl_max
-     with one null and one non-null argument to return the non-null
-     argument, rather than NULL:
+  <para>
+   If an SQL null value is passed to a function, the argument value
+   will appear as <quote>undefined</> in Perl.  The above function
+   definition will not behave very nicely with null inputs (in fact,
+   it will act as though they are zeroes).  We could add
+   <literal>STRICT</> to the function definition to make
+   <productname>PostgreSQL</productname> do something more reasonable:
+   if a null value is passed, the function will not be called at all,
+   but will just return a null result automatically.  Alternatively,
+   we could check for undefined inputs in the function body.  For
+   example, suppose that we wanted <function>perl_max</function> with
+   one null and one non-null argument to return the non-null argument,
+   rather than a null value:
 
-     <programlisting>
+<programlisting>
 CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
     my ($a,$b) = @_;
     if (! defined $a) {
@@ -172,21 +93,21 @@ CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
     if ($a > $b) { return $a; }
     return $b;
 ' LANGUAGE plperl;
-     </programlisting>
-    </para>
+</programlisting>
+  </para>
 
-    <para>
-     As shown above,
-     to return a NULL from a PL/Perl function, return an undefined
-     value.  This can be done whether the function is strict or not.
-    </para>
+  <para>
+   As shown above, to return an SQL null value from a PL/Perl
+   function, return an undefined value.  This can be done whether the
+   function is strict or not.
+  </para>
 
-    <para>
-     Composite-type arguments are passed to the function as references to
-     hashes.  The keys of the hash are the attribute names of the composite
-     type.  Here is an example:
+  <para>
+   Composite-type arguments are passed to the function as references
+   to hashes.  The keys of the hash are the attribute names of the
+   composite type.  Here is an example:
 
-     <programlisting>
+<programlisting>
 CREATE TABLE employee (
     name text,
     basesalary integer,
@@ -199,25 +120,97 @@ CREATE FUNCTION empcomp(employee) RETURNS integer AS '
 ' LANGUAGE plperl;
 
 SELECT name, empcomp(employee) FROM employee;
-     </programlisting>
-    </para>
+</programlisting>
+  </para>
 
-    <para>
-     There is not currently any support for returning a composite-type
-     result value.
-    </para>
+  <para>
+   There is currently no support for returning a composite-type result
+   value.
+  </para>
 
   <tip>
    <para>
     Because the function body is passed as an SQL string literal to
     <command>CREATE FUNCTION</command>, you have to escape single
-    quotes and backslashes within your Perl source, typically by doubling them
-    as shown in the above example.  Another possible approach is to
-    avoid writing single quotes by using Perl's extended quoting functions
-    (<literal>q[]</literal>, <literal>qq[]</literal>,
-    <literal>qw[]</literal>).
+    quotes and backslashes within your Perl source, typically by
+    doubling them as shown in the above example.  Another possible
+    approach is to avoid writing single quotes by using Perl's
+    extended quoting operators (<literal>q[]</literal>,
+    <literal>qq[]</literal>, <literal>qw[]</literal>).
    </para>
   </tip>
+ </sect1>
+
+ <sect1 id="plperl-data">
+  <title>Data Values in PL/Perl</title>
+
+  <para>
+   The argument values supplied to a PL/Perl function's script are
+   simply the input arguments converted to text form (just as if they
+   had been displayed by a <literal>SELECT</literal> statement).
+   Conversely, the <literal>return</> command will accept any string
+   that is acceptable input format for the function's declared return
+   type.  So, the PL/Perl programmer can manipulate data values as if
+   they were just text.
+  </para>
+ </sect1>
+
+ <sect1 id="plperl-database">
+  <title>Database Access from PL/Perl</title>
+
+  <para>
+   Access to the database itself from your Perl function can be done via
+   an experimental module <ulink
+   url="http://www.cpan.org/modules/by-module/DBD/APILOS/"><literal>DBD::PgSPI</literal></ulink>
+   (also available at <ulink url="http://www.cpan.org/SITES.html">CPAN
+   mirror sites</ulink>). This module makes available a
+   <acronym>DBI</>-compliant database-handle named
+   <varname>$pg_dbh</varname> that can be used to perform queries
+   with normal <acronym>DBI</> syntax.
+  </para>
+
+  <para>
+   PL/Perl itself presently provides only one additional Perl command:
+
+   <variablelist>
+    <varlistentry>
+     <indexterm>
+      <primary>elog</primary>
+      <secondary>PL/Perl</secondary>
+     </indexterm>
+
+     <term><function>elog</> <replaceable>level</replaceable>, <replaceable>msg</replaceable></term>
+     <listitem>
+      <para>
+       Emit a log or error message. Possible levels are
+       <literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
+       <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
+       <literal>ERROR</> raises an error condition: further execution
+       of the function is abandoned, and the current transaction is
+       aborted.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+  </para>
+ </sect1>
+
+ <sect1 id="plperl-trusted">
+  <title>Trusted and Untrusted PL/Perl</title>
+
+  <para>
+   Normally, PL/Perl is installed as a <quote>trusted</> programming
+   language named <literal>plperl</>.  In this setup, certain Perl
+   operations are disabled to preserve security.  In general, the
+   operations that are restricted are those that interact with the
+   environment. This includes file handle operations,
+   <literal>require</literal>, and <literal>use</literal> (for
+   external modules).  There is no way to access internals of the
+   database backend process or to gain OS-level access with the
+   permissions of the <productname>PostgreSQL</productname> user ID,
+   as a C function can do.  Thus, any unprivileged database user may
+   be permitted to use this language.
+  </para>
 
   <para>
    Here is an example of a function that will not work because file
@@ -231,89 +224,66 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
 </programlisting>
    The creation of the function will succeed, but executing it will not.
   </para>
+
   <para>
-   Note that if the same function was created by a superuser using language 
+   Sometimes it is desirable to write Perl functions that are not
+   restricted --- for example, one might want a Perl function that
+   sends mail.  To handle these cases, PL/Perl can also be installed
+   as an <quote>untrusted</> language (usually called
+   <quote>PL/PerlU</quote>).  In this case the full Perl language is
+   available.  If the <command>createlang</command> program is used to
+   install the language, the language name <literal>plperlu</literal>
+   will select the untrusted PL/Perl variant.
+  </para>
+
+  <para>
+   The writer of a PL/PerlU function must take care that the function
+   cannot be used to do anything unwanted, since it will be able to do
+   anything that could be done by a user logged in as the database
+   administrator.  Note that the database system allows only database
+   superusers to create functions in untrusted languages.
+  </para>
+
+  <para>
+   If the above function was created by a superuser using the language
    <literal>plperlu</>, execution would succeed.
   </para>
+ </sect1>
 
-   </sect2>
-
-   <sect2>
-    <title>Data Values in PL/Perl</title>
-
-    <para>
-     The argument values supplied to a PL/Perl function's script are simply
-     the input arguments converted to text form (just as if they had been
-     displayed by a SELECT statement).  Conversely, the <literal>return</>
-     command will accept any string that is acceptable input format for
-     the function's declared return type.  So, the PL/Perl programmer can
-     manipulate data values as if they were just text.
-    </para>
-
-   </sect2>
-
-   <sect2>
-    <title>Database Access from PL/Perl</title>
+ <sect1 id="plperl-missing">
+  <title>Missing Features</title>
 
   <para>
-   Access to the database itself from your Perl function can be done via
-   an experimental module <ulink
-   url="http://www.cpan.org/modules/by-module/DBD/APILOS/"><literal>DBD::PgSPI</literal></ulink>
-   (also available at <ulink url="http://www.cpan.org/SITES.html">CPAN
-   mirror sites</ulink>). This module makes available a
-   <acronym>DBI</>-compliant database-handle named
-   <varname>$pg_dbh</varname> that can be used to perform queries
-   with normal <acronym>DBI</> syntax.
+   The following features are currently missing from PL/Perl, but they
+   would make welcome contributions:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      PL/Perl functions cannot call each other directly (because they
+      are anonymous subroutines inside Perl).  There's presently no
+      way for them to share global variables, either.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      PL/Perl cannot be used to write trigger functions.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      <application>DBD::PgSPI</applicatioN> or similar capability
+      should be integrated into the standard
+      <productname>PostgreSQL</productname> distribution.
+     </para>
+    </listitem>
+   </itemizedlist>
   </para>
+ </sect1>
 
-    <para>
-     PL/Perl itself presently provides only one additional Perl command:
-    </para>
-
-    <variablelist>
-     <varlistentry>
-      <indexterm>
-       <primary>elog</primary>
-      </indexterm>
-      <term><function>elog</> <replaceable>level</replaceable>, <replaceable>msg</replaceable></term>
-      <listitem>
-       <para>
-	Emit a log or error message. Possible levels are
-	<literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
-	<literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
-	<literal>ERROR</> raises an error condition: further execution
-	of the function is abandoned, and the current transaction is
-	aborted.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-
-   </sect2>
-
-   <sect2>
-    <title>Missing Features</title>
-
-    <para>
-     PL/Perl functions cannot call each other directly (because they
-     are anonymous subroutines inside Perl).  There's presently
-     no way for them to share global variables, either.
-    </para>
-
-    <para>
-     PL/Perl cannot currently be used to write trigger functions.
-    </para>
-
-    <para>
-     DBD::PgSPI or similar capability should be integrated
-     into the standard <productname>PostgreSQL</productname> distribution.
-    </para>
-
-   </sect2>
-
-  </sect1>
- </chapter>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

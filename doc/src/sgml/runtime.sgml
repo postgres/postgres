@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.136 2002/09/17 21:41:47 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.137 2002/09/18 20:09:32 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -973,8 +973,8 @@ env PGOPTIONS='-c geqo=off' psql
         to turn this on, as it might expose programming mistakes. To use
         this option, the macro <literal>USE_ASSERT_CHECKING</literal>
         must be defined when <productname>PostgreSQL</productname> is
-        built (see the configure option
-        <literal>--enable-cassert</literal>). Note that
+        built (accomplished by the configure option
+        <option>--enable-cassert</option>). Note that
         <literal>DEBUG_ASSERTIONS</literal> defaults to on if
         <productname>PostgreSQL</productname> has been built with
 	assertions enabled.
@@ -1175,11 +1175,6 @@ env PGOPTIONS='-c geqo=off' psql
         standard output/error.) The default is 0, which means
         <systemitem>syslog</> is off. This option must be set at server
         start.
-       </para>
-       <para>
-        To use <systemitem>syslog</>, the build of
-        <productname>PostgreSQL</productname> must be configured with
-        the <option>--enable-syslog</option> option.
        </para>
       </listitem>
      </varlistentry>

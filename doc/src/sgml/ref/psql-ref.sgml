@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.74 2002/08/27 20:16:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.75 2002/09/18 20:09:32 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -2273,33 +2273,6 @@ $endif
     (This is not a <application>psql</application> but a
     <application>readline</application> feature. Read its documentation
     for further details.)
-    </para>
-
-    <para>
-    If you have the readline library installed but
-    <application>psql</application> does not seem to use it, you must
-    make sure that <productname>PostgreSQL</productname>'s top-level
-    <filename>configure</filename> script finds it.
-    <filename>configure</filename> needs to find both the library
-    <filename>libreadline.a</filename> (or a shared library equivalent)
-    <emphasis>and</emphasis> the header files
-    <filename>readline.h</filename> and <filename>history.h</filename>
-    (or <filename>readline/readline.h</filename> and
-    <filename>readline/history.h</filename>) in appropriate directories.
-    If you have the library and header files installed in an obscure
-    place you must tell <filename>configure</filename> about them, for
-    example:
-<programlisting>
-$ ./configure --with-includes=/opt/gnu/include --with-libs=/opt/gnu/lib  ...
-</programlisting>
-    Then you have to recompile <application>psql</application> (not
-    necessarily the entire code tree).
-    </para>
-
-    <para>
-    The <acronym>GNU</acronym> readline library can be obtained from the
-    <acronym>GNU</acronym> project's <acronym>FTP</acronym> server at
-    <ulink URL="ftp://ftp.gnu.org">ftp://ftp.gnu.org</ulink>.
     </para>
    </refsect3>
   </refsect2>
