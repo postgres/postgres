@@ -969,7 +969,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						output_statement($1, 0);
 					}
 		| ECPGFree		{
-						fprintf(yyout, "{ ECPGdeallocate(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1); 
+                        fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1); 
 						whenever_action(2);
 						free($1);
 					}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.66 1999/11/18 21:47:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.67 1999/11/23 19:47:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,35 +77,6 @@ extern void s_lock_sleep(unsigned spin);
 /*************************************************************************
  * All the gcc inlines
  */
-
-#if defined(__alpha__)
-#define TAS(lock) tas(lock)
-#define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
-
-static __inline__ int
-tas(volatile slock_t *lock)
-{
-	register slock_t _res;
-
-__asm__("    ldq   $0, %0              \n\
-                 bne   $0, 3f          \n\
-                 ldq_l $0, %0	           \n\
-                 bne   $0, 3f          \n\
-                 or    $31, 1, $0          \n\
-                 stq_c $0, %0	           \n\
-                 beq   $0, 2f              \n\
-                 bis   $31, $31, %1        \n\
-                 mb		                   \n\
-                 jmp   $31, 4f	           \n\
-              2: or    $31, 1, $0	       \n\
-              3: bis   $0, $0, %1	       \n\
-              4: nop      ": "=m"(*lock), "=r"(_res): :"0");
-
-	return (int) _res;
-}
-
-#endif	 /* __alpha__ */
-
 
 
 #if defined(__i386__)
@@ -226,20 +197,6 @@ tas(volatile slock_t *lock)
  * All non gcc
  */
 
-#if defined(__alpha__)
-/*
- * OSF/1 (Alpha AXP)
- *
- * Note that slock_t on the Alpha AXP is msemaphore instead of char
- * (see storage/ipc.h).
- */
-#define TAS(lock)	(msem_lock((lock), MSEM_IF_NOWAIT) < 0)
-#define S_UNLOCK(lock)	msem_unlock((lock), 0)
-#define S_INIT_LOCK(lock)	msem_init((lock), MSEM_UNLOCKED)
-#define S_LOCK_FREE(lock)	(!(lock)->msem_state)
-#endif	 /* __alpha__ */
-
-
 
 #if defined(NEED_I386_TAS_ASM)
 /* non gcc i386 based things */
@@ -271,6 +228,52 @@ tas(slock_t *s_lock)
 /*************************************************************************
  * These are the platforms that have common code for gcc and non-gcc
  */
+
+
+#if defined(__alpha)
+
+#if defined(__osf__)
+/*
+ * OSF/1 (Alpha AXP)
+ *
+ * Note that slock_t on the Alpha AXP is msemaphore instead of char
+ * (see storage/ipc.h).
+ */
+#define TAS(lock)	  (msem_lock((lock), MSEM_IF_NOWAIT) < 0)
+#define S_UNLOCK(lock) msem_unlock((lock), 0)
+#define S_INIT_LOCK(lock)		msem_init((lock), MSEM_UNLOCKED)
+#define S_LOCK_FREE(lock)	  (!(lock)->msem_state)
+
+#else /* i.e. not __osf__ */
+
+#define TAS(lock) tas(lock)
+#define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
+
+static __inline__ int
+tas(volatile slock_t *lock)
+{
+ register slock_t _res;
+
+__asm__("	 ldq   $0, %0			   \n\
+				 bne   $0, 3f		   \n\
+				 ldq_l $0, %0			 \n\
+				 bne   $0, 3f		   \n\
+				 or    $31, 1, $0		   \n\
+				 stq_c $0, %0				   \n\
+				 beq   $0, 2f			   \n\
+				 bis   $31, $31, %1 	   \n\
+				 mb 							   \n\
+				 jmp   $31, 4f			   \n\
+			  2: or    $31, 1, $0			   \n\
+			  3: bis   $0, $0, %1		   \n\
+			  4: nop	  ": "=m"(*lock), "=r"(_res): :"0");
+
+	return (int) _res;
+}
+#endif /* __osf__ */
+
+#endif /* __alpha */
+
 
 #if defined(__hpux)
 /*
