@@ -613,81 +613,6 @@ main() { double d = DBL_MIN; if (d != DBL_MIN) exit(-1); else exit(0); }],
 	[AC_DEFINE(HAVE_DBL_MIN_PROBLEM) AC_MSG_RESULT(no)],
 	AC_MSG_RESULT(assuming ok on target machine))
 
-dnl Check to see if we have a working 64-bit integer type.
-AC_MSG_CHECKING(whether 'long int' is 64 bits)
-AC_TRY_RUN([#include <stdio.h>
-typedef long int int64;
-#define INT64_FORMAT "%ld"
-
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_work()
-{
-  int64 c,d,e;
-  char buf[100];
-
-  if (sizeof(int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  /* we do perfunctory checks on multiply, divide, sprintf, sscanf */
-  c = a * b;
-  sprintf(buf, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;			/* either multiply or sprintf is busted */
-  if (sscanf(buf, INT64_FORMAT, &d) != 1)
-    return 0;
-  if (d != c)
-    return 0;
-  e = d / b;
-  if (e != a)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_int64_work());
-}],
-	[AC_DEFINE(HAVE_LONG_INT_64) AC_MSG_RESULT(yes)],
-	AC_MSG_RESULT(no),
-	AC_MSG_RESULT(assuming not on target machine))
-
-AC_MSG_CHECKING(whether 'long long int' is 64 bits)
-AC_TRY_RUN([#include <stdio.h>
-typedef long long int int64;
-#define INT64_FORMAT "%lld"
-
-int64 a = 20000001;
-int64 b = 40000005;
-
-int does_int64_work()
-{
-  int64 c,d,e;
-  char buf[100];
-
-  if (sizeof(int64) != 8)
-    return 0;			/* doesn't look like the right size */
-
-  /* we do perfunctory checks on multiply, divide, sprintf, sscanf */
-  c = a * b;
-  sprintf(buf, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;			/* either multiply or sprintf is busted */
-  if (sscanf(buf, INT64_FORMAT, &d) != 1)
-    return 0;
-  if (d != c)
-    return 0;
-  e = d / b;
-  if (e != a)
-    return 0;
-  return 1;
-}
-main() {
-  exit(! does_int64_work());
-}],
-	[AC_DEFINE(HAVE_LONG_LONG_INT_64) AC_MSG_RESULT(yes)],
-	AC_MSG_RESULT(no),
-	AC_MSG_RESULT(assuming not on target machine))
-
 dnl Checks for library functions.
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
@@ -765,6 +690,88 @@ fi
 	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB)
 ])
 AC_SUBST(HPUXMATHLIB)
+
+dnl Check to see if we have a working 64-bit integer type.
+dnl This has to be done after checking for snprintf, because
+dnl if the platform has snprintf then we need to know if snprintf
+dnl works with 64-bit ints.  However, if we are supplying our own
+dnl snprintf then we expect that it will work as long as the basic
+dnl 64-bit math operations work.  NOTE that we will supply our own
+dnl snprintf if either snprintf or vsnprintf is missing.
+
+AC_MSG_CHECKING(whether 'long int' is 64 bits)
+AC_TRY_RUN([#include <stdio.h>
+typedef long int int64;
+#define INT64_FORMAT "%ld"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  /* we do perfunctory checks on multiply and divide,
+   * and also test snprintf if the platform provides snprintf.
+   */
+  c = a * b;
+#if defined(HAVE_SNPRINTF) && defined(HAVE_VSNPRINTF)
+  snprintf(buf, 100, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;			/* either multiply or snprintf is busted */
+#endif
+  d = (c + b) / b;
+  if (d != a+1)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}],
+	[AC_DEFINE(HAVE_LONG_INT_64) AC_MSG_RESULT(yes)],
+	AC_MSG_RESULT(no),
+	AC_MSG_RESULT(assuming not on target machine))
+
+AC_MSG_CHECKING(whether 'long long int' is 64 bits)
+AC_TRY_RUN([#include <stdio.h>
+typedef long long int int64;
+#define INT64_FORMAT "%lld"
+
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d;
+  char buf[100];
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  /* we do perfunctory checks on multiply and divide,
+   * and also test snprintf if the platform provides snprintf.
+   */
+  c = a * b;
+#if defined(HAVE_SNPRINTF) && defined(HAVE_VSNPRINTF)
+  snprintf(buf, 100, INT64_FORMAT, c);
+  if (strcmp(buf, "800000140000005") != 0)
+    return 0;			/* either multiply or snprintf is busted */
+#endif
+  d = (c + b) / b;
+  if (d != a+1)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}],
+	[AC_DEFINE(HAVE_LONG_LONG_INT_64) AC_MSG_RESULT(yes)],
+	AC_MSG_RESULT(no),
+	AC_MSG_RESULT(assuming not on target machine))
 
 dnl Check to see if platform has POSIX signal interface.
 dnl NOTE: if this test fails then POSIX signals definitely don't work.

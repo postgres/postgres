@@ -37,17 +37,31 @@ int64 *
 int8in(char *str)
 {
 	int64	   *result = palloc(sizeof(int64));
+	char	   *ptr = str;
+	int64		tmp = 0;
+	int			sign = 1;
 
 	if (!PointerIsValid(str))
 		elog(ERROR, "Bad (null) int8 external representation", NULL);
 
-	if (sscanf(str, INT64_FORMAT, result) != 1)
+	/* Do our own scan, rather than relying on sscanf which might be
+	 * broken for long long.  NOTE: this will not detect int64 overflow...
+	 * but sscanf doesn't either...
+	 */
+	while (*ptr && isspace(*ptr))	/* skip leading spaces */
+		ptr++;
+	if (*ptr == '-')				/* handle sign */
+		sign = -1, ptr++;
+	else if (*ptr == '+')
+		ptr++;
+	if (! isdigit(*ptr))			/* require at least one digit */
+		elog(ERROR, "Bad int8 external representation '%s'", str);
+	while (*ptr && isdigit(*ptr))	/* process digits */
+		tmp = tmp * 10 + (*ptr++ - '0');
+	if (*ptr)						/* trailing junk? */
 		elog(ERROR, "Bad int8 external representation '%s'", str);
 
-#if FALSE
-	elog(ERROR, "64-bit integers are not supported", NULL);
-	result = NULL;
-#endif
+	*result = (sign < 0) ? -tmp : tmp;
 
 	return result;
 }	/* int8in() */
