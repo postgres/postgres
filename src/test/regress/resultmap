@@ -8,4 +8,3 @@ float8/i.86-pc-mingw32=float8-exp-three-digits-win32
 float8/i.86-pc-cygwin=float8-small-is-zero
 int8/.*-qnx=int8-exp-three-digits
 int8/i.86-pc-mingw32=int8-exp-three-digits-win32
-
