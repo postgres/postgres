@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.19 2004/01/26 22:35:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.20 2004/01/31 21:18:00 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,7 +450,6 @@ writefile(char *path, char **lines)
 	FILE	   *out_file;
 	char	  **line;
 
-	;
 	if ((out_file = fopen(path, PG_BINARY_W)) == NULL)
 	{
 		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
