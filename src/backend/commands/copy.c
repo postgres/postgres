@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.67 1999/01/17 06:18:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.68 1999/01/23 22:27:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,9 +303,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		}
 		else if (!from && !binary)
 		{
-		        CopySendData("\\.\n",3,fp);
-			if (IsUnderPostmaster)
-			        pq_flush();
+			CopySendData("\\.\n",3,fp);
 		}
 	}
 }

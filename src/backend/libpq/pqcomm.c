@@ -5,39 +5,40 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.63 1999/01/17 06:18:26 momjian Exp $
+ *  $Id: pqcomm.c,v 1.64 1999/01/23 22:27:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
- *              pq_init                 - initialize libpq
+ *		pq_init			- initialize libpq
  *		pq_getport		- return the PGPORT setting
  *		pq_close		- close input / output connections
  *		pq_flush		- flush pending output
+ *		pq_recvbuf		- load some bytes into the input buffer
  *		pq_getstr		- get a null terminated string from connection
- *              pq_getchar              - get 1 character from connection
- *              pq_peekchar             - peek at first character in connection
+ *		pq_getchar		- get 1 character from connection
+ *		pq_peekchar		- peek at next character from connection
  *		pq_getnchar		- get n characters from connection, and null-terminate
  *		pq_getint		- get an integer from connection
- *              pq_putchar              - send 1 character to connection
+ *		pq_putchar		- send 1 character to connection
  *		pq_putstr		- send a null terminated string to connection
  *		pq_putnchar		- send n characters to connection
  *		pq_putint		- send an integer to connection
- *		pq_putncharlen		- send n characters to connection
+ *		pq_putncharlen	- send n characters to connection
  *					  (also send an int header indicating
  *					   the length)
  *		pq_getinaddr	- initialize address from host and port number
  *		pq_getinserv	- initialize address from host and service name
  *
- *              StreamDoUnlink          - Shutdown UNIX socket connectioin
- *              StreamServerPort        - Open sock stream
- *              StreamConnection        - Create new connection with client
- *              StreamClose             - Close a client/backend connection
+ *		StreamDoUnlink		- Shutdown UNIX socket connection
+ *		StreamServerPort	- Open socket stream
+ *		StreamConnection	- Create new connection with client
+ *		StreamClose			- Close a client/backend connection
  * 
  * NOTES
- *              Frontend is now completey in interfaces/libpq, and no 
- *              functions from this file is used.
+ *              Frontend is now completely in interfaces/libpq, and no 
+ *              functions from this file are used there.
  *
  */
 #include "postgres.h"
@@ -79,6 +80,14 @@
 
 extern FILE * debug_port; /* in util.c */
 
+/*
+ * Buffers 
+ */
+char PqSendBuffer[PQ_BUFFER_SIZE];
+char PqRecvBuffer[PQ_BUFFER_SIZE];
+int PqSendPointer,PqRecvPointer,PqRecvLength;
+
+
 /* --------------------------------
  *		pq_init - open portal file descriptors
  * --------------------------------
@@ -86,6 +95,7 @@ extern FILE * debug_port; /* in util.c */
 void
 pq_init(int fd)
 {
+	PqSendPointer = PqRecvPointer = PqRecvLength = 0;
 	PQnotifies_init();
 	if (getenv("LIBPQ_DEBUG"))
 	  debug_port = stderr;
@@ -94,40 +104,40 @@ pq_init(int fd)
 /* -------------------------
  *	 pq_getchar()
  *
- *	 get a character from the input file,
- *
+ *	 get a character from the input file, or EOF if trouble
+ * --------------------------------
  */
 
 int
 pq_getchar(void)
 {
-	char c;
-
-	while (recv(MyProcPort->sock, &c, 1, 0) != 1) {
-	    if (errno != EINTR)
-			return EOF; /* Not interrupted, so something went wrong */
+	while (PqRecvPointer >= PqRecvLength)
+	{
+		if (pq_recvbuf())		/* If nothing in buffer, then recv some */
+			return EOF;			/* Failed to recv data */
 	}
-	  
-	return c;
+	return PqRecvBuffer[PqRecvPointer++];
 }
 
-/*
+/* -------------------------
+ *	 pq_peekchar()
+ *
+ *	 get a character from the connection, but leave it in the buffer
+ *	 to be read again
  * --------------------------------
- *              pq_peekchar - get 1 character from connection, but leave it in the stream
  */
+
 int
-pq_peekchar(void) {
-	char c;
-
-	while (recv(MyProcPort->sock, &c, 1, MSG_PEEK) != 1) {
-	    if (errno != EINTR)
-			return EOF; /* Not interrupted, so something went wrong */
+pq_peekchar(void)
+{
+	while (PqRecvPointer >= PqRecvLength)
+	{
+		if (pq_recvbuf())		/* If nothing in buffer, then recv some */
+			return EOF;			/* Failed to recv data */
 	}
-
-	return c;
+	/* Note we don't bump the pointer... */
+	return PqRecvBuffer[PqRecvPointer];
 }
-  
-
 
 /* --------------------------------
  *		pq_getport - return the PGPORT setting
@@ -150,18 +160,91 @@ pq_getport()
 void
 pq_close()
 {
-        close(MyProcPort->sock);
+	close(MyProcPort->sock);
 	PQnotifies_init();
 }
 
 /* --------------------------------
  *		pq_flush - flush pending output
+ *
+ *		returns 0 if OK, EOF if trouble
  * --------------------------------
  */
-void
+int
 pq_flush()
 {
-  /* Not supported/required? */
+	char *bufptr = PqSendBuffer;
+	char *bufend = PqSendBuffer + PqSendPointer;
+
+	while (bufptr < bufend)
+	{
+		int r = send(MyProcPort->sock, bufptr, bufend - bufptr, 0);
+		if (r <= 0)
+		{
+			if (errno == EINTR)
+				continue;		/* Ok if we were interrupted */
+			/* We would like to use elog() here, but cannot because elog
+			 * tries to write to the client, which would cause a recursive
+			 * flush attempt!  So just write it out to the postmaster log.
+			 */
+			fprintf(stderr, "pq_flush: send() failed, errno %d\n", errno);
+			/* We drop the buffered data anyway so that processing
+			 * can continue, even though we'll probably quit soon.
+			 */
+			PqSendPointer = 0;
+			return EOF;
+		}
+		bufptr += r;
+	}
+	PqSendPointer = 0;
+	return 0;
+}
+
+/* --------------------------------
+ *		pq_recvbuf - load some bytes into the input buffer
+ *
+ *		returns 0 if OK, EOF if trouble
+ * --------------------------------
+ */
+
+int
+pq_recvbuf()
+{
+	if (PqRecvPointer > 0)
+	{
+		if (PqRecvLength > PqRecvPointer)
+		{
+			/* still some unread data, left-justify it in the buffer */
+			memmove(PqRecvBuffer, PqRecvBuffer+PqRecvPointer,
+					PqRecvLength-PqRecvPointer);
+			PqRecvLength -= PqRecvPointer;
+			PqRecvPointer = 0;
+		}
+		else
+			PqRecvLength = PqRecvPointer = 0;
+	}
+
+	/* Can fill buffer from PqRecvLength and upwards */
+	for (;;)
+	{
+		int r = recv(MyProcPort->sock, PqRecvBuffer + PqRecvLength,
+					 PQ_BUFFER_SIZE - PqRecvLength, 0);
+		if (r <= 0)
+		{
+			if (errno == EINTR)
+				continue;		/* Ok if interrupted */
+			/* We would like to use elog() here, but dare not because elog
+			 * tries to write to the client, which will cause problems
+			 * if we have a hard communications failure ...
+			 * So just write the message to the postmaster log.
+			 */
+			fprintf(stderr, "pq_recvbuf: recv() failed, errno %d\n", errno);
+			return EOF;
+		}
+		/* r contains number of bytes read, so just incr length */
+		PqRecvLength += r;
+		return 0;
+	}
 }
 
 /* --------------------------------
@@ -194,7 +277,7 @@ pq_getstr(char *s, int maxlen)
 int
 pq_getnchar(char *s, int off, int maxlen)
 {
-        int r = pqGetNBytes(s + off, maxlen);
+	int r = pqGetNBytes(s + off, maxlen);
 	s[off+maxlen] = '\0';
 	return r;
 }
@@ -602,7 +685,7 @@ StreamConnection(int server_fd, Port *port)
 		if (setsockopt(port->sock, pe->p_proto, TCP_NODELAY,
 					   &on, sizeof(on)) < 0)
 		{
-			elog(ERROR, "postmaster: setsockopt failed");
+			elog(ERROR, "postmaster: setsockopt failed: %m");
 			return STATUS_ERROR;
 		}
 	}
@@ -644,18 +727,9 @@ pq_putncharlen(char *s, int n)
  */
 int pq_putchar(char c) 
 {
-  char isDone = 0;
-
-  do {
-    if (send(MyProcPort->sock, &c, 1, 0) != 1) {
-      if (errno != EINTR) 
-	return EOF; /* Anything other than interrupt is error! */
-    }
-    else
-      isDone = 1; /* Done if we sent one char */
-  } while (!isDone);
-  return c;
+	if (PqSendPointer >= PQ_BUFFER_SIZE)
+		if (pq_flush())			/* If buffer is full, then flush it out */
+			return EOF;
+	PqSendBuffer[PqSendPointer++] = c; /* Put in buffer */
+	return c;
 }
-
-
-

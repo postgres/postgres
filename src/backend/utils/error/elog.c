@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.37 1999/01/11 03:56:07 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.38 1999/01/23 22:27:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,8 +192,15 @@ elog(int lev, const char *fmt,...)
 			pq_putnchar("N", 1);
 		else
 			pq_putnchar("E", 1);
-		/* pq_putint(-101, 4); *//* should be query id */
 		pq_putstr(line + TIMESTAMP_SIZE);		/* don't show timestamps */
+		/*
+		 * This flush is normally not necessary, since postgres.c will
+		 * flush out waiting data when control returns to the main loop.
+		 * But it seems best to leave it here, so that the client has some
+		 * clue what happened if the backend dies before getting back to the
+		 * main loop ... error/notice messages should not be a performance-
+		 * critical path anyway, so an extra flush won't hurt much ...
+		 */
 		pq_flush();
 	}
 	if (!IsUnderPostmaster)

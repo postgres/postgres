@@ -98,7 +98,7 @@ pqPutLong(int integer)
 	n = ((PG_PROTOCOL_MAJOR(FrontendProtocol) == 0) ? hton_l(integer) : htonl((uint32) integer));
 #endif
 
-        return pqPutNBytes((char *)&n,4);
+	return pqPutNBytes((char *)&n, 4);
 }
 
 /* --------------------------------------------------------------------- */
@@ -107,7 +107,7 @@ pqGetShort(int *result)
 {
 	uint16		n;
 
-	if (pqGetNBytes((char *)&n,2) != 0)
+	if (pqGetNBytes((char *)&n, 2) != 0)
 	  return EOF;
 
 #ifdef FRONTEND
@@ -138,28 +138,29 @@ pqGetLong(int *result)
 }
 
 /* --------------------------------------------------------------------- */
-/* pqGetNBytes: Read a chunk of exactly len bytes in buffer s (which must be 1
-		byte longer) and terminate it with a '\0'.
-		Return 0 if ok.
-*/
+/* pqGetNBytes: Read a chunk of exactly len bytes into buffer s.
+ *	Return 0 if ok, EOF if trouble.
+ */
 int
 pqGetNBytes(char *s, size_t len)
 {
-	int bytesDone = 0;
+	size_t amount;
 
-	do {
-	  int r = recv(MyProcPort->sock, s+bytesDone, len-bytesDone, 0);
-	  if (r == 0 || r == -1) {
-	    if (errno != EINTR)
-	      return EOF; /* All other than signal-interrupted is error */
-	    continue; /* Otherwise, try again */
-	  }
-	  
-	  /* r contains number of bytes received */
-	  bytesDone += r;
-
-	} while (bytesDone < len);
-	/* Zero-termination now in pq_getnchar() instead */
+	while (len > 0)
+	{
+		while (PqRecvPointer >= PqRecvLength)
+		{
+			if (pq_recvbuf())	/* If nothing in buffer, then recv some */
+				return EOF;		/* Failed to recv data */
+		}
+		amount = PqRecvLength - PqRecvPointer;
+		if (amount > len)
+			amount = len;
+		memcpy(s, PqRecvBuffer + PqRecvPointer, amount);
+		PqRecvPointer += amount;
+		s += amount;
+		len -= amount;
+	}
 	return 0;
 }
 
@@ -167,20 +168,21 @@ pqGetNBytes(char *s, size_t len)
 int
 pqPutNBytes(const char *s, size_t len)
 {
-        int bytesDone = 0;
+	size_t amount;
 
-	do {
-	  int r = send(MyProcPort->sock, s+bytesDone, len-bytesDone, 0);
-	  if (r == 0 || r == -1) {
-	    if (errno != EINTR)
-	      return EOF; /* Only signal interruption allowed */
-	    continue; /* If interruped and read nothing, just try again */
-	  }
-	  
-	  /* r contains number of bytes sent so far */
-	  bytesDone += r;
-	} while (bytesDone < len);
-
+	while (len > 0)
+	{
+		if (PqSendPointer >= PQ_BUFFER_SIZE)
+			if (pq_flush())		/* If buffer is full, then flush it out */
+				return EOF;
+		amount = PQ_BUFFER_SIZE - PqSendPointer;
+		if (amount > len)
+			amount = len;
+		memcpy(PqSendBuffer + PqSendPointer, s, amount);
+		PqSendPointer += amount;
+		s += amount;
+		len -= amount;
+	}
 	return 0;
 }
 
@@ -191,8 +193,8 @@ pqGetString(char *s, size_t len)
 	int			c;
 
 	/*
-	 * Keep on reading until we get the terminating '\0' and discard those
-	 * bytes we don't have room for.
+	 * Keep on reading until we get the terminating '\0',
+	 * discarding any bytes we don't have room for.
 	 */
 
 	while ((c = pq_getchar()) != EOF && c != '\0')
@@ -216,4 +218,3 @@ pqPutString(const char *s)
 {
   return pqPutNBytes(s,strlen(s)+1);
 }
-
