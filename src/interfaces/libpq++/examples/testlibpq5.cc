@@ -31,7 +31,7 @@ tuple 1: got
 #include <stdlib.h>
 extern "C" {
 #include "postgres.h"		// for Postgres types
-#include "utils/geo-decls.h" // for the POLYGON type
+#include "utils/geo_decls.h" // for the POLYGON type
 }
 
 main()

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.5 1997/03/16 05:32:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.6 1997/03/16 19:03:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,15 +39,15 @@ extern char *tzname[2];
 extern long int timezone;
 extern int daylight;
 
-#define JTIME_INVALID		(infnan(0))
+#define JTIME_INVALID		(NAN)
 #define DATETIME_INVALID(j)	{*j = JTIME_INVALID;}
 #define DATETIME_IS_INVALID(j)	(isnan(*j))
 
-#define JTIME_NOBEGIN		(infnan(-ERANGE))
+#define JTIME_NOBEGIN		(-HUGE_VAL)
 #define DATETIME_NOBEGIN(j)	{*j = JTIME_NOBEGIN;}
 #define DATETIME_IS_NOBEGIN(j)	(*j == JTIME_NOBEGIN)
 
-#define JTIME_NOEND		(infnan(ERANGE))
+#define JTIME_NOEND		(HUGE_VAL)
 #define DATETIME_NOEND(j)	{*j = JTIME_NOEND;}
 #define DATETIME_IS_NOEND(j)	(*j == JTIME_NOEND)
 
