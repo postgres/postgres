@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.113 2004/07/21 22:31:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.114 2004/08/17 23:15:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1310,6 +1310,13 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 			 */
 			if (start < minoff)
 				start = minoff;
+
+			/*
+			 * Need this check too, to guard against possibility that page
+			 * split since we visited it originally.
+			 */
+			if (start > maxoff)
+				start = OffsetNumberNext(maxoff);
 
 			/*
 			 * These loops will check every item on the page --- but in an
