@@ -13213,11 +13213,13 @@ echo $ECHO_N "checking whether pthreads work without any flags... $ECHO_C" >&6
                 -*)
                 echo "$as_me:$LINENO: checking whether pthreads work with $flag" >&5
 echo $ECHO_N "checking whether pthreads work with $flag... $ECHO_C" >&6
-                PTHREAD_CFLAGS="$flag"
+                tryPTHREAD_CFLAGS="$flag"
                 ;;
 
-		pthread-config)
-		# Extract the first word of "pthread-config", so it can be a program name with args.
+                pthread-config)
+                # skip this if we already have flags defined, for PostgreSQL
+                if test x"$PTHREAD_CFLAGS" != x -o x"$PTHREAD_LIBS" != x; then continue; fi
+                # Extract the first word of "pthread-config", so it can be a program name with args.
 set dummy pthread-config; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
@@ -13253,22 +13255,23 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-		if test x"$acx_pthread_config" = xno; then continue; fi
-		PTHREAD_CFLAGS="`pthread-config --cflags`"
-		PTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
-		;;
+                if test x"$acx_pthread_config" = xno; then continue; fi
+                tryPTHREAD_CFLAGS="`pthread-config --cflags`"
+                tryPTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
+                fi
+                ;;
 
                 *)
                 echo "$as_me:$LINENO: checking for the pthreads library -l$flag" >&5
 echo $ECHO_N "checking for the pthreads library -l$flag... $ECHO_C" >&6
-                PTHREAD_LIBS="-l$flag"
+                tryPTHREAD_LIBS="-l$flag"
                 ;;
         esac
 
         save_LIBS="$LIBS"
         save_CFLAGS="$CFLAGS"
-        LIBS="$PTHREAD_LIBS $LIBS"
-        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        LIBS="$tryPTHREAD_LIBS $PTHREAD_LIBS $LIBS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
 
         # Check for various functions.  We must include pthread.h,
         # since some functions may be macros.  (On the Sequent, we
@@ -13324,11 +13327,13 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
         echo "$as_me:$LINENO: result: $acx_pthread_ok" >&5
 echo "${ECHO_T}$acx_pthread_ok" >&6
         if test "x$acx_pthread_ok" = xyes; then
-                break;
+            # we continue with more flags because Linux needs -lpthread
+            # for libpq builds on PostgreSQL.  The test above only
+            # tests for building binaries, not shared libraries.
+            PTHREAD_LIBS=" $tryPTHREAD_LIBS $PTHREAD_LIBS"
+            PTHREAD_CFLAGS="$PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
         fi
 
-        PTHREAD_LIBS=""
-        PTHREAD_CFLAGS=""
 done
 fi
 
@@ -13436,11 +13441,11 @@ echo "$as_me: WARNING: we do not know how to create joinable pthreads" >&2;}
         echo "$as_me:$LINENO: checking if more special flags are required for pthreads" >&5
 echo $ECHO_N "checking if more special flags are required for pthreads... $ECHO_C" >&6
         flag=no
-# We handle this ourselves in PostgreSQL
-#        case "${host_cpu}-${host_os}" in
-#                *-aix* | *-freebsd*)     flag="-D_THREAD_SAFE";;
-#                *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
-#        esac
+# We always add these in PostgreSQL
+#       case "${host_cpu}-${host_os}" in
+#               *-aix* | *-freebsd* | *-darwin*) flag="-D_THREAD_SAFE";;
+#               *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
+#       esac
         echo "$as_me:$LINENO: result: ${flag}" >&5
 echo "${ECHO_T}${flag}" >&6
         if test "x$flag" != xno; then
