@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.63 2002/06/20 20:29:28 momjian Exp $
+ *	$Id: nodeHash.c,v 1.64 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include "utils/lsyscache.h"
 
 
-static uint32	hashFunc(Datum key, int len, bool byVal);
+static uint32	hashFunc(Datum key, int typLen, bool byVal);
 
 /* ----------------------------------------------------------------
  *		ExecHash
@@ -632,7 +632,7 @@ ExecScanHashBucket(HashJoinState *hjstate,
  * ----------------------------------------------------------------
  */
 static uint32
-hashFunc(Datum key, int len, bool byVal)
+hashFunc(Datum key, int typLen, bool byVal)
 {
 	unsigned char *k;
 
@@ -647,33 +647,47 @@ hashFunc(Datum key, int len, bool byVal)
 		 * would get the wrong bytes on a big-endian machine.
 		 */
 		k = (unsigned char *) &key;
-		len = sizeof(Datum);
+		typLen = sizeof(Datum);
 	}
 	else
 	{
-		/*
-		 * If this is a variable length type, then 'key' points to a
-		 * "struct varlena" and len == -1.	NOTE: VARSIZE returns the
-		 * "real" data length plus the sizeof the "vl_len" attribute of
-		 * varlena (the length information). 'key' points to the beginning
-		 * of the varlena struct, so we have to use "VARDATA" to find the
-		 * beginning of the "real" data.  Also, we have to be careful to
-		 * detoast the datum if it's toasted.  (We don't worry about
-		 * freeing the detoasted copy; that happens for free when the
-		 * per-tuple memory context is reset in ExecHashGetBucket.)
-		 */
-		if (len < 0)
+		if (typLen > 0)
 		{
+			/* fixed-width pass-by-reference type */
+			k = (unsigned char *) DatumGetPointer(key);
+		}
+		else if (typLen == -1)
+		{
+			/*
+			 * It's a varlena type, so 'key' points to a
+			 * "struct varlena".	NOTE: VARSIZE returns the
+			 * "real" data length plus the sizeof the "vl_len" attribute of
+			 * varlena (the length information). 'key' points to the beginning
+			 * of the varlena struct, so we have to use "VARDATA" to find the
+			 * beginning of the "real" data.  Also, we have to be careful to
+			 * detoast the datum if it's toasted.  (We don't worry about
+			 * freeing the detoasted copy; that happens for free when the
+			 * per-tuple memory context is reset in ExecHashGetBucket.)
+			 */
 			struct varlena *vkey = PG_DETOAST_DATUM(key);
 
-			len = VARSIZE(vkey) - VARHDRSZ;
+			typLen = VARSIZE(vkey) - VARHDRSZ;
 			k = (unsigned char *) VARDATA(vkey);
 		}
-		else
+		else if (typLen == -2)
+		{
+			/* It's a null-terminated C string */
+			typLen = strlen(DatumGetCString(key)) + 1;
 			k = (unsigned char *) DatumGetPointer(key);
+		}
+		else
+		{
+			elog(ERROR, "hashFunc: Invalid typLen %d", typLen);
+			k = NULL;			/* keep compiler quiet */
+		}
 	}
 
-	return DatumGetUInt32(hash_any(k, len));
+	return DatumGetUInt32(hash_any(k, typLen));
 }
 
 /* ----------------------------------------------------------------

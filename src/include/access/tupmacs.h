@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.21 2002/06/20 20:29:43 momjian Exp $
+ * $Id: tupmacs.h,v 1.22 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,12 +93,11 @@
 #endif   /* SIZEOF_DATUM == 8 */
 
 /*
- * att_align aligns the given offset as needed for a datum of length attlen
- * and alignment requirement attalign.	In practice we don't need the length.
- * The attalign cases are tested in what is hopefully something like their
- * frequency of occurrence.
+ * att_align aligns the given offset as needed for a datum of alignment
+ * requirement attalign.  The cases are tested in what is hopefully something
+ * like their frequency of occurrence.
  */
-#define att_align(cur_offset, attlen, attalign) \
+#define att_align(cur_offset, attalign) \
 ( \
 	((attalign) == 'i') ? INTALIGN(cur_offset) : \
 	 (((attalign) == 'c') ? ((long)(cur_offset)) : \
@@ -111,18 +110,23 @@
 
 /*
  * att_addlength increments the given offset by the length of the attribute.
- * attval is only accessed if we are dealing with a varlena attribute.
+ * attval is only accessed if we are dealing with a variable-length attribute.
  */
 #define att_addlength(cur_offset, attlen, attval) \
 ( \
-	((attlen) != -1) ? \
+	((attlen) > 0) ? \
 	( \
 		(cur_offset) + (attlen) \
 	) \
-	: \
+	: (((attlen) == -1) ? \
 	( \
 		(cur_offset) + VARATT_SIZE(DatumGetPointer(attval)) \
 	) \
+	: \
+	( \
+		AssertMacro((attlen) == -2), \
+		(cur_offset) + (strlen(DatumGetCString(attval)) + 1) \
+	)) \
 )
 
 /*

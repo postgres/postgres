@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.32 2002/08/22 14:23:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.33 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3504,8 +3504,8 @@ needs_toast_table(Relation rel)
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
-		data_length = att_align(data_length, att[i]->attlen, att[i]->attalign);
-		if (att[i]->attlen >= 0)
+		data_length = att_align(data_length, att[i]->attalign);
+		if (att[i]->attlen > 0)
 		{
 			/* Fixed-length types are never toastable */
 			data_length += att[i]->attlen;

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.1 2002/08/22 00:01:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/pseudotypes.c,v 1.2 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,24 +50,29 @@ record_out(PG_FUNCTION_ARGS)
 
 /*
  * cstring_in		- input routine for pseudo-type CSTRING.
+ *
+ * We might as well allow this to support constructs like "foo_in('blah')".
  */
 Datum
 cstring_in(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot accept a constant of type %s", "CSTRING");
+	char	   *str = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_VOID();			/* keep compiler quiet */
+	PG_RETURN_CSTRING(pstrdup(str));
 }
 
 /*
  * cstring_out		- output routine for pseudo-type CSTRING.
+ *
+ * We allow this mainly so that "SELECT some_output_function(...)" does
+ * what the user will expect.
  */
 Datum
 cstring_out(PG_FUNCTION_ARGS)
 {
-	elog(ERROR, "Cannot display a value of type %s", "CSTRING");
+	char	   *str = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_VOID();			/* keep compiler quiet */
+	PG_RETURN_CSTRING(pstrdup(str));
 }
 
 

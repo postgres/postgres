@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.63 2002/08/22 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.64 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,9 +457,15 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 		}
 		else
 		{
-			/* fixed size */
+			/* fixed size or cstring */
 			attr = origattr;
 			len = typeinfo->attrs[i]->attlen;
+			if (len <= 0)
+			{
+				/* it's a cstring */
+				Assert(len == -2 && !typeinfo->attrs[i]->attbyval);
+				len = strlen(DatumGetCString(attr)) + 1;
+			}
 			pq_sendint(&buf, len, sizeof(int32));
 			if (typeinfo->attrs[i]->attbyval)
 			{

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.63 2002/08/22 00:01:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.64 2002/08/24 15:00:46 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -196,7 +196,7 @@ describeTypes(const char *pattern, bool verbose)
 	if (verbose)
 		appendPQExpBuffer(&buf,
 				 "  t.typname AS \"%s\",\n"
-				 "  CASE WHEN t.typlen = -1\n"
+				 "  CASE WHEN t.typlen < 0\n"
 				 "    THEN CAST('var' AS pg_catalog.text)\n"
 				 "    ELSE CAST(t.typlen AS pg_catalog.text)\n"
 				 "  END AS \"%s\",\n",

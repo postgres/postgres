@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.23 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.24 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,14 +19,18 @@
  * Datum itself (i.e. no pointers involved!). In this case the
  * length of the type is always greater than zero and not more than
  * "sizeof(Datum)"
- * B) if a type is not "byVal" and it has a fixed length, then
- * the "Datum" always contain a pointer to a stream of bytes.
- * The number of significant bytes are always equal to the length of the
- * type.
- * C) if a type is not "byVal" and is of variable length (i.e. it has
- * length == -1) then "Datum" always points to a "struct varlena".
+ *
+ * B) if a type is not "byVal" and it has a fixed length (typlen > 0),
+ * then the "Datum" always contains a pointer to a stream of bytes.
+ * The number of significant bytes are always equal to the typlen.
+ *
+ * C) if a type is not "byVal" and has typlen == -1,
+ * then the "Datum" always points to a "struct varlena".
  * This varlena structure has information about the actual length of this
  * particular instance of the type and about its value.
+ *
+ * D) if a type is not "byVal" and has typlen == -2,
+ * then the "Datum" always points to a null-terminated C string.
  *
  * Note that we do not treat "toasted" datums specially; therefore what
  * will be copied or compared is the compressed data or toast reference.
@@ -36,17 +40,15 @@
 
 #include "utils/datum.h"
 
+
 /*-------------------------------------------------------------------------
  * datumGetSize
  *
  * Find the "real" size of a datum, given the datum value,
- * whether it is a "by value", and its length.
+ * whether it is a "by value", and the declared type length.
  *
- * To cut a long story short, usually the real size is equal to the
- * type length, with the exception of variable length types which have
- * a length equal to -1. In this case, we have to look at the value of
- * the datum itself (which is a pointer to a 'varlena' struct) to find
- * its size.
+ * This is essentially an out-of-line version of the att_addlength()
+ * macro in access/tupmacs.h.  We do a tad more error checking though.
  *-------------------------------------------------------------------------
  */
 Size
@@ -62,19 +64,33 @@ datumGetSize(Datum value, bool typByVal, int typLen)
 	}
 	else
 	{
-		if (typLen == -1)
+		if (typLen > 0)
 		{
-			/* Assume it is a varlena datatype */
+			/* Fixed-length pass-by-ref type */
+			size = (Size) typLen;
+		}
+		else if (typLen == -1)
+		{
+			/* It is a varlena datatype */
 			struct varlena *s = (struct varlena *) DatumGetPointer(value);
 
 			if (!PointerIsValid(s))
 				elog(ERROR, "datumGetSize: Invalid Datum Pointer");
-			size = (Size) VARSIZE(s);
+			size = (Size) VARATT_SIZE(s);
+		}
+		else if (typLen == -2)
+		{
+			/* It is a cstring datatype */
+			char *s = (char *) DatumGetPointer(value);
+
+			if (!PointerIsValid(s))
+				elog(ERROR, "datumGetSize: Invalid Datum Pointer");
+			size = (Size) (strlen(s) + 1);
 		}
 		else
 		{
-			/* Fixed-length pass-by-ref type */
-			size = (Size) typLen;
+			elog(ERROR, "datumGetSize: Invalid typLen %d", typLen);
+			size = 0;			/* keep compiler quiet */
 		}
 	}
 
@@ -159,7 +175,9 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 		/*
 		 * just compare the two datums. NOTE: just comparing "len" bytes
 		 * will not do the work, because we do not know how these bytes
-		 * are aligned inside the "Datum".
+		 * are aligned inside the "Datum".  We assume instead that any
+		 * given datatype is consistent about how it fills extraneous
+		 * bits in the Datum.
 		 */
 		res = (value1 == value2);
 	}

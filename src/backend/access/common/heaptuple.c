@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.78 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.79 2002/08/24 15:00:45 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -48,7 +48,7 @@ ComputeDataSize(TupleDesc tupleDesc,
 		if (nulls[i] != ' ')
 			continue;
 
-		data_length = att_align(data_length, att[i]->attlen, att[i]->attalign);
+		data_length = att_align(data_length, att[i]->attalign);
 		data_length = att_addlength(data_length, att[i]->attlen, value[i]);
 	}
 
@@ -69,7 +69,7 @@ DataFill(char *data,
 {
 	bits8	   *bitP = 0;
 	int			bitmask = 0;
-	uint32		data_length;
+	Size		data_length;
 	int			i;
 	int			numberOfAttributes = tupleDesc->natts;
 	Form_pg_attribute *att = tupleDesc->attrs;
@@ -105,12 +105,13 @@ DataFill(char *data,
 		}
 
 		/* XXX we are aligning the pointer itself, not the offset */
-		data = (char *) att_align((long) data, att[i]->attlen, att[i]->attalign);
+		data = (char *) att_align((long) data, att[i]->attalign);
 
 		if (att[i]->attbyval)
 		{
 			/* pass-by-value */
 			store_att_byval(data, value[i], att[i]->attlen);
+			data_length = att[i]->attlen;
 		}
 		else if (att[i]->attlen == -1)
 		{
@@ -123,15 +124,22 @@ DataFill(char *data,
 			data_length = VARATT_SIZE(DatumGetPointer(value[i]));
 			memcpy(data, DatumGetPointer(value[i]), data_length);
 		}
+		else if (att[i]->attlen == -2)
+		{
+			/* cstring */
+			*infomask |= HEAP_HASVARLENA;
+			data_length = strlen(DatumGetCString(value[i])) + 1;
+			memcpy(data, DatumGetPointer(value[i]), data_length);
+		}
 		else
 		{
 			/* fixed-length pass-by-reference */
-			Assert(att[i]->attlen >= 0);
-			memcpy(data, DatumGetPointer(value[i]),
-				   (size_t) (att[i]->attlen));
+			Assert(att[i]->attlen > 0);
+			data_length = att[i]->attlen;
+			memcpy(data, DatumGetPointer(value[i]), data_length);
 		}
 
-		data = (char *) att_addlength((long) data, att[i]->attlen, value[i]);
+		data += data_length;
 	}
 }
 
@@ -235,7 +243,8 @@ nocachegetattr(HeapTuple tuple,
 		if (att[attnum]->attcacheoff != -1)
 		{
 			return fetchatt(att[attnum],
-				  (char *) tup + tup->t_hoff + att[attnum]->attcacheoff);
+							(char *) tup + tup->t_hoff +
+							att[attnum]->attcacheoff);
 		}
 #endif
 	}
@@ -243,9 +252,7 @@ nocachegetattr(HeapTuple tuple,
 	{
 		/*
 		 * there's a null somewhere in the tuple
-		 */
-
-		/*
+		 *
 		 * check to see if desired att is null
 		 */
 
@@ -346,11 +353,7 @@ nocachegetattr(HeapTuple tuple,
 			  (HeapTupleNoNulls(tuple) || !att_isnull(j, bp)) &&
 			  (HeapTupleAllFixed(tuple) || att[j]->attlen > 0)); j++)
 		{
-			/*
-			 * Fix me when going to a machine with more than a four-byte
-			 * word!
-			 */
-			off = att_align(off, att[j]->attlen, att[j]->attalign);
+			off = att_align(off, att[j]->attalign);
 
 			att[j]->attcacheoff = off;
 
@@ -391,7 +394,7 @@ nocachegetattr(HeapTuple tuple,
 				off = att[i]->attcacheoff;
 			else
 			{
-				off = att_align(off, att[i]->attlen, att[i]->attalign);
+				off = att_align(off, att[i]->attalign);
 
 				if (usecache)
 					att[i]->attcacheoff = off;
@@ -399,11 +402,11 @@ nocachegetattr(HeapTuple tuple,
 
 			off = att_addlength(off, att[i]->attlen, tp + off);
 
-			if (usecache && att[i]->attlen == -1)
+			if (usecache && att[i]->attlen <= 0)
 				usecache = false;
 		}
 
-		off = att_align(off, att[attnum]->attlen, att[attnum]->attalign);
+		off = att_align(off, att[attnum]->attalign);
 
 		return fetchatt(att[attnum], tp + off);
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.120 2002/06/20 20:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.121 2002/08/24 15:00:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1138,14 +1138,10 @@ getRowDescriptions(PGconn *conn)
 
 		/*
 		 * Since pqGetInt treats 2-byte integers as unsigned, we need to
-		 * coerce the special value "-1" to signed form.  (-1 is sent for
-		 * variable-length fields.)  Formerly, libpq effectively did a
-		 * sign-extension on the 2-byte value by storing it in a signed
-		 * short. Now we only coerce the single value 65535 == -1; values
-		 * 32768..65534 are taken as valid field lengths.
+		 * coerce the result to signed form.
 		 */
-		if (typlen == 0xFFFF)
-			typlen = -1;
+		typlen = (int) ((int16) typlen);
+
 		result->attDescs[i].name = pqResultStrdup(result,
 												  conn->workBuffer.data);
 		result->attDescs[i].typid = typid;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.57 2002/08/20 05:28:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.58 2002/08/24 15:00:47 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -362,17 +362,13 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 			 */
 			if (!fcinfo->isnull && !func->fn_retbyval)
 			{
-				int			len;
-				Datum		tmp;
+				Size		len;
+				void	   *tmp;
 
-				if (func->fn_rettyplen < 0)
-					len = VARSIZE(estate.retval);
-				else
-					len = func->fn_rettyplen;
-
-				tmp = (Datum) SPI_palloc(len);
-				memcpy((void *) tmp, (void *) estate.retval, len);
-				estate.retval = tmp;
+				len = datumGetSize(estate.retval, false, func->fn_rettyplen);
+				tmp = (void *) SPI_palloc(len);
+				memcpy(tmp, DatumGetPointer(estate.retval), len);
+				estate.retval = PointerGetDatum(tmp);
 			}
 		}
 	}
@@ -2682,7 +2678,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 
 			if (var->freeval)
 			{
-				pfree((void *) (var->value));
+				pfree(DatumGetPointer(var->value));
 				var->freeval = false;
 			}
 
@@ -2705,16 +2701,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			if (!var->datatype->typbyval && !*isNull)
 			{
 				if (newvalue == value)
-				{
-					int			len;
-
-					if (var->datatype->typlen < 0)
-						len = VARSIZE(newvalue);
-					else
-						len = var->datatype->typlen;
-					var->value = (Datum) palloc(len);
-					memcpy((void *) (var->value), (void *) newvalue, len);
-				}
+					var->value = datumCopy(newvalue,
+										   false,
+										   var->datatype->typlen);
 				else
 					var->value = newvalue;
 				var->freeval = true;

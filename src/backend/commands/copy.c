@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.166 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.167 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,6 +567,8 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			elog(ERROR, "COPY: couldn't lookup info for type %u",
 				 attr[attnum-1]->atttypid);
 		fmgr_info(out_func_oid, &out_functions[attnum-1]);
+		if (binary && attr[attnum-1]->attlen == -2)
+			elog(ERROR, "COPY BINARY: cstring not supported");
 	}
 
 	if (binary)
@@ -820,9 +822,16 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		fmgr_info(in_func_oid, &in_functions[i]);
 		elements[i] = GetTypeElement(attr[i]->atttypid);
 
-		/* if column not specified, use default value if one exists */
-		if (!intMember(i + 1, attnumlist))
+		if (intMember(i + 1, attnumlist))
 		{
+			/* attribute is to be copied */
+			if (binary && attr[i]->attlen == -2)
+				elog(ERROR, "COPY BINARY: cstring not supported");
+		}
+		else
+		{
+			/* attribute is NOT to be copied */
+			/* use default value if one exists */
 			defexprs[num_defaults] = build_column_default(rel, i + 1);
 			if (defexprs[num_defaults] != NULL)
 			{

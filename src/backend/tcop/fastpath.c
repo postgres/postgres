@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.53 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.54 2002/08/24 15:00:46 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -71,12 +71,12 @@
 
 /* ----------------
  *		SendFunctionResult
+ *
+ * retlen is 0 if returning NULL, else the typlen according to the catalogs
  * ----------------
  */
 static void
-SendFunctionResult(Datum retval,	/* actual return value */
-				   bool retbyval,
-				   int retlen)	/* the length according to the catalogs */
+SendFunctionResult(Datum retval, bool retbyval, int retlen)
 {
 	StringInfoData buf;
 
@@ -93,7 +93,7 @@ SendFunctionResult(Datum retval,	/* actual return value */
 		}
 		else
 		{						/* by-reference ... */
-			if (retlen < 0)
+			if (retlen == -1)
 			{					/* ... varlena */
 				struct varlena *v = (struct varlena *) DatumGetPointer(retval);
 
@@ -177,12 +177,15 @@ fetch_fp_info(Oid func_id, struct fp_info * fip)
 
 	for (i = 0; i < pp->pronargs; ++i)
 	{
-		if (OidIsValid(argtypes[i]))
-			get_typlenbyval(argtypes[i], &fip->arglen[i], &fip->argbyval[i]);
+		get_typlenbyval(argtypes[i], &fip->arglen[i], &fip->argbyval[i]);
+		/* We don't support cstring in fastpath protocol */
+		if (fip->arglen[i] == -2)
+			elog(ERROR, "CSTRING not supported in fastpath protocol");
 	}
 
-	if (OidIsValid(rettype))
-		get_typlenbyval(rettype, &fip->retlen, &fip->retbyval);
+	get_typlenbyval(rettype, &fip->retlen, &fip->retbyval);
+	if (fip->retlen == -2)
+		elog(ERROR, "CSTRING not supported in fastpath protocol");
 
 	ReleaseSysCache(func_htp);
 
@@ -297,7 +300,7 @@ HandleFunctionRequest(void)
 		}
 		else
 		{						/* by-reference ... */
-			if (fip->arglen[i] < 0)
+			if (fip->arglen[i] == -1)
 			{					/* ... varlena */
 				if (argsize < 0)
 					elog(ERROR, "HandleFunctionRequest: bogus argsize %d",

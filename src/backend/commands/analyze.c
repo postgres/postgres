@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.42 2002/08/11 00:08:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.43 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,6 +860,8 @@ compute_minimal_stats(VacAttrStats *stats,
 	double		total_width = 0;
 	bool		is_varlena = (!stats->attr->attbyval &&
 							  stats->attr->attlen == -1);
+	bool		is_varwidth = (!stats->attr->attbyval &&
+							   stats->attr->attlen < 0);
 	FmgrInfo	f_cmpeq;
 	typedef struct
 	{
@@ -905,7 +907,7 @@ compute_minimal_stats(VacAttrStats *stats,
 		nonnull_cnt++;
 
 		/*
-		 * If it's a varlena field, add up widths for average width
+		 * If it's a variable-width field, add up widths for average width
 		 * calculation.  Note that if the value is toasted, we use the
 		 * toasted width.  We don't bother with this calculation if it's a
 		 * fixed-width type.
@@ -927,6 +929,11 @@ compute_minimal_stats(VacAttrStats *stats,
 				continue;
 			}
 			value = PointerGetDatum(PG_DETOAST_DATUM(value));
+		}
+		else if (is_varwidth)
+		{
+			/* must be cstring */
+			total_width += strlen(DatumGetCString(value)) + 1;
 		}
 
 		/*
@@ -984,7 +991,7 @@ compute_minimal_stats(VacAttrStats *stats,
 		stats->stats_valid = true;
 		/* Do the simple null-frac and width stats */
 		stats->stanullfrac = (double) null_cnt / (double) numrows;
-		if (is_varlena)
+		if (is_varwidth)
 			stats->stawidth = total_width / (double) nonnull_cnt;
 		else
 			stats->stawidth = stats->attrtype->typlen;
@@ -1157,6 +1164,8 @@ compute_scalar_stats(VacAttrStats *stats,
 	double		total_width = 0;
 	bool		is_varlena = (!stats->attr->attbyval &&
 							  stats->attr->attlen == -1);
+	bool		is_varwidth = (!stats->attr->attbyval &&
+							   stats->attr->attlen < 0);
 	double		corr_xysum;
 	RegProcedure cmpFn;
 	SortFunctionKind cmpFnKind;
@@ -1196,7 +1205,7 @@ compute_scalar_stats(VacAttrStats *stats,
 		nonnull_cnt++;
 
 		/*
-		 * If it's a varlena field, add up widths for average width
+		 * If it's a variable-width field, add up widths for average width
 		 * calculation.  Note that if the value is toasted, we use the
 		 * toasted width.  We don't bother with this calculation if it's a
 		 * fixed-width type.
@@ -1218,6 +1227,11 @@ compute_scalar_stats(VacAttrStats *stats,
 				continue;
 			}
 			value = PointerGetDatum(PG_DETOAST_DATUM(value));
+		}
+		else if (is_varwidth)
+		{
+			/* must be cstring */
+			total_width += strlen(DatumGetCString(value)) + 1;
 		}
 
 		/* Add it to the list to be sorted */
@@ -1311,7 +1325,7 @@ compute_scalar_stats(VacAttrStats *stats,
 		stats->stats_valid = true;
 		/* Do the simple null-frac and width stats */
 		stats->stanullfrac = (double) null_cnt / (double) numrows;
-		if (is_varlena)
+		if (is_varwidth)
 			stats->stawidth = total_width / (double) nonnull_cnt;
 		else
 			stats->stawidth = stats->attrtype->typlen;

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.204 2002/08/19 15:08:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.205 2002/08/24 15:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
+#include "utils/datum.h"
 
 
 /*
@@ -791,23 +792,17 @@ _copyConst(Const *from)
 		/*
 		 * passed by value so just copy the datum. Also, don't try to copy
 		 * struct when value is null!
-		 *
 		 */
 		newnode->constvalue = from->constvalue;
 	}
 	else
 	{
 		/*
-		 * not passed by value. datum contains a pointer.
+		 * not passed by value.  We need a palloc'd copy.
 		 */
-		int			length = from->constlen;
-
-		if (length == -1)		/* variable-length type? */
-			length = VARSIZE(from->constvalue);
-		newnode->constvalue = PointerGetDatum(palloc(length));
-		memcpy(DatumGetPointer(newnode->constvalue),
-			   DatumGetPointer(from->constvalue),
-			   length);
+		newnode->constvalue = datumCopy(from->constvalue,
+										from->constbyval,
+										from->constlen);
 	}
 
 	newnode->constisnull = from->constisnull;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.128 2002/08/22 00:01:48 tgl Exp $
+ * $Id: pg_type.h,v 1.129 2002/08/24 15:00:46 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -45,7 +45,9 @@ CATALOG(pg_type) BOOTSTRAP
 	/*
 	 * For a fixed-size type, typlen is the number of bytes we use to
 	 * represent a value of this type, e.g. 4 for an int4.	But for a
-	 * variable-length type, typlen is -1.
+	 * variable-length type, typlen is negative.  We use -1 to indicate
+	 * a "varlena" type (one that has a length word), -2 to indicate a
+	 * null-terminated C string.
 	 */
 	int2		typlen;
 
@@ -87,7 +89,7 @@ CATALOG(pg_type) BOOTSTRAP
 	 * be turned into pseudo-arrays like that. Hence, the way to determine
 	 * whether a type is a "true" array type is if:
 	 *
-	 * typelem != 0 and typlen < 0.
+	 * typelem != 0 and typlen == -1.
 	 */
 	Oid			typelem;
 
@@ -513,11 +515,11 @@ DATA(insert OID = 2211 ( _regtype      PGNSP PGUID -1 f b t \054 0 2206 array_in
  */
 DATA(insert OID = 2249 ( record			PGNSP PGUID  4 t p t \054 0 0 record_in record_out	i p f 0 -1 0 _null_ _null_ ));
 #define RECORDOID		2249
-DATA(insert OID = 2275 ( cstring		PGNSP PGUID  4 t p t \054 0 0 cstring_in cstring_out	i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p t \054 0 0 cstring_in cstring_out	c p f 0 -1 0 _null_ _null_ ));
 #define CSTRINGOID		2275
 DATA(insert OID = 2276 ( any			PGNSP PGUID  4 t p t \054 0 0 any_in any_out	i p f 0 -1 0 _null_ _null_ ));
 #define ANYOID			2276
-DATA(insert OID = 2277 ( anyarray		PGNSP PGUID  4 t p t \054 0 0 anyarray_in anyarray_out	i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2277 ( anyarray		PGNSP PGUID -1 f p t \054 0 0 anyarray_in anyarray_out	i x f 0 -1 0 _null_ _null_ ));
 #define ANYARRAYOID		2277
 DATA(insert OID = 2278 ( void			PGNSP PGUID  4 t p t \054 0 0 void_in void_out	i p f 0 -1 0 _null_ _null_ ));
 #define VOIDOID			2278

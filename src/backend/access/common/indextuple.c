@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.57 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.58 2002/08/24 15:00:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 		untoasted_free[i] = false;
 
 		/* Do nothing if value is NULL or not of varlena type */
-		if (null[i] != ' ' || att->attlen >= 0)
+		if (null[i] != ' ' || att->attlen != -1)
 			continue;
 
 		/*
@@ -243,9 +243,10 @@ nocache_index_getattr(IndexTuple tup,
 #endif
 	}
 	else
-	{							/* there's a null somewhere in the tuple */
-
+	{
 		/*
+		 * there's a null somewhere in the tuple
+		 *
 		 * check to see if desired att is null
 		 */
 
@@ -291,8 +292,9 @@ nocache_index_getattr(IndexTuple tup,
 
 	tp = (char *) tup + data_off;
 
-	/* now check for any non-fixed length attrs before our attribute */
-
+	/*
+	 * now check for any non-fixed length attrs before our attribute
+	 */
 	if (!slow)
 	{
 		if (att[attnum]->attcacheoff != -1)
@@ -305,11 +307,13 @@ nocache_index_getattr(IndexTuple tup,
 			int			j;
 
 			for (j = 0; j < attnum; j++)
+			{
 				if (att[j]->attlen <= 0)
 				{
 					slow = true;
 					break;
 				}
+			}
 		}
 	}
 
@@ -337,12 +341,7 @@ nocache_index_getattr(IndexTuple tup,
 
 		for (; j <= attnum; j++)
 		{
-			/*
-			 * Fix me when going to a machine with more than a four-byte
-			 * word!
-			 */
-
-			off = att_align(off, att[j]->attlen, att[j]->attalign);
+			off = att_align(off, att[j]->attalign);
 
 			att[j]->attcacheoff = off;
 
@@ -377,22 +376,19 @@ nocache_index_getattr(IndexTuple tup,
 				off = att[i]->attcacheoff;
 			else
 			{
-				off = att_align(off, att[i]->attlen, att[i]->attalign);
+				off = att_align(off, att[i]->attalign);
 
 				if (usecache)
 					att[i]->attcacheoff = off;
 			}
 
-			if (att[i]->attlen == -1)
-			{
-				off += VARSIZE(tp + off);
+			off = att_addlength(off, att[i]->attlen, tp + off);
+
+			if (usecache && att[i]->attlen <= 0)
 				usecache = false;
-			}
-			else
-				off += att[i]->attlen;
 		}
 
-		off = att_align(off, att[attnum]->attlen, att[attnum]->attalign);
+		off = att_align(off, att[attnum]->attalign);
 
 		return fetchatt(att[attnum], tp + off);
 	}

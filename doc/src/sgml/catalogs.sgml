@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.53 2002/08/13 17:22:08 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.54 2002/08/24 15:00:45 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -3173,7 +3173,13 @@
       <entry>typlen</entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>Length of the storage representation of the type, -1 if variable length</entry>
+      <entry>
+       For a fixed-size type, <structfield>typlen</structfield> is the number
+       of bytes in the internal representation of the type.  But for a
+       variable-length type, <structfield>typlen</structfield> is negative.
+       -1 indicates a <quote>varlena</> type (one that has a length word),
+       -2 indicates a null-terminated C string.
+      </entry>
      </row>
 
      <row>
@@ -3325,7 +3331,7 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry><para>
-       <structfield>typstorage</structfield> tells for variable-length
+       <structfield>typstorage</structfield> tells for varlena
        types (those with <structfield>typlen</structfield> = -1) if
        the type is prepared for toasting and what the default strategy
        for attributes of this type should be.
