@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.49 2001/02/04 14:09:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.50 2001/02/11 01:52:11 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       $(INET_ATON) $(SNPRINTF) $(STRERROR)
 
 ifdef MULTIBYTE
-OBJS+= common.o wchar.o
+OBJS+= wchar.o
 endif
 
 # Add libraries that libpq depends (or might depend) on into the
@@ -62,7 +62,7 @@ strerror.c: $(backend_src)/port/strerror.c
 	rm -f $@ && $(LN_S) $< .
 
 ifdef MULTIBYTE
-common.c wchar.c : % : $(backend_src)/utils/mb/%
+wchar.c : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 endif
 
@@ -82,7 +82,7 @@ uninstall: uninstall-lib
 	rm -f $(addprefix $(DESTDIR)$(includedir)/, libpq-fe.h libpq-int.h pqexpbuffer.h)
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) dllist.c common.c wchar.c conv.c big5.c
+	rm -f $(OBJS) dllist.c wchar.c
 	rm -f $(OBJS) inet_aton.c snprintf.c strerror.c
 
 depend dep:
