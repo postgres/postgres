@@ -48,8 +48,8 @@ EXEC SQL END DECLARE SECTION;
 	EXEC SQL AT test0 COMMIT WORK;
 	EXEC SQL DISCONNECT test0;
 
-	pthread_create(&thread1, NULL, (void *) ins1, NULL);
-	pthread_create(&thread2, NULL, (void *) ins2, NULL);
+	pthread_create(&thread1, NULL, (void * (*)(void *)) ins1, NULL);
+	pthread_create(&thread2, NULL, (void * (*)(void *)) ins2, NULL);
 	pthread_join(thread1, NULL);
 	pthread_join(thread2, NULL);
 
