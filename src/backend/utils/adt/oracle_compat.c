@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.55 2004/08/29 05:06:49 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.56 2004/10/19 15:04:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,8 @@ texttowcs(const text *txt)
 		pg_verifymbstr(workstr, nbytes, false);
 		ereport(ERROR,
 				(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-				 errmsg("invalid multibyte character for locale")));
+				 errmsg("invalid multibyte character for locale"),
+				 errhint("The server's LC_CTYPE locale is probably incompatible with the database encoding.")));
 	}
 
 	Assert(ncodes <= (size_t) nbytes);
