@@ -69,6 +69,9 @@ static struct
 		STMT_TYPE_PROCCALL, "{"
 	},
 	{
+		STMT_TYPE_LOCK, "LOCK"
+	},
+	{
 		0, NULL
 	}
 };
