@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.34 1998/09/01 04:30:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.35 1998/10/01 22:51:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,7 +627,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int32 atttypmod)
 					(Size) len,
 					(Datum) lcp,
 					false,
-					false,		/* was omitted */
+					typeByVal(tp),
 					false,		/* not a set */
 					true /* is cast */ );
 
