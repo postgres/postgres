@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Jan 5 12:52:11 EST 2005
+   Last updated: Wed Jan 5 17:36:58 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -101,7 +101,7 @@
   
    Other than documentation in the source tree itself, you can find some
    papers/presentations discussing the code at
-   http://developer.postgresql.org.
+   http://www.postgresql.org/developer.
    
   1.6) I've developed a patch, what next?
   
