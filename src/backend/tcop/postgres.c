@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.344 2003/05/14 03:26:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.345 2003/05/14 18:40:37 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -309,6 +309,7 @@ SocketBackend(StringInfo inBuf)
 
 		case 'X':				/* terminate */
 			doing_extended_query_message = false;
+			ignore_till_sync = false;
 			break;
 
 		case 'B':				/* bind */
@@ -2525,7 +2526,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.344 $ $Date: 2003/05/14 03:26:01 $\n");
+		puts("$Revision: 1.345 $ $Date: 2003/05/14 18:40:37 $\n");
 	}
 
 	/*
@@ -2714,7 +2715,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/*
 		 * (6) process the command.  But ignore it if we're skipping till Sync.
 		 */
-		if (ignore_till_sync)
+		if (ignore_till_sync && firstchar != EOF)
 			continue;
 
 		switch (firstchar)
