@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.34 2000/04/12 17:15:50 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.35 2000/06/14 18:59:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ textnlike(struct varlena * s, struct varlena * p)
 
 #define LIKE_TRUE						1
 #define LIKE_FALSE						0
-#define LIKE_ABORT						-1
+#define LIKE_ABORT						(-1)
 
 /*--------------------
  *	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
