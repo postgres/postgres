@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.15 1998/01/04 19:12:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.16 1998/01/13 19:28:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@
  * Solaris 2
  */
 
-#if defined(i386_solaris) || \
+#if (defined(__i386__) && defined(__sun__)) || \
 	defined(sparc_solaris)
 /* for xxxxx_solaris, this is defined in port/.../tas.s */
 

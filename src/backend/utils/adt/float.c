@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.26 1998/01/05 16:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.27 1998/01/13 19:28:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,14 +105,7 @@ extern double rint(double x);
 
 #endif
 
-#ifndef HAVE_ISINF
-#define isinf my_isinf
-static int	isinf(double x);
-
-#else
 extern int	isinf(double x);
-
-#endif
 
 #endif
 /* ========== USER I/O ROUTINES ========== */
