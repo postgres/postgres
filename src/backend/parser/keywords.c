@@ -8,11 +8,7 @@
  *
  *
  * IDENTIFICATION
-<<<<<<< keywords.c
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.78 2000/07/03 23:09:43 wieck Exp $
-=======
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.78 2000/07/03 23:09:43 wieck Exp $
->>>>>>> 1.73
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.79 2000/07/14 15:43:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +57,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"cast", CAST},
 	{"char", CHAR},
 	{"character", CHARACTER},
+	{"characteristics", CHARACTERISTICS},
 	{"check", CHECK},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
@@ -134,6 +131,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"inherits", INHERITS},
 	{"initially", INITIALLY},
 	{"inner", INNER_P},
+	{"inout", INOUT},
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
@@ -192,10 +190,12 @@ static ScanKeyword ScanKeywords[] = {
 	{"option", OPTION},
 	{"or", OR},
 	{"order", ORDER},
+	{"out", OUT},
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
+	{"path", PATH_P},
 	{"pendant", PENDANT},
 	{"position", POSITION},
 	{"precision", PRECISION},
@@ -218,12 +218,14 @@ static ScanKeyword ScanKeywords[] = {
 	{"rollback", ROLLBACK},
 	{"row", ROW},
 	{"rule", RULE},
+	{"schema", SCHEMA},
 	{"scroll", SCROLL},
 	{"second", SECOND_P},
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
 	{"serial", SERIAL},
 	{"serializable", SERIALIZABLE},
+	{"session", SESSION},
 	{"session_user", SESSION_USER},
 	{"set", SET},
 	{"setof", SETOF},
@@ -273,6 +275,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"when", WHEN},
 	{"where", WHERE},
 	{"with", WITH},
+	{"without", WITHOUT},
 	{"work", WORK},
 	{"year", YEAR_P},
 	{"zone", ZONE},

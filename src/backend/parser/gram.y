@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.177 2000/07/09 21:30:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.178 2000/07/14 15:43:32 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -120,21 +120,24 @@ static void doNegateFloat(Value *v);
 }
 
 %type <node>	stmt,
-		AlterTableStmt, ClosePortalStmt,
-		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DropStmt,
+		AlterSchemaStmt, AlterTableStmt, ClosePortalStmt,
+		CopyStmt, CreateStmt, CreateAsStmt, CreateSchemaStmt, CreateSeqStmt, DefineStmt, DropStmt,
 		TruncateStmt, CommentStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
 		ProcedureStmt, ReindexStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
-		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
+		RenameStmt, RevokeStmt, RuleStmt, SetSessionStmt, TransactionStmt, ViewStmt, LoadStmt,
 		CreatedbStmt, DropdbStmt, VacuumStmt, CursorStmt, SubSelect,
 		UpdateStmt, InsertStmt, select_clause, SelectStmt, NotifyStmt, DeleteStmt, 
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt,
 		RuleActionStmtOrEmpty, ConstraintsSetStmt,
-                CreateGroupStmt, AlterGroupStmt, DropGroupStmt
+		CreateGroupStmt, AlterGroupStmt, DropGroupStmt
+
+%type <list>	SessionList
+%type <node>	SessionClause
 
 %type <node>    alter_column_action
 %type <ival>    drop_behavior
@@ -183,7 +186,7 @@ static void doNegateFloat(Value *v);
 
 %type <typnam>	func_arg, func_return
 
-%type <boolean>	TriggerForOpt, TriggerForType, OptTemp
+%type <boolean>	opt_arg, TriggerForOpt, TriggerForType, OptTemp
 
 %type <list>	for_update_clause, update_list
 %type <boolean>	opt_all
@@ -223,9 +226,6 @@ static void doNegateFloat(Value *v);
 %type <list>	OptSeqList
 %type <defelt>	OptSeqElem
 
-/*
-%type <dstmt>	def_rest
-*/
 %type <astmt>	insert_rest
 
 %type <node>	OptTableElement, ConstraintElem
@@ -250,8 +250,8 @@ static void doNegateFloat(Value *v);
 %type <target>	target_el, update_target_el
 %type <paramno> ParamNo
 
-%type <typnam>	Typename, opt_type, SimpleTypename,
-				Generic, Numeric, Character, Datetime, Bit
+%type <typnam>	Typename, opt_type, SimpleTypename, ConstTypename
+				Generic, Numeric, Character, ConstDatetime, ConstInterval, Bit
 %type <str>		typename, generic, numeric, character, datetime, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
@@ -261,7 +261,7 @@ static void doNegateFloat(Value *v);
 
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
-%type <str>		UserId, var_value, zone_value
+%type <str>		UserId, opt_boolean, var_value, zone_value
 %type <str>		ColId, ColLabel, TokenId
 
 %type <node>	TableConstraint
@@ -312,7 +312,7 @@ static void doNegateFloat(Value *v);
 		OF, OLD, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
-		SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SOME, SUBSTRING,
+		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
 		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
 		UNION, UNIQUE, UPDATE, USER, USING,
@@ -320,13 +320,15 @@ static void doNegateFloat(Value *v);
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
-%token	DEFERRABLE, DEFERRED,
-		IMMEDIATE, INITIALLY,
-		PENDANT,
+%token	CHARACTERISTICS,
+		DEFERRABLE, DEFERRED,
+		IMMEDIATE, INITIALLY, INOUT,
+		OFF, OUT,
+		PATH_P, PENDANT,
 		RESTRICT,
-        TRIGGER, 
+        TRIGGER,
         UNDER,
-		OFF
+		WITHOUT
 
 /* Keywords (in SQL92 non-reserved words) */
 %token	COMMITTED, SERIALIZABLE, TYPE_P
@@ -413,13 +415,15 @@ stmtmulti:  stmtmulti ';' stmt
 				}
 		;
 
-stmt :	AlterTableStmt
+stmt :	AlterSchemaStmt
+		| AlterTableStmt
 		| AlterGroupStmt
 		| AlterUserStmt
 		| ClosePortalStmt
 		| CopyStmt
 		| CreateStmt
 		| CreateAsStmt
+		| CreateSchemaStmt
 		| CreateGroupStmt
 		| CreateSeqStmt
 		| CreatePLangStmt
@@ -452,6 +456,7 @@ stmt :	AlterTableStmt
 		| RevokeStmt
 		| OptimizableStmt
 		| RuleStmt
+		| SetSessionStmt
 		| TransactionStmt
 		| ViewStmt
 		| LoadStmt
@@ -481,8 +486,8 @@ CreateUserStmt:  CREATE USER UserId
 					n->user = $3;
                     n->sysid = -1;
 					n->password = NULL;
-					n->createdb = $4 == +1 ? true : false;
-					n->createuser = $5 == +1 ? true : false;
+					n->createdb = $4 == +1 ? TRUE : FALSE;
+					n->createuser = $5 == +1 ? TRUE : FALSE;
 					n->groupElts = $6;
 					n->validUntil = $7;
 					$$ = (Node *)n;
@@ -495,8 +500,8 @@ CreateUserStmt:  CREATE USER UserId
 					n->user = $3;
                     n->sysid = $5;
 					n->password = $6;
-					n->createdb = $7 == +1 ? true : false;
-					n->createuser = $8 == +1 ? true : false;
+					n->createdb = $7 == +1 ? TRUE : FALSE;
+					n->createuser = $8 == +1 ? TRUE : FALSE;
 					n->groupElts = $9;
 					n->validUntil = $10;
 					$$ = (Node *)n;
@@ -666,6 +671,75 @@ DropGroupStmt: DROP GROUP UserId
 
 /*****************************************************************************
  *
+ * Manipulate a schema
+ *
+ *
+ *****************************************************************************/
+
+CreateSchemaStmt:  CREATE SCHEMA UserId
+				{
+					elog(ERROR, "CREATE SCHEMA not yet supported");
+				}
+		;
+
+AlterSchemaStmt:  ALTER SCHEMA UserId
+				{
+					elog(ERROR, "ALTER SCHEMA not yet supported");
+				}
+		;
+
+
+/*****************************************************************************
+ *
+ * Manipulate a postgresql session
+ *
+ *
+ *****************************************************************************/
+
+SetSessionStmt:  SET SESSION CHARACTERISTICS AS SessionList
+				{
+					SetSessionStmt *n = makeNode(SetSessionStmt);
+					n->args = $5;
+					$$ = (Node*)n;
+				}
+		;
+
+SessionList:  SessionList ',' SessionClause
+				{
+					$$ = lappend($1, $3);
+				}
+		| SessionClause
+				{
+					$$ = lcons($1, NIL);
+				}
+		;
+
+SessionClause:  TRANSACTION COMMIT opt_boolean
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name  = "autocommit";
+					n->value = $3;
+					$$ = (Node *) n;
+				}
+		| TIME ZONE zone_value
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name  = "timezone";
+					n->value = $3;
+					$$ = (Node *) n;
+				}
+		| TRANSACTION ISOLATION LEVEL opt_level
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name  = "DefaultXactIsoLevel";
+					n->value = $4;
+					$$ = (Node *) n;
+				}
+			;
+
+
+/*****************************************************************************
+ *
  * Set PG internal variable
  *	  SET name TO 'var_value'
  * Include SQL92 syntax (thomas 1997-10-22):
@@ -718,34 +792,30 @@ opt_level:  READ COMMITTED					{ $$ = "committed"; }
 		| SERIALIZABLE						{ $$ = "serializable"; }
 		;
 
-var_value:  SCONST	{ $$ = $1; }
-	| ICONST
-		{
-			char	buf[64];
-			sprintf(buf, "%d", $1);
-			$$ = pstrdup(buf);
-		}
-	| '-' ICONST
-		{
+var_value:  opt_boolean						{ $$ = $1; }
+		| SCONST							{ $$ = $1; }
+		| ICONST
+			{
+				char	buf[64];
+				sprintf(buf, "%d", $1);
+				$$ = pstrdup(buf);
+			}
+		| '-' ICONST
+			{
 			char	buf[64];
 			sprintf(buf, "%d", -($2));
 			$$ = pstrdup(buf);
 		}
-	| FCONST	{ $$ = $1; }
-	| '-' FCONST
-		{
+		| FCONST							{ $$ = $1; }
+		| '-' FCONST
+			{
 			char * s = palloc(strlen($2)+2);
 			s[0] = '-';
 			strcpy(s + 1, $2);
 			$$ = s;
 		}
-	| TRUE_P	{ $$ = "true"; }
-	| FALSE_P	{ $$ = "false"; }
-	| ON		{ $$ = "on"; }
-	| OFF		{ $$ = "off"; }
-
-	| name_list
-		{
+		| name_list
+			{
 			List *n;
 			int slen = 0;
 			char *result;
@@ -773,18 +843,23 @@ var_value:  SCONST	{ $$ = $1; }
 			*(result+strlen(result)-1) = '\0';
 			$$ = result;
 		}
-
-	| DEFAULT	{ $$ = NULL; }
+		| DEFAULT							{ $$ = NULL; }
 		;
 
-zone_value:  Sconst			{ $$ = $1; }
-		| DEFAULT			{ $$ = NULL; }
-		| LOCAL				{ $$ = NULL; }
+opt_boolean:  TRUE_P						{ $$ = "true"; }
+		| FALSE_P							{ $$ = "false"; }
+		| ON								{ $$ = "on"; }
+		| OFF								{ $$ = "off"; }
 		;
 
-opt_encoding:  Sconst       { $$ = $1; }
-        | DEFAULT           { $$ = NULL; }
-        | /*EMPTY*/         { $$ = NULL; }
+zone_value:  Sconst							{ $$ = $1; }
+		| DEFAULT							{ $$ = NULL; }
+		| LOCAL								{ $$ = NULL; }
+		;
+
+opt_encoding:  Sconst						{ $$ = $1; }
+        | DEFAULT							{ $$ = NULL; }
+        | /*EMPTY*/							{ $$ = NULL; }
         ;
 
 VariableShowStmt:  SHOW ColId
@@ -862,11 +937,11 @@ constraints_set_namelist:	IDENT
 
 constraints_set_mode:	DEFERRED
 				{
-					$$ = true;
+					$$ = TRUE;
 				}
 		| IMMEDIATE
 				{
-					$$ = false;
+					$$ = FALSE;
 				}
 		;
 
@@ -1265,8 +1340,8 @@ ColConstraintElem:
 					n->pk_attrs			= $3;
 					n->match_type		= $4;
 					n->actions			= $5;
-					n->deferrable		= false;
-					n->initdeferred		= false;
+					n->deferrable		= FALSE;
+					n->initdeferred		= FALSE;
 					$$ = (Node *)n;
 				}
 		;
@@ -1613,9 +1688,9 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 					n->attr = NULL;		/* unused */
 					n->when = NULL;		/* unused */
 
-					n->isconstraint  = false;
-					n->deferrable    = false;
-					n->initdeferred  = false;
+					n->isconstraint  = FALSE;
+					n->deferrable    = FALSE;
+					n->initdeferred  = FALSE;
 					n->constrrelname = NULL;
 					$$ = (Node *)n;
 				}
@@ -1629,15 +1704,15 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 					n->relname = $8;
 					n->funcname = $16;
 					n->args = $18;
-					n->before = false;
-					n->row = true;
+					n->before = FALSE;
+					n->row = TRUE;
 					memcpy (n->actions, $6, 4);
 					n->lang = NULL;		/* unused */
 					n->text = NULL;		/* unused */
 					n->attr = NULL;		/* unused */
 					n->when = NULL;		/* unused */
 
-					n->isconstraint  = true;
+					n->isconstraint  = TRUE;
 					n->deferrable = ($10 & 1) != 0;
 					n->initdeferred = ($10 & 2) != 0;
 
@@ -1780,16 +1855,6 @@ DefineStmt:  CREATE def_type def_name definition
 					$$ = (Node *)n;
 				}
 		;
-
-/*
-def_rest:  def_name definition
-				{
-					$$ = makeNode(DefineStmt);
-					$$->defname = $1;
-					$$->definition = $2;
-				}
-		;
-*/
 
 def_type:  OPERATOR							{ $$ = OPERATOR; }
 		| TYPE_P							{ $$ = TYPE_P; }
@@ -2008,7 +2073,7 @@ FetchStmt:  FETCH direction fetch_how_many from_in name
 					n->direction = $2;
 					n->howMany = $3;
 					n->portalname = $5;
-					n->ismove = false;
+					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
 		| FETCH fetch_how_many from_in name
@@ -2025,7 +2090,7 @@ FetchStmt:  FETCH direction fetch_how_many from_in name
 						n->howMany = $2;
 					}
 					n->portalname = $4;
-					n->ismove = false;
+					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
 		| FETCH direction from_in name
@@ -2038,7 +2103,7 @@ FetchStmt:  FETCH direction fetch_how_many from_in name
 					n->direction = $2;
 					n->howMany = 1;
 					n->portalname = $4;
-					n->ismove = false;
+					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
 		| FETCH from_in name
@@ -2047,7 +2112,7 @@ FetchStmt:  FETCH direction fetch_how_many from_in name
 					n->direction = FORWARD;
 					n->howMany = 1;
 					n->portalname = $3;
-					n->ismove = false;
+					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
 		| FETCH name
@@ -2056,7 +2121,7 @@ FetchStmt:  FETCH direction fetch_how_many from_in name
 					n->direction = FORWARD;
 					n->howMany = 1;
 					n->portalname = $2;
-					n->ismove = false;
+					n->ismove = FALSE;
 					$$ = (Node *)n;
 				}
 
@@ -2416,13 +2481,41 @@ func_args_list:  func_arg
  * which isn't meaningful in this context anyway.
  * - thomas 2000-03-25
  */
-func_arg:  SimpleTypename
+func_arg:  opt_arg TokenId SimpleTypename
 				{
 					/* We can catch over-specified arguments here if we want to,
 					 * but for now better to silently swallow typmod, etc.
 					 * - thomas 2000-03-22
 					 */
+					$$ = $3;
+				}
+		| opt_arg SimpleTypename
+				{
+					$$ = $2;
+				}
+		| TokenId SimpleTypename
+				{
+					$$ = $2;
+				}
+		| SimpleTypename
+				{
 					$$ = $1;
+				}
+		;
+
+opt_arg:  IN
+				{
+					$$ = FALSE;
+				}
+		| OUT
+				{
+					elog(ERROR, "CREATE FUNCTION/OUT parameters are not supported");
+					$$ = TRUE;
+				}
+		| INOUT
+				{
+					elog(ERROR, "CREATE FUNCTION/INOUT parameters are not supported");
+					$$ = FALSE;
 				}
 		;
 
@@ -2547,9 +2640,9 @@ ReindexStmt:  REINDEX reindex_type name opt_force
 				}
 		;
 
-reindex_type:	INDEX									{  $$ = INDEX; }
-		| TABLE									{  $$ = TABLE; }
-		| DATABASE								{  $$ = DATABASE; }
+reindex_type:  INDEX								{  $$ = INDEX; }
+		| TABLE										{  $$ = TABLE; }
+		| DATABASE									{  $$ = DATABASE; }
 		;
 opt_force:	FORCE									{  $$ = TRUE; }
 		| /* EMPTY */								{  $$ = FALSE; }
@@ -3269,8 +3362,8 @@ SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 					Node *op = (Node *) $1;
 					List *select_list = NIL;
 					SelectStmt *first_select;
-					bool	intersect_present = false,
-							unionall_present = false;
+					bool	intersect_present = FALSE,
+							unionall_present = FALSE;
 
 					/* Take the operator tree as an argument and create a
 					 * list of all SelectStmt Nodes found in the tree.
@@ -3399,7 +3492,7 @@ SubSelect:	SELECT opt_distinct target_list
 
 		/* easy way to return two values. Can someone improve this?  bjm */
 result:  INTO OptTempTableName			{ $$ = $2; }
-		| /*EMPTY*/						{ $$ = lcons(makeInteger(false), NIL); }
+		| /*EMPTY*/						{ $$ = lcons(makeInteger(FALSE), NIL); }
 		;
 
 /*
@@ -3880,11 +3973,15 @@ Typename:  SimpleTypename opt_array_bounds
 				}
 		;
 
-SimpleTypename:  Generic
+SimpleTypename:  ConstTypename
+		| ConstInterval
+		;
+
+ConstTypename:  Generic
 		| Numeric
 		| Bit
 		| Character
-		| Datetime
+		| ConstDatetime
 		;
 
 typename:  generic								{ $$ = $1; }
@@ -3903,6 +4000,7 @@ Generic:  generic
 		;
 
 generic:  IDENT									{ $$ = $1; }
+		| PATH_P								{ $$ = "path"; }
 		| TYPE_P								{ $$ = "type"; }
 		;
 
@@ -4121,7 +4219,7 @@ opt_collate:  COLLATE ColId						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-Datetime:  datetime
+ConstDatetime:  datetime
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($1);
@@ -4143,7 +4241,9 @@ Datetime:  datetime
 						$$->name = xlateSqlType("time");
 					$$->typmod = -1;
 				}
-		| INTERVAL opt_interval
+		;
+
+ConstInterval:  INTERVAL opt_interval
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("interval");
@@ -4160,6 +4260,7 @@ datetime:  YEAR_P								{ $$ = "year"; }
 		;
 
 opt_timezone:  WITH TIME ZONE					{ $$ = TRUE; }
+		| WITHOUT TIME ZONE						{ $$ = FALSE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
@@ -4190,7 +4291,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
-					n->useor = false;
+					n->useor = FALSE;
 					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $6;
 					$$ = (Node *)n;
@@ -4200,7 +4301,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
-					n->useor = true;
+					n->useor = TRUE;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $7;
 					$$ = (Node *)n;
@@ -4211,9 +4312,9 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
 					if (strcmp($4, "<>") == 0)
-						n->useor = true;
+						n->useor = TRUE;
 					else
-						n->useor = false;
+						n->useor = FALSE;
 					n->subLinkType = $5;
 					n->subselect = $7;
 					$$ = (Node *)n;
@@ -4224,9 +4325,9 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
 					if (strcmp($4, "<>") == 0)
-						n->useor = true;
+						n->useor = TRUE;
 					else
-						n->useor = false;
+						n->useor = FALSE;
 					n->subLinkType = MULTIEXPR_SUBLINK;
 					n->subselect = $6;
 					$$ = (Node *)n;
@@ -4252,8 +4353,8 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 						elog(ERROR, "Wrong number of parameters"
 							 " on right side of OVERLAPS expression");
 					n->args = nconc(largs, rargs);
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		;
@@ -4473,7 +4574,7 @@ a_expr:  c_expr
 							SubLink *n = (SubLink *)$4;
 							n->lefthand = lcons($1, NIL);
 							n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
-							n->useor = false;
+							n->useor = FALSE;
 							n->subLinkType = ANY_SUBLINK;
 							$$ = (Node *)n;
 					}
@@ -4500,7 +4601,7 @@ a_expr:  c_expr
 						SubLink *n = (SubLink *)$5;
 						n->lefthand = lcons($1, NIL);
 						n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
-						n->useor = false;
+						n->useor = FALSE;
 						n->subLinkType = ALL_SUBLINK;
 						$$ = (Node *)n;
 					}
@@ -4524,7 +4625,7 @@ a_expr:  c_expr
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NIL);
 					n->oper = (List *) makeA_Expr(OP, $2, NULL, NULL);
-					n->useor = false; /* doesn't matter since only one col */
+					n->useor = FALSE; /* doesn't matter since only one col */
 					n->subLinkType = $3;
 					n->subselect = $5;
 					$$ = (Node *)n;
@@ -4632,8 +4733,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = NIL;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| func_name '(' expr_list ')'
@@ -4641,8 +4742,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $3;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| func_name '(' ALL expr_list ')'
@@ -4650,8 +4751,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $4;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					/* Ideally we'd mark the FuncCall node to indicate
 					 * "must be an aggregate", but there's no provision
 					 * for that in FuncCall at the moment.
@@ -4663,8 +4764,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
 					n->args = $4;
-					n->agg_star = false;
-					n->agg_distinct = true;
+					n->agg_star = FALSE;
+					n->agg_distinct = TRUE;
 					$$ = (Node *)n;
 				}
 		| func_name '(' '*' ')'
@@ -4688,8 +4789,8 @@ c_expr:  attr
 					star->val.val.ival = 1;
 					n->funcname = $1;
 					n->args = lcons(star, NIL);
-					n->agg_star = true;
-					n->agg_distinct = false;
+					n->agg_star = TRUE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| CURRENT_DATE
@@ -4721,8 +4822,8 @@ c_expr:  attr
 
 					n->funcname = xlateSqlType("date");
 					n->args = lcons(s, NIL);
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 
 					$$ = (Node *)n;
 				}
@@ -4746,8 +4847,8 @@ c_expr:  attr
 
 					n->funcname = xlateSqlType("time");
 					n->args = lcons(s, NIL);
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 
 					$$ = (Node *)n;
 				}
@@ -4771,8 +4872,8 @@ c_expr:  attr
 
 					n->funcname = xlateSqlType("time");
 					n->args = lcons(s, NIL);
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented"
@@ -4800,8 +4901,8 @@ c_expr:  attr
 
 					n->funcname = xlateSqlType("timestamp");
 					n->args = lcons(s, NIL);
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 
 					$$ = (Node *)n;
 				}
@@ -4825,8 +4926,8 @@ c_expr:  attr
 
 					n->funcname = xlateSqlType("timestamp");
 					n->args = lcons(s, NIL);
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 
 					if ($3 != 0)
 						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented"
@@ -4839,8 +4940,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
 					n->args = NIL;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| SESSION_USER
@@ -4848,8 +4949,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
 					n->args = NIL;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| USER
@@ -4857,8 +4958,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "getpgusername";
 					n->args = NIL;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| EXTRACT '(' extract_list ')'
@@ -4866,8 +4967,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "date_part";
 					n->args = $3;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| POSITION '(' position_list ')'
@@ -4875,8 +4976,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "strpos";
 					n->args = $3;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| SUBSTRING '(' substr_list ')'
@@ -4884,8 +4985,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "substr";
 					n->args = $3;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
@@ -4894,8 +4995,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
 					n->args = $4;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| TRIM '(' LEADING trim_list ')'
@@ -4903,8 +5004,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "ltrim";
 					n->args = $4;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| TRIM '(' TRAILING trim_list ')'
@@ -4912,8 +5013,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "rtrim";
 					n->args = $4;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| TRIM '(' trim_list ')'
@@ -4921,8 +5022,8 @@ c_expr:  attr
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = "btrim";
 					n->args = $3;
-					n->agg_star = false;
-					n->agg_distinct = false;
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
 				}
 		| '(' SubSelect ')'
@@ -4930,7 +5031,7 @@ c_expr:  attr
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
 					n->oper = NIL;
-					n->useor = false;
+					n->useor = FALSE;
 					n->subLinkType = EXPR_SUBLINK;
 					n->subselect = $2;
 					$$ = (Node *)n;
@@ -4940,7 +5041,7 @@ c_expr:  attr
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = NIL;
 					n->oper = NIL;
-					n->useor = false;
+					n->useor = FALSE;
 					n->subLinkType = EXISTS_SUBLINK;
 					n->subselect = $3;
 					$$ = (Node *)n;
@@ -4982,7 +5083,7 @@ extract_list:  extract_arg FROM a_expr
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = $1;
-					$$ = lappend(lcons((Node *)n,NIL), $3);
+					$$ = makeList((Node *)n, $3, -1);
 				}
 		| /*EMPTY*/
 				{	$$ = NIL; }
@@ -5290,10 +5391,21 @@ AexprConst:  Iconst
 					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}
-		/* this rule formerly used Typename, but that causes reduce conflicts
-		 * with subscripted column names ...
+		/* The SimpleTypename rule formerly used Typename,
+		 * but that causes reduce conflicts with subscripted column names.
+		 * Now, separate into ConstTypename and ConstInterval,
+		 * to allow implementing the SQL92 syntax for INTERVAL literals.
+		 * - thomas 2000-06-24
 		 */
-		| SimpleTypename Sconst
+		| ConstTypename Sconst
+				{
+					A_Const *n = makeNode(A_Const);
+					n->typename = $1;
+					n->val.type = T_String;
+					n->val.val.str = $2;
+					$$ = (Node *)n;
+				}
+		| ConstInterval Sconst opt_interval
 				{
 					A_Const *n = makeNode(A_Const);
 					n->typename = $1;
@@ -5359,6 +5471,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| TokenId						{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| INTERVAL						{ $$ = "interval"; }
+		| NATIONAL						{ $$ = "national"; }
 		| TIME							{ $$ = "time"; }
 		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TYPE_P						{ $$ = "type"; }
@@ -5426,7 +5539,6 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| MINVALUE						{ $$ = "minvalue"; }
 		| MODE							{ $$ = "mode"; }
 		| NAMES							{ $$ = "names"; }
-		| NATIONAL						{ $$ = "national"; }
 		| NEXT							{ $$ = "next"; }
 		| NO							{ $$ = "no"; }
 		| NOCREATEDB					{ $$ = "nocreatedb"; }
@@ -5453,7 +5565,9 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| ROLLBACK						{ $$ = "rollback"; }
 		| ROW							{ $$ = "row"; }
 		| RULE							{ $$ = "rule"; }
+		| SCHEMA						{ $$ = "schema"; }
 		| SCROLL						{ $$ = "scroll"; }
+		| SESSION						{ $$ = "session"; }
 		| SEQUENCE						{ $$ = "sequence"; }
 		| SERIAL						{ $$ = "serial"; }
 		| SERIALIZABLE					{ $$ = "serializable"; }
@@ -5482,6 +5596,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| VERSION						{ $$ = "version"; }
 		| VIEW							{ $$ = "view"; }
 		| WITH							{ $$ = "with"; }
+		| WITHOUT						{ $$ = "without"; }
 		| WORK							{ $$ = "work"; }
 		| ZONE							{ $$ = "zone"; }
 		;
@@ -5550,6 +5665,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| INNER_P						{ $$ = "inner"; }
 		| INTERSECT						{ $$ = "intersect"; }
 		| INTO							{ $$ = "into"; }
+		| INOUT							{ $$ = "inout"; }
 		| IS							{ $$ = "is"; }
 		| ISNULL						{ $$ = "isnull"; }
 		| JOIN							{ $$ = "join"; }
@@ -5577,8 +5693,10 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ONLY							{ $$ = "only"; }
 		| OR							{ $$ = "or"; }
 		| ORDER							{ $$ = "order"; }
+		| OUT							{ $$ = "out"; }
 		| OUTER_P						{ $$ = "outer"; }
 		| OVERLAPS						{ $$ = "overlaps"; }
+		| PATH_P						{ $$ = "path"; }
 		| POSITION						{ $$ = "position"; }
 		| PRECISION						{ $$ = "precision"; }
 		| PRIMARY						{ $$ = "primary"; }
@@ -5839,9 +5957,9 @@ exprIsNullConstant(Node *arg)
 
 		if (con->val.type == T_Null &&
 			con->typename == NULL)
-			return true;
+			return TRUE;
 	}
-	return false;
+	return FALSE;
 }
 
 /*

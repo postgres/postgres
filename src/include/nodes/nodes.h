@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.70 2000/06/28 03:33:15 tgl Exp $
+ * $Id: nodes.h,v 1.71 2000/07/14 15:43:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,6 +193,7 @@ typedef enum NodeTag
 	T_AlterGroupStmt,
 	T_DropGroupStmt,
 	T_ReindexStmt,
+	T_SetSessionStmt,
 
 	T_A_Expr = 700,
 	T_Attr,

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.32 2000/06/30 18:03:40 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.33 2000/07/14 15:43:49 thomas Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -45,6 +45,7 @@ MainLoop(FILE *source)
 	bool		success;
 	volatile char in_quote;		/* == 0 for no in_quote */
 	volatile bool in_xcomment;	/* in extended comment */
+	volatile int xcdepth;
 	volatile int paren_level;
 	unsigned int query_start;
 	volatile int count_eof = 0;
@@ -316,14 +317,26 @@ MainLoop(FILE *source)
 			{
 				if (line[i] == '*' && line[i + thislen] == '/')
 				{
-					in_xcomment = false;
-					ADVANCE_1;
+					if (xcdepth > 0)
+					{
+						xcdepth--;
+					}
+					else
+					{
+						in_xcomment = false;
+						ADVANCE_1;
+					}
+				}
+				else if (line[i] == '/' && line[i + thislen] == '*')
+				{
+					xcdepth++;
 				}
 			}
 
 			/* start of extended comment? */
 			else if (line[i] == '/' && line[i + thislen] == '*')
 			{
+				xcdepth = 0;
 				in_xcomment = true;
 				ADVANCE_1;
 			}

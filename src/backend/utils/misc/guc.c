@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.6 2000/07/12 17:38:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.7 2000/07/14 15:43:47 thomas Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -508,7 +508,7 @@ set_config_option(const char * name, const char * value, GucContext
     type = find_option(name, &record);
     if (type == PGC_NONE)
 	{
-		elog(elevel, "not a valid option name: %s", name);
+		elog(elevel, "'%s' is not a valid option name", name);
 		return false;
 	}
 
@@ -520,14 +520,14 @@ set_config_option(const char * name, const char * value, GucContext
     if (record->context == PGC_POSTMASTER && context != PGC_POSTMASTER)
 	{
 		if (context != PGC_SIGHUP)
-			elog(ERROR, "%s cannot be changed after server start", name);
+			elog(ERROR, "'%s' cannot be changed after server start", name);
 		else
 			return true;
 	}
 	else if (record->context == PGC_SIGHUP && context != PGC_SIGHUP &&
 			 context != PGC_POSTMASTER)
 	{
-		elog(ERROR, "%s cannot be changed now", name);
+		elog(ERROR, "'%s' cannot be changed now", name);
 		/* Hmm, the idea of the SIGHUP context is "ought to be global,
 		 * but can be changed after postmaster start". But there's
 		 * nothing that prevents a crafty administrator from sending
@@ -537,7 +537,7 @@ set_config_option(const char * name, const char * value, GucContext
 			 && context != PGC_POSTMASTER)
 	{
 		if (context != PGC_SIGHUP)
-			elog(ERROR, "%s cannot be set after connection start", name);
+			elog(ERROR, "'%s' cannot be set after connection start", name);
 		else
 			return true;
 	}
@@ -562,7 +562,7 @@ set_config_option(const char * name, const char * value, GucContext
 				bool boolval;
                 if (!parse_bool(value, &boolval))
 				{
-					elog(elevel, "expected boolean value for option %s", name);
+					elog(elevel, "Option '%s' requires a boolean value", name);
 					return false;
 				}
 				if (DoIt)
@@ -583,12 +583,14 @@ set_config_option(const char * name, const char * value, GucContext
 
                 if (!parse_int(value, &intval))
 				{
-                    elog(elevel, "expected integer value for option %s", name);
+                    elog(elevel, "Option '%s' expects an integer value", name);
 					return false;
 				}
                 if (intval < conf->min || intval > conf->max)
 				{
-                    elog(elevel, "value out of permissible range %d .. %d", conf->min, conf->max);
+                    elog(elevel, "Option '%s' value %d is outside"
+						 " of permissible range [%d .. %d]",
+						 name, intval, conf->min, conf->max);
 					return false;
 				}
 				if (DoIt)
@@ -609,12 +611,14 @@ set_config_option(const char * name, const char * value, GucContext
 
                 if (!parse_real(value, &dval))
 				{
-                    elog(elevel, "expected real number for option %s", name);
+                    elog(elevel, "Option '%s' expects a real number", name);
 					return false;
 				}
                 if (dval < conf->min || dval > conf->max)
 				{
-                    elog(elevel, "value out of permissible range %g .. %g", conf->min, conf->max);
+                    elog(elevel, "Option '%s' value %g is outside"
+						 " of permissible range [%g .. %g]",
+						 name, dval, conf->min, conf->max);
 					return false;
 				}
 				if (DoIt)
@@ -633,7 +637,7 @@ set_config_option(const char * name, const char * value, GucContext
 			{
 				if (conf->parse_hook && !(conf->parse_hook)(value))
 				{
-					elog(elevel, "value '%s' not accepted for option %s", value, name);
+					elog(elevel, "Option '%s' rejects value '%s'", name, value);
 					return false;
 				}
 				if (DoIt)
@@ -705,7 +709,7 @@ GetConfigOption(const char * name)
 
     opttype = find_option(name, &record);
 	if (opttype == PGC_NONE)
-		elog(ERROR, "not a valid option name: %s", name);
+		elog(ERROR, "Option '%s' is not recognized", name);
 
 	switch(opttype)
     {

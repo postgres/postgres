@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.108 2000/06/12 03:41:03 momjian Exp $
+ * $Id: parsenodes.h,v 1.109 2000/07/14 15:43:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -687,6 +687,16 @@ typedef struct ExplainStmt
 	Query	   *query;			/* the query */
 	bool		verbose;		/* print plan info */
 } ExplainStmt;
+
+/* ----------------------
+ *		Set Session Statement
+ * ----------------------
+ */
+typedef struct SetSessionStmt
+{
+	NodeTag		type;
+	List	   *args;
+} SetSessionStmt;
 
 /* ----------------------
  * Set Statement

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.72 2000/06/14 18:17:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.73 2000/07/14 15:43:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,8 @@ extern YYSTYPE yylval;
 static char	   *literalbuf;		/* expandable buffer */
 static int		literallen;		/* actual current length */
 static int		literalalloc;	/* current allocated buffer size */
+
+static int		xcdepth = 0;
 
 #define startlit()  (literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
@@ -157,7 +159,7 @@ xdinside		[^"]+
  */
 xcstart			\/\*{op_chars}*
 xcstop			\*+\/
-xcinside		([^*]+)|(\*+[^/])
+xcinside		[^*/]+
 
 digit			[0-9]
 letter			[\200-\377_A-Za-z]
@@ -247,14 +249,28 @@ other			.
 {whitespace}	{ /* ignore */ }
 
 {xcstart}		{
+					xcdepth = 0;
 					BEGIN(xc);
 					/* Put back any characters past slash-star; see above */
 					yyless(2);
 				}
 
-<xc>{xcstop}	{ BEGIN(INITIAL); }
+<xc>{xcstart}	{
+					xcdepth++;
+					/* Put back any characters past slash-star; see above */
+					yyless(2);
+				}
+
+<xc>{xcstop}	{
+					if (xcdepth <= 0)
+						BEGIN(INITIAL);
+					else
+						xcdepth--;
+				}
 
 <xc>{xcinside}	{ /* ignore */ }
+
+<xc>{op_chars}	{ /* ignore */ }
 
 <xc><<EOF>>		{ elog(ERROR, "Unterminated /* comment"); }
 

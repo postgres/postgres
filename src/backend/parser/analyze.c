@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.149 2000/07/02 04:04:09 tgl Exp $
+ *	$Id: analyze.c,v 1.150 2000/07/14 15:43:32 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,6 +198,38 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 		case T_AlterTableStmt:
 			result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree);
+			break;
+
+		case T_SetSessionStmt:
+			{
+				List *l;
+				/* Session is a list of SetVariable nodes
+				 * so just run through the list.
+				 */
+				SetSessionStmt *stmt = (SetSessionStmt *) parseTree;
+
+				l = stmt->args;
+				/* First check for duplicate keywords (disallowed by SQL99) */
+				while (l != NULL)
+				{
+					VariableSetStmt *v = (VariableSetStmt *) lfirst(l);
+					List *ll = lnext(l);
+					while (ll != NULL)
+					{
+						VariableSetStmt *vv = (VariableSetStmt *) lfirst(ll);
+						if (strcmp(v->name, vv->name) == 0)
+							elog(ERROR, "SET SESSION CHARACTERISTICS duplicated entry not allowed");
+						ll = lnext(ll);
+					}
+					l = lnext(l);
+				}
+
+				l = stmt->args;
+				result = transformStmt(pstate, lfirst(l));
+				l = lnext(l);
+				if (l != NULL)
+					extras_after = lappend(extras_after, lfirst(l));
+			}
 			break;
 
 			/*------------------------
