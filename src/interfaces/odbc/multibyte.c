@@ -401,6 +401,7 @@ CC_lookup_characterset(ConnectionClass *self)
 			if (res)
 			{
 				self->client_encoding = strdup(wenc);
+				self->ccsc = pg_CS_code(self->client_encoding);
 				QR_Destructor(res);
 				free(encstr);
 				return;

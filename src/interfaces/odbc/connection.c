@@ -999,6 +999,7 @@ another_version_retry:
 				if (res = CC_send_query(self, "set client_encoding to 'UTF8'", NULL, CLEAR_RESULT_ON_ABORT), res)
 				{
 					self->client_encoding = strdup("UNICODE");
+					self->ccsc = pg_CS_code(self->client_encoding);
 					QR_Destructor(res);
 					
 				}
