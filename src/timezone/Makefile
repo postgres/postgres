@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.16 2004/10/04 13:43:59 momjian Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.17 2004/12/31 19:01:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -40,4 +40,4 @@ installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(datadir)
 
 clean distclean maintainer-clean:
-	rm -f SUBSYS.o zic $(OBJS) $(ZICOBJS)
+	rm -f SUBSYS.o zic$(X) $(OBJS) $(ZICOBJS)
