@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.53 2002/11/21 06:36:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.54 2003/02/23 23:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,9 +298,10 @@ GetOldestXmin(bool allDbs)
  * This ensures that the set of transactions seen as "running" by the
  * current xact will not change after it takes the snapshot.
  *
- * Also, we compute the current global xmin (oldest xmin across all running
+ * We also compute the current global xmin (oldest xmin across all running
  * transactions) and save it in RecentGlobalXmin.  This is the same
- * computation done by GetOldestXmin(TRUE).
+ * computation done by GetOldestXmin(TRUE).  The xmin value is also stored
+ * into RecentXmin.
  *----------
  */
 Snapshot
@@ -419,7 +420,9 @@ GetSnapshotData(bool serializable)
 	if (TransactionIdPrecedes(xmin, globalxmin))
 		globalxmin = xmin;
 
+	/* Update globals for use by VACUUM */
 	RecentGlobalXmin = globalxmin;
+	RecentXmin = xmin;
 
 	snapshot->xmin = xmin;
 	snapshot->xmax = xmax;

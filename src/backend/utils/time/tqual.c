@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.61 2002/10/08 17:17:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.62 2003/02/23 23:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,8 @@ Snapshot	SnapshotDirty = &SnapshotDirtyData;
 Snapshot	QuerySnapshot = NULL;
 Snapshot	SerializableSnapshot = NULL;
 
-/* This is updated by GetSnapshotData: */
+/* These are updated by GetSnapshotData: */
+TransactionId RecentXmin = InvalidTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
 
 bool		ReferentialIntegritySnapshotOverride = false;

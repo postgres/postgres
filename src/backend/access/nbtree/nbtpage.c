@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.62 2003/02/23 22:43:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.63 2003/02/23 23:20:52 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -544,7 +544,7 @@ _bt_page_recyclable(Page page)
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (P_ISDELETED(opaque) &&
-		TransactionIdPrecedesOrEquals(opaque->btpo.xact, RecentGlobalXmin))
+		TransactionIdPrecedesOrEquals(opaque->btpo.xact, RecentXmin))
 		return true;
 	return false;
 }
