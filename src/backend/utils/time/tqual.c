@@ -1,14 +1,22 @@
 /*-------------------------------------------------------------------------
  *
  * tqual.c
- *	  POSTGRES "time" qualification code.
+ *	  POSTGRES "time" qualification code, ie, tuple visibility rules.
+ *
+ * NOTE: all the HeapTupleSatisfies routines will update the tuple's
+ * "hint" status bits if we see that the inserting or deleting transaction
+ * has now committed or aborted.  The caller is responsible for noticing any
+ * change in t_infomask and scheduling a disk write if so.  Note that the
+ * caller must hold at least a shared buffer context lock on the buffer
+ * containing the tuple.  (VACUUM FULL assumes it's sufficient to have
+ * exclusive lock on the containing relation, instead.)
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.46 2002/01/11 20:07:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.47 2002/01/16 20:29:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +44,7 @@ bool		ReferentialIntegritySnapshotOverride = false;
  *
  * Note:
  *		Assumes heap tuple is valid.
- */
-/*
+ *
  * The satisfaction of "itself" requires the following:
  *
  * ((Xmin == my-transaction &&				the row was updated by the current transaction, and
@@ -153,8 +160,7 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple)
  *
  * Note:
  *		Assumes heap tuple is valid.
- */
-/*
+ *
  * The satisfaction of "now" requires the following:
  *
  * ((Xmin == my-transaction &&				changed by the current transaction
@@ -288,6 +294,71 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
 	return false;
 }
 
+/*
+ * HeapTupleSatisfiesToast
+ *		True iff heap tuple is valid for TOAST usage.
+ *
+ * This is a simplified version that only checks for VACUUM moving conditions.
+ * It's appropriate for TOAST usage because TOAST really doesn't want to do
+ * its own time qual checks; if you can see the main-table row that contains
+ * a TOAST reference, you should be able to see the TOASTed value.  However,
+ * vacuuming a TOAST table is independent of the main table, and in case such
+ * a vacuum fails partway through, we'd better do this much checking.
+ *
+ * Among other things, this means you can't do UPDATEs of rows in a TOAST
+ * table.
+ */
+bool
+HeapTupleSatisfiesToast(HeapTupleHeader tuple)
+{
+	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
+	{
+		if (tuple->t_infomask & HEAP_XMIN_INVALID)
+			return false;
+
+		if (tuple->t_infomask & HEAP_MOVED_OFF)
+		{
+			if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_cmin))
+				return false;
+			if (!TransactionIdIsInProgress((TransactionId) tuple->t_cmin))
+			{
+				if (TransactionIdDidCommit((TransactionId) tuple->t_cmin))
+				{
+					tuple->t_infomask |= HEAP_XMIN_INVALID;
+					return false;
+				}
+				tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+			}
+		}
+		else if (tuple->t_infomask & HEAP_MOVED_IN)
+		{
+			if (!TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_cmin))
+			{
+				if (TransactionIdIsInProgress((TransactionId) tuple->t_cmin))
+					return false;
+				if (TransactionIdDidCommit((TransactionId) tuple->t_cmin))
+					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
+				else
+				{
+					tuple->t_infomask |= HEAP_XMIN_INVALID;
+					return false;
+				}
+			}
+		}
+	}
+
+	/* otherwise assume the tuple is valid for TOAST. */
+	return true;
+}
+
+/*
+ * HeapTupleSatisfiesUpdate
+ *		Check whether a tuple can be updated.
+ *
+ * This applies exactly the same checks as HeapTupleSatisfiesNow,
+ * but returns a more-detailed result code, since UPDATE needs to know
+ * more than "is it visible?"
+ */
 int
 HeapTupleSatisfiesUpdate(HeapTuple htuple)
 {
@@ -404,6 +475,18 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple)
 	return HeapTupleUpdated;	/* updated by other */
 }
 
+/*
+ * HeapTupleSatisfiesDirty
+ *		True iff heap tuple is valid, including effects of concurrent xacts.
+ *
+ * This is essentially like HeapTupleSatisfiesItself as far as effects of
+ * the current transaction and committed/aborted xacts are concerned.
+ * However, we also include the effects of other xacts still in progress.
+ *
+ * Returns extra information in the global variable SnapshotDirty, namely
+ * xids of concurrent xacts that affected the tuple.  Also, the tuple's
+ * t_ctid (forward link) is returned if it's being updated.
+ */
 bool
 HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 {
@@ -516,6 +599,18 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 	return false;				/* updated by other */
 }
 
+/*
+ * HeapTupleSatisfiesSnapshot
+ *		True iff heap tuple is valid for the given snapshot.
+ *
+ * This is the same as HeapTupleSatisfiesNow, except that transactions that
+ * were in progress or as yet unstarted when the snapshot was taken will
+ * be treated as uncommitted, even if they really have committed by now.
+ *
+ * (Notice, however, that the tuple status hint bits will be updated on the
+ * basis of the true state of the transaction, even if we then pretend we
+ * can't see it.)
+ */
 bool
 HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 {
@@ -658,11 +753,6 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
  * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
  * still be visible to some open transaction, so we can't remove them,
  * even if we see that the deleting transaction has committed.
- *
- * As with the other HeapTupleSatisfies routines, we may update the tuple's
- * "hint" status bits if we see that the inserting or deleting transaction
- * has now committed or aborted.  The caller is responsible for noticing any
- * change in t_infomask and scheduling a disk write if so.
  */
 HTSV_Result
 HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
@@ -808,13 +898,21 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 }
 
 
+/*
+ * SetQuerySnapshot
+ *		Initialize query snapshot for a new query
+ *
+ * The SerializableSnapshot is the first one taken in a transaction.
+ * In serializable mode we just use that one throughout the transaction.
+ * In read-committed mode, we take a new snapshot at the start of each query.
+ */
 void
 SetQuerySnapshot(void)
 {
 	/* Initialize snapshot overriding to false */
 	ReferentialIntegritySnapshotOverride = false;
 
-	/* 1st call in xaction */
+	/* 1st call in xaction? */
 	if (SerializableSnapshot == NULL)
 	{
 		SerializableSnapshot = GetSnapshotData(true);
@@ -837,6 +935,10 @@ SetQuerySnapshot(void)
 	Assert(QuerySnapshot != NULL);
 }
 
+/*
+ * FreeXactSnapshot
+ *		Free snapshot(s) at end of transaction.
+ */
 void
 FreeXactSnapshot(void)
 {

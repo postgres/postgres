@@ -4,11 +4,11 @@
  *	  Support routines for external and compressed storage of
  *	  variable size attributes.
  *
- * Copyright (c) 2000, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2002, PostgreSQL Global Development Group
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.26 2001/11/05 17:46:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.27 2002/01/16 20:29:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -921,7 +921,7 @@ toast_delete_datum(Relation rel, Datum value)
 	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
 		toasttup.t_self = indexRes->heap_iptr;
-		heap_fetch(toastrel, SnapshotAny, &toasttup, &buffer, toastscan);
+		heap_fetch(toastrel, SnapshotToast, &toasttup, &buffer, toastscan);
 		pfree(indexRes);
 
 		if (!toasttup.t_data)
@@ -963,25 +963,17 @@ toast_fetch_datum(varattrib *attr)
 	TupleDesc	toasttupDesc;
 	RetrieveIndexResult indexRes;
 	Buffer		buffer;
-
 	varattrib  *result;
 	int32		ressize;
-	int32		residx;
-	int			numchunks;
+	int32		residx,
+				nextidx;
+	int32		numchunks;
 	Pointer		chunk;
 	bool		isnull;
 	int32		chunksize;
 
-	char	   *chunks_found;
-	char	   *chunks_expected;
-
 	ressize = attr->va_content.va_external.va_extsize;
 	numchunks = ((ressize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
-
-	chunks_found = palloc(numchunks);
-	chunks_expected = palloc(numchunks);
-	memset(chunks_found, 0, numchunks);
-	memset(chunks_expected, 1, numchunks);
 
 	result = (varattrib *) palloc(ressize + VARHDRSZ);
 	VARATT_SIZEP(result) = ressize + VARHDRSZ;
@@ -1008,13 +1000,17 @@ toast_fetch_datum(varattrib *attr)
 	/*
 	 * Read the chunks by index
 	 *
-	 * Note we will not necessarily see the chunks in sequence-number order.
+	 * Note that because the index is actually on (valueid, chunkidx)
+	 * we will see the chunks in chunkidx order, even though we didn't
+	 * explicitly ask for it.
 	 */
+	nextidx = 0;
+
 	toastscan = index_beginscan(toastidx, false, 1, &toastkey);
 	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
 		toasttup.t_self = indexRes->heap_iptr;
-		heap_fetch(toastrel, SnapshotAny, &toasttup, &buffer, toastscan);
+		heap_fetch(toastrel, SnapshotToast, &toasttup, &buffer, toastscan);
 		pfree(indexRes);
 
 		if (toasttup.t_data == NULL)
@@ -1033,9 +1029,9 @@ toast_fetch_datum(varattrib *attr)
 		/*
 		 * Some checks on the data we've found
 		 */
-		if (residx < 0 || residx >= numchunks)
-			elog(ERROR, "unexpected chunk number %d for toast value %u",
-				 residx,
+		if (residx != nextidx)
+			elog(ERROR, "unexpected chunk number %d (expected %d) for toast value %u",
+				 residx, nextidx,
 				 attr->va_content.va_external.va_valueid);
 		if (residx < numchunks - 1)
 		{
@@ -1044,15 +1040,15 @@ toast_fetch_datum(varattrib *attr)
 					 chunksize, residx,
 					 attr->va_content.va_external.va_valueid);
 		}
-		else
+		else if (residx < numchunks)
 		{
 			if ((residx * TOAST_MAX_CHUNK_SIZE + chunksize) != ressize)
 				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
 					 chunksize, residx,
 					 attr->va_content.va_external.va_valueid);
 		}
-		if (chunks_found[residx]++ > 0)
-			elog(ERROR, "chunk %d for toast value %u appears multiple times",
+		else
+			elog(ERROR, "unexpected chunk number %d for toast value %u",
 				 residx,
 				 attr->va_content.va_external.va_valueid);
 
@@ -1064,16 +1060,16 @@ toast_fetch_datum(varattrib *attr)
 			   chunksize);
 
 		ReleaseBuffer(buffer);
+		nextidx++;
 	}
 
 	/*
 	 * Final checks that we successfully fetched the datum
 	 */
-	if (memcmp(chunks_found, chunks_expected, numchunks) != 0)
-		elog(ERROR, "not all toast chunks found for value %u",
+	if (nextidx != numchunks)
+		elog(ERROR, "missing chunk number %d for toast value %u",
+			 nextidx,
 			 attr->va_content.va_external.va_valueid);
-	pfree(chunks_expected);
-	pfree(chunks_found);
 
 	/*
 	 * End scan and close relations
