@@ -20,7 +20,7 @@
   <SYNOPSIS>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
-    AS <replaceable class="parameter">path</replaceable>
+    AS <replaceable class="parameter">definition</replaceable>
     LANGUAGE '<replaceable class="parameter">langname</replaceable>'
   </SYNOPSIS>
   
@@ -65,12 +65,13 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
 	</VARLISTENTRY>
 	<VARLISTENTRY>
 	 <TERM>
-	  <replaceable class="parameter">path</replaceable>
+	  <replaceable class="parameter">definition</replaceable>
       </TERM>
       <LISTITEM>
        <PARA>
-	May be either an SQL-query or an absolute path to an
-	object file.
+	A string defining the function; the meaning depends on the language.
+	It may be an internal function name, the path to an object file,
+	an SQL query, or text in a procedural language.
        </PARA>
       </LISTITEM>
      </VARLISTENTRY>
@@ -149,6 +150,35 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
     Use <command>DROP FUNCTION</command>
     to drop user-defined functions.
    </PARA>
+
+  <PARA>
+   <productname>Postgres</productname> allows function "overloading";
+   that is, the same name can be used for several different functions
+   so long as they have distinct argument types.  This facility must be
+   used with caution for INTERNAL and C-language functions, however.
+  </PARA>
+
+  <PARA>
+   Two INTERNAL functions cannot have the same C name without causing
+   errors at link time.  To get around that, give them different C names
+   (for example, use the argument types as part of the C names), then
+   specify those names in the AS clause of <command>CREATE FUNCTION</command>.
+   If the AS clause is left empty then <command>CREATE FUNCTION</command>
+   assumes the C name of the function is the same as the SQL name.
+  </PARA>
+
+  <PARA>
+   For dynamically-loaded C functions, the SQL name of the function must
+   be the same as the C function name, because the AS clause is used to
+   give the path name of the object file containing the C code.  In this
+   situation it is best not to try to overload SQL function names.  It
+   might work to load a C function that has the same C name as an internal
+   function or another dynamically-loaded function --- or it might not.
+   On some platforms the dynamic loader may botch the load in interesting
+   ways if there is a conflict of C function names.  So, even if it works
+   for you today, you might regret overloading names later when you try
+   to run the code somewhere else.
+  </PARA>
   </REFSECT2>
  </refsect1>
   
