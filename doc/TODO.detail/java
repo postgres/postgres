@@ -1801,3 +1801,275 @@ TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
 
+From pgsql-hackers-owner+M16317=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 10:11:27 2001
+Return-path: <pgsql-hackers-owner+M16317=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6FBQZ28795
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:11:26 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6FBPE23613
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:11:25 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6F5MR55091
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 09:08:01 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16317=candle.pha.pa.us=pgman@postgresql.org)
+Received: from tiger.tigrasoft (fw.tigrasoft.hu [195.70.42.161])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB5JWMm92521;
+	Wed, 5 Dec 2001 14:32:26 -0500 (EST)
+	(envelope-from hornyakl@freemail.hu)
+Received: from freemail.hu ([192.168.0.200])
+	by tiger.tigrasoft (8.9.3/8.9.3/Debian 8.9.3-21) with ESMTP id UAA20333;
+	Wed, 5 Dec 2001 20:30:51 +0100
+X-Authentication-Warning: tiger.tigrasoft: Host [192.168.0.200] claimed to be freemail.hu
+Message-ID: <3C0E77F0.5030904@freemail.hu>
+Date: Wed, 05 Dec 2001 20:39:28 +0100
+From: Laszlo Hornyak <hornyakl@freemail.hu>
+Reply-To: hornyakl@users.sourceforge.net
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.4) Gecko/20010913
+X-Accept-Language: hu, en-us
+MIME-Version: 1.0
+To: Barry Lind <barry@xythos.com>, pgsql-hackers@postgresql.org,
+   pgsql-jdbc@postgresql.org
+Subject: Re: [HACKERS] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com> <3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com> <3C0D219C.1090804@freemail.hu> <3C0D799D.4010808@xythos.com> <3C0DE382.1050400@freemail.hu> <3C0E5A23.7060701@xythos.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Barry Lind wrote:
+
+>
+> I also stopped cc'ing the general list, since this is getting too 
+> detailed for most of the members on that list.
+
+Ok.
+
+> Now to your mail:
+>
+> This seems like a reasonable approach and should work across different 
+> JVMs.  It would probably be a good experiment to try this with the Sun 
+> or IBM jvm at some point to verify.  What I was afraid of was that you 
+> were hacking the Kaffe code to perform the integration which would 
+> limit this solution to only using Kaffe. 
+
+I am sure they wont work the same way. I think I have a sun jdk 1.3.0-2, 
+so I will try to port it soon. The IBM implementation must wait I think 
+until january.
+
+>
+> Just a suggestion:  PL/J might be a good name, since as you probably 
+> know it can't be called pl/java because of the trademark restrictions 
+> on the word 'java'. 
+
+Ok, you won, I do not read the licenses. From now it`s name is pl/j. 
+Isn`t 'j' too short for the name of the process that runns java? :)
+
+>
+> I am a little concerned about the stability and complexity of having 
+> this '-pizza' program be responsible for handling the calls on the 
+> java side.  My concern is that this will need to be a multithreaded 
+> program since multiple backends will concurrently be needing to 
+> interact with multiple java threads through this one program.  It 
+> might be simpler if each postgres process directly communicated to a 
+> java thread via a tcpip socket.  Then the "-pizza" program would only 
+> need to be responsible for starting up the jvm and creating java 
+> threads and sockets for a postgres process (it would perform a similar 
+> role to postmaster for postgres client connections). 
+
+With good design we can solve stability problems. As much as I know, if 
+postmaster dies, the postgres server becomes unavailable, this looks the 
+same problem. I do not know if we realy need sockets. Anyway, if 'j' 
+dies, we can create a new one, and restart calculations. Some watchdog 
+functionality...
+Doing thing with sockets need a lot of rework. It is the best time for 
+this, while there is not too much thing done.
+
+>>>
+>>>> -when java thread receives the signal, it reads the message(s) from 
+>>>> the queue, and starts some actions. When done it tells postgres 
+>>>> with a signal that it is ready, and it can come for its results. 
+>>>> This will be rewritten see below problems.
+>>>
+>>> Are signals the best way to accomplish this? 
+>>
+>> I don`t know if it is the best, it is the only way I know :)
+>> Do you know any other ways?
+>>
+> I don't know, but hopefully someone on the hackers list will chip in 
+> here with a comment.
+
+After a first developement cycle (if my brain doesn`t burn down), the 
+signals can be replaced to a plugable communication interface I think. 
+So maybe we can use CORBA, or sockets, or something else. This will take 
+a lot of time.
+
+> OK, so the same backend process that called the function gets messaged 
+> to process the sql.  This should work.  However it means you will need 
+> a special version of the jdbc driver that uses this shm+signals 
+> communication mechanism instead of what the current jdbc driver does. 
+> This is something I would be happy to help you with.
+
+
+This is kind of you. :)
+For this, I will have to finish the protocol of communication. I have to 
+learn Postgres enough, so I am not sure this will be done this weekend. 
+I have ideas, only time is needed to implement them or to recognize the 
+failures.
+
+Thanks,
+Laszlo Hornyak
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M16313=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 10:01:29 2001
+Return-path: <pgsql-hackers-owner+M16313=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6F1RZ28000
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:01:27 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6F1OE19111
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 10:01:25 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6EvtR54729
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 08:59:16 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16313=candle.pha.pa.us=pgman@postgresql.org)
+Received: from tiger.tigrasoft (fw.tigrasoft.hu [195.70.42.161])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6EFfm64066;
+	Thu, 6 Dec 2001 09:15:41 -0500 (EST)
+	(envelope-from hornyakl@freemail.hu)
+Received: from freemail.hu ([192.168.0.200])
+	by tiger.tigrasoft (8.9.3/8.9.3/Debian 8.9.3-21) with ESMTP id PAA29094;
+	Thu, 6 Dec 2001 15:15:01 +0100
+X-Authentication-Warning: tiger.tigrasoft: Host [192.168.0.200] claimed to be freemail.hu
+Message-ID: <3C0F7F6B.2060605@freemail.hu>
+Date: Thu, 06 Dec 2001 15:23:39 +0100
+From: Laszlo Hornyak <hornyakl@freemail.hu>
+Reply-To: hornyakl@users.sourceforge.net
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.4) Gecko/20010913
+X-Accept-Language: hu, en-us
+MIME-Version: 1.0
+To: Gunnar =?ISO-8859-1?Q?R=F8nning?= <gunnar@polygnosis.com>
+cc: Barry Lind <barry@xythos.com>, pgsql-hackers@postgresql.org,
+   pgsql-jdbc@postgresql.org
+Subject: Re: [HACKERS] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com>	<3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com> <m2zo4wttp1.fsf@smaug.polygnosis.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 8bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Hi!
+
+Sorry, I have time only for short ansvers, it is company time :((.
+
+Gunnar Rønning wrote:
+
+>* Barry Lind <barry@xythos.com> wrote:
+>|
+>| possible problems with your strategy).  Without knowing what exactly
+>| you are thinking of doing it is difficult to comment.
+>
+>Agreed. 
+>
+Ok, I will try to bring the code here before Monday, or at least some 
+pieces. It is full of hardcoded constants from my developement 
+environment. :(
+
+
+>
+>| I am very interested in hearing what your plans are for pl/java.  I
+>| think this is a very difficult project, but one that would be very
+>| useful and welcome.
+>
+>I would very much like to hear about the plans myself. 
+>
+I do not see so big difficulities yet, am I so lame? It won`t be easy, 
+realy, we should keep it simple, at least becouse of me.
+
+
+thanks,
+Laszlo Hornyak
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M16334=candle.pha.pa.us=pgman@postgresql.org Thu Dec  6 16:11:23 2001
+Return-path: <pgsql-hackers-owner+M16334=candle.pha.pa.us=pgman@postgresql.org>
+Received: from west.navpoint.com (west.navpoint.com [207.106.42.13])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fB6LBLZ25078
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 16:11:22 -0500 (EST)
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by west.navpoint.com (8.11.6/8.10.1) with ESMTP id fB6LBMa12305
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 16:11:22 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fB6L6wR66812
+	for <pgman@candle.pha.pa.us>; Thu, 6 Dec 2001 15:08:01 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16334=candle.pha.pa.us=pgman@postgresql.org)
+Received: from rh72.home.ee (adsl895.estpak.ee [213.168.23.133])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fB6Kxtm98840;
+	Thu, 6 Dec 2001 15:59:55 -0500 (EST)
+	(envelope-from hannu@tm.ee)
+Received: from tm.ee (localhost.localdomain [127.0.0.1])
+	by rh72.home.ee (8.11.6/8.11.6) with ESMTP id fB6I2pn02024;
+	Thu, 6 Dec 2001 23:02:52 +0500
+Message-ID: <3C0FB2CB.90901@tm.ee>
+Date: Thu, 06 Dec 2001 23:02:51 +0500
+From: Hannu Krosing <hannu@tm.ee>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.4) Gecko/20011019 Netscape6/6.2
+X-Accept-Language: et, en-us
+MIME-Version: 1.0
+To: hornyakl@users.sourceforge.net
+cc: Gunnar =?ISO-8859-1?Q?R=F8nning?= <gunnar@polygnosis.com>,
+   Barry Lind 
+	<barry@xythos.com>, pgsql-hackers@postgresql.org,
+   pgsql-jdbc@postgresql.org
+Subject: Re: [HACKERS] [GENERAL] java stored procedures
+References: <3C074DE4.9040905@freemail.hu> <3C0BE325.3020809@xythos.com>	<3C0C937E.9000405@freemail.hu> <3C0CFD82.1030600@xythos.com> <m2zo4wttp1.fsf@smaug.polygnosis.com> <3C0F7F6B.2060605@freemail.hu>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Laszlo Hornyak wrote:
+
+>>
+>> | I am very interested in hearing what your plans are for pl/java.  I
+>> | think this is a very difficult project, but one that would be very
+>> | useful and welcome.
+>>
+>> I would very much like to hear about the plans myself.
+>
+> I do not see so big difficulities yet, am I so lame? It won`t be easy, 
+> realy, we should keep it simple, at least becouse of me.
+
+Let me propose a very different approach to PL/J - use gcc-java and 
+figure out the problems
+with (dynamic) compiling and dynamic linking.
+
+This is an approach somewhat similar to .NET/C# that you first compile 
+things and then run instead
+of trying to do both at the same time ;)
+
+Oracle /may/ be doing something similar with their java stored 
+procedures, as they claim these to be "compiled".
+
+-----------------
+Hannu
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
