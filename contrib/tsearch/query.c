@@ -259,7 +259,7 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval)
 			pfree(lemm);
 		}
 		else
-			pushval_asis(state, VALTRUE, 0, 0);
+			pushval_asis(state, VALTRUE, NULL, 0);
 		if (count)
 			pushquery(state, OPR, (int4) '&', 0, 0);
 		count++;

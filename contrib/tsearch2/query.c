@@ -284,7 +284,7 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 
 	/* XXX */
 	if (prs.curwords == 0)
-		pushval_asis(state, VALSTOP, 0, 0, 0);
+		pushval_asis(state, VALSTOP, NULL, 0, 0);
 }
 
 #define STACKDEPTH	32

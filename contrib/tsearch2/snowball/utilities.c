@@ -9,7 +9,7 @@
 
 #define CREATE_SIZE 1
 
-extern symbol *
+symbol *
 create_s(void)
 {
 	symbol	   *p = (symbol *) (HEAD + (char *) malloc(HEAD + (CREATE_SIZE + 1) * sizeof(symbol)));
@@ -21,13 +21,13 @@ create_s(void)
 	return p;
 }
 
-extern void
+void
 lose_s(symbol * p)
 {
 	free((char *) p - HEAD);
 }
 
-extern int
+int
 in_grouping(struct SN_env * z, unsigned char *s, int min, int max)
 {
 	if (z->c >= z->l)
@@ -44,7 +44,7 @@ in_grouping(struct SN_env * z, unsigned char *s, int min, int max)
 	return 1;
 }
 
-extern int
+int
 in_grouping_b(struct SN_env * z, unsigned char *s, int min, int max)
 {
 	if (z->c <= z->lb)
@@ -61,7 +61,7 @@ in_grouping_b(struct SN_env * z, unsigned char *s, int min, int max)
 	return 1;
 }
 
-extern int
+int
 out_grouping(struct SN_env * z, unsigned char *s, int min, int max)
 {
 	if (z->c >= z->l)
@@ -77,7 +77,7 @@ out_grouping(struct SN_env * z, unsigned char *s, int min, int max)
 	return 1;
 }
 
-extern int
+int
 out_grouping_b(struct SN_env * z, unsigned char *s, int min, int max)
 {
 	if (z->c <= z->lb)
@@ -94,7 +94,7 @@ out_grouping_b(struct SN_env * z, unsigned char *s, int min, int max)
 }
 
 
-extern int
+int
 in_range(struct SN_env * z, int min, int max)
 {
 	if (z->c >= z->l)
@@ -110,7 +110,7 @@ in_range(struct SN_env * z, int min, int max)
 	return 1;
 }
 
-extern int
+int
 in_range_b(struct SN_env * z, int min, int max)
 {
 	if (z->c <= z->lb)
@@ -126,7 +126,7 @@ in_range_b(struct SN_env * z, int min, int max)
 	return 1;
 }
 
-extern int
+int
 out_range(struct SN_env * z, int min, int max)
 {
 	if (z->c >= z->l)
@@ -141,7 +141,7 @@ out_range(struct SN_env * z, int min, int max)
 	return 1;
 }
 
-extern int
+int
 out_range_b(struct SN_env * z, int min, int max)
 {
 	if (z->c <= z->lb)
@@ -156,7 +156,7 @@ out_range_b(struct SN_env * z, int min, int max)
 	return 1;
 }
 
-extern int
+int
 eq_s(struct SN_env * z, int s_size, symbol * s)
 {
 	if (z->l - z->c < s_size ||
@@ -166,7 +166,7 @@ eq_s(struct SN_env * z, int s_size, symbol * s)
 	return 1;
 }
 
-extern int
+int
 eq_s_b(struct SN_env * z, int s_size, symbol * s)
 {
 	if (z->c - z->lb < s_size ||
@@ -176,19 +176,19 @@ eq_s_b(struct SN_env * z, int s_size, symbol * s)
 	return 1;
 }
 
-extern int
+int
 eq_v(struct SN_env * z, symbol * p)
 {
 	return eq_s(z, SIZE(p), p);
 }
 
-extern int
+int
 eq_v_b(struct SN_env * z, symbol * p)
 {
 	return eq_s_b(z, SIZE(p), p);
 }
 
-extern int
+int
 find_among(struct SN_env * z, struct among * v, int v_size)
 {
 	int			i = 0;
@@ -280,7 +280,7 @@ find_among(struct SN_env * z, struct among * v, int v_size)
 
 /* find_among_b is for backwards processing. Same comments apply */
 
-extern int
+int
 find_among_b(struct SN_env * z, struct among * v, int v_size)
 {
 	int			i = 0;
@@ -364,7 +364,7 @@ find_among_b(struct SN_env * z, struct among * v, int v_size)
 }
 
 
-extern symbol *
+symbol *
 increase_size(symbol * p, int n)
 {
 	int			new_size = n + 20;
@@ -380,7 +380,7 @@ increase_size(symbol * p, int n)
    s_size symbols at s
 */
 
-extern int
+int
 replace_s(struct SN_env * z, int c_bra, int c_ket, int s_size, const symbol * s)
 {
 	int			adjustment = s_size - (c_ket - c_bra);
@@ -416,26 +416,26 @@ slice_check(struct SN_env * z)
 	}
 }
 
-extern void
+void
 slice_from_s(struct SN_env * z, int s_size, symbol * s)
 {
 	slice_check(z);
 	replace_s(z, z->bra, z->ket, s_size, s);
 }
 
-extern void
+void
 slice_from_v(struct SN_env * z, symbol * p)
 {
 	slice_from_s(z, SIZE(p), p);
 }
 
-extern void
+void
 slice_del(struct SN_env * z)
 {
-	slice_from_s(z, 0, 0);
+	slice_from_s(z, 0, NULL);
 }
 
-extern void
+void
 insert_s(struct SN_env * z, int bra, int ket, int s_size, symbol * s)
 {
 	int			adjustment = replace_s(z, bra, ket, s_size, s);
@@ -446,7 +446,7 @@ insert_s(struct SN_env * z, int bra, int ket, int s_size, symbol * s)
 		z->ket += adjustment;
 }
 
-extern void
+void
 insert_v(struct SN_env * z, int bra, int ket, symbol * p)
 {
 	int			adjustment = replace_s(z, bra, ket, SIZE(p), p);
@@ -457,7 +457,7 @@ insert_v(struct SN_env * z, int bra, int ket, symbol * p)
 		z->ket += adjustment;
 }
 
-extern symbol *
+symbol *
 slice_to(struct SN_env * z, symbol * p)
 {
 	slice_check(z);
@@ -472,7 +472,7 @@ slice_to(struct SN_env * z, symbol * p)
 	return p;
 }
 
-extern symbol *
+symbol *
 assign_to(struct SN_env * z, symbol * p)
 {
 	int			len = z->l;
@@ -484,7 +484,7 @@ assign_to(struct SN_env * z, symbol * p)
 	return p;
 }
 
-extern void
+void
 debug(struct SN_env * z, int number, int line_count)
 {
 	int			i;

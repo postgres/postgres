@@ -2,7 +2,7 @@
 
 #include "header.h"
 
-extern struct SN_env *
+struct SN_env *
 SN_create_env(int S_size, int I_size, int B_size)
 {
 	struct SN_env *z = (struct SN_env *) calloc(1, sizeof(struct SN_env));
@@ -59,7 +59,7 @@ SN_create_env(int S_size, int I_size, int B_size)
 	return z;
 }
 
-extern void
+void
 SN_close_env(struct SN_env * z)
 {
 	if (z->S && z->S_size)
@@ -81,7 +81,7 @@ SN_close_env(struct SN_env * z)
 	free(z);
 }
 
-extern void
+void
 SN_set_current(struct SN_env * z, int size, const symbol * s)
 {
 	replace_s(z, 0, z->l, size, s);

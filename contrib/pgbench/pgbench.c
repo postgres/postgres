@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.34 2004/10/25 02:15:01 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.35 2004/11/09 06:09:31 neilc Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -268,7 +268,7 @@ doOne(CState * state, int n, int debug, int ttype)
 					double		diff;
 					struct timeval now;
 
-					gettimeofday(&now, 0);
+					gettimeofday(&now, NULL);
 					diff = (int) (now.tv_sec - st->txn_begin.tv_sec) * 1000000.0 +
 						(int) (now.tv_usec - st->txn_begin.tv_usec);
 
@@ -328,7 +328,7 @@ doOne(CState * state, int n, int debug, int ttype)
 			st->tid = getrand(1, ntellers * tps);
 			st->delta = getrand(1, 1000);
 			if (use_log)
-				gettimeofday(&(st->txn_begin), 0);
+				gettimeofday(&(st->txn_begin), NULL);
 			break;
 		case 1:
 			snprintf(sql, 256, "update accounts set abalance = abalance + %d where aid = %d\n", st->delta, st->aid);
@@ -938,11 +938,11 @@ main(int argc, char **argv)
 	PQfinish(con);
 
 	/* set random seed */
-	gettimeofday(&tv1, 0);
+	gettimeofday(&tv1, NULL);
 	srand((unsigned int) tv1.tv_usec);
 
 	/* get start up time */
-	gettimeofday(&tv1, 0);
+	gettimeofday(&tv1, NULL);
 
 	if (is_connect == 0)
 	{
@@ -956,7 +956,7 @@ main(int argc, char **argv)
 	}
 
 	/* time after connections set up */
-	gettimeofday(&tv2, 0);
+	gettimeofday(&tv2, NULL);
 
 	/* send start up queries in async manner */
 	for (i = 0; i < nclients; i++)
@@ -973,7 +973,7 @@ main(int argc, char **argv)
 		{						/* all done ? */
 			disconnect_all(state);
 			/* get end time */
-			gettimeofday(&tv3, 0);
+			gettimeofday(&tv3, NULL);
 			printResults(ttype, state, &tv1, &tv2, &tv3);
 			if (LOGFILE)
 				fclose(LOGFILE);
