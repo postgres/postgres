@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.233 2003/10/31 19:51:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.234 2003/10/31 22:22:10 tgl Exp $
 -->
 
 <appendix id="release">
@@ -242,7 +242,7 @@ required for those wishing to migrate data from any previous release.</para>
 <itemizedlist>
 <listitem><para>Allow IPv6 server connections (Nigel Kukard, Johan Jordaan, Bruce, Tom, Kurt
   Roeckx, Andrew Dunstan)</para></listitem>
-<listitem><para>Fix SSL to handle errors cleanly (Nathan Mueller)
+<listitem><para>Fix SSL to handle errors cleanly (Nathan Mueller)</para>
    <para>
     In prior releases, certain rare SSL API error reports were not
     handled correctly.  This release fixes those problems.
@@ -625,7 +625,7 @@ required for those wishing to migrate data from any previous release.</para>
    </para>
    </listitem>
 <listitem><para>Allow CLUSTER to use index marked as pre-clustered by default (Alvaro Herrera)</para></listitem>
-<listitem><para>Allow CLUSTER to cluster all tables (Alvaro Herrera)
+<listitem><para>Allow CLUSTER to cluster all tables (Alvaro Herrera)</para>
    <para>
     This allows all previously clustered tables in a database to be
     reclustered with a single command.
