@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.107 2003/07/26 15:22:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.108 2003/07/28 06:27:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,8 +442,9 @@ ClientAuthentication(Port *port)
 #ifdef USE_SSL
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", SSL \"%s\"",
-								hostinfo, port->user_name, port->database_name, port->ssl ? "on" : "off")));
+						 errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
+								hostinfo, port->user_name, port->database_name,
+								port->ssl ? gettext("SSL on") : gettext("SSL off"))));
 #else
 				ereport(FATAL,
 						(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
