@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Makefile.inc,v 1.1.1.1 1996/07/09 06:22:01 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Makefile.inc,v 1.2 1996/08/28 02:13:10 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,9 +39,9 @@ GENFMGRTABFILES= fmgrtab.c
 # get slurped in prior to this Makefile.inc, or BKIOPTS should be set
 # in a higher directory level.
 #
-$(GENFMGRTABFILES): $(GENFMGRTAB) $(catdir)/pg_proc.h
+$(GENFMGRTABFILES): $(GENFMGRTAB) ../../include/catalog/pg_proc.h
 	cd $(objdir); \
-	sh $(SHOPTS) $(GENFMGRTAB) $(BKIOPTS) $(catdir)/pg_proc.h
+	sh $(SHOPTS) $(GENFMGRTAB) $(BKIOPTS) ../../include/catalog/pg_proc.h
 
 $(objdir)/fmgrtab.o:  fmgrtab.c
 	$(cc_inobjdir)
