@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.73 2004/09/16 21:08:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.74 2004/10/12 01:50:04 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,7 @@ PortalCreateHoldStore(Portal portal)
 	 */
 	portal->holdContext =
 		AllocSetContextCreate(PortalMemory,
-							  "PortalHeapMemory",
+							  "PortalHoldContext",
 							  ALLOCSET_DEFAULT_MINSIZE,
 							  ALLOCSET_DEFAULT_INITSIZE,
 							  ALLOCSET_DEFAULT_MAXSIZE);
