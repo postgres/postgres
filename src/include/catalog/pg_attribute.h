@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.61 2000/07/03 23:10:05 wieck Exp $
+ * $Id: pg_attribute.h,v 1.62 2000/07/31 22:39:06 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -124,15 +124,16 @@ CATALOG(pg_attribute) BOOTSTRAP
 
 	char		attstorage;
 
-	/*
+	/*----------
 	 * attstorage tells for VARLENA attributes, what the heap access
 	 * methods can do to it if a given tuple doesn't fit into a page.
-	 * Possible values are 'p': Value must be stored plain allways 'e':
-	 * Value can be stored in "secondary" relation (if relation has
-	 * rellongrelid attached) 'c': Value can be stored compressed inline
-	 * 'x': Value can be stored compressed inline or in "secondary".
-	 *
-	 * Note: compressed storage
+	 * Possible values are
+	 *		'p': Value must be stored plain always
+	 *		'e': Value can be stored in "secondary" relation (if relation
+	 *			 has rellongrelid attached)
+	 *		'm': Value can be stored compressed inline
+	 *		'x': Value can be stored compressed inline or in "secondary"
+	 *----------
 	 */
 
 	bool		attisset;
@@ -439,7 +440,7 @@ DATA(insert OID = 0 ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1259, {"relhaspkey"},    16, 0,	1, 18, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1259, {"relhasrules"},   16, 0,	1, 19, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
 { 1259, {"relhassubclass"},16, 0,	1, 20, 0, -1, -1, '\001', 'p', '\0', 'c', '\0', '\0' }, \
-{ 1259, {"relacl"},		 1034, 0,  -1, 21, 0, -1, -1,	'\0', 'p', '\0', 'i', '\0', '\0' }
+{ 1259, {"relacl"},		 1034, 0,  -1, 21, 0, -1, -1,	'\0', 'm', '\0', 'i', '\0', '\0' }
 
 DATA(insert OID = 0 ( 1259 relname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1259 reltype			26 0  4   2 0 -1 -1 t p f i f f));
@@ -461,7 +462,7 @@ DATA(insert OID = 0 ( 1259 relrefs			21 0  2  17 0 -1 -1 t p f s f f));
 DATA(insert OID = 0 ( 1259 relhaspkey		16 0  1  18 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1259 relhasrules		16 0  1  19 0 -1 -1 t p f c f f));
 DATA(insert OID = 0 ( 1259 relhassubclass	16 0  1  20 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  21 0 -1 -1 f p f i f f));
+DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  21 0 -1 -1 f m f i f f));
 DATA(insert OID = 0 ( 1259 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert OID = 0 ( 1259 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

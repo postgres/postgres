@@ -7,17 +7,16 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.25 2000/04/12 17:16:54 momjian Exp $
+ * $Id: acl.h,v 1.26 2000/07/31 22:39:02 tgl Exp $
  *
  * NOTES
- *	  For backward-compatability purposes we have to allow there
+ *	  For backward-compatibility purposes we have to allow there
  *	  to be a null ACL in a pg_class tuple.  This will be defined as
  *	  meaning "no protection" (i.e., old catalogs get old semantics).
  *
  *	  The AclItems in an ACL array are currently kept in sorted order.
  *	  Things will break hard if you change that without changing the
  *	  code wherever this is included.
- *
  *-------------------------------------------------------------------------
  */
 #ifndef ACL_H
@@ -78,7 +77,7 @@ typedef struct AclItem
 	AclMode		ai_mode;
 
 	/*
-	 * This is actually type 'aclitem', and we want a fixed size for for
+	 * This is actually type 'aclitem', and we want a fixed size for
 	 * all platforms, so we pad this with dummies.
 	 */
 	char		dummy1,
@@ -88,22 +87,30 @@ typedef struct AclItem
 /* Note: if the size of AclItem changes,
    change the aclitem typlen in pg_type.h */
 
+
 /*
- * The value of the first dimension-array element.	Since these arrays
- * always have a lower-bound of 0, this is the same as the number of
- * elements in the array.
+ * Definitions for convenient access to Acl (array of AclItem) and IdList
+ * (array of AclId).  These are standard Postgres arrays, but are restricted
+ * to have one dimension.  We also ignore the lower bound when reading,
+ * and set it to zero when writing.
+ *
+ * CAUTION: as of Postgres 7.1, these arrays are toastable (just like all
+ * other array types).  Therefore, be careful to detoast them with the
+ * macros provided, unless you know for certain that a particular array
+ * can't have been toasted.  Presently, we do not provide toast tables for
+ * pg_class or pg_group, so the entries in those tables won't have been
+ * stored externally --- but they could have been compressed!
  */
-#define ARR_DIM0(a) (((unsigned *) (((char *) a) + sizeof(ArrayType)))[0])
+
 
 /*
  * Acl			a one-dimensional POSTGRES array of AclItem
  */
 typedef ArrayType Acl;
 
-#define ACL_NUM(ACL)			ARR_DIM0(ACL)
+#define ACL_NUM(ACL)			(ARR_DIMS(ACL)[0])
 #define ACL_DAT(ACL)			((AclItem *) ARR_DATA_PTR(ACL))
-#define ACL_N_SIZE(N) \
-		((unsigned) (ARR_OVERHEAD(1) + ((N) * sizeof(AclItem))))
+#define ACL_N_SIZE(N)			(ARR_OVERHEAD(1) + ((N) * sizeof(AclItem)))
 #define ACL_SIZE(ACL)			ARR_SIZE(ACL)
 
 /*
@@ -111,12 +118,32 @@ typedef ArrayType Acl;
  */
 typedef ArrayType IdList;
 
-#define IDLIST_NUM(IDL)			ARR_DIM0(IDL)
+#define IDLIST_NUM(IDL)			(ARR_DIMS(IDL)[0])
 #define IDLIST_DAT(IDL)			((AclId *) ARR_DATA_PTR(IDL))
-#define IDLIST_N_SIZE(N) \
-		((unsigned) (ARR_OVERHEAD(1) + ((N) * sizeof(AclId))))
+#define IDLIST_N_SIZE(N)		(ARR_OVERHEAD(1) + ((N) * sizeof(AclId)))
 #define IDLIST_SIZE(IDL)		ARR_SIZE(IDL)
 
+/*
+ * fmgr macros for these types
+ */
+#define DatumGetAclItemP(X)        ((AclItem *) DatumGetPointer(X))
+#define PG_GETARG_ACLITEM_P(n)     DatumGetAclItemP(PG_GETARG_DATUM(n))
+#define PG_RETURN_ACLITEM_P(x)     PG_RETURN_POINTER(x)
+
+#define DatumGetAclP(X)            ((Acl *) PG_DETOAST_DATUM(X))
+#define DatumGetAclPCopy(X)        ((Acl *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_ACL_P(n)         DatumGetAclP(PG_GETARG_DATUM(n))
+#define PG_GETARG_ACL_P_COPY(n)    DatumGetAclPCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_ACL_P(x)         PG_RETURN_POINTER(x)
+
+#define DatumGetIdListP(X)         ((IdList *) PG_DETOAST_DATUM(X))
+#define DatumGetIdListPCopy(X)     ((IdList *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_IDLIST_P(n)      DatumGetIdListP(PG_GETARG_DATUM(n))
+#define PG_GETARG_IDLIST_P_COPY(n) DatumGetIdListPCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_IDLIST_P(x)      PG_RETURN_POINTER(x)
+
+
+/* mode indicators for I/O */
 #define ACL_MODECHG_STR			"+-="	/* list of valid characters */
 #define ACL_MODECHG_ADD_CHR		'+'
 #define ACL_MODECHG_DEL_CHR		'-'
@@ -157,11 +184,11 @@ extern ChangeACLStmt *makeAclStmt(char *privs, List *rel_list, char *grantee,
  * exported routines (from acl.c)
  */
 extern Acl *makeacl(int n);
-extern AclItem *aclitemin(char *s);
-extern char *aclitemout(AclItem *aip);
-extern Acl *aclinsert(Acl *old_acl, AclItem *mod_aip);
-extern Acl *aclremove(Acl *old_acl, AclItem *mod_aip);
-extern int32 aclcontains(Acl *acl, AclItem *aip);
+extern Datum aclitemin(PG_FUNCTION_ARGS);
+extern Datum aclitemout(PG_FUNCTION_ARGS);
+extern Datum aclinsert(PG_FUNCTION_ARGS);
+extern Datum aclremove(PG_FUNCTION_ARGS);
+extern Datum aclcontains(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in aclchk.c

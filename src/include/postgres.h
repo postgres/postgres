@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.43 2000/07/03 23:09:56 wieck Exp $
+ * $Id: postgres.h,v 1.44 2000/07/31 22:39:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,6 @@
  * ----------------------------------------------------------------
  */
 
-typedef int4 aclitem;
-
 #define InvalidOid		((Oid) 0)
 #define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
 
@@ -56,6 +54,8 @@ typedef Oid regproc;
 typedef Oid RegProcedure;
 
 #define RegProcedureIsValid(p)	OidIsValid(p)
+
+typedef int4 aclitem;			/* PHONY definition for catalog use only */
 
 /* ----------------------------------------------------------------
  *				Section 2:	variable length and array types

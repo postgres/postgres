@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.47 2000/06/14 18:17:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.48 2000/07/31 22:39:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,8 @@
 #include "utils/syscache.h"
 
 static char *getid(char *s, char *n);
-static int32 aclitemeq(AclItem *a1, AclItem *a2);
-static int32 aclitemgt(AclItem *a1, AclItem *a2);
+static bool aclitemeq(AclItem *a1, AclItem *a2);
+static bool aclitemgt(AclItem *a1, AclItem *a2);
 static char *aclparse(char *s, AclItem *aip, unsigned *modechg);
 
 #define ACL_IDTYPE_GID_KEYWORD	"group"
@@ -229,18 +229,14 @@ makeacl(int n)
  * RETURNS:
  *		the new AclItem
  */
-AclItem    *
-aclitemin(char *s)
+Datum
+aclitemin(PG_FUNCTION_ARGS)
 {
-	unsigned	modechg;
+	char	   *s = PG_GETARG_CSTRING(0);
 	AclItem    *aip;
-
-	if (!s)
-		elog(ERROR, "aclitemin: null string");
+	unsigned	modechg;
 
 	aip = (AclItem *) palloc(sizeof(AclItem));
-	if (!aip)
-		elog(ERROR, "aclitemin: palloc failed");
 	s = aclparse(s, aip, &modechg);
 	if (modechg != ACL_MODECHG_EQL)
 		elog(ERROR, "aclitemin: cannot accept anything but = ACLs");
@@ -248,7 +244,7 @@ aclitemin(char *s)
 		++s;
 	if (*s)
 		elog(ERROR, "aclitemin: extra garbage at end of specification");
-	return aip;
+	PG_RETURN_ACLITEM_P(aip);
 }
 
 /*
@@ -259,24 +255,17 @@ aclitemin(char *s)
  * RETURNS:
  *		the new string
  */
-char *
-aclitemout(AclItem *aip)
+Datum
+aclitemout(PG_FUNCTION_ARGS)
 {
+	AclItem	   *aip = PG_GETARG_ACLITEM_P(0);
 	char	   *p;
 	char	   *out;
 	HeapTuple	htup;
 	unsigned	i;
-	static AclItem default_aclitem = {ACL_ID_WORLD,
-		ACL_IDTYPE_WORLD,
-	ACL_WORLD_DEFAULT};
 	char	   *tmpname;
 
-	if (!aip)
-		aip = &default_aclitem;
-
 	p = out = palloc(strlen("group =arwR ") + 1 + NAMEDATALEN);
-	if (!out)
-		elog(ERROR, "aclitemout: palloc failed");
 	*p = '\0';
 
 	switch (aip->ai_idtype)
@@ -319,36 +308,28 @@ aclitemout(AclItem *aip)
 			*p++ = ACL_MODE_STR[i];
 	*p = '\0';
 
-	return out;
+	PG_RETURN_CSTRING(out);
 }
 
 /*
  * aclitemeq
  * aclitemgt
  *		AclItem equality and greater-than comparison routines.
- *		Two AclItems are equal iff they are both NULL or they have the
+ *		Two AclItems are equal iff they have the
  *		same identifier (and identifier type).
  *
  * RETURNS:
  *		a boolean value indicating = or >
  */
-static int32
+static bool
 aclitemeq(AclItem *a1, AclItem *a2)
 {
-	if (!a1 && !a2)
-		return 1;
-	if (!a1 || !a2)
-		return 0;
 	return a1->ai_idtype == a2->ai_idtype && a1->ai_id == a2->ai_id;
 }
 
-static int32
+static bool
 aclitemgt(AclItem *a1, AclItem *a2)
 {
-	if (a1 && !a2)
-		return 1;
-	if (!a1 || !a2)
-		return 0;
 	return ((a1->ai_idtype > a2->ai_idtype) ||
 			(a1->ai_idtype == a2->ai_idtype && a1->ai_id > a2->ai_id));
 }
@@ -384,25 +365,28 @@ acldefault(char *relname)
 	return acl;
 }
 
+/*
+ * Add or replace an item in an ACL array.
+ *
+ * NB: caller is responsible for having detoasted the input ACL, if needed.
+ */
 Acl *
 aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 {
 	Acl		   *new_acl;
 	AclItem    *old_aip,
 			   *new_aip;
-	unsigned	src,
+	int			src,
 				dst,
 				num;
 
+	/* These checks for null input are probably dead code, but... */
 	if (!old_acl || ACL_NUM(old_acl) < 1)
-	{
-		new_acl = makeacl(0);
-		return new_acl;
-	}
+		old_acl = makeacl(0);
 	if (!mod_aip)
 	{
 		new_acl = makeacl(ACL_NUM(old_acl));
-		memmove((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
+		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 		return new_acl;
 	}
 
@@ -422,7 +406,7 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	{
 		/* modify in-place */
 		new_acl = makeacl(ACL_NUM(old_acl));
-		memmove((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
+		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 		new_aip = ACL_DAT(new_acl);
 		src = dst;
 	}
@@ -470,60 +454,58 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	/*
 	 * if the newly added entry has no permissions, delete it from the
 	 * list.  For example, this helps in removing entries for users who no
-	 * longer exists...
+	 * longer exist...
 	 */
-	for (dst = 1; dst < num; dst++)
+	if (new_aip[dst].ai_mode == 0)
 	{
-		if (new_aip[dst].ai_mode == 0)
-		{
-			int			i;
+		int			i;
 
-			for (i = dst + 1; i < num; i++)
-			{
-				new_aip[i - 1].ai_id = new_aip[i].ai_id;
-				new_aip[i - 1].ai_idtype = new_aip[i].ai_idtype;
-				new_aip[i - 1].ai_mode = new_aip[i].ai_mode;
-			}
-			ARR_DIMS(new_acl)[0] = num - 1;
-			/* Adjust also the array size because it is used for memmove */
-			ARR_SIZE(new_acl) -= sizeof(AclItem);
-			break;
+		for (i = dst + 1; i < num; i++)
+		{
+			new_aip[i - 1].ai_id = new_aip[i].ai_id;
+			new_aip[i - 1].ai_idtype = new_aip[i].ai_idtype;
+			new_aip[i - 1].ai_mode = new_aip[i].ai_mode;
 		}
+		ARR_DIMS(new_acl)[0] = num - 1;
+		/* Adjust also the array size because it is used for memmove */
+		ARR_SIZE(new_acl) -= sizeof(AclItem);
 	}
 
 	return new_acl;
 }
 
 /*
- * aclinsert
- *
+ * aclinsert (exported function)
  */
-Acl *
-aclinsert(Acl *old_acl, AclItem *mod_aip)
+Datum
+aclinsert(PG_FUNCTION_ARGS)
 {
-	return aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL);
+	Acl		   *old_acl = PG_GETARG_ACL_P(0);
+	AclItem	   *mod_aip = PG_GETARG_ACLITEM_P(1);
+
+	PG_RETURN_ACL_P(aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL));
 }
 
-Acl *
-aclremove(Acl *old_acl, AclItem *mod_aip)
+Datum
+aclremove(PG_FUNCTION_ARGS)
 {
+	Acl		   *old_acl = PG_GETARG_ACL_P(0);
+	AclItem	   *mod_aip = PG_GETARG_ACLITEM_P(1);
 	Acl		   *new_acl;
 	AclItem    *old_aip,
 			   *new_aip;
-	unsigned	dst,
+	int			dst,
 				old_num,
 				new_num;
 
+	/* These checks for null input should be dead code, but... */
 	if (!old_acl || ACL_NUM(old_acl) < 1)
-	{
-		new_acl = makeacl(0);
-		return new_acl;
-	}
+		old_acl = makeacl(0);
 	if (!mod_aip)
 	{
 		new_acl = makeacl(ACL_NUM(old_acl));
-		memmove((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
-		return new_acl;
+		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
+		PG_RETURN_ACL_P(new_acl);
 	}
 
 	old_num = ACL_NUM(old_acl);
@@ -534,12 +516,12 @@ aclremove(Acl *old_acl, AclItem *mod_aip)
 	if (dst >= old_num)
 	{							/* not found or empty */
 		new_acl = makeacl(ACL_NUM(old_acl));
-		memmove((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
+		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
 	}
 	else
 	{
 		new_num = old_num - 1;
-		new_acl = makeacl(ACL_NUM(old_acl) - 1);
+		new_acl = makeacl(new_num);
 		new_aip = ACL_DAT(new_acl);
 		if (dst == 0)
 		{						/* start */
@@ -561,23 +543,24 @@ aclremove(Acl *old_acl, AclItem *mod_aip)
 					(new_num - dst) * sizeof(AclItem));
 		}
 	}
-	return new_acl;
+	PG_RETURN_ACL_P(new_acl);
 }
 
-int32
-aclcontains(Acl *acl, AclItem *aip)
+Datum
+aclcontains(PG_FUNCTION_ARGS)
 {
-	unsigned	i,
-				num;
+	Acl		   *acl = PG_GETARG_ACL_P(0);
+	AclItem	   *aip = PG_GETARG_ACLITEM_P(1);
 	AclItem    *aidat;
+	int			i,
+				num;
 
-	if (!acl || !aip || ((num = ACL_NUM(acl)) < 1))
-		return 0;
+	num = ACL_NUM(acl);
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)
 		if (aclitemeq(aip, aidat + i))
-			return 1;
-	return 0;
+			PG_RETURN_BOOL(true);
+	PG_RETURN_BOOL(false);
 }
 
 /* parser support routines */
@@ -638,7 +621,7 @@ aclmakepriv(char *old_privlist, char new_priv)
  *						"G"  - group
  *						"U"  - user
  *
- * concatentates the two strings together with a space in between
+ * concatenates the two strings together with a space in between
  *
  * this routine is used in the parser
  *
@@ -649,7 +632,7 @@ aclmakeuser(char *user_type, char *user)
 {
 	char	   *user_list;
 
-	user_list = palloc(strlen(user) + 3);
+	user_list = palloc(strlen(user_type) + strlen(user) + 2);
 	sprintf(user_list, "%s %s", user_type, user);
 	return user_list;
 }

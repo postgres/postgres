@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.153 2000/07/30 22:14:01 tgl Exp $
+ * $Id: pg_proc.h,v 1.154 2000/07/31 22:39:05 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1256,16 +1256,16 @@ DATA(insert OID = 1029 (  nullvalue		   PGUID 12 f t t f 1 f 16 "0" 100 0 0 100 
 DESCR("(internal)");
 DATA(insert OID = 1030 (  nonnullvalue	   PGUID 12 f t t f 1 f 16 "0" 100 0 0 100  nonnullvalue - ));
 DESCR("(internal)");
-DATA(insert OID = 1031 (  aclitemin		   PGUID 11 f t f t 1 f 1033 "0" 100 0 0 100	aclitemin - ));
+DATA(insert OID = 1031 (  aclitemin		   PGUID 12 f t f t 1 f 1033 "0" 100 0 0 100	aclitemin - ));
 DESCR("(internal)");
-DATA(insert OID = 1032 (  aclitemout	   PGUID 11 f t f t 1 f 23 "0" 100 0 0 100  aclitemout - ));
+DATA(insert OID = 1032 (  aclitemout	   PGUID 12 f t f t 1 f 23 "1033" 100 0 0 100  aclitemout - ));
 DESCR("(internal)");
-DATA(insert OID = 1035 (  aclinsert		   PGUID 11 f t f t 2 f 1034 "1034 1033" 100 0 0 100	aclinsert - ));
-DESCR("addition");
-DATA(insert OID = 1036 (  aclremove		   PGUID 11 f t f t 2 f 1034 "1034 1033" 100 0 0 100	aclremove - ));
-DESCR("subtract");
-DATA(insert OID = 1037 (  aclcontains	   PGUID 11 f t f t 2 f 16 "1034 1033" 100 0 0 100  aclcontains - ));
-DESCR("matches regex., case-sensitive");
+DATA(insert OID = 1035 (  aclinsert		   PGUID 12 f t f t 2 f 1034 "1034 1033" 100 0 0 100	aclinsert - ));
+DESCR("add/update ACL item");
+DATA(insert OID = 1036 (  aclremove		   PGUID 12 f t f t 2 f 1034 "1034 1033" 100 0 0 100	aclremove - ));
+DESCR("remove ACL item");
+DATA(insert OID = 1037 (  aclcontains	   PGUID 12 f t f t 2 f 16 "1034 1033" 100 0 0 100  aclcontains - ));
+DESCR("does ACL contain item?");
 DATA(insert OID = 1038 (  seteval		   PGUID 12 f t f t 1 f 23 "26" 100 0 0 100  seteval - ));
 DESCR("");
 DATA(insert OID = 1044 (  bpcharin		   PGUID 12 f t t t 3 f 1042 "0 26 23" 100 0 0 100 bpcharin - ));

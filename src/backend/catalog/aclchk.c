@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.38 2000/04/12 17:14:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.39 2000/07/31 22:39:13 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -33,7 +33,8 @@
 #include "utils/acl.h"
 #include "utils/syscache.h"
 
-static int32 aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode);
+static int32 aclcheck(char *relname, Acl *acl, AclId id,
+					  AclIdType idtype, AclMode mode);
 
 /*
  * Enable use of user relations in place of real system catalogs.
@@ -68,14 +69,16 @@ char	   *aclcheck_error_strings[] = {
 static
 dumpacl(Acl *acl)
 {
-	unsigned	i;
+	int			i;
 	AclItem    *aip;
 
 	elog(DEBUG, "acl size = %d, # acls = %d",
 		 ACL_SIZE(acl), ACL_NUM(acl));
-	aip = (AclItem *) ACL_DAT(acl);
+	aip = ACL_DAT(acl);
 	for (i = 0; i < ACL_NUM(acl); ++i)
-		elog(DEBUG, "	acl[%d]: %s", i, aclitemout(aip + i));
+		elog(DEBUG, "	acl[%d]: %s", i,
+			 DatumGetCString(DirectFunctionCall1(aclitemout,
+												 PointerGetDatum(aip + i))));
 }
 
 #endif
@@ -89,7 +92,7 @@ ChangeAcl(char *relname,
 		  unsigned modechg)
 {
 	unsigned	i;
-	Acl		   *old_acl = (Acl *) NULL,
+	Acl		   *old_acl,
 			   *new_acl;
 	Relation	relation;
 	HeapTuple	tuple;
@@ -97,14 +100,12 @@ ChangeAcl(char *relname,
 	char		nulls[Natts_pg_class];
 	char		replaces[Natts_pg_class];
 	Relation	idescs[Num_pg_class_indices];
-	int			free_old_acl = 0;
+	bool		isNull;
+	bool		free_old_acl = false;
 
 	/*
 	 * Find the pg_class tuple matching 'relname' and extract the ACL. If
 	 * there's no ACL, create a default using the pg_class.relowner field.
-	 *
-	 * We can't use the syscache here, since we need to do a heap_update on
-	 * the tuple we find.
 	 */
 	relation = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTuple(RELNAME,
@@ -117,25 +118,37 @@ ChangeAcl(char *relname,
 			 relname);
 	}
 
-	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
-		old_acl = (Acl *) heap_getattr(tuple,
-									   Anum_pg_class_relacl,
-									   RelationGetDescr(relation),
-									   (bool *) NULL);
-	if (!old_acl || ACL_NUM(old_acl) < 1)
+	old_acl = (Acl *) heap_getattr(tuple,
+								   Anum_pg_class_relacl,
+								   RelationGetDescr(relation),
+								   &isNull);
+	if (isNull)
 	{
 #ifdef ACLDEBUG_TRACE
 		elog(DEBUG, "ChangeAcl: using default ACL");
 #endif
-/*		old_acl = acldefault(((Form_pg_class) GETSTRUCT(tuple))->relowner); */
 		old_acl = acldefault(relname);
-		free_old_acl = 1;
+		free_old_acl = true;
+	}
+
+	/* Need to detoast the old ACL for modification */
+	old_acl = DatumGetAclP(PointerGetDatum(old_acl));
+
+	if (ACL_NUM(old_acl) < 1)
+	{
+#ifdef ACLDEBUG_TRACE
+		elog(DEBUG, "ChangeAcl: old ACL has zero length");
+#endif
+		old_acl = acldefault(relname);
+		free_old_acl = true;
 	}
 
 #ifdef ACLDEBUG_TRACE
 	dumpacl(old_acl);
 #endif
+
 	new_acl = aclinsert3(old_acl, mod_aip, modechg);
+
 #ifdef ACLDEBUG_TRACE
 	dumpacl(new_acl);
 #endif
@@ -148,7 +161,7 @@ ChangeAcl(char *relname,
 										 * anyway */
 	}
 	replaces[Anum_pg_class_relacl - 1] = 'r';
-	values[Anum_pg_class_relacl - 1] = (Datum) new_acl;
+	values[Anum_pg_class_relacl - 1] = PointerGetDatum(new_acl);
 	tuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
 
 	heap_update(relation, &tuple->t_self, tuple, NULL);
@@ -193,20 +206,20 @@ get_groname(AclId grosysid)
 	if (HeapTupleIsValid(tuple))
 		name = NameStr(((Form_pg_group) GETSTRUCT(tuple))->groname);
 	else
-		elog(NOTICE, "get_groname: group %d not found", grosysid);
+		elog(NOTICE, "get_groname: group %u not found", grosysid);
 	return name;
 }
 
-static int32
+static bool
 in_group(AclId uid, AclId gid)
 {
 	Relation	relation;
 	HeapTuple	tuple;
 	Acl		   *tmp;
-	unsigned	i,
+	int			i,
 				num;
 	AclId	   *aidp;
-	int32		found = 0;
+	bool		found = false;
 
 	relation = heap_openr(GroupRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheTuple(GROSYSID,
@@ -219,13 +232,15 @@ in_group(AclId uid, AclId gid)
 									  Anum_pg_group_grolist,
 									  RelationGetDescr(relation),
 									  (bool *) NULL);
+		/* be sure the IdList is not toasted */
+		tmp = DatumGetIdListP(PointerGetDatum(tmp));
 		/* XXX make me a function */
 		num = IDLIST_NUM(tmp);
 		aidp = IDLIST_DAT(tmp);
 		for (i = 0; i < num; ++i)
 			if (aidp[i] == uid)
 			{
-				found = 1;
+				found = true;
 				break;
 			}
 	}
@@ -344,8 +359,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 {
 	HeapTuple	tuple;
 	AclId		id;
-	Acl		   *acl = (Acl *) NULL,
-			   *tmp;
+	Acl		   *acl = (Acl *) NULL;
 	int32		result;
 	Relation	relation;
 
@@ -396,12 +410,11 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	}
 	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
 	{
-		tmp = (Acl *) heap_getattr(tuple,
-								   Anum_pg_class_relacl,
-								   RelationGetDescr(relation),
-								   (bool *) NULL);
-		acl = makeacl(ACL_NUM(tmp));
-		memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
+		/* get a detoasted copy of the ACL */
+		acl = DatumGetAclPCopy(heap_getattr(tuple,
+											Anum_pg_class_relacl,
+											RelationGetDescr(relation),
+											(bool *) NULL));
 	}
 	else
 	{
@@ -410,13 +423,10 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		 * if the acl is null, by default the owner can do whatever he
 		 * wants to with it
 		 */
-		int4		ownerId;
+		AclId		ownerId;
 
-		ownerId = (int4) heap_getattr(tuple,
-									  Anum_pg_class_relowner,
-									  RelationGetDescr(relation),
-									  (bool *) NULL);
-		acl = aclownerdefault(relname, (AclId) ownerId);
+		ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
+		acl = aclownerdefault(relname, ownerId);
 	}
 	heap_close(relation, RowExclusiveLock);
 #else
@@ -427,12 +437,11 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	if (HeapTupleIsValid(tuple) &&
 		!heap_attisnull(tuple, Anum_pg_class_relacl))
 	{
-		tmp = (Acl *) heap_getattr(tuple,
-								   Anum_pg_class_relacl,
-								   RelationGetDescr(relation),
-								   (bool *) NULL);
-		acl = makeacl(ACL_NUM(tmp));
-		memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
+		/* get a detoasted copy of the ACL */
+		acl = DatumGetAclPCopy(heap_getattr(tuple,
+											Anum_pg_class_relacl,
+											RelationGetDescr(relation),
+											(bool *) NULL));
 	}
 	heap_close(relation, RowExclusiveLock);
 #endif
