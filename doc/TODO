@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 24 22:23:07 EST 2000
+Last updated:		Mon Feb 28 04:23:56 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -295,6 +295,8 @@ MISC
 * -remove duplicate type in/out functions for disk and net
 * Allow persistent backends [persistent]
 * others [performance]
+* prevent labels from being output for stored rules (Tom)
+* allow configuration of maximum number of open files
 
 SOURCE CODE
 -----------
