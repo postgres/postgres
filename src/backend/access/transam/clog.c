@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.26 2004/08/30 19:00:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.27 2004/12/22 18:45:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,10 +212,6 @@ StartupCLOG(void)
 {
 	TransactionId xid = ShmemVariableCache->nextXid;
 	int			pageno = TransactionIdToPage(xid);
-	int			byteno = TransactionIdToByte(xid);
-	int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
-	int			slotno;
-	char	   *byteptr;
 
 	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
@@ -232,17 +228,27 @@ StartupCLOG(void)
 	 * marked by the previous database lifecycle (since subtransaction
 	 * commit writes clog but makes no WAL entry).  Let's just be safe.
 	 * (We need not worry about pages beyond the current one, since those
-	 * will be zeroed when first used.)
+	 * will be zeroed when first used.  For the same reason, there is no
+	 * need to do anything when nextXid is exactly at a page boundary; and
+	 * it's likely that the "current" page doesn't exist yet in that case.)
 	 */
-	slotno = SimpleLruReadPage(ClogCtl, pageno, xid);
-	byteptr = ClogCtl->shared->page_buffer[slotno] + byteno;
+	if (TransactionIdToPgIndex(xid) != 0)
+	{
+		int			byteno = TransactionIdToByte(xid);
+		int			bshift = TransactionIdToBIndex(xid) * CLOG_BITS_PER_XACT;
+		int			slotno;
+		char	   *byteptr;
 
-	/* Zero so-far-unused positions in the current byte */
-	*byteptr &= (1 << bshift) - 1;
-	/* Zero the rest of the page */
-	MemSet(byteptr + 1, 0, BLCKSZ - byteno - 1);
+		slotno = SimpleLruReadPage(ClogCtl, pageno, xid);
+		byteptr = ClogCtl->shared->page_buffer[slotno] + byteno;
 
-	ClogCtl->shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+		/* Zero so-far-unused positions in the current byte */
+		*byteptr &= (1 << bshift) - 1;
+		/* Zero the rest of the page */
+		MemSet(byteptr + 1, 0, BLCKSZ - byteno - 1);
+
+		ClogCtl->shared->page_status[slotno] = SLRU_PAGE_DIRTY;
+	}
 
 	LWLockRelease(CLogControlLock);
 }
