@@ -8,8 +8,8 @@ then	echo "Go to the src/tools/entab directory and do a 'make' and 'make install
 	echo "Then run $0 again."
 	exit 1
 fi
-indent -st -npro </dev/null >/dev/null 2>&1
-if [ "$?" -ne 0 ]
+indent --version </dev/null >/dev/null 2>&1
+if [ "$?" -eq 0 ]
 then	echo "You do not appear to have 'indent' installed on your system." >&2
 	exit 1
 fi
