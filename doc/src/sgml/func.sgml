@@ -41,20 +41,23 @@
 	<entry> COALESCE(<replaceable class="parameter">list</replaceable>) </entry>
 	<entry> non-NULL </entry>
 	<entry> return first non-NULL value in list </entry>
-	<entry> COALESCE(<replaceable class="parameter">r"</replaceable>le>, <replaceable
-	  class="parameter">c2</replaceable> + 5, 0) </entry>
+	<entry> COALESCE(rle, c2 + 5, 0) </entry>
        </row>
        <row>
 	<entry> NULLIF(<replaceable class="parameter">input</replaceable>,<replaceable class="parameter">value</replaceable>) </entry>
 	<entry> <replaceable class="parameter">input</replaceable> or NULL </entry>
-	<entry> return NULL if <replaceable class="parameter">input</replaceable> = <replaceable class="parameter">value</replaceable> </entry>
-	<entry> NULLIF(<replaceable class="parameter">c1</replaceable>, 'N/A')</entry>
+	<entry> return NULL if
+	<replaceable class="parameter">input</replaceable> =
+	<replaceable class="parameter">value</replaceable>,
+	else <replaceable class="parameter">input</replaceable>
+	</entry>
+	<entry> NULLIF(c1, 'N/A') </entry>
        </row>
        <row>
 	<entry> CASE WHEN <replaceable class="parameter">expr</replaceable> THEN <replaceable class="parameter">expr</replaceable> [...] ELSE <replaceable class="parameter">expr</replaceable> END </entry>
 	<entry> <replaceable class="parameter">expr</replaceable> </entry>
-	<entry> return expression for first true clause </entry>
-	<entry> CASE WHEN <replaceable class="parameter">c1</replaceable> = 1 THEN 'match' ELSE 'no match' END </entry>
+	<entry> return expression for first true WHEN clause </entry>
+	<entry> CASE WHEN c1 = 1 THEN 'match' ELSE 'no match' END </entry>
        </row>
       </tbody>
      </tgroup>
@@ -79,16 +82,52 @@
       </thead>
       <tbody>
        <row>
-	<entry> dexp(float8) </entry>
+	<entry> abs(float8) </entry>
 	<entry> float8 </entry>
-	<entry> raise e to the specified exponent </entry>
-	<entry> dexp(2.0) </entry>
+	<entry> absolute value </entry>
+	<entry> abs(-17.4) </entry>
        </row>
        <row>
-	<entry> dpow(float8,float8) </entry>
+	<entry> sqrt(float8) </entry>
+	<entry> float8 </entry>
+	<entry> square root </entry>
+	<entry> sqrt(2.0) </entry>
+       </row>
+       <row>
+	<entry> exp(float8) </entry>
+	<entry> float8 </entry>
+	<entry> raise e to the specified exponent </entry>
+	<entry> exp(2.0) </entry>
+       </row>
+       <row>
+	<entry> ln(float8) </entry>
+	<entry> float8 </entry>
+	<entry> natural logarithm </entry>
+	<entry> ln(2.0) </entry>
+       </row>
+       <row>
+	<entry> log(float8) </entry>
+	<entry> float8 </entry>
+	<entry> base 10 logarithm </entry>
+	<entry> log(2.0) </entry>
+       </row>
+       <row>
+	<entry> pow(float8,float8) </entry>
 	<entry> float8 </entry>
 	<entry> raise a number to the specified exponent </entry>
-	<entry> dpow(2.0, 16.0) </entry>
+	<entry> pow(2.0, 16.0) </entry>
+       </row>
+       <row>
+	<entry> round(float8) </entry>
+	<entry> float8 </entry>
+	<entry> round to nearest integer </entry>
+	<entry> round(42.4) </entry>
+       </row>
+       <row>
+	<entry> trunc(float8) </entry>
+	<entry> float8 </entry>
+	<entry> truncate (towards zero) </entry>
+	<entry> trunc(42.4) </entry>
        </row>
        <row>
 	<entry> float(int) </entry>
@@ -111,6 +150,11 @@
       </tbody>
      </tgroup>
     </table>
+   </para>
+
+   <para>
+   Most of the functions listed for FLOAT8 are also available for
+   type NUMERIC.
    </para>
   </sect1>
 
