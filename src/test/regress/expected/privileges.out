@@ -174,7 +174,10 @@ SELECT * FROM atestv1; -- ok
  1 | two
 (2 rows)
 
+SELECT * FROM atestv2; -- fail
+ERROR:  atest2: permission denied
 GRANT SELECT ON atestv1, atestv3 TO regressuser4;
+GRANT SELECT ON atestv2 TO regressuser2;
 SET SESSION AUTHORIZATION regressuser4;
 SELECT * FROM atestv1; -- ok
  a |  b  
@@ -183,11 +186,37 @@ SELECT * FROM atestv1; -- ok
  1 | two
 (2 rows)
 
+SELECT * FROM atestv2; -- fail
+ERROR:  atestv2: permission denied
 SELECT * FROM atestv3; -- ok
  one | two | three 
 -----+-----+-------
 (0 rows)
 
+CREATE VIEW atestv4 AS SELECT * FROM atestv3; -- nested view
+SELECT * FROM atestv4; -- ok
+ one | two | three 
+-----+-----+-------
+(0 rows)
+
+GRANT SELECT ON atestv4 TO regressuser2;
+SET SESSION AUTHORIZATION regressuser2;
+-- Two complex cases:
+SELECT * FROM atestv3; -- fail
+ERROR:  atestv3: permission denied
+SELECT * FROM atestv4; -- ok (even though regressuser2 cannot access underlying atestv3)
+ one | two | three 
+-----+-----+-------
+(0 rows)
+
+SELECT * FROM atest2; -- ok
+ col1 | col2 
+------+------
+ bar  | t
+(1 row)
+
+SELECT * FROM atestv2; -- fail (even though regressuser2 can access underlying atest2)
+ERROR:  atest2: permission denied
 -- privileges on functions, languages
 -- switch to superuser
 \c -
@@ -521,6 +550,7 @@ DROP TABLE atest3;
 DROP VIEW atestv1;
 DROP VIEW atestv2;
 DROP VIEW atestv3;
+DROP VIEW atestv4;
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;
 DROP USER regressuser1;

@@ -118,12 +118,29 @@ CREATE VIEW atestv2 AS SELECT * FROM atest2;
 CREATE VIEW atestv3 AS SELECT * FROM atest3; -- ok
 
 SELECT * FROM atestv1; -- ok
+SELECT * FROM atestv2; -- fail
 GRANT SELECT ON atestv1, atestv3 TO regressuser4;
+GRANT SELECT ON atestv2 TO regressuser2;
 
 SET SESSION AUTHORIZATION regressuser4;
 
 SELECT * FROM atestv1; -- ok
+SELECT * FROM atestv2; -- fail
 SELECT * FROM atestv3; -- ok
+
+CREATE VIEW atestv4 AS SELECT * FROM atestv3; -- nested view
+SELECT * FROM atestv4; -- ok
+GRANT SELECT ON atestv4 TO regressuser2;
+
+SET SESSION AUTHORIZATION regressuser2;
+
+-- Two complex cases:
+
+SELECT * FROM atestv3; -- fail
+SELECT * FROM atestv4; -- ok (even though regressuser2 cannot access underlying atestv3)
+
+SELECT * FROM atest2; -- ok
+SELECT * FROM atestv2; -- fail (even though regressuser2 can access underlying atest2)
 
 
 -- privileges on functions, languages
@@ -282,6 +299,7 @@ DROP TABLE atest3;
 DROP VIEW atestv1;
 DROP VIEW atestv2;
 DROP VIEW atestv3;
+DROP VIEW atestv4;
 
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;
