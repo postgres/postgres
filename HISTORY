@@ -1,21 +1,32 @@
+PostgreSQL 6.1                   Wed Feb 19 09:15:57 AST 1997
+-------------------------------------------------------------
+
+Major contributors:
+-------------------
+        Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
+        Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
+        Dan is Dan McGuirk <mcguirk@indirect.com>
+        Darren is Darren King <darrenk@insightdist.com>
+        Edmund is Edmund Mergl <E.Mergl@bawue.de>
+        Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
+        Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
+	Marc is "The Hermit Hacker" <scrappy@hub.org>
+        Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>  
+        Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
+        Vivek is Vivek Khera <khera@kci.kciLink.com> 
+
+Enhancements
+------------
+
+autoconf configuration(Marc)
+Genetic Query Optimization(Martin)
+
+
 PostgreSQL 6.0                   Wed Jan 29 00:19:54 EST 1997
 -------------------------------------------------------------
 
 A dump/restore is required for those wishing to migrate data from
 previous releases of PostgreSQL.
-
-Major contributors:
--------------------
-	Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
-	Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
-	Dan is Dan McGuirk <mcguirk@indirect.com>
-	Darren is Darren King <darrenk@insightdist.com>
-	Edmund is Edmund Mergl <E.Mergl@bawue.de>
-	Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
-	Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
- 	Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
-	Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
-	Vivek is Vivek Khera <khera@kci.kciLink.com>
 
 Bug Fixes
 ---------
