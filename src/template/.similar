@@ -1,3 +1,4 @@
 sparc-sun-solaris2.5=sparc_solaris-gcc
 i386-unknown-freebsd3.0=freebsd
 alpha-dec-osf4.0=alpha
+i386-unknown-netbsd1.2.1=netbsd
