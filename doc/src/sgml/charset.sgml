@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.67 2005/03/14 03:59:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.68 2005/03/14 06:49:48 neilc Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -1053,7 +1053,6 @@ RESET client_encoding;
        </listitem>
       </varlistentry>
 
-     <variablelist>
       <varlistentry>
        <term><ulink url="ftp://ftp.ora.com/pub/examples/nutshell/ujip/doc/cjk.inf"></ulink></term>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.308 2005/03/13 09:36:30 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.309 2005/03/14 06:49:48 neilc Exp $
 -->
 
 <chapter Id="runtime">
@@ -4500,7 +4500,7 @@ option         SEMMAP=256
 <prompt>$</prompt> <userinput>sysctl -w kernel.shmall=2097152</userinput>
 </screen>
         In addition these settings can be saved between reboots in 
-        <filename>/etc/sysctl.conf.
+        <filename>/etc/sysctl.conf</filename>.
        </para>
 
        <para>

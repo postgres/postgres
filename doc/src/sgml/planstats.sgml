@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.2 2005/02/27 01:17:34 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.3 2005/03/14 06:49:48 neilc Exp $
 -->
 
 <chapter id="planner-stats-details">
@@ -57,10 +57,10 @@ SELECT reltuples, relpages FROM pg_class WHERE relname = 'tenk1';
 ----------+-----------
       345 |     10000
 </programlisting>
-   The planner will check the <structfield>relpages<structfield> estimate 
-   (this is a cheap operation) and if incorrect may scale 
-   <structfield>reltuples<structfield> to obtain a row estimate. In this case it
-   does not, thus:
+    The planner will check the <structfield>relpages</structfield>
+    estimate (this is a cheap operation) and if incorrect may scale
+    <structfield>reltuples</structfield> to obtain a row estimate. In this
+    case it does not, thus:
 
 <programlisting>
 rows = 10000
@@ -297,7 +297,7 @@ t2.unique2 = t1.unique2
 
    This is due to the join method being nested-loop, with 
    <classname>tenk1</classname> being in the outer loop. The operator is just 
-   our familiar <literal>=<literal>, however the restriction function is 
+   our familiar <literal>=</literal>, however the restriction function is 
    obtained from the <structfield>oprjoin</structfield> column of 
    <classname>pg_operator</classname> - and is <function>eqjoinsel</function>.
    Additionally we use the statistical information for both 
