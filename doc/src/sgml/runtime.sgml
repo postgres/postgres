@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.270 2004/07/24 19:51:22 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.271 2004/08/03 23:42:59 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1339,6 +1339,30 @@ SET ENABLE_SEQSCAN TO OFF;
         value makes it more probable that at least one other
         transaction will become ready to commit during the delay
         interval. The default is five.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+     </sect3>
+     <sect3 id="runtime-config-wal-archiving">
+     <title>Archiving</title>
+
+    <variablelist>
+     <varlistentry id="guc-archive-command" xreflabel="archive_command">
+      <term><varname>archive_command</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        The shell command to execute to archive a completed segment of the
+	WAL file series.  If this is an empty string (which is the default),
+	WAL archiving is disabled.  Any <literal>%p</> in the string is
+	replaced 
+	by the absolute path of the file to archive, while any <literal>%f</>
+	is replaced by the file name only.  Write <literal>%%</> if you need
+	to embed an actual <literal>%</> character in the command.  For more
+	information see <xref linkend="backup-archiving-wal">.  This option
+	can only be set at server start or in the
+	<filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>
