@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.55 1998/10/06 02:31:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.56 1998/10/07 03:45:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,7 +526,9 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				family;
 	size_t		len;
 	int			one = 1;
+#ifdef HAVE_FCNTL_SETLK
 	int			lock_fd;
+#endif
 
 	family = ((hostName != NULL) ? AF_INET : AF_UNIX);
 
