@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar 24 17:37:06 EST 2002
+Last updated:		Sun Mar 24 22:36:39 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -239,7 +239,8 @@ COMMANDS
 	o Add untrusted version of plpython
 	o Add plsh server-side shell language (Peter E)
 	o Allow Java server-side programming (?) [java]
-
+	o Fix problems with complex temporary table creation/destruction
+	  without using PL/PgSQL EXECUTE
 
 CLIENTS
 -------
