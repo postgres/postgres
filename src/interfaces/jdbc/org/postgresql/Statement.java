@@ -39,6 +39,11 @@ public abstract class Statement {
 
     protected boolean escapeProcessing = true;
 
+    // Static variables for parsing SQL when escapeProcessing is true.
+    private static final short IN_SQLCODE = 0;
+    private static final short IN_STRING = 1;
+    private static final short BACKSLASH =2;
+    private static final short ESC_TIMEDATE = 3;
 
     public Statement() {
     }
@@ -226,26 +231,76 @@ public abstract class Statement {
     }
 
     /**
-     * This is an attempt to implement SQL Escape clauses
+     * Filter the SQL string of Java SQL Escape clauses. 
+     *
+     * Currently implemented Escape clauses are those mentioned in 11.3
+     * in the specification. Basically we look through the sql string for
+     * {d xxx}, {t xxx} or {ts xxx} in non-string sql code. When we find
+     * them, we just strip the escape part leaving only the xxx part.
+     * So, something like "select * from x where d={d '2001-10-09'}" would
+     * return "select * from x where d= '2001-10-09'".
      */
-    protected static String escapeSQL(String sql) {
-      // If we find a "{d", assume we have a date escape.
-      //
-      // Since the date escape syntax is very close to the
-      // native Postgres date format, we just remove the escape
-      // delimiters.
-      //
-      // This implementation could use some optimization, but it has
-      // worked in practice for two years of solid use.
-      int index = sql.indexOf("{d");
-      while (index != -1) {
-        StringBuffer buf = new StringBuffer(sql);
-        buf.setCharAt(index, ' ');
-        buf.setCharAt(index + 1, ' ');
-        buf.setCharAt(sql.indexOf('}', index), ' ');
-        sql = new String(buf);
-        index = sql.indexOf("{d");
-      }
-      return sql;
+    protected static String escapeSQL(String sql)
+    {
+        // Since escape codes can only appear in SQL CODE, we keep track
+        // of if we enter a string or not.
+        StringBuffer newsql = new StringBuffer();
+        short state = IN_SQLCODE;
+
+        int i = -1;
+        int len = sql.length();
+        while(++i < len)
+        {
+            char c = sql.charAt(i);
+            switch(state)
+            {
+            case IN_SQLCODE:
+                if(c == '\'')                // start of a string?
+                    state = IN_STRING;
+                else if(c == '{')            // start of an escape code?
+                    if(i+1 < len)
+                    {
+                        char next = sql.charAt(i+1);
+                        if(next == 'd')
+                        {
+                            state = ESC_TIMEDATE;
+                            i++;
+                            break;
+                        }
+                        else if(next == 't')
+                        {
+                            state = ESC_TIMEDATE;
+                            i += (i+2 < len && sql.charAt(i+2) == 's') ? 2 : 1;
+                            break;
+                        }
+                    }
+                newsql.append(c);
+                break;
+
+            case IN_STRING:
+                if(c == '\'')                 // end of string?
+                    state = IN_SQLCODE;
+                else if(c == '\\')            // a backslash?
+                    state = BACKSLASH;
+
+                newsql.append(c);
+                break;
+
+            case BACKSLASH:
+                state = IN_STRING;
+
+                newsql.append(c);
+                break;
+
+            case ESC_TIMEDATE:
+                if(c == '}')
+                    state = IN_SQLCODE;       // end of escape code.
+                else
+                    newsql.append(c);
+                break;
+            } // end switch
+        }
+
+        return newsql.toString();
     }
 }
