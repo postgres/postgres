@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * threads.c
+ * thread.c
  *
  *		  Prototypes and macros around system calls, used to help make
  *		  threaded libraries reentrant and safe to use from threaded applications.
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.1 2003/08/08 02:46:40 momjian Exp $
+ * $Id: thread.c,v 1.2 2003/08/08 03:09:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
