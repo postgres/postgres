@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr  2 13:40:06 EDT 2001
+Last updated:		Wed Apr  4 16:58:17 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -337,6 +337,7 @@ MISCELLANEOUS
 * Force transactions that commit at near the same time use a single fsync()
 * Make blind writes go through the file descriptor cache
 * Allow logging of query durations
+* Write out a CRC with each data block, and verify it on reading
 
 SOURCE CODE
 -----------
@@ -358,7 +359,6 @@ SOURCE CODE
 * Make sure all block numbers are unsigned to increase maximum table size
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
 * HOLDER/HOLDERTAB reanme to PROCLOCKLINK/PROCLOCKLINKTAG (Tom)
-* Correct CRC WAL code to be a real CRC64 algorithm
 * Add version file format stamp to heap and other table types
 * Make elog(LOG) in WAL its own output type, distinct from DEBUG
 * Rename some /contrib modules from pg* to pg_*
