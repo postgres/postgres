@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.135 2000/10/03 03:11:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.136 2000/10/03 03:39:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -620,14 +620,13 @@ static int
 connectMakeNonblocking(PGconn *conn)
 {
 #ifdef WIN32
-	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
+	int			on = 1;
+	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #elif defined(__BEOS__)
 	int			on = 1;
     if (ioctl(conn->sock, FIONBIO, &on) != 0)
 #else
-	int			on = 1;
-
-	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
+	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
 #endif
 	{
 		printfPQExpBuffer(&conn->errorMessage,
