@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.60 1999/03/19 02:41:36 momjian Exp $
+ * $Id: psqlHelp.h,v 1.61 1999/03/24 06:57:20 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,7 +330,7 @@ static struct _helpStruct QL_HELP[] = {
 set GEQO TO 'ON[=#]'|'OFF'\n\
 set R_PLANS TO 'ON'|'OFF'\n\
 set QUERY_LIMIT TO #\n\
-set CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'"},
+set CLIENT_ENCODING TO 'EUC_JP'|'SJIS'|'EUC_CN'|'EUC_KR'|'EUC_TW'|'BIG5'|'MULE_INTERNAL'|'LATIN1'|'LATIN2'|'LATIN3'|'LATIN4'|'LATIN5'|'KOI8|'WIN'|'ALT'"},
 #else
 	"\
 \tSET DateStyle TO 'ISO'|'SQL'|'Postgres'|'European'|'US'|'NonEuropean'\n\
