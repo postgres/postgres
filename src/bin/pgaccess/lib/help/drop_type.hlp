@@ -1,0 +1,20 @@
+.pgaw:Help.f.t insert end "DROP TYPE" {bold} " will remove a user type from the system catalogs. 
+
+" {} "Synopsis" {bold} "
+
+DROP TYPE typename
+
+" {} "Usage" {bold} "
+
+To remove the box type: 
+
+DROP TYPE box
+
+" {} "Notes" {bold} "
+
+DROP TYPE statement is a Postgres language extension. 
+
+Refer to CREATE TYPE for inforamation on how to create types. 
+
+It is the user's responsibility to remove any operators, functions, aggregates, access methods, subtypes, and classes that use a deleted type. 
+"

@@ -1,0 +1,83 @@
+<html><head><title>PgAccess - Common Problems</title></head>
+<body bgcolor="#C0C0C0">
+<h1>Common Problems with PgAccess</h1>
+<a name="connfail"><h2>Connection failure</h2>
+One of the most common initial problems is the message:<p>
+<samp>Error connecting database<br>
+Connection to database failed<br>
+connectDB() failed: Is the<br>
+postmaster running and<br>
+accepting TCP/IP (with -i)<br>
+connections at 'localhost' on<br>
+port '5432'?</samp><p>
+This usually occurs because the "postmaster" (the postgreSQL backend) was not
+started with the <samp>-i</samp> option.  Usually just adding <samp>-i</samp> to
+the command line that starts the postmaster and restarting will fix this.<p>
+If you have installed the prewritten script to start <b>postgreSQL</b> 
+automatically, this option is (currently) commented out:<p>
+<samp># PGOPTS="-i"</samp><p>
+just remove the hash and space and comment out the "blank" option above:<p>
+<samp>PGOPTS=""</samp><p>
+<a name="nonuser"><h2>User not defined</h2>
+Initially, <b>postgreSQL</b> only has one user, <samp>postgres</samp>, and any
+other user who starts up PgAccess will get the message:<p>
+<samp>Error connecting database<br>
+Connection to database failed<br>
+FATAL 1: SetUserId: user<br>
+'jim' is not in 'pg_shadow'</samp><p>
+See <b>User Administration</b> in the <b>PgAccess tutorial</b> for a description
+of how to create users.<p>
+<a name="libpg"><h2>libpgtcl not found</h2>
+PgAccess requires a library of functions named <samp>libpgtcl</samp>.  This
+should be available with the postgreSQL distribution, and is usually placed in
+the correct location when installing postgreSQL.  First check that there is a
+file named <samp>libpgtcl.so</samp> (perhaps with a number appended - or
+<samp>libpgtcl.dll</samp> on Windows systems) on your
+system.  If not, you will have to download and perhaps compile this library.<p>
+<samp>ftp://ftp.flex.ro/pub/pgaccess</samp><p>
+is one place that you can download precompiled libpgtcl libraries for
+PgAccess.<p>
+<a name="spchar">
+<h2>Locale specific characters</h2>
+This problem occurs with some special characters used in different
+countries because PgAccess did not use fonts with `-ISO8859-1' encoding.<p>
+One solution was proposed by H.P.Heidinger ( hph@hphbbs.ruhr.de) and
+is very simple.<p>
+If you look in the file pgaccess.tcl, you will find the fonts declared in 
+this manner:<p>
+<TT>$ grep -e '-font' -i pgaccess.tcl<BR>
+-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \<br>
+...</TT></P>
+The font declarations should be altered to:<p>
+<tt>-font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-iso8859-1<br>
+...</tt><p>
+That is, inserting an asterisk between the first pair of hyphens, and changing
+the final two asterisks to <samp>iso8859</samp> and <samp>1</samp>
+respectively.<p>
+You can alter the source code by running the following script :
+<P><TT>#!/bin/sh<BR>
+cp pgaccess.tcl pgaccess.tcl-org<BR>
+cat pgaccess.tcl |\<BR>
+sed -e's/\-\*\-\*\ /\-iso8859\-1\ /g' |\<BR>
+sed -e's/\-\*\-\*\}/\-iso8859\-1}/g' |\<BR>
+sed -e's/\-\*\-\*\]/\-iso8859\-1]/g' |\<BR>
+sed -e's/\-\*\-\*$/\-iso8859\-1/g' |\<BR>
+sed -e's/\-Clean\-/\-Fixed\-/g' |\<BR>
+sed -e's/clean/fixed/g' &gt;pgaccess.iso<BR>
+mv pgaccess.iso pgaccess.tcl<BR>
+chmod +x pgaccess.tcl</TT><P>
+The final version of PgAccess (1.0) will let the user decide what fonts
+will be used through a &quot;preferences&quot; dialog window.</p>
+<a name="pg63">
+<h2>Problem with PostgreSQL 6.3.x</h2>
+PgAccess 0.93 and later may have problems working with PostgreSQL 6.3.x.
+Changes in libpgtcl have been made to remove these, but if you are
+using PostgreSQL 6.3.x, this patch will allow you to get around the problems.<p>
+In the procedure <tt>wpg_exec</tt> change the following line:<p>
+<tt>set pgsql(errmsg) [pg_result $pgsql(res) -error]</tt><p>
+to this:<p>
+<tt>set pgsql(errmsg) "NO ERROR INFORMATION SUPPLIED"</tt><p>
+and the program will work. The only disadvantage is that with some error 
+conditions, you will not get the appropriate error message from libpgtcl.<p>
+<a href="index.html#problems">Back to index</a>
+</body></html>

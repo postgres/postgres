@@ -1,0 +1,13 @@
+.pgaw:Help.f.t insert end \
+"PostgreSQL" {title} \
+"\n\n" {} \
+"What is PostgreSQL?\n" {bold} \
+"  PostgreSQL is a object-relational database management system, originally developed at the University of California at Berkeley. PostgreSQL is based on  Postgres release 4.2. The Postgres project, led by Professor Michael Stonebraker, was sponsored by the Defense Advanced Research Projects Agency (DARPA), the Army Research Office (ARO), the National Science Foundation (NSF), and ESL, Inc.\n\n" {} \
+"	History of PostgreSQL\n" {link history} \
+"	Copyrights\n" {link copyrights} \
+"	Y2K statement\n" {link y2k} \
+"	PostgreSQL reserved key words\n" {link keywords} \
+"	Data types" {link data_types} " , " {} "Functions\n" {link pgfunctions} \
+"	Quick guide of PostgreSQL commands\n" {link sql_guide} \
+"	Inheritance\n" {link inheritance} \
+"	Multi-Version Concurency Control\n" {link mvcc}

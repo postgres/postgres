@@ -1,0 +1,102 @@
+.pgaw:Help.f.t insert end \
+"String functions\n\n" {title} \
+"SQL92 String Functions" {bold} \
+" - SQL92 defines string functions with specific syntax. Some of these are implemented using other Postgres functions. The supported string types for SQL92 are char, varchar, and text. 
+" {} "
+char_length(string)" {bold} " 
+	Returns: int4 
+	length of string" {} "
+
+character_length(string)" {bold} " 
+	Returns: int4 
+	length of string" {} " 
+
+lower(string)" {bold} " 
+	Returns: string 
+	convert string to lower case" {} " 
+
+octet_length(string)" {bold} " 
+	Returns: int4 
+	storage length of string" {} " 
+
+position(string in string)" {bold} " 
+	Returns: int4 
+	location of specified substring" {} " 
+
+substring(string \[from int\] \[for int\])" {bold} " 
+	Returns: string 
+	extract specified substring" {} " 
+
+trim(\[leading|trailing|both\] \[string\] from string)" {bold} " 
+	Returns: string 
+	trim characters from string" {} " 
+
+upper(text)" {bold} " 
+	Returns: text 
+	convert text to upper case 
+
+Many additional string functions are available for text, varchar(), and char() types. Some are used internally to implement the SQL92 string functions listed above. 
+
+" {} "PostgreSQL String Functions
+
+char(text)" {bold} " 
+	Returns: char 
+	convert text to char type 
+
+" {} "char(varchar)" {bold} " 
+	Returns: char 
+	convert varchar to char type 
+
+" {} "initcap(text)" {bold} " 
+	Returns: text 
+	first letter of each word to upper case 
+
+" {} "lpad(text,int,text)" {bold} " 
+	Returns: text 
+	left pad string to specified length 
+
+" {} "ltrim(text,text)" {bold} " 
+	Returns: text 
+	left trim characters from text 
+
+" {} "textpos(text,text)" {bold} " 
+	Returns:text 
+	locate specified substring 
+
+" {} "rpad(text,int,text)" {bold} "
+	Returns: text
+	right pad string to specified length 
+
+" {} "rtrim(text,text)" {bold} " 
+	Returns: text 
+	right trim characters from text 
+
+" {} "substr(text,int\[,int\])" {bold} " 
+	Returns: text 
+	extract specified substring 
+
+" {} "text(char)" {bold} " 
+	Returns: text 
+	convert char to text type 
+
+" {} "text(varchar)" {bold} " 
+	Returns: text 
+	convert varchar to text type 
+
+" {} "translate(text,from,to)" {bold} " 
+	Returns: text 
+	convert character in string 
+
+" {} "varchar(char)" {bold} " 
+	Returns: varchar 
+	convert char to varchar type 
+
+" {} "varchar(text)" {bold} " 
+	Returns: varchar 
+	convert text to varchar type 
+
+Most functions explicitly defined for text will work for char() and varchar() arguments. 
+
+" {} \
+"PostgreSQL functions\n" {link pgfunctions} \
+"Next - Date/Time functions" {link datefunc}

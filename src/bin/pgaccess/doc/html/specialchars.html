@@ -1,0 +1,47 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+   <TITLE>Special locale characters</TITLE>
+   <META NAME="GENERATOR" CONTENT="Mozilla/3.04Gold (X11; I; Linux 2.0.32 i586) [Netscape]">
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EF" VLINK="#51188E" ALINK="#FF0000">
+
+<H1>Special locale characters and PgAccess 
+<HR WIDTH="100%"></H1>
+
+<P>The problem is related with some special characters used in different
+countries because PgAccess did not use fonts with `-ISO8859-1' encoding
+-- </P>
+
+<P>The sollution was proposed by H.P.Heidinger ( hph@hphbbs.ruhr.de) and
+it's very simple.</P>
+
+<P>If you look into PgAccess, you will find fonts declared as follows :</P>
+
+<P><TT>$ grep -e '-font' -i pgaccess.tcl<BR>
+-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \<BR>
+-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \<BR>
+-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \<BR>
+-font -Adobe-Helvetica-Medium-R-Normal--*-120-*-*-*-*-*-* \</TT></P>
+
+<P>It should be something like: -adobe-helvetica-medium-r-normal-*-*-120-*-*-*-*-iso8859-1</P>
+
+<P>You can achieve this by running the following script :</P>
+
+<P><TT>#!/bin/sh<BR>
+cp pgaccess.tcl pgaccess.tcl-org<BR>
+cat pgaccess.tcl |\<BR>
+sed -e's/\-\*\-\*\ /\-iso8859\-1\ /g' |\<BR>
+sed -e's/\-\*\-\*\}/\-iso8859\-1}/g' |\<BR>
+sed -e's/\-\*\-\*\]/\-iso8859\-1]/g' |\<BR>
+sed -e's/\-\*\-\*$/\-iso8859\-1/g' |\<BR>
+sed -e's/\-Clean\-/\-Fixed\-/g' |\<BR>
+sed -e's/clean/fixed/g' &gt;pgaccess.iso<BR>
+mv pgaccess.iso pgaccess.tcl<BR>
+chmod +x pgaccess.tcl</TT></P>
+
+<P>The final version of PgAccess (1.0) will let the user decide what fonts
+will be used through a &quot;preferences&quot; dialog window.</P>
+
+</BODY>
+</HTML>

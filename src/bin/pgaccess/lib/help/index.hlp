@@ -1,0 +1,19 @@
+.pgaw:Help.f.t insert end \
+"PgAccess help index" {title} \
+"
+
+Topics available:
+" {} \
+"	Tables\n" {link tables} \
+"	Queries\n" {link queries} \
+"	Views\n" {link views} \
+"	Sequences\n" {link sequences} \
+"	Functions\n" {link functions} \
+"	Reports\n" {link reports} \
+"	Forms\n" {link forms} \
+"	Scripts\n" {link scripts} \
+"	Users\n" {link users} \
+"	Schema\n\n" {link schema} \
+"	PostgreSQL\n" {link postgresql} \
+"	The author of PgAccess\n" {link author}
+

@@ -1,0 +1,535 @@
+array set Messages {
+
+"Label" "Beschriftung"
+ 
+"Save schema" "Schema speichern"
+ 
+"Is unique ?" "Ist eindeutig ?"
+ 
+"Report builder" "Berichtgenerator"
+ 
+"Criteria" "Kriterien"
+ 
+"FATAL ERROR upgrading PgAccess table" "SCHWERER FEHLER beim Aktualisieren der PgAccess-Tabelle"
+ 
+"Save this query as a view" "Abfrage als View speichern"
+ 
+"Page header" "Seitenkopf"
+ 
+"Query name" "Abfragename"
+ 
+"Please select an object first!" "Bitte wählen Sie zuerst ein Objekt aus"
+ 
+"Fields :" "Felder :"
+ 
+"Name" "Name"
+ 
+"File name" "Dateiname"
+ 
+"Detail record" "Detail Datensatz"
+ 
+"Auto-load the last opened database at startup" "Zuletzt geöffnete Datenbank beim Start laden"
+ 
+"Maxvalue" "maximaler Wert"
+ 
+"Start value" "Startwert"
+ 
+"Report fields" "Berichtsfelder"
+ 
+"Test form" "Formular testen"
+ 
+"Error trying to connect to database '%s' on host %s \n\nPostgreSQL error message:%s" "Fehler beim Verbinden mit der Datenbank '%s' auf Rechner %s \n\nPostgreSQL Fehlercode :%s"
+ 
+"No field type ?" "Kein Feldtyp ?"
+ 
+"User without name?" "Dieser Benutzer hat keinen Namen ?"
+ 
+"You have to supply a name for this schema!" "Sie müssen einen Namen für diese Schema angeben."
+ 
+"Last value" "Letzter Wert"
+ 
+"Preferences" "Voreinstellungen"
+ 
+"View '%s' already exists!\nOverwrite ?" "View '%s' bereits vorhanden.\n Überschreiben ?"
+ 
+"You have to select an index!" "Sie müssen einen Index auswählen"
+ 
+"Field type" "Feldtyp"
+ 
+"Script name" "Skriptname"
+ 
+"Reload" "Erneut laden"
+ 
+"Remove table %s from query?" "Tabelle %s aus abfrage löschen ?"
+ 
+"SQL window" "SQL-Fenster"
+ 
+"Allow user to create other users" "Benutzer darf andere Benutzer anlegen"
+ 
+"Delete current record ?" "Aktuellen Satz löschen ?"
+ 
+"List box" "Listbox"
+ 
+"Save to query builder" "In Abfragegenerator speichern"
+ 
+"fixed width" "feste Breite"
+ 
+"Scripts" "Skripten"
+ 
+"Yes" "Ja"
+ 
+"Add label" "Beschriftung hinzufügen"
+ 
+"Sequence created!" "Zähler erzeugt"
+ 
+"Field information" "Feldeigenschaften"
+ 
+"Design" "Entwurf"
+ 
+"Field" "Feld"
+ 
+"You have to supply an external file name!" "Sie müssen einen externen Dateinamen angeben."
+ 
+"Increment" "Inkrement"
+ 
+"No" "Nein"
+ 
+"Form design" "Formularentwurf"
+ 
+"You must supply a return type!" "Sie müssen einen Rückgabewert angeben."
+ 
+"Remove field from result ?" "Feld aus Ergebnis löschen ?"
+ 
+"There is another object (a %s) with the same name.\nPlease change it!" "Es gibt bereits ein Objekt mit Namen %s.\nBitte wählen Sie einen anderen Namen."
+ 
+"This query has no commands?" "Die Abfrage enthält keine Anweisungen."
+ 
+"Execute query" "Abfrage ausführen"
+ 
+"field cannot be null" "Feld darf nicht null sein."
+ 
+"Help" "Hilfe"
+ 
+"Rename column" "Spalte umbenennen"
+ 
+"Database" "Datenbank"
+ 
+"Information" "Information"
+ 
+"Close" "Schließen"
+ 
+"Command" "Befehl"
+ 
+"Table" "Tabelle"
+ 
+"verify password" "Passwort bestätigen"
+ 
+"Vacuum" "Komprimieren"
+ 
+"Default value" "Standardwert"
+ 
+"Import" "Import"
+ 
+"Delete index" "Lösche Index"
+ 
+"Move up" "nach oben"
+ 
+"index properties" "Index-Eigenschaften"
+ 
+"check" "Überprüfe"
+ 
+"Create new table" "Neue Tabelle erzeugen"
+ 
+"Visual query designer" "Visueller Abfragedesigner"
+ 
+"Delete all" "Alle löschen"
+ 
+"You are going to delete\n\n %s \n\nProceed?" "Sie sind dabei\n\n %s \n\nzu löschen. Fortsetzen ?"
+ 
+"Schema name" "Schema-Name"
+ 
+"Error executing query" "Fehler beim Ausführen der Abfrage"
+ 
+"Report name" "Berichtname"
+ 
+"Add field" "Feld hinzufügen"
+ 
+"Field name" "Feldname"
+ 
+"FATAL ERROR searching for PgAccess system tables" "FATALER FEHLER Kann PgAccess Systemtabellen nicht finden"
+ 
+"A big number of rows displayed in table view will take a lot of memory!" "Die Anzeige vieler Zeilen in der Tabellenansicht benötigt sehr viel Speicher"
+ 
+"Preview" "Vorschau"
+ 
+"Users" "Benutzer"
+ 
+"Owner" "Eigentümer"
+ 
+"Form's window internal name" "interner Formularname"
+ 
+"Sort field" "Sortierfeld"
+ 
+"New name is the same as the old one!" "Neuer und alter Name stimmen überein."
+ 
+"Warning" "Warnung"
+ 
+"Suggestions at" "Vorschläge an"
+ 
+"Functions" "Funktionen"
+ 
+"Schema" "Schemata"
+ 
+"Open" "Öffnen"
+ 
+"size" "Größe"
+ 
+"Delete" "Löschen"
+ 
+"Returns" "Ergebnistyp"
+ 
+"Define new user" "Neuen Benutzer anlegen"
+ 
+"Move down" "nach unten"
+ 
+"Design script" "Entwurfsskript"
+ 
+"Check box" "Check box"
+ 
+"FINAL WARNING" "LETZTE WARNUNG"
+ 
+"Add table" "Tabelle hinzufügen"
+ 
+"Table viewer font" "Schrift zur Tabellenanzeige"
+ 
+"The field type is not specified!" "Der Feldtyp ist nicht angegeben"
+ 
+"Close test form" "Testformular schließen"
+ 
+"Export table" "Tabelle exportieren"
+ 
+"Add new index" "Neuen Index hinzufügen"
+ 
+"Left" "Links"
+ 
+"Field delimiter" "Feldtrennzeichen"
+ 
+"Add formula" "Formular hinzufügen"
+ 
+"Open database" "Datenbank öffnen"
+ 
+"Return" "?Zurück?"
+ 
+"Changed fonts may appear in the next working session!" "Die neuen Schrifteinstellungen werden erst beim nächsten Neustart wirksam"
+ 
+"Error" "Fehler"
+ 
+"Enter a field name" "Bitte geben Sie einen Feldnamen ein"
+ 
+"field name" "Feldname"
+ 
+"Forms" "Formulare"
+ 
+"Cannot add column" "Kann keine Spalte hinzufügen"
+ 
+"Clean" "Anzeige löschen"
+ 
+"Delete all objects ?" "Alle Objekte löschen ?"
+ 
+"Preferred language" "Bevorzugte Sprache"
+ 
+"Execute SQL" "SQL ausführen"
+ 
+"Sequences" "Zähler"
+ 
+"Button" "Knopf"
+ 
+"Language" "Sprache"
+ 
+"Query '%s' was not found!" "Abfrage '%s' nicht gefunden"
+ 
+"Object" "Objekt"
+ 
+"Font fixed" "feste Schriftbreite"
+ 
+"Table name" "Tabellenname"
+ 
+"Export" "Export"
+ 
+"Change user" "Benutzer bearbeiten"
+ 
+"You must give object a new name!" "Sie müssen dem Objekt einen neuen Namen geben"
+ 
+"Query" "Abfrage"
+ 
+"User name" "Benutzername"
+ 
+"Font normal" "normale Schrift"
+ 
+"Import table" "Tabelle importieren"
+ 
+"Toolbar" "Toolbar"
+ 
+"Radio btn" "Radio"
+ 
+"You must supply a name for this function!" "Sie müssen dieser Funktion einen Namen geben"
+ 
+"You have to select index fields!" "Sie müssen Index-Felder auswählen."
+ 
+"Constraint" "Constraint"
+ 
+"The script must have a name" "Das Skript muß einen Namen haben."
+ 
+"Save" "Speichern"
+ 
+"Exit" "Beenden"
+ 
+"Inherits" "Übernehme"
+ 
+"Delete field" "Feld löschen"
+ 
+"About" "Über"
+ 
+"Empty field name ?" "Leerer Feldname ?"
+ 
+"All report information will be deleted.\n\nProceed ?" "Alle Berichsdaten werden gelöscht\n\nFortfahren ?"
+ 
+"Host" "Rechner"
+ 
+"vacuuming database %s ..." "Komprimiere Datenbank %s ..."
+ 
+"Indexes defined" "definierte Indizes"
+ 
+"You must specify field size!" "Sie müssen eine Feldgröße angeben."
+ 
+"Schema '%s' already exists!" "Schema '%s' existiert bereits."
+ 
+"There is another field with the same name: '%s'!\n\nReplace it ?" "Es gibt bereits ein Feld mit diesem Namen : '%s'!\n\nSoll es ersetzt werden ?"
+ 
+"Contents" "Inhalt"
+ 
+"Views" "Views"
+ 
+"Variable" "Variable"
+ 
+"Error executing query\n\n%s\n\nPostgreSQL error message:\n%s\nPostgreSQL status:%s" "Fehler beim Ausführen der Abfrage\n\n%s\n\nPostgreSQL Fehlercode :\n%s \n PostgreSQL Status :%s"
+ 
+"Filter conditions" "Filterbedingung"
+ 
+"Error retrieving query definition" "Fehler beim Empfangen der Abfragedefinition"
+ 
+"Error deleting view" "Fehler beim Löschen der View"
+ 
+"New" "Neu"
+ 
+"Tables" "Tabellen"
+ 
+"Create" "Erzeugen"
+ 
+"Forms need an internal name, only literals, low case" "Formulare benötigen einen internen Namen (nur Kleinbuchstaben)"
+ 
+"Do you want to save the form into the database?" "Möchten Sie das Formular in der Datenbank speichern ?"
+ 
+"Schema '%s' was not found!" "Schema '%s' nicht gefunden"
+ 
+"proportional" "proportional"
+ 
+"Function saved!" "Funktion gespeichert"
+ 
+"with OIDs" "mit OIDs"
+ 
+"Table information" "Information de table"
+ 
+"Error inserting new record" "Fehler beim Einfügen des neuen Datensatzes"
+ 
+"Column name '%s' already exists in this table!" "Spaltenname '%s' existiert bereits"
+ 
+"File" "Datei"
+ 
+"Your table has no fields!" "Die Tabelle hat keine Felder."
+ 
+"Height" "Höhe"
+ 
+"You will always get the latest version at:" "Die aktuellste Version finden Sie unter:"
+ 
+"Form must have a name" "Das Formular muß einen Namen haben"
+ 
+"Password" "Passwort"
+ 
+"Valid until (date)" "Gültig bis (Datum)"
+ 
+"Report source" "Datenquelle"
+ 
+"Allow user to create databases" "Benutzer darf Datenbanken anlegen"
+ 
+"Cancel" "Abbrechen"
+ 
+"Is clustered ?" "Clustered ?"
+ 
+"Add new column" "Neue Spalte hinzufügen"
+ 
+"Show SQL" "SQL anzeigen."
+ 
+"New name" "Neuer Name"
+ 
+"Table '%s' not found!" "Tabelle '%s' nicht gefunden"
+ 
+"Form name" "Formularname"
+ 
+"Visual designer" "Visual Designer"
+ 
+"You choose to delete index\n\n %s \n\nProceed?" "Soll der Index \n\n %s \n\n wirklich gelöscht werden ?"
+ 
+"Error retrieving from" "Fehler beim Empfangen von..."
+ 
+"Save query definition" "Abfragedefinition speichern"
+ 
+"A Tcl/Tk interface to\nPostgreSQL\nby Constantin Teodorescu" "Ein Tcl/TK Interface für\nPostgreSQL\n von Constantin Teodorescu"
+ 
+"Operation completed!" "Operation abgeschlossen"
+ 
+"Max rows displayed in table/query view" "maximale Anzahl angezeigter Sätze in Tabellen/Abfragen/Views"
+ 
+"Passwords do not match!" "Die Passworte stimmen nicht überein"
+ 
+"Rename" "Umbenennen"
+ 
+"Entry" "Eintrag"
+ 
+"Error retrieving schema definition" "Fehler beim Empfang der Schemadefinition"
+ 
+"This is an action query!\n\nExecute it?" "Dies ist ein Aktionsabfrage.\n\nAusführen ?"
+ 
+"Error retrieving view definition for" "Fehler beim Ermitteln der Viewdefinition"
+ 
+"options" "Optionen"
+ 
+"Sequence '%s' not found!" "Zähler '%s' nicht gefunden"
+ 
+"Text" "Text"
+ 
+"Tcl error executing pg_exec %s\n\n%s" "Tcl-Fehler beim Ausführen von pg_exec %s\n\n%s"
+ 
+"Width" "Breite"
+ 
+"You have to supply a name for this query!" "Sie müssen einen Namen für die Abfrage eingeben."
+ 
+"Accessing data. Please wait ..." "Datenzugriff. Bitte warten ..."
+ 
+"Report footer" "Reportfuß"
+ 
+"Parameters" "Parameter"
+ 
+"Queries" "Abfragen"
+ 
+"Query '%s' already exists!" "Diese Abfrage '%s'  existiert bereits."
+ 
+"Font bold" "Fettdruck"
+ 
+"Query builder" "Abfrageassistent"
+ 
+"Error defining view" "Fehler beim definieren der View"
+ 
+"Top" "Oben"
+ 
+"You must supply a name for your table!" "Sie müssen einen Tabellennamen angeben"
+ 
+"Page footer" "Seitenfuß"
+ 
+"Font italic" "Kursivschrift"
+ 
+"Field name not entered!" "Kein Feldname eingegeben."
+ 
+"Index name cannot be null!" "Der Index-Name darf nicht null sein."
+ 
+"Sort" "Sortieren"
+ 
+"Import-Export table" "Import/Export Tabelle"
+ 
+"Point" "Punkt"
+ 
+"type" "Typ"
+ 
+"You should supply a name for this sequence" "Sie sollten einen Namen für diesen Zähler angeben"
+ 
+"Remove link ?" "Verweis löschen?"
+ 
+"You have to supply a table name!" "Sie müssen einen Tabellennamen angeben"
+ 
+"Report header" "Berichtskopf"
+ 
+"Attributes" "Attribute"
+ 
+"Table '%s' already in schema" "die Tabelle '%s' ist bereits in diesem
+Schema vorhanden"
+ 
+"Username" "Benutzername"
+ 
+"Minvalue" "minimaler Wert"
+ 
+"Sequence name" "Name des Zählers"
+ 
+"Define sequence" "Zähler definieren"
+ 
+"Function" "Funktion"
+ 
+"Sorting and filtering not (yet) available from queries!\n\nPlease enter them in the query definition!" "Das Sortieren und Filtern aus Abfragen heraus ist derzeit noch nicht möglich\n\nBitte legen Sie sie in der Abfragedefinnition fest!"
+ 
+"Reports" "Berichte"
+
+"Columns" "Spalten"
+ 
+"Indexes" "Indizes"
+
+"Permissions" "Berechtigungen"
+
+"not null" "nicht null"
+
+"Cluster index" "Cluster index" 
+
+"index columns" "Indexspalten"
+
+"Add user" "Benutzer hinzufügen"
+
+"Change permissions" "Berechtigungen ändern"
+
+"select" "Auswählen"
+
+"update" "Aktualisieren"
+
+"insert" "Einfügen"
+
+"rule" "Regeln"
+
+"Identification" "Identifikation"
+
+"Owner ID" "ID des Eigenümers"
+
+"Has primary key ?" "Primäschlüssel vorhanden ?"
+
+"Has rules ?" "Regeln vorhanden ?"
+
+"Statistics" "Statistik"
+
+"Number of tuples" "Anzahl der Sätze"
+
+"Number of pages" "Anzahl der Seiten"
+
+"Index name" "Indexname"
+
+"Index fields" "Indexfelder"
+
+"Table OID" "OID der Tabelle"
+
+"View system tables" "Systemtabellen anzeigen"
+
+"Back" "Zurück"
+
+"primary key" "Primärschlüssel"
+
+"Comments" "Anmerkungen"
+
+"Print" "Drucken"
+}
+
+

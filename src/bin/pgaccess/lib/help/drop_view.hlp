@@ -1,0 +1,17 @@
+.pgaw:Help.f.t insert end "DROP VIEW" {bold} " drops an existing view from the database. To execute this command you must be the owner of the view. 
+
+" {} "Synopsis" {bold} "
+
+DROP VIEW view
+
+" {} "Usage" {bold} "
+
+This command will remove the view called kinds: 
+
+DROP VIEW kinds;
+
+" {} "Notes" {bold} "
+
+The Postgres DROP TABLE statement also drops views. 
+
+Refer to CREATE VIEW for information on how to create views. "

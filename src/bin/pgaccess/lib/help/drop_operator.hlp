@@ -1,0 +1,32 @@
+.pgaw:Help.f.t insert end "DROP OPERATOR" {bold} " The DROP OPERATOR statement drops an existing operator from the database. To execute this command you must be the owner of the operator.  \
+The left or right type of a left or right unary operator, respectively, may be specified as NONE. 
+
+" {} "Synopsis" {bold} "
+" {} "
+DROP OPERATOR id ( type | NONE \[,...\] )
+
+" {code} "Usage" {bold} "
+
+Remove power operator a^n for int4: 
+" {} "
+DROP OPERATOR ^ (int4, int4);
+  
+" {code} "
+Remove left unary operator !a for booleans: 
+" {} "
+DROP OPERATOR ! (none, bool);
+  
+" {code} "
+Remove right unary factorial operator a! for int4: 
+" {} "
+DROP OPERATOR ! (int4, none);
+
+
+" {code} "Notes" {bold} "
+
+The DROP OPERATOR statement is a Postgres language extension. 
+
+Refer to CREATE OPERATOR for information on how to create operators. 
+
+It is the user's responsibility to remove any access methods and operator classes that rely on the deleted operator. 
+"

@@ -1,0 +1,130 @@
+.pgaw:Help.f.t insert end "CREATE LANGUAGE" {bold} ". Using CREATE LANGUAGE, a Postgres user can register a new language with Postgres. Subsequently, functions and trigger procedures can be defined in this new language. The user must \
+have the Postgres superuser privilege to register a new language. 
+
+Writing PL handlers 
+
+	The call handler for a procedural language must be written in a compiler language such as 'C' and registered with Postgres as a function taking no arguments and returning the opaque type, a \
+placeholder for unspecified or undefined types.. This prevents the call handler from being called directly as a function from queries. 
+However, arguments must be supplied on the actual call when a PL function or trigger procedure in the language offered by the handler is to be executed.  \
+       When called from the trigger manager, the only argument is the object ID from the procedure's pg_proc entry. All other information from the trigger manager is found in the global \
+       CurrentTriggerData pointer. 
+       When called from the function manager, the arguments are the object ID of the procedure's pg_proc entry, the number of arguments given to the PL function, the arguments in a \
+       FmgrValues structure and a pointer to a boolean where the function tells the caller if the return value is the SQL NULL value. 
+
+	It's up to the call handler to fetch the pg_proc entry and to analyze the argument and return types of the called procedure. The AS clause from the CREATE FUNCTION of the procedure will \
+be found in the prosrc attribute of the pg_proc table entry. This may be the source text in the procedural language itself (like for PL/Tcl), a pathname to a file or anything else that tells the call \
+handler what to do in detail. 
+
+" {} "Synopsis" {bold} "
+
+CREATE \[ TRUSTED \] PROCEDURAL LANGUAGE 'langname'
+    HANDLER call_handler
+    LANCOMPILER 'comment'
+
+" {code} "Inputs" {bold} "
+
+" {} "TRUSTED" {italic} "
+       TRUSTED specifies that the call handler for the language is safe; that is, it offers an unprivileged user no functionality to bypass access restrictions. If this keyword is omitted when
+       registering the language, only users with the Postgres superuser privilege can use this language to create new functions (like the 'C' language). 
+
+" {} "langname" {italic} "
+       The name of the new procedural language. The language name is case insensitive. A procedural language cannot override one of the built-in languages of Postgres. 
+
+" {} "HANDLER call_handler" {italic} "
+       call_handler is the name of a previously registered function that will be called to execute the PL procedures. 
+
+" {} "comment" {italic} "
+       The LANCOMPILER argument is the string that will be inserted in the LANCOMPILER attribute of the new pg_language entry. At present, Postgres does not use this attribute in any way. 
+
+" {} "Outputs" {bold} "
+
+" {} "CREATE" {italic} "
+       This message is returned if the language is successfully created. 
+
+" {} "ERROR: PL handler function funcname\(\) doesn't exist" {italic} "
+       This error is returned if the function funcname() is not found. 
+
+" {} "Usage" {bold} "
+
+This is a template for a PL handler written in 'C': 
+" {} "
+   #include \"executor/spi.h\"
+   #include \"commands/trigger.h\"
+   #include \"utils/elog.h\"
+   #include \"fmgr.h\"        /* for FmgrValues struct */
+   #include \"access/heapam.h\"
+   #include \"utils/syscache.h\"
+   #include \"catalog/pg_proc.h\"
+   #include \"catalog/pg_type.h\"
+        
+   Datum
+   plsample_call_handler\(
+        Oid       prooid,
+        int       pronargs,
+        FmgrValues     *proargs,
+        bool      *isNull\)
+   \{
+        Datum          retval;
+        TriggerData    *trigdata;
+
+        if \(CurrentTriggerData == NULL\) \{
+             /*
+              * Called as a function
+              */
+
+             retval = ...
+        \} else \{
+             /*
+              * Called as a trigger procedure
+              */
+             trigdata = CurrentTriggerData;
+             CurrentTriggerData = NULL;
+
+             retval = ...
+        \}
+
+        *isNull = false;
+        return retval;
+   \}
+" {code} "  
+Only a few thousand lines of code have to be added instead of the dots to complete the PL call handler. See CREATE FUNCTION for information on how to compile it into a loadable module .
+
+The following commands then register the sample procedural language: 
+" {} "
+    CREATE FUNCTION plsample_call_handler () RETURNS opaque
+    AS '/usr/local/pgsql/lib/plsample.so'
+    LANGUAGE 'C';
+    
+    CREATE PROCEDURAL LANGUAGE 'plsample'
+    HANDLER plsample_call_handler
+    LANCOMPILER 'PL/Sample';
+
+" {code} "Notes" {bold} "
+
+Use " {} "CREATE FUNCTION" {bold} " to create a function. 
+
+Use DROP LANGUAGE to drop procedural languages. 
+
+Refer to the table pg_language for further information: 
+
+Table    = pg_language
+" {} "
++-----------------+----------+-------+
+| Field           |   Type   | Length|
++-----------------+----------+-------+
+| lanname         | name     |   32  |
+| lancompiler     | text     |   var |
++-----------------+----------+-------+
+
+lanname |lancompiler   
+--------+--------------
+internal|n/a           
+lisp    |/usr/ucb/liszt
+C       |/bin/cc       
+sql     |postgres
+" {code} "
+
+" {} "Restrictions" {bold} "
+
+Since the call handler for a procedural language must be registered with Postgres in the 'C' language, it inherits all the capabilities and restrictions of 'C' functions.
+"

@@ -1,0 +1,22 @@
+.pgaw:Help.f.t insert end "CLOSE" {bold} " frees the resources associated with an open cursor. After the cursor is closed, no subsequent operations are allowed on it. A cursor should be closed when it is no longer needed. \
+An implicit close is executed for every open cursor when a transaction is terminated by  \
+" {} "COMMIT" {link commit} " or " {} "ROLLBACK" {link rollback} ".
+
+" {} "Synopsis" {bold} "
+
+CLOSE cursor
+
+" {} "Usage" {bold} "
+
+Close the cursor liahona:
+
+CLOSE liahona;
+
+" {} "Compatibility" {bold} "
+
+SQL92 
+CLOSE is fully compatible with SQL92
+
+" {} "Notes" {bold} "
+
+Postgres does not have an explicit OPEN cursor statement; a cursor is considered open when it is declared. Use the DECLARE statement to declare a cursor."

@@ -1,0 +1,16 @@
+.pgaw:Help.f.t insert end \
+"Year 2000 statement\n\n" {title} \
+"Author : " {bold} "Written by Thomas Lockhart on 1998-10-22\n" {} \
+{
+  The PostgreSQL Global Development Team provides the Postgres software code tree as a public service, without warranty and without liability for it's behavior or performance. However, at the time of writing: 
+
+  The author of this statement, a volunteer on the Postgres support team since November, 1996, is not aware of any problems in the Postgres code base related to time transitions around Jan 1, 2000 (Y2K). 
+
+  The author of this statement is not aware of any reports of Y2K problems uncovered in regression testing or in other field use of recent or current versions of Postgres. We might have expected to hear about problems if they existed, given the installed base and the active participation of users on the support mailing lists. 
+
+  To the best of the author's knowledge, the assumptions Postgres makes about dates specified with a two-digit year are documented in the current User's Guide in the chapter on data types. For two-digit years, the significant transition year is 1970, not 2000; e.g. "70-01-01" is interpreted as "1970-01-01", whereas "69-01-01" is interpreted as "2069-01-01". 
+
+  Any Y2K problems in the underlying OS related to obtaining "the current time" may propagate into apparent Y2K problems in Postgres. 
+
+  Refer to The Gnu Project and The Perl Institute for further discussion of Y2K issues, particularly as it relates to open source, no fee software. 
+}

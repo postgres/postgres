@@ -1,0 +1,34 @@
+.pgaw:Help.f.t insert end "LISTEN" {bold} " registers the current Postgres backend as a listener on the notify condition notifyname.  \
+
+Whenever the command NOTIFY notifyname is invoked, either by this backend or another one connected to the same database, all the backends currently listening on that notify condition are \
+notified, and each will in turn notify its connected frontend application. See the discussion of NOTIFY for more information.  \
+
+A backend can be deregistered for a given notify condition with the UNLISTEN command. Also, a backend's listen registrations are automatically cleared when the backend process exits.  \
+
+The method a frontend application must use to detect notify events depends on which Postgres application programming interface it uses. With the basic libpq library, the application issues \
+LISTEN as an ordinary SQL command, and then must periodically call the routine PQnotifies to find out whether any notify events have been received. Other interfaces such as libpgtcl provide \
+higher-level methods for handling notify events; indeed, with libpgtcl the application programmer should not even issue LISTEN or UNLISTEN directly. See the documentation for the library \
+you are using for more details. 
+
+The reference page for NOTIFY contains a more extensive discussion of the use of LISTEN and NOTIFY. 
+
+" {} "Synopsis" {bold} "
+
+LISTEN notifyname
+
+" {} "Usage" {bold} "
+" {} "
+                -- Configure and execute a listen/notify sequence from psql
+                postgres=> listen virtual;
+                LISTEN
+                postgres=> notify virtual;
+                NOTIFY
+                ASYNC NOTIFY of 'virtual' from backend pid '11239' received
+                
+" {code} "Notes" {bold} "
+
+notifyname can be any string valid as a name; it need not correspond to the name of any actual table. If notifyname is enclosed in double-quotes, it need not even be a syntactically valid name, \
+but can be any string up to 31 characters long. 
+
+In some previous releases of Postgres, notifyname had to be enclosed in double-quotes when it did not correspond to any existing table name, even if syntactically valid as a name. That is no \
+longer required. "

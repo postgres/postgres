@@ -1,0 +1,42 @@
+.pgaw:Help.f.t insert end \
+"CREATE SEQUENCE" {bold} " will enter a new sequence number generator into the current data base. This involves creating and initialising a new single-row table with the name seqname. The generator will be \"owned\" by the user issuing the command. 
+
+After a sequence is created, you may use the function nextval(seqname) to get a new number from the sequence. The function currval('seqname') may be used to determine the number returned by the last call to nextval(seqname) for the specified sequence in the current session. The function setval('seqname', newvalue) may be used to set the current value of the specified sequence. The next call to nextval(seqname) will return the given value plus the sequence increment. 
+
+" {} "Synopsis" {bold} "
+
+CREATE SEQUENCE seqname
+\[ INCREMENT increment \]
+\[ MINVALUE  minvalue \]
+\[ MAXVALUE  maxvalue \]
+\[ START     start \]
+\[ CACHE     cache \]
+\[ CYCLE \]
+" {code} "
+" {} "Inputs" {bold} "
+
+" {} "seqname" {italic} "
+	The name of a sequence to be created. 
+
+" {} "increment" {italic} "
+	The INCREMENT increment clause is optional. A positive value will make an ascending sequence, a negative one a descending sequence. The default value is one (1). 
+
+" {} "minvalue" {italic} "
+	The optional clause MINVALUE minvalue determines the minimum value a sequence can generate. The defaults are 1 and -2147483647 for ascending and descending sequences, respectively. 
+
+" {} "maxvalue" {italic} "
+	Use the optional clause MAXVALUE maxvalue to determine the maximum value for the sequence. The defaults are 2147483647 and -1 for ascending and descending sequences, respectively. 
+
+" {} "start" {italic} "
+	The optional START start clause enables the sequence to begin anywhere. The default starting value is minvalue for ascending sequences and maxvalue for descending ones. 
+
+" {} "cache" {italic} "
+	The CACHE cache option enables sequence numbers to be preallocated and stored in memory for faster access. The minimum value is 1 (only one value can be generated at a time, i.e. no cache) and this is also the default. 
+
+" {} "CYCLE" {italic} "
+	The optional CYCLE keyword may be used to enable the sequence to continue when the maxvalue or minvalue has been reached by an ascending or descending sequence respectively. If the limit is reached, the next number generated will be whatever the minvalue or maxvalue is, as appropriate. 
+
+" {} "CAUTION" {title} "
+Unexpected results may be obtained if a cache setting greater than one is used for a sequence object that will be used concurrently by multiple backends. Each backend will allocate \"cache\" successive sequence values during one access to the sequence object and increase the sequence object's last_value accordingly. Then, the next cache-1 uses of nextval within that backend simply return the preallocated values without touching the shared object. So, numbers allocated but not used in the current session will be lost. Furthermore, although multiple backends are guaranteed to allocate distinct sequence values, the values may be generated out of sequence when all the backends are considered. (For example, with a cache setting of 10, backend A might reserve values 1..10 and return nextval=1, then backend B might reserve values 11..20 and return nextval=11 before backend A has generated nextval=2.) Thus, with a cache setting of one it is safe to assume that nextval values are generated sequentially; with a cache setting greater than one you should only assume that the nextval values are all distinct, not that they are generated purely sequentially. Also, last_value will reflect the latest value reserved by any backend, whether or not it has yet been returned by nextval. 
+
+CREATE SEQUENCE is a Postgres language extension. There is no CREATE SEQUENCE statement in SQL92."

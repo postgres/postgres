@@ -1,0 +1,17 @@
+.pgaw:Help.f.t insert end "SELECT INTO" {bold} " creates a new table from the results of a query. Typically, this query draws data from an existing table, but any SQL query is allowed. 
+
+" {} "Synopsis" {bold} "
+" {} "
+SELECT \[ ALL | DISTINCT \] expression \[ AS name \] \[, ...\]
+    INTO \[TEMP\] \[ TABLE \] new_table \]
+    \[ FROM table \[alias\] \[, ...\] \]
+    \[ WHERE condition \]
+    \[ GROUP BY column \[, ...\] \]
+    \[ HAVING condition \[, ...\] \]
+    \[ { UNION \[ALL\] | INTERSECT | EXCEPT } select\]
+    \[ ORDER BY column \[ ASC | DESC \] \[, ...\] \]
+    \[ FOR UPDATE \[OF class_name...\]\]
+    \[ LIMIT count \[OFFSET|, count\]\]
+    
+" {code} "Note" {bold} "
+CREATE TABLE AS is functionally equivalent to the SELECT INTO command. "

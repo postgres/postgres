@@ -1,0 +1,73 @@
+.pgaw:Help.f.t insert end \
+"Geometric functions\n\n" {title} \
+"area(box) " {bold} "
+	Returns: float8 
+	area of box 
+
+" {} "area(circle) " {bold} "
+	Returns: float8 
+	area of circle 
+
+" {} "box(box,box) " {bold} "
+	Returns: box 
+	boxes to intersection box 
+
+" {} "center(box) " {bold} "
+	Returns: point 
+	center of object 
+
+" {} "center(circle) " {bold} "
+	Returns: point 
+	center of object 
+
+" {} "diameter(circle) " {bold} "
+	Returns: float8 
+	diameter of circle 
+
+" {} "height(box) " {bold} "
+	Returns: float8 
+	vertical size of box 
+
+" {} "isclosed(path) " {bold} "
+	Returns: bool 
+	a closed path? 
+
+" {} "isopen(path) " {bold} "
+	Returns: bool 
+	an open path? 
+
+" {} "length(lseg) " {bold} "
+	Returns: float8 
+	length of line segment 
+
+" {} "length(path) " {bold} "
+	Returns: float8 
+	length of path 
+
+" {} "pclose(path) " {bold} "
+	Returns: path 
+	convert path to closed 
+
+" {} "point(lseg,lseg) " {bold} "
+	Returns: point 
+	intersection 
+
+" {} "points(path) " {bold} "
+	Returns: int4 
+	number of points 
+
+" {} "popen(path) " {bold} "
+	Returns: path 
+	convert path to open 
+
+" {} "radius(circle) " {bold} "
+	Returns: float8 
+	radius of circle 
+
+" {} "width(box) " {bold} "
+	Returns: float8 
+	horizontal size 
+
+" {} \
+"PostgreSQL functions\n" {link pgfunctions} \
+"Next - IP V4 functions" {link ipv4func}
