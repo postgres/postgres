@@ -2,6 +2,24 @@
                                 Release Notes
   ------------------------------------------------------------------------
 
+Release 7.0.2
+
+This is a repackaging of 7.0.1 with added documentation.
+
+Migration to v7.0.2
+
+A dump/restore is not required for those running 7.*.
+
+Changes
+-------
+Added documentation to tarball.
+
+
+  ------------------------------------------------------------------------
+                                                               Release 7.0.1
+                                Release Notes
+  ------------------------------------------------------------------------
+          
 Release 7.0.1
 
 This is basically a cleanup release for 7.0.1

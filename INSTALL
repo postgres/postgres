@@ -1,11 +1,11 @@
-     Installation instructions for PostgreSQL 7.0.1.
+     Installation instructions for PostgreSQL 7.0.2.
 
 If you haven't gotten the PostgreSQL distribution, get it from
 ftp.postgresql.org, then unpack it:
 
-> gunzip postgresql-7.0.1.tar.gz
-> tar -xf postgresql-7.0.1.tar
-> mv postgresql-7.0.1 /usr/src
+> gunzip postgresql-7.0.2.tar.gz
+> tar -xf postgresql-7.0.2.tar
+> mv postgresql-7.0.2 /usr/src
 
 
 Before you start
@@ -138,10 +138,11 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      Test. (Be sure to use the "parallel regress test" method, since the
      sequential method only works with an already-installed server.)
 
-  5. If you are not upgrading an existing system then skip to step 7.
+  5. If you are not upgrading an existing system, skip to step 7.
+     If you are running 7.*, skip to step 6.
 
-     You now need to back up your existing database. To dump your fairly
-     recent post-6.0 database installation, type
+     You now need to back up your existing database. To dump your 
+     database installation, type:
 
      > pg_dumpall > db.out
 
@@ -151,13 +152,8 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      this (such as using OIDs as keys in tables), don't do it.
 
      Make sure to use the pg_dumpall command from the version you are
-     currently running. 7.0.1's pg_dumpall will not work on pre-7.0 databases.
-     However, if you are still using 6.0, do not use the pg_dumpall script
-     from 6.0 or everything will be owned by the PostgreSQL superuser after
-     you reload. In that case you should grab pg_dumpall from a later 6.x.x
-     release. If you are upgrading from a version prior to Postgres95 v1.09
-     then you must back up your database, install Postgres95 v1.09, restore
-     your database, then back it up again.
+     currently running. 7.0.2's pg_dumpall should not be used on older
+     databases.
 
                                         Caution
       You must make sure that your database is not updated in the middle of your
@@ -167,7 +163,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
 
       Rather than using pg_dumpall, pg_upgrade can often be used.
 
-  6. If you are upgrading an existing system then kill the database server
+  6. If you are upgrading an existing system, kill the database server
      now. Type
 
      > ps ax | grep postmaster
@@ -299,7 +295,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
 
 This concludes the installation proper. To make your life more productive
 and enjoyable you should look at the following optional steps and
-suggestions.
+suggestions:
 
    * Life will be more convenient if you set up some environment variables.
      First of all you probably want to include /usr/local/pgsql/bin (or
@@ -315,7 +311,7 @@ suggestions.
 
    * You probably want to install the man and HTML documentation. Type
 
-     > cd /usr/src/pgsql/postgresql-7.0.1/doc
+     > cd /usr/src/pgsql/postgresql-7.0.2/doc
      > gmake install
 
 

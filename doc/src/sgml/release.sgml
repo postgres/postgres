@@ -1,9 +1,51 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.49.2.4 2000/06/02 16:34:42 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.49.2.5 2000/06/05 10:59:16 momjian Exp $
 -->
 
  <chapter id="release">
   <title>Release Notes</title>
+
+<sect1>
+<title>Release 7.0.2</title>
+<!--
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Bruce</firstname>
+<surname>Momjian</surname>
+</author>
+</authorgroup>
+<date>2000-06-05</date>
+</docinfo>
+-->
+
+<para>
+2000-06-05
+</para>
+<para>
+This is a repackaging of 7.0.1 with added documentation.
+</para>
+
+
+<sect2>
+<title>Migration to v7.0.2</title>
+
+<para>
+A dump/restore is <emphasis>not</emphasis> required for those running
+7.*.
+</para>
+</sect2>
+<sect2>
+<title>Changes</title>
+
+<para>
+<programlisting>
+Added documentation to tarball.
+</programlisting>
+</para>
+</sect2>
+</sect1>
+
 
 <sect1>
 <title>Release 7.0.1</title>
