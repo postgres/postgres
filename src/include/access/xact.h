@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.46 2002/10/21 22:06:20 tgl Exp $
+ * $Id: xact.h,v 1.47 2002/11/13 03:12:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,11 @@ typedef struct TransactionStateData
 
 typedef TransactionStateData *TransactionState;
 
-/* ----------------
- *		transaction states
- * ----------------
+/*
+ *	transaction states - transaction state from server perspective
+ *	
+ *	Syntax error could cause transaction to abort, but client code thinks
+ *	it is still in a transaction, so we have to wait for COMMIT/ROLLBACK.
  */
 #define TRANS_DEFAULT			0
 #define TRANS_START				1
@@ -56,9 +58,8 @@ typedef TransactionStateData *TransactionState;
 #define TRANS_COMMIT			3
 #define TRANS_ABORT				4
 
-/* ----------------
- *		transaction block states
- * ----------------
+/*
+ *	transaction block states - transaction state of client queries
  */
 #define TBLOCK_DEFAULT			0
 #define TBLOCK_BEGIN			1

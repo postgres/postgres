@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.137 2002/11/11 22:19:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.138 2002/11/13 03:12:05 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
  *
- *		1)	system dies from some internal cause  (Assert, etc..)
- *		2)	user types abort
+ *		1)	system dies from some internal cause  (syntax error, etc..)
+ *		2)	user types ABORT
  *
  *		These two cases used to be treated identically, but now
  *		we need to distinguish them.  Why?	consider the following
@@ -30,8 +30,8 @@
  *		In case 1, we want to abort the transaction and return to the
  *		default state.	In case 2, there may be more commands coming
  *		our way which are part of the same transaction block and we have
- *		to ignore these commands until we see an END transaction.
- *		(or an ABORT! --djm)
+ *		to ignore these commands until we see a COMMIT transaction or
+ *		ROLLBACK.
  *
  *		Internal aborts are now handled by AbortTransactionBlock(), just as
  *		they always have been, and user aborts are now handled by
@@ -52,14 +52,6 @@
  *		  TransactionCommandContext until this point.
  *
  *	 NOTES
- *		This file is an attempt at a redesign of the upper layer
- *		of the V1 transaction system which was too poorly thought
- *		out to describe.  This new system hopes to be both simpler
- *		in design, simpler to extend and needs to contain added
- *		functionality to solve problems beyond the scope of the V1
- *		system.  (In particuler, communication of transaction
- *		information between parallel backends has to be supported)
- *
  *		The essential aspects of the transaction system are:
  *
  *				o  transaction id generation
@@ -69,7 +61,7 @@
  *				o  lock cleanup
  *
  *		Hence, the functional division of the transaction code is
- *		based on what of the above things need to be done during
+ *		based on which of the above things need to be done during
  *		a start/commit/abort transaction.  For instance, the
  *		routine AtCommit_Memory() takes care of all the memory
  *		cleanup stuff done at commit time.
@@ -99,17 +91,17 @@
  *				CommitTransactionBlock
  *				AbortTransactionBlock
  *
- *		These are invoked only in responce to a user "BEGIN", "END",
- *		or "ABORT" command.  The tricky part about these functions
+ *		These are invoked only in responce to a user "BEGIN WORK", "COMMIT",
+ *		or "ROLLBACK" command.  The tricky part about these functions
  *		is that they are called within the postgres main loop, in between
  *		the StartTransactionCommand() and CommitTransactionCommand().
  *
  *		For example, consider the following sequence of user commands:
  *
  *		1)		begin
- *		2)		retrieve (foo.all)
- *		3)		append foo (bar = baz)
- *		4)		end
+ *		2)		select * from foo
+ *		3)		insert into foo (bar = baz)
+ *		4)		commit
  *
  *		in the main processing loop, this results in the following
  *		transaction sequence:
@@ -120,15 +112,15 @@
  *			\	CommitTransactionCommand();
  *
  *			/	StartTransactionCommand();
- *		2) <	ProcessQuery();					<< retrieve (foo.all)
+ *		2) <	ProcessQuery();					<< select * from foo
  *			\	CommitTransactionCommand();
  *
  *			/	StartTransactionCommand();
- *		3) <	ProcessQuery();					<< append foo (bar = baz)
+ *		3) <	ProcessQuery();					<< insert into foo (bar = baz)
  *			\	CommitTransactionCommand();
  *
  *			/	StartTransactionCommand();
- *		4) /	ProcessUtility();				<< end
+ *		4) /	ProcessUtility();				<< commit
  *		   \		CommitTransactionBlock();
  *			\	CommitTransactionCommand();
  *
@@ -139,19 +131,14 @@
  *		outside these calls they need to do normal start/commit
  *		processing.
  *
- *		Furthermore, suppose the "retrieve (foo.all)" caused an abort
+ *		Furthermore, suppose the "select * from foo" caused an abort
  *		condition.	We would then want to abort the transaction and
- *		ignore all subsequent commands up to the "end".
+ *		ignore all subsequent commands up to the "commit".
  *		-cim 3/23/90
  *
  *-------------------------------------------------------------------------
  */
 
-/*
- * Large object clean up added in CommitTransaction() to prevent buffer leaks.
- * [PA, 7/17/98]
- * [PA] is Pascal André <andre@via.ecp.fr>
- */
 #include "postgres.h"
 
 #include <unistd.h>
@@ -201,9 +188,8 @@ static void CommitTransaction(void);
 static void RecordTransactionAbort(void);
 static void StartTransaction(void);
 
-/* ----------------
- *		global variables holding the current transaction state.
- * ----------------
+/*
+ *	global variables holding the current transaction state.
  */
 static TransactionStateData CurrentTransactionStateData = {
 	0,							/* transaction id */
@@ -211,13 +197,13 @@ static TransactionStateData CurrentTransactionStateData = {
 	0,							/* scan command id */
 	0x0,						/* start time */
 	TRANS_DEFAULT,				/* transaction state */
-	TBLOCK_DEFAULT				/* transaction block state */
+	TBLOCK_DEFAULT				/* transaction block state of client queries */
 };
 
 TransactionState CurrentTransactionState = &CurrentTransactionStateData;
 
 /*
- * User-tweakable parameters
+ *	User-tweakable parameters
  */
 int			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 int			XactIsoLevel;
@@ -236,22 +222,22 @@ static void *_RollbackData = NULL;
 
 
 /* ----------------------------------------------------------------
- *					 transaction state accessors
+ *	transaction state accessors
  * ----------------------------------------------------------------
  */
 
 #ifdef NOT_USED
 
 /* --------------------------------
- *		TransactionFlushEnabled()
- *		SetTransactionFlushEnabled()
+ *	TransactionFlushEnabled()
+ *	SetTransactionFlushEnabled()
  *
- *		These are used to test and set the "TransactionFlushState"
- *		varable.  If this variable is true (the default), then
- *		the system will flush all dirty buffers to disk at the end
- *		of each transaction.   If false then we are assuming the
- *		buffer pool resides in stable main memory, in which case we
- *		only do writes as necessary.
+ *	These are used to test and set the "TransactionFlushState"
+ *	varable.  If this variable is true (the default), then
+ *	the system will flush all dirty buffers to disk at the end
+ *	of each transaction.   If false then we are assuming the
+ *	buffer pool resides in stable main memory, in which case we
+ *	only do writes as necessary.
  * --------------------------------
  */
 static int	TransactionFlushState = 1;
@@ -271,10 +257,10 @@ SetTransactionFlushEnabled(bool state)
 
 
 /* --------------------------------
- *		IsTransactionState
+ *	IsTransactionState
  *
- *		This returns true if we are currently running a query
- *		within an executing transaction.
+ *	This returns true if we are currently running a query
+ *	within an executing transaction.
  * --------------------------------
  */
 bool
@@ -303,10 +289,10 @@ IsTransactionState(void)
 }
 
 /* --------------------------------
- *		IsAbortedTransactionBlockState
+ *	IsAbortedTransactionBlockState
  *
- *		This returns true if we are currently running a query
- *		within an aborted transaction block.
+ *	This returns true if we are currently running a query
+ *	within an aborted transaction block.
  * --------------------------------
  */
 bool
@@ -322,7 +308,7 @@ IsAbortedTransactionBlockState(void)
 
 
 /* --------------------------------
- *		GetCurrentTransactionId
+ *	GetCurrentTransactionId
  * --------------------------------
  */
 TransactionId
@@ -335,7 +321,7 @@ GetCurrentTransactionId(void)
 
 
 /* --------------------------------
- *		GetCurrentCommandId
+ *	GetCurrentCommandId
  * --------------------------------
  */
 CommandId
@@ -348,7 +334,7 @@ GetCurrentCommandId(void)
 
 
 /* --------------------------------
- *		GetCurrentTransactionStartTime
+ *	GetCurrentTransactionStartTime
  * --------------------------------
  */
 AbsoluteTime
@@ -361,7 +347,7 @@ GetCurrentTransactionStartTime(void)
 
 
 /* --------------------------------
- *		GetCurrentTransactionStartTimeUsec
+ *	GetCurrentTransactionStartTimeUsec
  * --------------------------------
  */
 AbsoluteTime
@@ -376,12 +362,12 @@ GetCurrentTransactionStartTimeUsec(int *msec)
 
 
 /* --------------------------------
- *		TransactionIdIsCurrentTransactionId
+ *	TransactionIdIsCurrentTransactionId
  *
- * During bootstrap, we cheat and say "it's not my transaction ID" even though
- * it is.  Along with transam.c's cheat to say that the bootstrap XID is
- * already committed, this causes the tqual.c routines to see previously
- * inserted tuples as committed, which is what we need during bootstrap.
+ *	During bootstrap, we cheat and say "it's not my transaction ID" even though
+ *	it is.  Along with transam.c's cheat to say that the bootstrap XID is
+ *	already committed, this causes the tqual.c routines to see previously
+ *	inserted tuples as committed, which is what we need during bootstrap.
  * --------------------------------
  */
 bool
@@ -400,7 +386,7 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 
 
 /* --------------------------------
- *		CommandIdIsCurrentCommandId
+ *	CommandIdIsCurrentCommandId
  * --------------------------------
  */
 bool
@@ -413,7 +399,7 @@ CommandIdIsCurrentCommandId(CommandId cid)
 
 
 /* --------------------------------
- *		CommandCounterIncrement
+ *	CommandCounterIncrement
  * --------------------------------
  */
 void
@@ -446,7 +432,7 @@ CommandCounterIncrement(void)
  */
 
 /* --------------------------------
- *		AtStart_Cache
+ *	AtStart_Cache
  * --------------------------------
  */
 static void
@@ -471,7 +457,7 @@ AtStart_Locks(void)
 }
 
 /* --------------------------------
- *		AtStart_Memory
+ *	AtStart_Memory
  * --------------------------------
  */
 static void
@@ -512,7 +498,7 @@ AtStart_Memory(void)
  */
 
 /*
- *		RecordTransactionCommit
+ *	RecordTransactionCommit
  */
 void
 RecordTransactionCommit(void)
@@ -620,7 +606,7 @@ RecordTransactionCommit(void)
 
 
 /* --------------------------------
- *		AtCommit_Cache
+ *	AtCommit_Cache
  * --------------------------------
  */
 static void
@@ -638,7 +624,7 @@ AtCommit_Cache(void)
 }
 
 /* --------------------------------
- *		AtCommit_LocalCache
+ *	AtCommit_LocalCache
  * --------------------------------
  */
 static void
@@ -651,7 +637,7 @@ AtCommit_LocalCache(void)
 }
 
 /* --------------------------------
- *		AtCommit_Locks
+ *	AtCommit_Locks
  * --------------------------------
  */
 static void
@@ -666,7 +652,7 @@ AtCommit_Locks(void)
 }
 
 /* --------------------------------
- *		AtCommit_Memory
+ *	AtCommit_Memory
  * --------------------------------
  */
 static void
@@ -694,7 +680,7 @@ AtCommit_Memory(void)
  */
 
 /*
- *		RecordTransactionAbort
+ *	RecordTransactionAbort
  */
 static void
 RecordTransactionAbort(void)
@@ -763,7 +749,7 @@ RecordTransactionAbort(void)
 }
 
 /* --------------------------------
- *		AtAbort_Cache
+ *	AtAbort_Cache
  * --------------------------------
  */
 static void
@@ -774,7 +760,7 @@ AtAbort_Cache(void)
 }
 
 /* --------------------------------
- *		AtAbort_Locks
+ *	AtAbort_Locks
  * --------------------------------
  */
 static void
@@ -790,7 +776,7 @@ AtAbort_Locks(void)
 
 
 /* --------------------------------
- *		AtAbort_Memory
+ *	AtAbort_Memory
  * --------------------------------
  */
 static void
@@ -823,7 +809,7 @@ AtAbort_Memory(void)
  */
 
 /* --------------------------------
- *		AtCleanup_Memory
+ *	AtCleanup_Memory
  * --------------------------------
  */
 static void
@@ -852,8 +838,7 @@ AtCleanup_Memory(void)
  */
 
 /* --------------------------------
- *		StartTransaction
- *
+ *	StartTransaction
  * --------------------------------
  */
 static void
@@ -929,8 +914,7 @@ CurrentXactInProgress(void)
 #endif
 
 /* --------------------------------
- *		CommitTransaction
- *
+ *	CommitTransaction
  * --------------------------------
  */
 static void
@@ -1050,8 +1034,7 @@ CommitTransaction(void)
 }
 
 /* --------------------------------
- *		AbortTransaction
- *
+ *	AbortTransaction
  * --------------------------------
  */
 static void
@@ -1157,8 +1140,7 @@ AbortTransaction(void)
 }
 
 /* --------------------------------
- *		CleanupTransaction
- *
+ *	CleanupTransaction
  * --------------------------------
  */
 static void
@@ -1185,10 +1167,10 @@ CleanupTransaction(void)
 }
 
 /* --------------------------------
- *		StartTransactionCommand
+ *	StartTransactionCommand
  *
- * preventChain, if true, forces autocommit behavior at the next
- * CommitTransactionCommand call.
+ *	preventChain, if true, forces autocommit behavior at the next
+ *	CommitTransactionCommand call.
  * --------------------------------
  */
 void
@@ -1278,9 +1260,9 @@ StartTransactionCommand(bool preventChain)
 }
 
 /* --------------------------------
- *		CommitTransactionCommand
+ *	CommitTransactionCommand
  *
- * forceCommit = true forces autocommit behavior even when autocommit is off.
+ *	forceCommit = true forces autocommit behavior even when autocommit is off.
  * --------------------------------
  */
 void
@@ -1377,7 +1359,7 @@ CommitTransactionCommand(bool forceCommit)
 }
 
 /* --------------------------------
- *		AbortCurrentTransaction
+ *	AbortCurrentTransaction
  * --------------------------------
  */
 void
@@ -1454,22 +1436,22 @@ AbortCurrentTransaction(void)
 }
 
 /* --------------------------------
- *		PreventTransactionChain
+ *	PreventTransactionChain
  *
- * This routine is to be called by statements that must not run inside
- * a transaction block, typically because they have non-rollback-able
- * side effects or do internal commits.
+ *	This routine is to be called by statements that must not run inside
+ *	a transaction block, typically because they have non-rollback-able
+ *	side effects or do internal commits.
  *
- * If we have already started a transaction block, issue an error; also issue
- * an error if we appear to be running inside a user-defined function (which
- * could issue more commands and possibly cause a failure after the statement
- * completes).  In autocommit-off mode, we allow the statement if a block is
- * not already started, and force the statement to be autocommitted despite
- * the mode.
+ *	If we have already started a transaction block, issue an error; also issue
+ *	an error if we appear to be running inside a user-defined function (which
+ *	could issue more commands and possibly cause a failure after the statement
+ *	completes).  In autocommit-off mode, we allow the statement if a block is
+ *	not already started, and force the statement to be autocommitted despite
+ *	the mode.
  *
- * stmtNode: pointer to parameter block for statement; this is used in
- * a very klugy way to determine whether we are inside a function.
- * stmtType: statement type name for error messages.
+ *	stmtNode: pointer to parameter block for statement; this is used in
+ *	a very klugy way to determine whether we are inside a function.
+ *	stmtType: statement type name for error messages.
  * --------------------------------
  */
 void
@@ -1512,7 +1494,7 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
  * ----------------------------------------------------------------
  */
 /* --------------------------------
- *		BeginTransactionBlock
+ *	BeginTransactionBlock
  * --------------------------------
  */
 void
@@ -1546,7 +1528,7 @@ BeginTransactionBlock(void)
 }
 
 /* --------------------------------
- *		EndTransactionBlock
+ *	EndTransactionBlock
  * --------------------------------
  */
 void
@@ -1594,7 +1576,7 @@ EndTransactionBlock(void)
 }
 
 /* --------------------------------
- *		AbortTransactionBlock
+ *	AbortTransactionBlock
  * --------------------------------
  */
 #ifdef NOT_USED
@@ -1632,7 +1614,7 @@ AbortTransactionBlock(void)
 #endif
 
 /* --------------------------------
- *		UserAbortTransactionBlock
+ *	UserAbortTransactionBlock
  * --------------------------------
  */
 void
@@ -1678,11 +1660,11 @@ UserAbortTransactionBlock(void)
 }
 
 /* --------------------------------
- *		AbortOutOfAnyTransaction
+ *	AbortOutOfAnyTransaction
  *
- * This routine is provided for error recovery purposes.  It aborts any
- * active transaction or transaction block, leaving the system in a known
- * idle state.
+ *	This routine is provided for error recovery purposes.  It aborts any
+ *	active transaction or transaction block, leaving the system in a known
+ *	idle state.
  * --------------------------------
  */
 void
@@ -1729,6 +1711,11 @@ IsTransactionBlock(void)
 
 	return false;
 }
+
+
+/*
+ *	XLOG support routines
+ */
 
 void
 xact_redo(XLogRecPtr lsn, XLogRecord *record)
