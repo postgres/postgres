@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.19 1999/05/25 16:14:57 momjian Exp $
+ * $Id: psort.h,v 1.19.2.1 1999/07/30 17:07:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PSORT_H
 #define PSORT_H
 
-#include "storage/fd.h"
 #include "access/relscan.h"
-#include "utils/lselect.h"
 #include "nodes/plannodes.h"
+#include "storage/fd.h"
+#include "utils/lselect.h"
 
 #define MAXTAPES		7		/* See Knuth Fig. 70, p273 */
 
@@ -66,7 +66,6 @@ typedef struct Psortstate
 } Psortstate;
 
 #ifdef	EBUG
-#include "utils/elog.h"
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
 

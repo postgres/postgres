@@ -7,14 +7,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: multilev.h,v 1.15 1999/02/13 23:22:07 momjian Exp $
+ * $Id: multilev.h,v 1.15.2.1 1999/07/30 17:07:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef MULTILEV_H
 #define MULTILEV_H
 
-#include <storage/lmgr.h>
+#include "storage/lmgr.h"
 
 #ifdef LowLevelLocking
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.61 1999/06/13 00:07:43 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.61.2.1 1999/07/30 17:07:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ extern void s_lock_sleep(unsigned spin);
  * All the gcc inlines
  */
 
-#if defined(__alpha)
+#if defined(__alpha__)
 #define TAS(lock) tas(lock)
 #define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
 
@@ -104,11 +104,11 @@ __asm__("    ldq   $0, %0              \n\
 	return (int) _res;
 }
 
-#endif	 /* __alpha */
+#endif	 /* __alpha__ */
 
 
 
-#if defined(i386)
+#if defined(__i386__)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -120,7 +120,7 @@ __asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(_res));
 	return (int) _res;
 }
 
-#endif	 /* i386 */
+#endif	 /* __i386__ */
 
 
 
@@ -140,7 +140,7 @@ __asm__("swpb %0, %0, [%3]": "=r"(_res), "=m"(*lock):"0"(_res), "r" (lock));
 
 
 
-#if defined(sparc)
+#if defined(__sparc__)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -154,7 +154,7 @@ tas(volatile slock_t *lock)
 	return (int) _res;
 }
 
-#endif	 /* sparc */
+#endif	 /* __sparc__ */
 
 
 #if defined(__mc68000__) && defined(__linux__)
@@ -226,7 +226,7 @@ tas(volatile slock_t *lock)
  * All non gcc
  */
 
-#if defined(__alpha)
+#if defined(__alpha__)
 /*
  * OSF/1 (Alpha AXP)
  *
@@ -237,7 +237,7 @@ tas(volatile slock_t *lock)
 #define S_UNLOCK(lock)	msem_unlock((lock), 0)
 #define S_INIT_LOCK(lock)	msem_init((lock), MSEM_UNLOCKED)
 #define S_LOCK_FREE(lock)	(!(lock)->msem_state)
-#endif	 /* __alpha */
+#endif	 /* __alpha__ */
 
 
 
@@ -307,7 +307,7 @@ tas(slock_t *s_lock)
  * assembly from his NECEWS SVR4 port, but we probably ought to retain this
  * for the R3000 chips out there.
  */
-#include <mutex.h>
+#include "mutex.h"
 #define TAS(lock)	(test_and_set(lock,1))
 #define S_UNLOCK(lock)	(test_then_and(lock,0))
 #define S_INIT_LOCK(lock)	(test_then_and(lock,0))

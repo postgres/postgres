@@ -6,19 +6,19 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.23 1999/05/25 16:14:57 momjian Exp $
+ * $Id: rel.h,v 1.23.2.1 1999/07/30 17:07:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef REL_H
 #define REL_H
 
-#include <catalog/pg_am.h>
-#include <catalog/pg_class.h>
-#include <access/strat.h>
-#include <access/tupdesc.h>
-#include <rewrite/prs2lock.h>
-#include <storage/fd.h>
+#include "access/strat.h"
+#include "access/tupdesc.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "rewrite/prs2lock.h"
+#include "storage/fd.h"
 
 typedef struct Trigger
 {
