@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.62 2005/03/13 05:11:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.63 2005/03/13 05:16:33 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -811,12 +811,13 @@ $ <userinput>psql -l</userinput>
           <literal>EUC_KR</literal>,
           <literal>EUC_TW</literal>,
           <literal>ISO_8859_5</literal>,
-          <literal>KOI8</literal></entry>,
+          <literal>KOI8</literal>,
           <literal>LATIN1</literal> to <literal>LATIN5</literal>,
           <literal>SJIS</literal>,
           <literal>WIN866</literal>,
           <literal>WIN1250</literal>,
           <literal>WIN1251</literal>
+         </entry>
         </row>
         <row> 
          <entry><literal>SJIS</literal></entry>
