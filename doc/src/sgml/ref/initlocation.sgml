@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.4 1999/07/22 15:09:12 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.5 2000/01/18 00:03:34 petere Exp $
 Postgres documentation
 -->
 
@@ -15,17 +15,15 @@ Postgres documentation
    <application>initlocation</application>
   </refname>
   <refpurpose>
-   Create a secondary <productname>Postgres</productname> database storage area
+   Create a secondary <productname>PostgreSQL</productname> database storage area
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-01-17</date>
   </refsynopsisdivinfo>
   <synopsis>
-initlocation [ --location=<replaceable class="parameter">er">al</replaceable>ble> | -D <replaceable class="parameter">altdir</replaceable> ]
-    [ --username=<replaceable class="parameter">name</replaceable> | -u <replaceable class="parameter">name</replaceable> ]
-    [ <replaceable class="parameter">altdir</replaceable> ]
+initlocation <replaceable class="parameter">directory</replaceable>
   </synopsis>
 
   <refsect2 id="R2-APP-INITLOCATION-1">
@@ -39,45 +37,14 @@ initlocation [ --location=<replaceable class="parameter">er">al</replaceable>ble
 
     <variablelist>
      <varlistentry>
-      <term>--location=<replaceable class="parameter">altdir</replaceable></term>
-      <term>-D <replaceable class="parameter">altdir</replaceable></term>
-      <term><replaceable class="parameter">altdir</replaceable></term>
+      <term><replaceable class="parameter">directory</replaceable></term>
       <listitem>
        <para>
 	Where in your Unix filesystem do you want alternate databases to go?
-	The top level directory is called the <envar>PGDATA</envar> directory, so you
-	might want to point your first alternate location at
-	<envar>PGDATA2</envar>.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term>--username=<replaceable class="parameter">name</replaceable></term>
-      <term>-u <replaceable class="parameter">name</replaceable></term>
-      <term><envar>PGUSER</envar></term>
-      <listitem>
-       <para>
-	Who will be the Unix filesystem owner of this database storage area?
-	The
-	<productname>Postgres</productname> superuser is a Unix user 
-	who owns all files that store the database
-	system and also owns the postmaster and backend processes that access them.
-	Usually, this is the user who should run <application>initlocation</application>
-	and who will thus have ownership of the directories and files.
-       </para>
-       <note>
-	<para>
-	 Only the Unix superuser can create a database system with a
-	 different user as the <productname>Postgres</productname> superuser.
-	 Specifying a user other than the <productname>Postgres</productname> superuser
-	 may lead to database security and data integrity problems. Refer to the
-	 <citetitle><productname>PostgreSQL</productname> Administrator's Guide</citetitle>
-	 for more information.
-	</para>
-       </note>
-      </listitem>
-     </varlistentry>
     </variablelist>
    </para>
   </refsect2>
@@ -92,65 +59,6 @@ initlocation [ --location=<replaceable class="parameter">er">al</replaceable>ble
    <para>
     <application>initlocation</application> will create directories in 
     the specified place.
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-We are initializing the database area with username postgres (uid=500).
-This user will own all the files and must also own the server process.
-Creating Postgres database system directory <replaceable class="parameter">altdir</replaceable>
-Creating Postgres database system directory <replaceable class="parameter">altdir</replaceable>
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Successful completion.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-We are initializing the database area with username postgres (uid=500).
-This user will own all the files and must also own the server process.
-Creating Postgres database system directory /usr/local/src/testlocation
-mkdir: cannot make directory `<replaceable class="parameter">altdir</replaceable>': Permission denied
-       </computeroutput></term>
-      <listitem>
-       <para>
-	You do not have filesystem permission to write to the specified directory area.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-Valid username not given.  You must specify the username for
-the Postgres superuser for the database system you are
-initializing, either with the --username option or by default
-to the USER environment variable.
-       </computeroutput></term>
-      <listitem>
-       <para>
-	The username which you have specified is not the
-	<productname>Postgres</productname> superuser.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-Can't tell what username to use.  You don't have the USER
-environment variable set to your username and didn't specify the
---username option
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Specify the <option>--username</option> command line option.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
    </para>
   </refsect2>
  </refsynopsisdiv>
@@ -164,41 +72,16 @@ environment variable set to your username and didn't specify the
   </title>
   <para>
    <application>initlocation</application> 
-   creates a new <productname>Postgres</productname> secondary database storage area. 
-   A secondary storage area contains a required tree of directories with
-   the correct file permissions on those directories.
+   creates a new <productname>PostgreSQL</productname> secondary database storage area.
+   See the discussion under <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-title">
+   about how to manage and use secondary storage areas. If the argument does not contain
+   a slash and is not valid as a path, it is assumed to be an environment variable,
+   which is referenced. See the examples at the end.
   </para>
   <para>
-   Creating a database storage area consists of creating the directories in which
-   database data might live.
+   In order to use this command you must be logged in (using 'su', for example)
+   the database superuser.
   </para>
-  <para>
-   There are two kinds of arguments for <application>initlocation</application>.
-
-   First, you can specify an environment variable (e.g. <envar>PGDATA2</envar>).
-   This environment variable should be known to the backend for later use in
-   <command>CREATE DATABASE/WITH LOCATION</command>
-   or 
-   <command>createdb -D <replaceable class="parameter">altdir</replaceable></command>.
-   However, <emphasis>the backend daemon must have this variable in it's
-    environment</emphasis> for this to succeed.
-
-   Second, you may be able to specify an explicit
-   absolute path to the top directory of the storage area. However,this second
-   option is possible only if explicitly enabled during the
-   <productname>Postgres</productname> installation. It is usually disabled
-   to alleviate security and data integrity concerns.
-  </para>
-  <note>
-   <para>
-    <productname>Postgres</productname> will add <filename>/base/</filename>
-    to the specified path to create the storage area.
-   </para>
-   <para>
-    The backend requires that any argument to <option>WITH LOCATION</option> which is
-    in all uppercase and which has no path delimiters is an environment variable.
-   </para>
-  </note>
  </refsect1>
 
  <refsect1 id="R1-APP-INITLOCATION-2">
@@ -210,12 +93,19 @@ environment variable set to your username and didn't specify the
   </title>
   <para>
    To create a database in an alternate location, using an environment variable:
+<programlisting>
+$ export PGDATA2=/opt/postgres/data
+$ initlocation PGDATA2
+$ createdb 'testdb' -D 'PGDATA2/testdb'
+</programlisting>
+  </para>
 
-   <programlisting>
-% setenv PGDATA2 /opt/postgres/data
-% initlocation PGDATA2
-% createdb -D PGDATA2
-   </programlisting>
+  <para>
+  Alternatively, if you allow absolute paths you could write:
+<programlisting>
+$ initlocation /opt/postgres/data
+$ createdb 'testdb' -D '/opt/postgres/data/testdb'
+</programlisting>
   </para>
  </refsect1>
 </refentry>

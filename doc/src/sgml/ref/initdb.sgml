@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.7 2000/01/15 18:30:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.8 2000/01/18 00:03:34 petere Exp $
 Postgres documentation
 -->
 
@@ -26,7 +26,7 @@ Postgres documentation
 initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
        [ --sysid|-i <replaceable class="parameter">sysid</replaceable> ]
        [ --pwprompt|-W ]
-       [ --encoding|-e <replaceable class="parameter">encoding</replaceable> ]
+       [ --encoding|-E <replaceable class="parameter">encoding</replaceable> ]
        [ --pglib|-L <replaceable class="parameter">libdir</replaceable> ]
        [ --username|-u <replaceable class="parameter">name</replaceable> ]
        [ --noclean | -n ] [ --debug | -d ] [ --template | -t ]
@@ -85,7 +85,7 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
  
      <varlistentry>
       <term>--encoding=<replaceable class="parameter">encoding</replaceable></term>
-      <term>-e <replaceable class="parameter">encoding</replaceable></term>
+      <term>-E <replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
         Selects the multibyte encoding of the template database. This will also

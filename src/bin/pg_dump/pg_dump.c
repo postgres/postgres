@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.132 2000/01/16 03:54:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.133 2000/01/18 00:03:37 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -69,6 +69,7 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
+#include "version.h"
 
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
@@ -122,60 +123,62 @@ char		g_comment_end[10];
 
 
 static void
-usage(const char *progname)
+help(const char *progname)
 {
-	fprintf(stderr,
-		"\nUsage: %s [options] dbname\n\n", progname);
+	printf("%s dumps a database to a text file.\n\n", progname);
+    puts(  "Usage:");
+    printf("  %s [options] dbname\n\n", progname);
+    puts(  "Options:");
 
 #ifdef HAVE_GETOPT_LONG
-	fprintf(stderr,
-
-	"    -a, --data-only         dump out only the data, no schema\n"
-	"    -c, --clean             clean(drop) schema prior to create\n"
-	"    -d, --insert-proper     dump data as proper insert strings\n"
-	"    -D, --insert-attr       dump data as inserts with attribute names\n"
-	"    -f, --out file          script output filename\n"
-	"    -h, --host hostname     server host name\n"
-	"    -n, --no-quotes         suppress most quotes around identifiers\n"
-	"    -N, --quotes            enable most quotes around identifiers\n"
-	"    -o, --oids              dump object id's (oids)\n"
-	"    -p, --port port         server port number\n"
-	"    -s, --schema-only       dump out only the schema, no data\n"
-	"    -t, --table table       dump for this table only\n"
-	"    -u, --password          use password authentication\n"
-	"    -v, --verbose           verbose\n"
-	"    -x, --no-acl            do not dump ACL's (grant/revoke)\n"
-	"    -?, --help              show this help message\n"
-
-	); /* fprintf */
+	puts(
+        "  -a, --data-only          dump out only the data, not the schema\n"
+        "  -c, --clean              clean (drop) schema prior to create\n"
+        "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
+        "  -D, --attribute-inserts  dump data as INSERT commands with attribute names\n"
+        "  -h, --host <hostname>    server host name\n"
+        "  -n, --no-quotes          suppress most quotes around identifiers\n"
+        "  -N, --quotes             enable most quotes around identifiers\n"
+        "  -O, --oids               dump object ids (oids)\n"
+        "  -p, --port <port>        server port number\n"
+        "  -s, --schema-only        dump out only the schema, no data\n"
+        "  -t, --table <table>      dump for this table only\n"
+        "  -u, --password           use password authentication\n"
+        "  -v, --verbose            verbose\n"
+        "  -x, --no-acl             do not dump ACL's (grant/revoke)\n"
+        );
 #else
-	fprintf(stderr,
-
-	"    -a                      dump out only the data, no schema\n"
-	"    -c                      clean(drop) schema prior to create\n"
-	"    -d                      dump data as proper insert strings\n"
-	"    -D                      dump data as inserts with attribute names\n"
-	"    -f filename             script output filename\n"
-	"    -h hostname             server host name\n"
-	"    -n                      suppress most quotes around identifiers\n"
-	"    -N                      enable most quotes around identifiers\n"
-	"    -o                      dump object id's (oids)\n"
-	"    -p port                 server port number\n"
-	"    -s                      dump out only the schema, no data\n"
-	"    -t table                dump for this table only\n"
-	"    -u                      use password authentication\n"
-	"    -v                      verbose\n"
-	"    -x                      do not dump ACL's (grant/revoke)\n"
-	"    -?                      show this help message\n"
-
-	); /* fprintf */
+    puts(
+        "  -a                       dump out only the data, no schema\n"
+        "  -c                       clean (drop) schema prior to create\n"
+        "  -d                       dump data as INSERT, rather than COPY, commands\n"
+        "  -D                       dump data as INSERT commands with attribute names\n"
+        "  -h <hostname>            server host name\n"
+        "  -n                       suppress most quotes around identifiers\n"
+        "  -N                       enable most quotes around identifiers\n"
+        "  -O                       dump object ids (oids)\n"
+        "  -p <port>                server port number\n"
+        "  -s                       dump out only the schema, no data\n"
+        "  -t <table>               dump for this table only\n"
+        "  -u                       use password authentication\n"
+        "  -v                       verbose\n"
+        "  -x                       do not dump ACL's (grant/revoke)\n"
+        );
 #endif
-
-	fprintf(stderr,
-		"\nIf dbname is not supplied, then the DATABASE environment variable value is used.\n\n");
-
-	exit(1);
+    puts("If no database name is not supplied, then the PGDATABASE environment\nvariable value is used.\n");
+    puts("Report bugs to <bugs@postgresql.org>.");
 }
+
+
+static void
+version(void)
+{
+    puts("pg_dump (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
+    puts("Copyright (C) 2000 PostgreSQL Global Development Team");
+    puts("Copyright (C) 1996 Regents of the University of California");
+    puts("Read the file COPYING to see the usage and distribution terms.");
+}
+
 
 static void
 exit_nicely(PGconn *conn)
@@ -551,14 +554,13 @@ main(int argc, char **argv)
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"clean", no_argument, NULL, 'c'},
-		{"insert-proper",no_argument, NULL, 'd'},
-		{"insert-attr",	no_argument, NULL, 'D'},
-		{"out", required_argument, NULL, 'f'},
-		{"to-file", required_argument, NULL, 'f'},
+		{"inserts",no_argument, NULL, 'd'},
+		{"attribute-inserts", no_argument, NULL, 'D'},
+		{"output", required_argument, NULL, '\037'}, /* see note below */
 		{"host", required_argument, NULL, 'h'},
 		{"no-quotes", no_argument, NULL, 'n'},
 		{"quotes", no_argument, NULL, 'N'},
-		{"oids", no_argument, NULL, 'o'},
+		{"oids", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
 		{"schema-only", no_argument, NULL, 's'},
 		{"table", required_argument, NULL, 't'},
@@ -566,6 +568,7 @@ main(int argc, char **argv)
 		{"verbose", no_argument, NULL, 'v'},
 		{"no-acl", no_argument, NULL, 'x'},
 		{"help", no_argument, NULL, '?'},
+        {"version", no_argument, NULL, 'V'}
 	};
 	int		optindex;
 #endif
@@ -580,12 +583,33 @@ main(int argc, char **argv)
 
 	dataOnly = schemaOnly = dumpData = attrNames = false;
 
-	progname = *argv;
+    if (!strrchr(argv[0], SEP_CHAR))
+        progname = argv[0];
+    else
+        progname = strrchr(argv[0], SEP_CHAR) + 1;
+
+    /*
+     * A note on options:
+     *
+     * The standard option for specifying an output file is -o/--output.
+     * The standard option for specifying an input file is -f/--file.
+     * pg_dump used to use -f for specifying an output file.
+     * Unfortunately, -o is already in use for oids.
+     *
+     * Therefore I instituted the following:
+     * + The -f option is gone. Most people use > for output redirection anyway
+     *   so there is really not a big point in supporting output files.
+     * + If you like, and can, you can use --output, but it's not documented.
+     * + The preferred option for oids is now -O. -o generates a warning.
+     * + In the (very far) future the -o option could be used to used for
+     *   specifying an output file.
+     *                                           -- petere 2000-01-17
+     */
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acdDf:h:nNop:st:uvxz?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDh:nNoOp:st:uvxzV?\037", long_options, &optindex)) != -1)
 #else
-	while ((c = getopt(argc, argv, "acdDf:h:nNop:st:uvxz?")) != -1)
+    while ((c = getopt(argc, argv, "acdDh:nNoOp:st:uvxzV?")) != -1)
 #endif
 	{
 		switch (c)
@@ -605,7 +629,7 @@ main(int argc, char **argv)
 				dumpData = true;
 				attrNames = true;
 				break;
-			case 'f':			/* output file name */
+			case '\037':		/* output file name, see note above */
 				filename = optarg;
 				break;
 			case 'h':			/* server host */
@@ -618,7 +642,9 @@ main(int argc, char **argv)
 			case 'N':			/* Force double-quotes on identifiers */
 				force_quotes = true;
 				break;
-			case 'o':			/* Dump oids */
+            case 'o':
+                fprintf(stderr, "%s: The -o option for dumping oids is deprecated. Please use -O.");
+			case 'O':			/* Dump oids */
 				oids = true;
 				break;
 			case 'p':			/* server port */
@@ -662,15 +688,17 @@ main(int argc, char **argv)
 			case 'x':			/* skip ACL dump */
 				aclsSkip = true;
 				break;
-			case 'z':			/* Old ACL option bjm 1999/05/27 */
-				fprintf(stderr,
-				 "%s: The -z option(dump ACLs) is now the default, continuing.\n",
-					progname);
-				break;
+            case 'V':
+                version();
+                exit(0);
+                break;
 			case '?':
-			default:
-				usage(progname);
+				help(progname);
+                exit(0);
 				break;
+			default:
+                fprintf(stderr, "%s: unknown option -%c\nTry -? for help.\n", progname, c);
+                exit(1);
 		}
 	}
 
@@ -679,7 +707,7 @@ main(int argc, char **argv)
 		fprintf(stderr,
 			 "%s: INSERT's can not set oids, so INSERT and OID options can not be used together.\n",
 				progname);
-		exit(2);
+		exit(1);
 	}
 
 	/* open the output file */
@@ -697,16 +725,16 @@ main(int argc, char **argv)
 			fprintf(stderr,
 				 "%s: could not open output file named %s for writing\n",
 					progname, filename);
-			exit(2);
+			exit(1);
 		}
 	}
 
 	/* find database */
 	if (!(dbname = argv[optind]) &&
-		!(dbname = getenv("DATABASE")))
+		!(dbname = getenv("PGDATABASE")))
 	{
 		fprintf(stderr, "%s: no database name specified\n", progname);
-		exit(2);
+		exit(1);
 	}
 
 	/* g_conn = PQsetdb(pghost, pgport, NULL, NULL, dbname); */
@@ -1417,7 +1445,7 @@ getFuncs(int *numFuncs)
 		{
 			fprintf(stderr, "failed sanity check: %s has %d args\n",
 					finfo[i].proname, finfo[i].nargs);
-			exit(2);
+			exit(1);
 		}
 		parseNumericArray(PQgetvalue(res, i, i_proargtypes),
 						  finfo[i].argtypes,
@@ -2922,7 +2950,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 		{
 			fprintf(stderr, "failed sanity check, table %s was not found\n",
 					indinfo[i].indrelname);
-			exit(2);
+			exit(1);
 		}
 
 		if (strcmp(indinfo[i].indproc, "0") == 0)

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.79 2000/01/15 18:30:31 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.80 2000/01/18 00:03:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -199,14 +199,14 @@ do
                 ;;
 # The encoding of the template1 database. Defaults to what you chose
 # at configure time. (see above)
-        --encoding|-e)
+        --encoding|-E)
                 MULTIBYTE="$2"
                 shift;;
         --encoding=*)
                 MULTIBYTE=`echo $1 | sed 's/^--encoding=//'`
                 ;;
-        -e*)
-                MULTIBYTE=`echo $1 | sed 's/^-e//'`
+        -E*)
+                MULTIBYTE=`echo $1 | sed 's/^-E//'`
                 ;;
         *)
                 PGDATA=$1

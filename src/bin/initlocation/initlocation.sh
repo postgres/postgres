@@ -1,107 +1,112 @@
 #!/bin/sh
 #-------------------------------------------------------------------------
 #
-# initarea.sh--
-#     Create (initialize) a secondary Postgres database storage area.  
+# initlocation.sh--
+#     Create a secondary PostgreSQL database storage area.  
 # 
-#     A database storage area contains individual Postgres databases.
-#
-#     To create the database storage area, we create a root directory tree.
-#
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.3 1999/12/16 20:09:57 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.4 2000/01/18 00:03:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
+exit_nicely(){
+    echo "$CMDNAME failed."
+    rm -rf "$PGALTDATA"
+    exit 1
+}
+
+
 CMDNAME=`basename $0`
-POSTGRES_SUPERUSERNAME=$USER
+EffectiveUser=`id -n -u 2>/dev/null || whoami 2>/dev/null`
+
+if [ "$USER" = 'root' -o "$LOGNAME" = 'root' ]
+then
+    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
+    echo "as the (unprivileged) user that will own the server process."
+    exit 1
+fi
+
+Location=
 
 while [ "$#" -gt 0 ]
 do
-	case "$1" in
-		--location=*) PGALTDATA="`echo $1 | sed 's/^--pgdata=//'`"; ;;
-		--username=*) POSTGRES_SUPERUSERNAME="`echo $1 | sed 's/^--username=//'`" ;;
+    case "$1" in
+        # These options are not really necessary, but what the heck.
+	--location=*)
+            Location=`echo $1 | sed 's/^--pgdata=//'`
+            ;;
+	--location)
+            Location="$2"
+            shift;;
+	-D)
+            Location="$2"
+            shift;;
 
-		--location) shift; PGALTDATA="$1"; ;;
-		--username) shift; POSTGRES_SUPERUSERNAME="$1"; ;;
-		--help) usage=1; ;;
+	--help|-\?)
+            usage=t
+            break;;
 
-		-u) shift; POSTGRES_SUPERUSERNAME="$1"; ;;
-		-D) shift; PGALTDATA="$1"; ;;
-		-h) usage=t; ;;
-		-\?) usage=t; ;;
-		-*) badparm=$1; ;;
-		*) PGALTDATA="$1"; ;;
+	-*)
+            echo "$CMDNAME: unrecognized option $badparm"
+            echo "Try -? for help."
+            exit 1
+            ;;
+	*)
+            Location="$1"
+            ;;
 	esac
 	shift
 done
 
-if [ -n "$badparm" ]; then
-	echo "$CMDNAME: Unrecognized parameter '$badparm'. Try -? for help."
-	exit 1
-fi
 
 if [ "$usage" ]; then
+        echo "$CMDNAME initializes an alternative filesystem location for database creation."
 	echo ""
-	echo "Usage: $CMDNAME [options] datadir"	
+	echo "Usage:"
+        echo "  $CMDNAME <location>"
 	echo ""
-	echo "    -u SUPERUSER, --username=SUPERUSER "
-	echo "    -D DATADIR,   --location=DATADIR   "
-	echo "    -?,           --help               "
-	echo ""
+        echo "Report bugs to <bugs@postgresql.org>."
+	exit 0
+fi
+
+
+if [ -z "$Location" ]; then
+	echo "$CMDNAME: missing required argument <location>"
+        echo "Try -? for help."
 	exit 1
 fi
 
-#-------------------------------------------------------------------------
-# Make sure he told us where to build the database area
-#-------------------------------------------------------------------------
 
-PGENVAR="$PGALTDATA"
-PGENVAR=`printenv $PGENVAR`
-if [ ! -z "$PGENVAR" ]; then
-	PGALTDATA=$PGENVAR
-	echo "$CMDNAME: input argument points to $PGALTDATA"
+#
+# Here's what's going on:
+#
+# You can call initlocation ENVAR (no dollar sign), then ENVAR will
+# (a) be tested whether it is valid as a path, or
+# (b) be resolved as an environment variable.
+# The latter has been the traditional behaviour.
+#
+# You can call initlocation $ENVAR, which will of course be resolved
+# by the shell, or initlocation some/path (containing at least one slash).
+# Then you just take that path.
+# This should apease users who are confused by the above behaviour.
+#
+
+if ! echo "$Location" | grep -s '/' >/dev/null 2>&1 && [ ! -d "$Location" ]; then
+    PGALTDATA=`printenv $Location 2> /dev/null`
+    if [ -z "$PGALTDATA" ]; then
+        echo "$CMDNAME: environment variable $PGALTDATA not set"
+        exit 1
+    fi
+    haveenv=t
+else
+    PGALTDATA="$Location"
+    haveenv=f
 fi
 
-if [ -z "$PGALTDATA" ]; then
-	echo "$CMDNAME: You must identify the target area, where the new data"
-	echo "for this database system can reside.  Do this with --location"
-	exit 1
-fi
-
-#---------------------------------------------------------------------------
-# Figure out who the Postgres superuser for the new database system will be.
-#---------------------------------------------------------------------------
-
-if [ -z "$POSTGRES_SUPERUSERNAME" ]; then 
-	echo "Can't tell what username to use.  You don't have the USER"
-	echo "environment variable set to your username and didn't specify the "
-	echo "--username option"
-	exit 1
-fi
-
-POSTGRES_SUPERUID=`pg_id $POSTGRES_SUPERUSERNAME`
-
-if [ $POSTGRES_SUPERUID = NOUSER ]; then
-	echo "Valid username not given.  You must specify the username for "
-	echo "the Postgres superuser for the database system you are "
-	echo "initializing, either with the --username option or by default "
-	echo "to the USER environment variable."
-	exit 1
-fi
-
-if [ $POSTGRES_SUPERUID -ne `pg_id` -a `pg_id` -ne 0 ]; then 
-	echo "Only the unix superuser may initialize a database with a different"
-	echo "Postgres superuser.  (You must be able to create files that belong"
-	echo "to the specified unix user)."
-	exit 1
-fi
-
-echo "We are initializing the database area with username" \
-	"$POSTGRES_SUPERUSERNAME (uid=$POSTGRES_SUPERUID)."   
+echo "The location will be initialized with username \"$EffectiveUser\"."
 echo "This user will own all the files and must also own the server process."
 echo
 
@@ -109,22 +114,51 @@ echo
 # Create the data directory if necessary
 # -----------------------------------------------------------------------
 
+# don't want to leave anything lying around
+trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
+
 # umask must disallow access to group, other for files and dirs
 umask 077
 
 if [ ! -d $PGALTDATA ]; then
-	echo "Creating Postgres database system directory $PGALTDATA"
-	echo
-	mkdir $PGALTDATA
-	if [ $? -ne 0 ]; then exit 1; fi
-	chown $POSTGRES_SUPERUSERNAME $PGALTDATA
-fi
-if [ ! -d $PGALTDATA/base ]; then
-	echo "Creating Postgres database system directory $PGALTDATA/base"
-	echo
-	mkdir $PGALTDATA/base
-	if [ $? -ne 0 ]; then exit 1; fi
-	chown $POSTGRES_SUPERUSERNAME $PGALTDATA/base
+	echo "Creating directory $PGALTDATA"
+	mkdir "$PGALTDATA"
+	if [ $? -ne 0 ]; then
+            echo "$CMDNAME: could not create $PGALTDATA"
+            echo "Make sure $PGALTDATA is a valid path and that you have permission to access it."
+            exit_nicely
+        fi
+else
+        echo "Fixing permissions on pre-existing directory $PGALTDATA"
+	chmod go-rwx "$PGALTDATA" || exit_nicely
 fi
 
-exit
+
+if [ ! -d $PGALTDATA/base ]; then
+	echo "Creating directory $PGALTDATA/base"
+	mkdir "$PGALTDATA/base"
+	if [ $? -ne 0 ]; then
+            echo "$CMDNAME: could not create $PGALTDATA/base"
+            echo "Make sure $PGALTDATA/base is a valid path and that you have permission to access it."
+            exit_nicely
+        fi
+else
+        echo "Fixing permissions on pre-existing directory $PGALTDATA/base"
+	chmod go-rwx "$PGALTDATA/base" || exit_nicely
+fi
+
+echo
+echo "$CMDNAME is complete."
+# We can only suggest them these commands if they used the environment
+# variable notation. Otherwise they would be induced to use an absolute
+# path, which the backend won't allow by default.
+if [ "$haveenv" = "t" ]; then
+    echo "You can now create a database using"
+    echo "  CREATE DATABASE <name> WITH LOCATION = '$Location/<name>'"
+    echo "in SQL, or"
+    echo "  createdb <name> -D '$Location/<name>'"
+    echo "from the shell."
+fi
+echo
+
+exit 0

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.5 1999/07/22 15:09:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.6 2000/01/18 00:03:34 petere Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,7 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 pg_dumpall
-pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
+pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] [ -a ] [ -d ] [ -D ] [ -O ] [ -s ] [ -u ] [ -v ] [ -x ]
   </synopsis>
 
   <refsect2 id="R2-APP-PG-DUMPALL-1">
@@ -77,7 +77,7 @@ pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replac
      </varlistentry>
 
      <varlistentry>
-      <term>-o</term>
+      <term>-O</term>
       <listitem>
        <para>
 	Dump object identifiers (<acronym>OID</acronym>s) for every table.
@@ -277,7 +277,7 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
    To dump all databases:
 
    <programlisting>
-% pg_dumpall -o > db.out
+% pg_dumpall > db.out
    </programlisting>
 
    <tip>

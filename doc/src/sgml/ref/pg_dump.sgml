@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.12 1999/07/22 15:09:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.13 2000/01/18 00:03:34 petere Exp $
 Postgres documentation
 -->
 
@@ -25,9 +25,9 @@ Postgres documentation
   <synopsis>
 pg_dump [ <replaceable class="parameter">dbname</replaceable> ]
 pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
-    [ -t <replaceable class="parameter">table</replaceable> ] [ -f <replaceable class="parameter">outputfile</replaceable> ]
+    [ -t <replaceable class="parameter">table</replaceable> ]
     [ -a ] [ -c ] [ -d ] [ -D ] [ -n ] [ -N ]
-    [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
+    [ -O ] [ -s ] [ -u ] [ -v ] [ -x ]
     [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
@@ -93,15 +93,6 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
      </varlistentry>
 
      <varlistentry>
-      <term>-f <replaceable class="parameter">filename</replaceable></term>
-      <listitem>
-       <para>
-	Specifies the output file. Defaults to <filename>stdout</filename>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term>-n</term>
       <listitem>
        <para>
@@ -124,7 +115,7 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceab
      </varlistentry>
 
      <varlistentry>
-      <term>-o</term>
+      <term>-O</term>
       <listitem>
        <para>
 	Dump object identifiers (<acronym>OID</acronym>s) for every table.
