@@ -7761,6 +7761,9 @@ if test x"$abs_top_srcdir" != x"$abs_top_builddir"; then
   echo "$ac_t""done" 1>&6
 fi
 
+# (see Makefile.global)
+echo >src/include/stamp-h
+
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
@@ -8242,7 +8245,6 @@ cat >> $CONFIG_STATUS <<EOF
 
 EOF
 cat >> $CONFIG_STATUS <<\EOF
-echo "timestamp file" > src/include/stamp-h
 
 exit 0
 EOF

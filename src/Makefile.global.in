@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.114 2000/11/30 20:36:10 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.115 2000/12/16 13:03:25 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -313,6 +313,7 @@ $(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_
 $(top_builddir)/src/include/config.h: $(top_builddir)/src/include/stamp-h
 $(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/config.h.in $(top_builddir)/config.status
 	cd $(top_builddir) && CONFIG_FILES= CONFIG_HEADERS=src/include/config.h ./config.status
+	echo >$@
 
 # When configure changes, rerun configure with the same options as
 # last time. To change configure, you need to run autoconf manually.
