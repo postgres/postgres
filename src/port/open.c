@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.8 2005/02/27 00:53:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.9 2005/03/24 04:36:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ win32_open(const char *fileName, int fileFlags,...)
 	/* Check that we can handle the request */
 	assert((fileFlags & ((O_RDONLY | O_WRONLY | O_RDWR) | O_APPEND |
 						 (O_RANDOM | O_SEQUENTIAL | O_TEMPORARY) |
-						 _O_SHORT_LIVED | O_SYNC |
+						 _O_SHORT_LIVED | O_DSYNC |
 	  (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
 
 	sa.nLength = sizeof(sa);
@@ -83,7 +83,7 @@ win32_open(const char *fileName, int fileFlags,...)
 		   ((fileFlags & O_SEQUENTIAL) ? FILE_FLAG_SEQUENTIAL_SCAN : 0) |
 		  ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
 			 ((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0)|
-					((fileFlags & O_SYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
+					((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						NULL)) == INVALID_HANDLE_VALUE)
 	{
 		switch (GetLastError())

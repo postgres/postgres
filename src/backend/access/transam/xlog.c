@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.181 2005/02/12 23:53:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.182 2005/03/24 04:36:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,13 @@
 #endif
 #endif
 
+#if defined(O_DSYNC)
 #if defined(OPEN_SYNC_FLAG)
-#if defined(O_DSYNC) && (O_DSYNC != OPEN_SYNC_FLAG)
+#if O_DSYNC != OPEN_SYNC_FLAG
+#define OPEN_DATASYNC_FLAG	  O_DSYNC
+#endif
+#else /* !defined(OPEN_SYNC_FLAG) */
+/* Win32 only has O_DSYNC */
 #define OPEN_DATASYNC_FLAG	  O_DSYNC
 #endif
 #endif
@@ -79,7 +84,11 @@
 #define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FDATASYNC
 #define DEFAULT_SYNC_FLAGBIT	  0
 #else
+#ifndef FSYNC_IS_WRITE_THROUGH
 #define DEFAULT_SYNC_METHOD_STR   "fsync"
+#else
+#define DEFAULT_SYNC_METHOD_STR   "fsync_writethrough"
+#endif
 #define DEFAULT_SYNC_METHOD		  SYNC_METHOD_FSYNC
 #define DEFAULT_SYNC_FLAGBIT	  0
 #endif
@@ -5154,7 +5163,12 @@ assign_xlog_sync_method(const char *method, bool doit, GucSource source)
 	int			new_sync_method;
 	int			new_sync_bit;
 
+#ifndef FSYNC_IS_WRITE_THROUGH
 	if (pg_strcasecmp(method, "fsync") == 0)
+#else
+	/* Win32 fsync() == _commit(0, which writes through a write cache */
+	if (pg_strcasecmp(method, "fsync_writethrough") == 0)
+#endif
 	{
 		new_sync_method = SYNC_METHOD_FSYNC;
 		new_sync_bit = 0;
