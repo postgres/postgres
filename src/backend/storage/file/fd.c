@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.59 2000/06/02 15:57:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.60 2000/06/14 03:19:24 momjian Exp $
  *
  * NOTES:
  *
@@ -94,6 +94,8 @@
 	((file) > 0 && (file) < (int) SizeVfdCache && VfdCache[file].fileName != NULL)
 
 #define FileIsNotOpen(file) (VfdCache[file].fd == VFD_CLOSED)
+
+#define FileUnknownPos (-1)
 
 typedef struct vfd
 {
@@ -790,6 +792,8 @@ FileRead(File file, char *buffer, int amount)
 	returnCode = read(VfdCache[file].fd, buffer, amount);
 	if (returnCode > 0)
 		VfdCache[file].seekPos += returnCode;
+	else
+		VfdCache[file].seekPos = FileUnknownPos;
 
 	return returnCode;
 }
@@ -806,11 +810,12 @@ FileWrite(File file, char *buffer, int amount)
 
 	FileAccess(file);
 	returnCode = write(VfdCache[file].fd, buffer, amount);
-	if (returnCode > 0)
+	if (returnCode > 0) {
 		VfdCache[file].seekPos += returnCode;
-
 	/* mark the file as needing fsync */
 	VfdCache[file].fdstate |= FD_DIRTY;
+	} else
+		VfdCache[file].seekPos = FileUnknownPos;
 
 	return returnCode;
 }
@@ -840,10 +845,26 @@ FileSeek(File file, long offset, int whence)
 			default:
 				elog(ERROR, "FileSeek: invalid whence: %d", whence);
 				break;
-		}
 	}
-	else
+	} else
+		switch (whence) {
+			case SEEK_SET:
+				if (offset < 0)
+					elog(ERROR, "FileSeek: invalid offset: %ld", offset);
+				if (VfdCache[file].seekPos != offset)
+					VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+				break;
+			case SEEK_CUR:
+				if ((offset != 0) || (VfdCache[file].seekPos == FileUnknownPos));
 		VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+				break;
+			case SEEK_END:
+				VfdCache[file].seekPos = lseek(VfdCache[file].fd, offset, whence);
+				break;
+			default:
+				elog(ERROR, "FileSeek: invalid whence: %d", whence);
+				break;
+		}
 	return VfdCache[file].seekPos;
 }
 
