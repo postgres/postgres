@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Dec 5 00:33:46 EST 2001
+   Last updated: Wed Dec 5 00:38:51 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -374,9 +374,8 @@
    monthly and one-time expenses that are required to keep it going. If
    you or your company has money it can donate to help fund this effort,
    please go to the following URL and make a donation:
-   
    http://www.pgsql.com/pg_goodies
-   
+       
    Although the web page mentions PostgreSQL, Inc, the "contributions"
    item is solely to support the PostgreSQL project and does not fund any
    specific company. If you prefer, you can also send a check to the
@@ -655,13 +654,13 @@
     4.6) What is the maximum size for a row, table, database?
     
    These are the limits:
-Maximum size for a database?             unlimited (60GB databases exist)
-Maximum size for a table?                16 TB
-Maximum size for a row?                  unlimited in 7.1 and later
-Maximum size for a field?                1GB in 7.1 and later
-Maximum number of rows in a table?       unlimited
-Maximum number of columns in a table?    250-1600 depending on column types
-Maximum number of indexes on a table?    unlimited
+    Maximum size for a database?             unlimited (60GB databases exist)
+    Maximum size for a table?                16 TB
+    Maximum size for a row?                  unlimited in 7.1 and later
+    Maximum size for a field?                1GB in 7.1 and later
+    Maximum number of rows in a table?       unlimited
+    Maximum number of columns in a table?    250-1600 depending on column types
+    Maximum number of indexes on a table?    unlimited
 
    Of course, these are not actually unlimited, but limited to available
    disk space and memory/swap space. Performance may suffer when these
