@@ -1,11 +1,11 @@
 #include <ecpgtype.h>
 
 struct ECPGtype;
-struct ECPGrecord_member
+struct ECPGstruct_member
 {
 	char	   *name;
 	struct ECPGtype *typ;
-	struct ECPGrecord_member *next;
+	struct ECPGstruct_member *next;
 };
 
 struct ECPGtype
@@ -19,20 +19,20 @@ struct ECPGtype
 		struct ECPGtype *element;		/* For an array this is the type
 										 * of the element */
 
-		struct ECPGrecord_member *members;
+		struct ECPGstruct_member *members;
 		/* A pointer to a list of members. */
 	}			u;
 };
 
 /* Everything is malloced. */
-struct ECPGrecord_member *ECPGmake_record_member(char *, struct ECPGtype *, struct ECPGrecord_member **);
+struct ECPGstruct_member *ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, long);
-struct ECPGtype *ECPGmake_record_type(struct ECPGrecord_member *);
+struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *);
 
 /* Frees a type. */
-void		ECPGfree_record_member(struct ECPGrecord_member *);
+void		ECPGfree_struct_member(struct ECPGstruct_member *);
 void		ECPGfree_type(struct ECPGtype *);
 
 /* Dump a type.
@@ -43,7 +43,7 @@ void		ECPGfree_type(struct ECPGtype *);
    reference-to-variable can be a reference to a struct element.
    arrsize is the size of the array in case of array fetches. Otherwise 0.
    size is the maxsize in case it is a varchar. Otherwise it is the size of
-	   the variable (required to do array fetches of records).
+	   the variable (required to do array fetches of structs).
  */
 void		ECPGdump_a_type(FILE *, const char *, struct ECPGtype *,  const char *, struct ECPGtype *, const char *, const char *);
 

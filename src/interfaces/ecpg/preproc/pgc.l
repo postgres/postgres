@@ -306,6 +306,7 @@ sql     [sS][qQ][lL]
 					return (yytext[0]);
 				}
 <SQL>{self}				{ 	return (yytext[0]); }
+<SQL>"->"                      { return S_STRUCTPOINTER; }
 <SQL>{operator}/-[\.0-9]	{
 					yylval.str = strdup((char*)yytext);
 					return (Op);

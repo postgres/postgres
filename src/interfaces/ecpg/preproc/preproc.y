@@ -17,8 +17,8 @@ static int      QueryIsRule = 0;
 static enum ECPGttype actual_type[128];
 static char     *actual_storage[128];
 
-/* temporarily store record members while creating the data structure */
-struct ECPGrecord_member *record_member_list[128] = { NULL };
+/* temporarily store struct members while creating the data structure */
+struct ECPGstruct_member *struct_member_list[128] = { NULL };
 
 /* keep a list of cursors */
 struct cursor *cur = NULL;
@@ -89,26 +89,6 @@ int braces_open;
 static struct variable * allvariables = NULL;
 
 static struct variable *
-find_variable(char * name)
-{
-    struct variable * p;
-    char * errorstring = (char *) mm_alloc(strlen(name) + 100);
-
-    for (p = allvariables; p; p = p->next)
-    {
-        if (strcmp(p->name, name) == 0)
-	    return p;
-    }
-
-    sprintf(errorstring, "The variable %s is not declared", name);
-    yyerror(errorstring);
-    free (errorstring);
-
-    return NULL;
-}
-
-
-static void
 new_variable(const char * name, struct ECPGtype * type)
 {
     struct variable * p = (struct variable*) mm_alloc(sizeof(struct variable));
@@ -119,6 +99,97 @@ new_variable(const char * name, struct ECPGtype * type)
 
     p->next = allvariables;
     allvariables = p;
+
+    return(p);
+}
+
+static struct variable * find_variable(char * name);
+
+static struct variable *
+find_struct_member(char *name, char *str, struct ECPGstruct_member *members)
+{
+    char *next = strpbrk(++str, ".-"), c = '\0';
+
+    if (next != NULL)
+    {
+	c = *next;
+	*next = '\0';
+    }
+
+    for (; members; members = members->next)
+    {
+        if (strcmp(members->name, str) == 0)
+	{
+		if (c == '\0')
+		{
+			/* found the end */
+			switch (members->typ->typ)
+			{
+			   case ECPGt_struct:
+				return(new_variable(name, ECPGmake_struct_type(members->typ->u.members)));
+			   case ECPGt_varchar:
+				return(new_variable(name, ECPGmake_varchar_type(members->typ->typ, members->typ->size)));
+			   default:
+				return(new_variable(name, ECPGmake_simple_type(members->typ->typ, members->typ->size)));
+			}
+		}
+		else
+		{
+			*next = c;
+			if (c == '-') next++;
+			return(find_struct_member(name, next, members->typ->u.members));
+		}
+	}
+    }
+
+    return(NULL);
+}
+
+static struct variable *
+find_struct(char * name, char *next)
+{
+    struct variable * p;
+    char c = *next;
+
+    /* first get the mother structure entry */
+    *next = '\0';
+    p = find_variable(name);
+
+    /* restore the name, we will need it later on */
+    *next = c;
+    if (*next == '-') next++;
+
+    return (find_struct_member(name, next, p->type->u.members));
+}
+
+static struct variable *
+find_simple(char * name)
+{
+    struct variable * p;
+
+    for (p = allvariables; p; p = p->next)
+    {
+        if (strcmp(p->name, name) == 0)
+	    return p;
+    }
+
+    return(NULL);
+}
+
+static struct variable *
+find_variable(char * name)
+{
+    char * next;
+    struct variable * p =
+    	((next = strpbrk(name, ".-")) != NULL) ? find_struct(name, next) : find_simple(name);
+
+    if (p == NULL)
+    {
+	sprintf(errortext, "The variable %s is not declared", name);
+	yyerror(errortext);
+    }
+
+    return(p);
 }
 
 static void
@@ -215,7 +286,7 @@ check_indicator(struct ECPGtype *var)
 	/* make sure this is a valid indicator variable */
 	switch (var->typ)
 	{
-		struct ECPGrecord_member *p;
+		struct ECPGstruct_member *p;
 
 		case ECPGt_short:
 		case ECPGt_int:
@@ -225,7 +296,7 @@ check_indicator(struct ECPGtype *var)
 		case ECPGt_unsigned_long:
 			break;
 
-		case ECPGt_record:
+		case ECPGt_struct:
 			for (p = var->u.members; p; p = p->next)
 				check_indicator(p->typ);
 			break;
@@ -392,8 +463,8 @@ output_statement(const char * stmt)
 /* C token */
 %token		S_ANYTHING S_AUTO S_BOOL S_CHAR S_CONST S_DOUBLE S_EXTERN
 %token		S_FLOAT S_INT
-%token		S_LONG S_REGISTER S_SHORT S_SIGNED S_STATIC S_STRUCT S_UNSIGNED
-%token		S_VARCHAR
+%token		S_LONG S_REGISTER S_SHORT S_SIGNED S_STATIC S_STRUCT 
+%token		S_STRUCTPOINTER S_UNSIGNED S_VARCHAR
 
 /* I need this and don't know where it is defined inside the backend */
 %token		TYPECAST
@@ -3704,7 +3775,7 @@ declaration: storage_clause type
 	{
 		actual_storage[struct_level] = $1;
 		actual_type[struct_level] = $2;
-		if ($2 != ECPGt_varchar && $2 != ECPGt_record)
+		if ($2 != ECPGt_varchar && $2 != ECPGt_struct)
 			fprintf(yyout, "%s %s", $1, ECPGtype_name($2));
 	}
 	variable_list ';' { fputc(';', yyout); }
@@ -3723,11 +3794,13 @@ type: simple_type
 struct_type: s_struct '{' variable_declarations '}'
 	{
 	    struct_level--;
-	    $$ = actual_type[struct_level] = ECPGt_record;
+	    fputs("} ", yyout);
+	    $$ = ECPGt_struct;
 	}
 
 s_struct : S_STRUCT symbol
 	{
+		struct_member_list[struct_level] = NULL;
 		struct_level++;
 		fprintf(yyout, "struct %s {", $2);
 	}
@@ -3764,14 +3837,13 @@ variable: opt_pointer symbol opt_index opt_initializer
 
 			switch (actual_type[struct_level])
 			{
-			   case ECPGt_record:
+			   case ECPGt_struct:
 				if (struct_level == 0)
-					new_variable($2, ECPGmake_record_type(record_member_list[struct_level]));
+					new_variable($2, ECPGmake_struct_type(struct_member_list[struct_level]));
 				else
-				        ECPGmake_record_member($2, ECPGmake_record_type(record_member_list[struct_level]), &(record_member_list[struct_level-1]));
+				        ECPGmake_struct_member($2, ECPGmake_struct_type(struct_member_list[struct_level]), &(struct_member_list[struct_level-1]));
 
-				record_member_list[struct_level] = NULL;
-		 		fprintf(yyout, "} %s%s%s%s", $1, $2, $3.str, $4);
+		 		fprintf(yyout, "%s%s%s%s", $1, $2, $3.str, $4);
 
 				break;
 			   case ECPGt_varchar:
@@ -3781,7 +3853,7 @@ variable: opt_pointer symbol opt_index opt_initializer
 				if (struct_level == 0) 
 					new_variable($2, ECPGmake_varchar_type(actual_type[struct_level], length));
 				else
-				        ECPGmake_record_member($2, ECPGmake_varchar_type(actual_type[struct_level], length), &(record_member_list[struct_level-1]));
+				        ECPGmake_struct_member($2, ECPGmake_varchar_type(actual_type[struct_level], length), &(struct_member_list[struct_level-1]));
 				
 				if (length > 0)
 					fprintf(yyout, "%s struct varchar_%s { int len; char arr[%d]; } %s", actual_storage[struct_level], $2, length, $2);
@@ -3794,7 +3866,7 @@ variable: opt_pointer symbol opt_index opt_initializer
 				if (struct_level == 0)
 					new_variable($2, ECPGmake_simple_type(actual_type[struct_level], length));
 				else
-				        ECPGmake_record_member($2, ECPGmake_simple_type(actual_type[struct_level], length), &(record_member_list[struct_level-1]));
+				        ECPGmake_struct_member($2, ECPGmake_simple_type(actual_type[struct_level], length), &(struct_member_list[struct_level-1]));
 
 				fprintf(yyout, "%s%s%s%s", $1, $2, $3.str, $4);
 
@@ -4230,15 +4302,15 @@ civariableonly : cvariable name {
 }
 
 cvariable: CVARIABLE			{ $$ = $1; }
-	| CVARIABLE '.' identlist	{ $$ = $1; }
-	| CVARIABLE '-' '>' identlist	{ $$ = $1; }
+	| CVARIABLE '.' identlist	{ $$ = cat3_str($1, ".", $3); }
+	| CVARIABLE S_STRUCTPOINTER identlist	{ $$ = cat3_str($1, "->", $3); }
 
 identlist: IDENT			{ $$ = $1; }
-	| IDENT '.' identlist		{ $$ = $1; }
-	| IDENT '-' '>' identlist   { $$ = $1; }
+	| IDENT '.' identlist		{ $$ = cat3_str($1, ".", $3); }
+	| IDENT S_STRUCTPOINTER identlist   { $$ = cat3_str($1, "->", $3); }
 
 indicator: /* empty */			{ $$ = NULL; }
-	| cvariable		 	{ check_indicator((find_variable($1))->type); $$ = $1; }
+	| cvariable		 	{ printf("## %s\n", $1); check_indicator((find_variable($1))->type); $$ = $1; }
 	| SQL_INDICATOR cvariable 	{ check_indicator((find_variable($2))->type); $$ = $2; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 

@@ -18,7 +18,7 @@
  * Complex types:
  * VARCHAR, VARCHAR2 - Strings with length (maxlen is given in the declaration)
  * Arrays of simple types and of VARCHAR, VARCHAR2 (size given in declaration)
- * Records build of simple types, arrays and other records.
+ * Records build of simple types, arrays and other structs.
  *
  * Complicating things:
  * typedefs and struct names!
@@ -41,7 +41,7 @@ enum ECPGttype
 	ECPGt_float, ECPGt_double,
 	ECPGt_varchar, ECPGt_varchar2,
 	ECPGt_array,
-	ECPGt_record,
+	ECPGt_struct,
 	ECPGt_EOIT,					/* End of insert types. */
 	ECPGt_EORT,					/* End of result types. */
 	ECPGt_NO_INDICATOR				/* no indicator */

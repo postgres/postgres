@@ -142,3 +142,10 @@ Fri Apr 24 13:50:15 CEST 1998
 
 	- Fixed some bugs.
 	- Set version to 2.1.1
+
+Mon Apr 27 14:26:55 CEST 1998
+
+	- Parser now able to understand and process syntax like :foo->bar
+	  and :foo.bar as variables.
+	- Set version to 2.2.0
+

@@ -40,12 +40,12 @@ mm_realloc(void *ptr, size_t size)
  */
 
 /* The NAME argument is copied. The type argument is preserved as a pointer. */
-struct ECPGrecord_member *
-ECPGmake_record_member(char *name, struct ECPGtype * type, struct ECPGrecord_member ** start)
+struct ECPGstruct_member *
+ECPGmake_struct_member(char *name, struct ECPGtype * type, struct ECPGstruct_member ** start)
 {
-	struct ECPGrecord_member *ptr,
+	struct ECPGstruct_member *ptr,
 			   *ne =
-	(struct ECPGrecord_member *) mm_alloc(sizeof(struct ECPGrecord_member));
+	(struct ECPGstruct_member *) mm_alloc(sizeof(struct ECPGstruct_member));
 
 	ne->name = strdup(name);
 	ne->typ = type;
@@ -94,9 +94,9 @@ ECPGmake_array_type(struct ECPGtype * typ, long siz)
 }
 
 struct ECPGtype *
-ECPGmake_record_type(struct ECPGrecord_member * rm)
+ECPGmake_struct_type(struct ECPGstruct_member * rm)
 {
-	struct ECPGtype *ne = ECPGmake_simple_type(ECPGt_record, 1);
+	struct ECPGtype *ne = ECPGmake_simple_type(ECPGt_struct, 1);
 
 	ne->u.members = rm;
 
@@ -116,14 +116,14 @@ ECPGmake_record_type(struct ECPGrecord_member * rm)
    reference-to-variable can be a reference to a struct element.
    arrsize is the size of the array in case of array fetches. Otherwise 0.
    size is the maxsize in case it is a varchar. Otherwise it is the size of
-   the variable (required to do array fetches of records).
+   the variable (required to do array fetches of structs).
  */
 void
 ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				  long varcharsize,
 				  long arrsiz, const char *siz, const char *prefix);
 void
-ECPGdump_a_record(FILE *o, const char *name, const char *ind_name, long arrsiz,
+ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz,
 		  struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offset, const char *prefix, const char * ind_prefix);
 
 
@@ -154,19 +154,19 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 		{
 			abort();			/* Array of array, */
 		}
-		else if (typ->u.element->typ == ECPGt_record)
+		else if (typ->u.element->typ == ECPGt_struct)
 		{
-			/* Array of records. */
-			ECPGdump_a_record(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, 0, prefix, ind_prefix);
+			/* Array of structs. */
+			ECPGdump_a_struct(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, 0, prefix, ind_prefix);
 		}
 		else
 		{
 			abort();
 		}
 	}
-	else if (typ->typ == ECPGt_record)
+	else if (typ->typ == ECPGt_struct)
 	{
-		ECPGdump_a_record(o, name, ind_name, 0, typ, ind_typ, 0, prefix, ind_prefix);
+		ECPGdump_a_struct(o, name, ind_name, 0, typ, ind_typ, 0, prefix, ind_prefix);
 	}
 	else
 	{
@@ -176,7 +176,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 
 
 /* If siz is NULL, then the offset is 0, if not use siz as a
-   string, it represents the offset needed if we are in an array of records. */
+   string, it represents the offset needed if we are in an array of structs. */
 void
 ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				  long varcharsize,
@@ -189,66 +189,66 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 	{
 			case ECPGt_char:
 			if (varcharsize == 0)		/* pointer */
-				fprintf(o, "\n\tECPGt_char,%s%s,%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
+				fprintf(o, "\n\tECPGt_char,(%s%s),%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
 						siz == NULL ? "sizeof(char)" : siz);
 			else
-				fprintf(o, "\n\tECPGt_char,&%s%s,%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
+				fprintf(o, "\n\tECPGt_char,&(%s%s),%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
 						siz == NULL ? "sizeof(char)" : siz);
 			break;
 		case ECPGt_unsigned_char:
 			if (varcharsize == 0)		/* pointer */
-				fprintf(o, "\n\tECPGt_unsigned_char,%s%s,%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
+				fprintf(o, "\n\tECPGt_unsigned_char,(%s%s),%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
 						siz == NULL ? "sizeof(char)" : siz);
 			else
-				fprintf(o, "\n\tECPGt_unsigned_char,&%s%s,%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
+				fprintf(o, "\n\tECPGt_unsigned_char,&(%s%s),%ldL,%ldL,%s, ", prefix ? prefix : "", name, varcharsize, arrsiz,
 						siz == NULL ? "sizeof(unsigned char)" : siz);
 			break;
 		case ECPGt_short:
-			fprintf(o, "\n\tECPGt_short,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_short,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(short)" : siz);
 			break;
 		case ECPGt_unsigned_short:
 			fprintf(o,
-					"\n\tECPGt_unsigned_short,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+					"\n\tECPGt_unsigned_short,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(unsigned short)" : siz);
 			break;
 		case ECPGt_int:
-			fprintf(o, "\n\tECPGt_int,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_int,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(int)" : siz);
 			break;
 		case ECPGt_unsigned_int:
-			fprintf(o, "\n\tECPGt_unsigned_int,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_unsigned_int,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(unsigned int)" : siz);
 			break;
 		case ECPGt_long:
-			fprintf(o, "\n\tECPGt_long,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_long,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(long)" : siz);
 			break;
 		case ECPGt_unsigned_long:
-			fprintf(o, "\n\tECPGt_unsigned_int,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_unsigned_int,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(unsigned int)" : siz);
 			break;
 		case ECPGt_float:
-			fprintf(o, "\n\tECPGt_float,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_float,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(float)" : siz);
 			break;
 		case ECPGt_double:
-			fprintf(o, "\n\tECPGt_double,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_double,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(double)" : siz);
 			break;
 		case ECPGt_bool:
-			fprintf(o, "\n\tECPGt_bool,&%s%s,0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
+			fprintf(o, "\n\tECPGt_bool,&(%s%s),0L,%ldL,%s, ", prefix ? prefix : "", name, arrsiz,
 					siz == NULL ? "sizeof(bool)" : siz);
 			break;
 		case ECPGt_varchar:
 		case ECPGt_varchar2:
 			if (siz == NULL)
-				fprintf(o, "\n\tECPGt_varchar,&%s%s,%ldL,%ldL,sizeof(struct varchar_%s), ",
+				fprintf(o, "\n\tECPGt_varchar,&(%s%s),%ldL,%ldL,sizeof(struct varchar_%s), ",
 						prefix ? prefix : "", name,
 						varcharsize,
 						arrsiz, name);
 			else
-				fprintf(o, "\n\tECPGt_varchar,&%s%s,%ldL,%ldL,%s, ",
+				fprintf(o, "\n\tECPGt_varchar,&(%s%s),%ldL,%ldL,%s, ",
 						prefix ? prefix : "", name,
 						varcharsize,
 						arrsiz, siz);
@@ -263,17 +263,17 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 }
 
 
-/* Penetrate a record and dump the contents. */
+/* Penetrate a struct and dump the contents. */
 void
-ECPGdump_a_record(FILE *o, const char *name, const char * ind_name, long arrsiz, struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offsetarg, const char *prefix, const char *ind_prefix)
+ECPGdump_a_struct(FILE *o, const char *name, const char * ind_name, long arrsiz, struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offsetarg, const char *prefix, const char *ind_prefix)
 {
 
 	/*
 	 * If offset is NULL, then this is the first recursive level. If not
-	 * then we are in a record in a record and the offset is used as
+	 * then we are in a struct in a struct and the offset is used as
 	 * offset.
 	 */
-	struct ECPGrecord_member *p, *ind_p = NULL;
+	struct ECPGstruct_member *p, *ind_p = NULL;
 	char		obuf[BUFSIZ];
 	char		pbuf[BUFSIZ], ind_pbuf[BUFSIZ];
 	const char *offset;
@@ -306,18 +306,19 @@ ECPGdump_a_record(FILE *o, const char *name, const char * ind_name, long arrsiz,
 /* Freeing is not really that important. Since we throw away the process
    anyway. Lets implement that last! */
 
-void
-ECPGfree_record_member(struct ECPGrecord_member * rm)
+/* won't work anymore because a list of members may appear in several locations */
+/*void
+ECPGfree_struct_member(struct ECPGstruct_member * rm)
 {
 	while (rm)
 	{
-		struct ECPGrecord_member *p = rm;
+		struct ECPGstruct_member *p = rm;
 
 		rm = rm->next;
 		free(p->name);
 		free(p);
 	}
-}
+}*/
 
 void
 ECPGfree_type(struct ECPGtype * typ)
@@ -330,15 +331,17 @@ ECPGfree_type(struct ECPGtype * typ)
 				free(typ->u.element);
 			else if (typ->u.element->typ == ECPGt_array)
 				abort();		/* Array of array, */
-			else if (typ->u.element->typ == ECPGt_record)
-				/* Array of records. */
-				ECPGfree_record_member(typ->u.members);
+			else if (typ->u.element->typ == ECPGt_struct)
+				/* Array of structs. */
+				free(typ->u.members);
+				/* ECPGfree_struct_member(typ->u.members);*/
 			else
 				abort();
 		}
-		else if (typ->typ == ECPGt_record)
+		else if (typ->typ == ECPGt_struct)
 		{
-			ECPGfree_record_member(typ->u.members);
+			free(typ->u.members);
+			/* ECPGfree_struct_member(typ->u.members);*/
 		}
 		else
 		{

@@ -53,6 +53,3 @@ exec sql disconnect {current|default|all|connectionname|connection_hostvar};
  commit release|commit work release auch disconnect
 
 It is not neccessary to check for "not found" after all commands.
-
-It would be nice to be able to specify parts of a structure like :foo.bar or
-:foo->bar.
