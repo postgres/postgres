@@ -1,0 +1,409 @@
+Proposal for function-manager redesign			24-May-2000
+--------------------------------------
+
+We know that the existing mechanism for calling Postgres functions needs
+to be redesigned.  It has portability problems because it makes
+assumptions about parameter passing that violate ANSI C; it fails to
+handle NULL arguments and results cleanly; and "function handlers" that
+support a class of functions (such as fmgr_pl) can only be done via a
+really ugly, non-reentrant kluge.  (Global variable set during every
+function call, forsooth.)  Here is a proposal for fixing these problems.
+
+In the past, the major objections to redoing the function-manager
+interface have been (a) it'll be quite tedious to implement, since every
+built-in function and everyplace that calls such functions will need to
+be touched; (b) such wide-ranging changes will be difficult to make in
+parallel with other development work; (c) it will break existing
+user-written loadable modules that define "C language" functions.  While
+I have no solution to the "tedium" aspect, I believe I see an answer to
+the other problems: by use of function handlers, we can support both old
+and new interfaces in parallel for both callers and callees, at some
+small efficiency cost for the old styles.  That way, most of the changes
+can be done on an incremental file-by-file basis --- we won't need a
+"big bang" where everything changes at once.  Support for callees
+written in the old style can be left in place indefinitely, to provide
+backward compatibility for user-written C functions.
+
+Note that neither the old function manager nor the redesign are intended
+to handle functions that accept or return sets.  Those sorts of functions
+need to be handled by special querytree structures.
+
+
+Changes in pg_proc (system data about a function)
+-------------------------------------------------
+
+A new column "proisstrict" will be added to the system pg_proc table.
+This is a boolean value which will be TRUE if the function is "strict",
+that is it always returns NULL when any of its inputs are NULL.  The
+function manager will check this field and skip calling the function when
+it's TRUE and there are NULL inputs.  This allows us to remove explicit
+NULL-value tests from many functions that currently need them.  A function
+that is not marked "strict" is responsible for checking whether its inputs
+are NULL or not.  Most builtin functions will be marked "strict".
+
+An optional WITH parameter will be added to CREATE FUNCTION to allow
+specification of whether user-defined functions are strict or not.  I am
+inclined to make the default be "not strict", since that seems to be the
+more useful case for functions expressed in SQL or a PL language, but
+am open to arguments for the other choice.
+
+
+The new function-manager interface
+----------------------------------
+
+The core of the new design is revised data structures for representing
+the result of a function lookup and for representing the parameters
+passed to a specific function invocation.  (We want to keep function
+lookup separate from function call, since many parts of the system apply
+the same function over and over; the lookup overhead should be paid once
+per query, not once per tuple.)
+
+
+When a function is looked up in pg_proc, the result is represented as
+
+typedef struct
+{
+    PGFunction  fn_addr;    /* pointer to function or handler to be called */
+    Oid         fn_oid;     /* OID of function (NOT of handler, if any) */
+    short       fn_nargs;   /* 0..FUNC_MAX_ARGS, or -1 if variable arg count */
+    bool        fn_strict;  /* function is "strict" (NULL in => NULL out) */
+    void       *fn_extra;   /* extra space for use by handler */
+} FmgrInfo;
+
+For an ordinary built-in function, fn_addr is just the address of the C
+routine that implements the function.  Otherwise it is the address of a
+handler for the class of functions that includes the target function.
+The handler can use the function OID and perhaps also the fn_extra slot
+to find the specific code to execute.  (fn_oid = InvalidOid can be used
+to denote a not-yet-initialized FmgrInfo struct.  fn_extra will always
+be NULL when an FmgrInfo is first filled by the function lookup code, but
+a function handler could set it to avoid making repeated lookups of its
+own when the same FmgrInfo is used repeatedly during a query.)  fn_nargs
+is the number of arguments expected by the function, and fn_strict is
+its strictness flag.
+
+FmgrInfo already exists in the current code, but has fewer fields.  This
+change should be transparent at the source-code level.
+
+
+During a call of a function, the following data structure is created
+and passed to the function:
+
+typedef struct
+{
+    FmgrInfo   *flinfo;         /* ptr to lookup info used for this call */
+    Node       *context;        /* pass info about context of call */
+    Node       *resultinfo;     /* pass or return extra info about result */
+    bool        isnull;         /* function must set true if result is NULL */
+    short       nargs;          /* # arguments actually passed */
+    Datum       arg[FUNC_MAX_ARGS];  /* Arguments passed to function */
+    bool        argnull[FUNC_MAX_ARGS];  /* T if arg[i] is actually NULL */
+} FunctionCallInfoData;
+typedef FunctionCallInfoData* FunctionCallInfo;
+
+flinfo points to the lookup info used to make the call.  Ordinary functions
+will probably ignore this field, but function class handlers will need it
+to find out the OID of the specific function being called.
+
+context is NULL for an "ordinary" function call, but may point to additional
+info when the function is called in certain contexts.  (For example, the
+trigger manager will pass information about the current trigger event here.)
+If context is used, it should point to some subtype of Node; the particular
+kind of context can then be indicated by the node type field.  (A callee
+should always check the node type before assuming it knows what kind of
+context is being passed.)  fmgr itself puts no other restrictions on the use
+of this field.
+
+resultinfo is NULL when calling any function from which a simple Datum
+result is expected.  It may point to some subtype of Node if the function
+returns more than a Datum.  Like the context field, resultinfo is a hook
+for expansion; fmgr itself doesn't constrain the use of the field.
+
+nargs, arg[], and argnull[] hold the arguments being passed to the function.
+Notice that all the arguments passed to a function (as well as its result
+value) will now uniformly be of type Datum.  As discussed below, callers
+and callees should apply the standard Datum-to-and-from-whatever macros
+to convert to the actual argument types of a particular function.  The
+value in arg[i] is unspecified when argnull[i] is true.
+
+It is generally the responsibility of the caller to ensure that the
+number of arguments passed matches what the callee is expecting; except
+for callees that take a variable number of arguments, the callee will
+typically ignore the nargs field and just grab values from arg[].
+
+The isnull field will be initialized to "false" before the call.  On
+return from the function, isnull is the null flag for the function result:
+if it is true the function's result is NULL, regardless of the actual
+function return value.  Note that simple "strict" functions can ignore
+both isnull and argnull[], since they won't even get called when there
+are any TRUE values in argnull[].
+
+FunctionCallInfo replaces FmgrValues plus a bunch of ad-hoc parameter
+conventions, global variables (fmgr_pl_finfo and CurrentTriggerData at
+least), and other uglinesses.
+
+
+Callees, whether they be individual functions or function handlers,
+shall always have this signature:
+
+Datum function (FunctionCallInfo fcinfo);
+
+which is represented by the typedef
+
+typedef Datum (*PGFunction) (FunctionCallInfo fcinfo);
+
+The function is responsible for setting fcinfo->isnull appropriately
+as well as returning a result represented as a Datum.  Note that since
+all callees will now have exactly the same signature, and will be called
+through a function pointer declared with exactly that signature, we
+should have no portability or optimization problems.
+
+
+Function coding conventions
+---------------------------
+
+As an example, int4 addition goes from old-style
+
+int32
+int4pl(int32 arg1, int32 arg2)
+{
+    return arg1 + arg2;
+}
+
+to new-style
+
+Datum
+int4pl(FunctionCallInfo fcinfo)
+{
+    /* we assume the function is marked "strict", so we can ignore
+     * NULL-value handling */
+
+    return Int32GetDatum(DatumGetInt32(fcinfo->arg[0]) +
+                         DatumGetInt32(fcinfo->arg[1]));
+}
+
+This is, of course, much uglier than the old-style code, but we can
+improve matters with some well-chosen macros for the boilerplate parts.
+I propose below macros that would make the code look like
+
+Datum
+int4pl(PG_FUNCTION_ARGS)
+{
+    int32   arg1 = PG_GETARG_INT32(0);
+    int32   arg2 = PG_GETARG_INT32(1);
+
+    PG_RETURN_INT32( arg1 + arg2 );
+}
+
+This is still more code than before, but it's fairly readable, and it's
+also amenable to machine processing --- for example, we could probably
+write a script that scans code like this and extracts argument and result
+type info for comparison to the pg_proc table.
+
+For the standard data types float4, float8, and int8, these macros should
+hide the indirection and space allocation involved, so that the function's
+code is not explicitly aware that these types are pass-by-reference.  This
+will offer a considerable gain in readability, and it also opens up the
+opportunity to make these types be pass-by-value on machines where it's
+feasible to do so.  (For example, on an Alpha it's pretty silly to make int8
+be pass-by-ref, since Datum is going to be 64 bits anyway.  float4 could
+become pass-by-value on all machines...)
+
+Here are the proposed macros and coding conventions:
+
+The definition of an fmgr-callable function will always look like
+
+Datum
+function_name(PG_FUNCTION_ARGS)
+{
+	...
+}
+
+"PG_FUNCTION_ARGS" just expands to "FunctionCallInfo fcinfo".  The main
+reason for using this macro is to make it easy for scripts to spot function
+definitions.  However, if we ever decide to change the calling convention
+again, it might come in handy to have this macro in place.
+
+A nonstrict function is responsible for checking whether each individual
+argument is null or not, which it can do with PG_ARGISNULL(n) (which is
+just "fcinfo->argnull[n]").  It should avoid trying to fetch the value
+of any argument that is null.
+
+Both strict and nonstrict functions can return NULL, if needed, with
+	PG_RETURN_NULL();
+which expands to
+	{ fcinfo->isnull = true; return (Datum) 0; }
+
+Argument values are ordinarily fetched using code like
+	int32	name = PG_GETARG_INT32(number);
+
+For float4, float8, and int8, the PG_GETARG macros will hide the pass-by-
+reference nature of the data types; for example PG_GETARG_FLOAT4 expands to
+	(* (float4 *) DatumGetPointer(fcinfo->arg[number]))
+and would typically be called like this:
+	float4  arg = PG_GETARG_FLOAT4(0);
+Note that "float4" and "float8" are the recommended typedefs to use, not
+"float32data" and "float64data", and the macros are named accordingly.
+But 64-bit ints should be declared as "int64".
+
+Non-null values are returned with a PG_RETURN_XXX macro of the appropriate
+type.  For example, PG_RETURN_INT32 expands to
+	return Int32GetDatum(x)
+PG_RETURN_FLOAT4, PG_RETURN_FLOAT8, and PG_RETURN_INT64 hide the pass-by-
+reference nature of their datatypes.
+
+fmgr.h will provide PG_GETARG and PG_RETURN macros for all the basic data
+types.  Modules or header files that define specialized SQL datatypes
+(eg, timestamp) should define appropriate macros for those types, so that
+functions manipulating the types can be coded in the standard style.
+
+For non-primitive data types (particularly variable-length types) it
+probably won't be very practical to hide the pass-by-reference nature of
+the data type, so the PG_GETARG and PG_RETURN macros for those types
+probably won't do more than DatumGetPointer/PointerGetDatum plus the
+appropriate typecast.  Functions returning such types will need to
+palloc() their result space explicitly.  I recommend naming the GETARG
+and RETURN macros for such types to end in "_P", as a reminder that they
+produce or take a pointer.  For example, PG_GETARG_TEXT_P yields "text *".
+
+For TOAST-able data types, the PG_GETARG macro will deliver a de-TOASTed
+data value.  There might be a few cases where the still-toasted value is
+wanted, but I am having a hard time coming up with examples.  For the
+moment I'd say that any such code could use a lower-level macro that is
+just ((struct varlena *) DatumGetPointer(fcinfo->arg[n])).
+
+Note: the above examples assume that arguments will be counted starting at
+zero.  We could have the ARG macros subtract one from the argument number,
+so that arguments are counted starting at one.  I'm not sure if that would be
+more or less confusing.  Does anyone have a strong feeling either way about
+it?
+
+When a function needs to access fcinfo->flinfo or one of the other auxiliary
+fields of FunctionCallInfo, it should just do it.  I doubt that providing
+syntactic-sugar macros for these cases is useful.
+
+
+Call-site coding conventions
+----------------------------
+
+There are many places in the system that call either a specific function
+(for example, the parser invokes "textin" by name in places) or a
+particular group of functions that have a common argument list (for
+example, the optimizer invokes selectivity estimation functions with
+a fixed argument list).  These places will need to change, but we should
+try to avoid making them significantly uglier than before.
+
+Places that invoke an arbitrary function with an arbitrary argument list
+can simply be changed to fill a FunctionCallInfoData structure directly;
+that'll be no worse and possibly cleaner than what they do now.
+
+When invoking a specific built-in function by name, we have generally
+just written something like
+	result = textin ( ... args ... )
+which will not work after textin() is converted to the new call style.
+I suggest that code like this be converted to use "helper" functions
+that will create and fill in a FunctionCallInfoData struct.  For
+example, if textin is being called with one argument, it'd look
+something like
+	result = DirectFunctionCall1(textin, PointerGetDatum(argument));
+These helper routines will have declarations like
+	Datum DirectFunctionCall2(PGFunction func, Datum arg1, Datum arg2);
+Note it will be the caller's responsibility to convert to and from
+Datum; appropriate conversion macros should be used.
+
+The DirectFunctionCallN routines will not bother to fill in
+fcinfo->flinfo (indeed cannot, since they have no idea about an OID for
+the target function); they will just set it NULL.  This is unlikely to
+bother any built-in function that could be called this way.  Note also
+that this style of coding cannot pass a NULL input value nor cope with
+a NULL result (it couldn't before, either!).  We can make the helper
+routines elog an error if they see that the function returns a NULL.
+
+(Note: direct calls like this will have to be changed at the same time
+that their called routines are changed to the new style.  But that will
+still be a lot less of a constraint than a "big bang" conversion.)
+
+When invoking a function that has a known argument signature, we have
+usually written either
+	result = fmgr(targetfuncOid, ... args ... );
+or
+	result = fmgr_ptr(FmgrInfo *finfo, ... args ... );
+depending on whether an FmgrInfo lookup has been done yet or not.
+This kind of code can be recast using helper routines, in the same
+style as above:
+	result = OidFunctionCall1(funcOid, PointerGetDatum(argument));
+	result = FunctionCall2(funcCallInfo,
+	                       PointerGetDatum(argument),
+	                       Int32GetDatum(argument));
+Again, this style of coding does not allow for expressing NULL inputs
+or receiving a NULL result.
+
+As with the callee-side situation, I propose adding argument conversion
+macros that hide the pass-by-reference nature of int8, float4, and
+float8, with an eye to making those types relatively painless to convert
+to pass-by-value.
+
+The existing helper functions fmgr(), fmgr_c(), etc will be left in
+place until all uses of them are gone.  Of course their internals will
+have to change in the first step of implementation, but they can
+continue to support the same external appearance.
+
+
+Notes about function handlers
+-----------------------------
+
+Handlers for classes of functions should find life much easier and
+cleaner in this design.  The OID of the called function is directly
+reachable from the passed parameters; we don't need the global variable
+fmgr_pl_finfo anymore.  Also, by modifying fcinfo->flinfo->fn_extra,
+the handler can cache lookup info to avoid repeat lookups when the same
+function is invoked many times.  (fn_extra can only be used as a hint,
+since callers are not required to re-use an FmgrInfo struct.
+But in performance-critical paths they normally will do so.)
+
+Issue: in what context should a handler allocate memory that it intends
+to use for fn_extra data?  The current palloc context when the handler
+is actually called might be considerably shorter-lived than the FmgrInfo
+struct, which would lead to dangling-pointer problems at the next use
+of the FmgrInfo.  Perhaps FmgrInfo should also store a memory context
+identifier that the handler could use to allocate space of the right
+lifespan.  (Having fmgr_info initialize this to CurrentMemoryContext
+should work in nearly all cases, though a few places might have to
+set it differently.)  At the moment I have not done this, since the
+existing PL handlers only need to set fn_extra to point at long-lived
+structures (data in their own caches) and don't really care which
+context the FmgrInfo is in anyway.
+
+Are there any other things needed by the call handlers for PL/pgsql and
+other languages?
+
+During the conversion process, support for old-style builtin functions
+and old-style user-written C functions will be provided by appropriate
+function handlers.  For example, the handler for old-style builtins
+looks roughly like fmgr_c() used to.
+
+
+System table updates
+--------------------
+
+In the initial phase, two new entries will be added to pg_language
+for language types "newinternal" and "newC", corresponding to
+builtin and dynamically-loaded functions having the new calling
+convention.
+
+There will also be a change to pg_proc to add the new "proisstrict"
+column.
+
+Then pg_proc entries will be changed from language code "internal" to
+"newinternal" piecemeal, as the associated routines are rewritten.
+(This will imply several rounds of forced initdbs as the contents of
+pg_proc change, but I think we can live with that.)
+
+The old language names "internal" and "C" will continue to refer to
+functions with the old calling convention.  We should deprecate
+old-style functions because of their portability problems, but the
+support for them will only be one small function handler routine,
+so we can leave them in place for as long as necessary.
+
+The expected calling convention for PL call handlers will need to change
+all-at-once, but fortunately there are not very many of them to fix.
