@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.56 2003/02/14 13:17:13 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.57 2003/05/16 04:59:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
 static ScanKeyword ScanKeywords[] = {
 	/* name, value */
 	{"abort", ABORT_P},
-	{"absolute", ABSOLUTE},
+	{"absolute", ABSOLUTE_P},
 	{"access", ACCESS},
 	{"action", ACTION},
 	{"add", ADD},
@@ -54,7 +54,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"bigint", BIGINT},
 	{"binary", BINARY},
 	{"bit", BIT},
-	{"boolean", BOOLEAN},
+	{"boolean", BOOLEAN_P},
 	{"both", BOTH},
 	{"by", BY},
 	{"cache", CACHE},
@@ -96,7 +96,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"day", DAY_P},
 	{"deallocate", DEALLOCATE},
 	{"dec", DEC},
-	{"decimal", DECIMAL},
+	{"decimal", DECIMAL_P},
 	{"declare", DECLARE},
 	{"default", DEFAULT},
 	{"deferrable", DEFERRABLE},
@@ -109,7 +109,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"distinct", DISTINCT},
 	{"do", DO},
 	{"domain", DOMAIN_P},
-	{"double", DOUBLE},
+	{"double", DOUBLE_P},
 	{"drop", DROP},
 	{"each", EACH},
 	{"else", ELSE},
@@ -153,11 +153,11 @@ static ScanKeyword ScanKeywords[] = {
 	{"initially", INITIALLY},
 	{"inner", INNER_P},
 	{"inout", INOUT},
-	{"input", INPUT},
+	{"input", INPUT_P},
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
 	{"instead", INSTEAD},
-	{"int", INT},
+	{"int", INT_P},
 	{"integer", INTEGER},
 	{"intersect", INTERSECT},
 	{"interval", INTERVAL},
@@ -237,7 +237,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"recheck", RECHECK},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
-	{"relative", RELATIVE},
+	{"relative", RELATIVE_P},
 	{"rename", RENAME},
 	{"replace", REPLACE},
 	{"reset", RESET},
@@ -273,7 +273,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"stdin", STDIN},
 	{"stdout", STDOUT},
 	{"storage", STORAGE},
-	{"strict", STRICT},
+	{"strict", STRICT_P},
 	{"substring", SUBSTRING},
 	{"sysid", SYSID},
 	{"table", TABLE},

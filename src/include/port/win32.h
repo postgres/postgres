@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.10 2003/05/15 16:35:29 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/win32.h,v 1.11 2003/05/16 04:59:22 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -164,15 +164,3 @@ struct timezone
 #define ECONNRESET WSAECONNRESET
 #define EINPROGRESS WSAEINPROGRESS
 
-/*
- * Supplement to <math.h>.
- */
-#define isnan _isnan
-#define finite _finite
-extern double rint(double x);
-
-/*
- * Supplement to <stdio.h>.
- */
-#define snprintf _snprintf
-#define vsnprintf _vsnprintf

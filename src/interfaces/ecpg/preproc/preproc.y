@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.217 2003/05/14 14:37:35 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.218 2003/05/16 04:59:22 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -177,12 +177,12 @@ make_name(void)
 %token	TYPECAST
 
 /* ordinary key words in alphabetical order */
-%token <keyword> ABORT_P ABSOLUTE ACCESS ACTION ADD AFTER
+%token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD AFTER
         AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY AS ASC
 	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
         BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
-        BOOLEAN BOTH BY
+        BOOLEAN_P BOTH BY
 
         CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
@@ -191,9 +191,9 @@ make_name(void)
         CREATE CREATEDB CREATEUSER CROSS CURRENT_DATE CURRENT_TIME
         CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
-        DATABASE DAY_P DEALLOCATE DEC DECIMAL DECLARE DEFAULT
+        DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
-	DESC DISTINCT DO DOMAIN_P DOUBLE DROP
+	DESC DISTINCT DO DOMAIN_P DOUBLE_P DROP
         EACH ELSE ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUSIVE
         EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
@@ -204,7 +204,7 @@ make_name(void)
         HANDLER HAVING HOUR_P
 
 	ILIKE IMMEDIATE IMMUTABLE IMPLICIT_P IN_P INCREMENT INDEX INHERITS
-        INITIALLY INNER_P INOUT INPUT INSENSITIVE INSERT INSTEAD INT
+        INITIALLY INNER_P INOUT INPUT_P INSENSITIVE INSERT INSTEAD INT_P
         INTEGER INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 
         JOIN
@@ -226,12 +226,12 @@ make_name(void)
 	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
 	PRECISION PRESERVE PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
-	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
+	READ REAL RECHECK REFERENCES REINDEX RELATIVE_P RENAME REPLACE
 	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW ROWS RULE
 
 	SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE SERIALIZABLE
         SESSION SESSION_USER SET SETOF SHARE SHOW SIMILAR SIMPLE SMALLINT SOME
-        STABLE START STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT
+        STABLE START STATEMENT STATISTICS STDIN STDOUT STORAGE STRICT_P
         SUBSTRING SYSID
 
         TABLE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP TO TOAST
@@ -1688,8 +1688,8 @@ FetchStmt: FETCH direction fetch_how_many from_in name ecpg_into
 
 direction:	FORWARD		{ $$ = make_str("forward"); }
 		| BACKWARD		{ $$ = make_str("backward"); }
-		| RELATIVE		{ $$ = make_str("relative"); }
-		| ABSOLUTE
+		| RELATIVE_P		{ $$ = make_str("relative"); }
+		| ABSOLUTE_P
 		{
 			mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported FETCH/ABSOLUTE will be passed to backend, backend will use RELATIVE");
 			$$ = make_str("absolute");
@@ -1973,11 +1973,11 @@ createfunc_opt_item: AS func_as
 				{ $$ = make_str("stable"); }
 		| VOLATILE
 				{ $$ = make_str("volatile"); }
-		| CALLED ON NULL_P INPUT
+		| CALLED ON NULL_P INPUT_P
 				{ $$ = make_str("called on null input"); }
-		| RETURNS NULL_P ON NULL_P INPUT
+		| RETURNS NULL_P ON NULL_P INPUT_P
 				{ $$ = make_str("returns null on null input"); }
-		| STRICT
+		| STRICT_P
 				{ $$ = make_str("strict"); }
 		| EXTERNAL SECURITY DEFINER
 				{ $$ = make_str("external security definer"); }
@@ -3010,7 +3010,7 @@ GenericType:  type_name			{ $$ = $1; }
  * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  * - thomas 1997-09-18
  */
-Numeric:  INT
+Numeric:  INT_P
 			{ $$ = make_str("int"); }
 		| INTEGER
 			{ $$ = make_str("integer"); }
@@ -3022,15 +3022,15 @@ Numeric:  INT
 			{ $$ = make_str("real"); }
 		| FLOAT_P opt_float
 			{ $$ = cat2_str(make_str("float"), $2); }
-		| DOUBLE PRECISION
+		| DOUBLE_P PRECISION
 			{ $$ = make_str("double precision"); }
-		| DECIMAL opt_decimal
+		| DECIMAL_P opt_decimal
 			{ $$ = cat2_str(make_str("decimal"), $2); }
 		| DEC opt_decimal
 			{ $$ = cat2_str(make_str("dec"), $2); }
 		| NUMERIC opt_numeric
 			{ $$ = cat2_str(make_str("numeric"), $2); }
-		| BOOLEAN
+		| BOOLEAN_P
 			{ $$ = make_str("boolean"); }
 		;
 
@@ -4607,11 +4607,11 @@ simple_type: unsigned_type					{ $$=$1; }
 		;
 
 unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
-		| SQL_UNSIGNED SQL_SHORT INT	{ $$ = ECPGt_unsigned_short; }
+		| SQL_UNSIGNED SQL_SHORT INT_P	{ $$ = ECPGt_unsigned_short; }
 		| SQL_UNSIGNED						{ $$ = ECPGt_unsigned_int; }
-		| SQL_UNSIGNED INT				{ $$ = ECPGt_unsigned_int; }
+		| SQL_UNSIGNED INT_P				{ $$ = ECPGt_unsigned_int; }
 		| SQL_UNSIGNED SQL_LONG				{ $$ = ECPGt_unsigned_long; }
-		| SQL_UNSIGNED SQL_LONG INT		{ $$ = ECPGt_unsigned_long; }
+		| SQL_UNSIGNED SQL_LONG INT_P		{ $$ = ECPGt_unsigned_long; }
 		| SQL_UNSIGNED SQL_LONG SQL_LONG
 		{
 #ifdef HAVE_LONG_LONG_INT_64
@@ -4620,7 +4620,7 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 			$$ = ECPGt_unsigned_long;
 #endif
 		}
-		| SQL_UNSIGNED SQL_LONG SQL_LONG INT
+		| SQL_UNSIGNED SQL_LONG SQL_LONG INT_P
 		{
 #ifdef HAVE_LONG_LONG_INT_64
 			$$ = ECPGt_unsigned_long_long;
@@ -4632,10 +4632,10 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 		;
 
 signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
-		| SQL_SHORT INT			{ $$ = ECPGt_short; }
-		| INT					{ $$ = ECPGt_int; }
+		| SQL_SHORT INT_P			{ $$ = ECPGt_short; }
+		| INT_P					{ $$ = ECPGt_int; }
 		| SQL_LONG					{ $$ = ECPGt_long; }
-		| SQL_LONG INT			{ $$ = ECPGt_long; }
+		| SQL_LONG INT_P			{ $$ = ECPGt_long; }
 		| SQL_LONG SQL_LONG
 		{
 #ifdef HAVE_LONG_LONG_INT_64
@@ -4644,7 +4644,7 @@ signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
 			$$ = ECPGt_long;
 #endif
 		}
-		| SQL_LONG SQL_LONG INT
+		| SQL_LONG SQL_LONG INT_P
 		{
 #ifdef HAVE_LONG_LONG_INT_64
 			$$ = ECPGt_long_long;
@@ -5318,7 +5318,7 @@ function_name:	ident						{ $$ = $1; }
 ColLabel:  ECPGColLabel					{ $$ = $1; }
 		| ECPGTypeName					{ $$ = $1; }
 		| CHAR_P						{ $$ = make_str("char"); }
-		| INT							{ $$ = make_str("int"); }
+		| INT_P							{ $$ = make_str("int"); }
 		| UNION							{ $$ = make_str("union"); }
 		;
 
@@ -5346,8 +5346,8 @@ ECPGColLabel:  ECPGColLabelCommon			{ $$ = $1; }
 /* "Unreserved" keywords --- available for use as any kind of name.
  */
 unreserved_keyword:
-		  ABORT_P					{ $$ = make_str("abort"); }
-		| ABSOLUTE						{ $$ = make_str("absolute"); }
+		  ABORT_P						{ $$ = make_str("abort"); }
+		| ABSOLUTE_P					{ $$ = make_str("absolute"); }
 		| ACCESS						{ $$ = make_str("access"); }
 		| ACTION						{ $$ = make_str("action"); }
 		| ADD							{ $$ = make_str("add"); }
@@ -5355,11 +5355,11 @@ unreserved_keyword:
 		| AGGREGATE						{ $$ = make_str("aggregate"); }
 		| ALTER							{ $$ = make_str("alter"); }
 		| ASSERTION						{ $$ = make_str("assertion"); }
-		| ASSIGNMENT						{ $$ = make_str("assignment"); }
+		| ASSIGNMENT					{ $$ = make_str("assignment"); }
 		| AT							{ $$ = make_str("at"); }
 		| BACKWARD						{ $$ = make_str("backward"); }
 		| BEFORE						{ $$ = make_str("before"); }
-		| BEGIN_P					{ $$ = make_str("begin"); }
+		| BEGIN_P						{ $$ = make_str("begin"); }
 		| BY							{ $$ = make_str("by"); }
 		| CACHE							{ $$ = make_str("cache"); }
 		| CASCADE						{ $$ = make_str("cascade"); }
@@ -5372,8 +5372,8 @@ unreserved_keyword:
 		| COMMENT						{ $$ = make_str("comment"); }
 		| COMMIT						{ $$ = make_str("commit"); }
 		| COMMITTED						{ $$ = make_str("committed"); }
-		| CONSTRAINTS						{ $$ = make_str("constraints"); }
-		| CONVERSION_P						{ $$ = make_str("conversion"); }
+		| CONSTRAINTS					{ $$ = make_str("constraints"); }
+		| CONVERSION_P					{ $$ = make_str("conversion"); }
 		| COPY							{ $$ = make_str("copy"); }
 		| CREATEDB						{ $$ = make_str("createdb"); }
 		| CREATEUSER					{ $$ = make_str("createuser"); }
@@ -5381,14 +5381,14 @@ unreserved_keyword:
 		| CYCLE							{ $$ = make_str("cycle"); }
 		| DATABASE						{ $$ = make_str("database"); }
 		| DAY_P							{ $$ = make_str("day"); }
-		| DEALLOCATE						{ $$ = make_str("deallocate"); }
+		| DEALLOCATE					{ $$ = make_str("deallocate"); }
 		| DECLARE						{ $$ = make_str("declare"); }
 		| DEFERRED						{ $$ = make_str("deferred"); }
 		| DELETE_P						{ $$ = make_str("delete"); }
-		| DELIMITER					{ $$ = make_str("delimiter"); }
+		| DELIMITER						{ $$ = make_str("delimiter"); }
 		| DELIMITERS					{ $$ = make_str("delimiters"); }
-		| DOMAIN_P					{ $$ = make_str("domain"); }
-		| DOUBLE						{ $$ = make_str("double"); }
+		| DOMAIN_P						{ $$ = make_str("domain"); }
+		| DOUBLE_P						{ $$ = make_str("double"); }
 		| DROP							{ $$ = make_str("drop"); }
 		| EACH							{ $$ = make_str("each"); }
 		| ENCODING						{ $$ = make_str("encoding"); }
@@ -5406,7 +5406,7 @@ unreserved_keyword:
 		| HOUR_P						{ $$ = make_str("hour"); }
 		| IMMEDIATE						{ $$ = make_str("immediate"); }
 		| IMMUTABLE						{ $$ = make_str("immutable"); }
-		| IMPLICIT_P						{ $$ = make_str("implicit"); }
+		| IMPLICIT_P					{ $$ = make_str("implicit"); }
 		| INCREMENT						{ $$ = make_str("increment"); }
 		| INDEX							{ $$ = make_str("index"); }
 		| INHERITS						{ $$ = make_str("inherits"); }
@@ -5416,7 +5416,7 @@ unreserved_keyword:
 		| INSTEAD						{ $$ = make_str("instead"); }
 		| ISOLATION						{ $$ = make_str("isolation"); }
 		| KEY							{ $$ = make_str("key"); }
-		| LANCOMPILER						{ $$ = make_str("lancompiler"); }
+		| LANCOMPILER					{ $$ = make_str("lancompiler"); }
 		| LANGUAGE						{ $$ = make_str("language"); }
 		| LEVEL							{ $$ = make_str("level"); }
 		| LISTEN						{ $$ = make_str("listen"); }
@@ -5459,7 +5459,7 @@ unreserved_keyword:
 		| READ							{ $$ = make_str("read"); }
 		| RECHECK						{ $$ = make_str("recheck"); }
 		| REINDEX						{ $$ = make_str("reindex"); }
-		| RELATIVE						{ $$ = make_str("relative"); }
+		| RELATIVE_P					{ $$ = make_str("relative"); }
 		| RENAME						{ $$ = make_str("rename"); }
 		| REPLACE						{ $$ = make_str("replace"); }
 		| RESET							{ $$ = make_str("reset"); }
@@ -5536,12 +5536,12 @@ col_name_keyword:
 		| COALESCE		{ $$ = make_str("coalesce"); }
 		| CONVERT		{ $$ = make_str("convert"); }
 		| DEC			{ $$ = make_str("dec"); }
-		| DECIMAL		{ $$ = make_str("decimal"); }
+		| DECIMAL_P		{ $$ = make_str("decimal"); }
 		| EXISTS		{ $$ = make_str("exists"); }
 		| EXTRACT		{ $$ = make_str("extract"); }
 		| FLOAT_P		{ $$ = make_str("float"); }
 /* INT must be excluded from ECPGColLabel because of conflict
-		| INT			{ $$ = make_str("int"); }
+		| INT_P			{ $$ = make_str("int"); }
  */
 		| INTEGER 		{ $$ = make_str("integer"); }
 		| INTERVAL		{ $$ = make_str("interval"); }
@@ -5628,7 +5628,7 @@ reserved_keyword:
 		| DISTINCT						{ $$ = make_str("distinct"); }
 		| DO							{ $$ = make_str("do"); }
 		| ELSE							{ $$ = make_str("else"); }
-		| END_P						{ $$ = make_str("end"); }
+		| END_P							{ $$ = make_str("end"); }
 		| EXCEPT						{ $$ = make_str("except"); }
 		| FALSE_P						{ $$ = make_str("false"); }
 		| FOR							{ $$ = make_str("for"); }
@@ -5784,17 +5784,16 @@ c_anything:  IDENT					{ $$ = $1; }
 		| S_RSHIFT					{ $$ = make_str(">>"); }
 		| S_STATIC					{ $$ = make_str("static"); }
 		| S_SUB						{ $$ = make_str("-="); }
-		| S_TYPEDEF				{ $$ = make_str("typedef"); }
+		| S_TYPEDEF					{ $$ = make_str("typedef"); }
 		| SQL_BOOL					{ $$ = make_str("bool"); }
 		| SQL_ENUM					{ $$ = make_str("enum"); }
-		| INT					{ $$ = make_str("int"); }
+		| INT_P						{ $$ = make_str("int"); }
 		| SQL_LONG					{ $$ = make_str("long"); }
 		| SQL_SHORT					{ $$ = make_str("short"); }
 		| SQL_SIGNED				{ $$ = make_str("signed"); }
 		| SQL_STRUCT				{ $$ = make_str("struct"); }
 		| SQL_UNSIGNED				{ $$ = make_str("unsigned"); }
 		| CHAR_P					{ $$ = make_str("char"); }
-		| DOUBLE					{ $$ = make_str("double"); }
 		| FLOAT_P					{ $$ = make_str("float"); }
 		| UNION						{ $$ = make_str("union"); }
 		| VARCHAR					{ $$ = make_str("varchar"); }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.2 2003/05/16 01:57:51 momjian Exp $
+ * $Id: port.h,v 1.3 2003/05/16 04:59:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ int pgunlink(const char *path);
 #endif
 
 extern int copydir(char *fromdir,char *todir);
+/* Last parameter not used */
 extern int gettimeofday(struct timeval *tp, struct timezone *tzp);
 
 #else
