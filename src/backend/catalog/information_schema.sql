@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.4 2003/03/20 05:06:55 momjian Exp $
+ * $Id: information_schema.sql,v 1.5 2003/05/18 20:55:57 petere Exp $
  */
 
 
@@ -169,17 +169,28 @@ CREATE VIEW columns AS
              AS character_octet_length,
 
            CAST(
-             CASE WHEN a.atttypid IN (1700) THEN ((a.atttypmod - 4) >> 16) & 65535 ELSE null END
+             CASE a.atttypid
+               WHEN 21 /*int2*/ THEN 16
+               WHEN 23 /*int4*/ THEN 32
+               WHEN 20 /*int8*/ THEN 64
+               WHEN 1700 /*numeric*/ THEN ((a.atttypmod - 4) >> 16) & 65535
+               WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
+               WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
+               ELSE null END
              AS cardinal_number)
              AS numeric_precision,
 
            CAST(
-             CASE WHEN a.atttypid IN (1700) THEN 10 ELSE null END
+             CASE WHEN a.atttypid IN (21, 23, 20, 700, 701) THEN 2
+                  WHEN a.atttypid IN (1700) THEN 10
+                  ELSE null END
              AS cardinal_number)
              AS numeric_precision_radix,
 
            CAST(
-             CASE WHEN a.atttypid IN (1700) THEN (a.atttypmod - 4) & 65535 ELSE null END
+             CASE WHEN a.atttypid IN (21, 23, 20) THEN 0
+                  WHEN a.atttypid IN (1700) THEN (a.atttypmod - 4) & 65535
+                  ELSE null END
              AS cardinal_number)
              AS numeric_scale,
 
@@ -203,18 +214,18 @@ CREATE VIEW columns AS
            CAST(null AS sql_identifier) AS collation_schema,
            CAST(null AS sql_identifier) AS collation_name,
 
-           CAST(CASE WHEN t.typbasetype <> 0 THEN current_database() ELSE null END
+           CAST(CASE WHEN t.typtype = 'd' THEN current_database() ELSE null END
              AS sql_identifier) AS domain_catalog,
-           CAST(CASE WHEN t.typbasetype <> 0 THEN nt.nspname ELSE null END
+           CAST(CASE WHEN t.typtype = 'd' THEN nt.nspname ELSE null END
              AS sql_identifier) AS domain_schema,
-           CAST(CASE WHEN t.typbasetype <> 0 THEN t.typname ELSE null END
+           CAST(CASE WHEN t.typtype = 'd' THEN t.typname ELSE null END
              AS sql_identifier) AS domain_name,
 
-           CAST(CASE WHEN t.typbasetype = 0 THEN current_database() ELSE null END
+           CAST(CASE WHEN t.typtype <> 'd' THEN current_database() ELSE null END
              AS sql_identifier) AS udt_catalog,
-           CAST(CASE WHEN t.typbasetype = 0 THEN nt.nspname ELSE null END
+           CAST(CASE WHEN t.typtype <> 'd' THEN nt.nspname ELSE null END
              AS sql_identifier) AS udt_schema,
-           CAST(CASE WHEN t.typbasetype = 0 THEN t.typname ELSE null END
+           CAST(CASE WHEN t.typtype <> 'd' THEN t.typname ELSE null END
              AS sql_identifier) AS udt_name,
 
            CAST(null AS sql_identifier) AS scope_catalog,
@@ -298,17 +309,28 @@ CREATE VIEW domains AS
            CAST(null AS sql_identifier) AS collation_name,
 
            CAST(
-             CASE WHEN t.typbasetype IN (1700) THEN ((t.typtypmod - 4) >> 16) & 65535 ELSE null END
+             CASE t.typbasetype
+               WHEN 21 /*int2*/ THEN 16
+               WHEN 23 /*int4*/ THEN 32
+               WHEN 20 /*int8*/ THEN 64
+               WHEN 1700 /*numeric*/ THEN ((t.typtypmod - 4) >> 16) & 65535
+               WHEN 700 /*float4*/ THEN 24 /*FLT_MANT_DIG*/
+               WHEN 701 /*float8*/ THEN 53 /*DBL_MANT_DIG*/
+               ELSE null END
              AS cardinal_number)
              AS numeric_precision,
 
            CAST(
-             CASE WHEN t.typbasetype IN (1700) THEN 10 ELSE null END
+             CASE WHEN t.typbasetype IN (21, 23, 20, 700, 701) THEN 2
+                  WHEN t.typbasetype IN (1700) THEN 10
+                  ELSE null END
              AS cardinal_number)
              AS numeric_precision_radix,
 
            CAST(
-             CASE WHEN t.typbasetype IN (1700) THEN (t.typtypmod - 4) & 65535 ELSE null END
+             CASE WHEN t.typbasetype IN (21, 23, 20) THEN 0
+                  WHEN t.typbasetype IN (1700) THEN (t.typtypmod - 4) & 65535
+                  ELSE null END
              AS cardinal_number)
              AS numeric_scale,
 
@@ -347,11 +369,11 @@ CREATE VIEW domains AS
     WHERE rs.oid = t.typnamespace
           AND t.typtype = 'd'
           AND t.typowner = u.usesysid
-          AND (u.usename = CURRENT_USER
+          AND (u.usename = current_user
               OR EXISTS (SELECT 1
                          FROM pg_user AS u2
                          WHERE rs.nspowner = u2.usesysid
-                           AND u2.usename = CURRENT_USER)
+                           AND u2.usename = current_user)
               OR EXISTS (SELECT 1
                          FROM pg_user AS u3,
                               pg_attribute AS a3,

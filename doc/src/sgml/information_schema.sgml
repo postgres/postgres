@@ -1,0 +1,1735 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.1 2003/05/18 20:55:56 petere Exp $ -->
+
+<chapter id="information-schema">
+ <title>The Information Schema</title>
+
+ <indexterm zone="information-schema">
+  <primary>information schema</primary>
+ </indexterm>
+
+ <para>
+  The information schema consists of a set of views that contain
+  information about the objects defined in the current database.  The
+  information schema is defined in the SQL standard and can therefore
+  be expected to be portable and remain stable --- unlike the system
+  catalogs, which are specific to PostgreSQL and are modelled after
+  implementation concerns.  The information schema views do not,
+  however, contain information about PostgreSQL-specific features; to
+  inquire about those you need to query the system catalogs or other
+  PostgreSQL-specific views.
+ </para>
+
+ <sect1 id="infoschema-schema">
+  <title>The Schema</title>
+
+  <para>
+   The information schema itself is a schema named
+   <literal>information_schema</literal>.  This schema automatically
+   exists in all databases.  The owner of this schema is the initial
+   database user in the cluster, and that user naturally has all the
+   privileges on this schema, including the ability to drop it (but
+   the space savings achieved by this are minuscule).
+  </para>
+
+  <para>
+   By default, the information schema is not in the schema search
+   path, so you need to access all objects in it through qualified
+   names.  Since the names of some of the objects in the information
+   schema are generic names that might occur in user applications, you
+   should be careful if you want to put the information schema in the
+   path.
+  </para>
+ </sect1>
+
+ <sect1 id="infoschema-datatypes">
+  <title>Data Types</title>
+
+  <para>
+   The columns of the information schema views use special data types
+   that are defined in the information schema.  These are defined as
+   simple domains over ordinary built-in types.  You should not use
+   these types for work outside the information schema, but your
+   applications must be prepared for them if they select from the
+   information schema.
+  </para>
+
+  <para>
+   These types are:
+
+   <variablelist>
+    <varlistentry>
+     <term><type>cardinal_number</type></term>
+     <listitem>
+      <para>
+       A nonnegative integer.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><type>character_data</type></term>
+     <listitem>
+      <para>
+       A character string (without specific maximum length).
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><type>sql_identifier</type></term>
+     <listitem>
+      <para>
+       A character string.  This type is used for SQL identifiers, the
+       type <type>character_data</type> is used for any other kind of
+       text data.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><type>time_stamp</type></term>
+     <listitem>
+      <para>
+       A domain over the type <type>timestamp</type>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   Every column in the information schema has one of these four types.
+  </para>
+
+  <para>
+   Boolean (true/false) data is represented in the information schema
+   by a column of type <type>character_data</type> that contains
+   either <literal>YES</literal> or <literal>NO</literal>.  (The
+   information schema was invented before the type
+   <type>boolean</type> was added to the SQL standard, so this
+   convention is necessary to keep the information schema backward
+   compatible.)
+  </para>
+ </sect1>
+
+ <sect1 id="infoschema-information-schema-catalog-name">
+  <title><literal>information_schema_catalog_name</literal></title>
+
+  <para>
+   <literal>information_schema_catalog_name</literal> is a table that
+   always contains one row and one column containing the name of the
+   current database (current catalog, in SQL terminology).
+  </para>
+
+  <table>
+   <title><literal>information_schema_catalog_name</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>catalog_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains this information schema</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-check-constraints">
+  <title><literal>check_constraints</literal></title>
+
+  <para>
+   The view <literal>check_constraints</literal> contains all check
+   constraints, either defined on a table or on a domain, that are
+   owned by the current user.
+  </para>
+
+  <table>
+   <title><literal>check_constraints</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>constraint_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the constraint (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>check_clause</literal></entry>
+      <entry><literal>character_data</literal></entry>
+      <entry>The check expression of the check constraint</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-column-domain-usage">
+  <title><literal>column_domain_usage</literal></title>
+
+  <para>
+   The view <literal>column_domain_usage</literal> identifies all
+   columns (of a table or a view) that make use of some domain defined
+   in the current database and owned by the current user.
+  </para>
+
+  <table>
+   <title><literal>column_domain_usage</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>domain_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the domain (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the domain</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the domain</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>column_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the column</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-columns">
+  <title><literal>columns</literal></title>
+
+  <para>
+   The view <literal>columns</literal> contains information about all
+   table columns (or view columns) in the database.  System columns
+   (<literal>oid</>, etc.) are not included.
+  </para>
+
+  <table>
+   <title><literal>columns</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database containing the table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema containing the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>column_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the column</entry>
+     </row>
+
+     <row>
+      <entry><literal>ordinal_position</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Ordinal position of the column within the table (count starts at 1)</entry>
+     </row>
+
+     <row>
+      <entry><literal>column_default</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Default expression of the column (null if the current user is
+       not the owner of the table containing the column)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_nullable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the column is possibly nullable,
+       <literal>NO</literal> if it is known not nullable.  A not-null
+       constraint is one way a column can be known not nullable, but
+       there may be others.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Data type of the column</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_maximum_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the column has a character or bit string type, the declared
+       maximum length; null for all other data types or if no maximum
+       length was declared.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_octet_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the column has a character type, the maximum possible length
+       in octets (bytes) of a datum (this should not be of concern to
+       PostgreSQL users); null for all other data types.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the column has a numeric type, this column contains the
+       (declared or implicit) precision of the type for this column.
+       The precision indicates the number of significant digits.  It
+       may be expressed in decimal (base 10) or binary (base 2) terms,
+       as specified in the column
+       <literal>numeric_precision_radix</literal>.  For all other data
+       types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the column has a numeric type, this column indicates in
+       which base the values in the columns
+       <literal>numeric_precision</literal> and
+       <literal>numeric_scale</literal> are expressed.  The value is
+       either 2 or 10.  For all other data types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the column has an exact numeric type, this column contains
+       the (declared or implicit) scale of the type for this column.
+       The scale indicates the number of significant digits to the
+       right of the decimal point.  It may be expressed in decimal
+       (base 10) or binary (base 2) terms, as specified in the column
+       <literal>numeric_precision_radix</literal>.  For all other data
+       types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>datetime_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the column has a date, time, or interval type, the declared
+       precision; null for all other data types or if no precision was
+       declared.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       If the column has a domain type, the name of the database that
+       the domain is defined in (always the current database), else
+       null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       If the column has a domain type, the name of the schema that
+       the domain is defined in, else null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>If the column has a domain type, the name of the domain, else null.</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the database that the column data type is defined in
+       (always the current database), null if the column has a domain
+       type.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>
+       Name of the schema that the column data type is defined in,
+       null if the column has a domain type.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the column data type, null if the column has a domain type.</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_cardinality</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_self_referencing</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-domain-constraints">
+  <title><literal>domain_constraints</literal></title>
+
+  <para>
+   The view <literal>domain_constraints</literal> contains all
+   constraints belonging to domains.
+  </para>
+
+  <table>
+   <title><literal>domain_constraints</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>constraint_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the constraint (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the domain (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the domain</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the domain</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_deferrable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the constraint is deferrable, <literal>NO</literal> if not</entry>
+     </row>
+
+     <row>
+      <entry><literal>initially_deferred</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the constraint is deferrable and initially deferred, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-domains">
+  <title><literal>domains</literal></title>
+
+  <para>
+   The view <literal>domains</literal> contains all domains defined in
+   the current database.
+  </para>
+
+  <table>
+   <title><literal>domains</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>domain_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the domain (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the domain</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the domain</entry>
+     </row>
+
+     <row>
+      <entry><literal>data_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Data type of the domain</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_maximum_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the domain has a character or bit string type, the declared
+       maximum length; null for all other data types or if no maximum
+       length was declared.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_octet_length</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the domain has a character type, the maximum possible length
+       in octets (bytes) of a datum (this should not be of concern to
+       PostgreSQL users); null for all other data types.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>collation_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the domain has a numeric type, this column contains the
+       (declared or implicit) precision of the type for this column.
+       The precision indicates the number of significant digits.  It
+       may be expressed in decimal (base 10) or binary (base 2) terms,
+       as specified in the column
+       <literal>numeric_precision_radix</literal>.  For all other data
+       types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_precision_radix</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the domain has a numeric type, this column indicates in
+       which base the values in the columns
+       <literal>numeric_precision</literal> and
+       <literal>numeric_scale</literal> are expressed.  The value is
+       either 2 or 10.  For all other data types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>numeric_scale</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the domain has an exact numeric type, this column contains
+       the (declared or implicit) scale of the type for this column.
+       The scale indicates the number of significant digits to the
+       right of the decimal point.  It may be expressed in decimal
+       (base 10) or binary (base 2) terms, as specified in the column
+       <literal>numeric_precision_radix</literal>.  For all other data
+       types, this column is null.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>datetime_precision</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       If the domain has a date, time, or interval type, the declared
+       precision; null for all other data types or if no precision was
+       declared.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_type</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>interval_precision</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>domain_default</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Default expression of the domain</entry>
+     </row>
+
+      <row>
+      <entry><literal>udt_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that the domain data type is defined in (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that the domain data type is defined in</entry>
+     </row>
+
+     <row>
+      <entry><literal>udt_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the domain data type</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>scope_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>maximum_cardinality</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>dtd_identifier</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-referential-constraints">
+  <title><literal>referential_constraints</literal></title>
+
+  <para>
+   The view <literal>referential_constraints</literal> contains all
+   referential (foreign key) constraints in the current database that
+   belong to a table owned by the current user.
+  </para>
+
+  <table>
+   <title><literal>referential_constraints</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>constraint_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the database containing the constraint (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the schema containing the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Name of the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>unique_constraint_catalog</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>unique_constraint_schema</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>unique_constraint_name</literal></entry>
+      <entry><literal>sql_identifier</literal></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>match_option</literal></entry>
+      <entry><literal>character_data</literal></entry>
+      <entry>
+       Match option of the referential constraint:
+       <literal>FULL</literal>, <literal>PARTIAL</literal>, or
+       <literal>NONE</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>update_rule</literal></entry>
+      <entry><literal>character_data</literal></entry>
+      <entry>
+       Update rule of the referential constraint:
+       <literal>CASCADE</literal>, <literal>SET NULL</literal>,
+       <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>,or
+       <literal>NO ACTION</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>delete_rule</literal></entry>
+      <entry><literal>character_data</literal></entry>
+      <entry>
+       Delete rule of the referential constraint:
+       <literal>CASCADE</literal>, <literal>SET NULL</literal>,
+       <literal>SET DEFAULT</literal>, <literal>RESTRICT</literal>,or
+       <literal>NO ACTION</literal>.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-schemata">
+  <title><literal>schemata</literal></title>
+
+  <para>
+   The view <literal>schemata</literal> contains all schemas in the
+   current database.
+  </para>
+
+  <table>
+   <title><literal>schemata</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>catalog_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that the schema is contained in (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>schema_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema</entry>
+     </row>
+
+     <row>
+      <entry><literal>schema_owner</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the owner of the schema</entry>
+     </row>
+
+     <row>
+      <entry><literal>default_character_set_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>default_character_set_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>default_character_set_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_path</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-sql-features">
+  <title><literal>sql_features</literal></title>
+
+  <para>
+   The table <literal>sql_features</literal> contains information
+   about which formal features defined in the SQL standard are
+   supported by PostgreSQL.  This is the same information that is
+   presented in <xref linkend="features">.  There you can also find
+   some additional background information.
+  </para>
+
+  <table>
+   <title><literal>sql_features</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>feature_id</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Identifier string of the feature</entry>
+     </row>
+
+     <row>
+      <entry><literal>feature_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Descriptive name of the feature</entry>
+     </row>
+
+     <row>
+      <entry><literal>sub_feature_id</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Identifier string of the subfeature, or a zero-length string if not a subfeature</entry>
+     </row>
+
+     <row>
+      <entry><literal>sub_feature_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Descriptive name of the subfeature, or a zero-length string if not a subfeature</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_supported</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the feature is fully supported by the
+       current version of PostgreSQL, <literal>NO</literal> if not
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_verified_by</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always null, since the PostgreSQL development group does not
+       perform formal testing of feature conformance
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>comments</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Possibly a comment about the supported status of the feature</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-sql-implementation-info">
+  <title><literal>sql_implementation_info</literal></title>
+
+  <para>
+   The table <literal>sql_information_info</literal> contains
+   information about various aspects that are left
+   implementation-defined by the SQL standard.  This information is
+   primarily intended for use in the context of the ODBC interface;
+   users of other interfaces will probably find this information to be
+   of little use.  For this reason, the individual implementation
+   information items are not described here; you will find them in the
+   description of the ODBC interface.
+  </para>
+
+  <table>
+   <title><literal>sql_implementation_info</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>implementation_info_id</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Identifier string of the implementation information item</entry>
+     </row>
+
+     <row>
+      <entry><literal>implementation_info_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Descriptive name of the implementation information item</entry>
+     </row>
+
+     <row>
+      <entry><literal>integer_value</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       Value of the implementation information item, or null if the
+       value is contained in the column
+       <literal>character_value</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>character_value</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Value of the implementation information item, or null if the
+       value is contained in the column
+       <literal>integer_value</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>comments</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Possibly a comment pertaining to the implementation information item</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-sql-languages">
+  <title><literal>sql_languages</literal></title>
+
+  <para>
+   The table <literal>sql_languages</literal> contains one row for
+   each SQL language binding that is supported by PostgreSQL.
+   PostgreSQL supports direct SQL and embedded SQL in C; that is all
+   you will learn from this table.
+  </para>
+
+  <table>
+   <title><literal>sql_languages</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>sql_language_source</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The name of the source of the language definition; always
+       <literal>ISO 9075</literal>, that is, the SQL standard
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_language_year</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The year the standard referenced in
+       <literal>sql_language_source</literal> was approved; currently
+       <literal>1999</>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_language_comformance</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The standard conformance level for the language binding.  For
+       ISO 9075:1999 this is always <literal>CORE</literal>.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_language_integrity</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null (This value is relevant to an earlier version of the SQL standard.)</entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_language_implementation</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Always null</entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_language_binding_style</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The language binding style, either <literal>DIRECT</literal> or
+       <literal>EMBEDDED</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>sql_language_programming_language</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       The programming language, if the binding style is
+       <literal>EMBEDDED</literal>, else null.  PostgreSQL only
+       supports the language C.
+      </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-sql-packages">
+  <title><literal>sql_packages</literal></title>
+
+  <para>
+   The table <literal>sql_packages</literal> contains information
+   about which features packages defined in the SQL standard are
+   supported by PostgreSQL.  Refer to <xref linkend="features"> for
+   background information on feature packages.
+  </para>
+
+  <table>
+   <title><literal>sql_packages</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>feature_id</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Identifier string of the package</entry>
+     </row>
+
+     <row>
+      <entry><literal>feature_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Descriptive name of the package</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_supported</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       <literal>YES</literal> if the package is fully supported by the
+       current version of PostgreSQL, <literal>NO</literal> if not
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_verified_by</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Always null, since the PostgreSQL development group does not
+       perform formal testing of feature conformance
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>comments</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Possibly a comment about the supported status of the package</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-sql-sizing">
+  <title><literal>sql_sizing</literal></title>
+
+  <para>
+   The table <literal>sql_sizing</literal> contains information about
+   various size limits and maximum values in PostgreSQL.  This
+   information is primarily intended for use in the context of the
+   ODBC interface; users of other interfaces will probably find this
+   information to be of little use.  For this reason, the individual
+   sizing items are not described here; you will find them in the
+   description of the ODBC interface.
+  </para>
+
+  <table>
+   <title><literal>sql_sizing</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>sizing_id</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Identifier of the sizing item</entry>
+     </row>
+
+     <row>
+      <entry><literal>sizing_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Descriptive name of the sizing item</entry>
+     </row>
+
+     <row>
+      <entry><literal>supported_value</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       Value of the sizing item, or 0 if the size is unlimited or
+       cannot be determined, or null if the features for which the
+       sizing item is applicable are not supported
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>comments</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Possibly a comment pertaining to the sizing item</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-sql-sizing-profiles">
+  <title><literal>sql_sizing_profiles</literal></title>
+
+  <para>
+   The table <literal>sql_sizing_profiles</literal> contains
+   information about the <literal>sql_sizing</literal> values that are
+   required by various profiles of the SQL standard.  PostgreSQL does
+   not track any SQL profiles, so this table is empty.
+  </para>
+
+  <table>
+   <title><literal>sql_sizing_profiles</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>sizing_id</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>Identifier of the sizing item</entry>
+     </row>
+
+     <row>
+      <entry><literal>sizing_name</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Descriptive name of the sizing item</entry>
+     </row>
+
+     <row>
+      <entry><literal>profile_id</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Identifier string of a profile</entry>
+     </row>
+
+     <row>
+      <entry><literal>required_value</literal></entry>
+      <entry><type>cardinal_number</type></entry>
+      <entry>
+       The value required by the SQL profile for the sizing item, or 0
+       if the profile places no limit on the sizing item, or null if
+       the profile does not require any of the features for which the
+       sizing item is applicable
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>comments</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Possibly a comment pertaining to the sizing item within the profile</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-table-constraints">
+  <title><literal>table_constraints</literal></title>
+
+  <para>
+   The view <literal>table_constraints</literal> contains all
+   constraints belonging to tables.
+  </para>
+
+  <table>
+   <title><literal>table_constraints</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>constraint_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the constraint (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the constraint</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>constraint_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Type of the constraint: <literal>CHECK</literal>,
+       <literal>FOREIGN KEY</literal>, <literal>PRIMARY KEY</literal>,
+       or <literal>UNIQUE</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_deferrable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the constraint is deferrable, <literal>NO</literal> if not</entry>
+     </row>
+
+     <row>
+      <entry><literal>initially_deferred</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the constraint is deferrable and initially deferred, <literal>NO</literal> if not</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-table-privileges">
+  <title><literal>table_privileges</literal></title>
+
+  <para>
+   The view <literal>table_privileges</literal> identifies all
+   privileges granted on tables to the current user or by the current
+   user.  There is one row for each combination of table, grantor, and
+   grantee.
+  </para>
+
+  <table>
+   <title><literal>table_privileges</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>grantor</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user that granted the privileges</entry>
+     </row>
+
+     <row>
+      <entry><literal>grantee</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the user that the privilege was granted to</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>privilege_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Type of the privilege: <literal>SELECT</literal>,
+       <literal>DELETE</literal>, <literal>INSERT</literal>,
+       <literal>UPDATE</literal>, <literal>REFERENCES</literal>, or
+       <literal>TRIGGER</literal>
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>is_grantable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry><literal>YES</literal> if the privilege is grantable, <literal>NO</literal> if not</entry>
+     </row>
+
+     <row>
+      <entry><literal>with_hierarchy</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-tables">
+  <title><literal>tables</literal></title>
+
+  <para>
+   The view <literal>tables</literal> contains all tables and views
+   defined in the current database.
+  </para>
+
+  <table>
+   <title><literal>tables</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the table (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the table</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_type</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Type of the table: <literal>BASE TABLE</literal> for a
+       persistent base table (the normal table type),
+       <literal>VIEW</literal> for a view, or <literal>LOCAL
+       TEMPORARY</literal> for a temporary table
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>self_referencing_column_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>reference_generation</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>user_defined_type_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>user_defined_type_schema</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>user_defined_type_name</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+ <sect1 id="infoschema-views">
+  <title><literal>views</literal></title>
+
+  <para>
+   The view <literal>views</literal> contains all views defined in the
+   current database.
+  </para>
+
+  <table>
+   <title><literal>views</literal> Columns</title>
+
+   <tgroup cols="3">
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Data Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal>table_catalog</literal></entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the database that contains the view (always the current database)</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_schema</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the schema that contains the view</entry>
+     </row>
+
+     <row>
+      <entry><literal>table_name</literal</entry>
+      <entry><type>sql_identifier</type></entry>
+      <entry>Name of the view</entry>
+     </row>
+
+     <row>
+      <entry><literal>view definition</literal</entry>
+      <entry><type>character_data</type></entry>
+      <entry>
+       Query expression defining the view (null if the current user is
+       not the owner of the view)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal>check_option</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Applies to a feature not available in PostgreSQL</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_updatable</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+
+     <row>
+      <entry><literal>is_insertable_into</literal></entry>
+      <entry><type>character_data</type></entry>
+      <entry>Not yet implemented</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+</chapter>
