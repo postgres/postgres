@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.193 2004/08/20 20:13:10 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.194 2004/08/28 22:55:06 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -360,7 +360,7 @@ ifneq (,$(LIBOBJS))
 LIBS := -lpgport $(LIBS)
 ifdef PGXS
 # where libpgport.a is installed
-LDFLAGS := -L$(pkglibdir) $(LDFLAGS)
+LDFLAGS := -L$(libdir) $(LDFLAGS)
 else
 LDFLAGS := -L$(top_builddir)/src/port $(LDFLAGS)
 endif
