@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.8.2.1 2002/11/20 07:54:27 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.8.2.2 2002/11/20 20:42:24 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -83,18 +83,18 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 			String[] l_origBindTypes = m_bindTypes;
 
 			for (i = 0;i < size;i++) {
-                //set state from batch
-                Object[] l_statement = (Object[])batch.elementAt(i);
+				//set state from batch
+				Object[] l_statement = (Object[])batch.elementAt(i);
 				this.m_sqlFragments = (String[])l_statement[0];
 				this.m_binds = (Object[])l_statement[1];
 				this.m_bindTypes = (String[])l_statement[2];
 				result[i] = this.executeUpdate();
 			}
 
-            //restore state of statement
-            String[] m_sqlFragments = l_origSqlFragments;
-			Object[] m_binds = l_origBinds;
-			String[] m_bindTypes = l_origBindTypes;
+			//restore state of statement
+			m_sqlFragments = l_origSqlFragments;
+			m_binds = l_origBinds;
+			m_bindTypes = l_origBindTypes;
 
 		}
 		catch (SQLException e)
