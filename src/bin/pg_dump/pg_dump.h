@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.70 2001/08/22 20:23:23 petere Exp $
+ * $Id: pg_dump.h,v 1.71 2001/10/01 21:31:52 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -141,16 +141,10 @@ typedef struct _indInfo
 	char	   *indreloid;		/* oid of the table the index is on */
 	char	   *indexrelname;	/* name of the index itself */
 	char	   *indrelname;		/* name of the indexed table */
-	char	   *indamname;		/* name of the access method (e.g. btree,
-								 * rtree, etc.) */
-	char	   *indproc;		/* oid of the function to compute the
-								 * index, 0 if none */
+	char	   *indexdef;		/* index definitional command */
+	char	   *indisprimary;	/* is this a PK index? */
 	char	   *indkey[INDEX_MAX_KEYS]; /* attribute numbers of the key
 										 * attributes */
-	char	   *indclass[INDEX_MAX_KEYS];		/* opclass of the keys */
-	char	   *indisunique;	/* is this index unique? */
-	char	   *indisprimary;	/* is this a PK index? */
-	char	   *indhaspred;		/* does this index have a predicate? */
 } IndInfo;
 
 typedef struct _aggInfo

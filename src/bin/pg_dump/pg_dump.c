@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.230 2001/09/21 21:58:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.231 2001/10/01 21:31:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1763,22 +1763,14 @@ clearIndInfo(IndInfo *ind, int numIndexes)
 			free(ind[i].indexrelname);
 		if (ind[i].indrelname)
 			free(ind[i].indrelname);
-		if (ind[i].indamname)
-			free(ind[i].indamname);
-		if (ind[i].indproc)
-			free(ind[i].indproc);
-		if (ind[i].indisunique)
-			free(ind[i].indisunique);
+		if (ind[i].indexdef)
+			free(ind[i].indexdef);
 		if (ind[i].indisprimary)
 			free(ind[i].indisprimary);
-		if (ind[i].indhaspred)
-			free(ind[i].indhaspred);
 		for (a = 0; a < INDEX_MAX_KEYS; ++a)
 		{
 			if (ind[i].indkey[a])
 				free(ind[i].indkey[a]);
-			if (ind[i].indclass[a])
-				free(ind[i].indclass[a]);
 		}
 	}
 	free(ind);
@@ -2884,20 +2876,14 @@ getIndexes(int *numIndexes)
 	int			i_indreloid;
 	int			i_indexrelname;
 	int			i_indrelname;
-	int			i_indamname;
-	int			i_indproc;
-	int			i_indkey;
-	int			i_indclass;
-	int			i_indisunique;
+	int			i_indexdef;
 	int			i_indisprimary;
-	int			i_indhaspred;
+	int			i_indkey;
 
 	/*
 	 * find all the user-defined indexes.
 	 *
 	 * Notice we skip indexes on system classes
-	 *
-	 * this is a 4-way join !!
 	 *
 	 * XXXX: Use LOJ
 	 */
@@ -2906,12 +2892,11 @@ getIndexes(int *numIndexes)
 					  "SELECT i.indexrelid as indexreloid, "
 					  "i.indrelid as indreloid, "
 					  "t1.relname as indexrelname, t2.relname as indrelname, "
-					  "i.indproc :: oid AS indproc, i.indkey, i.indclass, "
-					  "a.amname as indamname, i.indisunique, i.indisprimary, "
-					  "length(i.indpred) > 0 as indhaspred "
-					  "from pg_index i, pg_class t1, pg_class t2, pg_am a "
+					  "pg_get_indexdef(i.indexrelid) as indexdef, "
+					  "i.indisprimary, i.indkey "
+					  "from pg_index i, pg_class t1, pg_class t2 "
 					  "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
-					  "and t1.relam = a.oid and i.indexrelid > '%u'::oid "
+					  "and i.indexrelid > '%u'::oid "
 					  "and t2.relname !~ '^pg_' ",
 					  g_last_builtin_oid);
 
@@ -2938,13 +2923,9 @@ getIndexes(int *numIndexes)
 	i_indreloid = PQfnumber(res, "indreloid");
 	i_indexrelname = PQfnumber(res, "indexrelname");
 	i_indrelname = PQfnumber(res, "indrelname");
-	i_indamname = PQfnumber(res, "indamname");
-	i_indproc = PQfnumber(res, "indproc");
-	i_indkey = PQfnumber(res, "indkey");
-	i_indclass = PQfnumber(res, "indclass");
-	i_indisunique = PQfnumber(res, "indisunique");
+	i_indexdef = PQfnumber(res, "indexdef");
 	i_indisprimary = PQfnumber(res, "indisprimary");
-	i_indhaspred = PQfnumber(res, "indhaspred");
+	i_indkey = PQfnumber(res, "indkey");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2952,17 +2933,11 @@ getIndexes(int *numIndexes)
 		indinfo[i].indreloid = strdup(PQgetvalue(res, i, i_indreloid));
 		indinfo[i].indexrelname = strdup(PQgetvalue(res, i, i_indexrelname));
 		indinfo[i].indrelname = strdup(PQgetvalue(res, i, i_indrelname));
-		indinfo[i].indamname = strdup(PQgetvalue(res, i, i_indamname));
-		indinfo[i].indproc = strdup(PQgetvalue(res, i, i_indproc));
+		indinfo[i].indexdef = strdup(PQgetvalue(res, i, i_indexdef));
+		indinfo[i].indisprimary = strdup(PQgetvalue(res, i, i_indisprimary));
 		parseNumericArray(PQgetvalue(res, i, i_indkey),
 						  indinfo[i].indkey,
 						  INDEX_MAX_KEYS);
-		parseNumericArray(PQgetvalue(res, i, i_indclass),
-						  indinfo[i].indclass,
-						  INDEX_MAX_KEYS);
-		indinfo[i].indisunique = strdup(PQgetvalue(res, i, i_indisunique));
-		indinfo[i].indisprimary = strdup(PQgetvalue(res, i, i_indisprimary));
-		indinfo[i].indhaspred = strdup(PQgetvalue(res, i, i_indhaspred));
 	}
 	PQclear(res);
 
@@ -4346,23 +4321,18 @@ void
 dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			TableInfo *tblinfo, int numTables, const char *tablename)
 {
-	int			i,
-				k;
+	int			i;
 	int			tableInd;
-	PQExpBuffer attlist = createPQExpBuffer();
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
 	PQExpBuffer id1 = createPQExpBuffer();
-	PQExpBuffer id2 = createPQExpBuffer();
-	char	   *classname[INDEX_MAX_KEYS];
-	char	   *funcname;		/* the name of the function to comput the
-								 * index key from */
-	Oid			indclass;
-	int			nclass;
-	PGresult   *res;
 
 	for (i = 0; i < numIndexes; i++)
 	{
+		if (tablename && tablename[0] &&
+			(strcmp(indinfo[i].indrelname, tablename) != 0))
+			continue;
+
 		tableInd = findTableByName(tblinfo, numTables,
 								   indinfo[i].indrelname);
 		if (tableInd < 0)
@@ -4380,14 +4350,14 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 
 			PQExpBuffer consDef = getPKconstraint(&tblinfo[tableInd], &indinfo[i]);
 
-			resetPQExpBuffer(attlist);
+			resetPQExpBuffer(q);
 
-			appendPQExpBuffer(attlist, "Alter Table %s Add %s;",
+			appendPQExpBuffer(q, "Alter Table %s Add %s;",
 							  fmtId(tblinfo[tableInd].relname, force_quotes),
 							  consDef->data);
 
 			ArchiveEntry(fout, indinfo[i].oid, tblinfo[tableInd].primary_key_name,
-						 "CONSTRAINT", NULL, attlist->data, "",
+						 "CONSTRAINT", NULL, q->data, "",
 						 "", tblinfo[tableInd].usename, NULL, NULL);
 
 			destroyPQExpBuffer(consDef);
@@ -4400,205 +4370,34 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			continue;
 		}
 
+		resetPQExpBuffer(id1);
+		appendPQExpBuffer(id1, fmtId(indinfo[i].indexrelname, force_quotes));
 
-		if (strcmp(indinfo[i].indproc, "0") == 0)
-			funcname = NULL;
-		else
-		{
-			int			numFuncs;
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q, "%s;\n", indinfo[i].indexdef);
 
-			/*
-			 * the indproc is an oid which we use to find the name of the
-			 * pg_proc.  We need to do this because getFuncs() only reads
-			 * in the user-defined funcs not all the funcs.  We might not
-			 * find what we want by looking in FuncInfo*
-			 */
-			resetPQExpBuffer(q);
-			appendPQExpBuffer(q,
-							  "SELECT proname from pg_proc "
-							  "where pg_proc.oid = '%s'::oid",
-							  indinfo[i].indproc);
-			res = PQexec(g_conn, q->data);
-			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
-			{
-				write_msg(NULL, "query to get function name of oid %s failed: %s",
-						  indinfo[i].indproc, PQerrorMessage(g_conn));
-				exit_nicely();
-			}
+		resetPQExpBuffer(delq);
+		appendPQExpBuffer(delq, "DROP INDEX %s;\n", id1->data);
 
-			/* Sanity: Check we got only one tuple */
-			numFuncs = PQntuples(res);
-			if (numFuncs != 1)
-			{
-				write_msg(NULL, "query to get function name of oid %s returned %d rows; expected 1\n",
-						  indinfo[i].indproc, numFuncs);
-				exit_nicely();
-			}
+		/*
+		 * We make the index belong to the owner of its table, which
+		 * is not necessarily right but should answer 99% of the time.
+		 * Would have to add owner name to IndInfo to do it right.
+		 */
+		ArchiveEntry(fout, indinfo[i].indexreloid, id1->data,
+					 "INDEX", NULL, q->data, delq->data,
+					 "", tblinfo[tableInd].usename, NULL, NULL);
 
-			funcname = strdup(PQgetvalue(res, 0, PQfnumber(res, "proname")));
-			PQclear(res);
-		}
-
-		/* convert opclass oid(s) into names */
-		for (nclass = 0; nclass < INDEX_MAX_KEYS; nclass++)
-		{
-			int			numRows;
-
-			indclass = atooid(indinfo[i].indclass[nclass]);
-			if (indclass == 0)
-				break;
-			resetPQExpBuffer(q);
-			appendPQExpBuffer(q,
-							  "SELECT opcname from pg_opclass "
-							  "where pg_opclass.oid = '%u'::oid",
-							  indclass);
-			res = PQexec(g_conn, q->data);
-			if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
-			{
-				write_msg(NULL, "query to get operator class name of oid %u failed: %s",
-						  indclass, PQerrorMessage(g_conn));
-				exit_nicely();
-			}
-
-			/* Sanity: Check we got only one tuple */
-			numRows = PQntuples(res);
-			if (numRows != 1)
-			{
-				write_msg(NULL, "query to get operator class name of oid %u returned %d rows; expected 1\n",
-						  indclass, numRows);
-				exit_nicely();
-			}
-
-			classname[nclass] = strdup(PQgetvalue(res, 0, PQfnumber(res, "opcname")));
-			PQclear(res);
-		}
-
-		if (funcname && nclass != 1)
-		{
-			write_msg(NULL, "There must be exactly one OpClass for functional index \"%s\".\n",
-					  indinfo[i].indexrelname);
-			exit_nicely();
-		}
-
-		/* convert attribute numbers into attribute list */
-		resetPQExpBuffer(attlist);
-		for (k = 0; k < INDEX_MAX_KEYS; k++)
-		{
-			int			indkey;
-			const char *attname;
-
-			indkey = atoi(indinfo[i].indkey[k]);
-			if (indkey == InvalidAttrNumber)
-				break;
-			attname = getAttrName(indkey, &tblinfo[tableInd]);
-			if (funcname)
-				appendPQExpBuffer(attlist, "%s%s",
-								  (k == 0) ? "" : ", ",
-								  fmtId(attname, force_quotes));
-			else
-			{
-				if (k >= nclass)
-				{
-					write_msg(NULL, "no operator class found for column \"%s\" of index \"%s\"\n",
-							attname, indinfo[i].indexrelname);
-					exit_nicely();
-				}
-				resetPQExpBuffer(id1);
-				resetPQExpBuffer(id2);
-				appendPQExpBuffer(id1, fmtId(attname, force_quotes));
-				appendPQExpBuffer(id2, fmtId(classname[k], force_quotes));
-				appendPQExpBuffer(attlist, "%s%s %s",
-								  (k == 0) ? "" : ", ",
-								  id1->data, id2->data);
-				free(classname[k]);
-			}
-		}
-
-		if (!tablename || (strcmp(indinfo[i].indrelname, tablename) == 0) || (strlen(tablename) == 0))
-		{
-			resetPQExpBuffer(id1);
-			resetPQExpBuffer(id2);
-			appendPQExpBuffer(id1, fmtId(indinfo[i].indexrelname, force_quotes));
-			appendPQExpBuffer(id2, fmtId(indinfo[i].indrelname, force_quotes));
-
-			resetPQExpBuffer(delq);
-			appendPQExpBuffer(delq, "DROP INDEX %s;\n", id1->data);
-
-			resetPQExpBuffer(q);
-			appendPQExpBuffer(q, "CREATE %s INDEX %s on %s using %s (",
-			  (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
-							  id1->data,
-							  id2->data,
-							  indinfo[i].indamname);
-			if (funcname)
-			{
-				/* need 2 printf's here cuz fmtId has static return area */
-				appendPQExpBuffer(q, " %s", fmtId(funcname, false));
-				appendPQExpBuffer(q, " (%s) %s )", attlist->data,
-								  fmtId(classname[0], force_quotes));
-				free(funcname);
-				free(classname[0]);
-			}
-			else
-				appendPQExpBuffer(q, " %s )", attlist->data);
-				
-			if (strcmp(indinfo[i].indhaspred, "t") == 0)
-			{
-				/* There is an index predicate, so fetch and dump it */
-				int numRows;
-				PQExpBuffer pred = createPQExpBuffer();
-				
-				appendPQExpBuffer(pred, "SELECT pg_get_expr(indpred,indrelid) as pred FROM pg_index WHERE indexrelid = '%s'::oid",
-								  indinfo[i].indexreloid);
-				res = PQexec(g_conn, pred->data);
-				if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
-				{
-					fprintf(stderr, "dumpIndices(): SELECT (indpred) failed.  "
-							"Explanation from backend: '%s'.\n",
-							PQerrorMessage(g_conn));
-					exit_nicely();
-				}
-	
-				/* Sanity: Check we got only one tuple */
-				numRows = PQntuples(res);
-				if (numRows != 1)
-				{
-					fprintf(stderr, "dumpIndices(): SELECT (indpred) for index %s returned %d tuples. Expected 1.\n",
-							indinfo[i].indrelname, numRows);
-					exit_nicely();
-				}
-	
-				appendPQExpBuffer(q, " WHERE %s",
-								  PQgetvalue(res, 0, PQfnumber(res, "pred")));
-
-				PQclear(res);
-				destroyPQExpBuffer( pred );
-			}
-			appendPQExpBuffer(q, ";\n");
-
-			/*
-			 * We make the index belong to the owner of its table, which
-			 * is not necessarily right but should answer 99% of the time.
-			 * Would have to add owner name to IndInfo to do it right.
-			 */
-			ArchiveEntry(fout, indinfo[i].indexreloid, id1->data,
-						 "INDEX", NULL, q->data, delq->data,
-						 "", tblinfo[tableInd].usename, NULL, NULL);
-
-			/* Dump Index Comments */
-			resetPQExpBuffer(q);
-			appendPQExpBuffer(q, "INDEX %s", id1->data);
-			dumpComment(fout, q->data, indinfo[i].indexreloid,
-						"pg_class", 0, NULL);
-
-		}
+		/* Dump Index Comments */
+		resetPQExpBuffer(q);
+		appendPQExpBuffer(q, "INDEX %s", id1->data);
+		dumpComment(fout, q->data, indinfo[i].indexreloid,
+					"pg_class", 0, NULL);
 	}
 
-	destroyPQExpBuffer(attlist);
 	destroyPQExpBuffer(q);
 	destroyPQExpBuffer(delq);
 	destroyPQExpBuffer(id1);
-	destroyPQExpBuffer(id2);
 }
 
 /*
