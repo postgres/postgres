@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed May 19 22:58:17 EDT 2004
+Last updated:		Wed May 19 23:27:13 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -147,7 +147,6 @@ Indexes
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
 * Allow a single index to index multiple tables (for inheritance and subtables)
-* Allow col IS TRUE/FALSE use an index like col = TRUE/FALSE 
 
 
 Commands
