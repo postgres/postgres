@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.229 2002/04/12 19:11:49 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.230 2002/04/16 23:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1460,11 +1460,13 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		{
 			/*
 			 * fktypoid[i] is the foreign key table's i'th element's type
-			 * oid pktypoid[i] is the primary key table's i'th element's
-			 * type oid We let oper() do our work for us, including
-			 * elog(ERROR) if the types don't compare with =
+			 * pktypoid[i] is the primary key table's i'th element's type
+			 *
+			 * We let oper() do our work for us, including elog(ERROR) if
+			 * the types don't compare with =
 			 */
-			Operator	o = oper("=", fktypoid[i], pktypoid[i], false);
+			Operator	o = oper(makeList1(makeString("=")),
+								 fktypoid[i], pktypoid[i], false);
 
 			ReleaseSysCache(o);
 		}

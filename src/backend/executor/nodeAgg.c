@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.81 2002/04/11 19:59:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.82 2002/04/16 23:08:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -925,7 +925,8 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 							&peraggstate->inputtypeLen,
 							&peraggstate->inputtypeByVal);
 
-			eq_function = compatible_oper_funcid("=", inputType, inputType,
+			eq_function = compatible_oper_funcid(makeList1(makeString("=")),
+												 inputType, inputType,
 												 true);
 			if (!OidIsValid(eq_function))
 				elog(ERROR, "Unable to identify an equality operator for type '%s'",

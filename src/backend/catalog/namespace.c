@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.9 2002/04/15 22:33:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.10 2002/04/16 23:08:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
 #include "lib/stringinfo.h"
@@ -469,6 +470,179 @@ FuncnameGetCandidates(List *names, int nargs)
 		newResult->oid = proctup->t_data->t_oid;
 		memcpy(newResult->args, procform->proargtypes, nargs * sizeof(Oid));
 
+		newResult->next = resultList;
+		resultList = newResult;
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	return resultList;
+}
+
+/*
+ * OpernameGetCandidates
+ *		Given a possibly-qualified operator name and operator kind,
+ *		retrieve a list of the possible matches.
+ *
+ * We search a single namespace if the operator name is qualified, else
+ * all namespaces in the search path.  The return list will never contain
+ * multiple entries with identical argument types --- in the multiple-
+ * namespace case, we arrange for entries in earlier namespaces to mask
+ * identical entries in later namespaces.
+ *
+ * The returned items always have two args[] entries --- one or the other
+ * will be InvalidOid for a prefix or postfix oprkind.
+ */
+FuncCandidateList
+OpernameGetCandidates(List *names, char oprkind)
+{
+	FuncCandidateList resultList = NULL;
+	char	   *catalogname;
+	char	   *schemaname = NULL;
+	char	   *opername = NULL;
+	Oid			namespaceId;
+	CatCList   *catlist;
+	int			i;
+
+	/* deconstruct the name list */
+	switch (length(names))
+	{
+		case 1:
+			opername = strVal(lfirst(names));
+			break;
+		case 2:
+			schemaname = strVal(lfirst(names));
+			opername = strVal(lsecond(names));
+			break;
+		case 3:
+			catalogname = strVal(lfirst(names));
+			schemaname = strVal(lsecond(names));
+			opername = strVal(lfirst(lnext(lnext(names))));
+			/*
+			 * We check the catalog name and then ignore it.
+			 */
+			if (strcmp(catalogname, DatabaseName) != 0)
+				elog(ERROR, "Cross-database references are not implemented");
+			break;
+		default:
+			elog(ERROR, "Improper qualified name (too many dotted names)");
+			break;
+	}
+
+	if (schemaname)
+	{
+		/* use exact schema given */
+		namespaceId = GetSysCacheOid(NAMESPACENAME,
+									 CStringGetDatum(schemaname),
+									 0, 0, 0);
+		if (!OidIsValid(namespaceId))
+			elog(ERROR, "Namespace \"%s\" does not exist",
+				 schemaname);
+	}
+	else
+	{
+		/* flag to indicate we need namespace search */
+		namespaceId = InvalidOid;
+	}
+
+	/* Search syscache by name only */
+	catlist = SearchSysCacheList(OPERNAMENSP, 1,
+								 CStringGetDatum(opername),
+								 0, 0, 0);
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	opertup = &catlist->members[i]->tuple;
+		Form_pg_operator operform = (Form_pg_operator) GETSTRUCT(opertup);
+		int			pathpos = 0;
+		FuncCandidateList newResult;
+
+		/* Ignore operators of wrong kind */
+		if (operform->oprkind != oprkind)
+			continue;
+
+		if (OidIsValid(namespaceId))
+		{
+			/* Consider only opers in specified namespace */
+			if (operform->oprnamespace != namespaceId)
+				continue;
+			/* No need to check args, they must all be different */
+		}
+		else
+		{
+			/* Consider only opers that are in the search path */
+			if (pathContainsSystemNamespace ||
+				!IsSystemNamespace(operform->oprnamespace))
+			{
+				List	   *nsp;
+
+				foreach(nsp, namespaceSearchPath)
+				{
+					pathpos++;
+					if (operform->oprnamespace == (Oid) lfirsti(nsp))
+						break;
+				}
+				if (nsp == NIL)
+					continue;	/* oper is not in search path */
+			}
+
+			/*
+			 * Okay, it's in the search path, but does it have the same
+			 * arguments as something we already accepted?  If so, keep
+			 * only the one that appears earlier in the search path.
+			 *
+			 * If we have an ordered list from SearchSysCacheList (the
+			 * normal case), then any conflicting oper must immediately
+			 * adjoin this one in the list, so we only need to look at
+			 * the newest result item.  If we have an unordered list,
+			 * we have to scan the whole result list.
+			 */
+			if (resultList)
+			{
+				FuncCandidateList	prevResult;
+
+				if (catlist->ordered)
+				{
+					if (operform->oprleft == resultList->args[0] &&
+						operform->oprright == resultList->args[1])
+						prevResult = resultList;
+					else
+						prevResult = NULL;
+				}
+				else
+				{
+					for (prevResult = resultList;
+						 prevResult;
+						 prevResult = prevResult->next)
+					{
+						if (operform->oprleft == prevResult->args[0] &&
+							operform->oprright == prevResult->args[1])
+							break;
+					}
+				}
+				if (prevResult)
+				{
+					/* We have a match with a previous result */
+					Assert(pathpos != prevResult->pathpos);
+					if (pathpos > prevResult->pathpos)
+						continue; /* keep previous result */
+					/* replace previous result */
+					prevResult->pathpos = pathpos;
+					prevResult->oid = opertup->t_data->t_oid;
+					continue;	/* args are same, of course */
+				}
+			}
+		}
+
+		/*
+		 * Okay to add it to result list
+		 */
+		newResult = (FuncCandidateList)
+			palloc(sizeof(struct _FuncCandidateList) + sizeof(Oid));
+		newResult->pathpos = pathpos;
+		newResult->oid = opertup->t_data->t_oid;
+		newResult->args[0] = operform->oprleft;
+		newResult->args[1] = operform->oprright;
 		newResult->next = resultList;
 		resultList = newResult;
 	}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.35 2002/04/15 05:22:03 tgl Exp $
+ * $Id: defrem.h,v 1.36 2002/04/16 23:08:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ extern void CreateFunction(ProcedureStmt *stmt);
 extern void RemoveFunction(List *functionName, List *argTypes);
 
 extern void DefineOperator(List *names, List *parameters);
-extern void RemoveOperator(char *operatorName,
+extern void RemoveOperator(List *operatorName,
 						   TypeName *typeName1, TypeName *typeName2);
 
 extern void DefineAggregate(List *names, List *parameters);

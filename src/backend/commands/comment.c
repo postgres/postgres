@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.40 2002/04/11 19:59:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.41 2002/04/16 23:08:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "commands/comment.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "parser/parse.h"
 #include "utils/acl.h"
@@ -53,7 +54,7 @@ static void CommentRule(List *qualname, char *comment);
 static void CommentType(List *typename, char *comment);
 static void CommentAggregate(List *aggregate, List *arguments, char *comment);
 static void CommentProc(List *function, List *arguments, char *comment);
-static void CommentOperator(List *qualname, List *arguments, char *comment);
+static void CommentOperator(List *opername, List *arguments, char *comment);
 static void CommentTrigger(List *qualname, char *comment);
 
 
@@ -643,63 +644,29 @@ CommentProc(List *function, List *arguments, char *comment)
  * to be visible for both operator and function.
  */
 static void
-CommentOperator(List *qualname, List *arguments, char *comment)
+CommentOperator(List *opername, List *arguments, char *comment)
 {
-	char	   *opername = strVal(lfirst(qualname)); /* XXX */
 	TypeName   *typenode1 = (TypeName *) lfirst(arguments);
 	TypeName   *typenode2 = (TypeName *) lsecond(arguments);
-	char		oprtype = 0;
-	Form_pg_operator data;
-	HeapTuple	optuple;
-	Oid			oid,
-				leftoid = InvalidOid,
-				rightoid = InvalidOid;
+	Oid			oid;
 
-	/* Attempt to fetch the left type oid, if specified */
-	if (typenode1 != NULL)
-		leftoid = typenameTypeId(typenode1);
+	/* Look up the operator */
 
-	/* Attempt to fetch the right type oid, if specified */
-	if (typenode2 != NULL)
-		rightoid = typenameTypeId(typenode2);
-
-	/* Determine operator type */
-
-	if (OidIsValid(leftoid) && (OidIsValid(rightoid)))
-		oprtype = 'b';
-	else if (OidIsValid(leftoid))
-		oprtype = 'r';
-	else if (OidIsValid(rightoid))
-		oprtype = 'l';
-	else
-		elog(ERROR, "operator '%s' is of an illegal type'", opername);
-
-	/* Attempt to fetch the operator oid */
-
-	optuple = SearchSysCache(OPERNAME,
-							 PointerGetDatum(opername),
-							 ObjectIdGetDatum(leftoid),
-							 ObjectIdGetDatum(rightoid),
-							 CharGetDatum(oprtype));
-	if (!HeapTupleIsValid(optuple))
-		elog(ERROR, "operator '%s' does not exist", opername);
-
-	oid = optuple->t_data->t_oid;
+	oid = LookupOperNameTypeNames(opername, typenode1, typenode2,
+								  "CommentOperator");
 
 	/* Valid user's ability to comment on this operator */
 
 	if (!pg_oper_ownercheck(oid, GetUserId()))
 		elog(ERROR, "you are not permitted to comment on operator '%s'",
-			 opername);
+			 NameListToString(opername));
 
 	/* Get the procedure associated with the operator */
 
-	data = (Form_pg_operator) GETSTRUCT(optuple);
-	oid = data->oprcode;
+	oid = get_opcode(oid);
 	if (oid == InvalidOid)
-		elog(ERROR, "operator '%s' does not have an underlying function", opername);
-
-	ReleaseSysCache(optuple);
+		elog(ERROR, "operator '%s' does not have an underlying function",
+			 NameListToString(opername));
 
 	/* Call CreateComments() to create/drop the comments */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.54 2002/04/11 20:00:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.55 2002/04/16 23:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
@@ -28,17 +29,106 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
-static Oid *oper_select_candidate(int nargs, Oid *input_typeids,
-					  CandidateList candidates);
-static Operator oper_exact(char *op, Oid arg1, Oid arg2);
-static Operator oper_inexact(char *op, Oid arg1, Oid arg2);
-static int binary_oper_get_candidates(char *opname,
-						   CandidateList *candidates);
-static int unary_oper_get_candidates(char *opname,
-						  CandidateList *candidates,
-						  char rightleft);
-static void op_error(char *op, Oid arg1, Oid arg2);
-static void unary_op_error(char *op, Oid arg, bool is_left_op);
+static Oid	binary_oper_exact(Oid arg1, Oid arg2,
+							  FuncCandidateList candidates);
+static Oid	oper_select_candidate(int nargs, Oid *input_typeids,
+								  FuncCandidateList candidates);
+static void op_error(List *op, Oid arg1, Oid arg2);
+static void unary_op_error(List *op, Oid arg, bool is_left_op);
+
+
+/*
+ * LookupOperName
+ *		Given a possibly-qualified operator name and exact input datatypes,
+ *		look up the operator.  Returns InvalidOid if no such operator.
+ *
+ * Pass oprleft = InvalidOid for a prefix op, oprright = InvalidOid for
+ * a postfix op.
+ *
+ * If the operator name is not schema-qualified, it is sought in the current
+ * namespace search path.
+ */
+Oid
+LookupOperName(List *opername, Oid oprleft, Oid oprright)
+{
+	FuncCandidateList clist;
+	char	oprkind;
+
+	if (!OidIsValid(oprleft))
+		oprkind = 'l';
+	else if (!OidIsValid(oprright))
+		oprkind = 'r';
+	else
+		oprkind = 'b';
+
+	clist = OpernameGetCandidates(opername, oprkind);
+
+	while (clist)
+	{
+		if (clist->args[0] == oprleft && clist->args[1] == oprright)
+			return clist->oid;
+		clist = clist->next;
+	}
+
+	return InvalidOid;
+}
+
+/*
+ * LookupOperNameTypeNames
+ *		Like LookupOperName, but the argument types are specified by
+ *		TypeName nodes.  Also, if we fail to find the operator
+ *		and caller is not NULL, then an error is reported.
+ *
+ * Pass oprleft = NULL for a prefix op, oprright = NULL for a postfix op.
+ */
+Oid
+LookupOperNameTypeNames(List *opername, TypeName *oprleft,
+						TypeName *oprright, const char *caller)
+{
+	Oid		operoid;
+	Oid		leftoid,
+			rightoid;
+
+	if (oprleft == NULL)
+		leftoid = InvalidOid;
+	else
+	{
+		leftoid = LookupTypeName(oprleft);
+		if (!OidIsValid(leftoid))
+			elog(ERROR, "Type \"%s\" does not exist",
+				 TypeNameToString(oprleft));
+	}
+	if (oprright == NULL)
+		rightoid = InvalidOid;
+	else
+	{
+		rightoid = LookupTypeName(oprright);
+		if (!OidIsValid(rightoid))
+			elog(ERROR, "Type \"%s\" does not exist",
+				 TypeNameToString(oprright));
+	}
+
+	operoid = LookupOperName(opername, leftoid, rightoid);
+
+	if (!OidIsValid(operoid) && caller != NULL)
+	{
+		if (oprleft == NULL)
+			elog(ERROR, "%s: Prefix operator '%s' for type '%s' does not exist",
+				 caller, NameListToString(opername),
+				 TypeNameToString(oprright));
+		else if (oprright == NULL)
+			elog(ERROR, "%s: Postfix operator '%s' for type '%s' does not exist",
+				 caller, NameListToString(opername),
+				 TypeNameToString(oprleft));
+		else
+			elog(ERROR, "%s: Operator '%s' for types '%s' and '%s' does not exist",
+				 caller, NameListToString(opername),
+				 TypeNameToString(oprleft),
+				 TypeNameToString(oprright));
+	}
+
+	return operoid;
+}
 
 
 /* Select an ordering operator for the given datatype */
@@ -47,7 +137,8 @@ any_ordering_op(Oid argtype)
 {
 	Oid			order_opid;
 
-	order_opid = compatible_oper_opid("<", argtype, argtype, true);
+	order_opid = compatible_oper_opid(makeList1(makeString("<")),
+									  argtype, argtype, true);
 	if (!OidIsValid(order_opid))
 		elog(ERROR, "Unable to identify an ordering operator '%s' for type '%s'"
 			 "\n\tUse an explicit ordering operator or modify the query",
@@ -72,116 +163,32 @@ oprfuncid(Operator op)
 }
 
 
-/* binary_oper_get_candidates()
- *	given opname, find all possible input type pairs for which an operator
- *	named opname exists.
- *	Build a list of the candidate input types.
- *	Returns number of candidates found.
+/* binary_oper_exact()
+ * Check for an "exact" match to the specified operand types.
+ *
+ * If one operand is an unknown literal, assume it should be taken to be
+ * the same type as the other operand for this purpose.
  */
-static int
-binary_oper_get_candidates(char *opname,
-						   CandidateList *candidates)
+static Oid
+binary_oper_exact(Oid arg1, Oid arg2,
+				  FuncCandidateList candidates)
 {
-	Relation	pg_operator_desc;
-	SysScanDesc	pg_operator_scan;
-	HeapTuple	tup;
-	int			ncandidates = 0;
-	ScanKeyData opKey[1];
+	/* Unspecified type for one of the arguments? then use the other */
+	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid))
+		arg1 = arg2;
+	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
+		arg2 = arg1;
 
-	*candidates = NULL;
-
-	ScanKeyEntryInitialize(&opKey[0], 0,
-						   Anum_pg_operator_oprname,
-						   F_NAMEEQ,
-						   NameGetDatum(opname));
-
-	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
-	pg_operator_scan = systable_beginscan(pg_operator_desc,
-										  OperatorNameIndex, true,
-										  SnapshotNow,
-										  1, opKey);
-
-	while (HeapTupleIsValid(tup = systable_getnext(pg_operator_scan)))
+	while (candidates != NULL)
 	{
-		Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tup);
-
-		if (oper->oprkind == 'b')
-		{
-			CandidateList current_candidate;
-
-			current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-			current_candidate->args = (Oid *) palloc(2 * sizeof(Oid));
-
-			current_candidate->args[0] = oper->oprleft;
-			current_candidate->args[1] = oper->oprright;
-			current_candidate->next = *candidates;
-			*candidates = current_candidate;
-			ncandidates++;
-		}
+		if (arg1 == candidates->args[0] &&
+			arg2 == candidates->args[1])
+			return candidates->oid;
+		candidates = candidates->next;
 	}
 
-	systable_endscan(pg_operator_scan);
-	heap_close(pg_operator_desc, AccessShareLock);
-
-	return ncandidates;
-}	/* binary_oper_get_candidates() */
-
-/* unary_oper_get_candidates()
- *	given opname, find all possible types for which
- *	a right/left unary operator named opname exists.
- *	Build a list of the candidate input types.
- *	Returns number of candidates found.
- */
-static int
-unary_oper_get_candidates(char *opname,
-						  CandidateList *candidates,
-						  char rightleft)
-{
-	Relation	pg_operator_desc;
-	SysScanDesc	pg_operator_scan;
-	HeapTuple	tup;
-	int			ncandidates = 0;
-	ScanKeyData opKey[1];
-
-	*candidates = NULL;
-
-	ScanKeyEntryInitialize(&opKey[0], 0,
-						   Anum_pg_operator_oprname,
-						   F_NAMEEQ,
-						   NameGetDatum(opname));
-
-	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
-	pg_operator_scan = systable_beginscan(pg_operator_desc,
-										  OperatorNameIndex, true,
-										  SnapshotNow,
-										  1, opKey);
-
-	while (HeapTupleIsValid(tup = systable_getnext(pg_operator_scan)))
-	{
-		Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tup);
-
-		if (oper->oprkind == rightleft)
-		{
-			CandidateList current_candidate;
-
-			current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-			current_candidate->args = (Oid *) palloc(sizeof(Oid));
-
-			if (rightleft == 'r')
-				current_candidate->args[0] = oper->oprleft;
-			else
-				current_candidate->args[0] = oper->oprright;
-			current_candidate->next = *candidates;
-			*candidates = current_candidate;
-			ncandidates++;
-		}
-	}
-
-	systable_endscan(pg_operator_scan);
-	heap_close(pg_operator_desc, AccessShareLock);
-
-	return ncandidates;
-}	/* unary_oper_get_candidates() */
+	return InvalidOid;
+}
 
 
 /* oper_select_candidate()
@@ -234,13 +241,13 @@ unary_oper_get_candidates(char *opname,
  * some sense. (see equivalentOpersAfterPromotion for details.)
  * - ay 6/95
  */
-static Oid *
+static Oid
 oper_select_candidate(int nargs,
 					  Oid *input_typeids,
-					  CandidateList candidates)
+					  FuncCandidateList candidates)
 {
-	CandidateList current_candidate;
-	CandidateList last_candidate;
+	FuncCandidateList current_candidate;
+	FuncCandidateList last_candidate;
 	Oid		   *current_typeids;
 	Oid			current_type;
 	int			unknownOids;
@@ -289,9 +296,9 @@ oper_select_candidate(int nargs,
 
 	/* Done if no candidate or only one candidate survives */
 	if (ncandidates == 0)
-		return NULL;
+		return InvalidOid;
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates->oid;
 
 	/*
 	 * Run through all candidates and keep those with the most matches on
@@ -335,7 +342,7 @@ oper_select_candidate(int nargs,
 		last_candidate->next = NULL;
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates->oid;
 
 	/*
 	 * Still too many candidates? Run through all candidates and keep
@@ -382,7 +389,7 @@ oper_select_candidate(int nargs,
 		last_candidate->next = NULL;
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates->oid;
 
 	/*
 	 * Still too many candidates? Now look for candidates which are
@@ -428,7 +435,7 @@ oper_select_candidate(int nargs,
 		last_candidate->next = NULL;
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates->oid;
 
 	/*
 	 * Still too many candidates? Try assigning types for the unknown
@@ -467,7 +474,7 @@ oper_select_candidate(int nargs,
 					nmatch++;
 			}
 			if (nmatch == nargs)
-				return current_typeids;
+				return current_candidate->oid;
 		}
 	}
 
@@ -602,85 +609,10 @@ oper_select_candidate(int nargs,
 	}
 
 	if (ncandidates == 1)
-		return candidates->args;
+		return candidates->oid;
 
-	return NULL;				/* failed to determine a unique candidate */
+	return InvalidOid;			/* failed to determine a unique candidate */
 }	/* oper_select_candidate() */
-
-
-/* oper_exact()
- * Given operator, types of arg1 and arg2, return oper struct or NULL.
- *
- * NOTE: on success, the returned object is a syscache entry.  The caller
- * must ReleaseSysCache() the entry when done with it.
- */
-static Operator
-oper_exact(char *op, Oid arg1, Oid arg2)
-{
-	HeapTuple	tup;
-
-	/* Unspecified type for one of the arguments? then use the other */
-	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid))
-		arg1 = arg2;
-	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
-		arg2 = arg1;
-
-	tup = SearchSysCache(OPERNAME,
-						 PointerGetDatum(op),
-						 ObjectIdGetDatum(arg1),
-						 ObjectIdGetDatum(arg2),
-						 CharGetDatum('b'));
-
-	return (Operator) tup;
-}
-
-
-/* oper_inexact()
- * Given operator, types of arg1 and arg2, return oper struct or NULL.
- *
- * NOTE: on success, the returned object is a syscache entry.  The caller
- * must ReleaseSysCache() the entry when done with it.
- */
-static Operator
-oper_inexact(char *op, Oid arg1, Oid arg2)
-{
-	HeapTuple	tup;
-	CandidateList candidates;
-	int			ncandidates;
-	Oid		   *targetOids;
-	Oid			inputOids[2];
-
-	/* Unspecified type for one of the arguments? then use the other */
-	if (arg2 == InvalidOid)
-		arg2 = arg1;
-	if (arg1 == InvalidOid)
-		arg1 = arg2;
-
-	ncandidates = binary_oper_get_candidates(op, &candidates);
-
-	/* No operators found? Then return null... */
-	if (ncandidates == 0)
-		return NULL;
-
-	/*
-	 * Otherwise, check for compatible datatypes, and then try to resolve
-	 * the conflict if more than one candidate remains.
-	 */
-	inputOids[0] = arg1;
-	inputOids[1] = arg2;
-	targetOids = oper_select_candidate(2, inputOids, candidates);
-	if (targetOids != NULL)
-	{
-		tup = SearchSysCache(OPERNAME,
-							 PointerGetDatum(op),
-							 ObjectIdGetDatum(targetOids[0]),
-							 ObjectIdGetDatum(targetOids[1]),
-							 CharGetDatum('b'));
-	}
-	else
-		tup = NULL;
-	return (Operator) tup;
-}
 
 
 /* oper() -- search for a binary operator
@@ -697,22 +629,48 @@ oper_inexact(char *op, Oid arg1, Oid arg2)
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-oper(char *opname, Oid ltypeId, Oid rtypeId, bool noError)
+oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
 {
-	HeapTuple	tup;
+	FuncCandidateList clist;
+	Oid			operOid;
+	Oid			inputOids[2];
+	HeapTuple	tup = NULL;
 
-	/* check for exact match on this operator... */
-	if (HeapTupleIsValid(tup = oper_exact(opname, ltypeId, rtypeId)))
-		return (Operator) tup;
+	/* Get binary operators of given name */
+	clist = OpernameGetCandidates(opname, 'b');
 
-	/* try to find a match on likely candidates... */
-	if (HeapTupleIsValid(tup = oper_inexact(opname, ltypeId, rtypeId)))
-		return (Operator) tup;
+	/* No operators found? Then fail... */
+	if (clist != NULL)
+	{
+		/*
+		 * Check for an "exact" match.
+		 */
+		operOid = binary_oper_exact(ltypeId, rtypeId, clist);
+		if (!OidIsValid(operOid))
+		{
+			/*
+			 * Otherwise, search for the most suitable candidate.
+			 */
 
-	if (!noError)
+			/* Unspecified type for one of the arguments? then use the other */
+			if (rtypeId == InvalidOid)
+				rtypeId = ltypeId;
+			else if (ltypeId == InvalidOid)
+				ltypeId = rtypeId;
+			inputOids[0] = ltypeId;
+			inputOids[1] = rtypeId;
+			operOid = oper_select_candidate(2, inputOids, clist);
+		}
+		if (OidIsValid(operOid))
+			tup = SearchSysCache(OPEROID,
+								 ObjectIdGetDatum(operOid),
+								 0, 0, 0);
+	}
+
+	if (!HeapTupleIsValid(tup) && !noError)
 		op_error(opname, ltypeId, rtypeId);
 
-	return (Operator) NULL;
+	return (Operator) tup;
 }
 
 /* compatible_oper()
@@ -723,7 +681,7 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noError)
  *	are accepted).	Otherwise, the semantics are the same.
  */
 Operator
-compatible_oper(char *op, Oid arg1, Oid arg2, bool noError)
+compatible_oper(List *op, Oid arg1, Oid arg2, bool noError)
 {
 	Operator	optup;
 	Form_pg_operator opform;
@@ -755,7 +713,7 @@ compatible_oper(char *op, Oid arg1, Oid arg2, bool noError)
  * lookup fails and noError is true.
  */
 Oid
-compatible_oper_opid(char *op, Oid arg1, Oid arg2, bool noError)
+compatible_oper_opid(List *op, Oid arg1, Oid arg2, bool noError)
 {
 	Operator	optup;
 	Oid			result;
@@ -777,7 +735,7 @@ compatible_oper_opid(char *op, Oid arg1, Oid arg2, bool noError)
  * lookup fails and noError is true.
  */
 Oid
-compatible_oper_funcid(char *op, Oid arg1, Oid arg2, bool noError)
+compatible_oper_funcid(List *op, Oid arg1, Oid arg2, bool noError)
 {
 	Operator	optup;
 	Oid			result;
@@ -805,45 +763,49 @@ compatible_oper_funcid(char *op, Oid arg1, Oid arg2, bool noError)
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-right_oper(char *op, Oid arg)
+right_oper(List *op, Oid arg)
 {
-	HeapTuple	tup;
-	CandidateList candidates;
-	int			ncandidates;
-	Oid		   *targetOid;
+	FuncCandidateList clist;
+	Oid			operOid = InvalidOid;
+	HeapTuple	tup = NULL;
 
-	/* Try for exact match */
-	tup = SearchSysCache(OPERNAME,
-						 PointerGetDatum(op),
-						 ObjectIdGetDatum(arg),
-						 ObjectIdGetDatum(InvalidOid),
-						 CharGetDatum('r'));
+	/* Find candidates */
+	clist = OpernameGetCandidates(op, 'r');
 
-	if (!HeapTupleIsValid(tup))
+	if (clist != NULL)
 	{
-		/* Try for inexact matches */
-		ncandidates = unary_oper_get_candidates(op, &candidates, 'r');
-		if (ncandidates == 0)
-			unary_op_error(op, arg, FALSE);
-		else
+		/*
+		 * First, quickly check to see if there is an exactly matching
+		 * operator (there can be only one such entry in the list).
+		 */
+		FuncCandidateList clisti;
+
+		for (clisti = clist; clisti != NULL; clisti = clisti->next)
+		{
+			if (arg == clisti->args[0])
+			{
+				operOid = clisti->oid;
+				break;
+			}
+		}
+
+		if (!OidIsValid(operOid))
 		{
 			/*
 			 * We must run oper_select_candidate even if only one
 			 * candidate, otherwise we may falsely return a
 			 * non-type-compatible operator.
 			 */
-			targetOid = oper_select_candidate(1, &arg, candidates);
-			if (targetOid != NULL)
-				tup = SearchSysCache(OPERNAME,
-									 PointerGetDatum(op),
-									 ObjectIdGetDatum(targetOid[0]),
-									 ObjectIdGetDatum(InvalidOid),
-									 CharGetDatum('r'));
+			operOid = oper_select_candidate(1, &arg, clist);
 		}
-
-		if (!HeapTupleIsValid(tup))
-			unary_op_error(op, arg, FALSE);
+		if (OidIsValid(operOid))
+			tup = SearchSysCache(OPEROID,
+								 ObjectIdGetDatum(operOid),
+								 0, 0, 0);
 	}
+
+	if (!HeapTupleIsValid(tup))
+		unary_op_error(op, arg, FALSE);
 
 	return (Operator) tup;
 }	/* right_oper() */
@@ -861,45 +823,54 @@ right_oper(char *op, Oid arg)
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-left_oper(char *op, Oid arg)
+left_oper(List *op, Oid arg)
 {
-	HeapTuple	tup;
-	CandidateList candidates;
-	int			ncandidates;
-	Oid		   *targetOid;
+	FuncCandidateList clist;
+	Oid			operOid = InvalidOid;
+	HeapTuple	tup = NULL;
 
-	/* Try for exact match */
-	tup = SearchSysCache(OPERNAME,
-						 PointerGetDatum(op),
-						 ObjectIdGetDatum(InvalidOid),
-						 ObjectIdGetDatum(arg),
-						 CharGetDatum('l'));
+	/* Find candidates */
+	clist = OpernameGetCandidates(op, 'l');
 
-	if (!HeapTupleIsValid(tup))
+	if (clist != NULL)
 	{
-		/* Try for inexact matches */
-		ncandidates = unary_oper_get_candidates(op, &candidates, 'l');
-		if (ncandidates == 0)
-			unary_op_error(op, arg, TRUE);
-		else
+		/*
+		 * First, quickly check to see if there is an exactly matching
+		 * operator (there can be only one such entry in the list).
+		 *
+		 * The returned list has args in the form (0, oprright).  Move the
+		 * useful data into args[0] to keep oper_select_candidate simple.
+		 * XXX we are assuming here that we may scribble on the list!
+		 */
+		FuncCandidateList clisti;
+
+		for (clisti = clist; clisti != NULL; clisti = clisti->next)
+		{
+			clisti->args[0] = clisti->args[1];
+			if (arg == clisti->args[0])
+			{
+				operOid = clisti->oid;
+				break;
+			}
+		}
+
+		if (!OidIsValid(operOid))
 		{
 			/*
 			 * We must run oper_select_candidate even if only one
 			 * candidate, otherwise we may falsely return a
 			 * non-type-compatible operator.
 			 */
-			targetOid = oper_select_candidate(1, &arg, candidates);
-			if (targetOid != NULL)
-				tup = SearchSysCache(OPERNAME,
-									 PointerGetDatum(op),
-									 ObjectIdGetDatum(InvalidOid),
-									 ObjectIdGetDatum(targetOid[0]),
-									 CharGetDatum('l'));
+			operOid = oper_select_candidate(1, &arg, clist);
 		}
-
-		if (!HeapTupleIsValid(tup))
-			unary_op_error(op, arg, TRUE);
+		if (OidIsValid(operOid))
+			tup = SearchSysCache(OPEROID,
+								 ObjectIdGetDatum(operOid),
+								 0, 0, 0);
 	}
+
+	if (!HeapTupleIsValid(tup))
+		unary_op_error(op, arg, TRUE);
 
 	return (Operator) tup;
 }	/* left_oper() */
@@ -910,19 +881,22 @@ left_oper(char *op, Oid arg)
  * is not found.
  */
 static void
-op_error(char *op, Oid arg1, Oid arg2)
+op_error(List *op, Oid arg1, Oid arg2)
 {
 	if (!typeidIsValid(arg1))
 		elog(ERROR, "Left hand side of operator '%s' has an unknown type"
-			 "\n\tProbably a bad attribute name", op);
+			 "\n\tProbably a bad attribute name",
+			 NameListToString(op));
 
 	if (!typeidIsValid(arg2))
 		elog(ERROR, "Right hand side of operator %s has an unknown type"
-			 "\n\tProbably a bad attribute name", op);
+			 "\n\tProbably a bad attribute name",
+			 NameListToString(op));
 
 	elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
 		 "\n\tYou will have to retype this query using an explicit cast",
-		 op, format_type_be(arg1), format_type_be(arg2));
+		 NameListToString(op),
+		 format_type_be(arg1), format_type_be(arg2));
 }
 
 /* unary_op_error()
@@ -930,28 +904,28 @@ op_error(char *op, Oid arg1, Oid arg2)
  * is not found.
  */
 static void
-unary_op_error(char *op, Oid arg, bool is_left_op)
+unary_op_error(List *op, Oid arg, bool is_left_op)
 {
 	if (!typeidIsValid(arg))
 	{
 		if (is_left_op)
 			elog(ERROR, "operand of prefix operator '%s' has an unknown type"
 				 "\n\t(probably an invalid column reference)",
-				 op);
+				 NameListToString(op));
 		else
 			elog(ERROR, "operand of postfix operator '%s' has an unknown type"
 				 "\n\t(probably an invalid column reference)",
-				 op);
+				 NameListToString(op));
 	}
 	else
 	{
 		if (is_left_op)
 			elog(ERROR, "Unable to identify a prefix operator '%s' for type '%s'"
 			   "\n\tYou may need to add parentheses or an explicit cast",
-				 op, format_type_be(arg));
+				 NameListToString(op), format_type_be(arg));
 		else
 			elog(ERROR, "Unable to identify a postfix operator '%s' for type '%s'"
 			   "\n\tYou may need to add parentheses or an explicit cast",
-				 op, format_type_be(arg));
+				 NameListToString(op), format_type_be(arg));
 	}
 }

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.107 2002/04/03 05:39:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.108 2002/04/16 23:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_statistic.h"
@@ -3285,14 +3286,15 @@ string_lessthan(const char *str1, const char *str2, Oid datatype)
 }
 
 /* See if there is a binary op of the given name for the given datatype */
+/* NB: we assume that only built-in system operators are searched for */
 static Oid
 find_operator(const char *opname, Oid datatype)
 {
-	return GetSysCacheOid(OPERNAME,
+	return GetSysCacheOid(OPERNAMENSP,
 						  PointerGetDatum(opname),
 						  ObjectIdGetDatum(datatype),
 						  ObjectIdGetDatum(datatype),
-						  CharGetDatum('b'));
+						  ObjectIdGetDatum(PG_CATALOG_NAMESPACE));
 }
 
 /*

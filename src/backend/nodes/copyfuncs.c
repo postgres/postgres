@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.177 2002/04/11 19:59:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.178 2002/04/16 23:08:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1526,8 +1526,7 @@ _copyAExpr(A_Expr *from)
 	A_Expr	   *newnode = makeNode(A_Expr);
 
 	newnode->oper = from->oper;
-	if (from->opname)
-		newnode->opname = pstrdup(from->opname);
+	Node_Copy(from, newnode, name);
 	Node_Copy(from, newnode, lexpr);
 	Node_Copy(from, newnode, rexpr);
 
@@ -1648,8 +1647,7 @@ _copySortGroupBy(SortGroupBy *from)
 {
 	SortGroupBy *newnode = makeNode(SortGroupBy);
 
-	if (from->useOp)
-		newnode->useOp = pstrdup(from->useOp);
+	Node_Copy(from, newnode, useOp);
 	Node_Copy(from, newnode, node);
 
 	return newnode;
@@ -2128,7 +2126,7 @@ _copyRemoveOperStmt(RemoveOperStmt *from)
 {
 	RemoveOperStmt *newnode = makeNode(RemoveOperStmt);
 
-	newnode->opname = pstrdup(from->opname);
+	Node_Copy(from, newnode, opname);
 	Node_Copy(from, newnode, args);
 
 	return newnode;

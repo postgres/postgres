@@ -173,13 +173,13 @@ drop operator;
 ERROR:  parser: parse error at or near ";"
 -- bad operator name 
 drop operator equals;
-ERROR:  parser: parse error at or near "equals"
+ERROR:  parser: parse error at or near ";"
 -- missing type list 
 drop operator ===;
 ERROR:  parser: parse error at or near ";"
 -- missing parentheses 
 drop operator int4, int4;
-ERROR:  parser: parse error at or near "int4"
+ERROR:  parser: parse error at or near ","
 -- missing operator name 
 drop operator (int4, int4);
 ERROR:  parser: parse error at or near "("
@@ -191,7 +191,7 @@ drop operator === (int4);
 ERROR:  parser: argument type missing (use NONE for unary operators)
 -- no such operator by that name 
 drop operator === (int4, int4);
-ERROR:  RemoveOperator: binary operator '===' taking 'int4' and 'int4' does not exist
+ERROR:  RemoveOperator: Operator '===' for types 'int4' and 'int4' does not exist
 -- no such type1 
 drop operator = (nonesuch);
 ERROR:  parser: argument type missing (use NONE for unary operators)

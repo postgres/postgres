@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.39 2002/04/11 20:00:15 tgl Exp $
+ * $Id: parse_func.h,v 1.40 2002/04/16 23:08:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,16 +27,6 @@ typedef struct _InhPaths
 	Oid			self;			/* this class */
 	Oid		   *supervec;		/* vector of superclasses */
 } InhPaths;
-
-/*
- *	This structure holds a list of possible functions or operators that
- *	agree with the known name and argument types of the function/operator.
- */
-typedef struct _CandidateList
-{
-	Oid		   *args;
-	struct _CandidateList *next;
-}	*CandidateList;
 
 /* Result codes for func_get_detail */
 typedef enum

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.50 2001/11/30 19:24:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.51 2002/04/16 23:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,9 +284,9 @@ make_subplan(SubLink *slink)
 			 * Note: we use make_operand in case runtime type conversion
 			 * function calls must be inserted for this operator!
 			 */
-			left = make_operand("", lefthand,
+			left = make_operand(lefthand,
 								exprType(lefthand), opform->oprleft);
-			right = make_operand("", (Node *) prm,
+			right = make_operand((Node *) prm,
 								 prm->paramtype, opform->oprright);
 			ReleaseSysCache(tup);
 
@@ -433,9 +433,9 @@ make_subplan(SubLink *slink)
 			 * Note: we use make_operand in case runtime type conversion
 			 * function calls must be inserted for this operator!
 			 */
-			left = make_operand("", lefthand,
+			left = make_operand(lefthand,
 								exprType(lefthand), opform->oprleft);
-			right = make_operand("", (Node *) con,
+			right = make_operand((Node *) con,
 								 con->consttype, opform->oprright);
 			ReleaseSysCache(tup);
 

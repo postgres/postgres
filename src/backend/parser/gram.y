@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.301 2002/04/09 20:35:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.302 2002/04/16 23:08:11 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -82,11 +82,10 @@ static int	pfunc_num_args;
  */
 /*#define __YYSCLASS*/
 
-static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeStringConst(char *str, TypeName *typename);
 static Node *makeFloatConst(char *str);
-static Node *makeRowExpr(char *opr, List *largs, List *rargs);
+static Node *makeRowExpr(List *opr, List *largs, List *rargs);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *forUpdate,
@@ -177,13 +176,13 @@ static bool set_name_needs_quotes(const char *name);
 		database_name, access_method_clause, access_method, attr_name,
 		class, index_name, name, function_name, file_name
 
-%type <list>	func_name, handler_name
+%type <list>	func_name, handler_name, qual_Op, qual_all_Op, OptUseOp
 
 %type <range>	qualified_name, OptConstrFromTable
 
 %type <str>		opt_id,
 		all_Op, MathOp, opt_name,
-		OptUseOp, opt_class, SpecialRuleRelation
+		opt_class, SpecialRuleRelation
 
 %type <str>		opt_level, opt_encoding
 %type <node>	grantee
@@ -202,7 +201,7 @@ static bool set_name_needs_quotes(const char *name);
 		opt_column_list, columnList, opt_name_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_list, opt_array_bounds, qualified_name_list,
-		any_name, any_name_list, expr_list, dotted_name, attrs,
+		any_name, any_name_list, any_operator, expr_list, dotted_name, attrs,
 		target_list, update_target_list, insert_column_list,
 		insert_target_list,
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
@@ -404,7 +403,7 @@ static bool set_name_needs_quotes(const char *name);
 %nonassoc	BETWEEN
 %nonassoc	IN
 %left		POSTFIXOP		/* dummy for postfix Op rules */
-%left		Op				/* multi-character ops and user-defined operators */
+%left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
 %nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN	/* sets precedence for IS NULL, etc */
@@ -2086,11 +2085,11 @@ DefineStmt:  CREATE AGGREGATE func_name definition
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
-		| CREATE OPERATOR all_Op definition
+		| CREATE OPERATOR any_operator definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->defType = OPERATOR;
-					n->defnames = makeList1(makeString($3)); /* XXX */
+					n->defnames = $3;
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
@@ -2227,11 +2226,11 @@ CommentStmt:	COMMENT ON comment_type any_name IS comment_text
 				n->comment = $7;
 				$$ = (Node *) n;
 			}
-		| COMMENT ON OPERATOR all_Op '(' oper_argtypes ')' IS comment_text
+		| COMMENT ON OPERATOR any_operator '(' oper_argtypes ')' IS comment_text
 			{
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = OPERATOR;
-				n->objname = makeList1(makeString($4));	/* XXX */
+				n->objname = $4;
 				n->objargs = $6;
 				n->comment = $9;
 				$$ = (Node *) n;
@@ -2812,7 +2811,7 @@ aggr_argtype:  Typename							{ $$ = $1; }
 		| '*'									{ $$ = NULL; }
 		;
 
-RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
+RemoveOperStmt:  DROP OPERATOR any_operator '(' oper_argtypes ')'
 				{
 					RemoveOperStmt *n = makeNode(RemoveOperStmt);
 					n->opname = $3;
@@ -2831,6 +2830,12 @@ oper_argtypes:	Typename
 				{ $$ = makeList2(NULL, $3); }
 		| Typename ',' NONE			/* right unary */
 				{ $$ = makeList2($1, NULL); }
+		;
+
+any_operator: all_Op
+			{ $$ = makeList1(makeString($1)); }
+		| ColId '.' any_operator
+			{ $$ = lcons(makeString($1), $3); }
 		;
 
 
@@ -3831,10 +3836,14 @@ sortby: a_expr OptUseOp
 				}
 		;
 
-OptUseOp:  USING all_Op							{ $$ = $2; }
-		| ASC									{ $$ = "<"; }
-		| DESC									{ $$ = ">"; }
-		| /*EMPTY*/								{ $$ = "<"; /*default*/ }
+OptUseOp:  USING qual_all_Op
+				{ $$ = $2; }
+		| ASC
+				{ $$ = makeList1(makeString("<")); }
+		| DESC
+				{ $$ = makeList1(makeString(">")); }
+		| /*EMPTY*/
+				{ $$ = makeList1(makeString("<"));	/*default*/ }
 		;
 
 
@@ -4593,7 +4602,7 @@ row_expr: '(' row_descriptor ')' IN select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
+					n->oper = (List *) makeSimpleA_Expr(OP, "=", NULL, NULL);
 					n->useor = FALSE;
 					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $5;
@@ -4603,18 +4612,18 @@ row_expr: '(' row_descriptor ')' IN select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
-					n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
+					n->oper = (List *) makeSimpleA_Expr(OP, "<>", NULL, NULL);
 					n->useor = TRUE;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op sub_type select_with_parens
+		| '(' row_descriptor ')' qual_all_Op sub_type select_with_parens	%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
-					if (strcmp($4, "<>") == 0)
+					if (strcmp(strVal(llast($4)), "<>") == 0)
 						n->useor = TRUE;
 					else
 						n->useor = FALSE;
@@ -4622,12 +4631,12 @@ row_expr: '(' row_descriptor ')' IN select_with_parens
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op select_with_parens
+		| '(' row_descriptor ')' qual_all_Op select_with_parens		%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
 					n->oper = (List *) makeA_Expr(OP, $4, NULL, NULL);
-					if (strcmp($4, "<>") == 0)
+					if (strcmp(strVal(llast($4)), "<>") == 0)
 						n->useor = TRUE;
 					else
 						n->useor = FALSE;
@@ -4635,7 +4644,7 @@ row_expr: '(' row_descriptor ')' IN select_with_parens
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
+		| '(' row_descriptor ')' qual_all_Op '(' row_descriptor ')'		%prec Op
 				{
 					$$ = makeRowExpr($4, $2, $6);
 				}
@@ -4696,6 +4705,18 @@ MathOp:  '+'			{ $$ = "+"; }
 		| '='			{ $$ = "="; }
 		;
 
+qual_Op:  Op
+			{ $$ = makeList1(makeString($1)); }
+		|  OPERATOR '(' any_operator ')'
+			{ $$ = $3; }
+		;
+
+qual_all_Op:  all_Op
+			{ $$ = makeList1(makeString($1)); }
+		|  OPERATOR '(' any_operator ')'
+			{ $$ = $3; }
+		;
+
 /*
  * General expressions
  * This is the heart of the expression syntax.
@@ -4735,52 +4756,52 @@ a_expr:  c_expr
 		 * also to b_expr and to the MathOp list above.
 		 */
 		| '+' a_expr					%prec UMINUS
-				{	$$ = makeA_Expr(OP, "+", NULL, $2); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "+", NULL, $2); }
 		| '-' a_expr					%prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' a_expr
-				{	$$ = makeA_Expr(OP, "%", NULL, $2); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "%", NULL, $2); }
 		| '^' a_expr
-				{	$$ = makeA_Expr(OP, "^", NULL, $2); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "^", NULL, $2); }
 		| a_expr '%'
-				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "%", $1, NULL); }
 		| a_expr '^'
-				{	$$ = makeA_Expr(OP, "^", $1, NULL); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "^", $1, NULL); }
 		| a_expr '+' a_expr
-				{	$$ = makeA_Expr(OP, "+", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "+", $1, $3); }
 		| a_expr '-' a_expr
-				{	$$ = makeA_Expr(OP, "-", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "-", $1, $3); }
 		| a_expr '*' a_expr
-				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "*", $1, $3); }
 		| a_expr '/' a_expr
-				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "/", $1, $3); }
 		| a_expr '%' a_expr
-				{	$$ = makeA_Expr(OP, "%", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "%", $1, $3); }
 		| a_expr '^' a_expr
-				{	$$ = makeA_Expr(OP, "^", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "^", $1, $3); }
 		| a_expr '<' a_expr
-				{	$$ = makeA_Expr(OP, "<", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "<", $1, $3); }
 		| a_expr '>' a_expr
-				{	$$ = makeA_Expr(OP, ">", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, ">", $1, $3); }
 		| a_expr '=' a_expr
-				{	$$ = makeA_Expr(OP, "=", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "=", $1, $3); }
 
-		| a_expr Op a_expr
-				{	$$ = makeA_Expr(OP, $2, $1, $3); }
-		| Op a_expr
-				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
-		| a_expr Op					%prec POSTFIXOP
-				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
+		| a_expr qual_Op a_expr				%prec Op
+				{	$$ = (Node *) makeA_Expr(OP, $2, $1, $3); }
+		| qual_Op a_expr					%prec Op
+				{	$$ = (Node *) makeA_Expr(OP, $1, NULL, $2); }
+		| a_expr qual_Op					%prec POSTFIXOP
+				{	$$ = (Node *) makeA_Expr(OP, $2, $1, NULL); }
 
 		| a_expr AND a_expr
-				{	$$ = makeA_Expr(AND, NULL, $1, $3); }
+				{	$$ = (Node *) makeA_Expr(AND, NIL, $1, $3); }
 		| a_expr OR a_expr
-				{	$$ = makeA_Expr(OR, NULL, $1, $3); }
+				{	$$ = (Node *) makeA_Expr(OR, NIL, $1, $3); }
 		| NOT a_expr
-				{	$$ = makeA_Expr(NOT, NULL, NULL, $2); }
+				{	$$ = (Node *) makeA_Expr(NOT, NIL, NULL, $2); }
 
 		| a_expr LIKE a_expr
-				{	$$ = makeA_Expr(OP, "~~", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "~~", $1, $3); }
 		| a_expr LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -4788,10 +4809,10 @@ a_expr:  c_expr
 					n->args = makeList2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = makeA_Expr(OP, "~~", $1, (Node *) n);
+					$$ = (Node *) makeSimpleA_Expr(OP, "~~", $1, (Node *) n);
 				}
 		| a_expr NOT LIKE a_expr
-				{	$$ = makeA_Expr(OP, "!~~", $1, $4); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "!~~", $1, $4); }
 		| a_expr NOT LIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -4799,10 +4820,10 @@ a_expr:  c_expr
 					n->args = makeList2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = makeA_Expr(OP, "!~~", $1, (Node *) n);
+					$$ = (Node *) makeSimpleA_Expr(OP, "!~~", $1, (Node *) n);
 				}
 		| a_expr ILIKE a_expr
-				{	$$ = makeA_Expr(OP, "~~*", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "~~*", $1, $3); }
 		| a_expr ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -4810,10 +4831,10 @@ a_expr:  c_expr
 					n->args = makeList2($3, $5);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = makeA_Expr(OP, "~~*", $1, (Node *) n);
+					$$ = (Node *) makeSimpleA_Expr(OP, "~~*", $1, (Node *) n);
 				}
 		| a_expr NOT ILIKE a_expr
-				{	$$ = makeA_Expr(OP, "!~~*", $1, $4); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "!~~*", $1, $4); }
 		| a_expr NOT ILIKE a_expr ESCAPE a_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -4821,7 +4842,7 @@ a_expr:  c_expr
 					n->args = makeList2($4, $6);
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
-					$$ = makeA_Expr(OP, "!~~*", $1, (Node *) n);
+					$$ = (Node *) makeSimpleA_Expr(OP, "!~~*", $1, (Node *) n);
 				}
 		/* NullTest clause
 		 * Define SQL92-style Null test clause.
@@ -4915,15 +4936,15 @@ a_expr:  c_expr
 				}
 		| a_expr BETWEEN b_expr AND b_expr			%prec BETWEEN
 				{
-					$$ = makeA_Expr(AND, NULL,
-						makeA_Expr(OP, ">=", $1, $3),
-						makeA_Expr(OP, "<=", $1, $5));
+					$$ = (Node *) makeA_Expr(AND, NIL,
+						(Node *) makeSimpleA_Expr(OP, ">=", $1, $3),
+						(Node *) makeSimpleA_Expr(OP, "<=", $1, $5));
 				}
 		| a_expr NOT BETWEEN b_expr AND b_expr		%prec BETWEEN
 				{
-					$$ = makeA_Expr(OR, NULL,
-						makeA_Expr(OP, "<", $1, $4),
-						makeA_Expr(OP, ">", $1, $6));
+					$$ = (Node *) makeA_Expr(OR, NIL,
+						(Node *) makeSimpleA_Expr(OP, "<", $1, $4),
+						(Node *) makeSimpleA_Expr(OP, ">", $1, $6));
 				}
 		| a_expr IN in_expr
 				{
@@ -4932,7 +4953,8 @@ a_expr:  c_expr
 					{
 							SubLink *n = (SubLink *)$3;
 							n->lefthand = makeList1($1);
-							n->oper = (List *) makeA_Expr(OP, "=", NULL, NULL);
+							n->oper = (List *) makeSimpleA_Expr(OP, "=",
+																NULL, NULL);
 							n->useor = FALSE;
 							n->subLinkType = ANY_SUBLINK;
 							$$ = (Node *)n;
@@ -4943,11 +4965,13 @@ a_expr:  c_expr
 						List *l;
 						foreach(l, (List *) $3)
 						{
-							Node *cmp = makeA_Expr(OP, "=", $1, lfirst(l));
+							Node *cmp;
+							cmp = (Node *) makeSimpleA_Expr(OP, "=",
+															$1, lfirst(l));
 							if (n == NULL)
 								n = cmp;
 							else
-								n = makeA_Expr(OR, NULL, n, cmp);
+								n = (Node *) makeA_Expr(OR, NIL, n, cmp);
 						}
 						$$ = n;
 					}
@@ -4959,7 +4983,8 @@ a_expr:  c_expr
 					{
 						SubLink *n = (SubLink *)$4;
 						n->lefthand = makeList1($1);
-						n->oper = (List *) makeA_Expr(OP, "<>", NULL, NULL);
+						n->oper = (List *) makeSimpleA_Expr(OP, "<>",
+															NULL, NULL);
 						n->useor = FALSE;
 						n->subLinkType = ALL_SUBLINK;
 						$$ = (Node *)n;
@@ -4970,16 +4995,18 @@ a_expr:  c_expr
 						List *l;
 						foreach(l, (List *) $4)
 						{
-							Node *cmp = makeA_Expr(OP, "<>", $1, lfirst(l));
+							Node *cmp;
+							cmp = (Node *) makeSimpleA_Expr(OP, "<>",
+															$1, lfirst(l));
 							if (n == NULL)
 								n = cmp;
 							else
-								n = makeA_Expr(AND, NULL, n, cmp);
+								n = (Node *) makeA_Expr(AND, NIL, n, cmp);
 						}
 						$$ = n;
 					}
 				}
-		| a_expr all_Op sub_type select_with_parens		%prec Op
+		| a_expr qual_all_Op sub_type select_with_parens		%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = makeList1($1);
@@ -5007,42 +5034,42 @@ b_expr:  c_expr
 		| b_expr TYPECAST Typename
 				{	$$ = makeTypeCast($1, $3); }
 		| '+' b_expr					%prec UMINUS
-				{	$$ = makeA_Expr(OP, "+", NULL, $2); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "+", NULL, $2); }
 		| '-' b_expr					%prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' b_expr
-				{	$$ = makeA_Expr(OP, "%", NULL, $2); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "%", NULL, $2); }
 		| '^' b_expr
-				{	$$ = makeA_Expr(OP, "^", NULL, $2); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "^", NULL, $2); }
 		| b_expr '%'
-				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "%", $1, NULL); }
 		| b_expr '^'
-				{	$$ = makeA_Expr(OP, "^", $1, NULL); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "^", $1, NULL); }
 		| b_expr '+' b_expr
-				{	$$ = makeA_Expr(OP, "+", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "+", $1, $3); }
 		| b_expr '-' b_expr
-				{	$$ = makeA_Expr(OP, "-", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "-", $1, $3); }
 		| b_expr '*' b_expr
-				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "*", $1, $3); }
 		| b_expr '/' b_expr
-				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "/", $1, $3); }
 		| b_expr '%' b_expr
-				{	$$ = makeA_Expr(OP, "%", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "%", $1, $3); }
 		| b_expr '^' b_expr
-				{	$$ = makeA_Expr(OP, "^", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "^", $1, $3); }
 		| b_expr '<' b_expr
-				{	$$ = makeA_Expr(OP, "<", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "<", $1, $3); }
 		| b_expr '>' b_expr
-				{	$$ = makeA_Expr(OP, ">", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, ">", $1, $3); }
 		| b_expr '=' b_expr
-				{	$$ = makeA_Expr(OP, "=", $1, $3); }
+				{	$$ = (Node *) makeSimpleA_Expr(OP, "=", $1, $3); }
 
-		| b_expr Op b_expr
-				{	$$ = makeA_Expr(OP, $2, $1, $3); }
-		| Op b_expr
-				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
-		| b_expr Op					%prec POSTFIXOP
-				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
+		| b_expr qual_Op b_expr				%prec Op
+				{	$$ = (Node *) makeA_Expr(OP, $2, $1, $3); }
+		| qual_Op b_expr					%prec Op
+				{	$$ = (Node *) makeA_Expr(OP, $1, NULL, $2); }
+		| b_expr qual_Op					%prec POSTFIXOP
+				{	$$ = (Node *) makeA_Expr(OP, $2, $1, NULL); }
 		;
 
 /*
@@ -5539,12 +5566,9 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
 				{
 					CaseExpr *c = makeNode(CaseExpr);
 					CaseWhen *w = makeNode(CaseWhen);
-/*
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_Null;
-					w->result = (Node *)n;
-*/
-					w->expr = makeA_Expr(OP, "=", $3, $5);
+
+					w->expr = (Node *) makeSimpleA_Expr(OP, "=", $3, $5);
+					/* w->result is left NULL */
 					c->args = makeList1(w);
 					c->defresult = $3;
 					$$ = (Node *)c;
@@ -6244,17 +6268,6 @@ SpecialRuleRelation:  OLD
 %%
 
 static Node *
-makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
-{
-	A_Expr *a = makeNode(A_Expr);
-	a->oper = oper;
-	a->opname = opname;
-	a->lexpr = lexpr;
-	a->rexpr = rexpr;
-	return (Node *)a;
-}
-
-static Node *
 makeTypeCast(Node *arg, TypeName *typename)
 {
 	/*
@@ -6308,41 +6321,49 @@ makeFloatConst(char *str)
  * - thomas 1997-12-22
  */
 static Node *
-makeRowExpr(char *opr, List *largs, List *rargs)
+makeRowExpr(List *opr, List *largs, List *rargs)
 {
 	Node *expr = NULL;
 	Node *larg, *rarg;
+	char *oprname;
 
 	if (length(largs) != length(rargs))
-		elog(ERROR,"Unequal number of entries in row expression");
+		elog(ERROR, "Unequal number of entries in row expression");
 
 	if (lnext(largs) != NIL)
-		expr = makeRowExpr(opr,lnext(largs),lnext(rargs));
+		expr = makeRowExpr(opr, lnext(largs), lnext(rargs));
 
 	larg = lfirst(largs);
 	rarg = lfirst(rargs);
 
-	if ((strcmp(opr, "=") == 0)
-	 || (strcmp(opr, "<") == 0)
-	 || (strcmp(opr, "<=") == 0)
-	 || (strcmp(opr, ">") == 0)
-	 || (strcmp(opr, ">=") == 0))
+	oprname = strVal(llast(opr));
+
+	if ((strcmp(oprname, "=") == 0) ||
+		(strcmp(oprname, "<") == 0) ||
+		(strcmp(oprname, "<=") == 0) ||
+		(strcmp(oprname, ">") == 0) ||
+		(strcmp(oprname, ">=") == 0))
 	{
 		if (expr == NULL)
-			expr = makeA_Expr(OP, opr, larg, rarg);
+			expr = (Node *) makeA_Expr(OP, opr, larg, rarg);
 		else
-			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+			expr = (Node *) makeA_Expr(AND, NIL, expr,
+									   (Node *) makeA_Expr(OP, opr,
+														   larg, rarg));
 	}
-	else if (strcmp(opr, "<>") == 0)
+	else if (strcmp(oprname, "<>") == 0)
 	{
 		if (expr == NULL)
-			expr = makeA_Expr(OP, opr, larg, rarg);
+			expr = (Node *) makeA_Expr(OP, opr, larg, rarg);
 		else
-			expr = makeA_Expr(OR, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+			expr = (Node *) makeA_Expr(OR, NIL, expr,
+									   (Node *) makeA_Expr(OP, opr,
+														   larg, rarg));
 	}
 	else
 	{
-		elog(ERROR,"Operator '%s' not implemented for row expressions",opr);
+		elog(ERROR, "Operator '%s' not implemented for row expressions",
+			 oprname);
 	}
 
 	return expr;
@@ -6557,7 +6578,7 @@ doNegate(Node *n)
 		}
 	}
 
-	return makeA_Expr(OP, "-", NULL, n);
+	return (Node *) makeSimpleA_Expr(OP, "-", NULL, n);
 }
 
 static void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.114 2002/04/11 20:00:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.115 2002/04/16 23:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,8 @@ transformExpr(ParseState *pstate, Node *expr)
 							 * into IS NULL exprs.
 							 */
 							if (Transform_null_equals &&
-								strcmp(a->opname, "=") == 0 &&
+								length(a->name) == 1 &&
+								strcmp(strVal(lfirst(a->name)), "=") == 0 &&
 								(exprIsNullConstant(a->lexpr) ||
 								 exprIsNullConstant(a->rexpr)))
 							{
@@ -215,7 +216,7 @@ transformExpr(ParseState *pstate, Node *expr)
 								Node	   *rexpr = transformExpr(pstate,
 																a->rexpr);
 
-								result = (Node *) make_op(a->opname,
+								result = (Node *) make_op(a->name,
 														  lexpr,
 														  rexpr);
 							}
@@ -366,21 +367,23 @@ transformExpr(ParseState *pstate, Node *expr)
 					/* ALL, ANY, or MULTIEXPR: generate operator list */
 					List	   *left_list = sublink->lefthand;
 					List	   *right_list = qtree->targetList;
-					char	   *op;
+					List	   *op;
+					char	   *opname;
 					List	   *elist;
 
 					foreach(elist, left_list)
 						lfirst(elist) = transformExpr(pstate, lfirst(elist));
 
 					Assert(IsA(sublink->oper, A_Expr));
-					op = ((A_Expr *) sublink->oper)->opname;
+					op = ((A_Expr *) sublink->oper)->name;
+					opname = strVal(llast(op));
 					sublink->oper = NIL;
 
 					/* Combining operators other than =/<> is dubious... */
 					if (length(left_list) != 1 &&
-						strcmp(op, "=") != 0 && strcmp(op, "<>") != 0)
+						strcmp(opname, "=") != 0 && strcmp(opname, "<>") != 0)
 						elog(ERROR, "Row comparison cannot use '%s'",
-							 op);
+							 opname);
 
 					/*
 					 * Scan subquery's targetlist to find values that will
@@ -420,7 +423,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						if (opform->oprresult != BOOLOID)
 							elog(ERROR, "'%s' result type of '%s' must return '%s'"
 								 " to be used with quantified predicate subquery",
-								 op, typeidTypeName(opform->oprresult),
+								 opname, typeidTypeName(opform->oprresult),
 								 typeidTypeName(BOOLOID));
 
 						newop = makeOper(oprid(optup),	/* opno */
@@ -459,13 +462,8 @@ transformExpr(ParseState *pstate, Node *expr)
 					if (c->arg != NULL)
 					{
 						/* shorthand form was specified, so expand... */
-						A_Expr	   *a = makeNode(A_Expr);
-
-						a->oper = OP;
-						a->opname = "=";
-						a->lexpr = c->arg;
-						a->rexpr = warg;
-						warg = (Node *) a;
+						warg = (Node *) makeSimpleA_Expr(OP, "=",
+														 c->arg, warg);
 					}
 					neww->expr = transformExpr(pstate, warg);
 

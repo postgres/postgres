@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.154 2002/04/11 19:59:59 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.155 2002/04/16 23:08:10 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1285,7 +1285,7 @@ _outAExpr(StringInfo str, A_Expr *node)
 			appendStringInfo(str, "NOT ");
 			break;
 		case OP:
-			_outToken(str, node->opname);
+			_outNode(str, node->name);
 			appendStringInfo(str, " ");
 			break;
 		default:

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.25 2002/03/22 19:20:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.26 2002/04/16 23:08:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,9 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
      ] [, RIGHTARG = <replaceable class="parameter">righttype</replaceable> ]
      [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
      [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
-     [, HASHES ] [, SORT1 = <replaceable class="parameter">left_sort_op</replaceable> ] [, SORT2 = <replaceable class="parameter">right_sort_op</replaceable> ] )
+     [, HASHES ] [, MERGES ]
+     [, SORT1 = <replaceable class="parameter">left_sort_op</replaceable> ] [, SORT2 = <replaceable class="parameter">right_sort_op</replaceable> ]
+     [, LTCMP = <replaceable class="parameter">less_than_op</replaceable> ] [, GTCMP = <replaceable class="parameter">greater_than_op</replaceable> ] )
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATEOPERATOR-1">
@@ -116,10 +118,18 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       </listitem>
      </varlistentry>
      <varlistentry>
+      <term>MERGES</term>
+      <listitem>
+       <para>
+       Indicates this operator can support a merge join.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
       <term><replaceable class="parameter">left_sort_op</replaceable></term>
       <listitem>
        <para>
-	If this operator can support a merge join, the
+	If this operator can support a merge join, the less-than
 	operator that sorts the left-hand data type of this operator.
        </para>
       </listitem>
@@ -128,8 +138,26 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       <term><replaceable class="parameter">right_sort_op</replaceable></term>
       <listitem>
        <para>
-	If this operator can support a merge join, the
+	If this operator can support a merge join, the less-than
 	operator that sorts the right-hand data type of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">less_than_op</replaceable></term>
+      <listitem>
+       <para>
+	If this operator can support a merge join, the less-than
+	operator that compares the input data types of this operator.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">greater_than_op</replaceable></term>
+      <listitem>
+       <para>
+	If this operator can support a merge join, the greater-than
+	operator that compares the input data types of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -295,30 +323,39 @@ MYBOXES.description !== box '((0,0), (1,1))'
    it also works to just have both operators refer to each other.)
   </para>
   <para>
-   The HASHES, SORT1, and SORT2 options are  present  to  support  the
-   query  optimizer in performing joins.  
-   <productname>PostgreSQL</productname> can always
-   evaluate a join (i.e., processing a clause with two  tuple
-   variables separated by an operator that returns a <type>boolean</type>)
-   by iterative substitution [WONG76].  
-   In addition, <productname>PostgreSQL</productname>
-   can use a hash-join algorithm along
-   the lines of [SHAP86]; however, it must know whether  this
-   strategy  is  applicable.   The current hash-join algorithm
-   is only correct for operators that represent equality tests;
-   furthermore, equality of the data type must mean bitwise equality
-   of the representation of the type.  (For example, a data type that
-   contains unused bits that don't matter for equality tests could
-   not be hash-joined.)
-   The HASHES flag indicates to the query optimizer that a hash join
-   may safely be used with this operator.</para>
+   The HASHES, MERGES, SORT1, SORT2, LTCMP, and GTCMP options are present to
+   support the query optimizer in performing joins.
+   <productname>PostgreSQL</productname> can always evaluate a join (i.e.,
+   processing a clause with two tuple variables separated by an operator that
+   returns a <type>boolean</type>) by iterative substitution [WONG76].  In
+   addition, <productname>PostgreSQL</productname> can use a hash-join
+   algorithm along the lines of [SHAP86]; however, it must know whether this
+   strategy is applicable.  The current hash-join algorithm is only correct
+   for operators that represent equality tests; furthermore, equality of the
+   data type must mean bitwise equality of the representation of the type.
+   (For example, a data type that contains unused bits that don't matter for
+   equality tests could not be hash-joined.)  The HASHES flag indicates to the
+   query optimizer that a hash join may safely be used with this
+   operator.
+  </para>
   <para>
-   Similarly, the two sort operators indicate  to  the  query
-   optimizer whether merge-sort is a usable join strategy and
-   which operators should be used  to  sort  the  two  operand
-   classes.  Sort operators should only be provided for an equality
-   operator, and they should refer to less-than operators for the
-   left and right side data types respectively.
+   Similarly, the MERGES flag indicates whether merge-sort is a usable join
+   strategy for this operator.  A merge join requires that the two input
+   datatypes have consistent orderings, and that the mergejoin operator
+   behave like equality with respect to that ordering.  For example, it is
+   possible to merge-join equality between an integer and a float variable by
+   sorting both inputs in ordinary 
+   numeric order.  Execution of a merge join requires that the system be
+   able to identify four operators related to the mergejoin equality operator:
+   less-than comparison for the left input datatype,
+   less-than comparison for the right input datatype,
+   less-than comparison between the two datatypes, and
+   greater-than comparison between the two datatypes.  It is possible to
+   specify these by name, as the SORT1, SORT2, LTCMP, and GTCMP options
+   respectively.  The system will fill in the default names <literal>&lt;</>,
+   <literal>&lt;</>, <literal>&lt;</>, <literal>&gt;</> respectively if
+   any of these are omitted when MERGES is specified.  Also, MERGES will
+   be assumed to be implied if any of these four operator options appear.
   </para>
   <para>
    If  other join strategies are found to be practical,
@@ -408,8 +445,10 @@ CREATE OPERATOR === (
    RESTRICT = area_restriction_procedure,
    JOIN = area_join_procedure,
    HASHES,
-   SORT1 = <<<,
-   SORT2 = <<<
+   SORT1 = &lt;&lt;&lt;,
+   SORT2 = &lt;&lt;&lt;
+   -- Since sort operators were given, MERGES is implied.
+   -- LTCMP and GTCMP are assumed to be &lt; and &gt; respectively
 );
   </programlisting>  
  </refsect1>

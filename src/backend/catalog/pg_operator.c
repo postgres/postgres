@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.65 2002/04/09 20:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.66 2002/04/16 23:08:10 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -20,41 +20,40 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
+#include "parser/parse_oper.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
 static Oid OperatorGet(const char *operatorName,
+					   Oid operatorNamespace,
 					   Oid leftObjectId,
 					   Oid rightObjectId,
 					   bool *defined);
 
+static Oid OperatorLookup(List *operatorName,
+						  Oid leftObjectId,
+						  Oid rightObjectId,
+						  bool *defined);
+
 static Oid OperatorShellMake(const char *operatorName,
+							 Oid operatorNamespace,
 							 Oid leftTypeId,
 							 Oid rightTypeId);
 
-static void OperatorDef(const char *operatorName,
-			Oid leftTypeId,
-			Oid rightTypeId,
-			List *procedureName,
-			uint16 precedence,
-			bool isLeftAssociative,
-			const char *commutatorName,
-			const char *negatorName,
-			List *restrictionName,
-			List *joinName,
-			bool canHash,
-			const char *leftSortName,
-			const char *rightSortName);
-
 static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
+
+static Oid get_other_operator(List *otherOp,
+							  Oid otherLeftTypeId, Oid otherRightTypeId,
+							  const char *operatorName, Oid operatorNamespace,
+							  Oid leftTypeId, Oid rightTypeId,
+							  bool isCommutator);
 
 
 /*
@@ -114,76 +113,36 @@ validOperatorName(const char *name)
 }
 
 
-/* ----------------------------------------------------------------
- *		OperatorGet
+/*
+ * OperatorGet
  *
- *		finds the operator associated with the specified name
- *		and left and right type IDs.
+ *		finds an operator given an exact specification (name, namespace,
+ *		left and right type IDs).
  *
- * operatorName		-- name of operator to fetch
- * leftObjectId		-- left data type oid of operator to fetch
- * rightObjectId	-- right data type oid of operator to fetch
- * defined			-- set TRUE if defined (not a shell)
- * ----------------------------------------------------------------
+ *		*defined is set TRUE if defined (not a shell)
  */
 static Oid
 OperatorGet(const char *operatorName,
+			Oid operatorNamespace,
 			Oid leftObjectId,
 			Oid rightObjectId,
 			bool *defined)
 {
-	Relation	pg_operator_desc;
-	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
-	ScanKeyData opKey[3];
 	Oid			operatorObjectId;
 
-	if (!(OidIsValid(leftObjectId) || OidIsValid(rightObjectId)))
-		elog(ERROR, "operator %s must have at least one operand type",
-			 operatorName);
-
-	/*
-	 * open the pg_operator relation
-	 */
-	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
-
-	/*
-	 * form scan key
-	 */
-	ScanKeyEntryInitialize(&opKey[0], 0x0,
-						   Anum_pg_operator_oprname,
-						   F_NAMEEQ,
-						   PointerGetDatum(operatorName));
-	ScanKeyEntryInitialize(&opKey[1], 0x0,
-						   Anum_pg_operator_oprleft,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(leftObjectId));
-	ScanKeyEntryInitialize(&opKey[2], 0x0,
-						   Anum_pg_operator_oprright,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(rightObjectId));
-
-	/*
-	 * begin the scan
-	 */
-	pg_operator_scan = heap_beginscan(pg_operator_desc,
-									  0,
-									  SnapshotSelf,		/* no cache? */
-									  3,
-									  opKey);
-
-	/*
-	 * fetch the operator tuple, if it exists, and determine the proper
-	 * return oid value.
-	 */
-	tup = heap_getnext(pg_operator_scan, 0);
-
+	tup = SearchSysCache(OPERNAMENSP,
+						 PointerGetDatum(operatorName),
+						 ObjectIdGetDatum(leftObjectId),
+						 ObjectIdGetDatum(rightObjectId),
+						 ObjectIdGetDatum(operatorNamespace));
 	if (HeapTupleIsValid(tup))
 	{
 		regproc		oprcode = ((Form_pg_operator) GETSTRUCT(tup))->oprcode;
 
 		operatorObjectId = tup->t_data->t_oid;
 		*defined = RegProcedureIsValid(oprcode);
+		ReleaseSysCache(tup);
 	}
 	else
 	{
@@ -191,14 +150,40 @@ OperatorGet(const char *operatorName,
 		*defined = false;
 	}
 
-	/*
-	 * close the scan and return the oid.
-	 */
-	heap_endscan(pg_operator_scan);
-	heap_close(pg_operator_desc, AccessShareLock);
+	return operatorObjectId;
+}
+
+/*
+ * OperatorLookup
+ *
+ *		looks up an operator given a possibly-qualified name and
+ *		left and right type IDs.
+ *
+ *		*defined is set TRUE if defined (not a shell)
+ */
+static Oid
+OperatorLookup(List *operatorName,
+			   Oid leftObjectId,
+			   Oid rightObjectId,
+			   bool *defined)
+{
+	Oid			operatorObjectId;
+	regproc		oprcode;
+
+	operatorObjectId = LookupOperName(operatorName, leftObjectId,
+									  rightObjectId);
+	if (!OidIsValid(operatorObjectId))
+	{
+		*defined = false;
+		return InvalidOid;
+	}
+
+	oprcode = get_opcode(operatorObjectId);
+	*defined = RegProcedureIsValid(oprcode);
 
 	return operatorObjectId;
 }
+
 
 /*
  * OperatorShellMake
@@ -206,6 +191,7 @@ OperatorGet(const char *operatorName,
  */
 static Oid
 OperatorShellMake(const char *operatorName,
+				  Oid operatorNamespace,
 				  Oid leftTypeId,
 				  Oid rightTypeId)
 {
@@ -225,11 +211,6 @@ OperatorShellMake(const char *operatorName,
 		elog(ERROR, "\"%s\" is not a valid operator name", operatorName);
 
 	/*
-	 * open pg_operator
-	 */
-	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
-
-	/*
 	 * initialize our *nulls and *values arrays
 	 */
 	for (i = 0; i < Natts_pg_operator; ++i)
@@ -244,28 +225,35 @@ OperatorShellMake(const char *operatorName,
 	 */
 	i = 0;
 	namestrcpy(&oname, operatorName);
-	values[i++] = NameGetDatum(&oname);
-	values[i++] = Int32GetDatum(GetUserId());
-	values[i++] = UInt16GetDatum(0);
-	values[i++] = CharGetDatum('b');	/* assume it's binary */
-	values[i++] = BoolGetDatum(false);
-	values[i++] = BoolGetDatum(false);
-	values[i++] = ObjectIdGetDatum(leftTypeId);
-	values[i++] = ObjectIdGetDatum(rightTypeId);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
-	values[i++] = ObjectIdGetDatum(InvalidOid);
+	values[i++] = NameGetDatum(&oname);				/* oprname */
+	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
+	values[i++] = Int32GetDatum(GetUserId());		/* oprowner */
+	values[i++] = UInt16GetDatum(0);				/* oprprec */
+	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
+	values[i++] = BoolGetDatum(false);				/* oprisleft */
+	values[i++] = BoolGetDatum(false);				/* oprcanhash */
+	values[i++] = ObjectIdGetDatum(leftTypeId);		/* oprleft */
+	values[i++] = ObjectIdGetDatum(rightTypeId);	/* oprright */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprresult */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprcom */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprnegate */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprlsortop */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprrsortop */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprltcmpop */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprgtcmpop */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprcode */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprrest */
+	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprjoin */
+
+	/*
+	 * open pg_operator
+	 */
+	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
+	tupDesc = pg_operator_desc->rd_att;
 
 	/*
 	 * create a new operator tuple
 	 */
-	tupDesc = pg_operator_desc->rd_att;
-
 	tup = heap_formtuple(tupDesc, values, nulls);
 
 	/*
@@ -293,8 +281,26 @@ OperatorShellMake(const char *operatorName,
 	return operatorObjectId;
 }
 
-/* --------------------------------
- * OperatorDef
+/*
+ * OperatorCreate
+ *
+ * "X" indicates an optional argument (i.e. one that can be NULL or 0)
+ *		operatorName			name for new operator
+ *		operatorNamespace		namespace for new operator
+ *		leftTypeId				X left type ID
+ *		rightTypeId				X right type ID
+ *		procedureName			procedure for operator
+ *		precedence				operator precedence
+ *		isLeftAssociative		operator is left associative
+ *		commutatorName			X commutator operator
+ *		negatorName				X negator operator
+ *		restrictionName			X restriction sel. procedure
+ *		joinName				X join sel. procedure
+ *		canHash					hash join can be used with this operator
+ *		leftSortName			X left sort operator (for merge join)
+ *		rightSortName			X right sort operator (for merge join)
+ *		ltCompareName			X L<R compare operator (for merge join)
+ *		gtCompareName			X L>R compare operator (for merge join)
  *
  * This routine gets complicated because it allows the user to
  * specify operators that do not exist.  For example, if operator
@@ -354,68 +360,73 @@ OperatorShellMake(const char *operatorName,
  * else if a new operator is being created
  *	 create a tuple using heap_formtuple
  *	 call heap_insert
- * --------------------------------
- *		"X" indicates an optional argument (i.e. one that can be NULL)
- *		operatorName;			-- operator name
- *		leftTypeId;				-- X left type id
- *		rightTypeId;			-- X right type id
- *		procedureName;			-- procedure name for operator code
- *		precedence;				-- operator precedence
- *		isLeftAssociative;		-- operator is left associative?
- *		commutatorName;			-- X commutator operator name
- *		negatorName;			-- X negator operator name
- *		restrictionName;		-- X restriction sel. procedure name
- *		joinName;				-- X join sel. procedure name
- *		canHash;				-- can hash join be used with operator?
- *		leftSortName;			-- X left sort operator (for merge join)
- *		rightSortName;			-- X right sort operator (for merge join)
  */
-static void
-OperatorDef(const char *operatorName,
-			Oid leftTypeId,
-			Oid rightTypeId,
-			List *procedureName,
-			uint16 precedence,
-			bool isLeftAssociative,
-			const char *commutatorName,
-			const char *negatorName,
-			List *restrictionName,
-			List *joinName,
-			bool canHash,
-			const char *leftSortName,
-			const char *rightSortName)
+void
+OperatorCreate(const char *operatorName,
+			   Oid operatorNamespace,
+			   Oid leftTypeId,
+			   Oid rightTypeId,
+			   List *procedureName,
+			   uint16 precedence,
+			   bool isLeftAssociative,
+			   List *commutatorName,
+			   List *negatorName,
+			   List *restrictionName,
+			   List *joinName,
+			   bool canHash,
+			   List *leftSortName,
+			   List *rightSortName,
+			   List *ltCompareName,
+			   List *gtCompareName)
 {
 	Relation	pg_operator_desc;
-	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_operator];
 	char		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
 	Oid			operatorObjectId;
 	bool		operatorAlreadyDefined;
-	Oid			commutatorId = InvalidOid;
-	Oid			negatorId = InvalidOid;
+	Oid			procOid;
+	Oid			operResultType;
+	Oid			commutatorId,
+				negatorId,
+				leftSortId,
+				rightSortId,
+				ltCompareId,
+				gtCompareId,
+				restOid,
+				joinOid;
 	bool		selfCommutator = false;
-	const char *name[4];
 	Oid			typeId[FUNC_MAX_ARGS];
 	int			nargs;
-	Oid			procOid;
 	NameData	oname;
 	TupleDesc	tupDesc;
-	ScanKeyData opKey[3];
-	int			i,
-				j;
+	int			i;
 
 	/*
-	 * validate operator name
+	 * Sanity checks
 	 */
 	if (!validOperatorName(operatorName))
 		elog(ERROR, "\"%s\" is not a valid operator name", operatorName);
 
-	if (!(OidIsValid(leftTypeId) || OidIsValid(rightTypeId)))
-		elog(ERROR, "operator must have at least one operand type");
+	if (!OidIsValid(leftTypeId) && !OidIsValid(rightTypeId))
+		elog(ERROR, "at least one of leftarg or rightarg must be specified");
+
+	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
+	{
+		/* If it's not a binary op, these things mustn't be set: */
+		if (commutatorName)
+			elog(ERROR, "only binary operators can have commutators");
+		if (joinName)
+			elog(ERROR, "only binary operators can have join selectivity");
+		if (canHash)
+			elog(ERROR, "only binary operators can hash");
+		if (leftSortName || rightSortName || ltCompareName || gtCompareName)
+			elog(ERROR, "only binary operators can mergejoin");
+	}
 
 	operatorObjectId = OperatorGet(operatorName,
+								   operatorNamespace,
 								   leftTypeId,
 								   rightTypeId,
 								   &operatorAlreadyDefined);
@@ -428,13 +439,6 @@ OperatorDef(const char *operatorName,
 	 * At this point, if operatorObjectId is not InvalidOid then we are
 	 * filling in a previously-created shell.
 	 */
-
-	for (i = 0; i < Natts_pg_operator; ++i)
-	{
-		values[i] = (Datum) NULL;
-		replaces[i] = 'r';
-		nulls[i] = ' ';
-	}
 
 	/*
 	 * Look up registered procedures -- find the return type of
@@ -461,17 +465,13 @@ OperatorDef(const char *operatorName,
 	procOid = LookupFuncName(procedureName, nargs, typeId);
 	if (!OidIsValid(procOid))
 		func_error("OperatorDef", procedureName, nargs, typeId, NULL);
-
-	values[Anum_pg_operator_oprcode - 1] = ObjectIdGetDatum(procOid);
-	values[Anum_pg_operator_oprresult - 1] = ObjectIdGetDatum(get_func_rettype(procOid));
+	operResultType = get_func_rettype(procOid);
 
 	/*
 	 * find restriction estimator
 	 */
 	if (restrictionName)
-	{							/* optional */
-		Oid			restOid;
-
+	{
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = 0;			/* Query (opaque type) */
 		typeId[1] = OIDOID;		/* operator OID */
@@ -481,19 +481,15 @@ OperatorDef(const char *operatorName,
 		restOid = LookupFuncName(restrictionName, 4, typeId);
 		if (!OidIsValid(restOid))
 			func_error("OperatorDef", restrictionName, 4, typeId, NULL);
-
-		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(restOid);
 	}
 	else
-		values[Anum_pg_operator_oprrest - 1] = ObjectIdGetDatum(InvalidOid);
+		restOid = InvalidOid;
 
 	/*
 	 * find join estimator
 	 */
 	if (joinName)
-	{							/* optional */
-		Oid			joinOid;
-
+	{
 		MemSet(typeId, 0, FUNC_MAX_ARGS * sizeof(Oid));
 		typeId[0] = 0;			/* Query (opaque type) */
 		typeId[1] = OIDOID;		/* operator OID */
@@ -502,170 +498,148 @@ OperatorDef(const char *operatorName,
 		joinOid = LookupFuncName(joinName, 3, typeId);
 		if (!OidIsValid(joinOid))
 			func_error("OperatorDef", joinName, 3, typeId, NULL);
-
-		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(joinOid);
 	}
 	else
-		values[Anum_pg_operator_oprjoin - 1] = ObjectIdGetDatum(InvalidOid);
+		joinOid = InvalidOid;
 
 	/*
 	 * set up values in the operator tuple
 	 */
+
+	for (i = 0; i < Natts_pg_operator; ++i)
+	{
+		values[i] = (Datum) NULL;
+		replaces[i] = 'r';
+		nulls[i] = ' ';
+	}
+
 	i = 0;
 	namestrcpy(&oname, operatorName);
-	values[i++] = NameGetDatum(&oname);
-	values[i++] = Int32GetDatum(GetUserId());
-	values[i++] = UInt16GetDatum(precedence);
-	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');
-	values[i++] = BoolGetDatum(isLeftAssociative);
-	values[i++] = BoolGetDatum(canHash);
-	values[i++] = ObjectIdGetDatum(leftTypeId);
-	values[i++] = ObjectIdGetDatum(rightTypeId);
-
-	++i;						/* Skip "oprresult", it was filled in
-								 * above */
+	values[i++] = NameGetDatum(&oname);			/* oprname */
+	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
+	values[i++] = Int32GetDatum(GetUserId());		/* oprowner */
+	values[i++] = UInt16GetDatum(precedence);		/* oprprec */
+	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
+	values[i++] = BoolGetDatum(isLeftAssociative);	/* oprisleft */
+	values[i++] = BoolGetDatum(canHash);			/* oprcanhash */
+	values[i++] = ObjectIdGetDatum(leftTypeId);		/* oprleft */
+	values[i++] = ObjectIdGetDatum(rightTypeId);	/* oprright */
+	values[i++] = ObjectIdGetDatum(operResultType);	/* oprresult */
 
 	/*
 	 * Set up the other operators.	If they do not currently exist, create
 	 * shells in order to get ObjectId's.
 	 */
-	name[0] = commutatorName;
-	name[1] = negatorName;
-	name[2] = leftSortName;
-	name[3] = rightSortName;
 
-	for (j = 0; j < 4; ++j)
+	if (commutatorName)
 	{
-		if (name[j])
-		{
-			Oid			otherLeftTypeId = InvalidOid;
-			Oid			otherRightTypeId = InvalidOid;
-			Oid			other_oid = InvalidOid;
-			bool		otherDefined = false;
-
-			switch (j)
-			{
-				case 0: /* commutator has reversed arg types */
-					otherLeftTypeId = rightTypeId;
-					otherRightTypeId = leftTypeId;
-					other_oid = OperatorGet(name[j],
-											otherLeftTypeId,
-											otherRightTypeId,
-											&otherDefined);
-					commutatorId = other_oid;
-					break;
-				case 1: /* negator has same arg types */
-					otherLeftTypeId = leftTypeId;
-					otherRightTypeId = rightTypeId;
-					other_oid = OperatorGet(name[j],
-											otherLeftTypeId,
-											otherRightTypeId,
-											&otherDefined);
-					negatorId = other_oid;
-					break;
-				case 2: /* left sort op takes left-side data type */
-					otherLeftTypeId = leftTypeId;
-					otherRightTypeId = leftTypeId;
-					other_oid = OperatorGet(name[j],
-											otherLeftTypeId,
-											otherRightTypeId,
-											&otherDefined);
-					break;
-				case 3: /* right sort op takes right-side data type */
-					otherLeftTypeId = rightTypeId;
-					otherRightTypeId = rightTypeId;
-					other_oid = OperatorGet(name[j],
-											otherLeftTypeId,
-											otherRightTypeId,
-											&otherDefined);
-					break;
-			}
-
-			if (OidIsValid(other_oid))
-			{
-				/* other op already in catalogs */
-				values[i++] = ObjectIdGetDatum(other_oid);
-			}
-			else if (strcmp(operatorName, name[j]) != 0 ||
-					 otherLeftTypeId != leftTypeId ||
-					 otherRightTypeId != rightTypeId)
-			{
-				/* not in catalogs, different from operator */
-				other_oid = OperatorShellMake(name[j],
-											  otherLeftTypeId,
-											  otherRightTypeId);
-				if (!OidIsValid(other_oid))
-					elog(ERROR,
-					   "OperatorDef: can't create operator shell \"%s\"",
-						 name[j]);
-				values[i++] = ObjectIdGetDatum(other_oid);
-			}
-			else
-			{
-				/*
-				 * self-linkage to this operator; will fix below. Note
-				 * that only self-linkage for commutation makes sense.
-				 */
-				if (j != 0)
-					elog(ERROR,
-						 "operator cannot be its own negator or sort operator");
-				selfCommutator = true;
-				values[i++] = ObjectIdGetDatum(InvalidOid);
-			}
-		}
-		else
-		{
-			/* other operator is omitted */
-			values[i++] = ObjectIdGetDatum(InvalidOid);
-		}
+		/* commutator has reversed arg types */
+		commutatorId = get_other_operator(commutatorName,
+										  rightTypeId, leftTypeId,
+										  operatorName, operatorNamespace,
+										  leftTypeId, rightTypeId,
+										  true);
+		/*
+		 * self-linkage to this operator; will fix below. Note
+		 * that only self-linkage for commutation makes sense.
+		 */
+		if (!OidIsValid(commutatorId))
+			selfCommutator = true;
 	}
+	else
+		commutatorId = InvalidOid;
+	values[i++] = ObjectIdGetDatum(commutatorId);	/* oprcom */
 
-	/* last three fields were filled in above */
+	if (negatorName)
+	{
+		/* negator has same arg types */
+		negatorId = get_other_operator(negatorName,
+									   leftTypeId, rightTypeId,
+									   operatorName, operatorNamespace,
+									   leftTypeId, rightTypeId,
+									   false);
+	}
+	else
+		negatorId = InvalidOid;
+	values[i++] = ObjectIdGetDatum(negatorId);		/* oprnegate */
+
+	if (leftSortName)
+	{
+		/* left sort op takes left-side data type */
+		leftSortId = get_other_operator(leftSortName,
+									   leftTypeId, leftTypeId,
+									   operatorName, operatorNamespace,
+									   leftTypeId, rightTypeId,
+									   false);
+	}
+	else
+		leftSortId = InvalidOid;
+	values[i++] = ObjectIdGetDatum(leftSortId);		/* oprlsortop */
+
+	if (rightSortName)
+	{
+		/* right sort op takes right-side data type */
+		rightSortId = get_other_operator(rightSortName,
+										 rightTypeId, rightTypeId,
+										 operatorName, operatorNamespace,
+										 leftTypeId, rightTypeId,
+										 false);
+	}
+	else
+		rightSortId = InvalidOid;
+	values[i++] = ObjectIdGetDatum(rightSortId);	/* oprrsortop */
+
+	if (ltCompareName)
+	{
+		/* comparator has same arg types */
+		ltCompareId = get_other_operator(ltCompareName,
+										 leftTypeId, rightTypeId,
+										 operatorName, operatorNamespace,
+										 leftTypeId, rightTypeId,
+										 false);
+	}
+	else
+		ltCompareId = InvalidOid;
+	values[i++] = ObjectIdGetDatum(ltCompareId);	/* oprltcmpop */
+
+	if (gtCompareName)
+	{
+		/* comparator has same arg types */
+		gtCompareId = get_other_operator(gtCompareName,
+										 leftTypeId, rightTypeId,
+										 operatorName, operatorNamespace,
+										 leftTypeId, rightTypeId,
+										 false);
+	}
+	else
+		gtCompareId = InvalidOid;
+	values[i++] = ObjectIdGetDatum(gtCompareId);	/* oprgtcmpop */
+
+	values[i++] = ObjectIdGetDatum(procOid);		/* oprcode */
+	values[i++] = ObjectIdGetDatum(restOid);		/* oprrest */
+	values[i++] = ObjectIdGetDatum(joinOid);		/* oprjoin */
 
 	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
 	/*
-	 * If we are adding to an operator shell, get its t_self
+	 * If we are adding to an operator shell, update; else insert
 	 */
 	if (operatorObjectId)
 	{
-		/* Make sure we can see the shell even if it is new in current cmd */
-		CommandCounterIncrement();
+		tup = SearchSysCacheCopy(OPEROID,
+								 ObjectIdGetDatum(operatorObjectId),
+								 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "OperatorDef: operator %u not found",
+				 operatorObjectId);
 
-		ScanKeyEntryInitialize(&opKey[0], 0x0,
-							   Anum_pg_operator_oprname,
-							   F_NAMEEQ,
-							   PointerGetDatum(operatorName));
-		ScanKeyEntryInitialize(&opKey[1], 0x0,
-							   Anum_pg_operator_oprleft,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(leftTypeId));
-		ScanKeyEntryInitialize(&opKey[2], 0x0,
-							   Anum_pg_operator_oprright,
-							   F_OIDEQ,
-							   ObjectIdGetDatum(rightTypeId));
+		tup = heap_modifytuple(tup,
+							   pg_operator_desc,
+							   values,
+							   nulls,
+							   replaces);
 
-		pg_operator_scan = heap_beginscan(pg_operator_desc,
-										  0,
-										  SnapshotSelf, /* no cache? */
-										  3,
-										  opKey);
-
-		tup = heap_getnext(pg_operator_scan, 0);
-		if (HeapTupleIsValid(tup))
-		{
-			tup = heap_modifytuple(tup,
-								   pg_operator_desc,
-								   values,
-								   nulls,
-								   replaces);
-
-			simple_heap_update(pg_operator_desc, &tup->t_self, tup);
-		}
-		else
-			elog(ERROR, "OperatorDef: operator %u not found", operatorObjectId);
-
-		heap_endscan(pg_operator_scan);
+		simple_heap_update(pg_operator_desc, &tup->t_self, tup);
 	}
 	else
 	{
@@ -676,6 +650,7 @@ OperatorDef(const char *operatorName,
 		operatorObjectId = tup->t_data->t_oid;
 	}
 
+	/* Must update the indexes in either case */
 	if (RelationGetForm(pg_operator_desc)->relhasindex)
 	{
 		Relation	idescs[Num_pg_operator_indices];
@@ -705,7 +680,65 @@ OperatorDef(const char *operatorName,
 		OperatorUpd(operatorObjectId, commutatorId, negatorId);
 }
 
-/* ----------------------------------------------------------------
+/*
+ * Try to lookup another operator (commutator, etc)
+ *
+ * If not found, check to see if it is exactly the operator we are trying
+ * to define; if so, return InvalidOid.  (Note that this case is only
+ * sensible for a commutator, so we error out otherwise.)  If it is not
+ * the same operator, create a shell operator.
+ */
+static Oid
+get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
+				   const char *operatorName, Oid operatorNamespace,
+				   Oid leftTypeId, Oid rightTypeId, bool isCommutator)
+{
+	Oid			other_oid;
+	bool		otherDefined;
+	char	   *otherName;
+	Oid			otherNamespace;
+
+	other_oid = OperatorLookup(otherOp,
+							   otherLeftTypeId,
+							   otherRightTypeId,
+							   &otherDefined);
+
+	if (OidIsValid(other_oid))
+	{
+		/* other op already in catalogs */
+		return other_oid;
+	}
+
+	otherNamespace = QualifiedNameGetCreationNamespace(otherOp,
+													   &otherName);
+
+	if (strcmp(otherName, operatorName) == 0 &&
+		otherNamespace == operatorNamespace &&
+		otherLeftTypeId == leftTypeId &&
+		otherRightTypeId == rightTypeId)
+	{
+		/*
+		 * self-linkage to this operator; caller will fix later. Note
+		 * that only self-linkage for commutation makes sense.
+		 */
+		if (!isCommutator)
+			elog(ERROR, "operator cannot be its own negator or sort operator");
+		return InvalidOid;
+	}
+
+	/* not in catalogs, different from operator, so make shell */
+	other_oid = OperatorShellMake(otherName,
+								  otherNamespace,
+								  otherLeftTypeId,
+								  otherRightTypeId);
+	if (!OidIsValid(other_oid))
+		elog(ERROR,
+			 "OperatorDef: can't create operator shell \"%s\"",
+			 NameListToString(otherOp));
+	return other_oid;
+}
+
+/*
  * OperatorUpd
  *
  *	For a given operator, look up its negator and commutator operators.
@@ -713,19 +746,16 @@ OperatorDef(const char *operatorName,
  *	(respectively) are empty, then use the new operator for neg or comm.
  *	This solves a problem for users who need to insert two new operators
  *	which are the negator or commutator of each other.
- * ----------------------------------------------------------------
  */
 static void
 OperatorUpd(Oid baseId, Oid commId, Oid negId)
 {
 	int			i;
 	Relation	pg_operator_desc;
-	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_operator];
 	char		replaces[Natts_pg_operator];
 	Datum		values[Natts_pg_operator];
-	ScanKeyData opKey[1];
 
 	for (i = 0; i < Natts_pg_operator; ++i)
 	{
@@ -734,8 +764,6 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		nulls[i] = ' ';
 	}
 
-	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
-
 	/*
 	 * check and update the commutator & negator, if necessary
 	 *
@@ -743,18 +771,11 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	 */
 	CommandCounterIncrement();
 
-	ScanKeyEntryInitialize(&opKey[0], 0x0,
-						   ObjectIdAttributeNumber,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(commId));
+	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
-	pg_operator_scan = heap_beginscan(pg_operator_desc,
-									  0,
-									  SnapshotSelf,		/* no cache? */
-									  1,
-									  opKey);
-
-	tup = heap_getnext(pg_operator_scan, 0);
+	tup = SearchSysCacheCopy(OPEROID,
+							 ObjectIdGetDatum(commId),
+							 0, 0, 0);
 
 	/*
 	 * if the commutator and negator are the same operator, do one update.
@@ -765,13 +786,10 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	{
 		if (HeapTupleIsValid(tup))
 		{
-			Form_pg_operator t;
+			Form_pg_operator t = (Form_pg_operator) GETSTRUCT(tup);
 
-			t = (Form_pg_operator) GETSTRUCT(tup);
-			if (!OidIsValid(t->oprcom)
-				|| !OidIsValid(t->oprnegate))
+			if (!OidIsValid(t->oprcom) || !OidIsValid(t->oprnegate))
 			{
-
 				if (!OidIsValid(t->oprnegate))
 				{
 					values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
@@ -802,7 +820,6 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 				}
 			}
 		}
-		heap_endscan(pg_operator_scan);
 
 		heap_close(pg_operator_desc, RowExclusiveLock);
 
@@ -816,6 +833,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	{
 		values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(baseId);
 		replaces[Anum_pg_operator_oprcom - 1] = 'r';
+
 		tup = heap_modifytuple(tup,
 							   pg_operator_desc,
 							   values,
@@ -837,23 +855,18 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		replaces[Anum_pg_operator_oprcom - 1] = ' ';
 	}
 
-	heap_endscan(pg_operator_scan);
-
 	/* check and update the negator, if necessary */
-	opKey[0].sk_argument = ObjectIdGetDatum(negId);
 
-	pg_operator_scan = heap_beginscan(pg_operator_desc,
-									  0,
-									  SnapshotSelf,		/* no cache? */
-									  1,
-									  opKey);
+	tup = SearchSysCacheCopy(OPEROID,
+							 ObjectIdGetDatum(negId),
+							 0, 0, 0);
 
-	tup = heap_getnext(pg_operator_scan, 0);
 	if (HeapTupleIsValid(tup) &&
 		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprnegate)))
 	{
 		values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
 		replaces[Anum_pg_operator_oprnegate - 1] = 'r';
+
 		tup = heap_modifytuple(tup,
 							   pg_operator_desc,
 							   values,
@@ -872,79 +885,5 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 		}
 	}
 
-	heap_endscan(pg_operator_scan);
-
 	heap_close(pg_operator_desc, RowExclusiveLock);
-}
-
-
-/* ----------------------------------------------------------------
- * OperatorCreate
- *
- * This is now just an interface procedure for OperatorDef ...
- *
- * "X" indicates an optional argument (i.e. one that can be NULL or 0)
- *		operatorName;			-- operator name
- *		leftTypeId;				-- X left type ID
- *		rightTypeId;			-- X right type ID
- *		procedureName;			-- procedure for operator
- *		precedence;				-- operator precedence
- *		isLeftAssociative;		-- operator is left associative
- *		commutatorName;			-- X commutator operator name
- *		negatorName;			-- X negator operator name
- *		restrictionName;		-- X restriction sel. procedure
- *		joinName;				-- X join sel. procedure
- *		canHash;				-- hash join can be used with this operator
- *		leftSortName;			-- X left sort operator (for merge join)
- *		rightSortName;			-- X right sort operator (for merge join)
- */
-void
-OperatorCreate(const char *operatorName,
-			   Oid leftTypeId,
-			   Oid rightTypeId,
-			   const char *procedureName,
-			   uint16 precedence,
-			   bool isLeftAssociative,
-			   const char *commutatorName,
-			   const char *negatorName,
-			   const char *restrictionName,
-			   const char *joinName,
-			   bool canHash,
-			   const char *leftSortName,
-			   const char *rightSortName)
-{
-	if (!OidIsValid(leftTypeId) && !OidIsValid(rightTypeId))
-		elog(ERROR, "at least one of leftarg or rightarg must be specified");
-
-	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
-	{
-		/* If it's not a binary op, these things mustn't be set: */
-		if (commutatorName)
-			elog(ERROR, "only binary operators can have commutators");
-		if (joinName)
-			elog(ERROR, "only binary operators can have join selectivity");
-		if (canHash)
-			elog(ERROR, "only binary operators can hash");
-		if (leftSortName || rightSortName)
-			elog(ERROR, "only binary operators can have sort links");
-	}
-
-	/*
-	 * Use OperatorDef() to define the specified operator and also create
-	 * shells for the operator's associated operators if they don't
-	 * already exist.
-	 */
-	OperatorDef(operatorName,
-				leftTypeId,
-				rightTypeId,
-				makeList1(makeString((char*) procedureName)), /* XXX */
-				precedence,
-				isLeftAssociative,
-				commutatorName,
-				negatorName,
-				restrictionName ? makeList1(makeString((char*) restrictionName)) : NIL,	/* XXX */
-				joinName ? makeList1(makeString((char*) joinName)) : NIL, /* XXX */
-				canHash,
-				leftSortName,
-				rightSortName);
 }

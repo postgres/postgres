@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.88 2002/04/11 19:59:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.89 2002/04/16 23:08:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ char	   *Name_pg_namespace_indices[Num_pg_namespace_indices] =
 char	   *Name_pg_opclass_indices[Num_pg_opclass_indices] =
 {OpclassAmNameIndex, OpclassOidIndex};
 char	   *Name_pg_operator_indices[Num_pg_operator_indices] =
-{OperatorOidIndex, OperatorNameIndex};
+{OperatorOidIndex, OperatorNameNspIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] =
 {ProcedureOidIndex, ProcedureNameNspIndex};
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] =

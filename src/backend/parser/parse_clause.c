@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.88 2002/04/15 06:05:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.89 2002/04/16 23:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
-					List *targetlist, char *opname);
+					List *targetlist, List *opname);
 static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
 
 
@@ -257,22 +257,15 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 		Node	   *rvar = (Node *) lfirst(rvars);
 		A_Expr	   *e;
 
-		e = makeNode(A_Expr);
-		e->oper = OP;
-		e->opname = "=";
-		e->lexpr = copyObject(lvar);
-		e->rexpr = copyObject(rvar);
+		e = makeSimpleA_Expr(OP, "=", copyObject(lvar), copyObject(rvar));
 
 		if (result == NULL)
 			result = (Node *) e;
 		else
 		{
-			A_Expr	   *a = makeNode(A_Expr);
+			A_Expr	   *a;
 
-			a->oper = AND;
-			a->opname = NULL;
-			a->lexpr = result;
-			a->rexpr = (Node *) e;
+			a = makeA_Expr(AND, NIL, result, (Node *) e);
 			result = (Node *) a;
 		}
 
@@ -1117,7 +1110,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			else
 			{
 				*sortClause = addTargetToSortList(tle, *sortClause,
-												  targetlist, NULL);
+												  targetlist, NIL);
 
 				/*
 				 * Probably, the tle should always have been added at the
@@ -1160,7 +1153,7 @@ addAllTargetsToSortList(List *sortlist, List *targetlist)
 		TargetEntry *tle = (TargetEntry *) lfirst(i);
 
 		if (!tle->resdom->resjunk)
-			sortlist = addTargetToSortList(tle, sortlist, targetlist, NULL);
+			sortlist = addTargetToSortList(tle, sortlist, targetlist, NIL);
 	}
 	return sortlist;
 }
@@ -1169,13 +1162,13 @@ addAllTargetsToSortList(List *sortlist, List *targetlist)
  * addTargetToSortList
  *		If the given targetlist entry isn't already in the ORDER BY list,
  *		add it to the end of the list, using the sortop with given name
- *		or any available sort operator if opname == NULL.
+ *		or any available sort operator if opname == NIL.
  *
  * Returns the updated ORDER BY list.
  */
 static List *
 addTargetToSortList(TargetEntry *tle, List *sortlist, List *targetlist,
-					char *opname)
+					List *opname)
 {
 	/* avoid making duplicate sortlist entries */
 	if (!exprIsInSortList(tle->expr, sortlist, targetlist))

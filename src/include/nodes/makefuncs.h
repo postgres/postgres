@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.34 2002/03/29 19:06:23 tgl Exp $
+ * $Id: makefuncs.h,v 1.35 2002/04/16 23:08:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,11 @@
 #define MAKEFUNC_H
 
 #include "nodes/parsenodes.h"
+
+extern A_Expr *makeA_Expr(int oper, List *name, Node *lexpr, Node *rexpr);
+
+extern A_Expr *makeSimpleA_Expr(int oper, const char *name,
+								Node *lexpr, Node *rexpr);
 
 extern Oper *makeOper(Oid opno,
 		 Oid opid,

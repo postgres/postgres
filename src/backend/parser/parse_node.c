@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.61 2002/04/11 20:00:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.62 2002/04/16 23:08:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,10 +62,7 @@ make_parsestate(ParseState *parentParseState)
  * Ensure argument type match by forcing conversion of constants.
  */
 Node *
-make_operand(char *opname,
-			 Node *tree,
-			 Oid orig_typeId,
-			 Oid target_typeId)
+make_operand(Node *tree, Oid orig_typeId, Oid target_typeId)
 {
 	Node	   *result;
 
@@ -95,7 +92,7 @@ make_operand(char *opname,
  * This is where some type conversion happens.
  */
 Expr *
-make_op(char *opname, Node *ltree, Node *rtree)
+make_op(List *opname, Node *ltree, Node *rtree)
 {
 	Oid			ltypeId,
 				rtypeId;
@@ -114,7 +111,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	{
 		tup = right_oper(opname, ltypeId);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
-		left = make_operand(opname, ltree, ltypeId, opform->oprleft);
+		left = make_operand(ltree, ltypeId, opform->oprleft);
 		right = NULL;
 	}
 
@@ -123,7 +120,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	{
 		tup = left_oper(opname, rtypeId);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
-		right = make_operand(opname, rtree, rtypeId, opform->oprright);
+		right = make_operand(rtree, rtypeId, opform->oprright);
 		left = NULL;
 	}
 
@@ -132,8 +129,8 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	{
 		tup = oper(opname, ltypeId, rtypeId, false);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
-		left = make_operand(opname, ltree, ltypeId, opform->oprleft);
-		right = make_operand(opname, rtree, rtypeId, opform->oprright);
+		left = make_operand(ltree, ltypeId, opform->oprleft);
+		right = make_operand(rtree, rtypeId, opform->oprright);
 	}
 
 	newop = makeOper(oprid(tup),	/* opno */

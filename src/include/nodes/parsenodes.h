@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.169 2002/04/09 20:35:54 tgl Exp $
+ * $Id: parsenodes.h,v 1.170 2002/04/16 23:08:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,7 @@ typedef struct A_Expr
 {
 	NodeTag		type;
 	int			oper;			/* type of operation (OP,OR,AND,NOT) */
-	char	   *opname;			/* name of operator */
+	List	   *name;			/* possibly-qualified name of operator */
 	Node	   *lexpr;			/* left argument */
 	Node	   *rexpr;			/* right argument */
 } A_Expr;
@@ -373,7 +373,7 @@ typedef struct InsertDefault
 typedef struct SortGroupBy
 {
 	NodeTag		type;
-	char	   *useOp;			/* operator to use */
+	List	   *useOp;			/* operator to use */
 	Node	   *node;			/* Expression  */
 } SortGroupBy;
 
@@ -1189,7 +1189,7 @@ typedef struct RemoveFuncStmt
 typedef struct RemoveOperStmt
 {
 	NodeTag		type;
-	char	   *opname;			/* operator to drop */
+	List	   *opname;			/* operator to drop */
 	List	   *args;			/* types of the arguments */
 } RemoveOperStmt;
 

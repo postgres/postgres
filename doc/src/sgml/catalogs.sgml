@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.41 2002/04/11 19:59:54 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.42 2002/04/16 23:08:09 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1483,6 +1483,15 @@
      </row>
 
      <row>
+      <entry>oprnamespace</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_namespace.oid</entry>
+      <entry>
+       The OID of the namespace that contains this operator
+      </entry>
+     </row>
+
+     <row>
       <entry>oprowner</entry>
       <entry><type>int4</type></entry>
       <entry>pg_shadow.usesysid</entry>
@@ -1493,7 +1502,8 @@
       <entry>oprprec</entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>unused</entry>
+      <entry>precedence (currently unused, as precedences are hard-wired
+      in the grammar)</entry>
      </row>
 
      <row>
@@ -1510,7 +1520,8 @@
       <entry>oprisleft</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>unused</entry>
+      <entry>left-associativity (currently unused, as this is hard-wired
+      in the grammar)</entry>
      </row>
 
      <row>
@@ -1561,7 +1572,7 @@
       <entry>pg_operator.oid</entry>
       <entry>
        If this operator supports merge joins, the operator that sorts
-       the type of the left-hand operand
+       the type of the left-hand operand (<literal>L&lt;L</>)
       </entry>
      </row>
 
@@ -1571,28 +1582,48 @@
       <entry>pg_operator.oid</entry>
       <entry>
        If this operator supports merge joins, the operator that sorts
-       the type of the right-hand operand
+       the type of the right-hand operand (<literal>R&lt;R</>)
+      </entry>
+     </row>
+
+     <row>
+      <entry>oprltcmpop</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>
+       If this operator supports merge joins, the less-than operator that
+       compares the left and right operand types (<literal>L&lt;R</>)
+      </entry>
+     </row>
+
+     <row>
+      <entry>oprgtcmpop</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_operator.oid</entry>
+      <entry>
+       If this operator supports merge joins, the greater-than operator that
+       compares the left and right operand types (<literal>L&gt;R</>)
       </entry>
      </row>
 
      <row>
       <entry>oprcode</entry>
       <entry><type>regproc</type></entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>Function that implements this operator</entry>
      </row>
 
      <row>
       <entry>oprrest</entry>
       <entry><type>regproc</type></entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>Restriction selectivity estimation function for this operator</entry>
      </row>
 
      <row>
       <entry>oprjoin</entry>
       <entry><type>regproc</type></entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>Join selectivity estimation function for this operator</entry>
      </row>
     </tbody>
@@ -2498,28 +2529,28 @@
      <row>
       <entry>typinput</entry>
       <entry><type>regproc</type></entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>Input function</entry>
      </row>
 
      <row>
       <entry>typoutput</entry>
       <entry><type>regproc</type></entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>Output function</entry>
      </row>
 
      <row>
       <entry>typreceive</entry>
       <entry><type>regproc</type></entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>unused</entry>
      </row>
 
      <row>
       <entry>typsend</entry>
       <entry><type>regproc</type></entry>
-      <entry></entry>
+      <entry>pg_proc.oid</entry>
       <entry>unused</entry>
      </row>
 

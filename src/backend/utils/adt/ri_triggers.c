@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.36 2002/04/02 01:03:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.37 2002/04/16 23:08:11 tgl Exp $
  *
  * ----------
  */
@@ -36,6 +36,7 @@
 #include "catalog/pg_operator.h"
 #include "commands/trigger.h"
 #include "executor/spi_priv.h"
+#include "parser/parse_oper.h"
 #include "utils/lsyscache.h"
 #include "miscadmin.h"
 
@@ -3338,27 +3339,20 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 											  HASH_FIND, NULL);
 
 	/*
-	 * If not found, lookup the OPERNAME system cache for it to get the
-	 * func OID, then do the function manager lookup, and remember that
-	 * info.
+	 * If not found, lookup the operator, then do the function manager
+	 * lookup, and remember that info.
 	 */
 	if (!entry)
 	{
-		HeapTuple	opr_tup;
 		Oid			opr_proc;
 		FmgrInfo	finfo;
 
-		opr_tup = SearchSysCache(OPERNAME,
-								 PointerGetDatum("="),
-								 ObjectIdGetDatum(typeid),
-								 ObjectIdGetDatum(typeid),
-								 CharGetDatum('b'));
-		if (!HeapTupleIsValid(opr_tup))
+		opr_proc = compatible_oper_funcid(makeList1(makeString("=")),
+										  typeid, typeid, true);
+		if (!OidIsValid(opr_proc))
 			elog(ERROR,
-			"ri_AttributesEqual(): cannot find '=' operator for type %u",
+				 "ri_AttributesEqual(): cannot find '=' operator for type %u",
 				 typeid);
-		opr_proc = ((Form_pg_operator) GETSTRUCT(opr_tup))->oprcode;
-		ReleaseSysCache(opr_tup);
 
 		/*
 		 * Since fmgr_info could fail, call it *before* creating the

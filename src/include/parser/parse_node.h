@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.29 2001/11/05 17:46:35 momjian Exp $
+ * $Id: parse_node.h,v 1.30 2002/04/16 23:08:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,9 +51,8 @@ typedef struct ParseState
 } ParseState;
 
 extern ParseState *make_parsestate(ParseState *parentParseState);
-extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
-extern Node *make_operand(char *opname, Node *tree,
-			 Oid orig_typeId, Oid target_typeId);
+extern Expr *make_op(List *opname, Node *ltree, Node *rtree);
+extern Node *make_operand(Node *tree, Oid orig_typeId, Oid target_typeId);
 extern Var *make_var(ParseState *pstate, RangeTblEntry *rte, int attrno);
 extern ArrayRef *transformArraySubscripts(ParseState *pstate,
 						 Node *arrayBase,

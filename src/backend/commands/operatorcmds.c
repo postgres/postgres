@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.2 2002/04/16 23:08:10 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -41,6 +41,7 @@
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "parser/parse_oper.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
@@ -59,23 +60,26 @@ DefineOperator(List *names, List *parameters)
 {
 	char	   *oprName;
 	Oid			oprNamespace;
-	uint16		precedence = 0; /* operator precedence */
-	bool		canHash = false;	/* operator hashes */
+	uint16		precedence = 0;			/* operator precedence */
+	bool		canHash = false;		/* operator hashes */
+	bool		canMerge = false;		/* operator merges */
 	bool		isLeftAssociative = true;		/* operator is left
 												 * associative */
-	char	   *functionName = NULL;	/* function for operator */
+	List	   *functionName = NIL;		/* function for operator */
 	TypeName   *typeName1 = NULL;		/* first type name */
 	TypeName   *typeName2 = NULL;		/* second type name */
 	Oid			typeId1 = InvalidOid;	/* types converted to OID */
 	Oid			typeId2 = InvalidOid;
-	char	   *commutatorName = NULL;	/* optional commutator operator
+	List	   *commutatorName = NIL;	/* optional commutator operator
 										 * name */
-	char	   *negatorName = NULL;		/* optional negator operator name */
-	char	   *restrictionName = NULL; /* optional restrict. sel.
+	List	   *negatorName = NIL;		/* optional negator operator name */
+	List	   *restrictionName = NIL;	/* optional restrict. sel.
 										 * procedure */
-	char	   *joinName = NULL;	/* optional join sel. procedure name */
-	char	   *sortName1 = NULL;		/* optional first sort operator */
-	char	   *sortName2 = NULL;		/* optional second sort operator */
+	List	   *joinName = NIL;			/* optional join sel. procedure */
+	List	   *leftSortName = NIL;		/* optional left sort operator */
+	List	   *rightSortName = NIL;	/* optional right sort operator */
+	List	   *ltCompareName = NIL;	/* optional < compare operator */
+	List	   *gtCompareName = NIL;	/* optional > compare operator */
 	List	   *pl;
 
 	/* Convert list of names to a name and namespace */
@@ -101,7 +105,7 @@ DefineOperator(List *names, List *parameters)
 				elog(ERROR, "setof type not implemented for rightarg");
 		}
 		else if (strcasecmp(defel->defname, "procedure") == 0)
-			functionName = defGetString(defel);
+			functionName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "precedence") == 0)
 		{
 			/* NOT IMPLEMENTED (never worked in v4.2) */
@@ -113,19 +117,25 @@ DefineOperator(List *names, List *parameters)
 			elog(NOTICE, "CREATE OPERATOR: associativity not implemented");
 		}
 		else if (strcasecmp(defel->defname, "commutator") == 0)
-			commutatorName = defGetString(defel);
+			commutatorName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "negator") == 0)
-			negatorName = defGetString(defel);
+			negatorName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "restrict") == 0)
-			restrictionName = defGetString(defel);
+			restrictionName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "join") == 0)
-			joinName = defGetString(defel);
+			joinName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "hashes") == 0)
 			canHash = TRUE;
+		else if (strcasecmp(defel->defname, "merges") == 0)
+			canMerge = TRUE;
 		else if (strcasecmp(defel->defname, "sort1") == 0)
-			sortName1 = defGetString(defel);
+			leftSortName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "sort2") == 0)
-			sortName2 = defGetString(defel);
+			rightSortName = defGetQualifiedName(defel);
+		else if (strcasecmp(defel->defname, "ltcmp") == 0)
+			ltCompareName = defGetQualifiedName(defel);
+		else if (strcasecmp(defel->defname, "gtcmp") == 0)
+			gtCompareName = defGetQualifiedName(defel);
 		else
 		{
 			elog(WARNING, "DefineOperator: attribute \"%s\" not recognized",
@@ -136,7 +146,7 @@ DefineOperator(List *names, List *parameters)
 	/*
 	 * make sure we have our required definitions
 	 */
-	if (functionName == NULL)
+	if (functionName == NIL)
 		elog(ERROR, "Define: \"procedure\" unspecified");
 
 	/* Transform type names to type OIDs */
@@ -146,9 +156,30 @@ DefineOperator(List *names, List *parameters)
 		typeId2 = typenameTypeId(typeName2);
 
 	/*
+	 * If any of the mergejoin support operators were given, then canMerge
+	 * is implicit.  If canMerge is specified or implicit, fill in default
+	 * operator names for any missing mergejoin support operators.
+	 */
+	if (leftSortName || rightSortName || ltCompareName || gtCompareName)
+		canMerge = true;
+
+	if (canMerge)
+	{
+		if (!leftSortName)
+			leftSortName = makeList1(makeString("<"));
+		if (!rightSortName)
+			rightSortName = makeList1(makeString("<"));
+		if (!ltCompareName)
+			ltCompareName = makeList1(makeString("<"));
+		if (!gtCompareName)
+			gtCompareName = makeList1(makeString(">"));
+	}
+
+	/*
 	 * now have OperatorCreate do all the work..
 	 */
 	OperatorCreate(oprName,		/* operator name */
+				   oprNamespace, /* namespace */
 				   typeId1,		/* left type id */
 				   typeId2,		/* right type id */
 				   functionName,	/* function for operator */
@@ -161,9 +192,10 @@ DefineOperator(List *names, List *parameters)
 										 * procedure */
 				   joinName,	/* optional join sel. procedure name */
 				   canHash,		/* operator hashes */
-				   sortName1,	/* optional first sort operator */
-				   sortName2);	/* optional second sort operator */
-
+				   leftSortName,	/* optional left sort operator */
+				   rightSortName,	/* optional right sort operator */
+				   ltCompareName,	/* optional < comparison op */
+				   gtCompareName);	/* optional < comparison op */
 }
 
 
@@ -178,70 +210,36 @@ DefineOperator(List *names, List *parameters)
  *		...
  */
 void
-RemoveOperator(char *operatorName,		/* operator name */
+RemoveOperator(List *operatorName,		/* operator name */
 			   TypeName *typeName1, /* left argument type name */
 			   TypeName *typeName2) /* right argument type name */
 {
+	Oid			operOid;
 	Relation	relation;
 	HeapTuple	tup;
-	Oid			typeId1 = InvalidOid;
-	Oid			typeId2 = InvalidOid;
-	char		oprtype;
 
-	if (typeName1)
-		typeId1 = typenameTypeId(typeName1);
-
-	if (typeName2)
-		typeId2 = typenameTypeId(typeName2);
-
-	if (OidIsValid(typeId1) && OidIsValid(typeId2))
-		oprtype = 'b';
-	else if (OidIsValid(typeId1))
-		oprtype = 'r';
-	else
-		oprtype = 'l';
+	operOid = LookupOperNameTypeNames(operatorName, typeName1, typeName2,
+									  "RemoveOperator");
 
 	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
 
-	tup = SearchSysCacheCopy(OPERNAME,
-							 PointerGetDatum(operatorName),
-							 ObjectIdGetDatum(typeId1),
-							 ObjectIdGetDatum(typeId2),
-							 CharGetDatum(oprtype));
+	tup = SearchSysCacheCopy(OPEROID,
+							 ObjectIdGetDatum(operOid),
+							 0, 0, 0);
 
-	if (HeapTupleIsValid(tup))
-	{
-		if (!pg_oper_ownercheck(tup->t_data->t_oid, GetUserId()))
-			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
-				 operatorName);
+	if (!HeapTupleIsValid(tup))	/* should not happen */
+		elog(ERROR, "RemoveOperator: failed to find tuple for operator '%s'",
+			 NameListToString(operatorName));
 
-		/* Delete any comments associated with this operator */
-		DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
+	if (!pg_oper_ownercheck(operOid, GetUserId()))
+		elog(ERROR, "RemoveOperator: operator '%s': permission denied",
+			 NameListToString(operatorName));
 
-		simple_heap_delete(relation, &tup->t_self);
-	}
-	else
-	{
-		if (OidIsValid(typeId1) && OidIsValid(typeId2))
-		{
-			elog(ERROR, "RemoveOperator: binary operator '%s' taking '%s' and '%s' does not exist",
-				 operatorName,
-				 TypeNameToString(typeName1),
-				 TypeNameToString(typeName2));
-		}
-		else if (OidIsValid(typeId1))
-		{
-			elog(ERROR, "RemoveOperator: right unary operator '%s' taking '%s' does not exist",
-				 operatorName,
-				 TypeNameToString(typeName1));
-		}
-		else
-		{
-			elog(ERROR, "RemoveOperator: left unary operator '%s' taking '%s' does not exist",
-				 operatorName,
-				 TypeNameToString(typeName2));
-		}
-	}
+	/* Delete any comments associated with this operator */
+	DeleteComments(operOid, RelationGetRelid(relation));
+
+	simple_heap_delete(relation, &tup->t_self);
+
 	heap_freetuple(tup);
 	heap_close(relation, RowExclusiveLock);
 }

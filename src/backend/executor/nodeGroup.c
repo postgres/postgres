@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.44 2001/10/25 05:49:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.45 2002/04/16 23:08:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,7 +490,8 @@ execTuplesMatchPrepare(TupleDesc tupdesc,
 		Oid			typid = tupdesc->attrs[att - 1]->atttypid;
 		Oid			eq_function;
 
-		eq_function = compatible_oper_funcid("=", typid, typid, true);
+		eq_function = compatible_oper_funcid(makeList1(makeString("=")),
+											 typid, typid, true);
 		if (!OidIsValid(eq_function))
 			elog(ERROR, "Unable to identify an equality operator for type '%s'",
 				 typeidTypeName(typid));
