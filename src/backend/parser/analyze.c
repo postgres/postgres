@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.179 2001/02/14 21:35:01 tgl Exp $
+ *	$Id: analyze.c,v 1.180 2001/02/14 23:32:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -606,7 +606,8 @@ makeObjectName(char *name1, char *name2, char *typename)
 }
 
 static char *
-CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
+CreateIndexName(char *table_name, char *column_name,
+				char *label, List *indices)
 {
 	int			pass = 0;
 	char	   *iname = NULL;
@@ -617,7 +618,8 @@ CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
 	 * The type name for makeObjectName is label, or labelN if that's
 	 * necessary to prevent collisions among multiple indexes for the same
 	 * table.  Note there is no check for collisions with already-existing
-	 * indexes; this ought to be rethought someday.
+	 * indexes, only among the indexes we're about to create now; this ought
+	 * to be improved someday.
 	 */
 	strcpy(typename, label);
 
@@ -629,14 +631,15 @@ CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
 		{
 			IndexStmt  *index = lfirst(ilist);
 
-			if (strcmp(iname, index->idxname) == 0)
+			if (index->idxname != NULL &&
+				strcmp(iname, index->idxname) == 0)
 				break;
 		}
 		/* ran through entire list? then no name conflict found so done */
 		if (ilist == NIL)
 			break;
 
-		/* the last one conflicted, so try a new name component */
+		/* found a conflict, so try a new name component */
 		pfree(iname);
 		sprintf(typename, "%s%d", label, ++pass);
 	}
@@ -745,9 +748,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_UNIQUE;
-					constraint->name = makeObjectName(stmt->relname,
-													  column->colname,
-													  "key");
+					constraint->name = NULL; /* assign later */
 					column->constraints = lappend(column->constraints,
 												  constraint);
 
@@ -919,13 +920,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	stmt->constraints = constraints;
 
 /* Now run through the "deferred list" to complete the query transformation.
- * For PRIMARY KEYs, mark each column as NOT NULL and create an index.
- * For UNIQUE, create an index as for PRIMARY KEYS, but do not insist on NOT NULL.
- *
- * Note that this code does not currently look for all possible redundant cases
- *	and either ignore or stop with warning. The create might fail later when
- *	names for indices turn out to be duplicated, or a user might have specified
- *	extra useless indices which might hurt performance. - thomas 1997-12-08
+ * For PRIMARY KEY, mark each column as NOT NULL and create an index.
+ * For UNIQUE, create an index as for PRIMARY KEY, but do not insist on
+ * NOT NULL.
  */
 	while (dlist != NIL)
 	{
@@ -943,7 +940,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			if (pkey != NULL)
 				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple primary keys"
 					 " for table '%s' are not allowed", stmt->relname);
-			pkey = (IndexStmt *) index;
+			pkey = index;
 		}
 
 		if (constraint->name != NULL)
@@ -951,7 +948,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		else if (constraint->contype == CONSTR_PRIMARY)
 			index->idxname = makeObjectName(stmt->relname, NULL, "pkey");
 		else
-			index->idxname = NULL;
+			index->idxname = NULL; /* will set it later */
 
 		index->relname = stmt->relname;
 		index->accessMethod = "btree";
@@ -995,10 +992,10 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					int count;
 
 					Assert(IsA(inh, String));
-					rel = heap_openr(inh->val.str, AccessShareLock);
+					rel = heap_openr(strVal(inh), AccessShareLock);
 					if (rel->rd_rel->relkind != RELKIND_RELATION)
 						elog(ERROR, "inherited table \"%s\" is not a relation",
-							 inh->val.str);
+							 strVal(inh));
 					for (count = 0; count < rel->rd_att->natts; count++)
 					{
 						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
@@ -1020,7 +1017,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 							 * error if the inherited column won't be NOT NULL.
 							 * (Would a NOTICE be more reasonable?)
 							 */
-							if (! inhattr->attnotnull)
+							if (constraint->contype == CONSTR_PRIMARY &&
+								! inhattr->attnotnull)
 								elog(ERROR, "inherited attribute \"%s\" cannot be a PRIMARY KEY because it is not marked NOT NULL",
 									 inhname);
 							break;
@@ -1041,78 +1039,85 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			iparam->args = NIL;
 			iparam->class = NULL;
 			index->indexParams = lappend(index->indexParams, iparam);
-
-			if (index->idxname == NULL)
-				index->idxname = CreateIndexName(stmt->relname, iparam->name,
-												 "key", ilist);
 		}
-
-		if (index->idxname == NULL)		/* should not happen */
-			elog(ERROR, "CREATE TABLE: failed to make implicit index name");
 
 		ilist = lappend(ilist, index);
 		dlist = lnext(dlist);
 	}
 
-/* OK, now finally, if there is a primary key, then make sure that there aren't any redundant
- * unique indices defined on columns. This can arise if someone specifies UNIQUE explicitly
- * or if a SERIAL column was defined along with a table PRIMARY KEY constraint.
- * - thomas 1999-05-11
- */
+	/*
+	 * Scan the index list and remove any redundant index specifications.
+	 * This can happen if, for instance, the user writes SERIAL PRIMARY KEY
+	 * or SERIAL UNIQUE.  A strict reading of SQL92 would suggest raising
+	 * an error instead, but that strikes me as too anal-retentive.
+	 * - tgl 2001-02-14
+	 */
+	dlist = ilist;
+	ilist = NIL;
 	if (pkey != NULL)
 	{
-		dlist = ilist;
-		ilist = NIL;
-		while (dlist != NIL)
+		/* Make sure we keep the PKEY index in preference to others... */
+		ilist = makeList1(pkey);
+	}
+	while (dlist != NIL)
+	{
+		index = lfirst(dlist);
+
+		/* if it's pkey, it's already in ilist */
+		if (index != pkey)
 		{
-			List	   *pcols,
-					   *icols;
-			int			plen,
-						ilen;
-			int			keep = TRUE;
+			bool		keep = true;
+			List	   *priorlist;
 
-			index = lfirst(dlist);
-			pcols = pkey->indexParams;
-			icols = index->indexParams;
-
-			plen = length(pcols);
-			ilen = length(icols);
-
-			/* Not the same as the primary key? Then we should look... */
-			if ((index != pkey) && (ilen == plen))
+			foreach(priorlist, ilist)
 			{
-				keep = FALSE;
-				while ((pcols != NIL) && (icols != NIL))
-				{
-					IndexElem  *pcol = lfirst(pcols);
-					IndexElem  *icol = lfirst(icols);
-					char	   *pname = pcol->name;
-					char	   *iname = icol->name;
+				IndexStmt  *priorindex = lfirst(priorlist);
 
-					/* different names? then no match... */
-					if (strcmp(iname, pname) != 0)
-					{
-						keep = TRUE;
-						break;
-					}
-					pcols = lnext(pcols);
-					icols = lnext(icols);
+				if (equal(index->indexParams, priorindex->indexParams))
+				{
+					/*
+					 * If the prior index is as yet unnamed, and this one
+					 * is named, then transfer the name to the prior index.
+					 * This ensures that if we have named and unnamed
+					 * constraints, we'll use (at least one of) the names
+					 * for the index.
+					 */
+					if (priorindex->idxname == NULL)
+						priorindex->idxname = index->idxname;
+					keep = false;
+					break;
 				}
 			}
 
 			if (keep)
 				ilist = lappend(ilist, index);
-			dlist = lnext(dlist);
 		}
+
+		dlist = lnext(dlist);
 	}
 
+	/*
+	 * Finally, select unique names for all not-previously-named indices,
+	 * and display notice messages.
+	 */
 	dlist = ilist;
 	while (dlist != NIL)
 	{
 		index = lfirst(dlist);
+
+		if (index->idxname == NULL && index->indexParams != NIL)
+		{
+			iparam = lfirst(index->indexParams);
+			index->idxname = CreateIndexName(stmt->relname, iparam->name,
+											 "key", ilist);
+		}
+		if (index->idxname == NULL)		/* should not happen */
+			elog(ERROR, "CREATE TABLE: failed to make implicit index name");
+
 		elog(NOTICE, "CREATE TABLE/%s will create implicit index '%s' for table '%s'",
 			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
 			 index->idxname, stmt->relname);
+
 		dlist = lnext(dlist);
 	}
 
@@ -1123,7 +1128,6 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	/*
 	 * Now process the FOREIGN KEY constraints and add appropriate queries
 	 * to the extras_after statements list.
-	 *
 	 */
 	if (fkconstraints != NIL)
 	{
@@ -1173,16 +1177,15 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					List *inhRelnames=stmt->inhRelnames;
 					Relation rel;
 					foreach (inher, inhRelnames) {
-						int count=0;
 						Value *inh=lfirst(inher);
-						if (inh->type!=T_String) {
-								elog(ERROR, "inherited table name list returns a non-string");
-						}
-						rel=heap_openr(inh->val.str, AccessShareLock);
+						int count;
+
+						Assert(IsA(inh, String));
+						rel=heap_openr(strVal(inh), AccessShareLock);
 						if (rel->rd_rel->relkind != RELKIND_RELATION)
 							elog(ERROR, "inherited table \"%s\" is not a relation",
-								inh->val.str);
-						for (; count<rel->rd_att->natts; count++) {
+								strVal(inh));
+						for (count = 0; count < rel->rd_att->natts; count++) {
 							char *name=NameStr(rel->rd_att->attrs[count]->attname);
 							if (strcmp(fkattr->name, name) == 0) {
 								found=1;
