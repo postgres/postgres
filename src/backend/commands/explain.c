@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.37 1999/05/25 16:08:23 momjian Exp $
+ *	  $Id: explain.c,v 1.38 1999/06/17 23:45:32 tgl Exp $
  *
  */
 #include <stdio.h>
@@ -313,7 +313,6 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 			{
 				ResTarget  *rtentry;
 
-				es->rtable = appendplan->inheritrtable;
 				rtentry = nth(whichplan, appendplan->inheritrtable);
 				Assert(rtentry != NULL);
 				rt_store(appendplan->inheritrelid, es->rtable, rtentry);
