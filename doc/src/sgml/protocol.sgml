@@ -1,15 +1,7 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.36 2003/05/06 23:10:04 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.37 2003/05/07 21:46:15 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
-
-   <caution>
-    <para>
-     This is currently a <emphasis>DRAFT</> description of FE/BE protocol
-     version 3.0.  Details are still subject to change.
-     In particular, the representation of binary data is still under debate.
-    </para>
-   </caution>
 
  <para>
   <application>PostgreSQL</application> uses a message-based protocol
@@ -139,8 +131,8 @@
     lack specific values for <firstterm>parameters</>.  A portal represents
     a ready-to-execute or already-partially-executed statement, with any
     missing parameter values filled in.  (For <command>SELECT</> statements,
-    a portal is equivalent to an open cursor, but we use a different term
-    since cursors don't handle non-<command>SELECT</> statements.)
+    a portal is equivalent to an open cursor, but we choose to use a different
+    term since cursors don't handle non-<command>SELECT</> statements.)
    </para>
 
    <para>
@@ -167,6 +159,39 @@
     of multiple uses.
    </para>
   </sect2>
+
+  <sect2 id="protocol-format-codes">
+   <title>Formats and Format Codes</title>
+
+   <para>
+    Data of a particular datatype might be transmitted in any of several
+    different <firstterm>formats</>.  As of <application>PostgreSQL</> 7.4
+    the only supported formats are <quote>text</> and <quote>binary</>,
+    but the protocol makes provision for future extensions.  The desired
+    format for any value is specified by a <firstterm>format code</>.
+    Clients may specify a format code for each transmitted parameter value
+    and for each column of a query result.  Text has format code zero,
+    binary has format code one, and all other format codes are reserved
+    for future definition.
+   </para>
+
+   <para>
+    The text representation of values is whatever strings are produced
+    and accepted by the input/output conversion functions for the
+    particular datatype.  In the transmitted representation, there is
+    no trailing null character; the frontend must add one to received
+    values if it wants to process them as C strings.
+    (The text format does not allow embedded nulls, by the way.)
+   </para>
+
+   <para>
+    Binary representations for integers use network byte order (most
+    significant byte first).  For other datatypes consult the documentation
+    or source code to learn about the binary representation.  Keep in mind
+    that binary representations for complex datatypes may change across
+    server versions; the text format is usually the more portable choice.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="protocol-flow">
@@ -174,7 +199,9 @@
 
   <para>
    This section describes the message flow and the semantics of each
-   message type.  There are several different sub-protocols
+   message type.  (Details of the exact representation of each message
+   appear in <xref linkend="protocol-message-formats">.)
+   There are several different sub-protocols
    depending on the state of the connection: start-up,
    query, function call, COPY, and termination.  There are also special
    provisions for asynchronous operations (including
@@ -189,7 +216,9 @@
     To begin a session, a frontend opens a connection to the server and sends
     a startup message.  This message includes the names of the user and of the
     database the user wants to connect to; it also identifies the particular
-    protocol version to be used.  The server then uses this information and
+    protocol version to be used.  (Optionally, the startup message can include
+    additional settings for run-time parameters.)
+    The server then uses this information and
     the contents of its configuration files (such as
     <filename>pg_hba.conf</filename>) to determine
     whether the connection is provisionally acceptable, and what additional
@@ -334,6 +363,13 @@
    </para>
 
    <para>
+    During this phase the backend will attempt to apply any additional
+    run-time parameter settings that were given in the startup message.
+    If successful, these values become session defaults.  An error causes
+    ErrorResponse and exit.
+   </para>
+
+   <para>
     The possible messages from the backend in this phase are:
 
     <VariableList>
@@ -410,7 +446,9 @@
 
    <Para>
     A simple query cycle is initiated by the frontend sending a Query message
-    to the backend.  The backend then sends one or more response
+    to the backend.  The message includes an SQL command (or commands)
+    expressed as a text string.
+    The backend then sends one or more response
     messages depending on the contents of the query command string,
     and finally a ReadyForQuery response message.  ReadyForQuery
     informs the frontend that it may safely send a new command.
@@ -459,10 +497,19 @@
        <Para>
         Indicates that rows are about to be returned in response to
 	a <command>SELECT</command>, <command>FETCH</command>, etc query.
-	The message contents describe the layout of the rows.  This
-	will be followed by a DataRow or BinaryRow message (depending on
-	whether a binary cursor was specified) for each row being returned
+	The contents of this message describe the column layout of the rows.
+	This will be followed by a DataRow message for each row being returned
         to the frontend.
+       </Para>
+      </ListItem>
+     </VarListEntry>
+
+     <VarListEntry>
+      <Term>DataRow</Term>
+      <ListItem>
+       <Para>
+        One of the set of rows returned by
+	a <command>SELECT</command>, <command>FETCH</command>, etc query.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -517,7 +564,7 @@
     The response to a <command>SELECT</> query (or other queries that
     return rowsets, such as <command>EXPLAIN</> or <command>SHOW</>)
     normally consists of RowDescription, zero or more
-    DataRow or BinaryRow messages, and then CommandComplete.
+    DataRow messages, and then CommandComplete.
     <command>COPY</> to or from the frontend invokes special protocol
     as described in <xref linkend="protocol-copy">.
     All other query types normally produce only
@@ -544,6 +591,14 @@
     may occur partway through the sequence of messages generated by an
     individual query.
    </Para>
+
+   <para>
+    In simple Query mode, the format of retrieved values is always text,
+    except when the given command is a <command>FETCH</> from a cursor
+    declared with the <literal>BINARY</> option.  In that case, the
+    retrieved values are in binary format.  The format codes given in
+    the RowDescription message tell which format is being used.
+   </para>
 
    <para>
     A frontend must be prepared to accept ErrorResponse and
@@ -612,9 +667,21 @@
     statement (empty string denotes the unnamed prepared statement), the name
     of the destination portal (empty string denotes the unnamed portal), and
     the values to use for any parameter placeholders present in the prepared
-    statement.  The response is either BindComplete or ErrorResponse.  The
+    statement.  The
     supplied parameter set must match those needed by the prepared statement.
+    Bind also specifies the format to use for any data returned
+    by the query; the format can be specified overall, or per-column.
+    The response is either BindComplete or ErrorResponse.
    </para>
+
+   <note>
+    <para>
+     The choice between text and binary output is determined by the format
+     codes given in Bind, regardless of the SQL command involved.  The
+     <literal>BINARY</> attribute in cursor declarations is irrelevant when
+     using extended query protocol.
+    </para>
+   </note>
 
    <para>
     If successfully created, a named portal object lasts till the end of the
@@ -631,17 +698,15 @@
    <para>
     Once a portal exists, it can be executed using an Execute message.
     The Execute message specifies the portal name (empty string denotes the
-    unnamed portal), the desired output format (text or binary), and
+    unnamed portal) and
     a maximum result-row count (zero meaning <quote>fetch all rows</>).
-    The output format and result-row count are only meaningful for portals
-    containing commands that return rowsets; they are ignored for other types
-    of commands.  The possible
+    The result-row count is only meaningful for portals
+    containing commands that return rowsets; in other cases the command is
+    always executed to completion, and the row count is ignored.
+    The possible
     responses to Execute are the same as those described above for queries
     issued via simple query protocol, except that Execute doesn't cause
-    ReadyForQuery to be issued.  Also, the choice between text and binary
-    output (DataRow or BinaryRow messages) is determined by Execute's
-    format field, regardless of the command; the <literal>BINARY</> attribute
-    in cursor declarations is irrelevant when using this protocol.
+    ReadyForQuery to be issued.
    </para>
 
    <para>
@@ -698,10 +763,13 @@
     The Describe message (statement variant) specifies the name of an existing
     prepared statement (or an empty string for the unnamed prepared
     statement).  The response is a ParameterDescription message describing the
-    parameters needed by the statement (if any), followed by a RowDescription
-    message describing the rows that will be returned when the statement is
-    eventually executed (or NoData if the statement will not return rows).
-    ErrorResponse is issued if there is no such prepared statement.
+    parameters needed by the statement, followed by a RowDescription message
+    describing the rows that will be returned when the statement is eventually
+    executed (or a NoData message if the statement will not return rows).
+    ErrorResponse is issued if there is no such prepared statement.  Note that
+    since Bind has not yet been issued, the formats to be used for returned
+    columns are not yet known to the backend; the format code fields in the
+    RowDescription message will be zeroes in this case.
    </para>
 
    <tip>
@@ -748,6 +816,13 @@
   <Sect2>
    <Title>Function Call</Title>
 
+   <para>
+    The Function Call sub-protocol allows the client to request a direct
+    call of any function that exists in the database's
+    <structname>pg_proc</structname> system catalog.  The client must have
+    execute permission for the function.
+   </para>
+
    <note>
     <para>
      The Function Call sub-protocol is a legacy feature that is probably best
@@ -780,21 +855,13 @@
      </VarListEntry>
 
      <VarListEntry>
-      <Term>FunctionResultResponse</Term>
+      <Term>FunctionCallResponse</Term>
       <ListItem>
        <Para>
-        The function call was executed and returned a non-null result.
+        The function call was completed and returned the result given
+	in the message.
 	(Note that the Function Call protocol can only handle a single
 	scalar result, not a rowtype or set of results.)
-       </Para>
-      </ListItem>
-     </VarListEntry>
-
-     <VarListEntry>
-      <Term>FunctionVoidResponse</Term>
-      <ListItem>
-       <Para>
-        The function call was executed and returned a NULL value.
        </Para>
       </ListItem>
      </VarListEntry>
@@ -881,6 +948,14 @@
     processing.  The frontend should treat receipt of ErrorResponse (or
     indeed any message type other than CopyData or CopyDone) as terminating
     the copy-out mode.
+   </para>
+
+   <para>
+    The CopyInResponse and CopyOutResponse messages include fields that
+    inform the frontend of the number of columns per row and the format
+    codes being used for each column.  (As of the present implementation,
+    all columns in a given <command>COPY</> operation will use the same
+    format, but the message design does not assume this.)
    </para>
   </sect2>
 
@@ -1114,11 +1189,26 @@ This section describes the base data types used in messages.
 </Term>
 <ListItem>
 <Para>
-                An <Replaceable>n</Replaceable> bit integer in network byte
-		order.
+                An <Replaceable>n</Replaceable>-bit integer in network byte
+		order (most significant byte first).
                 If <Replaceable>i</Replaceable> is specified it
                 is the exact value that will appear, otherwise the value
 		is variable.  Eg. Int16, Int32(42).
+</Para>
+</ListItem>
+</VarListEntry>
+
+<VarListEntry>
+<Term>
+        Int<Replaceable>n</Replaceable>[<Replaceable>k</Replaceable>]
+</Term>
+<ListItem>
+<Para>
+		An array of <Replaceable>k</Replaceable>
+                <Replaceable>n</Replaceable>-bit integers, each in network
+		byte order.  The array length <Replaceable>k</Replaceable>
+		is always determined by an earlier field in the message.
+		Eg. Int16[M].
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1154,8 +1244,10 @@ characters that don't fit into your fixed-size buffer.
 </Term>
 <ListItem>
 <Para>
-                Exactly <Replaceable>n</Replaceable> bytes.  If
-                <Replaceable>c</Replaceable> is specified it is the exact
+                Exactly <Replaceable>n</Replaceable> bytes.  If the field
+		width <Replaceable>n</Replaceable> is not a constant, it is
+		always determinable from an earlier field in the message.
+                If <Replaceable>c</Replaceable> is specified it is the exact
                 value.  Eg. Byte2, Byte1('\n').
 </Para>
 </ListItem>
@@ -1573,86 +1665,6 @@ BackendKeyData (B)
 
 <VarListEntry>
 <Term>
-BinaryRow (B)
-</Term>
-<ListItem>
-<Para>
-<VariableList>
-<VarListEntry>
-<Term>
-        Byte1('B')
-</Term>
-<ListItem>
-<Para>
-                Identifies the message as a binary data row.
-                (Normally, a prior RowDescription message defines the number
-		of fields in the row and their data types.  Note that the
-		receiver <emphasis>must</> know the number of fields to be
-		able to decode the message contents.)
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Int32
-</Term>
-<ListItem>
-<Para>
-                Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
-                A bit map with one bit for each field in the row.  The 1st
-                field corresponds to bit 7 (MSB) of the 1st byte, the 2nd
-                field corresponds to bit 6 of the 1st byte, the 8th field
-                corresponds to bit 0 (LSB) of the 1st byte, the 9th field
-                corresponds to bit 7 of the 2nd byte, and so on.  Each bit
-                is set if the value of the corresponding field is not NULL.
-                If the number of fields is not a multiple of 8, the remainder
-                of the last byte in the bit map is wasted.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-        Then, for each field with a non-NULL value, there is the following:
-<VariableList>
-<VarListEntry>
-<Term>
-        Int32
-</Term>
-<ListItem>
-<Para>
-                Specifies the size of the value of the field, excluding
-                this size.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte<Replaceable>n</Replaceable>
-</Term>
-<ListItem>
-<Para>
-                Specifies the value of the field itself in binary
-                format.  <Replaceable>n</Replaceable> is the above size.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-
-</Para>
-</ListItem>
-</VarListEntry>
-
-
-<VarListEntry>
-<Term>
 Bind (F)
 </Term>
 <ListItem>
@@ -1703,66 +1715,55 @@ Bind (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int8
+        Int16
 </Term>
 <ListItem>
 <Para>
-		0 if parameter values are specified in textual form.
-                1 if parameter values are specified in binary form.
+		The number of parameter format codes that follow
+		(denoted <replaceable>C</> below).
+		This can be zero to indicate that there are no parameters
+		or that the parameters all use the default format (text);
+		or one, in which case the specified format code is applied
+		to all parameters; or it can equal the actual number of
+		parameters.
 </Para>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32
+        Int16[<replaceable>C</>]
 </Term>
 <ListItem>
 <Para>
-                The number of parameter values specified
-		(may be zero).  This must match the number of parameters
-		needed by the query.
+                The parameter format codes.  Each must presently be
+		zero (text) or one (binary).
 </Para>
 </ListItem>
 </VarListEntry>
-</VariableList>
-        If parameter values are specified in textual form, the following
-	appears for each parameter:
-<VariableList>
-<VarListEntry>
-<Term>
-        Int8
-</Term>
-<ListItem>
-<Para>
-                1 if the parameter is non-null.  0 if it is null.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        String
-</Term>
-<ListItem>
-<Para>
-                The parameter value in textual form (that is, suitable
-		input for the parameter's datatype's input converter).
-		If the preceding byte specified a null parameter, then
-		the string is omitted.
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-        If parameter values are specified in binary form, the following
-	appears for each parameter:
-<VariableList>
 <VarListEntry>
 <Term>
         Int16
 </Term>
 <ListItem>
 <Para>
-                Zero if the field is null, otherwise the <varname>typlen</>
-		for the field datatype.
+                The number of parameter values that follow (possibly zero).
+		This must match the number of parameters needed by the query.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        Next, the following pair of fields appear for each parameter:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int32
+</Term>
+<ListItem>
+<Para>
+                The length of the parameter value, in bytes (this count
+		does not include itself).  Can be zero.
+		As a special case, -1 indicates a NULL parameter value.
+		No value bytes follow in the NULL case.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -1772,12 +1773,40 @@ Bind (F)
 </Term>
 <ListItem>
 <Para>
-                The value of the field itself in binary format.
-		Omitted if the field is null.
-		<Replaceable>n</Replaceable> is the <varname>typlen</>
-		value if <varname>typlen</> is positive.  If
-		<varname>typlen</> is -1 then the field value begins with
-		its own length as an Int32 (the length includes itself).
+                The value of the parameter, in the format indicated by the
+		associated format code.
+                <Replaceable>n</Replaceable> is the above length.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        After the last parameter, the following fields appear:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+		The number of result-column format codes that follow
+		(denoted <replaceable>R</> below).
+		This can be zero to indicate that there are no result columns
+		or that the result columns should all use the default format
+		(text); 
+		or one, in which case the specified format code is applied
+		to all result columns (if any); or it can equal the actual
+		number of result columns of the query.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16[<replaceable>R</>]
+</Term>
+<ListItem>
+<Para>
+                The result-column format codes.  Each must presently be
+		zero (text) or one (binary).
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2203,7 +2232,7 @@ CopyInResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32(5)
+        Int32
 </Term>
 <ListItem>
 <Para>
@@ -2217,7 +2246,36 @@ CopyInResponse (B)
 </Term>
 <ListItem>
 <Para>
-                0 for textual copy, 1 for binary copy.
+                0 indicates the overall copy format is textual (rows
+		separated by newlines, columns separated by separator
+		characters, etc).
+		1 indicates the overall copy format is binary (similar
+		to DataRow format).
+		See <xref linkend="sql-copy" endterm="sql-copy-title">
+		for more information.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+		The number of columns in the data to be copied
+		(denoted <replaceable>N</> below).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16[<replaceable>N</>]
+</Term>
+<ListItem>
+<Para>
+                The format codes to be used for each column.
+		Each must presently be zero (text) or one (binary).
+		All must be zero if the overall copy format is textual.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2249,7 +2307,7 @@ CopyOutResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32(5)
+        Int32
 </Term>
 <ListItem>
 <Para>
@@ -2263,7 +2321,36 @@ CopyOutResponse (B)
 </Term>
 <ListItem>
 <Para>
-                0 for textual copy, 1 for binary copy.
+                0 indicates the overall copy format is textual (rows
+		separated by newlines, columns separated by separator
+		characters, etc).
+		1 indicates the overall copy format is binary (similar
+		to DataRow format).
+		See <xref linkend="sql-copy" endterm="sql-copy-title">
+		for more information.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+		The number of columns in the data to be copied
+		(denoted <replaceable>N</> below).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16[<replaceable>N</>]
+</Term>
+<ListItem>
+<Para>
+                The format codes to be used for each column.
+		Each must presently be zero (text) or one (binary).
+		All must be zero if the overall copy format is textual.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2287,11 +2374,7 @@ DataRow (B)
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as a text-format data row.
-                (Normally, a prior RowDescription message defines the number
-		of fields in the row and their data types.  Note that the
-		receiver <emphasis>must</> know the number of fields to be
-		able to decode the message contents.)
+                Identifies the message as a data row.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2307,23 +2390,16 @@ DataRow (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Byte<Replaceable>n</Replaceable>
+        Int16
 </Term>
 <ListItem>
 <Para>
-                A bit map with one bit for each field in the row.  The 1st
-                field corresponds to bit 7 (MSB) of the 1st byte, the 2nd
-                field corresponds to bit 6 of the 1st byte, the 8th field
-                corresponds to bit 0 (LSB) of the 1st byte, the 9th field
-                corresponds to bit 7 of the 2nd byte, and so on.  Each bit
-                is set if the value of the corresponding field is not NULL.
-                If the number of fields is not a multiple of 8, the remainder
-                of the last byte in the bit map is wasted.
+                The number of column values that follow (possibly zero).
 </Para>
 </ListItem>
 </VarListEntry>
 </VariableList>
-        Then, for each field with a non-NULL value, there is the following:
+        Next, the following pair of fields appear for each column:
 <VariableList>
 <VarListEntry>
 <Term>
@@ -2331,8 +2407,10 @@ DataRow (B)
 </Term>
 <ListItem>
 <Para>
-                Specifies the size of the value of the field, in
-		bytes; the count includes itself.
+                The length of the column value, in bytes (this count
+		does not include itself).  Can be zero.
+		As a special case, -1 indicates a NULL column value.
+		No value bytes follow in the NULL case.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2342,12 +2420,9 @@ DataRow (B)
 </Term>
 <ListItem>
 <Para>
-                Specifies the value of the field itself in textual
-		form (that is, the result of the output-conversion
-		routine for the field's datatype).
-		<Replaceable>n</Replaceable> is the above size minus 4.
-                There is no trailing zero-byte in the field data; the
-		frontend must add one if it wants one.
+                The value of the column, in the format indicated by the
+		associated format code.
+                <Replaceable>n</Replaceable> is the above length.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2558,17 +2633,6 @@ Execute (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int8
-</Term>
-<ListItem>
-<Para>
-		0 to return results in textual form (DataRow messages).
-                1 to return results in binary form (BinaryRow messages).
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
         Int32
 </Term>
 <ListItem>
@@ -2650,16 +2714,6 @@ FunctionCall (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        String("")
-</Term>
-<ListItem>
-<Para>
-                Unused.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
         Int32
 </Term>
 <ListItem>
@@ -2670,7 +2724,34 @@ FunctionCall (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32
+        Int16
+</Term>
+<ListItem>
+<Para>
+		The number of argument format codes that follow
+		(denoted <replaceable>C</> below).
+		This can be zero to indicate that there are no arguments
+		or that the arguments all use the default format (text);
+		or one, in which case the specified format code is applied
+		to all arguments; or it can equal the actual number of
+		arguments.
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16[<replaceable>C</>]
+</Term>
+<ListItem>
+<Para>
+                The argument format codes.  Each must presently be
+		zero (text) or one (binary).
+</Para>
+</ListItem>
+</VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
 </Term>
 <ListItem>
 <Para>
@@ -2680,7 +2761,7 @@ FunctionCall (F)
 </ListItem>
 </VarListEntry>
 </VariableList>
-        Then, for each argument, there is the following:
+        Next, the following pair of fields appear for each argument:
 <VariableList>
 <VarListEntry>
 <Term>
@@ -2688,8 +2769,10 @@ FunctionCall (F)
 </Term>
 <ListItem>
 <Para>
-                Specifies the size of the value of the argument,
-                excluding this size.
+                The length of the argument value, in bytes (this count
+		does not include itself).  Can be zero.
+		As a special case, -1 indicates a NULL argument value.
+		No value bytes follow in the NULL case.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2699,8 +2782,23 @@ FunctionCall (F)
 </Term>
 <ListItem>
 <Para>
-                Specifies the value of the field itself in binary
-                format.  <Replaceable>n</Replaceable> is the above size.
+                The value of the argument, in the format indicated by the
+		associated format code.
+                <Replaceable>n</Replaceable> is the above length.
+</Para>
+</ListItem>
+</VarListEntry>
+</VariableList>
+        After the last argument, the following field appears:
+<VariableList>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                The format code for the function result. Must presently be
+		zero (text) or one (binary).
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2713,7 +2811,7 @@ FunctionCall (F)
 
 <VarListEntry>
 <Term>
-FunctionResultResponse (B)
+FunctionCallResponse (B)
 </Term>
 <ListItem>
 <Para>
@@ -2741,22 +2839,14 @@ FunctionResultResponse (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Byte1('G')
-</Term>
-<ListItem>
-<Para>
-                Specifies that a non-null result was returned.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
         Int32
 </Term>
 <ListItem>
 <Para>
-                Specifies the size of the value of the result, excluding this
-                size.
+                The length of the function result value, in bytes (this count
+		does not include itself).  Can be zero.
+		As a special case, -1 indicates a NULL function result.
+		No value bytes follow in the NULL case.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2766,65 +2856,9 @@ FunctionResultResponse (B)
 </Term>
 <ListItem>
 <Para>
-                Specifies the value of the result itself in binary format.
-                <Replaceable>n</Replaceable> is the above size.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte1('0')
-</Term>
-<ListItem>
-<Para>
-                Unused.  (Strictly speaking, FunctionResultResponse and
-                FunctionVoidResponse are the same thing but with some optional
-                parts to the message.)
-</Para>
-</ListItem>
-</VarListEntry>
-</VariableList>
-
-</Para>
-</ListItem>
-</VarListEntry>
-
-
-<VarListEntry>
-<Term>
-FunctionVoidResponse (B)
-</Term>
-<ListItem>
-<Para>
-
-<VariableList>
-<VarListEntry>
-<Term>
-        Byte1('V')
-</Term>
-<ListItem>
-<Para>
-                Identifies the message as a function call result.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Int32(5)
-</Term>
-<ListItem>
-<Para>
-                Length of message contents in bytes, including self.
-</Para>
-</ListItem>
-</VarListEntry>
-<VarListEntry>
-<Term>
-        Byte1('0')
-</Term>
-<ListItem>
-<Para>
-                Specifies that a null result was returned.
+                The value of the function result, in the format indicated by
+		the associated format code.
+                <Replaceable>n</Replaceable> is the above length.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3033,7 +3067,7 @@ ParameterDescription (B)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32
+        Int16
 </Term>
 <ListItem>
 <Para>
@@ -3166,7 +3200,7 @@ Parse (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32
+        Int16
 </Term>
 <ListItem>
 <Para>
@@ -3293,7 +3327,7 @@ PortalSuspended (B)
 <ListItem>
 <Para>
                 Identifies the message as a portal-suspended indicator.
-		Note this only appears if an Execute row-count limit
+		Note this only appears if an Execute message's row-count limit
 		was reached.
 </Para>
 </ListItem>
@@ -3515,6 +3549,19 @@ RowDescription (B)
 </Para>
 </ListItem>
 </VarListEntry>
+<VarListEntry>
+<Term>
+        Int16
+</Term>
+<ListItem>
+<Para>
+                The format code being used for the field.  Currently will
+		be zero (text) or one (binary).  In a RowDescription
+		returned from the statement variant of Describe, the
+		format code is not yet known and will always be zero.
+</Para>
+</ListItem>
+</VarListEntry>
 </VariableList>
 
 </Para>
@@ -3580,14 +3627,14 @@ StartupMessage (F)
 </VarListEntry>
 <VarListEntry>
 <Term>
-        Int32
+        Int32(196608)
 </Term>
 <ListItem>
 <Para>
                 The protocol version number.  The most significant 16 bits are
-                the major version number (3 or more for the format described
-		here).
-		The least significant 16 bits are the minor version number.
+                the major version number (3 for the protocol described here).
+		The least significant 16 bits are the minor version number
+		(0 for the protocol described here).
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3932,6 +3979,14 @@ indicator.
 </para>
 
 <para>
+The distinction between BinaryRow and DataRow message types is gone; the
+single DataRow message type serves for returning data in all formats.
+Note that the layout of DataRow has changed to make it easier to parse.
+Also, the representation of binary values has changed: it is no longer
+directly tied to the server's internal representation.
+</para>
+
+<para>
 There is a new <quote>extended query</> sub-protocol, which adds the frontend
 message types Parse, Bind, Execute, Describe, Close, Flush, and Sync, and the
 backend message types ParseComplete, BindComplete, PortalSuspended,
@@ -3947,8 +4002,17 @@ is a well-defined way to recover from errors during COPY.  The special
 during COPY OUT.
 (It is still recognized as a terminator during COPY IN, but its use is
 deprecated and will eventually be removed.)  Binary COPY is supported.
-The CopyInResponse and CopyOutResponse messages include a field indicating
-whether the COPY operation is text or binary.
+The CopyInResponse and CopyOutResponse messages include fields indicating
+the number of columns and the format of each column.
+</para>
+
+<para>
+The layout of FunctionCall and FunctionCallResponse messages has changed.
+FunctionCall can now support passing NULL arguments to functions.  It also
+can handle passing parameters and retrieving results in either text or
+binary format.  There is no longer any reason to consider FunctionCall a
+potential security hole, since it does not offer direct access to internal
+server data representations.
 </para>
 
 <para>
@@ -3960,7 +4024,8 @@ changes for any of these parameters.
 
 <para>
 The RowDescription ('<literal>T</>') message carries new table OID and column
-number fields for each column of the described row.
+number fields for each column of the described row.  It also shows the format
+code for each column.
 </para>
 
 <para>
@@ -3978,12 +4043,6 @@ from the NOTIFY event sender.
 The EmptyQueryResponse ('<literal>I</>') message used to include an empty
 string parameter; this has been removed.
 </para>
-
-<note>
-<para>
-Additional changes will be documented as they are implemented.
-</para>
-</note>
 
 </sect1>
 
