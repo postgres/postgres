@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.76 1999/07/16 04:59:03 momjian Exp $
+ *	$Id: pqcomm.c,v 1.77 1999/07/16 23:12:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,9 @@
 #endif
 
 #include "libpq/libpq.h"
+#include "utils/trace.h"
 #include "miscadmin.h"
+
 
 #ifndef SOMAXCONN
 #define SOMAXCONN 5				/* from Linux listen(2) man page */
