@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.70 1998/05/26 03:20:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.71 1998/05/27 18:32:03 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -803,34 +803,23 @@ static void
 usage(char *progname)
 {
 	fprintf(stderr,
-			"Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-v protocol] [\t -o filename]\n",
-			progname);
-	fprintf(stderr, "\t[-P portno] [-t tracetype] [-x opttype] [-bCEiLFNopQSs] [dbname]\n");
-	fprintf(stderr, "    b: consider bushy plan trees during optimization\n");
-	fprintf(stderr, "    B: set number of buffers in buffer pool\n");
-	fprintf(stderr, "    C: supress version info\n");
-	fprintf(stderr, "    d: set debug level\n");
-	fprintf(stderr, "    E: echo query before execution\n");
-	fprintf(stderr, "    e  turn on European date format\n");
-	fprintf(stderr, "    F: turn off fsync\n");
-	fprintf(stderr, "    f: forbid plantype generation\n");
-	fprintf(stderr, "    i: don't execute the query, just show the plan tree\n");
+			"Usage: %s [options] [dbname]\n", progname);
+	fprintf(stderr, "\t-B buffers\tset number of buffers in buffer pool\n");
+	fprintf(stderr, "\t-C \t\tsupress version info\n");
+	fprintf(stderr, "\t-D dir\t\tdata directory\n");
+	fprintf(stderr, "\t-E \t\techo query before execution\n");
+	fprintf(stderr, "\t-F \t\tturn off fsync\n");
 #ifdef LOCK_MGR_DEBUG
-	fprintf(stderr, "    K: set locking debug level [0|1|2]\n");
+	fprintf(stderr, "\t-K \t\tset locking debug level [0|1|2]\n");
 #endif
-	fprintf(stderr, "    L: turn off locking\n");
-	fprintf(stderr, "    M: start as postmaster\n");
-	fprintf(stderr, "    N: don't use newline as query delimiter\n");
-	fprintf(stderr, "    o: send stdout and stderr to given filename \n");
-	fprintf(stderr, "    p: backend started by postmaster\n");
-	fprintf(stderr, "    P: set port file descriptor\n");
-	fprintf(stderr, "    Q: suppress informational messages\n");
-	fprintf(stderr, "    S: set amount of sort memory available\n");
-	fprintf(stderr, "    s: show stats after each query\n");
-	fprintf(stderr, "    t: trace component execution times\n");
-	fprintf(stderr, "    T: execute all possible plans for each query\n");
-	fprintf(stderr, "    v: set protocol version being used by frontend\n");
-	fprintf(stderr, "    x: control expensive function optimization\n");
+	fprintf(stderr, "\t-P port\t\tset port file descriptor\n");
+	fprintf(stderr, "\t-Q \t\tsuppress informational messages\n");
+	fprintf(stderr, "\t-S buffers\tset amount of sort memory available\n");
+	fprintf(stderr, "\t-d [1|2|3]\tset debug level\n");
+	fprintf(stderr, "\t-e \t\tturn on European date format\n");
+	fprintf(stderr, "\t-o file\t\tsend stdout and stderr to given filename \n");
+	fprintf(stderr, "\t-s \t\tshow stats after each query\n");
+	fprintf(stderr, "\t-v version\tset protocol version being used by frontend\n");
 }
 
 /* ----------------------------------------------------------------
@@ -1328,7 +1317,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.70 $ $Date: 1998/05/26 03:20:00 $");
+		puts("$Revision: 1.71 $ $Date: 1998/05/27 18:32:03 $");
 	}
 
 	/* ----------------

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.10 1998/01/26 01:42:51 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.11 1998/05/27 18:32:05 momjian Exp $
 .TH POSTGRESQL UNIX 12/08/96 PostgreSQL PostgreSQL
 .SH NAME
 postgres - the Postgres backend server
@@ -10,6 +10,9 @@ postgres - the Postgres backend server
 .BR "-B"
 n_buffers]
 [\c
+.BR "-C"
+]
+[\c
 .BR "-D"
 data_directory]
 [\c
@@ -18,7 +21,6 @@ data_directory]
 [\c
 .BR "-F"
 ]
-.br
 [\c
 .BR "-P"
 filedes]
@@ -29,20 +31,19 @@ filedes]
 .BR "-S n_buffers"
 ]
 [\c
-.BR "-e"
-]
-[\c
-.BR "-v protocol"
-]
-.br
-[\c
 .BR "-d"
 debug_level]
+[\c
+.BR "-e"
+]
 [\c
 .BR "-o"
 output_file]
 [\c
 .BR "-s"
+]
+[\c
+.BR "-v protocol"
 ]
 [dbname]
 .in -5n
@@ -64,7 +65,20 @@ environment variable.
 The 
 .IR postgres
 server understands the following command-line options:
-.TP 5n
+.TP
+.BR "-B" " n_buffers"
+If the backend is running under the 
+.IR postmaster ,
+.IR "n_buffers"
+is the number of shared-memory buffers that the
+.IR "postmaster"
+has allocated for the backend server processes that it starts.  If the
+backend is running standalone, this specifies the number of buffers to
+allocate.  This value defaults to 64, and each buffer is 8k bytes.
+.TP
+.BR "-C"
+Do not show server version number.
+.TP
 .BR "-D" " data_directory"
 This option specifies the pathname of the directory that contains the
 database system data (the tables, the catalogs, etc.).  If you don't 
@@ -76,16 +90,6 @@ the database system is created with
 .IR initdb ,
 with a --pgdata option to
 .IR initdb .
-.TP
-.BR "-B" " n_buffers"
-If the backend is running under the 
-.IR postmaster ,
-.IR "n_buffers"
-is the number of shared-memory buffers that the
-.IR "postmaster"
-has allocated for the backend server processes that it starts.  If the
-backend is running standalone, this specifies the number of buffers to
-allocate.  This value defaults to 64, and each buffer is 8k bytes.
 .TP
 .BR "-E"
 Echo all queries.
@@ -152,7 +156,7 @@ buffers.
 .BR "-v" " protocol"
 Specifies the number of the frontend/backend protocol to be used for this
 particular session.
-.SH "DEPRECATED COMMAND OPTIONS"
+.SH "DEVELOPER COMMAND OPTIONS"
 There are several other options that may be specified, used mainly
 for debugging purposes.  These are listed here only for the use by
 Postgres system developers.
@@ -183,6 +187,9 @@ disable sequential and index scans respectively, while
 disable nested-loop, merge and hash joins respectively.
 This is another feature that may not necessarily produce executable
 plans.
+.TP
+.BR "-i"
+Prevents query execution, but shows the plan tree.
 .TP
 .BR "-p"
 Indicates to the backend server that it has been started by a 

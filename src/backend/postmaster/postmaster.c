@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.76 1998/03/30 16:47:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.77 1998/05/27 18:32:02 momjian Exp $
  *
  * NOTES
  *
@@ -186,10 +186,10 @@ static char ExtraOptions[ARGV_SIZE] = "";
  * the postmaster stop (rather than kill) peers and not reinitialize
  * shared data structures.
  */
-static int	Reinit = 1;
-static int	SendStop = 0;
+static bool	Reinit = true;
+static int	SendStop = false;
 
-static int	NetServer = 0;		/* if not zero, postmaster listen for
+static bool	NetServer = false;		/* if not zero, postmaster listen for
 								 * non-local connections */
 
 /*
@@ -360,7 +360,7 @@ PostmasterMain(int argc, char *argv[])
 					DebugLvl = 1;
 				break;
 			case 'i':
-				NetServer = 1;
+				NetServer = true;
 				break;
 			case 'm':
 				/* Multiplexed backends no longer supported. */
@@ -375,7 +375,7 @@ PostmasterMain(int argc, char *argv[])
 				break;
 			case 'n':
 				/* Don't reinit shared mem after abnormal exit */
-				Reinit = 0;
+				Reinit = false;
 				break;
 			case 'o':
 
@@ -408,7 +408,7 @@ PostmasterMain(int argc, char *argv[])
 				 * lets the wily post_hacker collect core dumps from
 				 * everyone.
 				 */
-				SendStop = 1;
+				SendStop = true;
 				break;
 			default:
 				/* usage() never returns */
@@ -508,17 +508,18 @@ pmdaemonize(void)
 static void
 usage(const char *progname)
 {
-	fprintf(stderr, "usage: %s [options..]\n", progname);
+	fprintf(stderr, "usage: %s [options]\n", progname);
 	fprintf(stderr, "\t-B nbufs\tset number of shared buffers\n");
+	fprintf(stderr, "\t-D datadir\tset data directory\n");
+	fprintf(stderr, "\t-S \t\tsilent mode (disassociate from tty)\n");
+	fprintf(stderr, "\t-a system\tuse this authentication system\n");
 	fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
 	fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
-	fprintf(stderr, "\t-D datadir\tset data directory\n");
-	fprintf(stderr, "\t-i \tlisten on TCP/IP sockets as well as Unix domain socket\n");
-	fprintf(stderr, "\t-n\t\tdon't reinitialize shared memory after abnormal exit\n");
+	fprintf(stderr, "\t-i \t\tlisten on TCP/IP sockets as well as Unix domain socket\n");
+	fprintf(stderr, "\t-n \t\tdon't reinitialize shared memory after abnormal exit\n");
 	fprintf(stderr, "\t-o option\tpass 'option' to each backend servers\n");
-	fprintf(stderr, "\t-p port\t\tspecify port for postmaster to listen on\n");
-	fprintf(stderr, "\t-S\t\tsilent mode (disassociate from tty)\n");
-	fprintf(stderr, "\t-s\t\tsend SIGSTOP to all backend servers if one dies\n");
+	fprintf(stderr, "\t-p port\tspecify port for postmaster to listen on\n");
+	fprintf(stderr, "\t-s \t\tsend SIGSTOP to all backend servers if one dies\n");
 	exit(1);
 }
 
