@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.102 2001/05/04 18:39:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.103 2001/06/19 19:42:15 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -544,7 +544,6 @@ CommandCounterIncrement(void)
 	 */
 	AtCommit_LocalCache();
 	AtStart_Cache();
-
 }
 
 void
@@ -577,7 +576,7 @@ InitializeTransactionSystem(void)
 static void
 AtStart_Cache(void)
 {
-	DiscardInvalid();
+	AcceptInvalidationMessages();
 }
 
 /* --------------------------------
@@ -725,11 +724,10 @@ RecordTransactionCommit()
 static void
 AtCommit_Cache(void)
 {
-
 	/*
-	 * Make catalog changes visible to all backend.
+	 * Make catalog changes visible to all backends.
 	 */
-	RegisterInvalid(true);
+	AtEOXactInvalidationMessages(true);
 }
 
 /* --------------------------------
@@ -739,11 +737,10 @@ AtCommit_Cache(void)
 static void
 AtCommit_LocalCache(void)
 {
-
 	/*
 	 * Make catalog changes visible to me for the next command.
 	 */
-	ImmediateLocalInvalidation(true);
+	CommandEndInvalidationMessages(true);
 }
 
 /* --------------------------------
@@ -753,7 +750,6 @@ AtCommit_LocalCache(void)
 static void
 AtCommit_Locks(void)
 {
-
 	/*
 	 * XXX What if ProcReleaseLocks fails?	(race condition?)
 	 *
@@ -769,7 +765,6 @@ AtCommit_Locks(void)
 static void
 AtCommit_Memory(void)
 {
-
 	/*
 	 * Now that we're "out" of a transaction, have the system allocate
 	 * things in the top memory context instead of per-transaction
@@ -844,7 +839,7 @@ static void
 AtAbort_Cache(void)
 {
 	RelationCacheAbort();
-	RegisterInvalid(false);
+	AtEOXactInvalidationMessages(false);
 }
 
 /* --------------------------------

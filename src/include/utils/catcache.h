@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.33 2001/06/18 03:35:07 tgl Exp $
+ * $Id: catcache.h,v 1.34 2001/06/19 19:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@ typedef struct catcache
 	char	   *cc_relname;		/* name of relation the tuples come from */
 	char	   *cc_indname;		/* name of index matching cache keys */
 	int			cc_reloidattr;	/* AttrNumber of relation OID, or 0 */
+	bool		cc_relisshared;	/* is relation shared? */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
 	int			cc_ntup;		/* # of tuples currently in this cache */
 	int			cc_size;		/* # of hash buckets in this cache */
@@ -98,7 +99,7 @@ extern void CatalogCacheFlushRelation(Oid relId);
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 						 ItemPointer pointer);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
-							  HeapTuple tuple,
-							  void (*function) (int, Index, ItemPointer));
+						 HeapTuple tuple,
+						 void (*function) (int, Index, ItemPointer, Oid));
 
 #endif	 /* CATCACHE_H */

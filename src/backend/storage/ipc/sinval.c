@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.33 2001/06/16 22:58:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.34 2001/06/19 19:42:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,56 +55,31 @@ InitBackendSharedInvalidationState(void)
 }
 
 /*
- * RegisterSharedInvalid
+ * SendSharedInvalidMessage
  *	Add a shared-cache-invalidation message to the global SI message queue.
- *
- * Note:
- *	Assumes hash index is valid.
- *	Assumes item pointer is valid.
  */
 void
-RegisterSharedInvalid(int cacheId,		/* XXX */
-					  Index hashIndex,
-					  ItemPointer pointer)
+SendSharedInvalidMessage(SharedInvalidationMessage *msg)
 {
-	SharedInvalidData newInvalid;
 	bool		insertOK;
 
-	/*
-	 * This code has been hacked to accept two types of messages.  This
-	 * might be treated more generally in the future.
-	 *
-	 * (1) cacheId= system cache id hashIndex= system cache hash index for a
-	 * (possibly) cached tuple pointer= pointer of (possibly) cached tuple
-	 *
-	 * (2) cacheId= special non-syscache id hashIndex= object id contained in
-	 * (possibly) cached relation descriptor pointer= null
-	 */
-
-	newInvalid.cacheId = cacheId;
-	newInvalid.hashIndex = hashIndex;
-
-	if (ItemPointerIsValid(pointer))
-		ItemPointerCopy(pointer, &newInvalid.pointerData);
-	else
-		ItemPointerSetInvalid(&newInvalid.pointerData);
-
 	SpinAcquire(SInvalLock);
-	insertOK = SIInsertDataEntry(shmInvalBuffer, &newInvalid);
+	insertOK = SIInsertDataEntry(shmInvalBuffer, msg);
 	SpinRelease(SInvalLock);
 	if (!insertOK)
-		elog(DEBUG, "RegisterSharedInvalid: SI buffer overflow");
+		elog(DEBUG, "SendSharedInvalidMessage: SI buffer overflow");
 }
 
 /*
- * InvalidateSharedInvalid
+ * ReceiveSharedInvalidMessages
  *		Process shared-cache-invalidation messages waiting for this backend
  */
 void
-			InvalidateSharedInvalid(void (*invalFunction) (),
-									void (*resetFunction) ())
+ReceiveSharedInvalidMessages(
+	void (*invalFunction) (SharedInvalidationMessage *msg),
+	void (*resetFunction) (void))
 {
-	SharedInvalidData data;
+	SharedInvalidationMessage data;
 	int			getResult;
 	bool		gotMessage = false;
 
@@ -118,15 +93,13 @@ void
 		if (getResult < 0)
 		{
 			/* got a reset message */
-			elog(DEBUG, "InvalidateSharedInvalid: cache state reset");
+			elog(DEBUG, "ReceiveSharedInvalidMessages: cache state reset");
 			resetFunction();
 		}
 		else
 		{
 			/* got a normal data message */
-			invalFunction(data.cacheId,
-						  data.hashIndex,
-						  &data.pointerData);
+			invalFunction(&data);
 		}
 		gotMessage = true;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.79 2001/06/18 03:35:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.80 2001/06/19 19:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,18 @@
 
 /* #define CACHEDEBUG */		/* turns DEBUG elogs on */
 
-/* voodoo constants */
-#define NCCBUCKETS 257			/* Hash buckets per CatCache (prime!) */
+/*
+ * Constants related to size of the catcache.
+ *
+ * NCCBUCKETS should be prime and must be less than 64K (because
+ * SharedInvalCatcacheMsg crams hash indexes into a uint16 field).  In
+ * practice it should be a lot less, anyway, to avoid chewing up too much
+ * space on hash bucket headers.
+ *
+ * MAXCCTUPLES could be as small as a few hundred, if per-backend memory
+ * consumption is at a premium.
+ */
+#define NCCBUCKETS 257			/* Hash buckets per CatCache */
 #define MAXCCTUPLES 5000		/* Maximum # of tuples in all caches */
 
 
@@ -217,6 +227,11 @@ CatalogCacheInitializeCache(CatCache *cache)
 	 * copy the relcache's tuple descriptor to permanent cache storage
 	 */
 	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
+
+	/*
+	 * get the relation's relisshared flag, too
+	 */
+	cache->cc_relisshared = RelationGetForm(relation)->relisshared;
 
 	/*
 	 * return to the caller's memory context and close the rel
@@ -737,6 +752,7 @@ InitCatCache(int id,
 	cp->cc_relname = relname;
 	cp->cc_indname = indname;
 	cp->cc_reloidattr = reloidattr;
+	cp->cc_relisshared = false;	/* temporary */
 	cp->cc_tupdesc = (TupleDesc) NULL;
 	cp->cc_ntup = 0;
 	cp->cc_size = NCCBUCKETS;
@@ -1116,7 +1132,8 @@ ReleaseCatCache(HeapTuple tuple)
  *
  *	Note that it is irrelevant whether the given tuple is actually loaded
  *	into the catcache at the moment.  Even if it's not there now, it might
- *	be by the end of the command, so we have to be prepared to flush it.
+ *	be by the end of the command --- or might be in other backends' caches
+ * --- so we have to be prepared to flush it.
  *
  *	Also note that it's not an error if there are no catcaches for the
  *	specified relation.  inval.c doesn't know exactly which rels have
@@ -1126,7 +1143,7 @@ ReleaseCatCache(HeapTuple tuple)
 void
 PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-							  void (*function) (int, Index, ItemPointer))
+							  void (*function) (int, Index, ItemPointer, Oid))
 {
 	CatCache   *ccp;
 
@@ -1159,6 +1176,7 @@ PrepareToInvalidateCacheTuple(Relation relation,
 
 		(*function) (ccp->id,
 					 CatalogCacheComputeTupleHashIndex(ccp, tuple),
-					 &tuple->t_self);
+					 &tuple->t_self,
+					 ccp->cc_relisshared ? (Oid) 0 : MyDatabaseId);
 	}
 }

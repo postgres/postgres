@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.39 2001/06/16 22:58:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.40 2001/06/19 19:42:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/proc.h"
-#include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 
 SISeg	   *shmInvalBuffer;
@@ -35,7 +34,6 @@ static void SISetProcStateInvalid(SISeg *segP);
 int
 SInvalShmemSize(int maxBackends)
 {
-
 	/*
 	 * Figure space needed. Note sizeof(SISeg) includes the first
 	 * ProcState entry.
@@ -183,14 +181,13 @@ CleanupInvalidationState(int status, Datum arg)
  * Returns true for normal successful insertion, false if had to reset.
  */
 bool
-SIInsertDataEntry(SISeg *segP, SharedInvalidData *data)
+SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data)
 {
 	int			numMsgs = segP->maxMsgNum - segP->minMsgNum;
 
 	/* Is the buffer full? */
 	if (numMsgs >= MAXNUMMESSAGES)
 	{
-
 		/*
 		 * Don't panic just yet: slowest backend might have consumed some
 		 * messages but not yet have done SIDelExpiredDataEntries() to
@@ -273,13 +270,12 @@ SISetProcStateInvalid(SISeg *segP)
  */
 int
 SIGetDataEntry(SISeg *segP, int backendId,
-			   SharedInvalidData *data)
+			   SharedInvalidationMessage *data)
 {
 	ProcState  *stateP = &segP->procState[backendId - 1];
 
 	if (stateP->resetState)
 	{
-
 		/*
 		 * Force reset.  We can say we have dealt with any messages added
 		 * since the reset, as well...

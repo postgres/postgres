@@ -7,15 +7,15 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.26 2001/03/22 04:01:09 momjian Exp $
+ * $Id: sinvaladt.h,v 1.27 2001/06/19 19:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SINVALADT_H
 #define SINVALADT_H
 
-#include "storage/itemptr.h"
 #include "storage/shmem.h"
+#include "storage/sinval.h"
 
 /*
  * The shared cache invalidation manager is responsible for transmitting
@@ -45,6 +45,9 @@
  * large so that we don't need to do this often.  It must be a multiple of
  * MAXNUMMESSAGES so that the existing circular-buffer entries don't need
  * to be moved when we do it.
+ *
+ * The struct type SharedInvalidationMessage, defining the contents of
+ * a single message, is defined in sinval.h.
  */
 
 
@@ -61,15 +64,6 @@
 #define MAXNUMMESSAGES 4096
 #define MSGNUMWRAPAROUND (MAXNUMMESSAGES * 4096)
 
-/* The content of one shared-invalidation message */
-typedef struct SharedInvalidData
-{
-	int			cacheId;		/* XXX */
-	Index		hashIndex;
-	ItemPointerData pointerData;
-} SharedInvalidData;
-
-typedef SharedInvalidData *SharedInvalid;
 
 /* Per-backend state in shared invalidation structure */
 typedef struct ProcState
@@ -83,7 +77,6 @@ typedef struct ProcState
 /* Shared cache invalidation memory segment */
 typedef struct SISeg
 {
-
 	/*
 	 * General state information
 	 */
@@ -96,7 +89,7 @@ typedef struct SISeg
 	/*
 	 * Circular buffer holding shared-inval messages
 	 */
-	SharedInvalidData buffer[MAXNUMMESSAGES];
+	SharedInvalidationMessage buffer[MAXNUMMESSAGES];
 
 	/*
 	 * Per-backend state info.
@@ -117,9 +110,9 @@ extern SISeg *shmInvalBuffer;	/* pointer to the shared inval buffer */
 extern void SIBufferInit(int maxBackends);
 extern int	SIBackendInit(SISeg *segP);
 
-extern bool SIInsertDataEntry(SISeg *segP, SharedInvalidData *data);
+extern bool SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data);
 extern int SIGetDataEntry(SISeg *segP, int backendId,
-			   SharedInvalidData *data);
+						  SharedInvalidationMessage *data);
 extern void SIDelExpiredDataEntries(SISeg *segP);
 
 #endif	 /* SINVALADT_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.19 2001/01/24 19:43:28 momjian Exp $
+ * $Id: inval.h,v 1.20 2001/06/19 19:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,12 @@
 
 #include "access/htup.h"
 
-extern void DiscardInvalid(void);
 
-extern void RegisterInvalid(bool send);
+extern void AcceptInvalidationMessages(void);
 
-extern void ImmediateLocalInvalidation(bool send);
+extern void AtEOXactInvalidationMessages(bool isCommit);
+
+extern void CommandEndInvalidationMessages(bool isCommit);
 
 extern void RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 

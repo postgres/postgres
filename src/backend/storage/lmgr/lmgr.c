@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.46 2001/06/12 05:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.47 2001/06/19 19:42:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ LockRelation(Relation relation, LOCKMODE lockmode)
 	 * rebuild it and not just delete it.
 	 */
 	RelationIncrementReferenceCount(relation);
-	DiscardInvalid();
+	AcceptInvalidationMessages();
 	RelationDecrementReferenceCount(relation);
 }
 
