@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.7 1998/04/06 01:14:46 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.8 1998/04/06 02:10:49 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,6 +20,5 @@ install: initdb
 	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
 
 clean:
-	rm -f initdb
 
 dep depend:
