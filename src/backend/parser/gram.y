@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.330 2002/06/18 17:56:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.331 2002/06/19 15:40:58 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -161,7 +161,6 @@ static void doNegateFloat(Value *v);
 
 %type <list>	createdb_opt_list
 %type <defelt>	createdb_opt_item
-%type <boolean> opt_equal
 
 %type <ival>	opt_lock, lock_type
 %type <boolean> opt_force, opt_or_replace
@@ -224,12 +223,10 @@ static void doNegateFloat(Value *v);
 %type <defelt>	createfunc_opt_item
 %type <typnam>	func_arg, func_return, func_type, aggr_argtype
 
-%type <boolean> opt_arg, TriggerForOpt, TriggerForType, OptTemp, OptWithOids
+%type <boolean> opt_arg, TriggerForType, OptTemp, OptWithOids
 
 %type <list>	for_update_clause, opt_for_update_clause, update_list
 %type <boolean> opt_all
-%type <boolean> opt_table
-%type <boolean> opt_chain
 
 %type <node>	join_outer, join_qual
 %type <jtype>	join_type
@@ -309,8 +306,6 @@ static void doNegateFloat(Value *v);
 
 %type <list>	constraints_set_list
 %type <boolean> constraints_set_mode
-
-%type <boolean> opt_as
 
 
 /*
@@ -2044,8 +2039,8 @@ TriggerForSpec:
 		;
 
 TriggerForOpt:
-			EACH									{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+			EACH									{}
+			| /*EMPTY*/								{}
 		;
 
 TriggerForType:
@@ -3360,7 +3355,7 @@ opt_trans:	WORK									{}
 			| /*EMPTY*/								{}
 		;
 
-opt_chain:	AND NO CHAIN							{ $$ = FALSE; }
+opt_chain:	AND NO CHAIN							{}
 			| AND CHAIN
 				{
 					/* SQL99 asks that conforming dbs reject AND CHAIN
@@ -3368,7 +3363,6 @@ opt_chain:	AND NO CHAIN							{ $$ = FALSE; }
 					 * - thomas 2000-08-06
 					 */
 					elog(ERROR, "COMMIT / CHAIN not yet supported");
-					$$ = TRUE;
 				}
 		;
 
@@ -3511,8 +3505,8 @@ createdb_opt_item:
  *	equals for backward compability, and it doesn't seem worth removing it.
  *	2002-02-25
  */
-opt_equal:	'='										{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+opt_equal:	'='										{}
+			| /*EMPTY*/								{}
 		;
 
 
@@ -3578,8 +3572,8 @@ CreateDomainStmt:
 				}
 		;
 
-opt_as:		AS										{$$ = TRUE; }
-			| /* EMPTY */							{$$ = FALSE; }
+opt_as:		AS										{}
+			| /* EMPTY */							{}
 		;
 
 
@@ -4088,8 +4082,8 @@ OptTempTableName:
 				}
 		;
 
-opt_table:	TABLE									{ $$ = TRUE; }
-			| /*EMPTY*/								{ $$ = FALSE; }
+opt_table:	TABLE									{}
+			| /*EMPTY*/								{}
 		;
 
 opt_all:	ALL										{ $$ = TRUE; }
