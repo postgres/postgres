@@ -90,3 +90,17 @@ CREATE INDEX hash_f8_index ON hash_f8_heap USING hash (random float8_ops);
 
 -- CREATE INDEX hash_ovfl_index ON hash_ovfl_heap USING hash (x int4_ops);
 
+
+--
+-- Test functional index
+--
+CREATE TABLE func_index_heap (f1 text, f2 text);
+CREATE UNIQUE INDEX func_index_index on func_index_heap (textcat(f1,f2));
+
+INSERT INTO func_index_heap VALUES('ABC','DEF');
+INSERT INTO func_index_heap VALUES('AB','CDEFG');
+INSERT INTO func_index_heap VALUES('QWE','RTY');
+-- this should fail because of unique index:
+INSERT INTO func_index_heap VALUES('ABCD', 'EF');
+-- but this shouldn't:
+INSERT INTO func_index_heap VALUES('QWERTY');

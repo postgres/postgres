@@ -599,6 +599,7 @@ SELECT user_relns() AS user_relns
  fast_emp4000
  float4_tbl
  float8_tbl
+ func_index_heap
  hash_f8_heap
  hash_i4_heap
  hash_name_heap
@@ -653,7 +654,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(90 rows)
+(91 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 SELECT hobbies_by_name('basketball');
