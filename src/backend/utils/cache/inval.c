@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.12 1998/08/19 02:03:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.13 1998/08/19 14:51:29 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -276,7 +276,7 @@ getmyrelids()
 /* --------------------------------
  *		CacheIdInvalidate
  *
- *		This routine can invalidate an tuple in a system catalog cache
+ *		This routine can invalidate a tuple in a system catalog cache
  *		or a cached relation descriptor.  You pay your money and you
  *		take your chances...
  * --------------------------------
