@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.69 2004/05/05 04:48:45 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.70 2004/05/27 03:30:11 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -399,17 +399,26 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    <para>
     The <literal>DROP COLUMN</literal> form does not physically remove
     the column, but simply makes it invisible to SQL operations.  Subsequent
-    insert and update operations in the table will store a null value for the column.
-    Thus, dropping a column is quick but it will not immediately reduce the
-    on-disk size of your table, as the space occupied 
+    insert and update operations in the table will store a null value for the
+    column. Thus, dropping a column is quick but it will not immediately
+    reduce the on-disk size of your table, as the space occupied 
     by the dropped column is not reclaimed.  The space will be
     reclaimed over time as existing rows are updated.
-    To reclaim the space at once, do a dummy <command>UPDATE</> of all rows
-    and then vacuum, as in:
+   </para>
+
+   <para>
+    The fact that <literal>ALTER TYPE</> requires rewriting the whole table
+    is sometimes an advantage, because the rewriting process eliminates
+    any dead space in the table.  For example, to reclaim the space occupied
+    by a dropped column immediately, the fastest way is
 <programlisting>
-UPDATE table SET col = col;
-VACUUM FULL table;
+ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
 </programlisting>
+    where <literal>anycol</> is any remaining table column and
+    <literal>anytype</> is the same type that column already has.
+    This results in no semantically-visible change in the table,
+    but the command forces rewriting, which gets rid of no-longer-useful
+    data.
    </para>
 
    <para>
