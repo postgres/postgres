@@ -9,13 +9,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlibpq0.cc,v 1.4 1999/05/23 01:04:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlibpq0.cc,v 1.5 1999/12/03 18:28:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <iostream.h>
-#include <libpq++.H>
+#include <libpq++.h>
 
 int main()
 {

@@ -19,7 +19,7 @@ INSERT INTO TBL1 values (10);
  *
  */
 #include <iostream.h>
-#include <libpq++.H>
+#include <libpq++.h>
 #include <stdlib.h>
 
 main()

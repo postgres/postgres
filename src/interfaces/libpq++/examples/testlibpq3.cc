@@ -9,7 +9,7 @@
 
 #include <iostream.h>
 #include <iomanip.h>
-#include <libpq++.H>
+#include <libpq++.h>
 
 int main()
 {
