@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.1.1.1 1996/07/09 06:21:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.1.1.1.2.1 1996/08/19 01:13:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@
  * Exceptions:
  *	BadArg if name is invalid.
  *	BadArg if type1 is invalid.
- *	"WARN" if operator nonexistant.
+ *	"WARN" if operator nonexistent.
  *	...
  */
 void
@@ -307,7 +307,7 @@ RemoveType(char *typeName)    /* type name to be removed */
  *
  * Exceptions:
  *	BadArg if name is invalid.
- *	"WARN" if function nonexistant.
+ *	"WARN" if function nonexistent.
  *	...
  */
 void
