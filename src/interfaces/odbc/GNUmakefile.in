@@ -2,7 +2,7 @@
 #
 # GNUMakefile.in for psqlodbc (Postgres ODBC driver).
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.16 2000/06/19 16:58:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.17 2000/06/20 16:39:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ endif
 
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
-	CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
 
 $(top_builddir)/config.status: $(top_srcdir)/configure
 	cd $(top_builddir) && ./config.status --recheck

@@ -1184,24 +1184,6 @@ See the file 'config.log' for further diagnostics.])
 fi
 
 
-dnl Output files that are neither makefiles nor shell scripts probably
-dnl need fully-expanded substitutions, rather than partial expansions
-dnl that include references to other variables.  Currently the only
-dnl such item that's needed is an expanded version of libdir, but
-dnl others may be needed someday.  NOTE: 'eval' technique only copes
-dnl with one level of indirect reference per expansion; two levels is
-dnl currently enough for libdir, but it's ugly...
-
-dnl First we have to force 'NONE' prefix to be expanded itself.
-dnl For some reason, autoconf 2.13 doesn't do this until AC_OUTPUT,
-dnl which is too late...
-test "x$prefix" = xNONE && prefix=$ac_default_prefix
-test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-
-eval expanded_libdir="$libdir"
-eval expanded_libdir="$expanded_libdir"
-AC_SUBST(expanded_libdir)
-
 dnl Finally ready to produce output files ...
 
 AC_OUTPUT(
@@ -1228,8 +1210,8 @@ AC_OUTPUT(
 	src/interfaces/odbc/GNUmakefile
 	src/interfaces/python/GNUmakefile
 	src/pl/Makefile
+	src/pl/plpgsql/Makefile
 	src/pl/plpgsql/src/Makefile
-	src/pl/plpgsql/src/mklang.sql
 	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/pl/plperl/GNUmakefile
 	src/test/regress/GNUmakefile

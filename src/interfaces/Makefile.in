@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Attic/Makefile.in,v 1.3 2000/06/19 16:58:43 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/Attic/Makefile.in,v 1.4 2000/06/20 16:39:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,8 +57,8 @@ distclean maintainer-clean: clean
 .PHONY: all install dep depend clean distclean maintainer-clean
 
 
-GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
-	CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
+Makefile: Makefile.in $(top_builddir)/config.status
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
 
 $(top_builddir)/config.status: $(top_srcdir)/configure
 	cd $(top_builddir) && ./config.status --recheck

@@ -8768,14 +8768,6 @@ fi
 
 
 
-test "x$prefix" = xNONE && prefix=$ac_default_prefix
-test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
-
-eval expanded_libdir="$libdir"
-eval expanded_libdir="$expanded_libdir"
-
-
-
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure
@@ -8900,8 +8892,8 @@ trap 'rm -fr `echo "GNUmakefile
 	src/interfaces/odbc/GNUmakefile
 	src/interfaces/python/GNUmakefile
 	src/pl/Makefile
+	src/pl/plpgsql/Makefile
 	src/pl/plpgsql/src/Makefile
-	src/pl/plpgsql/src/mklang.sql
 	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/pl/plperl/GNUmakefile
 	src/test/regress/GNUmakefile
@@ -9027,7 +9019,6 @@ s%@X_PRE_LIBS@%$X_PRE_LIBS%g
 s%@X_LIBS@%$X_LIBS%g
 s%@X_EXTRA_LIBS@%$X_EXTRA_LIBS%g
 s%@X11_LIBS@%$X11_LIBS%g
-s%@expanded_libdir@%$expanded_libdir%g
 
 CEOF
 EOF
@@ -9092,8 +9083,8 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	src/interfaces/odbc/GNUmakefile
 	src/interfaces/python/GNUmakefile
 	src/pl/Makefile
+	src/pl/plpgsql/Makefile
 	src/pl/plpgsql/src/Makefile
-	src/pl/plpgsql/src/mklang.sql
 	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/pl/plperl/GNUmakefile
 	src/test/regress/GNUmakefile

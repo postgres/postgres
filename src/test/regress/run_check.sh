@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.19 2000/05/24 22:32:59 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.20 2000/06/20 16:40:19 petere Exp $
 
 # ----------
 # Check call syntax
@@ -162,7 +162,7 @@ mkdir -p $LOGDIR
 # Install this build into ./tmp/check
 # ----------
 echo "=============== Installing new build into ./tmp_check  ================"
-${MAKE:-gmake} -C ../.. POSTGRESDIR=$CHKDIR install >$LOGDIR/install.log 2>&1
+${MAKE:-gmake} -C ../../.. POSTGRESDIR=$CHKDIR prefix=$CHKDIR install >$LOGDIR/install.log 2>&1
 
 if [ $? -ne 0 ]
 then

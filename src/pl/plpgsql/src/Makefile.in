@@ -1,28 +1,38 @@
 #-------------------------------------------------------------------------
 #
-# Makefile
-#    Makefile for the plpgsql shared object
+# Makefile for the plpgsql shared object
 #
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.25 2000/06/07 16:26:54 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.26 2000/06/20 16:40:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
+srcdir = @srcdir@
+VPATH = @srcdir@
+
+top_srcdir = @top_srcdir@
+top_builddir = ../../../..
+subdir = src/pl/plpgsql/src
+
+
+INSTALL = @INSTALL@
+INSTALL_SHLIB = @INSTALL_SHLIB@
+mkinstalldirs = @mkinstalldirs@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+libdir = @libdir@
+
+
+# Shared library parameters
 NAME= plpgsql
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
+DLSUFFIX = @DLSUFFIX@
 
-SRCDIR= ../../..
+SRCDIR = $(top_srcdir)/src
 include $(SRCDIR)/Makefile.global
 
-# If using flex, ask for a case-insensitive, lex-compatible lexer.
-ifneq (,$(findstring flex,$(LEX)))
-LFLAGS+= -i -l
-endif
-# bsdi calls flex lex
-ifeq ($(PORTNAME), bsdi)
-LFLAGS+= -i -l
-endif
+
+CPPFLAGS += -I$(srcdir)
 
 OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
@@ -30,47 +40,67 @@ OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 include $(SRCDIR)/Makefile.shlib
 
 
-# In order to use Makefile.shlib, we allow it to build a static library
-# libplpgsql.a, which we just ignore, as well as a shared library that
-# it will insist on naming $(shlib).  We don't want to call it that when
-# installed, however, so we ignore the install-shlib rule and do this
-# instead:
+# In order to use Makefile.shlib, we allow it to build a static
+# library libplpgsql.a, which we just ignore, as well as a shared
+# library that it will insist on naming $(shlib). We don't want to
+# call it that when installed, however, so we ignore the install-shlib
+# rule and do this instead:
 
-install: $(shlib)
+install: installdirs $(shlib)
 ifneq ($(shlib),)
-	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/plpgsql$(DLSUFFIX)
+	$(INSTALL_SHLIB) $(shlib) $(libdir)/plpgsql$(DLSUFFIX)
 else
-	@echo "plpgsql not installed due to lack of shared library support."
+	@echo "*****"; \
+	 echo "* PL/pgSQL was not installed due to lack of shared library support."; \
+	 echo "*****"
 endif
 
+installdirs:
+	$(mkinstalldirs) $(libdir)
 
-pl_handler.o:	pl_handler.c plpgsql.h pl.tab.h
+pl_handler.o pl_comp.o pl_exec.o pl_funcs.o: plpgsql.h pl.tab.h
 
-pl_comp.o:	pl_comp.c plpgsql.h pl.tab.h
+pl_parse.o: pl_gram.c pl_scan.c plpgsql.h
+	$(CC) -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
-pl_exec.o:	pl_exec.c plpgsql.h pl.tab.h
+# Note: Since the yacc and lex files are shipped in the distribution,
+# they must be generated in the srcdir (as opposed to builddir).
 
-pl_funcs.o:	pl_funcs.c plpgsql.h pl.tab.h
-
-pl_parse.o:	pl_gram.c pl_scan.c plpgsql.h
-	$(CC) $(CFLAGS) -c -o $@ pl_gram.c
-
-pl_gram.c pl.tab.h:	gram.y
+$(srcdir)/pl_gram.c $(srcdir)/pl.tab.h: gram.y
 	$(YACC) -d $(YFLAGS) $<
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <y.tab.c >pl_gram.c
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <y.tab.h >pl.tab.h
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.c > $(srcdir)/pl_gram.c
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < y.tab.h > $(srcdir)/pl.tab.h
 	rm -f y.tab.c y.tab.h
 
-pl_scan.c:	scan.l
-	$(LEX) $(LFLAGS) $<
-	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <lex.yy.c >pl_scan.c
+# Assuming flex here for -i and -l options, since scan.l requires flex anyway.
+$(srcdir)/pl_scan.c: scan.l
+	$(LEX) $(LFLAGS) -i -l $<
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' < lex.yy.c > $@
 	rm -f lex.yy.c
 
+mklang.sql: mklang.sql.in
+	sed -e 's%__libdir__%$(libdir)%g' -e 's%__DLSUFFIX__%$(DLSUFFIX)%g' < $< > $@
 
-.PHONY: install clean
 
 clean: clean-shlib
-	rm -f lib$(NAME).a
-	rm -f *.o
-# And the garbage that might have been left behind by partial build:
-	rm -f y.tab.c y.tab.h lex.yy.c
+	rm -f lib$(NAME).a *.o y.tab.c y.tab.h lex.yy.c mklang.sql
+
+distclean: clean
+	rm -f Makefile
+
+maintainer-clean: clean
+	rm -f $(srcdir)/pl_gram.c $(srcdir)/pl.tab.h $(srcdir)/pl_scan.c
+	rm -f Makefile
+
+
+.PHONY: all install installdirs clean distclean maintainer-clean
+
+
+Makefile: Makefile.in $(top_builddir)/config.status
+	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
+
+$(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_builddir)/config.status
+	cd $(top_builddir) && CONFIG_FILES=src/Makefile.global CONFIG_HEADERS= ./config.status
+
+$(top_builddir)/config.status: $(top_srcdir)/configure
+	cd $(top_builddir) && ./config.status --recheck

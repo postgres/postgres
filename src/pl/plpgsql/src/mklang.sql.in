@@ -1,14 +1,13 @@
 --
 -- PL/pgSQL language declaration
 --
--- $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/mklang.sql.in,v 1.4 1999/05/11 22:57:50 tgl Exp $
+-- $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/mklang.sql.in,v 1.5 2000/06/20 16:40:10 petere Exp $
 --
 
 create function plpgsql_call_handler() returns opaque
-	as '@expanded_libdir@/plpgsql@DLSUFFIX@'
+	as '__libdir__/plpgsql__DLSUFFIX__'
 	language 'C';
 
 create trusted procedural language 'plpgsql'
 	handler plpgsql_call_handler
 	lancompiler 'PL/pgSQL';
-
