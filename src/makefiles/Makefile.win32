@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.5 2004/10/27 19:14:07 momjian Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.win32,v 1.6 2004/11/17 17:16:17 tgl Exp $
 
 # Use replacement include files for those missing on Win32
 override CPPFLAGS+="-I$(top_srcdir)/src/include/port/win32"
@@ -34,4 +34,15 @@ endif
 # required by Python headers
 ifneq (,$(findstring src/pl/plpython,$(subdir)))
 override CPPFLAGS+= -DUSE_DL_IMPORT
+endif
+
+# special win32 headers are provided here
+ifdef PGXS
+override CPPFLAGS+= -I$(includedir_server)/port/win32
+endif
+
+# it is better to install shared-libraries anyway?
+# may be overriden with make MAKE_DLL=false install
+ifndef MAKE_DLL
+MAKE_DLL	= true
 endif
