@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.26 2000/12/14 22:30:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.27 2000/12/16 18:22:53 tgl Exp $
 -->
 
  <chapter id="syntax">
@@ -791,7 +791,7 @@ sqrt(emp.salary)
 
     <para>
      A <firstterm>target list</firstterm>
-     is a parenthesized, comma-separated list of one or more elements, each
+     is a comma-separated list of one or more elements, each
      of which must be of the form:
 
      <synopsis>
@@ -799,16 +799,13 @@ sqrt(emp.salary)
      </synopsis>
 
      where <replaceable>result_attname</replaceable>
-     is the name of the attribute to be created (or an
-     already existing attribute name in the case of update statements.)  If
+     is the name to be assigned to the created column.  If 
      <replaceable>result_attname</replaceable>
-     is not present, then 
-     <replaceable>a_expr</replaceable>
-     must contain only one attribute name which is assumed to be the name
-     of the result field.  In <productname>Postgres</productname>
-     default naming is only used if
-     <replaceable>a_expr</replaceable>
-     is an attribute.
+     is not present, then <productname>Postgres</productname> selects a
+     default name based on the contents of <replaceable>a_expr</replaceable>.
+     If <replaceable>a_expr</replaceable> is a simple attribute reference
+     then the default name will be the same as that attribute's name, but
+     otherwise the implementation is free to assign any default name.
     </para>
    </sect2>
 
