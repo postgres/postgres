@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Feb 14 09:03:00 EST 2003
+   Last updated: Tue Feb 18 00:06:42 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -194,7 +194,7 @@
    The database server can run on Windows NT and Win2k using Cygwin, the
    Cygnus Unix/NT porting library. See pgsql/doc/FAQ_MSWIN in the
    distribution or the MS Windows FAQ at
-   http://www.PostgreSQL.org/docs/faq-mswin.html.
+   http://www.ca.PostgreSQL.org/docs/faq-mswin.html.
    
    A native port to MS Win NT/2000/XP is currently being worked on.
    
@@ -421,6 +421,9 @@
    http://www.thekompany.com/products/rekall/, proprietary). There is
    also PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), a web-based
    interface to PostgreSQL.
+   
+   See http://techdocs.postgresql.org/guides/GUITools for a more detailed
+   list.
    
     2.4) What languages are able to communicate with PostgreSQL?
     
@@ -823,13 +826,13 @@ Type            Internal Name   Notes
 VARCHAR(n)      varchar         size specifies maximum length, no padding
 CHAR(n)         bpchar          blank padded to the specified fixed length
 TEXT            text            no specific upper limit on length
-"char"          char            one character
 BYTEA           bytea           variable-length byte array (null-byte safe)
+"char"          char            one character
 
    You will see the internal name when examining system catalogs and in
    some error messages.
    
-   The last four types above are "varlena" types (i.e., the first four
+   The first four types above are "varlena" types (i.e., the first four
    bytes on disk are the length, followed by the data). Thus the actual
    space used is slightly greater than the declared size. However, these
    data types are also subject to compression or being stored out-of-line
@@ -841,8 +844,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    CHAR(n) is for storing strings that are all the same length. CHAR(n)
    pads with blanks to the specified length, while VARCHAR(n) only stores
    the characters supplied. BYTEA is for storing binary data,
-   particularly values that include NULL bytes. These types have similar
-   performance characteristics.
+   particularly values that include NULL bytes. All the types described
+   here have similar performance characteristics.
    
     4.15.1) How do I create a serial/auto-incrementing field?
     

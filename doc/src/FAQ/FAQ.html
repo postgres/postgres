@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Feb 14 09:03:00 EST 2003</P>
+    <P>Last updated: Tue Feb 18 00:06:42 EST 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -245,8 +245,8 @@
     <P>The database server can run on Windows NT and Win2k using
     Cygwin, the Cygnus Unix/NT porting library. See
     <I>pgsql/doc/FAQ_MSWIN</I> in the distribution or the MS Windows FAQ
-    at <A href="http://www.PostgreSQL.org/docs/faq-mswin.html">
-    http://www.PostgreSQL.org/docs/faq-mswin.html</A>.</P>
+    at <A href="http://www.ca.PostgreSQL.org/docs/faq-mswin.html">
+    http://www.ca.PostgreSQL.org/docs/faq-mswin.html</A>.</P>
 
     <p>A native port to MS Win NT/2000/XP is currently being worked
     on.</p>
@@ -535,7 +535,7 @@
     <H4><A name="2.3">2.3</A>) Does PostgreSQL have a graphical user
     interface?</H4>
 
-    Yes, there are several graphical interfaces to PostgreSQL available.
+    <P>Yes, there are several graphical interfaces to PostgreSQL available.
     These include PgAccess <a href="http://www.pgaccess.org">
     http://www.pgaccess.org</a>), PgAdmin II (<a
     href="http://www.pgadmin.org">http://www.pgadmin.org</a>,
@@ -545,7 +545,9 @@
     http://www.thekompany.com/products/rekall/</a>, proprietary). There is 
     also PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
     http://phppgadmin.sourceforge.net/ </a>), a web-based interface to 
-    PostgreSQL.
+    PostgreSQL.</P>
+
+    <P>See <a href="http://techdocs.postgresql.org/guides/GUITools">http://techdocs.postgresql.org/guides/GUITools</a> for a more detailed list.</P>
 
     <H4><A name="2.4">2.4</A>) What languages are able to communicate with 
     PostgreSQL?</H4>
@@ -1037,14 +1039,14 @@ Type            Internal Name   Notes
 VARCHAR(n)      varchar         size specifies maximum length, no padding
 CHAR(n)         bpchar          blank padded to the specified fixed length
 TEXT            text            no specific upper limit on length
-"char"          char            one character
 BYTEA           bytea           variable-length byte array (null-byte safe)
+"char"          char            one character
 </PRE>
 
     <P>You will see the internal name when examining system catalogs
     and in some error messages.</P>
 
-    <P>The last four types above are "varlena" types (i.e., the first
+    <P>The first four types above are "varlena" types (i.e., the first
     four bytes on disk are the length, followed by the data). Thus the
     actual space used is slightly greater than the declared size.
     However, these data types are also subject to compression or being
@@ -1058,8 +1060,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     same length. <SMALL>CHAR(n)</SMALL> pads with blanks to the specified
     length, while <SMALL>VARCHAR(n)</SMALL> only stores the characters
     supplied.  <SMALL>BYTEA</SMALL> is for storing binary data,
-    particularly values that include <SMALL>NULL</SMALL> bytes. These
-    types have similar performance characteristics.</P>
+    particularly values that include <SMALL>NULL</SMALL> bytes. All the
+    types described here have similar performance characteristics.</P>
 
     <H4><A name="4.15.1">4.15.1</A>) How do I create a
     serial/auto-incrementing field?</H4>
