@@ -19222,7 +19222,7 @@ echo "$as_me: executing $ac_dest commands" >&6;}
     check_win32_symlinks )
 # Links sometimes fail undetected on Mingw -
 # so here we detect it and warn the user
-for FILE in "$CONFIG_LINKS"
+for FILE in $CONFIG_LINKS
  do
 	# test -e works for symlinks in the MinGW console
 	test -e `expr "$FILE" : '\(^:*\)'` || { echo "$as_me:$LINENO: WARNING: *** link for $FILE - please fix by hand" >&5
