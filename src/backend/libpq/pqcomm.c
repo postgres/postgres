@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.26 1997/11/10 05:15:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.27 1997/11/17 16:17:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@
 #include <libpq/pqsignal.h>
 #include <libpq/auth.h>
 #include <libpq/libpq.h>		/* where the declarations go */
+#include <storage/ipc.h>
 
 /* ----------------
  *		declarations
@@ -595,7 +596,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	size_t		len;
 	int			one = 1;
 
-	family = hostName != NULL ? AF_INET : AF_UNIX;
+	family = ((hostName != NULL) ? AF_INET : AF_UNIX);
 
 	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
 	{
