@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.125 2003/06/27 19:08:38 tgl Exp $
+ * $Id: miscadmin.h,v 1.126 2003/07/17 00:55:37 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -147,7 +147,9 @@ extern DLLIMPORT Oid MyDatabaseId;
  * EuroDates if client prefers dates interpreted and written w/European conventions.
  *
  * HasCTZSet is true if user has set timezone as a numeric offset from UTC.
- * If so, CTimeZone is the timezone offset in seconds.
+ * If so, CTimeZone is the timezone offset in seconds (using the Unix-ish
+ * sign convention, ie, positive offset is west of UTC, rather than the
+ * SQL-ish convention that positive is east of UTC).
  */
 
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */

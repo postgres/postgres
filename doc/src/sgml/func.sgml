@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.159 2003/07/15 19:19:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.160 2003/07/17 00:55:36 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -5016,16 +5016,16 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
 </screen>
       </listitem>
      </varlistentry>
-<!--
      <varlistentry>
       <term><literal>timezone</literal></term>
       <listitem>
        <para>
-        The time zone offset. XXX But in what units?
+        The time zone offset from UTC, measured in seconds.  Positive values
+	correspond to time zones east of UTC, negative values to
+	zones west of UTC.
        </para>
       </listitem>
      </varlistentry>
--->
 
      <varlistentry>
       <term><literal>timezone_hour</literal></term>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.85 2003/07/04 18:21:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.86 2003/07/17 00:55:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3080,17 +3080,18 @@ timestamptz_part(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_TZ:
-				result = tz;
+				result = -tz;
 				break;
 
 			case DTK_TZ_MINUTE:
-				result = tz / 60;
-				TMODULO(result, dummy, 60e0);
+				result = -tz;
+				result /= 60;
+				FMODULO(result, dummy, 60e0);
 				break;
 
 			case DTK_TZ_HOUR:
-				dummy = tz;
-				TMODULO(dummy, result, 3600e0);
+				dummy = -tz;
+				FMODULO(dummy, result, 3600e0);
 				break;
 
 			case DTK_MICROSEC:

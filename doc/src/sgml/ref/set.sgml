@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.78 2003/07/15 19:19:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.79 2003/07/17 00:55:36 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -182,16 +182,16 @@ SELECT setseed(<replaceable>value</replaceable>);
          </listitem>
         </varlistentry>
         <varlistentry>
-         <term><literal>7</literal></term>
+         <term><literal>-7</literal></term>
          <listitem>
           <para>
            The time zone 7 hours west from UTC (equivalent
-           to PDT).  Negative values are east from UTC.
+           to PDT).  Positive values are east from UTC.
           </para>
          </listitem>
         </varlistentry>
         <varlistentry>
-         <term><literal>INTERVAL '08:00' HOUR TO MINUTE</literal></term>
+         <term><literal>INTERVAL '-08:00' HOUR TO MINUTE</literal></term>
          <listitem>
           <para>
            The time zone 8 hours west from UTC (equivalent
@@ -205,7 +205,7 @@ SELECT setseed(<replaceable>value</replaceable>);
          <listitem>
           <para>
            Set the time zone to your local time zone (the one that
-           your operating system defaults to).
+           the server's operating system defaults to).
           </para>
          </listitem>
         </varlistentry>

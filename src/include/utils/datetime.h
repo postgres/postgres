@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.39 2003/05/18 01:06:26 tgl Exp $
+ * $Id: datetime.h,v 1.40 2003/07/17 00:55:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,11 +196,22 @@ typedef struct
 } datetkn;
 
 
-/* TMODULO()
+/* FMODULO()
  * Macro to replace modf(), which is broken on some platforms.
  * t = input and remainder
  * q = integer part
  * u = divisor
+ */
+#define FMODULO(t,q,u) \
+do { \
+	q = ((t < 0) ? ceil(t / u): floor(t / u)); \
+	if (q != 0) t -= rint(q * u); \
+} while(0)
+
+/* TMODULO()
+ * Like FMODULO(), but work on the timestamp datatype (either int64 or float8).
+ * We assume that int64 follows the C99 semantics for division (negative
+ * quotients truncate towards zero).
  */
 #ifdef HAVE_INT64_TIMESTAMP
 #define TMODULO(t,q,u) \
@@ -211,7 +222,7 @@ do { \
 #else
 #define TMODULO(t,q,u) \
 do { \
-	q = ((t < 0)? ceil(t / u): floor(t / u)); \
+	q = ((t < 0) ? ceil(t / u): floor(t / u)); \
 	if (q != 0) t -= rint(q * u); \
 } while(0)
 #endif
