@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.4 1996/07/23 02:23:05 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.5 1996/08/13 01:28:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,15 +187,11 @@ typedef void (*sig_func)();
  *	error handling / abort routines
  * ----------------
  */
-# if !defined(PORTNAME_BSD44_derived) && \
-     !defined(PORTNAME_bsdi) && \
-     !defined(PORTNAME_bsdi_2_1)
-void err()
+void err_out()
 {
     Warnings++;
     cleanup();
 }
-#endif
 
 /* usage:
    usage help for the bootstrap backen

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.1.1.1 1996/07/09 06:21:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.2 1996/08/13 01:28:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ InsertStmt:
 		        elog(WARN,"incorrect number of values for tuple");
 		    if (reldesc == (Relation)NULL) {
 		        elog(WARN,"must OPEN RELATION before INSERT\n");
-		        err();
+		        err_out();
 		    }
 		    if (DebugMode)
 			puts("Insert Begin");

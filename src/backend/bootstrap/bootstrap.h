@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.1.1.1 1996/07/09 06:21:14 scrappy Exp $
+ * $Id: bootstrap.h,v 1.2 1996/08/13 01:28:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ extern void index_register(char *heap,
 			   FuncIndexInfo *finfo,
 			   PredInfo *predInfo);
 
-extern void err(void);
+extern void err_out(void);
 extern void InsertOneTuple(Oid objectid);
 extern void closerel(char *name);
 extern void boot_openrel(char *name);
