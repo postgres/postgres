@@ -11,7 +11,9 @@
 #include "halt.h"
 #include "libpgeasy.h"
 
+#ifndef NUL
 #define NUL '\0'
+#endif
 
 #ifndef TRUE
 #define TRUE 1
