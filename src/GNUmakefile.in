@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.43 1999/08/08 15:20:21 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.44 1999/10/12 14:46:26 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -98,6 +98,7 @@ distclean: clean
 		interfaces/libpq/Makefile \
 		interfaces/ecpg/lib/Makefile \
 		interfaces/libpq++/Makefile \
+		interfaces/libpgeasy/Makefile \
 		interfaces/libpgtcl/Makefile \
 		interfaces/odbc/GNUmakefile \
 		interfaces/odbc/Makefile.global \
