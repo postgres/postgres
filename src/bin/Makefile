@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.2 1996/07/23 03:01:58 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.3 1996/07/25 06:54:26 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ MKDIR=../mk
 #
 # C programs
 #
-SUBDIR=  monitor pg_id pg_version psql pg_dump
+SUBDIR=  pg_id pg_version psql pg_dump
 
 #
 # Shell scripts
