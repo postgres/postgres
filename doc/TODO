@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Aug 16 11:12:42 EDT 2002
+Last updated:		Fri Aug 16 11:13:10 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -70,6 +70,7 @@ Administration
 * Allow easy display of usernames in a group
 * Allow configuration files to be specified in a different directory
 * Reserve last process slot for super-user if max_connections reached
+
 
 Data Types
 ==========
