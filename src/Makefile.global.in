@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.65 2000/01/19 01:42:12 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.66 2000/02/10 19:11:17 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -280,7 +280,7 @@ ifneq ($(CUSTOM_COPT),)
 endif
 
 ifeq ($(CC), gcc)
-CFLAGS+= -Wall -Wmissing-prototypes
+CFLAGS+= -Wall -Wmissing-prototypes -Wmissing-declarations
 endif
 
 ifdef COPT
