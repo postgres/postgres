@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.10 2002/11/14 23:53:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.11 2002/11/15 03:22:30 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1217,7 +1217,7 @@ RETURN NEXT <replaceable>expression</replaceable>;
      returned).  Execution then continues with the next statement in
      the <application>PL/pgSQL</> function.  As successive
      <command>RETURN NEXT</command> commands are executed, the result
-     set is built up.  A final <command>RETURN</commmand>, which need
+     set is built up.  A final <command>RETURN</command>, which need
      have no argument, causes control to exit the function.
     </para>
 
