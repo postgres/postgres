@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.103 2004/03/15 10:41:26 ishii Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.104 2004/03/24 03:44:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,20 @@ extern PQnoticeReceiver PQsetNoticeReceiver(PGconn *conn,
 extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
 					 PQnoticeProcessor proc,
 					 void *arg);
+
+/*
+ *     Used to set callback that prevents concurrent access to
+ *     non-thread safe functions that libpq needs.
+ *     The default implementation uses a libpq internal mutex.
+ *     Only required for multithreaded apps that use kerberos
+ *     both within their app and for postgresql connections.
+ */
+typedef void (pgthreadlock_t)(int acquire);
+
+extern pgthreadlock_t * PQregisterThreadLock(pgthreadlock_t *newhandler);
+
+void
+PQinitSSL(int do_init);
 
 /* === in fe-exec.c === */
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.149 2004/03/23 23:37:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.150 2004/03/24 03:44:58 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3654,8 +3654,7 @@ call <function>fe_setauthsvc</function> at all.
 <literal>crypt()</literal> operating system function, which is often
 not thread-safe.<indexterm><primary>crypt</><secondary>thread
 safety</></> It is better to use the <literal>md5</literal> method,
-which is thread-safe on all platforms.  <application>SSL</> connections
-and <application>kerberos</> authentication are also not thread-safe.
+which is thread-safe on all platforms.
 </para>
 
 <para>

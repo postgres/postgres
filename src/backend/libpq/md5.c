@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.22 2003/11/29 19:51:49 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.23 2004/03/24 03:44:58 momjian Exp $
  */
 
 
@@ -271,7 +271,7 @@ calculateDigestFromBuffer(uint8 *b, uint32 len, uint8 sum[16])
 static void
 bytesToHex(uint8 b[16], char *s)
 {
-	static char *hex = "0123456789abcdef";
+	static const char *hex = "0123456789abcdef";
 	int			q,
 				w;
 

@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.89 2004/01/07 18:56:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.90 2004/03/24 03:44:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -590,6 +590,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		case AUTH_REQ_KRB4:
 #ifdef KRB4
+			pglock_thread();
 			if (pg_krb4_sendauth(PQerrormsg, conn->sock,
 							   (struct sockaddr_in *) & conn->laddr.addr,
 							   (struct sockaddr_in *) & conn->raddr.addr,
@@ -597,8 +598,10 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					libpq_gettext("Kerberos 4 authentication failed\n"));
+				pgunlock_thread();
 				return STATUS_ERROR;
 			}
+			pgunlock_thread();
 			break;
 #else
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
@@ -608,13 +611,16 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		case AUTH_REQ_KRB5:
 #ifdef KRB5
+			pglock_thread();
 			if (pg_krb5_sendauth(PQerrormsg, conn->sock,
 								 hostname) != STATUS_OK)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					libpq_gettext("Kerberos 5 authentication failed\n"));
+				pgunlock_thread();
 				return STATUS_ERROR;
 			}
+			pgunlock_thread();
 			break;
 #else
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
@@ -722,6 +728,7 @@ fe_getauthname(char *PQerrormsg)
 	if (authsvc == 0)
 		return NULL;			/* leave original error message in place */
 
+	pglock_thread();
 #ifdef KRB4
 	if (authsvc == STARTUP_KRB4_MSG)
 		name = pg_krb4_authname(PQerrormsg);
@@ -759,5 +766,6 @@ fe_getauthname(char *PQerrormsg)
 
 	if (name && (authn = (char *) malloc(strlen(name) + 1)))
 		strcpy(authn, name);
+	pgunlock_thread();
 	return authn;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.268 2004/03/10 21:12:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.269 2004/03/24 03:44:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2902,7 +2902,7 @@ int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
 	char		qbuf[128];
-	static char query[] = "set client_encoding to '%s'";
+	static const char query[] = "set client_encoding to '%s'";
 	PGresult   *res;
 	int			status;
 
@@ -3162,5 +3162,46 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	return NULL;
 
 #undef LINELEN
+}
+
+/*
+ * To keep the API consistent, the locking stubs are always provided, even
+ * if they are not required.
+ */
+
+void
+PQinitSSL(int do_init)
+{
+#ifdef USE_SSL
+	pq_initssllib = do_init;
+#endif
+}
+
+static pgthreadlock_t default_threadlock;
+static void
+default_threadlock(int acquire)
+{
+#ifdef ENABLE_THREAD_SAFETY
+	static pthread_mutex_t singlethread_lock = PTHREAD_MUTEX_INITIALIZER;
+	if (acquire)
+		pthread_mutex_lock(&singlethread_lock);
+	else
+		pthread_mutex_unlock(&singlethread_lock);
+#endif
+}
+
+pgthreadlock_t *g_threadlock = default_threadlock;
+
+pgthreadlock_t *
+PQregisterThreadLock(pgthreadlock_t *newhandler)
+{
+	pgthreadlock_t *prev;
+
+	prev = g_threadlock;
+	if (newhandler)
+		g_threadlock = newhandler;
+	else
+		g_threadlock = default_threadlock;
+	return prev;
 }
 

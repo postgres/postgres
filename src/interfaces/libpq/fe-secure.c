@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.37 2004/02/10 15:21:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.38 2004/03/24 03:44:59 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -135,11 +135,13 @@ static DH  *load_dh_file(int keylength);
 static DH  *load_dh_buffer(const char *, size_t);
 static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int	client_cert_cb(SSL *, X509 **, EVP_PKEY **);
+static int	init_ssl_system(PGconn *conn);
 static int	initialize_SSL(PGconn *);
 static void destroy_SSL(void);
 static PostgresPollingStatusType open_client_SSL(PGconn *);
 static void close_SSL(PGconn *);
-static const char *SSLerrmessage(void);
+static char *SSLerrmessage(void);
+static void SSLerrfree(char *buf);
 #endif
 
 #ifdef USE_SSL
@@ -251,9 +253,11 @@ pqsecure_open_client(PGconn *conn)
 			!SSL_set_app_data(conn->ssl, conn) ||
 			!SSL_set_fd(conn->ssl, conn->sock))
 		{
+			char *err = SSLerrmessage();
 			printfPQExpBuffer(&conn->errorMessage,
 			   libpq_gettext("could not establish SSL connection: %s\n"),
-							  SSLerrmessage());
+							  err);
+			SSLerrfree(err);
 			close_SSL(conn);
 			return PGRES_POLLING_FAILED;
 		}
@@ -327,8 +331,12 @@ rloop:
 					break;
 				}
 			case SSL_ERROR_SSL:
-				printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
+				{
+					char *err = SSLerrmessage();
+					printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("SSL error: %s\n"), err);
+					SSLerrfree(err);
+				}
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
 				SOCK_ERRNO_SET(ECONNRESET);
@@ -402,8 +410,12 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 					break;
 				}
 			case SSL_ERROR_SSL:
-				printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
+				{
+					char *err = SSLerrmessage();
+					printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("SSL error: %s\n"), err);
+					SSLerrfree(err);
+				}
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
 				SOCK_ERRNO_SET(ECONNRESET);
@@ -750,9 +762,11 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 	if (PEM_read_X509(fp, x509, NULL, NULL) == NULL)
 	{
+		char *err = SSLerrmessage();
 		printfPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("could not read certificate (%s): %s\n"),
-						  fnbuf, SSLerrmessage());
+						  fnbuf, err);
+		SSLerrfree(err);
 		fclose(fp);
 		return -1;
 	}
@@ -795,9 +809,11 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	}
 	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
 	{
+		char *err = SSLerrmessage();
 		printfPQExpBuffer(&conn->errorMessage,
 				  libpq_gettext("could not read private key (%s): %s\n"),
-						  fnbuf, SSLerrmessage());
+						  fnbuf, err);
+		SSLerrfree(err);
 		X509_free(*x509);
 		fclose(fp);
 		return -1;
@@ -807,9 +823,11 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	/* verify that the cert and key go together */
 	if (!X509_check_private_key(*x509, *pkey))
 	{
+		char *err = SSLerrmessage();
 		printfPQExpBuffer(&conn->errorMessage,
 			libpq_gettext("certificate/private key mismatch (%s): %s\n"),
-						  fnbuf, SSLerrmessage());
+						  fnbuf, err);
+		SSLerrfree(err);
 		X509_free(*x509);
 		EVP_PKEY_free(*pkey);
 		return -1;
@@ -819,6 +837,77 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 #endif
 }
 
+#ifdef ENABLE_THREAD_SAFETY
+
+static unsigned long
+pq_threadidcallback(void)
+{
+	return (unsigned long)pthread_self();
+}
+
+static pthread_mutex_t *pq_lockarray;
+static void
+pq_lockingcallback(int mode, int n, const char *file, int line)
+{
+	if (mode & CRYPTO_LOCK) {
+		pthread_mutex_lock(&pq_lockarray[n]);
+	} else {
+		pthread_mutex_unlock(&pq_lockarray[n]);
+	}
+}
+
+bool pq_initssllib = true;
+
+#endif /* ENABLE_THRAD_SAFETY */
+
+static int
+init_ssl_system(PGconn *conn)
+{
+#ifdef ENABLE_THREAD_SAFETY
+static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+	pthread_mutex_lock(&init_mutex);
+	
+	if (pq_initssllib && pq_lockarray == NULL) {
+		int i;
+		CRYPTO_set_id_callback(pq_threadidcallback);
+
+		pq_lockarray = malloc(sizeof(pthread_mutex_t)*CRYPTO_num_locks());
+		if (!pq_lockarray) {
+			pthread_mutex_unlock(&init_mutex);
+			return -1;
+		}
+		for (i=0;i<CRYPTO_num_locks();i++)
+			pthread_mutex_init(&pq_lockarray[i], NULL);
+
+		CRYPTO_set_locking_callback(pq_lockingcallback);
+	}
+#endif
+	if (!SSL_context)
+	{
+		if (pq_initssllib) {
+			SSL_library_init();
+			SSL_load_error_strings();
+		}
+		SSL_context = SSL_CTX_new(TLSv1_method());
+		if (!SSL_context)
+		{
+			char *err = SSLerrmessage();
+			printfPQExpBuffer(&conn->errorMessage,
+					 libpq_gettext("could not create SSL context: %s\n"),
+							  err);
+			SSLerrfree(err);
+#ifdef ENABLE_THREAD_SAFETY
+			pthread_mutex_unlock(&init_mutex);
+#endif
+			return -1;
+		}
+	}
+#ifdef ENABLE_THREAD_SAFETY
+	pthread_mutex_unlock(&init_mutex);
+#endif
+	return 0;
+}
 /*
  *	Initialize global SSL context.
  */
@@ -833,19 +922,8 @@ initialize_SSL(PGconn *conn)
 	char		fnbuf[2048];
 #endif
 
-	if (!SSL_context)
-	{
-		SSL_library_init();
-		SSL_load_error_strings();
-		SSL_context = SSL_CTX_new(TLSv1_method());
-		if (!SSL_context)
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-					 libpq_gettext("could not create SSL context: %s\n"),
-							  SSLerrmessage());
-			return -1;
-		}
-	}
+	if(!init_ssl_system(conn))
+		return -1;
 
 #ifndef WIN32
 	if (pqGetpwuid(getuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) == 0)
@@ -867,9 +945,11 @@ initialize_SSL(PGconn *conn)
 		}
 		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
 		{
+			char *err = SSLerrmessage();
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not read root certificate list (%s): %s\n"),
-							  fnbuf, SSLerrmessage());
+							  fnbuf, err);
+			SSLerrfree(err);
 			return -1;
 		}
 	}
@@ -936,10 +1016,14 @@ open_client_SSL(PGconn *conn)
 					return PGRES_POLLING_FAILED;
 				}
 			case SSL_ERROR_SSL:
-				printfPQExpBuffer(&conn->errorMessage,
-					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
-				close_SSL(conn);
-				return PGRES_POLLING_FAILED;
+				{
+					char *err = SSLerrmessage();
+					printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("SSL error: %s\n"), err);
+					SSLerrfree(err);
+					close_SSL(conn);
+					return PGRES_POLLING_FAILED;
+				}
 
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
@@ -973,9 +1057,11 @@ open_client_SSL(PGconn *conn)
 	conn->peer = SSL_get_peer_certificate(conn->ssl);
 	if (conn->peer == NULL)
 	{
+		char *err = SSLerrmessage();
 		printfPQExpBuffer(&conn->errorMessage,
 				libpq_gettext("certificate could not be obtained: %s\n"),
-						  SSLerrmessage());
+						  err);
+		SSLerrfree(err);
 		close_SSL(conn);
 		return PGRES_POLLING_FAILED;
 	}
@@ -1036,23 +1122,40 @@ close_SSL(PGconn *conn)
  * return NULL if it doesn't recognize the error code.  We don't
  * want to return NULL ever.
  */
-static const char *
+static char ssl_nomem[] = "Out of memory allocating error description";
+#define SSL_ERR_LEN	128
+
+static char *
 SSLerrmessage(void)
 {
 	unsigned long errcode;
 	const char *errreason;
-	static char errbuf[32];
+	char *errbuf;
 
+	errbuf = malloc(SSL_ERR_LEN);
+	if (!errbuf)
+		return ssl_nomem;
 	errcode = ERR_get_error();
-	if (errcode == 0)
-		return "No SSL error reported";
+	if (errcode == 0) {
+		strcpy(errbuf, "No SSL error reported");
+		return errbuf;
+	}
 	errreason = ERR_reason_error_string(errcode);
-	if (errreason != NULL)
-		return errreason;
-	snprintf(errbuf, sizeof(errbuf), "SSL error code %lu", errcode);
+	if (errreason != NULL) {
+		strncpy(errbuf, errreason, SSL_ERR_LEN-1);
+		errbuf[SSL_ERR_LEN-1] = '\0';
+		return errbuf;
+	}
+	snprintf(errbuf, SSL_ERR_LEN, "SSL error code %lu", errcode);
 	return errbuf;
 }
 
+static void
+SSLerrfree(char *buf)
+{
+	if (buf != ssl_nomem)
+		free(buf);
+}
 /*
  *	Return pointer to SSL object.
  */
