@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.1.1.1 1996/07/09 06:21:07 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.2 1996/07/13 07:37:33 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -56,7 +56,11 @@
 #	until after this file is processed!
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
-PORTNAME=	alpha
+PORTNAME=	BSD44_derived
+
+# FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
+LEX = flex
+LDADD+= -L/usr/local/lib -lfl
 
 # POSTGRESLOGIN is the login name of the user who gets special
 # privileges within the database.  By default it is "postgres", but
@@ -68,7 +72,7 @@ POSTGRESLOGIN=	postgres
 # For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
-POSTGRESDIR=	/private/postgres95
+POSTGRESDIR=	/usr/local/pg95
 
 # SRCDIR specifies where the source files are.
 SRCDIR=		$(POSTGRESDIR)/src
