@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.12 1997/03/18 21:40:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.13 1997/03/26 03:27:04 scrappy Exp $
  *
  * NOTE
  *    XXX this code needs improvement--check for state violations and
@@ -17,6 +17,7 @@
  */
 #include <stdio.h>	/* XXX use own I/O routines */
 #include <errno.h>
+#include <string.h>
 
 #include "postgres.h"
 
