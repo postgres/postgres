@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.c,v 1.1 2001/05/03 12:32:13 darcy Exp $
+ * $Header: /cvsroot/pgsql/contrib/chkpass/chkpass.c,v 1.2 2001/05/27 19:06:20 darcy Exp $
  * best viewed with tabs set to 4
  */
 
@@ -135,8 +135,8 @@ chkpass_rout(chkpass *password)
 
 	if ((result = (text *) palloc(VARHDRSZ + 16)) != NULL)
 	{
-		VARSIZE(result) = VARHDRSZ + strlen(password->password);
-		memcpy(VARDATA(result), password->password, strlen(password->password));
+		result->vl_len = VARHDRSZ + strlen(password->password);
+		memcpy(result->vl_dat, password->password, strlen(password->pass
 	}
 
 	return (result);
