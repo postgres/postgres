@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.9 1997/01/13 03:45:02 momjian Exp $
+ * $Id: parsenodes.h,v 1.10 1997/01/16 14:56:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -408,7 +408,7 @@ typedef struct VacuumStmt {
 typedef struct ExplainStmt {
     NodeTag		type;
     Query		*query;		/* the query */
-    List		*options;
+    bool		verbose;	/* print plan info */
 } ExplainStmt;
 
 

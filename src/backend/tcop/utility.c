@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.10 1997/01/13 03:44:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.11 1997/01/16 14:56:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,7 +591,7 @@ ProcessUtility(Node *parsetree,
 	    commandTag = "EXPLAIN";
 	    CHECK_IF_ABORTED();
 
-	    ExplainQuery(stmt->query, stmt->options, dest);
+	    ExplainQuery(stmt->query, stmt->verbose, dest);
 	}
 	break;
 	

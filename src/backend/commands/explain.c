@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.7 1996/12/29 19:30:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.8 1997/01/16 14:55:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ static char *Explain_PlanToString(Plan *plan, ExplainState *es);
  *
  */
 void
-ExplainQuery(Query *query, List *options, CommandDest dest)
+ExplainQuery(Query *query, bool verbose, CommandDest dest)
 {
     char *s = NULL, *s2;
     Plan *plan;
@@ -68,25 +68,10 @@ ExplainQuery(Query *query, List *options, CommandDest dest)
     es = (ExplainState*)malloc(sizeof(ExplainState));
     memset(es, 0, sizeof(ExplainState));
 
-    /* parse options */
-    while (options) {
-	char *ostr = strVal(lfirst(options));
-	if (!strcasecmp(ostr, "cost"))
-	    es->printCost = true;
-	else if (!strcasecmp(ostr, "plan"))
-	    es->printNodes = true;
-	else if (!strcasecmp(ostr, "full")) {
-	    es->printCost = true;
-	    es->printNodes = true;
-	}
-	else
-	    elog(WARN, "Unknown EXPLAIN option: %s", ostr);
+    es->printCost = true;	/* default */
 
-	options = lnext(options);
-    }
-
-    if (!es->printCost && !es->printNodes)
-        es->printCost = true;	/* default */
+    if (verbose)
+	es->printNodes = true;
 
     es->rtable = query->rtable;
 
