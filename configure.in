@@ -32,6 +32,7 @@ VERSION='7.1devel'
 AC_SUBST(VERSION)
 AC_DEFINE_UNQUOTED(PG_VERSION, "$VERSION")
 
+unset CDPATH
 abs_top_srcdir=`cd $srcdir && pwd`
 AC_SUBST(abs_top_srcdir)
 abs_top_builddir=`pwd`
@@ -52,7 +53,7 @@ PGAC_ARG_REQ(with, template, [],
     *)      if test -f "$srcdir/src/template/$with_template" ; then
               template=$withval
             else
-              AC_MSG_ERROR([\`$withval' is not a valid template name. Use \`list' for a list.])
+              AC_MSG_ERROR(['$withval' is not a valid template name. Use 'list' for a list.])
             fi;;
   esac
 ],
@@ -88,17 +89,17 @@ nextstep*) template=nextstep ;;
 esac
 
   if test x"$template" = x"" ; then
-    AC_MSG_ERROR([
+    AC_MSG_ERROR([[
 *******************************************************************
 PostgreSQL has apparently not been ported to your platform yet.
 To try a manual configuration, look into the src/template directory
-for a similar platform and use the \`--with-template=' option.
+for a similar platform and use the '--with-template=' option.
 
 Please also contact <pgsql-ports@postgresql.org> to see about
-rectifying this.  Include the above \`checking host system type...'
+rectifying this.  Include the above 'checking host system type...'
 line.
 *******************************************************************
-])
+]])
   fi
 
 ])
@@ -325,7 +326,7 @@ PGAC_ARG_BOOL(enable, cassert, no, [  --enable-cassert        enable assertion c
 # Include directories
 #
 ac_save_IFS=$IFS
-IFS=':'
+IFS="${IFS}:"
 # SRCH_INC comes from the template file
 for dir in $with_includes $SRCH_INC; do
   if test -d "$dir"; then
@@ -342,7 +343,7 @@ AC_SUBST(INCLUDES)
 # Library directories
 #
 ac_save_IFS=$IFS
-IFS=':'
+IFS="${IFS}:"
 # LIBRARY_DIRS comes from command line, SRCH_LIB from template file.
 for dir in $LIBRARY_DIRS $SRCH_LIB; do
   if test -d "$dir"; then
@@ -644,7 +645,7 @@ AC_PROG_YACC
 AC_SUBST(YFLAGS)
 if test "$with_tk" = yes; then
     AC_PATH_PROG(WISH, wish)
-    test -z "$WISH" && AC_MSG_ERROR([\`wish' is required for Tk support])
+    test -z "$WISH" && AC_MSG_ERROR(['wish' is required for Tk support])
 fi
 
 
@@ -682,21 +683,21 @@ AC_CHECK_LIB(bind,     __inet_ntoa)
 
 
 if test "$with_krb4" = yes ; then
-  AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library \`des' is required for Kerberos 4])])
-  AC_CHECK_LIB(krb, [krb_sendauth], [], [AC_MSG_ERROR([library \`krb' is required for Kerberos 4])])
+  AC_CHECK_LIB(des, [des_encrypt], [], [AC_MSG_ERROR([library 'des' is required for Kerberos 4])])
+  AC_CHECK_LIB(krb, [krb_sendauth], [], [AC_MSG_ERROR([library 'krb' is required for Kerberos 4])])
 fi
 
 if test "$with_krb5" = yes ; then
-  AC_CHECK_LIB(com_err, [com_err], [], [AC_MSG_ERROR([library \`com_err' is required for Kerberos 5])])
+  AC_CHECK_LIB(com_err, [com_err], [], [AC_MSG_ERROR([library 'com_err' is required for Kerberos 5])])
   AC_CHECK_LIB(crypto,  [krb5_encrypt], [],
-    [AC_CHECK_LIB(k5crypto, [krb5_encrypt], [], [AC_MSG_ERROR([library \`crypto' is required for Kerberos 5])])])
-  AC_CHECK_LIB(krb5,    [krb5_sendauth], [], [AC_MSG_ERROR([library \`krb5' is required for Kerberos 5])])
+    [AC_CHECK_LIB(k5crypto, [krb5_encrypt], [], [AC_MSG_ERROR([library 'crypto' or 'k5crypto' is required for Kerberos 5])])])
+  AC_CHECK_LIB(krb5,    [krb5_sendauth], [], [AC_MSG_ERROR([library 'krb5' is required for Kerberos 5])])
 fi
 
 if test "$with_openssl" = yes ; then
   dnl Order matters!
-  AC_CHECK_LIB(crypto, [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library \`ssl' is required for OpenSSL])])
-  AC_CHECK_LIB(ssl,    [SSL_library_init], [], [AC_MSG_ERROR([library \`ssl' is required for OpenSSL])])
+  AC_CHECK_LIB(crypto, [CRYPTO_new_ex_data], [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
+  AC_CHECK_LIB(ssl,    [SSL_library_init], [], [AC_MSG_ERROR([library 'ssl' is required for OpenSSL])])
 fi
 
 
