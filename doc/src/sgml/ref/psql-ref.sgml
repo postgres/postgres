@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.28 2000/03/11 13:56:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.29 2000/03/21 01:52:12 momjian Exp $
 Postgres documentation
 -->
 
@@ -70,16 +70,19 @@ Postgres documentation
     told about those parameters via command line options, namely <option>-d</option>,
     <option>-h</option>, <option>-p</option>, and <option>-U</option> respectively.
     If an argument is found that does not belong to any option it will be interpreted
-    as database name as well. Not all these options are required, defaults do apply.
-    If you omit the host name psql will connect via domain sockets to a server on the
+    as the database name (or the user name, if the database name is also
+	 given). Not all these options are required, defaults do apply.
+    If you omit the host name psql will connect via a UNIX domain socket
+    to a server on the
     local host. The default port number is compile-time determined. Since the database
-    server uses the same default, chances are you don't have to specify the port in most
-    settings. The default user name is your Unix username, the same with the database.
+    server uses the same default, you will not have to specify the port in most
+    cases. The default user name is your Unix username, as is the default
+    database name.
     Note that you can't just connect to any database under any username. Your database
     administrator should have informed you about your access rights. To save you some typing
     you can also set the environment variables <envar>PGDATABASE</envar>,
-    <envar>PGHOST</envar>, <envar>PGPORT</envar>, <envar>PGUSER</envar>,
-    respectively to appropriate values.
+    <envar>PGHOST</envar>, <envar>PGPORT</envar> and <envar>PGUSER</envar>
+    to appropriate values.
     </para>
 
     <para>
@@ -98,8 +101,8 @@ Postgres documentation
 
     <para>
     In normal operation, <application>psql</application> provides a prompt with
-    the name of the database that <application>psql</application> is currently
-    connected to followed by the string "=>". For example,
+    the name of the database to which <application>psql</application> is currently
+    connected, followed by the string "=>". For example,
 <programlisting>
 $ <userinput>psql testdb</userinput>
 Welcome to psql, the PostgreSQL interactive terminal.
@@ -118,7 +121,7 @@ testdb=>
     At the prompt, the user may type in <acronym>SQL</acronym> queries.  
     Ordinarily, input lines are sent to the backend when a query-terminating
     semicolon is reached. An end of line does not terminate a query! Thus queries
-    can be spread over serveral lines for clarity. If the query was sent and without
+    can be spread over several lines for clarity. If the query was sent and without
     error, the query results are displayed on the screen.
     </para>
 
@@ -141,7 +144,7 @@ testdb=>
     <para>
     Anything you enter in <application>psql</application> that begins with an
     unquoted backslash is a <application>psql</application> meta-command that is
-    processes by <application>psql</application> itself.
+    processed by <application>psql</application> itself.
     These commands are what makes
     <application>psql</application> interesting for administration or scripting.
     Meta-commands are more commonly called slash or backslash commands.
@@ -156,7 +159,7 @@ testdb=>
 
     <para>
     To include whitespace into an argument you must quote it with a single
-    quote. To include a single quote into such an argument, preceed it by
+    quote. To include a single quote into such an argument, precede it by
     a backslash. Anything contained in single quotes is furthermore subject to
     C-like substitutions for <literal>\n</literal> (new line), <literal>\t</literal>
      (tab), <literal>\</literal><replaceable>digits</replaceable>,
@@ -271,17 +274,17 @@ testdb=>
         <para>
         Performs a frontend (client) copy. This is an operation that runs an
 	<acronym>SQL</acronym> <xref linkend="SQL-COPY" endterm="SQL-COPY-title"> command,
-        but instead of the backend reading or writing the specified file, and 
+        but instead of the backend's reading or writing the specified file, and 
         consequently requiring backend access and special user privilege, 
 	as well as being bound to the file system accessible by the backend,
         <application>psql</application> reads or writes the 
-        file and routes the data to or from the backend onto the local file system.
+        file and routes the data between the backend and the local file system.
 	</para>
 
 	<para>
-	The syntax of the command is in analogy to the <acronym>SQL</acronym>
-	<command>COPY</command> command, see its description for the details.
-	Note that because of this, special parsing rules apply to the
+	The syntax of the command is similar to that of the <acronym>SQL</acronym>
+	<command>COPY</command> command (see its description for the details).
+	Note that, because of this, special parsing rules apply to the
 	<command>\copy</command> command. In particular, the variable
 	substitution rules and backslash escapes do not apply.
 	</para>
@@ -298,10 +301,10 @@ testdb=>
         <note>
         <para>
         Note the difference in interpretation of <literal>stdin</literal> and <literal>stdout</literal>
-        between frontend and backend copies: In a frontend copy these always refer
+        between frontend and backend copies: in a frontend copy these always refer
         to <application>psql</application>'s input and output stream. On a backend
-        copy <literal>stdin</literal> comes from whereever the <command>COPY</command>
-        itself came from (for example, a script ran with the <option>-f</option>) option,
+        copy <literal>stdin</literal> comes from wherever the <command>COPY</command>
+        itself came from (for example, a script run with the <option>-f</option> option),
         and <literal>stdout</literal> refers to the query output stream (see
         <command>\o</command> meta-command below).
         </para>
@@ -483,7 +486,7 @@ testdb=>
         <listitem>
         <para>
         If <replaceable class="parameter">filename</replaceable> is specified,
-        the file is edited and after the editor exit its content is copied
+        the file is edited; after the editor exits, its content is copied
         back to the query buffer. If no argument is given, the current query
         buffer is copied to a temporary file which is then edited in the same
         fashion.
@@ -840,7 +843,7 @@ lo_import 152801
 	  </para>
 
 	  <para>
-	  Expanded mode is support by all four output modes.
+	  Expanded mode is supported by all four output modes.
 	  </para>
 	  </listitem>
 	  </varlistentry>
@@ -913,7 +916,7 @@ lo_import 152801
 	  <term><literal>tableattr</literal> (or <literal>T</literal>) [ <replaceable class="parameter">text</replaceable> ]</term>
 	  <listitem>
 	  <para>
-	  Allows you to specify any attributes to be places inside the <acronym>HTML</acronym>
+	  Allows you to specify any attributes to be placed inside the <acronym>HTML</acronym>
 	  <sgmltag>table</sgmltag> tag. This could for example be
 	  <literal>cellpadding</literal> or <literal>bgcolor</literal>. Note that you
 	  probably don't want to specify <literal>border</literal> here, as
@@ -1014,9 +1017,9 @@ lo_import 152801
 	<note>
 	<para>
 	As of <application>psql</application> version 7.0 it is no longer
-	necessary, in fact, to save the command history as that will be done
-	automatically on program termination. The history is then
-	also automatically loaded every time <application>psql</application>
+	necessary to save the command history, since that will be done
+	automatically on program termination. The history is
+	also loaded automatically every time <application>psql</application>
 	starts up.
 	</para>
 	</note>
@@ -1032,7 +1035,7 @@ lo_import 152801
 	Sets the internal variable <replaceable class="parameter">name</replaceable>
 	to <replaceable class="parameter">value</replaceable> or, if more than one
         value is given, to the concatenation of all of them. If no second argument
-	is given, the variable is just set with not value. To unset a variable, use
+	is given, the variable is just set with no value. To unset a variable, use
         the <command>\unset</command> command.
 	</para>
 
@@ -1042,8 +1045,8 @@ lo_import 152801
 	</para>
 
 	<para>
-	Although you are welcome to set any variable to anything you want to,
-	<application>psql</application> treats several variables special.
+	Although you are welcome to set any variable to anything you want,
+	<application>psql</application> treats several variables as special.
 	They are documented in the section about variables.
 	</para>
 
@@ -1237,8 +1240,8 @@ Access permissions for database "test"
       that is completely parseable by the backend (i.e., it contains no <application>psql</application>
       specific features), or it is a single backslash command. Thus
       you cannot mix <acronym>SQL</acronym> and <application>psql</application>
-      meta-commands. To achieve this you could pipe the string into
-      <application>psql</application>, like so:
+      meta-commands. To achieve that, you could pipe the string into
+      <application>psql</application>, like this:
       <literal>echo "\x \\ select * from foo;" | psql</literal>.
       </para>
       </listitem>
@@ -1273,7 +1276,7 @@ Access permissions for database "test"
       <term>-E, --echo-hidden</term>
       <listitem>
       <para>
-      Echos the actual queries generated by \d and other backslash commands.
+      Echoes the actual queries generated by \d and other backslash commands.
       You can use this if you wish to include similar functionality into
       your own programs. This is equivalent to setting the variable
       <envar>ECHO_HIDDEN</envar> from within <application>psql</application>.
@@ -1431,7 +1434,7 @@ Access permissions for database "test"
       <term>-S, --single-line</term>
       <listitem>
       <para>
-      Runs in single-line mode where a newline terminates a query, like a semicolon would do.
+      Runs in single-line mode where a newline terminates a query, as a semicolon does.
       </para>
 
       <note>
@@ -1439,7 +1442,7 @@ Access permissions for database "test"
       This mode is provided for those who insist on it, but you are not necessarily
       encouraged to use it. In particular, if you mix <acronym>SQL</acronym> and
       meta-commands on a line the order of execution might not always be clear to
-      the unexperienced user.
+      the inexperienced user.
       </para>
       </note>
       </listitem>
@@ -1451,7 +1454,7 @@ Access permissions for database "test"
       <listitem>
       <para>
       Turn off printing of column names and result row count footers, etc.
-      It is completely equivalent to the <command>\t</command>.
+      It is completely equivalent to the <command>\t</command> meta-command.
       </para>
       </listitem>
     </varlistentry>
@@ -1505,7 +1508,7 @@ Access permissions for database "test"
       Note that you must separate name and value, if any, by an equal sign on the command
       line. To unset a variable, leave off the equal sign. These assignments are done
       during a very early state of startup, so variables reserved for internal purposes
-      might get overwritten again.
+      might get overwritten later.
       </para>
       </listitem>
     </varlistentry>
@@ -1771,16 +1774,16 @@ bar
         interface to specially store data that does not fit into one tuple,
         all the operations must be contained in a transaction block. (See the
         documentation of the large object interface for more information.) Since
-        <application>psql</application> has no way to keep track if you already
+        <application>psql</application> has no way to tell if you already
         have a transaction in progress when you call one of its internal
         commands <command>\lo_export</command>, <command>\lo_import</command>,
         <command>\lo_unlink</command> it must take some arbitrary action. This
         action could either be to roll back any transaction that might already
         be in progress, or to commit any such transaction, or to do nothing at
-        all. In the latter case you must provide you own
+        all. In the last case you must provide your own
         <command>BEGIN TRANSACTION</command>/<command>COMMIT</command> block or
         the results will be unpredictable (usually resulting in the desired
-        action not being performed in any case).
+        action's not being performed in any case).
 	</para>
 
 	<para>
@@ -1800,7 +1803,7 @@ bar
 	<para>
 	By default, if non-interactive scripts encounter an error, such as a
 	malformed <acronym>SQL</acronym> query or internal meta-command,
-	processing continues. This is has been the traditional behaviour of
+	processing continues. This has been the traditional behaviour of
         <application>psql</application> but it is sometimes not desirable. If this variable
 	is set, script processing will immediately terminate. If the script was
 	called from another script it will terminate in the same fashion.
@@ -1816,7 +1819,7 @@ bar
         <term><envar>PORT</envar></term>
 	<listitem>
 	<para>
-        The database server port you are currently connected to. This is set everytime
+        The database server port to which you are currently connected. This is set every time
         you connect to a database (including program startup), but can be unset.
 	</para>
 	</listitem>
@@ -1848,7 +1851,7 @@ bar
         <term><envar>SINGLELINE</envar></term>
 	<listitem>
 	<para>
-	This variable is set be the command line options <option>-S</option>. You
+	This variable is set by the command line option <option>-S</option>. You
 	can unset or reset it at run time.
 	</para>
 	</listitem>
@@ -1867,7 +1870,7 @@ bar
         <term><envar>USER</envar></term>
 	<listitem>
 	<para>
-        The database user you are currently connected as. This is set everytime
+        The database user you are currently connected as. This is set every time
         you connect to a database (including program startup), but can be unset.
 	</para>
 	</listitem>
@@ -1972,7 +1975,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
       <varlistentry>
         <term><literal>%m</literal></term>
-	<listitem><para>The hostname of the database server truncated after the
+	<listitem><para>The hostname of the database server, truncated after the
          first dot.</para></listitem>
       </varlistentry>
 
