@@ -230,7 +230,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.37 1998/09/18 03:02:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.38 1998/09/25 13:45:12 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4361,7 +4361,7 @@ static const short yycheck[] = {     3,
    205
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/local/bison/bison.simple"
+#line 3 "/usr/lib/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -4554,7 +4554,7 @@ __yy_memcpy (char *to, char *from, int count)
 #endif
 #endif
 
-#line 196 "/usr/local/bison/bison.simple"
+#line 196 "/usr/lib/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -10140,7 +10140,7 @@ case 888:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 498 "/usr/local/bison/bison.simple"
+#line 498 "/usr/lib/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -10629,10 +10629,6 @@ FlattenStringList(List *list)
 	};
 	*(s+len) = '\0';
 
-#ifdef PARSEDEBUG
-	elog(DEBUG, "flattened string is \"%s\"\n", s);
-#endif
-
 	return s;
 } /* FlattenStringList() */
 
@@ -10680,10 +10676,6 @@ makeConstantList( A_Const *n)
 		elog(ERROR,"Internal error in makeConstantList(): cannot encode node");
 	};
 
-#ifdef PARSEDEBUG
-	elog(DEBUG, "AexprConst argument is \"%s\"\n", defval);
-#endif
-
 	return result;
 } /* makeConstantList() */
 
@@ -10708,11 +10700,6 @@ fmtId(char *rawid)
 	} else {
 		cp = rawid;
 	};
-
-#ifdef PARSEDEBUG
-	elog(DEBUG, "fmtId- %sconvert %s to %s\n",
-	 ((cp == rawid)? "do not ": ""), rawid, cp);
-#endif
 
 	return cp;
 }
