@@ -2,7 +2,7 @@ POSTGRESQL INSTALLATION INSTRUCTIONS
 Copyright (c) 1997 Regents of  the University of California
 
 This is file /usr/src/pgsql/INSTALL.  It contains notes on how to install
-PostgreSQL v6.2.  Up to date information on PostgreSQL may be found at
+PostgreSQL v6.2.1.  Up to date information on PostgreSQL may be found at
 http://www.postgresql.org.
 
 PostgreSQL is an RDBMS database server.  It is not completely ANSI SQL
@@ -525,7 +525,7 @@ PostgreSQL:
         rm -rf /usr/local/pgsql_6_0
         # Also delete old database directory tree if it is not in
         #  /usr/local/pgsql_6_0/data
-        rm ~/postgresql-v6.2.tar.gz
+        rm ~/postgresql-v6.2.1.tar.gz
 
  26) You will probably want to print out the documentation.  Here is how
      you might do it if you have Ghostscript on your system and are
@@ -552,7 +552,7 @@ PostgreSQL:
      supported platforms.  We therefore ask you to let us know if you did
      or did not get PostgreSQL to work on you system.  Please send a
      mail message to pgsql-ports@postgresql.org telling us the following:
-       - The version of PostgreSQL (v6.2, 6.1.1, beta 970703, etc.).
+       - The version of PostgreSQL (v6.2.1, 6.1.1, beta 970703, etc.).
        - Your operating system (i.e. RedHat v4.0 Linux v2.0.26).
        - Your hardware (SPARC, i486, etc.).
        - Did you compile, install and run the regression tests cleanly?

@@ -1,0 +1,9 @@
+INSTALL
+HISTORY
+README
+doc/FAQ, including version number
+doc/Machine-specific FAQ's
+doc/TODO
+doc/bug.template
+include/version.h
+

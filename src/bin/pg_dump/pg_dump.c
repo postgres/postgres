@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.49 1997/10/02 13:57:05 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.50 1997/10/16 04:14:00 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1976,7 +1976,7 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 	char		rightarg[MAXQUERYLEN];
 	char		commutator[MAXQUERYLEN];
 	char		negator[MAXQUERYLEN];
-	char		restrict[MAXQUERYLEN];
+	char		restrictor[MAXQUERYLEN];
 	char		join[MAXQUERYLEN];
 	char		sortop[MAXQUERYLEN];
 
@@ -2026,9 +2026,9 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 			  findOprByOid(oprinfo, numOperators, oprinfo[i].oprnegate));
 
 		if (strcmp(oprinfo[i].oprrest, "-") == 0)
-			restrict[0] = '\0';
+			restrictor[0] = '\0';
 		else
-			sprintf(restrict, ", RESTRICT = %s ", oprinfo[i].oprrest);
+			sprintf(restrictor, ", RESTRICT = %s ", oprinfo[i].oprrest);
 
 		if (strcmp(oprinfo[i].oprjoin, "-") == 0)
 			join[0] = '\0';
@@ -2059,7 +2059,7 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 				rightarg,
 				commutator,
 				negator,
-				restrict,
+				restrictor,
 				(strcmp(oprinfo[i].oprcanhash, "t")) ? ", HASHES" : "",
 				join,
 				sortop);

@@ -1,3 +1,21 @@
+PostgreSQL 6.2.1                 Fri Oct 17 00:01:27 EDT 1997
+-------------------------------------------------------------
+
+This release does NOT require a dump/restore for those running 6.2.
+Please see the appropriate /migration file for more information.
+
+Changes in this release
+-----------------------
+Allow TIME and TYPE column names(Thomas)
+Allow larger range of true/false as boolean values(Thomas)
+Support output of "now" and "current"(Thomas)
+Handle DEFAULT with INSERT of NULL properly(Vadim)
+fix for buffer cache reference count problem(Vadim)
+Allow strings to span lines, like ANSI(Thomas)
+Fix for backward ORDER BY(Vadim)
+Fix avg(cash) computation(Thomas)
+
+
 PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
 -------------------------------------------------------------
 

@@ -1,8 +1,8 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Oct  2 14:08:20 EDT 1997
-   Version: 6.2
+   Last updated: Wed Oct 15 23:16:48 EDT 1997
+   Version: 6.2.1
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -241,9 +241,9 @@ Section 1: General Questions
      
   1.6) Latest release of PostgreSQL
   
-   The latest release of PostgreSQL is version 6.2, which was released
-   on October 2, 1997. For information about what is new in 6.2, see our
-   TODO list on our WWW page.
+   The latest release of PostgreSQL is version 6.2.1, which was released
+   on October 17th, 1997. For information about what is new in 6.2.1, see
+   our TODO list on our WWW page.
    
   1.7) Is there a commercial version of PostgreSQL?
   
@@ -279,18 +279,14 @@ Section 1: General Questions
   
    PostgreSQL v1.09 is compatible with databases created with v1.01.
    
-   Upgrading to 6.1 requires a dump and restore from previous releases.
+   Upgrading to 6.2.1 from pre-6.2 requires a dump and restore.
    
-   Upgrading from 6.1 to 6.1.1 requires running configure, compile of the
-   new release, recompile of all your custom applications to use the new
-   libpq, and then an install while the postmaster is temporarily
-   stopped.
-   
-   Upgrading to 6.2 requires a dump and restore from previous releases.
+   Upgrading to 6.2.1 from 6.2 does not require a dump, but see the
+   appropriate /migration file in the distribution.
    
    Those ugrading from versions earlier than 1.09 must upgrade to 1.09
    first without a dump/reload, then dump the data from 1.09, and then
-   load it into 6.2.
+   load it into 6.2.1.
    
   1.11) Are there ODBC drivers for PostgreSQL?
   
@@ -645,8 +641,8 @@ BYTEA           bytea           variable-length array of bytes
    could select the same new id. This statement should be performed
    within a transaction.
    
-   Yet another way is to use general trigger function autoinc()
-   from contrib/spi/autoinc.c
+   Yet another way is to use general trigger function autoinc() from
+   contrib/spi/autoinc.c.
    
   3.16) What are the pg_psort.XXX files in my database directory?
   
