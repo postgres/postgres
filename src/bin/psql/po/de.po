@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.13 2004/12/12 18:09:17 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.14 2005/01/06 00:11:55 tgl Exp $
 #
 # Use these quotes: »%s«
 #
@@ -1763,9 +1763,9 @@ msgid ""
 "\n"
 "where option can be:\n"
 "\n"
-"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
-"    | CREATEDB | NOCREATEDB\n"
+"    CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
 "    | VALID UNTIL 'abstime'\n"
 "\n"
 "ALTER USER name RENAME TO newname\n"
@@ -1777,9 +1777,9 @@ msgstr ""
 "\n"
 "wobei option Folgendes sein kann:\n"
 "\n"
-"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort' \n"
-"    | CREATEDB | NOCREATEDB\n"
+"    CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort' \n"
 "    | VALID UNTIL 'abstime'\n"
 "\n"
 "ALTER USER name RENAME TO neuer_name\n"
@@ -2412,10 +2412,10 @@ msgid ""
 "where option can be:\n"
 "    \n"
 "      SYSID uid \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | IN GROUP groupname [, ...]\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | VALID UNTIL 'abstime'"
 msgstr ""
 "CREATE USER name [ [ WITH ] option [ ... ] ]\n"
@@ -2423,10 +2423,10 @@ msgstr ""
 "wobei option Folgendes sein kann:\n"
 "    \n"
 "      SYSID uid \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort'\n"
 "    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | IN GROUP gruppenname [, ...]\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'passwort'\n"
 "    | VALID UNTIL 'abstime'"
 
 #: sql_help.h:213

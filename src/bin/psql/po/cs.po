@@ -1,7 +1,7 @@
 # translation of psql-cs.po to Czech
 # Czech message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/cs.po,v 1.4 2004/10/28 08:54:08 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/cs.po,v 1.5 2005/01/06 00:11:55 tgl Exp $
 # Karel Zak <zakkr@zf.jcu.cz>, 2001-2003, 2004.
 #
 msgid ""
@@ -1700,9 +1700,9 @@ msgid ""
 "\n"
 "where option can be:\n"
 "\n"
-"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
-"    | CREATEDB | NOCREATEDB\n"
+"    CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
 "    | VALID UNTIL 'abstime'\n"
 "\n"
 "ALTER USER name RENAME TO newname\n"
@@ -2142,10 +2142,10 @@ msgid ""
 "where option can be:\n"
 "    \n"
 "      SYSID uid \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | IN GROUP groupname [, ...]\n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | VALID UNTIL 'abstime'"
 msgstr ""
 
