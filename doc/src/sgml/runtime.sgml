@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.267 2004/06/24 19:26:55 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.268 2004/06/27 22:58:19 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3560,8 +3560,8 @@ kernel.shmmax = 134217728
        <para>
         Other parameters are sufficiently sized for any application. If
         you want to see for yourself look in
-        <filename>/usr/src/linux/include/asm-<replaceable>xxx</>/shmpara
-        m.h</> and <filename>/usr/src/linux/include/linux/sem.h</>.
+        <filename>/usr/src/linux/include/asm-<replaceable>xxx</>/shmparam.h</>
+        and <filename>/usr/src/linux/include/linux/sem.h</>.
        </para>
       </listitem>
      </varlistentry>
