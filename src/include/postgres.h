@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.2 1996/11/04 06:35:36 scrappy Exp $
+ * $Id: postgres.h,v 1.3 1996/12/10 07:03:40 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #ifndef POSTGRES_H
 #define POSTGRES_H
 
+#include "postgres_ext.h"
 #include "config.h"
 #include "c.h"
 #include "utils/elog.h"
@@ -53,8 +54,6 @@ typedef double	float8;
 
 typedef int4 aclitem;
 
-
-typedef uint32	Oid;
 #define InvalidOid	0
 #define OidIsValid(objectId)  ((bool) (objectId != InvalidOid))
 
@@ -104,26 +103,6 @@ typedef char16	*Char16;
 
 typedef int2 int28[8];
 typedef Oid oid8[8];
-
-/* char16 is distinct from Name.
-   now, you can truly change the max length of system names
-   by altering the NAMEDATALEN define below.
-   don't set the value too high because tuples are still constrained
-   to be less than 8K 
-*/
-
- /* NAMEDATALEN is the maximum string length (counting terminating null) 
-    of a Name */ 
-/* defined in Makefile.global */
-/* if you change the value of NAMEDATALEN, you may need to change the
-    alignment of the 'name' type in pg_type.h */
-#ifndef NAMEDATALEN
-#define NAMEDATALEN 16
-#endif /* NAMEDATALEN */
-/* OIDNAMELEN should be NAMEDATALEN + sizeof(Oid) */
-#ifndef OIDNAMELEN
-#define OIDNAMELEN 20
-#endif /* OIDNAMELEN */
 
 typedef struct nameData {
     char data[NAMEDATALEN];

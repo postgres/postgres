@@ -83,7 +83,7 @@
 #endif
 
 #if defined(hpux)
-#  define SIGJMP_BUF
+#  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
 #  define NEED_CBRT
@@ -129,7 +129,7 @@
    __USE_BSD is set by bsd/signal.h, and __USE_BSD_SIGNAL appears not to
    be used.
 */
-#  define SIGJMP_BUF
+#  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
 #  define NEED_CBRT
@@ -141,7 +141,7 @@
 
 /* does anybody use this? */
 #if defined(next)
-#  define SIGJMP_BUF
+#  define JMP_BUF
 #  define NEED_SIG_JMP
 #  define SB_PAD 56
    typedef struct mutex    slock_t;
@@ -184,7 +184,7 @@
 #endif
 
 #if defined(win32)
-#  define SIGJMP_BUF
+#  define JMP_BUF
 #  define NEED_SIG_JMP
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
@@ -216,20 +216,6 @@
 #ifndef       SIGNAL_ARGS
 #  define SIGNAL_ARGS int postgres_signal_arg
 #endif
-
-/* NAMEDATALEN is the max length for system identifiers (e.g. table names,
- * attribute names, function names, etc.)
- *
- * These MUST be set here.  DO NOT COMMENT THESE OUT
- * Setting these too high will result in excess space usage for system catalogs
- * Setting them too low will make the system unusable.
- * values between 16 and 64 that are multiples of four are recommended.
- *
- * NOTE also that databases with different NAMEDATALEN's cannot interoperate!
- */ 
-#define NAMEDATALEN 32
-/* OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid) */
-#define OIDNAMELEN  36
 
 /* 
  * DEF_PGPORT is the TCP port number on which the Postmaster listens by
