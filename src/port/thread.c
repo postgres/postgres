@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.4 2003/08/16 15:35:51 momjian Exp $
+ * $Id: thread.c,v 1.5 2003/09/03 19:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,8 @@
  *	The current setup is to assume either all standard functions are
  *	thread-safe (NEED_REENTRANT_FUNC_NAMES=no), or the operating system
  *	requires reentrant function names (NEED_REENTRANT_FUNC_NAMES=yes).
+ *	Compile and run src/tools/test_thread_funcs.c to see if your operating
+ *	system requires reentrant function names.
  */
  
 
