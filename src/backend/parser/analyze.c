@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.75 1998/05/09 23:29:52 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.76 1998/05/29 13:39:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,8 +315,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			te = makeNode(TargetEntry);
 			te->resdom = makeResdom(defval[ndef].adnum,
 									att[defval[ndef].adnum - 1]->atttypid,
-								  att[defval[ndef].adnum - 1]->atttypmod,
-			   pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
+									att[defval[ndef].adnum - 1]->atttypmod,
+									pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
 									0, 0, 0);
 			te->fjoin = NULL;
 			te->expr = (Node *) stringToNode(defval[ndef].adbin);
@@ -350,9 +350,10 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
-	/* The INSERT INTO ... SELECT ... could have a UNION */
-	qry->unionall = stmt->unionall;		/* in child, so unionClause may be
-										 * false */
+	/* The INSERT INTO ... SELECT ... could have a UNION
+	 * in child, so unionClause may be false
+	 */
+	qry->unionall = stmt->unionall;
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
 	return (Query *) qry;
@@ -813,8 +814,10 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
-	qry->unionall = stmt->unionall;		/* in child, so unionClause may be
-										 * false */
+	/* The INSERT INTO ... SELECT ... could have a UNION
+	 * in child, so unionClause may be false
+	 */
+	qry->unionall = stmt->unionall;
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
 	return (Query *) qry;
