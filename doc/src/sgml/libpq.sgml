@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.69 2001/09/07 22:02:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.70 2001/09/08 16:46:34 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -862,6 +862,7 @@ to <parameter>to</>, not including the terminating NUL character.
 Behavior is undefined when the <parameter>to</> and <parameter>from</>
 strings overlap.
 </para>
+</sect2>
 
 <sect2 id="libpq-exec-select-info">
   <title>Retrieving SELECT Result Information</title>
