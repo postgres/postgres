@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.93.2.1 1998/11/06 15:56:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.93.2.2 1998/11/15 07:11:29 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2563,15 +2563,16 @@ dumpACL(FILE *fout, TableInfo tbinfo)
 	{
 		if (ACLlist[k].privledges != (char *) NULL)
 		{
+			/* If you change this code, bear in mind fmtId() can be
+			 * used only once per printf() call...
+			 */
+			fprintf(fout,
+					"GRANT %s on %s to ",
+					ACLlist[k].privledges, fmtId(tbinfo.relname));
 			if (ACLlist[k].user == (char *) NULL)
-				fprintf(fout,
-						"GRANT %s on %s to PUBLIC;\n",
-						ACLlist[k].privledges, fmtId(tbinfo.relname));
+				fprintf(fout, "PUBLIC;\n");
 			else
-				fprintf(fout,
-						"GRANT %s on %s to %s;\n",
-						ACLlist[k].privledges, fmtId(tbinfo.relname),
-						fmtId(ACLlist[k].user));
+				fprintf(fout, "%s;\n", fmtId(ACLlist[k].user));
 		}
 	}
 }
@@ -2851,23 +2852,21 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 
 			strcpy(id1, fmtId(indinfo[i].indexrelname));
 			strcpy(id2, fmtId(indinfo[i].indrelname));
-			sprintf(q, "CREATE %s INDEX %s on %s using %s (",
+			fprintf(fout, "CREATE %s INDEX %s on %s using %s (",
 			  (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
 					id1,
 					id2,
 					indinfo[i].indamname);
 			if (funcname)
 			{
-				sprintf(q, "%s %s (%s) %s );\n",
-						q, fmtId(funcname), attlist, fmtId(classname[0]));
+				/* need 2 printf's here cuz fmtId has static return area */
+				fprintf(fout, " %s", fmtId(funcname));
+				fprintf(fout, " (%s) %s );\n", attlist, fmtId(classname[0]));
 				free(funcname);
 				free(classname[0]);
 			}
 			else
-				sprintf(q, "%s %s );\n",
-						q, attlist);
-
-			fputs(q, fout);
+				fprintf(fout, " %s );\n", attlist);
 		}
 	}
 
