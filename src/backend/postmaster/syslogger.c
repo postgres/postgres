@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.1 2004/08/05 23:32:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.2 2004/08/06 16:00:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,18 @@
 #include "storage/pg_shmem.h"
 #include "utils/guc.h"
 #include "utils/ps_status.h"
+
+
+/*
+ * We really want line-buffered mode for logfile output, but Windows does
+ * not have it, and interprets _IOLBF as _IOFBF (bozos).  So use _IONBF
+ * instead on Windows.
+ */
+#ifdef WIN32
+#define LBF_MODE	_IONBF
+#else
+#define LBF_MODE	_IOLBF
+#endif
 
 
 /*
@@ -132,11 +144,19 @@ SysLoggerMain(int argc, char *argv[])
 	 */
 	if (redirection_done)
 	{
-		int	i = open(NULL_DEV, O_WRONLY);
+		int	fd = open(NULL_DEV, O_WRONLY);
 
-		dup2(i, fileno(stdout));
-		dup2(i, fileno(stderr));
-		close(i);
+		/*
+		 * The closes might look redundant, but they are not: we want to be
+		 * darn sure the pipe gets closed even if the open failed.  We can
+		 * survive running with stderr pointing nowhere, but we can't afford
+		 * to have extra pipe input descriptors hanging around.
+		 */
+		close(fileno(stdout));
+		close(fileno(stderr));
+		dup2(fd, fileno(stdout));
+		dup2(fd, fileno(stderr));
+		close(fd);
 	}
 
 	/*
@@ -317,9 +337,13 @@ SysLoggerMain(int argc, char *argv[])
 		{
 			ereport(LOG,
 					(errmsg("logger shutting down")));
-			if (syslogFile)
-				fclose(syslogFile);
-			/* normal exit from the syslogger is here */
+			/*
+			 * Normal exit from the syslogger is here.  Note that we
+			 * deliberately do not close syslogFile before exiting;
+			 * this is to allow for the possibility of elog messages
+			 * being generated inside proc_exit.  Regular exit() will
+			 * take care of flushing and closing stdio channels.
+			 */
 			proc_exit(0);
 		}
 	}
@@ -401,7 +425,7 @@ SysLogger_Start(void)
 				 (errmsg("could not create logfile \"%s\": %m",
 						 filename))));
 
-	setvbuf(syslogFile, NULL, _IOLBF, 0);
+	setvbuf(syslogFile, NULL, LBF_MODE, 0);
 
 	pfree(filename);
 
@@ -557,7 +581,7 @@ syslogger_parseArgs(int argc, char *argv[])
 	if (fd != -1)
 	{
 	    syslogFile = fdopen(fd, "a");
-		setvbuf(syslogFile, NULL, _IOLBF, 0);
+		setvbuf(syslogFile, NULL, LBF_MODE, 0);
 	}
 	redirection_done = (bool) atoi(*argv++);
 #else  /* WIN32 */
@@ -568,7 +592,7 @@ syslogger_parseArgs(int argc, char *argv[])
 		if (fd != 0)
 		{
 			syslogFile = fdopen(fd, "a");
-			setvbuf(syslogFile, NULL, _IOLBF, 0);
+			setvbuf(syslogFile, NULL, LBF_MODE, 0);
 		}
 	}
 	redirection_done = (bool) atoi(*argv++);
@@ -631,7 +655,8 @@ pipeThread(void *arg)
 		{
 			DWORD error = GetLastError();
 
-			if (error == ERROR_HANDLE_EOF)
+			if (error == ERROR_HANDLE_EOF ||
+				error == ERROR_BROKEN_PIPE)
 				break;
 			ereport(LOG,
 					(errcode_for_file_access(),
@@ -689,7 +714,7 @@ logfile_rotate(void)
 		return;
 	}
 
-	setvbuf(fh, NULL, _IOLBF, 0);
+	setvbuf(fh, NULL, LBF_MODE, 0);
 
 	/* On Windows, need to interlock against data-transfer thread */
 #ifdef WIN32
