@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.15 2001/01/17 16:34:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.16 2001/01/17 22:13:33 momjian Exp $
 -->
 
  <chapter id="plsql">
@@ -472,7 +472,7 @@ END IF;
 	database return a value. Thus, the normal way to call a function
 	is to execute a SELECT query or doing an assignment (resulting
 	in a PL/pgSQL internal SELECT). But there are cases where someone
-	isn't interested in the functions result.
+	isn't interested in the function's result.
 	<programlisting>
 PERFORM <replaceable>query</replaceable>
 	</programlisting>
@@ -551,7 +551,7 @@ RETURN <replaceable>expression</replaceable>
        </para>
        <para>
 	The expressions result will be automatically casted into the
-	functions return type as described for assignments.
+	function's return type as described for assignments.
        </para>
       </listitem>
      </varlistentry>
@@ -838,7 +838,7 @@ EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replac
 
    <para>
     One painful detail of writing functions in PL/pgSQL is the handling
-    of single quotes. The functions source text on CREATE FUNCTION must
+    of single quotes. The function's source text on CREATE FUNCTION must
     be a literal string. Single quotes inside of literal strings must be
     either doubled or quoted with a backslash. We are still looking for
     an elegant alternative. In the meantime, doubling the single quotes
