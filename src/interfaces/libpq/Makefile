@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.41 2000/09/17 13:02:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.42 2000/10/12 07:38:13 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       pqexpbuffer.o dllist.o pqsignal.o $(SNPRINTF) $(INET_ATON)
 
 ifdef MULTIBYTE
-OBJS+= common.o wchar.o conv.o big5.o
+OBJS+= common.o wchar.o conv.o big5.o mbutils.o
 endif
 
 # If crypt is a separate library, rather than part of libc,
@@ -58,7 +58,9 @@ inet_aton.c: $(backend_src)/port/inet_aton.c
 	rm -f $@ && $(LN_S) $< .
 
 ifdef MULTIBYTE
-common.c wchar.c conv.c big5.c: % : $(backend_src)/utils/mb/%
+maps = iso8859.map UTF_to_EUC_JP.map EUC_JP_to_UTF.map sjis.map
+conv.c: $(maps)
+common.c wchar.c conv.c big5.c mbutils.c $(maps) : % : $(backend_src)/utils/mb/%
 	rm -f $@ && $(LN_S) $< .
 endif
 
