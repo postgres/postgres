@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.49 2001/03/27 14:56:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.50 2001/04/15 03:25:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -291,7 +291,7 @@ else # PORTNAME == aix
 # AIX case
 $(shlib): lib$(NAME).a
 	$(MKLDEXPORT) lib$(NAME).a > lib$(NAME)$(EXPSUFF)
-	$(COMPILER) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:lib$(NAME)$(EXPSUFF) -o $@ $< $(LDFLAGS) $(SHLIB_LINK)
+	$(COMPILER) -Wl,-H512 -Wl,-bM:SRE -Wl,-bI:$(top_builddir)/src/backend/$(POSTGRES_IMP) -Wl,-bE:lib$(NAME)$(EXPSUFF) -o $@ $< $(LDFLAGS) $(SHLIB_LINK) $(LDFLAGS_SL)
 
 endif # PORTNAME == aix
 
