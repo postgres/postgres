@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.111 2003/01/25 23:10:27 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.112 2003/01/27 23:55:38 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -101,7 +101,7 @@ bool		Australian_timezones = false;
 
 bool		Password_encryption = true;
 
-int			log_min_error_statement = ERROR;
+int			log_min_error_statement = PANIC;
 char	   *log_min_error_statement_str = NULL;
 const char	log_min_error_statement_str_default[] = "panic";
 
