@@ -12,7 +12,7 @@
 #if defined(PPC)
 typedef unsigned int slock_t;
 
-#elif defined(__alpha__)
+#elif defined(__alpha)
 typedef long int slock_t;
 
 #else /* i386 probably */

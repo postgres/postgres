@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.6 1998/05/04 16:58:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.7 1998/05/04 23:49:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ s_lock_stuck(slock_t *lock, char *file, int line)
  */
 
 
-#if defined(__alpha__)
+#if defined(__alpha)
 int
 tas(slock_t *lock)
 {
@@ -114,7 +114,7 @@ tas(slock_t *lock)
 
 	return (_res != 0);
 }
-#endif /* __alpha__ */
+#endif /* __alpha */
 
 
 
