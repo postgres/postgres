@@ -1750,6 +1750,10 @@ Mon Feb 16 08:17:19 CET 2004
 Tue Feb 24 16:48:57 CET 2004
 
 	- Corrected error handling in PGTYPEStimestamp_from_asc.
+	
+Mon Mar  1 08:56:37 CET 2004
+	
+	- Added partly missing VOLATILE keyword.
 	- Set pgtypeslib version to 1.2.
-	- Set ecpg version to 3.1.1.
+	- Set ecpg version to 3.2.0.
 

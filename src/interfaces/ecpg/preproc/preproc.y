@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.275 2004/02/18 08:42:02 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.276 2004/03/02 06:45:05 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -5666,11 +5666,12 @@ ECPGColLabel:  ECPGColLabelCommon			{ $$ = $1; }
 		;
 
 ECPGCKeywords: S_AUTO			{ $$ = make_str("auto"); }
-		| S_CONST			{ $$ = make_str("const"); }
-		| S_EXTERN			{ $$ = make_str("extern"); }
-		| S_REGISTER			{ $$ = make_str("register"); }
-		| S_STATIC			{ $$ = make_str("static"); }
-		| S_TYPEDEF			{ $$ = make_str("typedef"); }
+		| S_CONST		{ $$ = make_str("const"); }
+		| S_EXTERN		{ $$ = make_str("extern"); }
+		| S_REGISTER		{ $$ = make_str("register"); }
+		| S_STATIC		{ $$ = make_str("static"); }
+		| S_TYPEDEF		{ $$ = make_str("typedef"); }
+		| S_VOLATILE		{ $$ = make_str("volatile"); }
 		;
 	
 /*
@@ -6149,6 +6150,7 @@ c_anything:  IDENT				{ $$ = $1; }
 		| S_STATIC			{ $$ = make_str("static"); }
 		| S_SUB				{ $$ = make_str("-="); }
 		| S_TYPEDEF			{ $$ = make_str("typedef"); }
+		| S_VOLATILE			{ $$ = make_str("volatile"); }
 		| SQL_BOOL			{ $$ = make_str("bool"); }
 		| SQL_ENUM			{ $$ = make_str("enum"); }
 		| HOUR_P			{ $$ = make_str("hour"); }
