@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.19 2002/08/04 03:59:09 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.20 2002/08/04 04:17:33 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -61,9 +61,9 @@ static void plpgsql_input(char *buf, int *result, int max);
 
 %option yylineno
 
-DQUOTE	\"([^\"])*\"
-WS    [\200-\377_A-Za-z]
-WC    [\200-\377_A-Za-z0-9]
+
+WS    [\200-\377_A-Za-z"]
+WC    [\200-\377_A-Za-z0-9"]
 
 %x	IN_STRING IN_COMMENT
 
@@ -155,48 +155,17 @@ dump			{ return O_DUMP;			}
      * ----------
      */
 {WS}{WC}*		{ return plpgsql_parse_word(yytext);	}
-{DQUOTE}*		{ return plpgsql_parse_word(yytext);	}
-
 {WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_dblword(yytext);	}
-{WS}{WC}*\.{DQUOTE}*	{ return plpgsql_parse_dblword(yytext);	}
-{DQUOTE}*\.{WS}{WC}*	{ return plpgsql_parse_dblword(yytext);	}
-{DQUOTE}*\.{DQUOTE}*	{ return plpgsql_parse_dblword(yytext);	}
-
 {WS}{WC}*\.{WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-{WS}{WC}*\.{WS}{WC}*\.{DQUOTE}*	{ return plpgsql_parse_tripword(yytext); }
-{WS}{WC}*\.{DQUOTE}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-{WS}{WC}*\.{DQUOTE}*\.{DQUOTE}*	{ return plpgsql_parse_tripword(yytext); }
-{DQUOTE}*\.{WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-{DQUOTE}*\.{WS}{WC}*\.{DQUOTE}*	{ return plpgsql_parse_tripword(yytext); }
-{DQUOTE}*\.{DQUOTE}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-{DQUOTE}*\.{DQUOTE}*\.{DQUOTE}*	{ return plpgsql_parse_tripword(yytext); }
-
 {WS}{WC}*%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
-{DQUOTE}*%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
-
 {WS}{WC}*\.{WS}{WC}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-{WS}{WC}*\.{DQUOTE}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-{DQUOTE}*\.{WS}{WC}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-{DQUOTE}*\.{DQUOTE}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-
 {WS}{WC}*%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
-{DQUOTE}*%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
 
 \$[0-9]+		{ return plpgsql_parse_word(yytext);	}
-
 \$[0-9]+\.{WS}{WC}*	{ return plpgsql_parse_dblword(yytext);	}
-\$[0-9]+\.{DQUOTE}*	{ return plpgsql_parse_dblword(yytext);	}
-
 \$[0-9]+\.{WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-\$[0-9]+\.{WS}{WC}*\.{DQUOTE}*	{ return plpgsql_parse_tripword(yytext); }
-\$[0-9]+\.{DQUOTE}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
-\$[0-9]+\.{DQUOTE}*\.{DQUOTE}*	{ return plpgsql_parse_tripword(yytext); }
-
 \$[0-9]+%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
-
 \$[0-9]+\.{WS}{WC}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-\$[0-9]+\.{DQUOTE}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
-
 \$[0-9]+%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
 
 [0-9]+			{ return T_NUMBER;			}
