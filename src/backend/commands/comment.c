@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.61 2002/10/09 16:26:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.61.2.1 2003/07/17 20:14:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -403,20 +403,38 @@ CommentDatabase(List *qualname, char *comment)
 		elog(ERROR, "CommentDatabase: database name may not be qualified");
 	database = strVal(lfirst(qualname));
 
+	/*
+	 * We cannot currently support cross-database comments (since other DBs
+	 * cannot see pg_description of this database).  So, we reject attempts
+	 * to comment on a database other than the current one.  Someday this
+	 * might be improved, but it would take a redesigned infrastructure.
+	 *
+	 * When loading a dump, we may see a COMMENT ON DATABASE for the old name
+	 * of the database.  Erroring out would prevent pg_restore from completing
+	 * (which is really pg_restore's fault, but for now we will work around
+	 * the problem here).  Consensus is that the best fix is to treat wrong
+	 * database name as a WARNING not an ERROR.
+	 */
+
 	/* First get the database OID */
 	oid = get_database_oid(database);
 	if (!OidIsValid(oid))
-		elog(ERROR, "database \"%s\" does not exist", database);
-
-	/* Allow if the user matches the database dba or is a superuser */
-
-	if (!(superuser() || is_dbadmin(oid)))
-		elog(ERROR, "you are not permitted to comment on database \"%s\"",
-			 database);
+	{
+		elog(WARNING, "database \"%s\" does not exist", database);
+		return;
+	}
 
 	/* Only allow comments on the current database */
 	if (oid != MyDatabaseId)
-		elog(ERROR, "Database comments may only be applied to the current database");
+	{
+		elog(WARNING, "Database comments may only be applied to the current database");
+		return;
+	}
+
+	/* Allow if the user matches the database dba or is a superuser */
+	if (!(superuser() || is_dbadmin(oid)))
+		elog(ERROR, "you are not permitted to comment on database \"%s\"",
+			 database);
 
 	/* Create the comment with the pg_database oid */
 	CreateComments(oid, RelOid_pg_database, 0, comment);
