@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.10 1997/10/30 17:36:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.11 1997/11/07 06:24:33 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,6 +32,7 @@ include ../Makefile.global
 	$(MAKE) -C destroydb $@
 	$(MAKE) -C destroyuser $@
 	$(MAKE) -C initdb $@
+	$(MAKE) -C initlocation $@
 #
 # TCL/TK programs
 #
