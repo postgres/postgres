@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.63 2000/02/21 18:47:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.64 2000/03/01 18:47:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ _equalExpr(Expr *a, Expr *b)
 static bool
 _equalAttr(Attr *a, Attr *b)
 {
-	if (!strcmp(a->relname, b->relname))
+	if (strcmp(a->relname, b->relname) != 0)
 		return false;
 	if (!equal(a->attrs, b->attrs))
 		return false;
