@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.83 2002/10/12 16:29:51 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.84 2002/10/20 01:38:18 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1503,14 +1503,6 @@ gunzip -c user.ps.gz \
         <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
-	<entry><systemitem class="osname">BeOS</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.2</entry>
-	<entry>2001-11-29,
-	 Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
-        <entry>5.0.4</entry>
-       </row>
-       <row>
 	<entry><systemitem class="osname">BSD/OS</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.2</entry>
@@ -1712,15 +1704,6 @@ gunzip -c user.ps.gz \
 	 UW-7 Olivier Prenant (<email>ohp@pyrenet.fr</email>)</entry>
 	<entry>see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
-     <row>
-      <entry><systemitem class="osname">QNX 4 RTOS</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>7.2</entry>
-      <entry>2001-12-10,
-       Bernd Tegge (<email>tegge@repas-aeg.de</email>)
-      </entry>
-      <entry>4.25; see also <filename>doc/FAQ_QNX4</filename></entry>
-     </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
 	<entry><systemitem>Sparc</></entry>
@@ -1803,6 +1786,14 @@ gunzip -c user.ps.gz \
     </thead>
 
     <tbody>
+       <row>
+	<entry><systemitem class="osname">BeOS</></entry>
+	<entry><systemitem>x86</></entry>
+	<entry>7.2</entry>
+	<entry>2001-11-29,
+	 Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
+        <entry>needs updates to semaphore code</entry>
+       </row>
      <row>
       <entry><systemitem class="osname">DG/UX 5.4R4.11</></entry>
       <entry><systemitem>m88k</></entry>
@@ -1823,6 +1814,16 @@ gunzip -c user.ps.gz \
       <entry>6.x</entry>
       <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
       <entry>bit rot suspected</entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">QNX 4 RTOS</></entry>
+      <entry><systemitem>x86</></entry>
+      <entry>7.2</entry>
+      <entry>2001-12-10,
+       Bernd Tegge (<email>tegge@repas-aeg.de</email>)
+      </entry>
+      <entry>needs updates to semaphore code;
+       see also <filename>doc/FAQ_QNX4</filename></entry>
      </row>
      <row>
       <entry><systemitem class="osname">QNX RTOS v6</></entry>
