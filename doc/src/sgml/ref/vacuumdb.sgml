@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.6 1999/12/07 22:41:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.7 1999/12/18 08:34:49 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-12-04</date>
   </refsynopsisdivinfo>
   <synopsis>
-vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ --analyze | -z ] [ --verbose | -v ]
+vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ --analyze | -z ] [ --alldb | -a ] [ --verbose | -v ]
          [ --table '<replaceable class="parameter">table</replaceable> [ ( <replaceable class="parameter">column</replaceable> [,...] ) ]' ] [ [-d] <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
@@ -52,6 +52,15 @@ vacuumdb [ <replaceable class="parameter">connection options</replaceable> ] [ -
       <listitem>
        <para>
 	Calculate statistics on the database for use by the optimizer.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-a, --alldb</term>
+      <listitem>
+       <para>
+	Vacuum all databases.
        </para>
       </listitem>
      </varlistentry>

@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.4 1999/12/16 20:10:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.5 1999/12/18 08:34:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,6 +39,8 @@ do
         --host=*)
                 PSQLOPT="$PSQLOPT -h "`echo $1 | sed 's/^--host=//'`
                 ;;
+	--alldb|-a) 
+		dbname="`psql $PASSWDOPT $AUTHOPT $PGHOSTOPT $PGPORTOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`";;
 	--port|-p)
 		PSQLOPT="$PSQLOPT -p $2"
 		shift;;
@@ -119,6 +121,7 @@ if [ "$usage" ]; then
 	echo "    -W,                  --password          "
 	echo "    -d DBNAME,           --database=DBNAME   "
 	echo "    -z,                  --analyze           "
+	echo "    -a,                  --alldb             "
 	echo "    -t TABLE[(columns)], --table=TABLE[(columns)]"
 	echo "    -v,                  --verbose           "
 	echo "    -e,                  --echo              "
@@ -133,9 +136,13 @@ if [ -z "$dbname" ]; then
 	exit 1
 fi
 
-psql $PSQLOPT -d "$dbname" -c "VACUUM $verbose$analyze$table"
+for db in $dbname
+do
+	psql $PASSWDOPT -tq $AUTHOPT $PGHOSTOPT $PGPORTOPT -c "vacuum $verbose $analyze $table" $db
+done
 
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ]
+then
 	echo "$CMDNAME: Vacuum failed."
 	exit 1
 fi
