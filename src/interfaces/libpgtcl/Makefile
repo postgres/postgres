@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.6 1996/11/13 10:35:31 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.7 1997/01/10 17:40:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,16 @@ endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
-all: libpgtcl.a
+ifdef LINUX_ELF
+  shlib             := libpgtcl.so.1
+  install-shlib-dep := install-shlib
+  LDFLAGS           += -L ../libpq -lpq
+else
+  shlib             := 
+  install-shlib-dep :=
+endif
+
+all: libpgtcl.a $(shlib)
 
 libpgtcl.a: $(OBJS)
 ifdef MK_NO_LORDER
@@ -41,10 +50,15 @@ else
 endif
 	$(RANLIB) libpgtcl.a
 
+libpgtcl.so.1: $(OBJS)
+	$(CC) $(LDFLAGS) -shared $(OBJS) -o libpgtcl.so.1
+	rm -f libpgtcl.so
+	ln -s libpgtcl.so.1 libpgtcl.so
+
 .PHONY: beforeinstall-headers install-headers
 .PHONY: install install-libpgtcl
 
-install: install-headers install-libpgtcl
+install: install-headers install-libpgtcl $(install-shlib-dep)
 
 install-headers: beforeinstall-headers libpgtcl.h
 	$(INSTALL) $(INSTLOPTS) libpgtcl.h $(HEADERDIR)/libpgtcl.h
@@ -54,6 +68,12 @@ beforeinstall-headers:
 
 install-libpgtcl: libpgtcl.a
 	$(INSTALL) $(INSTL_LIB_OPTS) libpgtcl.a $(DESTDIR)$(LIBDIR)/libpgtcl.a
+
+install-shlib: libpgtcl.so.1
+	$(INSTALL) $(INSTL_LIB_OPTS) libpgtcl.so.1 \
+		$(DESTDIR)$(LIBDIR)/libpgtcl.so
+	rm -f $(DESTDIR)$(LIBDIR)/libpgtcl.so
+	ln -s libpgtcl.so.1 $(DESTDIR)$(LIBDIR)/libpgtcl.so
 
 .PHONY: clean
 clean: 

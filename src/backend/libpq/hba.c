@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.13 1996/11/27 08:15:16 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.14 1997/01/10 17:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,7 +500,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
         *ident_failed = true;
       } else {
         char ident_response[80+IDENT_USERNAME_MAX];
-        rc = recv(sock_fd, ident_response, sizeof(ident_response), 0);
+        rc = recv(sock_fd, ident_response, sizeof(ident_response)-1, 0);
         if (rc < 0) {
           sprintf(PQerrormsg,
                   "Unable to receive response from Ident server "
@@ -515,6 +515,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
           *ident_failed = true;
         } else {
           bool error;  /* response from Ident is garbage. */
+          ident_response[rc] = '\0';
           interpret_ident_response(ident_response, &error, ident_username);
           *ident_failed = error;
         }

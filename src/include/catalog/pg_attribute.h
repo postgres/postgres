@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.4 1996/11/13 20:50:54 scrappy Exp $
+ * $Id: pg_attribute.h,v 1.5 1997/01/10 17:39:50 momjian Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -185,10 +185,10 @@ DATA(insert OID = 0 ( 1247 typisdefined     16 0 0 0  1   7 0 t t 0 0 -1 f c));
 DATA(insert OID = 0 ( 1247 typdelim         18 0 0 0  1   8 0 t t 0 0 -1 f c));
 DATA(insert OID = 0 ( 1247 typrelid         26 0 0 0  4   9 0 t t 0 0 -1 f i));
 DATA(insert OID = 0 ( 1247 typelem          26 0 0 0  4  10 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 ( 1247 typinput         26 0 0 0  4  11 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 ( 1247 typoutput        26 0 0 0  4  12 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 ( 1247 typreceive       26 0 0 0  4  13 0 t t 0 0 -1 f i));
-DATA(insert OID = 0 ( 1247 typsend          26 0 0 0  4  14 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 ( 1247 typinput         24 0 0 0  4  11 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 ( 1247 typoutput        24 0 0 0  4  12 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 ( 1247 typreceive       24 0 0 0  4  13 0 t t 0 0 -1 f i));
+DATA(insert OID = 0 ( 1247 typsend          24 0 0 0  4  14 0 t t 0 0 -1 f i));
 DATA(insert OID = 0 ( 1247 typalign         18 0 0 0  1  15 0 t t 0 0 -1 f c));
 DATA(insert OID = 0 ( 1247 typdefault       25 0 0 0 -1  16 0 f t 0 0 -1 f i));
 DATA(insert OID = 0 ( 1247 ctid             27 0 0 0  6  -1 0 f t 0 0 -1 f i));

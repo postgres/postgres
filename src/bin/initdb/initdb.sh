@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.20 1996/12/23 08:50:27 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.21 1997/01/10 17:39:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -217,9 +217,9 @@ echo
 # umask must disallow access to group, other for files and dirs
 umask 077
 
-if [ -d "$PGDATA" ]; then
+if [ -f "$PGDATA/PG_VERSION" ]; then
     if [ $template_only -eq 0 ]; then
-        echo "$CMDNAME: error: Directory $PGDATA already exists."
+        echo "$CMDNAME: error: File $PGDATA/PG_VERSION already exists."
         echo "This probably means initdb has already been run and the "
         echo "database system already exists."
         echo 
