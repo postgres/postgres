@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.2 2000/07/04 14:25:28 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.3 2000/07/04 16:29:59 petere Exp $
 
 CMDNAME=`basename $0`
 
@@ -201,7 +201,7 @@ while read DATABASE DBOWNER ENCODING ; do
     fi
 
     echo "${BS}connect $DATABASE $DBOWNER"
-    $PGDUMP -d "$DATABASE"
+    $PGDUMP "$DATABASE"
     if [ "$?" -ne 0 ] ; then
         echo "pg_dump failed on $DATABASE, exiting" 1>&2
         exit 1
