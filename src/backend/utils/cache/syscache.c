@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.43 1999/11/24 16:52:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.44 1999/11/24 17:09:27 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -34,6 +34,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "utils/catcache.h"
 #include "utils/temprel.h"
@@ -368,7 +369,7 @@ NULL,NULL
 		},
 		offsetof(FormData_pg_statistic, stacommonval),
 		StatisticRelidAttnumOpIndex,
-	StatisticRelidAttnumOpIndexScan},
+	(ScanFunc) StatisticRelidAttnumOpIndexScan},
 	{TypeRelationName,			/* TYPENAME */
 		1,
 		{
