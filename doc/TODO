@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Thu Dec  2 13:13:37 EST 2004
+Last updated:		Thu Dec  2 14:32:05 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -106,6 +106,10 @@ Administration
   copied from the template1 database.
 
 * Add a function that returns the 'uptime' of the postmaster
+* Allow a warm standby system to also allow read-only queries
+
+  This is useful for checking PITR recovery.
+
 * Improve replication solutions
 	o Automatic failover
 
