@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: encode.c,v 1.1 2001/01/24 03:46:16 momjian Exp $
+ * $Id: encode.c,v 1.2 2001/02/06 18:05:13 momjian Exp $
  */
 
 #include <postgres.h>
@@ -79,7 +79,7 @@ encode(PG_FUNCTION_ARGS)
 		elog(FATAL, "pg_encode: overflow, encode estimate too small");
 	
 	PG_FREE_IF_COPY(arg, 0);
-	PG_FREE_IF_COPY(name, 0);
+	PG_FREE_IF_COPY(name, 1);
 	
 	PG_RETURN_TEXT_P(res);
 }
@@ -116,7 +116,7 @@ decode(PG_FUNCTION_ARGS)
 		elog(FATAL, "pg_decode: overflow, decode estimate too small");
 	
 	PG_FREE_IF_COPY(arg, 0);
-	PG_FREE_IF_COPY(name, 0);
+	PG_FREE_IF_COPY(name, 1);
 	
 	PG_RETURN_TEXT_P(res);
 }

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: pgcrypto.c,v 1.4 2001/01/24 03:46:16 momjian Exp $
+ * $Id: pgcrypto.c,v 1.5 2001/02/06 18:05:13 momjian Exp $
  */
 
 #include <postgres.h>
@@ -80,7 +80,7 @@ digest(PG_FUNCTION_ARGS)
 	h->digest(h, VARDATA(arg), len, VARDATA(res));
 	
 	PG_FREE_IF_COPY(arg, 0);
-	PG_FREE_IF_COPY(name, 0);
+	PG_FREE_IF_COPY(name, 1);
 	
 	PG_RETURN_TEXT_P(res);
 }
