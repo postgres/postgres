@@ -1,6 +1,7 @@
 #include "postgres.h"
-#include "fmgr.h"
 
+#include "fmgr.h"
+#include "miscadmin.h"
 #include "utils/hsearch.h"
 #include "access/xact.h"
 #include "catalog/pg_shadow.h"
