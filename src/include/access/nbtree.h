@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.50 2001/01/24 19:43:19 momjian Exp $
+ * $Id: nbtree.h,v 1.51 2001/02/07 23:34:18 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,10 @@ typedef BTPageOpaqueData *BTPageOpaque;
 
 #define BTREE_METAPAGE	0	/* first page is meta */
 #define BTREE_MAGIC		0x053162
+
+#define BTreeInvalidParent(opaque)	\
+	(opaque->btpo_parent == InvalidBlockNumber || \
+		opaque->btpo_parent == BTREE_METAPAGE)
 
 #define BTREE_VERSION	1
 
