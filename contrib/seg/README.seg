@@ -1,0 +1,326 @@
+This directory contains the code for the user-defined type,
+SEG, representing laboratory measurements as floating point
+intervals. 
+
+RATIONALE
+=========
+
+The geometry of measurements is usually more complex than that of a
+point in a numeric continuum. A measurement is usually a segment of
+that continuum with somewhat fuzzy limits. The measurements come out
+as intervals because of uncertainty and randomness, as well as because
+the value being measured may naturally be an interval indicating some
+condition, such as the temperature range of stability of a protein.
+
+Using just common sense, it appears more convenient to store such data
+as intervals, rather than pairs of numbers. In practice, it even turns
+out more efficient in most applications.
+
+Further along the line of common sense, the fuzziness of the limits
+suggests that the use of traditional numeric data types leads to a
+certain loss of information. Consider this: your instrument reads
+6.50, and you input this reading into the database. What do you get
+when you fetch it? Watch:
+
+test=> select 6.50 as "pH";
+ pH
+---
+6.5
+(1 row)
+
+In the world of measurements, 6.50 is not the same as 6.5. It may
+sometimes be critically different. The experimenters usually write
+down (and publish) the digits they trust. 6.50 is actually a fuzzy
+interval contained within a bigger and even fuzzier interval, 6.5,
+with their center points being (probably) the only common feature they
+share. We definitely do not want such different data items to appear the
+same.
+
+Conclusion? It is nice to have a special data type that can record the
+limits of an interval with arbitrarily variable precision. Variable in
+a sense that each data element records its own precision.
+
+Check this out:
+
+test=> select '6.25 .. 6.50'::seg as "pH";
+          pH
+------------
+6.25 .. 6.50
+(1 row)
+
+
+FILES
+=====
+
+Makefile		building instructions for the shared library
+
+README.seg		the file you are now reading
+
+buffer.c		global variables and buffer access utilities 
+			shared between the parser (segparse.y) and the
+			scanner (segscan.l)
+
+buffer.h		function prototypes for buffer.c
+
+seg.c			the implementation of this data type in c
+
+seg.sql.in		SQL code needed to register this type with postgres
+			(transformed to seg.sql by make)
+
+segdata.h		the data structure used to store the segments
+
+segparse.y		the grammar file for the parser (used by seg_in() in seg.c)
+ 
+segscan.l		scanner rules (used by seg_yyparse() in segparse.y)
+
+seg-validate.pl		a simple input validation script. It is probably a 
+			little stricter than the type itself: for example, 
+			it rejects '22 ' because of the trailing space. Use 
+			as a filter to discard bad values from a single column;
+			redirect to /dev/null to see the offending input
+
+sort-segments.pl	a script to sort the tables having a SEG type column
+
+
+INSTALLATION
+============
+
+To install the type, run
+
+	make
+	make install
+
+For this to work, make sure that:
+
+. the seg source directory is in the postgres contrib directory
+. the user running "make install" has postgres administrative authority
+. this user's environment defines the PGLIB and PGDATA variables and has
+  postgres binaries in the PATH.
+
+This only installs the type implementation and documentation.  To make the
+type available in any particular database, do
+
+	psql -d databasename < seg.sql
+
+If you install the type in the template1 database, all subsequently created
+databases will inherit it.
+
+To test the new type, after "make install" do
+
+	make installcheck
+
+If it fails, examine the file regression.diffs to find out the reason (the
+test code is a direct adaptation of the regression tests from the main
+source tree).
+
+
+SYNTAX
+======
+
+The external representation of an interval is formed using one or two
+floating point numbers joined by the range operator ('..' or '...'). 
+Optional certainty indicators (<, > and ~) are ignored by the internal 
+logics, but are retained in the data.
+
+Grammar
+-------
+
+rule 1    seg -> boundary PLUMIN deviation
+rule 2    seg -> boundary RANGE boundary
+rule 3    seg -> boundary RANGE
+rule 4    seg -> RANGE boundary
+rule 5    seg -> boundary
+rule 6    boundary -> FLOAT
+rule 7    boundary -> EXTENSION FLOAT
+rule 8    deviation -> FLOAT
+
+Tokens
+------
+
+RANGE        (\.\.)(\.)?
+PLUMIN       \'\+\-\'
+integer      [+-]?[0-9]+
+real         [+-]?[0-9]+\.[0-9]+
+FLOAT        ({integer}|{real})([eE]{integer})?
+EXTENSION    [<>~]
+
+
+Examples of valid SEG representations:
+--------------------------------------
+
+Any number	(rules 5,6) -- creates a zero-length segment (a point,
+		if you will)
+
+~5.0		(rules 5,7) -- creates a zero-length segment AND records 
+		'~' in the data. This notation reads 'approximately 5.0', 
+		but its meaning is not recognized by the code. It is ignored 
+		until you get the value back. View it is a short-hand comment.
+
+<5.0		(rules 5,7) -- creates a point at 5.0; '<' is ignored but 
+		is preserved as a comment
+
+>5.0		(rules 5,7) -- creates a point at 5.0; '>' is ignored but
+		is preserved as a comment
+
+5(+-)0.3
+5'+-'0.3	(rules 1,8) -- creates an interval '4.7..5.3'. As of this 
+		writing (02/09/2000), this mechanism isn't completely accurate 
+		in determining the number of significant digits for the 
+		boundaries. For example, it adds an extra digit to the lower
+		boundary if the resulting interval includes a power of ten:
+
+		template1=> select '10(+-)1'::seg as seg;
+		      seg
+		---------
+		9.0 .. 11 -- should be: 9 .. 11
+
+		Also, the (+-) notation is not preserved: 'a(+-)b' will 
+		always be returned as '(a-b) .. (a+b)'. The purpose of this 
+		notation is to allow input from certain data sources without 
+		conversion.
+
+50 .. 		(rule 3) -- everything that is greater than or equal to 50
+
+.. 0		(rule 4) -- everything that is less than or equal to 0
+
+1.5e-2 .. 2E-2 	(rule 2) -- creates an interval (0.015 .. 0.02)
+
+1 ... 2		The same as 1...2, or 1 .. 2, or 1..2 (space is ignored).
+		Because of the widespread use of '...' in the data sources,
+		I decided to stick to is as a range operator. This, and
+		also the fact that the white space around the range operator
+		is ignored, creates a parsing conflict with numeric constants 
+		starting with a	decimal point.
+
+
+Examples of invalid SEG input:
+------------------------------
+
+.1e7		should be: 0.1e7
+.1 .. .2	should be: 0.1 .. 0.2
+2.4 E4		should be: 2.4E4
+
+The following, although it is not a syntax error, is disallowed to improve
+the sanity of the data:
+
+5 .. 2		should be: 2 .. 5
+
+
+PRECISION
+=========
+
+The segments are stored internally as pairs of 32-bit floating point
+numbers. It means that the numbers with more than 7 significant digits
+will be truncated.
+
+The numbers with less than or exactly 7 significant digits retain their
+original precision. That is, if your query returns 0.00, you will be
+sure that the trailing zeroes are not the artifacts of formatting: they
+reflect the precision of the original data. The number of leading
+zeroes does not affect precision: the value 0.0067 is considered to
+have just 2 significant digits.
+
+
+USAGE
+=====
+
+The access method for SEG is a GiST (gist_seg_ops), which is a
+generalization of R-tree. GiSTs allow the postgres implementation of
+R-tree, originally encoded to support 2-D geometric types such as
+boxes and polygons, to be used with any data type whose data domain
+can be partitioned using the concepts of containment, intersection and
+equality. In other words, everything that can intersect or contain
+its own kind can be indexed with a GiST. That includes, among other
+things, all geometric data types, regardless of their dimensionality
+(see also contrib/cube).
+
+The operators supported by the GiST access method include:
+
+
+[a, b] << [c, d]	Is left of
+
+	The left operand, [a, b], occurs entirely to the left of the
+	right operand, [c, d], on the axis (-inf, inf). It means,
+	[a, b] << [c, d] is true if b < c and false otherwise
+
+[a, b] >> [c, d]	Is right of
+
+	[a, b] is occurs entirely to the right of [c, d]. 
+	[a, b] >> [c, d] is true if b > c and false otherwise
+
+[a, b] &< [c, d]	Over left
+
+	The segment [a, b] overlaps the segment [c, d] in such a way
+	that a <= c <= b and b <= d
+
+[a, b] &> [c, d]	Over right
+
+	The segment [a, b] overlaps the segment [c, d] in such a way
+	that a > c and b <= c <= d
+
+[a, b] = [c, d]		Same as
+
+	The segments [a, b] and [c, d] are identical, that is, a == b
+	and c == d
+
+[a, b] @ [c, d]		Contains
+
+	The segment [a, b] contains the segment [c, d], that is, 
+	a <= c and b >= d
+
+[a, b] @ [c, d]		Contained in
+
+	The segment [a, b] is contained in [c, d], that is, 
+	a >= c and b <= d
+
+Although the mnemonics of the following operators is questionable, I
+preserved them to maintain visual consistency with other geometric
+data types defined in Postgres.
+
+Other operators:
+
+[a, b] < [c, d]		Less than
+[a, b] > [c, d]		Greater than
+
+	These operators do not make a lot of sense for any practical
+	purpose but sorting. These operators first compare (a) to (c),
+	and if these are equal, compare (b) to (d). That accounts for
+	reasonably good sorting in most cases, which is useful if
+	you want to use ORDER BY with this type
+
+There are a few other potentially useful functions defined in seg.c 
+that vanished from the schema because I stopped using them. Some of 
+these were meant to support type casting. Let me know if I was wrong: 
+I will then add them back to the schema. I would also appreciate 
+other ideas that would enhance the type and make it more useful.
+
+For examples of usage, see sql/seg.sql
+
+NOTE: The performance of an R-tree index can largely depend on the
+order of input values. It may be very helpful to sort the input table
+on the SEG column (see the script sort-segments.pl for an example)
+
+
+CREDITS
+=======
+
+My thanks are primarily to Prof. Joe Hellerstein
+(http://db.cs.berkeley.edu/~jmh/) for elucidating the gist of the GiST
+(http://gist.cs.berkeley.edu/). I am also grateful to all postgres
+developers, present and past, for enabling myself to create my own
+world and live undisturbed in it. And I would like to acknowledge my
+gratitude to Argonne Lab and to the U.S. Department of Energy for the
+years of faithful support of my database research.
+
+
+------------------------------------------------------------------------
+Gene Selkov, Jr.
+Computational Scientist
+Mathematics and Computer Science Division
+Argonne National Laboratory
+9700 S Cass Ave.
+Building 221
+Argonne, IL 60439-4844
+
+selkovjr@mcs.anl.gov
+

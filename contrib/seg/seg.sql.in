@@ -1,0 +1,361 @@
+-- Create the user-defined type for 1-D floating point intervals (seg)
+-- 
+BEGIN TRANSACTION;
+
+CREATE FUNCTION seg_in(opaque)
+RETURNS opaque
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c';
+
+CREATE FUNCTION seg_out(opaque)
+RETURNS opaque
+AS 'MODULE_PATHNAME'
+LANGUAGE 'c';
+
+CREATE TYPE seg (
+internallength = 12,
+input = seg_in,
+output = seg_out
+);
+
+COMMENT ON TYPE seg IS
+'floating point interval ''FLOAT .. FLOAT'', ''.. FLOAT'', ''FLOAT ..'' or ''FLOAT''';
+
+--
+-- External C-functions for R-tree methods
+--
+
+-- Left/Right methods
+
+CREATE FUNCTION seg_over_left(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_over_left(seg, seg) IS
+'is over and left of';
+
+CREATE FUNCTION seg_over_right(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_over_right(seg, seg) IS
+'is over and right of';
+
+CREATE FUNCTION seg_left(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_left(seg, seg) IS
+'is left of';
+
+CREATE FUNCTION seg_right(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_right(seg, seg) IS
+'is right of';
+
+
+-- Comparison methods
+
+CREATE FUNCTION seg_lt(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_lt(seg, seg) IS
+'less than';
+
+CREATE FUNCTION seg_le(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_le(seg, seg) IS
+'less than or equal';
+
+CREATE FUNCTION seg_gt(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_gt(seg, seg) IS
+'greater than';
+
+CREATE FUNCTION seg_ge(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_ge(seg, seg) IS
+'greater than or equal';
+
+CREATE FUNCTION seg_contains(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_contains(seg, seg) IS
+'contains';
+
+CREATE FUNCTION seg_contained(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_contained(seg, seg) IS
+'contained in';
+
+CREATE FUNCTION seg_overlap(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_overlap(seg, seg) IS
+'overlaps';
+
+CREATE FUNCTION seg_same(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_same(seg, seg) IS
+'same as';
+
+CREATE FUNCTION seg_different(seg, seg) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+COMMENT ON FUNCTION seg_different(seg, seg) IS
+'different';
+
+-- support routines for indexing
+
+CREATE FUNCTION seg_union(seg, seg) RETURNS seg
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION seg_inter(seg, seg) RETURNS seg
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION seg_size(seg) RETURNS float4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+-- miscellaneous
+
+CREATE FUNCTION seg_upper(seg) RETURNS float4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION seg_lower(seg) RETURNS float4
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+
+--
+-- OPERATORS
+--
+
+CREATE OPERATOR < (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_lt,
+   COMMUTATOR = '>', NEGATOR = '>=',
+   RESTRICT = scalarltsel, JOIN = scalarltjoinsel
+);
+
+CREATE OPERATOR <= (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_le,
+   COMMUTATOR = '>=', NEGATOR = '>',
+   RESTRICT = scalarltsel, JOIN = scalarltjoinsel
+);
+
+CREATE OPERATOR > (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_gt,
+   COMMUTATOR = '<', NEGATOR = '<=',
+   RESTRICT = scalargtsel, JOIN = scalargtjoinsel
+);
+
+CREATE OPERATOR >= (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_ge,
+   COMMUTATOR = '<=', NEGATOR = '<',
+   RESTRICT = scalargtsel, JOIN = scalargtjoinsel
+);
+
+CREATE OPERATOR << (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_left,
+   COMMUTATOR = '>>',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR &< (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_over_left,
+   COMMUTATOR = '&>',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR && (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_overlap,
+   COMMUTATOR = '&&',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR &> (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_over_right,
+   COMMUTATOR = '&<',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR >> (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_right,
+   COMMUTATOR = '<<',
+   RESTRICT = positionsel, JOIN = positionjoinsel
+);
+
+CREATE OPERATOR = (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_same,
+   COMMUTATOR = '=', NEGATOR = '<>',
+   RESTRICT = eqsel, JOIN = eqjoinsel,
+   SORT1 = '<', SORT2 = '<'
+);
+
+CREATE OPERATOR <> (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_different,
+   COMMUTATOR = '<>', NEGATOR = '=',
+   RESTRICT = neqsel, JOIN = neqjoinsel
+);
+
+CREATE OPERATOR @ (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_contains,
+   COMMUTATOR = '~',
+   RESTRICT = contsel, JOIN = contjoinsel
+);
+
+CREATE OPERATOR ~ (
+   LEFTARG = seg, RIGHTARG = seg, PROCEDURE = seg_contained,
+   COMMUTATOR = '@',
+   RESTRICT = contsel, JOIN = contjoinsel
+);
+
+
+-- define the GiST support methods
+CREATE FUNCTION gseg_consistent(opaque,seg,int4) RETURNS bool
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION gseg_compress(opaque) RETURNS opaque 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION gseg_decompress(opaque) RETURNS opaque 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION gseg_penalty(opaque,opaque,opaque) RETURNS opaque
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION gseg_picksplit(opaque, opaque) RETURNS opaque
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION gseg_union(bytea, opaque) RETURNS seg 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+CREATE FUNCTION gseg_same(seg, seg, opaque) RETURNS opaque 
+	AS 'MODULE_PATHNAME' LANGUAGE 'c';
+
+
+-- register the default opclass for indexing
+INSERT INTO pg_opclass (opcname, opcdeftype)
+   SELECT 'gist_seg_ops', oid
+   FROM pg_type
+   WHERE typname = 'seg';
+
+
+-- get the comparators for segments and store them in a tmp table
+SELECT o.oid AS opoid, o.oprname
+INTO TABLE seg_ops_tmp
+FROM pg_operator o, pg_type t
+WHERE o.oprleft = t.oid and o.oprright = t.oid
+   and t.typname = 'seg';
+
+-- make sure we have the right operators
+-- SELECT * from seg_ops_tmp;
+
+-- using the tmp table, generate the amop entries 
+
+-- seg_left
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 1
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '<<';
+
+-- seg_overleft
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 2
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '&<';
+
+-- seg_overlap
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 3
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '&&';
+
+-- seg_overright
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 4
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '&>';
+
+-- seg_right
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 5
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '>>';
+
+-- seg_same
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 6
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '=';
+
+-- seg_contains
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 7
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '@';
+
+-- seg_contained
+INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy)
+   SELECT am.oid, opcl.oid, c.opoid, 8
+   FROM pg_am am, pg_opclass opcl, seg_ops_tmp c
+   WHERE amname = 'gist' and opcname = 'gist_seg_ops' 
+      and c.oprname = '~';
+
+DROP TABLE seg_ops_tmp;
+
+
+-- add the entries to amproc for the support methods
+-- note the amprocnum numbers associated with each are specific!
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 1
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_seg_ops'
+      and proname = 'gseg_consistent';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 2
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_seg_ops'
+      and proname = 'gseg_union';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 3
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_seg_ops'
+      and proname = 'gseg_compress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 4
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_seg_ops'
+      and proname = 'gseg_decompress';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 5
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_seg_ops'
+      and proname = 'gseg_penalty';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 6
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_seg_ops'
+      and proname = 'gseg_picksplit';
+
+INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
+   SELECT am.oid, opcl.oid, pro.oid, 7
+   FROM pg_am am, pg_opclass opcl, pg_proc pro
+   WHERE  amname = 'gist' and opcname = 'gist_seg_ops'
+      and proname = 'gseg_same';
+
+END TRANSACTION;
