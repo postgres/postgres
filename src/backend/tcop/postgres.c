@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.413 2004/05/21 05:07:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.414 2004/05/23 03:50:45 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -52,6 +52,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/proc.h"
+#include "storage/sinval.h"
 #include "tcop/fastpath.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -1899,6 +1900,7 @@ die(SIGNAL_ARGS)
 			/* until we are done getting ready for it */
 			InterruptHoldoffCount++;
 			DisableNotifyInterrupt();
+			DisableCatchupInterrupt();
 			/* Make sure CheckDeadLock won't run while shutting down... */
 			LockWaitCancel();
 			InterruptHoldoffCount--;
@@ -1955,6 +1957,7 @@ StatementCancelHandler(SIGNAL_ARGS)
 			if (LockWaitCancel())
 			{
 				DisableNotifyInterrupt();
+				DisableCatchupInterrupt();
 				InterruptHoldoffCount--;
 				ProcessInterrupts();
 			}
@@ -2006,6 +2009,7 @@ ProcessInterrupts(void)
 		QueryCancelPending = false;		/* ProcDie trumps QueryCancel */
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
+		DisableCatchupInterrupt();
 		ereport(FATAL,
 				(errcode(ERRCODE_ADMIN_SHUTDOWN),
 		 errmsg("terminating connection due to administrator command")));
@@ -2015,6 +2019,7 @@ ProcessInterrupts(void)
 		QueryCancelPending = false;
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
+		DisableCatchupInterrupt();
 		ereport(ERROR,
 				(errcode(ERRCODE_QUERY_CANCELED),
 				 errmsg("canceling query due to user request")));
@@ -2595,9 +2600,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * midst of output during who-knows-what operation...
 	 */
 	pqsignal(SIGPIPE, SIG_IGN);
-	pqsignal(SIGUSR1, SIG_IGN); /* this signal available for use */
-
-	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
+	pqsignal(SIGUSR1, CatchupInterruptHandler);
+	pqsignal(SIGUSR2, NotifyInterruptHandler);
 	pqsignal(SIGFPE, FloatExceptionHandler);
 
 	/*
@@ -2761,6 +2765,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		disable_sig_alarm(true);
 		QueryCancelPending = false;		/* again in case timeout occurred */
 		DisableNotifyInterrupt();
+		DisableCatchupInterrupt();
 		debug_query_string = NULL;
 
 		/*
@@ -2879,6 +2884,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 										 * signal */
 
 		EnableNotifyInterrupt();
+		EnableCatchupInterrupt();
 
 		/* Allow "die" interrupt to be processed while waiting */
 		ImmediateInterruptOK = true;
@@ -2901,6 +2907,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		QueryCancelPending = false;		/* forget any CANCEL signal */
 
 		DisableNotifyInterrupt();
+		DisableCatchupInterrupt();
 
 		/*
 		 * (5) check for any other interesting events that happened while

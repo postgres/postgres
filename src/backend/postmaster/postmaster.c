@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.393 2004/05/21 05:07:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.394 2004/05/23 03:50:45 tgl Exp $
  *
  * NOTES
  *
@@ -2861,11 +2861,11 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_CHILDREN))
 	{
 		/*
-		 * Send SIGUSR2 to all children (triggers AsyncNotifyHandler). See
-		 * storage/ipc/sinvaladt.c for the use of this.
+		 * Send SIGUSR1 to all children (triggers CatchupInterruptHandler).
+		 * See storage/ipc/sinval[adt].c for the use of this.
 		 */
 		if (Shutdown == NoShutdown)
-			SignalChildren(SIGUSR2);
+			SignalChildren(SIGUSR1);
 	}
 
 	PG_SETMASK(&UnBlockSig);

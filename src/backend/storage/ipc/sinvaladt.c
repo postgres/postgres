@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.54 2003/12/20 17:31:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.55 2004/05/23 03:50:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,16 +215,12 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data)
 	/*
 	 * Try to prevent table overflow.  When the table is 70% full send a
 	 * WAKEN_CHILDREN request to the postmaster.  The postmaster will send
-	 * a SIGUSR2 signal (ordinarily a NOTIFY signal) to all the backends.
-	 * This will force idle backends to execute a transaction to look
-	 * through pg_listener for NOTIFY messages, and as a byproduct of the
-	 * transaction start they will read SI entries.
+	 * a SIGUSR1 signal to all the backends, which will cause sinval.c
+	 * to read any pending SI entries.
 	 *
 	 * This should never happen if all the backends are actively executing
 	 * queries, but if a backend is sitting idle then it won't be starting
 	 * transactions and so won't be reading SI entries.
-	 *
-	 * dz - 27 Jan 1998
 	 */
 	if (numMsgs == (MAXNUMMESSAGES * 70 / 100) &&
 		IsUnderPostmaster)

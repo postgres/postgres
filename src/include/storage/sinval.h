@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.33 2004/02/10 01:55:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.34 2004/05/23 03:50:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,10 +99,19 @@ extern bool DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself);
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern TransactionId GetOldestXmin(bool allDbs);
 extern int	CountActiveBackends(void);
-
+extern int	CountEmptyBackendSlots(void);
 /* Use "struct PGPROC", not PGPROC, to avoid including proc.h here */
 extern struct PGPROC *BackendIdGetProc(BackendId procId);
 
-extern int	CountEmptyBackendSlots(void);
+/* signal handler for catchup events (SIGUSR1) */
+extern void CatchupInterruptHandler(SIGNAL_ARGS);
+
+/*
+ * enable/disable processing of catchup events directly from signal handler.
+ * The enable routine first performs processing of any catchup events that
+ * have occurred since the last disable.
+ */
+extern void EnableCatchupInterrupt(void);
+extern bool DisableCatchupInterrupt(void);
 
 #endif   /* SINVAL_H */

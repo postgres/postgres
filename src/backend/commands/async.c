@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.110 2004/05/22 21:58:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.111 2004/05/23 03:50:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
+#include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 #include "utils/fmgroids.h"
 #include "utils/ps_status.h"
@@ -607,7 +608,7 @@ AtAbort_Notify(void)
 
 /*
  *--------------------------------------------------------------
- * Async_NotifyHandler
+ * NotifyInterruptHandler
  *
  *		This is the signal handler for SIGUSR2.
  *
@@ -623,7 +624,7 @@ AtAbort_Notify(void)
  *--------------------------------------------------------------
  */
 void
-Async_NotifyHandler(SIGNAL_ARGS)
+NotifyInterruptHandler(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
 
@@ -669,12 +670,12 @@ Async_NotifyHandler(SIGNAL_ARGS)
 			{
 				/* Here, it is finally safe to do stuff. */
 				if (Trace_notify)
-					elog(DEBUG1, "Async_NotifyHandler: perform async notify");
+					elog(DEBUG1, "NotifyInterruptHandler: perform async notify");
 
 				ProcessIncomingNotify();
 
 				if (Trace_notify)
-					elog(DEBUG1, "Async_NotifyHandler: done");
+					elog(DEBUG1, "NotifyInterruptHandler: done");
 			}
 		}
 
@@ -766,12 +767,20 @@ EnableNotifyInterrupt(void)
  *		This is called by the PostgresMain main loop just after receiving
  *		a frontend command.  Signal handler execution of inbound notifies
  *		is disabled until the next EnableNotifyInterrupt call.
+ *
+ *		The SIGUSR1 signal handler also needs to call this, so as to
+ *		prevent conflicts if one signal interrupts the other.  So we
+ *		must return the previous state of the flag.
  * --------------------------------------------------------------
  */
-void
+bool
 DisableNotifyInterrupt(void)
 {
+	bool	result = (notifyInterruptEnabled != 0);
+
 	notifyInterruptEnabled = 0;
+
+	return result;
 }
 
 /*
@@ -785,10 +794,6 @@ DisableNotifyInterrupt(void)
  *		and clear the notification field in pg_listener until next time.
  *
  *		NOTE: since we are outside any transaction, we must create our own.
- *
- * Results:
- *		XXX
- *
  * --------------------------------------------------------------
  */
 static void
@@ -803,11 +808,15 @@ ProcessIncomingNotify(void)
 	Datum		value[Natts_pg_listener];
 	char		repl[Natts_pg_listener],
 				nulls[Natts_pg_listener];
+	bool		catchup_enabled;
+
+	/* Must prevent SIGUSR1 interrupt while I am running */
+	catchup_enabled = DisableCatchupInterrupt();
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify");
 
-	set_ps_display("async_notify");
+	set_ps_display("notify interrupt");
 
 	notifyInterruptOccurred = 0;
 
@@ -883,6 +892,9 @@ ProcessIncomingNotify(void)
 
 	if (Trace_notify)
 		elog(DEBUG1, "ProcessIncomingNotify: done");
+
+	if (catchup_enabled)
+		EnableCatchupInterrupt();
 }
 
 /*

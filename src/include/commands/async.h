@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.23 2003/11/29 22:40:59 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/commands/async.h,v 1.24 2004/05/23 03:50:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,15 +25,14 @@ extern void AtCommit_Notify(void);
 extern void AtAbort_Notify(void);
 
 /* signal handler for inbound notifies (SIGUSR2) */
-extern void Async_NotifyHandler(SIGNAL_ARGS);
+extern void NotifyInterruptHandler(SIGNAL_ARGS);
 
 /*
  * enable/disable processing of inbound notifies directly from signal handler.
  * The enable routine first performs processing of any inbound notifies that
- * have occurred since the last disable.  These are meant to be called ONLY
- * from the appropriate places in PostgresMain().
+ * have occurred since the last disable.
  */
 extern void EnableNotifyInterrupt(void);
-extern void DisableNotifyInterrupt(void);
+extern bool DisableNotifyInterrupt(void);
 
 #endif   /* ASYNC_H */
