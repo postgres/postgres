@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.3 1996/07/23 02:23:47 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.3.2.1 1996/08/26 20:35:29 scrappy Exp $
  *
  * NOTES
  *
@@ -1106,8 +1106,10 @@ checkDataDir()
     sprintf(path, "%s%cbase%ctemplate1%cpg_class", DataDir, SEP_CHAR, SEP_CHAR,
 	    SEP_CHAR);
     if ((fp=fopen(path, "r")) == NULL) {
-	fprintf(stderr, "%s: data base not found in directory \"%s\"\n",
-		progname, DataDir);
+        fprintf(stderr, "%s does not find the database.  Expected to find it "
+                "in the PGDATA directory \"%s\", but unable to open directory "
+                "with pathname \"%s\".\n", 
+                progname, DataDir, path);
 	exit(2);
     }
     fclose(fp);
