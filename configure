@@ -849,6 +849,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-integer-datetimes  enable 64-bit integer date/time support
   --enable-recode         enable character set recode support
   --enable-multibyte      enable multibyte character support
   --enable-nls[=LANGUAGES]  enable Native Language Support
@@ -1577,6 +1578,43 @@ fi;
 
 
 #
+# 64-bit integer date/time storage (--enable-integer-datetimes)
+#
+echo "$as_me:$LINENO: checking whether to build with 64-bit integer date/time support" >&5
+echo $ECHO_N "checking whether to build with 64-bit integer date/time support... $ECHO_C" >&6
+
+
+# Check whether --enable-integer-datetimes or --disable-integer-datetimes was given.
+if test "${enable_integer_datetimes+set}" = set; then
+  enableval="$enable_integer_datetimes"
+
+  case $enableval in
+    yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_INTEGER_DATETIMES 1
+_ACEOF
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-integer-datetimes option" >&5
+echo "$as_me: error: no argument expected for --enable-integer-datetimes option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_integer_datetimes=no
+
+fi;
+
+echo "$as_me:$LINENO: result: $enable_integer_datetimes" >&5
+echo "${ECHO_T}$enable_integer_datetimes" >&6
+
+
 # Character set recode (--enable-recode)
 #
 echo "$as_me:$LINENO: checking whether to build with recode support" >&5
