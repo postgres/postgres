@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.16 2002/04/12 09:37:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropuser,v 1.17 2002/04/12 09:42:32 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -22,6 +22,10 @@ PSQLOPT=
 forcedel=t
 DelUser=
 
+# These handle spaces/tabs in identifiers
+_IFS="$IFS"
+NL="
+"
 # Check for echo -n vs echo \c
 
 if echo '\c' | grep -s c >/dev/null 2>&1
@@ -125,7 +129,9 @@ fi
 
 if [ -z "$DelUser" ]; then
 	$ECHO_N "Enter name of user to delete: "$ECHO_C
-	read DelUser
+        IFS="$NL"
+        read DelUser
+        IFS="$_IFS"
 	[ "$?" -ne 0 ] && exit 1
 fi
 
