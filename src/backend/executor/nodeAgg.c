@@ -129,7 +129,7 @@ ExecAgg(Agg *node)
 		econtext = aggstate->csstate.cstate.cs_ExprContext;
 
 		nagg = length(node->aggs);
-
+		
 		value1 = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_values;
 		nulls = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_nulls;
 
@@ -158,7 +158,7 @@ ExecAgg(Agg *node)
 						xfn2_oid,
 						finalfn_oid;
 
-			aggno++;
+			aggref->aggno = ++aggno;
 			
 			/* ---------------------
 			 *	find transfer functions of all the aggregates and initialize
@@ -252,14 +252,15 @@ ExecAgg(Agg *node)
 					TupleDesc	tupType;
 					Datum	   *tupValue;
 					char	   *null_array;
+					AttrNumber	attnum;
 
 					tupType = aggstate->csstate.css_ScanTupleSlot->ttc_tupleDescriptor;
 					tupValue = projInfo->pi_tupValue;
 
 					/* initially, set all the values to NULL */
 					null_array = palloc(sizeof(char) * tupType->natts);
-					for (aggno = 0; aggno < tupType->natts; aggno++)
-						null_array[aggno] = 'n';
+					for (attnum = 0; attnum < tupType->natts; attnum++)
+						null_array[attnum] = 'n';
 					oneTuple = heap_formtuple(tupType, tupValue, null_array);
 					pfree(null_array);
 				}
@@ -328,8 +329,8 @@ ExecAgg(Agg *node)
 								attnum = ((Var *) aggref->target)->varattno;
 								attlen = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attlen;
 								byVal = outerslot->ttc_tupleDescriptor->attrs[attnum - 1]->attbyval;
-
 								break;
+
 							case T_Expr:
 								{
 									FunctionCachePtr fcache_ptr;
@@ -340,8 +341,8 @@ ExecAgg(Agg *node)
 										fcache_ptr = ((Oper *) tagnode)->op_fcache;
 									attlen = fcache_ptr->typlen;
 									byVal = fcache_ptr->typbyval;
-
 									break;
+
 								}
 							case T_Const:
 								attlen = ((Const *) aggref->target)->constlen;
@@ -371,10 +372,8 @@ ExecAgg(Agg *node)
 						 */
 						args[0] = value1[aggno];
 						args[1] = newVal;
-						value1[aggno] =
-							(Datum) fmgr_c(&aggfns->xfn1,
-										   (FmgrValues *) args,
-										   &isNull1);
+						value1[aggno] =	(Datum) fmgr_c(&aggfns->xfn1,
+										   (FmgrValues *) args, &isNull1);
 						Assert(!isNull1);
 					}
 				}
@@ -383,8 +382,7 @@ ExecAgg(Agg *node)
 				{
 					Datum		xfn2_val = value2[aggno];
 
-					value2[aggno] =
-						(Datum) fmgr_c(&aggfns->xfn2,
+					value2[aggno] =	(Datum) fmgr_c(&aggfns->xfn2,
 									 (FmgrValues *) &xfn2_val, &isNull2);
 					Assert(!isNull2);
 				}
@@ -481,9 +479,8 @@ ExecAgg(Agg *node)
 		 * As long as the retrieved group does not match the
 		 * qualifications it is ignored and the next group is fetched
 		 */
-		if(node->plan.qual != NULL){
-		  qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
-		}
+		if(node->plan.qual != NULL)
+			 qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
 		else qual_result = false;
 		
 		if (oneTuple)
@@ -523,8 +520,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	/*
 	 * assign node's base id and create expression context
 	 */
-	ExecAssignNodeBaseInfo(estate, &aggstate->csstate.cstate,
-						   (Plan *) parent);
+	ExecAssignNodeBaseInfo(estate, &aggstate->csstate.cstate, (Plan *) parent);
 	ExecAssignExprContext(estate, &aggstate->csstate.cstate);
 
 #define AGG_NSLOTS 2
@@ -536,8 +532,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 	ExecInitResultTupleSlot(estate, &aggstate->csstate.cstate);
 
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
-	econtext->ecxt_values =
-					(Datum *) palloc(sizeof(Datum) * length(node->aggs));
+	econtext->ecxt_values =	(Datum *) palloc(sizeof(Datum) * length(node->aggs));
 	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
 	econtext->ecxt_nulls = (char *) palloc(sizeof(char) * length(node->aggs));
 	MemSet(econtext->ecxt_nulls, 0, sizeof(char) * length(node->aggs));
@@ -665,8 +660,7 @@ aggGetAttr(TupleTableSlot *slot,
 		return (Datum) tempSlot;
 	}
 
-	result =
-		heap_getattr(heapTuple, /* tuple containing attribute */
+	result = heap_getattr(heapTuple, /* tuple containing attribute */
 					 attnum,	/* attribute number of desired attribute */
 					 tuple_type,/* tuple descriptor of tuple */
 					 isNull);	/* return: is attribute null? */
