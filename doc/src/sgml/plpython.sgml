@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.13 2002/09/22 18:47:24 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.14 2002/09/23 01:51:02 momjian Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -105,7 +105,7 @@ def __plpython_procedure_myfunc_23456():
    If the <literal>TD["when"]</literal> is <literal>BEFORE</>, you may
    return <literal>None</literal> or <literal>"OK"</literal> from the
    Python function to indicate the row is unmodified,
-   <literal>"SKIP"</> to abort the event, or <literal>"MODIFIED"</> to
+   <literal>"SKIP"</> to abort the event, or <literal>"MODIFY"</> to
    indicate you've modified the row.
   </para>
  </sect1>
