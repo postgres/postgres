@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.76 2004/12/31 22:02:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.77 2005/01/26 23:20:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -601,9 +601,11 @@ AtSubCommit_Portals(SubTransactionId mySubid,
 /*
  * Subtransaction abort handling for portals.
  *
- * Deactivate failed portals created during the failed subtransaction.
+ * Deactivate portals created during the failed subtransaction.
  * Note that per AtSubCommit_Portals, this will catch portals created
  * in descendants of the subtransaction too.
+ *
+ * We don't destroy any portals here; that's done in AtSubCleanup_Portals.
  */
 void
 AtSubAbort_Portals(SubTransactionId mySubid,
@@ -628,6 +630,8 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		 * will go FAILED if the underlying cursor fails.  (Note we do NOT
 		 * want to do this to upper-level portals, since they may be able
 		 * to continue.)
+		 *
+		 * This is only needed to dodge the sanity check in PortalDrop.
 		 */
 		if (portal->status == PORTAL_ACTIVE)
 			portal->status = PORTAL_FAILED;
@@ -635,7 +639,14 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 		/*
 		 * If the portal is READY then allow it to survive into the parent
 		 * transaction; otherwise shut it down.
+		 *
+		 * Currently, we can't actually support that because the portal's
+		 * query might refer to objects created or changed in the failed
+		 * subtransaction, leading to crashes if execution is resumed.
+		 * So, even READY portals are deleted.  It would be nice to detect
+		 * whether the query actually depends on any such object, instead.
 		 */
+#ifdef NOT_USED
 		if (portal->status == PORTAL_READY)
 		{
 			portal->createSubid = parentSubid;
@@ -643,6 +654,7 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 				ResourceOwnerNewParent(portal->resowner, parentXactOwner);
 		}
 		else
+#endif
 		{
 			/* let portalcmds.c clean up the state it knows about */
 			if (PointerIsValid(portal->cleanup))

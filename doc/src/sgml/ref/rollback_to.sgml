@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_to.sgml,v 1.5 2004/11/27 21:27:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/rollback_to.sgml,v 1.6 2005/01/26 23:20:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -74,11 +74,13 @@ ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] <replaceable>savepoint_name</re
 
   <para>
    Cursors have somewhat non-transactional behavior with respect to
-   savepoints.  Any cursor that is opened inside the savepoint is not closed
-   when the savepoint is rolled back.  If a cursor is affected by a
+   savepoints.  Any cursor that is opened inside a savepoint will be closed
+   when the savepoint is rolled back.  If a previously opened cursor is
+   affected by a 
    <command>FETCH</> command inside a savepoint that is later rolled
    back, the cursor position remains at the position that <command>FETCH</>
    left it pointing to (that is, <command>FETCH</> is not rolled back).
+   Closing a cursor is not undone by rolling back, either.
    A cursor whose execution causes a transaction to abort is put in a
    can't-execute state, so while the transaction can be restored using
    <command>ROLLBACK TO SAVEPOINT</>, the cursor can no longer be used.
