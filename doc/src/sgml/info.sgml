@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.6 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.7 2000/05/11 15:18:13 thomas Exp $
 -->
 
 <sect1>
@@ -112,7 +112,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.6 2000/03/31 03:27:40 thomas 
    <listitem>
     <para>
      The
-     <ulink url="postgresql.org"><productname>Postgres</productname></ulink>
+     <ulink url="http://postgresql.org"><productname>Postgres</productname></ulink>
      web site might have some information not appearing in the distribution.
      There is a <productname>mhonarc</productname> catalog of mailing list traffic
      which is a rich resource for many topics.
@@ -126,7 +126,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.6 2000/03/31 03:27:40 thomas 
     <para>
      The
      <ulink url="mailto:pgsql-general@postgresql.org">pgsql-general</ulink>
-     (<ulink url="http://www.PostgreSQL.ORG/mhonarc/pgsql-general/">archive</ulink>)
+     (<ulink url="http://www.postgresql.org/mhonarc/pgsql-general/">archive</ulink>)
      mailing list is a good place to have user questions answered.
      Other mailing lists are available; consult the Info Central section of the
      PostgreSQL web site for details.
