@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.38 1998/01/11 20:02:15 momjian Exp $
+ * $Id: psqlHelp.h,v 1.39 1998/01/22 23:05:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,6 +250,9 @@ static struct _helpStruct QL_HELP[] = {
 	{"load",
 		"dynamically load a module",
 	"load <filename>;"},
+	{"lock",
+		"exclusive lock a table inside a transaction",
+	"lock <class_name>;"},
 	{"move",
 		"move an cursor position",
 	"move [forward|backward] [<number>|all] [in <cursorname>];"},

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.95 1998/01/20 05:04:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.96 1998/01/22 23:04:52 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -116,7 +116,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
-		IndexStmt, ListenStmt, OptimizableStmt,
+		IndexStmt, ListenStmt, LockStmt, OptimizableStmt,
 		ProcedureStmt, 	RecipeStmt, RemoveAggrStmt, RemoveOperStmt,
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
@@ -276,7 +276,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
 		INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LISTEN, LOAD, LOCATION, MERGE, MOVE,
+		LANCOMPILER, LISTEN, LOAD, LOCK_P, LOCATION, MERGE, MOVE,
 		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
 		RECIPE, RENAME, REPLACE, RESET, RETURNS, RULE,
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
@@ -364,6 +364,7 @@ stmt :	  AddAttrStmt
 		| GrantStmt
 		| IndexStmt
 		| ListenStmt
+		| LockStmt
 		| ProcedureStmt
 		| RecipeStmt
 		| RemoveAggrStmt
@@ -2206,6 +2207,27 @@ DeleteStmt:  DELETE FROM relation_name
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relname = $3;
 					n->whereClause = $4;
+					$$ = (Node *)n;
+				}
+		;
+
+/*
+ *	Total hack to just lock a table inside a transaction.
+ *	Is it worth making this a separate command, with
+ *	its own node type and file.  I don't think so. bjm 1998/1/22
+ */
+LockStmt:  LOCK_P relation_name
+				{
+					DeleteStmt *n = makeNode(DeleteStmt);
+					A_Const *c = makeNode(A_Const);
+
+					c->val.type = T_String;
+					c->val.val.str = "f";
+					c->typename = makeNode(TypeName);
+					c->typename->name = xlateSqlType("bool");
+
+					n->relname = $2;
+					n->whereClause = c;
 					$$ = (Node *)n;
 				}
 		;
