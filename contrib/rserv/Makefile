@@ -22,10 +22,10 @@ override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 all: $(SQLS) $(TCLS) $(PERLS) $(SCRIPTS) $(SONAME)
 
 %.sql: %.sql.in
-	sed 's,@MODULE_FILENAME@,$(pkglibdir)/$(SONAME),g' $< >$@
+	sed 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' $< >$@
 
 $(PERLS) $(TCLS) $(SCRIPTS): %: %.in
-	sed -e 's,@MODULE_FILENAME@,$(pkglibdir)/$(SONAME),g' \
+	sed -e 's,@MODULE_FILENAME@,$$libdir/$(NAME),g' \
 	    -e 's:@SQLDIR@:$(datadir)/contrib:g' \
 	    -e 's:@BINDIR@:$(bindir):g' \
 	    -e 's:@LIBDIR@:$(datadir)/contrib:g' $< >$@
