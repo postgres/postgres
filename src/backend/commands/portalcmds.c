@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.36 2004/09/16 16:58:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.37 2004/11/28 22:16:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,12 +62,21 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 		RequireTransactionChain((void *) stmt, "DECLARE CURSOR");
 
 	/*
+	 * Because the planner is not cool about not scribbling on its input,
+	 * we make a preliminary copy of the source querytree.  This prevents
+	 * problems in the case that the DECLARE CURSOR is in a portal and is
+	 * executed repeatedly.  XXX the planner really shouldn't modify its
+	 * input ... FIXME someday.
+	 */
+	query = copyObject(stmt->query);
+
+	/*
 	 * The query has been through parse analysis, but not rewriting or
 	 * planning as yet.  Note that the grammar ensured we have a SELECT
 	 * query, so we are not expecting rule rewriting to do anything
 	 * strange.
 	 */
-	rewritten = QueryRewrite((Query *) stmt->query);
+	rewritten = QueryRewrite(query);
 	if (list_length(rewritten) != 1 || !IsA(linitial(rewritten), Query))
 		elog(ERROR, "unexpected rewrite result");
 	query = (Query *) linitial(rewritten);
