@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.4 1996/07/31 17:35:13 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.5 1996/07/31 18:59:00 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ PROG=	pg_dump
 MKDIR=	../../mk
 include $(MKDIR)/postgres.mk
 include ../Makefile.global
-CFLAGS += -I ../../backend/port/$(PORTNAME)
+
 SRCS=	pg_dump.c common.c
 
 include $(MKDIR)/postgres.prog.mk
