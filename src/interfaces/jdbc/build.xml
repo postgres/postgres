@@ -3,7 +3,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.4 2001/01/18 17:37:11 peter Exp $
+  $Id: build.xml,v 1.5 2001/02/07 09:13:20 peter Exp $
 
 -->
 
@@ -18,6 +18,17 @@
   <property name="minor" value="1" />
 
   <!--
+    defaults for the tests - overide these if required
+    junit.ui is one of textui, awtui or swingui
+
+    password must be something. Doesnt matter if trust is used!
+  -->
+  <property name="database" value="jdbc:postgresql:test" />
+  <property name="username" value="test" />
+  <property name="password" value="password" />
+  <property name="junit.ui" value="textui" />
+
+  <!--
     This is a simpler method than utils.CheckVersion
     It defaults to jdbc1, but builds jdbc2 if the java.lang.Byte class is
     in the CLASSPATH (ie JDK1.2 or later), and then enterprise if the
@@ -29,6 +40,7 @@
     <available property="jdk1.2+" classname="java.lang.ThreadLocal" />
     <available property="jdk1.3+" classname="java.lang.StrictMath" />
     <available property="jdk1.2e+" classname="javax.sql.DataSource" />
+    <available property="junit" classname="junit.framework.Test" />
   </target>
 
   <!--
@@ -46,6 +58,10 @@
     <!-- determine the connection class -->
     <property name="connectclass" value="org.postgresql.jdbc1.Connection" />
     <available property="connectclass" value="org.postgresql.jdbc2.Connection" classname="java.lang.ThreadLocal" />
+
+    <!-- comment out 1.3+ stuff -->
+    <property name="jdk13only" value="//" />
+    <available property="jdk13only" value="" classname="java.lang.StrictMath" />
 
     <!-- Some defaults -->
     <filter token="MAJORVERSION" value="${major}" />
@@ -86,6 +102,7 @@
       <exclude name="${package}/largeobject/PGblob.java" unless="jdk1.2+" />
       <exclude name="${package}/PostgresqlDataSource.java" unless="jdk1.2e+" />
       <exclude name="${package}/xa/**" unless="jdk1.2e+" />
+      <exclude name="${package}/test/**" unless="junit" />
     </javac>
     <copy todir="${dest}" overwrite="true" filtering="on">
       <fileset dir="${src}">
@@ -115,7 +132,7 @@
 
   <!-- This builds the jar file containing the driver -->
   <target name="jar" depends="compile,examples">
-    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="org/**" />
+    <jar jarfile="${jars}/postgresql.jar" basedir="${dest}" includes="${package}/**" excludes="${package}/test/**"/>
     <jar jarfile="${jars}/postgresql-examples.jar" basedir="${dest}" includes="example/**" />
   </target>
 
@@ -132,4 +149,23 @@
     </copy>
   </target>
 
+  <!--
+    This compiles and executes the JUnit tests
+  -->
+  <target name="test" depends="jar" if="junit">
+    <javac srcdir="${src}" destdir="${dest}">
+      <include name="${package}/test/jdbc2/**" if="jdk1.2+" />
+      <include name="${package}/test/java2ee/**" if="jdk1.2e+" />
+    </javac>
+    <java fork="yes" classname="junit.${junit.ui}.TestRunner" taskname="junit" failonerror="true">
+      <arg value="org.postgresql.test.JDBC2Tests" />
+      <sysproperty key="database" value="${database}" />
+      <sysproperty key="username" value="${username}" />
+      <sysproperty key="password" value="${password}" />
+      <classpath>
+        <pathelement location="${dest}" />
+        <pathelement path="${java.class.path}" />
+      </classpath>
+    </java>
+  </target>
 </project>

@@ -1,3 +1,7 @@
+Tue Feb 06 19:00:00 GMT 2001 peter@retep.org.uk
+        - Completed first two TestCase's for the test suite. JUnit is now
+          recognised by ant.
+
 Wed Jan 31 08:46:00 GMT 2001 peter@retep.org.uk
         - Some minor additions to Statement to make our own extensions more
           portable.

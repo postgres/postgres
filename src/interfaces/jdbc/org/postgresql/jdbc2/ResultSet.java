@@ -353,6 +353,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
     if (s != null)
       {
+
 	try
 	  {
 	    val = new BigDecimal(s);
