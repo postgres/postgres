@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.91 2005/01/22 23:22:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.92 2005/02/02 06:35:59 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -66,12 +66,12 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
 
   <para>
    If a schema name is given (for example, <literal>CREATE TABLE
-   myschema.mytable ...</>) then the table is created in the
-   specified schema.  Otherwise it is created in the current schema.
-   Temporary tables exist in a special schema, so a schema name may not be
-   given when creating a temporary table.
-   The table name must be distinct from the name of any other table,
-   sequence, index, or view in the same schema.
+   myschema.mytable ...</>) then the table is created in the specified
+   schema.  Otherwise it is created in the current schema.  Temporary
+   tables exist in a special schema, so a schema name may not be given
+   when creating a temporary table.  The name of the table must be
+   distinct from the name of any other table, sequence, index, or view
+   in the same schema.
   </para>
 
   <para>

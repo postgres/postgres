@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.29 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.30 2005/02/02 06:35:59 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ OR REPLACE ] VIEW <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable
+CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">name</replaceable> [ ( <replaceable
 class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="PARAMETER">query</replaceable>
 </synopsis>
  </refsynopsisdiv>
@@ -43,10 +43,12 @@ class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="P
 
   <para>
    If a schema name is given (for example, <literal>CREATE VIEW
-   myschema.myview ...</>) then the view is created in the
-   specified schema.  Otherwise it is created in the current schema.
-   The view name must be distinct from the name of any other view, table,
-   sequence, or index in the same schema.
+   myschema.myview ...</>) then the view is created in the specified
+   schema.  Otherwise it is created in the current schema.  Temporary
+   views exist in a special schema, so a schema name may not be given
+   when creating a temporary view. The name of the view must be
+   distinct from the name of any other view, table, sequence, or index
+   in the same schema.
   </para>
  </refsect1>
 
@@ -54,6 +56,28 @@ class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="P
   <title>Parameters</title>
 
   <variablelist>
+   <varlistentry>
+    <term><literal>TEMPORARY</> or <literal>TEMP</></term>
+    <listitem>
+     <para>
+      If specified, the view is created as a temporary view.
+      Temporary views are automatically dropped at the end of the
+      current session. Temporary views are automatically placed in the
+      current backend's local temporary schema, so it is illegal to
+      specify a schema-qualified name for a temporary view. Existing
+      permanent relations with the same name are not visible to the
+      current session while the temporary view exists, unless they are
+      referenced with schema-qualified names.
+     </para>
+
+     <para>
+      If any of the base tables referenced by the view are temporary,
+      the view is created as a temporary view (whether
+      <literal>TEMPORARY</literal> is specified or not).
+     </para>
+    </listitem>
+   </varlistentry>
+   
    <varlistentry>
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
@@ -102,7 +126,8 @@ class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="P
    </para>
 
    <para>
-    Use the <command>DROP VIEW</command> statement to drop views.
+    Use the <xref linkend="sql-dropview" endterm="sql-dropview-title">
+    statement to drop views.
    </para>
 
    <para>
@@ -153,7 +178,7 @@ CREATE VIEW comedies AS
 <synopsis>
 CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     AS query
-    [ WITH [ CASCADE | LOCAL ] CHECK OPTION ]
+    [ WITH [ CASCADED | LOCAL ] CHECK OPTION ]
 </synopsis>
   </para>
 
@@ -184,12 +209,12 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
      </varlistentry>
 
      <varlistentry>
-      <term><literal>CASCADE</literal></term>
+      <term><literal>CASCADED</literal></term>
       <listitem>
        <para>
         Check for integrity on this view and on any dependent
-        view. <literal>CASCADE</> is assumed if neither
-        <literal>CASCADE</> nor <literal>LOCAL</> is specified.
+        view. <literal>CASCADED</> is assumed if neither
+        <literal>CASCADED</> nor <literal>LOCAL</> is specified.
        </para>
       </listitem>
      </varlistentry>

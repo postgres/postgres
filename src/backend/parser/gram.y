@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.482 2005/01/27 03:17:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.483 2005/02/02 06:36:01 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4075,23 +4075,34 @@ transaction_mode_list_or_empty:
 
 /*****************************************************************************
  *
- *		QUERY:
- *				create view <viewname> '('target-list ')' AS <query>
+ *	QUERY:
+ *		CREATE [ OR REPLACE ] [ TEMP ] VIEW <viewname> '('target-list ')' AS <query>
  *
  *****************************************************************************/
 
-ViewStmt:	CREATE opt_or_replace VIEW qualified_name opt_column_list
+ViewStmt: CREATE OptTemp VIEW qualified_name opt_column_list
 				AS SelectStmt
 				{
 					ViewStmt *n = makeNode(ViewStmt);
-					n->replace = $2;
+					n->replace = false;
 					n->view = $4;
+					n->view->istemp = $2;
 					n->aliases = $5;
 					n->query = (Query *) $7;
-					$$ = (Node *)n;
+					$$ = (Node *) n;
+				}
+		| CREATE OR REPLACE OptTemp VIEW qualified_name opt_column_list
+				AS SelectStmt
+				{
+					ViewStmt *n = makeNode(ViewStmt);
+					n->replace = true;
+					n->view = $6;
+					n->view->istemp = $4;
+					n->aliases = $7;
+					n->query = (Query *) $9;
+					$$ = (Node *) n;
 				}
 		;
-
 
 /*****************************************************************************
  *

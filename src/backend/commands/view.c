@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.86 2004/12/31 21:59:42 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.87 2005/02/02 06:36:00 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "commands/view.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/clauses.h"
 #include "parser/parse_relation.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
@@ -30,7 +31,55 @@
 
 
 static void checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc);
+static bool isViewOnTempTable_walker(Node *node, void *context);
 
+/*---------------------------------------------------------------------
+ * isViewOnTempTable
+ *
+ * Returns true iff any of the relations underlying this view are
+ * temporary tables.
+ *---------------------------------------------------------------------
+ */
+static bool
+isViewOnTempTable(Query *viewParse)
+{
+	return isViewOnTempTable_walker((Node *) viewParse, NULL);
+}
+
+static bool
+isViewOnTempTable_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+
+	if (IsA(node, Query))
+	{
+		Query		*query = (Query *) node;
+		ListCell	*rtable;
+
+		foreach (rtable, query->rtable)
+		{
+			RangeTblEntry *rte = lfirst(rtable);
+			if (rte->rtekind == RTE_RELATION)
+			{
+				Relation rel = heap_open(rte->relid, AccessShareLock);
+				bool istemp = rel->rd_istemp;
+				heap_close(rel, AccessShareLock);
+				if (istemp)
+					return true;
+			}
+		}
+
+		return query_tree_walker(query,
+								 isViewOnTempTable_walker,
+								 context,
+								 QTW_IGNORE_JOINALIASES);
+	}
+
+	return expression_tree_walker(node,
+								  isViewOnTempTable_walker,
+								  context);
+}
 
 /*---------------------------------------------------------------------
  * DefineVirtualRelation
@@ -116,6 +165,13 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		if (!pg_class_ownercheck(viewOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 						   RelationGetRelationName(rel));
+
+		/*
+		 * Due to the namespace visibility rules for temporary
+		 * objects, we should only end up replacing a temporary view
+		 * with another temporary view, and vice versa.
+		 */
+		Assert(relation->istemp == rel->rd_istemp);
 
 		/*
 		 * Create a tuple descriptor to compare against the existing view,
@@ -326,17 +382,29 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
  *-------------------------------------------------------------------
  */
 void
-DefineView(const RangeVar *view, Query *viewParse, bool replace)
+DefineView(RangeVar *view, Query *viewParse, bool replace)
 {
 	Oid			viewOid;
 
+	/*
+	 * If the user didn't explicitly ask for a temporary view, check
+	 * whether we need one implicitly.
+	 */
+	if (!view->istemp)
+	{
+		view->istemp = isViewOnTempTable(viewParse);
+		if (view->istemp)
+			ereport(NOTICE,
+					(errmsg("view \"%s\" will be a temporary view",
+							view->relname)));
+	}
+		
 	/*
 	 * Create the view relation
 	 *
 	 * NOTE: if it already exists and replace is false, the xact will be
 	 * aborted.
 	 */
-
 	viewOid = DefineVirtualRelation(view, viewParse->targetList, replace);
 
 	/*
