@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.63 2000/01/15 18:30:28 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.64 2000/01/18 03:01:40 ishii Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -160,6 +160,9 @@ X11_LIBS= -lX11 @X_EXTRA_LIBS@
 
 # flag whether multibyte is on/off
 MULTIBYTE=@MULTIBYTE@
+ifdef MULTIBYTE
+MBFLAGS = -DMULTIBYTE
+endif
 
 ##############################################################################
 #
