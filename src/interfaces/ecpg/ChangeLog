@@ -1701,6 +1701,10 @@ Sun Oct 26 10:47:05 CET 2003
 Thu Oct 30 11:12:37 CET 2003
 
 	- Applied patch by Dave Cramer fixing several bugs in compatlib.
+	
+Fri Oct 31 15:09:22 CET 2003
+
+	- If EOF is found inside a string/comment/etc. stop parsing.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
