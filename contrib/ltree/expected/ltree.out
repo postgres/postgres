@@ -107,6 +107,66 @@ select ''::ltree || 'Top.Child1.Child2'::ltree;
  Top.Child1.Child2
 (1 row)
 
+select lca('{la.2.3,1.2.3.4.5.6,}') is null;
+ ?column? 
+----------
+ t
+(1 row)
+
+select lca('{la.2.3,1.2.3.4.5.6}') is null;
+ ?column? 
+----------
+ f
+(1 row)
+
+select lca('{1.la.2.3,1.2.3.4.5.6}');
+ lca 
+-----
+ 1
+(1 row)
+
+select lca('{1.2.3,1.2.3.4.5.6}');
+ lca 
+-----
+ 1.2
+(1 row)
+
+select lca('1.la.2.3','1.2.3.4.5.6');
+ lca 
+-----
+ 1
+(1 row)
+
+select lca('1.2.3','1.2.3.4.5.6');
+ lca 
+-----
+ 1.2
+(1 row)
+
+select lca('1.2.2.3','1.2.3.4.5.6');
+ lca 
+-----
+ 1.2
+(1 row)
+
+select lca('1.2.2.3','1.2.3.4.5.6','');
+ lca 
+-----
+ 
+(1 row)
+
+select lca('1.2.2.3','1.2.3.4.5.6','2');
+ lca 
+-----
+ 
+(1 row)
+
+select lca('1.2.2.3','1.2.3.4.5.6','1');
+ lca 
+-----
+ 
+(1 row)
+
 select '1'::lquery;
  lquery 
 --------

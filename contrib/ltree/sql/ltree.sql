@@ -23,6 +23,18 @@ select 'Top_0'::ltree || 'Top.Child1.Child2'::ltree;
 select 'Top.Child1.Child2'::ltree || ''::ltree;
 select ''::ltree || 'Top.Child1.Child2'::ltree;
 
+select lca('{la.2.3,1.2.3.4.5.6,}') is null;
+select lca('{la.2.3,1.2.3.4.5.6}') is null;
+select lca('{1.la.2.3,1.2.3.4.5.6}');
+select lca('{1.2.3,1.2.3.4.5.6}');
+select lca('1.la.2.3','1.2.3.4.5.6');
+select lca('1.2.3','1.2.3.4.5.6');
+select lca('1.2.2.3','1.2.3.4.5.6');
+select lca('1.2.2.3','1.2.3.4.5.6','');
+select lca('1.2.2.3','1.2.3.4.5.6','2');
+select lca('1.2.2.3','1.2.3.4.5.6','1');
+
+
 select '1'::lquery;
 select '4|3|2'::lquery;
 select '1.2'::lquery;
