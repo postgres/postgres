@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.28 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.29 2002/10/23 23:33:08 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -369,6 +369,21 @@ PostgreSQL documentation
    For others, which have little influence during single-user mode,
    see <xref linkend="app-postmaster">.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   To stop a running query use the <literal>SIGINT</literal> signal. To
+   tell <application>postgres</application> to reread the config file,
+   use a <literal>SIGHUP</literal> signal. The
+   <application>postmaster</application> uses <literal>SIGTERM</literal>
+   to tell a postgres process to quit normally and
+   <literal>SIGQUIT</literal> to terminate without the normal cleanup.
+   These <emphasis>should not</emphasis> be used by users.
+  </para>
+
  </refsect1>
 
  <refsect1>
