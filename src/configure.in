@@ -240,21 +240,6 @@ fi
 export USE_PERL
 
 dnl Unless we specify the command line options
-dnl	--disable-hba		to explicitly disable it 
-dnl	--enable-hba		to explicitly enable it 
-dnl The default is to enable it
-if test "$enable_hba" = "yes" 
-then
-	NOHBA=no
-elif test "$enable_hba" = "no"
-then
-	NOHBA=yes
-else
-	NOHBA=no
-fi
-export NOHBA
-
-dnl Unless we specify the command line options
 dnl     --disable cassert       to explicitly disable it
 dnl     --enable cassert        to explicitly enable it
 dnl If you do not explicitly do it, it defaults to disabled - we
@@ -531,14 +516,5 @@ fi
 AC_MSG_CHECKING(setting DEF_PGPORT)
 AC_DEFINE_UNQUOTED(DEF_PGPORT, "${DEF_PGPORT}")
 AC_MSG_RESULT($DEF_PGPORT)
-AC_MSG_CHECKING(setting HBA)
-if test "$NOHBA" = "no"
-then
-        AC_MSG_RESULT(enabled)
-        AC_DEFINE(HBA)
-else
-        AC_MSG_RESULT(disabled)
-fi 
-
 
 AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile ) 
