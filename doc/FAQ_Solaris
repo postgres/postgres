@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.1
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2001/04/04 20:02:31 $
+last updated:        $Date: 2001/04/08 16:36:13 $
 
 current maintainer:  Marc Liyanage (liyanage@access.ch)
 original author:     Marc Liyanage (liyanage@access.ch)
@@ -37,7 +37,7 @@ http://www.gnu.org/order/ftp.html
 
 2) Why do I get problems when building with OpenSSL support?
 
-When you build PostgreSQL with OpenSSL support you will probably get
+When you build PostgreSQL with OpenSSL support you might get
 compilation errors in the following files:
 
 src/backend/libpq/crypt.c
@@ -47,10 +47,9 @@ src/interfaces/libpq/fe-connect.c
 
 This is because of a namespace conflict between the standard
 /usr/include/crypt.h header and the header files provided by OpenSSL.
-We believe that this should be fixed by OpenSSL.
 
-The problem can be worked around by removing the inclusion of
-<crypt.h> in these four files.
+Upgrading your OpenSSL installation to version 0.9.6a fixes this
+problem.
 
 
 3) Why does configure complain about a failed test program?
