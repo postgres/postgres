@@ -793,3 +793,316 @@ TIP 5: Have you checked our extensive FAQ?
 
 http://www.postgresql.org/users-lounge/docs/faq.html
 
+From pgsql-hackers-owner+M4091@postgresql.org Mon Jan 29 17:00:26 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA13925
+	for <pgman@candle.pha.pa.us>; Mon, 29 Jan 2001 18:00:25 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0TMq7q43267;
+	Mon, 29 Jan 2001 17:52:07 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M4091@postgresql.org)
+Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0TMbYq42245
+	for <pgsql-hackers@postgreSQL.org>; Mon, 29 Jan 2001 17:37:34 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: from localhost (zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) with SMTP id XAA32063;
+	Mon, 29 Jan 2001 23:37:08 +0100
+Date: Mon, 29 Jan 2001 23:37:08 +0100 (CET)
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: =?koi8-r?B?7cHL08nNIO0uIPDPzNHLz9c=?= <max@bresttelecom.by>
+cc: pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres))
+In-Reply-To: <005d01c08772$de689030$1e01a8c0@bresttelecom>
+Message-ID: <Pine.LNX.3.96.1010129230017.31607B-100000@ara.zf.jcu.cz>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-2
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from QUOTED-PRINTABLE to 8bit by mail.postgresql.org id f0TMbYq42246
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+
+On Fri, 26 Jan 2001, [koi8-r] Максим М. Поляков wrote:
+
+>     Good Day, Dear Karel Zak!
+> 
+> Please, forgive me for my bad english and if i do not right with your 
+> day time.
+
+my English is more poor :-) 
+
+ You are right, it is (was?) in TODO and it will implemented - I hope - 
+in some next release (may be in 7.2 during ACL overhaul, Peter?). 
+
+Before some time I wrote patch that resolve it for 7.0.2 (anyone -
+I forgot his name..)  port it to 7.0.2, my original patch was for 7.0.0. 
+May be will possible use it for last stable 7.0.3 too. 
+
+The patch is at:
+	 ftp://ftp2.zf.jcu.cz/users/zakkr/pg/7.0.2-user.patch.gz
+
+This patch add to 7.0.2 code NOCREATETABLE and NOLOCKTABLE feature:
+
+CREATE USER username
+    [ WITH
+     [ SYSID uid ]
+     [ PASSWORD 'password' ] ]
+    [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
+->  [ CREATETABLE | NOCREATETABLE ] [ LOCKTABLE | NOLOCKTABLE ]
+    ...etc.
+
+ If CREATETABLE or LOCKTABLE is not specific in CREATE USER command,
+as default is set CREATETABLE or LOCKTABLE (true).
+
+
+ But, don't forget - it's temporarily solution, I hope that some next
+release resolve it more systematic. More is in the patche@postgresql.org
+archive where was send original patch.
+
+ Because you are not first person that ask me, I re-post (CC:) it to 
+hackers@postgresql.org, more admins happy with this :-)
+  
+				Karel
+
+> I want to ask You about "access control over who can create tables and 
+> use locks in PostgreSQL". This message was placed in PostgreSQL site 
+> TODO list. But now it was deleted. I so need help about this question, 
+> becouse i'll making a site witch will give hosting for our users. 
+> And i want to make a PostgreSQL access to their own databases. But there 
+> is (how You now) one problem. Anyone user may to connect to the different
+> user database and he may to create himself tables.
+> I don't like it.
+
+
+
+From mascarm@mascari.com Mon May  7 15:57:48 2001
+Return-path: <mascarm@mascari.com>
+Received: from corvette.mascari.com (dhcp065-024-161-045.columbus.rr.com [65.24.161.45])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f47Jvku26379
+	for <pgman@candle.pha.pa.us>; Mon, 7 May 2001 15:57:47 -0400 (EDT)
+Received: from ferrari (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with SMTP id PAA06587;
+	Mon, 7 May 2001 15:47:59 -0400
+Received: by localhost with Microsoft MAPI; Mon, 7 May 2001 15:55:53 -0400
+Message-ID: <01C0D70E.3241C920.mascarm@mascari.com>
+From: Mike Mascari <mascarm@mascari.com>
+Reply-To: "mascarm@mascari.com" <mascarm@mascari.com>
+To: "'Bruce Momjian'" <pgman@candle.pha.pa.us>, Karel Zak <zakkr@zf.jcu.cz>
+cc: pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: RE: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres))
+Date: Mon, 7 May 2001 15:55:52 -0400
+Organization: Mascari Development Inc.
+X-Mailer: Microsoft Internet E-mail/MAPI - 8.0.0.4211
+MIME-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Peter E. posted his proposal for the revamping of the 
+authentication/security system a few weeks ago. There was a 
+discussion, but I don't know if he came to any definitive 
+conclusions, such as implementing System Privileges as well as Object 
+Privileges. If he does, then the dba (or anyone who has been granted 
+GRANT ANY PRIVILEGE system privilege & CREATE USER system privilege) 
+should be able to do:
+
+CREATE USER mascarm IDENTIFIED BY manager;
+GRANT CREATE TABLE to mascarm;
+
+It would also be good if PostgreSQL came with 2 groups by default - 
+connect and dba.
+
+The connect group would be granted these System Privileges:
+
+CREATE AGGREGATE privilege
+CREATE INDEX privilege
+CREATE FUNCTION privilege
+CREATE OPERATOR privilege
+CREATE RULE privilege
+CREATE SESSION privilege
+CREATE SYNONYM privilege
+CREATE TABLE privilege
+CREATE TRIGGER privilege
+CREATE TYPE privilege
+CREATE VIEW privilege
+
+These allow the user to create the above objects in their own schema 
+only. We're getting schemas in 7.2, right? ;-).
+
+The dba group would be granted the rest, like these:
+
+CREATE ANY AGGREGATE privilege
+CREATE ANY INDEX privilege...
+(and so on)
+
+as well as:
+
+CREATE/ALTER/DROP USER
+GRANT ANY PRIVILEGE
+COMMENT ANY TABLE
+INSERT ANY TABLE
+UPDATE ANY TABLE
+DELETE ANY TABLE
+SELECT ANY TABLE
+ANALYZE ANY TABLE
+LOCK ANY TABLE
+CREATE PUBLIC SYNONYM (needed when schemas roll around)
+DROP PUBLIC SYNONYM
+(and so on)
+
+Then, the dba could do a:
+
+GRANT connect TO mascarm;
+
+Or a:
+
+CREATE USER mascarm
+IDENTIFIED BY manager
+IN GROUP connect;
+
+It seems Karel's patch is a solution to the problem of people who 
+want to create separate PostgreSQL user accounts, but want to ensure 
+that a user can't create tables. In Oracle, I would just do a:
+
+CREATE USER mascarm
+IDENTIFIED BY manager;
+
+GRANT CREATE SESSION TO mascarm;
+
+Now mascarm has the ability to connect, but that's it.
+
+Currently, if I know for instance that a background process DROPS a 
+table, CREATES a new one, and then imports some data, I can create my 
+own table by the same name, in between the DROP and CREATE and can 
+cause havoc (if its not done in a single transaction). Hopefully 
+Peter E's ACL design will allow for Oracle-like System Privileges to 
+take place. That would allow for a much finer granularity of 
+permissions then everyone either being the Unix equivalent of 'root' 
+or 'user'.
+
+Just my humble opinion though,
+
+Mike Mascari
+mascarm@mascari.com
+
+-----Original Message-----
+From:	Bruce Momjian [SMTP:pgman@candle.pha.pa.us]
+
+Can someone remind me what we are going to do with this?
+
+
+[ Charset ISO-8859-2 unsupported, converting... ]
+>
+> On Fri, 26 Jan 2001, [koi8-r] ______ _. _______ wrote:
+>
+> >     Good Day, Dear Karel Zak!
+> >
+> > Please, forgive me for my bad english and if i do not right with 
+your
+> > day time.
+>
+> my English is more poor :-)
+>
+>  You are right, it is (was?) in TODO and it will implemented - I 
+hope -
+> in some next release (may be in 7.2 during ACL overhaul, Peter?).
+>
+> Before some time I wrote patch that resolve it for 7.0.2 (anyone -
+> I forgot his name..)  port it to 7.0.2, my original patch was for 
+7.0.0.
+> May be will possible use it for last stable 7.0.3 too.
+>
+> The patch is at:
+> 	 ftp://ftp2.zf.jcu.cz/users/zakkr/pg/7.0.2-user.patch.gz
+>
+> This patch add to 7.0.2 code NOCREATETABLE and NOLOCKTABLE feature:
+>
+> CREATE USER username
+>     [ WITH
+>      [ SYSID uid ]
+>      [ PASSWORD 'password' ] ]
+>     [ CREATEDB   | NOCREATEDB ] [ CREATEUSER | NOCREATEUSER ]
+> ->  [ CREATETABLE | NOCREATETABLE ] [ LOCKTABLE | NOLOCKTABLE ]
+>     ...etc.
+>
+>  If CREATETABLE or LOCKTABLE is not specific in CREATE USER 
+command,
+> as default is set CREATETABLE or LOCKTABLE (true).
+>
+>
+>  But, don't forget - it's temporarily solution, I hope that some 
+next
+> release resolve it more systematic. More is in the 
+patche@postgresql.org
+> archive where was send original patch.
+>
+>  Because you are not first person that ask me, I re-post (CC:) it 
+to
+> hackers@postgresql.org, more admins happy with this :-)
+>
+> 				Karel
+>
+> > I want to ask You about "access control over who can create 
+tables and
+> > use locks in PostgreSQL". This message was placed in PostgreSQL 
+site
+> > TODO list. But now it was deleted. I so need help about this 
+question,
+> > becouse i'll making a site witch will give hosting for our users. 
+> > And i want to make a PostgreSQL access to their own databases. 
+But there
+> > is (how You now) one problem. Anyone user may to connect to the 
+different
+> > user database and he may to create himself tables.
+> > I don't like it.
+>
+>
+>
+
+--
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 
+19026
+
+
+
+From tgl@sss.pgh.pa.us Mon May  7 17:33:41 2001
+Return-path: <tgl@sss.pgh.pa.us>
+Received: from sss.pgh.pa.us (tgl@sss.pgh.pa.us [216.151.103.158])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f47LXeu02566
+	for <pgman@candle.pha.pa.us>; Mon, 7 May 2001 17:33:40 -0400 (EDT)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.3/8.11.3) with ESMTP id f47LXgR23236;
+	Mon, 7 May 2001 17:33:42 -0400 (EDT)
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Karel Zak <zakkr@zf.jcu.cz>,
+   =?KOI8-R?Q?=ED=C1=CB=D3=C9=CD_=ED=2E_=F0=CF=CC=D1=CB=CF=D7?= <max@bresttelecom.by>,
+   pgsql-hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] NOCREATETABLE patch (was: Re: Please, help!(about Postgres)) 
+In-Reply-To: <200105071848.f47ImBh20345@candle.pha.pa.us> 
+References: <200105071848.f47ImBh20345@candle.pha.pa.us>
+Comments: In-reply-to Bruce Momjian <pgman@candle.pha.pa.us>
+	message dated "Mon, 07 May 2001 14:48:11 -0400"
+Date: Mon, 07 May 2001 17:33:42 -0400
+Message-ID: <23233.989271222@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: OR
+
+Bruce Momjian <pgman@candle.pha.pa.us> writes:
+> Can someone remind me what we are going to do with this?
+
+I'd like to see some effort put into implementing the SQL-standard
+privilege model, rather than adding yet more ad-hoc user properties.
+The more of these we make, the more painful it's going to be to meet
+the spec later.
+
+Possibly, after we have the SQL semantics we'll still feel that we
+need some additional features ... but how about spec first and
+extensions afterwards?
+
+			regards, tom lane
+
