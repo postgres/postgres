@@ -639,6 +639,8 @@ SELECT t1.id1, t1.result, t2.expected
 -- ******************************
 -- numeric AVG used to fail on some platforms
 SELECT AVG(val) FROM num_data;
+SELECT STDDEV(val) FROM num_data;
+SELECT VARIANCE(val) FROM num_data;
 
 -- Check for appropriate rounding and overflow
 CREATE TABLE fract_only (id int, val numeric(4,4));
@@ -701,3 +703,30 @@ SELECT '' AS to_number_10, to_number('0', '99.99');
 SELECT '' AS to_number_11, to_number('.-01', 'S99.99');
 SELECT '' AS to_number_12, to_number('.01-', '99.99S');
 SELECT '' AS to_number_13, to_number(' . 0 1 -', ' 9 9 . 9 9 S');
+
+--
+-- Input syntax
+--
+
+CREATE TABLE num_input_test (n1 numeric);
+
+-- good inputs
+INSERT INTO num_input_test(n1) VALUES (' 123');
+INSERT INTO num_input_test(n1) VALUES ('   3245874    ');
+INSERT INTO num_input_test(n1) VALUES ('  -93853');
+INSERT INTO num_input_test(n1) VALUES ('555.50');
+INSERT INTO num_input_test(n1) VALUES ('-555.50');
+INSERT INTO num_input_test(n1) VALUES ('NaN ');
+INSERT INTO num_input_test(n1) VALUES ('        nan');
+
+-- bad inputs
+INSERT INTO num_input_test(n1) VALUES ('     ');
+INSERT INTO num_input_test(n1) VALUES ('   1234   %');
+INSERT INTO num_input_test(n1) VALUES ('xyz');
+INSERT INTO num_input_test(n1) VALUES ('- 1234');
+INSERT INTO num_input_test(n1) VALUES ('5 . 0');
+INSERT INTO num_input_test(n1) VALUES ('5. 0   ');
+INSERT INTO num_input_test(n1) VALUES ('');
+INSERT INTO num_input_test(n1) VALUES (' N aN ');
+
+SELECT * FROM num_input_test;

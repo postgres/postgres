@@ -6,23 +6,27 @@
 
 CREATE TABLE INT2_TBL(f1 int2);
 
-INSERT INTO INT2_TBL(f1) VALUES ('0');
+INSERT INTO INT2_TBL(f1) VALUES ('0   ');
 
-INSERT INTO INT2_TBL(f1) VALUES ('1234');
+INSERT INTO INT2_TBL(f1) VALUES ('  1234 ');
 
-INSERT INTO INT2_TBL(f1) VALUES ('-1234');
+INSERT INTO INT2_TBL(f1) VALUES ('    -1234');
 
 INSERT INTO INT2_TBL(f1) VALUES ('34.5');
 
--- largest and smallest values 
+-- largest and smallest values
 INSERT INTO INT2_TBL(f1) VALUES ('32767');
 
 INSERT INTO INT2_TBL(f1) VALUES ('-32767');
 
--- bad input values -- should give warnings 
+-- bad input values -- should give errors
 INSERT INTO INT2_TBL(f1) VALUES ('100000');
-
 INSERT INTO INT2_TBL(f1) VALUES ('asdf');
+INSERT INTO INT2_TBL(f1) VALUES ('    ');
+INSERT INTO INT2_TBL(f1) VALUES ('- 1234');
+INSERT INTO INT2_TBL(f1) VALUES ('4 444');
+INSERT INTO INT2_TBL(f1) VALUES ('123 dt');
+INSERT INTO INT2_TBL(f1) VALUES ('');
 
 
 SELECT '' AS five, INT2_TBL.*;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.61 2004/02/18 00:01:33 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numutils.c,v 1.62 2004/03/11 02:11:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <math.h>
 #include <limits.h>
+#include <ctype.h>
 
 #include "utils/builtins.h"
 
@@ -45,10 +46,12 @@
 /*
  * pg_atoi: convert string to integer
  *
- * size is the sizeof() the desired integral result (1, 2, or 4 bytes).
+ * 'size' is the sizeof() the desired integral result (1, 2, or 4 bytes).
  *
- * c, if not 0, is the terminator character that may appear after the
- * integer.  If 0, the string must end after the integer.
+ * allows any number of leading or trailing whitespace characters.
+ *
+ * 'c' is the character that terminates the input string (after any
+ * number of whitespace characters).
  *
  * Unlike plain atoi(), this will throw ereport() upon bad input format or
  * overflow.
@@ -57,7 +60,7 @@ int32
 pg_atoi(char *s, int size, int c)
 {
 	long		l;
-	char	   *badp = NULL;
+	char	   *badp;
 
 	/*
 	 * Some versions of strtol treat the empty string as an error, but
@@ -74,17 +77,21 @@ pg_atoi(char *s, int size, int c)
 	errno = 0;
 	l = strtol(s, &badp, 10);
 
-	/*
-	 * strtol() normally only sets ERANGE.	On some systems it also may
-	 * set EINVAL, which simply means it couldn't parse the input string.
-	 * This is handled by the second "if" consistent across platforms.
-	 */
-	if (errno && errno != ERANGE && errno != EINVAL)
+	/* We made no progress parsing the string, so bail out */
+	if (s == badp)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for integer: \"%s\"",
 						s)));
-	if (badp && *badp && *badp != c)
+
+	/*
+	 * Skip any trailing whitespace; if anything but whitespace
+	 * remains before the terminating character, bail out
+	 */
+	while (*badp != c && isspace(*badp))
+		badp++;
+
+	if (*badp != c)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for integer: \"%s\"",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.55 2004/03/04 21:47:18 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.56 2004/03/11 02:11:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,19 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	char	   *endptr;
 	Oid			result;
 
+	/*
+	 * In releases prior to 7.5, we accepted an empty string as valid
+	 * input (yielding an OID of 0). In 7.5, we accept empty strings,
+	 * but emit a warning noting that the feature is deprecated. In
+	 * 7.6+, the warning should be replaced by an error.
+	 */
+	if (*s == '\0')
+		ereport(WARNING,
+				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+				 errmsg("deprecated input syntax for type oid: \"\""),
+				 errdetail("This input will be rejected in "
+						   "a future release of PostgreSQL.")));
+
 	errno = 0;
 	cvt = strtoul(s, &endptr, 10);
 
@@ -47,20 +60,7 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 				 errmsg("invalid input syntax for type oid: \"%s\"",
 						s)));
 
-	/*
-	 * In releases prior to 7.5, we accepted an empty string as valid
-	 * input (yielding an OID of 0). In 7.5, we accept empty strings,
-	 * but emit a warning noting that the feature is deprecated. In
-	 * 7.6+, the warning should be replaced by an error.
-	 */
-	if (*s == '\0')
-		ereport(WARNING,
-				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-				 errmsg("deprecated input syntax for type oid: \"\""),
-				 errdetail("This input will be rejected in "
-						   "a future release of PostgreSQL.")));
-
-	if (endptr == s && *s)
+	if (endptr == s && *s != '\0')
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for type oid: \"%s\"",

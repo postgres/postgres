@@ -631,6 +631,7 @@ SELECT user_relns() AS user_relns
  num_exp_power_10_ln
  num_exp_sqrt
  num_exp_sub
+ num_input_test
  num_result
  onek
  onek2
@@ -660,7 +661,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(96 rows)
+(97 rows)
 
 --SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer'))) AS equip_name;
 SELECT hobbies_by_name('basketball');

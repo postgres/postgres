@@ -4,19 +4,29 @@
 -- Some of these answers are consequently numerically incorrect.
 --
 CREATE TABLE INT2_TBL(f1 int2);
-INSERT INTO INT2_TBL(f1) VALUES ('0');
-INSERT INTO INT2_TBL(f1) VALUES ('1234');
-INSERT INTO INT2_TBL(f1) VALUES ('-1234');
+INSERT INTO INT2_TBL(f1) VALUES ('0   ');
+INSERT INTO INT2_TBL(f1) VALUES ('  1234 ');
+INSERT INTO INT2_TBL(f1) VALUES ('    -1234');
 INSERT INTO INT2_TBL(f1) VALUES ('34.5');
 ERROR:  invalid input syntax for integer: "34.5"
--- largest and smallest values 
+-- largest and smallest values
 INSERT INTO INT2_TBL(f1) VALUES ('32767');
 INSERT INTO INT2_TBL(f1) VALUES ('-32767');
--- bad input values -- should give warnings 
+-- bad input values -- should give errors
 INSERT INTO INT2_TBL(f1) VALUES ('100000');
 ERROR:  value "100000" is out of range for type shortint
 INSERT INTO INT2_TBL(f1) VALUES ('asdf');
 ERROR:  invalid input syntax for integer: "asdf"
+INSERT INTO INT2_TBL(f1) VALUES ('    ');
+ERROR:  invalid input syntax for integer: "    "
+INSERT INTO INT2_TBL(f1) VALUES ('- 1234');
+ERROR:  invalid input syntax for integer: "- 1234"
+INSERT INTO INT2_TBL(f1) VALUES ('4 444');
+ERROR:  invalid input syntax for integer: "4 444"
+INSERT INTO INT2_TBL(f1) VALUES ('123 dt');
+ERROR:  invalid input syntax for integer: "123 dt"
+INSERT INTO INT2_TBL(f1) VALUES ('');
+ERROR:  invalid input syntax for integer: ""
 SELECT '' AS five, INT2_TBL.*;
  five |   f1   
 ------+--------

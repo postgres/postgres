@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.97 2004/03/04 21:47:18 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.98 2004/03/11 02:11:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,14 +185,37 @@ float4in(PG_FUNCTION_ARGS)
 
 	errno = 0;
 	val = strtod(num, &endptr);
-	if (*endptr != '\0')
+
+	if (errno == ERANGE)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("\"%s\" is out of range for type real", num)));
+
+	if (num == endptr)
 	{
 		/*
-		 * XXX we should accept "Infinity" and "-Infinity" too, but what
-		 * are the correct values to assign?  HUGE_VAL will provoke an
-		 * error from CheckFloat4Val.
+		 * We didn't find anything that looks like a float in the input
+		 *
+		 * In releases prior to 7.5, we accepted an empty string as
+		 * valid input (yielding a float8 of 0). In 7.5, we accept
+		 * empty strings, but emit a warning noting that the feature
+		 * is deprecated. In 7.6+, the warning should be replaced by
+		 * an error.
+		 *
+		 * XXX we should accept "Infinity" and "-Infinity" too, but
+		 * what are the correct values to assign?  HUGE_VAL will
+		 * provoke an error from CheckFloat4Val.
 		 */
-		if (strcasecmp(num, "NaN") == 0)
+		if (*num == '\0')
+		{
+			ereport(WARNING,
+					(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+					 errmsg("deprecated input syntax for type real: \"\""),
+					 errdetail("This input will be rejected in "
+							   "a future release of PostgreSQL.")));
+			Assert(val == 0.0);
+		}
+		else if (strcasecmp(num, "NaN") == 0)
 			val = NAN;
 		else
 			ereport(ERROR,
@@ -200,26 +223,17 @@ float4in(PG_FUNCTION_ARGS)
 					 errmsg("invalid input syntax for type real: \"%s\"",
 							num)));
 	}
-	else
-	{
-		if (errno == ERANGE)
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("\"%s\" is out of range for type real", num)));
-	}
 
-	/*
-	 * In releases prior to 7.5, we accepted an empty string as valid
-	 * input (yielding a float4 of 0). In 7.5, we accept empty
-	 * strings, but emit a warning noting that the feature is
-	 * deprecated. In 7.6+, the warning should be replaced by an error.
-	 */
-	if (num == endptr)
-		ereport(WARNING,
-				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-				 errmsg("deprecated input syntax for type real: \"\""),
-				 errdetail("This input will be rejected in "
-						   "a future release of PostgreSQL.")));
+	/* skip trailing whitespace */
+	while (*endptr != '\0' && isspace(*endptr))
+		endptr++;
+
+	/* if there is any junk left at the end of the string, bail out */
+	if (*endptr != '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type real: \"%s\"",
+						num)));
 
 	/*
 	 * if we get here, we have a legal double, still need to check to see
@@ -300,9 +314,33 @@ float8in(PG_FUNCTION_ARGS)
 
 	errno = 0;
 	val = strtod(num, &endptr);
-	if (*endptr != '\0')
+
+	if (errno == ERANGE)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("\"%s\" is out of range for type double precision", num)));
+
+	if (num == endptr)
 	{
-		if (strcasecmp(num, "NaN") == 0)
+		/*
+		 * We didn't find anything that looks like a float in the input
+		 *
+		 * In releases prior to 7.5, we accepted an empty string as
+		 * valid input (yielding a float8 of 0). In 7.5, we accept
+		 * empty strings, but emit a warning noting that the feature
+		 * is deprecated. In 7.6+, the warning should be replaced by
+		 * an error.
+		 */
+		if (*num == '\0')
+		{
+			ereport(WARNING,
+					(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+					 errmsg("deprecated input syntax for type double precision: \"\""),
+					 errdetail("This input will be rejected in "
+							   "a future release of PostgreSQL.")));
+			Assert(val == 0.0);
+		}
+		else if (strcasecmp(num, "NaN") == 0)
 			val = NAN;
 		else if (strcasecmp(num, "Infinity") == 0)
 			val = HUGE_VAL;
@@ -314,26 +352,17 @@ float8in(PG_FUNCTION_ARGS)
 					 errmsg("invalid input syntax for type double precision: \"%s\"",
 							num)));
 	}
-	else
-	{
-		if (errno == ERANGE)
-			ereport(ERROR,
-					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("\"%s\" is out of range for type double precision", num)));
-	}
 
-	/*
-	 * In releases prior to 7.5, we accepted an empty string as valid
-	 * input (yielding a float8 of 0). In 7.5, we accept empty
-	 * strings, but emit a warning noting that the feature is
-	 * deprecated. In 7.6+, the warning should be replaced by an error.
-	 */
-	if (num == endptr)
-		ereport(WARNING,
-				(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
-				 errmsg("deprecated input syntax for type double precision: \"\""),
-				 errdetail("This input will be rejected in "
-						   "a future release of PostgreSQL.")));
+	/* skip trailing whitespace */
+	while (*endptr != '\0' && isspace(*endptr))
+		endptr++;
+
+	/* if there is any junk left at the end of the string, bail out */
+	if (*endptr != '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type double precision: \"%s\"",
+						num)));
 
 	CheckFloat8Val(val);
 
