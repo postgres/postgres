@@ -1,3 +1,12 @@
+(1997-10-01)
+PostgreSQL has a Web site at http://www.postgresql.org/ which carries details
+on the latest release, upcoming features, and other information to make your
+work or play with PostgreSQL more productive.
 
-This is a dummy file...
+You may wish to subscribe to the PostgreSQL user-support mailing list.
+To do this, send e-mail to pgsql-questions-request@postgresql.org with the
+text "subscribe" in the message body. You should receive back an e-mail
+welcoming you to the list. Other mailing lists and support information are
+detailed on the Web site.
 
+Thank you for choosing PostgreSQL, a leading-edge freeware product.
