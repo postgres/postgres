@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.31 2004/05/17 14:35:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.32 2004/05/18 03:36:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1956,6 +1956,8 @@ main(int argc, char *argv[])
 		share_path = xmalloc(MAXPGPATH);
 		get_share_path(backend_exec, share_path);
 	}
+
+	canonicalize_path(share_path);
 
 	if ((short_version = get_short_version()) == NULL)
 	{

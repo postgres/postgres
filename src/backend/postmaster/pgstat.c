@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.69 2004/05/13 22:45:02 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.70 2004/05/18 03:36:30 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -487,7 +487,7 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	/* + the pstat file names, and postgres pathname */
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",pgStat_tmpfname);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",pgStat_fname);
-	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",my_exec_path); /* used? */
+	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",postgres_exec_path);
 	snprintf(pgstatBuf[bufc++],MAXPGPATH,"\"%s\"",DataDir);
 
 	/* Add to the arg list */
@@ -500,9 +500,9 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 
 	/* Fire off execv in child */
 #ifdef WIN32
-	pid = win32_forkexec(my_exec_path, av);
+	pid = win32_forkexec(postgres_exec_path, av);
 #else
-	if ((pid = fork()) == 0 && (execv(my_exec_path, av) == -1))
+	if ((pid = fork()) == 0 && (execv(postgres_exec_path, av) == -1))
 		/* FIXME: [fork/exec] suggestions for what to do here? Can't call elog... */
 		abort();
 #endif
@@ -532,7 +532,7 @@ pgstat_parseArgs(PGSTAT_FORK_ARGS)
 	MaxBackends		= atoi(argv[argc++]);
 	StrNCpy(pgStat_tmpfname,argv[argc++],MAXPGPATH);
 	StrNCpy(pgStat_fname,	argv[argc++],MAXPGPATH);
-	StrNCpy(my_exec_path,	argv[argc++],MAXPGPATH);
+	StrNCpy(postgres_exec_path,	argv[argc++],MAXPGPATH);
 	DataDir			= strdup(argv[argc++]);
 
 	read_nondefault_variables();
