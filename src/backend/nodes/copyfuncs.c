@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.28 1998/01/09 05:48:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.29 1998/01/11 20:01:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->cost = from->cost;
 	newnode->plan_size = from->plan_size;
 	newnode->plan_width = from->plan_width;
+	newnode->plan_tupperpage = from->plan_tupperpage;
 	newnode->state = from->state;
 	newnode->targetlist = copyObject(from->targetlist);
 	newnode->qual = copyObject(from->qual);
@@ -153,6 +154,7 @@ _copyAppend(Append *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, unionplans);
+	Node_Copy(from, newnode, unionrts);
 	newnode->unionrelid = from->unionrelid;
 	Node_Copy(from, newnode, unionrtentries);
 	Node_Copy(from, newnode, unionstate);
@@ -190,7 +192,7 @@ _copyScan(Scan *from)
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyScanFields(from, newnode);
+	CopyScanFields((Scan *) from, (Scan *) newnode);
 
 	return newnode;
 }
@@ -310,7 +312,6 @@ static MergeJoin *
 _copyMergeJoin(MergeJoin *from)
 {
 	MergeJoin  *newnode = makeNode(MergeJoin);
-	List	   *newlist;
 
 	/* ----------------
 	 *	copy node superclass fields
@@ -326,7 +327,6 @@ _copyMergeJoin(MergeJoin *from)
 	Node_Copy(from, newnode, mergeclauses);
 
 	newnode->mergesortop = from->mergesortop;
-	newlist = NIL;
 
 	newnode->mergerightorder = (Oid *) palloc(sizeof(Oid) * 2);
 	newnode->mergerightorder[0] = from->mergerightorder[0];
@@ -458,7 +458,9 @@ _copySort(Sort *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, sortstate);
-
+	Node_Copy(from, newnode, psortstate);
+	newnode->cleaned = from->cleaned;
+	
 	return newnode;
 }
 
@@ -473,8 +475,7 @@ _copyGroup(Group *from)
 	Group	   *newnode = makeNode(Group);
 	
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyTempFields((Temp *) from, (Temp *) newnode);
-	
+
 	newnode->tuplePerGroup = from->tuplePerGroup;
 	newnode->numCols = from->numCols;
 	newnode->grpColIdx = palloc (from->numCols * sizeof (AttrNumber));
@@ -495,14 +496,11 @@ _copyAgg(Agg *from)
 	int			i;
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyTempFields((Temp *) from, (Temp *) newnode);
 
 	newnode->numAgg = from->numAgg;
     newnode->aggs = palloc(sizeof(Aggreg *));
 	for (i = 0; i < from->numAgg; i++)
-	{
 		newnode->aggs[i] = copyObject(from->aggs[i]);
-	}
 
 	Node_Copy(from, newnode, aggstate);
 
@@ -518,8 +516,8 @@ _copyGroupClause(GroupClause *from)
 {
 		GroupClause		   *newnode = makeNode(GroupClause);
 
+		Node_Copy(from, newnode, entry);
 		newnode->grpOpoid = from->grpOpoid;
-		newnode->entry = copyObject(from->entry);
 
 		return newnode;
 }
@@ -545,6 +543,8 @@ _copyUnique(Unique *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
+	newnode->uniqueAttr = pstrdup(from->uniqueAttr);
+	newnode->uniqueAttrNum = from->uniqueAttrNum;
 	Node_Copy(from, newnode, uniquestate);
 
 	return newnode;
@@ -599,13 +599,7 @@ _copyResdom(Resdom *from)
 	newnode->reslen = from->reslen;
 
 	if (from->resname != NULL)
-	{
-		newnode->resname = palloc(strlen(from->resname) + 1);
-		strcpy(newnode->resname, from->resname);
-	}
-	else
-		newnode->resname = (char *) NULL;
-
+		newnode->resname = pstrdup(from->resname);
 	newnode->reskey = from->reskey;
 	newnode->reskeyop = from->reskeyop;
 	newnode->resjunk = from->resjunk;
@@ -630,14 +624,12 @@ _copyFjoin(Fjoin *from)
 
 	newnode->fj_results = (DatumPtr)
 		palloc((from->fj_nNodes) * sizeof(Datum));
-
-	newnode->fj_alwaysDone = (BoolPtr)
-		palloc((from->fj_nNodes) * sizeof(bool));
-
 	memmove(from->fj_results,
 			newnode->fj_results,
 			(from->fj_nNodes) * sizeof(Datum));
 
+	newnode->fj_alwaysDone = (BoolPtr)
+		palloc((from->fj_nNodes) * sizeof(bool));
 	memmove(from->fj_alwaysDone,
 			newnode->fj_alwaysDone,
 			(from->fj_nNodes) * sizeof(bool));
@@ -741,6 +733,8 @@ _copyConst(Const *from)
 	/* ----------------
 	 *	XXX super cheesy hack until parser/planner
 	 *	puts in the right values here.
+	 *
+	 *  But I like cheese.
 	 * ----------------
 	 */
 	if (!from->constisnull && cached_type != from->consttype)
@@ -826,6 +820,8 @@ _copyConst(Const *from)
 	}
 	newnode->constisnull = from->constisnull;
 	newnode->constbyval = from->constbyval;
+	newnode->constisset = from->constisset;
+	newnode->constiscast = from->constiscast;
 
 	return newnode;
 }
@@ -847,12 +843,7 @@ _copyParam(Param *from)
 	newnode->paramid = from->paramid;
 
 	if (from->paramname != NULL)
-	{
 		newnode->paramname = pstrdup(from->paramname);
-	}
-	else
-		newnode->paramname = (char *) NULL;
-
 	newnode->paramtype = from->paramtype;
 	Node_Copy(from, newnode, param_tlist);
 
@@ -899,11 +890,9 @@ _copyAggreg(Aggreg *from)
 	newnode->aggname = pstrdup(from->aggname);
 	newnode->basetype = from->basetype;
 	newnode->aggtype = from->aggtype;
-	newnode->usenulls = from->usenulls;
-
 	Node_Copy(from, newnode, target);
-
 	newnode->aggno = from->aggno;
+	newnode->usenulls = from->usenulls;
 
 	return newnode;
 }
@@ -937,9 +926,9 @@ _copyArrayRef(ArrayRef *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	newnode->refelemtype = from->refelemtype;
 	newnode->refattrlength = from->refattrlength;
 	newnode->refelemlength = from->refelemlength;
+	newnode->refelemtype = from->refelemtype;
 	newnode->refelembyval = from->refelembyval;
 
 	Node_Copy(from, newnode, refupperindexpr);
@@ -982,14 +971,11 @@ _copyRel(Rel *from)
 	newnode->tuples = from->tuples;
 	newnode->size = from->size;
 	newnode->width = from->width;
-	newnode->indproc = from->indproc;
-
 	Node_Copy(from, newnode, targetlist);
 	Node_Copy(from, newnode, pathlist);
 	Node_Copy(from, newnode, unorderedpath);
 	Node_Copy(from, newnode, cheapestpath);
 	newnode->pruneable = from->pruneable;
-	newnode->relam = from->relam;
 
 	if (from->classlist)
 	{
@@ -997,9 +983,7 @@ _copyRel(Rel *from)
 			;
 		newnode->classlist = (Oid *) palloc(sizeof(Oid) * (len + 1));
 		for (i = 0; i < len; i++)
-		{
 			newnode->classlist[i] = from->classlist[i];
-		}
 		newnode->classlist[len] = 0;
 	}
 
@@ -1009,21 +993,21 @@ _copyRel(Rel *from)
 			;
 		newnode->indexkeys = (int *) palloc(sizeof(int) * (len + 1));
 		for (i = 0; i < len; i++)
-		{
 			newnode->indexkeys[i] = from->indexkeys[i];
-		}
 		newnode->indexkeys[len] = 0;
 	}
 
+	newnode->relam = from->relam;
+	newnode->indproc = from->indproc;
+	Node_Copy(from, newnode, indpred);
+	
 	if (from->ordering)
 	{
 		for (len = 0; from->ordering[len] != 0; len++)
 			;
 		newnode->ordering = (Oid *) palloc(sizeof(Oid) * (len + 1));
 		for (i = 0; i < len; i++)
-		{
 			newnode->ordering[i] = from->ordering[i];
-		}
 		newnode->ordering[len] = 0;
 	}
 
@@ -1070,14 +1054,8 @@ CopyPathFields(Path *from, Path *newnode)
 			newnode->p_ordering.ord.sortop =
 				(Oid *) palloc(sizeof(Oid) * (len + 1));
 			for (i = 0; i < len; i++)
-			{
 				newnode->p_ordering.ord.sortop[i] = ordering[i];
-			}
 			newnode->p_ordering.ord.sortop[len] = 0;
-		}
-		else
-		{
-			newnode->p_ordering.ord.sortop = NULL;
 		}
 	}
 	else
@@ -1138,9 +1116,7 @@ _copyIndexPath(IndexPath *from)
 			;
 		newnode->indexkeys = (int *) palloc(sizeof(int) * (len + 1));
 		for (i = 0; i < len; i++)
-		{
 			newnode->indexkeys[i] = from->indexkeys[i];
-		}
 		newnode->indexkeys[len] = 0;
 	}
 
@@ -1364,6 +1340,7 @@ _copyHInfo(HInfo *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
+	CopyJoinMethodFields((JoinMethod *)from, (JoinMethod *)newnode);
 	newnode->hashop = from->hashop;
 
 	return newnode;
@@ -1382,6 +1359,7 @@ _copyMInfo(MInfo *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
+	CopyJoinMethodFields((JoinMethod *)from, (JoinMethod *)newnode);
 	Node_Copy(from, newnode, m_ordering);
 
 	return newnode;
@@ -1429,14 +1407,16 @@ _copyStream(Stream *from)
 	newnode->pathptr = from->pathptr;
 	newnode->cinfo = from->cinfo;
 	newnode->clausetype = from->clausetype;
-	newnode->groupup = from->groupup;
-	newnode->groupcost = from->groupcost;
-	newnode->groupsel = from->groupsel;
+
 	newnode->upstream = (StreamPtr) NULL;		/* only copy nodes
 												 * downwards! */
 	Node_Copy(from, newnode, downstream);
 	if (newnode->downstream)
 		((Stream *) newnode->downstream)->upstream = (Stream *) newnode;
+
+	newnode->groupup = from->groupup;
+	newnode->groupcost = from->groupcost;
+	newnode->groupsel = from->groupsel;
 
 	return newnode;
 }
@@ -1462,12 +1442,15 @@ _copyRangeTblEntry(RangeTblEntry *from)
 {
 	RangeTblEntry *newnode = makeNode(RangeTblEntry);
 
-	memcpy(newnode, from, sizeof(RangeTblEntry));
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
 	if (from->refname)
 		newnode->refname = pstrdup(from->refname);
+	newnode->relid = from->relid;
+	newnode->inh = from->inh;
+	newnode->inFromCl = from->inFromCl;
 
+		
 	return newnode;
 }
 
@@ -1499,13 +1482,8 @@ _copyTypeName(TypeName *from)
 	TypeName   *newnode = makeNode(TypeName);
 
 	if (from->name)
-	{
 		newnode->name = pstrdup(from->name);
-	}
-	else
-	{
-		from->name = (char *) 0;
-	}
+	newnode->timezone = from->timezone;
 	newnode->setof = from->setof;
 	Node_Copy(from, newnode, arrayBounds);
 	newnode->typlen = from->typlen;
@@ -1524,40 +1502,25 @@ _copyQuery(Query *from)
 	{
 		NotifyStmt *from_notify = (NotifyStmt *) from->utilityStmt;
 		NotifyStmt *n = makeNode(NotifyStmt);
-		int			length = strlen(from_notify->relname);
 
-		n->relname = palloc(length + 1);
-		strcpy(n->relname, from_notify->relname);
+		n->relname = pstrdup(from_notify->relname);
 		newnode->utilityStmt = (Node *) n;
 	}
 	newnode->resultRelation = from->resultRelation;
-	/* probably should dup this string instead of just pointing */
-	/* to the old one  --djm */
 	if (from->into)
-	{
 		newnode->into = pstrdup(from->into);
-	}
-	else
-	{
-		newnode->into = (char *) 0;
-	}
 	newnode->isPortal = from->isPortal;
 	newnode->isBinary = from->isBinary;
 	newnode->unionall = from->unionall;
 	if (from->uniqueFlag)
-	{
-		newnode->uniqueFlag = (char *) palloc(strlen(from->uniqueFlag) + 1);
-		strcpy(newnode->uniqueFlag, from->uniqueFlag);
-	}
-	else
-		newnode->uniqueFlag = NULL;
+		newnode->uniqueFlag = pstrdup(from->uniqueFlag);
 	Node_Copy(from, newnode, sortClause);
 	Node_Copy(from, newnode, rtable);
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, qual);
 
 	Node_Copy(from, newnode, groupClause);
-	Node_Copy(from, newnode, havingQual); /* currently ignored */
+	Node_Copy(from, newnode, havingQual);
 
 	newnode->qry_numAgg = from->qry_numAgg;
 	if (from->qry_numAgg > 0)
@@ -1567,8 +1530,6 @@ _copyQuery(Query *from)
 		for (i=0; i < from->qry_numAgg; i++)
 			newnode->qry_aggs[i] = _copyAggreg(from->qry_aggs[i]);
 	}
-	else
-		newnode->qry_aggs = NULL;
 
 	if (from->unionClause)
 	{
@@ -1578,8 +1539,6 @@ _copyQuery(Query *from)
 			temp_list = lappend(temp_list,copyObject(lfirst(ulist)));
 		newnode->unionClause = temp_list;
 	}
-	else
-		newnode->unionClause = NULL;
  				
 	return newnode;
 }

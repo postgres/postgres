@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.37 1998/01/11 04:36:25 momjian Exp $
+ * $Id: psqlHelp.h,v 1.38 1998/01/11 20:02:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,7 +150,8 @@ static struct _helpStruct QL_HELP[] = {
 	{"create view",
 		"create a view",
 	"create view <view_name> as\n\
-\tselect <expr1>[as <attr1>][,... <exprN>[as <attrN>]]\n\
+\tselect\n\
+\t<expr1>[as <attr1>][,... <exprN>[as <attrN>]]\n\
 \t[from <from_list>]\n\
 \t[where <qual>]\n\
 \t[group by <group_list>];"},
@@ -159,8 +160,11 @@ static struct _helpStruct QL_HELP[] = {
 	"declare <cursorname> [binary] cursor for\n\
 \tselect [distinct]\n\
 \t<expr1> [as <attr1>],...<exprN> [as <attrN>]\n\
-\t[from <from_list>] [where <qual>]\n\
-\t[order by <attr1> [using <op1>],... <attrN> [using <opN>]];"},
+\t[from <from_list>]\n\
+\t[where <qual>]\n\
+\t[group by <group_list>]\n\
+\t[order by <attr1> [using <op1>],... <attrN> [using <opN>]]\n\
+\t[union [all] select ...];"},
 	{"delete",
 		"delete tuples",
 	"delete from <class_name> [where <qual>];"},
@@ -234,7 +238,8 @@ static struct _helpStruct QL_HELP[] = {
 		"insert tuples",
 	"insert into <class_name> [(<attr1>...<attrN>)]\n\
 \tvalues (<expr1>...<exprN>); |\n\
-\tselect <expr1>,...<exprN>\n\
+\tselect [distinct]\n\
+\t<expr1>,...<exprN>\n\
 \t[from <from_clause>]\n\
 \t[where <qual>]\n\
 \t[group by <group_list>]\n\
