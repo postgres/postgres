@@ -311,3 +311,82 @@ structure...
 
                          - Tom
 
+From owner-pgsql-hackers@hub.org Wed Jul 21 02:35:13 1999
+Received: from hub.org (hub.org [216.126.84.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA13837
+	for <maillist@candle.pha.pa.us>; Wed, 21 Jul 1999 02:35:12 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id CAA88539;
+	Wed, 21 Jul 1999 02:27:41 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 21 Jul 1999 02:24:08 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id CAA87850
+	for pgsql-hackers-outgoing; Wed, 21 Jul 1999 02:23:13 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from localhost (IDENT:root@hectic-2.jpl.nasa.gov [128.149.68.204])
+	by hub.org (8.9.3/8.9.3) with ESMTP id CAA87810
+	for <pgsql-hackers@postgreSQL.org>; Wed, 21 Jul 1999 02:22:52 -0400 (EDT)
+	(envelope-from lockhart@alumni.caltech.edu)
+Received: from alumni.caltech.edu (lockhart@localhost [127.0.0.1])
+	by localhost (8.8.7/8.8.7) with ESMTP id GAA14480;
+	Wed, 21 Jul 1999 06:20:22 GMT
+Message-ID: <379566A6.A4CDF97F@alumni.caltech.edu>
+Date: Wed, 21 Jul 1999 06:20:22 +0000
+From: Thomas Lockhart <lockhart@alumni.caltech.edu>
+X-Mailer: Mozilla 4.6 [en] (X11; I; Linux 2.0.36 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Tom Lane <tgl@sss.pgh.pa.us>
+CC: Bruce Momjian <maillist@candle.pha.pa.us>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] Another reason to redesign querytree representation
+References: <591.932505751@sss.pgh.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: RO
+
+> Thomas, what do you think is needed for outer joins?
+
+Bruce and I have talked about it some already:
+
+For outer joins, tables must be combined in a particular order. For
+example, a left outer join requires that any entries in the left-side
+table which do not have a corresponding entry in the right-side table
+be expanded with nulls during the join. The information on the outer
+join can't be carried by the rte since the same table can appear twice
+in an outer join expression:
+
+  select * from t1 left join t2 using (i)
+                left join t1 on (i = t1.j);
+
+For a query like
+
+  select * from t1 left join t2 using (i) where t2.j = 3;
+
+istm that the outer join must be done before the t2 qualification is
+applied, and that another ordering may produce the wrong result.
+
+>From what I understand Bruce to say, the planner/optimizer is allowed
+to try all kinds of permutations of plans, choosing the one with the
+lowest cost. But if the info for the join is carried in a
+qualification node, then the planner/optimizer must know that it can't
+reorder the query as freely as it does now.
+
+I was thinking of having a new qualification node to carry this info,
+and it could be transformed into a mergejoin node which has a couple
+of new fields indicating left and/or right outer join behavior.
+
+A hashjoin method may be possible for queries which are structured as
+a left outer join; other outer joins will need to use the mergejoin
+method. Also, some poorly-qualified outer joins reduce to inner joins,
+and perhaps the optimizer can be smart enough to realize this.
+
+                     - Thomas
+
+-- 
+Thomas Lockhart				lockhart@alumni.caltech.edu
+South Pasadena, California
+
+
