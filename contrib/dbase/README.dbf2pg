@@ -107,7 +107,7 @@ dbf2sql(1L)					      dbf2sql(1L)
 ENVIRONMENT
        This program is affected by the	environment-variables  as
        used  by  "PostgresSQL."   See  the documentation of Post-
-       gresSQL for more info.
+       gresSQL for more info.  This program requires libiconv.
 
 BUGS
        Fields larger than 8192 characters are not  supported  and
