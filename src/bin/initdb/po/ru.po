@@ -1,16 +1,16 @@
 # ru.po
 # INITDB Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.7 2004/08/14 19:16:07 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.8 2004/09/13 12:11:19 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - August 11, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - March 27 - August 24, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-08-11 19:14-0300\n"
-"PO-Revision-Date: 2004-08-11 23:30-0500\n"
+"POT-Creation-Date: 2004-08-24 19:07-0300\n"
+"PO-Revision-Date: 2004-08-24 22:55-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -343,7 +343,7 @@ msgstr "Выполнение в режиме 'noclean'.  Сборка мусора и чистка после ошибок прои
 
 #: initdb.c:2113
 #: initdb.c:2130
-#: initdb.c:2336
+#: initdb.c:2341
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Наберите \"%s --help\" для более подробной информации.\n"
@@ -411,12 +411,17 @@ msgstr ""
 "Программа \"postgres\" найдена рядом с %s но не с той же версией как \"%s\".\n"
 "Проверьте вашу инсталляцию.\n"
 
-#: initdb.c:2242
+#: initdb.c:2239
+#, c-format
+msgid "%s: input file location must be an absolute path\n"
+msgstr "%s: местонахождение входного файла должно быть абсолютным путём\n"
+
+#: initdb.c:2247
 #, c-format
 msgid "%s: could not determine valid short version string\n"
 msgstr "%s: не в состоянии определить правильную короткую строку версии\n"
 
-#: initdb.c:2295
+#: initdb.c:2300
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -427,12 +432,12 @@ msgstr ""
 "принадлежать пользователю \"%s\". Этот пользователь\n"
 "также должен быть владельцем процесса сервера.\n"
 
-#: initdb.c:2306
+#: initdb.c:2311
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
 msgstr "Кластер баз данных будет инициализирован с локалью %s.\n"
 
-#: initdb.c:2310
+#: initdb.c:2315
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -451,32 +456,32 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2334
+#: initdb.c:2339
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
 msgstr "%s: не удалось найти подходящую кодировку для локали \"%s\"\n"
 
-#: initdb.c:2335
+#: initdb.c:2340
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Перезапустите %s с опцией -E.\n"
 
-#: initdb.c:2342
+#: initdb.c:2347
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
 msgstr "Кодировка базы по умолчанию установлена в %s.\n"
 
-#: initdb.c:2383
+#: initdb.c:2388
 #, c-format
 msgid "creating directory %s ... "
 msgstr "создание директории %s ... "
 
-#: initdb.c:2397
+#: initdb.c:2402
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "исправление прав на существующую директорию %s ... "
 
-#: initdb.c:2415
+#: initdb.c:2420
 #, c-format
 msgid ""
 "%s: directory \"%s\" exists but is not empty\n"
@@ -489,12 +494,12 @@ msgstr ""
 "директорию \"%s\" или её содержимое или выполните %s\n"
 "с аргументом отличным от \"%s\".\n"
 
-#: initdb.c:2432
+#: initdb.c:2437
 #, c-format
 msgid "creating directory %s/%s ... "
 msgstr "создание директории %s/%s ... "
 
-#: initdb.c:2493
+#: initdb.c:2498
 #, c-format
 msgid ""
 "\n"
