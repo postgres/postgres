@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.14 2001/09/13 15:55:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.15 2001/10/13 04:23:50 momjian Exp $
 -->
 
  <chapter id="pltcl">
@@ -513,11 +513,13 @@ CREATE FUNCTION t1_count(int4, int4) RETURNS int4 AS '
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term>
-       Modules and the <function>unknown</> command
-      </term>
-      <listitem>
+
+    </variablelist>
+
+   </sect2>
+
+   <sect2>
+       <title> Modules and the <function>unknown</> command</title>
        <para>
 	PL/Tcl has a special support for things often used. It
 	recognizes two magic tables, <literal>pltcl_modules</> and
@@ -526,20 +528,15 @@ CREATE FUNCTION t1_count(int4, int4) RETURNS int4 AS '
 	creation. Whenever an unknown Tcl procedure is called, the
 	unknown proc is asked to check if the procedure is defined in
 	one of the modules. If this is true, the module is loaded on
-	demand.  To enable this behavior, the
-	<productname>PostgreSQL</> must be configured with the option
-	<option>--enable-pltcl-unknown</option>.
+	demand.
        </para>
        <para>
-	There are support scripts to maintain these tables in the modules
-	subdirectory of the PL/Tcl source including the source for the
-	unknown module that must get installed initially.
+	There are support scripts to maintain these tables:
+	<command>pltcl_loadmod</>,<command>pltcl_listmod</>,
+	<command>pltcl_delmod</> and source for the
+	unknown module <filename>share/unknown.pltcl</> that must be loaded
+	into database initially for getting unknown support.
        </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-
    </sect2>
 
   </sect1>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.61 2001/10/09 22:32:32 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.62 2001/10/13 04:23:50 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -679,15 +679,6 @@ su - postgres
          automatically at their well-known location, but if you want to
          use a different version of Tcl or Tk you can specify the
          directory where to find them.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--enable-pltcl-unknown</option></term>
-       <listitem>
-        <para>
-         Enables enables PL/Tcl unknown support.
         </para>
        </listitem>
       </varlistentry>

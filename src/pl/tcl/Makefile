@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.34 2001/09/16 16:11:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.35 2001/10/13 04:23:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -86,29 +86,21 @@ endif
 ifeq ($(TCL_SHARED_BUILD), 1)
 
 all: $(INFILES)
-ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
-endif
 
 pltcl$(DLSUFFIX): pltcl.o
 
 install: all installdirs
 	$(INSTALL_SHLIB) $(DLOBJS) $(DESTDIR)$(pkglibdir)/$(DLOBJS)
-ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
-endif
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
-ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
-endif
 
 uninstall:
 	rm -f $(DESTDIR)$(pkglibdir)/$(DLOBJS)
-ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
-endif
 
 else # TCL_SHARED_BUILD = 0
 
@@ -124,6 +116,4 @@ Makefile.tcldefs: mkMakefile.tcldefs.sh
 
 clean distclean maintainer-clean:
 	rm -f $(INFILES) pltcl.o Makefile.tcldefs
-ifeq ($(enable_pltcl_unknown), yes)
 	$(MAKE) -C modules $@
-endif

@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.43 2001/10/06 23:21:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.44 2001/10/13 04:23:50 momjian Exp $
  *
  **********************************************************************/
 
@@ -146,9 +146,7 @@ static FunctionCallInfo pltcl_current_fcinfo = NULL;
 static void pltcl_init_all(void);
 static void pltcl_init_interp(Tcl_Interp *interp);
 
-#ifdef ENABLE_PLTCL_UNKNOWN
 static void pltcl_init_load_unknown(Tcl_Interp *interp);
-#endif
 
 Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
 Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
@@ -293,7 +291,6 @@ pltcl_init_interp(Tcl_Interp *interp)
 	Tcl_CreateCommand(interp, "spi_lastoid",
 					  pltcl_SPI_lastoid, NULL, NULL);
 					  
-#ifdef ENABLE_PLTCL_UNKNOWN
 	/************************************************************
 	 * Try to load the unknown procedure from pltcl_modules
 	 ************************************************************/
@@ -302,11 +299,8 @@ pltcl_init_interp(Tcl_Interp *interp)
 	pltcl_init_load_unknown(interp);
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl_init_interp(): SPI_finish failed");
-#endif	 /* ENABLE_PLTCL_UNKNOWN */
 }
 
-
-#ifdef ENABLE_PLTCL_UNKNOWN
 
 /**********************************************************************
  * pltcl_init_load_unknown()	- Load the unknown procedure from
@@ -379,8 +373,6 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	tcl_rc = Tcl_GlobalEval(interp, Tcl_DStringValue(&unknown_src));
 	Tcl_DStringFree(&unknown_src);
 }
-
-#endif	 /* ENABLE_PLTCL_UNKNOWN */
 
 
 /**********************************************************************
