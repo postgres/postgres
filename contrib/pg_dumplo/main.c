@@ -4,7 +4,7 @@
  *
  *	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.2 2000/06/19 13:54:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.3 2000/07/03 16:03:22 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -85,6 +85,7 @@ main(int argc, char **argv)
 			{ "host",	required_argument, 0, 'h' },
 			{ "space",	required_argument, 0, 's' },
 			{ "import",	no_argument, 0, 'i' },
+			{ "export",	no_argument, 0, 'e' },
 			{ "remove",	no_argument, 0, 'r' },
 			{ "quiet",	no_argument, 0, 'q' },
 			{ "all",	no_argument, 0, 'a' },

@@ -104,7 +104,7 @@ pglo_export(LODumpMaster *pgLO)
 		if ((tuples = PQntuples(pgLO->res)) == 0) {
 		
 			if (!pgLO->quiet && pgLO->action == ACTION_EXPORT_ATTR)
-				printf("%s: not large objets in '%s'\n", progname, ll->lo_table);	
+				printf("%s: no large objets in '%s'\n", progname, ll->lo_table);	
 			continue;
 		
 		} else if (check_res(pgLO)) {
@@ -137,7 +137,7 @@ pglo_export(LODumpMaster *pgLO)
 				}
 				
 				if (!pgLO->quiet)
-					printf("dump %s.%s (%d lagre obj)\n", 
+					printf("dump %s.%s (%d large obj)\n", 
 						ll->lo_table, ll->lo_attr, tuples);
 			}
 

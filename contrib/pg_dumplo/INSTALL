@@ -9,11 +9,10 @@ this help or the cool HOWTO.
 
 Compilation:
 ~~~~~~~~~~~
-	- In the PG contrib tree:
 		* run master ./configure in the PG source top directory  
 		* run 'make'
-		* run 'make install'
 
+	
 THANKS:
 ~~~~~~ 
 	<??? I lost his e-mail ???>
