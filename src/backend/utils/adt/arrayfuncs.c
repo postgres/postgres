@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.52 2000/01/26 05:57:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.52.2.1 2000/05/28 17:43:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1308,6 +1308,10 @@ array_map(ArrayType *v,
 	char	   *s;
 	char	   *p;
 	va_list		ap;
+
+	/* Need to guard against NULL input array */
+	if (v == NULL)
+		return NULL;
 
 	/* Large objects not yet supported */
 	if (ARR_IS_LO(v) == true)
