@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.23 2000/10/20 21:04:10 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.24 2000/10/31 14:37:25 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ SHLIB_LINK+= $(libpq)
 # If crypt is a separate library, rather than part of libc, it may need
 # to be referenced separately to keep (broken) linkers happy.  (This is
 # braindead; users of libpq should not need to know what it depends on.)
-SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
+SHLIB_LINK+= $(filter -lcrypt, $(LIBS))
 
 all: submake all-lib
 

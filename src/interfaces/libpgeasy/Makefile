@@ -2,7 +2,7 @@
 #
 # Makefile for src/interfaces/libpgeasy
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile,v 1.4 2000/10/20 21:04:07 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile,v 1.5 2000/10/31 14:37:25 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ SHLIB_LINK+= $(libpq)
 # If crypt is a separate library, rather than part of libc, it may need
 # to be referenced separately to keep (broken) linkers happy.  (This is
 # braindead; users of libpq should not need to know what it depends on.)
-SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
+SHLIB_LINK+= $(filter -lcrypt, $(LIBS))
 
 all: all-lib
 
