@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.28 2002/10/04 17:19:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.29 2002/10/31 19:11:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1835,10 +1835,10 @@ myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
  * and return a 3-way comparison result.  This takes care of handling
  * NULLs and sort ordering direction properly.
  */
-inline int32
-ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
-				  Datum datum1, bool isNull1,
-				  Datum datum2, bool isNull2)
+static inline int32
+inlineApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
+						Datum datum1, bool isNull1,
+						Datum datum2, bool isNull2)
 {
 	switch (kind)
 	{
@@ -1903,6 +1903,20 @@ ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
 	}
 }
 
+/*
+ * Non-inline ApplySortFunction() --- this is needed only to conform to
+ * C99's brain-dead notions about how to implement inline functions...
+ */
+int32
+ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
+				  Datum datum1, bool isNull1,
+				  Datum datum2, bool isNull2)
+{
+	return inlineApplySortFunction(sortFunction, kind,
+								   datum1, isNull1,
+								   datum2, isNull2);
+}
+
 
 /*
  * Routines specialized for HeapTuple case
@@ -1929,9 +1943,10 @@ comparetup_heap(Tuplesortstate *state, const void *a, const void *b)
 		datum1 = heap_getattr(ltup, attno, tupDesc, &isnull1);
 		datum2 = heap_getattr(rtup, attno, tupDesc, &isnull2);
 
-		compare = ApplySortFunction(&scanKey->sk_func,
-									state->sortFnKinds[nkey],
-									datum1, isnull1, datum2, isnull2);
+		compare = inlineApplySortFunction(&scanKey->sk_func,
+										  state->sortFnKinds[nkey],
+										  datum1, isnull1,
+										  datum2, isnull2);
 		if (compare != 0)
 		{
 			/* dead code? SK_COMMUTE can't actually be set here, can it? */
@@ -2043,8 +2058,9 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 		/* see comments about NULLs handling in btbuild */
 
 		/* the comparison function is always of CMP type */
-		compare = ApplySortFunction(&entry->sk_func, SORTFUNC_CMP,
-									datum1, isnull1, datum2, isnull2);
+		compare = inlineApplySortFunction(&entry->sk_func, SORTFUNC_CMP,
+										  datum1, isnull1,
+										  datum2, isnull2);
 
 		if (compare != 0)
 			return (int) compare;		/* done when we find unequal
@@ -2137,9 +2153,9 @@ comparetup_datum(Tuplesortstate *state, const void *a, const void *b)
 	DatumTuple *ltup = (DatumTuple *) a;
 	DatumTuple *rtup = (DatumTuple *) b;
 
-	return ApplySortFunction(&state->sortOpFn, state->sortFnKind,
-							 ltup->val, ltup->isNull,
-							 rtup->val, rtup->isNull);
+	return inlineApplySortFunction(&state->sortOpFn, state->sortFnKind,
+								   ltup->val, ltup->isNull,
+								   rtup->val, rtup->isNull);
 }
 
 static void *

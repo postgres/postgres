@@ -49,9 +49,10 @@ char	   *subarg = NULL;
 char		escape_buff[8192];
 
 void		do_substitute(char *subarg, dbhead * dbh);
-inline void strtoupper(char *string);
 
-inline void strtolower(char *string);
+static inline void strtoupper(char *string);
+static inline void strtolower(char *string);
+
 void		do_create(PGconn *, char *, dbhead *);
 void		do_inserts(PGconn *, char *, dbhead *);
 int			check_table(PGconn *, char *);
@@ -88,7 +89,7 @@ isinteger(char *buff)
 	return 1;
 }
 
-inline void
+static inline void
 strtoupper(char *string)
 {
 	while (*string != '\0')
@@ -98,7 +99,7 @@ strtoupper(char *string)
 	}
 }
 
-inline void
+static inline void
 strtolower(char *string)
 {
 	while (*string != '\0')
