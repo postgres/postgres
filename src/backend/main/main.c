@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.14 1998/02/26 04:31:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.15 1998/03/20 03:55:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,13 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef alpha
+#include <sys/sysinfo.h>
+#include <machine/hal_sysinfo.h>
+#define ASSEMBLER
+#include <sys/proc.h>
+#undef ASSEMBLER
+#endif
 #include "postgres.h"
 #ifdef USE_LOCALE
 #include <locale.h>
