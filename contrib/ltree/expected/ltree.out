@@ -74,15 +74,15 @@ SELECT subpath('Top.Child1.Child2',0,-1);
 (1 row)
 
 SELECT subpath('Top.Child1.Child2',0,0);
-      subpath      
--------------------
- Top.Child1.Child2
+ subpath 
+---------
+ 
 (1 row)
 
 SELECT subpath('Top.Child1.Child2',1,0);
-    subpath    
----------------
- Child1.Child2
+ subpath 
+---------
+ 
 (1 row)
 
 SELECT subpath('Top.Child1.Child2',0);
