@@ -1,0 +1,189 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.1 2002/07/22 08:57:15 ishii Exp $ -->
+
+<refentry id="SQL-CREATECONVERSION">
+ <refmeta>
+  <refentrytitle id="SQL-CREATECONVERSION-TITLE">CREATE CONVERSION</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE CONVERSION</refname>
+  <refpurpose>define a user-defined conversion</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE [DEFAULT] CONVERSION <replaceable>conversion_name</replaceable>
+    FOR <replaceable>source_encoding</replaceable>
+    TO <replaceable>dest_encoding</replaceable> FROM <replaceable>funcname</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+  
+ <refsect1 id="sql-createconversion-description">
+  <title>Description</title>
+
+  <para>
+   <command>CREATE CONVERSION</command> defines a new encoding
+   conversion. There are two kinds of conversions. A default
+   conversion is used for an automatic encoding conversion between
+   frontend and backend. There should be only one default conversion
+   for source/destination encodings pair in a schema. None default
+   conversion never be used for the automatic conversion. Instead it
+   can be used for CONVERT() function.
+ </para>
+
+  <para>
+   To be able to create a conversion, you must have the execute right
+   on the function and the usage right on the schema the function
+   belongs to.
+  </para>
+
+   <variablelist>
+    <title>Parameters</title>
+
+    <varlistentry>
+     <term><literal>DEFAULT</literal></term>
+
+     <listitem>
+      <para>
+       The <literal>DEFAULT</> clause indicates that this conversion
+       is the default for this particular source to destination
+       encoding. There should be only one default encoding in a schema
+       for the encoding pair. A default encoding can be used for not
+       only CONVERT() function, but also for the automatic encoding
+       conversion between frontend and backend. For this purpose, two
+       conversions, from encoding A to B AND encoding B to A, must be
+       defined.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>conversion_name</replaceable></term>
+
+     <listitem>
+      <para>
+       The name of the conversion. The conversion name may be
+       schema-qualified. If it is not, a conversion is defined in the
+       current schema. The conversion name must be unique with in a
+       schema.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>source_encoding</replaceable></term>
+
+     <listitem>
+      <para>
+       The source encoding name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>source_encoding</replaceable></term>
+
+     <listitem>
+      <para>
+       The destination encoding name.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable>funcname</replaceable></term>
+
+     <listitem>
+      <para>
+       The function used to perform the conversion.  The function name may
+       be schema-qualified.  If it is not, the function will be looked
+       up in the path.
+       </para>
+
+       <para>
+       The function must have following signature:
+
+       <programlisting>
+	conv_proc(
+	INTEGER,	-- source encoding id
+	INTEGER,	-- destination encoding id
+	OPAQUE,		-- source string (null terminated C string)
+	OPAQUE,		-- destination string (null terminated C string)
+	INTEGER		-- source string length
+	) returns INTEGER;	-- dummy. returns nothing, actually.
+       </programlisting>
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+ </refsect1>
+
+ <refsect1 id="sql-createconversion-notes">
+  <title>Notes</title>
+
+  <para>
+   Use <command>DROP CONVERSION</command> to remove user-defined conversions.
+  </para>
+
+  <para>
+   The privileges required to create a conversion may be changed in a future
+   release.
+  </para>
+
+ </refsect1>
+
+
+ <refsect1 id="sql-createconversion-examples">
+  <title>Examples</title>
+
+  <para>
+   To create a conversion from encoding UNICODE to LATIN1 using myfunc:
+<programlisting>
+CREATE CONVERSION myconv FOR 'UNICODE' TO 'LATIN1' FROM myfunc;
+</programlisting>
+  </para>
+ </refsect1>
+
+ 
+ <refsect1 id="sql-createconversion-compat">
+  <title>Compatibility</title>
+
+  <para>
+    <command>CREATE CONVERSION</command>
+    is a <productname>PostgreSQL</productname> extension.
+    There is no <command>CREATE OPERATOR</command>
+    statement in <acronym>SQL99</acronym>.
+  </para>
+ </refsect1>
+
+
+ <refsect1 id="sql-createconversion-seealso">
+  <title>See Also</title>
+
+  <para>
+   <xref linkend="sql-createfunction" endterm="sql-createfunction-title">,
+   <xref linkend="sql-dropconversion" endterm="sql-dropconversion-title">,
+   <citetitle>PostgreSQL Programmer's Guide</citetitle>
+  </para>
+ </refsect1>
+
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->
