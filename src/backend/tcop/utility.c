@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.129 2002/03/05 05:33:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.130 2002/03/06 20:34:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,11 @@ ProcessUtility(Node *parsetree,
 						case DROP_TYPE_P:
 							/* RemoveType does its own permissions checks */
 							RemoveType(relname);
+							break;
+
+						case DROP_DOMAIN_P:
+							/* RemoveDomain does its own permissions checks */
+							RemoveDomain(relname, stmt->behavior);
 							break;
 					}
 
@@ -740,6 +745,16 @@ ProcessUtility(Node *parsetree,
 
 		case T_DropPLangStmt:
 			DropProceduralLanguage((DropPLangStmt *) parsetree);
+			break;
+
+			/*
+			 * ******************************** DOMAIN statements ****
+			 *
+			 */
+		case T_CreateDomainStmt:
+			set_ps_display(commandTag = "CREATE DOMAIN");
+
+			DefineDomain((CreateDomainStmt *) parsetree);
 			break;
 
 			/*

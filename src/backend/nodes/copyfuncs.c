@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.165 2002/03/01 22:45:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.166 2002/03/06 20:34:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2223,6 +2223,19 @@ _copyLoadStmt(LoadStmt *from)
 
 	if (from->filename)
 		newnode->filename = pstrdup(from->filename);
+
+	return newnode;
+}
+
+static CreateDomainStmt *
+_copyCreateDomainStmt(CreateDomainStmt *from)
+{
+	CreateDomainStmt *newnode = makeNode(CreateDomainStmt);
+
+	if (from->domainname)
+		newnode->domainname = pstrdup(from->domainname);
+	if (from->typename)
+		newnode->typename = from->typename;
 
 	return newnode;
 }

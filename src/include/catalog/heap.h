@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.41 2001/11/05 17:46:31 momjian Exp $
+ * $Id: heap.h,v 1.42 2002/03/06 20:34:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 #define HEAP_H
 
 #include "catalog/pg_attribute.h"
+#include "nodes/parsenodes.h"
+#include "parser/parse_node.h"
 #include "utils/rel.h"
 
 typedef struct RawColumnDefault
@@ -44,6 +46,12 @@ extern void heap_truncate(char *relname);
 extern void AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *rawConstraints);
+
+extern Node *cookDefault(ParseState *pstate
+						, Node *raw_default
+						, Oid atttypid
+						, int32 atttypmod
+						, char *attname);
 
 extern int	RemoveCheckConstraint(Relation rel, const char *constrName, bool inh);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.28 2001/11/05 17:46:33 momjian Exp $
+ * $Id: defrem.h,v 1.29 2002/03/06 20:34:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,10 +39,12 @@ extern void CreateFunction(ProcedureStmt *stmt);
 extern void DefineOperator(char *name, List *parameters);
 extern void DefineAggregate(char *name, List *parameters);
 extern void DefineType(char *name, List *parameters);
+extern void DefineDomain(CreateDomainStmt *stmt);
 
 /*
  * prototypes in remove.c
  */
+extern void RemoveDomain(char *domainName, int behavior);
 extern void RemoveFunction(char *functionName, List *argTypes);
 extern void RemoveOperator(char *operatorName,
 			   char *typeName1, char *typeName2);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.65 2001/10/25 05:49:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.66 2002/03/06 20:34:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,8 +178,13 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* 14 */
 	values[i++] = CharGetDatum('i');	/* 15 */
 	values[i++] = CharGetDatum('p');	/* 16 */
+		values[i++] = BoolGetDatum(false);	/* 17 */
+			values[i++] = Int32GetDatum(-1);	/* 18 */
 	values[i++] = DirectFunctionCall1(textin,
-									  CStringGetDatum(typeName));		/* 17 */
+									  CStringGetDatum(typeName));		/* 19 */
+	values[i++] = DirectFunctionCall1(textin,
+									  CStringGetDatum(typeName));		/* 20 */
+
 
 	/*
 	 * create a new type tuple with FormHeapTuple
@@ -264,7 +269,7 @@ TypeShellMake(char *typeName)
 Oid
 TypeCreate(char *typeName,
 		   Oid assignedTypeOid,
-		   Oid relationOid,		/* only for 'c'atalog typeTypes */
+		   Oid relationOid,			/* only for 'c'atalog typeTypes */
 		   int16 internalSize,
 		   int16 externalSize,
 		   char typeType,
@@ -274,10 +279,15 @@ TypeCreate(char *typeName,
 		   char *receiveProcedure,
 		   char *sendProcedure,
 		   char *elementTypeName,
-		   char *defaultTypeValue,		/* internal rep */
+		   char *baseTypeName,
+		   char *defaultTypeValue,	/* human readable rep */
+		   char *defaultTypeBin,	/* cooked rep */
 		   bool passedByValue,
 		   char alignment,
-		   char storage)
+		   char storage,
+		   int32 typeMod,
+		   int32 typNDims,			/* Array dimensions for baseTypeName */
+		   bool typeNotNull)		/* binary default representation (cooked) */
 {
 	int			i,
 				j;
@@ -285,6 +295,7 @@ TypeCreate(char *typeName,
 	HeapScanDesc pg_type_scan;
 	Oid			typeObjectId;
 	Oid			elementObjectId = InvalidOid;
+	Oid			baseObjectId = InvalidOid;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_type];
 	char		replaces[Natts_pg_type];
@@ -315,6 +326,17 @@ TypeCreate(char *typeName,
 		elementObjectId = TypeGet(elementTypeName, &defined);
 		if (!defined)
 			elog(ERROR, "type %s does not exist", elementTypeName);
+	}
+
+	/*
+	 * if this type has an associated baseType, then we check that it
+	 * is defined.
+	 */
+	if (baseTypeName)
+	{
+		baseObjectId = TypeGet(baseTypeName, &defined);
+		if (!defined)
+			elog(ERROR, "type %s does not exist", baseTypeName);
 	}
 
 	/*
@@ -388,7 +410,7 @@ TypeCreate(char *typeName,
 			 * signature is 0,OIDOID,INT4OID.  The output procedures may
 			 * take 2 args (data value, element OID).
 			 */
-			if (OidIsValid(elementObjectId))
+			if (OidIsValid(elementObjectId) || OidIsValid(baseObjectId))
 			{
 				int			nargs;
 
@@ -411,6 +433,7 @@ TypeCreate(char *typeName,
 										 PointerGetDatum(argList),
 										 0);
 			}
+
 			if (!OidIsValid(procOid))
 				func_error("TypeCreate", procname, 1, argList, NULL);
 		}
@@ -429,6 +452,34 @@ TypeCreate(char *typeName,
 	values[i++] = CharGetDatum(storage);		/* 16 */
 
 	/*
+	 * set the typenotnull value
+	 */
+	values[i++] = BoolGetDatum(typeNotNull);	/* 17 */
+
+	/*
+	 * set the typemod value
+	 */
+	values[i++] = Int32GetDatum(typeMod);			/* 18 */
+
+	values[i++] = ObjectIdGetDatum(baseObjectId);	/* 19 */
+
+	/*
+	 * Dimension number for an array base type
+	 */
+	values[i++] = Int32GetDatum(typNDims);			/* 20 */
+
+	/*
+	 * initialize the default binary value for this type.  Check for
+	 * nulls of course.
+	 */
+	if (defaultTypeBin)
+		values[i] = DirectFunctionCall1(textin,
+									  CStringGetDatum(defaultTypeBin));
+	else
+		nulls[i] = 'n';
+	i++;										/* 21 */
+
+	/*
 	 * initialize the default value for this type.
 	 */
 	if (defaultTypeValue)
@@ -436,7 +487,7 @@ TypeCreate(char *typeName,
 									  CStringGetDatum(defaultTypeValue));
 	else
 		nulls[i] = 'n';
-	i++;						/* 17 */
+	i++;						/* 22 */
 
 	/*
 	 * open pg_type and begin a scan for the type name.

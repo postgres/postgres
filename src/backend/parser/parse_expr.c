@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.105 2001/11/12 20:05:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.106 2002/03/06 20:34:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1027,7 +1027,8 @@ parser_typecast_expression(ParseState *pstate,
 	if (inputType != targetType)
 	{
 		expr = CoerceTargetExpr(pstate, expr, inputType,
-								targetType, typename->typmod);
+								getBaseType(targetType),
+								typename->typmod);
 		if (expr == NULL)
 			elog(ERROR, "Cannot cast type '%s' to '%s'",
 				 format_type_be(inputType),
@@ -1039,7 +1040,7 @@ parser_typecast_expression(ParseState *pstate,
 	 * as well as a type coercion.
 	 */
 	expr = coerce_type_typmod(pstate, expr,
-							  targetType, typename->typmod);
+							  getBaseType(targetType), typename->typmod);
 
 	return expr;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.184 2002/03/06 06:09:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.185 2002/03/06 20:34:45 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -698,10 +698,15 @@ AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
 			   "oidin",			/* receive procedure */
 			   "oidout",		/* send procedure */
 			   NULL,			/* array element type - irrelevant */
+			   NULL,			/* baseType Name -- typically for domiains */
 			   NULL,			/* default type value - none */
+			   NULL,			/* default type binary representation */
 			   true,			/* passed by value */
 			   'i',				/* default alignment - same as for OID */
-			   'p');			/* Not TOASTable */
+			   'p',				/* Not TOASTable */
+			   -1,				/* Type mod length */
+			   0,				/* array dimensions for typBaseType */
+			   false);			/* Type NOT NULL */
 }
 
 /* --------------------------------
@@ -1584,6 +1589,10 @@ AddRelationRawConstraints(Relation rel,
 	int			numchecks;
 	List	   *listptr;
 
+	/* Probably shouldn't be null by default */
+	Node	   *expr = NULL;
+
+
 	/*
 	 * Get info about existing constraints.
 	 */
@@ -1614,68 +1623,13 @@ AddRelationRawConstraints(Relation rel,
 	foreach(listptr, rawColDefaults)
 	{
 		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(listptr);
-		Node	   *expr;
-		Oid			type_id;
 
-		Assert(colDef->raw_default != NULL);
 
-		/*
-		 * Transform raw parsetree to executable expression.
-		 */
-		expr = transformExpr(pstate, colDef->raw_default, EXPR_COLUMN_FIRST);
+		Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
 
-		/*
-		 * Make sure default expr does not refer to any vars.
-		 */
-		if (contain_var_clause(expr))
-			elog(ERROR, "cannot use column references in DEFAULT clause");
-
-		/*
-		 * No subplans or aggregates, either...
-		 */
-		if (contain_subplans(expr))
-			elog(ERROR, "cannot use subselects in DEFAULT clause");
-		if (contain_agg_clause(expr))
-			elog(ERROR, "cannot use aggregate functions in DEFAULT clause");
-
-		/*
-		 * Check that it will be possible to coerce the expression to the
-		 * column's type.  We store the expression without coercion,
-		 * however, to avoid premature coercion in cases like
-		 *
-		 * CREATE TABLE tbl (fld datetime DEFAULT 'now'::text);
-		 *
-		 * NB: this should match the code in optimizer/prep/preptlist.c that
-		 * will actually do the coercion, to ensure we don't accept an
-		 * unusable default expression.
-		 */
-		type_id = exprType(expr);
-		if (type_id != InvalidOid)
-		{
-			Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
-
-			if (type_id != atp->atttypid)
-			{
-				if (CoerceTargetExpr(NULL, expr, type_id,
-								  atp->atttypid, atp->atttypmod) == NULL)
-					elog(ERROR, "Column \"%s\" is of type %s"
-						 " but default expression is of type %s"
-					"\n\tYou will need to rewrite or cast the expression",
-						 NameStr(atp->attname),
-						 format_type_be(atp->atttypid),
-						 format_type_be(type_id));
-			}
-		}
-
-		/*
-		 * Might as well try to reduce any constant expressions.
-		 */
-		expr = eval_const_expressions(expr);
-
-		/*
-		 * Must fix opids, in case any operators remain...
-		 */
-		fix_opids(expr);
+		expr = cookDefault(pstate, colDef->raw_default
+						, atp->atttypid, atp->atttypmod
+						, NameStr(atp->attname));
 
 		/*
 		 * OK, store it.
@@ -1891,6 +1845,88 @@ SetRelationNumChecks(Relation rel, int numchecks)
 	heap_freetuple(reltup);
 	heap_close(relrel, RowExclusiveLock);
 }
+
+/*
+ * Take a raw default and convert it to a cooked format ready for
+ * storage.
+ *
+ * Parse state, attypid, attypmod and attname are required for
+ * CoerceTargetExpr() and more importantly transformExpr().
+ */
+Node *
+cookDefault(ParseState *pstate
+			, Node *raw_default
+			, Oid atttypid
+			, int32 atttypmod
+			, char *attname) {
+
+	Oid			type_id;
+	Node		*expr;
+
+	Assert(raw_default != NULL);
+
+	/*
+	 * Transform raw parsetree to executable expression.
+	 */
+	expr = transformExpr(pstate, raw_default, EXPR_COLUMN_FIRST);
+
+	/*
+	 * Make sure default expr does not refer to any vars.
+	 */
+	if (contain_var_clause(expr))
+		elog(ERROR, "cannot use column references in DEFAULT clause");
+
+	/*
+	 * No subplans or aggregates, either...
+	 */
+	if (contain_subplans(expr))
+		elog(ERROR, "cannot use subselects in DEFAULT clause");
+	if (contain_agg_clause(expr))
+		elog(ERROR, "cannot use aggregate functions in DEFAULT clause");
+
+	/*
+	 * Check that it will be possible to coerce the expression to the
+	 * column's type.  We store the expression without coercion,
+	 * however, to avoid premature coercion in cases like
+	 *
+	 * CREATE TABLE tbl (fld datetime DEFAULT 'now'::text);
+	 *
+	 * NB: this should match the code in optimizer/prep/preptlist.c that
+	 * will actually do the coercion, to ensure we don't accept an
+	 * unusable default expression.
+	 */
+	type_id = exprType(expr);
+	if (type_id != InvalidOid && atttypid != InvalidOid) {
+		if (type_id != atttypid) {
+
+			/* Try coercing to the base type of the domain if available */
+			if (CoerceTargetExpr(pstate, expr, type_id,
+								 getBaseType(atttypid),
+								 atttypmod) == NULL) {
+
+				elog(ERROR, "Column \"%s\" is of type %s"
+					" but default expression is of type %s"
+					"\n\tYou will need to rewrite or cast the expression",
+					 attname,
+					 format_type_be(atttypid),
+					 format_type_be(type_id));
+			}
+		}
+	}
+
+	/*
+	 * Might as well try to reduce any constant expressions.
+	 */
+	expr = eval_const_expressions(expr);
+
+	/*
+	 * Must fix opids, in case any operators remain...
+	 */
+	fix_opids(expr);
+
+	return(expr);
+}
+
 
 static void
 RemoveAttrDefaults(Relation rel)

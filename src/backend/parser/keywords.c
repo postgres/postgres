@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.101 2002/03/05 05:33:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.102 2002/03/06 20:34:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,6 +97,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"desc", DESC},
 	{"distinct", DISTINCT},
 	{"do", DO},
+	{"domain", DOMAIN_P},
 	{"double", DOUBLE},
 	{"drop", DROP},
 	{"each", EACH},

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.60 2002/03/01 04:09:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.61 2002/03/06 20:34:54 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -23,6 +23,7 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
+#include "parser/parse_coerce.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -822,16 +823,17 @@ get_typstorage(Oid typid)
  *	  Returns FALSE if there is no default (effectively, default is NULL).
  *	  The result points to palloc'd storage for pass-by-reference types.
  */
-bool
-get_typdefault(Oid typid, Datum *defaultValue)
+Node *
+get_typdefault(Oid typid, int32 atttypmod)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type type;
-	Oid			typinput,
-				typelem;
-	Datum		textDefaultVal;
+	Oid			typinput;
+	Oid			typbasetype;
+	char		typtype;
+	Datum		datum;
 	bool		isNull;
-	char	   *strDefaultVal;
+	Node	   *expr;
 
 	typeTuple = SearchSysCache(TYPEOID,
 							   ObjectIdGetDatum(typid),
@@ -843,38 +845,41 @@ get_typdefault(Oid typid, Datum *defaultValue)
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	typinput = type->typinput;
-	typelem = type->typelem;
+	typbasetype = type->typbasetype;
+	typtype = type->typtype;
 
 	/*
-	 * typdefault is potentially null, so don't try to access it as a
+	 * typdefaultbin is potentially null, so don't try to access it as a
 	 * struct field. Must do it the hard way with SysCacheGetAttr.
 	 */
-	textDefaultVal = SysCacheGetAttr(TYPEOID,
-									 typeTuple,
-									 Anum_pg_type_typdefault,
-									 &isNull);
+	datum = SysCacheGetAttr(TYPEOID,
+							typeTuple,
+							Anum_pg_type_typdefaultbin,
+							&isNull);
 
+	ReleaseSysCache(typeTuple);
 	if (isNull)
-	{
-		ReleaseSysCache(typeTuple);
-		*defaultValue = (Datum) 0;
-		return false;
+		return (Node *) NULL;
+
+	/* Convert Datum to a Node */
+	expr = stringToNode(DatumGetCString(
+						DirectFunctionCall1(textout, datum)));
+
+
+	/*
+	 * Ensure we goto the basetype before the domain type.
+	 *
+	 * Prevents scenarios like the below from failing:
+	 * CREATE DOMAIN dom text DEFAULT random();
+	 *
+	 */
+	if (typbasetype != InvalidOid) {
+		expr = coerce_type(NULL, expr, typid,
+						  typbasetype, atttypmod);
 	}
 
-	/* Convert text datum to C string */
-	strDefaultVal = DatumGetCString(DirectFunctionCall1(textout,
-														textDefaultVal));
 
-	/* Convert C string to a value of the given type */
-	*defaultValue = OidFunctionCall3(typinput,
-									 CStringGetDatum(strDefaultVal),
-									 ObjectIdGetDatum(typelem),
-									 Int32GetDatum(-1));
-
-	pfree(strDefaultVal);
-	ReleaseSysCache(typeTuple);
-
-	return true;
+	return expr;
 }
 
 /*
