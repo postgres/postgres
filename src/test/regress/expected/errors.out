@@ -98,7 +98,15 @@ QUERY: drop aggregate 314159;
 WARN:parser: parse error at or near "314159"
 
 QUERY: drop aggregate nonesuch;
-WARN:RemoveAggregate: aggregate 'nonesuch' does not exist
+WARN:parser: parse error at or near ";"
+
+QUERY: drop aggregate newcnt1;
+WARN:parser: parse error at or near ";"
+
+QUERY: drop aggregate newcnt nonesuch;
+WARN:RemoveAggregate: type 'nonesuch' does not exist
+QUERY: drop aggregate newcnt float4;
+WARN:RemoveAggregate: aggregate 'newcnt' for 'float4' does not exist
 QUERY: drop function ();
 WARN:parser: parse error at or near "("
 
