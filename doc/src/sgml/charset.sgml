@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.65 2005/03/13 22:04:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.66 2005/03/14 02:14:42 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -312,6 +312,7 @@ initdb --locale=sv_SE
          <entry>Name</entry>
          <entry>Description</entry>
          <entry>Language</entry>
+         <entry>Bytes/Char</entry>
          <entry>Aliases</entry>
         </row>
        </thead>
@@ -320,205 +321,239 @@ initdb --locale=sv_SE
          <entry><literal>BIG5</literal></entry>
          <entry>Big Five</entry>
          <entry>Traditional Chinese</entry>
-         <entry>WIN950, Windows950</entry>
+         <entry>1-2</entry>
+         <entry><literal>WIN950</>, <literal>Windows950</></entry>
         </row>
         <row>
          <entry><literal>EUC_CN</literal></entry>
          <entry>Extended UNIX Code-CN</entry>
          <entry>Simplified Chinese</entry>
+         <entry>1-3</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>EUC_JP</literal></entry>
          <entry>Extended UNIX Code-JP</entry>
          <entry>Japanese</entry>
+         <entry>1-3</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>EUC_KR</literal></entry>
          <entry>Extended UNIX Code-KR</entry>
          <entry>Korean</entry>
+         <entry>1-3</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>EUC_TW</literal></entry>
          <entry>Extended UNIX Code-TW</entry>
          <entry>Traditional Chinese, Taiwanese</entry>
+         <entry>1-3</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
          <entry>National Standard</entry>
          <entry>Chinese</entry>
+         <entry>1-2</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>GBK</literal></entry>
          <entry>Extended National Standard</entry>
          <entry>Simplified Chinese</entry>
-         <entry>WIN936, Windows936</entry>
+         <entry>1-2</entry>
+         <entry><literal>WIN936</>, <literal>Windows936</></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_5</literal></entry>
          <entry>ISO 8859-5, <acronym>ECMA</> 113</entry>
          <entry>Latin/Cyrillic</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_6</literal></entry>
          <entry>ISO 8859-6, <acronym>ECMA</> 114</entry>
          <entry>Latin/Arabic</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_7</literal></entry>
          <entry>ISO 8859-7, <acronym>ECMA</> 118</entry>
          <entry>Latin/Greek</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>ISO_8859_8</literal></entry>
          <entry>ISO 8859-8, <acronym>ECMA</> 121</entry>
          <entry>Latin/Hebrew</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>JOHAB</literal></entry>
          <entry><acronym>JOHAB</></entry>
          <entry>Korean (Hangul)</entry>
+         <entry>1-3</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>KOI8</literal></entry>
          <entry><acronym>KOI</acronym>8-R(U)</entry>
          <entry>Cyrillic</entry>
-         <entry>KOI8R</entry>
+         <entry>1</entry>
+         <entry><literal>KOI8R</></entry>
         </row>
         <row>
          <entry><literal>LATIN1</literal></entry>
          <entry>ISO 8859-1, <acronym>ECMA</> 94</entry>
          <entry>Western European</entry>
-         <entry>ISO88591</entry>
+         <entry>1</entry>
+         <entry><literal>ISO88591</></entry>
         </row>
         <row>
          <entry><literal>LATIN2</literal></entry>
          <entry>ISO 8859-2, <acronym>ECMA</> 94</entry>
          <entry>Central European</entry>
-         <entry>ISO88592</entry>
+         <entry>1</entry>
+         <entry><literal>ISO88592</></entry>
         </row>
         <row>
          <entry><literal>LATIN3</literal></entry>
          <entry>ISO 8859-3, <acronym>ECMA</> 94</entry>
          <entry>South European</entry>
-         <entry>ISO88593</entry>
+         <entry>1</entry>
+         <entry><literal>ISO88593</></entry>
         </row>
         <row>
          <entry><literal>LATIN4</literal></entry>
          <entry>ISO 8859-4, <acronym>ECMA</> 94</entry>
          <entry>North European</entry>
-         <entry>ISO88594</entry>
+         <entry>1</entry>
+         <entry><literal>ISO88594</></entry>
         </row>
         <row>
          <entry><literal>LATIN5</literal></entry>
          <entry>ISO 8859-9, <acronym>ECMA</> 128</entry>
          <entry>Turkish</entry>
-         <entry>ISO88599</entry>
+         <entry>1</entry>
+         <entry><literal>ISO88599</></entry>
         </row>
         <row>
          <entry><literal>LATIN6</literal></entry>
          <entry>ISO 8859-10, <acronym>ECMA</> 144</entry>
          <entry>Nordic</entry>
-         <entry>ISO885910</entry>
+         <entry>1</entry>
+         <entry><literal>ISO885910</></entry>
         </row>
         <row>
          <entry><literal>LATIN7</literal></entry>
          <entry>ISO 8859-13</entry>
          <entry>Baltic</entry>
-         <entry>ISO885913</entry>
+         <entry>1</entry>
+         <entry><literal>ISO885913</></entry>
         </row>
         <row>
          <entry><literal>LATIN8</literal></entry>
          <entry>ISO 8859-14</entry>
          <entry>Celtic</entry>
-         <entry>ISO885914</entry>
+         <entry>1</entry>
+         <entry><literal>ISO885914</></entry>
         </row>
         <row>
          <entry><literal>LATIN9</literal></entry>
          <entry>ISO 8859-15</entry>
          <entry>LATIN1 with Euro and accents</entry>
+         <entry>1</entry>
          <entry>ISO885915</entry>
         </row>
         <row>
          <entry><literal>LATIN10</literal></entry>
          <entry>ISO 8859-16, <acronym>ASRO</> SR 14111</entry>
          <entry>Romanian</entry>
-         <entry>ISO885916</entry>
+         <entry>1</entry>
+         <entry><literal>ISO885916</></entry>
         </row>
         <row>
          <entry><literal>MULE_INTERNAL</literal></entry>
          <entry>Mule internal code</entry>
          <entry>Multi-lingual Emacs</entry>
+         <entry>1-4</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>SJIS</literal></entry>
          <entry>Shift JIS</entry>
          <entry>Japanese</entry>
-         <entry>Mskanji, ShiftJIS, WIN932, Windows932</entry>
+         <entry>1-2</entry>
+         <entry><literal>Mskanji</>, <literal>ShiftJIS</>, <literal>WIN932</>, <literal>Windows932</></entry>
         </row>
         <row>
          <entry><literal>SQL_ASCII</literal></entry>
          <entry><acronym>ASCII</acronym></entry>
          <entry>English</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>UHC</literal></entry>
          <entry>Unified Hangul Code</entry>
          <entry>Korean</entry>
-         <entry>WIN949, Windows949</entry>
+         <entry>1-2</entry>
+         <entry><literal>WIN949</>, <literal>Windows949</></entry>
         </row>
         <row>
          <entry><literal>UTF8</literal></entry>
          <entry>Unicode, 8-bit</entry>
          <entry><emphasis>all</></entry>
-         <entry>Unicode</entry>
+         <entry>1-3</entry>
+         <entry><literal>Unicode</></entry>
         </row>
         <row>
          <entry><literal>WIN866</literal></entry>
          <entry>Windows CP866</entry>
          <entry>Cyrillic</entry>
-         <entry>ALT</entry>
+         <entry>1</entry>
+         <entry><literal>ALT</></entry>
         </row>
         <row>
          <entry><literal>WIN874</literal></entry>
          <entry>Windows CP874</entry>
          <entry>Thai</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>WIN1250</literal></entry>
          <entry>Windows CP1250</entry>
          <entry>Central European</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>WIN1251</literal></entry>
          <entry>Windows CP1251</entry>
          <entry>Cyrillic</entry>
-         <entry>WIN</entry>
+         <entry>1</entry>
+         <entry><literal>WIN</></entry>
         </row>
         <row>
          <entry><literal>WIN1256</literal></entry>
          <entry>Windows CP1256</entry>
          <entry>Arabic</entry>
+         <entry>1</entry>
          <entry></entry>
         </row>
         <row>
          <entry><literal>WIN1258</literal></entry>
          <entry>Windows CP1258</entry>
          <entry>Vietnamese</entry>
-         <entry>ABC, TCVN, TCVN5712, VSCII</entry>
+         <entry>1</entry>
+         <entry><literal>ABC</>, <literal>TCVN</>, <literal>TCVN5712</>, <literal>VSCII</></entry>
         </row>
        </tbody>
       </tgroup>
@@ -809,9 +844,6 @@ $ <userinput>psql -l</userinput>
           <literal>ISO_8859_5</literal>,
           <literal>KOI8</literal>,
           <literal>LATIN1</literal> to <literal>LATIN4</literal>,
-          <literal>LATIN2</literal>,
-          <literal>LATIN3</literal>,
-          <literal>LATIN4</literal>,
           <literal>SJIS</literal>,
           <literal>WIN866</literal>,
           <literal>WIN1250</literal>,
@@ -841,29 +873,7 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>UTF8</literal></entry>
-         <entry><emphasis>UTF8</emphasis>,
-          <literal>BIG5</literal>,
-          <literal>EUC_CN</literal>,
-          <literal>EUC_JP</literal>,
-          <literal>EUC_KR</literal>,
-          <literal>EUC_TW</literal>,
-          <literal>ISO_8859_5</literal>,
-          <literal>ISO_8859_6</literal>,
-          <literal>ISO_8859_7</literal>,
-          <literal>ISO_8859_8</literal>,
-          <literal>GB18030</literal>,
-          <literal>GBK</literal>,
-          <literal>JOHAB</literal>,
-          <literal>KOI8</literal>,
-          <literal>LATIN1</literal> to <literal>LATIN10</literal>,
-          <literal>SJIS</literal>,
-          <literal>UHC</literal>,
-          <literal>WIN866</literal>,
-          <literal>WIN874</literal>,
-          <literal>WIN1250</literal>,
-          <literal>WIN1251</literal>,
-          <literal>WIN1256</literal>,
-          <literal>WIN1258</literal>
+         <entry><emphasis>all supported encodings</emphasis>
          </entry>
         </row>
         <row>
