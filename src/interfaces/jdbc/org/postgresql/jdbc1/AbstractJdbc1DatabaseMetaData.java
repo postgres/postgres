@@ -2903,9 +2903,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			" ci.relname AS PK_NAME "+
 			from+
 			" WHERE ct.oid=i.indrelid AND ci.oid=i.indexrelid "+
-			" AND a.attrelid=ci.oid AND i.indisprimary "+
-			" AND ct.relname = '"+escapeQuotes(table)+"' "+
-			where+
+			" AND a.attrelid=ci.oid AND i.indisprimary ";
+                        if (table != null && !"".equals(table)) {
+			        sql += " AND ct.relname = '"+escapeQuotes(table)+"' ";
+                        }
+			sql += where+
 			" ORDER BY table_name, pk_name, key_seq";
 		return connection.createStatement().executeQuery(sql);
 	}
