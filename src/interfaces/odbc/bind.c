@@ -199,12 +199,20 @@ PGAPI_BindCol(
 		else
 		{
 			/* Make sure it is the bookmark data type */
-			if (fCType != SQL_C_BOOKMARK)
+			if (fCType == SQL_C_BOOKMARK)
+			switch (fCType)
 			{
-				stmt->errormsg = "Column 0 is not of type SQL_C_BOOKMARK";
-				stmt->errornumber = STMT_PROGRAM_TYPE_OUT_OF_RANGE;
-				SC_log_error(func, "", stmt);
-				return SQL_ERROR;
+				case SQL_C_BOOKMARK:
+#if (ODBCVER >= 0x0300)
+				case SQL_C_VARBOOKMARK:
+#endif /* ODBCVER */
+					break;
+				default:
+					stmt->errormsg = "Column 0 is not of type SQL_C_BOOKMARK";
+inolog("Column 0 is type %d not of type SQL_C_BOOKMARK", fCType);
+					stmt->errornumber = STMT_PROGRAM_TYPE_OUT_OF_RANGE;
+					SC_log_error(func, "", stmt);
+					return SQL_ERROR;
 			}
 
 			stmt->bookmark.buffer = rgbValue;

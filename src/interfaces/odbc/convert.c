@@ -349,8 +349,8 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	{
 		pbic = &stmt->bindings[stmt->current_col];
 		if (pbic->data_left == -2)
-			pbic->data_left = (cbValueMax > 0) ? 0 : -1;		/* This seems to be *
-																 * needed for ADO ? */
+			pbic->data_left = (cbValueMax > 0) ? 0 : -1; /* This seems to be *
+						 * needed for ADO ? */
 		if (pbic->data_left == 0)
 		{
 			if (pbic->ttlbuf != NULL)

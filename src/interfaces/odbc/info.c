@@ -1734,7 +1734,11 @@ PGAPI_Columns(
 	 * a statement is actually executed, so we'll have to do this
 	 * ourselves.
 	 */
+#if (ODBCVER >= 0x0300)
+	result_cols = 18;
+#else
 	result_cols = 14;
+#endif /* ODBCVER */
 	extend_bindings(stmt, result_cols);
 
 	/* set the field names */
@@ -1803,7 +1807,12 @@ PGAPI_Columns(
 			set_tuplefield_string(&row->tuple[11], "");
 
 #if (ODBCVER >= 0x0300)
+			set_tuplefield_null(&row->tuple[12]);
 			set_tuplefield_int2(&row->tuple[13], sqltype);
+			set_tuplefield_null(&row->tuple[14]);
+			set_tuplefield_int4(&row->tuple[15], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[16], 0);
+			set_tuplefield_string(&row->tuple[17], "No");
 #else
 			set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[13], the_type);
@@ -1918,9 +1927,12 @@ PGAPI_Columns(
 				break;
 			default:
 				set_tuplefield_int2(&row->tuple[13], sqltype);
+				set_tuplefield_null(&row->tuple[14]);
 				break;
 		}
+		set_tuplefield_int4(&row->tuple[15], pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 		set_tuplefield_int4(&row->tuple[16], field_number);
+		set_tuplefield_null(&row->tuple[17]);
 #else
 		set_tuplefield_int4(&row->tuple[13], field_type);
 #endif /* ODBCVER */
@@ -1956,7 +1968,8 @@ PGAPI_Columns(
 		set_tuplefield_string(&row->tuple[1], "");
 		set_tuplefield_string(&row->tuple[2], table_name);
 		set_tuplefield_string(&row->tuple[3], "xmin");
-		set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, the_type));
+		sqltype = pgtype_to_sqltype(stmt, the_type);
+		set_tuplefield_int2(&row->tuple[4], sqltype);
 		set_tuplefield_string(&row->tuple[5], pgtype_to_name(stmt, the_type));
 		set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
 		set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
@@ -1964,8 +1977,17 @@ PGAPI_Columns(
 		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
 		set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
 		set_tuplefield_string(&row->tuple[11], "");
+#if (ODBCVER >= 0x0300)
+		set_tuplefield_null(&row->tuple[12]);
+		set_tuplefield_int2(&row->tuple[13], sqltype);
+		set_tuplefield_null(&row->tuple[14]);
+		set_tuplefield_int4(&row->tuple[15], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_tuplefield_int4(&row->tuple[16], 0);
+		set_tuplefield_string(&row->tuple[17], "No");
+#else
 		set_tuplefield_int4(&row->tuple[12], pgtype_display_size(stmt, the_type, PG_STATIC, PG_STATIC));
 		set_tuplefield_int4(&row->tuple[13], the_type);
+#endif /* ODBCVER */
 
 		QR_add_tuple(res, row);
 	}

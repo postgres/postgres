@@ -189,6 +189,7 @@ PGAPI_DescribeCol(
 
 	/* gets all the information about a specific column */
 	StatementClass *stmt = (StatementClass *) hstmt;
+	ConnectionClass *conn;
 	QResultClass *res;
 	char	   *col_name = NULL;
 	Int4		fieldtype = 0;
@@ -200,7 +201,7 @@ PGAPI_DescribeCol(
 	int			len = 0;
 	RETCODE		result;
 
-	mylog("%s: entering...\n", func);
+	mylog("%s: entering.%d..\n", func, icol);
 
 	if (!stmt)
 	{
@@ -208,14 +209,16 @@ PGAPI_DescribeCol(
 		return SQL_INVALID_HANDLE;
 	}
 
-	ci = &(SC_get_conn(stmt)->connInfo);
+	conn = SC_get_conn(stmt);
+	ci = &(conn->connInfo);
 
 	SC_clear_error(stmt);
 
 #if (ODBCVER >= 0x0300)
 	if (0 == icol) /* bookmark column */
 	{
-		SQLSMALLINT	fType = SQL_INTEGER;
+		SQLSMALLINT	fType = stmt->options.use_bookmarks == SQL_UB_VARIABLE ? SQL_BINARY : SQL_INTEGER;
+
 		if (szColName && cbColNameMax > 0)
 			*szColName = '\0';
 		if (pcbColName)
@@ -440,7 +443,7 @@ PGAPI_ColAttributes(
 				break;
 			case SQL_DESC_TYPE:
 				if (pfDesc)
-					*pfDesc = SQL_INTEGER;
+					*pfDesc = stmt->options.use_bookmarks == SQL_UB_VARIABLE ? SQL_BINARY : SQL_INTEGER;
 				break;
 		}
 		return SQL_SUCCESS;
@@ -813,12 +816,19 @@ PGAPI_GetData(
 		}
 
 		/* Make sure it is the bookmark data type */
-		if (fCType != SQL_C_BOOKMARK)
+		switch (fCType)
 		{
-			stmt->errormsg = "Column 0 is not of type SQL_C_BOOKMARK";
-			stmt->errornumber = STMT_PROGRAM_TYPE_OUT_OF_RANGE;
-			SC_log_error(func, "", stmt);
-			return SQL_ERROR;
+			case SQL_C_BOOKMARK:
+#if (ODBCVER >= 0x0300)
+			case SQL_C_VARBOOKMARK:
+#endif /* ODBCVER */
+				break;
+			default:
+				stmt->errormsg = "Column 0 is not of type SQL_C_BOOKMARK";
+inolog("Column 0 is type %d not of type SQL_C_BOOKMARK", fCType);
+				stmt->errornumber = STMT_PROGRAM_TYPE_OUT_OF_RANGE;
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
 		}
 
 		get_bookmark = TRUE;

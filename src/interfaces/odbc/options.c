@@ -342,9 +342,9 @@ PGAPI_SetConnectOption(
 			break;
 
 		case SQL_AUTOCOMMIT:
-			if (vParam == SQL_AUTOCOMMIT_ON && CC_is_in_trans(conn))
+			if (vParam == SQL_AUTOCOMMIT_ON && CC_is_in_autocommit(conn))
 				break;
-			else if (vParam == SQL_AUTOCOMMIT_OFF && !CC_is_in_trans(conn))
+			else if (vParam == SQL_AUTOCOMMIT_OFF && !CC_is_in_autocommit(conn))
 				break;
 			if (CC_is_in_trans(conn))
 				CC_commit(conn);

@@ -959,8 +959,7 @@ SC_execute(StatementClass *self)
 		mylog("       Sending SELECT statement on stmt=%u, cursor_name='%s'\n", self, self->cursor_name);
 
 		/* send the declare/select */
-		res = CC_send_query(conn, self->stmt_with_params, NULL, TRUE);
-
+		res = CC_send_query(conn, self->stmt_with_params, NULL, FALSE);
 		if (SC_is_fetchcursor(self) && res != NULL &&
 			QR_command_successful(res))
 		{
@@ -1068,7 +1067,7 @@ SC_execute(StatementClass *self)
 		else
 		{
 			self->errornumber = STMT_EXEC_ERROR;
-			self->errormsg = "Error while executing the query";
+			self->errormsg = conn->errormsg;
 		}
 
 		if (!self->internal)

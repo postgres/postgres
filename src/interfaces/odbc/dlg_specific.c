@@ -175,9 +175,9 @@ driver_options_update(HWND hdlg, ConnInfo *ci, BOOL updateProfile)
 	comval->commlog = IsDlgButtonChecked(hdlg, DRV_COMMLOG);
 	comval->disable_optimizer = IsDlgButtonChecked(hdlg, DRV_OPTIMIZER);
 	comval->ksqo = IsDlgButtonChecked(hdlg, DRV_KSQO);
+	comval->unique_index = IsDlgButtonChecked(hdlg, DRV_UNIQUEINDEX);
 	if (!ci)
 	{
-		comval->unique_index = IsDlgButtonChecked(hdlg, DRV_UNIQUEINDEX);
 		comval->onlyread = IsDlgButtonChecked(hdlg, DRV_READONLY);
 	}
 	comval->use_declarefetch = IsDlgButtonChecked(hdlg, DRV_USEDECLAREFETCH);
@@ -442,15 +442,13 @@ updateCommons(const ConnInfo *ci)
 	SQLWritePrivateProfileString(sectionName,
 								 INI_KSQO, tmp, fileName);
 
+	sprintf(tmp, "%d", comval->unique_index);
+	SQLWritePrivateProfileString(sectionName, INI_UNIQUEINDEX, tmp, fileName);
 	/*
-	 * Never update the onlyread, unique_index from this module.
+	 * Never update the onlyread from this module.
 	 */
 	if (!ci)
 	{
-		sprintf(tmp, "%d", comval->unique_index);
-		SQLWritePrivateProfileString(sectionName, INI_UNIQUEINDEX, tmp,
-									 fileName);
-
 		sprintf(tmp, "%d", comval->onlyread);
 		SQLWritePrivateProfileString(sectionName, INI_READONLY, tmp,
 									 fileName);

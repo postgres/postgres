@@ -1322,7 +1322,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_resu
 				if ((swallow != '\0') || SOCK_get_errcode(sock) != 0)
 				{
 					self->errornumber = CONNECTION_BACKEND_CRAZY;
-					self->errormsg = "Unexpected protocol character from backend (send_query - I)";
+					QR_set_message(res, "Unexpected protocol character from backend (send_query - I)");
 					QR_set_status(res, PGRES_FATAL_ERROR);
 					ReadyToReturn = TRUE;
 					retres = cmdres;
@@ -1346,14 +1346,13 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_resu
 				if (msgbuffer[0] != '\0' && msgbuffer[strlen(msgbuffer) - 1] == '\n')
 					msgbuffer[strlen(msgbuffer) - 1] = '\0';
 
-				self->errormsg = msgbuffer;
 
-				mylog("send_query: 'E' - %s\n", self->errormsg);
-				qlog("ERROR from backend during send_query: '%s'\n", self->errormsg);
+				mylog("send_query: 'E' - %s\n", msgbuffer);
+				qlog("ERROR from backend during send_query: '%s'\n", msgbuffer);
 
 				/* We should report that an error occured. Zoltan */
 
-				if (!strncmp(self->errormsg, "FATAL", 5))
+				if (!strncmp(msgbuffer, "FATAL", 5))
 				{
 					self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
 					CC_set_no_trans(self);
@@ -1361,6 +1360,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_resu
 				else
 					self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
 				QR_set_status(res, PGRES_FATAL_ERROR);
+				QR_set_message(res, msgbuffer);
 				QR_set_aborted(res, TRUE);
 				aborted = TRUE;
 				while (msg_truncated)
@@ -1487,7 +1487,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_resu
 					retres = NULL;
 				}
 			}
-			else
+			if (retres)
 			{
 				/*
 				 *	discard results other than errors.
@@ -1501,6 +1501,11 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, BOOL clear_resu
 					qres->next = NULL;
 					QR_Destructor(qres);
 				}
+				/*
+				 *	If error message isn't set
+				 */
+				if (retres && (!self->errormsg || !self->errormsg[0]))
+					self->errormsg = QR_get_message(retres);
 			}
 		}
 	}
