@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.39 2000/11/10 20:13:25 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.40 2000/11/11 19:50:31 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -1248,29 +1248,34 @@ January 8 04:05:06 1999 PST
 	Although the <type>date</type> type 
 	does not have an associated time zone, the
 	<type>time</type> type can or does.
+	Time zones in the real world can have no meaning unless 
+	associated with a date as well as a time
+	since the offset may vary through the year with daylight savings
+	time boundaries.
        </para>
       </listitem>
 
       <listitem>
        <para>
 	The default time zone is specified as a constant integer offset 
-	from GMT/UTC.
+	from GMT/UTC. It is not possible to adapt to daylight savings
+	time when doing date/time arithmetic across
+	<acronym>DST</acronym> boundaries.
        </para>
       </listitem>
 
      </itemizedlist>
-
-     Time zones in the real world can have no meaning unless 
-     associated with a date as well as a time
-     since the offset may vary through the year with daylight savings
-     time boundaries.
     </para>
 
     <para>
-     To address these difficulties, <productname>Postgres</productname> 
-     associates time zones only with date and time
-     types which contain both date and time,
-     and assumes local time for any type containing only
+     To address these difficulties, we recommend using date/time
+     types which contain both date and time when using time zones. We
+     recommend <emphasis>not</emphasis> using the SQL92 type TIME
+     WITH TIME ZONE (though it is supported by
+     <productname>Postgres</productname> for legacy applications and
+     for compatibility with other RDBMS implementations).
+     <productname>Postgres</productname> 
+     assumes local time for any type containing only
      date or time. Further, time zone support is derived from 
      the underlying operating system
      time zone capabilities, and hence can handle daylight savings time 
@@ -1286,8 +1291,8 @@ January 8 04:05:06 1999 PST
     </para>
 
     <para>
-     All dates and times are stored internally in Universal UTC,
-     alternately known as Greenwich Mean Time (GMT). 
+     All dates and times are stored internally in UTC,
+     traditionally known as Greenwich Mean Time (GMT). 
      Times are converted to local time on the database server before being
      sent to the client frontend, hence by default are in the server
      time zone.
@@ -1299,7 +1304,7 @@ January 8 04:05:06 1999 PST
      <itemizedlist spacing="compact" mark="bullet">
       <listitem>
        <para>
-	The TZ environment variable used by the backend directly
+	The TZ environment variable is used by the backend directly
 	on postmaster start-up as the default time zone.
        </para>
       </listitem>
@@ -1315,15 +1320,27 @@ January 8 04:05:06 1999 PST
 	sets the time zone for the session.
        </para>
       </listitem>
+      <listitem>
+       <para>
+	The <acronym>SQL92</acronym> qualifier on
+	<programlisting>
+<replaceable>timestamp</replaceable> AT TIME ZONE '<replaceable>zone</replaceable>'
+	</programlisting>
+	where <replaceable>zone</replaceable> can be specified as a
+	text time zone (e.g. <literal>'PST'</literal>) or as an
+	interval (e.g. <literal>INTERVAL '-08:00'</literal>).
+       </para>
+      </listitem>
      </itemizedlist>
     </para>
 
     <para>
-     If an invalid time zone is specified,
-     the time zone becomes GMT (on most systems anyway).
-    </para>
-
-    <para>
+     <note>
+      <para>
+       If an invalid time zone is specified,
+       the time zone becomes GMT (on most systems anyway).
+      </para>
+     </note>
 
      <note>
       <para>
@@ -1889,6 +1906,10 @@ January 8 04:05:06 1999 PST
       </tgroup>
      </table>
     </para>
+   </sect2>
+
+   <sect2 id="inet-type">
+    <title><type>inet</type></title>
 
     <para>
     The essential difference between <type>inet</type> and <type>cidr</type>
