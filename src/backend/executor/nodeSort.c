@@ -7,11 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.18 1999/02/13 23:15:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.19 1999/06/03 03:17:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include <string.h>
 
 #include "executor/executor.h"
 #include "executor/execdebug.h"
@@ -58,6 +59,7 @@ FormSortKeys(Sort *sortnode)
 	if (keycount <= 0)
 		elog(ERROR, "FormSortKeys: keycount <= 0");
 	sortkeys = (ScanKey) palloc(keycount * sizeof(ScanKeyData));
+	MemSet((char *) sortkeys, 0, keycount * sizeof(ScanKeyData));
 
 	/* ----------------
 	 *	form each scan key from the resdom info in the target list
@@ -72,7 +74,7 @@ FormSortKeys(Sort *sortnode)
 		reskey = resdom->reskey;
 		reskeyop = resdom->reskeyop;
 
-		if (reskey > 0)
+		if (reskey > 0)			/* ignore TLEs that are not sort keys */
 		{
 			ScanKeyEntryInitialize(&sortkeys[reskey - 1],
 								   0,
