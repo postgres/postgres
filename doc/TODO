@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Apr 23 12:55:58 EDT 2002
+Last updated:		Tue Apr 23 12:59:21 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -305,7 +305,7 @@ REFERENTIAL INTEGRITY
 * Implement dirty reads and use them in RI triggers
 * Make triggers refer to columns by number, not name
 * Enforce referential integrity for system tables
-* -Allow user to control trigger firing order
+* -Allow user to control trigger firing order (Tom)
 * Add ALTER TRIGGER ... RENAME
 * Change foreign key constraint for array -> element to mean element
   in array
@@ -471,7 +471,7 @@ SOURCE CODE
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
 * Make one version of simple_prompt() in code (Bruce, Tom)
-* Compile in syslog functionaility by default (?)
+* -Compile in syslog functionaility by default (Tatsuo)
 * Modify regression tests to prevent failures do to minor numeric rounding
 * Use our own getopt() for FreeBSD/OpenBSD to allow --xxx flags (Bruce)
 * Add OpenBSD's getpeereid() call for local socket authentication (Bruce)
