@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.137 2001/01/24 00:06:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.138 2001/01/24 00:36:17 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1539,8 +1539,7 @@ setNewRelfilenode(Relation relation)
 		((Form_pg_class) GETSTRUCT(classTuple))->relfilenode = newrelfilenode;
 		simple_heap_update(pg_class, &classTuple->t_self, classTuple);
 	}
-	/* unlink old relfilenode */
-	DropRelationBuffers(relation);
+	/* schedule unlinking old relfilenode */
 	smgrunlink(DEFAULT_SMGR, relation);
 	/* cleanup pg_internal.init if necessary */
 	if (relation->rd_isnailed)
