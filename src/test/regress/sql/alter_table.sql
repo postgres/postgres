@@ -580,7 +580,7 @@ drop table def_test;
 alter table pg_class drop column relname;
 
 -- try altering non-existent table, should fail
-alter table foo drop column bar;
+alter table nosuchtable drop column bar;
 
 -- test dropping columns
 create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
