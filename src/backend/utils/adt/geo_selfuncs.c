@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.14 2000/04/12 17:15:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.15 2000/05/13 06:04:46 tgl Exp $
  *
  *	XXX These are totally bogus.  Perhaps someone will make them do
  *	something reasonable, someday.
@@ -54,7 +54,7 @@ areasel(Oid opid,
 	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
-	*result = 0.05;
+	*result = 0.02;
 	return result;
 }
 
@@ -68,7 +68,7 @@ areajoinsel(Oid opid,
 	float64		result;
 
 	result = (float64) palloc(sizeof(float64data));
-	*result = 0.05;
+	*result = 0.02;
 	return result;
 }
 
