@@ -149,6 +149,7 @@
    __USE_BSD is set by bsd/signal.h, and __USE_BSD_SIGNAL appears not to
    be used.
 */
+#  undef HAVE_SYS_SELECT_H
 #  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
