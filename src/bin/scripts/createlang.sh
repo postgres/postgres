@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.31 2001/09/30 22:17:51 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.32 2002/01/03 05:30:04 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -125,7 +125,7 @@ if [ -n "$usage" ]; then
         echo "$CMDNAME installs a procedural language into a PostgreSQL database."
 	echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] [langname] dbname"
+        echo "  $CMDNAME [options] langname [dbname]"
         echo
 	echo "Options:"
 	echo "  -h, --host=HOSTNAME             Database server host"
@@ -136,26 +136,23 @@ if [ -n "$usage" ]; then
 	echo "  -L, --pglib=DIRECTORY           Find language interpreter file in DIRECTORY"
 	echo "  -l, --list                      Show a list of currently installed languages"
         echo
-        echo "If 'langname' is not specified, you will be prompted interactively."
-        echo "A database name must be specified."
-        echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
 
-# ----------
-# Check that we have a database
-# ----------
 if [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument database name" 1>&2
-        echo "Try '$CMDNAME --help' for help." 1>&2
-	exit 1
+        if [ "$PGUSER" ]; then
+                dbname="$PGUSER"
+        else
+                dbname=`${PATHNAME}pg_id -u -n`
+        fi
+        [ "$?" -ne 0 ] && exit 1
 fi
 
 
 # ----------
-# List option
+# List option, doesn't need langname
 # ----------
 if [ "$list" ]; then
 	sqlcmd="SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\" FROM pg_language WHERE lanispl = TRUE;"
@@ -168,18 +165,19 @@ fi
 
 
 # ----------
+# We can't go any farther without a langname
+# ----------
+if [ -z "$langname" ]; then
+	echo "$CMDNAME: missing required argument language name" 1>&2
+        echo "Try '$CMDNAME --help' for help." 1>&2
+	exit 1
+fi
+
+# ----------
 # Check that we have PGLIB
 # ----------
 if [ -z "$PGLIB" ]; then
 	PGLIB='$libdir'
-fi
-
-# ----------
-# If not given on the command line, ask for the language
-# ----------
-if [ -z "$langname" ]; then
-	$ECHO_N "Language to install in database $dbname: "$ECHO_C
-	read langname
 fi
 
 # ----------

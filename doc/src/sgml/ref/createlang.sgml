@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.21 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createlang.sgml,v 1.22 2002/01/03 05:30:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -23,8 +23,8 @@ PostgreSQL documentation
   <cmdsynopsis>
    <command>createlang</command>
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
-   <arg><replaceable>langname</replaceable></arg>
-   <arg choice="plain"><replaceable>dbname</replaceable></arg>
+   <arg choice="plain"><replaceable>langname</replaceable></arg>
+   <arg><replaceable>dbname</replaceable></arg>
    <sbr>
    <command>createlang</command>
    <arg rep="repeat"><replaceable>connection-options</replaceable></arg>
@@ -46,9 +46,6 @@ PostgreSQL documentation
        <para>
 	Specifies the name of the procedural programming language to be
 	defined.
-	<application>createlang</application> will prompt for
-	<replaceable class="parameter">langname</replaceable>
-	if it is not specified on the command line.
        </para>
       </listitem>
      </varlistentry>
@@ -58,6 +55,8 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies to which database the language should be added.
+        The default is to create a database with the same name as the
+        current system user.
        </para>
       </listitem>
      </varlistentry>
