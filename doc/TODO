@@ -1,13 +1,13 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 19 12:33:55 EST 2003
+Last updated:		Wed Nov 19 12:35:29 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
 the PostgreSQL web site, http://www.PostgreSQL.org.
 
-A dash (-) marks changes that will appear in the upcoming 7.4 release.
+A dash (-) marks changes that will appear in the upcoming 7.5 release.
 
 Bracketed items "[]" have more detailed.
 
@@ -434,7 +434,7 @@ Miscellaneous
 * Improve caching of attribute offsets when NULLs exist in the row
 * Add a script to ask system configuration questions and tune postgresql.conf
 * Allow partitioning of table into multiple subtables
-* Use background process to write dirty shared buffers to disk
+* -Use background process to write dirty shared buffers to disk
 
 
 Source Code
@@ -458,7 +458,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1170 2003/11/19 17:34:01 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1170 2003/11/19 17:34:01 momjian Exp $
+* Change CVS $Id: TODO,v 1.1171 2003/11/19 17:35:40 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1171 2003/11/19 17:35:40 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
