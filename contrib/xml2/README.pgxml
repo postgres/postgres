@@ -27,7 +27,7 @@ Description of functions
 
 The first set of functions are straightforward XML parsing and XPath queries:
 
-pgxml_parse(document) RETURNS bool
+xml_valid(document) RETURNS bool
 
 This parses the document text in its parameter and returns true if the
 document is well-formed XML.

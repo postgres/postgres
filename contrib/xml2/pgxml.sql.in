@@ -1,6 +1,6 @@
 --SQL for XML parser
 
-CREATE OR REPLACE FUNCTION pgxml_parse(text) RETURNS bool
+CREATE OR REPLACE FUNCTION xml_valid(text) RETURNS bool
 	AS 'MODULE_PATHNAME' LANGUAGE 'c' WITH (isStrict);
 
 CREATE OR REPLACE FUNCTION xpath_string(text,text) RETURNS text

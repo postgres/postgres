@@ -39,7 +39,7 @@ xmlChar *pgxml_texttoxmlchar(text *textstring);
 static xmlXPathObjectPtr pgxml_xpath(text *document, xmlChar* xpath);
 
 
-Datum		pgxml_parse(PG_FUNCTION_ARGS);
+Datum		xml_valid(PG_FUNCTION_ARGS);
 Datum           xpath_nodeset(PG_FUNCTION_ARGS);
 Datum		xpath_string(PG_FUNCTION_ARGS);
 Datum		xpath_number(PG_FUNCTION_ARGS);
@@ -162,12 +162,12 @@ pgxml_parser_init()
 
 /* Returns true if document is well-formed */
 
-PG_FUNCTION_INFO_V1(pgxml_parse);
+PG_FUNCTION_INFO_V1(xml_valid);
 
 Datum
-pgxml_parse(PG_FUNCTION_ARGS)
+xml_valid(PG_FUNCTION_ARGS)
 {
-	/* called as pgxml_parse(document) */
+	/* called as xml_valid(document) */
 	xmlDocPtr	doctree;
 	text	   *t = PG_GETARG_TEXT_P(0);		/* document buffer */
 	int32		docsize = VARSIZE(t) - VARHDRSZ;
@@ -646,11 +646,11 @@ Datum xpath_table(PG_FUNCTION_ARGS)
   per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
   oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-/* Create the tuplestore - SortMem is the max in-memory size before it is
- * shipped to a disk heap file. Just like ... SortMem!
+/* Create the tuplestore - work_mem is the max in-memory size before a
+ * file is created on disk to hold it.
  */
 
-  tupstore = tuplestore_begin_heap(true, false, SortMem);
+  tupstore = tuplestore_begin_heap(true, false, work_mem);
 
   MemoryContextSwitchTo(oldcontext);
 
