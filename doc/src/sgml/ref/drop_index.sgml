@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.17 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_index.sgml,v 1.18 2003/06/24 23:29:25 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP INDEX <replaceable class="PARAMETER">index_name</replaceable> [, ...] [ CASCADE | RESTRICT ]
+DROP INDEX <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -35,7 +35,7 @@ DROP INDEX <replaceable class="PARAMETER">index_name</replaceable> [, ...] [ CAS
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">index_name</replaceable></term>
+    <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
       The name (optionally schema-qualified) of an index to remove.
@@ -78,11 +78,11 @@ DROP INDEX <replaceable class="PARAMETER">index_name</replaceable> [, ...] [ CAS
    </varlistentry>
 
    <varlistentry>
-    <term><computeroutput>ERROR: index "<replaceable class="PARAMETER">index_name</replaceable>" does not exist</computeroutput></term>
+    <term><computeroutput>ERROR: index "<replaceable class="PARAMETER">name</replaceable>" does not exist</computeroutput></term>
     <listitem>
      <para>
       This message is returned if <replaceable
-      class="PARAMETER">index_name</replaceable> is not an existing
+      class="PARAMETER">name</replaceable> is not an existing
       index.
      </para>
     </listitem>
