@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.24 1999/01/23 22:27:25 tgl Exp $
+ * $Id: libpq.h,v 1.25 1999/01/24 02:47:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,7 @@ extern int	pq_getchar(void);
 extern int	pq_peekchar(void);
 extern int	pq_getnchar(char *s, int off, int maxlen);
 extern int	pq_getint(int b);
-extern int  pq_putchar(char c);
+extern int  pq_putchar(unsigned char c);
 extern void pq_putstr(char *s);
 extern void pq_putnchar(char *s, int n);
 extern void pq_putint(int i, int b);
@@ -291,9 +291,9 @@ extern void StreamClose(int sock);
 
 #define PQ_BUFFER_SIZE 8192
 
-extern char PqSendBuffer[PQ_BUFFER_SIZE];
+extern unsigned char PqSendBuffer[PQ_BUFFER_SIZE];
 extern int PqSendPointer;	/* Next index to store a byte in PqSendBuffer */
-extern char PqRecvBuffer[PQ_BUFFER_SIZE];
+extern unsigned char PqRecvBuffer[PQ_BUFFER_SIZE];
 extern int PqRecvPointer;	/* Next index to read a byte from PqRecvBuffer */
 extern int PqRecvLength;	/* End of data available in PqRecvBuffer */
 

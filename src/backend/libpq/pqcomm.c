@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.64 1999/01/23 22:27:28 tgl Exp $
+ *  $Id: pqcomm.c,v 1.65 1999/01/24 02:47:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,8 +83,8 @@ extern FILE * debug_port; /* in util.c */
 /*
  * Buffers 
  */
-char PqSendBuffer[PQ_BUFFER_SIZE];
-char PqRecvBuffer[PQ_BUFFER_SIZE];
+unsigned char PqSendBuffer[PQ_BUFFER_SIZE];
+unsigned char PqRecvBuffer[PQ_BUFFER_SIZE];
 int PqSendPointer,PqRecvPointer,PqRecvLength;
 
 
@@ -173,8 +173,8 @@ pq_close()
 int
 pq_flush()
 {
-	char *bufptr = PqSendBuffer;
-	char *bufend = PqSendBuffer + PqSendPointer;
+	unsigned char *bufptr = PqSendBuffer;
+	unsigned char *bufend = PqSendBuffer + PqSendPointer;
 
 	while (bufptr < bufend)
 	{
@@ -725,7 +725,7 @@ pq_putncharlen(char *s, int n)
  * Act like the stdio putc() function. Write one character
  * to the stream. Return this character, or EOF on error.
  */
-int pq_putchar(char c) 
+int pq_putchar(unsigned char c) 
 {
 	if (PqSendPointer >= PQ_BUFFER_SIZE)
 		if (pq_flush())			/* If buffer is full, then flush it out */
