@@ -1,0 +1,3090 @@
+# translation of psql-ro.po to Romanian
+# translation of psql.po to Romanian
+# Alin Vaida <alin.vaida@gmail.com>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: psql-ro-8.0\n"
+"POT-Creation-Date: 2004-11-04 19:26+0000\n"
+"PO-Revision-Date: 2004-11-07 21:33+0200\n"
+"Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
+"Language-Team: Romanian <translators@postgresql.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.10\n"
+
+#: command.c:112
+msgid "Warning: This syntax is deprecated.\n"
+msgstr "Avertisment: Această sintaxă este depăşită.\n"
+
+#: command.c:120
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "Comandă invalidă \\%s. Încercaţi \\? pentru ajutor.\n"
+
+#: command.c:122
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "comandă invalidă \\%s\n"
+
+#: command.c:131
+#, c-format
+msgid "\\%s: extra argument \"%s\" ignored\n"
+msgstr "\\%s: argument suplimentar \"%s\" ignorat\n"
+
+#: command.c:240
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "imposibil de obţinut directorul de bază: %s\n"
+
+#: command.c:256
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %s\n"
+msgstr "\\%s: imposibil de schimbat directorul în \"%s\": %s\n"
+
+#: command.c:370 command.c:760
+msgid "no query buffer\n"
+msgstr "fără memorie tampon pentru interogări\n"
+
+#: command.c:433
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found\n"
+msgstr "%s: nume de codificare invalid sau procedură de conversie negasită\n"
+
+#: command.c:501 command.c:535 command.c:549 command.c:566 command.c:612
+#: command.c:740 command.c:771
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: lipseşte argumentul solicitat\n"
+
+#: command.c:598
+msgid "Query buffer is empty."
+msgstr "Memoria tampon pentru interogări este goală."
+
+#: command.c:632
+msgid "Query buffer reset (cleared)."
+msgstr "Memoria tampon pentru interogări reiniţializată (curăţată)."
+
+#: command.c:646
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "Istoric scris în fişierul \"%s\".\n"
+
+#: command.c:681 common.c:85 common.c:99 mainloop.c:71
+msgid "out of memory\n"
+msgstr "memorie insuficientă\n"
+
+#: command.c:696 command.c:745
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: eroare\n"
+
+#: command.c:726
+msgid "Timing is on."
+msgstr "Cronometrare pornită."
+
+#: command.c:728
+msgid "Timing is off."
+msgstr "Cronometrare oprită."
+
+#: command.c:788 command.c:808 command.c:1163 command.c:1170 command.c:1180
+#: command.c:1192 command.c:1205 command.c:1219 command.c:1241 command.c:1272
+#: common.c:170 copy.c:530 copy.c:575
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:915 command.c:939 startup.c:188 startup.c:206
+msgid "Password: "
+msgstr "Parolă: "
+
+#: command.c:953 common.c:216 common.c:685 common.c:740 common.c:983
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:957
+msgid "Previous connection kept\n"
+msgstr "Conexiune precedentă menţinută\n"
+
+#: command.c:969
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\conectare: %s"
+
+#: command.c:981
+#, c-format
+msgid "You are now connected to database \"%s\".\n"
+msgstr "Sunteţi conectat la baza de date \"%s\".\n"
+
+#: command.c:983
+#, c-format
+msgid "You are now connected as new user \"%s\".\n"
+msgstr "Sunteţi conectat ca utilizator nou \"%s\".\n"
+
+#: command.c:986
+#, c-format
+msgid "You are now connected to database \"%s\" as user \"%s\".\n"
+msgstr "Sunteţi conectat la baza de date \"%s\" ca utilizatorul \"%s\".\n"
+
+#: command.c:1103
+#, c-format
+msgid "could not start editor \"%s\"\n"
+msgstr "imposibil de pornit editorul \"%s\"\n"
+
+#: command.c:1105
+msgid "could not start /bin/sh\n"
+msgstr "imposibil de pornit /bin/sh\n"
+
+#: command.c:1148
+#, c-format
+msgid "could not open temporary file \"%s\": %s\n"
+msgstr "imposibil de deschis fişierul temporar \"%s\": %s\n"
+
+#: command.c:1340
+msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
+msgstr "\\pset: formatele permise sunt nealiniat, aliniat, html, latex\n"
+
+#: command.c:1345
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "Formatul de ieşire este %s.\n"
+
+#: command.c:1355
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "Stilul de bordură este %d.\n"
+
+#: command.c:1364
+msgid "Expanded display is on.\n"
+msgstr "Afişare extinsă pornită.\n"
+
+#: command.c:1365
+msgid "Expanded display is off.\n"
+msgstr "Afişare extinsă oprită.\n"
+
+#: command.c:1377
+#, c-format
+#, fuzzy
+msgid "Null display is \"%s\".\n"
+msgstr "Afişarea nulă este \"%s\".\n"
+
+#: command.c:1389
+#, c-format
+msgid "Field separator is \"%s\".\n"
+msgstr "Separatorul de câmpuri este \"%s\".\n"
+
+#: command.c:1403
+msgid "Record separator is <newline>."
+msgstr "Separatorul de înregistrări este <linienouă>."
+
+#: command.c:1405
+#, c-format
+msgid "Record separator is \"%s\".\n"
+msgstr "Separatorul de înregistrări este \"%s\".\n"
+
+#: command.c:1416
+msgid "Showing only tuples."
+msgstr "Afişare doar liste de valori."
+
+#: command.c:1418
+msgid "Tuples only is off."
+msgstr "Lista de valori este dezactivată."
+
+#: command.c:1434
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "Titlul este \"%s\".\n"
+
+#: command.c:1436
+msgid "Title is unset.\n"
+msgstr "Titlul este anulat.\n"
+
+#: command.c:1452
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr "Atributul tabelei este \"%s\".\n"
+
+#: command.c:1454
+msgid "Table attributes unset.\n"
+msgstr "Atributul tabelei este anulat.\n"
+
+#: command.c:1470
+msgid "Pager is used for long output."
+msgstr "Paginatorul este folosit pentru ieşirile lungi."
+
+#: command.c:1472
+msgid "Pager is always used."
+msgstr "Paginatorul este folosit tot timpul."
+
+#: command.c:1474
+msgid "Pager usage is off."
+msgstr "Folosire paginator oprită."
+
+#: command.c:1485
+msgid "Default footer is on."
+msgstr "Subsolul implicit este pornit."
+
+#: command.c:1487
+msgid "Default footer is off."
+msgstr "Subsolul implicit este oprit."
+
+#: command.c:1493
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: opţiune necunoscută: %s\n"
+
+#: command.c:1532
+msgid "\\!: failed\n"
+msgstr "\\!: eşuat\n"
+
+#: common.c:78
+#, c-format
+msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
+msgstr "%s: xstrdup: imposibil de duplicat un pointer nul (eroare internă)\n"
+
+#: common.c:123
+msgid "out of memory"
+msgstr "memorie insuficientă"
+
+#: common.c:356
+msgid "connection to server was lost\n"
+msgstr "conexiunea la server a fost pierdută\n"
+
+#: common.c:360
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "Conexiunea la server a fost pierdută. Se încearcă reiniţializarea: "
+
+#: common.c:365
+msgid "Failed.\n"
+msgstr "Eşuat.\n"
+
+#: common.c:372
+msgid "Succeeded.\n"
+msgstr "Reuşit.\n"
+
+#: common.c:471
+#, c-format
+msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
+msgstr "EROARE INTERNĂ: poziţie neaşteptată a instrucţiunii \"%s\"\n"
+
+#: common.c:607
+#, c-format
+msgid "LINE %d: "
+msgstr "LINIE %d: "
+
+#: common.c:624 common.c:633
+#, c-format
+msgid "%s\n"
+msgstr "%s\n"
+
+#: common.c:716 common.c:951
+msgid "You are currently not connected to a database.\n"
+msgstr "Nu sunteţi conectat la o bază de date.\n"
+
+#: common.c:771
+#, c-format
+msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
+msgstr "Notificare asincronă \"%s\" recepţionată de la procesul serverului cu PID %d.\n"
+
+#: common.c:959
+#, c-format
+msgid ""
+"***(Single step mode: verify command)"
+"*******************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
+msgstr ""
+"***(Mod cu un singur pas: verificare comandă)"
+"*******************************************\n"
+"%s\n"
+"***(apăsaţi Enter pentru continuare sau x şi Enter pentru anulare)"
+"********************\n"
+
+#: common.c:1010
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Timp: %.3f ms\n"
+
+#: copy.c:122
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: argumente necesare\n"
+
+#: copy.c:408
+#, c-format
+msgid "\\copy: parse error at \"%s\"\n"
+msgstr "\\copy: eroare de analizare la \"%s\"\n"
+
+#: copy.c:410
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: eroare de analizare la sfârşitul liniei\n"
+
+#: copy.c:541
+#, c-format
+msgid "%s: cannot copy from/to a directory\n"
+msgstr "%s: imposibil de copiat într-un/dintr-un director\n"
+
+#: copy.c:562
+#, c-format
+msgid "\\copy: %s"
+msgstr "\\copy: %s"
+
+#: copy.c:566
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\copy: răspuns neaşteptat (%d)\n"
+
+#: copy.c:668
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+"Introduceţi datele de copiat urmate de o linie nouă.\n"
+"Terminaţi cu un backslash şi un punct singure pe o linie."
+
+#: help.c:48
+msgid "on"
+msgstr "pornit"
+
+#: help.c:48
+msgid "off"
+msgstr "oprit"
+
+#: help.c:70
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "imposibil de determinat numele utilizatorului curent: %s\n"
+
+#: help.c:83
+#, c-format
+msgid ""
+"This is psql %s, the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr ""
+"Acesta este psql %s, terminalul interactiv pentru PostgreSQL.\n"
+"\n"
+
+#: help.c:85
+msgid "Usage:"
+msgstr "Utilizare:"
+
+#: help.c:86
+msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
+msgstr "  psql [OPŢIUNI]... [NUMEBD [NUMEUTILIZATOR]]\n"
+
+#: help.c:88
+msgid "General options:"
+msgstr "Opţiuni generale:"
+
+#: help.c:93
+#, c-format
+msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
+msgstr "  -d NUMEBD       specifică numele bazei de date pentru conecater (implicit: \"%s\")\n"
+
+#: help.c:94
+msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
+msgstr "  -c COMANDĂ      rulează o singură comandă (SQL sau internă) şi iese"
+
+#: help.c:95
+msgid "  -f FILENAME     execute commands from file, then exit"
+msgstr "  -f NUMEFIŞIER   execută comenzile din fişier, apoi iese"
+
+#: help.c:96
+msgid "  -l              list available databases, then exit"
+msgstr "  -l              enumeră bazele de date disponibile, apoi iese"
+
+#: help.c:97
+msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
+msgstr "  -v NUME=VALOARE setează variabila psql NUME la VALOARE"
+
+#: help.c:98
+msgid "  -X              do not read startup file (~/.psqlrc)"
+msgstr "  -X              nu se citeşte fişierul de pornire (~/.psqlrc)"
+
+#: help.c:99
+msgid "  --help          show this help, then exit"
+msgstr "  --help          afişează acest ajutor, apoi iese"
+
+#: help.c:100
+msgid "  --version       output version information, then exit"
+msgstr "  --version       afişează informaţiile despre versiune, apoi iese"
+
+#: help.c:102
+msgid ""
+"\n"
+"Input and output options:"
+msgstr ""
+"\n"
+"Opţiuni de intrare şi ieşire:"
+
+#: help.c:103
+msgid "  -a              echo all input from script"
+msgstr "  -a              afişează toate intrările din script"
+
+#: help.c:104
+msgid "  -e              echo commands sent to server"
+msgstr "  -e              afişează comenzile trimise serverului"
+
+#: help.c:105
+msgid "  -E              display queries that internal commands generate"
+msgstr "  -E              afişează interogările generate de comenzile interne"
+
+#: help.c:106
+msgid "  -q              run quietly (no messages, only query output)"
+msgstr "  -q              rulează în mod silenţios (fără mesaje, doar ieşirile interogărilor)"
+
+#: help.c:107
+msgid "  -o FILENAME     send query results to file (or |pipe)"
+msgstr "  -o NUMEFIŞIER   trimite rezultatele interogărilor în fişier (sau |conductă)"
+
+#: help.c:108
+msgid "  -n              disable enhanced command line editing (readline)"
+msgstr "  -n              dezactivează editarea extinsă a liniei de comandă (readline)"
+
+#: help.c:109
+msgid "  -s              single-step mode (confirm each query)"
+msgstr "  -s              mod cu un pas (se confirmă fiecare interogare)"
+
+#: help.c:110
+msgid "  -S              single-line mode (end of line terminates SQL command)"
+msgstr "  -S              mod cu o singură linie (sfârşitul de linie termină comanda SQL)"
+
+#: help.c:112
+msgid ""
+"\n"
+"Output format options:"
+msgstr ""
+"\n"
+"Opţiuni de formatare a ieşirii:"
+
+#: help.c:113
+msgid "  -A              unaligned table output mode (-P format=unaligned)"
+msgstr "  -A              mod tabel nealiniat (-P format=unaligned)"
+
+#: help.c:114
+msgid "  -H              HTML table output mode (-P format=html)"
+msgstr "  -H              mod tabel HTML (-P format=html)"
+
+#: help.c:115
+msgid "  -t              print rows only (-P tuples_only)"
+msgstr "  -t              afişare numai rânduri (-P tuples_only)"
+
+#: help.c:116
+msgid ""
+"  -T TEXT         set HTML table tag attributes (width, border) (-P "
+"tableattr=)"
+msgstr "  -T TEXT         setează atributele etichetei HTML pentru tabelă (lăţime, bordură) (-P tableattr=)"
+
+#: help.c:117
+msgid "  -x              turn on expanded table output (-P expanded)"
+msgstr "  -x              activează ieşirea tabelă extinsă (-P expanded)"
+
+#: help.c:118
+msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
+msgstr "  -P VAR[=ARG]    setează opţiunea de afişare VAR la ARG (vezi comanda \\pset)"
+
+#: help.c:119
+#, c-format
+msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
+msgstr "  -F ŞIR          setează separatorul de câmp (implicit: \"%s\") (-P fieldsep=)\n"
+
+#: help.c:121
+msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
+msgstr "  -R ŞIR          setează separatorul de înregistrare (implicit: linie nouă) (-P recordsep=)"
+
+#: help.c:123
+msgid ""
+"\n"
+"Connection options:"
+msgstr ""
+"\n"
+"Opţiuni de conectare:"
+
+#: help.c:126
+#, c-format
+msgid ""
+"  -h HOSTNAME     database server host or socket directory (default: \"%s"
+"\")\n"
+msgstr "  -h NUMEHOST     gazda serverului de baze de date sau directorul soclului (implicit: \"%s\")\n"
+
+#: help.c:127
+msgid "local socket"
+msgstr "soclu local"
+
+#: help.c:130
+#, c-format
+msgid "  -p PORT         database server port (default: \"%s\")\n"
+msgstr "  -p PORT         portul serverului de baze de date (implicit: \"%s\")\n"
+
+#: help.c:136
+#, c-format
+msgid "  -U NAME         database user name (default: \"%s\")\n"
+msgstr "  -U NUME         numele utilizatorului bazei de date (implicit: \"%s\")\n"
+
+#: help.c:137
+msgid "  -W              prompt for password (should happen automatically)"
+msgstr "  -W              solicită parola (în mod normal, se face automat)"
+
+#: help.c:140
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+"(for SQL commands) from within psql, or consult the psql section in\n"
+"the PostgreSQL documentation.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>."
+msgstr ""
+"\n"
+"Pentru mai multe informaţii, tastaţi \"\\?\" (pentru comenzi interne) sau \"\\help\"\n"
+"(pentru comenzi SQL) din psql, sau consultaţi secţiunea psql din\n"
+"documentaţia de PostgreSQL.\n"
+"\n"
+"Raportaţi erorile la <pgsql-bugs@postgresql.org>."
+
+#: help.c:174
+msgid "General\n"
+msgstr "General\n"
+
+#: help.c:175
+#, c-format
+msgid ""
+"  \\c[onnect] [DBNAME|- [USER]]\n"
+"                 connect to new database (currently \"%s\")\n"
+msgstr ""
+"  \\c[onnect] [NUMEBD|- [UTILIZATOR]]\n"
+"                 conectare la o nouă bază de date (în prezent \"%s\")\n"
+
+#: help.c:178
+msgid "  \\cd [DIR]      change the current working directory\n"
+msgstr "  \\cd [DIR]      schimbă directorul de lucru curent\n"
+
+#: help.c:179
+msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr "  \\copyright     afişează termenii de folosire şi de distribuţie a PostgreSQL\n"
+
+#: help.c:180
+msgid ""
+"  \\encoding [ENCODING]\n"
+"                 show or set client encoding\n"
+msgstr ""
+"  \\encoding [CODIFICARE]\n"
+"                 afişează sau setează codificarea clientului\n"
+
+#: help.c:182
+msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
+msgstr "  \\h [NUME]      ajutor pentru sintaxa comenzilor SQL, * pentru toate comenzile\n"
+
+#: help.c:183
+msgid "  \\q             quit psql\n"
+msgstr "  \\q             terminare psql\n"
+
+#: help.c:184
+msgid ""
+"  \\set [NAME [VALUE]]\n"
+"                 set internal variable, or list all if no parameters\n"
+msgstr ""
+"  \\set [NUME [VALOARE]]\n"
+"                 setează o variabilă internă sau le afişează pe toate dacă nu sunt furnizaţi parametri \n"
+
+#: help.c:186
+#, c-format
+msgid "  \\timing        toggle timing of commands (currently %s)\n"
+msgstr "  \\timing        comută cronometrarea comenzilor (în prezent %s)\n"
+
+#: help.c:188
+msgid "  \\unset NAME    unset (delete) internal variable\n"
+msgstr "  \\unset NUME    resetează (şterge) variabila internă\n"
+
+#: help.c:189
+msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
+msgstr "  \\! [COMANDĂ]   execută comanda în interpretor sau porneşte un interpretor interactiv\n"
+
+#: help.c:192
+msgid "Query Buffer\n"
+msgstr "Memorie tampon pentru interogări\n"
+
+#: help.c:193
+msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
+msgstr "  \\e [FIŞIER]    editează memoria tampon pentru interogări (sau fişierul) cu un editor extern\n"
+
+#: help.c:194
+msgid ""
+"  \\g [FILE]      send query buffer to server (and results to file or |"
+"pipe)\n"
+msgstr "  \\g [FIŞIER]    trimite memoria tampon pentru interogări serverului (şi rezultatele într-un fişier sau |conductă)\n"
+
+#: help.c:195
+msgid "  \\p             show the contents of the query buffer\n"
+msgstr "  \\p             afişează conţinutul memoriei tampon pentru interogări\n"
+
+#: help.c:196
+msgid "  \\r             reset (clear) the query buffer\n"
+msgstr "  \\r             resetează (şterge) memoria tampon pentru interogări\n"
+
+#: help.c:198
+msgid "  \\s [FILE]      display history or save it to file\n"
+msgstr "  \\s [FIŞIER]    afişează istoricul sau îl salvează în fişier\n"
+
+#: help.c:200
+msgid "  \\w FILE        write query buffer to file\n"
+msgstr "  \\w FIŞIER      scrie memoria tampon pentru interogări în fişier\n"
+
+#: help.c:203
+msgid "Input/Output\n"
+msgstr "Intrare/Ieşire\n"
+
+#: help.c:204
+msgid "  \\echo [STRING] write string to standard output\n"
+msgstr "  \\echo [ŞIR]    afişează şirul la ieşirea standard\n"
+
+#: help.c:205
+msgid "  \\i FILE        execute commands from file\n"
+msgstr "  \\i FIŞIER      execută comenzile din fişier\n"
+
+#: help.c:206
+msgid "  \\o [FILE]      send all query results to file or |pipe\n"
+msgstr "  \\o [FIŞIER]    salvează toate rezultatele interogărilor în fişier sau |conductă\n"
+
+#: help.c:207
+msgid ""
+"  \\qecho [STRING]\n"
+"                 write string to query output stream (see \\o)\n"
+msgstr ""
+"  \\qecho [ŞIR]\n"
+"                 scrie şirul în fluxul de ieşire al interogărilor (vezi \\o)\n"
+
+#: help.c:211
+msgid "Informational\n"
+msgstr "Informaţional\n"
+
+#: help.c:212
+msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
+msgstr "  \\d [NUME]      descriere tabelă, index, secvenţă sau vizualizare\n"
+
+#: help.c:213
+msgid ""
+"  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
+"                 list tables/indexes/sequences/views/system tables\n"
+msgstr ""
+"  \\d{t|i|s|v|S} [MODEL]   (adăugaţi \"+\" pentru mai multe detalii)\n"
+"                 listează tabelele/indecşii/secvenţele/vizualizările/tabelele sistem\n"
+
+#: help.c:215
+msgid "  \\da [PATTERN]  list aggregate functions\n"
+msgstr "  \\da [MODEL]    listează funcţiile agregate\n"
+
+#: help.c:216
+msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
+msgstr "  \\db [MODEL]    listează spaţiile de tabele (adăugaţi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:217
+msgid "  \\dc [PATTERN]  list conversions\n"
+msgstr "  \\dc [MODEL]    listează conversiile\n"
+
+#: help.c:218
+msgid "  \\dC            list casts\n"
+msgstr "  \\dC            listează conversiile de tip\n"
+
+#: help.c:219
+msgid "  \\dd [PATTERN]  show comment for object\n"
+msgstr "  \\dd [MODEL]    afişează comentariile pentru obiecte\n"
+
+#: help.c:220
+msgid "  \\dD [PATTERN]  list domains\n"
+msgstr "  \\dD [MODEL]    listează domeniile\n"
+
+#: help.c:221
+msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
+msgstr "  \\df [MODEL]    listează functiile (adăugaţi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:222
+msgid "  \\dg [PATTERN]  list groups\n"
+msgstr "  \\dg [MODEL]    listează grupurile\n"
+
+#: help.c:223
+msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
+msgstr "  \\dn [MODEL]    listează schemele (adăugaţi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:224
+msgid "  \\do [NAME]     list operators\n"
+msgstr "  \\do [NUME]     listează operatorii\n"
+
+#: help.c:225
+msgid "  \\dl            list large objects, same as \\lo_list\n"
+msgstr "  \\dl            listează obiectele mari, similar cu \\lo_list\n"
+
+#: help.c:226
+msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
+msgstr "  \\dp [MODEL]    listează drepturile de acces pentru tabele, vizualizări si secvenţe\n"
+
+#: help.c:227
+msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
+msgstr "  \\dT [MODEL]    listează tipurile de date (adăugaţi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:228
+msgid "  \\du [PATTERN]  list users\n"
+msgstr "  \\du [MODEL]    listează utilizatorii\n"
+
+#: help.c:229
+msgid "  \\l             list all databases (add \"+\" for more detail)\n"
+msgstr "  \\l             listează toate bazele de date (adăugaţi \"+\" pentru mai multe detalii)\n"
+
+#: help.c:230
+msgid ""
+"  \\z [PATTERN]   list table, view, and sequence access privileges (same as "
+"\\dp)\n"
+msgstr "  \\z [MODEL]     listează drepturile de acces pentru tabele, vizualizări şi secvenţe (similar cu \\dp)\n"
+
+#: help.c:233
+msgid "Formatting\n"
+msgstr "Formatare\n"
+
+#: help.c:234
+msgid "  \\a             toggle between unaligned and aligned output mode\n"
+msgstr "  \\a             comută între modurile de ieşire aliniat şi nealiniat\n"
+
+#: help.c:235
+msgid "  \\C [STRING]    set table title, or unset if none\n"
+msgstr "  \\C [ŞIR]       setează titlul tabelei, sau îl resetează dacă nu este specificată valoarea\n"
+
+#: help.c:236
+msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
+msgstr "  \\f [ŞIR]       afişează sau setează separatorul pentru ieşirea nealiniată a interogării\n"
+
+#: help.c:237
+#, c-format
+msgid "  \\H             toggle HTML output mode (currently %s)\n"
+msgstr "  \\H             comută modul de ieşire HTML (în prezent %s)\n"
+
+#: help.c:239
+msgid ""
+"  \\pset NAME [VALUE]\n"
+"                 set table output option\n"
+"                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
+"                 recordsep|tuples_only|title|tableattr|pager})\n"
+msgstr ""
+"  \\pset NUME [VALOARE]\n"
+"                 setează opţiunea de ieşire pentru tabelă\n"
+"                 (NUME := {format|border|expanded|fieldsep|footer|null|\n"
+"                 recordsep|tuples_only|title|tableattr|pager})\n"
+
+#: help.c:243
+#, c-format
+msgid "  \\t             show only rows (currently %s)\n"
+msgstr "  \\t             afişează numai rânduri (în prezent %s)\n"
+
+#: help.c:245
+msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
+msgstr "  \\T [ŞIR]       setează atributele tag-ului HTML <table>, sau le resetează dacă nu este specificată o valoare\n"
+
+#: help.c:246
+#, c-format
+msgid "  \\x             toggle expanded output (currently %s)\n"
+msgstr "  \\x             comută modul de ieşire extins (în prezent %s)\n"
+
+#: help.c:250
+msgid "Copy, Large Object\n"
+msgstr "Copiere, Obiecte Mari\n"
+
+#: help.c:251
+msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
+msgstr "  \\copy ...      execută SQL COPY cu fluxul de date către gazda clientului\n"
+
+#: help.c:252
+msgid ""
+"  \\lo_export LOBOID FILE\n"
+"  \\lo_import FILE [COMMENT] \n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID    large object operations\n"
+msgstr ""
+"  \\lo_export LOBOID FIŞIER\n"
+"  \\lo_import FIŞIER [COMENTARIU] \n"
+"  \\lo_list\n"
+"  \\lo_unlink LOBOID    operaţiuni cu obiecte mari\n"
+
+#: help.c:285
+msgid "Available help:\n"
+msgstr "Ajutor disponibil:\n"
+
+#: help.c:344
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"Comandă:     %s\n"
+"Descriere: %s\n"
+"Sintaxă:\n"
+"%s\n"
+"\n"
+
+#: help.c:357
+#, c-format
+msgid ""
+"No help available for \"%-.*s\".\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"Nu există ajutor disponibil pentru \"%-.*s\".\n"
+"Încercaţi \\h fără argumente pentru a vedea ajutorul disponibil.\n"
+
+#: input.c:210
+#, c-format
+msgid "could not save history to file \"%s\": %s\n"
+msgstr "imposibil de salvat istoricul în fişierul \"%s\": %s\n"
+
+#: input.c:213
+msgid "history is not supported by this installation\n"
+msgstr "istoricul nu este suportat de această instalare\n"
+
+#: large_obj.c:36
+#, c-format
+msgid "%s: not connected to a database\n"
+msgstr "%s: neconectat la o bază de date\n"
+
+#: large_obj.c:55
+#, c-format
+msgid "%s: current transaction is aborted\n"
+msgstr "%s: tranzacţia curentă este abandonată\n"
+
+#: large_obj.c:58
+#, c-format
+msgid "%s: unknown transaction status\n"
+msgstr "%s: stare a tranzacţiei necunoscută\n"
+
+#: describe.c:83 describe.c:187 describe.c:260 describe.c:322 describe.c:369
+#: describe.c:469 describe.c:758 describe.c:1488 describe.c:1733
+#: large_obj.c:256
+msgid "Description"
+msgstr "Descriere"
+
+#: large_obj.c:264
+msgid "Large objects"
+msgstr "Obiecte mari"
+
+#: mainloop.c:175
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "Folosiţi \"\\q\" pentru a părăsi %s.\n"
+
+#: print.c:428
+msgid "(No rows)\n"
+msgstr "(Nici un rând)\n"
+
+#: print.c:1200
+msgid "(1 row)"
+msgstr "(1 rând)"
+
+#: print.c:1202
+#, c-format
+msgid "(%d rows)"
+msgstr "(%d rânduri)"
+
+#: startup.c:133
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: memorie insuficientă\n"
+
+#: startup.c:182
+msgid "User name: "
+msgstr "Nume utilizator: "
+
+#: startup.c:293
+#, c-format
+msgid ""
+"Welcome to %s %s, the PostgreSQL interactive terminal.\n"
+"\n"
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help with psql commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+"\n"
+msgstr ""
+"Bine aţi venit la %s %s, terminalul interactiv PostgreSQL .\n"
+"\n"
+"Tastaţi: \\copyright pentru termenii de distribuţie\n"
+"         \\h pentru ajutor cu comenzile SQL\n"
+"         \\? pentru ajutor cu comenzile psql\n"
+"         \\g sau terminaţi cu punct si virgulă pentru a executa interogarea\n"
+"         \\q pentru terminare\n"
+"\n"
+
+#: startup.c:447
+#, c-format
+msgid "%s: couldn't set printing parameter \"%s\"\n"
+msgstr "%s: imposibil de setat parametrul de imprimare \"%s\"\n"
+
+#: startup.c:493
+#, c-format
+msgid "%s: could not delete variable \"%s\"\n"
+msgstr "%s: imposibil de şters variabila \"%s\"\n"
+
+#: startup.c:503
+#, c-format
+msgid "%s: could not set variable \"%s\"\n"
+msgstr "%s: imposibil de setat variabila \"%s\"\n"
+
+#: startup.c:534 startup.c:540
+#, c-format
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Încercaţi \"%s --help\" pentru mai multe informaţii.\n"
+
+#: startup.c:558
+#, c-format
+msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
+msgstr "%s: avertizare: argument în linia de comandă suplimentar \"%s\" ignorat\n"
+
+#: startup.c:565
+#, c-format
+msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
+msgstr "%s: Avertizare: Opţiunea -u este depăşită. Folosiţi -U.\n"
+
+#: startup.c:630
+msgid "contains support for command-line editing"
+msgstr "contine suprt pentru editarea liniei de comandă"
+
+#: startup.c:653
+#, c-format
+msgid ""
+"SSL connection (cipher: %s, bits: %i)\n"
+"\n"
+msgstr ""
+"Conexiune SSL (cifru: %s, biţi: %i)\n"
+"\n"
+
+#: describe.c:82 describe.c:177 describe.c:247 describe.c:320 describe.c:415
+#: describe.c:469 describe.c:1476 describe.c:1585 describe.c:1633
+msgid "Schema"
+msgstr "Schemă"
+
+#: describe.c:82 describe.c:128 describe.c:177 describe.c:247 describe.c:320
+#: describe.c:362 describe.c:415 describe.c:469 describe.c:1476
+#: describe.c:1586 describe.c:1634 describe.c:1727
+msgid "Name"
+msgstr "Nume"
+
+#: describe.c:82
+msgid "(all types)"
+msgstr "(toate tipurile)"
+
+#: describe.c:83
+msgid "Data type"
+msgstr "Tip de dată"
+
+#: describe.c:97
+msgid "List of aggregate functions"
+msgstr "Lista funcţiilor agregate"
+
+#: describe.c:117
+#, c-format
+msgid "The server version (%d) does not support tablespaces.\n"
+msgstr "Versiunea de server (%d) nu suporta spaţii de tabele.\n"
+
+#: describe.c:128 describe.c:186 describe.c:362 describe.c:1478
+#: describe.c:1727
+msgid "Owner"
+msgstr "Proprietar"
+
+#: describe.c:128
+msgid "Location"
+msgstr "Locaţie"
+
+#: describe.c:133 describe.c:415 describe.c:1733
+msgid "Access privileges"
+msgstr "Drepturi de acces"
+
+#: describe.c:150
+msgid "List of tablespaces"
+msgstr "Lista spatiilor de tabele"
+
+#: describe.c:177
+msgid "Result data type"
+msgstr "Tip de dată pentru rezultat"
+
+#: describe.c:178
+msgid "Argument data types"
+msgstr "Tipuri de dată pentru argument"
+
+#: describe.c:186
+msgid "Language"
+msgstr "Limbă"
+
+#: describe.c:187
+msgid "Source code"
+msgstr "Cod sursă"
+
+#: describe.c:221
+msgid "List of functions"
+msgstr "Lista funcţiilor"
+
+#: describe.c:257
+msgid "Internal name"
+msgstr "Nume intern"
+
+#: describe.c:257
+msgid "Size"
+msgstr "Mărime"
+
+#: describe.c:289
+msgid "List of data types"
+msgstr "Lista tipurilor de dată"
+
+#: describe.c:321
+msgid "Left arg type"
+msgstr "Tipul argumentului stâng"
+
+#: describe.c:321
+msgid "Right arg type"
+msgstr "Tipul argumentului drept"
+
+#: describe.c:322
+msgid "Result type"
+msgstr "Tipul rezultatului"
+
+#: describe.c:336
+msgid "List of operators"
+msgstr "Lista operatorilor"
+
+#: describe.c:365
+msgid "Encoding"
+msgstr "Codificare"
+
+#: describe.c:381
+msgid "List of databases"
+msgstr "Lista bazelor de date"
+
+#: describe.c:415 describe.c:543 describe.c:1477
+msgid "table"
+msgstr "tabelă"
+
+#: describe.c:415 describe.c:543 describe.c:1477
+msgid "view"
+msgstr "vizualizare"
+
+#: describe.c:415 describe.c:543 describe.c:1477
+msgid "sequence"
+msgstr "secvenţă"
+
+#: describe.c:415 describe.c:745 describe.c:1478 describe.c:1587
+msgid "Type"
+msgstr "Tip"
+
+#: describe.c:437
+#, c-format
+msgid "Access privileges for database \"%s\""
+msgstr "Drepturi de acces pentru baza de date \"%s\""
+
+#: describe.c:469
+msgid "Object"
+msgstr "Obiect"
+
+#: describe.c:480
+msgid "aggregate"
+msgstr "agregat"
+
+#: describe.c:498
+msgid "function"
+msgstr "funcţie"
+
+#: describe.c:512
+msgid "operator"
+msgstr "operator"
+
+#: describe.c:526
+msgid "data type"
+msgstr "tip de dată"
+
+#: describe.c:543 describe.c:1477
+msgid "index"
+msgstr "index"
+
+#: describe.c:559
+msgid "rule"
+msgstr "regulă"
+
+#: describe.c:575
+msgid "trigger"
+msgstr "declanşator"
+
+#: describe.c:593
+msgid "Object descriptions"
+msgstr "Descrierile obiectului"
+
+#: describe.c:641
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "Imposibil de găsit o relaţie numită \"%s\".\n"
+
+#: describe.c:728
+#, c-format
+msgid "Did not find any relation with OID %s.\n"
+msgstr "Imposibil de găsit o relaţie cu OID %s.\n"
+
+#: describe.c:744
+msgid "Column"
+msgstr "Coloană"
+
+#: describe.c:752
+msgid "Modifiers"
+msgstr "Modificatori"
+
+#: describe.c:859
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "Tabelă \"%s.%s\""
+
+#: describe.c:863
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "Vizualizare \"%s.%s\""
+
+#: describe.c:867
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "Secvenţă \"%s.%s\""
+
+#: describe.c:871
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "Index \"%s.%s\""
+
+#: describe.c:875
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "Relaţie specială \"%s.%s\""
+
+#: describe.c:879
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "Tabelă TOAST \"%s.%s\""
+
+#: describe.c:883
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "Tip compus \"%s.%s\""
+
+#: describe.c:887
+#, c-format
+msgid "?%c? \"%s.%s\""
+msgstr "?%c? \"%s.%s\""
+
+#: describe.c:925
+msgid "primary key, "
+msgstr "cheie primară, "
+
+#: describe.c:927
+msgid "unique, "
+msgstr "unic, "
+
+#: describe.c:933
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "pentru tabela \"%s.%s\""
+
+#: describe.c:937
+#, c-format
+msgid ", predicate (%s)"
+msgstr ", predicat (%s)"
+
+#: describe.c:940
+msgid ", clustered"
+msgstr ", grupat"
+
+#: describe.c:977
+#, c-format
+msgid ""
+"View definition:\n"
+"%s"
+msgstr ""
+"Definiţie vizualizare:\n"
+"%s"
+
+#: describe.c:983 describe.c:1204
+msgid "Rules:"
+msgstr "Reguli:"
+
+#: describe.c:1138
+msgid "Indexes:"
+msgstr "Indecşi:"
+
+#: describe.c:1146
+#, c-format
+msgid "    \"%s\""
+msgstr "    \"%s\""
+
+#: describe.c:1152
+msgid " PRIMARY KEY,"
+msgstr " PRIMARY KEY,"
+
+#: describe.c:1154
+msgid " UNIQUE,"
+msgstr " UNIQUE,"
+
+#: describe.c:1165
+msgid " CLUSTER"
+msgstr " CLUSTER"
+
+#: describe.c:1174
+msgid "Check constraints:"
+msgstr "Verificare restricţii:"
+
+#: describe.c:1178 describe.c:1193
+#, c-format
+msgid "    \"%s\" %s"
+msgstr "    \"%s\" %s"
+
+#: describe.c:1189
+msgid "Foreign-key constraints:"
+msgstr "Restricţii de cheie străină:"
+
+#: describe.c:1223
+msgid "Triggers:"
+msgstr "Declanşatori:"
+
+#: describe.c:1245
+msgid "Inherits"
+msgstr "Moşteneşte"
+
+#: describe.c:1259
+msgid "Has OIDs"
+msgstr "Are OID-uri"
+
+#: describe.c:1262 describe.c:1637 describe.c:1694
+msgid "yes"
+msgstr "da"
+
+#: describe.c:1262 describe.c:1638 describe.c:1692
+msgid "no"
+msgstr "nu"
+
+#: describe.c:1342
+#, c-format
+msgid "Tablespace: \"%s\""
+msgstr "Spaţiu de tabele: \"%s\""
+
+#: describe.c:1375
+msgid "User name"
+msgstr "Nume utilizator"
+
+#: describe.c:1375
+msgid "User ID"
+msgstr "ID utilizator"
+
+#: describe.c:1376
+msgid "superuser, create database"
+msgstr "utilizator privilegiat, creare bază de date"
+
+#: describe.c:1377
+msgid "superuser"
+msgstr "utilizator privilegiat"
+
+#: describe.c:1377
+msgid "create database"
+msgstr "creare bază de date"
+
+#: describe.c:1378
+msgid "Attributes"
+msgstr "Atribute"
+
+#: describe.c:1378
+msgid "Groups"
+msgstr "Grupuri"
+
+#: describe.c:1391
+msgid "List of database users"
+msgstr "Lista utilizatorilor de baze de date"
+
+#: describe.c:1418
+msgid "Group name"
+msgstr "Nume grup"
+
+#: describe.c:1418
+msgid "Group ID"
+msgstr "ID grup"
+
+#: describe.c:1431
+msgid "List of database groups"
+msgstr "Lista grupurilor de baze de date"
+
+#: describe.c:1478
+msgid "special"
+msgstr "special"
+
+#: describe.c:1483
+msgid "Table"
+msgstr "Tabelă"
+
+#: describe.c:1542
+msgid "No matching relations found.\n"
+msgstr "Nici o relaţie potrivită gasită.\n"
+
+#: describe.c:1544
+msgid "No relations found.\n"
+msgstr "Nici o relaţie gasită.\n"
+
+#: describe.c:1549
+msgid "List of relations"
+msgstr "Lista relatiilor"
+
+#: describe.c:1588
+msgid "Modifier"
+msgstr "Modificator"
+
+#: describe.c:1602
+msgid "List of domains"
+msgstr "Lista domeniilor"
+
+#: describe.c:1635
+msgid "Source"
+msgstr "Sursă"
+
+#: describe.c:1636
+msgid "Destination"
+msgstr "Destinaţie"
+
+#: describe.c:1639
+msgid "Default?"
+msgstr "Implicit?"
+
+#: describe.c:1653
+msgid "List of conversions"
+msgstr "Lista conversiilor"
+
+#: describe.c:1688
+msgid "Source type"
+msgstr "Tip sursă"
+
+#: describe.c:1689
+msgid "Target type"
+msgstr "Tip destinaţie"
+
+#: describe.c:1690
+msgid "(binary compatible)"
+msgstr "(compatibil binar)"
+
+#: describe.c:1691
+msgid "Function"
+msgstr "Funcţie"
+
+#: describe.c:1693
+msgid "in assignment"
+msgstr "în alocare"
+
+#: describe.c:1695
+msgid "Implicit?"
+msgstr "Implicit?"
+
+#: describe.c:1703
+msgid "List of casts"
+msgstr "Lista conversiilor de tip"
+
+#: describe.c:1753
+msgid "List of schemas"
+msgstr "Lista schemelor"
+
+#: sql_help.h:25 sql_help.h:373
+msgid "abort the current transaction"
+msgstr "abandonează tranzacţia curentă"
+
+#: sql_help.h:26
+msgid "ABORT [ WORK | TRANSACTION ]"
+msgstr "ABORT [ WORK | TRANSACTION ]"
+
+#: sql_help.h:29
+msgid "change the definition of an aggregate function"
+msgstr "modifică definiţia unei funcţii agregate"
+
+#: sql_help.h:30
+msgid ""
+"ALTER AGGREGATE name ( type ) RENAME TO newname\n"
+"ALTER AGGREGATE name ( type ) OWNER TO newowner"
+msgstr ""
+"ALTER AGGREGATE nume ( tip ) RENAME TO nume_nou\n"
+"ALTER AGGREGATE nume ( tip ) OWNER TO proprietar_nou"
+
+#: sql_help.h:33
+msgid "change the definition of a conversion"
+msgstr "modifică definiţia unei conversii"
+
+#: sql_help.h:34
+msgid ""
+"ALTER CONVERSION name RENAME TO newname\n"
+"ALTER CONVERSION name OWNER TO newowner"
+msgstr ""
+"ALTER CONVERSION nume RENAME TO nume_nou\n"
+"ALTER CONVERSION nume OWNER TO proprietar_nou"
+
+#: sql_help.h:37
+msgid "change a database"
+msgstr "modifică o bază de date"
+
+#: sql_help.h:38
+msgid ""
+"ALTER DATABASE name SET parameter { TO | = } { value | DEFAULT }\n"
+"ALTER DATABASE name RESET parameter\n"
+"\n"
+"ALTER DATABASE name RENAME TO newname\n"
+"\n"
+"ALTER DATABASE name OWNER TO new_owner"
+msgstr ""
+"ALTER DATABASE nume SET parametru { TO | = } { valoare | DEFAULT }\n"
+"ALTER DATABASE nume RESET parametru\n"
+"\n"
+"ALTER DATABASE nume RENAME TO nume_nou\n"
+"\n"
+"ALTER DATABASE nume OWNER TO proprietar_nou"
+
+#: sql_help.h:41
+msgid "change the definition of a domain"
+msgstr "modifică definiţia unui domeniu"
+
+#: sql_help.h:42
+msgid ""
+"ALTER DOMAIN name\n"
+"    { SET DEFAULT expression | DROP DEFAULT }\n"
+"ALTER DOMAIN name\n"
+"    { SET | DROP } NOT NULL\n"
+"ALTER DOMAIN name\n"
+"    ADD domain_constraint\n"
+"ALTER DOMAIN name\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN name\n"
+"    OWNER TO new_owner"
+msgstr ""
+"ALTER DOMAIN nume\n"
+"    { SET DEFAULT expresie | DROP DEFAULT }\n"
+"ALTER DOMAIN nume\n"
+"    { SET | DROP } NOT NULL\n"
+"ALTER DOMAIN nume\n"
+"    ADD restricţie_domeniu\n"
+"ALTER DOMAIN nume\n"
+"    DROP CONSTRAINT nume_restricţie [ RESTRICT | CASCADE ]\n"
+"ALTER DOMAIN nume\n"
+"    OWNER TO proprietar_nou"
+
+#: sql_help.h:45
+msgid "change the definition of a function"
+msgstr "modifică definiţia unei funcţii"
+
+#: sql_help.h:46
+msgid ""
+"ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname\n"
+"ALTER FUNCTION name ( [ type [, ...] ] ) OWNER TO newowner"
+msgstr ""
+"ALTER FUNCTION nume ( [ tip [, ...] ] ) RENAME TO nume_nou\n"
+"ALTER FUNCTION nume ( [ tip [, ...] ] ) OWNER TO proprietar_nou"
+
+#: sql_help.h:49
+msgid "change a user group"
+msgstr "modifică un grup de utilizatori"
+
+#: sql_help.h:50
+msgid ""
+"ALTER GROUP groupname ADD USER username [, ... ]\n"
+"ALTER GROUP groupname DROP USER username [, ... ]\n"
+"\n"
+"ALTER GROUP groupname RENAME TO newname"
+msgstr ""
+"ALTER GROUP nume_grup ADD USER nume_utilizator [, ... ]\n"
+"ALTER GROUP nume_grup DROP USER nume_utilizator [, ... ]\n"
+"\n"
+"ALTER GROUP nume_grup RENAME TO nume_nou"
+
+#: sql_help.h:53
+msgid "change the definition of an index"
+msgstr "modifică definiţia unui index"
+
+#: sql_help.h:54
+msgid ""
+"ALTER INDEX name \n"
+"    action [, ... ]\n"
+"ALTER INDEX name\n"
+"    RENAME TO new_name\n"
+"\n"
+"where action is one of:\n"
+"\n"
+"    OWNER TO new_owner\n"
+"    SET TABLESPACE indexspace_name"
+msgstr ""
+"ALTER INDEX nume \n"
+"    acţiune [, ... ]\n"
+"ALTER INDEX nume\n"
+"    RENAME TO nume_nou\n"
+"\n"
+"acţiunea este una dintre:\n"
+"\n"
+"    OWNER TO proprietar_nou\n"
+"    SET TABLESPACE nume_spaţii_indecşi"
+
+#: sql_help.h:57
+msgid "change the definition of a procedural language"
+msgstr "modifică definiţia unui limbaj procedural"
+
+#: sql_help.h:58
+msgid "ALTER LANGUAGE name RENAME TO newname"
+msgstr "ALTER LANGUAGE nume RENAME TO nume_nou"
+
+#: sql_help.h:61
+msgid "change the definition of an operator class"
+msgstr "modifică definiţia unei clase de operatori"
+
+#: sql_help.h:62
+msgid ""
+"ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
+"ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
+msgstr ""
+"ALTER OPERATOR CLASS nume USING metodă_index RENAME TO nume_nou\n"
+"ALTER OPERATOR CLASS nume USING metodă_index OWNER TO proprietar_nou"
+
+#: sql_help.h:65
+msgid "change the definition of an operator"
+msgstr "modifică definiţia unui operator"
+
+#: sql_help.h:66
+msgid ""
+"ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO "
+"newowner"
+msgstr "ALTER OPERATOR nume ( { tip_stânga | NONE } , { tip_dreapta | NONE } ) OWNER TO proprietar_nou"
+
+#: sql_help.h:69
+msgid "change the definition of a schema"
+msgstr "modifică definiţia unei scheme"
+
+#: sql_help.h:70
+msgid ""
+"ALTER SCHEMA name RENAME TO newname\n"
+"ALTER SCHEMA name OWNER TO newowner"
+msgstr ""
+"ALTER SCHEMA nume RENAME TO nume_nou\n"
+"ALTER SCHEMA nume OWNER TO proprietar_nou"
+
+#: sql_help.h:73
+msgid "change the definition of a sequence generator"
+msgstr "modifică definiţia unui generator de secvenţă"
+
+#: sql_help.h:74
+msgid ""
+"ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+msgstr ""
+"ALTER SEQUENCE nume [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE valoare_min | NO MINVALUE ] [ MAXVALUE valoare_max | NO MAXVALUE ]\n"
+"    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+
+#: sql_help.h:77
+msgid "change the definition of a table"
+msgstr "modifică definiţia unei tabele"
+
+#: sql_help.h:78
+msgid ""
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    action [, ... ]\n"
+"ALTER TABLE [ ONLY ] name [ * ]\n"
+"    RENAME [ COLUMN ] column TO new_column\n"
+"ALTER TABLE name\n"
+"    RENAME TO new_name\n"
+"\n"
+"where action is one of:\n"
+"\n"
+"    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
+"    DROP [ COLUMN ] column [ RESTRICT | CASCADE ]\n"
+"    ALTER [ COLUMN ] column TYPE type [ USING expression ]\n"
+"    ALTER [ COLUMN ] column SET DEFAULT expression\n"
+"    ALTER [ COLUMN ] column DROP DEFAULT\n"
+"    ALTER [ COLUMN ] column { SET | DROP } NOT NULL\n"
+"    ALTER [ COLUMN ] column SET STATISTICS integer\n"
+"    ALTER [ COLUMN ] column SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
+"    ADD table_constraint\n"
+"    DROP CONSTRAINT constraint_name [ RESTRICT | CASCADE ]\n"
+"    CLUSTER ON index_name\n"
+"    SET WITHOUT CLUSTER\n"
+"    SET WITHOUT OIDS\n"
+"    OWNER TO new_owner\n"
+"    SET TABLESPACE tablespace_name"
+msgstr ""
+"ALTER TABLE [ ONLY ] nume [ * ]\n"
+"    acţiune [, ... ]\n"
+"ALTER TABLE [ ONLY ] nume [ * ]\n"
+"    RENAME [ COLUMN ] coloană TO coloană_nouă\n"
+"ALTER TABLE nume\n"
+"    RENAME TO nume_nou\n"
+"\n"
+"acţiune este una dintre:\n"
+"\n"
+"    ADD [ COLUMN ] coloană tip [ restricţie_coloană [ ... ] ]\n"
+"    DROP [ COLUMN ] coloană [ RESTRICT | CASCADE ]\n"
+"    ALTER [ COLUMN ] coloană TYPE tip [ USING expresie ]\n"
+"    ALTER [ COLUMN ] coloană SET DEFAULT expresie\n"
+"    ALTER [ COLUMN ] coloană DROP DEFAULT\n"
+"    ALTER [ COLUMN ] coloană { SET | DROP } NOT NULL\n"
+"    ALTER [ COLUMN ] coloană SET STATISTICS întreg\n"
+"    ALTER [ COLUMN ] coloană SET STORAGE { PLAIN | EXTERNAL | EXTENDED | "
+"MAIN }\n"
+"    ADD restricţie_tabelă\n"
+"    DROP CONSTRAINT nume_restricţie [ RESTRICT | CASCADE ]\n"
+"    CLUSTER ON nume_index\n"
+"    SET WITHOUT CLUSTER\n"
+"    SET WITHOUT OIDS\n"
+"    OWNER TO proprietar_nou\n"
+"    SET TABLESPACE nume_spaţiu_tabelă"
+
+#: sql_help.h:81
+msgid "change the definition of a tablespace"
+msgstr "modifică definiţia unui spaţiu de tabele"
+
+#: sql_help.h:82
+msgid ""
+"ALTER TABLESPACE name RENAME TO newname\n"
+"ALTER TABLESPACE name OWNER TO newowner"
+msgstr ""
+"ALTER TABLESPACE nume RENAME TO nume_nou\n"
+"ALTER TABLESPACE nume OWNER TO proprietar_nou"
+
+#: sql_help.h:85
+msgid "change the definition of a trigger"
+msgstr "modifică definiţia unui declanşator"
+
+#: sql_help.h:86
+msgid "ALTER TRIGGER name ON table RENAME TO newname"
+msgstr "ALTER TRIGGER nume ON tabelă RENAME TO nume_nou"
+
+#: sql_help.h:89
+msgid "change the definition of a type"
+msgstr "modifică definiţia unui tip"
+
+#: sql_help.h:90
+msgid "ALTER TYPE name OWNER TO new_owner"
+msgstr "ALTER TYPE nume OWNER TO proprietar_nou"
+
+#: sql_help.h:93
+msgid "change a database user account"
+msgstr "modifică un cont de utilizator de bază de date"
+
+#: sql_help.h:94
+msgid ""
+"ALTER USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"\n"
+"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER \n"
+"    | VALID UNTIL 'abstime'\n"
+"\n"
+"ALTER USER name RENAME TO newname\n"
+"\n"
+"ALTER USER name SET parameter { TO | = } { value | DEFAULT }\n"
+"ALTER USER name RESET parameter"
+msgstr ""
+"ALTER USER nume [ [ WITH ] opţiune [ ... ] ]\n"
+"\n"
+"unde opţiune poate fi:\n"
+"\n"
+"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'parolă' \n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER \n"
+"    | VALID UNTIL 'timp_absolut'\n"
+"\n"
+"ALTER USER nume RENAME TO nume_nou\n"
+"\n"
+"ALTER USER nume SET parametru { TO | = } { valoare | DEFAULT }\n"
+"ALTER USER nume RESET parametru"
+
+#: sql_help.h:97
+msgid "collect statistics about a database"
+msgstr "colectează statistici despre o bază de date"
+
+#: sql_help.h:98
+msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
+msgstr "ANALYZE [ VERBOSE ] [ tabelă [ (coloană [, ...] ) ] ]"
+
+#: sql_help.h:101 sql_help.h:413
+msgid "start a transaction block"
+msgstr "iniţiază un bloc de tranzacţie"
+
+#: sql_help.h:102
+msgid ""
+"BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+msgstr ""
+"BEGIN [ WORK | TRANSACTION ] [ mod_tranzacţie [, ...] ]\n"
+"\n"
+"unde mod_tranzacţie este unul dintre:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+
+#: sql_help.h:105
+msgid "force a transaction log checkpoint"
+msgstr "forţează un punct de control al jurnalului tranzacţiei"
+
+#: sql_help.h:106
+msgid "CHECKPOINT"
+msgstr "CHECKPOINT"
+
+#: sql_help.h:109
+msgid "close a cursor"
+msgstr "închide un cursor"
+
+#: sql_help.h:110
+msgid "CLOSE name"
+msgstr "CLOSE nume"
+
+#: sql_help.h:113
+msgid "cluster a table according to an index"
+msgstr "grupează o tabelă conform unui index"
+
+#: sql_help.h:114
+msgid ""
+"CLUSTER indexname ON tablename\n"
+"CLUSTER tablename\n"
+"CLUSTER"
+msgstr ""
+"CLUSTER nume_index ON nume_tabelă\n"
+"CLUSTER nume_tabelă\n"
+"CLUSTER"
+
+#: sql_help.h:117
+msgid "define or change the comment of an object"
+msgstr "defineşte sau modifică comentariul unui obiect"
+
+#: sql_help.h:118
+msgid ""
+"COMMENT ON\n"
+"{\n"
+"  TABLE object_name |\n"
+"  COLUMN table_name.column_name |\n"
+"  AGGREGATE agg_name (agg_type) |\n"
+"  CAST (sourcetype AS targettype) |\n"
+"  CONSTRAINT constraint_name ON table_name |\n"
+"  CONVERSION object_name |\n"
+"  DATABASE object_name |\n"
+"  DOMAIN object_name |\n"
+"  FUNCTION func_name (arg1_type, arg2_type, ...) |\n"
+"  INDEX object_name |\n"
+"  LARGE OBJECT large_object_oid |\n"
+"  OPERATOR op (leftoperand_type, rightoperand_type) |\n"
+"  OPERATOR CLASS object_name USING index_method |\n"
+"  [ PROCEDURAL ] LANGUAGE object_name |\n"
+"  RULE rule_name ON table_name |\n"
+"  SCHEMA object_name |\n"
+"  SEQUENCE object_name |\n"
+"  TRIGGER trigger_name ON table_name |\n"
+"  TYPE object_name |\n"
+"  VIEW object_name\n"
+"} IS 'text'"
+msgstr ""
+"COMMENT ON\n"
+"{\n"
+"  TABLE nume_obiect |\n"
+"  COLUMN nume_tabelă.nume_coloană |\n"
+"  AGGREGATE nume_agregare (tip_agregare) |\n"
+"  CAST (tip_sursă AS tip_destinaţie) |\n"
+"  CONSTRAINT nume_restricţie ON nume_tabelă |\n"
+"  CONVERSION nume_obiect |\n"
+"  DATABASE nume_obiect |\n"
+"  DOMAIN nume_obiect |\n"
+"  FUNCTION nume_funcţie (tip_arg1, tip_arg2, ...) |\n"
+"  INDEX nume_obiect |\n"
+"  LARGE OBJECT oid_obiect_mare |\n"
+"  OPERATOR op (tip_operand_stâng, tip_operand_drept) |\n"
+"  OPERATOR CLASS nume_obiect USING metodă_index |\n"
+"  [ PROCEDURAL ] LANGUAGE nume_obiect |\n"
+"  RULE nume_regulă ON nume_tabelă |\n"
+"  SCHEMA nume_obiect |\n"
+"  SEQUENCE nume_obiect |\n"
+"  TRIGGER nume_declanşator ON nume_tabelă |\n"
+"  TYPE nume_obiect |\n"
+"  VIEW nume_obiect\n"
+"} IS 'text'"
+
+#: sql_help.h:121 sql_help.h:309
+msgid "commit the current transaction"
+msgstr "finalizează tranzacţia curentă"
+
+#: sql_help.h:122
+msgid "COMMIT [ WORK | TRANSACTION ]"
+msgstr "COMMIT [ WORK | TRANSACTION ]"
+
+#: sql_help.h:125
+msgid "copy data between a file and a table"
+msgstr "copiază date intre un fişier şi o tabelă"
+
+#: sql_help.h:126
+msgid ""
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    FROM { 'filename' | STDIN }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ] \n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ]\n"
+"          [ CSV [ QUOTE [ AS ] 'quote' ] \n"
+"                [ ESCAPE [ AS ] 'escape' ]\n"
+"                [ FORCE NOT NULL column [, ...] ]\n"
+"\n"
+"COPY tablename [ ( column [, ...] ) ]\n"
+"    TO { 'filename' | STDOUT }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimiter' ]\n"
+"          [ NULL [ AS ] 'null string' ]\n"
+"          [ CSV [ QUOTE [ AS ] 'quote' ] \n"
+"                [ ESCAPE [ AS ] 'escape' ]\n"
+"                [ FORCE QUOTE column [, ...] ]"
+msgstr ""
+"COPY nume_tabelă [ ( coloană [, ...] ) ]\n"
+"    FROM { 'nume_fişier' | STDIN }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ] \n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimitator' ]\n"
+"          [ NULL [ AS ] 'şir nul' ]\n"
+"          [ CSV [ QUOTE [ AS ] 'caracter citare' ] \n"
+"                [ ESCAPE [ AS ] 'caracter pentru escape' ]\n"
+"                [ FORCE NOT NULL coloană [, ...] ]\n"
+"\n"
+"COPY nume_tabelă [ ( coloană [, ...] ) ]\n"
+"    TO { 'nume_fişier' | STDOUT }\n"
+"    [ [ WITH ] \n"
+"          [ BINARY ]\n"
+"          [ OIDS ]\n"
+"          [ DELIMITER [ AS ] 'delimitator' ]\n"
+"          [ NULL [ AS ] 'şir nul' ]\n"
+"          [ CSV [ QUOTE [ AS ] 'caracter citare' ] \n"
+"                [ ESCAPE [ AS ] 'caracter pentru escape' ]\n"
+"                [ FORCE QUOTE coloană [, ...] ]"
+
+#: sql_help.h:129
+msgid "define a new aggregate function"
+msgstr "defineşte o nouă funcţie agregată"
+
+#: sql_help.h:130
+#, fuzzy
+msgid ""
+"CREATE AGGREGATE name (\n"
+"    BASETYPE = input_data_type,\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = state_data_type\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = initial_condition ]\n"
+")"
+msgstr ""
+"CREATE AGGREGATE nume (\n"
+"    BASETYPE = tip_date_intrare,\n"
+"    SFUNC = sfunc,\n"
+"    STYPE = tip_date_stare\n"
+"    [ , FINALFUNC = ffunc ]\n"
+"    [ , INITCOND = condiţie iniţială ]\n"
+")"
+
+#: sql_help.h:133
+msgid "define a new cast"
+msgstr "defineşte o conversie de tip nouă"
+
+#: sql_help.h:134
+msgid ""
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITH FUNCTION funcname (argtypes)\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (sourcetype AS targettype)\n"
+"    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]"
+msgstr ""
+"CREATE CAST (tip_sursă AS tip_destinaţie)\n"
+"    WITH FUNCTION nume_funcţie (tip_argumente)\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]\n"
+"\n"
+"CREATE CAST (tip_sursă AS tip_destinaţie)\n"
+"    WITHOUT FUNCTION\n"
+"    [ AS ASSIGNMENT | AS IMPLICIT ]"
+
+#: sql_help.h:137
+#, fuzzy
+msgid "define a new constraint trigger"
+msgstr "defineşte un nou declanşator de restricţie"
+
+#: sql_help.h:138
+msgid ""
+"CREATE CONSTRAINT TRIGGER name\n"
+"    AFTER events ON\n"
+"    tablename constraint attributes\n"
+"    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
+msgstr ""
+"CREATE CONSTRAINT TRIGGER nume\n"
+"    AFTER evenimente ON\n"
+"    nume_tabelă restricţie atribute\n"
+"    FOR EACH ROW EXECUTE PROCEDURE nume_funcţie ( argumente )"
+
+#: sql_help.h:141
+msgid "define a new conversion"
+msgstr "defineşte o nouă conversie"
+
+#: sql_help.h:142
+msgid ""
+"CREATE [DEFAULT] CONVERSION name\n"
+"    FOR source_encoding TO dest_encoding FROM funcname"
+msgstr ""
+"CREATE [DEFAULT] CONVERSION nume\n"
+"    FOR codificare_sursă TO codificare_destinaţie FROM nume_funcţie"
+
+#: sql_help.h:145
+msgid "create a new database"
+msgstr "creează o nouă bază de date"
+
+#: sql_help.h:146
+msgid ""
+"CREATE DATABASE name\n"
+"    [ [ WITH ] [ OWNER [=] dbowner ]\n"
+"           [ TEMPLATE [=] template ]\n"
+"           [ ENCODING [=] encoding ]\n"
+"           [ TABLESPACE [=] tablespace ] ]"
+msgstr ""
+"CREATE DATABASE nume\n"
+"    [ [ WITH ] [ OWNER [=] proprietar_bd ]\n"
+"           [ TEMPLATE [=] şablon ]\n"
+"           [ ENCODING [=] codificare ]\n"
+"           [ TABLESPACE [=] spatiu_tabele ] ]"
+
+#: sql_help.h:149
+msgid "define a new domain"
+msgstr "defineşte un domeniu nou"
+
+#: sql_help.h:150
+msgid ""
+"CREATE DOMAIN name [AS] data_type\n"
+"    [ DEFAULT expression ]\n"
+"    [ constraint [ ... ] ]\n"
+"\n"
+"where constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | NULL | CHECK (expression) }"
+msgstr ""
+"CREATE DOMAIN nume [AS] tip_date\n"
+"    [ DEFAULT expresie ]\n"
+"    [ restricţie [ ... ] ]\n"
+"\n"
+"unde restricţie este:\n"
+"\n"
+"[ CONSTRAINT nume_restricţie ]\n"
+"{ NOT NULL | NULL | CHECK (expresie) }"
+
+#: sql_help.h:153
+msgid "define a new function"
+msgstr "defineşte o funcţie nouă"
+
+#: sql_help.h:154
+msgid ""
+"CREATE [ OR REPLACE ] FUNCTION name ( [ [ argname ] argtype [, ...] ] )\n"
+"    RETURNS rettype\n"
+"  { LANGUAGE langname\n"
+"    | IMMUTABLE | STABLE | VOLATILE\n"
+"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
+"    | AS 'definition'\n"
+"    | AS 'obj_file', 'link_symbol'\n"
+"  } ...\n"
+"    [ WITH ( attribute [, ...] ) ]"
+msgstr ""
+"CREATE [ OR REPLACE ] FUNCTION nume ( [ [ nume_argument ] tip_argument [, ...] ] )\n"
+"    RETURNS tip_returnat\n"
+"  { LANGUAGE nume_limbaj\n"
+"    | IMMUTABLE | STABLE | VOLATILE\n"
+"    | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT\n"
+"    | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER\n"
+"    | AS 'definiţie'\n"
+"    | AS 'fişier_obiect', 'simbol_legătură'\n"
+"  } ...\n"
+"    [ WITH ( atribut [, ...] ) ]"
+
+#: sql_help.h:157
+msgid "define a new user group"
+msgstr "defineşte un grup de utilizatori nou"
+
+#: sql_help.h:158
+msgid ""
+"CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"\n"
+"     SYSID gid\n"
+"   | USER  username [, ...]"
+msgstr ""
+"CREATE GROUP nume [ [ WITH ] opţiune [ ... ] ]\n"
+"\n"
+"unde opţiune poate fi:\n"
+"\n"
+"     SYSID id_grup\n"
+"   | USER  nume_utilizator [, ...]"
+
+#: sql_help.h:161
+msgid "define a new index"
+msgstr "defineşte un index nou"
+
+#: sql_help.h:162
+msgid ""
+"CREATE [ UNIQUE ] INDEX name ON table [ USING method ]\n"
+"    ( { column | ( expression ) } [ opclass ] [, ...] )\n"
+"    [ TABLESPACE tablespace ]\n"
+"    [ WHERE predicate ]"
+msgstr ""
+"CREATE [ UNIQUE ] INDEX nume ON tabelă [ USING metodă ]\n"
+"    ( { coloană | ( expresie ) } [ clasă_operatori ] [, ...] )\n"
+"    [ TABLESPACE spaţiu_tabele ]\n"
+"    [ WHERE predicat ]"
+
+#: sql_help.h:165
+msgid "define a new procedural language"
+msgstr "defineşte un limbaj procedural nou"
+
+#: sql_help.h:166
+#, fuzzy
+msgid ""
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
+"    HANDLER call_handler [ VALIDATOR valfunction ]"
+msgstr ""
+"CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE nume\n"
+"    HANDLER call_handler [ VALIDATOR funcţie_validare ]"
+
+#: sql_help.h:169
+msgid "define a new operator class"
+msgstr "defineşte o clasă de operatori nouă"
+
+#: sql_help.h:170
+msgid ""
+"CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type USING index_method "
+"AS\n"
+"  {  OPERATOR strategy_number operator_name [ ( op_type, op_type ) ] "
+"[ RECHECK ]\n"
+"   | FUNCTION support_number funcname ( argument_type [, ...] )\n"
+"   | STORAGE storage_type\n"
+"  } [, ... ]"
+msgstr ""
+"CREATE OPERATOR CLASS nume [ DEFAULT ] FOR TYPE tip_date USING metodă_index "
+"AS\n"
+"  {  OPERATOR număr_strategie nume_operator [ ( tip_operator, tip_operator ) ] "
+"[ RECHECK ]\n"
+"   | FUNCTION număr_suport nume_funcţie ( tip_argument [, ...] )\n"
+"   | STORAGE tip_stocare\n"
+"  } [, ... ]"
+
+#: sql_help.h:173
+msgid "define a new operator"
+msgstr "defineşte un operator nou"
+
+#: sql_help.h:174
+msgid ""
+"CREATE OPERATOR name (\n"
+"    PROCEDURE = funcname\n"
+"    [, LEFTARG = lefttype ] [, RIGHTARG = righttype ]\n"
+"    [, COMMUTATOR = com_op ] [, NEGATOR = neg_op ]\n"
+"    [, RESTRICT = res_proc ] [, JOIN = join_proc ]\n"
+"    [, HASHES ] [, MERGES ]\n"
+"    [, SORT1 = left_sort_op ] [, SORT2 = right_sort_op ]\n"
+"    [, LTCMP = less_than_op ] [, GTCMP = greater_than_op ]\n"
+")"
+msgstr ""
+"CREATE OPERATOR nume (\n"
+"    PROCEDURE = nume_funcţie\n"
+"    [, LEFTARG = tip_stânga ] [, RIGHTARG = tip_dreapta ]\n"
+"    [, COMMUTATOR = operator_comutare ] [, NEGATOR = operator_negaţie ]\n"
+"    [, RESTRICT = procedură_restricţie ] [, JOIN = procedură_relaţionare]\n"
+"    [, HASHES ] [, MERGES ]\n"
+"    [, SORT1 = operator_sortare_stânga ] [, SORT2 = operator_sortare_dreapta ]\n"
+"    [, LTCMP = operator_mai_mic ] [, GTCMP = operator_mai_mare ]\n"
+")"
+
+#: sql_help.h:177
+msgid "define a new rewrite rule"
+msgstr "defineşte o regulă nouă"
+
+#: sql_help.h:178
+msgid ""
+"CREATE [ OR REPLACE ] RULE name AS ON event\n"
+"    TO table [ WHERE condition ]\n"
+"    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
+msgstr ""
+"CREATE [ OR REPLACE ] RULE nume AS ON eveniment\n"
+"    TO tabelă [ WHERE condiţie ]\n"
+"    DO [ ALSO | INSTEAD ] { NOTHING | comandă | ( comandă ; comandă ... ) }"
+
+#: sql_help.h:181
+msgid "define a new schema"
+msgstr "defineşte o schemă nouă"
+
+#: sql_help.h:182
+msgid ""
+"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ TABLESPACE "
+"tablespace ] [ schema_element [ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION username [ TABLESPACE tablespace ] "
+"[ schema_element [ ... ] ]"
+msgstr ""
+"CREATE SCHEMA nume_schemă [ AUTHORIZATION nume_utilizator ] [ TABLESPACE "
+"spaţiu_tabele ] [ element_schemă [ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION nume_utilizator [ TABLESPACE spaţiu_tabele ] "
+"[ element_schemă [ ... ] ]"
+
+#: sql_help.h:185
+msgid "define a new sequence generator"
+msgstr "defineşte un generator de secvenţă nou"
+
+#: sql_help.h:186
+msgid ""
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+msgstr ""
+"CREATE [ TEMPORARY | TEMP ] SEQUENCE nume [ INCREMENT [ BY ] increment ]\n"
+"    [ MINVALUE valoare_ | NO MINVALUE ] [ MAXVALUE valoare_max | NO MAXVALUE ]\n"
+"    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
+
+#: sql_help.h:189
+msgid "define a new table"
+msgstr "defineşte o tabelă nouă"
+
+#: sql_help.h:190
+msgid ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"[ ... ] ]\n"
+"    | table_constraint\n"
+"    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+")\n"
+"[ INHERITS ( parent_table [, ... ] ) ]\n"
+"[ WITH OIDS | WITHOUT OIDS ]\n"
+"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"[ TABLESPACE tablespace ]\n"
+"\n"
+"where column_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ NOT NULL | \n"
+"  NULL | \n"
+"  UNIQUE [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY [ USING INDEX TABLESPACE tablespace ] |\n"
+"  CHECK (expression) |\n"
+"  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
+"    [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"and table_constraint is:\n"
+"\n"
+"[ CONSTRAINT constraint_name ]\n"
+"{ UNIQUE ( column_name [, ... ] ) [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY ( column_name [, ... ] ) [ USING INDEX TABLESPACE tablespace ] "
+"|\n"
+"  CHECK ( expression ) |\n"
+"  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
+msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nume_tabelă (\n"
+"  { nume_coloană tip_dată [ DEFAULT expresie_implicită ] [ restricţie_coloană "
+"[ ... ] ]\n"
+"    | restricţie coloană\n"
+"    | LIKE tabelă_părinte [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+")\n"
+"[ INHERITS ( tabelă_părinte [, ... ] ) ]\n"
+"[ WITH OIDS | WITHOUT OIDS ]\n"
+"[ ON COMMIT { PRESERVE ROWS | DELETE ROWS | DROP } ]\n"
+"[ TABLESPACE spaţiu_tabele ]\n"
+"\n"
+"unde restricţie_coloană este:\n"
+"\n"
+"[ CONSTRAINT nume_restricţie ]\n"
+"{ NOT NULL | \n"
+"  NULL | \n"
+"  UNIQUE [ USING INDEX TABLESPACE spaţiu_tabele ] |\n"
+"  PRIMARY KEY [ USING INDEX TABLESPACE spaţiu_tabele ] |\n"
+"  CHECK (expresie) |\n"
+"  REFERENCES tabelă_referită [ ( coloană_referită ) ] [ MATCH FULL | MATCH PARTIAL | MATCH "
+"SIMPLE ]\n"
+"    [ ON DELETE acţiune ] [ ON UPDATE acţiune ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
+"\n"
+"şi restricţie_tabelă este:\n"
+"\n"
+"[ CONSTRAINT nume_restricţie ]\n"
+"{ UNIQUE ( nume_coloană [, ... ] ) [ USING INDEX TABLESPACE spaţiu_tabele ] |\n"
+"  PRIMARY KEY ( nume_coloană [, ... ] ) [ USING INDEX TABLESPACE spaţiu_tabele ] "
+"|\n"
+"  CHECK ( expresie ) |\n"
+"  FOREIGN KEY ( nume_coloană [, ... ] ) REFERENCES tabelă_referită [ ( coloană_referită "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE acţiune ] [ ON "
+"UPDATE acţiune ] }\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
+
+#: sql_help.h:193 sql_help.h:389
+msgid "define a new table from the results of a query"
+msgstr "defineşte o tabelă nouă din rezultatul unei interogări"
+
+#: sql_help.h:194
+msgid ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name "
+"[ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
+"    AS query"
+msgstr ""
+"CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nume_tabelă "
+"[ (nume_coloană [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
+"    AS interogare"
+
+#: sql_help.h:197
+msgid "define a new tablespace"
+msgstr "defineşte un spaţiu de tabele nou"
+
+#: sql_help.h:198
+msgid "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
+msgstr "CREATE TABLESPACE nume_spaţiu_tabele [ OWNER utilizator ] LOCATION 'director'"
+
+#: sql_help.h:201
+msgid "define a new trigger"
+msgstr "defineşte un declanşator nou"
+
+#: sql_help.h:202
+msgid ""
+"CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
+"    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
+msgstr ""
+"CREATE TRIGGER nume { BEFORE | AFTER } { eveniment [ OR ... ] }\n"
+"    ON tabelă [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
+"    EXECUTE PROCEDURE nume_funcţie ( argumente )"
+
+#: sql_help.h:205
+msgid "define a new data type"
+msgstr "defineşte un tip de dată nou"
+
+#: sql_help.h:206
+msgid ""
+"CREATE TYPE name AS\n"
+"    ( attribute_name data_type [, ... ] )\n"
+"\n"
+"CREATE TYPE name (\n"
+"    INPUT = input_function,\n"
+"    OUTPUT = output_function\n"
+"    [ , RECEIVE = receive_function ]\n"
+"    [ , SEND = send_function ]\n"
+"    [ , ANALYZE = analyze_function ]\n"
+"    [ , INTERNALLENGTH = { internallength | VARIABLE } ]\n"
+"    [ , PASSEDBYVALUE ]\n"
+"    [ , ALIGNMENT = alignment ]\n"
+"    [ , STORAGE = storage ]\n"
+"    [ , DEFAULT = default ]\n"
+"    [ , ELEMENT = element ]\n"
+"    [ , DELIMITER = delimiter ]\n"
+")"
+msgstr ""
+"CREATE TYPE nume AS\n"
+"    ( nume_atribut tip_dată [, ... ] )\n"
+"\n"
+"CREATE TYPE nume (\n"
+"    INPUT = funcţie_intrare,\n"
+"    OUTPUT = funcţie_ieşire\n"
+"    [ , RECEIVE = funcţie_primire ]\n"
+"    [ , SEND = functie_trimitere ]\n"
+"    [ , ANALYZE = funcţie_analiză ]\n"
+"    [ , INTERNALLENGTH = { lungime_internă | VARIABLE } ]\n"
+"    [ , PASSEDBYVALUE ]\n"
+"    [ , ALIGNMENT = alinieret ]\n"
+"    [ , STORAGE = stocare ]\n"
+"    [ , DEFAULT = implicit ]\n"
+"    [ , ELEMENT = element ]\n"
+"    [ , DELIMITER = delimitator ]\n"
+")"
+
+#: sql_help.h:209
+msgid "define a new database user account"
+msgstr "defineşte un cont de utilizator de baze de date nou"
+
+#: sql_help.h:210
+msgid ""
+"CREATE USER name [ [ WITH ] option [ ... ] ]\n"
+"\n"
+"where option can be:\n"
+"    \n"
+"      SYSID uid \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | IN GROUP groupname [, ...]\n"
+"    | VALID UNTIL 'abstime'"
+msgstr ""
+"CREATE USER nume [ [ WITH ] opţiune [ ... ] ]\n"
+"\n"
+"unde opţiune poate fi:\n"
+"    \n"
+"      SYSID uid \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'parolă'\n"
+"    | CREATEDB | NOCREATEDB\n"
+"    | CREATEUSER | NOCREATEUSER\n"
+"    | IN GROUP nume_grup [, ...]\n"
+"    | VALID UNTIL 'timp_absolut'"
+
+#: sql_help.h:213
+msgid "define a new view"
+msgstr "defineşte o vizualizare nouă"
+
+#: sql_help.h:214
+msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
+msgstr "CREATE [ OR REPLACE ] VIEW nume [ ( nume_coloană [, ...] ) ] AS interogare"
+
+#: sql_help.h:217
+msgid "deallocate a prepared statement"
+msgstr "de-alocă o instrucţiune preparată"
+
+#: sql_help.h:218
+msgid "DEALLOCATE [ PREPARE ] plan_name"
+msgstr "DEALLOCATE [ PREPARE ] nume_plan"
+
+#: sql_help.h:221
+msgid "define a cursor"
+msgstr "defineşte un cursor"
+
+#: sql_help.h:222
+msgid ""
+"DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query\n"
+"    [ FOR { READ ONLY | UPDATE [ OF column [, ...] ] } ]"
+msgstr ""
+"DECLARE nume [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
+"    CURSOR [ { WITH | WITHOUT } HOLD ] FOR interogare\n"
+"    [ FOR { READ ONLY | UPDATE [ OF coloană [, ...] ] } ]"
+
+#: sql_help.h:225
+msgid "delete rows of a table"
+msgstr "şterge rândurile unei tabele"
+
+#: sql_help.h:226
+msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
+msgstr "DELETE FROM [ ONLY ] tabelă [ WHERE condiţie ]"
+
+#: sql_help.h:229
+msgid "remove an aggregate function"
+msgstr "elimină o funcţie agregată"
+
+#: sql_help.h:230
+msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
+msgstr "DROP AGGREGATE nume ( tip ) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:233
+msgid "remove a cast"
+msgstr "elimină o conversie de tip"
+
+#: sql_help.h:234
+msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
+msgstr "DROP CAST (tip_sursă AS tip_destinaţie) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:237
+msgid "remove a conversion"
+msgstr "elimină o conversie"
+
+#: sql_help.h:238
+msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
+msgstr "DROP CONVERSION nume [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:241
+msgid "remove a database"
+msgstr "elimină o bază de date"
+
+#: sql_help.h:242
+msgid "DROP DATABASE name"
+msgstr "DROP DATABASE nume"
+
+#: sql_help.h:245
+msgid "remove a domain"
+msgstr "elimină un domeniu"
+
+#: sql_help.h:246
+msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
+msgstr "DROP DOMAIN nume [, ...]  [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:249
+msgid "remove a function"
+msgstr "elimină o funcţie"
+
+#: sql_help.h:250
+msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
+msgstr "DROP FUNCTION nume ( [ tip [, ...] ] ) [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:253
+msgid "remove a user group"
+msgstr "elimină un grup de utilizatori"
+
+#: sql_help.h:254
+msgid "DROP GROUP name"
+msgstr "DROP GROUP nume"
+
+#: sql_help.h:257
+msgid "remove an index"
+msgstr "elimină un index"
+
+#: sql_help.h:258
+msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP INDEX nume [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:261
+msgid "remove a procedural language"
+msgstr "elimină un limbaj procedural"
+
+#: sql_help.h:262
+msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
+msgstr "DROP [ PROCEDURAL ] LANGUAGE nume [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:265
+msgid "remove an operator class"
+msgstr "elimină o clasă de operatori"
+
+#: sql_help.h:266
+msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
+msgstr "DROP OPERATOR CLASS nume USING metodă_index [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:269
+msgid "remove an operator"
+msgstr "elimină un operator"
+
+#: sql_help.h:270
+msgid ""
+"DROP OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE "
+"| RESTRICT ]"
+msgstr ""
+"DROP OPERATOR nume ( { tip_stânga | NONE } , { tip_dreapta | NONE } ) [ CASCADE "
+"| RESTRICT ]"
+
+#: sql_help.h:273
+msgid "remove a rewrite rule"
+msgstr "elimină o regulă de rescriere"
+
+#: sql_help.h:274
+msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
+msgstr "DROP RULE nume ON relaţie [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:277
+msgid "remove a schema"
+msgstr "elimină o schemă"
+
+#: sql_help.h:278
+msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SCHEMA nume [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:281
+msgid "remove a sequence"
+msgstr "elimină o secvenţă"
+
+#: sql_help.h:282
+msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP SEQUENCE nume [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:285
+msgid "remove a table"
+msgstr "elimină o tabelă"
+
+#: sql_help.h:286
+msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TABLE nume [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:289
+msgid "remove a tablespace"
+msgstr "elimină un spatiu de tabele"
+
+#: sql_help.h:290
+msgid "DROP TABLESPACE tablespacename"
+msgstr "DROP TABLESPACE nume_spaţiu_tabele"
+
+#: sql_help.h:293
+msgid "remove a trigger"
+msgstr "elimină un declanşator"
+
+#: sql_help.h:294
+msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
+msgstr "DROP TRIGGER nume ON tabelă [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:297
+msgid "remove a data type"
+msgstr "elimină un tip de dată"
+
+#: sql_help.h:298
+msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP TYPE nume [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:301
+msgid "remove a database user account"
+msgstr "elimină un cont de utilizator de bază de date"
+
+#: sql_help.h:302
+msgid "DROP USER name"
+msgstr "DROP USER nume"
+
+#: sql_help.h:305
+msgid "remove a view"
+msgstr "elimină o vizualizare"
+
+#: sql_help.h:306
+msgid "DROP VIEW name [, ...] [ CASCADE | RESTRICT ]"
+msgstr "DROP VIEW nume [, ...] [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:310
+msgid "END [ WORK | TRANSACTION ]"
+msgstr "END [ WORK | TRANSACTION ]"
+
+#: sql_help.h:313
+msgid "execute a prepared statement"
+msgstr "execută o instrucţiune preparată"
+
+#: sql_help.h:314
+msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
+msgstr "EXECUTE nume_plan [ (parametru [, ...] ) ]"
+
+#: sql_help.h:317
+msgid "show the execution plan of a statement"
+msgstr "afişează planul de executie pentru o instructiune"
+
+#: sql_help.h:318
+msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
+msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] instrucţiune"
+
+#: sql_help.h:321
+msgid "retrieve rows from a query using a cursor"
+msgstr "transferă rândurile dintr-o interogare folosind un cursor"
+
+#: sql_help.h:322
+msgid ""
+"FETCH [ direction { FROM | IN } ] cursorname\n"
+"\n"
+"where direction can be empty or one of:\n"
+"\n"
+"    NEXT\n"
+"    PRIOR\n"
+"    FIRST\n"
+"    LAST\n"
+"    ABSOLUTE count\n"
+"    RELATIVE count\n"
+"    count\n"
+"    ALL\n"
+"    FORWARD\n"
+"    FORWARD count\n"
+"    FORWARD ALL\n"
+"    BACKWARD\n"
+"    BACKWARD count\n"
+"    BACKWARD ALL"
+msgstr ""
+"FETCH [ direcţie { FROM | IN } ] nume_cursor\n"
+"\n"
+"unde direcţie poate fi goală sau una dintre:\n"
+"\n"
+"    NEXT\n"
+"    PRIOR\n"
+"    FIRST\n"
+"    LAST\n"
+"    ABSOLUTE număr\n"
+"    RELATIVE număr\n"
+"    număr\n"
+"    ALL\n"
+"    FORWARD\n"
+"    FORWARD număr\n"
+"    FORWARD ALL\n"
+"    BACKWARD\n"
+"    BACKWARD număr\n"
+"    BACKWARD ALL"
+
+#: sql_help.h:325
+msgid "define access privileges"
+msgstr "defineşte drepturi de acces"
+
+#: sql_help.h:326
+msgid ""
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ([type, ...]) [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
+msgstr ""
+"GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] nume_tabelă [, ...]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE nume_bd [, ...]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE nume_spaţiu_tabele [, ...]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION nume_funcţie ([tip, ...]) [, ...]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE nume_limbaj [, ...]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT "
+"OPTION ]\n"
+"\n"
+"GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA nume_schemă [, ...]\n"
+"    TO { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
+
+#: sql_help.h:329
+msgid "create new rows in a table"
+msgstr "creează rânduri noi într-o tabelă"
+
+#: sql_help.h:330
+msgid ""
+"INSERT INTO table [ ( column [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
+msgstr ""
+"INSERT INTO tabelă [ ( coloană [, ...] ) ]\n"
+"    { DEFAULT VALUES | VALUES ( { expresie | DEFAULT } [, ...] ) | interogare }"
+
+#: sql_help.h:333
+msgid "listen for a notification"
+msgstr "aşteaptă o notificare"
+
+#: sql_help.h:334
+msgid "LISTEN name"
+msgstr "LISTEN nume"
+
+#: sql_help.h:337
+msgid "load or reload a shared library file"
+msgstr "încarcă sau re-încarcă o bibliotecă partajată"
+
+#: sql_help.h:338
+msgid "LOAD 'filename'"
+msgstr "LOAD 'nume_fisier'"
+
+#: sql_help.h:341
+msgid "lock a table"
+msgstr "blochează o tabelă"
+
+#: sql_help.h:342
+msgid ""
+"LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
+"\n"
+"where lockmode is one of:\n"
+"\n"
+"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
+"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
+msgstr ""
+"LOCK [ TABLE ] nume [, ...] [ IN mod_blocare MODE ] [ NOWAIT ]\n"
+"\n"
+"unde mod_blocare este unul dintre:\n"
+"\n"
+"    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
+"    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
+
+#: sql_help.h:345
+msgid "position a cursor"
+msgstr "poziţionează un cursor"
+
+#: sql_help.h:346
+msgid "MOVE [ direction { FROM | IN } ] cursorname"
+msgstr "MOVE [ direcţie { FROM | IN } ] nume_cursor"
+
+#: sql_help.h:349
+msgid "generate a notification"
+msgstr "generează o notificare"
+
+#: sql_help.h:350
+msgid "NOTIFY name"
+msgstr "NOTIFY nume"
+
+#: sql_help.h:353
+msgid "prepare a statement for execution"
+msgstr "prepară o instrucţiune pentru execuţie"
+
+#: sql_help.h:354
+msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
+msgstr "PREPARE nume_plan [ (tip_dată [, ...] ) ] AS instrucţiune"
+
+#: sql_help.h:357
+msgid "rebuild indexes"
+msgstr "reconstruieşte indecşii"
+
+#: sql_help.h:358
+msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
+msgstr "REINDEX { DATABASE | TABLE | INDEX } nume [ FORCE ]"
+
+#: sql_help.h:361
+msgid "destroy a previously defined savepoint"
+msgstr "distruge un punct de salvare definit anterior"
+
+#: sql_help.h:362
+msgid "RELEASE [ SAVEPOINT ] savepoint_name"
+msgstr "RELEASE [ SAVEPOINT ] nume_punct_salvare"
+
+#: sql_help.h:365
+msgid "restore the value of a run-time parameter to the default value"
+msgstr "restabileşte valoarea unui parametru de la momentul rulării la valoarea implicită"
+
+#: sql_help.h:366
+msgid ""
+"RESET name\n"
+"RESET ALL"
+msgstr ""
+"RESET nume\n"
+"RESET ALL"
+
+#: sql_help.h:369
+msgid "remove access privileges"
+msgstr "elimină drepturile de acces"
+
+#: sql_help.h:370
+msgid ""
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] tablename [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE dbname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION funcname ([type, ...]) [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE langname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA schemaname [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]"
+msgstr ""
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
+"    [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON [ TABLE ] nume_tabelă [, ...]\n"
+"    FROM { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON DATABASE nume_bd [, ...]\n"
+"    FROM { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE nume_spaţiu_tabele [, ...]\n"
+"    FROM { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { EXECUTE | ALL [ PRIVILEGES ] }\n"
+"    ON FUNCTION nume_funcţie ([tip, ...]) [, ...]\n"
+"    FROM { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { USAGE | ALL [ PRIVILEGES ] }\n"
+"    ON LANGUAGE nume_limbaj [, ...]\n"
+"    FROM { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
+"    ON SCHEMA nume_schemă [, ...]\n"
+"    FROM { nume_utilizator | GROUP nume_grup | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]"
+
+#: sql_help.h:374
+msgid "ROLLBACK [ WORK | TRANSACTION ]"
+msgstr "ROLLBACK [ WORK | TRANSACTION ]"
+
+#: sql_help.h:377
+#, fuzzy
+msgid "roll back to a savepoint"
+msgstr "anulează modificările până la un punct de salvare"
+
+#: sql_help.h:378
+msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
+msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] nume_punct_salvare"
+
+#: sql_help.h:381
+msgid "define a new savepoint within the current transaction"
+msgstr "defineşte un punct de salvare nou în tranzactia curentă"
+
+#: sql_help.h:382
+msgid "SAVEPOINT savepoint_name"
+msgstr "SAVEPOINT nume_punct_salvare"
+
+#: sql_help.h:385
+msgid "retrieve rows from a table or view"
+msgstr "transferă rânduri dintr-o tabelă sau vizualizare"
+
+#: sql_help.h:386
+msgid ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF table_name [, ...] ] ]\n"
+"\n"
+"where from_item can be one of:\n"
+"\n"
+"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias "
+"[, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING "
+"( join_column [, ...] ) ]"
+msgstr ""
+"SELECT [ ALL | DISTINCT [ ON ( expresie [, ...] ) ] ]\n"
+"    * | expresie [ AS nume_ieşire ] [, ...]\n"
+"    [ FROM din_element [, ...] ]\n"
+"    [ WHERE condiţie ]\n"
+"    [ GROUP BY expresie [, ...] ]\n"
+"    [ HAVING condiţie [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expresie [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { număr | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF nume_tabelă [, ...] ] ]\n"
+"\n"
+"unde din_element poate fi unul dintre:\n"
+"\n"
+"    [ ONLY ] nume_tabelă [ * ] [ [ AS ] alias [ ( alias_coloană [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( alias_coloană [, ...] ) ]\n"
+"    nume_funcţie ( [ argument [, ...] ] ) [ AS ] alias [ ( alias_coloană "
+"[, ...] | definiţie_coloană [, ...] ) ]\n"
+"    nume_funcţie ( [ argument [, ...] ] ) AS ( definiţie_coloană [, ...] )\n"
+"    din_element [ NATURAL ] tip_relaţionare from_item [ ON condiţie_relaţionare | USING "
+"( coloană_relaţionare [, ...] ) ]"
+
+#: sql_help.h:390
+msgid ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF tablename [, ...] ] ]"
+msgstr ""
+"SELECT [ ALL | DISTINCT [ ON ( expresie [, ...] ) ] ]\n"
+"    * | expresie [ AS nume_ieşire ] [, ...]\n"
+"    INTO [ TEMPORARY | TEMP ] [ TABLE ] tabelă_nouă\n"
+"    [ FROM din_element [, ...] ]\n"
+"    [ WHERE condiţie ]\n"
+"    [ GROUP BY expresie [, ...] ]\n"
+"    [ HAVING condiţie [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expresie [ ASC | DESC | USING operator ] [, ...] ]\n"
+"    [ LIMIT { număr | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR UPDATE [ OF nume_tabelă [, ...] ] ]"
+
+#: sql_help.h:393
+msgid "change a run-time parameter"
+msgstr "modifică un parametru de la momentul rulării"
+
+#: sql_help.h:394
+msgid ""
+"SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
+msgstr ""
+"SET [ SESSION | LOCAL ] nume { TO | = } { valoare | 'valoare' | DEFAULT }\n"
+"SET [ SESSION | LOCAL ] TIME ZONE { zonă_timp | LOCAL | DEFAULT }"
+
+#: sql_help.h:397
+msgid "set constraint checking modes for the current transaction"
+msgstr "setează modurile de verificare a restricţiilor pentru tranzacţia curentă"
+
+#: sql_help.h:398
+msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
+msgstr "SET CONSTRAINTS { ALL | nume [, ...] } { DEFERRED | IMMEDIATE }"
+
+#: sql_help.h:401
+msgid ""
+"set the session user identifier and the current user identifier of the "
+"current session"
+msgstr "setează identificatorul de sesiune al utilizatorului şi identificatorul curent al utilizatorului pentru sesiunea curentă"
+
+#: sql_help.h:402
+msgid ""
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
+"RESET SESSION AUTHORIZATION"
+msgstr ""
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION nume_utilizator\n"
+"SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
+"RESET SESSION AUTHORIZATION"
+
+#: sql_help.h:405
+msgid "set the characteristics of the current transaction"
+msgstr "setează caracteristicile tranzacţiei curente"
+
+#: sql_help.h:406
+msgid ""
+"SET TRANSACTION transaction_mode [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode [, ...]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+msgstr ""
+"SET TRANSACTION mod_tranzacţie [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION mod_tranzacţie [, ...]\n"
+"\n"
+"unde mod_tranzacţie este unul dintre:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+
+#: sql_help.h:409
+msgid "show the value of a run-time parameter"
+msgstr "afişează valoarea unui parametru de la momentul rulării"
+
+#: sql_help.h:410
+msgid ""
+"SHOW name\n"
+"SHOW ALL"
+msgstr ""
+"SHOW nume\n"
+"SHOW ALL"
+
+#: sql_help.h:414
+msgid ""
+"START TRANSACTION [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+msgstr ""
+"START TRANSACTION [ mod_tranzacţie [, ...] ]\n"
+"\n"
+"unde mod_tranzacţie este unul dintre:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ "
+"UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
+
+#: sql_help.h:417
+msgid "empty a table"
+msgstr "goleşte o tabelă"
+
+#: sql_help.h:418
+msgid "TRUNCATE [ TABLE ] name"
+msgstr "TRUNCATE [ TABLE ] nume"
+
+#: sql_help.h:421
+#, fuzzy
+msgid "stop listening for a notification"
+msgstr "renunţă să mai aştepte o notificare"
+
+#: sql_help.h:422
+msgid "UNLISTEN { name | * }"
+msgstr "UNLISTEN { nume | * }"
+
+#: sql_help.h:425
+msgid "update rows of a table"
+msgstr "actualizează rândurile unei tabele"
+
+#: sql_help.h:426
+msgid ""
+"UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
+"    [ FROM fromlist ]\n"
+"    [ WHERE condition ]"
+msgstr ""
+"UPDATE [ ONLY ] tabelă SET coloană = { expresie | DEFAULT } [, ...]\n"
+"    [ FROM din_listă ]\n"
+"    [ WHERE condiţie ]"
+
+#: sql_help.h:429
+msgid "garbage-collect and optionally analyze a database"
+msgstr "curăţă o bază de date şi, opţional, o analizează"
+
+#: sql_help.h:430
+msgid ""
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
+"[, ...] ) ] ]"
+msgstr ""
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ tabelă ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabelă [ (coloană "
+"[, ...] ) ] ]"
+
