@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.91 2001/03/25 17:52:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.92 2001/04/13 23:32:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,7 +239,7 @@ tas(volatile slock_t *lock)
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	register	_res;
+	register int	_res;
 
 	__asm__ __volatile__(
 		"	movl 	$1, r0			\n"
@@ -249,7 +249,7 @@ tas(volatile slock_t *lock)
 :		"=r"(_res)
 :		"r"(lock)
 :		"r0");
-	return (int) _res;
+	return _res;
 }
 
 #endif	 /* NEED_VAX_TAS_ASM */
@@ -261,13 +261,13 @@ tas(volatile slock_t *lock)
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	register	_res;
+	register int	_res;
 
 	__asm__ __volatile__(
 		"	sbitb	0, %0	\n"
 		"	sfsd	%1		\n"
 :		"=m"(*lock), "=r"(_res));
-	return (int) _res;
+	return _res;
 }
 
 #endif	 /* NEED_NS32K_TAS_ASM */
