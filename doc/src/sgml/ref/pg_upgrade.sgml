@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.18 2002/01/11 20:34:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.19 2002/01/11 20:48:47 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -91,6 +91,18 @@ $ pg_dumpall -s > schema.out
 $ make install
      </programlisting>
      to install the new binaries.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     Do:
+     <programlisting>
+$ cd pgsql/contrib/pg_resetxlog
+$ make install
+     </programlisting>
+     to install the /contrib/pg_resetxlog utility 
+     which will be used by pg_upgrade.
     </para>
    </step>
 
