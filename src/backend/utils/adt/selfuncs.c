@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.147.2.2 2004/02/02 03:07:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.147.2.3 2004/02/27 21:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3977,7 +3977,7 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 	 */
 	cost_qual_eval(&index_qual_cost, indexQuals);
 	*indexStartupCost = index_qual_cost.startup;
-	*indexTotalCost = numIndexPages +
+	*indexTotalCost = numIndexPages + index_qual_cost.startup +
 		(cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
 
 	/*
