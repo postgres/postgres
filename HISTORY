@@ -230,7 +230,7 @@ Allow column aliases on views CREATE VIEW name (collist)
 Fixes for views with subqueries (Tom)
 Allow UPDATE table SET fld = (SELECT ...) (Tom)
 SET command options no longer require quotes
-Update pgaccess to 0.98.5
+Update pgaccess to 0.98.6
 New SET SEED command
 New pg_options.sample file
 New SET FSYNC command (Massimo)

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.45 2000/04/28 15:03:39 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.46 2000/05/02 17:06:10 momjian Exp $
 -->
 
  <chapter id="release">
@@ -306,7 +306,7 @@ Allow column aliases on views CREATE VIEW name (collist)
 Fixes for views with subqueries (Tom)
 Allow UPDATE table SET fld = (SELECT ...) (Tom)
 SET command options no longer require quotes
-Update pgaccess to 0.98.5
+Update pgaccess to 0.98.6
 New SET SEED command
 New pg_options.sample file
 New SET FSYNC command (Massimo)
