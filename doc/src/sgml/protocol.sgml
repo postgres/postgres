@@ -657,17 +657,20 @@ This section describes the base data types used in messages.
 <ListItem>
 <Para>
 		A conventional C '\0' terminated string with no length
-		limitation.  A frontend should always read the full string
-		even though it may have to discard characters if its buffers
-		aren't big enough.
-<Note>
-<Para>
-Is 8193 bytes the largest allowed size?
-</Para>
-</Note>
+		limitation.
 		If <Replaceable>s</Replaceable> is specified it is the literal value.
 		Eg. String, String("user").
 </Para>
+		
+<Note>
+<Para>
+<Emphasis>There is no predefined limit</Emphasis> on the length of a string
+that can be returned by the backend.  Good coding strategy for a frontend
+is to use an expandable buffer so that anything that fits in memory can be
+accepted.  If that's not feasible, read the full string and discard trailing
+characters that don't fit into your fixed-size buffer.
+</Para>
+</Note>
 </ListItem>
 </VarListEntry>
 <VarListEntry>
