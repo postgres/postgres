@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.36 2000/06/05 07:28:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.37 2000/06/19 23:37:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ smgrinit()
 		if (smgrsw[i].smgr_init)
 		{
 			if ((*(smgrsw[i].smgr_init)) () == SM_FAIL)
-				elog(FATAL, "initialization failed on %s",
+				elog(FATAL, "initialization failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 														 Int16GetDatum(i))));
 		}
@@ -127,7 +127,7 @@ smgrshutdown(int dummy)
 		if (smgrsw[i].smgr_shutdown)
 		{
 			if ((*(smgrsw[i].smgr_shutdown)) () == SM_FAIL)
-				elog(FATAL, "shutdown failed on %s",
+				elog(FATAL, "shutdown failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 														 Int16GetDatum(i))));
 		}
@@ -146,7 +146,7 @@ smgrcreate(int16 which, Relation reln)
 	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
-		elog(ERROR, "cannot create %s", RelationGetRelationName(reln));
+		elog(ERROR, "cannot create %s: %m", RelationGetRelationName(reln));
 
 	return fd;
 }
@@ -162,7 +162,7 @@ smgrunlink(int16 which, Relation reln)
 	int			status;
 
 	if ((status = (*(smgrsw[which].smgr_unlink)) (reln)) == SM_FAIL)
-		elog(ERROR, "cannot unlink %s", RelationGetRelationName(reln));
+		elog(ERROR, "cannot unlink %s: %m", RelationGetRelationName(reln));
 
 	return status;
 }
@@ -181,7 +181,7 @@ smgrextend(int16 which, Relation reln, char *buffer)
 	status = (*(smgrsw[which].smgr_extend)) (reln, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "%s: cannot extend.  Check free disk space.",
+		elog(ERROR, "cannot extend %s: %m.\n\tCheck free disk space.",
 			 RelationGetRelationName(reln));
 
 	return status;
@@ -200,7 +200,7 @@ smgropen(int16 which, Relation reln)
 
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0 &&
 		!reln->rd_unlinked)
-		elog(ERROR, "cannot open %s", RelationGetRelationName(reln));
+		elog(ERROR, "cannot open %s: %m", RelationGetRelationName(reln));
 
 	return fd;
 }
@@ -220,7 +220,7 @@ int
 smgrclose(int16 which, Relation reln)
 {
 	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
-		elog(ERROR, "cannot close %s", RelationGetRelationName(reln));
+		elog(ERROR, "cannot close %s: %m", RelationGetRelationName(reln));
 
 	return SM_SUCCESS;
 }
@@ -243,7 +243,7 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_read)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot read block %d of %s",
+		elog(ERROR, "cannot read block %d of %s: %m",
 			 blocknum, RelationGetRelationName(reln));
 
 	return status;
@@ -265,7 +265,7 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_write)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot write block %d of %s",
+		elog(ERROR, "cannot write block %d of %s: %m",
 			 blocknum, RelationGetRelationName(reln));
 
 	return status;
@@ -282,7 +282,7 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_flush)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot flush block %d of %s to stable store",
+		elog(ERROR, "cannot flush block %d of %s to stable store: %m",
 			 blocknum, RelationGetRelationName(reln));
 
 	return status;
@@ -323,7 +323,7 @@ smgrblindwrt(int16 which,
 											   blkno, buffer, dofsync);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot write block %d of %s [%s] blind",
+		elog(ERROR, "cannot write block %d of %s [%s] blind: %m",
 			 blkno, relstr, dbstr);
 
 	pfree(dbstr);
@@ -352,7 +352,7 @@ smgrmarkdirty(int16 which,
 	status = (*(smgrsw[which].smgr_markdirty)) (reln, blkno);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot mark block %d of %s",
+		elog(ERROR, "cannot mark block %d of %s: %m",
 			 blkno, RelationGetRelationName(reln));
 
 	return status;
@@ -384,7 +384,7 @@ smgrblindmarkdirty(int16 which,
 													 blkno);
 
 	if (status == SM_FAIL)
-		elog(ERROR, "cannot mark block %d of %s [%s] blind",
+		elog(ERROR, "cannot mark block %d of %s [%s] blind: %m",
 			 blkno, relstr, dbstr);
 
 	pfree(dbstr);
@@ -406,7 +406,7 @@ smgrnblocks(int16 which, Relation reln)
 	int			nblocks;
 
 	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
-		elog(ERROR, "cannot count blocks for %s",
+		elog(ERROR, "cannot count blocks for %s: %m",
 			 RelationGetRelationName(reln));
 
 	return nblocks;
@@ -428,7 +428,7 @@ smgrtruncate(int16 which, Relation reln, int nblocks)
 	if (smgrsw[which].smgr_truncate)
 	{
 		if ((newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks)) < 0)
-			elog(ERROR, "cannot truncate %s to %d blocks",
+			elog(ERROR, "cannot truncate %s to %d blocks: %m",
 				 RelationGetRelationName(reln), nblocks);
 	}
 
@@ -449,7 +449,7 @@ smgrcommit()
 		if (smgrsw[i].smgr_commit)
 		{
 			if ((*(smgrsw[i].smgr_commit)) () == SM_FAIL)
-				elog(FATAL, "transaction commit failed on %s",
+				elog(FATAL, "transaction commit failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 														 Int16GetDatum(i))));
 		}
@@ -468,7 +468,7 @@ smgrabort()
 		if (smgrsw[i].smgr_abort)
 		{
 			if ((*(smgrsw[i].smgr_abort)) () == SM_FAIL)
-				elog(FATAL, "transaction abort failed on %s",
+				elog(FATAL, "transaction abort failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 														 Int16GetDatum(i))));
 		}

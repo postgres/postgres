@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.70 2000/06/02 15:57:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.71 2000/06/19 23:37:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,34 +130,41 @@ mdcreate(Relation reln)
 	char	   *path;
 
 	Assert(reln->rd_unlinked && reln->rd_fd < 0);
+
 	path = relpath(RelationGetPhysicalRelationName(reln));
 	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 
 	/*
+	 * For cataloged relations, pg_class is guaranteed to have a unique
+	 * record with the same relname by the unique index. So we are able to
+	 * reuse existent files for new cataloged relations. Currently we reuse
+	 * them in the following cases. 1. they are empty. 2. they are used
+	 * for Index relations and their size == BLCKSZ * 2.
+	 *
 	 * During bootstrap processing, we skip that check, because pg_time,
 	 * pg_variable, and pg_log get created before their .bki file entries
 	 * are processed.
-	 *
-	 * For cataloged relations,pg_class is guaranteed to have an unique
-	 * record with the same relname by the unique index. So we are able to
-	 * reuse existent files for new catloged relations. Currently we reuse
-	 * them in the following cases. 1. they are empty. 2. they are used
-	 * for Index relations and their size == BLCKSZ * 2.
 	 */
 
 	if (fd < 0)
 	{
+		int		save_errno = errno;
+
 		if (!IsBootstrapProcessingMode() &&
 			reln->rd_rel->relkind == RELKIND_UNCATALOGED)
 			return -1;
 
 		fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 		if (fd < 0)
+		{
+			/* be sure to return the error reported by create, not open */
+			errno = save_errno;
 			return -1;
+		}
 		if (!IsBootstrapProcessingMode())
 		{
 			bool		reuse = false;
-			int			len = FileSeek(fd, 0L, SEEK_END);
+			long		len = FileSeek(fd, 0L, SEEK_END);
 
 			if (len == 0)
 				reuse = true;
@@ -167,9 +174,12 @@ mdcreate(Relation reln)
 			if (!reuse)
 			{
 				FileClose(fd);
+				/* be sure to return the error reported by create */
+				errno = save_errno;
 				return -1;
 			}
 		}
+		errno = 0;
 	}
 	reln->rd_unlinked = false;
 
