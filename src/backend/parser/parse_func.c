@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.113 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.114 2001/11/12 00:00:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,7 +695,7 @@ func_get_candidates(char *funcname, int nargs)
 						   (bits16) 0x0,
 						   (AttrNumber) Anum_pg_proc_proname,
 						   (RegProcedure) F_NAMEEQ,
-						   (Datum) funcname);
+						   PointerGetDatum(funcname));
 
 	idesc = index_openr(ProcedureNameIndex);
 

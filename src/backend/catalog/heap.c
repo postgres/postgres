@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.180 2001/11/02 20:23:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.181 2001/11/12 00:00:55 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -438,7 +438,7 @@ RelnameFindRelid(const char *relname)
 							   0,
 							   (AttrNumber) Anum_pg_class_relname,
 							   (RegProcedure) F_NAMEEQ,
-							   (Datum) relname);
+							   PointerGetDatum(relname));
 
 		/*
 		 * begin the scan
@@ -1200,7 +1200,7 @@ DeleteTypeTuple(Relation rel)
 						   0,
 						   Anum_pg_attribute_atttypid,
 						   F_OIDEQ,
-						   typoid);
+						   ObjectIdGetDatum(typoid));
 
 	pg_attribute_scan = heap_beginscan(pg_attribute_desc,
 									   0,
@@ -1883,7 +1883,8 @@ RemoveAttrDefault(Relation rel)
 	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_attrdef_adrelid,
-						   F_OIDEQ, RelationGetRelid(rel));
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
 
@@ -1905,7 +1906,8 @@ RemoveRelCheck(Relation rel)
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
 
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_relcheck_rcrelid,
-						   F_OIDEQ, RelationGetRelid(rel));
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
 
@@ -1983,10 +1985,12 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 	 * constraint.
 	 */
 	ScanKeyEntryInitialize(&key[0], 0, Anum_pg_relcheck_rcrelid,
-						   F_OIDEQ, RelationGetRelid(rel));
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	ScanKeyEntryInitialize(&key[1], 0, Anum_pg_relcheck_rcname,
-						   F_NAMEEQ, PointerGetDatum(constrName));
+						   F_NAMEEQ,
+						   PointerGetDatum(constrName));
 
 	/* Begin scanning the heap */
 	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 2, key);

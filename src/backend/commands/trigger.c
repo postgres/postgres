@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.97 2001/10/25 05:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.98 2001/11/12 00:00:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 	 */
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   F_OIDEQ, RelationGetRelid(rel));
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tuple = heap_getnext(tgscan, 0)))
 	{
@@ -327,7 +328,8 @@ DropTrigger(DropTrigStmt *stmt)
 	 */
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   F_OIDEQ, RelationGetRelid(rel));
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tuple = heap_getnext(tgscan, 0)))
 	{
@@ -398,7 +400,8 @@ RelationRemoveTriggers(Relation rel)
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
-						   F_OIDEQ, RelationGetRelid(rel));
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 
@@ -450,7 +453,8 @@ RelationRemoveTriggers(Relation rel)
 	 * Also drop all constraint triggers referencing this relation
 	 */
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgconstrrelid,
-						   F_OIDEQ, RelationGetRelid(rel));
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
@@ -585,12 +589,6 @@ RelationBuildTriggers(Relation relation)
 		build->tgnargs = pg_trigger->tgnargs;
 		memcpy(build->tgattr, &(pg_trigger->tgattr),
 			   FUNC_MAX_ARGS * sizeof(int16));
-		val = (struct varlena *) fastgetattr(htup,
-											 Anum_pg_trigger_tgargs,
-											 tgrel->rd_att, &isnull);
-		if (isnull)
-			elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %s",
-				 RelationGetRelationName(relation));
 		if (build->tgnargs > 0)
 		{
 			char	   *p;
