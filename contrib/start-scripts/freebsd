@@ -1,0 +1,58 @@
+#! /bin/sh
+
+# PostgreSQL boot time startup script for FreeBSD.  Copy this file to
+# /usr/local/etc/rc.d/postgresql.
+
+# Created through merger of the Linux start script by Ryan Kirkpatrick
+# and the script in the FreeBSD ports collection.
+
+# $Header: /cvsroot/pgsql/contrib/start-scripts/freebsd,v 1.1 2001/02/10 00:13:23 petere Exp $
+
+## EDIT FROM HERE
+
+# Installation prefix
+prefix=/usr/local/pgsql
+
+# Data directory
+PGDATA="/usr/local/pgsql/data"
+
+# Who to run pg_ctl as, should be "postgres".
+PGUSER=postgres
+
+# Where to keep a log file
+PGLOG="$PGDATA/serverlog"
+
+## STOP EDITING HERE
+
+export PGDATA
+
+# The path that is to be used for the script
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# What to use to start up the postmaster
+DAEMON="$prefix/bin/pg_ctl"
+
+test -x "$DAEMON" || exit 0
+
+case $1 in
+    start)
+        su -l $PGUSER -c "$DAEMON start -s -l $PGLOG"
+	echo -n ' postgresql'
+	;;
+    stop)
+	su -l $PGUSER -c "$DAEMON stop -s -m fast"
+	;;
+    restart)
+	su -l $PGUSER -c "$DAEMON restart -s -m fast"
+	;;
+    status)
+	su -l $PGUSER -c "$DAEMON status"
+	;;
+    *)
+	# Print help
+	echo "Usage: `basename $0` {start|stop|restart|status}" 1>&2
+	exit 1
+	;;
+esac
+
+exit 0
