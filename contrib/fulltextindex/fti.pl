@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# This script substracts all substrings out of a specific column in a table
+# This script substracts all suffixes of all words in a specific column in a table
 # and generates output that can be loaded into a new table with the
 # psql '\copy' command. The new table should have the following structure:
 #
@@ -52,27 +52,28 @@ $PGRES_BAD_RESPONSE   = 5 ;
 $PGRES_NONFATAL_ERROR = 6 ;
 $PGRES_FATAL_ERROR    = 7 ;
 
+# the minimum length of word to include in the full text index
+$MIN_WORD_LENGTH = 2;
+
+# the minimum length of the substrings in the full text index
+$MIN_SUBSTRING_LENGTH = 2;
+
 $[ = 0; # make sure string offsets start at 0
 
 sub break_up {
 	my $string = pop @_;
 
+	# convert strings to lower case
+	$string = lc($string);
 	@strings = split(/\W+/, $string);
 	@subs = ();
 
 	foreach $s (@strings) {
 		$len = length($s);
-		next if ($len < 4);
-
-		$lpos = $len-1;
-		while ($lpos >= 3) {
-			$fpos = $lpos - 3;
-			while ($fpos >= 0) {
-				$sub = substr($s, $fpos, $lpos - $fpos + 1);
-				push(@subs, $sub);
-				$fpos = $fpos - 1;
-			}
-			$lpos = $lpos - 1;
+		next if ($len <= $MIN_WORD_LENGTH);
+		for ($i = 0; $i <= $len - $MIN_SUBSTRING_LENGTH; $i++) {
+			$tmp = substr($s, $i);
+			push(@subs, $tmp);
 		}
 	}
 
