@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.1.1.1.2.1 1996/10/24 07:33:52 scrappy Exp $
  *
  * Notes:
  *	XXX This needs to use exception.h to handle recovery when
@@ -860,6 +860,13 @@ SearchSysCache(struct catcache *cache,
     if ((RelationGetRelationTupleForm(relation))->relhasindex
 	&& !IsBootstrapProcessingMode())
 	{
+	    /* ----------
+	     *  Switch back to old memory context so memory not freed
+	     *  in the scan function will go away at transaction end.
+	     *  wieck - 10/18/1996
+	     * ----------
+	     */
+	    MemoryContextSwitchTo(oldcxt);
 	    Assert(cache->cc_iscanfunc);
 	    switch(cache->cc_nkeys)
 		{
@@ -868,22 +875,46 @@ SearchSysCache(struct catcache *cache,
 		case 2: ntp = cache->cc_iscanfunc(relation,v1,v2); break;
 		case 1: ntp = cache->cc_iscanfunc(relation,v1); break;
 		}
+	    /* ----------
+	     *  Back to Cache context. If we got a tuple copy it
+	     *  into our context.
+	     *  wieck - 10/18/1996
+	     * ----------
+	     */
+	    MemoryContextSwitchTo((MemoryContext)CacheCxt);
+	    if(HeapTupleIsValid(ntp)) {
+		ntp = heap_copytuple(ntp);
+	    }
 	}
     else
 	{
 	    HeapScanDesc	sd;
 	    
+	    /* ----------
+	     *  As above do the lookup in the callers memory
+	     *  context.
+	     *  wieck - 10/18/1996
+	     * ----------
+	     */
+	    MemoryContextSwitchTo(oldcxt);
+
 	    sd =  heap_beginscan(relation, 0, NowTimeQual,
 				 cache->cc_nkeys, cache->cc_skey);
 	    
 	    ntp = heap_getnext(sd, 0, &buffer);
 	    
+	    MemoryContextSwitchTo((MemoryContext)CacheCxt);
+
 	    if (HeapTupleIsValid(ntp)) {
 		CACHE1_elog(DEBUG, "SearchSysCache: found tuple");
 		ntp = heap_copytuple(ntp);
 	    }
 	    
+	    MemoryContextSwitchTo(oldcxt);
+
 	    heap_endscan(sd);
+
+	    MemoryContextSwitchTo((MemoryContext)CacheCxt);
 	}
     
     DisableCache = 0;
