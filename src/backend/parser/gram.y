@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.221 2001/02/18 18:06:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.222 2001/05/01 01:36:10 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4986,8 +4986,13 @@ extract_list:  extract_arg FROM a_expr
 				{	$$ = NIL; }
 		;
 
+/* Allow delimited string SCONST in extract_arg as an SQL extension.
+ * - thomas 2001-04-12
+ */
+
 extract_arg:  datetime						{ $$ = $1; }
-		| IDENT						{ $$ = $1; }
+		| SCONST							{ $$ = $1; }
+		| IDENT								{ $$ = $1; }
 		| TIMEZONE_HOUR						{ $$ = "tz_hour"; }
 		| TIMEZONE_MINUTE					{ $$ = "tz_minute"; }
 		;
