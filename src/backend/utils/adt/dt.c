@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.42 1997/10/17 05:36:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.43 1997/10/25 05:18:17 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3112,8 +3112,8 @@ DecodeTimeOnly(char *field[], int ftype[], int nf, int *dtype, struct tm * tm, d
 	tm->tm_hour = 0;
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
-	tm->tm_isdst = -1;			/* don't know daylight savings time status
-								 * apriori */
+	tm->tm_isdst = -1;			/* don't know daylight savings time status apriori */
+	*fsec = 0;
 
 	fmask = DTK_DATE_M;
 
