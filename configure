@@ -9360,6 +9360,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
