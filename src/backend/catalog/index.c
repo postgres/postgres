@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.215 2003/09/19 19:57:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.216 2003/09/23 01:51:09 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -76,6 +76,7 @@ static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					Oid *classOids,
 					bool primary);
 static Oid	IndexGetRelation(Oid indexId);
+static bool activate_index(Oid indexId, bool activate, bool inplace);
 
 
 static bool reindexing = false;
@@ -1689,8 +1690,23 @@ IndexGetRelation(Oid indexId)
 	return result;
 }
 
-/*
+/* ---------------------------------
+ * activate_index -- activate/deactivate the specified index.
+ *		Note that currently PostgreSQL doesn't hold the
+ *		status per index
+ * ---------------------------------
+ */
+static bool
+activate_index(Oid indexId, bool activate, bool inplace)
+{
+	if (!activate)				/* Currently does nothing */
+		return true;
+	return reindex_index(indexId, false, inplace);
+}
+
+/* --------------------------------
  * reindex_index - This routine is used to recreate an index
+ * --------------------------------
  */
 bool
 reindex_index(Oid indexId, bool force, bool inplace)
@@ -1729,26 +1745,26 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	 * the relcache can't cope with changing its relfilenode.
 	 *
 	 * In either of these cases, we are definitely processing a system index,
-	 * so we'd better be ignoring system indexes.  (These checks are just
-	 * for paranoia's sake --- upstream code should have disallowed reindex
-	 * in such cases already.)
+	 * so we'd better be ignoring system indexes.
 	 */
 	if (iRel->rd_rel->relisshared)
 	{
 		if (!IsIgnoringSystemIndexes())
-			elog(ERROR,
-				 "must be ignoring system indexes to reindex shared index %u",
-				 indexId);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				   errmsg("the target relation %u is shared", indexId)));
 		inplace = true;
 	}
+#ifndef ENABLE_REINDEX_NAILED_RELATIONS
 	if (iRel->rd_isnailed)
 	{
 		if (!IsIgnoringSystemIndexes())
-			elog(ERROR,
-				 "must be ignoring system indexes to reindex nailed index %u",
-				 indexId);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				   errmsg("the target relation %u is nailed", indexId)));
 		inplace = true;
 	}
+#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 	/* Fetch info needed for index_build */
 	indexInfo = BuildIndexInfo(iRel);
@@ -1787,12 +1803,13 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	return true;
 }
 
-#ifdef NOT_USED
 /*
+ * ----------------------------
  * activate_indexes_of_a_table
  *	activate/deactivate indexes of the specified table.
  *
  * Caller must already hold exclusive lock on the table.
+ * ----------------------------
  */
 bool
 activate_indexes_of_a_table(Relation heaprel, bool activate)
@@ -1814,11 +1831,11 @@ activate_indexes_of_a_table(Relation heaprel, bool activate)
 	}
 	return true;
 }
-#endif   /* NOT_USED */
 
-/*
- * reindex_relation - This routine is used to recreate all indexes
+/* --------------------------------
+ * reindex_relation - This routine is used to recreate indexes
  * of a relation.
+ * --------------------------------
  */
 bool
 reindex_relation(Oid relid, bool force)
@@ -1829,10 +1846,11 @@ reindex_relation(Oid relid, bool force)
 	HeapTuple	indexTuple;
 	bool		old,
 				reindexed;
-	bool		overwrite;
+	bool		deactivate_needed,
+				overwrite;
 	Relation	rel;
 
-	overwrite = false;
+	overwrite = deactivate_needed = false;
 
 	/*
 	 * Ensure to hold an exclusive lock throughout the transaction. The
@@ -1842,14 +1860,12 @@ reindex_relation(Oid relid, bool force)
 	rel = heap_open(relid, AccessExclusiveLock);
 
 	/*
-	 * Should be ignoring system indexes if we are reindexing a system table.
-	 * (This is elog not ereport because caller should have caught it.)
+	 * ignore the indexes of the target system relation while processing
+	 * reindex.
 	 */
 	if (!IsIgnoringSystemIndexes() &&
 		IsSystemRelation(rel) && !IsToastRelation(rel))
-		elog(ERROR,
-			 "must be ignoring system indexes to reindex system table %u",
-			 relid);
+		deactivate_needed = true;
 
 	/*
 	 * Shared system indexes must be overwritten because it's impossible
@@ -1857,35 +1873,49 @@ reindex_relation(Oid relid, bool force)
 	 */
 	if (rel->rd_rel->relisshared)
 	{
-		if (!IsIgnoringSystemIndexes())		/* shouldn't happen */
-			elog(ERROR,
-				 "must be ignoring system indexes to reindex shared table %u",
-				 relid);
-		overwrite = true;
+		if (IsIgnoringSystemIndexes())
+		{
+			overwrite = true;
+			deactivate_needed = true;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("the target relation %u is shared", relid)));
 	}
 
 	old = SetReindexProcessing(true);
+
+	if (deactivate_needed)
+	{
+		if (IndexesAreActive(rel))
+		{
+			if (!force)
+			{
+				SetReindexProcessing(old);
+				heap_close(rel, NoLock);
+				return false;
+			}
+			activate_indexes_of_a_table(rel, false);
+			CommandCounterIncrement();
+		}
+	}
 
 	/*
 	 * Continue to hold the lock.
 	 */
 	heap_close(rel, NoLock);
 
-	/*
-	 * Find table's indexes by looking in pg_index (not trusting indexes...)
-	 */
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0,
-						   Anum_pg_index_indrelid,
-						   F_OIDEQ,
-						   ObjectIdGetDatum(relid));
+	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
+						   F_OIDEQ, ObjectIdGetDatum(relid));
 	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
 	reindexed = false;
 	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
 
-		if (reindex_index(index->indexrelid, false, overwrite))
+		if (activate_index(index->indexrelid, true, overwrite))
 			reindexed = true;
 		else
 		{
@@ -1895,7 +1925,31 @@ reindex_relation(Oid relid, bool force)
 	}
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
+	if (reindexed)
+	{
+		/*
+		 * Ok,we could use the reindexed indexes of the target system
+		 * relation now.
+		 */
+		if (deactivate_needed)
+		{
+			if (!overwrite && relid == RelOid_pg_class)
+			{
+				/*
+				 * For pg_class, relhasindex should be set to true here in
+				 * place.
+				 */
+				setRelhasindex(relid, true, false, InvalidOid);
+				CommandCounterIncrement();
 
+				/*
+				 * However the following setRelhasindex() is needed to
+				 * keep consistency with WAL.
+				 */
+			}
+			setRelhasindex(relid, true, false, InvalidOid);
+		}
+	}
 	SetReindexProcessing(old);
 
 	return reindexed;
