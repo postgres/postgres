@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.4 1996/09/19 20:00:37 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.5 1996/10/18 19:01:16 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -16,26 +16,34 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 
 #include "postgres.h"
 
-#include "access/htup.h"
-#include "access/itup.h"
-#include "access/tupmacs.h"
-#include "access/skey.h"
-#include "access/heapam.h"
-#include "storage/ipc.h"
-#include "storage/buf.h"
-#include "storage/bufmgr.h"
-#include "access/transam.h"
-#include "storage/bufpage.h"		/* for MAXTUPLEN */
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/nodes.h" /* required for nodes/pg_list.h */
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+
+#include "storage/block.h" /* required for storage/itemptr.h */
+#include "storage/off.h" /* required for storage/itemptr.h */
 #include "storage/itemptr.h"
-#include "utils/memutils.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/rel.h"
 #include "utils/nabstime.h"
+#include "access/htup.h"
+
+#include "storage/buf.h"
+
+#include "storage/itemid.h"
+#include "storage/item.h"
+#include "storage/bufpage.h"
+
+#include "storage/fd.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "rewrite/prs2lock.h"
+#include "access/skey.h" /* required for access/strat.h */
+#include "access/strat.h"
+#include "utils/rel.h"
 
 /* this is so the sparcstation debugger works */
 
