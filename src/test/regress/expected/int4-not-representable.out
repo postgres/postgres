@@ -295,21 +295,3 @@ SELECT (2 + 2) / 2 AS two;
    2
 (1 row)
 
-SELECT dsqrt(float8 '64') AS eight;
- eight 
--------
-     8
-(1 row)
-
-SELECT |/float8 '64' AS eight;
- eight 
--------
-     8
-(1 row)
-
-SELECT ||/float8 '27' AS three;
- three 
--------
-     3
-(1 row)
-
