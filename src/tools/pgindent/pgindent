@@ -1454,12 +1454,15 @@ do
 		cat /tmp/$$
 	fi
 	cat /tmp/$$a |
+# remove tabs and retab with four spaces
+	detab -t8 -qc |
+	entab -t4 -qc |
 	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
 	sed 's;/\*---X_X;/* ---;g' |
 # workaround indent bug
 	sed 's;^static[ 	][ 	]*;static ;g' |
-	sed 's;^}[ 	][ 	]*;}	;' |
+	sed 's;^}		*;}	;' |
 # pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 # work around #else indenting next line if #ifdef defines variables at top
@@ -1473,9 +1476,6 @@ do
 		}
 		else 	print $0;
 	}' |
-# remove tabs and retab with four spaces
-	detab -t8 -qc |
-	entab -t4 -qc |
 # add space after comments that start on tab stops
 	sed 's;\([^ 	]\)\(/\*.*\*/\)$;\1	\2;' |
 # move trailing * in function return type
