@@ -27,10 +27,6 @@ fulltextindex -
 	Full text indexing using triggers
 	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
-int8 -
-	64-bit integer arithmetic for Postgres
-	by Thomas G. Lockhart <Thomas.Lockhart@jpl.nasa.gov>
-
 isbn_issn -
 	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
 	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
