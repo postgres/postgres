@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.1.1.1 1996/07/09 06:21:15 scrappy Exp $
+ * $Id: index.h,v 1.1.1.1.2.1 1996/08/19 13:34:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ extern void index_create(char *heapRelationName,
 			 AttrNumber attNums[],
 			 Oid classObjectId[], 
 			 uint16 parameterCount,
-			 Datum parameter[], 
+			 Datum *parameter, 
 			 Node *predicate);
 
 extern void index_destroy(Oid indexId);
@@ -53,7 +53,7 @@ extern void FillDummyExprContext(ExprContext *econtext, TupleTableSlot *slot,
 
 extern void index_build(Relation heapRelation, Relation indexRelation,
 	int numberOfAttributes, AttrNumber attributeNumber[],
-	uint16 parameterCount, Datum parameter[], FuncIndexInfo *funcInfo,
+	uint16 parameterCount, Datum *parameter, FuncIndexInfo *funcInfo,
 	PredInfo *predInfo);
 
 #endif /* INDEX_H */

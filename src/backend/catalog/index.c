@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.1.1.1 1996/07/09 06:21:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.1.1.1.2.1 1996/08/19 13:34:44 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -992,7 +992,7 @@ index_create(char *heapRelationName,
 	     AttrNumber attNums[],
 	     Oid classObjectId[],
 	     uint16 parameterCount,
-	     Datum parameter[],
+	     Datum *parameter,
 	     Node *predicate)
 {
     Relation		heapRelation;
@@ -1610,7 +1610,7 @@ index_build(Relation heapRelation,
 	    int numberOfAttributes,
 	    AttrNumber attributeNumber[],
 	    uint16	parameterCount,
-	    Datum	parameter[],
+	    Datum	*parameter,
 	    FuncIndexInfo *funcInfo,
 	    PredInfo *predInfo)
 {
