@@ -134,6 +134,7 @@ struct _defines
 	char	   	*old;
 	char	   	*new;
 	int		pertinent;
+	void            *used;
 	struct _defines *next;
 };
 

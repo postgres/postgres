@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.81.2.1 2003/12/18 18:55:06 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.81.2.2 2004/07/20 18:22:53 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -103,9 +103,10 @@ add_preprocessor_define(char *define)
 	else
 	{
 		defines->old = define_copy;
-		defines->new = mm_strdup("");
+		defines->new = mm_strdup("1");
 	}
 	defines->pertinent = true;
+	defines->used = NULL;
 	defines->next = pd;
 }
 

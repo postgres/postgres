@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.122.2.2 2004/02/15 13:50:02 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.122.2.3 2004/07/20 18:22:53 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,7 +550,7 @@ cppline			{space}*#(.*\\{space})+.*
 						/* How about a DEFINE? */
 						for (ptr = defines; ptr; ptr = ptr->next)
 						{
-							if (strcmp(yytext, ptr->old) == 0)
+							if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
 							{
 								struct _yy_buffer *yb;
 
@@ -559,7 +559,7 @@ cppline			{space}*#(.*\\{space})+.*
 								yb->buffer =  YY_CURRENT_BUFFER;
 								yb->lineno = yylineno;
 								yb->filename = mm_strdup(input_filename);
-								yb->next = yy_buffer;
+								ptr->used = yb->next = yy_buffer;
 
 								yy_buffer = yb;
 
@@ -648,7 +648,7 @@ cppline			{space}*#(.*\\{space})+.*
 						/* is it a define? */
 						for (ptr = defines; ptr; ptr = ptr->next)
 						{
-							if (strcmp(yytext, ptr->old) == 0)
+							if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
 							{
 								struct _yy_buffer *yb;
 
@@ -657,7 +657,7 @@ cppline			{space}*#(.*\\{space})+.*
 								yb->buffer =  YY_CURRENT_BUFFER;
 								yb->lineno = yylineno;
 								yb->filename = mm_strdup(input_filename);
-								yb->next = yy_buffer;
+								ptr->used = yb->next = yy_buffer;
 
 								yy_buffer = yb;
 
@@ -687,7 +687,7 @@ cppline			{space}*#(.*\\{space})+.*
 <C>"-"				{ return('-'); }
 <C>"("				{ return('('); }
 <C>")"				{ return(')'); }
-<C>{space}			{ ECHO; }
+<C,xskip>{space}		{ ECHO; }
 <C>\{				{ return('{'); }
 <C>\}				{ return('}'); }
 <C>\[				{ return('['); }
@@ -923,12 +923,13 @@ cppline			{space}*#(.*\\{space})+.*
 						}
 						if (ptr == NULL)
 						{
-												this = (struct _defines *) mm_alloc(sizeof(struct _defines));
+							this = (struct _defines *) mm_alloc(sizeof(struct _defines));
 
-												/* initial definition */
-												this->old = old;
-												this->new = mm_strdup(literalbuf);
+							/* initial definition */
+							this->old = old;
+							this->new = mm_strdup(literalbuf);
 							this->next = defines;
+							this->used = NULL;
 							defines = this;
 						}
 
@@ -953,7 +954,15 @@ cppline			{space}*#(.*\\{space})+.*
 				  		{
 							struct _yy_buffer *yb = yy_buffer;
 							int i;
+							struct _defines *ptr;
 
+							for (ptr = defines; ptr; ptr = ptr->next)
+								if (ptr->used == yy_buffer)
+							        {
+									ptr->used = NULL;
+							                break;
+							        }
+							
 							if (yyin != NULL)
 								fclose(yyin);
 
