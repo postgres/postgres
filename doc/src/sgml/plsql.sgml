@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.48 2001/11/15 23:32:39 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.49 2001/11/16 00:40:11 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1184,9 +1184,9 @@ END IF;
 <programlisting>
 IF number = 0 THEN
     result := ''zero'';
-ELSIF number &lt; 0 THEN
-    result := ''positive'';
 ELSIF number &gt; 0 THEN 
+    result := ''positive'';
+ELSIF number &lt; 0 THEN
     result := ''negative'';
 ELSE
     -- hmm, the only other possibility is that number IS NULL
