@@ -6,8 +6,6 @@
 #define PG_VERSION "7.5"
 #define PG_VERSION_STR "7.5devel (win32)"
 
-#define SYSCONFDIR ""
-
 #define DEF_PGPORT 5432
 #define DEF_PGPORT_STR "5432"
 
