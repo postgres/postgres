@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.47 2001/01/13 18:34:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.48 2001/01/26 22:04:22 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -335,8 +335,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.47 2001/01/13 18:34:51 pe
    </para>
 
    <para>
-    The numeric types have a full set of corresponding arithmetic operators and
-    functions. Refer to <xref linkend="functions"> for more information.
+    The syntax of constants for the numeric types is described in
+    <xref linkend="sql-syntax-constants">.  The numeric types have a
+    full set of corresponding arithmetic operators and
+    functions. Refer to <xref linkend="functions"> for more
+    information.
    </para>
 
    <para>
@@ -362,7 +365,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      <programlisting>
 CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
 CREATE TABLE <replaceable class="parameter">tablename</replaceable>
-    (<replaceable class="parameter">colname</replaceable> INT4 DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq');
+    (<replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq');
 CREATE UNIQUE INDEX <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_key on <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable>);
      </programlisting>
 
@@ -394,20 +397,29 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    <title>Monetary Type</title>
 
    <note>
-    <title>Obsolete Type</title>
+    <title>Deprecated</title>
     <para>
-     The <type>money</type> is now deprecated. Use <type>numeric</type>
-     or <type>decimal</type> instead. The money type may become a
-     locale-aware layer over the numeric type in a future release.
+     The <type>money</type> is now deprecated. Use
+     <type>numeric</type> or <type>decimal</type> instead, in
+     combination with the <function>to_char</function> function.  The
+     money type may become a locale-aware layer over the
+     <type>numeric</type> type in a future release.
     </para>
    </note>
 
    <para>
-    The <type>money</type> type supports US-style currency with 
-    fixed decimal point representation.
-    If <productname>Postgres</productname> is compiled with USE_LOCALE 
-    then the money type should use the monetary conventions defined for
-    <citetitle>locale(7)</citetitle>.
+    The <type>money</type> type stores U.S.-style currency with fixed
+    decimal point representation.  If
+    <productname>Postgres</productname> is compiled with locale
+    support then the <type>money</type> type uses locale-specific
+    output formatting.
+   </para>
+
+   <para>
+    Input is accepted in a variety of formats, including integer and
+    floating point literals, as well as <quote>typical</quote>
+    currency formatting, such as <literal>'$1,000.00'</literal>.
+    Output is in the latter form.
    </para>
 
    <para>
@@ -434,13 +446,8 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      </tgroup>
     </table>
    </para>
-
-   <para>
-    <type>numeric</type>
-    will replace the money type, and should be preferred.
-   </para>
-
   </sect1>
+
 
   <sect1 id="datatype-character">
    <title>Character Types</title>
@@ -453,6 +460,12 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     which unlike <type>character varying</type>
     does not require an explicit declared upper
     limit on the size of the field.
+   </para>
+
+   <para>
+    Refer to <xref linkend="sql-syntax-strings"> for information about
+    the syntax of string literals, and to <xref linkend="functions">
+    for information about available operators and functions.
    </para>
 
    <para>
@@ -661,8 +674,14 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     </para>
 
     <para>
-     Remember that any date or time input needs to be enclosed into single quotes,
-     like text strings.
+     Remember that any date or time input needs to be enclosed into
+     single quotes, like text strings.  Refer to <xref
+     linkend="sql-syntax-constants-generic"> for more information.
+     SQL requires the following syntax
+<synopsis>
+<replaceable>type</replaceable> '<replaceable>value</replaceable>'
+</synopsis>
+     but <productname>Postgres</productname> is more flexible.
     </para>
 
     <sect3>
@@ -1393,20 +1412,20 @@ January 8 04:05:06 1999 PST
       <thead>
        <row>
 	<entry>State</entry>
-	<entry>Output</entry>
 	<entry>Input</entry>
+	<entry>Output</entry>
        </row>
       </thead>
       <tbody>
        <row>
 	<entry>True</entry>
-	<entry>'t'</entry>
 	<entry>TRUE, 't', 'true', 'y', 'yes', '1'</entry>
+	<entry><literal>t</literal></entry>
        </row>
        <row>
 	<entry>False</entry>
-	<entry>'f'</entry>
 	<entry>FALSE, 'f', 'false', 'n', 'no', '0'</entry>
+	<entry><literal>f</literal></entry>
        </row>
       </tbody>
      </tgroup>
