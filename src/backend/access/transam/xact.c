@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.176 2004/08/01 20:57:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.177 2004/08/03 15:57:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2520,22 +2520,19 @@ RollbackToSavepoint(List *options)
 
 	Assert(PointerIsValid(name));
 
-	target = CurrentTransactionState;
-
-	while (target != NULL)
+	for (target = s; PointerIsValid(target); target = target->parent)
 	{
 		if (PointerIsValid(target->name) && strcmp(target->name, name) == 0)
 			break;
-		target = target->parent;
-
-		/* we don't cross savepoint level boundaries */
-		if (target->savepointLevel != s->savepointLevel)
-			ereport(ERROR,
-					(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
-					 errmsg("no such savepoint")));
 	}
 
 	if (!PointerIsValid(target))
+		ereport(ERROR,
+				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
+				 errmsg("no such savepoint")));
+
+	/* disallow crossing savepoint level boundaries */
+	if (target->savepointLevel != s->savepointLevel)
 		ereport(ERROR,
 				(errcode(ERRCODE_S_E_INVALID_SPECIFICATION),
 				 errmsg("no such savepoint")));
