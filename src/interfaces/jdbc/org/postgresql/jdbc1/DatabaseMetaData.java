@@ -1489,7 +1489,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[0] = new Field(connection, "PROCEDURE_CAT",   iVarcharOid, 32);
     f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, 32);
     f[2] = new Field(connection, "PROCEDURE_NAME",  iVarcharOid, 32);
-    f[3] = f[4] = f[5] = null;	// reserved, must be null for now
+    f[3] = f[4] = f[5] = new Field(connection,"reserved",iVarcharOid,32);	// null;	// reserved, must be null for now
     f[6] = new Field(connection, "REMARKS",	   iVarcharOid, 8192);
     f[7] = new Field(connection, "PROCEDURE_TYPE", iInt2Oid,	2);
     
