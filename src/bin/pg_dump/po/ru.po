@@ -1,10 +1,10 @@
 # ru.po
 # PG_DUMP Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.9 2004/05/29 06:26:11 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.10 2004/08/04 21:34:13 tgl Exp $
 #
 # ChangeLog:
-#   - April 6 - May 28, 2004: Updates for 7.5.x; <mokhov@cs.concordia.ca>
+#   - April 6 - May 28, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - October 5, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -13,7 +13,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5.x\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-05-28 01:37-0300\n"
 "PO-Revision-Date: 2004-05-28 01:42-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.215 2004/08/03 20:32:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.216 2004/08/04 21:33:40 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2408,7 +2408,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 
     <note>
      <para>
-      Prior to <productname>PostgreSQL</productname> 7.5, casting an
+      Prior to <productname>PostgreSQL</productname> 8.0, casting an
       integer to <type>bit(n)</> would copy the leftmost <literal>n</>
       bits of the integer, whereas now it copies the rightmost <literal>n</>
       bits.  Also, casting an integer to a bit string width wider than

@@ -4,13 +4,13 @@
  *	  definition of the system "type casts" relation (pg_cast)
  *	  along with the relation's initial contents.
  *
- * As of Postgres 7.5, pg_cast describes not only type coercion functions
+ * As of Postgres 8.0, pg_cast describes not only type coercion functions
  * but also length coercion functions.
  *
  *
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.12 2004/06/16 01:26:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.13 2004/08/04 21:34:23 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

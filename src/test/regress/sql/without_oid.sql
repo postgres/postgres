@@ -6,7 +6,7 @@
 -- This test tries to verify that WITHOUT OIDS actually saves space.
 -- On machines where MAXALIGN is 8, WITHOUT OIDS may or may not save any
 -- space, depending on the size of the tuple header + null bitmap.
--- As of 7.5 we need a 9-bit null bitmap to force the difference to appear.
+-- As of 8.0 we need a 9-bit null bitmap to force the difference to appear.
 --
 CREATE TABLE wi (i INT,
                  n1 int, n2 int, n3 int, n4 int,

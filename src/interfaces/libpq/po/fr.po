@@ -1,6 +1,6 @@
 # French message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.7 2004/01/13 18:58:41 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.8 2004/08/04 21:34:26 tgl Exp $
 #
 # Use these quotes: «%s»
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -9,7 +9,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-01-13 01:24-0400\n"
 "PO-Revision-Date: 2004-01-13 16:26+0100\n"
 "Last-Translator: Jean-Michel Pouré <jm@poure.com>\n"

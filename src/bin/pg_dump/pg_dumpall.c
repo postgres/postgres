@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.45 2004/07/19 21:39:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.46 2004/08/04 21:34:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 		/* Dump all users excluding the initdb user */
 		dumpUsers(conn, false);
 		dumpGroups(conn);
-		if (server_version >= 70500)
+		if (server_version >= 80000)
 			dumpTablespaces(conn);
 		if (!globals_only)
 			dumpCreateDB(conn);
@@ -571,7 +571,7 @@ dumpCreateDB(PGconn *conn)
 
 	printf("--\n-- Database creation\n--\n\n");
 
-	if (server_version >= 70500)
+	if (server_version >= 80000)
 		res = executeQuery(conn,
 						   "SELECT datname, "
 						   "coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), "

@@ -642,7 +642,7 @@ WHERE p1.amopopr = p2.oid AND
     (p2.oprrest = 0 OR p2.oprjoin = 0);
 
 -- Check that operator input types match the opclass
--- For 7.5, we require that oprleft match opcintype (possibly by coercion).
+-- For 8.0, we require that oprleft match opcintype (possibly by coercion).
 -- When amopsubtype is zero (default), oprright must equal oprleft;
 -- when amopsubtype is not zero, oprright must equal amopsubtype.
 

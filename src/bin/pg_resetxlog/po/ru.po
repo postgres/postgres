@@ -1,10 +1,10 @@
 # ru.po
 # PG_RESETXLOG Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.7 2004/04/15 08:04:05 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/po/ru.po,v 1.8 2004/08/04 21:34:14 tgl Exp $
 #
 # ChangeLog:
-#   - April 6, 2004: Updates for 7.5.*; <mokhov@cs.concordia.ca>
+#   - April 6, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - August 23, 2003: Updates for 7.4.*; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Complete post-7.3beta2 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post-7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -12,7 +12,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5.x\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-04-06 11:05-0300\n"
 "PO-Revision-Date: 2004-04-06 12:17-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.56 2004/03/11 02:11:13 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.57 2004/08/04 21:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,10 +34,10 @@ oidin_subr(const char *funcname, const char *s, char **endloc)
 	Oid			result;
 
 	/*
-	 * In releases prior to 7.5, we accepted an empty string as valid
-	 * input (yielding an OID of 0). In 7.5, we accept empty strings,
+	 * In releases prior to 8.0, we accepted an empty string as valid
+	 * input (yielding an OID of 0). In 8.0, we accept empty strings,
 	 * but emit a warning noting that the feature is deprecated. In
-	 * 7.6+, the warning should be replaced by an error.
+	 * 8.1+, the warning should be replaced by an error.
 	 */
 	if (*s == '\0')
 		ereport(WARNING,

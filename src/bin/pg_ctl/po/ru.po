@@ -1,14 +1,14 @@
 # ru.po
 # PG_CTL Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_ctl/po/ru.po,v 1.1 2004/06/10 02:59:22 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_ctl/po/ru.po,v 1.2 2004/08/04 21:34:09 tgl Exp $
 #
 # ChangeLog:
-#   - May 29, 2004: Initial translation for 7.5; Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - May 29, 2004: Initial translation for 8.0; Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5.x\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-05-29 20:53-0400\n"
 "PO-Revision-Date: 2004-05-29 21:57-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"

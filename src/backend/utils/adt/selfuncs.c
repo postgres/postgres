@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.161 2004/06/11 01:09:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.162 2004/08/04 21:34:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4294,7 +4294,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	 * from pg_statistic, estimate the index correlation as C for a single-
 	 * column index, or C * 0.75 for multiple columns.  (The idea here is
 	 * that multiple columns dilute the importance of the first column's
-	 * ordering, but don't negate it entirely.  Before 7.5 we divided the
+	 * ordering, but don't negate it entirely.  Before 8.0 we divided the
 	 * correlation by the number of columns, but that seems too strong.)
 	 */
 	if (index->indexkeys[0] != 0)

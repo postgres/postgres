@@ -16,7 +16,7 @@ is an introduction to installing, configuring, using and
 maintaining the database with the tsearch2 module activated.</p>
 <p>Please, note, tsearch2 module is fully incompatible with old
 tsearch, which is deprecated in 7.4 and will be obsoleted in
-7.5.</p>
+8.0.</p>
 <h3>USING TSEARCH2 AND POSTGRESQL FOR A WEB BASED SEARCH
 ENGINE</h3>
 <p>This documentation is provided as a short guide on how to
@@ -119,7 +119,7 @@ fashion. Without this patch, you must follow the instructions later
 in this document for backup and restore.</p>
 <p>This patch is only needed for tsearch2 in PostgreSQL versions
 7.3.x and 7.4.x. The patch has been applied to the sources for
-7.5.x.</p>
+8.0.x.</p>
 <p>When you have your source tree for tsearch2 ready, you can
 continue with the regular building and installation process</p>
 
@@ -155,7 +155,7 @@ be much easier.</p>
 <p>NOTE: the previous version of tsearch found in the
 contrib/tsearch directory is depricated. Although it is still
 available and included within PostgreSQL version 7.4. It will be
-removed in version 7.5.</p>
+removed in version 8.0.</p>
 <h3>ADDING TSEARCH2 FUNCTIONALITY TO A DATABASE</h3>
 <p>We should create a database to use as an example for the
 remainder of this file. We can call the database "ftstest". You can
@@ -1063,7 +1063,7 @@ archive, and restoring with pg_restore. In theory there should be
 no problems with any format after the patch is applied.</p>
 
 <p>This restoration procedure should never be an issue with the
-patch applied to version 7.5 of PostgreSQL. Only versions 7.3 and
+patch applied to version 8.0 of PostgreSQL. Only versions 7.3 and
 7.4 are affected. You can avoid any troubles by applying the patch
 prior to installation, or running the SQL script provided to live
 database before backup and restoring is done.</p>

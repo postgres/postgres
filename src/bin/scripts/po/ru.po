@@ -1,19 +1,19 @@
 # ru.po
 # PGSCRIPTS Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.5 2004/05/29 06:26:14 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.6 2004/08/04 21:34:20 tgl Exp $
 #
 # To the new translator:
 #   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
 #   PG Glossary: <http://www.sai.msu.su/~megera/oddmuse/index.cgi?Pgsql_Glossary>
 #
 # ChangeLog:
-#   - May 28, 2004: Updates for 7.5.*; <mokhov@cs.concordia.ca>
+#   - May 28, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - August 25, 2003: Complete Initial Translation for 7.4.*; Serguei A. Mokhov, <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5.x\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-03-27 14:12-0400\n"
 "PO-Revision-Date: 2003-08-25 12:26-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"

@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.14 2004/04/01 21:28:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.15 2004/08/04 21:34:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ per_MultiFuncCall(PG_FUNCTION_ARGS)
 	 * at the beginning of each call, the Slot will hold a dangling
 	 * pointer to an already-recycled tuple.  We clear it out here.
 	 *
-	 * Note: use of retval->slot is obsolete as of 7.5, and we expect that
+	 * Note: use of retval->slot is obsolete as of 8.0, and we expect that
 	 * it will always be NULL.  This is just here for backwards compatibility
 	 * in case someone creates a slot anyway.
 	 */

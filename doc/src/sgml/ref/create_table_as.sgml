@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.21 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.22 2004/08/04 21:33:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -141,14 +141,14 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
   </para>
 
   <para>
-   Prior to <productname>PostgreSQL</productname> 7.5, <command>CREATE
+   Prior to <productname>PostgreSQL</productname> 8.0, <command>CREATE
    TABLE AS</command> always included OIDs in the table it
    produced. Furthermore, these OIDs were newly generated: they were
    distinct from the OIDs of any of the rows in the source tables of
    the <command>SELECT</command> or <command>EXECUTE</command>
    statement. Therefore, if <command>CREATE TABLE AS</command> was
    frequently executed, the OID counter would be rapidly
-   incremented. As of <productname>PostgresSQL</productname> 7.5,
+   incremented. As of <productname>PostgresSQL</productname> 8.0,
    the <command>CREATE TABLE AS</command> command allows the user to
    explicitely specify whether OIDs should be included. If the
    presence of OIDs is not explicitely specified,

@@ -1,12 +1,12 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.276 2004/08/03 01:14:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.277 2004/08/04 21:33:40 tgl Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
  <sect1 id="release-7-5">
-  <title>Release 7.5</title>
+  <title>Release 8.0</title>
 
   <note>
    <title>Release date</title>
@@ -153,7 +153,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.276 2004/08/03 01:14:57 momjian
   </sect2>
 
   <sect2>
-   <title>Migration to version 7.5</title>
+   <title>Migration to version 8.0</title>
                                       
    <para>
     A dump/restore using <application>pg_dump</application> is
@@ -295,7 +295,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.276 2004/08/03 01:14:57 momjian
 
    <para>
     Below you will find a detailed account of the changes between
-    release 7.5 and the previous major release.
+    release 8.0 and the previous major release.
    </para>
 
   <sect3>
@@ -1011,7 +1011,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.276 2004/08/03 01:14:57 momjian
 
     <listitem>
      <para>
-      Warn of empty string being passes to oid/float4/float8 data types; 7.6
+      Warn of empty string being passed to oid/float4/float8 data types; 8.1
       will throw an error instead (Neil)
      </para>
     </listitem>
@@ -3811,7 +3811,7 @@ DROP SCHEMA information_schema CASCADE;
 turns out to have disabled rule-related permissions checks in many
 not-so-corner cases.  This would for example allow users to insert into views
 they weren't supposed to have permission to insert into.  We have therefore
-reverted the 7.3.3 patch.  The original bug will be fixed in 7.5.
+reverted the 7.3.3 patch.  The original bug will be fixed in 8.0.
 </para></listitem>
 <listitem><para>Repair incorrect order of operations in
 GetNewTransactionId()</para>

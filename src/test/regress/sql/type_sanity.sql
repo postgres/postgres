@@ -50,7 +50,7 @@ WHERE (p1.typtype = 'c' AND p1.typrelid = 0) OR
     (p1.typtype != 'c' AND p1.typrelid != 0);
 
 -- Look for basic types that don't have an array type.
--- NOTE: as of 7.5, this check finds smgr and unknown.
+-- NOTE: as of 8.0, this check finds smgr and unknown.
 
 SELECT p1.oid, p1.typname
 FROM pg_type as p1
@@ -78,7 +78,7 @@ WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
       p2.proargtypes[1] = 'oid'::regtype AND
       p2.proargtypes[2] = 'int4'::regtype));
 
--- As of 7.5, this check finds refcursor, which is borrowing
+-- As of 8.0, this check finds refcursor, which is borrowing
 -- other types' I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
@@ -96,7 +96,7 @@ WHERE p1.typinput = p2.oid AND p1.typtype in ('b', 'p') AND
 
 -- Check for bogus typoutput routines
 
--- As of 7.5, this check finds refcursor, which is borrowing
+-- As of 8.0, this check finds refcursor, which is borrowing
 -- other types' I/O routines
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2

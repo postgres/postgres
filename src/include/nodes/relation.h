@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.96 2004/06/05 01:55:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.97 2004/08/04 21:34:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,7 +355,7 @@ typedef struct Path
  * derived indexscannable conditions in 'indexquals'.
  *
  * Both 'indexclauses' and 'indexquals' are lists of sublists of RestrictInfo
- * nodes.  (Before 7.5, we kept bare operator expressions in these lists, but
+ * nodes.  (Before 8.0, we kept bare operator expressions in these lists, but
  * storing RestrictInfos is more efficient since selectivities can be cached.)
  *
  * 'isjoininner' is TRUE if the path is a nestloop inner scan (that is,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.107 2004/06/01 03:03:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.108 2004/08/04 21:33:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,7 +286,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		int			costcmp;
 
 		/*
-		 * As of Postgres 7.5, we use fuzzy cost comparison to avoid wasting
+		 * As of Postgres 8.0, we use fuzzy cost comparison to avoid wasting
 		 * cycles keeping paths that are really not significantly different
 		 * in cost.
 		 */

@@ -3,7 +3,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-05-07 13:08-0300\n"
 "PO-Revision-Date: 2004-05-20 18:34+0100\n"
 "Last-Translator: frank_lupo <frank_lupo@email.it>\n"

@@ -1,10 +1,10 @@
 # ru.po
 # LIBPQ Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.10 2004/04/05 09:13:43 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/ru.po,v 1.11 2004/08/04 21:34:26 tgl Exp $
 #
 # ChangeLog:
-#   - March 27, 2004: Update for 7.5.*; <mokhov@cs.concordia.ca>
+#   - March 27, 2004: Update for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - October 5, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
 #   - Januray 2, 2002: Completed SSL transaltion, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3beta2 fuzzy translation fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -13,7 +13,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5.x\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-03-27 14:12-0400\n"
 "PO-Revision-Date: 2003-10-05 11:35-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"

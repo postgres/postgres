@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.7 2004/07/01 00:51:29 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.8 2004/08/04 21:34:04 tgl Exp $
 
 Notes about memory allocation redesign
 --------------------------------------
@@ -66,7 +66,7 @@ return NULL, and it is not necessary or useful to test for such a result.
 * palloc(0) is explicitly a valid operation.  It does not return a NULL
 pointer, but a valid chunk of which no bytes may be used.  (However, the
 chunk might later be repalloc'd larger; it can also be pfree'd without
-error.)  (Note: this behavior is new in Postgres 7.5; earlier versions
+error.)  (Note: this behavior is new in Postgres 8.0; earlier versions
 disallowed palloc(0).  It seems more consistent to allow it, however.)
 Similarly, repalloc allows realloc'ing to zero size.
 

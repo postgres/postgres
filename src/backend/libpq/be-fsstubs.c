@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.71 2004/07/28 14:23:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.72 2004/08/04 21:33:49 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -27,7 +27,7 @@
  *	  existing documented semantics of LO FDs: they're only good within a
  *	  transaction.
  *
- *	  As of PostgreSQL 7.5, much of the angst expressed above is no longer
+ *	  As of PostgreSQL 8.0, much of the angst expressed above is no longer
  *	  relevant, and in fact it'd be pretty easy to allow LO FDs to stay
  *	  open across transactions.  However backwards compatibility suggests
  *	  that we should stick to the status quo.

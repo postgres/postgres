@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.5 2004/07/11 13:29:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.6 2004/08/04 21:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -736,7 +736,7 @@ other			.
 					/*
 					 * The variable value is just emitted without any
 					 * further examination.  This is consistent with the
-					 * pre-7.5 code behavior, if not with the way that
+					 * pre-8.0 code behavior, if not with the way that
 					 * variables are handled outside backslash commands.
 					 */
 					if (value)
@@ -837,7 +837,7 @@ other			.
 					 * unquoted backslash is end of command or next command,
 					 * do not eat
 					 *
-					 * (this was not the behavior pre-7.5, but it seems
+					 * (this was not the behavior pre-8.0, but it seems
 					 * consistent)
 					 */
 					yyless(0);

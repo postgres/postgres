@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.382 2004/08/04 17:13:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.383 2004/08/04 21:34:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1185,7 +1185,7 @@ dumpDatabase(Archive *AH)
 	selectSourceSchema("pg_catalog");
 
 	/* Get the database owner and parameters from pg_database */
-	if (g_fout->remoteVersion >= 70500)
+	if (g_fout->remoteVersion >= 80000)
 	{
 		appendPQExpBuffer(dbQry, "SELECT tableoid, oid, "
 						  "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
@@ -1525,7 +1525,7 @@ getNamespaces(int *numNamespaces)
 	 * we fetch all namespaces including system ones, so that every object
 	 * we read in can be linked to a containing namespace.
 	 */
-	if (g_fout->remoteVersion >= 70500)
+	if (g_fout->remoteVersion >= 80000)
 	{
 		appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
 		"(select usename from pg_user where nspowner = usesysid) as usename, "
@@ -2372,7 +2372,7 @@ getTables(int *numTables)
 	 * columns, etc.
 	 */
 
-	if (g_fout->remoteVersion >= 70500)
+	if (g_fout->remoteVersion >= 80000)
 	{
 		/*
 		 * Left join to pick up dependency info linking sequences to their
@@ -2726,7 +2726,7 @@ getIndexes(TableInfo tblinfo[], int numTables)
 		 * one internal dependency.
 		 */
 		resetPQExpBuffer(query);
-		if (g_fout->remoteVersion >= 70500)
+		if (g_fout->remoteVersion >= 80000)
 		{
 			appendPQExpBuffer(query,
 							  "SELECT t.tableoid, t.oid, "
@@ -4522,7 +4522,7 @@ dumpBaseType(Archive *fout, TypeInfo *tinfo)
 	selectSourceSchema(tinfo->dobj.namespace->dobj.name);
 
 	/* Fetch type-specific details */
-	if (fout->remoteVersion >= 70500)
+	if (fout->remoteVersion >= 80000)
 	{
 		appendPQExpBuffer(query, "SELECT typlen, "
 						  "typinput, typoutput, typreceive, typsend, "
@@ -5129,7 +5129,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	selectSourceSchema(finfo->dobj.namespace->dobj.name);
 
 	/* Fetch function-specific details */
-	if (g_fout->remoteVersion >= 70500)
+	if (g_fout->remoteVersion >= 80000)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "

@@ -1,17 +1,17 @@
 # ru.po
 # PG_CONTROLDATA Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/ru.po,v 1.7 2004/04/15 08:04:05 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/ru.po,v 1.8 2004/08/04 21:34:08 tgl Exp $
 #
 # ChangeLog:
-#   - March 27, 2004: Update for 7.5.*; <mokhov@cs.concordia.ca>
+#   - March 27, 2004: Update for 8.0.*; <mokhov@cs.concordia.ca>
 #   - July 24 - August 23, 2003: Update for 7.4.*; <mokhov@cs.concordia.ca>
 #   - September 7, 2002: Complete post 7.3beta1 Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - August 31, 2002: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5.x\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-03-27 14:11-0400\n"
 "PO-Revision-Date: 2004-03-27 14:05-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"

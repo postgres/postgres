@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.51 2004/07/31 20:55:45 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.52 2004/08/04 21:34:29 tgl Exp $
  *
  *********************************************************************
  */
@@ -272,7 +272,7 @@ static PLyProcedure *PLy_last_procedure = NULL;
  * interpreter returns to the calling function, we re-throw the error (even if
  * Python thinks it trapped the error and doesn't return NULL).  Eventually
  * this ought to be improved to let Python code really truly trap the error,
- * but that's more of a change from the pre-7.5 semantics than I have time for
+ * but that's more of a change from the pre-8.0 semantics than I have time for
  * now --- it will only be possible if the callback query is executed inside a
  * subtransaction.
  */

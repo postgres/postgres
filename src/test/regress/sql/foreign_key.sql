@@ -750,7 +750,7 @@ FOREIGN KEY (x1) REFERENCES pktable(id3);
 ALTER TABLE fktable ADD CONSTRAINT fk_4_2
 FOREIGN KEY (x4) REFERENCES pktable(id2);
 
--- int2 is part of int4 opclass as of 7.5
+-- int2 is part of int4 opclass as of 8.0
 ALTER TABLE fktable ADD CONSTRAINT fk_5_1
 FOREIGN KEY (x5) REFERENCES pktable(id1);
 

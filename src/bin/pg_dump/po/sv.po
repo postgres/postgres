@@ -2,13 +2,13 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/sv.po,v 1.15 2004/06/24 22:17:14 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/sv.po,v 1.16 2004/08/04 21:34:13 tgl Exp $
 #
 # Use these quotes: "%s"
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.5\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-06-25 00:14+0200\n"
 "PO-Revision-Date: 2004-06-25 00:16+0200\n"

@@ -1,6 +1,6 @@
 ==========================================================================
 This module is deprecated in 7.4 version of PostgreSQL and will be
-obsoleted in 7.5. Please, use new tsearch2 contrib module.
+obsoleted in 8.0. Please, use new tsearch2 contrib module.
 ==========================================================================
 
 Tsearch contrib module contains implementation of new data type txtidx - 
