@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.106 1999/10/03 23:55:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.107 1999/10/05 18:14:31 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -365,20 +365,29 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %left		UNION INTERSECT EXCEPT
 %%
 
-stmtblock:  stmtmulti opt_semi
+/*
+ *	Handle comment-only lines, and ;; SELECT * FROM pg_class ;;;
+ *	psql already handles such cases, but other interfaces don't.
+ *	bjm 1999/10/05
+ */
+stmtblock:  stmtmulti
 				{ parsetree = $1; }
 		;
 
 stmtmulti:  stmtmulti ';' stmt
-				{ $$ = lappend($1, $3); }
+				{ if ($3 != (Node *)NIL)
+					$$ = lappend($1, $3);
+				  else
+					$$ = $1;
+				}
 		| stmt
-				{ $$ = lcons($1,NIL); }
+				{ if ($1 != (Node *)NIL)
+					$$ = lcons($1,NIL);
+				  else
+					$$ = (Node *)NIL;
+				}
 		;
 
-opt_semi:	';'
-		|	/*EMPTY*/
-		;
-		
 stmt :	  AddAttrStmt
 		| AlterUserStmt
 		| ClosePortalStmt
@@ -423,6 +432,8 @@ stmt :	  AddAttrStmt
 		| VariableShowStmt
 		| VariableResetStmt
 		| ConstraintsSetStmt
+		|	/*EMPTY*/
+				{ $$ = (Node *)NIL; }
 		;
 
 /*****************************************************************************
