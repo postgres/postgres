@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 10 11:00:16 EDT 2004
+Last updated:		Tue Aug 10 13:30:30 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -271,12 +271,15 @@ Commands
   The use of C-style backslashes (.e.g. \n, \r) in quoted strings is not
   SQL-spec compliant, so allow such handling to be disabled.
 
-* Allow DELETE to handle table aliases for self-joins
+* Allow an alias to be provided for the target table in UPDATE/DELETE
 
-  There is no way to create a table alias for the deleted table for use
-  in the DELETE WHERE clause.  The agreed approach is to allow a USING 
-  clause to specify additional tables.  UPDATE already has an optional 
-  FROM clause for this purpose.
+  This is not SQL-spec but many DBMSs allow it.
+
+* Allow additional tables to be specified in DELETE for joins
+
+  UPDATE already allows this (UPDATE...FROM) but we need similar
+  functionality in DELETE.  It's been agreed that the keyword should 
+  be USING, to avoid anything as confusing as DELETE FROM a FROM b.
 
 * Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
 * Allow REINDEX to rebuild all database indexes, remove /contrib/reindex
