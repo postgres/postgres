@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.82 2003/05/12 23:08:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.83 2003/06/16 18:56:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1066,6 +1066,11 @@ time_interval(PG_FUNCTION_ARGS)
 
 /* interval_time()
  * Convert interval to time data type.
+ *
+ * This is defined as producing the fractional-day portion of the interval.
+ * Therefore, we can just ignore the months field.  It is not real clear
+ * what to do with negative intervals, but we choose to subtract the floor,
+ * so that, say, '-2 hours' becomes '22:00:00'.
  */
 Datum
 interval_time(PG_FUNCTION_ARGS)
@@ -1074,15 +1079,23 @@ interval_time(PG_FUNCTION_ARGS)
 	TimeADT		result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = span->time;
-	if ((result >= INT64CONST(86400000000))
-		|| (result <= INT64CONST(-86400000000)))
-		result -= (result / INT64CONST(1000000) * INT64CONST(1000000));
-#else
-	Interval	span1;
+	int64		days;
 
 	result = span->time;
-	TMODULO(result, span1.time, 86400e0);
+	if (result >= INT64CONST(86400000000))
+	{
+		days = result / INT64CONST(86400000000);
+		result -= days * INT64CONST(86400000000);
+	}
+	else if (result < 0)
+	{
+		days = (-result + INT64CONST(86400000000-1)) / INT64CONST(86400000000);
+		result += days * INT64CONST(86400000000);
+	}
+#else
+	result = span->time;
+	if (result >= 86400e0 || result < 0)
+		result -= floor(result / 86400e0) * 86400e0;
 #endif
 
 	PG_RETURN_TIMEADT(result);
