@@ -2,6 +2,8 @@
 
 #include "extern.h"
 
+struct ECPGstruct_member struct_no_indicator = {"no_indicator", &ecpg_no_indicator, NULL};
+
 /* malloc + error check */
 void *
 mm_alloc(size_t size)
@@ -374,15 +376,21 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz, 
 	sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);
 	prefix = pbuf;
 
-	sprintf(ind_pbuf, "%s%s.", ind_prefix ? ind_prefix : "", ind_name);
-	ind_prefix = ind_pbuf;
-
-	if (ind_typ != NULL)
+	if (ind_typ == &ecpg_no_indicator)
+	{
+		ind_p = &struct_no_indicator;
+	}
+	else if (ind_typ != NULL)
+	{
+		sprintf(ind_pbuf, "%s%s.", ind_prefix ? ind_prefix : "", ind_name);
+		ind_prefix = ind_pbuf;
 		ind_p = ind_typ->u.members;
+	}
+	
 	for (p = typ->u.members; p; p = p->next)
 	{
 		ECPGdump_a_type(o, p->name, p->typ, (ind_p != NULL) ? ind_p->name : NULL, (ind_p != NULL) ? ind_p->typ : NULL, prefix, ind_prefix);
-		if (ind_p != NULL)
+		if (ind_p != NULL && ind_p != &struct_no_indicator)
 			ind_p = ind_p->next;
 	}
 }
