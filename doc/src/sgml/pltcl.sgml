@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.29 2004/01/24 23:06:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.30 2004/05/16 23:22:07 neilc Exp $
 -->
 
  <chapter id="pltcl">
@@ -77,9 +77,10 @@ $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.29 2004/01/24 23:06:29 tgl Exp $
      To create a function in the <application>PL/Tcl</> language, use the standard syntax:
 
 <programlisting>
-CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS '
+CREATE FUNCTION <replaceable>funcname</replaceable>
+(<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
     # PL/Tcl function body
-' LANGUAGE pltcl;
+$$ LANGUAGE pltcl;
 </programlisting>
 
      <application>PL/TclU</> is the same, except that the language has to be specified as
@@ -100,10 +101,10 @@ CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types
      returning the greater of two integer values could be defined as:
 
 <programlisting>
-CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS '
+CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS $$
     if {$1 > $2} {return $1}
     return $2
-' LANGUAGE pltcl STRICT;
+$$ LANGUAGE pltcl STRICT;
 </programlisting>
 
      Note the clause <literal>STRICT</>, which saves us from
@@ -122,7 +123,7 @@ CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS '
      argument, rather than null:
 
 <programlisting>
-CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS '
+CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS $$
     if {[argisnull 1]} {
         if {[argisnull 2]} { return_null }
         return $2
@@ -130,7 +131,7 @@ CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS '
     if {[argisnull 2]} { return $1 }
     if {$1 > $2} {return $1}
     return $2
-' LANGUAGE pltcl;
+$$ LANGUAGE pltcl;
 </programlisting>
     </para>
 
@@ -154,7 +155,7 @@ CREATE TABLE employee (
     age integer
 );
 
-CREATE FUNCTION overpaid(employee) RETURNS boolean AS '
+CREATE FUNCTION overpaid(employee) RETURNS boolean AS $$
     if {200000.0 < $1(salary)} {
         return "t"
     }
@@ -162,7 +163,7 @@ CREATE FUNCTION overpaid(employee) RETURNS boolean AS '
         return "t"
     }
     return "f"
-' LANGUAGE pltcl;
+$$ LANGUAGE pltcl;
 </programlisting>
     </para>
 
@@ -359,25 +360,24 @@ spi_exec -array C "SELECT * FROM pg_class" {
 	Here's an example of a PL/Tcl function using a prepared plan:
 
 <programlisting>
-CREATE FUNCTION t1_count(integer, integer) RETURNS integer AS '
+CREATE FUNCTION t1_count(integer, integer) RETURNS integer AS $$
     if {![ info exists GD(plan) ]} {
         # prepare the saved plan on the first call
-        set GD(plan) [ spi_prepare \\
-                "SELECT count(*) AS cnt FROM t1 WHERE num &gt;= \\$1 AND num &lt;= \\$2" \\
+        set GD(plan) [ spi_prepare \
+                "SELECT count(*) AS cnt FROM t1 WHERE num &gt;= \$1 AND num &lt;= \$2" \
                 [ list int4 int4 ] ]
     }
     spi_execp -count 1 $GD(plan) [ list $1 $2 ]
     return $cnt
-' LANGUAGE pltcl;
+$$ LANGUAGE pltcl;
 </programlisting>
 
-	Note that each backslash that Tcl should see must be doubled when
-	we type in the function, since the main parser processes
-	backslashes, too, in <command>CREATE FUNCTION</>.  We need backslashes inside
-	the query string given to <function>spi_prepare</> to ensure that
-	the <literal>$<replaceable>n</replaceable></> markers will be passed through to
-	<function>spi_prepare</> as-is, and not
-	replaced by Tcl variable substitution.
+    We need backslashes inside the query string given to
+    <function>spi_prepare</> to ensure that the
+    <literal>$<replaceable>n</replaceable></> markers will be passed
+    through to <function>spi_prepare</> as-is, and not replaced by Tcl
+    variable substitution.
+
        </para>
       </listitem>
      </varlistentry>
@@ -425,7 +425,7 @@ SELECT 'doesn't' AS ret
 	The submitted command should contain
 
 <programlisting>
-SELECT 'doesn''t' AS ret
+SELECT $q$doesn't$q$ AS ret
 </programlisting>
 
 	which can be formed in PL/Tcl using
@@ -611,7 +611,7 @@ SELECT 'doesn''t' AS ret
      incremented on every update operation.
 
 <programlisting>
-CREATE FUNCTION trigfunc_modcount() RETURNS trigger AS '
+CREATE FUNCTION trigfunc_modcount() RETURNS trigger AS $$
     switch $TG_op {
         INSERT {
             set NEW($1) 0
@@ -625,7 +625,7 @@ CREATE FUNCTION trigfunc_modcount() RETURNS trigger AS '
         }
     }
     return [array get NEW]
-' LANGUAGE pltcl;
+$$ LANGUAGE pltcl;
 
 CREATE TABLE mytab (num integer, description text, modcnt integer);
 

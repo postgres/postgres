@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.49 2004/02/12 23:41:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.50 2004/05/16 23:22:07 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -466,8 +466,9 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
    a function definition:
 <programlisting>
 CREATE TYPE compfoo AS (f1 int, f2 text);
-CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS
-  'SELECT fooid, fooname FROM foo' LANGUAGE SQL;
+CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS $$
+    SELECT fooid, fooname FROM foo
+$$ LANGUAGE SQL;
 </programlisting>
   </para>
 

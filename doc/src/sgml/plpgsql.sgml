@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.37 2004/03/26 03:18:28 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.38 2004/05/16 23:22:06 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -89,13 +89,13 @@ $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.37 2004/03/26 03:18:28 neilc Ex
     alter your database schema. For example:
 
 <programlisting>
-CREATE FUNCTION populate() RETURNS integer AS '
+CREATE FUNCTION populate() RETURNS integer AS $$
 DECLARE
     -- declarations
 BEGIN
     PERFORM my_function();
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
 
     If you execute the above function, it will reference the OID for
@@ -261,13 +261,17 @@ end;
   <para>
    Since the code of a <application>PL/pgSQL</> function is specified in
    <command>CREATE FUNCTION</command> as a string literal, single
-   quotes inside the function body must be escaped by doubling them.
-   This can lead to
-   rather complicated code at times, especially if you are writing a
-   function that generates other functions, as in the example in <xref
-   linkend="plpgsql-statements-executing-dyn">.  This chart may be useful
-   as a summary of the needed numbers of quotation marks in
-   various situations.
+   quotes inside the function body must be escaped by doubling them
+    unless the string literal comprising the function body is dollar
+    quoted.
+    </para>
+
+    <para>
+    Doubling can lead to incomprehensible code at times, especially if
+    you are writing a function that generates other functions, as in the
+    example in <xref linkend="plpgsql-statements-executing-dyn">.  This
+    chart may be useful when translating pre-dollar quoting code into
+    something that is comprehensible.
   </para>
 
   <variablelist>
@@ -418,11 +422,11 @@ END;
      block are initialized to their default values every time the
      block is entered, not only once per function call. For example:
 <programlisting>
-CREATE FUNCTION somefunc() RETURNS integer AS '
+CREATE FUNCTION somefunc() RETURNS integer AS $$
 DECLARE
     quantity integer := 30;
 BEGIN
-    RAISE NOTICE ''Quantity here is %'', quantity;  -- Quantity here is 30
+    RAISE NOTICE 'Quantity here is %', quantity;  -- Quantity here is 30
     quantity := 50;
     --
     -- Create a subblock
@@ -430,14 +434,14 @@ BEGIN
     DECLARE
         quantity integer := 80;
     BEGIN
-        RAISE NOTICE ''Quantity here is %'', quantity;  -- Quantity here is 80
+        RAISE NOTICE 'Quantity here is %', quantity;  -- Quantity here is 80
     END;
 
-    RAISE NOTICE ''Quantity here is %'', quantity;  -- Quantity here is 50
+    RAISE NOTICE 'Quantity here is %', quantity;  -- Quantity here is 50
 
     RETURN quantity;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
     </para>
 
@@ -510,7 +514,7 @@ arow RECORD;
       Examples:
 <programlisting>
 quantity integer DEFAULT 32;
-url varchar := ''http://mysite.com'';
+url varchar := 'http://mysite.com';
 user_id CONSTANT integer := 10;
 </programlisting>
      </para>
@@ -531,32 +535,32 @@ user_id CONSTANT integer := 10;
       numeric identifier can then be used to refer to the parameter value.
       Some examples:
 <programlisting>
-CREATE FUNCTION sales_tax(real) RETURNS real AS '
+CREATE FUNCTION sales_tax(real) RETURNS real AS $$
 DECLARE
     subtotal ALIAS FOR $1;
 BEGIN
     RETURN subtotal * 0.06;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 
-CREATE FUNCTION instr(varchar, integer) RETURNS integer AS '
+CREATE FUNCTION instr(varchar, integer) RETURNS integer AS $$
 DECLARE
     v_string ALIAS FOR $1;
     index ALIAS FOR $2;
 BEGIN
     -- some computations here
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 
-CREATE FUNCTION concat_selected_fields(tablename) RETURNS text AS '
+CREATE FUNCTION concat_selected_fields(tablename) RETURNS text AS $$
 DECLARE
     in_t ALIAS FOR $1;
 BEGIN
     RETURN in_t.f1 || in_t.f3 || in_t.f5 || in_t.f7;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
      </para>
 
@@ -576,7 +580,7 @@ END;
       that has a <literal>+</> operator:
 <programlisting>
 CREATE FUNCTION add_three_values(anyelement, anyelement, anyelement)
-RETURNS anyelement AS '
+RETURNS anyelement AS $$
 DECLARE
     result ALIAS FOR $0;
     first ALIAS FOR $1;
@@ -586,7 +590,7 @@ BEGIN
     result := first + second + third;
     RETURN result;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
      </para>
     </sect2>
@@ -677,7 +681,7 @@ user_id users.user_id%TYPE;
    <para>
     Here is an example of using composite types:
 <programlisting>
-CREATE FUNCTION use_two_tables(tablename) RETURNS text AS '
+CREATE FUNCTION use_two_tables(tablename) RETURNS text AS $$
 DECLARE
     in_t ALIAS FOR $1;
     use_t table2name%ROWTYPE;
@@ -685,7 +689,7 @@ BEGIN
     SELECT * INTO use_t FROM table2name WHERE ... ;
     RETURN in_t.f1 || use_t.f3 || in_t.f5 || use_t.f7;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 SELECT use_two_tables(t.*) FROM tablename t WHERE ... ;
 </programlisting>
@@ -788,29 +792,29 @@ SELECT <replaceable>expression</replaceable>
      is a difference between what these two functions do:
 
 <programlisting>
-CREATE FUNCTION logfunc1(text) RETURNS timestamp AS '
+CREATE FUNCTION logfunc1(text) RETURNS timestamp AS $$
     DECLARE
         logtxt ALIAS FOR $1;
     BEGIN
-        INSERT INTO logtable VALUES (logtxt, ''now'');
-        RETURN ''now'';
+        INSERT INTO logtable VALUES (logtxt, 'now');
+        RETURN 'now';
     END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
 
      and
 
 <programlisting>
-CREATE FUNCTION logfunc2(text) RETURNS timestamp AS '
+CREATE FUNCTION logfunc2(text) RETURNS timestamp AS $$
     DECLARE
         logtxt ALIAS FOR $1;
         curtime timestamp;
     BEGIN
-        curtime := ''now'';
+        curtime := 'now';
         INSERT INTO logtable VALUES (logtxt, curtime);
         RETURN curtime;
     END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
     </para>
 
@@ -870,7 +874,7 @@ CREATE FUNCTION logfunc2(text) RETURNS timestamp AS '
     <application>PL/pgSQL</application>, but they are not specifically
     listed here.
    </para>
-   
+
    <sect2 id="plpgsql-statements-assignment">
     <title>Assignment</title>
 
@@ -968,11 +972,11 @@ SELECT INTO <replaceable>target</replaceable> <replaceable>select_expressions</r
      You can use <literal>FOUND</literal> immediately after a <command>SELECT
      INTO</command> statement to determine whether the assignment was successful
      (that is, at least one row was was returned by the query). For example:
-  
+
 <programlisting>
 SELECT INTO myrec * FROM emp WHERE empname = myname;
 IF NOT FOUND THEN
-    RAISE EXCEPTION ''employee % not found'', myname;
+    RAISE EXCEPTION 'employee % not found', myname;
 END IF;
 </programlisting>
     </para>
@@ -991,7 +995,7 @@ BEGIN
 
     IF users_rec.homepage IS NULL THEN
         -- user entered no homepage, return "http://"
-        RETURN ''http://'';
+        RETURN 'http://';
     END IF;
 END;
 </programlisting>
@@ -1032,14 +1036,14 @@ PERFORM <replaceable>query</replaceable>;
     <para>
      An example:
 <programlisting>
-PERFORM create_mv(''cs_session_page_requests_mv'', my_query);
+PERFORM create_mv('cs_session_page_requests_mv', my_query);
 </programlisting>
     </para>
    </sect2>
-   
+
    <sect2 id="plpgsql-statements-executing-dyn">
     <title>Executing Dynamic Commands</title>
-    
+
     <para>
      Oftentimes you will want to generate dynamic commands inside your
      <application>PL/pgSQL</application> functions, that is, commands
@@ -1066,12 +1070,14 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     </para>
 
     <para>
-    When working with dynamic commands you will have to face
-    escaping of single quotes in <application>PL/pgSQL</>. Please refer to the
-    overview in <xref linkend="plpgsql-quote-tips">,
-    which can save you some effort.
+    When working with dynamic commands you will have to face escaping
+    of single quotes in <application>PL/pgSQL</>.  The recommended method
+    is dollar quoting.  If you have legacy code which does
+    <emphasis>not</emphasis> use dollar quoting, please refer to the
+    overview in <xref linkend="plpgsql-quote-tips">, which can save you
+    some effort when translating said code to a more reasonable scheme.
     </para>
-     
+
     <para>
      Unlike all other commands in <application>PL/pgSQL</>, a command
      run by an <command>EXECUTE</command> statement is not prepared
@@ -1080,7 +1086,7 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
      string can be dynamically created within the function to perform
      actions on variable tables and columns.
     </para>
-  
+
     <para>
      The results from <command>SELECT</command> commands are discarded
      by <command>EXECUTE</command>, and <command>SELECT INTO</command>
@@ -1093,13 +1099,15 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
     </para>
 
     <para>
-     An example:
+     An example (except where noted, all examples herein assume that
+     you are using dollar quoting):
+
 <programlisting>
-EXECUTE ''UPDATE tbl SET ''
+EXECUTE 'UPDATE tbl SET '
         || quote_ident(colname)
-        || '' = ''
+        || ' = '
         || quote_literal(newvalue)
-        || '' WHERE ...'';
+        || ' WHERE ...';
 </programlisting>
     </para>
 
@@ -1144,12 +1152,46 @@ BEGIN
                  || referrer_keys.key_string || '''''''''' THEN RETURN '''''' 
                  || referrer_keys.referrer_type || ''''''; END IF;''; 
     END LOOP; 
-  
+
     a_output := a_output || '' RETURN NULL; END; '''' LANGUAGE plpgsql;''; 
- 
+
     EXECUTE a_output; 
-END; 
+END;
 ' LANGUAGE plpgsql;
+</programlisting>
+
+And here is an equivalent using dollar quoting.  At least it is more
+legible than the above, although both versions show that the design,
+rather than merely the formatting, needs to be re-thought.
+
+<programlisting>
+CREATE or replace FUNCTION cs_update_referrer_type_proc2() RETURNS integer AS $func$
+ DECLARE
+     referrer_keys RECORD;  -- declare a generic record to be used in a FOR
+     a_output varchar(4000);
+ BEGIN 
+     a_output := 'CREATE FUNCTION cs_find_referrer_type(varchar, varchar, varchar) 
+                   RETURNS varchar AS $innerfunc$ 
+                      DECLARE 
+                          v_host ALIAS FOR $1; 
+                          v_domain ALIAS FOR $2; 
+                          v_url ALIAS FOR $3;
+                      BEGIN '; 
+
+     -- Notice how we scan through the results of a query in a FOR loop
+     -- using the FOR &lt;record&gt; construct.
+
+     FOR referrer_keys IN SELECT * FROM cs_referrer_keys ORDER BY try_order LOOP
+         a_output := a_output || ' IF v_' || referrer_keys.kind || ' LIKE $$' 
+                  || referrer_keys.key_string || '$$ THEN RETURN $$' 
+                  || referrer_keys.referrer_type || '$$; END IF;'; 
+     END LOOP; 
+
+     a_output := a_output || ' RETURN NULL; END; $innerfunc$ LANGUAGE plpgsql;'; 
+     EXECUTE a_output; 
+    RETURN
+END;
+$func$ LANGUAGE plpgsql;
 </programlisting>
     </para>
    </sect2>
@@ -1252,7 +1294,7 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
     you can manipulate <productname>PostgreSQL</> data in a very
     flexible and powerful way. 
    </para>
-   
+
    <sect2 id="plpgsql-statements-returning">
     <title>Returning From a Function</title>
 
@@ -1362,7 +1404,7 @@ SELECT * FROM some_func();
      </note>
     </sect3>
    </sect2>
-    
+
    <sect2 id="plpgsql-conditionals">
     <title>Conditionals</title>
 
@@ -1434,20 +1476,20 @@ END IF;
        <para>
         Examples:
 <programlisting>
-IF parentid IS NULL OR parentid = ''''
+IF parentid IS NULL OR parentid = ''
 THEN
     RETURN fullname;
 ELSE
-    RETURN hp_true_filename(parentid) || ''/'' || fullname;
+    RETURN hp_true_filename(parentid) || '/' || fullname;
 END IF;
 </programlisting>
 
 <programlisting>
 IF v_count > 0 THEN 
     INSERT INTO users_count (count) VALUES (v_count);
-    RETURN ''t'';
+    RETURN 't';
 ELSE
-    RETURN ''f'';
+    RETURN 'f';
 END IF;
 </programlisting>
      </para>
@@ -1461,11 +1503,11 @@ END IF;
         following example:
 
 <programlisting>
-IF demo_row.sex = ''m'' THEN
-    pretty_sex := ''man'';
+IF demo_row.sex = 'm' THEN
+    pretty_sex := 'man';
 ELSE
-    IF demo_row.sex = ''f'' THEN
-        pretty_sex := ''woman'';
+    IF demo_row.sex = 'f' THEN
+        pretty_sex := 'woman';
     END IF;
 END IF;
 </programlisting>
@@ -1514,14 +1556,14 @@ END IF;
 
 <programlisting>
 IF number = 0 THEN
-    result := ''zero'';
+    result := 'zero';
 ELSIF number &gt; 0 THEN 
-    result := ''positive'';
+    result := 'positive';
 ELSIF number &lt; 0 THEN
-    result := ''negative'';
+    result := 'negative';
 ELSE
     -- hmm, the only other possibility is that number is null
-    result := ''NULL'';
+    result := 'NULL';
 END IF;
 </programlisting>
        </para>
@@ -1666,7 +1708,7 @@ END LOOP;
 <programlisting>
 FOR i IN 1..10 LOOP
     -- some computations here
-    RAISE NOTICE ''i is %'', i;
+    RAISE NOTICE 'i is %', i;
 END LOOP;
 
 FOR i IN REVERSE 10..1 LOOP
@@ -1704,18 +1746,18 @@ CREATE FUNCTION cs_refresh_mviews() RETURNS integer AS '
 DECLARE
     mviews RECORD;
 BEGIN
-    PERFORM cs_log(''Refreshing materialized views...'');
+    PERFORM cs_log('Refreshing materialized views...');
 
     FOR mviews IN SELECT * FROM cs_materialized_views ORDER BY sort_key LOOP
 
         -- Now "mviews" has one record from cs_materialized_views
 
-        PERFORM cs_log(''Refreshing materialized view '' || quote_ident(mviews.mv_name) || ''...'');
-        EXECUTE ''TRUNCATE TABLE  '' || quote_ident(mviews.mv_name);
-        EXECUTE ''INSERT INTO '' || quote_ident(mviews.mv_name) || '' '' || mviews.mv_query;
+        PERFORM cs_log('Refreshing materialized view ' || quote_ident(mviews.mv_name) || '...');
+        EXECUTE 'TRUNCATE TABLE  ' || quote_ident(mviews.mv_name);
+        EXECUTE 'INSERT INTO ' || quote_ident(mviews.mv_name) || ' ' || mviews.mv_query;
     END LOOP;
 
-    PERFORM cs_log(''Done refreshing materialized views.'');
+    PERFORM cs_log('Done refreshing materialized views.');
     RETURN 1;
 END;
 ' LANGUAGE plpgsql;
@@ -1778,7 +1820,7 @@ END LOOP;
     caller to read the rows. This provides an efficient way to return
     large row sets from functions.
    </para>
-   
+
    <sect2 id="plpgsql-cursor-declarations">
     <title>Declaring Cursor Variables</title>
 
@@ -1877,7 +1919,7 @@ OPEN <replaceable>unbound-cursor</replaceable> FOR EXECUTE <replaceable class="c
        <para>
         An example:
 <programlisting>
-OPEN curs1 FOR EXECUTE ''SELECT * FROM '' || quote_ident($1);
+OPEN curs1 FOR EXECUTE 'SELECT * FROM ' || quote_ident($1);
 </programlisting>
        </para>
      </sect3>
@@ -1978,7 +2020,7 @@ CLOSE curs1;
 </programlisting>
        </para>
      </sect3>
- 
+
     <sect3>
      <title>Returning Cursors</title>
 
@@ -2040,7 +2082,7 @@ COMMIT;
 
        <para>
         The following example uses automatic cursor name generation:
-         
+
 <programlisting>
 CREATE FUNCTION reffunc2() RETURNS refcursor AS '
 DECLARE
@@ -2053,7 +2095,7 @@ END;
 
 BEGIN;
 SELECT reffunc2();
-  
+
       reffunc2      
 --------------------
  &lt;unnamed cursor 1&gt;
@@ -2103,7 +2145,7 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
 
    <!--
    This example should work, but does not:
-        RAISE NOTICE ''Id number '' || key || '' not found!'';
+        RAISE NOTICE 'Id number ' || key || ' not found!';
    Put it back when we allow non-string-literal formats.
     -->
 
@@ -2111,14 +2153,14 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     In this example, the value of <literal>v_job_id</> will replace the
     <literal>%</literal> in the string:
 <programlisting>
-RAISE NOTICE ''Calling cs_create_job(%)'', v_job_id;
+RAISE NOTICE 'Calling cs_create_job(%)', v_job_id;
 </programlisting>
    </para>
 
    <para>
     This example will abort the transaction with the given error message:
 <programlisting>
-RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
+RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
 </programlisting>
    </para>
 
@@ -2171,7 +2213,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
    When a <application>PL/pgSQL</application> function is called as a
    trigger, several special variables are created automatically in the 
    top-level block. They are:
-   
+
    <variablelist>
     <varlistentry>
      <term><varname>NEW</varname></term>
@@ -2334,27 +2376,27 @@ CREATE TABLE emp (
     last_user text
 );
 
-CREATE FUNCTION emp_stamp() RETURNS trigger AS '
+CREATE FUNCTION emp_stamp() RETURNS trigger AS $emp_stamp$
     BEGIN
         -- Check that empname and salary are given
         IF NEW.empname IS NULL THEN
-            RAISE EXCEPTION ''empname cannot be null'';
+            RAISE EXCEPTION 'empname cannot be null';
         END IF;
         IF NEW.salary IS NULL THEN
-            RAISE EXCEPTION ''% cannot have null salary'', NEW.empname;
+            RAISE EXCEPTION '% cannot have null salary', NEW.empname;
         END IF;
 
         -- Who works for us when she must pay for it?
         IF NEW.salary &lt; 0 THEN
-            RAISE EXCEPTION ''% cannot have a negative salary'', NEW.empname;
+            RAISE EXCEPTION '% cannot have a negative salary', NEW.empname;
         END IF;
 
         -- Remember who changed the payroll when
-        NEW.last_date := ''now'';
+        NEW.last_date := 'now';
         NEW.last_user := current_user;
         RETURN NEW;
     END;
-' LANGUAGE plpgsql;
+$emp_stamp$ LANGUAGE plpgsql;
 
 CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
     FOR EACH ROW EXECUTE PROCEDURE emp_stamp();
@@ -2514,7 +2556,7 @@ show errors;
 
 <programlisting>
 CREATE OR REPLACE FUNCTION cs_fmt_browser_version(varchar, varchar)
-RETURNS varchar AS '
+RETURNS varchar AS $$
 DECLARE
     v_name ALIAS FOR $1;
     v_version ALIAS FOR $2;
@@ -2522,9 +2564,9 @@ BEGIN
     IF v_version IS NULL THEN
         return v_name;
     END IF;
-    RETURN v_name || ''/'' || v_version;
+    RETURN v_name || '/' || v_version;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
     </para>
    </example>
@@ -2534,7 +2576,7 @@ END;
     function that creates another function and how to handle to
     ensuing quoting problems.
    </para>
- 
+
    <example id="plpgsql-porting-ex2">
     <title>Porting a Function that Creates Another Function from <application>PL/SQL</> to <application>PL/pgSQL</></title>
 
@@ -2577,40 +2619,38 @@ show errors;
      Here is how this function would end up in <productname>PostgreSQL</>:
 
 <programlisting>
-CREATE FUNCTION cs_update_referrer_type_proc() RETURNS integer AS '
+CREATE or replace FUNCTION cs_update_referrer_type_proc() RETURNS
+text AS $func$
 DECLARE
-    referrer_keys RECORD;  -- Declare a generic record to be used in a FOR
-    a_output varchar(4000);
+    referrer_keys RECORD;  -- declare a generic record to be used in a FOR
+    a_output TEXT;
 BEGIN 
-    a_output := ''CREATE FUNCTION cs_find_referrer_type(varchar, varchar, varchar) 
-                  RETURNS varchar AS '''' 
+    a_output := 'CREATE FUNCTION cs_find_referrer_type(varchar, varchar, varchar) 
+                  RETURNS varchar AS $innerfunc$ 
                      DECLARE 
                          v_host ALIAS FOR $1; 
                          v_domain ALIAS FOR $2; 
                          v_url ALIAS FOR $3;
-                     BEGIN ''; 
+                     BEGIN '; 
 
-    -- Notice how we scan through the results of a query in a FOR loop
-    -- using the FOR &lt;record&gt; construct.
+     -- Notice how we scan through the results of a query in a FOR loop
+     -- using the FOR &lt;record&gt; construct.
 
-    FOR referrer_keys IN SELECT * FROM cs_referrer_keys ORDER BY try_order LOOP
-        a_output := a_output || '' IF v_'' || referrer_keys.kind || '' LIKE '''''''''' 
-                 || referrer_keys.key_string || '''''''''' THEN RETURN '''''' 
-                 || referrer_keys.referrer_type || ''''''; END IF;''; 
-    END LOOP; 
-  
-    a_output := a_output || '' RETURN NULL; END; '''' LANGUAGE plpgsql;''; 
- 
-    -- EXECUTE will work because we are not substituting any variables.
-    -- Otherwise it would fail.  Look at PERFORM for another way to run functions.
-    
-    EXECUTE a_output; 
+     FOR referrer_keys IN SELECT * FROM cs_referrer_keys ORDER BY try_order LOOP
+         a_output := a_output || ' IF v_' || referrer_keys.kind || ' LIKE $$' 
+                  || referrer_keys.key_string || '$$ THEN RETURN $$' 
+                  || referrer_keys.referrer_type || '$$; END IF;'; 
+     END LOOP; 
+
+     a_output := a_output || ' RETURN NULL; END; $innerfunc$ LANGUAGE plpgsql;'; 
+
+     return a_output; 
 END; 
-' LANGUAGE plpgsql;
+$func$ LANGUAGE plpgsql;
 </programlisting>
     </para>
    </example>
- 
+
    <para>
     <xref linkend="plpgsql-porting-ex3"> shows how to port a function
     with <literal>OUT</> parameters and string manipulation.
@@ -2686,7 +2726,7 @@ show errors;
      the host part could look like:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION cs_parse_url_host(varchar) RETURNS varchar AS '
+CREATE OR REPLACE FUNCTION cs_parse_url_host(varchar) RETURNS varchar AS $$
 DECLARE
     v_url ALIAS FOR $1;
     v_host varchar;
@@ -2696,23 +2736,23 @@ DECLARE
     a_pos3 integer;
 BEGIN 
     v_host := NULL; 
-    a_pos1 := instr(v_url, ''//'');
+    a_pos1 := instr(v_url, '//');
 
     IF a_pos1 = 0 THEN 
-        RETURN '''';  -- Return a blank
+        RETURN '';  -- Return a blank
     END IF; 
 
-    a_pos2 := instr(v_url,''/'',a_pos1 + 2);
+    a_pos2 := instr(v_url,'/',a_pos1 + 2);
     IF a_pos2 = 0 THEN 
         v_host := substr(v_url, a_pos1 + 2); 
-        v_path := ''/''; 
+        v_path := '/'; 
         RETURN v_host; 
     END IF; 
 
     v_host := substr(v_url, a_pos1 + 2, a_pos2 - a_pos1 - 2 ); 
     RETURN v_host; 
 END; 
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
     </para>
    </example>
@@ -2797,7 +2837,7 @@ show errors
     This is how we could port this procedure to <application>PL/pgSQL</>:
 
 <programlisting>
-CREATE OR REPLACE FUNCTION cs_create_job(integer) RETURNS integer AS '
+CREATE OR REPLACE FUNCTION cs_create_job(integer) RETURNS integer AS $$
 DECLARE
     v_job_id ALIAS FOR $1;
     a_running_job_count integer;
@@ -2808,7 +2848,7 @@ BEGIN
 
     IF a_running_job_count > 0
     THEN
-        RAISE EXCEPTION ''Unable to create a new job: a job is currently running.'';
+        RAISE EXCEPTION 'Unable to create a new job: a job is currently running.';
     END IF;
 
     DELETE FROM cs_active_job;
@@ -2820,12 +2860,12 @@ BEGIN
         INSERT INTO cs_jobs(job_id, start_stamp) VALUES (v_job_id, current_timestamp);
         RETURN 1;
     ELSE
-        RAISE NOTICE ''Job already running.'';<co id="co.plpgsql-porting-raise">
+        RAISE NOTICE 'Job already running.';<co id="co.plpgsql-porting-raise">
     END IF;
 
     RETURN 0;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
 
     <calloutlist>
@@ -2858,7 +2898,7 @@ END;
      <function>quote_literal(text)</function> and
      <function>quote_string(text)</function> as described in <xref
      linkend="plpgsql-statements-executing-dyn">.  Constructs of the
-     type <literal>EXECUTE ''SELECT * FROM $1'';</literal> will not
+     type <literal>EXECUTE 'SELECT * FROM $1';</literal> will not
      work unless you use these functions.
     </para>
    </sect3>
@@ -2881,9 +2921,9 @@ END;
      like this:
 
 <programlisting>
-CREATE FUNCTION foo(...) RETURNS integer AS '
+CREATE FUNCTION foo(...) RETURNS integer AS $$
 ...
-' LANGUAGE plpgsql STRICT IMMUTABLE;
+$$ LANGUAGE plpgsql STRICT IMMUTABLE;
 </programlisting>
     </para>
    </sect3>
@@ -2908,17 +2948,17 @@ CREATE FUNCTION foo(...) RETURNS integer AS '
 -- assume 1 (search starts at first character).
 --
 
-CREATE FUNCTION instr(varchar, varchar) RETURNS integer AS '
+CREATE FUNCTION instr(varchar, varchar) RETURNS integer AS $$
 DECLARE
     pos integer;
 BEGIN
     pos:= instr($1, $2, 1);
     RETURN pos;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 
-CREATE FUNCTION instr(varchar, varchar, varchar) RETURNS integer AS '
+CREATE FUNCTION instr(varchar, varchar, varchar) RETURNS integer AS $$
 DECLARE
     string ALIAS FOR $1;
     string_to_search ALIAS FOR $2;
@@ -2957,10 +2997,10 @@ BEGIN
         RETURN 0;
     END IF;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 
-CREATE FUNCTION instr(varchar, varchar, integer, integer) RETURNS integer AS '
+CREATE FUNCTION instr(varchar, varchar, integer, integer) RETURNS integer AS $$
 DECLARE
     string ALIAS FOR $1;
     string_to_search ALIAS FOR $2;
@@ -3018,10 +3058,10 @@ BEGIN
         RETURN 0;
     END IF;
 END;
-' LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 </programlisting>
   </sect2>
-  
+
  </sect1>
 
 </chapter>

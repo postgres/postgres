@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.22 2003/11/29 19:51:37 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.23 2004/05/16 23:22:07 neilc Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -230,14 +230,14 @@ rv = plpy.execute(plan, [ "name" ], 5)
    <literal>SD</literal> or <literal>GD</literal> (see
    <xref linkend="plpython-funcs">). For example:
 <programlisting>
-CREATE FUNCTION usesavedplan() RETURNS trigger AS '
+CREATE FUNCTION usesavedplan() RETURNS trigger AS $$
     if SD.has_key("plan"):
         plan = SD["plan"]
     else:
         plan = plpy.prepare("SELECT 1")
         SD["plan"] = plan
     # rest of function
-' LANGUAGE plpythonu;
+$$ LANGUAGE plpythonu;
 </programlisting>
   </para>
  </sect1>

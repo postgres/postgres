@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.29 2004/03/03 22:22:24 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.30 2004/05/16 23:22:07 neilc Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -631,9 +631,9 @@ FROM (SELECT * FROM table1) AS alias_name
 <programlisting>
 CREATE TABLE foo (fooid int, foosubid int, fooname text);
 
-CREATE FUNCTION getfoo(int) RETURNS SETOF foo AS '
+CREATE FUNCTION getfoo(int) RETURNS SETOF foo AS $$
     SELECT * FROM foo WHERE fooid = $1;
-' LANGUAGE SQL;
+$$ LANGUAGE SQL;
 
 SELECT * FROM getfoo(1) AS t1;
 

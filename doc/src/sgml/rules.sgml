@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.34 2004/03/09 05:05:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.35 2004/05/16 23:22:07 neilc Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -343,9 +343,9 @@ For the example, we need a little <literal>min</literal> function that
 returns the lower of 2 integer values. We create that as
 
 <ProgramListing>
-CREATE FUNCTION min(integer, integer) RETURNS integer AS '
+CREATE FUNCTION min(integer, integer) RETURNS integer AS $$
     SELECT CASE WHEN $1 < $2 THEN $1 ELSE $2 END
-' LANGUAGE SQL STRICT;
+$$ LANGUAGE SQL STRICT;
 </ProgramListing>
 </Para>
 

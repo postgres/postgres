@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.22 2003/12/14 00:10:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.23 2004/05/16 23:22:06 neilc Exp $
 -->
 
  <chapter id="plperl">
@@ -46,11 +46,17 @@ $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.22 2003/12/14 00:10:32 neilc Exp
   <para>
    To create a function in the PL/Perl language, use the standard syntax:
 <programlisting>
-CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS '
+CREATE FUNCTION <replaceable>funcname</replaceable>
+(<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS $$
     # PL/Perl function body
-' LANGUAGE plperl;
+$$ LANGUAGE plperl;
 </programlisting>
-   The body of the function is ordinary Perl code.
+   The body of the function is ordinary Perl code. Since the body of
+   the function is treated as a string by
+   <productname>PostgreSQL</productname>, it can be specified using
+   dollar quoting (as shown above), or via the usual single quote
+   syntax (see <xref linkend="sql-syntax-strings"> for more
+   information).
   </para>
 
   <para>
@@ -65,10 +71,10 @@ CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types
    could be defined as:
 
 <programlisting>
-CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
+CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
     if ($_[0] > $_[1]) { return $_[0]; }
     return $_[1];
-' LANGUAGE plperl;
+$$ LANGUAGE plperl;
 </programlisting>
   </para>
 
@@ -88,7 +94,7 @@ CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
    rather than a null value:
 
 <programlisting>
-CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
+CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS $$
     my ($a,$b) = @_;
     if (! defined $a) {
         if (! defined $b) { return undef; }
@@ -97,7 +103,7 @@ CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
     if (! defined $b) { return $a; }
     if ($a > $b) { return $a; }
     return $b;
-' LANGUAGE plperl;
+$$ LANGUAGE plperl;
 </programlisting>
   </para>
 
@@ -119,10 +125,10 @@ CREATE TABLE employee (
     bonus integer
 );
 
-CREATE FUNCTION empcomp(employee) RETURNS integer AS '
+CREATE FUNCTION empcomp(employee) RETURNS integer AS $$
     my ($emp) = @_;
-    return $emp->{''basesalary''} + $emp->{''bonus''};
-' LANGUAGE plperl;
+    return $emp->{'basesalary'} + $emp->{'bonus'};
+$$ LANGUAGE plperl;
 
 SELECT name, empcomp(employee) FROM employee;
 </programlisting>
@@ -136,12 +142,12 @@ SELECT name, empcomp(employee) FROM employee;
   <tip>
    <para>
     Because the function body is passed as an SQL string literal to
-    <command>CREATE FUNCTION</command>, you have to escape single
-    quotes and backslashes within your Perl source, typically by
-    doubling them as shown in the above example.  Another possible
-    approach is to avoid writing single quotes by using Perl's
-    extended quoting operators (<literal>q[]</literal>,
-    <literal>qq[]</literal>, <literal>qw[]</literal>).
+    <command>CREATE FUNCTION</command>, you have to use dollar quoting
+    or escape single quotes and backslashes within your Perl source,
+    typically by doubling them.  Another possible approach is to avoid
+    writing single quotes by using Perl's extended quoting operators
+    (<literal>q[]</literal>, <literal>qq[]</literal>,
+    <literal>qw[]</literal>).
    </para>
   </tip>
  </sect1>
@@ -226,11 +232,11 @@ SELECT name, empcomp(employee) FROM employee;
    Here is an example of a function that will not work because file
    system operations are not allowed for security reasons:
 <programlisting>
-CREATE FUNCTION badfunc() RETURNS integer AS '
+CREATE FUNCTION badfunc() RETURNS integer AS $$
     open(TEMP, ">/tmp/badfile");
     print TEMP "Gotcha!\n";
     return 1;
-' LANGUAGE plperl;
+$$ LANGUAGE plperl;
 </programlisting>
    The creation of the function will succeed, but executing it will not.
   </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.55 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.56 2004/05/16 23:22:07 neilc Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -54,10 +54,10 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    To update the definition of an existing function, use
    <command>CREATE OR REPLACE FUNCTION</command>.  It is not possible
    to change the name or argument types of a function this way (if you
-   tried, you'd just be creating a new, distinct function).  Also,
-   <command>CREATE OR REPLACE FUNCTION</command> will not let you
-   change the return type of an existing function.  To do that, you
-   must drop and recreate the function.
+   tried, you would actually be creating a new, distinct function).
+   Also, <command>CREATE OR REPLACE FUNCTION</command> will not let
+   you change the return type of an existing function.  To do that,
+   you must drop and recreate the function.
   </para>
 
   <para>
@@ -250,7 +250,14 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
       <para>
        A string defining the function; the meaning depends on the
        language.  It may be an internal function name, the path to an
-       object file, an SQL command, or text in a procedural language.
+       object file, an SQL command, or text in a procedural
+       language. When this string contains the text of a procedural
+       language function definition, it may be helpful to use dollar
+       quoting to specify this string, rather than the normal single
+       quote syntax (this avoids the need to escape any single quotes
+       that occur in the function definition itself). For more
+       information on dollar quoting, see <xref
+       linkend="sql-syntax-strings">.
       </para>
      </listitem>
     </varlistentry>
@@ -350,13 +357,14 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    </para>
 
    <para>
-    Use <command>DROP FUNCTION</command>
-    to remove user-defined functions.
+    Use <xref linkend="sql-dropfunction"
+    endterm="sql-dropfunction-title"> to remove user-defined
+    functions.
    </para>
 
   <para>
-   Any single quotes or backslashes in the function definition must be
-   escaped by doubling them.
+   Unless dollar quoting is used, any single quotes or backslashes in
+   the function definition must be escaped by doubling them.
   </para>
 
    <para>
@@ -374,7 +382,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
    information and examples, see <xref linkend="xfunc">.
 <programlisting>
 CREATE FUNCTION add(integer, integer) RETURNS integer
-    AS 'select $1 + $2;'
+    AS $$select $1 + $2;$$
     LANGUAGE SQL
     IMMUTABLE
     RETURNS NULL ON NULL INPUT;

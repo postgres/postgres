@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.76 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.77 2004/05/16 23:22:08 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -938,18 +938,18 @@ SELECT actors.name
    clause, both with and without a column definition list:
 
 <programlisting>
-CREATE FUNCTION distributors(int) RETURNS SETOF distributors AS '
+CREATE FUNCTION distributors(int) RETURNS SETOF distributors AS $$
     SELECT * FROM distributors WHERE did = $1;
-' LANGUAGE SQL;
+$$ LANGUAGE SQL;
 
 SELECT * FROM distributors(111);
  did |    name
 -----+-------------
  111 | Walt Disney
 
-CREATE FUNCTION distributors_2(int) RETURNS SETOF record AS '
+CREATE FUNCTION distributors_2(int) RETURNS SETOF record AS $$
     SELECT * FROM distributors WHERE did = $1;
-' LANGUAGE SQL;
+$$ LANGUAGE SQL;
 
 SELECT * FROM distributors_2(111) AS (f1 int, f2 text);
  f1  |     f2

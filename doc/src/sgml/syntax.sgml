@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.91 2004/05/10 22:44:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.92 2004/05/16 23:22:07 neilc Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -240,15 +240,73 @@ UPDATE "my_table" SET "a" = 5;
       <primary>quotation marks</primary>
       <secondary>escaping</secondary>
      </indexterm>
-     A string constant in SQL is an arbitrary sequence of characters
-     bounded by single quotes (<literal>'</literal>), e.g., <literal>'This
-     is a string'</literal>.  SQL allows single quotes to be embedded
-     in strings by typing two adjacent single quotes, e.g.,
-     <literal>'Dianne''s horse'</literal>.  In
-     <productname>PostgreSQL</productname> single quotes may
-     alternatively be escaped with a backslash (<literal>\</literal>),
-     e.g., <literal>'Dianne\'s horse'</literal>.
-    </para>
+     <indexterm>
+      <primary>dollar quoting</primary>
+     </indexterm>
+      <productname>PostgreSQL</productname> provides two ways to
+      specify a string constant. The first way is to enclose the
+      sequence of characters that constitute the string in single
+      quotes (<literal>'</literal>), e.g. <literal>'This is a
+      string'</literal>. This method of specifying a string constant
+      is defined by the SQL standard. The standard-compliant way of
+      embedding single-quotes these kinds of string constants is by
+      typing two adjacent single quotes, e.g. <literal>'Dianne''s
+      house'</literal>. In addition,
+      <productname>PostgreSQL</productname> allows single quotes
+      to be escaped with a backslash (<literal>\</literal>),
+      e.g. <literal>'Dianne\'s horse'</literal>.
+     </para>
+
+     <para>
+      While this syntax for specifying string constants is usually
+      convenient, it can be difficult to comprehend the content of the
+      string if it consists of many single quotes, each of which must
+      be doubled. To allows more readable queries in these situations,
+      <productname>PostgreSQL</productname> allows another way to
+      specify string constants known as <quote>dollar
+      quoting</quote>. A string constant specified via dollar quoting
+      consists of a dollar sign (<literal>$</literal>), an optional
+      <quote>tag</quote> of zero or more characters, another dollar
+      sign, an arbitrary sequence of characters that makes up the
+      string content, a dollar sign, the same tag that began this
+      dollar quote, and a dollar sign. For example, here are two
+      different ways to specify the previous example using dollar
+      quoting:
+<programlisting>
+$$Dianne's horse$$
+$SomeTag$Dianne's horse$SomeTag$
+</programlisting>
+      Note that inside the dollar-quoted string, single quotes can be
+      used without needing to be escaped.
+     </para>
+
+     <para>
+      Dollar quotes are case sensitive, so <literal>$tag$String
+      content$tag$</literal> is valid, but <literal>$TAG$String
+      content$tag$</literal> is not.  Also, dollar quotes can
+      nest. For example:
+<programlisting>
+CREATE OR REPLACE FUNCTION has_bad_chars(text) RETURNS boolean AS
+$function$
+BEGIN
+    RETURN ($1 ~ $q$[\t\r\n\v|\\]$q$);
+END;
+$function$ LANGUAGE plpgsql;
+</programlisting>
+      Note that nesting requires a different tag for each nested
+      dollar quote, as shown above. Furthermore, nested dollar quotes
+      can only be used when the content of the string that is being
+      quoted will be re-parsed by <productname>PostgreSQL</>.
+     </para>
+
+     <para>
+      Dollar quoting is not defined by the SQL standard, but it is
+      often a more convenient way to write long string literals (such
+      as procedural function definitions) than the standard-compliant
+      single quote syntax. Which quoting technique is most appropriate
+      for a particular circumstance is a decision that is left to the
+      user.
+     </para>
 
     <para>
      C-style backslash escapes are also available:
@@ -1008,7 +1066,7 @@ $<replaceable>number</replaceable>
 
 <programlisting>
 CREATE FUNCTION dept(text) RETURNS dept
-    AS 'SELECT * FROM dept WHERE name = $1'
+    AS $$SELECT * FROM dept WHERE name = $1$$
     LANGUAGE SQL;
 </programlisting>
 
