@@ -1,7 +1,7 @@
 # Makefile for Microsoft Visual C++ 5.0 (or compat)
 
-# Will build a Win32 static library libpq.lib
-#        and a Win32 dynamic library libpq.dll with import library libpqdll.lib
+# Will build a Win32 static library libpq(d).lib
+#        and a Win32 dynamic library libpq(d).dll with import library libpq(d)dll.lib
 # USE_SSL=1 will compile with OpenSSL
 # DEBUG=1 compiles with debugging symbols
 
@@ -10,13 +10,15 @@
 !MESSAGE
 
 !IFDEF DEBUG
-OPT=/Od /Zi
+OPT=/Od /Zi /MDd
 LOPT=/debug
 DEBUGDEF=/D _DEBUG
+OUTFILENAME=libpqd
 !ELSE
-OPT=/O2
+OPT=/O2 /MD
 LOPT=
 DEBUGDEF=/D NDEBUG
+OUTFILENAME=libpq
 !ENDIF
 
 !IF "$(OS)" == "Windows_NT"
@@ -39,7 +41,7 @@ CPP_OBJS=.\Release/
 !ENDIF
 
 
-ALL : "$(OUTDIR)\libpq.lib" "$(OUTDIR)\libpq.dll" 
+ALL : "$(OUTDIR)\$(OUTFILENAME).lib" "$(OUTDIR)\$(OUTFILENAME).dll" 
 
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
@@ -62,20 +64,20 @@ CLEAN :
 	-@erase "$(INTDIR)\pqexpbuffer.obj"
 	-@erase "$(OUTDIR)\libpqdll.obj"
 	-@erase "$(OUTDIR)\win32.obj"
-	-@erase "$(OUTDIR)\libpq.lib"
-	-@erase "$(OUTDIR)\libpq.dll"
+	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
+	-@erase "$(OUTDIR)\$(OUTFILENAME).dll"
 	-@erase "$(OUTDIR)\libpq.res"
 	-@erase "*.pch"
 	-@erase "$(OUTDIR)\libpq.pch"
-	-@erase "$(OUTDIR)\libpqdll.exp"
-	-@erase "$(OUTDIR)\libpqdll.lib"
+	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.exp"
+	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX $(OPT) /I "..\..\include" /D "FRONTEND" $(DEBUGDEF) /D\
+CPP_PROJ=/nologo /W3 /GX $(OPT) /I "..\..\include" /D "FRONTEND" $(DEBUGDEF) /D\
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
 
@@ -87,7 +89,7 @@ SSL_LIBS=ssleay32.lib libeay32.lib gdi32.lib
 CPP_SBRS=.
 
 LIB32=link.exe -lib
-LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\libpq.lib" 
+LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\$(OUTFILENAME).lib" 
 LIB32_OBJS= \
 	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
@@ -117,15 +119,15 @@ RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib wsock32.lib $(SSL_LIBS)  \
  /nologo /subsystem:windows /dll $(LOPT) /incremental:no\
- /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:I386 /out:"$(OUTDIR)\libpq.dll"\
- /implib:"$(OUTDIR)\libpqdll.lib"  /def:libpqdll.def
+ /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:I386 /out:"$(OUTDIR)\$(OUTFILENAME).dll"\
+ /implib:"$(OUTDIR)\$(OUTFILENAME)dll.lib"  /def:$(OUTFILENAME)dll.def
 LINK32_OBJS= \
 	"$(INTDIR)\libpqdll.obj" \
-	"$(OUTDIR)\libpq.lib" \
+	"$(OUTDIR)\$(OUTFILENAME).lib" \
 	"$(OUTDIR)\libpq.res"
 
 
-"$(OUTDIR)\libpq.lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
+"$(OUTDIR)\$(OUTFILENAME).lib" : "$(OUTDIR)" $(DEF_FILE) $(LIB32_OBJS)
     $(LIB32) @<<
   $(LIB32_FLAGS) $(DEF_FLAGS) $(LIB32_OBJS)
 <<
@@ -134,7 +136,7 @@ LINK32_OBJS= \
     $(RSC) $(RSC_PROJ) libpq.rc
 
 
-"$(OUTDIR)\libpq.dll" : "$(OUTDIR)" "$(OUTDIR)\libpqdll.obj" "$(INTDIR)\libpqdll.obj" "$(INTDIR)\libpq.res"
+"$(OUTDIR)\$(OUTFILENAME).dll" : "$(OUTDIR)" "$(OUTDIR)\libpqdll.obj" "$(INTDIR)\libpqdll.obj" "$(INTDIR)\libpq.res"
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
