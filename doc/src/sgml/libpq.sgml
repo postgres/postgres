@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.57 2001/01/20 20:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.58 2001/03/04 18:54:07 petere Exp $
 -->
 
- <chapter id="libpq-chapter">
-  <title id="libpq">libpq - C Library</title>
+ <chapter id="libpq">
+  <title>libpq - C Library</title>
 
   <para>
    <filename>libpq</filename> is the <acronym>C</acronym>
