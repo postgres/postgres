@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.104 2003/01/06 22:48:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.105 2003/01/07 04:25:29 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -206,6 +206,19 @@ PGconn *PQconnectdb(const char *conninfo)
       Set to 1 to require SSL connection to the backend. <application>Libpq</>
       will then refuse to connect if the server does not support
       SSL. Set to 0 (default) to negotiate with server.
+     </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><literal>service</literal></term>
+     <listitem>
+     <para>
+      Service name to use for additional parameters.  It specifies a service
+      name in pg_service.conf that holds additional connection parameters.
+      This allows applications to specify only a service name so connection parameters 
+      can be centrally maintained.  See <literal>pg_service.conf.sample</> for
+      information on how to set up the file.
      </para>
      </listitem>
     </varlistentry>

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.90 2003/01/06 03:18:26 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.91 2003/01/07 04:25:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -140,8 +140,9 @@ else
 		> $(srcdir)/libpq/pg_hba.conf.sample.no_ipv6
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample.no_ipv6 $(DESTDIR)$(datadir)/pg_hba.conf.sample
 endif
+	$(INSTALL_DATA) $(srcdir)/libpq/pg_service.conf.sample $(DESTDIR)$(datadir)/pg_service.conf.sample
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
-	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
+        $(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)
@@ -179,8 +180,9 @@ endif
 endif
 	$(MAKE) -C catalog uninstall-data
 	rm -f $(DESTDIR)$(datadir)/pg_hba.conf.sample \
+	      $(DESTDIR)$(datadir)/pg_service.conf.sample \
 	      $(DESTDIR)$(datadir)/pg_ident.conf.sample \
-	      $(DESTDIR)$(datadir)/postgresql.conf.sample
+              $(DESTDIR)$(datadir)/postgresql.conf.sample
 
 
 ##########################################################################

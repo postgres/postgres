@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.218 2003/01/06 22:48:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.219 2003/01/07 04:25:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2338,14 +2338,11 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 			return 1;
 		}
 
-		/* As default, set the database name to the name of the service */
+		/* If not already set, set the database name to the name of the service */
 		for (i = 0; options[i].keyword; i++)
 			if (strcmp(options[i].keyword, "dbname") == 0)
-			{
-				if (options[i].val != NULL)
-					free(options[i].val);
-				options[i].val = strdup(service);
-			}
+				if (options[i].val == NULL)
+					options[i].val = strdup(service);
 
 		while ((line = fgets(buf, MAXBUFSIZE - 1, f)) != NULL)
 		{
