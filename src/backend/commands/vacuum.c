@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110.2.3 1999/08/25 12:01:45 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.110.2.4 2000/01/04 17:27:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2405,10 +2405,21 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 					stup = heap_formtuple(sd->rd_att, values, nulls);
 
 					/* ----------------
-					 *	insert the tuple in the relation and get the tuple's oid.
+					 *	Watch out for oversize tuple, which can happen if
+					 *	both of the saved data values are long.
+					 *	Our fallback strategy is just to not store the
+					 *	pg_statistic tuple at all in that case.  (We could
+					 *	replace the values by NULLs and still store the
+					 *	numeric stats, but presently selfuncs.c couldn't
+					 *	do anything useful with that case anyway.)
 					 * ----------------
 					 */
-					heap_insert(sd, stup);
+					if (MAXALIGN(stup->t_len) <= MaxTupleSize)
+					{
+						/* OK to store tuple */
+						heap_insert(sd, stup);
+					}
+
 					pfree(DatumGetPointer(values[3]));
 					pfree(DatumGetPointer(values[4]));
 					pfree(stup);
