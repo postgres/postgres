@@ -841,7 +841,7 @@ Optional Features:
   --enable-nls[=LANGUAGES]  enable Native Language Support
   --disable-shared        do not build shared libraries
   --disable-rpath         do not embed shared library search path in executables
-  --disable-spinlocks     do not use Spinlocks
+  --disable-spinlocks     do not use spinlocks
   --enable-debug          build with debugging symbols (-g)
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
@@ -2384,40 +2384,105 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
+pgac_CFLAGS_before_template=$CFLAGS
+
 #
 # Read the template
 #
 . "$srcdir/src/template/$template" || exit
 
-# The template may have supplied a default setting for CFLAGS.
-# Override this if CFLAGS was set in the original environment.
+# CFLAGS are selected so:
+# If the user specifies something in the environment, that is used.
+# else:  If the template file set something, that is used.
+# else:  If the compiler is GCC, then we use -O2.
+# else:  If the compiler is something else, then we use -0.
+
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
+elif test "$pgac_CFLAGS_before_template" != "$CFLAGS"; then
+  : # (keep what template set)
+elif test "$GCC" = yes; then
+  CFLAGS="-O2"
 else
-  # autoconf already set the default CFLAGS for gcc to be -O2, but we
-  # need to specify -fno-strict-aliasing too in case it's gcc 3.3 or later.
-  if test "$GCC" = yes; then
-    CFLAGS="$CFLAGS -fno-strict-aliasing"
-  fi
+  CFLAGS="-O"
 fi
+
+# Need to specify -fno-strict-aliasing too in case it's gcc 3.3 or later.
+echo "$as_me:$LINENO: checking how to turn off strict aliasing in $CC" >&5
+echo $ECHO_N "checking how to turn off strict aliasing in $CC... $ECHO_C" >&6
+if test "${pgac_cv_prog_cc_no_strict_aliasing+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  pgac_save_CFLAGS=$CFLAGS
+if test "$GCC" = yes; then
+  pgac_try="-fno-strict-aliasing"
+else
+  # Maybe fill in later...
+  pgac_try=
+fi
+
+for pgac_flag in $pgac_try; do
+  CFLAGS="$pgac_save_CFLAGS $pgac_flag"
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_prog_cc_no_strict_aliasing=$pgac_try
+break
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+done
+
+CFLAGS=$pgac_save_CFLAGS
+
+fi
+echo "$as_me:$LINENO: result: $pgac_cv_prog_cc_no_strict_aliasing" >&5
+echo "${ECHO_T}$pgac_cv_prog_cc_no_strict_aliasing" >&6
+
+if test "$ac_env_CFLAGS_set" != set; then
+  CFLAGS="$CFLAGS $pgac_cv_prog_cc_no_strict_aliasing"
+fi
+
 # supply -g if --enable-debug
 if test "$enable_debug" = yes -a "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
 fi
-# default to -O rather than empty CFLAGS; this path will not be taken for
-# gcc (since autoconf supplies -O2), nor if --enable-debug (because -O -g
-# doesn't work on most non-gcc compilers), nor if the template provided
-# some CFLAGS.
-if test "$ac_env_CFLAGS_set" != set -a x"$CFLAGS" = x""; then
-  CFLAGS="-O"
-fi
+
 { echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
 echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
 
 # We already have this in Makefile.win32, but configure needs it too
-if test "$PORTNAME" = "win32"
-then
-	CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32"
+if test "$PORTNAME" = "win32"; then
+  CPPFLAGS="$CPPFLAGS -I$srcdir/src/include/port/win32"
 fi
 
 # Check if the compiler still works with the template settings

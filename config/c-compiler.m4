@@ -1,5 +1,5 @@
 # Macros to detect C compiler features
-# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.8 2003/04/24 21:16:42 tgl Exp $
+# $Header: /cvsroot/pgsql/config/c-compiler.m4,v 1.9 2003/10/25 15:32:11 petere Exp $
 
 
 # PGAC_C_SIGNED
@@ -97,7 +97,7 @@ AC_DEFINE_UNQUOTED(AS_TR_CPP(alignof_$1),
 
 
 # PGAC_C_FUNCNAME_SUPPORT
-# -------------
+# -----------------------
 # Check if the C compiler understands __func__ (C99) or __FUNCTION__ (gcc).
 # Define HAVE_FUNCNAME__FUNC or HAVE_FUNCNAME__FUNCTION accordingly.
 AC_DEFUN([PGAC_C_FUNCNAME_SUPPORT],
@@ -120,3 +120,32 @@ AC_DEFINE(HAVE_FUNCNAME__FUNCTION, 1,
           [Define to 1 if your compiler understands __FUNCTION__.])
 fi
 fi])# PGAC_C_FUNCNAME_SUPPORT
+
+
+# PGAC_PROG_CC_NO_STRICT_ALIASING
+# -------------------------------
+# Find out how to turn off strict aliasing in the C compiler.
+AC_DEFUN([PGAC_PROG_CC_NO_STRICT_ALIASING],
+[AC_CACHE_CHECK([how to turn off strict aliasing in $CC],
+                pgac_cv_prog_cc_no_strict_aliasing,
+[pgac_save_CFLAGS=$CFLAGS
+if test "$GCC" = yes; then
+  pgac_try="-fno-strict-aliasing"
+else
+  # Maybe fill in later...
+  pgac_try=
+fi
+
+for pgac_flag in $pgac_try; do
+  CFLAGS="$pgac_save_CFLAGS $pgac_flag"
+  _AC_COMPILE_IFELSE([AC_LANG_PROGRAM()],
+                     [pgac_cv_prog_cc_no_strict_aliasing=$pgac_try
+break])
+done
+
+CFLAGS=$pgac_save_CFLAGS
+])
+
+if test "$ac_env_CFLAGS_set" != set; then
+  CFLAGS="$CFLAGS $pgac_cv_prog_cc_no_strict_aliasing"
+fi])# PGAC_PROG_CC_NO_STRICT_ALIASING

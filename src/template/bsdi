@@ -1,7 +1,3 @@
-case $host_cpu in
-  i?86)  CFLAGS="$CFLAGS -m486";;
-esac
-
 case $host_os in
   bsdi2.0 | bsdi2.1 | bsdi3*) CC=gcc2;;
 esac

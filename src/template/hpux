@@ -2,5 +2,5 @@ CPPFLAGS="-D_XOPEN_SOURCE_EXTENDED"
 
 if test "$GCC" != yes ; then
   CC="$CC -Ae"
-  CFLAGS="$CFLAGS +O2"
+  CFLAGS="+O2"
 fi

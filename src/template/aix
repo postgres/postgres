@@ -1,7 +1,7 @@
 if test "$GCC" != yes ; then
   case $host_os in
     aix3.2.5 | aix4.1*) ;;
-    *) CFLAGS="$CFLAGS -O2 -qlonglong";;
+    *) CFLAGS="-O2 -qlonglong";;
   esac
-  CFLAGS="$CFLAGS -qmaxmem=16384 -qsrcmsg"
+  CFLAGS="-O -qmaxmem=16384 -qsrcmsg"
 fi

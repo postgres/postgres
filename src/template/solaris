@@ -1,9 +1,8 @@
 if test "$GCC" != yes ; then
   CC="$CC -Xa"			# relaxed ISO C mode
-  CFLAGS="$CFLAGS -O -v"	# -v is like gcc -Wall
+  CFLAGS="-O -v"		# -v is like gcc -Wall
 fi
 
 THREAD_SUPPORT=yes
 NEED_REENTRANT_FUNCS=yes	# 5.6 2003-09-13
 THREAD_LIBS="-pthread"
-

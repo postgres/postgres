@@ -1,5 +1,5 @@
 case $host_cpu in
-  alpha*)   CFLAGS="$CFLAGS -O";;  # alpha has problems with -O2
+  alpha*)   CFLAGS="-O";;  # alpha has problems with -O2
 esac
 
 THREAD_SUPPORT=yes
