@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.83 2001/12/19 19:42:51 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.84 2001/12/23 07:25:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2439,7 +2439,7 @@ StartupXLOG(void)
 			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_IN_RECOVERY)
 		elog(LOG, "database system was interrupted being in recovery at %s\n"
-			 "\tThis propably means that some data blocks are corrupted\n"
+			 "\tThis probably means that some data blocks are corrupted\n"
 			 "\tand you will have to use the last backup for recovery.",
 			 str_time(ControlFile->time));
 	else if (ControlFile->state == DB_IN_PRODUCTION)
