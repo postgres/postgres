@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.18 2001/09/30 22:17:51 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.19 2002/01/03 06:09:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -111,7 +111,7 @@ if [ "$usage" ]; then
         echo "$CMDNAME removes a procedural language from a database."
 	echo
 	echo "Usage:"
-        echo "  $CMDNAME [options] [langname [dbname]]"
+        echo "  $CMDNAME [options] langname [dbname]"
         echo
 	echo "Options:"
 	echo "  -h, --host=HOSTNAME             Database server host"
@@ -121,14 +121,24 @@ if [ "$usage" ]; then
 	echo "  -d, --dbname=DBNAME             Database to remove language from"
 	echo "  -l, --list                      Show a list of currently installed languages"
         echo
-        echo "If 'langname' is not specified, you will be prompted interactively."
-        echo "A database name must be specified."
-        echo
 	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
 
+if [ -z "$dbname" ]; then
+        if [ "$PGUSER" ]; then
+                dbname="$PGUSER"
+        else
+                dbname=`${PATHNAME}pg_id -u -n`
+        fi
+        [ "$?" -ne 0 ] && exit 1
+fi
+
+
+# ----------
+# List option, doesn't need langname
+# ----------
 if [ "$list" ]; then
 	sqlcmd="SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\" FROM pg_language WHERE lanispl = TRUE"
 	if [ "$showsql" = yes ]; then
@@ -140,21 +150,12 @@ fi
 
 
 # ----------
-# Check that we have a database
-# ----------
-if [ -z "$dbname" ]; then
-	echo "$CMDNAME: missing required argument database name" 1>&2
-        echo "Try '$CMDNAME --help' for help." 1>&2
-	exit 1
-fi
-
-
-# ----------
-# If not given on the commandline, ask for the language
+# We can't go any farther without a langname
 # ----------
 if [ -z "$langname" ]; then
-	$ECHO_N "Language to remove from database $dbname: "$ECHO_C
-	read langname
+	echo "$CMDNAME: missing required argument language name" 1>&2
+        echo "Try '$CMDNAME --help' for help." 1>&2
+	exit 1
 fi
 
 PSQL="${PATHNAME}psql -A -t -q $PSQLOPT -d $dbname -c"
