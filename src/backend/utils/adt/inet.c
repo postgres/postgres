@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: inet.c,v 1.9 1998/10/21 16:06:45 momjian Exp $
+ *	$Id: inet.c,v 1.10 1998/10/22 00:35:23 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -146,6 +146,13 @@ cidr_in(char *src)
 		+ ip_addrsize(dst);
 	ip_bits(dst) = bits;
 	return (dst);
+}
+
+/* just a stub */
+char *
+cidr_out(inet *src)
+{
+	return inet_out(src);
 }
 
 /*

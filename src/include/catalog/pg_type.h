@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.50 1998/10/21 16:06:48 momjian Exp $
+ * $Id: pg_type.h,v 1.51 1998/10/22 00:35:26 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -302,7 +302,7 @@ DATA(insert OID = 829 ( macaddr	   PGUID  6 -1 f b t \054 0	0 macaddr_in macaddr
 DESCR("MAC address");
 DATA(insert OID = 869 ( inet	   PGUID  -1 -1 f b t \054 0 0 inet_in inet_out inet_in inet_out i _null_ ));
 DESCR("Host address");
-DATA(insert OID = 650 ( cidr	   PGUID  -1 -1 f b t \054 0 0 cidr_in inet_out cidr_in inet_out i _null_ ));
+DATA(insert OID = 650 ( cidr	   PGUID  -1 -1 f b t \054 0 0 cidr_in cidr_out cidr_in cidr_out i _null_ ));
 DESCR("Network address");
 
 /* OIDS 900 - 999 */

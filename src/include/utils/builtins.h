@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.63 1998/10/21 16:06:49 momjian Exp $
+ * $Id: builtins.h,v 1.64 1998/10/22 00:35:28 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -520,6 +520,7 @@ int inet_cidr_pton(int af, const void *src, void *dst, size_t size, int *used);
 
 /* cidr.c */
 inet	   *cidr_in(char *str);
+char	   *cidr_out(inet *addr);
 
 /* inet.c */
 inet	   *inet_in(char *str);
