@@ -115,6 +115,10 @@ EXPORTS
     _PQsendQueryPrepared     @ 111
     _PQdsplen                @ 112
     _PQserverVersion         @ 113
+    _PQgetssl                @ 114
+    _pg_char_to_encoding     @ 115
+    _pg_valid_server_encoding @ 116
+    _pqsignal                @ 117
 
 ; Aliases for MS compatible names
     PQconnectdb             = _PQconnectdb            
@@ -230,3 +234,7 @@ EXPORTS
     PQsendQueryPrepared     = _PQsendQueryPrepared
     PQdsplen                = _PQdsplen
     PQserverVersion         = _PQserverVersion
+    PQgetssl                = _PQgetssl
+    pg_char_to_encoding     = _pg_char_to_encoding
+    pg_valid_server_encoding = _pg_valid_server_encoding
+    pqsignal                = _pqsignal

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.109 2004/10/16 03:10:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.110 2004/10/16 03:26:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,6 +258,8 @@ extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
 #ifdef USE_SSL
 /* Get the SSL structure associated with a connection */
 extern SSL *PQgetssl(PGconn *conn);
+#else
+extern void *PQgetssl(PGconn *conn);
 #endif
 
 /* Set verbosity for PQerrorMessage and PQresultErrorMessage */

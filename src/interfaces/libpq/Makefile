@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.117 2004/10/12 04:48:36 neilc Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.118 2004/10/16 03:26:43 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ ifeq ($(PORTNAME), win32)
 OBJS += win32.o libpqrc.o
 libpqrc.o : libpq.rc
 	windres -i libpq.rc -o libpqrc.o
+DLL_DEFFILE=libpqdll.def
 ifeq ($(enable_thread_safety), yes)
 # This doesn't work yet because configure test fails.  2004-06-19
 OBJS += pthread-win32.o

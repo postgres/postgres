@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.85 2004/10/15 05:11:00 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.86 2004/10/16 03:26:43 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,6 +31,8 @@
 # DLLTOOL_DEFFLAGS      Additional flags when creating the dll .def file
 # DLLTOOL_LIBFLAGS      Additional flags when creating the lib<module>.a file
 # DLLWRAP_FLAGS         Additional flags to dllwrap
+# DLL_DEFFILE           Use pre-existing .def file instead of auto-generating
+#                       one with all exports in it (win32 only).
 #
 # The module Makefile must also include
 # $(top_builddir)/src/Makefile.global before including this file.
@@ -306,9 +308,14 @@ else # PORTNAME == cygwin
 
 # Cygwin case
 $(shlib) lib$(NAME).a: $(OBJS)
+ifndef DLL_DEFFILE
 	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
 	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
+else
+	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
+	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib lib$(NAME).a
+endif
 
 endif # PORTNAME == cygwin
 
@@ -316,9 +323,14 @@ else # PORTNAME == win32
 
 # win32 case
 $(shlib) lib$(NAME).a: $(OBJS)
+ifndef DLL_DEFFILE
 	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
 	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
+else
+	$(DLLWRAP) $(LDFLAGS_SL) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(DLL_DEFFILE) $(OBJS) $(SHLIB_LINK)
+	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(DLL_DEFFILE) --output-lib lib$(NAME).a
+endif
 
 endif # PORTNAME == win32
 

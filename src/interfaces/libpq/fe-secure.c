@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.54 2004/09/28 00:06:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.55 2004/10/16 03:26:43 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -1200,6 +1200,12 @@ PQgetssl(PGconn *conn)
 	if (!conn)
 		return NULL;
 	return conn->ssl;
+}
+#else
+void *
+PQgetssl(PGconn *conn)
+{
+	return NULL;
 }
 #endif   /* USE_SSL */
 

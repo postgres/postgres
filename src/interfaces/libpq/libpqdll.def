@@ -115,3 +115,7 @@ EXPORTS
     PQsendQueryPrepared     @ 111
     PQdsplen                @ 112
     PQserverVersion         @ 113
+    PQgetssl                @ 114
+    pg_char_to_encoding     @ 115
+    pg_valid_server_encoding @ 116
+    pqsignal                @ 117
