@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.106 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.107 2004/09/10 04:10:53 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -169,12 +169,12 @@ describeFunctions(const char *pattern, bool verbose)
 	initPQExpBuffer(&buf);
 
 	printfPQExpBuffer(&buf,
-			"SELECT CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
-			  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
-					  "  n.nspname as \"%s\",\n"
+					  "SELECT n.nspname as \"%s\",\n"
 					  "  p.proname as \"%s\",\n"
-				  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\"",
-					  _("Result data type"), _("Schema"), _("Name"),
+					  "  CASE WHEN p.proretset THEN 'setof ' ELSE '' END ||\n"
+					  "  pg_catalog.format_type(p.prorettype, NULL) as \"%s\",\n"
+					  "  pg_catalog.oidvectortypes(p.proargtypes) as \"%s\"",
+					  _("Schema"), _("Name"), _("Result data type"), 
 					  _("Argument data types"));
 
 	if (verbose)
@@ -210,7 +210,7 @@ describeFunctions(const char *pattern, bool verbose)
 					   "n.nspname", "p.proname", NULL,
 					   "pg_catalog.pg_function_is_visible(p.oid)");
 
-	appendPQExpBuffer(&buf, "ORDER BY 2, 3, 1, 4;");
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2, 3, 4;");
 
 	res = PSQLexec(buf.data, false);
 	termPQExpBuffer(&buf);
@@ -1477,6 +1477,11 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 					  _("table"), _("view"), _("index"), _("sequence"),
 					  _("special"), _("Type"), _("Owner"));
 
+	if (showIndexes)
+		appendPQExpBuffer(&buf,
+						  ",\n c2.relname as \"%s\"",
+						  _("Table"));
+
 	if (verbose)
 		appendPQExpBuffer(&buf,
 		  ",\n  pg_catalog.obj_description(c.oid, 'pg_class') as \"%s\"",
@@ -1484,13 +1489,11 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 
 	if (showIndexes)
 		appendPQExpBuffer(&buf,
-						  ",\n c2.relname as \"%s\""
 						  "\nFROM pg_catalog.pg_class c"
 			  "\n     JOIN pg_catalog.pg_index i ON i.indexrelid = c.oid"
 			  "\n     JOIN pg_catalog.pg_class c2 ON i.indrelid = c2.oid"
 		"\n     LEFT JOIN pg_catalog.pg_user u ON u.usesysid = c.relowner"
-						  "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n",
-						  _("Table"));
+						  "\n     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace\n");
 	else
 		appendPQExpBuffer(&buf,
 						  "\nFROM pg_catalog.pg_class c"

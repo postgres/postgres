@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.33 2004/08/29 04:13:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.34 2004/09/10 04:10:53 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -249,9 +249,10 @@ do_lo_list(void)
 	printQueryOpt myopt = pset.popt;
 
 	snprintf(buf, sizeof(buf),
-			 "SELECT loid as \"ID\", pg_catalog.obj_description(loid, 'pg_largeobject') as \"%s\"\n"
-		 "FROM (SELECT DISTINCT loid FROM pg_catalog.pg_largeobject) x\n"
-			 "ORDER BY \"ID\"",
+			 "SELECT loid as \"ID\",\n"
+			 "  pg_catalog.obj_description(loid, 'pg_largeobject') as \"%s\"\n"
+			 "FROM (SELECT DISTINCT loid FROM pg_catalog.pg_largeobject) x\n"
+			 "ORDER BY 1",
 			 gettext("Description"));
 
 	res = PSQLexec(buf, false);
