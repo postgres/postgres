@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.140 2002/11/23 03:59:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.141 2002/11/25 03:36:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	if (stmt->row)
 		TRIGGER_SETT_ROW(tgtype);
 
-	for (i = 0; i < 2 && stmt->actions[i]; i++)
+	for (i = 0; stmt->actions[i]; i++)
 	{
 		switch (stmt->actions[i])
 		{
