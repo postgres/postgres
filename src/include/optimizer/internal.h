@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.6 1997/06/02 11:19:33 vadim Exp $
+ * $Id: internal.h,v 1.7 1997/06/03 03:15:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,6 @@ extern int BushyPlanFlag;
 /*#define joininfo_inactive(joininfo)	joininfo->inactive */
 
 /* GEQO switch according to number of relations in a query */
-#define GEQO_RELS 7
+#define GEQO_RELS 6
 
 #endif	/* INTERNAL_H */
