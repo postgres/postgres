@@ -1671,7 +1671,8 @@
            
     UPDATE shoelace_data SET
            sl_avail = shoelace_data.sl_avail + shoelace_arrive.arr_quant
-     FROM shoelace_arrive shoelace_arrive, shoelace_data shoelace_data,
+     FROM shoelace_arrive shoelace_arrive,
+          shoelace_data shoelace_data,
           shoelace_data s
     WHERE s.sl_name = shoelace_arrive.sl_name
       AND shoelace_data.sl_name = s.sl_name;

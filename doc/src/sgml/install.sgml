@@ -30,7 +30,8 @@
     </ListItem>
     <ListItem>
      <Para>
-      User <literal>postgres</literal> is the <ProductName>Postgres</ProductName> superuser.
+      User <literal>postgres</literal> is the 
+      <ProductName>Postgres</ProductName> superuser.
      </Para>
     </ListItem>
     <ListItem>
