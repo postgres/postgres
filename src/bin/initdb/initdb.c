@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.44 2004/07/19 02:47:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.45 2004/08/01 05:59:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,7 @@ char	   *lc_messages = "";
 char	   *username = "";
 bool		pwprompt = false;
 char       *pwfilename = NULL;
+char       *authmethod = "";
 bool		debug = false;
 bool		noclean = false;
 bool		show_setting = false;
@@ -117,6 +118,16 @@ bool		output_failed = false;
 /* defaults */
 int			n_connections = 10;
 int			n_buffers = 50;
+
+/*
+ * Warning messages for authentication methods
+ */
+char *authtrust_warning =											\
+	"# CAUTION: Configuring the system for local \"trust\" authentication allows\n"
+	"# any local user to connect as any PostgreSQL user, including the database\n"
+	"# superuser. If you do not trust all your local users, use another\n"
+	"# authenication method.\n";
+char *authwarning = NULL;
 
 /*
  * Centralized knowledge of switches to pass to backend
@@ -1114,7 +1125,16 @@ setup_config(void)
 							  "host    all         all         ::1",
 							  "#host    all         all         ::1");
 #endif
-
+	
+	/* Replace default authentication methods */
+	conflines = replace_token(conflines,
+							 "@authmethod@",
+							  authmethod);
+	
+	conflines = replace_token(conflines,
+							  "@authcomment@",
+							  strcmp(authmethod,"trust") ? "" : authtrust_warning);
+		
 	snprintf(path, sizeof(path), "%s/pg_hba.conf", pg_data);
 
 	writefile(path, conflines);
@@ -1971,6 +1991,7 @@ usage(const char *progname)
 			 "                            in the respective category (default taken from\n"
 			 "                            environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
+	printf(_("  -A, --auth=method         default authentication method for local connections\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
 	printf(_("  --pwfile=filename         read password for the new superuser from file\n"));
@@ -2004,6 +2025,7 @@ main(int argc, char *argv[])
 		{"lc-time", required_argument, NULL, 6},
 		{"lc-messages", required_argument, NULL, 7},
 		{"no-locale", no_argument, NULL, 8},
+		{"auth", required_argument, NULL, 'A'}, 
 		{"pwprompt", no_argument, NULL, 'W'},
 		{"pwfile", required_argument, NULL, 9},
 		{"username", required_argument, NULL, 'U'},
@@ -2052,10 +2074,13 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "dD:E:L:nU:W", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:L:nU:WA:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
+			case 'A':
+				authmethod = xstrdup(optarg);
+				break;
 			case 'D':
 				pg_data = xstrdup(optarg);
 				break;
@@ -2134,6 +2159,43 @@ main(int argc, char *argv[])
 	if (pwprompt && pwfilename)
 	{
 		fprintf(stderr, _("%s: you cannot specify both password prompt and password file\n"), progname);
+		exit(1);
+	}
+	
+	if (authmethod == NULL || !strlen(authmethod))
+	{
+		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections.\n"
+						"You can change this by editing pg_hba.conf or using the -A flag the\n"
+						"next time you run initdb.\n");
+		authmethod="trust";
+	}
+
+	if (strcmp(authmethod,"md5") &&
+		strcmp(authmethod,"ident") && 
+		strncmp(authmethod,"ident ",6) && /* ident with space = param */
+		strcmp(authmethod,"trust") &&
+#ifdef USE_PAM
+		strcmp(authmethod,"pam") &&
+		strncmp(authmethod,"pam ",4) && /* pam with space = param */
+#endif
+		strcmp(authmethod,"crypt") &&
+		strcmp(authmethod,"password")
+		)
+		/*
+		 *	Kerberos methods not listed because they are not supported
+		 * 	over local connections and are rejected in hba.c
+		 */
+	{
+		fprintf(stderr, _("%s: unknown authentication method \"%s\".\n"), progname, authmethod);
+		exit(1);
+	}
+
+	if ((!strcmp(authmethod,"md5") ||
+		 !strcmp(authmethod,"crypt") ||
+		 !strcmp(authmethod,"password")) &&
+		 !(pwprompt || pwfilename))
+	{
+		fprintf(stderr, _("%s: you need to specify a password for the superuser to enable %s authentication.\n"), progname, authmethod);
 		exit(1);
 	}
 
@@ -2448,6 +2510,9 @@ main(int argc, char *argv[])
 	vacuum_db();
 
 	make_template0();
+
+	if (authwarning != NULL)
+		fprintf(stderr, authwarning);
 
 	printf(_("\nSuccess. You can now start the database server using:\n\n"
 		   "    %s%s%s/postmaster -D %s%s%s\n"

@@ -48,20 +48,16 @@
 # Put your actual configuration here
 # ----------------------------------
 #
-# CAUTION: The default configuration allows any local user to connect
-# using any PostgreSQL user name, including the superuser, over either
-# Unix-domain sockets or TCP/IP.  If you are on a multiple-user
-# machine, the default configuration is probably too liberal for you.
-# Change it to use something other than "trust" authentication.
-#
 # If you want to allow non-local connections, you need to add more
 # "host" records.  Also, remember TCP/IP connections are only enabled
 # if you enable "tcpip_socket" in postgresql.conf.
 
+@authcomment@
+
 # TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
 
-local   all         all                                             trust
+local   all         all                                             @authmethod@
 # IPv4-style local connections:
-host    all         all         127.0.0.1         255.255.255.255   trust
+host    all         all         127.0.0.1         255.255.255.255   @authmethod@
 # IPv6-style local connections:
-host    all         all         ::1/128                             trust
+host    all         all         ::1/128                             @authmethod@
