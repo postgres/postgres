@@ -8,7 +8,7 @@
 
 #undef mkdir	/* no reason to use that macro because we ignore the 2nd arg */
 
-#include "dirent.h"
+#include <dirent.h>
 
 
 int
@@ -21,14 +21,17 @@ copydir(char *fromdir,char *todir)
 
 	if (mkdir(todir) != 0)
 	{
-		elog(ERROR, "could not make directory '%s'",todir);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create directory \"%s\": %m", todir)));
 		return 1;
 	}
 	xldir = opendir(fromdir);
 	if (xldir == NULL)
 	{
-		closedir(xldir);
-		elog(ERROR, "could not open directory '%s'",fromdir);
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open directory \"%s\": %m", fromdir)));
 		return 1;
 	}
 
@@ -38,8 +41,13 @@ copydir(char *fromdir,char *todir)
 			snprintf(tofl, MAXPGPATH, "%s/%s", todir, xlde->d_name);
 			if (CopyFile(fromfl,tofl,TRUE) < 0)
 			{
+				int		save_errno = errno;
+
 				closedir(xldir);
-				elog(ERROR,"could not create file %s\n",todir);
+				errno = save_errno;
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not copy file \"%s\": %m", fromfl)));
 				return 1;
 			}
 	}

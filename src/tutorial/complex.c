@@ -38,10 +38,10 @@ complex_in(char *str)
 	Complex    *result;
 
 	if (sscanf(str, " ( %lf , %lf )", &x, &y) != 2)
-	{
-		elog(ERROR, "complex_in: error in parsing \"%s\"", str);
-		return NULL;
-	}
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for complex: \"%s\"", str)));
+
 	result = (Complex *) palloc(sizeof(Complex));
 	result->x = x;
 	result->y = y;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.59 2002/09/04 20:31:45 momjian Exp $
+ * $Id: buf_internals.h,v 1.60 2003/07/27 17:10:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ typedef struct sbufdesc
  * Each backend has its own BufferLocks[] array holding flag bits
  * showing what locks it has set on each buffer.
  *
- * We have to free these locks in elog(ERROR)...
+ * We have to free these locks during ereport(ERROR)...
  */
 #define BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
 #define BL_PIN_COUNT_LOCK	(1 << 1)

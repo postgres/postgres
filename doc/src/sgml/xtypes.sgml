@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.17 2003/04/10 01:22:45 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xtypes.sgml,v 1.18 2003/07/27 17:10:06 tgl Exp $
 -->
 
  <sect1 id="xtypes">
@@ -70,14 +70,15 @@ typedef struct Complex {
 Complex *
 complex_in(char *str)
 {
-    double x, y;
-    Complex *result;
+    double      x,
+                y;
+    Complex    *result;
 
     if (sscanf(str, " ( %lf , %lf )", &amp;x, &amp;y) != 2)
-    {
-        elog(ERROR, "complex_in: error in parsing %s", str);
-        return NULL;
-    }
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+                 errmsg("invalid input syntax for complex: \"%s\"", str)));
+
     result = (Complex *) palloc(sizeof(Complex));
     result-&gt;x = x;
     result-&gt;y = y;

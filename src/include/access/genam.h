@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.39 2003/02/24 00:57:17 tgl Exp $
+ * $Id: genam.h,v 1.40 2003/07/27 17:10:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typedef bool (*IndexBulkDeleteCallback) (ItemPointer itemptr, void *state);
 typedef struct IndexVacuumCleanupInfo
 {
 	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
-	int			message_level;	/* elog level for progress messages */
+	int			message_level;	/* ereport level for progress messages */
 } IndexVacuumCleanupInfo;
 
 /* Struct for heap-or-index scans of system tables */

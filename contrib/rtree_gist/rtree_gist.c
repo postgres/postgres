@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/rtree_gist.c,v 1.6 2002/09/04 20:31:08 momjian Exp $
+ *	$Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/rtree_gist.c,v 1.7 2003/07/27 17:10:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,7 @@
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"
-#include "utils/palloc.h"
 #include "utils/geo_decls.h"
-#include "utils/elog.h"
 
 typedef Datum (*RDF) (PG_FUNCTION_ARGS);
 typedef Datum (*BINARY_UNION) (Datum, Datum, int *);

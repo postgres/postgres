@@ -2,8 +2,7 @@
 #define __LTREE_H__
 
 #include "postgres.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
+
 #include "utils/builtins.h"
 
 typedef struct

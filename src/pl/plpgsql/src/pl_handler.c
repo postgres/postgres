@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.14 2003/07/25 23:37:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.15 2003/07/27 17:10:07 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -65,7 +65,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	 * Connect to SPI manager
 	 */
 	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "could not connect to SPI manager");
+		elog(ERROR, "SPI_connect failed");
 
 	/* Find or compile the function */
 	func = plpgsql_compile(fcinfo);
@@ -84,7 +84,7 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	 * Disconnect from SPI manager
 	 */
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish() failed");
+		elog(ERROR, "SPI_finish failed");
 
 	return retval;
 }

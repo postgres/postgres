@@ -9,8 +9,6 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
 

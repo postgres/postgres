@@ -10,8 +10,6 @@
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
@@ -283,7 +281,7 @@ clean_fakeval(ITEM * ptr, int4 *len)
 	resroot = clean_fakeval_intree(root, &result);
 	if (result != V_UNKNOWN)
 	{
-		elog(NOTICE, "Query contains only stopword(s) or doesn't contain lexem(s), ignored");
+		elog(NOTICE, "query contains only stopword(s) or doesn't contain lexeme(s), ignored");
 		*len = 0;
 		return NULL;
 	}

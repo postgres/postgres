@@ -11,8 +11,6 @@
 #include "access/gist.h"
 #include "access/rtree.h"
 #include "lib/stringinfo.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
 #include "utils/builtins.h"
 
 #include "cubedata.h"

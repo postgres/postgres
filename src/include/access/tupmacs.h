@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.22 2002/08/24 15:00:46 tgl Exp $
+ * $Id: tupmacs.h,v 1.23 2003/07/27 17:10:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@
 				*(Datum *) (T) = (newdatum); \
 				break; \
 			default: \
-				elog(ERROR, "store_att_byval: unsupported byval length %d", \
+				elog(ERROR, "unsupported byval length: %d", \
 					 (int) (attlen)); \
 				break; \
 		} \
@@ -177,7 +177,7 @@
 				*(int32 *) (T) = DatumGetInt32(newdatum); \
 				break; \
 			default: \
-				elog(ERROR, "store_att_byval: unsupported byval length %d", \
+				elog(ERROR, "unsupported byval length: %d", \
 					 (int) (attlen)); \
 				break; \
 		} \
