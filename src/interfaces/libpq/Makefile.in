@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.19 1998/06/12 18:36:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.20 1998/06/15 21:01:47 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 # Shared library stuff
 shlib := 
 install-shlib-dep :=
-ifeq ($(PORTNAME), linux)
+ifeq ($(PORTNAME), linux_i386)
   install-shlib-dep := install-shlib
   shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -shared -soname libpq.so.$(SO_MAJOR_VERSION)
@@ -45,13 +45,13 @@ ifeq ($(PORTNAME), bsd)
     CFLAGS += $(CFLAGS_SL)
   endif
 endif
-ifeq ($(PORTNAME), i386_solaris)
+ifeq ($(PORTNAME), solaris_i386)
   install-shlib-dep := install-shlib
   shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -G -z text
   CFLAGS += $(CFLAGS_SL)
 endif
-ifeq ($(PORTNAME), sparc_solaris)
+ifeq ($(PORTNAME), solaris_sparc)
   install-shlib-dep := install-shlib
   shlib := libpq.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LDFLAGS_SL = -G

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.16 1998/04/06 16:52:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.17 1998/06/15 21:01:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,16 +42,16 @@ OBJS = pgenv.o pgconnection.o pgtransdb.o pgcursordb.o pglobject.o
 # Shared library stuff
 SHLIB := 
 INSTALL-SHLIB-DEP :=
-ifeq ($(PORTNAME), i386_solaris)
-  INSTALL-SHLIB-DEP := install-shlib
-  SHLIB := libpq++.so.1
-  LDFLAGS_SL = -G -z text -shared -soname $(SHLIB)
-  CFLAGS += $(CFLAGS_SL)
-endif
-ifeq ($(PORTNAME), linux)
+ifeq ($(PORTNAME), linux_i386)
   INSTALL-SHLIB-DEP := install-shlib
   SHLIB := libpq++.so.1
   LDFLAGS_SL = -shared -soname $(SHLIB)
+  CFLAGS += $(CFLAGS_SL)
+endif
+ifeq ($(PORTNAME), solaris_i386)
+  INSTALL-SHLIB-DEP := install-shlib
+  SHLIB := libpq++.so.1
+  LDFLAGS_SL = -G -z text -shared -soname $(SHLIB)
   CFLAGS += $(CFLAGS_SL)
 endif
 ifeq ($(PORTNAME), hpux)

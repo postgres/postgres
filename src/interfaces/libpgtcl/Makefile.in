@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.16 1998/06/12 18:36:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.17 1998/06/15 21:01:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ shlib             :=
 
 LIBPQ			= -L$(SRCDIR)/interfaces/libpq -lpq
 
-ifeq ($(PORTNAME), linux)
+ifeq ($(PORTNAME), linux_i386)
   install-shlib-dep	:= install-shlib
   shlib		:= libpgtcl.so.1
   CFLAGS		+= $(CFLAGS_SL)
@@ -49,14 +49,14 @@ ifeq ($(PORTNAME), bsd)
   endif
 endif
 
-ifeq ($(PORTNAME), i386_solaris)
+ifeq ($(PORTNAME), solaris_i386)
   install-shlib-dep	:= install-shlib
   shlib			:= libpgtcl.so.1
   LDFLAGS_SL		= -G -z text
   CFLAGS		+= $(CFLAGS_SL)
 endif
 
-ifeq ($(PORTNAME), sparc_solaris)
+ifeq ($(PORTNAME), solaris_sparc)
   install-shlib-dep     := install-shlib
   shlib                 := libpgtcl.so.1
   LDFLAGS_SL            = -G
