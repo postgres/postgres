@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.99 2001/02/14 21:35:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.100 2001/03/14 23:55:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				 * A projection must match an attribute name of the rel.
 				 */
 				if (get_attnum(argrelid, funcname) == InvalidAttrNumber)
-					elog(ERROR, "Functions on sets are not yet supported");
+					elog(ERROR, "No such attribute or function '%s'",
+						 funcname);
 			}
 
 			if (retval)
@@ -448,8 +449,15 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			}
 			else if (IsA(rteorjoin, JoinExpr))
 			{
-				elog(ERROR,
-					 "function applied to tuple is not supported for joins");
+				/*
+				 * We have f(x) or more likely x.f where x is a join and f
+				 * is not one of the attribute names of the join (else we'd
+				 * have recognized it above).  We don't support functions on
+				 * join tuples (since we don't have a named type for the join
+				 * tuples), so error out.
+				 */
+				elog(ERROR, "No such attribute or function %s.%s",
+					 refname, funcname);
 				rte = NULL;		/* keep compiler quiet */
 			}
 			else
@@ -471,8 +479,12 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * not an Oid.
 			 */
 			if (rte->relname == NULL)
-				elog(ERROR,
-					 "function applied to tuple is not supported for subSELECTs");
+			{
+				/* Here, we have an unrecognized attribute of a sub-select */
+				elog(ERROR, "No such attribute or function %s.%s",
+					 refname, funcname);
+			}
+
 			toid = typenameTypeId(rte->relname);
 
 			/* replace it in the arg list */
