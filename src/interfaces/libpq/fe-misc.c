@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.87 2003/03/06 03:16:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.88 2003/04/02 00:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #ifdef WIN32
 #include "win32.h"

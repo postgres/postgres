@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.148 2003/03/29 11:31:51 petere Exp $
+ *	$Id: pqcomm.c,v 1.149 2003/04/02 00:49:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,7 +204,11 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	struct addrinfo *addrs = NULL;
 	struct addrinfo hint;
 
-	Assert(family == AF_INET6 || family == AF_INET || family == AF_UNIX);
+#ifdef HAVE_UNIX_SOCKETS
+	Assert(family == AF_UNIX || isAF_INETx(family));
+#else
+	Assert(isAF_INETx(family));
+#endif
 
 	/* Initialize hint structure */
 	MemSet(&hint, 0, sizeof(hint));
@@ -229,8 +233,8 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	ret = getaddrinfo2(hostName, service, &hint, &addrs);
 	if (ret || addrs == NULL)
 	{
-		elog(LOG, "server socket failure: getaddrinfo2()%s: %s",
-			 (family == AF_INET6) ? " using IPv6" : "", gai_strerror(ret));
+		elog(LOG, "server socket failure: getaddrinfo2(): %s",
+			 gai_strerror(ret));
 		if (addrs != NULL)
 			freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;

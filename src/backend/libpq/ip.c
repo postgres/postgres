@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * ip.c
- *	  Handles IPv6
+ *	  IPv6-aware network access.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.3 2003/03/29 11:31:51 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.4 2003/04/02 00:49:28 tgl Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -17,11 +17,8 @@
  *-------------------------------------------------------------------------
  */
 
-#ifndef FRONTEND
-#include "postgres.h"
-#else
-#include "postgres_fe.h"
-#endif
+/* This is intended to be used in both frontend and backend, so use c.h */
+#include "c.h"
 
 #include <errno.h>
 #include <unistd.h>
@@ -36,18 +33,25 @@
 #include <arpa/inet.h>
 #include <sys/file.h>
 
-#include "libpq/libpq.h"
-#include "miscadmin.h"
+#include "libpq/ip.h"
 
-#ifdef FRONTEND
-#define elog fprintf
-#define LOG  stderr
+
+static int   rangeSockAddrAF_INET(const SockAddr *addr,
+								  const SockAddr *netaddr,
+								  const SockAddr *netmask);
+
+#ifdef HAVE_IPV6
+static int   rangeSockAddrAF_INET6(const SockAddr *addr,
+								   const SockAddr *netaddr,
+								   const SockAddr *netmask);
+static void  convSockAddr6to4(const SockAddr *src, SockAddr *dst);
 #endif
 
-#if defined(HAVE_UNIX_SOCKETS)
+#ifdef HAVE_UNIX_SOCKETS
 static int getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 							struct addrinfo **result);
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif
+
 
 /*
  *	getaddrinfo2 - get address info for Unix, IPv4 and IPv6 sockets
@@ -59,15 +63,11 @@ getaddrinfo2(const char *hostname, const char *servname,
 #ifdef HAVE_UNIX_SOCKETS
 	if (hintp != NULL && hintp->ai_family == AF_UNIX)
 		return getaddrinfo_unix(servname, hintp, result);
-	else
-	{
-#endif   /* HAVE_UNIX_SOCKETS */
-		/* NULL has special meaning to getaddrinfo */
-		return getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
-						   servname, hintp, result);
-#ifdef HAVE_UNIX_SOCKETS
-	}
-#endif   /* HAVE_UNIX_SOCKETS */
+#endif
+
+	/* NULL has special meaning to getaddrinfo */
+	return getaddrinfo((!hostname || hostname[0] == '\0') ? NULL : hostname,
+					   servname, hintp, result);
 }
 
 
@@ -98,11 +98,11 @@ freeaddrinfo2(int hint_ai_family, struct addrinfo *ai)
 
 #if defined(HAVE_UNIX_SOCKETS)
 /* -------
- *	getaddrinfo_unix - get unix socket info using IPv6
+ *	getaddrinfo_unix - get unix socket info using IPv6-compatible API
  *
  *	Bug:  only one addrinfo is set even though hintsp is NULL or
  *		  ai_socktype is 0
- *		  AI_CANNONNAME does not support.
+ *		  AI_CANONNAME is not supported.
  * -------
  */
 static int
@@ -128,7 +128,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 
 	if (hints.ai_family != AF_UNIX)
 	{
-		elog(LOG, "hints.ai_family is invalid in getaddrinfo_unix()\n");
+		/* shouldn't have been called */
 		return EAI_ADDRFAMILY;
 	}
 
@@ -247,8 +247,6 @@ SockAddr_pton(SockAddr *sa, const char *src)
 }
 
 
-
-
 /*
  *	isAF_INETx - check to see if sa is AF_INET or AF_INET6
  */
@@ -267,7 +265,8 @@ isAF_INETx(const int family)
 
 
 int
-rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr, const SockAddr *netmask)
+rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr,
+			  const SockAddr *netmask)
 {
 	if (addr->sa.sa_family == AF_INET)
 		return rangeSockAddrAF_INET(addr, netaddr, netmask);
@@ -279,7 +278,7 @@ rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr, const SockAddr *net
 		return 0;
 }
 
-int
+static int
 rangeSockAddrAF_INET(const SockAddr *addr, const SockAddr *netaddr,
 					 const SockAddr *netmask)
 {
@@ -294,8 +293,10 @@ rangeSockAddrAF_INET(const SockAddr *addr, const SockAddr *netaddr,
 		return 0;
 }
 
+
 #ifdef HAVE_IPV6
-int
+
+static int
 rangeSockAddrAF_INET6(const SockAddr *addr, const SockAddr *netaddr,
 					  const SockAddr *netmask)
 {
@@ -324,7 +325,7 @@ rangeSockAddrAF_INET6(const SockAddr *addr, const SockAddr *netaddr,
 	return 1;
 }
 
-void
+static void
 convSockAddr6to4(const SockAddr *src, SockAddr *dst)
 {
 	char		addr_str[INET6_ADDRSTRLEN];
@@ -337,6 +338,8 @@ convSockAddr6to4(const SockAddr *src, SockAddr *dst)
 		+ (src->in6.sin6_addr.s6_addr[14] << 8)
 		+ (src->in6.sin6_addr.s6_addr[13] << 16)
 		+ (src->in6.sin6_addr.s6_addr[12] << 24);
+
 	SockAddr_ntop(src, addr_str, INET6_ADDRSTRLEN, 0);
 }
-#endif
+
+#endif /* HAVE_IPV6 */

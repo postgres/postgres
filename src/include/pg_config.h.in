@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.42 2003/03/29 11:31:51 petere Exp $
+ * $Id: pg_config.h.in,v 1.43 2003/04/02 00:49:28 tgl Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -465,6 +465,9 @@
 /* Set to 1 if you have gethostname() */
 #undef HAVE_GETHOSTNAME
 
+/* Set to 1 if you have getpeereid() */
+#undef HAVE_GETPEEREID
+
 /* Set to 1 if struct tm has a tm_zone member */
 #undef HAVE_TM_ZONE
 
@@ -588,6 +591,9 @@
 
 /* Set to 1 if you have struct sockaddr_un */
 #undef HAVE_STRUCT_SOCKADDR_UN
+
+/* Set to 1 if you have struct addrinfo */
+#undef HAVE_STRUCT_ADDRINFO
 
 /* Set to 1 if you have krb5_ticket.enc_part2 */
 #undef HAVE_KRB5_TICKET_ENC_PART2

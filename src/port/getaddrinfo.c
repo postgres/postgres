@@ -1,11 +1,27 @@
-/* $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.1 2003/03/29 11:31:52 petere Exp $ */
+/*-------------------------------------------------------------------------
+ *
+ * getaddrinfo.c
+ *	  Support getaddrinfo() on platforms that don't have it.
+ *
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.2 2003/04/02 00:49:28 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 
+/* This is intended to be used in both frontend and backend, so use c.h */
 #include "c.h"
-#include "getaddrinfo.h"
-#include <netdb.h>
+
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include "getaddrinfo.h"
 
 
 int
@@ -16,7 +32,8 @@ getaddrinfo(const char *node, const char *service,
 	struct addrinfo *ai;
 	struct sockaddr_in sin, *psin;
 
-	if (!hints || (hints->ai_family != AF_INET && hints->ai_family != AF_UNSPEC))
+	if (!hints ||
+		(hints->ai_family != AF_INET && hints->ai_family != AF_UNSPEC))
 		return EAI_FAMILY;
 
 	if (hints->ai_socktype != SOCK_STREAM)
@@ -24,6 +41,10 @@ getaddrinfo(const char *node, const char *service,
 
 	if (!node && !service)
 		return EAI_NONAME;
+
+	memset(&sin, 0, sizeof(sin));
+
+	sin.sin_family = AF_INET;
 
 	if (node)
 	{
@@ -66,7 +87,7 @@ getaddrinfo(const char *node, const char *service,
 	}
 
 	if (service)
-		sin.sin_port = htons((unsigned short)atoi(service));
+		sin.sin_port = htons((unsigned short) atoi(service));
 
 	ai = malloc(sizeof(*ai));
 	if (!ai)
@@ -78,11 +99,11 @@ getaddrinfo(const char *node, const char *service,
 		return EAI_MEMORY;
 	}
 
-	memcpy(psin, &sin, sizeof(sin));
+	memcpy(psin, &sin, sizeof(*psin));
 
-	ai->ai_family = hints->ai_family;
-	ai->ai_socktype = hints->ai_socktype;
-	ai->ai_protocol = hints->ai_protocol;
+	ai->ai_family = AF_INET;
+	ai->ai_socktype = SOCK_STREAM;
+	ai->ai_protocol = IPPROTO_TCP;
 	ai->ai_addrlen = sizeof(*psin);
 	ai->ai_addr = (struct sockaddr *) psin;
 	ai->ai_canonname = NULL;
@@ -106,9 +127,10 @@ freeaddrinfo(struct addrinfo *res)
 }
 
 
-const char*
+const char *
 gai_strerror(int errcode)
 {
+#ifdef HAVE_HSTRERROR
 	int hcode;
 
 	switch (errcode)
@@ -129,4 +151,21 @@ gai_strerror(int errcode)
 	}
 
 	return hstrerror(hcode);
+
+#else /* !HAVE_HSTRERROR */
+
+	switch (errcode)
+	{
+		case EAI_NONAME:
+			return "Unknown host";
+		case EAI_NODATA:
+			return "No address associated with name";
+		case EAI_AGAIN:
+			return "Host name lookup failure";
+		case EAI_FAIL:
+		default:
+			return "Unknown server error";
+	}
+
+#endif /* HAVE_HSTRERROR */
 }

@@ -1,28 +1,32 @@
+/*-------------------------------------------------------------------------
+ *
+ * ip.h
+ *	  Definitions for IPv6-aware network access.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * $Id: ip.h,v 1.3 2003/04/02 00:49:28 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 #ifndef IP_H
 #define IP_H
-#include "c.h"
-#include <sys/socket.h>
-#include <netdb.h>
-#include "libpq/pqcomm.h"
-#ifndef HAVE_GETADDRINFO
+
 #include "getaddrinfo.h"
-#endif
+#include "libpq/pqcomm.h"
 
-int   getaddrinfo2(const char *hostname, const char *servname,
-				   const struct addrinfo *hintp, struct addrinfo **result);
-void  freeaddrinfo2(int hint_ai_family, struct addrinfo *ai);
 
-char *SockAddr_ntop(const SockAddr *sa, char *dst, size_t cnt, int v4conv);
-int   SockAddr_pton(SockAddr *sa, const char *src);
-int   isAF_INETx(const int family);
-int   rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr,
-			const SockAddr *netmask);
-int   rangeSockAddrAF_INET(const SockAddr *addr, const SockAddr *netaddr, 
-			   const SockAddr *netmask);
-#ifdef HAVE_IPV6
-int   rangeSockAddrAF_INET6(const SockAddr *addr, const SockAddr *netaddr, 
-			    const SockAddr *netmask);
-void  convSockAddr6to4(const SockAddr *src, SockAddr *dst);
-#endif
+extern int   getaddrinfo2(const char *hostname, const char *servname,
+						  const struct addrinfo *hintp,
+						  struct addrinfo **result);
+extern void  freeaddrinfo2(int hint_ai_family, struct addrinfo *ai);
+
+extern char *SockAddr_ntop(const SockAddr *sa, char *dst, size_t cnt,
+						   int v4conv);
+extern int   SockAddr_pton(SockAddr *sa, const char *src);
+
+extern int   isAF_INETx(const int family);
+extern int   rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr,
+						   const SockAddr *netmask);
 
 #endif /* IP_H */

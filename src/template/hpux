@@ -1,6 +1,8 @@
 if test "$GCC" = yes ; then
-  CFLAGS=-O2
+  CPPFLAGS="-D_XOPEN_SOURCE_EXTENDED"
+  CFLAGS="-O2"
 else
   CC="$CC -Ae"
-  CFLAGS=+O2
+  CPPFLAGS="-D_XOPEN_SOURCE_EXTENDED"
+  CFLAGS="+O2"
 fi

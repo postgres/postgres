@@ -1,11 +1,33 @@
-/* $Header: /cvsroot/pgsql/src/include/getaddrinfo.h,v 1.1 2003/03/29 11:31:51 petere Exp $ */
-
+/*-------------------------------------------------------------------------
+ *
+ * getaddrinfo.h
+ *	  Support getaddrinfo() on platforms that don't have it.
+ *
+ *
+ * Note: we use our own routines on platforms that don't HAVE_STRUCT_ADDRINFO,
+ * whether or not the library routine getaddrinfo() can be found.  This
+ * policy is needed because on some platforms a manually installed libbind.a
+ * may provide getaddrinfo(), yet the system headers may not provide the
+ * struct definitions needed to call it.  To avoid conflict with the libbind
+ * definition in such cases, we rename our routines to pg_xxx() via macros.
+ *
+ * This code will also work on platforms where struct addrinfo is defined
+ * in the system headers but no getaddrinfo() can be located.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * $Id: getaddrinfo.h,v 1.2 2003/04/02 00:49:28 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 #ifndef GETADDRINFO_H
 #define GETADDRINFO_H
 
-#include "c.h"
+#include <sys/socket.h>
 #include <netdb.h>
 
+
+#ifndef HAVE_STRUCT_ADDRINFO
 
 struct addrinfo {
 	int     ai_flags;
@@ -17,13 +39,6 @@ struct addrinfo {
 	char   *ai_canonname;
 	struct addrinfo *ai_next;
 };
-
-
-int getaddrinfo(const char *node, const char *service,
-				const struct addrinfo *hints, struct addrinfo **res);
-void freeaddrinfo(struct addrinfo *res);
-const char *gai_strerror(int errcode);
-
 
 #define EAI_BADFLAGS	-1
 #define EAI_NONAME		-2
@@ -39,5 +54,33 @@ const char *gai_strerror(int errcode);
 
 #define AI_PASSIVE		0x0001
 #define AI_NUMERICHOST	0x0004
+
+#endif /* HAVE_STRUCT_ADDRINFO */
+
+
+#ifndef HAVE_GETADDRINFO
+
+/* Rename private copies per comments above */
+#ifdef getaddrinfo
+#undef getaddrinfo
+#endif
+#define getaddrinfo pg_getaddrinfo
+
+#ifdef freeaddrinfo
+#undef freeaddrinfo
+#endif
+#define freeaddrinfo pg_freeaddrinfo
+
+#ifdef gai_strerror
+#undef gai_strerror
+#endif
+#define gai_strerror pg_gai_strerror
+
+extern int getaddrinfo(const char *node, const char *service,
+					   const struct addrinfo *hints, struct addrinfo **res);
+extern void freeaddrinfo(struct addrinfo *res);
+extern const char *gai_strerror(int errcode);
+
+#endif /* HAVE_GETADDRINFO */
 
 #endif /* GETADDRINFO_H */

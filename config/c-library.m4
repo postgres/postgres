@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.15 2003/01/28 21:57:12 petere Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.16 2003/04/02 00:49:27 tgl Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -60,6 +60,16 @@ AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
 #include <sys/un.h>
 #endif
 ])])# PGAC_STRUCT_SOCKADDR_UN
+
+
+# PGAC_STRUCT_ADDRINFO
+# -----------------------
+# If `struct addrinfo' exists, define HAVE_STRUCT_ADDRINFO.
+AC_DEFUN([PGAC_STRUCT_ADDRINFO],
+[AC_CHECK_TYPES([struct addrinfo], [], [],
+[#include <sys/socket.h>
+#include <netdb.h>
+])])# PGAC_STRUCT_ADDRINFO
 
 
 # PGAC_FUNC_POSIX_SIGNALS
