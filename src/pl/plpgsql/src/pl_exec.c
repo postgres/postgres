@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.102 2004/05/30 23:40:41 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.103 2004/06/04 00:07:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2969,17 +2969,12 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 				Datum *value,
 				bool *isnull)
 {
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
-	PLpgSQL_trigarg *trigarg;
-	int			tgargno;
-	int			fno;
-
 	switch (datum->dtype)
 	{
 		case PLPGSQL_DTYPE_VAR:
-			var = (PLpgSQL_var *) datum;
+		{
+			PLpgSQL_var *var = (PLpgSQL_var *) datum;
+
 			*typeid = var->datatype->typoid;
 			*value = var->value;
 			*isnull = var->isnull;
@@ -2989,9 +2984,56 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 						 errmsg("type of \"%s\" does not match that when preparing the plan",
 								var->refname)));
 			break;
+		}
+
+		case PLPGSQL_DTYPE_ROW:
+		{
+			PLpgSQL_row *row = (PLpgSQL_row *) datum;
+			HeapTuple	tup;
+
+			if (!row->rowtupdesc) /* should not happen */
+				elog(ERROR, "row variable has no tupdesc");
+			tup = make_tuple_from_row(estate, row, row->rowtupdesc);
+			if (tup == NULL)	/* should not happen */
+				elog(ERROR, "row not compatible with its own tupdesc");
+			*typeid = row->rowtupdesc->tdtypeid;
+			*value = HeapTupleGetDatum(tup);
+			*isnull = false;
+			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of \"%s\" does not match that when preparing the plan",
+								row->refname)));
+			break;
+		}
+
+		case PLPGSQL_DTYPE_REC:
+		{
+			PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
+
+			if (!HeapTupleIsValid(rec->tup))
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+						 errmsg("record \"%s\" is not assigned yet",
+								rec->refname),
+						 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+			*typeid = rec->tupdesc->tdtypeid;
+			*value = HeapTupleGetDatum(rec->tup);
+			*isnull = false;
+			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("type of \"%s\" does not match that when preparing the plan",
+								rec->refname)));
+			break;
+		}
 
 		case PLPGSQL_DTYPE_RECFIELD:
-			recfield = (PLpgSQL_recfield *) datum;
+		{
+			PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) datum;
+			PLpgSQL_rec *rec;
+			int			fno;
+
 			rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
 			if (!HeapTupleIsValid(rec->tup))
 				ereport(ERROR,
@@ -3013,9 +3055,13 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 						 errmsg("type of \"%s.%s\" does not match that when preparing the plan",
 								rec->refname, recfield->fieldname)));
 			break;
+		}
 
 		case PLPGSQL_DTYPE_TRIGARG:
-			trigarg = (PLpgSQL_trigarg *) datum;
+		{
+			PLpgSQL_trigarg *trigarg = (PLpgSQL_trigarg *) datum;
+			int			tgargno;
+
 			*typeid = TEXTOID;
 			tgargno = exec_eval_integer(estate, trigarg->argnum, isnull);
 			if (*isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
@@ -3034,6 +3080,7 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 						 errmsg("type of tgargv[%d] does not match that when preparing the plan",
 								tgargno)));
 			break;
+		}
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", datum->dtype);

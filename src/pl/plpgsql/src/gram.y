@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.54 2004/06/03 22:56:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.55 2004/06/04 00:07:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1589,17 +1589,15 @@ read_sql_construct(int until,
 				break;
 
 			case T_ROW:
-				/* XXX make this work someday */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("passing a whole row variable into a SQL command is not implemented")));
+				params[nparams] = yylval.row->rowno;
+				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			case T_RECORD:
-				/* XXX make this work someday */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("passing a whole record variable into a SQL command is not implemented")));
+				params[nparams] = yylval.rec->recno;
+				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			default:
@@ -1810,17 +1808,15 @@ make_select_stmt(void)
 				break;
 
 			case T_ROW:
-				/* XXX make this work someday */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("passing a whole row variable into a SQL command is not implemented")));
+				params[nparams] = yylval.row->rowno;
+				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			case T_RECORD:
-				/* XXX make this work someday */
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("passing a whole record variable into a SQL command is not implemented")));
+				params[nparams] = yylval.rec->recno;
+				snprintf(buf, sizeof(buf), " $%d ", ++nparams);
+				plpgsql_dstring_append(&ds, buf);
 				break;
 
 			default:
