@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.5 2000/03/30 05:30:42 tgl Exp $
+ * $Id: pgconnection.h,v 1.6 2000/04/14 01:00:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,14 @@
 extern "C" {
 #include "config.h"
 }
+
+/* We assume that the C++ compiler will have these keywords, even though
+ * config.h may have #define'd them to empty because C compiler doesn't.
+ */
+#undef const
+#undef inline
+#undef signed
+#undef volatile
 
 #ifdef HAVE_CXX_STRING_HEADER
 #include <string>
