@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.153 2003/10/24 20:44:19 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.154 2003/10/24 21:09:08 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1538,7 +1538,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem class="osname">BSD/OS</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.4</entry>
-	<entry>2002-10-25,
+	<entry>2003-10-24,
 	 Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry>4.3</entry>
        </row>
@@ -1661,9 +1661,8 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem class="osname">OpenBSD</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.3</entry>
-	<entry>2002-11-14,
-	 3.1 Magnus Naeslund (<email>mag@fbab.net</email>),
-	 3.2 Christopher Kings-Lynne (<email>chriskl@familyhealth.com.au</email>)</entry>
+	<entry>2003-10-24,
+	 3.2 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
         <entry></entry>
        </row>
        <row>
