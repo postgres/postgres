@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.51 2000/07/12 02:36:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.52 2000/07/14 22:17:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,49 +64,37 @@ rtbuild(PG_FUNCTION_ARGS)
 {
 	Relation		heap = (Relation) PG_GETARG_POINTER(0);
 	Relation		index = (Relation) PG_GETARG_POINTER(1);
-	int32			natts = PG_GETARG_INT32(2);
-	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
-	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(4);
-	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(5);
+	IndexInfo	   *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	Node		   *oldPred = (Node *) PG_GETARG_POINTER(3);
 #ifdef NOT_USED
-	bool			unique = PG_GETARG_BOOL(6);
-	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(7);
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
 #endif
-	HeapScanDesc scan;
-	AttrNumber	i;
+	HeapScanDesc hscan;
 	HeapTuple	htup;
 	IndexTuple	itup;
-	TupleDesc	hd,
-				id;
-	InsertIndexResult res;
-	Datum	   *d;
-	bool	   *nulls;
-	Buffer		buffer = InvalidBuffer;
-	int			nb,
-				nh,
-				ni;
-
+	TupleDesc	htupdesc,
+				itupdesc;
+	Datum		attdata[INDEX_MAX_KEYS];
+	char		nulls[INDEX_MAX_KEYS];
+	int			nhtups,
+				nitups;
+	Node	   *pred = indexInfo->ii_Predicate;
 #ifndef OMIT_PARTIAL_INDEX
-	ExprContext *econtext;
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
-
 #endif
-	Node	   *pred,
-			   *oldPred;
+	ExprContext *econtext;
+	InsertIndexResult res = NULL;
+	Buffer		buffer = InvalidBuffer;
 	RTSTATE		rtState;
 
 	initRtstate(&rtState, index);
-
-	pred = predInfo->pred;
-	oldPred = predInfo->oldPred;
 
 	/*
 	 * We expect to be called exactly once for any index relation. If
 	 * that's not the case, big trouble's what we have.
 	 */
-
-	if (oldPred == NULL && (nb = RelationGetNumberOfBlocks(index)) != 0)
+	if (oldPred == NULL && RelationGetNumberOfBlocks(index) != 0)
 		elog(ERROR, "%s already contains data", RelationGetRelationName(index));
 
 	/* initialize the root page (if this is a new index) */
@@ -117,44 +105,48 @@ rtbuild(PG_FUNCTION_ARGS)
 		WriteBuffer(buffer);
 	}
 
-	/* init the tuple descriptors and get set for a heap scan */
-	hd = RelationGetDescr(heap);
-	id = RelationGetDescr(index);
-	d = (Datum *) palloc(natts * sizeof(*d));
-	nulls = (bool *) palloc(natts * sizeof(*nulls));
+	/* get tuple descriptors for heap and index relations */
+	htupdesc = RelationGetDescr(heap);
+	itupdesc = RelationGetDescr(index);
 
 	/*
 	 * If this is a predicate (partial) index, we will need to evaluate
 	 * the predicate using ExecQual, which requires the current tuple to
 	 * be in a slot of a TupleTable.  In addition, ExecQual must have an
 	 * ExprContext referring to that slot.	Here, we initialize dummy
-	 * TupleTable and ExprContext objects for this purpose. --Nels, Feb
-	 * '92
+	 * TupleTable and ExprContext objects for this purpose. --Nels, Feb 92
+	 *
+	 * We construct the ExprContext anyway since we need a per-tuple
+	 * temporary memory context for function evaluation -- tgl July 00
 	 */
 #ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
-		ExecSetSlotDescriptor(slot, hd);
-		econtext = MakeExprContext(slot, TransactionCommandContext);
+		ExecSetSlotDescriptor(slot, htupdesc);
 	}
 	else
 	{
 		tupleTable = NULL;
 		slot = NULL;
-		econtext = NULL;
 	}
+	econtext = MakeExprContext(slot, TransactionCommandContext);
+#else
+	econtext = MakeExprContext(NULL, TransactionCommandContext);
 #endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* count the tuples as we insert them */
-	nh = ni = 0;
+	nhtups = nitups = 0;
 
-	scan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
+	/* start a heap scan */
+	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
 
-	while (HeapTupleIsValid(htup = heap_getnext(scan, 0)))
+	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
 	{
-		nh++;
+		MemoryContextReset(econtext->ecxt_per_tuple_memory);
+
+		nhtups++;
 
 #ifndef OMIT_PARTIAL_INDEX
 		/*
@@ -163,11 +155,10 @@ rtbuild(PG_FUNCTION_ARGS)
 		 */
 		if (oldPred != NULL)
 		{
-			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
-				ni++;
+				nitups++;
 				continue;
 			}
 		}
@@ -178,47 +169,27 @@ rtbuild(PG_FUNCTION_ARGS)
 		 */
 		if (pred != NULL)
 		{
-			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (!ExecQual((List *) pred, econtext, false))
 				continue;
 		}
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-		ni++;
+		nitups++;
 
 		/*
 		 * For the current heap tuple, extract all the attributes we use
 		 * in this index, and note which are null.
 		 */
-
-		for (i = 1; i <= natts; i++)
-		{
-			int			attoff;
-			bool		attnull;
-
-			/*
-			 * Offsets are from the start of the tuple, and are
-			 * zero-based; indices are one-based.  The next call returns i
-			 * - 1.  That's data hiding for you.
-			 */
-
-			attoff = AttrNumberGetAttrOffset(i);
-
-			/*
-			 * d[attoff] = HeapTupleGetAttributeValue(htup, buffer,
-			 */
-			d[attoff] = GetIndexValue(htup,
-									  hd,
-									  attoff,
-									  attnum,
-									  finfo,
-									  &attnull);
-			nulls[attoff] = (attnull ? 'n' : ' ');
-		}
+		FormIndexDatum(indexInfo,
+					   htup,
+					   htupdesc,
+					   econtext->ecxt_per_tuple_memory,
+					   attdata,
+					   nulls);
 
 		/* form an index tuple and point it at the heap tuple */
-		itup = index_formtuple(id, &d[0], nulls);
+		itup = index_formtuple(itupdesc, attdata, nulls);
 		itup->t_tid = htup->t_self;
 
 		/*
@@ -235,15 +206,15 @@ rtbuild(PG_FUNCTION_ARGS)
 	}
 
 	/* okay, all heap tuples are indexed */
-	heap_endscan(scan);
+	heap_endscan(hscan);
 
 #ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
 	{
 		ExecDropTupleTable(tupleTable, true);
-		FreeExprContext(econtext);
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
+	FreeExprContext(econtext);
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
@@ -264,19 +235,15 @@ rtbuild(PG_FUNCTION_ARGS)
 
 		heap_close(heap, NoLock);
 		index_close(index);
-		UpdateStats(hrelid, nh, inplace);
-		UpdateStats(irelid, ni, inplace);
+		UpdateStats(hrelid, nhtups, inplace);
+		UpdateStats(irelid, nitups, inplace);
 		if (oldPred != NULL && !inplace)
 		{
-			if (ni == nh)
+			if (nitups == nhtups)
 				pred = NULL;
 			UpdateIndexPredicate(irelid, oldPred, pred);
 		}
 	}
-
-	/* be tidy */
-	pfree(nulls);
-	pfree(d);
 
 	PG_RETURN_VOID();
 }

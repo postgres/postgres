@@ -12,7 +12,6 @@
 #ifndef GIST_H
 #define GIST_H
 
-#include "access/funcindex.h"
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"

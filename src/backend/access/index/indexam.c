@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.45 2000/06/13 07:34:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.46 2000/07/14 22:17:30 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -423,57 +423,4 @@ index_getprocid(Relation irel,
 	Assert(loc != NULL);
 
 	return loc[(natts * (procnum - 1)) + (attnum - 1)];
-}
-
-Datum
-GetIndexValue(HeapTuple tuple,
-			  TupleDesc hTupDesc,
-			  int attOff,
-			  AttrNumber *attrNums,
-			  FuncIndexInfo *fInfo,
-			  bool *attNull)
-{
-	Datum		returnVal;
-
-	if (PointerIsValid(fInfo) && FIgetProcOid(fInfo) != InvalidOid)
-	{
-		FmgrInfo				flinfo;
-		FunctionCallInfoData	fcinfo;
-		int						i;
-		bool					anynull = false;
-
-		/*
-		 * XXX ought to store lookup info in FuncIndexInfo so it need not
-		 * be repeated on each call?
-		 */
-		fmgr_info(FIgetProcOid(fInfo), &flinfo);
-
-		MemSet(&fcinfo, 0, sizeof(fcinfo));
-		fcinfo.flinfo = &flinfo;
-		fcinfo.nargs = FIgetnArgs(fInfo);
-
-		for (i = 0; i < FIgetnArgs(fInfo); i++)
-		{
-			fcinfo.arg[i] = heap_getattr(tuple,
-										 attrNums[i],
-										 hTupDesc,
-										 &fcinfo.argnull[i]);
-			anynull |= fcinfo.argnull[i];
-		}
-		if (flinfo.fn_strict && anynull)
-		{
-			/* force a null result for strict function */
-			returnVal = (Datum) 0;
-			*attNull = true;
-		}
-		else
-		{
-			returnVal = FunctionCallInvoke(&fcinfo);
-			*attNull = fcinfo.isnull;
-		}
-	}
-	else
-		returnVal = heap_getattr(tuple, attrNums[attOff], hTupDesc, attNull);
-
-	return returnVal;
 }

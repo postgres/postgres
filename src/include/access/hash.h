@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.34 2000/06/19 03:54:35 tgl Exp $
+ * $Id: hash.h,v 1.35 2000/07/14 22:17:53 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -17,7 +17,6 @@
 #ifndef HASH_H
 #define HASH_H
 
-#include "access/funcindex.h"
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"

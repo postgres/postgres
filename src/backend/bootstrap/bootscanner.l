@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.17 2000/01/26 05:56:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.18 2000/07/14 22:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,6 @@
 #include "postgres.h"
 
 #include "access/attnum.h"
-#include "access/funcindex.h"
 #include "access/htup.h"
 #include "access/itup.h"
 #include "access/skey.h"

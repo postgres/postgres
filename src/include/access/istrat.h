@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.17 2000/06/08 22:37:36 momjian Exp $
+ * $Id: istrat.h,v 1.18 2000/07/14 22:17:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,12 @@ extern StrategyNumber RelationGetStrategy(Relation relation,
 			   AttrNumber attributeNumber, StrategyEvaluation evaluation,
 					RegProcedure procedure);
 extern void IndexSupportInitialize(IndexStrategy indexStrategy,
-					   RegProcedure *indexSupport, Oid indexObjectId,
-			  Oid accessMethodObjectId, StrategyNumber maxStrategyNumber,
-		 StrategyNumber maxSupportNumber, AttrNumber maxAttributeNumber);
-
+								   RegProcedure *indexSupport,
+								   bool *isUnique,
+								   Oid indexObjectId,
+								   Oid accessMethodObjectId,
+								   StrategyNumber maxStrategyNumber,
+								   StrategyNumber maxSupportNumber,
+								   AttrNumber maxAttributeNumber);
 
 #endif	 /* ISTRAT_H */

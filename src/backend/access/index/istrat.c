@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.45 2000/06/08 22:36:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.46 2000/07/14 22:17:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,6 +533,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 void
 IndexSupportInitialize(IndexStrategy indexStrategy,
 					   RegProcedure *indexSupport,
+					   bool *isUnique,
 					   Oid indexObjectId,
 					   Oid accessMethodObjectId,
 					   StrategyNumber maxStrategyNumber,
@@ -544,6 +545,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	ScanKeyData entry[2];
 	Relation	operatorRelation;
 	HeapTuple	tuple;
+	Form_pg_index iform;
 	StrategyMap map;
 	AttrNumber	attributeNumber;
 	int			attributeIndex;
@@ -568,7 +570,12 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	}
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "IndexSupportInitialize: corrupted catalogs");
+		elog(ERROR, "IndexSupportInitialize: no pg_index entry for index %u",
+			 indexObjectId);
+
+	iform = (Form_pg_index) GETSTRUCT(tuple);
+
+	*isUnique = iform->indisunique;
 
 	maxStrategyNumber = AMStrategies(maxStrategyNumber);
 
@@ -578,10 +585,6 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	 */
 	for (attributeIndex = 0; attributeIndex < maxAttributeNumber; attributeIndex++)
 	{
-		Form_pg_index iform;
-
-		iform = (Form_pg_index) GETSTRUCT(tuple);
-
 		if (!OidIsValid(iform->indkey[attributeIndex]))
 		{
 			if (attributeIndex == InvalidAttrNumber)

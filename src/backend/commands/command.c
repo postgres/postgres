@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.88 2000/07/05 23:11:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.89 2000/07/14 22:17:42 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1205,7 +1205,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	char				toast_relname[NAMEDATALEN + 1];
 	char				toast_idxname[NAMEDATALEN + 1];
 	Relation			toast_rel;
-	AttrNumber			attNums[1];
+	IndexInfo		   *indexInfo;
 	Oid					classObjectId[1];
 
 	/*
@@ -1334,11 +1334,20 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	CommandCounterIncrement();
 
 	/* create index on chunk_id */
-	attNums[0] = 1;
+
+	indexInfo = makeNode(IndexInfo);
+	indexInfo->ii_NumIndexAttrs = 1;
+	indexInfo->ii_NumKeyAttrs = 1;
+	indexInfo->ii_KeyAttrNumbers[0] = 1;
+	indexInfo->ii_Predicate = NULL;
+	indexInfo->ii_FuncOid = InvalidOid;
+	indexInfo->ii_Unique = false;
+
 	classObjectId[0] = OID_OPS_OID;
-	index_create(toast_relname, toast_idxname, NULL, NULL, BTREE_AM_OID,
-				 1, attNums, classObjectId,
-				 (Node *) NULL, false, false, false, true);
+
+	index_create(toast_relname, toast_idxname, indexInfo,
+				 BTREE_AM_OID, classObjectId,
+				 false, false, true);
 
 	/* make the index visible in this transaction */
 	CommandCounterIncrement();

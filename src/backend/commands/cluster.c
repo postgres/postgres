@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.57 2000/07/04 06:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.58 2000/07/14 22:17:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,35 +198,31 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	Relation	OldIndex,
 				NewHeap;
 	HeapTuple	Old_pg_index_Tuple,
-				Old_pg_index_relation_Tuple,
-				pg_proc_Tuple;
+				Old_pg_index_relation_Tuple;
 	Form_pg_index Old_pg_index_Form;
 	Form_pg_class Old_pg_index_relation_Form;
-	Form_pg_proc pg_proc_Form;
+	IndexInfo  *indexInfo;
 	char	   *NewIndexName;
-	AttrNumber *attnumP;
-	int			natts;
-	FuncIndexInfo *finfo;
 
 	NewHeap = heap_open(OIDNewHeap, AccessExclusiveLock);
 	OldIndex = index_open(OIDOldIndex);
 
 	/*
 	 * OK. Create a new (temporary) index for the one that's already here.
-	 * To do this I get the info from pg_index, re-build the FunctInfo if
-	 * I have to, and add a new index with a temporary name.
+	 * To do this I get the info from pg_index, and add a new index with
+	 * a temporary name.
 	 */
-	Old_pg_index_Tuple = SearchSysCacheTuple(INDEXRELID,
+	Old_pg_index_Tuple = SearchSysCacheTupleCopy(INDEXRELID,
 							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
-											 0, 0, 0);
-
+												 0, 0, 0);
 	Assert(Old_pg_index_Tuple);
 	Old_pg_index_Form = (Form_pg_index) GETSTRUCT(Old_pg_index_Tuple);
 
-	Old_pg_index_relation_Tuple = SearchSysCacheTuple(RELOID,
-							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
-													  0, 0, 0);
+	indexInfo = BuildIndexInfo(Old_pg_index_Tuple);
 
+	Old_pg_index_relation_Tuple = SearchSysCacheTupleCopy(RELOID,
+							ObjectIdGetDatum(RelationGetRelid(OldIndex)),
+														  0, 0, 0);
 	Assert(Old_pg_index_relation_Tuple);
 	Old_pg_index_relation_Form = (Form_pg_class) GETSTRUCT(Old_pg_index_relation_Tuple);
 
@@ -234,50 +230,12 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	NewIndexName = palloc(NAMEDATALEN); /* XXX */
 	snprintf(NewIndexName, NAMEDATALEN, "temp_%x", OIDOldIndex);
 
-	/*
-	 * Ugly as it is, the only way I have of working out the number of
-	 * attribues is to count them. Mostly there'll be just one but I've
-	 * got to be sure.
-	 */
-	for (attnumP = &(Old_pg_index_Form->indkey[0]), natts = 0;
-		 natts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
-		 attnumP++, natts++);
-
-	/*
-	 * If this is a functional index, I need to rebuild the functional
-	 * component to pass it to the defining procedure.
-	 */
-	if (Old_pg_index_Form->indproc != InvalidOid)
-	{
-		finfo = (FuncIndexInfo *) palloc(sizeof(FuncIndexInfo));
-		FIgetnArgs(finfo) = natts;
-		FIgetProcOid(finfo) = Old_pg_index_Form->indproc;
-
-		pg_proc_Tuple = SearchSysCacheTuple(PROCOID,
-							ObjectIdGetDatum(Old_pg_index_Form->indproc),
-											0, 0, 0);
-
-		Assert(pg_proc_Tuple);
-		pg_proc_Form = (Form_pg_proc) GETSTRUCT(pg_proc_Tuple);
-		namecpy(&(finfo->funcName), &(pg_proc_Form->proname));
-		natts = 1;				/* function result is a single column */
-	}
-	else
-	{
-		finfo = (FuncIndexInfo *) NULL;
-	}
-
 	index_create(RelationGetRelationName(NewHeap),
 				 NewIndexName,
-				 finfo,
-				 NULL,			/* type info is in the old index */
+				 indexInfo,
 				 Old_pg_index_relation_Form->relam,
-				 natts,
-				 Old_pg_index_Form->indkey,
 				 Old_pg_index_Form->indclass,
-				 (Node *) NULL,	/* XXX where's the predicate? */
 				 Old_pg_index_Form->indislossy,
-				 Old_pg_index_Form->indisunique,
 				 Old_pg_index_Form->indisprimary,
 				 allowSystemTableMods);
 

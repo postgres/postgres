@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.60 2000/07/12 02:36:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.61 2000/07/14 22:17:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,43 +45,33 @@ btbuild(PG_FUNCTION_ARGS)
 {
 	Relation		heap = (Relation) PG_GETARG_POINTER(0);
 	Relation		index = (Relation) PG_GETARG_POINTER(1);
-	int32			natts = PG_GETARG_INT32(2);
-	AttrNumber	   *attnum = (AttrNumber *) PG_GETARG_POINTER(3);
-	FuncIndexInfo  *finfo = (FuncIndexInfo *) PG_GETARG_POINTER(4);
-	PredInfo	   *predInfo = (PredInfo *) PG_GETARG_POINTER(5);
-	bool			unique = PG_GETARG_BOOL(6);
+	IndexInfo	   *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
+	Node		   *oldPred = (Node *) PG_GETARG_POINTER(3);
 #ifdef NOT_USED
-	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(7);
+	IndexStrategy	istrat = (IndexStrategy) PG_GETARG_POINTER(4);
 #endif
 	HeapScanDesc hscan;
 	HeapTuple	htup;
 	IndexTuple	itup;
 	TupleDesc	htupdesc,
 				itupdesc;
-	Datum	   *attdata;
-	bool	   *nulls;
-	InsertIndexResult res = 0;
+	Datum		attdata[INDEX_MAX_KEYS];
+	char		nulls[INDEX_MAX_KEYS];
 	int			nhtups,
 				nitups;
-	int			i;
-	BTItem		btitem;
-
+	Node	   *pred = indexInfo->ii_Predicate;
 #ifndef OMIT_PARTIAL_INDEX
-	ExprContext *econtext = (ExprContext *) NULL;
-	TupleTable	tupleTable = (TupleTable) NULL;
-	TupleTableSlot *slot = (TupleTableSlot *) NULL;
-
+	TupleTable	tupleTable;
+	TupleTableSlot *slot;
 #endif
-	Node	   *pred,
-			   *oldPred;
+	ExprContext *econtext;
+	InsertIndexResult res = NULL;
 	BTSpool    *spool = NULL;
+	BTItem		btitem;
 	bool		usefast;
 
 	/* note that this is a new btree */
 	BuildingBtree = true;
-
-	pred = predInfo->pred;
-	oldPred = predInfo->oldPred;
 
 	/*
 	 * bootstrap processing does something strange, so don't use
@@ -104,17 +94,15 @@ btbuild(PG_FUNCTION_ARGS)
 	htupdesc = RelationGetDescr(heap);
 	itupdesc = RelationGetDescr(index);
 
-	/* get space for data items that'll appear in the index tuple */
-	attdata = (Datum *) palloc(natts * sizeof(Datum));
-	nulls = (bool *) palloc(natts * sizeof(bool));
-
 	/*
 	 * If this is a predicate (partial) index, we will need to evaluate
 	 * the predicate using ExecQual, which requires the current tuple to
 	 * be in a slot of a TupleTable.  In addition, ExecQual must have an
 	 * ExprContext referring to that slot.	Here, we initialize dummy
-	 * TupleTable and ExprContext objects for this purpose. --Nels, Feb
-	 * '92
+	 * TupleTable and ExprContext objects for this purpose. --Nels, Feb 92
+	 *
+	 * We construct the ExprContext anyway since we need a per-tuple
+	 * temporary memory context for function evaluation -- tgl July 00
 	 */
 #ifndef OMIT_PARTIAL_INDEX
 	if (pred != NULL || oldPred != NULL)
@@ -122,7 +110,6 @@ btbuild(PG_FUNCTION_ARGS)
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
 		ExecSetSlotDescriptor(slot, htupdesc);
-		econtext = MakeExprContext(slot, TransactionCommandContext);
 
 		/*
 		 * we never want to use sort/build if we are extending an existing
@@ -133,22 +120,29 @@ btbuild(PG_FUNCTION_ARGS)
 		 */
 		usefast = false;
 	}
+	else
+	{
+		tupleTable = NULL;
+		slot = NULL;
+	}
+	econtext = MakeExprContext(slot, TransactionCommandContext);
+#else
+	econtext = MakeExprContext(NULL, TransactionCommandContext);
 #endif	 /* OMIT_PARTIAL_INDEX */
 
-	/* start a heap scan */
 	/* build the index */
 	nhtups = nitups = 0;
 
 	if (usefast)
-	{
-		spool = _bt_spoolinit(index, unique);
-		res = (InsertIndexResult) NULL;
-	}
+		spool = _bt_spoolinit(index, indexInfo->ii_Unique);
 
+	/* start a heap scan */
 	hscan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
 
 	while (HeapTupleIsValid(htup = heap_getnext(hscan, 0)))
 	{
+		MemoryContextReset(econtext->ecxt_per_tuple_memory);
+
 		nhtups++;
 
 #ifndef OMIT_PARTIAL_INDEX
@@ -158,7 +152,6 @@ btbuild(PG_FUNCTION_ARGS)
 		 */
 		if (oldPred != NULL)
 		{
-			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (ExecQual((List *) oldPred, econtext, false))
 			{
@@ -173,7 +166,6 @@ btbuild(PG_FUNCTION_ARGS)
 		 */
 		if (pred != NULL)
 		{
-			/* SetSlotContents(slot, htup); */
 			slot->val = htup;
 			if (!ExecQual((List *) pred, econtext, false))
 				continue;
@@ -186,27 +178,12 @@ btbuild(PG_FUNCTION_ARGS)
 		 * For the current heap tuple, extract all the attributes we use
 		 * in this index, and note which are null.
 		 */
-
-		for (i = 1; i <= natts; i++)
-		{
-			int			attoff;
-			bool		attnull;
-
-			/*
-			 * Offsets are from the start of the tuple, and are
-			 * zero-based; indices are one-based.  The next call returns i
-			 * - 1.  That's data hiding for you.
-			 */
-
-			attoff = AttrNumberGetAttrOffset(i);
-			attdata[attoff] = GetIndexValue(htup,
-											htupdesc,
-											attoff,
-											attnum,
-											finfo,
-											&attnull);
-			nulls[attoff] = (attnull ? 'n' : ' ');
-		}
+		FormIndexDatum(indexInfo,
+					   htup,
+					   htupdesc,
+					   econtext->ecxt_per_tuple_memory,
+					   attdata,
+					   nulls);
 
 		/* form an index tuple and point it at the heap tuple */
 		itup = index_formtuple(itupdesc, attdata, nulls);
@@ -246,7 +223,7 @@ btbuild(PG_FUNCTION_ARGS)
 		if (usefast)
 			_bt_spool(btitem, spool);
 		else
-			res = _bt_doinsert(index, btitem, unique, heap);
+			res = _bt_doinsert(index, btitem, indexInfo->ii_Unique, heap);
 
 		pfree(btitem);
 		pfree(itup);
@@ -261,9 +238,9 @@ btbuild(PG_FUNCTION_ARGS)
 	if (pred != NULL || oldPred != NULL)
 	{
 		ExecDropTupleTable(tupleTable, true);
-		FreeExprContext(econtext);
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
+	FreeExprContext(econtext);
 
 	/*
 	 * if we are doing bottom-up btree build, finish the build by (1)
@@ -305,10 +282,6 @@ btbuild(PG_FUNCTION_ARGS)
 		heap_close(heap, NoLock);
 		index_close(index);
 
-		/*
-		 * UpdateStats(hrelid, nhtups, true); UpdateStats(irelid, nitups,
-		 * false);
-		 */
 		UpdateStats(hrelid, nhtups, inplace);
 		UpdateStats(irelid, nitups, inplace);
 		if (oldPred != NULL)
@@ -319,9 +292,6 @@ btbuild(PG_FUNCTION_ARGS)
 				UpdateIndexPredicate(irelid, oldPred, pred);
 		}
 	}
-
-	pfree(nulls);
-	pfree(attdata);
 
 	/* all done */
 	BuildingBtree = false;
@@ -361,8 +331,7 @@ btinsert(PG_FUNCTION_ARGS)
 
 	btitem = _bt_formitem(itup);
 
-	res = _bt_doinsert(rel, btitem,
-					   IndexIsUnique(RelationGetRelid(rel)), heapRel);
+	res = _bt_doinsert(rel, btitem, rel->rd_uniqueindex, heapRel);
 
 	pfree(btitem);
 	pfree(itup);

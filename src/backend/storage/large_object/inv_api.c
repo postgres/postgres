@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.73 2000/07/04 06:11:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.74 2000/07/14 22:17:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,12 +87,12 @@ static int	_inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln);
 LargeObjectDesc *
 inv_create(int flags)
 {
-	int			file_oid;
 	LargeObjectDesc *retval;
+	Oid			file_oid;
 	Relation	r;
 	Relation	indr;
 	TupleDesc	tupdesc;
-	AttrNumber	attNums[1];
+	IndexInfo  *indexInfo;
 	Oid			classObjectId[1];
 	char		objname[NAMEDATALEN];
 	char		indname[NAMEDATALEN];
@@ -109,17 +109,13 @@ inv_create(int flags)
 	sprintf(indname, "xinx%u", file_oid);
 
 	if (RelnameFindRelid(objname) != InvalidOid)
-	{
 		elog(ERROR,
 		  "internal error: %s already exists -- cannot create large obj",
 			 objname);
-	}
 	if (RelnameFindRelid(indname) != InvalidOid)
-	{
 		elog(ERROR,
 		  "internal error: %s already exists -- cannot create large obj",
 			 indname);
-	}
 
 	/* this is pretty painful...  want a tuple descriptor */
 	tupdesc = CreateTemplateTupleDesc(2);
@@ -155,21 +151,25 @@ inv_create(int flags)
 
 	/*
 	 * Now create a btree index on the relation's olastbyte attribute to
-	 * make seeks go faster.  The hardwired constants are embarassing to
-	 * me, and are symptomatic of the pressure under which this code was
-	 * written.
-	 *
-	 * ok, mao, let's put in some symbolic constants - jolly
+	 * make seeks go faster.
 	 */
+	indexInfo = makeNode(IndexInfo);
+	indexInfo->ii_NumIndexAttrs = 1;
+	indexInfo->ii_NumKeyAttrs = 1;
+	indexInfo->ii_KeyAttrNumbers[0] = 1;
+	indexInfo->ii_Predicate = NULL;
+	indexInfo->ii_FuncOid = InvalidOid;
+	indexInfo->ii_Unique = false;
 
-	attNums[0] = 1;
 	classObjectId[0] = INT4_OPS_OID;
-	index_create(objname, indname, NULL, NULL, BTREE_AM_OID,
-				 1, &attNums[0], &classObjectId[0],
-				 (Node *) NULL, false, false, false, false);
+
+	index_create(objname, indname, indexInfo,
+				 BTREE_AM_OID, classObjectId,
+				 false, false, false);
 
 	/* make the index visible in this transaction */
 	CommandCounterIncrement();
+
 	indr = index_openr(indname);
 
 	if (!RelationIsValid(indr))

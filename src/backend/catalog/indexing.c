@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.66 2000/06/17 04:56:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.67 2000/07/14 22:17:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,9 +83,9 @@ static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,
 
 
 /*
- * Changes (appends) to catalogs can (and does) happen at various places
+ * Changes (appends) to catalogs can and do happen at various places
  * throughout the code.  We need a generic routine that will open all of
- * the indices defined on a given catalog a return the relation descriptors
+ * the indices defined on a given catalog and return the relation descriptors
  * associated with them.
  */
 void
@@ -115,9 +115,20 @@ CatalogCloseIndices(int nIndices, Relation *idescs)
 
 
 /*
- * For the same reasons outlined above CatalogOpenIndices() we need a routine
- * that takes a new catalog tuple and inserts an associated index tuple into
- * each catalog index.
+ * For the same reasons outlined above for CatalogOpenIndices(), we need a
+ * routine that takes a new catalog tuple and inserts an associated index
+ * tuple into each catalog index.
+ *
+ * NOTE: since this routine looks up all the pg_index data on each call,
+ * it's relatively inefficient for inserting a large number of tuples into
+ * the same catalog.  We use it only for inserting one or a few tuples
+ * in a given command.  See ExecOpenIndices() and related routines if you
+ * are inserting tuples in bulk.
+ *
+ * NOTE: we do not bother to handle partial indices.  Nor do we try to
+ * be efficient for functional indices (the code should work for them,
+ * but may leak memory intraquery).  This should be OK for system catalogs,
+ * but don't use this routine for user tables!
  */
 void
 CatalogIndexInsert(Relation *idescs,
@@ -125,15 +136,9 @@ CatalogIndexInsert(Relation *idescs,
 				   Relation heapRelation,
 				   HeapTuple heapTuple)
 {
-	HeapTuple	index_tup;
 	TupleDesc	heapDescriptor;
-	Form_pg_index index_form;
 	Datum		datum[INDEX_MAX_KEYS];
-	char		nulls[INDEX_MAX_KEYS];
-	int			natts;
-	AttrNumber *attnumP;
-	FuncIndexInfo finfo,
-			   *finfoP;
+	char		nullv[INDEX_MAX_KEYS];
 	int			i;
 
 	if (IsIgnoringSystemIndexes())
@@ -142,51 +147,30 @@ CatalogIndexInsert(Relation *idescs,
 
 	for (i = 0; i < nIndices; i++)
 	{
+		HeapTuple	index_tup;
+		IndexInfo  *indexInfo;
 		InsertIndexResult indexRes;
 
-		index_tup = SearchSysCacheTupleCopy(INDEXRELID,
-									  ObjectIdGetDatum(idescs[i]->rd_id),
-											0, 0, 0);
-		Assert(index_tup);
-		index_form = (Form_pg_index) GETSTRUCT(index_tup);
+		index_tup = SearchSysCacheTuple(INDEXRELID,
+										ObjectIdGetDatum(idescs[i]->rd_id),
+										0, 0, 0);
+		if (!HeapTupleIsValid(index_tup))
+			elog(ERROR, "CatalogIndexInsert: index %u not found",
+				 idescs[i]->rd_id);
+		indexInfo = BuildIndexInfo(index_tup);
 
-		if (index_form->indproc != InvalidOid)
-		{
-			int			fatts;
-
-			/*
-			 * Compute the number of attributes we are indexing upon.
-			 */
-			for (attnumP = index_form->indkey, fatts = 0;
-				 fatts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
-				 attnumP++, fatts++)
-				;
-			FIgetnArgs(&finfo) = fatts;
-			natts = 1;
-			FIgetProcOid(&finfo) = index_form->indproc;
-			*(FIgetname(&finfo)) = '\0';
-			finfoP = &finfo;
-		}
-		else
-		{
-			natts = RelationGetDescr(idescs[i])->natts;
-			finfoP = (FuncIndexInfo *) NULL;
-		}
-
-		FormIndexDatum(natts,
-					   (AttrNumber *) index_form->indkey,
+		FormIndexDatum(indexInfo,
 					   heapTuple,
 					   heapDescriptor,
+					   CurrentMemoryContext,
 					   datum,
-					   nulls,
-					   finfoP);
+					   nullv);
 
-		indexRes = index_insert(idescs[i], datum, nulls,
+		indexRes = index_insert(idescs[i], datum, nullv,
 								&heapTuple->t_self, heapRelation);
 		if (indexRes)
 			pfree(indexRes);
-
-		heap_freetuple(index_tup);
+		pfree(indexInfo);
 	}
 }
 

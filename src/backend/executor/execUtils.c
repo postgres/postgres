@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.63 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.64 2000/07/14 22:17:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,9 @@
  *		QueryDescGetTypeInfo - moved here from main.c
  *								am not sure what uses it -cim 10/12/89
  *
- *		ExecGetIndexKeyInfo		\
- *		ExecOpenIndices			 | referenced by InitPlan, EndPlan,
- *		ExecCloseIndices		 | ExecAppend, ExecReplace
- *		ExecFormIndexTuple		 |
- *		ExecInsertIndexTuple	/
+ *		ExecOpenIndices			\
+ *		ExecCloseIndices		 | referenced by InitPlan, EndPlan,
+ *		ExecInsertIndexTuples	/  ExecAppend, ExecReplace
  *
  *	 NOTES
  *		This file has traditionally been the place to stick misc.
@@ -55,8 +53,6 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
-static void ExecGetIndexKeyInfo(Form_pg_index indexTuple, int *numAttsOutP,
-					AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);
 
 /* ----------------------------------------------------------------
  *		global counters for number of tuples processed, retrieved,
@@ -684,93 +680,6 @@ QueryDescGetTypeInfo(QueryDesc *queryDesc)
  *				  ExecInsertIndexTuples support
  * ----------------------------------------------------------------
  */
-/* ----------------------------------------------------------------
- *		ExecGetIndexKeyInfo
- *
- *		Extracts the index key attribute numbers from
- *		an index tuple form (i.e. a tuple from the pg_index relation)
- *		into an array of attribute numbers.  The array and the
- *		size of the array are returned to the caller via return
- *		parameters.
- * ----------------------------------------------------------------
- */
-static void
-ExecGetIndexKeyInfo(Form_pg_index indexTuple,
-					int *numAttsOutP,
-					AttrNumber **attsOutP,
-					FuncIndexInfoPtr fInfoP)
-{
-	int			i;
-	int			numKeys;
-	AttrNumber *attKeys;
-
-	/* ----------------
-	 *	check parameters
-	 * ----------------
-	 */
-	if (numAttsOutP == NULL || attsOutP == NULL)
-	{
-		elog(DEBUG, "ExecGetIndexKeyInfo: %s",
-		"invalid parameters: numAttsOutP and attsOutP must be non-NULL");
-	}
-
-	/* ----------------
-	 * set the procid for a possible functional index.
-	 * ----------------
-	 */
-	FIsetProcOid(fInfoP, indexTuple->indproc);
-
-	/* ----------------
-	 *	count the number of keys..
-	 * ----------------
-	 */
-	numKeys = 0;
-	for (i = 0; i < INDEX_MAX_KEYS &&
-		 indexTuple->indkey[i] != InvalidAttrNumber; i++)
-		numKeys++;
-
-	/* ----------------
-	 *	place number keys in callers return area
-	 *	or the number of arguments for a functional index.
-	 *
-	 *	If we have a functional index then the number of
-	 *	attributes defined in the index must 1 (the function's
-	 *	single return value).
-	 * ----------------
-	 */
-	if (FIgetProcOid(fInfoP) != InvalidOid)
-	{
-		FIsetnArgs(fInfoP, numKeys);
-		(*numAttsOutP) = 1;
-	}
-	else
-		(*numAttsOutP) = numKeys;
-
-	if (numKeys < 1)
-	{
-		elog(DEBUG, "ExecGetIndexKeyInfo: %s",
-			 "all index key attribute numbers are zero!");
-		(*attsOutP) = NULL;
-		return;
-	}
-
-	/* ----------------
-	 *	allocate and fill in array of key attribute numbers
-	 * ----------------
-	 */
-	CXT1_printf("ExecGetIndexKeyInfo: context is %d\n", CurrentMemoryContext);
-
-	attKeys = (AttrNumber *) palloc(numKeys * sizeof(AttrNumber));
-
-	for (i = 0; i < numKeys; i++)
-		attKeys[i] = indexTuple->indkey[i];
-
-	/* ----------------
-	 *	return array to caller.
-	 * ----------------
-	 */
-	(*attsOutP) = attKeys;
-}
 
 /* ----------------------------------------------------------------
  *		ExecOpenIndices
@@ -838,11 +747,6 @@ ExecOpenIndices(RelationInfo *resultRelationInfo)
 		Oid			indexOid = lfirsti(indexoidscan);
 		Relation	indexDesc;
 		HeapTuple	indexTuple;
-		Form_pg_index indexStruct;
-		int			numKeyAtts;
-		AttrNumber *indexKeyAtts;
-		FuncIndexInfoPtr fInfoP;
-		PredInfo   *predicate;
 		IndexInfo  *ii;
 
 		/* ----------------
@@ -874,47 +778,17 @@ ExecOpenIndices(RelationInfo *resultRelationInfo)
 		 *	Get the pg_index tuple for the index
 		 * ----------------
 		 */
-		indexTuple = SearchSysCacheTupleCopy(INDEXRELID,
-											 ObjectIdGetDatum(indexOid),
-											 0, 0, 0);
+		indexTuple = SearchSysCacheTuple(INDEXRELID,
+										 ObjectIdGetDatum(indexOid),
+										 0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "ExecOpenIndices: index %u not found", indexOid);
-		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
 		/* ----------------
 		 *	extract the index key information from the tuple
 		 * ----------------
 		 */
-		fInfoP = (FuncIndexInfoPtr) palloc(sizeof(*fInfoP));
-		ExecGetIndexKeyInfo(indexStruct,
-							&numKeyAtts,
-							&indexKeyAtts,
-							fInfoP);
-
-		/* ----------------
-		 *	next get the index predicate from the tuple
-		 * ----------------
-		 */
-		if (VARSIZE(&indexStruct->indpred) != 0)
-		{
-			char	   *predString;
-
-			predString = DatumGetCString(DirectFunctionCall1(textout,
-									PointerGetDatum(&indexStruct->indpred)));
-			predicate = (PredInfo *) stringToNode(predString);
-			pfree(predString);
-		}
-		else
-			predicate = NULL;
-
-		/* Save the index info */
-		ii = makeNode(IndexInfo);
-		ii->ii_NumKeyAttributes = numKeyAtts;
-		ii->ii_KeyAttributeNumbers = indexKeyAtts;
-		ii->ii_FuncIndexInfo = fInfoP;
-		ii->ii_Predicate = (Node *) predicate;
-
-		heap_freetuple(indexTuple);
+		ii = BuildIndexInfo(indexTuple);
 
 		relationDescs[i] = indexDesc;
 		indexInfoArray[i] = ii;
@@ -984,17 +858,11 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	int			numIndices;
 	RelationPtr relationDescs;
 	Relation	heapRelation;
-	IndexInfo **indexInfoArray;
-	IndexInfo  *indexInfo;
-	Node	   *predicate;
-	ExprContext *econtext;
-	InsertIndexResult result;
-	int			numberOfAttributes;
-	AttrNumber *keyAttributeNumbers;
-	FuncIndexInfoPtr fInfoP;
 	TupleDesc	heapDescriptor;
-	Datum	   *datum;
-	char	   *nulls;
+	IndexInfo **indexInfoArray;
+	ExprContext *econtext;
+	Datum		datum[INDEX_MAX_KEYS];
+	char		nullv[INDEX_MAX_KEYS];
 
 	heapTuple = slot->val;
 
@@ -1007,14 +875,27 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	relationDescs = resultRelationInfo->ri_IndexRelationDescs;
 	indexInfoArray = resultRelationInfo->ri_IndexRelationInfo;
 	heapRelation = resultRelationInfo->ri_RelationDesc;
+	heapDescriptor = RelationGetDescr(heapRelation);
+
+	/* ----------------
+	 *	Make a temporary expr/memory context for evaluating predicates
+	 *	and functional-index functions.
+	 *	XXX should do this once per command not once per tuple, and
+	 *	just reset it once per tuple.
+	 * ----------------
+	 */
+	econtext = MakeExprContext(slot, TransactionCommandContext);
 
 	/* ----------------
 	 *	for each index, form and insert the index tuple
 	 * ----------------
 	 */
-	econtext = NULL;
 	for (i = 0; i < numIndices; i++)
 	{
+		IndexInfo  *indexInfo;
+		Node	   *predicate;
+		InsertIndexResult result;
+
 		if (relationDescs[i] == NULL)
 			continue;
 
@@ -1022,39 +903,26 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		predicate = indexInfo->ii_Predicate;
 		if (predicate != NULL)
 		{
-			if (econtext == NULL)
-				econtext = MakeExprContext(slot,
-										   TransactionCommandContext);
-
 			/* Skip this index-update if the predicate isn't satisfied */
 			if (!ExecQual((List *) predicate, econtext, false))
 				continue;
 		}
 
 		/* ----------------
-		 *		get information from index info structure
+		 *	FormIndexDatum fills in its datum and null parameters
+		 *	with attribute information taken from the given heap tuple.
 		 * ----------------
 		 */
-		numberOfAttributes = indexInfo->ii_NumKeyAttributes;
-		keyAttributeNumbers = indexInfo->ii_KeyAttributeNumbers;
-		fInfoP = indexInfo->ii_FuncIndexInfo;
-		datum = (Datum *) palloc(numberOfAttributes * sizeof *datum);
-		nulls = (char *) palloc(numberOfAttributes * sizeof *nulls);
-		heapDescriptor = (TupleDesc) RelationGetDescr(heapRelation);
-
-		FormIndexDatum(numberOfAttributes,		/* num attributes */
-					   keyAttributeNumbers,		/* array of att nums to
-												 * extract */
-					   heapTuple,		/* tuple from base relation */
-					   heapDescriptor,	/* heap tuple's descriptor */
-					   datum,	/* return: array of attributes */
-					   nulls,	/* return: array of char's */
-					   fInfoP); /* functional index information */
-
+		FormIndexDatum(indexInfo,
+					   heapTuple,
+					   heapDescriptor,
+					   econtext->ecxt_per_tuple_memory,
+					   datum,
+					   nullv);
 
 		result = index_insert(relationDescs[i], /* index relation */
 							  datum,	/* array of heaptuple Datums */
-							  nulls,	/* info on nulls */
+							  nullv,	/* info on nulls */
 							  &(heapTuple->t_self),		/* tid of heap tuple */
 							  heapRelation);
 
@@ -1064,15 +932,11 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		 */
 		IncrIndexInserted();
 
-		/* ----------------
-		 *		free index tuple after insertion
-		 * ----------------
-		 */
 		if (result)
 			pfree(result);
 	}
-	if (econtext != NULL)
-		FreeExprContext(econtext);
+
+	FreeExprContext(econtext);
 }
 
 void
@@ -1094,5 +958,4 @@ SetChangedParamList(Plan *node, List *newchg)
 		/* else - add this param to the list */
 		node->chgParam = lappendi(node->chgParam, paramId);
 	}
-
 }

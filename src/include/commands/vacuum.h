@@ -7,17 +7,16 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.31 2000/05/29 17:40:44 momjian Exp $
+ * $Id: vacuum.h,v 1.32 2000/07/14 22:17:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VACUUM_H
 #define VACUUM_H
 
-#include "fmgr.h"
-#include "access/funcindex.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_attribute.h"
+#include "catalog/pg_index.h"
+#include "fmgr.h"
 #include "nodes/pg_list.h"
 #include "storage/itemptr.h"
 
@@ -53,14 +52,6 @@ typedef struct VacPageListData
 } VacPageListData;
 
 typedef VacPageListData *VacPageList;
-
-typedef struct
-{
-	FuncIndexInfo finfo;
-	FuncIndexInfo *finfoP;
-	Form_pg_index tform;
-	int			natts;
-} IndDesc;
 
 typedef struct
 {

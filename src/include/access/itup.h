@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.24 2000/03/17 02:36:37 tgl Exp $
+ * $Id: itup.h,v 1.25 2000/07/14 22:17:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,18 +59,6 @@ typedef struct RetrieveIndexResultData
 } RetrieveIndexResultData;
 
 typedef RetrieveIndexResultData *RetrieveIndexResult;
-
-
-/*-----------------
- * PredInfo -
- *	  used for partial indices
- *-----------------
- */
-typedef struct PredInfo
-{
-	Node	   *pred;
-	Node	   *oldPred;
-} PredInfo;
 
 
 /* ----------------

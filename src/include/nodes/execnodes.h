@@ -7,39 +7,49 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.43 2000/07/12 02:37:32 tgl Exp $
+ * $Id: execnodes.h,v 1.44 2000/07/14 22:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-#include "access/funcindex.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "executor/hashjoin.h"
 #include "executor/tuptable.h"
+#include "fmgr.h"
 #include "nodes/params.h"
 #include "nodes/primnodes.h"
 
 /* ----------------
  *	  IndexInfo information
  *
- *		this class holds the information saying what attributes
- *		are the key attributes for this index. -cim 10/15/89
+ *		this class holds the information needed to construct new index
+ *		entries for a particular index.  Used for both index_build and
+ *		retail creation of index entries.
  *
- *		NumKeyAttributes		number of key attributes for this index
- *		KeyAttributeNumbers		array of attribute numbers used as keys
- *		Predicate				partial-index predicate for this index
+ *		NumIndexAttrs		number of columns in this index
+ *							(1 if a func. index, else same as NumKeyAttrs)
+ *		NumKeyAttrs			number of key attributes for this index
+ *							(ie, number of attrs from underlying relation)
+ *		KeyAttrNumbers		underlying-rel attribute numbers used as keys
+ *		Predicate			partial-index predicate, or NULL if none
+ *		FuncOid				OID of function, or InvalidOid if not f. index
+ *		FuncInfo			fmgr lookup data for function, if FuncOid valid
+ *		Unique				is it a unique index?
  * ----------------
  */
 typedef struct IndexInfo
 {
 	NodeTag		type;
-	int			ii_NumKeyAttributes;
-	AttrNumber *ii_KeyAttributeNumbers;
-	FuncIndexInfoPtr ii_FuncIndexInfo;
+	int			ii_NumIndexAttrs;
+	int			ii_NumKeyAttrs;
+	AttrNumber	ii_KeyAttrNumbers[INDEX_MAX_KEYS];
 	Node	   *ii_Predicate;
+	Oid			ii_FuncOid;
+	FmgrInfo	ii_FuncInfo;
+	bool		ii_Unique;
 } IndexInfo;
 
 /* ----------------

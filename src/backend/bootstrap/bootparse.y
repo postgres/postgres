@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.31 2000/07/04 06:11:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.32 2000/07/14 22:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 
 
 #include "access/attnum.h"
-#include "access/funcindex.h"
 #include "access/htup.h"
 #include "access/itup.h"
 #include "access/skey.h"

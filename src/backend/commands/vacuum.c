@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.162 2000/07/05 16:17:38 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.163 2000/07/14 22:17:42 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -28,6 +28,7 @@
 #include "catalog/index.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
+#include "nodes/execnodes.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "tcop/tcopprot.h"
@@ -71,7 +72,8 @@ static void reap_page(VacPageList vacpagelist, VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
 static void get_indices(Relation relation, int *nindices, Relation **Irel);
 static void close_indices(int nindices, Relation *Irel);
-static void get_index_desc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc);
+static IndexInfo **get_index_desc(Relation onerel, int nindices,
+								  Relation *Irel);
 static void *vac_find_eq(void *bot, int nelem, int size, void *elm,
 			 int (*compar) (const void *, const void *));
 static int	vac_cmp_blk(const void *left, const void *right);
@@ -948,9 +950,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				newitemid;
 	HeapTupleData tuple,
 				newtup;
-	TupleDesc	tupdesc = NULL;
-	Datum	   *idatum = NULL;
-	char	   *inulls = NULL;
+	TupleDesc	tupdesc;
+	IndexInfo **indexInfo = NULL;
+	Datum		idatum[INDEX_MAX_KEYS];
+	char		inulls[INDEX_MAX_KEYS];
 	InsertIndexResult iresult;
 	VacPageListData Nvacpagelist;
 	VacPage		cur_page = NULL,
@@ -958,8 +961,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				vacpage,
 			   *curpage;
 	int			cur_item = 0;
-	IndDesc    *Idesc,
-			   *idcur;
 	int			last_move_dest_block = -1,
 				last_vacuum_block,
 				i = 0;
@@ -980,13 +981,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	myXID = GetCurrentTransactionId();
 	myCID = GetCurrentCommandId();
 
+	tupdesc = RelationGetDescr(onerel);
+
 	if (Irel != (Relation *) NULL)		/* preparation for index' inserts */
-	{
-		get_index_desc(onerel, nindices, Irel, &Idesc);
-		tupdesc = RelationGetDescr(onerel);
-		idatum = (Datum *) palloc(INDEX_MAX_KEYS * sizeof(*idatum));
-		inulls = (char *) palloc(INDEX_MAX_KEYS * sizeof(*inulls));
-	}
+		indexInfo = get_index_desc(onerel, nindices, Irel);
 
 	Nvacpagelist.num_pages = 0;
 	num_fraged_pages = fraged_pages->num_pages;
@@ -1456,15 +1454,22 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					if (Irel != (Relation *) NULL)
 					{
-						for (i = 0, idcur = Idesc; i < nindices; i++, idcur++)
+						/*
+						 * XXX using CurrentMemoryContext here means
+						 * intra-vacuum memory leak for functional indexes.
+						 * Should fix someday.
+						 *
+						 * XXX This code fails to handle partial indexes!
+						 * Probably should change it to use ExecOpenIndices.
+						 */
+						for (i = 0; i < nindices; i++)
 						{
-							FormIndexDatum(idcur->natts,
-							   (AttrNumber *) &(idcur->tform->indkey[0]),
+							FormIndexDatum(indexInfo[i],
 										   &newtup,
 										   tupdesc,
+										   CurrentMemoryContext,
 										   idatum,
-										   inulls,
-										   idcur->finfoP);
+										   inulls);
 							iresult = index_insert(Irel[i],
 												   idatum,
 												   inulls,
@@ -1575,15 +1580,22 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			/* insert index' tuples if needed */
 			if (Irel != (Relation *) NULL)
 			{
-				for (i = 0, idcur = Idesc; i < nindices; i++, idcur++)
+				/*
+				 * XXX using CurrentMemoryContext here means
+				 * intra-vacuum memory leak for functional indexes.
+				 * Should fix someday.
+				 *
+				 * XXX This code fails to handle partial indexes!
+				 * Probably should change it to use ExecOpenIndices.
+				 */
+				for (i = 0; i < nindices; i++)
 				{
-					FormIndexDatum(idcur->natts,
-							   (AttrNumber *) &(idcur->tform->indkey[0]),
+					FormIndexDatum(indexInfo[i],
 								   &newtup,
 								   tupdesc,
+								   CurrentMemoryContext,
 								   idatum,
-								   inulls,
-								   idcur->finfoP);
+								   inulls);
 					iresult = index_insert(Irel[i],
 										   idatum,
 										   inulls,
@@ -1821,10 +1833,8 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 
 	if (Irel != (Relation *) NULL)		/* pfree index' allocations */
 	{
-		pfree(Idesc);
-		pfree(idatum);
-		pfree(inulls);
 		close_indices(nindices, Irel);
+		pfree(indexInfo);
 	}
 
 	pfree(vacpage);
@@ -2347,46 +2357,30 @@ close_indices(int nindices, Relation *Irel)
 }
 
 
-static void
-get_index_desc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
+/*
+ * Obtain IndexInfo data for each index on the rel
+ */
+static IndexInfo **
+get_index_desc(Relation onerel, int nindices, Relation *Irel)
 {
-	IndDesc    *idcur;
-	HeapTuple	cachetuple;
-	AttrNumber *attnumP;
-	int			natts;
+	IndexInfo **indexInfo;
 	int			i;
+	HeapTuple	cachetuple;
 
-	*Idesc = (IndDesc *) palloc(nindices * sizeof(IndDesc));
+	indexInfo = (IndexInfo **) palloc(nindices * sizeof(IndexInfo *));
 
-	for (i = 0, idcur = *Idesc; i < nindices; i++, idcur++)
+	for (i = 0; i < nindices; i++)
 	{
-		cachetuple = SearchSysCacheTupleCopy(INDEXRELID,
+		cachetuple = SearchSysCacheTuple(INDEXRELID,
 							 ObjectIdGetDatum(RelationGetRelid(Irel[i])),
-											 0, 0, 0);
-		Assert(cachetuple);
-
-		/*
-		 * we never free the copy we make, because Idesc needs it for
-		 * later
-		 */
-		idcur->tform = (Form_pg_index) GETSTRUCT(cachetuple);
-		for (attnumP = &(idcur->tform->indkey[0]), natts = 0;
-			 natts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
-			 attnumP++, natts++);
-		if (idcur->tform->indproc != InvalidOid)
-		{
-			idcur->finfoP = &(idcur->finfo);
-			FIgetnArgs(idcur->finfoP) = natts;
-			natts = 1;
-			FIgetProcOid(idcur->finfoP) = idcur->tform->indproc;
-			*(FIgetname(idcur->finfoP)) = '\0';
-		}
-		else
-			idcur->finfoP = (FuncIndexInfo *) NULL;
-
-		idcur->natts = natts;
+										 0, 0, 0);
+		if (!HeapTupleIsValid(cachetuple))
+			elog(ERROR, "get_index_desc: index %u not found",
+				 RelationGetRelid(Irel[i]));
+		indexInfo[i] = BuildIndexInfo(cachetuple);
 	}
 
+	return indexInfo;
 }
 
 

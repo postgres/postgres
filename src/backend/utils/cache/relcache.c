@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.106 2000/07/05 23:11:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.107 2000/07/14 22:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1065,6 +1065,7 @@ IndexedAccessMethodInitialize(Relation relation)
 		support = (RegProcedure *) NULL;
 
 	IndexSupportInitialize(strategy, support,
+						   &relation->rd_uniqueindex,
 						   relation->rd_att->attrs[0]->attrelid,
 						   relation->rd_rel->relam,
 						   relamstrategies, relamsupport, natts);

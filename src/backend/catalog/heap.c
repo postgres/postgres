@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.139 2000/07/05 23:11:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.140 2000/07/14 22:17:40 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1073,91 +1073,37 @@ RelationTruncateIndexes(Relation heapRelation)
 	ScanKeyData entry;
 	HeapScanDesc scan;
 	HeapTuple	indexTuple,
-				procTuple,
 				classTuple;
-	Form_pg_index index;
+	IndexInfo  *indexInfo;
 	Oid			heapId,
 				indexId,
-				procId,
 				accessMethodId;
-	Node	   *oldPred = NULL;
-	PredInfo   *predInfo;
-	List	   *cnfPred = NULL;
-	AttrNumber *attributeNumberA;
-	FuncIndexInfo fInfo,
-			   *funcInfo = NULL;
-	bool		unique;
-	int			i,
-				numberOfAttributes;
-	char	   *predString;
 
 	heapId = RelationGetRelid(heapRelation);
 
 	/* Scan pg_index to find indexes on heapRelation */
-
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid, F_OIDEQ,
 						   ObjectIdGetDatum(heapId));
 	scan = heap_beginscan(indexRelation, false, SnapshotNow, 1, &entry);
 	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
 	{
-
 		/*
-		 * For each index, fetch index attributes so we can apply
-		 * index_build
+		 * For each index, fetch info needed for index_build
 		 */
-		index = (Form_pg_index) GETSTRUCT(indexTuple);
-		indexId = index->indexrelid;
-		procId = index->indproc;
-		unique = index->indisunique;
+		indexId = ((Form_pg_index) GETSTRUCT(indexTuple))->indexrelid;
+		indexInfo = BuildIndexInfo(indexTuple);
 
-		for (i = 0; i < INDEX_MAX_KEYS; i++)
-		{
-			if (index->indkey[i] == InvalidAttrNumber)
-				break;
-		}
-		numberOfAttributes = i;
-
-		/* If a valid where predicate, compute predicate Node */
-		if (VARSIZE(&index->indpred) != 0)
-		{
-			predString = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(&index->indpred)));
-			oldPred = stringToNode(predString);
-			pfree(predString);
-		}
-		predInfo = (PredInfo *) palloc(sizeof(PredInfo));
-		predInfo->pred = (Node *) cnfPred;
-		predInfo->oldPred = oldPred;
-
-		/* Assign Index keys to attributes array */
-		attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
-												 sizeof(AttrNumber));
-		for (i = 0; i < numberOfAttributes; i++)
-			attributeNumberA[i] = index->indkey[i];
-
-		/* If this is a procedural index, initialize our FuncIndexInfo */
-		if (procId != InvalidOid)
-		{
-			funcInfo = &fInfo;
-			FIsetnArgs(funcInfo, numberOfAttributes);
-			procTuple = SearchSysCacheTuple(PROCOID, ObjectIdGetDatum(procId),
-											0, 0, 0);
-			if (!HeapTupleIsValid(procTuple))
-				elog(ERROR, "RelationTruncateIndexes: index procedure not found");
-			namecpy(&(funcInfo->funcName),
-					&(((Form_pg_proc) GETSTRUCT(procTuple))->proname));
-			FIsetProcOid(funcInfo, procTuple->t_data->t_oid);
-		}
-
-		/* Fetch the classTuple associated with this index */
-		classTuple = SearchSysCacheTupleCopy(RELOID, ObjectIdGetDatum(indexId),
+		/* Fetch the pg_class tuple associated with this index */
+		classTuple = SearchSysCacheTupleCopy(RELOID,
+											 ObjectIdGetDatum(indexId),
 											 0, 0, 0);
 		if (!HeapTupleIsValid(classTuple))
-			elog(ERROR, "RelationTruncateIndexes: index access method not found");
+			elog(ERROR, "RelationTruncateIndexes: index %u not found in pg_class",
+				 indexId);
 		accessMethodId = ((Form_pg_class) GETSTRUCT(classTuple))->relam;
 
-		/* Open our index relation */
+		/* Open the index relation */
 		currentIndex = index_open(indexId);
 		if (currentIndex == NULL)
 			elog(ERROR, "RelationTruncateIndexes: can't open index relation");
@@ -1176,9 +1122,9 @@ RelationTruncateIndexes(Relation heapRelation)
 		currentIndex->rd_nblocks = 0;
 
 		/* Initialize the index and rebuild */
-		InitIndexStrategy(numberOfAttributes, currentIndex, accessMethodId);
-		index_build(heapRelation, currentIndex, numberOfAttributes,
-					attributeNumberA, funcInfo, predInfo, unique);
+		InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
+						  currentIndex, accessMethodId);
+		index_build(heapRelation, currentIndex, indexInfo, NULL);
 
 		/*
 		 * index_build will close both the heap and index relations (but

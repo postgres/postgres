@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.90 2000/07/03 23:09:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.91 2000/07/14 22:17:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,19 +160,11 @@ typedef struct _IndexList
 {
 	char	   *il_heap;
 	char	   *il_ind;
-	int			il_natts;
-	AttrNumber *il_attnos;
-	FuncIndexInfo *il_finfo;
-	PredInfo   *il_predInfo;
-	bool		il_unique;
+	IndexInfo  *il_info;
 	struct _IndexList *il_next;
 } IndexList;
 
 static IndexList *ILHead = (IndexList *) NULL;
-
-typedef void (*sig_func) ();
-
-
 
 
 /* ----------------------------------------------------------------
@@ -334,9 +326,9 @@ BootstrapMain(int argc, char *argv[])
 
 	if (!IsUnderPostmaster)
 	{
-		pqsignal(SIGINT, (sig_func) die);
-		pqsignal(SIGHUP, (sig_func) die);
-		pqsignal(SIGTERM, (sig_func) die);
+		pqsignal(SIGINT, (pqsigfunc) die);
+		pqsignal(SIGHUP, (pqsigfunc) die);
+		pqsignal(SIGTERM, (pqsigfunc) die);
 	}
 
 	/*
@@ -1080,14 +1072,9 @@ AddStr(char *str, int strlength, int mderef)
 void
 index_register(char *heap,
 			   char *ind,
-			   int natts,
-			   AttrNumber *attnos,
-			   FuncIndexInfo *finfo,
-			   PredInfo *predInfo,
-			   bool unique)
+			   IndexInfo *indexInfo)
 {
 	IndexList  *newind;
-	int			len;
 	MemoryContext oldcxt;
 
 	/*
@@ -1108,37 +1095,13 @@ index_register(char *heap,
 	newind = (IndexList *) palloc(sizeof(IndexList));
 	newind->il_heap = pstrdup(heap);
 	newind->il_ind = pstrdup(ind);
-	newind->il_natts = natts;
+	newind->il_info = (IndexInfo *) palloc(sizeof(IndexInfo));
 
-	if (PointerIsValid(finfo))
-		len = FIgetnArgs(finfo) * sizeof(AttrNumber);
-	else
-		len = natts * sizeof(AttrNumber);
-
-	newind->il_attnos = (AttrNumber *) palloc(len);
-	memcpy(newind->il_attnos, attnos, len);
-
-	if (PointerIsValid(finfo))
-	{
-		newind->il_finfo = (FuncIndexInfo *) palloc(sizeof(FuncIndexInfo));
-		memcpy(newind->il_finfo, finfo, sizeof(FuncIndexInfo));
-	}
-	else
-		newind->il_finfo = (FuncIndexInfo *) NULL;
-
-	if (predInfo != NULL)
-	{
-		newind->il_predInfo = (PredInfo *) palloc(sizeof(PredInfo));
-		newind->il_predInfo->pred = predInfo->pred;
-		newind->il_predInfo->oldPred = predInfo->oldPred;
-	}
-	else
-		newind->il_predInfo = NULL;
-
-	newind->il_unique = unique;
+	memcpy(newind->il_info, indexInfo, sizeof(IndexInfo));
+	/* predicate will likely be null anyway, but may as well copy it */
+	newind->il_info->ii_Predicate = copyObject(indexInfo->ii_Predicate);
 
 	newind->il_next = ILHead;
-
 	ILHead = newind;
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1147,18 +1110,16 @@ index_register(char *heap,
 void
 build_indices()
 {
-	Relation	heap;
-	Relation	ind;
-
 	for (; ILHead != (IndexList *) NULL; ILHead = ILHead->il_next)
 	{
+		Relation	heap;
+		Relation	ind;
+
 		heap = heap_openr(ILHead->il_heap, NoLock);
 		Assert(heap);
 		ind = index_openr(ILHead->il_ind);
 		Assert(ind);
-		index_build(heap, ind, ILHead->il_natts, ILHead->il_attnos,
-					ILHead->il_finfo, ILHead->il_predInfo,
-					ILHead->il_unique);
+		index_build(heap, ind, ILHead->il_info, NULL);
 
 		/*
 		 * In normal processing mode, index_build would close the heap and

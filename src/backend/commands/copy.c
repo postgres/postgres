@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.118 2000/07/12 02:36:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.119 2000/07/14 22:17:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,10 +50,6 @@ static Oid	GetOutputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static Oid	GetInputFunction(Oid type);
 static Oid	IsTypeByVal(Oid type);
-static void GetIndexRelations(Oid main_relation_oid,
-				  int *n_indices,
-				  Relation **index_rels);
-
 static void CopyReadNewline(FILE *fp, int *newline);
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print);
 
@@ -576,53 +572,35 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 }
 
 static void
-CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print)
+CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
+		 char *delim, char *null_print)
 {
 	HeapTuple	tuple;
-	AttrNumber	attr_count;
+	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
+	AttrNumber	attr_count;
 	FmgrInfo   *in_functions;
+	Oid		   *elements;
+	int32	   *typmod;
 	int			i;
 	Oid			in_func_oid;
 	Datum	   *values;
-	char	   *nulls,
-			   *index_nulls;
+	char	   *nulls;
 	bool	   *byval;
 	bool		isnull;
-	bool		has_index;
 	int			done = 0;
 	char	   *string = NULL,
 			   *ptr;
-	Relation   *index_rels;
 	int32		len,
 				null_ct,
 				null_id;
 	int32		ntuples,
 				tuples_read = 0;
 	bool		reading_to_eof = true;
-	Oid		   *elements;
-	int32	   *typmod;
-	FuncIndexInfo *finfo,
-			  **finfoP = NULL;
-	TupleDesc  *itupdescArr;
-	HeapTuple	pgIndexTup;
-	Form_pg_index *pgIndexP = NULL;
-	int		   *indexNatts = NULL;
-	char	   *predString;
-	Node	  **indexPred = NULL;
-	TupleDesc	rtupdesc;
+	RelationInfo *relationInfo;
 	EState	   *estate = makeNode(EState);		/* for ExecConstraints() */
-#ifndef OMIT_PARTIAL_INDEX
-	ExprContext *econtext = NULL;
 	TupleTable	tupleTable;
-	TupleTableSlot *slot = NULL;
-#endif
-	int			natts;
-	AttrNumber *attnumP;
-	Datum	   *idatum;
-	int			n_indices;
-	InsertIndexResult indexRes;
-	TupleDesc	tupDesc;
+	TupleTableSlot *slot;
 	Oid			loaded_oid = InvalidOid;
 	bool		skip_tuple = false;
 
@@ -630,71 +608,26 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 	attr = tupDesc->attrs;
 	attr_count = tupDesc->natts;
 
-	has_index = false;
-
 	/*
-	 * This may be a scalar or a functional index.	We initialize all
-	 * kinds of arrays here to avoid doing extra work at every tuple copy.
+	 * We need a RelationInfo so we can use the regular executor's
+	 * index-entry-making machinery.  (There used to be a huge amount
+	 * of code here that basically duplicated execUtils.c ...)
 	 */
+	relationInfo = makeNode(RelationInfo);
+	relationInfo->ri_RangeTableIndex = 1; /* dummy */
+	relationInfo->ri_RelationDesc = rel;
+	relationInfo->ri_NumIndices = 0;
+	relationInfo->ri_IndexRelationDescs = NULL;
+	relationInfo->ri_IndexRelationInfo = NULL;
 
-	if (rel->rd_rel->relhasindex)
-	{
-		GetIndexRelations(RelationGetRelid(rel), &n_indices, &index_rels);
-		if (n_indices > 0)
-		{
-			has_index = true;
-			itupdescArr = (TupleDesc *) palloc(n_indices * sizeof(TupleDesc));
-			pgIndexP = (Form_pg_index *) palloc(n_indices * sizeof(Form_pg_index));
-			indexNatts = (int *) palloc(n_indices * sizeof(int));
-			finfo = (FuncIndexInfo *) palloc(n_indices * sizeof(FuncIndexInfo));
-			finfoP = (FuncIndexInfo **) palloc(n_indices * sizeof(FuncIndexInfo *));
-			indexPred = (Node **) palloc(n_indices * sizeof(Node *));
-			for (i = 0; i < n_indices; i++)
-			{
-				itupdescArr[i] = RelationGetDescr(index_rels[i]);
-				pgIndexTup = SearchSysCacheTuple(INDEXRELID,
-					   ObjectIdGetDatum(RelationGetRelid(index_rels[i])),
-												 0, 0, 0);
-				Assert(pgIndexTup);
-				pgIndexP[i] = (Form_pg_index) GETSTRUCT(pgIndexTup);
-				for (attnumP = &(pgIndexP[i]->indkey[0]), natts = 0;
-				 natts < INDEX_MAX_KEYS && *attnumP != InvalidAttrNumber;
-					 attnumP++, natts++);
-				if (pgIndexP[i]->indproc != InvalidOid)
-				{
-					FIgetnArgs(&finfo[i]) = natts;
-					natts = 1;
-					FIgetProcOid(&finfo[i]) = pgIndexP[i]->indproc;
-					*(FIgetname(&finfo[i])) = '\0';
-					finfoP[i] = &finfo[i];
-				}
-				else
-					finfoP[i] = (FuncIndexInfo *) NULL;
-				indexNatts[i] = natts;
-				if (VARSIZE(&pgIndexP[i]->indpred) != 0)
-				{
-					predString = DatumGetCString(DirectFunctionCall1(textout,
-									PointerGetDatum(&pgIndexP[i]->indpred)));
-					indexPred[i] = stringToNode(predString);
-					pfree(predString);
-#ifndef OMIT_PARTIAL_INDEX
-					/* make dummy ExprContext for use by ExecQual */
-					if (econtext == NULL)
-					{
-						tupleTable = ExecCreateTupleTable(1);
-						slot = ExecAllocTableSlot(tupleTable);
-						rtupdesc = RelationGetDescr(rel);
-						ExecSetSlotDescriptor(slot, rtupdesc);
-						econtext = MakeExprContext(slot,
-												   TransactionCommandContext);
-					}
-#endif	 /* OMIT_PARTIAL_INDEX */
-				}
-				else
-					indexPred[i] = NULL;
-			}
-		}
-	}
+	ExecOpenIndices(relationInfo);
+
+	estate->es_result_relation_info = relationInfo;
+
+	/* Set up a dummy tuple table too */
+	tupleTable = ExecCreateTupleTable(1);
+	slot = ExecAllocTableSlot(tupleTable);
+	ExecSetSlotDescriptor(slot, tupDesc);
 
 	if (!binary)
 	{
@@ -723,16 +656,13 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 			reading_to_eof = false;
 	}
 
-	values = (Datum *) palloc(sizeof(Datum) * attr_count);
-	nulls = (char *) palloc(attr_count);
-	index_nulls = (char *) palloc(attr_count);
-	idatum = (Datum *) palloc(sizeof(Datum) * attr_count);
+	values = (Datum *) palloc(attr_count * sizeof(Datum));
+	nulls = (char *) palloc(attr_count * sizeof(char));
 	byval = (bool *) palloc(attr_count * sizeof(bool));
 
 	for (i = 0; i < attr_count; i++)
 	{
 		nulls[i] = ' ';
-		index_nulls[i] = ' ';
 #ifdef	_DROP_COLUMN_HACK__
 		if (COLUMN_IS_DROPPED(attr[i]))
 		{
@@ -873,6 +803,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 			tuple->t_data->t_oid = loaded_oid;
 
 		skip_tuple = false;
+
 		/* BEFORE ROW INSERT Triggers */
 		if (rel->trigdesc &&
 			rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
@@ -893,45 +824,25 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 		if (!skip_tuple)
 		{
 			/* ----------------
-			 * Check the constraints of a tuple
+			 * Check the constraints of the tuple
 			 * ----------------
 			 */
 
 			if (rel->rd_att->constr)
 				ExecConstraints("CopyFrom", rel, tuple, estate);
 
+			/* ----------------
+			 * OK, store the tuple and create index entries for it
+			 * ----------------
+			 */
 			heap_insert(rel, tuple);
 
-			if (has_index)
+			if (relationInfo->ri_NumIndices > 0)
 			{
-				for (i = 0; i < n_indices; i++)
-				{
-#ifndef OMIT_PARTIAL_INDEX
-					if (indexPred[i] != NULL)
-					{
-						/*
-						 * if tuple doesn't satisfy predicate, don't
-						 * update index
-						 */
-						slot->val = tuple;
-						/* SetSlotContents(slot, tuple); */
-						if (!ExecQual((List *) indexPred[i], econtext, false))
-							continue;
-					}
-#endif	 /* OMIT_PARTIAL_INDEX */
-					FormIndexDatum(indexNatts[i],
-								(AttrNumber *) &(pgIndexP[i]->indkey[0]),
-								   tuple,
-								   tupDesc,
-								   idatum,
-								   index_nulls,
-								   finfoP[i]);
-					indexRes = index_insert(index_rels[i], idatum, index_nulls,
-											&(tuple->t_self), rel);
-					if (indexRes)
-						pfree(indexRes);
-				}
+				ExecStoreTuple(tuple, slot, InvalidBuffer, false);
+				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 			}
+
 			/* AFTER ROW INSERT Triggers */
 			if (rel->trigdesc &&
 				rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
@@ -948,8 +859,8 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 				if (!binary)
 					pfree((void *) values[i]);
 			}
-			else if (nulls[i] == 'n')
-				nulls[i] = ' ';
+			/* reset nulls[] array for next time */
+			nulls[i] = ' ';
 		}
 
 		heap_freetuple(tuple);
@@ -958,11 +869,14 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 		if (!reading_to_eof && ntuples == tuples_read)
 			done = true;
 	}
+
+	/*
+	 * Done, clean up
+	 */
 	lineno = 0;
+
 	pfree(values);
 	pfree(nulls);
-	pfree(index_nulls);
-	pfree(idatum);
 	pfree(byval);
 
 	if (!binary)
@@ -972,21 +886,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 		pfree(typmod);
 	}
 
-	if (has_index)
-	{
-		for (i = 0; i < n_indices; i++)
-		{
-			if (index_rels[i] == NULL)
-				continue;
-			/* see comments in ExecOpenIndices() in execUtils.c */
-			if ((index_rels[i])->rd_rel->relam != BTREE_AM_OID &&
-				(index_rels[i])->rd_rel->relam != HASH_AM_OID)
-				UnlockRelation(index_rels[i], AccessExclusiveLock);
-			index_close(index_rels[i]);
-		}
-	}
-}
+	ExecDropTupleTable(tupleTable, true);
 
+	ExecCloseIndices(relationInfo);
+}
 
 
 static Oid
@@ -1054,52 +957,6 @@ IsTypeByVal(Oid type)
 	return InvalidOid;
 }
 
-/*
- * Given the OID of a relation, return an array of index relation descriptors
- * and the number of index relations.  These relation descriptors are open
- * using index_open().
- *
- * Space for the array itself is palloc'ed.
- */
-
-static void
-GetIndexRelations(Oid main_relation_oid,
-				  int *n_indices,
-				  Relation **index_rels)
-{
-	Relation	relation;
-	List	   *indexoidlist,
-			   *indexoidscan;
-	int			i;
-
-	relation = heap_open(main_relation_oid, AccessShareLock);
-	indexoidlist = RelationGetIndexList(relation);
-
-	*n_indices = length(indexoidlist);
-
-	if (*n_indices > 0)
-		*index_rels = (Relation *) palloc(*n_indices * sizeof(Relation));
-	else
-		*index_rels = NULL;
-
-	i = 0;
-	foreach(indexoidscan, indexoidlist)
-	{
-		Oid			indexoid = lfirsti(indexoidscan);
-		Relation	index = index_open(indexoid);
-
-		/* see comments in ExecOpenIndices() in execUtils.c */
-		if (index != NULL &&
-			index->rd_rel->relam != BTREE_AM_OID &&
-			index->rd_rel->relam != HASH_AM_OID)
-			LockRelation(index, AccessExclusiveLock);
-		(*index_rels)[i] = index;
-		i++;
-	}
-
-	freeList(indexoidlist);
-	heap_close(relation, AccessShareLock);
-}
 
 /*
  * Reads input from fp until an end of line is seen.

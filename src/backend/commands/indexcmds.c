@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.34 2000/07/05 23:11:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.35 2000/07/14 22:17:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/pg_am.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
@@ -47,14 +48,14 @@
 static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
 static void CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid);
 static void CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
-static void FuncIndexArgs(IndexElem *funcIndex, FuncIndexInfo *funcInfo,
-						  AttrNumber *attNumP, Oid *opOidP, Oid relId,
+static void FuncIndexArgs(IndexInfo *indexInfo, Oid *classOidP,
+						  IndexElem *funcIndex,
+						  Oid relId,
 						  char *accessMethodName, Oid accessMethodId);
-static void NormIndexAttrs(List *attList, AttrNumber *attNumP,
-						   Oid *opOidP, Oid relId,
+static void NormIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
+						   List *attList,
+						   Oid relId,
 						   char *accessMethodName, Oid accessMethodId);
-static void ProcessAttrTypename(IndexElem *attribute,
-					Oid defType, int32 defTypmod);
 static Oid	GetAttrOpClass(IndexElem *attribute, Oid attrType,
 						   char *accessMethodName, Oid accessMethodId);
 static char *GetDefaultOpClass(Oid atttypid);
@@ -67,10 +68,7 @@ static char *GetDefaultOpClass(Oid atttypid);
  *		index or a list of attributes to index on.
  * 'parameterList' is a list of DefElem specified in the with clause.
  * 'predicate' is the qual specified in the where clause.
- * 'rangetable' is for the predicate
- *
- * Exceptions:
- *		XXX
+ * 'rangetable' is needed to interpret the predicate
  */
 void
 DefineIndex(char *heapRelationName,
@@ -86,16 +84,15 @@ DefineIndex(char *heapRelationName,
 	Oid		   *classObjectId;
 	Oid			accessMethodId;
 	Oid			relationId;
+	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
-	AttrNumber *attributeNumberA;
 	HeapTuple	tuple;
-	FuncIndexInfo fInfo;
-	List	   *cnfPred = NULL;
+	List	   *cnfPred = NIL;
 	bool		lossy = false;
 	List	   *pl;
 
 	/*
-	 * count attributes
+	 * count attributes in index
 	 */
 	numberOfAttributes = length(attributeList);
 	if (numberOfAttributes <= 0)
@@ -108,21 +105,8 @@ DefineIndex(char *heapRelationName,
 	 * compute heap relation id
 	 */
 	if ((relationId = RelnameFindRelid(heapRelationName)) == InvalidOid)
-	{
 		elog(ERROR, "DefineIndex: relation \"%s\" not found",
 			 heapRelationName);
-	}
-
-	/*
-	 * XXX Hardwired hacks to check for limitations on supported index types.
-	 * We really ought to be learning this info from entries in the pg_am
-	 * table, instead of having it wired in here!
-	 */
-	if (unique && strcmp(accessMethodName, "btree") != 0)
-		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");
-
-	if (numberOfAttributes > 1 && strcmp(accessMethodName, "btree") != 0)
-		elog(ERROR, "DefineIndex: multi-column indices are only available with the btree access method");
 
 	/*
 	 * compute access method id
@@ -131,11 +115,20 @@ DefineIndex(char *heapRelationName,
 								PointerGetDatum(accessMethodName),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
 		elog(ERROR, "DefineIndex: access method \"%s\" not found",
 			 accessMethodName);
-	}
 	accessMethodId = tuple->t_data->t_oid;
+
+	/*
+	 * XXX Hardwired hacks to check for limitations on supported index types.
+	 * We really ought to be learning this info from entries in the pg_am
+	 * table, instead of having it wired in here!
+	 */
+	if (unique && accessMethodId != BTREE_AM_OID)
+		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");
+
+	if (numberOfAttributes > 1 && accessMethodId != BTREE_AM_OID)
+		elog(ERROR, "DefineIndex: multi-column indices are only available with the btree access method");
 
 	/*
 	 * WITH clause reinstated to handle lossy indices. -- JMH, 7/22/96
@@ -145,7 +138,7 @@ DefineIndex(char *heapRelationName,
 		DefElem    *param = (DefElem *) lfirst(pl);
 
 		if (!strcasecmp(param->defname, "islossy"))
-			lossy = TRUE;
+			lossy = true;
 		else
 			elog(NOTICE, "Unrecognized index attribute \"%s\" ignored",
 				 param->defname);
@@ -169,54 +162,50 @@ DefineIndex(char *heapRelationName,
 	if (!IsBootstrapProcessingMode() && !IndexesAreActive(relationId, false))
 		elog(ERROR, "Existing indexes are inactive. REINDEX first");
 
+	/*
+	 * Prepare arguments for index_create, primarily an IndexInfo structure
+	 */
+	indexInfo = makeNode(IndexInfo);
+	indexInfo->ii_Predicate = (Node *) cnfPred;
+	indexInfo->ii_FuncOid = InvalidOid;
+	indexInfo->ii_Unique = unique;
+
 	if (IsFuncIndex(attributeList))
 	{
-		IndexElem  *funcIndex = lfirst(attributeList);
+		IndexElem  *funcIndex = (IndexElem *) lfirst(attributeList);
 		int			nargs;
+
+		/* Parser should have given us only one list item, but check */
+		if (numberOfAttributes != 1)
+			elog(ERROR, "Functional index can only have one attribute");
 
 		nargs = length(funcIndex->args);
 		if (nargs > INDEX_MAX_KEYS)
 			elog(ERROR, "Index function can take at most %d arguments",
 				 INDEX_MAX_KEYS);
 
-		FIsetnArgs(&fInfo, nargs);
-
-		namestrcpy(&fInfo.funcName, funcIndex->name);
-
-		attributeNumberA = (AttrNumber *) palloc(nargs *
-											 sizeof attributeNumberA[0]);
+		indexInfo->ii_NumIndexAttrs = 1;
+		indexInfo->ii_NumKeyAttrs = nargs;
 
 		classObjectId = (Oid *) palloc(sizeof(Oid));
 
-		FuncIndexArgs(funcIndex, &fInfo, attributeNumberA,
-					  classObjectId, relationId,
-					  accessMethodName, accessMethodId);
-
-		index_create(heapRelationName, indexRelationName,
-					 &fInfo, NULL,
-					 accessMethodId, numberOfAttributes, attributeNumberA,
-					 classObjectId,
-					 (Node *) cnfPred,
-					 lossy, unique, primary, allowSystemTableMods);
+		FuncIndexArgs(indexInfo, classObjectId, funcIndex,
+					  relationId, accessMethodName, accessMethodId);
 	}
 	else
 	{
-		attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
-											 sizeof attributeNumberA[0]);
+		indexInfo->ii_NumIndexAttrs = numberOfAttributes;
+		indexInfo->ii_NumKeyAttrs = numberOfAttributes;
 
 		classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 
-		NormIndexAttrs(attributeList, attributeNumberA,
-					   classObjectId, relationId,
-					   accessMethodName, accessMethodId);
-
-		index_create(heapRelationName, indexRelationName,
-					 NULL, attributeList,
-					 accessMethodId, numberOfAttributes, attributeNumberA,
-					 classObjectId,
-					 (Node *) cnfPred,
-					 lossy, unique, primary, allowSystemTableMods);
+		NormIndexAttrs(indexInfo, classObjectId, attributeList,
+					   relationId, accessMethodName, accessMethodId);
 	}
+
+	index_create(heapRelationName, indexRelationName,
+				 indexInfo, accessMethodId, classObjectId,
+				 lossy, primary, allowSystemTableMods);
 
 	/*
 	 * We update the relation's pg_class tuple even if it already has
@@ -232,83 +221,48 @@ DefineIndex(char *heapRelationName,
 /*
  * ExtendIndex
  *		Extends a partial index.
- *
- * Exceptions:
- *		XXX
  */
 void
 ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 {
-	Oid		   *classObjectId;
-	Oid			accessMethodId;
-	Oid			indexId,
-				relationId;
-	Oid			indproc;
-	int			numberOfAttributes;
-	AttrNumber *attributeNumberA;
-	HeapTuple	tuple;
-	FuncIndexInfo fInfo;
-	FuncIndexInfo *funcInfo = NULL;
-	bool		unique;
-	Form_pg_index index;
-	Node	   *oldPred = NULL;
-	List	   *cnfPred = NULL;
-	PredInfo   *predInfo;
 	Relation	heapRelation;
 	Relation	indexRelation;
-	int			i;
+	Oid			accessMethodId,
+				indexId,
+				relationId;
+	HeapTuple	tuple;
+	Form_pg_index index;
+	List	   *cnfPred = NIL;
+	IndexInfo  *indexInfo;
+	Node	   *oldPred;
 
 	/*
-	 * compute index relation id and access method id
+	 * Get index's relation id and access method id from pg_class
 	 */
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(indexRelationName),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
 		elog(ERROR, "ExtendIndex: index \"%s\" not found",
 			 indexRelationName);
-	}
 	indexId = tuple->t_data->t_oid;
 	accessMethodId = ((Form_pg_class) GETSTRUCT(tuple))->relam;
 
 	/*
-	 * find pg_index tuple
+	 * Extract info from the pg_index tuple for the index
 	 */
 	tuple = SearchSysCacheTuple(INDEXRELID,
 								ObjectIdGetDatum(indexId),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
 		elog(ERROR, "ExtendIndex: relation \"%s\" is not an index",
 			 indexRelationName);
-	}
-
-	/*
-	 * Extract info from the pg_index tuple
-	 */
 	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);
 	relationId = index->indrelid;
-	indproc = index->indproc;
-	unique = index->indisunique;
+	indexInfo = BuildIndexInfo(tuple);
+	oldPred = indexInfo->ii_Predicate;
 
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-	{
-		if (index->indkey[i] == InvalidAttrNumber)
-			break;
-	}
-	numberOfAttributes = i;
-
-	if (VARSIZE(&index->indpred) != 0)
-	{
-		char	   *predString;
-
-		predString = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(&index->indpred)));
-		oldPred = stringToNode(predString);
-		pfree(predString);
-	}
 	if (oldPred == NULL)
 		elog(ERROR, "ExtendIndex: \"%s\" is not a partial index",
 			 indexRelationName);
@@ -316,8 +270,11 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	/*
 	 * Convert the extension predicate from parsetree form to plan form,
 	 * so it can be readily evaluated during index creation. Note:
-	 * "predicate" comes in as a list containing (1) the predicate itself
-	 * (a where_clause), and (2) a corresponding range table.
+	 * "predicate" comes in two parts (1) the predicate expression itself,
+	 * and (2) a corresponding range table.
+	 *
+	 * XXX I think this code is broken --- index_build expects a single
+	 * expression not a list --- tgl Jul 00
 	 */
 	if (rangetable != NIL)
 	{
@@ -326,47 +283,20 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
 
-	/* make predInfo list to pass to index_build */
-	predInfo = (PredInfo *) palloc(sizeof(PredInfo));
-	predInfo->pred = (Node *) cnfPred;
-	predInfo->oldPred = oldPred;
+	/* pass new predicate to index_build */
+	indexInfo->ii_Predicate = (Node *) cnfPred;
 
-	attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
-											 sizeof attributeNumberA[0]);
-	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof classObjectId[0]);
-
-
-	for (i = 0; i < numberOfAttributes; i++)
-	{
-		attributeNumberA[i] = index->indkey[i];
-		classObjectId[i] = index->indclass[i];
-	}
-
-	if (indproc != InvalidOid)
-	{
-		funcInfo = &fInfo;
-		FIsetnArgs(funcInfo, numberOfAttributes);
-
-		tuple = SearchSysCacheTuple(PROCOID,
-									ObjectIdGetDatum(indproc),
-									0, 0, 0);
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "ExtendIndex: index procedure %u not found",
-				 indproc);
-
-		namecpy(&(funcInfo->funcName),
-				&(((Form_pg_proc) GETSTRUCT(tuple))->proname));
-
-		FIsetProcOid(funcInfo, tuple->t_data->t_oid);
-	}
-
+	/* Open heap and index rels, and get suitable locks */
 	heapRelation = heap_open(relationId, ShareLock);
 	indexRelation = index_open(indexId);
 
-	InitIndexStrategy(numberOfAttributes, indexRelation, accessMethodId);
+	/* Obtain exclusive lock on it, just to be sure */
+	LockRelation(indexRelation, AccessExclusiveLock);
 
-	index_build(heapRelation, indexRelation, numberOfAttributes,
-				attributeNumberA, funcInfo, predInfo, unique);
+	InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
+					  indexRelation, accessMethodId);
+
+	index_build(heapRelation, indexRelation, indexInfo, oldPred);
 
 	/* heap and index rels are closed as a side-effect of index_build */
 }
@@ -431,15 +361,15 @@ CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid)
 
 
 static void
-FuncIndexArgs(IndexElem *funcIndex,
-			  FuncIndexInfo *funcInfo,
-			  AttrNumber *attNumP,
-			  Oid *opOidP,
+FuncIndexArgs(IndexInfo *indexInfo,
+			  Oid *classOidP,
+			  IndexElem *funcIndex,
 			  Oid relId,
 			  char *accessMethodName,
 			  Oid accessMethodId)
 {
-	List	   *rest;
+	Oid			argTypes[FUNC_MAX_ARGS];
+	List	   *arglist;
 	HeapTuple	tuple;
 	Oid			retType;
 	int			argn = 0;
@@ -447,68 +377,77 @@ FuncIndexArgs(IndexElem *funcIndex,
 	/*
 	 * process the function arguments, which are a list of T_String
 	 * (someday ought to allow more general expressions?)
+	 *
+	 * Note caller already checked that list is not too long.
 	 */
-	MemSet(funcInfo->arglist, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	MemSet(argTypes, 0, sizeof(argTypes));
 
-	foreach(rest, funcIndex->args)
+	foreach(arglist, funcIndex->args)
 	{
-		char	   *arg = strVal(lfirst(rest));
+		char	   *arg = strVal(lfirst(arglist));
 		Form_pg_attribute att;
 
 		tuple = SearchSysCacheTuple(ATTNAME,
 									ObjectIdGetDatum(relId),
-									PointerGetDatum(arg), 0, 0);
-
+									PointerGetDatum(arg),
+									0, 0);
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "DefineIndex: attribute \"%s\" not found", arg);
 		att = (Form_pg_attribute) GETSTRUCT(tuple);
-		*attNumP++ = att->attnum;
-		funcInfo->arglist[argn++] = att->atttypid;
+
+		indexInfo->ii_KeyAttrNumbers[argn] = att->attnum;
+		argTypes[argn] = att->atttypid;
+		argn++;
 	}
 
 	/* ----------------
 	 * Lookup the function procedure to get its OID and result type.
+	 *
+	 * XXX need to accept binary-compatible functions here, not just
+	 * an exact match.
 	 * ----------------
 	 */
 	tuple = SearchSysCacheTuple(PROCNAME,
-								PointerGetDatum(FIgetname(funcInfo)),
-								Int32GetDatum(FIgetnArgs(funcInfo)),
-								PointerGetDatum(FIgetArglist(funcInfo)),
+								PointerGetDatum(funcIndex->name),
+								Int32GetDatum(indexInfo->ii_NumKeyAttrs),
+								PointerGetDatum(argTypes),
 								0);
-
 	if (!HeapTupleIsValid(tuple))
 	{
-		func_error("DefineIndex", FIgetname(funcInfo),
-				   FIgetnArgs(funcInfo), FIgetArglist(funcInfo), NULL);
+		func_error("DefineIndex", funcIndex->name,
+				   indexInfo->ii_NumKeyAttrs, argTypes, NULL);
 	}
 
-	FIsetProcOid(funcInfo, tuple->t_data->t_oid);
+	indexInfo->ii_FuncOid = tuple->t_data->t_oid;
 	retType = ((Form_pg_proc) GETSTRUCT(tuple))->prorettype;
 
-	/* Process type and opclass, using func return type as default */
+	/* Process opclass, using func return type as default type */
 
-	ProcessAttrTypename(funcIndex, retType, -1);
+	classOidP[0] = GetAttrOpClass(funcIndex, retType,
+								  accessMethodName, accessMethodId);
 
-	*opOidP = GetAttrOpClass(funcIndex, retType,
-							 accessMethodName, accessMethodId);
+	/* Need to do the fmgr function lookup now, too */
+
+	fmgr_info(indexInfo->ii_FuncOid, & indexInfo->ii_FuncInfo);
 }
 
 static void
-NormIndexAttrs(List *attList,	/* list of IndexElem's */
-			   AttrNumber *attNumP,
+NormIndexAttrs(IndexInfo *indexInfo,
 			   Oid *classOidP,
+			   List *attList,	/* list of IndexElem's */
 			   Oid relId,
 			   char *accessMethodName,
 			   Oid accessMethodId)
 {
 	List	   *rest;
+	int			attn = 0;
 
 	/*
 	 * process attributeList
 	 */
 	foreach(rest, attList)
 	{
-		IndexElem  *attribute = lfirst(rest);
+		IndexElem  *attribute = (IndexElem *) lfirst(rest);
 		HeapTuple	atttuple;
 		Form_pg_attribute attform;
 
@@ -524,36 +463,13 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 				 attribute->name);
 		attform = (Form_pg_attribute) GETSTRUCT(atttuple);
 
-		*attNumP++ = attform->attnum;
+		indexInfo->ii_KeyAttrNumbers[attn] = attform->attnum;
 
-		ProcessAttrTypename(attribute, attform->atttypid, attform->atttypmod);
-
-		*classOidP++ = GetAttrOpClass(attribute, attform->atttypid,
-									  accessMethodName, accessMethodId);
+		classOidP[attn] = GetAttrOpClass(attribute, attform->atttypid,
+										 accessMethodName, accessMethodId);
 
 		heap_freetuple(atttuple);
-	}
-}
-
-static void
-ProcessAttrTypename(IndexElem *attribute,
-					Oid defType, int32 defTypmod)
-{
-	HeapTuple	tuple;
-
-	/* build a type node so we can set the proper alignment, etc. */
-	if (attribute->typename == NULL)
-	{
-		tuple = SearchSysCacheTuple(TYPEOID,
-									ObjectIdGetDatum(defType),
-									0, 0, 0);
-		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "DefineIndex: type for attribute \"%s\" undefined",
-				 attribute->name);
-
-		attribute->typename = makeNode(TypeName);
-		attribute->typename->name = nameout(&((Form_pg_type) GETSTRUCT(tuple))->typname);
-		attribute->typename->typmod = defTypmod;
+		attn++;
 	}
 }
 
@@ -626,7 +542,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	 *
 	 * If the opclass was the default for the datatype, assume we can skip
 	 * this check --- that saves a few cycles in the most common case.
-	 * If pg_opclass is messed up then we're probably screwed anyway...
+	 * If pg_opclass is wrong then we're probably screwed anyway...
 	 */
 	if (doTypeCheck)
 	{

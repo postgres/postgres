@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.23 2000/01/26 05:57:50 momjian Exp $
+ * $Id: genam.h,v 1.24 2000/07/14 22:17:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef GENAM_H
 #define GENAM_H
 
-#include "access/funcindex.h"
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
@@ -42,9 +41,6 @@ extern RetrieveIndexResult index_getnext(IndexScanDesc scan,
 extern RegProcedure index_cost_estimator(Relation relation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
-extern Datum GetIndexValue(HeapTuple tuple, TupleDesc hTupDesc,
-			  int attOff, AttrNumber *attrNums, FuncIndexInfo *fInfo,
-			  bool *attNull);
 
 /* in genam.c */
 extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
