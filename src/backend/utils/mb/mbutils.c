@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.36.2.1 2002/11/26 02:37:13 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/mb/mbutils.c,v 1.36.2.2 2003/02/19 14:14:58 ishii Exp $
  */
 #include "postgres.h"
 
@@ -37,6 +37,8 @@ static unsigned char *perform_default_encoding_conversion(unsigned char *src,
 									int len, bool is_client_to_server);
 static int cliplen(const unsigned char *str, int len, int limit);
 
+/* Flag to we need to initialize client encoding info */
+static int need_to_init_client_encoding = -1;
 
 /*
  * Set the client encoding and save fmgrinfo for the converion
@@ -57,6 +59,13 @@ SetClientEncoding(int encoding, bool doit)
 
 	if (!PG_VALID_FE_ENCODING(encoding))
 		return (-1);
+
+	/* If we cannot actualy set client encoding info, remeber it
+	 * so that we could set it using InitializeClientEncoding()
+	 * in InitPostgres()
+	 */
+	if (current_server_encoding != encoding && !IsTransactionState())
+		need_to_init_client_encoding = encoding;
 
 	if (current_server_encoding == encoding ||
 	(current_server_encoding == PG_SQL_ASCII || encoding == PG_SQL_ASCII))
@@ -113,6 +122,19 @@ SetClientEncoding(int encoding, bool doit)
 		ToClientConvProc = to_client;
 	}
 	return 0;
+}
+
+/* Initialize client encoding if necessary.
+ * called from InitPostgres() once during backend starting up.
+ */
+void
+InitializeClientEncoding()
+{
+	if (need_to_init_client_encoding > 0)
+	{
+		SetClientEncoding(need_to_init_client_encoding, 1);
+		need_to_init_client_encoding = -1;
+	}
 }
 
 /*
