@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.125 1999/12/11 00:31:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.126 1999/12/16 20:09:58 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -125,42 +125,54 @@ static void
 usage(const char *progname)
 {
 	fprintf(stderr,
-			"usage:  %s [options] dbname\n", progname);
+		"\nUsage: %s [options] dbname\n\n", progname);
+
+#ifdef HAVE_GETOPT_LONG
 	fprintf(stderr,
-			"\t -a          \t\t dump out only the data, no schema\n");
+	
+	"    -a, --data-only         dump out only the data, no schema\n"
+	"    -c, --clean             clean(drop) schema prior to create\n"
+	"    -d, --insert-proper     dump data as proper insert strings\n"
+	"    -D, --insert-attr       dump data as inserts with attribute names\n"
+	"    -f, --out file          script output filename\n"
+	"    -h, --host hostname     server host name\n"
+	"    -n, --no-quotes         suppress most quotes around identifiers\n"
+	"    -N, --quotes            enable most quotes around identifiers\n"
+	"    -o, --oids              dump object id's (oids)\n"
+	"    -p, --port port         server port number\n"
+	"    -s, --schema-only       dump out only the schema, no data\n"
+	"    -t, --table table       dump for this table only\n"
+	"    -u, --password          use password authentication\n"
+	"    -v, --verbose           verbose\n"
+	"    -x, --no-acl            do not dump ACL's (grant/revoke)\n"
+	"    -?, --help              show this help message\n"
+	
+	); /* fprintf */
+#else
 	fprintf(stderr,
-			"\t -c          \t\t clean(drop) schema prior to create\n");
+	
+	"    -a                      dump out only the data, no schema\n"
+	"    -c                      clean(drop) schema prior to create\n"
+	"    -d                      dump data as proper insert strings\n"
+	"    -D                      dump data as inserts with attribute names\n"
+	"    -f filename             script output filename\n"
+	"    -h hostname             server host name\n"
+	"    -n                      suppress most quotes around identifiers\n"
+	"    -N                      enable most quotes around identifiers\n"
+	"    -o                      dump object id's (oids)\n"
+	"    -p port                 server port number\n"
+	"    -s                      dump out only the schema, no data\n"
+	"    -t table                dump for this table only\n"
+	"    -u                      use password authentication\n"
+	"    -v                      verbose\n"
+	"    -x                      do not dump ACL's (grant/revoke)\n"
+	"    -?                      show this help message\n"
+	
+	); /* fprintf */
+#endif
+	
 	fprintf(stderr,
-			"\t -d          \t\t dump data as proper insert strings\n");
-	fprintf(stderr,
-			"\t -D          \t\t dump data as inserts"
-			" with attribute names\n");
-	fprintf(stderr,
-			"\t -f filename \t\t script output filename\n");
-	fprintf(stderr,
-			"\t -h hostname \t\t server host name\n");
-	fprintf(stderr,
-		"\t -n          \t\t suppress most quotes around identifiers\n");
-	fprintf(stderr,
-		  "\t -N          \t\t enable most quotes around identifiers\n");
-	fprintf(stderr,
-			"\t -o          \t\t dump object id's (oids)\n");
-	fprintf(stderr,
-			"\t -p port     \t\t server port number\n");
-	fprintf(stderr,
-			"\t -s          \t\t dump out only the schema, no data\n");
-	fprintf(stderr,
-			"\t -t table    \t\t dump for this table only\n");
-	fprintf(stderr,
-			"\t -u          \t\t use password authentication\n");
-	fprintf(stderr,
-			"\t -v          \t\t verbose\n");
-	fprintf(stderr,
-			"\t -x          \t\t do not dump ACL's (grant/revoke)\n");
-	fprintf(stderr,
-			"\nIf dbname is not supplied, then the DATABASE environment "
-			"variable value is used.\n");
-	fprintf(stderr, "\n");
+		"\nIf dbname is not supplied, then the DATABASE environment variable value is used.\n\n");
 
 	exit(1);
 }
@@ -534,6 +546,29 @@ main(int argc, char **argv)
 	char		password[100];
 	bool		use_password = false;
 
+#ifdef HAVE_GETOPT_LONG
+	static struct option long_options[] = {
+		{"data-only", no_argument, NULL, 'a'},
+		{"clean", no_argument, NULL, 'c'},
+		{"insert-proper",no_argument, NULL, 'd'},
+		{"insert-attr",	no_argument, NULL, 'D'},
+		{"out", required_argument, NULL, 'f'},
+		{"to-file", required_argument, NULL, 'f'},
+		{"host", required_argument, NULL, 'h'},
+		{"no-quotes", no_argument, NULL, 'n'},
+		{"quotes", no_argument, NULL, 'N'},
+		{"oids", no_argument, NULL, 'o'},
+		{"port", required_argument, NULL, 'p'},
+		{"schema-only", no_argument, NULL, 's'},
+		{"table", required_argument, NULL, 't'},
+		{"password", no_argument, NULL, 'u'},
+		{"verbose", no_argument, NULL, 'v'},
+		{"no-acl", no_argument, NULL, 'x'},
+		{"help", no_argument, NULL, '?'},
+	};        
+	int		optindex;
+#endif
+
 	g_verbose = false;
 	force_quotes = true;
 	dropSchema = false;
@@ -546,7 +581,11 @@ main(int argc, char **argv)
 
 	progname = *argv;
 
-	while ((c = getopt(argc, argv, "acdDf:h:nNop:st:uvxz")) != EOF)
+#ifdef HAVE_GETOPT_LONG
+	while ((c = getopt_long(argc, argv, "acdDf:h:nNop:st:uvxz?", long_options, &optindex)) != -1)
+#else
+	while ((c = getopt(argc, argv, "acdDf:h:nNop:st:uvxz?")) != -1)
+#endif
 	{
 		switch (c)
 		{
@@ -627,6 +666,7 @@ main(int argc, char **argv)
 				 "%s: The -z option(dump ACLs) is now the default, continuing.\n",
 					progname);
 				break;
+			case '?':	
 			default:
 				usage(progname);
 				break;

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.64 1999/12/12 05:57:30 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.65 1999/12/16 20:09:56 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -152,26 +152,39 @@ do
 			exit 100
 		fi
                 ;;
+	--help)
+		usage=t
+		;;
+	-\?)
+		usage=t
+		;;
         *)
-                echo "Unrecognized option '$1'.  Syntax is:"
-		if [ -z "$MULTIBYTE" ];then
-                echo "initdb [-t | --template] [-d | --debug]" \
-                     "[-n | --noclean]" \
-                     "[-u SUPERUSER | --username=SUPERUSER]" \
-                     "[-r DATADIR | --pgdata=DATADIR]" \
-                     "[-l LIBDIR | --pglib=LIBDIR]"
-		else
-                echo "initdb [-t | --template] [-d | --debug]" \
-                     "[-n | --noclean]" \
-                     "[-u SUPERUSER | --username=SUPERUSER]" \
-                     "[-r DATADIR | --pgdata=DATADIR]" \
-                     "[-l LIBDIR | --pglib=LIBDIR]" \
-                     "[-e ENCODING | --pgencoding=ENCODING]"
-		fi
-                exit 100
+                echo "Unrecognized option '$1'. Try -? for help."
+		exit 100
         esac
         shift
 done
+
+if [ "$usage" ]; then
+	echo ""
+	echo "Usage: $CMDNAME [options]"
+	echo ""
+        echo "    -t,           --template           "
+        echo "    -d,           --debug              "
+        echo "    -n,           --noclean            "
+        echo "    -u SUPERUSER, --username=SUPERUSER " 
+        echo "    -r DATADIR,   --pgdata=DATADIR     "
+        echo "    -l LIBDIR,    --pglib=LIBDIR       "
+	
+	if [ -n "$MULTIBYTE" ]; then 
+		echo "    -e ENCODING,  --pgencoding=ENCODING"
+        fi
+	
+	echo "    -?,           --help               "           	
+	echo ""	
+
+	exit 100
+fi
 
 #-------------------------------------------------------------------------
 # Make sure he told us where to find the Postgres files.

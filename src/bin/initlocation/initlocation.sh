@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.2 1998/10/05 02:51:21 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.3 1999/12/16 20:09:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,21 +27,31 @@ do
 
 		--location) shift; PGALTDATA="$1"; ;;
 		--username) shift; POSTGRES_SUPERUSERNAME="$1"; ;;
+		--help) usage=1; ;;
 
 		-u) shift; POSTGRES_SUPERUSERNAME="$1"; ;;
 		-D) shift; PGALTDATA="$1"; ;;
-		-*) badparm=$1; usage=1; ;;
+		-h) usage=t; ;;
+		-\?) usage=t; ;;
+		-*) badparm=$1; ;;
 		*) PGALTDATA="$1"; ;;
 	esac
 	shift
 done
 
 if [ -n "$badparm" ]; then
-	echo "$CMDNAME: Unrecognized parameter '$badparm'"
+	echo "$CMDNAME: Unrecognized parameter '$badparm'. Try -? for help."
+	exit 1
 fi
 
-if [ -n "$usage" ]; then
-	echo "Usage: $CMDNAME [-u SUPERUSER] DATADIR"
+if [ "$usage" ]; then
+	echo ""
+	echo "Usage: $CMDNAME [options] datadir"	
+	echo ""
+	echo "    -u SUPERUSER, --username=SUPERUSER "
+	echo "    -D DATADIR,   --location=DATADIR   "
+	echo "    -?,           --help               "
+	echo ""
 	exit 1
 fi
 

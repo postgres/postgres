@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.4 1999/07/17 20:18:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.5 1999/12/16 20:10:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,5 +46,5 @@ main(int argc, char **argv)
 static void
 usage()
 {
-	fprintf(stderr, "pg_encoding: encoding_name | encoding_number\n");
+	fprintf(stderr, "\nUsage: pg_encoding encoding_name | encoding_number\n\n");
 }
