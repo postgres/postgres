@@ -373,7 +373,6 @@ static int r_prelude(struct SN_env * z) {
             z->c = c;
             break;
         }
-    lab1:
         z->c = c;
     }
     return 1;

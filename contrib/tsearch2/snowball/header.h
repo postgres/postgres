@@ -1,10 +1,4 @@
-
-#include <limits.h>
-
 #include "api.h"
-
-#define MAXINT INT_MAX
-#define MININT INT_MIN
 
 #define HEAD 2*sizeof(int)
 
