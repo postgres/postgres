@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.60 1998/06/13 20:27:10 momjian Exp $
+ * $Id: pg_proc.h,v 1.61 1998/07/08 14:08:59 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -90,7 +90,7 @@ typedef FormData_pg_proc *Form_pg_proc;
  * ----------------
  */
 
-/* keep the following ordered by OID so that later changes can be made easier*/
+/* keep the following ordered by OID so that later changes can be made easier */
 
 /* OIDS 1 - 99 */
 
@@ -203,8 +203,11 @@ DATA(insert OID = 1258 (  textcat		   PGUID 11 f t f 2 f 25 "25 25" 100 0 1 0	fo
 DESCR("concatenate");
 DATA(insert OID = 1377 (  textoctetlen	   PGUID 11 f t f 1 f 23 "25" 100 0 1 0  foo bar ));
 DESCR("octet length");
+
 DATA(insert OID =  84 (  boolne			   PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
 DESCR("not equal");
+DATA(insert OID =  89 (  version		   PGUID 11 f t t 0 f 25 "" 100 0 0 100 foo bar ));
+DESCR("PostgreSQL version string");
 
 DATA(insert OID = 1265 (  rtsel			   PGUID 11 f t f 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DESCR("r-tree");
@@ -829,6 +832,55 @@ DESCR("hash");
 DATA(insert OID = 456 (  hashtext		   PGUID 11 f t f 2 f 23 "25 25" 100 0 0 100  foo bar ));
 DESCR("hash");
 
+DATA(insert OID = 460 (  int8in			   PGUID 11 f t f 1 f 20 "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 461 (  int8out		   PGUID 11 f t f 1 f 19 "0" 100 0 0 100  foo bar ));
+DESCR("(internal)");
+DATA(insert OID = 462 (  int8um			   PGUID 11 f t f 1 f 20 "20" 100 0 0 100  foo bar ));
+DESCR("unary minus");
+DATA(insert OID = 463 (  int8pl			   PGUID 11 f t f 2 f 20 "20 20" 100 0 0 100  foo bar ));
+DESCR("addition");
+DATA(insert OID = 464 (  int8mi			   PGUID 11 f t f 2 f 20 "20 20" 100 0 0 100  foo bar ));
+DESCR("subtraction");
+DATA(insert OID = 465 (  int8mul		   PGUID 11 f t f 2 f 20 "20 20" 100 0 0 100  foo bar ));
+DESCR("multiply");
+DATA(insert OID = 466 (  int8div		   PGUID 11 f t f 2 f 20 "20 20" 100 0 0 100  foo bar ));
+DESCR("divide");
+DATA(insert OID = 467 (  int8eq			   PGUID 11 f t f 2 f 16 "20 20" 100 0 0 100  foo bar ));
+DESCR("equal");
+DATA(insert OID = 468 (  int8ne			   PGUID 11 f t f 2 f 16 "20 20" 100 0 0 100  foo bar ));
+DESCR("not equal");
+DATA(insert OID = 469 (  int8lt			   PGUID 11 f t f 2 f 16 "20 20" 100 0 0 100  foo bar ));
+DESCR("less-than");
+DATA(insert OID = 470 (  int8gt			   PGUID 11 f t f 2 f 16 "20 20" 100 0 0 100  foo bar ));
+DESCR("greater-than");
+DATA(insert OID = 471 (  int8le			   PGUID 11 f t f 2 f 16 "20 20" 100 0 0 100  foo bar ));
+DESCR("less-than-or-equals");
+DATA(insert OID = 472 (  int8ge			   PGUID 11 f t f 2 f 16 "20 20" 100 0 0 100  foo bar ));
+DESCR("greater-than-or-equals");
+
+DATA(insert OID = 474 (  int84eq		   PGUID 11 f t f 2 f 16 "20 23" 100 0 0 100  foo bar ));
+DESCR("equal");
+DATA(insert OID = 475 (  int84ne		   PGUID 11 f t f 2 f 16 "20 23" 100 0 0 100  foo bar ));
+DESCR("not equal");
+DATA(insert OID = 476 (  int84lt		   PGUID 11 f t f 2 f 16 "20 23" 100 0 0 100  foo bar ));
+DESCR("less-than");
+DATA(insert OID = 477 (  int84gt		   PGUID 11 f t f 2 f 16 "20 23" 100 0 0 100  foo bar ));
+DESCR("greater-than");
+DATA(insert OID = 478 (  int84le		   PGUID 11 f t f 2 f 16 "20 23" 100 0 0 100  foo bar ));
+DESCR("less-than-or-equals");
+DATA(insert OID = 479 (  int84ge		   PGUID 11 f t f 2 f 16 "20 23" 100 0 0 100  foo bar ));
+DESCR("greater-than-or-equals");
+
+DATA(insert OID = 480 (  int84			   PGUID 11 f t f 1 f  23 "20" 100 0 0 100  foo bar ));
+DESCR("convert int8 to int4");
+DATA(insert OID = 481 (  int48			   PGUID 11 f t f 1 f  20 "23" 100 0 0 100  foo bar ));
+DESCR("convert int4 to int8");
+DATA(insert OID = 482 (  i8tod			   PGUID 11 f t f 1 f 701 "20" 100 0 0 100  foo bar ));
+DESCR("convert int8 to float8");
+DATA(insert OID = 483 (  dtoi8			   PGUID 11 f t f 1 f  20 "701" 100 0 0 100  foo bar ));
+DESCR("convert float8 to int8");
+
 /* OIDS 500 - 599 */
 
 /* OIDS 600 - 699 */
@@ -861,8 +913,6 @@ DATA(insert OID = 683 (  oid8eq			   PGUID 11 f t f 2 f 16 "30 30" 100 0 0 100  
 DESCR("equals");
 
 /* OIDS 700 - 799 */
-
-
 DATA(insert OID = 710 (  getpgusername	   PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
 DESCR("(internal)");
 DATA(insert OID = 711 (  userfntest		   PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
@@ -951,13 +1001,13 @@ DESCR("");
 DATA(insert OID = 767 (  int2inc		   PGUID 11 f t f 1 f 21 "21" 100 0 0 100  foo bar ));
 DESCR("");
 DATA(insert OID = 768 (  int4larger		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID = 769 (  int4smaller	   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("smaller of two");
 DATA(insert OID = 770 (  int2larger		   PGUID 11 f t f 2 f 21 "21 21" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("larger of two");
 DATA(insert OID = 771 (  int2smaller	   PGUID 11 f t f 2 f 21 "21 21" 100 0 0 100  foo bar ));
-DESCR("");
+DESCR("smaller of two");
 DATA(insert OID = 772 (  gistsel		   PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DESCR("gist selectivity");
 DATA(insert OID = 773 (  gistnpage		   PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
@@ -1035,12 +1085,30 @@ DESCR("matches LIKE expression");
 DATA(insert OID =  859 (  namenlike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 DESCR("does not match LIKE expression");
 
-DATA(insert OID =  846 (  cash_mul_flt4		   PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
+DATA(insert OID =  846 (  cash_mul_flt4	   PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
 DESCR("multiply");
-DATA(insert OID =  847 (  cash_div_flt4		   PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
+DATA(insert OID =  847 (  cash_div_flt4	   PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
 DESCR("divide");
-DATA(insert OID =  848 (  flt4_mul_cash		   PGUID 11 f t f 2 f 790 "700 790" 100 0 0 100  foo bar ));
+DATA(insert OID =  848 (  flt4_mul_cash    PGUID 11 f t f 2 f 790 "700 790" 100 0 0 100  foo bar ));
 DESCR("multiply");
+
+DATA(insert OID =  852 (  int48eq		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DESCR("equal");
+DATA(insert OID =  853 (  int48ne		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DESCR("not equal");
+DATA(insert OID =  854 (  int48lt		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DESCR("less-than");
+DATA(insert OID =  855 (  int48gt		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DESCR("greater-than");
+DATA(insert OID =  856 (  int48le		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DESCR("less-than-or-equals");
+DATA(insert OID =  857 (  int48ge		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DESCR("greater-than-or-equals");
+
+DATA(insert OID =  860 (  char_bpchar      PGUID 11 f t f 1 f 1042 "18" 100 0 0 100  foo bar ));
+DESCR("convert to bpchar");
+DATA(insert OID =  861 (  bpchar_char      PGUID 11 f t f 1 f   18 "1042" 100 0 0 100  foo bar ));
+DESCR("convert to char");
 
 DATA(insert OID =  862 (  int4_mul_cash		   PGUID 11 f t f 2 f 790 "23 790" 100 0 0 100	foo bar ));
 DESCR("multiply");
@@ -1448,6 +1516,16 @@ DESCR("truncate datetime to specified units");
 DATA(insert OID = 1218 (  timespan_trunc   PGUID 11 f t f 2 f 1186 "25 1186" 100 0 0 100  foo bar ));
 DESCR("truncate timespan to specified units");
 
+DATA(insert OID = 1230 (  bpchar           PGUID 14 f t f 1 f 1042 "18" 100 0 0 100  "select char_bpchar($1)" - ));
+DESCR("convert to bpchar");
+DATA(insert OID = 1231 (  char             PGUID 14 f t f 1 f   23 "1042" 100 0 0 100  "select bpchar_char($1)" - ));
+DESCR("convert to char");
+
+DATA(insert OID = 1236 (  int8larger	   PGUID 11 f t f 2 f 20 "20 20" 100 0 0 100  foo bar ));
+DESCR("larger of two");
+DATA(insert OID = 1237 (  int8smaller	   PGUID 11 f t f 2 f 20 "20 20" 100 0 0 100  foo bar ));
+DESCR("smaller of two");
+
 DATA(insert OID = 1238 (  texticregexeq    PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0	foo bar ));
 DESCR("matches regex., case-insensitive");
 DATA(insert OID = 1239 (  texticregexne    PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0	foo bar ));
@@ -1470,6 +1548,23 @@ DATA(insert OID = 1263 (  text_timespan    PGUID 11 f t f 1 f 1186 "25" 100 0 0 
 DESCR("convert");
 DATA(insert OID = 1271 (  timespan_finite  PGUID 11 f t f 1 f	16 "1186" 100 0 0 100  foo bar ));
 DESCR("boolean test");
+
+DATA(insert OID = 1274 (  int84pl		   PGUID 11 f t f 2 f 20 "20 23" 100 0 0 100  foo bar ));
+DESCR("addition");
+DATA(insert OID = 1275 (  int84mi		   PGUID 11 f t f 2 f 20 "20 23" 100 0 0 100  foo bar ));
+DESCR("subtraction");
+DATA(insert OID = 1276 (  int84mul		   PGUID 11 f t f 2 f 20 "20 23" 100 0 0 100  foo bar ));
+DESCR("multiply");
+DATA(insert OID = 1277 (  int84div		   PGUID 11 f t f 2 f 20 "20 23" 100 0 0 100  foo bar ));
+DESCR("divide");
+DATA(insert OID = 1278 (  int48pl		   PGUID 11 f t f 2 f 20 "23 20" 100 0 0 100  foo bar ));
+DESCR("addition");
+DATA(insert OID = 1279 (  int48mi		   PGUID 11 f t f 2 f 20 "23 20" 100 0 0 100  foo bar ));
+DESCR("subtraction");
+DATA(insert OID = 1280 (  int48mul		   PGUID 11 f t f 2 f 20 "23 20" 100 0 0 100  foo bar ));
+DESCR("multiply");
+DATA(insert OID = 1281 (  int48div		   PGUID 11 f t f 2 f 20 "23 20" 100 0 0 100  foo bar ));
+DESCR("divide");
 
 DATA(insert OID = 1297 (  timestamp_in	   PGUID 11 f t f 1 f 1296 "0" 100 0 0 100	foo bar ));
 DESCR("(internal)");
@@ -1582,11 +1677,6 @@ DESCR("octet length");
 DATA(insert OID = 1376 (  octet_length			 PGUID 14 f t f 1 f   23   "1043" 100 0 0 100  "select varcharoctetlen($1)" - ));
 DESCR("octet length");
 
-DATA(insert OID = 1374 (  char_bpchar		 PGUID 11 f t f 1 f 1042 "18" 100 0 0 100  foo bar ));
-DATA(insert OID = 1375 (  bpchar			 PGUID 14 f t f 1 f 1042 "18" 100 0 0 100  "select char_bpchar($1)" - ));
-DATA(insert OID = 1376 (  bpchar_char		 PGUID 11 f t f 1 f   18 "1042" 100 0 0 100  foo bar ));
-DATA(insert OID = 1377 (  char				 PGUID 14 f t f 1 f   23 "1042" 100 0 0 100  "select bpchar_char($1)" - ));
-
 DATA(insert OID = 1380 (  date_part    PGUID 14 f t f 2 f  701 "25 1184" 100 0 0 100  "select datetime_part($1, $2)" - ));
 DESCR("extract field from datetime");
 DATA(insert OID = 1381 (  date_part    PGUID 14 f t f 2 f  701 "25 1186" 100 0 0 100  "select timespan_part($1, $2)" - ));
@@ -1645,7 +1735,6 @@ DATA(insert OID = 1404 (  int		   PGUID 14 f t f 1 f	23	 "23" 100 0 0 100  "sele
 DESCR("convert int4 to int4 (no-op)");
 DATA(insert OID = 1405 (  int2		   PGUID 14 f t f 1 f	21	 "21" 100 0 0 100  "select $1" - ));
 DESCR("convert int2 to int2 (no-op)");
-
 DATA(insert OID = 1406 (  float8	   PGUID 14 f t f 1 f  701	"701" 100 0 0 100  "select $1" - ));
 DESCR("convert float8 to float8 (no-op)");
 DATA(insert OID = 1407 (  float8	   PGUID 14 f t f 1 f  701	"700" 100 0 0 100  "select ftod($1)" - ));
@@ -1666,8 +1755,6 @@ DATA(insert OID = 1414 (  int4		   PGUID 14 f t f 1 f	23	 "21" 100 0 0 100  "sel
 DESCR("convert int2 to int4");
 DATA(insert OID = 1415 (  int4		   PGUID 14 f t f 1 f	23	"700" 100 0 0 100  "select ftoi4($1)" - ));
 DESCR("convert float4 to int4");
-DATA(insert OID = 1416 (  int2		   PGUID 14 f t f 1 f	21	 "21" 100 0 0 100  "select $1" - ));
-DESCR("convert int2 to int2 (no-op)");
 DATA(insert OID = 1417 (  int2		   PGUID 14 f t f 1 f	21	 "23" 100 0 0 100  "select i4toi2($1)" - ));
 DESCR("convert int4 to int2");
 DATA(insert OID = 1418 (  int2		   PGUID 14 f t f 1 f	21	"701" 100 0 0 100  "select dtoi2($1)" - ));
@@ -1929,6 +2016,17 @@ DESCR("");
 DATA(insert OID = 1584 (  area				PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_area($1)" - ));
 DESCR("");
 
+DATA(insert OID = 1592 (  int8				PGUID 14 f t f 1 f  20 "20" 100 0 0 100  "select $1" - ));
+DESCR("convert int8 to int8 (no-op)");
+DATA(insert OID = 1593 (  int8				PGUID 14 f t f 1 f  20 "23" 100 0 0 100  "select int48($1)" - ));
+DESCR("convert int4 to int8");
+DATA(insert OID = 1594 (  int8				PGUID 14 f t f 1 f  20 "701" 100 0 0 100  "select dtoi8($1)" - ));
+DESCR("convert float8 to int8");
+DATA(insert OID = 1595 (  int4				PGUID 14 f t f 1 f  23 "20" 100 0 0 100  "select int84($1)" - ));
+DESCR("convert int8 to int4");
+DATA(insert OID = 1596 (  float8			PGUID 14 f t f 1 f 701 "20" 100 0 0 100  "select i8tod($1)" - ));
+DESCR("convert int8 to float8");
+
 /* OIDS 1600 - 1699 */
 
 DATA(insert OID = 1600 (  line				PGUID 14 f t f 2 f 628 "600 600" 100 0 0 100  "select line_construct_pp($1, $2)" - ));
@@ -1984,9 +2082,6 @@ DATA(insert OID =  1317 (  nextval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  fo
 DESCR("sequence next value");
 DATA(insert OID =  1319 (  currval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
 DESCR("sequence current value");
-
-DATA(insert OID = 1600 ( version       PGUID 11 f t t 0 f 25 "" 100 0 0 100 foo bar ));
-DESCR("PostgreSQL version string");
 
 
 /*

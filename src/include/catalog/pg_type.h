@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.40 1998/05/09 22:48:37 thomas Exp $
+ * $Id: pg_type.h,v 1.41 1998/07/08 14:09:00 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -67,8 +67,8 @@ CATALOG(pg_type) BOOTSTRAP
 	 * the I/O routines are written to expect pass by reference. Note that
 	 * float4 is written for pass by reference and has a declared length
 	 * of 4 bytes, so it looks like pass by reference must be consistant
-	 * with the declared length, and typbyval is used somewhere. - tgl
-	 * 97/03/20)
+	 * with the declared length, and typbyval is used somewhere.
+	 * - tgl 1997-03-20).
 	 */
 	char		typtype;
 	bool		typisdefined;
@@ -160,11 +160,15 @@ DESCR("variable length array of bytes");
 
 DATA(insert OID = 18 (	char	   PGUID  1   1 t b t \054 0   0 charin charout charin charout c _null_ ));
 DESCR("single character");
-#define CHAROID 18
+#define CHAROID			18
 
 DATA(insert OID = 19 (	name	   PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0	18 namein nameout namein nameout d _null_ ));
 DESCR("31-character type for storing system identifiers");
-#define NAMEOID 19
+#define NAMEOID			19
+
+DATA(insert OID = 20 (  int8	   PGUID  8  20 f b t \054 0   0 int8in int8out int8in int8out d _null_ ));
+DESCR("eight-byte integer, >18 digits");
+#define INT8OID			20
 
 DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
 DESCR("two-byte integer, -32k to 32k");
@@ -189,7 +193,7 @@ DATA(insert OID = 24 (	regproc    PGUID  4  16 t b t \054 0   0 regprocin regpro
 DESCR("registered procedure");
 DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  18 textin textout textin textout i _null_ ));
 DESCR("native variable-length string");
-#define TEXTOID 25
+#define TEXTOID			25
 
 DATA(insert OID = 26 (	oid		   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
 DESCR("object identifier type");
