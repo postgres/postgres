@@ -1,7 +1,13 @@
-main()
+/*
+** lextest.c
+**
+** tests for flex 2.5.3 bug
+*/
+
+int main()
 {
 	yylex();
-	return;
+	return 0;
 }
 
 yywrap()
