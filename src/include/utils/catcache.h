@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.9 1998/01/24 22:50:34 momjian Exp $
+ * $Id: catcache.h,v 1.10 1998/02/23 17:44:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@ extern GlobalMemory CacheCxt;
 extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 						 ItemPointer pointer);
 extern void ResetSystemCache(void);
+extern void SystemCacheRelationFlushed(Oid relId);
 extern CatCache * InitSysCache(char *relname, char *indname, int id, int nkeys,
 			 int key[], HeapTuple (*iScanfuncP) ());
 extern HeapTuple SearchSysCache(struct catcache * cache, Datum v1, Datum v2,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.35 1998/01/31 04:38:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.36 1998/02/23 17:43:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@
 #include "utils/relcache.h"
 #include "utils/hsearch.h"
 #include "utils/relcache.h"
+#include "utils/catcache.h"
 
 #include "catalog/catname.h"
 #include "catalog/catalog.h"
@@ -1344,6 +1345,7 @@ RelationFlushRelation(Relation *relationPtr,
 		RelationCacheDelete(relation);
 
 		FreeTupleDesc(relation->rd_att);
+		SystemCacheRelationFlushed(relation->rd_id);
 
 		FreeTriggerDesc(relation);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.9 1997/11/17 16:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.10 1998/02/23 17:43:23 scrappy Exp $
  *
  * Note - this code is real crufty...
  *
@@ -511,6 +511,20 @@ RelationInvalidateRelationCache(Relation relation,
 
 	(*function) (relationId, objectId);
 }
+
+
+/*
+ *	InitLocalInvalidateData
+ *
+ *	Setup this before anything could ever get invalid!
+ *	Called by InitPostgres();
+ */
+void
+InitLocalInvalidateData()
+{
+	ValidateHacks();
+}
+
 
 /*
  * DiscardInvalid --

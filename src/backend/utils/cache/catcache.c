@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.22 1998/02/11 19:12:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.23 1998/02/23 17:43:19 scrappy Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -618,6 +618,29 @@ ResetSystemCache()
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(oldcxt);
+}
+
+/* --------------------------------
+ *		SystemCacheRelationFlushed
+ *
+ *	RelationFlushRelation() frees some information referenced in the
+ *	cache structures. So we get informed when this is done and arrange
+ *	for the next SearchSysCache() call that this information is setup
+ *	again.
+ * --------------------------------
+ */
+void
+SystemCacheRelationFlushed(Oid relId)
+{
+	struct catcache *cache;
+
+	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
+	{
+		if (cache->relationId == relId)
+		{
+			cache->relationId = InvalidOid;
+		}
+	}
 }
 
 /* --------------------------------

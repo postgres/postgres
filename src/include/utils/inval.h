@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.7 1997/09/08 21:55:08 momjian Exp $
+ * $Id: inval.h,v 1.8 1998/02/23 17:44:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,8 @@
 
 #include <access/htup.h>
 #include <utils/rel.h>
+
+extern void InitLocalInvalidateData(void);
 
 extern void DiscardInvalid(void);
 

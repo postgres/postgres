@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.22 1998/01/29 03:23:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.23 1998/02/23 17:43:53 scrappy Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -62,6 +62,7 @@
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/mcxt.h"			/* for EnableMemoryContext, etc. */
+#include "utils/inval.h"
 
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
@@ -585,6 +586,12 @@ InitPostgres(char *name)		/* database name */
 	 * ----------------
 	 */
 	InitUserid();
+
+	/* ----------------
+	 *	 initialize local data in cache invalidation stuff
+	 * ----------------
+	 */
+	InitLocalInvalidateData();
 
 	/* ----------------
 	 *	ok, all done, now let's make sure we don't do it again.
