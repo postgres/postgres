@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.11 1997/04/04 10:40:34 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.12 1997/04/24 13:25:07 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,11 @@ INCLUDE_OPT= -I.. \
              -I../port/$(PORTNAME) \
              -I../../include
 
-CFLAGS+= $(INCLUDE_OPT) -Wno-error
+CFLAGS+= $(INCLUDE_OPT) 
+
+ifeq ($(CC), gcc)
+CFLAGS+= -Wno-error
+endif
 
 OBJS= aclchk.o dest.o fastpath.o postgres.o pquery.o utility.o variable.o
 
