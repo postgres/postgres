@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.18 1998/09/01 04:29:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.19 1999/01/27 00:36:28 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -275,7 +275,7 @@ print_slot(TupleTableSlot *slot)
 		return;
 	}
 
-	debugtup(slot->val, slot->ttc_tupleDescriptor);
+	debugtup(slot->val, slot->ttc_tupleDescriptor, NULL);
 }
 
 static char *

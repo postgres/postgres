@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.39 1999/01/24 22:50:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.40 1999/01/27 00:36:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,10 @@
 #ifdef MULTIBYTE
 #include <mb/pg_wchar.h>
 #endif
+
+static void printtup_setup(DestReceiver* self, TupleDesc typeinfo);
+static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self);
+static void printtup_cleanup(DestReceiver* self);
 
 /* ----------------------------------------------------------------
  *		printtup / debugtup support
@@ -65,12 +69,88 @@ getTypeOutAndElem(Oid type, Oid* typOutput, Oid* typElem)
 }
 
 /* ----------------
+ *		Private state for a printtup destination object
+ * ----------------
+ */
+typedef struct {				/* Per-attribute information */
+	Oid			typoutput;		/* Oid for the attribute's type output fn */
+	Oid			typelem;		/* typelem value to pass to the output fn */
+	/* more soon... */
+} PrinttupAttrInfo;
+
+typedef struct {
+	DestReceiver		pub;		/* publicly-known function pointers */
+	TupleDesc			attrinfo;	/* The attr info we are set up for */
+	int					nattrs;
+	PrinttupAttrInfo   *myinfo;		/* Cached info about each attr */
+} DR_printtup;
+
+/* ----------------
+ *		Initialize: create a DestReceiver for printtup
+ * ----------------
+ */
+DestReceiver*
+printtup_create_DR()
+{
+	DR_printtup* self = (DR_printtup*) palloc(sizeof(DR_printtup));
+
+	self->pub.receiveTuple = printtup;
+	self->pub.setup = printtup_setup;
+	self->pub.cleanup = printtup_cleanup;
+
+	self->attrinfo = NULL;
+	self->nattrs = 0;
+	self->myinfo = NULL;
+
+	return (DestReceiver*) self;
+}
+
+static void
+printtup_setup(DestReceiver* self, TupleDesc typeinfo)
+{
+	/* ----------------
+	 * We could set up the derived attr info at this time, but we postpone it
+	 * until the first call of printtup, for 3 reasons:
+	 * 1. We don't waste time (compared to the old way) if there are no
+	 *    tuples at all to output.
+	 * 2. Checking in printtup allows us to handle the case that the tuples
+	 *    change type midway through (although this probably can't happen in
+	 *    the current executor).
+	 * 3. Right now, ExecutorRun passes a NULL for typeinfo anyway :-(
+	 * ----------------
+	 */
+}
+
+static void
+printtup_prepare_info(DR_printtup* myState, TupleDesc typeinfo, int numAttrs)
+{
+	int i;
+
+	if (myState->myinfo)
+		pfree(myState->myinfo);	/* get rid of any old data */
+	myState->myinfo = NULL;
+	myState->attrinfo = typeinfo;
+	myState->nattrs = numAttrs;
+	if (numAttrs <= 0)
+		return;
+	myState->myinfo = (PrinttupAttrInfo*)
+		palloc(numAttrs * sizeof(PrinttupAttrInfo));
+	for (i = 0; i < numAttrs; i++)
+	{
+		PrinttupAttrInfo* thisState = myState->myinfo + i;
+		getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
+						  &thisState->typoutput, &thisState->typelem);
+	}
+}
+
+/* ----------------
  *		printtup
  * ----------------
  */
-void
-printtup(HeapTuple tuple, TupleDesc typeinfo)
+static void
+printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 {
+	DR_printtup *myState = (DR_printtup*) self;
 	int			i,
 				j,
 				k,
@@ -78,11 +158,14 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	char	   *outputstr;
 	Datum		attr;
 	bool		isnull;
-	Oid			typoutput,
-				typelem;
 #ifdef MULTIBYTE
 	unsigned char *p;
 #endif
+
+	/* Set or update my derived attribute info, if needed */
+	if (myState->attrinfo != typeinfo ||
+		myState->nattrs != tuple->t_data->t_natts)
+		printtup_prepare_info(myState, typeinfo, tuple->t_data->t_natts);
 
 	/* ----------------
 	 *	tell the frontend to expect new tuple data (in ASCII style)
@@ -120,10 +203,11 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
 			continue;
-		if (getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
-							  &typoutput, &typelem))
+		if (OidIsValid(myState->myinfo[i].typoutput))
 		{
-			outputstr = fmgr(typoutput, attr, typelem,
+			outputstr = fmgr(myState->myinfo[i].typoutput,
+							 attr,
+							 myState->myinfo[i].typelem,
 							 typeinfo->attrs[i]->atttypmod);
 #ifdef MULTIBYTE
 			p = pg_server_to_client(outputstr, strlen(outputstr));
@@ -145,6 +229,19 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 			pq_putnchar(outputstr, outputlen);
 		}
 	}
+}
+
+/* ----------------
+ *		printtup_cleanup
+ * ----------------
+ */
+static void
+printtup_cleanup(DestReceiver* self)
+{
+	DR_printtup* myState = (DR_printtup*) self;
+	if (myState->myinfo)
+		pfree(myState->myinfo);
+	pfree(myState);
 }
 
 /* ----------------
@@ -190,7 +287,7 @@ showatts(char *name, TupleDesc tupleDesc)
  * ----------------
  */
 void
-debugtup(HeapTuple tuple, TupleDesc typeinfo)
+debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 {
 	int			i;
 	Datum		attr;
@@ -221,11 +318,12 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
  *		We use a different data prefix, e.g. 'B' instead of 'D' to
  *		indicate a tuple in internal (binary) form.
  *
- *		This is same as printtup, except we don't use the typout func.
+ *		This is same as printtup, except we don't use the typout func,
+ *		and therefore have no need for persistent state.
  * ----------------
  */
 void
-printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
+printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 {
 	int			i,
 				j,

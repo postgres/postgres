@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * dest.h--
- *		Whenever the backend is submitted a query, the results
+ *		Whenever the backend executes a query, the results
  *		have to go someplace - either to the standard output,
  *		to a local portal buffer or to a remote portal buffer.
  *
@@ -23,21 +23,40 @@
  *		a query internally.  This is not used now but it may be
  *		useful for the parallel optimiser/executor.
  *
+ * dest.c defines three functions that implement destination management:
+ *
+ * BeginCommand: initialize the destination.
+ * DestToFunction: return a pointer to a struct of destination-specific
+ * receiver functions.
+ * EndCommand: clean up the destination when output is complete.
+ *
+ * The DestReceiver object returned by DestToFunction may be a statically
+ * allocated object (for destination types that require no local state)
+ * or can be a palloc'd object that has DestReceiver as its first field
+ * and contains additional fields (see printtup.c for an example).  These
+ * additional fields are then accessible to the DestReceiver functions
+ * by casting the DestReceiver* pointer passed to them.
+ * The palloc'd object is pfree'd by the DestReceiver's cleanup function.
+ *
+ * XXX FIXME: the initialization and cleanup code that currently appears
+ * in-line in BeginCommand and EndCommand probably should be moved out
+ * to routines associated with each destination receiver type.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.16 1998/09/01 04:38:39 momjian Exp $
+ * $Id: dest.h,v 1.17 1999/01/27 00:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DEST_H
 #define DEST_H
 
+#include <access/htup.h>
 #include <access/tupdesc.h>
 
 /* ----------------
- *		CommandDest is used to allow the results of calling
- *		pg_eval() to go to the right place.
+ *		CommandDest is a simplistic means of identifying the desired
+ *		destination.  Someday this will probably need to be improved.
  * ----------------
  */
 typedef enum
@@ -51,25 +70,38 @@ typedef enum
 	SPI							/* results sent to SPI manager */
 } CommandDest;
 
+/* ----------------
+ *		DestReceiver is a base type for destination-specific local state.
+ *		In the simplest cases, there is no state info, just the function
+ *		pointers that the executor must call.
+ * ----------------
+ */
+typedef struct _DestReceiver DestReceiver;
 
-/* AttrInfo* replaced with TupleDesc, now that TupleDesc also has within it
-   the number of attributes
+struct _DestReceiver {
+	/* Called for each tuple to be output: */
+	void (*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
+						  DestReceiver* self);
+	/* Initialization and teardown: */
+	void (*setup) (DestReceiver* self, TupleDesc typeinfo);
+	void (*cleanup) (DestReceiver* self);
+	/* Private fields might appear beyond this point... */
+};
 
-typedef struct AttrInfo {
-	int					numAttr;
-	Form_pg_attribute	*attrs;
-} AttrInfo;
-*/
+/* The primary destination management functions */
 
-extern void (*DestToFunction(CommandDest dest)) ();
+extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
+						 bool isIntoRel, bool isIntoPortal, char *tag,
+						 CommandDest dest);
+extern DestReceiver* DestToFunction(CommandDest dest);
 extern void EndCommand(char *commandTag, CommandDest dest);
+
+/* Additional functions that go with destination management, more or less. */
+
 extern void SendCopyBegin(void);
 extern void ReceiveCopyBegin(void);
 extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
-extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
-			 bool isIntoRel, bool isIntoPortal, char *tag,
-			 CommandDest dest);
 extern void UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples);
 
 #endif	 /* DEST_H */

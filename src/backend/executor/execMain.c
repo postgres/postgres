@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.63 1999/01/25 12:01:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.64 1999/01/27 00:36:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,10 @@ static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 			Query *parseTree, CmdType operation,
 			int numberTuples, ScanDirection direction,
-			void (*printfunc) ());
-static void ExecRetrieve(TupleTableSlot *slot, void (*printfunc) (),
-									 EState *estate);
+			DestReceiver *destfunc);
+static void ExecRetrieve(TupleTableSlot *slot,
+						 DestReceiver *destfunc,
+						 EState *estate);
 static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
@@ -171,7 +172,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 	Plan	   *plan;
 	TupleTableSlot *result;
 	CommandDest dest;
-	void		(*destination) ();
+	DestReceiver   *destfunc;
 
 	/******************
 	 *	sanity checks
@@ -188,9 +189,18 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 	parseTree = queryDesc->parsetree;
 	plan = queryDesc->plantree;
 	dest = queryDesc->dest;
-	destination = (void (*) ()) DestToFunction(dest);
+	destfunc = DestToFunction(dest);
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
+
+	/******************
+	 *	FIXME: the dest setup function ought to be handed the tuple desc
+	 *  for the tuples to be output, but I'm not quite sure how to get that
+	 *  info at this point.  For now, passing NULL is OK because no existing
+	 *  dest setup function actually uses the pointer.
+	 ******************
+	 */
+	(*destfunc->setup) (destfunc, (TupleDesc) NULL);
 
 	switch (feature)
 	{
@@ -202,7 +212,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 								 operation,
 								 ALL_TUPLES,
 								 ForwardScanDirection,
-								 destination);
+								 destfunc);
 			break;
 		case EXEC_FOR:
 			result = ExecutePlan(estate,
@@ -211,7 +221,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 								 operation,
 								 count,
 								 ForwardScanDirection,
-								 destination);
+								 destfunc);
 			break;
 
 			/******************
@@ -225,7 +235,7 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 								 operation,
 								 count,
 								 BackwardScanDirection,
-								 destination);
+								 destfunc);
 			break;
 
 			/******************
@@ -240,13 +250,15 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, int count)
 								 operation,
 								 ONE_TUPLE,
 								 ForwardScanDirection,
-								 destination);
+								 destfunc);
 			break;
 		default:
 			result = NULL;
 			elog(DEBUG, "ExecutorRun: Unknown feature %d", feature);
 			break;
 	}
+
+	(*destfunc->cleanup) (destfunc);
 
 	return result;
 }
@@ -745,7 +757,7 @@ ExecutePlan(EState *estate,
 			CmdType operation,
 			int numberTuples,
 			ScanDirection direction,
-			void (*printfunc) ())
+			DestReceiver* destfunc)
 {
 	JunkFilter *junkfilter;
 
@@ -905,7 +917,7 @@ ExecutePlan(EState *estate,
 		{
 			case CMD_SELECT:
 				ExecRetrieve(slot,		/* slot containing tuple */
-							 printfunc, /* print function */
+							 destfunc,	/* destination's tuple-receiver obj */
 							 estate);	/* */
 				result = slot;
 				break;
@@ -961,7 +973,7 @@ ExecutePlan(EState *estate,
  */
 static void
 ExecRetrieve(TupleTableSlot *slot,
-			 void (*printfunc) (),
+			 DestReceiver *destfunc,
 			 EState *estate)
 {
 	HeapTuple	tuple;
@@ -988,7 +1000,7 @@ ExecRetrieve(TupleTableSlot *slot,
 	 *	send the tuple to the front end (or the screen)
 	 ******************
 	 */
-	(*printfunc) (tuple, attrtype);
+	(*destfunc->receiveTuple) (tuple, attrtype, destfunc);
 	IncrRetrieved();
 	(estate->es_processed)++;
 }

@@ -3,7 +3,7 @@
  * spi.c--
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.30 1999/01/24 05:40:48 tgl Exp $
+ * $Id: spi.c,v 1.31 1999/01/27 00:36:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,6 @@ static int	_SPI_curid = -1;
 uint32		SPI_processed = 0;
 SPITupleTable *SPI_tuptable;
 int			SPI_result;
-
-void		spi_printtup(HeapTuple tuple, TupleDesc tupdesc);
 
 typedef struct
 {
@@ -566,7 +564,7 @@ SPI_pfree(void *pointer)
  *
  */
 void
-spi_printtup(HeapTuple tuple, TupleDesc tupdesc)
+spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver* self)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
