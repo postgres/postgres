@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.122 2000/07/15 00:01:37 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.123 2000/07/17 03:05:01 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -729,12 +729,10 @@ _outAggref(StringInfo str, Aggref *node)
 	appendStringInfo(str, " AGGREG :aggname ");
 	_outToken(str, node->aggname);
 	appendStringInfo(str, " :basetype %u :aggtype %u :target ",
-					 node->basetype,
-					 node->aggtype);
+					 node->basetype, node->aggtype);
 	_outNode(str, node->target);
 
-	appendStringInfo(str, " :usenulls %s :aggstar %s :aggdistinct %s ",
-					 node->usenulls ? "true" : "false",
+	appendStringInfo(str, " :aggstar %s :aggdistinct %s ",
 					 node->aggstar ? "true" : "false",
 					 node->aggdistinct ? "true" : "false");
 	/* aggno is not dumped */

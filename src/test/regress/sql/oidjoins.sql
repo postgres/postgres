@@ -1,14 +1,10 @@
 --
 -- This is created by pgsql/contrib/findoidjoins/make_oidjoin_check
 --
-SELECT	oid, pg_aggregate.aggtransfn1 
+SELECT	oid, pg_aggregate.aggtransfn 
 FROM	pg_aggregate 
-WHERE	pg_aggregate.aggtransfn1 != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_aggregate.aggtransfn1);
-SELECT	oid, pg_aggregate.aggtransfn2 
-FROM	pg_aggregate 
-WHERE	pg_aggregate.aggtransfn2 != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_aggregate.aggtransfn2);
+WHERE	pg_aggregate.aggtransfn != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_aggregate.aggtransfn);
 SELECT	oid, pg_aggregate.aggfinalfn 
 FROM	pg_aggregate 
 WHERE	pg_aggregate.aggfinalfn != 0 AND 
@@ -17,14 +13,10 @@ SELECT	oid, pg_aggregate.aggbasetype
 FROM	pg_aggregate 
 WHERE	pg_aggregate.aggbasetype != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_aggregate.aggbasetype);
-SELECT	oid, pg_aggregate.aggtranstype1 
+SELECT	oid, pg_aggregate.aggtranstype 
 FROM	pg_aggregate 
-WHERE	pg_aggregate.aggtranstype1 != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_aggregate.aggtranstype1);
-SELECT	oid, pg_aggregate.aggtranstype2 
-FROM	pg_aggregate 
-WHERE	pg_aggregate.aggtranstype2 != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_aggregate.aggtranstype2);
+WHERE	pg_aggregate.aggtranstype != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_type AS t1 WHERE t1.oid = pg_aggregate.aggtranstype);
 SELECT	oid, pg_aggregate.aggfinaltype 
 FROM	pg_aggregate 
 WHERE	pg_aggregate.aggfinaltype != 0 AND 
@@ -109,6 +101,14 @@ SELECT	oid, pg_class.relam
 FROM	pg_class 
 WHERE	pg_class.relam != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_am AS t1 WHERE t1.oid = pg_class.relam);
+SELECT	oid, pg_class.reltoastrelid 
+FROM	pg_class 
+WHERE	pg_class.reltoastrelid != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_class AS t1 WHERE t1.oid = pg_class.reltoastrelid);
+SELECT	oid, pg_class.reltoastidxid 
+FROM	pg_class 
+WHERE	pg_class.reltoastidxid != 0 AND 
+	NOT EXISTS(SELECT * FROM pg_class AS t1 WHERE t1.oid = pg_class.reltoastidxid);
 SELECT	oid, pg_index.indexrelid 
 FROM	pg_index 
 WHERE	pg_index.indexrelid != 0 AND 

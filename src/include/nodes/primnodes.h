@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.43 2000/06/12 19:40:49 momjian Exp $
+ * $Id: primnodes.h,v 1.44 2000/07/17 03:05:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,10 +301,9 @@ typedef struct Iter
  *		basetype		- base type Oid of the aggregate (ie, input type)
  *		aggtype			- type Oid of final result of the aggregate
  *		target			- attribute or expression we are aggregating on
- *		usenulls		- TRUE to accept null values as inputs
  *		aggstar			- TRUE if argument was really '*'
- *		aggdistinct		- TRUE if arguments were labeled DISTINCT
- *		aggno			- workspace for nodeAgg.c executor
+ *		aggdistinct		- TRUE if it's agg(DISTINCT ...)
+ *		aggno			- workspace for executor (see nodeAgg.c)
  * ----------------
  */
 typedef struct Aggref
@@ -314,7 +313,6 @@ typedef struct Aggref
 	Oid			basetype;
 	Oid			aggtype;
 	Node	   *target;
-	bool		usenulls;
 	bool		aggstar;
 	bool		aggdistinct;
 	int			aggno;

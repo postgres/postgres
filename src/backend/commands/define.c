@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.44 2000/07/03 23:09:33 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.45 2000/07/17 03:04:44 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -484,16 +484,12 @@ DefineOperator(char *oprName,
  */
 void
 DefineAggregate(char *aggName, List *parameters)
-
 {
-	char	   *stepfunc1Name = NULL;
-	char	   *stepfunc2Name = NULL;
+	char	   *transfuncName = NULL;
 	char	   *finalfuncName = NULL;
 	char	   *baseType = NULL;
-	char	   *stepfunc1Type = NULL;
-	char	   *stepfunc2Type = NULL;
-	char	   *init1 = NULL;
-	char	   *init2 = NULL;
+	char	   *transType = NULL;
+	char	   *initval = NULL;
 	List	   *pl;
 
 	foreach(pl, parameters)
@@ -501,47 +497,28 @@ DefineAggregate(char *aggName, List *parameters)
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
 		/*
-		 * sfunc1
+		 * sfunc1, stype1, and initcond1 are accepted as obsolete spellings
+		 * for sfunc, stype, initcond.
 		 */
-		if (!strcasecmp(defel->defname, "sfunc1"))
-			stepfunc1Name = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "basetype"))
-			baseType = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "stype1"))
-		{
-			stepfunc1Type = defGetString(defel);
-
-			/*
-			 * sfunc2
-			 */
-		}
-		else if (!strcasecmp(defel->defname, "sfunc2"))
-			stepfunc2Name = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "stype2"))
-		{
-			stepfunc2Type = defGetString(defel);
-
-			/*
-			 * final
-			 */
-		}
-		else if (!strcasecmp(defel->defname, "finalfunc"))
-		{
+		if (strcasecmp(defel->defname, "sfunc") == 0)
+			transfuncName = defGetString(defel);
+		else if (strcasecmp(defel->defname, "sfunc1") == 0)
+			transfuncName = defGetString(defel);
+		else if (strcasecmp(defel->defname, "finalfunc") == 0)
 			finalfuncName = defGetString(defel);
-
-			/*
-			 * initial conditions
-			 */
-		}
-		else if (!strcasecmp(defel->defname, "initcond1"))
-			init1 = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "initcond2"))
-			init2 = defGetString(defel);
+		else if (strcasecmp(defel->defname, "basetype") == 0)
+			baseType = defGetString(defel);
+		else if (strcasecmp(defel->defname, "stype") == 0)
+			transType = defGetString(defel);
+		else if (strcasecmp(defel->defname, "stype1") == 0)
+			transType = defGetString(defel);
+		else if (strcasecmp(defel->defname, "initcond") == 0)
+			initval = defGetString(defel);
+		else if (strcasecmp(defel->defname, "initcond1") == 0)
+			initval = defGetString(defel);
 		else
-		{
 			elog(NOTICE, "DefineAggregate: attribute \"%s\" not recognized",
 				 defel->defname);
-		}
 	}
 
 	/*
@@ -549,31 +526,20 @@ DefineAggregate(char *aggName, List *parameters)
 	 */
 	if (baseType == NULL)
 		elog(ERROR, "Define: \"basetype\" unspecified");
-	if (stepfunc1Name != NULL)
-	{
-		if (stepfunc1Type == NULL)
-			elog(ERROR, "Define: \"stype1\" unspecified");
-	}
-	if (stepfunc2Name != NULL)
-	{
-		if (stepfunc2Type == NULL)
-			elog(ERROR, "Define: \"stype2\" unspecified");
-	}
+	if (transType == NULL)
+		elog(ERROR, "Define: \"stype\" unspecified");
+	if (transfuncName == NULL)
+		elog(ERROR, "Define: \"sfunc\" unspecified");
 
 	/*
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
-	AggregateCreate(aggName,	/* aggregate name */
-					stepfunc1Name,		/* first step function name */
-					stepfunc2Name,		/* second step function name */
-					finalfuncName,		/* final function name */
-					baseType,	/* type of object being aggregated */
-					stepfunc1Type,		/* return type of first function */
-					stepfunc2Type,		/* return type of second function */
-					init1,		/* first initial condition */
-					init2);		/* second initial condition */
-
-	/* XXX free palloc'd memory */
+	AggregateCreate(aggName,		/* aggregate name */
+					transfuncName,	/* step function name */
+					finalfuncName,	/* final function name */
+					baseType,		/* type of data being aggregated */
+					transType,		/* transition data type */
+					initval);		/* initial condition */
 }
 
 /*

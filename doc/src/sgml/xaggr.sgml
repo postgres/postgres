@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.7 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.8 2000/07/17 03:04:40 tgl Exp $
 -->
 
  <chapter id="xaggr">
@@ -16,39 +16,20 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.7 2000/03/31 03:27:41 thomas
    an initial value for the state, and a state transition
    function.  The state transition function is just an
    ordinary function that could also be used outside the
-   context of the aggregate.
+   context of the aggregate.  A <firstterm>final function</firstterm>
+   can also be specified, in case the desired output of the aggregate
+   is different from the data that needs to be kept in the running
+   state value.
   </para>
 
   <para>
-   Actually, in order to make it easier to construct useful
-   aggregates from existing functions, an aggregate can have
-   one or two separate state values, one or two transition
-   functions to update those state values, and a
-   <firstterm>final function</firstterm> that computes the
-   actual aggregate result from the ending state values.
+   Thus, in addition to the input and result datatypes seen by a user
+   of the aggregate, there is an internal state-value datatype that
+   may be different from both the input and result types.
   </para>
 
   <para>
-   Thus there can be as many as four datatypes involved:
-   the type of the input data items, the type of the aggregate's
-   result, and the types of the two state values.  Only the
-   input and result datatypes are seen by a user of the aggregate.
-  </para>
-
-  <para>
-   Some state transition functions need to look at each successive
-   input to compute the next state value, while others ignore the
-   specific input value and simply update their internal state.
-   (The most useful example of the second kind is a running count
-   of the number of input items.)  The <productname>Postgres</productname>
-   aggregate machinery defines <acronym>sfunc1</acronym> for
-   an aggregate as a function that is passed both the old state
-   value and the current input value, while <acronym>sfunc2</acronym>
-   is a function that is passed only the old state value.
-  </para>
-
-  <para>
-   If we define an aggregate that  uses  only <acronym>sfunc1</acronym>,
+   If we define an aggregate that does not use a final function,
    we have an aggregate that computes a running function of
    the attribute values from each instance.  "Sum"  is  an
    example  of  this  kind  of aggregate.  "Sum" starts at
@@ -60,10 +41,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.7 2000/03/31 03:27:41 thomas
    
    <programlisting>
 CREATE AGGREGATE complex_sum (
-    sfunc1 = complex_add,
+    sfunc = complex_add,
     basetype = complex,
-    stype1 = complex,
-    initcond1 = '(0,0)'
+    stype = complex,
+    initcond = '(0,0)'
 );
 
 SELECT complex_sum(a) FROM test_complex;
@@ -81,67 +62,48 @@ SELECT complex_sum(a) FROM test_complex;
   </para>
 
   <para>
-   If we define only <acronym>sfunc2</acronym>, we are 
-   specifying  an  aggregate  
-   that computes a running function that is independent  of  
-   the  attribute  values  from  each  instance.
-   "Count"  is  the  most  common  example of this kind of
-   aggregate.  "Count" starts at zero and adds one to  its
-   running  total for each instance, ignoring the instance
-   value.  Here, we use the built-in 
-   <acronym>int4inc</acronym> routine to do
-   the work for us.  This routine increments (adds one to)
-   its argument.
-   
-   <programlisting>
-CREATE AGGREGATE my_count (
-    sfunc2 = int4inc, -- add one
-    basetype = int4,
-    stype2 = int4,
-    initcond2 = '0'
-);
-
-SELECT my_count(*) as emp_count from EMP;
-
-         +----------+
-         |emp_count |
-         +----------+
-         |5         |
-         +----------+
-   </programlisting>
+   The above definition of "Sum" will return zero (the initial
+   state condition) if there are no non-null input values.
+   Perhaps we want to return NULL in that case instead --- SQL92
+   expects "Sum" to behave that way.  We can do this simply by
+   omitting the "initcond" phrase, so that the initial state
+   condition is NULL.  Ordinarily this would mean that the sfunc
+   would need to check for a NULL state-condition input, but for
+   "Sum" and some other simple aggregates like "Max" and "Min",
+   it's sufficient to insert the first non-null input value into
+   the state variable and then start applying the transition function
+   at the second non-null input value.  <productname>Postgres</productname>
+   will do that automatically if the initial condition is NULL and
+   the transition function is marked "strict" (ie, not to be called
+   for NULL inputs).
   </para>
   
   <para>
-   "Average" is an example of an aggregate  that  requires
-   both  a function to compute the running sum and a function 
-   to compute the running count.   When  all  of  the
-   instances have been processed, the final answer for the
-   aggregate is the running sum  divided  by  the  running
-   count.   We use the <acronym>int4pl</acronym> and
-   <acronym>int4inc</acronym> routines we used
-   before as well as the <productname>Postgres</productname>  integer  division  
-   routine,  <acronym>int4div</acronym>,  to  compute the division of the sum by
-   the count.
-   
+   Another bit of default behavior for a "strict" transition function
+   is that the previous state value is retained unchanged whenever a
+   NULL input value is encountered.  Thus, NULLs are ignored.  If you
+   need some other behavior for NULL inputs, just define your transition
+   function as non-strict, and code it to test for NULL inputs and do
+   whatever is needed.
+  </para>
+  
+  <para>
+   "Average" is a more complex example of an aggregate.  It requires
+   two pieces of running state: the sum of the inputs and the count
+   of the number of inputs.  The final result is obtained by dividing
+   these quantities.  Average is typically implemented by using a
+   two-element array as the transition state value.  For example,
+   the built-in implementation of <function>avg(float8)</function>
+   looks like:
+
    <programlisting>
-CREATE AGGREGATE my_average (
-    sfunc1 = int4pl,     --  sum
-    basetype = int4,
-    stype1 = int4,
-    sfunc2 = int4inc,    -- count
-    stype2 = int4,
-    finalfunc = int4div, -- division
-    initcond1 = '0',
-    initcond2 = '0'
+CREATE AGGREGATE avg (
+    sfunc = float8_accum,
+    basetype = float8,
+    stype = _float8,
+    finalfunc = float8_avg,
+    initcond = '{0,0}'
 );
-
-SELECT my_average(salary) as emp_average FROM EMP;
-
-         +------------+
-         |emp_average |
-         +------------+
-         |1640        |
-         +------------+
    </programlisting>
   </para>
 

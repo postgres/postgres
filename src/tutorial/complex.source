@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.7 2000/03/28 02:49:19 tgl Exp $
+-- $Id: complex.source,v 1.8 2000/07/17 03:05:41 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -111,10 +111,10 @@ SELECT  a + '(1.0,1.0)'::complex AS aa,
 -----------------------------
 
 CREATE AGGREGATE complex_sum (
-   sfunc1 = complex_add,
+   sfunc = complex_add,
    basetype = complex,
-   stype1 = complex,
-   initcond1 = '(0,0)'
+   stype = complex,
+   initcond = '(0,0)'
 );
 
 SELECT complex_sum(a) FROM test_complex;

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.68 2000/07/12 02:37:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.69 2000/07/17 03:05:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,8 +256,6 @@ _equalAggref(Aggref *a, Aggref *b)
 	if (a->aggtype != b->aggtype)
 		return false;
 	if (!equal(a->target, b->target))
-		return false;
-	if (a->usenulls != b->usenulls)
 		return false;
 	if (a->aggstar != b->aggstar)
 		return false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.34 2000/07/05 23:11:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.35 2000/07/17 03:04:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_func.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -36,13 +38,7 @@
  *		Currently, redefining aggregates using the same name is not
  *		supported.	In such a case, a warning is printed that the
  *		aggregate already exists.  If such is not the case, a new tuple
- *		is created and inserted in the aggregate relation.	The fields
- *		of this tuple are aggregate name, owner id, 2 transition functions
- *		(called aggtransfn1 and aggtransfn2), final function (aggfinalfn),
- *		type of data on which aggtransfn1 operates (aggbasetype), return
- *		types of the two transition functions (aggtranstype1 and
- *		aggtranstype2), final return type (aggfinaltype), and initial values
- *		for the two state transition functions (agginitval1 and agginitval2).
+ *		is created and inserted in the aggregate relation.
  *		All types and functions must have been defined
  *		prior to defining the aggregate.
  *
@@ -50,31 +46,27 @@
  */
 void
 AggregateCreate(char *aggName,
-				char *aggtransfn1Name,
-				char *aggtransfn2Name,
+				char *aggtransfnName,
 				char *aggfinalfnName,
 				char *aggbasetypeName,
-				char *aggtransfn1typeName,
-				char *aggtransfn2typeName,
-				char *agginitval1,
-				char *agginitval2)
+				char *aggtranstypeName,
+				char *agginitval)
 {
-	int			i;
 	Relation	aggdesc;
 	HeapTuple	tup;
 	char		nulls[Natts_pg_aggregate];
 	Datum		values[Natts_pg_aggregate];
 	Form_pg_proc proc;
-	Oid			xfn1 = InvalidOid;
-	Oid			xfn2 = InvalidOid;
-	Oid			ffn = InvalidOid;
-	Oid			xbase = InvalidOid;
-	Oid			xret1 = InvalidOid;
-	Oid			xret2 = InvalidOid;
-	Oid			fret = InvalidOid;
+	Oid			transfn;
+	Oid			finalfn = InvalidOid; /* can be omitted */
+	Oid			basetype;
+	Oid			transtype;
+	Oid			finaltype;
 	Oid			fnArgs[FUNC_MAX_ARGS];
+	int			nargs;
 	NameData	aname;
 	TupleDesc	tupDesc;
+	int			i;
 
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -82,143 +74,112 @@ AggregateCreate(char *aggName,
 	if (!aggName)
 		elog(ERROR, "AggregateCreate: no aggregate name supplied");
 
-	if (!aggtransfn1Name && !aggtransfn2Name)
-		elog(ERROR, "AggregateCreate: aggregate must have at least one transition function");
+	if (!aggtransfnName)
+		elog(ERROR, "AggregateCreate: aggregate must have a transition function");
 
-	if (aggtransfn1Name && aggtransfn2Name && !aggfinalfnName)
-		elog(ERROR, "AggregateCreate: Aggregate must have final function with both transition functions");
-
-	/* handle the aggregate's base type (input data type) */
+	/*
+	 * Handle the aggregate's base type (input data type).  This can be
+	 * specified as 'ANY' for a data-independent transition function,
+	 * such as COUNT(*).
+	 */
 	tup = SearchSysCacheTuple(TYPENAME,
 							  PointerGetDatum(aggbasetypeName),
 							  0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "AggregateCreate: Type '%s' undefined", aggbasetypeName);
-	xbase = tup->t_data->t_oid;
+	if (HeapTupleIsValid(tup))
+	{
+		basetype = tup->t_data->t_oid;
+		Assert(OidIsValid(basetype));
+	}
+	else
+	{
+		if (strcasecmp(aggbasetypeName, "ANY") != 0)
+			elog(ERROR, "AggregateCreate: Type '%s' undefined",
+				 aggbasetypeName);
+		basetype = InvalidOid;
+	}
 
 	/* make sure there is no existing agg of same name and base type */
 	tup = SearchSysCacheTuple(AGGNAME,
 							  PointerGetDatum(aggName),
-							  ObjectIdGetDatum(xbase),
+							  ObjectIdGetDatum(basetype),
 							  0, 0);
 	if (HeapTupleIsValid(tup))
 		elog(ERROR,
 			 "AggregateCreate: aggregate '%s' with base type '%s' already exists",
 			 aggName, aggbasetypeName);
 
-	/* handle transfn1 and transtype1 */
-	if (aggtransfn1Name)
-	{
-		tup = SearchSysCacheTuple(TYPENAME,
-								  PointerGetDatum(aggtransfn1typeName),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "AggregateCreate: Type '%s' undefined",
-				 aggtransfn1typeName);
-		xret1 = tup->t_data->t_oid;
+	/* handle transtype */
+	tup = SearchSysCacheTuple(TYPENAME,
+							  PointerGetDatum(aggtranstypeName),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "AggregateCreate: Type '%s' undefined",
+			 aggtranstypeName);
+	transtype = tup->t_data->t_oid;
+	Assert(OidIsValid(transtype));
 
-		fnArgs[0] = xret1;
-		fnArgs[1] = xbase;
-		tup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(aggtransfn1Name),
-								  Int32GetDatum(2),
-								  PointerGetDatum(fnArgs),
-								  0);
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "AggregateCreate: '%s('%s', '%s') does not exist",
-				 aggtransfn1Name, aggtransfn1typeName, aggbasetypeName);
-		if (((Form_pg_proc) GETSTRUCT(tup))->prorettype != xret1)
-			elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
-				 aggtransfn1Name, aggtransfn1typeName);
-		xfn1 = tup->t_data->t_oid;
-		if (!OidIsValid(xfn1) || !OidIsValid(xret1) ||
-			!OidIsValid(xbase))
-			elog(ERROR, "AggregateCreate: bogus function '%s'", aggtransfn1Name);
+	/* handle transfn */
+	fnArgs[0] = transtype;
+	if (OidIsValid(basetype))
+	{
+		fnArgs[1] = basetype;
+		nargs = 2;
+	}
+	else
+	{
+		nargs = 1;
+	}
+	tup = SearchSysCacheTuple(PROCNAME,
+							  PointerGetDatum(aggtransfnName),
+							  Int32GetDatum(nargs),
+							  PointerGetDatum(fnArgs),
+							  0);
+	if (!HeapTupleIsValid(tup))
+		func_error("AggregateCreate", aggtransfnName, nargs, fnArgs, NULL);
+	transfn = tup->t_data->t_oid;
+	proc = (Form_pg_proc) GETSTRUCT(tup);
+	if (proc->prorettype != transtype)
+		elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
+			 aggtransfnName, aggtranstypeName);
+	Assert(OidIsValid(transfn));
+	/*
+	 * If the transfn is strict and the initval is NULL, make sure
+	 * input type and transtype are the same (or at least binary-
+	 * compatible), so that it's OK to use the first input value
+	 * as the initial transValue.
+	 */
+	if (((Form_pg_proc) GETSTRUCT(tup))->proisstrict && agginitval == NULL)
+	{
+		if (basetype != transtype &&
+			! IS_BINARY_COMPATIBLE(basetype, transtype))
+			elog(ERROR, "AggregateCreate: must not omit initval when transfn is strict and transtype is not compatible with input type");
 	}
 
-	/* handle transfn2 and transtype2 */
-	if (aggtransfn2Name)
+	/* handle finalfn, if supplied */
+	if (aggfinalfnName)
 	{
-		tup = SearchSysCacheTuple(TYPENAME,
-								  PointerGetDatum(aggtransfn2typeName),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "AggregateCreate: Type '%s' undefined",
-				 aggtransfn2typeName);
-		xret2 = tup->t_data->t_oid;
-
-		fnArgs[0] = xret2;
+		fnArgs[0] = transtype;
 		fnArgs[1] = 0;
 		tup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(aggtransfn2Name),
+								  PointerGetDatum(aggfinalfnName),
 								  Int32GetDatum(1),
 								  PointerGetDatum(fnArgs),
 								  0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "AggregateCreate: '%s'('%s') does not exist",
-				 aggtransfn2Name, aggtransfn2typeName);
-		if (((Form_pg_proc) GETSTRUCT(tup))->prorettype != xret2)
-			elog(ERROR, "AggregateCreate: return type of '%s' is not '%s'",
-				 aggtransfn2Name, aggtransfn2typeName);
-		xfn2 = tup->t_data->t_oid;
-		if (!OidIsValid(xfn2) || !OidIsValid(xret2))
-			elog(ERROR, "AggregateCreate: bogus function '%s'", aggtransfn2Name);
-	}
-
-	/* handle finalfn */
-	if (aggfinalfnName)
-	{
-		int			nargs = 0;
-
-		if (OidIsValid(xret1))
-			fnArgs[nargs++] = xret1;
-		if (OidIsValid(xret2))
-			fnArgs[nargs++] = xret2;
-		fnArgs[nargs] = 0;		/* make sure slot 2 is empty if just 1 arg */
-		tup = SearchSysCacheTuple(PROCNAME,
-								  PointerGetDatum(aggfinalfnName),
-								  Int32GetDatum(nargs),
-								  PointerGetDatum(fnArgs),
-								  0);
-		if (!HeapTupleIsValid(tup))
-		{
-			if (nargs == 2)
-				elog(ERROR, "AggregateCreate: '%s'('%s','%s') does not exist",
-				aggfinalfnName, aggtransfn1typeName, aggtransfn2typeName);
-			else if (OidIsValid(xret1))
-				elog(ERROR, "AggregateCreate: '%s'('%s') does not exist",
-					 aggfinalfnName, aggtransfn1typeName);
-			else
-				elog(ERROR, "AggregateCreate: '%s'('%s') does not exist",
-					 aggfinalfnName, aggtransfn2typeName);
-		}
-		ffn = tup->t_data->t_oid;
+			func_error("AggregateCreate", aggfinalfnName, 1, fnArgs, NULL);
+		finalfn = tup->t_data->t_oid;
 		proc = (Form_pg_proc) GETSTRUCT(tup);
-		fret = proc->prorettype;
-		if (!OidIsValid(ffn) || !OidIsValid(fret))
-			elog(ERROR, "AggregateCreate: bogus function '%s'", aggfinalfnName);
+		finaltype = proc->prorettype;
+		Assert(OidIsValid(finalfn));
 	}
 	else
 	{
-
 		/*
-		 * If no finalfn, aggregate result type is type of the sole state
-		 * value (we already checked there is only one)
+		 * If no finalfn, aggregate result type is type of the state value
 		 */
-		if (OidIsValid(xret1))
-			fret = xret1;
-		else
-			fret = xret2;
+		finaltype = transtype;
 	}
-	Assert(OidIsValid(fret));
-
-	/*
-	 * If transition function 2 is defined, it must have an initial value,
-	 * whereas transition function 1 need not, which allows max and min
-	 * aggregates to return NULL if they are evaluated on empty sets.
-	 */
-	if (OidIsValid(xfn2) && !agginitval2)
-		elog(ERROR, "AggregateCreate: transition function 2 MUST have an initial value");
+	Assert(OidIsValid(finaltype));
 
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_aggregate; i++)
@@ -229,25 +190,17 @@ AggregateCreate(char *aggName,
 	namestrcpy(&aname, aggName);
 	values[Anum_pg_aggregate_aggname - 1] = NameGetDatum(&aname);
 	values[Anum_pg_aggregate_aggowner - 1] = Int32GetDatum(GetUserId());
-	values[Anum_pg_aggregate_aggtransfn1 - 1] = ObjectIdGetDatum(xfn1);
-	values[Anum_pg_aggregate_aggtransfn2 - 1] = ObjectIdGetDatum(xfn2);
-	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(ffn);
-	values[Anum_pg_aggregate_aggbasetype - 1] = ObjectIdGetDatum(xbase);
-	values[Anum_pg_aggregate_aggtranstype1 - 1] = ObjectIdGetDatum(xret1);
-	values[Anum_pg_aggregate_aggtranstype2 - 1] = ObjectIdGetDatum(xret2);
-	values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(fret);
+	values[Anum_pg_aggregate_aggtransfn - 1] = ObjectIdGetDatum(transfn);
+	values[Anum_pg_aggregate_aggfinalfn - 1] = ObjectIdGetDatum(finalfn);
+	values[Anum_pg_aggregate_aggbasetype - 1] = ObjectIdGetDatum(basetype);
+	values[Anum_pg_aggregate_aggtranstype - 1] = ObjectIdGetDatum(transtype);
+	values[Anum_pg_aggregate_aggfinaltype - 1] = ObjectIdGetDatum(finaltype);
 
-	if (agginitval1)
-		values[Anum_pg_aggregate_agginitval1 - 1] =
-			DirectFunctionCall1(textin, CStringGetDatum(agginitval1));
+	if (agginitval)
+		values[Anum_pg_aggregate_agginitval - 1] =
+			DirectFunctionCall1(textin, CStringGetDatum(agginitval));
 	else
-		nulls[Anum_pg_aggregate_agginitval1 - 1] = 'n';
-
-	if (agginitval2)
-		values[Anum_pg_aggregate_agginitval2 - 1] =
-			DirectFunctionCall1(textin, CStringGetDatum(agginitval2));
-	else
-		nulls[Anum_pg_aggregate_agginitval2 - 1] = 'n';
+		nulls[Anum_pg_aggregate_agginitval - 1] = 'n';
 
 	aggdesc = heap_openr(AggregateRelationName, RowExclusiveLock);
 	tupDesc = aggdesc->rd_att;
@@ -271,11 +224,9 @@ AggregateCreate(char *aggName,
 }
 
 Datum
-AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
+AggNameGetInitVal(char *aggName, Oid basetype, bool *isNull)
 {
 	HeapTuple	tup;
-	Relation	aggRel;
-	int			initValAttno;
 	Oid			transtype,
 				typinput,
 				typelem;
@@ -285,15 +236,6 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 
 	Assert(PointerIsValid(aggName));
 	Assert(PointerIsValid(isNull));
-	Assert(xfuncno == 1 || xfuncno == 2);
-
-	/*
-	 * since we will have to use fastgetattr (in case one or both init
-	 * vals are NULL), we will need to open the relation.  Do that first
-	 * to ensure we don't get a stale tuple from the cache.
-	 */
-
-	aggRel = heap_openr(AggregateRelationName, AccessShareLock);
 
 	tup = SearchSysCacheTuple(AGGNAME,
 							  PointerGetDatum(aggName),
@@ -302,29 +244,19 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "AggNameGetInitVal: cache lookup failed for aggregate '%s'",
 			 aggName);
-	if (xfuncno == 1)
-	{
-		transtype = ((Form_pg_aggregate) GETSTRUCT(tup))->aggtranstype1;
-		initValAttno = Anum_pg_aggregate_agginitval1;
-	}
-	else
-	{
-		/* can only be 1 or 2 */
-		transtype = ((Form_pg_aggregate) GETSTRUCT(tup))->aggtranstype2;
-		initValAttno = Anum_pg_aggregate_agginitval2;
-	}
+	transtype = ((Form_pg_aggregate) GETSTRUCT(tup))->aggtranstype;
 
-	textInitVal = fastgetattr(tup, initValAttno,
-							  RelationGetDescr(aggRel),
-							  isNull);
+	/*
+	 * initval is potentially null, so don't try to access it as a struct
+	 * field. Must do it the hard way with SysCacheGetAttr.
+	 */
+	textInitVal = SysCacheGetAttr(AGGNAME, tup,
+								  Anum_pg_aggregate_agginitval,
+								  isNull);
 	if (*isNull)
-	{
-		heap_close(aggRel, AccessShareLock);
-		return PointerGetDatum(NULL);
-	}
-	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
+		return (Datum) 0;
 
-	heap_close(aggRel, AccessShareLock);
+	strInitVal = DatumGetCString(DirectFunctionCall1(textout, textInitVal));
 
 	tup = SearchSysCacheTuple(TYPEOID,
 							  ObjectIdGetDatum(transtype),

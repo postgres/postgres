@@ -7,18 +7,16 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.38 2000/05/31 00:28:38 petere Exp $
+ * $Id: lock.h,v 1.39 2000/07/17 03:05:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCK_H_
 #define LOCK_H_
 
-#include "postgres.h"
 #include "storage/ipc.h"
 #include "storage/itemptr.h"
 #include "storage/shmem.h"
-#include "utils/array.h"
 
 extern SPINLOCK LockMgrLock;
 typedef int LOCKMASK;

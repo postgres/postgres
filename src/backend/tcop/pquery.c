@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.36 2000/07/12 02:37:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.37 2000/07/17 03:05:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,9 @@
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "tcop/pquery.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
+
 
 static char *CreateOperationTag(int operationType);
 

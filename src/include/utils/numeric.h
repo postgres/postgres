@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.10 2000/06/13 07:35:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.11 2000/07/17 03:05:32 tgl Exp $
  *
  * ----------
  */
@@ -55,7 +55,7 @@
  * all leading and trailing zeroes (except there will be a trailing zero
  * in the last byte, if the number of digits is odd).  In particular,
  * if the value is zero, there will be no digits at all!  The weight is
- * arbitrary in this case, but we normally set it to zero.
+ * arbitrary in that case, but we normally set it to zero.
  * ----------
  */
 typedef struct NumericData
@@ -75,9 +75,11 @@ typedef NumericData *Numeric;
  * fmgr interface macros
  */
 
-#define DatumGetNumeric(X)    ((Numeric) PG_DETOAST_DATUM(X))
-#define NumericGetDatum(X)    PointerGetDatum(X)
-#define PG_GETARG_NUMERIC(n)  DatumGetNumeric(PG_GETARG_DATUM(n))
-#define PG_RETURN_NUMERIC(x)  return NumericGetDatum(x)
+#define DatumGetNumeric(X)        ((Numeric) PG_DETOAST_DATUM(X))
+#define DatumGetNumericCopy(X)    ((Numeric) PG_DETOAST_DATUM_COPY(X))
+#define NumericGetDatum(X)        PointerGetDatum(X)
+#define PG_GETARG_NUMERIC(n)      DatumGetNumeric(PG_GETARG_DATUM(n))
+#define PG_GETARG_NUMERIC_COPY(n) DatumGetNumericCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_NUMERIC(x)      return NumericGetDatum(x)
 
 #endif	 /* _PG_NUMERIC_H_ */

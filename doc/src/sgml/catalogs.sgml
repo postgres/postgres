@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.6 2000/06/09 01:43:56 momjian Exp $
+.\" $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.7 2000/07/17 03:04:40 tgl Exp $
 .TH "SYSTEM CATALOGS" INTRO 03/13/94 PostgreSQL PostgreSQL
 .SH "Section 7 - System Catalogs"
 .de LS
@@ -91,20 +91,16 @@ The following catalogs relate to the class/type system.
  * see DEFINE AGGREGATE for an explanation of transition functions
  */
 pg_aggregate
-    NameData      aggname	/* aggregate name (e.g., "count") */
+    NameData    aggname		/* aggregate name (e.g., "count") */
     oid         aggowner	/* usesysid of creator */
-    regproc     aggtransfn1	/* first transition function */
-    regproc     aggtransfn2	/* second transition function */
+    regproc     aggtransfn	/* transition function */
     regproc     aggfinalfn	/* final function */
     oid         aggbasetype	/* type of data on which aggregate
 				   operates */
-    oid         aggtranstype1	/* type returned by aggtransfn1 */
-    oid         aggtranstype2	/* type returned by aggtransfn2 */
-    oid         aggfinaltype	/* type returned by aggfinalfn */
-    text        agginitval1	/* external format of initial
-				   (starting) value of aggtransfn1 */
-    text        agginitval2	/* external format of initial
-				   (starting) value of aggtransfn2 */
+    oid         aggtranstype	/* type of aggregate's transition
+				   (state) data */
+    oid         aggfinaltype	/* type of aggregate's final result */
+    text        agginitval	/* external format of initial state value */
 .fi
 .nf M
 pg_am

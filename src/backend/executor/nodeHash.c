@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.49 2000/07/12 02:37:03 tgl Exp $
+ *	$Id: nodeHash.c,v 1.50 2000/07/17 03:04:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,8 @@
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
+#include "utils/memutils.h"
+
 
 static int	hashFunc(Datum key, int len, bool byVal);
 

@@ -114,45 +114,18 @@ end;
 
 --
 -- DEFINE AGGREGATE
- 
--- left out finalfunc 
-create aggregate newavg1 (sfunc1 = int4pl,
-			  basetype = int4,
-			  stype1 = int4,
-			  sfunc2 = int4inc,
-			  stype2 = int4, 
-			  initcond1 = '0',
-			  initcond2 = '0');
-
--- sfunc return type disagreement 
-create aggregate newavg2 (sfunc1 = int4pl,
-			  basetype = int4,
-			  stype1 = int4,
-			  sfunc2 = int2inc,
-			  stype2 = int2,
-			  finalfunc = int4div,
-			  initcond1 = '0',
-			  initcond2 = '0');
 
 -- sfunc/finalfunc type disagreement 
-create aggregate newavg3 (sfunc1 = int4pl,
+create aggregate newavg2 (sfunc = int4pl,
 			  basetype = int4,
-			  stype1 = int4,
-			  sfunc2 = int4inc,
-			  stype2 = int4,
-			  finalfunc = int2div,
-			  initcond1 = '0',
-			  initcond2 = '0');
+			  stype = int4,
+			  finalfunc = int2um,
+			  initcond = '0');
 
 -- left out basetype
-create aggregate newcnt1 (sfunc2 = int4inc,
-			  stype2 = int4,
-			initcond2 = '0');
-
--- left out initcond2 (for sfunc2) 
-create aggregate newcnt1 (sfunc2 = int4inc,
-			  basetype = int4,
-			  stype2 = int4);
+create aggregate newcnt1 (sfunc = int4inc,
+			  stype = int4,
+			  initcond = '0');
 
 
 --

@@ -12,16 +12,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.12 2000/07/12 02:37:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execScan.c,v 1.13 2000/07/17 03:04:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <sys/types.h>
 #include <sys/file.h>
+
 #include "postgres.h"
 
 #include "executor/executor.h"
+#include "utils/memutils.h"
+
 
 /* ----------------------------------------------------------------
  *		ExecScan

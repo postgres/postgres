@@ -99,46 +99,18 @@ end;
 NOTICE:  COMMIT: no transaction in progress
 --
 -- DEFINE AGGREGATE
- 
--- left out finalfunc 
-create aggregate newavg1 (sfunc1 = int4pl,
-			  basetype = int4,
-			  stype1 = int4,
-			  sfunc2 = int4inc,
-			  stype2 = int4, 
-			  initcond1 = '0',
-			  initcond2 = '0');
-ERROR:  AggregateCreate: Aggregate must have final function with both transition functions
--- sfunc return type disagreement 
-create aggregate newavg2 (sfunc1 = int4pl,
-			  basetype = int4,
-			  stype1 = int4,
-			  sfunc2 = int2inc,
-			  stype2 = int2,
-			  finalfunc = int4div,
-			  initcond1 = '0',
-			  initcond2 = '0');
-ERROR:  AggregateCreate: 'int4div'('int4','int2') does not exist
 -- sfunc/finalfunc type disagreement 
-create aggregate newavg3 (sfunc1 = int4pl,
+create aggregate newavg2 (sfunc = int4pl,
 			  basetype = int4,
-			  stype1 = int4,
-			  sfunc2 = int4inc,
-			  stype2 = int4,
-			  finalfunc = int2div,
-			  initcond1 = '0',
-			  initcond2 = '0');
-ERROR:  AggregateCreate: 'int2div'('int4','int4') does not exist
+			  stype = int4,
+			  finalfunc = int2um,
+			  initcond = '0');
+ERROR:  AggregateCreate: function 'int2um(int4)' does not exist
 -- left out basetype
-create aggregate newcnt1 (sfunc2 = int4inc,
-			  stype2 = int4,
-			initcond2 = '0');
+create aggregate newcnt1 (sfunc = int4inc,
+			  stype = int4,
+			  initcond = '0');
 ERROR:  Define: "basetype" unspecified
--- left out initcond2 (for sfunc2) 
-create aggregate newcnt1 (sfunc2 = int4inc,
-			  basetype = int4,
-			  stype2 = int4);
-ERROR:  AggregateCreate: transition function 2 MUST have an initial value
 --
 -- REMOVE INDEX
  

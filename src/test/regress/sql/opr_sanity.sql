@@ -363,66 +363,32 @@ WHERE p1.oprjoin = p2.oid AND
 -- **************** pg_aggregate ****************
 
 -- Look for illegal values in pg_aggregate fields.
--- aggbasetype can only be 0 if transfn1 is not present (eg, count(*))
--- or itself takes a wild-card input; we check the latter case below.
 
 SELECT p1.oid, p1.aggname
 FROM pg_aggregate as p1
-WHERE (p1.aggbasetype = 0 AND p1.aggtransfn1 != 0) OR aggfinaltype = 0;
+WHERE aggtransfn = 0 OR aggtranstype = 0 OR aggfinaltype = 0;
 
--- Check combinations of transfer functions.
--- Although either transfn1 or transfn2 can be null,
--- it makes no sense for both to be.  And if both are defined,
--- presumably there should be a finalfn to combine their results.
--- We also check that transtypes are null just when corresponding
--- transfns are.  Also, if there is no finalfn then the output type
--- must be the transtype the result will be taken from.
+-- If there is no finalfn then the output type must be the transtype.
 
 SELECT p1.oid, p1.aggname
 FROM pg_aggregate as p1
-WHERE p1.aggtransfn1 = 0 AND p1.aggtransfn2 = 0;
+WHERE p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype;
 
-SELECT p1.oid, p1.aggname
-FROM pg_aggregate as p1
-WHERE p1.aggtransfn1 != 0 AND p1.aggtransfn2 = 0 AND
-    (p1.aggtranstype1 = 0 OR p1.aggtranstype2 != 0 OR
-     (p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype1));
-
-SELECT p1.oid, p1.aggname
-FROM pg_aggregate as p1
-WHERE p1.aggtransfn1 = 0 AND p1.aggtransfn2 != 0 AND
-    (p1.aggtranstype1 != 0 OR p1.aggtranstype2 = 0 OR
-     (p1.aggfinalfn = 0 AND p1.aggfinaltype != p1.aggtranstype2));
-
-SELECT p1.oid, p1.aggname
-FROM pg_aggregate as p1
-WHERE p1.aggtransfn1 != 0 AND p1.aggtransfn2 != 0 AND
-    (p1.aggtranstype1 = 0 OR p1.aggtranstype2 = 0 OR
-     p1.aggfinalfn = 0);
-
--- Cross-check transfn1 (if present) against its entry in pg_proc.
+-- Cross-check transfn against its entry in pg_proc.
 -- FIXME: what about binary-compatible types?
+-- NOTE: in 7.1, this search finds max and min on abstime, which are
+-- implemented using int4larger/int4smaller.  Until we have
+-- some cleaner way of dealing with binary-equivalent types, just leave
+-- those two tuples in the expected output.
 
 SELECT p1.oid, p1.aggname, p2.oid, p2.proname
 FROM pg_aggregate AS p1, pg_proc AS p2
-WHERE p1.aggtransfn1 = p2.oid AND
-    (p2.proretset OR p2.pronargs != 2
--- diked out until we find a way of marking binary-compatible types
--- OR
---     p1.aggtranstype1 != p2.prorettype OR
---     p1.aggtranstype1 != p2.proargtypes[0] OR
---     p1.aggbasetype != p2.proargtypes[1]
-);
-
--- Cross-check transfn2 (if present) against its entry in pg_proc.
--- FIXME: what about binary-compatible types?
-
-SELECT p1.oid, p1.aggname, p2.oid, p2.proname
-FROM pg_aggregate AS p1, pg_proc AS p2
-WHERE p1.aggtransfn2 = p2.oid AND
-    (p2.proretset OR p1.aggtranstype2 != p2.prorettype OR
-     p2.pronargs != 1 OR
-     p1.aggtranstype2 != p2.proargtypes[0]);
+WHERE p1.aggtransfn = p2.oid AND
+    (p2.proretset OR
+     p1.aggtranstype != p2.prorettype OR
+     p1.aggtranstype != p2.proargtypes[0] OR
+     NOT ((p2.pronargs = 2 AND p1.aggbasetype = p2.proargtypes[1]) OR
+          (p2.pronargs = 1 AND p1.aggbasetype = 0)));
 
 -- Cross-check finalfn (if present) against its entry in pg_proc.
 -- FIXME: what about binary-compatible types?
@@ -431,9 +397,8 @@ SELECT p1.oid, p1.aggname, p2.oid, p2.proname
 FROM pg_aggregate AS p1, pg_proc AS p2
 WHERE p1.aggfinalfn = p2.oid AND
     (p2.proretset OR p1.aggfinaltype != p2.prorettype OR
-     p2.pronargs != 2 OR
-     p1.aggtranstype1 != p2.proargtypes[0] OR
-     p1.aggtranstype2 != p2.proargtypes[1]);
+     p2.pronargs != 1 OR
+     p1.aggtranstype != p2.proargtypes[0]);
 
 -- **************** pg_opclass ****************
 

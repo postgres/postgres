@@ -386,28 +386,33 @@ create function tcl_int4add(int4,int4) returns int4 as '
     return [expr $1 + $2]
 ' language 'pltcl';
 
-create function tcl_int4div(int4,int4) returns int4 as '
-    return [expr $1 / $2]
+-- We use split(n) as a quick-and-dirty way of parsing the input array
+-- value, which comes in as a string like '{1,2}'.  There are better ways...
+
+create function tcl_int4_accum(_int4,int4) returns _int4 as '
+    set state [split $1 "{,}"]
+    set newsum [expr {[lindex $state 1] + $2}]
+    set newcnt [expr {[lindex $state 2] + 1}]
+    return "{$newsum,$newcnt}"
 ' language 'pltcl';
 
-create function tcl_int4inc(int4) returns int4 as '
-    return [expr $1 + 1]
+create function tcl_int4_avg(_int4) returns int4 as '
+    set state [split $1 "{,}"]
+    return [expr {[lindex $state 1] / [lindex $state 2]}]
 ' language 'pltcl';
 
 create aggregate tcl_avg (
-		sfunc1 = tcl_int4add,
+		sfunc = tcl_int4_accum,
 		basetype = int4,
-		stype1 = int4,
-		sfunc2 = tcl_int4inc,
-		stype2 = int4,
-		finalfunc = tcl_int4div,
-		initcond2 = '0'
+		stype = _int4,
+		finalfunc = tcl_int4_avg,
+		initcond = '{0,0}'
 	);
 
 create aggregate tcl_sum (
-		sfunc1 = tcl_int4add,
+		sfunc = tcl_int4add,
 		basetype = int4,
-		stype1 = int4,
+		stype = int4,
 		initcond1 = '0'
 	);
 

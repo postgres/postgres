@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.38 2000/06/15 03:32:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.39 2000/07/17 03:05:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,18 +189,16 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 {
 	HeapTuple	theAggTuple;
 	Form_pg_aggregate aggform;
-	Oid			fintype;
-	Oid			xfn1;
-	Oid			vartype;
 	Aggref	   *aggref;
-	bool		usenulls = false;
 
 	theAggTuple = SearchSysCacheTuple(AGGNAME,
 									  PointerGetDatum(aggname),
 									  ObjectIdGetDatum(basetype),
 									  0, 0);
+	/* shouldn't happen --- caller should have checked already */
 	if (!HeapTupleIsValid(theAggTuple))
-		elog(ERROR, "Aggregate %s does not exist", aggname);
+		agg_error("ParseAgg", aggname, basetype);
+	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
 
 	/*
 	 * There used to be a really ugly hack for count(*) here.
@@ -209,43 +207,18 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	 * does the right thing.  (It didn't use to do the right thing,
 	 * because the optimizer had the wrong ideas about semantics of
 	 * queries without explicit variables.	Fixed as of Oct 1999 --- tgl.)
-	 *
-	 * Since "1" never evaluates as null, we currently have no need of the
-	 * "usenulls" flag, but it should be kept around; in fact, we should
-	 * extend the pg_aggregate table to let usenulls be specified as an
-	 * attribute of user-defined aggregates.  In the meantime, usenulls is
-	 * just always set to "false".
 	 */
 
-	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
-	fintype = aggform->aggfinaltype;
-	xfn1 = aggform->aggtransfn1;
-
-	/* only aggregates with transfn1 need a base type */
-	if (OidIsValid(xfn1))
-	{
-		basetype = aggform->aggbasetype;
-		vartype = exprType(lfirst(args));
-		if ((basetype != vartype)
-			&& (!IS_BINARY_COMPATIBLE(basetype, vartype)))
-		{
-			Type		tp1,
-						tp2;
-
-			tp1 = typeidType(basetype);
-			tp2 = typeidType(vartype);
-			elog(ERROR, "Aggregate type mismatch"
-				 "\n\t%s() works on %s, not on %s",
-				 aggname, typeTypeName(tp1), typeTypeName(tp2));
-		}
-	}
+	/*
+	 * We assume caller has already checked that given args are compatible
+	 * with the agg's basetype.
+	 */
 
 	aggref = makeNode(Aggref);
 	aggref->aggname = pstrdup(aggname);
 	aggref->basetype = aggform->aggbasetype;
-	aggref->aggtype = fintype;
+	aggref->aggtype = aggform->aggfinaltype;
 	aggref->target = lfirst(args);
-	aggref->usenulls = usenulls;
 	aggref->aggstar = agg_star;
 	aggref->aggdistinct = agg_distinct;
 
@@ -268,10 +241,9 @@ agg_error(char *caller, char *aggname, Oid basetypeID)
 	 */
 
 	if (basetypeID == InvalidOid)
-		elog(ERROR, "%s: aggregate '%s' for all types does not exist", caller, aggname);
+		elog(ERROR, "%s: aggregate '%s' for all types does not exist",
+			 caller, aggname);
 	else
-	{
-		elog(ERROR, "%s: aggregate '%s' for '%s' does not exist", caller, aggname,
-			 typeidTypeName(basetypeID));
-	}
+		elog(ERROR, "%s: aggregate '%s' for '%s' does not exist",
+			 caller, aggname, typeidTypeName(basetypeID));
 }

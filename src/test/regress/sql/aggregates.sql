@@ -6,7 +6,10 @@ SELECT avg(four) AS avg_1 FROM onek;
 
 SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
 
-SELECT avg(b) AS avg_107_943 FROM aggtest;
+-- In 7.1, avg(float4) is computed using float8 arithmetic.
+-- Round the result to 3 digits to avoid platform-specific results.
+
+SELECT avg(b)::numeric(10,3) AS avg_107_943 FROM aggtest;
 
 SELECT avg(gpa) AS avg_3_4 FROM ONLY student;
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.9 2000/03/31 14:57:05 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.10 2000/07/17 03:04:41 tgl Exp $
 Postgres documentation
 -->
 
@@ -21,20 +21,18 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-07-16</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = <replaceable class="PARAMETER">input_data_type</replaceable>
-    [ , SFUNC1 = <replaceable class="PARAMETER">sfunc1</replaceable>, STYPE1 = <replaceable class="PARAMETER">state1_type</replaceable> ]
-    [ , SFUNC2 = <replaceable class="PARAMETER">sfunc2</replaceable>, STYPE2 = <replaceable class="PARAMETER">state2_type</replaceable> ]
+CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = <replaceable class="PARAMETER">input_data_type</replaceable>,
+    SFUNC = <replaceable class="PARAMETER">sfunc</replaceable>, STYPE = <replaceable class="PARAMETER">state_type</replaceable>
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
-    [ , INITCOND1 = <replaceable class="PARAMETER">initial_condition1</replaceable> ]
-    [ , INITCOND2 = <replaceable class="PARAMETER">initial_condition2</replaceable> ] )
+    [ , INITCOND = <replaceable class="PARAMETER">initial_condition</replaceable> ] )
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEAGGREGATE-1">
    <refsect2info>
-    <date>1998-09-09</date>
+    <date>2000-07-16</date>
    </refsect2info>
    <title>
     Inputs
@@ -55,57 +53,39 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = 
       <listitem>
        <para>
 	The input data type on which this aggregate function operates.
+	This can be specified as ANY for an aggregate that does not
+	examine its input values
+	(an example is <function>count(*)</function>).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">sfunc1</replaceable></term>
+      <term><replaceable class="PARAMETER">sfunc</replaceable></term>
       <listitem>
        <para>
-	A state transition function
-	to be called for every non-NULL input data value.
-	This must be a function of two arguments, the first being of
-	type <replaceable class="PARAMETER">state1_type</replaceable>
+	The name of the state transition function
+	to be called for each input data value.
+	This is normally a function of two arguments, the first being of
+	type <replaceable class="PARAMETER">state_type</replaceable>
 	and the second of
 	type <replaceable class="PARAMETER">input_data_type</replaceable>.
-	The function must return a value of
-	type <replaceable class="PARAMETER">state1_type</replaceable>.
-	This function takes the current state value 1 and the current
-	input data item, and returns the next state value 1.
+	Alternatively, for an aggregate that does not examine its input
+	values, the function takes just one argument of
+	type <replaceable class="PARAMETER">state_type</replaceable>.
+	In either case the function must return a value of
+	type <replaceable class="PARAMETER">state_type</replaceable>.
+	This function takes the current state value and the current
+	input data item, and returns the next state value.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">state1_type</replaceable></term>
+      <term><replaceable class="PARAMETER">state_type</replaceable></term>
       <listitem>
        <para>
-	The data type for the first state value of the aggregate.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">sfunc2</replaceable></term>
-      <listitem>
-       <para>
-	A state transition function
-	to be called for every non-NULL input data value.
-	This must be a function of one argument of
-	type <replaceable class="PARAMETER">state2_type</replaceable>,
-	returning a value of the same type.
-	This function takes the current state value 2 and
-	returns the next state value 2.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">state2_type</replaceable></term>
-      <listitem>
-       <para>
-	The data type for the second state value of the aggregate.
+	The data type for the aggregate's state value.
        </para>
       </listitem>
      </varlistentry>
@@ -114,35 +94,28 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = 
       <term><replaceable class="PARAMETER">ffunc</replaceable></term>
       <listitem>
        <para>
-	The final function called to compute the aggregate's result
-	after all input data has been traversed.
-	If both state values are used, the final function must
-	take two arguments of types
-	<replaceable class="PARAMETER">state1_type</replaceable>
-	and
-	<replaceable class="PARAMETER">state2_type</replaceable>.
-	If only one state value is used, the final function must
-	take a single argument of that state value's type.
+	The name of the final function called to compute the aggregate's
+	result after all input data has been traversed.  The function
+	must take a single argument of type
+	<replaceable class="PARAMETER">state_type</replaceable>.
 	The output datatype of the aggregate is defined as the return
 	type of this function.
+	If <replaceable class="PARAMETER">ffunc</replaceable>
+	is not specified, then the ending state value is used as the
+	aggregate's result, and the output type is
+	<replaceable class="PARAMETER">state_type</replaceable>.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="PARAMETER">initial_condition1</replaceable></term>
+      <term><replaceable class="PARAMETER">initial_condition</replaceable></term>
       <listitem>
        <para>
-	The initial value for state value 1.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">initial_condition2</replaceable></term>
-      <listitem>
-       <para>
-	The initial value for state value 2.
+	The initial setting for the state value.  This must be a literal
+	constant in the form accepted for the datatype
+	<replaceable class="PARAMETER">state_type</replaceable>.
+	If not specified, the state value starts out NULL.
        </para>
       </listitem>
      </varlistentry>
@@ -177,7 +150,7 @@ CREATE
 
  <refsect1 id="R1-SQL-CREATEAGGREGATE-1">
   <refsect1info>
-   <date>1998-09-09</date>
+   <date>2000-07-16</date>
   </refsect1info>
   <title>
    Description
@@ -199,65 +172,76 @@ CREATE
    of the same name and input data type as an aggregate.
   </para>
   <para>
-   An  aggregate  function is made from between one and three ordinary
+   An  aggregate function is made from one or two ordinary
    functions:
-   two state transition functions, 
-   <replaceable class="PARAMETER">sfunc1</replaceable>
-   and <replaceable class="PARAMETER">sfunc2</replaceable>,
-   and a final calculation function,
+   a state transition function
+   <replaceable class="PARAMETER">sfunc</replaceable>,
+   and an optional final calculation function
    <replaceable class="PARAMETER">ffunc</replaceable>.
    These are used as follows:
    <programlisting>
-<replaceable class="PARAMETER">sfunc1</replaceable>( internal-state1, next-data-item ) ---> next-internal-state1
-<replaceable class="PARAMETER">sfunc2</replaceable>( internal-state2 ) ---> next-internal-state2
-<replaceable class="PARAMETER">ffunc</replaceable>(internal-state1, internal-state2) ---> aggregate-value
+<replaceable class="PARAMETER">sfunc</replaceable>( internal-state, next-data-item ) ---> next-internal-state
+<replaceable class="PARAMETER">ffunc</replaceable>( internal-state ) ---> aggregate-value
    </programlisting>
   </para>
   <para>
-   <productname>Postgres</productname> creates one or two temporary variables
-   (of data types <replaceable class="PARAMETER">stype1</replaceable> and/or
-   <replaceable class="PARAMETER">stype2</replaceable>) to hold the
-   current internal states of the aggregate.  At each input data item,
-   the state transition function(s) are invoked to calculate new values
-   for the internal state values.  After all the data has been processed,
+   <productname>Postgres</productname> creates a temporary variable
+   of data type <replaceable class="PARAMETER">stype</replaceable>
+   to hold the current internal state of the aggregate.  At each input
+   data item,
+   the state transition function is invoked to calculate a new
+   internal state value.  After all the data has been processed,
    the final function is invoked once to calculate the aggregate's output
-   value.
+   value.  If there is no final function then the ending state value
+   is returned as-is.
   </para>
-  <para>
-   <replaceable class="PARAMETER">ffunc</replaceable> must be specified if
-   both transition functions are specified.  If only one transition function
-   is used, then <replaceable class="PARAMETER">ffunc</replaceable> is
-   optional.  The default behavior when
-   <replaceable class="PARAMETER">ffunc</replaceable> is not provided is
-   to return the ending value of the internal state value being used
-   (and, therefore, the aggregate's output type is the same as that
-   state value's type).
-  </para>  
   
-  <para>	
-   An aggregate function may also provide one or two initial conditions,
-   that is, initial values for the internal state values being used.
-   These are specified and  stored in the database as fields of type
-   <type>text</type>, but they must be valid external representations
-   of constants of the state value datatypes.  If
-   <replaceable class="PARAMETER">sfunc1</replaceable> is specified 
-   without an <replaceable class="PARAMETER">initcond1</replaceable> value,
-   then the system does not call
-   <replaceable class="PARAMETER">sfunc1</replaceable> 
-   at the first input item; instead, the internal state value 1 is
-   initialized with the first input value, and
-   <replaceable class="PARAMETER">sfunc1</replaceable> is called beginning 
-   at the second input item.  This is useful for aggregates like MIN and
-   MAX.  Note that an aggregate using this feature will return NULL when
-   called with no input values.  There is no comparable provision for
-   state value 2; if <replaceable class="PARAMETER">sfunc2</replaceable> is
-   specified then an <replaceable class="PARAMETER">initcond2</replaceable> is
-   required.
+  <para>
+   An aggregate function may provide an initial condition,
+   that is, an initial value for the internal state value.
+   This is specified and stored in the database as a field of type
+   <type>text</type>, but it must be a valid external representation
+   of a constant of the state value datatype.  If it is not supplied
+   then the state value starts out NULL.
+  </para>
+  
+  <para>
+   If the state transition function is declared "strict" in pg_proc,
+   then it cannot be called with NULL inputs.  With such a transition
+   function, aggregate execution behaves as follows.  NULL input values
+   are ignored (the function is not called and the previous state value
+   is retained).  If the initial state value is NULL, then the first
+   non-NULL input value replaces the state value, and the transition
+   function is invoked beginning with the second non-NULL input value.
+   This is handy for implementing aggregates like <function>max</function>.
+   Note that this behavior is only available when
+   <replaceable class="PARAMETER">state_type</replaceable>
+   is the same as
+   <replaceable class="PARAMETER">input_data_type</replaceable>.
+   When these types are different, you must supply a non-NULL initial
+   condition or use a non-strict transition function.
+  </para>
+  
+  <para>
+   If the state transition function is not strict, then it will be called
+   unconditionally at each input value, and must deal with NULL inputs
+   and NULL transition values for itself.  This allows the aggregate
+   author to have full control over the aggregate's handling of NULLs.
+  </para>
+  
+  <para>
+   If the final function is declared "strict", then it will not
+   be called when the ending state value is NULL; instead a NULL result
+   will be output automatically.  (Of course this is just the normal
+   behavior of strict functions.)  In any case the final function has
+   the option of returning NULL.  For example, the final function for
+   <function>avg</function> returns NULL when it sees there were zero
+   input tuples.
   </para>
   
   <refsect2 id="R2-SQL-CREATEAGGREGATE-3">
    <refsect2info>
-    <date>1998-09-09</date>
+    <date>2000-07-16</date>
    </refsect2info>
    <title>
     Notes
@@ -270,29 +254,6 @@ CREATE
    <para>
     The parameters of <command>CREATE AGGREGATE</command> can be written
     in any order, not just the order illustrated above.
-   </para>
-
-   <para>
-    It  is possible to specify aggregate functions
-    that have varying combinations of state  and  final  functions. 
-    For example, the <function>count</function> aggregate requires
-    <replaceable class="PARAMETER">sfunc2</replaceable> 
-    (an incrementing function) but not
-    <replaceable class="PARAMETER">sfunc1</replaceable>  or  
-    <replaceable class="PARAMETER">ffunc</replaceable>,
-    whereas  the  <function>sum</function> aggregate requires
-    <replaceable class="PARAMETER">sfunc1</replaceable> (an addition
-    function) but not <replaceable class="PARAMETER">sfunc2</replaceable> or
-    <replaceable class="PARAMETER">ffunc</replaceable>,  and  the
-    <function>avg</function>
-    aggregate  requires 
-    both state functions as
-    well as a <replaceable class="PARAMETER">ffunc</replaceable> (a division
-    function) to  produce  its 
-    answer.   In any case, at least one state function must be
-    defined, and any <replaceable class="PARAMETER">sfunc2</replaceable> must
-    have  a  corresponding
-    <replaceable class="PARAMETER">initcond2</replaceable>. 
    </para>
 
   </refsect2>

@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.116 2000/07/12 02:37:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.117 2000/07/17 03:04:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -843,7 +843,6 @@ _copyAggref(Aggref *from)
 	newnode->basetype = from->basetype;
 	newnode->aggtype = from->aggtype;
 	Node_Copy(from, newnode, target);
-	newnode->usenulls = from->usenulls;
 	newnode->aggstar = from->aggstar;
 	newnode->aggdistinct = from->aggdistinct;
 	newnode->aggno = from->aggno;		/* probably not needed */

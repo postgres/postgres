@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.70 2000/06/28 03:32:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.71 2000/07/17 03:05:08 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -20,7 +20,7 @@
  *	Interface:
  *
  *	LockAcquire(), LockRelease(), LockMethodTableInit(),
- *	LockMethodTableRename(), LockReleaseAll, LockOwners()
+ *	LockMethodTableRename(), LockReleaseAll,
  *	LockResolveConflicts(), GrantLock()
  *
  *	NOTE: This module is used to define new lock tables.  The
@@ -35,9 +35,11 @@
 #include <signal.h>
 
 #include "postgres.h"
+
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "storage/proc.h"
+#include "utils/memutils.h"
 #include "utils/ps_status.h"
 
 static int	WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode);
@@ -1721,181 +1723,6 @@ nxtl:	;
 	/* if we got here, no deadlock */
 	return false;
 }
-
-#ifdef NOT_USED
-/*
- * Return an array with the pids of all processes owning a lock.
- * This works only for user locks because normal locks have no
- * pid information in the corresponding XIDLookupEnt.
- */
-ArrayType  *
-LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
-{
-	XIDLookupEnt *xidLook = NULL;
-	SPINLOCK	masterLock;
-	LOCK	   *lock;
-	SHMEM_OFFSET lock_offset;
-	int			count = 0;
-	LOCKMETHODTABLE *lockMethodTable;
-	HTAB	   *xidTable;
-	bool		found;
-	int			ndims,
-				nitems,
-				hdrlen,
-				size;
-	int			lbounds[1],
-				hbounds[1];
-	ArrayType  *array;
-	int		   *data_ptr;
-
-	/* Assume that no one will modify the result */
-	static int	empty_array[] = {20, 1, 0, 0, 0};
-
-#ifdef LOCK_DEBUG
-	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
-        elog(DEBUG, "LockOwners: user lock tag [%u]", locktag->objId.blkno);
-#endif
-
-	/* This must be changed when short term locks will be used */
-	locktag->lockmethod = lockmethod;
-
-	Assert((lockmethod >= MIN_LOCKMETHOD) && (lockmethod < NumLockMethods));
-	lockMethodTable = LockMethodTable[lockmethod];
-	if (!lockMethodTable)
-	{
-		elog(NOTICE, "lockMethodTable is null in LockOwners");
-		return (ArrayType *) &empty_array;
-	}
-
-	if (LockingIsDisabled)
-		return (ArrayType *) &empty_array;
-
-	masterLock = lockMethodTable->ctl->masterLock;
-	SpinAcquire(masterLock);
-
-	/*
-	 * Find a lock with this tag
-	 */
-	Assert(lockMethodTable->lockHash->hash == tag_hash);
-	lock = (LOCK *) hash_search(lockMethodTable->lockHash, (Pointer) locktag,
-								HASH_FIND, &found);
-
-	/*
-	 * let the caller print its own error message, too. Do not elog(WARN).
-	 */
-	if (!lock)
-	{
-		SpinRelease(masterLock);
-		elog(NOTICE, "LockOwners: locktable corrupted");
-		return (ArrayType *) &empty_array;
-	}
-
-	if (!found)
-	{
-		SpinRelease(masterLock);
-        elog(NOTICE, "LockOwners: no such lock");
-		return (ArrayType *) &empty_array;
-	}
-	LOCK_PRINT("LockOwners: found", lock, 0);
-	Assert((lock->nHolding > 0) && (lock->nActive > 0));
-	Assert(lock->nActive <= lock->nHolding);
-	lock_offset = MAKE_OFFSET(lock);
-
-	/* Construct a 1-dimensional array */
-	ndims = 1;
-	hdrlen = ARR_OVERHEAD(ndims);
-	lbounds[0] = 0;
-	hbounds[0] = lock->nActive;
-	size = hdrlen + sizeof(int) * hbounds[0];
-	array = (ArrayType *) palloc(size);
-	MemSet(array, 0, size);
-	memmove((char *) array, (char *) &size, sizeof(int));
-	memmove((char *) ARR_NDIM_PTR(array), (char *) &ndims, sizeof(int));
-	memmove((char *) ARR_DIMS(array), (char *) hbounds, ndims * sizeof(int));
-	memmove((char *) ARR_LBOUND(array), (char *) lbounds, ndims * sizeof(int));
-	SET_LO_FLAG(false, array);
-	data_ptr = (int *) ARR_DATA_PTR(array);
-
-	xidTable = lockMethodTable->xidHash;
-	hash_seq(NULL);
-	nitems = 0;
-	while ((xidLook = (XIDLookupEnt *) hash_seq(xidTable)) &&
-		   (xidLook != (XIDLookupEnt *) TRUE))
-	{
-		if (count++ > 1000)
-		{
-			elog(NOTICE, "LockOwners: possible loop, giving up");
-			break;
-		}
-
-		if (xidLook->tag.pid == 0)
-		{
-			XID_PRINT("LockOwners: no pid", xidLook);
-			continue;
-		}
-
-		if (!xidLook->tag.lock)
-		{
-			XID_PRINT("LockOwners: NULL LOCK", xidLook);
-			continue;
-		}
-
-		if (xidLook->tag.lock != lock_offset)
-		{
-			XID_PRINT("LockOwners: different lock", xidLook);
-			continue;
-		}
-
-		if (LOCK_LOCKMETHOD(*lock) != lockmethod)
-		{
-			XID_PRINT("LockOwners: other table", xidLook);
-			continue;
-		}
-
-		if (xidLook->nHolding <= 0)
-		{
-			XID_PRINT("LockOwners: not holding", xidLook);
-			continue;
-		}
-
-		if (nitems >= hbounds[0])
-		{
-			elog(NOTICE, "LockOwners: array size exceeded");
-			break;
-		}
-
-		/*
-		 * Check that the holding process is still alive by sending him an
-		 * unused (ignored) signal. If the kill fails the process is not
-		 * alive.
-		 */
-		if ((xidLook->tag.pid != MyProcPid) \
-			&&(kill(xidLook->tag.pid, SIGCHLD)) != 0)
-		{
-			/* Return a negative pid to signal that process is dead */
-			data_ptr[nitems++] = -(xidLook->tag.pid);
-			XID_PRINT("LockOwners: not alive", xidLook);
-			/* XXX - TODO: remove this entry and update lock stats */
-			continue;
-		}
-
-		/* Found a process holding the lock */
-		XID_PRINT("LockOwners: holding", xidLook);
-		data_ptr[nitems++] = xidLook->tag.pid;
-	}
-
-	SpinRelease(masterLock);
-
-	/* Adjust the actual size of the array */
-	hbounds[0] = nitems;
-	size = hdrlen + sizeof(int) * hbounds[0];
-	memmove((char *) array, (char *) &size, sizeof(int));
-	memmove((char *) ARR_DIMS(array), (char *) hbounds, ndims * sizeof(int));
-
-	return array;
-}
-
-#endif /* NOT_USED */
 
 #ifdef LOCK_DEBUG
 /*

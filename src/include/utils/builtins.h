@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.123 2000/07/09 21:30:21 petere Exp $
+ * $Id: builtins.h,v 1.124 2000/07/17 03:05:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,6 @@ extern Datum int2mi(PG_FUNCTION_ARGS);
 extern Datum int2mul(PG_FUNCTION_ARGS);
 extern Datum int2div(PG_FUNCTION_ARGS);
 extern Datum int2abs(PG_FUNCTION_ARGS);
-extern Datum int2inc(PG_FUNCTION_ARGS);
 extern Datum int24pl(PG_FUNCTION_ARGS);
 extern Datum int24mi(PG_FUNCTION_ARGS);
 extern Datum int24mul(PG_FUNCTION_ARGS);
@@ -207,12 +206,10 @@ extern float32 float4pl(float32 arg1, float32 arg2);
 extern float32 float4mi(float32 arg1, float32 arg2);
 extern float32 float4mul(float32 arg1, float32 arg2);
 extern float32 float4div(float32 arg1, float32 arg2);
-extern float32 float4inc(float32 arg1);
 extern float64 float8pl(float64 arg1, float64 arg2);
 extern float64 float8mi(float64 arg1, float64 arg2);
 extern float64 float8mul(float64 arg1, float64 arg2);
 extern float64 float8div(float64 arg1, float64 arg2);
-extern float64 float8inc(float64 arg1);
 extern bool float4eq(float32 arg1, float32 arg2);
 extern bool float4ne(float32 arg1, float32 arg2);
 extern bool float4lt(float32 arg1, float32 arg2);
@@ -261,6 +258,11 @@ extern float64 radians(float64 arg1);
 extern float64 dtan(float64 arg1);
 extern float64 drandom(void);
 extern int32 setseed(float64 seed);
+extern Datum float8_accum(PG_FUNCTION_ARGS);
+extern Datum float4_accum(PG_FUNCTION_ARGS);
+extern Datum float8_avg(PG_FUNCTION_ARGS);
+extern Datum float8_variance(PG_FUNCTION_ARGS);
+extern Datum float8_stddev(PG_FUNCTION_ARGS);
 
 extern float64 float48pl(float32 arg1, float64 arg2);
 extern float64 float48mi(float32 arg1, float64 arg2);
@@ -545,7 +547,6 @@ extern Numeric numeric_mul(Numeric num1, Numeric num2);
 extern Numeric numeric_div(Numeric num1, Numeric num2);
 extern Numeric numeric_mod(Numeric num1, Numeric num2);
 extern Numeric numeric_inc(Numeric num);
-extern Numeric numeric_dec(Numeric num);
 extern Numeric numeric_smaller(Numeric num1, Numeric num2);
 extern Numeric numeric_larger(Numeric num1, Numeric num2);
 extern Numeric numeric_sqrt(Numeric num);
@@ -555,14 +556,24 @@ extern Numeric numeric_log(Numeric num1, Numeric num2);
 extern Numeric numeric_power(Numeric num1, Numeric num2);
 extern Datum int4_numeric(PG_FUNCTION_ARGS);
 extern int32 numeric_int4(Numeric num);
-extern Numeric int8_numeric(int64 *val);
+extern Datum int8_numeric(PG_FUNCTION_ARGS);
 extern int64 *numeric_int8(Numeric num);
 extern Datum int2_numeric(PG_FUNCTION_ARGS);
 extern Datum numeric_int2(PG_FUNCTION_ARGS);
-extern Numeric float4_numeric(float32 val);
-extern float32 numeric_float4(Numeric num);
 extern Numeric float8_numeric(float64 val);
 extern float64 numeric_float8(Numeric num);
+extern Numeric float4_numeric(float32 val);
+extern float32 numeric_float4(Numeric num);
+extern Datum numeric_accum(PG_FUNCTION_ARGS);
+extern Datum int2_accum(PG_FUNCTION_ARGS);
+extern Datum int4_accum(PG_FUNCTION_ARGS);
+extern Datum int8_accum(PG_FUNCTION_ARGS);
+extern Datum numeric_avg(PG_FUNCTION_ARGS);
+extern Datum numeric_variance(PG_FUNCTION_ARGS);
+extern Datum numeric_stddev(PG_FUNCTION_ARGS);
+extern Datum int2_sum(PG_FUNCTION_ARGS);
+extern Datum int4_sum(PG_FUNCTION_ARGS);
+extern Datum int8_sum(PG_FUNCTION_ARGS);
 
 /* lztext.c */
 extern lztext  *lztextin(char *str);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.7 2000/05/18 14:24:32 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.8 2000/07/17 03:04:41 tgl Exp $
 Postgres documentation
 -->
 
@@ -49,7 +49,7 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> <replaceable cl
        <para>
 	The type of an existing aggregate function.
 	(Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
-	further information about data types).
+	further information about data types.)
 	<comment>This should become a cross-reference rather than a
 	 hard-coded chapter number</comment>
        </para>
@@ -80,7 +80,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE RemoveAggregate: aggregate '<replaceable class="parameter">agg</replaceable>' for '<replaceable class="parameter">type</replaceable>' does not exist
+ERROR: RemoveAggregate: aggregate '<replaceable class="parameter">agg</replaceable>' for '<replaceable class="parameter">type</replaceable>' does not exist
        </computeroutput></term>
       <listitem>
        <para>

@@ -3,36 +3,38 @@
  * nodeAgg.c
  *	  Routines to handle aggregate nodes.
  *
- *	  ExecAgg evaluates each aggregate in the following steps: (initcond1,
- *	  initcond2 are the initial values and sfunc1, sfunc2, and finalfunc are
- *	  the transition functions.)
+ *	  ExecAgg evaluates each aggregate in the following steps:
  *
- *		 value1 = initcond1
- *		 value2 = initcond2
+ *		 transvalue = initcond
  *		 foreach input_value do
- *			value1 = sfunc1(value1, input_value)
- *			value2 = sfunc2(value2)
- *		 value1 = finalfunc(value1, value2)
+ *			transvalue = transfunc(transvalue, input_value)
+ *		 result = finalfunc(transvalue)
  *
- *	  If initcond1 is NULL then the first non-NULL input_value is
- *	  assigned directly to value1.	sfunc1 isn't applied until value1
- *	  is non-NULL.
+ *	  If a finalfunc is not supplied then the result is just the ending
+ *	  value of transvalue.
  *
- *	  sfunc1 is never applied when the current tuple's input_value is NULL.
- *	  sfunc2 is applied for each tuple if the aggref is marked 'usenulls',
- *	  otherwise it is only applied when input_value is not NULL.
- *	  (usenulls was formerly used for COUNT(*), but is no longer needed for
- *	  that purpose; as of 10/1999 the support for usenulls is dead code.
- *	  I have not removed it because it seems like a potentially useful
- *	  feature for user-defined aggregates.	We'd just need to add a
- *	  flag column to pg_aggregate and a parameter to CREATE AGGREGATE...)
+ *	  If transfunc is marked "strict" in pg_proc and initcond is NULL,
+ *	  then the first non-NULL input_value is assigned directly to transvalue,
+ *	  and transfunc isn't applied until the second non-NULL input_value.
+ *	  The agg's input type and transtype must be the same in this case!
+ *
+ *	  If transfunc is marked "strict" then NULL input_values are skipped,
+ *	  keeping the previous transvalue.  If transfunc is not strict then it
+ *	  is called for every input tuple and must deal with NULL initcond
+ *	  or NULL input_value for itself.
+ *
+ *	  If finalfunc is marked "strict" then it is not called when the
+ *	  ending transvalue is NULL, instead a NULL result is created
+ *	  automatically (this is just the usual handling of strict functions,
+ *	  of course).  A non-strict finalfunc can make its own choice of
+ *	  what to return for a NULL ending transvalue.
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.69 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.70 2000/07/17 03:04:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +47,7 @@
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "optimizer/clauses.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_type.h"
@@ -67,16 +70,15 @@ typedef struct AggStatePerAggData
 	Aggref	   *aggref;
 
 	/* Oids of transfer functions */
-	Oid			xfn1_oid;
-	Oid			xfn2_oid;
-	Oid			finalfn_oid;
+	Oid			transfn_oid;
+	Oid			finalfn_oid;	/* may be InvalidOid */
 
 	/*
 	 * fmgr lookup data for transfer functions --- only valid when
-	 * corresponding oid is not InvalidOid
+	 * corresponding oid is not InvalidOid.  Note in particular that
+	 * fn_strict flags are kept here.
 	 */
-	FmgrInfo	xfn1;
-	FmgrInfo	xfn2;
+	FmgrInfo	transfn;
 	FmgrInfo	finalfn;
 
 	/*
@@ -94,12 +96,10 @@ typedef struct AggStatePerAggData
 	FmgrInfo	equalfn;
 
 	/*
-	 * initial values from pg_aggregate entry
+	 * initial value from pg_aggregate entry
 	 */
-	Datum		initValue1;		/* for transtype1 */
-	Datum		initValue2;		/* for transtype2 */
-	bool		initValue1IsNull,
-				initValue2IsNull;
+	Datum		initValue;
+	bool		initValueIsNull;
 
 	/*
 	 * We need the len and byval info for the agg's input, result, and
@@ -107,45 +107,42 @@ typedef struct AggStatePerAggData
 	 */
 	int			inputtypeLen,
 				resulttypeLen,
-				transtype1Len,
-				transtype2Len;
+				transtypeLen;
 	bool		inputtypeByVal,
 				resulttypeByVal,
-				transtype1ByVal,
-				transtype2ByVal;
+				transtypeByVal;
 
 	/*
 	 * These values are working state that is initialized at the start of
 	 * an input tuple group and updated for each input tuple.
 	 *
 	 * For a simple (non DISTINCT) aggregate, we just feed the input values
-	 * straight to the transition functions.  If it's DISTINCT, we pass
+	 * straight to the transition function.  If it's DISTINCT, we pass
 	 * the input values into a Tuplesort object; then at completion of the
 	 * input tuple group, we scan the sorted values, eliminate duplicates,
-	 * and run the transition functions on the rest.
+	 * and run the transition function on the rest.
 	 */
 
 	Tuplesortstate *sortstate;	/* sort object, if a DISTINCT agg */
 
-	Datum		value1,			/* current transfer values 1 and 2 */
-				value2;
-	bool		value1IsNull,
-				value2IsNull;
-	bool		noInitValue;	/* true if value1 not set yet */
+	Datum		transValue;
+	bool		transValueIsNull;
+
+	bool		noTransValue;	/* true if transValue not set yet */
 
 	/*
-	 * Note: right now, noInitValue always has the same value as
-	 * value1IsNull. But we should keep them separate because once the
-	 * fmgr interface is fixed, we'll need to distinguish a null returned
-	 * by transfn1 from a null we haven't yet replaced with an input
-	 * value.
+	 * Note: noTransValue initially has the same value as transValueIsNull,
+	 * and if true both are cleared to false at the same time.  They are
+	 * not the same though: if transfn later returns a NULL, we want to
+	 * keep that NULL and not auto-replace it with a later input value.
+	 * Only the first non-NULL input will be auto-substituted.
 	 */
 } AggStatePerAggData;
 
 
 static void initialize_aggregate(AggStatePerAgg peraggstate);
-static void advance_transition_functions(AggStatePerAgg peraggstate,
-							 Datum newVal, bool isNull);
+static void advance_transition_function(AggStatePerAgg peraggstate,
+										Datum newVal, bool isNull);
 static void process_sorted_aggregate(AggState *aggstate,
 									 AggStatePerAgg peraggstate);
 static void finalize_aggregate(AggStatePerAgg peraggstate,
@@ -182,144 +179,118 @@ initialize_aggregate(AggStatePerAgg peraggstate)
 	}
 
 	/*
-	 * (Re)set value1 and value2 to their initial values.
+	 * (Re)set transValue to the initial value.
 	 *
-	 * Note that when the initial values are pass-by-ref, we just reuse
-	 * them without copying for each group.  Hence, transition function
-	 * had better not scribble on its input!
+	 * Note that when the initial value is pass-by-ref, we just reuse it
+	 * without copying for each group.  Hence, transition function
+	 * had better not scribble on its input, or it will fail for GROUP BY!
 	 */
-	peraggstate->value1 = peraggstate->initValue1;
-	peraggstate->value1IsNull = peraggstate->initValue1IsNull;
-	peraggstate->value2 = peraggstate->initValue2;
-	peraggstate->value2IsNull = peraggstate->initValue2IsNull;
+	peraggstate->transValue = peraggstate->initValue;
+	peraggstate->transValueIsNull = peraggstate->initValueIsNull;
 
 	/* ------------------------------------------
-	 * If the initial value for the first transition function
-	 * doesn't exist in the pg_aggregate table then we will let
-	 * the first value returned from the outer procNode become
-	 * the initial value. (This is useful for aggregates like
-	 * max{} and min{}.)  The noInitValue flag signals that we
-	 * still need to do this.
+	 * If the initial value for the transition state doesn't exist in the
+	 * pg_aggregate table then we will let the first non-NULL value returned
+	 * from the outer procNode become the initial value. (This is useful for
+	 * aggregates like max() and min().)  The noTransValue flag signals that
+	 * we still need to do this.
 	 * ------------------------------------------
 	 */
-	peraggstate->noInitValue = peraggstate->initValue1IsNull;
+	peraggstate->noTransValue = peraggstate->initValueIsNull;
 }
 
 /*
- * Given a new input value, advance the transition functions of an aggregate.
+ * Given a new input value, advance the transition function of an aggregate.
  *
- * When called, CurrentMemoryContext should be the context we want transition
- * function results to be delivered into on this cycle.
- *
- * Note: if the agg does not have usenulls set, null inputs will be filtered
- * out before reaching here.
+ * When called, CurrentMemoryContext should be the context we want the
+ * transition function result to be delivered into on this cycle.
  */
 static void
-advance_transition_functions(AggStatePerAgg peraggstate,
-							 Datum newVal, bool isNull)
+advance_transition_function(AggStatePerAgg peraggstate,
+							Datum newVal, bool isNull)
 {
 	FunctionCallInfoData	fcinfo;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-
-	/*
-	 * XXX reconsider isNULL handling here
-	 */
-	if (OidIsValid(peraggstate->xfn1_oid) && !isNull)
+	if (peraggstate->transfn.fn_strict)
 	{
-		if (peraggstate->noInitValue)
+		if (isNull)
 		{
-
 			/*
-			 * value1 has not been initialized. This is the first non-NULL
-			 * input value. We use it as the initial value for value1.
-			 *
-			 * XXX We assume, without having checked, that the agg's input
-			 * type is binary-compatible with its transtype1!
+			 * For a strict transfn, nothing happens at a NULL input tuple;
+			 * we just keep the prior transValue.  However, if the transtype
+			 * is pass-by-ref, we have to copy it into the new context
+			 * because the old one is going to get reset.
+			 */
+			if (!peraggstate->transValueIsNull)
+				peraggstate->transValue = datumCopy(peraggstate->transValue,
+												peraggstate->transtypeByVal,
+												peraggstate->transtypeLen);
+			return;
+		}
+		if (peraggstate->noTransValue)
+		{
+			/*
+			 * transValue has not been initialized. This is the first non-NULL
+			 * input value. We use it as the initial value for transValue.
+			 * (We already checked that the agg's input type is binary-
+			 * compatible with its transtype, so straight copy here is OK.)
 			 *
 			 * We had better copy the datum if it is pass-by-ref, since
 			 * the given pointer may be pointing into a scan tuple that
 			 * will be freed on the next iteration of the scan.
 			 */
-			peraggstate->value1 = datumCopy(newVal,
-											peraggstate->transtype1ByVal,
-											peraggstate->transtype1Len);
-			peraggstate->value1IsNull = false;
-			peraggstate->noInitValue = false;
+			peraggstate->transValue = datumCopy(newVal,
+												peraggstate->transtypeByVal,
+												peraggstate->transtypeLen);
+			peraggstate->transValueIsNull = false;
+			peraggstate->noTransValue = false;
+			return;
 		}
-		else
+		if (peraggstate->transValueIsNull)
 		{
-			/* apply transition function 1 */
-			fcinfo.flinfo = &peraggstate->xfn1;
-			fcinfo.nargs = 2;
-			fcinfo.arg[0] = peraggstate->value1;
-			fcinfo.argnull[0] = peraggstate->value1IsNull;
-			fcinfo.arg[1] = newVal;
-			fcinfo.argnull[1] = isNull;
-			if (fcinfo.flinfo->fn_strict &&
-				(peraggstate->value1IsNull || isNull))
-			{
-				/* don't call a strict function with NULL inputs */
-				newVal = (Datum) 0;
-				fcinfo.isnull = true;
-			}
-			else
-				newVal = FunctionCallInvoke(&fcinfo);
 			/*
-			 * If the transition function was uncooperative, it may have
-			 * given us a pass-by-ref result that points at the scan tuple
-			 * or the prior-cycle working memory.  Copy it into the active
-			 * context if it doesn't look right.
+			 * Don't call a strict function with NULL inputs.  Note it is
+			 * possible to get here despite the above tests, if the transfn
+			 * is strict *and* returned a NULL on a prior cycle.  If that
+			 * happens we will propagate the NULL all the way to the end.
 			 */
-			if (!peraggstate->transtype1ByVal && !fcinfo.isnull &&
-				! MemoryContextContains(CurrentMemoryContext,
-										DatumGetPointer(newVal)))
-				newVal = datumCopy(newVal,
-								   peraggstate->transtype1ByVal,
-								   peraggstate->transtype1Len);
-			peraggstate->value1 = newVal;
-			peraggstate->value1IsNull = fcinfo.isnull;
+			return;
 		}
 	}
 
-	if (OidIsValid(peraggstate->xfn2_oid))
-	{
-		/* apply transition function 2 */
-		fcinfo.flinfo = &peraggstate->xfn2;
-		fcinfo.nargs = 1;
-		fcinfo.arg[0] = peraggstate->value2;
-		fcinfo.argnull[0] = peraggstate->value2IsNull;
-		fcinfo.isnull = false;	/* must reset after use by xfn1 */
-		if (fcinfo.flinfo->fn_strict && peraggstate->value2IsNull)
-		{
-			/* don't call a strict function with NULL inputs */
-			newVal = (Datum) 0;
-			fcinfo.isnull = true;
-		}
-		else
-			newVal = FunctionCallInvoke(&fcinfo);
-		/*
-		 * If the transition function was uncooperative, it may have
-		 * given us a pass-by-ref result that points at the scan tuple
-		 * or the prior-cycle working memory.  Copy it into the active
-		 * context if it doesn't look right.
-		 */
-		if (!peraggstate->transtype2ByVal && !fcinfo.isnull &&
-			! MemoryContextContains(CurrentMemoryContext,
-									DatumGetPointer(newVal)))
-			newVal = datumCopy(newVal,
-							   peraggstate->transtype2ByVal,
-							   peraggstate->transtype2Len);
-		peraggstate->value2 = newVal;
-		peraggstate->value2IsNull = fcinfo.isnull;
-	}
+	/* OK to call the transition function */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+	fcinfo.flinfo = &peraggstate->transfn;
+	fcinfo.nargs = 2;
+	fcinfo.arg[0] = peraggstate->transValue;
+	fcinfo.argnull[0] = peraggstate->transValueIsNull;
+	fcinfo.arg[1] = newVal;
+	fcinfo.argnull[1] = isNull;
+
+	newVal = FunctionCallInvoke(&fcinfo);
+
+	/*
+	 * If the transition function was uncooperative, it may have
+	 * given us a pass-by-ref result that points at the scan tuple
+	 * or the prior-cycle working memory.  Copy it into the active
+	 * context if it doesn't look right.
+	 */
+	if (!peraggstate->transtypeByVal && !fcinfo.isnull &&
+		! MemoryContextContains(CurrentMemoryContext,
+								DatumGetPointer(newVal)))
+		newVal = datumCopy(newVal,
+						   peraggstate->transtypeByVal,
+						   peraggstate->transtypeLen);
+
+	peraggstate->transValue = newVal;
+	peraggstate->transValueIsNull = fcinfo.isnull;
 }
 
 /*
- * Run the transition functions for a DISTINCT aggregate.  This is called
+ * Run the transition function for a DISTINCT aggregate.  This is called
  * after we have completed entering all the input values into the sort
- * object.  We complete the sort, read out the value in sorted order, and
- * run the transition functions on each non-duplicate value.
+ * object.  We complete the sort, read out the values in sorted order,
+ * and run the transition function on each non-duplicate value.
  *
  * When called, CurrentMemoryContext should be the per-query context.
  */
@@ -346,13 +317,13 @@ process_sorted_aggregate(AggState *aggstate,
 	{
 		/*
 		 * DISTINCT always suppresses nulls, per SQL spec, regardless of
-		 * the aggregate's usenulls setting.
+		 * the transition function's strictness.
 		 */
 		if (isNull)
 			continue;
 		/*
 		 * Clear and select the current working context for evaluation of
-		 * the equality function and transition functions.
+		 * the equality function and transition function.
 		 */
 		MemoryContextReset(aggstate->agg_cxt[aggstate->which_cxt]);
 		oldContext =
@@ -365,11 +336,14 @@ process_sorted_aggregate(AggState *aggstate,
 			/* equal to prior, so forget this one */
 			if (!peraggstate->inputtypeByVal)
 				pfree(DatumGetPointer(newVal));
-			/* note we do NOT flip contexts in this case... */
+			/*
+			 * note we do NOT flip contexts in this case, so no need to
+			 * copy prior transValue to other context.
+			 */
 		}
 		else
 		{
-			advance_transition_functions(peraggstate, newVal, false);
+			advance_transition_function(peraggstate, newVal, false);
 			/*
 			 * Make the other context current so that this transition
 			 * result is preserved.
@@ -402,48 +376,19 @@ static void
 finalize_aggregate(AggStatePerAgg peraggstate,
 				   Datum *resultVal, bool *resultIsNull)
 {
-	FunctionCallInfoData	fcinfo;
-
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-
 	/*
-	 * Apply the agg's finalfn, or substitute the appropriate
-	 * transition value if there is no finalfn.
-	 *
-	 * XXX For now, only apply finalfn if we got at least one non-null input
-	 * value.  This prevents zero divide in AVG(). If we had cleaner
-	 * handling of null inputs/results in functions, we could probably
-	 * take out this hack and define the result for no inputs as whatever
-	 * finalfn returns for null input.
+	 * Apply the agg's finalfn if one is provided, else return transValue.
 	 */
-	if (OidIsValid(peraggstate->finalfn_oid) &&
-		!peraggstate->noInitValue)
+	if (OidIsValid(peraggstate->finalfn_oid))
 	{
+		FunctionCallInfoData	fcinfo;
+
+		MemSet(&fcinfo, 0, sizeof(fcinfo));
 		fcinfo.flinfo = &peraggstate->finalfn;
-		if (peraggstate->finalfn.fn_nargs > 1)
-		{
-			fcinfo.nargs = 2;
-			fcinfo.arg[0] = peraggstate->value1;
-			fcinfo.argnull[0] = peraggstate->value1IsNull;
-			fcinfo.arg[1] = peraggstate->value2;
-			fcinfo.argnull[1] = peraggstate->value2IsNull;
-		}
-		else if (OidIsValid(peraggstate->xfn1_oid))
-		{
-			fcinfo.nargs = 1;
-			fcinfo.arg[0] = peraggstate->value1;
-			fcinfo.argnull[0] = peraggstate->value1IsNull;
-		}
-		else if (OidIsValid(peraggstate->xfn2_oid))
-		{
-			fcinfo.nargs = 1;
-			fcinfo.arg[0] = peraggstate->value2;
-			fcinfo.argnull[0] = peraggstate->value2IsNull;
-		}
-		else
-			elog(ERROR, "ExecAgg: no valid transition functions??");
-		if (fcinfo.flinfo->fn_strict &&
-			(fcinfo.argnull[0] || fcinfo.argnull[1]))
+		fcinfo.nargs = 1;
+		fcinfo.arg[0] = peraggstate->transValue;
+		fcinfo.argnull[0] = peraggstate->transValueIsNull;
+		if (fcinfo.flinfo->fn_strict && peraggstate->transValueIsNull)
 		{
 			/* don't call a strict function with NULL inputs */
 			*resultVal = (Datum) 0;
@@ -455,20 +400,12 @@ finalize_aggregate(AggStatePerAgg peraggstate,
 			*resultIsNull = fcinfo.isnull;
 		}
 	}
-	else if (OidIsValid(peraggstate->xfn1_oid))
-	{
-		/* Return value1 */
-		*resultVal = peraggstate->value1;
-		*resultIsNull = peraggstate->value1IsNull;
-	}
-	else if (OidIsValid(peraggstate->xfn2_oid))
-	{
-		/* Return value2 */
-		*resultVal = peraggstate->value2;
-		*resultIsNull = peraggstate->value2IsNull;
-	}
 	else
-		elog(ERROR, "ExecAgg: no valid transition functions??");
+	{
+		*resultVal = peraggstate->transValue;
+		*resultIsNull = peraggstate->transValueIsNull;
+	}
+
 	/*
 	 * If result is pass-by-ref, make sure it is in the right context.
 	 */
@@ -588,11 +525,11 @@ ExecAgg(Agg *node)
 				newVal = ExecEvalExpr(aggref->target, econtext,
 									  &isNull, &isDone);
 
-				if (isNull && !aggref->usenulls)
-					continue;	/* ignore this tuple for this agg */
-
 				if (aggref->aggdistinct)
 				{
+					/* in DISTINCT mode, we may ignore nulls */
+					if (isNull)
+						continue;
 					/* putdatum has to be called in per-query context */
 					MemoryContextSwitchTo(oldContext);
 					tuplesort_putdatum(peraggstate->sortstate,
@@ -600,8 +537,10 @@ ExecAgg(Agg *node)
 					MemoryContextSwitchTo(econtext->ecxt_per_tuple_memory);
 				}
 				else
-					advance_transition_functions(peraggstate,
-												 newVal, isNull);
+				{
+					advance_transition_function(peraggstate,
+												newVal, isNull);
+				}
 			}
 
 			/*
@@ -889,8 +828,7 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		HeapTuple	aggTuple;
 		Form_pg_aggregate aggform;
 		Type		typeInfo;
-		Oid			xfn1_oid,
-					xfn2_oid,
+		Oid			transfn_oid,
 					finalfn_oid;
 
 		/* Mark Aggref node with its associated index in the result array */
@@ -913,53 +851,51 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 		peraggstate->resulttypeLen = typeLen(typeInfo);
 		peraggstate->resulttypeByVal = typeByVal(typeInfo);
 
-		peraggstate->initValue1 =
+		typeInfo = typeidType(aggform->aggtranstype);
+		peraggstate->transtypeLen = typeLen(typeInfo);
+		peraggstate->transtypeByVal = typeByVal(typeInfo);
+
+		peraggstate->initValue =
 			AggNameGetInitVal(aggname,
 							  aggform->aggbasetype,
-							  1,
-							  &peraggstate->initValue1IsNull);
+							  &peraggstate->initValueIsNull);
 
-		peraggstate->initValue2 =
-			AggNameGetInitVal(aggname,
-							  aggform->aggbasetype,
-							  2,
-							  &peraggstate->initValue2IsNull);
-
-		peraggstate->xfn1_oid = xfn1_oid = aggform->aggtransfn1;
-		peraggstate->xfn2_oid = xfn2_oid = aggform->aggtransfn2;
+		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
 		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
 
-		if (OidIsValid(xfn1_oid))
-		{
-			fmgr_info(xfn1_oid, &peraggstate->xfn1);
-			/* If a transfn1 is specified, transtype1 had better be, too */
-			typeInfo = typeidType(aggform->aggtranstype1);
-			peraggstate->transtype1Len = typeLen(typeInfo);
-			peraggstate->transtype1ByVal = typeByVal(typeInfo);
-		}
-
-		if (OidIsValid(xfn2_oid))
-		{
-			fmgr_info(xfn2_oid, &peraggstate->xfn2);
-			/* If a transfn2 is specified, transtype2 had better be, too */
-			typeInfo = typeidType(aggform->aggtranstype2);
-			peraggstate->transtype2Len = typeLen(typeInfo);
-			peraggstate->transtype2ByVal = typeByVal(typeInfo);
-			/* ------------------------------------------
-			 * If there is a second transition function, its initial
-			 * value must exist -- as it does not depend on data values,
-			 * we have no other way of determining an initial value.
-			 * ------------------------------------------
-			 */
-			if (peraggstate->initValue2IsNull)
-				elog(ERROR, "ExecInitAgg: agginitval2 is null");
-		}
-
+		fmgr_info(transfn_oid, &peraggstate->transfn);
 		if (OidIsValid(finalfn_oid))
 			fmgr_info(finalfn_oid, &peraggstate->finalfn);
 
+		/*
+		 * If the transfn is strict and the initval is NULL, make sure
+		 * input type and transtype are the same (or at least binary-
+		 * compatible), so that it's OK to use the first input value
+		 * as the initial transValue.  This should have been checked at
+		 * agg definition time, but just in case...
+		 */
+		if (peraggstate->transfn.fn_strict && peraggstate->initValueIsNull)
+		{
+			/*
+			 * Note: use the type from the input expression here,
+			 * not aggform->aggbasetype, because the latter might be 0.
+			 * (Consider COUNT(*).)
+			 */
+			Oid			inputType = exprType(aggref->target);
+
+			if (inputType != aggform->aggtranstype &&
+				! IS_BINARY_COMPATIBLE(inputType, aggform->aggtranstype))
+				elog(ERROR, "Aggregate %s needs to have compatible input type and transition type",
+					 aggname);
+		}
+
 		if (aggref->aggdistinct)
 		{
+			/*
+			 * Note: use the type from the input expression here,
+			 * not aggform->aggbasetype, because the latter might be 0.
+			 * (Consider COUNT(*).)
+			 */
 			Oid			inputType = exprType(aggref->target);
 			Operator	eq_operator;
 			Form_pg_operator pgopform;

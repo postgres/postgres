@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.40 2000/07/12 22:59:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.41 2000/07/17 03:05:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -648,14 +648,6 @@ int2div(PG_FUNCTION_ARGS)
 	int16		arg2 = PG_GETARG_INT16(1);
 
 	PG_RETURN_INT16(arg1 / arg2);
-}
-
-Datum
-int2inc(PG_FUNCTION_ARGS)
-{
-	int16		arg = PG_GETARG_INT16(0);
-
-	PG_RETURN_INT16(arg + 1);
 }
 
 Datum

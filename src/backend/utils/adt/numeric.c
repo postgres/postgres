@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.31 2000/06/15 03:32:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.32 2000/07/17 03:05:18 tgl Exp $
  *
  * ----------
  */
@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <sys/types.h>
 
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/int8.h"
 #include "utils/numeric.h"
@@ -1231,49 +1232,6 @@ numeric_inc(Numeric num)
 
 
 /* ----------
- * numeric_dec() -
- *
- *	Decrement a number by one
- * ----------
- */
-Numeric
-numeric_dec(Numeric num)
-{
-	NumericVar	arg;
-	Numeric		res;
-
-	/* ----------
-	 * Handle NULL
-	 * ----------
-	 */
-	if (num == NULL)
-		return NULL;
-
-	/* ----------
-	 * Handle NaN
-	 * ----------
-	 */
-	if (NUMERIC_IS_NAN(num))
-		return make_result(&const_nan);
-
-	/* ----------
-	 * Compute the result and return it
-	 * ----------
-	 */
-	init_var(&arg);
-
-	set_var_from_num(num, &arg);
-
-	sub_var(&arg, &const_one, &arg);
-	res = make_result(&arg);
-
-	free_var(&arg);
-
-	return res;
-}
-
-
-/* ----------
  * numeric_smaller() -
  *
  *	Return the smaller of two numbers
@@ -1733,24 +1691,24 @@ numeric_int4(Numeric num)
 }
 
 
-Numeric
-int8_numeric(int64 *val)
+Datum
+int8_numeric(PG_FUNCTION_ARGS)
 {
+	Datum		val = PG_GETARG_DATUM(0);
 	Numeric		res;
 	NumericVar	result;
 	char	   *tmp;
 
 	init_var(&result);
 
-	tmp = DatumGetCString(DirectFunctionCall1(int8out,
-											  PointerGetDatum(val)));
+	tmp = DatumGetCString(DirectFunctionCall1(int8out, val));
 	set_var_from_str(tmp, &result);
 	res = make_result(&result);
 
 	free_var(&result);
 	pfree(tmp);
 
-	return res;
+	PG_RETURN_NUMERIC(res);
 }
 
 
@@ -1936,6 +1894,369 @@ numeric_float4(Numeric num)
 	pfree(tmp);
 
 	return result;
+}
+
+
+/* ----------------------------------------------------------------------
+ *
+ * Aggregate functions
+ *
+ * The transition datatype for all these aggregates is a 3-element array
+ * of Numeric, holding the values N, sum(X), sum(X*X) in that order.
+ *
+ * We represent N as a numeric mainly to avoid having to build a special
+ * datatype; it's unlikely it'd overflow an int4, but ...
+ *
+ * ----------------------------------------------------------------------
+ */
+
+static ArrayType *
+do_numeric_accum(ArrayType *transarray, Numeric newval)
+{
+	Datum	   *transdatums;
+	int			ndatums;
+	Numeric		N,
+				sumX,
+				sumX2;
+	ArrayType  *result;
+
+	/* We assume the input is array of numeric */
+	deconstruct_array(transarray,
+					  false, -1, 'i',
+					  &transdatums, &ndatums);
+	if (ndatums != 3)
+		elog(ERROR, "do_numeric_accum: expected 3-element numeric array");
+	N = DatumGetNumeric(transdatums[0]);
+	sumX = DatumGetNumeric(transdatums[1]);
+	sumX2 = DatumGetNumeric(transdatums[2]);
+
+	N = numeric_inc(N);
+	sumX = numeric_add(sumX, newval);
+	sumX2 = numeric_add(sumX2, numeric_mul(newval, newval));
+
+	transdatums[0] = NumericGetDatum(N);
+	transdatums[1] = NumericGetDatum(sumX);
+	transdatums[2] = NumericGetDatum(sumX2);
+
+	result = construct_array(transdatums, 3,
+							 false, -1, 'i');
+
+	return result;
+}
+
+Datum
+numeric_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Numeric		newval = PG_GETARG_NUMERIC(1);
+
+	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+}
+
+/*
+ * Integer data types all use Numeric accumulators to share code and
+ * avoid risk of overflow.
+ */
+
+Datum
+int2_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum		newval2 = PG_GETARG_DATUM(1);
+	Numeric		newval;
+
+	newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric, newval2));
+
+	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+}
+
+Datum
+int4_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum		newval4 = PG_GETARG_DATUM(1);
+	Numeric		newval;
+
+	newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric, newval4));
+
+	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+}
+
+Datum
+int8_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum		newval8 = PG_GETARG_DATUM(1);
+	Numeric		newval;
+
+	newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric, newval8));
+
+	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+}
+
+Datum
+numeric_avg(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum	   *transdatums;
+	int			ndatums;
+	Numeric		N,
+				sumX;
+
+	/* We assume the input is array of numeric */
+	deconstruct_array(transarray,
+					  false, -1, 'i',
+					  &transdatums, &ndatums);
+	if (ndatums != 3)
+		elog(ERROR, "numeric_avg: expected 3-element numeric array");
+	N = DatumGetNumeric(transdatums[0]);
+	sumX = DatumGetNumeric(transdatums[1]);
+	/* ignore sumX2 */
+
+	/* SQL92 defines AVG of no values to be NULL */
+	/* N is zero iff no digits (cf. numeric_uminus) */
+	if (N->varlen == NUMERIC_HDRSZ)
+		PG_RETURN_NULL();
+
+	PG_RETURN_NUMERIC(numeric_div(sumX, N));
+}
+
+Datum
+numeric_variance(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum	   *transdatums;
+	int			ndatums;
+	Numeric		N,
+				sumX,
+				sumX2,
+				res;
+	NumericVar	vN,
+				vsumX,
+				vsumX2,
+				vNminus1;
+
+	/* We assume the input is array of numeric */
+	deconstruct_array(transarray,
+					  false, -1, 'i',
+					  &transdatums, &ndatums);
+	if (ndatums != 3)
+		elog(ERROR, "numeric_variance: expected 3-element numeric array");
+	N = DatumGetNumeric(transdatums[0]);
+	sumX = DatumGetNumeric(transdatums[1]);
+	sumX2 = DatumGetNumeric(transdatums[2]);
+
+	if (NUMERIC_IS_NAN(N) || NUMERIC_IS_NAN(sumX) || NUMERIC_IS_NAN(sumX2))
+		PG_RETURN_NUMERIC(make_result(&const_nan));
+
+	/* We define VARIANCE of no values to be NULL, of 1 value to be 0 */
+	/* N is zero iff no digits (cf. numeric_uminus) */
+	if (N->varlen == NUMERIC_HDRSZ)
+		PG_RETURN_NULL();
+
+	init_var(&vN);
+	set_var_from_num(N, &vN);
+
+	init_var(&vNminus1);
+	sub_var(&vN, &const_one, &vNminus1);
+
+	if (cmp_var(&vNminus1, &const_zero) <= 0)
+	{
+		free_var(&vN);
+		free_var(&vNminus1);
+		PG_RETURN_NUMERIC(make_result(&const_zero));
+	}
+
+	init_var(&vsumX);
+	set_var_from_num(sumX, &vsumX);
+	init_var(&vsumX2);
+	set_var_from_num(sumX2, &vsumX2);
+
+	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
+	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
+	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
+	mul_var(&vN, &vNminus1, &vNminus1);	/* N * (N - 1) */
+	div_var(&vsumX2, &vNminus1, &vsumX); /* variance */
+
+	res = make_result(&vsumX);
+
+	free_var(&vN);
+	free_var(&vNminus1);
+	free_var(&vsumX);
+	free_var(&vsumX2);
+
+	PG_RETURN_NUMERIC(res);
+}
+
+Datum
+numeric_stddev(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum	   *transdatums;
+	int			ndatums;
+	Numeric		N,
+				sumX,
+				sumX2,
+				res;
+	NumericVar	vN,
+				vsumX,
+				vsumX2,
+				vNminus1;
+
+	/* We assume the input is array of numeric */
+	deconstruct_array(transarray,
+					  false, -1, 'i',
+					  &transdatums, &ndatums);
+	if (ndatums != 3)
+		elog(ERROR, "numeric_stddev: expected 3-element numeric array");
+	N = DatumGetNumeric(transdatums[0]);
+	sumX = DatumGetNumeric(transdatums[1]);
+	sumX2 = DatumGetNumeric(transdatums[2]);
+
+	if (NUMERIC_IS_NAN(N) || NUMERIC_IS_NAN(sumX) || NUMERIC_IS_NAN(sumX2))
+		PG_RETURN_NUMERIC(make_result(&const_nan));
+
+	/* We define STDDEV of no values to be NULL, of 1 value to be 0 */
+	/* N is zero iff no digits (cf. numeric_uminus) */
+	if (N->varlen == NUMERIC_HDRSZ)
+		PG_RETURN_NULL();
+
+	init_var(&vN);
+	set_var_from_num(N, &vN);
+
+	init_var(&vNminus1);
+	sub_var(&vN, &const_one, &vNminus1);
+
+	if (cmp_var(&vNminus1, &const_zero) <= 0)
+	{
+		free_var(&vN);
+		free_var(&vNminus1);
+		PG_RETURN_NUMERIC(make_result(&const_zero));
+	}
+
+	init_var(&vsumX);
+	set_var_from_num(sumX, &vsumX);
+	init_var(&vsumX2);
+	set_var_from_num(sumX2, &vsumX2);
+
+	mul_var(&vsumX, &vsumX, &vsumX);	/* now vsumX contains sumX * sumX */
+	mul_var(&vN, &vsumX2, &vsumX2);		/* now vsumX2 contains N * sumX2 */
+	sub_var(&vsumX2, &vsumX, &vsumX2);	/* N * sumX2 - sumX * sumX */
+	mul_var(&vN, &vNminus1, &vNminus1);	/* N * (N - 1) */
+	div_var(&vsumX2, &vNminus1, &vsumX); /* variance */
+	sqrt_var(&vsumX, &vsumX);			/* stddev */
+
+	res = make_result(&vsumX);
+
+	free_var(&vN);
+	free_var(&vNminus1);
+	free_var(&vsumX);
+	free_var(&vsumX2);
+
+	PG_RETURN_NUMERIC(res);
+}
+
+
+/*
+ * SUM transition functions for integer datatypes.
+ *
+ * We use a Numeric accumulator to avoid overflow.  Because SQL92 defines
+ * the SUM() of no values to be NULL, not zero, the initial condition of
+ * the transition data value needs to be NULL.  This means we can't rely
+ * on ExecAgg to automatically insert the first non-null data value into
+ * the transition data: it doesn't know how to do the type conversion.
+ * The upshot is that these routines have to be marked non-strict and
+ * handle substitution of the first non-null input themselves.
+ */
+
+Datum
+int2_sum(PG_FUNCTION_ARGS)
+{
+	Numeric		oldsum,
+				newval;
+
+	if (PG_ARGISNULL(0))
+	{
+		/* No non-null input seen so far... */
+		if (PG_ARGISNULL(1))
+			PG_RETURN_NULL();	/* still no non-null */
+		/* This is the first non-null input. */
+		newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
+													 PG_GETARG_DATUM(1)));
+		PG_RETURN_NUMERIC(newval);
+	}
+
+	oldsum = PG_GETARG_NUMERIC(0);
+
+	/* Leave sum unchanged if new input is null. */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_NUMERIC(oldsum);
+
+	/* OK to do the addition. */
+	newval = DatumGetNumeric(DirectFunctionCall1(int2_numeric,
+												 PG_GETARG_DATUM(1)));
+
+	PG_RETURN_NUMERIC(numeric_add(oldsum, newval));
+}
+
+Datum
+int4_sum(PG_FUNCTION_ARGS)
+{
+	Numeric		oldsum,
+				newval;
+
+	if (PG_ARGISNULL(0))
+	{
+		/* No non-null input seen so far... */
+		if (PG_ARGISNULL(1))
+			PG_RETURN_NULL();	/* still no non-null */
+		/* This is the first non-null input. */
+		newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+													 PG_GETARG_DATUM(1)));
+		PG_RETURN_NUMERIC(newval);
+	}
+
+	oldsum = PG_GETARG_NUMERIC(0);
+
+	/* Leave sum unchanged if new input is null. */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_NUMERIC(oldsum);
+
+	/* OK to do the addition. */
+	newval = DatumGetNumeric(DirectFunctionCall1(int4_numeric,
+												 PG_GETARG_DATUM(1)));
+
+	PG_RETURN_NUMERIC(numeric_add(oldsum, newval));
+}
+
+Datum
+int8_sum(PG_FUNCTION_ARGS)
+{
+	Numeric		oldsum,
+				newval;
+
+	if (PG_ARGISNULL(0))
+	{
+		/* No non-null input seen so far... */
+		if (PG_ARGISNULL(1))
+			PG_RETURN_NULL();	/* still no non-null */
+		/* This is the first non-null input. */
+		newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+													 PG_GETARG_DATUM(1)));
+		PG_RETURN_NUMERIC(newval);
+	}
+
+	oldsum = PG_GETARG_NUMERIC(0);
+
+	/* Leave sum unchanged if new input is null. */
+	if (PG_ARGISNULL(1))
+		PG_RETURN_NUMERIC(oldsum);
+
+	/* OK to do the addition. */
+	newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric,
+												 PG_GETARG_DATUM(1)));
+
+	PG_RETURN_NUMERIC(numeric_add(oldsum, newval));
 }
 
 
@@ -2574,30 +2895,33 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			 */
 			switch (cmp_abs(var1, var2))
 			{
-				case 0: /* ----------
-																 * ABS(var1) == ABS(var2)
-																 * result = ZERO
-																 * ----------
-																 */
+				case 0:
+					/* ----------
+					 * ABS(var1) == ABS(var2)
+					 * result = ZERO
+					 * ----------
+					 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
-				case 1: /* ----------
-																 * ABS(var1) > ABS(var2)
-																 * result = +(ABS(var1) - ABS(var2))
-																 * ----------
-																 */
+				case 1:
+					/* ----------
+					 * ABS(var1) > ABS(var2)
+					 * result = +(ABS(var1) - ABS(var2))
+					 * ----------
+					 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
 
-				case -1:		/* ----------
-								 * ABS(var1) < ABS(var2)
-								 * result = -(ABS(var2) - ABS(var1))
-								 * ----------
-								 */
+				case -1:
+					/* ----------
+					 * ABS(var1) < ABS(var2)
+					 * result = -(ABS(var2) - ABS(var1))
+					 * ----------
+					 */
 					sub_abs(var2, var1, result);
 					result->sign = NUMERIC_NEG;
 					break;
@@ -2615,30 +2939,33 @@ add_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			 */
 			switch (cmp_abs(var1, var2))
 			{
-				case 0: /* ----------
-																 * ABS(var1) == ABS(var2)
-																 * result = ZERO
-																 * ----------
-																 */
+				case 0:
+					/* ----------
+					 * ABS(var1) == ABS(var2)
+					 * result = ZERO
+					 * ----------
+					 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
-				case 1: /* ----------
-																 * ABS(var1) > ABS(var2)
-																 * result = -(ABS(var1) - ABS(var2))
-																 * ----------
-																 */
+				case 1:
+					/* ----------
+					 * ABS(var1) > ABS(var2)
+					 * result = -(ABS(var1) - ABS(var2))
+					 * ----------
+					 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;
 
-				case -1:		/* ----------
-								 * ABS(var1) < ABS(var2)
-								 * result = +(ABS(var2) - ABS(var1))
-								 * ----------
-								 */
+				case -1:
+					/* ----------
+					 * ABS(var1) < ABS(var2)
+					 * result = +(ABS(var2) - ABS(var1))
+					 * ----------
+					 */
 					sub_abs(var2, var1, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2693,30 +3020,33 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			 */
 			switch (cmp_abs(var1, var2))
 			{
-				case 0: /* ----------
-																 * ABS(var1) == ABS(var2)
-																 * result = ZERO
-																 * ----------
-																 */
+				case 0:
+					/* ----------
+					 * ABS(var1) == ABS(var2)
+					 * result = ZERO
+					 * ----------
+					 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
-				case 1: /* ----------
-																 * ABS(var1) > ABS(var2)
-																 * result = +(ABS(var1) - ABS(var2))
-																 * ----------
-																 */
+				case 1:
+					/* ----------
+					 * ABS(var1) > ABS(var2)
+					 * result = +(ABS(var1) - ABS(var2))
+					 * ----------
+					 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_POS;
 					break;
 
-				case -1:		/* ----------
-								 * ABS(var1) < ABS(var2)
-								 * result = -(ABS(var2) - ABS(var1))
-								 * ----------
-								 */
+				case -1:
+					/* ----------
+					 * ABS(var1) < ABS(var2)
+					 * result = -(ABS(var2) - ABS(var1))
+					 * ----------
+					 */
 					sub_abs(var2, var1, result);
 					result->sign = NUMERIC_NEG;
 					break;
@@ -2734,30 +3064,33 @@ sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			 */
 			switch (cmp_abs(var1, var2))
 			{
-				case 0: /* ----------
-																 * ABS(var1) == ABS(var2)
-																 * result = ZERO
-																 * ----------
-																 */
+				case 0:
+					/* ----------
+					 * ABS(var1) == ABS(var2)
+					 * result = ZERO
+					 * ----------
+					 */
 					zero_var(result);
 					result->rscale = MAX(var1->rscale, var2->rscale);
 					result->dscale = MAX(var1->dscale, var2->dscale);
 					break;
 
-				case 1: /* ----------
-																 * ABS(var1) > ABS(var2)
-																 * result = -(ABS(var1) - ABS(var2))
-																 * ----------
-																 */
+				case 1:
+					/* ----------
+					 * ABS(var1) > ABS(var2)
+					 * result = -(ABS(var1) - ABS(var2))
+					 * ----------
+					 */
 					sub_abs(var1, var2, result);
 					result->sign = NUMERIC_NEG;
 					break;
 
-				case -1:		/* ----------
-								 * ABS(var1) < ABS(var2)
-								 * result = +(ABS(var2) - ABS(var1))
-								 * ----------
-								 */
+				case -1:
+					/* ----------
+					 * ABS(var1) < ABS(var2)
+					 * result = +(ABS(var2) - ABS(var1))
+					 * ----------
+					 */
 					sub_abs(var2, var1, result);
 					result->sign = NUMERIC_POS;
 					break;
@@ -2817,7 +3150,7 @@ mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 
 		for (i2 = var2->ndigits - 1; i2 >= 0; i2--)
 		{
-			sum = sum + res_digits[i] + var1->digits[i1] * var2->digits[i2];
+			sum += res_digits[i] + var1->digits[i1] * var2->digits[i2];
 			res_digits[i--] = sum % 10;
 			sum /= 10;
 		}
@@ -3067,7 +3400,6 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 
 	/*
 	 * Tidy up
-	 *
 	 */
 	digitbuf_free(dividend.buf);
 	for (i = 1; i < 10; i++)
@@ -3552,6 +3884,11 @@ add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 				i1,
 				i2;
 	int			carry = 0;
+	/* copy these values into local vars for speed in inner loop */
+	int			var1ndigits = var1->ndigits;
+	int			var2ndigits = var2->ndigits;
+	NumericDigit *var1digits = var1->digits;
+	NumericDigit *var2digits = var2->digits;
 
 	res_weight = MAX(var1->weight, var2->weight) + 1;
 	res_rscale = MAX(var1->rscale, var2->rscale);
@@ -3569,14 +3906,24 @@ add_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	{
 		i1--;
 		i2--;
-		if (i1 >= 0 && i1 < var1->ndigits)
-			carry += var1->digits[i1];
-		if (i2 >= 0 && i2 < var2->ndigits)
-			carry += var2->digits[i2];
+		if (i1 >= 0 && i1 < var1ndigits)
+			carry += var1digits[i1];
+		if (i2 >= 0 && i2 < var2ndigits)
+			carry += var2digits[i2];
 
-		res_digits[i] = carry % 10;
-		carry /= 10;
+		if (carry >= 10)
+		{
+			res_digits[i] = carry - 10;
+			carry = 1;
+		}
+		else
+		{
+			res_digits[i] = carry;
+			carry = 0;
+		}
 	}
+
+	Assert(carry == 0);			/* else we failed to allow for carry out */
 
 	while (res_ndigits > 0 && *res_digits == 0)
 	{
@@ -3623,6 +3970,11 @@ sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 				i1,
 				i2;
 	int			borrow = 0;
+	/* copy these values into local vars for speed in inner loop */
+	int			var1ndigits = var1->ndigits;
+	int			var2ndigits = var2->ndigits;
+	NumericDigit *var1digits = var1->digits;
+	NumericDigit *var2digits = var2->digits;
 
 	res_weight = var1->weight;
 	res_rscale = MAX(var1->rscale, var2->rscale);
@@ -3640,10 +3992,10 @@ sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	{
 		i1--;
 		i2--;
-		if (i1 >= 0 && i1 < var1->ndigits)
-			borrow += var1->digits[i1];
-		if (i2 >= 0 && i2 < var2->ndigits)
-			borrow -= var2->digits[i2];
+		if (i1 >= 0 && i1 < var1ndigits)
+			borrow += var1digits[i1];
+		if (i2 >= 0 && i2 < var2ndigits)
+			borrow -= var2digits[i2];
 
 		if (borrow < 0)
 		{
@@ -3656,6 +4008,8 @@ sub_abs(NumericVar *var1, NumericVar *var2, NumericVar *result)
 			borrow = 0;
 		}
 	}
+
+	Assert(borrow == 0);		/* else caller gave us var1 < var2 */
 
 	while (res_ndigits > 0 && *res_digits == 0)
 	{

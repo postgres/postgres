@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.158 2000/07/11 13:07:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.159 2000/07/17 03:05:20 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1421,22 +1421,16 @@ clearAggInfo(AggInfo *agginfo, int numArgs)
 			free(agginfo[i].oid);
 		if (agginfo[i].aggname)
 			free(agginfo[i].aggname);
-		if (agginfo[i].aggtransfn1)
-			free(agginfo[i].aggtransfn1);
-		if (agginfo[i].aggtransfn2)
-			free(agginfo[i].aggtransfn2);
+		if (agginfo[i].aggtransfn)
+			free(agginfo[i].aggtransfn);
 		if (agginfo[i].aggfinalfn)
 			free(agginfo[i].aggfinalfn);
-		if (agginfo[i].aggtranstype1)
-			free(agginfo[i].aggtranstype1);
+		if (agginfo[i].aggtranstype)
+			free(agginfo[i].aggtranstype);
 		if (agginfo[i].aggbasetype)
 			free(agginfo[i].aggbasetype);
-		if (agginfo[i].aggtranstype2)
-			free(agginfo[i].aggtranstype2);
-		if (agginfo[i].agginitval1)
-			free(agginfo[i].agginitval1);
-		if (agginfo[i].agginitval2)
-			free(agginfo[i].agginitval2);
+		if (agginfo[i].agginitval)
+			free(agginfo[i].agginitval);
 		if (agginfo[i].usename)
 			free(agginfo[i].usename);
 	}
@@ -1463,22 +1457,19 @@ getAggregates(int *numAggs)
 
 	int			i_oid;
 	int			i_aggname;
-	int			i_aggtransfn1;
-	int			i_aggtransfn2;
+	int			i_aggtransfn;
 	int			i_aggfinalfn;
-	int			i_aggtranstype1;
+	int			i_aggtranstype;
 	int			i_aggbasetype;
-	int			i_aggtranstype2;
-	int			i_agginitval1;
-	int			i_agginitval2;
+	int			i_agginitval;
 	int			i_usename;
 
 	/* find all user-defined aggregates */
 
 	appendPQExpBuffer(query,
-		   "SELECT pg_aggregate.oid, aggname, aggtransfn1, aggtransfn2, "
-				"aggfinalfn, aggtranstype1, aggbasetype, aggtranstype2, "
-		  "agginitval1, agginitval2, usename from pg_aggregate, pg_user "
+					  "SELECT pg_aggregate.oid, aggname, aggtransfn, "
+					  "aggfinalfn, aggtranstype, aggbasetype, "
+					  "agginitval, usename from pg_aggregate, pg_user "
 					  "where aggowner = usesysid");
 
 	res = PQexec(g_conn, query->data);
@@ -1497,28 +1488,22 @@ getAggregates(int *numAggs)
 
 	i_oid = PQfnumber(res, "oid");
 	i_aggname = PQfnumber(res, "aggname");
-	i_aggtransfn1 = PQfnumber(res, "aggtransfn1");
-	i_aggtransfn2 = PQfnumber(res, "aggtransfn2");
+	i_aggtransfn = PQfnumber(res, "aggtransfn");
 	i_aggfinalfn = PQfnumber(res, "aggfinalfn");
-	i_aggtranstype1 = PQfnumber(res, "aggtranstype1");
+	i_aggtranstype = PQfnumber(res, "aggtranstype");
 	i_aggbasetype = PQfnumber(res, "aggbasetype");
-	i_aggtranstype2 = PQfnumber(res, "aggtranstype2");
-	i_agginitval1 = PQfnumber(res, "agginitval1");
-	i_agginitval2 = PQfnumber(res, "agginitval2");
+	i_agginitval = PQfnumber(res, "agginitval");
 	i_usename = PQfnumber(res, "usename");
 
 	for (i = 0; i < ntups; i++)
 	{
 		agginfo[i].oid = strdup(PQgetvalue(res, i, i_oid));
 		agginfo[i].aggname = strdup(PQgetvalue(res, i, i_aggname));
-		agginfo[i].aggtransfn1 = strdup(PQgetvalue(res, i, i_aggtransfn1));
-		agginfo[i].aggtransfn2 = strdup(PQgetvalue(res, i, i_aggtransfn2));
+		agginfo[i].aggtransfn = strdup(PQgetvalue(res, i, i_aggtransfn));
 		agginfo[i].aggfinalfn = strdup(PQgetvalue(res, i, i_aggfinalfn));
-		agginfo[i].aggtranstype1 = strdup(PQgetvalue(res, i, i_aggtranstype1));
+		agginfo[i].aggtranstype = strdup(PQgetvalue(res, i, i_aggtranstype));
 		agginfo[i].aggbasetype = strdup(PQgetvalue(res, i, i_aggbasetype));
-		agginfo[i].aggtranstype2 = strdup(PQgetvalue(res, i, i_aggtranstype2));
-		agginfo[i].agginitval1 = strdup(PQgetvalue(res, i, i_agginitval1));
-		agginfo[i].agginitval2 = strdup(PQgetvalue(res, i, i_agginitval2));
+		agginfo[i].agginitval = strdup(PQgetvalue(res, i, i_agginitval));
 		agginfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 	}
 
@@ -2902,69 +2887,32 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
 	PQExpBuffer aggSig = createPQExpBuffer();
-	PQExpBuffer sfunc1 = createPQExpBuffer();
-	PQExpBuffer sfunc2 = createPQExpBuffer();
-	PQExpBuffer basetype = createPQExpBuffer();
-	PQExpBuffer finalfunc = createPQExpBuffer();
-	char		comma1[2],
-				comma2[2];
+	PQExpBuffer details = createPQExpBuffer();
 
 	for (i = 0; i < numAggs; i++)
 	{
-
-		resetPQExpBuffer(sfunc1);
-		resetPQExpBuffer(sfunc2);
-		resetPQExpBuffer(basetype);
-		resetPQExpBuffer(finalfunc);
+		resetPQExpBuffer(details);
 
 		/* skip all the builtin oids */
 		if (atoi(agginfo[i].oid) < g_last_builtin_oid)
 			continue;
 
-		appendPQExpBuffer(basetype,
+		appendPQExpBuffer(details,
 						  "BASETYPE = %s, ",
 						  fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype), false));
 
-		if (!(strcmp(agginfo[i].aggtransfn1, "-") == 0))
-		{
-			appendPQExpBuffer(sfunc1,
-							  "SFUNC1 = %s, STYPE1 = %s",
-							  agginfo[i].aggtransfn1,
-							  fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype1), false));
-			if (agginfo[i].agginitval1)
-				appendPQExpBuffer(sfunc1, ", INITCOND1 = '%s'",
-								  agginfo[i].agginitval1);
+		appendPQExpBuffer(details,
+						  "SFUNC = %s, STYPE = %s",
+						  agginfo[i].aggtransfn,
+						  fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype), false));
 
-		}
-
-		if (!(strcmp(agginfo[i].aggtransfn2, "-") == 0))
-		{
-			appendPQExpBuffer(sfunc2,
-							  "SFUNC2 = %s, STYPE2 = %s",
-							  agginfo[i].aggtransfn2,
-							  fmtId(findTypeByOid(tinfo, numTypes, agginfo[i].aggtranstype2), false));
-			if (agginfo[i].agginitval2)
-				appendPQExpBuffer(sfunc2, ", INITCOND2 = '%s'",
-								  agginfo[i].agginitval2);
-		}
+		if (agginfo[i].agginitval)
+			appendPQExpBuffer(details, ", INITCOND = '%s'",
+							  agginfo[i].agginitval);
 
 		if (!(strcmp(agginfo[i].aggfinalfn, "-") == 0))
-			appendPQExpBuffer(finalfunc, "FINALFUNC = %s", agginfo[i].aggfinalfn);
-		if (sfunc1->data[0] != '\0' && sfunc2->data[0] != '\0')
-		{
-			comma1[0] = ',';
-			comma1[1] = '\0';
-		}
-		else
-			comma1[0] = '\0';
-
-		if (finalfunc->data[0] != '\0' && (sfunc1->data[0] != '\0' || sfunc2->data[0] != '\0'))
-		{
-			comma2[0] = ',';
-			comma2[1] = '\0';
-		}
-		else
-			comma2[0] = '\0';
+			appendPQExpBuffer(details, ", FINALFUNC = %s",
+							  agginfo[i].aggfinalfn);
 
 		resetPQExpBuffer(aggSig);
 		appendPQExpBuffer(aggSig, "%s %s", agginfo[i].aggname,
@@ -2974,14 +2922,9 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		appendPQExpBuffer(delq, "DROP AGGREGATE %s;\n", aggSig->data);
 
 		resetPQExpBuffer(q);
-		appendPQExpBuffer(q, "CREATE AGGREGATE %s ( %s %s%s %s%s %s );\n",
+		appendPQExpBuffer(q, "CREATE AGGREGATE %s ( %s );\n",
 						  agginfo[i].aggname,
-						  basetype->data,
-						  sfunc1->data,
-						  comma1,
-						  sfunc2->data,
-						  comma2,
-						  finalfunc->data);
+						  details->data);
 
 		ArchiveEntry(fout, agginfo[i].oid, aggSig->data, "AGGREGATE", NULL,
 						q->data, delq->data, agginfo[i].usename, NULL, NULL);

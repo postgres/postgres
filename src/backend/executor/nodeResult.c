@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.14 2000/07/12 02:37:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.15 2000/07/17 03:04:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,8 @@
 
 #include "executor/executor.h"
 #include "executor/nodeResult.h"
+#include "utils/memutils.h"
+
 
 /* ----------------------------------------------------------------
  *		ExecResult(node)

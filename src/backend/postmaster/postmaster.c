@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.156 2000/07/12 22:59:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.157 2000/07/17 03:05:04 tgl Exp $
  *
  * NOTES
  *
@@ -33,6 +33,7 @@
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
 
 #include <unistd.h>
@@ -80,6 +81,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/exc.h"
 #include "utils/guc.h"
+#include "utils/memutils.h"
 
 
 #define INVALID_SOCK	(-1)

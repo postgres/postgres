@@ -3,18 +3,17 @@
 --
 -- all functions CREATEd
 CREATE AGGREGATE newavg (
-   sfunc1 = int4pl, basetype = int4, stype1 = int4, 
-   sfunc2 = int4inc, stype2 = int4,
-   finalfunc = int4div,
-   initcond1 = '0', initcond2 = '0'
+   sfunc = int4_accum, basetype = int4, stype = _numeric, 
+   finalfunc = numeric_avg,
+   initcond1 = '{0,0,0}'
 );
--- sfunc1 (value-dependent) only 
+-- without finalfunc; test obsolete spellings 'sfunc1' etc
 CREATE AGGREGATE newsum (
    sfunc1 = int4pl, basetype = int4, stype1 = int4, 
    initcond1 = '0'
 );
--- sfunc2 (value-independent) only 
+-- value-independent transition function
 CREATE AGGREGATE newcnt (
-   sfunc2 = int4inc, basetype = int4, stype2 = int4, 
-   initcond2 = '0'
+   sfunc = int4inc, basetype = 'any', stype = int4,
+   initcond = '0'
 );

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.33 2000/07/12 22:59:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.34 2000/07/17 03:05:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "access/hash.h"
 #include "access/xact.h"
 #include "miscadmin.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 
 
@@ -882,10 +883,6 @@ overlaps_timestamp(PG_FUNCTION_ARGS)
 
 /*----------------------------------------------------------
  *	"Arithmetic" operators on date/times.
- *		timestamp_foo	returns foo as an object (pointer) that
- *						can be passed between languages.
- *		timestamp_xx		is an internal routine which returns the
- *						actual value.
  *---------------------------------------------------------*/
 
 Datum
@@ -1150,7 +1147,6 @@ interval_larger(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-
 Datum
 interval_pl(PG_FUNCTION_ARGS)
 {
@@ -1231,6 +1227,90 @@ interval_div(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INTERVAL_P(result);
 }
+
+/*
+ * interval_accum and interval_avg implement the AVG(interval) aggregate.
+ *
+ * The transition datatype for this aggregate is a 2-element array of
+ * intervals, where the first is the running sum and the second contains
+ * the number of values so far in its 'time' field.  This is a bit ugly
+ * but it beats inventing a specialized datatype for the purpose.
+ */
+
+Datum
+interval_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Interval   *newval = PG_GETARG_INTERVAL_P(1);
+	Datum	   *transdatums;
+	int			ndatums;
+	Interval	sumX,
+				N;
+	Interval   *newsum;
+	ArrayType  *result;
+
+	/* We assume the input is array of interval */
+	deconstruct_array(transarray,
+					  false, 12, 'd',
+					  &transdatums, &ndatums);
+	if (ndatums != 2)
+		elog(ERROR, "interval_accum: expected 2-element interval array");
+	/*
+	 * XXX memcpy, instead of just extracting a pointer, to work around
+	 * buggy array code: it won't ensure proper alignment of Interval
+	 * objects on machines where double requires 8-byte alignment.
+	 * That should be fixed, but in the meantime...
+	 */
+	memcpy(&sumX, DatumGetIntervalP(transdatums[0]), sizeof(Interval));
+	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
+
+	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
+												   IntervalPGetDatum(&sumX),
+												   IntervalPGetDatum(newval)));
+	N.time += 1;
+
+	transdatums[0] = IntervalPGetDatum(newsum);
+	transdatums[1] = IntervalPGetDatum(&N);
+
+	result = construct_array(transdatums, 2,
+							 false, 12, 'd');
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+Datum
+interval_avg(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum	   *transdatums;
+	int			ndatums;
+	Interval	sumX,
+				N;
+
+	/* We assume the input is array of interval */
+	deconstruct_array(transarray,
+					  false, 12, 'd',
+					  &transdatums, &ndatums);
+	if (ndatums != 2)
+		elog(ERROR, "interval_avg: expected 2-element interval array");
+	/*
+	 * XXX memcpy, instead of just extracting a pointer, to work around
+	 * buggy array code: it won't ensure proper alignment of Interval
+	 * objects on machines where double requires 8-byte alignment.
+	 * That should be fixed, but in the meantime...
+	 */
+	memcpy(&sumX, DatumGetIntervalP(transdatums[0]), sizeof(Interval));
+	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
+
+	/* SQL92 defines AVG of no values to be NULL */
+	if (N.time == 0)
+		PG_RETURN_NULL();
+
+	return DirectFunctionCall2(interval_div,
+							   IntervalPGetDatum(&sumX),
+							   Float8GetDatum(N.time));
+}
+
 
 /* timestamp_age()
  * Calculate time difference while retaining year/month fields.

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.25 2000/06/13 07:35:30 tgl Exp $
+ * $Id: array.h,v 1.26 2000/07/17 03:05:32 tgl Exp $
  *
  * NOTES
  *	  XXX the data array should be MAXALIGN'd -- notice that the array
@@ -24,14 +24,26 @@
 #define ARRAY_H
 
 #include "fmgr.h"
-#include "utils/memutils.h"
 
+/*
+ * Arrays are varlena objects, so must meet the varlena convention that
+ * the first int32 of the object contains the total object size in bytes.
+ */
 typedef struct
 {
-	int			size;			/* total array size (in bytes) */
+	int32		size;			/* total array size (varlena requirement) */
 	int			ndim;			/* # of dimensions */
 	int			flags;			/* implementation flags */
 } ArrayType;
+
+/*
+ * fmgr macros for array objects
+ */
+#define DatumGetArrayTypeP(X)         ((ArrayType *) PG_DETOAST_DATUM(X))
+#define DatumGetArrayTypePCopy(X)     ((ArrayType *) PG_DETOAST_DATUM_COPY(X))
+#define PG_GETARG_ARRAYTYPE_P(n)      DatumGetArrayTypeP(PG_GETARG_DATUM(n))
+#define PG_GETARG_ARRAYTYPE_P_COPY(n) DatumGetArrayTypePCopy(PG_GETARG_DATUM(n))
+#define PG_RETURN_ARRAYTYPE_P(x)      PG_RETURN_POINTER(x)
 
 /*
  * bitmask of ArrayType flags field:
@@ -43,11 +55,9 @@ typedef struct
 #define ARR_CHK_FLAG	(0x2)
 #define ARR_OBJ_MASK	(0x1c)
 
-#define ARR_FLAGS(a)			((ArrayType *) a)->flags
 #define ARR_SIZE(a)				(((ArrayType *) a)->size)
-
 #define ARR_NDIM(a)				(((ArrayType *) a)->ndim)
-#define ARR_NDIM_PTR(a)			(&(((ArrayType *) a)->ndim))
+#define ARR_FLAGS(a)			(((ArrayType *) a)->flags)
 
 #define ARR_IS_LO(a) \
 		(((ArrayType *) a)->flags & ARR_LOB_FLAG)
@@ -102,7 +112,6 @@ typedef struct
 #define RETURN_NULL(type)  do { *isNull = true; return (type) 0; } while (0)
 
 #define NAME_LEN	30
-#define MAX_BUFF_SIZE BLCKSZ
 
 typedef struct
 {
@@ -133,6 +142,12 @@ extern ArrayType *array_assgn(ArrayType *array, int nSubscripts,
 							  ArrayType *newArr,
 							  bool elmbyval, int elmlen, bool *isNull);
 extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType);
+
+extern ArrayType *construct_array(Datum *elems, int nelems,
+								  bool elmbyval, int elmlen, char elmalign);
+extern void deconstruct_array(ArrayType *array,
+							  bool elmbyval, int elmlen, char elmalign,
+							  Datum **elemsp, int *nelemsp);
 
 extern int _LOtransfer(char **destfd, int size, int nitems, char **srcfd,
 			int isSrcLO, int isDestLO);

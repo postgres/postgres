@@ -2,18 +2,20 @@
 -- AGGREGATES
 --
 SELECT avg(four) AS avg_1 FROM onek;
- avg_1 
--------
-     1
+    avg_1     
+--------------
+ 1.5000000000
 (1 row)
 
 SELECT avg(a) AS avg_32 FROM aggtest WHERE a < 100;
- avg_32 
---------
-     32
+    avg_32     
+---------------
+ 32.6666666667
 (1 row)
 
-SELECT avg(b) AS avg_107_943 FROM aggtest;
+-- In 7.1, avg(float4) is computed using float8 arithmetic.
+-- Round the result to 3 digits to avoid platform-specific results.
+SELECT avg(b)::numeric(10,3) AS avg_107_943 FROM aggtest;
  avg_107_943 
 -------------
      107.943
@@ -116,9 +118,9 @@ select ten, count(four), sum(DISTINCT four) from onek group by ten;
 (10 rows)
 
 SELECT newavg(four) AS avg_1 FROM onek;
- avg_1 
--------
-     1
+    avg_1     
+--------------
+ 1.5000000000
 (1 row)
 
 SELECT newsum(four) AS sum_1500 FROM onek;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.17 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.18 2000/07/17 03:04:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,10 +18,13 @@
  *		ExecInitNestLoop - initialize the join
  *		ExecEndNestLoop  - shut down the join
  */
+
 #include "postgres.h"
 
 #include "executor/execdebug.h"
 #include "executor/nodeNestloop.h"
+#include "utils/memutils.h"
+
 
 /* ----------------------------------------------------------------
  *		ExecNestLoop(node)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.78 2000/07/12 22:59:12 petere Exp $
+ * $Id: c.h,v 1.79 2000/07/17 03:05:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,6 +586,25 @@ extern Datum Float8GetDatum(float8 X);
  */
 
 #define Float64GetDatum(X) PointerGetDatum(X)
+
+/*
+ * Int64GetDatumFast
+ * Float4GetDatumFast
+ * Float8GetDatumFast
+ *
+ * These macros are intended to allow writing code that does not depend on
+ * whether int64, float4, float8 are pass-by-reference types, while not
+ * sacrificing performance when they are.  The argument must be a variable
+ * that will exist and have the same value for as long as the Datum is needed.
+ * In the pass-by-ref case, the address of the variable is taken to use as
+ * the Datum.  In the pass-by-val case, these will be the same as the non-Fast
+ * macros.
+ */
+
+#define Int64GetDatumFast(X)  PointerGetDatum(&(X))
+#define Float4GetDatumFast(X) PointerGetDatum(&(X))
+#define Float8GetDatumFast(X) PointerGetDatum(&(X))
+
 
 /* ----------------------------------------------------------------
  *				Section 5:	IsValid macros for system types

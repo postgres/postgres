@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.64 2000/07/12 22:59:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.65 2000/07/17 03:05:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
  *		Basic float4 ops:
  *		 float4in, float4out, float4abs, float4um
  *		Basic float8 ops:
- *		 float8in, float8inAd, float8out, float8outAd, float8abs, float8um
+ *		 float8in, float8out, float8abs, float8um
  *		Arithmetic operators:
  *		 float4pl, float4mi, float4mul, float4div
  *		 float8pl, float8mi, float8mul, float8div
@@ -64,6 +64,7 @@
 #endif
 
 #include "fmgr.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 
 static void CheckFloat8Val(double val);
@@ -90,7 +91,6 @@ static void CheckFloat8Val(double val);
 
 #ifndef atof
 extern double atof(const char *p);
-
 #endif
 
 #ifndef HAVE_CBRT
@@ -100,9 +100,8 @@ static double cbrt(double x);
 #else
 #if !defined(nextstep)
 extern double cbrt(double x);
-
 #endif
-#endif
+#endif /* HAVE_CBRT */
 
 #ifndef HAVE_RINT
 #define rint my_rint
@@ -110,10 +109,9 @@ static double rint(double x);
 
 #else
 extern double rint(double x);
+#endif /* HAVE_RINT */
 
-#endif
-
-#endif
+#endif /* NeXT check */
 
 /* ========== USER I/O ROUTINES ========== */
 
@@ -453,7 +451,6 @@ float8smaller(float64 arg1, float64 arg2)
  *		float4mi		- returns a pointer to arg1 - arg2
  *		float4mul		- returns a pointer to arg1 * arg2
  *		float4div		- returns a pointer to arg1 / arg2
- *		float4inc		- returns a poniter to arg1 + 1.0
  */
 float32
 float4pl(float32 arg1, float32 arg2)
@@ -527,29 +524,11 @@ float4div(float32 arg1, float32 arg2)
 	return result;
 }
 
-float32
-float4inc(float32 arg1)
-{
-	float32		result;
-	double		val;
-
-	if (!arg1)
-		return (float32) NULL;
-
-	val = *arg1 + (float32data) 1.0;
-
-	CheckFloat4Val(val);
-	result = (float32) palloc(sizeof(float32data));
-	*result = val;
-	return result;
-}
-
 /*
  *		float8pl		- returns a pointer to arg1 + arg2
  *		float8mi		- returns a pointer to arg1 - arg2
  *		float8mul		- returns a pointer to arg1 * arg2
  *		float8div		- returns a pointer to arg1 / arg2
- *		float8inc		- returns a pointer to arg1 + 1.0
  */
 float64
 float8pl(float64 arg1, float64 arg2)
@@ -618,22 +597,6 @@ float8div(float64 arg1, float64 arg2)
 
 	val = *arg1 / *arg2;
 	CheckFloat8Val(val);
-	*result = val;
-	return result;
-}
-
-float64
-float8inc(float64 arg1)
-{
-	float64		result;
-	double		val;
-
-	if (!arg1)
-		return (float64) NULL;
-
-	val = *arg1 + (float64data) 1.0;
-	CheckFloat8Val(val);
-	result = (float64) palloc(sizeof(float64data));
 	*result = val;
 	return result;
 }
@@ -1572,10 +1535,181 @@ setseed(float64 seed)
 }	/* setseed() */
 
 
+
 /*
- *		====================
- *		ARITHMETIC OPERATORS
- *		====================
+ *		=========================
+ *		FLOAT AGGREGATE OPERATORS
+ *		=========================
+ *
+ *		float8_accum	- accumulate for AVG(), STDDEV(), etc
+ *		float4_accum	- same, but input data is float4
+ *		float8_avg		- produce final result for float AVG()
+ *		float8_variance	- produce final result for float VARIANCE()
+ *		float8_stddev	- produce final result for float STDDEV()
+ *
+ * The transition datatype for all these aggregates is a 3-element array
+ * of float8, holding the values N, sum(X), sum(X*X) in that order.
+ *
+ * Note that we represent N as a float to avoid having to build a special
+ * datatype.  Given a reasonable floating-point implementation, there should
+ * be no accuracy loss unless N exceeds 2 ^ 52 or so (by which time the
+ * user will have doubtless lost interest anyway...)
+ */
+
+static float8 *
+check_float8_array(ArrayType *transarray, const char *caller)
+{
+	/*
+	 * We expect the input to be a 3-element float array; verify that.
+	 * We don't need to use deconstruct_array() since the array data
+	 * is just going to look like a C array of 3 float8 values.
+	 */
+	if (ARR_SIZE(transarray) != (ARR_OVERHEAD(1) + 3 * sizeof(float8)) ||
+		ARR_NDIM(transarray) != 1 ||
+		ARR_DIMS(transarray)[0] != 3)
+		elog(ERROR, "%s: expected 3-element float8 array", caller);
+	return (float8 *) ARR_DATA_PTR(transarray);
+}
+
+Datum
+float8_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	float8		newval = PG_GETARG_FLOAT8(1);
+	float8	   *transvalues;
+	float8		N,
+				sumX,
+				sumX2;
+	Datum		transdatums[3];
+	ArrayType  *result;
+
+	transvalues = check_float8_array(transarray, "float8_accum");
+	N = transvalues[0];
+	sumX = transvalues[1];
+	sumX2 = transvalues[2];
+
+	N += 1.0;
+	sumX += newval;
+	sumX2 += newval * newval;
+
+	transdatums[0] = Float8GetDatumFast(N);
+	transdatums[1] = Float8GetDatumFast(sumX);
+	transdatums[2] = Float8GetDatumFast(sumX2);
+
+	result = construct_array(transdatums, 3,
+							 false /* float8 byval */, sizeof(float8), 'd');
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+Datum
+float4_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	float4		newval4 = PG_GETARG_FLOAT4(1);
+	float8	   *transvalues;
+	float8		N,
+				sumX,
+				sumX2,
+				newval;
+	Datum		transdatums[3];
+	ArrayType  *result;
+
+	transvalues = check_float8_array(transarray, "float4_accum");
+	N = transvalues[0];
+	sumX = transvalues[1];
+	sumX2 = transvalues[2];
+
+	/* Do arithmetic in float8 for best accuracy */
+	newval = newval4;
+
+	N += 1.0;
+	sumX += newval;
+	sumX2 += newval * newval;
+
+	transdatums[0] = Float8GetDatumFast(N);
+	transdatums[1] = Float8GetDatumFast(sumX);
+	transdatums[2] = Float8GetDatumFast(sumX2);
+
+	result = construct_array(transdatums, 3,
+							 false /* float8 byval */, sizeof(float8), 'd');
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+Datum
+float8_avg(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	float8	   *transvalues;
+	float8		N,
+				sumX;
+
+	transvalues = check_float8_array(transarray, "float8_avg");
+	N = transvalues[0];
+	sumX = transvalues[1];
+	/* ignore sumX2 */
+
+	/* SQL92 defines AVG of no values to be NULL */
+	if (N == 0.0)
+		PG_RETURN_NULL();
+
+	PG_RETURN_FLOAT8(sumX / N);
+}
+
+Datum
+float8_variance(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	float8	   *transvalues;
+	float8		N,
+				sumX,
+				sumX2;
+
+	transvalues = check_float8_array(transarray, "float8_variance");
+	N = transvalues[0];
+	sumX = transvalues[1];
+	sumX2 = transvalues[2];
+
+	/* We define VARIANCE of no values to be NULL, of 1 value to be 0 */
+	if (N == 0.0)
+		PG_RETURN_NULL();
+
+	if (N <= 1.0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8((N * sumX2 - sumX * sumX) / (N * (N - 1.0)));
+}
+
+Datum
+float8_stddev(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	float8	   *transvalues;
+	float8		N,
+				sumX,
+				sumX2;
+
+	transvalues = check_float8_array(transarray, "float8_stddev");
+	N = transvalues[0];
+	sumX = transvalues[1];
+	sumX2 = transvalues[2];
+
+	/* We define STDDEV of no values to be NULL, of 1 value to be 0 */
+	if (N == 0.0)
+		PG_RETURN_NULL();
+
+	if (N <= 1.0)
+		PG_RETURN_FLOAT8(0.0);
+
+	PG_RETURN_FLOAT8(sqrt((N * sumX2 - sumX * sumX) / (N * (N - 1.0))));
+}
+
+
+/*
+ *		====================================
+ *		MIXED-PRECISION ARITHMETIC OPERATORS
+ *		====================================
  */
 
 /*

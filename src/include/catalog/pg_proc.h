@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.147 2000/07/14 22:17:56 tgl Exp $
+ * $Id: pg_proc.h,v 1.148 2000/07/17 03:05:25 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -433,8 +433,8 @@ DATA(insert OID = 206 (  float4um		   PGUID 11 f t t t 1 f 700 "700" 100 0 0 100
 DESCR("negate");
 DATA(insert OID = 207 (  float4abs		   PGUID 11 f t t t 1 f 700 "700" 100 0 0 100  float4abs - ));
 DESCR("absolute value");
-DATA(insert OID = 208 (  float4inc		   PGUID 11 f t t t 1 f 700 "700" 100 0 0 100  float4inc - ));
-DESCR("increment");
+DATA(insert OID = 208 (  float4_accum	   PGUID 12 f t t t 2 f 1022 "1022 700" 100 0 0 100  float4_accum - ));
+DESCR("aggregate transition function");
 DATA(insert OID = 209 (  float4larger	   PGUID 11 f t t t 2 f 700 "700 700" 100 0 0 100  float4larger - ));
 DESCR("larger of two");
 DATA(insert OID = 211 (  float4smaller	   PGUID 11 f t t t 2 f 700 "700 700" 100 0 0 100  float4smaller - ));
@@ -461,8 +461,8 @@ DATA(insert OID = 220 (  float8um		   PGUID 11 f t t t 1 f 701 "701" 100 0 0 100
 DESCR("negate");
 DATA(insert OID = 221 (  float8abs		   PGUID 11 f t t t 1 f 701 "701" 100 0 0 100  float8abs - ));
 DESCR("absolute value");
-DATA(insert OID = 222 (  float8inc		   PGUID 11 f t t t 1 f 701 "701" 100 0 0 100  float8inc - ));
-DESCR("increment");
+DATA(insert OID = 222 (  float8_accum	   PGUID 12 f t t t 2 f 1022 "1022 701" 100 0 0 100  float8_accum - ));
+DESCR("aggregate transition function");
 DATA(insert OID = 223 (  float8larger	   PGUID 11 f t t t 2 f 701 "701 701" 100 0 0 100  float8larger - ));
 DESCR("larger of two");
 DATA(insert OID = 224 (  float8smaller	   PGUID 11 f t t t 2 f 701 "701 701" 100 0 0 100  float8smaller - ));
@@ -1004,8 +1004,6 @@ DESCR("large object export");
 
 DATA(insert OID = 766 (  int4inc		   PGUID 12 f t t t 1 f 23 "23" 100 0 0 100  int4inc - ));
 DESCR("increment");
-DATA(insert OID = 767 (  int2inc		   PGUID 12 f t t t 1 f 21 "21" 100 0 0 100  int2inc - ));
-DESCR("increment");
 DATA(insert OID = 768 (  int4larger		   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4larger - ));
 DESCR("larger of two");
 DATA(insert OID = 769 (  int4smaller	   PGUID 12 f t t t 2 f 23 "23 23" 100 0 0 100  int4smaller - ));
@@ -1181,8 +1179,6 @@ DATA(insert OID = 944 (  char			   PGUID 12 f t t t 1 f 18 "25" 100 0 0 100  tex
 DESCR("convert text to char");
 DATA(insert OID = 946 (  text			   PGUID 12 f t t t 1 f 25 "18" 100 0 0 100  char_text - ));
 DESCR("convert char to text");
-DATA(insert OID = 948 (  varchar		   PGUID 12 f t t t 1 f 25 "1043" 100 0 0 100  bpchar_char - ));
-DESCR("convert varchar() to text");
 
 DATA(insert OID = 950 (  istrue			   PGUID 12 f t t f 1 f 16 "16" 100 0 0 100  istrue - ));
 DESCR("bool is true (not false or unknown)");
@@ -2395,8 +2391,6 @@ DATA(insert OID = 1746 ( float8					PGUID 11 f t t t 1 f 701 "1700" 100 0 0 100 
 DESCR("(internal)");
 DATA(insert OID = 1764 ( numeric_inc			PGUID 11 f t t t 1 f 1700 "1700" 100 0 0 100	numeric_inc - ));
 DESCR("increment by one");
-DATA(insert OID = 1765 ( numeric_dec			PGUID 11 f t t t 1 f 1700 "1700" 100 0 0 100	numeric_dec - ));
-DESCR("decrement by one");
 DATA(insert OID = 1766 ( numeric_smaller		PGUID 11 f t t t 2 f 1700 "1700 1700" 100 0 0 100  numeric_smaller - ));
 DESCR("smaller of two numbers");
 DATA(insert OID = 1767 ( numeric_larger			PGUID 11 f t t t 2 f 1700 "1700 1700" 100 0 0 100  numeric_larger - ));
@@ -2407,7 +2401,7 @@ DATA(insert OID = 1771 ( numeric_uminus			PGUID 11 f t t t 1 f 1700 "1700" 100 0
 DESCR("negate");
 DATA(insert OID = 1779 ( int8					PGUID 11 f t t t 1 f 20 "1700" 100 0 0 100  numeric_int8 - ));
 DESCR("(internal)");
-DATA(insert OID = 1781 ( numeric				PGUID 11 f t t t 1 f 1700 "20" 100 0 0 100  int8_numeric - ));
+DATA(insert OID = 1781 ( numeric				PGUID 12 f t t t 1 f 1700 "20" 100 0 0 100  int8_numeric - ));
 DESCR("(internal)");
 DATA(insert OID = 1782 ( numeric				PGUID 12 f t t t 1 f 1700 "21" 100 0 0 100  int2_numeric - ));
 DESCR("(internal)");
@@ -2464,6 +2458,38 @@ DATA(insert OID = 1828 ( nlikejoinsel		PGUID 12 f t f t 5 f 701 "26 26 21 26 21"
 DESCR("join selectivity of NOT LIKE");
 DATA(insert OID = 1829 ( icregexnejoinsel	PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	icregexnejoinsel - ));
 DESCR("join selectivity of case-insensitive regex non-match");
+
+/* Aggregate-related functions */
+DATA(insert OID = 1830 (  float8_avg	   PGUID 12 f t t t 1 f 701 "1022" 100 0 0 100  float8_avg - ));
+DESCR("AVG aggregate final function");
+DATA(insert OID = 1831 (  float8_variance  PGUID 12 f t t t 1 f 701 "1022" 100 0 0 100  float8_variance - ));
+DESCR("VARIANCE aggregate final function");
+DATA(insert OID = 1832 (  float8_stddev	   PGUID 12 f t t t 1 f 701 "1022" 100 0 0 100  float8_stddev - ));
+DESCR("STDDEV aggregate final function");
+DATA(insert OID = 1833 (  numeric_accum	   PGUID 12 f t t t 2 f 1231 "1231 1700" 100 0 0 100  numeric_accum - ));
+DESCR("aggregate transition function");
+DATA(insert OID = 1834 (  int2_accum	   PGUID 12 f t t t 2 f 1231 "1231 21" 100 0 0 100  int2_accum - ));
+DESCR("aggregate transition function");
+DATA(insert OID = 1835 (  int4_accum	   PGUID 12 f t t t 2 f 1231 "1231 23" 100 0 0 100  int4_accum - ));
+DESCR("aggregate transition function");
+DATA(insert OID = 1836 (  int8_accum	   PGUID 12 f t t t 2 f 1231 "1231 20" 100 0 0 100  int8_accum - ));
+DESCR("aggregate transition function");
+DATA(insert OID = 1837 (  numeric_avg	   PGUID 12 f t t t 1 f 1700 "1231" 100 0 0 100  numeric_avg - ));
+DESCR("AVG aggregate final function");
+DATA(insert OID = 1838 (  numeric_variance PGUID 12 f t t t 1 f 1700 "1231" 100 0 0 100  numeric_variance - ));
+DESCR("VARIANCE aggregate final function");
+DATA(insert OID = 1839 (  numeric_stddev   PGUID 12 f t t t 1 f 1700 "1231" 100 0 0 100  numeric_stddev - ));
+DESCR("STDDEV aggregate final function");
+DATA(insert OID = 1840 (  int2_sum		   PGUID 12 f t t f 2 f 1700 "1700 21" 100 0 0 100  int2_sum - ));
+DESCR("SUM(int2) transition function");
+DATA(insert OID = 1841 (  int4_sum		   PGUID 12 f t t f 2 f 1700 "1700 23" 100 0 0 100  int4_sum - ));
+DESCR("SUM(int4) transition function");
+DATA(insert OID = 1842 (  int8_sum		   PGUID 12 f t t f 2 f 1700 "1700 20" 100 0 0 100  int8_sum - ));
+DESCR("SUM(int8) transition function");
+DATA(insert OID = 1843 (  interval_accum   PGUID 12 f t t t 2 f 1187 "1187 1186" 100 0 0 100  interval_accum - ));
+DESCR("aggregate transition function");
+DATA(insert OID = 1844 (  interval_avg	   PGUID 12 f t t t 1 f 1186 "1187" 100 0 0 100  interval_avg - ));
+DESCR("AVG aggregate final function");
 
 
 /*
