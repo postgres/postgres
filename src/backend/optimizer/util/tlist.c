@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.7 1997/09/08 21:45:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.8 1997/11/25 22:00:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "optimizer/clauses.h"
 
 #include "nodes/makefuncs.h"
-#include "parser/catalog_utils.h"
 
 static Node *flatten_tlistentry(Node *tlistentry, List *flat_tlist);
 

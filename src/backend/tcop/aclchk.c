@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.19 1997/11/24 05:08:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.20 1997/11/25 22:06:08 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -31,10 +31,12 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "catalog/pg_user.h"
+#include "parser/parse_agg.h"
+#include "parser/parse_func.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
-#include "parser/catalog_utils.h"
 #include "fmgr.h"
 
 static int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);

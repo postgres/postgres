@@ -6,6 +6,7 @@
  *-------------------------------------------------------------------------
  */
 #include "executor/spi.h"
+#include "catalog/pg_type.h"
 #include "access/printtup.h"
 #include "fmgr.h"
 

@@ -6,12 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeFuncs.h,v 1.5 1997/09/08 21:52:45 momjian Exp $
+ * $Id: nodeFuncs.h,v 1.6 1997/11/25 22:06:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODEFUNCS_H
 #define NODEFUNCS_H
+
+#include <nodes/nodes.h>
+#include <nodes/primnodes.h>
 
 extern bool single_node(Node *node);
 extern bool var_is_outer(Var *var);

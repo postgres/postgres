@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.6 1997/09/08 21:45:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.7 1997/11/25 21:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -641,10 +641,10 @@ xfunc_width(LispValue clause)
 	}
 	else if (IsA(clause, Param))
 	{
-		if (typeid_get_relid(get_paramtype((Param) clause)))
+		if (typeidTypeRelid(get_paramtype((Param) clause)))
 		{
 			/* Param node returns a tuple.	Find its width */
-			rd = heap_open(typeid_get_relid(get_paramtype((Param) clause)));
+			rd = heap_open(typeidTypeRelid(get_paramtype((Param) clause)));
 			retval = xfunc_tuple_width(rd);
 			heap_close(rd);
 		}
@@ -659,7 +659,7 @@ xfunc_width(LispValue clause)
 		else
 		{
 			/* Param node returns a base type */
-			retval = tlen(get_id_type(get_paramtype((Param) clause)));
+			retval = typeLen(typeidType(get_paramtype((Param) clause)));
 		}
 		goto exit;
 	}
@@ -1324,9 +1324,9 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
 
 	/* if function returns a tuple, get the width of that */
-	if (typeid_get_relid(proc->prorettype))
+	if (typeidTypeRelid(proc->prorettype))
 	{
-		rd = heap_open(typeid_get_relid(proc->prorettype));
+		rd = heap_open(typeidTypeRelid(proc->prorettype));
 		retval = xfunc_tuple_width(rd);
 		heap_close(rd);
 		goto exit;

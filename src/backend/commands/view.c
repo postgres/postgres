@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.15 1997/11/21 18:09:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.16 1997/11/25 21:59:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,8 @@
 #include <access/xact.h>
 #include <utils/builtins.h>
 #include <nodes/relation.h>
-#include <parser/catalog_utils.h>
-#include <parser/parse_query.h>
+#include <parser/parse_relation.h>
+#include <parser/parse_type.h>
 #include <rewrite/rewriteDefine.h>
 #include <rewrite/rewriteHandler.h>
 #include <rewrite/rewriteManip.h>
@@ -72,7 +72,7 @@ DefineVirtualRelation(char *relname, List *tlist)
 			entry = lfirst(t);
 			res = entry->resdom;
 			resname = res->resname;
-			restypename = tname(get_id_type(res->restype));
+			restypename = typeidTypeName(res->restype);
 
 			typename = makeNode(TypeName);
 

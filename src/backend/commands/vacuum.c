@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.52 1997/11/21 19:59:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.53 1997/11/25 21:59:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #include <catalog/pg_statistic.h>
 #include <catalog/pg_type.h>
 #include <catalog/pg_operator.h>
+#include <parser/parse_oper.h>
 #include <storage/smgr.h>
 #include <storage/lmgr.h>
 #include <utils/inval.h>
@@ -44,7 +45,6 @@
 #include <utils/syscache.h>
 #include <utils/builtins.h>
 #include <commands/vacuum.h>
-#include <parser/catalog_utils.h>
 #include <storage/bufpage.h>
 #include "storage/shmem.h"
 #ifndef HAVE_GETRUSAGE

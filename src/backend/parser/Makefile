@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.11 1997/11/24 05:20:57 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.12 1997/11/25 22:00:21 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,8 +22,9 @@ CFLAGS+= -Wno-error
 endif
 
 
-OBJS= analyze.o catalog_utils.o gram.o \
-      keywords.o parser.o parse_query.o scan.o scansup.o
+OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
+      parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
+      parse_type.o parse_target.o scan.o scansup.o
 
 all: SUBSYS.o
 

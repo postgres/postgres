@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.8 1997/11/21 18:10:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.9 1997/11/25 22:00:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
 #include "nodes/plannodes.h"
 #include "nodes/relation.h"
 
-#include "parser/parse_query.h"
 #include "parser/parsetree.h"
 
 #include "utils/elog.h"

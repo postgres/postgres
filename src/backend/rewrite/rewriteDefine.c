@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.7 1997/10/25 05:37:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.8 1997/11/25 22:06:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,8 @@
 #include "utils/lsyscache.h"	/* for get_typlen */
 #include "nodes/pg_list.h"		/* for Lisp support */
 #include "nodes/parsenodes.h"
-#include "parser/catalog_utils.h"
+#include "parser/parse_relation.h"
+
 #include "rewrite/locks.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
@@ -107,7 +108,7 @@ InsertRule(char *rulname,
 	if (evslot == NULL)
 		evslot_index = -1;
 	else
-		evslot_index = varattno(eventrel, (char *) evslot);
+		evslot_index = attnameAttNum(eventrel, (char *) evslot);
 	heap_close(eventrel);
 
 	if (evinstead)
@@ -221,8 +222,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	}
 	else
 	{
-		event_attno = varattno(event_relation, eslot_string);
-		event_attype = att_typeid(event_relation, event_attno);
+		event_attno = attnameAttNum(event_relation, eslot_string);
+		event_attype = attnumTypeId(event_relation, event_attno);
 	}
 	heap_close(event_relation);
 

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.28 1997/11/20 23:22:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.29 1997/11/25 22:05:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,9 +14,20 @@
 #include <stdio.h>
 
 #include "postgres.h"
+#include "nodes/pg_list.h"
+#include "parser/parser.h"
+#include "parser/analyze.h"
+#include "parser/parse_node.h"
+
+void	init_io();		/* from scan.l */
+void	parser_init(Oid *typev, int nargs); /* from gram.y */
+int 	yyparse();		/* from gram.c */
+
+#ifdef 0
+#include "parser/parse.h"
 #include "parser/gramparse.h"
-#include "parser/parse_query.h"
 #include "utils/palloc.h"
+#endif
 
 char	   *parseString;		/* the char* which holds the string to be
 								 * parsed */
@@ -103,10 +114,10 @@ static void
 define_sets(Node *clause)
 {
 	Oid			setoid;
-	Type		t = type("oid");
-	Oid			typeoid = typeid(t);
-	Size		oidsize = tlen(t);
-	bool		oidbyval = tbyval(t);
+	Type		t = typeidType(OIDOID);
+	Oid			typeoid = typeTypeId(t);
+	Size		oidsize = typeLen(t);
+	bool		oidbyval = typeByVal(t);
 
 	if (clause == NULL)
 	{
@@ -125,11 +136,11 @@ define_sets(Node *clause)
 			return;
 		}
 		setoid = SetDefine(((Const *) clause)->constvalue,
-						   get_id_typname(((Const *) clause)->consttype));
+						   typeidTypeName(((Const *) clause)->consttype));
 		set_constvalue((Const) clause, setoid);
 		set_consttype((Const) clause, typeoid);
 		set_constlen((Const) clause, oidsize);
-		set_constbyval((Const) clause, oidbyval);
+		set_constypeByVal((Const) clause, oidbyval);
 	}
 	else if (IsA(clause, Iter))
 	{
@@ -173,6 +184,5 @@ define_sets(Node *clause)
 		define_sets(get_rightop(clause));
 	}
 }
-
 #endif
 

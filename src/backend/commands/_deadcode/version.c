@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.7 1997/09/08 02:22:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.8 1997/11/25 21:59:11 momjian Exp $
  *
  * NOTES
  *	  At the point the version is defined, 2 physical relations are created
@@ -30,6 +30,7 @@
 #include <utils/builtins.h>
 #include <commands/version.h>
 #include <access/xact.h>		/* for GetCurrentXactStartTime */
+#include <parser/parse_node.h>
 #include <tcop/tcopprot.h>
 
 #define MAX_QUERY_LEN 1024

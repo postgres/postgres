@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.13 1997/11/24 05:08:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.14 1997/11/25 21:58:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,10 @@
 #include <utils/builtins.h>
 #include <utils/tqual.h>
 #include <fmgr.h>
-#include <parser/catalog_utils.h>
 #include <catalog/catname.h>
 #include <catalog/indexing.h>
+#include <catalog/pg_type.h>
+#include <parser/parse_func.h>
 #include <storage/lmgr.h>
 #include <miscadmin.h>
 #ifndef HAVE_MEMMOVE

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.29 1997/11/24 05:08:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.30 1997/11/25 21:58:43 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -30,26 +30,27 @@
 #include <fmgr.h>
 #include <access/genam.h>
 #include <access/heapam.h>
-#include <storage/lmgr.h>
-#include <miscadmin.h>
+#include <access/istrat.h>
 #include <access/xact.h>
-#include <parser/catalog_utils.h>
-#include <storage/smgr.h>
-#include <utils/builtins.h>
-#include <utils/mcxt.h>
-#include <utils/relcache.h>
-#include <utils/syscache.h>
-#include <utils/tqual.h>
 #include <bootstrap/bootstrap.h>
 #include <catalog/catname.h>
 #include <catalog/catalog.h>
 #include <catalog/indexing.h>
 #include <catalog/heap.h>
 #include <catalog/index.h>
+#include <catalog/pg_type.h>
 #include <executor/executor.h>
+#include <miscadmin.h>
 #include <optimizer/clauses.h>
 #include <optimizer/prep.h>
-#include <access/istrat.h>
+#include <parser/parse_func.h>
+#include <storage/lmgr.h>
+#include <storage/smgr.h>
+#include <utils/builtins.h>
+#include <utils/mcxt.h>
+#include <utils/relcache.h>
+#include <utils/syscache.h>
+#include <utils/tqual.h>
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

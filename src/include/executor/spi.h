@@ -15,7 +15,6 @@
 #include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
 #include "catalog/pg_proc.h"
-#include "parser/parse_query.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"

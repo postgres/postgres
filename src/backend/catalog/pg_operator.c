@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.16 1997/11/24 05:08:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.17 1997/11/25 21:58:46 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -20,9 +20,10 @@
 #include <utils/syscache.h>
 #include <utils/tqual.h>
 #include <access/heapam.h>
-#include <parser/catalog_utils.h>
 #include <catalog/catname.h>
 #include <catalog/pg_operator.h>
+#include <catalog/pg_type.h>
+#include <parser/parse_oper.h>
 #include <storage/bufmgr.h>
 #include <fmgr.h>
 #include <miscadmin.h>

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.7 1997/09/08 21:54:42 momjian Exp $
+ * $Id: tcopprot.h,v 1.8 1997/11/25 22:07:10 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -19,7 +19,7 @@
 #define TCOPPROT_H
 
 #include <executor/execdesc.h>
-#include <parser/parse_query.h>
+#include <parser/parse_node.h>
 
 #ifndef BOOTSTRAP_INCLUDE
 extern List *

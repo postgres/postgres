@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.10 1997/11/21 18:10:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.11 1997/11/25 21:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,8 @@
 #include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
+#include "parser/parse_expr.h"
 
-#include "parser/catalog_utils.h"
-#include "parser/parse_query.h"
 #include "utils/elog.h"
 #include "utils/lsyscache.h"
 #include "access/heapam.h"
@@ -310,7 +309,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	}
 
 	/* by here, the function is declared to return some type */
-	if ((typ = (Type) get_id_type(rettype)) == NULL)
+	if ((typ = typeidType(rettype)) == NULL)
 		elog(WARN, "can't find return type %d for function\n", rettype);
 
 	/*
@@ -318,21 +317,21 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	 * final query had better be a retrieve.
 	 */
 	if (cmd != CMD_SELECT)
-		elog(WARN, "function declared to return type %s, but final query is not a retrieve", tname(typ));
+		elog(WARN, "function declared to return type %s, but final query is not a retrieve", typeTypeName(typ));
 
 	/*
 	 * test 4:	for base type returns, the target list should have exactly
 	 * one entry, and its type should agree with what the user declared.
 	 */
 
-	if (get_typrelid(typ) == InvalidOid)
+	if (typeTypeRelid(typ) == InvalidOid)
 	{
 		if (exec_tlist_length(tlist) > 1)
-			elog(WARN, "function declared to return %s returns multiple values in final retrieve", tname(typ));
+			elog(WARN, "function declared to return %s returns multiple values in final retrieve", typeTypeName(typ));
 
 		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
 		if (resnode->restype != rettype)
-			elog(WARN, "return type mismatch in function: declared to return %s, returns %s", tname(typ), tname(get_id_type(resnode->restype)));
+			elog(WARN, "return type mismatch in function: declared to return %s, returns %s", typeTypeName(typ), typeidTypeName(resnode->restype));
 
 		/* by here, base return types match */
 		return;
@@ -358,16 +357,16 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	 * declared return type, and be sure that attributes 1 .. n in the
 	 * target list match the declared types.
 	 */
-	reln = heap_open(get_typrelid(typ));
+	reln = heap_open(typeTypeRelid(typ));
 
 	if (!RelationIsValid(reln))
-		elog(WARN, "cannot open relation relid %d", get_typrelid(typ));
+		elog(WARN, "cannot open relation relid %d", typeTypeRelid(typ));
 
 	relid = reln->rd_id;
 	relnatts = reln->rd_rel->relnatts;
 
 	if (exec_tlist_length(tlist) != relnatts)
-		elog(WARN, "function declared to return type %s does not retrieve (%s.*)", tname(typ), tname(typ));
+		elog(WARN, "function declared to return type %s does not retrieve (%s.*)", typeTypeName(typ), typeTypeName(typ));
 
 	/* expect attributes 1 .. n in order */
 	for (i = 1; i <= relnatts; i++)
@@ -397,14 +396,14 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 			else if (IsA(thenode, Func))
 				tletype = (Oid) get_functype((Func *) thenode);
 			else
-				elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
+				elog(WARN, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
 		}
 		else
-			elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
+			elog(WARN, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
 #endif
 		/* reach right in there, why don't you? */
 		if (tletype != reln->rd_att->attrs[i - 1]->atttypid)
-			elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
+			elog(WARN, "function declared to return type %s does not retrieve (%s.all)", typeTypeName(typ), typeTypeName(typ));
 	}
 
 	heap_close(reln);

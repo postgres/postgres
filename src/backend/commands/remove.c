@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.16 1997/11/20 23:21:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.17 1997/11/25 21:59:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,8 @@
 #include <catalog/pg_language.h>
 #include <catalog/pg_operator.h>
 #include <catalog/pg_proc.h>
-#include <parser/catalog_utils.h>
+#include <catalog/pg_type.h>
+#include <parser/parse_func.h>
 #include <storage/bufmgr.h>
 #include <fmgr.h>
 #ifndef HAVE_MEMMOVE

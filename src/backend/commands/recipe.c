@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.12 1997/11/21 18:09:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.13 1997/11/25 21:59:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,9 @@
 #include <catalog/pg_type.h>
 #include <commands/recipe.h>
 #include <libpq/libpq-be.h>
+#include <parser/parse_node.h>
 #include <utils/builtins.h>
 #include <utils/relcache.h>		/* for RelationNameGetRelation */
-#include <parser/parse_query.h>
 #include <rewrite/rewriteHandler.h>
 #include <rewrite/rewriteManip.h>
 #include <tcop/pquery.h>
@@ -488,7 +488,7 @@ tg_replaceNumberedParam(Node *expression,
 						 * "result" attribute from the tee relation
 						 */
 
-						isRel = (typeid_get_relid(p->paramtype) != 0);
+						isRel = (typeidTypeRelid(p->paramtype) != 0);
 						if (isRel)
 						{
 							newVar = makeVar(rt_ind,

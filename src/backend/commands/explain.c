@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.14 1997/09/18 20:20:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.15 1997/11/25 21:58:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,11 @@
 
 #include <postgres.h>
 
-#include <parser/catalog_utils.h>
-#include <parser/parse_query.h> /* for MakeTimeRange() */
 #include <nodes/plannodes.h>
 #include <tcop/tcopprot.h>
 #include <lib/stringinfo.h>
 #include <commands/explain.h>
+#include <parser/parse_node.h>
 #include <optimizer/planner.h>
 #include <access/xact.h>
 

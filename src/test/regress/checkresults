@@ -1,6 +1,8 @@
 #!/bin/sh
 # check regression tests
-# usage:  checkresults < results.out
+# usage:  checkresults [ regress.out ]
+
+[ "$#" -eq 0 ] && set regress.out
 
 for file in `cat "$@" | grep 'failed$' | cut -d " " -f 1`
 do

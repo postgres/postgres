@@ -23,12 +23,12 @@
 #include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/catalog.h"
+#include "parser/parse_type.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "storage/bufmgr.h"
 #include "utils/palloc.h"
 #include "utils/syscache.h"
-#include "parser/catalog_utils.h"
 
 /*
  * AggFuncInfo -
@@ -172,7 +172,7 @@ ExecAgg(Agg *node)
 		if (!HeapTupleIsValid(aggTuple))
 			elog(WARN, "ExecAgg: cache lookup failed for aggregate \"%s\"(%s)",
 				 aggname,
-				 tname(get_id_type(agg->basetype)));
+				 typeidTypeName(agg->basetype));
 		aggp = (Form_pg_aggregate) GETSTRUCT(aggTuple);
 
 		xfn1_oid = aggp->aggtransfn1;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.71 1997/11/24 16:55:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.72 1997/11/25 22:05:29 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -39,8 +39,6 @@
 #include "nodes/parsenodes.h"
 #include "nodes/print.h"
 #include "parser/gramparse.h"
-#include "parser/catalog_utils.h"
-#include "parser/parse_query.h"
 #include "utils/acl.h"
 #include "catalog/catname.h"
 #include "utils/elog.h"
@@ -49,7 +47,10 @@
 static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
 static Node *saved_In_Expr;
+static Oid	*param_type_info;
+static int	pfunc_num_args;
 extern List *parsetree;
+
 
 /*
  * If you need access to certain yacc-generated variables and find that
@@ -64,6 +65,9 @@ static List *makeConstantList( A_Const *node);
 static char *FlattenStringList(List *list);
 static char *fmtId(char *rawid);
 static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
+static void param_type_init(Oid *typev, int nargs);
+
+Oid	param_type(int t); /* used in parse_expr.c */
 
 /* old versions of flex define this as a macro */
 #if defined(yywrap)
@@ -2324,7 +2328,7 @@ Typename:  Array opt_array_bounds
 						 * emp(name=text,mgr=emp)
 						 */
 						$$->setof = TRUE;
-					else if (get_typrelid((Type)type($$->name)) != InvalidOid)
+					else if (typeTypeRelid(typenameType($$->name)) != InvalidOid)
 						 /* (Eventually add in here that the set can only
 						  * contain one element.)
 						  */
@@ -3690,4 +3694,24 @@ printf("fmtId- %sconvert %s to %s\n", ((cp == rawid)? "do not ": ""), rawid, cp)
 #endif
 
 	return(cp);
-} /* fmtId() */
+}
+
+/*
+ * param_type_init()
+ *
+ * keep enough information around fill out the type of param nodes
+ * used in postquel functions
+ */
+static void
+param_type_init(Oid *typev, int nargs)
+{
+	pfunc_num_args = nargs;
+	param_type_info = typev;
+}
+
+Oid param_type(int t)
+{
+	if ((t > pfunc_num_args) || (t == 0))
+		return InvalidOid;
+	return param_type_info[t - 1];
+}

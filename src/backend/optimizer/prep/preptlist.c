@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.5 1997/09/08 21:45:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.6 1997/11/25 22:00:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "nodes/pg_list.h"
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
@@ -24,9 +25,9 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/palloc.h"
+#include "parser/parse_type.h"
 
 #include "parser/parsetree.h"	/* for getrelid() */
-#include "parser/catalog_utils.h"
 
 #include "optimizer/internal.h"
 #include "optimizer/prep.h"
@@ -278,7 +279,7 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 		attisset = get_attisset( /* type_id, */ relid, attname);
 		if (attisset)
 		{
-			typlen = tlen(type("oid"));
+			typlen = typeLen(typeidType(OIDOID));
 		}
 		else
 		{
