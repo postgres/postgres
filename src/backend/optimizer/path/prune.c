@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.33 1999/02/15 03:22:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.34 1999/02/15 03:59:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ merge_rels_with_same_relids(List *rel_list)
 }
 
 /*
- * merge_rel_with_same_relids
+  * merge_rel_with_same_relids
  *	  Prunes those relations from 'other_rels' that are redundant with
  *	  'rel'.  A relation is redundant if it is built up of the same
  *	  relations as 'rel'.  Paths for the redundant relation are merged into
@@ -108,7 +108,7 @@ rels_set_cheapest(List *rel_list)
 
 #ifdef NOT_USED
 /*
- * merge_joinrels
+ * merge_rels_with_same_relids
  *	  Given two lists of rel nodes that are already
  *	  pruned, merge them into one pruned rel node list
  *
@@ -118,7 +118,7 @@ rels_set_cheapest(List *rel_list)
  * Returns one pruned rel node list
  */
 List *
-merge_joinrels(List *rel_list1, List *rel_list2)
+merge_rels_with_same_relids(List *rel_list1, List *rel_list2)
 {
 	List	   *xrel = NIL;
 
@@ -132,7 +132,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 }
 
 /*
- * prune_oldrels
+ * del_rels_all_bushy_inactive
  *	  If all the joininfo's in a rel node are bushy_inactive,
  *	  that means that this node has been joined into
  *	  other nodes in all possible ways, therefore
@@ -144,7 +144,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
  * Returns a new list of rel nodes
  */
 List *
-prune_oldrels(List *old_rels)
+del_rels_all_bushy_inactive(List *old_rels)
 {
 	RelOptInfo *rel;
 	List	   *joininfo_list,

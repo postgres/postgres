@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.35 1999/02/15 03:22:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.36 1999/02/15 03:59:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,7 +211,7 @@ make_one_rel_by_joins(Query *root, List *outer_rels, int levels_needed)
 			 * involves the join relation to the joininfo list of the
 			 * other relation
 			 */
-			add_new_joininfos(root, joined_rels, outer_rels);
+			add_rel_to_rel_joininfos(root, joined_rels, outer_rels);
 		}
 #endif
 
@@ -236,12 +236,12 @@ make_one_rel_by_joins(Query *root, List *outer_rels, int levels_needed)
 			 * prune rels that have been completely incorporated into new
 			 * join rels
 			 */
-			outer_rels = prune_oldrels(outer_rels);
+			outer_rels = del_rels_all_bushy_inactive(outer_rels);
 
 			/*
 			 * merge join rels if then contain the same list of base rels
 			 */
-			outer_rels = merge_joinrels(joined_rels, outer_rels);
+			outer_rels = merge_rels_with_same_relids(joined_rels, outer_rels);
 			root->join_rel_list = outer_rels;
 		}
 		else
