@@ -13,7 +13,7 @@ import org.postgresql.core.QueryExecutor;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.20 2003/04/17 04:37:07 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.21 2003/05/03 20:40:45 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -871,6 +871,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				break;
 			case Types.BINARY:
 			case Types.VARBINARY:
+			case Types.LONGVARBINARY:
 				l_pgType = PG_BYTEA;
 				break;
 			case Types.OTHER:
@@ -1490,6 +1491,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				break;
 			case Types.BINARY:
 			case Types.VARBINARY:
+			case Types.LONGVARBINARY:
 				setObject(parameterIndex, x);
 				break;
 			case Types.OTHER:

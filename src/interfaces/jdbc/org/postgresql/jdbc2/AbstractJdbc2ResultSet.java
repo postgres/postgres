@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.18 2003/03/25 02:24:07 davec Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.19 2003/05/03 20:40:45 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,11 +148,18 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 			default:
 				String type = field.getPGType();
+
 				// if the backend doesn't know the type then coerce to String
 				if (type.equals("unknown"))
 				{
 					return getString(columnIndex);
 				}
+                                // Specialized support for ref cursors is neater.
+                                else if (type.equals("refcursor"))
+                                {
+                                        String cursorName = getString(columnIndex);
+                                        return statement.createRefCursorResultSet(cursorName);
+                                }
 				else
 				{
 					return connection.getObject(field.getPGType(), getString(columnIndex));

@@ -3,6 +3,7 @@ package org.postgresql.jdbc1;
 
 import java.sql.*;
 import java.util.Vector;
+import org.postgresql.PGRefCursorResultSet;
 import org.postgresql.core.BaseResultSet;
 import org.postgresql.core.Field;
 
@@ -17,6 +18,11 @@ public class Jdbc1CallableStatement extends AbstractJdbc1Statement implements ja
 	public BaseResultSet createResultSet (Field[] fields, java.util.Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
 	{
 		return new Jdbc1ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
+	}
+
+ 	public PGRefCursorResultSet createRefCursorResultSet (String cursorName) throws SQLException
+	{
+                return new Jdbc1RefCursorResultSet(this, cursorName);
 	}
 }
 

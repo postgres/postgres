@@ -2,7 +2,9 @@ package org.postgresql.jdbc3;
 
 
 import java.sql.*;
+import org.postgresql.PGRefCursorResultSet;
 import org.postgresql.core.BaseResultSet;
+import org.postgresql.core.BaseStatement;
 import org.postgresql.core.Field;
 
 public class Jdbc3PreparedStatement extends org.postgresql.jdbc3.AbstractJdbc3Statement implements java.sql.PreparedStatement
@@ -15,8 +17,12 @@ public class Jdbc3PreparedStatement extends org.postgresql.jdbc3.AbstractJdbc3St
 
 	public BaseResultSet createResultSet (Field[] fields, java.util.Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
 	{
-		return new Jdbc3ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
+                return new Jdbc3ResultSet((BaseStatement)this, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}
-
+         
+  	public PGRefCursorResultSet createRefCursorResultSet (String cursorName) throws SQLException
+	{
+                return new Jdbc3RefCursorResultSet(this, cursorName);
+	}
 }
 

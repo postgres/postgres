@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.11 2003/03/08 06:06:55 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.12 2003/05/03 20:40:45 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,11 +575,18 @@ public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 				return getBytes(columnIndex);
 			default:
 				String type = field.getPGType();
+
 				// if the backend doesn't know the type then coerce to String
 				if (type.equals("unknown"))
 				{
 					return getString(columnIndex);
 				}
+                                // Specialized support for ref cursors is neater.
+                                else if (type.equals("refcursor"))
+                                {
+                                        String cursorName = getString(columnIndex);
+                                        return statement.createRefCursorResultSet(cursorName);
+                                }
 				else
 				{
 					return connection.getObject(field.getPGType(), getString(columnIndex));
