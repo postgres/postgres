@@ -26,6 +26,15 @@ endif
 LDFLAGS+= -Wl,+b -Wl,$(libdir) -Wl,-z
 export_dynamic = -Wl,-E
 
+AROPT = crs
+
+DLSUFFIX = .sl
+ifeq ($(GCC), yes)
+CFLAGS_SL = -fPIC
+else
+CFLAGS_SL = +z
+endif
+
 # Rule for building shared libs (currently used only for regression test
 # shlib ... should go away, since this is not really enough knowledge)
 %.sl: %.o

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.32 2000/10/07 14:39:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.33 2000/10/21 22:36:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#if defined(__alpha__) && !defined(linux)
+#if defined(__alpha) && !defined(linux)
 #include <sys/sysinfo.h>
 #include "machine/hal_sysinfo.h"
 #define ASSEMBLER
@@ -43,7 +43,7 @@ main(int argc, char *argv[])
 {
 	int			len;
 
-#if defined(__alpha__)
+#if defined(__alpha)
 #ifdef NOFIXADE
 	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
 
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
 #endif
 
-#if defined(__alpha__)
+#if defined(__alpha)
 	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
 				   (unsigned long) NULL) < 0)
 		elog(NOTICE, "setsysinfo failed: %d\n", errno);

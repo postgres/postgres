@@ -115,16 +115,15 @@ AC_LINK_FILES([src/makefiles/Makefile.${template}], [src/Makefile.port])
 # Pick right test-and-set (TAS) code.  Most platforms have inline
 # assembler code in src/include/storage/s_lock.h, so we just use
 # a dummy file here.
-tas_file=dummy.s
-need_tas=no
 case $host in
   *-*-hpux*)        need_tas=yes; tas_file=hpux.s ;;
   sparc-*-solaris*) need_tas=yes; tas_file=solaris_sparc.s ;;
   i?86-*-solaris)   need_tas=yes; tas_file=solaris_i386.s ;;
+  *)                need_tas=no;  tas_file=dummy.s ;;
 esac
+AC_LINK_FILES([src/backend/port/tas/${tas_file}], [src/backend/port/tas.s])
 
 if test "$need_tas" = yes ; then
-  AC_LINK_FILES([src/backend/port/tas/${tas_file}], [src/backend/port/tas.s])
   TAS=tas.o
 fi
 AC_SUBST(TAS)
@@ -249,12 +248,7 @@ AC_PROG_CC_WORKS
 AC_EXEEXT
 AC_PROG_CPP
 AC_PROG_GCC_TRADITIONAL
-
 AC_SUBST(GCC)
-AC_SUBST(AROPT)
-AC_SUBST(SHARED_LIB)
-AC_SUBST(DLSUFFIX)
-AC_SUBST(DL_LIB)
 
 # Create compiler version string
 if test x"$GCC" = x"yes" ; then

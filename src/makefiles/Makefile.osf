@@ -1,2 +1,8 @@
-%.so:  %.o
+AROPT = crs
+DLSUFFIX = .so
+CFLAGS_SL =
+
+%.so: %.o
 	$(LD) -shared -expect_unresolved '*' -o $@ $<
+
+LDFLAGS += -rpath $(libdir)

@@ -1,5 +1,2 @@
-AROPT=cq
 CFLAGS=
-SHARED_LIB='-K PIC'
-DLSUFFIX=.so
 CC="$CC -b elf"

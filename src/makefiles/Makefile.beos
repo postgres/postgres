@@ -1,7 +1,13 @@
 MK_NO_LORDER=true
+AROPT = crs
+
 ifdef ELF_SYSTEM
 export_dynamic = -Wl,-E
 endif
+
+DLSUFFIX = .so
+CFLAGS_SL = -fpic -DPIC
+
 %.so: %.o
 	ln -fs $(top_srcdir)/src/backend/postgres _APP_
 	$(CC) -nostart -Xlinker -soname=$@ -o $@ _APP_ $<

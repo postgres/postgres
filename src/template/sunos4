@@ -1,10 +1,1 @@
-AROPT=cr
-DLSUFFIX=.so
-
-if test "$GCC" = yes ; then
-  CFLAGS=
-  SHARED_LIB=-fPIC
-else
-  CFLAGS=
-  SHARED_LIB=-PIC
-fi
+CFLAGS=

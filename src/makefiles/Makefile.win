@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.6 2000/10/20 21:04:13 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.7 2000/10/21 22:36:13 petere Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
@@ -11,12 +11,15 @@ SHLIB_LINK=$(DLLLIBS)
 # (see http://sources.redhat.com/cygwin/faq/faq.html#SEC110)
 LIBS:=$(filter-out -lm -lc, $(LIBS))
 
+AROPT = crs
+DLSUFFIX = .dll
+CFLAGS_SL =
+
 %.dll: %.o
 	$(DLLTOOL) --export-all --output-def $*.def $<
 	$(DLLWRAP) -o $@ --def $*.def $< $(top_builddir)/src/utils/dllinit.o $(DLLLIBS)
 	rm -f $*.def
 
-curdir:=$(shell pwd)
-ifeq ($(findstring backend,$(curdir)), backend)
+ifeq ($(findstring backend,$(subdir)), backend)
 override CPPFLAGS+= -DBUILDING_DLL=1
 endif

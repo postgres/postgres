@@ -4,6 +4,8 @@
 
 LDFLAGS+= -lc /usr/ucblib/libucb.a -LD-Blargedynsym
 
+DLSUFFIX = .so
+CFLAGS_SL =
+
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
-

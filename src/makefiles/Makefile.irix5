@@ -1,7 +1,10 @@
-
 # RANLIB is not used on IRIX 5
 RANLIB= touch
 MK_NO_LORDER= true
+AROPT = crs
+
+DLSUFFIX = .so
+CFLAGS_SL =
 
 %.so: %.o
 	$(LD) -G -Bdynamic -shared -o $@ $< 

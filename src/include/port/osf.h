@@ -1,3 +1,4 @@
+#define NOFIXADE
 #define USE_POSIX_TIME
 #define DISABLE_XOPEN_NLS
 #define HAS_TEST_AND_SET
@@ -5,8 +6,3 @@
 /*typedef msemaphore slock_t;*/
 #include <alpha/builtins.h>
 typedef volatile long slock_t;
-
-/* some platforms define __alpha, but not __alpha__ */
-#if defined(__alpha) && !defined(__alpha__)
-#define __alpha__
-#endif

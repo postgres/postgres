@@ -1,4 +1,1 @@
-AROPT=crs
 CFLAGS=
-SHARED_LIB=-fpic
-DLSUFFIX=.so

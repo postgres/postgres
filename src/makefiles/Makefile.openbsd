@@ -1,6 +1,12 @@
+AROPT = cq
+
 ifdef ELF_SYSTEM
 export_dynamic = -Wl,-E
 endif
+
+DLSUFFIX = .so
+CFLAGS_SL = -fpic -DPIC
+
 %.so: %.o
 ifdef ELF_SYSTEM
 	$(LD) -x -Bshareable -o $@ $<

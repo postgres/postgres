@@ -1,11 +1,6 @@
-AROPT=crs
-DLSUFFIX=.so
-
 if test "$GCC" = yes ; then
   CFLAGS=
-  SHARED_LIB=-fPIC
 else
   CC="$CC -Xa"			# relaxed ISO C mode
   CFLAGS=-v			# -v is like gcc -Wall
-  SHARED_LIB=-KPIC
 fi

@@ -1,4 +1,3 @@
-AROPT=cq
 CFLAGS='-O2 -pipe'
 
 case $host_cpu in
@@ -11,12 +10,6 @@ esac
 
 case $host_os in
   bsdi2.0 | bsdi2.1 | bsdi3*)
-    SHARED_LIB=
-    DLSUFFIX=.o
     CC=gcc2
-    ;;
-  *)
-    SHARED_LIB=-fpic
-    DLSUFFIX=.so
     ;;
 esac

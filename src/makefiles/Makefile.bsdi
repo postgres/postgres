@@ -1,8 +1,22 @@
-# for bsdi 4.0 ELF
-# if we defined .so in template/bsdi_4.0
+AROPT = cq
+
+# bsdi 4.0 and later is ELF
+DLSUFFIX = .so
+ifeq ($(host_os), bsdi2.0)
+DLSUFFIX = .o
+endif
+ifeq ($(host_os), bsdi2.1)
+DLSUFFIX = .o
+endif
+ifeq ($(findstring bsdi3, $(host_os)), bsdi3)
+DLSUFFIX = .o
+endif
 
 ifeq ($(DLSUFFIX), .so)
+CFLAGS_SL = -fpic
 export_dynamic = -export-dynamic
+else
+CFLAGS_SL =
 endif
 
 %.so: %.o

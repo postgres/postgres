@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.102 2000/10/20 23:57:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.103 2000/10/21 22:36:11 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -137,7 +137,6 @@ override CPPFLAGS += $(sort -I$(top_srcdir)/src/include -I$(top_builddir)/src/in
 CC = @CC@
 GCC = @GCC@
 CFLAGS = @CFLAGS@
-CFLAGS_SL = @SHARED_LIB@
 ifeq ($(GCC), yes)
   CFLAGS += -Wall -Wmissing-prototypes -Wmissing-declarations
 endif
@@ -158,7 +157,6 @@ FLEXFLAGS = @FLEXFLAGS@ $(LFLAGS)
 
 # Linking
 
-AROPT = @AROPT@
 LIBS = @LIBS@
 LD = @LD@
 with_gnu_ld = @with_gnu_ld@
@@ -166,7 +164,6 @@ LDFLAGS = @LDFLAGS@ $(LIBS)
 KRB_LIBS = @KRB_LIBS@
 LDREL = -r
 LDOUT = -o
-DLSUFFIX = @DLSUFFIX@
 RANLIB = @RANLIB@
 LORDER = @LORDER@
 X = @EXEEXT@

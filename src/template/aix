@@ -1,23 +1,16 @@
-AROPT=crs
-DLSUFFIX=.so
-
 if test "$GCC" = yes ; then
   CFLAGS=-pipe
   CXXFLAGS=-pipe
-  SHARED_LIB=-lc
 else # not GCC
   case $host_os in
     aix3.2.5)
       CFLAGS='-qchars=signed -qmaxmem=8192 -qhalt=w -qsrcmsg'
-      SHARED_LIB='-e _nostart -lc'
       ;;
     aix4.1)
       CFLAGS='-qchars=signed -qmaxmem=8192 -qhalt=w -qsrcmsg -qcheck=divzero'
-      SHARED_LIB='-bnoentry -lc'
       ;;
     aix4.2 | aix4.3)
       CFLAGS='-qmaxmem=16384 -qhalt=w -qsrcmsg -qlanglvl=extended -qlonglong'
-      SHARED_LIB='-lc'
       ;;
   esac
 fi # not GCC

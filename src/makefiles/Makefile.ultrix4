@@ -1,7 +1,9 @@
 SHELL=/bin/sh5
+AROPT = crs
 
-#
+DLSUFFIX = .so
 # "-G 0" works for both DEC cc and GNU cc.
-#
+CFLAGS_SL = -G 0
+
 %.so: %.c
 	$(CC) -c -G 0 $(CPPFLAGS) $(CFLAGS) -o $@ $<

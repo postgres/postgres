@@ -1,2 +1,11 @@
+AROPT = cr
+
+DLSUFFIX = .so
+ifeq ($(GCC), yes)
+CFLAGS_SL = -fPIC
+else
+CFLAGS_SL = -PIC
+endif
+
 %.so: %.o
 	$(LD) -dc -dp -Bdynamic -o $@ $<

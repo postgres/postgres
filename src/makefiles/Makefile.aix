@@ -4,6 +4,19 @@ MAKE_EXPORTS= true
 
 RANLIB= touch
 MK_NO_LORDER= true
+AROPT = crs
+
+DLSUFFIX = .so
+ifneq ($(GCC), yes)
+  ifeq ($(host_os), aix3.2.5)
+    CFLAGS_SL = -e _nostart
+  endif
+  ifeq ($(host_os), aix4.1)
+    CFLAGS_SL = -bnoentry
+  endif
+endif
+CFLAGS_SL += -lc
+
 
 EXPSUFF= .exp
 IMPSUFF= .imp

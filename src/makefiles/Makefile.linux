@@ -1,5 +1,7 @@
+AROPT = crs
 export_dynamic = -export-dynamic
-MK_NO_LORDER= true
+DLSUFFIX = .so
+CFLAGS_SL = -fpic
 
 %.so: %.o
 	$(CC) -shared -o $@ $<
