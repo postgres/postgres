@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.71 2001/03/22 06:16:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.72 2001/06/12 05:55:49 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -738,44 +738,46 @@ heap_freetuple(HeapTuple htup)
 }
 
 
-/* ----------------------------------------------------------------
- *						other misc functions
- * ----------------------------------------------------------------
+/* ----------------
+ *		heap_addheader
+ *
+ * This routine forms a HeapTuple by copying the given structure (tuple
+ * data) and adding a generic header.  Note that the tuple data is
+ * presumed to contain no null fields.  It is typically only useful
+ * for null-free system tables.
+ * ----------------
  */
-
 HeapTuple
-heap_addheader(uint32 natts,	/* max domain index */
-			   int structlen,	/* its length */
-			   char *structure) /* pointer to the struct */
+heap_addheader(int natts,		/* max domain index */
+			   Size structlen,	/* its length */
+			   void *structure) /* pointer to the struct */
 {
 	HeapTuple	tuple;
-	HeapTupleHeader td;			/* tuple data */
-	unsigned long len;
+	HeapTupleHeader td;
+	Size		len;
 	int			hoff;
 
 	AssertArg(natts > 0);
 
-	len = offsetof(HeapTupleHeaderData, t_bits);
+	/* header needs no null bitmap */
+	hoff = MAXALIGN(offsetof(HeapTupleHeaderData, t_bits));
+	len = hoff + structlen;
 
-	hoff = len = MAXALIGN(len); /* be conservative */
-	len += structlen;
 	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
-	tuple->t_datamcxt = CurrentMemoryContext;
-	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	tuple->t_len = len;
 	ItemPointerSetInvalid(&(tuple->t_self));
 	tuple->t_tableOid = InvalidOid;
+	tuple->t_datamcxt = CurrentMemoryContext;
+	tuple->t_data = td = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	MemSet((char *) td, 0, len);
 
 	td->t_hoff = hoff;
 	td->t_natts = natts;
-	td->t_infomask = 0;
-	td->t_infomask |= HEAP_XMAX_INVALID;
+	td->t_infomask = HEAP_XMAX_INVALID;	/* XXX sufficient? */
 
-	if (structlen > 0)
-		memcpy((char *) td + hoff, structure, (size_t) structlen);
+	memcpy((char *) td + hoff, structure, structlen);
 
 	return tuple;
 }

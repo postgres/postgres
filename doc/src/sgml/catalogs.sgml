@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.17 2001/05/14 20:30:19 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.18 2001/06/12 05:55:48 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -645,7 +645,8 @@
       <entry>relisshared</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>XXX (This is not what it seems to be.)</entry>
+      <entry>True if this table is shared across all databases in the
+      cluster.</entry>
      </row>
 
      <row>

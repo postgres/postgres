@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.136 2001/06/01 02:41:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.137 2001/06/12 05:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,7 +1116,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
-	if (IsSharedSystemRelationName(NameStr(relation->rd_rel->relname)))
+	if (relation->rd_rel->relisshared)
 		relation->rd_node.tblNode = InvalidOid;
 	else
 		relation->rd_node.tblNode = MyDatabaseId;
@@ -1201,7 +1201,6 @@ IndexedAccessMethodInitialize(Relation relation)
  *		catalogs...
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
- *
  */
 static void
 formrdesc(char *relationName,
@@ -1245,15 +1244,10 @@ formrdesc(char *relationName,
 	strcpy(RelationGetPhysicalRelationName(relation), relationName);
 
 	/*
-	 * For debugging purposes, it's important to distinguish between
-	 * shared and non-shared relations, even at bootstrap time.  There's
-	 * code in the buffer manager that traces allocations that has to know
-	 * about this.
+	 * It's important to distinguish between shared and non-shared relations,
+	 * even at bootstrap time, to make sure we know where they are stored.
 	 */
-	if (IsSystemRelationName(relationName))
-		relation->rd_rel->relisshared = IsSharedSystemRelationName(relationName);
-	else
-		relation->rd_rel->relisshared = false;
+	relation->rd_rel->relisshared = IsSharedSystemRelationName(relationName);
 
 	relation->rd_rel->relpages = 1;
 	relation->rd_rel->reltuples = 1;
@@ -1286,7 +1280,7 @@ formrdesc(char *relationName,
 	 */
 	RelationInitLockInfo(relation);		/* see lmgr.c */
 
-	if (IsSharedSystemRelationName(relationName))
+	if (relation->rd_rel->relisshared)
 		relation->rd_node.tblNode = InvalidOid;
 	else
 		relation->rd_node.tblNode = MyDatabaseId;
@@ -1301,14 +1295,15 @@ formrdesc(char *relationName,
 	/* In bootstrap mode, we have no indexes */
 	if (!IsBootstrapProcessingMode())
 	{
-		for (i = 0; IndexedCatalogNames[i] != NULL; i++)
-		{
-			if (strcmp(IndexedCatalogNames[i], relationName) == 0)
-			{
-				relation->rd_rel->relhasindex = true;
-				break;
-			}
-		}
+		/*
+		 * This list is incomplete, but it only has to work for the
+		 * set of rels that formrdesc is used for ...
+		 */
+		if (strcmp(relationName, RelationRelationName) == 0 ||
+			strcmp(relationName, AttributeRelationName) == 0 ||
+			strcmp(relationName, ProcedureRelationName) == 0 ||
+			strcmp(relationName, TypeRelationName) == 0)
+			relation->rd_rel->relhasindex = true;
 	}
 
 	/*
@@ -1323,7 +1318,6 @@ formrdesc(char *relationName,
  *
  *		Update the phony data inserted by formrdesc() with real info
  *		from pg_class.
- *
  */
 static void
 fixrdesc(char *relationName)

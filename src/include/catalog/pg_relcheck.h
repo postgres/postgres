@@ -27,7 +27,7 @@
  *		typedef struct FormData_pg_relcheck
  * ----------------
  */
-CATALOG(pg_relcheck) BOOTSTRAP
+CATALOG(pg_relcheck)
 {
 	Oid			rcrelid;
 	NameData	rcname;

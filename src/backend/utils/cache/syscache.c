@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.61 2001/05/07 00:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.62 2001/06/12 05:55:49 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -31,7 +31,6 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_language.h"
-#include "catalog/pg_listener.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
@@ -214,15 +213,6 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{ListenerRelationName,		/* LISTENREL */
-		ListenerPidRelnameIndex,
-		2,
-		{
-			Anum_pg_listener_pid,
-			Anum_pg_listener_relname,
-			0,
-			0
-	}},
 	{OperatorRelationName,		/* OPERNAME */
 		OperatorNameIndex,
 		4,
@@ -277,20 +267,11 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{RewriteRelationName,		/* REWRITENAME */
+	{RewriteRelationName,		/* RULENAME */
 		RewriteRulenameIndex,
 		1,
 		{
 			Anum_pg_rewrite_rulename,
-			0,
-			0,
-			0
-	}},
-	{RewriteRelationName,		/* RULEOID */
-		RewriteOidIndex,
-		1,
-		{
-			ObjectIdAttributeNumber,
 			0,
 			0,
 			0

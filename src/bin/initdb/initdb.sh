@@ -15,15 +15,19 @@
 # changed to add site-local standard data.  Either one can be copied
 # to produce a new database.
 #
-# To create template1, we run the postgres (backend) program and
-# feed it data from the bki files that were installed.  template0 is
-# made just by copying the completed template1.
+# To create template1, we run the postgres (backend) program in bootstrap
+# mode and feed it data from the postgres.bki library file.  After this
+# initial bootstrap phase, some additional stuff is created by normal
+# SQL commands fed to a standalone backend.  Those commands are just
+# embedded into this script (yeah, it's ugly).
+#
+# template0 is made just by copying the completed template1.
 #
 #
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.125 2001/05/12 01:48:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.126 2001/06/12 05:55:50 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -338,11 +342,8 @@ fi
 # Find the input files
 #-------------------------------------------------------------------------
 
-TEMPLATE1_BKI="$datadir"/template1.bki
-GLOBAL_BKI="$datadir"/global.bki
-
-TEMPLATE1_DESCR="$datadir"/template1.description
-GLOBAL_DESCR="$datadir"/global.description
+POSTGRES_BKI="$datadir"/postgres.bki
+POSTGRES_DESCR="$datadir"/postgres.description
 
 PG_HBA_SAMPLE="$datadir"/pg_hba.conf.sample
 PG_IDENT_SAMPLE="$datadir"/pg_ident.conf.sample
@@ -353,8 +354,8 @@ then
     echo
     echo "Initdb variables:"
     for var in PGDATA datadir PGPATH TEMPFILE MULTIBYTE MULTIBYTEID \
-        POSTGRES_SUPERUSERNAME POSTGRES_SUPERUSERID TEMPLATE1_BKI GLOBAL_BKI \
-        TEMPLATE1_DESCR GLOBAL_DESCR POSTGRESQL_CONF_SAMPLE \
+        POSTGRES_SUPERUSERNAME POSTGRES_SUPERUSERID POSTGRES_BKI \
+        POSTGRES_DESCR POSTGRESQL_CONF_SAMPLE \
 	PG_HBA_SAMPLE PG_IDENT_SAMPLE ; do
         eval "echo '  '$var=\$$var"
     done
@@ -364,8 +365,8 @@ if [ "$show_setting" = yes ] ; then
     exit 0
 fi
 
-for PREREQ_FILE in "$TEMPLATE1_BKI" "$GLOBAL_BKI" "$PG_HBA_SAMPLE" \
-    "$PG_IDENT_SAMPLE"
+for PREREQ_FILE in "$POSTGRES_BKI" "$POSTGRES_DESCR" \
+    "$PG_HBA_SAMPLE" "$PG_IDENT_SAMPLE" "$POSTGRESQL_CONF_SAMPLE"
 do
     if [ ! -f "$PREREQ_FILE" ] ; then
       (
@@ -377,7 +378,8 @@ do
     fi
 done
 
-for file in "$TEMPLATE1_BKI" "$GLOBAL_BKI"; do
+for file in "$POSTGRES_BKI"
+do
      if [ x"`sed 1q $file`" != x"# PostgreSQL $short_version" ]; then
        (
          echo "The input file '$file' needed by $CMDNAME does not"
@@ -445,7 +447,7 @@ fi
 
 ##########################################################################
 #
-# CREATE TEMPLATE1 DATABASE
+# RUN BKI SCRIPT IN BOOTSTRAP MODE TO CREATE TEMPLATE1
 
 rm -rf "$PGDATA"/base/1 || exit_nicely
 mkdir "$PGDATA"/base/1 || exit_nicely
@@ -455,35 +457,23 @@ then
     BACKEND_TALK_ARG="-d"
 fi
 
-BACKENDARGS="-boot -F -D$PGDATA $BACKEND_TALK_ARG"
 FIRSTRUN="-boot -x1 -F -D$PGDATA $BACKEND_TALK_ARG"
 
 echo "Creating template1 database in $PGDATA/base/1"
 [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
 
-cat "$TEMPLATE1_BKI" \
-| sed -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
+cat "$POSTGRES_BKI" \
+| sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
+      -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
+      -e "s/ENCODING/$MULTIBYTEID/g" \
 | "$PGPATH"/postgres $FIRSTRUN template1 \
 || exit_nicely
 
 echo $short_version > "$PGDATA"/base/1/PG_VERSION || exit_nicely
 
-
 ##########################################################################
 #
-# CREATE GLOBAL TABLES
-#
-
-echo "Creating global relations in $PGDATA/global"
-
-[ "$debug" = yes ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
-
-cat "$GLOBAL_BKI" \
-| sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
-      -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
-      -e "s/ENCODING/$MULTIBYTEID/g" \
-| "$PGPATH"/postgres $BACKENDARGS template1 \
-|| exit_nicely
+# CREATE CONFIG FILES
 
 echo $short_version > "$PGDATA/PG_VERSION" || exit_nicely
 
@@ -492,7 +482,6 @@ cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
 cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
 chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 	"$PGDATA"/postgresql.conf
-
 
 ##########################################################################
 #
@@ -614,8 +603,7 @@ echo "CREATE VIEW pg_indexes AS \
 
 echo "Loading pg_description."
 echo "COPY pg_description FROM STDIN" > $TEMPFILE
-cat "$TEMPLATE1_DESCR" >> $TEMPFILE
-cat "$GLOBAL_DESCR" >> $TEMPFILE
+cat "$POSTGRES_DESCR" >> $TEMPFILE
 
 cat $TEMPFILE \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely

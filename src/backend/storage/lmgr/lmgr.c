@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.45 2001/03/22 03:59:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.46 2001/06/12 05:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,16 +107,12 @@ InitLockTable(int maxBackends)
 void
 RelationInitLockInfo(Relation relation)
 {
-	char	   *relname;
-
 	Assert(RelationIsValid(relation));
 	Assert(OidIsValid(RelationGetRelid(relation)));
 
-	relname = (char *) RelationGetPhysicalRelationName(relation);
-
 	relation->rd_lockInfo.lockRelId.relId = RelationGetRelid(relation);
 
-	if (IsSharedSystemRelationName(relname))
+	if (relation->rd_rel->relisshared)
 		relation->rd_lockInfo.lockRelId.dbId = InvalidOid;
 	else
 		relation->rd_lockInfo.lockRelId.dbId = MyDatabaseId;

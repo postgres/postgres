@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.77 2001/03/22 03:59:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.78 2001/06/12 05:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,21 +28,25 @@
 #include "utils/syscache.h"
 
 /*
- * Names of indices - they match all system caches
+ * Names of indices for each system catalog.
  */
 
 char	   *Name_pg_aggregate_indices[Num_pg_aggregate_indices] =
 {AggregateNameTypeIndex};
 char	   *Name_pg_am_indices[Num_pg_am_indices] =
-{AmNameIndex};
+{AmNameIndex, AmOidIndex};
 char	   *Name_pg_amop_indices[Num_pg_amop_indices] =
 {AccessMethodOpidIndex, AccessMethodStrategyIndex};
+char	   *Name_pg_amproc_indices[Num_pg_amproc_indices] =
+{AccessProcedureIndex};
 char	   *Name_pg_attr_indices[Num_pg_attr_indices] =
 {AttributeRelidNameIndex, AttributeRelidNumIndex};
 char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] =
 {AttrDefaultIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] =
 {ClassNameIndex, ClassOidIndex};
+char	   *Name_pg_database_indices[Num_pg_database_indices] =
+{DatabaseNameIndex, DatabaseOidIndex};
 char	   *Name_pg_group_indices[Num_pg_group_indices] =
 {GroupNameIndex, GroupSysidIndex};
 char	   *Name_pg_index_indices[Num_pg_index_indices] =
@@ -53,10 +57,8 @@ char	   *Name_pg_language_indices[Num_pg_language_indices] =
 {LanguageOidIndex, LanguageNameIndex};
 char	   *Name_pg_largeobject_indices[Num_pg_largeobject_indices] =
 {LargeObjectLOidPNIndex};
-char	   *Name_pg_listener_indices[Num_pg_listener_indices] =
-{ListenerPidRelnameIndex};
 char	   *Name_pg_opclass_indices[Num_pg_opclass_indices] =
-{OpclassNameIndex, OpclassDeftypeIndex};
+{OpclassDeftypeIndex, OpclassNameIndex, OpclassOidIndex};
 char	   *Name_pg_operator_indices[Num_pg_operator_indices] =
 {OperatorOidIndex, OperatorNameIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] =
@@ -64,7 +66,7 @@ char	   *Name_pg_proc_indices[Num_pg_proc_indices] =
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] =
 {RelCheckIndex};
 char	   *Name_pg_rewrite_indices[Num_pg_rewrite_indices] =
-{RewriteOidIndex, RewriteRulenameIndex};
+{RewriteRulenameIndex};
 char	   *Name_pg_shadow_indices[Num_pg_shadow_indices] =
 {ShadowNameIndex, ShadowSysidIndex};
 char	   *Name_pg_statistic_indices[Num_pg_statistic_indices] =

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.132 2001/06/07 00:09:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.133 2001/06/12 05:55:49 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -411,8 +411,8 @@ AlterTableAddColumn(const char *relationName,
 	attributeD.attrelid = reltup->t_data->t_oid;
 
 	attributeTuple = heap_addheader(Natts_pg_attribute,
-									sizeof attributeD,
-									(char *) &attributeD);
+									ATTRIBUTE_TUPLE_SIZE,
+									(void *) &attributeD);
 
 	attribute = (Form_pg_attribute) GETSTRUCT(attributeTuple);
 
@@ -481,7 +481,7 @@ AlterTableAddColumn(const char *relationName,
 	if (hasindex)
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
 
-	heap_close(attrdesc, RowExclusiveLock);
+	heap_close(attrdesc, NoLock);
 
 	/*
 	 * Update number of attributes in pg_class tuple
@@ -580,17 +580,15 @@ AlterTableAlterColumnDefault(const char *relationName,
 						   PointerGetDatum(colName),
 						   0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
-		heap_close(rel, AccessExclusiveLock);
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
 			 relationName, colName);
-	}
 
 	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
 	ReleaseSysCache(tuple);
 
-	if (newDefault)				/* SET DEFAULT */
+	if (newDefault)
 	{
+		/* SET DEFAULT */
 		List	   *rawDefaults = NIL;
 		RawColumnDefault *rawEnt;
 
@@ -608,15 +606,14 @@ AlterTableAlterColumnDefault(const char *relationName,
 		 */
 		AddRelationRawConstraints(rel, rawDefaults, NIL);
 	}
-
 	else
-/* DROP DEFAULT */
 	{
+		/* DROP DEFAULT */
 		Relation	attr_rel;
 		ScanKeyData scankeys[3];
 		HeapScanDesc scan;
 
-		attr_rel = heap_openr(AttributeRelationName, AccessExclusiveLock);
+		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 		ScanKeyEntryInitialize(&scankeys[0], 0x0,
 							   Anum_pg_attribute_attrelid, F_OIDEQ,
 							   ObjectIdGetDatum(myrelid));
@@ -665,7 +662,7 @@ drop_default(Oid relid, int16 attnum)
 	Relation	attrdef_rel;
 	HeapTuple	tuple;
 
-	attrdef_rel = heap_openr(AttrDefaultRelationName, AccessExclusiveLock);
+	attrdef_rel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&scankeys[0], 0x0,
 						   Anum_pg_attrdef_adrelid, F_OIDEQ,
 						   ObjectIdGetDatum(relid));
@@ -778,7 +775,7 @@ AlterTableAlterColumnStatistics(const char *relationName,
 	}
 
 	heap_freetuple(tuple);
-	heap_close(attrelation, RowExclusiveLock);
+	heap_close(attrelation, NoLock);
 }
 
 
@@ -1010,8 +1007,7 @@ AlterTableDropColumn(const char *relationName,
 {
 #ifdef	_DROP_COLUMN_HACK__
 	Relation	rel,
-				attrdesc,
-				adrel;
+				attrdesc;
 	Oid			myrelid,
 				attoid;
 	HeapTuple	reltup;
@@ -1023,8 +1019,6 @@ AlterTableDropColumn(const char *relationName,
 	int			attnum;
 	bool		hasindex;
 	char		dropColname[32];
-	void	   *sysscan;
-	ScanKeyData scankeys[2];
 
 	if (inh)
 		elog(ERROR, "ALTER TABLE / DROP COLUMN with inherit option is not supported yet");
@@ -1136,30 +1130,9 @@ AlterTableDropColumn(const char *relationName,
 
 	/* delete comments */
 	DeleteComments(attoid);
-	/* delete attrdef */
-	adrel = heap_openr(AttrDefaultRelationName, RowExclusiveLock);
-	ScanKeyEntryInitialize(&scankeys[0], 0x0, Anum_pg_attrdef_adrelid,
-						   F_OIDEQ, ObjectIdGetDatum(myrelid));
 
-	/*--------
-	 * Oops pg_attrdef doesn't have (adrelid,adnum) index
-	 *
-	 *	ScanKeyEntryInitialize(&scankeys[1], 0x0, Anum_pg_attrdef_adnum,
-	 * 								F_INT2EQ, Int16GetDatum(attnum));
-	 *	sysscan = systable_beginscan(adrel, AttrDefaultIndex, 2, scankeys);
-	 *--------
-	 */
-	sysscan = systable_beginscan(adrel, AttrDefaultIndex, 1, scankeys);
-	while (HeapTupleIsValid(tup = systable_getnext(sysscan)))
-	{
-		if (((Form_pg_attrdef) GETSTRUCT(tup))->adnum == attnum)
-		{
-			simple_heap_delete(adrel, &tup->t_self);
-			break;
-		}
-	}
-	systable_endscan(sysscan);
-	heap_close(adrel, NoLock);
+	/* delete attrdef */
+	drop_default(myrelid, attnum);
 
 	/*
 	 * Remove objects which reference this column
@@ -1318,10 +1291,7 @@ AlterTableAddConstraint(char *relationName,
 							heap_endscan(scan);
 
 							if (!successful)
-							{
-								heap_close(rel, NoLock);
 								elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
-							}
 
 							/*
 							 * Call AddRelationRawConstraints to do the
@@ -1768,7 +1738,7 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 	 * unlock everything and return
 	 */
 	heap_freetuple(tuple);
-	heap_close(class_rel, RowExclusiveLock);
+	heap_close(class_rel, NoLock);
 }
 
 

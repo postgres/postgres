@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.153 2001/06/01 02:41:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.154 2001/06/12 05:55:49 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -343,17 +343,19 @@ AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
 static void
 ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 {
-	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid,
-													 CacheMemoryContext);
-
 	/*
-	 * XXX missing the initialization of some other fields
+	 * Fill in a copy of relevant pg_am entry
 	 */
-
+	indexRelation->rd_am = AccessMethodObjectIdGetForm(amoid,
+													   CacheMemoryContext);
+	/*
+	 * Set up some additional fields of the index' pg_class entry.
+	 * In particular, initialize knowledge of whether the index is shared.
+	 */
 	indexRelation->rd_rel->relowner = GetUserId();
-
 	indexRelation->rd_rel->relam = amoid;
-	indexRelation->rd_rel->reltuples = 1;		/* XXX */
+	indexRelation->rd_rel->relisshared = 
+		IsSharedSystemRelationName(RelationGetPhysicalRelationName(indexRelation));
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
 }
 
@@ -374,7 +376,7 @@ UpdateRelationRelation(Relation indexRelation, char *temp_relname)
 	/* XXX Natts_pg_class_fixed is a hack - see pg_class.h */
 	tuple = heap_addheader(Natts_pg_class_fixed,
 						   CLASS_TUPLE_SIZE,
-						   (char *) indexRelation->rd_rel);
+						   (void *) indexRelation->rd_rel);
 
 	/*
 	 * the new tuple must have the same oid as the relcache entry for the
@@ -428,50 +430,22 @@ InitializeAttributeOids(Relation indexRelation,
 
 /* ----------------------------------------------------------------
  *		AppendAttributeTuples
- *
- *		XXX For now, only change the ATTNUM attribute value
  * ----------------------------------------------------------------
  */
 static void
 AppendAttributeTuples(Relation indexRelation, int numatts)
 {
 	Relation	pg_attribute;
-	HeapTuple	init_tuple,
-				cur_tuple = NULL,
-				new_tuple;
 	bool		hasind;
 	Relation	idescs[Num_pg_attr_indices];
-	Datum		value[Natts_pg_attribute];
-	char		nullv[Natts_pg_attribute];
-	char		replace[Natts_pg_attribute];
 	TupleDesc	indexTupDesc;
+	HeapTuple	new_tuple;
 	int			i;
 
 	/*
 	 * open the attribute relation
 	 */
 	pg_attribute = heap_openr(AttributeRelationName, RowExclusiveLock);
-
-	/*
-	 * initialize *null, *replace and *value
-	 */
-	MemSet(nullv, ' ', Natts_pg_attribute);
-	MemSet(replace, ' ', Natts_pg_attribute);
-
-	/* ----------
-	 *	create the first attribute tuple.
-	 *	XXX For now, only change the ATTNUM attribute value
-	 * ----------
-	 */
-	replace[Anum_pg_attribute_attnum - 1] = 'r';
-	replace[Anum_pg_attribute_attcacheoff - 1] = 'r';
-
-	value[Anum_pg_attribute_attnum - 1] = Int16GetDatum(1);
-	value[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(-1);
-
-	init_tuple = heap_addheader(Natts_pg_attribute,
-								ATTRIBUTE_TUPLE_SIZE,
-							 (char *) (indexRelation->rd_att->attrs[0]));
 
 	hasind = false;
 	if (!IsIgnoringSystemIndexes() && pg_attribute->rd_rel->relhasindex)
@@ -481,60 +455,35 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	}
 
 	/*
-	 * insert the first attribute tuple.
-	 */
-	cur_tuple = heap_modifytuple(init_tuple,
-								 pg_attribute,
-								 value,
-								 nullv,
-								 replace);
-	heap_freetuple(init_tuple);
-
-	heap_insert(pg_attribute, cur_tuple);
-	if (hasind)
-		CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, cur_tuple);
-
-	/*
-	 * now we use the information in the index cur_tuple descriptor to
-	 * form the remaining attribute tuples.
+	 * insert data from new index's tupdesc into pg_attribute
 	 */
 	indexTupDesc = RelationGetDescr(indexRelation);
 
-	for (i = 1; i < numatts; i += 1)
+	for (i = 0; i < numatts; i++)
 	{
-
 		/*
-		 * process the remaining attributes...
+		 * There used to be very grotty code here to set these fields,
+		 * but I think it's unnecessary.  They should be set already.
 		 */
-		memmove(GETSTRUCT(cur_tuple),
-				(char *) indexTupDesc->attrs[i],
-				ATTRIBUTE_TUPLE_SIZE);
+		Assert(indexTupDesc->attrs[i]->attnum == i+1);
+		Assert(indexTupDesc->attrs[i]->attcacheoff == -1);
 
-		value[Anum_pg_attribute_attnum - 1] = Int16GetDatum(i + 1);
-
-		new_tuple = heap_modifytuple(cur_tuple,
-									 pg_attribute,
-									 value,
-									 nullv,
-									 replace);
-		heap_freetuple(cur_tuple);
+		new_tuple = heap_addheader(Natts_pg_attribute,
+								   ATTRIBUTE_TUPLE_SIZE,
+								   (void *) indexTupDesc->attrs[i]);
 
 		heap_insert(pg_attribute, new_tuple);
+
 		if (hasind)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, new_tuple);
 
-		/*
-		 * ModifyHeapTuple returns a new copy of a cur_tuple so we free
-		 * the original and use the copy..
-		 */
-		cur_tuple = new_tuple;
+		heap_freetuple(new_tuple);
 	}
 
-	if (cur_tuple)
-		heap_freetuple(cur_tuple);
-	heap_close(pg_attribute, RowExclusiveLock);
 	if (hasind)
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+
+	heap_close(pg_attribute, RowExclusiveLock);
 }
 
 /* ----------------------------------------------------------------
@@ -613,7 +562,7 @@ UpdateIndexRelation(Oid indexoid,
 	 */
 	tuple = heap_addheader(Natts_pg_index,
 						   itupLen,
-						   (char *) indexForm);
+						   (void *) indexForm);
 
 	/*
 	 * insert the tuple into the pg_index
@@ -1994,7 +1943,7 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 	if (!inplace)
 	{
-		inplace = IsSharedSystemRelationName(NameStr(iRel->rd_rel->relname));
+		inplace = iRel->rd_rel->relisshared;
 		if (!inplace)
 			setNewRelfilenode(iRel);
 	}
@@ -2114,7 +2063,7 @@ reindex_relation(Oid relid, bool force)
 	 * Shared system indexes must be overwritten because it's impossible
 	 * to update pg_class tuples of all databases.
 	 */
-	if (IsSharedSystemRelationName(NameStr(rel->rd_rel->relname)))
+	if (rel->rd_rel->relisshared)
 	{
 		if (IsIgnoringSystemIndexes())
 		{

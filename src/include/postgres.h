@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.48 2001/03/23 18:26:01 tgl Exp $
+ * $Id: postgres.h,v 1.49 2001/06/12 05:55:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,17 +569,13 @@ extern int	assertTest(int val);
  *				Section 4: genbki macros used by catalog/pg_xxx.h files
  * ----------------------------------------------------------------
  */
-#define CATALOG(x) \
-	typedef struct CppConcat(FormData_,x)
+#define CATALOG(x)  typedef struct CppConcat(FormData_,x)
 
-/* Huh? */
-#define DATA(x) extern int errno
-#define DESCR(x) extern int errno
-#define DECLARE_INDEX(x) extern int errno
-#define DECLARE_UNIQUE_INDEX(x) extern int errno
-
-#define BUILD_INDICES
 #define BOOTSTRAP
+
+/* these need to expand into some harmless, repeatable declaration */
+#define DATA(x)   extern int errno
+#define DESCR(x)  extern int errno
 
 #define BKI_BEGIN
 #define BKI_END

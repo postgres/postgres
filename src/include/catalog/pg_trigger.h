@@ -27,7 +27,7 @@
  *		typedef struct FormData_pg_trigger
  * ----------------
  */
-CATALOG(pg_trigger) BOOTSTRAP
+CATALOG(pg_trigger)
 {
 	Oid			tgrelid;		/* triggered relation */
 	NameData	tgname;			/* trigger' name */

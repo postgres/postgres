@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.166 2001/05/30 12:57:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.167 2001/06/12 05:55:49 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -218,8 +218,9 @@ heap_create(char *relname,
 	}
 
 	/*
-	 * real ugly stuff to assign the proper relid in the relation
-	 * descriptor follows.
+	 * Real ugly stuff to assign the proper relid in the relation
+	 * descriptor follows.  Note that only "bootstrapped" relations
+	 * whose OIDs are hard-coded in pg_class.h need be listed here.
 	 */
 	if (relname && IsSystemRelationName(relname))
 	{
@@ -263,12 +264,6 @@ heap_create(char *relname,
 			tblNode = InvalidOid;
 			relid = RelOid_pg_log;
 		}
-		else if (strcmp(AttrDefaultRelationName, relname) == 0)
-			relid = RelOid_pg_attrdef;
-		else if (strcmp(RelCheckRelationName, relname) == 0)
-			relid = RelOid_pg_relcheck;
-		else if (strcmp(TriggerRelationName, relname) == 0)
-			relid = RelOid_pg_trigger;
 		else
 		{
 			relid = newoid();
@@ -566,7 +561,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 
 		tup = heap_addheader(Natts_pg_attribute,
 							 ATTRIBUTE_TUPLE_SIZE,
-							 (char *) *dpp);
+							 (void *) *dpp);
 
 		heap_insert(rel, tup);
 
@@ -583,16 +578,18 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	dpp = SysAtt;
 	for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
 	{
-		/* Fill in the correct relation OID */
-		/* HACK: we are writing on static data here */
-		(*dpp)->attrelid = new_rel_oid;
-		/* Unneeded since they should be OK in the constant data anyway */
-		/* (*dpp)->attstattarget = 0; */
-		/* (*dpp)->attcacheoff = -1; */
+		Form_pg_attribute attStruct;
 
 		tup = heap_addheader(Natts_pg_attribute,
 							 ATTRIBUTE_TUPLE_SIZE,
-							 (char *) *dpp);
+							 (void *) *dpp);
+
+		/* Fill in the correct relation OID in the copied tuple */
+		attStruct = (Form_pg_attribute) GETSTRUCT(tup);
+		attStruct->attrelid = new_rel_oid;
+		/* Unneeded since they should be OK in the constant data anyway */
+		/* attStruct->attstattarget = 0; */
+		/* attStruct->attcacheoff = -1; */
 
 		heap_insert(rel, tup);
 
@@ -603,13 +600,13 @@ AddNewAttributeTuples(Oid new_rel_oid,
 		dpp++;
 	}
 
-	heap_close(rel, RowExclusiveLock);
-
 	/*
 	 * close pg_attribute indices
 	 */
 	if (hasindex)
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+
+	heap_close(rel, RowExclusiveLock);
 }
 
 /* --------------------------------
@@ -686,7 +683,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 */
 	tup = heap_addheader(Natts_pg_class_fixed,
 						 CLASS_TUPLE_SIZE,
-						 (char *) new_rel_reltup);
+						 (void *) new_rel_reltup);
 
 	/* force tuple to have the desired OID */
 	tup->t_data->t_oid = new_rel_oid;

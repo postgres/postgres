@@ -1,6 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * dbcommands.c
+ *		Database management commands (create/drop database).
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
@@ -8,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.74 2001/03/22 03:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.75 2001/06/12 05:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +26,7 @@
 #include "catalog/catalog.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/indexing.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
@@ -241,9 +243,8 @@ createdb(const char *dbname, const char *dbpath,
 	heap_insert(pg_database_rel, tuple);
 
 	/*
-	 * Update indexes (there aren't any currently)
+	 * Update indexes
 	 */
-#ifdef Num_pg_database_indices
 	if (RelationGetForm(pg_database_rel)->relhasindex)
 	{
 		Relation	idescs[Num_pg_database_indices];
@@ -254,7 +255,6 @@ createdb(const char *dbname, const char *dbpath,
 						   tuple);
 		CatalogCloseIndices(Num_pg_database_indices, idescs);
 	}
-#endif
 
 	/* Close pg_database, but keep lock till commit */
 	heap_close(pg_database_rel, NoLock);
@@ -333,7 +333,7 @@ dropdb(const char *dbname)
 		elog(ERROR, "DROP DATABASE: database \"%s\" is being accessed by other users", dbname);
 
 	/*
-	 * Find the database's tuple by OID (should be unique, we trust).
+	 * Find the database's tuple by OID (should be unique).
 	 */
 	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
 						   F_OIDEQ, ObjectIdGetDatum(db_id));
@@ -343,7 +343,6 @@ dropdb(const char *dbname)
 	tup = heap_getnext(pgdbscan, 0);
 	if (!HeapTupleIsValid(tup))
 	{
-
 		/*
 		 * This error should never come up since the existence of the
 		 * database is checked earlier

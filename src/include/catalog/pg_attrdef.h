@@ -27,7 +27,7 @@
  *		typedef struct FormData_pg_attrdef
  * ----------------
  */
-CATALOG(pg_attrdef) BOOTSTRAP
+CATALOG(pg_attrdef)
 {
 	Oid			adrelid;
 	int2		adnum;

@@ -6,16 +6,16 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.75 2001/03/22 06:16:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.76 2001/06/12 05:55:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -31,9 +31,9 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
+
 static void CheckPgUserAclNotNull(void);
 
-#define SQL_LENGTH	512
 
 /*---------------------------------------------------------------------
  * write_password_file / update_pg_pwd
@@ -121,8 +121,7 @@ write_password_file(Relation rel)
 				"%s"
 				CRYPT_PWD_FILE_SEPSTR
 				"%s\n",
-				DatumGetCString(DirectFunctionCall1(nameout,
-								   NameGetDatum(DatumGetName(datum_n)))),
+				DatumGetCString(DirectFunctionCall1(nameout, datum_n)),
 				null_p ? "" :
 				DatumGetCString(DirectFunctionCall1(textout, datum_p)),
 				null_v ? "\\N" :
@@ -168,10 +167,16 @@ write_password_file(Relation rel)
 Datum
 update_pg_pwd(PG_FUNCTION_ARGS)
 {
-	Relation	rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
+	/*
+	 * ExclusiveLock ensures no one modifies pg_shadow while we read it,
+	 * and that only one backend rewrites the flat file at a time.  It's
+	 * OK to allow normal reads of pg_shadow in parallel, however.
+	 */
+	Relation	rel = heap_openr(ShadowRelationName, ExclusiveLock);
 
 	write_password_file(rel);
-	heap_close(rel, AccessExclusiveLock);
+	/* OK to release lock, since we did not modify the relation */
+	heap_close(rel, ExclusiveLock);
 	return PointerGetDatum(NULL);
 }
 
@@ -210,39 +215,41 @@ CreateUser(CreateUserStmt *stmt)
 	 * to be sure of what the next usesysid should be, and we need to
 	 * protect our update of the flat password file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
+	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
-	while (!user_exists && !sysid_exists && HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while (!user_exists && !sysid_exists &&
+		   HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
 		Datum		datum;
 		bool		null;
 
-		datum = heap_getattr(tuple, Anum_pg_shadow_usename, pg_shadow_dsc, &null);
-		user_exists = datum && !null && (strcmp((char *) datum, stmt->user) == 0);
+		datum = heap_getattr(tuple, Anum_pg_shadow_usename,
+							 pg_shadow_dsc, &null);
+		Assert(!null);
+		user_exists = (strcmp((char *) DatumGetName(datum), stmt->user) == 0);
 
-		datum = heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null);
+		datum = heap_getattr(tuple, Anum_pg_shadow_usesysid,
+							 pg_shadow_dsc, &null);
+		Assert(!null);
 		if (havesysid)			/* customized id wanted */
-			sysid_exists = datum && !null && ((int) datum == stmt->sysid);
+			sysid_exists = (DatumGetInt32(datum) == stmt->sysid);
 		else
-/* pick 1 + max */
 		{
-			if ((int) datum > max_id)
-				max_id = (int) datum;
+			/* pick 1 + max */
+			if (DatumGetInt32(datum) > max_id)
+				max_id = DatumGetInt32(datum);
 		}
 	}
 	heap_endscan(scan);
 
-	if (user_exists || sysid_exists)
-	{
-		heap_close(pg_shadow_rel, AccessExclusiveLock);
-		if (user_exists)
-			elog(ERROR, "CREATE USER: user name \"%s\" already exists", stmt->user);
-		else
-			elog(ERROR, "CREATE USER: sysid %d is already assigned", stmt->sysid);
-		return;
-	}
+	if (user_exists)
+		elog(ERROR, "CREATE USER: user name \"%s\" already exists",
+			 stmt->user);
+	if (sysid_exists)
+		elog(ERROR, "CREATE USER: sysid %d is already assigned",
+			 stmt->sysid);
 
 	/*
 	 * Build a tuple to insert
@@ -252,12 +259,12 @@ CreateUser(CreateUserStmt *stmt)
 	new_record[Anum_pg_shadow_usesysid - 1] = Int32GetDatum(havesysid ? stmt->sysid : max_id + 1);
 
 	AssertState(BoolIsValid(stmt->createdb));
-	new_record[Anum_pg_shadow_usecreatedb - 1] = (Datum) (stmt->createdb);
-	new_record[Anum_pg_shadow_usetrace - 1] = (Datum) (false);
+	new_record[Anum_pg_shadow_usecreatedb - 1] = BoolGetDatum(stmt->createdb);
+	new_record[Anum_pg_shadow_usetrace - 1] = BoolGetDatum(false);
 	AssertState(BoolIsValid(stmt->createuser));
-	new_record[Anum_pg_shadow_usesuper - 1] = (Datum) (stmt->createuser);
+	new_record[Anum_pg_shadow_usesuper - 1] = BoolGetDatum(stmt->createuser);
 	/* superuser gets catupd right by default */
-	new_record[Anum_pg_shadow_usecatupd - 1] = (Datum) (stmt->createuser);
+	new_record[Anum_pg_shadow_usecatupd - 1] = BoolGetDatum(stmt->createuser);
 
 	if (stmt->password)
 		new_record[Anum_pg_shadow_passwd - 1] =
@@ -278,13 +285,11 @@ CreateUser(CreateUserStmt *stmt)
 	new_record_nulls[Anum_pg_shadow_valuntil - 1] = stmt->validUntil ? ' ' : 'n';
 
 	tuple = heap_formtuple(pg_shadow_dsc, new_record, new_record_nulls);
-	Assert(tuple);
 
 	/*
-	 * Insert a new record in the pg_shadow table
+	 * Insert new record in the pg_shadow table
 	 */
-	if (heap_insert(pg_shadow_rel, tuple) == InvalidOid)
-		elog(ERROR, "CREATE USER: heap_insert failed");
+	heap_insert(pg_shadow_rel, tuple);
 
 	/*
 	 * Update indexes
@@ -322,9 +327,9 @@ CreateUser(CreateUserStmt *stmt)
 	write_password_file(pg_shadow_rel);
 
 	/*
-	 * Now we can clean up.
+	 * Now we can clean up; but keep lock until commit.
 	 */
-	heap_close(pg_shadow_rel, AccessExclusiveLock);
+	heap_close(pg_shadow_rel, NoLock);
 }
 
 
@@ -348,8 +353,11 @@ AlterUser(AlterUserStmt *stmt)
 
 	/* must be superuser or just want to change your own password */
 	if (!superuser() &&
-	  !(stmt->createdb == 0 && stmt->createuser == 0 && !stmt->validUntil
-		&& stmt->password && strcmp(GetUserName(GetUserId()), stmt->user) == 0))
+		!(stmt->createdb == 0 &&
+		  stmt->createuser == 0 &&
+		  !stmt->validUntil &&
+		  stmt->password &&
+		  strcmp(GetUserName(GetUserId()), stmt->user) == 0))
 		elog(ERROR, "ALTER USER: permission denied");
 
 	/* changes to the flat password file cannot be rolled back */
@@ -361,17 +369,14 @@ AlterUser(AlterUserStmt *stmt)
 	 * secure exclusive lock to protect our update of the flat password
 	 * file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
+	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	tuple = SearchSysCache(SHADOWNAME,
 						   PointerGetDatum(stmt->user),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
-		heap_close(pg_shadow_rel, AccessExclusiveLock);
 		elog(ERROR, "ALTER USER: user \"%s\" does not exist", stmt->user);
-	}
 
 	/*
 	 * Build a tuple to update, perusing the information just obtained
@@ -483,8 +488,7 @@ AlterUser(AlterUserStmt *stmt)
 	/*
 	 * Now we can clean up.
 	 */
-	heap_close(pg_shadow_rel, AccessExclusiveLock);
-
+	heap_close(pg_shadow_rel, NoLock);
 }
 
 
@@ -510,7 +514,7 @@ DropUser(DropUserStmt *stmt)
 	 * deleted.  Note we secure exclusive lock, because we need to protect
 	 * our update of the flat password file.
 	 */
-	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
+	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	foreach(item, stmt->users)
@@ -530,11 +534,8 @@ DropUser(DropUserStmt *stmt)
 							   PointerGetDatum(user),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-		{
-			heap_close(pg_shadow_rel, AccessExclusiveLock);
 			elog(ERROR, "DROP USER: user \"%s\" does not exist%s", user,
 				 (length(stmt->users) > 1) ? " (no users removed)" : "");
-		}
 
 		usesysid = DatumGetInt32(heap_getattr(tuple, Anum_pg_shadow_usesysid, pg_shadow_dsc, &null));
 
@@ -546,28 +547,30 @@ DropUser(DropUserStmt *stmt)
 		 * don't read the manual, it doesn't seem to be the behaviour one
 		 * would expect either.) -- petere 2000/01/14)
 		 */
-		pg_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+		pg_rel = heap_openr(DatabaseRelationName, AccessShareLock);
 		pg_dsc = RelationGetDescr(pg_rel);
 
-		ScanKeyEntryInitialize(&scankey, 0x0, Anum_pg_database_datdba, F_INT4EQ,
+		ScanKeyEntryInitialize(&scankey, 0x0,
+							   Anum_pg_database_datdba, F_INT4EQ,
 							   Int32GetDatum(usesysid));
 
 		scan = heap_beginscan(pg_rel, false, SnapshotNow, 1, &scankey);
 
 		if (HeapTupleIsValid(tmp_tuple = heap_getnext(scan, 0)))
 		{
-			datum = heap_getattr(tmp_tuple, Anum_pg_database_datname, pg_dsc, &null);
-			heap_close(pg_shadow_rel, AccessExclusiveLock);
+			char   *dbname;
+
+			datum = heap_getattr(tmp_tuple, Anum_pg_database_datname,
+								 pg_dsc, &null);
+			Assert(!null);
+			dbname = DatumGetCString(DirectFunctionCall1(nameout, datum));
 			elog(ERROR, "DROP USER: user \"%s\" owns database \"%s\", cannot be removed%s",
-				 user,
-				 DatumGetCString(DirectFunctionCall1(nameout,
-									 NameGetDatum(DatumGetName(datum)))),
-				 (length(stmt->users) > 1) ? " (no users removed)" : ""
-				);
+				 user, dbname,
+				 (length(stmt->users) > 1) ? " (no users removed)" : "");
 		}
 
 		heap_endscan(scan);
-		heap_close(pg_rel, AccessExclusiveLock);
+		heap_close(pg_rel, AccessShareLock);
 
 		/*
 		 * Somehow we'd have to check for tables, views, etc. owned by the
@@ -587,7 +590,7 @@ DropUser(DropUserStmt *stmt)
 		 *
 		 * try calling alter group drop user for every group
 		 */
-		pg_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+		pg_rel = heap_openr(GroupRelationName, ExclusiveLock);
 		pg_dsc = RelationGetDescr(pg_rel);
 		scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
 		while (HeapTupleIsValid(tmp_tuple = heap_getnext(scan, 0)))
@@ -602,7 +605,7 @@ DropUser(DropUserStmt *stmt)
 			AlterGroup(&ags, "DROP USER");
 		}
 		heap_endscan(scan);
-		heap_close(pg_rel, AccessExclusiveLock);
+		heap_close(pg_rel, ExclusiveLock);
 
 		/*
 		 * Advance command counter so that later iterations of this loop
@@ -622,7 +625,7 @@ DropUser(DropUserStmt *stmt)
 	/*
 	 * Now we can clean up.
 	 */
-	heap_close(pg_shadow_rel, AccessExclusiveLock);
+	heap_close(pg_shadow_rel, NoLock);
 }
 
 
@@ -681,38 +684,41 @@ CreateGroup(CreateGroupStmt *stmt)
 	if (!superuser())
 		elog(ERROR, "CREATE GROUP: permission denied");
 
-	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
 	scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 0, NULL);
-	while (!group_exists && !sysid_exists && HeapTupleIsValid(tuple = heap_getnext(scan, false)))
+	while (!group_exists && !sysid_exists &&
+		   HeapTupleIsValid(tuple = heap_getnext(scan, false)))
 	{
 		Datum		datum;
 		bool		null;
 
-		datum = heap_getattr(tuple, Anum_pg_group_groname, pg_group_dsc, &null);
-		group_exists = datum && !null && (strcmp((char *) datum, stmt->name) == 0);
+		datum = heap_getattr(tuple, Anum_pg_group_groname,
+							 pg_group_dsc, &null);
+		Assert(!null);
+		group_exists = (strcmp((char *) DatumGetName(datum), stmt->name) == 0);
 
-		datum = heap_getattr(tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
+		datum = heap_getattr(tuple, Anum_pg_group_grosysid,
+							 pg_group_dsc, &null);
+		Assert(!null);
 		if (stmt->sysid >= 0)	/* customized id wanted */
-			sysid_exists = datum && !null && ((int) datum == stmt->sysid);
+			sysid_exists = (DatumGetInt32(datum) == stmt->sysid);
 		else
-/* pick 1 + max */
 		{
-			if ((int) datum > max_id)
-				max_id = (int) datum;
+			/* pick 1 + max */
+			if (DatumGetInt32(datum) > max_id)
+				max_id = DatumGetInt32(datum);
 		}
 	}
 	heap_endscan(scan);
 
-	if (group_exists || sysid_exists)
-	{
-		heap_close(pg_group_rel, AccessExclusiveLock);
-		if (group_exists)
-			elog(ERROR, "CREATE GROUP: group name \"%s\" already exists", stmt->name);
-		else
-			elog(ERROR, "CREATE GROUP: group sysid %d is already assigned", stmt->sysid);
-	}
+	if (group_exists)
+		elog(ERROR, "CREATE GROUP: group name \"%s\" already exists",
+			 stmt->name);
+	if (sysid_exists)
+		elog(ERROR, "CREATE GROUP: group sysid %d is already assigned",
+			 stmt->sysid);
 
 	/*
 	 * Translate the given user names to ids
@@ -790,7 +796,7 @@ CreateGroup(CreateGroupStmt *stmt)
 		CatalogCloseIndices(Num_pg_group_indices, idescs);
 	}
 
-	heap_close(pg_group_rel, AccessExclusiveLock);
+	heap_close(pg_group_rel, NoLock);
 }
 
 
@@ -811,7 +817,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	if (!superuser())
 		elog(ERROR, "%s: permission denied", tag);
 
-	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
 	/*
@@ -1052,7 +1058,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 
 	ReleaseSysCache(group_tuple);
 
-	heap_close(pg_group_rel, AccessExclusiveLock);
+	heap_close(pg_group_rel, NoLock);
 }
 
 
@@ -1078,7 +1084,7 @@ DropGroup(DropGroupStmt *stmt)
 	/*
 	 * Scan the pg_group table and delete all matching groups.
 	 */
-	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 	scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 0, NULL);
 
@@ -1087,8 +1093,9 @@ DropGroup(DropGroupStmt *stmt)
 		Datum		datum;
 		bool		null;
 
-		datum = heap_getattr(tuple, Anum_pg_group_groname, pg_group_dsc, &null);
-		if (datum && !null && strcmp((char *) datum, stmt->name) == 0)
+		datum = heap_getattr(tuple, Anum_pg_group_groname,
+							 pg_group_dsc, &null);
+		if (!null && strcmp((char *) DatumGetName(datum), stmt->name) == 0)
 		{
 			gro_exists = true;
 			simple_heap_delete(pg_group_rel, &tuple->t_self);
@@ -1101,10 +1108,7 @@ DropGroup(DropGroupStmt *stmt)
 	 * Did we find any?
 	 */
 	if (!gro_exists)
-	{
-		heap_close(pg_group_rel, AccessExclusiveLock);
 		elog(ERROR, "DROP GROUP: group \"%s\" does not exist", stmt->name);
-	}
 
-	heap_close(pg_group_rel, AccessExclusiveLock);
+	heap_close(pg_group_rel, NoLock);
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.72 2001/05/14 21:58:10 momjian Exp $
+ * $Id: pg_attribute.h,v 1.73 2001/06/12 05:55:50 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -213,6 +213,8 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 
 /* ----------------
  *		initial contents of pg_attribute
+ *
+ * NOTE: only "bootstrapped" relations need to be declared here.
  * ----------------
  */
 
@@ -468,64 +470,6 @@ DATA(insert OID = 0 ( 1259 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
 DATA(insert OID = 0 ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
-
-/* ----------------
- *		pg_attrdef
- * ----------------
- */
-DATA(insert OID = 0 ( 1215 adrelid			26 0  4   1 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1215 adnum			21 0  2   2 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1215 adbin			25 0 -1   3 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1215 adsrc			25 0 -1   4 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1215 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1215 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1215 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1215 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1215 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1215 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1215 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
-
-/* ----------------
- *		pg_relcheck
- * ----------------
- */
-DATA(insert OID = 0 ( 1216 rcrelid			26 0  4   1 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1216 rcname			19 0  NAMEDATALEN  2 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1216 rcbin			25 0 -1   3 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1216 rcsrc			25 0 -1   4 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1216 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1216 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1216 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1216 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1216 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1216 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1216 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
-
-/* ----------------
- *		pg_trigger
- * ----------------
- */
-DATA(insert OID = 0 ( 1219 tgrelid			26 0  4   1 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1219 tgname			19 0  NAMEDATALEN  2 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1219 tgfoid			26 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1219 tgtype			21 0  2   4 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1219 tgenabled		16 0  1   5 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1219 tgisconstraint	16 0  1   6 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1219 tgconstrname		19 0  NAMEDATALEN  7 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1219 tgconstrrelid	26 0  4   8 0 -1 -1 t p f i f f));
-
-DATA(insert OID = 0 ( 1219 tgdeferrable		16 0  1   9 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1219 tginitdeferred	16 0  1   10 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1219 tgnargs			21 0  2   11 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1219 tgattr			22 0  INDEX_MAX_KEYS*2	12 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   13 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1219 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1219 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1219 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1219 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1219 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1219 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1219 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_log - this relation is modified by special purpose access

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.50 2001/05/30 14:40:13 momjian Exp $
+ * $Id: pg_class.h,v 1.51 2001/06/12 05:55:50 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -29,10 +29,6 @@
 /* ----------------
  *		pg_class definition.  cpp turns this into
  *		typedef struct FormData_pg_class
- *
- *		Note: the #if 0, #endif around the BKI_BEGIN.. END block
- *			  below keeps cpp from seeing what is meant for the
- *			  genbki script
  * ----------------
  */
 
@@ -59,7 +55,6 @@ CATALOG(pg_class) BOOTSTRAP
 	bool		relisshared;
 	char		relkind;
 	int2		relnatts;
-
 	/*
 	 * relnatts is the number of user attributes this class has.  There
 	 * must be exactly this many instances in Class pg_attribute for this
@@ -73,7 +68,6 @@ CATALOG(pg_class) BOOTSTRAP
 	bool		relhaspkey;		/* has PRIMARY KEY (not used) */
 	bool		relhasrules;	/* has associated rules */
 	bool		relhassubclass; /* has derived classes */
-
 	/*
 	 * relacl may or may not be present, see note above!
 	 */
@@ -129,6 +123,8 @@ typedef FormData_pg_class *Form_pg_class;
 
 /* ----------------
  *		initial contents of pg_class
+ *
+ * NOTE: only "bootstrapped" relations need to be declared here.
  * ----------------
  */
 
@@ -150,12 +146,6 @@ DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 1269 0 0 0 0 f t s 1	0 0 0 0 0 f
 DESCR("");
 DATA(insert OID = 376  (  pg_xactlock  0	  PGUID 0	 0 0 0 0 0 f t s 1	0 0 0 0 0 f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1215 (  pg_attrdef 109	  PGUID 0 1215 0 0 0 0 t t r 4	0 0 0 0 0 f f f _null_ ));
-DESCR("");
-DATA(insert OID = 1216 (  pg_relcheck 110	  PGUID 0 1216 0 0 0 0 t t r 4	0 0 0 0 0 f f f _null_ ));
-DESCR("");
-DATA(insert OID = 1219 (  pg_trigger 111	  PGUID 0 1219 0 0 0 0 t t r 13  0 0 0 0 0 f f f _null_ ));
-DESCR("");
 
 #define RelOid_pg_type			1247
 #define RelOid_pg_attribute		1249
@@ -165,9 +155,6 @@ DESCR("");
 #define RelOid_pg_group			1261
 #define RelOid_pg_database		1262
 #define RelOid_pg_log			1269
-#define RelOid_pg_attrdef		1215
-#define RelOid_pg_relcheck		1216
-#define RelOid_pg_trigger		1219
 
 /* Xact lock pseudo-table */
 #define XactLockTableId			376

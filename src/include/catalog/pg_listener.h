@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_listener.h,v 1.8 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_listener.h,v 1.9 2001/06/12 05:55:50 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -38,6 +38,13 @@ CATALOG(pg_listener)
 	int4		listenerpid;
 	int4		notification;
 } FormData_pg_listener;
+
+/* ----------------
+ *		Form_pg_listener corresponds to a pointer to a tuple with
+ *		the format of pg_listener relation.
+ * ----------------
+ */
+typedef FormData_pg_listener *Form_pg_listener;
 
 /* ----------------
  *		compiler constants for pg_listener
