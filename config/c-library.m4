@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $PostgreSQL: pgsql/config/c-library.m4,v 1.27 2004/09/08 19:43:00 momjian Exp $
+# $PostgreSQL: pgsql/config/c-library.m4,v 1.28 2004/10/04 18:14:18 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -216,6 +216,10 @@ AC_SUBST(HAVE_POSIX_SIGNALS)])# PGAC_FUNC_POSIX_SIGNALS
 # Determine which format snprintf uses for long long int.  We handle
 # %lld, %qd, %I64d.  The result is in shell variable
 # LONG_LONG_INT_FORMAT.
+#
+# MinGW uses '%I64d', though gcc throws an warning with -Wall,
+# while '%lld' doesn't generate a warning, but doesn't work.
+#
 AC_DEFUN([PGAC_FUNC_SNPRINTF_LONG_LONG_INT_FORMAT],
 [AC_MSG_CHECKING([snprintf format for long long int])
 AC_CACHE_VAL(pgac_cv_snprintf_long_long_int_format,
