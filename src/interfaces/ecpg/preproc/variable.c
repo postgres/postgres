@@ -137,7 +137,7 @@ find_struct(char *name, char *next, char *end)
 		/* restore the name, we will need it later */
 		*next = c;
 
-		return find_struct_member(name, end, p->type->u.element->u.members, p->brace_level);
+		return find_struct_member(name, ++end, p->type->u.element->u.members, p->brace_level);
 	}
 	else
 	{
@@ -260,6 +260,37 @@ remove_variables(int brace_level)
 	{
 		if (p->brace_level >= brace_level)
 		{
+			/* is it still referenced by a cursor? */
+			struct cursor *ptr;
+
+                        for (ptr = cur; ptr != NULL; ptr = ptr->next)
+			{
+				struct arguments *varptr, *prevvar;
+
+				for (varptr = prevvar = ptr->argsinsert; varptr != NULL; varptr = varptr->next)
+				{
+					if (p == varptr->variable)
+					{
+						/* remove from list */
+						if (varptr == ptr->argsinsert)
+							ptr->argsinsert = varptr->next;
+						else
+							prevvar->next = varptr->next;
+					}
+				}
+				for (varptr = ptr->argsresult; varptr != NULL; varptr = varptr->next)
+				{
+					if (p == varptr->variable)
+					{
+						/* remove from list */
+						if (varptr == ptr->argsresult)
+							ptr->argsresult = varptr->next;
+						else
+							prevvar->next = varptr->next;
+					}
+				}
+			}
+							
 			/* remove it */
 			if (p == allvariables)
 				prev = allvariables = p->next;

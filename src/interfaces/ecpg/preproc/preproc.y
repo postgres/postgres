@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.229 2003/06/10 17:46:43 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.230 2003/06/11 06:39:12 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -47,14 +47,6 @@ static struct inf_compat_val
 	char *val;
 	struct inf_compat_val *next;
 } *informix_val;
-
-void mm(void)
-{
-	int i,j;
-
-	i=1;
-	j=i+1;
-}
 
 /*
  * Handle parsing errors and warnings
@@ -673,7 +665,6 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 			struct cursor *ptr;
 			struct arguments *p;
 
-		mm();
 			for (ptr = cur; ptr != NULL; ptr=ptr->next)
 			{
 				if (strcmp(ptr->name, $1) == 0)
@@ -2632,7 +2623,6 @@ DeclareCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 			this = (struct cursor *) mm_alloc(sizeof(struct cursor));
 
 			/* initial definition */
-			mm();
 			this->next = cur;
 			this->name = $2;
 			this->connection = connection;
