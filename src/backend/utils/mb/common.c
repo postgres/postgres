@@ -2,7 +2,7 @@
  * This file contains some public functions
  * usable for both the backend and the frontend.
  * Tatsuo Ishii
- * $Id: common.c,v 1.11 2001/02/10 02:31:27 tgl Exp $
+ * $Id: common.c,v 1.12 2001/02/11 01:59:22 ishii Exp $
  */
 #include "postgres.h"
 
@@ -96,10 +96,3 @@ PG_encoding_to_char(PG_FUNCTION_ARGS)
 }
 
 #endif
-
-/* returns the byte length of a multi-byte word for an encoding */
-int
-pg_encoding_mblen(int encoding, const unsigned char *mbstr)
-{
-	return ((*pg_wchar_table[encoding].mblen) (mbstr));
-}

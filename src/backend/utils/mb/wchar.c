@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.14 2001/02/10 02:31:27 tgl Exp $
+ * $Id: wchar.c,v 1.15 2001/02/11 01:59:22 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -496,4 +496,13 @@ int
 pg_mic_mblen(const unsigned char *mbstr)
 {
 	return (pg_mule_mblen(mbstr));
+}
+
+/* 
+ * Returns the byte length of a multi-byte word.
+ */
+int
+pg_encoding_mblen(int encoding, const unsigned char *mbstr)
+{
+	return ((*pg_wchar_table[encoding].mblen) (mbstr));
 }
