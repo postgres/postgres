@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.247 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.248 2003/02/22 00:45:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2603,16 +2603,24 @@ static void
 scan_index(Relation indrel, double num_tuples)
 {
 	IndexBulkDeleteResult *stats;
+	IndexVacuumCleanupInfo vcinfo;
 	VacRUsage	ru0;
 
 	vac_init_rusage(&ru0);
 
 	/*
-	 * Even though we're not planning to delete anything, use the
-	 * ambulkdelete call, so that the scan happens within the index AM for
-	 * more speed.
+	 * Even though we're not planning to delete anything, we use the
+	 * ambulkdelete call, because (a) the scan happens within the index AM
+	 * for more speed, and (b) it may want to pass private statistics to
+	 * the amvacuumcleanup call.
 	 */
 	stats = index_bulk_delete(indrel, dummy_tid_reaped, NULL);
+
+	/* Do post-VACUUM cleanup, even though we deleted nothing */
+	vcinfo.vacuum_full = true;
+	vcinfo.message_level = elevel;
+
+	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
 
 	if (!stats)
 		return;
@@ -2622,9 +2630,9 @@ scan_index(Relation indrel, double num_tuples)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
+	elog(elevel, "Index %s: Pages %u, %u free; Tuples %.0f.\n\t%s",
 		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->num_index_tuples,
+		 stats->num_pages, stats->pages_free, stats->num_index_tuples,
 		 vac_show_rusage(&ru0));
 
 	/*
@@ -2661,12 +2669,19 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 			 double num_tuples, int keep_tuples)
 {
 	IndexBulkDeleteResult *stats;
+	IndexVacuumCleanupInfo vcinfo;
 	VacRUsage	ru0;
 
 	vac_init_rusage(&ru0);
 
 	/* Do bulk deletion */
 	stats = index_bulk_delete(indrel, tid_reaped, (void *) vacpagelist);
+
+	/* Do post-VACUUM cleanup */
+	vcinfo.vacuum_full = true;
+	vcinfo.message_level = elevel;
+
+	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
 
 	if (!stats)
 		return;
@@ -2676,8 +2691,9 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
-		 RelationGetRelationName(indrel), stats->num_pages,
+	elog(elevel, "Index %s: Pages %u, %u free; Tuples %.0f: Deleted %.0f.\n\t%s",
+		 RelationGetRelationName(indrel),
+		 stats->num_pages, stats->pages_free,
 		 stats->num_index_tuples - keep_tuples, stats->tuples_removed,
 		 vac_show_rusage(&ru0));
 

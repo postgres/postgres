@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.23 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.24 2003/02/22 00:45:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				tups_vacuumed,
 				nkeep,
 				nunused;
-	bool		did_vacuum_index = false;
 	int			i;
 	VacRUsage	ru0;
 
@@ -244,7 +243,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			/* Remove index entries */
 			for (i = 0; i < nindexes; i++)
 				lazy_vacuum_index(Irel[i], vacrelstats);
-			did_vacuum_index = true;
 			/* Remove tuples from heap */
 			lazy_vacuum_heap(onerel, vacrelstats);
 			/* Forget the now-vacuumed tuples, and press on */
@@ -415,7 +413,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	vacrelstats->rel_tuples = num_tuples;
 
 	/* If any tuples need to be deleted, perform final vacuum cycle */
-	/* XXX put a threshold on min nuber of tuples here? */
+	/* XXX put a threshold on min number of tuples here? */
 	if (vacrelstats->num_dead_tuples > 0)
 	{
 		/* Remove index entries */
@@ -424,9 +422,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		/* Remove tuples from heap */
 		lazy_vacuum_heap(onerel, vacrelstats);
 	}
-	else if (!did_vacuum_index)
+	else
 	{
-		/* Scan indexes just to update pg_class statistics about them */
+		/* Must do post-vacuum cleanup and statistics update anyway */
 		for (i = 0; i < nindexes; i++)
 			lazy_scan_index(Irel[i], vacrelstats);
 	}
@@ -551,42 +549,36 @@ static void
 lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 {
 	IndexBulkDeleteResult *stats;
+	IndexVacuumCleanupInfo vcinfo;
 	VacRUsage	ru0;
 
 	vac_init_rusage(&ru0);
 
 	/*
-	 * If the index is not partial, skip the scan, and just assume it has
-	 * the same number of tuples as the heap.
-	 */
-	if (!vac_is_partial_index(indrel))
-	{
-		vac_update_relstats(RelationGetRelid(indrel),
-							RelationGetNumberOfBlocks(indrel),
-							vacrelstats->rel_tuples,
-							false);
-		return;
-	}
-
-	/*
-	 * If index is unsafe for concurrent access, must lock it; but a
-	 * shared lock should be sufficient.
+	 * If index is unsafe for concurrent access, must lock it.
 	 */
 	if (!indrel->rd_am->amconcurrent)
-		LockRelation(indrel, AccessShareLock);
+		LockRelation(indrel, AccessExclusiveLock);
 
 	/*
-	 * Even though we're not planning to delete anything, use the
-	 * ambulkdelete call, so that the scan happens within the index AM for
-	 * more speed.
+	 * Even though we're not planning to delete anything, we use the
+	 * ambulkdelete call, because (a) the scan happens within the index AM
+	 * for more speed, and (b) it may want to pass private statistics to
+	 * the amvacuumcleanup call.
 	 */
 	stats = index_bulk_delete(indrel, dummy_tid_reaped, NULL);
+
+	/* Do post-VACUUM cleanup, even though we deleted nothing */
+	vcinfo.vacuum_full = false;
+	vcinfo.message_level = elevel;
+
+	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
 
 	/*
 	 * Release lock acquired above.
 	 */
 	if (!indrel->rd_am->amconcurrent)
-		UnlockRelation(indrel, AccessShareLock);
+		UnlockRelation(indrel, AccessExclusiveLock);
 
 	if (!stats)
 		return;
@@ -596,9 +588,9 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 						stats->num_pages, stats->num_index_tuples,
 						false);
 
-	elog(elevel, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
+	elog(elevel, "Index %s: Pages %u, %u free; Tuples %.0f.\n\t%s",
 		 RelationGetRelationName(indrel),
-		 stats->num_pages, stats->num_index_tuples,
+		 stats->num_pages, stats->pages_free, stats->num_index_tuples,
 		 vac_show_rusage(&ru0));
 
 	pfree(stats);
@@ -617,6 +609,7 @@ static void
 lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 {
 	IndexBulkDeleteResult *stats;
+	IndexVacuumCleanupInfo vcinfo;
 	VacRUsage	ru0;
 
 	vac_init_rusage(&ru0);
@@ -630,26 +623,33 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 	/* Do bulk deletion */
 	stats = index_bulk_delete(indrel, lazy_tid_reaped, (void *) vacrelstats);
 
+	/* Do post-VACUUM cleanup */
+	vcinfo.vacuum_full = false;
+	vcinfo.message_level = elevel;
+
+	stats = index_vacuum_cleanup(indrel, &vcinfo, stats);
+
 	/*
 	 * Release lock acquired above.
 	 */
 	if (!indrel->rd_am->amconcurrent)
 		UnlockRelation(indrel, AccessExclusiveLock);
 
+	if (!stats)
+		return;
+
 	/* now update statistics in pg_class */
-	if (stats)
-	{
-		vac_update_relstats(RelationGetRelid(indrel),
-							stats->num_pages, stats->num_index_tuples,
-							false);
+	vac_update_relstats(RelationGetRelid(indrel),
+						stats->num_pages, stats->num_index_tuples,
+						false);
 
-		elog(elevel, "Index %s: Pages %u; Tuples %.0f: Deleted %.0f.\n\t%s",
-			 RelationGetRelationName(indrel), stats->num_pages,
-			 stats->num_index_tuples, stats->tuples_removed,
-			 vac_show_rusage(&ru0));
+	elog(elevel, "Index %s: Pages %u, %u free; Tuples %.0f: Deleted %.0f.\n\t%s",
+		 RelationGetRelationName(indrel),
+		 stats->num_pages, stats->pages_free,
+		 stats->num_index_tuples, stats->tuples_removed,
+		 vac_show_rusage(&ru0));
 
-		pfree(stats);
-	}
+	pfree(stats);
 }
 
 /*

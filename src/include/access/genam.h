@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.37 2002/09/04 20:31:36 momjian Exp $
+ * $Id: genam.h,v 1.38 2003/02/22 00:45:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,17 +20,32 @@
 #include "nodes/primnodes.h"
 
 
-/* Struct for statistics returned by bulk-delete operation */
+/*
+ * Struct for statistics returned by bulk-delete operation
+ *
+ * This is now also passed to the index AM's vacuum-cleanup operation,
+ * if it has one, which can modify the results as needed.  Note that
+ * an index AM could choose to have bulk-delete return a larger struct
+ * of which this is just the first field; this provides a way for bulk-delete
+ * to communicate additional private data to vacuum-cleanup.
+ */
 typedef struct IndexBulkDeleteResult
 {
 	BlockNumber num_pages;		/* pages remaining in index */
+	double		num_index_tuples;		/* tuples remaining */
 	double		tuples_removed; /* # removed by bulk-delete operation */
-	double		num_index_tuples;		/* # remaining */
+	BlockNumber	pages_free;		/* # unused pages in index */
 } IndexBulkDeleteResult;
 
 /* Typedef for callback function to determine if a tuple is bulk-deletable */
 typedef bool (*IndexBulkDeleteCallback) (ItemPointer itemptr, void *state);
 
+/* Struct for additional arguments passed to vacuum-cleanup operation */
+typedef struct IndexVacuumCleanupInfo
+{
+	bool		vacuum_full;	/* VACUUM FULL (we have exclusive lock) */
+	int			message_level;	/* elog level for progress messages */
+} IndexVacuumCleanupInfo;
 
 /* Struct for heap-or-index scans of system tables */
 typedef struct SysScanDescData
@@ -72,6 +87,9 @@ extern bool index_getnext_indexitem(IndexScanDesc scan,
 extern IndexBulkDeleteResult *index_bulk_delete(Relation indexRelation,
 				  IndexBulkDeleteCallback callback,
 				  void *callback_state);
+extern IndexBulkDeleteResult *index_vacuum_cleanup(Relation indexRelation,
+				  IndexVacuumCleanupInfo *info,
+				  IndexBulkDeleteResult *stats);
 extern RegProcedure index_cost_estimator(Relation indexRelation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);

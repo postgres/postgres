@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.60 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.61 2003/02/22 00:45:03 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -491,8 +491,9 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 
 	result = (IndexBulkDeleteResult *) palloc(sizeof(IndexBulkDeleteResult));
 	result->num_pages = num_pages;
-	result->tuples_removed = tuples_removed;
 	result->num_index_tuples = num_index_tuples;
+	result->tuples_removed = tuples_removed;
+	result->pages_free = 0;
 
 	PG_RETURN_POINTER(result);
 }

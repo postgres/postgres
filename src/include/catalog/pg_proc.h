@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.283 2003/02/13 05:24:02 momjian Exp $
+ * $Id: pg_proc.h,v 1.284 2003/02/22 00:45:05 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -709,6 +709,8 @@ DESCR("btree(internal)");
 DATA(insert OID = 338 (  btbuild		   PGNSP PGUID 12 f f t f v 3 2278 "2281 2281 2281" btbuild - _null_ ));
 DESCR("btree(internal)");
 DATA(insert OID = 332 (  btbulkdelete	   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" btbulkdelete - _null_ ));
+DESCR("btree(internal)");
+DATA(insert OID = 972 (  btvacuumcleanup   PGNSP PGUID 12 f f t f v 3 2281 "2281 2281 2281" btvacuumcleanup - _null_ ));
 DESCR("btree(internal)");
 DATA(insert OID = 1268 (  btcostestimate   PGNSP PGUID 12 f f t f v 8 2278 "2281 2281 2281 2281 2281 2281 2281 2281"  btcostestimate - _null_ ));
 DESCR("btree(internal)");

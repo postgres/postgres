@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.64 2003/02/21 00:06:22 tgl Exp $
+ * $Id: nbtree.h,v 1.65 2003/02/22 00:45:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_ROOT		(1 << 1)	/* root page (has no parent) */
 #define BTP_DELETED		(1 << 2)	/* page has been deleted from tree */
 #define BTP_META		(1 << 3)	/* meta-page */
+#define BTP_HALF_DEAD	(1 << 4)	/* empty, but still in tree */
 
 
 /*
@@ -124,12 +125,13 @@ typedef BTItemData *BTItem;
 #define SizeOfBTItem	sizeof(BTItemData)
 
 /* Test whether items are the "same" per the above notes */
-#define BTItemSame(i1, i2)	  ( (i1)->bti_itup.t_tid.ip_blkid.bi_hi == \
-								(i2)->bti_itup.t_tid.ip_blkid.bi_hi && \
-								(i1)->bti_itup.t_tid.ip_blkid.bi_lo == \
-								(i2)->bti_itup.t_tid.ip_blkid.bi_lo && \
-								(i1)->bti_itup.t_tid.ip_posid == \
-								(i2)->bti_itup.t_tid.ip_posid )
+#define BTTidSame(i1, i2)	\
+	( (i1).ip_blkid.bi_hi == (i2).ip_blkid.bi_hi && \
+	  (i1).ip_blkid.bi_lo == (i2).ip_blkid.bi_lo && \
+	  (i1).ip_posid == (i2).ip_posid )
+#define BTItemSame(i1, i2)	\
+	BTTidSame((i1)->bti_itup.t_tid, (i2)->bti_itup.t_tid)
+
 
 /*
  *	In general, the btree code tries to localize its knowledge about
@@ -150,6 +152,7 @@ typedef BTItemData *BTItem;
 #define P_ISLEAF(opaque)		((opaque)->btpo_flags & BTP_LEAF)
 #define P_ISROOT(opaque)		((opaque)->btpo_flags & BTP_ROOT)
 #define P_ISDELETED(opaque)		((opaque)->btpo_flags & BTP_DELETED)
+#define P_IGNORE(opaque)		((opaque)->btpo_flags & (BTP_DELETED|BTP_HALF_DEAD))
 
 /*
  *	Lehman and Yao's algorithm requires a ``high key'' on every non-rightmost
@@ -412,8 +415,6 @@ typedef BTScanOpaqueData *BTScanOpaque;
 /*
  * prototypes for functions in nbtree.c (external entry points for btree)
  */
-extern bool BuildingBtree;		/* in nbtree.c */
-
 extern void AtEOXact_nbtree(void);
 
 extern Datum btbuild(PG_FUNCTION_ARGS);
@@ -426,6 +427,7 @@ extern Datum btendscan(PG_FUNCTION_ARGS);
 extern Datum btmarkpos(PG_FUNCTION_ARGS);
 extern Datum btrestrpos(PG_FUNCTION_ARGS);
 extern Datum btbulkdelete(PG_FUNCTION_ARGS);
+extern Datum btvacuumcleanup(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in nbtinsert.c

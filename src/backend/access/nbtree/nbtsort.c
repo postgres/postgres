@@ -1,4 +1,5 @@
 /*-------------------------------------------------------------------------
+ *
  * nbtsort.c
  *		Build a btree from sorted input by loading leaf pages sequentially.
  *
@@ -35,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.71 2003/02/21 00:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.72 2003/02/22 00:45:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,8 +165,8 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 		ResetUsage();
 	}
 #endif   /* BTREE_BUILD_STATS */
-	tuplesort_performsort(btspool->sortstate);
 
+	tuplesort_performsort(btspool->sortstate);
 	if (btspool2)
 		tuplesort_performsort(btspool2->sortstate);
 	_bt_load(btspool->index, btspool, btspool2);
@@ -331,7 +332,7 @@ _bt_sortaddtup(Page page,
 
 	if (PageAddItem(page, (Item) btitem, itemsize, itup_off,
 					LP_USED) == InvalidOffsetNumber)
-		elog(FATAL, "btree: failed to add item to the page in _bt_sort");
+		elog(ERROR, "btree: failed to add item to the page in _bt_sort");
 }
 
 /*----------
@@ -470,8 +471,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 
 		/*
 		 * Write out the old page.	We never want to see it again, so we
-		 * can give up our lock (if we had one; most likely BuildingBtree
-		 * is set, so we aren't locking).
+		 * can give up our lock.
 		 */
 		_bt_blwritepage(index, obuf);
 
@@ -534,7 +534,7 @@ _bt_uppershutdown(Relation index, BTPageState *state)
 		if (s->btps_next == (BTPageState *) NULL)
 		{
 			opaque->btpo_flags |= BTP_ROOT;
-			_bt_metaproot(index, blkno, s->btps_level + 1);
+			_bt_metaproot(index, blkno, s->btps_level);
 		}
 		else
 		{

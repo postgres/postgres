@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.65 2003/01/19 00:13:28 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.66 2003/02/22 00:45:03 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -444,6 +444,13 @@
       <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
       <entry>bulk-delete function</entry>
+     </row>
+
+     <row>
+      <entry>amvacuumcleanup</entry>
+      <entry><type>regproc</type></entry>
+      <entry>pg_proc.oid</entry>
+      <entry>post-VACUUM cleanup function</entry>
      </row>
 
      <row>

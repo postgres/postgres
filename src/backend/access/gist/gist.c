@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.99 2002/11/13 00:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.100 2003/02/22 00:45:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1650,8 +1650,9 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 	result = (IndexBulkDeleteResult *) palloc(sizeof(IndexBulkDeleteResult));
 	result->num_pages = num_pages;
-	result->tuples_removed = tuples_removed;
 	result->num_index_tuples = num_index_tuples;
+	result->tuples_removed = tuples_removed;
+	result->pages_free = 0;
 
 	PG_RETURN_POINTER(result);
 }

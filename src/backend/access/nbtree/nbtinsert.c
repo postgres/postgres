@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.97 2003/02/21 00:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.98 2003/02/22 00:45:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,12 +280,21 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 			if (!_bt_isequal(itupdesc, page, P_HIKEY,
 							 natts, itup_scankey))
 				break;
-			nblkno = opaque->btpo_next;
-			if (nbuf != InvalidBuffer)
-				_bt_relbuf(rel, nbuf);
-			nbuf = _bt_getbuf(rel, nblkno, BT_READ);
-			page = BufferGetPage(nbuf);
-			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			/* Advance to next non-dead page --- there must be one */
+			for (;;)
+			{
+				nblkno = opaque->btpo_next;
+				if (nbuf != InvalidBuffer)
+					_bt_relbuf(rel, nbuf);
+				nbuf = _bt_getbuf(rel, nblkno, BT_READ);
+				page = BufferGetPage(nbuf);
+				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+				if (!P_IGNORE(opaque))
+					break;
+				if (P_RIGHTMOST(opaque))
+					elog(ERROR, "_bt_check_unique: fell off the end of %s",
+						 RelationGetRelationName(rel));
+			}
 			maxoff = PageGetMaxOffsetNumber(page);
 			offset = P_FIRSTDATAKEY(opaque);
 		}
@@ -414,20 +423,34 @@ _bt_insertonpg(Relation rel,
 			   _bt_compare(rel, keysz, scankey, page, P_HIKEY) == 0 &&
 			   random() > (MAX_RANDOM_VALUE / 100))
 		{
-			/* step right one page */
-			BlockNumber rblkno = lpageop->btpo_next;
-			Buffer		rbuf;
-
 			/*
-			 * must write-lock next page before releasing write lock on
+			 * step right to next non-dead page
+			 *
+			 * must write-lock that page before releasing write lock on
 			 * current page; else someone else's _bt_check_unique scan
-			 * could fail to see our insertion.
+			 * could fail to see our insertion.  write locks on intermediate
+			 * dead pages won't do because we don't know when they will get
+			 * de-linked from the tree.
 			 */
-			rbuf = _bt_getbuf(rel, rblkno, BT_WRITE);
+			Buffer		rbuf = InvalidBuffer;
+
+			for (;;)
+			{
+				BlockNumber rblkno = lpageop->btpo_next;
+
+				if (rbuf != InvalidBuffer)
+					_bt_relbuf(rel, rbuf);
+				rbuf = _bt_getbuf(rel, rblkno, BT_WRITE);
+				page = BufferGetPage(rbuf);
+				lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+				if (!P_IGNORE(lpageop))
+					break;
+				if (P_RIGHTMOST(lpageop))
+					elog(ERROR, "_bt_insertonpg: fell off the end of %s",
+						 RelationGetRelationName(rel));
+			}
 			_bt_relbuf(rel, buf);
 			buf = rbuf;
-			page = BufferGetPage(buf);
-			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			movedright = true;
 		}
 
@@ -633,8 +656,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	BTPageOpaque ropaque,
 				lopaque,
 				oopaque;
-	Buffer		sbuf = 0;
-	Page		spage = 0;
+	Buffer		sbuf = InvalidBuffer;
+	Page		spage = NULL;
+	BTPageOpaque sopaque = NULL;
 	Size		itemsz;
 	ItemId		itemid;
 	BTItem		item;
@@ -792,6 +816,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	{
 		sbuf = _bt_getbuf(rel, ropaque->btpo_next, BT_WRITE);
 		spage = BufferGetPage(sbuf);
+		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
+		if (sopaque->btpo_prev != ropaque->btpo_prev)
+			elog(PANIC, "btree: right sibling's left-link doesn't match");
 	}
 
 	/*
@@ -801,6 +828,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * NO ELOG(ERROR) till right sibling is updated.
 	 */
 	START_CRIT_SECTION();
+
+	if (!P_RIGHTMOST(ropaque))
+		sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
@@ -847,10 +877,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 		if (!P_RIGHTMOST(ropaque))
 		{
-			BTPageOpaque sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
-
-			sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
-
 			rdata[2].next = &(rdata[3]);
 			rdata[3].buffer = sbuf;
 			rdata[3].data = NULL;
@@ -1250,58 +1276,63 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 		Buffer		buf;
 		Page		page;
 		BTPageOpaque opaque;
-		OffsetNumber offnum,
-					minoff,
-					maxoff;
-		ItemId		itemid;
-		BTItem		item;
 
 		buf = _bt_getbuf(rel, blkno, access);
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-		minoff = P_FIRSTDATAKEY(opaque);
-		maxoff = PageGetMaxOffsetNumber(page);
 
-		/*
-		 * start = InvalidOffsetNumber means "search the whole page".
-		 * We need this test anyway due to possibility that
-		 * page has a high key now when it didn't before.
-		 */
-		if (start < minoff)
-			start = minoff;
-
-		/*
-		 * These loops will check every item on the page --- but in an order
-		 * that's attuned to the probability of where it actually is.  Scan
-		 * to the right first, then to the left.
-		 */
-		for (offnum = start;
-			 offnum <= maxoff;
-			 offnum = OffsetNumberNext(offnum))
+		if (!P_IGNORE(opaque))
 		{
-			itemid = PageGetItemId(page, offnum);
-			item = (BTItem) PageGetItem(page, itemid);
-			if (BTItemSame(item, &stack->bts_btitem))
+			OffsetNumber offnum,
+						minoff,
+						maxoff;
+			ItemId		itemid;
+			BTItem		item;
+
+			minoff = P_FIRSTDATAKEY(opaque);
+			maxoff = PageGetMaxOffsetNumber(page);
+
+			/*
+			 * start = InvalidOffsetNumber means "search the whole page".
+			 * We need this test anyway due to possibility that
+			 * page has a high key now when it didn't before.
+			 */
+			if (start < minoff)
+				start = minoff;
+
+			/*
+			 * These loops will check every item on the page --- but in an
+			 * order that's attuned to the probability of where it actually
+			 * is.  Scan to the right first, then to the left.
+			 */
+			for (offnum = start;
+				 offnum <= maxoff;
+				 offnum = OffsetNumberNext(offnum))
 			{
-				/* Return accurate pointer to where link is now */
-				stack->bts_blkno = blkno;
-				stack->bts_offset = offnum;
-				return buf;
+				itemid = PageGetItemId(page, offnum);
+				item = (BTItem) PageGetItem(page, itemid);
+				if (BTItemSame(item, &stack->bts_btitem))
+				{
+					/* Return accurate pointer to where link is now */
+					stack->bts_blkno = blkno;
+					stack->bts_offset = offnum;
+					return buf;
+				}
 			}
-		}
 
-		for (offnum = OffsetNumberPrev(start);
-			 offnum >= minoff;
-			 offnum = OffsetNumberPrev(offnum))
-		{
-			itemid = PageGetItemId(page, offnum);
-			item = (BTItem) PageGetItem(page, itemid);
-			if (BTItemSame(item, &stack->bts_btitem))
+			for (offnum = OffsetNumberPrev(start);
+				 offnum >= minoff;
+				 offnum = OffsetNumberPrev(offnum))
 			{
-				/* Return accurate pointer to where link is now */
-				stack->bts_blkno = blkno;
-				stack->bts_offset = offnum;
-				return buf;
+				itemid = PageGetItemId(page, offnum);
+				item = (BTItem) PageGetItem(page, itemid);
+				if (BTItemSame(item, &stack->bts_btitem))
+				{
+					/* Return accurate pointer to where link is now */
+					stack->bts_blkno = blkno;
+					stack->bts_offset = offnum;
+					return buf;
+				}
 			}
 		}
 
@@ -1365,6 +1396,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	rootpage = BufferGetPage(rootbuf);
 	rootblknum = BufferGetBlockNumber(rootbuf);
+
+	/* acquire lock on the metapage */
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_WRITE);
 	metapg = BufferGetPage(metabuf);
 	metad = BTPageGetMeta(metapg);

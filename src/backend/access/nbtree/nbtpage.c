@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.59 2003/02/21 00:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.60 2003/02/22 00:45:04 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -22,34 +22,17 @@
  */
 #include "postgres.h"
 
-#include <time.h>
-
 #include "access/nbtree.h"
 #include "miscadmin.h"
 #include "storage/lmgr.h"
 
-extern bool FixBTree;			/* comments in nbtree.c */
-extern Buffer _bt_fixroot(Relation rel, Buffer oldrootbuf, bool release);
-
-/*
- *	We use high-concurrency locking on btrees.	There are two cases in
- *	which we don't do locking.  One is when we're building the btree.
- *	Since the creating transaction has not committed, no one can see
- *	the index, and there's no reason to share locks.  The second case
- *	is when we're just starting up the database system.  We use some
- *	special-purpose initialization code in the relation cache manager
- *	(see utils/cache/relcache.c) to allow us to do indexed scans on
- *	the system catalogs before we'd normally be able to.  This happens
- *	before the lock table is fully initialized, so we can't use it.
- *	Strictly speaking, this violates 2pl, but we don't do 2pl on the
- *	system catalogs anyway, so I declare this to be okay.
- */
-
-#define USELOCKING		(!BuildingBtree && !IsInitProcessingMode())
-
 
 /*
  *	_bt_metapinit() -- Initialize the metadata page of a new btree.
+ *
+ * Note: there's no real need for any locking here.  Since the transaction
+ * creating the index hasn't committed yet, no one else can even see the index
+ * much less be trying to use it.
  */
 void
 _bt_metapinit(Relation rel)
@@ -58,10 +41,6 @@ _bt_metapinit(Relation rel)
 	Page		pg;
 	BTMetaPageData *metad;
 	BTPageOpaque op;
-
-	/* can't be sharing this with anyone, now... */
-	if (USELOCKING)
-		LockRelation(rel, AccessExclusiveLock);
 
 	if (RelationGetNumberOfBlocks(rel) != 0)
 		elog(ERROR, "Cannot initialize non-empty btree %s",
@@ -114,10 +93,6 @@ _bt_metapinit(Relation rel)
 	END_CRIT_SECTION();
 
 	WriteBuffer(buf);
-
-	/* all done */
-	if (USELOCKING)
-		UnlockRelation(rel, AccessExclusiveLock);
 }
 
 /*
@@ -142,7 +117,8 @@ _bt_metapinit(Relation rel)
  *		what we will return is the old root, which is now just the leftmost
  *		page on a probably-not-very-wide level.  For most purposes this is
  *		as good as or better than the true root, so we do not bother to
- *		insist on finding the true root.
+ *		insist on finding the true root.  We do, however, guarantee to
+ *		return a live (not deleted or half-dead) page.
  *
  *		On successful return, the root page is pinned and read-locked.
  *		The metadata page is not locked or pinned on exit.
@@ -157,6 +133,7 @@ _bt_getroot(Relation rel, int access)
 	Page		rootpage;
 	BTPageOpaque rootopaque;
 	BlockNumber rootblkno;
+	uint32		rootlevel;
 	BTMetaPageData *metad;
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
@@ -164,6 +141,7 @@ _bt_getroot(Relation rel, int access)
 	metaopaque = (BTPageOpaque) PageGetSpecialPointer(metapg);
 	metad = BTPageGetMeta(metapg);
 
+	/* sanity-check the metapage */
 	if (!(metaopaque->btpo_flags & BTP_META) ||
 		metad->btm_magic != BTREE_MAGIC)
 		elog(ERROR, "Index %s is not a btree",
@@ -191,90 +169,113 @@ _bt_getroot(Relation rel, int access)
 		/*
 		 * Race condition:	if someone else initialized the metadata
 		 * between the time we released the read lock and acquired the
-		 * write lock, above, we must avoid doing it again.
+		 * write lock, we must avoid doing it again.
 		 */
-		if (metad->btm_root == P_NONE)
-		{
-			/*
-			 * Get, initialize, write, and leave a lock of the appropriate
-			 * type on the new root page.  Since this is the first page in
-			 * the tree, it's a leaf as well as the root.
-			 */
-			rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
-			rootblkno = BufferGetBlockNumber(rootbuf);
-			rootpage = BufferGetPage(rootbuf);
-
-			_bt_pageinit(rootpage, BufferGetPageSize(rootbuf));
-			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
-			rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
-			rootopaque->btpo_flags = (BTP_LEAF | BTP_ROOT);
-			rootopaque->btpo.level = 0;
-
-			/* NO ELOG(ERROR) till meta is updated */
-			START_CRIT_SECTION();
-
-			metad->btm_root = rootblkno;
-			metad->btm_level = 0;
-			metad->btm_fastroot = rootblkno;
-			metad->btm_fastlevel = 0;
-
-			/* XLOG stuff */
-			if (!rel->rd_istemp)
-			{
-				xl_btree_newroot xlrec;
-				XLogRecPtr	recptr;
-				XLogRecData rdata;
-
-				xlrec.node = rel->rd_node;
-				xlrec.rootblk = rootblkno;
-				xlrec.level = 0;
-
-				rdata.buffer = InvalidBuffer;
-				rdata.data = (char *) &xlrec;
-				rdata.len = SizeOfBtreeNewroot;
-				rdata.next = NULL;
-
-				recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, &rdata);
-
-				PageSetLSN(rootpage, recptr);
-				PageSetSUI(rootpage, ThisStartUpID);
-				PageSetLSN(metapg, recptr);
-				PageSetSUI(metapg, ThisStartUpID);
-			}
-
-			END_CRIT_SECTION();
-
-			_bt_wrtnorelbuf(rel, rootbuf);
-
-			/*
-			 * swap root write lock for read lock.  There is no danger of
-			 * anyone else accessing the new root page while it's unlocked,
-			 * since no one else knows where it is yet.
-			 */
-			LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
-			LockBuffer(rootbuf, BT_READ);
-
-			/* okay, metadata is correct, write and release it */
-			_bt_wrtbuf(rel, metabuf);
-		}
-		else
+		if (metad->btm_root != P_NONE)
 		{
 			/*
 			 * Metadata initialized by someone else.  In order to
 			 * guarantee no deadlocks, we have to release the metadata
-			 * page and start all over again.
+			 * page and start all over again.  (Is that really true?
+			 * But it's hardly worth trying to optimize this case.)
 			 */
 			_bt_relbuf(rel, metabuf);
 			return _bt_getroot(rel, access);
 		}
+
+		/*
+		 * Get, initialize, write, and leave a lock of the appropriate
+		 * type on the new root page.  Since this is the first page in
+		 * the tree, it's a leaf as well as the root.
+		 */
+		rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
+		rootblkno = BufferGetBlockNumber(rootbuf);
+		rootpage = BufferGetPage(rootbuf);
+
+		_bt_pageinit(rootpage, BufferGetPageSize(rootbuf));
+		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+		rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
+		rootopaque->btpo_flags = (BTP_LEAF | BTP_ROOT);
+		rootopaque->btpo.level = 0;
+
+		/* NO ELOG(ERROR) till meta is updated */
+		START_CRIT_SECTION();
+
+		metad->btm_root = rootblkno;
+		metad->btm_level = 0;
+		metad->btm_fastroot = rootblkno;
+		metad->btm_fastlevel = 0;
+
+		/* XLOG stuff */
+		if (!rel->rd_istemp)
+		{
+			xl_btree_newroot xlrec;
+			XLogRecPtr	recptr;
+			XLogRecData rdata;
+
+			xlrec.node = rel->rd_node;
+			xlrec.rootblk = rootblkno;
+			xlrec.level = 0;
+
+			rdata.buffer = InvalidBuffer;
+			rdata.data = (char *) &xlrec;
+			rdata.len = SizeOfBtreeNewroot;
+			rdata.next = NULL;
+
+			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, &rdata);
+
+			PageSetLSN(rootpage, recptr);
+			PageSetSUI(rootpage, ThisStartUpID);
+			PageSetLSN(metapg, recptr);
+			PageSetSUI(metapg, ThisStartUpID);
+		}
+
+		END_CRIT_SECTION();
+
+		_bt_wrtnorelbuf(rel, rootbuf);
+
+		/*
+		 * swap root write lock for read lock.  There is no danger of
+		 * anyone else accessing the new root page while it's unlocked,
+		 * since no one else knows where it is yet.
+		 */
+		LockBuffer(rootbuf, BUFFER_LOCK_UNLOCK);
+		LockBuffer(rootbuf, BT_READ);
+
+		/* okay, metadata is correct, write and release it */
+		_bt_wrtbuf(rel, metabuf);
 	}
 	else
 	{
 		rootblkno = metad->btm_fastroot;
+		Assert(rootblkno != P_NONE);
+		rootlevel = metad->btm_fastlevel;
 
 		_bt_relbuf(rel, metabuf);		/* done with the meta page */
 
-		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+		for (;;)
+		{
+			rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+			rootpage = BufferGetPage(rootbuf);
+			rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+
+			if (!P_IGNORE(rootopaque))
+				break;
+
+			/* it's dead, Jim.  step right one page */
+			if (P_RIGHTMOST(rootopaque))
+				elog(ERROR, "No live root page found in %s",
+					 RelationGetRelationName(rel));
+			rootblkno = rootopaque->btpo_next;
+
+			_bt_relbuf(rel, rootbuf);
+		}
+
+		/* Note: can't check btpo.level on deleted pages */
+		if (rootopaque->btpo.level != rootlevel)
+			elog(ERROR, "Root page %u of %s has level %u, expected %u",
+				 rootblkno, RelationGetRelationName(rel),
+				 rootopaque->btpo.level, rootlevel);
 	}
 
 	/*
@@ -305,7 +306,10 @@ _bt_gettrueroot(Relation rel)
 	Page		metapg;
 	BTPageOpaque metaopaque;
 	Buffer		rootbuf;
+	Page		rootpage;
+	BTPageOpaque rootopaque;
 	BlockNumber rootblkno;
+	uint32		rootlevel;
 	BTMetaPageData *metad;
 
 	metabuf = _bt_getbuf(rel, BTREE_METAPAGE, BT_READ);
@@ -331,16 +335,41 @@ _bt_gettrueroot(Relation rel)
 	}
 
 	rootblkno = metad->btm_root;
+	rootlevel = metad->btm_level;
 
 	_bt_relbuf(rel, metabuf);	/* done with the meta page */
 
-	rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+	for (;;)
+	{
+		rootbuf = _bt_getbuf(rel, rootblkno, BT_READ);
+		rootpage = BufferGetPage(rootbuf);
+		rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
+
+		if (!P_IGNORE(rootopaque))
+			break;
+
+		/* it's dead, Jim.  step right one page */
+		if (P_RIGHTMOST(rootopaque))
+			elog(ERROR, "No live root page found in %s",
+				 RelationGetRelationName(rel));
+		rootblkno = rootopaque->btpo_next;
+
+		_bt_relbuf(rel, rootbuf);
+	}
+
+	/* Note: can't check btpo.level on deleted pages */
+	if (rootopaque->btpo.level != rootlevel)
+		elog(ERROR, "Root page %u of %s has level %u, expected %u",
+			 rootblkno, RelationGetRelationName(rel),
+			 rootopaque->btpo.level, rootlevel);
 
 	return rootbuf;
 }
 
 /*
  *	_bt_getbuf() -- Get a buffer by block number for read or write.
+ *
+ *		blkno == P_NEW means to get an unallocated index page.
  *
  *		When this routine returns, the appropriate lock is set on the
  *		requested buffer and its reference count has been incremented
@@ -359,18 +388,35 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 	}
 	else
 	{
+		bool		needLock;
 		Page		page;
+
+		/* XXX soon: ask FSM about free space */
 
 		/*
 		 * Extend the relation by one page.
 		 *
-		 * Extend bufmgr code is unclean and so we have to use extra locking
-		 * here.
+		 * We have to use a lock to ensure no one else is extending the rel at
+		 * the same time, else we will both try to initialize the same new
+		 * page.  We can skip locking for new or temp relations, however,
+		 * since no one else could be accessing them.
 		 */
-		LockPage(rel, 0, ExclusiveLock);
-		buf = ReadBuffer(rel, blkno);
+		needLock = !(rel->rd_isnew || rel->rd_istemp);
+
+		if (needLock)
+			LockPage(rel, 0, ExclusiveLock);
+
+		buf = ReadBuffer(rel, P_NEW);
+
+		/*
+		 * Release the file-extension lock; it's now OK for someone else to
+		 * extend the relation some more.
+		 */
+		if (needLock)
+			UnlockPage(rel, 0, ExclusiveLock);
+
+		/* Acquire appropriate buffer lock on new page */
 		LockBuffer(buf, access);
-		UnlockPage(rel, 0, ExclusiveLock);
 
 		/* Initialize the new page before returning it */
 		page = BufferGetPage(buf);
@@ -403,10 +449,9 @@ _bt_relbuf(Relation rel, Buffer buf)
  *		and a pin on the buffer.
  *
  * NOTE: actually, the buffer manager just marks the shared buffer page
- * dirty here, the real I/O happens later.	Since we can't persuade the
- * Unix kernel to schedule disk writes in a particular order, there's not
- * much point in worrying about this.  The most we can say is that all the
- * writes will occur before commit.
+ * dirty here; the real I/O happens later.  This is okay since we are not
+ * relying on write ordering anyway.  The WAL mechanism is responsible for
+ * guaranteeing correctness after a crash.
  */
 void
 _bt_wrtbuf(Relation rel, Buffer buf)
@@ -455,8 +500,9 @@ _bt_pageinit(Page page, Size size)
  *		mistake.  On exit, metapage data is correct and we no longer have
  *		a pin or lock on the metapage.
  *
- * XXX this is not used for splitting anymore, only in nbtsort.c at the
- * completion of btree building.
+ * Actually this is not used for splitting on-the-fly anymore.  It's only used
+ * in nbtsort.c at the completion of btree building, where we know we have
+ * sole access to the index anyway.
  */
 void
 _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level)
@@ -511,6 +557,10 @@ _bt_metaproot(Relation rel, BlockNumber rootbknum, uint32 level)
 
 /*
  * Delete an item from a btree page.
+ *
+ * This must only be used for deleting leaf items.  Deleting an item on a
+ * non-leaf page has to be done as part of an atomic action that includes
+ * deleting the page it points to.
  *
  * This routine assumes that the caller has pinned and locked the buffer,
  * and will write the buffer afterwards.

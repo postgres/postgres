@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.41 2003/02/21 00:06:22 tgl Exp $
+ * $Id: xlog.h,v 1.42 2003/02/22 00:45:05 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -56,17 +56,18 @@ typedef struct XLogRecord
 #define XLR_INFO_MASK			0x0F
 
 /*
- * We support backup of up to 2 disk blocks per XLOG record (could support
- * more if we cared to dedicate more xl_info bits for this purpose; currently
- * do not need more than 2 anyway).  If we backed up any disk blocks then we
- * use flag bits in xl_info to signal it.
+ * If we backed up any disk blocks with the XLOG record, we use flag bits in
+ * xl_info to signal it.  We support backup of up to 3 disk blocks per XLOG
+ * record.  (Could support 4 if we cared to dedicate all the xl_info bits for
+ * this purpose; currently bit 0 of xl_info is unused and available.)
  */
-#define XLR_BKP_BLOCK_MASK		0x0C	/* all info bits used for bkp
+#define XLR_BKP_BLOCK_MASK		0x0E	/* all info bits used for bkp
 										 * blocks */
-#define XLR_MAX_BKP_BLOCKS		2
+#define XLR_MAX_BKP_BLOCKS		3
 #define XLR_SET_BKP_BLOCK(iblk) (0x08 >> (iblk))
 #define XLR_BKP_BLOCK_1			XLR_SET_BKP_BLOCK(0)	/* 0x08 */
 #define XLR_BKP_BLOCK_2			XLR_SET_BKP_BLOCK(1)	/* 0x04 */
+#define XLR_BKP_BLOCK_3			XLR_SET_BKP_BLOCK(2)	/* 0x02 */
 
 /*
  * Sometimes we log records which are out of transaction control.

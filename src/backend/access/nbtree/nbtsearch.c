@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * nbtsearch.c
- *	  search code for postgres btrees.
+ *	  Search code for postgres btrees.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.73 2003/02/21 00:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.74 2003/02/22 00:45:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "access/nbtree.h"
 
 
+static Buffer _bt_walk_left(Relation rel, Buffer buf);
 static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
 
@@ -79,10 +80,11 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 		par_blkno = BufferGetBlockNumber(*bufP);
 
 		/*
-		 * We need to save the bit image of the index entry we chose in
+		 * We need to save the location of the index entry we chose in
 		 * the parent page on a stack. In case we split the tree, we'll
-		 * use this bit image to figure out what our real parent page is,
-		 * in case the parent splits while we're working lower in the
+		 * use the stack to work back up to the parent page.  We also save
+		 * the actual downlink (TID) to uniquely identify the index entry,
+		 * in case it moves right while we're working lower in the
 		 * tree.  See the paper by Lehman and Yao for how this is detected
 		 * and handled. (We use the child link to disambiguate duplicate
 		 * keys in the index -- Lehman and Yao disallow duplicate keys.)
@@ -114,7 +116,7 @@ _bt_search(Relation rel, int keysz, ScanKey scankey,
 /*
  *	_bt_moveright() -- move right in the btree if necessary.
  *
- *		When we drop and reacquire a pointer to a page, it is possible that
+ *		When we follow a pointer to reach a page, it is possible that
  *		the page has changed in the meanwhile.	If this happens, we're
  *		guaranteed that the page has "split right" -- that is, that any
  *		data that appeared on the page originally is either on the page
@@ -148,9 +150,13 @@ _bt_moveright(Relation rel,
 	 * right.  (If the scan key is equal to the high key, we might or
 	 * might not need to move right; have to scan the page first anyway.)
 	 * It could even have split more than once, so scan as far as needed.
+	 *
+	 * We also have to move right if we followed a link that brought us to
+	 * a dead page.
 	 */
 	while (!P_RIGHTMOST(opaque) &&
-		   _bt_compare(rel, keysz, scankey, page, P_HIKEY) > 0)
+		   (P_IGNORE(opaque) ||
+			_bt_compare(rel, keysz, scankey, page, P_HIKEY) > 0))
 	{
 		/* step right one page */
 		BlockNumber rblkno = opaque->btpo_next;
@@ -160,6 +166,10 @@ _bt_moveright(Relation rel,
 		page = BufferGetPage(buf);
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	}
+
+	if (P_IGNORE(opaque))
+		elog(ERROR, "_bt_moveright: fell off the end of %s",
+			 RelationGetRelationName(rel));
 
 	return buf;
 }
@@ -796,7 +806,6 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	OffsetNumber offnum,
 				maxoff;
 	BlockNumber blkno;
-	BlockNumber obknum;
 
 	/*
 	 * Don't use ItemPointerGetOffsetNumber or you risk to get assertion
@@ -814,7 +823,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 			offnum = OffsetNumberNext(offnum);
 		else
 		{
-			/* walk right to the next page with data */
+			/* Walk right to the next page with data */
 			for (;;)
 			{
 				/* if we're at end of scan, release the buffer and return */
@@ -831,58 +840,56 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				*bufP = _bt_getbuf(rel, blkno, BT_READ);
 				page = BufferGetPage(*bufP);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-				maxoff = PageGetMaxOffsetNumber(page);
-				/* done if it's not empty */
-				offnum = P_FIRSTDATAKEY(opaque);
-				if (!PageIsEmpty(page) && offnum <= maxoff)
-					break;
+				if (!P_IGNORE(opaque))
+				{
+					maxoff = PageGetMaxOffsetNumber(page);
+					/* done if it's not empty */
+					offnum = P_FIRSTDATAKEY(opaque);
+					if (!PageIsEmpty(page) && offnum <= maxoff)
+						break;
+				}
 			}
 		}
 	}
-	else
+	else						/* backwards scan */
 	{
 		if (offnum > P_FIRSTDATAKEY(opaque))
 			offnum = OffsetNumberPrev(offnum);
 		else
 		{
-			/* walk left to the next page with data */
+			/*
+			 * Walk left to the next page with data.  This is much more
+			 * complex than the walk-right case because of the possibility
+			 * that the page to our left splits while we are in flight to it,
+			 * plus the possibility that the page we were on gets deleted
+			 * after we leave it.  See nbtree/README for details.
+			 */
 			for (;;)
 			{
-				/* if we're at end of scan, release the buffer and return */
-				if (P_LEFTMOST(opaque))
+				*bufP = _bt_walk_left(rel, *bufP);
+
+				/* if we're at end of scan, return failure */
+				if (*bufP == InvalidBuffer)
 				{
-					_bt_relbuf(rel, *bufP);
 					ItemPointerSetInvalid(current);
-					*bufP = so->btso_curbuf = InvalidBuffer;
+					so->btso_curbuf = InvalidBuffer;
 					return false;
 				}
-				/* step left */
-				obknum = BufferGetBlockNumber(*bufP);
-				blkno = opaque->btpo_prev;
-				_bt_relbuf(rel, *bufP);
-				*bufP = _bt_getbuf(rel, blkno, BT_READ);
 				page = BufferGetPage(*bufP);
 				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-
 				/*
-				 * If the adjacent page just split, then we have to walk
-				 * right to find the block that's now adjacent to where we
-				 * were.  Because pages only split right, we don't have to
-				 * worry about this failing to terminate.
+				 * Okay, we managed to move left to a non-deleted page.
+				 * Done if it's not half-dead and not empty.  Else loop back
+				 * and do it all again.
 				 */
-				while (opaque->btpo_next != obknum)
+				if (!P_IGNORE(opaque))
 				{
-					blkno = opaque->btpo_next;
-					_bt_relbuf(rel, *bufP);
-					*bufP = _bt_getbuf(rel, blkno, BT_READ);
-					page = BufferGetPage(*bufP);
-					opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+					maxoff = PageGetMaxOffsetNumber(page);
+					offnum = maxoff;
+					if (!PageIsEmpty(page) &&
+						maxoff >= P_FIRSTDATAKEY(opaque))
+						break;
 				}
-				/* done if it's not empty */
-				maxoff = PageGetMaxOffsetNumber(page);
-				offnum = maxoff;
-				if (!PageIsEmpty(page) && maxoff >= P_FIRSTDATAKEY(opaque))
-					break;
 			}
 		}
 	}
@@ -896,10 +903,132 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 }
 
 /*
+ * _bt_walk_left() -- step left one page, if possible
+ *
+ * The given buffer must be pinned and read-locked.  This will be dropped
+ * before stepping left.  On return, we have pin and read lock on the
+ * returned page, instead.
+ *
+ * Returns InvalidBuffer if there is no page to the left (no lock is held
+ * in that case).
+ *
+ * When working on a non-leaf level, it is possible for the returned page
+ * to be half-dead; the caller should check that condition and step left
+ * again if it's important.
+ */
+static Buffer
+_bt_walk_left(Relation rel, Buffer buf)
+{
+	Page		page;
+	BTPageOpaque opaque;
+
+	page = BufferGetPage(buf);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+
+	for (;;)
+	{
+		BlockNumber obknum;
+		BlockNumber lblkno;
+		BlockNumber blkno;
+		int			tries;
+
+		/* if we're at end of tree, release buf and return failure */
+		if (P_LEFTMOST(opaque))
+		{
+			_bt_relbuf(rel, buf);
+			break;
+		}
+		/* remember original page we are stepping left from */
+		obknum = BufferGetBlockNumber(buf);
+		/* step left */
+		blkno = lblkno = opaque->btpo_prev;
+		_bt_relbuf(rel, buf);
+		buf = _bt_getbuf(rel, blkno, BT_READ);
+		page = BufferGetPage(buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		/*
+		 * If this isn't the page we want, walk right till we find
+		 * what we want --- but go no more than four hops (an
+		 * arbitrary limit).  If we don't find the correct page by then,
+		 * the most likely bet is that the original page got deleted
+		 * and isn't in the sibling chain at all anymore, not that its
+		 * left sibling got split more than four times.
+		 *
+		 * Note that it is correct to test P_ISDELETED not P_IGNORE
+		 * here, because half-dead pages are still in the sibling
+		 * chain.  Caller must reject half-dead pages if wanted.
+		 */
+		tries = 0;
+		for (;;)
+		{
+			if (!P_ISDELETED(opaque) && opaque->btpo_next == obknum)
+			{
+				/* Found desired page, return it */
+				return buf;
+			}
+			if (P_RIGHTMOST(opaque) || ++tries > 4)
+				break;
+			blkno = opaque->btpo_next;
+			_bt_relbuf(rel, buf);
+			buf = _bt_getbuf(rel, blkno, BT_READ);
+			page = BufferGetPage(buf);
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		}
+
+		/* Return to the original page to see what's up */
+		_bt_relbuf(rel, buf);
+		buf = _bt_getbuf(rel, obknum, BT_READ);
+		page = BufferGetPage(buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		if (P_ISDELETED(opaque))
+		{
+			/*
+			 * It was deleted.  Move right to first nondeleted page
+			 * (there must be one); that is the page that has acquired the
+			 * deleted one's keyspace, so stepping left from it will take
+			 * us where we want to be.
+			 */
+			for (;;)
+			{
+				if (P_RIGHTMOST(opaque))
+					elog(ERROR, "_bt_walk_left: fell off the end of %s",
+						 RelationGetRelationName(rel));
+				blkno = opaque->btpo_next;
+				_bt_relbuf(rel, buf);
+				buf = _bt_getbuf(rel, blkno, BT_READ);
+				page = BufferGetPage(buf);
+				opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+				if (!P_ISDELETED(opaque))
+					break;
+			}
+			/*
+			 * Now return to top of loop, resetting obknum to
+			 * point to this nondeleted page, and try again.
+			 */
+		}
+		else
+		{
+			/*
+			 * It wasn't deleted; the explanation had better be
+			 * that the page to the left got split or deleted.
+			 * Without this check, we'd go into an infinite loop
+			 * if there's anything wrong.
+			 */
+			if (opaque->btpo_prev == lblkno)
+				elog(ERROR, "_bt_walk_left: can't find left sibling in %s",
+					 RelationGetRelationName(rel));
+			/* Okay to try again with new lblkno value */
+		}
+	}
+
+	return InvalidBuffer;
+}
+
+/*
  * _bt_get_endpoint() -- Find the first or last page on a given tree level
  *
  * If the index is empty, we will return InvalidBuffer; any other failure
- * condition causes elog().
+ * condition causes elog().  We will not return a dead page.
  *
  * The returned buffer is pinned and read-locked.
  */
@@ -941,12 +1070,13 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		 * step right if needed to get to it (this could happen if the
 		 * page split since we obtained a pointer to it).
 		 */
-		while (P_ISDELETED(opaque) ||
+		while (P_IGNORE(opaque) ||
 			   (rightmost && !P_RIGHTMOST(opaque)))
 		{
 			blkno = opaque->btpo_next;
 			if (blkno == P_NONE)
-				elog(ERROR, "_bt_get_endpoint: ran off end of btree");
+				elog(ERROR, "_bt_get_endpoint: fell off the end of %s",
+					 RelationGetRelationName(rel));
 			_bt_relbuf(rel, buf);
 			buf = _bt_getbuf(rel, blkno, BT_READ);
 			page = BufferGetPage(buf);
@@ -959,7 +1089,7 @@ _bt_get_endpoint(Relation rel, uint32 level, bool rightmost)
 		if (opaque->btpo.level < level)
 			elog(ERROR, "_bt_get_endpoint: btree level %u not found", level);
 
-		/* Step to leftmost or rightmost child page */
+		/* Descend to leftmost or rightmost child page */
 		if (rightmost)
 			offnum = PageGetMaxOffsetNumber(page);
 		else

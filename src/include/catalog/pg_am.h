@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.23 2002/07/29 22:14:11 tgl Exp $
+ * $Id: pg_am.h,v 1.24 2003/02/22 00:45:05 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -58,6 +58,7 @@ CATALOG(pg_am)
 	regproc		amrestrpos;		/* "restore marked scan position" function */
 	regproc		ambuild;		/* "build new index" function */
 	regproc		ambulkdelete;	/* bulk-delete function */
+	regproc		amvacuumcleanup; /* post-VACUUM cleanup function */
 	regproc		amcostestimate; /* estimate cost of an indexscan */
 } FormData_pg_am;
 
@@ -72,7 +73,7 @@ typedef FormData_pg_am *Form_pg_am;
  *		compiler constants for pg_am
  * ----------------
  */
-#define Natts_pg_am						19
+#define Natts_pg_am						20
 #define Anum_pg_am_amname				1
 #define Anum_pg_am_amowner				2
 #define Anum_pg_am_amstrategies			3
@@ -91,21 +92,22 @@ typedef FormData_pg_am *Form_pg_am;
 #define Anum_pg_am_amrestrpos			16
 #define Anum_pg_am_ambuild				17
 #define Anum_pg_am_ambulkdelete			18
-#define Anum_pg_am_amcostestimate		19
+#define Anum_pg_am_amvacuumcleanup		19
+#define Anum_pg_am_amcostestimate		20
 
 /* ----------------
  *		initial contents of pg_am
  * ----------------
  */
 
-DATA(insert OID = 402 (  rtree	PGUID	8 3 0 f f f f rtgettuple rtinsert rtbeginscan rtrescan rtendscan rtmarkpos rtrestrpos rtbuild rtbulkdelete rtcostestimate ));
+DATA(insert OID = 402 (  rtree	PGUID	8 3 0 f f f f rtgettuple rtinsert rtbeginscan rtrescan rtendscan rtmarkpos rtrestrpos rtbuild rtbulkdelete - rtcostestimate ));
 DESCR("r-tree index access method");
-DATA(insert OID = 403 (  btree	PGUID	5 1 1 t t t t btgettuple btinsert btbeginscan btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btcostestimate ));
+DATA(insert OID = 403 (  btree	PGUID	5 1 1 t t t t btgettuple btinsert btbeginscan btrescan btendscan btmarkpos btrestrpos btbuild btbulkdelete btvacuumcleanup btcostestimate ));
 DESCR("b-tree index access method");
 #define BTREE_AM_OID 403
-DATA(insert OID = 405 (  hash	PGUID	1 1 0 f f f t hashgettuple hashinsert hashbeginscan hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete hashcostestimate ));
+DATA(insert OID = 405 (  hash	PGUID	1 1 0 f f f t hashgettuple hashinsert hashbeginscan hashrescan hashendscan hashmarkpos hashrestrpos hashbuild hashbulkdelete - hashcostestimate ));
 DESCR("hash index access method");
-DATA(insert OID = 783 (  gist	PGUID 100 7 0 f t f f gistgettuple gistinsert gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistcostestimate ));
+DATA(insert OID = 783 (  gist	PGUID 100 7 0 f t f f gistgettuple gistinsert gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete - gistcostestimate ));
 DESCR("GiST index access method");
 #define GIST_AM_OID 783
 

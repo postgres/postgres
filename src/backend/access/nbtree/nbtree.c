@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.95 2003/02/21 00:06:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.96 2003/02/22 00:45:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "access/nbtree.h"
 #include "catalog/index.h"
 #include "miscadmin.h"
+#include "storage/freespace.h"
 
 
 /* Working state for btbuild and its callback */
@@ -44,7 +45,6 @@ typedef struct
 } BTBuildState;
 
 
-bool		BuildingBtree = false;		/* see comment in btbuild() */
 bool		FastBuild = true;	/* use SORT instead of insertion build */
 
 /*
@@ -68,13 +68,7 @@ static void btbuildCallback(Relation index,
 void
 AtEOXact_nbtree(void)
 {
-	/*
-	 * Note: these actions should only be necessary during xact abort; but
-	 * they can't hurt during a commit.
-	 */
-
-	/* If we were building a btree, we ain't anymore. */
-	BuildingBtree = false;
+	/* nothing to do at the moment */
 }
 
 
@@ -94,9 +88,6 @@ btbuild(PG_FUNCTION_ARGS)
 	IndexInfo  *indexInfo = (IndexInfo *) PG_GETARG_POINTER(2);
 	double		reltuples;
 	BTBuildState buildstate;
-
-	/* set flag to disable locking */
-	BuildingBtree = true;
 
 	/*
 	 * bootstrap processing does something strange, so don't use
@@ -171,9 +162,6 @@ btbuild(PG_FUNCTION_ARGS)
 		ResetUsage();
 	}
 #endif   /* BTREE_BUILD_STATS */
-
-	/* all done */
-	BuildingBtree = false;
 
 	/*
 	 * Since we just counted the tuples in the heap, we update its stats
@@ -689,10 +677,6 @@ btbulkdelete(PG_FUNCTION_ARGS)
 				 * We now need to back up the scan one item, so that the next
 				 * cycle will re-examine the same offnum on this page (which
 				 * now holds the next item).
-				 *
-				 * For now, just hack the current-item index.  Will need to
-				 * be smarter when deletion includes removal of empty
-				 * index pages.
 				 */
 				current->ip_posid--;
 			}
@@ -708,10 +692,87 @@ btbulkdelete(PG_FUNCTION_ARGS)
 
 	result = (IndexBulkDeleteResult *) palloc(sizeof(IndexBulkDeleteResult));
 	result->num_pages = num_pages;
-	result->tuples_removed = tuples_removed;
 	result->num_index_tuples = num_index_tuples;
+	result->tuples_removed = tuples_removed;
+	result->pages_free = 0;		/* not computed here */
 
 	PG_RETURN_POINTER(result);
+}
+
+/*
+ * Post-VACUUM cleanup.
+ *
+ * Here, we scan looking for pages we can delete or return to the freelist.
+ *
+ * Result: a palloc'd struct containing statistical info for VACUUM displays.
+ */
+Datum
+btvacuumcleanup(PG_FUNCTION_ARGS)
+{
+	Relation	rel = (Relation) PG_GETARG_POINTER(0);
+#ifdef NOT_USED
+	IndexVacuumCleanupInfo *info = (IndexVacuumCleanupInfo *) PG_GETARG_POINTER(1);
+#endif
+	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(2);
+	BlockNumber num_pages;
+	BlockNumber blkno;
+	PageFreeSpaceInfo *pageSpaces;
+	int			nFreePages,
+				maxFreePages;
+
+	Assert(stats != NULL);
+
+	num_pages = RelationGetNumberOfBlocks(rel);
+
+	/* No point in remembering more than MaxFSMPages pages */
+	maxFreePages = MaxFSMPages;
+	if ((BlockNumber) maxFreePages > num_pages)
+		maxFreePages = (int) num_pages + 1;	/* +1 to avoid palloc(0) */
+	pageSpaces = (PageFreeSpaceInfo *) palloc(maxFreePages * sizeof(PageFreeSpaceInfo));
+	nFreePages = 0;
+
+	/*
+	 * Scan through all pages of index, except metapage.  (Any pages added
+	 * after we start the scan will not be examined; this should be fine,
+	 * since they can't possibly be empty.)
+	 */
+	for (blkno = BTREE_METAPAGE+1; blkno < num_pages; blkno++)
+	{
+		Buffer	buf;
+		Page	page;
+		BTPageOpaque opaque;
+
+		buf = _bt_getbuf(rel, blkno, BT_READ);
+		page = BufferGetPage(buf);
+		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		if (P_ISDELETED(opaque))
+		{
+			/* XXX if safe-to-reclaim... */
+			if (nFreePages < maxFreePages)
+			{
+				pageSpaces[nFreePages].blkno = blkno;
+				/* The avail-space value is bogus, but must be < BLCKSZ */
+				pageSpaces[nFreePages].avail = BLCKSZ-1;
+				nFreePages++;
+			}
+		}
+		_bt_relbuf(rel, buf);
+	}
+
+	/*
+	 * Update the shared Free Space Map with the info we now have about
+	 * free space in the index, discarding any old info the map may have.
+	 * We do not need to sort the page numbers; they're in order already.
+	 */
+	MultiRecordFreeSpace(&rel->rd_node, 0, nFreePages, pageSpaces);
+
+	pfree(pageSpaces);
+
+	/* update statistics */
+	stats->num_pages = num_pages;
+	stats->pages_free = nFreePages;
+
+	PG_RETURN_POINTER(stats);
 }
 
 /*
@@ -739,7 +800,7 @@ _bt_restscan(IndexScanDesc scan)
 				maxoff;
 	BTPageOpaque opaque;
 	Buffer		nextbuf;
-	ItemPointerData target = so->curHeapIptr;
+	ItemPointer target = &(so->curHeapIptr);
 	BTItem		item;
 	BlockNumber blkno;
 
@@ -759,7 +820,7 @@ _bt_restscan(IndexScanDesc scan)
 	 * current->ip_posid before first index tuple on the current page
 	 * (_bt_step will move it right)...  XXX still needed?
 	 */
-	if (!ItemPointerIsValid(&target))
+	if (!ItemPointerIsValid(target))
 	{
 		ItemPointerSetOffsetNumber(current,
 							   OffsetNumberPrev(P_FIRSTDATAKEY(opaque)));
@@ -778,11 +839,7 @@ _bt_restscan(IndexScanDesc scan)
 			 offnum = OffsetNumberNext(offnum))
 		{
 			item = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-			if (item->bti_itup.t_tid.ip_blkid.bi_hi ==
-				target.ip_blkid.bi_hi &&
-				item->bti_itup.t_tid.ip_blkid.bi_lo ==
-				target.ip_blkid.bi_lo &&
-				item->bti_itup.t_tid.ip_posid == target.ip_posid)
+			if (BTTidSame(item->bti_itup.t_tid, *target))
 			{
 				/* Found it */
 				current->ip_posid = offnum;
@@ -793,22 +850,33 @@ _bt_restscan(IndexScanDesc scan)
 		/*
 		 * The item we're looking for moved right at least one page, so
 		 * move right.  We are careful here to pin and read-lock the next
-		 * page before releasing the current one.  This ensures that a
-		 * concurrent btbulkdelete scan cannot pass our position --- if it
+		 * non-dead page before releasing the current one.  This ensures that
+		 * a concurrent btbulkdelete scan cannot pass our position --- if it
 		 * did, it might be able to reach and delete our target item before
 		 * we can find it again.
 		 */
 		if (P_RIGHTMOST(opaque))
-			elog(FATAL, "_bt_restscan: my bits moved right off the end of the world!"
+			elog(ERROR, "_bt_restscan: my bits moved right off the end of the world!"
 				 "\n\tRecreate index %s.", RelationGetRelationName(rel));
-
-		blkno = opaque->btpo_next;
-		nextbuf = _bt_getbuf(rel, blkno, BT_READ);
+		/* Advance to next non-dead page --- there must be one */
+		nextbuf = InvalidBuffer;
+		for (;;)
+		{
+			blkno = opaque->btpo_next;
+			if (nextbuf != InvalidBuffer)
+				_bt_relbuf(rel, nextbuf);
+			nextbuf = _bt_getbuf(rel, blkno, BT_READ);
+			page = BufferGetPage(nextbuf);
+			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+			if (!P_IGNORE(opaque))
+				break;
+			if (P_RIGHTMOST(opaque))
+				elog(ERROR, "_bt_restscan: fell off the end of %s",
+					 RelationGetRelationName(rel));
+		}
 		_bt_relbuf(rel, buf);
 		so->btso_curbuf = buf = nextbuf;
-		page = BufferGetPage(buf);
 		maxoff = PageGetMaxOffsetNumber(page);
-		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 		offnum = P_FIRSTDATAKEY(opaque);
 		ItemPointerSet(current, blkno, offnum);
 	}

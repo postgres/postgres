@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.63 2003/01/08 19:41:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.64 2003/02/22 00:45:03 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -23,6 +23,7 @@
  *		index_restrpos	- restore a scan position
  *		index_getnext	- get the next tuple from a scan
  *		index_bulk_delete	- bulk deletion of index tuples
+ *		index_vacuum_cleanup	- post-deletion cleanup of an index
  *		index_cost_estimator	- fetch amcostestimate procedure OID
  *		index_getprocid - get a support procedure OID
  *
@@ -575,6 +576,37 @@ index_bulk_delete(Relation indexRelation,
 										 PointerGetDatum(indexRelation),
 									 PointerGetDatum((Pointer) callback),
 									   PointerGetDatum(callback_state)));
+
+	return result;
+}
+
+/* ----------------
+ *		index_vacuum_cleanup - do post-deletion cleanup of an index
+ *
+ *		return value is an optional palloc'd struct of statistics
+ * ----------------
+ */
+IndexBulkDeleteResult *
+index_vacuum_cleanup(Relation indexRelation,
+					 IndexVacuumCleanupInfo *info,
+					 IndexBulkDeleteResult *stats)
+{
+	RegProcedure procedure;
+	IndexBulkDeleteResult *result;
+
+	RELATION_CHECKS;
+
+	/* It's okay for an index AM not to have a vacuumcleanup procedure */
+	if (!RegProcedureIsValid(indexRelation->rd_am->amvacuumcleanup))
+		return stats;
+
+	GET_REL_PROCEDURE(vacuum_cleanup, amvacuumcleanup);
+
+	result = (IndexBulkDeleteResult *)
+		DatumGetPointer(OidFunctionCall3(procedure,
+										 PointerGetDatum(indexRelation),
+										 PointerGetDatum((Pointer) info),
+										 PointerGetDatum((Pointer) stats)));
 
 	return result;
 }
