@@ -1688,6 +1688,10 @@ Sun Oct 19 15:20:16 CEST 2003
 
 	- Need to check for both Informic compat modes when parsing include
 	  files.
+	  
+Mon Oct 20 14:53:40 CEST 2003
+
+	- Install dummy sqlda.h file.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
