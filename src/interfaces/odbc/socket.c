@@ -227,23 +227,29 @@ SOCK_put_string(SocketClass *self, char *string)
 int
 SOCK_get_int(SocketClass *self, short len)
 {
-	char		buf[4];
-
 	switch (len)
 	{
 		case 2:
-			SOCK_get_n_char(self, buf, len);
+		{
+			unsigned short	buf;
+
+			SOCK_get_n_char(self, (char *) &buf, len);
 			if (self->reverse)
-				return *((unsigned short *) buf);
+				return buf;
 			else
-				return ntohs(*((unsigned short *) buf));
+				return ntohs(buf);
+		}
 
 		case 4:
-			SOCK_get_n_char(self, buf, len);
+		{
+			unsigned int	buf;
+
+			SOCK_get_n_char(self, (char *) &buf, len);
 			if (self->reverse)
-				return *((unsigned int *) buf);
+				return buf;
 			else
-				return ntohl(*((unsigned int *) buf));
+				return ntohl(buf);
+		}
 
 		default:
 			self->errornumber = SOCKET_GET_INT_WRONG_LENGTH;
