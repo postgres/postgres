@@ -10,12 +10,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.132 2003/01/20 18:54:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.133 2003/01/22 00:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <limits.h>
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -418,6 +419,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 	Plan	   *plan;
 	Plan	   *subplan;
 	List	   *sub_targetlist;
+	List	   *my_tlist;
 	List	   *l;
 
 	subplan = create_plan(root, best_path->subpath);
@@ -474,21 +476,39 @@ create_unique_plan(Query *root, UniquePath *best_path)
 			subplan->targetlist = newtlist;
 	}
 
+	my_tlist = new_unsorted_tlist(subplan->targetlist);
+
 	if (best_path->use_hash)
 	{
-		elog(ERROR, "create_unique_plan: hash case not implemented yet");
-		plan = NULL;
+		int		numGroupCols = length(my_tlist);
+		long	numGroups;
+		AttrNumber *groupColIdx;
+		int		i;
+
+		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
+
+		groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
+		for (i = 0; i < numGroupCols; i++)
+			groupColIdx[i] = i+1;
+
+		plan = (Plan *) make_agg(root,
+								 my_tlist,
+								 NIL,
+								 AGG_HASHED,
+								 numGroupCols,
+								 groupColIdx,
+								 numGroups,
+								 0,
+								 subplan);
 	}
 	else
 	{
-		List	   *sort_tlist;
 		List	   *sortList;
 
-		sort_tlist = new_unsorted_tlist(subplan->targetlist);
-		sortList = addAllTargetsToSortList(NIL, sort_tlist);
-		plan = (Plan *) make_sort_from_sortclauses(root, sort_tlist,
+		sortList = addAllTargetsToSortList(NIL, my_tlist);
+		plan = (Plan *) make_sort_from_sortclauses(root, my_tlist,
 												   subplan, sortList);
-		plan = (Plan *) make_unique(sort_tlist, plan, sortList);
+		plan = (Plan *) make_unique(my_tlist, plan, sortList);
 	}
 
 	plan->plan_rows = best_path->rows;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.84 2003/01/20 18:54:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.85 2003/01/22 00:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,14 +16,22 @@
 
 #include <math.h>
 
+#include "catalog/pg_operator.h"
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "nodes/plannodes.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_oper.h"
 #include "utils/memutils.h"
 #include "utils/selfuncs.h"
+#include "utils/syscache.h"
+
+
+static bool hash_safe_tlist(List *tlist);
 
 
 /*****************************************************************************
@@ -506,6 +514,7 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 {
 	UniquePath *pathnode;
 	Path		sort_path;		/* dummy for result of cost_sort */
+	Path		agg_path;		/* dummy for result of cost_agg */
 	MemoryContext oldcontext;
 	List	   *sub_targetlist;
 	List	   *l;
@@ -587,14 +596,78 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	 */
 	sort_path.total_cost += cpu_operator_cost * rel->rows * numCols;
 
-	pathnode->use_hash = false;	/* for now */
+	/*
+	 * Is it safe to use a hashed implementation?  If so, estimate and
+	 * compare costs.  We only try this if we know the targetlist for
+	 * sure (else we can't be sure about the datatypes involved).
+	 */
+	pathnode->use_hash = false;
+	if (enable_hashagg && sub_targetlist && hash_safe_tlist(sub_targetlist))
+	{
+		/*
+		 * Estimate the overhead per hashtable entry at 64 bytes (same
+		 * as in planner.c).
+		 */
+		int		hashentrysize = rel->width + 64;
 
-	pathnode->path.startup_cost = sort_path.startup_cost;
-	pathnode->path.total_cost = sort_path.total_cost;
+		if (hashentrysize * pathnode->rows <= SortMem * 1024L)
+		{
+			cost_agg(&agg_path, root,
+					 AGG_HASHED, 0,
+					 numCols, pathnode->rows,
+					 subpath->startup_cost,
+					 subpath->total_cost,
+					 rel->rows);
+			if (agg_path.total_cost < sort_path.total_cost)
+				pathnode->use_hash = true;
+		}
+	}
+
+	if (pathnode->use_hash)
+	{
+		pathnode->path.startup_cost = agg_path.startup_cost;
+		pathnode->path.total_cost = agg_path.total_cost;
+	}
+	else
+	{
+		pathnode->path.startup_cost = sort_path.startup_cost;
+		pathnode->path.total_cost = sort_path.total_cost;
+	}
 
 	rel->cheapest_unique_path = (Path *) pathnode;
 
 	return pathnode;
+}
+
+/*
+ * hash_safe_tlist - can datatypes of given tlist be hashed?
+ *
+ * We assume hashed aggregation will work if the datatype's equality operator
+ * is marked hashjoinable.
+ *
+ * XXX this probably should be somewhere else.  See also hash_safe_grouping
+ * in plan/planner.c.
+ */
+static bool
+hash_safe_tlist(List *tlist)
+{
+	List	   *tl;
+
+	foreach(tl, tlist)
+	{
+		Node	   *expr = (Node *) lfirst(tl);
+		Operator	optup;
+		bool		oprcanhash;
+
+		optup = equality_oper(exprType(expr), true);
+		if (!optup)
+			return false;
+		oprcanhash = ((Form_pg_operator) GETSTRUCT(optup))->oprcanhash;
+		ReleaseSysCache(optup);
+		if (!oprcanhash)
+			return false;
+	}
+	return true;
 }
 
 /*
