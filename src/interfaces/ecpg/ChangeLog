@@ -1160,6 +1160,11 @@ Wed Dec  5 12:27:25 CET 2001
 	- Fixed variable handling in AT statement.
 	- Fixed bug that caused segfault when given incorrect DB name.
 	- Fixed bug in ecpglib causing indicator to list the size of the
-	  variable instead of the size of the data.
+	  variable instead of the size of the data
+
+Thu Dec  6 14:02:56 CET 2001
+
+	- Removed debug message from preproc.y.
+	- Fixed some bugs in exec sql var and exec sql type command.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

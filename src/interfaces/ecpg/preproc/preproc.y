@@ -3886,7 +3886,6 @@ connection_target: database_name opt_server opt_port
         |  db_prefix ':' server opt_port '/' database_name opt_options
                 {
 		  /* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
-			printf("%s\n", $1);
 		  if (strncmp($1, "unix:postgresql", strlen("unix:postgresql")) != 0 && strncmp($1, "tcp:postgresql", strlen("tcp:postgresql")) != 0)
 		  {
 		    sprintf(errortext, "only protocols 'tcp' and 'unix' and database type 'postgresql' are supported");
@@ -4271,10 +4270,6 @@ s_struct: SQL_STRUCT opt_symbol
             if (struct_level >= STRUCT_DEPTH)
                  mmerror(ET_ERROR, "Too many levels in nested structure definition");
 
-	    /* reset this variable so we see if there was */
-	    /* an initializer specified */
-	    initializer = 0;
-
 	    $$ = cat2_str(make_str("struct"), $2);
 	};
 
@@ -4283,10 +4278,6 @@ s_union: UNION opt_symbol
             struct_member_list[struct_level++] = NULL;
             if (struct_level >= STRUCT_DEPTH)
                  mmerror(ET_ERROR, "Too many levels in nested structure definition");
-
-	    /* reset this variable so we see if there was */
-	    /* an initializer specified */
-	    initializer = 0;
 
 	    $$ = cat2_str(make_str("union"), $2);
 	};
@@ -4661,52 +4652,62 @@ ECPGSetConnection:  SET SQL_CONNECTION to_equal connection_object
 /*
  * define a new type for embedded SQL
  */
-ECPGTypedef: TYPE_P ColLabel IS type opt_type_array_bounds opt_reference
+ECPGTypedef: TYPE_P
+	{
+		/* reset this variable so we see if there was */
+		/* an initializer specified */
+		initializer = 0;
+	}
+	ColLabel IS type opt_type_array_bounds opt_reference
 	{
 		/* add entry to list */
 		struct typedefs *ptr, *this;
-		int dimension = $5.index1;
-		int length = $5.index2;
+		int dimension = $6.index1;
+		int length = $6.index2;
 
-		if (($4.type_enum == ECPGt_struct ||
-		     $4.type_enum == ECPGt_union) &&
+		if (($5.type_enum == ECPGt_struct ||
+		     $5.type_enum == ECPGt_union) &&
 		    initializer == 1)
-			mmerror(ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
-
-		for (ptr = types; ptr != NULL; ptr = ptr->next)
 		{
-			if (strcmp($2, ptr->name) == 0)
+			mmerror(ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
+		}
+		else
+		{
+			for (ptr = types; ptr != NULL; ptr = ptr->next)
 			{
-			        /* re-definition is a bug */
-				sprintf(errortext, "Type %s already defined", $2);
-				mmerror(ET_ERROR, errortext);
-	                }
+				if (strcmp($3, ptr->name) == 0)
+				{
+			        	/* re-definition is a bug */
+					sprintf(errortext, "Type %s already defined", $3);
+					mmerror(ET_ERROR, errortext);
+                		}
+			}
+
+			adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0);
+
+       			this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
+
+	        	/* initial definition */
+		        this->next = types;
+	        	this->name = $3;
+			this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+			this->type->type_enum = $5.type_enum;
+			this->type->type_str = mm_strdup($3);
+			this->type->type_dimension = dimension; /* dimension of array */
+			this->type->type_index = length;    /* lenght of string */
+			this->struct_member_list = ($5.type_enum == ECPGt_struct || $5.type_enum == ECPGt_union) ?
+				struct_member_list[struct_level] : NULL;
+
+			if ($5.type_enum != ECPGt_varchar &&
+			    $5.type_enum != ECPGt_char &&
+	        	    $5.type_enum != ECPGt_unsigned_char &&
+			    this->type->type_index >= 0)
+        	                    mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
+
+        		types = this;
 		}
 
-		adjust_array($4.type_enum, &dimension, &length, $4.type_dimension, $4.type_index, *$6?1:0);
-
-        	this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
-
-        	/* initial definition */
-	        this->next = types;
-	        this->name = $2;
-		this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
-		this->type->type_enum = $4.type_enum;
-		this->type->type_str = mm_strdup($2);
-		this->type->type_dimension = dimension; /* dimension of array */
-		this->type->type_index = length;    /* lenght of string */
-		this->struct_member_list = ($4.type_enum == ECPGt_struct || $4.type_enum == ECPGt_union) ?
-			struct_member_list[struct_level] : NULL;
-
-		if ($4.type_enum != ECPGt_varchar &&
-		    $4.type_enum != ECPGt_char &&
-	            $4.type_enum != ECPGt_unsigned_char &&
-		    this->type->type_index >= 0)
-                            mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
-
-        	types = this;
-
-		$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($2), make_str("is"), mm_strdup($4.type_str), mm_strdup($5.str), $6, make_str("*/"));
+		$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($3), make_str("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, make_str("*/"));
 	};
 
 opt_type_array_bounds:  '[' ']' opt_type_array_bounds
@@ -4754,60 +4755,70 @@ opt_reference: SQL_REFERENCE { $$ = make_str("reference"); }
 /*
  * define the type of one variable for embedded SQL
  */
-ECPGVar: SQL_VAR ColLabel IS type opt_type_array_bounds opt_reference
+ECPGVar: SQL_VAR
 	{
-		struct variable *p = find_variable($2);
-		int dimension = $5.index1;
-		int length = $5.index2;
+		/* reset this variable so we see if there was */
+		/* an initializer specified */
+		initializer = 0;
+	}
+	ColLabel IS type opt_type_array_bounds opt_reference
+	{
+		struct variable *p = find_variable($3);
+		int dimension = $6.index1;
+		int length = $6.index2;
 		struct ECPGtype * type;
 
-		if (($4.type_enum == ECPGt_struct ||
-		     $4.type_enum == ECPGt_union) &&
+		if (($5.type_enum == ECPGt_struct ||
+		     $5.type_enum == ECPGt_union) &&
 		    initializer == 1)
-			mmerror(ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
-
-		adjust_array($4.type_enum, &dimension, &length, $4.type_dimension, $4.type_index, *$6?1:0);
-
-		switch ($4.type_enum)
 		{
-		   case ECPGt_struct:
-		   case ECPGt_union:
-                        if (dimension < 0)
-                            type = ECPGmake_struct_type(struct_member_list[struct_level], $4.type_enum);
-                        else
-                            type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $4.type_enum), dimension); 
-                        break;
-                   case ECPGt_varchar:
-                        if (dimension == -1)
-                            type = ECPGmake_simple_type($4.type_enum, length);
-                        else
-                            type = ECPGmake_array_type(ECPGmake_simple_type($4.type_enum, length), dimension);
+			mmerror(ET_ERROR, "Initializer not allowed in EXEC SQL VAR command");
+		}
+		else
+		{
+			adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0);
 
-			break;
-                   case ECPGt_char:
-                   case ECPGt_unsigned_char:
-                        if (dimension == -1)
-                            type = ECPGmake_simple_type($4.type_enum, length);
-                        else
-                            type = ECPGmake_array_type(ECPGmake_simple_type($4.type_enum, length), dimension);
+			switch ($5.type_enum)
+			{
+			   case ECPGt_struct:
+			   case ECPGt_union:
+        	                if (dimension < 0)
+                	            type = ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum);
+                        	else
+	                            type = ECPGmake_array_type(ECPGmake_struct_type(struct_member_list[struct_level], $5.type_enum), dimension); 
+        	                break;
+                	   case ECPGt_varchar:
+                        	if (dimension == -1)
+	                            type = ECPGmake_simple_type($5.type_enum, length);
+        	                else
+                	            type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length), dimension);
 
-			break;
-		   default:
-			if (length >= 0)
-                	    mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
+				break;
+        	           case ECPGt_char:
+                	   case ECPGt_unsigned_char:
+                        	if (dimension == -1)
+	                            type = ECPGmake_simple_type($5.type_enum, length);
+        	                else
+                	            type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length), dimension);
 
-                        if (dimension < 0)
-                            type = ECPGmake_simple_type($4.type_enum, 1);
-                        else
-                            type = ECPGmake_array_type(ECPGmake_simple_type($4.type_enum, 1), dimension);
+				break;
+			   default:
+				if (length >= 0)
+                		    mmerror(ET_ERROR, "No multi-dimensional array support for simple data types");
 
-			break;
-		}	
+	                        if (dimension < 0)
+        	                    type = ECPGmake_simple_type($5.type_enum, 1);
+                	        else
+                        	    type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, 1), dimension);
 
-		ECPGfree_type(p->type);
-		p->type = type;
+				break;
+			}	
 
-		$$ = cat_str(7, make_str("/* exec sql var"), mm_strdup($2), make_str("is"), mm_strdup($4.type_str), mm_strdup($5.str), $6, make_str("*/"));
+			ECPGfree_type(p->type);
+			p->type = type;
+		}
+
+		$$ = cat_str(7, make_str("/* exec sql var"), mm_strdup($3), make_str("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, make_str("*/"));
 	};
 
 /*
