@@ -426,6 +426,7 @@ SS_finalize_plan(Plan *plan)
 		case T_Result:
 			param_list = set_unioni(param_list,
 									_finalize_primnode(((Result *) plan)->resconstantqual, &subPlan));
+			/* subPlan is NOT necessarily NULL here ... */
 			break;
 
 		case T_Append:
@@ -503,10 +504,10 @@ SS_finalize_plan(Plan *plan)
 
 }
 
-List	   *SS_pull_subplan(void *expr);
+/* Construct a list of all subplans found within the given node tree */
 
 List *
-SS_pull_subplan(void *expr)
+SS_pull_subplan(Node *expr)
 {
 	List	   *result = NULL;
 
@@ -524,18 +525,18 @@ SS_pull_subplan(void *expr)
 		return SS_pull_subplan(((Iter *) expr)->iterexpr);
 	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
 			 not_clause(expr) || is_funcclause(expr))
-		return SS_pull_subplan(((Expr *) expr)->args);
+		return SS_pull_subplan((Node *) ((Expr *) expr)->args);
 	else if (IsA(expr, Aggref))
 		return SS_pull_subplan(((Aggref *) expr)->target);
 	else if (IsA(expr, ArrayRef))
 	{
-		result = SS_pull_subplan(((ArrayRef *) expr)->refupperindexpr);
+		result = SS_pull_subplan((Node *)((ArrayRef *) expr)->refupperindexpr);
 		result = nconc(result,
-				  SS_pull_subplan(((ArrayRef *) expr)->reflowerindexpr));
+				SS_pull_subplan((Node*) ((ArrayRef *) expr)->reflowerindexpr));
 		result = nconc(result,
 					   SS_pull_subplan(((ArrayRef *) expr)->refexpr));
 		result = nconc(result,
-					 SS_pull_subplan(((ArrayRef *) expr)->refassgnexpr));
+					   SS_pull_subplan(((ArrayRef *) expr)->refassgnexpr));
 	}
 	else if (IsA(expr, TargetEntry))
 		return SS_pull_subplan(((TargetEntry *) expr)->expr);

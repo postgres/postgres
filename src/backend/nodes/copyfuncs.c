@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.75 1999/03/01 00:10:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.76 1999/03/03 00:02:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "catalog/pg_type.h"
 #include "storage/lmgr.h"
 #include "optimizer/planmain.h"
+#include "optimizer/subselect.h"
 
 /*
  * listCopy
@@ -78,8 +79,6 @@ listCopy(List *list)
 static void
 CopyPlanFields(Plan *from, Plan *newnode)
 {
-	extern List *SS_pull_subplan(void *expr);
-
 	newnode->cost = from->cost;
 	newnode->plan_size = from->plan_size;
 	newnode->plan_width = from->plan_width;
@@ -93,7 +92,7 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->chgParam = listCopy(from->chgParam);
 	Node_Copy(from, newnode, initPlan);
 	if (from->subPlan != NULL)
-		newnode->subPlan = SS_pull_subplan(newnode->qual);
+		newnode->subPlan = SS_pull_subplan((Node*) newnode->qual);
 	else
 		newnode->subPlan = NULL;
 	newnode->nParamExec = from->nParamExec;
@@ -138,6 +137,11 @@ _copyResult(Result *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, resconstantqual);
+
+	/* We must add subplans in resconstantqual to the new plan's subPlan list
+	 */
+	newnode->plan.subPlan = nconc(newnode->plan.subPlan,
+								  SS_pull_subplan(newnode->resconstantqual));
 
 	return newnode;
 }
