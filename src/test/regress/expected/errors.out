@@ -11,7 +11,7 @@ ERROR:  attribute 'nonesuch' not found
 QUERY: select distinct on foobar from pg_database;
 ERROR:  parser: parse error at or near "from"
 QUERY: select distinct on foobar * from pg_database;
-ERROR:  The field specified in the UNIQUE ON clause is not in the targetlist
+ERROR:  All fields in the UNIQUE ON clause must appear in the target list
 QUERY: delete from;
 ERROR:  parser: parse error at or near ";"
 QUERY: delete from nonesuch;
