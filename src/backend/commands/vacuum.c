@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.141 2000/02/24 04:34:38 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.142 2000/03/08 23:41:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,6 +144,7 @@ PortalVariableMemory CommonSpecialPortalGetMemory(void)
 {
 	return PortalGetVariableMemory(vc_portal);
 }
+
 bool CommonSpecialPortalIsOpen(void)
 {
 	return CommonSpecialPortalInUse;
@@ -153,6 +154,7 @@ void
 vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 {
 	NameData	VacRel;
+	Name		VacRelName;
 	PortalVariableMemory pmem;
 	MemoryContext old;
 	List	   *le;
@@ -173,17 +175,22 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 	if (IsTransactionBlock())
 		elog(ERROR, "VACUUM cannot run inside a BEGIN/END block");
 
-	/* initialize vacuum cleaner, particularly vc_portal */
-	vc_init();
-
 	if (verbose)
 		MESSAGE_LEVEL = NOTICE;
 	else
 		MESSAGE_LEVEL = DEBUG;
 
-	/* vacrel gets de-allocated on transaction commit, so copy it */
+	/* Create special portal for cross-transaction storage */
+	CommonSpecialPortalOpen();
+
+	/* vacrel gets de-allocated on xact commit, so copy it to safe storage */
 	if (vacrel)
-		strcpy(NameStr(VacRel), vacrel);
+	{
+		namestrcpy(&VacRel, vacrel);
+		VacRelName = &VacRel;
+	}
+	else
+		VacRelName = NULL;
 
 	/* must also copy the column list, if any, to safe storage */
 	pmem = CommonSpecialPortalGetMemory();
@@ -196,11 +203,18 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 	}
 	MemoryContextSwitchTo(old);
 
+	/*
+	 * Start up the vacuum cleaner.
+	 *
+	 * NOTE: since this commits the current transaction, the memory holding
+	 * any passed-in parameters gets freed here.  We must have already copied
+	 * pass-by-reference parameters to safe storage.  Don't make me fix this
+	 * again!
+	 */
+	vc_init();
+
 	/* vacuum the database */
-	if (vacrel)
-		vc_vacuum(&VacRel, analyze, va_cols);
-	else
-		vc_vacuum(NULL, analyze, NIL);
+	vc_vacuum(VacRelName, analyze, va_cols);
 
 	/* clean up */
 	vc_shutdown();
@@ -229,8 +243,6 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 static void
 vc_init()
 {
-	CommonSpecialPortalOpen();
-
 	/* matches the StartTransaction in PostgresMain() */
 	CommitTransactionCommand();
 }
@@ -252,6 +264,7 @@ vc_shutdown()
 	 */
 	unlink(RELCACHE_INIT_FILENAME);
 
+	/* Clean up working storage */
 	CommonSpecialPortalClose();
 
 	/* matches the CommitTransaction in PostgresMain() */
