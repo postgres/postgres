@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 12 22:20:55 EDT 2002
+Last updated:		Fri Jul 12 22:41:48 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -190,7 +190,7 @@ Commands
 	  [inheritance]
 	o Add ALTER TABLE DROP COLUMN feature [drop]
 	o Add ALTER FUNCTION
-	o Add ALTER TABLE DROP non-CHECK CONSTRAINT
+	o -Add ALTER TABLE DROP non-CHECK CONSTRAINT
 	o -ALTER TABLE ADD PRIMARY KEY (Tom)
 	o -ALTER TABLE ADD UNIQUE (Tom)
 	o -ALTER TABLE ALTER COLUMN SET/DROP NOT NULL (Christopher Kings-Lynne)
@@ -259,7 +259,7 @@ Clients
 * Have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
 * -Have pg_dump -C dump database location and encoding information
-* Allow psql \d to show foreign keys
+* -Allow psql \d to show foreign keys
 * -Allow psql \d to show temporary table structure (Tom)
 * Allow psql to show transaction status if backend protocol changes made
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
@@ -321,15 +321,16 @@ Dependency Checking
 
 * -Add pg_depend table for dependency recording; use sysrelid, oid,
   depend_sysrelid, depend_oid, name
-* Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
+* -Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
   SERIAL type
 * Have SERIAL generate non-colliding sequence names when we have 
   auto-destruction
-* Prevent column dropping if column is used by foreign key
+* -Prevent column dropping if column is used by foreign key
 * Propagate column or table renaming to foreign key constraints
-* Automatically drop constraints/functions when object is dropped
-* Make constraints clearer in dump file
-* Make foreign keys easier to identify
+* -Automatically drop constraints/functions when object is dropped
+* -Make foreign key constraints clearer in dump file
+* Make other constraints clearer in dump file
+* -Make foreign keys easier to identify
 * Flush cached query plans when their underlying catalog data changes
 
 
