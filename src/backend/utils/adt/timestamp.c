@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.40 2000/12/07 18:38:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.41 2001/01/03 16:48:02 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1887,9 +1887,9 @@ interval_trunc(PG_FUNCTION_ARGS)
 }
 
 /* isoweek2date()
- *
- * 	Convert ISO week of year number to date. An year must be already set.  
- *	karel 2000/08/07
+ * Convert ISO week of year number to date.
+ * The year field must be specified!
+ * karel 2000/08/07
  */
 void
 isoweek2date( int woy, int *year, int *mon, int *mday)
@@ -2053,7 +2053,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 					break;
 
 				case DTK_QUARTER:
-					result = (tm->tm_mon / 4) + 1;
+					result = ((tm->tm_mon - 1) / 3) + 1;
 					break;
 
 				case DTK_WEEK:
