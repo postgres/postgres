@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.124 2001/01/06 01:48:59 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.125 2001/01/06 21:53:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -881,7 +881,7 @@ RelationBuildRuleLock(Relation relation)
 		Assert(! isnull);
 		ruleaction_str = DatumGetCString(DirectFunctionCall1(textout,
 															 ruleaction));
-		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+		oldcxt = MemoryContextSwitchTo(rulescxt);
 		rule->actions = (List *) stringToNode(ruleaction_str);
 		MemoryContextSwitchTo(oldcxt);
 		pfree(ruleaction_str);
@@ -893,7 +893,7 @@ RelationBuildRuleLock(Relation relation)
 		Assert(! isnull);
 		rule_evqual_str = DatumGetCString(DirectFunctionCall1(textout,
 															  rule_evqual));
-		oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+		oldcxt = MemoryContextSwitchTo(rulescxt);
 		rule->qual = (Node *) stringToNode(rule_evqual_str);
 		MemoryContextSwitchTo(oldcxt);
 		pfree(rule_evqual_str);
