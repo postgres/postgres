@@ -929,7 +929,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			case Types.BIT:
 				return new Boolean(getBoolean(columnIndex));
 			case Types.SMALLINT:
-				return new Integer(getInt(columnIndex));
+				return new Short((short)getInt(columnIndex));
 			case Types.INTEGER:
 				return new Integer(getInt(columnIndex));
 			case Types.BIGINT:
