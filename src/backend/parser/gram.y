@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.306 2002/04/21 00:26:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.307 2002/04/21 19:21:49 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -60,6 +60,7 @@
 #include "storage/lmgr.h"
 #include "utils/numeric.h"
 #include "utils/datetime.h"
+#include "utils/date.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
@@ -84,7 +85,9 @@ static int	pfunc_num_args;
 
 static Node *makeTypeCast(Node *arg, TypeName *typename);
 static Node *makeStringConst(char *str, TypeName *typename);
+static Node *makeIntConst(int val);
 static Node *makeFloatConst(char *str);
+static Node *makeAConst(Value *v);
 static Node *makeRowExpr(List *opr, List *largs, List *rargs);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
@@ -131,9 +134,9 @@ static bool set_name_needs_quotes(const char *name);
 		AlterUserStmt, AlterUserSetStmt, AnalyzeStmt,
 		ClosePortalStmt, ClusterStmt, CommentStmt, ConstraintsSetStmt,
 		CopyStmt, CreateAsStmt, CreateDomainStmt, CreateGroupStmt, CreatePLangStmt,
-		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateTrigStmt,
+		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateAssertStmt, CreateTrigStmt,
 		CreateUserStmt, CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
-		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropTrigStmt,
+		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropAssertStmt, DropTrigStmt,
 		DropRuleStmt, DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
 		NotifyStmt, OptimizableStmt, ProcedureStmt, ReindexStmt,
@@ -231,7 +234,7 @@ static bool set_name_needs_quotes(const char *name);
 %type <boolean>	opt_freeze, analyze_keyword
 
 %type <ival>	copy_dirn, direction, reindex_type, drop_type,
-		opt_column, event, comment_type
+				opt_column, event, comment_type
 
 %type <ival>	fetch_how_many
 
@@ -273,14 +276,15 @@ static bool set_name_needs_quotes(const char *name);
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
 %type <ival>	opt_numeric, opt_decimal
-%type <boolean>	opt_varying, opt_timezone, opt_timezone_x
+%type <boolean>	opt_varying, opt_timezone
 
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
-%type <str>		UserId, opt_boolean, var_value, ColId_or_Sconst
+%type <str>		UserId, opt_boolean, ColId_or_Sconst
+%type <list>	var_list
 %type <str>		ColId, ColLabel, type_name, func_name_keyword
 %type <str>		col_name_keyword, unreserved_keyword, reserved_keyword
-%type <node>	zone_value
+%type <node>	var_value, zone_value
 
 %type <node>	TableConstraint
 %type <list>	ColQualList
@@ -340,7 +344,7 @@ static bool set_name_needs_quotes(const char *name);
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL99 reserved words) */
-%token	CHAIN, CHARACTERISTICS,
+%token	ASSERTION, CHAIN, CHARACTERISTICS,
 		DEFERRABLE, DEFERRED,
 		IMMEDIATE, INITIALLY, INOUT,
 		OFF, OUT,
@@ -458,6 +462,7 @@ stmt : AlterDatabaseSetStmt
 		| CreateGroupStmt
 		| CreateSeqStmt
 		| CreatePLangStmt
+		| CreateAssertStmt
 		| CreateTrigStmt
 		| CreateUserStmt
 		| ClusterStmt
@@ -468,6 +473,7 @@ stmt : AlterDatabaseSetStmt
 		| CommentStmt
 		| DropGroupStmt
 		| DropPLangStmt
+		| DropAssertStmt
 		| DropTrigStmt
 		| DropRuleStmt
 		| DropUserStmt
@@ -512,19 +518,19 @@ stmt : AlterDatabaseSetStmt
  *****************************************************************************/
 
 CreateUserStmt:  CREATE USER UserId OptUserList 
-				  {
+				{
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
 					n->options = $4;
 					$$ = (Node *)n;
-				  }
-                 | CREATE USER UserId WITH OptUserList
-                  {
+				}
+			| CREATE USER UserId WITH OptUserList
+				{
 					CreateUserStmt *n = makeNode(CreateUserStmt);
 					n->user = $3;
 					n->options = $5;
 					$$ = (Node *)n;
-                  }                   
+				}                   
 		;
 
 /*****************************************************************************
@@ -593,66 +599,66 @@ OptUserList: OptUserList OptUserElem		{ $$ = lappend($1, $2); }
 		;
 
 OptUserElem:  PASSWORD Sconst
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "password";
-				  $$->arg = (Node *)makeString($2);
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "password";
+					$$->arg = (Node *)makeString($2);
 				}
-			  | ENCRYPTED PASSWORD Sconst
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "encryptedPassword";
-				  $$->arg = (Node *)makeString($3);
+			| ENCRYPTED PASSWORD Sconst
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "encryptedPassword";
+					$$->arg = (Node *)makeString($3);
 				}
-			  | UNENCRYPTED PASSWORD Sconst
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "unencryptedPassword";
-				  $$->arg = (Node *)makeString($3);
+			| UNENCRYPTED PASSWORD Sconst
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "unencryptedPassword";
+					$$->arg = (Node *)makeString($3);
 				}
-              | SYSID Iconst
+			| SYSID Iconst
 				{
-				  $$ = makeNode(DefElem);
-				  $$->defname = "sysid";
-				  $$->arg = (Node *)makeInteger($2);
+					$$ = makeNode(DefElem);
+					$$->defname = "sysid";
+					$$->arg = (Node *)makeInteger($2);
 				}
-              | CREATEDB
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "createdb";
-				  $$->arg = (Node *)makeInteger(TRUE);
+			| CREATEDB
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "createdb";
+					$$->arg = (Node *)makeInteger(TRUE);
 				}
-              | NOCREATEDB
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "createdb";
-				  $$->arg = (Node *)makeInteger(FALSE);
+			| NOCREATEDB
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "createdb";
+					$$->arg = (Node *)makeInteger(FALSE);
 				}
-              | CREATEUSER
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "createuser";
-				  $$->arg = (Node *)makeInteger(TRUE);
+			| CREATEUSER
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "createuser";
+					$$->arg = (Node *)makeInteger(TRUE);
 				}
-              | NOCREATEUSER
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "createuser";
-				  $$->arg = (Node *)makeInteger(FALSE);
+			| NOCREATEUSER
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "createuser";
+					$$->arg = (Node *)makeInteger(FALSE);
 				}
-              | IN GROUP user_list
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "groupElts";
-				  $$->arg = (Node *)$3;
+			| IN GROUP user_list
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "groupElts";
+					$$->arg = (Node *)$3;
 				}
-              | VALID UNTIL Sconst
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "validUntil";
-				  $$->arg = (Node *)makeString($3);
+			| VALID UNTIL Sconst
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "validUntil";
+					$$->arg = (Node *)makeString($3);
 				}
-        ;
+		;
 
 user_list:  user_list ',' UserId
 				{
@@ -674,19 +680,19 @@ user_list:  user_list ',' UserId
  *****************************************************************************/
 
 CreateGroupStmt:  CREATE GROUP UserId OptGroupList
-				   {
+				{
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
 					n->options = $4;
 					$$ = (Node *)n;
-				   }
-			      | CREATE GROUP UserId WITH OptGroupList
-				   {
+				}
+			| CREATE GROUP UserId WITH OptGroupList
+				{
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
 					n->options = $5;
 					$$ = (Node *)n;
-				   }
+				}
 		;
 
 /*
@@ -697,18 +703,18 @@ OptGroupList: OptGroupList OptGroupElem		{ $$ = lappend($1, $2); }
 		;
 
 OptGroupElem:  USER user_list
-                { 
-				  $$ = makeNode(DefElem);
-				  $$->defname = "userElts";
-				  $$->arg = (Node *)$2;
+				{ 
+					$$ = makeNode(DefElem);
+					$$->defname = "userElts";
+					$$->arg = (Node *)$2;
 				}
-               | SYSID Iconst
+			| SYSID Iconst
 				{
-				  $$ = makeNode(DefElem);
-				  $$->defname = "sysid";
-				  $$->arg = (Node *)makeInteger($2);
+					$$ = makeNode(DefElem);
+					$$->defname = "sysid";
+					$$->arg = (Node *)makeInteger($2);
 				}
-        ;
+		;
 
 
 /*****************************************************************************
@@ -812,6 +818,7 @@ schema_stmt: CreateStmt
 		| ViewStmt
 		;
 
+
 /*****************************************************************************
  *
  * Set PG internal variable
@@ -821,20 +828,18 @@ schema_stmt: CreateStmt
  *
  *****************************************************************************/
 
-VariableSetStmt:  SET ColId TO var_value
+VariableSetStmt:  SET ColId TO var_list
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
-					if ($4 != NULL)
-						n->args = makeList1(makeStringConst($4, NULL));
+					n->args = $4;
 					$$ = (Node *) n;
 				}
-		| SET ColId '=' var_value
+		| SET ColId '=' var_list
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
-					if ($4 != NULL)
-						n->args = makeList1(makeStringConst($4, NULL));
+					n->args = $4;
 					$$ = (Node *) n;
 				}
 		| SET TIME ZONE zone_value
@@ -876,69 +881,24 @@ VariableSetStmt:  SET ColId TO var_value
 				}
 		;
 
-opt_level:  READ COMMITTED					{ $$ = "read committed"; }
-		| SERIALIZABLE						{ $$ = "serializable"; }
+var_list:  var_value
+				{	$$ = makeList1($1); }
+		| var_list ',' var_value
+				{	$$ = lappend($1, $3); }
+		| DEFAULT
+				{ $$ = NIL; }
 		;
 
-var_value:  opt_boolean						{ $$ = $1; }
-		| SCONST							{ $$ = $1; }
-		| ICONST
-			{
-				char	buf[64];
-				sprintf(buf, "%d", $1);
-				$$ = pstrdup(buf);
-			}
-		| '-' ICONST
-			{
-				char	buf[64];
-				sprintf(buf, "%d", -($2));
-				$$ = pstrdup(buf);
-			}
-		| FCONST							{ $$ = $1; }
-		| '-' FCONST
-			{
-				char * s = palloc(strlen($2)+2);
-				s[0] = '-';
-				strcpy(s + 1, $2);
-				$$ = s;
-			}
-		| name_list
-			{
-				List *n;
-				int slen = 0;
-				char *result;
+var_value:  opt_boolean
+				{ $$ = makeStringConst($1, NULL); }
+		| ColId_or_Sconst
+				{ $$ = makeStringConst($1, NULL); }
+		| NumericOnly
+				{ $$ = makeAConst($1); }
+		;
 
-				/* List of words? Then concatenate together */
-				if ($1 == NIL)
-					elog(ERROR, "SET must have at least one argument");
-
-				/* compute space needed; allow for quotes and comma */
-				foreach (n, $1)
-				{
-					Value *p = (Value *) lfirst(n);
-					Assert(IsA(p, String));
-					slen += (strlen(p->val.str) + 3);
-				}
-				result = palloc(slen + 1);
-				*result = '\0';
-				foreach (n, $1)
-				{
-					Value *p = (Value *) lfirst(n);
-					if (set_name_needs_quotes(p->val.str))
-					{
-						strcat(result, "\"");
-						strcat(result, p->val.str);
-						strcat(result, "\"");
-					}
-					else
-						strcat(result, p->val.str);
-					strcat(result, ",");
-				}
-				/* remove the trailing comma from the last element */
-				*(result+strlen(result)-1) = '\0';
-				$$ = result;
-			}
-		| DEFAULT							{ $$ = NULL; }
+opt_level:  READ COMMITTED					{ $$ = "read committed"; }
+		| SERIALIZABLE						{ $$ = "serializable"; }
 		;
 
 opt_boolean:  TRUE_P						{ $$ = "true"; }
@@ -949,10 +909,17 @@ opt_boolean:  TRUE_P						{ $$ = "true"; }
 
 /* Timezone values can be:
  * - a string such as 'pst8pdt'
+ * - a column identifier such as "pst8pdt"
  * - an integer or floating point number
  * - a time interval per SQL99
+ * ConstInterval and ColId give shift/reduce errors,
+ * so use IDENT and reject anything which is a reserved word.
  */
 zone_value:  Sconst
+			{
+				$$ = makeStringConst($1, NULL);
+			}
+		| IDENT
 			{
 				$$ = makeStringConst($1, NULL);
 			}
@@ -970,6 +937,9 @@ zone_value:  Sconst
 		| ConstInterval '(' Iconst ')' Sconst opt_interval
 			{
 				A_Const *n = (A_Const *) makeStringConst($5, $1);
+				if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
+					elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
+						 $3, 0, MAX_INTERVAL_PRECISION);
 				if ($6 != -1)
 				{
 					if (($6 & ~(MASK(HOUR) | MASK(MINUTE))) != 0)
@@ -983,26 +953,7 @@ zone_value:  Sconst
 
 				$$ = (Node *)n;
 			}
-		| FCONST
-			{
-				$$ = makeFloatConst($1);
-			}
-		| '-' FCONST
-			{
-				$$ = doNegate(makeFloatConst($2));
-			}
-		| ICONST
-			{
-				char buf[64];
-				sprintf(buf, "%d", $1);
-				$$ = makeFloatConst(pstrdup(buf));
-			}
-		| '-' ICONST
-			{
-				char buf[64];
-				sprintf(buf, "%d", $2);
-				$$ = doNegate(makeFloatConst(pstrdup(buf)));
-			}
+		| NumericOnly						{ $$ = makeAConst($1); }
 		| DEFAULT							{ $$ = NULL; }
 		| LOCAL								{ $$ = NULL; }
 		;
@@ -1386,7 +1337,7 @@ columnDef:  ColId Typename ColQualList opt_collate
 					n->constraints = $3;
 
 					if ($4 != NULL)
-						elog(NOTICE,"CREATE TABLE / COLLATE %s not yet implemented"
+						elog(NOTICE, "CREATE TABLE / COLLATE %s not yet implemented"
 							 "; clause ignored", $4);
 
 					$$ = (Node *)n;
@@ -1715,7 +1666,7 @@ CreateAsStmt:  CREATE OptTemp TABLE qualified_name OptCreateAs AS SelectStmt
 					 */
 					SelectStmt *n = findLeftmostSelect((SelectStmt *) $7);
 					if (n->into != NULL)
-						elog(ERROR,"CREATE TABLE AS may not specify INTO");
+						elog(ERROR, "CREATE TABLE AS may not specify INTO");
 					$4->istemp = $2;
 					n->into = $4;
 					n->intoColNames = $5;
@@ -2067,6 +2018,42 @@ DropTrigStmt:  DROP TRIGGER name ON qualified_name
 					n->relation = $5;
 					n->property = $3;
 					n->removeType = DROP_TRIGGER;
+					$$ = (Node *) n;
+				}
+		;
+
+
+/*****************************************************************************
+ *
+ *		QUERIES :
+ *				CREATE ASSERTION ...
+ *				DROP ASSERTION ...
+ *
+ *****************************************************************************/
+
+CreateAssertStmt:  CREATE ASSERTION name
+			CHECK '(' a_expr ')' ConstraintAttributeSpec
+				{
+					CreateTrigStmt *n = makeNode(CreateTrigStmt);
+					n->trigname = $3;
+					n->args = makeList1($6);
+					n->isconstraint  = TRUE;
+					n->deferrable = ($8 & 1) != 0;
+					n->initdeferred = ($8 & 2) != 0;
+
+					elog(ERROR, "CREATE ASSERTION is not yet supported");
+
+					$$ = (Node *)n;
+				}
+		;
+
+DropAssertStmt:  DROP ASSERTION name
+				{
+					DropPropertyStmt *n = makeNode(DropPropertyStmt);
+					n->relation = NULL;
+					n->property = $3;
+					n->removeType = DROP_TRIGGER;
+					elog(ERROR, "DROP ASSERTION is not yet supported");
 					$$ = (Node *) n;
 				}
 		;
@@ -2955,9 +2942,9 @@ opt_column:  COLUMN						{ $$ = COLUMN; }
  *****************************************************************************/
 
 RuleStmt:  CREATE RULE name AS
-		   { QueryIsRule=TRUE; }
-		   ON event TO qualified_name where_clause
-		   DO opt_instead RuleActionList
+			{ QueryIsRule=TRUE; }
+			ON event TO qualified_name where_clause
+			DO opt_instead RuleActionList
 				{
 					RuleStmt *n = makeNode(RuleStmt);
 					n->relation = $9;
@@ -4311,6 +4298,9 @@ SimpleTypename:  ConstTypename
 		| ConstInterval '(' Iconst ')' opt_interval
 				{
 					$$ = $1;
+					if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
+						elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
+							 $3, 0, MAX_INTERVAL_PRECISION);
 					$$->typmod = ((($5 & 0x7FFF) << 16) | $3);
 				}
 		| type_name attrs
@@ -4367,13 +4357,13 @@ Numeric:  FLOAT opt_float
 opt_float:  '(' Iconst ')'
 				{
 					if ($2 < 1)
-						elog(ERROR,"precision for FLOAT must be at least 1");
+						elog(ERROR, "precision for FLOAT must be at least 1");
 					else if ($2 < 7)
 						$$ = xlateSqlType("float4");
 					else if ($2 < 16)
 						$$ = xlateSqlType("float8");
 					else
-						elog(ERROR,"precision for FLOAT must be less than 16");
+						elog(ERROR, "precision for FLOAT must be less than 16");
 				}
 		| /*EMPTY*/
 				{
@@ -4384,10 +4374,10 @@ opt_float:  '(' Iconst ')'
 opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"NUMERIC precision %d must be between 1 and %d",
+						elog(ERROR, "NUMERIC precision %d must be between 1 and %d",
 							 $2, NUMERIC_MAX_PRECISION);
 					if ($4 < 0 || $4 > $2)
-						elog(ERROR,"NUMERIC scale %d must be between 0 and precision %d",
+						elog(ERROR, "NUMERIC scale %d must be between 0 and precision %d",
 							 $4,$2);
 
 					$$ = (($2 << 16) | $4) + VARHDRSZ;
@@ -4395,7 +4385,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 		| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"NUMERIC precision %d must be between 1 and %d",
+						elog(ERROR, "NUMERIC precision %d must be between 1 and %d",
 							 $2, NUMERIC_MAX_PRECISION);
 
 					$$ = ($2 << 16) + VARHDRSZ;
@@ -4410,10 +4400,10 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 opt_decimal:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"DECIMAL precision %d must be between 1 and %d",
+						elog(ERROR, "DECIMAL precision %d must be between 1 and %d",
 									$2, NUMERIC_MAX_PRECISION);
 					if ($4 < 0 || $4 > $2)
-						elog(ERROR,"DECIMAL scale %d must be between 0 and precision %d",
+						elog(ERROR, "DECIMAL scale %d must be between 0 and precision %d",
 									$4,$2);
 
 					$$ = (($2 << 16) | $4) + VARHDRSZ;
@@ -4421,7 +4411,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 		| '(' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						elog(ERROR,"DECIMAL precision %d must be between 1 and %d",
+						elog(ERROR, "DECIMAL precision %d must be between 1 and %d",
 									$2, NUMERIC_MAX_PRECISION);
 
 					$$ = ($2 << 16) + VARHDRSZ;
@@ -4442,10 +4432,10 @@ Bit:  bit '(' Iconst ')'
 				{
 					$$ = makeTypeName($1);
 					if ($3 < 1)
-						elog(ERROR,"length for type '%s' must be at least 1",
+						elog(ERROR, "length for type '%s' must be at least 1",
 							 $1);
 					else if ($3 > (MaxAttrSize * BITS_PER_BYTE))
-						elog(ERROR,"length for type '%s' cannot exceed %d",
+						elog(ERROR, "length for type '%s' cannot exceed %d",
 							 $1, (MaxAttrSize * BITS_PER_BYTE));
 					$$->typmod = $3;
 				}
@@ -4491,10 +4481,10 @@ Character:  character '(' Iconst ')' opt_charset
 					$$ = makeTypeName($1);
 
 					if ($3 < 1)
-						elog(ERROR,"length for type '%s' must be at least 1",
+						elog(ERROR, "length for type '%s' must be at least 1",
 							 $1);
 					else if ($3 > MaxAttrSize)
-						elog(ERROR,"length for type '%s' cannot exceed %d",
+						elog(ERROR, "length for type '%s' cannot exceed %d",
 							 $1, MaxAttrSize);
 
 					/* we actually implement these like a varlen, so
@@ -4547,7 +4537,7 @@ opt_collate:  COLLATE ColId						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
+ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone
 				{
 					if ($5)
 						$$ = makeTypeName(xlateSqlType("timestamptz"));
@@ -4557,12 +4547,12 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $5;
-					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"TIMESTAMP(%d)%s precision must be between %d and %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""), 0, 13);
+					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
+						elog(ERROR, "TIMESTAMP(%d)%s precision must be between %d and %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""), 0, MAX_TIMESTAMP_PRECISION);
 					$$->typmod = $3;
 				}
-		| TIMESTAMP opt_timezone_x
+		| TIMESTAMP opt_timezone
 				{
 					if ($2)
 						$$ = makeTypeName(xlateSqlType("timestamptz"));
@@ -4587,9 +4577,9 @@ ConstDatetime:  TIMESTAMP '(' Iconst ')' opt_timezone_x
 						$$ = makeTypeName(xlateSqlType("timetz"));
 					else
 						$$ = makeTypeName(xlateSqlType("time"));
-					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"TIME(%d)%s precision must be between %d and %d",
-							 $3, ($5 ? " WITH TIME ZONE": ""), 0, 13);
+					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
+						elog(ERROR, "TIME(%d)%s precision must be between %d and %d",
+							 $3, ($5 ? " WITH TIME ZONE": ""), 0, MAX_TIME_PRECISION);
 					$$->typmod = $3;
 				}
 		| TIME opt_timezone
@@ -4610,16 +4600,6 @@ ConstInterval:  INTERVAL
 				{
 					$$ = makeTypeName(xlateSqlType("interval"));
 				}
-		;
-
-/* XXX Make the default be WITH TIME ZONE for 7.2 to help with database upgrades
- * but revert this back to WITHOUT TIME ZONE for 7.3.
- * Do this by simply reverting opt_timezone_x to opt_timezone - thomas 2001-09-06
- */
-
-opt_timezone_x:  WITH TIME ZONE					{ $$ = TRUE; }
-		| WITHOUT TIME ZONE						{ $$ = FALSE; }
-		| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 opt_timezone:  WITH TIME ZONE					{ $$ = TRUE; }
@@ -5293,9 +5273,9 @@ c_expr:  columnref
 					s->val.val.str = "now";
 					s->typename = makeTypeName(xlateSqlType("text"));
 					d = makeTypeName(xlateSqlType("timetz"));
-					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"CURRENT_TIME(%d) precision must be between %d and %d",
-							 $3, 0, 13);
+					if (($3 < 0) || ($3 > MAX_TIME_PRECISION))
+						elog(ERROR, "CURRENT_TIME(%d) precision must be between %d and %d",
+							 $3, 0, MAX_TIME_PRECISION);
 					d->typmod = $3;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
@@ -5337,9 +5317,9 @@ c_expr:  columnref
 					s->typename = makeTypeName(xlateSqlType("text"));
 
 					d = makeTypeName(xlateSqlType("timestamptz"));
-					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"CURRENT_TIMESTAMP(%d) precision must be between %d and %d",
-							 $3, 0, 13);
+					if (($3 < 0) || ($3 > MAX_TIMESTAMP_PRECISION))
+						elog(ERROR, "CURRENT_TIMESTAMP(%d) precision must be between %d and %d",
+							 $3, 0, MAX_TIMESTAMP_PRECISION);
 					d->typmod = $3;
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
@@ -5748,8 +5728,12 @@ target_el:  a_expr AS ColLabel
 				}
 		;
 
-/* Target list as found in UPDATE table SET ... */
-
+/* Target list as found in UPDATE table SET ...
+| '(' row_ ')' = '(' row_ ')'
+{
+	$$ = NULL;
+}
+ */
 update_target_list:  update_target_list ',' update_target_el
 				{	$$ = lappend($1,$3);  }
 		| update_target_el
@@ -5911,8 +5895,10 @@ AexprConst:  Iconst
 					n->val.type = T_String;
 					n->val.val.str = $5;
 					/* precision specified, and fields may be... */
+					if (($3 < 0) || ($3 > MAX_INTERVAL_PRECISION))
+						elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
+							 $3, 0, MAX_INTERVAL_PRECISION);
 					n->typename->typmod = ((($6 & 0x7FFF) << 16) | $3);
-
 					$$ = (Node *)n;
 				}
 		| PARAM opt_indirection
@@ -6013,6 +5999,7 @@ unreserved_keyword:
 		| AFTER							{ $$ = "after"; }
 		| AGGREGATE						{ $$ = "aggregate"; }
 		| ALTER							{ $$ = "alter"; }
+		| ASSERTION						{ $$ = "assertion"; }
 		| AT							{ $$ = "at"; }
 		| BACKWARD						{ $$ = "backward"; }
 		| BEFORE						{ $$ = "before"; }
@@ -6308,14 +6295,14 @@ SpecialRuleRelation:  OLD
 					if (QueryIsRule)
 						$$ = "*OLD*";
 					else
-						elog(ERROR,"OLD used in non-rule query");
+						elog(ERROR, "OLD used in non-rule query");
 				}
 		| NEW
 				{
 					if (QueryIsRule)
 						$$ = "*NEW*";
 					else
-						elog(ERROR,"NEW used in non-rule query");
+						elog(ERROR, "NEW used in non-rule query");
 				}
 		;
 
@@ -6358,6 +6345,17 @@ makeStringConst(char *str, TypeName *typename)
 }
 
 static Node *
+makeIntConst(int val)
+{
+	A_Const *n = makeNode(A_Const);
+	n->val.type = T_Integer;
+	n->val.val.ival = val;
+	n->typename = makeTypeName(xlateSqlType("integer"));
+
+	return (Node *)n;
+}
+
+static Node *
 makeFloatConst(char *str)
 {
 	A_Const *n = makeNode(A_Const);
@@ -6367,6 +6365,30 @@ makeFloatConst(char *str)
 	n->typename = makeTypeName(xlateSqlType("float"));
 
 	return (Node *)n;
+}
+
+static Node *
+makeAConst(Value *v)
+{
+	Node *n;
+
+	switch (v->type)
+	{
+		case T_Float:
+			n = makeFloatConst(v->val.str);
+			break;
+
+		case T_Integer:
+			n = makeIntConst(v->val.ival);
+			break;
+
+		case T_String:
+		default:
+			n = makeStringConst(v->val.str, NULL);
+			break;
+	}
+
+	return n;
 }
 
 /* makeRowExpr()
