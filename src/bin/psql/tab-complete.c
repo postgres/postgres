@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.7 2000/01/18 23:30:24 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.8 2000/01/21 23:32:36 tgl Exp $
  */
 
 /*-----------
@@ -532,7 +532,9 @@ char ** psql_completion(char *text, int start, int end)
        attempts filename completion, and that's usually no good. */
     if (matches == NULL) {
         COMPLETE_WITH_CONST("");
+#ifdef HAVE_RL_COMPLETION_APPEND_CHARACTER
         rl_completion_append_character = '\0';
+#endif
     }
 	
 

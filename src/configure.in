@@ -840,10 +840,15 @@ AC_CHECK_FUNC(rint,
 	      AC_DEFINE(HAVE_RINT),
 	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $HPUXMATHLIB))
 
+dnl Some old versions of libreadline don't have rl_completion_append_character
+AC_EGREP_HEADER(rl_completion_append_character, readline.h,
+	AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER),
+	[AC_EGREP_HEADER(rl_completion_append_character, readline/readline.h,
+		AC_DEFINE(HAVE_RL_COMPLETION_APPEND_CHARACTER))])
+AC_SUBST(HAVE_RL_COMPLETION_APPEND_CHARACTER)
 
 dnl Check for GNU style long options support (getopt_long)
 AC_CHECK_FUNCS(getopt_long)
-
 
 AC_MSG_CHECKING(for finite() macro or function)
 AC_TRY_LINK([#include <math.h>],

@@ -454,6 +454,9 @@ extern void srandom(unsigned int seed);
 /* Set to 1 if you have libhistory.a */
 #undef HAVE_LIBHISTORY
 
+/* Set to 1 if your libreadline defines rl_completion_append_character */
+#undef HAVE_RL_COMPLETION_APPEND_CHARACTER
+
 /* Set to 1 if you have getopt_long() (GNU long options) */
 #undef HAVE_GETOPT_LONG
 
