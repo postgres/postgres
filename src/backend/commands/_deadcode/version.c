@@ -5,12 +5,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  The version stuff has not been tested under postgres95 and probably doesn't
+ *  The version stuff has not been tested under postgres and probably doesn't
  *  work! - jolly 8/19/95
  *  
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.3 1996/11/06 08:21:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.3.2.1 1996/12/13 02:51:20 momjian Exp $
  *
  * NOTES
  *    At the point the version is defined, 2 physical relations are created
