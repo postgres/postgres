@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.8 2000/05/26 02:07:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/initlocation.sgml,v 1.9 2000/05/26 15:47:17 momjian Exp $
 Postgres documentation
 -->
 
@@ -95,6 +95,11 @@ initlocation <replaceable class="parameter">directory</replaceable>
    To create a database in an alternate location, using an environment variable:
 <programlisting>
 $ export PGDATA2=/opt/postgres/data
+</programlisting>
+Start and stop postmaster so it sees the $PGDATA2 environment variable.
+The system must be configured so the postmaster sees $PGDATA2 every time it
+starts.
+<programlisting>
 $ initlocation PGDATA2
 $ createdb -D 'PGDATA2' 'testdb' 
 </programlisting>
