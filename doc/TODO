@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Dec 29 15:40:24 EST 2001
+Last updated:		Sat Dec 29 20:46:55 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -398,6 +398,7 @@ MISCELLANEOUS
 * Add new pg_proc cachable settings to specify whether function can be
   evaluated only once or once per query
 * Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
+* Make locking of shared data structures more fine-grained
 
 SOURCE CODE
 -----------
