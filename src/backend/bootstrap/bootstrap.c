@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.11 1996/11/14 10:23:34 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.12 1996/11/22 04:32:41 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,6 +319,7 @@ BootstrapMain(int argc, char *argv[])
         switch (flag) {
         case 'D':
             DataDir = optarg;
+            break;
         case 'd':
             DebugMode = 1; /* print out debugging info while parsing */
             break;
