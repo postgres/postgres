@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.108 2003/12/01 22:21:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.109 2004/01/09 21:12:20 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -413,6 +413,7 @@ exec_command(const char *cmd,
 		else
 		{
 			fname = scan_option(&string, OT_NORMAL, NULL, true);
+			expand_tilde(&fname);
 			status = do_edit(fname, query_buf) ? CMD_NEWEDIT : CMD_ERROR;
 			free(fname);
 		}
@@ -494,7 +495,10 @@ exec_command(const char *cmd,
 		if (!fname)
 			pset.gfname = NULL;
 		else
+		{
+			expand_tilde(&fname);
 			pset.gfname = xstrdup(fname);
+		}
 		free(fname);
 		status = CMD_SEND;
 	}
@@ -531,6 +535,7 @@ exec_command(const char *cmd,
 		}
 		else
 		{
+			expand_tilde(&fname);
 			success = (process_file(fname) == EXIT_SUCCESS);
 			free(fname);
 		}
@@ -561,7 +566,10 @@ exec_command(const char *cmd,
 				success = false;
 			}
 			else
+			{
+				expand_tilde(&opt2);
 				success = do_lo_export(opt1, opt2);
+			}
 		}
 
 		else if (strcmp(cmd + 3, "import") == 0)
@@ -572,7 +580,10 @@ exec_command(const char *cmd,
 				success = false;
 			}
 			else
+			{
+				expand_tilde(&opt1);
 				success = do_lo_import(opt1, opt2);
+			}
 		}
 
 		else if (strcmp(cmd + 3, "list") == 0)
@@ -602,6 +613,7 @@ exec_command(const char *cmd,
 	{
 		char	   *fname = scan_option(&string, OT_FILEPIPE, NULL, true);
 
+		expand_tilde(&fname);
 		success = setQFout(fname);
 		free(fname);
 	}
@@ -653,6 +665,7 @@ exec_command(const char *cmd,
 	{
 		char	   *fname = scan_option(&string, OT_NORMAL, NULL, true);
 
+		expand_tilde(&fname);
 		success = saveHistory(fname ? fname : "/dev/tty");
 
 		if (success && !quiet && fname)
@@ -771,6 +784,7 @@ exec_command(const char *cmd,
 		else
 		{
 			fname = scan_option(&string, OT_FILEPIPE, NULL, true);
+			expand_tilde(&fname);
 
 			if (!fname)
 			{
