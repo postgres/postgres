@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.19 1998/10/12 02:40:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.20 1998/10/12 04:32:22 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ include ../../Makefile.global
 #
 include Makefile.tcltkdefs
 
-CFLAGS+=  -I$(SRCDIR)/interfaces/libpgtcl 
+CFLAGS+= $(X_CFLAGS) -I$(SRCDIR)/interfaces/libpgtcl 
 
 ifdef KRBVERS
 LDFLAGS+= $(KRBLIBS)
@@ -41,8 +41,8 @@ pgtclsh: pgtclAppInit.o
 
 pgtksh: pgtkAppInit.o
 	$(CC) $(CFLAGS) $(TK_DEFS) -o $@ pgtkAppInit.o \
-	  $(LIBPGTCL) $(LIBPQ) $(TK_LIB_SPEC) $(TK_LIBS) \
-	  $(TCL_LIB_SPEC) $(TCL_LIB) $(LDFLAGS)
+	  $(LIBPGTCL) $(LIBPQ) $(X_LIBS) $(TK_LIB_SPEC) $(TK_LIBS) \
+	  $(TCL_LIB_SPEC) $(TCL_LIB) $(X11_LIBS) $(LDFLAGS)
 
 install: pgtclsh pgtksh
 	$(INSTALL) $(INSTL_EXE_OPTS) pgtclsh $(BINDIR)/pgtclsh
