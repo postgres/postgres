@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.10 1999/12/10 12:34:13 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.11 2000/01/06 16:30:43 wieck Exp $
  *
  * ----------
  */
@@ -1903,7 +1903,12 @@ RI_FKey_setdefault_del (FmgrInfo *proinfo)
 				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
 
 				/* ----------
-				 * Now replace the CONST NULL targetlist expressions
+				 * Here now follows very ugly code depending on internals
+				 * of the SPI manager.
+				 *
+				 * EVIL EVIL EVIL (but must be - Jan)
+				 *
+				 * We replace the CONST NULL targetlist expressions
 				 * in the generated plan by (any) default values found
 				 * in the tuple constructor.
 				 * ----------
@@ -1931,7 +1936,8 @@ RI_FKey_setdefault_del (FmgrInfo *proinfo)
 							 * ----------
 							 */
 							spi_qptle = (TargetEntry *)
-										nth(i, spi_plan->targetlist);
+										nth(defval[j].adnum - 1,
+										spi_plan->targetlist);
 							spi_qptle->expr = stringToNode(defval[j].adbin);
 
 							break;
@@ -2188,7 +2194,8 @@ RI_FKey_setdefault_upd (FmgrInfo *proinfo)
 							 * ----------
 							 */
 							spi_qptle = (TargetEntry *)
-										nth(i, spi_plan->targetlist);
+										nth(defval[j].adnum - 1,
+										spi_plan->targetlist);
 							spi_qptle->expr = stringToNode(defval[j].adbin);
 
 							break;
