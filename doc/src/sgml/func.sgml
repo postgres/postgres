@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.102 2002/06/15 02:59:55 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.103 2002/06/15 20:03:51 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4323,9 +4323,9 @@ SELECT NULLIF(value, '(none)') ...
        <entry>name of current schema</entry>
       </row>
       <row>
-       <entry><function>current_schemas()</function></entry>
+       <entry><function>current_schemas(boolean)</function></entry>
        <entry><type>name[]</type></entry>
-       <entry>names of schemas in search path</entry>
+       <entry>names of schemas in search path optionally including implicit schemas</entry>
       </row>
      </tbody>
     </tgroup>
@@ -4378,10 +4378,10 @@ SELECT NULLIF(value, '(none)') ...
     at the front of the search path (or NULL if the search path is
     empty).  This is the schema that will be used for any tables or
     other named objects that are created without specifying a target schema.
-    <function>current_schemas</function> returns an array of the names of all
-    schemas presently in the search path.  Note that these functions show
-    only schemas that are explicitly part of the path; when a system schema
-    is being searched implicitly, it is not listed.
+    <function>current_schemas(boolean)</function> returns an array of the names of all
+    schemas presently in the search path.  The boolean option determines whether or not
+    implicitly included system schemas such as pg_catalog are included in the search 
+    path returned.
    </para>
 
    <table>

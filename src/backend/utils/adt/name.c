@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.37 2002/06/13 06:19:45 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.38 2002/06/15 20:03:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ current_schema(PG_FUNCTION_ARGS)
 Datum
 current_schemas(PG_FUNCTION_ARGS)
 {
-	List   *search_path = fetch_search_path(false);
+	List   *search_path = fetch_search_path(PG_GETARG_BOOL(0));
 	int		nnames = length(search_path);
 	Datum  *names;
 	int		i;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.241 2002/06/11 15:41:37 thomas Exp $
+ * $Id: pg_proc.h,v 1.242 2002/06/15 20:03:51 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1761,7 +1761,7 @@ DESCR("convert name to varchar");
 
 DATA(insert OID = 1402 (  current_schema	PGNSP PGUID 12 f f f t f s 0    19 "0" 100 0 0 100	current_schema - _null_ ));
 DESCR("current schema name");
-DATA(insert OID = 1403 (  current_schemas	PGNSP PGUID 12 f f f t f s 0  1003 "0" 100 0 0 100	current_schemas - _null_ ));
+DATA(insert OID = 1403 (  current_schemas	PGNSP PGUID 12 f f f t f s 1  1003 "16" 100 0 0 100	current_schemas - _null_ ));
 DESCR("current schema search list");
 
 DATA(insert OID = 1404 (  overlay			PGNSP PGUID 14 f f f t f i 4 25 "25 25 23 23" 100 0 0 100  "select substring($1, 1, ($3 - 1)) || $2 || substring($1, ($3 + $4))" - _null_ ));
