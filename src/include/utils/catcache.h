@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.28 2000/11/16 22:30:49 tgl Exp $
+ * $Id: catcache.h,v 1.29 2000/11/24 04:16:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ typedef struct catcache
 	short		cc_nkeys;		/* number of keys (1..4) */
 	short		cc_key[4];		/* AttrNumber of each key */
 	PGFunction	cc_hashfunc[4]; /* hash function to use for each key */
-	ScanKeyData cc_skey[4];		/* precomputed key info for indexscans */
+	ScanKeyData cc_skey[4];		/* precomputed key info for heap scans */
 	Dllist		cc_lrulist;		/* overall LRU list, most recent first */
 	Dllist		cc_cache[NCCBUCK]; /* hash buckets */
 } CatCache;

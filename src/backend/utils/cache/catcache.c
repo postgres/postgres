@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.72 2000/11/16 22:30:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.73 2000/11/24 04:16:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,8 +258,8 @@ CatalogCacheInitializeCache(CatCache *cache)
 				  &cache->cc_skey[i].sk_func);
 		cache->cc_skey[i].sk_nargs = cache->cc_skey[i].sk_func.fn_nargs;
 
-		/* Initialize sk_attno suitably for index scans */
-		cache->cc_skey[i].sk_attno = i+1;
+		/* Initialize sk_attno suitably for HeapKeyTest() and heap scans */
+		cache->cc_skey[i].sk_attno = cache->cc_key[i];
 
 		CACHE4_elog(DEBUG, "CatalogCacheInit %s %d %p",
 					cache->cc_relname,
@@ -664,8 +664,8 @@ InitCatCache(int id,
 
 	/* ----------------
 	 *	initialize the cache's relation information for the relation
-	 *	corresponding to this cache and initialize some of the the new
-	 *	cache's other internal fields.
+	 *	corresponding to this cache, and initialize some of the new
+	 *	cache's other internal fields.  But don't open the relation yet.
 	 * ----------------
 	 */
 	cp->cc_relname = relname;
@@ -885,9 +885,19 @@ SearchCatCache(CatCache *cache,
 		RetrieveIndexResult indexRes;
 		HeapTupleData tuple;
 		Buffer		buffer;
+		int			i;
 
 		CACHE2_elog(DEBUG, "SearchCatCache(%s): performing index scan",
 					cache->cc_relname);
+
+		/*
+		 * For an index scan, sk_attno has to be set to the index attribute
+		 * number(s), not the heap attribute numbers.  We assume that the
+		 * index corresponds exactly to the cache keys (or its first N
+		 * keys do, anyway).
+		 */
+		for (i = 0; i < cache->cc_nkeys; ++i)
+			cur_skey[i].sk_attno = i+1;
 
 		idesc = index_openr(cache->cc_indname);
 		isd = index_beginscan(idesc, false, cache->cc_nkeys, cur_skey);
@@ -915,17 +925,9 @@ SearchCatCache(CatCache *cache,
 	else
 	{
 		HeapScanDesc sd;
-		int			i;
 
 		CACHE2_elog(DEBUG, "SearchCatCache(%s): performing heap scan",
 					cache->cc_relname);
-
-		/*
-		 * For a heap scan, sk_attno has to be set to the heap attribute
-		 * number(s), not the index attribute numbers.
-		 */
-		for (i = 0; i < cache->cc_nkeys; ++i)
-			cur_skey[i].sk_attno = cache->cc_key[i];
 
 		sd = heap_beginscan(relation, 0, SnapshotNow,
 							cache->cc_nkeys, cur_skey);
