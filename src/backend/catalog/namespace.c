@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.24 2002/07/12 18:43:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.25 2002/07/16 06:58:14 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_conversion.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
@@ -1268,6 +1269,28 @@ PopSpecialNamespace(Oid namespaceId)
 	namespaceSearchPathValid = false;
 }
 
+/*
+ * FindDefaultConversionProc - find default encoding cnnversion proc
+ */
+Oid FindDefaultConversionProc(int4 for_encoding, int4 to_encoding)
+{
+	Oid			proc;
+	List	   *lptr;
+
+	recomputeNamespacePath();
+
+	foreach(lptr, namespaceSearchPath)
+	{
+		Oid			namespaceId = (Oid) lfirsti(lptr);
+
+		proc = FindDefaultConversion(namespaceId, for_encoding, to_encoding);
+		if (OidIsValid(proc))
+			return proc;
+	}
+
+	/* Not found in path */
+	return InvalidOid;
+}
 
 /*
  * recomputeNamespacePath - recompute path derived variables if needed.
