@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.305 2005/02/26 23:19:05 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.306 2005/03/02 19:58:54 tgl Exp $
 -->
 
 <chapter Id="runtime">
@@ -4360,9 +4360,9 @@ options "SEMMNS=240"
         <command>loader</command> interfaces.  The following
         parameters can be set using <command>sysctl</command>:
 <screen>
-<prompt>$</prompt> <userinput>systcl -w kern.ipc.shmall=32768</userinput>
-<prompt>$</prompt> <userinput>systcl -w kern.ipc.shmmax=134217728</userinput>
-<prompt>$</prompt> <userinput>systcl -w kern.ipc.semmap=256</userinput>
+<prompt>$</prompt> <userinput>sysctl -w kern.ipc.shmall=32768</userinput>
+<prompt>$</prompt> <userinput>sysctl -w kern.ipc.shmmax=134217728</userinput>
+<prompt>$</prompt> <userinput>sysctl -w kern.ipc.semmap=256</userinput>
 </screen>
         To have these settings persist over reboots, modify
         <filename>/etc/sysctl.conf</filename>.
@@ -4466,8 +4466,8 @@ option         SEMMAP=256
         and explicitly set the maximum total shared memory size to 2097152 
         pages (the default):
 <screen>
-<prompt>$</prompt> <userinput>systcl -w kernel.shmmax=134217728</userinput>
-<prompt>$</prompt> <userinput>systcl -w kernel.shmall=2097152</userinput>
+<prompt>$</prompt> <userinput>sysctl -w kernel.shmmax=134217728</userinput>
+<prompt>$</prompt> <userinput>sysctl -w kernel.shmall=2097152</userinput>
 </screen>
         In addition these settings can be saved between reboots in 
         <filename>/etc/sysctl.conf.
