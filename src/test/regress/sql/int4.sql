@@ -73,10 +73,19 @@ SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT4_TBL i;
 
 SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT4_TBL i;
 
-
 --
 -- more complex expressions
 --
+
+-- variations on unary minus parsing
+SELECT -2+3 AS one;
+
+SELECT 4-2 AS two;
+
+SELECT 2- -1 AS three;
+
+SELECT 2 - -2 AS four;
+
 SELECT '2'::int2 * '2'::int2 = '16'::int2 / '4'::int2 AS true;
 
 SELECT '2'::int4 * '2'::int2 = '16'::int2 / '4'::int4 AS true;
