@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.143 1998/05/13 03:27:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.144 1998/05/15 01:57:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1988,8 +1988,16 @@ HandleSlashCmds(PsqlSettings *pset,
 
 				if (optarg)
 					fs = optarg;
-				if (optarg && !*optarg && strlen(cmd) > 2)
-					fs = cmd + 2;
+				/* handle \f \{space} */
+				if (optarg && !*optarg && strlen(cmd) > 1)
+				{
+					int			i;
+					
+					/* line and cmd match until the first blank space */
+					for (i=2; isspace(line[i]); i++)
+						;
+					fs = cmd + i - 1;
+				}
 				if (pset->opt.fieldSep)
 					free(pset->opt.fieldSep);
 				if (!(pset->opt.fieldSep = strdup(fs)))
