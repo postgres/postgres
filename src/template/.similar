@@ -6,4 +6,5 @@ i386-unknown-freebsd3.0=freebsd
 i386-unknown-netbsd1.2.1=netbsd
 mips-sgi-irix5.3=irix5
 sparc-sun-solaris2.5=sparc_solaris-gcc
+sparc-sun-solaris2.5.1=sparc_solaris-gcc
 sparc-unknown-linux-gnu=linux-elf
