@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.83 1998/08/24 01:38:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.84 1998/08/25 15:00:17 thomas Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -427,19 +427,18 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 
 		querytree = querytree_list->qtrees[i];
 
+		if (DebugPrintQuery == true)
+		{
+			printf("\n---- \tquery is:\n%s\n", query_string);
+			printf("\n");
+			fflush(stdout);
+		}
 
 		/* don't rewrite utilites */
 		if (querytree->commandType == CMD_UTILITY)
 		{
 			new_list->qtrees[j++] = querytree;
 			continue;
-		}
-
-		if (DebugPrintQuery == true)
-		{
-			printf("\n---- \tquery is:\n%s\n", query_string);
-			printf("\n");
-			fflush(stdout);
 		}
 
 		if (DebugPrintParse == true)
@@ -1391,7 +1390,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.83 $ $Date: 1998/08/24 01:38:02 $");
+		puts("$Revision: 1.84 $ $Date: 1998/08/25 15:00:17 $");
 	}
 
 	/* ----------------
