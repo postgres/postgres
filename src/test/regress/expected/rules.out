@@ -1143,6 +1143,21 @@ SELECT * FROM shoelace ORDER BY sl_name;
  sl8        |       21 | brown      |     40 | inch     |     101.6
 (9 rows)
 
+SELECT * FROM shoe ORDER BY shoename;
+  shoename  | sh_avail |  slcolor   | slminlen | slminlen_cm | slmaxlen | slmaxlen_cm |  slunit  
+------------+----------+------------+----------+-------------+----------+-------------+----------
+ sh1        |        2 | black      |       70 |          70 |       90 |          90 | cm      
+ sh2        |        0 | black      |       30 |        76.2 |       40 |       101.6 | inch    
+ sh3        |        4 | brown      |       50 |          50 |       65 |          65 | cm      
+ sh4        |        3 | brown      |       40 |       101.6 |       50 |         127 | inch    
+(4 rows)
+
+SELECT count(*) FROM shoe;
+ count 
+-------
+     4
+(1 row)
+
 --
 -- Check that ruleutils are working
 --

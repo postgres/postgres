@@ -682,6 +682,9 @@ DELETE FROM shoelace WHERE EXISTS
 
 SELECT * FROM shoelace ORDER BY sl_name;
 
+SELECT * FROM shoe ORDER BY shoename;
+SELECT count(*) FROM shoe;
+
 
 --
 -- Check that ruleutils are working
