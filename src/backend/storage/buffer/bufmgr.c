@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.27 1997/10/12 07:12:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.28 1997/10/22 19:04:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1631,9 +1631,18 @@ BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
 				buf->tag.blockNum >= block)
 			{
 				if (buf->flags & BM_DIRTY)
+				{
+					elog (NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is dirty",
+						rdesc->rd_rel->relname.data, block, buf->tag.blockNum);
 					return (-1);
+				}
 				if (LocalRefCount[i] > 0)
+				{
+					elog (NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is referenced (%d)",
+						rdesc->rd_rel->relname.data, block, 
+						buf->tag.blockNum, LocalRefCount[i]);
 					return (-2);
+				}
 				buf->tag.relId.relId = InvalidOid;
 			}
 		}
@@ -1650,11 +1659,17 @@ BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
 		{
 			if (buf->flags & BM_DIRTY)
 			{
+				elog (NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is dirty (private %d, last %d, global %d)",
+					buf->sb_relname, block, buf->tag.blockNum, 
+					PrivateRefCount[i], LastRefCount[i], buf->refcount);
 				SpinRelease(BufMgrLock);
 				return (-1);
 			}
 			if (!(buf->flags & BM_FREE))
 			{
+				elog (NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is referenced (private %d, last %d, global %d)",
+					buf->sb_relname, block, buf->tag.blockNum, 
+					PrivateRefCount[i], LastRefCount[i], buf->refcount);
 				SpinRelease(BufMgrLock);
 				return (-2);
 			}
