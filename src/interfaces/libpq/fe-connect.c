@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.250 2003/06/21 21:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.251 2003/06/23 17:03:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,6 @@
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
-#endif
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
 #endif
 
 #include "libpq-fe.h"
