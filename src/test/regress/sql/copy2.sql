@@ -2,7 +2,7 @@ CREATE TABLE x (
 	a serial,
 	b int,
 	c text not null default 'stuff',
-	d text not null,
+	d text,
 	e text
 );
 
@@ -27,6 +27,7 @@ CREATE TRIGGER trg_x_before BEFORE INSERT ON x
 FOR EACH ROW EXECUTE PROCEDURE fn_x_before();
 
 COPY x (a, b, c, d, e) from stdin;
+9999	\N	\\N	\NN	\N
 10000	21	31	41	51
 \.
 
@@ -74,6 +75,24 @@ COPY x from stdin;
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 500000,x,45,80,90
+500001,x,\x,\\x,\\\x
+500002,x,\,,\\\,,\\
+\.
+
+COPY x from stdin WITH DELIMITER AS ';' NULL AS '';
+3000;;c;;
+\.
+
+COPY x from stdin WITH DELIMITER AS ':' NULL AS '\\X';
+4000:\X:C:\X:\X
+4001:1:empty::
+4002:2:null:\X:\X
+4003:3:Backslash:\\:\\
+4004:4:BackslashX:\\X:\\X
+4005:5:N:\N:\N
+4006:6:BackslashN:\\N:\\N
+4007:7:XX:\XX:\XX
+4008:8:Delimiter:\::\:
 \.
 
 -- check results of copy in
