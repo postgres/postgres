@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.88 2002/09/19 22:48:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.89 2002/10/14 04:26:54 momjian Exp $
  *
  */
 
@@ -35,6 +35,7 @@ typedef struct ExplainState
 	/* options */
 	bool		printCost;		/* print cost */
 	bool		printNodes;		/* do nodeToString() instead */
+	bool		printAnalyze;		/* print actual times */
 	/* other states */
 	List	   *rtable;			/* range table */
 } ExplainState;
@@ -405,6 +406,11 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 							 1000.0 * plan->instrument->total / nloops,
 							 plan->instrument->ntuples / nloops,
 							 plan->instrument->nloops);
+			es->printAnalyze = true;
+		}
+		else if( es->printAnalyze )
+		{
+			appendStringInfo(str, " (never executed)");
 		}
 	}
 	appendStringInfo(str, "\n");
