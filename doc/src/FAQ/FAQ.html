@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Nov 15 23:41:03 EST 2003</P>
+    <P>Last updated: Wed Nov 19 11:50:04 EST 2003</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1102,7 +1102,7 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     serial/auto-incrementing field?</H4>
 
     <P>PostgreSQL supports a <SMALL>SERIAL</SMALL> data type. It
-    auto-creates a sequence and index on the column. For example,
+    auto-creates a sequence.  For example,
     this:</P>
 <PRE>
     CREATE TABLE person ( 
@@ -1118,7 +1118,6 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
         name TEXT 
     );
-    CREATE UNIQUE INDEX person_id_key ON person ( id );
 </PRE>
 
     See the <I>create_sequence</I> manual page for more information

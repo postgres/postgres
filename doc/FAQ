@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Nov 15 23:41:03 EST 2003
+   Last updated: Wed Nov 19 11:50:04 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -879,8 +879,8 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
    
     4.15.1) How do I create a serial/auto-incrementing field?
     
-   PostgreSQL supports a SERIAL data type. It auto-creates a sequence and
-   index on the column. For example, this:
+   PostgreSQL supports a SERIAL data type. It auto-creates a sequence.
+   For example, this:
     CREATE TABLE person (
         id   SERIAL,
         name TEXT
@@ -892,7 +892,6 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
         name TEXT
     );
-    CREATE UNIQUE INDEX person_id_key ON person ( id );
 
    See the create_sequence manual page for more information about
    sequences. You can also use each row's OID field as a unique value.
