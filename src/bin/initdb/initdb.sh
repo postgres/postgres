@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.131 2001/07/31 01:16:09 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.132 2001/08/10 18:57:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -484,9 +484,14 @@ chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 # To break an SQL command across lines in this script, backslash-escape all
 # internal newlines in the command.
 
-echo "Initializing pg_shadow."
+if [ "$debug" = yes ]
+then
+    PGSQL_OPT="-O -F -D$PGDATA"
+else
+    PGSQL_OPT="-o /dev/null -O -F -D$PGDATA"
+fi
 
-PGSQL_OPT="-o /dev/null -O -F -D$PGDATA"
+echo "Initializing pg_shadow."
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 -- Create a trigger so that direct updates to pg_shadow will be written
@@ -682,7 +687,7 @@ CREATE VIEW pg_statio_all_tables AS \
     FROM pg_class C FULL OUTER JOIN \
             pg_index I ON C.oid = I.indrelid FULL OUTER JOIN \
             pg_class T ON C.reltoastrelid = T.oid FULL OUTER JOIN \
-            pg_class X ON C.reltoastidxid = X.oid \
+            pg_class X ON T.reltoastidxid = X.oid \
     WHERE C.relkind = 'r' \
     GROUP BY C.oid, C.relname, T.oid, X.oid;
 
@@ -793,22 +798,23 @@ fi
 
 echo "Loading pg_description."
 (
-  echo "COPY pg_description FROM STDIN;";
+  cat <<EOF
+    CREATE TEMP TABLE tmp_pg_description ( \
+	objoid oid, \
+	classname name, \
+	objsubid int4, \
+	description text) WITHOUT OIDS;
+    COPY tmp_pg_description FROM STDIN;
+EOF
   cat "$POSTGRES_DESCR"
+  cat <<EOF
+\.
+    INSERT INTO pg_description SELECT \
+	t.objoid, c.oid, t.objsubid, t.description \
+    FROM tmp_pg_description t, pg_class c WHERE c.relname = t.classname;
+EOF
 ) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-
-echo "Setting lastsysoid."
-
-"$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
-UPDATE pg_database SET \
-	datistemplate = 't', \
-	datlastsysoid = (SELECT max(oid) FROM pg_description) \
-    WHERE datname = 'template1';
-EOF
-if [ "$?" -ne 0 ]; then
-    exit_nicely
-fi
 
 echo "Vacuuming database."
 
@@ -823,10 +829,17 @@ echo "Copying template1 to template0."
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
 CREATE DATABASE template0;
+
 UPDATE pg_database SET \
 	datistemplate = 't', \
 	datallowconn = 'f' \
     WHERE datname = 'template0';
+
+-- We use the OID of template0 to determine lastsysoid
+
+UPDATE pg_database SET datlastsysoid = \
+    (SELECT oid - 1 FROM pg_database WHERE datname = 'template0');
+
 VACUUM FULL pg_database;
 EOF
 if [ "$?" -ne 0 ]; then

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.22 2001/07/15 22:48:18 tgl Exp $
+ * $Id: pg_index.h,v 1.23 2001/08/10 18:57:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,14 +40,13 @@
  * first variable length field.  so I moved indislossy, indhaskeytype,
  * and indisunique before indpred.	--djm 8/20/96
  */
-CATALOG(pg_index)
+CATALOG(pg_index) BKI_WITHOUT_OIDS
 {
-	Oid			indexrelid;
-	Oid			indrelid;
-	Oid			indproc;		/* registered procedure for functional
-								 * index */
-	int2vector	indkey;
-	oidvector	indclass;
+	Oid			indexrelid;		/* OID of the index */
+	Oid			indrelid;		/* OID of the relation it indexes */
+	Oid			indproc;		/* OID of function for functional index */
+	int2vector	indkey;			/* column numbers of indexed attributes */
+	oidvector	indclass;		/* opclass identifiers */
 	bool		indisclustered;	/* unused */
 	bool		indislossy;		/* index hit must be reevaluated against heap
 								 * value to make sure it really is match;

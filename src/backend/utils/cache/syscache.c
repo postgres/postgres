@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.63 2001/06/18 03:35:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.64 2001/08/10 18:57:37 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -483,6 +483,28 @@ SearchSysCacheCopy(int cacheId,
 	newtuple = heap_copytuple(tuple);
 	ReleaseSysCache(tuple);
 	return newtuple;
+}
+
+/*
+ * SearchSysCacheExists
+ *
+ * A convenience routine that just probes to see if a tuple can be found.
+ * No lock is retained on the syscache entry.
+ */
+bool
+SearchSysCacheExists(int cacheId,
+					 Datum key1,
+					 Datum key2,
+					 Datum key3,
+					 Datum key4)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCache(cacheId, key1, key2, key3, key4);
+	if (!HeapTupleIsValid(tuple))
+		return false;
+	ReleaseSysCache(tuple);
+	return true;
 }
 
 /*

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.20 2001/05/12 01:48:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.21 2001/08/10 18:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,8 @@ insert			{ return(INSERT_TUPLE); }
 "index"			{ return(INDEX); }
 "on"			{ return(ON); }
 "using"			{ return(USING); }
+"without_oids"	{ return(XWITHOUT_OIDS); }
+
 {arrayid}		{
 					yylval.ival = EnterString(MapArrayTypeName((char*)yytext));
 					return(ID);

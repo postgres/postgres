@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.37 2001/07/16 05:06:59 tgl Exp $
+ * $Id: index.h,v 1.38 2001/08/10 18:57:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ extern void InitIndexStrategy(int numatts,
 				  Relation indexRelation,
 				  Oid accessMethodObjectId);
 
-extern void index_create(char *heapRelationName,
+extern Oid index_create(char *heapRelationName,
 			 char *indexRelationName,
 			 IndexInfo *indexInfo,
 			 Oid accessMethodObjectId,
@@ -56,7 +56,8 @@ extern void FormIndexDatum(IndexInfo *indexInfo,
 
 extern void UpdateStats(Oid relid, double reltuples);
 extern bool IndexesAreActive(Oid relid, bool comfirmCommitted);
-extern void setRelhasindex(Oid relid, bool hasindex);
+extern void setRelhasindex(Oid relid, bool hasindex,
+						   bool isprimary, Oid reltoastidxid);
 
 extern void setNewRelfilenode(Relation relation);
 

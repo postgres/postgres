@@ -439,23 +439,14 @@ WHERE p1.oid != p2.oid AND
 
 -- Look for illegal values in pg_amop fields
 
-SELECT p1.oid
+SELECT p1.amopclaid, p1.amopopr, p1.amopid
 FROM pg_amop as p1
 WHERE p1.amopid = 0 OR p1.amopclaid = 0 OR p1.amopopr = 0 OR
     p1.amopstrategy <= 0;
 
--- Look for duplicate pg_amop entries
-
-SELECT p1.oid, p2.oid
-FROM pg_amop AS p1, pg_amop AS p2
-WHERE p1.oid != p2.oid AND
-    p1.amopid = p2.amopid AND
-    p1.amopclaid = p2.amopclaid AND
-    p1.amopstrategy = p2.amopstrategy;
-
 -- Cross-check amopstrategy index against parent AM
 
-SELECT p1.oid, p2.oid, p2.amname
+SELECT p1.amopclaid, p1.amopopr, p1.amopid, p2.oid, p2.amname
 FROM pg_amop AS p1, pg_am AS p2
 WHERE p1.amopid = p2.oid AND p1.amopstrategy > p2.amstrategies;
 
@@ -475,14 +466,14 @@ WHERE p1.amstrategies != (SELECT count(*) FROM pg_amop AS p3
 -- NOTE: for 7.1, add restriction that operator inputs are of same type.
 -- We used to have opclasses like "int24_ops" but these were broken.
 
-SELECT p1.oid, p2.oid, p2.oprname
+SELECT p1.amopclaid, p1.amopopr, p1.amopid, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
     (p2.oprkind != 'b' OR p2.oprresult != 16 OR p2.oprleft != p2.oprright);
 
 -- If opclass is for a specific type, operator inputs should be of that type
 
-SELECT p1.oid, p2.oid, p2.oprname, p3.oid, p3.opcname
+SELECT p1.amopclaid, p1.amopopr, p1.amopid, p2.oid, p2.oprname, p3.oid, p3.opcname
 FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
 WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
     p3.opcdeftype != 0 AND
@@ -492,23 +483,14 @@ WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
 
 -- Look for illegal values in pg_amproc fields
 
-SELECT p1.oid
+SELECT p1.amid, p1.amopclaid, p1.amprocnum
 FROM pg_amproc as p1
 WHERE p1.amid = 0 OR p1.amopclaid = 0 OR p1.amproc = 0 OR
     p1.amprocnum <= 0;
 
--- Look for duplicate pg_amproc entries
-
-SELECT p1.oid, p2.oid
-FROM pg_amproc AS p1, pg_amproc AS p2
-WHERE p1.oid != p2.oid AND
-    p1.amid = p2.amid AND
-    p1.amopclaid = p2.amopclaid AND
-    p1.amprocnum = p2.amprocnum;
-
 -- Cross-check amprocnum index against parent AM
 
-SELECT p1.oid, p2.oid, p2.amname
+SELECT p1.amid, p1.amopclaid, p1.amprocnum, p2.oid, p2.amname
 FROM pg_amproc AS p1, pg_am AS p2
 WHERE p1.amid = p2.oid AND p1.amprocnum > p2.amsupport;
 
@@ -529,10 +511,12 @@ WHERE p1.amsupport != (SELECT count(*) FROM pg_amproc AS p3
 -- We can check that all the referenced instances of the same support
 -- routine number take the same number of parameters, but that's about it...
 
-SELECT p1.oid, p2.oid, p2.proname, p3.oid, p4.oid, p4.proname
+SELECT p1.amid, p1.amopclaid, p1.amprocnum,
+	p2.oid, p2.proname,
+	p3.amid, p3.amopclaid, p3.amprocnum,
+	p4.oid, p4.proname
 FROM pg_amproc AS p1, pg_proc AS p2, pg_amproc AS p3, pg_proc AS p4
-WHERE p1.oid != p3.oid AND
-    p1.amid = p3.amid AND p1.amprocnum = p3.amprocnum AND
+WHERE p1.amid = p3.amid AND p1.amprocnum = p3.amprocnum AND
     p1.amproc = p2.oid AND p3.amproc = p4.oid AND
     (p2.proretset OR p4.proretset OR p2.pronargs != p4.pronargs);
 

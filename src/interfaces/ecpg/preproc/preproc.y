@@ -302,7 +302,7 @@ make_name(void)
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt direction fetch_how_many from_in
 %type  <str>    ClosePortalStmt DropStmt VacuumStmt AnalyzeStmt opt_verbose
-%type  <str>    opt_full func_arg
+%type  <str>    opt_full func_arg OptWithOids
 %type  <str>    analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>    index_list func_index index_elem opt_class access_method_clause
 %type  <str>    index_opt_unique IndexStmt func_return ConstInterval
@@ -1057,9 +1057,9 @@ copy_null:	WITH NULL_P AS StringConst	{ $$ = cat2_str(make_str("with null as"), 
  *****************************************************************************/
 
 CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
-				OptInherit
+				OptInherit OptWithOids
 				{
-					$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8);
+					$$ = cat_str(9, make_str("create"), $2, make_str("table"), $4, make_str("("), $6, make_str(")"), $8, $9);
 				}
 		;
 
@@ -1256,7 +1256,13 @@ key_reference:  NO ACTION	{ $$ = make_str("no action"); }
 
 OptInherit:  INHERITS '(' relation_name_list ')'                { $$ = cat_str(3, make_str("inherits ("), $3, make_str(")")); }
                 | /*EMPTY*/					{ $$ = EMPTY; }
-                ;      
+                ;
+
+OptWithOids:  WITH OIDS						{ $$ = make_str("with oids"); }
+			| WITHOUT OIDS					{ $$ = make_str("without oids"); }
+			| /*EMPTY*/						{ $$ = EMPTY; }
+		;
+
 
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for

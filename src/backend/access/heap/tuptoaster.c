@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.23 2001/06/22 19:16:20 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.24 2001/08/10 18:57:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -45,7 +45,7 @@ static void toast_delete(Relation rel, HeapTuple oldtup);
 static void toast_delete_datum(Relation rel, Datum value);
 static void toast_insert_or_update(Relation rel, HeapTuple newtup,
 					   HeapTuple oldtup);
-static Datum toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value);
+static Datum toast_save_datum(Relation rel, Datum value);
 static varattrib *toast_fetch_datum(varattrib *attr);
 
 
@@ -319,10 +319,10 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 				VARATT_IS_EXTERNAL(old_value))
 			{
 				if (new_isnull || !VARATT_IS_EXTERNAL(new_value) ||
-					old_value->va_content.va_external.va_rowid !=
-					new_value->va_content.va_external.va_rowid ||
-					old_value->va_content.va_external.va_attno !=
-					new_value->va_content.va_external.va_attno)
+					old_value->va_content.va_external.va_valueid !=
+					new_value->va_content.va_external.va_valueid ||
+					old_value->va_content.va_external.va_toastrelid !=
+					new_value->va_content.va_external.va_toastrelid)
 				{
 
 					/*
@@ -524,10 +524,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-		toast_values[i] = toast_save_datum(rel,
-										   newtup->t_data->t_oid,
-										   i + 1,
-										   toast_values[i]);
+		toast_values[i] = toast_save_datum(rel, toast_values[i]);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
@@ -639,10 +636,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-		toast_values[i] = toast_save_datum(rel,
-										   newtup->t_data->t_oid,
-										   i + 1,
-										   toast_values[i]);
+		toast_values[i] = toast_save_datum(rel, toast_values[i]);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
@@ -772,7 +766,7 @@ toast_compress_datum(Datum value)
  * ----------
  */
 static Datum
-toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
+toast_save_datum(Relation rel, Datum value)
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -811,10 +805,6 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	result->va_content.va_external.va_valueid = newoid();
 	result->va_content.va_external.va_toastrelid =
 		rel->rd_rel->reltoastrelid;
-	result->va_content.va_external.va_toastidxid =
-		rel->rd_rel->reltoastidxid;
-	result->va_content.va_external.va_rowid = mainoid;
-	result->va_content.va_external.va_attno = attno;
 
 	/*
 	 * Initialize constant parts of the tuple data
@@ -836,21 +826,20 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	 */
 	toastrel = heap_open(rel->rd_rel->reltoastrelid, RowExclusiveLock);
 	toasttupDesc = toastrel->rd_att;
-	toastidx = index_open(rel->rd_rel->reltoastidxid);
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
 
 	/*
 	 * Split up the item into chunks
 	 */
 	while (data_todo > 0)
 	{
-
 		/*
 		 * Calculate the size of this chunk
 		 */
 		chunk_size = Min(TOAST_MAX_CHUNK_SIZE, data_todo);
 
 		/*
-		 * Build a tuple
+		 * Build a tuple and store it
 		 */
 		t_values[1] = Int32GetDatum(chunk_seq++);
 		VARATT_SIZEP(&chunk_data) = chunk_size + VARHDRSZ;
@@ -859,10 +848,16 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 		if (!HeapTupleIsValid(toasttup))
 			elog(ERROR, "Failed to build TOAST tuple");
 
-		/*
-		 * Store it and create the index entry
-		 */
 		heap_insert(toastrel, toasttup);
+
+		/*
+		 * Create the index entry.  We cheat a little here by not using
+		 * FormIndexDatum: this relies on the knowledge that the index
+		 * columns are the same as the initial columns of the table.
+		 *
+		 * Note also that there had better not be any user-created index
+		 * on the TOAST table, since we don't bother to update anything else.
+		 */
 		idxres = index_insert(toastidx, t_values, t_nulls,
 							  &(toasttup->t_self),
 							  toastrel);
@@ -872,8 +867,8 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 		/*
 		 * Free memory
 		 */
-		heap_freetuple(toasttup);
 		pfree(idxres);
+		heap_freetuple(toasttup);
 
 		/*
 		 * Move on to next chunk
@@ -918,10 +913,11 @@ toast_delete_datum(Relation rel, Datum value)
 	 */
 	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
 						 RowExclusiveLock);
-	toastidx = index_open(attr->va_content.va_external.va_toastidxid);
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
 
 	/*
 	 * Setup a scan key to fetch from the index by va_valueid
+	 * (we don't particularly care whether we see them in sequence or not)
 	 */
 	ScanKeyEntryInitialize(&toastkey,
 						   (bits16) 0,
@@ -930,7 +926,7 @@ toast_delete_datum(Relation rel, Datum value)
 			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
 
 	/*
-	 * Read the chunks by index
+	 * Find the chunks by index
 	 */
 	toastscan = index_beginscan(toastidx, false, 1, &toastkey);
 	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
@@ -1009,7 +1005,7 @@ toast_fetch_datum(varattrib *attr)
 	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
 						 AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
-	toastidx = index_open(attr->va_content.va_external.va_toastidxid);
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
 
 	/*
 	 * Setup a scan key to fetch from the index by va_valueid
@@ -1049,25 +1045,25 @@ toast_fetch_datum(varattrib *attr)
 		 * Some checks on the data we've found
 		 */
 		if (residx < 0 || residx >= numchunks)
-			elog(ERROR, "unexpected chunk number %d for toast value %d",
+			elog(ERROR, "unexpected chunk number %d for toast value %u",
 				 residx,
 				 attr->va_content.va_external.va_valueid);
 		if (residx < numchunks - 1)
 		{
 			if (chunksize != TOAST_MAX_CHUNK_SIZE)
-				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %d",
+				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
 					 chunksize, residx,
 					 attr->va_content.va_external.va_valueid);
 		}
 		else
 		{
 			if ((residx * TOAST_MAX_CHUNK_SIZE + chunksize) != ressize)
-				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %d",
+				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
 					 chunksize, residx,
 					 attr->va_content.va_external.va_valueid);
 		}
 		if (chunks_found[residx]++ > 0)
-			elog(ERROR, "chunk %d for toast value %d appears multiple times",
+			elog(ERROR, "chunk %d for toast value %u appears multiple times",
 				 residx,
 				 attr->va_content.va_external.va_valueid);
 
@@ -1085,7 +1081,7 @@ toast_fetch_datum(varattrib *attr)
 	 * Final checks that we successfully fetched the datum
 	 */
 	if (memcmp(chunks_found, chunks_expected, numchunks) != 0)
-		elog(ERROR, "not all toast chunks found for value %d",
+		elog(ERROR, "not all toast chunks found for value %u",
 			 attr->va_content.va_external.va_valueid);
 	pfree(chunks_expected);
 	pfree(chunks_found);

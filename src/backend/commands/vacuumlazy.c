@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.3 2001/07/18 00:46:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.4 2001/08/10 18:57:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,7 +339,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			/*
 			 * Other checks...
 			 */
-			if (!OidIsValid(tuple.t_data->t_oid))
+			if (!OidIsValid(tuple.t_data->t_oid) &&
+				onerel->rd_rel->relhasoids)
 				elog(NOTICE, "Rel %s: TID %u/%u: OID IS INVALID. TUPGONE %d.",
 					 relname, blkno, offnum, (int) tupgone);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.77 2001/08/04 00:14:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.78 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,14 +354,14 @@ dropdb(const char *dbname)
 
 	heap_endscan(pgdbscan);
 
+	/* Delete any comments associated with the database */
+	DeleteComments(db_id, RelationGetRelid(pgdbrel));
+
 	/*
 	 * Close pg_database, but keep exclusive lock till commit to ensure
 	 * that any new backend scanning pg_database will see the tuple dead.
 	 */
 	heap_close(pgdbrel, NoLock);
-
-	/* Delete any comments associated with the database */
-	DeleteComments(db_id);
 
 	/*
 	 * Drop pages for this database that are in the shared buffer cache.

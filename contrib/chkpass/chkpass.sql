@@ -4,7 +4,7 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $Header: /cvsroot/pgsql/contrib/chkpass/Attic/chkpass.sql,v 1.1 2001/05/03 12:32:13 darcy Exp $
+--  $Header: /cvsroot/pgsql/contrib/chkpass/Attic/chkpass.sql,v 1.2 2001/08/10 18:57:32 tgl Exp $
 --  best viewed with tabs set to 4
 --  %%PGDIR%% changed to your local directory where modules is
 --
@@ -73,9 +73,7 @@ create operator <> (
 	procedure = ne
 );
 
-INSERT INTO pg_description (objoid, description)
-	SELECT oid, 'password type with checks'
-		FROM pg_type WHERE typname = 'chkpass';
+COMMENT ON TYPE chkpass IS 'password type with checks';
 
 --
 --	eof

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.55 2001/05/07 00:43:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.56 2001/08/10 18:57:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
@@ -38,6 +39,7 @@ static Node *scanJoinForColumn(JoinExpr *join, char *colname,
 				  int sublevels_up);
 static bool isForUpdate(ParseState *pstate, char *relname);
 static List *expandNamesVars(ParseState *pstate, List *names, List *vars);
+static int	specialAttNum(char *a);
 static void warnAutoRange(ParseState *pstate, char *refname);
 
 
@@ -318,11 +320,19 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	 */
 	if (rte->relid != InvalidOid)
 	{
+		/* quick check to see if name could be a system column */
 		attnum = specialAttNum(colname);
 		if (attnum != InvalidAttrNumber)
 		{
-			result = (Node *) make_var(pstate, rte, attnum);
-			rte->checkForRead = true;
+			/* now check to see if column actually is defined */
+			if (SearchSysCacheExists(ATTNUM,
+									 ObjectIdGetDatum(rte->relid),
+									 Int16GetDatum(attnum),
+									 0, 0))
+			{
+				result = (Node *) make_var(pstate, rte, attnum);
+				rte->checkForRead = true;
+			}
 		}
 	}
 
@@ -968,7 +978,10 @@ attnameAttNum(Relation rd, char *a)
 			return i + 1;
 
 	if ((i = specialAttNum(a)) != InvalidAttrNumber)
-		return i;
+	{
+		if (i != ObjectIdAttributeNumber || rd->rd_rel->relhasoids)
+			return i;
+	}
 
 	/* on failure */
 	elog(ERROR, "Relation '%s' does not have attribute '%s'",
@@ -977,10 +990,15 @@ attnameAttNum(Relation rd, char *a)
 }
 
 /* specialAttNum()
+ *
  * Check attribute name to see if it is "special", e.g. "oid".
  * - thomas 2000-02-07
+ *
+ * Note: this only discovers whether the name could be a system attribute.
+ * Caller needs to verify that it really is an attribute of the rel,
+ * at least in the case of "oid", which is now optional.
  */
-int
+static int
 specialAttNum(char *a)
 {
 	int			i;
@@ -993,38 +1011,14 @@ specialAttNum(char *a)
 }
 
 
-#ifdef NOT_USED
-/*
- * Given range variable, return whether attribute of this name
- * is a set.
- * NOTE the ASSUMPTION here that no system attributes are, or ever
- * will be, sets.
- *
- *	This should only be used if the relation is already
- *	heap_open()'ed.  Use the cache version get_attisset()
- *	for access to non-opened relations.
- */
-bool
-attnameIsSet(Relation rd, char *name)
-{
-	int			i;
-
-	/* First check if this is a system attribute */
-	for (i = 0; i < SPECIALS; i++)
-	{
-		if (strcmp(special_attr[i].attrname, name) == 0)
-			return false;		/* no sys attr is a set */
-	}
-	return get_attisset(RelationGetRelid(rd), name);
-}
-
-#endif
-
 /* given attribute id, return type of that attribute */
 /*
  *	This should only be used if the relation is already
  *	heap_open()'ed.  Use the cache version get_atttype()
  *	for access to non-opened relations.
+ *
+ * Note: we don't bother to check rd->rd_rel->relhasoids; we assume that
+ * the caller will only ask about OID if that column has been found valid.
  */
 Oid
 attnumTypeId(Relation rd, int attid)

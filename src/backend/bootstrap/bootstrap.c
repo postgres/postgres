@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.113 2001/08/04 00:14:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.114 2001/08/10 18:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,7 +627,9 @@ DefineAttr(char *name, char *type, int attnum)
 
 /* ----------------
  *		InsertOneTuple
- *		assumes that 'oid' will not be zero.
+ *
+ * If objectid is not zero, it is a specific OID to assign to the tuple.
+ * Otherwise, an OID will be assigned (if necessary) by heap_insert.
  * ----------------
  */
 void
@@ -635,7 +637,6 @@ InsertOneTuple(Oid objectid)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
-
 	int			i;
 
 	if (DebugMode)
@@ -664,7 +665,7 @@ InsertOneTuple(Oid objectid)
  * ----------------
  */
 void
-InsertOneValue(Oid objectid, char *value, int i)
+InsertOneValue(char *value, int i)
 {
 	int			typeindex;
 	char	   *prt;

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.151 2001/08/10 14:30:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.152 2001/08/10 18:57:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1967,11 +1967,12 @@ _copyCreateStmt(CreateStmt *from)
 {
 	CreateStmt *newnode = makeNode(CreateStmt);
 
-	newnode->istemp = from->istemp;
 	newnode->relname = pstrdup(from->relname);
 	Node_Copy(from, newnode, tableElts);
 	Node_Copy(from, newnode, inhRelnames);
 	Node_Copy(from, newnode, constraints);
+	newnode->istemp = from->istemp;
+	newnode->hasoids = from->hasoids;
 
 	return newnode;
 }

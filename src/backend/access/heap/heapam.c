@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.123 2001/07/12 04:11:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.124 2001/08/10 18:57:32 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1027,17 +1027,10 @@ heap_get_latest_tid(Relation relation,
 }
 
 /* ----------------
- *		heap_insert		- insert tuple
+ *		heap_insert		- insert tuple into a heap
  *
  *		The assignment of t_min (and thus the others) should be
  *		removed eventually.
- *
- *		Currently places the tuple onto the last page.	If there is no room,
- *		it is placed on new pages.	(Heap relations)
- *		Note that concurrent inserts during a scan will probably have
- *		unexpected results, though this will be fixed eventually.
- *
- *		Fix to work with indexes.
  * ----------------
  */
 Oid
@@ -1049,18 +1042,21 @@ heap_insert(Relation relation, HeapTuple tup)
 	IncrHeapAccessStat(local_insert);
 	IncrHeapAccessStat(global_insert);
 
-	/*
-	 * If the object id of this tuple has already been assigned, trust the
-	 * caller.	There are a couple of ways this can happen.  At initial db
-	 * creation, the backend program sets oids for tuples.	When we define
-	 * an index, we set the oid.  Finally, in the future, we may allow
-	 * users to set their own object ids in order to support a persistent
-	 * object store (objects need to contain pointers to one another).
-	 */
-	if (!OidIsValid(tup->t_data->t_oid))
-		tup->t_data->t_oid = newoid();
-	else
-		CheckMaxObjectId(tup->t_data->t_oid);
+	if (relation->rd_rel->relhasoids)
+	{
+		/*
+		 * If the object id of this tuple has already been assigned, trust the
+		 * caller.	There are a couple of ways this can happen.  At initial db
+		 * creation, the backend program sets oids for tuples.	When we define
+		 * an index, we set the oid.  Finally, in the future, we may allow
+		 * users to set their own object ids in order to support a persistent
+		 * object store (objects need to contain pointers to one another).
+		 */
+		if (!OidIsValid(tup->t_data->t_oid))
+			tup->t_data->t_oid = newoid();
+		else
+			CheckMaxObjectId(tup->t_data->t_oid);
+	}
 
 	TransactionIdStore(GetCurrentTransactionId(), &(tup->t_data->t_xmin));
 	tup->t_data->t_cmin = GetCurrentCommandId();

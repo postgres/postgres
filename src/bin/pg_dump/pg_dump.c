@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.218 2001/08/03 20:47:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.219 2001/08/10 18:57:38 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -182,7 +182,8 @@ typedef enum _formatLiteralOptions
 	/* only checks for 'opts == CONV_ALL' anyway. */
 } formatLiteralOptions;
 
-static void dumpComment(Archive *outfile, const char *target, const char *oid,
+static void dumpComment(Archive *fout, const char *target, const char *oid,
+						const char *classname, int subid,
 						const char *((*deps)[]));
 static void dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool dataOnly);
 static void dumpACL(Archive *fout, TableInfo tbinfo);
@@ -338,6 +339,7 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 {
 	const DumpContext *dctx = (DumpContext *) dctxv;
 	const char *classname = dctx->tblinfo[dctx->tblidx].relname;
+	const bool	hasoids = dctx->tblinfo[dctx->tblidx].hasoids;
 	const bool	oids = dctx->oids;
 
 	PGresult   *res;
@@ -349,7 +351,7 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 	if (g_verbose)
 		write_msg(NULL, "dumping out the contents of table %s\n", classname);
 
-	if (oids == true)
+	if (oids && hasoids)
 	{
 
 		/*
@@ -625,19 +627,11 @@ static void
 dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 		 const char *onlytable, const bool oids, const bool force_quotes)
 {
-
 	int			i;
 	DataDumperPtr dumpFn;
 	DumpContext *dumpCtx;
-	char	   *oidsPart;
 	char		copyBuf[512];
 	char	   *copyStmt;
-
-	if (oids == true)
-		oidsPart = "WITH OIDS ";
-	else
-		oidsPart = "";
-
 
 	if (g_verbose)
 	{
@@ -672,24 +666,25 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 			dumpCtx->tblidx = i;
 			dumpCtx->oids = oids;
 
-			if (!dumpData)		/* Dump/restore using COPY */
+			if (!dumpData)
 			{
+				/* Dump/restore using COPY */
 				dumpFn = dumpClasses_nodumpData;
-				/* dumpClasses_nodumpData(fout, classname, oids); */
-				sprintf(copyBuf, "COPY %s %sFROM stdin;\n", fmtId(tblinfo[i].relname, force_quotes),
-						oidsPart);
+				sprintf(copyBuf, "COPY %s %sFROM stdin;\n",
+						fmtId(tblinfo[i].relname, force_quotes),
+						(oids && tblinfo[i].hasoids) ? "WITH OIDS " : "");
 				copyStmt = copyBuf;
 			}
 			else
-/* Restore using INSERT */
 			{
+				/* Restore using INSERT */
 				dumpFn = dumpClasses_dumpData;
-				/* dumpClasses_dumpData(fout, classname); */
 				copyStmt = NULL;
 			}
 
 			ArchiveEntry(fout, tblinfo[i].oid, tblinfo[i].relname,
-				"TABLE DATA", NULL, "", "", copyStmt, tblinfo[i].usename,
+						 "TABLE DATA", NULL, "", "",
+						 copyStmt, tblinfo[i].usename,
 						 dumpFn, dumpCtx);
 		}
 	}
@@ -1111,6 +1106,12 @@ main(int argc, char **argv)
 	MoveToEnd(g_fout, "TRIGGER");
 	MoveToEnd(g_fout, "RULE");
 	MoveToEnd(g_fout, "SEQUENCE SET");
+	/*
+	 * Moving all comments to end is annoying, but must do it for comments
+	 * on stuff we just moved, and we don't seem to have quite enough
+	 * dependency structure to get it really right...
+	 */
+	MoveToEnd(g_fout, "COMMENT");
 
 	if (plainText)
 	{
@@ -1231,7 +1232,7 @@ dumpBlobs(Archive *AH, char *junkOid, void *junkVal)
 	int			loFd;
 	char		buf[loBufSize];
 	int			cnt;
-	int			blobOid;
+	Oid			blobOid;
 
 	if (g_verbose)
 		write_msg(NULL, "saving BLOBs\n");
@@ -1270,7 +1271,7 @@ dumpBlobs(Archive *AH, char *junkOid, void *junkVal)
 		/* Process the tuples, if any */
 		for (i = 0; i < PQntuples(res); i++)
 		{
-			blobOid = atoi(PQgetvalue(res, i, 0));
+			blobOid = atooid(PQgetvalue(res, i, 0));
 			/* Open the BLOB */
 			loFd = lo_open(g_conn, blobOid, INV_READ);
 			if (loFd == -1)
@@ -1660,8 +1661,6 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 		/* Process Attributes */
 		for (j = 0; j < tblinfo[i].numatts; j++)
 		{
-			if (tblinfo[i].attoids[j])
-				free(tblinfo[i].attoids[j]);
 			if (tblinfo[i].attnames[j])
 				free(tblinfo[i].attnames[j]);
 			if (tblinfo[i].typnames[j])
@@ -2023,7 +2022,7 @@ getFuncs(int *numFuncs)
 		finfo[i].prorettype = strdup(PQgetvalue(res, i, i_prorettype));
 		finfo[i].retset = (strcmp(PQgetvalue(res, i, i_proretset), "t") == 0);
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
-		finfo[i].lang = atoi(PQgetvalue(res, i, i_prolang));
+		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		finfo[i].iscachable = (strcmp(PQgetvalue(res, i, i_iscachable), "t") == 0);
 		finfo[i].isstrict = (strcmp(PQgetvalue(res, i, i_isstrict), "t") == 0);
@@ -2078,6 +2077,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	int			i_relchecks;
 	int			i_reltriggers;
 	int			i_relhasindex;
+	int			i_relhasoids;
 
 	char		relkindview[2];
 
@@ -2093,12 +2093,25 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 * (sequence) or 'v' (view).
 	 */
 
-	if (g_fout->remoteVersion >= 70100)
+	if (g_fout->remoteVersion >= 70200)
 	{
 		appendPQExpBuffer(query,
 					  "SELECT pg_class.oid, relname, relacl, relkind, "
 					  "(select usename from pg_user where relowner = usesysid) as usename, "
-					  "relchecks, reltriggers, relhasindex "
+					  "relchecks, reltriggers, relhasindex, relhasoids "
+					  "from pg_class "
+					  "where relname !~ '^pg_' "
+					  "and relkind in ('%c', '%c', '%c') "
+					  "order by oid",
+					  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
+	}
+	else if (g_fout->remoteVersion >= 70100)
+	{
+		/* all tables have oids in 7.1 */
+		appendPQExpBuffer(query,
+					  "SELECT pg_class.oid, relname, relacl, relkind, "
+					  "(select usename from pg_user where relowner = usesysid) as usename, "
+					  "relchecks, reltriggers, relhasindex, 't'::bool as relhasoids "
 					  "from pg_class "
 					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
@@ -2117,7 +2130,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 					  "THEN '%c'::\"char\" "
 					  "ELSE relkind END AS relkind,"
 					  "(select usename from pg_user where relowner = usesysid) as usename, "
-					  "relchecks, reltriggers, relhasindex "
+					  "relchecks, reltriggers, relhasindex, 't'::bool as relhasoids "
 					  "from pg_class c "
 					  "where relname !~ '^pg_' "
 					  "and relkind in ('%c', '%c', '%c') "
@@ -2149,6 +2162,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	i_relchecks = PQfnumber(res, "relchecks");
 	i_reltriggers = PQfnumber(res, "reltriggers");
 	i_relhasindex = PQfnumber(res, "relhasindex");
+	i_relhasoids = PQfnumber(res, "relhasoids");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2249,7 +2263,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 							  "          )"
 							  "      and c.rcsrc = pg_relcheck.rcsrc "
 							  "      and c.rcrelid = i.inhparent) "
-							  " Order By oid ",
+							  " order by rcname ",
 							  tblinfo[i].oid);
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 ||
@@ -2324,6 +2338,9 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		}
 		else
 			tblinfo[i].pkIndexOid = NULL;
+
+		/* Has it got OIDs? */
+		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 
 		/* Get primary key name (if primary key exist) */
 		if (tblinfo[i].pkIndexOid != NULL)
@@ -2726,7 +2743,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_atttypmod;
 	int			i_attnotnull;
 	int			i_atthasdef;
-	int			i_attoid;
 	int			i_atttypedefn;
 	PGresult   *res;
 	int			ntups;
@@ -2753,13 +2769,13 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* Fake the LOJ below */
 			appendPQExpBuffer(q,
-						"  SELECT a.oid as attoid, a.attnum, a.attname, t.typname, a.atttypmod, "
+						"  SELECT a.attnum, a.attname, t.typname, a.atttypmod, "
 						"        a.attnotnull, a.atthasdef, NULL as atttypedefn "
 						"    from pg_attribute a, pg_type t "
 						"    where a.attrelid = '%s'::oid "
 						"        and a.attnum > 0 "
 						"        and a.atttypid = t.oid "
-						" UNION ALL SELECT a.oid as attoid, a.attnum, a.attname, NULL as typname, a.atttypmod, "
+						" UNION ALL SELECT a.attnum, a.attname, NULL as typname, a.atttypmod, "
 						"        a.attnotnull, a.atthasdef, NULL as atttypedefn "
 						"    from pg_attribute a "
 						"    where a.attrelid = '%s'::oid "
@@ -2769,7 +2785,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 						tblinfo[i].oid, tblinfo[i].oid);
 
 		} else {
-			appendPQExpBuffer(q, "SELECT a.oid as attoid, a.attnum, a.attname, t.typname, a.atttypmod, "
+			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, t.typname, a.atttypmod, "
 								"a.attnotnull, a.atthasdef, format_type(a.atttypid, a.atttypmod) as atttypedefn "
 								"from pg_attribute a LEFT OUTER JOIN pg_type t ON a.atttypid = t.oid "
 								"where a.attrelid = '%s'::oid "
@@ -2787,7 +2803,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		ntups = PQntuples(res);
 
-		i_attoid = PQfnumber(res, "attoid");
 		i_attname = PQfnumber(res, "attname");
 		i_typname = PQfnumber(res, "typname");
 		i_atttypmod = PQfnumber(res, "atttypmod");
@@ -2796,7 +2811,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_atttypedefn = PQfnumber(res, "atttypedefn");
 
 		tblinfo[i].numatts = ntups;
-		tblinfo[i].attoids = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].attnames = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].atttypedefns = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].typnames = (char **) malloc(ntups * sizeof(char *));
@@ -2818,7 +2832,6 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				exit_nicely();
 			}
 
-			tblinfo[i].attoids[j] = strdup(PQgetvalue(res, j, i_attoid));
 			tblinfo[i].attnames[j] = strdup(PQgetvalue(res, j, i_attname));
 			tblinfo[i].atttypedefns[j] = strdup(PQgetvalue(res, j, i_atttypedefn));
 			tblinfo[i].typnames[j] = strdup(PQgetvalue(res, j, i_typname));
@@ -2983,21 +2996,22 @@ getIndexes(int *numIndexes)
 }
 
 /*------------------------------------------------------------------
- * dumpComments --
+ * dumpComment --
  *
  * This routine is used to dump any comments associated with the
  * oid handed to this routine. The routine takes a constant character
- * string for the target part of the object and the oid of the object
- * whose comments are to be dumped. It is perfectly acceptable
- * to hand an oid to this routine which has not been commented.  Additional
- * dependencies can be passed for the comment, too --- this is needed for
- * VIEWs, whose comments are filed under the table OID but which are dumped
- * in order by their rule OID.
+ * string for the target part of the comment-creation command, plus
+ * OID, class name, and subid which are the primary key for pg_description.
+ * If a matching pg_description entry is found, it is dumped.
+ * Additional dependencies can be passed for the comment, too --- this is
+ * needed for VIEWs, whose comments are filed under the table OID but
+ * which are dumped in order by their rule OID.
  *------------------------------------------------------------------
 */
 
 static void
 dumpComment(Archive *fout, const char *target, const char *oid,
+			const char *classname, int subid,
 			const char *((*deps)[]))
 {
 	PGresult   *res;
@@ -3011,8 +3025,20 @@ dumpComment(Archive *fout, const char *target, const char *oid,
 	/*** Build query to find comment ***/
 
 	query = createPQExpBuffer();
-	appendPQExpBuffer(query, "SELECT description FROM pg_description WHERE objoid = ");
-	appendPQExpBuffer(query, oid);
+
+	if (fout->remoteVersion >= 70200)
+	{
+		appendPQExpBuffer(query, "SELECT description FROM pg_description "
+						  "WHERE objoid = %s and classoid = "
+						  "(SELECT oid FROM pg_class where relname = '%s') "
+						  "and objsubid = %d",
+						  oid, classname, subid);
+	}
+	else
+	{
+		/* Note: this will fail to find attribute comments in pre-7.2... */
+		appendPQExpBuffer(query, "SELECT description FROM pg_description WHERE objoid = %s", oid);
+	}
 
 	/*** Execute query ***/
 
@@ -3026,18 +3052,18 @@ dumpComment(Archive *fout, const char *target, const char *oid,
 
 	/*** If a comment exists, build COMMENT ON statement ***/
 
-	if (PQntuples(res) != 0)
+	if (PQntuples(res) == 1)
 	{
 		i_description = PQfnumber(res, "description");
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "COMMENT ON %s IS ", target);
-		formatStringLiteral(query, PQgetvalue(res, 0, i_description), PASS_LFTAB);
+		formatStringLiteral(query, PQgetvalue(res, 0, i_description),
+							PASS_LFTAB);
 		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, oid, target, "COMMENT", deps,
 					 query->data, "" /* Del */ ,
 					 "" /* Copy */ , "" /* Owner */ , NULL, NULL);
-
 	}
 
 	/*** Clear the statement buffer and return ***/
@@ -3086,7 +3112,8 @@ dumpDBComment(Archive *fout)
 		i_oid = PQfnumber(res, "oid");
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "DATABASE %s", fmtId(PQdb(g_conn), force_quotes));
-		dumpComment(fout, query->data, PQgetvalue(res, 0, i_oid), NULL);
+		dumpComment(fout, query->data, PQgetvalue(res, 0, i_oid),
+					"pg_database", 0, NULL);
 	}
 
 	/*** Clear the statement buffer and return ***/
@@ -3118,7 +3145,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 			continue;
 
 		/* skip relation types */
-		if (atoi(tinfo[i].typrelid) != 0)
+		if (atooid(tinfo[i].typrelid) != 0)
 			continue;
 
 		/* skip undefined placeholder types */
@@ -3223,7 +3250,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		resetPQExpBuffer(q);
 
 		appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo[i].typname, force_quotes));
-		dumpComment(fout, q->data, tinfo[i].oid, NULL);
+		dumpComment(fout, q->data, tinfo[i].oid, "pg_type", 0, NULL);
 	}
 
 	destroyPQExpBuffer(q);
@@ -3503,7 +3530,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	appendPQExpBuffer(q, "FUNCTION %s ",
 					  fmtId(finfo[i].proname, force_quotes));
 	appendPQExpBuffer(q, "( %s )", fnlist->data);
-	dumpComment(fout, q->data, finfo[i].oid, NULL);
+	dumpComment(fout, q->data, finfo[i].oid, "pg_proc", 0, NULL);
 
 done:
 	destroyPQExpBuffer(q);
@@ -3798,7 +3825,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q, "AGGREGATE %s %s", agginfo[i].aggname,
 						  findTypeByOid(tinfo, numTypes, agginfo[i].aggbasetype, zeroAsOpaque + useBaseTypeName));
-		dumpComment(fout, q->data, agginfo[i].oid, NULL);
+		dumpComment(fout, q->data, agginfo[i].oid, "pg_aggregate", 0, NULL);
 	}
 
 	destroyPQExpBuffer(q);
@@ -4208,6 +4235,9 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 					appendPQExpBuffer(q, ")");
 				}
 
+				if (!tblinfo[i].hasoids)
+					appendPQExpBuffer(q, " WITHOUT OIDS");
+
 				appendPQExpBuffer(q, ";\n");
 			}
 
@@ -4231,14 +4261,16 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 				appendPQExpBuffer(q, "COLUMN %s", fmtId(tblinfo[i].relname, force_quotes));
 				appendPQExpBuffer(q, ".");
 				appendPQExpBuffer(q, "%s", fmtId(tblinfo[i].attnames[j], force_quotes));
-				dumpComment(fout, q->data, tblinfo[i].attoids[j], NULL);
+				dumpComment(fout, q->data, tblinfo[i].oid,
+							"pg_class", j+1, commentDeps);
 			}
 
 			/* Dump Table Comments */
 
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "%s %s", reltypename, fmtId(tblinfo[i].relname, force_quotes));
-			dumpComment(fout, q->data, tblinfo[i].oid, commentDeps);
+			dumpComment(fout, q->data, tblinfo[i].oid,
+						"pg_class", 0, commentDeps);
 
 		}
 	}
@@ -4330,7 +4362,7 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 	char	   *classname[INDEX_MAX_KEYS];
 	char	   *funcname;		/* the name of the function to comput the
 								 * index key from */
-	int			indclass;
+	Oid			indclass;
 	int			nclass;
 	PGresult   *res;
 
@@ -4417,7 +4449,7 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 		{
 			int			numRows;
 
-			indclass = atoi(indinfo[i].indclass[nclass]);
+			indclass = atooid(indinfo[i].indclass[nclass]);
 			if (indclass == 0)
 				break;
 			resetPQExpBuffer(q);
@@ -4554,13 +4586,15 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			 * is not necessarily right but should answer 99% of the time.
 			 * Would have to add owner name to IndInfo to do it right.
 			 */
-			ArchiveEntry(fout, tblinfo[tableInd].oid, id1->data, "INDEX", NULL, q->data, delq->data,
+			ArchiveEntry(fout, indinfo[i].indexreloid, id1->data,
+						 "INDEX", NULL, q->data, delq->data,
 						 "", tblinfo[tableInd].usename, NULL, NULL);
 
 			/* Dump Index Comments */
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "INDEX %s", id1->data);
-			dumpComment(fout, q->data, indinfo[i].indexreloid, NULL);
+			dumpComment(fout, q->data, indinfo[i].indexreloid,
+						"pg_class", 0, NULL);
 
 		}
 	}
@@ -4664,7 +4698,7 @@ setMaxOid(Archive *fout)
 		write_msg(NULL, "could not insert into pgdump_oid table: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
-	max_oid = atol(PQoidStatus(res));
+	max_oid = atooid(PQoidStatus(res));
 	if (max_oid == 0)
 	{
 		write_msg(NULL, "inserted invalid oid\n");
@@ -4684,7 +4718,7 @@ setMaxOid(Archive *fout)
 	snprintf(sql, 1024,
 			 "CREATE TEMPORARY TABLE pgdump_oid (dummy int4);\n"
 			 "COPY pgdump_oid WITH OIDS FROM stdin;\n"
-			 "%-d\t0\n"
+			 "%u\t0\n"
 			 "\\.\n"
 			 "DROP TABLE pgdump_oid;\n",
 			 max_oid);
@@ -4869,7 +4903,8 @@ dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool 
 
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo.relname, force_quotes));
-		dumpComment(fout, query->data, tbinfo.oid, NULL);
+		dumpComment(fout, query->data, tbinfo.oid,
+					"pg_class", 0, NULL);
 	}
 
 	destroyPQExpBuffer(query);
@@ -4897,7 +4932,8 @@ dumpTriggers(Archive *fout, const char *tablename,
 			ArchiveEntry(fout, tblinfo[i].triggers[j].oid, tblinfo[i].triggers[j].tgname,
 				   "TRIGGER", NULL, tblinfo[i].triggers[j].tgsrc, "", "",
 						 tblinfo[i].usename, NULL, NULL);
-			dumpComment(fout, tblinfo[i].triggers[j].tgcomment, tblinfo[i].triggers[j].oid, NULL);
+			dumpComment(fout, tblinfo[i].triggers[j].tgcomment, tblinfo[i].triggers[j].oid,
+						"pg_trigger", 0, NULL);
 		}
 	}
 }
@@ -4976,7 +5012,8 @@ dumpRules(Archive *fout, const char *tablename,
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "RULE %s", fmtId(PQgetvalue(res, i, i_rulename), force_quotes));
-			dumpComment(fout, query->data, PQgetvalue(res, i, i_oid), NULL);
+			dumpComment(fout, query->data, PQgetvalue(res, i, i_oid),
+						"pg_rewrite", 0, NULL);
 
 		}
 

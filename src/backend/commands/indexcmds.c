@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.55 2001/08/09 18:28:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.56 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,7 +212,7 @@ DefineIndex(char *heapRelationName,
 	 * backends to flush their relcache entries and in particular their
 	 * cached lists of the indexes for this relation.
 	 */
-	setRelhasindex(relationId, true);
+	setRelhasindex(relationId, true, primary, InvalidOid);
 }
 
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.242 2001/08/10 14:30:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.243 2001/08/10 18:57:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -198,7 +198,7 @@ static void doNegateFloat(Value *v);
 
 %type <typnam>	func_arg, func_return, func_type, aggr_argtype
 
-%type <boolean>	opt_arg, TriggerForOpt, TriggerForType, OptTemp
+%type <boolean>	opt_arg, TriggerForOpt, TriggerForType, OptTemp, OptWithOids
 
 %type <list>	for_update_clause, opt_for_update_clause, update_list
 %type <boolean>	opt_all
@@ -1174,14 +1174,15 @@ copy_null:      WITH NULL_P AS Sconst			{ $$ = $4; }
  *
  *****************************************************************************/
 
-CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')' OptInherit
+CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')' OptInherit OptWithOids
 				{
 					CreateStmt *n = makeNode(CreateStmt);
-					n->istemp = $2;
 					n->relname = $4;
 					n->tableElts = $6;
 					n->inhRelnames = $8;
 					n->constraints = NIL;
+					n->istemp = $2;
+					n->hasoids = $9;
 					$$ = (Node *)n;
 				}
 		;
@@ -1540,6 +1541,12 @@ key_reference:  NO ACTION				{ $$ = FKCONSTR_ON_KEY_NOACTION; }
 OptInherit:  INHERITS '(' relation_name_list ')'	{ $$ = $3; }
 		| /*EMPTY*/									{ $$ = NIL; }
 		;
+
+OptWithOids:  WITH OIDS						{ $$ = TRUE; }
+			| WITHOUT OIDS					{ $$ = FALSE; }
+			| /*EMPTY*/						{ $$ = TRUE; }
+		;
+
 
 /*
  * Note: CREATE TABLE ... AS SELECT ... is just another spelling for

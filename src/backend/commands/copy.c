@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.140 2001/07/11 21:53:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.141 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,43 +235,45 @@ CopyDonePeek(FILE *fp, int c, int pickup)
 
 /*
  *	 DoCopy executes the SQL COPY statement.
+ *
+ * Either unload or reload contents of table <relname>, depending on <from>.
+ * (<from> = TRUE means we are inserting into the table.)
+ *
+ * If <pipe> is false, transfer is between the table and the file named
+ * <filename>.  Otherwise, transfer is between the table and our regular
+ * input/output stream.	The latter could be either stdin/stdout or a
+ * socket, depending on whether we're running under Postmaster control.
+ *
+ * Iff <binary>, unload or reload in the binary format, as opposed to the
+ * more wasteful but more robust and portable text format.
+ *
+ * Iff <oids>, unload or reload the format that includes OID information.
+ * On input, we accept OIDs whether or not the table has an OID column,
+ * but silently drop them if it does not.  On output, we report an error
+ * if the user asks for OIDs in a table that has none (not providing an
+ * OID column might seem friendlier, but could seriously confuse programs).
+ *
+ * If in the text format, delimit columns with delimiter <delim> and print
+ * NULL values as <null_print>.
+ *
+ * When loading in the text format from an input stream (as opposed to
+ * a file), recognize a "." on a line by itself as EOF.	Also recognize
+ * a stream EOF.  When unloading in the text format to an output stream,
+ * write a "." on a line by itself at the end of the data.
+ *
+ * Do not allow a Postgres user without superuser privilege to read from
+ * or write to a file.
+ *
+ * Do not allow the copy if user doesn't have proper permission to access
+ * the table.
  */
-
 void
 DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	   char *filename, char *delim, char *null_print)
 {
-/*----------------------------------------------------------------------------
-  Either unload or reload contents of class <relname>, depending on <from>.
-
-  If <pipe> is false, transfer is between the class and the file named
-  <filename>.  Otherwise, transfer is between the class and our regular
-  input/output stream.	The latter could be either stdin/stdout or a
-  socket, depending on whether we're running under Postmaster control.
-
-  Iff <binary>, unload or reload in the binary format, as opposed to the
-  more wasteful but more robust and portable text format.
-
-  If in the text format, delimit columns with delimiter <delim> and print
-  NULL values as <null_print>.
-
-  When loading in the text format from an input stream (as opposed to
-  a file), recognize a "." on a line by itself as EOF.	Also recognize
-  a stream EOF.  When unloading in the text format to an output stream,
-  write a "." on a line by itself at the end of the data.
-
-  Iff <oids>, unload or reload the format that includes OID information.
-
-  Do not allow a Postgres user without superuser privilege to read from
-  or write to a file.
-
-  Do not allow the copy if user doesn't have proper permission to access
-  the class.
-----------------------------------------------------------------------------*/
-
 	FILE	   *fp;
 	Relation	rel;
-	const AclMode required_access = from ? ACL_INSERT : ACL_SELECT;
+	const AclMode required_access = (from ? ACL_INSERT : ACL_SELECT);
 	int			result;
 
 	/*
@@ -305,10 +307,15 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 	if (from)
 	{							/* copy from file to database */
-		if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-			elog(ERROR, "You cannot change sequence relation %s", relname);
-		if (rel->rd_rel->relkind == RELKIND_VIEW)
-			elog(ERROR, "You cannot copy view %s", relname);
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+		{
+			if (rel->rd_rel->relkind == RELKIND_VIEW)
+				elog(ERROR, "You cannot copy view %s", relname);
+			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+				elog(ERROR, "You cannot change sequence relation %s", relname);
+			else
+				elog(ERROR, "You cannot copy object %s", relname);
+		}
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
@@ -332,8 +339,15 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	}
 	else
 	{							/* copy from database to file */
-		if (rel->rd_rel->relkind == RELKIND_VIEW)
-			elog(ERROR, "You cannot copy view %s", relname);
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+		{
+			if (rel->rd_rel->relkind == RELKIND_VIEW)
+				elog(ERROR, "You cannot copy view %s", relname);
+			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+				elog(ERROR, "You cannot copy sequence %s", relname);
+			else
+				elog(ERROR, "You cannot copy object %s", relname);
+		}
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
@@ -409,6 +423,10 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 	bool	   *isvarlena;
 	int16		fld_size;
 	char	   *string;
+
+	if (oids && !rel->rd_rel->relhasoids)
+		elog(ERROR, "COPY: table %s does not have OIDs",
+			 RelationGetRelationName(rel));
 
 	tupDesc = rel->rd_att;
 	attr_count = rel->rd_att->natts;
@@ -705,6 +723,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		in_functions = NULL;
 		elements = NULL;
 	}
+
+	/* Silently drop incoming OIDs if table does not have OIDs */
+	if (!rel->rd_rel->relhasoids)
+		oids = false;
 
 	values = (Datum *) palloc(attr_count * sizeof(Datum));
 	nulls = (char *) palloc(attr_count * sizeof(char));

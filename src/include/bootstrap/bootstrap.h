@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.22 2001/05/12 01:48:49 petere Exp $
+ * $Id: bootstrap.h,v 1.23 2001/08/10 18:57:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ extern void boot_openrel(char *name);
 extern char *LexIDStr(int ident_num);
 
 extern void DefineAttr(char *name, char *type, int attnum);
-extern void InsertOneValue(Oid objectid, char *value, int i);
+extern void InsertOneValue(char *value, int i);
 extern void InsertOneNull(int i);
 extern char *MapArrayTypeName(char *s);
 extern char *CleanUpStr(char *s);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.36 2001/07/12 04:11:13 tgl Exp $
+ * $Id: transam.h,v 1.37 2001/08/10 18:57:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,11 +63,27 @@
 typedef unsigned char XidStatus;	/* (2 bits) */
 
 /* ----------
- *		We reserve the first 16384 object ids for manual assignment.
- *		oid's less than this appear in the .bki files.  the choice of
- *		16384 is completely arbitrary.
+ *		Object ID (OID) zero is InvalidOid.
+ *
+ *		OIDs 1-9999 are reserved for manual assignment (see the files
+ *		in src/include/catalog/).
+ *
+ *		OIDS 10000-16383 are reserved for assignment by genbki.sh.
+ *
+ *		OIDs beginning at 16384 are assigned at runtime from the OID
+ *		generator.  (The first few of these will be assigned during initdb,
+ *		to objects created after the initial BKI script processing.)
+ *
+ * The choices of 10000 and 16384 are completely arbitrary, and can be moved
+ * if we run low on OIDs in either category.  Changing the macros below
+ * should be sufficient to do this.
+ *
+ * NOTE: if the OID generator wraps around, we should skip over OIDs 0-16383
+ * and resume with 16384.  This minimizes the odds of OID conflict, by not
+ * reassigning OIDs that might have been assigned during initdb.
  * ----------
  */
+#define FirstGenBKIObjectId   10000
 #define BootstrapObjectIdData 16384
 
 /*
@@ -111,7 +127,7 @@ extern void TransBlockNumberSetXidStatus(Relation relation,
 /* in transam/varsup.c */
 extern void GetNewTransactionId(TransactionId *xid);
 extern void ReadNewTransactionId(TransactionId *xid);
-extern void GetNewObjectId(Oid *oid_return);
+extern Oid	GetNewObjectId(void);
 extern void CheckMaxObjectId(Oid assigned_oid);
 
 /* ----------------

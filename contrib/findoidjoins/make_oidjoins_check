@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # You first run findoidjoins on the template1 database, and send that
-# output into this file to generate a list of SQL statements.
+# output into this script to generate a list of SQL statements.
 
 # NOTE: any field that findoidjoins thinks joins to more than one table
 # will NOT be checked by the output of this script.  You should be
@@ -41,7 +41,7 @@ $AWK -F'[ \.]' '\
 	}
 	{
 		printf "\
-SELECT	oid, %s.%s \n\
+SELECT	ctid, %s.%s \n\
 FROM	%s \n\
 WHERE	%s.%s != 0 AND \n\
 	NOT EXISTS(SELECT * FROM %s AS t1 WHERE t1.oid = %s.%s);\n",

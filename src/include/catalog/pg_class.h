@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.51 2001/06/12 05:55:50 tgl Exp $
+ * $Id: pg_class.h,v 1.52 2001/08/10 18:57:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -42,30 +42,31 @@
  */
 CATALOG(pg_class) BOOTSTRAP
 {
-	NameData	relname;
-	Oid			reltype;
-	int4		relowner;
-	Oid			relam;
-	Oid			relfilenode;
-	int4		relpages;
-	float4		reltuples;
-	Oid			reltoastrelid;
-	Oid			reltoastidxid;
-	bool		relhasindex;
-	bool		relisshared;
-	char		relkind;
-	int2		relnatts;
+	NameData	relname;		/* class name */
+	Oid			reltype;		/* OID of associated entry in pg_type */
+	int4		relowner;		/* class owner */
+	Oid			relam;			/* index access method; 0 if not an index */
+	Oid			relfilenode;	/* identifier of physical storage file */
+	int4		relpages;		/* # of blocks (not always up-to-date) */
+	float4		reltuples;		/* # of tuples (not always up-to-date) */
+	Oid			reltoastrelid;	/* OID of toast table; 0 if none */
+	Oid			reltoastidxid;	/* if toast table, OID of chunk_id index */
+	bool		relhasindex;	/* T if has (or has had) any indexes */
+	bool		relisshared;	/* T if shared across databases */
+	char		relkind;		/* see RELKIND_xxx constants below */
+	int2		relnatts;		/* number of user attributes */
 	/*
-	 * relnatts is the number of user attributes this class has.  There
-	 * must be exactly this many instances in Class pg_attribute for this
-	 * class that have attnum > 0 (= user attribute).
+	 * Class pg_attribute must contain exactly "relnatts" user attributes
+	 * (with attnums ranging from 1 to relnatts) for this class.  It may
+	 * also contain entries with negative attnums for system attributes.
 	 */
 	int2		relchecks;		/* # of CHECK constraints for class */
 	int2		reltriggers;	/* # of TRIGGERs */
 	int2		relukeys;		/* # of Unique keys (not used) */
 	int2		relfkeys;		/* # of FOREIGN KEYs (not used) */
 	int2		relrefs;		/* # of references to this rel (not used) */
-	bool		relhaspkey;		/* has PRIMARY KEY (not used) */
+	bool		relhasoids;		/* T if we generate OIDs for rows of rel */
+	bool		relhaspkey;		/* has PRIMARY KEY index */
 	bool		relhasrules;	/* has associated rules */
 	bool		relhassubclass; /* has derived classes */
 	/*
@@ -93,11 +94,11 @@ typedef FormData_pg_class *Form_pg_class;
 /* ----------------
  *		Natts_pg_class_fixed is used to tell routines that insert new
  *		pg_class tuples (as opposed to replacing old ones) that there's no
- *		relacl field.
+ *		relacl field.  This is a kluge.
  * ----------------
  */
-#define Natts_pg_class_fixed			21
-#define Natts_pg_class					22
+#define Natts_pg_class_fixed			22
+#define Natts_pg_class					23
 #define Anum_pg_class_relname			1
 #define Anum_pg_class_reltype			2
 #define Anum_pg_class_relowner			3
@@ -116,10 +117,11 @@ typedef FormData_pg_class *Form_pg_class;
 #define Anum_pg_class_relukeys			16
 #define Anum_pg_class_relfkeys			17
 #define Anum_pg_class_relrefs			18
-#define Anum_pg_class_relhaspkey		19
-#define Anum_pg_class_relhasrules		20
-#define Anum_pg_class_relhassubclass	21
-#define Anum_pg_class_relacl			22
+#define Anum_pg_class_relhasoids		19
+#define Anum_pg_class_relhaspkey		20
+#define Anum_pg_class_relhasrules		21
+#define Anum_pg_class_relhassubclass	22
+#define Anum_pg_class_relacl			23
 
 /* ----------------
  *		initial contents of pg_class
@@ -128,23 +130,23 @@ typedef FormData_pg_class *Form_pg_class;
  * ----------------
  */
 
-DATA(insert OID = 1247 (  pg_type 71		  PGUID 0 1247 0 0 0 0 f f r 17 0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1247 (  pg_type		71	PGUID 0 1247 0 0 0 0 f f r 17 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1249 (  pg_attribute 75	  PGUID 0 1249 0 0 0 0 f f r 15 0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1249 (  pg_attribute	75	PGUID 0 1249 0 0 0 0 f f r 15 0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1255 (  pg_proc 81		  PGUID 0 1255 0 0 0 0 f f r 17 0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1255 (  pg_proc		81	PGUID 0 1255 0 0 0 0 f f r 17 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1259 (  pg_class 83		  PGUID 0 1259 0 0 0 0 f f r 22 0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1259 (  pg_class		83	PGUID 0 1259 0 0 0 0 f f r 23 0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1260 (  pg_shadow 86		  PGUID 0 1260 0 0 0 0 f t r 8	0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1260 (  pg_shadow		86	PGUID 0 1260 0 0 0 0 f t r 8  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1261 (  pg_group 87		  PGUID 0 1261 0 0 0 0 f t r 3	0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1261 (  pg_group		87	PGUID 0 1261 0 0 0 0 f t r 3  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1262 (  pg_database 88	  PGUID 0 1262 0 0 0 0 f t r 7	0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1262 (  pg_database	88	PGUID 0 1262 0 0 0 0 f t r 7  0 0 0 0 0 t f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1269 (  pg_log  99		  PGUID 0 1269 0 0 0 0 f t s 1	0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 1269 (  pg_log		99	PGUID 0 1269 0 0 0 0 f t s 1  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 376  (  pg_xactlock  0	  PGUID 0	 0 0 0 0 0 f t s 1	0 0 0 0 0 f f f _null_ ));
+DATA(insert OID = 376  (  pg_xactlock	0	PGUID 0    0 0 0 0 0 f t s 1  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
 
 #define RelOid_pg_type			1247

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.72 2001/07/22 22:01:04 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.73 2001/08/10 18:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2510,8 +2510,6 @@ StartupXLOG(void)
 		 checkPoint.nextXid, checkPoint.nextOid);
 	if (checkPoint.nextXid < FirstTransactionId)
 		elog(STOP, "invalid next transaction id");
-	if (checkPoint.nextOid < BootstrapObjectIdData)
-		elog(STOP, "invalid next oid");
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.99 2001/08/10 14:30:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.100 2001/08/10 18:57:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -819,8 +819,6 @@ _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 static bool
 _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 {
-	if (a->istemp != b->istemp)
-		return false;
 	if (!equalstr(a->relname, b->relname))
 		return false;
 	if (!equal(a->tableElts, b->tableElts))
@@ -828,6 +826,10 @@ _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 	if (!equal(a->inhRelnames, b->inhRelnames))
 		return false;
 	if (!equal(a->constraints, b->constraints))
+		return false;
+	if (a->istemp != b->istemp)
+		return false;
+	if (a->hasoids != b->hasoids)
 		return false;
 
 	return true;

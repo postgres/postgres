@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.42 2001/05/30 20:52:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.43 2001/08/10 18:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,24 +124,13 @@ IsSharedSystemRelationName(const char *relname)
  *		newoid			- returns a unique identifier across all catalogs.
  *
  *		Object Id allocation is now done by GetNewObjectID in
- *		access/transam/varsup.c.  oids are now allocated correctly.
+ *		access/transam/varsup.
  *
- * old comments:
- *		This needs to change soon, it fails if there are too many more
- *		than one call per second when postgres restarts after it dies.
- *
- *		The distribution of OID's should be done by the POSTMASTER.
- *		Also there needs to be a facility to preallocate OID's.  Ie.,
- *		for a block of OID's to be declared as invalid ones to allow
- *		user programs to use them for temporary object identifiers.
+ *		This code probably needs to change to generate OIDs separately
+ *		for each table.
  */
 Oid
 newoid(void)
 {
-	Oid			lastoid;
-
-	GetNewObjectId(&lastoid);
-	if (!OidIsValid(lastoid))
-		elog(ERROR, "newoid: GetNewObjectId returns invalid oid");
-	return lastoid;
+	return GetNewObjectId();
 }

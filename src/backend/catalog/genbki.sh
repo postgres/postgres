@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.20 2001/05/07 00:43:16 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.21 2001/08/10 18:57:33 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -136,6 +136,15 @@ for dir in $INCLUDE_DIRS; do
     fi
 done
 
+# Get FirstGenBKIObjectId from access/transam.h
+for dir in $INCLUDE_DIRS; do
+    if [ -f "$dir/access/transam.h" ]; then
+        BKIOBJECTID=`grep '#define[ 	]*FirstGenBKIObjectId' $dir/access/transam.h | $AWK '{ print $3 }'`
+        break
+    fi
+done
+export BKIOBJECTID
+
 # NOTE: we assume here that FUNC_MAX_ARGS has the same value as INDEX_MAX_KEYS,
 # and don't read it separately from config.h.  This is OK because both of them
 # must be equal to the length of oidvector.
@@ -184,16 +193,21 @@ sed -e "s/;[ 	]*$//g" \
 #	nc is the number of catalogs
 #	inside is a variable set to 1 when we are scanning the
 #	   contents of a catalog definition.
-#	inserting_data is a flag indicating when we are processing DATA lines.
-#		(i.e. have a relation open and need to close it)
+#	reln_open is a flag indicating when we are processing DATA lines.
+#	   (i.e. have a relation open and need to close it)
+#	nextbkioid is the next OID available for automatic assignment.
+#	oid is the most recently seen or assigned oid.
 # ----------------
 BEGIN {
 	inside = 0;
 	raw = 0;
-	bootstrap = 0;
+	bootstrap = "";
+	without_oids = "";
 	nc = 0;
 	reln_open = 0;
-        comment_level = 0;
+	comment_level = 0;
+	nextbkioid = ENVIRON["BKIOBJECTID"];
+	oid = 0;
 }
 
 # ----------------
@@ -217,23 +231,26 @@ comment_level > 0 { next; }
 raw == 1 	{ print; next; }
 
 # ----------------
-#	DATA() statements should get passed right through after
-#	stripping off the DATA( and the ) on the end.
+#	DATA() statements are basically passed right through after
+#	stripping off the DATA( and the ) on the end.  However,
+#	if we see "OID = 0" then we should assign an oid from nextbkioid.
+#	Remember any explicit or assigned OID for use by DESCR().
 # ----------------
 /^DATA\(/ {
 	data = substr($0, 6, length($0) - 6);
-	print data;
-	nf = 1;
 	oid = 0;
-	while (nf <= NF-3)
+	nf = split(data, datafields);
+	if (nf >= 4 && datafields[1] == "insert" && datafields[2] == "OID" && datafields[3] == "=")
 	{
-		if ($nf == "OID" && $(nf+1) == "=")
+		oid = datafields[4];
+		if (oid == 0)
 		{
-			oid = $(nf+2);
-			break;
+			oid = nextbkioid;
+			nextbkioid++;
+			sub("OID *= *0", "OID = " oid, data);
 		}
-		nf++;
 	}
+	print data;
 	next;
 }
 
@@ -242,7 +259,7 @@ raw == 1 	{ print; next; }
 	{
 		data = substr($0, 8, length($0) - 9);
 		if (data != "")
-			printf "%d	%s\n", oid, data >>descriptionfile;
+			printf "%d\t%s\t0\t%s\n", oid, catalog, data >>descriptionfile;
 	}
 	next;
 }
@@ -291,13 +308,16 @@ raw == 1 	{ print; next; }
 	}
 
 # ----
-#  get the name of the new catalog
+#  get the name and properties of the new catalog
 # ----
 	pos = index($1,")");
 	catalog = substr($1,9,pos-9); 
 
 	if ($0 ~ /BOOTSTRAP/) {
-		bootstrap = 1;
+		bootstrap = "bootstrap ";
+	}
+	if ($0 ~ /BKI_WITHOUT_OIDS/) {
+		without_oids = "without_oids ";
 	}
 
         i = 1;
@@ -323,11 +343,7 @@ inside == 1 {
 #  if this is the last line, then output the bki catalog stuff.
 # ----
 	if ($1 ~ /}/) {
-		if (bootstrap) {
-			print "create bootstrap " catalog;
-		} else {
-			print "create " catalog;
-		}
+		print "create " bootstrap without_oids catalog;
 		print "\t(";
 
 		for (j=1; j<i-1; j++) {
@@ -336,14 +352,15 @@ inside == 1 {
 		print "\t " attname[ j ] " = " atttype[ j ] ;
 		print "\t)";
 
-		if (! bootstrap) {
+		if (bootstrap == "") {
 			print "open " catalog;
 		}
 
 		i = 1;
 		reln_open = 1;
 		inside = 0;
-		bootstrap = 0;
+		bootstrap = "";
+		without_oids = "";
 		next;
 	}
 

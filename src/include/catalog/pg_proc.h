@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.200 2001/08/06 01:25:32 tgl Exp $
+ * $Id: pg_proc.h,v 1.201 2001/08/10 18:57:40 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1481,6 +1481,11 @@ DESCR("date difference preserving months and years");
 DATA(insert OID = 1200 (  reltime		   PGUID 12 f t t t 1 f  703 "23" 100 0 0 100  int4reltime - ));
 DESCR("convert int4 to reltime");
 
+DATA(insert OID = 1215 (  obj_description	PGUID 14 f t f t 2 f	25 "26 19" 100 0 0 100  "select description from pg_description where objoid = $1 and classoid = (select oid from pg_class where relname = $2) and objsubid = 0" - ));
+DESCR("get description for object id and catalog name");
+DATA(insert OID = 1216 (  col_description	PGUID 14 f t f t 2 f	25 "26 23" 100 0 0 100  "select description from pg_description where objoid = $1 and classoid = (select oid from pg_class where relname = 'pg_class') and objsubid = $2" - ));
+DESCR("get description for table column");
+
 DATA(insert OID = 1217 (  date_trunc	   PGUID 12 f t f t 2 f 1184 "25 1184" 100 0 0 100	timestamp_trunc - ));
 DESCR("truncate timestamp to specified units");
 DATA(insert OID = 1218 (  date_trunc	   PGUID 12 f t f t 2 f 1186 "25 1186" 100 0 0 100	interval_trunc - ));
@@ -1624,8 +1629,12 @@ DESCR("exponentiation");
 DATA(insert OID = 1347 (  exp				 PGUID 12 f t t t 1 f 701 "701" 100 0 0 100  dexp - ));
 DESCR("exponential");
 
-DATA(insert OID = 1348 (  obj_description	 PGUID 14 f t f t 1 f	25 "26" 100 0 0 100  "select description from pg_description where objoid = $1" - ));
-DESCR("get description for object id");
+/*
+ * This form of obj_description is now deprecated, since it will fail if
+ * OIDs are not unique across system catalogs.  Use the other forms instead.
+ */
+DATA(insert OID = 1348 (  obj_description	 PGUID 14 f t f t 1 f	25 "26" 100 0 0 100  "select description from pg_description where objoid = $1 and objsubid = 0" - ));
+DESCR("get description for object id (deprecated)");
 DATA(insert OID = 1349 (  oidvectortypes	 PGUID 12 f t f t 1 f	25 "30" 100 0 0 100  oidvectortypes - ));
 DESCR("print type names of oidvector field");
 

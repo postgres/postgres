@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.36 2001/05/12 01:48:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.37 2001/08/10 18:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ do_end()
 
 
 int num_columns_read = 0;
-static Oid objectid;
 
 %}
 
@@ -91,7 +90,7 @@ static Oid objectid;
 %type <list>  boot_index_params
 %type <ielem> boot_index_param
 %type <ival> boot_const boot_ident
-%type <ival> optbootstrap boot_tuple boot_tuplelist
+%type <ival> optbootstrap optwithoutoids boot_tuple boot_tuplelist
 %type <oidval> optoideq
 
 %token <ival> CONST ID
@@ -99,7 +98,7 @@ static Oid objectid;
 %token STRING XDEFINE
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE
 %token COMMA EQUALS LPAREN RPAREN
-%token OBJ_ID XBOOTSTRAP NULLVAL
+%token OBJ_ID XBOOTSTRAP XWITHOUT_OIDS NULLVAL
 %start TopLevel
 
 %nonassoc low
@@ -152,7 +151,7 @@ Boot_CloseStmt:
 		;
 
 Boot_CreateStmt:
-		  XCREATE optbootstrap boot_ident LPAREN
+		  XCREATE optbootstrap optwithoutoids boot_ident LPAREN
 				{
 					do_start();
 					numattr = 0;
@@ -160,10 +159,10 @@ Boot_CreateStmt:
 					{
 						if ($2)
 							elog(DEBUG, "creating bootstrap relation %s...",
-								 LexIDStr($3));
+								 LexIDStr($4));
 						else
 							elog(DEBUG, "creating relation %s...",
-								 LexIDStr($3));
+								 LexIDStr($4));
 					}
 				}
 		  boot_typelist
@@ -185,9 +184,10 @@ Boot_CreateStmt:
 							closerel(NULL);
 						}
 
-						tupdesc = CreateTupleDesc(numattr,attrtypes);
-						reldesc = heap_create(LexIDStr($3), tupdesc,
+						tupdesc = CreateTupleDesc(numattr, attrtypes);
+						reldesc = heap_create(LexIDStr($4), tupdesc,
 											  false, true, true);
+						reldesc->rd_rel->relhasoids = ! ($3);
 						if (DebugMode)
 							elog(DEBUG, "bootstrap relation created");
 					}
@@ -197,9 +197,10 @@ Boot_CreateStmt:
 						TupleDesc tupdesc;
 
 						tupdesc = CreateTupleDesc(numattr,attrtypes);
-						id = heap_create_with_catalog(LexIDStr($3),
+						id = heap_create_with_catalog(LexIDStr($4),
 													  tupdesc,
 													  RELKIND_RELATION,
+													  ! ($3),
 													  false,
 													  true);
 						if (DebugMode)
@@ -232,8 +233,7 @@ Boot_InsertStmt:
 						elog(ERROR, "relation not open");
 						err_out();
 					}
-					objectid = $2;
-					InsertOneTuple(objectid);
+					InsertOneTuple($2);
 					do_end();
 				}
 		;
@@ -287,6 +287,11 @@ optbootstrap:
 		|				{ $$ = 0; }
 		;
 
+optwithoutoids:
+			XWITHOUT_OIDS	{ $$ = 1; }
+		|					{ $$ = 0; }
+		;
+
 boot_typelist:
 		  boot_type_thing
 		| boot_typelist COMMA boot_type_thing
@@ -302,8 +307,8 @@ boot_type_thing:
 		;
 
 optoideq:
-			OBJ_ID EQUALS boot_ident { $$ = atol(LexIDStr($3));				}
-		|						{ $$ = newoid();	}
+			OBJ_ID EQUALS boot_ident { $$ = atol(LexIDStr($3));	}
+		|						{ $$ = (Oid) 0;	}
 		;
 
 boot_tuplelist:
@@ -313,8 +318,10 @@ boot_tuplelist:
 		;
 
 boot_tuple:
-		  boot_ident {InsertOneValue(objectid, LexIDStr($1), num_columns_read++); }
-		| boot_const {InsertOneValue(objectid, LexIDStr($1), num_columns_read++); }
+		  boot_ident
+			{ InsertOneValue(LexIDStr($1), num_columns_read++); }
+		| boot_const
+			{ InsertOneValue(LexIDStr($1), num_columns_read++); }
 		| NULLVAL
 			{ InsertOneNull(num_columns_read++); }
 		;

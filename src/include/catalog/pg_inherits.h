@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_inherits.h,v 1.10 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_inherits.h,v 1.11 2001/08/10 18:57:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -31,7 +31,7 @@
  *		typedef struct FormData_pg_inherits
  * ----------------
  */
-CATALOG(pg_inherits)
+CATALOG(pg_inherits) BKI_WITHOUT_OIDS
 {
 	Oid			inhrelid;
 	Oid			inhparent;

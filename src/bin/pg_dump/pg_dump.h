@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.68 2001/08/03 19:43:05 tgl Exp $
+ * $Id: pg_dump.h,v 1.69 2001/08/10 18:57:38 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -63,7 +63,7 @@ typedef struct _funcInfo
 	char	   *oid;
 	char	   *proname;
 	char	   *proowner;
-	int			lang;
+	Oid			lang;
 	int			nargs;
 	char	   *argtypes[FUNC_MAX_ARGS];
 	char	   *prorettype;
@@ -97,6 +97,7 @@ typedef struct _tableInfo
 								 * created after the base table was created. 
 								 */
 	bool		sequence;
+	bool		hasoids;		/* does it have OIDs? */
 	int			numatts;		/* number of attributes */
 	int		   *inhAttrs;		/* an array of flags, one for each
 								 * attribute if the value is 1, then this
@@ -104,7 +105,6 @@ typedef struct _tableInfo
 	int		   *inhAttrDef;		/* Flags indicating if attrdef is inherited */
 	int		   *inhNotNull;		/* Flags indicating if NOT NULL in inherited */
 	char	  **attnames;		/* the attribute names */
-	char	  **attoids;		/* oids of the various attributes */
 	char	  **atttypedefns;	/* formatted column type definitions */
 	char	  **typnames;		/* fill out attributes */
 	bool	   *notnull;		/* Not null constraints of an attribute */

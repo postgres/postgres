@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.49 2001/06/12 05:55:50 tgl Exp $
+ * $Id: postgres.h,v 1.50 2001/08/10 18:57:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
  */
 
 /* ----------------
- *		struct varattrib is the header of a varlena object that may have been TOASTed.
+ * struct varattrib is the header of a varlena object that may have been TOASTed.
  * ----------------
  */
 #define TUPLE_TOASTER_ACTIVE
@@ -78,9 +78,6 @@ typedef struct varattrib
 			int32		va_extsize;		/* External saved size */
 			Oid			va_valueid;		/* Unique identifier of value */
 			Oid			va_toastrelid;	/* RelID where to find chunks */
-			Oid			va_toastidxid;	/* Main tables row Oid */
-			Oid			va_rowid;		/* Referencing row Oid */
-			int16		va_attno;		/* Main tables attno */
 		}			va_external;/* External stored attribute */
 
 		char		va_data[1]; /* Plain stored attribute */
@@ -572,6 +569,8 @@ extern int	assertTest(int val);
 #define CATALOG(x)  typedef struct CppConcat(FormData_,x)
 
 #define BOOTSTRAP
+
+#define BKI_WITHOUT_OIDS
 
 /* these need to expand into some harmless, repeatable declaration */
 #define DATA(x)   extern int errno

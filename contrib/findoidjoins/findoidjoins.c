@@ -38,7 +38,6 @@ main(int argc, char **argv)
 		FROM pg_class c, pg_attribute a, pg_type t \
 		WHERE a.attnum > 0 AND \
 			  relkind = 'r' AND \
-			  relhasrules = 'f' AND \
 			  (typname = 'oid' OR \
 			   typname = 'regproc') AND \
 			  a.attrelid = c.oid AND \
@@ -52,8 +51,7 @@ main(int argc, char **argv)
 		DECLARE c_relations BINARY CURSOR FOR \
 		SELECT relname \
 		FROM pg_class c \
-		WHERE relkind = 'r' AND \
-			  relhasrules = 'f' \
+		WHERE relkind = 'r' AND relhasoids \
 		ORDER BY 1; \
 		");
 	doquery("FETCH ALL IN c_relations");
@@ -71,14 +69,14 @@ main(int argc, char **argv)
 				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
 					SELECT	count(*) \
-						FROM %s t1, %s t2 \
-					WHERE t1.%s = t2.oid ", relname, relname2, attname);
+						FROM \"%s\" t1, \"%s\" t2 \
+					WHERE t1.\"%s\" = t2.oid ", relname, relname2, attname);
 			else
 				sprintf(query, "\
 					DECLARE c_matches BINARY CURSOR FOR \
 					SELECT	count(*) \
-								FROM %s t1, %s t2 \
-								WHERE RegprocToOid(t1.%s) = t2.oid ", relname, relname2, attname);
+								FROM \"%s\" t1, \"%s\" t2 \
+								WHERE RegprocToOid(t1.\"%s\") = t2.oid ", relname, relname2, attname);
 
 			doquery(query);
 			doquery("FETCH ALL IN c_matches");

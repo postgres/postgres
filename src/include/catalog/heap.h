@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.36 2001/05/30 12:57:36 momjian Exp $
+ * $Id: heap.h,v 1.37 2001/08/10 18:57:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ extern Relation heap_create(char *relname, TupleDesc tupDesc,
 extern void heap_storage_create(Relation rel);
 
 extern Oid heap_create_with_catalog(char *relname, TupleDesc tupdesc,
-						 char relkind, bool istemp,
+						 char relkind, bool relhasoids, bool istemp,
 						 bool allow_system_table_mods);
 
 extern void heap_drop_with_catalog(const char *relname,
@@ -48,6 +48,7 @@ extern void AddRelationRawConstraints(Relation rel,
 extern int RemoveCheckConstraint(Relation rel, const char *constrName, bool inh);
 
 
-extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno);
+extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,
+												   bool relhasoids);
 
 #endif	 /* HEAP_H */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.37 2001/08/09 03:32:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.38 2001/08/10 18:57:39 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -51,7 +51,7 @@ describeAggregates(const char *name)
 			 "    WHEN 0 THEN CAST('%s' AS text)\n"
 			 "    ELSE format_type(a.aggbasetype, NULL)\n"
 			 "  END AS \"%s\",\n"
-			 "  obj_description(a.oid) as \"%s\"\n"
+			 "  obj_description(a.oid, 'pg_aggregate') as \"%s\"\n"
 			 "FROM pg_aggregate a\n",
 			 _("Name"), _("(all types)"),
 			 _("Data type"), _("Description") );
@@ -105,7 +105,7 @@ describeFunctions(const char *name, bool verbose)
 				 ",\n  u.usename as \"%s\",\n"
 				 "  l.lanname as \"%s\",\n"
 				 "  p.prosrc as \"%s\",\n"
-				 "  obj_description(p.oid) as \"%s\"",
+				 "  obj_description(p.oid, 'pg_proc') as \"%s\"",
 				 _("Owner"), _("Language"),
 				 _("Source code"), _("Description") );
 
@@ -165,7 +165,7 @@ describeTypes(const char *name, bool verbose)
 				 "  END AS \"%s\",\n",
 				 _("Internal name"), _("Size") );
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),	
-			 "  obj_description(t.oid) as \"%s\"\n",
+			 "  obj_description(t.oid, 'pg_type') as \"%s\"\n",
 			 _("Description") );
 
 	/*
@@ -214,7 +214,7 @@ describeOperators(const char *name)
 			 "  CASE WHEN o.oprkind='l' THEN NULL ELSE format_type(o.oprleft, NULL) END AS \"%s\",\n"
 			 "  CASE WHEN o.oprkind='r' THEN NULL ELSE format_type(o.oprright, NULL) END AS \"%s\",\n"
 			 "  format_type(p.prorettype, NULL) AS \"%s\",\n"
-			 "  obj_description(p.oid) as \"%s\"\n"
+			 "  obj_description(p.oid, 'pg_proc') as \"%s\"\n"
 			 "FROM pg_proc p, pg_operator o\n"
 			 "WHERE RegprocToOid(o.oprcode) = p.oid\n",
 			 _("Name"), _("Left arg type"), _("Right arg type"),
@@ -265,7 +265,7 @@ listAllDbs(bool desc)
 #endif
 	if (desc)
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-				 ",\n       obj_description(d.oid) as \"%s\"",
+				 ",\n       obj_description(d.oid, 'pg_database') as \"%s\"",
 				 _("Description"));
 	strcat(buf,
 		   "\nFROM pg_database d LEFT JOIN pg_user u ON d.datdba = u.usesysid\n"
@@ -348,28 +348,34 @@ objectDescription(const char *object)
 			 "FROM (\n"
 
 			 /* Aggregate descriptions */
-			 "  SELECT a.oid as oid, CAST(a.aggname AS text) as name, CAST('%s' AS text) as object\n"
+			 "  SELECT a.oid as oid, a.tableoid as tableoid,\n"
+			 "  CAST(a.aggname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_aggregate a\n"
 
 			 /* Function descriptions (except in/outs for datatypes) */
 			 "UNION ALL\n"
-			 "  SELECT p.oid as oid, CAST(p.proname AS text) as name, CAST('%s' AS text) as object\n"
+			 "  SELECT p.oid as oid, p.tableoid as tableoid,\n"
+			 "  CAST(p.proname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_proc p\n"
 			 "  WHERE p.pronargs = 0 or oidvectortypes(p.proargtypes) <> ''\n"
 
 			 /* Operator descriptions (must get comment via associated function) */
 			 "UNION ALL\n"
-			 "  SELECT RegprocToOid(o.oprcode) as oid, CAST(o.oprname AS text) as name, CAST('%s' AS text) as object\n"
+			 "  SELECT RegprocToOid(o.oprcode) as oid,\n"
+			 "  (SELECT oid FROM pg_class WHERE relname = 'pg_proc') as tableoid,\n"
+			 "  CAST(o.oprname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_operator o\n"
 
 			 /* Type description */
 			 "UNION ALL\n"
-			 "  SELECT t.oid as oid, format_type(t.oid, NULL) as name, CAST('%s' AS text) as object\n"
+			 "  SELECT t.oid as oid, t.tableoid as tableoid,\n"
+			 "  format_type(t.oid, NULL) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_type t\n"
 
 			 /* Relation (tables, views, indexes, sequences) descriptions */
 			 "UNION ALL\n"
-			 "  SELECT c.oid as oid, CAST(c.relname AS text) as name,\n"
+			 "  SELECT c.oid as oid, c.tableoid as tableoid,\n"
+			 "  CAST(c.relname AS text) as name,\n"
 			 "  CAST(\n"
 			 "    CASE c.relkind WHEN 'r' THEN '%s' WHEN 'v' THEN '%s' WHEN 'i' THEN '%s' WHEN 'S' THEN '%s' END"
 			 "  AS text) as object\n"
@@ -377,18 +383,20 @@ objectDescription(const char *object)
 
 			 /* Rule description (ignore rules for views) */
 			 "UNION ALL\n"
-			 "  SELECT r.oid as oid, CAST(r.rulename AS text) as name, CAST('%s' AS text) as object\n"
+			 "  SELECT r.oid as oid, r.tableoid as tableoid,\n"
+			 "  CAST(r.rulename AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_rewrite r\n"
 			 "  WHERE r.rulename !~ '^_RET'\n"
 
 			 /* Trigger description */
 			 "UNION ALL\n"
-			 "  SELECT t.oid as oid, CAST(t.tgname AS text) as name, CAST('%s' AS text) as object\n"
+			 "  SELECT t.oid as oid, t.tableoid as tableoid,\n"
+			 "  CAST(t.tgname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_trigger t\n"
 
 			 ") AS tt,\n"
 			 "pg_description d\n"
-			 "WHERE tt.oid = d.objoid\n",
+			 "WHERE tt.oid = d.objoid and tt.tableoid = d.classoid and d.objsubid = 0\n",
 
 			 _("Name"), _("Object"), _("Description"),
 			 _("aggregate"), _("function"), _("operator"),
@@ -528,7 +536,7 @@ describeTableDetails(const char *name, bool desc)
 	/* Get column info */
 	strcpy(buf, "SELECT a.attname, format_type(a.atttypid, a.atttypmod), a.attnotnull, a.atthasdef, a.attnum");
 	if (desc)
-		strcat(buf, ", obj_description(a.oid)");
+		strcat(buf, ", col_description(a.attrelid, a.attnum)");
 	strcat(buf, "\nFROM pg_class c, pg_attribute a\n"
 		   "WHERE c.relname = '");
 	strncat(buf, name, NAMEDATALEN);
@@ -1025,7 +1033,7 @@ listTables(const char *infotype, const char *name, bool desc)
 
 	if (desc)
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-				 ",\n  obj_description(c.oid) as \"%s\"",
+				 ",\n  obj_description(c.oid, 'pg_class') as \"%s\"",
 				 _("Description"));
 	strcat(buf,
 		   "\nFROM pg_class c LEFT JOIN pg_user u ON c.relowner = u.usesysid\n"

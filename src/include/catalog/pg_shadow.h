@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.12 2001/06/13 21:44:41 tgl Exp $
+ * $Id: pg_shadow.h,v 1.13 2001/08/10 18:57:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -29,7 +29,7 @@
  *		typedef struct FormData_pg_shadow
  * ----------------
  */
-CATALOG(pg_shadow) BOOTSTRAP
+CATALOG(pg_shadow) BOOTSTRAP BKI_WITHOUT_OIDS
 {
 	NameData	usename;
 	int4		usesysid;
@@ -69,6 +69,6 @@ typedef FormData_pg_shadow *Form_pg_shadow;
  * user choices.
  * ----------------
  */
-DATA(insert OID = 0 ( "POSTGRES" PGUID t t t t _null_ _null_ ));
+DATA(insert ( "POSTGRES" PGUID t t t t _null_ _null_ ));
 
 #endif	 /* PG_SHADOW_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.51 2001/06/16 18:59:31 tgl Exp $
+ * $Id: indexing.h,v 1.52 2001/08/10 18:57:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 /*
  * Number of indices that exist for each system catalog
  */
-#define Num_pg_aggregate_indices	1
+#define Num_pg_aggregate_indices	2
 #define Num_pg_am_indices			2
 #define Num_pg_amop_indices			2
 #define Num_pg_amproc_indices		1
@@ -51,6 +51,7 @@
 #define AccessMethodStrategyIndex	"pg_amop_strategy_index"
 #define AccessProcedureIndex		"pg_amproc_am_opcl_procnum_index"
 #define AggregateNameTypeIndex		"pg_aggregate_name_type_index"
+#define AggregateOidIndex			"pg_aggregate_oid_index"
 #define AmNameIndex					"pg_am_name_index"
 #define AmOidIndex					"pg_am_oid_index"
 #define AttrDefaultIndex			"pg_attrdef_adrelid_adnum_index"
@@ -60,7 +61,7 @@
 #define ClassOidIndex				"pg_class_oid_index"
 #define DatabaseNameIndex			"pg_database_datname_index"
 #define DatabaseOidIndex			"pg_database_oid_index"
-#define DescriptionObjIndex			"pg_description_objoid_index"
+#define DescriptionObjIndex			"pg_description_o_c_o_index"
 #define GroupNameIndex				"pg_group_name_index"
 #define GroupSysidIndex				"pg_group_sysid_index"
 #define IndexIndrelidIndex			"pg_index_indrelid_index"
@@ -151,6 +152,7 @@ extern HeapTuple ClassOidIndexScan(Relation heapRelation, Datum relId);
  */
 
 DECLARE_UNIQUE_INDEX(pg_aggregate_name_type_index on pg_aggregate using btree(aggname name_ops, aggbasetype oid_ops));
+DECLARE_UNIQUE_INDEX(pg_aggregate_oid_index on pg_aggregate using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_am_name_index on pg_am using btree(amname name_ops));
 DECLARE_UNIQUE_INDEX(pg_am_oid_index on pg_am using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_amop_opid_index on pg_amop using btree(amopclaid oid_ops, amopopr oid_ops, amopid oid_ops));
@@ -163,7 +165,7 @@ DECLARE_UNIQUE_INDEX(pg_class_oid_index on pg_class using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_class_relname_index on pg_class using btree(relname name_ops));
 DECLARE_UNIQUE_INDEX(pg_database_datname_index on pg_database using btree(datname name_ops));
 DECLARE_UNIQUE_INDEX(pg_database_oid_index on pg_database using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_description_objoid_index on pg_description using btree(objoid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_description_o_c_o_index on pg_description using btree(objoid oid_ops, classoid oid_ops, objsubid int4_ops));
 DECLARE_UNIQUE_INDEX(pg_group_name_index on pg_group using btree(groname name_ops));
 DECLARE_UNIQUE_INDEX(pg_group_sysid_index on pg_group using btree(grosysid int4_ops));
 /* This following index is not used for a cache and is not unique */

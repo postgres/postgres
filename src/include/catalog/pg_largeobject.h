@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_largeobject.h,v 1.7 2001/03/22 04:00:39 momjian Exp $
+ * $Id: pg_largeobject.h,v 1.8 2001/08/10 18:57:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -28,12 +28,11 @@
 
 /* ----------------
  *		pg_largeobject definition.	cpp turns this into
- *		typedef struct FormData_pg_largeobject. Large object id
- *		is stored in loid;
+ *		typedef struct FormData_pg_largeobject
  * ----------------
  */
 
-CATALOG(pg_largeobject)
+CATALOG(pg_largeobject) BKI_WITHOUT_OIDS
 {
 	Oid			loid;			/* Identifier of large object */
 	int4		pageno;			/* Page number (starting from 0) */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.94 2001/08/02 15:59:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.95 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,10 +336,8 @@ DropTrigger(DropTrigStmt *stmt)
 
 		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
 		{
-
-			/*** Delete any comments associated with this trigger ***/
-
-			DeleteComments(tuple->t_data->t_oid);
+			/* Delete any comments associated with this trigger */
+			DeleteComments(tuple->t_data->t_oid, RelationGetRelid(tgrel));
 
 			simple_heap_delete(tgrel, &tuple->t_self);
 			tgfound++;
@@ -407,10 +405,8 @@ RelationRemoveTriggers(Relation rel)
 
 	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
 	{
-
-		/*** Delete any comments associated with this trigger ***/
-
-		DeleteComments(tup->t_data->t_oid);
+		/* Delete any comments associated with this trigger */
+		DeleteComments(tup->t_data->t_oid, RelationGetRelid(tgrel));
 
 		simple_heap_delete(tgrel, &tup->t_self);
 

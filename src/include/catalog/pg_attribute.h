@@ -8,14 +8,14 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.73 2001/06/12 05:55:50 tgl Exp $
+ * $Id: pg_attribute.h,v 1.74 2001/08/10 18:57:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
  *	  information from the DATA() statements.
  *
- *	  utils/cache/relcache.c requires some hard-coded tuple descriptors
- *	  for some of the system catalogs so if the schema for any of
+ *	  utils/cache/relcache.c requires hard-coded tuple descriptors
+ *	  for some of the system catalogs.  So if the schema for any of
  *	  these changes, be sure and change the appropriate Schema_xxx
  *	  macros!  -cim 2/5/91
  *
@@ -39,7 +39,7 @@
  *		system attributes in catalog/heap.c also.
  * ----------------
  */
-CATALOG(pg_attribute) BOOTSTRAP
+CATALOG(pg_attribute) BOOTSTRAP BKI_WITHOUT_OIDS
 {
 	Oid			attrelid;		/* OID of relation containing this
 								 * attribute */
@@ -241,50 +241,50 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typstorage"},    18, 0,	1, 16, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1247, {"typdefault"},    25, 0,  -1, 17, 0, -1, -1, false	, 'x', false, 'i', false, false }
 
-DATA(insert OID = 0 ( 1247 typname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1247 typowner			23 0  4   2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 typlen			21 0  2   3 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1247 typprtlen		21 0  2   4 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1247 typbyval			16 0  1   5 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1247 typtype			18 0  1   6 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1247 typisdefined		16 0  1   7 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1247 typdelim			18 0  1   8 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1247 typrelid			26 0  4   9 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 typelem			26 0  4  10 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 typinput			24 0  4  11 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 typoutput		24 0  4  12 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 typreceive		24 0  4  13 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 typsend			24 0  4  14 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 typalign			18 0  1  15 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1247 typstorage		18 0  1  16 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1247 typdefault		25 0 -1  17 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1247 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1247 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
+DATA(insert ( 1247 typowner			23 0  4   2 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typlen			21 0  2   3 0 -1 -1 t p f s f f));
+DATA(insert ( 1247 typprtlen		21 0  2   4 0 -1 -1 t p f s f f));
+DATA(insert ( 1247 typbyval			16 0  1   5 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typtype			18 0  1   6 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typisdefined		16 0  1   7 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typdelim			18 0  1   8 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typrelid			26 0  4   9 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typelem			26 0  4  10 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typinput			24 0  4  11 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typoutput		24 0  4  12 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typreceive		24 0  4  13 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typsend			24 0  4  14 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typalign			18 0  1  15 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typstorage		18 0  1  16 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typdefault		25 0 -1  17 0 -1 -1 f x f i f f));
+DATA(insert ( 1247 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
+DATA(insert ( 1247 oid				26 0  4  -2 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_database
  * ----------------
  */
-DATA(insert OID = 0 ( 1262 datname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1262 datdba			23 0  4   2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 encoding			23 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 datistemplate	16 0  1   4 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1262 datallowconn		16 0  1   5 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1262 datlastsysoid	26 0  4   6 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 datname			19 0 NAMEDATALEN   1 0 -1 -1 f p f i f f));
+DATA(insert ( 1262 datdba			23 0  4   2 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 encoding			23 0  4   3 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 datistemplate	16 0  1   4 0 -1 -1 t p f c f f));
+DATA(insert ( 1262 datallowconn		16 0  1   5 0 -1 -1 t p f c f f));
+DATA(insert ( 1262 datlastsysoid	26 0  4   6 0 -1 -1 t p f i f f));
 /* do not mark datpath as toastable; GetRawDatabaseInfo won't cope */
-DATA(insert OID = 0 ( 1262 datpath			25 0 -1   7 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1262 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1262 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 datpath			25 0 -1   7 0 -1 -1 f p f i f f));
+DATA(insert ( 1262 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
+DATA(insert ( 1262 oid				26 0  4  -2 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_proc
@@ -309,65 +309,65 @@ DATA(insert OID = 0 ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1255, {"prosrc"},				25, 0, -1, 16, 0, -1, -1, false, 'x', false, 'i', false, false }, \
 { 1255, {"probin"},				17, 0, -1, 17, 0, -1, -1, false, 'x', false, 'i', false, false }
 
-DATA(insert OID = 0 ( 1255 proname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1255 proowner			23 0  4   2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 prolang			26 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 proisinh			16 0  1   4 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1255 proistrusted		16 0  1   5 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1255 proiscachable	16 0  1   6 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1255 proisstrict		16 0  1   7 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1255 pronargs			21 0  2   8 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1255 proretset		16 0  1   9 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1255 prorettype		26 0  4  10 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 proargtypes		30 0 INDEX_MAX_KEYS*4 11 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1255 probyte_pct		23 0  4  12 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 properbyte_cpu	23 0  4  13 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 propercall_cpu	23 0  4  14 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 prooutin_ratio	23 0  4  15 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 prosrc			25 0 -1  16 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1255 probin			17 0 -1  17 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1255 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1255 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 proname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
+DATA(insert ( 1255 proowner			23 0  4   2 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 prolang			26 0  4   3 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 proisinh			16 0  1   4 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 proistrusted		16 0  1   5 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 proiscachable	16 0  1   6 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 proisstrict		16 0  1   7 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 pronargs			21 0  2   8 0 -1 -1 t p f s f f));
+DATA(insert ( 1255 proretset		16 0  1   9 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 prorettype		26 0  4  10 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 proargtypes		30 0 INDEX_MAX_KEYS*4 11 0 -1 -1 f p f i f f));
+DATA(insert ( 1255 probyte_pct		23 0  4  12 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 properbyte_cpu	23 0  4  13 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 propercall_cpu	23 0  4  14 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 prooutin_ratio	23 0  4  15 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 prosrc			25 0 -1  16 0 -1 -1 f x f i f f));
+DATA(insert ( 1255 probin			17 0 -1  17 0 -1 -1 f x f i f f));
+DATA(insert ( 1255 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
+DATA(insert ( 1255 oid				26 0  4  -2 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_shadow
  * ----------------
  */
-DATA(insert OID = 0 ( 1260 usename			19	DEFAULT_ATTSTATTARGET NAMEDATALEN	1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1260 usesysid			23	DEFAULT_ATTSTATTARGET	4	2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1260 usecreatedb		16	0	1	3 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1260 usetrace			16	0	1	4 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1260 usesuper			16	0	1	5 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1260 usecatupd		16	0	1	6 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1260 passwd			25	0  -1	7 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1260 valuntil			702 0	4	8 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1260 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1260 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1260 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1260 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1260 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1260 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1260 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 usename			19	DEFAULT_ATTSTATTARGET NAMEDATALEN	1 0 -1 -1 f p f i f f));
+DATA(insert ( 1260 usesysid			23	DEFAULT_ATTSTATTARGET	4	2 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 usecreatedb		16	0	1	3 0 -1 -1 t p f c f f));
+DATA(insert ( 1260 usetrace			16	0	1	4 0 -1 -1 t p f c f f));
+DATA(insert ( 1260 usesuper			16	0	1	5 0 -1 -1 t p f c f f));
+DATA(insert ( 1260 usecatupd		16	0	1	6 0 -1 -1 t p f c f f));
+DATA(insert ( 1260 passwd			25	0  -1	7 0 -1 -1 f x f i f f));
+DATA(insert ( 1260 valuntil			702 0	4	8 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
+/* no OIDs in pg_shadow */
+DATA(insert ( 1260 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_group
  * ----------------
  */
-DATA(insert OID = 0 ( 1261 groname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN  1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1261 grosysid			23 DEFAULT_ATTSTATTARGET  4   2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1261 grolist		  1007 0 -1   3 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1261 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1261 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1261 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1261 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1261 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
+DATA(insert ( 1261 groname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN  1 0 -1 -1 f p f i f f));
+DATA(insert ( 1261 grosysid			23 DEFAULT_ATTSTATTARGET  4   2 0 -1 -1 t p f i f f));
+DATA(insert ( 1261 grolist		  1007 0 -1   3 0 -1 -1 f x f i f f));
+DATA(insert ( 1261 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
+/* no OIDs in pg_group */
+DATA(insert ( 1261 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
+DATA(insert ( 1261 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
+DATA(insert ( 1261 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
+DATA(insert ( 1261 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_attribute
@@ -390,28 +390,28 @@ DATA(insert OID = 0 ( 1261 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1249, {"attnotnull"},  16, 0, 1, 14, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1249, {"atthasdef"},	 16, 0, 1, 15, 0, -1, -1, true, 'p', false, 'c', false, false }
 
-DATA(insert OID = 0 ( 1249 attrelid			26 DEFAULT_ATTSTATTARGET  4   1 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 attname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN  2 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1249 atttypid			26 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 attstattarget	23 0  4   4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 attlen			21 0  2   5 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1249 attnum			21 0  2   6 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1249 attndims			23 0  4   7 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 attcacheoff		23 0  4   8 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 atttypmod		23 0  4   9 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 attbyval			16 0  1  10 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1249 attstorage		18 0  1  11 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1249 attisset			16 0  1  12 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1249 attalign			18 0  1  13 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1249 attnotnull		16 0  1  14 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1249 atthasdef		16 0  1  15 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1249 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1249 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 attrelid			26 DEFAULT_ATTSTATTARGET  4   1 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 attname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN  2 0 -1 -1 f p f i f f));
+DATA(insert ( 1249 atttypid			26 0  4   3 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 attstattarget	23 0  4   4 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 attlen			21 0  2   5 0 -1 -1 t p f s f f));
+DATA(insert ( 1249 attnum			21 0  2   6 0 -1 -1 t p f s f f));
+DATA(insert ( 1249 attndims			23 0  4   7 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 attcacheoff		23 0  4   8 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 atttypmod		23 0  4   9 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 attbyval			16 0  1  10 0 -1 -1 t p f c f f));
+DATA(insert ( 1249 attstorage		18 0  1  11 0 -1 -1 t p f c f f));
+DATA(insert ( 1249 attisset			16 0  1  12 0 -1 -1 t p f c f f));
+DATA(insert ( 1249 attalign			18 0  1  13 0 -1 -1 t p f c f f));
+DATA(insert ( 1249 attnotnull		16 0  1  14 0 -1 -1 t p f c f f));
+DATA(insert ( 1249 atthasdef		16 0  1  15 0 -1 -1 t p f c f f));
+DATA(insert ( 1249 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
+/* no OIDs in pg_attribute */
+DATA(insert ( 1249 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_class
@@ -436,40 +436,42 @@ DATA(insert OID = 0 ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1259, {"relukeys"},	   21, 0,	2, 16, 0, -1, -1, true, 'p', false, 's', false, false }, \
 { 1259, {"relfkeys"},	   21, 0,	2, 17, 0, -1, -1, true, 'p', false, 's', false, false }, \
 { 1259, {"relrefs"},	   21, 0,	2, 18, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1259, {"relhaspkey"},    16, 0,	1, 19, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relhasrules"},   16, 0,	1, 20, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relhassubclass"},16, 0,	1, 21, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1259, {"relacl"},		 1034, 0,  -1, 22, 0, -1, -1,	false, 'x', false, 'i', false, false }
+{ 1259, {"relhasoids"},    16, 0,	1, 19, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relhaspkey"},    16, 0,	1, 20, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relhasrules"},   16, 0,	1, 21, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relhassubclass"},16, 0,	1, 22, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1259, {"relacl"},		 1034, 0,  -1, 23, 0, -1, -1, false, 'x', false, 'i', false, false }
 
-DATA(insert OID = 0 ( 1259 relname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1259 reltype			26 0  4   2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 relowner			23 0  4   3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 relam			26 0  4   4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 relfilenode		26 0  4   5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 relpages			23 0  4   6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 reltuples	   700 0  4   7 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1259 reltoastrelid	26 0  4   8 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 reltoastidxid	26 0  4   9 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 relhasindex		16 0  1  10 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relisshared		16 0  1  11 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relkind			18 0  1  12 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relnatts			21 0  2  13 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1259 relchecks		21 0  2  14 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1259 reltriggers		21 0  2  15 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1259 relukeys			21 0  2  16 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1259 relfkeys			21 0  2  17 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1259 relrefs			21 0  2  18 0 -1 -1 t p f s f f));
-DATA(insert OID = 0 ( 1259 relhaspkey		16 0  1  19 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relhasrules		16 0  1  20 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relhassubclass	16 0  1  21 0 -1 -1 t p f c f f));
-DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  22 0 -1 -1 f x f i f f));
-DATA(insert OID = 0 ( 1259 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
-DATA(insert OID = 0 ( 1259 oid				26 0  4  -2 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
-DATA(insert OID = 0 ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
+DATA(insert ( 1259 reltype			26 0  4   2 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relowner			23 0  4   3 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relam			26 0  4   4 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relfilenode		26 0  4   5 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relpages			23 0  4   6 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 reltuples	   700 0  4   7 0 -1 -1 f p f i f f));
+DATA(insert ( 1259 reltoastrelid	26 0  4   8 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 reltoastidxid	26 0  4   9 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 relhasindex		16 0  1  10 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relisshared		16 0  1  11 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relkind			18 0  1  12 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relnatts			21 0  2  13 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relchecks		21 0  2  14 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 reltriggers		21 0  2  15 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relukeys			21 0  2  16 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relfkeys			21 0  2  17 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relrefs			21 0  2  18 0 -1 -1 t p f s f f));
+DATA(insert ( 1259 relhasoids		16 0  1  19 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relhaspkey		16 0  1  20 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relhasrules		16 0  1  21 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relhassubclass	16 0  1  22 0 -1 -1 t p f c f f));
+DATA(insert ( 1259 relacl		  1034 0 -1  23 0 -1 -1 f x f i f f));
+DATA(insert ( 1259 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
+DATA(insert ( 1259 oid				26 0  4  -2 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 cmin				29 0  4  -4 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 xmax				28 0  4  -5 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 cmax				29 0  4  -6 0 -1 -1 t p f i f f));
+DATA(insert ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_log - this relation is modified by special purpose access
@@ -480,7 +482,7 @@ DATA(insert OID = 0 ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 #define Schema_pg_log \
 { 1269, {"logfoo"},  26, 0, 4, 1, 0, -1, -1, true, 'p', false, 'i', false, false }
 
-DATA(insert OID = 0 ( 1269 logfoo			26 0  4   1 0 -1 -1 t p f i f f));
+DATA(insert ( 1269 logfoo			26 0  4   1 0 -1 -1 t p f i f f));
 
 /* ----------------
  *		pg_xactlock - this relation is modified by special purpose access
@@ -491,6 +493,6 @@ DATA(insert OID = 0 ( 1269 logfoo			26 0  4   1 0 -1 -1 t p f i f f));
 #define Schema_pg_xactlock \
 { 376, {"xactlockfoo"},  26, 0, 4, 1, 0, -1, -1, true, 'p', false, 'i', false, false }
 
-DATA(insert OID = 0 ( 376 xactlockfoo		26 0  4   1 0 -1 -1 t p f i f f));
+DATA(insert ( 376 xactlockfoo		26 0  4   1 0 -1 -1 t p f i f f));
 
 #endif	 /* PG_ATTRIBUTE_H */

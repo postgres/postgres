@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.19 2001/07/15 22:48:15 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.20 2001/08/10 18:57:32 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -532,9 +532,9 @@
   <para>
    <structname>pg_class</structname> catalogues tables and mostly
    everything else that has columns or is otherwise similar to a
-   table.  This includes indexes (but see
+   table.  This includes indexes (but see also
    <structname>pg_index</structname>), sequences, views, and some
-   kinds of special relation kinds.  Below, when we mean all of these
+   kinds of special relation.  Below, when we mean all of these
    kinds of objects we speak of <quote>relations</quote>.  Not all
    fields are meaningful for all relation types.
   </para>
@@ -565,8 +565,8 @@
       <entry><type>oid</type></entry>
       <entry>pg_type.oid</entry>
       <entry>
-       The data type that corresponds to this table (not functional,
-       only set for system tables)
+       The OID of the data type that corresponds to this table, if any
+       (zero for indexes, which have no pg_type entry)
       </entry>
      </row>
 
@@ -631,14 +631,19 @@
       <entry>reltoastidxid</entry>
       <entry><type>oid</type></entry>
       <entry>pg_class.oid</entry>
-      <entry>Oid of the index on the TOAST table for this table, 0 if none</entry>
+      <entry>
+       For a TOAST table, the OID of its index.  0 if not a TOAST table.
+      </entry>
      </row>
 
      <row>
       <entry>relhasindex</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if this is a table and it has at least one index</entry>
+      <entry>True if this is a table and it has (or recently had) any indexes.
+       This is set by CREATE INDEX, but not cleared immediately by DROP INDEX.
+       VACUUM clears relhasindex if it finds the table has no indexes.
+      </entry>
      </row>
 
      <row>
@@ -664,7 +669,7 @@
       <entry><type>int2</type></entry>
       <entry></entry>
       <entry>
-       Number of columns in the relation, besides system columns.
+       Number of user columns in the relation (system columns not counted).
        There must be this many corresponding entries in
        <structname>pg_attribute</structname>.  See also
        <structname>pg_attribute</structname>.<structfield>attnum</structfield>.
@@ -695,14 +700,30 @@
       <entry>relukeys</entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>unused  (<emphasis>Not</emphasis> the number of unique keys or something.)</entry>
+      <entry>unused  (<emphasis>Not</emphasis> the number of unique keys)</entry>
      </row>
 
      <row>
       <entry>relfkeys</entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>Number foreign keys on the table</entry>
+      <entry>unused  (<emphasis>Not</emphasis> the number of foreign keys on the table)</entry>
+     </row>
+
+     <row>
+      <entry>relrefs</entry>
+      <entry><type>int2</type></entry>
+      <entry></entry>
+      <entry>unused</entry>
+     </row>
+
+     <row>
+      <entry>relhasoids</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       True if we generate an OID for each row of the relation.
+      </entry>
      </row>
 
      <row>
@@ -710,8 +731,7 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>
-       unused  (No, this does not say whether the table has a primary
-       key.  It's really unused.)
+       True if the table has (or once had) a primary key.
       </entry>
      </row>
 
@@ -726,7 +746,7 @@
       <entry>relhassubclass</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>At least one table inherits this one</entry>
+      <entry>At least one table inherits from this one</entry>
      </row>
 
      <row>
@@ -872,6 +892,23 @@
       <entry><type>oid</type></entry>
       <entry>any oid attribute</entry>
       <entry>The oid of the object this description pertains to</entry>
+     </row>
+
+     <row>
+      <entry>classoid</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_class.oid</entry>
+      <entry>The oid of the system catalog this object appears in</entry>
+     </row>
+
+     <row>
+      <entry>objsubid</entry>
+      <entry><type>int4</type></entry>
+      <entry></entry>
+      <entry>For a comment on a table attribute, this is the attribute's
+       column number (the objoid and classoid refer to the table itself).
+       For all other object types, this field is presently zero.
+      </entry>
      </row>
 
      <row>

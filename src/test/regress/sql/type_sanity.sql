@@ -112,23 +112,14 @@ WHERE (p1.relkind = 'i' AND p1.relam = 0) OR
 
 -- Look for illegal values in pg_attribute fields
 
-SELECT p1.oid, p1.attrelid, p1.attname
+SELECT p1.attrelid, p1.attname
 FROM pg_attribute as p1
 WHERE p1.attrelid = 0 OR p1.atttypid = 0 OR p1.attnum = 0 OR
     p1.attcacheoff != -1;
 
--- Look for duplicate pg_attribute entries
--- (This would not be necessary if the indexes on pg_attribute were UNIQUE?)
-
-SELECT p1.oid, p1.attname, p2.oid, p2.attname
-FROM pg_attribute AS p1, pg_attribute AS p2
-WHERE p1.oid != p2.oid AND
-    p1.attrelid = p2.attrelid AND
-    (p1.attname = p2.attname OR p1.attnum = p2.attnum);
-
 -- Cross-check attnum against parent relation
 
-SELECT p1.oid, p1.attname, p2.oid, p2.relname
+SELECT p1.attrelid, p1.attname, p2.oid, p2.relname
 FROM pg_attribute AS p1, pg_class AS p2
 WHERE p1.attrelid = p2.oid AND p1.attnum > p2.relnatts;
 
@@ -142,7 +133,7 @@ WHERE p1.relnatts != (SELECT count(*) FROM pg_attribute AS p2
 
 -- Cross-check against pg_type entry
 
-SELECT p1.oid, p1.attname, p2.oid, p2.typname
+SELECT p1.attrelid, p1.attname, p2.oid, p2.typname
 FROM pg_attribute AS p1, pg_type AS p2
 WHERE p1.atttypid = p2.oid AND
     (p1.attlen != p2.typlen OR

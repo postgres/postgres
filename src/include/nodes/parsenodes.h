@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.139 2001/08/10 14:30:15 momjian Exp $
+ * $Id: parsenodes.h,v 1.140 2001/08/10 18:57:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,13 +192,14 @@ typedef struct CopyStmt
 typedef struct CreateStmt
 {
 	NodeTag		type;
-	bool		istemp;			/* is this a temp table? */
 	char	   *relname;		/* name of relation to create */
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
 	List	   *inhRelnames;	/* relations to inherit from (list of
 								 * T_String Values) */
 	List	   *constraints;	/* constraints (list of Constraint and
 								 * FkConstraint nodes) */
+	bool		istemp;			/* is this a temp table? */
+	bool		hasoids;		/* should it have OIDs? */
 } CreateStmt;
 
 /* ----------

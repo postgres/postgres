@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_log.h,v 1.8 2001/01/24 19:43:21 momjian Exp $
+ * $Id: pg_log.h,v 1.9 2001/08/10 18:57:40 tgl Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code
@@ -28,7 +28,7 @@
  * ----------------
  */
 
-CATALOG(pg_log) BOOTSTRAP
+CATALOG(pg_log) BOOTSTRAP BKI_WITHOUT_OIDS
 {
 	Oid			logfoo;
 } FormData_pg_log;

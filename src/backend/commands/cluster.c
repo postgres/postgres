@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.67 2001/07/12 20:35:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.68 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,9 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 	tupdesc = CreateTupleDescCopyConstr(OldHeapDesc);
 
 	OIDNewHeap = heap_create_with_catalog(NewName, tupdesc,
-										  RELKIND_RELATION, istemp,
+										  OldHeap->rd_rel->relkind,
+										  OldHeap->rd_rel->relhasoids,
+										  istemp,
 										  allowSystemTableMods);
 
 	/*
@@ -227,7 +229,8 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap, char *NewIndexName)
 				 Old_pg_index_Form->indisprimary,
 				 allowSystemTableMods);
 
-	setRelhasindex(OIDNewHeap, true);
+	setRelhasindex(OIDNewHeap, true,
+				   Old_pg_index_Form->indisprimary, InvalidOid);
 
 	ReleaseSysCache(Old_pg_index_Tuple);
 	ReleaseSysCache(Old_pg_index_relation_Tuple);

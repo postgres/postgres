@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.142 2001/06/19 22:39:11 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.143 2001/08/10 18:57:36 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -108,9 +108,6 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 	appendStringInfo(str, " CREATE :relname ");
 	_outToken(str, node->relname);
 
-	appendStringInfo(str, " :istemp %s ",
-					 booltostr(node->istemp));
-
 	appendStringInfo(str, "	:columns ");
 	_outNode(str, node->tableElts);
 
@@ -119,6 +116,10 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 
 	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
+
+	appendStringInfo(str, " :istemp %s :hasoids %s ",
+					 booltostr(node->istemp),
+					 booltostr(node->hasoids));
 }
 
 static void

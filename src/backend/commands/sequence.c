@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.61 2001/06/29 21:08:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.62 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,9 +161,10 @@ DefineSequence(CreateSeqStmt *seq)
 	}
 
 	stmt->relname = seq->seqname;
-	stmt->istemp = seq->istemp;
 	stmt->inhRelnames = NIL;
 	stmt->constraints = NIL;
+	stmt->istemp = seq->istemp;
+	stmt->hasoids = false;
 
 	DefineRelation(stmt, RELKIND_SEQUENCE);
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.54 2001/03/22 03:59:25 momjian Exp $
+ *	$Id: view.c,v 1.55 2001/08/10 18:57:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,11 @@ DefineVirtualRelation(char *relname, List *tlist)
 	 * nil...
 	 */
 	createStmt->relname = relname;
-	createStmt->istemp = false;
 	createStmt->tableElts = attrList;
 	createStmt->inhRelnames = NIL;
 	createStmt->constraints = NIL;
+	createStmt->istemp = false;
+	createStmt->hasoids = false;
 
 	/*
 	 * finally create the relation...

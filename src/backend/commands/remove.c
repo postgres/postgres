@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.61 2001/06/05 19:34:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.62 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,9 +85,8 @@ RemoveOperator(char *operatorName,		/* operator name */
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 
-		/*** Delete any comments associated with this operator ***/
-
-		DeleteComments(tup->t_data->t_oid);
+		/* Delete any comments associated with this operator */
+		DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
 
 		simple_heap_delete(relation, &tup->t_self);
 
@@ -146,11 +145,8 @@ SingleOpOperatorRemove(Oid typeOid)
 		scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
 		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 		{
-
-			/*** This is apparently a routine not in use, but remove ***/
-			/*** any comments anyways ***/
-
-			DeleteComments(tup->t_data->t_oid);
+			/* Delete any comments associated with this operator */
+			DeleteComments(tup->t_data->t_oid, RelationGetRelid(rel));
 
 			simple_heap_delete(rel, &tup->t_self);
 		}
@@ -242,7 +238,6 @@ RemoveType(char *typeName)		/* type name to be removed */
 {
 	Relation	relation;
 	HeapTuple	tup;
-	Oid			typeOid;
 	char	   *shadow_type;
 
 	if (!pg_ownercheck(GetUserId(), typeName, TYPENAME))
@@ -257,11 +252,8 @@ RemoveType(char *typeName)		/* type name to be removed */
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "RemoveType: type '%s' does not exist", typeName);
 
-	typeOid = tup->t_data->t_oid;
-
-	/*** Delete any comments associated with this type ***/
-
-	DeleteComments(typeOid);
+	/* Delete any comments associated with this type */
+	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -347,9 +339,8 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 		elog(NOTICE, "Removing built-in function \"%s\"", functionName);
 	}
 
-	/*** Delete any comments associated with this function ***/
-
-	DeleteComments(tup->t_data->t_oid);
+	/* Delete any comments associated with this function */
+	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
 
 	simple_heap_delete(relation, &tup->t_self);
 
@@ -421,9 +412,8 @@ RemoveAggregate(char *aggName, char *aggType)
 		}
 	}
 
-	/*** Remove any comments related to this aggregate ***/
-
-	DeleteComments(tup->t_data->t_oid);
+	/* Remove any comments related to this aggregate */
+	DeleteComments(tup->t_data->t_oid, RelationGetRelid(relation));
 
 	simple_heap_delete(relation, &tup->t_self);
 

@@ -27,7 +27,7 @@
  *		typedef struct FormData_pg_relcheck
  * ----------------
  */
-CATALOG(pg_relcheck)
+CATALOG(pg_relcheck) BKI_WITHOUT_OIDS
 {
 	Oid			rcrelid;
 	NameData	rcname;

@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.144 2001/06/22 19:16:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.145 2001/08/10 18:57:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -761,7 +761,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				intoRelationId =
 					heap_create_with_catalog(intoName,
 											 tupdesc,
-											 RELKIND_RELATION,
+											 RELKIND_RELATION, true,
 											 parseTree->isTemp,
 											 allowSystemTableMods);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.44 2001/03/22 03:59:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.45 2001/08/10 18:57:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ RemoveRewriteRule(char *ruleName)
 	/*
 	 * Delete any comments associated with this rule
 	 */
-	DeleteComments(ruleId);
+	DeleteComments(ruleId, RelationGetRelid(RewriteRelation));
 
 	/*
 	 * Now delete the pg_rewrite tuple for the rule
@@ -175,10 +175,8 @@ RelationRemoveRules(Oid relid)
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
 	{
-
-		/*** Delete any comments associated with this relation ***/
-
-		DeleteComments(tuple->t_data->t_oid);
+		/* Delete any comments associated with this rule */
+		DeleteComments(tuple->t_data->t_oid, RelationGetRelid(RewriteRelation));
 
 		simple_heap_delete(RewriteRelation, &tuple->t_self);
 	}

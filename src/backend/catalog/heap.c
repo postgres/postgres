@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.173 2001/08/10 15:49:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.174 2001/08/10 18:57:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -64,8 +64,10 @@
 
 
 static void AddNewRelationTuple(Relation pg_class_desc,
-				Relation new_rel_desc, Oid new_rel_oid, Oid new_type_oid,
-					int natts, char relkind, char *temp_relname);
+								Relation new_rel_desc,
+								Oid new_rel_oid, Oid new_type_oid,
+								char relkind, bool relhasoids,
+								char *temp_relname);
 static void DeleteAttributeTuples(Relation rel);
 static void DeleteRelationTuple(Relation rel);
 static void DeleteTypeTuple(Relation rel);
@@ -151,9 +153,12 @@ static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
  * This function returns a Form_pg_attribute pointer for a system attribute.
  */
 Form_pg_attribute
-SystemAttributeDefinition(AttrNumber attno)
+SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 {
 	if (attno >= 0 || attno < - (int) lengthof(SysAtt))
+		elog(ERROR, "SystemAttributeDefinition: invalid attribute number %d",
+			 attno);
+	if (attno == ObjectIdAttributeNumber && !relhasoids)
 		elog(ERROR, "SystemAttributeDefinition: invalid attribute number %d",
 			 attno);
 	return SysAtt[-attno - 1];
@@ -167,9 +172,8 @@ SystemAttributeDefinition(AttrNumber attno)
 /* ----------------------------------------------------------------
  *		heap_create		- Create an uncataloged heap relation
  *
- *		Fields relpages, reltuples, reltuples, relkeys, relhistory,
- *		relisindexed, and relkind of rel->rd_rel are initialized
- *		to all zeros, as are rd_last and rd_hook.  Rd_refcnt is set to 1.
+ *		rel->rd_rel is initialized by RelationBuildLocalRelation,
+ *		and is mostly zeroes at return.
  *
  *		Remove the system relation specific code to elsewhere eventually.
  *
@@ -337,7 +341,7 @@ heap_storage_create(Relation rel)
  * --------------------------------
  */
 static void
-CheckAttributeNames(TupleDesc tupdesc)
+CheckAttributeNames(TupleDesc tupdesc, bool relhasoids)
 {
 	int			i;
 	int			j;
@@ -353,19 +357,18 @@ CheckAttributeNames(TupleDesc tupdesc)
 	{
 		for (j = 0; j < (int) lengthof(SysAtt); j++)
 		{
-			if (strcmp(NameStr(SysAtt[j]->attname),
-					   NameStr(tupdesc->attrs[i]->attname)) == 0)
+			if (relhasoids || SysAtt[j]->attnum != ObjectIdAttributeNumber)
 			{
-				elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
-					 NameStr(SysAtt[j]->attname));
+				if (strcmp(NameStr(SysAtt[j]->attname),
+						   NameStr(tupdesc->attrs[i]->attname)) == 0)
+					elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
+						 NameStr(SysAtt[j]->attname));
 			}
 		}
 		if (tupdesc->attrs[i]->atttypid == UNKNOWNOID)
-		{
 			elog(NOTICE, "Attribute '%s' has an unknown type"
-				 "\n\tRelation created; continue",
+				 "\n\tProceeding with relation creation anyway",
 				 NameStr(tupdesc->attrs[i]->attname));
-		}
 	}
 
 	/*
@@ -377,10 +380,8 @@ CheckAttributeNames(TupleDesc tupdesc)
 		{
 			if (strcmp(NameStr(tupdesc->attrs[j]->attname),
 					   NameStr(tupdesc->attrs[i]->attname)) == 0)
-			{
 				elog(ERROR, "column name \"%s\" is duplicated",
 					 NameStr(tupdesc->attrs[j]->attname));
-			}
 		}
 	}
 }
@@ -461,7 +462,8 @@ RelnameFindRelid(const char *relname)
  */
 static void
 AddNewAttributeTuples(Oid new_rel_oid,
-					  TupleDesc tupdesc)
+					  TupleDesc tupdesc,
+					  bool relhasoids)
 {
 	Form_pg_attribute *dpp;
 	int			i;
@@ -509,30 +511,33 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	}
 
 	/*
-	 * next we add the system attributes..
+	 * next we add the system attributes.  Skip OID if rel has no OIDs.
 	 */
 	dpp = SysAtt;
 	for (i = 0; i < -1 - FirstLowInvalidHeapAttributeNumber; i++)
 	{
-		Form_pg_attribute attStruct;
+		if (relhasoids || (*dpp)->attnum != ObjectIdAttributeNumber)
+		{
+			Form_pg_attribute attStruct;
 
-		tup = heap_addheader(Natts_pg_attribute,
-							 ATTRIBUTE_TUPLE_SIZE,
-							 (void *) *dpp);
+			tup = heap_addheader(Natts_pg_attribute,
+								 ATTRIBUTE_TUPLE_SIZE,
+								 (void *) *dpp);
 
-		/* Fill in the correct relation OID in the copied tuple */
-		attStruct = (Form_pg_attribute) GETSTRUCT(tup);
-		attStruct->attrelid = new_rel_oid;
-		/* Unneeded since they should be OK in the constant data anyway */
-		/* attStruct->attstattarget = 0; */
-		/* attStruct->attcacheoff = -1; */
+			/* Fill in the correct relation OID in the copied tuple */
+			attStruct = (Form_pg_attribute) GETSTRUCT(tup);
+			attStruct->attrelid = new_rel_oid;
+			/* Unneeded since they should be OK in the constant data anyway */
+			/* attStruct->attstattarget = 0; */
+			/* attStruct->attcacheoff = -1; */
 
-		heap_insert(rel, tup);
+			heap_insert(rel, tup);
 
-		if (hasindex)
-			CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
+			if (hasindex)
+				CatalogIndexInsert(idescs, Num_pg_attr_indices, rel, tup);
 
-		heap_freetuple(tup);
+			heap_freetuple(tup);
+		}
 		dpp++;
 	}
 
@@ -557,8 +562,8 @@ AddNewRelationTuple(Relation pg_class_desc,
 					Relation new_rel_desc,
 					Oid new_rel_oid,
 					Oid new_type_oid,
-					int natts,
 					char relkind,
+					bool relhasoids,
 					char *temp_relname)
 {
 	Form_pg_class new_rel_reltup;
@@ -610,7 +615,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 	new_rel_reltup->relowner = GetUserId();
 	new_rel_reltup->reltype = new_type_oid;
 	new_rel_reltup->relkind = relkind;
-	new_rel_reltup->relnatts = natts;
+	new_rel_reltup->relhasoids = relhasoids;
 
 	/* ----------------
 	 *	now form a tuple to add to pg_class
@@ -697,6 +702,7 @@ Oid
 heap_create_with_catalog(char *relname,
 						 TupleDesc tupdesc,
 						 char relkind,
+						 bool relhasoids,
 						 bool istemp,
 						 bool allow_system_table_mods)
 {
@@ -704,18 +710,17 @@ heap_create_with_catalog(char *relname,
 	Relation	new_rel_desc;
 	Oid			new_rel_oid;
 	Oid			new_type_oid;
-	int			natts = tupdesc->natts;
 	char	   *temp_relname = NULL;
 
 	/*
 	 * sanity checks
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
-	if (natts <= 0 || natts > MaxHeapAttributeNumber)
+	if (tupdesc->natts <= 0 || tupdesc->natts > MaxHeapAttributeNumber)
 		elog(ERROR, "Number of columns is out of range (1 to %d)",
 			 MaxHeapAttributeNumber);
 
-	CheckAttributeNames(tupdesc);
+	CheckAttributeNames(tupdesc, relhasoids);
 
 	/* temp tables can mask non-temp tables */
 	if ((!istemp && RelnameFindRelid(relname)) ||
@@ -763,8 +768,8 @@ heap_create_with_catalog(char *relname,
 						new_rel_desc,
 						new_rel_oid,
 						new_type_oid,
-						natts,
 						relkind,
+						relhasoids,
 						temp_relname);
 
 	/*
@@ -780,15 +785,9 @@ heap_create_with_catalog(char *relname,
 	 * now add tuples to pg_attribute for the attributes in our new
 	 * relation.
 	 */
-	AddNewAttributeTuples(new_rel_oid, tupdesc);
+	AddNewAttributeTuples(new_rel_oid, tupdesc, relhasoids);
 
 	StoreConstraints(new_rel_desc);
-
-	if (istemp)
-	{
-		pfree(relname);
-		pfree(temp_relname);
-	}
 
 	/*
 	 * We create the disk file for this relation here
@@ -799,11 +798,15 @@ heap_create_with_catalog(char *relname,
 	/*
 	 * ok, the relation has been cataloged, so close our relations and
 	 * return the oid of the newly created relation.
-	 *
-	 * SOMEDAY: fill the STATISTIC relation properly.
 	 */
 	heap_close(new_rel_desc, NoLock);	/* do not unlock till end of xact */
 	heap_close(pg_class_desc, RowExclusiveLock);
+
+	if (istemp)
+	{
+		pfree(relname);
+		pfree(temp_relname);
+	}
 
 	return new_rel_oid;
 }
@@ -1120,9 +1123,6 @@ DeleteAttributeTuples(Relation rel)
 								 0, 0);
 		if (HeapTupleIsValid(tup))
 		{
-			/*** Delete any comments associated with this attribute ***/
-			DeleteComments(tup->t_data->t_oid);
-
 			simple_heap_delete(pg_attribute_desc, &tup->t_self);
 			heap_freetuple(tup);
 		}
@@ -1247,7 +1247,7 @@ DeleteTypeTuple(Relation rel)
  *		3)	remove indexes
  *		4)	remove pg_class tuple
  *		5)	remove pg_attribute tuples and related descriptions
- *				6)		remove pg_description tuples
+ *		6)	remove pg_description tuples
  *		7)	remove pg_type tuples
  *		8)	RemoveConstraints ()
  *		9)	unlink relation
@@ -1333,7 +1333,7 @@ heap_drop_with_catalog(const char *relname,
 	/*
 	 * delete comments, statistics, and constraints
 	 */
-	DeleteComments(RelationGetRelid(rel));
+	DeleteComments(rid, RelOid_pg_class);
 
 	RemoveStatistics(rel);
 

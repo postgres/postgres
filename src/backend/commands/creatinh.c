@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.78 2001/06/22 21:37:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.79 2001/08/10 18:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  */
 
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
-				List **supOids, List **supconstr);
+				List **supOids, List **supconstr, bool *supHasOids);
 static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int findAttrByName(const char *attributeName, List *schema);
@@ -57,6 +57,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	TupleDesc	descriptor;
 	List	   *inheritOids;
 	List	   *old_constraints;
+	bool		parentHasOids;
 	List	   *rawDefaults;
 	List	   *listptr;
 	int			i;
@@ -73,7 +74,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * including inherited attributes.
 	 */
 	schema = MergeAttributes(schema, stmt->inhRelnames, stmt->istemp,
-							 &inheritOids, &old_constraints);
+							 &inheritOids, &old_constraints, &parentHasOids);
 
 	numberOfAttributes = length(schema);
 	if (numberOfAttributes <= 0)
@@ -135,7 +136,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	}
 
 	relationId = heap_create_with_catalog(relname, descriptor,
-										  relkind, stmt->istemp,
+										  relkind,
+										  stmt->hasoids || parentHasOids,
+										  stmt->istemp,
 										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -248,6 +251,7 @@ TruncateRelation(char *name)
  * 'supOids' receives an integer list of the OIDs of the parent relations.
  * 'supconstr' receives a list of constraints belonging to the parents,
  *		updated as necessary to be valid for the child.
+ * 'supHasOids' is set TRUE if any parent has OIDs, else it is set FALSE.
  *
  * Return value:
  * Completed schema list.
@@ -293,12 +297,13 @@ TruncateRelation(char *name)
  */
 static List *
 MergeAttributes(List *schema, List *supers, bool istemp,
-				List **supOids, List **supconstr)
+				List **supOids, List **supconstr, bool *supHasOids)
 {
 	List	   *entry;
 	List	   *inhSchema = NIL;
 	List	   *parentOids = NIL;
 	List	   *constraints = NIL;
+	bool		parentHasOids = false;
 	bool		have_bogus_defaults = false;
 	char	   *bogus_marker = "Bogus!"; /* marks conflicting defaults */
 	int			child_attno;
@@ -341,7 +346,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 	/*
 	 * Scan the parents left-to-right, and merge their attributes to form
-	 * a list of inherited attributes (inhSchema).
+	 * a list of inherited attributes (inhSchema).  Also check to see if
+	 * we need to inherit an OID column.
 	 */
 	child_attno = 0;
 	foreach(entry, supers)
@@ -370,6 +376,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 		parentOids = lappendi(parentOids, relation->rd_id);
 		setRelhassubclassInRelation(relation->rd_id, true);
+
+		parentHasOids |= relation->rd_rel->relhasoids;
 
 		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
@@ -598,6 +606,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 	*supOids = parentOids;
 	*supconstr = constraints;
+	*supHasOids = parentHasOids;
 	return schema;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.139 2001/08/10 14:30:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.140 2001/08/10 18:57:34 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -102,7 +102,7 @@ PerformPortalFetch(char *name,
 	QueryDesc  *queryDesc;
 	EState	   *estate;
 	MemoryContext oldcontext;
-	bool		faked_desc = false;
+	bool		temp_desc = false;
 
 	/*
 	 * sanity checks
@@ -130,24 +130,33 @@ PerformPortalFetch(char *name,
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	/*
-	 * tell the destination to prepare to receive some tuples.
+	 * If the requested destination is not the same as the query's
+	 * original destination, make a temporary QueryDesc with the proper
+	 * destination.  This supports MOVE, for example, which will pass in
+	 * dest = None.
 	 *
-	 * If we've been asked for a MOVE, make a temporary QueryDesc with the
-	 * appropriate dummy destination.
+	 * EXCEPTION: if the query's original dest is RemoteInternal (ie, it's
+	 * a binary cursor) and the request is Remote, we do NOT override the
+	 * original dest.  This is necessary since a FETCH command will pass
+	 * dest = Remote, not knowing whether the cursor is binary or not.
 	 */
 	queryDesc = PortalGetQueryDesc(portal);
 	estate = PortalGetState(portal);
 
-	if (dest != queryDesc->dest)			/* MOVE */
+	if (dest != queryDesc->dest &&
+		!(queryDesc->dest == RemoteInternal && dest == Remote))
 	{
 		QueryDesc  *qdesc = (QueryDesc *) palloc(sizeof(QueryDesc));
 
 		memcpy(qdesc, queryDesc, sizeof(QueryDesc));
 		qdesc->dest = dest;
 		queryDesc = qdesc;
-		faked_desc = true;
+		temp_desc = true;
 	}
 
+	/*
+	 * tell the destination to prepare to receive some tuples.
+	 */
 	BeginCommand(name,
 				 queryDesc->operation,
 				 PortalGetTupleDesc(portal),
@@ -156,7 +165,7 @@ PerformPortalFetch(char *name,
 				 false,			/* this is a portal fetch, not a "retrieve
 								 * portal" */
 				 tag,
-				 dest);
+				 queryDesc->dest);
 
 	/*
 	 * Determine which direction to go in, and check to see if we're
@@ -205,7 +214,7 @@ PerformPortalFetch(char *name,
 	/*
 	 * Clean up and switch back to old context.
 	 */
-	if (faked_desc)			/* MOVE */
+	if (temp_desc)
 		pfree(queryDesc);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -1004,8 +1013,7 @@ AlterTableDropColumn(const char *relationName,
 #ifdef	_DROP_COLUMN_HACK__
 	Relation	rel,
 				attrdesc;
-	Oid			myrelid,
-				attoid;
+	Oid			myrelid;
 	HeapTuple	reltup;
 	HeapTupleData classtuple;
 	Buffer		buffer;
@@ -1094,7 +1102,6 @@ AlterTableDropColumn(const char *relationName,
 	if (attnum <= 0)
 		elog(ERROR, "ALTER TABLE: column name \"%s\" was already dropped",
 			 colName);
-	attoid = tup->t_data->t_oid;
 
 	/*
 	 * Check constraints/indices etc here
@@ -1124,8 +1131,9 @@ AlterTableDropColumn(const char *relationName,
 	heap_close(attrdesc, NoLock);
 	heap_freetuple(tup);
 
-	/* delete comments */
-	DeleteComments(attoid);
+	/* delete comment for this attribute only */
+	CreateComments(RelationGetRelid(rel), RelOid_pg_class,
+				   (int32) attnum, NULL);
 
 	/* delete attrdef */
 	drop_default(myrelid, attnum);
@@ -1750,9 +1758,8 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	Oid			toast_idxid;
 	char		toast_relname[NAMEDATALEN + 1];
 	char		toast_idxname[NAMEDATALEN + 1];
-	Relation	toast_idxrel;
 	IndexInfo  *indexInfo;
-	Oid			classObjectId[1];
+	Oid			classObjectId[2];
 
 	/*
 	 * permissions checking.  XXX exactly what is appropriate here?
@@ -1870,50 +1877,49 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	 * so there's no need to handle the toast rel as temp.
 	 */
 	toast_relid = heap_create_with_catalog(toast_relname, tupdesc,
-										   RELKIND_TOASTVALUE,
+										   RELKIND_TOASTVALUE, false,
 										   false, true);
 
 	/* make the toast relation visible, else index creation will fail */
 	CommandCounterIncrement();
 
-	/* create index on chunk_id */
+	/*
+	 * Create unique index on chunk_id, chunk_seq.
+	 *
+	 * NOTE: the tuple toaster could actually function with a single-column
+	 * index on chunk_id only.  However, it couldn't be unique then.  We
+	 * want it to be unique as a check against the possibility of duplicate
+	 * TOAST chunk OIDs.  Too, the index might be a little more efficient this
+	 * way, since btree isn't all that happy with large numbers of equal keys.
+	 */
 
 	indexInfo = makeNode(IndexInfo);
-	indexInfo->ii_NumIndexAttrs = 1;
-	indexInfo->ii_NumKeyAttrs = 1;
+	indexInfo->ii_NumIndexAttrs = 2;
+	indexInfo->ii_NumKeyAttrs = 2;
 	indexInfo->ii_KeyAttrNumbers[0] = 1;
+	indexInfo->ii_KeyAttrNumbers[1] = 2;
 	indexInfo->ii_Predicate = NIL;
 	indexInfo->ii_FuncOid = InvalidOid;
-	indexInfo->ii_Unique = false;
+	indexInfo->ii_Unique = true;
 
 	classObjectId[0] = OID_OPS_OID;
+	classObjectId[1] = INT4_OPS_OID;
 
-	index_create(toast_relname, toast_idxname, indexInfo,
-				 BTREE_AM_OID, classObjectId,
-				 false, false, true);
+	toast_idxid = index_create(toast_relname, toast_idxname, indexInfo,
+							   BTREE_AM_OID, classObjectId,
+							   false, true, true);
 
 	/*
 	 * Update toast rel's pg_class entry to show that it has an index.
+	 * The index OID is stored into the reltoastidxid field for
+	 * easy access by the tuple toaster.
 	 */
-	setRelhasindex(toast_relid, true);
+	setRelhasindex(toast_relid, true, true, toast_idxid);
 
 	/*
-	 * Make index visible
-	 */
-	CommandCounterIncrement();
-
-	/*
-	 * Get the OID of the newly created index
-	 */
-	toast_idxrel = index_openr(toast_idxname);
-	toast_idxid = RelationGetRelid(toast_idxrel);
-	index_close(toast_idxrel);
-
-	/*
-	 * Store the toast table- and index-Oid's in the relation tuple
+	 * Store the toast table's OID in the parent relation's tuple
 	 */
 	((Form_pg_class) GETSTRUCT(reltup))->reltoastrelid = toast_relid;
-	((Form_pg_class) GETSTRUCT(reltup))->reltoastidxid = toast_idxid;
 	simple_heap_update(class_rel, &reltup->t_self, reltup);
 
 	/*

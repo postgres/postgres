@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.158 2001/08/10 15:49:39 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.159 2001/08/10 18:57:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -229,7 +229,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 			/*
 			 * here we are indexing on a system attribute (-1...-n)
 			 */
-			from = SystemAttributeDefinition(atnum);
+			from = SystemAttributeDefinition(atnum,
+											 heapRelation->rd_rel->relhasoids);
 		}
 		else
 		{
@@ -355,6 +356,7 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 	indexRelation->rd_rel->relisshared = 
 		IsSharedSystemRelationName(RelationGetPhysicalRelationName(indexRelation));
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
+	indexRelation->rd_rel->relhasoids = false;
 }
 
 /* ----------------------------------------------------------------
@@ -659,9 +661,11 @@ InitIndexStrategy(int numatts,
 
 /* ----------------------------------------------------------------
  *		index_create
+ *
+ * Returns OID of the created index.
  * ----------------------------------------------------------------
  */
-void
+Oid
 index_create(char *heapRelationName,
 			 char *indexRelationName,
 			 IndexInfo *indexInfo,
@@ -803,6 +807,8 @@ index_create(char *heapRelationName,
 	}
 	else
 		index_build(heapRelation, indexRelation, indexInfo);
+
+	return indexoid;
 }
 
 /* ----------------------------------------------------------------
@@ -852,7 +858,7 @@ index_drop(Oid indexId)
 	/*
 	 * fix DESCRIPTION relation
 	 */
-	DeleteComments(indexId);
+	DeleteComments(indexId, RelOid_pg_class);
 
 	/*
 	 * fix RELATION relation
@@ -877,8 +883,11 @@ index_drop(Oid indexId)
 	 * must send out a shared-cache-inval notice on the owning relation to
 	 * ensure other backends update their relcache lists of indexes.  So,
 	 * unconditionally do setRelhasindex(true).
+	 *
+	 * Possible future improvement: skip the physical tuple update and
+	 * just send out an invalidation message.
 	 */
-	setRelhasindex(heapId, true);
+	setRelhasindex(heapId, true, false, InvalidOid);
 
 	heap_close(relationRelation, RowExclusiveLock);
 
@@ -1199,6 +1208,12 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
 /* ----------------
  *		set relhasindex of relation's pg_class entry
  *
+ * If isprimary is TRUE, we are defining a primary index, so also set
+ * relhaspkey to TRUE.  Otherwise, leave relhaspkey alone.
+ *
+ * If reltoastidxid is not InvalidOid, also set reltoastidxid to that value.
+ * This is only used for TOAST relations.
+ *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
  * entries to be flushed or updated with the new hasindex data.
@@ -1208,10 +1223,11 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
  * ----------------
  */
 void
-setRelhasindex(Oid relid, bool hasindex)
+setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 {
 	Relation	pg_class;
 	HeapTuple	tuple;
+	Form_pg_class classtuple;
 	HeapScanDesc pg_class_scan = NULL;
 
 	/*
@@ -1219,7 +1235,8 @@ setRelhasindex(Oid relid, bool hasindex)
 	 */
 	pg_class = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	if (!IsIgnoringSystemIndexes() && (!IsReindexProcessing() || pg_class->rd_rel->relhasindex))
+	if (!IsIgnoringSystemIndexes() &&
+		(!IsReindexProcessing() || pg_class->rd_rel->relhasindex))
 	{
 		tuple = SearchSysCacheCopy(RELOID,
 								   ObjectIdGetDatum(relid),
@@ -1248,11 +1265,21 @@ setRelhasindex(Oid relid, bool hasindex)
 	}
 
 	/*
-	 * Update hasindex in pg_class.
+	 * Update fields in the pg_class tuple.
 	 */
 	if (pg_class_scan)
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
-	((Form_pg_class) GETSTRUCT(tuple))->relhasindex = hasindex;
+
+	classtuple = (Form_pg_class) GETSTRUCT(tuple);
+	classtuple->relhasindex = hasindex;
+	if (isprimary)
+		classtuple->relhaspkey = true;
+	if (OidIsValid(reltoastidxid))
+	{
+		Assert(classtuple->relkind == RELKIND_TOASTVALUE);
+		classtuple->reltoastidxid = reltoastidxid;
+	}
+
 	if (pg_class_scan)
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
@@ -1945,7 +1972,7 @@ activate_indexes_of_a_table(Oid relid, bool activate)
 	if (IndexesAreActive(relid, true))
 	{
 		if (!activate)
-			setRelhasindex(relid, false);
+			setRelhasindex(relid, false, false, InvalidOid);
 		else
 			return false;
 	}
@@ -2081,7 +2108,7 @@ reindex_relation(Oid relid, bool force)
 				 * For pg_class, relhasindex should be set to true here in
 				 * place.
 				 */
-				setRelhasindex(relid, true);
+				setRelhasindex(relid, true, false, InvalidOid);
 				CommandCounterIncrement();
 
 				/*
@@ -2089,7 +2116,7 @@ reindex_relation(Oid relid, bool force)
 				 * keep consistency with WAL.
 				 */
 			}
-			setRelhasindex(relid, true);
+			setRelhasindex(relid, true, false, InvalidOid);
 		}
 	}
 	SetReindexProcessing(old);

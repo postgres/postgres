@@ -27,7 +27,7 @@
  *		typedef struct FormData_pg_attrdef
  * ----------------
  */
-CATALOG(pg_attrdef)
+CATALOG(pg_attrdef) BKI_WITHOUT_OIDS
 {
 	Oid			adrelid;
 	int2		adnum;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.42 2001/05/03 17:50:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.43 2001/08/10 18:57:32 tgl Exp $
 Postgres documentation
 -->
 
@@ -25,8 +25,9 @@ Postgres documentation
   <synopsis>
 CREATE [ TEMPORARY | TEMP ] TABLE <replaceable class="PARAMETER">table_name</replaceable> (
     { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
-      | <replaceable>table_constraint</replaceable> }  [, ... ]
-    ) [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
+      | <replaceable>table_constraint</replaceable> }  [, ... ] )
+    [ INHERITS ( <replaceable>parent_table</replaceable> [, ... ] ) ]
+    [ WITH OIDS | WITHOUT OIDS ]
 
 where <replaceable class="PARAMETER">column_constraint</replaceable> can be:
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
@@ -104,6 +105,18 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> can be:
        <para>
 	The optional INHERITS clause specifies a list of table
 	names from which this table automatically inherits all fields.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>WITH OIDS or WITHOUT OIDS</term>
+      <listitem>
+       <para>
+        This optional clause specifies whether rows of the new table should
+	have OIDs (object identifiers) assigned to them.  The default is
+	WITH OIDS.  (If the new table inherits from any tables that have OIDs,
+	then WITH OIDS is forced even if the command says WITHOUT OIDS.)
        </para>
       </listitem>
      </varlistentry>
@@ -301,6 +314,49 @@ INHERITS ( <replaceable class="PARAMETER">parent_table</replaceable> [, ... ] )
    reliably for functions on the first or only parent table, but not so well
    for functions on additional parents.)
   </para>
+ </refsect1>
+
+ <refsect1 id="R1-SQL-OIDSCLAUSE-1">
+  <title id="R1-SQL-OIDSCLAUSE-1-TITLE">
+   OIDS Clause
+  </title>
+  <para>
+   <synopsis>
+    WITH OIDS | WITHOUT OIDS
+   </synopsis>
+  </para>
+
+  <para>
+   This clause controls whether an OID (object ID) is generated and assigned
+   to each row inserted into the table.  The default is WITH OIDS.
+   Specifying WITHOUT OIDS allows the user to suppress generation of
+   OIDs for rows of a table.  This may be worthwhile for large
+   tables, since it will reduce OID consumption and thereby postpone
+   wraparound of the 32-bit OID counter.  Once the counter wraps around,
+   uniqueness of OIDs can no longer be assumed, which considerably reduces
+   their usefulness.
+  </para>
+
+  <para>
+   Whenever an application makes use of OIDs to identify specific rows of
+   a table, it is recommended that you create a unique index on OID for
+   that table, to ensure that OIDs in the table will indeed uniquely
+   identify rows even after counter wraparound.  (An index on OID is needed
+   anyway for fast lookup of rows by OID.)  Avoid assuming that OIDs are
+   unique across tables --- if you need a database-wide unique identifier,
+   use the combination of tableoid and row OID for the purpose.  (It is
+   likely that future Postgres releases will use a separate OID counter
+   for each table, so that it will be <emphasis>necessary</> not optional
+   to include tableoid to have a unique identifier database-wide.)
+  </para>
+
+  <tip>
+   <para>
+    WITHOUT OIDS is not recommended for tables with no primary key, since
+    without either an OID or a unique data key, it is difficult to identify
+    specific rows.
+   </para>
+  </tip>
  </refsect1>
 
  <refsect1 id="R1-SQL-DEFAULTCLAUSE-1">
@@ -2096,6 +2152,18 @@ ALTER DOMAIN cities
      SQL99 (but not SQL92) defines single inheritance using a different
      syntax and different semantics.  SQL99-style inheritance is not yet
      supported by <productname>Postgres</productname>.
+    </para>
+   </refsect3>
+
+   <refsect3 id="R3-SQL-INHERITANCE-1">
+    <title>
+     Object IDs
+    </title>
+    <para>
+     The <productname>Postgres</productname> concept of OIDs is not
+     standard.  SQL99 (but not SQL92) has a notion of object ID, but
+     the syntax and semantics are different --- SQL99 associates OIDs
+     with individual values, not with rows.
     </para>
    </refsect3>
   </refsect2>

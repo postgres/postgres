@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.15 2001/06/02 18:25:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/large_obj.c,v 1.16 2001/08/10 18:57:39 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -149,7 +149,7 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 {
 	PGresult   *res;
 	Oid			loid;
-	char		buf[1024];
+	char		oidbuf[32];
 	unsigned int i;
 	bool		own_transaction = true;
 	const char *var = GetVariable(pset.vars, "LO_TRANSACTION");
@@ -189,15 +189,12 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	/* insert description if given */
 	if (comment_arg)
 	{
-		sprintf(buf, "INSERT INTO pg_description VALUES (%u, '", loid);
-		for (i = 0; i < strlen(comment_arg); i++)
-			if (comment_arg[i] == '\'')
-				strcat(buf, "\\'");
-			else
-				strncat(buf, &comment_arg[i], 1);
-		strcat(buf, "')");
+		char	*cmdbuf;
+		char	*bufptr;
+		int		slen = strlen(comment_arg);
 
-		if (!(res = PSQLexec(buf)))
+		cmdbuf = malloc(slen * 2 + 256);
+		if (!cmdbuf)
 		{
 			if (own_transaction)
 			{
@@ -206,6 +203,32 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 			}
 			return false;
 		}
+		sprintf(cmdbuf,
+				"INSERT INTO pg_description VALUES (%u, "
+				"(SELECT oid FROM pg_class WHERE relname = 'pg_largeobject'),"
+				" 0, '", loid);
+		bufptr = cmdbuf + strlen(cmdbuf);
+		for (i = 0; i < slen; i++)
+		{
+			if (comment_arg[i] == '\'' || comment_arg[i] == '\\')
+				*bufptr++ = '\\';
+			*bufptr++ = comment_arg[i];
+		}
+		strcpy(bufptr, "')");
+
+		if (!(res = PSQLexec(cmdbuf)))
+		{
+			if (own_transaction)
+			{
+				res = PQexec(pset.db, "ROLLBACK");
+				PQclear(res);
+			}
+			free(cmdbuf);
+			return false;
+		}
+
+		PQclear(res);
+		free(cmdbuf);
 	}
 
 	if (own_transaction)
@@ -221,9 +244,9 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	}
 
 
-	fprintf(pset.queryFout, "lo_import %d\n", loid);
-	sprintf(buf, "%u", (unsigned int) loid);
-	SetVariable(pset.vars, "LASTOID", buf);
+	fprintf(pset.queryFout, "lo_import %u\n", loid);
+	sprintf(oidbuf, "%u", loid);
+	SetVariable(pset.vars, "LASTOID", oidbuf);
 
 	return true;
 }
@@ -278,7 +301,9 @@ do_lo_unlink(const char *loid_arg)
 	}
 
 	/* remove the comment as well */
-	sprintf(buf, "DELETE FROM pg_description WHERE objoid = %u", loid);
+	sprintf(buf, "DELETE FROM pg_description WHERE objoid = %u "
+			"AND classoid = (SELECT oid FROM pg_class WHERE relname = 'pg_largeobject')",
+			loid);
 	if (!(res = PSQLexec(buf)))
 	{
 		if (own_transaction)
@@ -322,7 +347,7 @@ do_lo_list(void)
 	printQueryOpt myopt = pset.popt;
 
 	snprintf(buf, sizeof(buf),
-			 "SELECT loid as \"ID\", obj_description(loid) as \"%s\"\n"
+			 "SELECT loid as \"ID\", obj_description(loid, 'pg_largeobject') as \"%s\"\n"
 			 "FROM (SELECT DISTINCT loid FROM pg_largeobject) x\n"
 			 "ORDER BY \"ID\"",
 			 gettext("Description"));
