@@ -33,11 +33,12 @@ pg_operator   |t
 pg_proc       |t          
 pg_relcheck   |t          
 pg_rewrite    |t          
+pg_statistic  |t          
 pg_trigger    |t          
 pg_type       |t          
 road          |t          
 shighway      |t          
 tenk1         |t          
 tenk2         |t          
-(34 rows)
+(35 rows)
 
