@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.77 2000/07/03 23:58:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.78 2000/07/04 01:39:24 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1125,6 +1125,7 @@ heap_fetch(Relation relation,
 
 	if (!ItemIdIsUsed(lp))
 	{
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		ReleaseBuffer(buffer);
 		*userbuf = InvalidBuffer;
 		tuple->t_datamcxt = NULL;
@@ -1331,17 +1332,17 @@ heap_insert(Relation relation, HeapTuple tup)
 		xlrec.mask = tup->t_data->t_infomask;
 		
 		XLogRecPtr recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_INSERT,
-			(char*) xlrec, sizeof(xlrec), 
-			(char*) tup->t_data + offsetof(HeapTupleHeaderData, tbits), 
-			tup->t_len - offsetof(HeapTupleHeaderData, tbits));
+			(char*) xlrec, SizeOfHeapInsert, 
+			(char*) tup->t_data + offsetof(HeapTupleHeaderData, t_bits), 
+			tup->t_len - offsetof(HeapTupleHeaderData, t_bits));
 
 		((PageHeader) BufferGetPage(buffer))->pd_lsn = recptr;
 		((PageHeader) BufferGetPage(buffer))->pd_sui = ThisStartUpID;
 	}
 #endif
 
-	WriteBuffer(buffer);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	if (IsSystemRelationName(RelationGetRelationName(relation)))
 		RelationMark4RollbackHeapTuple(relation, tup);
@@ -1440,7 +1441,7 @@ l1:
 		xlrec.dtid.cid = GetCurrentCommandId();
 		xlrec.dtid.tid = tp.t_self;
 		XLogRecPtr recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE,
-			(char*) xlrec, sizeof(xlrec), NULL, 0);
+			(char*) xlrec, SizeOfHeapDelete, NULL, 0);
 
 		dp->pd_lsn = recptr;
 		dp->pd_sui = ThisStartUpID;
@@ -1610,9 +1611,9 @@ l2:
 		xlrec.mask = newtup->t_data->t_infomask;
 		
 		XLogRecPtr recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_UPDATE,
-			(char*) xlrec, sizeof(xlrec), 
-			(char*) newtup->t_data + offsetof(HeapTupleHeaderData, tbits), 
-			newtup->t_len - offsetof(HeapTupleHeaderData, tbits));
+			(char*) xlrec, SizeOfHeapUpdate, 
+			(char*) newtup->t_data + offsetof(HeapTupleHeaderData, t_bits), 
+			newtup->t_len - offsetof(HeapTupleHeaderData, t_bits));
 
 		if (newbuf != buffer)
 		{
@@ -1907,3 +1908,43 @@ heap_restrpos(HeapScanDesc scan)
 				   (ScanKey) NULL);
 	}
 }
+
+#ifdef XLOG
+void heap_redo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	
+	if (info == XLOG_HEAP_INSERT)
+		heap_xlog_insert(true, lsn, record);
+	else if (info == XLOG_HEAP_DELETE)
+		heap_xlog_delete(true, lsn, record);
+	else if (info == XLOG_HEAP_UPDATE)
+		heap_xlog_update(true, lsn, record);
+	else if (info == XLOG_HEAP_MOVE)
+		heap_xlog_move(true, lsn, record);
+	else
+		elog(STOP, "heap_redo: unknown op code %u", info);
+}
+
+void heap_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+	
+	if (info == XLOG_HEAP_INSERT)
+		heap_xlog_insert(false, lsn, record);
+	else if (info == XLOG_HEAP_DELETE)
+		heap_xlog_delete(false, lsn, record);
+	else if (info == XLOG_HEAP_UPDATE)
+		heap_xlog_update(false, lsn, record);
+	else if (info == XLOG_HEAP_MOVE)
+		heap_xlog_move(false, lsn, record);
+	else
+		elog(STOP, "heap_undo: unknown op code %u", info);
+}
+
+void heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
+{
+	xl_heap_insert  xlrec = XLogRecGetData(record);
+}
+
+#endif	/* XLOG */
