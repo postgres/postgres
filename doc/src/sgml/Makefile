@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.72 2004/03/09 20:10:10 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.73 2004/11/23 16:27:59 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -213,6 +213,9 @@ postgres.xml: postgres.sgml $(GENERATED_SGML)
 	  >$@
 
 testxml: stylesheet.xsl postgres.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam pg.version '$(VERSION)' $^
+
+htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam pg.version '$(VERSION)' $^
 
 
