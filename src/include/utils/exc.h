@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.5 1996/11/27 08:16:44 bryanh Exp $
+ * $Id: exc.h,v 1.6 1996/12/10 07:04:22 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ extern Index ExcLineNumber;
 /*
  * ExcMessage and Exception are now defined in c.h
  */
-#if !defined(SIGJMP_BUF)
+#if defined(JMP_BUF)
 typedef jmp_buf		ExcContext;
 #else
 typedef sigjmp_buf	ExcContext;
