@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.172 2004/09/26 00:26:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.173 2004/10/18 23:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -778,6 +778,36 @@ pq_getbytes(char *s, size_t len)
 }
 
 /* --------------------------------
+ *		pq_discardbytes		- throw away a known number of bytes
+ *
+ *		same as pq_getbytes except we do not copy the data to anyplace.
+ *		this is used for resynchronizing after read errors.
+ *
+ *		returns 0 if OK, EOF if trouble
+ * --------------------------------
+ */
+static int
+pq_discardbytes(size_t len)
+{
+	size_t		amount;
+
+	while (len > 0)
+	{
+		while (PqRecvPointer >= PqRecvLength)
+		{
+			if (pq_recvbuf())	/* If nothing in buffer, then recv some */
+				return EOF;		/* Failed to recv data */
+		}
+		amount = PqRecvLength - PqRecvPointer;
+		if (amount > len)
+			amount = len;
+		PqRecvPointer += amount;
+		len -= amount;
+	}
+	return 0;
+}
+
+/* --------------------------------
  *		pq_getstring	- get a null terminated string from connection
  *
  *		The return value is placed in an expansible StringInfo, which has
@@ -867,9 +897,8 @@ pq_getmessage(StringInfo s, int maxlen)
 	}
 
 	len = ntohl(len);
-	len -= 4;					/* discount length itself */
 
-	if (len < 0 ||
+	if (len < 4 ||
 		(maxlen > 0 && len > maxlen))
 	{
 		ereport(COMMERROR,
@@ -878,10 +907,28 @@ pq_getmessage(StringInfo s, int maxlen)
 		return EOF;
 	}
 
+	len -= 4;					/* discount length itself */
+
 	if (len > 0)
 	{
-		/* Allocate space for message */
-		enlargeStringInfo(s, len);
+		/*
+		 * Allocate space for message.  If we run out of room (ridiculously
+		 * large message), we will elog(ERROR), but we want to discard the
+		 * message body so as not to lose communication sync.
+		 */
+		PG_TRY();
+		{
+			enlargeStringInfo(s, len);
+		}
+		PG_CATCH();
+		{
+			if (pq_discardbytes(len) == EOF)
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("incomplete message from client")));
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 
 		/* And grab the message */
 		if (pq_getbytes(s->data, len) == EOF)
