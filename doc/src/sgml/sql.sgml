@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.34 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.35 2005/02/21 02:21:03 neilc Exp $
 -->
 
  <chapter id="sql-intro">
@@ -647,7 +647,7 @@ R:                    S:
     <para>
      For a more detailed description and definition of the relational
      algebra refer to [<xref linkend="ULL88" endterm="ULL88">] or
-     [<xref linkend="DATE94" endterm="DATE94">].
+     [<xref linkend="DATE04" endterm="DATE04">].
     </para>
 
     <example>
@@ -714,7 +714,7 @@ R:                    S:
      the one underlying the most relational languages. For a detailed
      discussion on <acronym>DRC</acronym> (and also
      <acronym>TRC</acronym>) see
-     <xref linkend="DATE94" endterm="DATE94">
+     <xref linkend="DATE04" endterm="DATE04">
      or
      <xref linkend="ULL88" endterm="ULL88">.
     </para>
@@ -772,7 +772,7 @@ x(A) &mid; F(x)
      algorithm</quote>) by which an arbitrary expression of the relational
      calculus can be reduced to a semantically equivalent expression of
      relational algebra. For a more detailed discussion on that refer to
-     <xref linkend="DATE94" endterm="DATE94">
+     <xref linkend="DATE04" endterm="DATE04">
      and
      <xref linkend="ULL88" endterm="ULL88">.
     </para>
@@ -2076,7 +2076,7 @@ DELETE FROM SUPPLIER
      <xref linkend="SIM98" endterm="SIM98">
      for a more detailed
      description). For more information about system catalogs refer to
-     <xref linkend="DATE94" endterm="DATE94">.
+     <xref linkend="DATE04" endterm="DATE04">.
     </para>
    </sect2>
 
@@ -2142,7 +2142,7 @@ DELETE FROM SUPPLIER
      For a detailed discussion on embedded <acronym>SQL</acronym>
      refer to
      <xref linkend="DATE97" endterm="DATE97">,
-     <xref linkend="DATE94" endterm="DATE94">,
+     <xref linkend="DATE04" endterm="DATE04">,
      or
      <xref linkend="ULL88" endterm="ULL88">.
     </para>

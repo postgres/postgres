@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.20 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.21 2005/02/21 02:21:00 neilc Exp $
 -->
 
  <bibliography id="biblio">
@@ -23,11 +23,11 @@ $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.20 2003/11/29 19:51:36 pgsql Exp
    <title><acronym>SQL</acronym> Reference Books</title>
    <para>Reference texts for <acronym>SQL</acronym> features.</para>
 
-   <biblioentry id="BOWMAN93">
+   <biblioentry id="BOWMAN01">
     <title>The Practical <acronym>SQL</acronym> Handbook</title>
-    <titleabbrev>Bowman et al, 1996</titleabbrev>
-    <subtitle>Using Structured Query Language</subtitle>
-    <edition>Third Edition</edition>
+    <titleabbrev>Bowman et al, 2001</titleabbrev>
+    <subtitle>Using SQL Variants</subtitle>
+    <edition>Fourth Edition</edition>
     <authorgroup>
      <author>
       <firstname>Judith</firstname>
@@ -42,14 +42,13 @@ $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.20 2003/11/29 19:51:36 pgsql Exp
       <surname>Darnovsky</surname>
      </author>
     </authorgroup>
-    <isbn>0-201-44787-8</isbn>
-    <pubdate>1996</pubdate>
+    <isbn>0-201-70309-2</isbn>
+    <pubdate>2001</pubdate>
     <publisher>
-     <publishername>Addison-Wesley</publishername>
+     <publishername>Addison-Wesley Professional</publishername>
     </publisher>
     <copyright>
-     <year>1996</year>
-     <holder>Addison-Wesley Longman, Inc.</holder>
+     <year>2001</year>
     </copyright>
    </biblioentry>
 
@@ -79,30 +78,30 @@ $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.20 2003/11/29 19:51:36 pgsql Exp
     </copyright>
    </biblioentry>
 
-   <biblioentry id="DATE94">
+   <biblioentry id="DATE04">
     <title>An Introduction to Database Systems</title>
-    <titleabbrev>Date, 1994</titleabbrev>
-    <edition>Sixth Edition</edition>
+    <titleabbrev>Date, 2004</titleabbrev>
+    <edition>Eighth Edition</edition>
     <authorgroup>
      <author>
       <firstname>C. J.</firstname>
       <surname>Date</surname>
      </author>
     </authorgroup>
-    <volumenum>Volume 1</volumenum>
-    <pubdate>1994</pubdate>
+    <isbn>0-321-19784-4</isbn>
+    <pubdate>2003</pubdate>
     <publisher>
      <publishername>Addison-Wesley</publishername>
     </publisher>
     <copyright>
-     <year>1994</year>
-     <holder>Addison-Wesley Longman, Inc.</holder>
+     <year>2004</year>
+     <holder>Pearson Education, Inc.</holder>
     </copyright>
    </biblioentry>
 
-  <biblioentry id="ELMA99">
+  <biblioentry id="ELMA04">
    <title>Fundamentals of Database Systems</title>
-   <edition>3rd Edition</edition>
+   <edition>Fourth Edition</edition>
    <authorgroup>
     <author>
      <firstname>Ramez</firstname>
@@ -113,11 +112,14 @@ $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.20 2003/11/29 19:51:36 pgsql Exp
      <surname>Navathe</surname>
     </author>
    </authorgroup>
-   <isbn>0-805-31755-4</isbn>
-   <pubdate>August 1999</pubdate>
+   <isbn>0-321-12226-7</isbn>
+   <pubdate>2003</pubdate>
    <publisher>
     <publishername>Addison-Wesley</publishername>
    </publisher>
+   <copyright>
+    <year>2004</year>
+   </copyright>
   </biblioentry>
 
    <biblioentry id="MELT93">

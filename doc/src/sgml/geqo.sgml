@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.28 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.29 2005/02/21 02:21:00 neilc Exp $
 Genetic Optimizer
 -->
 
@@ -302,7 +302,7 @@ Genetic Optimizer
 
     <listitem>
      <para>
-      <xref linkend="ELMA99">
+      <xref linkend="ELMA04">
      </para>
     </listitem>
 
