@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar  3 09:26:47 EST 2004
+Last updated:		Mon Mar  8 23:45:40 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -42,7 +42,7 @@ Administration
   so we can implement roles
 * Add the concept of dataspaces/tablespaces [tablespaces]
 * Allow logging of only data definition(DDL), or DDL and modification statements
-* Allow log lines to include session-level information, like database and user
+* -Allow log lines to include session-level information, like database and user
 * Allow server log information to be output as INSERT statements
 * Prevent default re-use of sysids for dropped users and groups
 * Prevent dropping user that still owns objects, or auto-drop the objects
