@@ -1,0 +1,940 @@
+2001-03-16 16:29  scrappy
+
+	* configure, configure.in: 
+	upgrade version to beta6
+
+2001-03-16 12:42  tgl
+
+	* contrib/pgcrypto/README.pgcrypto: Documentation update from Marko
+	Kreen.
+
+2001-03-16 08:05  meskes
+
+	* src/interfaces/ecpg/preproc/variable.c: Fixed bug in handling of
+	pointers to structs.
+
+2001-03-16 08:03  inoue
+
+	* src/interfaces/odbc/: multibyte.c, multibyte.h: Oops I forgot to
+	add new files for multibyte support.  Sorry Eiji.
+
+2001-03-16 00:44  tgl
+
+	* doc/src/sgml/runtime.sgml, doc/src/sgml/wal.sgml,
+	src/backend/access/transam/xlog.c, src/backend/utils/misc/guc.c,
+	src/backend/utils/misc/postgresql.conf.sample,
+	src/include/access/xlog.h: Support syncing WAL log to disk using
+	either fsync(), fdatasync(), O_SYNC, or O_DSYNC (as available on a
+	given platform).  Add GUC parameter to control sync method.  Also,
+	add defense to XLogWrite to prevent it from going nuts if passed a
+	target write position that's past the end of the buffers so far
+	filled by XLogInsert.
+
+2001-03-16 00:08  tgl
+
+	* contrib/pg_resetxlog/pg_resetxlog.c: Resetting the XLOG can't
+	include rewinding it to logical position zero, because we need page
+	LSNs stored in the main database to be less than the current XLOG
+	position.  Hence, generate the new XLOG segment at last old segment
+	number plus one.
+
+2001-03-15 20:17  inoue
+
+	* src/interfaces/odbc/: connection.c, convert.c, dlg_specific.c,
+	parse.c, psqlodbc.h, psqlodbc.rc, win32.mak: Add multibyte support.
+	   Provide an extenisible scheme of encoding conversion.   As the
+	first step, SJIS and BIG5 are supported.	 From now on
+	multibyte people would be happy to use	    this psqlodbc driver.
+	
+	Eiji Tokuya e-tokuya@mail.sankyo-unyu.co.jp
+
+2001-03-15 15:01  tgl
+
+	* doc/src/sgml/client-auth.sgml: Update sample error messages to
+	agree with current code.
+
+2001-03-15 06:56  darcy
+
+	* src/interfaces/python/pgdb.py: Fix parameter handling.
+	
+	Fix a bug where cs.execute('select %d + %d', (1, 2)) would get
+	interpreted as cs.executemany('select %d + %d', (1, 2))
+
+2001-03-15 06:26  darcy
+
+	* src/interfaces/python/: pgmodule.c, setup.py: Add WIN32 support.
+
+2001-03-14 20:07  tgl
+
+	* doc/src/sgml/func.sgml: Improve description of to_char templates.
+
+2001-03-14 18:55  tgl
+
+	* src/backend/parser/parse_func.c: Give a more reasonable error
+	message for a bad attribute name applied to a join or subselect
+	alias ... cf. Oliver Elphick's complaint 13-Mar.
+
+2001-03-14 17:20  petere
+
+	* doc/src/sgml/backup.sgml: Fix markup.
+
+2001-03-14 16:50  tgl
+
+	* src/: backend/commands/trigger.c, include/commands/trigger.h:
+	Reduce amount of memory used per tuple for after-event triggers. 
+	This is still a memory leak, but a little less bad than it was.
+
+2001-03-14 16:47  tgl
+
+	* src/backend/commands/copy.c: COPY should handle after-insert
+	triggers the same as execMain.c does.  I'm not sure that it's
+	really necessary to save insert events when there are only after
+	update or delete triggers, but certainly it's wrong for COPY to
+	behave differently from an INSERT query.
+
+2001-03-14 16:11  petere
+
+	* src/tools/release_prep: It's "gmake dist" now.
+
+2001-03-14 16:07  petere
+
+	* src/tools/make_etags: For some ungodly reason my etags doesn't
+	have an --output option, but it does have -o.
+
+2001-03-14 16:03  petere
+
+	* src/bin/pgtclsh/README: We're past Postgres95 now, and I'm sure
+	Jolly doesn't want to receive any bug reports.	;-)
+
+2001-03-14 15:53  petere
+
+	* src/interfaces/libpq++/dependencies: We got automatic
+	dependencies now.
+
+2001-03-14 15:47  petere
+
+	* src/interfaces/jdbc/README_6.3: We're way past 6.3 ...
+
+2001-03-14 15:44  petere
+
+	* src/interfaces/jdbc/README: Update.  Things are now build through
+	'make'.
+
+2001-03-14 15:23  tgl
+
+	* src/backend/access/transam/xlog.c: Use SEP_CHAR consistently in
+	forming XLOG pathnames.
+
+2001-03-14 15:12  tgl
+
+	* src/: backend/utils/adt/datetime.c, include/utils/timestamp.h:
+	Remove obsolete PowerPC-specific hack for comparisons to DBL_MIN
+	(per recent discussion with Tatsuo).  Hopefully the compilers with
+	that old bug are all long gone.
+
+2001-03-14 14:35  tgl
+
+	* src/: Makefile.shlib, makefiles/Makefile.hpux: Move -Bsymbolic
+	for HPUX to Makefile.hpux, per Peter E's recommendation.
+
+2001-03-14 13:24  momjian
+
+	* src/backend/: storage/lmgr/lock.c, tcop/postgres.c: 'waiting'
+	status display had extra space, removed.  Change the administrator
+	to 'an' administrator.
+
+2001-03-14 13:00  petere
+
+	* configure, configure.in: Try to run empty test program before
+	running any real AC_TRY_RUN's, to prevent disguised failures.
+
+2001-03-14 12:58  tgl
+
+	* src/backend/postmaster/postmaster.c: Don't go belly-up if fork()
+	fails for a routine checkpoint subprocess.  Just try again later.
+
+2001-03-14 11:50  tgl
+
+	* src/backend/utils/adt/numeric.c: Fix numeric modulo operator for
+	case of fractional right argument.
+
+2001-03-14 10:14  momjian
+
+	* src/backend/tcop/postgres.c: New shutdown wording:
+	
+		This connection has been terminated by the administrator
+
+2001-03-14 04:10  inoue
+
+	* src/interfaces/odbc/: environ.c, socket.c: Fix some memory leaks.
+
+2001-03-14 03:40  inoue
+
+	* src/backend/commands/vacuum.c: ifdef out reindex stuff in VACUUM
+	for safety.
+
+2001-03-13 19:57  tgl
+
+	* contrib/: Makefile, README, pg_resetxlog/Makefile,
+	pg_resetxlog/README.pg_resetxlog, pg_resetxlog/pg_resetxlog.c:
+	First cut at XLOG file reset utility.  Could do with more testing,
+	but it works in the simple cases.
+
+2001-03-13 16:37  petere
+
+	* src/bin/initdb/initdb.sh: Provide more useful error message if
+	'postgres -V' failed.  Advertise pg_ctl '-l' option.
+
+2001-03-13 15:52  petere
+
+	* doc/FAQ_SCO: update
+
+2001-03-13 15:42  petere
+
+	* doc/FAQ_Solaris: update
+
+2001-03-13 15:32  tgl
+
+	* src/: backend/access/transam/xlog.c, include/access/xlog.h:
+	Change xlog page-header format to include StartUpID.  Use the SUI
+	to detect case that next page in log came from an older run than
+	the prior page.  This avoids the necessity to re-zero the log after
+	recovery from a crash, which is good because we need not risk
+	destroying valuable log information.  This forces another initdb
+	since yesterday :-(.  Need to get that log reset utility done...
+
+2001-03-13 14:28  petere
+
+	* contrib/Makefile: 'test -e' isn't portable.  Use 'test -f'.
+
+2001-03-13 09:41  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-03-13 09:08  pjw
+
+	* doc/src/sgml/backup.sgml: Document changed features of pg_dump,
+	including: - Large Object dumps - Compressed custom format -
+	Requirement to use template0 when creating DB
+
+2001-03-13 08:18  pjw
+
+	* src/bin/pg_dump/pg_backup_archiver.c: - Use subselect  when
+	enabling triggers, - Use exact table names when enabling/disabling
+	triggers
+
+2001-03-13 04:03  inoue
+
+	* src/interfaces/odbc/psqlodbc.reg: The attached file contains the
+	registry settings required to install the ODBC driver on Windows
+	9X/ME/NT/2K when using the later versions of the driver that don't
+	have the Installshield installation:
+	
+	1) Install psqlodbc.dll in to C:\Windows\System or
+	C:\Winnt\System32 2) Add the registry settings in the attached file
+	using regedit.
+	
+	A useful addition to src/interfaces/odbc perhaps?
+	
+	Regards, Dave.
+
+2001-03-12 20:17  tgl
+
+	* contrib/pg_controldata/: Makefile, README.pg_controldata,
+	pg_controldata.c: Update for new pg_control format.
+
+2001-03-12 20:17  tgl
+
+	* doc/src/sgml/runtime.sgml, doc/src/sgml/wal.sgml,
+	doc/src/sgml/ref/checkpoint.sgml,
+	src/backend/access/transam/transam.c,
+	src/backend/access/transam/varsup.c,
+	src/backend/access/transam/xact.c,
+	src/backend/access/transam/xlog.c,
+	src/backend/access/transam/xlogutils.c,
+	src/backend/bootstrap/bootstrap.c,
+	src/backend/postmaster/postmaster.c, src/backend/port/beos/shm.c,
+	src/backend/port/qnx4/shm.c, src/backend/storage/ipc/ipc.c,
+	src/backend/tcop/postgres.c, src/backend/utils/hash/Makefile,
+	src/backend/utils/hash/pg_crc.c, src/backend/utils/init/globals.c,
+	src/backend/utils/init/miscinit.c, src/backend/utils/misc/guc.c,
+	src/backend/utils/misc/postgresql.conf.sample,
+	src/include/miscadmin.h, src/include/access/transam.h,
+	src/include/access/xlog.h, src/include/access/xlogdefs.h,
+	src/include/access/xlogutils.h, src/include/catalog/pg_control.h,
+	src/include/storage/ipc.h, src/include/tcop/tcopprot.h,
+	src/include/utils/pg_crc.h: XLOG (and related) changes:
+	
+	* Store two past checkpoint locations, not just one, in pg_control.
+	   On startup, we fall back to the older checkpoint if the newer
+	one    is unreadable.  Also, a physical copy of the newest
+	checkpoint record    is kept in pg_control for possible use in
+	disaster recovery (ie,	  complete loss of pg_xlog).  Also add a
+	version number for pg_control	 itself.  Remove archdir from
+	pg_control; it ought to be a GUC    parameter, not a special case
+	(not that it's implemented yet anyway).
+	
+	* Suppress successive checkpoint records when nothing has been
+	entered   in the WAL log since the last one.  This is not so much
+	to avoid I/O   as to make it actually useful to keep track of the
+	last two   checkpoints.  If the things are right next to each other
+	then there's   not a lot of redundancy gained...
+	
+	* Change CRC scheme to a true 64-bit CRC, not a pair of 32-bit CRCs
+	  on alternate bytes.  Polynomial borrowed from ECMA DLT1 standard.
+	
+	* Fix XLOG record length handling so that it will work at BLCKSZ =
+	32k.
+	
+	* Change XID allocation to work more like OID allocation.  (This is
+	of   dubious necessity, but I think it's a good idea anyway.)
+	
+	* Fix a number of minor bugs, such as off-by-one logic for XLOG
+	file   wraparound at the 4 gig mark.
+	
+	* Add documentation and clean up some coding infelicities; move
+	file   format declarations out to include files where planned
+	contrib   utilities can get at them.
+	
+	* Checkpoint will now occur every CHECKPOINT_SEGMENTS log segments
+	or   every CHECKPOINT_TIMEOUT seconds, whichever comes first.  It
+	is also   possible to force a checkpoint by sending SIGUSR1 to the
+	postmaster   (undocumented feature...)
+	
+	* Defend against kill -9 postmaster by storing shmem block's key
+	and ID	 in postmaster.pid lockfile, and checking at startup to
+	ensure that no	 processes are still connected to old shmem block
+	(if it still exists).
+	
+	* Switch backends to accept SIGQUIT rather than SIGUSR1 for
+	emergency   stop, for symmetry with postmaster and xlog utilities. 
+	Clean up signal   handling in bootstrap.c so that xlog utilities
+	launched by postmaster	 will react to signals better.
+	
+	* Standalone bootstrap now grabs lockfile in target directory, as
+	added	insurance against running it in parallel with live
+	postmaster.
+
+2001-03-12 18:02  tgl
+
+	* src/backend/commands/trigger.c: Avoid O(N^2) behavior in
+	deferredTriggerAddEvent() for large numbers of tuples
+	inserted/deleted/updated in a single transaction.  On my machine,
+	this reduced the time to delete 80000 tuples in a
+	foreign-key-referencing table from ~15min to ~8sec.
+
+2001-03-11 06:24  petere
+
+	* configure, configure.in, config/java.m4: Throw error if Ant is
+	not found and Java is requested.  Remove redundant AC_SUBST that
+	messed up the diversions and thus the configure output.
+
+2001-03-11 06:06  petere
+
+	* build.xml, contrib/retep/build.xml, doc/src/sgml/jdbc.sgml,
+	src/interfaces/jdbc/Makefile, src/interfaces/jdbc/build.xml,
+	src/interfaces/jdbc/org/postgresql/Driver.java.in: Add uninstall
+	target to Java build.  Respect default port setting in JDBC driver.
+	 Pick up version number from Makefile.global.  Change installation
+	directory to share/java/.  Document.
+
+2001-03-10 18:15  tgl
+
+	* src/Makefile.shlib: Turns out the HPUX linker likes -Bsymbolic
+	too.  Without this, ODBC driver does not work because its internal
+	cross-references get bound to similarly named functions in unixODBC
+	shared library.
+
+2001-03-10 18:12  tgl
+
+	* src/interfaces/odbc/environ.c: Provide a hack to let
+	initialization happen on platforms for which psqlodbc.c's
+	constructor-making techniques do not work.
+
+2001-03-10 17:30  tgl
+
+	* src/interfaces/odbc/gpps.c: Do not accept values from sections
+	following the specified section.
+
+2001-03-10 16:16  tgl
+
+	* doc/src/sgml/datatype.sgml: BOX documentation disagreed with code
+	about corner order.
+
+2001-03-10 11:57  petere
+
+	* doc/src/sgml/installation.sgml: Document --with-java.
+
+2001-03-10 11:05  petere
+
+	* doc/src/sgml/: Makefile, stylesheet.dsl: Eliminate some hackery
+	when creating text files (INSTALL) with a few lines of DSSSL.
+
+2001-03-10 05:38  petere
+
+	* configure, configure.in, src/Makefile.global.in,
+	src/makefiles/Makefile.hpux: Use install-sh unconditionally.
+
+2001-03-09 23:21  tgl
+
+	* src/backend/utils/error/elog.c: FATAL errors should cause exit
+	with nonzero status if we are not running under the postmaster ---
+	specifically, if we are a standalone backend running under the
+	initdb script, this is critical!
+
+2001-03-09 22:34  inoue
+
+	* src/interfaces/odbc/: convert.c, info.c, qresult.c, results.c,
+	statement.c: 1)Allow the access to indexes with up to 16 keys. 
+	2)Fix some memory leaks.  3)Change some bogus error messages.
+
+2001-03-09 17:10  tgl
+
+	* src/include/catalog/pg_shadow.h: Don't choke on superuser names
+	containing random punctuation.
+
+2001-03-09 16:50  petere
+
+	* src/interfaces/Makefile: Recursive distclean shouldn't depend on
+	recursive clean.  Subdirectories handle this.
+
+2001-03-09 14:09  petere
+
+	* doc/src/sgml/plsql.sgml: Integrate "Porting from Oracle PL/SQL"
+	HOWTO from Roberto Mello.
+
+2001-03-09 01:36  inoue
+
+	* src/backend/tcop/postgres.c: hold interupts during
+	LockWaitCancel().
+
+2001-03-08 12:00  momjian
+
+	* doc/: FAQ_japanese, src/FAQ/FAQ_japanese.html: Add Japanese FAQ>
+
+2001-03-08 11:52  momjian
+
+	* doc/: FAQ, src/FAQ/FAQ.html: Update FAQ.
+
+2001-03-07 20:49  tgl
+
+	* src/backend/optimizer/util/clauses.c: A subplan invoked within an
+	aggregate function's argument should be allowed to receive
+	ungrouped variables of the current query level.  Curious that no
+	one reported this bug before...
+
+2001-03-07 19:24  tgl
+
+	* src/backend/utils/mb/: mbutils.c, wchar.c: Modify wchar
+	conversion routines to not fetch the next byte past the end of a
+	counted input string.  Marinos Yannikos' recent crash report turns
+	out to be due to applying pg_ascii2wchar_with_len to a TEXT object
+	that is smack up against the end of memory.  This is the second
+	just-barely- reproducible bug report I have seen that traces to
+	some bit of code fetching one more byte than it is allowed to. 
+	Let's be more careful out there, boys and girls.  While at it, I
+	changed the code to not risk a similar crash when there is a
+	truncated multibyte character at the end of an input string.  The
+	output in this case might not be the most reasonable output
+	possible; if anyone wants to improve it further, step right up...
+
+2001-03-07 16:20  tgl
+
+	* src/backend/: access/gist/gist.c, access/hash/hashinsert.c,
+	access/hash/hashovfl.c, access/hash/hashpage.c,
+	access/rtree/rtree.c, commands/sequence.c: Repair a number of
+	places that didn't bother to check whether PageAddItem succeeds or
+	not.  Revise rtree page split algorithm to take care about making a
+	feasible split --- ie, will the incoming tuple actually fit?
+	Failure to make a feasible split, combined with failure to notice
+	the failure, account for Jim Stone's recent bug report.  I suspect
+	that hash and gist indices may have the same type of bug, but at
+	least now we'll get error messages rather than silent failures if
+	so.  Also clean up rtree code to use Datum rather than char* where
+	appropriate.
+
+2001-03-07 11:18  momjian
+
+	* src/pl/tcl/pltcl.c: > Applied.  Thanks.
+	
+	One more :)) It's for improper function argumets for
+	PLTCL_UNKNOWN_SUPPORT code
+	
+	I'm not an autoconf expert, but is it possible to enable unknown
+	support in pltcl with configure option ? This support is really
+	handy for real life usage of pl/tcl.
+	
+	seva@sevasoft.kiev.ua
+
+2001-03-07 11:09  momjian
+
+	* src/pl/tcl/modules/pltcl_loadmod: pltcl_loadmod has problems with
+	big (>4k) modules because of missing incr in splitting code:
+	
+	seva@sevasoft.kiev.ua
+
+2001-03-06 17:46  momjian
+
+	* contrib/mysql/my2pg.pl: Update my2pg, new version.
+
+2001-03-06 17:07  tgl
+
+	* src/interfaces/perl5/Makefile.PL: Believe $POSTGRES_LIB and
+	$POSTGRES_INCLUDE only if they name actual directories, per
+	suggestion from Robert Creager.
+
+2001-03-06 15:41  petere
+
+	* doc/src/sgml/Makefile: Sync rule for making INSTALL file.
+
+2001-03-06 14:58  petere
+
+	* src/bin/pg_dump/pg_restore.c: Help message s/dump/restore/ (must
+	have been copy&pasted from pg_dump).
+
+2001-03-06 13:55  petere
+
+	* doc/src/sgml/ref/: pg_dump.sgml, pg_restore.sgml: Some editing,
+	enhance markup, move description section before options list.
+
+2001-03-06 13:11  momjian
+
+	* doc/src/sgml/ref/create_type.sgml: Shorten TOAST mention
+
+2001-03-06 12:43  petere
+
+	* doc/src/sgml/ref/: pgtclsh.sgml, pgtksh.sgml:
+	Update/correct/refine.
+
+2001-03-06 07:04  peter
+
+	* src/interfaces/jdbc/: CHANGELOG, org/postgresql/xa/Test.java: Tue
+	Mar 06 12:05:00 GMT 2001 peter@retep.org.uk	    - Removed
+	org.postgresql.xa.Test from the JDBC EE driver as it's an old	   
+	    test class and prevented it from compiling.
+
+2001-03-06 00:22  pjw
+
+	* doc/src/sgml/ref/pg_restore.sgml: - Reflect change of option -U
+	to -L
+
+2001-03-06 00:22  pjw
+
+	* doc/src/sgml/ref/pg_dump.sgml: - Minor correction to usage
+
+2001-03-05 23:53  pjw
+
+	* src/bin/pg_dump/pg_dump.c: - Dump relevant parts of sequences
+	only when doing schemaOnly & dataOnly - Prevent double-dumping of
+	sequences when dataOnly.
+
+2001-03-05 23:08  pjw
+
+	* src/bin/pg_dump/: pg_backup_archiver.c, pg_backup_archiver.h,
+	pg_restore.c: - Only disable triggers in DataOnly (or implied
+	data-only) restores.  - Change -U option to -L to allow -U to
+	specify username in future. (pg_restore)
+
+2001-03-05 14:00  petere
+
+	* doc/src/sgml/ref/comment.sgml: Add missing space, change some
+	markup.
+
+2001-03-05 14:00  petere
+
+	* doc/src/sgml/ref/set.sgml: Sorry, that change was not correct.
+
+2001-03-05 13:42  momjian
+
+	* doc/src/sgml/ref/: alter_table.sgml, comment.sgml,
+	create_type.sgml, pg_config-ref.sgml, pg_dump.sgml,
+	pg_dumpall.sgml, pg_restore.sgml, set.sgml: I'm attaching those
+	diffs for the Reference Guide in a tar file, as not all of them
+	attached properly in the post I made a few minutes ago. Please
+	disregard those earlier files. The diffs in the tar file replace
+	them.
+	
+	Pierce Tyler
+
+2001-03-05 13:09  momjian
+
+	* doc/FAQ_german, doc/src/FAQ/FAQ_german.html,
+	src/tools/backend/backend_dirs.html, src/tools/backend/index.html,
+	src/tools/make_diff/README: Update email addresses.
+
+2001-03-05 12:20  momjian
+
+	* src/bin/pgaccess/lib/languages/chinese_big5: 
+	Here is the chinese_big5 patch for PgAccess.  I've tested under
+	Chinese Windows 2000 without any problem.
+	
+	Have fun.
+	
+	LM.Liu
+
+2001-03-05 05:18  peter
+
+	* configure, configure.in, contrib/retep/retep.jpx,
+	contrib/retep/uk/org/retep/util/StandaloneApp.java: Hmmm, a
+	conflict with V1.104 of configure.in remained and broke configure
+	(said redirection required when run).
+	
+	After checking using cvsweb, removed the offending conflict. 
+	Rebuilt configure using autoconf, and it now works fine.
+
+2001-03-05 05:02  peter
+
+	* config/java.m4: There's always 1 file missed out ;-)
+	
+	Found while testing against a full checkout. Peter
+
+2001-03-05 04:38  peter
+
+	* aclocal.m4, build.xml, configure, configure.in,
+	src/Makefile.global.in, src/interfaces/Makefile,
+	src/interfaces/jdbc/CHANGELOG, src/interfaces/jdbc/Makefile,
+	src/interfaces/jdbc/build.xml, src/interfaces/jdbc/jdbc.jpx: 
+	
+	Ok, I've split todays commit into three, the first two already done
+	had some bits in JDBC & the first set of tools into contrib.
+	
+	This is the third, and deals with enabling JDBC to be compiled with
+	the main source.
+	
+	What it does is add a new option to configure: --with-java
+	
+	This option tells configure to look for ant (our build tool of
+	choice) and if found, it then compiles both the JDBC driver and the
+	new tools as part of the normal make.
+	
+	Also, when the postgresql install is done, all the .jar files are
+	also installed into the ${PGLIB}/java directory (thought best to
+	keep then separate)
+	
+	Now I had some conflicts when this applied so could someone please
+	double check that everything is ok?
+	
+	Peter
+
+2001-03-05 04:17  peter
+
+	* src/interfaces/jdbc/org/postgresql/: Driver.java.in,
+	core/ConnectionHook.java, jdbc2/CallableStatement.java: Minor
+	fixes...
+
+2001-03-05 04:15  peter
+
+	* contrib/retep/: CHANGELOG, Implementation, README, build.xml,
+	retep.jpx, uk/org/retep/tools.properties,
+	uk/org/retep/dtu/DCollection.java,
+	uk/org/retep/dtu/DConstants.java, uk/org/retep/dtu/DElement.java,
+	uk/org/retep/dtu/DEnvironment.java, uk/org/retep/dtu/DModule.java,
+	uk/org/retep/dtu/DModuleXML.java, uk/org/retep/dtu/DNode.java,
+	uk/org/retep/dtu/DProcessor.java, uk/org/retep/dtu/DTransform.java,
+	uk/org/retep/tools/Tool.java,
+	uk/org/retep/util/ExceptionDialog.java,
+	uk/org/retep/util/Globals.java, uk/org/retep/util/Logger.java,
+	uk/org/retep/util/Main.java, uk/org/retep/util/StandaloneApp.java,
+	uk/org/retep/util/hba/Editor.java, uk/org/retep/util/hba/Main.java,
+	uk/org/retep/util/hba/Record.java,
+	uk/org/retep/util/misc/IPAddress.java,
+	uk/org/retep/util/misc/PropertiesIO.java,
+	uk/org/retep/util/misc/WStringTokenizer.java,
+	uk/org/retep/util/models/HBATableModel.java,
+	uk/org/retep/util/models/PropertiesTableModel.java,
+	uk/org/retep/util/proped/Main.java,
+	uk/org/retep/util/proped/PropertyEditor.java: First batch of the
+	tools merged in...
+
+2001-03-04 13:54  petere
+
+	* doc/src/sgml/: filelist.sgml, libpq.sgml, programmer.sgml,
+	pygresql.sgml: PyGreSQL documentation.	Based on the README,
+	converted to DocBook by Mikhail Terekhov <terekhov@emc.com>.
+
+2001-03-04 10:43  momjian
+
+	* contrib/mysql/my2pg.pl, src/include/nodes/plannodes.h: Update
+	mysql converter, new version released.
+
+2001-03-03 17:11  tgl
+
+	* doc/src/sgml/ref/create_table_as.sgml: Document TEMP option.
+
+2001-03-03 10:53  petere
+
+	* configure, configure.in, config/prep_buildtree,
+	src/Makefile.global.in, src/makefiles/Makefile.qnx4: Add configure
+	check for -lunix, for QNX.
+	
+	Recode test for equality of source and build directory using 'test
+	-ef', because even using pwd you might not get equal strings. 
+	Thanks, QNX.
+
+2001-03-03 09:00  darcy
+
+	* src/interfaces/python/Announce: Update the version number.  We
+	may change this to 7.1 if we align it with PostgreSQL.
+	
+	Add notice that development has moved into the PostgreSQL tree.
+
+2001-03-03 08:58  darcy
+
+	* src/interfaces/python/pg.py: Add oid to list of keys cached.
+	
+	Add a test to avoid an exception in certain cases.
+
+2001-03-03 08:54  darcy
+
+	* src/interfaces/python/README: Incrementing version number in
+	preparation for next release.  Note that I am talking with Thomas
+	Lockhart about the idea of bringing the PyGreSQL version number
+	into alignment with PostgreSQL so this may change to 7.1 before the
+	release.
+	
+	I have added to the copyright to indicate that from now on the
+	PostgreSQL copyright will apply.  If someone wants to make that
+	clearer please do.  The existing copyrights need to stay there for
+	now but if necessary I can ask Pascal Andre if he agrees to a
+	different wording.
+	
+	Added reference to the Python DB-API 2.0 compliant API wrapper.
+	
+	Added reference to the PyGreSQL mailing list.
+
+2001-03-03 08:42  darcy
+
+	* src/interfaces/python/pgmodule.c: Added postgres.h header for
+	more type checking.
+	
+	Changed the way that OID is retrieved on inserts.  PQoidStatus
+	appears to be deprecated so I am using PQoidValue instead.
+
+2001-03-01 14:03  petere
+
+	* src/backend/port/dynloader/qnx4.h: Add missing include.
+
+2001-03-01 13:52  petere
+
+	* src/bin/psql/print.c: Fix memory leak.
+
+2001-03-01 13:34  tgl
+
+	* src/bin/psql/common.c: Ensure previous setting of pset.queryFout
+	is restored after a failed backslash-g command.
+
+2001-03-01 11:17  petere
+
+	* src/include/Makefile: Add missing semicolon required by QNX
+	shell.	from "Tegge, Bernd" <tegge@repas-aeg.de>
+
+2001-03-01 00:05  ishii
+
+	* configure, configure.in, src/bin/pg_dump/pg_restore.c,
+	src/bin/pg_id/pg_id.c, src/include/config.h.in,
+	src/interfaces/ecpg/preproc/ecpg.c: Remove HAVE_OPTARG per
+	discussion in hackers list.
+
+2001-02-28 15:39  petere
+
+	* src/bin/psql/mainloop.c: Do not strip whitespace within quotes.
+
+2001-02-27 17:07  tgl
+
+	* src/: backend/commands/command.c, backend/tcop/pquery.c,
+	backend/utils/mmgr/portalmem.c, include/utils/portal.h: Tweak
+	portal (cursor) code so that it will not call the executor again
+	when user does another FETCH after reaching end of data, or another
+	FETCH backwards after reaching start.  This is needed because some
+	plan nodes are not very robust about being called again after
+	they've already returned NULL; for example, MergeJoin will crash in
+	some states but not others.  While the ideal approach would be for
+	them all to handle this correctly, it seems foolish to assume that
+	no such bugs would creep in again once cleaned up.  Therefore, the
+	most robust answer is to prevent the situation from arising at all.
+
+2001-02-27 15:34  tgl
+
+	* src/include/catalog/pg_proc.h: Mark new text<->date, text<->time,
+	text<->timetz conversion functions as noncachable, so that
+	CURRENT_DATE and CURRENT_TIME work as functions again, rather than
+	being collapsed to constants immediately.  Marking the reverse
+	conversions noncachable might be overkill, but I'm not sure; do
+	these datatypes have the notion of a CURRENT value?  Better safe
+	than sorry, for now.
+
+2001-02-27 10:37  scrappy
+
+	* contrib/ipc_check/: README, ipc_check.pl: 
+	start of an admin tool for FreeBSD to help configure shared memory
+	for that machine
+	
+	I kept the name as generic as possible though, as other OS should
+	have similar methods, so this can be extended "as appropriate" ...
+
+2001-02-27 03:13  ishii
+
+	* src/bin/psql/Makefile, src/bin/psql/input.c,
+	src/bin/psql/print.c, src/bin/psql/stringutils.c,
+	src/include/config.h.in, src/backend/utils/adt/formatting.c,
+	src/bin/pg_dump/Makefile, src/bin/pg_dump/pg_restore.c,
+	src/bin/pg_id/pg_id.c, src/interfaces/ecpg/preproc/ecpg.c,
+	src/makefiles/Makefile.sunos4, configure, src/Makefile.global.in,
+	src/Makefile.shlib, configure.in: Massive commits for SunOS4 port.
+
+2001-02-27 02:07  ishii
+
+	* src/backend/parser/parse_coerce.c: Fix vacuum analyze error.
+	
+	vacuum analyze on pg_type fails if bogus entries remain in
+	pg_operator.  Here is a sample script to reproduce the problem.
+	
+	drop table t1; create table t1(i int); drop function foo(t1,t1);
+	create function foo(t1,t1) returns bool as 'select true' language
+	'sql'; create operator = (   leftarg = t1,   rightarg = t1, 
+	commutator = =, 	procedure = foo 	); drop table t1;
+	vacuum analyze;
+
+2001-02-26 09:42  meskes
+
+	* src/interfaces/ecpg/: ChangeLog, preproc/preproc.y: Fixed
+	variable handling in preproc.y.
+
+2001-02-26 00:15  ishii
+
+	* src/bin/pgaccess/lib/tables.tcl: Allow pgaccess to input
+	Japanese. See included mail.
+	
+	Subject: [HACKERS] pgaccess Japanese input capability patch From:
+	Tatsuo Ishii <t-ishii@sra.co.jp> To: teo@flex.ro Cc:
+	pgsql-hackers@postgresql.org, pgsql-interfaces@postgresql.org Date:
+	Sat, 24 Feb 2001 21:41:14 +0900
+	
+	Hi Teodorescu,
+	
+	I have made patches which enable pgaccess to input Japanese
+	characters in the table editing window. As you might know, to input
+	Japanese characters, we first type in "hiragana" then convert it to
+	"kanji". To make this proccess transparent to tcl application
+	programs, libraries are provided with localized version of Tcl/Tk.
+	The patches bind certain keys to initiate a function (kanjiInput)
+	that is responsible for the conversion process. If the function is
+	not available, those keys will not be binded.
+	
+	Comments? -- Tatsuo Ishii
+
+2001-02-25 19:50  tgl
+
+	* doc/src/sgml/wal.sgml, src/backend/access/transam/xact.c,
+	src/backend/access/transam/xlog.c,
+	src/backend/storage/ipc/sinval.c, src/backend/utils/misc/guc.c,
+	src/backend/utils/misc/postgresql.conf.sample,
+	src/bin/psql/tab-complete.c, src/include/access/xlog.h,
+	src/include/storage/proc.h, src/include/storage/sinval.h: Implement
+	COMMIT_SIBLINGS parameter to allow pre-commit delay to occur only
+	if at least N other backends currently have open transactions. 
+	This is not a great deal of intelligence about whether a delay
+	might be profitable ... but it beats no intelligence at all.  Note
+	that the default COMMIT_DELAY is still zero --- this new code does
+	nothing unless that setting is changed.  Also, mark ENABLEFSYNC as
+	a system-wide setting.	It's no longer safe to allow that to be set
+	per-backend, since we may be relying on some other backend's fsync
+	to have synced the WAL log.
+
+2001-02-25 11:05  petere
+
+	* doc/src/sgml/syntax.sgml: Even better example for operator
+	precedence mis-parsing.
+
+2001-02-25 10:57  petere
+
+	* contrib/pg_controldata/Makefile: Doesn't need libpq.
+
+2001-02-25 10:55  petere
+
+	* contrib/pg_controldata/: pg_controldata, pg_controldata.o: Remove
+	binary files.
+
+2001-02-24 17:42  tgl
+
+	* src/backend/storage/buffer/s_lock.c: At least on HPUX, select
+	with delay.tv_sec = 0 and delay.tv_usec = 1000000 does not lead to
+	a one-second delay, but to an immediate EINVAL failure.  This
+	causes CHECKPOINT to crash with s_lock_stuck much too quickly :-(. 
+	Fix by breaking down the requested wait div/mod 1e6.
+
+2001-02-24 13:09  petere
+
+	* doc/src/sgml/syntax.sgml: Choose a more suitable example for the
+	operator precedence mis-parsing example.
+
+2001-02-24 07:40  petere
+
+	* doc/src/sgml/: jdbc.sgml, stylesheet.dsl: Markup, spell check,
+	refine JDBC documentation.
+
+2001-02-23 21:04  tgl
+
+	* src/backend/tcop/postgres.c: When under postmaster, bogus
+	arguments should cause proc_exit(0) not proc_exit(1).  Unless you
+	think a system-wide restart is an appropriate response to bogus
+	PGOPTIONS, that is.
+
+2001-02-23 17:52  tgl
+
+	* src/bin/pg_dump/: pg_backup_archiver.c, pg_backup_tar.c: Fix
+	pg_dump crashes caused by bogus use of va_start/va_end (only seen
+	on some platforms, which is not too surprising considering how
+	platform specific these macros must be).
+
+2001-02-23 15:38  momjian
+
+	* contrib/: README, pg_controldata/Makefile,
+	pg_controldata/README.pg_controldata,
+	pg_controldata/pg_controldata, pg_controldata/pg_controldata.c,
+	pg_controldata/pg_controldata.o: I had a need to read such things
+	as the backend locale and the catalog version number from the
+	current database, and couldn't find any existing program to do
+	that.
+	
+	linda:~$ pg_controldata Log file id:			      0 Log
+	file segment:			  5 Last modified:		   
+	      Wed Feb  7 19:35:47 2001 Database block size:		   
+	 8192 Blocks per segment of large relation: 131072 Catalog version
+	number: 	      200101061 LC_COLLATE:			   
+	  en_GB LC_CTYPE:			      en_GB Log archive
+	directory:
+	
+	Oliver Elphick				     
+	Oliver.Elphick@lfix.co.uk
+
+2001-02-23 15:12  tgl
+
+	* src/backend/storage/lmgr/lock.c: As long as we're fixing this
+	space calculation, let's actually do it right.	We should MAXALIGN
+	the individual items because we'll allocate them individually, not
+	as an array.
+
+2001-02-23 14:24  momjian
+
+	* src/include/storage/lock.h: Update comments on locks.
+
+2001-02-23 13:28  momjian
+
+	* src/: backend/storage/lmgr/lock.c, include/storage/lock.h: Bruce
+	Momjian <pgman@candle.pha.pa.us> writes:
+	> Is there one LOCKMETHODCTL for every backend?  I thought there
+	was only
+	> one of them.
+	>>
+	>> You're right, that line is erroneous; it should read
+	>>
+	>> size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LOCKMETHODCTL));
+	>>
+	>> Not a significant error but it should be changed for clarity ...
+
+2001-02-23 13:09  scrappy
+
+	* ChangeLogs/ChangeLog-7.1beta4-to-7.1beta5: 
+	update to beta5 ... I think I ran cvs2cl right this time? :)
+
