@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.1.1.1 1996/07/09 06:22:02 scrappy Exp $
+ * $Id: portal.h,v 1.2 1996/08/13 01:36:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ struct PortalD {
     QueryDesc				*queryDesc;
     TupleDesc                           attinfo;
     EState				*state;
-    void				(*cleanup)();
+    void				(*cleanup)(Portal);
 };
 
 /*
