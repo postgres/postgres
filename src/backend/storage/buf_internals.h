@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.2 1996/07/22 22:59:42 scrappy Exp $
+ * $Id: buf_internals.h,v 1.3 1996/07/23 05:43:11 scrappy Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -118,8 +118,8 @@ struct sbufdesc {
     int16		bufsmgr;	/* storage manager id for buffer */
     unsigned		refcount;	/* # of times buffer is pinned */
 
-    char *sb_dbname;	/* name of db in which buf belongs */
-    char *sb_relname;	/* name of reln */
+    char sb_dbname[NAMEDATALEN+1];	/* name of db in which buf belongs */
+    char sb_relname[NAMEDATALEN+1];	/* name of reln */
 #ifdef HAS_TEST_AND_SET
     /* can afford a dedicated lock if test-and-set locks are available */
     slock_t	io_in_progress_lock;
@@ -164,7 +164,7 @@ struct sbufdesc {
 
 #if defined(PORTNAME_BSD44_derived) || \
     defined(PORTNAME_bsdi) || \
-    defined(PORTNAME_i86pc_solaris) || \
+    defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_linux) || \
     defined(PORTNAME_sparc) || \
     defined(PORTNAME_sparc_solaris)

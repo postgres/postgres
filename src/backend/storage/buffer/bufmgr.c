@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.1.1.1 1996/07/09 06:21:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.2 1996/07/23 05:44:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -485,20 +485,23 @@ BufferAlloc(Relation reln,
 		    }
 		}
 		
+		if ( buf != NULL )
+		{
 #ifdef HAS_TEST_AND_SET
-		S_UNLOCK(&(buf->io_in_progress_lock));
+			S_UNLOCK(&(buf->io_in_progress_lock));
 #else /* !HAS_TEST_AND_SET */
-		if (buf->refcount > 1)
-		    SignalIO(buf);
+			if (buf->refcount > 1)
+			    SignalIO(buf);
 #endif /* !HAS_TEST_AND_SET */
 		
 		/* give up the buffer since we don't need it any more */
-		buf->refcount--;
-		PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
-		AddBufferToFreelist(buf);
-		buf->flags |= BM_FREE;
-		buf->flags &= ~BM_DIRTY;
-		buf->flags &= ~BM_IO_IN_PROGRESS;
+			buf->refcount--;
+			PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
+			AddBufferToFreelist(buf);
+			buf->flags |= BM_FREE;
+			buf->flags &= ~BM_DIRTY;
+			buf->flags &= ~BM_IO_IN_PROGRESS;
+		}
 		
 		SpinRelease(BufMgrLock);
 		
@@ -537,8 +540,8 @@ BufferAlloc(Relation reln,
     }
     
     /* record the database name and relation name for this buffer */
-    buf->sb_relname = pstrdup(reln->rd_rel->relname.data);
-    buf->sb_dbname = pstrdup(GetDatabaseName());
+    strcpy (buf->sb_relname, reln->rd_rel->relname.data);
+    strcpy (buf->sb_dbname, GetDatabaseName());
     
     /* remember which storage manager is responsible for it */
     buf->bufsmgr = reln->rd_rel->relsmgr;
@@ -1248,7 +1251,7 @@ PrintBufferDescs()
 	    elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, relname=%.*s, \
 blockNum=%d, flags=0x%x, refcount=%d %d)",
 		 i, buf->freeNext, buf->freePrev, NAMEDATALEN,
-		 &(buf->sb_relname), buf->tag.blockNum, buf->flags,
+		 buf->sb_relname, buf->tag.blockNum, buf->flags,
 		 buf->refcount, PrivateRefCount[i]);
 	}
 	SpinRelease(BufMgrLock);
@@ -1273,7 +1276,7 @@ PrintPinnedBufs()
 	if (PrivateRefCount[i] > 0)
 	    elog(NOTICE, "[%02d] (freeNext=%d, freePrev=%d, relname=%.*s, \
 blockNum=%d, flags=0x%x, refcount=%d %d)\n",
-		 i, buf->freeNext, buf->freePrev, NAMEDATALEN, &(buf->sb_relname),
+		 i, buf->freeNext, buf->freePrev, NAMEDATALEN, buf->sb_relname,
 		 buf->tag.blockNum, buf->flags,
 		 buf->refcount, PrivateRefCount[i]);
     }
