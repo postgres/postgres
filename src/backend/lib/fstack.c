@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.3 1996/11/06 08:27:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.4 1997/06/06 22:02:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,20 +39,11 @@
 #define FixedStackGetItem(stack, pointer) \
 	((FixedItem)((char *)(pointer) + (stack)->offset))
 
+#define	FixedStackIsValid(stack) ((bool)PointerIsValid(stack))
+
 /*
  * External functions
  */
-
-/*
- * FixedStackIsValid --
- *	True iff stack is valid.
- */
-static bool
-FixedStackIsValid(FixedStack stack)
-{
-    return ((bool)PointerIsValid(stack));
-}
-
 
 void
 FixedStackInit(FixedStack stack, Offset offset)
@@ -92,7 +83,7 @@ FixedStackPush(FixedStack stack, Pointer pointer)
     stack->top = item;
 }
 
-
+#ifndef	NO_ASSERT_CHECKING
 /*
  * FixedStackContains --
  *	True iff ordered stack contains given element.
@@ -122,6 +113,7 @@ FixedStackContains(FixedStack stack, Pointer pointer)
     }
     return (false);
 }
+#endif
 
 Pointer
 FixedStackGetTop(FixedStack stack)
