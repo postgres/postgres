@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.27 1997/10/30 16:36:39 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.28 1997/11/14 15:43:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ extern char *parseCh;
 #if defined(FLEX_SCANNER)
 /* MAX_PARSE_BUFFER is defined in miscadmin.h */
 #define YYLMAX MAX_PARSE_BUFFER
+#define YY_NO_UNPUT
 extern int myinput(char* buf, int max);
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max) {result = myinput(buf,max);}
