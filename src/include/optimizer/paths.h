@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.49 2000/12/14 22:30:45 tgl Exp $
+ * $Id: paths.h,v 1.50 2001/01/24 18:37:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "nodes/relation.h"
 
 /* default GEQO threshold (default value for geqo_rels) */
+/* If you change this, update backend/utils/misc/postgresql.sample.conf */
 #define DEFAULT_GEQO_RELS 11
 
 

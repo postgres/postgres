@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.27 2001/01/09 06:24:33 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.28 2001/01/24 18:37:31 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -76,50 +76,50 @@ bool SQL_inheritance        = true;
 
 enum config_type
 {
-    PGC_NONE = 0,
-    PGC_BOOL,
-    PGC_INT,
-    PGC_REAL,
-    PGC_STRING
+	PGC_NONE = 0,
+	PGC_BOOL,
+	PGC_INT,
+	PGC_REAL,
+	PGC_STRING
 };
 
 
 struct config_generic
 {
-    const char *name;
-    GucContext  context;
-    void       *variable;
+	const char *name;
+	GucContext  context;
+	void       *variable;
 };
 
 
 struct config_bool
 {
-    const char *name;
-    GucContext  context;
-    bool       *variable;
-    bool        default_val;
+	const char *name;
+	GucContext  context;
+	bool       *variable;
+	bool        default_val;
 };
 
 
 struct config_int
 {
-    const char *name;
-    GucContext  context;
-    int        *variable;
-    int         default_val;
-    int         min;
-    int         max;
+	const char *name;
+	GucContext  context;
+	int        *variable;
+	int         default_val;
+	int         min;
+	int         max;
 };
 
 
 struct config_real
 {
-    const char *name;
-    GucContext  context;
-    double     *variable;
-    double      default_val;
-    double      min;
-    double      max;
+	const char *name;
+	GucContext  context;
+	double     *variable;
+	double      default_val;
+	double      min;
+	double      max;
 };
 
 /*
@@ -130,11 +130,11 @@ struct config_real
  */
 struct config_string
 {
-    const char *name;
-    GucContext  context;
-    char      **variable;
-    const char *default_val;
-    bool       (*parse_hook)(const char *);
+	const char *name;
+	GucContext  context;
+	char      **variable;
+	const char *default_val;
+	bool       (*parse_hook)(const char *);
 };
 
 
@@ -152,7 +152,12 @@ struct config_string
  *
  * 4. Add a record below.
  *
- * 5. Don't forget to document that option.
+ * 5. Add it to postgresql.conf.sample
+ *
+ * 6. Don't forget to document that option.
+ *
+ * WHEN MAKING MODIFICATIONS, remember to update postgresql.conf.sample
+ *
  */
 
 
@@ -284,28 +289,28 @@ ConfigureNamesInt[] =
 	{"commit_delay",		PGC_USERSET,			&CommitDelay,
 	 5, 0, 1000},
 
-    {NULL, 0, NULL, 0, 0, 0}
+	{NULL, 0, NULL, 0, 0, 0}
 };
 
 
 static struct config_real
 ConfigureNamesReal[] =
 {
-    {"effective_cache_size",      PGC_USERSET,          &effective_cache_size,
-     DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX},
-    {"random_page_cost",          PGC_USERSET,          &random_page_cost,
-     DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX},
-    {"cpu_tuple_cost",            PGC_USERSET,          &cpu_tuple_cost,
-     DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX},
-    {"cpu_index_tuple_cost",      PGC_USERSET,          &cpu_index_tuple_cost,
-     DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX},
-    {"cpu_operator_cost",         PGC_USERSET,          &cpu_operator_cost,
-     DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX},
+	{"effective_cache_size",      PGC_USERSET,          &effective_cache_size,
+	 DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX},
+	{"random_page_cost",          PGC_USERSET,          &random_page_cost,
+	 DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX},
+	{"cpu_tuple_cost",            PGC_USERSET,          &cpu_tuple_cost,
+	 DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX},
+	{"cpu_index_tuple_cost",      PGC_USERSET,          &cpu_index_tuple_cost,
+	 DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX},
+	{"cpu_operator_cost",         PGC_USERSET,          &cpu_operator_cost,
+	 DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX},
 
-    {"geqo_selection_bias",       PGC_USERSET,          &Geqo_selection_bias,
-     DEFAULT_GEQO_SELECTION_BIAS,   MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS},
+	{"geqo_selection_bias",       PGC_USERSET,          &Geqo_selection_bias,
+	 DEFAULT_GEQO_SELECTION_BIAS,   MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS},
 
-    {NULL, 0, NULL, 0.0, 0.0, 0.0}
+	{NULL, 0, NULL, 0.0, 0.0, 0.0}
 };
 
 
@@ -319,10 +324,10 @@ ConfigureNamesString[] =
 	 "", NULL},
 
 #ifdef ENABLE_SYSLOG
-	{"syslog_facility",           PGC_POSTMASTER,	    &Syslog_facility, 
-	"LOCAL0", check_facility},	 
-	{"syslog_ident",              PGC_POSTMASTER,	    &Syslog_ident, 
-	"postgres", NULL},	 
+	{"syslog_facility",           PGC_POSTMASTER,	    &Syslog_facility,
+	"LOCAL0", check_facility},
+	{"syslog_ident",              PGC_POSTMASTER,	    &Syslog_ident,
+	"postgres", NULL},
 #endif
 
 	{"unix_socket_directory",	  PGC_POSTMASTER,       &UnixSocketDir,
@@ -346,43 +351,43 @@ ConfigureNamesString[] =
 static enum config_type
 find_option(const char * name, struct config_generic ** record)
 {
-    int i;
+	int i;
 
-    Assert(name);
+	Assert(name);
 
-    for (i = 0; ConfigureNamesBool[i].name; i++)
-        if (strcasecmp(ConfigureNamesBool[i].name, name)==0)
-        {
-            if (record)
-                *record = (struct config_generic *)&ConfigureNamesBool[i];
-            return PGC_BOOL;
-        }
+	for (i = 0; ConfigureNamesBool[i].name; i++)
+		if (strcasecmp(ConfigureNamesBool[i].name, name)==0)
+		{
+			if (record)
+				*record = (struct config_generic *)&ConfigureNamesBool[i];
+			return PGC_BOOL;
+		}
 
-    for (i = 0; ConfigureNamesInt[i].name; i++)
-        if (strcasecmp(ConfigureNamesInt[i].name, name)==0)
-        {
-            if (record)
-                *record = (struct config_generic *)&ConfigureNamesInt[i];
-            return PGC_INT;
-        }
+	for (i = 0; ConfigureNamesInt[i].name; i++)
+		if (strcasecmp(ConfigureNamesInt[i].name, name)==0)
+		{
+			if (record)
+				*record = (struct config_generic *)&ConfigureNamesInt[i];
+			return PGC_INT;
+		}
 
-    for (i = 0; ConfigureNamesReal[i].name; i++)
-        if (strcasecmp(ConfigureNamesReal[i].name, name)==0)
-        {
-            if (record)
-                *record = (struct config_generic *)&ConfigureNamesReal[i];
-            return PGC_REAL;
-        }
+	for (i = 0; ConfigureNamesReal[i].name; i++)
+		if (strcasecmp(ConfigureNamesReal[i].name, name)==0)
+		{
+			if (record)
+				*record = (struct config_generic *)&ConfigureNamesReal[i];
+			return PGC_REAL;
+		}
 
 	for (i = 0; ConfigureNamesString[i].name; i++)
-        if (strcasecmp(ConfigureNamesString[i].name, name)==0)
-        {
-            if (record)
-                *record = (struct config_generic *)&ConfigureNamesString[i];
-            return PGC_STRING;
-        }
+		if (strcasecmp(ConfigureNamesString[i].name, name)==0)
+		{
+			if (record)
+				*record = (struct config_generic *)&ConfigureNamesString[i];
+			return PGC_STRING;
+		}
 
-    return PGC_NONE;
+	return PGC_NONE;
 }
 
 
@@ -394,16 +399,16 @@ find_option(const char * name, struct config_generic ** record)
 void
 ResetAllOptions(void)
 {
-    int i;
+	int i;
 
-    for (i = 0; ConfigureNamesBool[i].name; i++)
-        *(ConfigureNamesBool[i].variable) = ConfigureNamesBool[i].default_val;
+	for (i = 0; ConfigureNamesBool[i].name; i++)
+		*(ConfigureNamesBool[i].variable) = ConfigureNamesBool[i].default_val;
 
-    for (i = 0; ConfigureNamesInt[i].name; i++)
-        *(ConfigureNamesInt[i].variable) = ConfigureNamesInt[i].default_val;
+	for (i = 0; ConfigureNamesInt[i].name; i++)
+		*(ConfigureNamesInt[i].variable) = ConfigureNamesInt[i].default_val;
 
-    for (i = 0; ConfigureNamesReal[i].name; i++)
-        *(ConfigureNamesReal[i].variable) = ConfigureNamesReal[i].default_val;
+	for (i = 0; ConfigureNamesReal[i].name; i++)
+		*(ConfigureNamesReal[i].variable) = ConfigureNamesReal[i].default_val;
 
 	for (i = 0; ConfigureNamesString[i].name; i++)
 	{
@@ -433,55 +438,55 @@ ResetAllOptions(void)
 static bool
 parse_bool(const char * value, bool * result)
 {
-    size_t len = strlen(value);
+	size_t len = strlen(value);
 
-    if (strncasecmp(value, "true", len)==0)
-    {
-        if (result)
-            *result = true;
-    }
-    else if (strncasecmp(value, "false", len)==0)
-    {
-        if (result)
-            *result = false;
-    }
+	if (strncasecmp(value, "true", len)==0)
+	{
+		if (result)
+			*result = true;
+	}
+	else if (strncasecmp(value, "false", len)==0)
+	{
+		if (result)
+			*result = false;
+	}
 
-    else if (strncasecmp(value, "yes", len)==0)
-    {
-        if (result)
-            *result = true;
-    }
-    else if (strncasecmp(value, "no", len)==0)
-    {
-        if (result)
-            *result = false;
-    }
+	else if (strncasecmp(value, "yes", len)==0)
+	{
+		if (result)
+			*result = true;
+	}
+	else if (strncasecmp(value, "no", len)==0)
+	{
+		if (result)
+			*result = false;
+	}
 
-    else if (strcasecmp(value, "on")==0)
-    {
-        if (result)
-            *result = true;
-    }
-    else if (strcasecmp(value, "off")==0)
-    {
-        if (result)
-            *result = false;
-    }
+	else if (strcasecmp(value, "on")==0)
+	{
+		if (result)
+			*result = true;
+	}
+	else if (strcasecmp(value, "off")==0)
+	{
+		if (result)
+			*result = false;
+	}
 
-    else if (strcasecmp(value, "1")==0)
-    {
-        if (result)
-            *result = true;
-    }
-    else if (strcasecmp(value, "0")==0)
-    {
-        if (result)
-            *result = false;
-    }
+	else if (strcasecmp(value, "1")==0)
+	{
+		if (result)
+			*result = true;
+	}
+	else if (strcasecmp(value, "0")==0)
+	{
+		if (result)
+			*result = false;
+	}
 
-    else
-        return false;
-    return true;
+	else
+		return false;
+	return true;
 }
 
 
@@ -495,16 +500,16 @@ parse_bool(const char * value, bool * result)
 static bool
 parse_int(const char * value, int * result)
 {
-    long val;
-    char * endptr;
+	long val;
+	char * endptr;
 
-    errno = 0;
-    val = strtol(value, &endptr, 0);
-    if (endptr == value || *endptr != '\0' || errno == ERANGE)
-        return false;
-    if (result)
-        *result = (int)val;
-    return true;
+	errno = 0;
+	val = strtol(value, &endptr, 0);
+	if (endptr == value || *endptr != '\0' || errno == ERANGE)
+		return false;
+	if (result)
+		*result = (int)val;
+	return true;
 }
 
 
@@ -517,16 +522,16 @@ parse_int(const char * value, int * result)
 static bool
 parse_real(const char * value, double * result)
 {
-    double val;
-    char * endptr;
+	double val;
+	char * endptr;
 
-    errno = 0;
-    val = strtod(value, &endptr);
-    if (endptr == value || *endptr != '\0' || errno == ERANGE)
-        return false;
-    if (result)
-        *result = val;
-    return true;
+	errno = 0;
+	val = strtod(value, &endptr);
+	if (endptr == value || *endptr != '\0' || errno == ERANGE)
+		return false;
+	if (result)
+		*result = val;
+	return true;
 }
 
 
@@ -555,14 +560,14 @@ bool
 set_config_option(const char * name, const char * value, GucContext
 				  context, bool DoIt)
 {
-    struct config_generic * record;
-    enum config_type type;
+	struct config_generic * record;
+	enum config_type type;
 	int elevel;
 
 	elevel = (context == PGC_SIGHUP) ? DEBUG : ERROR;
 
-    type = find_option(name, &record);
-    if (type == PGC_NONE)
+	type = find_option(name, &record);
+	if (type == PGC_NONE)
 	{
 		elog(elevel, "'%s' is not a valid option name", name);
 		return false;
@@ -573,7 +578,7 @@ set_config_option(const char * name, const char * value, GucContext
 	 * precise rules. Note that we don't want to throw errors if we're
 	 * in the SIGHUP context. In that case we just ignore the attempt.
 	 */
-    if (record->context == PGC_POSTMASTER && context != PGC_POSTMASTER)
+	if (record->context == PGC_POSTMASTER && context != PGC_POSTMASTER)
 	{
 		if (context != PGC_SIGHUP)
 			elog(ERROR, "'%s' cannot be changed after server start", name);
@@ -607,83 +612,83 @@ set_config_option(const char * name, const char * value, GucContext
 	/*
 	 * Evaluate value and set variable
 	 */
-    switch(type)
-    {
-        case PGC_BOOL:
+	switch(type)
+	{
+		case PGC_BOOL:
 		{
 			struct config_bool * conf = (struct config_bool *)record;
 
-            if (value)
-            {
+			if (value)
+			{
 				bool boolval;
-                if (!parse_bool(value, &boolval))
+				if (!parse_bool(value, &boolval))
 				{
 					elog(elevel, "option '%s' requires a boolean value", name);
 					return false;
 				}
 				if (DoIt)
 					*conf->variable = boolval;
-            }
-            else if (DoIt)
-                *conf->variable = conf->default_val;
-            break;
+			}
+			else if (DoIt)
+				*conf->variable = conf->default_val;
+			break;
 		}
 
 		case PGC_INT:
-        {
-            struct config_int * conf = (struct config_int *)record;
+		{
+			struct config_int * conf = (struct config_int *)record;
 
-            if (value)
-            {
-                int intval;
+			if (value)
+			{
+				int intval;
 
-                if (!parse_int(value, &intval))
+				if (!parse_int(value, &intval))
 				{
-                    elog(elevel, "option '%s' expects an integer value", name);
+					elog(elevel, "option '%s' expects an integer value", name);
 					return false;
 				}
-                if (intval < conf->min || intval > conf->max)
+				if (intval < conf->min || intval > conf->max)
 				{
-                    elog(elevel, "option '%s' value %d is outside"
+					elog(elevel, "option '%s' value %d is outside"
 						 " of permissible range [%d .. %d]",
 						 name, intval, conf->min, conf->max);
 					return false;
 				}
 				if (DoIt)
 					*conf->variable = intval;
-            }
-            else if (DoIt)
-                *conf->variable = conf->default_val;
-            break;
-        }
+			}
+			else if (DoIt)
+				*conf->variable = conf->default_val;
+			break;
+		}
 
 		case PGC_REAL:
-        {
-            struct config_real * conf = (struct config_real *)record;
+		{
+			struct config_real * conf = (struct config_real *)record;
 
-            if (value)
-            {
-                double dval;
+			if (value)
+			{
+				double dval;
 
-                if (!parse_real(value, &dval))
+				if (!parse_real(value, &dval))
 				{
-                    elog(elevel, "option '%s' expects a real number", name);
+					elog(elevel, "option '%s' expects a real number", name);
 					return false;
 				}
-                if (dval < conf->min || dval > conf->max)
+				if (dval < conf->min || dval > conf->max)
 				{
-                    elog(elevel, "option '%s' value %g is outside"
+					elog(elevel, "option '%s' value %g is outside"
 						 " of permissible range [%g .. %g]",
 						 name, dval, conf->min, conf->max);
 					return false;
 				}
 				if (DoIt)
 					*conf->variable = dval;
-            }
-            else if (DoIt)
-                *conf->variable = conf->default_val;
-            break;
-        }
+			}
+			else if (DoIt)
+				*conf->variable = conf->default_val;
+			break;
+		}
 
 		case PGC_STRING:
 		{
@@ -727,7 +732,7 @@ set_config_option(const char * name, const char * value, GucContext
 		}
 
 		default: ;
-    }
+	}
 	return true;
 }
 
@@ -759,35 +764,35 @@ SetConfigOption(const char * name, const char * value, GucContext
 const char *
 GetConfigOption(const char * name)
 {
-    struct config_generic * record;
+	struct config_generic * record;
 	static char buffer[256];
 	enum config_type opttype;
 
-    opttype = find_option(name, &record);
+	opttype = find_option(name, &record);
 	if (opttype == PGC_NONE)
 		elog(ERROR, "Option '%s' is not recognized", name);
 
 	switch(opttype)
-    {
-        case PGC_BOOL:
-            return *((struct config_bool *)record)->variable ? "on" : "off";
+	{
+		case PGC_BOOL:
+			return *((struct config_bool *)record)->variable ? "on" : "off";
 
-        case PGC_INT:
+		case PGC_INT:
 			snprintf(buffer, 256, "%d", *((struct config_int *)record)->variable);
 			return buffer;
 
-        case PGC_REAL:
+		case PGC_REAL:
 			snprintf(buffer, 256, "%g", *((struct config_real *)record)->variable);
 			return buffer;
 
 		case PGC_STRING:
 			return *((struct config_string *)record)->variable;
 
-        default:
+		default:
 			;
-    }
-    return NULL;
-}    
+	}
+	return NULL;
+}
 
 
 
@@ -838,7 +843,7 @@ ParseLongOption(const char * string, char ** name, char ** value)
 
 
 #ifdef ENABLE_SYSLOG
-bool 
+bool
 check_facility(const char *facility)
 {
 	if (strcasecmp(facility,"LOCAL0") == 0) return true;

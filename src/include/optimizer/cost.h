@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.35 2000/10/05 19:48:33 momjian Exp $
+ * $Id: cost.h,v 1.36 2001/01/24 18:37:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 /* defaults for costsize.c's Cost parameters */
 /* NB: cost-estimation code should use the variables, not these constants! */
+/* If you change these, update backend/utils/misc/postgresql.sample.conf */
 #define DEFAULT_EFFECTIVE_CACHE_SIZE  1000.0	/* measured in pages */
 #define DEFAULT_RANDOM_PAGE_COST  4.0
 #define DEFAULT_CPU_TUPLE_COST	0.01

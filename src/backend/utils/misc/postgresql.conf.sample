@@ -18,3 +18,153 @@
 # Any option can also be given as a command line switch to the
 # postmaster, e.g., 'postmaster -c log_connections=on'. Some options
 # can be set at run-time with the 'SET' SQL command.
+
+
+#========================================================================
+
+
+#
+#	Connection Parameters
+#
+#tcpip_socket = false
+#ssl = false
+
+#max_connections = 32 # 1-1024
+
+#port = 5432 
+#hostname_lookup = false
+#show_source_port = false
+
+#unix_socket_directory = ""
+#unix_socket_group = ""
+#unix_socket_permissions = 0777
+
+#virtual_host = ""
+
+#krb_server_keyfile = ""
+
+
+#
+#	Performance
+#
+#sort_mem = 512
+#shared_buffers = 2*max_connections # min 16
+#fsync = true
+
+
+#
+#	Optimizer Parameters
+#
+#enable_seqscan = true
+#enable_indexscan = true
+#enable_tidscan = true
+#enable_sort = true
+#enable_nestloop = true
+#enable_mergejoin = true
+#enable_hashjoin = true
+
+#ksqo = false
+#geqo = true
+
+#effective_cache_size = 1000  # default in 8k pages
+#random_page_cost = 4
+#cpu_tuple_cost = 0.01
+#cpu_index_tuple_cost = 0.001
+#cpu_operator_cost = 0.0025
+#geqo_selection_bias = 2.0 # range 1.5-2.0
+
+
+#
+#	GEQO Optimizer Parameters
+#
+#geqo_threshold = 11
+#geqo_pool_size = 0  #default based in tables, range 128-1024
+#geqo_effort = 1
+#geqo_generations = 0
+#geqo_random_seed = -1 # auto-compute seed
+
+
+#
+#	Inheritance
+#
+#sql_inheritance = true
+
+
+#
+#	Deadlock
+#
+#deadlock_timeout = 1000
+
+
+#
+#	Expression Depth Limitation
+#
+#max_expr_depth = 10000 # min 10
+
+
+#
+#	Write-ahead log (WAL)
+#
+#wal_buffers = 8 # min 4
+#wal_files = 0 # range 0-64
+#wal_debug = 0 # range 0-16
+#commit_delay = 5 # range 0-1000
+#checkpoint_timeout = 300 # range 30-1800
+
+
+#
+#	Debug display
+#
+#silent_mode = false
+
+#log_connections = false
+#log_timestamp = false
+#log_pid = false
+
+#debug_level = 0 # range 0-16
+
+#debug_print_query = false
+#debug_print_parse = false
+#debug_print_rewritten = false
+#debug_print_plan = false
+#debug_pretty_print = false
+
+#ifdef USE_ASSERT_CHECKING
+#debug_assertions = true
+#endif
+
+
+#
+#	Syslog
+#
+#ifdef ENABLE_SYSLOG
+#syslog = 0 # range 0-2
+#syslog_facility = "LOCAL0"
+#syslog_ident = "postgres"
+#endif
+
+
+#
+#	Statistics
+#
+#show_parser_stats = false
+#show_planner_stats = false
+#show_executor_stats = false
+#show_query_stats = false
+#ifdef BTREE_BUILD_STATS
+#show_btree_build_stats = false
+#endif
+
+
+#
+#	Lock Tracing
+#
+#trace_notify = false
+#ifdef LOCK_DEBUG
+#trace_locks = false
+#trace_userlocks = false
+#trace_spinlocks = false
+#debug_deadlocks = false
+#trace_lock_oidmin = 16384
+#trace_lock_table = 0
+#endif
