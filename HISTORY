@@ -39,6 +39,7 @@ Generate elog(ERROR) on over-large integer(Bruce)
 Allow multiple-argument functions in constraint clauses(Thomas)
 Check boolean input literals for 'true','false','yes','no','1','0'
 	and throw elog(ERROR) if unrecognized(Thomas)
+Change default table creation from ACL_RD to ACL_NO (aka private tables)(marc)
 
 
 Enhancements
