@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.194 2000/10/05 19:11:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.195 2000/10/07 00:58:17 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -59,7 +59,6 @@
 
 extern List *parsetree;			/* final parse result is delivered here */
 
-static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
 static Oid	*param_type_info;
 static int	pfunc_num_args;
@@ -161,7 +160,7 @@ static void doNegateFloat(Value *v);
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, copy_null, def_name,
 		database_name, access_method_clause, access_method, attr_name,
-		class, index_name, name, func_name, file_name, aggr_argtype
+		class, index_name, name, func_name, file_name
 
 %type <str>		opt_id,
 		all_Op, MathOp, opt_name,
@@ -183,7 +182,7 @@ static void doNegateFloat(Value *v);
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
 		opt_select_limit
 
-%type <typnam>	func_arg, func_return
+%type <typnam>	func_arg, func_return, aggr_argtype
 
 %type <boolean>	opt_arg, TriggerForOpt, TriggerForType, OptTemp
 
@@ -1541,7 +1540,7 @@ CreateAsStmt:  CREATE OptTemp TABLE relation_name OptUnder OptCreateAs AS Select
 					n->istemp = $2;
 					n->into = $4;
                     if ($5 != NIL)
-						yyerror("CREATE TABLE/AS SELECT does not support UNDER");
+						elog(ERROR,"CREATE TABLE/AS SELECT does not support UNDER");
 					if ($6 != NIL)
 						mapTargetColumns($6, n->targetList);
 					$$ = $8;
@@ -2009,8 +2008,8 @@ CommentStmt:	COMMENT ON comment_type name IS comment_text
 				CommentStmt *n = makeNode(CommentStmt);
 				n->objtype = $3;
 				n->objname = $4;
-				n->objproperty = $5;
-				n->objlist = NULL;
+				n->objproperty = NULL;
+				n->objlist = makeList1($5);
 				n->comment = $7;
 				$$ = (Node *) n;
 			}
@@ -2309,7 +2308,7 @@ grantee:  PUBLIC
 
 opt_with_grant:  WITH GRANT OPTION
 				{
-					yyerror("WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
+					elog(ERROR,"WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
 				 }
 		| /*EMPTY*/
 		;
@@ -2471,7 +2470,7 @@ ProcedureStmt:	CREATE FUNCTION func_name func_args
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->funcname = $3;
-					n->defArgs = $4;
+					n->argTypes = $4;
 					n->returnType = (Node *)$6;
 					n->withClause = $11;
 					n->as = $8;
@@ -2488,29 +2487,12 @@ func_args:  '(' func_args_list ')'				{ $$ = $2; }
 		;
 
 func_args_list:  func_arg
-				{	$$ = makeList1(makeString($1->name)); }
+				{	$$ = makeList1($1); }
 		| func_args_list ',' func_arg
-				{	$$ = lappend($1, makeString($3->name)); }
+				{	$$ = lappend($1, $3); }
 		;
 
-/* Would be nice to use the full Typename production for these fields,
- * but that one sometimes dives into the catalogs looking for valid types.
- * Arguments like "opaque" are valid when defining functions,
- * so that won't work here. The only thing we give up is array notation,
- * which isn't meaningful in this context anyway.
- * - thomas 2000-03-25
- * The following productions are difficult, since it is difficult to
- * distinguish between TokenId and SimpleTypename:
-		opt_arg TokenId SimpleTypename
-				{
-					$$ = $3;
-				}
-		| TokenId SimpleTypename
-				{
-					$$ = $2;
-				}
- */
-func_arg:  opt_arg SimpleTypename
+func_arg:  opt_arg Typename
 				{
 					/* We can catch over-specified arguments here if we want to,
 					 * but for now better to silently swallow typmod, etc.
@@ -2518,7 +2500,7 @@ func_arg:  opt_arg SimpleTypename
 					 */
 					$$ = $2;
 				}
-		| SimpleTypename
+		| Typename
 				{
 					$$ = $1;
 				}
@@ -2546,18 +2528,13 @@ func_as: Sconst
 				{ 	$$ = makeList2(makeString($1), makeString($3)); }
 		;
 
-func_return:  SimpleTypename
+func_return:  Typename
 				{
 					/* We can catch over-specified arguments here if we want to,
 					 * but for now better to silently swallow typmod, etc.
 					 * - thomas 2000-03-22
 					 */
 					$$ = $1;
-				}
-		| SETOF SimpleTypename
-				{
-					$$ = $2;
-					$$->setof = TRUE;
 				}
 		;
 
@@ -2599,12 +2576,12 @@ RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 				{
 						RemoveAggrStmt *n = makeNode(RemoveAggrStmt);
 						n->aggname = $3;
-						n->aggtype = $4;
+						n->aggtype = (Node *) $4;
 						$$ = (Node *)n;
 				}
 		;
 
-aggr_argtype:  name								{ $$ = $1; }
+aggr_argtype:  Typename							{ $$ = $1; }
 		| '*'									{ $$ = NULL; }
 		;
 
@@ -2628,16 +2605,16 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 				}
 		;
 
-oper_argtypes:	name
+oper_argtypes:	Typename
 				{
 				   elog(ERROR,"parser: argument type missing (use NONE for unary operators)");
 				}
-		| name ',' name
-				{ $$ = makeList2(makeString($1), makeString($3)); }
-		| NONE ',' name			/* left unary */
-				{ $$ = makeList2(NULL, makeString($3)); }
-		| name ',' NONE			/* right unary */
-				{ $$ = makeList2(makeString($1), NULL); }
+		| Typename ',' Typename
+				{ $$ = makeList2($1, $3); }
+		| NONE ',' Typename			/* left unary */
+				{ $$ = makeList2(NULL, $3); }
+		| Typename ',' NONE			/* right unary */
+				{ $$ = makeList2($1, NULL); }
 		;
 
 
@@ -3832,23 +3809,6 @@ Typename:  SimpleTypename opt_array_bounds
 				{
 					$$ = $1;
 					$$->arrayBounds = $2;
-
-					/* Is this the name of a complex type? If so, implement
-					 * it as a set.
-					 */
-					if (strcmp(saved_relname, $$->name) == 0)
-						/* This attr is the same type as the relation
-						 * being defined. The classic example: create
-						 * emp(name=text,mgr=emp)
-						 */
-						$$->setof = TRUE;
-					else if (typeTypeRelid(typenameType($$->name)) != InvalidOid)
-						 /* (Eventually add in here that the set can only
-						  * contain one element.)
-						  */
-						$$->setof = TRUE;
-					else
-						$$->setof = FALSE;
 				}
 		| SETOF SimpleTypename
 				{
@@ -3909,7 +3869,7 @@ Numeric:  FLOAT opt_float
 		| DECIMAL opt_decimal
 				{
 					$$ = makeNode(TypeName);
-					$$->name = xlateSqlType("numeric");
+					$$->name = xlateSqlType("decimal");
 					$$->typmod = $2;
 				}
 		| DEC opt_decimal
@@ -5245,17 +5205,15 @@ update_target_el:  ColId opt_indirection '=' a_expr
 relation_name:	SpecialRuleRelation
 				{
 					$$ = $1;
-					StrNCpy(saved_relname, $1, NAMEDATALEN);
 				}
 		| ColId
 				{
 					/* disallow refs to variable system tables */
 					if (strcmp(LogRelationName, $1) == 0
-					   || strcmp(VariableRelationName, $1) == 0)
+						|| strcmp(VariableRelationName, $1) == 0)
 						elog(ERROR,"%s cannot be accessed by users",$1);
 					else
 						$$ = $1;
-					StrNCpy(saved_relname, $1, NAMEDATALEN);
 				}
 		;
 
@@ -5298,7 +5256,7 @@ AexprConst:  Iconst
 					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}
-		/* The SimpleTypename rule formerly used Typename,
+		/* This rule formerly used Typename,
 		 * but that causes reduce conflicts with subscripted column names.
 		 * Now, separate into ConstTypename and ConstInterval,
 		 * to allow implementing the SQL92 syntax for INTERVAL literals.
@@ -5383,6 +5341,7 @@ ColId:  generic							{ $$ = $1; }
 		| TokenId						{ $$ = $1; }
 		| INTERVAL						{ $$ = "interval"; }
 		| NATIONAL						{ $$ = "national"; }
+		| NONE							{ $$ = "none"; }
 		| PATH_P						{ $$ = "path"; }
 		| SERIAL						{ $$ = "serial"; }
 		| TIME							{ $$ = "time"; }
@@ -5595,7 +5554,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| NATURAL						{ $$ = "natural"; }
 		| NCHAR							{ $$ = "nchar"; }
 		| NEW							{ $$ = "new"; }
-		| NONE							{ $$ = "none"; }
 		| NOT							{ $$ = "not"; }
 		| NOTNULL						{ $$ = "notnull"; }
 		| NULLIF						{ $$ = "nullif"; }
@@ -5851,7 +5809,6 @@ xlateSqlType(char *name)
 
 void parser_init(Oid *typev, int nargs)
 {
-	saved_relname[0] = '\0';
 	QueryIsRule = FALSE;
 	/*
 	 * Keep enough information around to fill out the type of param nodes

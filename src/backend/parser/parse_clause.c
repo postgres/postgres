@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.69 2000/10/05 19:11:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.70 2000/10/07 00:58:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,7 +375,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	save_joinlist = pstate->p_joinlist;
 	pstate->p_rtable = NIL;
 	pstate->p_joinlist = NIL;
-	parsetrees = parse_analyze(makeList1(r->subquery), pstate);
+	parsetrees = parse_analyze(r->subquery, pstate);
 	pstate->p_rtable = save_rtable;
 	pstate->p_joinlist = save_joinlist;
 

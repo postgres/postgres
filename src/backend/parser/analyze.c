@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.160 2000/10/05 19:11:33 tgl Exp $
+ *	$Id: analyze.c,v 1.161 2000/10/07 00:58:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,48 +69,44 @@ static List *extras_after;
 
 /*
  * parse_analyze -
- *	  analyze a list of parse trees and transform them if necessary.
+ *	  analyze a raw parse tree and transform it to Query form.
  *
- * Returns a list of transformed parse trees. Optimizable statements are
- * all transformed to Query while the rest stays the same.
- *
+ * The result is a List of Query nodes (we need a list since some commands
+ * produce multiple Queries).  Optimizable statements require considerable
+ * transformation, while many utility-type statements are simply hung off
+ * a dummy CMD_UTILITY Query node.
  */
 List *
-parse_analyze(List *pl, ParseState *parentParseState)
+parse_analyze(Node *parseTree, ParseState *parentParseState)
 {
 	List	   *result = NIL;
+	ParseState *pstate = make_parsestate(parentParseState);
+	Query	   *query;
 
-	while (pl != NIL)
+	extras_before = extras_after = NIL;
+
+	query = transformStmt(pstate, parseTree);
+	release_pstate_resources(pstate);
+
+	while (extras_before != NIL)
 	{
-		ParseState *pstate = make_parsestate(parentParseState);
-		Query	   *parsetree;
-
-		extras_before = extras_after = NIL;
-
-		parsetree = transformStmt(pstate, lfirst(pl));
+		result = lappend(result,
+						 transformStmt(pstate, lfirst(extras_before)));
 		release_pstate_resources(pstate);
-
-		while (extras_before != NIL)
-		{
-			result = lappend(result,
-							 transformStmt(pstate, lfirst(extras_before)));
-			release_pstate_resources(pstate);
-			extras_before = lnext(extras_before);
-		}
-
-		result = lappend(result, parsetree);
-
-		while (extras_after != NIL)
-		{
-			result = lappend(result,
-							 transformStmt(pstate, lfirst(extras_after)));
-			release_pstate_resources(pstate);
-			extras_after = lnext(extras_after);
-		}
-
-		pfree(pstate);
-		pl = lnext(pl);
+		extras_before = lnext(extras_before);
 	}
+
+	result = lappend(result, query);
+
+	while (extras_after != NIL)
+	{
+		result = lappend(result,
+						 transformStmt(pstate, lfirst(extras_after)));
+		release_pstate_resources(pstate);
+		extras_after = lnext(extras_after);
+	}
+
+	pfree(pstate);
 
 	return result;
 }
@@ -126,8 +122,7 @@ release_pstate_resources(ParseState *pstate)
 
 /*
  * transformStmt -
- *	  transform a Parse tree. If it is an optimizable statement, turn it
- *	  into a Query tree.
+ *	  transform a Parse tree into a Query tree.
  */
 static Query *
 transformStmt(ParseState *pstate, Node *parseTree)
@@ -353,7 +348,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		 * from a stand-alone SELECT. (Indeed, Postgres up through 6.5 had
 		 * bugs of just that nature...)
 		 */
-		selectList = parse_analyze(makeList1(stmt->selectStmt), pstate);
+		selectList = parse_analyze(stmt->selectStmt, pstate);
 		Assert(length(selectList) == 1);
 
 		selectQuery = (Query *) lfirst(selectList);
@@ -1933,7 +1928,7 @@ transformSetOperationTree(ParseState *pstate, Node *node)
 		 */
 		save_rtable = pstate->p_rtable;
 		pstate->p_rtable = NIL;
-		selectList = parse_analyze(makeList1(stmt), pstate);
+		selectList = parse_analyze((Node *) stmt, pstate);
 		pstate->p_rtable = save_rtable;
 
 		Assert(length(selectList) == 1);
@@ -2752,6 +2747,7 @@ makeFromExpr(List *fromlist, Node *quals)
 static void
 transformColumnType(ParseState *pstate, ColumnDef *column)
 {
+	TypeName   *typename = column->typename;
 
 	/*
 	 * If the column doesn't have an explicitly specified typmod, check to
@@ -2760,18 +2756,33 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	 * Note that we deliberately do NOT look at array or set information
 	 * here; "numeric[]" needs the same default typmod as "numeric".
 	 */
-	if (column->typename->typmod == -1)
+	if (typename->typmod == -1)
 	{
-		switch (typeTypeId(typenameType(column->typename->name)))
+		switch (typeTypeId(typenameType(typename->name)))
 		{
-				case BPCHAROID:
+			case BPCHAROID:
 				/* "char" -> "char(1)" */
-				column->typename->typmod = VARHDRSZ + 1;
+				typename->typmod = VARHDRSZ + 1;
 				break;
 			case NUMERICOID:
-				column->typename->typmod = VARHDRSZ +
+				typename->typmod = VARHDRSZ +
 					((NUMERIC_DEFAULT_PRECISION << 16) | NUMERIC_DEFAULT_SCALE);
 				break;
 		}
 	}
+
+	/*
+	 * Is this the name of a complex type? If so, implement
+	 * it as a set.
+	 *
+	 * XXX this is a hangover from ancient Berkeley code that probably
+	 * doesn't work anymore anyway.
+	 */
+	 if (typeTypeRelid(typenameType(typename->name)) != InvalidOid)
+	 {
+		 /* (Eventually add in here that the set can only
+		  * contain one element.)
+		  */
+		 typename->setof = true;
+	 }
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.20 2000/08/24 03:29:09 tgl Exp $
+ * $Id: defrem.h,v 1.21 2000/10/07 00:58:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ extern void DefineType(char *name, List *parameters);
 /*
  * prototypes in remove.c
  */
-extern void RemoveFunction(char *functionName, int nargs, List *argNameList);
+extern void RemoveFunction(char *functionName, List *argTypes);
 extern void RemoveOperator(char *operatorName,
 			   char *typeName1, char *typeName2);
 extern void RemoveType(char *typeName);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.34 2000/09/06 14:15:28 petere Exp $
+ * $Id: tcopprot.h,v 1.35 2000/10/07 00:58:23 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -35,9 +35,9 @@ extern bool ShowPortNumber;
 extern List *pg_parse_and_rewrite(char *query_string,
 								  Oid *typev, int nargs);
 extern Plan *pg_plan_query(Query *querytree);
-extern void pg_exec_query_dest(char *query_string,
-							   CommandDest dest,
-							   MemoryContext parse_context);
+extern void pg_exec_query_string(char *query_string,
+								 CommandDest dest,
+								 MemoryContext parse_context);
 
 #endif	 /* BOOTSTRAP_INCLUDE */
 

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.75 2000/10/05 19:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.76 2000/10/07 00:58:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -753,23 +753,9 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 static bool
 _equalChangeACLStmt(ChangeACLStmt *a, ChangeACLStmt *b)
 {
-	if (a->aclitem && b->aclitem)
-	{
-		if (a->aclitem->ai_id != b->aclitem->ai_id)
-			return false;
-		if (a->aclitem->ai_idtype != b->aclitem->ai_idtype)
-			return false;
-		if (a->aclitem->ai_mode != b->aclitem->ai_mode)
-			return false;
-	}
-	else
-	{
-		if (a->aclitem != b->aclitem)
-			return false;		/* one NULL, one not */
-	}
-	if (a->modechg != b->modechg)
-		return false;
 	if (!equal(a->relNames, b->relNames))
+		return false;
+	if (!equalstr(a->aclString, b->aclString))
 		return false;
 
 	return true;
@@ -956,7 +942,7 @@ _equalProcedureStmt(ProcedureStmt *a, ProcedureStmt *b)
 {
 	if (!equalstr(a->funcname, b->funcname))
 		return false;
-	if (!equal(a->defArgs, b->defArgs))
+	if (!equal(a->argTypes, b->argTypes))
 		return false;
 	if (!equal(a->returnType, b->returnType))
 		return false;
@@ -975,7 +961,7 @@ _equalRemoveAggrStmt(RemoveAggrStmt *a, RemoveAggrStmt *b)
 {
 	if (!equalstr(a->aggname, b->aggname))
 		return false;
-	if (!equalstr(a->aggtype, b->aggtype))
+	if (!equal(a->aggtype, b->aggtype))
 		return false;
 
 	return true;

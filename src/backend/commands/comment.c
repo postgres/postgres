@@ -25,6 +25,8 @@
 #include "commands/comment.h"
 #include "miscadmin.h"
 #include "parser/parse.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_func.h"
 #include "rewrite/rewriteRemove.h"
 #include "utils/acl.h"
 #include "utils/fmgroids.h"
@@ -46,7 +48,7 @@ static void CommentAttribute(char *relation, char *attrib, char *comment);
 static void CommentDatabase(char *database, char *comment);
 static void CommentRewrite(char *rule, char *comment);
 static void CommentType(char *type, char *comment);
-static void CommentAggregate(char *aggregate, char *aggtype, char *comment);
+static void CommentAggregate(char *aggregate, List *arguments, char *comment);
 static void CommentProc(char *function, List *arguments, char *comment);
 static void CommentOperator(char *opname, List *arguments, char *comment);
 static void CommentTrigger(char *trigger, char *relation, char *comments);
@@ -92,7 +94,7 @@ CommentObject(int objtype, char *objname, char *objproperty,
 			CommentType(objname, comment);
 			break;
 		case (AGGREGATE):
-			CommentAggregate(objname, objproperty, comment);
+			CommentAggregate(objname, objlist, comment);
 			break;
 		case (FUNCTION):
 			CommentProc(objname, objlist, comment);
@@ -544,9 +546,10 @@ CommentType(char *type, char *comment)
 */
 
 static void
-CommentAggregate(char *aggregate, char *argument, char *comment)
+CommentAggregate(char *aggregate, List *arguments, char *comment)
 {
-
+	TypeName   *aggtype = (TypeName *) lfirst(arguments);
+	char	   *aggtypename = NULL;
 	HeapTuple	aggtuple;
 	Oid			baseoid,
 				oid;
@@ -554,11 +557,12 @@ CommentAggregate(char *aggregate, char *argument, char *comment)
 
 	/*** First, attempt to determine the base aggregate oid ***/
 
-	if (argument)
+	if (aggtype)
 	{
-		baseoid = TypeGet(argument, &defined);
+		aggtypename = TypeNameToInternalName(aggtype);
+		baseoid = TypeGet(aggtypename, &defined);
 		if (!OidIsValid(baseoid))
-			elog(ERROR, "aggregate type '%s' does not exist", argument);
+			elog(ERROR, "type '%s' does not exist", aggtypename);
 	}
 	else
 		baseoid = 0;
@@ -568,10 +572,10 @@ CommentAggregate(char *aggregate, char *argument, char *comment)
 #ifndef NO_SECURITY
 	if (!pg_aggr_ownercheck(GetUserId(), aggregate, baseoid))
 	{
-		if (argument)
+		if (aggtypename)
 		{
 			elog(ERROR, "you are not permitted to comment on aggregate '%s' %s '%s'",
-				 aggregate, "with type", argument);
+				 aggregate, "with type", aggtypename);
 		}
 		else
 		{
@@ -587,10 +591,10 @@ CommentAggregate(char *aggregate, char *argument, char *comment)
 								   ObjectIdGetDatum(baseoid), 0, 0);
 	if (!HeapTupleIsValid(aggtuple))
 	{
-		if (argument)
+		if (aggtypename)
 		{
 			elog(ERROR, "aggregate type '%s' does not exist for aggregate '%s'",
-				 argument, aggregate);
+				 aggtypename, aggregate);
 		}
 		else
 			elog(ERROR, "aggregate '%s' does not exist", aggregate);
@@ -622,7 +626,6 @@ CommentProc(char *function, List *arguments, char *comment)
 				functuple;
 	Oid			oid,
 				argoids[FUNC_MAX_ARGS];
-	char	   *argument;
 	int			i,
 				argcount;
 
@@ -635,18 +638,20 @@ CommentProc(char *function, List *arguments, char *comment)
 			 FUNC_MAX_ARGS);
 	for (i = 0; i < argcount; i++)
 	{
-		argument = strVal(lfirst(arguments));
+		TypeName   *t = (TypeName *) lfirst(arguments);
+		char	   *typnam = TypeNameToInternalName(t);
+
 		arguments = lnext(arguments);
-		if (strcmp(argument, "opaque") == 0)
-			argoids[i] = 0;
+
+		if (strcmp(typnam, "opaque") == 0)
+			argoids[i] = InvalidOid;
 		else
 		{
 			argtuple = SearchSysCacheTuple(TYPENAME,
-										   PointerGetDatum(argument),
+										   PointerGetDatum(typnam),
 										   0, 0, 0);
 			if (!HeapTupleIsValid(argtuple))
-				elog(ERROR, "function argument type '%s' does not exist",
-					 argument);
+				elog(ERROR, "CommentProc: type '%s' not found", typnam);
 			argoids[i] = argtuple->t_data->t_oid;
 		}
 	}
@@ -664,10 +669,9 @@ CommentProc(char *function, List *arguments, char *comment)
 	functuple = SearchSysCacheTuple(PROCNAME, PointerGetDatum(function),
 									Int32GetDatum(argcount),
 									PointerGetDatum(argoids), 0);
-
 	if (!HeapTupleIsValid(functuple))
-		elog(ERROR, "function '%s' with the supplied %s does not exist",
-			 function, "argument list");
+		func_error("CommentProc", function, argcount, argoids, NULL);
+
 	oid = functuple->t_data->t_oid;
 
 	/*** Call CreateComments() to create/drop the comments ***/
@@ -691,23 +695,24 @@ CommentProc(char *function, List *arguments, char *comment)
 static void
 CommentOperator(char *opername, List *arguments, char *comment)
 {
-
+	TypeName   *typenode1 = (TypeName *) lfirst(arguments);
+	TypeName   *typenode2 = (TypeName *) lsecond(arguments);
+	char		oprtype = 0,
+			   *lefttype = NULL,
+			   *righttype = NULL;
 	Form_pg_operator data;
 	HeapTuple	optuple;
 	Oid			oid,
 				leftoid = InvalidOid,
 				rightoid = InvalidOid;
 	bool		defined;
-	char		oprtype = 0,
-			   *lefttype = NULL,
-			   *righttype = NULL;
 
 	/*** Initialize our left and right argument types ***/
 
-	if (lfirst(arguments) != NULL)
-		lefttype = strVal(lfirst(arguments));
-	if (lsecond(arguments) != NULL)
-		righttype = strVal(lsecond(arguments));
+	if (typenode1 != NULL)
+		lefttype = TypeNameToInternalName(typenode1);
+	if (typenode2 != NULL)
+		righttype = TypeNameToInternalName(typenode2);
 
 	/*** Attempt to fetch the left oid, if specified ***/
 
@@ -732,9 +737,9 @@ CommentOperator(char *opername, List *arguments, char *comment)
 	if (OidIsValid(leftoid) && (OidIsValid(rightoid)))
 		oprtype = 'b';
 	else if (OidIsValid(leftoid))
-		oprtype = 'l';
-	else if (OidIsValid(rightoid))
 		oprtype = 'r';
+	else if (OidIsValid(rightoid))
+		oprtype = 'l';
 	else
 		elog(ERROR, "operator '%s' is of an illegal type'", opername);
 
@@ -769,7 +774,6 @@ CommentOperator(char *opername, List *arguments, char *comment)
 	/*** Call CreateComments() to create/drop the comments ***/
 
 	CreateComments(oid, comment);
-
 }
 
 /*------------------------------------------------------------------

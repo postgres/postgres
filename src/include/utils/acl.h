@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.28 2000/10/02 04:49:27 tgl Exp $
+ * $Id: acl.h,v 1.29 2000/10/07 00:58:23 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -167,12 +167,15 @@ extern char *aclcheck_error_strings[];
 /*#define ACLDEBUG_TRACE*/
 
 /*
- * routines used internally (parser, etc.)
+ * routines used internally
  */
 extern Acl *acldefault(char *relname, AclId ownerid);
 
 extern Acl *aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg);
 
+/*
+ * routines used by the parser
+ */
 extern char *aclmakepriv(char *old_privlist, char new_priv);
 extern char *aclmakeuser(char *user_type, char *user);
 extern ChangeACLStmt *makeAclStmt(char *privs, List *rel_list, char *grantee,
@@ -187,6 +190,7 @@ extern Datum aclitemout(PG_FUNCTION_ARGS);
 extern Datum aclinsert(PG_FUNCTION_ARGS);
 extern Datum aclremove(PG_FUNCTION_ARGS);
 extern Datum aclcontains(PG_FUNCTION_ARGS);
+extern void ExecuteChangeACLStmt(ChangeACLStmt *stmt);
 
 /*
  * prototypes for functions in aclchk.c

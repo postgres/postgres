@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.85 2000/10/05 19:11:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.86 2000/10/07 00:58:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,8 +294,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					break;
 				}
 				pstate->p_hasSubLinks = true;
-				qtrees = parse_analyze(makeList1(sublink->subselect),
-									   pstate);
+				qtrees = parse_analyze(sublink->subselect, pstate);
 				if (length(qtrees) != 1)
 					elog(ERROR, "Bad query in subselect");
 				qtree = (Query *) lfirst(qtrees);
@@ -821,19 +820,21 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 static Node *
 parser_typecast_constant(Value *expr, TypeName *typename)
 {
-	Const	   *con;
 	Type		tp;
 	Datum		datum;
+	Const	   *con;
 	char	   *const_string = NULL;
 	bool		string_palloced = false;
 	bool		isNull = false;
 
+	tp = typenameType(TypeNameToInternalName(typename));
+
 	switch (nodeTag(expr))
 	{
 		case T_Integer:
-			string_palloced = true;
 			const_string = DatumGetCString(DirectFunctionCall1(int4out,
 										   Int32GetDatum(expr->val.ival)));
+			string_palloced = true;
 			break;
 		case T_Float:
 		case T_String:
@@ -844,18 +845,8 @@ parser_typecast_constant(Value *expr, TypeName *typename)
 			break;
 		default:
 			elog(ERROR, "Cannot cast this expression to type '%s'",
-				 typename->name);
+				 typeTypeName(tp));
 	}
-
-	if (typename->arrayBounds != NIL)
-	{
-		char		type_string[NAMEDATALEN + 2];
-
-		sprintf(type_string, "_%s", typename->name);
-		tp = (Type) typenameType(type_string);
-	}
-	else
-		tp = (Type) typenameType(typename->name);
 
 	if (isNull)
 		datum = (Datum) NULL;
@@ -892,15 +883,7 @@ parser_typecast_expression(ParseState *pstate,
 	Type		tp;
 	Oid			targetType;
 
-	if (typename->arrayBounds != NIL)
-	{
-		char		type_string[NAMEDATALEN + 2];
-
-		sprintf(type_string, "_%s", typename->name);
-		tp = (Type) typenameType(type_string);
-	}
-	else
-		tp = (Type) typenameType(typename->name);
+	tp = typenameType(TypeNameToInternalName(typename));
 	targetType = typeTypeId(tp);
 
 	if (inputType == InvalidOid)
@@ -924,4 +907,27 @@ parser_typecast_expression(ParseState *pstate,
 							  targetType, typename->typmod);
 
 	return expr;
+}
+
+/*
+ * Given a TypeName node as returned by the grammar, generate the internal
+ * name of the corresponding type.  Note this does NOT check if the type
+ * exists or not.
+ */
+char *
+TypeNameToInternalName(TypeName *typename)
+{
+	if (typename->arrayBounds != NIL)
+	{
+		/*
+		 * By convention, the name of an array type is the name of its
+		 * element type with "_" prepended.
+		 */
+		char   *arrayname = palloc(strlen(typename->name) + 2);
+
+		sprintf(arrayname, "_%s", typename->name);
+		return arrayname;
+	}
+	else
+		return typename->name;
 }

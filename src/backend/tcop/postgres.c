@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.177 2000/10/03 03:11:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.178 2000/10/07 00:58:18 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -47,6 +47,8 @@
 #include "nodes/print.h"
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
+#include "parser/analyze.h"
+#include "parser/parse.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/fastpath.h"
@@ -90,8 +92,6 @@ extern char ControlFilePath[];
 
 static bool	dontExecute = false;
 
-static bool IsEmptyQuery = false;
-
 /* note: these declarations had better match tcopprot.h */
 DLLIMPORT sigjmp_buf Warn_restart;
 
@@ -129,6 +129,10 @@ int			XfuncMode = 0;
 static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
+static List *pg_parse_query(char *query_string, Oid *typev, int nargs);
+static List *pg_analyze_and_rewrite(Node *parsetree);
+static void start_xact_command(void);
+static void finish_xact_command(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
 static void quickdie(SIGNAL_ARGS);
@@ -341,28 +345,66 @@ ReadCommand(StringInfo inBuf)
  *
  * A list of Query nodes is returned, since the string might contain
  * multiple queries and/or the rewriter might expand one query to several.
+ *
+ * NOTE: this routine is no longer used for processing interactive queries,
+ * but it is still needed for parsing of SQL function bodies.
  */
 List *
 pg_parse_and_rewrite(char *query_string,	/* string to execute */
 					 Oid *typev,			/* parameter types */
 					 int nargs)				/* number of parameters */
 {
+	List	   *raw_parsetree_list;
 	List	   *querytree_list;
-	List	   *querytree_list_item;
-	Query	   *querytree;
-	List	   *new_list;
+	List	   *list_item;
+
+	/* ----------------
+	 *	(1) parse the request string into a list of raw parse trees.
+	 * ----------------
+	 */
+	raw_parsetree_list = pg_parse_query(query_string, typev, nargs);
+
+	/* ----------------
+	 *	(2) Do parse analysis and rule rewrite.
+	 * ----------------
+	 */
+	querytree_list = NIL;
+	foreach(list_item, raw_parsetree_list)
+	{
+		Node   *parsetree = (Node *) lfirst(list_item);
+
+		querytree_list = nconc(querytree_list,
+							   pg_analyze_and_rewrite(parsetree));
+	}
+
+	return querytree_list;
+}
+
+/*
+ * Do raw parsing (only).
+ *
+ * A list of parsetrees is returned, since there might be multiple
+ * commands in the given string.
+ *
+ * NOTE: for interactive queries, it is important to keep this routine
+ * separate from the analysis & rewrite stages.  Analysis and rewriting
+ * cannot be done in an aborted transaction, since they require access to
+ * database tables.  So, we rely on the raw parser to determine whether
+ * we've seen a COMMIT or ABORT command; when we are in abort state, other
+ * commands are not processed any further than the raw parse stage.
+ */
+static List *
+pg_parse_query(char *query_string, Oid *typev, int nargs)
+{
+	List	   *raw_parsetree_list;
 
 	if (Debug_print_query)
 		elog(DEBUG, "query: %s", query_string);
 
-	/* ----------------
-	 *	(1) parse the request string into a list of parse trees
-	 * ----------------
-	 */
 	if (Show_parser_stats)
 		ResetUsage();
 
-	querytree_list = parser(query_string, typev, nargs);
+	raw_parsetree_list = parser(query_string, typev, nargs);
 
 	if (Show_parser_stats)
 	{
@@ -370,17 +412,53 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 		ShowUsage();
 	}
 
+	return raw_parsetree_list;
+}
+
+/*
+ * Given a raw parsetree (gram.y output), perform parse analysis and
+ * rule rewriting.
+ *
+ * A list of Query nodes is returned, since either the analyzer or the
+ * rewriter might expand one query to several.
+ *
+ * NOTE: for reasons mentioned above, this must be separate from raw parsing.
+ */
+static List *
+pg_analyze_and_rewrite(Node *parsetree)
+{
+	List	   *querytree_list;
+	List	   *list_item;
+	Query	   *querytree;
+	List	   *new_list;
+
 	/* ----------------
-	 *	(2) rewrite the queries, as necessary
+	 *	(1) Perform parse analysis.
+	 * ----------------
+	 */
+	if (Show_parser_stats)
+		ResetUsage();
+
+	querytree_list = parse_analyze(parsetree, NULL);
+
+	if (Show_parser_stats)
+	{
+		fprintf(StatFp, "PARSE ANALYSIS STATISTICS\n");
+		ShowUsage();
+		ResetUsage();
+	}
+
+	/* ----------------
+	 *	(2) Rewrite the queries, as necessary
 	 *
 	 *	rewritten queries are collected in new_list.  Note there may be
 	 *	more or fewer than in the original list.
 	 * ----------------
 	 */
 	new_list = NIL;
-	foreach(querytree_list_item, querytree_list)
+	foreach(list_item, querytree_list)
 	{
-		querytree = (Query *) lfirst(querytree_list_item);
+		querytree = (Query *) lfirst(list_item);
 
 		if (Debug_print_parse)
 		{
@@ -409,19 +487,18 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 
 	querytree_list = new_list;
 
+	if (Show_parser_stats)
+	{
+		fprintf(StatFp, "REWRITER STATISTICS\n");
+		ShowUsage();
+	}
+
 #ifdef COPY_PARSE_PLAN_TREES
-	/* Optional debugging check: pass parsetree output through copyObject() */
-	/*
-	 * Note: we run this test after rewrite, not before, because copyObject()
-	 * does not handle most kinds of nodes that are used only in raw parse
-	 * trees.  The present (bizarre) implementation of UNION/INTERSECT/EXCEPT
-	 * doesn't run analysis of the second and later subqueries until rewrite,
-	 * so we'd get false failures on these queries if we did it beforehand.
-	 */
+	/* Optional debugging check: pass querytree output through copyObject() */
 	new_list = (List *) copyObject(querytree_list);
 	/* This checks both copyObject() and the equal() routines... */
 	if (! equal(new_list, querytree_list))
-		elog(NOTICE, "pg_parse_and_rewrite: copyObject failed on parse tree");
+		elog(NOTICE, "pg_analyze_and_rewrite: copyObject failed on parse tree");
 	else
 		querytree_list = new_list;
 #endif
@@ -431,9 +508,9 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 		if (Debug_pretty_print)
 		{
 			elog(DEBUG, "rewritten parse tree:");
-			foreach(querytree_list_item, querytree_list)
+			foreach(list_item, querytree_list)
 			{
-				querytree = (Query *) lfirst(querytree_list_item);
+				querytree = (Query *) lfirst(list_item);
 				nodeDisplay(querytree);
 				printf("\n");
 			}
@@ -441,10 +518,9 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 		else
 		{
 			elog(DEBUG, "rewritten parse tree:");
-
-			foreach(querytree_list_item, querytree_list)
+			foreach(list_item, querytree_list)
 			{
-				querytree = (Query *) lfirst(querytree_list_item);
+				querytree = (Query *) lfirst(list_item);
 				elog(DEBUG, "%s", nodeToString(querytree));
 			}
 		}
@@ -514,7 +590,7 @@ pg_plan_query(Query *querytree)
 
 
 /* ----------------------------------------------------------------
- *		pg_exec_query_dest()
+ *		pg_exec_query_string()
  *
  *		Takes a querystring, runs the parser/utilities or
  *		parser/planner/executor over it as necessary.
@@ -545,21 +621,31 @@ pg_plan_query(Query *querytree)
  */
 
 void
-pg_exec_query_dest(char *query_string,	/* string to execute */
-				   CommandDest dest,	/* where results should go */
-				   MemoryContext parse_context)	/* context for parsetrees */
+pg_exec_query_string(char *query_string,	/* string to execute */
+					 CommandDest dest,		/* where results should go */
+					 MemoryContext parse_context) /* context for parsetrees */
 {
+	bool		xact_started;
 	MemoryContext oldcontext;
-	List	   *querytree_list,
-			   *querytree_item;
+	List	   *parsetree_list,
+			   *parsetree_item;
 
 	/*
-	 * If you called this routine with parse_context = CurrentMemoryContext,
-	 * you blew it.  They *must* be different, else the context reset
-	 * at the bottom of the loop will destroy the querytree list.
-	 * (We really ought to check that parse_context isn't a child of
-	 * CurrentMemoryContext either, but that would take more cycles than
-	 * it's likely to be worth.)
+	 * Start up a transaction command.  All queries generated by the
+	 * query_string will be in this same command block, *unless* we find
+	 * a BEGIN/COMMIT/ABORT statement; we have to force a new xact command
+	 * after one of those, else bad things will happen in xact.c.
+	 * (Note that this will possibly change execution memory context.)
+	 */
+	start_xact_command();
+	xact_started = true;
+
+	/*
+	 * parse_context *must* be different from the execution memory context,
+	 * else the context reset at the bottom of the loop will destroy the
+	 * parsetree list.  (We really ought to check that parse_context isn't a
+	 * child of CurrentMemoryContext either, but that would take more cycles
+	 * than it's likely to be worth.)
 	 */
 	Assert(parse_context != CurrentMemoryContext);
 
@@ -569,48 +655,57 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 	oldcontext = MemoryContextSwitchTo(parse_context);
 
 	/*
-	 * Parse and rewrite the query or queries.
+	 * Do basic parsing of the query or queries (this should be safe
+	 * even if we are in aborted transaction state!)
 	 */
-	querytree_list = pg_parse_and_rewrite(query_string, NULL, 0);
+	parsetree_list = pg_parse_query(query_string, NULL, 0);
 
 	/*
-	 * Switch back to execution context for planning and execution.
+	 * Switch back to execution context to enter the loop.
 	 */
 	MemoryContextSwitchTo(oldcontext);
 
 	/*
-	 * Run through the query or queries and execute each one.
+	 * Run through the parsetree(s) and process each one.
 	 */
-	foreach(querytree_item, querytree_list)
+	foreach(parsetree_item, parsetree_list)
 	{
-		Query	   *querytree = (Query *) lfirst(querytree_item);
+		Node   *parsetree = (Node *) lfirst(parsetree_item);
+		bool	isTransactionStmt;
+		List   *querytree_list,
+			   *querytree_item;
 
-		/* if we got a cancel signal in parsing or prior command, quit */
-		if (QueryCancel)
-			CancelQuery();
+		/* Transaction control statements need some special handling */
+		isTransactionStmt = IsA(parsetree, TransactionStmt);
 
-		if (querytree->commandType == CMD_UTILITY)
+		/*
+		 * If we are in an aborted transaction, ignore all commands except
+		 * COMMIT/ABORT.  It is important that this test occur before we
+		 * try to do parse analysis, rewrite, or planning, since all those
+		 * phases try to do database accesses, which may fail in abort state.
+		 * (It might be safe to allow some additional utility commands in
+		 * this state, but not many...)
+		 */
+		if (IsAbortedTransactionBlockState())
 		{
-			/* ----------------
-			 *	 process utility functions (create, destroy, etc..)
-			 *
-			 *	 Note: we do not check for the transaction aborted state
-			 *	 because that is done in ProcessUtility.
-			 * ----------------
-			 */
-			if (Debug_print_query)
-				elog(DEBUG, "ProcessUtility: %s", query_string);
-			else if (DebugLvl > 1)
-				elog(DEBUG, "ProcessUtility");
+			bool	allowit = false;
 
-			ProcessUtility(querytree->utilityStmt, dest);
-		}
-		else
-		{
-			Plan	   *plan;
+			if (isTransactionStmt)
+			{
+				TransactionStmt *stmt = (TransactionStmt *) parsetree;
 
-			/* If aborted transaction, skip planning and execution */
-			if (IsAbortedTransactionBlockState())
+				switch (stmt->command)
+				{
+					case COMMIT:
+					case ROLLBACK:
+						allowit = true;
+						break;
+					default:
+						break;
+				}
+			}
+
+			if (! allowit)
 			{
 				/* ----------------
 				 *	 the EndCommand() stuff is to tell the frontend
@@ -631,57 +726,179 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 				 */
 				continue;
 			}
+		}
 
-			plan = pg_plan_query(querytree);
+		/* Make sure we are in a transaction command */
+		if (! xact_started)
+		{
+			start_xact_command();
+			xact_started = true;
+		}
 
-			/* if we got a cancel signal whilst planning, quit */
+		/* If we got a cancel signal in parsing or prior command, quit */
+		if (QueryCancel)
+			CancelQuery();
+
+		/*
+		 * OK to analyze and rewrite this query.
+		 *
+		 * Switch to appropriate context for constructing querytrees
+		 * (again, these must outlive the execution context).
+		 */
+		oldcontext = MemoryContextSwitchTo(parse_context);
+
+		querytree_list = pg_analyze_and_rewrite(parsetree);
+
+		/*
+		 * Switch back to execution context for planning and execution.
+		 */
+		MemoryContextSwitchTo(oldcontext);
+
+		/*
+		 * Inner loop handles the individual queries generated from a
+		 * single parsetree by analysis and rewrite.
+		 */
+		foreach(querytree_item, querytree_list)
+		{
+			Query	   *querytree = (Query *) lfirst(querytree_item);
+
+			/* Make sure we are in a transaction command */
+			if (! xact_started)
+			{
+				start_xact_command();
+				xact_started = true;
+			}
+
+			/* If we got a cancel signal in analysis or prior command, quit */
 			if (QueryCancel)
 				CancelQuery();
 
-			/* Initialize snapshot state for query */
-			SetQuerySnapshot();
-
-			/*
-			 * execute the plan
-			 */
-			if (Show_executor_stats)
-				ResetUsage();
-
-			if (dontExecute)
+			if (querytree->commandType == CMD_UTILITY)
 			{
-				/* don't execute it, just show the query plan */
-				print_plan(plan, querytree);
+				/* ----------------
+				 *	 process utility functions (create, destroy, etc..)
+				 * ----------------
+				 */
+				if (Debug_print_query)
+					elog(DEBUG, "ProcessUtility: %s", query_string);
+				else if (DebugLvl > 1)
+					elog(DEBUG, "ProcessUtility");
+
+				ProcessUtility(querytree->utilityStmt, dest);
 			}
 			else
 			{
-				if (DebugLvl > 1)
-					elog(DEBUG, "ProcessQuery");
-				ProcessQuery(querytree, plan, dest);
+				/* ----------------
+				 *	 process a plannable query.
+				 * ----------------
+				 */
+				Plan	   *plan;
+
+				plan = pg_plan_query(querytree);
+
+				/* if we got a cancel signal whilst planning, quit */
+				if (QueryCancel)
+					CancelQuery();
+
+				/* Initialize snapshot state for query */
+				SetQuerySnapshot();
+
+				/*
+				 * execute the plan
+				 */
+				if (Show_executor_stats)
+					ResetUsage();
+
+				if (dontExecute)
+				{
+					/* don't execute it, just show the query plan */
+					print_plan(plan, querytree);
+				}
+				else
+				{
+					if (DebugLvl > 1)
+						elog(DEBUG, "ProcessQuery");
+					ProcessQuery(querytree, plan, dest);
+				}
+
+				if (Show_executor_stats)
+				{
+					fprintf(stderr, "EXECUTOR STATISTICS\n");
+					ShowUsage();
+				}
 			}
 
-			if (Show_executor_stats)
+			/*
+			 * In a query block, we want to increment the command counter
+			 * between queries so that the effects of early queries are
+			 * visible to subsequent ones.  In particular we'd better
+			 * do so before checking constraints.
+			 */
+			if (!isTransactionStmt)
+				CommandCounterIncrement();
+
+			/*
+			 * Invoke IMMEDIATE constraint triggers
+			 */
+			DeferredTriggerEndQuery();
+
+			/*
+			 * Clear the execution context to recover temporary
+			 * memory used by the query.  NOTE: if query string contains
+			 * BEGIN/COMMIT transaction commands, execution context may
+			 * now be different from what we were originally passed;
+			 * so be careful to clear current context not "oldcontext".
+			 */
+			Assert(parse_context != CurrentMemoryContext);
+
+			MemoryContextResetAndDeleteChildren(CurrentMemoryContext);
+
+			/*
+			 * If this was a transaction control statement, commit it
+			 * and arrange to start a new xact command for the next
+			 * command (if any).
+			 */
+			if (isTransactionStmt)
 			{
-				fprintf(stderr, "EXECUTOR STATISTICS\n");
-				ShowUsage();
+				finish_xact_command();
+				xact_started = false;
 			}
-		}
 
-		/*
-		 * In a query block, we want to increment the command counter
-		 * between queries so that the effects of early queries are
-		 * visible to subsequent ones.
-		 */
-		CommandCounterIncrement();
-		/*
-		 * Also, clear the execution context to recover temporary
-		 * memory used by the query.  NOTE: if query string contains
-		 * BEGIN/COMMIT transaction commands, execution context may
-		 * now be different from what we were originally passed;
-		 * so be careful to clear current context not "oldcontext".
-		 */
-		MemoryContextResetAndDeleteChildren(CurrentMemoryContext);
-	}
+		} /* end loop over queries generated from a parsetree */
+	} /* end loop over parsetrees */
+
+	/*
+	 * Close down transaction statement, if one is open.
+	 */
+	if (xact_started)
+		finish_xact_command();
 }
+
+/*
+ * Convenience routines for starting/committing a single command.
+ */
+static void
+start_xact_command(void)
+{
+	if (DebugLvl >= 1)
+		elog(DEBUG, "StartTransactionCommand");
+	StartTransactionCommand();
+}
+
+static void
+finish_xact_command(void)
+{
+	if (DebugLvl >= 1)
+		elog(DEBUG, "CommitTransactionCommand");
+	set_ps_display("commit");	/* XXX probably the wrong place to do this */
+	CommitTransactionCommand();
+#ifdef SHOW_MEMORY_STATS
+	/* print mem stats at each commit for leak tracking */
+	if (ShowStats)
+		MemoryContextStats(TopMemoryContext);
+#endif
+}
+
 
 /* --------------------------------
  *		signal handler routines used in PostgresMain()
@@ -1397,7 +1614,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.177 $ $Date: 2000/10/03 03:11:19 $\n");
+		puts("$Revision: 1.178 $ $Date: 2000/10/07 00:58:18 $\n");
 	}
 
 	/*
@@ -1524,22 +1741,20 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		{
 				/* ----------------
 				 *	'F' indicates a fastpath call.
-				 *		XXX HandleFunctionRequest
 				 * ----------------
 				 */
 			case 'F':
-				IsEmptyQuery = false;
-
 				/* start an xact for this function invocation */
-				if (DebugLvl >= 1)
-					elog(DEBUG, "StartTransactionCommand");
-				StartTransactionCommand();
+				start_xact_command();
 
 				if (HandleFunctionRequest() == EOF)
 				{
 					/* lost frontend connection during F message input */
 					goto normalexit;
 				}
+
+				/* commit the function-invocation transaction */
+				finish_xact_command();
 				break;
 
 				/* ----------------
@@ -1551,35 +1766,28 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				{
 					/* ----------------
 					 *	if there is nothing in the input buffer, don't bother
-					 *	trying to parse and execute anything..
+					 *	trying to parse and execute anything; just send
+					 *	back a quick NullCommand response.
 					 * ----------------
 					 */
-					IsEmptyQuery = true;
+					if (IsUnderPostmaster)
+						NullCommand(Remote);
 				}
 				else
 				{
 					/* ----------------
 					 *	otherwise, process the input string.
+					 *
+					 * Note: transaction command start/end is now done
+					 * within pg_exec_query_string(), not here.
 					 * ----------------
 					 */
-					IsEmptyQuery = false;
 					if (Show_query_stats)
 						ResetUsage();
 
-					/* start an xact for this query */
-					if (DebugLvl >= 1)
-						elog(DEBUG, "StartTransactionCommand");
-					StartTransactionCommand();
-
-					pg_exec_query_dest(parser_input->data,
-									   whereToSendOutput,
-									   QueryContext);
-
-					/*
-					 * Invoke IMMEDIATE constraint triggers
-					 *
-					 */
-					DeferredTriggerEndQuery();
+					pg_exec_query_string(parser_input->data,
+										 whereToSendOutput,
+										 QueryContext);
 
 					if (Show_query_stats)
 					{
@@ -1603,39 +1811,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				elog(ERROR, "unknown frontend message was received");
 		}
 
-		/* ----------------
-		 *	 (6) commit the current transaction
-		 *
-		 *	 Note: if we had an empty input buffer, then we didn't
-		 *	 call pg_exec_query_dest, so we don't bother to commit
-		 *	 this transaction.
-		 * ----------------
-		 */
-		if (!IsEmptyQuery)
-		{
-			if (DebugLvl >= 1)
-				elog(DEBUG, "CommitTransactionCommand");
-			set_ps_display("commit");
-			CommitTransactionCommand();
-#ifdef SHOW_MEMORY_STATS
-			/* print global-context stats at each commit for leak tracking */
-			if (ShowStats)
-				MemoryContextStats(TopMemoryContext);
-#endif
-		}
-		else
-		{
-			if (IsUnderPostmaster)
-				NullCommand(Remote);
-		}
-
 #ifdef MEMORY_CONTEXT_CHECKING
 		/*
-		 * Check all memory after each backend loop
+		 * Check all memory after each backend loop.  This is a rather
+		 * weird place to do it, perhaps.
 		 */
 		MemoryContextCheck(TopMemoryContext);	
 #endif
-	}							/* end of main loop */
+	}							/* end of input-reading loop */
 
 normalexit:
 	ExitAfterAbort = true;		/* ensure we will exit if elog during abort */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.49 2000/10/02 04:49:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.50 2000/10/07 00:58:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,12 @@
 
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "catalog/catalog.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "lib/stringinfo.h"
+#include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/memutils.h"
@@ -561,7 +563,52 @@ aclcontains(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(false);
 }
 
-/* parser support routines */
+/*
+ * ExecuteChangeACLStmt
+ *		Called to execute the utility command type ChangeACLStmt
+ */
+void
+ExecuteChangeACLStmt(ChangeACLStmt *stmt)
+{
+	AclItem		aclitem;
+	unsigned	modechg;
+	List	   *i;
+
+	/* see comment in pg_type.h */
+	Assert(ACLITEMSIZE == sizeof(AclItem));
+
+	/* Convert string ACL spec into internal form */
+	aclparse(stmt->aclString, &aclitem, &modechg);
+
+	foreach(i, stmt->relNames)
+	{
+		char	   *relname = strVal(lfirst(i));
+		Relation	rel;
+
+		rel = heap_openr(relname, AccessExclusiveLock);
+		if (rel && rel->rd_rel->relkind == RELKIND_INDEX)
+			elog(ERROR, "\"%s\" is an index relation",
+				 relname);
+#ifndef NO_SECURITY
+		if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+			elog(ERROR, "you do not own class \"%s\"",
+				 relname);
+#endif
+		ChangeAcl(relname, &aclitem, modechg);
+		/* close rel, but keep lock until end of xact */
+		heap_close(rel, NoLock);
+	}
+}
+
+
+/*
+ * Parser support routines for ACL-related statements.
+ *
+ * XXX CAUTION: these are called from gram.y, which is not allowed to
+ * do any table accesses.  Therefore, it is not kosher to do things
+ * like trying to translate usernames to user IDs here.  Keep it all
+ * in string form until statement execution time.
+ */
 
 /*
  * aclmakepriv
@@ -569,9 +616,7 @@ aclcontains(PG_FUNCTION_ARGS)
  * and a new privilege
  *
  * does not add duplicate privileges
- *
  */
-
 char *
 aclmakepriv(char *old_privlist, char new_priv)
 {
@@ -619,12 +664,9 @@ aclmakepriv(char *old_privlist, char new_priv)
  *						"G"  - group
  *						"U"  - user
  *
- * concatenates the two strings together with a space in between
- *
- * this routine is used in the parser
- *
+ * Just concatenates the two strings together with a space in between.
+ * Per above comments, we can't try to resolve a user or group name here.
  */
-
 char *
 aclmakeuser(char *user_type, char *user)
 {
@@ -635,20 +677,16 @@ aclmakeuser(char *user_type, char *user)
 	return user_list;
 }
 
-
 /*
  * makeAclStmt:
- *	  this is a helper routine called by the parser
- * create a ChangeAclStmt
- *	  we take in the privilegs, relation_name_list, and grantee
- * as well as a single character '+' or '-' to indicate grant or revoke
+ *	  create a ChangeACLStmt at parse time.
+ *	  we take in the privileges, relation_name_list, and grantee
+ *	  as well as a single character '+' or '-' to indicate grant or revoke
  *
- * returns a new ChangeACLStmt*
- *
- * this routines works by creating a old-style changle acl string and
- * then calling aclparse;
+ * We convert the information to the same external form recognized by
+ * aclitemin (see aclparse), and save that string in the ChangeACLStmt.
+ * Conversion to internal form happens when the statement is executed.
  */
-
 ChangeACLStmt *
 makeAclStmt(char *privileges, List *rel_list, char *grantee,
 			char grant_or_revoke)
@@ -657,11 +695,6 @@ makeAclStmt(char *privileges, List *rel_list, char *grantee,
 	StringInfoData str;
 
 	initStringInfo(&str);
-
-	/* see comment in pg_type.h */
-	Assert(ACLITEMSIZE == sizeof(AclItem));
-
-	n->aclitem = (AclItem *) palloc(sizeof(AclItem));
 
 	/* the grantee string is "G <group_name>", "U <user_name>", or "ALL" */
 	if (grantee[0] == 'G')		/* group permissions */
@@ -683,7 +716,8 @@ makeAclStmt(char *privileges, List *rel_list, char *grantee,
 						 grant_or_revoke, privileges);
 	}
 	n->relNames = rel_list;
-	aclparse(str.data, n->aclitem, (unsigned *) &n->modechg);
+	n->aclString = pstrdup(str.data);
+
 	pfree(str.data);
 	return n;
 }

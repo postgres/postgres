@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.115 2000/10/05 19:11:36 tgl Exp $
+ * $Id: parsenodes.h,v 1.116 2000/10/07 00:58:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,9 +114,8 @@ typedef struct AlterTableStmt
 typedef struct ChangeACLStmt
 {
 	NodeTag		type;
-	struct AclItem *aclitem;
-	unsigned	modechg;
 	List	   *relNames;
+	char	   *aclString;
 } ChangeACLStmt;
 
 /* ----------------------
@@ -488,10 +487,8 @@ typedef struct ProcedureStmt
 {
 	NodeTag		type;
 	char	   *funcname;		/* name of function to create */
-	List	   *defArgs;		/* list of definitions a list of strings
-								 * (as Value *) */
-	Node	   *returnType;		/* the return type (as a string or a
-								 * TypeName (ie.setof) */
+	List	   *argTypes;		/* list of argument types (TypeName nodes) */
+	Node	   *returnType;		/* the return type (a TypeName node) */
 	List	   *withClause;		/* a list of DefElem */
 	List	   *as;				/* definition of function body */
 	char	   *language;		/* C, SQL, etc */
@@ -505,7 +502,7 @@ typedef struct RemoveAggrStmt
 {
 	NodeTag		type;
 	char	   *aggname;		/* aggregate to drop */
-	char	   *aggtype;		/* for this type */
+	Node	   *aggtype;		/* TypeName for input datatype, or NULL */
 } RemoveAggrStmt;
 
 /* ----------------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.48 2000/08/21 20:55:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.49 2000/10/07 00:58:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,34 +93,33 @@ ProcedureCreate(char *procedureName,
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	foreach(x, argList)
 	{
-		Value	   *t = lfirst(x);
+		TypeName   *t = (TypeName *) lfirst(x);
+		char	   *typnam = TypeNameToInternalName(t);
 
 		if (parameterCount >= FUNC_MAX_ARGS)
 			elog(ERROR, "Procedures cannot take more than %d arguments",
 				 FUNC_MAX_ARGS);
 
-		if (strcmp(strVal(t), "opaque") == 0)
+		if (strcmp(typnam, "opaque") == 0)
 		{
 			if (languageObjectId == SQLlanguageId)
 				elog(ERROR, "ProcedureCreate: sql functions cannot take type \"opaque\"");
-			toid = 0;
+			toid = InvalidOid;
 		}
 		else
 		{
-			toid = TypeGet(strVal(t), &defined);
+			toid = TypeGet(typnam, &defined);
 
 			if (!OidIsValid(toid))
-			{
 				elog(ERROR, "ProcedureCreate: arg type '%s' is not defined",
-					 strVal(t));
-			}
-
+					 typnam);
 			if (!defined)
-			{
 				elog(NOTICE, "ProcedureCreate: arg type '%s' is only a shell",
-					 strVal(t));
-			}
+					 typnam);
 		}
+
+		if (t->setof)
+			elog(ERROR, "ProcedureCreate: functions cannot accept set arguments");
 
 		typev[parameterCount++] = toid;
 	}
@@ -178,7 +177,7 @@ ProcedureCreate(char *procedureName,
 	{
 		if (languageObjectId == SQLlanguageId)
 			elog(ERROR, "ProcedureCreate: sql functions cannot return type \"opaque\"");
-		typeObjectId = 0;
+		typeObjectId = InvalidOid;
 	}
 	else
 	{
@@ -194,10 +193,8 @@ ProcedureCreate(char *procedureName,
 					 returnTypeName);
 		}
 		else if (!defined)
-		{
 			elog(NOTICE, "ProcedureCreate: return type '%s' is only a shell",
 				 returnTypeName);
-		}
 	}
 
 	/*
@@ -211,7 +208,6 @@ ProcedureCreate(char *procedureName,
 		get_attnum(relid, procedureName) != InvalidAttrNumber)
 		elog(ERROR, "method %s already an attribute of type %s",
 			 procedureName, strVal(lfirst(argList)));
-
 
 	/*
 	 * If this is a postquel procedure, we parse it here in order to be

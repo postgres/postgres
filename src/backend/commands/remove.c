@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.52 2000/09/12 16:48:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.53 2000/10/07 00:58:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "utils/acl.h"
 #include "utils/syscache.h"
@@ -39,8 +40,8 @@
  */
 void
 RemoveOperator(char *operatorName,		/* operator name */
-			   char *typeName1, /* first type name */
-			   char *typeName2) /* optional second type name */
+			   char *typeName1,			/* left argument type name */
+			   char *typeName2)			/* right argument type name */
 {
 	Relation	relation;
 	HeapTuple	tup;
@@ -53,28 +54,22 @@ RemoveOperator(char *operatorName,		/* operator name */
 	{
 		typeId1 = TypeGet(typeName1, &defined);
 		if (!OidIsValid(typeId1))
-		{
 			elog(ERROR, "RemoveOperator: type '%s' does not exist", typeName1);
-			return;
-		}
 	}
 
 	if (typeName2)
 	{
 		typeId2 = TypeGet(typeName2, &defined);
 		if (!OidIsValid(typeId2))
-		{
 			elog(ERROR, "RemoveOperator: type '%s' does not exist", typeName2);
-			return;
-		}
 	}
 
 	if (OidIsValid(typeId1) && OidIsValid(typeId2))
 		oprtype = 'b';
 	else if (OidIsValid(typeId1))
-		oprtype = 'l';
-	else
 		oprtype = 'r';
+	else
+		oprtype = 'l';
 
 	relation = heap_openr(OperatorRelationName, RowExclusiveLock);
 
@@ -93,7 +88,6 @@ RemoveOperator(char *operatorName,		/* operator name */
 			elog(ERROR, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 #endif
-
 
 		/*** Delete any comments associated with this operator ***/
 
@@ -308,13 +302,12 @@ RemoveType(char *typeName)		/* type name to be removed */
  */
 void
 RemoveFunction(char *functionName,		/* function name to be removed */
-			   int nargs,
-			   List *argNameList /* list of TypeNames */ )
+			   List *argTypes)	/* list of TypeName nodes */
 {
+	int			nargs = length(argTypes);
 	Relation	relation;
 	HeapTuple	tup;
 	Oid			argList[FUNC_MAX_ARGS];
-	char	   *typename;
 	int			i;
 
 	if (nargs > FUNC_MAX_ARGS)
@@ -323,19 +316,20 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	for (i = 0; i < nargs; i++)
 	{
-		typename = strVal(lfirst(argNameList));
-		argNameList = lnext(argNameList);
+		TypeName   *t = (TypeName *) lfirst(argTypes);
+		char	   *typnam = TypeNameToInternalName(t);
 
-		if (strcmp(typename, "opaque") == 0)
-			argList[i] = 0;
+		argTypes = lnext(argTypes);
+
+		if (strcmp(typnam, "opaque") == 0)
+			argList[i] = InvalidOid;
 		else
 		{
 			tup = SearchSysCacheTuple(TYPENAME,
-									  PointerGetDatum(typename),
+									  PointerGetDatum(typnam),
 									  0, 0, 0);
-
 			if (!HeapTupleIsValid(tup))
-				elog(ERROR, "RemoveFunction: type '%s' not found", typename);
+				elog(ERROR, "RemoveFunction: type '%s' not found", typnam);
 			argList[i] = tup->t_data->t_oid;
 		}
 	}

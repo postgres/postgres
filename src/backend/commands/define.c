@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.46 2000/07/22 03:34:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.47 2000/10/07 00:58:16 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -49,6 +49,7 @@
 #include "commands/defrem.h"
 #include "fmgr.h"
 #include "optimizer/cost.h"
+#include "parser/parse_expr.h"
 #include "tcop/dest.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
@@ -83,27 +84,15 @@ case_translate_language_name(const char *input, char *output)
 
 
 static void
-compute_return_type(const Node *returnType,
+compute_return_type(TypeName *returnType,
 					char **prorettype_p, bool *returnsSet_p)
 {
 /*---------------------------------------------------------------------------
    Examine the "returns" clause returnType of the CREATE FUNCTION statement
-   and return information about it as **prorettype_p and **returnsSet.
+   and return information about it as *prorettype_p and *returnsSet.
 ----------------------------------------------------------------------------*/
-	if (nodeTag(returnType) == T_TypeName)
-	{
-		/* a set of values */
-		TypeName   *setType = (TypeName *) returnType;
-
-		*prorettype_p = setType->name;
-		*returnsSet_p = setType->setof;
-	}
-	else
-	{
-		/* singleton */
-		*prorettype_p = strVal(returnType);
-		*returnsSet_p = false;
-	}
+	*prorettype_p = TypeNameToInternalName(returnType);
+	*returnsSet_p = returnType->setof;
 }
 
 
@@ -214,7 +203,7 @@ interpret_AS_clause(const char *languageName, const List *as,
 		*prosrc_str_p = strVal(lfirst(as));
 		*probin_str_p = "-";
 
-		if (lnext(as) != NULL)
+		if (lnext(as) != NIL)
 			elog(ERROR, "CREATE FUNCTION: only one AS item needed for %s language",
 				 languageName);
 	}
@@ -231,26 +220,22 @@ void
 CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 {
 	char	   *probin_str;
-
 	/* pathname of executable file that executes this function, if any */
+
 	char	   *prosrc_str;
-
 	/* SQL that executes this function, if any */
+
 	char	   *prorettype;
-
 	/* Type of return value (or member of set of values) from function */
-	char		languageName[NAMEDATALEN];
 
+	char		languageName[NAMEDATALEN];
 	/*
 	 * name of language of function, with case adjusted: "C", "newC",
 	 * "internal", "newinternal", "sql", etc.
 	 */
 
 	bool		returnsSet;
-
 	/* The function returns a set of values, as opposed to a singleton. */
-
-	bool		lanisPL = false;
 
 	/*
 	 * The following are optional user-supplied attributes of the
@@ -263,8 +248,12 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	bool		canCache,
 				isStrict;
 
+	/* Convert language name to canonical case */
 	case_translate_language_name(stmt->language, languageName);
 
+	/*
+	 * Apply appropriate security checks depending on language.
+	 */
 	if (strcmp(languageName, "C") == 0 ||
 		strcmp(languageName, "newC") == 0 ||
 		strcmp(languageName, "internal") == 0 ||
@@ -301,7 +290,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 
 		/* Check that this language is a PL */
 		languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
-		if (!(languageStruct->lanispl))
+		if (!languageStruct->lanispl)
 			elog(ERROR,
 				 "Language '%s' isn't defined as PL", languageName);
 
@@ -316,11 +305,15 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 				 "language.",
 				 languageName);
 		}
-
-		lanisPL = true;
 	}
 
-	compute_return_type(stmt->returnType, &prorettype, &returnsSet);
+	/*
+	 * Convert remaining parameters of CREATE to form wanted by
+	 * ProcedureCreate.
+	 */
+	Assert(IsA(stmt->returnType, TypeName));
+	compute_return_type((TypeName *) stmt->returnType,
+						&prorettype, &returnsSet);
 
 	compute_full_attributes(stmt->withClause,
 							&byte_pct, &perbyte_cpu, &percall_cpu,
@@ -345,7 +338,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 					perbyte_cpu,
 					percall_cpu,
 					outin_ratio,
-					stmt->defArgs,
+					stmt->argTypes,
 					dest);
 }
 
@@ -389,49 +382,43 @@ DefineOperator(char *oprName,
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (!strcasecmp(defel->defname, "leftarg"))
+		if (strcasecmp(defel->defname, "leftarg") == 0)
 		{
-			if ((nodeTag(defel->arg) == T_TypeName)
-				&& (((TypeName *) defel->arg)->setof))
-				elog(ERROR, "setof type not implemented for leftarg");
-
 			typeName1 = defGetString(defel);
-			if (typeName1 == NULL)
-				elog(ERROR, "type for leftarg is malformed.");
+			if (IsA(defel->arg, TypeName)
+				&& ((TypeName *) defel->arg)->setof)
+				elog(ERROR, "setof type not implemented for leftarg");
 		}
-		else if (!strcasecmp(defel->defname, "rightarg"))
+		else if (strcasecmp(defel->defname, "rightarg") == 0)
 		{
-			if ((nodeTag(defel->arg) == T_TypeName)
-				&& (((TypeName *) defel->arg)->setof))
-				elog(ERROR, "setof type not implemented for rightarg");
-
 			typeName2 = defGetString(defel);
-			if (typeName2 == NULL)
-				elog(ERROR, "type for rightarg is malformed.");
+			if (IsA(defel->arg, TypeName)
+				&& ((TypeName *) defel->arg)->setof)
+				elog(ERROR, "setof type not implemented for rightarg");
 		}
-		else if (!strcasecmp(defel->defname, "procedure"))
+		else if (strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "precedence"))
+		else if (strcasecmp(defel->defname, "precedence") == 0)
 		{
 			/* NOT IMPLEMENTED (never worked in v4.2) */
 			elog(NOTICE, "CREATE OPERATOR: precedence not implemented");
 		}
-		else if (!strcasecmp(defel->defname, "associativity"))
+		else if (strcasecmp(defel->defname, "associativity") == 0)
 		{
 			/* NOT IMPLEMENTED (never worked in v4.2) */
 			elog(NOTICE, "CREATE OPERATOR: associativity not implemented");
 		}
-		else if (!strcasecmp(defel->defname, "commutator"))
+		else if (strcasecmp(defel->defname, "commutator") == 0)
 			commutatorName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "negator"))
+		else if (strcasecmp(defel->defname, "negator") == 0)
 			negatorName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "restrict"))
+		else if (strcasecmp(defel->defname, "restrict") == 0)
 			restrictionName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "join"))
+		else if (strcasecmp(defel->defname, "join") == 0)
 			joinName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "hashes"))
+		else if (strcasecmp(defel->defname, "hashes") == 0)
 			canHash = TRUE;
-		else if (!strcasecmp(defel->defname, "sort1"))
+		else if (strcasecmp(defel->defname, "sort1") == 0)
 		{
 			/* ----------------
 			 * XXX ( ... [ , sort1 = oprname ] [ , sort2 = oprname ] ... )
@@ -441,7 +428,7 @@ DefineOperator(char *oprName,
 			 */
 			sortName1 = defGetString(defel);
 		}
-		else if (!strcasecmp(defel->defname, "sort2"))
+		else if (strcasecmp(defel->defname, "sort2") == 0)
 			sortName2 = defGetString(defel);
 		else
 		{
@@ -562,72 +549,73 @@ DefineType(char *typeName, List *parameters)
 	char		delimiter = DEFAULT_TYPDELIM;
 	char	   *shadow_type;
 	List	   *pl;
-	char		alignment = 'i';/* default alignment */
-	char		storage = 'p'; /* default storage in TOAST */
+	char		alignment = 'i'; /* default alignment */
+	char		storage = 'p';	/* default storage in TOAST */
 
 	/*
-	 * Type names can only be 15 characters long, so that the shadow type
-	 * can be created using the 16th character as necessary.
+	 * Type names must be one character shorter than other names,
+	 * allowing room to create the corresponding array type name with
+	 * prepended "_".
 	 */
-	if (strlen(typeName) >= (NAMEDATALEN - 1))
+	if (strlen(typeName) > (NAMEDATALEN - 2))
 	{
 		elog(ERROR, "DefineType: type names must be %d characters or less",
-			 NAMEDATALEN - 1);
+			 NAMEDATALEN - 2);
 	}
 
 	foreach(pl, parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (!strcasecmp(defel->defname, "internallength"))
+		if (strcasecmp(defel->defname, "internallength") == 0)
 			internalLength = defGetTypeLength(defel);
-		else if (!strcasecmp(defel->defname, "externallength"))
+		else if (strcasecmp(defel->defname, "externallength") == 0)
 			externalLength = defGetTypeLength(defel);
-		else if (!strcasecmp(defel->defname, "input"))
+		else if (strcasecmp(defel->defname, "input") == 0)
 			inputName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "output"))
+		else if (strcasecmp(defel->defname, "output") == 0)
 			outputName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "send"))
+		else if (strcasecmp(defel->defname, "send") == 0)
 			sendName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "delimiter"))
+		else if (strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
 
 			delimiter = p[0];
 		}
-		else if (!strcasecmp(defel->defname, "receive"))
+		else if (strcasecmp(defel->defname, "receive") == 0)
 			receiveName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "element"))
+		else if (strcasecmp(defel->defname, "element") == 0)
 			elemName = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "default"))
+		else if (strcasecmp(defel->defname, "default") == 0)
 			defaultValue = defGetString(defel);
-		else if (!strcasecmp(defel->defname, "passedbyvalue"))
+		else if (strcasecmp(defel->defname, "passedbyvalue") == 0)
 			byValue = true;
-		else if (!strcasecmp(defel->defname, "alignment"))
+		else if (strcasecmp(defel->defname, "alignment") == 0)
 		{
 			char	   *a = defGetString(defel);
 
-			if (!strcasecmp(a, "double"))
+			if (strcasecmp(a, "double") == 0)
 				alignment = 'd';
-			else if (!strcasecmp(a, "int4"))
+			else if (strcasecmp(a, "int4") == 0)
 				alignment = 'i';
 			else
 			{
-				elog(ERROR, "DefineType: \"%s\" alignment  not recognized",
+				elog(ERROR, "DefineType: \"%s\" alignment not recognized",
 					 a);
 			}
 		}
-		else if (!strcasecmp(defel->defname, "storage"))
+		else if (strcasecmp(defel->defname, "storage") == 0)
 		{
 			char	   *a = defGetString(defel);
 
-			if (!strcasecmp(a, "plain"))
+			if (strcasecmp(a, "plain") == 0)
 				storage = 'p';
-			else if (!strcasecmp(a, "external"))
+			else if (strcasecmp(a, "external") == 0)
 				storage = 'e';
-			else if (!strcasecmp(a, "extended"))
+			else if (strcasecmp(a, "extended") == 0)
 				storage = 'x';
-			else if (!strcasecmp(a, "main"))
+			else if (strcasecmp(a, "main") == 0)
 				storage = 'm';
 			else
 			{
@@ -674,8 +662,8 @@ DefineType(char *typeName, List *parameters)
 			   storage);		/* TOAST strategy */
 
 	/* ----------------
-	 *	When we create a true type (as opposed to a complex type)
-	 *	we need to have an shadow array entry for it in pg_type as well.
+	 *	When we create a base type (as opposed to a complex type)
+	 *	we need to have an array entry for it in pg_type as well.
 	 * ----------------
 	 */
 	shadow_type = makeArrayTypeName(typeName);
@@ -702,19 +690,32 @@ DefineType(char *typeName, List *parameters)
 static char *
 defGetString(DefElem *def)
 {
-	char	   *string;
+	if (def->arg == NULL)
+		elog(ERROR, "Define: \"%s\" requires a parameter",
+			 def->defname);
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+		{
+			char *str = palloc(32);
 
-	if (nodeTag(def->arg) == T_String)
-		string = strVal(def->arg);
-	else if (nodeTag(def->arg) == T_TypeName)
-		string = ((TypeName *) def->arg)->name;
-	else
-		string = NULL;
-#if 0
-	elog(ERROR, "Define: \"%s\" = what?", def->defname);
-#endif
-
-	return string;
+			snprintf(str, 32, "%ld", (long) intVal(def->arg));
+			return str;
+		}
+		case T_Float:
+			/* T_Float values are kept in string form, so this type cheat
+			 * works (and doesn't risk losing precision)
+			 */
+			return strVal(def->arg);
+		case T_String:
+			return strVal(def->arg);
+		case T_TypeName:
+			return TypeNameToInternalName((TypeName *) def->arg);
+		default:
+			elog(ERROR, "Define: cannot interpret argument of \"%s\"",
+				 def->defname);
+	}
+	return NULL;				/* keep compiler quiet */
 }
 
 static double
@@ -739,15 +740,32 @@ defGetNumeric(DefElem *def)
 static int
 defGetTypeLength(DefElem *def)
 {
-	if (nodeTag(def->arg) == T_Integer)
-		return intVal(def->arg);
-	else if (nodeTag(def->arg) == T_String &&
-			!strcasecmp(strVal(def->arg), "variable"))
-		return -1;				/* variable length */
-	else if (nodeTag(def->arg) == T_TypeName &&
-			!strcasecmp(((TypeName *)(def->arg))->name, "variable"))
-		return -1;
-
-	elog(ERROR, "Define: \"%s\" = what?", def->defname);
-	return -1;
+	if (def->arg == NULL)
+		elog(ERROR, "Define: \"%s\" requires a parameter",
+			 def->defname);
+	switch (nodeTag(def->arg))
+	{
+		case T_Integer:
+			return intVal(def->arg);
+		case T_Float:
+			elog(ERROR, "Define: \"%s\" requires an integral value",
+				 def->defname);
+			break;
+		case T_String:
+			if (strcasecmp(strVal(def->arg), "variable") == 0)
+				return -1;		/* variable length */
+			break;
+		case T_TypeName:
+			/* cope if grammar chooses to believe "variable" is a typename */
+			if (strcasecmp(TypeNameToInternalName((TypeName *) def->arg),
+						   "variable") == 0)
+				return -1;		/* variable length */
+			break;
+		default:
+			elog(ERROR, "Define: cannot interpret argument of \"%s\"",
+				 def->defname);
+	}
+	elog(ERROR, "Define: invalid argument for \"%s\"",
+		 def->defname);
+	return 0;					/* keep compiler quiet */
 }
