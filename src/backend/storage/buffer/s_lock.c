@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.37 2001/08/28 15:04:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.38 2001/08/29 11:54:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ success:						\n\
 
 #endif	 /* __powerpc__ */
 
-#if defined(__mips__) || !defined(__sgi)
+#if defined(__mips__) && !defined(__sgi)
 static void
 tas_dummy()
 {
