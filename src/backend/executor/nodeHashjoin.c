@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.57 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.58 2003/11/25 21:00:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,7 +308,8 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	HashJoinState *hjstate;
 	Plan	   *outerNode;
 	Hash	   *hashNode;
-	List	   *hclauses;
+	List	   *lclauses;
+	List	   *rclauses;
 	List	   *hoperators;
 	List	   *hcl;
 
@@ -410,31 +411,31 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	hjstate->hj_CurTuple = (HashJoinTuple) NULL;
 
 	/*
-	 * The planner already made a list of the inner hashkeys for us, but
-	 * we also need a list of the outer hashkeys, as well as a list of the
-	 * hash operator OIDs.	Both lists of exprs must then be prepared for
-	 * execution.
+	 * Deconstruct the hash clauses into outer and inner argument values,
+	 * so that we can evaluate those subexpressions separately.  Also make
+	 * a list of the hash operator OIDs, in preparation for looking up the
+	 * hash functions to use.
 	 */
-	hjstate->hj_InnerHashKeys = (List *)
-		ExecInitExpr((Expr *) hashNode->hashkeys,
-					 innerPlanState(hjstate));
-	((HashState *) innerPlanState(hjstate))->hashkeys =
-		hjstate->hj_InnerHashKeys;
-
-	hclauses = NIL;
+	lclauses = NIL;
+	rclauses = NIL;
 	hoperators = NIL;
-	foreach(hcl, node->hashclauses)
+	foreach(hcl, hjstate->hashclauses)
 	{
-		OpExpr	   *hclause = (OpExpr *) lfirst(hcl);
+		FuncExprState *fstate = (FuncExprState *) lfirst(hcl);
+		OpExpr	   *hclause;
 
+		Assert(IsA(fstate, FuncExprState));
+		hclause = (OpExpr *) fstate->xprstate.expr;
 		Assert(IsA(hclause, OpExpr));
-		hclauses = lappend(hclauses, get_leftop((Expr *) hclause));
+		lclauses = lappend(lclauses, lfirst(fstate->args));
+		rclauses = lappend(rclauses, lsecond(fstate->args));
 		hoperators = lappendo(hoperators, hclause->opno);
 	}
-	hjstate->hj_OuterHashKeys = (List *)
-		ExecInitExpr((Expr *) hclauses,
-					 (PlanState *) hjstate);
+	hjstate->hj_OuterHashKeys = lclauses;
+	hjstate->hj_InnerHashKeys = rclauses;
 	hjstate->hj_HashOperators = hoperators;
+	/* child Hash node needs to evaluate inner hash keys, too */
+	((HashState *) innerPlanState(hjstate))->hashkeys = rclauses;
 
 	hjstate->js.ps.ps_OuterTupleSlot = NULL;
 	hjstate->js.ps.ps_TupFromTlist = false;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.159 2003/11/12 21:15:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.160 2003/11/25 21:00:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ static HashJoin *make_hashjoin(List *tlist,
 			  List *hashclauses,
 			  Plan *lefttree, Plan *righttree,
 			  JoinType jointype);
-static Hash *make_hash(List *tlist, List *hashkeys, Plan *lefttree);
+static Hash *make_hash(List *tlist, Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist,
 			   List *joinclauses, List *otherclauses,
 			   List *mergeclauses,
@@ -1067,8 +1067,6 @@ create_hashjoin_plan(Query *root,
 	List	   *hashclauses;
 	HashJoin   *join_plan;
 	Hash	   *hash_plan;
-	List	   *innerhashkeys;
-	List	   *hcl;
 
 	/* Get the join qual clauses (in plain expression form) */
 	if (IS_OUTER_JOIN(best_path->jpath.jointype))
@@ -1102,14 +1100,6 @@ create_hashjoin_plan(Query *root,
 	otherclauses = order_qual_clauses(root, otherclauses);
 	hashclauses = order_qual_clauses(root, hashclauses);
 
-	/*
-	 * Extract the inner hash keys (right-hand operands of the
-	 * hashclauses) to put in the Hash node.
-	 */
-	innerhashkeys = NIL;
-	foreach(hcl, hashclauses)
-		innerhashkeys = lappend(innerhashkeys, get_rightop(lfirst(hcl)));
-
 	/* We don't want any excess columns in the hashed tuples */
 	disuse_physical_tlist(inner_plan, best_path->jpath.innerjoinpath);
 
@@ -1117,7 +1107,6 @@ create_hashjoin_plan(Query *root,
 	 * Build the hash node and hash join node.
 	 */
 	hash_plan = make_hash(inner_plan->targetlist,
-						  innerhashkeys,
 						  inner_plan);
 	join_plan = make_hashjoin(tlist,
 							  joinclauses,
@@ -1728,7 +1717,7 @@ make_hashjoin(List *tlist,
 }
 
 static Hash *
-make_hash(List *tlist, List *hashkeys, Plan *lefttree)
+make_hash(List *tlist, Plan *lefttree)
 {
 	Hash	   *node = makeNode(Hash);
 	Plan	   *plan = &node->plan;
@@ -1744,7 +1733,6 @@ make_hash(List *tlist, List *hashkeys, Plan *lefttree)
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->hashkeys = hashkeys;
 
 	return node;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.70 2003/11/12 21:15:59 tgl Exp $
+ * $Id: plannodes.h,v 1.71 2003/11/25 21:00:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,7 +350,7 @@ typedef struct Unique
 typedef struct Hash
 {
 	Plan		plan;
-	List	   *hashkeys;
+	/* all other info is in the parent HashJoin node */
 } Hash;
 
 /* ----------------
