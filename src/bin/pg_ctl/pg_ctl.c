@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.24 2004/07/29 16:11:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.25 2004/08/21 03:12:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,11 +404,22 @@ test_postmaster_connection(void)
 
 	for (i = 0; i < wait_seconds; i++)
 	{
-		if ((conn = PQsetdbLogin(NULL, portstr, NULL, NULL, "template1", NULL, NULL)) != NULL)
+		if ((conn = PQsetdbLogin(NULL, portstr, NULL, NULL,
+					"template1", NULL, NULL)) != NULL &&
+			PQstatus(conn) == CONNECTION_OK)
 		{
 			PQfinish(conn);
 			success = true;
 			break;
+		}
+		else
+		{
+			if (!silence_echo)
+			{
+				printf(".");
+				fflush(stdout);
+			}
+			pg_usleep(1000000); /* 1 sec */
 		}
 	}
 
