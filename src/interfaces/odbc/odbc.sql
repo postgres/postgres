@@ -1,5 +1,5 @@
 -- PostgreSQL catalog extensions for ODBC compatibility
--- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.5 2001/12/10 00:01:14 thomas Exp $
+-- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.6 2001/12/10 00:11:06 thomas Exp $
 
 -- ODBC functions are described here:
 -- <http://msdn.microsoft.com/library/en-us/odbc/htm/odbcscalar_functions.asp>
@@ -139,10 +139,6 @@ CREATE OR REPLACE FUNCTION curdate() RETURNS date AS '
 
 CREATE OR REPLACE FUNCTION curtime() RETURNS time with time zone AS '
     SELECT current_time;
-' LANGUAGE SQL;
-
-CREATE OR REPLACE FUNCTION odbc_timestamp() RETURNS timestamp with time zone AS '
-    SELECT current_timestamp;
 ' LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION odbc_timestamp() RETURNS timestamp with time zone AS '
