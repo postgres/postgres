@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.34 2004/09/26 01:40:55 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.35 2004/12/19 04:06:23 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -46,6 +46,11 @@ typedef char bool;
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
+
+/* Test for POSIX.1c 2-arg sigwait() and fail on single-arg version */
+#include <signal.h>
+int sigwait(const sigset_t *set, int *sig);
+
 
 #if !defined(ENABLE_THREAD_SAFETY) && !defined(IN_CONFIGURE)
 int
