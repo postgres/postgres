@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.6 1996/11/03 12:34:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.7 1996/11/05 09:53:03 scrappy Exp $
  *
  * NOTES
  *    initam should be moved someplace else.
@@ -15,22 +15,13 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
+#include <postgres.h>
 
-#include "postgres.h"
-
-#include "access/relscan.h"
-
-#include "access/heapam.h"
-
-#include "nodes/memnodes.h"
-
-#include "utils/mcxt.h"
-
-#include "utils/palloc.h"
+#include <access/heapam.h>
+#include <utils/mcxt.h>
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.7 1996/11/03 12:34:50 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.8 1996/11/05 09:53:01 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -73,44 +73,28 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "access/relscan.h"
-#include "storage/bufpage.h"
+#include <storage/bufpage.h>
+#include <access/heapam.h>
+#include <miscadmin.h>
+#include <utils/relcache.h>
+#include <access/valid.h>
+#include <access/hio.h>
+#include <storage/lmgr.h>
+#include <storage/smgr.h>
+#include <catalog/catalog.h>
+#include <access/transam.h>
+#include <access/xact.h>
+#include <utils/inval.h>
+#include <utils/memutils.h>
 
-#include "access/heapam.h"
-
-#include "miscadmin.h"
-
-#include "utils/relcache.h"
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif
-
-#include "access/valid.h"
-
-#include "storage/bufmgr.h"
-
-#include "utils/palloc.h"
-
-#include "access/hio.h"
-
-#include "storage/lmgr.h"
-
-#include "storage/smgr.h"
-
-#include "catalog/catalog.h"
-
-#include "access/transam.h"
-
-#include "access/xact.h"
-
-#include "utils/inval.h"
-
-#include "utils/memutils.h"
 
 static bool	ImmediateInvalidation;
 

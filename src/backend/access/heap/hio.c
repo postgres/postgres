@@ -7,18 +7,17 @@
  *
  *
  * IDENTIFICATION
- *    $Id: hio.c,v 1.8 1996/11/03 22:57:28 scrappy Exp $
+ *    $Id: hio.c,v 1.9 1996/11/05 09:53:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "storage/bufpage.h"
-#include "access/relscan.h"
-#include "access/heapam.h"
-#include "storage/bufmgr.h"
-#include "utils/memutils.h"
+#include <storage/bufpage.h>
+#include <access/heapam.h>
+#include <storage/bufmgr.h>
+#include <utils/memutils.h>
 
 /*
  * amputunique	- place tuple at tid
