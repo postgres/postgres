@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.11 1997/08/19 21:34:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.12 1997/08/28 05:06:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,7 +551,7 @@ time_ge(TimeADT *time1, TimeADT *time2)
 int
 time_cmp(TimeADT *time1, TimeADT *time2)
 {
-    return((*time1 < *time2)? -1: (((*time1 < *time2)? 1: 0)));
+    return((*time1 < *time2)? -1: (((*time1 > *time2)? 1: 0)));
 } /* time_cmp() */
 
 
