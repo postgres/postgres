@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.29 1998/02/10 16:03:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.30 1998/02/13 03:27:45 vadim Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -288,7 +288,14 @@ _outPlanInfo(StringInfo str, Plan *node)
 	_outNode(str, node->lefttree);
 	appendStringInfo(str, " :righttree ");
 	_outNode(str, node->righttree);
-
+	appendStringInfo(str, " :extprm ");
+	_outIntList(str, node->extParam);
+	appendStringInfo(str, " :locprm ");
+	_outIntList(str, node->locParam);
+	appendStringInfo(str, " :initplan ");
+	_outNode(str, node->initPlan);
+	sprintf(buf, " :nprm %d ", node->nParamExec);
+	appendStringInfo(str, buf);
 }
 
 /*
@@ -406,6 +413,26 @@ _outHashJoin(StringInfo str, HashJoin *node)
 	appendStringInfo(str, buf);
 	sprintf(buf, " :hashdone %d ", node->hashdone);
 	appendStringInfo(str, buf);
+}
+
+static void
+_outSubPlan(StringInfo str, SubPlan *node)
+{
+	char		buf[500];
+
+	appendStringInfo(str, "SUBPLAN");
+	appendStringInfo(str, " :plan ");
+	_outNode(str, node->plan);
+	sprintf(buf, " :planid %u ", node->plan_id);
+	appendStringInfo(str, buf);
+	appendStringInfo(str, " :rtable ");
+	_outNode(str, node->rtable);
+	appendStringInfo(str, " :setprm ");
+	_outIntList (str, node->setParam);
+	appendStringInfo(str, " :parprm ");
+	_outIntList (str, node->parParam);
+	appendStringInfo(str, " :slink ");
+	_outNode(str, node->sublink);
 }
 
 /*
@@ -673,6 +700,9 @@ _outExpr(StringInfo str, Expr *node)
 			break;
 		case NOT_EXPR:
 			opstr = "not";
+			break;
+		case SUBPLAN_EXPR:
+			opstr = "subp";
 			break;
 	}
 	appendStringInfo(str, " :opType ");
@@ -1653,6 +1683,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Hash:
 				_outHash(str, obj);
+				break;
+			case T_SubPlan:
+				_outSubPlan(str, obj);
 				break;
 			case T_Tee:
 				_outTee(str, obj);

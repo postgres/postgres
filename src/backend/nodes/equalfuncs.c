@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.14 1998/02/10 04:00:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.15 1998/02/13 03:27:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,6 +236,7 @@ _equalParam(Param *a, Param *b)
 				return (false);
 			break;
 		case PARAM_NUM:
+		case PARAM_EXEC:
 			if (a->paramid != b->paramid)
 				return (false);
 			break;
@@ -504,6 +505,18 @@ _equalIndexScan(IndexScan *a, IndexScan *b)
 }
 
 static bool
+_equalSubPlan(SubPlan *a, SubPlan *b)
+{
+	if (a->plan_id != b->plan_id)
+		return (false);
+
+	if (!equal((a->sublink->oper), (b->sublink->oper)))
+		return (false);
+	
+	return (true);
+}
+
+static bool
 _equalJInfo(JInfo *a, JInfo *b)
 {
 	Assert(IsA(a, JInfo));
@@ -679,6 +692,9 @@ equal(void *a, void *b)
 			break;
 		case T_IndexScan:
 			retval = _equalIndexScan(a, b);
+			break;
+		case T_SubPlan:
+			retval = _equalSubPlan(a, b);
 			break;
 		case T_JInfo:
 			retval = _equalJInfo(a, b);

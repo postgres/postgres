@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.37 1998/02/10 04:00:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.38 1998/02/13 03:27:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,8 @@ listCopy(List *list)
 static void
 CopyPlanFields(Plan *from, Plan *newnode)
 {
+	extern List	   *SS_pull_subplan (void *expr);
+	
 	newnode->cost = from->cost;
 	newnode->plan_size = from->plan_size;
 	newnode->plan_width = from->plan_width;
@@ -88,6 +90,15 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->qual = copyObject(from->qual);
 	newnode->lefttree = copyObject(from->lefttree);
 	newnode->righttree = copyObject(from->righttree);
+	newnode->extParam = listCopy (from->extParam);
+	newnode->locParam = listCopy (from->locParam);
+	newnode->chgParam = listCopy (from->chgParam);
+	Node_Copy(from, newnode, initPlan);
+	if ( from->subPlan != NULL )
+		newnode->subPlan = SS_pull_subplan (newnode->qual);
+	else
+		newnode->subPlan = NULL;
+	newnode->nParamExec = from->nParamExec;
 }
 
 /* ----------------
@@ -571,6 +582,22 @@ _copyHash(Hash *from)
 	newnode->hashtable = from->hashtable;
 	newnode->hashtablekey = from->hashtablekey;
 	newnode->hashtablesize = from->hashtablesize;
+
+	return newnode;
+}
+
+static SubPlan *
+_copySubPlan(SubPlan *from)
+{
+	SubPlan	   *newnode = makeNode(SubPlan);
+	
+	Node_Copy(from, newnode, plan);
+	newnode->plan_id = from->plan_id;
+	Node_Copy(from, newnode, rtable);
+	newnode->setParam = listCopy (from->setParam);
+	newnode->parParam = listCopy (from->parParam);
+	Node_Copy(from, newnode, sublink);
+	newnode->shutdown = from->shutdown;
 
 	return newnode;
 }
@@ -1660,6 +1687,9 @@ copyObject(void *from)
 			break;
 		case T_Hash:
 			retval = _copyHash(from);
+			break;
+		case T_SubPlan:
+			retval = _copySubPlan(from);
 			break;
 
 			/*

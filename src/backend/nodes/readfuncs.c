@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.24 1998/02/10 16:03:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.25 1998/02/13 03:27:47 vadim Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -776,6 +776,10 @@ _readExpr()
 	else if (!strncmp(token, "not", 3))
 	{
 		local_node->opType = NOT_EXPR;
+	}
+	else if (!strncmp(token, "subp", 4))
+	{
+		local_node->opType = SUBPLAN_EXPR;
 	}
 
 	token = lsptok(NULL, &length);		/* eat :oper */
