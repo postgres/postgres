@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.21 2001/03/16 05:44:33 tgl Exp $
+ * $Id: xlog.h,v 1.22 2001/03/18 20:18:59 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -201,7 +201,6 @@ extern void StartupXLOG(void);
 extern void ShutdownXLOG(void);
 extern void CreateCheckPoint(bool shutdown);
 extern void SetThisStartUpID(void);
-extern void XLogPutNextXid(TransactionId nextXid);
 extern void XLogPutNextOid(Oid nextOid);
 extern void SetRedoRecPtr(void);
 extern void GetRedoRecPtr(void);

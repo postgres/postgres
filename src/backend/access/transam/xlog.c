@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.61 2001/03/18 00:30:27 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.62 2001/03/18 20:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2161,7 +2161,6 @@ BootStrapXLOG(void)
 	checkPoint.time = time(NULL);
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
-	ShmemVariableCache->xidCount = 0;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 
@@ -2317,7 +2316,6 @@ StartupXLOG(void)
 		elog(STOP, "Invalid NextTransactionId/NextOid");
 
 	ShmemVariableCache->nextXid = checkPoint.nextXid;
-	ShmemVariableCache->xidCount = 0;
 	ShmemVariableCache->nextOid = checkPoint.nextOid;
 	ShmemVariableCache->oidCount = 0;
 
@@ -2368,11 +2366,7 @@ StartupXLOG(void)
 			do
 			{
 				if (record->xl_xid >= ShmemVariableCache->nextXid)
-				{
-					/* This probably shouldn't happen... */
 					ShmemVariableCache->nextXid = record->xl_xid + 1;
-					ShmemVariableCache->xidCount = 0;
-				}
 				if (XLOG_DEBUG)
 				{
 					char	buf[8192];
@@ -2717,8 +2711,6 @@ CreateCheckPoint(bool shutdown)
 
 	SpinAcquire(XidGenLockId);
 	checkPoint.nextXid = ShmemVariableCache->nextXid;
-	if (!shutdown)
-		checkPoint.nextXid += ShmemVariableCache->xidCount;
 	SpinRelease(XidGenLockId);
 
 	SpinAcquire(OidGenLockId);
@@ -2804,21 +2796,6 @@ CreateCheckPoint(bool shutdown)
 }
 
 /*
- * Write a NEXTXID log record
- */
-void
-XLogPutNextXid(TransactionId nextXid)
-{
-	XLogRecData		rdata;
-
-	rdata.buffer = InvalidBuffer;
-	rdata.data = (char *)(&nextXid);
-	rdata.len = sizeof(TransactionId);
-	rdata.next = NULL;
-	(void) XLogInsert(RM_XLOG_ID, XLOG_NEXTXID, &rdata);
-}
-
-/*
  * Write a NEXTOID log record
  */
 void
@@ -2841,18 +2818,7 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 {
 	uint8	info = record->xl_info & ~XLR_INFO_MASK;
 
-	if (info == XLOG_NEXTXID)
-	{
-		TransactionId		nextXid;
-
-		memcpy(&nextXid, XLogRecGetData(record), sizeof(TransactionId));
-		if (ShmemVariableCache->nextXid < nextXid)
-		{
-			ShmemVariableCache->nextXid = nextXid;
-			ShmemVariableCache->xidCount = 0;
-		}
-	}
-	else if (info == XLOG_NEXTOID)
+	if (info == XLOG_NEXTOID)
 	{
 		Oid		nextOid;
 
@@ -2870,7 +2836,6 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 		/* In a SHUTDOWN checkpoint, believe the counters exactly */
 		ShmemVariableCache->nextXid = checkPoint.nextXid;
-		ShmemVariableCache->xidCount = 0;
 		ShmemVariableCache->nextOid = checkPoint.nextOid;
 		ShmemVariableCache->oidCount = 0;
 	}
@@ -2879,11 +2844,10 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 		CheckPoint	checkPoint;
 
 		memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
-		/* In an ONLINE checkpoint, treat the counters like NEXTXID/NEXTOID */
+		/* In an ONLINE checkpoint, treat the counters like NEXTOID */
 		if (ShmemVariableCache->nextXid < checkPoint.nextXid)
 		{
 			ShmemVariableCache->nextXid = checkPoint.nextXid;
-			ShmemVariableCache->xidCount = 0;
 		}
 		if (ShmemVariableCache->nextOid < checkPoint.nextOid)
 		{
@@ -2914,13 +2878,6 @@ xlog_desc(char *buf, uint8 xl_info, char* rec)
 			checkpoint->ThisStartUpID, checkpoint->nextXid, 
 			checkpoint->nextOid,
 			(info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
-	}
-	else if (info == XLOG_NEXTXID)
-	{
-		TransactionId		nextXid;
-
-		memcpy(&nextXid, rec, sizeof(TransactionId));
-		sprintf(buf + strlen(buf), "nextXid: %u", nextXid);
 	}
 	else if (info == XLOG_NEXTOID)
 	{

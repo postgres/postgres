@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.36 2001/03/13 01:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.37 2001/03/18 20:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,17 +44,9 @@ GetNewTransactionId(TransactionId *xid)
 
 	SpinAcquire(XidGenLockId);
 
-	/* If we run out of logged for use xids then we must log more */
-	if (ShmemVariableCache->xidCount == 0)
-	{
-		XLogPutNextXid(ShmemVariableCache->nextXid + VAR_XID_PREFETCH);
-		ShmemVariableCache->xidCount = VAR_XID_PREFETCH;
-	}
-
 	*xid = ShmemVariableCache->nextXid;
 
 	(ShmemVariableCache->nextXid)++;
-	(ShmemVariableCache->xidCount)--;
 
 	SpinRelease(XidGenLockId);
 

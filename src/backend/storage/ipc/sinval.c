@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.26 2001/02/26 00:50:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.27 2001/03/18 20:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,7 +296,7 @@ GetSnapshotData(bool serializable)
 	/*
 	 * Unfortunately, we have to call ReadNewTransactionId() after
 	 * acquiring SInvalLock above. It's not good because
-	 * ReadNewTransactionId() does SpinAcquire(OidGenLockId) but
+	 * ReadNewTransactionId() does SpinAcquire(XidGenLockId) but
 	 * _necessary_.
 	 */
 	ReadNewTransactionId(&(snapshot->xmax));

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_control.h,v 1.1 2001/03/13 01:17:06 tgl Exp $
+ * $Id: pg_control.h,v 1.2 2001/03/18 20:18:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ typedef struct CheckPoint
 /* XLOG info values for XLOG rmgr */
 #define XLOG_CHECKPOINT_SHUTDOWN		0x00
 #define XLOG_CHECKPOINT_ONLINE			0x10
-#define XLOG_NEXTXID					0x20
 #define XLOG_NEXTOID					0x30
 
 
