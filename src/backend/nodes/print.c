@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.59 2003/01/15 19:35:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.60 2003/01/22 19:26:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -362,24 +362,43 @@ print_expr(Node *expr, List *rtable)
 		printf("%s", outputstr);
 		pfree(outputstr);
 	}
-	else if (IsA(expr, Expr))
+	else if (IsA(expr, OpExpr))
 	{
-		Expr	   *e = (Expr *) expr;
+		OpExpr	   *e = (OpExpr *) expr;
+		char	   *opname;
 
-		if (is_opclause(expr))
+		opname = get_opname(e->opno);
+		if (length(e->args) > 1)
 		{
-			char	   *opname;
-
-			print_expr(get_leftop(e), rtable);
-			opname = get_opname(((OpExpr *) e)->opno);
+			print_expr(get_leftop((Expr *) e), rtable);
 			printf(" %s ", ((opname != NULL) ? opname : "(invalid operator)"));
-			print_expr(get_rightop(e), rtable);
+			print_expr(get_rightop((Expr *) e), rtable);
 		}
 		else
-			printf("an expr");
+		{
+			/* we print prefix and postfix ops the same... */
+			printf("%s ", ((opname != NULL) ? opname : "(invalid operator)"));
+			print_expr(get_leftop((Expr *) e), rtable);
+		}
+	}
+	else if (IsA(expr, FuncExpr))
+	{
+		FuncExpr   *e = (FuncExpr *) expr;
+		char	   *funcname;
+		List	   *l;
+
+		funcname = get_func_name(e->funcid);
+		printf("%s(", ((funcname != NULL) ? funcname : "(invalid function)"));
+		foreach(l, e->args)
+		{
+			print_expr(lfirst(l), rtable);
+			if (lnext(l))
+				printf(",");
+		}
+		printf(")");
 	}
 	else
-		printf("not an expr");
+		printf("unknown expr");
 }
 
 /*
