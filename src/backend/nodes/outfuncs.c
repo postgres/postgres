@@ -1,17 +1,23 @@
-/*
+/*-------------------------------------------------------------------------
+ *
  * outfuncs.c
- *	  routines to convert a node to ascii representation
+ *	  Output functions for Postgres tree nodes.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.181 2002/11/24 21:52:13 tgl Exp $
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.182 2002/11/25 18:12:09 tgl Exp $
  *
  * NOTES
- *	  Every (plan) node in POSTGRES has an associated "out" routine which
- *	  knows how to create its ascii representation. These functions are
- *	  useful for debugging as well as for storing plans in the system
- *	  catalogs (eg. views).
+ *	  Every node type that can appear in stored rules' parsetrees *must*
+ *	  have an output function defined here (as well as an input function
+ *	  in readfuncs.c).  For use in debugging, we also provide output
+ *	  functions for nodes that appear in raw parsetrees and plan trees.
+ *	  These nodes however need not have input functions.
+ *
+ *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
@@ -25,6 +31,72 @@
 #include "nodes/relation.h"
 #include "parser/parse.h"
 #include "utils/datum.h"
+
+
+/*
+ * Macros to simplify output of different kinds of fields.  Use these
+ * wherever possible to reduce the chance for silly typos.  Note that these
+ * hard-wire conventions about the names of the local variables in an Out
+ * routine.
+ */
+
+/* Write the label for the node type */
+#define WRITE_NODE_TYPE(nodelabel) \
+	appendStringInfo(str, nodelabel)
+
+/* Write an integer field (anything written as ":fldname %d") */
+#define WRITE_INT_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %d", node->fldname)
+
+/* Write an unsigned integer field (anything written as ":fldname %u") */
+#define WRITE_UINT_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
+
+/* Write an OID field (don't hard-wire assumption that OID is same as uint) */
+#define WRITE_OID_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %u", node->fldname)
+
+/* Write a long-integer field */
+#define WRITE_LONG_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %ld", node->fldname)
+
+/* Write a char field (ie, one ascii character) */
+#define WRITE_CHAR_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %c", node->fldname)
+
+/* Write an enumerated-type field as an integer code */
+#define WRITE_ENUM_FIELD(fldname, enumtype) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %d", \
+					 (int) node->fldname)
+
+/* Write a float field --- caller must give format to define precision */
+#define WRITE_FLOAT_FIELD(fldname,format) \
+	appendStringInfo(str, " :" CppAsString(fldname) " " format, node->fldname)
+
+/* Write a boolean field */
+#define WRITE_BOOL_FIELD(fldname) \
+	appendStringInfo(str, " :" CppAsString(fldname) " %s", \
+					 booltostr(node->fldname))
+
+/* Write a character-string (possibly NULL) field */
+#define WRITE_STRING_FIELD(fldname) \
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 _outToken(str, node->fldname))
+
+/* Write a Node field */
+#define WRITE_NODE_FIELD(fldname) \
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 _outNode(str, node->fldname))
+
+/* Write an integer-list field */
+#define WRITE_INTLIST_FIELD(fldname) \
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 _outIntList(str, node->fldname))
+
+/* Write an OID-list field */
+#define WRITE_OIDLIST_FIELD(fldname) \
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 _outOidList(str, node->fldname))
 
 
 #define booltostr(x)  ((x) ? "true" : "false")
@@ -105,133 +177,117 @@ _outOidList(StringInfo str, List *list)
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
-	appendStringInfo(str, " CREATE :relation ");
-	_outNode(str, node->relation);
+	WRITE_NODE_TYPE("CREATE");
 
-	appendStringInfo(str, "	:tableElts ");
-	_outNode(str, node->tableElts);
-
-	appendStringInfo(str, " :inhRelations ");
-	_outNode(str, node->inhRelations);
-
-	appendStringInfo(str, " :constraints ");
-	_outNode(str, node->constraints);
-
-	appendStringInfo(str, " :hasoids %s :oncommit %d ",
-					 booltostr(node->hasoids),
-					 (int) node->oncommit);
+	WRITE_NODE_FIELD(relation);
+	WRITE_NODE_FIELD(tableElts);
+	WRITE_NODE_FIELD(inhRelations);
+	WRITE_NODE_FIELD(constraints);
+	WRITE_BOOL_FIELD(hasoids);
+	WRITE_ENUM_FIELD(oncommit, OnCommitAction);
 }
 
 static void
 _outIndexStmt(StringInfo str, IndexStmt *node)
 {
-	appendStringInfo(str, " INDEX :idxname ");
-	_outToken(str, node->idxname);
-	appendStringInfo(str, " :relation ");
-	_outNode(str, node->relation);
-	appendStringInfo(str, " :accessMethod ");
-	_outToken(str, node->accessMethod);
-	appendStringInfo(str, " :indexParams ");
-	_outNode(str, node->indexParams);
-	appendStringInfo(str, " :whereClause ");
-	_outNode(str, node->whereClause);
-	appendStringInfo(str, " :rangetable ");
-	_outNode(str, node->rangetable);
-	appendStringInfo(str, " :unique %s :primary %s :isconstraint %s ",
-					 booltostr(node->unique),
-					 booltostr(node->primary),
-					 booltostr(node->isconstraint));
+	WRITE_NODE_TYPE("INDEX");
+
+	WRITE_STRING_FIELD(idxname);
+	WRITE_NODE_FIELD(relation);
+	WRITE_STRING_FIELD(accessMethod);
+	WRITE_NODE_FIELD(indexParams);
+	WRITE_NODE_FIELD(whereClause);
+	WRITE_NODE_FIELD(rangetable);
+	WRITE_BOOL_FIELD(unique);
+	WRITE_BOOL_FIELD(primary);
+	WRITE_BOOL_FIELD(isconstraint);
 }
 
 static void
 _outNotifyStmt(StringInfo str, NotifyStmt *node)
 {
-	appendStringInfo(str, " NOTIFY :relation ");
-	_outNode(str, node->relation);
+	WRITE_NODE_TYPE("NOTIFY");
+
+	WRITE_NODE_FIELD(relation);
 }
 
 static void
 _outSelectStmt(StringInfo str, SelectStmt *node)
 {
+	WRITE_NODE_TYPE("SELECT");
+
 	/* XXX this is pretty durn incomplete */
-	appendStringInfo(str, " SELECT :where ");
-	_outNode(str, node->whereClause);
+	WRITE_NODE_FIELD(whereClause);
 }
 
 static void
 _outFuncCall(StringInfo str, FuncCall *node)
 {
-	appendStringInfo(str, " FUNCCALL ");
-	_outNode(str, node->funcname);
-	appendStringInfo(str, " :args ");
-	_outNode(str, node->args);
-	appendStringInfo(str, " :agg_star %s :agg_distinct %s ",
-					 booltostr(node->agg_star),
-					 booltostr(node->agg_distinct));
+	WRITE_NODE_TYPE("FUNCCALL");
+
+	WRITE_NODE_FIELD(funcname);
+	WRITE_NODE_FIELD(args);
+	WRITE_BOOL_FIELD(agg_star);
+	WRITE_BOOL_FIELD(agg_distinct);
 }
 
 static void
 _outColumnDef(StringInfo str, ColumnDef *node)
 {
-	appendStringInfo(str, " COLUMNDEF :colname ");
-	_outToken(str, node->colname);
-	appendStringInfo(str, " :typename ");
-	_outNode(str, node->typename);
-	appendStringInfo(str, " :inhcount %d :is_local %s :is_not_null %s :raw_default ",
-					 node->inhcount,
-					 booltostr(node->is_local),
-					 booltostr(node->is_not_null));
-	_outNode(str, node->raw_default);
-	appendStringInfo(str, " :cooked_default ");
-	_outToken(str, node->cooked_default);
-	appendStringInfo(str, " :constraints ");
-	_outNode(str, node->constraints);
-	appendStringInfo(str, " :support ");
-	_outNode(str, node->support);
+	WRITE_NODE_TYPE("COLUMNDEF");
+
+	WRITE_STRING_FIELD(colname);
+	WRITE_NODE_FIELD(typename);
+	WRITE_INT_FIELD(inhcount);
+	WRITE_BOOL_FIELD(is_local);
+	WRITE_BOOL_FIELD(is_not_null);
+	WRITE_NODE_FIELD(raw_default);
+	WRITE_STRING_FIELD(cooked_default);
+	WRITE_NODE_FIELD(constraints);
+	WRITE_NODE_FIELD(support);
 }
 
 static void
 _outTypeName(StringInfo str, TypeName *node)
 {
-	appendStringInfo(str, " TYPENAME :names ");
-	_outNode(str, node->names);
-	appendStringInfo(str, " :typeid %u :timezone %s :setof %s"
-					 " :pct_type %s :typmod %d :arrayBounds ",
-					 node->typeid,
-					 booltostr(node->timezone),
-					 booltostr(node->setof),
-					 booltostr(node->pct_type),
-					 node->typmod);
-	_outNode(str, node->arrayBounds);
+	WRITE_NODE_TYPE("TYPENAME");
+
+	WRITE_NODE_FIELD(names);
+	WRITE_OID_FIELD(typeid);
+	WRITE_BOOL_FIELD(timezone);
+	WRITE_BOOL_FIELD(setof);
+	WRITE_BOOL_FIELD(pct_type);
+	WRITE_INT_FIELD(typmod);
+	WRITE_NODE_FIELD(arrayBounds);
 }
 
 static void
 _outTypeCast(StringInfo str, TypeCast *node)
 {
-	appendStringInfo(str, " TYPECAST :arg ");
-	_outNode(str, node->arg);
-	appendStringInfo(str, " :typename ");
-	_outNode(str, node->typename);
+	WRITE_NODE_TYPE("TYPECAST");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_NODE_FIELD(typename);
 }
 
 static void
 _outIndexElem(StringInfo str, IndexElem *node)
 {
-	appendStringInfo(str, " INDEXELEM :name ");
-	_outToken(str, node->name);
-	appendStringInfo(str, " :funcname ");
-	_outNode(str, node->funcname);
-	appendStringInfo(str, " :args ");
-	_outNode(str, node->args);
-	appendStringInfo(str, " :opclass ");
-	_outNode(str, node->opclass);
+	WRITE_NODE_TYPE("INDEXELEM");
+
+	WRITE_STRING_FIELD(name);
+	WRITE_NODE_FIELD(funcname);
+	WRITE_NODE_FIELD(args);
+	WRITE_NODE_FIELD(opclass);
 }
 
 static void
 _outQuery(StringInfo str, Query *node)
 {
-	appendStringInfo(str, " QUERY :command %d :source %d :utility ",
-					 (int) node->commandType, (int) node->querySource);
+	WRITE_NODE_TYPE("QUERY");
+
+	WRITE_ENUM_FIELD(commandType, CmdType);
+	WRITE_ENUM_FIELD(querySource, QuerySource);
 
 	/*
 	 * Hack to work around missing outfuncs routines for a lot of the
@@ -247,60 +303,34 @@ _outQuery(StringInfo str, Query *node)
 			case T_CreateStmt:
 			case T_IndexStmt:
 			case T_NotifyStmt:
-				_outNode(str, node->utilityStmt);
+				WRITE_NODE_FIELD(utilityStmt);
 				break;
 			default:
-				appendStringInfo(str, "?");
+				appendStringInfo(str, " :utilityStmt ?");
 				break;
 		}
 	}
 	else
-		appendStringInfo(str, "<>");
+		appendStringInfo(str, " :utilityStmt <>");
 
-	appendStringInfo(str, " :resultRelation %d :into ",
-					 node->resultRelation);
-	_outNode(str, node->into);
-
-	appendStringInfo(str, " :isPortal %s :isBinary %s"
-					 " :hasAggs %s :hasSubLinks %s :rtable ",
-					 booltostr(node->isPortal),
-					 booltostr(node->isBinary),
-					 booltostr(node->hasAggs),
-					 booltostr(node->hasSubLinks));
-	_outNode(str, node->rtable);
-
-	appendStringInfo(str, " :jointree ");
-	_outNode(str, node->jointree);
-
-	appendStringInfo(str, " :rowMarks ");
-	_outIntList(str, node->rowMarks);
-
-	appendStringInfo(str, " :targetList ");
-	_outNode(str, node->targetList);
-
-	appendStringInfo(str, " :groupClause ");
-	_outNode(str, node->groupClause);
-
-	appendStringInfo(str, " :havingQual ");
-	_outNode(str, node->havingQual);
-
-	appendStringInfo(str, " :distinctClause ");
-	_outNode(str, node->distinctClause);
-
-	appendStringInfo(str, " :sortClause ");
-	_outNode(str, node->sortClause);
-
-	appendStringInfo(str, " :limitOffset ");
-	_outNode(str, node->limitOffset);
-
-	appendStringInfo(str, " :limitCount ");
-	_outNode(str, node->limitCount);
-
-	appendStringInfo(str, " :setOperations ");
-	_outNode(str, node->setOperations);
-
-	appendStringInfo(str, " :resultRelations ");
-	_outIntList(str, node->resultRelations);
+	WRITE_INT_FIELD(resultRelation);
+	WRITE_NODE_FIELD(into);
+	WRITE_BOOL_FIELD(isPortal);
+	WRITE_BOOL_FIELD(isBinary);
+	WRITE_BOOL_FIELD(hasAggs);
+	WRITE_BOOL_FIELD(hasSubLinks);
+	WRITE_NODE_FIELD(rtable);
+	WRITE_NODE_FIELD(jointree);
+	WRITE_INTLIST_FIELD(rowMarks);
+	WRITE_NODE_FIELD(targetList);
+	WRITE_NODE_FIELD(groupClause);
+	WRITE_NODE_FIELD(havingQual);
+	WRITE_NODE_FIELD(distinctClause);
+	WRITE_NODE_FIELD(sortClause);
+	WRITE_NODE_FIELD(limitOffset);
+	WRITE_NODE_FIELD(limitCount);
+	WRITE_NODE_FIELD(setOperations);
+	WRITE_INTLIST_FIELD(resultRelations);
 
 	/* planner-internal fields are not written out */
 }
@@ -308,29 +338,36 @@ _outQuery(StringInfo str, Query *node)
 static void
 _outSortClause(StringInfo str, SortClause *node)
 {
-	appendStringInfo(str, " SORTCLAUSE :tleSortGroupRef %u :sortop %u ",
-					 node->tleSortGroupRef, node->sortop);
+	WRITE_NODE_TYPE("SORTCLAUSE");
+
+	WRITE_UINT_FIELD(tleSortGroupRef);
+	WRITE_OID_FIELD(sortop);
 }
 
 static void
 _outGroupClause(StringInfo str, GroupClause *node)
 {
-	appendStringInfo(str, " GROUPCLAUSE :tleSortGroupRef %u :sortop %u ",
-					 node->tleSortGroupRef, node->sortop);
+	WRITE_NODE_TYPE("GROUPCLAUSE");
+
+	WRITE_UINT_FIELD(tleSortGroupRef);
+	WRITE_OID_FIELD(sortop);
 }
 
 static void
 _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 {
-	appendStringInfo(str, " SETOPERATIONSTMT :op %d :all %s :larg ",
-					 (int) node->op,
-					 booltostr(node->all));
-	_outNode(str, node->larg);
-	appendStringInfo(str, " :rarg ");
-	_outNode(str, node->rarg);
-	appendStringInfo(str, " :colTypes ");
-	_outOidList(str, node->colTypes);
+	WRITE_NODE_TYPE("SETOPERATIONSTMT");
+
+	WRITE_ENUM_FIELD(op, SetOperation);
+	WRITE_BOOL_FIELD(all);
+	WRITE_NODE_FIELD(larg);
+	WRITE_NODE_FIELD(rarg);
+	WRITE_OIDLIST_FIELD(colTypes);
 }
+
+/*
+ *	Stuff from plannodes.h
+ */
 
 /*
  * print the basic stuff of all nodes that inherit from Plan
@@ -340,274 +377,208 @@ _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 static void
 _outPlanInfo(StringInfo str, Plan *node)
 {
-	appendStringInfo(str,
-					 ":startup_cost %.2f :total_cost %.2f :rows %.0f :width %d :qptargetlist ",
-					 node->startup_cost,
-					 node->total_cost,
-					 node->plan_rows,
-					 node->plan_width);
-	_outNode(str, node->targetlist);
-
-	appendStringInfo(str, " :qpqual ");
-	_outNode(str, node->qual);
-
-	appendStringInfo(str, " :lefttree ");
-	_outNode(str, node->lefttree);
-
-	appendStringInfo(str, " :righttree ");
-	_outNode(str, node->righttree);
-
-	appendStringInfo(str, " :extprm ");
-	_outIntList(str, node->extParam);
-
-	appendStringInfo(str, " :locprm ");
-	_outIntList(str, node->locParam);
-
-	appendStringInfo(str, " :initplan ");
-	_outNode(str, node->initPlan);
-
-	appendStringInfo(str, " :nprm %d ", node->nParamExec);
+	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
+	WRITE_FLOAT_FIELD(total_cost, "%.2f");
+	WRITE_FLOAT_FIELD(plan_rows, "%.0f");
+	WRITE_INT_FIELD(plan_width);
+	WRITE_NODE_FIELD(targetlist);
+	WRITE_NODE_FIELD(qual);
+	WRITE_NODE_FIELD(lefttree);
+	WRITE_NODE_FIELD(righttree);
+	WRITE_INTLIST_FIELD(extParam);
+	WRITE_INTLIST_FIELD(locParam);
+	/* chgParam is execution state too */
+	WRITE_NODE_FIELD(initPlan);
+	/* we don't write subPlan; reader must reconstruct list */
+	WRITE_INT_FIELD(nParamExec);
 }
 
 /*
- *	Stuff from plannodes.h
+ * print the basic stuff of all nodes that inherit from Scan
  */
+static void
+_outScanInfo(StringInfo str, Scan *node)
+{
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_UINT_FIELD(scanrelid);
+}
+
+/*
+ * print the basic stuff of all nodes that inherit from Join
+ */
+static void
+_outJoinPlanInfo(StringInfo str, Join *node)
+{
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_ENUM_FIELD(jointype, JoinType);
+	WRITE_NODE_FIELD(joinqual);
+}
+
+
 static void
 _outPlan(StringInfo str, Plan *node)
 {
-	appendStringInfo(str, " PLAN ");
+	WRITE_NODE_TYPE("PLAN");
+
 	_outPlanInfo(str, (Plan *) node);
 }
 
 static void
 _outResult(StringInfo str, Result *node)
 {
-	appendStringInfo(str, " RESULT ");
+	WRITE_NODE_TYPE("RESULT");
+
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :resconstantqual ");
-	_outNode(str, node->resconstantqual);
-
+	WRITE_NODE_FIELD(resconstantqual);
 }
 
-/*
- *	Append is a subclass of Plan.
- */
 static void
 _outAppend(StringInfo str, Append *node)
 {
-	appendStringInfo(str, " APPEND ");
+	WRITE_NODE_TYPE("APPEND");
+
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :appendplans ");
-	_outNode(str, node->appendplans);
-
-	appendStringInfo(str, " :isTarget %s ",
-					 booltostr(node->isTarget));
+	WRITE_NODE_FIELD(appendplans);
+	WRITE_BOOL_FIELD(isTarget);
 }
 
-/*
- *	Join is a subclass of Plan
- */
-static void
-_outJoin(StringInfo str, Join *node)
-{
-	appendStringInfo(str, " JOIN ");
-	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :jointype %d :joinqual ",
-					 (int) node->jointype);
-	_outNode(str, node->joinqual);
-}
-
-/*
- *	NestLoop is a subclass of Join
- */
-static void
-_outNestLoop(StringInfo str, NestLoop *node)
-{
-	appendStringInfo(str, " NESTLOOP ");
-	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :jointype %d :joinqual ",
-					 (int) node->join.jointype);
-	_outNode(str, node->join.joinqual);
-}
-
-/*
- *	MergeJoin is a subclass of Join
- */
-static void
-_outMergeJoin(StringInfo str, MergeJoin *node)
-{
-	appendStringInfo(str, " MERGEJOIN ");
-	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :jointype %d :joinqual ",
-					 (int) node->join.jointype);
-	_outNode(str, node->join.joinqual);
-
-	appendStringInfo(str, " :mergeclauses ");
-	_outNode(str, node->mergeclauses);
-}
-
-/*
- *	HashJoin is a subclass of Join.
- */
-static void
-_outHashJoin(StringInfo str, HashJoin *node)
-{
-	appendStringInfo(str, " HASHJOIN ");
-	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :jointype %d :joinqual ",
-					 (int) node->join.jointype);
-	_outNode(str, node->join.joinqual);
-
-	appendStringInfo(str, " :hashclauses ");
-	_outNode(str, node->hashclauses);
-	appendStringInfo(str, " :hashjoinop %u ",
-					 node->hashjoinop);
-}
-
-static void
-_outSubPlan(StringInfo str, SubPlan *node)
-{
-	appendStringInfo(str, " SUBPLAN :plan ");
-	_outNode(str, node->plan);
-
-	appendStringInfo(str, " :planid %d :rtable ", node->plan_id);
-	_outNode(str, node->rtable);
-
-	appendStringInfo(str, " :setprm ");
-	_outIntList(str, node->setParam);
-
-	appendStringInfo(str, " :parprm ");
-	_outIntList(str, node->parParam);
-
-	appendStringInfo(str, " :slink ");
-	_outNode(str, node->sublink);
-}
-
-/*
- *	Scan is a subclass of Node
- */
 static void
 _outScan(StringInfo str, Scan *node)
 {
-	appendStringInfo(str, " SCAN ");
-	_outPlanInfo(str, (Plan *) node);
+	WRITE_NODE_TYPE("SCAN");
 
-	appendStringInfo(str, " :scanrelid %u ", node->scanrelid);
+	_outScanInfo(str, (Scan *) node);
 }
 
-/*
- *	SeqScan is a subclass of Scan
- */
 static void
 _outSeqScan(StringInfo str, SeqScan *node)
 {
-	appendStringInfo(str, " SEQSCAN ");
-	_outPlanInfo(str, (Plan *) node);
+	WRITE_NODE_TYPE("SEQSCAN");
 
-	appendStringInfo(str, " :scanrelid %u ", node->scanrelid);
+	_outScanInfo(str, (Scan *) node);
 }
 
-/*
- *	IndexScan is a subclass of Scan
- */
 static void
 _outIndexScan(StringInfo str, IndexScan *node)
 {
-	appendStringInfo(str, " INDEXSCAN ");
-	_outPlanInfo(str, (Plan *) node);
+	WRITE_NODE_TYPE("INDEXSCAN");
 
-	appendStringInfo(str, " :scanrelid %u :indxid ", node->scan.scanrelid);
-	_outOidList(str, node->indxid);
+	_outScanInfo(str, (Scan *) node);
 
-	appendStringInfo(str, " :indxqual ");
-	_outNode(str, node->indxqual);
-
-	appendStringInfo(str, " :indxqualorig ");
-	_outNode(str, node->indxqualorig);
-
-	appendStringInfo(str, " :indxorderdir %d ", node->indxorderdir);
+	WRITE_OIDLIST_FIELD(indxid);
+	WRITE_NODE_FIELD(indxqual);
+	WRITE_NODE_FIELD(indxqualorig);
+	WRITE_ENUM_FIELD(indxorderdir, ScanDirection);
 }
 
-/*
- *	TidScan is a subclass of Scan
- */
 static void
 _outTidScan(StringInfo str, TidScan *node)
 {
-	appendStringInfo(str, " TIDSCAN ");
-	_outPlanInfo(str, (Plan *) node);
+	WRITE_NODE_TYPE("TIDSCAN");
 
-	appendStringInfo(str, " :scanrelid %u ", node->scan.scanrelid);
-	appendStringInfo(str, " :needrescan %d ", node->needRescan);
+	_outScanInfo(str, (Scan *) node);
 
-	appendStringInfo(str, " :tideval ");
-	_outNode(str, node->tideval);
-
+	WRITE_BOOL_FIELD(needRescan);
+	WRITE_NODE_FIELD(tideval);
 }
 
-/*
- *	SubqueryScan is a subclass of Scan
- */
 static void
 _outSubqueryScan(StringInfo str, SubqueryScan *node)
 {
-	appendStringInfo(str, " SUBQUERYSCAN ");
-	_outPlanInfo(str, (Plan *) node);
+	WRITE_NODE_TYPE("SUBQUERYSCAN");
 
-	appendStringInfo(str, " :scanrelid %u :subplan ", node->scan.scanrelid);
-	_outNode(str, node->subplan);
+	_outScanInfo(str, (Scan *) node);
+
+	WRITE_NODE_FIELD(subplan);
 }
 
-/*
- *	FunctionScan is a subclass of Scan
- */
 static void
 _outFunctionScan(StringInfo str, FunctionScan *node)
 {
-	appendStringInfo(str, " FUNCTIONSCAN ");
-	_outPlanInfo(str, (Plan *) node);
+	WRITE_NODE_TYPE("FUNCTIONSCAN");
 
-	appendStringInfo(str, " :scanrelid %u ", node->scan.scanrelid);
+	_outScanInfo(str, (Scan *) node);
 }
 
-/*
- *	Material is a subclass of Plan
- */
 static void
-_outMaterial(StringInfo str, Material *node)
+_outJoin(StringInfo str, Join *node)
 {
-	appendStringInfo(str, " MATERIAL ");
-	_outPlanInfo(str, (Plan *) node);
+	WRITE_NODE_TYPE("JOIN");
+
+	_outJoinPlanInfo(str, (Join *) node);
 }
 
-/*
- *	Sort is a subclass of Plan
- */
 static void
-_outSort(StringInfo str, Sort *node)
+_outNestLoop(StringInfo str, NestLoop *node)
 {
-	appendStringInfo(str, " SORT ");
-	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :keycount %d ", node->keycount);
+	WRITE_NODE_TYPE("NESTLOOP");
+
+	_outJoinPlanInfo(str, (Join *) node);
+}
+
+static void
+_outMergeJoin(StringInfo str, MergeJoin *node)
+{
+	WRITE_NODE_TYPE("MERGEJOIN");
+
+	_outJoinPlanInfo(str, (Join *) node);
+
+	WRITE_NODE_FIELD(mergeclauses);
+}
+
+static void
+_outHashJoin(StringInfo str, HashJoin *node)
+{
+	WRITE_NODE_TYPE("HASHJOIN");
+
+	_outJoinPlanInfo(str, (Join *) node);
+
+	WRITE_NODE_FIELD(hashclauses);
+	WRITE_OID_FIELD(hashjoinop);
 }
 
 static void
 _outAgg(StringInfo str, Agg *node)
 {
-	appendStringInfo(str, " AGG ");
+	WRITE_NODE_TYPE("AGG");
+
 	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :aggstrategy %d :numCols %d :numGroups %ld ",
-					 (int) node->aggstrategy, node->numCols, node->numGroups);
+
+	WRITE_ENUM_FIELD(aggstrategy, AggStrategy);
+	WRITE_INT_FIELD(numCols);
+	WRITE_LONG_FIELD(numGroups);
 }
 
 static void
 _outGroup(StringInfo str, Group *node)
 {
-	appendStringInfo(str, " GRP ");
+	WRITE_NODE_TYPE("GRP");
+
 	_outPlanInfo(str, (Plan *) node);
-	appendStringInfo(str, " :numCols %d ", node->numCols);
+
+	WRITE_INT_FIELD(numCols);
+}
+
+static void
+_outMaterial(StringInfo str, Material *node)
+{
+	WRITE_NODE_TYPE("MATERIAL");
+
+	_outPlanInfo(str, (Plan *) node);
+}
+
+static void
+_outSort(StringInfo str, Sort *node)
+{
+	WRITE_NODE_TYPE("SORT");
+
+	_outPlanInfo(str, (Plan *) node);
+
+	WRITE_INT_FIELD(keycount);
 }
 
 static void
@@ -615,13 +586,15 @@ _outUnique(StringInfo str, Unique *node)
 {
 	int			i;
 
-	appendStringInfo(str, " UNIQUE ");
+	WRITE_NODE_TYPE("UNIQUE");
+
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :numCols %d :uniqColIdx ",
-					 node->numCols);
+	WRITE_INT_FIELD(numCols);
+
+	appendStringInfo(str, " :uniqColIdx");
 	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, "%d ", (int) node->uniqColIdx[i]);
+		appendStringInfo(str, " %d", node->uniqColIdx[i]);
 }
 
 static void
@@ -629,40 +602,52 @@ _outSetOp(StringInfo str, SetOp *node)
 {
 	int			i;
 
-	appendStringInfo(str, " SETOP ");
+	WRITE_NODE_TYPE("SETOP");
+
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :cmd %d :numCols %d :dupColIdx ",
-					 (int) node->cmd, node->numCols);
+	WRITE_ENUM_FIELD(cmd, SetOpCmd);
+	WRITE_INT_FIELD(numCols);
+
+	appendStringInfo(str, " :dupColIdx");
 	for (i = 0; i < node->numCols; i++)
-		appendStringInfo(str, "%d ", (int) node->dupColIdx[i]);
-	appendStringInfo(str, " :flagColIdx %d ",
-					 (int) node->flagColIdx);
+		appendStringInfo(str, " %d", node->dupColIdx[i]);
+
+	WRITE_INT_FIELD(flagColIdx);
 }
 
 static void
 _outLimit(StringInfo str, Limit *node)
 {
-	appendStringInfo(str, " LIMIT ");
+	WRITE_NODE_TYPE("LIMIT");
+
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :limitOffset ");
-	_outNode(str, node->limitOffset);
-	appendStringInfo(str, " :limitCount ");
-	_outNode(str, node->limitCount);
+	WRITE_NODE_FIELD(limitOffset);
+	WRITE_NODE_FIELD(limitCount);
 }
 
-/*
- *	Hash is a subclass of Plan
- */
 static void
 _outHash(StringInfo str, Hash *node)
 {
-	appendStringInfo(str, " HASH ");
+	WRITE_NODE_TYPE("HASH");
+
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :hashkey ");
-	_outNode(str, node->hashkey);
+	WRITE_NODE_FIELD(hashkey);
+}
+
+static void
+_outSubPlan(StringInfo str, SubPlan *node)
+{
+	WRITE_NODE_TYPE("SUBPLAN");
+
+	WRITE_NODE_FIELD(plan);
+	WRITE_INT_FIELD(plan_id);
+	WRITE_NODE_FIELD(rtable);
+	WRITE_INTLIST_FIELD(setParam);
+	WRITE_INTLIST_FIELD(parParam);
+	WRITE_NODE_FIELD(sublink);
 }
 
 /*****************************************************************************
@@ -671,56 +656,31 @@ _outHash(StringInfo str, Hash *node)
  *
  *****************************************************************************/
 
-/*
- *	Resdom is a subclass of Node
- */
 static void
 _outResdom(StringInfo str, Resdom *node)
 {
-	appendStringInfo(str,
-				 " RESDOM :resno %d :restype %u :restypmod %d :resname ",
-					 node->resno,
-					 node->restype,
-					 node->restypmod);
-	_outToken(str, node->resname);
-	appendStringInfo(str, " :reskey %u :reskeyop %u :ressortgroupref %u :resjunk %s ",
-					 node->reskey,
-					 node->reskeyop,
-					 node->ressortgroupref,
-					 booltostr(node->resjunk));
+	WRITE_NODE_TYPE("RESDOM");
+
+	WRITE_INT_FIELD(resno);
+	WRITE_OID_FIELD(restype);
+	WRITE_INT_FIELD(restypmod);
+	WRITE_STRING_FIELD(resname);
+	WRITE_UINT_FIELD(ressortgroupref);
+	WRITE_UINT_FIELD(reskey);
+	WRITE_OID_FIELD(reskeyop);
+	WRITE_BOOL_FIELD(resjunk);
 }
 
-static void
-_outFjoin(StringInfo str, Fjoin *node)
-{
-	int			i;
-
-	appendStringInfo(str, " FJOIN :initialized %s :nNodes %d ",
-					 booltostr(node->fj_initialized),
-					 node->fj_nNodes);
-
-	appendStringInfo(str, " :innerNode ");
-	_outNode(str, node->fj_innerNode);
-
-	appendStringInfo(str, " :results @ 0x%p :alwaysdone",
-					 node->fj_results);
-
-	for (i = 0; i < node->fj_nNodes; i++)
-		appendStringInfo(str,
-						 booltostr(node->fj_alwaysDone[i]));
-}
-
-/*
- *	Expr is a subclass of Node
- */
 static void
 _outExpr(StringInfo str, Expr *node)
 {
 	char	   *opstr = NULL;
 
-	appendStringInfo(str, " EXPR :typeOid %u ",
-					 node->typeOid);
+	WRITE_NODE_TYPE("EXPR");
 
+	WRITE_OID_FIELD(typeOid);
+
+	/* do-it-yourself enum representation */
 	switch (node->opType)
 	{
 		case OP_EXPR:
@@ -747,305 +707,261 @@ _outExpr(StringInfo str, Expr *node)
 	}
 	appendStringInfo(str, " :opType ");
 	_outToken(str, opstr);
-	appendStringInfo(str, " :oper ");
-	_outNode(str, node->oper);
 
-	appendStringInfo(str, " :args ");
-	_outNode(str, node->args);
+	WRITE_NODE_FIELD(oper);
+	WRITE_NODE_FIELD(args);
 }
 
-/*
- *	Var is a subclass of Expr
- */
 static void
 _outVar(StringInfo str, Var *node)
 {
-	appendStringInfo(str,
-				" VAR :varno %u :varattno %d :vartype %u :vartypmod %d ",
-					 node->varno,
-					 node->varattno,
-					 node->vartype,
-					 node->vartypmod);
+	WRITE_NODE_TYPE("VAR");
 
-	appendStringInfo(str, " :varlevelsup %u :varnoold %u :varoattno %d",
-					 node->varlevelsup,
-					 node->varnoold,
-					 node->varoattno);
+	WRITE_UINT_FIELD(varno);
+	WRITE_INT_FIELD(varattno);
+	WRITE_OID_FIELD(vartype);
+	WRITE_INT_FIELD(vartypmod);
+	WRITE_UINT_FIELD(varlevelsup);
+	WRITE_UINT_FIELD(varnoold);
+	WRITE_INT_FIELD(varoattno);
 }
 
-/*
- *	Const is a subclass of Expr
- */
 static void
 _outConst(StringInfo str, Const *node)
 {
-	appendStringInfo(str,
-					 " CONST :consttype %u :constlen %d :constbyval %s"
-					 " :constisnull %s :constvalue ",
-					 node->consttype,
-					 node->constlen,
-					 booltostr(node->constbyval),
-					 booltostr(node->constisnull));
+	WRITE_NODE_TYPE("CONST");
 
+	WRITE_OID_FIELD(consttype);
+	WRITE_INT_FIELD(constlen);
+	WRITE_BOOL_FIELD(constbyval);
+	WRITE_BOOL_FIELD(constisnull);
+	/* XXX what about constisset, constiscast? */
+
+	appendStringInfo(str, " :constvalue ");
 	if (node->constisnull)
 		appendStringInfo(str, "<>");
 	else
 		_outDatum(str, node->constvalue, node->constlen, node->constbyval);
 }
 
-/*
- *	Aggref
- */
 static void
 _outAggref(StringInfo str, Aggref *node)
 {
-	appendStringInfo(str, " AGGREG :aggfnoid %u :aggtype %u :target ",
-					 node->aggfnoid, node->aggtype);
-	_outNode(str, node->target);
+	WRITE_NODE_TYPE("AGGREF");
 
-	appendStringInfo(str, " :aggstar %s :aggdistinct %s ",
-					 booltostr(node->aggstar),
-					 booltostr(node->aggdistinct));
-	/* aggno is not dumped */
+	WRITE_OID_FIELD(aggfnoid);
+	WRITE_OID_FIELD(aggtype);
+	WRITE_NODE_FIELD(target);
+	WRITE_BOOL_FIELD(aggstar);
+	WRITE_BOOL_FIELD(aggdistinct);
+	/* aggno is not saved since it is just executor state */
 }
 
-/*
- *	SubLink
- */
 static void
 _outSubLink(StringInfo str, SubLink *node)
 {
-	appendStringInfo(str,
-					 " SUBLINK :subLinkType %d :useor %s :lefthand ",
-					 node->subLinkType,
-					 booltostr(node->useor));
-	_outNode(str, node->lefthand);
+	WRITE_NODE_TYPE("SUBLINK");
 
-	appendStringInfo(str, " :oper ");
-	_outNode(str, node->oper);
-
-	appendStringInfo(str, " :subselect ");
-	_outNode(str, node->subselect);
+	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
+	WRITE_BOOL_FIELD(useor);
+	WRITE_NODE_FIELD(lefthand);
+	WRITE_NODE_FIELD(oper);
+	WRITE_NODE_FIELD(subselect);
 }
 
-/*
- *	ArrayRef is a subclass of Expr
- */
 static void
 _outArrayRef(StringInfo str, ArrayRef *node)
 {
-	appendStringInfo(str,
-		 " ARRAYREF :refrestype %u :refattrlength %d :refelemlength %d ",
-					 node->refrestype,
-					 node->refattrlength,
-					 node->refelemlength);
+	WRITE_NODE_TYPE("ARRAYREF");
 
-	appendStringInfo(str,
-				   ":refelembyval %s :refelemalign %c :refupperindexpr ",
-					 booltostr(node->refelembyval),
-					 node->refelemalign);
-	_outNode(str, node->refupperindexpr);
-
-	appendStringInfo(str, " :reflowerindexpr ");
-	_outNode(str, node->reflowerindexpr);
-
-	appendStringInfo(str, " :refexpr ");
-	_outNode(str, node->refexpr);
-
-	appendStringInfo(str, " :refassgnexpr ");
-	_outNode(str, node->refassgnexpr);
+	WRITE_OID_FIELD(refrestype);
+	WRITE_INT_FIELD(refattrlength);
+	WRITE_INT_FIELD(refelemlength);
+	WRITE_BOOL_FIELD(refelembyval);
+	WRITE_CHAR_FIELD(refelemalign);
+	WRITE_NODE_FIELD(refupperindexpr);
+	WRITE_NODE_FIELD(reflowerindexpr);
+	WRITE_NODE_FIELD(refexpr);
+	WRITE_NODE_FIELD(refassgnexpr);
 }
 
-/*
- *	Func is a subclass of Expr
- */
 static void
 _outFunc(StringInfo str, Func *node)
 {
-	appendStringInfo(str,
-		" FUNC :funcid %u :funcresulttype %u :funcretset %s :funcformat %d ",
-					 node->funcid,
-					 node->funcresulttype,
-					 booltostr(node->funcretset),
-					 (int) node->funcformat);
+	WRITE_NODE_TYPE("FUNC");
+
+	WRITE_OID_FIELD(funcid);
+	WRITE_OID_FIELD(funcresulttype);
+	WRITE_BOOL_FIELD(funcretset);
+	WRITE_ENUM_FIELD(funcformat, CoercionForm);
 }
 
-/*
- *	Oper is a subclass of Expr
- */
 static void
 _outOper(StringInfo str, Oper *node)
 {
-	appendStringInfo(str,
-				" OPER :opno %u :opid %u :opresulttype %u :opretset %s ",
-					 node->opno,
-					 node->opid,
-					 node->opresulttype,
-					 booltostr(node->opretset));
+	WRITE_NODE_TYPE("OPER");
+
+	WRITE_OID_FIELD(opno);
+	WRITE_OID_FIELD(opid);
+	WRITE_OID_FIELD(opresulttype);
+	WRITE_BOOL_FIELD(opretset);
 }
 
-/*
- *	Param is a subclass of Expr
- */
 static void
 _outParam(StringInfo str, Param *node)
 {
-	appendStringInfo(str, " PARAM :paramkind %d :paramid %d :paramname ",
-					 node->paramkind,
-					 node->paramid);
-	_outToken(str, node->paramname);
-	appendStringInfo(str, " :paramtype %u ", node->paramtype);
+	WRITE_NODE_TYPE("PARAM");
+
+	WRITE_INT_FIELD(paramkind);
+	WRITE_INT_FIELD(paramid);
+	WRITE_STRING_FIELD(paramname);
+	WRITE_OID_FIELD(paramtype);
 }
 
-/*
- *	FieldSelect
- */
 static void
 _outFieldSelect(StringInfo str, FieldSelect *node)
 {
-	appendStringInfo(str, " FIELDSELECT :arg ");
-	_outNode(str, node->arg);
+	WRITE_NODE_TYPE("FIELDSELECT");
 
-	appendStringInfo(str, " :fieldnum %d :resulttype %u :resulttypmod %d ",
-				   node->fieldnum, node->resulttype, node->resulttypmod);
+	WRITE_NODE_FIELD(arg);
+	WRITE_INT_FIELD(fieldnum);
+	WRITE_OID_FIELD(resulttype);
+	WRITE_INT_FIELD(resulttypmod);
 }
 
-/*
- *	RelabelType
- */
 static void
 _outRelabelType(StringInfo str, RelabelType *node)
 {
-	appendStringInfo(str, " RELABELTYPE :arg ");
-	_outNode(str, node->arg);
-	appendStringInfo(str,
-					 " :resulttype %u :resulttypmod %d :relabelformat %d ",
-					 node->resulttype,
-					 node->resulttypmod,
-					 (int) node->relabelformat);
+	WRITE_NODE_TYPE("RELABELTYPE");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_OID_FIELD(resulttype);
+	WRITE_INT_FIELD(resulttypmod);
+	WRITE_ENUM_FIELD(relabelformat, CoercionForm);
 }
 
-/*
- *	RangeTblRef
- */
 static void
 _outRangeTblRef(StringInfo str, RangeTblRef *node)
 {
-	appendStringInfo(str, " RANGETBLREF %d ",
-					 node->rtindex);
+	WRITE_NODE_TYPE("RANGETBLREF");
+
+	WRITE_INT_FIELD(rtindex);
 }
 
-/*
- *	FromExpr
- */
-static void
-_outFromExpr(StringInfo str, FromExpr *node)
-{
-	appendStringInfo(str, " FROMEXPR :fromlist ");
-	_outNode(str, node->fromlist);
-	appendStringInfo(str, " :quals ");
-	_outNode(str, node->quals);
-}
-
-/*
- *	JoinExpr
- */
 static void
 _outJoinExpr(StringInfo str, JoinExpr *node)
 {
-	appendStringInfo(str, " JOINEXPR :jointype %d :isNatural %s :larg ",
-					 (int) node->jointype,
-					 booltostr(node->isNatural));
-	_outNode(str, node->larg);
-	appendStringInfo(str, " :rarg ");
-	_outNode(str, node->rarg);
-	appendStringInfo(str, " :using ");
-	_outNode(str, node->using);
-	appendStringInfo(str, " :quals ");
-	_outNode(str, node->quals);
-	appendStringInfo(str, " :alias ");
-	_outNode(str, node->alias);
-	appendStringInfo(str, " :rtindex %d ", node->rtindex);
+	WRITE_NODE_TYPE("JOINEXPR");
+
+	WRITE_ENUM_FIELD(jointype, JoinType);
+	WRITE_BOOL_FIELD(isNatural);
+	WRITE_NODE_FIELD(larg);
+	WRITE_NODE_FIELD(rarg);
+	WRITE_NODE_FIELD(using);
+	WRITE_NODE_FIELD(quals);
+	WRITE_NODE_FIELD(alias);
+	WRITE_INT_FIELD(rtindex);
 }
 
-/*
- *	TargetEntry is a subclass of Node.
- */
+static void
+_outFromExpr(StringInfo str, FromExpr *node)
+{
+	WRITE_NODE_TYPE("FROMEXPR");
+
+	WRITE_NODE_FIELD(fromlist);
+	WRITE_NODE_FIELD(quals);
+}
+
 static void
 _outTargetEntry(StringInfo str, TargetEntry *node)
 {
-	appendStringInfo(str, " TARGETENTRY :resdom ");
-	_outNode(str, node->resdom);
+	WRITE_NODE_TYPE("TARGETENTRY");
 
-	appendStringInfo(str, " :expr ");
-	_outNode(str, node->expr);
+	WRITE_NODE_FIELD(resdom);
+	/* fjoin not supported ... */
+	WRITE_NODE_FIELD(expr);
 }
 
 static void
 _outAlias(StringInfo str, Alias *node)
 {
-	appendStringInfo(str, " ALIAS :aliasname ");
-	_outToken(str, node->aliasname);
-	appendStringInfo(str, " :colnames ");
-	_outNode(str, node->colnames);
+	WRITE_NODE_TYPE("ALIAS");
+
+	WRITE_STRING_FIELD(aliasname);
+	WRITE_NODE_FIELD(colnames);
 }
 
 static void
 _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
+	WRITE_NODE_TYPE("RTE");
+
 	/* put alias + eref first to make dump more legible */
-	appendStringInfo(str, " RTE :alias ");
-	_outNode(str, node->alias);
-	appendStringInfo(str, " :eref ");
-	_outNode(str, node->eref);
-	appendStringInfo(str, " :rtekind %d ",
-					 (int) node->rtekind);
+	WRITE_NODE_FIELD(alias);
+	WRITE_NODE_FIELD(eref);
+	WRITE_ENUM_FIELD(rtekind, RTEKind);
+
 	switch (node->rtekind)
 	{
 		case RTE_RELATION:
 		case RTE_SPECIAL:
-			appendStringInfo(str, ":relid %u", node->relid);
+			WRITE_OID_FIELD(relid);
 			break;
 		case RTE_SUBQUERY:
-			appendStringInfo(str, ":subquery ");
-			_outNode(str, node->subquery);
+			WRITE_NODE_FIELD(subquery);
 			break;
 		case RTE_FUNCTION:
-			appendStringInfo(str, ":funcexpr ");
-			_outNode(str, node->funcexpr);
-			appendStringInfo(str, " :coldeflist ");
-			_outNode(str, node->coldeflist);
+			WRITE_NODE_FIELD(funcexpr);
+			WRITE_NODE_FIELD(coldeflist);
 			break;
 		case RTE_JOIN:
-			appendStringInfo(str, ":jointype %d :joinaliasvars ",
-							 (int) node->jointype);
-			_outNode(str, node->joinaliasvars);
+			WRITE_ENUM_FIELD(jointype, JoinType);
+			WRITE_NODE_FIELD(joinaliasvars);
 			break;
 		default:
 			elog(ERROR, "bogus rte kind %d", (int) node->rtekind);
 			break;
 	}
-	appendStringInfo(str, " :inh %s :inFromCl %s :checkForRead %s"
-					 " :checkForWrite %s :checkAsUser %u",
-					 booltostr(node->inh),
-					 booltostr(node->inFromCl),
-					 booltostr(node->checkForRead),
-					 booltostr(node->checkForWrite),
-					 node->checkAsUser);
+
+	WRITE_BOOL_FIELD(inh);
+	WRITE_BOOL_FIELD(inFromCl);
+	WRITE_BOOL_FIELD(checkForRead);
+	WRITE_BOOL_FIELD(checkForWrite);
+	WRITE_OID_FIELD(checkAsUser);
 }
 
 /*
- *	Path is a subclass of Node.
+ * print the basic stuff of all nodes that inherit from Path
  */
+static void
+_outPathInfo(StringInfo str, Path *node)
+{
+	WRITE_ENUM_FIELD(pathtype, NodeTag);
+	WRITE_FLOAT_FIELD(startup_cost, "%.2f");
+	WRITE_FLOAT_FIELD(total_cost, "%.2f");
+	WRITE_NODE_FIELD(pathkeys);
+}
+
+/*
+ * print the basic stuff of all nodes that inherit from JoinPath
+ */
+static void
+_outJoinPathInfo(StringInfo str, JoinPath *node)
+{
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_ENUM_FIELD(jointype, JoinType);
+	WRITE_NODE_FIELD(outerjoinpath);
+	WRITE_NODE_FIELD(innerjoinpath);
+	WRITE_NODE_FIELD(joinrestrictinfo);
+}
+
 static void
 _outPath(StringInfo str, Path *node)
 {
-	appendStringInfo(str,
-	 " PATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->pathtype,
-					 node->startup_cost,
-					 node->total_cost);
-	_outNode(str, node->pathkeys);
+	WRITE_NODE_TYPE("PATH");
+
+	_outPathInfo(str, (Path *) node);
 }
 
 /*
@@ -1054,197 +970,108 @@ _outPath(StringInfo str, Path *node)
 static void
 _outIndexPath(StringInfo str, IndexPath *node)
 {
-	appendStringInfo(str,
-					 " INDEXPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->path.pathtype,
-					 node->path.startup_cost,
-					 node->path.total_cost);
-	_outNode(str, node->path.pathkeys);
+	WRITE_NODE_TYPE("INDEXPATH");
 
-	appendStringInfo(str, " :indexinfo ");
-	_outNode(str, node->indexinfo);
+	_outPathInfo(str, (Path *) node);
 
-	appendStringInfo(str, " :indexqual ");
-	_outNode(str, node->indexqual);
-
-	appendStringInfo(str, " :indexscandir %d :rows %.2f ",
-					 (int) node->indexscandir,
-					 node->rows);
+	WRITE_NODE_FIELD(indexinfo);
+	WRITE_NODE_FIELD(indexqual);
+	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
+	WRITE_FLOAT_FIELD(rows, "%.2f");
 }
 
-/*
- *	TidPath is a subclass of Path.
- */
 static void
 _outTidPath(StringInfo str, TidPath *node)
 {
-	appendStringInfo(str,
-					 " TIDPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->path.pathtype,
-					 node->path.startup_cost,
-					 node->path.total_cost);
-	_outNode(str, node->path.pathkeys);
+	WRITE_NODE_TYPE("TIDPATH");
 
-	appendStringInfo(str, " :tideval ");
-	_outNode(str, node->tideval);
+	_outPathInfo(str, (Path *) node);
 
-	appendStringInfo(str, " :unjoined_relids ");
-	_outIntList(str, node->unjoined_relids);
+	WRITE_NODE_FIELD(tideval);
+	WRITE_INTLIST_FIELD(unjoined_relids);
 }
 
-/*
- *	AppendPath is a subclass of Path.
- */
 static void
 _outAppendPath(StringInfo str, AppendPath *node)
 {
-	appendStringInfo(str,
-					 " APPENDPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->path.pathtype,
-					 node->path.startup_cost,
-					 node->path.total_cost);
-	_outNode(str, node->path.pathkeys);
+	WRITE_NODE_TYPE("APPENDPATH");
 
-	appendStringInfo(str, " :subpaths ");
-	_outNode(str, node->subpaths);
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(subpaths);
 }
 
-/*
- *	ResultPath is a subclass of Path.
- */
 static void
 _outResultPath(StringInfo str, ResultPath *node)
 {
-	appendStringInfo(str,
-					 " RESULTPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->path.pathtype,
-					 node->path.startup_cost,
-					 node->path.total_cost);
-	_outNode(str, node->path.pathkeys);
+	WRITE_NODE_TYPE("RESULTPATH");
 
-	appendStringInfo(str, " :subpath ");
-	_outNode(str, node->subpath);
+	_outPathInfo(str, (Path *) node);
 
-	appendStringInfo(str, " :constantqual ");
-	_outNode(str, node->constantqual);
+	WRITE_NODE_FIELD(subpath);
+	WRITE_NODE_FIELD(constantqual);
 }
 
-/*
- *	NestPath is a subclass of Path
- */
 static void
 _outNestPath(StringInfo str, NestPath *node)
 {
-	appendStringInfo(str,
-					 " NESTPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->path.pathtype,
-					 node->path.startup_cost,
-					 node->path.total_cost);
-	_outNode(str, node->path.pathkeys);
-	appendStringInfo(str, " :jointype %d :outerjoinpath ",
-					 (int) node->jointype);
-	_outNode(str, node->outerjoinpath);
-	appendStringInfo(str, " :innerjoinpath ");
-	_outNode(str, node->innerjoinpath);
-	appendStringInfo(str, " :joinrestrictinfo ");
-	_outNode(str, node->joinrestrictinfo);
+	WRITE_NODE_TYPE("NESTPATH");
+
+	_outJoinPathInfo(str, (JoinPath *) node);
 }
 
-/*
- *	MergePath is a subclass of NestPath.
- */
 static void
 _outMergePath(StringInfo str, MergePath *node)
 {
-	appendStringInfo(str,
-					 " MERGEPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->jpath.path.pathtype,
-					 node->jpath.path.startup_cost,
-					 node->jpath.path.total_cost);
-	_outNode(str, node->jpath.path.pathkeys);
-	appendStringInfo(str, " :jointype %d :outerjoinpath ",
-					 (int) node->jpath.jointype);
-	_outNode(str, node->jpath.outerjoinpath);
-	appendStringInfo(str, " :innerjoinpath ");
-	_outNode(str, node->jpath.innerjoinpath);
-	appendStringInfo(str, " :joinrestrictinfo ");
-	_outNode(str, node->jpath.joinrestrictinfo);
+	WRITE_NODE_TYPE("MERGEPATH");
 
-	appendStringInfo(str, " :path_mergeclauses ");
-	_outNode(str, node->path_mergeclauses);
+	_outJoinPathInfo(str, (JoinPath *) node);
 
-	appendStringInfo(str, " :outersortkeys ");
-	_outNode(str, node->outersortkeys);
-
-	appendStringInfo(str, " :innersortkeys ");
-	_outNode(str, node->innersortkeys);
+	WRITE_NODE_FIELD(path_mergeclauses);
+	WRITE_NODE_FIELD(outersortkeys);
+	WRITE_NODE_FIELD(innersortkeys);
 }
 
-/*
- *	HashPath is a subclass of NestPath.
- */
 static void
 _outHashPath(StringInfo str, HashPath *node)
 {
-	appendStringInfo(str,
-					 " HASHPATH :pathtype %d :startup_cost %.2f :total_cost %.2f :pathkeys ",
-					 node->jpath.path.pathtype,
-					 node->jpath.path.startup_cost,
-					 node->jpath.path.total_cost);
-	_outNode(str, node->jpath.path.pathkeys);
-	appendStringInfo(str, " :jointype %d :outerjoinpath ",
-					 (int) node->jpath.jointype);
-	_outNode(str, node->jpath.outerjoinpath);
-	appendStringInfo(str, " :innerjoinpath ");
-	_outNode(str, node->jpath.innerjoinpath);
-	appendStringInfo(str, " :joinrestrictinfo ");
-	_outNode(str, node->jpath.joinrestrictinfo);
+	WRITE_NODE_TYPE("HASHPATH");
 
-	appendStringInfo(str, " :path_hashclauses ");
-	_outNode(str, node->path_hashclauses);
+	_outJoinPathInfo(str, (JoinPath *) node);
+
+	WRITE_NODE_FIELD(path_hashclauses);
 }
 
-/*
- *	PathKeyItem is a subclass of Node.
- */
 static void
 _outPathKeyItem(StringInfo str, PathKeyItem *node)
 {
-	appendStringInfo(str, " PATHKEYITEM :sortop %u :key ",
-					 node->sortop);
-	_outNode(str, node->key);
+	WRITE_NODE_TYPE("PATHKEYITEM");
+
+	WRITE_NODE_FIELD(key);
+	WRITE_OID_FIELD(sortop);
 }
 
-/*
- *	RestrictInfo is a subclass of Node.
- */
 static void
 _outRestrictInfo(StringInfo str, RestrictInfo *node)
 {
-	appendStringInfo(str, " RESTRICTINFO :clause ");
-	_outNode(str, node->clause);
+	WRITE_NODE_TYPE("RESTRICTINFO");
 
-	appendStringInfo(str, " :ispusheddown %s :subclauseindices ",
-					 booltostr(node->ispusheddown));
-	_outNode(str, node->subclauseindices);
-
-	appendStringInfo(str, " :mergejoinoperator %u ", node->mergejoinoperator);
-	appendStringInfo(str, " :left_sortop %u ", node->left_sortop);
-	appendStringInfo(str, " :right_sortop %u ", node->right_sortop);
-	appendStringInfo(str, " :hashjoinoperator %u ", node->hashjoinoperator);
+	WRITE_NODE_FIELD(clause);
+	WRITE_BOOL_FIELD(ispusheddown);
+	WRITE_NODE_FIELD(subclauseindices);
+	WRITE_OID_FIELD(mergejoinoperator);
+	WRITE_OID_FIELD(left_sortop);
+	WRITE_OID_FIELD(right_sortop);
+	WRITE_OID_FIELD(hashjoinoperator);
 }
 
-/*
- *	JoinInfo is a subclass of Node.
- */
 static void
 _outJoinInfo(StringInfo str, JoinInfo *node)
 {
-	appendStringInfo(str, " JINFO :unjoined_relids ");
-	_outIntList(str, node->unjoined_relids);
+	WRITE_NODE_TYPE("JOININFO");
 
-	appendStringInfo(str, " :jinfo_restrictinfo ");
-	_outNode(str, node->jinfo_restrictinfo);
+	WRITE_INTLIST_FIELD(unjoined_relids);
+	WRITE_NODE_FIELD(jinfo_restrictinfo);
 }
 
 /*
@@ -1262,22 +1089,22 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 	if (typbyval)
 	{
 		s = (char *) (&value);
-		appendStringInfo(str, " %u [ ", (unsigned int) length);
+		appendStringInfo(str, "%u [ ", (unsigned int) length);
 		for (i = 0; i < (Size) sizeof(Datum); i++)
 			appendStringInfo(str, "%d ", (int) (s[i]));
-		appendStringInfo(str, "] ");
+		appendStringInfo(str, "]");
 	}
 	else
 	{
 		s = (char *) DatumGetPointer(value);
 		if (!PointerIsValid(s))
-			appendStringInfo(str, " 0 [ ] ");
+			appendStringInfo(str, "0 [ ]");
 		else
 		{
-			appendStringInfo(str, " %u [ ", (unsigned int) length);
+			appendStringInfo(str, "%u [ ", (unsigned int) length);
 			for (i = 0; i < length; i++)
 				appendStringInfo(str, "%d ", (int) (s[i]));
-			appendStringInfo(str, "] ");
+			appendStringInfo(str, "]");
 		}
 	}
 }
@@ -1285,29 +1112,30 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
 static void
 _outAExpr(StringInfo str, A_Expr *node)
 {
-	appendStringInfo(str, " AEXPR ");
+	WRITE_NODE_TYPE("AEXPR");
+
 	switch (node->oper)
 	{
 		case AND:
-			appendStringInfo(str, "AND ");
+			appendStringInfo(str, " AND");
 			break;
 		case OR:
-			appendStringInfo(str, "OR ");
+			appendStringInfo(str, " OR");
 			break;
 		case NOT:
-			appendStringInfo(str, "NOT ");
+			appendStringInfo(str, " NOT");
 			break;
 		case OP:
-			_outNode(str, node->name);
 			appendStringInfo(str, " ");
+			WRITE_NODE_FIELD(name);
 			break;
 		default:
-			appendStringInfo(str, "?? ");
+			appendStringInfo(str, " ??");
 			break;
 	}
-	_outNode(str, node->lexpr);
-	appendStringInfo(str, " ");
-	_outNode(str, node->rexpr);
+
+	WRITE_NODE_FIELD(lexpr);
+	WRITE_NODE_FIELD(rexpr);
 }
 
 static void
@@ -1316,7 +1144,7 @@ _outValue(StringInfo str, Value *value)
 	switch (value->type)
 	{
 		case T_Integer:
-			appendStringInfo(str, " %ld ", value->val.ival);
+			appendStringInfo(str, "%ld", value->val.ival);
 			break;
 		case T_Float:
 
@@ -1324,19 +1152,19 @@ _outValue(StringInfo str, Value *value)
 			 * We assume the value is a valid numeric literal and so does
 			 * not need quoting.
 			 */
-			appendStringInfo(str, " %s ", value->val.str);
+			appendStringInfo(str, "%s", value->val.str);
 			break;
 		case T_String:
-			appendStringInfo(str, " \"");
+			appendStringInfoChar(str, '"');
 			_outToken(str, value->val.str);
-			appendStringInfo(str, "\" ");
+			appendStringInfoChar(str, '"');
 			break;
 		case T_BitString:
 			/* internal representation already has leading 'b' */
-			appendStringInfo(str, " %s ", value->val.str);
+			appendStringInfo(str, "%s", value->val.str);
 			break;
 		default:
-			elog(WARNING, "_outValue: don't know how to print type %d ",
+			elog(WARNING, "_outValue: don't know how to print type %d",
 				 value->type);
 			break;
 	}
@@ -1345,86 +1173,82 @@ _outValue(StringInfo str, Value *value)
 static void
 _outRangeVar(StringInfo str, RangeVar *node)
 {
-	appendStringInfo(str, " RANGEVAR :relation ");
+	WRITE_NODE_TYPE("RANGEVAR");
 
 	/*
 	 * we deliberately ignore catalogname here, since it is presently not
 	 * semantically meaningful
 	 */
-	_outToken(str, node->schemaname);
-	appendStringInfo(str, " . ");
-	_outToken(str, node->relname);
-	appendStringInfo(str, " :inhopt %d :istemp %s",
-					 (int) node->inhOpt,
-					 booltostr(node->istemp));
-	appendStringInfo(str, " :alias ");
-	_outNode(str, node->alias);
+	WRITE_STRING_FIELD(schemaname);
+	WRITE_STRING_FIELD(relname);
+	WRITE_ENUM_FIELD(inhOpt, InhOption);
+	WRITE_BOOL_FIELD(istemp);
+	WRITE_NODE_FIELD(alias);
 }
 
 static void
 _outColumnRef(StringInfo str, ColumnRef *node)
 {
-	appendStringInfo(str, " COLUMNREF :fields ");
-	_outNode(str, node->fields);
-	appendStringInfo(str, " :indirection ");
-	_outNode(str, node->indirection);
+	WRITE_NODE_TYPE("COLUMNREF");
+
+	WRITE_NODE_FIELD(fields);
+	WRITE_NODE_FIELD(indirection);
 }
 
 static void
 _outParamRef(StringInfo str, ParamRef *node)
 {
-	appendStringInfo(str, " PARAMREF :number %d :fields ", node->number);
-	_outNode(str, node->fields);
-	appendStringInfo(str, " :indirection ");
-	_outNode(str, node->indirection);
+	WRITE_NODE_TYPE("PARAMREF");
+
+	WRITE_INT_FIELD(number);
+	WRITE_NODE_FIELD(fields);
+	WRITE_NODE_FIELD(indirection);
 }
 
 static void
 _outAConst(StringInfo str, A_Const *node)
 {
-	appendStringInfo(str, "CONST ");
+	WRITE_NODE_TYPE("CONST ");
+
 	_outValue(str, &(node->val));
-	appendStringInfo(str, " :typename ");
-	_outNode(str, node->typename);
+	WRITE_NODE_FIELD(typename);
 }
 
 static void
 _outExprFieldSelect(StringInfo str, ExprFieldSelect *node)
 {
-	appendStringInfo(str, " EXPRFIELDSELECT :arg ");
-	_outNode(str, node->arg);
-	appendStringInfo(str, " :fields ");
-	_outNode(str, node->fields);
-	appendStringInfo(str, " :indirection ");
-	_outNode(str, node->indirection);
+	WRITE_NODE_TYPE("EXPRFIELDSELECT");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_NODE_FIELD(fields);
+	WRITE_NODE_FIELD(indirection);
 }
 
 static void
 _outConstraint(StringInfo str, Constraint *node)
 {
-	appendStringInfo(str, " CONSTRAINT :name ");
-	_outToken(str, node->name);
-	appendStringInfo(str, " :type ");
+	WRITE_NODE_TYPE("CONSTRAINT");
 
+	WRITE_STRING_FIELD(name);
+
+	appendStringInfo(str, " :contype ");
 	switch (node->contype)
 	{
 		case CONSTR_PRIMARY:
-			appendStringInfo(str, "PRIMARY_KEY :keys ");
-			_outNode(str, node->keys);
+			appendStringInfo(str, "PRIMARY_KEY");
+			WRITE_NODE_FIELD(keys);
 			break;
 
 		case CONSTR_CHECK:
-			appendStringInfo(str, "CHECK :raw ");
-			_outNode(str, node->raw_expr);
-			appendStringInfo(str, " :cooked ");
-			_outToken(str, node->cooked_expr);
+			appendStringInfo(str, "CHECK");
+			WRITE_NODE_FIELD(raw_expr);
+			WRITE_STRING_FIELD(cooked_expr);
 			break;
 
 		case CONSTR_DEFAULT:
-			appendStringInfo(str, "DEFAULT :raw ");
-			_outNode(str, node->raw_expr);
-			appendStringInfo(str, " :cooked ");
-			_outToken(str, node->cooked_expr);
+			appendStringInfo(str, "DEFAULT");
+			WRITE_NODE_FIELD(raw_expr);
+			WRITE_STRING_FIELD(cooked_expr);
 			break;
 
 		case CONSTR_NOTNULL:
@@ -1432,8 +1256,8 @@ _outConstraint(StringInfo str, Constraint *node)
 			break;
 
 		case CONSTR_UNIQUE:
-			appendStringInfo(str, "UNIQUE :keys ");
-			_outNode(str, node->keys);
+			appendStringInfo(str, "UNIQUE");
+			WRITE_NODE_FIELD(keys);
 			break;
 
 		default:
@@ -1445,107 +1269,85 @@ _outConstraint(StringInfo str, Constraint *node)
 static void
 _outFkConstraint(StringInfo str, FkConstraint *node)
 {
-	appendStringInfo(str, " FKCONSTRAINT :constr_name ");
-	_outToken(str, node->constr_name);
-	appendStringInfo(str, " :pktable ");
-	_outNode(str, node->pktable);
-	appendStringInfo(str, " :fk_attrs ");
-	_outNode(str, node->fk_attrs);
-	appendStringInfo(str, " :pk_attrs ");
-	_outNode(str, node->pk_attrs);
-	appendStringInfo(str, " :fk_matchtype %c :fk_upd_action %c :fk_del_action %c :deferrable %s :initdeferred %s :skip_validation %s",
-					 node->fk_matchtype,
-					 node->fk_upd_action,
-					 node->fk_del_action,
-					 booltostr(node->deferrable),
-					 booltostr(node->initdeferred),
-					 booltostr(node->skip_validation));
+	WRITE_NODE_TYPE("FKCONSTRAINT");
+
+	WRITE_STRING_FIELD(constr_name);
+	WRITE_NODE_FIELD(pktable);
+	WRITE_NODE_FIELD(fk_attrs);
+	WRITE_NODE_FIELD(pk_attrs);
+	WRITE_CHAR_FIELD(fk_matchtype);
+	WRITE_CHAR_FIELD(fk_upd_action);
+	WRITE_CHAR_FIELD(fk_del_action);
+	WRITE_BOOL_FIELD(deferrable);
+	WRITE_BOOL_FIELD(initdeferred);
+	WRITE_BOOL_FIELD(skip_validation);
 }
 
 static void
 _outCaseExpr(StringInfo str, CaseExpr *node)
 {
-	appendStringInfo(str, " CASE :casetype %u :arg ",
-					 node->casetype);
-	_outNode(str, node->arg);
+	WRITE_NODE_TYPE("CASE");
 
-	appendStringInfo(str, " :args ");
-	_outNode(str, node->args);
-
-	appendStringInfo(str, " :defresult ");
-	_outNode(str, node->defresult);
+	WRITE_OID_FIELD(casetype);
+	WRITE_NODE_FIELD(arg);
+	WRITE_NODE_FIELD(args);
+	WRITE_NODE_FIELD(defresult);
 }
 
 static void
 _outCaseWhen(StringInfo str, CaseWhen *node)
 {
-	appendStringInfo(str, " WHEN ");
-	_outNode(str, node->expr);
+	WRITE_NODE_TYPE("WHEN");
 
-	appendStringInfo(str, " :then ");
-	_outNode(str, node->result);
+	WRITE_NODE_FIELD(expr);
+	WRITE_NODE_FIELD(result);
 }
 
-/*
- *	NullTest
- */
 static void
 _outNullTest(StringInfo str, NullTest *node)
 {
-	appendStringInfo(str, " NULLTEST :arg ");
-	_outNode(str, node->arg);
-	appendStringInfo(str, " :nulltesttype %d ",
-					 (int) node->nulltesttype);
+	WRITE_NODE_TYPE("NULLTEST");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_ENUM_FIELD(nulltesttype, NullTestType);
 }
 
-/*
- *	BooleanTest
- */
 static void
 _outBooleanTest(StringInfo str, BooleanTest *node)
 {
-	appendStringInfo(str, " BOOLEANTEST :arg ");
-	_outNode(str, node->arg);
-	appendStringInfo(str, " :booltesttype %d ",
-					 (int) node->booltesttype);
+	WRITE_NODE_TYPE("BOOLEANTEST");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_ENUM_FIELD(booltesttype, BoolTestType);
 }
 
-/*
- *	ConstraintTest
- */
 static void
 _outConstraintTest(StringInfo str, ConstraintTest *node)
 {
-	appendStringInfo(str, " CONSTRAINTTEST :arg ");
-	_outNode(str, node->arg);
-	appendStringInfo(str, " :testtype %d :name ",
-					 (int) node->testtype);
-	_outToken(str, node->name);
-	appendStringInfo(str, " :domain ");
-	_outToken(str, node->domname);
-	appendStringInfo(str, " :check_expr ");
-	_outNode(str, node->check_expr);
+	WRITE_NODE_TYPE("CONSTRAINTTEST");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_ENUM_FIELD(testtype, ConstraintTestType);
+	WRITE_STRING_FIELD(name);
+	WRITE_STRING_FIELD(domname);
+	WRITE_NODE_FIELD(check_expr);
 }
 
-/*
- *	ConstraintTestValue
- */
-static void
-_outConstraintTestValue(StringInfo str, ConstraintTestValue *node)
-{
-	appendStringInfo(str, " CONSTRAINTTESTVALUE :typeid %u :typemod %d ",
-					 node->typeId,
-					 node->typeMod);
-}
-
-/*
- *	DomainConstraintValue
- */
 static void
 _outDomainConstraintValue(StringInfo str, DomainConstraintValue *node)
 {
-	appendStringInfo(str, " DOMAINCONSTRAINTVALUE ");
+	WRITE_NODE_TYPE("DOMAINCONSTRAINTVALUE");
 }
+
+static void
+_outConstraintTestValue(StringInfo str, ConstraintTestValue *node)
+{
+	WRITE_NODE_TYPE("CONSTRAINTTESTVALUE");
+
+	WRITE_OID_FIELD(typeId);
+	WRITE_INT_FIELD(typeMod);
+}
+
 
 /*
  * _outNode -
@@ -1573,7 +1375,10 @@ _outNode(StringInfo str, void *obj)
 		}
 		appendStringInfoChar(str, ')');
 	}
-	else if (IsA(obj, Integer) || IsA(obj, Float) || IsA(obj, String) || IsA(obj, BitString))
+	else if (IsA(obj, Integer) ||
+			 IsA(obj, Float) ||
+			 IsA(obj, String) ||
+			 IsA(obj, BitString))
 	{
 		/* nodeRead does not want to see { } around these! */
 		_outValue(str, obj);
@@ -1687,9 +1492,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_Resdom:
 				_outResdom(str, obj);
-				break;
-			case T_Fjoin:
-				_outFjoin(str, obj);
 				break;
 			case T_Expr:
 				_outExpr(str, obj);
@@ -1825,7 +1627,7 @@ _outNode(StringInfo str, void *obj)
 				break;
 
 			default:
-				elog(WARNING, "_outNode: don't know how to print type %d ",
+				elog(WARNING, "_outNode: don't know how to print type %d",
 					 nodeTag(obj));
 				break;
 		}

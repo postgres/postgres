@@ -8,18 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.138 2002/11/24 21:52:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.139 2002/11/25 18:12:10 tgl Exp $
  *
  * NOTES
- *	  Most of the read functions for plan nodes are tested. (In fact, they
- *	  pass the regression test as of 11/8/94.) The rest (for path selection)
- *	  are probably never used. No effort has been made to get them to work.
- *	  The simplest way to test these functions is by doing the following in
- *	  ProcessQuery (before executing the plan):
- *				plan = stringToNode(nodeToString(plan));
- *	  Then, run the regression test. Let's just say you'll notice if either
- *	  of the above function are not properly done.
- *														- ay 11/94
+ *	  Path and Plan nodes do not have any readfuncs support, because we
+ *	  never have occasion to read them in.  (There was once code here that
+ *	  claimed to read them, but it was broken as well as unused.)
  *
  *-------------------------------------------------------------------------
  */
@@ -27,9 +21,98 @@
 
 #include <math.h>
 
-#include "nodes/plannodes.h"
+#include "nodes/parsenodes.h"
 #include "nodes/readfuncs.h"
-#include "nodes/relation.h"
+
+
+/*
+ * Macros to simplify reading of different kinds of fields.  Use these
+ * wherever possible to reduce the chance for silly typos.  Note that these
+ * hard-wire conventions about the names of the local variables in a Read
+ * routine.
+ */
+
+/* Declare appropriate local variables */
+#define READ_LOCALS(nodeTypeName) \
+	nodeTypeName *local_node = makeNode(nodeTypeName); \
+	char	   *token; \
+	int			length
+
+/* A few guys need only local_node */
+#define READ_LOCALS_NO_FIELDS(nodeTypeName) \
+	nodeTypeName *local_node = makeNode(nodeTypeName)
+
+/* And a few guys need only the pg_strtok support fields */
+#define READ_TEMP_LOCALS() \
+	char	   *token; \
+	int			length
+
+/* Read an integer field (anything written as ":fldname %d") */
+#define READ_INT_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = atoi(token)
+
+/* Read an unsigned integer field (anything written as ":fldname %u") */
+#define READ_UINT_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = atoui(token)
+
+/* Read an OID field (don't hard-wire assumption that OID is same as uint) */
+#define READ_OID_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = atooid(token)
+
+/* Read a char field (ie, one ascii character) */
+#define READ_CHAR_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = token[0]
+
+/* Read an enumerated-type field that was written as an integer code */
+#define READ_ENUM_FIELD(fldname, enumtype) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = (enumtype) atoi(token)
+
+/* Read a float field */
+#define READ_FLOAT_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = atof(token)
+
+/* Read a boolean field */
+#define READ_BOOL_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = strtobool(token)
+
+/* Read a character-string field */
+#define READ_STRING_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	token = pg_strtok(&length);		/* get field value */ \
+	local_node->fldname = nullable_string(token, length)
+
+/* Read a Node field */
+#define READ_NODE_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = nodeRead(true)
+
+/* Read an integer-list field */
+#define READ_INTLIST_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = toIntList(nodeRead(true))
+
+/* Read an OID-list field */
+#define READ_OIDLIST_FIELD(fldname) \
+	token = pg_strtok(&length);		/* skip :fldname */ \
+	local_node->fldname = toOidList(nodeRead(true))
+
+/* Routine exit */
+#define READ_DONE() \
+	return local_node
 
 
 /*
@@ -50,11 +133,6 @@
 
 static Datum readDatum(bool typbyval);
 
-
-/* ----------------
- *		node creator declarations
- * ----------------
- */
 
 /* Convert Value list returned by nodeRead into list of integers */
 static List *
@@ -106,694 +184,137 @@ toOidList(List *list)
 	return list;
 }
 
-/* ----------------
- *		_readQuery
- * ----------------
+/*
+ * _readQuery
  */
 static Query *
 _readQuery(void)
 {
-	Query	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Query);
 
-	local_node = makeNode(Query);
-
-	token = pg_strtok(&length); /* skip :command */
-	token = pg_strtok(&length); /* get commandType */
-	local_node->commandType = atoi(token);
-
-	token = pg_strtok(&length); /* skip :source */
-	token = pg_strtok(&length); /* get querySource */
-	local_node->querySource = atoi(token);
-
-	token = pg_strtok(&length); /* skip :utility */
-	local_node->utilityStmt = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :resultRelation */
-	token = pg_strtok(&length); /* get the resultRelation */
-	local_node->resultRelation = atoi(token);
-
-	token = pg_strtok(&length); /* skip :into */
-	local_node->into = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :isPortal */
-	token = pg_strtok(&length); /* get isPortal */
-	local_node->isPortal = strtobool(token);
-
-	token = pg_strtok(&length); /* skip :isBinary */
-	token = pg_strtok(&length); /* get isBinary */
-	local_node->isBinary = strtobool(token);
-
-	token = pg_strtok(&length); /* skip the :hasAggs */
-	token = pg_strtok(&length); /* get hasAggs */
-	local_node->hasAggs = strtobool(token);
-
-	token = pg_strtok(&length); /* skip the :hasSubLinks */
-	token = pg_strtok(&length); /* get hasSubLinks */
-	local_node->hasSubLinks = strtobool(token);
-
-	token = pg_strtok(&length); /* skip :rtable */
-	local_node->rtable = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :jointree */
-	local_node->jointree = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :rowMarks */
-	local_node->rowMarks = toIntList(nodeRead(true));
-
-	token = pg_strtok(&length); /* skip :targetlist */
-	local_node->targetList = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :groupClause */
-	local_node->groupClause = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :havingQual */
-	local_node->havingQual = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :distinctClause */
-	local_node->distinctClause = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :sortClause */
-	local_node->sortClause = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :limitOffset */
-	local_node->limitOffset = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :limitCount */
-	local_node->limitCount = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :setOperations */
-	local_node->setOperations = nodeRead(true);
-
-	token = pg_strtok(&length); /* skip :resultRelations */
-	local_node->resultRelations = toIntList(nodeRead(true));
+	READ_ENUM_FIELD(commandType, CmdType);
+	READ_ENUM_FIELD(querySource, QuerySource);
+	READ_NODE_FIELD(utilityStmt);
+	READ_INT_FIELD(resultRelation);
+	READ_NODE_FIELD(into);
+	READ_BOOL_FIELD(isPortal);
+	READ_BOOL_FIELD(isBinary);
+	READ_BOOL_FIELD(hasAggs);
+	READ_BOOL_FIELD(hasSubLinks);
+	READ_NODE_FIELD(rtable);
+	READ_NODE_FIELD(jointree);
+	READ_INTLIST_FIELD(rowMarks);
+	READ_NODE_FIELD(targetList);
+	READ_NODE_FIELD(groupClause);
+	READ_NODE_FIELD(havingQual);
+	READ_NODE_FIELD(distinctClause);
+	READ_NODE_FIELD(sortClause);
+	READ_NODE_FIELD(limitOffset);
+	READ_NODE_FIELD(limitCount);
+	READ_NODE_FIELD(setOperations);
+	READ_INTLIST_FIELD(resultRelations);
 
 	/* planner-internal fields are left zero */
 
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readNotifyStmt
- * ----------------
+/*
+ * _readNotifyStmt
  */
 static NotifyStmt *
 _readNotifyStmt(void)
 {
-	NotifyStmt *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(NotifyStmt);
 
-	local_node = makeNode(NotifyStmt);
+	READ_NODE_FIELD(relation);
 
-	token = pg_strtok(&length); /* skip :relation */
-	local_node->relation = nodeRead(true);
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readSortClause
- * ----------------
+/*
+ * _readSortClause
  */
 static SortClause *
 _readSortClause(void)
 {
-	SortClause *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(SortClause);
 
-	local_node = makeNode(SortClause);
+	READ_UINT_FIELD(tleSortGroupRef);
+	READ_OID_FIELD(sortop);
 
-	token = pg_strtok(&length); /* skip :tleSortGroupRef */
-	token = pg_strtok(&length); /* get tleSortGroupRef */
-	local_node->tleSortGroupRef = atoui(token);
-
-	token = pg_strtok(&length); /* skip :sortop */
-	token = pg_strtok(&length); /* get sortop */
-	local_node->sortop = atooid(token);
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readGroupClause
- * ----------------
+/*
+ * _readGroupClause
  */
 static GroupClause *
 _readGroupClause(void)
 {
-	GroupClause *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(GroupClause);
 
-	local_node = makeNode(GroupClause);
+	READ_UINT_FIELD(tleSortGroupRef);
+	READ_OID_FIELD(sortop);
 
-	token = pg_strtok(&length); /* skip :tleSortGroupRef */
-	token = pg_strtok(&length); /* get tleSortGroupRef */
-	local_node->tleSortGroupRef = atoui(token);
-
-	token = pg_strtok(&length); /* skip :sortop */
-	token = pg_strtok(&length); /* get sortop */
-	local_node->sortop = atooid(token);
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readSetOperationStmt
- * ----------------
+/*
+ * _readSetOperationStmt
  */
 static SetOperationStmt *
 _readSetOperationStmt(void)
 {
-	SetOperationStmt *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(SetOperationStmt);
 
-	local_node = makeNode(SetOperationStmt);
+	READ_ENUM_FIELD(op, SetOperation);
+	READ_BOOL_FIELD(all);
+	READ_NODE_FIELD(larg);
+	READ_NODE_FIELD(rarg);
+	READ_OIDLIST_FIELD(colTypes);
 
-	token = pg_strtok(&length); /* eat :op */
-	token = pg_strtok(&length); /* get op */
-	local_node->op = (SetOperation) atoi(token);
-
-	token = pg_strtok(&length); /* eat :all */
-	token = pg_strtok(&length); /* get all */
-	local_node->all = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :larg */
-	local_node->larg = nodeRead(true);	/* get larg */
-
-	token = pg_strtok(&length); /* eat :rarg */
-	local_node->rarg = nodeRead(true);	/* get rarg */
-
-	token = pg_strtok(&length); /* eat :colTypes */
-	local_node->colTypes = toOidList(nodeRead(true));
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_getPlan
- * ----------------
- */
-static void
-_getPlan(Plan *node)
-{
-	char	   *token;
-	int			length;
-
-	token = pg_strtok(&length); /* first token is :startup_cost */
-	token = pg_strtok(&length); /* next is the actual cost */
-	node->startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* skip the :total_cost */
-	token = pg_strtok(&length); /* next is the actual cost */
-	node->total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* skip the :rows */
-	token = pg_strtok(&length); /* get the plan_rows */
-	node->plan_rows = atof(token);
-
-	token = pg_strtok(&length); /* skip the :width */
-	token = pg_strtok(&length); /* get the plan_width */
-	node->plan_width = atoi(token);
-
-	token = pg_strtok(&length); /* eat :qptargetlist */
-	node->targetlist = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :qpqual */
-	node->qual = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :lefttree */
-	node->lefttree = (Plan *) nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :righttree */
-	node->righttree = (Plan *) nodeRead(true);
-
-	node->state = (EState *) NULL;		/* never read in */
-
-	return;
-}
-
-/*
- *	Stuff from plannodes.h
- */
-
-/* ----------------
- *		_readPlan
- * ----------------
- */
-static Plan *
-_readPlan(void)
-{
-	Plan	   *local_node;
-
-	local_node = makeNode(Plan);
-
-	_getPlan(local_node);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readResult
- * ----------------
- */
-static Result *
-_readResult(void)
-{
-	Result	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(Result);
-
-	_getPlan((Plan *) local_node);
-
-	token = pg_strtok(&length); /* eat :resconstantqual */
-	local_node->resconstantqual = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readAppend
- *
- *	Append is a subclass of Plan.
- * ----------------
- */
-
-static Append *
-_readAppend(void)
-{
-	Append	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(Append);
-
-	_getPlan((Plan *) local_node);
-
-	token = pg_strtok(&length); /* eat :appendplans */
-	local_node->appendplans = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :isTarget */
-	token = pg_strtok(&length); /* get isTarget */
-	local_node->isTarget = strtobool(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_getJoin
- * ----------------
- */
-static void
-_getJoin(Join *node)
-{
-	char	   *token;
-	int			length;
-
-	_getPlan((Plan *) node);
-
-	token = pg_strtok(&length); /* skip the :jointype */
-	token = pg_strtok(&length); /* get the jointype */
-	node->jointype = (JoinType) atoi(token);
-
-	token = pg_strtok(&length); /* skip the :joinqual */
-	node->joinqual = nodeRead(true);	/* get the joinqual */
-}
-
-
-/* ----------------
- *		_readJoin
- *
- *	Join is a subclass of Plan
- * ----------------
- */
-static Join *
-_readJoin(void)
-{
-	Join	   *local_node;
-
-	local_node = makeNode(Join);
-
-	_getJoin(local_node);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readNestLoop
- *
- *	NestLoop is a subclass of Join
- * ----------------
- */
-
-static NestLoop *
-_readNestLoop(void)
-{
-	NestLoop   *local_node;
-
-	local_node = makeNode(NestLoop);
-
-	_getJoin((Join *) local_node);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readMergeJoin
- *
- *	MergeJoin is a subclass of Join
- * ----------------
- */
-static MergeJoin *
-_readMergeJoin(void)
-{
-	MergeJoin  *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(MergeJoin);
-
-	_getJoin((Join *) local_node);
-
-	token = pg_strtok(&length); /* eat :mergeclauses */
-	local_node->mergeclauses = nodeRead(true);	/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readHashJoin
- *
- *	HashJoin is a subclass of Join.
- * ----------------
- */
-static HashJoin *
-_readHashJoin(void)
-{
-	HashJoin   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(HashJoin);
-
-	_getJoin((Join *) local_node);
-
-	token = pg_strtok(&length); /* eat :hashclauses */
-	local_node->hashclauses = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :hashjoinop */
-	token = pg_strtok(&length); /* get hashjoinop */
-	local_node->hashjoinop = atooid(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_getScan
- *
- *	Scan is a subclass of Plan.
- *
- *	Scan gets its own get function since stuff inherits it.
- * ----------------
- */
-static void
-_getScan(Scan *node)
-{
-	char	   *token;
-	int			length;
-
-	_getPlan((Plan *) node);
-
-	token = pg_strtok(&length); /* eat :scanrelid */
-	token = pg_strtok(&length); /* get scanrelid */
-	node->scanrelid = atoui(token);
-}
-
-/* ----------------
- *		_readScan
- *
- * Scan is a subclass of Plan.
- * ----------------
- */
-static Scan *
-_readScan(void)
-{
-	Scan	   *local_node;
-
-	local_node = makeNode(Scan);
-
-	_getScan(local_node);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readSeqScan
- *
- *	SeqScan is a subclass of Scan
- * ----------------
- */
-static SeqScan *
-_readSeqScan(void)
-{
-	SeqScan    *local_node;
-
-	local_node = makeNode(SeqScan);
-
-	_getScan((Scan *) local_node);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readIndexScan
- *
- *	IndexScan is a subclass of Scan
- * ----------------
- */
-static IndexScan *
-_readIndexScan(void)
-{
-	IndexScan  *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(IndexScan);
-
-	_getScan((Scan *) local_node);
-
-	token = pg_strtok(&length); /* eat :indxid */
-	local_node->indxid = toOidList(nodeRead(true));		/* now read it */
-
-	token = pg_strtok(&length); /* eat :indxqual */
-	local_node->indxqual = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :indxqualorig */
-	local_node->indxqualorig = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :indxorderdir */
-	token = pg_strtok(&length); /* get indxorderdir */
-	local_node->indxorderdir = atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readTidScan
- *
- *	TidScan is a subclass of Scan
- * ----------------
- */
-static TidScan *
-_readTidScan(void)
-{
-	TidScan    *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(TidScan);
-
-	_getScan((Scan *) local_node);
-
-	token = pg_strtok(&length); /* eat :needrescan */
-	token = pg_strtok(&length); /* get needrescan */
-	local_node->needRescan = atoi(token);
-
-	token = pg_strtok(&length); /* eat :tideval */
-	local_node->tideval = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readSubqueryScan
- *
- *	SubqueryScan is a subclass of Scan
- * ----------------
- */
-static SubqueryScan *
-_readSubqueryScan(void)
-{
-	SubqueryScan *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(SubqueryScan);
-
-	_getScan((Scan *) local_node);
-
-	token = pg_strtok(&length); /* eat :subplan */
-	local_node->subplan = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readFunctionScan
- *
- *	FunctionScan is a subclass of Scan
- * ----------------
- */
-static FunctionScan *
-_readFunctionScan(void)
-{
-	FunctionScan *local_node;
-
-	local_node = makeNode(FunctionScan);
-
-	_getScan((Scan *) local_node);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readSort
- *
- *	Sort is a subclass of Plan
- * ----------------
- */
-static Sort *
-_readSort(void)
-{
-	Sort	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(Sort);
-
-	_getPlan((Plan *) local_node);
-
-	token = pg_strtok(&length); /* eat :keycount */
-	token = pg_strtok(&length); /* get keycount */
-	local_node->keycount = atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readHash
- *
- *	Hash is a subclass of Plan
- * ----------------
- */
-static Hash *
-_readHash(void)
-{
-	Hash	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(Hash);
-
-	_getPlan((Plan *) local_node);
-
-	token = pg_strtok(&length); /* eat :hashkey */
-	local_node->hashkey = nodeRead(true);
-
-	return local_node;
-}
 
 /*
  *	Stuff from primnodes.h.
  */
 
-/* ----------------
- *		_readResdom
- *
- *	Resdom is a subclass of Node
- * ----------------
+/*
+ * _readResdom
  */
 static Resdom *
 _readResdom(void)
 {
-	Resdom	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Resdom);
 
-	local_node = makeNode(Resdom);
+	READ_INT_FIELD(resno);
+	READ_OID_FIELD(restype);
+	READ_INT_FIELD(restypmod);
+	READ_STRING_FIELD(resname);
+	READ_UINT_FIELD(ressortgroupref);
+	READ_UINT_FIELD(reskey);
+	READ_OID_FIELD(reskeyop);
+	READ_BOOL_FIELD(resjunk);
 
-	token = pg_strtok(&length); /* eat :resno */
-	token = pg_strtok(&length); /* get resno */
-	local_node->resno = atoi(token);
-
-	token = pg_strtok(&length); /* eat :restype */
-	token = pg_strtok(&length); /* get restype */
-	local_node->restype = atooid(token);
-
-	token = pg_strtok(&length); /* eat :restypmod */
-	token = pg_strtok(&length); /* get restypmod */
-	local_node->restypmod = atoi(token);
-
-	token = pg_strtok(&length); /* eat :resname */
-	token = pg_strtok(&length); /* get the name */
-	local_node->resname = nullable_string(token, length);
-
-	token = pg_strtok(&length); /* eat :reskey */
-	token = pg_strtok(&length); /* get reskey */
-	local_node->reskey = atoui(token);
-
-	token = pg_strtok(&length); /* eat :reskeyop */
-	token = pg_strtok(&length); /* get reskeyop */
-	local_node->reskeyop = atooid(token);
-
-	token = pg_strtok(&length); /* eat :ressortgroupref */
-	token = pg_strtok(&length); /* get ressortgroupref */
-	local_node->ressortgroupref = atoui(token);
-
-	token = pg_strtok(&length); /* eat :resjunk */
-	token = pg_strtok(&length); /* get resjunk */
-	local_node->resjunk = strtobool(token);
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readExpr
- *
- *	Expr is a subclass of Node
- * ----------------
+/*
+ * _readExpr
  */
 static Expr *
 _readExpr(void)
 {
-	Expr	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Expr);
 
-	local_node = makeNode(Expr);
+	READ_OID_FIELD(typeOid);
 
-	token = pg_strtok(&length); /* eat :typeOid */
-	token = pg_strtok(&length); /* get typeOid */
-	local_node->typeOid = atooid(token);
-
-	token = pg_strtok(&length); /* eat :opType */
-	token = pg_strtok(&length); /* get opType */
+	/* do-it-yourself enum representation */
+	token = pg_strtok(&length); /* skip :opType */
+	token = pg_strtok(&length); /* get field value */
 	if (strncmp(token, "op", 2) == 0)
 		local_node->opType = OP_EXPR;
 	else if (strncmp(token, "distinct", 8) == 0)
@@ -811,1551 +332,596 @@ _readExpr(void)
 	else
 		elog(ERROR, "_readExpr: unknown opType \"%.*s\"", length, token);
 
-	token = pg_strtok(&length); /* eat :oper */
-	local_node->oper = nodeRead(true);
+	READ_NODE_FIELD(oper);
+	READ_NODE_FIELD(args);
 
-	token = pg_strtok(&length); /* eat :args */
-	local_node->args = nodeRead(true);	/* now read it */
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readCaseExpr
- *
- *	CaseExpr is a subclass of Node
- * ----------------
- */
-static CaseExpr *
-_readCaseExpr(void)
-{
-	CaseExpr   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(CaseExpr);
-
-	token = pg_strtok(&length); /* eat :casetype */
-	token = pg_strtok(&length); /* get casetype */
-	local_node->casetype = atooid(token);
-
-	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :args */
-	local_node->args = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :defresult */
-	local_node->defresult = nodeRead(true);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readCaseWhen
- *
- *	CaseWhen is a subclass of Node
- * ----------------
- */
-static CaseWhen *
-_readCaseWhen(void)
-{
-	CaseWhen   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(CaseWhen);
-
-	local_node->expr = nodeRead(true);
-	token = pg_strtok(&length); /* eat :then */
-	local_node->result = nodeRead(true);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readNullTest
- *
- *	NullTest is a subclass of Node
- * ----------------
- */
-static NullTest *
-_readNullTest(void)
-{
-	NullTest   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(NullTest);
-
-	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :nulltesttype */
-	token = pg_strtok(&length); /* get nulltesttype */
-	local_node->nulltesttype = (NullTestType) atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readBooleanTest
- *
- *	BooleanTest is a subclass of Node
- * ----------------
- */
-static BooleanTest *
-_readBooleanTest(void)
-{
-	BooleanTest *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(BooleanTest);
-
-	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :booltesttype */
-	token = pg_strtok(&length); /* get booltesttype */
-	local_node->booltesttype = (BoolTestType) atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readConstraintTest
- *
- *	ConstraintTest is a subclass of Node
- * ----------------
- */
-static ConstraintTest *
-_readConstraintTest(void)
-{
-	ConstraintTest *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(ConstraintTest);
-
-	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :testtype */
-	token = pg_strtok(&length); /* get testtype */
-	local_node->testtype = (ConstraintTestType) atoi(token);
-
-	token = pg_strtok(&length); /* get :name */
-	token = pg_strtok(&length); /* now read it */
-	local_node->name = nullable_string(token, length);
-
-	token = pg_strtok(&length); /* get :domname */
-	token = pg_strtok(&length); /* get domname */
-	local_node->domname = nullable_string(token, length);
-
-	token = pg_strtok(&length); /* eat :check_expr */
-	local_node->check_expr = nodeRead(true);	/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readConstraintTestValue
- *
- *	ConstraintTestValue is a subclass of Node
- * ----------------
- */
-static ConstraintTestValue *
-_readConstraintTestValue(void)
-{
-	ConstraintTestValue *local_node;
-	char   *token;
-	int		length;
-
-	local_node = makeNode(ConstraintTestValue);
-	token = pg_strtok(&length); /* eat :typeid */
-	token = pg_strtok(&length); /* get typeid */
-	local_node->typeId = atooid(token);
-	token = pg_strtok(&length); /* eat :typemod */
-	token = pg_strtok(&length); /* get typemod */
-	local_node->typeMod = atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readDomainConstraintValue
- *
- *	DomainConstraintValue is a subclass of Node
- * ----------------
- */
-static DomainConstraintValue *
-_readDomainConstraintValue(void)
-{
-	DomainConstraintValue *local_node;
-
-	local_node = makeNode(DomainConstraintValue);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readVar
- *
- *	Var is a subclass of Expr
- * ----------------
+/*
+ * _readVar
  */
 static Var *
 _readVar(void)
 {
-	Var		   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Var);
 
-	local_node = makeNode(Var);
+	READ_UINT_FIELD(varno);
+	READ_INT_FIELD(varattno);
+	READ_OID_FIELD(vartype);
+	READ_INT_FIELD(vartypmod);
+	READ_UINT_FIELD(varlevelsup);
+	READ_UINT_FIELD(varnoold);
+	READ_INT_FIELD(varoattno);
 
-	token = pg_strtok(&length); /* eat :varno */
-	token = pg_strtok(&length); /* get varno */
-	local_node->varno = atoui(token);
-
-	token = pg_strtok(&length); /* eat :varattno */
-	token = pg_strtok(&length); /* get varattno */
-	local_node->varattno = atoi(token);
-
-	token = pg_strtok(&length); /* eat :vartype */
-	token = pg_strtok(&length); /* get vartype */
-	local_node->vartype = atooid(token);
-
-	token = pg_strtok(&length); /* eat :vartypmod */
-	token = pg_strtok(&length); /* get vartypmod */
-	local_node->vartypmod = atoi(token);
-
-	token = pg_strtok(&length); /* eat :varlevelsup */
-	token = pg_strtok(&length); /* get varlevelsup */
-	local_node->varlevelsup = atoui(token);
-
-	token = pg_strtok(&length); /* eat :varnoold */
-	token = pg_strtok(&length); /* get varnoold */
-	local_node->varnoold = atoui(token);
-
-	token = pg_strtok(&length); /* eat :varoattno */
-	token = pg_strtok(&length); /* eat :varoattno */
-	local_node->varoattno = atoi(token);
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
+/*
  * _readArrayRef
- *
- * ArrayRef is a subclass of Expr
- * ----------------
  */
 static ArrayRef *
 _readArrayRef(void)
 {
-	ArrayRef   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(ArrayRef);
 
-	local_node = makeNode(ArrayRef);
+	READ_OID_FIELD(refrestype);
+	READ_INT_FIELD(refattrlength);
+	READ_INT_FIELD(refelemlength);
+	READ_BOOL_FIELD(refelembyval);
+	READ_CHAR_FIELD(refelemalign);
+	READ_NODE_FIELD(refupperindexpr);
+	READ_NODE_FIELD(reflowerindexpr);
+	READ_NODE_FIELD(refexpr);
+	READ_NODE_FIELD(refassgnexpr);
 
-	token = pg_strtok(&length); /* eat :refrestype */
-	token = pg_strtok(&length); /* get refrestype */
-	local_node->refrestype = atooid(token);
-
-	token = pg_strtok(&length); /* eat :refattrlength */
-	token = pg_strtok(&length); /* get refattrlength */
-	local_node->refattrlength = atoi(token);
-
-	token = pg_strtok(&length); /* eat :refelemlength */
-	token = pg_strtok(&length); /* get refelemlength */
-	local_node->refelemlength = atoi(token);
-
-	token = pg_strtok(&length); /* eat :refelembyval */
-	token = pg_strtok(&length); /* get refelembyval */
-	local_node->refelembyval = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :refelemalign */
-	token = pg_strtok(&length); /* get refelemalign */
-	local_node->refelemalign = token[0];
-
-	token = pg_strtok(&length); /* eat :refupperindexpr */
-	local_node->refupperindexpr = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :reflowerindexpr */
-	local_node->reflowerindexpr = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :refexpr */
-	local_node->refexpr = nodeRead(true);
-
-	token = pg_strtok(&length); /* eat :refassgnexpr */
-	local_node->refassgnexpr = nodeRead(true);
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readConst
- *
- *	Const is a subclass of Expr
- * ----------------
+/*
+ * _readConst
  */
 static Const *
 _readConst(void)
 {
-	Const	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Const);
 
-	local_node = makeNode(Const);
+	READ_OID_FIELD(consttype);
+	READ_INT_FIELD(constlen);
+	READ_BOOL_FIELD(constbyval);
+	READ_BOOL_FIELD(constisnull);
+	/* XXX what about constisset, constiscast? */
 
-	token = pg_strtok(&length); /* get :consttype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->consttype = atooid(token);
-
-	token = pg_strtok(&length); /* get :constlen */
-	token = pg_strtok(&length); /* now read it */
-	local_node->constlen = atoi(token);
-
-	token = pg_strtok(&length); /* get :constbyval */
-	token = pg_strtok(&length); /* now read it */
-	local_node->constbyval = strtobool(token);
-
-	token = pg_strtok(&length); /* get :constisnull */
-	token = pg_strtok(&length); /* now read it */
-	local_node->constisnull = strtobool(token);
-
-	token = pg_strtok(&length); /* get :constvalue */
-
+	token = pg_strtok(&length); /* skip :constvalue */
 	if (local_node->constisnull)
-	{
-		token = pg_strtok(&length);		/* skip "NIL" */
-	}
+		token = pg_strtok(&length);		/* skip "<>" */
 	else
 		local_node->constvalue = readDatum(local_node->constbyval);
 
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readFunc
- *
- *	Func is a subclass of Expr
- * ----------------
+/*
+ * _readFunc
  */
 static Func *
 _readFunc(void)
 {
-	Func	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Func);
 
-	local_node = makeNode(Func);
-
-	token = pg_strtok(&length); /* get :funcid */
-	token = pg_strtok(&length); /* now read it */
-	local_node->funcid = atooid(token);
-
-	token = pg_strtok(&length); /* get :funcresulttype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->funcresulttype = atooid(token);
-
-	token = pg_strtok(&length); /* get :funcretset */
-	token = pg_strtok(&length); /* now read it */
-	local_node->funcretset = strtobool(token);
-
-	token = pg_strtok(&length); /* get :funcformat */
-	token = pg_strtok(&length); /* now read it */
-	local_node->funcformat = (CoercionForm) atoi(token);
+	READ_OID_FIELD(funcid);
+	READ_OID_FIELD(funcresulttype);
+	READ_BOOL_FIELD(funcretset);
+	READ_ENUM_FIELD(funcformat, CoercionForm);
 
 	local_node->func_fcache = NULL;
 
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readOper
- *
- *	Oper is a subclass of Expr
- * ----------------
+/*
+ * _readOper
  */
 static Oper *
 _readOper(void)
 {
-	Oper	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Oper);
 
-	local_node = makeNode(Oper);
-
-	token = pg_strtok(&length); /* get :opno */
-	token = pg_strtok(&length); /* now read it */
-	local_node->opno = atooid(token);
-
-	token = pg_strtok(&length); /* get :opid */
-	token = pg_strtok(&length); /* now read it */
-	local_node->opid = atooid(token);
-
-	token = pg_strtok(&length); /* get :opresulttype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->opresulttype = atooid(token);
-
-	token = pg_strtok(&length); /* get :opretset */
-	token = pg_strtok(&length); /* now read it */
-	local_node->opretset = strtobool(token);
+	READ_OID_FIELD(opno);
+	READ_OID_FIELD(opid);
+	READ_OID_FIELD(opresulttype);
+	READ_BOOL_FIELD(opretset);
 
 	local_node->op_fcache = NULL;
 
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readParam
- *
- *	Param is a subclass of Expr
- * ----------------
+/*
+ * _readParam
  */
 static Param *
 _readParam(void)
 {
-	Param	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Param);
 
-	local_node = makeNode(Param);
+	READ_INT_FIELD(paramkind);
+	READ_INT_FIELD(paramid);
+	READ_STRING_FIELD(paramname);
+	READ_OID_FIELD(paramtype);
 
-	token = pg_strtok(&length); /* get :paramkind */
-	token = pg_strtok(&length); /* now read it */
-	local_node->paramkind = atoi(token);
-
-	token = pg_strtok(&length); /* get :paramid */
-	token = pg_strtok(&length); /* now read it */
-	local_node->paramid = atoi(token);
-
-	token = pg_strtok(&length); /* get :paramname */
-	token = pg_strtok(&length); /* now read it */
-	local_node->paramname = nullable_string(token, length);
-
-	token = pg_strtok(&length); /* get :paramtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->paramtype = atooid(token);
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readAggref
- *
- *	Aggref is a subclass of Node
- * ----------------
+/*
+ * _readAggref
  */
 static Aggref *
 _readAggref(void)
 {
-	Aggref	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Aggref);
 
-	local_node = makeNode(Aggref);
+	READ_OID_FIELD(aggfnoid);
+	READ_OID_FIELD(aggtype);
+	READ_NODE_FIELD(target);
+	READ_BOOL_FIELD(aggstar);
+	READ_BOOL_FIELD(aggdistinct);
+	/* aggno is not saved since it is just executor state */
 
-	token = pg_strtok(&length); /* eat :aggfnoid */
-	token = pg_strtok(&length); /* get aggfnoid */
-	local_node->aggfnoid = atooid(token);
-
-	token = pg_strtok(&length); /* eat :aggtype */
-	token = pg_strtok(&length); /* get aggtype */
-	local_node->aggtype = atooid(token);
-
-	token = pg_strtok(&length); /* eat :target */
-	local_node->target = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :aggstar */
-	token = pg_strtok(&length); /* get aggstar */
-	local_node->aggstar = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :aggdistinct */
-	token = pg_strtok(&length); /* get aggdistinct */
-	local_node->aggdistinct = strtobool(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readSubLink
- *
- *	SubLink is a subclass of Node
- * ----------------
- */
-static SubLink *
-_readSubLink(void)
-{
-	SubLink    *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(SubLink);
-
-	token = pg_strtok(&length); /* eat :subLinkType */
-	token = pg_strtok(&length); /* get subLinkType */
-	local_node->subLinkType = atoi(token);
-
-	token = pg_strtok(&length); /* eat :useor */
-	token = pg_strtok(&length); /* get useor */
-	local_node->useor = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :lefthand */
-	local_node->lefthand = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :oper */
-	local_node->oper = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :subselect */
-	local_node->subselect = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readFieldSelect
- *
- *	FieldSelect is a subclass of Node
- * ----------------
- */
-static FieldSelect *
-_readFieldSelect(void)
-{
-	FieldSelect *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(FieldSelect);
-
-	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :fieldnum */
-	token = pg_strtok(&length); /* get fieldnum */
-	local_node->fieldnum = (AttrNumber) atoi(token);
-
-	token = pg_strtok(&length); /* eat :resulttype */
-	token = pg_strtok(&length); /* get resulttype */
-	local_node->resulttype = atooid(token);
-
-	token = pg_strtok(&length); /* eat :resulttypmod */
-	token = pg_strtok(&length); /* get resulttypmod */
-	local_node->resulttypmod = atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readRelabelType
- *
- *	RelabelType is a subclass of Node
- * ----------------
- */
-static RelabelType *
-_readRelabelType(void)
-{
-	RelabelType *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(RelabelType);
-
-	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :resulttype */
-	token = pg_strtok(&length); /* get resulttype */
-	local_node->resulttype = atooid(token);
-
-	token = pg_strtok(&length); /* eat :resulttypmod */
-	token = pg_strtok(&length); /* get resulttypmod */
-	local_node->resulttypmod = atoi(token);
-
-	token = pg_strtok(&length); /* eat :relabelformat */
-	token = pg_strtok(&length); /* get relabelformat */
-	local_node->relabelformat = (CoercionForm) atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readRangeTblRef
- *
- *	RangeTblRef is a subclass of Node
- * ----------------
- */
-static RangeTblRef *
-_readRangeTblRef(void)
-{
-	RangeTblRef *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(RangeTblRef);
-
-	token = pg_strtok(&length); /* get rtindex */
-	local_node->rtindex = atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readFromExpr
- *
- *	FromExpr is a subclass of Node
- * ----------------
- */
-static FromExpr *
-_readFromExpr(void)
-{
-	FromExpr   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(FromExpr);
-
-	token = pg_strtok(&length); /* eat :fromlist */
-	local_node->fromlist = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :quals */
-	local_node->quals = nodeRead(true); /* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readJoinExpr
- *
- *	JoinExpr is a subclass of Node
- * ----------------
- */
-static JoinExpr *
-_readJoinExpr(void)
-{
-	JoinExpr   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(JoinExpr);
-
-	token = pg_strtok(&length); /* eat :jointype */
-	token = pg_strtok(&length); /* get jointype */
-	local_node->jointype = (JoinType) atoi(token);
-
-	token = pg_strtok(&length); /* eat :isNatural */
-	token = pg_strtok(&length); /* get isNatural */
-	local_node->isNatural = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :larg */
-	local_node->larg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :rarg */
-	local_node->rarg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :using */
-	local_node->using = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* eat :quals */
-	local_node->quals = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* eat :alias */
-	local_node->alias = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* eat :rtindex */
-	token = pg_strtok(&length); /* get rtindex */
-	local_node->rtindex = atoi(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readTargetEntry
- * ----------------
- */
-static TargetEntry *
-_readTargetEntry(void)
-{
-	TargetEntry *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(TargetEntry);
-
-	token = pg_strtok(&length); /* get :resdom */
-	local_node->resdom = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :expr */
-	local_node->expr = nodeRead(true);	/* now read it */
-
-	return local_node;
+	READ_DONE();
 }
 
 static RangeVar *
 _readRangeVar(void)
 {
-	RangeVar   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(RangeVar);
+	READ_LOCALS(RangeVar);
 
 	local_node->catalogname = NULL;		/* not currently saved in output
 										 * format */
 
-	token = pg_strtok(&length); /* eat :relation */
-	token = pg_strtok(&length); /* get schemaname */
-	local_node->schemaname = nullable_string(token, length);
+	READ_STRING_FIELD(schemaname);
+	READ_STRING_FIELD(relname);
+	READ_ENUM_FIELD(inhOpt, InhOption);
+	READ_BOOL_FIELD(istemp);
+	READ_NODE_FIELD(alias);
 
-	token = pg_strtok(&length); /* eat "." */
-	token = pg_strtok(&length); /* get relname */
-	local_node->relname = nullable_string(token, length);
+	READ_DONE();
+}
 
-	token = pg_strtok(&length); /* eat :inhopt */
-	token = pg_strtok(&length); /* get inhopt */
-	local_node->inhOpt = (InhOption) atoi(token);
+/*
+ * _readSubLink
+ */
+static SubLink *
+_readSubLink(void)
+{
+	READ_LOCALS(SubLink);
 
-	token = pg_strtok(&length); /* eat :istemp */
-	token = pg_strtok(&length); /* get istemp */
-	local_node->istemp = strtobool(token);
+	READ_ENUM_FIELD(subLinkType, SubLinkType);
+	READ_BOOL_FIELD(useor);
+	READ_NODE_FIELD(lefthand);
+	READ_NODE_FIELD(oper);
+	READ_NODE_FIELD(subselect);
 
-	token = pg_strtok(&length); /* eat :alias */
-	local_node->alias = nodeRead(true); /* now read it */
+	READ_DONE();
+}
 
-	return local_node;
+/*
+ * _readFieldSelect
+ */
+static FieldSelect *
+_readFieldSelect(void)
+{
+	READ_LOCALS(FieldSelect);
+
+	READ_NODE_FIELD(arg);
+	READ_INT_FIELD(fieldnum);
+	READ_OID_FIELD(resulttype);
+	READ_INT_FIELD(resulttypmod);
+
+	READ_DONE();
+}
+
+/*
+ * _readRelabelType
+ */
+static RelabelType *
+_readRelabelType(void)
+{
+	READ_LOCALS(RelabelType);
+
+	READ_NODE_FIELD(arg);
+	READ_OID_FIELD(resulttype);
+	READ_INT_FIELD(resulttypmod);
+	READ_ENUM_FIELD(relabelformat, CoercionForm);
+
+	READ_DONE();
+}
+
+/*
+ * _readRangeTblRef
+ */
+static RangeTblRef *
+_readRangeTblRef(void)
+{
+	READ_LOCALS(RangeTblRef);
+
+	READ_INT_FIELD(rtindex);
+
+	READ_DONE();
+}
+
+/*
+ * _readJoinExpr
+ */
+static JoinExpr *
+_readJoinExpr(void)
+{
+	READ_LOCALS(JoinExpr);
+
+	READ_ENUM_FIELD(jointype, JoinType);
+	READ_BOOL_FIELD(isNatural);
+	READ_NODE_FIELD(larg);
+	READ_NODE_FIELD(rarg);
+	READ_NODE_FIELD(using);
+	READ_NODE_FIELD(quals);
+	READ_NODE_FIELD(alias);
+	READ_INT_FIELD(rtindex);
+
+	READ_DONE();
+}
+
+/*
+ * _readFromExpr
+ */
+static FromExpr *
+_readFromExpr(void)
+{
+	READ_LOCALS(FromExpr);
+
+	READ_NODE_FIELD(fromlist);
+	READ_NODE_FIELD(quals);
+
+	READ_DONE();
+}
+
+
+/*
+ *	Stuff from parsenodes.h.
+ */
+
+/*
+ * _readCaseExpr
+ */
+static CaseExpr *
+_readCaseExpr(void)
+{
+	READ_LOCALS(CaseExpr);
+
+	READ_OID_FIELD(casetype);
+	READ_NODE_FIELD(arg);
+	READ_NODE_FIELD(args);
+	READ_NODE_FIELD(defresult);
+
+	READ_DONE();
+}
+
+/*
+ * _readCaseWhen
+ */
+static CaseWhen *
+_readCaseWhen(void)
+{
+	READ_LOCALS(CaseWhen);
+
+	READ_NODE_FIELD(expr);
+	READ_NODE_FIELD(result);
+
+	READ_DONE();
+}
+
+/*
+ * _readNullTest
+ */
+static NullTest *
+_readNullTest(void)
+{
+	READ_LOCALS(NullTest);
+
+	READ_NODE_FIELD(arg);
+	READ_ENUM_FIELD(nulltesttype, NullTestType);
+
+	READ_DONE();
+}
+
+/*
+ * _readBooleanTest
+ */
+static BooleanTest *
+_readBooleanTest(void)
+{
+	READ_LOCALS(BooleanTest);
+
+	READ_NODE_FIELD(arg);
+	READ_ENUM_FIELD(booltesttype, BoolTestType);
+
+	READ_DONE();
+}
+
+/*
+ * _readConstraintTest
+ */
+static ConstraintTest *
+_readConstraintTest(void)
+{
+	READ_LOCALS(ConstraintTest);
+
+	READ_NODE_FIELD(arg);
+	READ_ENUM_FIELD(testtype, ConstraintTestType);
+	READ_STRING_FIELD(name);
+	READ_STRING_FIELD(domname);
+	READ_NODE_FIELD(check_expr);
+
+	READ_DONE();
+}
+
+/*
+ * _readDomainConstraintValue
+ */
+static DomainConstraintValue *
+_readDomainConstraintValue(void)
+{
+	READ_LOCALS_NO_FIELDS(DomainConstraintValue);
+
+	READ_DONE();
+}
+
+/*
+ * _readConstraintTestValue
+ */
+static ConstraintTestValue *
+_readConstraintTestValue(void)
+{
+	READ_LOCALS(ConstraintTestValue);
+
+	READ_OID_FIELD(typeId);
+	READ_INT_FIELD(typeMod);
+
+	READ_DONE();
+}
+
+/*
+ * _readTargetEntry
+ */
+static TargetEntry *
+_readTargetEntry(void)
+{
+	READ_LOCALS(TargetEntry);
+
+	READ_NODE_FIELD(resdom);
+	/* fjoin not supported ... */
+	READ_NODE_FIELD(expr);
+
+	READ_DONE();
 }
 
 static ColumnRef *
 _readColumnRef(void)
 {
-	ColumnRef  *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(ColumnRef);
 
-	local_node = makeNode(ColumnRef);
+	READ_NODE_FIELD(fields);
+	READ_NODE_FIELD(indirection);
 
-	token = pg_strtok(&length); /* eat :fields */
-	local_node->fields = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :indirection */
-	local_node->indirection = nodeRead(true);	/* now read it */
-
-	return local_node;
+	READ_DONE();
 }
 
 static ColumnDef *
 _readColumnDef(void)
 {
-	ColumnDef  *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(ColumnDef);
 
-	local_node = makeNode(ColumnDef);
+	READ_STRING_FIELD(colname);
+	READ_NODE_FIELD(typename);
+	READ_INT_FIELD(inhcount);
+	READ_BOOL_FIELD(is_local);
+	READ_BOOL_FIELD(is_not_null);
+	READ_NODE_FIELD(raw_default);
+	READ_STRING_FIELD(cooked_default);
+	READ_NODE_FIELD(constraints);
+	READ_NODE_FIELD(support);
 
-	token = pg_strtok(&length); /* eat :colname */
-	token = pg_strtok(&length); /* now read it */
-	local_node->colname = nullable_string(token, length);
-
-	token = pg_strtok(&length); /* eat :typename */
-	local_node->typename = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :inhcount */
-	token = pg_strtok(&length); /* get :inhcount */
-	local_node->inhcount = atoi(token);
-
-	token = pg_strtok(&length); /* eat :is_local */
-	token = pg_strtok(&length); /* get :is_local */
-	local_node->is_local = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :is_not_null */
-	token = pg_strtok(&length); /* get :is_not_null */
-	local_node->is_not_null = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :raw_default */
-	local_node->raw_default = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :cooked_default */
-	token = pg_strtok(&length); /* now read it */
-	local_node->cooked_default = nullable_string(token, length);
-
-	token = pg_strtok(&length); /* eat :constraints */
-	local_node->constraints = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :support */
-	local_node->support = nodeRead(true);		/* now read it */
-
-	return local_node;
+	READ_DONE();
 }
 
 static TypeName *
 _readTypeName(void)
 {
-	TypeName   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(TypeName);
 
-	local_node = makeNode(TypeName);
+	READ_NODE_FIELD(names);
+	READ_OID_FIELD(typeid);
+	READ_BOOL_FIELD(timezone);
+	READ_BOOL_FIELD(setof);
+	READ_BOOL_FIELD(pct_type);
+	READ_INT_FIELD(typmod);
+	READ_NODE_FIELD(arrayBounds);
 
-	token = pg_strtok(&length); /* eat :names */
-	local_node->names = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* eat :typeid */
-	token = pg_strtok(&length); /* get typeid */
-	local_node->typeid = atooid(token);
-
-	token = pg_strtok(&length); /* eat :timezone */
-	token = pg_strtok(&length); /* get timezone */
-	local_node->timezone = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :setof */
-	token = pg_strtok(&length); /* get setof */
-	local_node->setof = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :pct_type */
-	token = pg_strtok(&length); /* get pct_type */
-	local_node->pct_type = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :typmod */
-	token = pg_strtok(&length); /* get typmod */
-	local_node->typmod = atoi(token);
-
-	token = pg_strtok(&length); /* eat :arrayBounds */
-	local_node->arrayBounds = nodeRead(true);	/* now read it */
-
-	return local_node;
+	READ_DONE();
 }
 
 static ExprFieldSelect *
 _readExprFieldSelect(void)
 {
-	ExprFieldSelect *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(ExprFieldSelect);
 
-	local_node = makeNode(ExprFieldSelect);
+	READ_NODE_FIELD(arg);
+	READ_NODE_FIELD(fields);
+	READ_NODE_FIELD(indirection);
 
-	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :fields */
-	local_node->fields = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :indirection */
-	local_node->indirection = nodeRead(true);	/* now read it */
-
-	return local_node;
+	READ_DONE();
 }
 
 static Alias *
 _readAlias(void)
 {
-	Alias	   *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(Alias);
 
-	local_node = makeNode(Alias);
+	READ_STRING_FIELD(aliasname);
+	READ_NODE_FIELD(colnames);
 
-	token = pg_strtok(&length); /* eat :aliasname */
-	token = pg_strtok(&length); /* get aliasname */
-	local_node->aliasname = debackslash(token, length);
-
-	token = pg_strtok(&length); /* eat :colnames */
-	local_node->colnames = nodeRead(true);		/* now read it */
-
-	return local_node;
+	READ_DONE();
 }
 
-/* ----------------
- *		_readRangeTblEntry
- * ----------------
+/*
+ * _readRangeTblEntry
  */
 static RangeTblEntry *
 _readRangeTblEntry(void)
 {
-	RangeTblEntry *local_node;
-	char	   *token;
-	int			length;
+	READ_LOCALS(RangeTblEntry);
 
-	local_node = makeNode(RangeTblEntry);
-
-	token = pg_strtok(&length); /* eat :alias */
-	local_node->alias = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* eat :eref */
-	local_node->eref = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* eat :rtekind */
-	token = pg_strtok(&length); /* get rtekind */
-	local_node->rtekind = (RTEKind) atoi(token);
+	/* put alias + eref first to make dump more legible */
+	READ_NODE_FIELD(alias);
+	READ_NODE_FIELD(eref);
+	READ_ENUM_FIELD(rtekind, RTEKind);
 
 	switch (local_node->rtekind)
 	{
 		case RTE_RELATION:
 		case RTE_SPECIAL:
-			token = pg_strtok(&length); /* eat :relid */
-			token = pg_strtok(&length); /* get :relid */
-			local_node->relid = atooid(token);
+			READ_OID_FIELD(relid);
 			break;
-
 		case RTE_SUBQUERY:
-			token = pg_strtok(&length); /* eat :subquery */
-			local_node->subquery = nodeRead(true);		/* now read it */
+			READ_NODE_FIELD(subquery);
 			break;
-
 		case RTE_FUNCTION:
-			token = pg_strtok(&length); /* eat :funcexpr */
-			local_node->funcexpr = nodeRead(true);		/* now read it */
-
-			token = pg_strtok(&length); /* eat :coldeflist */
-			local_node->coldeflist = nodeRead(true);	/* now read it */
-
+			READ_NODE_FIELD(funcexpr);
+			READ_NODE_FIELD(coldeflist);
 			break;
-
 		case RTE_JOIN:
-			token = pg_strtok(&length); /* eat :jointype */
-			token = pg_strtok(&length); /* get jointype */
-			local_node->jointype = (JoinType) atoi(token);
-
-			token = pg_strtok(&length); /* eat :joinaliasvars */
-			local_node->joinaliasvars = nodeRead(true); /* now read it */
+			READ_ENUM_FIELD(jointype, JoinType);
+			READ_NODE_FIELD(joinaliasvars);
 			break;
-
 		default:
 			elog(ERROR, "bogus rte kind %d", (int) local_node->rtekind);
 			break;
 	}
 
-	token = pg_strtok(&length); /* eat :inh */
-	token = pg_strtok(&length); /* get :inh */
-	local_node->inh = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :inFromCl */
-	token = pg_strtok(&length); /* get :inFromCl */
-	local_node->inFromCl = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :checkForRead */
-	token = pg_strtok(&length); /* get :checkForRead */
-	local_node->checkForRead = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :checkForWrite */
-	token = pg_strtok(&length); /* get :checkForWrite */
-	local_node->checkForWrite = strtobool(token);
-
-	token = pg_strtok(&length); /* eat :checkAsUser */
-	token = pg_strtok(&length); /* get :checkAsUser */
-	local_node->checkAsUser = atooid(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readPath
- *
- *	Path is a subclass of Node.
- * ----------------
- */
-static Path *
-_readPath(void)
-{
-	Path	   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(Path);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->pathkeys = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readIndexPath
- *
- *	IndexPath is a subclass of Path.
- * ----------------
- */
-static IndexPath *
-_readIndexPath(void)
-{
-	IndexPath  *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(IndexPath);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->path.pathkeys = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :indexinfo */
-	local_node->indexinfo = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :indexqual */
-	local_node->indexqual = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :indexscandir */
-	token = pg_strtok(&length); /* now read it */
-	local_node->indexscandir = (ScanDirection) atoi(token);
-
-	token = pg_strtok(&length); /* get :rows */
-	token = pg_strtok(&length); /* now read it */
-	local_node->rows = atof(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readTidPath
- *
- *	TidPath is a subclass of Path.
- * ----------------
- */
-static TidPath *
-_readTidPath(void)
-{
-	TidPath    *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(TidPath);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->path.pathkeys = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :tideval */
-	local_node->tideval = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :unjoined_relids */
-	local_node->unjoined_relids = toIntList(nodeRead(true));
-
-	return local_node;
-}
-
-/* ----------------
- *		_readAppendPath
- *
- *	AppendPath is a subclass of Path.
- * ----------------
- */
-static AppendPath *
-_readAppendPath(void)
-{
-	AppendPath *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(AppendPath);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->path.pathkeys = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :subpaths */
-	local_node->subpaths = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readResultPath
- *
- *	ResultPath is a subclass of Path.
- * ----------------
- */
-static ResultPath *
-_readResultPath(void)
-{
-	ResultPath *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(ResultPath);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->path.pathkeys = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :subpath */
-	local_node->subpath = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :constantqual */
-	local_node->constantqual = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readNestPath
- *
- *	NestPath is a subclass of Path
- * ----------------
- */
-static NestPath *
-_readNestPath(void)
-{
-	NestPath   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(NestPath);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->path.total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->path.pathkeys = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :jointype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jointype = (JoinType) atoi(token);
-
-	token = pg_strtok(&length); /* get :outerjoinpath */
-	local_node->outerjoinpath = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :innerjoinpath */
-	local_node->innerjoinpath = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :joinrestrictinfo */
-	local_node->joinrestrictinfo = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readMergePath
- *
- *	MergePath is a subclass of NestPath.
- * ----------------
- */
-static MergePath *
-_readMergePath(void)
-{
-	MergePath  *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(MergePath);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.path.pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.path.startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.path.total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* get :jointype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.jointype = (JoinType) atoi(token);
-
-	token = pg_strtok(&length); /* get :outerjoinpath */
-	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* get :innerjoinpath */
-	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* get :joinrestrictinfo */
-	local_node->jpath.joinrestrictinfo = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :path_mergeclauses */
-	local_node->path_mergeclauses = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :outersortkeys */
-	local_node->outersortkeys = nodeRead(true); /* now read it */
-
-	token = pg_strtok(&length); /* get :innersortkeys */
-	local_node->innersortkeys = nodeRead(true); /* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readHashPath
- *
- *	HashPath is a subclass of NestPath.
- * ----------------
- */
-static HashPath *
-_readHashPath(void)
-{
-	HashPath   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(HashPath);
-
-	token = pg_strtok(&length); /* get :pathtype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.path.pathtype = atoi(token);
-
-	token = pg_strtok(&length); /* get :startup_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.path.startup_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :total_cost */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.path.total_cost = (Cost) atof(token);
-
-	token = pg_strtok(&length); /* get :pathkeys */
-	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* get :jointype */
-	token = pg_strtok(&length); /* now read it */
-	local_node->jpath.jointype = (JoinType) atoi(token);
-
-	token = pg_strtok(&length); /* get :outerjoinpath */
-	local_node->jpath.outerjoinpath = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* get :innerjoinpath */
-	local_node->jpath.innerjoinpath = nodeRead(true);	/* now read it */
-
-	token = pg_strtok(&length); /* get :joinrestrictinfo */
-	local_node->jpath.joinrestrictinfo = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :path_hashclauses */
-	local_node->path_hashclauses = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readPathKeyItem
- *
- *	PathKeyItem is a subclass of Node.
- * ----------------
- */
-static PathKeyItem *
-_readPathKeyItem(void)
-{
-	PathKeyItem *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(PathKeyItem);
-
-	token = pg_strtok(&length); /* get :sortop */
-	token = pg_strtok(&length); /* now read it */
-	local_node->sortop = atooid(token);
-
-	token = pg_strtok(&length); /* get :key */
-	local_node->key = nodeRead(true);	/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readRestrictInfo
- *
- *	RestrictInfo is a subclass of Node.
- * ----------------
- */
-static RestrictInfo *
-_readRestrictInfo(void)
-{
-	RestrictInfo *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(RestrictInfo);
-
-	token = pg_strtok(&length); /* get :clause */
-	local_node->clause = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :ispusheddown */
-	token = pg_strtok(&length); /* now read it */
-	local_node->ispusheddown = strtobool(token);
-
-	token = pg_strtok(&length); /* get :subclauseindices */
-	local_node->subclauseindices = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* get :mergejoinoperator */
-	token = pg_strtok(&length); /* now read it */
-	local_node->mergejoinoperator = atooid(token);
-
-	token = pg_strtok(&length); /* get :left_sortop */
-	token = pg_strtok(&length); /* now read it */
-	local_node->left_sortop = atooid(token);
-
-	token = pg_strtok(&length); /* get :right_sortop */
-	token = pg_strtok(&length); /* now read it */
-	local_node->right_sortop = atooid(token);
-
-	token = pg_strtok(&length); /* get :hashjoinoperator */
-	token = pg_strtok(&length); /* now read it */
-	local_node->hashjoinoperator = atooid(token);
-
-	/* eval_cost is not part of saved representation; compute on first use */
-	local_node->eval_cost = -1;
-	/* ditto for this_selec */
-	local_node->this_selec = -1;
-	/* ditto for cached pathkeys, selectivity, bucketsize */
-	local_node->left_pathkey = NIL;
-	local_node->right_pathkey = NIL;
-	local_node->left_mergescansel = -1;
-	local_node->right_mergescansel = -1;
-	local_node->left_bucketsize = -1;
-	local_node->right_bucketsize = -1;
-
-	return local_node;
-}
-
-/* ----------------
- *		_readJoinInfo()
- *
- *	JoinInfo is a subclass of Node.
- * ----------------
- */
-static JoinInfo *
-_readJoinInfo(void)
-{
-	JoinInfo   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(JoinInfo);
-
-	token = pg_strtok(&length); /* get :unjoined_relids */
-	local_node->unjoined_relids = toIntList(nodeRead(true));	/* now read it */
-
-	token = pg_strtok(&length); /* get :jinfo_restrictinfo */
-	local_node->jinfo_restrictinfo = nodeRead(true);	/* now read it */
-
-	return local_node;
+	READ_BOOL_FIELD(inh);
+	READ_BOOL_FIELD(inFromCl);
+	READ_BOOL_FIELD(checkForRead);
+	READ_BOOL_FIELD(checkForWrite);
+	READ_OID_FIELD(checkAsUser);
+
+	READ_DONE();
 }
 
 
-/* ----------------
- *		parsePlanString
+/*
+ * parseNodeString
  *
- * Given a character string containing a plan, parsePlanString sets up the
- * plan structure representing that plan.
+ * Given a character string representing a node tree, parseNodeString creates
+ * the internal node structure.
  *
  * The string to be read must already have been loaded into pg_strtok().
- * ----------------
  */
 Node *
-parsePlanString(void)
+parseNodeString(void)
 {
-	char	   *token;
-	int			length;
-	void	   *return_value = NULL;
+	void	   *return_value;
+	READ_TEMP_LOCALS();
 
 	token = pg_strtok(&length);
 
-	if (length == 4 && strncmp(token, "PLAN", length) == 0)
-		return_value = _readPlan();
-	else if (length == 6 && strncmp(token, "RESULT", length) == 0)
-		return_value = _readResult();
-	else if (length == 6 && strncmp(token, "APPEND", length) == 0)
-		return_value = _readAppend();
-	else if (length == 4 && strncmp(token, "JOIN", length) == 0)
-		return_value = _readJoin();
-	else if (length == 8 && strncmp(token, "NESTLOOP", length) == 0)
-		return_value = _readNestLoop();
-	else if (length == 9 && strncmp(token, "MERGEJOIN", length) == 0)
-		return_value = _readMergeJoin();
-	else if (length == 8 && strncmp(token, "HASHJOIN", length) == 0)
-		return_value = _readHashJoin();
-	else if (length == 4 && strncmp(token, "SCAN", length) == 0)
-		return_value = _readScan();
-	else if (length == 7 && strncmp(token, "SEQSCAN", length) == 0)
-		return_value = _readSeqScan();
-	else if (length == 9 && strncmp(token, "INDEXSCAN", length) == 0)
-		return_value = _readIndexScan();
-	else if (length == 7 && strncmp(token, "TIDSCAN", length) == 0)
-		return_value = _readTidScan();
-	else if (length == 12 && strncmp(token, "SUBQUERYSCAN", length) == 0)
-		return_value = _readSubqueryScan();
-	else if (length == 12 && strncmp(token, "FUNCTIONSCAN", length) == 0)
-		return_value = _readFunctionScan();
-	else if (length == 4 && strncmp(token, "SORT", length) == 0)
-		return_value = _readSort();
-	else if (length == 6 && strncmp(token, "AGGREG", length) == 0)
+#define MATCH(tokname, namelen) \
+	(length == namelen && strncmp(token, tokname, namelen) == 0)
+
+	if (MATCH("AGGREF", 6))
 		return_value = _readAggref();
-	else if (length == 7 && strncmp(token, "SUBLINK", length) == 0)
+	else if (MATCH("SUBLINK", 7))
 		return_value = _readSubLink();
-	else if (length == 11 && strncmp(token, "FIELDSELECT", length) == 0)
+	else if (MATCH("FIELDSELECT", 11))
 		return_value = _readFieldSelect();
-	else if (length == 11 && strncmp(token, "RELABELTYPE", length) == 0)
+	else if (MATCH("RELABELTYPE", 11))
 		return_value = _readRelabelType();
-	else if (length == 11 && strncmp(token, "RANGETBLREF", length) == 0)
+	else if (MATCH("RANGETBLREF", 11))
 		return_value = _readRangeTblRef();
-	else if (length == 8 && strncmp(token, "FROMEXPR", length) == 0)
+	else if (MATCH("FROMEXPR", 8))
 		return_value = _readFromExpr();
-	else if (length == 8 && strncmp(token, "JOINEXPR", length) == 0)
+	else if (MATCH("JOINEXPR", 8))
 		return_value = _readJoinExpr();
-	else if (length == 4 && strncmp(token, "HASH", length) == 0)
-		return_value = _readHash();
-	else if (length == 6 && strncmp(token, "RESDOM", length) == 0)
+	else if (MATCH("RESDOM", 6))
 		return_value = _readResdom();
-	else if (length == 4 && strncmp(token, "EXPR", length) == 0)
+	else if (MATCH("EXPR", 4))
 		return_value = _readExpr();
-	else if (length == 8 && strncmp(token, "ARRAYREF", length) == 0)
+	else if (MATCH("ARRAYREF", 8))
 		return_value = _readArrayRef();
-	else if (length == 3 && strncmp(token, "VAR", length) == 0)
+	else if (MATCH("VAR", 3))
 		return_value = _readVar();
-	else if (length == 5 && strncmp(token, "CONST", length) == 0)
+	else if (MATCH("CONST", 5))
 		return_value = _readConst();
-	else if (length == 4 && strncmp(token, "FUNC", length) == 0)
+	else if (MATCH("FUNC", 4))
 		return_value = _readFunc();
-	else if (length == 4 && strncmp(token, "OPER", length) == 0)
+	else if (MATCH("OPER", 4))
 		return_value = _readOper();
-	else if (length == 5 && strncmp(token, "PARAM", length) == 0)
+	else if (MATCH("PARAM", 5))
 		return_value = _readParam();
-	else if (length == 11 && strncmp(token, "TARGETENTRY", length) == 0)
+	else if (MATCH("TARGETENTRY", 11))
 		return_value = _readTargetEntry();
-	else if (length == 8 && strncmp(token, "RANGEVAR", length) == 0)
+	else if (MATCH("RANGEVAR", 8))
 		return_value = _readRangeVar();
-	else if (length == 9 && strncmp(token, "COLUMNREF", length) == 0)
+	else if (MATCH("COLUMNREF", 9))
 		return_value = _readColumnRef();
-	else if (length == 9 && strncmp(token, "COLUMNDEF", length) == 0)
+	else if (MATCH("COLUMNDEF", 9))
 		return_value = _readColumnDef();
-	else if (length == 8 && strncmp(token, "TYPENAME", length) == 0)
+	else if (MATCH("TYPENAME", 8))
 		return_value = _readTypeName();
-	else if (length == 15 && strncmp(token, "EXPRFIELDSELECT", length) == 0)
+	else if (MATCH("EXPRFIELDSELECT", 15))
 		return_value = _readExprFieldSelect();
-	else if (length == 5 && strncmp(token, "ALIAS", length) == 0)
+	else if (MATCH("ALIAS", 5))
 		return_value = _readAlias();
-	else if (length == 3 && strncmp(token, "RTE", length) == 0)
+	else if (MATCH("RTE", 3))
 		return_value = _readRangeTblEntry();
-	else if (length == 4 && strncmp(token, "PATH", length) == 0)
-		return_value = _readPath();
-	else if (length == 9 && strncmp(token, "INDEXPATH", length) == 0)
-		return_value = _readIndexPath();
-	else if (length == 7 && strncmp(token, "TIDPATH", length) == 0)
-		return_value = _readTidPath();
-	else if (length == 10 && strncmp(token, "APPENDPATH", length) == 0)
-		return_value = _readAppendPath();
-	else if (length == 10 && strncmp(token, "RESULTPATH", length) == 0)
-		return_value = _readResultPath();
-	else if (length == 8 && strncmp(token, "NESTPATH", length) == 0)
-		return_value = _readNestPath();
-	else if (length == 9 && strncmp(token, "MERGEPATH", length) == 0)
-		return_value = _readMergePath();
-	else if (length == 8 && strncmp(token, "HASHPATH", length) == 0)
-		return_value = _readHashPath();
-	else if (length == 11 && strncmp(token, "PATHKEYITEM", length) == 0)
-		return_value = _readPathKeyItem();
-	else if (length == 12 && strncmp(token, "RESTRICTINFO", length) == 0)
-		return_value = _readRestrictInfo();
-	else if (length == 8 && strncmp(token, "JOININFO", length) == 0)
-		return_value = _readJoinInfo();
-	else if (length == 5 && strncmp(token, "QUERY", length) == 0)
+	else if (MATCH("QUERY", 5))
 		return_value = _readQuery();
-	else if (length == 6 && strncmp(token, "NOTIFY", length) == 0)
+	else if (MATCH("NOTIFY", 6))
 		return_value = _readNotifyStmt();
-	else if (length == 10 && strncmp(token, "SORTCLAUSE", length) == 0)
+	else if (MATCH("SORTCLAUSE", 10))
 		return_value = _readSortClause();
-	else if (length == 11 && strncmp(token, "GROUPCLAUSE", length) == 0)
+	else if (MATCH("GROUPCLAUSE", 11))
 		return_value = _readGroupClause();
-	else if (length == 16 && strncmp(token, "SETOPERATIONSTMT", length) == 0)
+	else if (MATCH("SETOPERATIONSTMT", 16))
 		return_value = _readSetOperationStmt();
-	else if (length == 4 && strncmp(token, "CASE", length) == 0)
+	else if (MATCH("CASE", 4))
 		return_value = _readCaseExpr();
-	else if (length == 4 && strncmp(token, "WHEN", length) == 0)
+	else if (MATCH("WHEN", 4))
 		return_value = _readCaseWhen();
-	else if (length == 8 && strncmp(token, "NULLTEST", length) == 0)
+	else if (MATCH("NULLTEST", 8))
 		return_value = _readNullTest();
-	else if (length == 11 && strncmp(token, "BOOLEANTEST", length) == 0)
+	else if (MATCH("BOOLEANTEST", 11))
 		return_value = _readBooleanTest();
-	else if (length == 14 && strncmp(token, "CONSTRAINTTEST", length) == 0)
+	else if (MATCH("CONSTRAINTTEST", 14))
 		return_value = _readConstraintTest();
-	else if (length == 21 && strncmp(token, "DOMAINCONSTRAINTVALUE", length) == 0)
+	else if (MATCH("DOMAINCONSTRAINTVALUE", 21))
 		return_value = _readDomainConstraintValue();
-	else if (length == 19 && strncmp(token, "CONSTRAINTTESTVALUE", length) == 0)
+	else if (MATCH("CONSTRAINTTESTVALUE", 19))
 		return_value = _readConstraintTestValue();
 	else
-		elog(ERROR, "badly formatted planstring \"%.10s\"...", token);
+	{
+		elog(ERROR, "badly formatted node string \"%.32s\"...", token);
+		return_value = NULL;	/* keep compiler quiet */
+	}
 
 	return (Node *) return_value;
 }
 
-/*------------------------------------------------------------*/
 
-/* ----------------
- *		readDatum
+/*
+ * readDatum
  *
  * Given a string representation of a constant, recreate the appropriate
  * Datum.  The string representation embeds length info, but not byValue,
  * so we must be told that.
- * ----------------
  */
 static Datum
 readDatum(bool typbyval)
