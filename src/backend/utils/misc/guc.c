@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.64 2002/04/01 03:34:26 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.65 2002/04/03 05:39:32 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -41,6 +41,7 @@
 #include "utils/builtins.h"
 #include "utils/datetime.h"
 #include "utils/elog.h"
+#include "utils/pg_locale.h"
 #include "pgstat.h"
 
 
@@ -583,6 +584,26 @@ static struct config_string
 	{
 		"krb_server_keyfile", PGC_POSTMASTER, PGC_S_DEFAULT, &pg_krb_server_keyfile,
 		PG_KRB_SRVTAB, NULL, NULL
+	},
+
+	{
+		"lc_messages", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_messages,
+		"", locale_messages_check, locale_messages_assign
+	},
+
+	{
+		"lc_monetary", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_monetary,
+		"", locale_monetary_check, locale_monetary_assign
+	},
+
+	{
+		"lc_numeric", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_numeric,
+		"", locale_numeric_check, locale_numeric_assign
+	},
+
+	{
+		"lc_time", PGC_POSTMASTER, PGC_S_DEFAULT, &locale_time,
+		"", locale_time_check, locale_time_assign
 	},
 
 	{

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.145 2002/03/02 21:39:34 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.146 2002/04/03 05:39:32 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -49,6 +49,26 @@ exit_nicely(){
         echo "Data directory $PGDATA will not be removed at user's request." 1>&2
     fi
     exit 1
+}
+
+pg_getlocale(){
+    arg=$1
+    unset ret
+
+    for var in "PGLC_$arg" PGLOCALE LC_ALL "LC_$arg" LANG; do
+        varset=`eval echo '${'"$var"'+set}'`
+        varval=`eval echo '$'"$var"`
+        if test "$varset" = set; then
+            ret=$varval
+            break
+        fi
+    done
+
+    if test "${ret+set}" != set; then
+        ret=C
+    fi
+
+    echo "$ret"
 }
 
 
@@ -251,11 +271,61 @@ do
         -E*)
                 MULTIBYTE=`echo $1 | sed 's/^-E//'`
                 ;;
+# Locale flags
+        --locale)
+                PGLOCALE="$2"
+                shift;;
+        --locale=*)
+                PGLOCALE=`echo $1 | sed 's/^[^=]*=//'`
+                ;;
+        --no-locale)
+                PGLOCALE=C
+                ;;
+
+        --lc-collate)
+                PGLC_COLLATE=$2
+                shift;;
+        --lc-collate=*)
+                PGLC_COLLATE=`echo $1 | sed 's/^[^=]*=//'`
+                ;;
+        --lc-ctype)
+                PGLC_CTYPE=$2
+                shift;;
+        --lc-ctype=*)
+                PGLC_CTYPE=`echo $1 | sed 's/^[^=]*=//'`
+                ;;
+        --lc-messages)
+                PGLC_MESSAGES=$2
+                shift;;
+        --lc-messages=*)
+                PGLC_MESSAGES=`echo $1 | sed 's/^[^=]*=//'`
+                ;;
+        --lc-monetary)
+                PGLC_MONETARY=$2
+                shift;;
+        --lc-monetary=*)
+                PGLC_MONETARY=`echo $1 | sed 's/^[^=]*=//'`
+                ;;
+        --lc-numeric)
+                PGLC_NUMERIC=$2
+                shift;;
+        --lc-numeric=*)
+                PGLC_NUMERIC=`echo $1 | sed 's/^[^=]*=//'`
+                ;;
+        --lc-time)
+                PGLC_TIME=$2
+                shift;;
+        --lc-time=*)
+                PGLC_TIME=`echo $1 | sed 's/^[^=]*=//'`
+                ;;
+
 	-*)
 		echo "$CMDNAME: invalid option: $1"
 		echo "Try '$CMDNAME --help' for more information."
 		exit 1
 		;;
+
+# Non-option argument specifies data directory
         *)
                 PGDATA=$1
                 ;;
@@ -275,6 +345,13 @@ if [ "$usage" ]; then
     if [ -n "$MULTIBYTE" ] ; then 
         echo "  -E, --encoding ENCODING     Set default encoding for new databases"
     fi
+    echo "  --locale LOCALE             Initialize database cluster with given locale"
+    echo "  --lc-collate, --lc-ctype, --lc-messages LOCALE"
+    echo "  --lc-monetary, --lc-numeric, --lc-time LOCALE"
+    echo "                              Initialize database cluster with given locale"
+    echo "                              in the respective category"
+    echo "                              (default taken from environment)"
+    echo "  --no-locale                 Equivalent to --locale=C"
     echo "  -U, --username NAME         Database superuser name"
     echo "Less commonly used options: "
     echo "  -L DIRECTORY                Where to find the input files"
@@ -469,7 +546,15 @@ echo "$short_version" > "$PGDATA/PG_VERSION" || exit_nicely
 cat "$POSTGRES_BKI" \
 | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
       -e "s/ENCODING/$MULTIBYTEID/g" \
-| "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BACKEND_TALK_ARG template1 \
+| 
+(
+  LC_COLLATE=`pg_getlocale COLLATE`
+  LC_CTYPE=`pg_getlocale CTYPE`
+  export LC_COLLATE
+  export LC_CTYPE
+  unset LC_ALL
+  "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BACKEND_TALK_ARG template1
+) \
 || exit_nicely
 
 # Make the per-database PGVERSION for template1 only after init'ing it
@@ -485,7 +570,19 @@ $ECHO_N "creating configuration files... "$ECHO_C
 
 cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf              || exit_nicely
 cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
-cp "$POSTGRESQL_CONF_SAMPLE" "$PGDATA"/postgresql.conf || exit_nicely
+(
+  cat "$POSTGRESQL_CONF_SAMPLE"
+  echo
+  echo
+  echo "#"
+  echo "#	Locale settings"
+  echo "#"
+  echo "# (initialized by initdb -- may be changed)"
+  for cat in MESSAGES MONETARY NUMERIC TIME; do
+    echo "LC_$cat = '`pg_getlocale $cat`'"
+  done
+) > "$PGDATA"/postgresql.conf || exit_nicely
+
 chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 	"$PGDATA"/postgresql.conf
 

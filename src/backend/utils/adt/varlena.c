@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.81 2002/04/01 03:34:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.82 2002/04/03 05:39:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
+#include "utils/pg_locale.h"
 
 static int	text_cmp(text *arg1, text *arg2);
 
@@ -493,29 +494,36 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 	char	   *a1p,
 			   *a2p;
 
-#ifdef USE_LOCALE
-	a1p = (char *) palloc(len1 + 1);
-	a2p = (char *) palloc(len2 + 1);
+	/*
+	 * Unfortunately, there is no strncoll(), so in the non-C locale
+	 * case we have to do some memory copying.  This turns out to be
+	 * significantly slower, so we optimize the case were LC_COLLATE
+	 * is C.
+	 */
+	if (!lc_collate_is_c())
+	{
+		a1p = (char *) palloc(len1 + 1);
+		a2p = (char *) palloc(len2 + 1);
 
-	memcpy(a1p, arg1, len1);
-	*(a1p + len1) = '\0';
-	memcpy(a2p, arg2, len2);
-	*(a2p + len2) = '\0';
+		memcpy(a1p, arg1, len1);
+		*(a1p + len1) = '\0';
+		memcpy(a2p, arg2, len2);
+		*(a2p + len2) = '\0';
 
-	result = strcoll(a1p, a2p);
+		result = strcoll(a1p, a2p);
 
-	pfree(a1p);
-	pfree(a2p);
+		pfree(a1p);
+		pfree(a2p);
+	}
+	else
+	{
+		a1p = arg1;
+		a2p = arg2;
 
-#else
-
-	a1p = arg1;
-	a2p = arg2;
-
-	result = strncmp(a1p, a2p, Min(len1, len2));
-	if ((result == 0) && (len1 != len2))
-		result = (len1 < len2) ? -1 : 1;
-#endif
+		result = strncmp(a1p, a2p, Min(len1, len2));
+		if ((result == 0) && (len1 != len2))
+			result = (len1 < len2) ? -1 : 1;
+	}
 
 	return result;
 }

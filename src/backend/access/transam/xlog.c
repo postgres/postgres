@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.90 2002/03/15 19:20:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.91 2002/04/03 05:39:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <dirent.h>
-#ifdef USE_LOCALE
 #include <locale.h>
-#endif
 
 #include "access/clog.h"
 #include "access/transam.h"
@@ -2081,10 +2079,7 @@ WriteControlFile(void)
 {
 	int			fd;
 	char		buffer[BLCKSZ]; /* need not be aligned */
-
-#ifdef USE_LOCALE
 	char	   *localeptr;
-#endif
 
 	/*
 	 * Initialize version and compatibility-check fields
@@ -2093,7 +2088,6 @@ WriteControlFile(void)
 	ControlFile->catalog_version_no = CATALOG_VERSION_NO;
 	ControlFile->blcksz = BLCKSZ;
 	ControlFile->relseg_size = RELSEG_SIZE;
-#ifdef USE_LOCALE
 	localeptr = setlocale(LC_COLLATE, NULL);
 	if (!localeptr)
 		elog(PANIC, "invalid LC_COLLATE setting");
@@ -2115,10 +2109,6 @@ WriteControlFile(void)
 		  "\n\tsuch queries, you may wish to set LC_COLLATE to \"C\" and"
 			 "\n\tre-initdb.  For more information see the Administrator's Guide.",
 			 ControlFile->lc_collate);
-#else							/* not USE_LOCALE */
-	strcpy(ControlFile->lc_collate, "C");
-	strcpy(ControlFile->lc_ctype, "C");
-#endif   /* not USE_LOCALE */
 
 	/* Contents are protected with a CRC */
 	INIT_CRC64(ControlFile->crc);
@@ -2232,7 +2222,6 @@ ReadControlFile(void)
 			 "\tbut the backend was compiled with RELSEG_SIZE %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->relseg_size, RELSEG_SIZE);
-#ifdef USE_LOCALE
 	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
 		elog(PANIC,
 		   "The database cluster was initialized with LC_COLLATE '%s',\n"
@@ -2245,15 +2234,6 @@ ReadControlFile(void)
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_ctype);
-#else							/* not USE_LOCALE */
-	if (strcmp(ControlFile->lc_collate, "C") != 0 ||
-		strcmp(ControlFile->lc_ctype, "C") != 0)
-		elog(PANIC,
-		"The database cluster was initialized with LC_COLLATE '%s' and\n"
-			 "\tLC_CTYPE '%s', but the server was compiled without locale support.\n"
-			 "\tIt looks like you need to initdb or recompile.",
-			 ControlFile->lc_collate, ControlFile->lc_ctype);
-#endif   /* not USE_LOCALE */
 }
 
 void

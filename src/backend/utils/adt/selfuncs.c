@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.106 2002/03/08 04:29:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.107 2002/04/03 05:39:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,9 +70,7 @@
 
 #include <ctype.h>
 #include <math.h>
-#ifdef USE_LOCALE
 #include <locale.h>
-#endif
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -95,6 +93,7 @@
 #include "utils/datum.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
+#include "utils/pg_locale.h"
 #include "utils/selfuncs.h"
 #include "utils/syscache.h"
 
@@ -2240,19 +2239,16 @@ convert_one_string_to_scalar(unsigned char *value, int rangelo, int rangehi)
 /*
  * Convert a string-type Datum into a palloc'd, null-terminated string.
  *
- * If USE_LOCALE is defined, we must pass the string through strxfrm()
+ * When using a non-C locale, we must pass the string through strxfrm()
  * before continuing, so as to generate correct locale-specific results.
  */
 static unsigned char *
 convert_string_datum(Datum value, Oid typid)
 {
 	char	   *val;
-
-#ifdef USE_LOCALE
 	char	   *xfrmstr;
 	size_t		xfrmsize;
 	size_t		xfrmlen;
-#endif
 
 	switch (typid)
 	{
@@ -2290,21 +2286,22 @@ convert_string_datum(Datum value, Oid typid)
 			return NULL;
 	}
 
-#ifdef USE_LOCALE
-	/* Guess that transformed string is not much bigger than original */
-	xfrmsize = strlen(val) + 32;	/* arbitrary pad value here... */
-	xfrmstr = (char *) palloc(xfrmsize);
-	xfrmlen = strxfrm(xfrmstr, val, xfrmsize);
-	if (xfrmlen >= xfrmsize)
+	if (!lc_collate_is_c())
 	{
-		/* Oops, didn't make it */
-		pfree(xfrmstr);
-		xfrmstr = (char *) palloc(xfrmlen + 1);
-		xfrmlen = strxfrm(xfrmstr, val, xfrmlen + 1);
+		/* Guess that transformed string is not much bigger than original */
+		xfrmsize = strlen(val) + 32;	/* arbitrary pad value here... */
+		xfrmstr = (char *) palloc(xfrmsize);
+		xfrmlen = strxfrm(xfrmstr, val, xfrmsize);
+		if (xfrmlen >= xfrmsize)
+		{
+			/* Oops, didn't make it */
+			pfree(xfrmstr);
+			xfrmstr = (char *) palloc(xfrmlen + 1);
+			xfrmlen = strxfrm(xfrmstr, val, xfrmlen + 1);
+		}
+		pfree(val);
+		val = xfrmstr;
 	}
-	pfree(val);
-	val = xfrmstr;
-#endif
 
 	return (unsigned char *) val;
 }
@@ -3147,44 +3144,28 @@ pattern_selectivity(char *patt, Pattern_Type ptype)
 	return result;
 }
 
+
 /*
- * Test whether the database's LOCALE setting is safe for LIKE/regexp index
- * optimization.  The key requirement here is that given a prefix string,
- * say "foo", we must be able to generate another string "fop" that is
- * greater than all strings "foobar" starting with "foo".  Unfortunately,
- * many non-C locales have bizarre collation rules in which "fop" > "foo"
- * is not sufficient to ensure "fop" > "foobar".  Until we can come up
- * with a more bulletproof way of generating the upper-bound string,
- * disable the optimization in locales where it is not known to be safe.
+ * We want test whether the database's LC_COLLATE setting is safe for
+ * LIKE/regexp index optimization.
+ *
+ * The key requirement here is that given a prefix string, say "foo",
+ * we must be able to generate another string "fop" that is greater
+ * than all strings "foobar" starting with "foo".  Unfortunately, a
+ * non-C locale may have arbitrary collation rules in which "fop" >
+ * "foo" is not sufficient to ensure "fop" > "foobar".  Until we can
+ * come up with a more bulletproof way of generating the upper-bound
+ * string, the optimization is disabled in all non-C locales.
+ *
+ * (In theory, locales other than C may be LIKE-safe so this function
+ * could be different from lc_collate_is_c(), but in a different
+ * theory, non-C locales are completely unpredicable so it's unlikely
+ * to happen.)
  */
 bool
 locale_is_like_safe(void)
 {
-#ifdef USE_LOCALE
-	/* Cache result so we only have to compute it once */
-	static int	result = -1;
-	char	   *localeptr;
-
-	if (result >= 0)
-		return (bool) result;
-	localeptr = setlocale(LC_COLLATE, NULL);
-	if (!localeptr)
-		elog(PANIC, "Invalid LC_COLLATE setting");
-
-	/*
-	 * Currently we accept only "C" and "POSIX" (do any systems still
-	 * return "POSIX"?).  Which other locales allow safe optimization?
-	 */
-	if (strcmp(localeptr, "C") == 0)
-		result = true;
-	else if (strcmp(localeptr, "POSIX") == 0)
-		result = true;
-	else
-		result = false;
-	return (bool) result;
-#else							/* not USE_LOCALE */
-	return true;				/* We must be in C locale, which is OK */
-#endif   /* USE_LOCALE */
+	return lc_collate_is_c();
 }
 
 /*

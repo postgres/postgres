@@ -1,56 +1,42 @@
-/* -----------------------------------------------------------------------
- * pg_locale.h
+/*-----------------------------------------------------------------------
  *
- *	 The PostgreSQL locale utils.
+ * PostgreSQL locale utilities
  *
+ * $Header: /cvsroot/pgsql/src/include/utils/pg_locale.h,v 1.12 2002/04/03 05:39:33 petere Exp $
  *
- * $Id: pg_locale.h,v 1.11 2001/11/05 17:46:36 momjian Exp $
+ * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
- *
- *	Karel Zak - Zakkr
- *
- * -----------------------------------------------------------------------
+ *-----------------------------------------------------------------------
  */
 
 #ifndef _PG_LOCALE_
 #define _PG_LOCALE_
 
-#ifdef USE_LOCALE
+#include "postgres.h"
+#include <locale.h>
 
-/*------
- * POSIX locale categories and environment variable LANG
- *------
- */
-typedef struct PG_LocaleCategories
-{
-	char	   *lang,
-			   *lc_ctype,
-			   *lc_numeric,
-			   *lc_time,
-			   *lc_collate,
-			   *lc_monetary,
-			   *lc_messages;
-} PG_LocaleCategories;
+extern char * locale_messages;
+extern char * locale_monetary;
+extern char * locale_numeric;
+extern char * locale_time;
+
+bool locale_messages_check(const char *proposed);
+bool locale_monetary_check(const char *proposed);
+bool locale_numeric_check(const char *proposed);
+bool locale_time_check(const char *proposed);
+
+void locale_messages_assign(const char *value);
+void locale_monetary_assign(const char *value);
+void locale_numeric_assign(const char *value);
+void locale_time_assign(const char *value);
+
+bool chklocale(int category, const char *proposed);
+bool lc_collate_is_c(void);
 
 /*
- * Save locale category settings into PG memory
- */
-extern void PGLC_current(PG_LocaleCategories *lc);
-
-/*
- * Free memory allocated in PGLC_current()
- */
-extern void PGLC_free_categories(PG_LocaleCategories *lc);
-
-/*------
- * Return the POSIX lconv struct (contains number/money formatting information)
- * with locale information for all categories.	Note that returned lconv
- * does not depend on currently active category settings, but on external
- * environment variables for locale.
- *------
+ * Return the POSIX lconv struct (contains number/money formatting
+ * information) with locale information for all categories.
  */
 extern struct lconv *PGLC_localeconv(void);
-#endif   /* USE_LOCALE */
 
 #endif   /* _PG_LOCALE_ */

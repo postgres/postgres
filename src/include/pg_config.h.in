@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.19 2002/03/29 17:32:55 petere Exp $
+ * $Id: pg_config.h.in,v 1.20 2002/04/03 05:39:33 petere Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -32,9 +32,6 @@
 #undef PG_VERSION
 /* A canonical string containing the version number, platform, and C compiler */
 #undef PG_VERSION_STR
-
-/* Set to 1 if you want LOCALE support (--enable-locale) */
-#undef USE_LOCALE
 
 /* Set to 1 if you want cyrillic recode (--enable-recode) */
 #undef CYR_RECODE

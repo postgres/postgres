@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.74 2002/01/20 05:45:18 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.75 2002/04/03 05:39:28 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -527,17 +527,6 @@ su - postgres
         </para>
         <para>
          Example: <literal>--with-libraries=/opt/gnu/lib:/usr/sup/lib</>.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry>
-       <term><option>--enable-locale</option></term>
-       <listitem>
-        <para>
-         Enables locale support. There is a performance penalty
-         associated with locale support, but if you are not in an
-         English-speaking environment you will most likely need this.
         </para>
        </listitem>
       </varlistentry>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.23 2002/03/22 19:20:05 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.24 2002/04/03 05:39:27 petere Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -63,35 +63,24 @@
   <sect2>
    <title>Overview</>
 
-  <para>
-    Locale support is not built into <productname>PostgreSQL</> by
-    default; to enable it, supply the <option>--enable-locale</> option
-    to the <filename>configure</> script:
-<informalexample>
+   <para>
+    Locale support is automatically initialized when a database
+    cluster is created using <command>initdb</command>.
+    <command>initdb</command> will initialize the database cluster
+    with the locale setting of its execution environment; so if your
+    system is already set to use the locale that you want in your
+    database cluster then there is nothing else you need to do.  If
+    you want to use a different locale (or you are not sure which
+    locale your system is set to), you can tell
+    <command>initdb</command> exactly which locale you want with the
+    option <option>--locale</option>.  For example:
 <screen>
-<prompt>$ </><userinput>./configure --enable-locale</>
+<prompt>$ </><userinput>initdb --locale=sv_SE</>
 </screen>
-</informalexample>
-    Locale support only affects the server; all clients are compatible
-    with servers with or without locale support.
    </para>
 
    <para>
-    To enable messages translated to the user's preferred language,
-    the <option>--enable-nls</option> option must be used.  This
-    option is independent of the other locale support.
-   </para>
-
-   <para>
-    The information about which particular cultural rules to use is
-    determined by standard environment variables.  If you are getting
-    localized behavior from other programs you probably have them set
-    up already.  The simplest way to set the localization information
-    is the <envar>LANG</> variable, for example:
-<programlisting>
-export LANG=sv_SE
-</programlisting>
-    This sets the locale to Swedish (<literal>sv</>) as spoken in
+    This example sets the locale to Swedish (<literal>sv</>) as spoken in
     Sweden (<literal>SE</>).  Other possibilities might be
     <literal>en_US</> (U.S. English) and <literal>fr_CA</> (Canada,
     French).  If more than one character set can be useful for a locale
@@ -103,9 +92,9 @@ export LANG=sv_SE
 
    <para>
     Occasionally it is useful to mix rules from several locales, e.g.,
-    use U.S. collation rules but Spanish messages.  To do that a set of
-    environment variables exist that override the default of
-    <envar>LANG</> for a particular category:
+    use U.S. collation rules but Spanish messages.  To support that, a
+    set of locale subcategories exist that control only a certain
+    aspect of the localization rules.
 
     <informaltable>
      <tgroup cols="2">
@@ -138,12 +127,64 @@ export LANG=sv_SE
      </tgroup>
     </informaltable>
 
-    Additionally, all of these specific variables and the
-    <envar>LANG</> variable can be overridden with the
-    <envar>LC_ALL</> environment variable.
+    The category names translate into names of
+    <command>initdb</command> options to override the locale choice
+    for a specific category.  For instance, to set the locale to
+    French Canadian, but use U.S. rules for formatting currency, use
+    <literal>initdb --locale=fr_CA --lc-monetary=en_US</literal>.
+   </para>
+
+   <para>
+    If you want the system to behave as if it had no locale support,
+    use the special locale <literal>C</> or <literal>POSIX</>.
+   </para>
+
+   <para>
+    The nature of some locale categories is that their value has to be
+    fixed for the lifetime of a database cluster.  That is, once
+    <command>initdb</command> has run, you cannot change them anymore.
+    <literal>LC_COLLATE</literal> and <literal>LC_CTYPE</literal> are
+    those categories.  They affect the sort order of indexes, so they
+    must be kept fixed, or indexes on text columns will become corrupt.
+    <productname>PostgreSQL</productname> enforces this by recording
+    the values of <envar>LC_COLLATE</> and <envar>LC_CTYPE</> that are
+    seen by <command>initdb</>.  The server automatically adopts
+    those two values when it is started.
+   </para>
+
+   <para>
+    The other locale categories can be changed as desired whenever the
+    server is started by setting the run-time configuration variables
+    that have the same name as the locale categories (see <xref
+    linkend="runtime-config"> for details).  The defaults that are
+    chosen by <command>initdb</command> are actually only written into
+    the configuration file <filename>postgresql.conf</filename> to
+    serve as defaults when the server is started.  If you delete the
+    assignments from <filename>postgresql.conf</filename> then the
+    server will inherit the settings from the execution environment.
+   </para>
+
+   <para>
+    Note that the locale behavior of the server is determined by the
+    environment variables seen by the server, not by the environment
+    of any client.  Therefore, be careful to configure the correct locale settings
+    before starting the server.  A consequence of this is that if
+    client and server are set up to different locales, messages may
+    appear in different languages depending on where they originated.
    </para>
 
    <note>
+    <para>
+     When we speak of inheriting the locale from the execution
+     environment, this means the following on most operating systems:
+     For a given locale category, say the collation, the following
+     environment variables are consulted in this order until one is
+     found to be set: <envar>LC_ALL</envar>, <envar>LC_COLLATE</envar>
+     (the variable corresponding to the respective category),
+     <envar>LANG</envar>.  If none of these environment variables are
+     set then the locale defaults to <literal>C</literal>.
+    </para>
+
     <para>
      Some message localization libraries also look at the environment
      variable <envar>LANGUAGE</envar> which overrides all other locale
@@ -156,31 +197,9 @@ export LANG=sv_SE
    </note>
 
    <para>
-    If you want the system to behave as if it had no locale support,
-    use the special locale <literal>C</> or <literal>POSIX</>, or
-    simply unset all locale-related variables.
-   </para>
-
-   <para>
-    Note that the locale behavior of the server is determined by the
-    environment variables seen by the server, not by the environment
-    of any client.  Therefore, be careful to set these variables
-    before starting the server.  A consequence of this is that if
-    client and server are set up to different locales, messages may
-    appear in different languages depending on where they originated.
-   </para>
-
-   <para>
-    The <envar>LC_COLLATE</> and <envar>LC_CTYPE</> variables affect the
-    sort order of indexes.  Therefore, these values must be kept fixed
-    for any particular database cluster, or indexes on text columns will
-    become corrupt.  <productname>PostgreSQL</productname> enforces this
-    by recording the values of <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
-    that are seen by <application>initdb</>.  The server automatically adopts
-    those two values when it is started; only the other <envar>LC_</>
-    categories can be set from the environment at server start-up.
-    In short, only one collation order can be used in a database cluster,
-    and it is chosen at <application>initdb</> time.
+    To enable messages translated to the user's preferred language,
+    the <option>--enable-nls</option> option must be used.  This
+    option is independent of the other locale support.
    </para>
   </sect2>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.19 2001/12/08 03:24:37 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.20 2002/04/03 05:39:29 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -38,6 +38,13 @@ PostgreSQL documentation
      <arg>-E </arg>
      <replaceable>encoding</replaceable>
     </group>
+    <arg>--locale <replaceable>locale</replaceable></arg>
+    <arg>--lc-collate <replaceable>locale</replaceable></arg>
+    <arg>--lc-ctype <replaceable>locale</replaceable></arg>
+    <arg>--lc-messages <replaceable>locale</replaceable></arg>
+    <arg>--lc-monetary <replaceable>locale</replaceable></arg>
+    <arg>--lc-numeric <replaceable>locale</replaceable></arg>
+    <arg>--lc-time <replaceable>locale</replaceable></arg>
     <arg>-L <replaceable>directory</replaceable></arg>
     <group><arg>--noclean</arg><arg>-n</arg></group>
     <group><arg>--debug</arg><arg>-d</arg></group>
@@ -64,6 +71,25 @@ PostgreSQL documentation
    <literal>template1</literal> database is copied.
    It contains catalog tables filled in for things like the
    built-in types.
+  </para>
+
+  <para>
+   <command>initdb</command> initializes the database cluster's
+   default locale and character set encoding.  Some locale categories
+   are fixed for the lifetime of the cluster, so it is important to
+   make the right choice when running <command>initdb</command>.
+   Other locale categories can be changed later when the server is
+   started.  <command>initdb</command> will write those locale
+   settings into the <filename>postgresql.conf</filename>
+   configuration file so they are the default, but they can be changed
+   by editing that file.  To set the locale that
+   <command>initdb</command> uses, see the description of the
+   <option>--locale</option> option.  The character set encoding can
+   be set separately for each database as it is created.
+   <command>initdb</command> determines the encoding for the
+   <literal>template1</literal> database, which will serve as the
+   default for all other databases.  To alter the default encoding use
+   the <option>--encoding</option> option.
   </para>
 
   <para>
@@ -150,6 +176,32 @@ PostgreSQL documentation
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term>--locale=<replaceable>locale</replaceable></term>
+      <listitem>
+       <para>
+        Sets the default locale for the database cluster.  If this
+        option is not specified, the locale is inherited from the
+        environment that <command>initdb</command> runs in.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--lc-collate=<replaceable>locale</replaceable></term>
+      <term>--lc-ctype=<replaceable>locale</replaceable></term>
+      <term>--lc-messages=<replaceable>locale</replaceable></term>
+      <term>--lc-monetary=<replaceable>locale</replaceable></term>
+      <term>--lc-numeric=<replaceable>locale</replaceable></term>
+      <term>--lc-time=<replaceable>locale</replaceable></term>
+
+      <listitem>
+       <para>
+        Like <option>--locale</option>, but only sets the locale in
+        the specified category.
+       </para>
+      </listitem>
+     </varlistentry>
    </variablelist>
    </para>
 

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.51 2002/03/06 06:10:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.52 2002/04/03 05:39:29 petere Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -72,9 +72,7 @@
 #include <ctype.h>
 #include <sys/time.h>
 #include <unistd.h>
-#ifdef USE_LOCALE
 #include <locale.h>
-#endif
 #include <math.h>
 #include <float.h>
 
@@ -3380,9 +3378,6 @@ int_to_roman(int number)
 static void
 NUM_prepare_locale(NUMProc *Np)
 {
-
-#ifdef USE_LOCALE
-
 	if (Np->Num->need_locale)
 	{
 
@@ -3436,8 +3431,6 @@ NUM_prepare_locale(NUMProc *Np)
 	}
 	else
 	{
-#endif
-
 		/*
 		 * Default values
 		 */
@@ -3446,10 +3439,7 @@ NUM_prepare_locale(NUMProc *Np)
 		Np->decimal = ".";
 		Np->L_thousands_sep = ",";
 		Np->L_currency_symbol = " ";
-
-#ifdef USE_LOCALE
 	}
-#endif
 }
 
 /* ----------

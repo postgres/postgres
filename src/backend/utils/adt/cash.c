@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.52 2002/02/19 22:19:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.53 2002/04/03 05:39:29 petere Exp $
  */
 
 #include "postgres.h"
@@ -17,9 +17,7 @@
 #include <limits.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef USE_LOCALE
 #include <locale.h>
-#endif
 
 #include "miscadmin.h"
 #include "utils/builtins.h"
@@ -83,11 +81,7 @@ cash_in(PG_FUNCTION_ARGS)
 				psymbol,
 			   *nsymbol;
 
-#ifdef USE_LOCALE
 	struct lconv *lconvert = PGLC_localeconv();
-#endif
-
-#ifdef USE_LOCALE
 
 	/*
 	 * frac_digits will be CHAR_MAX in some locales, notably C.  However,
@@ -108,14 +102,6 @@ cash_in(PG_FUNCTION_ARGS)
 	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
 	psymbol = ((*lconvert->positive_sign != '\0') ? *lconvert->positive_sign : '+');
 	nsymbol = ((*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-");
-#else
-	fpoint = 2;
-	dsymbol = '.';
-	ssymbol = ',';
-	csymbol = "$";
-	psymbol = '+';
-	nsymbol = "-";
-#endif
 
 #ifdef CASHDEBUG
 	printf("cashin- precision '%d'; decimal '%c'; thousands '%c'; currency '%s'; positive '%c'; negative '%s'\n",
@@ -241,11 +227,8 @@ cash_out(PG_FUNCTION_ARGS)
 			   *nsymbol;
 	char		convention;
 
-#ifdef USE_LOCALE
 	struct lconv *lconvert = PGLC_localeconv();
-#endif
 
-#ifdef USE_LOCALE
 	/* see comments about frac_digits in cash_in() */
 	points = lconvert->frac_digits;
 	if (points < 0 || points > 10)
@@ -264,15 +247,6 @@ cash_out(PG_FUNCTION_ARGS)
 	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
 	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
 	nsymbol = ((*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-");
-#else
-	points = 2;
-	mon_group = 3;
-	comma = ',';
-	convention = 0;
-	dsymbol = '.';
-	csymbol = "$";
-	nsymbol = "-";
-#endif
 
 	point_pos = LAST_DIGIT - points;
 

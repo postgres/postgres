@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.111 2002/04/01 03:34:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.112 2002/04/03 05:39:29 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -135,8 +135,14 @@ postgres$ <userinput>initdb -D /usr/local/pgsql/data</userinput>
   </para>
 
   <para>
+   <indexterm><primary>locale</></>
    <indexterm><primary>LC_COLLATE</></>
-   One surprise you might encounter while running
+   <command>initdb</command> also initializes the default locale for
+   the database cluster.  Normally, it will just take the locale
+   settings in the environment and apply them to the initialized
+   database.  It is possible to specify a different locale for the
+   database; more information about that can be found in <xref
+   linkend="locale">.  One surprise you might encounter while running
    <command>initdb</command> is a notice similar to this:
 <screen>
 WARNING:  Initializing database with en_US collation order.
@@ -145,18 +151,17 @@ WARNING:  Initializing database with en_US collation order.
         such queries, you may wish to set LC_COLLATE to "C" and
         re-initdb.  For more information see the Administrator's Guide.
 </screen>
-   This is intended to warn you that the currently selected locale will
-   cause indexes to be sorted in an order that prevents them from being
-   used for LIKE and regular-expression searches. If you need good
-   performance in such searches, you should set your current locale to
-   <literal>C</> and re-run <command>initdb</command>. On most systems,
-   setting the current locale is done by changing the value of the
-   environment variable <literal>LC_ALL</literal> or
-   <literal>LANG</literal>. The sort order used within a particular
-   database cluster is set by <command>initdb</command> and cannot be
-   changed later, short of dumping all data, rerunning
-   <command>initdb</command>, and reloading the data. So it's important
-   to make this choice correctly the first time.
+   This is intended to warn you that the currently selected locale
+   will cause indexes to be sorted in an order that prevents them from
+   being used for LIKE and regular-expression searches. If you need
+   good performance in such searches, you should set your current
+   locale to <literal>C</> and re-run <command>initdb</command>, e.g.,
+   by running <literal>initdb --lc-collate=C</literal>. The sort
+   order used within a particular database cluster is set by
+   <command>initdb</command> and cannot be changed later, short of
+   dumping all data, rerunning <command>initdb</command>, and
+   reloading the data. So it's important to make this choice correctly
+   the first time.
   </para>
  </sect1>
 
@@ -1312,6 +1317,71 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Sets the location of the Kerberos server key file. See
         <xref linkend="kerberos-auth"> for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LC_MESSAGES</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Sets the language in which messages are displayed.  Acceptable
+        values are system-dependent; see <xref linkend="locale"> for
+        more information.  If this variable is set to the empty string
+        (which is the default) then the value is inherited from the
+        execution environment of the server in a system-dependent way.
+       </para>
+
+       <para>
+        On some systems, this locale category does not exist.  Setting
+        this variable will still work, but there will be no effect.
+        Also, there is a chance that no translated messages for the
+        desired language exist.  In that case you will continue to see
+        the English messages.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LC_MONETARY</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Sets the locale to use for formatting monetary amounts.
+        Acceptable values are system-dependent; see <xref
+        linkend="locale"> for more information.  If this variable is
+        set to the empty string (which is the default) then the value
+        is inherited from the execution environment of the server in a
+        system-dependent way.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LC_NUMERIC</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Sets the locale to use for formatting numbers, for example
+        with the <function>to_char()</function> family of
+        functions. Acceptable values are system-dependent; see <xref
+        linkend="locale"> for more information.  If this variable is
+        set to the empty string (which is the default) then the value
+        is inherited from the execution environment of the server in a
+        system-dependent way.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>LC_TIME</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Sets the locale to use for formatting date and time values,
+        for example with the <function>to_char()</function> family of
+        functions. Acceptable values are system-dependent; see <xref
+        linkend="locale"> for more information.  If this variable is
+        set to the empty string (which is the default) then the value
+        is inherited from the execution environment of the server in a
+        system-dependent way.
        </para>
       </listitem>
      </varlistentry>

@@ -845,7 +845,6 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-locale         enable locale support
   --enable-recode         enable character set recode support
   --enable-multibyte      enable multibyte character support
   --enable-nls[=LANGUAGES]  enable Native Language Support
@@ -1568,44 +1567,6 @@ echo "$as_me: error: argument required for --with-libs option" >&2;}
 
 fi;
 
-
-
-#
-# Locale (--enable-locale)
-#
-echo "$as_me:$LINENO: checking whether to build with locale support" >&5
-echo $ECHO_N "checking whether to build with locale support... $ECHO_C" >&6
-
-
-# Check whether --enable-locale or --disable-locale was given.
-if test "${enable_locale+set}" = set; then
-  enableval="$enable_locale"
-
-  case $enableval in
-    yes)
-
-cat >>confdefs.h <<\_ACEOF
-#define USE_LOCALE 1
-_ACEOF
-
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --enable-locale option" >&5
-echo "$as_me: error: no argument expected for --enable-locale option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  enable_locale=no
-
-fi;
-
-echo "$as_me:$LINENO: result: $enable_locale" >&5
-echo "${ECHO_T}$enable_locale" >&6
 
 
 #

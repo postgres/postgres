@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.174 2002/04/01 01:11:00 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.175 2002/04/03 05:39:27 petere Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -138,16 +138,6 @@ PGAC_ARG_REQ(with, libraries, [  --with-libraries=DIRS   look for additional lib
 
 PGAC_ARG_REQ(with, libs,      [  --with-libs=DIRS        alternative spelling of --with-libraries],
              [LIBRARY_DIRS=$withval])
-
-
-#
-# Locale (--enable-locale)
-#
-AC_MSG_CHECKING([whether to build with locale support])
-PGAC_ARG_BOOL(enable, locale, no, [  --enable-locale         enable locale support],
-              [AC_DEFINE([USE_LOCALE], 1,
-                         [Set to 1 if you want LOCALE support (--enable-locale)])])
-AC_MSG_RESULT([$enable_locale])
 
 
 #

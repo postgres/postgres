@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.86 2002/03/22 19:20:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.87 2002/04/03 05:39:27 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -724,11 +724,9 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </note>
 
    <para>
-    The <type>money</type> type stores U.S.-style currency with fixed
-    decimal point representation.  If
-    <productname>PostgreSQL</productname> is compiled with locale
-    support then the <type>money</type> type uses locale-specific
-    output formatting.
+    The <type>money</type> type stores a currency amount with fixed
+    decimal point representation.  The output format is
+    locale-specific.
    </para>
 
    <para>

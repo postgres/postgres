@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.49 2001/11/05 17:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.50 2002/04/03 05:39:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,7 @@
 
 #include <pwd.h>
 #include <unistd.h>
-#if defined(USE_LOCALE) || defined(ENABLE_NLS)
 #include <locale.h>
-#endif
 
 #if defined(__alpha) && defined(__osf__)
 #include <sys/sysinfo.h>
@@ -122,11 +120,25 @@ main(int argc, char *argv[])
 		new_argv[i] = strdup(argv[i]);
 	new_argv[argc] = NULL;
 
-	/* Initialize NLS settings so we can give localized error messages */
-#ifdef ENABLE_NLS
+	/*
+	 * Set up locale information from environment.  Note that CTYPE
+	 * and COLLATE will be overridden later from pg_control if we are
+	 * in an already-initialized database.  We set them here so that
+	 * they will be available to fill pg_control during initdb.  The
+	 * other ones will get reset later in ResetAllOptions, but we set
+	 * them here to get already localized behavior during startup
+	 * (e.g., error messages).
+	 */
+	setlocale(LC_COLLATE, "");
+	setlocale(LC_CTYPE, "");
 #ifdef LC_MESSAGES
 	setlocale(LC_MESSAGES, "");
 #endif
+	setlocale(LC_MONETARY, "");
+	setlocale(LC_NUMERIC, "");
+	setlocale(LC_TIME, "");
+
+#ifdef ENABLE_NLS
 	bindtextdomain("postgres", LOCALEDIR);
 	textdomain("postgres");
 #endif
@@ -177,20 +189,6 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
-
-	/*
-	 * Set up locale information from environment, in only the categories
-	 * needed by Postgres; leave other categories set to default "C".
-	 * (Note that CTYPE and COLLATE will be overridden later from
-	 * pg_control if we are in an already-initialized database.  We set
-	 * them here so that they will be available to fill pg_control during
-	 * initdb.)
-	 */
-#ifdef USE_LOCALE
-	setlocale(LC_CTYPE, "");
-	setlocale(LC_COLLATE, "");
-	setlocale(LC_MONETARY, "");
-#endif
 
 	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, or
