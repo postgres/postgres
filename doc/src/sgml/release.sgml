@@ -276,6 +276,10 @@ DEFAULT now supports mixed-case identifiers(Tom)
 Fix for multi-segment uses of DROP/RENAME table, indexes(Ole Gjerde)
 Disable use of pg_dump with both -o and -d options(Bruce)
 Allow pg_dump to properly dump GROUP permissions(Bruce)
+Fix GROUP BY in INSERT INTO table SELECT * FROM table2(Jan)
+Fix for computations in views(Jan)
+Fix for aggregates on array indexes(Tom)
+Fix for DEFAULT handles single quotes in value requiring too many quotes
 
 Enhancements
 ------------
@@ -356,6 +360,8 @@ backend cache, memory speedups(Tom)
 have pg_dump do everything in one snapshot transaction(Vadim)
 fix for large object memory leakage, fix for pg_dumping(Tom)
 INET type now respects netmask for comparisons
+Make VACUUM ANALYZE only use a readlock(Vadim)
+Allow VIEWs on UNIONS(Jan)
 
 Source Tree Changes
 -------------------

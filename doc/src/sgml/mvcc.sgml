@@ -215,8 +215,7 @@
 
    <para>
     <firstterm>Serializable</firstterm> provides the highest transaction isolation.
-    When a
-    transaction is on the serializable level,
+    When a transaction is on the serializable level,
     a query sees only data
     committed before the transaction began and never see either dirty data
     or concurrent transaction changes committed during transaction
