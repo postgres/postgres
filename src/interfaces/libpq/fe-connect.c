@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.281 2004/08/18 02:59:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.282 2004/08/19 00:00:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3093,7 +3093,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 {
 	FILE	   *fp;
 	char	   *pgpassfile;
-	char	   home[MAXPGPATH];
+	char	   *home;
 	struct stat stat_buf;
 
 #define LINELEN NAMEDATALEN*5
@@ -3111,10 +3111,13 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	if (port == NULL)
 		port = DEF_PGPORT_STR;
 
-	/* Look for it in the home dir */
-	if (!get_home_path(home))
+	/*
+	 *	Look for it in the home dir.
+	 *	We don't use get_home_path() so we don't pull path.c into our library.
+	 */
+	if (!(home = getenv(HOMEDIR)))
 		return NULL;
-
+	
 	pgpassfile = malloc(strlen(home) + 1 + strlen(PGPASSFILE) + 1);
 	if (!pgpassfile)
 	{
@@ -3122,7 +3125,11 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 		return NULL;
 	}
 
+#ifndef WIN32
 	sprintf(pgpassfile, "%s/%s", home, PGPASSFILE);
+#else
+	sprintf(pgpassfile, "%s\\%s", home, PGPASSFILE);
+#endif
 
 	/* If password file cannot be opened, ignore it. */
 	if (stat(pgpassfile, &stat_buf) == -1)
