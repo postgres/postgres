@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.16 2001/07/12 17:42:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.17 2001/08/02 21:31:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -502,6 +502,12 @@ typedef struct
 	int			found_varno;
 	int			ndatums;
 	PLpgSQL_datum **datums;
+
+	/* temporary state for results from evaluation of query or expr */
+	SPITupleTable *eval_tuptable;
+	uint32		eval_processed;
+	Oid			eval_lastoid;
+	ExprContext *eval_econtext;
 }			PLpgSQL_execstate;
 
 
