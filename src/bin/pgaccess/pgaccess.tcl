@@ -728,6 +728,12 @@ if {$fdvar(oper)=="move"} {
 if {$fdvar(oper)!="draw"} return
 set fdvar(oper) none
 .fd.c delete curdraw
+# Check for x2<x1 or y2<y1
+if {$x<$fdvar(xstart)} {set temp $x ; set x $fdvar(xstart) ; set fdvar(xstart) $temp}
+if {$y<$fdvar(ystart)} {set temp $y ; set y $fdvar(ystart) ; set fdvar(ystart) $temp}
+# Check for too small sizes
+if {[expr $x-$fdvar(xstart)]<20} {set x [expr $fdvar(xstart)+20]}
+if {[expr $y-$fdvar(ystart)]<10} {set y [expr $fdvar(ystart)+10]}
 incr fdvar(objnum)
 set i $fdvar(objnum)
 lappend fdvar(objlist) $i
@@ -765,6 +771,7 @@ foreach i $fdvar(objlist) {
 #close $fid
 set res [pg_exec $dbc "delete from pga_forms where formname='$fdvar(formname)'"]
 pg_result $res -clear
+regsub -all "'" $info "''" info
 set res [pg_exec $dbc "insert into pga_forms values ('$fdvar(formname)','$info')"]
 pg_result $res -clear
 cmd_Forms
@@ -815,6 +822,7 @@ catch {set fdvar(c_text) $fdobj($i,l)}
 
 proc {fd_test} {} {
 global fdvar fdobj dbc datasets
+set basewp $fdvar(forminame)
 set base .$fdvar(forminame)
 if {[winfo exists $base]} {
    wm deiconify $base; return
@@ -840,30 +848,82 @@ switch $fdobj($item,t) {
         button $base.$name  -borderwidth 1 -padx 0 -pady 0 -text "$fdobj($item,l)" -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -command [subst {$cmd}]
     }
     checkbox {
-        checkbutton  $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -borderwidth 1
+        checkbutton  $base.$name -onvalue t -offvalue f -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -borderwidth 1
         set wh {}
     }
-    query { set visual 0
-        set procbody "proc $base.$name:execute {} {global dbc datasets ; set datasets($base.$name) \[pg_exec \$dbc \"$fdobj($item,x)\"\] ; set ceva \[$base.$name:fields\]}"
-        eval $procbody
-#        tk_messageBox -message $procbody
-        set procbody "proc $base.$name:nrecords {} {global datasets ; return \[pg_result \$datasets($base.$name) -numTuples\]}"
-        eval $procbody
-#        tk_messageBox -message $procbody
-        set procbody "proc $base.$name:close {} {global datasets ; pg_result \$datasets($base.$name) -clear}"
-        eval $procbody
-#        tk_messageBox -message $procbody
-        set procbody "proc $base.$name:fields {} {global datasets ; set fl {} ; foreach fd \[pg_result \$datasets($base.$name) -lAttributes\] {lappend fl \[lindex \$fd 0\]} ; set datasets($base.$name,fields) \$fl ; return \$fl}"
-#        tk_messageBox -message $procbody
-        eval $procbody
+    query {
+    	set visual 0
+	set datasets($base.$name,sql) $fdobj($item,x)
+        eval "proc $base.$name:open {} {\
+        	global dbc datasets tup$basewp$name ;\
+        	catch {unset tup$basewp$name} ;\
+        	set wn \[focus\] ; cursor_watch \$wn ;\
+        	set res \[pg_exec \$dbc \"\$datasets($base.$name,sql)\"\] ;\
+        	pg_result \$res -assign tup$basewp$name ;\
+        	set fl {} ;\
+        	foreach fd \[pg_result \$res -lAttributes\] {lappend fl \[lindex \$fd 0\]} ;\
+        	set datasets($base.$name,fields) \$fl ;\
+        	set datasets($base.$name,recno) 0 ;\
+        	set datasets($base.$name,nrecs) \[pg_result \$res -numTuples\] ;\
+        	cursor_arrow \$wn ;\
+        }"
+        eval "proc $base.$name:setsql {sqlcmd} {\
+        	global datasets ;\
+        	set datasets($base.$name,sql) \$sqlcmd ;\
+        }"
+        eval "proc $base.$name:nrecords {} {\
+        	global datasets ;\
+        	return \$datasets($base.$name,nrecs) ;\
+        }"
+        eval "proc $base.$name:crtrecord {} {\
+        	global datasets ;\
+        	return \$datasets($base.$name,recno) ;\
+        }"
+        eval "proc $base.$name:moveto {newrecno} {\
+        	global datasets ;\
+        	set datasets($base.$name,recno) \$newrecno ;\
+        }"
+        eval "proc $base.$name:close {} {
+        	global tup$basewp$name ;\
+        	catch {unset tup$basewp$name };\
+        }"
+        eval "proc $base.$name:fields {} {\
+        	global datasets ;\
+        	return \$datasets($base.$name,fields) ;\
+        }"
+        eval "proc $base.$name:fill {lb fld} {\
+        	global datasets tup$basewp$name ;\
+        	\$lb delete 0 end ;\
+        	for {set i 0} {\$i<\$datasets($base.$name,nrecs)} {incr i} {\
+        		\$lb insert end \$tup$basewp$name\(\$i,\$fld\) ;\
+        	}
+        }"
         eval "proc $base.$name:movefirst {} {global datasets ; set datasets($base.$name,recno) 0}"
-        eval "proc $base.$name:movenext {} {global datasets ; incr datasets($base.$name,recno)}"
+        eval "proc $base.$name:movenext {} {global datasets ; incr datasets($base.$name,recno) ; if {\$datasets($base.$name,recno)==\[$base.$name:nrecords\]} {$base.$name:movelast}}"
         eval "proc $base.$name:moveprevious {} {global datasets ; incr datasets($base.$name,recno) -1 ; if {\$datasets($base.$name,recno)==-1} {$base.$name:movefirst}}"
         eval "proc $base.$name:movelast {} {global datasets ; set datasets($base.$name,recno) \[expr \[$base.$name:nrecords\] -1\]}"
-        eval "proc $base.$name:updatecontrols {} {global datasets ; set i 0 ; foreach fld \$datasets($base.$name,fields) {catch {upvar $base.$name.\$fld dbvar ; set dbvar \[lindex \[pg_result \$datasets($base.$name) -getTuple \$datasets($base.$name,recno)\] \$i\]} ; incr i}}"
+        eval "proc $base.$name:updatecontrols {} {\
+        	global datasets tup$basewp$name ;\
+        	set i \$datasets($base.$name,recno) ;\
+        	foreach fld \$datasets($base.$name,fields) {\
+        		catch {\
+        			upvar $basewp$name\(\$fld\) dbvar ;\
+        			set dbvar \$tup$basewp$name\(\$i,\$fld\) ;\
+        		}\
+        	}\
+        }"
+        eval "proc $base.$name:clearcontrols {} {\
+        	global datasets ;\
+        	catch { foreach fld \$datasets($base.$name,fields) {\
+        		catch {\
+        			upvar $basewp$name\(\$fld\) dbvar ;\
+        			set dbvar {} ;\
+        		}\
+        	}}\
+        }"
     }
     radio {
-        radiobutton  $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -borderwidth 1
+        radiobutton  $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -text "$fdobj($item,l)" -variable "$fdobj($item,v)" -value "$name" -borderwidth 1
         set wh {}
     }
     entry {
@@ -877,7 +937,11 @@ switch $fdobj($item,t) {
 	set var {} ; catch {set var $fdobj($item,v)}
 	if {$var!=""} {$base.$name configure -textvar $var}
     }
-    listbox {listbox $base.$name -borderwidth 1 -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*}
+    listbox {
+    	listbox $base.$name -borderwidth 1 -background white  -highlightthickness 0 -selectborderwidth 0 -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -yscrollcommand [subst {$base.sb$name set}]
+	scrollbar $base.sb$name -borderwidth 1 -command [subst {$base.$name yview}] -orient vert  -highlightthickness 0
+	eval [subst "place $base.sb$name -x [expr [lindex $coord 2]-14] -y [expr [lindex $coord 1]-1] -width 16 -height [expr 3+[lindex $coord 3]-[lindex $coord 1]] -anchor nw -bordermode ignore"]
+    }
 }
 if $visual {eval [subst "place $base.$name  -x [expr [lindex $coord 0]-1] -y [expr [lindex $coord 1]-1] -anchor nw $wh -bordermode ignore"]}
 }
@@ -2565,7 +2629,7 @@ proc vTclWindow.about {base} {
     label $base.l2  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.82}
+    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.83}
     label $base.l4  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
@@ -2883,7 +2947,7 @@ proc vTclWindow.iew {base} {
 		tk_messageBox -title Information -message "Operation completed!"
 		Window destroy .iew
 	}
-        cursor_arrow .iew
+        catch {cursor_arrow .iew}
 }}  -padx 9  -pady 3 -text Export 
     button $base.cancelbtn  -borderwidth 1 -command {Window destroy .iew}  -padx 9  -pady 3 -text Cancel 
     checkbutton $base.oicb  -borderwidth 1  -text {with OIDs} -variable oicb 

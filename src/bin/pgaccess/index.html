@@ -1,118 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
 <HEAD>
-   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
-   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.32 i586) [Netscape]">
    <TITLE>PgAccess - a Tcl/Tk PostgreSQL interface</TITLE>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/3.04Gold (X11; I; Linux 2.0.32 i586) [Netscape]">
 </HEAD>
 <BODY BGCOLOR="#FFFFFF">
 
-<H1>
-PgAccess - a database management tool for <A HREF="http://www.postgreSQL.org">PostgreSQL</A></H1>
+<H1>PgAccess - a database management tool for <A HREF="http://www.postgreSQL.org">PostgreSQL</A></H1>
 
-<HR>
+<P>
+<HR></P>
 
 <P>This program is protected by the following <A HREF="copyright.html">copyright</A>
-<LI>
-<A HREF="pgaccess-0.82.tar.gz">Download the last version of Pgaccess (press
-shift and click this link)</A>.</LI>
+</P>
 
+<LI><A HREF="pgaccess-0.83.tar.gz">Download the last version of Pgaccess
+(press shift and click this link)</A>.</LI>
 
-<P>Latest version of PgAccess is 0.82 , 1 March 1998 !
-<BR>&nbsp;
+<P>Latest version of PgAccess is 0.83 , 11 March 1998 ! <BR>
+&nbsp; </P>
+
 <CENTER><TABLE BORDER=3 CELLSPACING=0 CELLPADDING=0 WIDTH="100%" BGCOLOR="#FFB6C1" >
 <TR>
 <TD>
-<CENTER></CENTER>
-
-<CENTER><B><FONT SIZE=+2>PgAccess can now design <A HREF="forms.html">Forms</A></FONT></B>,
-<B><FONT SIZE=+2><A HREF="pga-rad.html">Reports and Scripts</A></FONT></B></CENTER>
+<CENTER><P><B><FONT SIZE=+2>PgAccess can now design <A HREF="forms.html">Forms</A></FONT></B>,
+<B><FONT SIZE=+2><A HREF="pga-rad.html">Reports and Scripts</A></FONT></B>
+</P></CENTER>
 </TD>
 </TR>
 </TABLE></CENTER>
-I think that there were some problems loading libpgtcl library.
-<BR>I invite you to read a <A HREF="index.html#libpgtcl">special section
-concerning <B>libpgtcl</B></A>
-<H3>
-<FONT COLOR="#191970">What does PgAccess now!</FONT></H3>
-Here are some images from PgAccess windows : <A HREF="pic-pga-1.gif">Main
+
+<H3><FONT COLOR="#000080">Installation problems</FONT></H3>
+
+<UL>
+<LI>Some problems related with locale special characters could be solved
+by this <A HREF="specialchars.html">simple patch</A></LI>
+
+<LI>I think that there were some problems loading libpgtcl library. I invite
+you to read a <A HREF="index.html#libpgtcl">special section concerning
+libpgtcl</A> </LI>
+</UL>
+
+<H3><FONT COLOR="#191970">What does PgAccess now!</FONT></H3>
+
+<P>Here are some images from PgAccess windows : <A HREF="pic-pga-1.gif">Main
 window </A>, <A HREF="pic-pga-2.gif">table builder </A>, <A HREF="pic-pga-4.gif">table(query)
-view </A>, <A HREF="pic-pga-3.gif">visual query builder </A>.
+view </A>, <A HREF="pic-pga-3.gif">visual query builder </A>. </P>
 
-<P><B>Tables</B>
-<BR>- opening tables for viewing, max 200 records (changed by preferences
-menu)
-<BR>- column resizing, dragging the vertical grid line (better in table
-space rather than in the table header)
-<BR>- text wrap in cells - layout saved for every table
-<BR>- import/export to external files (SDF,CSV)
-<BR>- filter capabilities (enter filter like (price>3.14)
-<BR>- sort order capabilities (enter manually the sort field(s))
-<BR>- editing in place
-<BR>- improved table generator assistant
-<BR>- improved field editing
-<BR><B>Queries</B>
-<BR>- define , edit and stores "user defined queries"
-<BR>- store queries as views
-<BR>- execution of queries
-<BR>- viewing of select type queries result
-<BR>- query deleting and renaming
-<BR>- <B><BLINK><FONT COLOR="#FF0000">NEW !!!</FONT></BLINK></B> Visual
-query builder with drag &amp; drop capabilities. For any of you who had
-installed the Tcl/Tk plugin for Netscape Navigator, you can see it at work
-<A HREF="qbtclet.html">clicking here</A>
-<BR><B>Sequences</B>
-<BR>- defines sequences, delete them and inspect them
-<BR><B>Functions</B>
-<BR>- define, inspect and delete functions in SQL language
-<BR><B>Reports</B>
-<BR>- design and display simple reports from tables
-<BR>- fields and labels, font changing, style and size
-<BR>- saves and loads report description from database
-<BR>- show report previews, sample postscript output file
-<BR><B>Forms</B>
-<BR>- open user defined forms
-<BR>- form design module available
-<BR>- query widget available, controls bound to query results
-<BR>- <A HREF="forms.html">click here</A> for a description of forms and
-how they can be used
-<BR><B>Scripts</B>
-<BR>- define, modify and call user defined scripts
-<BR>Here is <A HREF="pga-rad.html">a special section concerning forms and
-scripts</A> .
+<P><B>Tables</B> <BR>
+- opening tables for viewing, max 200 records (changed by preferences menu)
+<BR>
+- column resizing, dragging the vertical grid line (better in table space
+rather than in the table header) <BR>
+- text wrap in cells - layout saved for every table <BR>
+- import/export to external files (SDF,CSV) <BR>
+- filter capabilities (enter filter like (price&gt;3.14) <BR>
+- sort order capabilities (enter manually the sort field(s)) <BR>
+- editing in place <BR>
+- improved table generator assistant <BR>
+- improved field editing <BR>
+<B>Queries</B> <BR>
+- define , edit and stores &quot;user defined queries&quot; <BR>
+- store queries as views <BR>
+- execution of queries <BR>
+- viewing of select type queries result <BR>
+- query deleting and renaming <BR>
+- visual query builder with drag &amp; drop capabilities. For any of you
+who had installed the Tcl/Tk plugin for Netscape Navigator, you can see
+it at work <A HREF="qbtclet.html">clicking here</A> <BR>
+<B>Sequences</B> <BR>
+- defines sequences, delete them and inspect them <BR>
+<B>Functions</B> <BR>
+- define, inspect and delete functions in SQL language <BR>
+<B>Reports</B> <BR>
+- design and display simple reports from tables <BR>
+- fields and labels, font changing, style and size <BR>
+- saves and loads report description from database <BR>
+- show report previews, sample postscript output file <BR>
+<B>Forms</B> <BR>
+- open user defined forms <BR>
+- form design module available <BR>
+- query widget available, controls bound to query results <BR>
+- <A HREF="forms.html">click here</A> for a description of forms and how
+they can be used <BR>
+<B>Scripts</B> <BR>
+- define, modify and call user defined scripts <BR>
+Here is <A HREF="pga-rad.html">a special section concerning forms and scripts</A>
+. </P>
 
-<P>On the TODO list!
-<BR>- table design (add new fields, renaming, etc.)
+<P>On the TODO list! <BR>
+- table design (add new fields, renaming, etc.) </P>
 
-<P>&nbsp;
+<P>&nbsp; </P>
 
 <P>If you have any comment, suggestion for improvements, please feel free
-to e-mail to : <A HREF="mailto:teo@flex.ro">teo@flex.ro&nbsp;</A>
+to e-mail to : <A HREF="mailto:teo@flex.ro">teo@flex.ro&nbsp;</A> </P>
 
 <P><B><FONT COLOR="#FF1493"><FONT SIZE=+2>Mailing list for PgAccess </FONT></FONT></B><A HREF="maillist.html">Here
-you will find how to subscribe to this mailing list</A>.
+you will find how to subscribe to this mailing list</A>. </P>
 
 <P>
-<HR>
-<H1>
-More information about libgtcl</H1>
-Also, you will need the PostgreSQL to Tcl interface library, lined as a
-Tcl/Tk 'load'-able module. It is called libpgtcl and the source is located
+<HR></P>
+
+<H1>More information about libgtcl</H1>
+
+<P>Also, you will need the PostgreSQL to Tcl interface library, lined as
+a Tcl/Tk 'load'-able module. It is called libpgtcl and the source is located
 in the PostgreSQL directory /src/interfaces/libpgtcl. Specifically, you
 will need a libpgtcl library that is 'load'-able from Tcl/Tk. This is technically
 different from an ordinary PostgreSQL loadable object file, because libpgtcl
 is a collection of object files. Under Linux, this is called libpgtcl.so.
-<BR>You can download <A HREF="libpgtcl.so">from here </A>a version already
-compiled for Linux i386 systems. Just copy libpgtcl.so into your system
-library director (/usr/lib) and go for it. One of the solutions is to remove
-from the source the line containing <B>load libpgtcl.so </B>and to load
-pgaccess.tcl not with wish, but with pgwish (or wishpg) that wish that
-was linked with libpgtcl library!
+<BR>
+You can download <A HREF="libpgtcl.so">from here </A>a version already
+compiled for Linux RedHat 4.2 i386 systems. Just copy libpgtcl.so into
+your system library directory (/usr/lib or /lib) and go for it. One of
+the solutions is to remove from the source the line containing <B>load
+libpgtcl.so </B>and to load pgaccess.tcl not with wish, but with pgwish
+(or wishpg) that wish that was linked with libpgtcl library! </P>
 
 <P>If you have installed RedHat 5.0, you should get the last distribution
 kit of postgreSQL and compile it from scratch. RedHat 5.0 is using some
 new versions of libraries and you have to compile and install again at
-least <B>libpq </B>and <B><TT>libpgtcl </TT></B>libraries.
+least <B>libpq </B>and <B><TT>libpgtcl </TT></B>libraries. </P>
 
-<P>However, the application should work without problems!
+<P>However, the application should work without problems! </P>
+
 </BODY>
 </HTML>
