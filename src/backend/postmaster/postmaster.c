@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.65 1997/12/09 03:11:08 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.66 1997/12/11 17:03:52 momjian Exp $
  *
  * NOTES
  *
@@ -333,11 +333,6 @@ PostmasterMain(int argc, char *argv[])
 			case 'D':
 				/* Set PGDATA from the command line. */
 				DataDir = optarg;
-				{
-					char envEntry[2 * ARGV_SIZE];
-					sprintf(envEntry, "PGDATA=%s", DataDir);
-					putenv(envEntry);
-				}
 				break;
 			case 'd':
 
