@@ -57,7 +57,7 @@ char *convert_charset(char *string);
 void usage(void);
 unsigned int isinteger(char *);
 
-char *simple_prompt(const char *prompt, int maxlen, int echo);
+char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 
 unsigned int isinteger(char *buff) {
@@ -472,13 +472,12 @@ void do_inserts(PGconn *conn, char *table, dbhead *dbh) {
 	free(query);
 }
 
+
 /*
- * This is from Postgres 7.0.3 source tarball, utility program PSQL.
- *
- * simple_prompt
+ * simple_prompt  --- borrowed from psql
  *
  * Generalized function especially intended for reading in usernames and
- * password interactively. Reads from stdin.
+ * password interactively. Reads from /dev/tty or stdin/stderr.
  *
  * prompt:		The prompt to print
  * maxlen:		How many characters to accept
@@ -486,65 +485,95 @@ void do_inserts(PGconn *conn, char *table, dbhead *dbh) {
  *
  * Returns a malloc()'ed string with the input (w/o trailing newline).
  */
-static int prompt_state;
+static bool prompt_state = false;
 
 char *
-simple_prompt(const char *prompt, int maxlen, int echo)
+simple_prompt(const char *prompt, int maxlen, bool echo)
 {
 	int			length;
 	char	   *destination;
-
+	FILE *termin, *termout;
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
-
 #endif
 
 	destination = (char *) malloc(maxlen + 2);
 	if (!destination)
 		return NULL;
-	if (prompt)
-		fputs(prompt, stderr);
 
-	prompt_state = 1;
+	prompt_state = true;		/* disable SIGINT */
+
+	/*
+	 * Do not try to collapse these into one "w+" mode file.
+	 * Doesn't work on some platforms (eg, HPUX 10.20).
+	 */
+	termin = fopen("/dev/tty", "r");
+	termout = fopen("/dev/tty", "w");
+	if (!termin || !termout)
+	{
+		if (termin)
+			fclose(termin);
+		if (termout)
+			fclose(termout);
+		termin = stdin;
+		termout = stderr;
+	}
 
 #ifdef HAVE_TERMIOS_H
 	if (!echo)
 	{
-		tcgetattr(0, &t);
+		tcgetattr(fileno(termin), &t);
 		t_orig = t;
 		t.c_lflag &= ~ECHO;
-		tcsetattr(0, TCSADRAIN, &t);
+		tcsetattr(fileno(termin), TCSAFLUSH, &t);
 	}
 #endif
-
-	fgets(destination, maxlen, stdin);
-
-#ifdef HAVE_TERMIOS_H
-	if (!echo)
+	
+	if (prompt)
 	{
-		tcsetattr(0, TCSADRAIN, &t_orig);
-		puts("");
+		fputs(gettext(prompt), termout);
+		fflush(termout);
 	}
-#endif
 
-	prompt_state = 0;
+	if (fgets(destination, maxlen, termin) == NULL)
+		destination[0] = '\0';
 
 	length = strlen(destination);
 	if (length > 0 && destination[length - 1] != '\n')
 	{
 		/* eat rest of the line */
-		char		buf[512];
+		char		buf[128];
+		int			buflen;
 
 		do
 		{
-			fgets(buf, 512, stdin);
-		} while (buf[strlen(buf) - 1] != '\n');
+			if (fgets(buf, sizeof(buf), termin) == NULL)
+				break;
+			buflen = strlen(buf);
+		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
 
 	if (length > 0 && destination[length - 1] == '\n')
 		/* remove trailing newline */
 		destination[length - 1] = '\0';
+
+#ifdef HAVE_TERMIOS_H
+	if (!echo)
+	{
+		tcsetattr(fileno(termin), TCSAFLUSH, &t_orig);
+		fputs("\n", termout);
+		fflush(termout);
+	}
+#endif
+
+	if (termin != stdin)
+	{
+		fclose(termin);
+		fclose(termout);
+	}
+
+	prompt_state = false;		/* SIGINT okay again */
 
 	return destination;
 }

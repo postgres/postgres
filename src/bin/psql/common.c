@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.35 2001/10/15 16:40:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.36 2001/10/18 21:57:11 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -169,15 +169,14 @@ NoticeProcessor(void *arg, const char *message)
  *
  * Returns a malloc()'ed string with the input (w/o trailing newline).
  */
-static bool prompt_state;
+static bool prompt_state = false;
 
 char *
 simple_prompt(const char *prompt, int maxlen, bool echo)
 {
 	int			length;
 	char	   *destination;
-	static FILE *termin = NULL, *termout;
-
+	FILE *termin, *termout;
 #ifdef HAVE_TERMIOS_H
 	struct termios t_orig,
 				t;
@@ -187,22 +186,22 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!destination)
 		return NULL;
 
-	prompt_state = true;
+	prompt_state = true;		/* disable SIGINT */
 
-	/* initialize the streams */
-	if (!termin)
+	/*
+	 * Do not try to collapse these into one "w+" mode file.
+	 * Doesn't work on some platforms (eg, HPUX 10.20).
+	 */
+	termin = fopen("/dev/tty", "r");
+	termout = fopen("/dev/tty", "w");
+	if (!termin || !termout)
 	{
-		if ((termin = termout = fopen("/dev/tty", "w+")) == NULL)
-		{
-			termin = stdin;
-			termout = stderr;
-		}
-	}
-	
-	if (prompt)
-	{
-		fputs(gettext(prompt), termout);
-		rewind(termout); /* does flush too */
+		if (termin)
+			fclose(termin);
+		if (termout)
+			fclose(termout);
+		termin = stdin;
+		termout = stderr;
 	}
 
 #ifdef HAVE_TERMIOS_H
@@ -211,22 +210,18 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 		tcgetattr(fileno(termin), &t);
 		t_orig = t;
 		t.c_lflag &= ~ECHO;
-		tcsetattr(fileno(termin), TCSADRAIN, &t);
+		tcsetattr(fileno(termin), TCSAFLUSH, &t);
 	}
 #endif
+	
+	if (prompt)
+	{
+		fputs(gettext(prompt), termout);
+		fflush(termout);
+	}
 
 	if (fgets(destination, maxlen, termin) == NULL)
 		destination[0] = '\0';
-
-#ifdef HAVE_TERMIOS_H
-	if (!echo)
-	{
-		tcsetattr(fileno(termin), TCSADRAIN, &t_orig);
-		fputs("\n", termout);
-	}
-#endif
-
-	prompt_state = false;
 
 	length = strlen(destination);
 	if (length > 0 && destination[length - 1] != '\n')
@@ -246,6 +241,23 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (length > 0 && destination[length - 1] == '\n')
 		/* remove trailing newline */
 		destination[length - 1] = '\0';
+
+#ifdef HAVE_TERMIOS_H
+	if (!echo)
+	{
+		tcsetattr(fileno(termin), TCSAFLUSH, &t_orig);
+		fputs("\n", termout);
+		fflush(termout);
+	}
+#endif
+
+	if (termin != stdin)
+	{
+		fclose(termin);
+		fclose(termout);
+	}
+
+	prompt_state = false;		/* SIGINT okay again */
 
 	return destination;
 }
