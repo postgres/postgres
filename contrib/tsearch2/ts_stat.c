@@ -457,7 +457,7 @@ ts_stat_sql(text *txt, text *ws)
 	if ( ws ) {
 		char *buf;
 		buf = VARDATA(ws);
-		while( buf - VARDATA(ws) < VARSIZE(buf) - VARHDRSZ ) {
+		while( buf - VARDATA(ws) < VARSIZE(ws) - VARHDRSZ ) {
 			switch (tolower(*buf)) {
 				case 'a':
 					stat->weight |= 1 << 3;
