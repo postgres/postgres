@@ -158,6 +158,8 @@ Dynahash portability improvements (Tom)
 Remove OID's from some system tables (Tom)
 Remove 'triggered data change violation' error check (Tom)
 Optimize LIKE/ILIKE when using single-byte encodings (Tatsuo)
+New libpq function PQescapeBytea() escapes binary strings for use as
+  SQL string literals
 
 Types
 -----
@@ -167,7 +169,14 @@ BIT, BIT VARYING now returns error on too long input (Peter E)
 New function bit_length() (Peter E)
 INET, CIDR text conversion functions (Alex Pilosov)
 INET, CIDR operators << and <<= indexable (Alex Pilosov)
-Bytea comparison improvements, \### now requires three octal digits (Joe Conway)
+Bytea \### now requires valid three digit octal number
+Bytea comparison improvements, now supports =, !=, >, >=, <, and <=
+Bytea now supports btree indexes
+Bytea now supports LIKE, LIKE...ESCAPE, NOT LIKE, NOT LIKE...ESCAPE
+Bytea now supports string concatenation
+New Bytea functions - position(), substring, trim, btrim, and length
+New encode() function mode, 'escaped', converts minimally escaped
+   bytea to/from text
 Make trim/ltrim/rtrim/btrim/lpad/rpad/translate() multibyte aware (Tatsuo)
 Formats with the correct number of columns for UNICODE in psql (Patrice)
 Add pg_database_encoding_max_length() (Tatsuo)
