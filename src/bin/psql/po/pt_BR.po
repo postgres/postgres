@@ -4,8 +4,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-14 16:37-0200\n"
-"PO-Revision-Date: 2003-11-03 00:46-0200\n"
+"POT-Creation-Date: 2003-11-15 21:21+0100\n"
+"PO-Revision-Date: 2003-11-15 21:35+0100\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
 "Language-Team: Brazilian Portuguese <euler@ufgnet.ufg.br>\n"
 "MIME-Version: 1.0\n"
@@ -67,7 +67,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s\".\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
+#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:341
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
@@ -874,8 +874,8 @@ msgstr "%s: transação atual foi terminada\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: status da transação é desconhecido\n"
 
-#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
-#: describe.c:339 describe.c:438 describe.c:718 describe.c:1345
+#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
+#: describe.c:438 describe.c:718 describe.c:1345 large_obj.c:278
 msgid "Description"
 msgstr "Descrição"
 
@@ -2013,7 +2013,7 @@ msgstr "define uma nova tabela"
 #: sql_help.h:174
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
-"    { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
 "[ ... ] ]\n"
 "    | table_constraint\n"
 "    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
@@ -2046,8 +2046,7 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE nome_tabela (\n"
-"    { nome_coluna tipo_dado [ DEFAULT expressão_padrão ] [ restrição_coluna "
-"[ ... ] ]\n"
+"    { nome_coluna tipo_dado [ DEFAULT expressão_padrão ] [ restrição_coluna [ ... ] ]\n"
 "    | restrição_tabela\n"
 "    | LIKE tabela_pai [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2060,11 +2059,9 @@ msgstr ""
 "[ CONSTRAINT nome_restrição ]\n"
 "{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
 "  CHECK (expressão) |\n"
-"  REFERENCES tabela_ref [ ( coluna_ref ) ] [ MATCH FULL | MATCH PARTIAL | "
-"MATCH SIMPLE ]\n"
+"  REFERENCES tabela_ref [ ( coluna_ref ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
 "    [ ON DELETE ação ] [ ON UPDATE ação ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
-"IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
 "\n"
 "e restrição_tabela é:\n"
 "\n"
@@ -2072,10 +2069,8 @@ msgstr ""
 "{ UNIQUE ( nome_coluna [, ... ] ) |\n"
 "  PRIMARY KEY ( nome_coluna [, ... ] ) |\n"
 "  CHECK ( expressão ) |\n"
-"  FOREIGN KEY ( nome_coluna [, ... ] ) REFERENCES tabela_ref [ ( coluna_ref "
-"[, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE ação ] [ ON "
-"UPDATE ação ] }\n"
+"  FOREIGN KEY ( nome_coluna [, ... ] ) REFERENCES tabela_ref [ ( coluna_ref [, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE ação ] [ ON UPDATE ação ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:177 sql_help.h:353

@@ -13,8 +13,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-13 03:11+0200\n"
-"PO-Revision-Date: 2003-10-06 07:00+0200\n"
+"POT-Creation-Date: 2003-11-15 21:21+0100\n"
+"PO-Revision-Date: 2003-11-15 21:36+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
@@ -75,7 +75,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Zgodovina je bila zapisana v datoteko \"%s\".\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
+#: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:341
 msgid "out of memory\n"
 msgstr "zmanjkalo je pomnilnika\n"
 
@@ -112,7 +112,7 @@ msgstr "napaka v razlaganju ukaza pri koncu vrstice\n"
 msgid "Password: "
 msgstr "Geslo: "
 
-#: command.c:1389 common.c:181 common.c:351 common.c:405 common.c:652
+#: command.c:1389 common.c:181 common.c:352 common.c:406 common.c:653
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -272,17 +272,17 @@ msgstr "Neuspeh.\n"
 msgid "Succeeded.\n"
 msgstr "Uspelo.\n"
 
-#: common.c:381 common.c:620
+#: common.c:382 common.c:621
 msgid "You are currently not connected to a database.\n"
 msgstr "Trenutno niste povezani z nobeno bazo podatkov.\n"
 
-#: common.c:436
+#: common.c:437
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Asinhrono obvestilo \"%s\" prejeto od strežniškega procesa z PID %d.\n"
 
-#: common.c:516
+#: common.c:517
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -290,7 +290,7 @@ msgstr ""
 "Vnesite podatke za kopiranje, zaključene z <newline>.\n"
 "Končajte z backslashem in piko (\\.) v samostojni vrstici."
 
-#: common.c:628
+#: common.c:629
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -305,7 +305,7 @@ msgstr ""
 "***(pritisnite enter za nadaljevanje, ali vtipkajte x in enter za preklic)"
 "******\n"
 
-#: common.c:679
+#: common.c:680
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Čas: %.3f ms\n"
@@ -878,8 +878,8 @@ msgstr "%s: trenutna transakcija je prekinjena\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: stanje transakcije ni znano\n"
 
-#: large_obj.c:278 describe.c:106 describe.c:157 describe.c:230 describe.c:292
-#: describe.c:339 describe.c:438 describe.c:718 describe.c:1343
+#: describe.c:106 describe.c:157 describe.c:230 describe.c:292 describe.c:339
+#: describe.c:438 describe.c:718 describe.c:1345 large_obj.c:278
 msgid "Description"
 msgstr "Opis"
 
@@ -979,13 +979,13 @@ msgstr ""
 "\n"
 
 #: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:384
-#: describe.c:438 describe.c:1336 describe.c:1442 describe.c:1490
+#: describe.c:438 describe.c:1338 describe.c:1444 describe.c:1492
 msgid "Schema"
 msgstr "Shema"
 
 #: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:332
-#: describe.c:438 describe.c:1336 describe.c:1443 describe.c:1491
-#: describe.c:1586
+#: describe.c:438 describe.c:1338 describe.c:1445 describe.c:1493
+#: describe.c:1588
 msgid "Name"
 msgstr "Ime"
 
@@ -1009,7 +1009,7 @@ msgstr "Tip rezultata"
 msgid "Argument data types"
 msgstr "Podatkovni tipi argumentov"
 
-#: describe.c:156 describe.c:332 describe.c:1338 describe.c:1587
+#: describe.c:156 describe.c:332 describe.c:1340 describe.c:1589
 msgid "Owner"
 msgstr "Lastnik"
 
@@ -1061,7 +1061,7 @@ msgstr "Kodna tabela"
 msgid "List of databases"
 msgstr "Seznam podatkovnih baz"
 
-#: describe.c:384 describe.c:1353
+#: describe.c:384 describe.c:1355
 msgid "Table"
 msgstr "Tabela"
 
@@ -1094,19 +1094,19 @@ msgstr "operator"
 msgid "data type"
 msgstr "podatkovni tip"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "table"
 msgstr "tabela"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "view"
 msgstr "pogled*"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "index"
 msgstr "indeks"
 
-#: describe.c:512 describe.c:1337
+#: describe.c:512 describe.c:1339
 msgid "sequence"
 msgstr "zaporedje"
 
@@ -1136,7 +1136,7 @@ msgstr "Najdena ni bila nobena relacija z OID %s.\n"
 msgid "Column"
 msgstr "Stolpec"
 
-#: describe.c:705 describe.c:1338 describe.c:1444
+#: describe.c:705 describe.c:1340 describe.c:1446
 msgid "Type"
 msgstr "Tip"
 
@@ -1210,162 +1210,157 @@ msgstr ""
 msgid "Rules"
 msgstr "Pravila"
 
-#: describe.c:1084
+#: describe.c:1086
 msgid "Indexes:"
 msgstr "Indeksi:"
 
-#: describe.c:1092
+#: describe.c:1094
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1098
+#: describe.c:1100
 msgid " primary key,"
 msgstr " primarni ključ,"
 
-#: describe.c:1100
+#: describe.c:1102
 msgid " unique,"
 msgstr " unikaten,"
 
-#: describe.c:1118
+#: describe.c:1120
 msgid "Check constraints:"
 msgstr "Omejitve:"
 
-#: describe.c:1122
-#, c-format
-msgid "    \"%s\" CHECK %s"
-msgstr "    \"%s\" CHECK %s"
-
-#: describe.c:1133
-msgid "Foreign-key constraints:"
-msgstr "Omejitve po tujem ključu:"
-
-#: describe.c:1137
+#: describe.c:1124 describe.c:1139
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
-#: describe.c:1148
+#: describe.c:1135
+msgid "Foreign-key constraints:"
+msgstr "Omejitve po tujem ključu:"
+
+#: describe.c:1150
 msgid "Rules:"
 msgstr "Pravila:"
 
-#: describe.c:1167
+#: describe.c:1169
 msgid "Triggers:"
 msgstr "Prožilci:"
 
-#: describe.c:1189
+#: describe.c:1191
 msgid "Inherits"
 msgstr "Deduje od"
 
-#: describe.c:1275
+#: describe.c:1277
 msgid "User name"
 msgstr "Uporabniško ime"
 
-#: describe.c:1275
+#: describe.c:1277
 msgid "User ID"
 msgstr "upor. ID"
 
-#: describe.c:1276
+#: describe.c:1278
 msgid "superuser, create database"
 msgstr "superuser, create database"
 
-#: describe.c:1277
+#: describe.c:1279
 msgid "superuser"
 msgstr "superuser"
 
-#: describe.c:1277
+#: describe.c:1279
 msgid "create database"
 msgstr "create database"
 
-#: describe.c:1278
+#: describe.c:1280
 msgid "Attributes"
 msgstr "Atributi"
 
-#: describe.c:1291
+#: describe.c:1293
 msgid "List of database users"
 msgstr "Seznam uporabnikov"
 
-#: describe.c:1338
+#: describe.c:1340
 msgid "special"
 msgstr "posebno"
 
-#: describe.c:1399
+#: describe.c:1401
 msgid "No matching relations found.\n"
 msgstr "Najdena ni bila nobena ujemajoča relacija.\n"
 
-#: describe.c:1401
+#: describe.c:1403
 msgid "No relations found.\n"
 msgstr "Najdena ni bila nobena relacija.\n"
 
-#: describe.c:1406
+#: describe.c:1408
 msgid "List of relations"
 msgstr "Seznam relacij"
 
-#: describe.c:1445
+#: describe.c:1447
 msgid "Modifier"
 msgstr "Modifikator"
 
-#: describe.c:1459
+#: describe.c:1461
 msgid "List of domains"
 msgstr "Seznam domen"
 
-#: describe.c:1492
+#: describe.c:1494
 msgid "Source"
 msgstr "Vir"
 
-#: describe.c:1493
+#: describe.c:1495
 msgid "Destination"
 msgstr "Cilj"
 
-#: describe.c:1494 describe.c:1551
+#: describe.c:1496 describe.c:1553
 msgid "yes"
 msgstr "da"
 
-#: describe.c:1495 describe.c:1549
+#: describe.c:1497 describe.c:1551
 msgid "no"
 msgstr "ne"
 
-#: describe.c:1496
+#: describe.c:1498
 msgid "Default?"
 msgstr "Privzeta?"
 
-#: describe.c:1510
+#: describe.c:1512
 msgid "List of conversions"
 msgstr "Seznam pretvorb med kodnimi tabelami"
 
-#: describe.c:1545
+#: describe.c:1547
 msgid "Source type"
 msgstr "Izvorni tip"
 
-#: describe.c:1546
+#: describe.c:1548
 msgid "Target type"
 msgstr "Ciljni tip"
 
-#: describe.c:1547
+#: describe.c:1549
 msgid "(binary compatible)"
 msgstr "(binarno združljiva)"
 
-#: describe.c:1548
+#: describe.c:1550
 msgid "Function"
 msgstr "Funkcija"
 
-#: describe.c:1550
+#: describe.c:1552
 msgid "in assignment"
 msgstr "ob prireditvi"
 
-#: describe.c:1552
+#: describe.c:1554
 msgid "Implicit?"
 msgstr "Implicitno?"
 
-#: describe.c:1560
+#: describe.c:1562
 msgid "List of casts"
 msgstr "Seznam pretvorb med podatkovnimi tipi"
 
-#: describe.c:1601
+#: describe.c:1603
 msgid "List of schemas"
 msgstr "Seznam shem"
 
-#: sql_help.h:25 sql_help.h:341
+#: sql_help.h:25 sql_help.h:345
 msgid "abort the current transaction"
 msgstr "prekini trenutno transakcijo"
 
@@ -1476,10 +1471,20 @@ msgid "ALTER OPERATOR CLASS name USING index_method RENAME TO newname"
 msgstr "ALTER OPERATOR CLASS ime USING index_method RENAME TO novo_ime"
 
 #: sql_help.h:61
+#, fuzzy
+msgid "change the definition of a schema"
+msgstr "spremeni definicijo domene"
+
+#: sql_help.h:62
+#, fuzzy
+msgid "ALTER SCHEMA name RENAME TO newname"
+msgstr "ALTER CONVERSION ime_pretvorbe RENAME TO novo_ime_pretvorbe"
+
+#: sql_help.h:65
 msgid "alter the definition of a sequence generator"
 msgstr "spremeni definicijo generatorja zaporedja"
 
-#: sql_help.h:62
+#: sql_help.h:66
 msgid ""
 "ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -1490,11 +1495,11 @@ msgstr ""
 "MAXVALUE ]\n"
 "    [ RESTART [ WITH ] začetek ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 
-#: sql_help.h:65
+#: sql_help.h:69
 msgid "change the definition of a table"
 msgstr "spremeni definicijo tabele"
 
-#: sql_help.h:66
+#: sql_help.h:70
 msgid ""
 "ALTER TABLE [ ONLY ] name [ * ]\n"
 "    ADD [ COLUMN ] column type [ column_constraint [ ... ] ]\n"
@@ -1552,19 +1557,19 @@ msgstr ""
 "ALTER TABLE ime_tabele\n"
 "    CLUSTER ON ime_indeksa"
 
-#: sql_help.h:69
+#: sql_help.h:73
 msgid "change the definition of a trigger"
 msgstr "spremeni definicijo prožilca"
 
-#: sql_help.h:70
+#: sql_help.h:74
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
 msgstr "ALTER TRIGGER ime_prožilca ON ime_tabele RENAME TO novo_ime_prožilca"
 
-#: sql_help.h:73
+#: sql_help.h:77
 msgid "change a database user account"
 msgstr "spremeni uporabniški račun"
 
-#: sql_help.h:74
+#: sql_help.h:78
 msgid ""
 "ALTER USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -1594,43 +1599,43 @@ msgstr ""
 "ALTER USER uporabniško_ime SET parameter { TO | = } { vrednost | DEFAULT }\n"
 "ALTER USER uporabniško_ime RESET parameter"
 
-#: sql_help.h:77
+#: sql_help.h:81
 msgid "collect statistics about a database"
 msgstr "zberi statistike o bazi podatkov"
 
-#: sql_help.h:78
+#: sql_help.h:82
 msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ ime_tabele [ (ime_stolpca [, ...] ) ] ]"
 
-#: sql_help.h:81 sql_help.h:373
+#: sql_help.h:85 sql_help.h:377
 msgid "start a transaction block"
 msgstr "začni transakcijski blok"
 
-#: sql_help.h:82
+#: sql_help.h:86
 msgid "BEGIN [ WORK | TRANSACTION ]"
 msgstr "BEGIN [ WORK | TRANSACTION ]"
 
-#: sql_help.h:85
+#: sql_help.h:89
 msgid "force a transaction log checkpoint"
 msgstr "vsili kontrolno točko v dnevniku transakcij"
 
-#: sql_help.h:86
+#: sql_help.h:90
 msgid "CHECKPOINT"
 msgstr "CHECKPOINT"
 
-#: sql_help.h:89
+#: sql_help.h:93
 msgid "close a cursor"
 msgstr "zapri kurzor"
 
-#: sql_help.h:90
+#: sql_help.h:94
 msgid "CLOSE name"
 msgstr "CLOSE ime_kurzorja"
 
-#: sql_help.h:93
+#: sql_help.h:97
 msgid "cluster a table according to an index"
 msgstr "preuredi vrstni red vrstic podane tabele v skladu s podanim indeksom"
 
-#: sql_help.h:94
+#: sql_help.h:98
 msgid ""
 "CLUSTER indexname ON tablename\n"
 "CLUSTER tablename\n"
@@ -1640,11 +1645,11 @@ msgstr ""
 "CLUSTER ime_tabele\n"
 "CLUSTER"
 
-#: sql_help.h:97
+#: sql_help.h:101
 msgid "define or change the comment of an object"
 msgstr "definiraj ali spremeni komentar objekta"
 
-#: sql_help.h:98
+#: sql_help.h:102
 msgid ""
 "COMMENT ON\n"
 "{\n"
@@ -1684,19 +1689,19 @@ msgstr ""
 "  VIEW ime_objekta\n"
 "} IS 'besedilo'"
 
-#: sql_help.h:101 sql_help.h:281
+#: sql_help.h:105 sql_help.h:285
 msgid "commit the current transaction"
 msgstr "potrdi trenutno transakcijo"
 
-#: sql_help.h:102
+#: sql_help.h:106
 msgid "COMMIT [ WORK | TRANSACTION ]"
 msgstr "COMMIT [ WORK | TRANSACTION ]"
 
-#: sql_help.h:105
+#: sql_help.h:109
 msgid "copy data between a file and a table"
 msgstr "kopiraj podatke med datoteko in tabelo"
 
-#: sql_help.h:106
+#: sql_help.h:110
 msgid ""
 "COPY tablename [ ( column [, ...] ) ]\n"
 "    FROM { 'filename' | STDIN }\n"
@@ -1730,11 +1735,11 @@ msgstr ""
 "          [ DELIMITER [ AS ] 'razmejitveni_znak' ]\n"
 "          [ NULL [ AS ] 'null string' ] ]"
 
-#: sql_help.h:109
+#: sql_help.h:113
 msgid "define a new aggregate function"
 msgstr "definiraj novo agregatno funkcijo"
 
-#: sql_help.h:110
+#: sql_help.h:114
 msgid ""
 "CREATE AGGREGATE name (\n"
 "    BASETYPE = input_data_type,\n"
@@ -1752,11 +1757,11 @@ msgstr ""
 "    [ , INITCOND = začetno_stanje ]\n"
 ")"
 
-#: sql_help.h:113
+#: sql_help.h:117
 msgid "define a new cast"
 msgstr "definiraj novo pretvorbo med podatkovnimi tipi (cast)"
 
-#: sql_help.h:114
+#: sql_help.h:118
 msgid ""
 "CREATE CAST (sourcetype AS targettype)\n"
 "    WITH FUNCTION funcname (argtype)\n"
@@ -1774,11 +1779,11 @@ msgstr ""
 "    WITHOUT FUNCTION\n"
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 
-#: sql_help.h:117
+#: sql_help.h:121
 msgid "define a new constraint trigger"
 msgstr "definiraj nov omejitveni prožilec"
 
-#: sql_help.h:118
+#: sql_help.h:122
 msgid ""
 "CREATE CONSTRAINT TRIGGER name\n"
 "    AFTER events ON\n"
@@ -1790,11 +1795,11 @@ msgstr ""
 "    ime_tabele omejitev atributi\n"
 "    FOR EACH ROW EXECUTE PROCEDURE ime_funkcije ( argumenti )"
 
-#: sql_help.h:121
+#: sql_help.h:125
 msgid "define a new conversion"
 msgstr "definiraj novo pretvorbo med kodnimi tabelami"
 
-#: sql_help.h:122
+#: sql_help.h:126
 msgid ""
 "CREATE [DEFAULT] CONVERSION name\n"
 "    FOR source_encoding TO dest_encoding FROM funcname"
@@ -1802,11 +1807,11 @@ msgstr ""
 "CREATE [DEFAULT] CONVERSION ime_pretvorbe\n"
 "    FOR izvorna_kodna_tabela TO ciljna_kodna_tabela FROM ime_funkcije"
 
-#: sql_help.h:125
+#: sql_help.h:129
 msgid "create a new database"
 msgstr "ustvari novo bazo podatkov"
 
-#: sql_help.h:126
+#: sql_help.h:130
 msgid ""
 "CREATE DATABASE name\n"
 "    [ [ WITH ] [ OWNER [=] dbowner ]\n"
@@ -1820,11 +1825,11 @@ msgstr ""
 "           [ TEMPLATE [=] predloga ]\n"
 "           [ ENCODING [=] kodna_tabela ] ]"
 
-#: sql_help.h:129
+#: sql_help.h:133
 msgid "define a new domain"
 msgstr "definiraj novo domeno"
 
-#: sql_help.h:130
+#: sql_help.h:134
 msgid ""
 "CREATE DOMAIN name [AS] data_type\n"
 "    [ DEFAULT expression ]\n"
@@ -1844,11 +1849,11 @@ msgstr ""
 "[ CONSTRAINT ime_omejitve ]\n"
 "{ NOT NULL | NULL | CHECK (izraz) }"
 
-#: sql_help.h:133
+#: sql_help.h:137
 msgid "define a new function"
 msgstr "definiraj novo funkcijo"
 
-#: sql_help.h:134
+#: sql_help.h:138
 msgid ""
 "CREATE [ OR REPLACE ] FUNCTION name ( [ argtype [, ...] ] )\n"
 "    RETURNS rettype\n"
@@ -1872,11 +1877,11 @@ msgstr ""
 "  } ...\n"
 "    [ WITH ( atribut [, ...] ) ]"
 
-#: sql_help.h:137
+#: sql_help.h:141
 msgid "define a new user group"
 msgstr "definiraj novo uporabniško skupino"
 
-#: sql_help.h:138
+#: sql_help.h:142
 msgid ""
 "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -1892,11 +1897,11 @@ msgstr ""
 "     SYSID gid\n"
 "   | USER  uporabniško_ime [, ...]"
 
-#: sql_help.h:141
+#: sql_help.h:145
 msgid "define a new index"
 msgstr "definiraj nov indeks"
 
-#: sql_help.h:142
+#: sql_help.h:146
 msgid ""
 "CREATE [ UNIQUE ] INDEX name ON table [ USING method ]\n"
 "    ( { column | ( expression ) } [ opclass ] [, ...] )\n"
@@ -1906,11 +1911,11 @@ msgstr ""
 "    ( { ime_stolpca | ( izraz ) } [ opclass ] [, ...] )\n"
 "    [ WHERE pogoj_delnega_indeksa ]"
 
-#: sql_help.h:145
+#: sql_help.h:149
 msgid "define a new procedural language"
 msgstr "definiraj nov proceduralni jezik"
 
-#: sql_help.h:146
+#: sql_help.h:150
 msgid ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
 "    HANDLER call_handler [ VALIDATOR valfunction ]"
@@ -1918,11 +1923,11 @@ msgstr ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE ime_jezika\n"
 "    HANDLER upravljalec_klicov [ VALIDATOR validacijska_funkcija ]"
 
-#: sql_help.h:149
+#: sql_help.h:153
 msgid "define a new operator class"
 msgstr "definiraj nov operator class"
 
-#: sql_help.h:150
+#: sql_help.h:154
 msgid ""
 "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type USING index_method "
 "AS\n"
@@ -1940,11 +1945,11 @@ msgstr ""
 "   | STORAGE storage_type\n"
 "  } [, ... ]"
 
-#: sql_help.h:153
+#: sql_help.h:157
 msgid "define a new operator"
 msgstr "definiraj nov operator"
 
-#: sql_help.h:154
+#: sql_help.h:158
 msgid ""
 "CREATE OPERATOR name (\n"
 "    PROCEDURE = funcname\n"
@@ -1966,11 +1971,11 @@ msgstr ""
 "    [, LTCMP = less_than_op ] [, GTCMP = greater_than_op ]\n"
 ")"
 
-#: sql_help.h:157
+#: sql_help.h:161
 msgid "define a new rewrite rule"
 msgstr "definiraj novo prepisovalno pravilo"
 
-#: sql_help.h:158
+#: sql_help.h:162
 msgid ""
 "CREATE [ OR REPLACE ] RULE name AS ON event\n"
 "    TO table [ WHERE condition ]\n"
@@ -1980,11 +1985,11 @@ msgstr ""
 "    TO ime_tabele [ WHERE pogoj ]\n"
 "    DO [ INSTEAD ] { NOTHING | ukaz | ( ukaz ; ukaz ... ) }"
 
-#: sql_help.h:161
+#: sql_help.h:165
 msgid "define a new schema"
 msgstr "definiraj novo shemo"
 
-#: sql_help.h:162
+#: sql_help.h:166
 msgid ""
 "CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element "
 "[ ... ] ]\n"
@@ -1994,11 +1999,11 @@ msgstr ""
 "[ ... ] ]\n"
 "CREATE SCHEMA AUTHORIZATION uporabniško_ime [ element_sheme [ ... ] ]"
 
-#: sql_help.h:165
+#: sql_help.h:169
 msgid "define a new sequence generator"
 msgstr "definiraj nov generator zaporedja"
 
-#: sql_help.h:166
+#: sql_help.h:170
 msgid ""
 "CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
 "    [ MINVALUE minvalue | NO MINVALUE ] [ MAXVALUE maxvalue | NO MAXVALUE ]\n"
@@ -2010,14 +2015,14 @@ msgstr ""
 "MAXVALUE ]\n"
 "    [ START [ WITH ] začetek ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 
-#: sql_help.h:169
+#: sql_help.h:173
 msgid "define a new table"
 msgstr "definiraj novo tabelo"
 
-#: sql_help.h:170
+#: sql_help.h:174
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
-"    { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
+"  { column_name data_type [ DEFAULT default_expr ] [ column_constraint "
 "[ ... ] ]\n"
 "    | table_constraint\n"
 "    | LIKE parent_table [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
@@ -2083,11 +2088,11 @@ msgstr ""
 "UPDATE akcija ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
-#: sql_help.h:173 sql_help.h:349
+#: sql_help.h:177 sql_help.h:353
 msgid "create a new table from the results of a query"
 msgstr "ustvari novo tabelo iz rezultatov poizvedbe"
 
-#: sql_help.h:174
+#: sql_help.h:178
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name "
 "[ (column_name [, ...] ) ]\n"
@@ -2097,11 +2102,11 @@ msgstr ""
 "[ (ime_stolpca [, ...] ) ]\n"
 "    AS poizvedba"
 
-#: sql_help.h:177
+#: sql_help.h:181
 msgid "define a new trigger"
 msgstr "definiraj nov prožilec"
 
-#: sql_help.h:178
+#: sql_help.h:182
 msgid ""
 "CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
 "    ON table [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
@@ -2111,11 +2116,11 @@ msgstr ""
 "    ON ime_tabele [ FOR [ EACH ] { ROW | STATEMENT } ]\n"
 "    EXECUTE PROCEDURE ime_funkcije ( argumenti )"
 
-#: sql_help.h:181
+#: sql_help.h:185
 msgid "define a new data type"
 msgstr "definiraj nov podatkovni tip"
 
-#: sql_help.h:182
+#: sql_help.h:186
 msgid ""
 "CREATE TYPE name AS\n"
 "    ( attribute_name data_type [, ... ] )\n"
@@ -2151,11 +2156,11 @@ msgstr ""
 "    [ , DELIMITER = delimiter ]\n"
 ")"
 
-#: sql_help.h:185
+#: sql_help.h:189
 msgid "define a new database user account"
 msgstr "definiraj nov uporabniški račun"
 
-#: sql_help.h:186
+#: sql_help.h:190
 msgid ""
 "CREATE USER name [ [ WITH ] option [ ... ] ]\n"
 "\n"
@@ -2179,29 +2184,29 @@ msgstr ""
 "    | IN GROUP ime_skupine [, ...]\n"
 "    | VALID UNTIL 'abstime'"
 
-#: sql_help.h:189
+#: sql_help.h:193
 msgid "define a new view"
 msgstr "definiraj nov pogled"
 
-#: sql_help.h:190
+#: sql_help.h:194
 msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
 msgstr ""
 "CREATE [ OR REPLACE ] VIEW ime_pogleda [ ( ime_stolpca [, ...] ) ] AS "
 "poizvedba"
 
-#: sql_help.h:193
+#: sql_help.h:197
 msgid "deallocate a prepared statement"
 msgstr "pobriši pripravljeno izjavo"
 
-#: sql_help.h:194
+#: sql_help.h:198
 msgid "DEALLOCATE [ PREPARE ] plan_name"
 msgstr "DEALLOCATE [ PREPARE ] ime_načrta"
 
-#: sql_help.h:197
+#: sql_help.h:201
 msgid "define a cursor"
 msgstr "definiraj kurzor"
 
-#: sql_help.h:198
+#: sql_help.h:202
 msgid ""
 "DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR query\n"
@@ -2211,101 +2216,101 @@ msgstr ""
 "    CURSOR [ { WITH | WITHOUT } HOLD ] FOR poizvedba\n"
 "    [ FOR { READ ONLY | UPDATE [ OF stolpec [, ...] ] } ]"
 
-#: sql_help.h:201
+#: sql_help.h:205
 msgid "delete rows of a table"
 msgstr "izbriši vrstice v tabeli"
 
-#: sql_help.h:202
+#: sql_help.h:206
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
 msgstr "DELETE FROM [ ONLY ] ime_tabele [ WHERE pogoj ]"
 
-#: sql_help.h:205
+#: sql_help.h:209
 msgid "remove an aggregate function"
 msgstr "odstrani agregatno funkcijo"
 
-#: sql_help.h:206
+#: sql_help.h:210
 msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
 msgstr "DROP AGGREGATE ime_agregata ( tip_argumenta ) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:209
+#: sql_help.h:213
 msgid "remove a cast"
 msgstr "odstrani pretvorbo med podatkovnimi tipi (cast)"
 
-#: sql_help.h:210
+#: sql_help.h:214
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 msgstr "DROP CAST (izvorni_tip AS ciljni_tip) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:213
+#: sql_help.h:217
 msgid "remove a conversion"
 msgstr "odstrani pretvorbo med kodnimi tabelami"
 
-#: sql_help.h:214
+#: sql_help.h:218
 msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
 msgstr "DROP CONVERSION ime_pretvorbe [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:217
+#: sql_help.h:221
 msgid "remove a database"
 msgstr "odstrani bazo podatkov"
 
-#: sql_help.h:218
+#: sql_help.h:222
 msgid "DROP DATABASE name"
 msgstr "DROP DATABASE ime_baze"
 
-#: sql_help.h:221
+#: sql_help.h:225
 msgid "remove a domain"
 msgstr "odstrani domeno"
 
-#: sql_help.h:222
+#: sql_help.h:226
 msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
 msgstr "DROP DOMAIN ime_domene [, ...]  [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:225
+#: sql_help.h:229
 msgid "remove a function"
 msgstr "odstrani funkcijo"
 
-#: sql_help.h:226
+#: sql_help.h:230
 msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
 msgstr ""
 "DROP FUNCTION ime_funkcije ( [ tip_argumenta [, ...] ] ) [ CASCADE | "
 "RESTRICT ]"
 
-#: sql_help.h:229
+#: sql_help.h:233
 msgid "remove a user group"
 msgstr "odstrani uporabniško skupino"
 
-#: sql_help.h:230
+#: sql_help.h:234
 msgid "DROP GROUP name"
 msgstr "DROP GROUP ime_skupine"
 
-#: sql_help.h:233
+#: sql_help.h:237
 msgid "remove an index"
 msgstr "odstrani indeks"
 
-#: sql_help.h:234
+#: sql_help.h:238
 msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP INDEX ime_indeksa [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:237
+#: sql_help.h:241
 msgid "remove a procedural language"
 msgstr "odstrani proceduralni jezik"
 
-#: sql_help.h:238
+#: sql_help.h:242
 msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
 msgstr "DROP [ PROCEDURAL ] LANGUAGE ime_jezika [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:241
+#: sql_help.h:245
 msgid "remove an operator class"
 msgstr "odstrani operator class"
 
-#: sql_help.h:242
+#: sql_help.h:246
 msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR CLASS ime USING index_method [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:245
+#: sql_help.h:249
 msgid "remove an operator"
 msgstr "odstrani operator"
 
-#: sql_help.h:246
+#: sql_help.h:250
 msgid ""
 "DROP OPERATOR name ( lefttype | NONE , righttype | NONE ) [ CASCADE | "
 "RESTRICT ]"
@@ -2313,95 +2318,95 @@ msgstr ""
 "DROP OPERATOR ime_operatorja ( levi_tip | NONE , desni_tip | NONE ) "
 "[ CASCADE | RESTRICT ]"
 
-#: sql_help.h:249
+#: sql_help.h:253
 msgid "remove a rewrite rule"
 msgstr "odstrani prepisovalno pravilo"
 
-#: sql_help.h:250
+#: sql_help.h:254
 msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
 msgstr "DROP RULE ime_pravila ON ime_relacije [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:253
+#: sql_help.h:257
 msgid "remove a schema"
 msgstr "odstrani shemo"
 
-#: sql_help.h:254
+#: sql_help.h:258
 msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SCHEMA ime_sheme [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:257
+#: sql_help.h:261
 msgid "remove a sequence"
 msgstr "odstrani zaporedje"
 
-#: sql_help.h:258
+#: sql_help.h:262
 msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SEQUENCE ime_zaporedja [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:261
+#: sql_help.h:265
 msgid "remove a table"
 msgstr "odstrani tabelo"
 
-#: sql_help.h:262
+#: sql_help.h:266
 msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TABLE ime_tabele [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:265
+#: sql_help.h:269
 msgid "remove a trigger"
 msgstr "odstrani prožilec"
 
-#: sql_help.h:266
+#: sql_help.h:270
 msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
 msgstr "DROP TRIGGER ime_prožilca ON ime_tabele [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:269
+#: sql_help.h:273
 msgid "remove a data type"
 msgstr "odstrani podatkovni tip"
 
-#: sql_help.h:270
+#: sql_help.h:274
 msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TYPE ime_tipa [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:273
+#: sql_help.h:277
 msgid "remove a database user account"
 msgstr "odstrani uporabniški račun"
 
-#: sql_help.h:274
+#: sql_help.h:278
 msgid "DROP USER name"
 msgstr "DROP USER uporabniško_ime"
 
-#: sql_help.h:277
+#: sql_help.h:281
 msgid "remove a view"
 msgstr "odstrani pogled"
 
-#: sql_help.h:278
+#: sql_help.h:282
 msgid "DROP VIEW name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP VIEW ime_pogleda [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:282
+#: sql_help.h:286
 msgid "END [ WORK | TRANSACTION ]"
 msgstr "END [ WORK | TRANSACTION ]"
 
-#: sql_help.h:285
+#: sql_help.h:289
 msgid "execute a prepared statement"
 msgstr "izvrši pripravljeno izjavo"
 
-#: sql_help.h:286
+#: sql_help.h:290
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
 msgstr "EXECUTE ime_načrta [ (parameter [, ...] ) ]"
 
-#: sql_help.h:289
+#: sql_help.h:293
 msgid "show the execution plan of a statement"
 msgstr "prikaži načrt izvajanja za podano izjavo"
 
-#: sql_help.h:290
+#: sql_help.h:294
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
 msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] stavek"
 
-#: sql_help.h:293
+#: sql_help.h:297
 msgid "retrieve rows from a query using a cursor"
 msgstr "dobi vrstice iz poizvedbe z uporabo kurzorja"
 
-#: sql_help.h:294
+#: sql_help.h:298
 msgid ""
 "FETCH [ direction { FROM | IN } ] cursorname\n"
 "\n"
@@ -2441,11 +2446,11 @@ msgstr ""
 "    BACKWARD število\n"
 "    BACKWARD ALL"
 
-#: sql_help.h:297
+#: sql_help.h:301
 msgid "define access privileges"
 msgstr "definiraj privilegije za dostop"
 
-#: sql_help.h:298
+#: sql_help.h:302
 msgid ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
@@ -2498,11 +2503,11 @@ msgstr ""
 "    TO { uporabniško_ime | GROUP ime_skupine | PUBLIC } [, ...] [ WITH GRANT "
 "OPTION ]"
 
-#: sql_help.h:301
+#: sql_help.h:305
 msgid "create new rows in a table"
 msgstr "ustvari nove vrstice v tabeli"
 
-#: sql_help.h:302
+#: sql_help.h:306
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
@@ -2510,27 +2515,27 @@ msgstr ""
 "INSERT INTO ime_tabele [ ( stolpec [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { izraz | DEFAULT } [, ...] ) | poizvedba }"
 
-#: sql_help.h:305
+#: sql_help.h:309
 msgid "listen for a notification"
 msgstr "čakaj na obvestilo"
 
-#: sql_help.h:306
+#: sql_help.h:310
 msgid "LISTEN name"
 msgstr "LISTEN ime"
 
-#: sql_help.h:309
+#: sql_help.h:313
 msgid "load or reload a shared library file"
 msgstr "naloži ali ponovno naloži deljeno knjižnico"
 
-#: sql_help.h:310
+#: sql_help.h:314
 msgid "LOAD 'filename'"
 msgstr "LOAD 'ime_datoteke'"
 
-#: sql_help.h:313
+#: sql_help.h:317
 msgid "lock a table"
 msgstr "zakleni tabelo"
 
-#: sql_help.h:314
+#: sql_help.h:318
 msgid ""
 "LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ]\n"
 "\n"
@@ -2546,43 +2551,43 @@ msgstr ""
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 
-#: sql_help.h:317
+#: sql_help.h:321
 msgid "position a cursor"
 msgstr "premakni kurzor"
 
-#: sql_help.h:318
+#: sql_help.h:322
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
 msgstr "MOVE [ smer { FROM | IN } ] ime_kurzorja"
 
-#: sql_help.h:321
+#: sql_help.h:325
 msgid "generate a notification"
 msgstr "ustvari obvestilo"
 
-#: sql_help.h:322
+#: sql_help.h:326
 msgid "NOTIFY name"
 msgstr "NOTIFY ime"
 
-#: sql_help.h:325
+#: sql_help.h:329
 msgid "prepare a statement for execution"
 msgstr "pripravi izjavo na izvršitev"
 
-#: sql_help.h:326
+#: sql_help.h:330
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
 msgstr "PREPARE ime_načrta [ (podatkovni_tip [, ...] ) ] AS izjava"
 
-#: sql_help.h:329
+#: sql_help.h:333
 msgid "rebuild indexes"
 msgstr "ponovno ustvari indeks"
 
-#: sql_help.h:330
+#: sql_help.h:334
 msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
 msgstr "REINDEX { DATABASE | TABLE | INDEX } ime_baze [ FORCE ]"
 
-#: sql_help.h:333
+#: sql_help.h:337
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "ponastavi vrednost run-time parametra na privzeto vrednost"
 
-#: sql_help.h:334
+#: sql_help.h:338
 msgid ""
 "RESET name\n"
 "RESET ALL"
@@ -2590,11 +2595,11 @@ msgstr ""
 "RESET ime_parametra\n"
 "RESET ALL"
 
-#: sql_help.h:337
+#: sql_help.h:341
 msgid "remove access privileges"
 msgstr "odvzami privilegije za dostop"
 
-#: sql_help.h:338
+#: sql_help.h:342
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
@@ -2658,15 +2663,15 @@ msgstr ""
 "    FROM { uporabniško_ime | GROUP ime_skupine | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:342
+#: sql_help.h:346
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
 msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
-#: sql_help.h:345
+#: sql_help.h:349
 msgid "retrieve rows from a table or view"
 msgstr "izberi vrstice iz tabele ali pogleda"
 
-#: sql_help.h:346
+#: sql_help.h:350
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2713,7 +2718,7 @@ msgstr ""
 "    from_item [ NATURAL ] tip_stika from_item [ ON pogoj_stika | USING "
 "( join_column [, ...] ) ]"
 
-#: sql_help.h:350
+#: sql_help.h:354
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2741,11 +2746,11 @@ msgstr ""
 "    [ OFFSET začetek ]\n"
 "    [ FOR UPDATE [ OF ime_tabele [, ...] ] ]"
 
-#: sql_help.h:353
+#: sql_help.h:357
 msgid "change a run-time parameter"
 msgstr "spremeni vrednost run-time parametra"
 
-#: sql_help.h:354
+#: sql_help.h:358
 msgid ""
 "SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
@@ -2754,16 +2759,16 @@ msgstr ""
 "DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { časovni_pas | LOCAL | DEFAULT }"
 
-#: sql_help.h:357
+#: sql_help.h:361
 msgid "set the constraint mode of the current transaction"
 msgstr "nastavi vedenje omejitev znotraj trenutne transakcije"
 
-#: sql_help.h:358
+#: sql_help.h:362
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr ""
 "SET CONSTRAINTS { ALL | ime_omejitve [, ...] } { DEFERRED | IMMEDIATE }"
 
-#: sql_help.h:361
+#: sql_help.h:365
 msgid ""
 "set the session user identifier and the current user identifier of the "
 "current session"
@@ -2771,7 +2776,7 @@ msgstr ""
 "nastavi uporabnikov identifikator za trenutno sejo (začasni prevzem vloge "
 "drugega uporabnika)"
 
-#: sql_help.h:362
+#: sql_help.h:366
 msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
@@ -2781,11 +2786,11 @@ msgstr ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 
-#: sql_help.h:365
+#: sql_help.h:369
 msgid "set the characteristics of the current transaction"
 msgstr "nastavi lastnosti trenutne transakcije"
 
-#: sql_help.h:366
+#: sql_help.h:370
 msgid ""
 "SET TRANSACTION\n"
 "    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
@@ -2801,11 +2806,11 @@ msgstr ""
 "    [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] [ READ WRITE | "
 "READ ONLY ]"
 
-#: sql_help.h:369
+#: sql_help.h:373
 msgid "show the value of a run-time parameter"
 msgstr "prikaži vrednost run-time parametra"
 
-#: sql_help.h:370
+#: sql_help.h:374
 msgid ""
 "SHOW name\n"
 "SHOW ALL"
@@ -2813,7 +2818,7 @@ msgstr ""
 "SHOW ime\n"
 "SHOW ALL"
 
-#: sql_help.h:374
+#: sql_help.h:378
 msgid ""
 "START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] "
 "[ READ WRITE | READ ONLY ]"
@@ -2821,27 +2826,27 @@ msgstr ""
 "START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] "
 "[ READ WRITE | READ ONLY ]"
 
-#: sql_help.h:377
+#: sql_help.h:381
 msgid "empty a table"
 msgstr "izprazni tabelo"
 
-#: sql_help.h:378
+#: sql_help.h:382
 msgid "TRUNCATE [ TABLE ] name"
 msgstr "TRUNCATE [ TABLE ] ime_tabele"
 
-#: sql_help.h:381
+#: sql_help.h:385
 msgid "stop listening for a notification"
 msgstr "prenehaj čakati na obvestilo"
 
-#: sql_help.h:382
+#: sql_help.h:386
 msgid "UNLISTEN { name | * }"
 msgstr "UNLISTEN { ime | * }"
 
-#: sql_help.h:385
+#: sql_help.h:389
 msgid "update rows of a table"
 msgstr "posodobi vrstice v tabeli"
 
-#: sql_help.h:386
+#: sql_help.h:390
 msgid ""
 "UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
 "    [ FROM fromlist ]\n"
@@ -2851,11 +2856,11 @@ msgstr ""
 "    [ FROM fromlist ]\n"
 "    [ WHERE pogoj ]"
 
-#: sql_help.h:389
+#: sql_help.h:393
 msgid "garbage-collect and optionally analyze a database"
 msgstr "poberi smeti in (ob zahtevi) analiziraj bazo podatkov"
 
-#: sql_help.h:390
+#: sql_help.h:394
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column "
