@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.1 1999/12/05 20:04:39 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/droplang.sgml,v 1.2 2000/01/19 20:08:22 petere Exp $
 Postgres documentation
 -->
 
@@ -114,16 +114,6 @@ droplang [ <replaceable class="parameter">connection options</replaceable> ] --l
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term>-e, --echo</term>
-      <listitem>
-       <para>
-        Echo the commands that <application>droplang</application> generates
-	and sends to the backend.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
   </refsect2>
@@ -141,9 +131,6 @@ droplang [ <replaceable class="parameter">connection options</replaceable> ] --l
     option and see under the respective <acronym>SQL</acronym> command
     for details. Check also under <xref linkend="APP-PSQL" endterm="APP-PSQL-title">
     for more possibilities.
-   </para>
-   <para>
-    No output is generated if <application>droplang</application> succeeds.
    </para>
   </refsect2>
  </refsynopsisdiv>

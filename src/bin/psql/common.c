@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.9 2000/01/18 23:30:23 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.10 2000/01/19 20:08:33 petere Exp $
  */
 #include <c.h>
 #include "common.h"
@@ -146,7 +146,7 @@ psql_error(const char *fmt, ...)
         fflush(pset.queryFout);
 
     if (pset.inputfile)
-        fprintf(stderr, "%s:%u: ", pset.inputfile ? pset.inputfile : pset.progname, pset.lineno);
+        fprintf(stderr, "%s:%s:%u: ", pset.progname, pset.inputfile, pset.lineno);
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);

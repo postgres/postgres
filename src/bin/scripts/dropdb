@@ -10,11 +10,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.5 2000/01/12 19:36:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/dropdb,v 1.6 2000/01/19 20:08:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
+PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 PSQLOPT=
 dbname=
@@ -58,14 +59,11 @@ do
         --port=*)
                 PSQLOPT="$PSQLOPT -p "`echo $1 | sed 's/^--port=//'`
                 ;;
-	--user|--username|-U)
-		PSQLOPT="$PSQLOPT -U '$2'"
+	--username|-U)
+		PSQLOPT="$PSQLOPT -U $2"
 		shift;;
         -U*)
                 PSQLOPT="$PSQLOPT $1"
-                ;;
-        --user=*)
-                PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--user=//'`
                 ;;
         --username=*)
                 PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--username=//'`
@@ -84,7 +82,8 @@ do
 		forcedel=f
 		;;
 	-*)
-		echo "$CMDNAME: Unrecognized option: $1. Try -? for help."
+		echo "$CMDNAME: invalid option: $1"
+                echo "Try -? for help."
 		exit 1
 		;;
 	 *)
@@ -96,15 +95,21 @@ done
 
 
 if [ "$usage" ]; then
-	echo "Usage: $CMDNAME [options] dbname"
-	echo ""
+        echo "$CMDNAME removes a PostgreSQL database."
+        echo
+	echo "Usage:"
+        echo "  $CMDNAME [options] dbname"
+        echo
+	echo "Options:"
 	echo "  -h, --host=HOSTNAME             Database server host"
 	echo "  -p, --port=PORT                 Database server port"
 	echo "  -U, --username=USERNAME         Username to connect as"
 	echo "  -W, --password                  Prompt for password"
 	echo "  -i, --interactive               Prompt before deleting anything"
-#???	echo "  -e,          --echo             "
-        echo "  -q,          --quiet            Don't write any messages"
+	echo "  -e, --echo                      Show the query being sent to the backend"
+        echo "  -q, --quiet                     Don't write any messages"
+	echo
+	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
@@ -127,7 +132,7 @@ fi
 
 dbname=`echo $dbname | sed 's/\"/\\\"/g'`
 
-psql $PSQLOPT -d template1 -c "DROP DATABASE \"$dbname\""
+${PATHNAME}psql $PSQLOPT -d template1 -c "DROP DATABASE \"$dbname\""
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: database removal failed"
 	exit 1

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.4 2000/01/18 00:03:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.5 2000/01/19 20:08:25 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -68,7 +68,7 @@ if [ "$usage" ]; then
 	echo "Usage:"
         echo "  $CMDNAME <location>"
 	echo ""
-        echo "Report bugs to <bugs@postgresql.org>."
+        echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 

@@ -11,11 +11,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.6 2000/01/12 19:36:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.7 2000/01/19 20:08:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
+PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 MB=
 PSQLOPT=
@@ -49,14 +50,11 @@ do
         --port=*)
                 PSQLOPT="$PSQLOPT -p "`echo $1 | sed 's/^--port=//'`
                 ;;
-	--user|--username|-U)
-		PSQLOPT="$PSQLOPT -U '$2'"
+	--username|-U)
+		PSQLOPT="$PSQLOPT -U $2"
 		shift;;
         -U*)
                 PSQLOPT="$PSQLOPT $1"
-                ;;
-        --user=*)
-                PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--user=//'`
                 ;;
         --username=*)
                 PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--username=//'`
@@ -90,7 +88,7 @@ do
                 MB=`echo $1 | sed 's/^--encoding=//'`
                 ;;
 	-*)
-		echo "$CMDNAME: unrecognized option: $1"
+		echo "$CMDNAME: invalid option: $1"
                 echo "Try -? for help."
 		exit 1
 		;;
@@ -106,16 +104,22 @@ do
 done
 
 if [ "$usage" ]; then
-	echo "Usage: $CMDNAME [options] dbname [description]"
-	echo ""
+        echo "$CMDNAME creates a PostgreSQL database."
+        echo
+	echo "Usage:"
+        echo "  $CMDNAME [options] dbname [description]"
+        echo
+	echo "Options:"
 	echo "  -D, --location=PATH             Alternative place to store the database"
 	echo "  -E, --encoding=ENCODING         Multibyte encoding for the database"
 	echo "  -h, --host=HOSTNAME             Database server host"
 	echo "  -p, --port=PORT                 Database server port"
 	echo "  -U, --username=USERNAME         Username to connect as"
 	echo "  -W, --password                  Prompt for password"
-#???	echo "  -e,          --echo             "
-        echo "  -q,          --quiet            Don't write any messages"
+	echo "  -e, --echo                      Show the query being sent to the backend"
+        echo "  -q, --quiet                     Don't write any messages"
+	echo
+	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
@@ -146,7 +150,7 @@ withstring=
 [ "$MB" ] &&         withstring="$withstring ENCODING = '$MB'"
 [ "$withstring" ] && withstring=" WITH$withstring"
 
-psql $PSQLOPT -d template1 -c "CREATE DATABASE \"$dbname\"$withstring"
+${PATHNAME}psql $PSQLOPT -d template1 -c "CREATE DATABASE \"$dbname\"$withstring"
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: database creation failed"
 	exit 1
@@ -157,7 +161,7 @@ fi
 
 dbcomment=`echo $dbcomment | sed "s/'/\\\\\'/g"`
 
-psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
+${PATHNAME}psql $PSQLOPT -d template1 -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: comment creation failed (database was created)"
 	exit 1

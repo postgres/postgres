@@ -8,13 +8,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.7 2000/01/19 02:59:01 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.8 2000/01/19 20:08:36 petere Exp $
 #
 # Note - this should NOT be setuid.
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
+PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 NewUser=
 SysID=
@@ -64,14 +65,11 @@ do
                 ;;
 # Note: These two specify the user to connect as (like in psql),
 #       not the user you're creating.
-	--user|--username|-U)
-		PSQLOPT="$PSQLOPT -U '$2'"
+	--username|-U)
+		PSQLOPT="$PSQLOPT -U $2"
 		shift;;
         -U*)
                 PSQLOPT="$PSQLOPT $1"
-                ;;
-        --user=*)
-                PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--user=//'`
                 ;;
         --username=*)
                 PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--username=//'`
@@ -111,7 +109,7 @@ do
 		PwPrompt=t
 		;;
 	-*)
-		echo "$CMDNAME: unrecognized option: $1"
+		echo "$CMDNAME: invalid option: $1"
                 echo "Try -? for help."
 		exit 1
 		;;
@@ -123,8 +121,12 @@ do
 done
 
 if [ "$usage" ]; then	
-	echo "Usage: $CMDNAME [options] [username]"
-	echo ""
+        echo "$CMDNAME creates a new PostgreSQL user."
+        echo
+	echo "Usage:"
+        echo "  $CMDNAME [options] [username]"
+        echo
+	echo "Options:"
 	echo "  -d, --createdb                  User can create new databases"
 	echo "  -D, --no-createdb               User cannot create databases"
 	echo "  -a, --adduser                   User can add new users"
@@ -135,8 +137,10 @@ if [ "$usage" ]; then
 	echo "  -p, --port=PORT                 Database server port"
 	echo "  -U, --username=USERNAME         Username to connect as (not the one to create)"
 	echo "  -W, --password                  Prompt for password to connect"
-#???	echo "  -e,          --echo             "
-        echo "  -q,          --quiet            Don't write any messages"
+	echo "  -e, --echo                      Show the query being sent to the backend"
+        echo "  -q, --quiet                     Don't write any messages"
+	echo
+	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
@@ -219,7 +223,7 @@ SUBQUERY=
 [ "$CanAddUser" = t ] &&  QUERY="$QUERY CREATEUSER"
 [ "$CanAddUser" = f ] &&  QUERY="$QUERY NOCREATEUSER"
 
-psql $PSQLOPT -d template1 -c "$QUERY"
+${PATHNAME}psql -c "$QUERY" -d template1 $PSQLOPT
 if [ $? -ne 0 ]; then
 	echo "$CMDNAME: creation of user \"$NewUser\" failed"
 	exit 1

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.11 2000/01/18 23:30:23 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.12 2000/01/19 20:08:34 petere Exp $
  */
 #include <c.h>
 #include "help.h"
@@ -129,7 +129,7 @@ usage(void)
     puts(  "(for SQL commands) from within psql, or consult the psql section in");
     puts(  "the PostgreSQL manual, which accompanies the distribution and is also");
     puts(  "available at <http://www.postgresql.org>.");
-    puts(  "Report bugs to <bugs@postgresql.org>.");
+    puts(  "Report bugs to <pgsql-bugs@postgresql.org>.");
 
 #ifndef WIN32
 	if (pw)

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.136 2000/01/19 02:58:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.137 2000/01/19 20:08:30 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -167,7 +167,7 @@ help(const char *progname)
         );
 #endif
     puts("If no database name is not supplied, then the PGDATABASE environment\nvariable value is used.\n");
-    puts("Report bugs to <bugs@postgresql.org>.");
+    puts("Report bugs to <pgsql-bugs@postgresql.org>.");
 }
 
 

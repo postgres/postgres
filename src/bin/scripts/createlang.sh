@@ -8,16 +8,16 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.5 2000/01/12 19:36:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.6 2000/01/19 20:08:35 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
+PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 PSQLOPT=
 dbname=
 langname=
-echo=
 list=
 
 # Check for echo -n vs echo \c
@@ -65,14 +65,11 @@ do
         --port=*)
                 PSQLOPT="$PSQLOPT -p "`echo $1 | sed 's/^--port=//'`
                 ;;
-	--user|--username|-U)
-		PSQLOPT="$PSQLOPT -U '$2'"
+	--username|-U)
+		PSQLOPT="$PSQLOPT -U $2"
 		shift;;
         -U*)
                 PSQLOPT="$PSQLOPT $1"
-                ;;
-        --user=*)
-                PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--user=//'`
                 ;;
         --username=*)
                 PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--username=//'`
@@ -80,10 +77,7 @@ do
 	--password|-W)
 		PSQLOPT="$PSQLOPT -W"
 		;;
-	--echo|-e)
-                echo=t
-		;;
-	--dbname|--database|-d)
+	--dbname|-d)
 		dbname="$2"
 		shift;;
         -d*)
@@ -91,9 +85,6 @@ do
                 ;;
         --dbname=*)
                 dbname=`echo $1 | sed 's/^--dbname=//'`
-                ;;
-        --database=*)
-                dbname=`echo $1 | sed 's/^--database=//'`
                 ;;
 # misc options
 	--pglib|-L)
@@ -107,7 +98,7 @@ do
                 ;;
 
 	-*)
-		echo "$CMDNAME: unrecognized option: $1"
+		echo "$CMDNAME: invalid option: $1"
                 echo "Try -? for help."
 		exit 1
 		;;
@@ -123,23 +114,22 @@ do
 done
 
 if [ "$usage" ]; then	
-	echo ""
-	echo "Usage: $CMDNAME [options] [langname [dbname]]"
-	echo ""
+        echo "$CMDNAME installs a procedural language into a PostgreSQL database."
+	echo
+	echo "Usage:"
+        echo "  $CMDNAME [options] [langname [dbname]]"
+        echo
+	echo "Options:"
 	echo "  -h, --host=HOSTNAME             Database server host"
 	echo "  -p, --port=PORT                 Database server port"
 	echo "  -U, --username=USERNAME         Username to connect as"
 	echo "  -W, --password                  Prompt for password"
 	echo "  -d, --dbname=DBNAME             Database to install language in"
-	echo "  -e, --echo                      Create some output about what is happening"
 	echo "  -L, --pglib=PGLIB               Find language interpreter in directory PGLIB"
 	echo "  -l, --list                      Show a list of currently installed languages"
+        echo
+	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
-fi
-
-if [ "$list" ]; then
-        psql $PSQLOPT -d "$dbname" -c "SELECT lanname, lanpltrusted, lancompiler FROM pg_language WHERE lanispl = 't'"
-        exit $?
 fi
 
 
@@ -150,6 +140,15 @@ if [ -z "$dbname" ]; then
 	echo "$CMDNAME: missing required argument database name"
         echo "Try -? for help."
 	exit 1
+fi
+
+
+# ----------
+# List option
+# ----------
+if [ "$list" ]; then
+        ${PATHNAME}psql $PSQLOPT -d "$dbname" -P 'title=Procedural languages' -c "SELECT lanname as \"Name\", lanpltrusted as \"Trusted?\", lancompiler as \"Compiler\" FROM pg_language WHERE lanispl = 't'"
+        exit $?
 fi
 
 
@@ -210,13 +209,7 @@ if [ ! -f $PGLIB/${langname}__DLSUFFIX__ ]; then
 fi
 
 
-if [ "$echo" ]; then
-        PSQLOPT="$PSQLOPT -e"
-else
-        PSQLOPT="$PSQLOPT -q"
-fi
-
-PSQL="psql -A -t $PSQLOPT -d $dbname -c"
+PSQL="${PATHNAME}psql -A -t -q $PSQLOPT -d $dbname -c"
 
 # ----------
 # Make sure the language isn't already installed
@@ -254,4 +247,5 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
+echo "Ok"
 exit 0

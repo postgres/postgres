@@ -11,11 +11,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.8 2000/01/12 19:36:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.9 2000/01/19 20:08:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 CMDNAME=`basename $0`
+PATHNAME=`echo $0 | sed "s,$CMDNAME\$,,"`
 
 PSQLOPT=
 verbose=
@@ -23,6 +24,7 @@ analyze=
 table=
 dbname=
 alldb=
+quiet=0
 
 while [ $# -gt 0 ]
 do
@@ -50,14 +52,11 @@ do
         --port=*)
                 PSQLOPT="$PSQLOPT -p "`echo $1 | sed 's/^--port=//'`
                 ;;
-	--user|--username|-U)
-		PSQLOPT="$PSQLOPT -U '$2'"
+	--username|-U)
+		PSQLOPT="$PSQLOPT -U $2"
 		shift;;
         -U*)
                 PSQLOPT="$PSQLOPT $1"
-                ;;
-        --user=*)
-                PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--user=//'`
                 ;;
         --username=*)
                 PSQLOPT="$PSQLOPT -U "`echo $1 | sed 's/^--username=//'`
@@ -66,12 +65,13 @@ do
 		PSQLOPT="$PSQLOPT -W"
 		;;
 	--echo|-e)
-		PSQLOPT="$PSQLOPT -e"
+		ECHOOPT="-e"
 		;;
 	--quiet|-q)
-		PSQLOPT="$PSQLOPT -o /dev/null"
+		ECHOOPT="$ECHOOPT -o /dev/null"
+                quiet=1
 		;;
-	--dbname|--database|-d)
+	--dbname|-d)
 		dbname="$2"
 		shift;;
         -d*)
@@ -80,12 +80,9 @@ do
         --dbname=*)
                 dbname=`echo $1 | sed 's/^--dbname=//'`
                 ;;
-        --database=*)
-                dbname=`echo $1 | sed 's/^--database=//'`
-                ;;
 # options converted into SQL command
 	--analyze|-z)
-		analyze="ANALYZE "
+		analyze="ANALYZE"
 		;;
 	--all|-a)
 		alldb=Y
@@ -100,11 +97,11 @@ do
                 table=`echo $1 | sed 's/^--table=//'`
                 ;;
 	--verbose|-v)
-		verbose="VERBOSE "
+		verbose="VERBOSE"
 		;;
 
 	-*)
-		echo "$CMDNAME: unrecognized option: $1"
+		echo "$CMDNAME: invalid option: $1"
                 echo "Try -? for help."
 		exit 1
 		;;
@@ -116,8 +113,12 @@ do
 done
 
 if [ "$usage" ]; then	
-	echo "Usage: $CMDNAME [options] [dbname]"
-	echo ""
+        echo "$CMDNAME cleans and analyzes a PostgreSQL database."
+        echo
+	echo "Usage:"
+        echo "  $CMDNAME [options] [dbname]"
+	echo
+        echo "Options:"
 	echo "  -h, --host=HOSTNAME             Database server host"
 	echo "  -p, --port=PORT                 Database server port"
 	echo "  -U, --username=USERNAME         Username to connect as"
@@ -127,8 +128,10 @@ if [ "$usage" ]; then
 	echo "  -z, --analyze                   Update optimizer hints"
 	echo "  -t, --table='TABLE[(columns)]'  Vacuum specific table only"
 	echo "  -v, --verbose                   Write a lot of output"
-#???	echo "  -e, --echo                      "
+	echo "  -e, --echo                      Show the command being sent to the backend"
         echo "  -q, --quiet                     Don't write any output"
+        echo
+	echo "Report bugs to <pgsql-bugs@postgresql.org>."
 	exit 0
 fi
 
@@ -137,10 +140,9 @@ if [ "$alldb" ]; then
                 echo "$CMDNAME: cannot vacuum all databases and a specific one at the same time"
                 exit 1
         fi
-	dbname="`psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`"
-fi
+	dbname=`${PATHNAME}psql $PSQLOPT -q -t -A -d template1 -c 'SELECT datname FROM pg_database'`
 
-if [ -z "$dbname" ]; then
+elif [ -z "$dbname" ]; then
 	echo "$CMDNAME: missing required argument database name"
         echo "Try -? for help."
 	exit 1
@@ -148,7 +150,8 @@ fi
 
 for db in $dbname
 do
-	psql $PSQLOPT -c "vacuum $verbose $analyze $table" -d $dbname
+        [ "$alldb" -a "$quiet" -ne 1 ] && echo "Vacuuming $db"
+	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "VACUUM $verbose $analyze $table" -d $db
 done
 
 if [ $? -ne 0 ]; then

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.3 2000/01/18 00:03:36 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.4 2000/01/19 20:08:27 petere Exp $
 #
 
 CMDNAME=`basename $0`
@@ -13,7 +13,7 @@ if [ "$1" = '-?' -o "$1" = "--help" ]; then
     echo
     echo "Note: Since the utilities underlying this script are very different"
     echo "from platform to platform, chances are that it might not work on"
-    echo "yours. If that is the case, please write to <bugs@postgresql.org>"
+    echo "yours. If that is the case, please write to <pgsql-bugs@postgresql.org>"
     echo "so that your platform can be supported in the future."
     exit 0
 fi

@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.80 2000/01/18 00:03:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.81 2000/01/19 20:08:24 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -235,7 +235,7 @@ if [ "$usage" ]; then
         echo "  -d, --debug                 Generate lots of debugging output"
         echo "  -n, --noclean               Do not clean up after errors"
  	echo	 
-        echo "Report bugs to <bugs@postgresql.org>."
+        echo "Report bugs to <pgsql-bugs@postgresql.org>."
  	exit 0
 fi
 
