@@ -11,7 +11,7 @@
  *	  SQL aggregates. (Do not expect POSTQUEL semantics.)	 -- ay 2/95
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.57 1999/10/08 03:49:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.58 1999/10/30 01:18:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -408,24 +408,43 @@ ExecAgg(Agg *node)
 				return NULL;
 		}
 		else
+		{
 			aggstate->agg_done = true;
+			/*
+			 * If inputtuple==NULL (ie, the outerPlan didn't return anything),
+			 * create a dummy all-nulls input tuple for use by execProject.
+			 * 99.44% of the time this is a waste of cycles, because
+			 * ordinarily the projected output tuple's targetlist cannot
+			 * contain any direct (non-aggregated) references to input
+			 * columns, so the dummy tuple will not be referenced.  However
+			 * there are special cases where this isn't so --- in particular
+			 * an UPDATE involving an aggregate will have a targetlist
+			 * reference to ctid.  We need to return a null for ctid in that
+			 * situation, not coredump.
+			 *
+			 * The values returned for the aggregates will be the initial
+			 * values of the transition functions.
+			 */
+			if (inputTuple == NULL)
+			{
+				TupleDesc	tupType;
+				Datum	   *tupValue;
+				char	   *null_array;
+				AttrNumber	attnum;
+
+				tupType = aggstate->csstate.css_ScanTupleSlot->ttc_tupleDescriptor;
+				tupValue = projInfo->pi_tupValue;
+				null_array = (char *) palloc(sizeof(char) * tupType->natts);
+				for (attnum = 0; attnum < tupType->natts; attnum++)
+					null_array[attnum] = 'n';
+				inputTuple = heap_formtuple(tupType, tupValue, null_array);
+				pfree(null_array);
+			}
+		}
 
 		/*
-		 * We used to create a dummy all-nulls input tuple here if
-		 * inputTuple == NULL (ie, the outerPlan didn't return anything).
-		 * However, now that we don't return a bogus tuple in Group mode,
-		 * we can only get here with inputTuple == NULL in non-Group mode.
-		 * So, if the parser has done its job right, the projected output
-		 * tuple's targetList must not contain any direct references to
-		 * input columns, and so it's a waste of time to create an
-		 * all-nulls input tuple.  We just let the tuple slot get set
-		 * to NULL instead.  The values returned for the aggregates will
-		 * be the initial values of the transition functions.
-		 */
-
-		/*
-		 * Store the representative input tuple (or NULL, if none)
-		 * in the tuple table slot reserved for it.
+		 * Store the representative input tuple in the tuple table slot
+		 * reserved for it.
 		 */
 		ExecStoreTuple(inputTuple,
 					   aggstate->csstate.css_ScanTupleSlot,
