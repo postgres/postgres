@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.83 1999/12/28 13:40:49 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.84 1999/12/30 05:05:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,31 +378,27 @@ static Relation
 AllocateRelationDesc(Relation relation, u_int natts,
 					 Form_pg_class relp)
 {
-	Size		len;
 	Form_pg_class relationForm;
 
 	/* ----------------
 	 *	allocate space for the relation tuple form
 	 * ----------------
 	 */
-	relationForm = (Form_pg_class)
-		palloc((Size) (sizeof(FormData_pg_class)));
+	relationForm = (Form_pg_class) palloc(sizeof(FormData_pg_class));
 
-	memmove((char *) relationForm, (char *) relp, CLASS_TUPLE_SIZE);
+	memcpy((char *) relationForm, (char *) relp, CLASS_TUPLE_SIZE);
 
 	/* ----------------
 	 *	allocate space for new relation descriptor, if needed
 	 */
-	len = sizeof(RelationData);
-
 	if (relation == NULL)
-		relation = (Relation) palloc(len);
+		relation = (Relation) palloc(sizeof(RelationData));
 
 	/* ----------------
 	 *	clear new reldesc
 	 * ----------------
 	 */
-	MemSet((char *) relation, 0, len);
+	MemSet((char *) relation, 0, sizeof(RelationData));
 
 	/* make sure relation is marked as having no open file yet */
 	relation->rd_fd = -1;
@@ -745,13 +741,9 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	u_int		natts;
 	Oid			relid;
 	Oid			relam;
-	Form_pg_class relp;
-
-	MemoryContext oldcxt;
-
 	HeapTuple	pg_class_tuple;
-
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+	Form_pg_class relp;
+	MemoryContext oldcxt;
 
 	/* ----------------
 	 *	find the tuple in pg_class corresponding to the given relation id
@@ -764,11 +756,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 * ----------------
 	 */
 	if (!HeapTupleIsValid(pg_class_tuple))
-	{
-		MemoryContextSwitchTo(oldcxt);
-
 		return NULL;
-	}
 
 	/* ----------------
 	 *	get information from the pg_class_tuple
@@ -781,8 +769,10 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	/* ----------------
 	 *	allocate storage for the relation descriptor,
 	 *	initialize relation->rd_rel and get the access method id.
+	 *	The storage is allocated in memory context CacheCxt.
 	 * ----------------
 	 */
+	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 	relation = AllocateRelationDesc(oldrelation, natts, relp);
 	relam = relation->rd_rel->relam;
 
@@ -866,14 +856,14 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 */
 	RelationCacheInsert(relation);
 
+	MemoryContextSwitchTo(oldcxt);
+
 	/* -------------------
 	 *	free the memory allocated for pg_class_tuple
 	 *	and for lock data pointed to by pg_class_tuple
 	 * -------------------
 	 */
 	heap_freetuple(pg_class_tuple);
-
-	MemoryContextSwitchTo(oldcxt);
 
 	return relation;
 }
@@ -1764,7 +1754,6 @@ AttrDefaultFetch(Relation relation)
 			 ndef - found, RelationGetRelationName(relation));
 
 	index_endscan(sd);
-	pfree(sd);
 	index_close(irel);
 	heap_close(adrel, AccessShareLock);
 }
@@ -1837,7 +1826,6 @@ RelCheckFetch(Relation relation)
 			 ncheck - found, RelationGetRelationName(relation));
 
 	index_endscan(sd);
-	pfree(sd);
 	index_close(irel);
 	heap_close(rcrel, AccessShareLock);
 }

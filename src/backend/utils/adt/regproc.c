@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.46 1999/12/16 22:19:52 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.47 1999/12/30 05:05:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,6 @@ regprocin(char *pro_name_or_oid)
 			}
 
 			index_endscan(sd);
-			pfree(sd);
 			index_close(idesc);
 			heap_close(hdesc, AccessShareLock);
 

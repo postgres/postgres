@@ -513,7 +513,6 @@ RelationBuildTriggers(Relation relation)
 			 NAMEDATALEN, RelationGetRelationName(relation));
 
 	index_endscan(sd);
-	pfree(sd);
 	index_close(irel);
 	heap_close(tgrel, AccessShareLock);
 
@@ -1562,7 +1561,6 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			elog(ERROR, "Constraint '%s' does not exist", (char *)lfirst(l));
 
 		index_endscan(sd);
-
 	}
 	index_close(irel);
 	heap_close(tgrel, AccessShareLock);

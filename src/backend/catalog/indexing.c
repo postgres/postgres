@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.54 1999/12/16 22:19:39 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.55 1999/12/30 05:04:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 	}
 
 	index_endscan(sd);
-	pfree(sd);
+
 	return result;
 }
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.20 1999/07/16 17:07:25 momjian Exp $
+ * $Id: genam.h,v 1.21 1999/12/30 05:05:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,5 +47,6 @@ extern Datum GetIndexValue(HeapTuple tuple, TupleDesc hTupDesc,
 /* in genam.c */
 extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
 					 uint16 numberOfKeys, ScanKey key);
+extern void IndexScanEnd(IndexScanDesc scan);
 
 #endif	 /* GENAM_H */

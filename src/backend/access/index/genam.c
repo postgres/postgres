@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.21 1999/07/17 20:16:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.22 1999/12/30 05:04:50 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -39,7 +39,7 @@
  * All other states cannot occur.
  *
  * Note:
- *It would be possible to cache the status of the previous and
+ *		It would be possible to cache the status of the previous and
  *		next item pointer using the flags.
  * ----------------------------------------------------------------
  */
@@ -55,9 +55,19 @@
  *		We don't know how the various AMs do locking, however, so we don't
  *		do anything about that here.
  *
- *		The intent is that an AM implementor will define a front-end routine
- *		that calls this one, to fill in the scan, and then does whatever kind
- *		of locking he wants.
+ *		The intent is that an AM implementor will define a beginscan routine
+ *		that calls RelationGetIndexScan, to fill in the scan, and then does
+ *		whatever kind of locking he wants.
+ *
+ *		At the end of a scan, the AM's endscan routine undoes the locking,
+ *		but does *not* call IndexScanEnd --- the higher-level index_endscan
+ *		routine does that.  (We can't do it in the AM because index_endscan
+ *		still needs to touch the IndexScanDesc after calling the AM.)
+ *
+ *		Because of this, the AM does not have a choice whether to call
+ *		RelationGetIndexScan or not; its beginscan routine must return an
+ *		object made by RelationGetIndexScan.  This is kinda ugly but not
+ *		worth cleaning up now.
  * ----------------------------------------------------------------
  */
 
@@ -72,16 +82,11 @@
  *				relation -- index relation for scan.
  *				scanFromEnd -- if true, begin scan at one of the index's
  *							   endpoints.
- *				numberOfKeys -- count of scan keys (more than one won't
- *								necessarily do anything useful, yet).
+ *				numberOfKeys -- count of scan keys.
  *				key -- the ScanKey for the starting position of the scan.
  *
  *		Returns:
  *				An initialized IndexScanDesc.
- *
- *		Side Effects:
- *				Bumps the ref count on the relation to keep it in the cache.
- *
  * ----------------
  */
 IndexScanDesc
@@ -116,6 +121,30 @@ RelationGetIndexScan(Relation relation,
 	index_rescan(scan, scanFromEnd, key);
 
 	return scan;
+}
+
+/* ----------------
+ *	IndexScanEnd -- End an index scan.
+ *
+ *		This routine just releases the storage acquired by
+ *		RelationGetIndexScan().  Any AM-level resources are
+ *		assumed to already have been released by the AM's
+ *		endscan routine.
+ *
+ *	Returns:
+ *		None.
+ * ----------------
+ */
+void
+IndexScanEnd(IndexScanDesc scan)
+{
+	if (!IndexScanIsValid(scan))
+		elog(ERROR, "IndexScanEnd: invalid scan");
+
+	if (scan->keyData != NULL)
+		pfree(scan->keyData);
+
+	pfree(scan);
 }
 
 #ifdef NOT_USED
@@ -158,29 +187,6 @@ IndexScanRestart(IndexScanDesc scan,
 				key,
 				scan->numberOfKeys * sizeof(ScanKeyData));
 }
-
-/* ----------------
- *	IndexScanEnd -- End and index scan.
- *
- *		This routine is not used by any existing access method, but is
- *		suitable for use if you don't want to do sophisticated locking.
- *
- *	Returns:
- *		None.
- *
- *	Side Effects:
- *		None.
- * ----------------
- */
-void
-IndexScanEnd(IndexScanDesc scan)
-{
-	if (!IndexScanIsValid(scan))
-		elog(ERROR, "IndexScanEnd: invalid scan");
-
-	pfree(scan);
-}
-
 
 /* ----------------
  *	IndexScanMarkPosition -- Mark current position in a scan.

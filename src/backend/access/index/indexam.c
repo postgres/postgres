@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.37 1999/11/07 23:07:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.38 1999/12/30 05:04:50 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -298,6 +298,9 @@ index_endscan(IndexScanDesc scan)
 	UnlockRelation(scan->relation, AccessShareLock);
 
 	RelationDecrementReferenceCount(scan->relation);
+
+	/* Release the scan data structure itself */
+	IndexScanEnd(scan);
 }
 
 /* ----------------
