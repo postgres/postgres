@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 13 04:04:27 EDT 2000
+Last updated:		Tue Jun 13 22:24:15 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -133,6 +133,7 @@ COMMANDS
 * Allow BINARY option to SELECT, like we do with DECLARE
 * Prevent truncate on table with a referential integrity trigger
 * MOVE 0 should not move to end of cursor
+* Overhaul ACL (access control) code
   
 CLIENTS
 
