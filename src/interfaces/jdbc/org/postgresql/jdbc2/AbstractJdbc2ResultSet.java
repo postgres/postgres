@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.8 2002/09/11 05:38:45 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.9 2002/10/17 19:17:08 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -623,7 +623,11 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			for ( int i = 1; keys.hasMoreElements(); i++)
 			{
 				String key = (String) keys.nextElement();
-				insertStatement.setObject(i, updateValues.get( key ) );
+				Object o = updateValues.get(key);
+				if (o instanceof NullObject)
+					insertStatement.setNull(i,java.sql.Types.NULL);
+				else
+					insertStatement.setObject(i, o);
 			}
 
 			insertStatement.executeUpdate();
@@ -735,14 +739,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 											  )
 	throws SQLException
 	{
-
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		byte[] theData = null;
-
 		try
 		{
 			x.read(theData, 0, length);
@@ -756,9 +753,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			throw new PSQLException("postgresql.updateable.ioerror" + ie);
 		}
 
-		doingUpdates = !onInsertRow;
-
-		updateValues.put( fields[columnIndex - 1].getName(), theData );
+		updateValue(columnIndex, theData);
 
 	}
 
@@ -767,15 +762,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 			java.math.BigDecimal x )
 	throws SQLException
 	{
-
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), x );
-
+		updateValue(columnIndex, x);
 	}
 
 
@@ -785,14 +772,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 											   )
 	throws SQLException
 	{
-
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		byte[] theData = null;
-
 		try
 		{
 			x.read(theData, 0, length);
@@ -806,10 +786,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		{
 			throw new PSQLException("postgresql.updateable.ioerror" + ie);
 		}
-
-		doingUpdates = !onInsertRow;
-
-		updateValues.put( fields[columnIndex - 1].getName(), theData );
+		updateValue(columnIndex, theData);
 
 	}
 
@@ -817,46 +794,23 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	public synchronized void updateBoolean(int columnIndex, boolean x)
 	throws SQLException
 	{
-
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		if ( Driver.logDebug )
 			Driver.debug("updating boolean " + fields[columnIndex - 1].getName() + "=" + x);
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), new Boolean(x) );
-
+		updateValue(columnIndex, new Boolean(x));
 	}
 
 
 	public synchronized void updateByte(int columnIndex, byte x)
 	throws SQLException
 	{
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
-		doingUpdates = true;
-		updateValues.put( fields[columnIndex - 1].getName(), String.valueOf(x) );
+		updateValue(columnIndex, String.valueOf(x));
 	}
 
 
 	public synchronized void updateBytes(int columnIndex, byte[] x)
 	throws SQLException
 	{
-
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), x );
-
+		updateValue(columnIndex, x);
 	}
 
 
@@ -866,14 +820,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 												  )
 	throws SQLException
 	{
-
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		char[] theData = null;
-
 		try
 		{
 			x.read(theData, 0, length);
@@ -887,124 +834,66 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		{
 			throw new PSQLException("postgresql.updateable.ioerror" + ie);
 		}
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), theData);
-
+		updateValue(columnIndex, theData);
 	}
 
 
 	public synchronized void updateDate(int columnIndex, java.sql.Date x)
 	throws SQLException
 	{
-
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), x );
+		updateValue(columnIndex, x);
 	}
 
 
 	public synchronized void updateDouble(int columnIndex, double x)
 	throws SQLException
 	{
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		if ( Driver.logDebug )
 			Driver.debug("updating double " + fields[columnIndex - 1].getName() + "=" + x);
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), new Double(x) );
-
+		updateValue(columnIndex, new Double(x));
 	}
 
 
 	public synchronized void updateFloat(int columnIndex, float x)
 	throws SQLException
 	{
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		if ( Driver.logDebug )
 			Driver.debug("updating float " + fields[columnIndex - 1].getName() + "=" + x);
-
-		doingUpdates = !onInsertRow;
-
-		updateValues.put( fields[columnIndex - 1].getName(), new Float(x) );
-
+		updateValue(columnIndex, new Float(x));
 	}
 
 
 	public synchronized void updateInt(int columnIndex, int x)
 	throws SQLException
 	{
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		if ( Driver.logDebug )
 			Driver.debug("updating int " + fields[columnIndex - 1].getName() + "=" + x);
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), new Integer(x) );
-
+		updateValue(columnIndex, new Integer(x));
 	}
 
 
 	public synchronized void updateLong(int columnIndex, long x)
 	throws SQLException
 	{
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		if ( Driver.logDebug )
 			Driver.debug("updating long " + fields[columnIndex - 1].getName() + "=" + x);
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), new Long(x) );
-
+		updateValue(columnIndex, new Long(x));
 	}
 
 
 	public synchronized void updateNull(int columnIndex)
 	throws SQLException
 	{
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), null);
-
-
+		updateValue(columnIndex, new NullObject());
 	}
 
 
 	public synchronized void updateObject(int columnIndex, Object x)
 	throws SQLException
 	{
-		if ( !isUpdateable() )
-		{
-			throw new PSQLException( "postgresql.updateable.notupdateable" );
-		}
-
 		if ( Driver.logDebug )
 			Driver.debug("updating object " + fields[columnIndex - 1].getName() + " = " + x);
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), x );
+		updateValue(columnIndex, x);
 	}
 
 
@@ -1152,7 +1041,11 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 				Iterator iterator = updateValues.values().iterator();
 				for (; iterator.hasNext(); i++)
 				{
-					updateStatement.setObject( i + 1, iterator.next() );
+					Object o = iterator.next();
+					if (o instanceof NullObject)
+						updateStatement.setNull(i+1,java.sql.Types.NULL);
+					else
+						updateStatement.setObject( i + 1, o );
 
 				}
 				for ( int j = 0; j < numKeys; j++, i++)
@@ -1194,11 +1087,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	{
 		if ( Driver.logDebug )
 			Driver.debug("in update Short " + fields[columnIndex - 1].getName() + " = " + x);
-
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), new Short(x) );
-
+		updateValue(columnIndex, new Short(x));
 	}
 
 
@@ -1207,10 +1096,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	{
 		if ( Driver.logDebug )
 			Driver.debug("in update String " + fields[columnIndex - 1].getName() + " = " + x);
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), x );
-
+		updateValue(columnIndex, x);
 	}
 
 
@@ -1219,11 +1105,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	{
 		if ( Driver.logDebug )
 			Driver.debug("in update Time " + fields[columnIndex - 1].getName() + " = " + x);
-
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), x );
-
+		updateValue(columnIndex, x);
 	}
 
 
@@ -1232,10 +1114,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	{
 		if ( Driver.logDebug )
 			Driver.debug("updating Timestamp " + fields[columnIndex - 1].getName() + " = " + x);
-
-		doingUpdates = !onInsertRow;
-		updateValues.put( fields[columnIndex - 1].getName(), x );
-
+		updateValue(columnIndex, x);
 
 	}
 
@@ -1564,6 +1443,17 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		this.statement = statement;
 	}
 
+	protected void updateValue(int columnIndex, Object value) throws SQLException {
+		if ( !isUpdateable() )
+		{
+			throw new PSQLException( "postgresql.updateable.notupdateable" );
+		}
+		doingUpdates = !onInsertRow;
+		if (value == null)
+			updateNull(columnIndex);
+		else
+			updateValues.put(fields[columnIndex - 1].getName(), value);
+	}
 
 	private class PrimaryKey
 	{
@@ -1581,7 +1471,8 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		}
 	};
 
-
+	class NullObject {
+	};
 
 }
 
