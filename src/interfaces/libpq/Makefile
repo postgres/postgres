@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.114 2004/10/04 20:36:12 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.115 2004/10/06 16:42:01 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ endif
 # matter.)
 SHLIB_LINK += $(filter -lcrypt -ldes -lkrb -lcom_err -lcrypto -lk5crypto -lkrb5 -lssl -lsocket -lnsl -lresolv -lintl, $(LIBS)) $(PTHREAD_LIBS)
 ifeq ($(PORTNAME), win32)
-SHLIB_LINK += -lwsock32 -lws2_32
+SHLIB_LINK += -lwsock32 -lws2_32 $(filter -leay32 -lssleay32, $(LIBS))
 endif
 
 
