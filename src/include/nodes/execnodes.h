@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.78 2002/11/15 02:50:10 momjian Exp $
+ * $Id: execnodes.h,v 1.79 2002/11/22 22:10:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,17 +775,28 @@ typedef struct SetOpState
  * offset is the number of initial tuples to skip (0 does nothing).
  * count is the number of tuples to return after skipping the offset tuples.
  * If no limit count was specified, count is undefined and noCount is true.
+ * When lstate == LIMIT_INITIAL, offset/count/noCount haven't been set yet.
  * ----------------
  */
+typedef enum
+{
+	LIMIT_INITIAL,				/* initial state for LIMIT node */
+	LIMIT_EMPTY,				/* there are no returnable rows */
+	LIMIT_INWINDOW,				/* have returned a row in the window */
+	LIMIT_SUBPLANEOF,			/* at EOF of subplan (within window) */
+	LIMIT_WINDOWEND,			/* stepped off end of window */
+	LIMIT_WINDOWSTART			/* stepped off beginning of window */
+} LimitStateCond;
+
 typedef struct LimitState
 {
 	CommonState cstate;			/* its first field is NodeTag */
 	long		offset;			/* current OFFSET value */
 	long		count;			/* current COUNT, if any */
-	long		position;		/* 1-based index of last tuple fetched */
-	bool		parmsSet;		/* have we calculated offset/limit yet? */
 	bool		noCount;		/* if true, ignore count */
-	bool		atEnd;			/* if true, we've reached EOF of subplan */
+	LimitStateCond lstate;		/* state machine status, as above */
+	long		position;		/* 1-based index of last tuple returned */
+	TupleTableSlot *subSlot;	/* tuple last obtained from subplan */
 } LimitState;
 
 
