@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.80 2001/07/16 05:06:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.81 2001/07/31 17:56:31 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -119,7 +119,6 @@ static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context);
 static void get_setop_query(Node *setOp, Query *query,
 				deparse_context *context, bool toplevel);
-static bool simple_distinct(List *distinctClause, List *targetList);
 static void get_rule_sortgroupclause(SortClause *srt, List *tlist,
 									 bool force_colno,
 									 deparse_context *context);
@@ -1064,9 +1063,7 @@ get_basic_select_query(Query *query, deparse_context *context)
 	/* Add the DISTINCT clause if given */
 	if (query->distinctClause != NIL)
 	{
-		if (simple_distinct(query->distinctClause, query->targetList))
-			appendStringInfo(buf, " DISTINCT");
-		else
+		if (has_distinct_on_clause(query))
 		{
 			appendStringInfo(buf, " DISTINCT ON (");
 			sep = "";
@@ -1081,6 +1078,8 @@ get_basic_select_query(Query *query, deparse_context *context)
 			}
 			appendStringInfo(buf, ")");
 		}
+		else
+			appendStringInfo(buf, " DISTINCT");
 	}
 
 	/* Then we tell what to select (the targetlist) */
@@ -1205,34 +1204,6 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		elog(ERROR, "get_setop_query: unexpected node %d",
 			 (int) nodeTag(setOp));
 	}
-}
-
-/*
- * Detect whether a DISTINCT list can be represented as just DISTINCT
- * or needs DISTINCT ON.  It's simple if it contains exactly the nonjunk
- * targetlist items.
- */
-static bool
-simple_distinct(List *distinctClause, List *targetList)
-{
-	while (targetList)
-	{
-		TargetEntry *tle = (TargetEntry *) lfirst(targetList);
-
-		if (!tle->resdom->resjunk)
-		{
-			if (distinctClause == NIL)
-				return false;
-			if (((SortClause *) lfirst(distinctClause))->tleSortGroupRef !=
-				tle->resdom->ressortgroupref)
-				return false;
-			distinctClause = lnext(distinctClause);
-		}
-		targetList = lnext(targetList);
-	}
-	if (distinctClause != NIL)
-		return false;
-	return true;
 }
 
 /*

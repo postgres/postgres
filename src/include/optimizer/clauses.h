@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.44 2001/05/20 20:28:20 tgl Exp $
+ * $Id: clauses.h,v 1.45 2001/07/31 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,8 @@ extern bool contain_noncachable_functions(Node *clause);
 
 extern bool is_pseudo_constant_clause(Node *clause);
 extern List *pull_constant_clauses(List *quals, List **constantQual);
+
+extern bool has_distinct_on_clause(Query *query);
 
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);

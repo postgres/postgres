@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.77 2001/07/16 17:57:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.78 2001/07/31 17:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,8 +296,12 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 * the quals down into the component queries of the setop, but getting it
 	 * right seems nontrivial.  Work on this later.)
 	 *
-	 * 2. If the subquery has a LIMIT clause we must not push down any quals,
-	 * since that could change the set of rows returned.
+	 * 2. If the subquery has a LIMIT clause or a DISTINCT ON clause, we must
+	 * not push down any quals, since that could change the set of rows
+	 * returned.  (Actually, we could push down quals into a DISTINCT ON
+	 * subquery if they refer only to DISTINCT-ed output columns, but checking
+	 * that seems more work than it's worth.  In any case, a plain DISTINCT is
+	 * safe to push down past.)
 	 *
 	 * 3. We do not push down clauses that contain subselects, mainly because
 	 * I'm not sure it will work correctly (the subplan hasn't yet transformed
@@ -311,7 +315,8 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 */
 	if (subquery->setOperations == NULL &&
 		subquery->limitOffset == NULL &&
-		subquery->limitCount == NULL)
+		subquery->limitCount == NULL &&
+		!has_distinct_on_clause(subquery))
 	{
 		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;

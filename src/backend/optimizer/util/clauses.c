@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.86 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.87 2001/07/31 17:56:31 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -729,13 +729,65 @@ pull_constant_clauses(List *quals, List **constantQual)
 
 
 /*****************************************************************************
+ *		Tests on clauses of queries
+ *
+ * Possibly this code should go someplace else, since this isn't quite the
+ * same meaning of "clause" as is used elsewhere in this module.  But I can't
+ * think of a better place for it...
+ *****************************************************************************/
+
+/*
+ * Test whether a query uses DISTINCT ON, ie, has a distinct-list that is
+ * just a subset of the output columns.
+ */
+bool
+has_distinct_on_clause(Query *query)
+{
+	List   *targetList;
+
+	/* Is there a DISTINCT clause at all? */
+	if (query->distinctClause == NIL)
+		return false;
+	/*
+	 * If the DISTINCT list contains all the nonjunk targetlist items,
+	 * then it's a simple DISTINCT, else it's DISTINCT ON.  We do not
+	 * require the lists to be in the same order (since the parser may
+	 * have adjusted the DISTINCT clause ordering to agree with ORDER BY).
+	 */
+	foreach(targetList, query->targetList)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(targetList);
+		Index		ressortgroupref;
+		List	   *distinctClause;
+
+		if (tle->resdom->resjunk)
+			continue;
+		ressortgroupref = tle->resdom->ressortgroupref;
+		if (ressortgroupref == 0)
+			return true;		/* definitely not in DISTINCT list */
+		foreach(distinctClause, query->distinctClause)
+		{
+			SortClause *scl = (SortClause *) lfirst(distinctClause);
+
+			if (scl->tleSortGroupRef == ressortgroupref)
+				break;			/* found TLE in DISTINCT */
+		}
+		if (distinctClause == NIL)
+			return true;		/* this TLE is not in DISTINCT list */
+	}
+	/* It's a simple DISTINCT */
+	return false;
+}
+
+
+/*****************************************************************************
  *																			 *
  *		General clause-manipulating routines								 *
  *																			 *
  *****************************************************************************/
 
 /*
- * clause_relids_vars
+ * clause_get_relids_vars
  *	  Retrieves distinct relids and vars appearing within a clause.
  *
  * '*relids' is set to an integer list of all distinct "varno"s appearing
