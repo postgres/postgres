@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.19 1998/01/17 04:53:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.20 1998/01/19 18:10:52 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1182,7 +1182,7 @@ _readSubLink()
 	local_node->lefthand = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :oper */
-	local_node->oper = nodeRead(true);		/* now read it */
+	local_node->oper = toIntList(nodeRead(true));		/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :subselect */
 	local_node->subselect = nodeRead(true);		/* now read it */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.14 1998/01/19 05:06:36 momjian Exp $
+ * $Id: primnodes.h,v 1.15 1998/01/19 18:11:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,6 @@ typedef enum SubLinkType
 
 typedef struct SubLink
 {
-struct Query;
 	NodeTag		type;
 	SubLinkType	subLinkType;
 	bool		useor;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.23 1998/01/17 04:53:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.24 1998/01/19 18:10:50 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -771,7 +771,7 @@ _outSubLink(StringInfo str, SubLink *node)
 	appendStringInfo(str, " :lefthand ");
 	_outNode(str, node->lefthand);
 	appendStringInfo(str, " :oper ");
-	_outNode(str, node->oper);
+	_outIntList(str, node->oper);
 	appendStringInfo(str, " :subselect ");
 	_outNode(str, node->subselect);
 }

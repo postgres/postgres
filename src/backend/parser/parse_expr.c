@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.9 1998/01/19 05:48:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.10 1998/01/19 18:10:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,12 +255,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				SubLink			*sublink = (SubLink *) expr;
 				QueryTreeList	*qtree;
 				Query			*subselect;
-
-				qtree = parse_analyze(lcons(sublink->subselect,NIL), pstate);
+				List			*llist;
 				
+				qtree = parse_analyze(lcons(sublink->subselect,NIL), pstate);
 				Assert(qtree->len == 1);
-
 				sublink->subselect = (Node *) subselect = qtree->qtrees[0];
+
+				foreach(llist, sublink->lefthand)
+					lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
 			
 				if (length(sublink->lefthand) !=
 					length(subselect->targetList))
@@ -270,20 +272,22 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				{
 					char *op = lfirst(sublink->oper);
 					List *left_expr = sublink->lefthand;
-					List *right_expr = subselect->targetList;
-					List *elist;
-					
-					foreach(elist, left_expr)
-					{
-						Node	   *lexpr = transformExpr(pstate, lfirst(elist), precedence);
-						Node	   *rexpr = lfirst(right_expr);
-						TargetEntry *tent = (TargetEntry *)rexpr;
-						Expr	   *op_expr;						
-
-						op_expr = make_op(op, lexpr, tent->expr);
-						sublink->oper = lappend(sublink->oper, op_expr->oper);
-						right_expr = lnext(right_expr);
-					}
+  					List *right_expr = subselect->targetList;
+  					List *elist;
+  
+					sublink->oper = NIL;
+  					foreach(elist, left_expr)
+  					{
+						Node	   *lexpr = lfirst(elist);
+  						Node	   *rexpr = lfirst(right_expr);
+  						TargetEntry *tent = (TargetEntry *)rexpr;
+  						Expr	   *op_expr;						
+  
+  						op_expr = make_op(op, lexpr, tent->expr);
+						sublink->oper = lappendi(sublink->oper,
+								((Oper *)op_expr->oper)->opno);
+  						right_expr = lnext(right_expr);
+  					}
 					result = (Node *) expr;
 				}
 				break;
