@@ -860,6 +860,7 @@ Optional Packages:
   --without-tk            do not build Tk interfaces if Tcl is enabled
   --with-tclconfig=DIR    tclConfig.sh and tkConfig.sh are in DIR
   --with-tkconfig=DIR     tkConfig.sh is in DIR
+  --with-perl             build Perl interface and PL/Perl
   --with-python           build Python interface module
   --with-java             build JDBC interface and Java tools
   --with-krb4[=DIR]       build with Kerberos 4 support [/usr/athena]
@@ -2945,6 +2946,41 @@ fi;
 
 
 #
+# Optionally build Perl modules (Pg.pm and PL/Perl)
+#
+echo "$as_me:$LINENO: checking whether to build Perl modules" >&5
+echo $ECHO_N "checking whether to build Perl modules... $ECHO_C" >&6
+
+
+
+# Check whether --with-perl or --without-perl was given.
+if test "${with_perl+set}" = set; then
+  withval="$with_perl"
+
+  case $withval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-perl option" >&5
+echo "$as_me: error: no argument expected for --with-perl option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_perl=no
+
+fi;
+
+echo "$as_me:$LINENO: result: $with_perl" >&5
+echo "${ECHO_T}$with_perl" >&6
+
+
+#
 # Optionally build Python interface module
 #
 echo "$as_me:$LINENO: checking whether to build Python modules" >&5
@@ -4118,6 +4154,87 @@ fi
     test -z "$WISH" && { { echo "$as_me:$LINENO: error: 'wish' is required for Tk support" >&5
 echo "$as_me: error: 'wish' is required for Tk support" >&2;}
    { (exit 1); exit 1; }; }
+fi
+
+# Extract the first word of "perl", so it can be a program name with args.
+set dummy perl; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_PERL+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $PERL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PERL="$PERL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PERL="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  ;;
+esac
+fi
+PERL=$ac_cv_path_PERL
+
+if test -n "$PERL"; then
+  echo "$as_me:$LINENO: result: $PERL" >&5
+echo "${ECHO_T}$PERL" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+if test "$with_perl" = yes; then
+
+echo "$as_me:$LINENO: checking for Perl installsitearch" >&5
+echo $ECHO_N "checking for Perl installsitearch... $ECHO_C" >&6
+perl_installsitearch=`$PERL -MConfig -e 'print $Config{installsitearch}'`
+echo "$as_me:$LINENO: result: $perl_installsitearch" >&5
+echo "${ECHO_T}$perl_installsitearch" >&6
+echo "$as_me:$LINENO: checking for Perl installman3dir" >&5
+echo $ECHO_N "checking for Perl installman3dir... $ECHO_C" >&6
+perl_installman3dir=`$PERL -MConfig -e 'print $Config{installman3dir}'`
+echo "$as_me:$LINENO: result: $perl_installman3dir" >&5
+echo "${ECHO_T}$perl_installman3dir" >&6
+echo "$as_me:$LINENO: checking for Perl archlibexp" >&5
+echo $ECHO_N "checking for Perl archlibexp... $ECHO_C" >&6
+perl_archlibexp=`$PERL -MConfig -e 'print $Config{archlibexp}'`
+echo "$as_me:$LINENO: result: $perl_archlibexp" >&5
+echo "${ECHO_T}$perl_archlibexp" >&6
+echo "$as_me:$LINENO: checking for Perl privlibexp" >&5
+echo $ECHO_N "checking for Perl privlibexp... $ECHO_C" >&6
+perl_privlibexp=`$PERL -MConfig -e 'print $Config{privlibexp}'`
+echo "$as_me:$LINENO: result: $perl_privlibexp" >&5
+echo "${ECHO_T}$perl_privlibexp" >&6
+echo "$as_me:$LINENO: checking for Perl useshrplib" >&5
+echo $ECHO_N "checking for Perl useshrplib... $ECHO_C" >&6
+perl_useshrplib=`$PERL -MConfig -e 'print $Config{useshrplib}'`
+echo "$as_me:$LINENO: result: $perl_useshrplib" >&5
+echo "${ECHO_T}$perl_useshrplib" >&6
+echo "$as_me:$LINENO: checking for Perl man3ext" >&5
+echo $ECHO_N "checking for Perl man3ext... $ECHO_C" >&6
+perl_man3ext=`$PERL -MConfig -e 'print $Config{man3ext}'`
+echo "$as_me:$LINENO: result: $perl_man3ext" >&5
+echo "${ECHO_T}$perl_man3ext" >&6
+
+echo "$as_me:$LINENO: checking for flags to link embedded Perl" >&5
+echo $ECHO_N "checking for flags to link embedded Perl... $ECHO_C" >&6
+pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
+pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
+perl_embed_ldflags=`echo X"$pgac_tmp1" | sed "s/^X//;s%$pgac_tmp2%%"`
+echo "$as_me:$LINENO: result: $perl_embed_ldflags" >&5
+echo "${ECHO_T}$perl_embed_ldflags" >&6
 fi
 
 if test "$with_python" = yes; then
@@ -16173,6 +16290,7 @@ s,@autodepend@,$autodepend,;t t
 s,@INCLUDES@,$INCLUDES,;t t
 s,@with_tcl@,$with_tcl,;t t
 s,@with_tk@,$with_tk,;t t
+s,@with_perl@,$with_perl,;t t
 s,@with_python@,$with_python,;t t
 s,@ANT@,$ANT,;t t
 s,@with_java@,$with_java,;t t
@@ -16200,6 +16318,14 @@ s,@STRIP_SHARED_LIB@,$STRIP_SHARED_LIB,;t t
 s,@YACC@,$YACC,;t t
 s,@YFLAGS@,$YFLAGS,;t t
 s,@WISH@,$WISH,;t t
+s,@PERL@,$PERL,;t t
+s,@perl_installsitearch@,$perl_installsitearch,;t t
+s,@perl_installman3dir@,$perl_installman3dir,;t t
+s,@perl_archlibexp@,$perl_archlibexp,;t t
+s,@perl_privlibexp@,$perl_privlibexp,;t t
+s,@perl_useshrplib@,$perl_useshrplib,;t t
+s,@perl_man3ext@,$perl_man3ext,;t t
+s,@perl_embed_ldflags@,$perl_embed_ldflags,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@python_version@,$python_version,;t t
 s,@python_prefix@,$python_prefix,;t t
