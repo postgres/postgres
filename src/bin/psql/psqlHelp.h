@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.36 1998/01/11 04:17:01 momjian Exp $
+ * $Id: psqlHelp.h,v 1.37 1998/01/11 04:36:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,7 +237,8 @@ static struct _helpStruct QL_HELP[] = {
 \tselect <expr1>,...<exprN>\n\
 \t[from <from_clause>]\n\
 \t[where <qual>]\n\
-\t[group by <group_list>];"},
+\t[group by <group_list>]\n\
+\t[union [all] select ...];"},
 	{"listen",
 		"listen for notification on a relation",
 	"listen <class_name>"},
