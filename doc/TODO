@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun  4 16:27:40 EDT 2001
+Last updated:		Wed Jun  6 00:53:41 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -145,7 +145,10 @@ COMMANDS
 	* Add ALTER TABLE DROP COLUMN feature [drop]
 	* Add ALTER FUNCTION
 	* Add ALTER TABLE DROP non-CHECK CONSTRAINT
-	* -Add ALTER TABLE DROP CHECK CONSTRAINT (Christopher Kings)
+	* -Add ALTER TABLE DROP CHECK CONSTRAINT (Christopher Kings-Lynne)
+	* ALTER TABLE ADD PRIMARY KEY (Christopher Kings-Lynne)
+	* ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
+
 * CLUSTER
 	* cluster all tables at once
 	* prevent lose of indexes, permissions, inheritance
