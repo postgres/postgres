@@ -4,7 +4,7 @@
 #    Makefile for port/darwin
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/darwin/Makefile,v 1.1 2000/12/11 00:49:54 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/darwin/Makefile,v 1.2 2001/11/08 04:24:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/port/darwin
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = sem.o
+OBJS = sem.o system.o
 
 all: SUBSYS.o
 

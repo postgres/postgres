@@ -1,0 +1,38 @@
+The file system.c included herein is taken directly from Apple's Darwin
+open-source CVS archives, and is redistributed under the BSD copyright
+notice it bears.  (According to Apple's CVS logs, their version is
+identical to the FreeBSD original.)  It provides our own implementation of
+the system(3) function, which ought by all rights to be identical to the
+one provided in libc on Darwin machines.  Nonetheless, this version works,
+whereas the one that actually ships with Mac OS X 10.1 doesn't.  The
+shipped version appears to disconnect the calling process from any shared
+memory segments it is attached to.  (The symptom seen in PostgreSQL is
+that a backend attempting to execute CREATE DATABASE core-dumps.)  I would
+love to know why there is a discrepancy between the published source and
+the actual behavior --- tgl 7-Nov-2001.
+
+Appropriate bug reports have been filed with Apple --- see 
+Radar Bug#s 2767956, 2683531, 2805147.  One hopes we can retire this
+kluge in the not too distant future.
+
+
+As of PostgreSQL 7.2 and Mac OS X 10.1, one should expect warnings
+like these while linking the backend:
+
+/usr/bin/ld: warning unused multiple definitions of symbol _system
+port/SUBSYS.o definition of _system in section (__TEXT,__text)
+/usr/lib/libm.dylib(system.o) unused definition of _system
+/usr/bin/ld: warning unused multiple definitions of symbol _semctl
+port/SUBSYS.o definition of _semctl in section (__TEXT,__text)
+/usr/lib/libm.dylib(semctl.o) unused definition of _semctl
+/usr/bin/ld: warning unused multiple definitions of symbol _semget
+port/SUBSYS.o definition of _semget in section (__TEXT,__text)
+/usr/lib/libm.dylib(semget.o) unused definition of _semget
+/usr/bin/ld: warning unused multiple definitions of symbol _semop
+port/SUBSYS.o definition of _semop in section (__TEXT,__text)
+/usr/lib/libm.dylib(semop.o) unused definition of _semop
+
+The first of these shows us overriding system() per the above-described
+hack.  The rest show sem.c overriding the nonfunctional semaphore stubs
+in libc.  (Perhaps sem.c can also be retired someday, but semget support
+is reportedly not high on Apple's to-do list.)
