@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.63 1998/12/18 09:09:54 vadim Exp $
+ * $Id: parsenodes.h,v 1.64 1998/12/21 12:50:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,7 +669,7 @@ typedef struct TypeName
 	char	   *name;			/* name of the type */
 	bool		timezone;		/* timezone specified? */
 	bool		setof;			/* is a set? */
-	int16		typmod;			/* type modifier */
+	int32		typmod;			/* type modifier */
 	List	   *arrayBounds;	/* array bounds */
 } TypeName;
 
