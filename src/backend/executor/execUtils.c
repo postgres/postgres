@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.26 1998/01/20 05:03:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.27 1998/02/07 06:11:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -531,6 +531,7 @@ ExecSetTypeInfo(int index,
 	att->attproc = 0;			/* dummy value */
 	att->attnelems = 0;			/* dummy value */
 	att->attcacheoff = -1;
+	att->atttypmod = -1;
 	att->attisset = false;
 	att->attalign = attalign;
 }

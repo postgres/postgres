@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.34 1998/02/06 19:18:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.35 1998/02/07 06:10:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,6 +627,7 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->attbyval = (attlen == 1) || (attlen == 2) || (attlen == 4);
 	}
 	attrtypes[attnum]->attcacheoff = -1;
+	attrtypes[attnum]->atttypmod = -1;
 }
 
 

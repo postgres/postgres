@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.36 1998/01/16 23:19:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.37 1998/02/07 06:10:49 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -118,12 +118,12 @@ DefaultBuild(Relation heapRelation, Relation indexRelation,
  * ----------------------------------------------------------------
  */
 static FormData_pg_attribute sysatts[] = {
-	{0l, {"ctid"}, 27l, 0l, 6, -1, 0, -1, 0, '\0', '\0', 'i', '\0', '\0'},
-	{0l, {"oid"},  26l, 0l, 4, -2, 0, -1, 0, '\001', '\0', 'i', '\0', '\0'},
-	{0l, {"xmin"}, 28l, 0l, 4, -3, 0, -1, 0, '\0', '\0', 'i', '\0', '\0'},
-	{0l, {"cmin"}, 29l, 0l, 4, -4, 0, -1, 0, '\001', '\0', 'i', '\0', '\0'},
-	{0l, {"xmax"}, 28l, 0l, 4, -5, 0, -1, 0, '\0', '\0', 'i', '\0', '\0'},
-	{0l, {"cmax"}, 29l, 0l, 4, -6, 0, -1, 0, '\001', '\0', 'i', '\0', '\0'},
+	{0l, {"ctid"}, 27l, 0l, 6, -1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
+	{0l, {"oid"},  26l, 0l, 4, -2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
+	{0l, {"xmin"}, 28l, 0l, 4, -3, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
+	{0l, {"cmin"}, 29l, 0l, 4, -4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
+	{0l, {"xmax"}, 28l, 0l, 4, -5, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
+	{0l, {"cmax"}, 29l, 0l, 4, -6, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
 };
 
 /* ----------------------------------------------------------------
@@ -437,7 +437,7 @@ ConstructTupleDescriptor(Oid heapoid,
 
 		((AttributeTupleForm) to)->attnotnull = false;
 		((AttributeTupleForm) to)->atthasdef = false;
-		((AttributeTupleForm) to)->atttypmod = 0;
+		((AttributeTupleForm) to)->atttypmod = -1;
 
 		/*
 		 * if the keytype is defined, we need to change the tuple form's
