@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.374 2004/03/15 15:56:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.375 2004/03/15 16:18:42 momjian Exp $
  *
  * NOTES
  *
@@ -946,6 +946,10 @@ PostmasterMain(int argc, char *argv[])
 static void
 pmdaemonize(int argc, char *argv[])
 {
+#ifdef WIN32
+	/* not supported */
+	elog(FATAL,"SilentMode not supported under WIN32");
+#else
 	int			i;
 	pid_t		pid;
 
@@ -958,12 +962,7 @@ pmdaemonize(int argc, char *argv[])
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
-#ifdef WIN32
-	/* FIXME: [fork/exec] to be implemented? */
-	abort();
-#else
 	pid = fork();
-#endif
 	if (pid == (pid_t) -1)
 	{
 		postmaster_error("could not fork background process: %s",
@@ -998,6 +997,7 @@ pmdaemonize(int argc, char *argv[])
 	dup2(i, 1);
 	dup2(i, 2);
 	close(i);
+#endif
 }
 
 
@@ -3230,7 +3230,10 @@ CreateOptsFile(int argc, char *argv[])
 	int			i;
 
 	if (FindExec(fullprogname, argv[0], "postmaster") < 0)
+	{
+		elog(LOG, "could not locate postmaster");
 		return false;
+	}
 
 	snprintf(filename, sizeof(filename), "%s/postmaster.opts", DataDir);
 
