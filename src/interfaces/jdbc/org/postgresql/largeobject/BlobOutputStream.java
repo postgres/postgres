@@ -92,6 +92,7 @@ public class BlobOutputStream extends OutputStream {
      */
     public void close() throws IOException {
       try {
+        flush();
         lo.close();
         lo=null;
       } catch(SQLException se) {

@@ -431,9 +431,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
             // is buffered internally anyhow, so there would be no performance
             // boost gained, if anything it would be worse!
             int c=x.read();
-            while(c>-1) {
+            int p=0;
+            while(c>-1 && p<length) {
               los.write(c);
               c=x.read();
+              p++;
             }
             los.close();
           } catch(IOException se) {

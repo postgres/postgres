@@ -3,7 +3,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.5 2001/02/07 09:13:20 peter Exp $
+  $Id: build.xml,v 1.6 2001/02/14 17:45:13 peter Exp $
 
 -->
 
@@ -26,6 +26,7 @@
   <property name="database" value="jdbc:postgresql:test" />
   <property name="username" value="test" />
   <property name="password" value="password" />
+  <property name="tablename" value="jdbctest" />
   <property name="junit.ui" value="textui" />
 
   <!--

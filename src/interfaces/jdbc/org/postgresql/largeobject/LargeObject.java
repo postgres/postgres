@@ -62,6 +62,10 @@ public class LargeObject
   private int		oid;	// OID of this object
   private int		fd;	// the descriptor of the open large object
 
+  private BlobOutputStream os;  // The current output stream
+
+  private boolean closed=false; // true when we are closed
+
   /**
    * This opens a large object.
    *
@@ -100,9 +104,25 @@ public class LargeObject
    */
   public void close() throws SQLException
   {
-    FastpathArg args[] = new FastpathArg[1];
-    args[0] = new FastpathArg(fd);
-    fp.fastpath("lo_close",false,args); // true here as we dont care!!
+    if(!closed) {
+      // flush any open output streams
+      if(os!=null) {
+        try {
+          // we can't call os.close() otherwise we go into an infinite loop!
+          os.flush();
+        } catch(IOException ioe) {
+          throw new SQLException(ioe.getMessage());
+        } finally {
+          os=null;
+        }
+      }
+
+      // finally close
+      FastpathArg args[] = new FastpathArg[1];
+      args[0] = new FastpathArg(fd);
+      fp.fastpath("lo_close",false,args); // true here as we dont care!!
+      closed=true;
+    }
   }
 
   /**
@@ -279,7 +299,9 @@ public class LargeObject
    */
   public OutputStream getOutputStream() throws SQLException
   {
-    return new BlobOutputStream(this);
+    if(os==null)
+      os = new BlobOutputStream(this);
+    return os;
   }
 
 }

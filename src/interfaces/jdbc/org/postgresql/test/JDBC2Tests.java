@@ -207,12 +207,13 @@ public class JDBC2Tests extends TestSuite {
 
     // MetaData
 
-    // Fastpath/LargeObject
-
     // Other misc tests, based on previous problems users have had or specific
     // features some applications require.
     suite.addTestSuite(JBuilderTest.class);
     suite.addTestSuite(MiscTest.class);
+
+    // Fastpath/LargeObject
+    suite.addTestSuite(BlobTest.class);
 
     // That's all folks
     return suite;

@@ -1,3 +1,8 @@
+Web Feb 14 17:29:00 GMT 2001 peter@retep.org.uk
+        - Fixed bug in LargeObject & BlobOutputStream where the stream's output
+          was not flushed when either the stream or the blob were closed.
+        - Fixed PreparedStatement.setBinaryStream() where it ignored the length
+
 Tue Feb 13 16:33:00 GMT 2001 peter@retep.org.uk
         - More TestCases implemented. Refined the test suite api's.
         - Removed need for SimpleDateFormat in ResultSet.getDate() improving
