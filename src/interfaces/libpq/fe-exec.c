@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.10 1996/07/31 02:20:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.11 1996/07/31 06:05:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,7 @@
 #include "libpq-fe.h"
 #include <signal.h>
 #include <sys/ioctl.h>
-#if defined(PORTNAME_sparc_solaris) || \
-    defined(PORTNAME_i386_solaris)
 #include <sys/termios.h>
-#endif
 
 #ifdef TIOCGWINSZ
 struct winsize screen_size;
