@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4 1996/07/23 03:35:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.4.2.1 1996/08/19 13:23:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,16 +66,16 @@ static void closePGconn(PGconn *conn);
 PGconn* 
 PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
 {
-    PGconn *conn;
-    char *tmp;
+  PGconn *conn;
+  char *tmp;
 
-    conn = (PGconn*)malloc(sizeof(PGconn));
+  conn = (PGconn*)malloc(sizeof(PGconn));
 
-    if (!conn) {
-      fprintf(stderr,"FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
-      return (PGconn*)NULL;
-    }
-
+  if (conn == NULL) {
+    fprintf(stderr,
+            "FATAL: PQsetdb() -- unable to allocate memory for a PGconn");
+    return (PGconn*)NULL;
+  }
     conn->Pfout = NULL;
     conn->Pfin = NULL;
     conn->Pfdebug = NULL;
@@ -113,39 +113,36 @@ PQsetdb(char *pghost, char* pgport, char* pgoptions, char* pgtty, char* dbName)
 	conn->pgoptions = strdup(tmp);
     } else
 	conn->pgoptions = strdup(pgoptions);
-#if 0
-    if (!dbName || dbName[0] == '\0') {
+    if (((tmp = dbName) && (dbName[0] != '\0')) ||
+        ((tmp = getenv("PGDATABASE")))) {
+      conn->dbName = strdup(tmp);
+    } else {
 	char errorMessage[ERROR_MSG_LENGTH];
-	if (!(tmp = getenv("PGDATABASE")) &&
-	    !(tmp = fe_getauthname(errorMessage))) {
+	if ((tmp = fe_getauthname(errorMessage)) != 0) {
+          conn->dbName = strdup(tmp);
+          free((char *)tmp);
+        } else {
 	    sprintf(conn->errorMessage,
 		    "FATAL: PQsetdb: Unable to determine a database name!\n");
-/*	    pqdebug("%s", conn->errorMessage); */
 	    conn->dbName = NULL;
 	    return conn;
 	}
-	conn->dbName = strdup(tmp);
-    } else
-	conn->dbName = strdup(dbName);
-#endif
-    if (((tmp = dbName) && (dbName[0] != '\0')) ||
-                                              ((tmp = getenv("PGDATABASE")))) {
-      conn->dbName = strdup(tmp);
-    } else {
-      char errorMessage[ERROR_MSG_LENGTH];
-      if (tmp = fe_getauthname(errorMessage)) {
-        conn->dbName = strdup(tmp);
-        free(tmp);
-      } else {
-        sprintf(conn->errorMessage,
-              "FATAL: PQsetdb: Unable to determine a database name!\n");
-/*      pqdebug("%s", conn->errorMessage); */
-        conn->dbName = NULL;
-        return conn;
-      }
     }
     conn->status = connectDB(conn);
-    return conn;
+    if (conn->status == CONNECTION_OK) {
+      PGresult *res;
+      /* Send a blank query to make sure everything works; in particular, that
+         the database exists.
+         */ 
+      res = PQexec(conn," ");
+      if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY) {
+        /* PQexec has put error message in conn->errorMessage */
+        closePGconn(conn);
+      }
+      PQclear(res);
+    } 
+  }     
+  return conn;
 }
 
 /*
@@ -165,7 +162,6 @@ connectDB(PGconn *conn)
     int         laddrlen = sizeof(struct sockaddr);
     Port        *port = conn->port;
     int         portno;
-    PGresult    *res;
 
     char        *user;
     /*
@@ -274,14 +270,6 @@ connectDB(PGconn *conn)
     
     conn->port = port;
 
-    /* we have a connection now,
-       send a blank query down to make sure the database exists*/
-    res = PQexec(conn," ");
-    if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY) {
-      /* error will already be in conn->errorMessage */
-      goto connect_errReturn;
-    }
-    free(res);
     return CONNECTION_OK;
 
 connect_errReturn:
@@ -318,6 +306,7 @@ closePGconn(PGconn *conn)
     if (conn->Pfout) fclose(conn->Pfout);
     if (conn->Pfin)  fclose(conn->Pfin);
     if (conn->Pfdebug) fclose(conn->Pfdebug);
+    conn->status = CONNECTION_BAD;  /* Well, not really _bad_ - just absent */
 }
 
 /*
