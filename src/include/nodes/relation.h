@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.24 1999/02/15 03:22:23 momjian Exp $
+ * $Id: relation.h,v 1.25 1999/02/15 05:21:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ typedef struct MergeInfo
 typedef struct JoinInfo
 {
 	NodeTag		type;
-	List	   *otherrels;
+	List	   *unjoined_rels;
 	List	   *jinfo_restrictinfo;
 	bool		mergejoinable;
 	bool		hashjoinable;

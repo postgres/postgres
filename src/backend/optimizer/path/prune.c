@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.34 1999/02/15 03:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.35 1999/02/15 05:21:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *merge_rel_with_same_relids(RelOptInfo *rel, List *other_rels);
+static List *merge_rel_with_same_relids(RelOptInfo *rel, List *unjoined_rels);
 
 /*
  * merge_rels_with_same_relids
@@ -48,8 +48,8 @@ merge_rels_with_same_relids(List *rel_list)
 }
 
 /*
-  * merge_rel_with_same_relids
- *	  Prunes those relations from 'other_rels' that are redundant with
+ * merge_rel_with_same_relids
+ *	  Prunes those relations from 'unjoined_rels' that are redundant with
  *	  'rel'.  A relation is redundant if it is built up of the same
  *	  relations as 'rel'.  Paths for the redundant relation are merged into
  *	  the pathlist of 'rel'.
@@ -59,25 +59,25 @@ merge_rels_with_same_relids(List *rel_list)
  *
  */
 static List *
-merge_rel_with_same_relids(RelOptInfo *rel, List *other_rels)
+merge_rel_with_same_relids(RelOptInfo *rel, List *unjoined_rels)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;
 
-	foreach(i, other_rels)
+	foreach(i, unjoined_rels)
 	{
-		RelOptInfo *other_rel = (RelOptInfo *) lfirst(i);
+		RelOptInfo *unjoined_rel = (RelOptInfo *) lfirst(i);
 
-		if (same(rel->relids, other_rel->relids))
+		if (same(rel->relids, unjoined_rel->relids))
 			/*
 			 *	This are on the same relations,
 			 *	so get the best of their pathlists.
 			 */
 			rel->pathlist = add_pathlist(rel,
 										 rel->pathlist,
-										 other_rel->pathlist);
+										 unjoined_rel->pathlist);
 		else
-			result = lappend(result, other_rel);
+			result = lappend(result, unjoined_rel);
 	}
 	return result;
 }

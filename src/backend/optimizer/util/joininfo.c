@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.16 1999/02/15 03:22:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.17 1999/02/15 05:21:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ joininfo_member(List *join_relids, List *joininfo_list)
 	foreach(i, joininfo_list)
 	{
 		other_rels = lfirst(i);
-		if (same(join_relids, ((JoinInfo *) other_rels)->otherrels))
+		if (same(join_relids, ((JoinInfo *) other_rels)->unjoined_rels))
 			return (JoinInfo *) other_rels;
 	}
 	return (JoinInfo *) NULL;
@@ -70,7 +70,7 @@ find_joininfo_node(RelOptInfo *this_rel, List *join_relids)
 	if (joininfo == NULL)
 	{
 		joininfo = makeNode(JoinInfo);
-		joininfo->otherrels = join_relids;
+		joininfo->unjoined_rels = join_relids;
 		joininfo->jinfo_restrictinfo = NIL;
 		joininfo->mergejoinable = false;
 		joininfo->hashjoinable = false;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.26 1999/02/15 03:22:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.27 1999/02/15 05:21:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,18 +246,19 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo, List *join_relids
 	foreach(join_relid, join_relids)
 	{
 		JoinInfo   *joininfo;
-		List	   *other_rels = NIL;
+		List	   *unjoined_rels = NIL;
 		List	   *rel;
 
 		foreach(rel, join_relids)
 		{
 			if (lfirsti(rel) != lfirsti(join_relid))
-				other_rels = lappendi(other_rels, lfirsti(rel));
+				unjoined_rels = lappendi(unjoined_rels, lfirsti(rel));
 		}
 
 		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
-									  other_rels);
-		joininfo->jinfo_restrictinfo = lcons(copyObject((void *) restrictinfo), joininfo->jinfo_restrictinfo);
+									  unjoined_rels);
+		joininfo->jinfo_restrictinfo = lcons(copyObject((void *) restrictinfo),
+											 joininfo->jinfo_restrictinfo);
 
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.47 1999/02/15 03:22:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.48 1999/02/15 05:21:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1208,7 +1208,7 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 		{
 			List	   *clauses = lfirst(clausegroups);
 
-			((RestrictInfo *) lfirst(clauses))->restrictinfojoinid = joininfo->otherrels;
+			((RestrictInfo *) lfirst(clauses))->restrictinfojoinid = joininfo->unjoined_rels;
 		}
 		cg_list = nconc(cg_list, clausegroups);
 	}

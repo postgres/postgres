@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.36 1999/02/15 03:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.37 1999/02/15 05:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,9 @@ bool		_use_geqo_ = false;
 int32		_use_geqo_rels_ = GEQO_RELS;
 
 
-static void find_base_rel_paths(Query *root, List *rels);
-static RelOptInfo *make_one_rel_by_joins(Query *root, List *outer_rels, int levels_needed);
+static void set_base_rel_pathlist(Query *root, List *rels);
+static RelOptInfo *make_one_rel_by_joins(Query *root, List *rels,
+										 int levels_needed);
 
 #ifdef OPTIMIZER_DEBUG
 static void debug_print_rel(Query *root, RelOptInfo *rel);
@@ -71,7 +72,7 @@ make_one_rel(Query *root, List *rels)
 	if (levels_needed <= 0)
 		return NULL;
 
-	find_base_rel_paths(root, rels);
+	set_base_rel_pathlist(root, rels);
 
 	if (levels_needed <= 1)
 	{
@@ -83,7 +84,7 @@ make_one_rel(Query *root, List *rels)
 	else
 	{
 		/*
-		 * this means that joins or sorts are required. set selectivities
+		 * This means that joins or sorts are required. set selectivities
 		 * of clauses that have not been set by an index.
 		 */
 		set_rest_relselec(root, rels);
@@ -93,7 +94,7 @@ make_one_rel(Query *root, List *rels)
 }
 
 /*
- * find_base_rel_paths
+ * set_base_rel_pathlist
  *	  Finds all paths available for scanning each relation entry in
  *	  'rels'.  Sequential scan and any available indices are considered
  *	  if possible(indices are not considered for lower nesting levels).
@@ -102,7 +103,7 @@ make_one_rel(Query *root, List *rels)
  *	  MODIFIES: rels
  */
 static void
-find_base_rel_paths(Query *root, List *rels)
+set_base_rel_pathlist(Query *root, List *rels)
 {
 	List	   *temp;
 
@@ -150,7 +151,7 @@ find_base_rel_paths(Query *root, List *rels)
  *	  Find all possible joinpaths(bushy trees) for a query by systematically
  *	  finding ways to join relations(both original and derived) together.
  *
- * 'outer_rels' is the current list of relations for which join paths
+ * 'rels' is the current list of relations for which join paths
  *				are to be found, i.e., the current list of relations that
  *				have already been derived.
  * 'levels_needed' is the number of iterations needed
@@ -159,7 +160,7 @@ find_base_rel_paths(Query *root, List *rels)
  * the result of joining all the original relations together.
  */
 static RelOptInfo *
-make_one_rel_by_joins(Query *root, List *outer_rels, int levels_needed)
+make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 {
 	List	   *x;
 	List	   *joined_rels = NIL;
@@ -180,11 +181,11 @@ make_one_rel_by_joins(Query *root, List *outer_rels, int levels_needed)
 	{
 		/*
 		 * Determine all possible pairs of relations to be joined at this
-		 * level. Determine paths for joining these relation pairs and
+		 * level.  Determine paths for joining these relation pairs and
 		 * modify 'joined_rels' accordingly, then eliminate redundant join
 		 * relations.
 		 */
-		joined_rels = make_rels_by_joins(root, outer_rels);
+		joined_rels = make_rels_by_joins(root, rels);
 
 		update_rels_pathlist_for_joins(root, joined_rels);
 
@@ -211,7 +212,7 @@ make_one_rel_by_joins(Query *root, List *outer_rels, int levels_needed)
 			 * involves the join relation to the joininfo list of the
 			 * other relation
 			 */
-			add_rel_to_rel_joininfos(root, joined_rels, outer_rels);
+			add_rel_to_rel_joininfos(root, joined_rels, rels);
 		}
 #endif
 
@@ -236,33 +237,25 @@ make_one_rel_by_joins(Query *root, List *outer_rels, int levels_needed)
 			 * prune rels that have been completely incorporated into new
 			 * join rels
 			 */
-			outer_rels = del_rels_all_bushy_inactive(outer_rels);
+			rels = del_rels_all_bushy_inactive(rels);
 
 			/*
 			 * merge join rels if then contain the same list of base rels
 			 */
-			outer_rels = merge_rels_with_same_relids(joined_rels, outer_rels);
-			root->join_rel_list = outer_rels;
+			joined_rels = merge_rels_with_same_relids(joined_rels, rels);
 		}
-		else
 #endif
-		root->join_rel_list = joined_rels;
-
-#ifdef NOT_USED
-		if (!BushyPlanFlag)
-#endif
-		outer_rels = joined_rels;
-
+		root->join_rel_list = rels = joined_rels;
 	}
 
-	Assert(length(joined_rels) == 1);
+	Assert(BushyPlanFlag || length(rels) == 1);
 
 #ifdef NOT_USED
 	if (BushyPlanFlag)
-		return final_join_rels(outer_rels);
+		return get_cheapest_complete_rel(rels);
 	else
 #endif
-	return lfirst(joined_rels);
+	return lfirst(rels);
 }
 
 /*****************************************************************************

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.24 1999/02/15 03:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.25 1999/02/15 05:21:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,17 +113,17 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
 
 		if (!joininfo->bushy_inactive)
 		{
-			List	   *other_rels = joininfo->otherrels;
+			List	   *unjoined_rels = joininfo->unjoined_rels;
 
-			if (other_rels != NIL)
+			if (unjoined_rels != NIL)
 			{
-				if (length(other_rels) == 1 &&
+				if (length(unjoined_rels) == 1 &&
 					(only_relids == NIL ||
 					/* geqo only wants certain relids to make new rels */
-					 same(joininfo->otherrels, only_relids)))
+					 same(joininfo->unjoined_rels, only_relids)))
 				{
 					rel = make_join_rel(outer_rel,
-								 get_base_rel(root, lfirsti(other_rels)),
+								 get_base_rel(root, lfirsti(unjoined_rels)),
 										joininfo);
 					/* how about right-sided plan ? */
 					if (_use_right_sided_plans_ &&
@@ -132,7 +132,7 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
 						if (rel != NULL)
 							join_list = lappend(join_list, rel);
 						rel = make_join_rel(get_base_rel(root,
-														 lfirsti(other_rels)),
+														 lfirsti(unjoined_rels)),
 											outer_rel,
 											joininfo);
 					}
@@ -141,7 +141,7 @@ make_rels_by_clause_joins(Query *root, RelOptInfo *outer_rel,
 				else if (BushyPlanFlag)
 				{
 					rel = make_join_rel(outer_rel,
-										get_join_rel(root, other_rels),
+										get_join_rel(root, unjoined_rels),
 										joininfo);
 				}
 #endif
@@ -328,7 +328,7 @@ static List *
 new_joininfo_list(List *joininfo_list, List *join_relids)
 {
 	List	   *current_joininfo_list = NIL;
-	List	   *new_otherrels = NIL;
+	List	   *new_unjoined_rels = NIL;
 	JoinInfo   *other_joininfo = (JoinInfo *) NULL;
 	List	   *xjoininfo = NIL;
 
@@ -337,16 +337,16 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 		List	   *or;
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 
-		new_otherrels = joininfo->otherrels;
-		foreach(or, new_otherrels)
+		new_unjoined_rels = joininfo->unjoined_rels;
+		foreach(or, new_unjoined_rels)
 		{
 			if (intMember(lfirsti(or), join_relids))
-				new_otherrels = lremove((void *) lfirst(or), new_otherrels);
+				new_unjoined_rels = lremove((void *) lfirst(or), new_unjoined_rels);
 		}
-		joininfo->otherrels = new_otherrels;
-		if (new_otherrels != NIL)
+		joininfo->unjoined_rels = new_unjoined_rels;
+		if (new_unjoined_rels != NIL)
 		{
-			other_joininfo = joininfo_member(new_otherrels,
+			other_joininfo = joininfo_member(new_unjoined_rels,
 											 current_joininfo_list);
 			if (other_joininfo)
 			{
@@ -357,7 +357,7 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 			{
 				other_joininfo = makeNode(JoinInfo);
 
-				other_joininfo->otherrels = joininfo->otherrels;
+				other_joininfo->unjoined_rels = joininfo->unjoined_rels;
 				other_joininfo->jinfo_restrictinfo = joininfo->jinfo_restrictinfo;
 				other_joininfo->mergejoinable = joininfo->mergejoinable;
 				other_joininfo->hashjoinable = joininfo->hashjoinable;
@@ -410,12 +410,12 @@ add_rel_to_rel_joininfos(Query *root, List *joinrels, List *outerrels)
 		foreach(xjoininfo, joinrel->joininfo)
 		{
 			JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
-			List	   *other_rels = joininfo->otherrels;
+			List	   *unjoined_rels = joininfo->unjoined_rels;
 			List	   *restrict_info = joininfo->jinfo_restrictinfo;
 			bool		mergejoinable = joininfo->mergejoinable;
 			bool		hashjoinable = joininfo->hashjoinable;
 
-			foreach(xrelid, other_rels)
+			foreach(xrelid, unjoined_rels)
 			{
 				Relid		relid = (Relid) lfirst(xrelid);
 				RelOptInfo *rel = get_join_rel(root, relid);
@@ -423,7 +423,7 @@ add_rel_to_rel_joininfos(Query *root, List *joinrels, List *outerrels)
 				List	   *xsuper_rel = NIL;
 				JoinInfo   *new_joininfo = makeNode(JoinInfo);
 
-				new_joininfo->otherrels = joinrel->relids;
+				new_joininfo->unjoined_rels = joinrel->relids;
 				new_joininfo->jinfo_restrictinfo = restrict_info;
 				new_joininfo->mergejoinable = mergejoinable;
 				new_joininfo->hashjoinable = hashjoinable;
@@ -449,7 +449,7 @@ add_rel_to_rel_joininfos(Query *root, List *joinrels, List *outerrels)
 						{
 							JoinInfo   *new_joininfo = makeNode(JoinInfo);
 
-							new_joininfo->otherrels = new_relids;
+							new_joininfo->unjoined_rels = new_relids;
 							new_joininfo->jinfo_restrictinfo = restrict_info;
 							new_joininfo->mergejoinable = mergejoinable;
 							new_joininfo->hashjoinable = hashjoinable;
@@ -473,7 +473,7 @@ add_rel_to_rel_joininfos(Query *root, List *joinrels, List *outerrels)
 
 #ifdef NOT_USED
 /*
- * final_join_rels
+ * get_cheapest_complete_rel
  *	   Find the join relation that includes all the original
  *	   relations, i.e. the final join result.
  *
@@ -482,14 +482,14 @@ add_rel_to_rel_joininfos(Query *root, List *joinrels, List *outerrels)
  * Returns the list of final join relations.
  */
 RelOptInfo *
-final_join_rels(List *join_rel_list)
+get_cheapest_complete_rel(List *join_rel_list)
 {
 	List	   *xrel = NIL;
 	RelOptInfo *final_rel = NULL;
 
 	/*
 	 * find the relations that has no further joins, i.e., its joininfos
-	 * all have otherrels nil.
+	 * all have unjoined_rels nil.
 	 */
 	foreach(xrel, join_rel_list)
 	{
@@ -501,7 +501,7 @@ final_join_rels(List *join_rel_list)
 		{
 			JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 
-			if (joininfo->otherrels != NIL)
+			if (joininfo->unjoined_rels != NIL)
 			{
 				final = false;
 				break;
