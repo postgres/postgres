@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.48 1999/02/15 05:21:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.49 1999/02/15 05:28:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *
  *
  */
 List *
-find_index_paths(Query *root,
+create_index_paths(Query *root,
 				 RelOptInfo *rel,
 				 List *indices,
 				 List *restrictinfo_list,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.37 1999/02/15 05:21:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.38 1999/02/15 05:28:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ set_base_rel_pathlist(Query *root, List *rels)
 
 		sequential_scan_list = lcons(create_seqscan_path(rel), NIL);
 
-		rel_index_scan_list = find_index_paths(root,
+		rel_index_scan_list = create_index_paths(root,
 											   rel,
 											   find_relation_indices(root, rel),
 											   rel->restrictinfo,
