@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.196 2004/03/30 15:53:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.197 2004/04/10 18:02:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4948,18 +4948,31 @@ EXTRACT (<replaceable>field</replaceable> FROM <replaceable>source</replaceable>
       <term><literal>century</literal></term>
       <listitem>
        <para>
-        The year field divided by 100
+        The historical definition of a century.
        </para>
 
 <screen>
-SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
+SELECT EXTRACT(CENTURY FROM TIMESTAMP '2000-12-16 12:21:13');
 <lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
+SELECT EXTRACT(CENTURY FROM TIMESTAMP '2001-02-16 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>21</computeroutput>
 </screen>
 
        <para>
-        Note that the result for the century field is simply the year field
-        divided by 100, and not the conventional definition which puts most
-        years in the 1900's in the twentieth century.
+        An historical century is a period of 100 years.
+	The first century starts at 0001-01-01 00:00:00 AD, although
+	they did not know at the time. This definition applies to all
+	Gregorian calendar countries. There is no number 0 century, 
+	you go from -1 to 1.
+
+	If you disagree with this, please write your complaint to:
+	Pope, Cathedral Saint-Peter of Roma, Vatican.
+       </para>
+
+       <para>
+	Compatibility: if you want the previous postgres version of century,
+	just divide the year by 100. Note that with this definition, 
+	century number 0 lasts 200 years.
        </para>
       </listitem>
      </varlistentry>
@@ -5083,18 +5096,17 @@ SELECT EXTRACT(MICROSECONDS FROM TIME '17:12:28.5');
       <term><literal>millennium</literal></term>
       <listitem>
        <para>
-        The year field divided by 1000
+        The conventional historical millennium.
        </para>
 
 <screen>
 SELECT EXTRACT(MILLENNIUM FROM TIMESTAMP '2001-02-16 20:38:40');
-<lineannotation>Result: </lineannotation><computeroutput>2</computeroutput>
+<lineannotation>Result: </lineannotation><computeroutput>3</computeroutput>
 </screen>
 
        <para>
-        Note that the result for the millennium field is simply the year field
-        divided by 1000, and not the conventional definition which puts
-        years in the 1900's in the second millennium.
+        Years in the 1900's are in the second millennium.
+	The third millennium starts January 1, 2001.
        </para>
       </listitem>
      </varlistentry>

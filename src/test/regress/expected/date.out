@@ -819,3 +819,114 @@ SELECT date 'tomorrow' - date 'yesterday' AS "Two days";
         2
 (1 row)
 
+--
+-- test extract!
+--
+-- century
+--
+SELECT EXTRACT(CENTURY FROM DATE '0101-12-31 BC'); -- -2
+ date_part 
+-----------
+        -2
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '0100-12-31 BC'); -- -1
+ date_part 
+-----------
+        -1
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '0001-12-31 BC'); -- -1
+ date_part 
+-----------
+        -1
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '0001-01-01');    --  1
+ date_part 
+-----------
+         1
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '0001-01-01 AD'); --  1
+ date_part 
+-----------
+         1
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '1900-12-31');    -- 19
+ date_part 
+-----------
+        19
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '1901-01-01');    -- 20
+ date_part 
+-----------
+        20
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '2000-12-31');    -- 20
+ date_part 
+-----------
+        20
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM DATE '2001-01-01');    -- 21
+ date_part 
+-----------
+        21
+(1 row)
+
+SELECT EXTRACT(CENTURY FROM CURRENT_DATE)>=21 AS True;     -- true
+ true 
+------
+ t
+(1 row)
+
+--
+-- millennium
+--
+SELECT EXTRACT(MILLENNIUM FROM DATE '0001-12-31 BC'); -- -1
+ date_part 
+-----------
+        -1
+(1 row)
+
+SELECT EXTRACT(MILLENNIUM FROM DATE '0001-01-01 AD'); --  1
+ date_part 
+-----------
+         1
+(1 row)
+
+SELECT EXTRACT(MILLENNIUM FROM DATE '1000-12-31');    --  1
+ date_part 
+-----------
+         1
+(1 row)
+
+SELECT EXTRACT(MILLENNIUM FROM DATE '1001-01-01');    --  2
+ date_part 
+-----------
+         2
+(1 row)
+
+SELECT EXTRACT(MILLENNIUM FROM DATE '2000-12-31');    --  2
+ date_part 
+-----------
+         2
+(1 row)
+
+SELECT EXTRACT(MILLENNIUM FROM DATE '2001-01-01');    --  3
+ date_part 
+-----------
+         3
+(1 row)
+
+-- next test to be fixed on the turn of the next millennium;-)
+SELECT EXTRACT(MILLENNIUM FROM CURRENT_DATE);         --  3
+ date_part 
+-----------
+         3
+(1 row)
+
