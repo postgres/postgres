@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.351 2005/02/27 08:31:30 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.352 2005/02/28 03:45:22 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1028,6 +1028,10 @@ DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 f f t f i 2 1009 "25 2
 DESCR("split delimited text into text[]");
 DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 f f t f i 2 25 "2277 25" _null_ array_to_text - _null_ ));
 DESCR("concatenate array elements, using delimiter, into text");
+DATA(insert OID = 515 (  array_larger	   PGNSP PGUID 12 f f t f i 2 2277 "2277 2277" _null_ array_larger - _null_ ));
+DESCR("larger of two");
+DATA(insert OID = 516 (  array_smaller	   PGNSP PGUID 12 f f t f i 2 2277 "2277 2277" _null_ array_smaller - _null_ ));
+DESCR("smaller of two");
 
 DATA(insert OID = 760 (  smgrin			   PGNSP PGUID 12 f f t f s 1 210 "2275" _null_  smgrin - _null_ ));
 DESCR("I/O");
@@ -3029,6 +3033,7 @@ DATA(insert OID = 2127 (  max				PGNSP PGUID 12 t f f f i 1 1184 "1184" _null_	a
 DATA(insert OID = 2128 (  max				PGNSP PGUID 12 t f f f i 1 1186 "1186" _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2129 (  max				PGNSP PGUID 12 t f f f i 1 25 "25" _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2130 (  max				PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_	aggregate_dummy - _null_ ));
+DATA(insert OID = 2050 (  max				PGNSP PGUID 12 t f f f i 1 2277 "2277" _null_	aggregate_dummy - _null_ ));
 
 DATA(insert OID = 2131 (  min				PGNSP PGUID 12 t f f f i 1 20 "20" _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2132 (  min				PGNSP PGUID 12 t f f f i 1 23 "23" _null_	aggregate_dummy - _null_ ));
@@ -3046,6 +3051,7 @@ DATA(insert OID = 2143 (  min				PGNSP PGUID 12 t f f f i 1 1184 "1184" _null_	a
 DATA(insert OID = 2144 (  min				PGNSP PGUID 12 t f f f i 1 1186 "1186" _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2145 (  min				PGNSP PGUID 12 t f f f i 1 25 "25" _null_	aggregate_dummy - _null_ ));
 DATA(insert OID = 2146 (  min				PGNSP PGUID 12 t f f f i 1 1700 "1700" _null_	aggregate_dummy - _null_ ));
+DATA(insert OID = 2051 (  min				PGNSP PGUID 12 t f f f i 1 2277 "2277" _null_	aggregate_dummy - _null_ ));
 
 DATA(insert OID = 2147 (  count				PGNSP PGUID 12 t f f f i 1 20 "2276" _null_  aggregate_dummy - _null_ ));
 

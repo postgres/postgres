@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.48 2005/01/28 17:35:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.49 2005/02/28 03:45:22 neilc Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -110,6 +110,7 @@ DATA(insert ( 2127	timestamptz_larger	-			1184	_null_ ));
 DATA(insert ( 2128	interval_larger -				1186	_null_ ));
 DATA(insert ( 2129	text_larger		-				25		_null_ ));
 DATA(insert ( 2130	numeric_larger	-				1700	_null_ ));
+DATA(insert ( 2050	array_larger	-				2277    _null_ ));
 
 /* min */
 DATA(insert ( 2131	int8smaller		-				20		_null_ ));
@@ -128,6 +129,7 @@ DATA(insert ( 2143	timestamptz_smaller -			1184	_null_ ));
 DATA(insert ( 2144	interval_smaller	-			1186	_null_ ));
 DATA(insert ( 2145	text_smaller	-				25		_null_ ));
 DATA(insert ( 2146	numeric_smaller -				1700	_null_ ));
+DATA(insert ( 2051	array_smaller	-				2277    _null_ ));
 
 /*
  * Using int8inc for count() is cheating a little, since it really only

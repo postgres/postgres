@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.115 2004/12/31 22:01:21 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.116 2005/02/28 03:45:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3386,4 +3386,34 @@ makeMdArrayResult(ArrayBuildState *astate,
 	MemoryContextDelete(astate->mcontext);
 
 	return PointerGetDatum(result);
+}
+
+Datum
+array_larger(PG_FUNCTION_ARGS)
+{
+	ArrayType	*v1,
+				*v2,
+				*result;
+
+	v1 = PG_GETARG_ARRAYTYPE_P(0);
+	v2 = PG_GETARG_ARRAYTYPE_P(1);
+
+	result = ((array_cmp(fcinfo) > 0) ? v1 : v2);
+
+	PG_RETURN_ARRAYTYPE_P(result);
+}
+
+Datum
+array_smaller(PG_FUNCTION_ARGS)
+{
+	ArrayType	*v1,
+				*v2,
+				*result;
+
+	v1 = PG_GETARG_ARRAYTYPE_P(0);
+	v2 = PG_GETARG_ARRAYTYPE_P(1);
+
+	result = ((array_cmp(fcinfo) < 0) ? v1 : v2);
+
+	PG_RETURN_ARRAYTYPE_P(result);
 }
