@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.89 2003/12/01 22:11:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.90 2003/12/01 22:21:54 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1276,12 +1276,13 @@ describeUsers(const char *pattern)
 			"       WHEN u.usesuper THEN CAST('%s' AS pg_catalog.text)\n"
 		 "       WHEN u.usecreatedb THEN CAST('%s' AS pg_catalog.text)\n"
 					  "       ELSE CAST('' AS pg_catalog.text)\n"
-					  "  END AS \"%s\"\n"
+					  "  END AS \"%s\",\n"
+					  "  ARRAY(SELECT g.groname FROM pg_catalog.pg_group g WHERE u.usesysid = ANY(g.grolist)) as \"%s\"\n"
 					  "FROM pg_catalog.pg_user u\n",
 					  _("User name"), _("User ID"),
 					  _("superuser, create database"),
 					  _("superuser"), _("create database"),
-					  _("Attributes"));
+					  _("Attributes"), _("Groups"));
 
 	processNamePattern(&buf, pattern, false, false,
 					   NULL, "u.usename", NULL, NULL);
@@ -1295,6 +1296,46 @@ describeUsers(const char *pattern)
 
 	myopt.nullPrint = NULL;
 	myopt.title = _("List of database users");
+
+	printQuery(res, &myopt, pset.queryFout);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
+ * \dg
+ *
+ * Describes groups.
+ */
+bool
+describeGroups(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT g.groname AS \"%s\",\n"
+					  "  g.grosysid AS \"%s\"\n"
+					  "FROM pg_catalog.pg_group g\n",
+					  _("Group name"), _("Group ID"));
+
+	processNamePattern(&buf, pattern, false, false,
+					   NULL, "g.groname", NULL, NULL);
+
+	appendPQExpBuffer(&buf, "ORDER BY 1;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of database groups");
 
 	printQuery(res, &myopt, pset.queryFout);
 

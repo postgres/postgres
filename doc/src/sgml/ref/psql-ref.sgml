@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.100 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.101 2003/12/01 22:21:54 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -900,6 +900,17 @@ testdb=>
         </para>
         </note>
 
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dg [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+        Lists all database groups or only those that match <replaceable
+        class="parameter">pattern</replaceable>.
+        </para>
         </listitem>
       </varlistentry>
 
