@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jun 27 14:06:42 EDT 2001
+Last updated:		Fri Jun 29 17:28:08 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -304,7 +304,7 @@ SOURCE CODE
 * Convert remaining fprintf(stderr,...)/perror() to elog()
 * Fix problems with libpq non-blocking/async code [async]
 * Merge global and template BKI files (Peter E)
-* Fix username/password length limits in all areas
+* Fix username/password length limits in all areas, e.g. pg_passwd
 * Remove compile-time upper limit on number of backends (MAXBACKENDS) (Tom)
 * Make sure all block numbers are unsigned to increase maximum table size
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
