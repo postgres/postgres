@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.18 1996/08/14 04:56:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.19 1996/08/14 05:44:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ slashUsage(PsqlSettings *ps)
   fprintf(stderr,"\t \\C [<captn>] -- set html3 caption (currently '%s')\n", ps->opt.caption? ps->opt.caption: "");
   fprintf(stderr,"\t \\c <dbname>  -- connect to new database (currently '%s')\n", PQdb(ps->db));
   fprintf(stderr,"\t \\d [<table>] -- list tables in database or columns in <table>,* for all\n");
-  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>, \\E execute too\n");
+  fprintf(stderr,"\t \\e [<fname>] -- edit the current query buffer or <fname>,\\E execute too\n");
   fprintf(stderr,"\t \\f [<sep>]   -- change field separater (currently '%s')\n", ps->opt.fieldSep);
   fprintf(stderr,"\t \\g [<fname>] -- send query to backend [and place results in <fname>]\n");
   fprintf(stderr,"\t \\g |<cmd>    -- send query to backend and pipe results into <cmd>\n");
@@ -1291,7 +1291,9 @@ handleCopyOut(PGresult *res, bool quiet)
     while (!copydone) {
 	ret = PQgetline(res->conn, copybuf, COPYBUFSIZ);
 	
-	if (copybuf[0] == '.' && copybuf[1] =='\0') {
+	if (copybuf[0] == '\\' &&
+	    copybuf[1] == '.' &&
+	    copybuf[2] =='\0') {
 	    copydone = true;	/* don't print this... */
 	} else {
 	    fputs(copybuf, stdout);
@@ -1325,7 +1327,7 @@ handleCopyIn(PGresult *res, bool quiet)
     
     if (!quiet) {
 	fputs("Enter info followed by a newline\n", stdout);
-	fputs("End with a dot on a line by itself.\n", stdout);
+	fputs("End with a backslash and a period on a line by itself.\n", stdout);
     }
     
     /*
@@ -1354,14 +1356,14 @@ handleCopyIn(PGresult *res, bool quiet)
 	    }
 	    if (c == EOF) {
 		/* reading from stdin, but from a file */
-		PQputline(res->conn, ".");
+		PQputline(res->conn, "\\.");
 		copydone = true;
 		break;
 	    }
 	    *s = '\0';
 	    PQputline(res->conn, copybuf);
 	    if (firstload) {
-		if (!strcmp(copybuf, ".")) {
+		if (!strcmp(copybuf, "\\.")) {
 		    copydone = true;
 		}
 		firstload = false;
