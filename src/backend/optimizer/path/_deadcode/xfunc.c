@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.28 1999/02/13 23:16:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.1 1999/02/18 00:49:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@
 
 /* local funcs */
 static int xfunc_card_unreferenced(Query *queryInfo,
-						Expr *clause, Relid referenced);
+						Expr *clause, Relids referenced);
 
 */
 
@@ -631,10 +631,10 @@ xfunc_width(LispValue clause)
 	}
 	else if (IsA(clause, Param))
 	{
-		if (typeidTypeRelid(get_paramtype((Param) clause)))
+		if (typeidTypeRelids(get_paramtype((Param) clause)))
 		{
 			/* Param node returns a tuple.	Find its width */
-			rd = heap_open(typeidTypeRelid(get_paramtype((Param) clause)));
+			rd = heap_open(typeidTypeRelids(get_paramtype((Param) clause)));
 			retval = xfunc_tuple_width(rd);
 			heap_close(rd);
 		}
@@ -724,9 +724,9 @@ exit:
  */
 static Count
 xfunc_card_unreferenced(Query *queryInfo,
-						LispValue clause, Relid referenced)
+						LispValue clause, Relids referenced)
 {
-	Relid		unreferenced,
+	Relids		unreferenced,
 				allrelids = LispNil;
 	LispValue	temp;
 
@@ -751,7 +751,7 @@ xfunc_card_unreferenced(Query *queryInfo,
  **   multiple together cardinalities of a list relations.
  */
 Count
-xfunc_card_product(Query *queryInfo, Relid relids)
+xfunc_card_product(Query *queryInfo, Relids relids)
 {
 	LispValue	cinfonode;
 	LispValue	temp;
@@ -1310,9 +1310,9 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
 
 	/* if function returns a tuple, get the width of that */
-	if (typeidTypeRelid(proc->prorettype))
+	if (typeidTypeRelids(proc->prorettype))
 	{
-		rd = heap_open(typeidTypeRelid(proc->prorettype));
+		rd = heap_open(typeidTypeRelids(proc->prorettype));
 		retval = xfunc_tuple_width(rd);
 		heap_close(rd);
 		goto exit;
@@ -1478,7 +1478,6 @@ xfunc_copyrel(RelOptInfo from, RelOptInfo *to)
 	Node_Copy(from, newnode, alloc, restrictinfo);
 	Node_Copy(from, newnode, alloc, joininfo);
 	Node_Copy(from, newnode, alloc, innerjoin);
-	Node_Copy(from, newnode, alloc, superrels);
 
 	(*to) = newnode;
 	return true;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.34 1999/02/15 05:21:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.35 1999/02/18 00:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,7 +526,7 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
 	Assert(IsA(a, JoinInfo));
 	Assert(IsA(b, JoinInfo));
-	if (!equal(a->unjoined_rels, b->unjoined_rels))
+	if (!equal(a->unjoined_relids, b->unjoined_relids))
 		return false;
 	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
 		return false;

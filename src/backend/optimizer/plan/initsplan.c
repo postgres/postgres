@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.27 1999/02/15 05:21:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.28 1999/02/18 00:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,8 @@ extern int	Quiet;
 
 static void add_restrict_and_join_to_rel(Query *root, List *clause);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
-					  List *join_relids);
-static void add_vars_to_targetlist(Query *root, List *vars, List *join_relids);
+					  Relids join_relids);
+static void add_vars_to_targetlist(Query *root, List *vars, Relids join_relids);
 
 static MergeOrder *mergejoinop(Expr *clause);
 static Oid	hashjoinop(Expr *clause);
@@ -107,7 +107,7 @@ add_missing_vars_to_tlist(Query *root, List *tlist)
 	foreach(l, root->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
-		List	   *relids;
+		Relids		relids;
 		RelOptInfo *result;
 		Var		   *var;
 
@@ -165,7 +165,7 @@ add_restrict_and_join_to_rels(Query *root, List *clauses)
 static void
 add_restrict_and_join_to_rel(Query *root, List *clause)
 {
-	List	   *relids;
+	Relids		relids;
 	List	   *vars;
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
 
@@ -235,31 +235,31 @@ add_restrict_and_join_to_rel(Query *root, List *clause)
  * 'restrictinfo' describes the join clause
  * 'join_relids' is the list of relations participating in the join clause
  *
- * Returns nothing.
- *
  */
 static void
-add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo, List *join_relids)
+add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
+						Relids join_relids)
 {
 	List	   *join_relid;
 
+	/* For every relid, find the rel, and add the proper join entries */
 	foreach(join_relid, join_relids)
 	{
 		JoinInfo   *joininfo;
-		List	   *unjoined_rels = NIL;
-		List	   *rel;
+		Relids		unjoined_relids = NIL;
+		List 		*rel;
 
+		/* Get the relids not equal to the current relid */
 		foreach(rel, join_relids)
 		{
 			if (lfirsti(rel) != lfirsti(join_relid))
-				unjoined_rels = lappendi(unjoined_rels, lfirsti(rel));
+				unjoined_relids = lappendi(unjoined_relids, lfirsti(rel));
 		}
 
 		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
-									  unjoined_rels);
+									  unjoined_relids);
 		joininfo->jinfo_restrictinfo = lcons(copyObject((void *) restrictinfo),
 											 joininfo->jinfo_restrictinfo);
-
 	}
 }
 
@@ -279,7 +279,7 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo, List *join_relids
  *	  Returns nothing.
  */
 static void
-add_vars_to_targetlist(Query *root, List *vars, List *join_relids)
+add_vars_to_targetlist(Query *root, List *vars, Relids join_relids)
 {
 	Var		   *var;
 	List	   *temp = NIL;

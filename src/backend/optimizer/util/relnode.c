@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.14 1999/02/15 03:22:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.15 1999/02/18 00:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 RelOptInfo *
 get_base_rel(Query *root, int relid)
 {
-	List	   *relids;
+	Relids	relids;
 	RelOptInfo *rel;
 
 	relids = lconsi(relid, NIL);
@@ -53,7 +53,6 @@ get_base_rel(Query *root, int relid)
 		rel->restrictinfo = NIL;
 		rel->joininfo = NIL;
 		rel->innerjoin = NIL;
-		rel->superrels = NIL;
 
 		root->base_rel_list = lcons(rel, root->base_rel_list);
 
@@ -76,7 +75,6 @@ get_base_rel(Query *root, int relid)
 			bool		hasindex;
 			int			pages,
 						tuples;
-
 			/*
 			 * Otherwise, retrieve relation characteristics from the
 			 * system catalogs.
@@ -93,11 +91,10 @@ get_base_rel(Query *root, int relid)
 /*
  * get_join_rel
  *	  Returns relation entry corresponding to 'relid' (a list of relids),
- *	  creating a new one if necessary. This is for join relations.
- *
+ *	  or NULL.
  */
 RelOptInfo *
-get_join_rel(Query *root, List *relid)
+get_join_rel(Query *root, Relids relid)
 {
 	return rel_member(relid, root->join_rel_list);
 }
@@ -111,17 +108,17 @@ get_join_rel(Query *root, List *relid)
  *
  */
 RelOptInfo *
-rel_member(List *relid, List *rels)
+rel_member(Relids relids, List *rels)
 {
 	List	   *temp = NIL;
 	List	   *temprelid = NIL;
 
-	if (relid != NIL && rels != NIL)
+	if (relids != NIL && rels != NIL)
 	{
 		foreach(temp, rels)
 		{
 			temprelid = ((RelOptInfo *) lfirst(temp))->relids;
-			if (same(temprelid, relid))
+			if (same(temprelid, relids))
 				return (RelOptInfo *) (lfirst(temp));
 		}
 	}

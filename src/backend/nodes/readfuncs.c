@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.58 1999/02/15 05:21:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.59 1999/02/18 00:49:15 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1982,8 +1982,8 @@ _readJoinInfo()
 
 	local_node = makeNode(JoinInfo);
 
-	token = lsptok(NULL, &length);		/* get :unjoined_rels */
-	local_node->unjoined_rels = toIntList(nodeRead(true));		/* now read it */
+	token = lsptok(NULL, &length);		/* get :unjoined_relids */
+	local_node->unjoined_relids = toIntList(nodeRead(true));		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :jinfo_restrictinfo */
 	local_node->jinfo_restrictinfo = nodeRead(true);		/* now read it */

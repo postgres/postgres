@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.29 1999/02/13 23:16:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.30 1999/02/18 00:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include "optimizer/planner.h"
 #include "optimizer/planmain.h"
 
-static List *plan_inherit_query(List *relids, Index rt_index,
+static List *plan_inherit_query(Relids relids, Index rt_index,
 				   RangeTblEntry *rt_entry, Query *parse,
 				   List **union_rtentriesPtr);
 static RangeTblEntry *new_rangetable_entry(Oid new_relid,
@@ -248,7 +248,7 @@ plan_inherit_queries(Query *parse, Index rt_index)
  *	  in union_rtentries.
  */
 static List *
-plan_inherit_query(List *relids,
+plan_inherit_query(Relids relids,
 				   Index rt_index,
 				   RangeTblEntry *rt_entry,
 				   Query *root,
@@ -301,8 +301,8 @@ plan_inherit_query(List *relids,
  *		lists.
  */
 List *
-find_all_inheritors(List *unexamined_relids,
-					List *examined_relids)
+find_all_inheritors(Relids unexamined_relids,
+					Relids examined_relids)
 {
 	List	   *new_inheritors = NIL;
 	List	   *new_examined_relids = NIL;

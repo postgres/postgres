@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.72 1999/02/15 05:21:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.73 1999/02/18 00:49:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1066,7 +1066,6 @@ _copyRelOptInfo(RelOptInfo * from)
 	Node_Copy(from, newnode, restrictinfo);
 	Node_Copy(from, newnode, joininfo);
 	Node_Copy(from, newnode, innerjoin);
-	Node_Copy(from, newnode, superrels);
 
 	return newnode;
 }
@@ -1428,12 +1427,11 @@ _copyJoinInfo(JoinInfo *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	newnode->unjoined_rels = listCopy(from->unjoined_rels);
+	newnode->unjoined_relids = listCopy(from->unjoined_relids);
 	Node_Copy(from, newnode, jinfo_restrictinfo);
 
 	newnode->mergejoinable = from->mergejoinable;
 	newnode->hashjoinable = from->hashjoinable;
-	newnode->bushy_inactive = from->bushy_inactive;
 
 	return newnode;
 }

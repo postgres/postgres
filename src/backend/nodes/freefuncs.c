@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.12 1999/02/15 05:21:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.13 1999/02/18 00:49:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -740,7 +740,6 @@ _freeRelOptInfo(RelOptInfo *node)
 	freeObject(node->restrictinfo);
 	freeObject(node->joininfo);
 	freeObject(node->innerjoin);
-	freeObject(node->superrels);
 
 	pfree(node);
 }
@@ -1024,7 +1023,7 @@ _freeJoinInfo(JoinInfo *node)
 	 *	free remainder of node
 	 * ----------------
 	 */
-	freeList(node->unjoined_rels);
+	freeList(node->unjoined_relids);
 	freeObject(node->jinfo_restrictinfo);
 
 	pfree(node);

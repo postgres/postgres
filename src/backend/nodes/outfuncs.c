@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.74 1999/02/15 05:21:02 momjian Exp $
+ *  $Id: outfuncs.c,v 1.75 1999/02/18 00:49:14 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -61,7 +61,7 @@ _outIntList(StringInfo str, List *list)
 	appendStringInfo(str, "(");
 	foreach(l, list)
 	{
-		appendStringInfo(str, " %d ", (int) lfirst(l));
+		appendStringInfo(str, " %d ", lfirsti(l));
 	}
 	appendStringInfo(str, ")");
 }
@@ -1198,8 +1198,8 @@ _outHashInfo(StringInfo str, HashInfo *node)
 static void
 _outJoinInfo(StringInfo str, JoinInfo *node)
 {
-	appendStringInfo(str, " JINFO :unjoined_rels ");
-	_outIntList(str, node->unjoined_rels);
+	appendStringInfo(str, " JINFO :unjoined_relids ");
+	_outIntList(str, node->unjoined_relids);
 
 	appendStringInfo(str, " :jinfo_restrictinfo ");
 	_outNode(str, node->jinfo_restrictinfo);

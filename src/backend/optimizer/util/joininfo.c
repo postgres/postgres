@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.17 1999/02/15 05:21:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.18 1999/02/18 00:49:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,16 +38,16 @@
 JoinInfo   *
 joininfo_member(List *join_relids, List *joininfo_list)
 {
-	List	   *i = NIL;
-	List	   *other_rels = NIL;
+	List	    *i;
 
 	foreach(i, joininfo_list)
 	{
-		other_rels = lfirst(i);
-		if (same(join_relids, ((JoinInfo *) other_rels)->unjoined_rels))
-			return (JoinInfo *) other_rels;
+		JoinInfo	*joininfo = (JoinInfo *)lfirst(i);
+
+		if (same(join_relids, joininfo->unjoined_relids))
+			return joininfo;
 	}
-	return (JoinInfo *) NULL;
+	return NULL;
 }
 
 
@@ -62,7 +62,7 @@ joininfo_member(List *join_relids, List *joininfo_list)
  *
  */
 JoinInfo   *
-find_joininfo_node(RelOptInfo *this_rel, List *join_relids)
+find_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
 {
 	JoinInfo   *joininfo = joininfo_member(join_relids,
 										   this_rel->joininfo);
@@ -70,11 +70,10 @@ find_joininfo_node(RelOptInfo *this_rel, List *join_relids)
 	if (joininfo == NULL)
 	{
 		joininfo = makeNode(JoinInfo);
-		joininfo->unjoined_rels = join_relids;
+		joininfo->unjoined_relids = join_relids;
 		joininfo->jinfo_restrictinfo = NIL;
 		joininfo->mergejoinable = false;
 		joininfo->hashjoinable = false;
-		joininfo->bushy_inactive = false;
 		this_rel->joininfo = lcons(joininfo, this_rel->joininfo);
 	}
 	return joininfo;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.36 1999/02/15 03:22:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.37 1999/02/18 00:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -633,7 +633,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.path.pathorder->ordtype = SORTOP_ORDER;
 	pathnode->jpath.path.pathorder->ord.sortop = NULL;
 	pathnode->jpath.path.outerjoincost = (Cost) 0.0;
-	pathnode->jpath.path.joinid = (Relid) NULL;
+	pathnode->jpath.path.joinid = (Relids) NULL;
 	/* pathnode->hashjoinoperator = operator;  */
 	pathnode->path_hashclauses = hashclauses;
 	pathnode->outerhashkeys = outerkeys;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.25 1999/02/15 05:21:12 momjian Exp $
+ * $Id: relation.h,v 1.26 1999/02/18 00:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,11 @@
 #include <nodes/primnodes.h>
 
 /*
- * Relid
+ * Relids
  *		List of relation identifiers (indexes into the rangetable).
  */
 
-typedef List *Relid;
+typedef List *Relids;
 
 /*
  * RelOptInfo
@@ -72,7 +72,7 @@ typedef struct RelOptInfo
 	NodeTag		type;
 
 	/* all relations: */
-	Relid		relids;
+	Relids		relids;			/* integer list of base relids involved */
 
 	/* catalog statistics information */
 	bool		indexed;
@@ -84,7 +84,7 @@ typedef struct RelOptInfo
 	/* materialization information */
 	List	   *targetlist;
 	List	   *pathlist;		/* Path structures */
-	struct Path *cheapestpath;
+	struct Path *cheapestpath;	
 	bool		pruneable;
 
 	/* used solely by indices: */
@@ -100,7 +100,6 @@ typedef struct RelOptInfo
 	List	   *restrictinfo;	/* RestrictInfo structures */
 	List	   *joininfo;		/* JoinInfo structures */
 	List	   *innerjoin;
-	List	   *superrels;
 } RelOptInfo;
 
 extern Var *get_expr(TargetEntry *foo);
@@ -148,7 +147,7 @@ typedef struct Path
 							 * indexes.
 							 */							   
 	Cost		outerjoincost;
-	Relid		joinid;
+	Relids		joinid;
 	List	   *loc_restrictinfo;
 } Path;
 
@@ -221,7 +220,7 @@ typedef struct RestrictInfo
 
 	/* hashjoin only */
 	Oid			hashjoinoperator;
-	Relid		restrictinfojoinid;
+	Relids		restrictinfojoinid;
 } RestrictInfo;
 
 typedef struct JoinMethod
@@ -246,11 +245,10 @@ typedef struct MergeInfo
 typedef struct JoinInfo
 {
 	NodeTag		type;
-	List	   *unjoined_rels;
+	Relids		unjoined_relids;
 	List	   *jinfo_restrictinfo;
 	bool		mergejoinable;
 	bool		hashjoinable;
-	bool		bushy_inactive;
 } JoinInfo;
 
 typedef struct Iter

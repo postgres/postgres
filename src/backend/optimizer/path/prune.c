@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.36 1999/02/16 00:41:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.37 1999/02/18 00:49:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *merge_rel_with_same_relids(RelOptInfo *rel, List *unjoined_rels);
+static List *merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids);
 
 /*
  * merge_rels_with_same_relids
@@ -49,7 +49,7 @@ merge_rels_with_same_relids(List *rel_list)
 
 /*
  * merge_rel_with_same_relids
- *	  Prunes those relations from 'unjoined_rels' that are redundant with
+ *	  Prunes those relations from 'unjoined_relids' that are redundant with
  *	  'rel'.  A relation is redundant if it is built up of the same
  *	  relations as 'rel'.  Paths for the redundant relation are merged into
  *	  the pathlist of 'rel'.
@@ -59,12 +59,12 @@ merge_rels_with_same_relids(List *rel_list)
  *
  */
 static List *
-merge_rel_with_same_relids(RelOptInfo *rel, List *unjoined_rels)
+merge_rel_with_same_relids(RelOptInfo *rel, Relids unjoined_relids)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;
 
-	foreach(i, unjoined_rels)
+	foreach(i, unjoined_relids)
 	{
 		RelOptInfo *unjoined_rel = (RelOptInfo *) lfirst(i);
 
@@ -105,49 +105,3 @@ rels_set_cheapest(List *rel_list)
 			elog(ERROR, "non JoinPath called");
 	}
 }
-
-/*
- * del_rels_all_bushy_inactive
- *	  If all the joininfo's in a rel node are bushy_inactive,
- *	  that means that this node has been joined into
- *	  other nodes in all possible ways, therefore
- *	  this node can be discarded.  If not, it will cause
- *	  extra complexity of the optimizer.
- *
- * old_rels is a list of rel nodes
- *
- * Returns a new list of rel nodes
- */
-List *
-del_rels_all_bushy_inactive(List *old_rels)
-{
-	RelOptInfo *rel;
-	List	   *joininfo_list,
-			   *xjoininfo,
-			   *i,
-			   *temp_list = NIL;
-
-	foreach(i, old_rels)
-	{
-		rel = (RelOptInfo *) lfirst(i);
-		joininfo_list = rel->joininfo;
-
-		if (joininfo_list == NIL)
-			temp_list = lcons(rel, temp_list);
-		else
-		{
-			foreach(xjoininfo, joininfo_list)
-			{
-				JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
-
-				if (!joininfo->bushy_inactive)
-				{
-					temp_list = lcons(rel, temp_list);
-					break;
-				}
-			}
-		}
-	}
-	return temp_list;
-}
-
