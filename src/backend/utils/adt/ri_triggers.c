@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43.2.1 2003/03/27 19:25:52 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43.2.2 2003/04/26 22:21:58 tgl Exp $
  *
  * ----------
  */
@@ -58,17 +58,18 @@
 #define RI_KEYS_SOME_NULL				1
 #define RI_KEYS_NONE_NULL				2
 
-
+/* queryno values must be distinct for the convenience of ri_PerformCheck */
 #define RI_PLAN_CHECK_LOOKUPPK_NOCOLS	1
 #define RI_PLAN_CHECK_LOOKUPPK			2
-#define RI_PLAN_CASCADE_DEL_DODELETE	1
-#define RI_PLAN_CASCADE_UPD_DOUPDATE	1
-#define RI_PLAN_NOACTION_DEL_CHECKREF	1
-#define RI_PLAN_NOACTION_UPD_CHECKREF	1
-#define RI_PLAN_RESTRICT_DEL_CHECKREF	1
-#define RI_PLAN_RESTRICT_UPD_CHECKREF	1
-#define RI_PLAN_SETNULL_DEL_DOUPDATE	1
-#define RI_PLAN_SETNULL_UPD_DOUPDATE	1
+#define RI_PLAN_CASCADE_DEL_DODELETE	3
+#define RI_PLAN_CASCADE_UPD_DOUPDATE	4
+#define RI_PLAN_NOACTION_DEL_CHECKREF	5
+#define RI_PLAN_NOACTION_UPD_CHECKREF	6
+#define RI_PLAN_RESTRICT_DEL_CHECKREF	7
+#define RI_PLAN_RESTRICT_UPD_CHECKREF	8
+#define RI_PLAN_SETNULL_DEL_DOUPDATE	9
+#define RI_PLAN_SETNULL_UPD_DOUPDATE	10
+#define RI_PLAN_KEYEQUAL_UPD			11
 
 #define MAX_QUOTED_NAME_LEN  (NAMEDATALEN*2+3)
 #define MAX_QUOTED_REL_NAME_LEN  (MAX_QUOTED_NAME_LEN*2)
@@ -149,6 +150,10 @@ static bool ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row,
 static void ri_InitHashTables(void);
 static void *ri_FetchPreparedPlan(RI_QueryKey *key);
 static void ri_HashPreparedPlan(RI_QueryKey *key, void *plan);
+static void *ri_PlanCheck(char *querystr, int nargs, Oid *argtypes,
+						  RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
+						  bool cache_plan);
+
 
 /* ----------
  * RI_FKey_check -
@@ -264,6 +269,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 							 fk_rel, pk_rel,
 							 tgnargs, tgargs);
 
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect() failed in RI_FKey_check()");
+
 		if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 		{
 			char		querystr[MAX_QUOTED_REL_NAME_LEN + 100];
@@ -278,20 +286,14 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x FOR UPDATE OF x",
 					 pkrelname);
 
-			/*
-			 * Prepare, save and remember the new plan.
-			 */
-			qplan = SPI_prepare(querystr, 0, NULL);
-			qplan = SPI_saveplan(qplan);
-			ri_HashPreparedPlan(&qkey, qplan);
+			/* Prepare and save the plan */
+			qplan = ri_PlanCheck(querystr, 0, NULL,
+								 &qkey, fk_rel, pk_rel, true);
 		}
 
 		/*
 		 * Execute the plan
 		 */
-		if (SPI_connect() != SPI_OK_CONNECT)
-			elog(WARNING, "SPI_connect() failed in RI_FKey_check()");
-
 		SetUserId(RelationGetForm(pk_rel)->relowner);
 
 		if (SPI_execp(qplan, check_values, check_nulls, 1) != SPI_OK_SELECT)
@@ -420,7 +422,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		 * The query string built is
 		 *	SELECT 1 FROM ONLY <pktable> WHERE pkatt1 = $1 [AND ...]
 		 * The type id's for the $ parameters are those of the
-		 * corresponding FK attributes. Thus, SPI_prepare could
+		 * corresponding FK attributes. Thus, ri_PlanCheck could
 		 * eventually fail if the parser cannot identify some way
 		 * how to compare these two types by '='.
 		 * ----------
@@ -440,12 +442,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		}
 		strcat(querystr, " FOR UPDATE OF x");
 
-		/*
-		 * Prepare, save and remember the new plan.
-		 */
-		qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-		qplan = SPI_saveplan(qplan);
-		ri_HashPreparedPlan(&qkey, qplan);
+		/* Prepare and save the plan */
+		qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+							 &qkey, fk_rel, pk_rel, true);
 	}
 
 	/*
@@ -625,7 +624,7 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 		 * The query string built is
 		 *	SELECT 1 FROM ONLY <pktable> WHERE pkatt1 = $1 [AND ...]
 		 * The type id's for the $ parameters are those of the
-		 * corresponding FK attributes. Thus, SPI_prepare could
+		 * corresponding FK attributes. Thus, ri_PlanCheck could
 		 * eventually fail if the parser cannot identify some way
 		 * how to compare these two types by '='.
 		 * ----------
@@ -645,12 +644,9 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 		}
 		strcat(querystr, " FOR UPDATE OF x");
 
-		/*
-		 * Prepare, save and remember the new plan.
-		 */
-		qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-		qplan = SPI_saveplan(qplan);
-		ri_HashPreparedPlan(&qkey, qplan);
+		/* Prepare and save the plan */
+		qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+							 &qkey, pk_rel, pk_rel, true);
 	}
 
 	/*
@@ -834,7 +830,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 				 * The query string built is
 				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -854,12 +850,9 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, " FOR UPDATE OF x");
 
-				/*
-				 * Prepare, save and remember the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-				qplan = SPI_saveplan(qplan);
-				ri_HashPreparedPlan(&qkey, qplan);
+				/* Prepare and save the plan */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -1075,7 +1068,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				 * The query string built is
 				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -1095,12 +1088,9 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, " FOR UPDATE OF x");
 
-				/*
-				 * Prepare, save and remember the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-				qplan = SPI_saveplan(qplan);
-				ri_HashPreparedPlan(&qkey, qplan);
+				/* Prepare and save the plan */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -1288,7 +1278,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 				 * The query string built is
 				 *	DELETE FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -1307,12 +1297,9 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
 				}
 
-				/*
-				 * Prepare, save and remember the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-				qplan = SPI_saveplan(qplan);
-				ri_HashPreparedPlan(&qkey, qplan);
+				/* Prepare and save the plan */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -1511,7 +1498,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				 *	UPDATE ONLY <fktable> SET fkatt1 = $1 [, ...]
 				 *			WHERE fkatt1 = $n [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -1537,12 +1524,9 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, qualstr);
 
-				/*
-				 * Prepare, save and remember the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs * 2, queryoids);
-				qplan = SPI_saveplan(qplan);
-				ri_HashPreparedPlan(&qkey, qplan);
+				/* Prepare and save the plan */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs * 2, queryoids,
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -1741,7 +1725,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 				 * The query string built is
 				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -1761,12 +1745,9 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, " FOR UPDATE OF x");
 
-				/*
-				 * Prepare, save and remember the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-				qplan = SPI_saveplan(qplan);
-				ri_HashPreparedPlan(&qkey, qplan);
+				/* Prepare and save the plan */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -1975,7 +1956,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 				 * The query string built is
 				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -1995,12 +1976,9 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, " FOR UPDATE OF x");
 
-				/*
-				 * Prepare, save and remember the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-				qplan = SPI_saveplan(qplan);
-				ri_HashPreparedPlan(&qkey, qplan);
+				/* Prepare and save the plan */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -2195,7 +2173,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -2220,12 +2198,9 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, qualstr);
 
-				/*
-				 * Prepare, save and remember the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-				qplan = SPI_saveplan(qplan);
-				ri_HashPreparedPlan(&qkey, qplan);
+				/* Prepare and save the plan */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, true);
 			}
 
 			/*
@@ -2445,7 +2420,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -2481,19 +2456,12 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				strcat(querystr, qualstr);
 
 				/*
-				 * Prepare the new plan.
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
-
-				/*
-				 * Save and remember the plan if we're building the
+				 * Prepare the plan.  Save it only if we're building the
 				 * "standard" plan.
 				 */
-				if (use_cached_query)
-				{
-					qplan = SPI_saveplan(qplan);
-					ri_HashPreparedPlan(&qkey, qplan);
-				}
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel,
+									 use_cached_query);
 			}
 
 			/*
@@ -2682,7 +2650,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -2707,10 +2675,9 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, qualstr);
 
-				/*
-				 * Prepare the plan
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
+				/* Prepare the plan, don't save it */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, false);
 
 				/*
 				 * Scan the plan's targetlist and replace the NULLs by
@@ -2942,7 +2909,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
-				 * corresponding PK attributes. Thus, SPI_prepare could
+				 * corresponding PK attributes. Thus, ri_PlanCheck could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
@@ -2977,10 +2944,9 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				}
 				strcat(querystr, qualstr);
 
-				/*
-				 * Prepare the plan
-				 */
-				qplan = SPI_prepare(querystr, qkey.nkeypairs, queryoids);
+				/* Prepare the plan, don't save it */
+				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
+									 &qkey, fk_rel, pk_rel, false);
 
 				/*
 				 * Scan the plan's targetlist and replace the NULLs by
@@ -3124,7 +3090,7 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 		case RI_MATCH_TYPE_UNSPECIFIED:
 		case RI_MATCH_TYPE_FULL:
 			ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
-								 0,
+								 RI_PLAN_KEYEQUAL_UPD,
 								 fk_rel, pk_rel,
 								 tgnargs, tgargs);
 
@@ -3160,6 +3126,52 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
  * ----------
  */
 
+
+/*
+ * Prepare execution plan for a query to enforce an RI restriction
+ *
+ * If cache_plan is true, the plan is saved into our plan hashtable
+ * so that we don't need to plan it again.
+ */
+static void *
+ri_PlanCheck(char *querystr, int nargs, Oid *argtypes,
+			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
+			 bool cache_plan)
+{
+	void	   *qplan;
+	Relation	query_rel;
+	Oid			save_uid;
+
+	/*
+	 * The query is always run against the FK table except
+	 * when this is an update/insert trigger on the FK table itself -
+	 * either RI_PLAN_CHECK_LOOKUPPK or RI_PLAN_CHECK_LOOKUPPK_NOCOLS
+	 */
+	if (qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK ||
+		qkey->constr_queryno == RI_PLAN_CHECK_LOOKUPPK_NOCOLS)
+		query_rel = pk_rel;
+	else
+		query_rel = fk_rel;
+
+	/* Switch to proper UID to perform check as */
+	save_uid = GetUserId();
+	SetUserId(RelationGetForm(query_rel)->relowner);
+
+	/* Create the plan */
+	qplan = SPI_prepare(querystr, nargs, argtypes);
+
+	/* Restore UID */
+	SetUserId(save_uid);
+
+	/* Save the plan if requested */
+	if (cache_plan)
+	{
+		qplan = SPI_saveplan(qplan);
+		ri_HashPreparedPlan(qkey, qplan);
+	}
+
+	return qplan;
+}
 
 /*
  * quoteOneName --- safely quote a single SQL name
