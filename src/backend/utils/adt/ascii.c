@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.8 2001/03/22 06:16:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.9 2001/09/06 04:57:29 ishii Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -78,7 +78,7 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 #define RANGE_160	160
 
 
-	if (enc == LATIN1)
+	if (enc == PG_LATIN1)
 	{
 
 		/*
@@ -87,7 +87,7 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 		ascii = "  cL Y  \"Ca  -R     'u .,      ?AAAAAAACEEEEIIII NOOOOOxOUUUUYTBaaaaaaaceeeeiiii nooooo/ouuuuyty";
 		range = RANGE_160;
 	}
-	else if (enc == LATIN2)
+	else if (enc == PG_LATIN2)
 	{
 
 		/*
@@ -96,7 +96,7 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 		ascii = " A L LS \"SSTZ-ZZ a,l'ls ,sstz\"zzRAAAALCCCEEEEIIDDNNOOOOxRUUUUYTBraaaalccceeeeiiddnnoooo/ruuuuyt.";
 		range = RANGE_160;
 	}
-	else if (enc == WIN1250)
+	else if (enc == PG_WIN1250)
 	{
 
 		/*

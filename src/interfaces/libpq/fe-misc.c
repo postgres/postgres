@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.55 2001/09/06 02:52:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.56 2001/09/06 04:57:30 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,7 +809,7 @@ int
 PQenv2encoding(void)
 {
 	char	   *str;
-	int			encoding = SQL_ASCII;
+	int			encoding = PG_SQL_ASCII;
 
 	str = getenv("PGCLIENTENCODING");
 	if (str && *str != '\0')

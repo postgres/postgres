@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.26 2001/05/28 01:00:25 ishii Exp $
+ * $Id: conv.c,v 1.27 2001/09/06 04:57:29 ishii Exp $
  *
  *
  */
@@ -39,12 +39,12 @@
 #include "Unicode/utf8_to_big5.map"
 #include "Unicode/big5_to_utf8.map"
 /* Cyrillic charset conversion */
-#include "Unicode/ALT_to_utf8.map"
-#include "Unicode/KOI8_to_utf8.map"
-#include "Unicode/WIN_to_utf8.map"
-#include "Unicode/utf8_to_ALT.map"
-#include "Unicode/utf8_to_KOI8.map"
-#include "Unicode/utf8_to_WIN.map"
+#include "Unicode/alt_to_utf8.map"
+#include "Unicode/koi8r_to_utf8.map"
+#include "Unicode/win1251_to_utf8.map"
+#include "Unicode/utf8_to_alt.map"
+#include "Unicode/utf8_to_koi8r.map"
+#include "Unicode/utf8_to_win1251.map"
 
 
 #endif	 /* UNICODE_CONVERSION */
@@ -824,16 +824,16 @@ mic2ascii(unsigned char *mic, unsigned char *p, int len)
  * Alternativny Variant (MS-DOS CP866)
  */
 
-/* koi2mic: KOI8-R to Mule internal code */
+/* koi8r2mic: KOI8-R to Mule internal code */
 static void
-koi2mic(unsigned char *l, unsigned char *p, int len)
+koi8r2mic(unsigned char *l, unsigned char *p, int len)
 {
 	latin2mic(l, p, len, LC_KOI8_R);
 }
 
-/* mic2koi: Mule internal code to KOI8-R */
+/* mic2koi8r: Mule internal code to KOI8-R */
 static void
-mic2koi(unsigned char *mic, unsigned char *p, int len)
+mic2koi8r(unsigned char *mic, unsigned char *p, int len)
 {
 	mic2latin(mic, p, len, LC_KOI8_R);
 }
@@ -981,7 +981,7 @@ mic2iso(unsigned char *mic, unsigned char *p, int len)
 
 /* win2mic: CP1251 to Mule internal code */
 static void
-win2mic(unsigned char *l, unsigned char *p, int len)
+win12512mic(unsigned char *l, unsigned char *p, int len)
 {
 	static unsigned char win2koi[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1007,7 +1007,7 @@ win2mic(unsigned char *l, unsigned char *p, int len)
 
 /* mic2win: Mule internal code to CP1251 */
 static void
-mic2win(unsigned char *mic, unsigned char *p, int len)
+mic2win1251(unsigned char *mic, unsigned char *p, int len)
 {
 	static unsigned char koi2win[] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1343,23 +1343,23 @@ utf_to_latin5(unsigned char *utf, unsigned char *iso, int len)
  */
 
 /*
- * UTF-8 --->KOI8 
+ * UTF-8 --->KOI8-R 
  */
 static void
-utf_to_KOI8(unsigned char *utf, unsigned char *iso, int len)
+utf_to_KOI8R(unsigned char *utf, unsigned char *iso, int len)
 
 {
-	utf_to_local(utf, iso, ULmap_KOI8, sizeof(ULmap_KOI8) / sizeof(pg_utf_to_local), len);
+	utf_to_local(utf, iso, ULmap_KOI8R, sizeof(ULmap_KOI8R) / sizeof(pg_utf_to_local), len);
 }
 
 /*
- * UTF-8 --->WIN 
+ * UTF-8 --->WIN1251 
  */
 static void
-utf_to_WIN(unsigned char *utf, unsigned char *iso, int len)
+utf_to_WIN1251(unsigned char *utf, unsigned char *iso, int len)
 
 {
-	utf_to_local(utf, iso, ULmap_WIN, sizeof(ULmap_WIN) / sizeof(pg_utf_to_local), len);
+	utf_to_local(utf, iso, ULmap_WIN1251, sizeof(ULmap_WIN1251) / sizeof(pg_utf_to_local), len);
 }
 
 /*
@@ -1382,10 +1382,8 @@ local_to_utf(unsigned char *iso, unsigned char *utf,
 	unsigned int iiso;
 	int			l;
 	pg_local_to_utf *p;
-	pg_encoding_conv_tbl *e;
 
-	e = pg_get_enc_ent(encoding);
-	if (e == 0)
+	if (!PG_VALID_ENCODING(encoding))
 		elog(ERROR, "Invalid encoding number %d", encoding);
 
 	for (; len > 0 && *iso; len -= l)
@@ -1424,7 +1422,7 @@ local_to_utf(unsigned char *iso, unsigned char *utf,
 		if (p == NULL)
 		{
 			elog(NOTICE, "local_to_utf: could not convert (0x%04x) %s to UTF-8. Ignored",
-				 iiso, e->name);
+				 iiso, (&pg_enc2name_tbl[ encoding ])->name);
 			continue;
 		}
 		if (p->utf & 0xff000000)
@@ -1445,7 +1443,7 @@ local_to_utf(unsigned char *iso, unsigned char *utf,
 static void
 latin2_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
-	local_to_utf(iso, utf, LUmapISO8859_2, sizeof(LUmapISO8859_2) / sizeof(pg_local_to_utf), LATIN2, len);
+	local_to_utf(iso, utf, LUmapISO8859_2, sizeof(LUmapISO8859_2) / sizeof(pg_local_to_utf), PG_LATIN2, len);
 }
 
 /*
@@ -1454,7 +1452,7 @@ latin2_to_utf(unsigned char *iso, unsigned char *utf, int len)
 static void
 latin3_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
-	local_to_utf(iso, utf, LUmapISO8859_3, sizeof(LUmapISO8859_3) / sizeof(pg_local_to_utf), LATIN3, len);
+	local_to_utf(iso, utf, LUmapISO8859_3, sizeof(LUmapISO8859_3) / sizeof(pg_local_to_utf), PG_LATIN3, len);
 }
 
 /*
@@ -1463,7 +1461,7 @@ latin3_to_utf(unsigned char *iso, unsigned char *utf, int len)
 static void
 latin4_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
-	local_to_utf(iso, utf, LUmapISO8859_4, sizeof(LUmapISO8859_4) / sizeof(pg_local_to_utf), LATIN4, len);
+	local_to_utf(iso, utf, LUmapISO8859_4, sizeof(LUmapISO8859_4) / sizeof(pg_local_to_utf), PG_LATIN4, len);
 }
 
 /*
@@ -1472,25 +1470,25 @@ latin4_to_utf(unsigned char *iso, unsigned char *utf, int len)
 static void
 latin5_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
-	local_to_utf(iso, utf, LUmapISO8859_5, sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf), LATIN5, len);
+	local_to_utf(iso, utf, LUmapISO8859_5, sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf), PG_LATIN5, len);
 }
 
 /*
- * KOI8 ---> UTF-8
+ * KOI8-R ---> UTF-8
  */
 static void
-KOI8_to_utf(unsigned char *iso, unsigned char *utf, int len)
+KOI8R_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
-	local_to_utf(iso, utf, LUmapKOI8, sizeof(LUmapKOI8) / sizeof(pg_local_to_utf), KOI8, len);
+	local_to_utf(iso, utf, LUmapKOI8R, sizeof(LUmapKOI8R) / sizeof(pg_local_to_utf), PG_KOI8R, len);
 }
 
 /*
- * WIN ---> UTF-8
+ * WIN1251 ---> UTF-8
  */
 static void
-WIN_to_utf(unsigned char *iso, unsigned char *utf, int len)
+WIN1251_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
-	local_to_utf(iso, utf, LUmapWIN, sizeof(LUmapWIN) / sizeof(pg_local_to_utf), WIN, len);
+	local_to_utf(iso, utf, LUmapWIN1251, sizeof(LUmapWIN1251) / sizeof(pg_local_to_utf), PG_WIN1251, len);
 }
 
 /*
@@ -1499,7 +1497,7 @@ WIN_to_utf(unsigned char *iso, unsigned char *utf, int len)
 static void
 ALT_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
-	local_to_utf(iso, utf, LUmapALT, sizeof(LUmapALT) / sizeof(pg_local_to_utf), ALT, len);
+	local_to_utf(iso, utf, LUmapALT, sizeof(LUmapALT) / sizeof(pg_local_to_utf), PG_ALT, len);
 }
 /*
  * UTF-8 ---> EUC_JP
@@ -1519,7 +1517,7 @@ static void
 euc_jp_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_JP,
-			 sizeof(LUmapEUC_JP) / sizeof(pg_local_to_utf), EUC_JP, len);
+			 sizeof(LUmapEUC_JP) / sizeof(pg_local_to_utf), PG_EUC_JP, len);
 }
 
 /*
@@ -1540,7 +1538,7 @@ static void
 euc_cn_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_CN,
-			 sizeof(LUmapEUC_CN) / sizeof(pg_local_to_utf), EUC_CN, len);
+			 sizeof(LUmapEUC_CN) / sizeof(pg_local_to_utf), PG_EUC_CN, len);
 }
 
 /*
@@ -1561,7 +1559,7 @@ static void
 euc_kr_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_KR,
-			 sizeof(LUmapEUC_KR) / sizeof(pg_local_to_utf), EUC_KR, len);
+			 sizeof(LUmapEUC_KR) / sizeof(pg_local_to_utf), PG_EUC_KR, len);
 }
 
 /*
@@ -1582,7 +1580,7 @@ static void
 euc_tw_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapEUC_TW,
-			 sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), EUC_TW, len);
+			 sizeof(LUmapEUC_TW) / sizeof(pg_local_to_utf), PG_EUC_TW, len);
 }
 
 /*
@@ -1603,7 +1601,7 @@ static void
 sjis_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapSJIS,
-				 sizeof(LUmapSJIS) / sizeof(pg_local_to_utf), SJIS, len);
+				 sizeof(LUmapSJIS) / sizeof(pg_local_to_utf), PG_SJIS, len);
 }
 
 /*
@@ -1624,85 +1622,59 @@ static void
 big5_to_utf(unsigned char *euc, unsigned char *utf, int len)
 {
 	local_to_utf(euc, utf, LUmapBIG5,
-				 sizeof(LUmapBIG5) / sizeof(pg_local_to_utf), BIG5, len);
+				 sizeof(LUmapBIG5) / sizeof(pg_local_to_utf), PG_BIG5, len);
 }
 
-/*-----------------------------------------------------------------*/
-
-pg_encoding_conv_tbl pg_conv_tbl[] = {
-	{SQL_ASCII, "SQL_ASCII", 0, ascii2mic, mic2ascii,
-	ascii2utf, utf2ascii},		/* SQL/ASCII */
-	{EUC_JP, "EUC_JP", 0, euc_jp2mic, mic2euc_jp,
-	euc_jp_to_utf, utf_to_euc_jp},		/* EUC_JP */
-	{EUC_CN, "EUC_CN", 0, euc_cn2mic, mic2euc_cn,
-	euc_cn_to_utf, utf_to_euc_cn},		/* EUC_CN */
-	{EUC_KR, "EUC_KR", 0, euc_kr2mic, mic2euc_kr,
-	euc_kr_to_utf, utf_to_euc_kr},		/* EUC_KR */
-	{EUC_TW, "EUC_TW", 0, euc_tw2mic, mic2euc_tw,
-	euc_tw_to_utf, utf_to_euc_tw},		/* EUC_TW */
-	{UNICODE, "UNICODE", 0, 0, 0},		/* UNICODE */
-	{MULE_INTERNAL, "MULE_INTERNAL", 0, 0, 0},	/* MULE_INTERNAL */
-	{LATIN1, "LATIN1", 0, latin12mic, mic2latin1,
-	latin1_to_utf, utf_to_latin1},		/* ISO 8859 Latin 1 */
-	{LATIN2, "LATIN2", 0, latin22mic, mic2latin2,
-	latin2_to_utf, utf_to_latin2},		/* ISO 8859 Latin 2 */
-	{LATIN3, "LATIN3", 0, latin32mic, mic2latin3,
-	latin3_to_utf, utf_to_latin3},		/* ISO 8859 Latin 3 */
-	{LATIN4, "LATIN4", 0, latin42mic, mic2latin4,
-	latin4_to_utf, utf_to_latin4},		/* ISO 8859 Latin 4 */
-	{LATIN5, "LATIN5", 0, iso2mic, mic2iso,
-	latin5_to_utf, utf_to_latin5},		/* ISO 8859 Latin 5 */
-	{KOI8, "KOI8", 0, koi2mic, mic2koi,
-	KOI8_to_utf, utf_to_KOI8},						/* KOI8-R */
-	{WIN, "WIN", 0, win2mic, mic2win,
-	WIN_to_utf , utf_to_WIN},						/* CP1251 */
-	{ALT, "ALT", 0, alt2mic, mic2alt,
-	ALT_to_utf, utf_to_ALT},						/* CP866 */
-	{SJIS, "SJIS", 1, sjis2mic, mic2sjis,
-	sjis_to_utf, utf_to_sjis},	/* SJIS */
-	{BIG5, "BIG5", 1, big52mic, mic2big5,
-	big5_to_utf, utf_to_big5},	/* Big5 */
-	{WIN1250, "WIN1250", 1, win12502mic, mic2win1250,
-	0, 0},						/* WIN 1250 */
-	{-1, "", 0, 0, 0, 0}		/* end mark */
+/* ----------
+ * Encoding conversion routines
+ *
+ * WARINIG: must by same order as pg_enc in include/mb/pg_wchar.h!
+ * ----------
+ */
+pg_enconv pg_enconv_tbl[] = 
+{
+	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, ascii2utf, utf2ascii },
+	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, euc_jp_to_utf, utf_to_euc_jp },
+	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, euc_cn_to_utf, utf_to_euc_cn },
+	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, euc_kr_to_utf, utf_to_euc_kr },
+	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, euc_tw_to_utf, utf_to_euc_tw },
+	{ PG_UTF8, 	0, 0, 0, 0 },
+	{ PG_MULE_INTERNAL, 0, 0, 0, 0 },
+	{ PG_LATIN1,	latin12mic, mic2latin1, latin1_to_utf, utf_to_latin1 },
+	{ PG_LATIN2,	latin22mic, mic2latin2, latin2_to_utf, utf_to_latin2 },
+	{ PG_LATIN3,	latin32mic, mic2latin3, latin3_to_utf, utf_to_latin3 },
+	{ PG_LATIN4,	latin42mic, mic2latin4, latin4_to_utf, utf_to_latin4 },
+	{ PG_LATIN5,	iso2mic, mic2iso, latin5_to_utf, utf_to_latin5 },
+	{ PG_KOI8R,	koi8r2mic, mic2koi8r, KOI8R_to_utf, utf_to_KOI8R },
+	{ PG_WIN1251,	win12512mic, mic2win1251, WIN1251_to_utf, utf_to_WIN1251 },
+	{ PG_ALT,	alt2mic, mic2alt, ALT_to_utf, utf_to_ALT },
+	{ PG_SJIS,	sjis2mic, mic2sjis, sjis_to_utf, utf_to_sjis },
+	{ PG_BIG5,	big52mic, mic2big5, big5_to_utf, utf_to_big5},
+	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0 },
 };
 
 #else
 
-pg_encoding_conv_tbl pg_conv_tbl[] = {
-	{SQL_ASCII, "SQL_ASCII", 0, ascii2mic, mic2ascii,
-	0, 0},						/* SQL/ASCII */
-	{EUC_JP, "EUC_JP", 0, euc_jp2mic, mic2euc_jp,
-	0, 0},						/* EUC_JP */
-	{EUC_CN, "EUC_CN", 0, euc_cn2mic, mic2euc_cn,
-	0, 0},						/* EUC_CN */
-	{EUC_KR, "EUC_KR", 0, euc_kr2mic, mic2euc_kr},		/* EUC_KR */
-	{EUC_TW, "EUC_TW", 0, euc_tw2mic, mic2euc_tw},		/* EUC_TW */
-	{UNICODE, "UNICODE", 0, 0, 0},		/* UNICODE */
-	{MULE_INTERNAL, "MULE_INTERNAL", 0, 0, 0},	/* MULE_INTERNAL */
-	{LATIN1, "LATIN1", 0, latin12mic, mic2latin1,
-	0, 0},						/* ISO 8859 Latin 1 */
-	{LATIN2, "LATIN2", 0, latin22mic, mic2latin2,
-	0, 0},						/* ISO 8859 Latin 2 */
-	{LATIN3, "LATIN3", 0, latin32mic, mic2latin3,
-	0, 0},						/* ISO 8859 Latin 3 */
-	{LATIN4, "LATIN4", 0, latin42mic, mic2latin4,
-	0, 0},						/* ISO 8859 Latin 4 */
-	{LATIN5, "LATIN5", 0, iso2mic, mic2iso,
-	0, 0},						/* ISO 8859 Latin 5 */
-	{KOI8, "KOI8", 0, koi2mic, mic2koi,
-	0, 0},						/* KOI8-R */
-	{WIN, "WIN", 0, win2mic, mic2win,
-	0, 0},						/* CP1251 */
-	{ALT, "ALT", 0, alt2mic, mic2alt,
-	0, 0},						/* CP866 */
-	{SJIS, "SJIS", 1, sjis2mic, mic2sjis,
-	0, 0},						/* SJIS */
-	{BIG5, "BIG5", 1, big52mic, mic2big5,
-	0, 0},						/* Big5 */
-	{WIN1250, "WIN1250", 1, win12502mic, mic2win1250,
-	0, 0},						/* WIN 1250 */
-	{-1, "", 0, 0, 0, 0}		/* end mark */
+pg_enconv pg_enconv_tbl[] = 
+{
+	{ PG_SQL_ASCII,	ascii2mic, mic2ascii, 0, 0 },
+	{ PG_EUC_JP,	euc_jp2mic, mic2euc_jp, 0, 0 },
+	{ PG_EUC_CN,	euc_cn2mic, mic2euc_cn, 0, 0 },
+	{ PG_EUC_KR,	euc_kr2mic, mic2euc_kr, 0, 0 },
+	{ PG_EUC_TW,	euc_tw2mic, mic2euc_tw, 0, 0 },
+	{ PG_UTF8, 	0, 0, 0, 0 },
+	{ PG_MULE_INTERNAL, 0, 0, 0, 0 },
+	{ PG_LATIN1,	latin12mic, mic2latin1, 0, 0 },
+	{ PG_LATIN2,	latin22mic, mic2latin2, 0, 0 },
+	{ PG_LATIN3,	latin32mic, mic2latin3, 0, 0 },
+	{ PG_LATIN4,	latin42mic, mic2latin4, 0, 0 },
+	{ PG_LATIN5,	iso2mic, mic2iso, 0, 0 },
+	{ PG_KOI8R,	koi8r2mic, mic2koi8r, 0, 0 },
+	{ PG_WIN1251,	win12512mic, mic2win1251, 0, 0 },
+	{ PG_ALT,	alt2mic, mic2alt, 0, 0 },
+	{ PG_SJIS,	sjis2mic, mic2sjis, 0, 0 },
+	{ PG_BIG5,	big52mic, mic2big5, 0, 0 },
+	{ PG_WIN1250,	win12502mic, mic2win1250, 0, 0 },
 };
 
 #endif	 /* UNICODE_CONVERSION */

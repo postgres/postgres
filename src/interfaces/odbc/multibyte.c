@@ -70,12 +70,18 @@ multibyte_init(void)
 unsigned char *
 check_client_encoding(unsigned char *str)
 {
-	if (strstr(str, "%27SJIS%27") || strstr(str, "'SJIS'") || strstr(str, "'sjis'"))
+	if (strstr(str, "%27SJIS%27") || 
+	    strstr(str, "'SJIS'") || 
+	    strstr(str, "'sjis'") ||
+	    strstr(str, "'Shift_JIS'"))
 	{
 		multibyte_client_encoding = SJIS;
 		return ("SJIS");
 	}
-	if (strstr(str, "%27BIG5%27") || strstr(str, "'BIG5'") || strstr(str, "'big5'"))
+	if (strstr(str, "%27BIG5%27") || 
+	    strstr(str, "'BIG5'") || 
+	    strstr(str, "'big5'")
+	    strstr(str, "'Big5'"))
 	{
 		multibyte_client_encoding = BIG5;
 		return ("BIG5");

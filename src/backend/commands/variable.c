@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.51 2001/06/30 22:03:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.52 2001/09/06 04:57:28 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,8 @@
 #include "mb/pg_wchar.h"
 #else
 /* Grand unified hard-coded badness */
-#define pg_encoding_to_char(x) "SQL_ASCII"
-#define pg_get_client_encoding()  0
+#define pg_get_client_encoding_name()  "SQL_ASCII"
+#define GetDatabaseEncodingName() "SQL_ASCII"
 #endif
 
 
@@ -559,15 +559,15 @@ parse_client_encoding(char *value)
 	}
 	else
 	{
-		if (pg_set_client_encoding(encoding))
+		if (pg_set_client_encoding(encoding) < 0)
 		{
 			elog(ERROR, "Conversion between %s and %s is not supported",
-				 value, pg_encoding_to_char(GetDatabaseEncoding()));
+				 value, GetDatabaseEncodingName());
 		}
 	}
 #else
 	if (value &&
-	strcasecmp(value, pg_encoding_to_char(pg_get_client_encoding())) != 0)
+	strcasecmp(value, pg_get_client_encoding_name()) != 0)
 		elog(ERROR, "Client encoding %s is not supported", value);
 #endif
 	return TRUE;
@@ -577,7 +577,7 @@ static bool
 show_client_encoding(void)
 {
 	elog(NOTICE, "Current client encoding is %s",
-		 pg_encoding_to_char(pg_get_client_encoding()));
+		pg_get_client_encoding_name());
 	return TRUE;
 }
 
@@ -619,8 +619,7 @@ parse_server_encoding(char *value)
 static bool
 show_server_encoding(void)
 {
-	elog(NOTICE, "Current server encoding is %s",
-		 pg_encoding_to_char(GetDatabaseEncoding()));
+	elog(NOTICE, "Current server encoding is %s", GetDatabaseEncodingName());
 	return TRUE;
 }
 

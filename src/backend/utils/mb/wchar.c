@@ -1,15 +1,21 @@
 /*
  * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.18 2001/04/19 02:34:35 ishii Exp $
+ * $Id: wchar.c,v 1.19 2001/09/06 04:57:29 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
  */
 /* can be used in either frontend or backend */
 #include "postgres_fe.h"
-
 #include "mb/pg_wchar.h"
+
+#ifdef FRONTEND
+	#define Assert(condition)
+#else
+	#include "postgres.h"
+#endif
+
 
 /*
  * conversion to pg_wchar is done by "table driven."
@@ -452,41 +458,24 @@ pg_big5_mblen(const unsigned char *s)
 }
 
 pg_wchar_tbl pg_wchar_table[] = {
-	{pg_ascii2wchar_with_len, pg_ascii_mblen},	/* 0 */
-	{pg_eucjp2wchar_with_len, pg_eucjp_mblen},	/* 1 */
-	{pg_euccn2wchar_with_len, pg_euccn_mblen},	/* 2 */
-	{pg_euckr2wchar_with_len, pg_euckr_mblen},	/* 3 */
-	{pg_euctw2wchar_with_len, pg_euctw_mblen},	/* 4 */
-	{pg_utf2wchar_with_len, pg_utf_mblen},		/* 5 */
-	{pg_mule2wchar_with_len, pg_mule_mblen},	/* 6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 9 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 10 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 11 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 12 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 13 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 14 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 15 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 16 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 17 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 18 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 19 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 20 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 21 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 22 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 23 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 24 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 25 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 26 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 27 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 28 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 29 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 30 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen},		/* 31 */
-	{0, pg_sjis_mblen},			/* 32 */
-	{0, pg_big5_mblen},			/* 33 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen} /* 34 */
+	{pg_ascii2wchar_with_len, pg_ascii_mblen},	/* 0; PG_SQL_ASCII  */
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen},	/* 1; PG_EUC_JP */
+	{pg_euccn2wchar_with_len, pg_euccn_mblen},	/* 2; PG_EUC_CN */
+	{pg_euckr2wchar_with_len, pg_euckr_mblen},	/* 3; PG_EUC_KR */
+	{pg_euctw2wchar_with_len, pg_euctw_mblen},	/* 4; PG_EUC_TW */
+	{pg_utf2wchar_with_len, pg_utf_mblen},		/* 5; PG_UNICODE */
+	{pg_mule2wchar_with_len, pg_mule_mblen},	/* 6; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 7; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 8; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 9; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 10; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 11; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 12; PG_KOI8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 13; PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen},	/* 14; PG_ALT */
+	{0, pg_sjis_mblen},				/* 15; PG_SJIS */
+	{0, pg_big5_mblen},				/* 17; PG_BIG5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen} 	/* 18; PG_WIN1250 */
 };
 
 /* returns the byte length of a word for mule internal code */
@@ -502,5 +491,10 @@ pg_mic_mblen(const unsigned char *mbstr)
 int
 pg_encoding_mblen(int encoding, const unsigned char *mbstr)
 {
-	return( (encoding >= 0 && encoding < sizeof(pg_wchar_table)/sizeof(pg_wchar_tbl))? ((*pg_wchar_table[encoding].mblen) (mbstr)) : ((*pg_wchar_table[SQL_ASCII].mblen) (mbstr)));
+	Assert(PG_VALID_ENCODING(encoding));
+
+	return( (encoding >= 0 && 
+	         encoding < sizeof(pg_wchar_table)/sizeof(pg_wchar_tbl)) ? 
+			((*pg_wchar_table[encoding].mblen) (mbstr)) : 
+			((*pg_wchar_table[PG_SQL_ASCII].mblen) (mbstr)));
 }

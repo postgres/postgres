@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.19 2001/08/15 07:07:40 ishii Exp $
+ * $Id: mbutils.c,v 1.20 2001/09/06 04:57:29 ishii Exp $
  */
 #include "postgres.h"
 
@@ -11,26 +11,36 @@
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 
-static int	client_encoding = -1;
-static void (*client_to_mic) ();/* something to MIC */
-static void (*client_from_mic) ();		/* MIC to something */
-static void (*server_to_mic) ();/* something to MIC */
-static void (*server_from_mic) ();		/* MIC to something */
+/*
+ * We handle for actual FE and BE encoding setting encoding-identificator 
+ * and encoding-name too. It prevent searching and conversion from encoding
+ * to encoding name in getdatabaseencoding() and other routines.
+ *
+ * Default is PG_SQL_ASCII encoding (but this is never used, because
+ * backend during startup init it by SetDatabaseEncoding()).
+ *
+ * Karel Zak (Aug 2001)
+ */
+static pg_enc2name	*ClientEncoding = NULL;
+static pg_enc2name	*DatabaseEncoding = &pg_enc2name_tbl[ PG_SQL_ASCII ];
+
+static void	(*client_to_mic) ();	/* something to MIC */
+static void	(*client_from_mic) ();	/* MIC to something */
+static void	(*server_to_mic) ();	/* something to MIC */
+static void	(*server_from_mic) ();	/* MIC to something */
 
 /*
  * find encoding table entry by encoding
  */
-pg_encoding_conv_tbl *
-pg_get_enc_ent(int encoding)
+pg_enconv *
+pg_get_enconv_by_encoding(int encoding)
 {
-	pg_encoding_conv_tbl *p = pg_conv_tbl;
-
-	for (; p->encoding >= 0; p++)
+	if (PG_VALID_ENCODING(encoding))
 	{
-		if (p->encoding == encoding)
-			return (p);
+		Assert((&pg_enconv_tbl[ encoding ])->encoding == encoding);
+		return &pg_enconv_tbl[ encoding ];
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -56,38 +66,38 @@ pg_find_encoding_converters(int src, int dest, void (**src_to_mic)(), void (**de
 	{							/* src == dest? */
 		*src_to_mic = *dest_from_mic = 0;
 	}
-	else if (src == MULE_INTERNAL)
+	else if (src == PG_MULE_INTERNAL)
 	{							/* src == MULE_INETRNAL? */
-		*dest_from_mic = pg_get_enc_ent(dest)->from_mic;
+		*dest_from_mic = pg_get_enconv_by_encoding(dest)->from_mic;
 		if (*dest_from_mic == 0)
 			return (-1);
 		*src_to_mic = 0;
 	}
-	else if (dest == MULE_INTERNAL)
+	else if (dest == PG_MULE_INTERNAL)
 	{							/* dest == MULE_INETRNAL? */
-		*src_to_mic = pg_get_enc_ent(src)->to_mic;
+		*src_to_mic = pg_get_enconv_by_encoding(src)->to_mic;
 		if (*src_to_mic == 0)
 			return (-1);
 		*dest_from_mic = 0;
 	}
-	else if (src == UNICODE)
+	else if (src == PG_UTF8)
 	{							/* src == UNICODE? */
-		*dest_from_mic = pg_get_enc_ent(dest)->from_unicode;
+		*dest_from_mic = pg_get_enconv_by_encoding(dest)->from_unicode;
 		if (*dest_from_mic == 0)
 			return (-1);
 		*src_to_mic = 0;
 	}
-	else if (dest == UNICODE)
+	else if (dest == PG_UTF8)
 	{							/* dest == UNICODE? */
-		*src_to_mic = pg_get_enc_ent(src)->to_unicode;
+		*src_to_mic = pg_get_enconv_by_encoding(src)->to_unicode;
 		if (*src_to_mic == 0)
 			return (-1);
 		*dest_from_mic = 0;
 	}
 	else
 	{
-		*src_to_mic = pg_get_enc_ent(src)->to_mic;
-		*dest_from_mic = pg_get_enc_ent(dest)->from_mic;
+		*src_to_mic = pg_get_enconv_by_encoding(src)->to_mic;
+		*dest_from_mic = pg_get_enconv_by_encoding(dest)->from_mic;
 		if (*src_to_mic == 0 || *dest_from_mic == 0)
 			return (-1);
 	}
@@ -101,11 +111,17 @@ pg_find_encoding_converters(int src, int dest, void (**src_to_mic)(), void (**de
 int
 pg_set_client_encoding(int encoding)
 {
-	int current_server_encoding = GetDatabaseEncoding();
+	int current_server_encoding = DatabaseEncoding->encoding;
+
+	if (!PG_VALID_FE_ENCODING(encoding))
+		return (-1);
 
 	if (pg_find_encoding_converters(encoding, current_server_encoding, &client_to_mic, &server_from_mic) < 0)
 		return (-1);
-	client_encoding = encoding;
+
+	ClientEncoding = &pg_enc2name_tbl[ encoding ];
+
+	Assert(ClientEncoding->encoding == encoding);
 
 	if (pg_find_encoding_converters(current_server_encoding, encoding, &server_to_mic, &client_from_mic) < 0)
 		return (-1);
@@ -118,12 +134,30 @@ pg_set_client_encoding(int encoding)
 int
 pg_get_client_encoding()
 {
-	if (client_encoding == -1)
+	Assert(DatabaseEncoding);
+
+	if (ClientEncoding == NULL)
 	{
 		/* this is the first time */
-		client_encoding = GetDatabaseEncoding();
+		ClientEncoding = DatabaseEncoding;
 	}
-	return (client_encoding);
+	return (ClientEncoding->encoding);
+}
+
+/*
+ * returns the current client encoding name
+ */
+const char *
+pg_get_client_encoding_name()
+{
+	Assert(DatabaseEncoding);
+
+	if (ClientEncoding == NULL)
+	{
+		/* this is the first time */
+		ClientEncoding = DatabaseEncoding;
+	}
+	return (ClientEncoding->name);
 }
 
 /*
@@ -189,7 +223,7 @@ pg_convert(PG_FUNCTION_ARGS)
 	text	*string = PG_GETARG_TEXT_P(0);
 	Name	s = PG_GETARG_NAME(1);
 	int encoding = pg_char_to_encoding(NameStr(*s));
-	int db_encoding = GetDatabaseEncoding();
+	int db_encoding = DatabaseEncoding->encoding;
 	void (*src)(), (*dest)();
 	unsigned char	*result;
 	text	*retval;
@@ -277,7 +311,10 @@ pg_convert2(PG_FUNCTION_ARGS)
 unsigned char *
 pg_client_to_server(unsigned char *s, int len)
 {
-	if (client_encoding == GetDatabaseEncoding())
+	Assert(ClientEncoding);
+	Assert(DatabaseEncoding);
+
+	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 	    return s;
 
 	return pg_do_encoding_conversion(s, len, client_to_mic, server_from_mic);
@@ -299,7 +336,10 @@ pg_client_to_server(unsigned char *s, int len)
 unsigned char *
 pg_server_to_client(unsigned char *s, int len)
 {
-	if (client_encoding == GetDatabaseEncoding())
+	Assert(ClientEncoding);
+	Assert(DatabaseEncoding);
+
+	if (ClientEncoding->encoding == DatabaseEncoding->encoding)
 		return s;
 
 	return pg_do_encoding_conversion(s, len, server_to_mic, client_from_mic);
@@ -309,21 +349,21 @@ pg_server_to_client(unsigned char *s, int len)
 int
 pg_mb2wchar(const unsigned char *from, pg_wchar * to)
 {
-	return (*pg_wchar_table[GetDatabaseEncoding()].mb2wchar_with_len) (from, to, strlen(from));
+	return (*pg_wchar_table[ DatabaseEncoding->encoding ].mb2wchar_with_len) (from, to, strlen(from));
 }
 
 /* convert a multi-byte string to a wchar with a limited length */
 int
 pg_mb2wchar_with_len(const unsigned char *from, pg_wchar * to, int len)
 {
-	return (*pg_wchar_table[GetDatabaseEncoding()].mb2wchar_with_len) (from, to, len);
+	return (*pg_wchar_table[ DatabaseEncoding->encoding ].mb2wchar_with_len) (from, to, len);
 }
 
 /* returns the byte length of a multi-byte word */
 int
 pg_mblen(const unsigned char *mbstr)
 {
-	return ((*pg_wchar_table[GetDatabaseEncoding()].mblen) (mbstr));
+	return ((*pg_wchar_table[ DatabaseEncoding->encoding ].mblen) (mbstr));
 }
 
 /* returns the length (counted as a wchar) of a multi-byte string */
@@ -407,27 +447,33 @@ pg_mbcharcliplen(const unsigned char *mbstr, int len, int limit)
 	return (clen);
 }
 
-/*
- * functions for utils/init */
-static int	DatabaseEncoding = MULTIBYTE;
-
 void
 SetDatabaseEncoding(int encoding)
 {
-	DatabaseEncoding = encoding;
+	if (!PG_VALID_BE_ENCODING(encoding))
+		elog(ERROR, "SetDatabaseEncoding(): invalid database encoding");
+
+	DatabaseEncoding = &pg_enc2name_tbl[ encoding ];
+	Assert(DatabaseEncoding->encoding == encoding);
 }
 
 int
 GetDatabaseEncoding()
 {
-	return (DatabaseEncoding);
+	Assert(DatabaseEncoding);
+	return (DatabaseEncoding->encoding);
 }
 
-/* for builtin-function */
+const char *
+GetDatabaseEncodingName()
+{
+	Assert(DatabaseEncoding);
+	return (DatabaseEncoding->name);
+}
+
 Datum
 getdatabaseencoding(PG_FUNCTION_ARGS)
 {
-	const char *encoding_name = pg_encoding_to_char(DatabaseEncoding);
-
-	return DirectFunctionCall1(namein, CStringGetDatum(encoding_name));
+	Assert(DatabaseEncoding);
+	return DirectFunctionCall1(namein, CStringGetDatum(DatabaseEncoding->name));
 }

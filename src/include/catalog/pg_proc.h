@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.208 2001/09/06 03:22:42 momjian Exp $
+ * $Id: pg_proc.h,v 1.209 2001/09/06 04:57:29 ishii Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2136,6 +2136,8 @@ DATA(insert OID =  937 (  substring    PGUID 14 f t t t 2 f 25 "25 23" 100 0 0 1
 DESCR("return portion of string");
 
 /* for multi-byte support */
+
+/* old encoding names - back compatibility only */
 DATA(insert OID = 1039 (  getdatabaseencoding	   PGUID 12 f t f t 0 f 19 "0" 100 0 0 100	getdatabaseencoding - ));
 DESCR("encoding name of current database");
 

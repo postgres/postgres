@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.88 2001/08/25 18:52:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.89 2001/09/06 04:57:29 ishii Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -127,7 +127,7 @@ ReverifyMyDatabase(const char *name)
 #ifdef MULTIBYTE
 	SetDatabaseEncoding(dbform->encoding);
 #else
-	if (dbform->encoding != SQL_ASCII)
+	if (dbform->encoding != PG_SQL_ASCII)
 		elog(FATAL, "database was initialized with MULTIBYTE encoding %d,\n\tbut the backend was compiled without multibyte support.\n\tlooks like you need to initdb or recompile.",
 			 dbform->encoding);
 #endif

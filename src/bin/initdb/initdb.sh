@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.135 2001/08/26 16:56:00 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.136 2001/09/06 04:57:29 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -292,7 +292,7 @@ fi
 
 if [ "$MULTIBYTE" ]
 then
-	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
+	MULTIBYTEID=`$PGPATH/pg_encoding -b $MULTIBYTE`
         if [ "$?" -ne 0 ]
 	then
               (
@@ -305,11 +305,7 @@ then
         fi
 	if [ -z "$MULTIBYTEID" ]
 	then
-		echo "$CMDNAME: $MULTIBYTE is not a valid encoding name" 1>&2
-		exit 1
-	elif [ $MULTIBYTEID -gt 31 ]
-	then
-		echo "$CMDNAME: $MULTIBYTE cannot be used as a database encoding" 1>&2
+		echo "$CMDNAME: $MULTIBYTE is not a valid backend encoding name" 1>&2
 		exit 1
 	fi
 fi

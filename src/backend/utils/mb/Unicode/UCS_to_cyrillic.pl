@@ -2,7 +2,7 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Id: UCS_to_cyrillic.pl,v 1.1 2001/04/29 07:27:38 ishii Exp $
+# $Id: UCS_to_cyrillic.pl,v 1.2 2001/09/06 04:57:29 ishii Exp $
 #
 # Generate UTF-8 <--> ISO8859 code conversion tables from
 # map files provided by Unicode organization.
@@ -15,10 +15,10 @@
 #		 # and Unicode name (not used in this script)
 
 require "ucs2utf.pl";
-%filename = ('KOI8'=>'koi8-r.txt',
-             'WIN'=>'cp1251.txt',
+%filename = ('KOI8R'=>'koi8-r.txt',
+             'WIN1251'=>'cp1251.txt',
              'ALT'=>'cp866.txt');
-@charsets = ('KOI8','ALT','WIN');
+@charsets = ('KOI8R','ALT','WIN1251');
 foreach $charset (@charsets) {
 
 #
