@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.6 1997/05/02 13:43:14 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.7 1997/05/05 06:52:58 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,10 +30,8 @@ all: $(INFILES)
 	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
 	if [ -z "$$USER" ]; then echo 'Cannot deduce $$USER.'; exit 1; fi; \
 	rm -f $@; \
-	PWD=`pwd`; \
 	OBJ=`pwd`; \
-	sed -e "s:_CWD_:$$PWD:g" \
-	    -e "s:_OBJWD_:$$OBJ/\.\.:g" \
+	sed -e "s:_OBJWD_:$$OBJ/\.\.:g" \
 	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s/_USER_/$$USER/g" < $< | \
 	sed -e "s:output/\.\.:input/\.\.:g" > ../expected/$@
