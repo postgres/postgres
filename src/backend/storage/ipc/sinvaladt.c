@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.25 1999/09/06 19:37:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.26 1999/09/09 14:56:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,9 +228,19 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidData *data)
 	/* Is the buffer full? */
 	if (numMsgs >= MAXNUMMESSAGES)
 	{
-		/* Yes, so force reset */
-		SISetProcStateInvalid(segP);
-		return false;
+		/*
+		 * Don't panic just yet: slowest backend might have consumed some
+		 * messages but not yet have done SIDelExpiredDataEntries() to
+		 * advance minMsgNum.  So, make sure minMsgNum is up-to-date.
+		 */
+		SIDelExpiredDataEntries(segP);
+		numMsgs = segP->maxMsgNum - segP->minMsgNum;
+		if (numMsgs >= MAXNUMMESSAGES)
+		{
+			/* Yup, it's definitely full, no choice but to reset */
+			SISetProcStateInvalid(segP);
+			return false;
+		}
 	}
 
 	/*
