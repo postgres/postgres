@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.50 2001/10/28 06:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.51 2002/03/21 06:21:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,8 +593,7 @@ ExecTypeFromTL(List *targetList)
 			TupleDescInitEntry(typeInfo,
 							   resdom->resno,
 							   resdom->resname,
-			/* fix for SELECT NULL ... */
-							   (restype ? restype : UNKNOWNOID),
+							   restype,
 							   resdom->restypmod,
 							   0,
 							   false);
