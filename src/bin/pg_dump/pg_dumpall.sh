@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.13 2001/09/30 22:17:51 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.14 2002/01/09 04:56:44 momjian Exp $
 
 CMDNAME=`basename $0`
 
@@ -39,7 +39,7 @@ fi
 # they might temporarily move the installation tree elsewhere, so we'd
 # accidentally invoke the newly installed versions of pg_dump and psql.
 if [ x"$PGPATH" = x"" ]; then
-    PGPATH=$bindir
+    PGPATH="$bindir"
 fi
 
 #
