@@ -1,6 +1,7 @@
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 
 <!entity about    SYSTEM "about.sgml">
+<!entity bug-reporting SYSTEM "bug-reporting.sgml">
 <!entity history  SYSTEM "history.sgml">
 <!entity info     SYSTEM "info.sgml">
 <!entity legal    SYSTEM "legal.sgml">

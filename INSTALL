@@ -1,18 +1,11 @@
      Installation instructions for PostgreSQL 7.0.
 
-Commands were tested on RedHat Linux version 5.2 using the bash shell.
-Except where noted, they will probably work on most systems. Commands like
-ps and tar may vary wildly between platforms on what options you should use.
-Use common sense before typing in these commands.
-
 If you haven't gotten the PostgreSQL distribution, get it from
 ftp.postgresql.org, then unpack it:
 
-$ gunzip postgresql-7.0.tar.gz
-$ tar -xf postgresql-7.0.tar
-$ mv postgresql-7.0 /usr/src
-
-Again, these commands might differ on your system.
+gunzip postgresql-7.0.tar.gz
+tar -xf postgresql-7.0.tar
+mv postgresql-7.0 /usr/src
 
 Before you start
 
@@ -22,7 +15,7 @@ systems you may find that GNU make is installed under the name "gmake". We
 will use that name from now on to indicate GNU make, no matter what name it
 has on your system. To test for GNU make enter
 
-$ gmake --version
+gmake --version
 
 If you need to get GNU make, you can find it at ftp://ftp.gnu.org.
 
@@ -46,7 +39,7 @@ extra 20MB.
 
 To check for disk space, use
 
-$ df -k
+df -k
 
 Considering today's prices for hard disks, getting a large and fast hard
 disk should probably be in your plans before putting a database into
@@ -77,7 +70,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      You now need to back up your existing database. To dump your fairly
      recent post-6.0 database installation, type
 
-     $ pg_dumpall > db.out
+     pg_dumpall > db.out
 
      If you wish to preserve object id's (oids), then use the -o option when
      running pg_dumpall. However, unless you have a special reason for doing
@@ -96,14 +89,18 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
       backup. If necessary, bring down postmaster, edit the permissions in file
       /usr/local/pgsql/data/pg_hba.conf to allow only you on, then bring
       postmaster back up.
-
   3. If you are upgrading an existing system then kill the database server
      now. Type
 
-     $ ps ax | grep postmaster
+     ps ax | grep postmaster
 
-     This should list the process numbers for a number of processes, similar
-     to this:
+     or
+
+     ps -e | grep postmaster
+
+     (It depends on your system which one of these two works. No harm can be
+     done by typing the wrong one.) This should list the process numbers for
+     a number of processes, similar to this:
 
        263  ?  SW   0:00 (postmaster)
        777  p1 S    0:00 grep postmaster
@@ -112,20 +109,20 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      process postmaster (263 in the above case). (Do not use the id for the
      process "grep postmaster".)
 
-     $ kill pid
+     kill pid
 
           Tip: On systems which have PostgreSQL started at boot time,
           there is probably a startup file which will accomplish the
           same thing. For example, on a Redhat Linux system one might
           find that
 
-          $ /etc/rc.d/init.d/postgres.init stop
+          /etc/rc.d/init.d/postgres.init stop
 
           works.
 
      Also move the old directories out of the way. Type the following:
 
-     $ mv /usr/local/pgsql /usr/local/pgsql.old
+     mv /usr/local/pgsql /usr/local/pgsql.old
 
      or replace your particular paths.
 
@@ -134,7 +131,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      make choices about what gets installed. Change into the src
      subdirectory and type:
 
-     $ ./configure
+     ./configure
 
      followed by any options you might want to give it. For a first
      installation you should be able to do fine without any. For a complete
@@ -176,30 +173,32 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
 
   5. Compile the program. Type
 
-     $ gmake
+     gmake
 
      The compilation process can take anywhere from 10 minutes to an hour.
-     Your milage will most certainly vary.
+     Your milage will most certainly vary. Remember to use GNU make.
 
      The last line displayed will hopefully be
 
      All of PostgreSQL is successfully made. Ready to install.
 
-     Remember, "gmake" may be called "make" on your system.
-
   6. Install the program. Type
 
-     $ gmake install
+     gmake install
 
   7. Tell your system how to find the new shared libraries. How to do this
      varies between platforms. What tends to work everywhere is to set the
      environment variable LD_LIBRARY_PATH:
 
-     $ LD_LIBRARY_PATH=/usr/local/pgsql/lib
-     $ export LD_LIBRARY_PATH
+     LD_LIBRARY_PATH=/usr/local/pgsql/lib
+     export LD_LIBRARY_PATH
 
-     You might want to put this into a shell startup file such as
-     ~/.bash_profile.
+     on sh, ksh, bash, zsh or
+
+     setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
+
+     on csh or tcsh. You might want to put this into a shell startup file
+     such as /etc/profile.
 
      On some systems the following is the preferred method, but you must
      have root access. Edit file /etc/ld.so.conf to add a line
@@ -211,7 +210,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
      If in doubt, refer to the manual pages of your system. If you later on
      get a message like
 
-     ./psql: error in loading shared libraries
+     psql: error in loading shared libraries
      libpq.so.2.1: cannot open shared object file: No such file or directory
 
      then the above was necessary. Simply do this step then.
@@ -219,10 +218,10 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
   8. Create the database installation. To do this you must log in to your
      PostgreSQL superuser account. It will not work as root.
 
-     $ mkdir /usr/local/pgsql/data
-     $ chown postgres /usr/local/pgsql/data
-     $ su - postgres
-     $ /usr/local/pgsql/initdb -D /usr/local/pgsql/data
+     mkdir /usr/local/pgsql/data
+     chown postgres /usr/local/pgsql/data
+     su - postgres
+     /usr/local/pgsql/initdb -D /usr/local/pgsql/data
 
      The -D option specifies the location where the data will be stored. You
      can use any path you want, it does not have to be under the
@@ -235,7 +234,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
   9. The previous step should have told you how to start up the database
      server. Do so now.
 
-     $ /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
+     /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
 
      This will start the server in the foreground. To make it detach to the
      background, use the -S.
@@ -243,7 +242,7 @@ For a fresh install or upgrading from previous releases of PostgreSQL:
  10. If you are upgrading from an existing installation, dump your data back
      in:
 
-     $ /usr/local/pgsql/bin/psql < db.out
+     /usr/local/pgsql/bin/psql -d template1 -f db.out
 
      You also might want to copy over the old pg_hba.conf file and any other
      files you might have had set up for authentication, such as password
@@ -266,8 +265,8 @@ suggestions.
 
    * You probably want to install the man and HTML documentation. Type
 
-     $ cd /usr/src/pgsql/postgresql-7.0/doc
-     $ gmake install
+     cd /usr/src/pgsql/postgresql-7.0/doc
+     gmake install
 
      This will install files under /usr/local/pgsql/doc and
      /usr/local/pgsql/man. To enable your system to find the man
@@ -281,20 +280,16 @@ suggestions.
      Postscript files using a print filter, then to print the User's Guide
      simply type
 
-     $ cd /usr/local/pgsql/doc
-     $ gunzip -c user.ps.tz | lpr
+     cd /usr/local/pgsql/doc
+     gunzip -c user.ps.tz | lpr
 
      Here is how you might do it if you have Ghostscript on your system and
      are writing to a laserjet printer.
 
-     $ alias gshp='gs -sDEVICE=laserjet -r300 -dNOPAUSE'
-     $ export GS_LIB=/usr/share/ghostscript:/usr/share/ghostscript/fonts
-     $ gunzip user.ps.gz
-     $ gshp -sOUTPUTFILE=user.hp user.ps
-     $ gzip user.ps
-     $ lpr -l -s -r manpage.hp
+     gunzip -c user.ps.gz | gs -sDEVICE=laserjet -r300 -q -dNOPAUSE -sOutputFile=- | lpr
 
-     If in doubt, confer your manuals or your local expert.
+     Printer setups can vary wildly from system to system. If in doubt,
+     consult your manuals or your local expert.
 
      The Adminstrator's Guide should probably be your first reading if you
      are completely new to PostgreSQL, as it contains information about how
@@ -352,3 +347,15 @@ suggestions.
      into production use. The file
      /usr/src/pgsql/postgresql-7.0/src/test/regress/README has detailed
      instructions for running and interpreting the regression tests.
+
+To start "playing around", set up the paths as explained above and start the
+server. To create a database, type
+
+createdb testdb
+
+Then enter
+
+psql testdb
+
+to connect to that database. At the prompt you can enter SQL and start
+experimenting.
