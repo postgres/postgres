@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.76 2001/04/15 03:14:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.77 2001/04/18 17:04:24 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1051,7 +1051,8 @@ get_basic_select_query(Query *query, deparse_context *context)
 			char	   *attname;
 
 			get_names_for_var(var, context, &refname, &attname);
-			tell_as = (strcmp(attname, tle->resdom->resname) != 0);
+			tell_as = (attname == NULL ||
+					   strcmp(attname, tle->resdom->resname) != 0);
 		}
 
 		/* and do if so */
@@ -1380,6 +1381,9 @@ get_utility_query_def(Query *query, deparse_context *context)
 /*
  * Get the relation refname and attname for a (possibly nonlocal) Var.
  *
+ * attname will be returned as NULL if the Var represents a whole tuple
+ * of the relation.
+ *
  * This is trickier than it ought to be because of the possibility of aliases
  * and limited scope of refnames.  We have to try to return the correct alias
  * with respect to the current namespace given by the context.
@@ -1414,7 +1418,10 @@ get_names_for_var(Var *var, deparse_context *context,
 	 */
 	rte = rt_fetch(var->varno, dpns->rtable);
 	*refname = rte->eref->relname;
-	*attname = get_rte_attribute_name(rte, var->varattno);
+	if (var->varattno == InvalidAttrNumber)
+		*attname = NULL;
+	else
+		*attname = get_rte_attribute_name(rte, var->varattno);
 }
 
 /*
@@ -1474,7 +1481,10 @@ find_alias_in_namespace(Node *nsnode, Node *expr,
 				RangeTblEntry *rte = rt_fetch(rtindex, rangetable);
 
 				*refname = rte->eref->relname;
-				*attname = get_rte_attribute_name(rte, var->varattno);
+				if (var->varattno == InvalidAttrNumber)
+					*attname = NULL;
+				else
+					*attname = get_rte_attribute_name(rte, var->varattno);
 				return true;
 			}
 		}
@@ -1684,17 +1694,20 @@ get_rule_expr(Node *node, deparse_context *context)
 				char	   *attname;
 
 				get_names_for_var(var, context, &refname, &attname);
-				if (context->varprefix)
+				if (context->varprefix || attname == NULL)
 				{
 					if (strcmp(refname, "*NEW*") == 0)
-						appendStringInfo(buf, "new.");
+						appendStringInfo(buf, "new");
 					else if (strcmp(refname, "*OLD*") == 0)
-						appendStringInfo(buf, "old.");
+						appendStringInfo(buf, "old");
 					else
-						appendStringInfo(buf, "%s.",
+						appendStringInfo(buf, "%s",
 										 quote_identifier(refname));
+					if (attname)
+						appendStringInfoChar(buf, '.');
 				}
-				appendStringInfo(buf, "%s", quote_identifier(attname));
+				if (attname)
+					appendStringInfo(buf, "%s", quote_identifier(attname));
 			}
 			break;
 
