@@ -19,11 +19,11 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.c,v 1.2 2001/06/29 16:29:37 wieck Exp $
+ *	$Id: pgstat.c,v 1.3 2001/06/30 19:01:27 petere Exp $
  * ----------
  */
-#include <stdio.h>
-#include <stdlib.h>
+#include "postgres.h"
+
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -36,8 +36,6 @@
 
 #include <errno.h>
 #include <signal.h>
-
-#include "postgres.h"
 
 #include "miscadmin.h"
 #include "utils/memutils.h"
@@ -88,8 +86,8 @@ static HTAB				   *pgStatBeDead = NULL;
 static PgStat_StatBeEntry  *pgStatBeTable = NULL;
 static int					pgStatNumBackends = 0;
 
-static char					pgStat_tmpfname[PATH_MAX];
-static char					pgStat_fname[PATH_MAX];
+static char					pgStat_tmpfname[MAXPGPATH];
+static char					pgStat_fname[MAXPGPATH];
 
 
 /* ----------
@@ -140,9 +138,9 @@ pgstat_init(void)
 	/*
 	 * Initialize the filenames for the status reports.
 	 */
-	snprintf(pgStat_tmpfname,  PATH_MAX - 1, 
+	snprintf(pgStat_tmpfname, MAXPGPATH, 
 				PGSTAT_STAT_TMPFILE,  DataDir, getpid());
-	snprintf(pgStat_fname, PATH_MAX - 1, 
+	snprintf(pgStat_fname, MAXPGPATH, 
 				PGSTAT_STAT_FILENAME, DataDir);
 
 	/*
@@ -1696,7 +1694,7 @@ pgstat_write_statsfile(void)
 	 * Open the statistics temp file to write out
 	 * the current values.
 	 */
-	fpout = fopen(pgStat_tmpfname, "w");
+	fpout = fopen(pgStat_tmpfname, PG_BINARY_W);
 	if (fpout == NULL)
 	{
 		fprintf(stderr, "PGSTAT: cannot open temp stats file\nPGSTAT: ");
@@ -1954,7 +1952,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	 * simply return zero for anything and the collector simply
 	 * starts from scratch with empty counters.
 	 */
-	if ((fpin = fopen(pgStat_fname, "r")) == NULL)
+	if ((fpin = fopen(pgStat_fname, PG_BINARY_R)) == NULL)
 		return;
 
 	/*
