@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.86 2003/01/24 21:53:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.87 2003/06/02 19:00:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #define ACL_IDTYPE_UID_KEYWORD	"user"
 
 static const char *getid(const char *s, char *n);
+static void putid(char *p, const char *s);
 static Acl *makeacl(int n);
 static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitemeq(const AclItem *a1, const AclItem *a2);
@@ -64,40 +65,66 @@ static AclMode convert_schema_priv_string(text *priv_type_text);
 static const char *
 getid(const char *s, char *n)
 {
-	unsigned	len;
-	const char *id;
-	int			in_quotes = 0;
+	int			len = 0;
+	bool		in_quotes = false;
 
 	Assert(s && n);
 
 	while (isspace((unsigned char) *s))
-		++s;
-
-	if (*s == '"')
-	{
-		in_quotes = 1;
 		s++;
-	}
-
-	for (id = s, len = 0;
-		 isalnum((unsigned char) *s) || *s == '_' || in_quotes;
-		 ++len, ++s)
+	/* This test had better match what putid() does, below */
+	for (;
+		 *s != '\0' &&
+			 (isalnum((unsigned char) *s) ||
+			  *s == '_' ||
+			  *s == '"' ||
+			  in_quotes);
+		 s++)
 	{
-		if (in_quotes && *s == '"')
+		if (*s == '"')
 		{
-			len--;
-			in_quotes = 0;
+			in_quotes = !in_quotes;
+		}
+		else
+		{
+			if (len >= NAMEDATALEN-1)
+				elog(ERROR, "identifier must be less than %d characters",
+					 NAMEDATALEN);
+			n[len++] = *s;
 		}
 	}
-	if (len >= NAMEDATALEN)
-		elog(ERROR, "getid: identifier must be <%d characters",
-			 NAMEDATALEN);
-	if (len > 0)
-		memmove(n, id, len);
 	n[len] = '\0';
 	while (isspace((unsigned char) *s))
-		++s;
+		s++;
 	return s;
+}
+
+/*
+ * Write a user or group Name at *p, surrounding it with double quotes if
+ * needed.  There must be at least NAMEDATALEN+2 bytes available at *p.
+ */
+static void
+putid(char *p, const char *s)
+{
+	const char *src;
+	bool	safe = true;
+
+	for (src = s; *src; src++)
+	{
+		/* This test had better match what getid() does, above */
+		if (!isalnum((unsigned char) *src) && *src != '_')
+		{
+			safe = false;
+			break;
+		}
+	}
+	if (!safe)
+		*p++ = '"';
+	for (src = s; *src; src++)
+		*p++ = *src;
+	if (!safe)
+		*p++ = '"';
+	*p = '\0';
 }
 
 /*
@@ -304,7 +331,12 @@ aclitemout(PG_FUNCTION_ARGS)
 	unsigned	i;
 	char	   *tmpname;
 
-	p = out = palloc(strlen("group = ") + 2 * N_ACL_RIGHTS + 2* NAMEDATALEN + 2);
+	out = palloc(strlen("group =/") +
+				 2 * N_ACL_RIGHTS +
+				 2 * (NAMEDATALEN+2) +
+				 1);
+
+	p = out;
 	*p = '\0';
 
 	switch (ACLITEM_GET_IDTYPE(*aip))
@@ -315,36 +347,25 @@ aclitemout(PG_FUNCTION_ARGS)
 								  0, 0, 0);
 			if (HeapTupleIsValid(htup))
 			{
-				strncat(p,
-					NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename),
-						NAMEDATALEN);
+				putid(p, NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename));
 				ReleaseSysCache(htup);
 			}
 			else
 			{
 				/* Generate numeric UID if we don't find an entry */
-				char	   *tmp;
-
-				tmp = DatumGetCString(DirectFunctionCall1(int4out,
-									 Int32GetDatum((int32) aip->ai_grantee)));
-				strcat(p, tmp);
-				pfree(tmp);
+				sprintf(p, "%d", aip->ai_grantee);
 			}
 			break;
 		case ACL_IDTYPE_GID:
-			strcat(p, "group ");
+			strcpy(p, "group ");
+			p += strlen(p);
 			tmpname = get_groname(aip->ai_grantee);
 			if (tmpname != NULL)
-				strncat(p, tmpname, NAMEDATALEN);
+				putid(p, tmpname);
 			else
 			{
 				/* Generate numeric GID if we don't find an entry */
-				char	   *tmp;
-
-				tmp = DatumGetCString(DirectFunctionCall1(int4out,
-									 Int32GetDatum((int32) aip->ai_grantee)));
-				strcat(p, tmp);
-				pfree(tmp);
+				sprintf(p, "%d", aip->ai_grantee);
 			}
 			break;
 		case ACL_IDTYPE_WORLD:
@@ -375,20 +396,13 @@ aclitemout(PG_FUNCTION_ARGS)
 						  0, 0, 0);
 	if (HeapTupleIsValid(htup))
 	{
-		strncat(p,
-				NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename),
-				NAMEDATALEN);
+		putid(p, NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename));
 		ReleaseSysCache(htup);
 	}
 	else
 	{
 		/* Generate numeric UID if we don't find an entry */
-		char	   *tmp;
-
-		tmp = DatumGetCString(DirectFunctionCall1(int4out,
-												  Int32GetDatum((int32) aip->ai_grantor)));
-		strcat(p, tmp);
-		pfree(tmp);
+		sprintf(p, "%d", aip->ai_grantor);
 	}
 
 	while (*p)

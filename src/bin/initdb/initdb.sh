@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.191 2003/05/28 18:19:09 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.192 2003/06/02 19:00:29 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1021,11 +1021,11 @@ echo "ok"
 $ECHO_N "setting privileges on built-in objects... "$ECHO_C
 (
   cat <<EOF
-    UPDATE pg_class SET relacl = '{"=r/$POSTGRES_SUPERUSERNAME"}' \
+    UPDATE pg_class SET relacl = '{"=r/\\\\"$POSTGRES_SUPERUSERNAME\\\\""}' \
         WHERE relkind IN ('r', 'v', 'S') AND relacl IS NULL;
-    UPDATE pg_proc SET proacl = '{"=X/$POSTGRES_SUPERUSERNAME"}' \
+    UPDATE pg_proc SET proacl = '{"=X/\\\\"$POSTGRES_SUPERUSERNAME\\\\""}' \
         WHERE proacl IS NULL;
-    UPDATE pg_language SET lanacl = '{"=U/$POSTGRES_SUPERUSERNAME"}' \
+    UPDATE pg_language SET lanacl = '{"=U/\\\\"$POSTGRES_SUPERUSERNAME\\\\""}' \
         WHERE lanpltrusted;
     GRANT USAGE ON SCHEMA pg_catalog TO PUBLIC;
     GRANT CREATE, USAGE ON SCHEMA public TO PUBLIC;
