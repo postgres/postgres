@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.11 2002/01/10 17:51:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.12 2002/01/10 18:08:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,32 +714,30 @@ RewriteControlFile(TransactionId set_xid)
 	int			fd;
 	char		buffer[BLCKSZ]; /* need not be aligned */
 
-	if (set_xid == 0)
-	{
-		/*
-		 * Adjust fields as needed to force an empty XLOG starting at the next
-		 * available segment.
-		 */
-		newXlogId = ControlFile.logId;
-		newXlogSeg = ControlFile.logSeg;
-		/* be sure we wrap around correctly at end of a logfile */
-		NextLogSeg(newXlogId, newXlogSeg);
-	
-		ControlFile.checkPointCopy.redo.xlogid = newXlogId;
-		ControlFile.checkPointCopy.redo.xrecoff =
-			newXlogSeg * XLogSegSize + SizeOfXLogPHD;
-		ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
-		ControlFile.checkPointCopy.time = time(NULL);
-	
-		ControlFile.state = DB_SHUTDOWNED;
-		ControlFile.time = time(NULL);
-		ControlFile.logId = newXlogId;
-		ControlFile.logSeg = newXlogSeg + 1;
-		ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
-		ControlFile.prevCheckPoint.xlogid = 0;
-		ControlFile.prevCheckPoint.xrecoff = 0;
-	}
-	else
+	/*
+	 * Adjust fields as needed to force an empty XLOG starting at the next
+	 * available segment.
+	 */
+	newXlogId = ControlFile.logId;
+	newXlogSeg = ControlFile.logSeg;
+	/* be sure we wrap around correctly at end of a logfile */
+	NextLogSeg(newXlogId, newXlogSeg);
+
+	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
+	ControlFile.checkPointCopy.redo.xrecoff =
+		newXlogSeg * XLogSegSize + SizeOfXLogPHD;
+	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
+	ControlFile.checkPointCopy.time = time(NULL);
+
+	ControlFile.state = DB_SHUTDOWNED;
+	ControlFile.time = time(NULL);
+	ControlFile.logId = newXlogId;
+	ControlFile.logSeg = newXlogSeg + 1;
+	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
+	ControlFile.prevCheckPoint.xlogid = 0;
+	ControlFile.prevCheckPoint.xrecoff = 0;
+
+	if (set_xid != 0)
 		ControlFile.checkPointCopy.nextXid = set_xid;
 	
 	/* Contents are protected with a CRC */
@@ -1012,20 +1010,6 @@ main(int argc, char **argv)
 		GuessControlValues();
 
 	/*
-	 * Set XID in pg_control and exit
-	 */
-	if (set_xid)
-	{
-		if (guessed)
-		{
-			printf("\npg_control appears corrupt.  Can not update XID.\n");
-			exit(1);
-		}
-		RewriteControlFile(set_xid);
-		exit(0);
-	}
-
-	/*
 	 * If we had to guess anything, and -f was not given, just print the
 	 * guessed values and exit.  Also print if -n is given.
 	 */
@@ -1051,7 +1035,7 @@ main(int argc, char **argv)
 	/*
 	 * Else, do the dirty deed.
 	 */
-	RewriteControlFile(0);
+	RewriteControlFile(set_xid);
 	KillExistingXLOG();
 	WriteEmptyXLOG();
 
