@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.26 2000/03/18 18:03:11 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.27 2000/03/27 21:11:37 petere Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -481,7 +481,7 @@ MainLoop(FILE *source)
 
 
 		/* Put the rest of the line in the query buffer. */
-		if (line[query_start + strspn(line + query_start, " \t")] != '\0')
+		if (line[query_start + strspn(line + query_start, " \t\n")] != '\0')
 		{
 			if (query_buf->len > 0)
 				appendPQExpBufferChar(query_buf, '\n');

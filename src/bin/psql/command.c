@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.25 2000/03/18 22:48:29 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.26 2000/03/27 21:11:37 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -1442,21 +1442,16 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		{
 			/* read file back in */
 			char		line[1024];
-			size_t		result;
 
 			resetPQExpBuffer(query_buf);
-			do
-			{
-				result = fread(line, 1, 1024, stream);
-				if (ferror(stream))
-				{
-                    psql_error("%s: %s\n", fname, strerror(errno));
-					error = true;
-					break;
-				}
-				appendBinaryPQExpBuffer(query_buf, line, result);
-			} while (!feof(stream));
-			appendPQExpBufferChar(query_buf, '\0');
+            while (fgets(line, 1024, stream))
+				appendPQExpBufferStr(query_buf, line);
+
+            if (ferror(stream))
+            {
+                psql_error("%s: %s\n", fname, strerror(errno));
+                error = true;
+            }
 
 			fclose(stream);
 		}
@@ -1471,6 +1466,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
             }
         }
     }
+
 	return !error;
 }
 
