@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.337 2003/07/25 19:37:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.338 2003/07/25 21:02:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2371,6 +2371,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				j,
 				k;
 	PQExpBuffer q = createPQExpBuffer();
+	int			i_attnum;
 	int			i_attname;
 	int			i_atttypname;
 	int			i_atttypmod;
@@ -2421,12 +2422,13 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		if (g_fout->remoteVersion >= 70300)
 		{
+			/* need left join here to not fail on dropped columns ... */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, a.attstattarget, a.attstorage, t.typstorage, "
-					  "a.attnotnull, a.atthasdef, a.attisdropped, a.attislocal, "
-			  "pg_catalog.format_type(a.atttypid,a.atttypmod) as atttypname "
-							  "from pg_catalog.pg_attribute a, pg_catalog.pg_type t "
-							  "where a.atttypid = t.oid "
-							  "and a.attrelid = '%s'::pg_catalog.oid "
+							  "a.attnotnull, a.atthasdef, a.attisdropped, a.attislocal, "
+							  "pg_catalog.format_type(t.oid,a.atttypmod) as atttypname "
+							  "from pg_catalog.pg_attribute a left join pg_catalog.pg_type t "
+							  "on a.atttypid = t.oid "
+							  "where a.attrelid = '%s'::pg_catalog.oid "
 							  "and a.attnum > 0::pg_catalog.int2 "
 							  "order by a.attrelid, a.attnum",
 							  tbinfo->oid);
@@ -2439,11 +2441,11 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * been explicitly set or was just a default.
 			 */
 			appendPQExpBuffer(q, "SELECT a.attnum, a.attname, a.atttypmod, -1 as attstattarget, a.attstorage, t.typstorage, "
-						 "a.attnotnull, a.atthasdef, false as attisdropped, null as attislocal, "
-						 "format_type(a.atttypid,a.atttypmod) as atttypname "
-							  "from pg_attribute a, pg_type t "
-							  "where a.atttypid = t.oid "
-							  "and a.attrelid = '%s'::oid "
+							  "a.attnotnull, a.atthasdef, false as attisdropped, null as attislocal, "
+							  "format_type(t.oid,a.atttypmod) as atttypname "
+							  "from pg_attribute a left join pg_type t "
+							  "on a.atttypid = t.oid "
+							  "where a.attrelid = '%s'::oid "
 							  "and a.attnum > 0::int2 "
 							  "order by a.attrelid, a.attnum",
 							  tbinfo->oid);
@@ -2451,7 +2453,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		else
 		{
 			/* format_type not available before 7.1 */
-			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, attstorage, 'p' as typstorage, "
+			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, attstorage, attstorage as typstorage, "
 						 "attnotnull, atthasdef, false as attisdropped, null as attislocal, "
 							  "(select typname from pg_type where oid = atttypid) as atttypname "
 							  "from pg_attribute a "
@@ -2471,6 +2473,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		ntups = PQntuples(res);
 
+		i_attnum = PQfnumber(res, "attnum");
 		i_attname = PQfnumber(res, "attname");
 		i_atttypname = PQfnumber(res, "atttypname");
 		i_atttypmod = PQfnumber(res, "atttypmod");
@@ -2501,6 +2504,12 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 		for (j = 0; j < ntups; j++)
 		{
+			if (j+1 != atoi(PQgetvalue(res, j, i_attnum)))
+			{
+				write_msg(NULL, "invalid attribute numbering in table \"%s\"\n",
+						  tbinfo->relname);
+					exit_nicely();
+			}
 			tbinfo->attnames[j] = strdup(PQgetvalue(res, j, i_attname));
 			tbinfo->atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
 			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
@@ -5410,7 +5419,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 
 			/*
 			 * Dump per-column storage information.  The statement is only dumped if
-			 * the storage has been changed.
+			 * the storage has been changed from the type's default.
 			 */
 			if(!tbinfo->attisdropped[j] && tbinfo->attstorage[j] != tbinfo->typstorage[j])
 			{
