@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 17 22:15:15 EST 2001
+Last updated:		Wed Jan 17 22:15:46 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -290,7 +290,7 @@ MISC
 * Gather more accurate dispersion statistics using indexes
 * Improve statistics storage in pg_class [performance]
 * VACUUM
-	* Improve speed with indexes (perhaps create new index instead) [vacuum]
+	* Improve speed with indexes (perhaps recreate index instead) [vacuum]
 	* Reduce lock time by moving tuples with read lock, then write
 	  lock and truncate table [vacuum]
 	* -Redesign ANALYZE in VACUUM so it can be run separately without locks
