@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.1 1999/10/13 15:02:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/buffile.c,v 1.2 1999/10/16 19:49:26 tgl Exp $
  *
  * NOTES:
  *
@@ -27,10 +27,7 @@
  *
  * BufFile also supports temporary files that exceed the OS file size limit
  * (by opening multiple fd.c temporary files).  This is an essential feature
- * for sorts and hashjoins on large amounts of data.  It is possible to have
- * more than one BufFile reading/writing the same temp file, although the
- * caller is responsible for avoiding ill effects from buffer overlap when
- * this is done.
+ * for sorts and hashjoins on large amounts of data.
  *-------------------------------------------------------------------------
  */
 
@@ -48,33 +45,24 @@
 #define MAX_PHYSICAL_FILESIZE  (RELSEG_SIZE * BLCKSZ)
 
 /*
- * To handle multiple BufFiles on a single logical temp file, we use this
- * data structure representing a logical file (which can be made up of
- * multiple physical files to get around the OS file size limit).
+ * This data structure represents a buffered file that consists of one or
+ * more physical files (each accessed through a virtual file descriptor
+ * managed by fd.c).
  */
-typedef struct LogicalFile
+struct BufFile
 {
-	int			refCount;		/* number of BufFiles using me */
-	bool		isTemp;			/* can only add files if this is TRUE */
 	int			numFiles;		/* number of physical files in set */
 	/* all files except the last have length exactly MAX_PHYSICAL_FILESIZE */
-
 	File	   *files;			/* palloc'd array with numFiles entries */
 	long	   *offsets;		/* palloc'd array with numFiles entries */
 	/* offsets[i] is the current seek position of files[i].  We use this
 	 * to avoid making redundant FileSeek calls.
 	 */
-} LogicalFile;
 
-/*
- * A single file buffer looks like this.
- */
-struct BufFile
-{
-	LogicalFile *logFile;		/* the underlying LogicalFile */
+	bool		isTemp;			/* can only add files if this is TRUE */
 	bool		dirty;			/* does buffer need to be written? */
 	/*
-	 * "current pos" is position of start of buffer within LogicalFile.
+	 * "current pos" is position of start of buffer within the logical file.
 	 * Position as seen by user of BufFile is (curFile, curOffset + pos).
 	 */
 	int			curFile;		/* file index (0..n) part of current pos */
@@ -84,30 +72,33 @@ struct BufFile
 	char		buffer[BLCKSZ];
 };
 
-static LogicalFile *makeLogicalFile(File firstfile);
-static void extendLogicalFile(LogicalFile *file);
-static void deleteLogicalFile(LogicalFile *file);
+static BufFile *makeBufFile(File firstfile);
+static void extendBufFile(BufFile *file);
 static void BufFileLoadBuffer(BufFile *file);
 static void BufFileDumpBuffer(BufFile *file);
 static int	BufFileFlush(BufFile *file);
 
 
 /*
- * Create a LogicalFile with one component file and refcount 1.
+ * Create a BufFile given the first underlying physical file.
  * NOTE: caller must set isTemp true if appropriate.
  */
-static LogicalFile *
-makeLogicalFile(File firstfile)
+static BufFile *
+makeBufFile(File firstfile)
 {
-	LogicalFile *file = (LogicalFile *) palloc(sizeof(LogicalFile));
+	BufFile	   *file = (BufFile *) palloc(sizeof(BufFile));
 
-	file->refCount = 1;
-	file->isTemp = false;
 	file->numFiles = 1;
 	file->files = (File *) palloc(sizeof(File));
 	file->files[0] = firstfile;
 	file->offsets = (long *) palloc(sizeof(long));
 	file->offsets[0] = 0L;
+	file->isTemp = false;
+	file->dirty = false;
+	file->curFile = 0;
+	file->curOffset = 0L;
+	file->pos = 0;
+	file->nbytes = 0;
 
 	return file;
 }
@@ -116,7 +107,7 @@ makeLogicalFile(File firstfile)
  * Add another component temp file.
  */
 static void
-extendLogicalFile(LogicalFile *file)
+extendBufFile(BufFile *file)
 {
 	File		pfile;
 
@@ -134,21 +125,6 @@ extendLogicalFile(LogicalFile *file)
 }
 
 /*
- * Close and delete a LogicalFile when its refCount has gone to zero.
- */
-static void
-deleteLogicalFile(LogicalFile *file)
-{
-	int i;
-
-	for (i = 0; i < file->numFiles; i++)
-		FileClose(file->files[i]);
-	pfree(file->files);
-	pfree(file->offsets);
-	pfree(file);
-}
-
-/*
  * Create a BufFile for a new temporary file (which will expand to become
  * multiple temporary files if more than MAX_PHYSICAL_FILESIZE bytes are
  * written to it).
@@ -156,24 +132,16 @@ deleteLogicalFile(LogicalFile *file)
 BufFile *
 BufFileCreateTemp(void)
 {
-	BufFile    *bfile = (BufFile *) palloc(sizeof(BufFile));
+	BufFile    *file;
 	File		pfile;
-	LogicalFile *lfile;
 
 	pfile = OpenTemporaryFile();
 	Assert(pfile >= 0);
 
-	lfile = makeLogicalFile(pfile);
-	lfile->isTemp = true;
+	file = makeBufFile(pfile);
+	file->isTemp = true;
 
-	bfile->logFile = lfile;
-	bfile->dirty = false;
-	bfile->curFile = 0;
-	bfile->curOffset = 0L;
-	bfile->pos = 0;
-	bfile->nbytes = 0;
-
-	return bfile;
+	return file;
 }
 
 /*
@@ -186,42 +154,7 @@ BufFileCreateTemp(void)
 BufFile *
 BufFileCreate(File file)
 {
-	BufFile    *bfile = (BufFile *) palloc(sizeof(BufFile));
-	LogicalFile *lfile;
-
-	lfile = makeLogicalFile(file);
-
-	bfile->logFile = lfile;
-	bfile->dirty = false;
-	bfile->curFile = 0;
-	bfile->curOffset = 0L;
-	bfile->pos = 0;
-	bfile->nbytes = 0;
-
-	return bfile;
-}
-
-/*
- * Create an additional BufFile accessing the same underlying file as an
- * existing BufFile.  This is useful for having multiple read/write access
- * positions in a single temporary file.  Note the caller is responsible
- * for avoiding trouble due to overlapping buffer positions!  (Caller may
- * assume that buffer size is BLCKSZ...)
- */
-BufFile *
-BufFileReaccess(BufFile *file)
-{
-	BufFile    *bfile = (BufFile *) palloc(sizeof(BufFile));
-
-	bfile->logFile = file->logFile;
-	bfile->logFile->refCount++;
-	bfile->dirty = false;
-	bfile->curFile = 0;
-	bfile->curOffset = 0L;
-	bfile->pos = 0;
-	bfile->nbytes = 0;
-
-	return bfile;
+	return makeBufFile(file);
 }
 
 /*
@@ -232,16 +165,21 @@ BufFileReaccess(BufFile *file)
 void
 BufFileClose(BufFile *file)
 {
+	int		i;
+
 	/* flush any unwritten data */
 	BufFileFlush(file);
-	/* close the underlying (with delete if it's a temp file) */
-	if (--(file->logFile->refCount) <= 0)
-		deleteLogicalFile(file->logFile);
+	/* close the underlying file(s) (with delete if it's a temp file) */
+	for (i = 0; i < file->numFiles; i++)
+		FileClose(file->files[i]);
 	/* release the buffer space */
+	pfree(file->files);
+	pfree(file->offsets);
 	pfree(file);
 }
 
-/* BufFileLoadBuffer
+/*
+ * BufFileLoadBuffer
  *
  * Load some data into buffer, if possible, starting from curOffset.
  * At call, must have dirty = false, pos and nbytes = 0.
@@ -250,7 +188,6 @@ BufFileClose(BufFile *file)
 static void
 BufFileLoadBuffer(BufFile *file)
 {
-	LogicalFile *lfile = file->logFile;
 	File	thisfile;
 
 	/*
@@ -261,30 +198,33 @@ BufFileLoadBuffer(BufFile *file)
 	 * MAX_PHYSICAL_FILESIZE.
 	 */
 	if (file->curOffset >= MAX_PHYSICAL_FILESIZE &&
-		file->curFile+1 < lfile->numFiles)
+		file->curFile+1 < file->numFiles)
 	{
 		file->curFile++;
 		file->curOffset = 0L;
 	}
-	thisfile = lfile->files[file->curFile];
 	/*
-	 * May need to reposition physical file, if more than one BufFile
-	 * is using it.
+	 * May need to reposition physical file.
 	 */
-	if (file->curOffset != lfile->offsets[file->curFile])
+	thisfile = file->files[file->curFile];
+	if (file->curOffset != file->offsets[file->curFile])
 	{
 		if (FileSeek(thisfile, file->curOffset, SEEK_SET) != file->curOffset)
 			return;				/* seek failed, read nothing */
-		lfile->offsets[file->curFile] = file->curOffset;
+		file->offsets[file->curFile] = file->curOffset;
 	}
+	/*
+	 * Read whatever we can get, up to a full bufferload.
+	 */
 	file->nbytes = FileRead(thisfile, file->buffer, sizeof(file->buffer));
 	if (file->nbytes < 0)
 		file->nbytes = 0;
-	lfile->offsets[file->curFile] += file->nbytes;
+	file->offsets[file->curFile] += file->nbytes;
 	/* we choose not to advance curOffset here */
 }
 
-/* BufFileDumpBuffer
+/*
+ * BufFileDumpBuffer
  *
  * Dump buffer contents starting at curOffset.
  * At call, should have dirty = true, nbytes > 0.
@@ -293,7 +233,6 @@ BufFileLoadBuffer(BufFile *file)
 static void
 BufFileDumpBuffer(BufFile *file)
 {
-	LogicalFile *lfile = file->logFile;
 	int			wpos = 0;
 	int			bytestowrite;
 	File		thisfile;
@@ -307,10 +246,10 @@ BufFileDumpBuffer(BufFile *file)
 		/*
 		 * Advance to next component file if necessary and possible.
 		 */
-		if (file->curOffset >= MAX_PHYSICAL_FILESIZE && lfile->isTemp)
+		if (file->curOffset >= MAX_PHYSICAL_FILESIZE && file->isTemp)
 		{
-			while (file->curFile+1 >= lfile->numFiles)
-				extendLogicalFile(lfile);
+			while (file->curFile+1 >= file->numFiles)
+				extendBufFile(file);
 			file->curFile++;
 			file->curOffset = 0L;
 		}
@@ -319,28 +258,27 @@ BufFileDumpBuffer(BufFile *file)
 		 * to write as much as asked...
 		 */
 		bytestowrite = file->nbytes - wpos;
-		if (lfile->isTemp)
+		if (file->isTemp)
 		{
 			long	availbytes = MAX_PHYSICAL_FILESIZE - file->curOffset;
 
 			if ((long) bytestowrite > availbytes)
 				bytestowrite = (int) availbytes;
 		}
-		thisfile = lfile->files[file->curFile];
 		/*
-		 * May need to reposition physical file, if more than one BufFile
-		 * is using it.
+		 * May need to reposition physical file.
 		 */
-		if (file->curOffset != lfile->offsets[file->curFile])
+		thisfile = file->files[file->curFile];
+		if (file->curOffset != file->offsets[file->curFile])
 		{
 			if (FileSeek(thisfile, file->curOffset, SEEK_SET) != file->curOffset)
 				return;			/* seek failed, give up */
-			lfile->offsets[file->curFile] = file->curOffset;
+			file->offsets[file->curFile] = file->curOffset;
 		}
 		bytestowrite = FileWrite(thisfile, file->buffer, bytestowrite);
 		if (bytestowrite <= 0)
 			return;				/* failed to write */
-		lfile->offsets[file->curFile] += bytestowrite;
+		file->offsets[file->curFile] += bytestowrite;
 		file->curOffset += bytestowrite;
 		wpos += bytestowrite;
 	}
@@ -363,7 +301,8 @@ BufFileDumpBuffer(BufFile *file)
 	file->nbytes = 0;
 }
 
-/* BufFileRead
+/*
+ * BufFileRead
  *
  * Like fread() except we assume 1-byte element size.
  */
@@ -409,7 +348,8 @@ BufFileRead(BufFile *file, void *ptr, size_t size)
 	return nread;
 }
 
-/* BufFileWrite
+/*
+ * BufFileWrite
  *
  * Like fwrite() except we assume 1-byte element size.
  */
@@ -458,7 +398,8 @@ BufFileWrite(BufFile *file, void *ptr, size_t size)
 	return nwritten;
 }
 
-/* BufFileFlush
+/*
+ * BufFileFlush
  *
  * Like fflush()
  */
@@ -475,9 +416,15 @@ BufFileFlush(BufFile *file)
 	return 0;
 }
 
-/* BufFileSeek
+/*
+ * BufFileSeek
  *
- * Like fseek().  Result is 0 if OK, EOF if not.
+ * Like fseek(), except that target position needs two values in order to
+ * work when logical filesize exceeds maximum value representable by long.
+ * We do not support relative seeks across more than LONG_MAX, however.
+ *
+ * Result is 0 if OK, EOF if not.  Logical position is not moved if an
+ * impossible seek is attempted.
  */
 int
 BufFileSeek(BufFile *file, int fileno, long offset, int whence)
@@ -487,7 +434,7 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 	switch (whence)
 	{
 		case SEEK_SET:
-			if (fileno < 0 || fileno >= file->logFile->numFiles ||
+			if (fileno < 0 || fileno >= file->numFiles ||
 				offset < 0)
 				return EOF;
 			newFile = fileno;
@@ -516,11 +463,11 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 			return EOF;
 		newOffset += MAX_PHYSICAL_FILESIZE;
 	}
-	if (file->logFile->isTemp)
+	if (file->isTemp)
 	{
 		while (newOffset > MAX_PHYSICAL_FILESIZE)
 		{
-			if (++newFile >= file->logFile->numFiles)
+			if (++newFile >= file->numFiles)
 				return EOF;
 			newOffset -= MAX_PHYSICAL_FILESIZE;
 		}
@@ -548,9 +495,44 @@ BufFileSeek(BufFile *file, int fileno, long offset, int whence)
 	return 0;
 }
 
-extern void
+void
 BufFileTell(BufFile *file, int *fileno, long *offset)
 {
 	*fileno = file->curFile;
 	*offset = file->curOffset + file->pos;
+}
+
+/*
+ * BufFileSeekBlock --- block-oriented seek
+ *
+ * Performs absolute seek to the start of the n'th BLCKSZ-sized block of
+ * the file.  Note that users of this interface will fail if their files
+ * exceed BLCKSZ * LONG_MAX bytes, but that is quite a lot; we don't work
+ * with tables bigger than that, either...
+ *
+ * Result is 0 if OK, EOF if not.  Logical position is not moved if an
+ * impossible seek is attempted.
+ */
+int
+BufFileSeekBlock(BufFile *file, long blknum)
+{
+	return BufFileSeek(file,
+					   (int) (blknum / RELSEG_SIZE),
+					   (blknum % RELSEG_SIZE) * BLCKSZ,
+					   SEEK_SET);
+}
+
+/*
+ * BufFileTellBlock --- block-oriented tell
+ *
+ * Any fractional part of a block in the current seek position is ignored.
+ */
+long
+BufFileTellBlock(BufFile *file)
+{
+	long	blknum;
+
+	blknum = (file->curOffset + file->pos) / BLCKSZ;
+	blknum += file->curFile * RELSEG_SIZE;
+	return blknum;
 }
