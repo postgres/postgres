@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.159 2000/07/17 03:05:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.160 2000/07/21 11:40:08 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -61,11 +61,18 @@
  *		 - Added a -Z option for compression level on compressed formats
  *		 - Restored '-f' in usage output
  *
-*-------------------------------------------------------------------------
+ *
+ * Modifications - 17-Jul-2000 - Philip Warner pjw@rhyme.com.au
+ *		 - Support for BLOB output.
+ *		 - Sort archive by OID, put some items at end (out of OID order)
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include <unistd.h>				/* for getopt() */
 #include <ctype.h>
+
+#include "pg_backup.h"
 
 #include "postgres.h"
 
@@ -84,6 +91,7 @@
 #include "catalog/pg_type.h"
 
 #include "libpq-fe.h"
+#include <libpq/libpq-fs.h>
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
@@ -108,6 +116,9 @@ static void setMaxOid(Archive *fout);
 
 static void AddAcl(char *aclbuf, const char *keyword);
 static char *GetPrivileges(const char *s);
+
+static int dumpBlobs(Archive *AH, char*, void*);
+
 
 extern char *optarg;
 extern int	optind,
@@ -268,14 +279,26 @@ dumpClasses_nodumpData(Archive *fout, char* oid, void *dctxv)
 
 	if (oids == true)
 	{
-		archprintf(fout, "COPY %s WITH OIDS FROM stdin;\n",
-				fmtId(classname, force_quotes));
+		/* 
+		 * archprintf(fout, "COPY %s WITH OIDS FROM stdin;\n",
+		 *		fmtId(classname, force_quotes));
+		 *
+		 *  - Not used as of V1.3 (needs to be in ArchiveEntry call)
+		 *
+		 */
+
 		sprintf(query, "COPY %s WITH OIDS TO stdout;\n",
 				fmtId(classname, force_quotes));
 	}
 	else
 	{
-		archprintf(fout, "COPY %s FROM stdin;\n", fmtId(classname, force_quotes));
+		/* 
+		 *archprintf(fout, "COPY %s FROM stdin;\n", fmtId(classname, force_quotes));
+		 *
+		 * - Not used as of V1.3 (needs to be in ArchiveEntry call)
+		 *
+		 */
+
 		sprintf(query, "COPY %s TO stdout;\n", fmtId(classname, force_quotes));
 	}
 	res = PQexec(g_conn, query);
@@ -452,18 +475,27 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
  */
 static void
 dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
-			const char *onlytable, const bool oids)
+			const char *onlytable, const bool oids, const bool force_quotes)
 {
 
 	int				i;
 	char	   		*all_only;
 	DataDumperPtr	dumpFn;
 	DumpContext		*dumpCtx;
+	char			*oidsPart;
+	char			copyBuf[512];
+	char			*copyStmt;
 
 	if (onlytable == NULL)
 		all_only = "all";
 	else
 		all_only = "only";
+
+	if (oids == true)
+		oidsPart = "WITH OIDS ";
+	else
+		oidsPart = "";
+
 
 	if (g_verbose)
 		fprintf(stderr, "%s dumping out the contents of %s %d table%s/sequence%s %s\n",
@@ -514,111 +546,27 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 			dumpCtx->tblidx = i;
 			dumpCtx->oids = oids;
 
-			if (!dumpData)
+			if (!dumpData) /* Dump/restore using COPY */
+			{
 				dumpFn = dumpClasses_nodumpData;
 				/* dumpClasses_nodumpData(fout, classname, oids); */
-			else
+				sprintf(copyBuf, "COPY %s %s FROM stdin;\n", fmtId(tblinfo[i].relname, force_quotes),
+						oidsPart);
+				copyStmt = copyBuf;
+			}
+			else /* Restore using INSERT */
+			{
 				dumpFn = dumpClasses_dumpData;
 				/* dumpClasses_dumpData(fout, classname); */
+				copyStmt = NULL;
+			}
 
 			ArchiveEntry(fout, tblinfo[i].oid, fmtId(tblinfo[i].relname, false),
-							"TABLE DATA", NULL, "", "", tblinfo[i].usename,
+							"TABLE DATA", NULL, "", "", copyStmt, tblinfo[i].usename,
 							dumpFn, dumpCtx);
 		}
 	}
 }
-
-static void
-prompt_for_password(char *username, char *password)
-{
-	char		buf[512];
-	int			length;
-
-#ifdef HAVE_TERMIOS_H
-	struct termios t_orig,
-				   t;
-#endif
-
-	fprintf(stderr, "Username: ");
-	fflush(stderr);
-	fgets(username, 100, stdin);
-	length = strlen(username);
-	/* skip rest of the line */
-	if (length > 0 && username[length - 1] != '\n')
-	{
-		do
-		{
-			fgets(buf, 512, stdin);
-		} while (buf[strlen(buf) - 1] != '\n');
-	}
-	if (length > 0 && username[length - 1] == '\n')
-		username[length - 1] = '\0';
-
-#ifdef HAVE_TERMIOS_H
-	tcgetattr(0, &t);
-	t_orig = t;
-	t.c_lflag &= ~ECHO;
-	tcsetattr(0, TCSADRAIN, &t);
-#endif
-	fprintf(stderr, "Password: ");
-	fflush(stderr);
-	fgets(password, 100, stdin);
-#ifdef HAVE_TERMIOS_H
-	tcsetattr(0, TCSADRAIN, &t_orig);
-#endif
-
-	length = strlen(password);
-	/* skip rest of the line */
-	if (length > 0 && password[length - 1] != '\n')
-	{
-		do
-		{
-			fgets(buf, 512, stdin);
-		} while (buf[strlen(buf) - 1] != '\n');
-	}
-	if (length > 0 && password[length - 1] == '\n')
-		password[length - 1] = '\0';
-
-	fprintf(stderr, "\n\n");
-}
-
-
-static void
-check_database_version(bool ignoreVersion)
-{
-	PGresult   *res;
-	double      myversion;
-	const char *remoteversion_str;
-	double      remoteversion;
-
-	myversion = strtod(PG_VERSION, NULL);
-	res = PQexec(g_conn, "SELECT version()");
-	if (!res ||
-		PQresultStatus(res) != PGRES_TUPLES_OK ||
-		PQntuples(res) != 1)
-	{
-		fprintf(stderr, "check_database_version(): command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-
-	remoteversion_str = PQgetvalue(res, 0, 0);
-	remoteversion = strtod(remoteversion_str + 11, NULL);
-	if (myversion != remoteversion)
-	{
-		fprintf(stderr, "Database version: %s\npg_dump version: %s\n",
-				remoteversion_str, PG_VERSION);
-		if (ignoreVersion)
-			fprintf(stderr, "Proceeding despite version mismatch.\n");
-		else
-		{
-			fprintf(stderr, "Aborting because of version mismatch.\n"
-					"Use --ignore-version if you think it's safe to proceed anyway.\n");
-			exit_nicely(g_conn);
-		}
-	}
-	PQclear(res);
-}
-
 
 int
 main(int argc, char **argv)
@@ -634,20 +582,19 @@ main(int argc, char **argv)
 	bool		oids = false;
 	TableInfo  *tblinfo;
 	int			numTables;
-	char		connect_string[512] = "";
-	char		tmp_string[128];
-	char		username[100];
-	char		password[100];
 	bool		use_password = false;
 	int			compressLevel = -1;
 	bool		ignore_version = false;
-	int		plainText = 0;
-	int		outputClean = 0;
+	int			plainText = 0;
+	int			outputClean = 0;
+	int			outputBlobs = 0;
+
 	RestoreOptions	*ropt;
 
 #ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
+		{"blobs", no_argument, NULL, 'b' },
 		{"clean", no_argument, NULL, 'c'},
 		{"file", required_argument, NULL, 'f'},
 		{"format", required_argument, NULL, 'F'},
@@ -686,6 +633,12 @@ main(int argc, char **argv)
 	else
 		progname = strrchr(argv[0], SEP_CHAR) + 1;
 
+	/* Set defaulty options based on progname */
+	if (strcmp(progname, "pg_backup") == 0)
+	{
+		format = "c";
+		outputBlobs = 1;
+	}
 
 #ifdef HAVE_GETOPT_LONG
 	while ((c = getopt_long(argc, argv, "acdDf:F:h:inNop:st:uvxzZ:V?", long_options, &optindex)) != -1)
@@ -698,6 +651,10 @@ main(int argc, char **argv)
 			case 'a':			/* Dump data only */
 				dataOnly = true;
 				break;
+			case 'b':			/* Dump blobs */
+				outputBlobs = true;
+				break;
+
 			case 'c':			/* clean (i.e., drop) schema prior to
  								 * create */
 				outputClean = 1;
@@ -843,7 +800,12 @@ main(int argc, char **argv)
 		case 'p':
 		case 'P':
 			plainText = 1;
-			g_fout = CreateArchive(filename, archPlainText, 0);
+			g_fout = CreateArchive(filename, archNull, 0);
+			break;
+
+		case 't':
+		case 'T':
+			g_fout = CreateArchive(filename, archTar, compressLevel);
 			break;
 
 		default:
@@ -860,53 +822,13 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	/* find database */
-	if (!(dbname = argv[optind]) &&
-		!(dbname = getenv("PGDATABASE")))
-	{
-		fprintf(stderr, "%s: no database name specified\n", progname);
-		exit(1);
-	}
+	/* Let the archiver know how noisy to be */
+	g_fout->verbose = g_verbose;
 
-	/* g_conn = PQsetdb(pghost, pgport, NULL, NULL, dbname); */
-	if (pghost != NULL)
-	{
-		sprintf(tmp_string, "host=%s ", pghost);
-		strcat(connect_string, tmp_string);
-	}
-	if (pgport != NULL)
-	{
-		sprintf(tmp_string, "port=%s ", pgport);
-		strcat(connect_string, tmp_string);
-	}
-	if (dbname != NULL)
-	{
-		sprintf(tmp_string, "dbname=%s ", dbname);
-		strcat(connect_string, tmp_string);
-	}
-	if (use_password)
-	{
-		prompt_for_password(username, password);
-		strcat(connect_string, "authtype=password ");
-		sprintf(tmp_string, "user=%s ", username);
-		strcat(connect_string, tmp_string);
-		sprintf(tmp_string, "password=%s ", password);
-		strcat(connect_string, tmp_string);
-		MemSet(tmp_string, 0, sizeof(tmp_string));
-		MemSet(password, 0, sizeof(password));
-	}
-	g_conn = PQconnectdb(connect_string);
-	MemSet(connect_string, 0, sizeof(connect_string));
-	/* check to see that the backend connection was successfully made */
-	if (PQstatus(g_conn) == CONNECTION_BAD)
-	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", dbname);
-		fprintf(stderr, "%s\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
+	dbname = argv[optind];
 
-	/* check for version mismatch */
-	check_database_version(ignore_version);
+	/* Open the database using the Archiver, so it knows about it. Errors mean death */
+	g_conn = ConnectDatabase(g_fout, dbname, pghost, pgport, use_password, ignore_version);
 
 	/*
 	 * Start serializable transaction to dump consistent data
@@ -916,17 +838,15 @@ main(int argc, char **argv)
 
 		res = PQexec(g_conn, "begin");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-			exit_nicely(g_conn);
-		}
+		    exit_horribly(g_fout, "BEGIN command failed. Explanation from backend: '%s'.\n",
+				PQerrorMessage(g_conn));
+
 		PQclear(res);
 		res = PQexec(g_conn, "set transaction isolation level serializable");
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "SET TRANSACTION command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-			exit_nicely(g_conn);
-		}
+		    exit_horribly(g_fout, "SET TRANSACTION command failed. Explanation from backend: '%s'.\n",
+				PQerrorMessage(g_conn));
+
 		PQclear(res);
 	}
 
@@ -941,7 +861,12 @@ main(int argc, char **argv)
 	tblinfo = dumpSchema(g_fout, &numTables, tablename, aclsSkip, oids, schemaOnly, dataOnly);
 
 	if (!schemaOnly)
-	    dumpClasses(tblinfo, numTables, g_fout, tablename, oids);
+	{
+	    dumpClasses(tblinfo, numTables, g_fout, tablename, oids, force_quotes);
+	}
+
+	if (outputBlobs)
+		ArchiveEntry(g_fout, "0", "BLOBS", "BLOBS", NULL, "", "", "", "", dumpBlobs, 0); 
 
 	if (!dataOnly)				/* dump indexes and triggers at the end
 								 * for performance */
@@ -950,6 +875,15 @@ main(int argc, char **argv)
 		dumpTriggers(g_fout, tablename, tblinfo, numTables);
 		dumpRules(g_fout, tablename, tblinfo, numTables);
 	}
+
+	/* Now sort the output nicely */
+	SortTocByOID(g_fout);
+	MoveToEnd(g_fout, "TABLE DATA");
+	MoveToEnd(g_fout, "BLOBS");
+	MoveToEnd(g_fout, "INDEX");
+	MoveToEnd(g_fout, "TRIGGER");
+	MoveToEnd(g_fout, "RULE");
+	MoveToEnd(g_fout, "ACL");
 
 	if (plainText) 
 	{
@@ -971,6 +905,92 @@ main(int argc, char **argv)
 	clearTableInfo(tblinfo, numTables);
 	PQfinish(g_conn);
 	exit(0);
+}
+
+/*
+ * dumpBlobs:
+ *	dump all blobs
+ *
+ */
+
+#define loBufSize 16384 
+#define loFetchSize 1000
+
+static int 
+dumpBlobs(Archive *AH, char* junkOid, void *junkVal)
+{
+	PQExpBuffer		oidQry = createPQExpBuffer();
+	PQExpBuffer		oidFetchQry = createPQExpBuffer();
+	PGresult		*res;
+	int				i;
+	int				loFd;
+	char			buf[loBufSize];
+	int				cnt;
+	int				blobOid;
+
+	if (g_verbose)
+		fprintf(stderr, "%s saving BLOBs\n", g_comment_start);
+
+	/* Cursor to get all BLOB tables */
+    appendPQExpBuffer(oidQry, "Declare blobOid Cursor for SELECT oid from pg_class where relkind = 'l'");
+
+	res = PQexec(g_conn, oidQry->data);
+	if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "dumpBlobs(): Declare Cursor failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+		exit_nicely(g_conn);
+	}
+
+	/* Fetch for cursor */
+	appendPQExpBuffer(oidFetchQry, "Fetch %d in blobOid", loFetchSize);
+
+	do {
+		/* Do a fetch */
+		PQclear(res);
+		res = PQexec(g_conn, oidFetchQry->data);
+
+		if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+		    fprintf(stderr, "dumpBlobs(): Fetch Cursor failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+		    exit_nicely(g_conn);
+		}
+
+		/* Process the tuples, if any */
+		for (i = 0; i < PQntuples(res); i++)
+		{
+			blobOid = atoi(PQgetvalue(res, i, 0));
+			/* Open the BLOB */
+			loFd = lo_open(g_conn, blobOid, INV_READ);
+			if (loFd == -1)
+			{
+				fprintf(stderr, "dumpBlobs(): Could not open large object.  "
+									"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+				exit_nicely(g_conn);
+			}
+
+			StartBlob(AH, blobOid);
+
+			/* Now read it in chunks, sending data to archive */
+			do {
+				cnt = lo_read(g_conn, loFd, buf, loBufSize);
+				if (cnt < 0) {
+					fprintf(stderr, "dumpBlobs(): Error reading large object. "
+								" Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+					exit_nicely(g_conn);
+				}
+
+				WriteData(AH, buf, cnt); 
+
+			} while (cnt > 0);
+
+			lo_close(g_conn, loFd);
+
+			EndBlob(AH, blobOid);
+
+		}
+	} while (PQntuples(res) > 0);
+
+	return 1;
 }
 
 /*
@@ -2409,7 +2429,7 @@ dumpComment(Archive *fout, const char *target, const char *oid)
 							target, checkForQuote(PQgetvalue(res, 0, i_description)));
 
 		ArchiveEntry(fout, oid, target, "COMMENT", NULL, query->data, "" /*Del*/,
-					   "" /*Owner*/, NULL, NULL);	
+					   "" /* Copy */, "" /*Owner*/, NULL, NULL);	
 
 	}
 
@@ -2542,7 +2562,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 			appendPQExpBuffer(q, ");\n");
 
 		ArchiveEntry(fout, tinfo[i].oid, fmtId(tinfo[i].typname, force_quotes), "TYPE", NULL,
-						q->data, delq->data, tinfo[i].usename, NULL, NULL);
+						q->data, delq->data, "", tinfo[i].usename, NULL, NULL);
 
 		/*** Dump Type Comments ***/
 
@@ -2629,7 +2649,7 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 				lancompiler);
 
 		ArchiveEntry(fout, PQgetvalue(res, i, i_oid), lanname, "PROCEDURAL LANGUAGE",
-			    NULL, defqry->data, delqry->data, "", NULL, NULL);
+			    NULL, defqry->data, delqry->data, "", "", NULL, NULL);
 
 		free(lanname);
 		free(lancompiler);
@@ -2669,8 +2689,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	PQExpBuffer fn = createPQExpBuffer();
 	PQExpBuffer delqry = createPQExpBuffer();
 	PQExpBuffer fnlist = createPQExpBuffer();
-	PQExpBuffer	asPart = createPQExpBuffer();
 	int			j;
+	PQExpBuffer asPart = createPQExpBuffer();
 	char		func_lang[NAMEDATALEN + 1];
 	PGresult   *res;
 	int			nlangs;
@@ -2703,7 +2723,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
   
 	i_lanname = PQfnumber(res, "lanname");
 
-  	/*
+	/*
 	 * See backend/commands/define.c for details of how the 'AS' clause
 	 * is used.
 	 */
@@ -2751,7 +2771,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 					  asPart->data, func_lang);
 
 	ArchiveEntry(fout, finfo[i].oid, fn->data, "FUNCTION", NULL, q->data, delqry->data,
-					finfo[i].usename, NULL, NULL);
+					"", finfo[i].usename, NULL, NULL);
 
 	/*** Dump Function Comments ***/
 
@@ -2870,7 +2890,7 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 						  sort2->data);
 
 		ArchiveEntry(fout, oprinfo[i].oid, oprinfo[i].oprname, "OPERATOR", NULL,
-						q->data, delq->data, oprinfo[i].usename, NULL, NULL);
+						q->data, delq->data, "", oprinfo[i].usename, NULL, NULL);
 	}
 }
 
@@ -2927,7 +2947,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 						  details->data);
 
 		ArchiveEntry(fout, agginfo[i].oid, aggSig->data, "AGGREGATE", NULL,
-						q->data, delq->data, agginfo[i].usename, NULL, NULL);
+						q->data, delq->data, "", agginfo[i].usename, NULL, NULL);
 
 		/*** Dump Aggregate Comments ***/
 
@@ -3096,7 +3116,7 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 
 	free(aclbuf);
 
-	ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "ACL", NULL, sql, "", "", NULL, NULL);
+	ArchiveEntry(fout, tbinfo.oid, tbinfo.relname, "ACL", NULL, sql, "", "", "", NULL, NULL);
 
 }
 
@@ -3274,7 +3294,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 			if (!dataOnly) {
 				ArchiveEntry(fout, tblinfo[i].oid, fmtId(tblinfo[i].relname, false),
-								"TABLE", NULL, q->data, delq->data, tblinfo[i].usename,
+								"TABLE", NULL, q->data, delq->data, "", tblinfo[i].usename,
 								NULL, NULL);
 			}
 
@@ -3468,7 +3488,7 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 			/* Dump Index Comments */
 
 			ArchiveEntry(fout, tblinfo[tableInd].oid, id1->data, "INDEX", NULL, q->data, delq->data,
-							tblinfo[tableInd].usename, NULL, NULL);
+							"", tblinfo[tableInd].usename, NULL, NULL);
 
 			resetPQExpBuffer(q);
 			appendPQExpBuffer(q, "INDEX %s", id1->data);
@@ -3599,7 +3619,7 @@ setMaxOid(Archive *fout)
 	pos = pos + snprintf(sql+pos, 1024-pos, "\\.\n");
 	pos = pos + snprintf(sql+pos, 1024-pos, "DROP TABLE pg_dump_oid;\n");
 
-	ArchiveEntry(fout, "0", "Max OID", "<Init>", NULL, sql, "","", NULL, NULL);
+	ArchiveEntry(fout, "0", "Max OID", "<Init>", NULL, sql, "", "", "", NULL, NULL);
 }
 
 /*
@@ -3750,7 +3770,7 @@ dumpSequence(Archive *fout, TableInfo tbinfo)
 	}
 
 	ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE", NULL,
-					query->data, delqry->data, tbinfo.usename, NULL, NULL);
+					query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
 
 	/* Dump Sequence Comments */
 
@@ -3779,7 +3799,7 @@ dumpTriggers(Archive *fout, const char *tablename,
 		for (j = 0; j < tblinfo[i].ntrig; j++)
 		{
 			ArchiveEntry(fout, tblinfo[i].triggers[j].oid, tblinfo[i].triggers[j].tgname,
-						"TRIGGER", NULL, tblinfo[i].triggers[j].tgsrc, "",
+						"TRIGGER", NULL, tblinfo[i].triggers[j].tgsrc, "", "", 
 						tblinfo[i].usename, NULL, NULL);
 			dumpComment(fout, tblinfo[i].triggers[j].tgcomment, tblinfo[i].triggers[j].oid);
 		}
@@ -3846,7 +3866,7 @@ dumpRules(Archive *fout, const char *tablename,
 
 			ArchiveEntry(fout, PQgetvalue(res, i, i_oid), PQgetvalue(res, i, i_rulename),
 							"RULE", NULL, PQgetvalue(res, i, i_definition),
-							"", "", NULL, NULL);
+							"", "", "", NULL, NULL);
 
 			/* Dump rule comments */
 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.19 2000/07/04 19:52:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.20 2000/07/21 11:40:08 pjw Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,8 +12,8 @@ subdir = src/bin/pg_dump
 top_builddir = ../../..
 include ../../Makefile.global
 
-OBJS= pg_backup_archiver.o pg_backup_custom.o pg_backup_files.o \
-       pg_backup_plain_text.o $(STRDUP)
+OBJS= pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o pg_backup_files.o \
+       pg_backup_null.o pg_backup_tar.o $(STRDUP)
 
 CFLAGS+= -I$(LIBPQDIR)
 LIBS+= -lz

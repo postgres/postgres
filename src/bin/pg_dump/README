@@ -1,16 +1,22 @@
 Notes on pg_dump
 ================
 
-pg_dump, by default, still outputs text files.
+1. pg_dump, by default, still outputs text files.
 
-pg_dumpall forces all pg_dump output to be text, since it also outputs text into the same output stream.
+2. pg_dumpall forces all pg_dump output to be text, since it also outputs text into the same output stream.
 
-The plain text output format can not be used as input into pg_restore.
+3. The plain text output format can not be used as input into pg_restore.
+
+4. pg_dump now dumps the items in a modified OID order to try to improve relaibility of default restores.
 
 
 To dump a database into the next custom format, type:
 
     pg_dump <db-name> -Fc > <backup-file>
+
+or, in TAR format
+
+	pg_dump <db-name> -Ft > <backup-file>
 
 To restore, try
  
@@ -53,7 +59,37 @@ or, simply:
     pg_restore backup.bck --use=toc.lis | psql newdbname
 
 
-Philip Warner, 3-Jul-2000
+BLOBs
+=====
+
+To dump blobs you must use the custom archive format (-Fc) or TAR format (-Ft), and specify the 
+--blobs qualifier to the pg_dump command.
+
+To restore blobs you must use a direct database connection (--db=db-to-restore-to).
+
+eg.
+
+   pg_dump --blob -Fc db-to-backup -f backup.bck
+
+   pg_restore backup.bck --db=db-to-restore-into
+
+
+TAR
+===
+
+The TAR archive that pg_dump creates currently has a blank username & group for the files, 
+but should be otherwise valid. It also includes a 'restore.sql' script which is there for
+the benefit of humans. It is never used by pg_restore.
+
+Note: the TAR format archive can only be used as input into pg_restore if it is in TAR form.
+(ie. you should not extract the files then expect pg_restore to work). 
+
+You can extract, edit, and tar the files again, and it should work, but the 'toc'
+file should go at the start, the data files be in the order they are used, and
+the BLOB files at the end.
+
+
+Philip Warner, 16-Jul-2000
 pjw@rhyme.com.au
 
 

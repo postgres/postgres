@@ -29,6 +29,10 @@
 #define __PG_BACKUP_ARCHIVE__
 
 #include <stdio.h>
+#include <time.h>
+
+#include "postgres.h"
+#include "pqexpbuffer.h"
 
 #ifdef HAVE_LIBZ
 #include <zlib.h>
@@ -51,15 +55,23 @@ typedef z_stream *z_streamp;
 #endif
 
 #include "pg_backup.h"
+#include "libpq-fe.h"
 
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 2 
-#define K_VERS_REV 2
+#define K_VERS_MINOR 4 
+#define K_VERS_REV 3 
+
+/* Data block types */
+#define BLK_DATA 1
+#define BLK_BLOB 2
+#define BLK_BLOBS 3
 
 /* Some important version numbers (checked in code) */
 #define K_VERS_1_0 (( (1 * 256 + 0) * 256 + 0) * 256 + 0)
-#define K_VERS_1_2 (( (1 * 256 + 2) * 256 + 0) * 256 + 0)
-#define K_VERS_MAX (( (1 * 256 + 2) * 256 + 255) * 256 + 0)
+#define K_VERS_1_2 (( (1 * 256 + 2) * 256 + 0) * 256 + 0) /* Allow No ZLIB */
+#define K_VERS_1_3 (( (1 * 256 + 3) * 256 + 0) * 256 + 0) /* BLOBs */
+#define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0) /* Date & name in header */
+#define K_VERS_MAX (( (1 * 256 + 4) * 256 + 255) * 256 + 0)
 
 struct _archiveHandle;
 struct _tocEntry;
@@ -72,16 +84,23 @@ typedef void	(*StartDataPtr)		(struct _archiveHandle* AH, struct _tocEntry* te);
 typedef int 	(*WriteDataPtr)		(struct _archiveHandle* AH, const void* data, int dLen);
 typedef void	(*EndDataPtr)		(struct _archiveHandle* AH, struct _tocEntry* te);
 
-typedef int	(*WriteBytePtr)		(struct _archiveHandle* AH, const int i);
+typedef void	(*StartBlobsPtr)	(struct _archiveHandle* AH, struct _tocEntry* te);
+typedef void    (*StartBlobPtr)		(struct _archiveHandle* AH, struct _tocEntry* te, int oid);
+typedef void	(*EndBlobPtr)		(struct _archiveHandle* AH, struct _tocEntry* te, int oid);
+typedef void	(*EndBlobsPtr)		(struct _archiveHandle* AH, struct _tocEntry* te);
+
+typedef int		(*WriteBytePtr)		(struct _archiveHandle* AH, const int i);
 typedef int    	(*ReadBytePtr)		(struct _archiveHandle* AH);
-typedef int	(*WriteBufPtr)		(struct _archiveHandle* AH, const void* c, int len);
-typedef int	(*ReadBufPtr)		(struct _archiveHandle* AH, void* buf, int len);
+typedef int		(*WriteBufPtr)		(struct _archiveHandle* AH, const void* c, int len);
+typedef int		(*ReadBufPtr)		(struct _archiveHandle* AH, void* buf, int len);
 typedef void	(*SaveArchivePtr)	(struct _archiveHandle* AH);
 typedef void 	(*WriteExtraTocPtr)	(struct _archiveHandle* AH, struct _tocEntry* te);
 typedef void	(*ReadExtraTocPtr)	(struct _archiveHandle* AH, struct _tocEntry* te);
 typedef void	(*PrintExtraTocPtr)	(struct _archiveHandle* AH, struct _tocEntry* te);
 typedef void	(*PrintTocDataPtr)	(struct _archiveHandle* AH, struct _tocEntry* te, 
 						RestoreOptions *ropt);
+
+typedef int		(*CustomOutPtr)		(struct _archiveHandle* AH, const void* buf, int len);
 
 typedef int	(*TocSortCompareFn)	(const void* te1, const void *te2); 
 
@@ -95,16 +114,44 @@ typedef struct _outputContext {
 	int		gzOut;
 } OutputContext;
 
+typedef enum { 
+	SQL_SCAN = 0,
+	SQL_IN_SQL_COMMENT,
+	SQL_IN_EXT_COMMENT,
+	SQL_IN_QUOTE} sqlparseState;
+	
+typedef struct {
+	int					backSlash;
+	sqlparseState		state;
+	char				lastChar;
+	char				quoteChar;
+} sqlparseInfo;
+
 typedef struct _archiveHandle {
+	Archive				public;				/* Public part of archive */
 	char				vmaj;				/* Version of file */
 	char				vmin;
 	char				vrev;
 	int					version;			/* Conveniently formatted version */
 
+	int					debugLevel;			/* Not used. Intended for logging */
 	int					intSize;			/* Size of an integer in the archive */
 	ArchiveFormat		format;				/* Archive format */
 
+	sqlparseInfo		sqlparse;
+	PQExpBuffer			sqlBuf;
+
+	time_t				createDate;			/* Date archive created */
+
+	/*
+	 * Fields used when discovering header.
+	 * A format can always get the previous read bytes from here...
+	 */
 	int					readHeader;			/* Used if file header has been read already */
+	char				*lookahead;			/* Buffer used when reading header to discover format */
+	int					lookaheadSize;		/* Size of allocated buffer */
+	int					lookaheadLen;		/* Length of data in lookahead */
+	int					lookaheadPos;		/* Current read position in lookahead buffer */
 
 	ArchiveEntryPtr		ArchiveEntryPtr;	/* Called for each metadata object */
 	StartDataPtr		StartDataPtr; 		/* Called when table data is about to be dumped */
@@ -121,11 +168,33 @@ typedef struct _archiveHandle {
 	PrintExtraTocPtr	PrintExtraTocPtr;	/* Extra TOC info for format */
 	PrintTocDataPtr		PrintTocDataPtr;
 
-	int			lastID;						/* Last internal ID for a TOC entry */
-	char*		fSpec;						/* Archive File Spec */
-	FILE		*FH;						/* General purpose file handle */
-	void		*OF;
-	int		gzOut;						/* Output file */
+	StartBlobsPtr		StartBlobsPtr;
+	EndBlobsPtr			EndBlobsPtr;
+	StartBlobPtr		StartBlobPtr;
+	EndBlobPtr			EndBlobPtr;
+
+	CustomOutPtr		CustomOutPtr;		/* Alternate script output routine */
+
+	/* Stuff for direct DB connection */
+	char				username[100];
+	char				*dbname;			/* Name of db for connection */
+	char				*archdbname;		/* DB name *read* from archive */
+	char				*pghost;
+	char				*pgport;
+	PGconn				*connection;
+	int					connectToDB;		/* Flag to indicate if direct DB connection is required */
+	int					pgCopyIn;			/* Currently in libpq 'COPY IN' mode. */
+	PQExpBuffer			pgCopyBuf;			/* Left-over data from incomplete lines in COPY IN */
+
+	int					loFd;				/* BLOB fd */
+	int					writingBlob;		/* Flag */
+	int					createdBlobXref;	/* Flag */
+
+	int					lastID;				/* Last internal ID for a TOC entry */
+	char*				fSpec;				/* Archive File Spec */
+	FILE				*FH;				/* General purpose file handle */
+	void				*OF;
+	int					gzOut;				/* Output file */
 
 	struct _tocEntry*		toc;			/* List of TOC entries */
 	int						tocCount;		/* Number of TOC entries */
@@ -135,6 +204,7 @@ typedef struct _archiveHandle {
 	ArchiveMode				mode;			/* File mode - r or w */
 	void*					formatData;		/* Header data specific to file format */
 
+	RestoreOptions			*ropt;			/* Used to check restore options in ahwrite etc */
 } ArchiveHandle;
 
 typedef struct _tocEntry {
@@ -148,6 +218,7 @@ typedef struct _tocEntry {
 	char*				desc;
 	char*				defn;
 	char*				dropStmt;
+	char*				copyStmt;
 	char*				owner;
 	char**				depOid;
 	int					printed;		/* Indicates if entry defn has been dumped */
@@ -159,7 +230,8 @@ typedef struct _tocEntry {
 
 } TocEntry;
 
-extern void die_horribly(const char *fmt, ...);
+/* Used everywhere */
+extern void die_horribly(ArchiveHandle *AH, const char *fmt, ...);
 
 extern void WriteTOC(ArchiveHandle* AH);
 extern void ReadTOC(ArchiveHandle* AH);
@@ -175,19 +247,27 @@ extern int TocIDRequired(ArchiveHandle* AH, int id, RestoreOptions *ropt);
  * Mandatory routines for each supported format
  */
 
-extern int WriteInt(ArchiveHandle* AH, int i);
-extern int ReadInt(ArchiveHandle* AH);
-extern char* ReadStr(ArchiveHandle* AH);
-extern int WriteStr(ArchiveHandle* AH, char* s);
+extern int 				WriteInt(ArchiveHandle* AH, int i);
+extern int 				ReadInt(ArchiveHandle* AH);
+extern char* 			ReadStr(ArchiveHandle* AH);
+extern int 				WriteStr(ArchiveHandle* AH, char* s);
 
-extern void InitArchiveFmt_Custom(ArchiveHandle* AH);
-extern void InitArchiveFmt_Files(ArchiveHandle* AH);
-extern void InitArchiveFmt_PlainText(ArchiveHandle* AH);
+extern void 			StartRestoreBlob(ArchiveHandle* AH, int oid);
+extern void 			EndRestoreBlob(ArchiveHandle* AH, int oid);
+
+extern void 			InitArchiveFmt_Custom(ArchiveHandle* AH);
+extern void 			InitArchiveFmt_Files(ArchiveHandle* AH);
+extern void 			InitArchiveFmt_Null(ArchiveHandle* AH);
+extern void 			InitArchiveFmt_Tar(ArchiveHandle* AH);
+
+extern int 				isValidTarHeader(char *header);
 
 extern OutputContext	SetOutput(ArchiveHandle* AH, char *filename, int compression);
-extern void 		ResetOutput(ArchiveHandle* AH, OutputContext savedContext);
+extern void 			ResetOutput(ArchiveHandle* AH, OutputContext savedContext);
 
 int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH);
 int ahprintf(ArchiveHandle* AH, const char *fmt, ...);
+
+void ahlog(ArchiveHandle* AH, int level, const char *fmt, ...);
 
 #endif

@@ -30,12 +30,15 @@
 
 #define PG_BACKUP__
 
+#include "postgres.h"
+#include "libpq-fe.h"
+
 typedef enum _archiveFormat {
     archUnknown = 0,
     archCustom = 1,
     archFiles = 2,
     archTar = 3,
-    archPlainText = 4
+    archNull = 4
 } ArchiveFormat;
 
 /*
@@ -43,7 +46,8 @@ typedef enum _archiveFormat {
  *  time this gives us some abstraction and type checking.
  */
 typedef struct _Archive {
-    /* Nothing here */
+	int			verbose;
+    /* The rest is private */
 } Archive;
 
 typedef int     (*DataDumperPtr)(Archive* AH, char* oid, void* userArg);
@@ -64,14 +68,21 @@ typedef struct _restoreOptions {
 	char		*formatName;
 
 	int			selTypes;
-	int		selIndex;
-	int		selFunction;
-	int		selTrigger;
-	int		selTable;
+	int			selIndex;
+	int			selFunction;
+	int			selTrigger;
+	int			selTable;
 	char		*indexNames;
 	char		*functionNames;
 	char		*tableNames;
 	char		*triggerNames;
+
+	int			useDB;
+	char		*dbname;
+	char		*pgport;
+	char		*pghost;
+	int			ignoreVersion;
+	int			requirePassword;
 
 	int		*idWanted;
 	int		limitToList;
@@ -83,24 +94,42 @@ typedef struct _restoreOptions {
  * Main archiver interface.
  */
 
+extern void exit_horribly(Archive *AH, const char *fmt, ...);
+
+/* Lets the archibe know we have a DB connection to shutdown if it dies */
+
+PGconn* ConnectDatabase(Archive *AH,
+		const char* 	dbname,
+		const char*	pghost,
+		const char*	pgport,
+		const int	reqPwd,
+		const int	ignoreVersion);
+
+
 /* Called to add a TOC entry */
 extern void	ArchiveEntry(Archive* AH, const char* oid, const char* name,
 			const char* desc, const char* (deps[]), const char* defn,
-			const char* dropStmt, const char* owner, 
+			const char* dropStmt, const char* copyStmt, const char* owner, 
 			DataDumperPtr dumpFn, void* dumpArg);
 
 /* Called to write *data* to the archive */
 extern int	WriteData(Archive* AH, const void* data, int dLen);
+
+//extern int 	StartBlobs(Archive* AH);
+//extern int	EndBlobs(Archive* AH);
+extern int	StartBlob(Archive* AH, int oid);
+extern int	EndBlob(Archive* AH, int oid);
 
 extern void	CloseArchive(Archive* AH);
 
 extern void	RestoreArchive(Archive* AH, RestoreOptions *ropt);
 
 /* Open an existing archive */
-extern Archive* OpenArchive(const char* FileSpec, ArchiveFormat fmt);
+extern Archive* OpenArchive(const char* FileSpec, const ArchiveFormat fmt);
 
 /* Create a new archive */
-extern Archive* CreateArchive(const char* FileSpec, ArchiveFormat fmt, int compression);
+extern Archive* CreateArchive(const char* FileSpec, const ArchiveFormat fmt, 
+								const int compression);
 
 /* The --list option */
 extern void	PrintTOCSummary(Archive* AH, RestoreOptions *ropt);

@@ -25,6 +25,8 @@
 
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
+#include "pg_backup_db.h"
+
 #include <string.h>
 #include <unistd.h> /* for dup */
 
@@ -32,10 +34,13 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "pqexpbuffer.h"
+#include "libpq/libpq-fs.h"
+
 static void		_SortToc(ArchiveHandle* AH, TocSortCompareFn fn);
 static int		_tocSortCompareByOIDNum(const void *p1, const void *p2);
 static int		_tocSortCompareByIDNum(const void *p1, const void *p2);
-static ArchiveHandle* 	_allocAH(const char* FileSpec, ArchiveFormat fmt, 
+static ArchiveHandle* 	_allocAH(const char* FileSpec, const ArchiveFormat fmt, 
 				int compression, ArchiveMode mode);
 static int 		_printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt);
 static int		_tocEntryRequired(TocEntry* te, RestoreOptions *ropt);
@@ -45,7 +50,13 @@ static TocEntry*	_getTocEntry(ArchiveHandle* AH, int id);
 static void		_moveAfter(ArchiveHandle* AH, TocEntry* pos, TocEntry* te);
 static void		_moveBefore(ArchiveHandle* AH, TocEntry* pos, TocEntry* te);
 static int		_discoverArchiveFormat(ArchiveHandle* AH);
+
 static char	*progname = "Archiver";
+
+static void		_die_horribly(ArchiveHandle *AH, const char *fmt, va_list ap);
+
+static int 		_canRestoreBlobs(ArchiveHandle *AH);
+
 
 /*
  *  Wrapper functions.
@@ -58,7 +69,9 @@ static char	*progname = "Archiver";
 
 /* Create a new archive */
 /* Public */
-Archive* CreateArchive(const char* FileSpec, ArchiveFormat fmt, int compression)
+Archive* CreateArchive(const char* FileSpec, const ArchiveFormat fmt,
+                                const int compression)
+
 {
     ArchiveHandle*	AH = _allocAH(FileSpec, fmt, compression, archModeWrite);
     return (Archive*)AH;
@@ -66,7 +79,7 @@ Archive* CreateArchive(const char* FileSpec, ArchiveFormat fmt, int compression)
 
 /* Open an existing archive */
 /* Public */
-Archive* OpenArchive(const char* FileSpec, ArchiveFormat fmt) 
+Archive* OpenArchive(const char* FileSpec, const ArchiveFormat fmt) 
 {
     ArchiveHandle*      AH = _allocAH(FileSpec, fmt, 0, archModeRead);
     return (Archive*)AH;
@@ -80,9 +93,9 @@ void	CloseArchive(Archive* AHX)
 
     /* Close the output */
     if (AH->gzOut)
-	GZCLOSE(AH->OF);
+		GZCLOSE(AH->OF);
     else if (AH->OF != stdout)
-	fclose(AH->OF);
+		fclose(AH->OF);
 }
 
 /* Public */
@@ -93,47 +106,155 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
     int			reqs;
     OutputContext	sav;
 
+	AH->ropt = ropt;
+
+	/*
+	 * If we're using a DB connection, then connect it.
+	 */
+	if (ropt->useDB)
+	{
+		ahlog(AH, 1, "Connecting to database for restore\n");
+		if (AH->version < K_VERS_1_3)
+			die_horribly(AH, "Direct database connections are not supported in pre-1.3 archives");
+
+		ConnectDatabase(AHX, ropt->dbname, ropt->pghost, ropt->pgport, 
+							ropt->requirePassword, ropt->ignoreVersion);
+	}
+
+	/*
+	 *	Setup the output file if necessary.
+	 */
     if (ropt->filename || ropt->compression)
-	sav = SetOutput(AH, ropt->filename, ropt->compression);
+		sav = SetOutput(AH, ropt->filename, ropt->compression);
 
     ahprintf(AH, "--\n-- Selected TOC Entries:\n--\n");
 
-    /* Drop the items at the start, in reverse order */
+    /*
+     * Drop the items at the start, in reverse order 
+	 */
     if (ropt->dropSchema) {
-	te = AH->toc->prev;
-	while (te != AH->toc) {
-	    reqs = _tocEntryRequired(te, ropt);
-	    if ( (reqs & 1) && te->dropStmt) {  /* We want the schema */
-		ahprintf(AH, "%s", te->dropStmt);
-	    }
-	    te = te->prev;
-	}
+		te = AH->toc->prev;
+		while (te != AH->toc) {
+			reqs = _tocEntryRequired(te, ropt);
+			if ( ( (reqs & 1) != 0) && te->dropStmt) {  /* We want the schema */
+				ahlog(AH, 1, "Dropping %s %s\n", te->desc, te->name);
+				ahprintf(AH, "%s", te->dropStmt);
+			}
+			te = te->prev;
+		}
     }
 
+	/*
+	 * Now process each TOC entry
+	 */
     te = AH->toc->next;
     while (te != AH->toc) {
-	reqs = _tocEntryRequired(te, ropt);
 
-	if (reqs & 1) /* We want the schema */
-	    _printTocEntry(AH, te, ropt);
+		/* Work out what, if anything, we want from this entry */
+		reqs = _tocEntryRequired(te, ropt);
 
-	if (AH->PrintTocDataPtr != NULL && (reqs & 2) != 0) {
+		if ( (reqs & 1) != 0) /* We want the schema */
+		{
+			ahlog(AH, 1, "Creating %s %s\n", te->desc, te->name);
+			_printTocEntry(AH, te, ropt);
+		}
+
+		/* 
+		 * If we want data, and it has data, then restore that too 
+		 */
+		if (AH->PrintTocDataPtr != NULL && (reqs & 2) != 0) {
 #ifndef HAVE_LIBZ
-	    if (AH->compression != 0)
-		die_horribly("%s: Unable to restore data from a compressed archive\n", progname);
+			if (AH->compression != 0)
+				die_horribly(AH, "%s: Unable to restore data from a compressed archive\n", progname);
 #endif
-	    _disableTriggers(AH, te, ropt);
-	    (*AH->PrintTocDataPtr)(AH, te, ropt);
-	    _enableTriggers(AH, te, ropt);
-	}
-	te = te->next;
+
+			ahlog(AH, 1, "Restoring data for %s \n", te->name);
+
+			ahprintf(AH, "--\n-- Data for TOC Entry ID %d (OID %s) %s %s\n--\n\n",
+						te->id, te->oid, te->desc, te->name);
+
+			/*
+			 * Maybe we can't do BLOBS, so check if this node is for BLOBS 
+			 */
+			if ((strcmp(te->desc,"BLOBS") == 0) && !_canRestoreBlobs(AH))
+			{
+				ahprintf(AH, "--\n-- SKIPPED \n--\n\n");
+				/*
+				 * This is a bit nasty - we assume, for the moment, that if a custom
+				 * output is used, then we don't want warnings.
+				 */
+				if (!AH->CustomOutPtr)
+					fprintf(stderr, "%s: WARNING - skipping BLOB restoration\n", progname);
+			} else {
+
+				_disableTriggers(AH, te, ropt);
+
+
+				/* If we have a copy statement, use it. As of V1.3, these are separate 
+				 * to allow easy import from withing a database connection. Pre 1.3 
+				 * archives can not use DB connections and are sent to output only.
+				 *
+				 * For V1.3+, the table data MUST have a copy statement so that 
+				 * we can go into appropriate mode with libpq.
+				 */
+				if (te->copyStmt && strlen(te->copyStmt) > 0)
+					ahprintf(AH, te->copyStmt);
+
+				(*AH->PrintTocDataPtr)(AH, te, ropt);
+
+				_enableTriggers(AH, te, ropt);
+			}
+		}
+		te = te->next;
     }
 
-    if (ropt->filename)
-	ResetOutput(AH, sav);
+	/*
+	 * Now use blobs_xref (if used) to fixup any refs for tables that we loaded
+	 */
+	if (_canRestoreBlobs(AH) && AH->createdBlobXref)
+	{
+		te = AH->toc->next;
+		while (te != AH->toc) {
 
+			/* Is it table data? */
+			if (strcmp(te->desc, "TABLE DATA") == 0) {
+
+				ahlog(AH, 2, "Checking if we loaded %s\n", te->name);
+
+				reqs = _tocEntryRequired(te, ropt);
+
+				if ( (reqs & 2) != 0) /* We loaded the data */
+				{
+					ahlog(AH, 1, "Fixing up BLOB ref for %s\n", te->name);
+					FixupBlobRefs(AH, te->name);
+				}
+			}
+			else
+			{
+				ahlog(AH, 2, "Ignoring BLOB xrefs for %s %s\n", te->desc, te->name);
+			}
+
+			te = te->next;
+		}
+	}
+
+	/*
+	 * Clean up & we're done.
+	 */
+    if (ropt->filename)
+		ResetOutput(AH, sav);
+
+	if (ropt->useDB)
+	{
+		PQfinish(AH->connection);
+		AH->connection = NULL;
+	}
 }
 
+/*
+ * Allocate a new RestoreOptions block.
+ * This is mainly so we can initialize it, but also for future expansion,
+ */
 RestoreOptions*		NewRestoreOptions(void)
 {
 	RestoreOptions* opts;
@@ -143,6 +264,11 @@ RestoreOptions*		NewRestoreOptions(void)
 	opts->format = archUnknown;
 
 	return opts;
+}
+
+static int _canRestoreBlobs(ArchiveHandle *AH)
+{
+	return (AH->ropt->useDB && AH->connection);
 }
 
 static void _disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
@@ -168,13 +294,17 @@ static void _enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 
 
 /*
- * This is a routine that is available to pg_dump, hence the 'Archive*' parameter.
+ * This is a routine that is part of the dumper interface, hence the 'Archive*' parameter.
  */
 
 /* Public */
 int	WriteData(Archive* AHX, const void* data, int dLen)
 {
     ArchiveHandle*      AH = (ArchiveHandle*)AHX;
+
+	if (!AH->currToc)
+		die_horribly(AH, "%s: WriteData can not be called outside the context of "
+						"a DataDumper routine\n", progname);
 
     return (*AH->WriteDataPtr)(AH, data, dLen);
 }
@@ -187,7 +317,7 @@ int	WriteData(Archive* AHX, const void* data, int dLen)
 /* Public */
 void	ArchiveEntry(Archive* AHX, const char* oid, const char* name,
 			const char* desc, const char* (deps[]), const char* defn,
-                        const char* dropStmt, const char* owner,
+			const char* dropStmt, const char* copyStmt, const char* owner,
 			DataDumperPtr dumpFn, void* dumpArg)
 {
     ArchiveHandle*	AH = (ArchiveHandle*)AHX;
@@ -196,9 +326,9 @@ void	ArchiveEntry(Archive* AHX, const char* oid, const char* name,
     AH->lastID++;
     AH->tocCount++;
 
-    newToc = (TocEntry*)malloc(sizeof(TocEntry));
+    newToc = (TocEntry*)calloc(1, sizeof(TocEntry));
     if (!newToc)
-	die_horribly("Archiver: unable to allocate memory for TOC entry\n");
+	die_horribly(AH, "Archiver: unable to allocate memory for TOC entry\n");
 
     newToc->prev = AH->toc->prev;
     newToc->next = AH->toc;
@@ -212,6 +342,7 @@ void	ArchiveEntry(Archive* AHX, const char* oid, const char* name,
     newToc->desc = strdup(desc);
     newToc->defn = strdup(defn);
     newToc->dropStmt = strdup(dropStmt);
+	newToc->copyStmt = copyStmt ? strdup(copyStmt) : NULL;
     newToc->owner = strdup(owner);
     newToc->printed = 0;
     newToc->formatData = NULL;
@@ -233,9 +364,29 @@ void PrintTOCSummary(Archive* AHX, RestoreOptions *ropt)
     ArchiveHandle*	AH = (ArchiveHandle*) AHX;
     TocEntry		*te = AH->toc->next;
     OutputContext	sav;
+	char			*fmtName;
 
     if (ropt->filename)
 	sav = SetOutput(AH, ropt->filename, ropt->compression);
+
+	ahprintf(AH, ";\n; Archive created at %s", ctime(&AH->createDate));
+	ahprintf(AH, ";     dbname: %s\n;     TOC Entries: %d\n;     Compression: %d\n",
+				AH->archdbname, AH->tocCount, AH->compression);
+
+	switch (AH->format) {
+		case archFiles:
+			fmtName = "FILES";
+			break;
+		case archCustom:
+			fmtName = "CUSTOM";
+			break;
+		case archTar:
+			fmtName = "TAR";
+			break;
+		default:
+			fmtName = "UNKNOWN";
+	}
+	ahprintf(AH, ";     Format: %s\n;\n", fmtName);
 
     ahprintf(AH, ";\n; Selected TOC Entries:\n;\n");
 
@@ -250,12 +401,86 @@ void PrintTOCSummary(Archive* AHX, RestoreOptions *ropt)
 }
 
 /***********
+ * BLOB Archival
+ ***********/
+
+/* Called by a dumper to signal start of a BLOB */
+int StartBlob(Archive* AHX, int oid)
+{
+    ArchiveHandle* AH = (ArchiveHandle*)AHX;
+
+    if (!AH->StartBlobPtr)
+		die_horribly(AH, "%s: BLOB output not supported in chosen format\n", progname);
+
+    (*AH->StartBlobPtr)(AH, AH->currToc, oid);
+
+    return 1;
+}
+
+/* Called by a dumper to signal end of a BLOB */
+int EndBlob(Archive* AHX, int oid)
+{
+    ArchiveHandle* AH = (ArchiveHandle*)AHX;
+
+    if (AH->EndBlobPtr)
+		(*AH->EndBlobPtr)(AH, AH->currToc, oid);
+
+    return 1;
+}
+
+/**********
+ * BLOB Restoration
+ **********/
+
+/*
+ * Called by a format handler to initiate restoration of a blob
+ */
+void StartRestoreBlob(ArchiveHandle* AH, int oid)
+{
+	int			loOid;
+
+	if (!AH->createdBlobXref)
+	{
+		if (!AH->connection)
+			die_horribly(AH, "%s: can not restore BLOBs without a database connection", progname);
+
+		CreateBlobXrefTable(AH);
+		AH->createdBlobXref = 1;
+	}
+
+	loOid = lo_creat(AH->connection, INV_READ | INV_WRITE);
+	if (loOid == 0)
+		die_horribly(AH, "%s: unable to create BLOB\n", progname);
+
+	ahlog(AH, 1, "Restoring BLOB oid %d as %d\n", oid, loOid);
+
+	StartTransaction(AH);
+
+	InsertBlobXref(AH, oid, loOid);
+
+	AH->loFd = lo_open(AH->connection, loOid, INV_WRITE);
+	if (AH->loFd == -1)
+		die_horribly(AH, "%s: unable to open BLOB\n", progname);
+
+    AH->writingBlob = 1;
+}
+
+void EndRestoreBlob(ArchiveHandle* AH, int oid)
+{
+    lo_close(AH->connection, AH->loFd);
+    AH->writingBlob = 0;
+
+	CommitTransaction(AH);
+}
+
+/***********
  * Sorting and Reordering
  ***********/
 
 /*
  * Move TOC entries of the specified type to the START of the TOC.
  */
+
 /* Public */
 void MoveToStart(Archive* AHX, char *oType) 
 {
@@ -356,7 +581,7 @@ void SortTocFromFile(Archive* AHX, RestoreOptions *ropt)
     /* Setup the file */
     fh = fopen(ropt->tocFile, PG_BINARY_R);
     if (!fh)
-	die_horribly("%s: could not open TOC file\n", progname);
+	die_horribly(AH, "%s: could not open TOC file\n", progname);
 
     while (fgets(buf, 1024, fh) != NULL)
     {
@@ -377,14 +602,14 @@ void SortTocFromFile(Archive* AHX, RestoreOptions *ropt)
 	id = strtol(buf, &endptr, 10);
 	if (endptr == buf)
 	{
-	    fprintf(stderr, "%s: warning - line ignored: %s\n", progname, buf);
+	    fprintf(stderr, "%s: WARNING - line ignored: %s\n", progname, buf);
 	    continue;
 	}
 
 	/* Find TOC entry */
 	te = _getTocEntry(AH, id);
 	if (!te) 
-	    die_horribly("%s: could not find entry for id %d\n",progname, id);
+	    die_horribly(AH, "%s: could not find entry for id %d\n",progname, id);
 
 	ropt->idWanted[id-1] = 1;
 
@@ -428,7 +653,7 @@ int archprintf(Archive* AH, const char *fmt, ...)
 	if ((p = malloc(bSize)) == NULL)
 	{
 	    va_end(ap);
-	    die_horribly("%s: could not allocate buffer for archprintf\n", progname);
+	    exit_horribly(AH, "%s: could not allocate buffer for archprintf\n", progname);
 	}
 	cnt = vsnprintf(p, bSize, fmt, ap);
     }
@@ -519,15 +744,15 @@ int ahprintf(ArchiveHandle* AH, const char *fmt, ...)
     /* This is paranoid: deal with the possibility that vsnprintf is willing to ignore trailing null */
     /* or returns > 0 even if string does not fit. It may be the case that it returns cnt = bufsize */ 
     while (cnt < 0 || cnt >= (bSize - 1) ) {
-	if (p != NULL) free(p);
-	bSize *= 2;
-	p = (char*)malloc(bSize);
-	if (p == NULL)
-	{
-	    va_end(ap);
-	    die_horribly("%s: could not allocate buffer for ahprintf\n", progname);
-	}
-	cnt = vsnprintf(p, bSize, fmt, ap);
+		if (p != NULL) free(p);
+		bSize *= 2;
+		p = (char*)malloc(bSize);
+		if (p == NULL)
+		{
+			va_end(ap);
+			die_horribly(AH, "%s: could not allocate buffer for ahprintf\n", progname);
+		}
+		cnt = vsnprintf(p, bSize, fmt, ap);
     }
     va_end(ap);
     ahwrite(p, 1, cnt, AH);
@@ -535,27 +760,81 @@ int ahprintf(ArchiveHandle* AH, const char *fmt, ...)
     return cnt;
 }
 
+void ahlog(ArchiveHandle* AH, int level, const char *fmt, ...)
+{
+	va_list		ap;
+
+	if (AH->debugLevel < level && (!AH->public.verbose || level > 1))
+		return;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+}
+
 /*
- *  Write buffer to the output file (usually stdout).
+ *  Write buffer to the output file (usually stdout). This is user for
+ *  outputting 'restore' scripts etc. It is even possible for an archive
+ * 	format to create a custom output routine to 'fake' a restore if it
+ *	wants to generate a script (see TAR output).
  */
 int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH)
 {
-    if (AH->gzOut)
-	return GZWRITE((void*)ptr, size, nmemb, AH->OF);
-    else
-	return fwrite((void*)ptr, size, nmemb, AH->OF);
+	int		res;
+
+    if (AH->writingBlob)
+	{
+		res = lo_write(AH->connection, AH->loFd, (void*)ptr, size * nmemb);
+		ahlog(AH, 5, "Wrote %d bytes of BLOB data (result = %d)\n", size * nmemb, res);
+		return res;
+	}
+    else if (AH->gzOut)
+		return GZWRITE((void*)ptr, size, nmemb, AH->OF);
+    else if (AH->CustomOutPtr)
+		return AH->CustomOutPtr(AH, ptr, size * nmemb);
+	else
+	{
+		/*
+		 * If we're doing a restore, and it's direct to DB, and we're connected
+	     * then send it to the DB.
+		 */	
+		if (AH->ropt && AH->ropt->useDB && AH->connection)
+			return ExecuteSqlCommandBuf(AH, (void*)ptr, size*nmemb);
+		else
+			return fwrite((void*)ptr, size, nmemb, AH->OF);
+	}
+}		
+
+/* Common exit code */
+static void _die_horribly(ArchiveHandle *AH, const char *fmt, va_list ap)
+{
+    vfprintf(stderr, fmt, ap);
+
+    if (AH)
+	if (AH->connection)
+	    PQfinish(AH->connection);
+
+    exit(1);
 }
 
+/* External use */
+void exit_horribly(Archive *AH, const char *fmt, ...)
+{
+    va_list     ap;
 
-void die_horribly(const char *fmt, ...)
+    va_start(ap, fmt);
+    _die_horribly((ArchiveHandle*)AH, fmt, ap);
+}
+
+/* Archiver use (just different arg declaration) */
+void die_horribly(ArchiveHandle *AH, const char *fmt, ...)
 {
     va_list 	ap;
 
     va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    exit(1);
+    _die_horribly(AH, fmt, ap);
 }
+
 
 static void _moveAfter(ArchiveHandle* AH, TocEntry* pos, TocEntry* te)
 {
@@ -622,9 +901,9 @@ int	WriteInt(ArchiveHandle* AH, int i)
     /* SIGN byte */
     if (i < 0) {
 	(*AH->WriteBytePtr)(AH, 1);
-	i = -i;
+		i = -i;
     } else {
-	(*AH->WriteBytePtr)(AH, 0);
+		(*AH->WriteBytePtr)(AH, 0);
     }
     
     for(b = 0 ; b < AH->intSize ; b++) {
@@ -638,30 +917,40 @@ int	WriteInt(ArchiveHandle* AH, int i)
 int    	ReadInt(ArchiveHandle* AH)
 {
     int res = 0;
-    int shft = 1;
     int bv, b;
     int	sign = 0; /* Default positive */
+	int bitShift = 0;
 
     if (AH->version > K_VERS_1_0)
-	/* Read a sign byte */
-	sign = (*AH->ReadBytePtr)(AH);
+		/* Read a sign byte */
+		sign = (*AH->ReadBytePtr)(AH);
 
     for( b = 0 ; b < AH->intSize ; b++) {
-        bv = (*AH->ReadBytePtr)(AH);
-        res = res  + shft * bv;
-        shft *= 256;
+        bv = (*AH->ReadBytePtr)(AH) & 0xFF;
+		if (bv != 0)
+			res = res + (bv << bitShift);
+		bitShift += 8;
     }
 
     if (sign)
-	res = - res;
+		res = - res;
 
     return res;
 }
 
 int	WriteStr(ArchiveHandle* AH, char* c)
 {
-    int l = WriteInt(AH, strlen(c));
-    return (*AH->WriteBufPtr)(AH, c, strlen(c)) + l;
+    int res;
+
+	if (c)
+	{
+		res = WriteInt(AH, strlen(c));
+		res += (*AH->WriteBufPtr)(AH, c, strlen(c));
+	}
+	else
+		res = WriteInt(AH, -1);
+
+    return res;
 }
 
 char*	ReadStr(ArchiveHandle* AH)
@@ -670,12 +959,18 @@ char*	ReadStr(ArchiveHandle* AH)
     int		l;
 
     l = ReadInt(AH);
-    buf = (char*)malloc(l+1);
-    if (!buf)
-	die_horribly("Archiver: Unable to allocate sufficient memory in ReadStr\n");
+	if (l == -1)
+		buf = NULL;
+	else
+	{
+		buf = (char*)malloc(l+1);
+		if (!buf)
+			die_horribly(AH, "%s: Unable to allocate sufficient memory in ReadStr - "													"requested %d (0x%x) bytes\n", progname, l, l);
 
-    (*AH->ReadBufPtr)(AH, (void*)buf, l);
-    buf[l] = '\0';
+		(*AH->ReadBufPtr)(AH, (void*)buf, l);
+		buf[l] = '\0';
+	}
+
     return buf;
 }
 
@@ -686,138 +981,188 @@ int _discoverArchiveFormat(ArchiveHandle* AH)
     int		cnt;
     int		wantClose = 0;
 
+	/*
+	 * fprintf(stderr, "%s: Attempting to ascertain archive format\n", progname);
+	 */
+
+	if (AH->lookahead)
+		free(AH->lookahead);
+
+	AH->lookaheadSize = 512;
+	AH->lookahead = calloc(1, 512);
+	AH->lookaheadLen = 0;
+	AH->lookaheadPos = 0;
 
     if (AH->fSpec) {
-	wantClose = 1;
-	fh = fopen(AH->fSpec, PG_BINARY_R);
+		wantClose = 1;
+		fh = fopen(AH->fSpec, PG_BINARY_R);
     } else {
-	fh = stdin;
+		fh = stdin;
     }
 
     if (!fh)
-	die_horribly("Archiver: could not open input file\n");
+		die_horribly(AH, "Archiver: could not open input file\n");
 
     cnt = fread(sig, 1, 5, fh);
 
     if (cnt != 5)
-        die_horribly("%s: input file is too short, or is unreadable\n", progname);
+        die_horribly(AH, "%s: input file is too short, or is unreadable\n", progname);
 
-    if (strncmp(sig, "PGDMP", 5) != 0)
-	die_horribly("%s: input file does not appear to be a valid archive\n", progname);
+	/* Save it, just in case we need it later*/
+	strncpy(&AH->lookahead[0], sig, 5);
+	AH->lookaheadLen = 5;
 
-    AH->vmaj = fgetc(fh);
-    AH->vmin = fgetc(fh);
+    if (strncmp(sig, "PGDMP", 5) == 0)
+	{
+		AH->vmaj = fgetc(fh);
+		AH->vmin = fgetc(fh);
 
-    /* Check header version; varies from V1.0 */
-    if (AH->vmaj > 1 || ( (AH->vmaj == 1) && (AH->vmin > 0) ) ) /* Version > 1.0 */ 
-	AH->vrev = fgetc(fh);
-    else
-	AH->vrev = 0;
+		/* Save these too... */
+		AH->lookahead[AH->lookaheadLen++] = AH->vmaj;
+		AH->lookahead[AH->lookaheadLen++] = AH->vmin;
 
-    AH->intSize = fgetc(fh);
-    AH->format = fgetc(fh);
+		/* Check header version; varies from V1.0 */
+		if (AH->vmaj > 1 || ( (AH->vmaj == 1) && (AH->vmin > 0) ) ) /* Version > 1.0 */
+		{	
+			AH->vrev = fgetc(fh);
+			AH->lookahead[AH->lookaheadLen++] = AH->vrev;
+		}
+		else
+			AH->vrev = 0;
 
-    /* Make a convenient integer <maj><min><rev>00 */
-    AH->version = ( (AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev ) * 256 + 0;
+		AH->intSize = fgetc(fh);
+		AH->lookahead[AH->lookaheadLen++] = AH->intSize;
+
+		AH->format = fgetc(fh);
+		AH->lookahead[AH->lookaheadLen++] = AH->format;
+
+		/* Make a convenient integer <maj><min><rev>00 */
+		AH->version = ( (AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev ) * 256 + 0;
+	} else {
+		/*
+		 * *Maybe* we have a tar archive format file...
+		 * So, read first 512 byte header...
+		 */
+		cnt = fread(&AH->lookahead[AH->lookaheadLen], 1, 512 - AH->lookaheadLen, fh);
+		AH->lookaheadLen += cnt;
+
+		if (AH->lookaheadLen != 512)
+			die_horribly(AH, "%s: input file does not appear to be a valid archive (too short?)\n",
+							progname);
+
+		if (!isValidTarHeader(AH->lookahead))
+			die_horribly(AH, "%s: input file does not appear to be a valid archive\n", progname);
+
+		AH->format = archTar;
+	}
 
     /* If we can't seek, then mark the header as read */
     if (fseek(fh, 0, SEEK_SET) != 0) 
-	AH->readHeader = 1;
+	{
+		/*
+		 * NOTE: Formats that use the looahead buffer can unset this in their Init routine.
+		 */
+		AH->readHeader = 1;
+	}
+	else
+		AH->lookaheadLen = 0; /* Don't bother since we've reset the file */
+
+	/*
+	 *fprintf(stderr, "%s: read %d bytes into lookahead buffer\n", progname, AH->lookaheadLen);
+	 */
 
     /* Close the file */
     if (wantClose)
-	fclose(fh);
+		fclose(fh);
 
     return AH->format;
-
 }
 
 
 /*
  * Allocate an archive handle
  */
-static ArchiveHandle* _allocAH(const char* FileSpec, ArchiveFormat fmt, 
-				int compression, ArchiveMode mode) {
+static ArchiveHandle* _allocAH(const char* FileSpec, const ArchiveFormat fmt, 
+				const int compression, ArchiveMode mode) 
+{
     ArchiveHandle*	AH;
+
+	/*
+	 *fprintf(stderr, "%s: allocating AH for %s, format %d\n", progname, FileSpec, fmt); 
+	 */
 
     AH = (ArchiveHandle*)calloc(1, sizeof(ArchiveHandle));
     if (!AH) 
-	die_horribly("Archiver: Could not allocate archive handle\n");
+		die_horribly(AH, "Archiver: Could not allocate archive handle\n");
 
     AH->vmaj = K_VERS_MAJOR;
     AH->vmin = K_VERS_MINOR;
 
+	AH->createDate = time(NULL);
+
     AH->intSize = sizeof(int);
     AH->lastID = 0;
     if (FileSpec) {
-	AH->fSpec = strdup(FileSpec);
+		AH->fSpec = strdup(FileSpec);
+		/*
+		 * Not used; maybe later....
+		 *
+		 * AH->workDir = strdup(FileSpec);
+		 * for(i=strlen(FileSpec) ; i > 0 ; i--)
+		 *   if (AH->workDir[i-1] == '/')
+		 */
     } else {
-	AH->fSpec = NULL;
-    }
-    AH->FH = NULL;
-    AH->formatData = NULL;
+		AH->fSpec = NULL;
+    } 
 
-    AH->currToc = NULL;
     AH->currUser = "";
 
     AH->toc = (TocEntry*)calloc(1, sizeof(TocEntry));
     if (!AH->toc)
-	die_horribly("Archiver: Could not allocate TOC header\n");
+		die_horribly(AH, "Archiver: Could not allocate TOC header\n");
 
-    AH->tocCount = 0;
     AH->toc->next = AH->toc;
     AH->toc->prev = AH->toc;
-    AH->toc->id  = 0;
-    AH->toc->oid  = NULL;
-    AH->toc->name = NULL; /* eg. MY_SPECIAL_FUNCTION */
-    AH->toc->desc = NULL; /* eg. FUNCTION */
-    AH->toc->defn = NULL; /* ie. sql to define it */
-    AH->toc->depOid = NULL;
     
     AH->mode = mode;
-    AH->format = fmt;
     AH->compression = compression;
 
-    AH->ArchiveEntryPtr = NULL;
-
-    AH->StartDataPtr = NULL;
-    AH->WriteDataPtr = NULL;
-    AH->EndDataPtr = NULL;
-
-    AH->WriteBytePtr = NULL;
-    AH->ReadBytePtr = NULL;
-    AH->WriteBufPtr = NULL;
-    AH->ReadBufPtr = NULL;
-    AH->ClosePtr = NULL;
-    AH->WriteExtraTocPtr = NULL;
-    AH->ReadExtraTocPtr = NULL;
-    AH->PrintExtraTocPtr = NULL;
-
-    AH->readHeader = 0;
+	AH->pgCopyBuf = createPQExpBuffer();
+	AH->sqlBuf = createPQExpBuffer();
 
     /* Open stdout with no compression for AH output handle */
     AH->gzOut = 0;
     AH->OF = stdout;
 
+	/*
+	 *fprintf(stderr, "%s: archive format is %d\n", progname, fmt);
+	 */
+
     if (fmt == archUnknown)
-	fmt = _discoverArchiveFormat(AH);
+		AH->format = _discoverArchiveFormat(AH);
+	else
+		AH->format = fmt;
 
-    switch (fmt) {
+    switch (AH->format) {
 
-	case archCustom:
-	    InitArchiveFmt_Custom(AH);
-	    break;
+		case archCustom:
+			InitArchiveFmt_Custom(AH);
+			break;
 
-	case archFiles:
-	    InitArchiveFmt_Files(AH);
-	    break;
+		case archFiles:
+			InitArchiveFmt_Files(AH);
+			break;
 
-	case archPlainText:
-	    InitArchiveFmt_PlainText(AH);
-	    break;
+		case archNull:
+			InitArchiveFmt_Null(AH);
+			break;
 
-	default:
-	    die_horribly("Archiver: Unrecognized file format '%d'\n", fmt);
+		case archTar:
+			InitArchiveFmt_Tar(AH);
+			break;
+
+		default:
+			die_horribly(AH, "Archiver: Unrecognized file format '%d'\n", fmt);
     }
 
     return AH;
@@ -827,13 +1172,25 @@ static ArchiveHandle* _allocAH(const char* FileSpec, ArchiveFormat fmt,
 void WriteDataChunks(ArchiveHandle* AH)
 {
     TocEntry		*te = AH->toc->next;
+	StartDataPtr	startPtr;
+	EndDataPtr		endPtr;
 
     while (te != AH->toc) {
 	if (te->dataDumper != NULL) {
 	    AH->currToc = te;
 	    /* printf("Writing data for %d (%x)\n", te->id, te); */
-	    if (AH->StartDataPtr != NULL) {
-		(*AH->StartDataPtr)(AH, te);
+
+		if (strcmp(te->desc, "BLOBS") == 0)
+		{
+			startPtr = AH->StartBlobsPtr;
+			endPtr = AH->EndBlobsPtr;
+		} else {
+			startPtr = AH->StartDataPtr;
+			endPtr = AH->EndDataPtr;
+		}
+
+	    if (startPtr != NULL) {
+			(*startPtr)(AH, te);
 	    }
 
 	    /* printf("Dumper arg for %d is %x\n", te->id, te->dataDumperArg); */
@@ -842,12 +1199,12 @@ void WriteDataChunks(ArchiveHandle* AH)
 	     */
 	    (*te->dataDumper)((Archive*)AH, te->oid, te->dataDumperArg);
 
-	    if (AH->EndDataPtr != NULL) {
-		(*AH->EndDataPtr)(AH, te);
+	    if (endPtr != NULL) {
+			(*endPtr)(AH, te);
 	    }
 	    AH->currToc = NULL;
 	}
-	te = te->next;
+		te = te->next;
     }
 }
 
@@ -866,6 +1223,7 @@ void WriteToc(ArchiveHandle* AH)
 	WriteStr(AH, te->desc);
 	WriteStr(AH, te->defn);
 	WriteStr(AH, te->dropStmt);
+	WriteStr(AH, te->copyStmt);
 	WriteStr(AH, te->owner);
 	if (AH->WriteExtraTocPtr) {
 	    (*AH->WriteExtraTocPtr)(AH, te);
@@ -884,71 +1242,79 @@ void ReadToc(ArchiveHandle* AH)
 
     for( i = 0 ; i < AH->tocCount ; i++) {
 
-	te = (TocEntry*)malloc(sizeof(TocEntry));
-	te->id = ReadInt(AH);
+		te = (TocEntry*)calloc(1, sizeof(TocEntry));
+		te->id = ReadInt(AH);
 
-	/* Sanity check */
-	if (te->id <= 0 || te->id > AH->tocCount)
-	    die_horribly("Archiver: failed sanity check (bad entry id) - perhaps a corrupt TOC\n");
+		/* Sanity check */
+		if (te->id <= 0 || te->id > AH->tocCount)
+			die_horribly(AH, "Archiver: failed sanity check (bad entry id) - perhaps a corrupt TOC\n");
 
-	te->hadDumper = ReadInt(AH);
-	te->oid = ReadStr(AH);
-	te->oidVal = atoi(te->oid);
-	te->name = ReadStr(AH);
-	te->desc = ReadStr(AH);
-	te->defn = ReadStr(AH);
-	te->dropStmt = ReadStr(AH);
-	te->owner = ReadStr(AH);
-	if (AH->ReadExtraTocPtr) {
-	    (*AH->ReadExtraTocPtr)(AH, te);
-	}
-	te->prev = AH->toc->prev;
-	AH->toc->prev->next = te;
-	AH->toc->prev = te;
-	te->next = AH->toc;
+		te->hadDumper = ReadInt(AH);
+		te->oid = ReadStr(AH);
+		te->oidVal = atoi(te->oid);
+		te->name = ReadStr(AH);
+		te->desc = ReadStr(AH);
+		te->defn = ReadStr(AH);
+		te->dropStmt = ReadStr(AH);
+
+		if (AH->version >= K_VERS_1_3)
+			te->copyStmt = ReadStr(AH);
+
+		te->owner = ReadStr(AH);
+
+		if (AH->ReadExtraTocPtr) {
+			(*AH->ReadExtraTocPtr)(AH, te);
+		}
+
+		ahlog(AH, 3, "Read TOC entry %d (id %d) for %s %s\n", i, te->id, te->desc, te->name);
+
+		te->prev = AH->toc->prev;
+		AH->toc->prev->next = te;
+		AH->toc->prev = te;
+		te->next = AH->toc;
     }
 }
 
 static int _tocEntryRequired(TocEntry* te, RestoreOptions *ropt)
 {
-    int res = 3; /* Data and Schema */
-
+    int res = 3; /* Schema = 1, Data = 2, Both = 3 */
+ 
     /* If it's an ACL, maybe ignore it */
     if (ropt->aclsSkip && strcmp(te->desc,"ACL") == 0)
-	return 0;
+		return 0;
 
     /* Check if tablename only is wanted */
     if (ropt->selTypes)
     {
-	if ( (strcmp(te->desc, "TABLE") == 0) || (strcmp(te->desc, "TABLE DATA") == 0) )
-	{
-	    if (!ropt->selTable)
-		return 0;
-	    if (ropt->tableNames && strcmp(ropt->tableNames, te->name) != 0)
-		return 0;
-       	} else if (strcmp(te->desc, "INDEX") == 0) {
-	    if (!ropt->selIndex)
-		return 0;
-	    if (ropt->indexNames && strcmp(ropt->indexNames, te->name) != 0)
-		return 0;
-	} else if (strcmp(te->desc, "FUNCTION") == 0) {
-	    if (!ropt->selFunction)
-		return 0;
-	    if (ropt->functionNames && strcmp(ropt->functionNames, te->name) != 0)
-		return 0;
-	} else if (strcmp(te->desc, "TRIGGER") == 0) {
-	    if (!ropt->selTrigger)
-		return 0;
-	    if (ropt->triggerNames && strcmp(ropt->triggerNames, te->name) != 0)
-		return 0;
-	} else {
-	    return 0;
+		if ( (strcmp(te->desc, "TABLE") == 0) || (strcmp(te->desc, "TABLE DATA") == 0) )
+		{
+			if (!ropt->selTable)
+				return 0;
+			if (ropt->tableNames && strcmp(ropt->tableNames, te->name) != 0)
+				return 0;
+		} else if (strcmp(te->desc, "INDEX") == 0) {
+			if (!ropt->selIndex)
+				return 0;
+			if (ropt->indexNames && strcmp(ropt->indexNames, te->name) != 0)
+				return 0;
+		} else if (strcmp(te->desc, "FUNCTION") == 0) {
+			if (!ropt->selFunction)
+				return 0;
+			if (ropt->functionNames && strcmp(ropt->functionNames, te->name) != 0)
+				return 0;
+		} else if (strcmp(te->desc, "TRIGGER") == 0) {
+			if (!ropt->selTrigger)
+				return 0;
+			if (ropt->triggerNames && strcmp(ropt->triggerNames, te->name) != 0)
+				return 0;
+		} else {
+			return 0;
+		}
 	}
-    }
 
     /* Mask it if we only want schema */
     if (ropt->schemaOnly)
-	res = res & 1;
+		res = res & 1;
 
     /* Mask it we only want data */
     if (ropt->dataOnly) 
@@ -956,15 +1322,15 @@ static int _tocEntryRequired(TocEntry* te, RestoreOptions *ropt)
 
     /* Mask it if we don't have a schema contribition */
     if (!te->defn || strlen(te->defn) == 0) 
-	res = res & 2;
+		res = res & 2;
 
     /* Mask it if we don't have a possible data contribition */
     if (!te->hadDumper)
-	res = res & 1;
+		res = res & 1;
 
     /* Finally, if we used a list, limit based on that as well */
     if (ropt->limitToList && !ropt->idWanted[te->id - 1]) 
-	return 0;
+		return 0;
 
     return res;
 }
@@ -979,8 +1345,9 @@ static int _printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt)
     ahprintf(AH, "--\n\n");
 
     if (te->owner && strlen(te->owner) != 0 && strcmp(AH->currUser, te->owner) != 0) {
-	ahprintf(AH, "\\connect - %s\n", te->owner);
-	AH->currUser = te->owner;
+		//todo pjw - fix for db connection...
+		//ahprintf(AH, "\\connect - %s\n", te->owner);
+		AH->currUser = te->owner;
     }
 
     ahprintf(AH, "%s\n", te->defn);
@@ -990,6 +1357,8 @@ static int _printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt)
 
 void WriteHead(ArchiveHandle* AH) 
 {
+	struct tm		crtm;
+
     (*AH->WriteBufPtr)(AH, "PGDMP", 5); 	/* Magic code */
     (*AH->WriteBytePtr)(AH, AH->vmaj);
     (*AH->WriteBytePtr)(AH, AH->vmin);
@@ -1003,69 +1372,101 @@ void WriteHead(ArchiveHandle* AH)
 		    "archive will be uncompressed \n", progname);
 
     AH->compression = 0;
-    (*AH->WriteBytePtr)(AH, 0);
 
-#else
+#endif
 
-    (*AH->WriteBytePtr)(AH, AH->compression);
+	WriteInt(AH, AH->compression);
 
-#endif    
+	crtm = *localtime(&AH->createDate);
+	WriteInt(AH, crtm.tm_sec);
+	WriteInt(AH, crtm.tm_min);
+	WriteInt(AH, crtm.tm_hour);
+	WriteInt(AH, crtm.tm_mday);
+	WriteInt(AH, crtm.tm_mon);
+	WriteInt(AH, crtm.tm_year);
+	WriteInt(AH, crtm.tm_isdst);
+	WriteStr(AH, AH->dbname);	
 }
 
 void ReadHead(ArchiveHandle* AH)
 {
-    char	tmpMag[7];
-    int		fmt;
+    char		tmpMag[7];
+    int			fmt;
+	struct tm	crtm;
 
+	/* If we haven't already read the header... */
     if (!AH->readHeader) {
 
-	(*AH->ReadBufPtr)(AH, tmpMag, 5);
+		(*AH->ReadBufPtr)(AH, tmpMag, 5);
 
-	if (strncmp(tmpMag,"PGDMP", 5) != 0)
-	    die_horribly("Archiver: Did not fing magic PGDMP in file header\n");
+		if (strncmp(tmpMag,"PGDMP", 5) != 0)
+			die_horribly(AH, "Archiver: Did not fing magic PGDMP in file header\n");
 
-	AH->vmaj = (*AH->ReadBytePtr)(AH);
-	AH->vmin = (*AH->ReadBytePtr)(AH);
+		AH->vmaj = (*AH->ReadBytePtr)(AH);
+		AH->vmin = (*AH->ReadBytePtr)(AH);
 
-	if (AH->vmaj > 1 || ( (AH->vmaj == 1) && (AH->vmin > 0) ) ) /* Version > 1.0 */
-	{
-	    AH->vrev = (*AH->ReadBytePtr)(AH);
-	} else {
-	    AH->vrev = 0;
-	}
+		if (AH->vmaj > 1 || ( (AH->vmaj == 1) && (AH->vmin > 0) ) ) /* Version > 1.0 */
+		{
+			AH->vrev = (*AH->ReadBytePtr)(AH);
+		} else {
+			AH->vrev = 0;
+		}
 
-	AH->version = ( (AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev ) * 256 + 0;
+		AH->version = ( (AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev ) * 256 + 0;
 
 
-	if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
-	    die_horribly("Archiver: unsupported version (%d.%d) in file header\n", AH->vmaj, AH->vmin);
+		if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
+			die_horribly(AH, "%s: unsupported version (%d.%d) in file header\n", 
+					progname, AH->vmaj, AH->vmin);
 
-	AH->intSize = (*AH->ReadBytePtr)(AH);
-	if (AH->intSize > 32)
-	    die_horribly("Archiver: sanity check on integer size (%d) failes\n", AH->intSize);
+		AH->intSize = (*AH->ReadBytePtr)(AH);
+		if (AH->intSize > 32)
+			die_horribly(AH, "Archiver: sanity check on integer size (%d) failes\n", AH->intSize);
 
-	if (AH->intSize > sizeof(int))
-	    fprintf(stderr, "\nWARNING: Backup file was made on a machine with larger integers, "
-			    "some operations may fail\n");
+		if (AH->intSize > sizeof(int))
+			fprintf(stderr, "\n%s: WARNING - archive was made on a machine with larger integers, "
+					"some operations may fail\n", progname);
 
-	fmt = (*AH->ReadBytePtr)(AH);
+		fmt = (*AH->ReadBytePtr)(AH);
 
-	if (AH->format != fmt)
-	    die_horribly("Archiver: expected format (%d) differs from format found in file (%d)\n", 
-			    AH->format, fmt);
+		if (AH->format != fmt)
+			die_horribly(AH, "%s: expected format (%d) differs from format found in file (%d)\n", 
+					progname, AH->format, fmt);
     }
 
     if (AH->version >= K_VERS_1_2)
     {
-	AH->compression = (*AH->ReadBytePtr)(AH);
+		if (AH->version < K_VERS_1_4)
+			AH->compression = (*AH->ReadBytePtr)(AH);
+		else
+			AH->compression = ReadInt(AH);
     } else {
-	AH->compression = Z_DEFAULT_COMPRESSION;
+		AH->compression = Z_DEFAULT_COMPRESSION;
     }
 
 #ifndef HAVE_LIBZ
     if (AH->compression != 0)
-	fprintf(stderr, "%s: WARNING - archive is compressed - any data will not be available\n", progname);
+		fprintf(stderr, "%s: WARNING - archive is compressed - any data will not be available\n", 
+					progname);
 #endif
+
+	if (AH->version >= K_VERS_1_4)
+	{
+		crtm.tm_sec = ReadInt(AH);
+		crtm.tm_min = ReadInt(AH);
+		crtm.tm_hour = ReadInt(AH);
+		crtm.tm_mday = ReadInt(AH);
+		crtm.tm_mon = ReadInt(AH);
+		crtm.tm_year = ReadInt(AH);
+		crtm.tm_isdst = ReadInt(AH);
+
+		AH->archdbname = ReadStr(AH);
+
+		AH->createDate = mktime(&crtm);
+
+		if (AH->createDate == (time_t)-1)
+			fprintf(stderr, "%s: WARNING - bad creation date in header\n", progname);
+	}
 
 }
 
@@ -1144,5 +1545,12 @@ static int	_tocSortCompareByIDNum(const void* p1, const void* p2)
     }
 }
 
-
+/*
+ * Maybe I can use this somewhere...
+ *
+ *create table pgdump_blob_path(p text);
+ *insert into pgdump_blob_path values('/home/pjw/work/postgresql-cvs/pgsql/src/bin/pg_dump_140');
+ *
+ *insert into dump_blob_xref select 12345,lo_import(p || '/q.q') from pgdump_blob_path;
+ */
 

@@ -84,19 +84,24 @@ typedef struct option optType;
 struct option cmdopts[] = {	
 				{ "clean", 0, NULL, 'c' },
 				{ "data-only", 0, NULL, 'a' },
+				{ "dbname", 1, NULL, 'd' },
 				{ "file", 1, NULL, 'f' },
 				{ "format", 1, NULL, 'F' },
-				{ "function", 2, NULL, 'p' },
-				{ "index", 2, NULL, 'i'},
+				{ "function", 2, NULL, 'P' },
+				{ "host", 1, NULL, 'h' },
+				{ "ignore-version", 0, NULL, 'i'},
+				{ "index", 2, NULL, 'I'},
 				{ "list", 0, NULL, 'l'},
 				{ "no-acl", 0, NULL, 'x' },
+				{ "port", 1, NULL, 'p' },
 				{ "oid-order", 0, NULL, 'o'},
 				{ "orig-order", 0, NULL, 'O' },
+				{ "password", 0, NULL, 'u' },
 				{ "rearrange", 0, NULL, 'r'},
 				{ "schema-only", 0, NULL, 's' },
 				{ "table", 2, NULL, 't'},
 				{ "trigger", 2, NULL, 'T' },
-				{ "use-list", 1, NULL, 'u'},
+				{ "use-list", 1, NULL, 'U'},
 				{ "verbose", 0, NULL, 'v' },
 				{ NULL, 0, NULL, 0}
 			    };
@@ -115,9 +120,9 @@ int main(int argc, char **argv)
 	progname = *argv;
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acf:F:i:loOp:st:T:u:vx", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acd:f:F:h:i:loOp:st:T:u:U:vx", cmdopts, NULL)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "acf:F:i:loOp:st:T:u:vx")) != -1)
+	while ((c = getopt(argc, argv, "acd:f:F:h:i:loOp:st:T:u:U:vx")) != -1)
 #endif
 	{
 		switch (c)
@@ -129,6 +134,13 @@ int main(int argc, char **argv)
 								 * create */
 				opts->dropSchema = 1;
 				break;
+			case 'd':
+				if (strlen(optarg) != 0)
+				{
+					opts->dbname = strdup(optarg);
+					opts->useDB = 1;
+				}
+				break;
 			case 'f':			/* output file name */
 				opts->filename = strdup(optarg);
 				break;
@@ -136,22 +148,32 @@ int main(int argc, char **argv)
 				if (strlen(optarg) != 0) 
 				    opts->formatName = strdup(optarg);
 				break;
+			case 'h':
+				if (strlen(optarg) != 0)
+					opts->pghost = strdup(optarg);
+				break;
+			case 'i':
+				opts->ignoreVersion = 1;
+				break;
 			case 'o':
 				opts->oidOrder = 1;
 				break;
 			case 'O':
 				opts->origOrder = 1;
 				break;
+			case 'p':
+				if (strlen(optarg) != 0)
+					opts->pgport = strdup(optarg);
+				break;
 			case 'r':
 				opts->rearrange = 1;
 				break;
-
-			case 'p': /* Function */
+			case 'P': /* Function */
 				opts->selTypes = 1;
 				opts->selFunction = 1;
 				opts->functionNames = _cleanupName(optarg);
 				break;
-			case 'i': /* Index */
+			case 'I': /* Index */
 				opts->selTypes = 1;
 				opts->selIndex = 1;
 				opts->indexNames = _cleanupName(optarg);
@@ -173,7 +195,11 @@ int main(int argc, char **argv)
 				opts->tocSummary = 1;
 				break;
 
-			case 'u':			/* input TOC summary file name */
+			case 'u':
+				opts->requirePassword = 1;
+				break;
+
+			case 'U':			/* input TOC summary file name */
 				opts->tocFile = strdup(optarg);
 				break;
 
@@ -201,42 +227,53 @@ int main(int argc, char **argv)
 
 	    case 'c':
 	    case 'C':
-		opts->format = archCustom;
-		break;
+			opts->format = archCustom;
+			break;
 
 	    case 'f':
 	    case 'F':
-		opts->format = archFiles;
-		break;
+			opts->format = archFiles;
+			break;
+
+		case 't':
+		case 'T':
+			opts->format = archTar;
+			break;
 
 	    default:
-		fprintf(stderr, "%s: Unknown archive format '%s', please specify 'f' or 'c'\n", progname, opts->formatName);
-		exit (1);
+			fprintf(stderr, "%s: Unknown archive format '%s', please specify 't' or 'c'\n",
+						progname, opts->formatName);
+			exit (1);
 	}
     }
 
     AH = OpenArchive(fileSpec, opts->format);
 
+	/* Let the archiver know how noisy to be */
+	AH->verbose = opts->verbose;
+
     if (opts->tocFile)
-	SortTocFromFile(AH, opts);
+		SortTocFromFile(AH, opts);
 
     if (opts->oidOrder)
-	SortTocByOID(AH);
+		SortTocByOID(AH);
     else if (opts->origOrder)
-	SortTocByID(AH);
+		SortTocByID(AH);
 
     if (opts->rearrange) {
-	MoveToEnd(AH, "TABLE DATA");
-	MoveToEnd(AH, "INDEX");
-	MoveToEnd(AH, "TRIGGER");
-	MoveToEnd(AH, "RULE");
-	MoveToEnd(AH, "ACL");
+		MoveToStart(AH, "<Init>");
+		MoveToEnd(AH, "TABLE DATA");
+		MoveToEnd(AH, "BLOBS");
+		MoveToEnd(AH, "INDEX");
+		MoveToEnd(AH, "TRIGGER");
+		MoveToEnd(AH, "RULE");
+		MoveToEnd(AH, "ACL");
     }
 
     if (opts->tocSummary) {
-	PrintTOCSummary(AH, opts);
+		PrintTOCSummary(AH, opts);
     } else {
-	RestoreArchive(AH, opts);
+		RestoreArchive(AH, opts);
     }
 
     CloseArchive(AH);
@@ -250,39 +287,48 @@ static void usage(const char *progname)
 	fprintf(stderr,
 	"usage:  %s [options] [backup file]\n"
 	    "  -a, --data-only             \t dump out only the data, no schema\n"
+		"  -d, --dbname <name>         \t specify database name\n"
 	    "  -c, --clean                 \t clean(drop) schema prior to create\n"
 	    "  -f filename                 \t script output filename\n"
 	    "  -F, --format {c|f}          \t specify backup file format\n"
-	    "  -p, --function[=name]       \t dump functions or named function\n"
+		"  -h, --host <hostname>       \t server host name\n"
 	    "  -i, --index[=name]          \t dump indexes or named index\n"
 	    "  -l, --list                  \t dump summarized TOC for this file\n"
 	    "  -o, --oid-order             \t dump in oid order\n"
 	    "  -O, --orig-order            \t dump in original dump order\n"
+		"  -p, --port <port>           \t server port number\n"
+		"  -P, --function[=name]       \t dump functions or named function\n"
 	    "  -r, --rearrange             \t rearrange output to put indexes etc at end\n"
 	    "  -s, --schema-only           \t dump out only the schema, no data\n"
 	    "  -t [table], --table[=table] \t dump for this table only\n"
 	    "  -T, --trigger[=name]        \t dump triggers or named trigger\n"
-	    "  -u, --use-list filename     \t use specified TOC for ordering output from this file\n"
-	    "  -v                          \t verbose\n"
+		"  -u, --password              \t use password authentication\n"
+	    "  -U, --use-list filename     \t use specified TOC for ordering output from this file\n"
+	    "  -v, --verbose               \t verbose\n"
 	    "  -x, --no-acl                \t skip dumping of ACLs (grant/revoke)\n"
 	    , progname);
+
 #else
 	fprintf(stderr,
 	"usage:  %s [options] [backup file]\n"
 	    "  -a                          \t dump out only the data, no schema\n"
+		"  -d,          <name>         \t specify database name\n"
 	    "  -c                          \t clean(drop) schema prior to create\n"
 	    "  -f filename NOT IMPLEMENTED \t script output filename\n"
 	    "  -F           {c|f}          \t specify backup file format\n"
-	    "  -p name                     \t dump functions or named function\n"
+		"  -h,        <hostname>       \t server host name\n"
 	    "  -i name                     \t dump indexes or named index\n"
 	    "  -l                          \t dump summarized TOC for this file\n"
 	    "  -o                          \t dump in oid order\n"
 	    "  -O                          \t dump in original dump order\n"
+		"  -p         <port>           \t server port number\n"
+		"  -P name                     \t dump functions or named function\n"
 	    "  -r                          \t rearrange output to put indexes etc at end\n"
 	    "  -s                          \t dump out only the schema, no data\n"
 	    "  -t name                     \t dump for this table only\n"
 	    "  -T name                     \t dump triggers or named trigger\n"
-	    "  -u filename                 \t use specified TOC for ordering output from this file\n"
+		"  -u                          \t use password authentication\n"
+	    "  -U filename                 \t use specified TOC for ordering output from this file\n"
 	    "  -v                          \t verbose\n"
 	    "  -x                          \t skip dumping of ACLs (grant/revoke)\n"
 	    , progname);
