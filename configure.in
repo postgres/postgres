@@ -201,6 +201,14 @@ Or do not specify an argument to the option to use the default.]);;
 
 AC_SUBST(MULTIBYTE)
 
+#
+# Unicode conversion (--enable-uniconv)
+#
+AC_MSG_CHECKING([whether to build with Unicode conversion support])
+PGAC_ARG_BOOL(enable, uniconv, no, [  --enable-uniconv         enable unicode conversion support],
+              [AC_DEFINE([UNICODE_CONVERSION], 1,
+                         [Set to 1 if you want Unicode conversion support (--enable-uniconv)])])
+AC_MSG_RESULT([$enable_uniconv])
 
 #
 # Default port number (--with-pgport), default 5432

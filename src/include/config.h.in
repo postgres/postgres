@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.144 2000/10/23 14:49:45 momjian Exp $
+ * $Id: config.h.in,v 1.145 2000/10/30 07:17:31 ishii Exp $
  */
 
 #ifndef CONFIG_H
@@ -41,6 +41,9 @@
 
 /* Set to 1 if you want to use multibyte characters (--enable-multibyte) */
 #undef MULTIBYTE
+
+/* Set to 1 if you want Unicode conversion support (--enable-uniconv) */
+#undef UNICODE_CONVERSION
 
 /* Set to 1 if you want ASSERT checking (--enable-cassert) */
 #undef USE_ASSERT_CHECKING
