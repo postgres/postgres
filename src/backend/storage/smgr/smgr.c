@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.20 1998/09/01 04:32:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.21 1998/10/08 18:30:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,12 +72,15 @@ static f_smgr smgrsw[] = {
  *	write-once storage managers.
  */
 
+#ifdef NOT_USED
 static bool smgrwo[] = {
 	false,						/* magnetic disk */
 #ifdef STABLE_MEMORY_STORAGE
 	false,						/* main memory */
 #endif
 };
+#endif
+
 static int	NSmgr = lengthof(smgrsw);
 
 /*
@@ -396,6 +399,7 @@ smgrabort()
 
 #endif
 
+#ifdef NOT_USED
 bool
 smgriswo(int16 smgrno)
 {
@@ -404,3 +408,4 @@ smgriswo(int16 smgrno)
 
 	return smgrwo[smgrno];
 }
+#endif

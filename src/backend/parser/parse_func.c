@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.29 1998/09/25 13:36:04 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.30 1998/10/08 18:29:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,8 @@ static int match_argtypes(int nargs,
 			   CandidateList *candidates);
 static List *setup_tlist(char *attname, Oid relid);
 static List *setup_base_tlist(Oid typeid);
+static Oid *func_select_candidate(int nargs, Oid *input_typeids,
+				CandidateList candidates);
 
 #define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
 
@@ -626,7 +628,7 @@ match_argtypes(int nargs,
  * But for now, return NULL and make the user give a better hint.
  * - thomas 1998-03-17
  */
-Oid *
+static Oid *
 func_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  CandidateList candidates)

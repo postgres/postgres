@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.23 1998/10/05 02:48:49 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.24 1998/10/08 18:30:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,6 @@ AbortPostgres()
 		proc_exit(FatalExitStatus);
 }
 
-#endif
 
 /* ----------------
  *		StatusBackendExit
@@ -138,6 +137,8 @@ StatusPostmasterExit(int status)
 	/* someday, do some real cleanup and then call the LISP exit */
 	proc_exit(status);
 }
+#endif
+
 
 /* ----------------------------------------------------------------
  *		processing mode support stuff (used to be in pmod.c)
@@ -145,6 +146,7 @@ StatusPostmasterExit(int status)
  */
 static ProcessingMode Mode = NoProcessing;
 
+#ifdef NOT_USED
 /*
  * IsNoProcessingMode --
  *		True iff processing mode is NoProcessing.
@@ -154,6 +156,7 @@ IsNoProcessingMode()
 {
 	return (bool) (Mode == NoProcessing);
 }
+#endif
 
 /*
  * IsBootstrapProcessingMode --

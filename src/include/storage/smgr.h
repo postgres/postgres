@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.12 1998/09/01 04:38:37 momjian Exp $
+ * $Id: smgr.h,v 1.13 1998/10/08 18:30:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@ extern int smgrblindwrt(int16 which, char *dbname, char *relname, Oid dbid,
 extern int	smgrnblocks(int16 which, Relation reln);
 extern int	smgrtruncate(int16 which, Relation reln, int nblocks);
 extern int	smgrcommit(void);
-extern bool smgriswo(int16 smgrno);
 
 
 

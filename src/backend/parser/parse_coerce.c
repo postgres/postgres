@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.7 1998/10/01 22:45:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.8 1998/10/08 18:29:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,8 @@
 
 Oid			DemoteType(Oid inType);
 Oid			PromoteTypeToNext(Oid inType);
+
+static Oid PreferredType(CATEGORY category, Oid type);
 
 
 /* coerce_type()
@@ -347,7 +349,7 @@ IsPreferredType(CATEGORY category, Oid type)
 /* PreferredType()
  * Return the preferred type OID for the specified category.
  */
-Oid
+static Oid
 PreferredType(CATEGORY category, Oid type)
 {
 	Oid			result;

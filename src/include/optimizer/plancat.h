@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plancat.h,v 1.9 1998/09/01 04:37:16 momjian Exp $
+ * $Id: plancat.h,v 1.10 1998/10/08 18:30:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,5 @@ extern Cost join_selectivity(Oid functionObjectId, Oid operatorObjectId,
 				 Oid relationObjectId2, AttrNumber attributeNumber2);
 
 extern List *find_inheritance_children(Oid inhparent);
-extern List *VersionGetParents(Oid verrelid);
 
 #endif	 /* PLANCAT_H */

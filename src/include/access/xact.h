@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.16 1998/10/06 02:40:06 tgl Exp $
+ * $Id: xact.h,v 1.17 1998/10/08 18:30:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,6 @@ typedef TransactionStateData *TransactionState;
 extern int	TransactionFlushEnabled(void);
 extern void SetTransactionFlushEnabled(bool state);
 
-extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
 extern void OverrideTransactionSystem(bool flag);
 extern TransactionId GetCurrentTransactionId(void);
@@ -115,7 +114,6 @@ extern TransactionId DisabledTransactionId;
 extern TransactionId xidin(char *representation);
 extern char *xidout(TransactionId transactionId);
 extern bool xideq(TransactionId xid1, TransactionId xid2);
-extern bool TransactionIdIsLessThan(TransactionId id1, TransactionId id2);
 extern void TransactionIdAdd(TransactionId *xid, int value);
 
 #endif	 /* XACT_H */

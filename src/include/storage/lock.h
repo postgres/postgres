@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.18 1998/09/01 04:38:24 momjian Exp $
+ * $Id: lock.h,v 1.19 1998/10/08 18:30:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,6 @@ extern int	LockShmemSize(void);
 extern bool LockingDisabled(void);
 extern bool DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock,
 			  bool skip_check);
-ArrayType  *LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag);
 
 #ifdef DEADLOCK_DEBUG
 extern void DumpLocks(void);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.59 1998/10/08 02:08:47 momjian Exp $
+ * $Id: builtins.h,v 1.60 1998/10/08 18:30:49 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -141,7 +141,6 @@ extern bool namelt(NameData *arg1, NameData *arg2);
 extern bool namele(NameData *arg1, NameData *arg2);
 extern bool namegt(NameData *arg1, NameData *arg2);
 extern bool namege(NameData *arg1, NameData *arg2);
-extern int	namecmp(Name n1, Name n2);
 extern int	namecpy(Name n1, Name n2);
 extern int	namestrcpy(Name name, char *str);
 extern int	namestrcmp(Name name, char *str);
@@ -229,7 +228,6 @@ extern bool intervalct(TimeInterval i1, TimeInterval i2);
 extern bool intervalov(TimeInterval i1, TimeInterval i2);
 extern AbsoluteTime intervalstart(TimeInterval i);
 extern AbsoluteTime intervalend(TimeInterval i);
-extern int	isreltime(char *timestring);
 extern text *timeofday(void);
 
 /* filename.c */
@@ -440,7 +438,6 @@ extern text *textcat(text *arg1, text *arg2);
 extern bool texteq(text *arg1, text *arg2);
 extern bool textne(text *arg1, text *arg2);
 extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);
-extern int	text_cmp(text *arg1, text *arg2);
 extern bool text_lt(text *arg1, text *arg2);
 extern bool text_le(text *arg1, text *arg2);
 extern bool text_gt(text *arg1, text *arg2);

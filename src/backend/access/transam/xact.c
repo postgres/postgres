@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.24 1998/10/06 02:39:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.25 1998/10/08 18:29:15 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -262,7 +262,6 @@ SetTransactionFlushEnabled(bool state)
 	TransactionFlushState = (state == true);
 }
 
-#endif
 
 /* --------------------------------
  *		IsTransactionState
@@ -297,6 +296,7 @@ IsTransactionState(void)
 	 */
 	return false;
 }
+#endif
 
 /* --------------------------------
  *		IsAbortedTransactionBlockState

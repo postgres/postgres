@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.29 1998/09/25 13:36:08 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.30 1998/10/08 18:29:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 static List *ExpandAllTables(ParseState *pstate);
 static char *FigureColname(Node *expr, Node *resval);
 
-Node *SizeTargetExpr(ParseState *pstate,
+static Node *SizeTargetExpr(ParseState *pstate,
 			   Node *expr,
 			   Oid attrtype,
 			   int32 attrtypmod);
@@ -664,7 +664,7 @@ CoerceTargetExpr(ParseState *pstate,
  * Apparently going to a fixed-length string?
  * Then explicitly size for storage...
  */
-Node *
+static Node *
 SizeTargetExpr(ParseState *pstate,
 			   Node *expr,
 			   Oid attrtype,

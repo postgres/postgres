@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.13 1998/08/25 04:19:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.14 1998/10/08 18:29:19 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,7 @@ GLOBALBKI_SRCS= $(addprefix ../../include/catalog/, \
 
 LOCALBKI_SRCS= $(addprefix ../../include/catalog/, \
                  pg_proc.h pg_type.h pg_attribute.h pg_class.h \
-                 pg_inherits.h pg_index.h pg_version.h pg_statistic.h \
+                 pg_inherits.h pg_index.h pg_statistic.h \
                  pg_operator.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
                  pg_language.h pg_parg.h \
                  pg_aggregate.h pg_ipl.h pg_inheritproc.h \

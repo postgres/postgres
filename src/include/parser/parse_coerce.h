@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.5 1998/09/01 04:37:32 momjian Exp $
+ * $Id: parse_coerce.h,v 1.6 1998/10/08 18:30:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,6 @@ typedef enum CATEGORY
 
 
 extern bool IsPreferredType(CATEGORY category, Oid type);
-extern Oid	PreferredType(CATEGORY category, Oid type);
 extern CATEGORY TypeCategory(Oid type);
 
 extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.43 1998/09/01 04:31:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.44 1998/10/08 18:29:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,7 @@ static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
+static void PrintBufferDescs(void);
 
 /* not static but used by vacuum only ... */
 int			BlowawayRelationBuffers(Relation rel, BlockNumber block);
@@ -1263,6 +1264,7 @@ BufferGetBlockNumber(Buffer buffer)
 		return BufferDescriptors[buffer - 1].tag.blockNum;
 }
 
+#ifdef NOT_USED
 /*
  * BufferGetRelation --
  *		Returns the relation desciptor associated with a buffer.
@@ -1297,6 +1299,7 @@ BufferGetRelation(Buffer buffer)
 
 	return relation;
 }
+#endif
 
 /*
  * BufferReplace
@@ -1464,7 +1467,7 @@ DropBuffers(Oid dbid)
  *		use only.
  * -----------------------------------------------------------------
  */
-void
+static void
 PrintBufferDescs()
 {
 	int			i;

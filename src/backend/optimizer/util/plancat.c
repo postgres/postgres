@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.22 1998/09/23 04:22:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.23 1998/10/08 18:29:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,6 +423,7 @@ find_inheritance_children(Oid inhparent)
 	return list;
 }
 
+#ifdef NOT_USED
 /*
  * VersionGetParents--
  *
@@ -461,6 +462,8 @@ VersionGetParents(Oid verrelid)
 	heap_close(relation);
 	return list;
 }
+#endif
+
 
 /*****************************************************************************
  *

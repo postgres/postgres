@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_type.h,v 1.8 1998/09/01 04:37:40 momjian Exp $
+ * $Id: parse_type.h,v 1.9 1998/10/08 18:30:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@ extern bool typeByVal(Type t);
 extern char *typeTypeName(Type t);
 extern char typeTypeFlag(Type t);
 extern char *stringTypeString(Type tp, char *string, int32 atttypmod);
-extern Oid	typeidOutfunc(Oid type_id);
 extern Oid	typeidTypeRelid(Oid type_id);
 extern Oid	typeTypeRelid(Type typ);
 extern Oid	typeidTypElem(Oid type_id);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.19 1998/09/25 13:36:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.20 1998/10/08 18:29:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,8 @@
 #include "storage/bufmgr.h"
 #include "utils/syscache.h"
 
-Oid * oper_select_candidate(int nargs, Oid *input_typeids, CandidateList candidates);
+static Oid * oper_select_candidate(int nargs, Oid *input_typeids,
+							CandidateList candidates);
 static int binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
@@ -169,7 +170,7 @@ binary_oper_get_candidates(char *opname,
  * some sense. (see equivalentOpersAfterPromotion for details.)
  * - ay 6/95
  */
-Oid *
+static Oid *
 oper_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  CandidateList candidates)

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.25 1998/09/01 04:32:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.26 1998/10/08 18:29:59 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -194,6 +194,7 @@ MultiLockReln(LockInfo lockinfo, LOCKMODE lockmode)
 	return MultiAcquire(MultiTableId, &tag, lockmode, RELN_LEVEL);
 }
 
+#ifdef NOT_USED
 /*
  * MultiLockTuple -- Lock the TID associated with a tuple
  *
@@ -220,6 +221,7 @@ MultiLockTuple(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 	tag.tupleId = *tidPtr;
 	return MultiAcquire(MultiTableId, &tag, lockmode, TUPLE_LEVEL);
 }
+#endif
 
 /*
  * same as above at page level

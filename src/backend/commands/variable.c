@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.13 1998/09/03 02:34:29 momjian Exp $
+ * $Id: variable.c,v 1.14 1998/10/08 18:29:20 momjian Exp $
  *
  */
 
@@ -18,6 +18,28 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
+
+static bool show_date(void);
+static bool reset_date(void);
+static bool parse_date(const char *);
+static bool show_timezone(void);
+static bool reset_timezone(void);
+static bool parse_timezone(const char *);
+static bool show_cost_heap(void);
+static bool reset_cost_heap(void);
+static bool parse_cost_heap(const char *);
+static bool show_cost_index(void);
+static bool reset_cost_index(void);
+static bool parse_cost_index(const char *);
+static bool show_r_plans(void);
+static bool reset_r_plans();
+static bool parse_r_plans(const char *);
+static bool reset_geqo(void);
+static bool show_geqo(void);
+static bool parse_geqo(const char *);
+static bool show_ksqo(void);
+static bool reset_ksqo(void);
+static bool parse_ksqo(const char *);
 
 extern Cost _cpu_page_wight_;
 extern Cost _cpu_index_page_wight_;
@@ -128,7 +150,7 @@ get_token(char **tok, char **val, const char *str)
 }
 
 /*-----------------------------------------------------------------------*/
-bool
+static bool
 parse_geqo(const char *value)
 {
 	const char *rest;
@@ -175,7 +197,7 @@ parse_geqo(const char *value)
 	return TRUE;
 }
 
-bool
+static bool
 show_geqo()
 {
 
@@ -186,7 +208,7 @@ show_geqo()
 	return TRUE;
 }
 
-bool
+static bool
 reset_geqo(void)
 {
 
@@ -199,7 +221,7 @@ reset_geqo(void)
 	return TRUE;
 }
 
-bool
+static bool
 parse_r_plans(const char *value)
 {
 	if (value == NULL)
@@ -219,7 +241,7 @@ parse_r_plans(const char *value)
 }
 
 /*-----------------------------------------------------------------------*/
-bool
+static bool
 show_r_plans()
 {
 
@@ -230,7 +252,7 @@ show_r_plans()
 	return TRUE;
 }
 
-bool
+static bool
 reset_r_plans()
 {
 
@@ -243,7 +265,7 @@ reset_r_plans()
 }
 
 /*-----------------------------------------------------------------------*/
-bool
+static bool
 parse_cost_heap(const char *value)
 {
 	float32		res;
@@ -268,7 +290,7 @@ show_cost_heap()
 	return TRUE;
 }
 
-bool
+static bool
 reset_cost_heap()
 {
 	_cpu_page_wight_ = _CPU_PAGE_WEIGHT_;
@@ -276,7 +298,7 @@ reset_cost_heap()
 }
 
 /*-----------------------------------------------------------------------*/
-bool
+static bool
 parse_cost_index(const char *value)
 {
 	float32		res;
@@ -301,7 +323,7 @@ show_cost_index()
 	return TRUE;
 }
 
-bool
+static bool
 reset_cost_index()
 {
 	_cpu_index_page_wight_ = _CPU_INDEX_PAGE_WEIGHT_;
@@ -309,7 +331,7 @@ reset_cost_index()
 }
 
 /*-----------------------------------------------------------------------*/
-bool
+static bool
 parse_date(const char *value)
 {
 	char	   *tok;
@@ -379,7 +401,7 @@ parse_date(const char *value)
 	return TRUE;
 }
 
-bool
+static bool
 show_date()
 {
 	char		buf[64];
@@ -431,7 +453,7 @@ static char tzbuf[64];
  * Try to save existing TZ environment variable for later use in RESET TIME ZONE.
  * - thomas 1997-11-10
  */
-bool
+static bool
 parse_timezone(const char *value)
 {
 	char	   *tok;
@@ -468,7 +490,7 @@ parse_timezone(const char *value)
 	return TRUE;
 }	/* parse_timezone() */
 
-bool
+static bool
 show_timezone()
 {
 	char	   *tz;
@@ -625,7 +647,7 @@ indexes when multiple ORs are specified in the where clause.
 See optimizer/prep/prepkeyset.c for more on this.
 	daveh@insightdist.com    6/16/98
 -----------------------------------------------------------------------*/
-bool
+static bool
 parse_ksqo(const char *value)
 {
 	if (value == NULL)
@@ -644,7 +666,7 @@ parse_ksqo(const char *value)
 	return TRUE;
 }
 
-bool
+static bool
 show_ksqo()
 {
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.37 1998/09/09 18:32:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.38 1998/10/08 18:29:57 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1712,6 +1712,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 	return false;
 }
 
+#ifdef NOT_USED
 /*
  * Return an array with the pids of all processes owning a lock.
  * This works only for user locks because normal locks have no
@@ -1898,6 +1899,7 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 
 	return array;
 }
+#endif
 
 #ifdef DEADLOCK_DEBUG
 /*

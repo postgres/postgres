@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.33 1998/09/01 04:33:59 momjian Exp $
+ * $Id: miscadmin.h,v 1.34 1998/10/08 18:30:18 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -197,10 +197,7 @@ extern void InitPostgres(char *name);
 
 /* in miscinit.c */
 extern void ExitPostgres(ExitStatus status);
-extern void StatusBackendExit(int status);
-extern void StatusPostmasterExit(int status);
 
-extern bool IsNoProcessingMode(void);
 extern bool IsBootstrapProcessingMode(void);
 extern bool IsInitProcessingMode(void);
 extern bool IsNormalProcessingMode(void);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.20 1998/09/01 03:26:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.21 1998/10/08 18:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,6 @@ static Oid	procedureId_save = -1;
 static int	pronargs_save;
 static func_ptr user_fn_save = (func_ptr) NULL;
 static func_ptr handle_load(char *filename, char *funcname);
-
-func_ptr	trigger_dynamic(char *filename, char *funcname);
 
 func_ptr
 fmgr_dynamic(Oid procedureId, int *pronargs)
@@ -279,6 +277,7 @@ load_file(char *filename)
 	handle_load(filename, (char *) NULL);
 }
 
+/* Is this used? bjm 1998/10/08 */
 func_ptr
 trigger_dynamic(char *filename, char *funcname)
 {

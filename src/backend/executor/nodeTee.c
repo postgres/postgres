@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.23 1998/09/01 04:28:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.24 1998/10/08 18:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,6 +420,7 @@ ExecTee(Tee *node, Plan *parent)
 	return result;
 }
 
+#ifdef NOT_USED
 /* ----------------------------------------------------------------
  *		ExecTeeReScan(node)
  *
@@ -462,6 +463,7 @@ ExecTeeReScan(Tee *node, ExprContext *exprCtxt, Plan *parent)
 		}
 	}
 }
+#endif
 
 
 /* ---------------------------------------------------------------------

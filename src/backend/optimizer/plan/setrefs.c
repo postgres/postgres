@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.27 1998/09/09 03:48:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.28 1998/10/08 18:29:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ static void replace_result_clause(Node *clause, List *subplanTargetList);
 static bool OperandIsInner(Node *opnd, int inner_relid);
 static List *replace_agg_clause(Node *expr, List *targetlist);
 static Node *del_agg_clause(Node *clause);
+static void set_result_tlist_references(Result *resultNode);
 
 /*****************************************************************************
  *
@@ -522,7 +523,7 @@ tlist_temp_references(Oid tempid,
  *	2) this routine will probably *NOT* work with nested dot
  *	   fields....
  */
-void
+static void
 set_result_tlist_references(Result *resultNode)
 {
 	Plan	   *subplan;

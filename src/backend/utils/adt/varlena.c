@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.43 1998/09/02 23:37:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.44 1998/10/08 18:30:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,9 @@
 #include "utils/builtins.h"		/* where function declarations go */
 
 #include "mb/pg_wchar.h"
+
+static int	text_cmp(text *arg1, text *arg2);
+
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
@@ -515,6 +518,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 	return result;
 }	/* varstr_cmp() */
 
+
 /* text_cmp()
  * Comparison function for text strings.
  * Includes locale support, but must copy strings to temporary memory
@@ -523,7 +527,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
  *	but it appears that most routines (incl. this one) assume not! - tgl 97/04/07
  * Returns -1, 0 or 1
  */
-int
+static int
 text_cmp(text *arg1, text *arg2)
 {
 	char	   *a1p,

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.15 1998/09/01 04:32:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.16 1998/10/08 18:30:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,11 +155,13 @@ namecat(Name n1, Name n2)
 
 #endif
 
+#ifdef NOT_USED
 int
 namecmp(Name n1, Name n2)
 {
 	return strncmp(n1->data, n2->data, NAMEDATALEN);
 }
+#endif
 
 int
 namestrcpy(Name name, char *str)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.16 1998/09/03 02:34:35 momjian Exp $
+ * $Id: planmain.h,v 1.17 1998/10/08 18:30:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ extern List *join_references(List *clauses, List *outer_tlist,
 				List *inner_tlist);
 extern List *index_outerjoin_references(List *inner_indxqual,
 						   List *outer_tlist, Index inner_relid);
-extern void set_result_tlist_references(Result *resultNode);
 extern List *set_agg_tlist_references(Agg *aggNode);
 extern void set_agg_agglist_references(Agg *aggNode);
 extern void del_agg_tlist_references(List *tlist);

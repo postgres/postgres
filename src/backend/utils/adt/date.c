@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.27 1998/09/01 04:32:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.28 1998/10/08 18:30:05 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -941,6 +941,7 @@ intervalend(TimeInterval i)
  *	 PRIVATE ROUTINES														 *
  *****************************************************************************/
 
+#ifdef NOT_USED
 /*
  *		isreltime		- returns 1, iff datestring is of type reltime
  *								  2, iff datestring is 'invalid time' identifier
@@ -987,6 +988,7 @@ isreltime(char *str)
 
 	return 0;
 }	/* isreltime() */
+#endif
 
 #if FALSE
 int

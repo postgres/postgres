@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeTee.h,v 1.6 1998/09/01 04:36:09 momjian Exp $
+ * $Id: nodeTee.h,v 1.7 1998/10/08 18:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 
 extern TupleTableSlot *ExecTee(Tee *node, Plan *parent);
 extern bool ExecInitTee(Tee *node, EState *estate, Plan *parent);
-extern void ExecTeeReScan(Tee *node, ExprContext *exprCtxt, Plan *parent);
 extern void ExecEndTee(Tee *node, Plan *parent);
 extern int	ExecCountSlotsTee(Tee *node);
 

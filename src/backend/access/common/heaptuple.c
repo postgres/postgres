@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.44 1998/09/07 05:35:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.45 1998/10/08 18:29:10 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -274,6 +274,7 @@ heap_sysattrbyval(AttrNumber attno)
 	return byval;
 }
 
+#ifdef NOT_USED
 /* ----------------
  *		heap_getsysattr
  * ----------------
@@ -300,6 +301,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 	}
 	return (Datum) NULL;
 }
+#endif
 
 /* ----------------
  *		nocachegetattr

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.45 1998/09/01 03:26:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.46 1998/10/08 18:30:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,6 +361,7 @@ AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2)
 	return time1 < time2;
 }
 
+#ifdef NOT_USED
 bool
 AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2)
 {
@@ -375,7 +376,7 @@ AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2)
 
 	return time1 > time2;
 }
-
+#endif
 
 /* abstime_finite()
  */

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.20 1998/09/01 03:22:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.21 1998/10/08 18:29:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,7 +446,6 @@ ExecSlotPolicy(TupleTableSlot *slot)	/* slot to inspect */
 	return slot->ttc_shouldFree;
 }
 
-#endif
 
 /* --------------------------------
  *		ExecSetSlotPolicy
@@ -468,6 +467,7 @@ ExecSetSlotPolicy(TupleTableSlot *slot, /* slot to change */
 
 	return old_shouldFree;
 }
+#endif
 
 /* --------------------------------
  *		ExecSlotDescriptor
@@ -638,6 +638,7 @@ ExecInitScanTupleSlot(EState *estate, CommonScanState *commonscanstate)
 	commonscanstate->css_ScanTupleSlot = (TupleTableSlot *) slot;
 }
 
+#ifdef NOT_USED
 /* ----------------
  *		ExecInitMarkedTupleSlot
  * ----------------
@@ -649,6 +650,7 @@ ExecInitMarkedTupleSlot(EState *estate, MergeJoinState *mergestate)
 	INIT_SLOT_ALLOC;
 	mergestate->mj_MarkedTupleSlot = (TupleTableSlot *) slot;
 }
+#endif
 
 /* ----------------
  *		ExecInitOuterTupleSlot

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.17 1998/09/01 03:21:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.18 1998/10/08 18:29:18 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -53,6 +53,7 @@ xidout(TransactionId transactionId)
 
 }
 
+#ifdef NOT_USED
 /* ----------------------------------------------------------------
  *		TransactionIdIsLessThan
  * ----------------------------------------------------------------
@@ -62,6 +63,7 @@ TransactionIdIsLessThan(TransactionId id1, TransactionId id2)
 {
 	return (bool) (id1 < id2);
 }
+#endif
 
 /* ----------------------------------------------------------------
  *		xideq

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.16 1998/09/01 04:30:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.17 1998/10/08 18:29:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,6 +154,7 @@ stringTypeString(Type tp, char *string, int32 atttypmod)
 }
 
 /* Given a type id, returns the out-conversion function of the type */
+#ifdef NOT_USED
 Oid
 typeidOutfunc(Oid type_id)
 {
@@ -171,6 +172,7 @@ typeidOutfunc(Oid type_id)
 	outfunc = type->typoutput;
 	return outfunc;
 }
+#endif
 
 Oid
 typeidTypeRelid(Oid type_id)

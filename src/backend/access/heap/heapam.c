@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.35 1998/09/01 04:26:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.36 1998/10/08 18:29:12 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -95,6 +95,8 @@
 #else
 #include <string.h>
 #endif
+
+static void doinsert(Relation relation, HeapTuple tup);
 
 static bool ImmediateInvalidation;
 
@@ -475,7 +477,7 @@ heapgettup(Relation relation,
 	}
 }
 
-void
+static void
 doinsert(Relation relation, HeapTuple tup)
 {
 	RelationPutHeapTupleAtEnd(relation, tup);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.14 1998/09/01 03:21:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.15 1998/10/08 18:29:14 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -167,9 +167,6 @@ IndexScanRestart(IndexScanDesc scan,
 				scan->numberOfKeys * sizeof(ScanKeyData));
 }
 
-#endif
-
-#ifdef NOT_USED
 /* ----------------
  *	IndexScanEnd -- End and index scan.
  *
@@ -192,7 +189,6 @@ IndexScanEnd(IndexScanDesc scan)
 	pfree(scan);
 }
 
-#endif
 
 /* ----------------
  *	IndexScanMarkPosition -- Mark current position in a scan.
@@ -274,3 +270,5 @@ IndexScanRestorePosition(IndexScanDesc scan)
 
 	scan->flags = 0x0;			/* XXX should have a symbolic name */
 }
+#endif
+

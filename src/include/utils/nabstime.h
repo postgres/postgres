@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.16 1998/09/01 04:39:23 momjian Exp $
+ * $Id: nabstime.h,v 1.17 1998/10/08 18:30:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,6 @@ extern AbsoluteTime datetime_abstime(DateTime *datetime);
 extern DateTime *abstime_datetime(AbsoluteTime abstime);
 
 extern bool AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2);
-extern bool AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2);
 
 extern void abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn);
 

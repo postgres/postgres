@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.58 1998/09/23 17:51:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.59 1998/10/08 18:30:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,9 @@ static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
 static DateTime dt2local(DateTime dt, int timezone);
 static void dt2time(DateTime dt, int *hour, int *min, double *sec);
 static int	j2day(int jd);
+static double time2t(const int hour, const int min, const double sec);
+static int	timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec);
+static int	tm2timespan(struct tm * tm, double fsec, TimeSpan *span);
 
 #define USE_DATE_CACHE 1
 #define ROUND_ALL 0
@@ -2529,7 +2532,7 @@ tm2datetime(struct tm * tm, double fsec, int *tzp, DateTime *result)
 /* timespan2tm()
  * Convert a timespan data type to a tm structure.
  */
-int
+static int
 timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 {
 	double		time;
@@ -2566,7 +2569,7 @@ timespan2tm(TimeSpan span, struct tm * tm, float8 *fsec)
 	return 0;
 }	/* timespan2tm() */
 
-int
+static int
 tm2timespan(struct tm * tm, double fsec, TimeSpan *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
@@ -2590,7 +2593,7 @@ dt2local(DateTime dt, int tz)
 	return dt;
 }	/* dt2local() */
 
-double
+static double
 time2t(const int hour, const int min, const double sec)
 {
 	return (((hour * 60) + min) * 60) + sec;
