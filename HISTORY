@@ -31,7 +31,7 @@ authentication option is available on Linux and *BSD systems.
 statistics module to get fine-grained information about table and index
 usage.
 
-Migration to 7.1
+Migration to 7.2
 
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.  One significant change is that
