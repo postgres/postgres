@@ -20,4 +20,15 @@ __EOF__
   rm -f conftest.*
 
   PTHREAD_CFLAGS="-Kpthread"
+
+# The effect of doing threading for the backend does not work
+# because of a threading bug that appears in the regression tests:
+#
+# in make check, the plpgsql test (plpgsql.sql)
+# set statement_timeout to 1000;
+# select blockme();
+# reset statement_timeout;
+#
+# per report from Olivier PRENANT <ohp@pyrenet.fr>
+
 fi
