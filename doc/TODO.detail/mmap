@@ -240,3 +240,142 @@ It doesn't allow you to do several important optimizations.
 ---------------------------(end of broadcast)---------------------------
 TIP 4: Don't 'kill -9' the postmaster
 
+From pgsql-general-owner+M14300@postgresql.org Mon Aug 27 13:07:32 2001
+Return-path: <pgsql-general-owner+M14300@postgresql.org>
+Received: from server1.pgsql.org (server1.pgsql.org [64.39.15.238])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id f7RH7VF04800
+	for <pgman@candle.pha.pa.us>; Mon, 27 Aug 2001 13:07:31 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by server1.pgsql.org (8.11.6/8.11.6) with ESMTP id f7RH7Tq17721;
+	Mon, 27 Aug 2001 12:07:29 -0500 (CDT)
+	(envelope-from pgsql-general-owner+M14300@postgresql.org)
+Received: from svana.org (svana.org [210.9.66.30])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id f7RFE1f13269
+	for <pgsql-general@postgresql.org>; Mon, 27 Aug 2001 11:14:01 -0400 (EDT)
+	(envelope-from kleptog@svana.org)
+Received: from kleptog by svana.org with local (Exim 3.12 #1 (Debian))
+	id 15bO5x-0000Fd-00; Tue, 28 Aug 2001 01:14:33 +1000
+Date: Tue, 28 Aug 2001 01:14:33 +1000
+From: Martijn van Oosterhout <kleptog@svana.org>
+To: Andrew Snow <andrew@modulus.org>
+cc: pgsql-general@postgresql.org
+Subject: Re: [GENERAL] raw partition
+Message-ID: <20010828011433.E32309@svana.org>
+Reply-To: Martijn van Oosterhout <kleptog@svana.org>
+References: <20010827233815.B32309@svana.org> <000101c12f00$dc5814b0$fa01b5ca@avon>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <000101c12f00$dc5814b0$fa01b5ca@avon>; from andrew@modulus.org on Tue, Aug 28, 2001 at 12:02:08AM +1000
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+On Tue, Aug 28, 2001 at 12:02:08AM +1000, Andrew Snow wrote:
+> 
+> What I think would be better would be moving postgresql to a system of
+> using memory-mapped I/O.  instead of the shared buffer cache, files
+> would be directly memory-mapped and the OS would do the caching.  I
+> can't see this happening though because of platform dependancy, but I
+> think its worth another look soon because many unix platforms support
+> mmap().  I think it would improve the performance of disk-intensive
+> tasks noticeably.
+
+Well, this has other problems. Consider tables that are larger than your
+system memory. You'd have to continuously map and unmap different sections.
+That can have odd side effects (witness mozilla on linux having 15,000
+mapped areas or so...)
+
+You would still however get the advantage that you wouldn't have to copy the
+data from the disk buffers to user space, you simply get the disk buffer
+mapped into your address space.
+
+I think that for commonly used tables that are under 100K in size (most of
+the system tables), this is quite a workable idea. If you don't mind keeping
+them mapped the whole time.
+
+-- 
+Martijn van Oosterhout <kleptog@svana.org>
+http://svana.org/kleptog/
+> It would be nice if someone came up with a certification system that
+> actually separated those who can barely regurgitate what they crammed over
+> the last few weeks from those who command secret ninja networking powers.
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-general-owner+M14319@postgresql.org Mon Aug 27 16:57:10 2001
+Return-path: <pgsql-general-owner+M14319@postgresql.org>
+Received: from server1.pgsql.org (server1.pgsql.org [64.39.15.238])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id f7RKv9F16849
+	for <pgman@candle.pha.pa.us>; Mon, 27 Aug 2001 16:57:09 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by server1.pgsql.org (8.11.6/8.11.6) with ESMTP id f7RKv9q31456;
+	Mon, 27 Aug 2001 15:57:09 -0500 (CDT)
+	(envelope-from pgsql-general-owner+M14319@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id f7RJrsf55472
+	for <pgsql-general@postgresql.org>; Mon, 27 Aug 2001 15:53:54 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id f7RJrGK19431;
+	Mon, 27 Aug 2001 15:53:16 -0400 (EDT)
+To: Martijn van Oosterhout <kleptog@svana.org>
+cc: Andrew Snow <andrew@modulus.org>, pgsql-general@postgresql.org
+Subject: Re: [GENERAL] raw partition 
+In-Reply-To: <20010828011433.E32309@svana.org> 
+References: <20010827233815.B32309@svana.org> <000101c12f00$dc5814b0$fa01b5ca@avon> <20010828011433.E32309@svana.org>
+Comments: In-reply-to Martijn van Oosterhout <kleptog@svana.org>
+	message dated "Tue, 28 Aug 2001 01:14:33 +1000"
+Date: Mon, 27 Aug 2001 15:53:15 -0400
+Message-ID: <19428.998941995@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-general-owner@postgresql.org
+Status: OR
+
+Martijn van Oosterhout <kleptog@svana.org> writes:
+> You would still however get the advantage that you wouldn't have to copy the
+> data from the disk buffers to user space, you simply get the disk buffer
+> mapped into your address space.
+
+AFAICS this would be the *only* advantage.  While it's not negligible,
+it's quite unclear that it's worth the bookkeeping and portability
+headaches of managing lots of mmap'd areas, either.
+
+Before I take this idea seriously at all, I'd want to see a design that
+addresses a couple of critical issues:
+
+1. Postgres' shared buffers are *shared*, potentially across many
+processes.  How will you deal with buffers for files that have been
+mmap'd by only some of the processes?  (Maybe this means that the
+whole concept of shared buffers goes away, and each process does its
+own buffer management based on its own mmaps.  Not sure.  That would be
+a pretty radical restructuring though, and would completely invalidate
+our present approach to page-level locking.)
+
+2. How do you deal with extending a file?  My system's mmap man page
+says
+     If the size of the mapped file changes after the call to mmap(), the
+     effect of references to portions of the mapped region that correspond
+     to added or removed portions of the file is unspecified.
+This suggests that the only portable way to cope is to issue a separate
+mmap for every disk page.  Will typical Unix systems perform well with
+umpteen thousand small mmap requests?
+
+3. How do you persuade the other backends to drop their mmaps of a table
+you are deleting?
+
+There are probably other gotchas, but without an understanding of how
+to address these, I doubt it's worth looking further ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
