@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.357 2004/01/09 23:27:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.358 2004/01/11 03:49:31 momjian Exp $
  *
  * NOTES
  *
@@ -297,6 +297,10 @@ postmaster_error(const char *fmt,...)
 __attribute__((format(printf, 1, 2)));
 
 #ifdef EXEC_BACKEND
+#ifdef WIN32
+pid_t win32_forkexec(const char* path, char *argv[]);
+#endif
+
 static pid_t Backend_forkexec(Port *port);
 
 static unsigned long tmpBackendFileNum = 0;
@@ -923,7 +927,12 @@ pmdaemonize(int argc, char *argv[])
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
 
+#ifdef WIN32
+	/* FIXME: [fork/exec] to be implemented? */
+	abort();
+#else
 	pid = fork();
+#endif
 	if (pid == (pid_t) -1)
 	{
 		postmaster_error("could not fork background process: %s",
@@ -2692,6 +2701,9 @@ Backend_forkexec(Port *port)
   	av[ac++] = NULL;
   	Assert(ac <= lengthof(av));
 
+#ifdef WIN32
+	pid = win32_forkexec(pg_pathname,av); /* logs on error */
+#else
 	/* Fire off execv in child */
 	if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
 		/*
@@ -2699,7 +2711,7 @@ Backend_forkexec(Port *port)
 		 *  Probably OK to issue error (unlike pgstat case)
 		 */
 		abort();
-
+#endif
 	return pid; /* Parent returns pid */
 }
 
@@ -3039,12 +3051,16 @@ SSDataBase(int xlop)
 
 #ifdef EXEC_BACKEND
 		/* EXEC_BACKEND case; fork/exec here */
+#ifdef WIN32
+		pid = win32_forkexec(pg_pathname,av); /* logs on error */
+#else
 		if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
 		{
 			/* in child */
 			elog(ERROR,"unable to execv in SSDataBase: %m");
 			exit(0);
 		}
+#endif
 #else
 		BootstrapMain(ac, av);
 		ExitPostmaster(0);
@@ -3332,6 +3348,55 @@ read_backend_variables(unsigned long id, Port *port)
 		ereport(WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not remove file \"%s\": %m", filename)));
+}
+
+#endif
+
+#ifdef WIN32
+
+pid_t win32_forkexec(const char* path, char *argv[])
+{
+	STARTUPINFO si;
+	PROCESS_INFORMATION pi;
+	char *p;
+	int i;
+	char cmdLine[MAXPGPATH];
+
+	/* Format the cmd line */
+	snprintf(cmdLine,sizeof(cmdLine),"%s",path);
+	i = 0;
+	while (argv[++i] != NULL)
+	{
+		/* FIXME: [fork/exec] some strlen checks might be prudent here */
+		strcat(cmdLine," ");
+		strcat(cmdLine,argv[i]);
+	}
+
+	/*
+	 * The following snippet can disappear when we consistently
+	 * use forward slashes.
+	 */
+	p = cmdLine;
+	while (*(p++) != '\0')
+		if (*p == '/') *p = '\\';
+
+	memset(&pi,0,sizeof(pi));
+	memset(&si,0,sizeof(si));
+	si.cb = sizeof(si);
+	if (!CreateProcess(NULL,cmdLine,NULL,NULL,TRUE,0,NULL,NULL,&si,&pi))
+	{
+		elog(ERROR,"CreateProcess call failed (%d): %m",GetLastError());
+		return -1;
+	}
+
+	/*
+	   FIXME: [fork/exec] we might need to keep the following handle/s,
+	   depending on how we implement signalling.
+	*/
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+
+	return pi.dwProcessId;
 }
 
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.77 2003/12/30 00:03:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.78 2004/01/11 03:49:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,10 +118,10 @@ InitShmemAllocation(void *seghdr, bool init)
 
 		SpinLockInit(ShmemLock);
 		SpinLockInit(ShmemIndexLock);
-	
+
 		/* ShmemIndex can't be set up yet (need LWLocks first) */
 		ShmemIndex = (HTAB *) NULL;
-	
+
 		/*
 		 * Initialize ShmemVariableCache for transaction manager.
 		 */
@@ -234,19 +234,19 @@ InitShmemIndex(void)
 	{
 		MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
 		strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
-	
+
 		result = (ShmemIndexEnt *)
 			hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
 		if (!result)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory")));
-	
+
 		Assert(ShmemBootstrap && !found);
-	
+
 		result->location = MAKE_OFFSET(ShmemIndex->hctl);
 		result->size = SHMEM_INDEX_SIZE;
-	
+
 		ShmemBootstrap = false;
 	}
 

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.52 2004/01/09 04:58:09 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.53 2004/01/11 03:49:31 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -50,6 +50,9 @@
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
 
+#ifdef WIN32
+extern pid_t win32_forkexec(const char* path, char *argv[]);
+#endif
 
 /* ----------
  * GUC parameters
@@ -402,10 +405,13 @@ pgstat_forkexec(STATS_PROCESS_TYPE procType)
 	Assert(ac <= lengthof(av));
 
 	/* Fire off execv in child */
+#ifdef WIN32
+	pid = win32_forkexec(pg_pathname,av);
+#else
 	if ((pid = fork()) == 0 && (execv(pg_pathname,av) == -1))
 		/* FIXME: [fork/exec] suggestions for what to do here? Can't call elog... */
 		abort();
-
+#endif
 	return pid; /* Parent returns pid */
 }
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.70 2004/01/06 23:15:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.71 2004/01/11 03:49:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,19 @@ main(int argc, char *argv[])
 				argv[0], strerror(errno));
 #endif
 #endif   /* NOFIXADE || NOPRINTADE */
+
+#if defined(WIN32)
+	{
+		WSADATA wsaData;
+		int err = WSAStartup(MAKEWORD(2,2), &wsaData);
+		if (err != 0)
+		{
+			fprintf(stderr, "%s: WSAStartup failed: %d\n",
+					argv[0], err);
+			exit(1);
+		}
+	}
+#endif
 
 #ifdef __BEOS__
 	/* BeOS-specific actions on startup */
