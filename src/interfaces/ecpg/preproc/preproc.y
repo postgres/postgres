@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.262 2003/10/06 06:44:55 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.263 2003/10/22 16:43:42 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -5248,6 +5248,7 @@ execstring: char_variable
 
 prepared_name: name	 	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		| char_variable	{ $$ = $1; }
+		;
 
 /*
  * the exec sql free command to deallocate a previously
