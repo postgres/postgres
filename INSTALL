@@ -114,7 +114,7 @@ To upgrade to PostgreSQL v6.1 do the following:
 
   5) Some platforms use flex.  If your system uses flex then make sure
      you have a good version.  Type
-        flex -- version
+        flex --version
 
      If the flex command is not found then you probably do not need it.
      If the version is 2.5.2 or 2.5.4 or greater then you are okay.  If it
