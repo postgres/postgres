@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.40 2004/05/21 05:07:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.41 2004/08/09 05:34:39 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -230,39 +230,11 @@ gmake installcheck
     <para>
      Most of the date and time results are dependent on the time zone
      environment.  The reference files are generated for time zone
-     <literal>PST8PDT</literal> (Berkeley, California), and there will be apparent
-     failures if the tests are not run with that time zone setting.
+     <literal>PST8PDT</literal> (Berkeley, California), and there will be
+     apparent failures if the tests are not run with that time zone setting.
      The regression test driver sets environment variable
      <envar>PGTZ</envar> to <literal>PST8PDT</literal>, which normally
-     ensures proper results.  However, your operating system must provide
-     support for the <literal>PST8PDT</literal> time zone, or the time zone-dependent
-     tests will fail. To verify that your machine does have this
-     support, type the following:
-<screen>
-env TZ=PST8PDT date
-</screen>
-     The command above should have returned the current system time in
-     the <literal>PST8PDT</literal> time zone. If the <literal>PST8PDT</literal> time zone is not available,
-     then your system may have returned the time in UTC. If the
-     <literal>PST8PDT</literal> time zone is missing, you can set the time zone
-     rules explicitly:
-<programlisting>
-PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
-</programlisting>
-    </para>
-
-    <para>
-     There appear to be some systems that do not accept the
-     recommended syntax for explicitly setting the local time zone
-     rules; you may need to use a different <envar>PGTZ</envar>
-     setting on such machines.
-    </para>
-
-    <para>
-     Some systems using older time-zone libraries fail to apply
-     daylight-saving corrections to dates before 1970, causing
-     pre-1970 <acronym>PDT</acronym> times to be displayed in <acronym>PST</acronym> instead.  This will
-     result in localized differences in the test results.
+     ensures proper results.
     </para>
    </sect2>
     
