@@ -881,29 +881,29 @@ the time zone becomes GMT (on most systems anyway).
 </para>
 </sect2>
 
-<sect2>
-<title>Date/Time Input</title>
+   <sect2>
+    <title>Date/Time Input</title>
 
-<para>
-General-use date and time is input using a wide range of
-styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
-traditional <productname>Postgres</productname> 
-and other permutations of date and time. In cases where interpretation
-can be ambiguous (quite possible with many traditional styles of date 
-specification) <productname>Postgres</productname> uses a style setting 
-to resolve the ambiguity.
-</para>
+    <para>
+     General-use date and time is input using a wide range of
+     styles, including ISO-compatible, <acronym>SQL</acronym>-compatible, 
+     traditional <productname>Postgres</productname> 
+     and other permutations of date and time. In cases where interpretation
+     can be ambiguous (quite possible with many traditional styles of date 
+     specification) <productname>Postgres</productname> uses a style setting 
+     to resolve the ambiguity.
+    </para>
 
-<para>
-Most date and time types share code for data input. For those types
-the input can have any of a wide variety of styles. For numeric date 
-representations,
-European and US conventions can differ, and the proper interpretation 
-is obtained by using the <command>SET DATESTYLE</command>
-command before entering data.
-Note that the style setting does not preclude use of various styles for input;
- it is used primarily to determine the output style and to resolve ambiguities.
-</para>
+    <para>
+     Most date and time types share code for data input. For those types
+     the input can have any of a wide variety of styles. For numeric date 
+     representations,
+     European and US conventions can differ, and the proper interpretation 
+     is obtained by using the <command>SET DATESTYLE</command>
+     command before entering data.
+     Note that the style setting does not preclude use of various styles for input;
+     it is used primarily to determine the output style and to resolve ambiguities.
+    </para>
 
     <para>
      The special values <literal>current</literal>,
@@ -915,74 +915,846 @@ Note that the style setting does not preclude use of various styles for input;
     </para>
 
     <para>
-    The strings
-    <literal>now</literal>,
-    <literal>today</literal>,
-    <literal>yesterday</literal>,
-    <literal>tomorrow</literal>,
-    and <literal>epoch</literal>
-    can be used to specify
-    time values.  <literal>now</literal>
-    means the current transaction time, and differs from
-    <literal>current</literal>
-    in that the current time is immediately substituted
-    for it.  <literal>epoch</literal>
-    means Jan 1 00:00:00 1970 GMT.
-   </para>
+     The strings
+     <literal>now</literal>,
+     <literal>today</literal>,
+     <literal>yesterday</literal>,
+     <literal>tomorrow</literal>,
+     and <literal>epoch</literal>
+     can be used to specify time values.
+     <literal>now</literal>
+     means the current transaction time, and differs from
+     <literal>current</literal>
+     in that the current time is immediately substituted for it.
+     <literal>epoch</literal> means <literal>Jan 1 00:00:00 1970 GMT</literal>.
+    </para>
 
-<para>
-<table tocentry="1">
-<title><productname>Postgres</productname> Date/Time Special Constants</title>
-<titleabbrev>Constants</titleabbrev>
-<tgroup cols="2">
-<thead>
-  <row>
-    <entry>Constant</entry>
-    <entry>Description</entry>
-  </row>
-</thead>
-<tbody>
-  <row>
-    <entry>current</entry>
-    <entry>Current transaction time, deferred</entry>
-  </row>
-  <row>
-    <entry>epoch</entry>
-    <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
-  </row>
-  <row>
-    <entry>infinity</entry>
-    <entry>Later than other valid times</entry>
-  </row>
-  <row>
-    <entry>-infinity</entry>
-    <entry>Earlier than other valid times</entry>
-  </row>
-  <row>
-    <entry>invalid</entry>
-    <entry>Illegal entry</entry>
-  </row>
-  <row>
-    <entry>now</entry>
-    <entry>Current transaction time</entry>
-  </row>
-  <row>
-    <entry>today</entry>
-    <entry>Midnight today</entry>
-  </row>
-  <row>
-    <entry>tomorrow</entry>
-    <entry>Midnight tomorrow</entry>
-  </row>
-  <row>
-    <entry>yesterday</entry>
-    <entry>Midnight yesterday</entry>
-  </row>
-</tbody>
-</tgroup>
-</table>
-</para>
+    <para>
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Date/Time Special Constants</title>
+      <titleabbrev>Constants</titleabbrev>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Constant</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>current</entry>
+	 <entry>Current transaction time, deferred</entry>
+	</row>
+	<row>
+	 <entry>epoch</entry>
+	 <entry>1970-01-01 00:00:00+00 (Unix system time zero)</entry>
+	</row>
+	<row>
+	 <entry>infinity</entry>
+	 <entry>Later than other valid times</entry>
+	</row>
+	<row>
+	 <entry>-infinity</entry>
+	 <entry>Earlier than other valid times</entry>
+	</row>
+	<row>
+	 <entry>invalid</entry>
+	 <entry>Illegal entry</entry>
+	</row>
+	<row>
+	 <entry>now</entry>
+	 <entry>Current transaction time</entry>
+	</row>
+	<row>
+	 <entry>today</entry>
+	 <entry>Midnight today</entry>
+	</row>
+	<row>
+	 <entry>tomorrow</entry>
+	 <entry>Midnight tomorrow</entry>
+	</row>
+	<row>
+	 <entry>yesterday</entry>
+	 <entry>Midnight yesterday</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
 
+    <para>
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Date Input</title>
+      <titleabbrev>Date Inputs</titleabbrev>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Example</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>January 8, 1999</entry>
+	 <entry>Unambiguous text month</entry>
+	</row>
+	<row>
+	 <entry>1999-01-08</entry>
+	 <entry>ISO-8601</entry>
+	</row>
+	<row>
+	 <entry>1/8/1999</entry>
+	 <entry>US; read as August 1 in European mode</entry>
+	</row>
+	<row>
+	 <entry>8/1/1999</entry>
+	 <entry>European; read as August 1 in US mode</entry>
+	</row>
+	<row>
+	 <entry>1/18/1999</entry>
+	 <entry>US; read as January 18 in any mode</entry>
+	</row>
+	<row>
+	 <entry>1999.008</entry>
+	 <entry>Year and day of year</entry>
+	</row>
+	<row>
+	 <entry>19990108</entry>
+	 <entry>ISO-8601 year, month, day</entry>
+	</row>
+	<row>
+	 <entry>990108</entry>
+	 <entry>ISO-8601 year, month, day</entry>
+	</row>
+	<row>
+	 <entry>1999.008</entry>
+	 <entry>Year and day of year</entry>
+	</row>
+	<row>
+	 <entry>99008</entry>
+	 <entry>Year and day of year</entry>
+	</row>
+	<row>
+	 <entry>January 8, 99 BC</entry>
+	 <entry>Year 99 before the Christian Era</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Month Abbreviations</title>
+      <titleabbrev>Month Abbreviations</titleabbrev>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Month</entry>
+	 <entry>Abbreviations</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>April</entry>
+	 <entry>Apr</entry>
+	</row>
+	<row>
+	 <entry>August</entry>
+	 <entry>Aug</entry>
+	</row>
+	<row>
+	 <entry>December</entry>
+	 <entry>Dec</entry>
+	</row>
+	<row>
+	 <entry>February</entry>
+	 <entry>Feb</entry>
+	</row>
+	<row>
+	 <entry>January</entry>
+	 <entry>Jan</entry>
+	</row>
+	<row>
+	 <entry>July</entry>
+	 <entry>Jul</entry>
+	</row>
+	<row>
+	 <entry>June</entry>
+	 <entry>Jun</entry>
+	</row>
+	<row>
+	 <entry>March</entry>
+	 <entry>Mar</entry>
+	</row>
+	<row>
+	 <entry>November</entry>
+	 <entry>Nov</entry>
+	</row>
+	<row>
+	 <entry>October</entry>
+	 <entry>Oct</entry>
+	</row>
+	<row>
+	 <entry>September</entry>
+	 <entry>Sep, Sept</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+
+     <note>
+      <para>
+       The month <literal>May</literal> has no explicit abbreviation, for obvious reasons.
+      </para>
+     </note>
+    </para>
+
+    <para>
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Day of Week Abbreviations</title>
+      <titleabbrev>Day of Week Abbreviations</titleabbrev>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Day</entry>
+	 <entry>Abbreviation</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>Sunday</entry>
+	 <entry>Sun</entry>
+	</row>
+	<row>
+	 <entry>Monday</entry>
+	 <entry>Mon</entry>
+	</row>
+	<row>
+	 <entry>Tuesday</entry>
+	 <entry>Tue, Tues</entry>
+	</row>
+	<row>
+	 <entry>Wednesday</entry>
+	 <entry>Wed, Weds</entry>
+	</row>
+	<row>
+	 <entry>Thursday</entry>
+	 <entry>Thu, Thur, Thurs</entry>
+	</row>
+	<row>
+	 <entry>Friday</entry>
+	 <entry>Fri</entry>
+	</row>
+	<row>
+	 <entry>Saturday</entry>
+	 <entry>Sat</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Time Input</title>
+      <titleabbrev>Time Inputs</titleabbrev>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Example</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>04:05:06.789</entry>
+	 <entry>ISO-8601, with all time fields</entry>
+	</row>
+	<row>
+	 <entry>04:05:06</entry>
+	 <entry>ISO-8601</entry>
+	</row>
+	<row>
+	 <entry>04:05</entry>
+	 <entry>ISO-8601</entry>
+	</row>
+	<row>
+	 <entry>040506</entry>
+	 <entry>ISO-8601</entry>
+	</row>
+	<row>
+	 <entry>04:05 AM</entry>
+	 <entry>Same as 04:05; AM does not affect value</entry>
+	</row>
+	<row>
+	 <entry>04:05 PM</entry>
+	 <entry>Same as 16:05; input hour must be <= 12</entry>
+	</row>
+	<row>
+	 <entry>z</entry>
+	 <entry>Same as 00:00:00</entry>
+	</row>
+	<row>
+	 <entry>zulu</entry>
+	 <entry>Same as 00:00:00</entry>
+	</row>
+	<row>
+	 <entry>allballs</entry>
+	 <entry>Same as 00:00:00</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Time Zone Input</title>
+      <titleabbrev>Time Zone Inputs</titleabbrev>
+      <tgroup cols="2">
+       <thead>
+	<row>
+	 <entry>Time Zone</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>PST</entry>
+	 <entry>Pacific Standard Time</entry>
+	</row>
+	<row>
+	 <entry>-8:00</entry>
+	 <entry>ISO-8601 offset for PST</entry>
+	</row>
+	<row>
+	 <entry>-800</entry>
+	 <entry>ISO-8601 offset for PST</entry>
+	</row>
+	<row>
+	 <entry>-8</entry>
+	 <entry>ISO-8601 offset for PST</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+    </para>
+
+    <para>
+     <table tocentry="1">
+      <title><productname>Postgres</productname> Recognized Time Zones</title>
+      <titleabbrev>Time Zones</titleabbrev>
+      <tgroup cols="3">
+       <thead>
+	<row>
+	 <entry>Time Zone</entry>
+	 <entry>Offset from UTC</entry>
+	 <entry>Description</entry>
+	</row>
+       </thead>
+       <tbody>
+	<row>
+	 <entry>ACSST</entry>
+	 <entry>+10:30 </entry>
+	 <entry>Central Australia Summer Std Time</entry>
+	</row>
+	<row>
+	 <entry>ACST</entry>
+	 <entry>+09:30 </entry>
+	 <entry>Central Australia Std Time</entry>
+	</row>
+	<row>
+	 <entry>ADT</entry>
+	 <entry>-02:00 </entry>
+	 <entry>Atlantic Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>AESST</entry>
+	 <entry>+11:00 </entry>
+	 <entry>Australia Eastern Summer Std Time</entry>
+	</row>
+	<row>
+	 <entry>AEST</entry>
+	 <entry>+10:00 </entry>
+	 <entry>Australia Eastern Std Time</entry>
+	</row>
+	<row>
+	 <entry>AHST</entry>
+	 <entry>-10:00 </entry>
+	 <entry>Alaska-Hawaii Std Time</entry>
+	</row>
+	<row>
+	 <entry>AST</entry>
+	 <entry>-4:00 </entry>
+	 <entry>Atlantic Std Time (Canada)</entry>
+	</row>
+	<row>
+	 <entry>AWSST</entry>
+	 <entry>+9:00 </entry>
+	 <entry>Australia Western Summer Std Time</entry>
+	</row>
+	<row>
+	 <entry>AWST</entry>
+	 <entry>+8:00 </entry>
+	 <entry>Australia Western Std Time</entry>
+	</row>
+	<row>
+	 <entry>BST</entry>
+	 <entry>+1:00 </entry>
+	 <entry>British Summer Time</entry>
+	</row>
+	<row>
+	 <entry>BT</entry>
+	 <entry>+3:00 </entry>
+	 <entry>Baghdad Time</entry>
+	</row>
+	<row>
+	 <entry>CADT</entry>
+	 <entry>+10:30 </entry>
+	 <entry>Central Australia Daylight Savings Time</entry>
+	</row>
+	<row>
+	 <entry>CAST</entry>
+	 <entry>+09:30 </entry>
+	 <entry>Central Australia Std Time</entry>
+	</row>
+	<row>
+	 <entry>CAT</entry>
+	 <entry>-10:00 </entry>
+	 <entry>Central Alaska Time</entry>
+	</row>
+	<row>
+	 <entry>CCT</entry>
+	 <entry>+8:00 </entry>
+	 <entry>China Coastal Time</entry>
+	</row>
+	<row>
+	 <entry>CDT</entry>
+	 <entry>-5:00 </entry>
+	 <entry>Central Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>CET</entry>
+	 <entry>+1:00 </entry>
+	 <entry>Central European Time</entry>
+	</row>
+	<row>
+	 <entry>CETDST</entry>
+	 <entry>+2:00 </entry>
+	 <entry>Central European Daylight Savings Time</entry>
+	</row>
+	<row>
+	 <entry>CST</entry>
+	 <entry>+6:00 </entry>
+	 <entry>Central Std Time</entry>
+	</row>
+	<row>
+	 <entry>DNT</entry>
+	 <entry>+1:00 </entry>
+	 <entry>Dansk Normal Tid</entry>
+	</row>
+	<row>
+	 <entry>DST</entry>
+	 <entry>+1:00 </entry>
+	 <entry>Dansk Standard Time (?)</entry>
+	</row>
+	<row>
+	 <entry>EAST</entry>
+	 <entry>+10:00 </entry>
+	 <entry>East Australian Std Time</entry>
+	</row>
+	<row>
+	 <entry>EDT</entry>
+	 <entry>-4:00 </entry>
+	 <entry>Eastern Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>EET</entry>
+	 <entry>+2:00 </entry>
+	 <entry>Eastern Europe, USSR Zone 1</entry>
+	</row>
+	<row>
+	 <entry>EETDST</entry>
+	 <entry>+3:00 </entry>
+	 <entry>Eastern Europe Daylight Savings Time</entry>
+	</row>
+	<row>
+	 <entry>EST</entry>
+	 <entry>-5:00 </entry>
+	 <entry>Eastern Standard Time</entry>
+	</row>
+	<row>
+	 <entry>FST</entry>
+	 <entry>+1:00 </entry>
+	 <entry>French Summer Time</entry>
+	</row>
+	<row>
+	 <entry>FWT</entry>
+	 <entry>+2:00</entry>
+	 <entry>French Winter Time</entry>
+	</row>
+	<row>
+	 <entry>GMT</entry>
+	 <entry>0:00</entry>
+	 <entry>Greenwish Mean Time</entry>
+	</row>
+	<row>
+	 <entry>GST</entry>
+	 <entry>+10:00</entry>
+	 <entry>Guam Std Time, USSR Zone 9</entry>
+	</row>
+	<row>
+	 <entry>HDT</entry>
+	 <entry>-9:00</entry>
+	 <entry>Hawaii/Alaska</entry>
+	</row>
+	<row>
+	 <entry>IDLE</entry>
+	 <entry>+12:00</entry>
+	 <entry>International Date Line, East</entry>
+	</row>
+	<row>
+	 <entry>IDLW</entry>
+	 <entry>-12:00</entry>
+	 <entry>International Date Line, West</entry>
+	</row>
+	<row>
+	 <entry>IST</entry>
+	 <entry>+2:00</entry>
+	 <entry>Israel</entry>
+	</row>
+	<row>
+	 <entry>IT</entry>
+	 <entry>+3:40</entry>
+	 <entry>Iran Time</entry>
+	</row>
+	<row>
+	 <entry>JST</entry>
+	 <entry>+9:00</entry>
+	 <entry>Japan Std Time,USSR Zone 8</entry>
+	</row>
+	<row>
+	 <entry>JT</entry>
+	 <entry>+7:30</entry>
+	 <entry>Java Time</entry>
+	</row>
+	<row>
+	 <entry>KST</entry>
+	 <entry>+9:00</entry>
+	 <entry>Korea Standard Time</entry>
+	</row>
+	<row>
+	 <entry>LIGT</entry>
+	 <entry>+10:00</entry>
+	 <entry>Melbourne, Australia</entry>
+	</row>
+	<row>
+	 <entry>MDT</entry>
+	 <entry>-6:00</entry>
+	 <entry>Mountain Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>MEST</entry>
+	 <entry>+2:00</entry>
+	 <entry>Middle Europe Summer Time</entry>
+	</row>
+	<row>
+	 <entry>MET</entry>
+	 <entry>+1:00</entry>
+	 <entry>Middle Europe Time</entry>
+	</row>
+	<row>
+	 <entry>METDST</entry>
+	 <entry>+2:00</entry>
+	 <entry>Middle Europe Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>MEWT</entry>
+	 <entry>+1:00</entry>
+	 <entry>Middle Europe Winter Time</entry>
+	</row>
+	<row>
+	 <entry>MEZ</entry>
+	 <entry>+1:00</entry>
+	 <entry>Middle Europe Zone</entry>
+	</row>
+	<row>
+	 <entry>MST</entry>
+	 <entry>-7:00</entry>
+	 <entry>Mountain Standard Time</entry>
+	</row>
+	<row>
+	 <entry>MT</entry>
+	 <entry>+8:30</entry>
+	 <entry>Moluccas Time</entry>
+	</row>
+	<row>
+	 <entry>NDT</entry>
+	 <entry>-2:30</entry>
+	 <entry>Newfoundland Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>NFT</entry>
+	 <entry>-3:30</entry>
+	 <entry>Newfoundland Standard Time</entry>
+	</row>
+	<row>
+	 <entry>NOR</entry>
+	 <entry>+1:00</entry>
+	 <entry>Norway Standard Time</entry>
+	</row>
+	<row>
+	 <entry>NST</entry>
+	 <entry>-3:30</entry>
+	 <entry>Newfoundland Standard Time</entry>
+	</row>
+	<row>
+	 <entry>NT</entry>
+	 <entry>-11:00</entry>
+	 <entry>Nome Time</entry>
+	</row>
+	<row>
+	 <entry>NZDT</entry>
+	 <entry>+13:00</entry>
+	 <entry>New Zealand Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>NZST</entry>
+	 <entry>+12:00</entry>
+	 <entry>New Zealand Std Time</entry>
+	</row>
+	<row>
+	 <entry>NZT</entry>
+	 <entry>+12:00</entry>
+	 <entry>New Zealand Time</entry>
+	</row>
+	<row>
+	 <entry>PDT</entry>
+	 <entry>-7:00</entry>
+	 <entry>Pacific Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>PST</entry>
+	 <entry>-8:00</entry>
+	 <entry>Pacific Std Time</entry>
+	</row>
+	<row>
+	 <entry>SADT</entry>
+	 <entry>+10:30</entry>
+	 <entry>South Australian Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>SAT</entry>
+	 <entry>+9:30</entry>
+	 <entry>South Australian Std Time</entry>
+	</row>
+	<row>
+	 <entry>SET</entry>
+	 <entry>+1:00</entry>
+	 <entry>Seychelles Time</entry>
+	</row>
+	<row>
+	 <entry>SST</entry>
+	 <entry>+2:00</entry>
+	 <entry>Swedish Summer Time</entry>
+	</row>
+	<row>
+	 <entry>SWT</entry>
+	 <entry>+1:00</entry>
+	 <entry>Swedish Winter Time</entry>
+	</row>
+	<row>
+	 <entry>WADT</entry>
+	 <entry>+8:00</entry>
+	 <entry>West Australian Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>WAST</entry>
+	 <entry>+7:00</entry>
+	 <entry>West Australian Std Time</entry>
+	</row>
+	<row>
+	 <entry>WAT</entry>
+	 <entry>-1:00</entry>
+	 <entry>West Africa Time</entry>
+	</row>
+	<row>
+	 <entry>WDT</entry>
+	 <entry>+9:00</entry>
+	 <entry>West Australian Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>WET</entry>
+	 <entry>0:00</entry>
+	 <entry>Western Europe</entry>
+	</row>
+	<row>
+	 <entry>WETDST</entry>
+	 <entry>+1:00</entry>
+	 <entry>Western Europe Daylight Savings Time</entry>
+	</row>
+	<row>
+	 <entry>WST</entry>
+	 <entry>+8:00</entry>
+	 <entry>West Australian Std Time</entry>
+	</row>
+	<row>
+	 <entry>YDT</entry>
+	 <entry>-8:00</entry>
+	 <entry>Yukon Daylight Time</entry>
+	</row>
+	<row>
+	 <entry>YST</entry>
+	 <entry>-9:00</entry>
+	 <entry>Yukon Standard Time</entry>
+	</row>
+	<row>
+	 <entry>ZP4</entry>
+	 <entry>-4:00</entry>
+	 <entry>GMT +4 hours</entry>
+	</row>
+	<row>
+	 <entry>ZP5</entry>
+	 <entry>-5:00</entry>
+	 <entry>GMT +5  hours</entry>
+	</row>
+	<row>
+	 <entry>ZP6</entry>
+	 <entry>-6:00</entry>
+	 <entry>GMT +6  hours</entry>
+	</row>
+       </tbody>
+      </tgroup>
+     </table>
+     <note>
+      <para>
+       If the compiler option USE_AUSTRALIAN_RULES is set 
+       then <literal>EST</literal> refers to Australia Eastern Std Time,
+       which has an offset of +10:00 hours from UTC.
+      </para>
+
+      <para>
+       It is interesting that Australian time zones and their naming variants
+       account for fully one quarter of all time zones in the 
+       <productname>Postgres</productname> time zone lookup table.
+      </para>
+     </note>
+    </para>
+
+    <procedure>
+     <title>Date/Time Input Interpretation</title>
+     <step>
+      <para>
+       Break the input string into tokens and categorize each token as
+       a string, time, time zone, or number.
+      </para>
+
+      <substeps>
+       <step>
+	<para>
+	 If the token contains a colon (":"), this is a time string.
+	</para>
+       </step>
+
+       <step>
+	<para>
+	 If the token contains a dash ("-"), slash ("/"), or dot ("."),
+	 this is a date string which may have a text month.
+	</para>
+       </step>
+
+       <step>
+	<para>
+	 If the token is numeric only, then it is either a single field
+	 or an ISO-8601 concatenated date (e.g. "19990113" for January 13, 1999)
+	 or time (e.g. 141516 for 14:15:16).
+	</para>
+       </step>
+       <step>
+	<para>
+	 If the token starts with a plus ("+") or minus ("-"),
+	 then it is either a time zone or a special field.
+	</para>
+       </step>
+      </substeps>
+     </step>
+
+     <step>
+      <para>
+       If the token is a text string, match up with possible strings.
+      </para>
+
+      <substeps>
+       <step>
+	<para>
+	 Do a binary-search table lookup for the token
+	 as either a special string (e.g. <literal>today</literal>),
+	 day (e.g. <literal>Thursday</literal>),
+	 month (e.g. <literal>January</literal>), or noise word (e.g. <literal>on</literal>).
+	</para>
+	<para>
+	 Set field values and bit mask for fields.
+	 For example, set year, month, day for <literal>today</literal>, and additionally
+	 hour, minute, second for <literal>now</literal>.
+	</para>
+       </step>
+
+       <step>
+	<para>
+	 If not found, do a similar binary-search table lookup to match
+	 the token with a time zone.
+	</para>
+       </step>
+
+       <step>
+	<para>
+	 If not found, throw an error.
+	</para>
+       </step>
+      </substeps>
+     </step>
+
+     <step>
+      <para>
+       The token is a number or number field. If there are more than 4 digits, 
+       and if no other date fields have been previously read, then interpret 
+       as a "concatenated date".
+      </para>
+
+      <substeps>
+       <step>
+	<para>If there </para>
+       </step>
+      </substeps>
+     </step>
+
+     <step>
+      <para>
+      </para>
+     </step>
+
+     <step>
+      <para>
+      </para>
+     </step>
+
+     <step>
+      <para>
+      </para>
+     </step>
+
+     <step>
+      <para>
+      </para>
+     </step>
+
+     <step>
+      <para>
+      </para>
+     </step>
+
+    </procedure>
 </sect2>
 
 <sect2>
