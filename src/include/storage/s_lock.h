@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.71 2000/07/05 16:09:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.72 2000/10/08 04:38:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,10 +270,15 @@ tas(slock_t *s_lock)
  * Note that slock_t on the Alpha AXP is msemaphore instead of char
  * (see storage/ipc.h).
  */
+#include <alpha/builtins.h>
+#if 0
 #define TAS(lock)	  (msem_lock((lock), MSEM_IF_NOWAIT) < 0)
 #define S_UNLOCK(lock) msem_unlock((lock), 0)
 #define S_INIT_LOCK(lock)		msem_init((lock), MSEM_UNLOCKED)
 #define S_LOCK_FREE(lock)	  (!(lock)->msem_state)
+#else
+#define TAS(lock)         (__INTERLOCKED_TESTBITSS_QUAD((lock),0))
+#endif
 
 #else /* i.e. not __osf__ */
 
