@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.77 2003/01/22 20:44:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.78 2003/02/22 05:57:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -808,11 +808,13 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 	 * later bypass any calls which adjust the tm fields.
 	 */
 	if (HasCTZSet && (tzp != NULL))
+	{
 #ifdef HAVE_INT64_TIMESTAMP
 		dt -= (CTimeZone * INT64CONST(1000000));
 #else
 		dt -= CTimeZone;
 #endif
+	}
 
 	time = dt;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -908,9 +910,11 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 #endif
 
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-			*tzp = CTimeZone;	/* V7 conventions; don't know timezone? */
+			*tzp = 0;
+			/* Mark this as *no* time zone available */
+			tm->tm_isdst = -1;
 			if (tzn != NULL)
-				*tzn = CTZName;
+				*tzn = NULL;
 #endif
 
 			dt = dt2local(dt, *tzp);

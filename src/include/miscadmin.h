@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.115 2003/01/09 18:00:24 tgl Exp $
+ * $Id: miscadmin.h,v 1.116 2003/02/22 05:57:45 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -141,10 +141,8 @@ extern DLLIMPORT Oid MyDatabaseId;
  * DateStyle specifies preference for date formatting for output.
  * EuroDates if client prefers dates interpreted and written w/European conventions.
  *
- * HasCTZSet if client timezone is specified by client.
- * CDayLight is the apparent daylight savings time status.
- * CTimeZone is the timezone offset in seconds.
- * CTZName is the timezone label.
+ * HasCTZSet is true if user has set timezone as a numeric offset from UTC.
+ * If so, CTimeZone is the timezone offset in seconds.
  */
 
 #define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
@@ -157,9 +155,7 @@ extern DLLIMPORT Oid MyDatabaseId;
 extern int	DateStyle;
 extern bool EuroDates;
 extern bool HasCTZSet;
-extern bool CDayLight;
 extern int	CTimeZone;
-extern char CTZName[];
 
 extern bool enableFsync;
 extern bool allowSystemTableMods;

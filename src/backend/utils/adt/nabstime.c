@@ -1,4 +1,5 @@
 /*-------------------------------------------------------------------------
+ *
  * nabstime.c
  *	  Utilities for the built-in type "AbsoluteTime".
  *	  Functions for the built-in type "RelativeTime".
@@ -9,9 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.103 2003/02/20 05:24:55 tgl Exp $
- *
- * NOTES
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.104 2003/02/22 05:57:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +21,6 @@
 #include <sys/time.h>
 #include <float.h>
 #include <limits.h>
-
-#if !(defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE))
-#include <sys/timeb.h>
-#endif
 
 #include "access/xact.h"
 #include "miscadmin.h"
@@ -88,78 +83,25 @@ static int istinterval(char *i_string,
 
 
 /* GetCurrentAbsoluteTime()
- * Get the current system time. Set timezone parameters if not specified elsewhere.
- * Define HasCTZSet to allow clients to specify the default timezone.
+ * Get the current system time.
  *
- * Returns the number of seconds since epoch (January 1 1970 GMT)
+ * Returns the number of seconds since epoch (January 1 1970 GMT).
  */
 AbsoluteTime
 GetCurrentAbsoluteTime(void)
 {
 	time_t		now;
 
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-	struct tm  *tm;
-
 	now = time(NULL);
-#else
-	struct timeb tb;			/* the old V7-ism */
-
-	ftime(&tb);
-	now = tb.time;
-#endif
-
-	if (!HasCTZSet)
-	{
-#if defined(HAVE_TM_ZONE)
-		tm = localtime(&now);
-
-		CTimeZone = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
-		CDayLight = (tm->tm_isdst > 0);
-
-#ifdef NOT_USED
-
-		/*
-		 * XXX is there a better way to get local timezone string w/o
-		 * tzname? - tgl 97/03/18
-		 */
-		strftime(CTZName, MAXTZLEN, "%Z", tm);
-#endif
-
-		/*
-		 * XXX FreeBSD man pages indicate that this should work - thomas
-		 * 1998-12-12
-		 */
-		StrNCpy(CTZName, tm->tm_zone, MAXTZLEN+1);
-
-#elif defined(HAVE_INT_TIMEZONE)
-		tm = localtime(&now);
-
-		CDayLight = tm->tm_isdst;
-		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-		StrNCpy(CTZName, tzname[tm->tm_isdst], MAXTZLEN+1);
-#else							/* neither HAVE_TM_ZONE nor
-								 * HAVE_INT_TIMEZONE */
-		CTimeZone = tb.timezone * 60;
-		CDayLight = (tb.dstflag != 0);
-
-		/*
-		 * XXX does this work to get the local timezone string in V7? -
-		 * tgl 97/03/18
-		 */
-		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
-#endif
-	}
-
 	return (AbsoluteTime) now;
-}	/* GetCurrentAbsoluteTime() */
+}
 
 
 /* GetCurrentAbsoluteTimeUsec()
- * Get the current system time. Set timezone parameters if not specified elsewhere.
- * Define HasCTZSet to allow clients to specify the default timezone.
+ * Get the current system time.
  *
- * Returns the number of seconds since epoch (January 1 1970 GMT)
+ * Returns the number of seconds since epoch (January 1 1970 GMT),
+ * and returns fractional seconds (as # of microseconds) into *usec.
  */
 AbsoluteTime
 GetCurrentAbsoluteTimeUsec(int *usec)
@@ -167,85 +109,28 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 	time_t		now;
 	struct timeval tp;
 
-#ifdef NOT_USED
-	struct timezone tpz;
-#endif
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-	struct tm  *tm;
-
-#else
-	struct timeb tb;			/* the old V7-ism */
-#endif
-
 	gettimeofday(&tp, NULL);
-
 	now = tp.tv_sec;
 	*usec = tp.tv_usec;
-
-#ifdef NOT_USED
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-	now = time(NULL);
-#else
-	ftime(&tb);
-	now = tb.time;
-#endif
-#endif
-
-	if (!HasCTZSet)
-	{
-#if defined(HAVE_TM_ZONE)
-		tm = localtime(&now);
-
-		CTimeZone = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
-		CDayLight = (tm->tm_isdst > 0);
-
-#ifdef NOT_USED
-
-		/*
-		 * XXX is there a better way to get local timezone string w/o
-		 * tzname? - tgl 97/03/18
-		 */
-		strftime(CTZName, MAXTZLEN, "%Z", tm);
-#endif
-
-		/*
-		 * XXX FreeBSD man pages indicate that this should work - thomas
-		 * 1998-12-12
-		 */
-		StrNCpy(CTZName, tm->tm_zone, MAXTZLEN+1);
-
-#elif defined(HAVE_INT_TIMEZONE)
-		tm = localtime(&now);
-
-		CDayLight = tm->tm_isdst;
-		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-		StrNCpy(CTZName, tzname[tm->tm_isdst], MAXTZLEN+1);
-#else							/* neither HAVE_TM_ZONE nor
-								 * HAVE_INT_TIMEZONE */
-		CTimeZone = tb.timezone * 60;
-		CDayLight = (tb.dstflag != 0);
-
-		/*
-		 * XXX does this work to get the local timezone string in V7? -
-		 * tgl 97/03/18
-		 */
-		strftime(CTZName, MAXTZLEN, "%Z", localtime(&now));
-#endif
-	};
-
 	return (AbsoluteTime) now;
-}	/* GetCurrentAbsoluteTimeUsec() */
+}
 
 
+/* GetCurrentDateTime()
+ * Get the transaction start time ("now()") broken down as a struct tm.
+ */
 void
 GetCurrentDateTime(struct tm * tm)
 {
 	int			tz;
 
 	abstime2tm(GetCurrentTransactionStartTime(), &tz, tm, NULL);
-}	/* GetCurrentDateTime() */
+}
 
-
+/* GetCurrentTimeUsec()
+ * Get the transaction start time ("now()") broken down as a struct tm,
+ * plus fractional-second and timezone info.
+ */
 void
 GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)
 {
@@ -253,7 +138,7 @@ GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)
 	int			usec;
 
 	abstime2tm(GetCurrentTransactionStartTimeUsec(&usec), &tz, tm, NULL);
-	/* Note: don't pass NULL tzp directly to abstime2tm */
+	/* Note: don't pass NULL tzp to abstime2tm; affects behavior */
 	if (tzp != NULL)
 		*tzp = tz;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -261,22 +146,14 @@ GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)
 #else
 	*fsec = usec * 1.0e-6;
 #endif
-}	/* GetCurrentTimeUsec() */
+}
 
 
 void
 abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 {
 	time_t		time = (time_t) _time;
-
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tx;
-
-#else
-	struct timeb tb;			/* the old V7-ism */
-
-	ftime(&tb);
-#endif
 
 	/*
 	 * If HasCTZSet is true then we have a brute force time zone
@@ -286,7 +163,6 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 	if (HasCTZSet && (tzp != NULL))
 		time -= CTimeZone;
 
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	if ((!HasCTZSet) && (tzp != NULL))
 		tx = localtime((time_t *) &time);
 	else
@@ -336,7 +212,8 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tm->tm_zone, MAXTZLEN + 1);
 				if (strlen(tm->tm_zone) > MAXTZLEN)
-					elog(WARNING, "Invalid timezone \'%s\'", tm->tm_zone);
+					elog(WARNING, "Invalid timezone \'%s\'",
+						 tm->tm_zone);
 			}
 		}
 	}
@@ -369,13 +246,13 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 				 */
 				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
 				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-					elog(WARNING, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
+					elog(WARNING, "Invalid timezone \'%s\'",
+						 tzname[tm->tm_isdst]);
 			}
 		}
 	}
 	else
 		tm->tm_isdst = -1;
-#endif
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 	if (tzp != NULL)
 	{
@@ -391,26 +268,16 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		}
 		else
 		{
-			*tzp = tb.timezone * 60;
-
-			/*
-			 * XXX does this work to get the local timezone string in V7?
-			 * - tgl 97/03/18
-			 */
+			/* default to UTC */
+			*tzp = 0;
 			if (tzn != NULL)
-			{
-				strftime(*tzn, MAXTZLEN, "%Z", localtime(&now));
-				tzn[MAXTZLEN] = '\0';	/* let's just be sure it's
-										 * null-terminated */
-			}
+				*tzn = NULL;
 		}
 	}
 	else
 		tm->tm_isdst = -1;
 #endif
-
-	return;
-}	/* abstime2tm() */
+}
 
 
 /* tm2abstime()
@@ -451,7 +318,7 @@ tm2abstime(struct tm * tm, int tz)
 		return INVALID_ABSTIME;
 
 	return sec;
-}	/* tm2abstime() */
+}
 
 
 /* nabstimein()
@@ -888,9 +755,7 @@ reltime2tm(RelativeTime time, struct tm * tm)
 	TMODULO(time, tm->tm_hour, 3600);
 	TMODULO(time, tm->tm_min, 60);
 	TMODULO(time, tm->tm_sec, 1);
-
-	return;
-}	/* reltime2tm() */
+}
 
 
 /*

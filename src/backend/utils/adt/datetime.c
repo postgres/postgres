@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.101 2003/02/20 05:24:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.102 2003/02/22 05:57:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1604,8 +1604,9 @@ DetermineLocalTimeZone(struct tm * tm)
 			tz = (int) delta2;
 		}
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
+		/* Assume UTC if no system timezone info available */
 		tm->tm_isdst = 0;
-		tz = CTimeZone;
+		tz = 0;
 #endif
 	}
 	else
