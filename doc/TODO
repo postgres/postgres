@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb  7 23:32:04 EST 2002
+Last updated:		Fri Feb  8 01:41:04 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -66,7 +66,6 @@ ADMIN
 * Allow logging of query durations
 * Prevent SIGHUP and 'pg_ctl reload' from changing command line
   specified parameters to postgresql.conf defaults
-* Have checkpoint process identify itself via ps status display
 
 
 DATA TYPES
