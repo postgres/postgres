@@ -1,6 +1,6 @@
 How to install PostgreSQL on Windows NT or Windows 2000
 =======================================================
-$Date: 2001/04/24 20:05:02 $
+$Date: 2001/05/07 16:02:38 $
 
 1.  Install the Cygwin package.
 
@@ -40,4 +40,4 @@ NOTE:  The following are known issues with PostgreSQL on Windows:
     overflowing the listen() backlog queue which causes connection
     refused errors.
 
-Problem reports can be sent to <pgsql-ports@postgresql.org>.
+Problem reports can be sent to <pgsql-cygwin@postgresql.org>.
