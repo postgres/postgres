@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.16 2001/12/03 19:02:58 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.17 2002/02/07 22:20:26 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -38,6 +38,9 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_database.h"
 #include "libpq/pqsignal.h"
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 #include "miscadmin.h"
 #include "utils/memutils.h"
 #include "storage/backendid.h"
@@ -424,8 +427,12 @@ pgstat_report_activity(char *what)
 		return;
 
 	len = strlen(what);
+#ifdef MULTIBYTE
+	len = pg_mbcliplen((const unsigned char *)what, len, PGSTAT_ACTIVITY_SIZE - 1);
+#else
 	if (len >= PGSTAT_ACTIVITY_SIZE)
 		len = PGSTAT_ACTIVITY_SIZE - 1;
+#endif
 
 	memcpy(msg.m_what, what, len);
 	msg.m_what[len] = '\0';
