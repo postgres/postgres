@@ -50,7 +50,7 @@ ERROR:  parser: parse error at or near ","
 --  to avoid a shift/reduce conflict that arises from NOT NULL being
 --  part of the column definition syntax:
 CREATE TABLE error_tbl (b1 bool DEFAULT 1 IN (1, 2));
-ERROR:  parser: parse error at or near "in"
+ERROR:  parser: parse error at or near "IN"
 --  this should work, however:
 CREATE TABLE error_tbl (b1 bool DEFAULT (1 IN (1, 2)));
 DROP TABLE error_tbl;
