@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.179 2005/03/23 07:44:57 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.180 2005/03/24 00:03:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,14 +87,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	ObjectAddress myself,
 				referenced;
 
-    /*
-     * We need to prevent concurrent CREATE TRIGGER commands, as well
-     * as concurrent table modifications (INSERT, DELETE, UPDATE), so
-     * acquire an ExclusiveLock -- it should be fine to allow SELECTs
-     * to proceed. We could perhaps acquire ShareRowExclusiveLock, but
-     * there seems little gain in allowing SELECT FOR UPDATE.
-     */
-	rel = heap_openrv(stmt->relation, ExclusiveLock);
+	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
 	if (stmt->constrrel != NULL)
 		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
