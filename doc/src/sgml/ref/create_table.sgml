@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.79 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.80 2004/03/22 16:18:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -185,18 +185,20 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The <literal>LIKE</literal> clause specifies a table from which
-      the new table automatically inherits all column names, their data types, and
-      not-null constraints.
+      the new table automatically copies all column names, their data types,
+      and their not-null constraints.
      </para>
      <para>
-      Unlike <literal>INHERITS</literal>, the new table and inherited table
-      are complete decoupled after creation has been completed.  Data inserted
-      into the new table will not be reflected into the parent table.
+      Unlike <literal>INHERITS</literal>, the new table and original table
+      are completely decoupled after creation is complete.  Changes to the
+      original table will not be applied to the new table, and it is not
+      possible to include data of the new table in scans of the original
+      table.
      </para>
      <para>
-      Default expressions for the inherited column definitions will only be included if
-      <literal>INCLUDING DEFAULTS</literal> is specified.  The default is to exclude
-      default expressions.
+      Default expressions for the copied column definitions will only be
+      included if <literal>INCLUDING DEFAULTS</literal> is specified.  The
+      default is to exclude default expressions.
      </para>
     </listitem>
    </varlistentry>
@@ -207,12 +209,24 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      <para>
       The optional <literal>INHERITS</> clause specifies a list of
       tables from which the new table automatically inherits all
-      columns.  If the same column name exists in more than one parent
+      columns.
+     </para>
+
+     <para>
+      Use of <literal>INHERITS</> creates a persistent relationship
+      between the new child table and its parent table(s).  Schema
+      modifications to the parent(s) normally propagate to children
+      as well, and by default the data of the child table is included in
+      scans of the parent(s).
+     </para>
+
+     <para>
+      If the same column name exists in more than one parent
       table, an error is reported unless the data types of the columns
       match in each of the parent tables.  If there is no conflict,
       then the duplicate columns are merged to form a single column in
       the new table.  If the column name list of the new table
-      contains a column that is also inherited, the data type must
+      contains a column name that is also inherited, the data type must
       likewise match the inherited column(s), and the column
       definitions are merged into one.  However, inherited and new
       column declarations of the same name need not specify identical
