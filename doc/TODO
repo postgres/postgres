@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Apr 20 16:16:27 EDT 2004
+Last updated:		Wed Apr 28 12:35:30 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -133,7 +133,6 @@ Indexes
   [inheritance]
 * Add UNIQUE capability to non-btree indexes
 * Add rtree index support for line, lseg, path, point
-  columns and indexes with many duplicate keys
 * Use indexes for min() and max() or convert to SELECT col FROM tab ORDER
   BY col DESC LIMIT 1 if appropriate index exists and WHERE clause acceptible
 * Use index to restrict rows returned by multi-key index when used with
