@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.66 2005/03/14 02:14:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.67 2005/03/14 03:59:22 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -676,10 +676,7 @@ $ <userinput>psql -l</userinput>
        <tbody>
         <row>
          <entry><literal>BIG5</literal></entry>
-         <entry><emphasis>BIG5</emphasis>,
-         <literal>EUC_TW</literal>
-         <literal>MULE_INTERNAL</literal>,
-         <literal>UTF8</literal>
+         <entry><emphasis>not available as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -714,14 +711,12 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>GB18030</literal></entry>
-         <entry><emphasis>GB18030</emphasis>,
-         <literal>UTF8</literal>
+         <entry><emphasis>not available as a server encoding</emphasis>
          </entry>
         </row>
         <row>
          <entry><literal>GBK</literal></entry>
-         <entry><emphasis>GBK</emphasis>,
-         <literal>UTF8</literal>
+         <entry><emphasis>not available as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -852,10 +847,7 @@ $ <userinput>psql -l</userinput>
         </row>
         <row> 
          <entry><literal>SJIS</literal></entry>
-         <entry><emphasis>SJIS</emphasis>,
-         <literal>EUC_JP</literal>,
-         <literal>MULE_INTERNAL</literal>,
-         <literal>UTF8</literal>
+         <entry><emphasis>not available as a server encoding</emphasis>
          </entry>
         </row>
         <row>
@@ -867,8 +859,7 @@ $ <userinput>psql -l</userinput>
         </row>
         <row>
          <entry><literal>UHC</literal></entry>
-         <entry><emphasis>UHC</emphasis>,
-         <literal>UTF8</literal>
+         <entry><emphasis>not available as a server encoding</emphasis>
          </entry>
         </row>
         <row>
