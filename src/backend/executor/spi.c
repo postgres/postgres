@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.75.2.3 2003/02/14 21:12:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.75.2.4 2003/09/23 15:11:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1387,7 +1387,8 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 		elog(ERROR, "invalid portal in SPI cursor operation");
 
 	/* Push the SPI stack */
-	_SPI_begin_call(true);
+	if (_SPI_begin_call(true) < 0)
+		elog(ERROR, "SPI cursor operation called while not connected");
 
 	/* Reset the SPI result */
 	SPI_processed = 0;
@@ -1468,8 +1469,7 @@ _SPI_procmem()
 }
 
 /*
- * _SPI_begin_call
- *
+ * _SPI_begin_call: begin a SPI operation within a connected procedure
  */
 static int
 _SPI_begin_call(bool execmem)
@@ -1486,6 +1486,11 @@ _SPI_begin_call(bool execmem)
 	return 0;
 }
 
+/*
+ * _SPI_end_call: end a SPI operation within a connected procedure
+ *
+ * Note: this currently has no failure return cases, so callers don't check
+ */
 static int
 _SPI_end_call(bool procmem)
 {
