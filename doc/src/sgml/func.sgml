@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.185 2003/12/26 21:30:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.186 2004/02/05 22:54:36 joe Exp $
 PostgreSQL documentation
 -->
 
@@ -8199,6 +8199,96 @@ AND
   </sect2>
  </sect1>
 
+ <sect1 id="functions-srf">
+  <title>Set Returning Functions</title>
+
+  <indexterm zone="functions-srf">
+   <primary>set returning functions</primary>
+   <secondary>functions</secondary>
+  </indexterm>
+
+  <para>
+   This section describes functions that possibly return more than one row.
+   Currently the only functions in this class are series generating functions,
+   as detailed in <xref linkend="functions-srf-series">.
+  </para>
+
+  <table id="functions-srf-series">
+   <title>Series Generating Functions</title>
+   <tgroup cols="4">
+    <thead>
+     <row>
+      <entry>Function</entry>
+      <entry>Argument Type</entry>
+      <entry>Return Type</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><literal><function>generate_series</function>(<parameter>start</parameter>, <parameter>stop</parameter>)</literal></entry>
+      <entry><type>int</type> or <type>bigint</type></entry>
+      <entry><type>setof int</type> or <type>setof bigint</type> (same as argument type)</entry>
+      <entry>
+       Generate a series of values, from <parameter>start</parameter> to <parameter>stop</parameter>
+       with a step size of one.
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>generate_series</function>(<parameter>start</parameter>, <parameter>stop</parameter>, <parameter>step</parameter>)</literal></entry>
+      <entry><type>int</type> or <type>bigint</type></entry>
+      <entry><type>setof int</type> or <type>setof bigint</type> (same as argument type)</entry>
+      <entry>
+       Generate a series of values, from <parameter>start</parameter> to <parameter>stop</parameter>
+       with a step size of <parameter>step</parameter>.
+      </entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   When <parameter>step</parameter> is positive, zero rows are returned if
+   <parameter>start</parameter> is greater than <parameter>stop</parameter>.
+   Conversely, when <parameter>step</parameter> is negative, zero rows are
+   returned if <parameter>start</parameter> is less than <parameter>stop</parameter>.
+   Zero rows are also returned for <literal>NULL</literal> inputs. It is an error
+   for <parameter>step</parameter> to be zero. Some examples follow:
+<programlisting>
+select * from generate_series(2,4);
+ generate_series
+-----------------
+               2
+               3
+               4
+(3 rows)
+
+select * from generate_series(5,1,-2);
+ generate_series
+-----------------
+               5
+               3
+               1
+(3 rows)
+
+select * from generate_series(4,3);
+ generate_series
+-----------------
+(0 rows)
+
+select current_date + s.a as dates from generate_series(0,14,7) as s(a);
+   dates
+------------
+ 2004-02-05
+ 2004-02-12
+ 2004-02-19
+(3 rows)
+</programlisting>
+  </para>
+ </sect1>
 </chapter>
 
 <!-- Keep this comment at the end of the file
