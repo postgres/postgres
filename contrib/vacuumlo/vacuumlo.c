@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.21 2003/08/04 02:39:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.22 2003/08/04 22:03:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,8 +256,9 @@ vacuumlo(char *database, struct _param * param)
 	/*
 	 * Now find any candidate tables who have columns of type oid.
 	 *
-	 * NOTE: the temp table formed above is ignored, because its real table
-	 * name will be pg_something.  Also, pg_largeobject will be ignored.
+	 * NOTE: we ignore system tables and temp tables by the expedient of
+	 * rejecting tables in schemas named 'pg_*'.  In particular, the temp
+	 * table formed above is ignored, and pg_largeobject will be too.
 	 * If either of these were scanned, obviously we'd end up with nothing
 	 * to delete...
 	 *
@@ -266,14 +267,14 @@ vacuumlo(char *database, struct _param * param)
 	 */
 	buf[0] = '\0';
 	strcat(buf, "SELECT c.relname, a.attname ");
-	strcat(buf, "FROM pg_class c, pg_attribute a, pg_type t ");
+	strcat(buf, "FROM pg_class c, pg_attribute a, pg_namespace s, pg_type t ");
 	strcat(buf, "WHERE a.attnum > 0 ");
 	strcat(buf, "      AND a.attrelid = c.oid ");
 	strcat(buf, "      AND a.atttypid = t.oid ");
+	strcat(buf, "      AND c.relnamespace = s.oid ");
 	strcat(buf, "      AND t.typname in ('oid', 'lo') ");
 	strcat(buf, "      AND c.relkind = 'r'");
-	strcat(buf, "      AND c.relname NOT LIKE 'pg_%'");
-	strcat(buf, "      AND c.relname != 'vacuum_l'");
+	strcat(buf, "      AND s.nspname NOT LIKE 'pg\\\\_%'");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
@@ -296,12 +297,14 @@ vacuumlo(char *database, struct _param * param)
 			fprintf(stdout, "Checking %s in %s\n", field, table);
 
 		/*
-		 * We use a DELETE with implicit join for efficiency.  This is a
-		 * Postgres-ism and not portable to other DBMSs, but then this
-		 * whole program is a Postgres-ism.
+		 * The "IN" construct used here was horribly inefficient before
+		 * Postgres 7.4, but should be now competitive if not better than
+		 * the bogus join we used before.
 		 */
-		snprintf(buf, BUFSIZE, "DELETE FROM vacuum_l WHERE lo = \"%s\".\"%s\" ",
-				 table, field);
+		snprintf(buf, BUFSIZE,
+				 "DELETE FROM vacuum_l "
+				 "WHERE lo IN (SELECT \"%s\" FROM \"%s\")",
+				 field, table);
 		res2 = PQexec(conn, buf);
 		if (PQresultStatus(res2) != PGRES_COMMAND_OK)
 		{
@@ -388,10 +391,10 @@ void
 usage(void)
 {
 	fprintf(stdout, "vacuumlo removes unreferenced large objects from databases\n\n");
-	fprintf(stdout, "Usage:\n  vacuumlo [options] dbname [dbnames...]\n\n");
+	fprintf(stdout, "Usage:\n  vacuumlo [options] dbname [dbname ...]\n\n");
 	fprintf(stdout, "Options:\n");
-	fprintf(stdout, "  -v\t\tWrite a lot of output\n");
-	fprintf(stdout, "  -n\t\tDon't remove any large object, just show what would be done\n");
+	fprintf(stdout, "  -v\t\tWrite a lot of progress messages\n");
+	fprintf(stdout, "  -n\t\tDon't remove large objects, just show what would be done\n");
 	fprintf(stdout, "  -U username\tUsername to connect as\n");
 	fprintf(stdout, "  -W\t\tPrompt for password\n");
 	fprintf(stdout, "  -h hostname\tDatabase server host\n");
