@@ -80,7 +80,8 @@
    glimpse.
    
    make_diff has tools to create patch diff files that can be applied to
-   the distribution.
+   the distribution. This produces context diffs, which is our preferred
+   format.
    
    Our standard format is to indent each code level with one tab, where
    each tab is four spaces. You will need to set your editor to display
