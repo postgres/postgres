@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.29 1999/10/07 04:23:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.30 1999/12/09 05:58:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,13 +19,21 @@
 #include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+typedef struct {
+	ParseState *pstate;
+	List	   *groupClauses;
+} check_ungrouped_columns_context;
+
 static bool contain_agg_clause(Node *clause);
 static bool contain_agg_clause_walker(Node *node, void *context);
-static bool exprIsAggOrGroupCol(Node *expr, List *groupClauses);
-static bool exprIsAggOrGroupCol_walker(Node *node, List *groupClauses);
+static void check_ungrouped_columns(Node *node, ParseState *pstate,
+									List *groupClauses);
+static bool check_ungrouped_columns_walker(Node *node,
+										   check_ungrouped_columns_context *context);
 
 /*
  * contain_agg_clause
@@ -53,9 +61,11 @@ contain_agg_clause_walker(Node *node, void *context)
 }
 
 /*
- * exprIsAggOrGroupCol -
- *	  returns true if the expression does not contain non-group columns,
- *	  other than within the arguments of aggregate functions.
+ * check_ungrouped_columns -
+ *	  Scan the given expression tree for ungrouped variables (variables
+ *	  that are not listed in the groupClauses list and are not within
+ *	  the arguments of aggregate functions).  Emit a suitable error message
+ *	  if any are found.
  *
  * NOTE: we assume that the given clause has been transformed suitably for
  * parser output.  This means we can use the planner's expression_tree_walker.
@@ -68,50 +78,70 @@ contain_agg_clause_walker(Node *node, void *context)
  * inside the subquery and converted them into a list of parameters for the
  * subquery.
  */
-static bool
-exprIsAggOrGroupCol(Node *expr, List *groupClauses)
+static void
+check_ungrouped_columns(Node *node, ParseState *pstate,
+						List *groupClauses)
 {
-	/* My walker returns TRUE if it finds a subexpression that is NOT
-	 * acceptable (since we can abort the recursion at that point).
-	 * So, invert its result.
-	 */
-	return ! exprIsAggOrGroupCol_walker(expr, groupClauses);
+	check_ungrouped_columns_context	context;
+
+	context.pstate = pstate;
+	context.groupClauses = groupClauses;
+	check_ungrouped_columns_walker(node, &context);
 }
 
 static bool
-exprIsAggOrGroupCol_walker(Node *node, List *groupClauses)
+check_ungrouped_columns_walker(Node *node,
+							   check_ungrouped_columns_context *context)
 {
 	List	   *gl;
 
 	if (node == NULL)
 		return false;
-	if (IsA(node, Aggref))
-		return false;			/* OK; do not examine argument of aggregate */
 	if (IsA(node, Const) || IsA(node, Param))
 		return false;			/* constants are always acceptable */
-	/* Now check to see if expression as a whole matches any GROUP BY item.
-	 * We need to do this at every recursion level so that we recognize
-	 * GROUPed-BY expressions.
+	/*
+	 * If we find an aggregate function, do not recurse into its arguments.
 	 */
-	foreach(gl, groupClauses)
+	if (IsA(node, Aggref))
+		return false;
+	/*
+	 * Check to see if subexpression as a whole matches any GROUP BY item.
+	 * We need to do this at every recursion level so that we recognize
+	 * GROUPed-BY expressions before reaching variables within them.
+	 */
+	foreach(gl, context->groupClauses)
 	{
 		if (equal(node, lfirst(gl)))
 			return false;		/* acceptable, do not descend more */
 	}
-	/* If we have an ungrouped Var, we have a failure --- unless it is an
+	/*
+	 * If we have an ungrouped Var, we have a failure --- unless it is an
 	 * outer-level Var.  In that case it's a constant as far as this query
 	 * level is concerned, and we can accept it.  (If it's ungrouped as far
 	 * as the upper query is concerned, that's someone else's problem...)
 	 */
 	if (IsA(node, Var))
 	{
-		if (((Var *) node)->varlevelsup == 0)
-			return true;		/* found an ungrouped local variable */
-		return false;			/* outer-level Var is acceptable */
+		Var			   *var = (Var *) node;
+		RangeTblEntry  *rte;
+		char		   *attname;
+
+		if (var->varlevelsup > 0)
+			return false;		/* outer-level Var is acceptable */
+		/* Found an ungrouped local variable; generate error message */
+		Assert(var->varno > 0 &&
+			   var->varno <= length(context->pstate->p_rtable));
+		rte = rt_fetch(var->varno, context->pstate->p_rtable);
+		attname = get_attname(rte->relid, var->varattno);
+		if (! attname)
+			elog(ERROR, "cache lookup of attribute %d in relation %u failed",
+				 var->varattno, rte->relid);
+		elog(ERROR, "Attribute %s.%s must be GROUPed or used in an aggregate function",
+			 rte->refname, attname);
 	}
 	/* Otherwise, recurse. */
-	return expression_tree_walker(node, exprIsAggOrGroupCol_walker,
-								  (void *) groupClauses);
+	return expression_tree_walker(node, check_ungrouped_columns_walker,
+								  (void *) context);
 }
 
 /*
@@ -135,9 +165,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	/*
 	 * Aggregates must never appear in WHERE clauses. (Note this check
 	 * should appear first to deliver an appropriate error message;
-	 * otherwise we are likely to generate the generic "illegal use of
-	 * aggregates in target list" message, which is outright misleading if
-	 * the problem is in WHERE.)
+	 * otherwise we are likely to complain about some innocent variable
+	 * in the target list, which is outright misleading if the problem
+	 * is in WHERE.)
 	 */
 	if (contain_agg_clause(qry->qual))
 		elog(ERROR, "Aggregates not allowed in WHERE clause");
@@ -146,8 +176,8 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * No aggregates allowed in GROUP BY clauses, either.
 	 *
 	 * While we are at it, build a list of the acceptable GROUP BY expressions
-	 * for use by exprIsAggOrGroupCol() (this avoids repeated scans of the
-	 * targetlist within the recursive routines...)
+	 * for use by check_ungrouped_columns() (this avoids repeated scans of the
+	 * targetlist within the recursive routine...)
 	 */
 	foreach(tl, qry->groupClause)
 	{
@@ -161,26 +191,10 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	}
 
 	/*
-	 * The expression specified in the HAVING clause can only contain
-	 * aggregates, group columns and functions thereof.  As with WHERE,
-	 * we want to point the finger at HAVING before the target list.
+	 * Check the targetlist and HAVING clause for ungrouped variables.
 	 */
-	if (!exprIsAggOrGroupCol(qry->havingQual, groupClauses))
-		elog(ERROR,
-			 "Illegal use of aggregates or non-group column in HAVING clause");
-
-	/*
-	 * The target list can only contain aggregates, group columns and
-	 * functions thereof.
-	 */
-	foreach(tl, qry->targetList)
-	{
-		TargetEntry *tle = lfirst(tl);
-
-		if (!exprIsAggOrGroupCol(tle->expr, groupClauses))
-			elog(ERROR,
-				 "Illegal use of aggregates or non-group column in target list");
-	}
+	check_ungrouped_columns((Node *) qry->targetList, pstate, groupClauses);
+	check_ungrouped_columns((Node *) qry->havingQual, pstate, groupClauses);
 
 	/* Release the list storage (but not the pointed-to expressions!) */
 	freeList(groupClauses);

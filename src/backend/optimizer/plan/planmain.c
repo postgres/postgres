@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.47 1999/11/15 02:00:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.48 1999/12/09 05:58:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,10 +100,7 @@ query_planner(Query *root,
 			 * Note we do NOT do this for subplans in WHERE; it's legal
 			 * there because WHERE is evaluated pre-GROUP.
 			 */
-			if (check_subplans_for_ungrouped_vars((Node *) tlist,
-												  root->groupClause,
-												  tlist))
-				elog(ERROR, "Sub-SELECT must use only GROUPed attributes from outer SELECT");
+			check_subplans_for_ungrouped_vars((Node *) tlist, root, tlist);
 		}
 	}
 

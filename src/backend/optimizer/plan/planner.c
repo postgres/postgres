@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.71 1999/11/15 02:00:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.72 1999/12/09 05:58:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,10 +344,9 @@ union_planner(Query *parse)
 			/* Expand SubLinks to SubPlans */
 			parse->havingQual = SS_process_sublinks(parse->havingQual);
 			/* Check for ungrouped variables passed to subplans */
-			if (check_subplans_for_ungrouped_vars(parse->havingQual,
-												  parse->groupClause,
-												  parse->targetList))
-				elog(ERROR, "Sub-SELECT must use only GROUPed attributes from outer SELECT");
+			check_subplans_for_ungrouped_vars(parse->havingQual,
+											  parse,
+											  parse->targetList);
 		}
 	}
 

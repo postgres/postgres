@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.55 1999/11/22 17:56:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.56 1999/12/09 05:58:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -30,6 +30,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_type.h"
+#include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -40,7 +41,7 @@
 						(isnull), true, false, false))
 
 typedef struct {
-	List	   *groupClause;
+	Query	   *query;
 	List	   *targetList;
 } check_subplans_for_ungrouped_vars_context;
 
@@ -427,28 +428,30 @@ pull_agg_clause_walker(Node *node, List **listptr)
 /*
  * check_subplans_for_ungrouped_vars
  *		Check for subplans that are being passed ungrouped variables as
- *		parameters; return TRUE if any are found.
+ *		parameters; generate an error message if any are found.
  *
  * In most contexts, ungrouped variables will be detected by the parser (see
- * parse_agg.c, exprIsAggOrGroupCol()). But that routine currently does not
- * check subplans, because the necessary info is not computed until the
+ * parse_agg.c, check_ungrouped_columns()). But that routine currently does
+ * not check subplans, because the necessary info is not computed until the
  * planner runs.  So we do it here, after we have processed the subplan.
  * This ought to be cleaned up someday.
  *
  * 'clause' is the expression tree to be searched for subplans.
- * 'groupClause' is the GROUP BY list (a list of GroupClause nodes).
+ * 'query' provides the GROUP BY list and range table.
  * 'targetList' is the target list that the group clauses refer to.
+ * (Is it really necessary to pass the tlist separately?  Couldn't we
+ * just use the tlist found in the query node?)
  */
-bool
+void
 check_subplans_for_ungrouped_vars(Node *clause,
-								  List *groupClause,
+								  Query *query,
 								  List *targetList)
 {
 	check_subplans_for_ungrouped_vars_context context;
 
-	context.groupClause = groupClause;
+	context.query = query;
 	context.targetList = targetList;
-	return check_subplans_for_ungrouped_vars_walker(clause, &context);
+	check_subplans_for_ungrouped_vars_walker(clause, &context);
 }
 
 static bool
@@ -472,10 +475,27 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 		foreach(t, ((Expr *) node)->args)
 		{
 			Node	   *thisarg = lfirst(t);
-			bool		contained_in_group_clause = false;
+			Var		   *var;
+			bool		contained_in_group_clause;
 			List	   *gl;
 
-			foreach(gl, context->groupClause)
+			/*
+			 * We do not care about args that are not local variables;
+			 * params or outer-level vars are not our responsibility to
+			 * check.  (The outer-level query passing them to us needs
+			 * to worry, instead.)
+			 */
+			if (! IsA(thisarg, Var))
+				continue;
+			var = (Var *) thisarg;
+			if (var->varlevelsup > 0)
+				continue;
+
+			/*
+			 * Else, see if it is a grouping column.
+			 */
+			contained_in_group_clause = false;
+			foreach(gl, context->query->groupClause)
 			{
 				GroupClause	   *gcl = lfirst(gl);
 				Node		   *groupexpr;
@@ -490,7 +510,21 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 			}
 
 			if (!contained_in_group_clause)
-				return true;	/* found an ungrouped argument */
+			{
+				/* Found an ungrouped argument.  Complain. */
+				RangeTblEntry  *rte;
+				char		   *attname;
+
+				Assert(var->varno > 0 &&
+					   var->varno <= length(context->query->rtable));
+				rte = rt_fetch(var->varno, context->query->rtable);
+				attname = get_attname(rte->relid, var->varattno);
+				if (! attname)
+					elog(ERROR, "cache lookup of attribute %d in relation %u failed",
+						 var->varattno, rte->relid);
+				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
+					 rte->refname, attname);
+			}
 		}
 	}
 	return expression_tree_walker(node,
