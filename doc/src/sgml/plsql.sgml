@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.32 2001/05/17 21:50:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.33 2001/05/22 13:52:27 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -880,12 +880,11 @@ RETURN <replaceable>expression</replaceable>
     <title>Conditional Control: IF statements</title>
 
     <para>
-     <function>IF</function> statements let you take action
-     according to certain conditions. PL/pgSQL has three forms of
-     IF: IF-THEN, IF-THEN-ELSE, IF-THEN-ELSE IF. NOTE: All
-     PL/pgSQL IF statements need a corresponding <function>END
-     IF</function> statement. In ELSE-IF statements you need two:
-     one for the first IF and one for the second (ELSE IF).
+	<function>IF</function> statements let you execute commands based on
+      certain conditions. PL/PgSQL has four forms of IF: IF-THEN, IF-THEN-ELSE,
+      IF-THEN-ELSE IF, IF-THEN-ELSIF-THEN-ELSE. NOTE: All PL/PgSQL IF statements need
+	a corresponding <function>END IF</function> clause. With ELSE-IF statements,
+      you need two: one for the first IF and one for the second (ELSE IF).
     </para>
 
     <variablelist>
@@ -979,6 +978,41 @@ END IF;
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>
+       IF-THEN-ELSIF-ELSE
+      </term>
+
+      <listitem>
+       <para>
+        IF-THEN-ELSIF-ELSE allows you test multiple conditions
+        in one statement. Internally it is handled as nested 
+        IF-THEN-ELSE-IF-THEN commands. The optional ELSE
+        branch is executed when none of the conditions are met.
+       </para>
+
+       <para>
+        Here is an example:
+       </para>
+
+<programlisting>
+IF number = 0 THEN
+    result := ''zero'';
+ELSIF number &lt; 0 THEN
+    result := ''negative'';
+ELSIF number &gt; 0 THEN 
+    result := ''negative'';
+ELSE
+    -- now it seems to be NULL
+    result := ''NULL'';
+END IF;
+</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+
     </variablelist>
    </sect3>
 
