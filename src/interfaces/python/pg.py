@@ -63,17 +63,6 @@ class DB:
 							# that takes a single string arg.  For example
 							# in a CGI set to "%s<BR>"
 
-		# Get all the primary keys at once
-		for rel, att in self.db.query("""SELECT
-							pg_class.relname, pg_attribute.attname
-						FROM pg_class, pg_attribute, pg_index
-						WHERE pg_class.oid = pg_attribute.attrelid AND
-							pg_class.oid = pg_index.indrelid AND
-							pg_index.indkey[0] = pg_attribute.attnum AND 
-							pg_index.indisprimary = 't' AND
-							pg_attribute.attisdropped = 'f'""").getresult():
-			self.__pkeys__[rel] = att
-
 	def _do_debug(self, s):
 		if not self.debug: return
 		if type(self.debug) == StringType: print self.debug % s
@@ -85,10 +74,30 @@ class DB:
 		self._do_debug(qstr)
 		return self.db.query(qstr)
 
-	# If third arg supplied set primary key to it
 	def pkey(self, cl, newpkey = None):
+		"""This method returns the primary key of a class.  If newpkey
+			is set and is set and is not a dictionary then set that
+			value as the primary key of the class.  If it is a dictionary
+			then replace the __pkeys__ dictionary with it."""
+		# Get all the primary keys at once
+		if type(newpkey) == DictType:
+			self.__pkeys__ = newpkey
+			return
+
 		if newpkey:
 			self.__pkeys__[cl] = newpkey
+			return newpkey
+
+		if self.__pkeys__ == {}:
+			for rel, att in self.db.query("""SELECT
+							pg_class.relname, pg_attribute.attname
+						FROM pg_class, pg_attribute, pg_index
+						WHERE pg_class.oid = pg_attribute.attrelid AND
+							pg_class.oid = pg_index.indrelid AND
+							pg_index.indkey[0] = pg_attribute.attnum AND 
+							pg_index.indisprimary = 't' AND
+							pg_attribute.attisdropped = 'f'""").getresult():
+				self.__pkeys__[rel] = att
 
 		# will raise an exception if primary key doesn't exist
 		return self.__pkeys__[cl]
@@ -108,7 +117,17 @@ class DB:
 			l.append(n[0])
 		return l
 
-	def get_attnames(self, cl):
+	def get_attnames(self, cl, newattnames = None):
+		"""This method gets a list of attribute names for a class.  If
+			the optional newattnames exists it must be a dictionary and
+			will become the new attribute names dictionary."""
+
+		if type(newattnames) == DictType:
+			self.__attnames__ = newattnames
+			return
+		elif newattnames:
+			raise error, "If supplied, newattnames must be a dictionary"
+
 		# May as well cache them
 		if self.__attnames__.has_key(cl):
 			return self.__attnames__[cl]
@@ -160,7 +179,7 @@ class DB:
 			xcl = cl
 
 		if keyname == None:			# use the primary key by default
-			keyname = self.__pkeys__[xcl]
+			keyname = self.pkey(xcl)
 
 		fnames = self.get_attnames(xcl)
 
@@ -225,6 +244,8 @@ class DB:
 	# Update always works on the oid which get returns if available
 	# otherwise use the primary key.  Fail if neither.
 	def update(self, cl, a):
+		self.pkey(cl)		# make sure we have a self.__pkeys__ dictionary
+
 		foid = 'oid_%s' % cl
 		if a.has_key(foid):
 			where = "oid = %s" % a[foid]
