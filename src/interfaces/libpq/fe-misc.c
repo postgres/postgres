@@ -24,12 +24,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.27 1999/07/19 02:27:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.28 1999/07/19 06:25:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <unistd.h>
 #include <sys/time.h>
 #include <errno.h>
 #include <signal.h>
@@ -42,6 +41,8 @@
 
 #ifdef WIN32
 #include "win32.h"
+#else
+#include <unistd.h>
 #endif
 
 #ifdef HAVE_SYS_SELECT_H

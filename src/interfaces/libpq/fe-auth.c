@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.31 1999/07/19 02:27:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.32 1999/07/19 06:25:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
  *
  */
 
-#include <unistd.h>
-
 #include "postgres.h"
 #include "libpq-fe.h"
 #include "libpq-int.h"
@@ -35,6 +33,7 @@
 #ifdef WIN32
 #include "win32.h"
 #else
+#include <unistd.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */

@@ -9,11 +9,10 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.25 1999/07/19 02:27:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.26 1999/07/19 06:25:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <unistd.h>
 #include <signal.h>
 
 #include "postgres.h"
@@ -24,6 +23,7 @@
 #ifdef WIN32
 #include "win32.h"
 #else
+#include <unistd.h>
 #include <sys/ioctl.h>
 #endif
 

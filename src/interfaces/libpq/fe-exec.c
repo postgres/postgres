@@ -7,11 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.83 1999/07/19 02:27:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.84 1999/07/19 06:25:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <unistd.h>
 #include <errno.h>
 #include <ctype.h>
 
@@ -21,6 +20,8 @@
 
 #ifdef WIN32
 #include "win32.h"
+#else
+#include <unistd.h>
 #endif
 
 

@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.100 1999/07/19 02:27:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.101 1999/07/19 06:25:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
@@ -25,6 +24,7 @@
 #ifdef WIN32
 #include "win32.h"
 #else
+#include <unistd.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
 #endif
