@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.37 2001/01/12 21:54:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.38 2001/01/23 01:01:36 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -879,10 +879,60 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	}
 	else
 	{
+		/*
+		 * Small-chunk case.  If the chunk is the last one in its block,
+		 * there might be enough free space after it that we can just
+		 * enlarge the chunk in-place.  It's relatively painful to find
+		 * the containing block in the general case, but we can detect
+		 * last-ness quite cheaply for the typical case where the chunk
+		 * is in the active (topmost) allocation block.  (At least with
+		 * the regression tests and code as of 1/2001, realloc'ing the last
+		 * chunk of a non-topmost block hardly ever happens, so it's not
+		 * worth scanning the block list to catch that case.)
+		 *
+		 * NOTE: must be careful not to create a chunk of a size that
+		 * AllocSetAlloc would not create, else we'll get confused later.
+		 */
+		AllocPointer newPointer;
+
+		if (size <= ALLOC_CHUNK_LIMIT)
+		{
+			AllocBlock	block = set->blocks;
+			char	   *chunk_end;
+
+			chunk_end = (char *) chunk + (oldsize + ALLOC_CHUNKHDRSZ);
+			if (chunk_end == block->freeptr)
+			{ 
+				/* OK, it's last in block ... is there room? */
+				Size	freespace = block->endptr - block->freeptr;
+				int		fidx;
+				Size	newsize;
+				Size	delta;
+
+				fidx = AllocSetFreeIndex(size);
+				newsize = 1 << (fidx + ALLOC_MINBITS);
+				Assert(newsize >= oldsize);
+				delta = newsize - oldsize;
+				if (freespace >= delta)
+				{
+					/* Yes, so just enlarge the chunk. */
+					block->freeptr += delta;
+					chunk->size += delta;
+#ifdef MEMORY_CONTEXT_CHECKING		
+					chunk->requested_size = size;
+					/* set mark to catch clobber of "unused" space */
+					if (size < chunk->size)
+						((char *) pointer)[size] = 0x7E;
+#endif
+					return pointer;
+				}
+			}
+		}
+
 		/* Normal small-chunk case: just do it by brute force. */
 
 		/* allocate new chunk */
-		AllocPointer newPointer = AllocSetAlloc((MemoryContext) set, size);
+		newPointer = AllocSetAlloc((MemoryContext) set, size);
 
 		/* transfer existing data (certain to fit) */
 		memcpy(newPointer, pointer, oldsize);
