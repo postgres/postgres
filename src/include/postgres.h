@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.52 2001/08/24 22:46:28 petere Exp $
+ * $Id: postgres.h,v 1.53 2001/10/03 21:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -562,7 +562,10 @@ extern DLLIMPORT bool assert_enabled;
 extern int ExceptionalCondition(char *conditionName,
 					 Exception *exceptionP, char *details,
 					 char *fileName, int lineNumber);
-extern char *vararg_format(const char *fmt,...);
+
+extern char *vararg_format(const char *fmt, ...)
+/* This lets gcc check the format string for consistency. */
+__attribute__((format(printf, 1, 2)));
 
 #ifndef USE_ASSERT_CHECKING
 #define LogAssert(condition, printArgs)

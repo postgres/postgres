@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.101 2001/08/27 23:02:25 tgl Exp $
+ * $Id: c.h,v 1.102 2001/10/03 21:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -634,13 +634,13 @@ typedef NameData *Name;
  */
 
 #ifndef HAVE_SNPRINTF_DECL
-extern int	snprintf(char *str, size_t count, const char *fmt,...);
-
+extern int	snprintf(char *str, size_t count, const char *fmt, ...)
+/* This extension allows gcc to check the format string */
+__attribute__((format(printf, 3, 4)));
 #endif
 
 #ifndef HAVE_VSNPRINTF_DECL
 extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
-
 #endif
 
 #if !defined(HAVE_MEMMOVE) && !defined(memmove)

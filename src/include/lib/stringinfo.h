@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.19 2001/01/24 19:43:24 momjian Exp $
+ * $Id: stringinfo.h,v 1.20 2001/10/03 21:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,9 @@ extern void initStringInfo(StringInfo str);
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
-extern void appendStringInfo(StringInfo str, const char *fmt,...);
+extern void appendStringInfo(StringInfo str, const char *fmt, ...)
+/* This extension allows gcc to check the format string */
+__attribute__((format(printf, 2, 3)));
 
 /*------------------------
  * appendStringInfoChar

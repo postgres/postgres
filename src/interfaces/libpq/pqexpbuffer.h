@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqexpbuffer.h,v 1.6 2001/01/24 19:43:31 momjian Exp $
+ * $Id: pqexpbuffer.h,v 1.7 2001/10/03 21:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,9 @@ extern int	enlargePQExpBuffer(PQExpBuffer str, size_t needed);
  * This is a convenience routine that does the same thing as
  * resetPQExpBuffer() followed by appendPQExpBuffer().
  */
-extern void printfPQExpBuffer(PQExpBuffer str, const char *fmt,...);
+extern void printfPQExpBuffer(PQExpBuffer str, const char *fmt, ...)
+/* This extension allows gcc to check the format string */
+__attribute__((format(printf, 2, 3)));
 
 /*------------------------
  * appendPQExpBuffer
@@ -131,7 +133,9 @@ extern void printfPQExpBuffer(PQExpBuffer str, const char *fmt,...);
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
-extern void appendPQExpBuffer(PQExpBuffer str, const char *fmt,...);
+extern void appendPQExpBuffer(PQExpBuffer str, const char *fmt, ...)
+/* This extension allows gcc to check the format string */
+__attribute__((format(printf, 2, 3)));
 
 /*------------------------
  * appendPQExpBufferStr

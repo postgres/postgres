@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.244 2001/09/30 20:08:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.245 2001/10/03 21:58:28 tgl Exp $
  *
  * NOTES
  *
@@ -251,13 +251,9 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 static pid_t SSDataBase(int xlop);
-#ifdef __GNUC__
-/* This checks the format string for consistency. */
 static void postmaster_error(const char *fmt, ...)
-	__attribute__((format(printf, 1, 2)));
-#else
-static void postmaster_error(const char *fmt, ...);
-#endif
+/* This lets gcc check the format string for consistency. */
+__attribute__((format(printf, 1, 2)));
 
 #define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
 #define CheckPointDataBase()	SSDataBase(BS_XLOG_CHECKPOINT)

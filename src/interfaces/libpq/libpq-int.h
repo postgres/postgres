@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.39 2001/08/17 02:59:20 momjian Exp $
+ * $Id: libpq-int.h,v 1.40 2001/10/03 21:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,10 +346,7 @@ extern int	pqWriteReady(PGconn *conn);
 
 #ifdef ENABLE_NLS
 extern char * libpq_gettext(const char *msgid)
-#ifdef __GNUC__
-__attribute__((format_arg(1)))
-#endif
-;
+__attribute__((format_arg(1)));
 #else
 #define libpq_gettext(x) (x)
 #endif

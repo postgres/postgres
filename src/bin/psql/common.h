@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.13 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.14 2001/10/03 21:58:28 tgl Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -13,33 +13,28 @@
 #include "pqsignal.h"
 #include "libpq-fe.h"
 
-char	   *xstrdup(const char *string);
+extern char	   *xstrdup(const char *string);
 
-bool		setQFout(const char *fname);
+extern bool		setQFout(const char *fname);
 
-#ifndef __GNUC__
-void		psql_error(const char *fmt,...);
+extern void		psql_error(const char *fmt, ...)
+/* This lets gcc check the format string for consistency. */
+__attribute__((format(printf, 1, 2)));
 
-#else
-/* This checks the format string for consistency. */
-void		psql_error(const char *fmt,...) __attribute__((format(printf, 1, 2)));
+extern void		NoticeProcessor(void *arg, const char *message);
 
-#endif
-
-void		NoticeProcessor(void *arg, const char *message);
-
-char	   *simple_prompt(const char *prompt, int maxlen, bool echo);
+extern char	   *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 extern volatile bool cancel_pressed;
 extern PGconn *cancelConn;
 
 #ifndef WIN32
-void		handle_sigint(SIGNAL_ARGS);
+extern void		handle_sigint(SIGNAL_ARGS);
 
 #endif	 /* not WIN32 */
 
-PGresult   *PSQLexec(const char *query);
+extern PGresult   *PSQLexec(const char *query);
 
-bool		SendQuery(const char *query);
+extern bool		SendQuery(const char *query);
 
 #endif	 /* COMMON_H */
