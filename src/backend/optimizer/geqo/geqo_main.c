@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.42 2004/01/21 23:33:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.43 2004/01/23 23:54:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,9 @@
 /*
  * Configuration options
  */
+int			Geqo_effort;
 int			Geqo_pool_size;
 int			Geqo_generations;
-int			Geqo_effort;
 double		Geqo_selection_bias;
 
 
@@ -66,6 +66,7 @@ static int	gimme_number_generations(int pool_size);
 RelOptInfo *
 geqo(Query *root, int number_of_rels, List *initial_rels)
 {
+	GeqoEvalData evaldata;
 	int			generation;
 	Chromosome *momma;
 	Chromosome *daddy;
@@ -90,6 +91,10 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	int			mutations = 0;
 #endif
 
+/* set up evaldata */
+	evaldata.root = root;
+	evaldata.initial_rels = initial_rels;
+
 /* set GA parameters */
 	pool_size = gimme_pool_size(number_of_rels);
 	number_generations = gimme_number_generations(pool_size);
@@ -99,7 +104,7 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	pool = alloc_pool(pool_size, number_of_rels);
 
 /* random initialization of the pool */
-	random_init_pool(root, initial_rels, pool, 0, pool->size);
+	random_init_pool(pool, &evaldata);
 
 /* sort the pool according to cheapest path as fitness */
 	sort_pool(pool);			/* we have to do it only one time, since
@@ -107,41 +112,54 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 								 * in future (-> geqo_pool.c:spread_chromo
 								 * ) */
 
+#ifdef GEQO_DEBUG
+	elog(DEBUG1, "GEQO selected %d pool entries, best %.2f, worst %.2f",
+		 pool_size,
+		 pool->data[0].worth,
+		 pool->data[pool_size - 1].worth);
+#endif
+
 /* allocate chromosome momma and daddy memory */
 	momma = alloc_chromo(pool->string_length);
 	daddy = alloc_chromo(pool->string_length);
 
 #if defined (ERX)
-	ereport(DEBUG2,
-			(errmsg_internal("using edge recombination crossover [ERX]")));
+#ifdef GEQO_DEBUG
+	elog(DEBUG2, "using edge recombination crossover [ERX]");
+#endif
 /* allocate edge table memory */
 	edge_table = alloc_edge_table(pool->string_length);
 #elif defined(PMX)
-	ereport(DEBUG2,
-			(errmsg_internal("using partially matched crossover [PMX]")));
+#ifdef GEQO_DEBUG
+	elog(DEBUG2, "using partially matched crossover [PMX]");
+#endif
 /* allocate chromosome kid memory */
 	kid = alloc_chromo(pool->string_length);
 #elif defined(CX)
-	ereport(DEBUG2,
-			(errmsg_internal("using cycle crossover [CX]")));
+#ifdef GEQO_DEBUG
+	elog(DEBUG2, "using cycle crossover [CX]");
+#endif
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(PX)
-	ereport(DEBUG2,
-			(errmsg_internal("using position crossover [PX]")));
+#ifdef GEQO_DEBUG
+	elog(DEBUG2, "using position crossover [PX]");
+#endif
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX1)
-	ereport(DEBUG2,
-			(errmsg_internal("using order crossover [OX1]")));
+#ifdef GEQO_DEBUG
+	elog(DEBUG2, "using order crossover [OX1]");
+#endif
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
 #elif defined(OX2)
-	ereport(DEBUG2,
-			(errmsg_internal("using order crossover [OX2]")));
+#ifdef GEQO_DEBUG
+	elog(DEBUG2, "using order crossover [OX2]");
+#endif
 /* allocate city table memory */
 	kid = alloc_chromo(pool->string_length);
 	city_table = alloc_city_table(pool->string_length);
@@ -189,8 +207,7 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 
 
 		/* EVALUATE FITNESS */
-		kid->worth = geqo_eval(root, initial_rels,
-							   kid->string, pool->string_length);
+		kid->worth = geqo_eval(kid->string, pool->string_length, &evaldata);
 
 		/* push the kid into the wilderness of life according to its worth */
 		spread_chromo(kid, pool);
@@ -207,22 +224,26 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 #if defined(ERX) && defined(GEQO_DEBUG)
 	if (edge_failures != 0)
 		elog(LOG, "[GEQO] failures: %d, average: %d",
-			 edge_failures, (int) generation / edge_failures);
+			 edge_failures, (int) number_generations / edge_failures);
 	else
 		elog(LOG, "[GEQO] no edge failures detected");
 #endif
 
-
 #if defined(CX) && defined(GEQO_DEBUG)
 	if (mutations != 0)
-		elog(LOG, "[GEQO] mutations: %d, generations: %d", mutations, generation);
+		elog(LOG, "[GEQO] mutations: %d, generations: %d",
+			 mutations, number_generations);
 	else
 		elog(LOG, "[GEQO] no mutations processed");
 #endif
 
-
 #ifdef GEQO_DEBUG
 	print_pool(stdout, pool, 0, pool_size - 1);
+#endif
+
+#ifdef GEQO_DEBUG
+	elog(DEBUG1, "GEQO best is %.2f after %d generations",
+		 pool->data[0].worth, number_generations);
 #endif
 
 
@@ -233,8 +254,7 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 	best_tour = (Gene *) pool->data[0].string;
 
 	/* root->join_rel_list will be modified during this ! */
-	best_rel = gimme_tree(root, initial_rels,
-						  best_tour, pool->string_length);
+	best_rel = gimme_tree(best_tour, pool->string_length, &evaldata);
 
 	if (best_rel == NULL)
 		elog(ERROR, "failed to make a valid plan");
@@ -272,53 +292,49 @@ geqo(Query *root, int number_of_rels, List *initial_rels)
 }
 
 
-
 /*
- * Return either configured pool size or
- * a good default based on query size (no. of relations)
- * = 2^(QS+1)
- * also constrain between 128 and 1024
+ * Return either configured pool size or a good default
+ *
+ * The default is based on query size (no. of relations) = 2^(QS+1),
+ * but constrained to a range based on the effort value.
  */
 static int
 gimme_pool_size(int nr_rel)
 {
 	double		size;
+	int			minsize;
+	int			maxsize;
 
-	if (Geqo_pool_size > 0)
+	/* Legal pool size *must* be at least 2, so ignore attempt to select 1 */
+	if (Geqo_pool_size >= 2)
 		return Geqo_pool_size;
 
 	size = pow(2.0, nr_rel + 1.0);
 
-	if (size < MIN_GEQO_POOL_SIZE)
-		return MIN_GEQO_POOL_SIZE;
-	else if (size > MAX_GEQO_POOL_SIZE)
-		return MAX_GEQO_POOL_SIZE;
-	else
-		return (int) ceil(size);
+	maxsize = 50 * Geqo_effort;			/* 50 to 500 individuals */
+	if (size > maxsize)
+		return maxsize;
+
+	minsize = 10 * Geqo_effort;			/* 10 to 100 individuals */
+	if (size < minsize)
+		return minsize;
+
+	return (int) ceil(size);
 }
 
 
-
 /*
- * Return either configured number of generations or
- * some reasonable default calculated on the fly.
- * = Effort * Log2(PoolSize)
+ * Return either configured number of generations or a good default
+ *
+ * The default is the same as the pool size, which allows us to be
+ * sure that less-fit individuals get pushed out of the breeding
+ * population before the run finishes.
  */
 static int
 gimme_number_generations(int pool_size)
 {
-	double		gens;
-
 	if (Geqo_generations > 0)
 		return Geqo_generations;
 
-	gens = Geqo_effort * log((double) pool_size) / log(2.0);
-
-	/* bound it to a sane range */
-	if (gens <= 0)
-		gens = 1;
-	else if (gens > 10000)
-		gens = 10000;
-
-	return (int) ceil(gens);
+	return pool_size;
 }

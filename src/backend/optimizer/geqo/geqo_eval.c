@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.66 2003/11/29 19:51:50 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.67 2004/01/23 23:54:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,13 +31,17 @@
 #include "utils/memutils.h"
 
 
+static bool desirable_join(Query *root,
+						   RelOptInfo *outer_rel, RelOptInfo *inner_rel);
+
+
 /*
  * geqo_eval
  *
  * Returns cost of a query tree as an individual of the population.
  */
 Cost
-geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
+geqo_eval(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 {
 	MemoryContext mycontext;
 	MemoryContext oldcxt;
@@ -52,9 +56,9 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	 * redundant cost calculations, we simply reject tours where tour[0] >
 	 * tour[1], assigning them an artificially bad fitness.
 	 *
-	 * (It would be better to tweak the GEQO logic to not generate such tours
-	 * in the first place, but I'm not sure of all the implications in the
-	 * mutation logic.)
+	 * init_tour() is aware of this rule and so we should never reject a
+	 * tour during the initial filling of the pool.  It seems difficult to
+	 * persuade the recombination logic never to break the rule, however.
 	 */
 	if (num_gene >= 2 && tour[0] > tour[1])
 		return DBL_MAX;
@@ -80,10 +84,10 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	 * this, it'll be pointing at recycled storage after the
 	 * MemoryContextDelete below.
 	 */
-	savelist = root->join_rel_list;
+	savelist = evaldata->root->join_rel_list;
 
 	/* construct the best path for the given combination of relations */
-	joinrel = gimme_tree(root, initial_rels, tour, num_gene);
+	joinrel = gimme_tree(tour, num_gene, evaldata);
 
 	/*
 	 * compute fitness
@@ -97,7 +101,7 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 		fitness = DBL_MAX;
 
 	/* restore join_rel_list */
-	root->join_rel_list = savelist;
+	evaldata->root->join_rel_list = savelist;
 
 	/* release all the memory acquired within gimme_tree */
 	MemoryContextSwitchTo(oldcxt);
@@ -111,63 +115,156 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
  *	  Form planner estimates for a join tree constructed in the specified
  *	  order.
  *
- *	 'root' is the Query
- *	 'initial_rels' is the list of initial relations (FROM-list items)
  *	 'tour' is the proposed join order, of length 'num_gene'
+ *	 'evaldata' contains the context we need
  *
  * Returns a new join relation whose cheapest path is the best plan for
  * this join order.  NB: will return NULL if join order is invalid.
  *
- * Note that at each step we consider using the next rel as both left and
- * right side of a join.  However, we cannot build general ("bushy") plan
- * trees this way, only left-sided and right-sided trees.
+ * The original implementation of this routine always joined in the specified
+ * order, and so could only build left-sided plans (and right-sided and
+ * mixtures, as a byproduct of the fact that make_join_rel() is symmetric).
+ * It could never produce a "bushy" plan.  This had a couple of big problems,
+ * of which the worst was that as of 7.4, there are situations involving IN
+ * subqueries where the only valid plans are bushy.
+ *
+ * The present implementation takes the given tour as a guideline, but
+ * postpones joins that seem unsuitable according to some heuristic rules.
+ * This allows correct bushy plans to be generated at need, and as a nice
+ * side-effect it seems to materially improve the quality of the generated
+ * plans.
  */
 RelOptInfo *
-gimme_tree(Query *root, List *initial_rels,
-		   Gene *tour, int num_gene)
+gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 {
+	RelOptInfo **stack;
+	int			stack_depth;
 	RelOptInfo *joinrel;
-	int			cur_rel_index;
 	int			rel_count;
 
 	/*
-	 * Start with the first relation ...
+	 * Create a stack to hold not-yet-joined relations.
 	 */
-	cur_rel_index = (int) tour[0];
-
-	joinrel = (RelOptInfo *) nth(cur_rel_index - 1, initial_rels);
+	stack = (RelOptInfo **) palloc(num_gene * sizeof(RelOptInfo *));
+	stack_depth = 0;
 
 	/*
-	 * And add on each relation in the specified order ...
+	 * Push each relation onto the stack in the specified order.  After
+	 * pushing each relation, see whether the top two stack entries are
+	 * joinable according to the desirable_join() heuristics.  If so,
+	 * join them into one stack entry, and try again to combine with the
+	 * next stack entry down (if any).  When the stack top is no longer
+	 * joinable, continue to the next input relation.  After we have pushed
+	 * the last input relation, the heuristics are disabled and we force
+	 * joining all the remaining stack entries.
+	 *
+	 * If desirable_join() always returns true, this produces a straight
+	 * left-to-right join just like the old code.  Otherwise we may produce
+	 * a bushy plan or a left/right-sided plan that really corresponds to
+	 * some tour other than the one given.  To the extent that the heuristics
+	 * are helpful, however, this will be a better plan than the raw tour.
+	 *
+	 * Also, when a join attempt fails (because of IN-clause constraints),
+	 * we may be able to recover and produce a workable plan, where the old
+	 * code just had to give up.  This case acts the same as a false result
+	 * from desirable_join().
 	 */
-	for (rel_count = 1; rel_count < num_gene; rel_count++)
+	for (rel_count = 0; rel_count < num_gene; rel_count++)
 	{
-		RelOptInfo *inner_rel;
-		RelOptInfo *new_rel;
+		int			cur_rel_index;
 
+		/* Get the next input relation and push it */
 		cur_rel_index = (int) tour[rel_count];
-
-		inner_rel = (RelOptInfo *) nth(cur_rel_index - 1, initial_rels);
+		stack[stack_depth] = (RelOptInfo *) nth(cur_rel_index - 1,
+												evaldata->initial_rels);
+		stack_depth++;
 
 		/*
-		 * Construct a RelOptInfo representing the previous joinrel joined
-		 * to inner_rel.  These are always inner joins.  Note that we
-		 * expect the joinrel not to exist in root->join_rel_list yet, and
-		 * so the paths constructed for it will only include the ones we
-		 * want.
+		 * While it's feasible, pop the top two stack entries and replace
+		 * with their join.
 		 */
-		new_rel = make_join_rel(root, joinrel, inner_rel, JOIN_INNER);
+		while (stack_depth >= 2)
+		{
+			RelOptInfo *outer_rel = stack[stack_depth - 2];
+			RelOptInfo *inner_rel = stack[stack_depth - 1];
 
-		/* Fail if join order is not valid */
-		if (new_rel == NULL)
-			return NULL;
+			/*
+			 * Don't pop if heuristics say not to join now.  However,
+			 * once we have exhausted the input, the heuristics can't
+			 * prevent popping.
+			 */
+			if (rel_count < num_gene - 1 &&
+				!desirable_join(evaldata->root, outer_rel, inner_rel))
+				break;
 
-		/* Find and save the cheapest paths for this rel */
-		set_cheapest(new_rel);
+			/*
+			 * Construct a RelOptInfo representing the join of these
+			 * two input relations.  These are always inner joins.
+			 * Note that we expect the joinrel not to exist in
+			 * root->join_rel_list yet, and so the paths constructed for it
+			 * will only include the ones we want.
+			 */
+			joinrel = make_join_rel(evaldata->root, outer_rel, inner_rel,
+									JOIN_INNER);
 
-		/* and repeat... */
-		joinrel = new_rel;
+			/* Can't pop stack here if join order is not valid */
+			if (!joinrel)
+				break;
+
+			/* Find and save the cheapest paths for this rel */
+			set_cheapest(joinrel);
+
+			/* Pop the stack and replace the inputs with their join */
+			stack_depth--;
+			stack[stack_depth - 1] = joinrel;
+		}
 	}
 
+	/* Did we succeed in forming a single join relation? */
+	if (stack_depth == 1)
+		joinrel = stack[0];
+	else
+		joinrel = NULL;
+
+	pfree(stack);
+
 	return joinrel;
+}
+
+/*
+ * Heuristics for gimme_tree: do we want to join these two relations?
+ */
+static bool
+desirable_join(Query *root,
+			   RelOptInfo *outer_rel, RelOptInfo *inner_rel)
+{
+	List	   *i;
+
+	/*
+	 * Join if there is an applicable join clause.
+	 */
+	foreach(i, outer_rel->joininfo)
+	{
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+
+		if (bms_is_subset(joininfo->unjoined_relids, inner_rel->relids))
+			return true;
+	}
+
+	/*
+	 * Join if the rels are members of the same IN sub-select.  This is
+	 * needed to improve the odds that we will find a valid solution in
+	 * a case where an IN sub-select has a clauseless join.
+	 */
+	foreach(i, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(i);
+
+		if (bms_is_subset(outer_rel->relids, ininfo->righthand) &&
+			bms_is_subset(inner_rel->relids, ininfo->righthand))
+			return true;
+	}
+
+	/* Otherwise postpone the join till later. */
+	return false;
 }

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.22 2003/11/29 22:39:49 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_pool.c,v 1.23 2004/01/23 23:54:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,11 @@
 /* -- parts of this are adapted from D. Whitley's Genitor algorithm -- */
 
 #include "postgres.h"
+
+#include <float.h>
+#include <limits.h>
+#include <math.h>
+
 #include "optimizer/geqo.h"
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_pool.h"
@@ -84,19 +89,42 @@ free_pool(Pool *pool)
  *		initialize genetic pool
  */
 void
-random_init_pool(Query *root, List *initial_rels,
-				 Pool *pool, int strt, int stp)
+random_init_pool(Pool *pool, GeqoEvalData *evaldata)
 {
 	Chromosome *chromo = (Chromosome *) pool->data;
 	int			i;
+	int			bad = 0;
 
-	for (i = strt; i < stp; i++)
+	/*
+	 * We immediately discard any invalid individuals (those that geqo_eval
+	 * returns DBL_MAX for), thereby not wasting pool space on them.
+	 *
+	 * If we fail to make any valid individuals after 10000 tries, give up;
+	 * this probably means something is broken, and we shouldn't just let
+	 * ourselves get stuck in an infinite loop.
+	 */
+	i = 0;
+	while (i < pool->size)
 	{
 		init_tour(chromo[i].string, pool->string_length);
-		pool->data[i].worth = geqo_eval(root, initial_rels,
-										chromo[i].string,
-										pool->string_length);
+		pool->data[i].worth = geqo_eval(chromo[i].string,
+										pool->string_length,
+										evaldata);
+		if (pool->data[i].worth < DBL_MAX)
+			i++;
+		else
+		{
+			bad++;
+			if (i == 0 && bad >= 10000)
+				elog(ERROR, "failed to make a valid plan");
+		}
 	}
+
+#ifdef GEQO_DEBUG
+	if (bad > 0)
+		elog(DEBUG1, "%d invalid tours found while selecting %d pool entries",
+			 bad, pool->size);
+#endif
 }
 
 /*
@@ -113,20 +141,17 @@ sort_pool(Pool *pool)
 
 /*
  * compare
- *	 static input function for pg_sort
- *
- *	 return values for sort from smallest to largest are prooved!
- *	 don't change them!
+ *	 qsort comparison function for sort_pool
  */
 static int
 compare(const void *arg1, const void *arg2)
 {
-	Chromosome	chromo1 = *(Chromosome *) arg1;
-	Chromosome	chromo2 = *(Chromosome *) arg2;
+	const Chromosome *chromo1 = (const Chromosome *) arg1;
+	const Chromosome *chromo2 = (const Chromosome *) arg2;
 
-	if (chromo1.worth == chromo2.worth)
+	if (chromo1->worth == chromo2->worth)
 		return 0;
-	else if (chromo1.worth > chromo2.worth)
+	else if (chromo1->worth > chromo2->worth)
 		return 1;
 	else
 		return -1;

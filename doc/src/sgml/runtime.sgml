@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.231 2004/01/21 23:33:34 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.232 2004/01/23 23:54:20 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1396,7 +1396,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Use genetic query optimization to plan queries with at least
         this many <literal>FROM</> items involved. (Note that an outer
         <literal>JOIN</> construct counts as only one <literal>FROM</>
-        item.) The default is 11. For simpler queries it is usually best
+        item.) The default is 12. For simpler queries it is usually best
         to use the deterministic, exhaustive planner, but for queries with
         many tables the deterministic planner takes too long.
        </para>
@@ -1404,25 +1404,33 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
+      <term><varname>geqo_effort</varname> (<type>integer</type>)</term>
       <term><varname>geqo_pool_size</varname> (<type>integer</type>)</term>
       <term><varname>geqo_generations</varname> (<type>integer</type>)</term>
-      <term><varname>geqo_effort</varname> (<type>integer</type>)</term>
       <term><varname>geqo_selection_bias</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
         Various tuning parameters for the genetic query optimization
-        algorithm. The pool size is the number of individuals in one
-        population. Valid values are between 128 and 1024. If it is set
-        to 0 (the default) a pool size of 2^(QS+1), where QS is the
-        number of <literal>FROM</> items in the query, is used.
+        algorithm.  The recommended one to modify is
+	<varname>geqo_effort</varname>, which can range from 1 to 10 with
+	a default of 5.  Larger values increase the time spent in planning
+	but make it more likely that a good plan will be found.
+	<varname>geqo_effort</varname> doesn't actually do anything directly,
+	it is just used to compute the default values for the other
+	parameters.  If you prefer, you can set the other parameters by hand
+	instead.
+	The pool size is the number of individuals in the genetic population.
+	It must be at least two, and useful values are typically 100 to 1000.
+	If it is set to zero (the default setting) then a suitable default
+	is chosen based on <varname>geqo_effort</varname> and the number of
+	tables in the query.
 	Generations specifies the number of iterations of the algorithm.
-	The value must be a positive integer. If 0 is specified then
-	<literal>Effort * Log2(PoolSize)</literal> is used.
+	It must be at least one, and useful values are in the same range
+	as the pool size.
+	If it is set to zero (the default setting) then a suitable default
+	is chosen based on the pool size.
 	The run time of the algorithm is roughly proportional to the sum of
 	pool size and generations.
-	<varname>geqo_effort</varname> is only used in computing the default
-	generations setting, as just described.  The default value is 40,
-	and the allowed range 1 to 100.
         The selection bias is the selective pressure within the
         population. Values can be from 1.50 to 2.00; the latter is the
         default.

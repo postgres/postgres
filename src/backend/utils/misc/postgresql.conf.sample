@@ -122,11 +122,10 @@
 # - Genetic Query Optimizer -
 
 #geqo = true
-#geqo_threshold = 11
-#geqo_pool_size = 0		# default based on tables in statement,
-				# range 128-1024
-#geqo_generations = 0		# use default: effort * log2(pool_size)
-#geqo_effort = 40		# range 1-100
+#geqo_threshold = 12
+#geqo_effort = 5		# range 1-10
+#geqo_pool_size = 0		# selects default based on effort
+#geqo_generations = 0		# selects default based on effort
 #geqo_selection_bias = 2.0	# range 1.5-2.0
 
 # - Other Planner Options -
