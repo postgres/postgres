@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.37 2000/03/11 23:17:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.38 2000/03/18 19:53:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,18 +703,14 @@ op_error(char *op, Oid arg1, Oid arg2)
 	if (typeidIsValid(arg1))
 		tp1 = typeidType(arg1);
 	else
-	{
 		elog(ERROR, "Left hand side of operator '%s' has an unknown type"
 			 "\n\tProbably a bad attribute name", op);
-	}
 
 	if (typeidIsValid(arg2))
 		tp2 = typeidType(arg2);
 	else
-	{
 		elog(ERROR, "Right hand side of operator %s has an unknown type"
 			 "\n\tProbably a bad attribute name", op);
-	}
 
 	elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
 		 "\n\tYou will have to retype this query using an explicit cast",
@@ -741,7 +737,7 @@ unary_op_error(char *op, Oid arg, bool is_left_op)
 	}
 
 	elog(ERROR, "Unable to identify a %s operator '%s' for type '%s'"
-		 "\n\tYou will have to retype this query using an explicit cast",
+		 "\n\tYou may need to add parentheses or an explicit cast",
 		 (is_left_op ? "left" : "right"),
 		 op, typeTypeName(tp1));
 }
