@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.182 2000/10/26 17:31:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.183 2000/10/28 01:07:00 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1111,7 +1111,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 	optind = 1;					/* reset after postmaster's usage */
 
-	while ((flag = getopt(argc, argv,  "A:B:CD:d:Eef:FiLNOPo:p:S:st:v:W:x:-:")) != EOF)
+	while ((flag = getopt(argc, argv,  "A:B:CD:d:Eef:FiLNOPo:p:S:st:v:W:x:-:?")) != EOF)
 		switch (flag)
 		{
 			case 'A':
@@ -1385,6 +1385,16 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				char *name, *value;
 
 				ParseLongOption(optarg, &name, &value);
+				if (strcmp(name, "help")==0)
+				{
+					usage(argv[0]);
+					exit(0);
+				}
+				else if (strcmp(name, "version")==0)
+				{
+					puts("postgres (PostgreSQL) " PG_VERSION);
+					exit(0);
+				}
 				if (!value)
 					elog(ERROR, "--%s requires argument", optarg);
 
@@ -1395,14 +1405,22 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 			}
 
+			case '?':
+				if (strcmp(argv[optind - 1], "-?") == 0)
+				{
+					usage(argv[0]);
+					exit(0);
+				}
+				else
+					errs++;
+				break;
+
 			default:
-				/* ----------------
-				 *	default: bad command line option
-				 * ----------------
-				 */
+				/* shouldn't get here */
 				errs++;
 				break;
 		}
+
 
 	if (Show_query_stats &&
 		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
@@ -1470,8 +1488,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		/* noninteractive case: nothing should be left after switches */
 		if (errs || argc != optind || DBName == NULL)
 		{
-			usage(argv[0]);
-			proc_exit(0);
+			fprintf(stderr, "%s: invalid command line arguments\nTry -? for help.\n", argv[0]);
+			proc_exit(1);
 		}
 		pq_init();				/* initialize libpq at backend startup */
 		whereToSendOutput = Remote;
@@ -1483,8 +1501,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		whereToSendOutput = Debug;
 		if (errs || argc - optind > 1)
 		{
-			usage(argv[0]);
-			proc_exit(0);
+			fprintf(stderr, "%s: invalid command line arguments\nTry -? for help.\n", argv[0]);
+			proc_exit(1);
 		}
 		else if (argc - optind == 1)
 			DBName = argv[optind];
@@ -1492,7 +1510,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		{
 			fprintf(stderr, "%s: user name undefined and no database specified\n",
 					argv[0]);
-			proc_exit(0);
+			proc_exit(1);
 		}
 
 		/*
@@ -1618,7 +1636,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.182 $ $Date: 2000/10/26 17:31:35 $\n");
+		puts("$Revision: 1.183 $ $Date: 2000/10/28 01:07:00 $\n");
 	}
 
 	/*
