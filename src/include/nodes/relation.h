@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.102 2004/12/31 22:03:34 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.103 2005/02/21 06:43:04 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,8 +288,8 @@ typedef struct IndexOptInfo
  *	the first sublist represents the primary sort key, the second the
  *	first secondary sort key, etc.	Each sublist contains one or more
  *	PathKeyItem nodes, each of which can be taken as the attribute that
- *	appears at that sort position.	(See the top of optimizer/path/pathkeys.c
- *	for more information.)
+ *	appears at that sort position.	(See optimizer/README for more
+ *	information.)
  */
 
 typedef struct PathKeyItem
