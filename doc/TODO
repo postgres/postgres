@@ -221,7 +221,7 @@ MISC
 * fix memory leak in cache code when non-existant table is referenced
 * In WHERE x=3 AND x=y, add y=3
 * pass atttypmod through parser in more cases(Bruce)
-
+* remov
 SOURCE CODE
 -----------
 * Add use of 'const' for varibles in source tree
