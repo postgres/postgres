@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.10 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.11 2001/08/10 23:49:20 tgl Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,8 @@ Postgres documentation
    <date>2000-03-25</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE VIEW <replaceable class="PARAMETER">view</replaceable> AS SELECT <replaceable class="PARAMETER">query</replaceable>
+CREATE VIEW <replaceable class="PARAMETER">view</replaceable> [ ( <replaceable
+class="PARAMETER">column name list</replaceable> ) ] AS SELECT <replaceable class="PARAMETER">query</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEVIEW-1">
@@ -41,6 +42,16 @@ CREATE VIEW <replaceable class="PARAMETER">view</replaceable> AS SELECT <replace
       <listitem>
        <para>
 	The name of a view to be created.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">column name list</replaceable></term>
+      <listitem>
+       <para>
+        An optional list of names to be used for columns of the view.
+	If given, these names override the column names that would be
+	deduced from the SQL query.
        </para>
       </listitem>
      </varlistentry>
@@ -124,7 +135,7 @@ CREATE VIEW vista AS SELECT text 'Hello World'
   </title>
   <para>
    <command>CREATE VIEW</command> will define a view of a table.
-   This view is not physically materialized. Specifically, a query
+   The view is not physically materialized. Instead, a query
    rewrite retrieve rule is automatically generated to support
    retrieve operations on views.
   </para>
