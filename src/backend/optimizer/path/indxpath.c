@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.27 1998/08/10 04:49:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.28 1998/08/11 19:32:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -953,11 +953,10 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	/*
 	 * 1. Find a "btree" strategy number for the pred_op
 	 */
-	/* XXX - hardcoded amopid value 403 to find "btree" operator classes */
 	ScanKeyEntryInitialize(&entry[0], 0,
 						   Anum_pg_amop_amopid,
 						   F_OIDEQ,
-						   ObjectIdGetDatum(403));
+						   ObjectIdGetDatum(BTREE_AM_OID));
 
 	ScanKeyEntryInitialize(&entry[1], 0,
 						   Anum_pg_amop_amopopr,

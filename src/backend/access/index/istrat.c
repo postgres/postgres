@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.22 1998/08/10 14:32:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.23 1998/08/11 19:32:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,10 +148,7 @@ StrategyTermIsValid(StrategyTerm term,
 	{
 		if (!StrategyOperatorIsValid(&term->operatorData[index],
 									 maxStrategy))
-		{
-
 			return false;
-		}
 	}
 
 	return true;
@@ -574,8 +571,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			break;
 		}
 
-		operatorClassObjectId[attributeIndex]
-			= iform->indclass[attributeIndex];
+		operatorClassObjectId[attributeIndex] = iform->indclass[attributeIndex];
 	}
 
 	heap_endscan(scan);
@@ -592,14 +588,11 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		ScanKeyEntryInitialize(&entry[1], 0, Anum_pg_amproc_amopclaid,
 							   F_OIDEQ, 0);
 
-/*		relation = heap_openr(Name_pg_amproc); */
 		relation = heap_openr(AccessMethodProcedureRelationName);
-
 
 		for (attributeNumber = maxAttributeNumber; attributeNumber > 0;
 			 attributeNumber--)
 		{
-
 			int16		support;
 			Form_pg_amproc form;
 			RegProcedure *loc;

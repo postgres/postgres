@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.9 1998/02/26 04:40:28 momjian Exp $
+ * $Id: strat.h,v 1.10 1998/08/11 19:32:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,11 +74,7 @@ typedef StrategyEvaluationData *StrategyEvaluation;
 #define StrategyTransformMapIsValid(transform) PointerIsValid(transform)
 
 
-#ifndef CorrectStrategies		/* XXX this should be removable */
-#define AMStrategies(foo)		12
-#else							/* !defined(CorrectStrategies) */
 #define AMStrategies(foo)		(foo)
-#endif							/* !defined(CorrectStrategies) */
 
 typedef struct StrategyMapData
 {
