@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.24 2004/06/14 18:08:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.25 2004/06/26 16:32:04 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -14,38 +14,6 @@
 #include "utils/hsearch.h"
 #include "utils/nabstime.h"
 #include "utils/rel.h"
-
-
-/* ----------
- * Paths for the statistics files. The %s is replaced with the
- * installations $PGDATA.
- * ----------
- */
-#define PGSTAT_STAT_FILENAME	"%s/global/pgstat.stat"
-#define PGSTAT_STAT_TMPFILE		"%s/global/pgstat.tmp.%d"
-
-/* ----------
- * Timer definitions.
- * ----------
- */
-#define PGSTAT_STAT_INTERVAL	500		/* How often to write the status	*/
- /* file; in milliseconds.			 */
-
-#define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed		*/
- /* objects known, to give delayed	 */
- /* UDP packets time to arrive;		 */
- /* in milliseconds.				 */
-
-#define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY / PGSTAT_STAT_INTERVAL)
-
-#define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart */
- /* a failed statistics collector; in seconds. */
-
-/* ----------
- * How much of the actual query string to send to the collector.
- * ----------
- */
-#define PGSTAT_ACTIVITY_SIZE	256
 
 
 /* ----------
@@ -62,102 +30,10 @@
 #define PGSTAT_MTYPE_RESETCOUNTER	7
 
 /* ----------
- * Amount of space reserved in pgstat_recvbuffer().
- * ----------
- */
-#define PGSTAT_RECVBUFFERSZ		((int) (1024 * sizeof(PgStat_Msg)))
-
-
-/* ----------
- * The initial size hints for the hash tables used in the collector.
- * ----------
- */
-#define PGSTAT_DB_HASH_SIZE		16
-#define PGSTAT_BE_HASH_SIZE		512
-#define PGSTAT_TAB_HASH_SIZE	512
-
-
-/* ----------
  * The data type used for counters.
  * ----------
  */
 typedef int64 PgStat_Counter;
-
-
-/* ------------------------------------------------------------
- * Statistic collector data structures follow
- * ------------------------------------------------------------
- */
-/* ----------
- * PgStat_StatDBEntry			The collectors data per database
- * ----------
- */
-typedef struct PgStat_StatDBEntry
-{
-	Oid			databaseid;
-	HTAB	   *tables;
-	int			n_backends;
-	PgStat_Counter n_connects;
-	PgStat_Counter n_xact_commit;
-	PgStat_Counter n_xact_rollback;
-	PgStat_Counter n_blocks_fetched;
-	PgStat_Counter n_blocks_hit;
-	int			destroy;
-} PgStat_StatDBEntry;
-
-
-/* ----------
- * PgStat_StatBeEntry			The collectors data per backend
- * ----------
- */
-typedef struct PgStat_StatBeEntry
-{
-	Oid			databaseid;
-	Oid			userid;
-	int			procpid;
-	char		activity[PGSTAT_ACTIVITY_SIZE];
-	AbsoluteTime activity_start_sec;
-	int			activity_start_usec;
-} PgStat_StatBeEntry;
-
-
-/* ----------
- * PgStat_StatBeDead			Because UDP packets can arrive out of
- *								order, we need to keep some information
- *								about backends that are known to be
- *								dead for some seconds. This info is held
- *								in a hash table of these structs.
- * ----------
- */
-typedef struct PgStat_StatBeDead
-{
-	int			procpid;
-	int			backendid;
-	int			destroy;
-} PgStat_StatBeDead;
-
-
-/* ----------
- * PgStat_StatTabEntry			The collectors data table data
- * ----------
- */
-typedef struct PgStat_StatTabEntry
-{
-	Oid			tableid;
-
-	PgStat_Counter numscans;
-
-	PgStat_Counter tuples_returned;
-	PgStat_Counter tuples_fetched;
-	PgStat_Counter tuples_inserted;
-	PgStat_Counter tuples_updated;
-	PgStat_Counter tuples_deleted;
-
-	PgStat_Counter blocks_fetched;
-	PgStat_Counter blocks_hit;
-
-	int			destroy;
-} PgStat_StatTabEntry;
 
 
 /* ------------------------------------------------------------
@@ -181,7 +57,15 @@ typedef struct PgStat_MsgHdr
 } PgStat_MsgHdr;
 
 /* ----------
- * PgStat_TabEntry				A table slot in a MsgTabstat
+ * Space available in a message.  This will keep the UDP packets below 1K,
+ * which should fit unfragmented into the MTU of the lo interface on most
+ * platforms. Does anybody care for platforms where it doesn't?
+ * ----------
+ */
+#define PGSTAT_MSG_PAYLOAD	(1000 - sizeof(PgStat_MsgHdr))
+
+/* ----------
+ * PgStat_TableEntry			Per-table info in a MsgTabstat
  * ----------
  */
 typedef struct PgStat_TableEntry
@@ -234,6 +118,8 @@ typedef struct PgStat_MsgBeterm
  *								to parse a query.
  * ----------
  */
+#define PGSTAT_ACTIVITY_SIZE	PGSTAT_MSG_PAYLOAD
+
 typedef struct PgStat_MsgActivity
 {
 	PgStat_MsgHdr m_hdr;
@@ -241,20 +127,13 @@ typedef struct PgStat_MsgActivity
 } PgStat_MsgActivity;
 
 /* ----------
- * How many table entries fit into a MsgTabstat. Actually,
- * this will keep the UDP packets below 1K, what should fit
- * unfragmented into the MTU of the lo interface on most
- * platforms. Does anybody care for platforms where it doesn't?
- * ----------
- */
-#define PGSTAT_NUM_TABENTRIES	((1000 - sizeof(PgStat_MsgHdr))			\
-								/ sizeof(PgStat_TableEntry))
-
-/* ----------
  * PgStat_MsgTabstat			Sent by the backend to report table
  *								and buffer access statistics.
  * ----------
  */
+#define PGSTAT_NUM_TABENTRIES	((PGSTAT_MSG_PAYLOAD - 3 * sizeof(int))		\
+								/ sizeof(PgStat_TableEntry))
+
 typedef struct PgStat_MsgTabstat
 {
 	PgStat_MsgHdr m_hdr;
@@ -264,19 +143,14 @@ typedef struct PgStat_MsgTabstat
 	PgStat_TableEntry m_entry[PGSTAT_NUM_TABENTRIES];
 } PgStat_MsgTabstat;
 
-
-/* ----------
- * How many Oid entries fit into a MsgTabpurge.
- * ----------
- */
-#define PGSTAT_NUM_TABPURGE		((1000 - sizeof(PgStat_MsgHdr))			\
-								/ sizeof(Oid))
-
 /* ----------
  * PgStat_MsgTabpurge			Sent by the backend to tell the collector
  *								about dead tables.
  * ----------
  */
+#define PGSTAT_NUM_TABPURGE		((PGSTAT_MSG_PAYLOAD - sizeof(int))		\
+								/ sizeof(Oid))
+
 typedef struct PgStat_MsgTabpurge
 {
 	PgStat_MsgHdr m_hdr;
@@ -323,6 +197,83 @@ typedef union PgStat_Msg
 	PgStat_MsgDropdb msg_dropdb;
 	PgStat_MsgResetcounter msg_resetcounter;
 } PgStat_Msg;
+
+
+/* ------------------------------------------------------------
+ * Statistic collector data structures follow
+ * ------------------------------------------------------------
+ */
+
+/* ----------
+ * PgStat_StatDBEntry			The collectors data per database
+ * ----------
+ */
+typedef struct PgStat_StatDBEntry
+{
+	Oid			databaseid;
+	HTAB	   *tables;
+	int			n_backends;
+	PgStat_Counter n_connects;
+	PgStat_Counter n_xact_commit;
+	PgStat_Counter n_xact_rollback;
+	PgStat_Counter n_blocks_fetched;
+	PgStat_Counter n_blocks_hit;
+	int			destroy;
+} PgStat_StatDBEntry;
+
+
+/* ----------
+ * PgStat_StatBeEntry			The collectors data per backend
+ * ----------
+ */
+typedef struct PgStat_StatBeEntry
+{
+	Oid			databaseid;
+	Oid			userid;
+	int			procpid;
+	AbsoluteTime activity_start_sec;
+	int			activity_start_usec;
+	char		activity[PGSTAT_ACTIVITY_SIZE];
+} PgStat_StatBeEntry;
+
+
+/* ----------
+ * PgStat_StatBeDead			Because UDP packets can arrive out of
+ *								order, we need to keep some information
+ *								about backends that are known to be
+ *								dead for some seconds. This info is held
+ *								in a hash table of these structs.
+ * ----------
+ */
+typedef struct PgStat_StatBeDead
+{
+	int			procpid;
+	int			backendid;
+	int			destroy;
+} PgStat_StatBeDead;
+
+
+/* ----------
+ * PgStat_StatTabEntry			The collectors data table data
+ * ----------
+ */
+typedef struct PgStat_StatTabEntry
+{
+	Oid			tableid;
+
+	PgStat_Counter numscans;
+
+	PgStat_Counter tuples_returned;
+	PgStat_Counter tuples_fetched;
+	PgStat_Counter tuples_inserted;
+	PgStat_Counter tuples_updated;
+	PgStat_Counter tuples_deleted;
+
+	PgStat_Counter blocks_fetched;
+	PgStat_Counter blocks_hit;
+
+	int			destroy;
+} PgStat_StatTabEntry;
 
 
 /* ----------

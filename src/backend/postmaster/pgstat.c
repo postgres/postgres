@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.75 2004/06/14 18:08:18 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.76 2004/06/26 16:32:02 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -22,12 +22,10 @@
 #include <fcntl.h>
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <errno.h>
 #include <signal.h>
 #include <time.h>
 
@@ -53,6 +51,47 @@
 #include "utils/ps_status.h"
 #include "utils/rel.h"
 #include "utils/syscache.h"
+
+
+/* ----------
+ * Paths for the statistics files. The %s is replaced with the
+ * installation's $PGDATA.
+ * ----------
+ */
+#define PGSTAT_STAT_FILENAME	"%s/global/pgstat.stat"
+#define PGSTAT_STAT_TMPFILE		"%s/global/pgstat.tmp.%d"
+
+/* ----------
+ * Timer definitions.
+ * ----------
+ */
+#define PGSTAT_STAT_INTERVAL	500		/* How often to write the status
+										 * file; in milliseconds. */
+
+#define PGSTAT_DESTROY_DELAY	10000	/* How long to keep destroyed
+										 * objects known, to give delayed
+										 * UDP packets time to arrive;
+										 * in milliseconds. */
+
+#define PGSTAT_DESTROY_COUNT	(PGSTAT_DESTROY_DELAY / PGSTAT_STAT_INTERVAL)
+
+#define PGSTAT_RESTART_INTERVAL 60		/* How often to attempt to restart
+										 * a failed statistics collector;
+										 * in seconds. */
+
+/* ----------
+ * Amount of space reserved in pgstat_recvbuffer().
+ * ----------
+ */
+#define PGSTAT_RECVBUFFERSZ		((int) (1024 * sizeof(PgStat_Msg)))
+
+/* ----------
+ * The initial size hints for the hash tables used in the collector.
+ * ----------
+ */
+#define PGSTAT_DB_HASH_SIZE		16
+#define PGSTAT_BE_HASH_SIZE		512
+#define PGSTAT_TAB_HASH_SIZE	512
 
 
 /* ----------
@@ -2760,7 +2799,7 @@ pgstat_recv_activity(PgStat_MsgActivity *msg, int len)
 
 	/*
 	 * Here we check explicitly for 0 return, since we don't want to
-	 * mangle the activity of an active backend by a delayed packed from a
+	 * mangle the activity of an active backend by a delayed packet from a
 	 * dead one.
 	 */
 	if (pgstat_add_backend(&msg->m_hdr) != 0)
@@ -2768,7 +2807,7 @@ pgstat_recv_activity(PgStat_MsgActivity *msg, int len)
 
 	entry = &(pgStatBeTable[msg->m_hdr.m_backendid - 1]);
 
-	strncpy(entry->activity, msg->m_what, PGSTAT_ACTIVITY_SIZE);
+	StrNCpy(entry->activity, msg->m_what, PGSTAT_ACTIVITY_SIZE);
 
 	entry->activity_start_sec =
 		GetCurrentAbsoluteTimeUsec(&entry->activity_start_usec);
