@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.89 2002/07/02 05:49:52 momjian Exp $
+ * $Id: pg_dump.h,v 1.90 2002/07/06 20:12:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,5 +208,8 @@ extern void dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 					   const bool aclsSkip,
 					   const bool schemaOnly, const bool dataOnly);
 extern void dumpIndexes(Archive *fout, TableInfo *tbinfo, int numTables);
+
+/* sprompt.h */
+extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 #endif   /* PG_DUMP_H */

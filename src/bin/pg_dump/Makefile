@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.33 2002/06/20 20:29:41 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.34 2002/07/06 20:12:30 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ subdir = src/bin/pg_dump
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS= pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o pg_backup_files.o \
-       pg_backup_null.o pg_backup_tar.o
+OBJS= pg_backup_archiver.o pg_backup_db.o pg_backup_custom.o \
+      pg_backup_files.o pg_backup_null.o pg_backup_tar.o sprompt.o
 
 ifdef STRDUP
 OBJS+=$(top_builddir)/src/utils/strdup.o
