@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.41 2002/02/26 02:15:54 davec Exp $
+ * $Id: Connection.java,v 1.42 2002/03/05 18:00:36 davec Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -315,16 +315,6 @@ public abstract class Connection
 		switch (beresp)
 		{
 			case 'Z':
-
-                              try
-                                 {
-                                    pg_stream.SendChar('Q');
-                                    pg_stream.SendChar(' ');
-                                    pg_stream.SendChar(0);
-                                    pg_stream.flush();
-                                 } catch (IOException e) {
-                                    throw new PSQLException("postgresql.con.ioerror",e);
-                                 }
 				break;
 			case 'E':
 			case 'N':
