@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.29 2002/07/28 15:22:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.30 2002/08/20 02:20:48 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -146,7 +146,7 @@ PostgreSQL documentation
     <xref linkend="app-pgdump">
     calls.  This is useful to control some aspects of the output
     format, but some options such as <option>-f</option>,
-    <option>-t</option>, and <replaceable
+    <option>-F</option>, <option>-t</option>, and <replaceable
     class="parameter">dbname</replaceable> should be avoided.
    </para>
   </refsect2>
