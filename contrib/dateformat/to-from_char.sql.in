@@ -1,0 +1,29 @@
+-- to-from_char.sql datetime routines --
+--
+-- Copyright (c) 1999, Karel Zak "Zakkr" <zakkr@zf.jcu.cz>
+--
+-- This file is distributed under the GNU General Public License
+-- either version 2, or (at your option) any later version.
+
+
+-- Define the new functions
+--
+
+create function to_char(datetime, text) returns text
+  as 'MODULE_PATHNAME' 
+  language 'c';
+
+create function from_char(text, text) returns datetime
+  as 'MODULE_PATHNAME' 
+  language 'c';
+
+create function to_date(text, text) returns date
+  as 'MODULE_PATHNAME' 
+  language 'c';
+ 
+create function ordinal(int, text) returns text
+  as 'MODULE_PATHNAME' 
+  language 'c';
+
+
+-- end of file
