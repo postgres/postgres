@@ -345,7 +345,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.13 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
 	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
@@ -454,7 +454,7 @@ From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
 	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
-Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.13 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
 	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
@@ -1006,7 +1006,7 @@ From pgsql-general-owner+M2497@hub.org Fri Jun 16 18:31:03 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA04165
 	for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:31:01 -0400 (EDT)
-Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.12 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
+Received: from hub.org (root@hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.13 $) with ESMTP id RAA13110 for <pgman@candle.pha.pa.us>; Fri, 16 Jun 2000 17:20:12 -0400 (EDT)
 Received: from hub.org (majordom@localhost [127.0.0.1])
 	by hub.org (8.10.1/8.10.1) with SMTP id e5GLDaM14477;
 	Fri, 16 Jun 2000 17:13:36 -0400 (EDT)
@@ -1647,5 +1647,595 @@ OEV6eO8MnBSlbJMHiQ08gNE=
 -----END PGP SIGNATURE-----
 
 --=-Ivchb84S75fOMzJ9DxwK--
+
+
+From pgsql-hackers-owner+M26157@postgresql.org Tue Aug  6 23:06:34 2002
+Date: Wed, 7 Aug 2002 13:07:38 +1000 (EST)
+From: Gavin Sherry <swm@linuxworld.com.au>
+To: Curt Sampson <cjs@cynic.net>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] CLUSTER and indisclustered
+In-Reply-To: <Pine.NEB.4.44.0208071126590.1214-100000@angelic.cynic.net>
+Message-ID: <Pine.LNX.4.21.0208071259210.13438-100000@linuxworld.com.au>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  1357
+
+On Wed, 7 Aug 2002, Curt Sampson wrote:
+
+> But after doing some benchmarking of various sorts of random reads
+> and writes, it occurred to me that there might be optimizations
+> that could help a lot with this sort of thing. What if, when we've
+> got an index block with a bunch of entries, instead of doing the
+> reads in the order of the entries, we do them in the order of the
+> blocks the entries point to? That would introduce a certain amount
+> of "sequentialness" to the reads that the OS is not capable of
+> introducing (since it can't reschedule the reads you're doing, the
+> way it could reschedule, say, random writes).
+
+This sounds more or less like the method employed by Firebird as described
+by Ann Douglas to Tom at OSCON (correct me if I get this wrong).
+
+Basically, firebird populates a bitmap with entries the scan is interested
+in. The bitmap is populated in page order so that all entries on the same
+heap page can be fetched at once.
+
+This is totally different to the way postgres does things and would
+require significant modification to the index access methods.
+
+Gavin
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M26162@postgresql.org Wed Aug  7 00:42:35 2002
+To: Curt Sampson <cjs@cynic.net>
+cc: mark Kirkwood <markir@slithery.org>, Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] CLUSTER and indisclustered 
+In-Reply-To: <Pine.NEB.4.44.0208071126590.1214-100000@angelic.cynic.net> 
+References: <Pine.NEB.4.44.0208071126590.1214-100000@angelic.cynic.net>
+Comments: In-reply-to Curt Sampson <cjs@cynic.net>
+	message dated "Wed, 07 Aug 2002 11:31:32 +0900"
+Date: Wed, 07 Aug 2002 00:41:47 -0400
+Message-ID: <12593.1028695307@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  3063
+
+Curt Sampson <cjs@cynic.net> writes:
+> But after doing some benchmarking of various sorts of random reads
+> and writes, it occurred to me that there might be optimizations
+> that could help a lot with this sort of thing. What if, when we've
+> got an index block with a bunch of entries, instead of doing the
+> reads in the order of the entries, we do them in the order of the
+> blocks the entries point to?
+
+I thought to myself "didn't I just post something about that?"
+and then realized it was on a different mailing list.  Here ya go
+(and no, this is not the first time around on this list either...)
+
+
+I am currently thinking that bitmap indexes per se are not all that
+interesting.  What does interest me is bitmapped index lookup, which
+came back into mind after hearing Ann Harrison describe how FireBird/
+InterBase does it.
+
+The idea is that you don't scan the index and base table concurrently
+as we presently do it.  Instead, you scan the index and make a list
+of the TIDs of the table tuples you need to visit.  This list can
+be conveniently represented as a sparse bitmap.  After you've finished
+looking at the index, you visit all the required table tuples *in
+physical order* using the bitmap.  This eliminates multiple fetches
+of the same heap page, and can possibly let you get some win from
+sequential access.
+
+Once you have built this mechanism, you can then move on to using
+multiple indexes in interesting ways: you can do several indexscans
+in one query and then AND or OR their bitmaps before doing the heap
+scan.  This would allow, for example, "WHERE a = foo and b = bar"
+to be handled by ANDing results from separate indexes on the a and b
+columns, rather than having to choose only one index to use as we do
+now.
+
+Some thoughts about implementation: FireBird's implementation seems
+to depend on an assumption about a fixed number of tuple pointers
+per page.  We don't have that, but we could probably get away with
+just allocating BLCKSZ/sizeof(HeapTupleHeaderData) bits per page.
+Also, the main downside of this approach is that the bitmap could
+get large --- but you could have some logic that causes you to fall
+back to plain sequential scan if you get too many index hits.  (It's
+interesting to think of this as lossy compression of the bitmap...
+which leads to the idea of only being fuzzy in limited areas of the
+bitmap, rather than losing all the information you have.)
+
+A possibly nasty issue is that lazy VACUUM has some assumptions in it
+about indexscans holding pins on index pages --- that's what prevents
+it from removing heap tuples that a concurrent indexscan is just about
+to visit.  It might be that there is no problem: even if lazy VACUUM
+removes a heap tuple and someone else then installs a new tuple in that
+same TID slot, you should be okay because the new tuple is too new to
+pass your visibility test.  But I'm not convinced this is safe.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M26172@postgresql.org Wed Aug  7 02:49:56 2002
+X-Authentication-Warning: rh72.home.ee: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] CLUSTER and indisclustered
+From: Hannu Krosing <hannu@tm.ee>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Curt Sampson <cjs@cynic.net>, mark Kirkwood <markir@slithery.org>, 
+	   Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+In-Reply-To: <12776.1028697148@sss.pgh.pa.us>
+References: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net> 
+	<12776.1028697148@sss.pgh.pa.us>
+X-Mailer: Ximian Evolution 1.0.7 
+Date: 07 Aug 2002 09:46:29 +0500
+Message-ID: <1028695589.2133.11.camel@rh72.home.ee>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  1064
+
+On Wed, 2002-08-07 at 10:12, Tom Lane wrote:
+> Curt Sampson <cjs@cynic.net> writes:
+> > On Wed, 7 Aug 2002, Tom Lane wrote:
+> >> Also, the main downside of this approach is that the bitmap could
+> >> get large --- but you could have some logic that causes you to fall
+> >> back to plain sequential scan if you get too many index hits.
+> 
+> > Well, what I was thinking of, should the list of TIDs to fetch get too
+> > long, was just to break it down in to chunks.
+> 
+> But then you lose the possibility of combining multiple indexes through
+> bitmap AND/OR steps, which seems quite interesting to me.  If you've
+> visited only a part of each index then you can't apply that concept.
+
+When the tuples are small relative to pagesize, you may get some
+"compression" by saving just pages and not the actual tids in the the
+bitmap.
+
+-------------
+Hannu
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M26166@postgresql.org Wed Aug  7 00:55:52 2002
+Date: Wed, 7 Aug 2002 13:55:41 +0900 (JST)
+From: Curt Sampson <cjs@cynic.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: mark Kirkwood <markir@slithery.org>, Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>,  <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] CLUSTER and indisclustered 
+In-Reply-To: <12593.1028695307@sss.pgh.pa.us>
+Message-ID: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  1840
+
+On Wed, 7 Aug 2002, Tom Lane wrote:
+
+> I thought to myself "didn't I just post something about that?"
+> and then realized it was on a different mailing list.  Here ya go
+> (and no, this is not the first time around on this list either...)
+
+Wow. I'm glad to see you looking at this, because this feature would so
+*so* much for the performance of some of my queries, and really, really
+impress my "billion-row-database" client.
+
+> The idea is that you don't scan the index and base table concurrently
+> as we presently do it.  Instead, you scan the index and make a list
+> of the TIDs of the table tuples you need to visit.
+
+Right.
+
+> Also, the main downside of this approach is that the bitmap could
+> get large --- but you could have some logic that causes you to fall
+> back to plain sequential scan if you get too many index hits.
+
+Well, what I was thinking of, should the list of TIDs to fetch get too
+long, was just to break it down in to chunks. If you want to limit to,
+say, 1000 TIDs, and your index has 3000, just do the first 1000, then
+the next 1000, then the last 1000. This would still result in much less
+disk head movement and speed the query immensely.
+
+(BTW, I have verified this emperically during testing of random read vs.
+random write on a RAID controller. The writes were 5-10 times faster
+than the reads because the controller was caching a number of writes and
+then doing them in the best possible order, whereas the reads had to be
+satisfied in the order they were submitted to the controller.)
+
+cjs
+-- 
+Curt Sampson  <cjs@cynic.net>   +81 90 7737 2974   http://www.netbsd.org
+    Don't you know, in this new Dark Age, we're all light.  --XTC
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M26167@postgresql.org Wed Aug  7 01:12:54 2002
+To: Curt Sampson <cjs@cynic.net>
+cc: mark Kirkwood <markir@slithery.org>, Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] CLUSTER and indisclustered 
+In-Reply-To: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net> 
+References: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net>
+Comments: In-reply-to Curt Sampson <cjs@cynic.net>
+	message dated "Wed, 07 Aug 2002 13:55:41 +0900"
+Date: Wed, 07 Aug 2002 01:12:28 -0400
+Message-ID: <12776.1028697148@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  1428
+
+Curt Sampson <cjs@cynic.net> writes:
+> On Wed, 7 Aug 2002, Tom Lane wrote:
+>> Also, the main downside of this approach is that the bitmap could
+>> get large --- but you could have some logic that causes you to fall
+>> back to plain sequential scan if you get too many index hits.
+
+> Well, what I was thinking of, should the list of TIDs to fetch get too
+> long, was just to break it down in to chunks.
+
+But then you lose the possibility of combining multiple indexes through
+bitmap AND/OR steps, which seems quite interesting to me.  If you've
+visited only a part of each index then you can't apply that concept.
+
+Another point to keep in mind is that the bigger the bitmap gets, the
+less useful an indexscan is, by definition --- sooner or later you might
+as well fall back to a seqscan.  So the idea of lossy compression of a
+large bitmap seems really ideal to me.  In principle you could seqscan
+the parts of the table where matching tuples are thick on the ground,
+and indexscan the parts where they ain't.  Maybe this seems natural
+to me as an old JPEG campaigner, but if you don't see the logic I
+recommend thinking about it a little ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From tgl@sss.pgh.pa.us Wed Aug  7 09:27:05 2002
+To: Hannu Krosing <hannu@tm.ee>
+cc: Curt Sampson <cjs@cynic.net>, mark Kirkwood <markir@slithery.org>, 
+	   Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] CLUSTER and indisclustered 
+In-Reply-To: <1028726966.13418.12.camel@taru.tm.ee> 
+References: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net> <12776.1028697148@sss.pgh.pa.us> <1028695589.2133.11.camel@rh72.home.ee> <1028726966.13418.12.camel@taru.tm.ee>
+Comments: In-reply-to Hannu Krosing <hannu@tm.ee>
+	message dated "07 Aug 2002 15:29:26 +0200"
+Date: Wed, 07 Aug 2002 09:26:42 -0400
+Message-ID: <15010.1028726802@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Content-Length:  1120
+
+Hannu Krosing <hannu@tm.ee> writes:
+> Now I remembered my original preference for page bitmaps (vs. tuple
+> bitmaps): one can't actually make good use of a bitmap of tuples because
+> there is no fixed tuples/page ratio and thus no way to quickly go from
+> bit position to actual tuple. You mention the same problem but propose a
+> different solution.
+
+> Using page bitmap, we will at least avoid fetching any unneeded pages -
+> essentially we will have a sequential scan over possibly interesting
+> pages.
+
+Right.  One form of the "lossy compression" idea I suggested is to
+switch from a per-tuple bitmap to a per-page bitmap once the bitmap gets
+too large to work with.  Again, one could imagine doing that only in
+denser areas of the bitmap.
+
+> But I guess that CLUSTER support for INSERT will not be touched for 7.3
+> as will real bitmap indexes ;)
+
+All of this is far-future work I think.  Adding a new scan type to the
+executor would probably be pretty localized, but the ramifications in
+the planner could be extensive --- especially if you want to do plans
+involving ANDed or ORed bitmaps.
+
+			regards, tom lane
+
+From pgsql-hackers-owner+M26178@postgresql.org Wed Aug  7 08:28:14 2002
+X-Authentication-Warning: taru.tm.ee: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] CLUSTER and indisclustered
+From: Hannu Krosing <hannu@tm.ee>
+To: Hannu Krosing <hannu@tm.ee>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Curt Sampson <cjs@cynic.net>, 
+	   mark Kirkwood <markir@slithery.org>, Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+In-Reply-To: <1028695589.2133.11.camel@rh72.home.ee>
+References: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net> 
+	<12776.1028697148@sss.pgh.pa.us>  <1028695589.2133.11.camel@rh72.home.ee>
+X-Mailer: Ximian Evolution 1.0.3.99 
+Date: 07 Aug 2002 15:29:26 +0200
+Message-ID: <1028726966.13418.12.camel@taru.tm.ee>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  1837
+
+On Wed, 2002-08-07 at 06:46, Hannu Krosing wrote:
+> On Wed, 2002-08-07 at 10:12, Tom Lane wrote:
+> > Curt Sampson <cjs@cynic.net> writes:
+> > > On Wed, 7 Aug 2002, Tom Lane wrote:
+> > >> Also, the main downside of this approach is that the bitmap could
+> > >> get large --- but you could have some logic that causes you to fall
+> > >> back to plain sequential scan if you get too many index hits.
+> > 
+> > > Well, what I was thinking of, should the list of TIDs to fetch get too
+> > > long, was just to break it down in to chunks.
+> > 
+> > But then you lose the possibility of combining multiple indexes through
+> > bitmap AND/OR steps, which seems quite interesting to me.  If you've
+> > visited only a part of each index then you can't apply that concept.
+> 
+> When the tuples are small relative to pagesize, you may get some
+> "compression" by saving just pages and not the actual tids in the the
+> bitmap.
+
+Now I remembered my original preference for page bitmaps (vs. tuple
+bitmaps): one can't actually make good use of a bitmap of tuples because
+there is no fixed tuples/page ratio and thus no way to quickly go from
+bit position to actual tuple. You mention the same problem but propose a
+different solution.
+
+Using page bitmap, we will at least avoid fetching any unneeded pages -
+essentially we will have a sequential scan over possibly interesting
+pages.
+
+If we were to use page-bitmap index for something with only a few values
+like booleans, some insert-time local clustering should be useful, so
+that TRUEs and FALSEs end up on different pages.
+
+But I guess that CLUSTER support for INSERT will not be touched for 7.3
+as will real bitmap indexes ;)
+
+---------------
+Hannu
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M26192@postgresql.org Wed Aug  7 10:26:30 2002
+To: Hannu Krosing <hannu@tm.ee>
+cc: Curt Sampson <cjs@cynic.net>, mark Kirkwood <markir@slithery.org>, 
+	   Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] CLUSTER and indisclustered 
+In-Reply-To: <1028733234.13418.113.camel@taru.tm.ee> 
+References: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net> <12776.1028697148@sss.pgh.pa.us> <1028695589.2133.11.camel@rh72.home.ee> <1028726966.13418.12.camel@taru.tm.ee> <15010.1028726802@sss.pgh.pa.us> <1028733234.13418.113.camel@taru.tm.ee>
+Comments: In-reply-to Hannu Krosing <hannu@tm.ee>
+	message dated "07 Aug 2002 17:13:54 +0200"
+Date: Wed, 07 Aug 2002 10:26:13 -0400
+Message-ID: <15622.1028730373@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  1224
+
+Hannu Krosing <hannu@tm.ee> writes:
+> On Wed, 2002-08-07 at 15:26, Tom Lane wrote:
+>> Right.  One form of the "lossy compression" idea I suggested is to
+>> switch from a per-tuple bitmap to a per-page bitmap once the bitmap gets
+>> too large to work with.  
+
+> If it is a real bitmap, should it not be easyeast to allocate at the
+> start ?
+
+But it isn't a "real bitmap".  That would be a really poor
+implementation, both for space and speed --- do you really want to scan
+over a couple of megs of zeroes to find the few one-bits you care about,
+in the typical case?  "Bitmap" is a convenient term because it describes
+the abstract behavior we want, but the actual data structure will
+probably be nontrivial.  If I recall Ann's description correctly,
+Firebird's implementation uses run length coding of some kind (anyone
+care to dig in their source and get all the details?).  If we tried
+anything in the way of lossy compression then there'd be even more stuff
+lurking under the hood.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M26188@postgresql.org Wed Aug  7 10:12:26 2002
+X-Authentication-Warning: taru.tm.ee: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] CLUSTER and indisclustered
+From: Hannu Krosing <hannu@tm.ee>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Curt Sampson <cjs@cynic.net>, mark Kirkwood <markir@slithery.org>, 
+	   Gavin Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+In-Reply-To: <15010.1028726802@sss.pgh.pa.us>
+References: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net>
+	<12776.1028697148@sss.pgh.pa.us> <1028695589.2133.11.camel@rh72.home.ee>
+	<1028726966.13418.12.camel@taru.tm.ee>  <15010.1028726802@sss.pgh.pa.us>
+X-Mailer: Ximian Evolution 1.0.3.99 
+Date: 07 Aug 2002 17:13:54 +0200
+Message-ID: <1028733234.13418.113.camel@taru.tm.ee>
+X-Virus-Scanned: by AMaViS new-20020517
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-Virus-Scanned: by AMaViS new-20020517
+Content-Length:  2812
+
+On Wed, 2002-08-07 at 15:26, Tom Lane wrote:
+> Hannu Krosing <hannu@tm.ee> writes:
+> > Now I remembered my original preference for page bitmaps (vs. tuple
+> > bitmaps): one can't actually make good use of a bitmap of tuples because
+> > there is no fixed tuples/page ratio and thus no way to quickly go from
+> > bit position to actual tuple. You mention the same problem but propose a
+> > different solution.
+> 
+> > Using page bitmap, we will at least avoid fetching any unneeded pages -
+> > essentially we will have a sequential scan over possibly interesting
+> > pages.
+> 
+> Right.  One form of the "lossy compression" idea I suggested is to
+> switch from a per-tuple bitmap to a per-page bitmap once the bitmap gets
+> too large to work with.  
+
+If it is a real bitmap, should it not be easyeast to allocate at the
+start ?
+
+a page bitmap for a 100 000 000 tuple table with 10 tuples/page will be
+sized 10000000/8 = 1.25 MB, which does not look too big for me for that
+amount of data (the data table itself would occupy 80 GB).
+
+Even having the bitmap of 16 bits/page (with the bits 0-14 meaning
+tuples 0-14 and bit 15 meaning "seq scan the rest of page") would
+consume just 20 MB of _local_ memory, and would be quite justifyiable
+for a query on a table that large.
+
+For a real bitmap index the tuples-per-page should be a user-supplied
+tuning parameter.
+
+> Again, one could imagine doing that only in denser areas of the bitmap.
+
+I would hardly call the resulting structure "a bitmap" ;)
+
+And I'm not sure the overhead for a more complex structure would win us
+any additional performance for most cases.
+
+> > But I guess that CLUSTER support for INSERT will not be touched for 7.3
+> > as will real bitmap indexes ;)
+> 
+> All of this is far-future work I think. 
+
+After we do that we will probably be able claim support for
+"datawarehousing" ;)
+
+> Adding a new scan type to the
+> executor would probably be pretty localized, but the ramifications in
+> the planner could be extensive --- especially if you want to do plans
+> involving ANDed or ORed bitmaps.
+
+Also going to "smart inserter" which can do local clustering on sets of
+real bitmap indexes for INSERTS (and INSERT side of UPDATE) would
+probably be a major change from our current "stupid inserter" ;)
+
+This will not be needed for bitmap resolution higher than 1bit/page but
+default local clustering on bitmap indexes will probably buy us some
+extra performance. by avoiding data page fetches when such indexes are
+used.
+
+AN anyway the support for INSERT being aware of clustering will probably
+come up sometime.
+
+------------
+Hannu
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From hannu@tm.ee Wed Aug  7 11:22:53 2002
+X-Authentication-Warning: taru.tm.ee: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] CLUSTER and indisclustered
+From: Hannu Krosing <hannu@tm.ee>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Curt Sampson <cjs@cynic.net>, mark Kirkwood <markir@slithery.org>, 
+	   Gavin 
+	 Sherry <swm@linuxworld.com.au>, 
+	   Bruce Momjian <pgman@candle.pha.pa.us>, pgsql-hackers@postgresql.org
+In-Reply-To: <15622.1028730373@sss.pgh.pa.us>
+References: <Pine.NEB.4.44.0208071351440.1214-100000@angelic.cynic.net>
+	<12776.1028697148@sss.pgh.pa.us> <1028695589.2133.11.camel@rh72.home.ee>
+	<1028726966.13418.12.camel@taru.tm.ee> <15010.1028726802@sss.pgh.pa.us>
+	<1028733234.13418.113.camel@taru.tm.ee>  <15622.1028730373@sss.pgh.pa.us>
+X-Mailer: Ximian Evolution 1.0.3.99 
+Date: 07 Aug 2002 18:24:30 +0200
+Message-ID: <1028737470.13419.182.camel@taru.tm.ee>
+Content-Length:  2382
+
+On Wed, 2002-08-07 at 16:26, Tom Lane wrote:
+> Hannu Krosing <hannu@tm.ee> writes:
+> > On Wed, 2002-08-07 at 15:26, Tom Lane wrote:
+> >> Right.  One form of the "lossy compression" idea I suggested is to
+> >> switch from a per-tuple bitmap to a per-page bitmap once the bitmap gets
+> >> too large to work with.  
+> 
+> > If it is a real bitmap, should it not be easyeast to allocate at the
+> > start ?
+> 
+> But it isn't a "real bitmap".  That would be a really poor
+> implementation, both for space and speed --- do you really want to scan
+> over a couple of megs of zeroes to find the few one-bits you care about,
+> in the typical case?
+
+I guess that depends on data. The typical case should be somthing the
+stats process will find out so the optimiser can use it
+
+The bitmap must be less than 1/48 (size of TID) full for best
+uncompressed "active-tid-list" to be smaller than plain bitmap. If there
+were some structure above list then this ratio would be even higher.
+
+I have had good experience using "compressed delta lists", which will
+scale well ofer the whole "fullness" spectrum of bitmap, but this is for
+storage, not for initial constructing of lists.
+
+>  "Bitmap" is a convenient term because it describes
+> the abstract behavior we want, but the actual data structure will
+> probably be nontrivial.  If I recall Ann's description correctly,
+> Firebird's implementation uses run length coding of some kind (anyone
+> care to dig in their source and get all the details?).
+
+Plain RLL is probably a good way to store it and for merging two or more
+bitmaps, but not as good for constructing it bit-by-bit. I guess the
+most effective structure for updating is often still a plain bitmap
+(maybe not if it is very sparse and all of it does not fit in cache),
+followed by some kind of balanced tree (maybe rb-tree).
+
+If the bitmap is relatively full then the plain bitmap is almost always
+the most effective to update.
+
+> If we tried anything in the way of lossy compression then there'd
+> be even more stuff lurking under the hood.
+
+Having three-valued (0,1,maybe) RLL-encoded "tritmap" would be a good
+way to represent lossy compression, and it would also be quite
+straightforward to merge two of these using AND or OR. It may even be
+possible to easily construct it using a fixed-length b-tree and going
+from 1 to "maybe" for nodes that get too dense.
+
+---------------
+Hannu
 
 
