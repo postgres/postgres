@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.77 2001/10/10 00:02:42 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.78 2001/10/12 02:08:34 ishii Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -1006,6 +1006,16 @@
       </entry>
       <entry><literal>ltrim('zzzytrim','xyz')</literal></entry>
       <entry><literal>trim</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>pg_client_encoding</function>()</entry>
+      <entry><type>name</type></entry>
+      <entry>
+       Returns current client encoding name.
+      </entry>
+      <entry><literal>pg_client_encoding()</literal></entry>
+      <entry><literal>SQL_ASCII</literal></entry>
      </row>
 
      <row>

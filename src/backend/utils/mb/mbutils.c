@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.23 2001/09/21 15:27:38 tgl Exp $
+ * $Id: mbutils.c,v 1.24 2001/10/12 02:08:34 ishii Exp $
  */
 #include "postgres.h"
 
@@ -470,4 +470,11 @@ getdatabaseencoding(PG_FUNCTION_ARGS)
 {
 	Assert(DatabaseEncoding);
 	return DirectFunctionCall1(namein, CStringGetDatum(DatabaseEncoding->name));
+}
+
+Datum
+pg_client_encoding(PG_FUNCTION_ARGS)
+{
+	Assert(ClientEncoding);
+	return DirectFunctionCall1(namein, CStringGetDatum(ClientEncoding->name));
 }
