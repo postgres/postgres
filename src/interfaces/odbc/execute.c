@@ -33,6 +33,7 @@
 #include "qresult.h"
 #include "convert.h"
 #include "bind.h"
+#include "pgtypes.h"
 #include "lobj.h"
 
 extern GLOBAL_VALUES globals;
@@ -222,17 +223,22 @@ SQLExecute(
 	 */
 	if (stmt->prepare && stmt->status == STMT_PREMATURE)
 	{
-		stmt->status = STMT_FINISHED;
-		if (stmt->errormsg == NULL)
-		{
-			mylog("%s: premature statement but return SQL_SUCCESS\n", func);
-			return SQL_SUCCESS;
-		}
+		if (stmt->inaccurate_result)
+			SC_recycle_statement(stmt);
 		else
 		{
-			SC_log_error(func, "", stmt);
-			mylog("%s: premature statement so return SQL_ERROR\n", func);
-			return SQL_ERROR;
+			stmt->status = STMT_FINISHED;
+			if (stmt->errormsg == NULL)
+			{
+				mylog("%s: premature statement but return SQL_SUCCESS\n", func);
+				return SQL_SUCCESS;
+			}
+			else
+			{
+				SC_log_error(func, "", stmt);
+				mylog("%s: premature statement so return SQL_ERROR\n", func);
+				return SQL_ERROR;
+			}
 		}
 	}
 
@@ -283,30 +289,36 @@ SQLExecute(
 	}
 
 
-	/*
-	 * The bound parameters could have possibly changed since the last
-	 * execute of this statement?  Therefore check for params and re-copy.
-	 */
-	stmt->data_at_exec = -1;
-	for (i = 0; i < stmt->parameters_allocated; i++)
+	/* Check if statement has any data-at-execute parameters when it is not in SC_pre_execute. */
+	if (!stmt->pre_executing)
 	{
-		/* Check for data at execution parameters */
-		if (stmt->parameters[i].data_at_exec == TRUE)
-		{
-			if (stmt->data_at_exec < 0)
-				stmt->data_at_exec = 1;
-			else
-				stmt->data_at_exec++;
-		}
-	}
-	/* If there are some data at execution parameters, return need data */
 
-	/*
-	 * SQLParamData and SQLPutData will be used to send params and execute
-	 * the statement.
-	 */
-	if (stmt->data_at_exec > 0)
-		return SQL_NEED_DATA;
+		/*
+		 * The bound parameters could have possibly changed since the last
+		 * execute of this statement?  Therefore check for params and re-copy.
+		 */
+		stmt->data_at_exec = -1;
+		for (i = 0; i < stmt->parameters_allocated; i++)
+		{
+			/* Check for data at execution parameters */
+			if (stmt->parameters[i].data_at_exec == TRUE)
+			{
+				if (stmt->data_at_exec < 0)
+					stmt->data_at_exec = 1;
+				else
+					stmt->data_at_exec++;
+			}
+		}
+		/* If there are some data at execution parameters, return need data */
+
+		/*
+		 * SQLParamData and SQLPutData will be used to send params and execute
+		 * the statement.
+		 */
+		if (stmt->data_at_exec > 0)
+			return SQL_NEED_DATA;
+
+	}
 
 
 	mylog("%s: copying statement params: trans_status=%d, len=%d, stmt='%s'\n", func, conn->transact_status, strlen(stmt->statement), stmt->statement);
@@ -777,8 +789,7 @@ SQLPutData(
 
 		}
 		else
-		{						/* for handling text fields and small
-								 * binaries */
+		{						/* for handling fields */
 
 			if (cbValue == SQL_NTS)
 			{
@@ -793,16 +804,35 @@ SQLPutData(
 			}
 			else
 			{
-				current_param->EXEC_buffer = malloc(cbValue + 1);
-				if (!current_param->EXEC_buffer)
+				Int2 ctype = current_param->CType;
+				if (ctype == SQL_C_DEFAULT)
+					ctype = sqltype_to_default_ctype(current_param->SQLType);
+				if (ctype == SQL_C_CHAR || ctype == SQL_C_BINARY)
 				{
-					stmt->errornumber = STMT_NO_MEMORY_ERROR;
-					stmt->errormsg = "Out of memory in SQLPutData (2)";
-					SC_log_error(func, "", stmt);
-					return SQL_ERROR;
+					current_param->EXEC_buffer = malloc(cbValue + 1);
+					if (!current_param->EXEC_buffer)
+					{
+						stmt->errornumber = STMT_NO_MEMORY_ERROR;
+						stmt->errormsg = "Out of memory in SQLPutData (2)";
+						SC_log_error(func, "", stmt);
+						return SQL_ERROR;
+					}
+					memcpy(current_param->EXEC_buffer, rgbValue, cbValue);
+					current_param->EXEC_buffer[cbValue] = '\0';
 				}
-				memcpy(current_param->EXEC_buffer, rgbValue, cbValue);
-				current_param->EXEC_buffer[cbValue] = '\0';
+				else
+				{
+					Int4 used = ctype_length(ctype);
+					current_param->EXEC_buffer = malloc(used);
+					if (!current_param->EXEC_buffer)
+					{
+						stmt->errornumber = STMT_NO_MEMORY_ERROR;
+						stmt->errormsg = "Out of memory in SQLPutData (2)";
+						SC_log_error(func, "", stmt);
+						return SQL_ERROR;
+					}
+					memcpy(current_param->EXEC_buffer, rgbValue, used);
+				}
 			}
 		}
 	}

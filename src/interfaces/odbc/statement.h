@@ -214,6 +214,9 @@ struct StatementClass_
 														 * parameter
 														 * substitution */
 
+	char		pre_executing;	/* This statement is prematurely executing */
+	char		inaccurate_result;		/* Current status is PREMATURE
+										 * but result is inaccurate */
 };
 
 #define SC_get_conn(a)	  (a->hdbc)

@@ -92,5 +92,6 @@ char	   *pgtype_literal_suffix(StatementClass *stmt, Int4 type);
 char	   *pgtype_create_params(StatementClass *stmt, Int4 type);
 
 Int2		sqltype_to_default_ctype(Int2 sqltype);
+Int4		ctype_length(Int2 ctype);
 
 #endif

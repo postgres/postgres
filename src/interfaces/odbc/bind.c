@@ -143,10 +143,15 @@ SQLBindParameter(
 	}
 
 	/* Data at exec macro only valid for C char/binary data */
-	if ((fSqlType == SQL_LONGVARBINARY || fSqlType == SQL_LONGVARCHAR) && pcbValue && *pcbValue <= SQL_LEN_DATA_AT_EXEC_OFFSET)
+	if (pcbValue && (*pcbValue == SQL_DATA_AT_EXEC ||
+			*pcbValue <= SQL_LEN_DATA_AT_EXEC_OFFSET))
 		stmt->parameters[ipar].data_at_exec = TRUE;
 	else
 		stmt->parameters[ipar].data_at_exec = FALSE;
+
+	/* Clear premature result */
+	if (stmt->status == STMT_PREMATURE)
+		SC_recycle_statement(stmt);
 
 	mylog("SQLBindParamater: ipar=%d, paramType=%d, fCType=%d, fSqlType=%d, cbColDef=%d, ibScale=%d, rgbValue=%d, *pcbValue = %d, data_at_exec = %d\n", ipar, fParamType, fCType, fSqlType, cbColDef, ibScale, rgbValue, pcbValue ? *pcbValue : -777, stmt->parameters[ipar].data_at_exec);
 

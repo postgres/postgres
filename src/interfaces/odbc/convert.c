@@ -838,7 +838,20 @@ copy_statement_with_parameters(StatementClass *stmt)
 		param_number++;
 
 		if (param_number >= stmt->parameters_allocated)
-			break;
+		{
+			if (stmt->pre_executing)
+			{
+				strcpy(&new_statement[npos], "NULL");
+				npos += 4;
+				stmt->inaccurate_result = TRUE;
+				continue;
+			}
+			else
+			{
+				new_statement[npos++] = '?';
+				continue;
+			}
+		}
 
 		/* Assign correct buffers based on data at exec param or not */
 		if (stmt->parameters[param_number].data_at_exec)
@@ -866,8 +879,18 @@ copy_statement_with_parameters(StatementClass *stmt)
 		 */
 		if (!buffer)
 		{
-			new_statement[npos++] = '?';
-			continue;
+			if (stmt->pre_executing)
+			{
+				strcpy(&new_statement[npos], "NULL");
+				npos += 4;
+				stmt->inaccurate_result = TRUE;
+				continue;
+			}
+			else
+			{
+				new_statement[npos++] = '?';
+				continue;
+			}
 		}
 
 		param_ctype = stmt->parameters[param_number].CType;

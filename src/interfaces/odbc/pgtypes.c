@@ -955,3 +955,56 @@ sqltype_to_default_ctype(Int2 sqltype)
 			return SQL_C_CHAR;
 	}
 }
+
+Int4
+ctype_length(Int2 ctype)
+{
+	switch (ctype)
+	{
+		case SQL_C_SSHORT:
+		case SQL_C_SHORT:
+			return sizeof(SWORD);
+
+		case SQL_C_USHORT:
+			return sizeof(UWORD);
+
+		case SQL_C_SLONG:
+		case SQL_C_LONG:
+			return sizeof(SDWORD);
+
+		case SQL_C_ULONG:
+			return sizeof(UDWORD);
+
+		case SQL_C_FLOAT:
+			return sizeof(SFLOAT);
+
+		case SQL_C_DOUBLE:
+			return sizeof(SDOUBLE);
+
+		case SQL_C_BIT:
+			return sizeof(UCHAR);
+
+		case SQL_C_STINYINT:
+		case SQL_C_TINYINT:
+			return sizeof(SCHAR);
+
+		case SQL_C_UTINYINT:
+			return sizeof(UCHAR);
+
+		case SQL_C_DATE:
+			return sizeof(DATE_STRUCT);
+
+		case SQL_C_TIME:
+			return sizeof(TIME_STRUCT);
+
+		case SQL_C_TIMESTAMP:
+			return sizeof(TIMESTAMP_STRUCT);
+
+		case SQL_C_BINARY:
+		case SQL_C_CHAR:
+			return 0;
+
+		default:				/* should never happen */
+			return 0;
+	}
+}

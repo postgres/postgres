@@ -291,6 +291,9 @@ SC_Constructor(void)
 
 		/* Clear Statement Options -- defaults will be set in AllocStmt */
 		memset(&rv->options, 0, sizeof(StatementOptions));
+
+		rv->pre_executing = FALSE;
+		rv->inaccurate_result = FALSE;
 	}
 	return rv;
 }
@@ -518,6 +521,7 @@ SC_recycle_statement(StatementClass *self)
 		QR_Destructor(self->result);
 		self->result = NULL;
 	}
+	self->inaccurate_result = FALSE;
 
 	/****************************************************************/
 	/* Reset only parameters that have anything to do with results */
@@ -550,18 +554,33 @@ SC_recycle_statement(StatementClass *self)
 void
 SC_pre_execute(StatementClass *self)
 {
-
 	mylog("SC_pre_execute: status = %d\n", self->status);
 
 	if (self->status == STMT_READY)
 	{
 		mylog("              preprocess: status = READY\n");
 
-		SQLExecute(self);
-
-		if (self->status == STMT_FINISHED)
+		if (self->statement_type == STMT_TYPE_SELECT)
 		{
-			mylog("              preprocess: after status = FINISHED, so set PREMATURE\n");
+			char old_pre_executing = self->pre_executing;
+			self->pre_executing = TRUE;
+			self->inaccurate_result = FALSE;
+
+			SQLExecute(self);
+
+			self->pre_executing = old_pre_executing;
+
+			if (self->status == STMT_FINISHED)
+			{
+				mylog("              preprocess: after status = FINISHED, so set PREMATURE\n");
+				self->status = STMT_PREMATURE;
+			}
+		}
+		else
+		{
+			self->result = QR_Constructor();
+			QR_set_status(self->result, PGRES_TUPLES_OK);
+			self->inaccurate_result = TRUE;
 			self->status = STMT_PREMATURE;
 		}
 	}
