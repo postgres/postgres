@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct  5 16:43:01 EDT 2001
+Last updated:		Sun Oct  7 23:23:28 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -101,7 +101,7 @@ VIEWS
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
 * -Evaluate INSERT rules at end of query, rather than beginning (Jan)
-* Allow views on temporary tables to behave as temporary views
+* Allow temporary views
 
 INDEXES
 
