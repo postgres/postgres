@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.65 2004/11/29 20:11:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.66 2005/01/11 06:08:45 tgl Exp $
  *
  **********************************************************************/
 
@@ -295,7 +295,7 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
-		if (SvTYPE(val) != SVt_NULL)
+		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
 			values[attn - 1] = SvPV(val, PL_na);
 	}
 	hv_iterinit(perlhash);
@@ -446,7 +446,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("$_TD->{new} does not exist")));
-	if (SvTYPE(*svp) != SVt_RV || SvTYPE(SvRV(*svp)) != SVt_PVHV)
+	if (!SvOK(*svp) || SvTYPE(*svp) != SVt_RV || SvTYPE(SvRV(*svp)) != SVt_PVHV)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("$_TD->{new} is not a hash reference")));
@@ -467,7 +467,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
-		if (SvTYPE(val) != SVt_NULL)
+		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
 		{
 			Oid			typinput;
 			Oid			typioparam;
@@ -873,7 +873,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		TupleDesc	tupdesc;
 		AttInMetadata *attinmeta;
 
-		if (SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVAV)
+		if (!SvOK(perlret) || SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVAV)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("set-returning Perl function must return reference to array")));
@@ -911,7 +911,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			svp = av_fetch(ret_av, funcctx->call_cntr, FALSE);
 			Assert(svp != NULL);
 
-			if (SvTYPE(*svp) != SVt_RV || SvTYPE(SvRV(*svp)) != SVt_PVHV)
+			if (!SvOK(*svp) || SvTYPE(*svp) != SVt_RV || SvTYPE(SvRV(*svp)) != SVt_PVHV)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("elements of Perl result array must be reference to hash")));
@@ -933,7 +933,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		AV		   *ret_av;
 		FuncCallContext *funcctx;
 
-		if (SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVAV)
+		if (!SvOK(perlret) || SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVAV)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("set-returning Perl function must return reference to array")));
@@ -957,7 +957,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			svp = av_fetch(ret_av, funcctx->call_cntr, FALSE);
 			Assert(svp != NULL);
 
-			if (SvTYPE(*svp) != SVt_NULL)
+			if (SvOK(*svp) && SvTYPE(*svp) != SVt_NULL)
 			{
 				char	   *val = SvPV(*svp, PL_na);
 
@@ -988,7 +988,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		AttInMetadata *attinmeta;
 		HeapTuple	tup;
 
-		if (SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVHV)
+		if (!SvOK(perlret) || SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVHV)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("composite-returning Perl function must return reference to hash")));
