@@ -144,7 +144,7 @@ float seg_atof ( char *value ) {
   if ( errno ) {
     snprintf(buf, 256, "numeric value %s unrepresentable", value);
     reset_parse_buffer();     
-    elog(ERROR, buf);
+    elog(ERROR, "%s", buf);
   }
 
   return result;
@@ -175,7 +175,7 @@ int seg_yyerror ( char *msg ) {
 	  );
 
   reset_parse_buffer();     
-  elog(ERROR, buf);
+  elog(ERROR, "%s", buf);
   return 0;
 }
 

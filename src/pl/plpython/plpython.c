@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26 2002/10/19 22:10:58 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.26.2.1 2002/11/22 16:25:53 tgl Exp $
  *
  *********************************************************************
  */
@@ -2733,7 +2733,7 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 		RERAISE_EXC();
 	}
 
-	elog(level, sv);
+	elog(level, "%s", sv);
 
 	RESTORE_EXC();
 
