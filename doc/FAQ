@@ -6,7 +6,7 @@
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at the
-   postgreSQL Web site, http://www.PostgreSQL.org.
+   PostgreSQL Web site, http://www.PostgreSQL.org.
    
    Linux-specific questions are answered in
    http://www.PostgreSQL.org/docs/faq-linux.html.
@@ -15,7 +15,7 @@
    http://www.PostgreSQL.org/docs/faq-hpux.html.
    
    Solaris-specific questions are answered in
-   http://www.postgresql.org/docs/faq-solaris.html.
+   http://www.PostgreSQL.org/docs/faq-solaris.html.
    
    Irix-specific questions are answered in
    http://www.PostgreSQL.org/docs/faq-irix.html.
@@ -130,7 +130,7 @@
    PostgreSQL development is being performed by a team of Internet
    developers who all subscribe to the PostgreSQL development mailing
    list. The current coordinator is Marc G. Fournier
-   (scrappy@postgreSQL.org). (See below on how to join). This team is now
+   (scrappy@PostgreSQL.org). (See below on how to join). This team is now
    responsible for all current and future development of PostgreSQL.
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
@@ -210,26 +210,24 @@
     1.5) Where can I get PostgreSQL?
     
    The primary anonymous ftp site for PostgreSQL is
-   ftp://ftp.postgreSQL.org/pub
-   
-   For mirror sites, see our main web site.
+   ftp://ftp.PostgreSQL.org/pub. For mirror sites, see our main web site.
    
     1.6) Where can I get support for PostgreSQL?
     
    There is no official support for PostgreSQL from the University of
    California, Berkeley. It is maintained through volunteer effort.
    
-   The main mailing list is: pgsql-general@postgreSQL.org. It is
+   The main mailing list is: pgsql-general@PostgreSQL.org. It is
    available for discussion of matters pertaining to PostgreSQL. To
    subscribe, send a mail with the lines in the body (not the subject
    line)
         subscribe
         end
 
-   to pgsql-general-request@postgreSQL.org.
+   to pgsql-general-request@PostgreSQL.org.
    
    There is also a digest list available. To subscribe to this list, send
-   email to: pgsql-general-digest-request@postgreSQL.org with a body of:
+   email to: pgsql-general-digest-request@PostgreSQL.org with a body of:
         subscribe
         end
 
@@ -237,13 +235,13 @@
    has received around 30k of messages.
    
    The bugs mailing list is available. To subscribe to this list, send
-   email to bugs-request@postgreSQL.org with a body of:
+   email to bugs-request@PostgreSQL.org with a body of:
    
         subscribe
         end
 
    There is also a developers discussion mailing list available. To
-   subscribe to this list, send email to hackers-request@postgreSQL.org
+   subscribe to this list, send email to hackers-request@PostgreSQL.org
    with a body of:
    
         subscribe
@@ -252,7 +250,7 @@
    Additional mailing lists and information about PostgreSQL can be found
    via the PostgreSQL WWW home page at:
    
-     http://www.postgreSQL.org
+     http://www.PostgreSQL.org
      
    There is also an IRC channel on EFNet, channel #PostgreSQL. I use the
    unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
@@ -270,11 +268,11 @@
     
    Several manuals, manual pages, and some small test examples are
    included in the distribution. See the /doc directory. You can also
-   browse the manual on-line at http://www.postgresql.org/docs/postgres.
+   browse the manual on-line at http://www.PostgreSQL.org/docs/postgres.
    in the distribution.
    
    There is a PostgreSQL book availiable at
-   http://www.postgresql.org/docs/awbook.html
+   http://www.PostgreSQL.org/docs/awbook.html
    
    psql has some nice \d commands to show information about types,
    operators, functions, aggregates, etc.
@@ -288,7 +286,7 @@
    
     1.10) How can I learn SQL?
     
-   The PostgreSQL book at http://www.postgresql.org/docs/awbook.html
+   The PostgreSQL book at http://www.PostgreSQL.org/docs/awbook.html
    teaches SQL. There is a nice tutorial at
    http://w3.one.net/~jhoffman/sqltut.htm and at
    http://ourworld.compuserve.com/homepages/graeme_birchall/HTM_COOK.HTM.
@@ -319,9 +317,9 @@
    
     1.13) How do I submit a bug report?
     
-   Fill out the "bug-template" file and send it to: bugs@postgreSQL.org
+   Fill out the "bug-template" file and send it to: bugs@PostgreSQL.org
    
-   Also check out our ftp site ftp://ftp.postgreSQL.org/pub to see if
+   Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
    there is a more recent PostgreSQL version or patches.
    
     1.14) How does PostgreSQL compare to other DBMS's?
@@ -395,7 +393,7 @@
    There are two ODBC drivers available, PsqlODBC and OpenLink ODBC.
    
    PsqlODBC is included in the distribution. More information about it
-   can be gotten from: ftp://ftp.postgresql.org/pub/odbc/index.html
+   can be gotten from: ftp://ftp.PostgreSQL.org/pub/odbc/index.html
    
    OpenLink ODBC can be gotten from http://www.openlinksw.com. It works
    with their standard ODBC client software so you'll have PostgreSQL
