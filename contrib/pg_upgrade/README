@@ -1,132 +1,22 @@
+                                 pg_upgrade
 
+This is a version of pg_upgrade which will migrate a 7.1 database to 7.2,
+or allow a 7.2 to 7.2 migration if you need to perform an initdb.
 
+Read the manual page for more information.  To view it:
 
-PG_UPGRADE(1)     PostgreSQL Client Applications    PG_UPGRADE(1)
+	nroff -man pg_upgrade.1 | $PAGER
 
+Bruce Momjian
 
-NNAAMMEE
-       pg_upgrade - upgrade tool
+2002-01-14
 
-SSYYNNOOPPSSIISS
-       Allows upgrading from a previous release without reloading
-       data
+--
 
-DDEESSCCRRIIPPTTIIOONN
-       ppgg__uuppggrraaddee is a utility  for  upgrading  from  a  previous
-       PostgreSQL release without reloading all the data. Not all
-       PostgreSQL releases  can  use  this  utility.   Check  the
-       release notes for details about your version.
+To migrate this to newer versions of PostgreSQL:  
 
-       ppgg__uuppggrraaddee  must  be  run in two stages.  In phase one you
-       must run ppgg__uuppggrraaddee with your old database installation in
-       place.   In phase two, ppgg__uuppggrraaddee must be run on a freshly
-       iinniittddbb'ed current  install.   In  both  phases,  the  same
-       ppgg__uuppggrraaddee  script  matching  the  newly installed version
-       must be used.
-
-UUppggrraaddiinngg PPoossttggrreeSSQQLL wwiitthh ppgg__uuppggrraaddee
-       1) Back up your existing  data  directory,  preferably  by
-       making a complete dump with ppgg__dduummppaallll..
-
-       2)  Copy  the  program _p_g_s_q_l_/_c_o_n_t_r_i_b_/_p_g___u_p_g_r_a_d_e_/_p_g___u_p_g_r_a_d_e
-       from the current PostgreSQL  distribution  somewhere  into
-       your path.
-
-       3)  Change your working directory to the pgsql main direc-
-       tory, and type:
-
-       $$ ppgg__uuppggrraaddee --11
-
-       to collect information about the old database  needed  for
-       the upgrade.
-
-       4) Do:
-
-       $$ mmaakkee iinnssttaallll
-
-       to install the new binaries.
-
-       5)  Do:
-
-       $$ ccdd ppggssqqll//ccoonnttrriibb//ppgg__rreesseettxxlloogg
-       $$ mmaakkee iinnssttaallll
-
-       to  install  the  _p_g___r_e_s_e_t_x_l_o_g  utility which is needed by
-       ppgg__uuppggrraaddee.
-
-       6) Run initdb to create a new template1 database  contain-
-       ing  the system tables for the new release.  Make sure you
-       use settings similar to those used in your  previous  ver-
-       sion.
-
-
-
-14 Jan 2002               PG_UPGRADE(1)                         1
-
-
-
-
-
-PG_UPGRADE(1)     PostgreSQL Client Applications    PG_UPGRADE(1)
-
-
-       7)  Start  the new _p_o_s_t_m_a_s_t_e_r_.  (Note: it is critical that
-       no users connect to the server until the upgrade  is  com-
-       plete.  You may wish to start the postmaster without -i or
-       alter pg_hba.conf temporarily.)
-
-       8)  Change your working directory to the pgsql main direc-
-       tory again, and type:
-
-       $$ ppgg__uuppggrraaddee --22
-
-       The  program will do some checking to make sure everything
-       is properly configured, and will  then  recreate  all  the
-       databases  and  tables you had, but with no data.  It will
-       then physically move the data files containing  non-system
-       tables and indexes into the proper subdirectories.
-
-       9)   Restore  your old _p_g___h_b_a_._c_o_n_f if needed to allow user
-       logins.
-
-
-       10)   Carefully  examine  the  contents  of  the  upgraded
-       databases.  If you detect problems, you'll need to recover
-       by restoring from your full  ppgg__dduummppaallll  backup.  You  can
-       delete  the _p_g___u_p_g_r_a_d_e___i_n_f_o_/ directory when you are satis-
-       fied.
-
-       The upgraded databases will be in  an  un-vacuumed  state.
-       You  will  probably  want  to  run a _V_A_C_U_U_M _A_N_A_L_Y_Z_E before
-       beginning production work.
-
-SSEEEE AALLSSOO
-       initdb(1), postmaster(1), pg_dump(1), pg_dumpall(1), vacu-
-       umdb(1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-14 Jan 2002               PG_UPGRADE(1)                         2
-
+	1)  Update the version numbers at the top of the file
+	2)  Search for specific version mentions in the script and update
+	    accordingly.
+	3)  Add changes for next version.
 
