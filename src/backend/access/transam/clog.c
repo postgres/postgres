@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.10 2002/09/02 02:47:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.11 2002/09/26 22:58:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -809,8 +809,8 @@ TruncateCLOG(TransactionId oldestXact)
 	if (!ScanCLOGDirectory(cutoffPage, false))
 		return;					/* nothing to remove */
 
-	/* Perform a CHECKPOINT */
-	CreateCheckPoint(false);
+	/* Perform a forced CHECKPOINT */
+	CreateCheckPoint(false, true);
 
 	/*
 	 * Scan CLOG shared memory and remove any pages preceding the cutoff

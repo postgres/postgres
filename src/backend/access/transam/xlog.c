@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.106 2002/09/04 20:31:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.107 2002/09/26 22:58:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2743,7 +2743,7 @@ StartupXLOG(void)
 		 * checkpoint to become prevCheckPoint...
 		 */
 		ControlFile->checkPoint = checkPointLoc;
-		CreateCheckPoint(true);
+		CreateCheckPoint(true, true);
 		XLogCloseRelationCache();
 	}
 
@@ -2901,7 +2901,7 @@ ShutdownXLOG(void)
 
 	CritSectionCount++;
 	CreateDummyCaches();
-	CreateCheckPoint(true);
+	CreateCheckPoint(true, true);
 	ShutdownCLOG();
 	CritSectionCount--;
 
@@ -2910,9 +2910,12 @@ ShutdownXLOG(void)
 
 /*
  * Perform a checkpoint --- either during shutdown, or on-the-fly
+ *
+ * If force is true, we force a checkpoint regardless of whether any XLOG
+ * activity has occurred since the last one.
  */
 void
-CreateCheckPoint(bool shutdown)
+CreateCheckPoint(bool shutdown, bool force)
 {
 	CheckPoint	checkPoint;
 	XLogRecPtr	recptr;
@@ -2955,21 +2958,21 @@ CreateCheckPoint(bool shutdown)
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
 
 	/*
-	 * If this isn't a shutdown, and we have not inserted any XLOG records
-	 * since the start of the last checkpoint, skip the checkpoint.  The
-	 * idea here is to avoid inserting duplicate checkpoints when the
-	 * system is idle.	That wastes log space, and more importantly it
+	 * If this isn't a shutdown or forced checkpoint, and we have not inserted
+	 * any XLOG records since the start of the last checkpoint, skip the
+	 * checkpoint.  The idea here is to avoid inserting duplicate checkpoints
+	 * when the system is idle. That wastes log space, and more importantly it
 	 * exposes us to possible loss of both current and previous checkpoint
 	 * records if the machine crashes just as we're writing the update.
-	 * (Perhaps it'd make even more sense to checkpoint only when the
-	 * previous checkpoint record is in a different xlog page?)
+	 * (Perhaps it'd make even more sense to checkpoint only when the previous
+	 * checkpoint record is in a different xlog page?)
 	 *
 	 * We have to make two tests to determine that nothing has happened since
 	 * the start of the last checkpoint: current insertion point must
 	 * match the end of the last checkpoint record, and its redo pointer
 	 * must point to itself.
 	 */
-	if (!shutdown)
+	if (!shutdown && !force)
 	{
 		XLogRecPtr	curInsert;
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.143 2002/09/25 20:31:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.144 2002/09/26 22:58:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,7 +390,7 @@ BootstrapMain(int argc, char *argv[])
 
 		case BS_XLOG_CHECKPOINT:
 			CreateDummyCaches();
-			CreateCheckPoint(false);
+			CreateCheckPoint(false, false);
 			SetSavedRedoRecPtr();		/* pass redo ptr back to
 										 * postmaster */
 			proc_exit(0);		/* done */
@@ -445,7 +445,7 @@ BootstrapMain(int argc, char *argv[])
 	Int_yyparse();
 
 	SetProcessingMode(NormalProcessing);
-	CreateCheckPoint(true);
+	CreateCheckPoint(true, true);
 	SetProcessingMode(BootstrapProcessing);
 
 	/* clean up processing */
