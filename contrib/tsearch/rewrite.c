@@ -174,6 +174,9 @@ clean_NOT(ITEM * ptr, int4 *len)
 	return plaintree(clean_NOT_intree(root), len);
 }
 
+#ifdef V_UNKNOWN				/* apparently Windows defines this :-( */
+#undef V_UNKNOWN
+#endif
 #define V_UNKNOWN	0
 #define V_TRUE		1
 #define V_FALSE		2

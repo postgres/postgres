@@ -342,11 +342,11 @@ typedef struct
 {
 	uint16		len;
 	char	   *word;
-}	WORD;
+}	WORD_T; /* WORD type defined on win32; we'll use WORD_T */
 
 typedef struct
 {
-	WORD	   *words;
+	WORD_T	   *words;
 	int4		lenwords;
 	int4		curwords;
 }	PRSTEXT;
@@ -369,7 +369,7 @@ parsetext(PRSTEXT * prs, char *buf, int4 buflen)
 		if (prs->curwords == prs->lenwords)
 		{
 			prs->lenwords *= 2;
-			prs->words = (WORD *) repalloc((void *) prs->words, prs->lenwords * sizeof(WORD));
+			prs->words = (WORD_T *) repalloc((void *) prs->words, prs->lenwords * sizeof(WORD_T));
 		}
 		if (tokenlen > 0xffff)
 		{
@@ -410,18 +410,18 @@ parsetext(PRSTEXT * prs, char *buf, int4 buflen)
 static int
 compareWORD(const void *a, const void *b)
 {
-	if (((WORD *) a)->len == ((WORD *) b)->len)
+	if (((WORD_T *) a)->len == ((WORD_T *) b)->len)
 		return strncmp(
-					   ((WORD *) a)->word,
-					   ((WORD *) b)->word,
-					   ((WORD *) b)->len);
-	return (((WORD *) a)->len > ((WORD *) b)->len) ? 1 : -1;
+					   ((WORD_T *) a)->word,
+					   ((WORD_T *) b)->word,
+					   ((WORD_T *) b)->len);
+	return (((WORD_T *) a)->len > ((WORD_T *) b)->len) ? 1 : -1;
 }
 
 static int
-uniqueWORD(WORD * a, int4 l)
+uniqueWORD(WORD_T * a, int4 l)
 {
-	WORD	   *ptr,
+	WORD_T	   *ptr,
 			   *res;
 
 	if (l == 1)
@@ -430,7 +430,7 @@ uniqueWORD(WORD * a, int4 l)
 	res = a;
 	ptr = a + 1;
 
-	qsort((void *) a, l, sizeof(WORD), compareWORD);
+	qsort((void *) a, l, sizeof(WORD_T), compareWORD);
 
 	while (ptr - a < l)
 	{
@@ -500,7 +500,7 @@ txt2txtidx(PG_FUNCTION_ARGS)
 
 	prs.lenwords = 32;
 	prs.curwords = 0;
-	prs.words = (WORD *) palloc(sizeof(WORD) * prs.lenwords);
+	prs.words = (WORD_T *) palloc(sizeof(WORD_T) * prs.lenwords);
 
 	initmorph();
 	parsetext(&prs, VARDATA(in), VARSIZE(in) - VARHDRSZ);
@@ -564,7 +564,7 @@ tsearch(PG_FUNCTION_ARGS)
 				 errmsg("could not find txtidx_field")));
 	prs.lenwords = 32;
 	prs.curwords = 0;
-	prs.words = (WORD *) palloc(sizeof(WORD) * prs.lenwords);
+	prs.words = (WORD_T *) palloc(sizeof(WORD_T) * prs.lenwords);
 
 	initmorph();
 	/* find all words in indexable column */

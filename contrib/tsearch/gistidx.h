@@ -33,6 +33,9 @@ typedef char *BITVECP;
 #define GETBIT(x,i) ( (GETBYTE(x,i) >> ( (i) % BITBYTE )) & 0x01 )
 
 #define abs(a)			((a) <	(0) ? -(a) : (a))
+#ifdef min
+#undef min
+#endif
 #define min(a,b)			((a) <	(b) ? (a) : (b))
 #define HASHVAL(val) (((unsigned int)(val)) % SIGLENBIT)
 #define HASH(sign, val) SETBIT((sign), HASHVAL(val))
