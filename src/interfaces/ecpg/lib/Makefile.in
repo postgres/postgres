@@ -25,12 +25,12 @@ ifeq ($(PORTNAME), bsd)
   LDFLAGS_SL = -x -Bshareable -Bforcearchive
   CFLAGS += $(CFLAGS_SL)
 endif
-ifeq ($(PORTNAME), i386_solaris)
-  install-shlib-dep := install-shlib
-  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL = -G -z text
-  CFLAGS += $(CFLAGS_SL)
-endif
+#ifeq ($(PORTNAME), i386_solaris)
+#  install-shlib-dep := install-shlib
+#  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+#  LDFLAGS_SL = -G -z text
+#  CFLAGS += $(CFLAGS_SL)
+#endif
 ifeq ($(PORTNAME), univel)
   install-shlib-dep := install-shlib
   shlib := libecpg.so.1
