@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.30 1999/08/22 20:15:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.31 1999/08/23 23:48:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,6 @@
 #include "utils/syscache.h"
 
 static void disallow_setop(char *op, Type optype, Node *operand);
-static Node *make_operand(char *opname,
-			 Node *tree,
-			 Oid orig_typeId,
-			 Oid true_typeId);
 
 /* make_parsestate()
  * Allocate and initialize a new ParseState.
@@ -58,31 +54,31 @@ make_parsestate(ParseState *parentParseState)
 /* make_operand()
  * Ensure argument type match by forcing conversion of constants.
  */
-static Node *
+Node *
 make_operand(char *opname,
 			 Node *tree,
 			 Oid orig_typeId,
-			 Oid true_typeId)
+			 Oid target_typeId)
 {
 	Node	   *result;
-	Type		true_type;
+	Type		target_type;
 
 	if (tree != NULL)
 	{
 		result = tree;
-		true_type = typeidType(true_typeId);
-		disallow_setop(opname, true_type, result);
+		target_type = typeidType(target_typeId);
+		disallow_setop(opname, target_type, result);
 
 		/* must coerce? */
-		if (true_typeId != orig_typeId)
-			result = coerce_type(NULL, tree, orig_typeId, true_typeId, -1);
+		if (target_typeId != orig_typeId)
+			result = coerce_type(NULL, tree, orig_typeId, target_typeId, -1);
 	}
 	/* otherwise, this is a NULL value */
 	else
 	{
 		Const	   *con = makeNode(Const);
 
-		con->consttype = true_typeId;
+		con->consttype = target_typeId;
 		con->constlen = 0;
 		con->constvalue = (Datum) (struct varlena *) NULL;
 		con->constisnull = true;
@@ -128,47 +124,31 @@ make_op(char *opname, Node *ltree, Node *rtree)
 			   *right;
 	Expr	   *result;
 
+	ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
+	rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
+
 	/* right operator? */
 	if (rtree == NULL)
 	{
-		ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
 		tup = right_oper(opname, ltypeId);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 		left = make_operand(opname, ltree, ltypeId, opform->oprleft);
 		right = NULL;
-
 	}
 
 	/* left operator? */
 	else if (ltree == NULL)
 	{
-		rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
 		tup = left_oper(opname, rtypeId);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
 		left = NULL;
-
 	}
 
 	/* otherwise, binary operator */
 	else
 	{
-		/* binary operator */
-		ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
-		rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
-
-		/* check for exact match on this operator... */
-		if (HeapTupleIsValid(tup = oper_exact(opname, ltypeId, rtypeId, &ltree, &rtree, TRUE)))
-		{
-			ltypeId = exprType(ltree);
-			rtypeId = exprType(rtree);
-		}
-		/* try to find a match on likely candidates... */
-		else if (!HeapTupleIsValid(tup = oper_inexact(opname, ltypeId, rtypeId, &ltree, &rtree, FALSE)))
-		{
-			/* Won't return from oper_inexact() without a candidate... */
-		}
-
+		tup = oper(opname, ltypeId, rtypeId, FALSE);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 		left = make_operand(opname, ltree, ltypeId, opform->oprleft);
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);

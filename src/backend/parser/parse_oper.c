@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.29 1999/07/17 20:17:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.30 1999/08/23 23:48:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@
 
 static Oid *oper_select_candidate(int nargs, Oid *input_typeids,
 					  CandidateList candidates);
+static Operator oper_exact(char *op, Oid arg1, Oid arg2);
+static Operator oper_inexact(char *op, Oid arg1, Oid arg2);
 static int binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
@@ -376,15 +378,14 @@ oper_select_candidate(int nargs,
 
 
 /* oper_exact()
- * Given operator, and arguments, return oper struct.
+ * Given operator, and arguments, return oper struct or NULL.
  * Inputs:
  * arg1, arg2: Type IDs
  */
-Operator
-oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarnings)
+static Operator
+oper_exact(char *op, Oid arg1, Oid arg2)
 {
 	HeapTuple	tup;
-	Node	   *tree;
 
 	/* Unspecified type for one of the arguments? then use the other */
 	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid))
@@ -398,51 +399,17 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 							  ObjectIdGetDatum(arg2),
 							  CharGetDatum('b'));
 
-	/*
-	 * Did not find anything? then try flipping arguments on a commutative
-	 * operator...
-	 */
-	if (!HeapTupleIsValid(tup) && (arg1 != arg2))
-	{
-		tup = SearchSysCacheTuple(OPRNAME,
-								  PointerGetDatum(op),
-								  ObjectIdGetDatum(arg2),
-								  ObjectIdGetDatum(arg1),
-								  CharGetDatum('b'));
-
-		if (HeapTupleIsValid(tup))
-		{
-			Form_pg_operator opform;
-
-			opform = (Form_pg_operator) GETSTRUCT(tup);
-			if (opform->oprcom == tup->t_data->t_oid)
-			{
-				if ((ltree != NULL) && (rtree != NULL))
-				{
-					tree = *ltree;
-					*ltree = *rtree;
-					*rtree = tree;
-				}
-			}
-			/* disable for now... - thomas 1998-05-14 */
-			else
-				tup = NULL;
-		}
-		if (!HeapTupleIsValid(tup) && (!noWarnings))
-			op_error(op, arg1, arg2);
-	}
-
-	return tup;
+	return (Operator) tup;
 }	/* oper_exact() */
 
 
 /* oper_inexact()
- * Given operator, types of arg1, and arg2, return oper struct.
+ * Given operator, types of arg1, and arg2, return oper struct or NULL.
  * Inputs:
  * arg1, arg2: Type IDs
  */
-Operator
-oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarnings)
+static Operator
+oper_inexact(char *op, Oid arg1, Oid arg2)
 {
 	HeapTuple	tup;
 	CandidateList candidates;
@@ -458,13 +425,9 @@ oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWa
 
 	ncandidates = binary_oper_get_candidates(op, arg1, arg2, &candidates);
 
-	/* No operators found? Then throw error or return null... */
+	/* No operators found? Then return null... */
 	if (ncandidates == 0)
-	{
-		if (!noWarnings)
-			op_error(op, arg1, arg2);
 		return NULL;
-	}
 
 	/* Or found exactly one? Then proceed... */
 	else if (ncandidates == 1)
@@ -493,18 +456,6 @@ oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWa
 		}
 		else
 			tup = NULL;
-
-		/* Could not choose one, for whatever reason... */
-		if (!HeapTupleIsValid(tup))
-		{
-			if (!noWarnings)
-			{
-				elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
-					 "\n\tYou will have to retype this query using an explicit cast",
-					 op, typeTypeName(typeidType(arg1)), typeTypeName(typeidType(arg2)));
-			}
-			return NULL;
-		}
 	}
 	return (Operator) tup;
 }	/* oper_inexact() */
@@ -521,17 +472,16 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noWarnings)
 	HeapTuple	tup;
 
 	/* check for exact match on this operator... */
-	if (HeapTupleIsValid(tup = oper_exact(opname, ltypeId, rtypeId, NULL, NULL, TRUE)))
+	if (HeapTupleIsValid(tup = oper_exact(opname, ltypeId, rtypeId)))
 	{
 	}
 	/* try to find a match on likely candidates... */
-	else if (HeapTupleIsValid(tup = oper_inexact(opname, ltypeId, rtypeId, NULL, NULL, TRUE)))
+	else if (HeapTupleIsValid(tup = oper_inexact(opname, ltypeId, rtypeId)))
 	{
 	}
 	else if (!noWarnings)
 	{
-		elog(ERROR, "Unable to identify a binary operator '%s' for types %s and %s",
-			 opname, typeTypeName(typeidType(ltypeId)), typeTypeName(typeidType(rtypeId)));
+		op_error(opname, ltypeId, rtypeId);
 	}
 
 	return (Operator) tup;
@@ -741,8 +691,7 @@ op_error(char *op, Oid arg1, Oid arg2)
 			 "\n\tProbably a bad attribute name", op);
 	}
 
-	elog(ERROR, "There is no operator '%s' for types '%s' and '%s'"
-		 "\n\tYou will either have to retype this query using an explicit cast,"
-	 "\n\tor you will have to define the operator using CREATE OPERATOR",
+	elog(ERROR, "Unable to identify an operator '%s' for types '%s' and '%s'"
+		 "\n\tYou will have to retype this query using an explicit cast",
 		 op, typeTypeName(tp1), typeTypeName(tp2));
 }
