@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Ponedel'nik 22 Aprelya 14:02:41 EDT 2003
+   Data poslednego obnovleniya: Pyatnica 30 Maya 22:24:56 EDT 2003
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -66,9 +66,9 @@
                                       
    4.1) V chem otlichie mezhdu binarnym i normal'nym kursorom?
    4.2) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek
-   zaprosa?
+   zaprosa? Dlya proizvol'noj stroki?
    4.3) Kak poluchit' spisok tablic ili drugih komponentov v psql?
-   4.4) Kak udalit' kolonku iz tablicy?
+   4.4) Kak udalit' kolonku iz tablicy ili izmenit' eio tip dannyh?
    4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
    4.6) Kak mnogo diskovogo prostranstva v baze dannyh nuzhno dlya
    sohraneniya dannyh iz obychnogo tekstovogo fajla?
@@ -709,6 +709,7 @@
    Smotrite opisanie na stranicah rukovodstva posvyaschennym DECLARE.
    
     4.2) Kak vypolnit' SELECT tol'ko dlya neskol'kih pervyh strochek zaprosa?
+    Proizvol'noj stroki?
     
    Smotrite stanicu rukovodstva posvyaschennuyu FETCH ili ispol'zujte
    SELECT ... LIMIT....
@@ -719,6 +720,12 @@
    mozhet vydat' tol'ko neskol'ko pervyh zaproshennyh zapisej ili mozhet
    vypolnyat' zapros poka ne budut vydany zhelaemye zapisi.
    
+   To SELECT a random row, use:
+    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+
     4.3) Kak poluchit' spisok tablic ili drugih komponentov v psql?
     
    Vy mozhete posmotret' ishodnyj kod psql v fajle
@@ -728,10 +735,10 @@
    chtoby `eta programma vydavala zaprosy, kotorye ona ispol'zuet dlya
    vypolneniya zadannyh vami komand.
    
-    4.4) Kak udalit' kolonku iz tablicy?
+    4.4) Kak udalit' kolonku iz tablicy ili izmenit' ioio tip dannyh?
     
-   `Eta funkcional'nost' byla dobavlena v vypusk 7.3 s operatorom ALTER
-   TABLE DROP COLUMN. V rannih versiyah, mozhno sdelat' tak:
+   DROP COLUMN funkcional'nost' byla dobavlena v vypusk 7.3 s operatorom
+   ALTER TABLE DROP COLUMN. V rannih versiyah, mozhno sdelat' tak:
     BEGIN;
     LOCK TABLE old_table;
     SELECT ...  -- vyborka vseh kolonok za isklyucheniem toj, kotoruyu hotite u
@@ -740,6 +747,13 @@ dalit'
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
+    COMMIT;
+
+   Dlya izmeneniya tipa dannyh kolonki, sdelajte tak:
+    BEGIN;
+    ALTER TABLE tab ADD COLUMN new_col new_data_type;
+    UPDATE tab SET new_col = CAST(old_col AS new_data_type);
+    ALTER TABLE DROP COLUMN old_col;
     COMMIT;
 
     4.5) Kakovy maksimal'nye razmery dlya zapisej, tablic i bazy dannyh?
