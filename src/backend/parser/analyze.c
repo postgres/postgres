@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.104 1999/05/13 15:01:32 thomas Exp $
+ *  $Id: analyze.c,v 1.105 1999/05/17 04:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,7 +545,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;
 					constraint->name = sname;
-					cstring = palloc(9 + strlen(constraint->name) + 2 + 1);
+					cstring = palloc(10 + strlen(constraint->name) + 3 + 1);
 					strcpy(cstring, "nextval('\"");
 					strcat(cstring, constraint->name);
 					strcat(cstring, "\"')");
