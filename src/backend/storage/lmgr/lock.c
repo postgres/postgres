@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.33 1998/08/25 21:20:26 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.34 1998/08/28 12:08:03 scrappy Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -668,7 +668,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 			{
 				SHMQueueDelete(&result->queue);
 				result = (XIDLookupEnt *) hash_search(xidTable,
-													  (Pointer) &result,
+													  (Pointer) result,
 													  HASH_REMOVE, &found);
 				if (!result || !found) {
 					elog(NOTICE, "LockAcquire: remove xid, table corrupted");
