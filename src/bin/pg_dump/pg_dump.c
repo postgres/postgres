@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.248 2002/04/13 19:57:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.249 2002/04/18 20:01:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2274,17 +2274,28 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char *tablename)
 			PGresult   *res2;
 
 			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "SELECT definition as viewdef, ");
 
-			/*
-			 * XXX 7.2 - replace with att from pg_views or some other
-			 * generic source
-			 */
-			appendPQExpBuffer(query, "(select oid from pg_rewrite where "
-					  " rulename=('_RET' || viewname)::name) as view_oid"
-							  " from pg_views where viewname = ");
-			formatStringLiteral(query, tblinfo[i].relname, CONV_ALL);
-			appendPQExpBuffer(query, ";");
+			if (g_fout->remoteVersion < 70300)
+			{
+				appendPQExpBuffer(query, "SELECT definition as viewdef, "
+								  "(select oid from pg_rewrite where "
+								  " rulename=('_RET' || viewname)::name) as view_oid"
+								  " from pg_views where viewname = ");
+				formatStringLiteral(query, tblinfo[i].relname, CONV_ALL);
+				appendPQExpBuffer(query, ";");
+			}
+			else
+			{
+				/* Beginning in 7.3, viewname is not unique; use OID */
+				appendPQExpBuffer(query, "SELECT pg_get_viewdef(ev_class) as viewdef, "
+								  "oid as view_oid"
+								  " from pg_rewrite where"
+								  " ev_class = '%s'::oid and"
+								  " rulename = ('_RET' || ",
+								  tblinfo[i].oid);
+				formatStringLiteral(query, tblinfo[i].relname, CONV_ALL);
+				appendPQExpBuffer(query, ")::name;");
+			}
 
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
@@ -4995,23 +5006,41 @@ dumpRules(Archive *fout, const char *tablename,
 			continue;
 
 		/*
-		 * Get all rules defined for this table We include pg_rules in the
-		 * cross since it filters out all view rules (pjw 15-Sep-2000).
-		 *
-		 * XXXX: Use LOJ here
+		 * Get all rules defined for this table
 		 */
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "SELECT definition,"
-						  "   (select usename from pg_user where pg_class.relowner = usesysid) AS viewowner, "
-						  "   pg_rewrite.oid, pg_rewrite.rulename "
-						  "FROM pg_rewrite, pg_class, pg_rules "
-						  "WHERE pg_class.relname = ");
-		formatStringLiteral(query, tblinfo[t].relname, CONV_ALL);
-		appendPQExpBuffer(query,
-						  "    AND pg_rewrite.ev_class = pg_class.oid "
-						  "    AND pg_rules.tablename = pg_class.relname "
-					   "    AND pg_rules.rulename = pg_rewrite.rulename "
-						  "ORDER BY pg_rewrite.oid");
+
+		if (g_fout->remoteVersion < 70300)
+		{
+			/*
+			 * We include pg_rules in the cross since it filters out all view
+			 * rules (pjw 15-Sep-2000).
+			 */
+			appendPQExpBuffer(query, "SELECT definition,"
+							  "   (select usename from pg_user where pg_class.relowner = usesysid) AS viewowner, "
+							  "   pg_rewrite.oid, pg_rewrite.rulename "
+							  "FROM pg_rewrite, pg_class, pg_rules "
+							  "WHERE pg_class.relname = ");
+			formatStringLiteral(query, tblinfo[t].relname, CONV_ALL);
+			appendPQExpBuffer(query,
+							  "    AND pg_rewrite.ev_class = pg_class.oid "
+							  "    AND pg_rules.tablename = pg_class.relname "
+							  "    AND pg_rules.rulename = pg_rewrite.rulename "
+							  "ORDER BY pg_rewrite.oid");
+		}
+		else
+		{
+			appendPQExpBuffer(query, "SELECT pg_get_ruledef(pg_rewrite.oid) AS definition,"
+							  " (select usename from pg_user where pg_class.relowner = usesysid) AS viewowner, "
+							  " pg_rewrite.oid, pg_rewrite.rulename "
+							  "FROM pg_rewrite, pg_class "
+							  "WHERE pg_class.oid = '%s'::oid "
+							  " AND pg_rewrite.ev_class = pg_class.oid "
+							  " AND pg_rewrite.rulename !~ '^_RET' "
+							  "ORDER BY pg_rewrite.oid",
+							  tblinfo[t].oid);
+		}
+
 		res = PQexec(g_conn, query->data);
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
@@ -5041,6 +5070,7 @@ dumpRules(Archive *fout, const char *tablename,
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "RULE %s", fmtId(PQgetvalue(res, i, i_rulename), force_quotes));
+			appendPQExpBuffer(query, " ON %s", fmtId(tblinfo[t].relname, force_quotes));
 			dumpComment(fout, query->data, PQgetvalue(res, i, i_oid),
 						"pg_rewrite", 0, NULL);
 

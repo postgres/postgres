@@ -4,11 +4,14 @@
  *	  definition of the system "rewrite-rule" relation (pg_rewrite)
  *	  along with the relation's initial contents.
  *
+ * As of Postgres 7.3, the primary key for this table is <ev_class, rulename>
+ * --- ie, rule names are only unique among the rules of a given table.
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_rewrite.h,v 1.17 2001/11/05 17:46:32 momjian Exp $
+ * $Id: pg_rewrite.h,v 1.18 2002/04/18 20:01:11 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -34,9 +37,9 @@
 CATALOG(pg_rewrite)
 {
 	NameData	rulename;
-	char		ev_type;
 	Oid			ev_class;
 	int2		ev_attr;
+	char		ev_type;
 	bool		is_instead;
 
 	/* NB: remaining fields must be accessed via heap_getattr */
@@ -57,9 +60,9 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
  */
 #define Natts_pg_rewrite				7
 #define Anum_pg_rewrite_rulename		1
-#define Anum_pg_rewrite_ev_type			2
-#define Anum_pg_rewrite_ev_class		3
-#define Anum_pg_rewrite_ev_attr			4
+#define Anum_pg_rewrite_ev_class		2
+#define Anum_pg_rewrite_ev_attr			3
+#define Anum_pg_rewrite_ev_type			4
 #define Anum_pg_rewrite_is_instead		5
 #define Anum_pg_rewrite_ev_qual			6
 #define Anum_pg_rewrite_ev_action		7

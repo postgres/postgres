@@ -699,7 +699,7 @@ insert into foo values(1);
 insert into foo values(1001);
 select * from foo;
 
-drop rule foorule;
+drop rule foorule on foo;
 
 -- this should fail because f1 is not exposed for unqualified reference:
 create rule foorule as on insert to foo where f1 < 100
@@ -714,7 +714,7 @@ insert into foo values(100);
 select * from foo;
 select * from foo2;
 
-drop rule foorule;
+drop rule foorule on foo;
 drop table foo;
 drop table foo2;
 
@@ -751,7 +751,7 @@ update vview set descrip='test3' where pid=3;
 select * from vview;
 select * from cchild;
 
-drop rule rrule;
+drop rule rrule on vview;
 drop view vview;
 drop table pparent;
 drop table cchild;

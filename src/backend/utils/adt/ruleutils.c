@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.96 2002/04/11 20:00:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.97 2002/04/18 20:01:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -42,6 +42,7 @@
 
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -97,11 +98,10 @@ typedef struct
  * Global data
  * ----------
  */
-static char *rulename = NULL;
-static void *plan_getrule = NULL;
-static char *query_getrule = "SELECT * FROM pg_rewrite WHERE rulename = $1";
-static void *plan_getview = NULL;
-static char *query_getview = "SELECT * FROM pg_rewrite WHERE rulename = $1";
+static void *plan_getrulebyoid = NULL;
+static char *query_getrulebyoid = "SELECT * FROM pg_rewrite WHERE oid = $1";
+static void *plan_getviewrule = NULL;
+static char *query_getviewrule = "SELECT * FROM pg_rewrite WHERE ev_class = $1 AND rulename = $2";
 
 
 /* ----------
@@ -112,6 +112,7 @@ static char *query_getview = "SELECT * FROM pg_rewrite WHERE rulename = $1";
  * as a parameter, and append their text output to its contents.
  * ----------
  */
+static text *pg_do_getviewdef(Oid viewoid);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace);
@@ -156,20 +157,15 @@ static char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 Datum
 pg_get_ruledef(PG_FUNCTION_ARGS)
 {
-	Name		rname = PG_GETARG_NAME(0);
+	Oid			ruleoid = PG_GETARG_OID(0);
 	text	   *ruledef;
 	Datum		args[1];
-	char		nulls[2];
+	char		nulls[1];
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
 	StringInfoData buf;
 	int			len;
-
-	/*
-	 * We need the rules name somewhere deep down: rulename is global
-	 */
-	rulename = pstrdup(NameStr(*rname));
 
 	/*
 	 * Connect to SPI manager
@@ -182,27 +178,26 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	 * pg_rewrite over the SPI manager instead of using the syscache to be
 	 * checked for read access on pg_rewrite.
 	 */
-	if (plan_getrule == NULL)
+	if (plan_getrulebyoid == NULL)
 	{
 		Oid			argtypes[1];
 		void	   *plan;
 
-		argtypes[0] = NAMEOID;
-		plan = SPI_prepare(query_getrule, 1, argtypes);
+		argtypes[0] = OIDOID;
+		plan = SPI_prepare(query_getrulebyoid, 1, argtypes);
 		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getrule);
-		plan_getrule = SPI_saveplan(plan);
+			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getrulebyoid);
+		plan_getrulebyoid = SPI_saveplan(plan);
 	}
 
 	/*
 	 * Get the pg_rewrite tuple for this rule
 	 */
-	args[0] = PointerGetDatum(rulename);
-	nulls[0] = (rulename == NULL) ? 'n' : ' ';
-	nulls[1] = '\0';
-	spirc = SPI_execp(plan_getrule, args, nulls, 1);
+	args[0] = ObjectIdGetDatum(ruleoid);
+	nulls[0] = ' ';
+	spirc = SPI_execp(plan_getrulebyoid, args, nulls, 1);
 	if (spirc != SPI_OK_SELECT)
-		elog(ERROR, "failed to get pg_rewrite tuple for %s", rulename);
+		elog(ERROR, "failed to get pg_rewrite tuple for %u", ruleoid);
 	if (SPI_processed != 1)
 	{
 		if (SPI_finish() != SPI_OK_FINISH)
@@ -248,21 +243,47 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 Datum
 pg_get_viewdef(PG_FUNCTION_ARGS)
 {
-	Name		vname = PG_GETARG_NAME(0);
+	/* By OID */
+	Oid			viewoid = PG_GETARG_OID(0);
 	text	   *ruledef;
-	Datum		args[1];
-	char		nulls[1];
+
+	ruledef = pg_do_getviewdef(viewoid);
+	PG_RETURN_TEXT_P(ruledef);
+}
+
+Datum
+pg_get_viewdef_name(PG_FUNCTION_ARGS)
+{
+	/* By qualified name */
+	text	   *viewname = PG_GETARG_TEXT_P(0);
+	RangeVar   *viewrel;
+	Oid			viewoid;
+	text	   *ruledef;
+
+	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname,
+															   "get_viewdef"));
+	viewoid = RangeVarGetRelid(viewrel, false);
+
+	ruledef = pg_do_getviewdef(viewoid);
+	PG_RETURN_TEXT_P(ruledef);
+}
+
+/*
+ * Common code for by-OID and by-name variants of pg_get_viewdef
+ */
+static text *
+pg_do_getviewdef(Oid viewoid)
+{
+	text	   *ruledef;
+	Datum		args[2];
+	char		nulls[2];
 	int			spirc;
 	HeapTuple	ruletup;
 	TupleDesc	rulettc;
 	StringInfoData buf;
 	int			len;
+	char	   *viewname;
 	char	   *name;
-
-	/*
-	 * We need the view name somewhere deep down
-	 */
-	rulename = pstrdup(NameStr(*vname));
 
 	/*
 	 * Connect to SPI manager
@@ -275,28 +296,31 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	 * pg_rewrite over the SPI manager instead of using the syscache to be
 	 * checked for read access on pg_rewrite.
 	 */
-	if (plan_getview == NULL)
+	if (plan_getviewrule == NULL)
 	{
-		Oid			argtypes[1];
+		Oid			argtypes[2];
 		void	   *plan;
 
-		argtypes[0] = NAMEOID;
-		plan = SPI_prepare(query_getview, 1, argtypes);
+		argtypes[0] = OIDOID;
+		argtypes[1] = NAMEOID;
+		plan = SPI_prepare(query_getviewrule, 2, argtypes);
 		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getview);
-		plan_getview = SPI_saveplan(plan);
+			elog(ERROR, "SPI_prepare() failed for \"%s\"", query_getviewrule);
+		plan_getviewrule = SPI_saveplan(plan);
 	}
 
 	/*
-	 * Get the pg_rewrite tuple for this rule: rulename is actually
-	 * viewname here
+	 * Get the pg_rewrite tuple for the view's SELECT rule
 	 */
-	name = MakeRetrieveViewRuleName(rulename);
-	args[0] = PointerGetDatum(name);
+	viewname = get_rel_name(viewoid);
+	name = MakeRetrieveViewRuleName(viewname);
+	args[0] = ObjectIdGetDatum(viewoid);
+	args[1] = PointerGetDatum(name);
 	nulls[0] = ' ';
-	spirc = SPI_execp(plan_getview, args, nulls, 1);
+	nulls[1] = ' ';
+	spirc = SPI_execp(plan_getviewrule, args, nulls, 2);
 	if (spirc != SPI_OK_SELECT)
-		elog(ERROR, "failed to get pg_rewrite tuple for view %s", rulename);
+		elog(ERROR, "failed to get pg_rewrite tuple for view %s", viewname);
 	initStringInfo(&buf);
 	if (SPI_processed != 1)
 		appendStringInfo(&buf, "Not a view");
@@ -322,10 +346,7 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "get_viewdef: SPI_finish() failed");
 
-	/*
-	 * Easy - isn't it?
-	 */
-	PG_RETURN_TEXT_P(ruledef);
+	return ruledef;
 }
 
 
@@ -633,8 +654,6 @@ deparse_expression(Node *expr, List *dpcontext, bool forceprefix)
 	context.namespaces = dpcontext;
 	context.varprefix = forceprefix;
 
-	rulename = "";				/* in case of errors */
-
 	get_rule_expr(expr, &context);
 
 	return buf.data;
@@ -792,6 +811,7 @@ deparse_context_for_subplan(const char *name, List *tlist,
 static void
 make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 {
+	char	   *rulename;
 	char		ev_type;
 	Oid			ev_class;
 	int2		ev_attr;
@@ -800,23 +820,38 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	char	   *ev_action;
 	List	   *actions = NIL;
 	int			fno;
+	Datum		dat;
 	bool		isnull;
 
 	/*
 	 * Get the attribute values from the rules tuple
 	 */
+	fno = SPI_fnumber(rulettc, "rulename");
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	rulename = NameStr(*(DatumGetName(dat)));
+
 	fno = SPI_fnumber(rulettc, "ev_type");
-	ev_type = (char) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	ev_type = DatumGetChar(dat);
 
 	fno = SPI_fnumber(rulettc, "ev_class");
-	ev_class = (Oid) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	ev_class = DatumGetObjectId(dat);
 
 	fno = SPI_fnumber(rulettc, "ev_attr");
-	ev_attr = (int2) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	ev_attr = DatumGetInt16(dat);
 
 	fno = SPI_fnumber(rulettc, "is_instead");
-	is_instead = (bool) SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	dat = SPI_getbinval(ruletup, rulettc, fno, &isnull);
+	Assert(!isnull);
+	is_instead = DatumGetBool(dat);
 
+	/* these could be nulls */
 	fno = SPI_fnumber(rulettc, "ev_qual");
 	ev_qual = SPI_getvalue(ruletup, rulettc, fno);
 
@@ -1051,8 +1086,8 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace)
 			break;
 
 		default:
-			elog(ERROR, "get_ruledef of %s: query command type %d not implemented yet",
-				 rulename, query->commandType);
+			elog(ERROR, "get_query_def: unknown query command type %d",
+				 query->commandType);
 			break;
 	}
 }
@@ -1901,9 +1936,7 @@ get_rule_expr(Node *node, deparse_context *context)
 			break;
 
 		default:
-			printf("\n%s\n", nodeToString(node));
-			elog(ERROR, "get_ruledef of %s: unknown node type %d in get_rule_expr()",
-				 rulename, nodeTag(node));
+			elog(ERROR, "get_rule_expr: unknown node type %d", nodeTag(node));
 			break;
 	}
 }

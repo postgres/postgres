@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.94 2002/03/22 19:20:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.95 2002/04/18 20:01:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4344,7 +4344,12 @@ SELECT NULLIF(value, '(none)') ...
        <entry>Get CREATE VIEW command for view</>
       </row>
       <row>
-       <entry><function>pg_get_ruledef</>(<parameter>rulename</parameter>)</entry>
+       <entry><function>pg_get_viewdef</>(<parameter>viewOID</parameter>)</entry>
+       <entry><type>text</></entry>
+       <entry>Get CREATE VIEW command for view</>
+      </row>
+      <row>
+       <entry><function>pg_get_ruledef</>(<parameter>ruleOID</parameter>)</entry>
        <entry><type>text</></entry>
        <entry>Get CREATE RULE command for rule</>
       </row>

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.303 2002/04/17 20:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.304 2002/04/18 20:01:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -134,7 +134,7 @@ static bool set_name_needs_quotes(const char *name);
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateTrigStmt,
 		CreateUserStmt, CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
 		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropTrigStmt,
-		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
+		DropRuleStmt, DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
 		NotifyStmt, OptimizableStmt, ProcedureStmt, ReindexStmt,
 		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt,
@@ -469,6 +469,7 @@ stmt : AlterDatabaseSetStmt
 		| DropGroupStmt
 		| DropPLangStmt
 		| DropTrigStmt
+		| DropRuleStmt
 		| DropUserStmt
 		| ExplainStmt
 		| FetchStmt
@@ -2062,9 +2063,10 @@ ConstraintTimeSpec: INITIALLY IMMEDIATE
 
 DropTrigStmt:  DROP TRIGGER name ON qualified_name
 				{
-					DropTrigStmt *n = makeNode(DropTrigStmt);
-					n->trigname = $3;
+					DropPropertyStmt *n = makeNode(DropPropertyStmt);
 					n->relation = $5;
+					n->property = $3;
+					n->removeType = DROP_TRIGGER;
 					$$ = (Node *) n;
 				}
 		;
@@ -2154,7 +2156,6 @@ drop_type: TABLE								{ $$ = DROP_TABLE; }
 		| SEQUENCE								{ $$ = DROP_SEQUENCE; }
 		| VIEW									{ $$ = DROP_VIEW; }
 		| INDEX									{ $$ = DROP_INDEX; }
-		| RULE									{ $$ = DROP_RULE; }
 		| TYPE_P								{ $$ = DROP_TYPE; }
 		| DOMAIN_P								{ $$ = DROP_DOMAIN; }
 		;
@@ -2191,11 +2192,11 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  *  The COMMENT ON statement can take different forms based upon the type of
  *  the object associated with the comment. The form of the statement is:
  *
- *  COMMENT ON [ [ DATABASE | DOMAIN | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] 
+ *  COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW ]
  *               <objname> | AGGREGATE <aggname> (<aggtype>) | FUNCTION 
  *		 <funcname> (arg1, arg2, ...) | OPERATOR <op> 
  *		 (leftoperand_typ rightoperand_typ) | TRIGGER <triggername> ON
- *		 <relname> ] IS 'text'
+ *		 <relname> | RULE <rulename> ON <relname> ] IS 'text'
  *
  *****************************************************************************/
  
@@ -2244,12 +2245,30 @@ CommentStmt:	COMMENT ON comment_type any_name IS comment_text
 				n->comment = $8;
 				$$ = (Node *) n;
 			}
+		| COMMENT ON RULE name ON any_name IS comment_text
+			{
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = RULE;
+				n->objname = lappend($6, makeString($4));
+				n->objargs = NIL;
+				n->comment = $8;
+				$$ = (Node *) n;
+			}
+		| COMMENT ON RULE name IS comment_text
+			{
+				/* Obsolete syntax supported for awhile for compatibility */
+				CommentStmt *n = makeNode(CommentStmt);
+				n->objtype = RULE;
+				n->objname = makeList1(makeString($4));
+				n->objargs = NIL;
+				n->comment = $6;
+				$$ = (Node *) n;
+			}
 		;
 
 comment_type:	COLUMN { $$ = COLUMN; }
 		| DATABASE { $$ = DATABASE; }
 		| INDEX { $$ = INDEX; }
-		| RULE { $$ = RULE; }
 		| SEQUENCE { $$ = SEQUENCE; }
 		| TABLE { $$ = TABLE; }
 		| DOMAIN_P { $$ = TYPE_P; }
@@ -2974,6 +2993,17 @@ event:	SELECT							{ $$ = CMD_SELECT; }
 
 opt_instead:  INSTEAD					{ $$ = TRUE; }
 		| /*EMPTY*/						{ $$ = FALSE; }
+		;
+
+
+DropRuleStmt:  DROP RULE name ON qualified_name
+				{
+					DropPropertyStmt *n = makeNode(DropPropertyStmt);
+					n->relation = $5;
+					n->property = $3;
+					n->removeType = DROP_RULE;
+					$$ = (Node *) n;
+				}
 		;
 
 

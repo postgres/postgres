@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.104 2002/04/05 11:56:54 momjian Exp $
+ * $Id: nodes.h,v 1.105 2002/04/18 20:01:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ typedef enum NodeTag
 	T_VariableShowStmt,
 	T_VariableResetStmt,
 	T_CreateTrigStmt,
-	T_DropTrigStmt,
+	T_DropPropertyStmt,
 	T_CreatePLangStmt,
 	T_DropPLangStmt,
 	T_CreateUserStmt,

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.64 2002/04/17 20:57:56 tgl Exp $
+ * $Id: indexing.h,v 1.65 2002/04/18 20:01:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@
 #define ProcedureOidIndex			"pg_proc_oid_index"
 #define RelCheckIndex				"pg_relcheck_rcrelid_index"
 #define RewriteOidIndex				"pg_rewrite_oid_index"
-#define RewriteRulenameIndex		"pg_rewrite_rulename_index"
+#define RewriteRelRulenameIndex		"pg_rewrite_rel_rulename_index"
 #define ShadowNameIndex				"pg_shadow_usename_index"
 #define ShadowSysidIndex			"pg_shadow_usesysid_index"
 #define StatisticRelidAttnumIndex	"pg_statistic_relid_att_index"
@@ -178,7 +178,7 @@ DECLARE_UNIQUE_INDEX(pg_proc_proname_args_nsp_index on pg_proc using btree(prona
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_relcheck_rcrelid_index on pg_relcheck using btree(rcrelid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_rewrite_oid_index on pg_rewrite using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_rewrite_rulename_index on pg_rewrite using btree(rulename name_ops));
+DECLARE_UNIQUE_INDEX(pg_rewrite_rel_rulename_index on pg_rewrite using btree(ev_class oid_ops, rulename name_ops));
 DECLARE_UNIQUE_INDEX(pg_shadow_usename_index on pg_shadow using btree(usename name_ops));
 DECLARE_UNIQUE_INDEX(pg_shadow_usesysid_index on pg_shadow using btree(usesysid int4_ops));
 DECLARE_UNIQUE_INDEX(pg_statistic_relid_att_index on pg_statistic using btree(starelid oid_ops, staattnum int2_ops));

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.15 2002/03/19 02:18:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.16 2002/04/18 20:01:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -25,11 +25,12 @@ PostgreSQL documentation
   <synopsis>
 COMMENT ON
 [
-  [ DATABASE | DOMAIN | INDEX | RULE | SEQUENCE | TABLE | TYPE | VIEW ] <replaceable class="PARAMETER">object_name</replaceable> |
+  [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW ] <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
   FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1</replaceable>, <replaceable class="PARAMETER">arg2</replaceable>, ...) |
   OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable> <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
+  RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable>
 ] IS <replaceable class="PARAMETER">'text'</replaceable>
   </synopsis>
@@ -46,7 +47,7 @@ COMMENT ON
     <variablelist>
      <varlistentry>
       <term><replaceable class="PARAMETER">object_name, table_name,
-      column_name, agg_name, func_name, op, trigger_name</replaceable></term>
+      column_name, agg_name, func_name, op, rule_name, trigger_name</replaceable></term>
       <listitem>
        <para>
 	The name of the object to be be commented.
@@ -143,7 +144,6 @@ COMMENT ON mytable IS 'This is my table.';
 COMMENT ON DATABASE my_database IS 'Development Database';
 COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
 COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee id';
-COMMENT ON RULE my_rule IS 'Logs UPDATES of employee records';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
 COMMENT ON TABLE my_table IS 'Employee Information';
 COMMENT ON TYPE my_type IS 'Complex Number support';
@@ -152,6 +152,7 @@ COMMENT ON COLUMN my_table.my_field IS 'Employee ID number';
 COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
 COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two text';
+COMMENT ON RULE my_rule ON my_table IS 'Logs UPDATES of employee records';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for R.I.';
    </programlisting>
   </para>

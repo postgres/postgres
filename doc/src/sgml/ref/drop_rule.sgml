@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.11 2001/12/08 03:24:36 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.12 2002/04/18 20:01:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
    <date>1998-09-22</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP RULE <replaceable class="PARAMETER">name</replaceable> [, ...]
+DROP RULE <replaceable class="PARAMETER">name</replaceable> ON <replaceable class="PARAMETER">relation</replaceable>
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPRULE-1">
@@ -40,6 +40,14 @@ DROP RULE <replaceable class="PARAMETER">name</replaceable> [, ...]
       <listitem>
        <para>
 	The name of an existing rule to drop.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">relation</replaceable></term>
+      <listitem>
+       <para>
+	The name of the relation the rule applies to.
        </para>
       </listitem>
      </varlistentry>
@@ -68,7 +76,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR:  Rule or view "<replaceable class="parameter">name</replaceable>" not found
+ERROR:  Rule "<replaceable class="parameter">name</replaceable>" not found
        </computeroutput></term>
       <listitem>
        <para>
@@ -113,11 +121,6 @@ ERROR:  Rule or view "<replaceable class="parameter">name</replaceable>" not fou
     Refer to <command>CREATE RULE</command> for
     information on how to create rules.
    </para>
-
-   <para>
-    Once a rule is dropped, access to historical information
-    the rule has written may disappear.
-   </para>
   </refsect2>
  </refsect1>
   
@@ -129,7 +132,7 @@ ERROR:  Rule or view "<replaceable class="parameter">name</replaceable>" not fou
    To drop the rewrite rule <literal>newrule</literal>:
 
    <programlisting>
-DROP RULE newrule;
+DROP RULE newrule ON mytable;
    </programlisting>
   </para>
  </refsect1>

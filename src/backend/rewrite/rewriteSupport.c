@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.49 2001/08/12 21:35:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.50 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,11 +29,12 @@
  * Is there a rule by the given name?
  */
 bool
-IsDefinedRewriteRule(const char *ruleName)
+IsDefinedRewriteRule(Oid owningRel, const char *ruleName)
 {
-	return SearchSysCacheExists(RULENAME,
+	return SearchSysCacheExists(RULERELNAME,
+								ObjectIdGetDatum(owningRel),
 								PointerGetDatum(ruleName),
-								0, 0, 0);
+								0, 0);
 }
 
 /*

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.149 2002/04/15 05:22:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.150 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,11 +310,6 @@ ProcessUtility(Node *parsetree,
 							rel = makeRangeVarFromNameList(names);
 							CheckDropPermissions(rel, RELKIND_INDEX);
 							RemoveIndex(rel);
-							break;
-
-						case DROP_RULE:
-							/* RemoveRewriteRule checks permissions */
-							RemoveRewriteRule(names);
 							break;
 
 						case DROP_TYPE:
@@ -714,12 +709,24 @@ ProcessUtility(Node *parsetree,
 			CreateTrigger((CreateTrigStmt *) parsetree);
 			break;
 
-		case T_DropTrigStmt:
+		case T_DropPropertyStmt:
 			{
-				DropTrigStmt *stmt = (DropTrigStmt *) parsetree;
+				DropPropertyStmt *stmt = (DropPropertyStmt *) parsetree;
+				Oid		relId;
 
-				DropTrigger(RangeVarGetRelid(stmt->relation, false),
-							stmt->trigname);
+				relId = RangeVarGetRelid(stmt->relation, false);
+
+				switch (stmt->removeType)
+				{
+					case DROP_RULE:
+						/* RemoveRewriteRule checks permissions */
+						RemoveRewriteRule(relId, stmt->property);
+						break;
+					case DROP_TRIGGER:
+						/* DropTrigger checks permissions */
+						DropTrigger(relId, stmt->property);
+						break;
+				}
 			}
 			break;
 

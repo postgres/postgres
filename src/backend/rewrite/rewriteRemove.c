@@ -8,15 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.47 2002/03/29 19:06:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.48 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "utils/builtins.h"
+#include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_rewrite.h"
 #include "commands/comment.h"
 #include "miscadmin.h"
@@ -30,12 +31,11 @@
 /*
  * RemoveRewriteRule
  *
- * Delete a rule given its (possibly qualified) rulename.
+ * Delete a rule given its name.
  */
 void
-RemoveRewriteRule(List *names)
+RemoveRewriteRule(Oid owningRel, const char *ruleName)
 {
-	char	   *ruleName;
 	Relation	RewriteRelation;
 	Relation	event_relation;
 	HeapTuple	tuple;
@@ -45,13 +45,6 @@ RemoveRewriteRule(List *names)
 	int32		aclcheck_result;
 
 	/*
-	 * XXX temporary until rules become schema-tized
-	 */
-	if (length(names) != 1)
-		elog(ERROR, "Qualified rule names not supported yet");
-	ruleName = strVal(lfirst(names));
-
-	/*
 	 * Open the pg_rewrite relation.
 	 */
 	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
@@ -59,9 +52,10 @@ RemoveRewriteRule(List *names)
 	/*
 	 * Find the tuple for the target rule.
 	 */
-	tuple = SearchSysCacheCopy(RULENAME,
+	tuple = SearchSysCacheCopy(RULERELNAME,
+							   ObjectIdGetDatum(owningRel),
 							   PointerGetDatum(ruleName),
-							   0, 0, 0);
+							   0, 0);
 
 	/*
 	 * complain if no rule with such name existed
@@ -75,6 +69,7 @@ RemoveRewriteRule(List *names)
 	 */
 	ruleId = tuple->t_data->t_oid;
 	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
+	Assert(eventRelationOid == owningRel);
 
 	/*
 	 * We had better grab AccessExclusiveLock so that we know no other
@@ -137,10 +132,10 @@ RemoveRewriteRule(List *names)
 void
 RelationRemoveRules(Oid relid)
 {
-	Relation	RewriteRelation = NULL;
-	HeapScanDesc scanDesc = NULL;
+	Relation	RewriteRelation;
+	SysScanDesc scanDesc;
 	ScanKeyData scanKeyData;
-	HeapTuple	tuple = NULL;
+	HeapTuple	tuple;
 
 	/*
 	 * Open the pg_rewrite relation.
@@ -148,18 +143,21 @@ RelationRemoveRules(Oid relid)
 	RewriteRelation = heap_openr(RewriteRelationName, RowExclusiveLock);
 
 	/*
-	 * Scan the RuleRelation ('pg_rewrite') for all the tuples that has
-	 * the same ev_class as relid (the relation to be removed).
+	 * Scan pg_rewrite for all the tuples that have the same ev_class
+	 * as relid (the relation to be removed).
 	 */
 	ScanKeyEntryInitialize(&scanKeyData,
 						   0,
 						   Anum_pg_rewrite_ev_class,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
-	scanDesc = heap_beginscan(RewriteRelation,
-							  0, SnapshotNow, 1, &scanKeyData);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
+	scanDesc = systable_beginscan(RewriteRelation,
+								  RewriteRelRulenameIndex,
+								  true, SnapshotNow,
+								  1, &scanKeyData);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scanDesc)))
 	{
 		/* Delete any comments associated with this rule */
 		DeleteComments(tuple->t_data->t_oid, RelationGetRelid(RewriteRelation));
@@ -167,6 +165,7 @@ RelationRemoveRules(Oid relid)
 		simple_heap_delete(RewriteRelation, &tuple->t_self);
 	}
 
-	heap_endscan(scanDesc);
+	systable_endscan(scanDesc);
+
 	heap_close(RewriteRelation, RowExclusiveLock);
 }

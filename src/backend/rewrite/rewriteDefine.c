@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.66 2002/03/26 19:16:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.67 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
 
 /*
  * InsertRule -
- *	  takes the arguments and inserts them as attributes into the system
+ *	  takes the arguments and inserts them as a row into the system
  *	  relation "pg_rewrite"
  */
 static Oid
@@ -58,7 +58,7 @@ InsertRule(char *rulname,
 	HeapTuple	tup;
 	Oid			rewriteObjectId;
 
-	if (IsDefinedRewriteRule(rulname))
+	if (IsDefinedRewriteRule(eventrel_oid, rulname))
 		elog(ERROR, "Attempt to insert rule \"%s\" failed: already exists",
 			 rulname);
 
@@ -69,13 +69,13 @@ InsertRule(char *rulname,
 
 	i = 0;
 	namestrcpy(&rname, rulname);
-	values[i++] = NameGetDatum(&rname);
-	values[i++] = CharGetDatum(evtype + '0');
-	values[i++] = ObjectIdGetDatum(eventrel_oid);
-	values[i++] = Int16GetDatum(evslot_index);
-	values[i++] = BoolGetDatum(evinstead);
-	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(evqual));
-	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));
+	values[i++] = NameGetDatum(&rname);				/* rulename */
+	values[i++] = ObjectIdGetDatum(eventrel_oid);	/* ev_class */
+	values[i++] = Int16GetDatum(evslot_index);		/* ev_attr */
+	values[i++] = CharGetDatum(evtype + '0');		/* ev_type */
+	values[i++] = BoolGetDatum(evinstead);			/* is_instead */
+	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(evqual));	/* ev_qual */
+	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));	/* ev_action */
 
 	/*
 	 * create a new pg_rewrite tuple
@@ -423,26 +423,27 @@ setRuleCheckAsUser_walker(Node *node, Oid *context)
  * ON SELECT rule associated with a view, when the view is renamed.
  */
 void
-RenameRewriteRule(char *oldname, char *newname)
+RenameRewriteRule(Oid owningRel, const char *oldName,
+				  const char *newName)
 {
 	Relation	pg_rewrite_desc;
 	HeapTuple	ruletup;
 
 	pg_rewrite_desc = heap_openr(RewriteRelationName, RowExclusiveLock);
 
-	ruletup = SearchSysCacheCopy(RULENAME,
-								 PointerGetDatum(oldname),
-								 0, 0, 0);
+	ruletup = SearchSysCacheCopy(RULERELNAME,
+								 ObjectIdGetDatum(owningRel),
+								 PointerGetDatum(oldName),
+								 0, 0);
 	if (!HeapTupleIsValid(ruletup))
-		elog(ERROR, "RenameRewriteRule: rule \"%s\" does not exist", oldname);
+		elog(ERROR, "RenameRewriteRule: rule \"%s\" does not exist", oldName);
 
 	/* should not already exist */
-	if (IsDefinedRewriteRule(newname))
+	if (IsDefinedRewriteRule(owningRel, newName))
 		elog(ERROR, "Attempt to rename rule \"%s\" failed: \"%s\" already exists",
-			 oldname, newname);
+			 oldName, newName);
 
-	StrNCpy(NameStr(((Form_pg_rewrite) GETSTRUCT(ruletup))->rulename),
-			newname, NAMEDATALEN);
+	namestrcpy(&(((Form_pg_rewrite) GETSTRUCT(ruletup))->rulename), newName);
 
 	simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
 

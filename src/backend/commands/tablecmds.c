@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.2 2002/04/15 23:45:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.3 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1423,8 +1423,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	Relation	ridescs[Num_pg_class_indices];
 	Oid			toast_relid;
 	Oid			toast_idxid;
-	char		toast_relname[NAMEDATALEN + 1];
-	char		toast_idxname[NAMEDATALEN + 1];
+	char		toast_relname[NAMEDATALEN];
+	char		toast_idxname[NAMEDATALEN];
 	IndexInfo  *indexInfo;
 	Oid			classObjectId[2];
 
@@ -1667,7 +1667,7 @@ needs_toast_table(Relation rel)
 Oid
 DefineRelation(CreateStmt *stmt, char relkind)
 {
-	char	   *relname = palloc(NAMEDATALEN);
+	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
 	List	   *schema = stmt->tableElts;
 	int			numberOfAttributes;
@@ -1686,7 +1686,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * Truncate relname to appropriate length (probably a waste of time,
 	 * as parser should have done this already).
 	 */
-	StrNCpy(relname, (stmt->relation)->relname, NAMEDATALEN);
+	StrNCpy(relname, stmt->relation->relname, NAMEDATALEN);
 
 	/*
 	 * Look up the namespace in which we are supposed to create the
@@ -2642,8 +2642,8 @@ renameatt(Oid relid,
 							 0, 0))
 		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
 
-	StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
-			newattname, NAMEDATALEN);
+	namestrcpy(&(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
+			   newattname);
 
 	simple_heap_update(attrelation, &atttup->t_self, atttup);
 
@@ -2699,8 +2699,8 @@ renameatt(Oid relid,
 		/*
 		 * Update the (copied) attribute tuple.
 		 */
-		StrNCpy(NameStr(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
-				newattname, NAMEDATALEN);
+		namestrcpy(&(((Form_pg_attribute) GETSTRUCT(atttup))->attname),
+				   newattname);
 
 		simple_heap_update(attrelation, &atttup->t_self, atttup);
 
@@ -2753,6 +2753,7 @@ renamerel(Oid relid, const char *newrelname)
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	reltup;
 	Oid			namespaceId;
+	char	   *oldrelname;
 	char		relkind;
 	bool		relhastriggers;
 	Relation	irelations[Num_pg_class_indices];
@@ -2763,13 +2764,14 @@ renamerel(Oid relid, const char *newrelname)
 	 */
 	targetrelation = relation_open(relid, AccessExclusiveLock);
 
+	oldrelname = pstrdup(RelationGetRelationName(targetrelation));
 	namespaceId = RelationGetNamespace(targetrelation);
 
 	/* Validity checks */
 	if (!allowSystemTableMods &&
 		IsSystemRelation(targetrelation))
 		elog(ERROR, "renamerel: system relation \"%s\" may not be renamed",
-			 RelationGetRelationName(targetrelation));
+			 oldrelname);
 
 	relkind = targetrelation->rd_rel->relkind;
 	relhastriggers = (targetrelation->rd_rel->reltriggers > 0);
@@ -2785,7 +2787,7 @@ renamerel(Oid relid, const char *newrelname)
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "renamerel: relation \"%s\" does not exist",
-			 RelationGetRelationName(targetrelation));
+			 oldrelname);
 
 	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
@@ -2794,8 +2796,7 @@ renamerel(Oid relid, const char *newrelname)
 	 * Update pg_class tuple with new relname.	(Scribbling on reltup is
 	 * OK because it's a copy...)
 	 */
-	StrNCpy(NameStr(((Form_pg_class) GETSTRUCT(reltup))->relname),
-			newrelname, NAMEDATALEN);
+	namestrcpy(&(((Form_pg_class) GETSTRUCT(reltup))->relname), newrelname);
 
 	simple_heap_update(relrelation, &reltup->t_self, reltup);
 
@@ -2811,8 +2812,7 @@ renamerel(Oid relid, const char *newrelname)
 	 * Also rename the associated type, if any.
 	 */
 	if (relkind != RELKIND_INDEX)
-		TypeRename(RelationGetRelationName(targetrelation), namespaceId,
-				   newrelname);
+		TypeRename(oldrelname, namespaceId, newrelname);
 
 	/*
 	 * If it's a view, must also rename the associated ON SELECT rule.
@@ -2822,9 +2822,9 @@ renamerel(Oid relid, const char *newrelname)
 		char	   *oldrulename,
 				   *newrulename;
 
-		oldrulename = MakeRetrieveViewRuleName(RelationGetRelationName(targetrelation));
+		oldrulename = MakeRetrieveViewRuleName(oldrelname);
 		newrulename = MakeRetrieveViewRuleName(newrelname);
-		RenameRewriteRule(oldrulename, newrulename);
+		RenameRewriteRule(relid, oldrulename, newrulename);
 	}
 
 	/*
@@ -2834,12 +2834,12 @@ renamerel(Oid relid, const char *newrelname)
 	{
 		/* update tgargs where relname is primary key */
 		update_ri_trigger_args(relid,
-							   RelationGetRelationName(targetrelation),
+							   oldrelname,
 							   newrelname,
 							   false, true);
 		/* update tgargs where relname is foreign key */
 		update_ri_trigger_args(relid,
-							   RelationGetRelationName(targetrelation),
+							   oldrelname,
 							   newrelname,
 							   true, true);
 	}

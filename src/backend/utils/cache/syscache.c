@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.78 2002/04/17 20:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.79 2002/04/18 20:01:10 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -333,13 +333,13 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{RewriteRelationName,		/* RULENAME */
-		RewriteRulenameIndex,
+	{RewriteRelationName,		/* RULERELNAME */
+		RewriteRelRulenameIndex,
 		Anum_pg_rewrite_ev_class,
-		1,
+		2,
 		{
+			Anum_pg_rewrite_ev_class,
 			Anum_pg_rewrite_rulename,
-			0,
 			0,
 			0
 	}},

@@ -217,13 +217,13 @@ ERROR:  parser: parse error at or near ";"
 drop rule 314159;
 ERROR:  parser: parse error at or near "314159"
 -- no such rule 
-drop rule nonesuch;
-ERROR:  Rule "nonesuch" not found
+drop rule nonesuch on noplace;
+ERROR:  Relation "noplace" does not exist
 -- bad keyword 
 drop tuple rule nonesuch;
 ERROR:  parser: parse error at or near "tuple"
 -- no such rule 
-drop instance rule nonesuch;
+drop instance rule nonesuch on noplace;
 ERROR:  parser: parse error at or near "instance"
 -- no such rule 
 drop rewrite rule nonesuch;

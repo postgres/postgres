@@ -239,13 +239,13 @@ drop rule;
 drop rule 314159;
 
 -- no such rule 
-drop rule nonesuch;
+drop rule nonesuch on noplace;
 
 -- bad keyword 
 drop tuple rule nonesuch;
 
 -- no such rule 
-drop instance rule nonesuch;
+drop instance rule nonesuch on noplace;
 
 -- no such rule 
 drop rewrite rule nonesuch;

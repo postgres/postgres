@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.160 2002/04/12 20:38:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.161 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -675,17 +675,18 @@ RelationBuildRuleLock(Relation relation)
 
 	/*
 	 * open pg_rewrite and begin a scan
-	 *
-	 * XXX: there is no suitable index for this scan.  FIXME.
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName, AccessShareLock);
 	pg_rewrite_tupdesc = RelationGetDescr(pg_rewrite_desc);
-	pg_rewrite_scan = systable_beginscan(pg_rewrite_desc, NULL, false,
+	pg_rewrite_scan = systable_beginscan(pg_rewrite_desc, 
+										 RewriteRelRulenameIndex,
+										 criticalRelcachesBuilt,
 										 SnapshotNow,
 										 1, &key);
 
 	while (HeapTupleIsValid(pg_rewrite_tuple = systable_getnext(pg_rewrite_scan)))
 	{
+		Form_pg_rewrite rewrite_form = (Form_pg_rewrite) GETSTRUCT(pg_rewrite_tuple);
 		bool		isnull;
 		Datum		ruleaction;
 		Datum		rule_evqual;
@@ -698,18 +699,11 @@ RelationBuildRuleLock(Relation relation)
 
 		rule->ruleId = pg_rewrite_tuple->t_data->t_oid;
 
-		rule->event = DatumGetInt32(heap_getattr(pg_rewrite_tuple,
-												 Anum_pg_rewrite_ev_type,
-												 pg_rewrite_tupdesc,
-												 &isnull)) - 48;
-		rule->attrno = DatumGetInt16(heap_getattr(pg_rewrite_tuple,
-												  Anum_pg_rewrite_ev_attr,
-												  pg_rewrite_tupdesc,
-												  &isnull));
-		rule->isInstead = DatumGetBool(heap_getattr(pg_rewrite_tuple,
-											  Anum_pg_rewrite_is_instead,
-													pg_rewrite_tupdesc,
-													&isnull));
+		rule->event = rewrite_form->ev_type - '0';
+		rule->attrno = rewrite_form->ev_attr;
+		rule->isInstead = rewrite_form->is_instead;
+
+		/* Must use heap_getattr to fetch ev_qual and ev_action */
 
 		ruleaction = heap_getattr(pg_rewrite_tuple,
 								  Anum_pg_rewrite_ev_action,

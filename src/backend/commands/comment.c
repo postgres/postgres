@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.41 2002/04/16 23:08:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.42 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -472,44 +472,105 @@ CommentDatabase(List *qualname, char *comment)
  * CommentRule --
  *
  * This routine is used to add/drop any user-comments a user might
- * have regarding a specified RULE. The rule is specified by name
- * and, if found, and the user has appropriate permissions, a
- * comment will be added/dropped using the CreateComments() routine.
+ * have regarding a specified RULE. The rule for commenting is determined by
+ * both its name and the relation to which it refers. The arguments to this
+ * function are the rule name and relation name (merged into a qualified
+ * name), and the comment to add/drop.
+ *
+ * Before PG 7.3, rules had unique names across the whole database, and so
+ * the syntax was just COMMENT ON RULE rulename, with no relation name.
+ * For purposes of backwards compatibility, we support that as long as there
+ * is only one rule by the specified name in the database.
  */
 static void
 CommentRule(List *qualname, char *comment)
 {
-	char	   *rule;
+	int			nnames;
+	List	   *relname;
+	char	   *rulename;
+	RangeVar   *rel;
+	Relation	relation;
 	HeapTuple	tuple;
 	Oid			reloid;
 	Oid			ruleoid;
 	Oid			classoid;
 	int32		aclcheck;
 
-	/* XXX this is gonna change soon */
-	if (length(qualname) != 1)
-		elog(ERROR, "CommentRule: rule name may not be qualified");
-	rule = strVal(lfirst(qualname));
+	/* Separate relname and trig name */
+	nnames = length(qualname);
+	if (nnames == 1)
+	{
+		/* Old-style: only a rule name is given */
+		Relation	RewriteRelation;
+		HeapScanDesc scanDesc;
+		ScanKeyData scanKeyData;
 
-	/* Find the rule's pg_rewrite tuple, get its OID and its table's OID */
+		rulename = strVal(lfirst(qualname));
 
-	tuple = SearchSysCache(RULENAME,
-						   PointerGetDatum(rule),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "rule '%s' does not exist", rule);
+		/* Search pg_rewrite for such a rule */
+		ScanKeyEntryInitialize(&scanKeyData,
+							   0,
+							   Anum_pg_rewrite_rulename,
+							   F_NAMEEQ,
+							   PointerGetDatum(rulename));
 
-	reloid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
-	ruleoid = tuple->t_data->t_oid;
+		RewriteRelation = heap_openr(RewriteRelationName, AccessShareLock);
+		scanDesc = heap_beginscan(RewriteRelation,
+								  0, SnapshotNow, 1, &scanKeyData);
 
-	ReleaseSysCache(tuple);
+		tuple = heap_getnext(scanDesc, 0);
+		if (HeapTupleIsValid(tuple))
+		{
+			reloid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
+			ruleoid = tuple->t_data->t_oid;
+		}
+		else
+		{
+			elog(ERROR, "rule '%s' does not exist", rulename);
+			reloid = ruleoid = 0; /* keep compiler quiet */
+		}
+
+		if (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
+			elog(ERROR, "There are multiple rules '%s'"
+				 "\n\tPlease specify a relation name as well as a rule name",
+				 rulename);
+
+		heap_endscan(scanDesc);
+		heap_close(RewriteRelation, AccessShareLock);
+
+		/* Open the owning relation to ensure it won't go away meanwhile */
+		relation = heap_open(reloid, AccessShareLock);
+	}
+	else
+	{
+		/* New-style: rule and relname both provided */
+		Assert(nnames >= 2);
+		relname = ltruncate(nnames-1, listCopy(qualname));
+		rulename = strVal(nth(nnames-1, qualname));
+
+		/* Open the owning relation to ensure it won't go away meanwhile */
+		rel = makeRangeVarFromNameList(relname);
+		relation = heap_openrv(rel, AccessShareLock);
+		reloid = RelationGetRelid(relation);
+
+		/* Find the rule's pg_rewrite tuple, get its OID */
+		tuple = SearchSysCache(RULERELNAME,
+							   ObjectIdGetDatum(reloid),
+							   PointerGetDatum(rulename),
+							   0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "rule '%s' does not exist", rulename);
+		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
+		ruleoid = tuple->t_data->t_oid;
+		ReleaseSysCache(tuple);
+	}
 
 	/* Check object security */
 
 	aclcheck = pg_class_aclcheck(reloid, GetUserId(), ACL_RULE);
 	if (aclcheck != ACLCHECK_OK)
 		elog(ERROR, "you are not permitted to comment on rule '%s'",
-			 rule);
+			 rulename);
 
 	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
 

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.127 2002/04/17 20:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.128 2002/04/18 20:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1232,11 +1232,13 @@ _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 }
 
 static bool
-_equalDropTrigStmt(DropTrigStmt *a, DropTrigStmt *b)
+_equalDropPropertyStmt(DropPropertyStmt *a, DropPropertyStmt *b)
 {
-	if (!equalstr(a->trigname, b->trigname))
-		return false;
 	if (!equal(a->relation, b->relation))
+		return false;
+	if (!equalstr(a->property, b->property))
+		return false;
+	if (a->removeType != b->removeType)
 		return false;
 
 	return true;
@@ -2080,8 +2082,8 @@ equal(void *a, void *b)
 		case T_CreateTrigStmt:
 			retval = _equalCreateTrigStmt(a, b);
 			break;
-		case T_DropTrigStmt:
-			retval = _equalDropTrigStmt(a, b);
+		case T_DropPropertyStmt:
+			retval = _equalDropPropertyStmt(a, b);
 			break;
 		case T_CreatePLangStmt:
 			retval = _equalCreatePLangStmt(a, b);
