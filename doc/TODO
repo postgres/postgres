@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 20 10:23:26 EDT 2001
+Last updated:		Fri Jul 20 10:29:50 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -67,7 +67,7 @@ TYPES
 * -Add non-large-object binary field (already exists -- bytea)
 * -Make binary/file in/out interface for TOAST columns (base64)
 * Functions returning sets do not totally work
-* SELECT col FROM tab WHERE numeric_col = 10.1 fails
+* SELECT col FROM tab WHERE numeric_col = 10.1 fails, requires quotes
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * -Add SQL standard function bit_length() (Peter E)
 * -Make oid use unsigned int more reliably (Tom)
@@ -83,7 +83,7 @@ MULTILANGUAGE SUPPORT
 * Allow LOCALE on a per-column basis, default to ASCII
 * Support multiple simultaneous character sets, per SQL92
 * Reject character sequences those are not valid in their charset
-* Make functions more multi-byte aware, i.e. trim()
+* Make functions more multi-byte aware, e.g. trim()
 * -Make n of CHAR(n)/VARCHAR(n) the number of letters, not bytes (Tatsuo)
 
 VIEWS
@@ -304,7 +304,7 @@ MISCELLANEOUS
 * Allow logging of query durations
 * Add hash-based aggregates
 * Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
-
+* Create spinlock sleepers queue so everyone doesn't wake up at once
 
 SOURCE CODE
 -----------
