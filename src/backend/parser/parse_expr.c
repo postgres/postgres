@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.19 1998/02/10 16:03:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.20 1998/02/13 03:41:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,39 +245,43 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				List			*llist;
 
 				pstate->p_hasSubLinks = true;
-
 				qtree = parse_analyze(lcons(sublink->subselect,NIL), pstate);
-				Assert(qtree->len == 1);
+				if (qtree->len != 1 || 
+						qtree->qtrees[0]->commandType != CMD_SELECT || 
+								qtree->qtrees[0]->resultRelation != 0 )
+					elog (ERROR, "parser: bad query in subselect");
 				sublink->subselect = (Node *) qtree->qtrees[0];
-				
-				foreach(llist, sublink->lefthand)
-					lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
-			
-				if (length(sublink->lefthand) !=
-					length(((Query *)sublink->subselect)->targetList))
-					elog(ERROR,"Subselect has too many or too few fields.");
 					
 				if (sublink->subLinkType != EXISTS_SUBLINK)
 				{
 					char *op = lfirst(sublink->oper);
 					List *left_expr = sublink->lefthand;
-					List *right_expr = ((Query *)sublink->subselect)->targetList;
+					List *right_expr = ((Query*) sublink->subselect)->targetList;
 					List *elist;
 
+					foreach(llist, left_expr)
+						lfirst(llist) = transformExpr(pstate, lfirst(llist), precedence);
+					
+					if (length(left_expr) !=
+						length(right_expr))
+							elog(ERROR,"Subselect has too many or too few fields.");
+					
 					sublink->oper = NIL;
 					foreach(elist, left_expr)
 					{
-						Node	   *lexpr = lfirst(elist);
-						Node	   *rexpr = lfirst(right_expr);
-						TargetEntry *tent = (TargetEntry *)rexpr;
-						Expr	   *op_expr;						
+						Node		   *lexpr = lfirst(elist);
+						Node		   *rexpr = lfirst(right_expr);
+						TargetEntry	   *tent = (TargetEntry *)rexpr;
+						Expr		   *op_expr;						
 
 						op_expr = make_op(op, lexpr, tent->expr);
-						sublink->oper = lappend(sublink->oper, op_expr->oper);
+						sublink->oper = lappend(sublink->oper, op_expr);
 						right_expr = lnext(right_expr);
 					}
-					result = (Node *) expr;
 				}
+				else
+					sublink->oper = NIL;
+				result = (Node *) expr;
 				break;
 			}
 		default:
