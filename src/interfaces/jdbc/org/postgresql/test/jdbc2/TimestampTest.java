@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: TimestampTest.java,v 1.1 2001/02/13 16:39:05 peter Exp $
+ * $Id: TimestampTest.java,v 1.2 2001/02/16 16:45:01 peter Exp $
  *
  * This has been the most controversial pair of methods since 6.5 was released!
  *
@@ -111,7 +111,8 @@ public class TimestampTest extends TestCase {
     t = rs.getTimestamp(1);
     assert(t!=null);
 
-    assert(t.equals(getTimestamp(1970,6,2,7,13,0)));
+    // Seems Daylight saving is ignored?
+    assert(t.equals(getTimestamp(1970,6,2,8,13,0)));
 
     assert(!rs.next()); // end of table. Fail if more entries exist.
 

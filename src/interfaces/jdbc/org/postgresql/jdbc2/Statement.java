@@ -427,11 +427,17 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 	throw org.postgresql.Driver.notImplemented();
     }
 
+    /**
+     * New in 7.1
+     */
     public void setResultSetConcurrency(int value) throws SQLException
     {
       concurrency=value;
     }
 
+    /**
+     * New in 7.1
+     */
     public void setResultSetType(int value) throws SQLException
     {
       resultsettype=value;

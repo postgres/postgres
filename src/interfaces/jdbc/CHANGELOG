@@ -1,3 +1,14 @@
+Fri Feb 17 15:11:00 GMT 2001 peter@retep.org.uk
+        - Reduced the object overhead in PreparedStatement by reusing the same
+          StringBuffer object throughout. Similarly SimpleDateStamp's are alse
+          reused in a thread save manner.
+        - Implemented in PreparedStatement: setNull(), setDate/Time/Timestamp
+          using Calendar, setBlob(), setCharacterStream()
+        - Clob's are now implemented in ResultSet & PreparedStatement!
+        - Implemented a lot of DatabaseMetaData & ResultSetMetaData methods.
+          We have about 18 unimplemented methods left in JDBC2 at the current
+          time.
+
 Web Feb 14 17:29:00 GMT 2001 peter@retep.org.uk
         - Fixed bug in LargeObject & BlobOutputStream where the stream's output
           was not flushed when either the stream or the blob were closed.

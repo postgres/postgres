@@ -36,6 +36,14 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	String[] inStrings;
 	Connection connection;
 
+        // Some performance caches
+        private StringBuffer sbuf = new StringBuffer();
+
+        // We use ThreadLocal for SimpleDateFormat's because they are not that
+        // thread safe, so each calling thread has its own object.
+        private ThreadLocal tl_df   = new ThreadLocal(); // setDate() SimpleDateFormat
+        private ThreadLocal tl_tsdf = new ThreadLocal(); // setTimestamp() SimpleDateFormat
+
 	/**
 	 * Constructor for the PreparedStatement class.
 	 * Split the SQL statement into segments - separated by the arguments.
@@ -78,6 +86,16 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			templateStrings[i] = (String)v.elementAt(i);
 	}
 
+        /**
+         * New in 7.1 - overides Statement.close() to dispose of a few local objects
+         */
+        public void close() throws SQLException {
+          // free the ThreadLocal caches
+          tl_df.set(null);
+
+          super.close();
+        }
+
 	/**
 	 * A Prepared SQL query is executed and its ResultSet is returned
 	 *
@@ -87,18 +105,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException
 	{
-		StringBuffer s = new StringBuffer();
-		int i;
-
-		for (i = 0 ; i < inStrings.length ; ++i)
-		{
-			if (inStrings[i] == null)
-				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
-			s.append (templateStrings[i]);
-			s.append (inStrings[i]);
-		}
-		s.append(templateStrings[inStrings.length]);
-		return super.executeQuery(s.toString()); 	// in Statement class
+		return super.executeQuery(compileQuery()); 	// in Statement class
 	}
 
 	/**
@@ -112,19 +119,28 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public int executeUpdate() throws SQLException
 	{
-		StringBuffer s = new StringBuffer();
+		return super.executeUpdate(compileQuery()); 	// in Statement class
+	}
+
+        /**
+         * Helper - this compiles the SQL query from the various parameters
+         * This is identical to toString() except it throws an exception if a
+         * parameter is unused.
+         */
+        private synchronized String compileQuery() throws SQLException
+        {
+                sbuf.setLength(0);
 		int i;
 
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
 				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
-			s.append (templateStrings[i]);
-			s.append (inStrings[i]);
+			sbuf.append (templateStrings[i]).append (inStrings[i]);
 		}
-		s.append(templateStrings[inStrings.length]);
-		return super.executeUpdate(s.toString()); 	// in Statement class
-	}
+		sbuf.append(templateStrings[inStrings.length]);
+                return sbuf.toString();
+        }
 
 	/**
 	 * Set a parameter to SQL NULL
@@ -262,19 +278,23 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	  if(x==null)
 	    set(parameterIndex,"null");
 	  else {
-	    StringBuffer b = new StringBuffer();
-	    int i;
+            // use the shared buffer object. Should never clash but this makes
+            // us thread safe!
+	    synchronized(sbuf) {
+              sbuf.setLength(0);
+              int i;
 
-	    b.append('\'');
-	    for (i = 0 ; i < x.length() ; ++i)
-	      {
-		char c = x.charAt(i);
-		if (c == '\\' || c == '\'')
-		  b.append((char)'\\');
-		b.append(c);
-	      }
-	    b.append('\'');
-	    set(parameterIndex, b.toString());
+              sbuf.append('\'');
+              for (i = 0 ; i < x.length() ; ++i)
+                {
+                  char c = x.charAt(i);
+                  if (c == '\\' || c == '\'')
+                    sbuf.append((char)'\\');
+                  sbuf.append(c);
+                }
+              sbuf.append('\'');
+              set(parameterIndex, sbuf.toString());
+            }
 	  }
 	}
 
@@ -312,7 +332,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-          SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
+          SimpleDateFormat df = (SimpleDateFormat) tl_df.get();
+          if(df==null) {
+            df = new SimpleDateFormat("''yyyy-MM-dd''");
+            tl_df.set(df);
+          }
 
 	  set(parameterIndex, df.format(x));
 
@@ -351,11 +375,19 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException
         {
-          SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+          SimpleDateFormat df = (SimpleDateFormat) tl_tsdf.get();
+          if(df==null) {
+            df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            tl_tsdf.set(df);
+          }
           df.setTimeZone(TimeZone.getTimeZone("GMT"));
-          StringBuffer strBuf = new StringBuffer("'");
-          strBuf.append(df.format(x)).append('.').append(x.getNanos()/10000000).append("+00'");
-	  set(parameterIndex, strBuf.toString());
+
+          // Use the shared StringBuffer
+          synchronized(sbuf) {
+            sbuf.setLength(0);
+            sbuf.append("'").append(df.format(x)).append('.').append(x.getNanos()/10000000).append("+00'");
+            set(parameterIndex, sbuf.toString());
+          }
 
           // The above works, but so does the following. I'm leaving the above in, but this seems
           // to be identical. Pays to read the docs ;-)
@@ -575,38 +607,31 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public boolean execute() throws SQLException
 	{
-		StringBuffer s = new StringBuffer();
-		int i;
-
-		for (i = 0 ; i < inStrings.length ; ++i)
-		{
-			if (inStrings[i] == null)
-				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
-			s.append (templateStrings[i]);
-			s.append (inStrings[i]);
-		}
-		s.append(templateStrings[inStrings.length]);
-		return super.execute(s.toString()); 	// in Statement class
+		return super.execute(compileQuery()); 	// in Statement class
 	}
 
 	/**
 	 * Returns the SQL statement with the current template values
 	 * substituted.
+         * NB: This is identical to compileQuery() except instead of throwing
+         * SQLException if a parameter is null, it places ? instead.
 	 */
 	public String toString() {
-		StringBuffer s = new StringBuffer();
+          synchronized(sbuf) {
+                sbuf.setLength(0);
 		int i;
 
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
-				s.append( '?' );
+				sbuf.append( '?' );
 			else
-				s.append (templateStrings[i]);
-			s.append (inStrings[i]);
+				sbuf.append (templateStrings[i]);
+			sbuf.append (inStrings[i]);
 		}
-		s.append(templateStrings[inStrings.length]);
-		return s.toString();
+		sbuf.append(templateStrings[inStrings.length]);
+		return sbuf.toString();
+          }
 	}
 
 	// **************************************************************
@@ -631,14 +656,26 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 
     // ** JDBC 2 Extensions **
 
+    /**
+     * This parses the query and adds it to the current batch
+     */
     public void addBatch() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	super.addBatch(compileQuery());
     }
 
+    /**
+     * Not sure what this one does, so I'm saying this returns the MetaData for
+     * the last ResultSet returned!
+     */
     public java.sql.ResultSetMetaData getMetaData() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      java.sql.ResultSet rs = getResultSet();
+      if(rs!=null)
+        return rs.getMetaData();
+
+      // Does anyone really know what this method does?
+      return null;
     }
 
     public void setArray(int i,Array x) throws SQLException
@@ -646,24 +683,59 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	throw org.postgresql.Driver.notImplemented();
     }
 
+    /**
+     * Sets a Blob - basically its similar to setBinaryStream()
+     */
     public void setBlob(int i,Blob x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      setBinaryStream(i,x.getBinaryStream(),(int)x.length());
     }
 
+    /**
+     * This is similar to setBinaryStream except it uses a Reader instead of
+     * InputStream.
+     */
     public void setCharacterStream(int i,java.io.Reader x,int length) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+          LargeObjectManager lom = connection.getLargeObjectAPI();
+          int oid = lom.create();
+          LargeObject lob = lom.open(oid);
+          OutputStream los = lob.getOutputStream();
+          try {
+            // could be buffered, but then the OutputStream returned by LargeObject
+            // is buffered internally anyhow, so there would be no performance
+            // boost gained, if anything it would be worse!
+            int c=x.read();
+            int p=0;
+            while(c>-1 && p<length) {
+              los.write(c);
+              c=x.read();
+              p++;
+            }
+            los.close();
+          } catch(IOException se) {
+            throw new PSQLException("postgresql.prep.is",se);
+          }
+          // lob is closed by the stream so don't call lob.close()
+          setInt(i,oid);
     }
 
+    /**
+     * New in 7.1
+     */
     public void setClob(int i,Clob x) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      setBinaryStream(i,x.getAsciiStream(),(int)x.length());
     }
 
+    /**
+     * At least this works as in PostgreSQL null represents anything null ;-)
+     *
+     * New in 7,1
+     */
     public void setNull(int i,int t,String s) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	setNull(i,t);
     }
 
     public void setRef(int i,Ref x) throws SQLException
@@ -671,19 +743,43 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	throw org.postgresql.Driver.notImplemented();
     }
 
+    /**
+     * New in 7,1
+     */
     public void setDate(int i,java.sql.Date d,java.util.Calendar cal) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      if(cal==null)
+        setDate(i,d);
+      else {
+        cal.setTime(d);
+        setDate(i,new java.sql.Date(cal.getTime().getTime()));
+      }
     }
 
+    /**
+     * New in 7,1
+     */
     public void setTime(int i,Time t,java.util.Calendar cal) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      if(cal==null)
+        setTime(i,t);
+      else {
+        cal.setTime(t);
+        setTime(i,new java.sql.Time(cal.getTime().getTime()));
+      }
     }
 
+    /**
+     * New in 7,1
+     */
     public void setTimestamp(int i,Timestamp t,java.util.Calendar cal) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      if(cal==null)
+        setTimestamp(i,t);
+      else {
+        cal.setTime(t);
+        setTimestamp(i,new java.sql.Timestamp(cal.getTime().getTime()));
+      }
     }
 
 }

@@ -2539,23 +2539,20 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
     // ** JDBC 2 Extensions **
 
+    /**
+     * New in 7.1 - we don't support deletes so this must be false!
+     */
     public boolean deletesAreDetected(int i) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
+    /**
+     * New in 7.1 - we don't support deletes so this must be false!
+     */
     public boolean othersDeletesAreVisible(int i) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
-    }
-
-    public Class getClass(String catalog,
-			  String schema,
-			  String table,
-			  String columnNamePattern
-			  ) throws SQLException
-    {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
     public java.sql.Connection getConnection() throws SQLException
@@ -2563,6 +2560,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	return (java.sql.Connection)connection;
     }
 
+    /**
+     * Return user defined types in a schema
+     */
     public java.sql.ResultSet getUDTs(String catalog,
 				      String schemaPattern,
 				      String typeNamePattern,
@@ -2572,66 +2572,90 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	throw org.postgresql.Driver.notImplemented();
     }
 
+    /**
+     * New in 7.1 - we don't support visible inserts so this must be false!
+     */
     public boolean othersInsertsAreVisible(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
+    /**
+     * New in 7.1 - we don't support visible updates so this must be false!
+     */
     public boolean updatesAreDetected(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
+    /**
+     * New in 7.1 - we don't support visible updates so this must be false!
+     */
     public boolean othersUpdatesAreVisible(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
     public boolean ownUpdatesAreVisible(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
     public boolean ownInsertsAreVisible(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
     public boolean insertsAreDetected(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
     public boolean ownDeletesAreVisible(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
     public boolean rowChangesAreDetected(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
     public boolean rowChangesAreVisible(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return false;
     }
 
+    /**
+     * New in 7.1 - If this is for PreparedStatement yes, ResultSet no
+     */
     public boolean supportsBatchUpdates() throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return true;
     }
 
+    /**
+     * New in 7.1
+     */
     public boolean supportsResultSetConcurrency(int type,int concurrency) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // These combinations are not supported!
+      if(type==java.sql.ResultSet.TYPE_SCROLL_SENSITIVE)
+        return false;
+
+      // We don't yet support Updateable ResultSets
+      if(concurrency==java.sql.ResultSet.CONCUR_UPDATABLE)
+        return false;
+
+      // Everything else we do
+      return true;
     }
 
     public boolean supportsResultSetType(int type) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+      // The only type we don't support
+      return type!=java.sql.ResultSet.TYPE_SCROLL_SENSITIVE;
     }
-
 
 }
 

@@ -62,6 +62,11 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   protected org.postgresql.jdbc2.Statement statement;
 
   /**
+   * StringBuffer used by getTimestamp
+   */
+  private StringBuffer sbuf;
+
+  /**
    * Create a new ResultSet - Note that we create ResultSets to
    * represent the results of everything.
    *
@@ -467,42 +472,52 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     //and java expects three digits if fractional seconds are present instead of two for postgres
     //so this code strips off timezone info and adds on the GMT+/-...
     //as well as adds a third digit for partial seconds if necessary
-    StringBuffer strBuf = new StringBuffer(s);
-    char sub = strBuf.charAt(strBuf.length()-3);
-    if (sub == '+' || sub == '-') {
-      strBuf.setLength(strBuf.length()-3);
-      if (subsecond)  {
-        strBuf = strBuf.append('0').append("GMT").append(s.substring(s.length()-3, s.length())).append(":00");
-      } else {
-        strBuf = strBuf.append("GMT").append(s.substring(s.length()-3, s.length())).append(":00");
+    synchronized(this) {
+      // We must be synchronized here incase more theads access the ResultSet
+      // bad practice but possible. Anyhow this is to protect sbuf and
+      // SimpleDateFormat objects
+
+      // First time?
+      if(sbuf==null)
+        sbuf = new StringBuffer();
+
+      sbuf.setLength(0);
+      sbuf.append(s);
+
+      char sub = sbuf.charAt(sbuf.length()-3);
+      if (sub == '+' || sub == '-') {
+        sbuf.setLength(sbuf.length()-3);
+        if (subsecond)  {
+          sbuf.append('0').append("GMT").append(s.substring(s.length()-3)).append(":00");
+        } else {
+          sbuf.append("GMT").append(s.substring(s.length()-3)).append(":00");
+        }
+      } else if (subsecond) {
+        sbuf.append('0');
       }
-    } else if (subsecond) {
-      strBuf = strBuf.append('0');
-    }
 
-    s = strBuf.toString();
+      // could optimize this a tad to remove too many object creations...
+      SimpleDateFormat df = null;
 
-    SimpleDateFormat df = null;
+      if (s.length()>23 && subsecond) {
+        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
+      } else if (s.length()>23 && !subsecond) {
+        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
+      } else if (s.length()>10 && subsecond) {
+        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+      } else if (s.length()>10 && !subsecond) {
+        df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+      } else {
+        df = new SimpleDateFormat("yyyy-MM-dd");
+      }
 
-    if (s.length()>23 && subsecond) {
-      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSzzzzzzzzz");
-    } else if (s.length()>23 && !subsecond) {
-      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:sszzzzzzzzz");
-    } else if (s.length()>10 && subsecond) {
-      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-    } else if (s.length()>10 && !subsecond) {
-      df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    } else {
-      df = new SimpleDateFormat("yyyy-MM-dd");
-    }
-
-    try {
-	return new Timestamp(df.parse(s).getTime());
-    } catch(ParseException e) {
-	throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
+      try {
+          return new Timestamp(df.parse(sbuf.toString()).getTime());
+      } catch(ParseException e) {
+          throw new PSQLException("postgresql.res.badtimestamp",new Integer(e.getErrorOffset()),s);
+      }
     }
   }
-
 
   /**
    * A column value can be retrieved as a stream of ASCII characters
@@ -967,14 +982,20 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       }
     }
 
+    /**
+     * New in 7.1
+     */
     public Clob getClob(String columnName) throws SQLException
     {
 	return getClob(findColumn(columnName));
     }
 
+    /**
+     * New in 7.1
+     */
     public Clob getClob(int i) throws SQLException
     {
-	throw org.postgresql.Driver.notImplemented();
+	return new org.postgresql.largeobject.PGclob(connection,getInt(i));
     }
 
     public int getConcurrency() throws SQLException
@@ -1191,11 +1212,6 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
       // Sub-classes should implement this as part of their cursor support
       throw org.postgresql.Driver.notImplemented();
     }
-
-    //public void setKeysetSize(int keys) throws SQLException
-    //{
-    //throw org.postgresql.Driver.notImplemented();
-    //}
 
     public void updateAsciiStream(int columnIndex,
 				  java.io.InputStream x,
