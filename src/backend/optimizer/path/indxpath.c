@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.4 1996/11/08 05:56:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.5 1997/01/22 06:25:42 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,8 +441,16 @@ group_clauses_by_indexkey(Rel *rel,
  */
 #define IndexScanableOperand(opnd, indkeys, rel, index) \
     ((index->indproc == InvalidOid) ? \
-	equal_indexkey_var(indkeys,opnd) : \
+	match_indexkey_operand(indkeys, opnd, rel) : \
 	function_index_operand((Expr*)opnd,rel,index))
+
+/*
+ * There was
+ *	equal_indexkey_var(indkeys,opnd) : \
+ * above, and now
+ *	match_indexkey_operand(indkeys, opnd, rel) : \
+ * - vadim 01/22/97
+ */
 
 /*    
  * match_clause_to-indexkey--
@@ -513,7 +521,13 @@ match_clause_to_indexkey(Rel *rel,
 	    /*
 	     * Must try to commute the clause to standard s-arg format.
 	     */
+#ifdef INDEXSCAN_PATCH
+	    /* ...And here...  - vadim 01/22/97 */ 
+	    else if ((leftop && IsA(leftop,Const)) ||
+			(leftop && IsA(leftop,Param)))
+#else
 	    else if (leftop && IsA(leftop,Const))
+#endif
 		{
 		    restrict_op =
 			get_commutator(((Oper*)((Expr*)clause)->oper)->opno);
