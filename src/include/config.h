@@ -47,6 +47,8 @@
 #define ESCAPE_PATCH
 #define ARRAY_PATCH
 
+/* Fixes use of indexes infunctions */
+#define INDEXSCAN_PATCH 
 
 /* found in src/backend/utils/adt/date.c */
 /* #define DATEDEBUG */
