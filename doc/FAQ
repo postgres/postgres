@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Jan 10 18:35:15 EST 2002
+   Last updated: Thu Jan 10 18:41:45 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -786,7 +786,7 @@ Type            Internal Name   Notes
 CHAR(#)         bpchar          blank padded to the specified fixed length
 VARCHAR(#)      varchar         size specifies maximum length, no padding
 TEXT            text            no specific upper limit on length
-BYTEA           bytea           variable-length byte array (null-safe)
+BYTEA           bytea           variable-length byte array (null-byte safe)
 
    You will see the internal name when examining system catalogs and in
    some error messages.
