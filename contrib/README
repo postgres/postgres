@@ -171,10 +171,6 @@ tools -
 	Assorted developer tools
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
-unixdate -
-	Conversions from integer to datetime
-	by Thomas Lockhart <lockhart@alumni.caltech.edu>
-
 userlock -
 	User locks
 	by Massimo Dal Zotto <dz@cs.unitn.it>
