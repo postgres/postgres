@@ -47,11 +47,6 @@ fulltextindex -
 	Full text indexing using triggers
 	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
 
-init.d - 
-	
-	Init.d-style scripts for starting and stopping the PostgreSQL
-	server by Ryan Kirkpatrick <pgsql@rkirkpat.net>
-	
 intarray -
 	Index support for arrays of int4, using GiST
 	by Teodor Sigaev <teodor@stack.net> and Oleg Bartunov
@@ -60,11 +55,6 @@ intarray -
 isbn_issn -
 	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
 	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
-
-linux -
-	Scripts for starting and stopping the PostgreSQL server on
-	a Linux system
-	by Thomas Lockhart <lockhart@alumni.caltech.edu>
 
 lo -
 	Large Object maintenance
@@ -123,6 +113,9 @@ soundex -
 spi -
 	Various trigger functions, examples for using SPI.
 
+start-scripts - 
+	Scripts for starting the server at boot time.
+	
 string -
 	C-like input/output conversion routines for strings
 	by Massimo Dal Zotto <dz@cs.unitn.it>

@@ -1,0 +1,90 @@
+#! /bin/sh
+
+# This is an example of a start/stop script for SysV-style init, such
+# as is used on Linux systems.  You should edit some of the variables
+# and maybe the 'echo' commands.
+#
+# Place this file at /etc/init.d/postgresql (or
+# /etc/rc.d/init.d/postgresql) and make symlinks to
+#   /etc/rc.d/rc0.d/K02postgresql
+#   /etc/rc.d/rc1.d/K02postgresql
+#   /etc/rc.d/rc2.d/K02postgresql
+#   /etc/rc.d/rc3.d/S98postgresql
+#   /etc/rc.d/rc4.d/S98postgresql
+#   /etc/rc.d/rc5.d/S98postgresql
+# Or check out the chkconfig program, if you have it.
+#
+# Proper init scripts on Linux systems normally require setting lock
+# and pid files under /var/run as well as reacting to network
+# settings, so you should treat this with care.
+
+# Original author:  Ryan Kirkpatrick <pgsql@rkirkpat.net>
+
+# $Header: /cvsroot/pgsql/contrib/start-scripts/linux,v 1.1 2001/02/08 19:53:33 petere Exp $
+
+## EDIT FROM HERE
+
+# Installation prefix
+prefix=/usr/local/pgsql
+
+# Data directory
+PGDATA="/usr/local/pgsql/data"
+
+# Who to run pg_ctl as, should be "postgres".
+PGUSER=postgres
+
+# Where to keep a log file
+PGLOG="$PGDATA/serverlog"
+
+## STOP EDITING HERE
+
+export PGDATA
+
+# Check for echo -n vs echo \c
+if echo '\c' | grep -s c >/dev/null 2>&1 ; then
+    ECHO_N="echo -n"
+    ECHO_C=""
+else
+    ECHO_N="echo"
+    ECHO_C='\c'
+fi
+
+# The path that is to be used for the script
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# What to use to start up the postmaster
+DAEMON="$prefix/bin/pg_ctl"
+
+set -e
+
+# Only start if we can find pg_ctl.
+test -f $DAEMON || exit 0
+
+# Parse command line parameters.
+case $1 in
+  start)
+	$ECHO_N "Starting PostgreSQL: "$ECHO_C
+	su - $PGUSER -c "$DAEMON start -s -l $PGLOG" 
+	echo "ok"
+	;;
+  stop)
+	echo -n "Stopping PostgreSQL: "
+	su - $PGUSER -c "$DAEMON stop -s -m fast"
+	echo "ok"
+	;;
+  restart)
+	echo -n "Restarting PostgreSQL: "
+	su - $PGUSER -c "$DAEMON restart -s -m fast"
+	echo "ok"
+	;;
+  status)
+	su - $PGUSER -c "$DAEMON status"
+	;;
+  *)
+	# Print help
+	echo "Usage: $0 {start|stop|restart|status}" 1>&2
+	exit 1
+	;;
+esac
+
+exit 0
