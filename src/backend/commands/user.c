@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.83 2001/09/08 15:24:00 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.84 2001/09/19 09:48:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,38 +220,38 @@ CreateUser(CreateUserStmt *stmt)
 	{
 		DefElem *defel = (DefElem *) lfirst(option);
 
-		if (strcasecmp(defel->defname, "password") == 0 ||
-			strcasecmp(defel->defname, "encryptedPassword") == 0 ||
-			strcasecmp(defel->defname, "unencryptedPassword") == 0) {
+		if (strcmp(defel->defname, "password") == 0 ||
+			strcmp(defel->defname, "encryptedPassword") == 0 ||
+			strcmp(defel->defname, "unencryptedPassword") == 0) {
 			if (dpassword)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dpassword = defel;
-			if (strcasecmp(defel->defname, "encryptedPassword") == 0)
+			if (strcmp(defel->defname, "encryptedPassword") == 0)
 				encrypt_password = true;
-			else if (strcasecmp(defel->defname, "unencryptedPassword") == 0)
+			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
 				encrypt_password = false;
 		}
-		else if (strcasecmp(defel->defname, "sysid") == 0) {
+		else if (strcmp(defel->defname, "sysid") == 0) {
 			if (dsysid)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dsysid = defel;
 		}
-		else if (strcasecmp(defel->defname, "createdb") == 0) {
+		else if (strcmp(defel->defname, "createdb") == 0) {
 			if (dcreatedb)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dcreatedb = defel;
 		}
-		else if (strcasecmp(defel->defname, "createuser") == 0) {
+		else if (strcmp(defel->defname, "createuser") == 0) {
 			if (dcreateuser)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dcreateuser = defel;
 		}
-		else if (strcasecmp(defel->defname, "groupElts") == 0) {
+		else if (strcmp(defel->defname, "groupElts") == 0) {
 			if (dgroupElts)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dgroupElts = defel;
 		}
-		else if (strcasecmp(defel->defname, "validUntil") == 0) {
+		else if (strcmp(defel->defname, "validUntil") == 0) {
 			if (dvalidUntil)
 				elog(ERROR, "CREATE USER: conflicting options");
 			dvalidUntil = defel;
@@ -455,28 +455,28 @@ AlterUser(AlterUserStmt *stmt)
 	{
 		DefElem *defel = (DefElem *) lfirst(option);
 
-		if (strcasecmp(defel->defname, "password") == 0 ||
-			strcasecmp(defel->defname, "encryptedPassword") == 0 ||
-			strcasecmp(defel->defname, "unencryptedPassword") == 0) {
+		if (strcmp(defel->defname, "password") == 0 ||
+			strcmp(defel->defname, "encryptedPassword") == 0 ||
+			strcmp(defel->defname, "unencryptedPassword") == 0) {
 			if (dpassword)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dpassword = defel;
-			if (strcasecmp(defel->defname, "encryptedPassword") == 0)
+			if (strcmp(defel->defname, "encryptedPassword") == 0)
 				encrypt_password = true;
-			else if (strcasecmp(defel->defname, "unencryptedPassword") == 0)
+			else if (strcmp(defel->defname, "unencryptedPassword") == 0)
 				encrypt_password = false;
 		}
-		else if (strcasecmp(defel->defname, "createdb") == 0) {
+		else if (strcmp(defel->defname, "createdb") == 0) {
 			if (dcreatedb)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dcreatedb = defel;
 		}
-		else if (strcasecmp(defel->defname, "createuser") == 0) {
+		else if (strcmp(defel->defname, "createuser") == 0) {
 			if (dcreateuser)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dcreateuser = defel;
 		}
-		else if (strcasecmp(defel->defname, "validUntil") == 0) {
+		else if (strcmp(defel->defname, "validUntil") == 0) {
 			if (dvalidUntil)
 				elog(ERROR, "ALTER USER: conflicting options");
 			dvalidUntil = defel;
@@ -849,12 +849,12 @@ CreateGroup(CreateGroupStmt *stmt)
 	{
 		DefElem *defel = (DefElem *) lfirst(option);
 
-		if (strcasecmp(defel->defname, "sysid") == 0) {
+		if (strcmp(defel->defname, "sysid") == 0) {
 			if (dsysid)
 				elog(ERROR, "CREATE GROUP: conflicting options");
 			dsysid = defel;
 		}
-		else if (strcasecmp(defel->defname, "userElts") == 0) {
+		else if (strcmp(defel->defname, "userElts") == 0) {
 			if (duserElts)
 				elog(ERROR, "CREATE GROUP: conflicting options");
 			duserElts = defel;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.63 2001/08/16 20:38:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.64 2001/09/19 09:48:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,17 +737,17 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (!strcasecmp(defel->defname, "increment"))
+		if (strcmp(defel->defname, "increment")==0)
 			increment_by = defel;
-		else if (!strcasecmp(defel->defname, "start"))
+		else if (strcmp(defel->defname, "start")==0)
 			last_value = defel;
-		else if (!strcasecmp(defel->defname, "maxvalue"))
+		else if (strcmp(defel->defname, "maxvalue")==0)
 			max_value = defel;
-		else if (!strcasecmp(defel->defname, "minvalue"))
+		else if (strcmp(defel->defname, "minvalue")==0)
 			min_value = defel;
-		else if (!strcasecmp(defel->defname, "cache"))
+		else if (strcmp(defel->defname, "cache")==0)
 			cache_value = defel;
-		else if (!strcasecmp(defel->defname, "cycle"))
+		else if (strcmp(defel->defname, "cycle")==0)
 		{
 			if (defel->arg != (Node *) NULL)
 				elog(ERROR, "DefineSequence: CYCLE ??");
