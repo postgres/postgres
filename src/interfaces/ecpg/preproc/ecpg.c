@@ -91,7 +91,7 @@ main(int argc, char *const argv[])
 		/* after the options there must not be anything but filenames */
 		for (fnr = optind; fnr < argc; fnr++)
 		{
-			char	   *output_filename, *ptr2ext;
+			char	*ptr2ext;
 
 			input_filename = mm_alloc(strlen(argv[fnr]) + 5);
 
@@ -113,7 +113,7 @@ main(int argc, char *const argv[])
 
 			if (out_option == 0)/* calculate the output name */
 			{
-				output_filename = strdup(input_filename);
+				char *output_filename = strdup(input_filename);
 				
 				ptr2ext = strrchr(output_filename, '.');
 				/* make extension = .c */
@@ -128,6 +128,7 @@ main(int argc, char *const argv[])
 					free(input_filename);
 					continue;
 				}
+				free(output_filename);
 			}
 
 			yyin = fopen(input_filename, "r");
@@ -149,8 +150,6 @@ main(int argc, char *const argv[])
 				if (out_option == 0)
 					fclose(yyout);
 			}
-
-			free(output_filename);
 			free(input_filename);
 		}
 	}

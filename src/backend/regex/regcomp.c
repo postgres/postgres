@@ -256,7 +256,7 @@ int			cflags;
 #ifdef MB
 	p->next = wcp;
 #else
-	p->next = pattern; /* convenience; we do not modify it */
+	p->next = (pg_wchar *)pattern; /* convenience; we do not modify it */
 #endif
 	p->end = p->next + len;
 	p->error = 0;

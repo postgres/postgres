@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.15 1998/03/30 16:47:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.16 1998/04/06 02:38:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ struct itemIdSortData
 };
 
 static int
-itemidcompare(void *itemidp1, void *itemidp2)
+itemidcompare(const void *itemidp1, const void *itemidp2)
 {
 	if (((struct itemIdSortData *) itemidp1)->itemiddata.lp_off ==
 		((struct itemIdSortData *) itemidp2)->itemiddata.lp_off)
