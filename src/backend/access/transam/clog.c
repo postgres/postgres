@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.13 2003/05/02 21:52:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.14 2003/05/02 21:59:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ static ClogCtlData *ClogCtl = NULL;
  * The value is automatically inherited by backends via fork, and
  * doesn't need to be in shared memory.
  */
-static LWLockId *ClogBufferLocks;		/* Per-buffer I/O locks */
+static LWLockId ClogBufferLocks[NUM_CLOG_BUFFERS];		/* Per-buffer I/O locks */
 
 /*
  * ClogDir is set during CLOGShmemInit and does not change thereafter.
@@ -271,67 +271,41 @@ TransactionIdGetStatus(TransactionId xid)
 /*
  * Initialization of shared memory for CLOG
  */
+
 int
 CLOGShmemSize(void)
 {
-	return MAXALIGN(sizeof(ClogCtlData) + CLOG_BLCKSZ * NUM_CLOG_BUFFERS)
-#ifdef EXEC_BACKEND
-			+ MAXALIGN(NUM_CLOG_BUFFERS * sizeof(LWLockId))
-#endif
-	;
+	return MAXALIGN(sizeof(ClogCtlData) + CLOG_BLCKSZ * NUM_CLOG_BUFFERS);
 }
-
 
 void
 CLOGShmemInit(void)
 {
 	bool		found;
+	char	   *bufptr;
 	int			slotno;
 
-	/* Handle ClogCtl */
-	
 	/* this must agree with space requested by CLOGShmemSize() */
-	ClogCtl = (ClogCtlData *) ShmemInitStruct("CLOG Ctl",
-				MAXALIGN(sizeof(ClogCtlData) +
-				CLOG_BLCKSZ * NUM_CLOG_BUFFERS), &found);
+	ClogCtl = (ClogCtlData *)
+		ShmemInitStruct("CLOG Ctl",
+						MAXALIGN(sizeof(ClogCtlData) +
+								 CLOG_BLCKSZ * NUM_CLOG_BUFFERS),
+						&found);
+	Assert(!found);
 
-	if (!IsUnderPostmaster)
-	/* Initialize ClogCtl shared memory area */
+	memset(ClogCtl, 0, sizeof(ClogCtlData));
+
+	bufptr = ((char *) ClogCtl) + sizeof(ClogCtlData);
+
+	for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
 	{
-		char	   *bufptr;
-
-		Assert(!found);
-
-		memset(ClogCtl, 0, sizeof(ClogCtlData));
-
-		bufptr = (char *)ClogCtl + sizeof(ClogCtlData);
-	
-		for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
-		{
-			ClogCtl->page_buffer[slotno] = bufptr;
-			ClogCtl->page_status[slotno] = CLOG_PAGE_EMPTY;
-			bufptr += CLOG_BLCKSZ;
-		}
-
-		/* ClogCtl->latest_page_number will be set later */
+		ClogCtl->page_buffer[slotno] = bufptr;
+		ClogCtl->page_status[slotno] = CLOG_PAGE_EMPTY;
+		ClogBufferLocks[slotno] = LWLockAssign();
+		bufptr += CLOG_BLCKSZ;
 	}
-	else
-		Assert(found);
 
-	/* Handle ClogBufferLocks */
-	
-#ifdef EXEC_BACKEND
-	ClogBufferLocks = (LWLockId *) ShmemInitStruct("CLOG Buffer Locks",
-						NUM_CLOG_BUFFERS * sizeof(LWLockId), &found);
-	Assert((!found && !IsUnderPostmaster) || (found && IsUnderPostmaster));
-#else
-	ClogBufferLocks = malloc(NUM_CLOG_BUFFERS * sizeof(LWLockId));
-	Assert(ClogBufferLocks);
-#endif
-
-	if (!IsUnderPostmaster)
-		for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
-			ClogBufferLocks[slotno] = LWLockAssign();
+	/* ClogCtl->latest_page_number will be set later */
 
 	/* Init CLOG directory path */
 	snprintf(ClogDir, MAXPGPATH, "%s/pg_clog", DataDir);

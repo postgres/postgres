@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.58 2003/05/02 21:52:42 momjian Exp $
+ * $Id: ipc.h,v 1.59 2003/05/02 21:59:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,5 @@ extern void on_exit_reset(void);
 extern void CreateSharedMemoryAndSemaphores(bool makePrivate,
 								int maxBackends,
 								int port);
-extern void AttachSharedMemoryAndSemaphores(void);
 
 #endif   /* IPC_H */

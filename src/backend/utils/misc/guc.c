@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.119 2003/04/25 19:45:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.120 2003/05/02 21:59:31 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -60,6 +60,9 @@
 #define PG_KRB_SRVTAB ""
 #endif
 
+#ifdef EXEC_BACKEND
+#define CONFIG_EXEC_PARAMS "global/config_exec_params"
+#endif
 
 /* XXX these should appear in other modules' header files */
 extern bool Log_connections;
@@ -2801,6 +2804,204 @@ _ShowOption(struct config_generic * record)
 }
 
 
+#ifdef EXEC_BACKEND
+/*
+ *	This routine dumps out all non-default GUC options into a binary
+ *	file that is read by all exec'ed backends.  The format is:
+ *
+ *		variable name, string, null terminated
+ *		variable value, string, null terminated
+ *		variable source, integer
+ */
+void
+write_nondefault_variables(GucContext context)
+{
+	int i;
+	char *new_filename, *filename;
+	int elevel;
+	FILE *fp;
+
+	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
+	Assert(DataDir);
+	elevel = (context == PGC_SIGHUP) ? DEBUG3 : ERROR;
+
+	/*
+	 * Open file
+	 */
+	new_filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) +
+							strlen(".new") + 2);
+	filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
+	if (new_filename == NULL || filename == NULL)
+	{
+		elog(elevel, "out of memory");
+		return;
+	}
+	sprintf(new_filename, "%s/" CONFIG_EXEC_PARAMS ".new", DataDir);
+	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
+
+    fp = AllocateFile(new_filename, "w");
+    if (!fp)
+    {
+ 		free(new_filename);
+		free(filename);
+		elog(elevel, "could not write exec config params file `"
+					CONFIG_EXEC_PARAMS "': %s", strerror(errno));
+		return;
+	}
+
+	for (i = 0; i < num_guc_variables; i++)
+	{
+		struct config_generic *gconf = guc_variables[i];
+
+		if (gconf->source != PGC_S_DEFAULT)
+		{
+			fprintf(fp, "%s", gconf->name);
+			fputc(0, fp);
+
+			switch (gconf->vartype)
+			{
+				case PGC_BOOL:
+					{
+						struct config_bool *conf = (struct config_bool *) gconf;
+
+						if (*conf->variable == 0)
+							fprintf(fp, "false");
+						else
+							fprintf(fp, "true");
+					}
+					break;
+
+				case PGC_INT:
+					{
+						struct config_int *conf = (struct config_int *) gconf;
+
+						fprintf(fp, "%d", *conf->variable);
+					}
+					break;
+
+				case PGC_REAL:
+					{
+						struct config_real *conf = (struct config_real *) gconf;
+
+						/* Could lose precision here? */
+						fprintf(fp, "%f", *conf->variable);
+					}
+					break;
+
+				case PGC_STRING:
+					{
+						struct config_string *conf = (struct config_string *) gconf;
+
+						fprintf(fp, "%s", *conf->variable);
+					}
+					break;
+			}
+
+			fputc(0, fp);
+
+			fwrite(&gconf->source, sizeof(gconf->source), 1, fp);
+		}
+	}
+
+	FreeFile(fp);
+	/* Put new file in place, this could delay on Win32 */
+	rename(new_filename, filename);
+	free(new_filename);
+	free(filename);
+	return;
+}
+
+
+/*
+ *	Read string, including null byte from file
+ *
+ *	Return NULL on EOF and nothing read
+ */
+static char *
+read_string_with_null(FILE *fp)
+{
+	int i = 0, ch, maxlen = 256;
+	char *str = NULL;
+
+	do
+	{
+		if ((ch = fgetc(fp)) == EOF)
+		{
+			if (i == 0)
+				return NULL;
+			else
+				elog(FATAL, "Invalid format of exec config params file");
+		}
+		if (i == 0)
+			str = malloc(maxlen);
+		else if (i == maxlen)
+			str = realloc(str, maxlen *= 2);
+		str[i++] = ch;
+	} while (ch != 0);
+
+	return str;
+}
+
+
+/*
+ *	This routine loads a previous postmaster dump of its non-default
+ *	settings.
+ */
+void
+read_nondefault_variables(void)
+{
+	char *filename;
+	FILE *fp;
+	char *varname, *varvalue;
+	int varsource;
+
+	Assert(DataDir);
+
+	/*
+	 * Open file
+	 */
+	filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
+	if (filename == NULL)
+	{
+		elog(ERROR, "out of memory");
+		return;
+	}
+	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
+
+    fp = AllocateFile(filename, "r");
+    if (!fp)
+    {
+		free(filename);
+        /* File not found is fine */
+        if (errno != ENOENT)
+            elog(FATAL, "could not read exec config params file `"
+					CONFIG_EXEC_PARAMS "': %s", strerror(errno));
+		return;
+    }
+
+    while (1)
+	{
+		if ((varname = read_string_with_null(fp)) == NULL)
+			break;
+
+		if ((varvalue = read_string_with_null(fp)) == NULL)
+			elog(FATAL, "Invalid format of exec config params file");
+ 		if (fread(&varsource, sizeof(varsource), 1, fp) == 0)
+			elog(FATAL, "Invalid format of exec config params file");
+
+		(void) set_config_option(varname, varvalue, PGC_POSTMASTER,
+				varsource, false, true);
+		free(varname);
+		free(varvalue);
+	}
+
+	FreeFile(fp);
+	free(filename);
+	return;
+}
+#endif
+
+
 /*
  * A little "long argument" simulation, although not quite GNU
  * compliant. Takes a string of the form "some-option=some value" and
@@ -3203,3 +3404,4 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 
 
 #include "guc-file.c"
+

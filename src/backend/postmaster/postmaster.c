@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.316 2003/05/02 21:52:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.317 2003/05/02 21:59:31 momjian Exp $
  *
  * NOTES
  *
@@ -172,13 +172,6 @@ static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 #endif
 
-/* Used to reduce macros tests */
-#ifdef EXEC_BACKEND
-const bool ExecBackend = true;
-#else
-const bool ExecBackend = false;
-#endif
-
 /*
  * Set by the -o option
  */
@@ -263,11 +256,12 @@ static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static void LogChildExit(int lev, const char *procname,
 			 int pid, int exitstatus);
-static int	DoBackend(Port *port);
+static int	BackendFinalize(Port *port);
 void		ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
+static void BackendFork(Port *port, Backend *bn);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
@@ -577,6 +571,9 @@ PostmasterMain(int argc, char *argv[])
 	SetDataDir(potential_DataDir);
 
 	ProcessConfigFile(PGC_POSTMASTER);
+#ifdef EXEC_BACKEND
+	write_nondefault_variables(PGC_POSTMASTER);
+#endif
 
 	/*
 	 * Check for invalid combinations of GUC settings.
@@ -1238,7 +1235,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 	 * Now fetch parameters out of startup packet and save them into the
 	 * Port structure.  All data structures attached to the Port struct
 	 * must be allocated in TopMemoryContext so that they won't disappear
-	 * when we pass them to PostgresMain (see DoBackend).  We need not worry
+	 * when we pass them to PostgresMain (see BackendFinalize).  We need not worry
 	 * about leaking this storage on failure, since we aren't in the postmaster
 	 * process anymore.
 	 */
@@ -1410,11 +1407,7 @@ processCancelRequest(Port *port, void *pkt)
 		elog(DEBUG1, "processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
 		return;
 	}
-	else if (ExecBackend)
-	{
-		AttachSharedMemoryAndSemaphores();
-	}
-	
+
 	/* See if we have a matching backend */
 
 	for (curr = DLGetHead(BackendList); curr; curr = DLGetSucc(curr))
@@ -1579,6 +1572,9 @@ SIGHUP_handler(SIGNAL_ARGS)
 		elog(LOG, "Received SIGHUP, reloading configuration files");
 		SignalChildren(SIGHUP);
 		ProcessConfigFile(PGC_SIGHUP);
+#ifdef EXEC_BACKEND
+		write_nondefault_variables(PGC_SIGHUP);
+#endif
 		load_hba();
 		load_ident();
 	}
@@ -2064,28 +2060,7 @@ BackendStartup(Port *port)
 	pid = fork();
 
 	if (pid == 0)				/* child */
-	{
-		int			status;
-
-#ifdef LINUX_PROFILE
-		setitimer(ITIMER_PROF, &prof_itimer, NULL);
-#endif
-
-#ifdef __BEOS__
-		/* Specific beos backend startup actions */
-		beos_backend_startup();
-#endif
-		free(bn);
-
-		status = DoBackend(port);
-		if (status != 0)
-		{
-			elog(LOG, "connection startup failed");
-			proc_exit(status);
-		}
-		else
-			proc_exit(0);
-	}
+		BackendFork(port, bn);	/* never returns */
 
 	/* in parent, error */
 	if (pid < 0)
@@ -2118,6 +2093,31 @@ BackendStartup(Port *port)
 	return STATUS_OK;
 }
 
+
+static void
+BackendFork(Port *port, Backend *bn)
+{
+	int			status;
+
+#ifdef LINUX_PROFILE
+	setitimer(ITIMER_PROF, &prof_itimer, NULL);
+#endif
+
+#ifdef __BEOS__
+	/* Specific beos backend startup actions */
+	beos_backend_startup();
+#endif
+	free(bn);
+
+	status = BackendFinalize(port);
+	if (status != 0)
+	{
+		elog(LOG, "connection startup failed");
+		proc_exit(status);
+	}
+	else
+		proc_exit(0);
+}
 
 /*
  * Try to report backend fork() failure to client before we close the
@@ -2184,7 +2184,7 @@ split_opts(char **argv, int *argcp, char *s)
 }
 
 /*
- * DoBackend -- perform authentication, and if successful, set up the
+ * BackendFinalize -- perform authentication, and if successful, set up the
  *		backend's argument list and invoke backend main().
  *
  * This used to perform an execv() but we no longer exec the backend;
@@ -2195,7 +2195,7 @@ split_opts(char **argv, int *argcp, char *s)
  *		If PostgresMain() fails, return status.
  */
 static int
-DoBackend(Port *port)
+BackendFinalize(Port *port)
 {
 	char	   *remote_host;
 	char	  **av;
@@ -2232,6 +2232,10 @@ DoBackend(Port *port)
 	/* Reset MyProcPid to new backend's pid */
 	MyProcPid = getpid();
 
+#ifdef EXEC_BACKEND
+	read_nondefault_variables();
+#endif
+
 	/*
 	 * Initialize libpq and enable reporting of elog errors to the client.
 	 * Must do this now because authentication uses libpq to send
@@ -2259,7 +2263,7 @@ DoBackend(Port *port)
 		unsigned short remote_port;
 		char	   *host_addr;
 #ifdef HAVE_IPV6
-		char	   ip_hostinfo[INET6_ADDRSTRLEN]; 
+		char	   ip_hostinfo[INET6_ADDRSTRLEN];
 #else
 		char	   ip_hostinfo[INET_ADDRSTRLEN];
 #endif
@@ -2305,7 +2309,7 @@ DoBackend(Port *port)
 	}
 	else
 	{
-		/* not AF_INET */
+	   	/* not AF_INET */
 		remote_host = "[local]";
 
 		if (Log_connections)
@@ -2329,7 +2333,7 @@ DoBackend(Port *port)
 	 * indefinitely.  PreAuthDelay doesn't count against the time limit.
 	 */
 	if (!enable_sig_alarm(AuthenticationTimeout * 1000, false))
-		elog(FATAL, "DoBackend: Unable to set timer for auth timeout");
+		elog(FATAL, "BackendFinalize: Unable to set timer for auth timeout");
 
 	/*
 	 * Receive the startup packet (which might turn out to be a cancel
@@ -2358,7 +2362,7 @@ DoBackend(Port *port)
 	 * SIGTERM/SIGQUIT again until backend startup is complete.
 	 */
 	if (!disable_sig_alarm(false))
-		elog(FATAL, "DoBackend: Unable to disable timer for auth timeout");
+		elog(FATAL, "BackendFinalize: Unable to disable timer for auth timeout");
 	PG_SETMASK(&BlockSig);
 
 	if (Log_connections)
