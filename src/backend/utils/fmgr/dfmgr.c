@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.70 2004/02/17 03:35:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.71 2004/03/09 05:06:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,6 +343,9 @@ substitute_libpath_macro(const char *name)
 {
 	size_t		macroname_len;
 	char	   *replacement = NULL;
+#ifdef WIN32
+	char		basename[MAXPGPATH];
+#endif
 
 	AssertArg(name != NULL);
 
@@ -356,7 +359,26 @@ substitute_libpath_macro(const char *name)
 #endif
 
 	if (strncmp(name, "$libdir", macroname_len) == 0)
+#ifndef WIN32
 		replacement = PKGLIBDIR;
+#else
+	{
+		char *p;
+		if (GetModuleFileName(NULL,basename,MAXPGPATH) == 0)
+			ereport(FATAL,
+					(errmsg("GetModuleFileName failed (%i)",(int)GetLastError())));
+
+		canonicalize_path(basename);
+		if ((p = last_path_separator(basename)) == NULL)
+			ereport(FATAL,
+					(errmsg("unexpected failure in determining PKGLIBDIR (%s)",basename)));
+		else
+			*p = '\0';
+
+		strcat(basename,"/../lib");
+		replacement = basename;
+	}
+#endif
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
