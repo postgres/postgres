@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.24 2004/04/26 00:36:18 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.25 2004/04/26 00:38:25 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 	if (gethostname(myhostname, MAXHOSTNAMELEN) != 0)
 	{
-		fprintf(stderr, "can not get local hostname, exiting\n");
+		fprintf(stderr, "Can not get local hostname **\nexiting\n");
 		exit(1);
 	}
 #endif
@@ -202,7 +202,7 @@ func_call_1(void)
 		open("/tmp/thread_test.1", O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
 	{
 		fprintf(stderr, "Could not create file in /tmp or\n");
-		fprintf(stderr, "could not generate failure for create file in /tmp, exiting\n");
+		fprintf(stderr, "Could not generate failure for create file in /tmp **\nexiting\n");
 		exit(1);
 	}
 
@@ -215,7 +215,7 @@ func_call_1(void)
 		sched_yield();
 	if (errno != EEXIST)
 	{
-		fprintf(stderr, "errno not thread-safe; exiting\n");
+		fprintf(stderr, "errno not thread-safe **\nexiting\n");
 		unlink("/tmp/thread_test.1");
 		exit(1);
 	}
@@ -271,7 +271,7 @@ func_call_2(void)
 	/* open non-existant file */
 	if (open("/tmp/thread_test.2", O_RDONLY, 0600) >= 0)
 	{
-		fprintf(stderr, "Read-only open succeeded without create, exiting\n");
+		fprintf(stderr, "Read-only open succeeded without create **\nexiting\n");
 		exit(1);
 	}
 
@@ -284,7 +284,7 @@ func_call_2(void)
 		sched_yield();
 	if (errno != ENOENT)
 	{
-		fprintf(stderr, "errno not thread-safe; exiting\n");
+		fprintf(stderr, "errno not thread-safe **\nexiting\n");
 		unlink("/tmp/thread_test.A");
 		exit(1);
 	}
