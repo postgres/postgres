@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.122 2000/07/02 15:21:18 petere Exp $
+ * $Id: config.h.in,v 1.123 2000/07/05 17:44:29 scrappy Exp $
  */
 
 #ifndef CONFIG_H
@@ -510,6 +510,9 @@ extern long random(void);
 #ifndef HAVE_SRANDOM
 extern void srandom(unsigned int seed);
 #endif
+
+/* Set to 1 if you have libz.a */
+#undef HAVE_LIBZ
 
 /* Set to 1 if you have libreadline.a */
 #undef HAVE_LIBREADLINE

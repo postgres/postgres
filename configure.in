@@ -689,6 +689,7 @@ AC_PROG_YACC
 AC_SUBST(YFLAGS)
 
 
+AC_CHECK_LIB(z,     main)
 AC_CHECK_LIB(sfio,     main)
 AC_CHECK_LIB(ncurses,  main, [], [AC_CHECK_LIB(curses, main)])
 AC_CHECK_LIB(termcap,  main)
