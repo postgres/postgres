@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.69 1998/10/01 01:40:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.69.2.1 1998/11/29 01:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,17 +214,23 @@ addTuple(PGresult *res, PGresAttValue *tup)
 		 *
 		 * We can use realloc because shallow copying of the structure is
 		 * okay.  Note that the first time through, res->tuples is NULL.
-		 * realloc is supposed to do the right thing in that case. Also,
-		 * on failure realloc is supposed to return NULL without damaging
+		 * While ANSI says that realloc() should act like malloc() in that
+		 * case, some old C libraries (like SunOS 4.1.x) coredump instead.
+		 * On failure realloc is supposed to return NULL without damaging
 		 * the existing allocation.
 		 * Note that the positions beyond res->ntups are garbage, not
 		 * necessarily NULL.
 		 */
 		int newSize = res->tupArrSize + TUPARR_GROW_BY;
-		PGresAttValue ** newTuples = (PGresAttValue **)
-			realloc(res->tuples, newSize * sizeof(PGresAttValue *));
+		PGresAttValue ** newTuples;
+		if (res->tuples == NULL)
+			newTuples = (PGresAttValue **)
+				malloc(newSize * sizeof(PGresAttValue *));
+		else
+			newTuples = (PGresAttValue **)
+				realloc(res->tuples, newSize * sizeof(PGresAttValue *));
 		if (! newTuples)
-			return FALSE;		/* realloc failed */
+			return FALSE;		/* malloc or realloc failed */
 		res->tupArrSize = newSize;
 		res->tuples = newTuples;
 	}
