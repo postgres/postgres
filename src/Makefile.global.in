@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.127 2001/05/12 17:49:32 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.128 2001/05/25 14:28:58 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -98,6 +98,8 @@ endif
 endif
 
 odbcinst_ini_dir = @odbcinst_ini_dir@
+
+javadir := $(DESTDIR)$(datadir)/java
 
 
 ##########################################################################

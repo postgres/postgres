@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.30 2001/05/17 03:22:53 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.31 2001/05/25 14:28:58 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ all:
 	$(ANT) -buildfile $(top_srcdir)/build.xml $(properties)
 
 install: installdirs
-	$(ANT) -Dinstall.directory=$(DESTDIR)$(datadir)/java \
+	$(ANT) -Dinstall.directory=$(javadir) \
 		-buildfile $(top_srcdir)/build.xml \
 		install $(properties)
 
