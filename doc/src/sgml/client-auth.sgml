@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.56 2003/08/31 17:32:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.57 2003/09/05 20:31:35 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -199,13 +199,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 <programlisting>
 (<replaceable>actual-IP-address</replaceable> xor <replaceable>IP-address-field</replaceable>) and <replaceable>IP-mask-field</replaceable>
 </programlisting>
-       must be zero for the record to match.  (Of course IP addresses
-       can be spoofed but this consideration is beyond the scope of
-       <productname>PostgreSQL</productname>.) If you machine supports
-       IPv6, the default <filename>pg_hba.conf</> file will have an
-       IPv6 entry for <literal>localhost</>. You can add your own IPv6
-       entries to the file. IPv6 entries are used only for IPv6
-       connections.
+       must be zero for the record to match.
+      </para>
+
+      <para>
+       An IP address given in IPv4 format will match IPv6 connections that
+       have the corresponding address, for example <literal>127.0.0.1</>
+       will match the IPv6 address <literal>::ffff:127.0.0.1</>.  An entry
+       given in IPv6 format will match only IPv6 connections, even if the
+       represented address is in the IPv4-in-IPv6 range.  Note that entries
+       in IPv6 format will be rejected if the system's C library does not have
+       support for IPv6 addresses.
       </para>
 
       <para>
@@ -219,9 +223,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>CIDR-mask</replaceable></term>
      <listitem>
       <para>
-        This is an integer specifying the number of significant bits 
-        to set in the mask, and is an alternative to using the 
-        <replaceable>IP-mask</replaceable> notation. The number must
+        This field may be used as an alternative to the 
+        <replaceable>IP-mask</replaceable> notation.  It is an
+	integer specifying the number of high-order bits 
+        to set in the mask.  The number must
         be between 0 and 32 (in the case of an IPv4 address) or 128
         (in the case of an IPv6 address) inclusive. 0 will match any
         address, while 32/128 will match only the exact host specified.

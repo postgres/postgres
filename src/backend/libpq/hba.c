@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.112 2003/09/05 03:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.113 2003/09/05 20:31:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -673,13 +673,6 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (cidr_slash)
 			*cidr_slash = '/';
 
-		if (file_ip_addr->ai_family != port->raddr.addr.ss_family)
-		{
-			/* Wrong address family. */
-			freeaddrinfo_all(hints.ai_family, file_ip_addr);
-			return;
-		}
-
 		/* Get the netmask */
 		if (cidr_slash)
 		{
@@ -703,6 +696,28 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 
 			if (file_ip_addr->ai_family != mask->ss_family)
 				goto hba_syntax;
+		}
+
+		if (file_ip_addr->ai_family != port->raddr.addr.ss_family)
+		{
+			/*
+			 * Wrong address family.  We allow only one case: if the
+			 * file has IPv4 and the port is IPv6, promote the file
+			 * address to IPv6 and try to match that way.
+			 */
+#ifdef HAVE_IPV6
+			if (file_ip_addr->ai_family == AF_INET &&
+				port->raddr.addr.ss_family == AF_INET6)
+			{
+				promote_v4_to_v6_addr((struct sockaddr_storage *) file_ip_addr->ai_addr);
+				promote_v4_to_v6_mask(mask);
+			}
+			else
+#endif /* HAVE_IPV6 */
+			{
+				freeaddrinfo_all(hints.ai_family, file_ip_addr);
+				return;
+			}
 		}
 
 		/* Read the rest of the line. */
