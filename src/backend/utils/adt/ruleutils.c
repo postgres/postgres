@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.118 2002/08/26 17:53:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.119 2002/08/29 01:19:41 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -61,6 +61,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
+#include "parser/parse_type.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
 #include "rewrite/rewriteSupport.h"
@@ -157,6 +158,8 @@ static void get_sublink_expr(Node *node, deparse_context *context);
 static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
+static void get_from_clause_coldeflist(List *coldeflist,
+									   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
@@ -2749,6 +2752,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, query->rtable);
+		List	   *coldeflist = NIL;
+		bool		gavealias = false;
 
 		switch (rte->rtekind)
 		{
@@ -2767,6 +2772,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			case RTE_FUNCTION:
 				/* Function RTE */
 				get_rule_expr(rte->funcexpr, context);
+				/* might need to emit column list for RECORD function */
+				coldeflist = rte->coldeflist;
 				break;
 			default:
 				elog(ERROR, "unexpected rte kind %d", (int) rte->rtekind);
@@ -2776,7 +2783,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		{
 			appendStringInfo(buf, " %s",
 							 quote_identifier(rte->alias->aliasname));
-			if (rte->alias->colnames != NIL)
+			gavealias = true;
+			if (rte->alias->colnames != NIL && coldeflist == NIL)
 			{
 				List	   *col;
 
@@ -2802,6 +2810,13 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			 */
 			appendStringInfo(buf, " %s",
 							 quote_identifier(rte->eref->aliasname));
+			gavealias = true;
+		}
+		if (coldeflist != NIL)
+		{
+			if (!gavealias)
+				appendStringInfo(buf, " AS ");
+			get_from_clause_coldeflist(coldeflist, context);
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
@@ -2885,6 +2900,43 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	else
 		elog(ERROR, "get_from_clause_item: unexpected node type %d",
 			 nodeTag(jtnode));
+}
+
+/*
+ * get_from_clause_coldeflist - reproduce FROM clause coldeflist
+ *
+ * The coldeflist is appended immediately (no space) to buf.  Caller is
+ * responsible for ensuring that an alias or AS is present before it.
+ */
+static void
+get_from_clause_coldeflist(List *coldeflist, deparse_context *context)
+{
+	StringInfo	buf = context->buf;
+	List	   *col;
+	int			i = 0;
+
+	appendStringInfoChar(buf, '(');
+
+	foreach(col, coldeflist)
+	{
+		ColumnDef  *n = lfirst(col);
+		char	   *attname;
+		Oid			atttypeid;
+		int32		atttypmod;
+
+		attname = n->colname;
+		atttypeid = typenameTypeId(n->typename);
+		atttypmod = n->typename->typmod;
+
+		if (i > 0)
+			appendStringInfo(buf, ", ");
+		appendStringInfo(buf, "%s %s",
+						 quote_identifier(attname),
+						 format_type_with_typemod(atttypeid, atttypmod));
+		i++;
+	}
+
+	appendStringInfoChar(buf, ')');
 }
 
 /*
