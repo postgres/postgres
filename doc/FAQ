@@ -96,6 +96,7 @@
    4.21) My large-object operations get invalid large obj descriptor.
    Why?
    4.22) How do I create a column that will default to the current time?
+   4.23) Why are my subqueries using IN so slow?
    
                             Extending PostgreSQL
                                       
@@ -198,8 +199,8 @@
    Unix/NT porting library. See pgsql/doc/README.NT in the distribution.
    
    There is also a web page at
-   http://members.tripod.com/~kevlo/postgres/portNT.html. There is
-   another port using U/Win at http://surya.wipro.com/uwin/ported.html.
+   http://www.freebsd.org/~kevlo/postgres/portNT.html. There is another
+   port using U/Win at http://surya.wipro.com/uwin/ported.html.
    
     1.5) Where can I get PostgreSQL?
     
@@ -913,10 +914,27 @@ BYTEA           bytea           variable-length array of bytes
 
    but this makes the column default to the time of table creation, not
    the time of row insertion. Instead do:
-        create table test (x int, modtime timestamp default text 'now');
+        CREATE TABLE test (x int, modtime timestamp default now() );
 
-   The casting of the value to text prevents the default value from being
-   computed at table creation time, and delays it until insertion time.
+   The calling of the function now() prevents the default value from
+   being computed at table creation time, and delays it until insertion
+   time. We believe this will not be a problem in post-6.5.* releases.
+   
+    4.23) Why are my subqueries using IN so slow?
+    
+   Currently, we join subqueries to outer queries by sequential scanning
+   the result of the subquery for each row of the outer query. A
+   workaround is to replace IN with EXISTS. For example, change:
+        SELECT *
+        FROM tab
+        WHERE col1 IN (SELECT col2 FROM TAB2)
+
+   to:
+        SELECT *
+        FROM tab
+        WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
+
+   We hope to fix this limitation in a future release.
      _________________________________________________________________
    
                             Extending PostgreSQL
