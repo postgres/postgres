@@ -144,13 +144,6 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,130,10,85,10
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,25,25,85,10
-    GROUPBOX        "Protocol",IDC_STATIC,15,40,180,25
-    CONTROL         "6.4+",DS_PG64,"Button",BS_AUTORADIOBUTTON | WS_GROUP,25,
-                    50,35,10
-    CONTROL         "6.3",DS_PG63,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    75,50,26,10
-    CONTROL         "6.2",DS_PG62,"Button",BS_AUTORADIOBUTTON | WS_TABSTOP,
-                    130,50,26,10
     GROUPBOX        "OID Options",IDC_STATIC,15,70,180,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
                     WS_GROUP | WS_TABSTOP,25,81,59,10
