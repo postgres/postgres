@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.34 1998/01/05 16:39:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.35 1998/02/11 03:56:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,7 +318,15 @@ other			.
 					errno = 0;
 					yylval.ival = strtol((char *)yytext,&endptr,10);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ERROR,"Bad integer input '%s'",yytext);
+					{
+						errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							elog(ERROR,"Bad integer input '%s'",yytext);
+						CheckFloat8Val(yylval.dval);
+						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
+						return (FCONST);
+					}
 					return (ICONST);
 				}
 {real}/{space}*-{number} {
@@ -328,7 +336,7 @@ other			.
 					errno = 0;
 					yylval.dval = strtod(((char *)yytext),&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
-					elog(ERROR,"Bad float8 input '%s'",yytext);
+						elog(ERROR,"Bad float8 input '%s'",yytext);
 					CheckFloat8Val(yylval.dval);
 					return (FCONST);
 				}
@@ -338,7 +346,15 @@ other			.
 					errno = 0;
 					yylval.ival = strtol((char *)yytext,&endptr,10);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ERROR,"Bad integer input '%s'",yytext);
+					{
+						errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							elog(ERROR,"Bad integer input '%s'",yytext);
+						CheckFloat8Val(yylval.dval);
+						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
+						return (FCONST);
+					}
 					return (ICONST);
 				}
 {real}			{
