@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.184 2001/03/22 04:00:39 momjian Exp $
+ * $Id: pg_proc.h,v 1.185 2001/05/09 23:13:35 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -210,9 +210,9 @@ DESCR("not equal");
 DATA(insert OID =  89 (  version		   PGUID 12 f t f t 0 f 25 "" 100 0 0 100 pgsql_version - ));
 DESCR("PostgreSQL version string");
 
-DATA(insert OID = 1265 (  rtcostestimate   PGUID 12 f t f t 7 f 0 "0 0 0 0 0 0 0" 100 0 0 100  rtcostestimate - ));
+DATA(insert OID = 1265 (  rtcostestimate   PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  rtcostestimate - ));
 DESCR("r-tree cost estimator");
-DATA(insert OID = 1268 (  btcostestimate   PGUID 12 f t f t 7 f 0 "0 0 0 0 0 0 0" 100 0 0 100  btcostestimate - ));
+DATA(insert OID = 1268 (  btcostestimate   PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  btcostestimate - ));
 DESCR("btree cost estimator");
 
 /* OIDS 100 - 199 */
@@ -789,7 +789,7 @@ DESCR("convert name to char()");
 DATA(insert OID =  409 (  name			   PGUID 12 f t t t 1 f 19 "1042" 100 0 0 100	bpchar_name - ));
 DESCR("convert char() to name");
 
-DATA(insert OID =  438 (  hashcostestimate PGUID 12 f t f t 7 f 0 "0 0 0 0 0 0 0" 100 0 0 100  hashcostestimate - ));
+DATA(insert OID =  438 (  hashcostestimate PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  hashcostestimate - ));
 DESCR("hash index cost estimator");
 
 DATA(insert OID = 440 (  hashgettuple	   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  hashgettuple - ));
@@ -1014,7 +1014,7 @@ DESCR("larger of two");
 DATA(insert OID = 771 (  int2smaller	   PGUID 12 f t t t 2 f 21 "21 21" 100 0 0 100	int2smaller - ));
 DESCR("smaller of two");
 
-DATA(insert OID = 772 (  gistcostestimate  PGUID 12 f t f t 7 f 0 "0 0 0 0 0 0 0" 100 0 0 100  gistcostestimate - ));
+DATA(insert OID = 772 (  gistcostestimate  PGUID 12 f t f t 8 f 0 "0 0 0 0 0 0 0 0" 100 0 0 100  gistcostestimate - ));
 DESCR("gist cost estimator");
 DATA(insert OID = 774 (  gistgettuple	   PGUID 12 f t f t 2 f 23 "0 0" 100 0 0 100  gistgettuple - ));
 DESCR("gist(internal)");

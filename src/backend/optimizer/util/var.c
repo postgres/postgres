@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.31 2001/04/18 20:42:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.32 2001/05/09 23:13:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,9 @@ typedef struct
 typedef struct
 {
 	int			varno;
+	int			varattno;
 	int			sublevels_up;
-} contain_whole_tuple_var_context;
+} contain_var_reference_context;
 
 typedef struct
 {
@@ -39,8 +40,8 @@ typedef struct
 
 static bool pull_varnos_walker(Node *node,
 				   pull_varnos_context *context);
-static bool contain_whole_tuple_var_walker(Node *node,
-				   contain_whole_tuple_var_context *context);
+static bool contain_var_reference_walker(Node *node,
+				   contain_var_reference_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
@@ -129,10 +130,10 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 
 
 /*
- *		contain_whole_tuple_var
+ *		contain_var_reference
  *
- *		Detect whether a parsetree contains any references to the whole
- *		tuple of a given rtable entry (ie, a Var with varattno = 0).
+ *		Detect whether a parsetree contains any references to a specified
+ *		attribute of a specified rtable entry.
  *
  * NOTE: this is used on not-yet-planned expressions.  It may therefore find
  * bare SubLinks, and if so it needs to recurse into them to look for uplevel
@@ -140,11 +141,12 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
  * SubPlan, we only need to look at the parameters passed to the subplan.
  */
 bool
-contain_whole_tuple_var(Node *node, int varno, int levelsup)
+contain_var_reference(Node *node, int varno, int varattno, int levelsup)
 {
-	contain_whole_tuple_var_context context;
+	contain_var_reference_context context;
 
 	context.varno = varno;
+	context.varattno = varattno;
 	context.sublevels_up = levelsup;
 
 	/*
@@ -154,15 +156,15 @@ contain_whole_tuple_var(Node *node, int varno, int levelsup)
 	 */
 	if (node && IsA(node, Query))
 		return query_tree_walker((Query *) node,
-								 contain_whole_tuple_var_walker,
+								 contain_var_reference_walker,
 								 (void *) &context, true);
 	else
-		return contain_whole_tuple_var_walker(node, &context);
+		return contain_var_reference_walker(node, &context);
 }
 
 static bool
-contain_whole_tuple_var_walker(Node *node,
-							   contain_whole_tuple_var_context *context)
+contain_var_reference_walker(Node *node,
+							 contain_var_reference_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -171,8 +173,8 @@ contain_whole_tuple_var_walker(Node *node,
 		Var		   *var = (Var *) node;
 
 		if (var->varno == context->varno &&
-			var->varlevelsup == context->sublevels_up &&
-			var->varattno == InvalidAttrNumber)
+			var->varattno == context->varattno &&
+			var->varlevelsup == context->sublevels_up)
 			return true;
 		return false;
 	}
@@ -187,11 +189,11 @@ contain_whole_tuple_var_walker(Node *node,
 		 */
 		Expr	   *expr = (Expr *) node;
 
-		if (contain_whole_tuple_var_walker((Node *) ((SubPlan *) expr->oper)->sublink->oper,
-										   context))
+		if (contain_var_reference_walker((Node *) ((SubPlan *) expr->oper)->sublink->oper,
+										 context))
 			return true;
-		if (contain_whole_tuple_var_walker((Node *) expr->args,
-										   context))
+		if (contain_var_reference_walker((Node *) expr->args,
+										 context))
 			return true;
 		return false;
 	}
@@ -202,13 +204,26 @@ contain_whole_tuple_var_walker(Node *node,
 
 		context->sublevels_up++;
 		result = query_tree_walker((Query *) node,
-								   contain_whole_tuple_var_walker,
+								   contain_var_reference_walker,
 								   (void *) context, true);
 		context->sublevels_up--;
 		return result;
 	}
-	return expression_tree_walker(node, contain_whole_tuple_var_walker,
+	return expression_tree_walker(node, contain_var_reference_walker,
 								  (void *) context);
+}
+
+
+/*
+ *		contain_whole_tuple_var
+ *
+ *		Detect whether a parsetree contains any references to the whole
+ *		tuple of a given rtable entry (ie, a Var with varattno = 0).
+ */
+bool
+contain_whole_tuple_var(Node *node, int varno, int levelsup)
+{
+	return contain_var_reference(node, varno, InvalidAttrNumber, levelsup);
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.54 2001/05/09 00:35:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.55 2001/05/09 23:13:35 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -183,6 +183,36 @@ get_atttypmod(Oid relid, AttrNumber attnum)
 	}
 	else
 		return -1;
+}
+
+/*
+ * get_atttypetypmod
+ *
+ *		A two-fer: given the relation id and the attribute number,
+ *		fetch both type OID and atttypmod in a single cache lookup.
+ *
+ * Unlike the otherwise-similar get_atttype/get_atttypmod, this routine
+ * raises an error if it can't obtain the information.
+ */
+void
+get_atttypetypmod(Oid relid, AttrNumber attnum,
+				  Oid *typid, int32 *typmod)
+{
+	HeapTuple	tp;
+	Form_pg_attribute att_tup;
+
+	tp = SearchSysCache(ATTNUM,
+						ObjectIdGetDatum(relid),
+						Int16GetDatum(attnum),
+						0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for relation %u attribute %d",
+			 relid, attnum);
+	att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
+	*typid = att_tup->atttypid;
+	*typmod = att_tup->atttypmod;
+	ReleaseSysCache(tp);
 }
 
 /*				---------- INDEX CACHE ----------						 */

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.6 2000/12/22 21:51:57 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.7 2001/05/09 23:13:34 tgl Exp $
 -->
 
  <chapter id="indexcost">
@@ -57,7 +57,8 @@ amcostestimate (Query *root,
                 List *indexQuals,
                 Cost *indexStartupCost,
                 Cost *indexTotalCost,
-                Selectivity *indexSelectivity);
+                Selectivity *indexSelectivity,
+                double *indexCorrelation);
    </programlisting>
 
    The first four parameters are inputs:
@@ -103,7 +104,7 @@ amcostestimate (Query *root,
   </para>
 
   <para>
-   The last three parameters are pass-by-reference outputs:
+   The last four parameters are pass-by-reference outputs:
 
    <variablelist>
     <varlistentry>
@@ -129,6 +130,16 @@ amcostestimate (Query *root,
      <listitem>
       <para>
        Set to index selectivity
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>*indexCorrelation</term>
+     <listitem>
+      <para>
+       Set to correlation coefficient between index scan order and
+       underlying table's order
       </para>
      </listitem>
     </varlistentry>
@@ -170,6 +181,13 @@ amcostestimate (Query *root,
    table tuples that will be retrieved during the index scan.  In the case
    of a lossy index, this will typically be higher than the fraction of
    tuples that actually pass the given qual conditions.
+  </para>
+
+  <para>
+   The indexCorrelation should be set to the correlation (ranging between
+   -1.0 and 1.0) between the index order and the table order.  This is used
+   to adjust the estimate for the cost of fetching tuples from the main
+   table.
   </para>
 
   <procedure>
@@ -224,6 +242,14 @@ amcostestimate (Query *root,
      </programlisting>
     </para>
    </step>
+
+   <step>
+    <para>
+     Estimate the index correlation.  For a simple ordered index on a single
+     field, this can be retrieved from pg_statistic.  If the correlation
+     is not known, the conservative estimate is zero (no correlation).
+    </para>
+   </step>
   </procedure>
 
   <para>
@@ -237,8 +263,8 @@ amcostestimate (Query *root,
 
    <programlisting>
 prorettype = 0
-pronargs = 7
-proargtypes = 0 0 0 0 0 0 0
+pronargs = 8
+proargtypes = 0 0 0 0 0 0 0 0
    </programlisting>
 
    We use zero ("opaque") for all the arguments since none of them have types

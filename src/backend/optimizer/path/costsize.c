@@ -31,17 +31,18 @@
  * result by interpolating between startup_cost and total_cost.  In detail:
  *		actual_cost = startup_cost +
  *			(total_cost - startup_cost) * tuples_to_fetch / path->parent->rows;
- * Note that a relation's rows count (and, by extension, a Plan's plan_rows)
- * are set without regard to any LIMIT, so that this equation works properly.
- * (Also, these routines guarantee not to set the rows count to zero, so there
- * will be no zero divide.)  The LIMIT is applied as a separate Plan node.
+ * Note that a base relation's rows count (and, by extension, plan_rows for
+ * plan nodes below the LIMIT node) are set without regard to any LIMIT, so
+ * that this equation works properly.  (Also, these routines guarantee not to
+ * set the rows count to zero, so there will be no zero divide.)  The LIMIT is
+ * applied as a top-level plan node.
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.72 2001/05/09 00:35:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.73 2001/05/09 23:13:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,12 +206,18 @@ cost_index(Path *path, Query *root,
 {
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
-	Cost		cpu_per_tuple;
 	Cost		indexStartupCost;
 	Cost		indexTotalCost;
 	Selectivity indexSelectivity;
+	double		indexCorrelation,
+				csquared;
+	Cost		min_IO_cost,
+				max_IO_cost;
+	Cost		cpu_per_tuple;
 	double		tuples_fetched;
 	double		pages_fetched;
+	double		T,
+				b;
 
 	/* Should only be applied to base relations */
 	Assert(IsA(baserel, RelOptInfo) &&IsA(index, IndexOptInfo));
@@ -224,38 +231,52 @@ cost_index(Path *path, Query *root,
 	 * Call index-access-method-specific code to estimate the processing
 	 * cost for scanning the index, as well as the selectivity of the
 	 * index (ie, the fraction of main-table tuples we will have to
-	 * retrieve).
+	 * retrieve) and its correlation to the main-table tuple order.
 	 */
-	OidFunctionCall7(index->amcostestimate,
+	OidFunctionCall8(index->amcostestimate,
 					 PointerGetDatum(root),
 					 PointerGetDatum(baserel),
 					 PointerGetDatum(index),
 					 PointerGetDatum(indexQuals),
 					 PointerGetDatum(&indexStartupCost),
 					 PointerGetDatum(&indexTotalCost),
-					 PointerGetDatum(&indexSelectivity));
+					 PointerGetDatum(&indexSelectivity),
+					 PointerGetDatum(&indexCorrelation));
 
 	/* all costs for touching index itself included here */
 	startup_cost += indexStartupCost;
 	run_cost += indexTotalCost - indexStartupCost;
 
-	/*
+	/*----------
 	 * Estimate number of main-table tuples and pages fetched.
 	 *
-	 * If the number of tuples is much smaller than the number of pages in
-	 * the relation, each tuple will cost a separate nonsequential fetch.
-	 * If it is comparable or larger, then probably we will be able to
-	 * avoid some fetches.	We use a growth rate of log(#tuples/#pages +
-	 * 1) --- probably totally bogus, but intuitively it gives the right
-	 * shape of curve at least.
+	 * When the index ordering is uncorrelated with the table ordering,
+	 * we use an approximation proposed by Mackert and Lohman, "Index Scans
+	 * Using a Finite LRU Buffer: A Validated I/O Model", ACM Transactions
+	 * on Database Systems, Vol. 14, No. 3, September 1989, Pages 401-424.
+	 * The Mackert and Lohman approximation is that the number of pages
+	 * fetched is
+	 *	PF =
+	 *		min(2TNs/(2T+Ns), T)			when T <= b
+	 *		2TNs/(2T+Ns)					when T > b and Ns <= 2Tb/(2T-b)
+	 *		b + (Ns - 2Tb/(2T-b))*(T-b)/T	when T > b and Ns > 2Tb/(2T-b)
+	 * where
+	 *		T = # pages in table
+	 *		N = # tuples in table
+	 *		s = selectivity = fraction of table to be scanned
+	 *		b = # buffer pages available (we include kernel space here)
 	 *
-	 * XXX if the relation has recently been "clustered" using this index,
-	 * then in fact the target tuples will be highly nonuniformly
-	 * distributed, and we will be seriously overestimating the scan cost!
-	 * Currently we have no way to know whether the relation has been
-	 * clustered, nor how much it's been modified since the last
-	 * clustering, so we ignore this effect.  Would be nice to do better
-	 * someday.
+	 * When the index ordering is exactly correlated with the table ordering
+	 * (just after a CLUSTER, for example), the number of pages fetched should
+	 * be just sT.  What's more, these will be sequential fetches, not the
+	 * random fetches that occur in the uncorrelated case.  So, depending on
+	 * the extent of correlation, we should estimate the actual I/O cost
+	 * somewhere between s * T * 1.0 and PF * random_cost.  We currently
+	 * interpolate linearly between these two endpoints based on the
+	 * correlation squared (XXX is that appropriate?).
+	 *
+	 * In any case the number of tuples fetched is Ns.
+	 *----------
 	 */
 
 	tuples_fetched = indexSelectivity * baserel->tuples;
@@ -263,24 +284,56 @@ cost_index(Path *path, Query *root,
 	if (tuples_fetched < 1.0)
 		tuples_fetched = 1.0;
 
-	if (baserel->pages > 0)
-		pages_fetched = ceil(baserel->pages *
-							 log(tuples_fetched / baserel->pages + 1.0));
+	/* This part is the Mackert and Lohman formula */
+
+	T = (baserel->pages > 1) ? (double) baserel->pages : 1.0;
+	b = (effective_cache_size > 1) ? effective_cache_size : 1.0;
+
+	if (T <= b)
+	{
+		pages_fetched =
+			(2.0 * T * tuples_fetched) / (2.0 * T + tuples_fetched);
+		if (pages_fetched > T)
+			pages_fetched = T;
+	}
 	else
-		pages_fetched = tuples_fetched;
+	{
+		double	lim;
+
+		lim = (2.0 * T * b) / (2.0 * T - b);
+		if (tuples_fetched <= lim)
+		{
+			pages_fetched =
+				(2.0 * T * tuples_fetched) / (2.0 * T + tuples_fetched);
+		}
+		else
+		{
+			pages_fetched =
+				b + (tuples_fetched - lim) * (T - b) / T;
+		}
+	}
 
 	/*
-	 * Now estimate one nonsequential access per page fetched, plus
-	 * appropriate CPU costs per tuple.
+	 * min_IO_cost corresponds to the perfectly correlated case (csquared=1),
+	 * max_IO_cost to the perfectly uncorrelated case (csquared=0).  Note
+	 * that we just charge random_page_cost per page in the uncorrelated
+	 * case, rather than using cost_nonsequential_access, since we've already
+	 * accounted for caching effects by using the Mackert model.
 	 */
-
-	/* disk costs for main table */
-	run_cost += pages_fetched * cost_nonsequential_access(baserel->pages);
-
-	/* CPU costs */
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
+	min_IO_cost = ceil(indexSelectivity * T);
+	max_IO_cost = pages_fetched * random_page_cost;
 
 	/*
+	 * Now interpolate based on estimated index order correlation
+	 * to get total disk I/O cost for main table accesses.
+	 */
+	csquared = indexCorrelation * indexCorrelation;
+
+	run_cost += max_IO_cost + csquared * (min_IO_cost - max_IO_cost);
+
+	/*
+	 * Estimate CPU costs per tuple.
+	 *
 	 * Normally the indexquals will be removed from the list of
 	 * restriction clauses that we have to evaluate as qpquals, so we
 	 * should subtract their costs from baserestrictcost.  For a lossy
@@ -290,6 +343,8 @@ cost_index(Path *path, Query *root,
 	 * Rather than work out exactly how much to subtract, we don't
 	 * subtract anything in that case either.
 	 */
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost;
+
 	if (!index->lossy && !is_injoin)
 		cpu_per_tuple -= cost_qual_eval(indexQuals);
 

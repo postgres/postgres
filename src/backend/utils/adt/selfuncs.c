@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.88 2001/05/07 00:43:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.89 2001/05/09 23:13:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "optimizer/cost.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
+#include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/int8.h"
@@ -818,7 +819,6 @@ eqjoinsel(PG_FUNCTION_ARGS)
 {
 #ifdef NOT_USED					/* see neqjoinsel() before removing me! */
 	Oid			opid = PG_GETARG_OID(0);
-
 #endif
 	Oid			relid1 = PG_GETARG_OID(1);
 	AttrNumber	attno1 = PG_GETARG_INT16(2);
@@ -2230,16 +2230,14 @@ string_to_datum(const char *str, Oid datatype)
  *-------------------------------------------------------------------------
  */
 
-static Datum
-genericcostestimate(PG_FUNCTION_ARGS)
+static void
+genericcostestimate(Query *root, RelOptInfo *rel,
+					IndexOptInfo *index, List *indexQuals,
+					Cost *indexStartupCost,
+					Cost *indexTotalCost,
+					Selectivity *indexSelectivity,
+					double *indexCorrelation)
 {
-	Query	   *root = (Query *) PG_GETARG_POINTER(0);
-	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
-	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
-	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
-	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
-	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
-	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
 	double		numIndexTuples;
 	double		numIndexPages;
 
@@ -2275,33 +2273,134 @@ genericcostestimate(PG_FUNCTION_ARGS)
 	*indexTotalCost = numIndexPages +
 		(cpu_index_tuple_cost + cost_qual_eval(indexQuals)) * numIndexTuples;
 
-	PG_RETURN_VOID();
+	/*
+	 * Generic assumption about index correlation: there isn't any.
+	 */
+	*indexCorrelation = 0.0;
 }
 
-/*
- * For first cut, just use generic function for all index types.
- */
 
 Datum
 btcostestimate(PG_FUNCTION_ARGS)
 {
-	return genericcostestimate(fcinfo);
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+
+	genericcostestimate(root, rel, index, indexQuals,
+						indexStartupCost, indexTotalCost,
+						indexSelectivity, indexCorrelation);
+
+	/*
+	 * If it's a functional index, leave the default zero-correlation
+	 * estimate in place.  If not, and if we can get an estimate for
+	 * the first variable's ordering correlation C from pg_statistic,
+	 * estimate the index correlation as C / number-of-columns.
+	 * (The idea here is that multiple columns dilute the importance
+	 * of the first column's ordering, but don't negate it entirely.)
+	 */
+	if (index->indproc == InvalidOid)
+	{
+		Oid			relid;
+		HeapTuple	tuple;
+
+		relid = getrelid(lfirsti(rel->relids), root->rtable);
+		Assert(relid != InvalidOid);
+		tuple = SearchSysCache(STATRELATT,
+							   ObjectIdGetDatum(relid),
+							   Int16GetDatum(index->indexkeys[0]),
+							   0, 0);
+		if (HeapTupleIsValid(tuple))
+		{
+			Oid		typid;
+			int32	typmod;
+			float4 *numbers;
+			int		nnumbers;
+
+			get_atttypetypmod(relid, index->indexkeys[0],
+							  &typid, &typmod);
+			if (get_attstatsslot(tuple, typid, typmod,
+								 STATISTIC_KIND_CORRELATION,
+								 index->ordering[0],
+								 NULL, NULL, &numbers, &nnumbers))
+			{
+				double	varCorrelation;
+				int		nKeys;
+
+				Assert(nnumbers == 1);
+				varCorrelation = numbers[0];
+				for (nKeys = 1; index->indexkeys[nKeys] != 0; nKeys++)
+					/*skip*/;
+
+				*indexCorrelation = varCorrelation / nKeys;
+
+				free_attstatsslot(typid, NULL, 0, numbers, nnumbers);
+			}
+			ReleaseSysCache(tuple);
+		}
+	}
+
+	PG_RETURN_VOID();
 }
 
 Datum
 rtcostestimate(PG_FUNCTION_ARGS)
 {
-	return genericcostestimate(fcinfo);
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+
+	genericcostestimate(root, rel, index, indexQuals,
+						indexStartupCost, indexTotalCost,
+						indexSelectivity, indexCorrelation);
+
+	PG_RETURN_VOID();
 }
 
 Datum
 hashcostestimate(PG_FUNCTION_ARGS)
 {
-	return genericcostestimate(fcinfo);
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+
+	genericcostestimate(root, rel, index, indexQuals,
+						indexStartupCost, indexTotalCost,
+						indexSelectivity, indexCorrelation);
+
+	PG_RETURN_VOID();
 }
 
 Datum
 gistcostestimate(PG_FUNCTION_ARGS)
 {
-	return genericcostestimate(fcinfo);
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	RelOptInfo *rel = (RelOptInfo *) PG_GETARG_POINTER(1);
+	IndexOptInfo *index = (IndexOptInfo *) PG_GETARG_POINTER(2);
+	List	   *indexQuals = (List *) PG_GETARG_POINTER(3);
+	Cost	   *indexStartupCost = (Cost *) PG_GETARG_POINTER(4);
+	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
+	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
+	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+
+	genericcostestimate(root, rel, index, indexQuals,
+						indexStartupCost, indexTotalCost,
+						indexSelectivity, indexCorrelation);
+
+	PG_RETURN_VOID();
 }

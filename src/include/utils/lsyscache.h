@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.32 2001/05/09 00:35:09 tgl Exp $
+ * $Id: lsyscache.h,v 1.33 2001/05/09 23:13:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,8 @@ extern AttrNumber get_attnum(Oid relid, char *attname);
 extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern bool get_attisset(Oid relid, char *attname);
 extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
+extern void get_atttypetypmod(Oid relid, AttrNumber attnum,
+							  Oid *typid, int32 *typmod);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
 extern bool op_mergejoinable(Oid opno, Oid ltype, Oid rtype,
