@@ -25,7 +25,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.24 2003/05/29 04:52:44 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.25 2003/06/30 16:38:30 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -554,6 +554,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public void setMaxRows(int max) throws SQLException
 	{
+		if (max<0) throw new PSQLException("postgresql.input.rows.gt0");
 		maxrows = max;
 	}
 
@@ -590,6 +591,7 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 	 */
 	public void setQueryTimeout(int seconds) throws SQLException
 	{
+		if (seconds<0) throw new PSQLException("postgresql.input.query.gt0");
 		timeout = seconds;
 	}
 

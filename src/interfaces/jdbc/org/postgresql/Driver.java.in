@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.30 2003/05/29 04:39:51 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.31 2003/06/30 16:38:30 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,6 +272,17 @@ public class Driver implements java.sql.Driver
 			l_urlArgs = url.substring(l_qPos+1);
 		}
 
+		// look for an IPv6 address that is enclosed by []
+		// the upcoming parsing that uses colons as identifiers can't handle
+		// the colons in an IPv6 address.
+		int ipv6start = l_urlServer.indexOf("[");
+		int ipv6end = l_urlServer.indexOf("]");
+		String ipv6address = null;
+		if (ipv6start != -1 && ipv6end > ipv6start) {
+			ipv6address = l_urlServer.substring(ipv6start+1,ipv6end);
+			l_urlServer = l_urlServer.substring(0,ipv6start)+"ipv6host"+l_urlServer.substring(ipv6end+1);
+		}
+
 		//parse the server part of the url
 		StringTokenizer st = new StringTokenizer(l_urlServer, ":/", true);
 		for (int count = 0; (st.hasMoreTokens()); count++)
@@ -345,6 +356,10 @@ public class Driver implements java.sql.Driver
 				}
 			}
 		}
+
+		// if we extracted an IPv6 address out earlier put it back
+		if (ipv6address != null)
+			urlProps.put("PGHOST",ipv6address);
 
 		//parse the args part of the url
 		StringTokenizer qst = new StringTokenizer(l_urlArgs, "&");
