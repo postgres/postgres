@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.126 2004/09/13 20:06:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.127 2004/09/30 17:42:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -502,13 +502,12 @@ explain_outNode(StringInfo str,
 			i = 0;
 			foreach(l, ((IndexScan *) plan)->indxid)
 			{
-				Relation	relation;
+				char	   *indname;
 
-				relation = index_open(lfirst_oid(l));
+				indname = get_rel_name(lfirst_oid(l));
 				appendStringInfo(str, "%s%s",
 								 (++i > 1) ? ", " : "",
-					quote_identifier(RelationGetRelationName(relation)));
-				index_close(relation);
+								 quote_identifier(indname));
 			}
 			/* FALL THRU */
 		case T_SeqScan:
