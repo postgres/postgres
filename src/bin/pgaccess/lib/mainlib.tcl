@@ -105,12 +105,18 @@ global CurrentDB
 
 
 proc {cmd_Functions} {} {
-global CurrentDB
+global PgAcVar CurrentDB
 	set maxim 16384
 	setCursor CLOCK
-	catch {
-		wpg_select $CurrentDB "select oid from pg_database where datname='template1'" rec {
-			set maxim $rec(oid)
+	set dbname $PgAcVar(opendb,dbname)
+	if [catch {wpg_select $CurrentDB "select datlastsysoid from pg_database where datname='$dbname'" rec {
+			set maxim $rec(datlastsysoid)
+		}
+	}] {
+		catch {
+			wpg_select $CurrentDB "select oid from pg_database where datname='template1'" rec {
+				set maxim $rec(oid)
+			}
 		}
 	}
 	.pgaw:Main.lb delete 0 end
