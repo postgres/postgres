@@ -129,3 +129,41 @@ TIP 6: Have you searched our list archives?
 
 http://archives.postgresql.org
 
+From hstenger@adinet.com.uy Wed Jan 23 14:13:33 2002
+Return-path: <hstenger@adinet.com.uy>
+Received: from correo.adinet.com.uy (fecorreo01.adinet.com.uy [206.99.44.217])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id g0NJDWU29832
+	for <pgman@candle.pha.pa.us>; Wed, 23 Jan 2002 14:13:33 -0500 (EST)
+Received: from adinet.com.uy (200.61.76.155) by correo.adinet.com.uy (5.5.052) (authenticated as hstenger@adinet.com.uy)
+        id 3C4DBC5C00017E9F; Wed, 23 Jan 2002 16:13:25 -0300
+Message-ID: <3C4F0BC0.5CFBB919@adinet.com.uy>
+Date: Wed, 23 Jan 2002 16:15:12 -0300
+From: Haroldo Stenger <hstenger@adinet.com.uy>
+X-Mailer: Mozilla 4.78 [en] (Win98; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: PostgreSQL-development <pgsql-hackers@postgreSQL.org>
+Subject: Re: [HACKERS] Savepoints
+References: <200201231819.g0NIJ5i24508@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+> 
+> Basically, under my plan, WAL would be unchanged.  WAL's function is
+> crash recovery, and it would retain that.  There would also be no
+> on-disk changes.  I would use the command counter in certain cases to
+> identify savepoints.
+
+This is a pointer to the previous August thread, where your original proposal
+was posted, and some WAL/not WAL discussion took place. Just not to repeat the
+already mentioned points. Oh, it's google archive just for fun, and to not
+overload hub.org ;-)
+
+http://groups.google.com/groups?hl=en&threadm=200108050432.f754Wdo11696%40candle.pha.pa.us&rnum=1&prev=/groups%3Fhl%3Den%26selm%3D200108050432.f754Wdo11696%2540candle.pha.pa.us
+
+Regards,
+Haroldo.
+
