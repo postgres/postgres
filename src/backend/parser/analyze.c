@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.24 1997/04/02 04:00:55 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.25 1997/04/05 06:29:03 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1545,17 +1545,17 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
     while (grouplist != NIL) {
 	GroupClause *grpcl = makeNode(GroupClause);
 	TargetEntry *restarget;
+	Resdom *resdom;
 
 	restarget = find_targetlist_entry(pstate, lfirst(grouplist), targetlist);
 
 	if (restarget == NULL)
 	    elog(WARN,"The field being grouped by must appear in the target list");
-        if (nodeTag(restarget->expr) != T_Var) {
-            elog(WARN, "parser: can only specify attribute in group by");
-        }
 
-	grpcl->grpAttr = (Var *)restarget->expr;
- 	grpcl->grpOpoid = any_ordering_op(grpcl->grpAttr->vartype);
+	grpcl->resdom = resdom = restarget->resdom;
+ 	grpcl->grpOpoid = oprid(oper("<",
+				   resdom->restype,
+				   resdom->restype,false));
 	if (glist == NIL)
 	    gl = glist = lcons(grpcl, NIL);
 	else {
@@ -2360,6 +2360,38 @@ contain_agg_clause(Node *clause)
 }
 
 /*
+ * tleIsAggOrGroupCol -
+ *    returns true if the TargetEntry is Agg or GroupCol.
+ */
+static bool
+tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
+{
+    Node *expr = tle->expr;
+    List *gl;
+    
+    if ( expr == NULL || IsA (expr, Const) )
+	return TRUE;
+	
+    foreach (gl, groupClause)
+    {
+	GroupClause *grpcl = lfirst(gl);
+	
+    	if ( tle->resdom->resno == grpcl->resdom->resno )
+    	{
+    	    if ( IsA (expr, Aggreg) )
+    	    	elog (WARN, "parser: aggregates not allowed in GROUP BY clause");
+	    return TRUE;
+	}
+    }
+
+    if ( IsA (expr, Aggreg) )
+	return TRUE;
+
+    return FALSE;
+}
+
+#if 0	/* Now GroupBy contains resdom to enable Group By func_results */
+/*
  * exprIsAggOrGroupCol -
  *    returns true if the expression does not contain non-group columns.
  */
@@ -2398,6 +2430,7 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
 
     return FALSE;
 }
+#endif
 
 /*
  * parseCheckAggregates -
@@ -2425,7 +2458,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
      */
     foreach (tl, qry->targetList) {
 	TargetEntry *tle = lfirst(tl);
-	if (!exprIsAggOrGroupCol(tle->expr, qry->groupClause))
+	if (!tleIsAggOrGroupCol(tle, qry->groupClause))
 	    elog(WARN,
 		 "parser: illegal use of aggregates or non-group column in target list");
     }
@@ -2434,9 +2467,12 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
      * the expression specified in the HAVING clause has the same restriction
      * as those in the target list.
      */
+/*
+ * Need to change here when we get HAVING works. Currently 
+ * qry->havingQual is NULL.	- vadim 04/05/97
     if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause))
 	elog(WARN,
 	     "parser: illegal use of aggregates or non-group column in HAVING clause");
-    
+ */    
     return;
 }
