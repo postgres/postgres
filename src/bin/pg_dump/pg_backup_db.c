@@ -115,7 +115,7 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	if (myversion != remoteversion)
 	{
 		fprintf(stderr, "Database version: %s\n%s version: %s\n",
-				progname, remoteversion_str, PG_VERSION);
+				remoteversion_str, progname, PG_VERSION);
 		if (ignoreVersion)
 			fprintf(stderr, "Proceeding despite version mismatch.\n");
 		else
