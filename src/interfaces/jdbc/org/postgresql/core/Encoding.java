@@ -8,7 +8,7 @@ import org.postgresql.util.*;
 /*
  * Converts to and from the character encoding used by the backend.
  *
- * $Id: Encoding.java,v 1.7.2.1 2002/11/14 05:54:39 barry Exp $
+ * $Id: Encoding.java,v 1.7.2.2 2003/02/09 23:41:46 barry Exp $
  */
 
 public class Encoding
@@ -235,36 +235,40 @@ public class Encoding
 	private static final int pow2_12 = 4096;	// 212
 	private char[] cdata = new char[50];
 
-	private synchronized String decodeUTF8(byte data[], int offset, int length) {
-		char[] l_cdata = cdata;
-		if (l_cdata.length < (length)) {
-			l_cdata = new char[length];
-		}
-		int i = offset;
-		int j = 0;
-		int k = length + offset;
-		int z, y, x, val;
-		while (i < k) {
-			z = data[i] & 0xFF;
-			if (z < 0x80) {
-				l_cdata[j++] = (char)data[i];
-				i++;
-			} else if (z >= 0xE0) {		// length == 3
-				y = data[i+1] & 0xFF;
-				x = data[i+2] & 0xFF;
-				val = (z-0xE0)*pow2_12 + (y-0x80)*pow2_6 + (x-0x80);
-				l_cdata[j++] = (char) val;
-				i+= 3;
-			} else {		// length == 2 (maybe add checking for length > 3, throw exception if it is
-				y = data[i+1] & 0xFF;
-				val = (z - 0xC0)* (pow2_6)+(y-0x80);
-				l_cdata[j++] = (char) val;
-				i+=2;
-			} 
-		}
+	private synchronized String decodeUTF8(byte data[], int offset, int length) throws SQLException {
+		try {
+			char[] l_cdata = cdata;
+			if (l_cdata.length < (length)) {
+				l_cdata = new char[length];
+			}
+			int i = offset;
+			int j = 0;
+			int k = length + offset;
+			int z, y, x, val;
+			while (i < k) {
+				z = data[i] & 0xFF;
+				if (z < 0x80) {
+					l_cdata[j++] = (char)data[i];
+					i++;
+				} else if (z >= 0xE0) {		// length == 3
+					y = data[i+1] & 0xFF;
+					x = data[i+2] & 0xFF;
+					val = (z-0xE0)*pow2_12 + (y-0x80)*pow2_6 + (x-0x80);
+					l_cdata[j++] = (char) val;
+					i+= 3;
+				} else {		// length == 2 (maybe add checking for length > 3, throw exception if it is
+					y = data[i+1] & 0xFF;
+					val = (z - 0xC0)* (pow2_6)+(y-0x80);
+					l_cdata[j++] = (char) val;
+					i+=2;
+				} 
+			}
 	
-		String s = new String(l_cdata, 0, j);
-		return s;
+			String s = new String(l_cdata, 0, j);
+			return s;
+		} catch (Exception l_e) {
+			throw new PSQLException("postgresql.con.invalidchar", l_e);
+		}
 	}
 
 }
