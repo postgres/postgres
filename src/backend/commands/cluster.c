@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.90 2002/09/04 20:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.91 2002/11/02 21:20:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,6 +474,20 @@ swap_relfilenodes(Oid r1, Oid r2)
 	relform2->reltoastrelid = swaptemp;
 
 	/* we should not swap reltoastidxid */
+
+	/* swap size statistics too, since new rel has freshly-updated stats */
+	{
+		int4	swap_pages;
+		float4	swap_tuples;
+
+		swap_pages = relform1->relpages;
+		relform1->relpages = relform2->relpages;
+		relform2->relpages = swap_pages;
+
+		swap_tuples = relform1->reltuples;
+		relform1->reltuples = relform2->reltuples;
+		relform2->reltuples = swap_tuples;
+	}
 
 	/* Update the tuples in pg_class */
 	simple_heap_update(relRelation, &reltup1->t_self, reltup1);
