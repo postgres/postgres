@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.11 2004/06/10 17:45:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.12 2004/06/10 18:02:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,11 +223,11 @@ start_postmaster(void)
 	char		cmd[MAXPGPATH];
 
 	if (log_file != NULL)
-		/* Win32 needs START rather than "&" */
+		/* Win32 needs START /B rather than "&" */
 #ifndef WIN32
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < %s >> \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "START %s\"%s\" %s < %s >> \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "START /B %s\"%s\" %s < %s >> \"%s\" 2>&1%s",
 #endif
 				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, log_file,
 				 SYSTEMQUOTE);
@@ -235,7 +235,7 @@ start_postmaster(void)
 #ifndef WIN32
 		snprintf(cmd, MAXPGPATH, "%s\"%s\" %s < \"%s\" 2>&1 &%s",
 #else
-		snprintf(cmd, MAXPGPATH, "START %s\"%s\" %s < \"%s\" 2>&1%s",
+		snprintf(cmd, MAXPGPATH, "START /B %s\"%s\" %s < \"%s\" 2>&1%s",
 #endif
 				 SYSTEMQUOTE, postgres_path, post_opts, DEVNULL, SYSTEMQUOTE);
 	return system(cmd);
