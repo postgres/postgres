@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.3 2003/01/07 22:52:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.98.2.4 2003/01/07 22:54:03 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2134,7 +2134,7 @@ for information on correct values for these environment variables.
  <primary>files</primary>
 </indexterm>
 <para>
-<anchor id="pgpassfile"/>
+<anchor id="pgpassfile">
 <indexterm>
  <primary>password</primary>
  <secondary>.pgpass</secondary>
