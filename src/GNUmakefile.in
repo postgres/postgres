@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.29 1998/09/29 12:40:34 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.30 1998/10/06 05:42:55 thomas Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,9 +38,6 @@ all:
 	$(MAKE) -C interfaces all
 	$(MAKE) -C bin all
 	$(MAKE) -C pl all
-ifneq ($(wildcard man), )
-	$(MAKE) -C man all
-endif
 	@if test $@. = all. -o $@. = .; then \
 	echo All of PostgreSQL is successfully made.  Ready to install. ;\
         fi
@@ -51,9 +48,6 @@ install:
 	$(MAKE) -C backend install
 	$(MAKE) -C bin install
 	$(MAKE) -C pl install
-ifneq ($(wildcard man), )
-	$(MAKE) -C man install
-endif
 	$(MAKE) -C interfaces install
 	cat ../register.txt
 
@@ -66,9 +60,6 @@ clean:
 	$(MAKE) -C pl clean
 	$(MAKE) -C test clean
 	$(MAKE) -C ../contrib/spi clean
-ifneq ($(wildcard man), )
-	$(MAKE) -C man clean
-endif
 
 distclean: clean
 	rm -f Makefile.global \
@@ -102,9 +93,6 @@ distclean: clean
 	$(MAKE) -C interfaces $@
 	$(MAKE) -C bin $@
 	$(MAKE) -C pl $@
-ifneq ($(wildcard man), )
-	$(MAKE) -C man $@
-endif
 	@if test $@. = all. -o $@. = .; then \
 	echo All of PostgreSQL is successfully made.  Ready to install. ;\
         fi

@@ -169,30 +169,30 @@ fi
 
 dnl We have read the default value of USE_LOCALE from the template
 dnl file.  We have a further option of using
-dnl	--enable-locale		to explicitly enable it
+dnl	--enable-locale to explicitly enable it
 dnl It defaults to disabled
 AC_MSG_CHECKING(setting USE_LOCALE)
 AC_ARG_ENABLE(
    locale,
-   [  --enable-locale	  enable locale support ],
+   [  --enable-locale         enable locale support ],
    AC_DEFINE(USE_LOCALE) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
 
 dnl We exclude cyrillic recode support unless we override it with
-dnl	--enable-recode		to explicitly enable it
+dnl	--enable-recode to explicitly enable it
 dnl It defaults to disabled
 AC_MSG_CHECKING(setting CYR_RECODE)
 AC_ARG_ENABLE(
    recode,
-   [  --enable-recode	  enable cyrillic recode support ],
+   [  --enable-recode         enable cyrillic recode support ],
    AC_DEFINE(CYR_RECODE) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
 
 AC_MSG_CHECKING(setting MULTIBYTE)
 AC_ARG_WITH(mb,
-    [  --with-mb=<encoding> enable multi-byte support ], 
+    [  --with-mb=<encoding>    enable multi-byte support ], 
     [
 	case "$withval" in
 	EUC_JP|EHC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5)
@@ -221,7 +221,7 @@ dnl We exclude tcl support unless we override it with --with-tcl
 AC_MSG_CHECKING(setting USE_TCL)
 AC_ARG_WITH(
    tcl,
-   [  --with-tcl		  use tcl ],
+   [  --with-tcl              use tcl ],
    [
 	case "$withval" in
 	y | ye | yes)		USE_TCL=true; AC_MSG_RESULT(enabled) ;;
@@ -258,7 +258,7 @@ dnl We exclude perl support unless we override it with --with-perl
 AC_MSG_CHECKING(setting USE_PERL)
 AC_ARG_WITH(
    perl,
-   [  --with-perl		  use perl ],
+   [  --with-perl             use perl ],
    [
 	case "$withval" in
 	y | ye | yes)		USE_PERL=true; AC_MSG_RESULT(enabled) ;;
@@ -279,20 +279,41 @@ AC_ARG_WITH(
 #fi
 export USE_PERL
 
+dnl We disable odbc support unless we override it with --enable-odbc
+#USE_ODBC=false
+AC_MSG_CHECKING(setting USE_ODBC)
+AC_ARG_WITH(
+   odbc,
+   [   --with-odbc            use odbc ],
+   [
+	case "$withval" in
+	y | ye | yes)		USE_ODBC=true; AC_MSG_RESULT(enabled) ;;
+	*)			USE_ODBC=false; AC_MSG_RESULT(disabled) ;;
+	esac
+   ],
+   [ USE_ODBC=false; AC_MSG_RESULT(disabled) ]
+)
+#
+#if test "$enable_odbc." != "."
+#then
+#        USE_ODBC=$enable_odbc
+#fi
+export USE_ODBC
+
 dnl Unless we specify the command line options
 dnl	--enable cassert	to explicitly enable it
 dnl If you do not explicitly do it, it defaults to disabled
 AC_MSG_CHECKING(setting ASSERT CHECKING)
 AC_ARG_ENABLE(
    cassert,
-   [  --enable-cassert	  enable assertion checks (debugging) ],
+   [  --enable-cassert        enable assertion checks (debugging) ],
    AC_DEFINE(USE_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
 
 dnl Check for C support (allow override if needed)
 AC_ARG_WITH(CC,
-    [  --with-CC=compiler     use specific C compiler],
+    [  --with-CC=compiler      use specific C compiler],
     [
 	case "$withval" in
 	"" | y | ye | yes | n | no)
@@ -334,6 +355,7 @@ AC_SUBST(DLSUFFIX)
 AC_SUBST(DL_LIB)
 AC_SUBST(USE_TCL)
 AC_SUBST(USE_PERL)
+AC_SUBST(USE_ODBC)
 AC_SUBST(MULTIBYTE)
 
 dnl Check for C++ support (allow override if needed)
@@ -822,4 +844,16 @@ then
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
-AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpq++/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h)
+dnl cause configure to recurse into subdirectories with their own configure
+dnl Darn, setting AC_CONFIG_SUBDIRS sets a list $subdirs$ in the configure output
+dnl  file, but then configure doesn't bother using that list. Probably a bug in
+dnl  this version of autoconf.
+dnl So at the moment interfaces/odbc gets configured unconditionally.
+dnl - thomas 1998-10-05
+#if test "X$USE_ODBC" = "Xtrue"
+#then
+#	AC_CONFIG_SUBDIRS(interfaces/odbc)
+#fi
+#
+#AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpq++/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h)
+AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpq++/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile include/version.h interfaces/odbc/Makefile.global interfaces/odbc/GNUmakefile)
