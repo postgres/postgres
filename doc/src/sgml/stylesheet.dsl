@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.12 2001/09/30 16:05:54 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.13 2001/10/04 22:30:14 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -121,6 +121,32 @@
   (cond (tex-backend "eps")
         (rtf-backend "ai"))) ;; ApplixWare?
 
+;; The rules in the default stylesheet for productname format it as
+;; a paragraph.  This may be suitable for productname directly
+;; within *info, but it's nonsense when productname is used
+;; inline, as we do.
+(mode set-titlepage-recto-mode
+  (element (para productname) ($charseq$)))
+(mode set-titlepage-verso-mode
+  (element (para productname) ($charseq$)))
+(mode book-titlepage-recto-mode
+  (element (para productname) ($charseq$)))
+(mode book-titlepage-verso-mode
+  (element (para productname) ($charseq$)))
+;; Add more here if needed...
+
+;; Format legalnotice justified and with space between paragraphs.
+(mode book-titlepage-verso-mode
+  (element (legalnotice para)
+    (make paragraph
+      use: book-titlepage-verso-style	;; alter this if ever it needs to appear elsewhere
+      quadding: %default-quadding%
+      line-spacing: (* 0.8 (inherited-line-spacing))
+      font-size: (* 0.8 (inherited-font-size))
+      space-before: (* 0.8 %para-sep%)
+      space-after: (* 0.8 %para-sep%)
+      (process-children))))
+
 ]]> <!-- %output-print -->
 
 <![ %output-text; [
@@ -130,6 +156,27 @@
 (define %section-autolabel% #f)
 (define %chapter-autolabel% #f)
 (define $generate-chapter-toc$ (lambda () #f))
+
+;; For text output, produce "ASCII markup" for emphasis and such.
+
+(define ($asterix-seq$ #!optional (sosofo (process-children)))
+  (make sequence
+    (literal "*")
+    sosofo
+    (literal "*")))
+ 
+(define ($dquote-seq$ #!optional (sosofo (process-children)))
+  (make sequence
+    (literal (gentext-start-quote))
+    sosofo
+    (literal (gentext-end-quote))))
+ 
+(element (para command) ($dquote-seq$))
+(element (para emphasis) ($asterix-seq$))
+(element (para filename) ($dquote-seq$))
+(element (para option) ($dquote-seq$))
+(element (para replaceable) ($dquote-seq$))
+(element (para userinput) ($dquote-seq$))
 
 ]]> <!-- %output-text -->
 
