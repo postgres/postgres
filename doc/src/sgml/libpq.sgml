@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.159 2004/08/16 02:12:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.160 2004/08/17 16:54:46 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3738,8 +3738,7 @@ When <productname>PostgreSQL</> is configured without
 <function>send()</> call and restores the original signal handler after
 completion. When <literal>--enable-thread-safety</> is used,
 <application>libpq</> installs its own <literal>SIGPIPE</> handler
-before the first database connection if no custom <literal>SIGPIPE</>
-handler has been installed previously. This handler uses thread-local
+before the first database connection.  This handler uses thread-local
 storage to determine if a <literal>SIGPIPE</> signal has been generated
 by a libpq <function>send()</>. If an application wants to install
 its own <literal>SIGPIPE</> signal handler, it should call

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.46 2004/08/17 04:24:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.47 2004/08/17 16:54:47 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -152,7 +152,8 @@ static SSL_CTX *SSL_context = NULL;
 
 #ifdef ENABLE_THREAD_SAFETY
 static void sigpipe_handler_ignore_send(int signo);
-pthread_key_t pq_thread_in_send = 0;
+pthread_key_t pq_thread_in_send = 0;	/* initializer needed on Darwin */
+static pqsigfunc pq_pipe_handler;
 #endif
 
 /* ------------------------------------------------------------ */
@@ -1190,23 +1191,12 @@ PQgetssl(PGconn *conn)
 void
 pq_check_sigpipe_handler(void)
 {
-	pqsigfunc pipehandler;
-
+	pthread_key_create(&pq_thread_in_send, NULL);
 	/*
-	 *	If the app hasn't set a SIGPIPE handler, define our own
-	 *	that ignores SIGPIPE on libpq send() and does SIG_DFL
-	 *	for other SIGPIPE cases.
+	 *	Find current pipe handler and chain on to it.
 	 */
-	pipehandler = pqsignalinquire(SIGPIPE);
-	if (pipehandler == SIG_DFL)	/* not set by application */
-	{
-		/*
-		 *	Create key first because the signal handler might be called
-		 *	right after being installed.
-		 */
-		pthread_key_create(&pq_thread_in_send, NULL);	
-		pqsignal(SIGPIPE, sigpipe_handler_ignore_send);
-	}
+	pq_pipe_handler = pqsignalinquire(SIGPIPE);
+	pqsignal(SIGPIPE, sigpipe_handler_ignore_send);
 }
 
 /*
@@ -1216,12 +1206,18 @@ void
 sigpipe_handler_ignore_send(int signo)
 {
 	/*
-	 *	If we have gotten a SIGPIPE outside send(), exit.
-	 *	Synchronous signals are delivered to the thread
-	 *	that caused the signal.
+	 *	If we have gotten a SIGPIPE outside send(), chain or
+	 *	exit if we are at the end of the chain.
+	 *	Synchronous signals are delivered to the thread that
+	 *	caused the signal.
 	 */
 	if (!PQinSend())
-		exit(128 + SIGPIPE);	/* typical return value for SIG_DFL */
+	{
+		if (pq_pipe_handler == SIG_DFL)	/* not set by application */
+			exit(128 + SIGPIPE);	/* typical return value for SIG_DFL */
+		else
+			(*pq_pipe_handler)(signo);      /* call original handler */
+	}
 }
 #endif
 #endif
