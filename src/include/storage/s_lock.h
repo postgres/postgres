@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.76 2000/12/29 21:31:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.77 2000/12/30 02:34:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,50 +291,56 @@ tas(volatile slock_t *s_lock)
 
 #if defined(__alpha)
 
-#if defined(__osf__)
 /*
- * OSF/1 (Alpha AXP)
- *
- * Note that slock_t on the Alpha AXP is msemaphore instead of char
- * (see storage/ipc.h).
+ * Correct multi-processor locking methods are explained in section 5.5.3
+ * of the Alpha AXP Architecture Handbook, which at this writing can be
+ * found at ftp://ftp.netbsd.org/pub/NetBSD/misc/dec-docs/index.html.
+ * For gcc we implement the handbook's code directly with inline assembler.
  */
-#include <alpha/builtins.h>
-#if 0
-#define TAS(lock)	  (msem_lock((lock), MSEM_IF_NOWAIT) < 0)
-#define S_UNLOCK(lock) msem_unlock((lock), 0)
-#define S_INIT_LOCK(lock)		msem_init((lock), MSEM_UNLOCKED)
-#define S_LOCK_FREE(lock)	  (!(lock)->msem_state)
-#else
-#define TAS(lock)         (__INTERLOCKED_TESTBITSS_QUAD((lock),0))
-#endif
+#if defined(__GNUC__)
 
-#else /* i.e. not __osf__ */
-
-#define TAS(lock) tas(lock)
-#define S_UNLOCK(lock) do { __asm__("mb"); *(lock) = 0; } while (0)
+#define TAS(lock)  tas(lock)
+#define S_UNLOCK(lock)  do { __asm__ volatile ("mb"); *(lock) = 0; } while (0)
 
 static __inline__ int
 tas(volatile slock_t *lock)
 {
- register slock_t _res;
+	register slock_t _res;
 
-__asm__("	 ldq   $0, %0			   \n\
-				 bne   $0, 3f		   \n\
-				 ldq_l $0, %0			 \n\
-				 bne   $0, 3f		   \n\
-				 or    $31, 1, $0		   \n\
-				 stq_c $0, %0				   \n\
-				 beq   $0, 2f			   \n\
-				 bis   $31, $31, %1 	   \n\
-				 mb 							   \n\
-				 jmp   $31, 4f			   \n\
-			  2: or    $31, 1, $0			   \n\
-			  3: bis   $0, $0, %1		   \n\
-			  4: nop	  ": "=m"(*lock), "=r"(_res): :"0");
+	__asm__ volatile
+("		ldq   $0, %0		\n\
+		bne   $0, 2f		\n\
+		ldq_l %1, %0		\n\
+		bne   %1, 2f		\n\
+		mov   1, $0			\n\
+		stq_c $0, %0		\n\
+		beq   $0, 2f		\n\
+		mb					\n\
+		br    3f			\n\
+	 2: mov   1, %1			\n\
+	 3:       \n" : "=m"(*lock), "=r"(_res) : : "0");
 
 	return (int) _res;
 }
-#endif /* __osf__ */
+
+#else /* !defined(__GNUC__) */
+
+/*
+ * The Tru64 compiler doesn't support gcc-style inline asm, but it does
+ * have some builtin functions that accomplish much the same results.
+ * For simplicity, slock_t is defined as long (ie, quadword) on Alpha
+ * regardless of the compiler in use.  LOCK_LONG and UNLOCK_LONG only
+ * operate on an int (ie, longword), but that's OK as long as we define
+ * S_INIT_LOCK to zero out the whole quadword.
+ */
+
+#include <alpha/builtins.h>
+
+#define S_INIT_LOCK(lock)  (*(lock) = 0)
+#define TAS(lock)          (__LOCK_LONG_RETRY((lock), 1) == 0)
+#define S_UNLOCK(lock)     __UNLOCK_LONG(lock)
+
+#endif /* defined(__GNUC__) */
 
 #endif /* __alpha */
 
