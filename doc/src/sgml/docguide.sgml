@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.23 1999/12/04 04:53:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.24 2000/01/18 06:10:54 momjian Exp $
 Documentation Guide
 Thomas Lockhart
 
@@ -995,6 +995,36 @@ PSTYLE= /home/tgl/SGML/db107.d/docbook/print
 % make install
    </programlisting>
   </para>
+ <sect2>
+  <title>FreeBSD specific howto</title>
+  <para>
+  To build the documentation on FreeBSD a number of ports will need to
+  be installed.
+   <programlisting>
+% cd /usr/ports/devel/gmake && make install
+% cd /usr/ports/textproc/docproj && make install
+% cd /usr/ports/textproc/docbook && make install
+% cd /usr/ports/textproc/dsssl-docbook-modular && make install
+   </programlisting>
+  Some enviornment variables need to be set (assumes you are running a sh 
+  based shell):
+   <programlisting>
+export SMGL_ROOT=/usr/local/share/sgml                                          
+SGML_CATALOG_FILES=/usr/local/share/sgml/jade/catalog                           
+SGML_CATALOG_FILES=/usr/local/share/sgml/html/catalog:$SGML_CATALOG_FILES       
+SGML_CATALOG_FILES=/usr/local/share/sgml/iso8879/catalog:$SGML_CATALOG_FILES    
+SGML_CATALOG_FILES=/usr/local/share/sgml/transpec/catalog:$SGML_CATALOG_FILES   
+SGML_CATALOG_FILES=/usr/local/share/sgml/docbook/catalog:$SGML_CATALOG_FILES    
+export SGML_CATALOG_FILES                                                          </programlisting>
+  Make needs some special arguments, or these need to be added to your 
+Makefile.custom:
+   <programlisting>
+HSTYLE=/usr/local/share/sgml/docbook/dsssl/modular/html/ 
+PSTYLE=/usr/local/share/sgml/docbook/dsssl/modular/print/
+   </programlisting>
+  Of course you'll need to use gmake rather than just plain 'make' to build.
+  </para>
+ </sect2>
  </sect1>
 
  <sect1>
