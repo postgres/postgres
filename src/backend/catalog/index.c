@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.238 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.239 2004/08/31 17:10:36 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -543,8 +543,8 @@ index_create(Oid heapRelationId,
 								namespaceId,
 								tableSpaceId,
 								indexTupDesc,
+								RELKIND_INDEX,
 								shared_relation,
-								true,
 								allow_system_table_mods);
 
 	/* Fetch the relation OID assigned by heap_create */

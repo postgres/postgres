@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.275 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.276 2004/08/31 17:10:36 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -201,12 +201,13 @@ heap_create(const char *relname,
 			Oid relnamespace,
 			Oid reltablespace,
 			TupleDesc tupDesc,
+			char relkind,
 			bool shared_relation,
-			bool create_storage,
 			bool allow_system_table_mods)
 {
 	Oid			relid;
 	bool		nailme = false;
+	bool		create_storage;
 	Relation	rel;
 
 	/*
@@ -264,6 +265,34 @@ heap_create(const char *relname,
 		relid = newoid();
 
 	/*
+	 * Decide if we need storage or not, and handle a couple other
+	 * special cases for particular relkinds.
+	 */
+	switch (relkind)
+	{
+		case RELKIND_VIEW:
+		case RELKIND_COMPOSITE_TYPE:
+			create_storage = false;
+			/*
+			 * Force reltablespace to zero if the relation has no physical
+			 * storage.  This is mainly just for cleanliness' sake.
+			 */
+			reltablespace = InvalidOid;
+			break;
+		case RELKIND_SEQUENCE:
+			create_storage = true;
+			/*
+			 * Force reltablespace to zero for sequences, since we don't
+			 * support moving them around into different tablespaces.
+			 */
+			reltablespace = InvalidOid;
+			break;
+		default:
+			create_storage = true;
+			break;
+	}
+
+	/*
 	 * Never allow a pg_class entry to explicitly specify the database's
 	 * default tablespace in reltablespace; force it to zero instead. This
 	 * ensures that if the database is cloned with a different default
@@ -273,13 +302,6 @@ heap_create(const char *relname,
 	 * Yes, this is a bit of a hack.
 	 */
 	if (reltablespace == MyDatabaseTableSpace)
-		reltablespace = InvalidOid;
-
-	/*
-	 * Also, force reltablespace to zero if the relation has no physical
-	 * storage.  This is mainly just for cleanliness' sake.
-	 */
-	if (!create_storage)
 		reltablespace = InvalidOid;
 
 	/*
@@ -728,16 +750,13 @@ heap_create_with_catalog(const char *relname,
 	 * Create the relcache entry (mostly dummy at this point) and the
 	 * physical disk file.	(If we fail further down, it's the smgr's
 	 * responsibility to remove the disk file again.)
-	 *
-	 * NB: create a physical file only if it's not a view or type relation.
 	 */
 	new_rel_desc = heap_create(relname,
 							   relnamespace,
 							   reltablespace,
 							   tupdesc,
+							   relkind,
 							   shared_relation,
-							   (relkind != RELKIND_VIEW &&
-								relkind != RELKIND_COMPOSITE_TYPE),
 							   allow_system_table_mods);
 
 	/* Fetch the relation OID assigned by heap_create */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.70 2004/08/29 04:13:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.71 2004/08/31 17:10:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@ extern Relation heap_create(const char *relname,
 			Oid relnamespace,
 			Oid reltablespace,
 			TupleDesc tupDesc,
+			char relkind,
 			bool shared_relation,
-			bool create_storage,
 			bool allow_system_table_mods);
 
 extern Oid heap_create_with_catalog(const char *relname,

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.72 2004/08/29 04:12:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.73 2004/08/31 17:10:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,8 +184,8 @@ Boot_CreateStmt:
 												   PG_CATALOG_NAMESPACE,
 												   $3 ? GLOBALTABLESPACE_OID : 0,
 												   tupdesc,
+												   RELKIND_RELATION,
 												   $3,
-												   true,
 												   true);
 						elog(DEBUG4, "bootstrap relation created");
 					}
