@@ -59,49 +59,38 @@ public class JDBC2Tests extends TestSuite {
     }
   }
 
-  /**
-   * Helper - creates a test table for use by a test
-   */
-  public static void createTable(Connection conn,String columns) {
-    try {
-      Statement st = conn.createStatement();
+	/**
+	 * Helper - creates a test table for use by a test
+	*/
+	public static void createTable(
+		Connection conn, String table, String columns) {
+		try {
+			Statement st = conn.createStatement();
+			try {
+				try {
+					st.executeUpdate("drop table " + table);
+				} catch(SQLException se) { 
+					// Intentionally ignore exception
+				}
 
-      // Ignore the drop
-      try {
-        st.executeUpdate("drop table "+getTableName());
-      } catch(SQLException se) {
-      }
+				// Now create the table
+				st.executeUpdate( "create table " + table + " (" + columns + 
+					")" );
+			} finally {
+				st.close();
+			}
+		} catch(SQLException ex) {
+			TestCase.assert(ex.getMessage(),false);
+		}
+	}
 
-      // Now create the table
-      st.executeUpdate("create table "+getTableName()+" ("+columns+")");
-
-      st.close();
-    } catch(SQLException ex) {
-      TestCase.assert(ex.getMessage(),false);
-    }
-  }
-
-  /**
-   * Variant used when more than one table is required
-   */
-  public static void createTable(Connection conn,String id,String columns) {
-    try {
-      Statement st = conn.createStatement();
-
-      // Ignore the drop
-      try {
-        st.executeUpdate("drop table "+getTableName(id));
-      } catch(SQLException se) {
-      }
-
-      // Now create the table
-      st.executeUpdate("create table "+getTableName(id)+" ("+columns+")");
-
-      st.close();
-    } catch(SQLException ex) {
-      TestCase.assert(ex.getMessage(),false);
-    }
-  }
+	// Create the test table whose name is passed via the properties
+	// (see ../../../build.xml). It appears that the original author of
+	// this test suite intended to specify all test table names via the
+	// properties, but this was never fully implemented.
+	public static void createTable(Connection conn, String columns) {
+		createTable(conn, getTableName(), columns);
+	}
 
   /**
    * Helper - generates INSERT SQL - very simple
