@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.52 2002/05/12 20:10:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.53 2002/05/18 18:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/subselect.h"
+#include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "utils/syscache.h"
@@ -586,7 +587,7 @@ process_sublinks_mutator(Node *node, void *context)
 }
 
 List *
-SS_finalize_plan(Plan *plan)
+SS_finalize_plan(Plan *plan, List *rtable)
 {
 	List	   *extParam = NIL;
 	List	   *locParam = NIL;
@@ -619,10 +620,20 @@ SS_finalize_plan(Plan *plan)
 							  &results);
 			break;
 
-		case T_Append:
-			foreach(lst, ((Append *) plan)->appendplans)
-				results.paramids = set_unioni(results.paramids,
-								 SS_finalize_plan((Plan *) lfirst(lst)));
+		case T_IndexScan:
+			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
+							  &results);
+
+			/*
+			 * we need not look at indxqualorig, since it will have the
+			 * same param references as indxqual, and we aren't really
+			 * concerned yet about having a complete subplan list.
+			 */
+			break;
+
+		case T_TidScan:
+			finalize_primnode((Node *) ((TidScan *) plan)->tideval,
+							  &results);
 			break;
 
 		case T_SubqueryScan:
@@ -638,15 +649,22 @@ SS_finalize_plan(Plan *plan)
 							 ((SubqueryScan *) plan)->subplan->extParam);
 			break;
 
-		case T_IndexScan:
-			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
-							  &results);
+		case T_FunctionScan:
+			{
+				RangeTblEntry *rte;
 
-			/*
-			 * we need not look at indxqualorig, since it will have the
-			 * same param references as indxqual, and we aren't really
-			 * concerned yet about having a complete subplan list.
-			 */
+				rte = rt_fetch(((FunctionScan *) plan)->scan.scanrelid,
+							   rtable);
+				Assert(rte->rtekind == RTE_FUNCTION);
+				finalize_primnode(rte->funcexpr, &results);
+			}
+			break;
+
+		case T_Append:
+			foreach(lst, ((Append *) plan)->appendplans)
+				results.paramids = set_unioni(results.paramids,
+								 SS_finalize_plan((Plan *) lfirst(lst),
+												  rtable));
 			break;
 
 		case T_NestLoop:
@@ -673,11 +691,6 @@ SS_finalize_plan(Plan *plan)
 							  &results);
 			break;
 
-		case T_TidScan:
-			finalize_primnode((Node *) ((TidScan *) plan)->tideval,
-							  &results);
-			break;
-
 		case T_Agg:
 		case T_SeqScan:
 		case T_Material:
@@ -686,7 +699,6 @@ SS_finalize_plan(Plan *plan)
 		case T_SetOp:
 		case T_Limit:
 		case T_Group:
-		case T_FunctionScan:
 			break;
 
 		default:
@@ -696,9 +708,11 @@ SS_finalize_plan(Plan *plan)
 
 	/* Process left and right subplans, if any */
 	results.paramids = set_unioni(results.paramids,
-								  SS_finalize_plan(plan->lefttree));
+								  SS_finalize_plan(plan->lefttree,
+												   rtable));
 	results.paramids = set_unioni(results.paramids,
-								  SS_finalize_plan(plan->righttree));
+								  SS_finalize_plan(plan->righttree,
+												   rtable));
 
 	/* Now we have all the paramids and subplans */
 

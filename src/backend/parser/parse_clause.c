@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.92 2002/05/12 23:43:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.93 2002/05/18 18:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,9 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 */
 	save_namespace = pstate->p_namespace;
 	pstate->p_namespace = NIL;
+
 	parsetrees = parse_analyze(r->subquery, pstate);
+
 	pstate->p_namespace = save_namespace;
 
 	/*
@@ -455,26 +457,49 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 {
 	Node	   *funcexpr;
 	char	   *funcname;
+	List	   *save_namespace;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
 
-	/*
-	 * Transform the raw FuncCall node
-	 */
-	funcexpr = transformExpr(pstate, r->funccallnode);
-
+	/* Get function name for possible use as alias */
 	Assert(IsA(r->funccallnode, FuncCall));
 	funcname = strVal(llast(((FuncCall *) r->funccallnode)->funcname));
 
 	/*
-	 * Disallow aggregate functions and subselects in the expression.
-	 * (Aggregates clearly make no sense; perhaps later we could support
-	 * subselects, though.)
+	 * Transform the raw FuncCall node.  This is a bit tricky because we don't
+	 * want the function expression to be able to see any FROM items already
+	 * created in the current query (compare to transformRangeSubselect).
+	 * But it does need to be able to see any further-up parent states.
+	 * So, temporarily make the current query level have an empty namespace.
+	 * NOTE: this code is OK only because the expression can't legally alter
+	 * the namespace by causing implicit relation refs to be added.
 	 */
-	if (contain_agg_clause(funcexpr))
-		elog(ERROR, "cannot use aggregate function in FROM function expression");
-	if (contain_subplans(funcexpr))
-		elog(ERROR, "cannot use subselect in FROM function expression");
+	save_namespace = pstate->p_namespace;
+	pstate->p_namespace = NIL;
+
+	funcexpr = transformExpr(pstate, r->funccallnode);
+
+	pstate->p_namespace = save_namespace;
+
+	/*
+	 * We still need to check that the function parameters don't refer
+	 * to any other rels.  That could happen despite our hack on the namespace
+	 * if fully-qualified names are used.  So, check there are no local
+	 * Var references in the transformed expression.  (Outer references
+	 * are OK, and are ignored here.)
+	 */
+	if (pull_varnos(funcexpr) != NIL)
+		elog(ERROR, "FROM function expression may not refer to other relations of same query level");
+
+	/*
+	 * Disallow aggregate functions in the expression.  (No reason to postpone
+	 * this check until parseCheckAggregates.)
+	 */
+	if (pstate->p_hasAggs)
+	{
+		if (contain_agg_clause(funcexpr))
+			elog(ERROR, "cannot use aggregate function in FROM function expression");
+	}
 
 	/*
 	 * Insist we have a bare function call (explain.c is the only place

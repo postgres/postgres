@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.118 2002/05/18 02:25:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.119 2002/05/18 18:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 */
 	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
 	{
-		(void) SS_finalize_plan(plan);
+		(void) SS_finalize_plan(plan, parse->rtable);
 
 		/*
 		 * At the moment, SS_finalize_plan doesn't handle initPlans and so
