@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.28 2003/08/04 02:40:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.29 2003/08/04 17:25:14 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -308,9 +308,13 @@ rloop:
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					else
+					{
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
 
+						SOCK_ERRNO = ECONNRESET;
+						n = -1;
+					}
 					break;
 				}
 			case SSL_ERROR_SSL:
@@ -318,13 +322,13 @@ rloop:
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				pqsecure_close(conn);
 				SOCK_ERRNO = ECONNRESET;
 				n = -1;
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("Unknown SSL error code\n"));
+				n = -1;
 				break;
 		}
 	}
@@ -376,8 +380,12 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
 					else
+					{
 						printfPQExpBuffer(&conn->errorMessage,
 										  libpq_gettext("SSL SYSCALL error: EOF detected\n"));
+						SOCK_ERRNO = ECONNRESET;
+						n = -1;
+					}
 					break;
 				}
 			case SSL_ERROR_SSL:
@@ -385,13 +393,13 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
 				/* fall through */
 			case SSL_ERROR_ZERO_RETURN:
-				pqsecure_close(conn);
 				SOCK_ERRNO = ECONNRESET;
 				n = -1;
 				break;
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("Unknown SSL error code\n"));
+				n = -1;
 				break;
 		}
 	}
