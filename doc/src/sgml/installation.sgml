@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.230 2005/03/31 03:54:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.231 2005/04/04 05:12:32 neilc Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -327,7 +327,9 @@ su - postgres
    The <productname>PostgreSQL</> &version; sources can be obtained by
    anonymous FTP from <ulink
    url="ftp://ftp.postgresql.org/pub/source/v&version;/postgresql-&version;.tar.gz"></ulink>.
-   Use a mirror if possible. After you have obtained the file, unpack it:
+   Other download options can be found on our website:
+   <ulink url="http://www.postgresql.org/download/"></ulink>. After you
+   have obtained the file, unpack it:
 <screen>
 <userinput>gunzip postgresql-&version;.tar.gz</userinput>
 <userinput>tar xf postgresql-&version;.tar</userinput>
