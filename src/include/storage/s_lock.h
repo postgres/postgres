@@ -24,6 +24,9 @@
  *		Tests if the lock is free. Returns TRUE if free, FALSE if locked.
  *		This does *not* change the state of the lock.
  *
+ *	void SPIN_DELAY(void)
+ *		Delay operation to occur inside spinlock wait loop.
+ *
  *	Note to implementors: there are default implementations for all these
  *	macros at the bottom of the file.  Check if your platform can use
  *	these or needs to override them.
@@ -63,7 +66,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.123 2003/12/23 22:15:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.124 2003/12/27 20:58:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,12 +110,26 @@ tas(volatile slock_t *lock)
 {
 	register slock_t _res = 1;
 
+	/* Use a non-locking test before asserting the bus lock */
 	__asm__ __volatile__(
+		"	cmpb	$0,%1	\n"
+		"	jne		1f		\n"
 		"	lock			\n"
 		"	xchgb	%0,%1	\n"
+		"1: \n"
 :		"=q"(_res), "=m"(*lock)
 :		"0"(_res));
 	return (int) _res;
+}
+
+#define SPIN_DELAY() spin_delay()
+
+static __inline__ void
+spin_delay(void)
+{
+	__asm__ __volatile__(
+		" rep; nop			\n"
+		: : : "memory");
 }
 
 #endif	 /* __i386__ || __x86_64__ */
@@ -707,6 +724,10 @@ extern int	tas_sema(volatile slock_t *lock);
 #if !defined(S_INIT_LOCK)
 #define S_INIT_LOCK(lock)	S_UNLOCK(lock)
 #endif	 /* S_INIT_LOCK */
+
+#if !defined(SPIN_DELAY)
+#define SPIN_DELAY()	((void) 0)
+#endif	 /* SPIN_DELAY */
 
 #if !defined(TAS)
 extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or

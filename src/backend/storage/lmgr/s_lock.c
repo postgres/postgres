@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.22 2003/12/23 22:15:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/s_lock.c,v 1.23 2003/12/27 20:58:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,10 @@ s_lock(volatile slock_t *lock, const char *file, int line)
 
 	while (TAS(lock))
 	{
+		/* CPU-specific delay each time through the loop */
+		SPIN_DELAY();
+
+		/* Block the process every SPINS_PER_DELAY tries */
 		if (++spins > SPINS_PER_DELAY)
 		{
 			if (++delays > NUM_DELAYS)
