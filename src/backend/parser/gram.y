@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.122 1999/12/14 00:08:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.123 1999/12/16 17:24:14 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -129,6 +129,7 @@ static Node *doNegate(Node *n);
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt,
 		RuleActionStmtOrEmpty, ConstraintsSetStmt,
+                CreateGroupStmt, AlterGroupStmt, DropGroupStmt
 
 %type <str>		opt_database1, opt_database2, location, encoding
 
@@ -139,7 +140,7 @@ static Node *doNegate(Node *n);
 %type <str>		user_passwd_clause
 %type <ival>            sysid_clause
 %type <str>		user_valid_clause
-%type <list>	user_group_list, user_group_clause
+%type <list>	user_group_list, user_group_clause, users_in_new_group_clause
 
 %type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted
 
@@ -391,11 +392,13 @@ stmtmulti:  stmtmulti ';' stmt
 		;
 
 stmt :	  AddAttrStmt
+                | AlterGroupStmt
 		| AlterUserStmt
 		| ClosePortalStmt
 		| CopyStmt
 		| CreateStmt
 		| CreateAsStmt
+                | CreateGroupStmt
 		| CreateSeqStmt
 		| CreatePLangStmt
 		| CreateTrigStmt
@@ -405,6 +408,7 @@ stmt :	  AddAttrStmt
 		| DropStmt		
 		| TruncateStmt
 		| CommentStmt
+                | DropGroupStmt
 		| DropPLangStmt
 		| DropTrigStmt
 		| DropUserStmt
@@ -575,19 +579,98 @@ user_group_list:  user_group_list ',' UserId
 				}
 		;
 
-user_group_clause:  IN GROUP user_group_list
-                                {
-                                        /* the backend doesn't actually process this,
-                                         * so an error message is probably fairer */
-                                        yyerror("IN GROUP is not implemented");
-                                        /* $$ = $3; */
-                                }
-			| /*EMPTY*/							{ $$ = NULL; }
+user_group_clause:  IN GROUP user_group_list    { $$ = $3; }
+			| /*EMPTY*/             { $$ = NULL; }
 		;
 
 user_valid_clause:  VALID UNTIL SCONST			{ $$ = $3; }
 			| /*EMPTY*/							{ $$ = NULL; }
 		;
+
+
+/*****************************************************************************
+ *
+ * Create a postresql group
+ *
+ *
+ *****************************************************************************/
+
+CreateGroupStmt:  CREATE GROUP UserId 
+                  {
+                        CreateGroupStmt *n = makeNode(CreateGroupStmt);
+			n->name = $3;
+                        n->sysid = -1;
+                        n->initUsers = NULL;
+                        $$ = (Node *)n;
+                  }
+                  |
+                  CREATE GROUP UserId WITH sysid_clause users_in_new_group_clause
+                  {
+                        CreateGroupStmt *n = makeNode(CreateGroupStmt);
+			n->name = $3;
+                        n->sysid = $5;
+                        n->initUsers = $6;
+                        $$ = (Node *)n;
+                  }
+                ;
+
+users_in_new_group_clause:  USER user_group_list   { $$ = $2; }
+                            | /* EMPTY */          { $$ = NULL; }
+                ;                         
+
+/*****************************************************************************
+ *
+ * Alter a postresql group
+ *
+ *
+ *****************************************************************************/
+
+AlterGroupStmt: ALTER GROUP UserId WITH SYSID Iconst
+                {
+                        AlterGroupStmt *n = makeNode(AlterGroupStmt);
+			n->name = $3;
+                        n->sysid = $6;
+                        n->action = 0;
+                        n->listUsers = NULL;
+                        $$ = (Node *)n;
+                }
+                |
+                ALTER GROUP UserId ADD USER user_group_list
+                {
+                        AlterGroupStmt *n = makeNode(AlterGroupStmt);
+			n->name = $3;
+                        n->sysid = -1;
+                        n->action = +1;
+                        n->listUsers = $6;
+                        $$ = (Node *)n;
+                }
+                |
+                ALTER GROUP UserId DROP USER user_group_list
+                {
+                        AlterGroupStmt *n = makeNode(AlterGroupStmt);
+			n->name = $3;
+                        n->sysid = -1;
+                        n->action = -1;
+                        n->listUsers = $6;
+                        $$ = (Node *)n;
+                }
+                ;
+
+/*****************************************************************************
+ *
+ * Drop a postresql group
+ *
+ *
+ *****************************************************************************/
+
+DropGroupStmt: DROP GROUP UserId
+               {
+                        DropGroupStmt *n = makeNode(DropGroupStmt);
+			n->name = $3;
+                        $$ = (Node *)n;
+               }
+                ;
+
 
 /*****************************************************************************
  *

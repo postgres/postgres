@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.58 1999/12/10 03:56:09 momjian Exp $
+ * $Id: nodes.h,v 1.59 1999/12/16 17:24:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,6 +189,9 @@ typedef enum NodeTag
 	T_DropUserStmt,
 	T_LockStmt,
 	T_ConstraintsSetStmt,
+    T_CreateGroupStmt,
+    T_AlterGroupStmt,
+    T_DropGroupStmt,
 
 	T_A_Expr = 700,
 	T_Attr,

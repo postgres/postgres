@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_group.h,v 1.6 1999/02/13 23:21:09 momjian Exp $
+ * $Id: pg_group.h,v 1.7 1999/12/16 17:24:17 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -35,7 +35,7 @@ CATALOG(pg_group) BOOTSTRAP
 
 typedef FormData_pg_group *Form_pg_group;
 
-#define Natts_pg_group			1
+#define Natts_pg_group			3
 #define Anum_pg_group_groname	1
 #define Anum_pg_group_grosysid	2
 #define Anum_pg_group_grolist	3

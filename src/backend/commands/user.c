@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.44 1999/12/14 00:17:33 momjian Exp $
+ * $Id: user.c,v 1.45 1999/12/16 17:24:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,16 @@
 #include "catalog/catname.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_shadow.h"
+#include "catalog/pg_group.h"
+#include "catalog/indexing.h"
 #include "commands/copy.h"
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
+#include "nodes/pg_list.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
+#include "utils/array.h"
 #include "utils/syscache.h"
 
 static void CheckPgUserAclNotNull(void);
@@ -118,6 +122,7 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 				havepassword,
 				havevaluntil;
 	int			max_id = -1;
+    List       *item;
 
     havesysid    = stmt->sysid >= 0;
 	havepassword = stmt->password && stmt->password[0];
@@ -218,8 +223,18 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	pg_exec_query_dest(sql, dest, false);
 
 	/*
-	 * Add stuff here for groups?
+	 * Add the user to the groups specified. We'll just call the below
+     * AlterGroup for this.
 	 */
+    foreach(item, stmt->groupElts)
+    {
+        AlterGroupStmt ags;
+
+        ags.name = strVal(lfirst(item));
+        ags.action = +1;
+        ags.listUsers = lcons((void*)makeString(stmt->user), NIL);
+        AlterGroup(&ags, dest);
+    }
 
 	/*
 	 * Write the updated pg_shadow data to the flat password file.
@@ -367,6 +382,8 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	/*
 	 * Add stuff here for groups?
 	 */
+    if (stmt->groupElts)
+        elog(NOTICE, "IN GROUP is not implemented for ALTER USER.");
 
 	/*
 	 * Write the updated pg_shadow data to the flat password file.
@@ -546,3 +563,511 @@ CheckPgUserAclNotNull()
 
 	return;
 }
+
+
+/*** GROUP THINGS ***/
+
+void
+CreateGroup(CreateGroupStmt *stmt, CommandDest dest)
+{
+	Relation	pg_group_rel;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+    TupleDesc   pg_group_dsc;
+	bool		inblock;
+    bool        group_exists = false,
+                sysid_exists = false;
+    int         max_id = -1;
+    Datum       new_record[Natts_pg_group];
+    char        new_record_nulls[Natts_pg_group];
+    List       *item, *newlist=NULL;
+    ArrayType  *userarray;
+
+
+	if (!(inblock = IsTransactionBlock()))
+		BeginTransactionBlock();
+
+	/*
+	 * Make sure the user can do this.
+	 */
+	if (pg_aclcheck(GroupRelationName, GetPgUserName(), ACL_RD | ACL_AP) != ACLCHECK_OK)
+	{
+		UserAbortTransactionBlock();
+		elog(ERROR, "CreateGroup: Permission denied.");
+	}
+
+	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+	pg_group_dsc = RelationGetDescr(pg_group_rel);
+
+	scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 0, NULL);
+	while (!group_exists && !sysid_exists && HeapTupleIsValid(tuple = heap_getnext(scan, false)))
+	{
+        Datum		datum;
+        bool        null;
+
+		datum = heap_getattr(tuple, Anum_pg_group_groname, pg_group_dsc, &null);
+		group_exists = datum && !null && (strcmp((char *) datum, stmt->name) == 0);
+
+		datum = heap_getattr(tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
+        if (stmt->sysid >= 0) /* customized id wanted */
+            sysid_exists = datum && !null && ((int)datum == stmt->sysid);
+        else /* pick 1 + max */
+        {
+            if ((int) datum > max_id)
+                max_id = (int) datum;
+        }
+	}
+	heap_endscan(scan);
+
+	if (group_exists || sysid_exists)
+	{
+		heap_close(pg_group_rel, AccessExclusiveLock);
+		UserAbortTransactionBlock();
+        if (group_exists)
+            elog(ERROR, "CreateGroup: Group name \"%s\" already exists.", stmt->name);
+        else
+            elog(ERROR, "CreateGroup: Group sysid %d is already assigned.", stmt->sysid);
+	}
+
+    /*
+     * Translate the given user names to ids
+     */
+
+    foreach(item, stmt->initUsers)
+    {
+        const char * groupuser = strVal(lfirst(item));
+        Value *v;
+
+        tuple = SearchSysCacheTuple(SHADOWNAME,
+                                    PointerGetDatum(groupuser),
+                                    0, 0, 0);
+        if (!HeapTupleIsValid(tuple))
+        {
+            heap_close(pg_group_rel, AccessExclusiveLock);
+            UserAbortTransactionBlock();
+            elog(ERROR, "CreateGroup: User \"%s\" does not exist.", groupuser);
+        }
+
+        v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+        if (!member(v, newlist))
+            newlist = lcons(v, newlist);
+    }
+
+    /* build an array to insert */
+    if (newlist)
+    {
+        int i;
+
+        userarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
+        ARR_SIZE(userarray) = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
+        ARR_FLAGS(userarray) = 0x0;
+        ARR_NDIM(userarray) = 1; /* one dimensional array */
+        ARR_LBOUND(userarray)[0] = 1; /* axis starts at one */
+        ARR_DIMS(userarray)[0] = length(newlist); /* axis is this long */
+        /* fill the array */
+        i = 0;
+        foreach(item, newlist)
+        {
+            ((int*)ARR_DATA_PTR(userarray))[i++] = intVal(lfirst(item));
+        }
+    }
+    else
+        userarray = NULL;
+
+    /*
+     * Form a tuple to insert
+     */
+    if (stmt->sysid >=0)
+        max_id = stmt->sysid;
+    else 
+        max_id++;
+
+    new_record[Anum_pg_group_groname-1] = (Datum)(stmt->name);
+    new_record[Anum_pg_group_grosysid-1] = (Datum)(max_id);
+    new_record[Anum_pg_group_grolist-1] = (Datum)userarray;
+
+    new_record_nulls[Anum_pg_group_groname-1] = ' ';
+    new_record_nulls[Anum_pg_group_grosysid-1] = ' ';
+    new_record_nulls[Anum_pg_group_grolist-1] = userarray ? ' ' : 'n';
+
+    tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
+
+    /*
+     * Insert a new record in the pg_group_table
+     */
+    heap_insert(pg_group_rel, tuple);
+
+    /*
+     * Update indexes
+     */
+    if (RelationGetForm(pg_group_rel)->relhasindex) {
+        Relation idescs[Num_pg_group_indices];
+      
+        CatalogOpenIndices(Num_pg_group_indices, 
+                           Name_pg_group_indices, idescs);
+        CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel, 
+                           tuple);
+        CatalogCloseIndices(Num_pg_group_indices, idescs);
+    }
+
+	heap_close(pg_group_rel, NoLock);
+
+	if (IsTransactionBlock() && !inblock)
+		EndTransactionBlock();
+}
+
+
+
+void
+AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
+{
+	Relation	pg_group_rel;
+    TupleDesc   pg_group_dsc;
+	bool		inblock;
+    HeapTuple   group_tuple;
+
+	if (!(inblock = IsTransactionBlock()))
+		BeginTransactionBlock();
+
+	/*
+	 * Make sure the user can do this.
+	 */
+	if (pg_aclcheck(GroupRelationName, GetPgUserName(), ACL_RD | ACL_WR) != ACLCHECK_OK)
+	{
+		UserAbortTransactionBlock();
+		elog(ERROR, "AlterGroup: Permission denied.");
+	}
+
+    pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+    pg_group_dsc = RelationGetDescr(pg_group_rel);
+
+    /*
+     * Verify that group exists.
+     * If we find a tuple, will take that the rest of the way and make our
+     * modifications on it.
+     */
+    if (!HeapTupleIsValid(group_tuple = SearchSysCacheTupleCopy(GRONAME, PointerGetDatum(stmt->name), 0, 0, 0)))
+	{
+        heap_close(pg_group_rel, AccessExclusiveLock);
+		UserAbortTransactionBlock();
+		elog(ERROR, "AlterGroup: Group \"%s\" does not exist.", stmt->name);
+	}
+
+    /*
+     * Now decide what to do.
+     */
+    if (stmt->action == 0) /* change sysid */
+    {
+        bool          sysid_exists = false;
+        ScanKeyData   keys[2];
+        HeapTuple	  tuple;
+        HeapScanDesc  scan;
+        Datum       new_record[Natts_pg_group];
+        char        new_record_nulls[Natts_pg_group];
+        bool null;
+
+        /*
+         * First check if the id is already assigned.
+         */
+        ScanKeyEntryInitialize(&keys[0], 0x0, Anum_pg_group_grosysid, F_INT4EQ,
+                               Int32GetDatum(stmt->sysid));
+        ScanKeyEntryInitialize(&keys[1], 0x0, Anum_pg_group_groname, F_NAMENE,
+                               PointerGetDatum(stmt->name));
+        scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 2, keys);
+
+        if (HeapTupleIsValid(heap_getnext(scan, false)))
+        {
+            heap_endscan(scan);
+            heap_close(pg_group_rel, AccessExclusiveLock);
+            UserAbortTransactionBlock();
+            elog(ERROR, "AlterGroup: Group sysid %d is already assigned.", stmt->sysid);
+        }
+        heap_endscan(scan);
+
+        /*
+         * Insert the new tuple with the updated sysid
+         */
+        new_record[Anum_pg_group_groname-1] = (Datum)(stmt->name);
+        new_record[Anum_pg_group_grosysid-1] = (Datum)(stmt->sysid);
+        new_record[Anum_pg_group_grolist-1] = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
+        new_record_nulls[Anum_pg_group_groname-1] = ' ';
+        new_record_nulls[Anum_pg_group_grosysid-1] = ' ';
+        new_record_nulls[Anum_pg_group_grolist-1] = null ? 'n' : ' ';
+
+        tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
+        heap_update(pg_group_rel, &group_tuple->t_self, tuple, NULL);
+
+        /* Update indexes */
+        if (RelationGetForm(pg_group_rel)->relhasindex) {
+            Relation idescs[Num_pg_group_indices];
+      
+            CatalogOpenIndices(Num_pg_group_indices, 
+                               Name_pg_group_indices, idescs);
+            CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel, 
+                               tuple);
+            CatalogCloseIndices(Num_pg_group_indices, idescs);
+        }
+    }
+
+    /*
+     * add users to group 
+     */
+    else if (stmt->action > 0)
+    {
+        Datum       new_record[Natts_pg_group];
+        char        new_record_nulls[Natts_pg_group] = { ' ', ' ', ' '};
+        ArrayType *newarray, *oldarray;
+        List * newlist = NULL, *item;
+        HeapTuple tuple;
+        bool null = false;
+        Datum datum = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
+        int i;
+        
+        oldarray = (ArrayType*)datum;
+        Assert(null || ARR_NDIM(oldarray) == 1);
+        /* first add the old array to the hitherto empty list */
+        if (!null)
+            for (i = ARR_LBOUND(oldarray)[0]; i < ARR_LBOUND(oldarray)[0] + ARR_DIMS(oldarray)[0]; i++)
+            {
+                int index, arrval;
+                Value *v;
+                bool valueNull;
+                index = i;
+                arrval = DatumGetInt32(array_ref(oldarray, 1, &index, true/*by value*/,
+                                                 sizeof(int), 0, &valueNull));
+                v = makeInteger(arrval);
+                /* filter out duplicates */
+                if (!member(v, newlist))
+                    newlist = lcons(v, newlist);
+            }
+
+        /* 
+         * now convert the to be added usernames to sysids and add them
+         * to the list
+         */
+        foreach(item, stmt->listUsers)
+        {
+            Value *v;
+            /* Get the uid of the proposed user to add. */
+            tuple = SearchSysCacheTuple(SHADOWNAME,
+                                        PointerGetDatum(strVal(lfirst(item))),
+                                        0, 0, 0);
+            if (!HeapTupleIsValid(tuple))
+            {
+                heap_close(pg_group_rel, AccessExclusiveLock);
+                UserAbortTransactionBlock();
+                elog(ERROR, "AlterGroup: User \"%s\" does not exist.", strVal(lfirst(item)));
+            }
+            
+            v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+            if (!member(v, newlist))
+                newlist = lcons(v, newlist);
+            else
+                elog(NOTICE, "AlterGroup: User \"%s\" is already in group \"%s\".", strVal(lfirst(item)), stmt->name);
+        }
+             
+        newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
+        ARR_SIZE(newarray) = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
+        ARR_FLAGS(newarray) = 0x0;
+        ARR_NDIM(newarray) = 1; /* one dimensional array */
+        ARR_LBOUND(newarray)[0] = 1; /* axis starts at one */
+        ARR_DIMS(newarray)[0] = length(newlist); /* axis is this long */
+        /* fill the array */
+        i = 0;
+        foreach(item, newlist)
+        {
+            ((int*)ARR_DATA_PTR(newarray))[i++] = intVal(lfirst(item));
+        }
+        
+        /*
+         * Form a tuple with the new array and write it back.
+         */
+        new_record[Anum_pg_group_groname-1] = (Datum)(stmt->name);
+        new_record[Anum_pg_group_grosysid-1] = heap_getattr(group_tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
+        new_record[Anum_pg_group_grolist-1] = PointerGetDatum(newarray);
+
+        tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
+        heap_update(pg_group_rel, &group_tuple->t_self, tuple, NULL);
+
+        /* Update indexes */
+        if (RelationGetForm(pg_group_rel)->relhasindex) {
+            Relation idescs[Num_pg_group_indices];
+      
+            CatalogOpenIndices(Num_pg_group_indices, 
+                               Name_pg_group_indices, idescs);
+            CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel, 
+                               tuple);
+            CatalogCloseIndices(Num_pg_group_indices, idescs);
+        }
+    } /* endif alter group add user */
+
+    /*
+     * drop users from group
+     */
+    else if (stmt->action < 0)
+    {
+        Datum         datum;
+        bool          null;
+        
+        datum = heap_getattr(group_tuple, Anum_pg_group_grolist, pg_group_dsc, &null);
+        if (null)
+            elog(NOTICE, "AlterGroup: Group \"%s\"'s membership is NULL.", stmt->name);
+        else
+        {
+            HeapTuple	  tuple;
+            Datum       new_record[Natts_pg_group];
+            char        new_record_nulls[Natts_pg_group] = { ' ', ' ', ' '};
+            ArrayType    *oldarray, *newarray;
+            List * newlist = NULL, *item;
+            int i;
+
+            oldarray = (ArrayType*)datum;
+            Assert(ARR_NDIM(oldarray) == 1);
+            /* first add the old array to the hitherto empty list */
+            for (i = ARR_LBOUND(oldarray)[0]; i < ARR_LBOUND(oldarray)[0] + ARR_DIMS(oldarray)[0]; i++)
+            {
+                int index, arrval;
+                Value *v;
+                bool valueNull;
+                index = i;
+                arrval = DatumGetInt32(array_ref(oldarray, 1, &index, true/*by value*/,
+                                                 sizeof(int), 0, &valueNull));
+                v = makeInteger(arrval);
+                /* filter out duplicates */
+                if (!member(v, newlist))
+                    newlist = lcons(v, newlist);
+            }
+
+            /* 
+             * now convert the to be dropped usernames to sysids and remove
+             * them from the list
+             */
+            foreach(item, stmt->listUsers)
+            {
+                Value *v;
+                /* Get the uid of the proposed user to drop. */
+                tuple = SearchSysCacheTuple(SHADOWNAME,
+                                            PointerGetDatum(strVal(lfirst(item))),
+                                            0, 0, 0);
+                if (!HeapTupleIsValid(tuple))
+                {
+                    heap_close(pg_group_rel, AccessExclusiveLock);
+                    UserAbortTransactionBlock();
+                    elog(ERROR, "AlterGroup: User \"%s\" does not exist.", strVal(lfirst(item)));
+                }
+            
+                v = makeInteger(((Form_pg_shadow) GETSTRUCT(tuple))->usesysid);
+                if (member(v, newlist))
+                    newlist = LispRemove(v, newlist);
+                else
+                    elog(NOTICE, "AlterGroup: User \"%s\" is not in group \"%s\".", strVal(lfirst(item)), stmt->name);
+            }
+
+            newarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
+            ARR_SIZE(newarray) = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
+            ARR_FLAGS(newarray) = 0x0;
+            ARR_NDIM(newarray) = 1; /* one dimensional array */
+            ARR_LBOUND(newarray)[0] = 1; /* axis starts at one */
+            ARR_DIMS(newarray)[0] = length(newlist); /* axis is this long */
+            /* fill the array */
+            i = 0;
+            foreach(item, newlist)
+            {
+                ((int*)ARR_DATA_PTR(newarray))[i++] = intVal(lfirst(item));
+            }
+        
+            /*
+             * Insert the new tuple with the updated user list
+             */
+            new_record[Anum_pg_group_groname-1] = (Datum)(stmt->name);
+            new_record[Anum_pg_group_grosysid-1] = heap_getattr(group_tuple, Anum_pg_group_grosysid, pg_group_dsc, &null);
+            new_record[Anum_pg_group_grolist-1] = PointerGetDatum(newarray);
+
+            tuple = heap_formtuple(pg_group_dsc, new_record, new_record_nulls);
+            heap_update(pg_group_rel, &group_tuple->t_self, tuple, NULL);
+
+            /* Update indexes */
+            if (RelationGetForm(pg_group_rel)->relhasindex) {
+                Relation idescs[Num_pg_group_indices];
+      
+                CatalogOpenIndices(Num_pg_group_indices, 
+                                   Name_pg_group_indices, idescs);
+                CatalogIndexInsert(idescs, Num_pg_group_indices, pg_group_rel, 
+                                   tuple);
+                CatalogCloseIndices(Num_pg_group_indices, idescs);
+            }
+
+        } /* endif group not null */
+    } /* endif alter group drop user */
+
+    heap_close(pg_group_rel, NoLock);
+
+    pfree(group_tuple);
+
+	if (IsTransactionBlock() && !inblock)
+		EndTransactionBlock();
+}
+
+
+
+void
+DropGroup(DropGroupStmt *stmt, CommandDest dest)
+{
+	Relation	pg_group_rel;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+    TupleDesc   pg_group_dsc;
+	bool		inblock;
+    bool        gro_exists = false;
+
+	if (!(inblock = IsTransactionBlock()))
+		BeginTransactionBlock();
+
+	/*
+	 * Make sure the user can do this.
+	 */
+	if (pg_aclcheck(GroupRelationName, GetPgUserName(), ACL_RD | ACL_WR) != ACLCHECK_OK)
+	{
+		UserAbortTransactionBlock();
+		elog(ERROR, "DropGroup: Permission denied.");
+	}
+
+    /*
+     * Scan the pg_group table and delete all matching users.
+     */
+	pg_group_rel = heap_openr(GroupRelationName, AccessExclusiveLock);
+	pg_group_dsc = RelationGetDescr(pg_group_rel);
+	scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 0, NULL);
+
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, false)))
+	{
+        Datum datum;
+        bool null;
+
+        datum = heap_getattr(tuple, Anum_pg_group_groname, pg_group_dsc, &null);
+        if (datum && !null && strcmp((char*)datum, stmt->name)==0)
+        {
+            gro_exists = true;
+            heap_delete(pg_group_rel, &tuple->t_self, NULL);
+        }
+
+	}
+
+	heap_endscan(scan);
+
+    /*
+     * Did we find any?
+     */
+    if (!gro_exists)
+    {
+        heap_close(pg_group_rel, AccessExclusiveLock);
+		UserAbortTransactionBlock();
+		elog(ERROR, "DropGroup: Group \"%s\" does not exist.", stmt->name);
+    }
+
+	heap_close(pg_group_rel, NoLock);
+
+	if (IsTransactionBlock() && !inblock)
+		EndTransactionBlock();
+}
+
