@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.2 1996/10/03 04:19:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.3 1996/10/03 20:11:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,9 +200,11 @@ _vc_getrels(Portal p, NameData *VacRelP)
     VRelList vrl, cur;
     Datum d;
     char *rname;
+    char rkind;
     int16 smgrno;
     bool n;
     ScanKeyData  pgckey;
+    bool found = false;
 
     StartTransactionCommand();
 
@@ -225,6 +227,8 @@ _vc_getrels(Portal p, NameData *VacRelP)
 
     while (HeapTupleIsValid(pgctup = heap_getnext(pgcscan, 0, &buf))) {
 
+	found = true;
+	
 	/*
 	 *  We have to be careful not to vacuum the archive (since it
 	 *  already contains vacuumed tuples), and not to vacuum
@@ -252,6 +256,18 @@ _vc_getrels(Portal p, NameData *VacRelP)
 	    continue;
 	}
 
+	d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relkind,
+				 pgcdesc, &n);
+
+	rkind = DatumGetChar(d);
+
+	/* skip system relations */
+	if (rkind != 'r') {
+	    ReleaseBuffer(buf);
+	    elog(NOTICE, "Vacuum: can not process index and certain system tables" );
+	    continue;
+	}
+				 
 	/* get a relation list entry for this guy */
 	old = MemoryContextSwitchTo((MemoryContext)portalmem);
 	if (vrl == (VRelList) NULL) {
@@ -272,7 +288,10 @@ _vc_getrels(Portal p, NameData *VacRelP)
 	/* wei hates it if you forget to do this */
 	ReleaseBuffer(buf);
     }
+    if (found == false)
+    	elog(NOTICE, "Vacuum: table not found" );
 
+    
     heap_close(pgclass);
     heap_endscan(pgcscan);
 
