@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.51 2000/12/21 17:36:15 tgl Exp $
+ *	$Id: view.c,v 1.52 2001/01/03 18:43:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,19 +110,20 @@ char *
 MakeRetrieveViewRuleName(char *viewName)
 {
 	char	   *buf;
-#ifdef MULTIBYTE
-	int			len;
-#endif
+	int			buflen,
+				maxlen;
 
-	buf = palloc(strlen(viewName) + 5);
-	snprintf(buf, strlen(viewName) + 5, "_RET%s", viewName);
-
+	buflen = strlen(viewName) + 5;
+	buf = palloc(buflen);
+	snprintf(buf, buflen, "_RET%s", viewName);
+	/* clip to less than NAMEDATALEN bytes, if necessary */
 #ifdef MULTIBYTE
-	len = pg_mbcliplen(buf,strlen(buf),NAMEDATALEN-1);
-	buf[len] = '\0';
+	maxlen = pg_mbcliplen(buf, strlen(buf), NAMEDATALEN-1);
 #else
-	buf[NAMEDATALEN-1] = '\0';
+	maxlen = NAMEDATALEN-1;
 #endif
+	if (maxlen < buflen)
+		buf[maxlen] = '\0';
 
 	return buf;
 }
