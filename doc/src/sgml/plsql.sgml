@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.54 2002/03/22 19:20:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.55 2002/04/09 02:31:58 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -762,7 +762,7 @@ CREATE FUNCTION logfunc2 (TEXT) RETURNS TIMESTAMP AS '
     <para>
      If the expression's result data type doesn't match the variable's
      data type, or the variable has a specific size/precision
-     (as for <type>char(20)</type>), the result value will be implicitly
+     (like <type>char(20)</type>), the result value will be implicitly
      converted by the <application>PL/pgSQL</application> interpreter using
      the result type's output-function and 
      the variable type's input-function. Note that this could potentially
@@ -880,7 +880,7 @@ PERFORM <replaceable>query</replaceable>;
      This executes a <literal>SELECT</literal>
      <replaceable>query</replaceable> and discards the
      result. <application>PL/pgSQL</application> variables are substituted
-     into the query as usual.
+     in the query as usual.
     </para>
 
     <note>
@@ -927,7 +927,7 @@ EXECUTE <replaceable class="command">query-string</replaceable>;
     <para>
      Note in particular that no substitution of <application>PL/pgSQL</>
      variables is done on the query string.  The values of variables must
-     be inserted into the query string as it is constructed.
+     be inserted in the query string as it is constructed.
     </para>
 
     <para>
@@ -1441,16 +1441,16 @@ END LOOP;
    <title>Cursors</title>
 
    <para>
-    Rather than executing a whole query at once, it is possible to
-    set up a <firstterm>cursor</> that encapsulates the query, and
-    then read the query result a few rows at a time.  One reason
-    for doing this is to avoid memory overrun when the result contains
-    a large number of rows.  (However, <application>PL/pgSQL</> users
-    don't normally need to worry about that, since FOR loops automatically
-    use a cursor internally to avoid memory problems.)  A more interesting
-    possibility is that a function can return a reference to a cursor
-    that it has set up, allowing the caller to read the rows.  This
-    provides one way of returning a row set from a function.
+    Rather than executing a whole query at once, it is possible to set
+    up a <firstterm>cursor</> that encapsulates the query, and then read
+    the query result a few rows at a time. One reason for doing this is
+    to avoid memory overrun when the result contains a large number of
+    rows. (However, <application>PL/pgSQL</> users don't normally need
+    to worry about that, since FOR loops automatically use a cursor
+    internally to avoid memory problems.) A more interesting usage is to
+    return a reference to a cursor that it has created, allowing the
+    caller to read the rows. This provides one way of returning multiple
+    rows and columns from a function.
    </para>
    
    <sect2 id="plpgsql-cursor-declarations">
@@ -1498,11 +1498,10 @@ DECLARE
 
     <para>
      Before a cursor can be used to retrieve rows, it must be
-     <firstterm>opened</>.  (This is the equivalent action to
-     the SQL command <command>DECLARE CURSOR</>.)
-     <application>PL/pgSQL</> has four forms of the OPEN statement,
-     two of which are for use with unbound cursor variables
-     and the other two for use with bound cursor variables.
+     <firstterm>opened</>. (This is the equivalent action to the SQL
+     command <command>DECLARE CURSOR</>.) <application>PL/pgSQL</> has
+     four forms of the OPEN statement, two of which use unbound cursor
+     variables and the other two use bound cursor variables.
     </para>
 
     <sect3>
@@ -1518,7 +1517,7 @@ OPEN <replaceable>unbound-cursor</replaceable> FOR SELECT ...;
 	have been declared as an unbound cursor (that is, as a simple
 	<type>refcursor</> variable).  The SELECT query is treated
 	in the same way as other SELECTs in <application>PL/pgSQL</>:
-	<application>PL/pgSQL</> variable names are substituted for,
+	<application>PL/pgSQL</> variable names are substituted,
 	and the query plan is cached for possible re-use.
 
 <programlisting>
@@ -1539,8 +1538,8 @@ OPEN <replaceable>unbound-cursor</replaceable> FOR EXECUTE <replaceable class="c
 	to execute.  The cursor cannot be open already, and it must
 	have been declared as an unbound cursor (that is, as a simple
 	<type>refcursor</> variable).  The query is specified as a
-	string expression in the same way as for the EXECUTE command.
-	As usual, this gives flexibility for the query to vary
+	string expression in the same way as in the EXECUTE command.
+	As usual, this gives flexibility so the query can vary
 	from one run to the next.
 
 <programlisting>
@@ -1562,7 +1561,7 @@ OPEN <replaceable>bound-cursor</replaceable> <optional> ( <replaceable>argument_
 	The cursor cannot be open already.  A list of actual argument
 	value expressions must appear if and only if the cursor was
 	declared to take arguments.  These values will be substituted
-	into the query.
+	in the query.
 	The query plan for a bound cursor is always considered
 	cacheable --- there is no equivalent of EXECUTE in this case.
 
@@ -1593,7 +1592,7 @@ OPEN curs3(42);
     </para>
 
     <para>
-     All Portals are implicitly closed at end of transaction.  Therefore
+     All Portals are implicitly closed at transaction end.  Therefore
      a <type>refcursor</> value is useful to reference an open cursor
      only until the end of the transaction.
     </para>
@@ -1608,7 +1607,7 @@ FETCH <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
 
         FETCH retrieves the next row from the cursor into a target,
 	which may be a row variable, a record variable, or a comma-separated
-	list of simple variables, just as for SELECT INTO.  As with
+	list of simple variables, just like SELECT INTO.  As with
 	SELECT INTO, the special variable FOUND may be checked to see
 	whether a row was obtained or not.
 
@@ -1633,6 +1632,70 @@ CLOSE <replaceable>cursor</replaceable>;
 
 <programlisting>
 CLOSE curs1;
+</programlisting>
+       </para>
+     </sect3>
+ 
+    <sect3>
+     <title>Returning Cursors</title>
+
+       <para>
+
+        <application>PL/pgSQL</> functions can return cursors to the
+        caller. This is used to return multiple rows or columns from the
+        function. The function opens the cursor and returns the cursor
+        name to the caller. The caller can then FETCH rows from the
+        cursor. The cursor can be CLOSEd by the caller, or it will be
+        closed automatically when the transaction closes.
+
+       </para>
+
+       <para>
+        The cursor name returned by the function can be specified by the
+        caller or automatically generated. The following example shows
+        how a cursor name can be supplied by the caller:
+
+<programlisting>
+CREATE TABLE test (col text);
+INSERT INTO test VALUES ('123');
+
+CREATE FUNCTION reffunc(refcursor) RETURNS refcursor AS '
+BEGIN
+        OPEN $1 FOR SELECT col FROM test;
+        RETURN $1;
+END;
+' LANGUAGE 'plpgsql';
+
+BEGIN;
+SELECT reffunc('funccursor');
+FETCH ALL IN funccursor;
+COMMIT;
+</programlisting>
+       </para>
+
+       <para>
+        The following example uses automatic cursor name generation:
+         
+<programlisting>
+CREATE FUNCTION reffunc2() RETURNS refcursor AS '
+DECLARE
+        ref refcursor;
+BEGIN
+        OPEN ref FOR SELECT col FROM test;
+        RETURN ref;
+END;
+' LANGUAGE 'plpgsql';
+
+BEGIN;
+SELECT reffunc2();
+  
+        reffunc2      
+  --------------------
+   <unnamed cursor 1>
+  (1 row)
+
+FETCH ALL IN "<unnamed cursor 1>";
+COMMIT;
 </programlisting>
        </para>
      </sect3>
