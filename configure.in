@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.313 2004/02/02 22:20:32 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.314 2004/02/10 19:55:45 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1063,9 +1063,8 @@ fi
 
 # If we found "long int" is 64 bits, assume snprintf handles it.  If
 # we found we need to use "long long int", better check.  We cope with
-# snprintfs that use either %lld, %qd, or %I64d as the format.  If
-# neither works, fall back to our own snprintf emulation (which we
-# know uses %lld).
+# snprintfs that use %lld, %qd, or %I64d as the format.  If none of these
+# work, fall back to our own snprintf emulation (which we know uses %lld).
 
 if test "$HAVE_LONG_LONG_INT_64" = yes ; then
   if test $pgac_need_repl_snprintf = no; then
@@ -1079,14 +1078,20 @@ if test "$HAVE_LONG_LONG_INT_64" = yes ; then
     # Here if we previously decided we needed to use our own snprintf
     LONG_LONG_INT_FORMAT='%lld'
   fi
+  LONG_LONG_UINT_FORMAT=`echo "$LONG_LONG_INT_FORMAT" | sed 's/d$/u/'`
   INT64_FORMAT="\"$LONG_LONG_INT_FORMAT\""
+  UINT64_FORMAT="\"$LONG_LONG_UINT_FORMAT\""
 else
   # Here if we are not using 'long long int' at all
   INT64_FORMAT='"%ld"'
+  UINT64_FORMAT='"%lu"'
 fi
 
 AC_DEFINE_UNQUOTED(INT64_FORMAT, $INT64_FORMAT,
                    [Define to the appropriate snprintf format for 64-bit ints, if any.])
+
+AC_DEFINE_UNQUOTED(UINT64_FORMAT, $UINT64_FORMAT,
+                   [Define to the appropriate snprintf format for unsigned 64-bit ints, if any.])
 
 if test $pgac_need_repl_snprintf = yes; then
   AC_LIBOBJ(snprintf)
