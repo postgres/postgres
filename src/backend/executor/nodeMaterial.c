@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.19 1999/02/03 21:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.20 1999/02/09 17:02:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "executor/nodeMaterial.h"
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
-#include "optimizer/internal.h" /* for _TEMP_RELATION_ID_ */
+#include "optimizer/internal.h" /* for _NONAME_RELATION_ID_ */
 #include "access/heapam.h"
 
 /* ----------------------------------------------------------------
@@ -265,7 +265,7 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 
 	/* ----------------
 	 *	ExecCreatR wants it's second argument to be an object id of
-	 *	a relation in the range table or a _TEMP_RELATION_ID
+	 *	a relation in the range table or a _NONAME_RELATION_ID
 	 *	indicating that the relation is not in the range table.
 	 *
 	 *	In the second case ExecCreatR creates a temp relation.
@@ -277,7 +277,7 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 /*	  len = ExecTargetListLength(node->plan.targetlist); */
-	tempDesc = ExecCreatR(tupType, _TEMP_RELATION_ID_);
+	tempDesc = ExecCreatR(tupType, _NONAME_RELATION_ID_);
 
 	/* ----------------
 	 *	save the relation descriptor in the sortstate

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.26 1999/02/03 20:15:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.27 1999/02/09 17:02:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ cost_seqscan(int relid, int relpages, int reltuples)
 		/*
 		 * cost of sequentially scanning a materialized temporary relation
 		 */
-		temp += _TEMP_SCAN_COST_;
+		temp += _NONAME_SCAN_COST_;
 	}
 	else
 	{
@@ -198,7 +198,7 @@ cost_sort(List *keys, int tuples, int width, bool noread)
 		numTuples * base_log((double) pages, (double) 2.0);
 
 	if (!noread)
-		temp = temp + cost_seqscan(_TEMP_RELATION_ID_, npages, tuples);
+		temp = temp + cost_seqscan(_NONAME_RELATION_ID_, npages, tuples);
 	Assert(temp >= 0);
 
 	return temp;

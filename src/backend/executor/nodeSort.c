@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.16 1998/09/01 03:22:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.17 1999/02/09 17:02:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "catalog/catalog.h"
 #include "catalog/heap.h"
 #include "storage/bufmgr.h"
-#include "optimizer/internal.h" /* for _TEMP_RELATION_ID_ */
+#include "optimizer/internal.h" /* for _NONAME_RELATION_ID_ */
 
 /* ----------------------------------------------------------------
  *		FormSortKeys(node)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.40 1999/02/09 03:51:41 momjian Exp $
+ * $Id: nodes.h,v 1.41 1999/02/09 17:03:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ typedef enum NodeTag
 	T_NestLoop,
 	T_MergeJoin,
 	T_HashJoin,
-	T_Temp,
+	T_Noname,
 	T_Material,
 	T_Sort,
 	T_Agg,
@@ -251,8 +251,8 @@ typedef struct Node
 	(nodeTag(j)==T_Join || nodeTag(j)==T_NestLoop || \
 	 nodeTag(j)==T_MergeJoin || nodeTag(j)==T_HashJoin)
 
-#define IsA_Temp(t) \
-	(nodeTag(t)==T_Temp || nodeTag(t)==T_Material || nodeTag(t)==T_Sort || \
+#define IsA_Noname(t) \
+	(nodeTag(t)==T_Noname || nodeTag(t)==T_Material || nodeTag(t)==T_Sort || \
 	 nodeTag(t)==T_Unique)
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.39 1999/02/09 03:51:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.40 1999/02/09 17:02:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@
 #include "optimizer/internal.h"
 
 
-#define TEMP_SORT		1
-#define TEMP_MATERIAL	2
+#define NONAME_SORT		1
+#define NONAME_MATERIAL	2
 
 static List *switch_outer(List *clauses);
 static Scan *create_scan_node(Path *best_path, List *tlist);
@@ -60,8 +60,8 @@ static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static Node *fix_indxqual_references(Node *clause, Path *index_path);
-static Temp *make_temp(List *tlist, List *keys, Oid *operators,
-		  Plan *plan_node, int temptype);
+static Noname *make_noname(List *tlist, List *keys, Oid *operators,
+		  Plan *plan_node, int nonametype);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig, Cost cost);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
@@ -72,7 +72,7 @@ static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist, List *qpqual,
 			   List *mergeclauses, Oid opcode, Oid *rightorder,
 			   Oid *leftorder, Plan *righttree, Plan *lefttree);
-static Material *make_material(List *tlist, Oid tempid, Plan *lefttree,
+static Material *make_material(List *tlist, Oid nonameid, Plan *lefttree,
 			  int keycount);
 
 /*
@@ -476,11 +476,11 @@ create_nestloop_node(JoinPath *best_path,
 	}
 	else if (IsA_Join(inner_node))
 	{
-		inner_node = (Plan *) make_temp(inner_tlist,
+		inner_node = (Plan *) make_noname(inner_tlist,
 										NIL,
 										NULL,
 										inner_node,
-										TEMP_MATERIAL);
+										NONAME_MATERIAL);
 	}
 
 	join_node = make_nestloop(tlist,
@@ -545,11 +545,11 @@ create_mergejoin_node(MergePath *best_path,
 	 */
 	if (best_path->outersortkeys)
 	{
-		Temp	   *sorted_outer_node = make_temp(outer_tlist,
+		Noname	   *sorted_outer_node = make_noname(outer_tlist,
 												best_path->outersortkeys,
 												  outer_order,
 												  outer_node,
-												  TEMP_SORT);
+												  NONAME_SORT);
 
 		sorted_outer_node->plan.cost = outer_node->cost;
 		outer_node = (Plan *) sorted_outer_node;
@@ -557,11 +557,11 @@ create_mergejoin_node(MergePath *best_path,
 
 	if (best_path->innersortkeys)
 	{
-		Temp	   *sorted_inner_node = make_temp(inner_tlist,
+		Noname	   *sorted_inner_node = make_noname(inner_tlist,
 												best_path->innersortkeys,
 												  inner_order,
 												  inner_node,
-												  TEMP_SORT);
+												  NONAME_SORT);
 
 		sorted_inner_node->plan.cost = outer_node->cost;
 		inner_node = (Plan *) sorted_inner_node;
@@ -798,7 +798,7 @@ switch_outer(List *clauses)
 }
 
 /*
- * set-temp-tlist-operators--
+ * set-noname-tlist-operators--
  *	  Sets the key and keyop fields of resdom nodes in a target list.
  *
  *	  'tlist' is the target list
@@ -812,7 +812,7 @@ switch_outer(List *clauses)
  *	  Returns the modified target list.
  */
 static List *
-set_temp_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
+set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
 {
 	Node	   *keys = NULL;
 	int			keyno = 1;
@@ -846,8 +846,8 @@ set_temp_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
  *****************************************************************************/
 
 /*
- * make_temp--
- *	  Create plan nodes to sort or materialize relations into temporaries. The
+ * make_noname--
+ *	  Create plan nodes to sort or materialize relations into noname. The
  *	  result returned for a sort will look like (SEQSCAN(SORT(plan-node)))
  *	  or (SEQSCAN(MATERIAL(plan-node)))
  *
@@ -856,46 +856,46 @@ set_temp_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
  *	  'operators' is the operators with which the sort or hash is to be done
  *		(a list of operator OIDs)
  *	  'plan-node' is the node which yields tuples for the sort
- *	  'temptype' indicates which operation(sort or hash) to perform
+ *	  'nonametype' indicates which operation(sort or hash) to perform
  */
-static Temp *
-make_temp(List *tlist,
+static Noname *
+make_noname(List *tlist,
 		  List *keys,
 		  Oid *operators,
 		  Plan *plan_node,
-		  int temptype)
+		  int nonametype)
 {
-	List	   *temp_tlist;
-	Temp	   *retval = NULL;
+	List	   *noname_tlist;
+	Noname	   *retval = NULL;
 
-	/* Create a new target list for the temporary, with keys set. */
-	temp_tlist = set_temp_tlist_operators(new_unsorted_tlist(tlist),
+	/* Create a new target list for the noname, with keys set. */
+	noname_tlist = set_noname_tlist_operators(new_unsorted_tlist(tlist),
 										  keys,
 										  operators);
-	switch (temptype)
+	switch (nonametype)
 	{
-		case TEMP_SORT:
-			retval = (Temp *) make_seqscan(tlist,
+		case NONAME_SORT:
+			retval = (Noname *) make_seqscan(tlist,
 										   NIL,
-										   _TEMP_RELATION_ID_,
-										   (Plan *) make_sort(temp_tlist,
-													  _TEMP_RELATION_ID_,
+										   _NONAME_RELATION_ID_,
+										   (Plan *) make_sort(noname_tlist,
+													  _NONAME_RELATION_ID_,
 															  plan_node,
 														  length(keys)));
 			break;
 
-		case TEMP_MATERIAL:
-			retval = (Temp *) make_seqscan(tlist,
+		case NONAME_MATERIAL:
+			retval = (Noname *) make_seqscan(tlist,
 										   NIL,
-										   _TEMP_RELATION_ID_,
-									   (Plan *) make_material(temp_tlist,
-													  _TEMP_RELATION_ID_,
+										   _NONAME_RELATION_ID_,
+									   (Plan *) make_material(noname_tlist,
+													  _NONAME_RELATION_ID_,
 															  plan_node,
 														  length(keys)));
 			break;
 
 		default:
-			elog(ERROR, "make_temp: unknown temp type %d", temptype);
+			elog(ERROR, "make_noname: unknown noname type %d", nonametype);
 
 	}
 	return retval;
@@ -1049,7 +1049,7 @@ make_mergejoin(List *tlist,
 }
 
 Sort *
-make_sort(List *tlist, Oid tempid, Plan *lefttree, int keycount)
+make_sort(List *tlist, Oid nonameid, Plan *lefttree, int keycount)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
@@ -1060,7 +1060,7 @@ make_sort(List *tlist, Oid tempid, Plan *lefttree, int keycount)
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->tempid = tempid;
+	node->nonameid = nonameid;
 	node->keycount = keycount;
 
 	return node;
@@ -1068,7 +1068,7 @@ make_sort(List *tlist, Oid tempid, Plan *lefttree, int keycount)
 
 static Material *
 make_material(List *tlist,
-			  Oid tempid,
+			  Oid nonameid,
 			  Plan *lefttree,
 			  int keycount)
 {
@@ -1081,7 +1081,7 @@ make_material(List *tlist,
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->tempid = tempid;
+	node->nonameid = nonameid;
 	node->keycount = keycount;
 
 	return node;
@@ -1145,7 +1145,7 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
-	node->tempid = _TEMP_RELATION_ID_;
+	node->nonameid = _NONAME_RELATION_ID_;
 	node->keycount = 0;
 	if (strcmp(uniqueAttr, "*") == 0)
 		node->uniqueAttr = NULL;

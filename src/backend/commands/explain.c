@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.30 1998/12/18 14:45:07 wieck Exp $
+ *	  $Id: explain.c,v 1.31 1999/02/09 17:02:43 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -176,8 +176,8 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		case T_IndexScan:
 			pname = "Index Scan";
 			break;
-		case T_Temp:
-			pname = "Temp Scan";
+		case T_Noname:
+			pname = "Noname Scan";
 			break;
 		case T_Sort:
 			pname = "Sort";

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.10 1999/02/03 20:15:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.11 1999/02/09 17:03:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,8 @@ get_base_rel(Query *root, int relid)
 			 * If the relation is a materialized relation, assume
 			 * constants for sizes.
 			 */
-			rel->pages = _TEMP_RELATION_PAGES_;
-			rel->tuples = _TEMP_RELATION_TUPLES_;
+			rel->pages = _NONAME_RELATION_PAGES_;
+			rel->tuples = _NONAME_RELATION_TUPLES_;
 
 		}
 		else

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.20 1999/01/23 23:28:09 momjian Exp $
+ * $Id: plannodes.h,v 1.21 1999/02/09 17:03:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,15 +262,15 @@ typedef struct Group
 
 /*
  * ==========
- * Temp nodes
+ * Noname nodes
  * ==========
  */
-typedef struct Temp
+typedef struct Noname
 {
 	Plan		plan;
-	Oid			tempid;
+	Oid			nonameid;
 	int			keycount;
-} Temp;
+} Noname;
 
 /* ----------------
  *		materialization node
@@ -278,8 +278,8 @@ typedef struct Temp
  */
 typedef struct Material
 {
-	Plan		plan;			/* temp node flattened out */
-	Oid			tempid;
+	Plan		plan;			/* noname node flattened out */
+	Oid			nonameid;
 	int			keycount;
 	MaterialState *matstate;
 } Material;
@@ -290,8 +290,8 @@ typedef struct Material
  */
 typedef struct Sort
 {
-	Plan		plan;			/* temp node flattened out */
-	Oid			tempid;
+	Plan		plan;			/* noname node flattened out */
+	Oid			nonameid;
 	int			keycount;
 	SortState  *sortstate;
 	void	   *psortstate;
@@ -304,8 +304,8 @@ typedef struct Sort
  */
 typedef struct Unique
 {
-	Plan		plan;			/* temp node flattened out */
-	Oid			tempid;
+	Plan		plan;			/* noname node flattened out */
+	Oid			nonameid;
 	int			keycount;
 	char	   *uniqueAttr;		/* NULL if all attrs, or unique attribute
 								 * name */

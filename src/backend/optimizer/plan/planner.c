@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.42 1999/02/03 21:16:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.43 1999/02/09 17:03:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,7 +399,7 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 	}
 
 	sortplan = (Plan *) make_sort(temp_tlist,
-								  _TEMP_RELATION_ID_,
+								  _NONAME_RELATION_ID_,
 								  (Plan *) plannode,
 								  length(sortcls));
 

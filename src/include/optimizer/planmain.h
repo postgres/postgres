@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.19 1999/02/02 17:46:16 momjian Exp $
+ * $Id: planmain.h,v 1.20 1999/02/09 17:03:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ extern Plan *query_planner(Query *root,
 extern Plan *create_plan(Path *best_path);
 extern SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid,
 			 Plan *lefttree);
-extern Sort *make_sort(List *tlist, Oid tempid, Plan *lefttree,
+extern Sort *make_sort(List *tlist, Oid nonameid, Plan *lefttree,
 		  int keycount);
 extern Agg *make_agg(List *tlist, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: execAmi.c,v 1.30 1999/02/02 03:44:23 momjian Exp $
+ *  $Id: execAmi.c,v 1.31 1999/02/09 17:02:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@
 #include "executor/nodeAppend.h"
 #include "executor/nodeSubplan.h"
 #include "executor/execdebug.h"
-#include "optimizer/internal.h" /* for _TEMP_RELATION_ID_ */
+#include "optimizer/internal.h" /* for _NONAME_RELATION_ID_ */
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/heap.h"
@@ -509,11 +509,11 @@ ExecCreatR(TupleDesc tupType,
 
 	relDesc = NULL;
 
-	if (relationOid == _TEMP_RELATION_ID_)
+	if (relationOid == _NONAME_RELATION_ID_)
 	{
 		/* ----------------
 		 *	 create a temporary relation
-		 *	 (currently the planner always puts a _TEMP_RELATION_ID
+		 *	 (currently the planner always puts a _NONAME_RELATION_ID
 		 *	 in the relation argument so we expect this to be the case although
 		 *	 it's possible that someday we'll get the name from
 		 *	 from the range table.. -cim 10/12/89)

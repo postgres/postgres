@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.72 1999/02/03 21:15:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.73 1999/02/09 17:02:42 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -149,7 +149,7 @@ typedef struct tempRelList
 								 * array */
 } TempRelList;
 
-#define TEMP_REL_LIST_SIZE	32
+#define NONAME_REL_LIST_SIZE	32
 
 static TempRelList *tempRels = NULL;
 
@@ -1392,7 +1392,7 @@ InitNoNameRelList(void)
 	}
 
 	tempRels = (TempRelList *) malloc(sizeof(TempRelList));
-	tempRels->size = TEMP_REL_LIST_SIZE;
+	tempRels->size = NONAME_REL_LIST_SIZE;
 	tempRels->rels = (Relation *) malloc(sizeof(Relation) * tempRels->size);
 	MemSet(tempRels->rels, 0, sizeof(Relation) * tempRels->size);
 	tempRels->num = 0;
@@ -1436,7 +1436,7 @@ AddToNoNameRelList(Relation r)
 
 	if (tempRels->num == tempRels->size)
 	{
-		tempRels->size += TEMP_REL_LIST_SIZE;
+		tempRels->size += NONAME_REL_LIST_SIZE;
 		tempRels->rels = realloc(tempRels->rels,
 								 sizeof(Relation) * tempRels->size);
 	}

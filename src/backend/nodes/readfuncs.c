@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.51 1999/02/09 03:51:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.52 1999/02/09 17:02:50 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -565,25 +565,25 @@ _readIndexScan()
 }
 
 /* ----------------
- *		_readTemp
+ *		_readNoname
  *
- *	Temp is a subclass of Plan
+ *	Noname is a subclass of Plan
  * ----------------
  */
-static Temp *
-_readTemp()
+static Noname *
+_readNoname()
 {
-	Temp	   *local_node;
+	Noname	   *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(Temp);
+	local_node = makeNode(Noname);
 
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :tempid */
-	token = lsptok(NULL, &length);		/* get tempid */
-	local_node->tempid = atol(token);
+	token = lsptok(NULL, &length);		/* eat :nonameid */
+	token = lsptok(NULL, &length);		/* get nonameid */
+	local_node->nonameid = atol(token);
 
 	token = lsptok(NULL, &length);		/* eat :keycount */
 	token = lsptok(NULL, &length);		/* get keycount */
@@ -595,7 +595,7 @@ _readTemp()
 /* ----------------
  *		_readSort
  *
- *	Sort is a subclass of Temp
+ *	Sort is a subclass of Noname
  * ----------------
  */
 static Sort *
@@ -609,9 +609,9 @@ _readSort()
 
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :tempid */
-	token = lsptok(NULL, &length);		/* get tempid */
-	local_node->tempid = atol(token);
+	token = lsptok(NULL, &length);		/* eat :nonameid */
+	token = lsptok(NULL, &length);		/* get nonameid */
+	local_node->nonameid = atol(token);
 
 	token = lsptok(NULL, &length);		/* eat :keycount */
 	token = lsptok(NULL, &length);		/* get keycount */
@@ -639,7 +639,7 @@ _readAgg()
 /* ----------------
  *		_readUnique
  *
- * For some reason, unique is a subclass of Temp.
+ * For some reason, unique is a subclass of Noname.
  */
 static Unique *
 _readUnique()
@@ -652,9 +652,9 @@ _readUnique()
 
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :tempid */
-	token = lsptok(NULL, &length);		/* get :tempid */
-	local_node->tempid = atol(token);
+	token = lsptok(NULL, &length);		/* eat :nonameid */
+	token = lsptok(NULL, &length);		/* get :nonameid */
+	local_node->nonameid = atol(token);
 
 	token = lsptok(NULL, &length);		/* eat :keycount */
 	token = lsptok(NULL, &length);		/* get :keycount */
@@ -666,7 +666,7 @@ _readUnique()
 /* ----------------
  *		_readHash
  *
- *	Hash is a subclass of Temp
+ *	Hash is a subclass of Noname
  * ----------------
  */
 static Hash *
@@ -2070,8 +2070,8 @@ parsePlanString(void)
 		return_value = _readSeqScan();
 	else if (!strncmp(token, "INDEXSCAN", length))
 		return_value = _readIndexScan();
-	else if (!strncmp(token, "TEMP", length))
-		return_value = _readTemp();
+	else if (!strncmp(token, "NONAME", length))
+		return_value = _readNoname();
 	else if (!strncmp(token, "SORT", length))
 		return_value = _readSort();
 	else if (!strncmp(token, "AGGREG", length))

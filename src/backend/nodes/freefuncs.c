@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.3 1999/02/09 03:51:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.4 1999/02/09 17:02:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,32 +298,32 @@ _freeHashJoin(HashJoin *node)
 
 
 /* ----------------
- *		FreeTempFields
+ *		FreeNonameFields
  *
- *		This function frees the fields of the Temp node.  It is used by
- *		all the free functions for classes which inherit node Temp.
+ *		This function frees the fields of the Noname node.  It is used by
+ *		all the free functions for classes which inherit node Noname.
  * ----------------
  */
 static void
-FreeTempFields(Temp *node)
+FreeNonameFields(Noname *node)
 {
 	return;
 }
 
 
 /* ----------------
- *		_freeTemp
+ *		_freeNoname
  * ----------------
  */
 static void
-_freeTemp(Temp *node)
+_freeNoname(Noname *node)
 {
 	/* ----------------
 	 *	free node superclass fields
 	 * ----------------
 	 */
 	FreePlanFields((Plan *) node);
-	FreeTempFields(node);
+	FreeNonameFields(node);
 
 	pfree(node);
 }
@@ -340,7 +340,7 @@ _freeMaterial(Material *node)
 	 * ----------------
 	 */
 	FreePlanFields((Plan *) node);
-	FreeTempFields((Temp *) node);
+	FreeNonameFields((Noname *) node);
 
 	pfree(node);
 }
@@ -358,7 +358,7 @@ _freeSort(Sort *node)
 	 * ----------------
 	 */
 	FreePlanFields((Plan *) node);
-	FreeTempFields((Temp *) node);
+	FreeNonameFields((Noname *) node);
 
 	pfree(node);
 }
@@ -417,7 +417,7 @@ _freeUnique(Unique *node)
 	 * ----------------
 	 */
 	FreePlanFields((Plan *) node);
-	FreeTempFields((Temp *) node);
+	FreeNonameFields((Noname *) node);
 
 	/* ----------------
 	 *	free remainder of node
@@ -1207,8 +1207,8 @@ freeObject(void *node)
 		case T_HashJoin:
 			_freeHashJoin(node);
 			break;
-		case T_Temp:
-			_freeTemp(node);
+		case T_Noname:
+			_freeNoname(node);
 			break;
 		case T_Material:
 			_freeMaterial(node);

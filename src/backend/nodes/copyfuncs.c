@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.64 1999/02/09 03:51:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.65 1999/02/09 17:02:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,36 +372,36 @@ _copyHashJoin(HashJoin *from)
 
 
 /* ----------------
- *		CopyTempFields
+ *		CopyNonameFields
  *
- *		This function copies the fields of the Temp node.  It is used by
- *		all the copy functions for classes which inherit from Temp.
+ *		This function copies the fields of the Noname node.  It is used by
+ *		all the copy functions for classes which inherit from Noname.
  * ----------------
  */
 static void
-CopyTempFields(Temp *from, Temp *newnode)
+CopyNonameFields(Noname *from, Noname *newnode)
 {
-	newnode->tempid = from->tempid;
+	newnode->nonameid = from->nonameid;
 	newnode->keycount = from->keycount;
 	return;
 }
 
 
 /* ----------------
- *		_copyTemp
+ *		_copyNoname
  * ----------------
  */
-static Temp *
-_copyTemp(Temp *from)
+static Noname *
+_copyNoname(Noname *from)
 {
-	Temp	   *newnode = makeNode(Temp);
+	Noname	   *newnode = makeNode(Noname);
 
 	/* ----------------
 	 *	copy node superclass fields
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyTempFields(from, newnode);
+	CopyNonameFields(from, newnode);
 
 	return newnode;
 }
@@ -420,7 +420,7 @@ _copyMaterial(Material *from)
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyTempFields((Temp *) from, (Temp *) newnode);
+	CopyNonameFields((Noname *) from, (Noname *) newnode);
 
 	return newnode;
 }
@@ -440,7 +440,7 @@ _copySort(Sort *from)
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyTempFields((Temp *) from, (Temp *) newnode);
+	CopyNonameFields((Noname *) from, (Noname *) newnode);
 
 	return newnode;
 }
@@ -511,7 +511,7 @@ _copyUnique(Unique *from)
 	 * ----------------
 	 */
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
-	CopyTempFields((Temp *) from, (Temp *) newnode);
+	CopyNonameFields((Noname *) from, (Noname *) newnode);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1688,8 +1688,8 @@ copyObject(void *from)
 		case T_HashJoin:
 			retval = _copyHashJoin(from);
 			break;
-		case T_Temp:
-			retval = _copyTemp(from);
+		case T_Noname:
+			retval = _copyNoname(from);
 			break;
 		case T_Material:
 			retval = _copyMaterial(from);

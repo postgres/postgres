@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.37 1999/02/03 21:16:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.38 1999/02/09 17:03:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,14 +34,14 @@
 #include "optimizer/tlist.h"
 
 static void set_join_tlist_references(Join *join);
-static void set_tempscan_tlist_references(SeqScan *tempscan);
-static void set_temp_tlist_references(Temp *temp);
+static void set_nonamescan_tlist_references(SeqScan *nonamescan);
+static void set_noname_tlist_references(Noname *noname);
 static List *replace_clause_joinvar_refs(Expr *clause,
 							List *outer_tlist, List *inner_tlist);
 static List *replace_subclause_joinvar_refs(List *clauses,
 							   List *outer_tlist, List *inner_tlist);
 static Var *replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist);
-static List *tlist_temp_references(Oid tempid, List *tlist);
+static List *tlist_noname_references(Oid nonameid, List *tlist);
 static void replace_result_clause(Node *clause, List *subplanTargetList);
 static bool OperandIsInner(Node *opnd, int inner_relid);
 static List *replace_agg_clause(Node *expr, List *targetlist);
@@ -74,10 +74,10 @@ set_tlist_references(Plan *plan)
 	if (IsA_Join(plan))
 		set_join_tlist_references((Join *) plan);
 	else if (IsA(plan, SeqScan) &&plan->lefttree &&
-			 IsA_Temp(plan->lefttree))
-		set_tempscan_tlist_references((SeqScan *) plan);
+			 IsA_Noname(plan->lefttree))
+		set_nonamescan_tlist_references((SeqScan *) plan);
 	else if (IsA(plan, Sort))
-		set_temp_tlist_references((Temp *) plan);
+		set_noname_tlist_references((Noname *) plan);
 	else if (IsA(plan, Result))
 		set_result_tlist_references((Result *) plan);
 	else if (IsA(plan, Hash))
@@ -136,49 +136,49 @@ set_join_tlist_references(Join *join)
 }
 
 /*
- * set-tempscan-tlist-references--
- *	  Modifies the target list of a node that scans a temp relation (i.e., a
- *	  sort or hash node) so that the varnos refer to the child temporary.
+ * set-nonamescan-tlist-references--
+ *	  Modifies the target list of a node that scans a noname relation (i.e., a
+ *	  sort or hash node) so that the varnos refer to the child noname.
  *
- * 'tempscan' is a seqscan node
+ * 'nonamescan' is a seqscan node
  *
  * Returns nothing of interest, but modifies internal fields of nodes.
  *
  */
 static void
-set_tempscan_tlist_references(SeqScan *tempscan)
+set_nonamescan_tlist_references(SeqScan *nonamescan)
 {
-	Temp	   *temp = (Temp *) ((Plan *) tempscan)->lefttree;
+	Noname	   *noname = (Noname *) ((Plan *) nonamescan)->lefttree;
 
-	((Plan *) tempscan)->targetlist = tlist_temp_references(temp->tempid,
-							  ((Plan *) tempscan)->targetlist);
-	set_temp_tlist_references(temp);
+	((Plan *) nonamescan)->targetlist = tlist_noname_references(noname->nonameid,
+							  ((Plan *) nonamescan)->targetlist);
+	set_noname_tlist_references(noname);
 }
 
 /*
- * set-temp-tlist-references--
- *	  The temp's vars are made consistent with (actually, identical to) the
- *	  modified version of the target list of the node from which temp node
+ * set-noname-tlist-references--
+ *	  The noname's vars are made consistent with (actually, identical to) the
+ *	  modified version of the target list of the node from which noname node
  *	  receives its tuples.
  *
- * 'temp' is a temp (e.g., sort, hash) plan node
+ * 'noname' is a noname (e.g., sort, hash) plan node
  *
  * Returns nothing of interest, but modifies internal fields of nodes.
  *
  */
 static void
-set_temp_tlist_references(Temp *temp)
+set_noname_tlist_references(Noname *noname)
 {
-	Plan	   *source = ((Plan *) temp)->lefttree;
+	Plan	   *source = ((Plan *) noname)->lefttree;
 
 	if (source != NULL)
 	{
 		set_tlist_references(source);
-		((Plan *) temp)->targetlist = copy_vars(((Plan *) temp)->targetlist,
+		((Plan *) noname)->targetlist = copy_vars(((Plan *) noname)->targetlist,
 					  (source)->targetlist);
 	}
 	else
-		elog(ERROR, "calling set_temp_tlist_references with empty lefttree");
+		elog(ERROR, "calling set_noname_tlist_references with empty lefttree");
 }
 
 /*
@@ -475,25 +475,25 @@ replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
 }
 
 /*
- * tlist-temp-references--
- *	  Creates a new target list for a node that scans a temp relation,
- *	  setting the varnos to the id of the temp relation and setting varids
+ * tlist-noname-references--
+ *	  Creates a new target list for a node that scans a noname relation,
+ *	  setting the varnos to the id of the noname relation and setting varids
  *	  if necessary (varids are only needed if this is a targetlist internal
  *	  to the tree, in which case the targetlist entry always contains a var
- *	  node, so we can just copy it from the temp).
+ *	  node, so we can just copy it from the noname).
  *
- * 'tempid' is the id of the temp relation
+ * 'nonameid' is the id of the noname relation
  * 'tlist' is the target list to be modified
  *
  * Returns new target list
  *
  */
 static List *
-tlist_temp_references(Oid tempid,
+tlist_noname_references(Oid nonameid,
 					  List *tlist)
 {
 	List	   *t_list = NIL;
-	TargetEntry *temp = (TargetEntry *) NULL;
+	TargetEntry *noname = (TargetEntry *) NULL;
 	TargetEntry *xtl = NULL;
 	List	   *entry;
 
@@ -507,16 +507,16 @@ tlist_temp_references(Oid tempid,
 		else
 			oattno = 0;
 
-		temp = makeTargetEntry(xtl->resdom,
-							   (Node *) makeVar(tempid,
+		noname = makeTargetEntry(xtl->resdom,
+							   (Node *) makeVar(nonameid,
 												xtl->resdom->resno,
 												xtl->resdom->restype,
 												xtl->resdom->restypmod,
 												0,
-												tempid,
+												nonameid,
 												oattno));
 
-		t_list = lappend(t_list, temp);
+		t_list = lappend(t_list, noname);
 	}
 	return t_list;
 }

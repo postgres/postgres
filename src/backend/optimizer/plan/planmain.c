@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.29 1998/10/01 02:03:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.30 1999/02/09 17:03:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,7 +478,7 @@ make_groupPlan(List **tlist,
 	}
 
 	sortplan = make_sort(sort_tlist,
-						 _TEMP_RELATION_ID_,
+						 _NONAME_RELATION_ID_,
 						 subplan,
 						 numCols);
 	sortplan->plan.cost = subplan->cost;		/* XXX assume no cost */
