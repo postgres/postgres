@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Oct  8 21:28:58 EDT 2004
+Last updated:		Tue Oct 12 21:03:05 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -326,7 +326,12 @@ Commands
   to be automatically ignored.
 
 * Make row-wise comparisons work per SQL spec
+* Add RESET CONNECTION command to reset all session state
 
+  This would include resetting of all variables (RESET ALL), dropping of
+  all temporary tables, removal of any NOTIFYs, etc.  This could be used
+  for connection pooling.  We could also change RESET ALL to have this
+  functionality.
 
 * ALTER
 	o Have ALTER TABLE RENAME rename SERIAL sequence names
