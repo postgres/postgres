@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.219 2004/07/12 02:22:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.220 2004/07/19 02:47:10 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1371,6 +1371,15 @@ static struct config_real ConfigureNamesReal[] =
 
 static struct config_string ConfigureNamesString[] =
 {
+ 	{
+ 		{"archive_command", PGC_SIGHUP, WAL_SETTINGS,
+ 			gettext_noop("WAL archiving command."),
+ 			gettext_noop("The shell command that will be called to archive a WAL file.")
+ 		},
+ 		&XLogArchiveCommand,
+ 		"", NULL, NULL
+ 	},
+
 	{
 		{"client_encoding", PGC_USERSET, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the client's character set encoding."),

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.411 2004/07/12 19:14:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.412 2004/07/19 02:47:08 tgl Exp $
  *
  * NOTES
  *
@@ -104,6 +104,7 @@
 #include "miscadmin.h"
 #include "nodes/nodes.h"
 #include "postmaster/postmaster.h"
+#include "postmaster/pgarch.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -198,6 +199,7 @@ char	   *preload_libraries_string = NULL;
 /* PIDs of special child processes; 0 when not running */
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
+			PgArchPID = 0,
 			PgStatPID = 0;
 
 /* Startup/shutdown state */
@@ -826,7 +828,8 @@ PostmasterMain(int argc, char *argv[])
 	 *
 	 * CAUTION: when changing this list, check for side-effects on the signal
 	 * handling setup of child processes.  See tcop/postgres.c,
-	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, and postmaster/pgstat.c.
+	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, postmaster/pgarch.c,
+	 * and postmaster/pgstat.c.
 	 */
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
@@ -1217,6 +1220,11 @@ ServerLoop(void)
 				kill(BgWriterPID, SIGUSR2);
 		}
 
+		/* If we have lost the archiver, try to start a new one */
+		if (XLogArchivingActive() && PgArchPID == 0 && 
+            StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
+			PgArchPID = pgarch_start();
+ 
 		/* If we have lost the stats collector, try to start a new one */
 		if (PgStatPID == 0 &&
 			StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
@@ -1760,6 +1768,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 		SignalChildren(SIGHUP);
 		if (BgWriterPID != 0)
 			kill(BgWriterPID, SIGHUP);
+		if (PgArchPID != 0)
+			kill(PgArchPID, SIGHUP);
 		/* PgStatPID does not currently need SIGHUP */
 		load_hba();
 		load_ident();
@@ -1818,6 +1828,9 @@ pmdie(SIGNAL_ARGS)
 			/* And tell it to shut down */
 			if (BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
+			/* Tell pgarch to shut down too; nothing left for it to do */
+			if (PgArchPID != 0)
+				kill(PgArchPID, SIGQUIT);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
 				kill(PgStatPID, SIGQUIT);
@@ -1862,6 +1875,9 @@ pmdie(SIGNAL_ARGS)
 			/* And tell it to shut down */
 			if (BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
+			/* Tell pgarch to shut down too; nothing left for it to do */
+			if (PgArchPID != 0)
+				kill(PgArchPID, SIGQUIT);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
 				kill(PgStatPID, SIGQUIT);
@@ -1880,6 +1896,8 @@ pmdie(SIGNAL_ARGS)
 				kill(StartupPID, SIGQUIT);
 			if (BgWriterPID != 0)
 				kill(BgWriterPID, SIGQUIT);
+			if (PgArchPID != 0)
+				kill(PgArchPID, SIGQUIT);
 			if (PgStatPID != 0)
 				kill(PgStatPID, SIGQUIT);
 			if (DLGetHead(BackendList))
@@ -1967,12 +1985,16 @@ reaper(SIGNAL_ARGS)
 
 			/*
 			 * Go to shutdown mode if a shutdown request was pending.
-			 * Otherwise, try to start the stats collector too.
+			 * Otherwise, try to start the archiver and stats collector too.
 			 */
 			if (Shutdown > NoShutdown && BgWriterPID != 0)
 				kill(BgWriterPID, SIGUSR2);
-			else if (PgStatPID == 0 && Shutdown == NoShutdown)
-				PgStatPID = pgstat_start();
+			else if (Shutdown == NoShutdown) {
+                    if (XLogArchivingActive() && PgArchPID == 0)
+        				PgArchPID = pgarch_start();
+                    if (PgStatPID == 0)
+        				PgStatPID = pgstat_start();
+            }
 
 			continue;
 		}
@@ -2005,6 +2027,23 @@ reaper(SIGNAL_ARGS)
 		}
 
 		/*
+		 * Was it the archiver?  If so, just try to start a new
+		 * one; no need to force reset of the rest of the system.  (If fail,
+		 * we'll try again in future cycles of the main loop.)
+		 */
+		if (PgArchPID != 0 && pid == PgArchPID)
+		{
+			PgArchPID = 0;
+			if (exitstatus != 0)
+				LogChildExit(LOG, gettext("archiver process"),
+							 pid, exitstatus);
+			if (XLogArchivingActive() &&
+				StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
+				PgArchPID = pgarch_start();
+			continue;
+		}
+
+		/*
 		 * Was it the statistics collector?  If so, just try to start a new
 		 * one; no need to force reset of the rest of the system.  (If fail,
 		 * we'll try again in future cycles of the main loop.)
@@ -2029,8 +2068,9 @@ reaper(SIGNAL_ARGS)
 	if (FatalError)
 	{
 		/*
-		 * Wait for all children exit, then reset shmem and
-		 * StartupDataBase.
+		 * Wait for all important children to exit, then reset shmem and
+		 * StartupDataBase.  (We can ignore the archiver and stats processes
+		 * here since they are not connected to shmem.)
 		 */
 		if (DLGetHead(BackendList) || StartupPID != 0 || BgWriterPID != 0)
 			goto reaper_done;
@@ -2189,6 +2229,17 @@ HandleChildCrash(int pid,
 								 (SendStop ? "SIGSTOP" : "SIGQUIT"),
 								 (int) BgWriterPID)));
 		kill(BgWriterPID, (SendStop ? SIGSTOP : SIGQUIT));
+	}
+
+	/* Force a power-cycle of the pgarch process too */
+	/* (Shouldn't be necessary, but just for luck) */
+	if (PgArchPID != 0 && !FatalError)
+	{
+		ereport(DEBUG2,
+				(errmsg_internal("sending %s to process %d",
+								 "SIGQUIT",
+								 (int) PgArchPID)));
+		kill(PgArchPID, SIGQUIT);
 	}
 
 	/* Force a power-cycle of the pgstat processes too */
@@ -2873,6 +2924,16 @@ SubPostmasterMain(int argc, char *argv[])
 		BootstrapMain(argc - 2, argv + 2);
 		proc_exit(0);
 	}
+	if (strcmp(argv[1], "-forkarch") == 0)
+	{
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts();
+
+		/* Do not want to attach to shared memory */
+
+		PgArchiverMain(argc, argv);
+		proc_exit(0);
+	}
 	if (strcmp(argv[1], "-forkbuf") == 0)
 	{
 		/* Close the postmaster's sockets */
@@ -2951,6 +3012,18 @@ sigusr1_handler(SIGNAL_ARGS)
 		if (Shutdown <= SmartShutdown)
 			SignalChildren(SIGUSR1);
 	}
+ 
+	if (PgArchPID != 0 && Shutdown == NoShutdown)
+	{
+		if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER))
+		{
+			/*
+			 * Send SIGUSR1 to archiver process, to wake it up and begin
+			 * archiving next transaction log file.
+			 */
+            kill(PgArchPID, SIGUSR1);
+		}
+    }
 
 	PG_SETMASK(&UnBlockSig);
 

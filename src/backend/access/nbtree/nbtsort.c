@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.83 2004/07/11 18:01:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.84 2004/07/19 02:47:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,7 @@
 #include "postgres.h"
 
 #include "access/nbtree.h"
+#include "access/xlog.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
 #include "utils/tuplesort.h"
@@ -222,15 +223,9 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 	/*
 	 * We need to log index creation in WAL iff WAL archiving is enabled
 	 * AND it's not a temp index.
-	 *
-	 * XXX when WAL archiving is actually supported, this test will likely
-	 * need to change; and the hardwired extern is cruddy anyway ...
 	 */
-	{
-		extern char XLOG_archive_dir[];
+	wstate.btws_use_wal = XLogArchivingActive() && !wstate.index->rd_istemp;
 
-		wstate.btws_use_wal = XLOG_archive_dir[0] && !wstate.index->rd_istemp;
-	}
 	/* reserve the metapage */
 	wstate.btws_pages_alloced = BTREE_METAPAGE + 1;
 	wstate.btws_pages_written = 0;

@@ -1,0 +1,588 @@
+/*-------------------------------------------------------------------------
+ *
+ * pgarch.c
+ *
+ *	PostgreSQL WAL archiver
+ *
+ *  All functions relating to archiver are included here
+ *
+ *  - All functions executed by archiver process
+ *
+ *  - archiver is forked from postmaster, and the two
+ *  processes then communicate using signals. All functions
+ *  executed by postmaster are included in this file.
+ *
+ *  Initial author: Simon Riggs     simon@2ndquadrant.com
+ *
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.1 2004/07/19 02:47:08 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
+#include "postgres.h"
+
+#include <fcntl.h>
+#include <signal.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+
+#include "postmaster/pgarch.h"
+#include "libpq/pqsignal.h"
+#include "miscadmin.h"
+#include "postmaster/postmaster.h"
+#include "storage/fd.h"
+#include "storage/ipc.h"
+#include "storage/pg_shmem.h"
+#include "storage/pmsignal.h"
+#include "utils/guc.h"
+#include "utils/ps_status.h"
+
+
+/* ----------
+ * Timer definitions.
+ * ----------
+ */
+#define PGARCH_AUTOWAKE_INTERVAL 60		/* How often to force a poll of
+										 * the archive status directory;
+										 * in seconds. */
+#define PGARCH_RESTART_INTERVAL 60		/* How often to attempt to restart
+										 * a failed archiver; in seconds. */
+
+/* ----------
+ * Archiver control info.
+ *
+ * We expect that archivable files within pg_xlog will have names between
+ * MIN_XFN_CHARS and MAX_XFN_CHARS in length, consisting only of characters
+ * appearing in VALID_XFN_CHARS.  The status files in archive_status have
+ * corresponding names with ".ready" or ".done" appended.
+ * ----------
+ */
+#define MIN_XFN_CHARS	16
+#define MAX_XFN_CHARS	16
+#define VALID_XFN_CHARS	"0123456789ABCDEF"
+
+#define NUM_ARCHIVE_RETRIES 3
+
+
+/* ----------
+ * Local data
+ * ----------
+ */
+static char XLogDir[MAXPGPATH];
+static char XLogArchiveStatusDir[MAXPGPATH];
+static time_t last_pgarch_start_time;
+
+/*
+ * Flags set by interrupt handlers for later service in the main loop.
+ */
+static volatile sig_atomic_t got_SIGHUP = false;
+static volatile sig_atomic_t wakened = false;
+
+/* ----------
+ * Local function forward declarations
+ * ----------
+ */
+#ifdef EXEC_BACKEND
+static pid_t pgarch_forkexec(void);
+#endif
+
+NON_EXEC_STATIC void PgArchiverMain(int argc, char *argv[]);
+static void pgarch_exit(SIGNAL_ARGS);
+static void ArchSigHupHandler(SIGNAL_ARGS);
+static void pgarch_waken(SIGNAL_ARGS);
+static void pgarch_MainLoop(void);
+static void pgarch_ArchiverCopyLoop(void);
+static bool pgarch_archiveXlog(char *xlog);
+static bool pgarch_readyXlog(char *xlog);
+static void pgarch_archiveDone(char *xlog);
+
+
+/* ------------------------------------------------------------
+ * Public functions called from postmaster follow
+ * ------------------------------------------------------------
+ */
+
+/*
+ * pgarch_start
+ *
+ *	Called from postmaster at startup or after an existing archiver
+ *	died.  Attempt to fire up a fresh archiver process.
+ *
+ *	Returns PID of child process, or 0 if fail.
+ *
+ *	Note: if fail, we will be called again from the postmaster main loop.
+ */
+int
+pgarch_start(void)
+{
+	time_t		curtime;
+	pid_t		pgArchPid;
+
+	/*
+	 * Do nothing if no archiver needed
+	 */
+	if (!XLogArchivingActive())
+		return 0;
+
+	/*
+	 * Do nothing if too soon since last archiver start.  This is a
+	 * safety valve to protect against continuous respawn attempts if the
+	 * archiver is dying immediately at launch. Note that since we will
+	 * be re-called from the postmaster main loop, we will get another
+	 * chance later.
+	 */
+	curtime = time(NULL);
+	if ((unsigned int) (curtime - last_pgarch_start_time) <
+		(unsigned int) PGARCH_RESTART_INTERVAL)
+ 		return 0;
+	last_pgarch_start_time = curtime;
+
+	fflush(stdout);
+	fflush(stderr);
+
+#ifdef __BEOS__
+	/* Specific beos actions before backend startup */
+	beos_before_backend_startup();
+#endif
+
+#ifdef EXEC_BACKEND
+	switch ((pgArchPid = pgarch_forkexec()))
+#else
+	switch ((pgArchPid = fork()))
+#endif
+	{
+		case -1:
+#ifdef __BEOS__
+			/* Specific beos actions */
+			beos_backend_startup_failed();
+#endif
+			ereport(LOG,
+					(errmsg("could not fork archiver: %m")));
+			return 0;
+
+#ifndef EXEC_BACKEND
+		case 0:
+			/* in postmaster child ... */
+#ifdef __BEOS__
+			/* Specific beos actions after backend startup */
+			beos_backend_startup();
+#endif
+			/* Close the postmaster's sockets */
+			ClosePostmasterPorts();
+
+			/* Drop our connection to postmaster's shared memory, as well */
+			PGSharedMemoryDetach();
+
+			PgArchiverMain(0, NULL);
+			break;
+#endif
+
+		default:
+			return (int) pgArchPid;
+	}
+
+	/* shouldn't get here */
+	return 0;
+}
+
+/* ------------------------------------------------------------
+ * Local functions called by archiver follow
+ * ------------------------------------------------------------
+ */
+
+
+#ifdef EXEC_BACKEND
+
+/*
+ * pgarch_forkexec() -
+ *
+ * Format up the arglist for, then fork and exec, archive process
+ */
+static pid_t
+pgarch_forkexec(void)
+{
+	char *av[10];
+	int ac = 0;
+
+	av[ac++] = "postgres";
+
+	av[ac++] = "-forkarch";
+
+	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
+
+	av[ac] = NULL;
+	Assert(ac < lengthof(av));
+
+	return postmaster_forkexec(ac, av);
+}
+
+#endif /* EXEC_BACKEND */
+
+
+/*
+ * PgArchiverMain
+ *
+ *	The argc/argv parameters are valid only in EXEC_BACKEND case.  However,
+ *	since we don't use 'em, it hardly matters...
+ */
+NON_EXEC_STATIC void
+PgArchiverMain(int argc, char *argv[])
+{
+    IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
+
+    MyProcPid = getpid();		/* reset MyProcPid */
+
+	/* Lose the postmaster's on-exit routines */
+	on_exit_reset();
+
+    /*
+     * Ignore all signals usually bound to some action in the postmaster,
+	 * except for SIGHUP, SIGUSR1 and SIGQUIT.
+     */
+    pqsignal(SIGHUP, ArchSigHupHandler);
+    pqsignal(SIGINT, SIG_IGN);
+    pqsignal(SIGTERM, SIG_IGN);
+    pqsignal(SIGQUIT, pgarch_exit);
+    pqsignal(SIGALRM, SIG_IGN);
+    pqsignal(SIGPIPE, SIG_IGN);
+    pqsignal(SIGUSR1, pgarch_waken);
+    pqsignal(SIGUSR2, SIG_IGN);
+    pqsignal(SIGCHLD, SIG_DFL);
+    pqsignal(SIGTTIN, SIG_DFL);
+    pqsignal(SIGTTOU, SIG_DFL);
+    pqsignal(SIGCONT, SIG_DFL);
+    pqsignal(SIGWINCH, SIG_DFL);
+    PG_SETMASK(&UnBlockSig);
+
+    /*
+     * Identify myself via ps
+     */
+    init_ps_display("archiver process", "", "");
+    set_ps_display("");
+
+    /* Init XLOG file paths */
+    snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
+    snprintf(XLogArchiveStatusDir, MAXPGPATH, "%s/archive_status", XLogDir);
+
+    pgarch_MainLoop();
+
+ 	exit(0);
+}
+
+/* SIGQUIT signal handler for archiver process */
+static void
+pgarch_exit(SIGNAL_ARGS)
+{
+	/*
+	 * For now, we just nail the doors shut and get out of town.  It might
+	 * seem cleaner to finish up any pending archive copies, but there's
+	 * a nontrivial risk that init will kill us partway through.
+	 */
+    exit(0);
+}
+
+/* SIGHUP: set flag to re-read config file at next convenient time */
+static void
+ArchSigHupHandler(SIGNAL_ARGS)
+{
+	got_SIGHUP = true;
+}
+
+/* SIGUSR1 signal handler for archiver process */
+static void
+pgarch_waken(SIGNAL_ARGS)
+{
+	wakened = true;
+}
+
+/*
+ * pgarch_MainLoop
+ *
+ * Main loop for archiver
+ */
+static void
+pgarch_MainLoop(void)
+{
+	time_t last_copy_time = 0;
+	time_t curtime;
+
+	/*
+	 * We run the copy loop immediately upon entry, in case there are
+	 * unarchived files left over from a previous database run (or maybe
+	 * the archiver died unexpectedly).  After that we wait for a signal
+	 * or timeout before doing more.
+	 */
+	wakened = true;
+
+	do {
+
+		/* Check for config update */
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+			if (!XLogArchivingActive())
+				break;			/* user wants us to shut down */
+		}
+
+		/* Do what we're here for */
+		if (wakened)
+		{
+			wakened = false;
+			pgarch_ArchiverCopyLoop();
+			last_copy_time = time(NULL);
+		}
+
+		/*
+		 * There shouldn't be anything for the archiver to do except
+		 * to wait for a signal, so we could use pause(3) here...
+		 * ...however, the archiver exists to protect our data, so
+		 * she wakes up occasionally to allow herself to be proactive.
+		 * In particular this avoids getting stuck if a signal arrives
+		 * just before we enter sleep().
+		 */
+		if (!wakened)
+		{
+			sleep(PGARCH_AUTOWAKE_INTERVAL);
+
+			curtime = time(NULL);
+			if ((unsigned int) (curtime - last_copy_time) >=
+				(unsigned int) PGARCH_AUTOWAKE_INTERVAL)
+				wakened = true;
+		}
+ 	} while (PostmasterIsAlive(true));
+}
+
+/*
+ * pgarch_ArchiverCopyLoop
+ *
+ * Archives all outstanding xlogs then returns
+ */
+static void
+pgarch_ArchiverCopyLoop(void)
+{
+ 	char	xlog[MAX_XFN_CHARS + 1];
+
+    /*
+     * loop through all xlogs with archive_status of .ready
+     * and archive them...mostly we expect this to be a single
+     * file, though it is possible some backend will add
+     * files onto the list of those that need archiving while we
+     * are still copying earlier archives
+     */
+ 	while (pgarch_readyXlog(xlog))
+	{
+		int     failures = 0;
+
+		for (;;)
+		{
+			if (pgarch_archiveXlog(xlog))
+			{
+				/* successful */
+				pgarch_archiveDone(xlog);
+				break;			/* out of inner retry loop */
+			}
+			else
+			{
+				if (++failures >= NUM_ARCHIVE_RETRIES)
+				{
+					ereport(WARNING,
+							(errmsg("transaction log file \"%s\" could not be archived",
+									xlog)));
+					return;		/* give up archiving for now */
+				}
+				sleep(1);		/* wait a bit before retrying */
+			}
+		}
+	}
+}
+
+/*
+ * pgarch_archiveXlog
+ *
+ * Invokes system(3) to copy one archive file to wherever it should go
+ *
+ * Returns true if successful
+ */
+static bool
+pgarch_archiveXlog(char *xlog)
+{
+    char xlogarchcmd[MAXPGPATH];
+    char pathname[MAXPGPATH];
+	char *dp;
+	char *endp;
+	const char *sp;
+    int rc;
+
+    snprintf(pathname, MAXPGPATH, "%s/%s", XLogDir, xlog);
+
+	/*
+	 * construct the command to be executed
+	 */
+	dp = xlogarchcmd;
+	endp = xlogarchcmd + MAXPGPATH - 1;
+	*endp = '\0';
+
+	for (sp = XLogArchiveCommand; *sp; sp++)
+	{
+		if (*sp == '%')
+		{
+			switch (sp[1])
+			{
+				case 'p':
+					/* %p: full path of source file */
+					sp++;
+					StrNCpy(dp, pathname, endp-dp);
+					dp += strlen(dp);
+					break;
+				case 'f':
+					/* %f: filename of source file */
+					sp++;
+					StrNCpy(dp, xlog, endp-dp);
+					dp += strlen(dp);
+					break;
+				case '%':
+					/* convert %% to a single % */
+					sp++;
+					if (dp < endp)
+						*dp++ = *sp;
+					break;
+				default:
+					/* otherwise treat the % as not special */
+					if (dp < endp)
+						*dp++ = *sp;
+					break;
+			}
+		}
+		else
+		{
+			if (dp < endp)
+				*dp++ = *sp;
+		}
+	}
+	*dp = '\0';
+
+	ereport(DEBUG3,
+            (errmsg_internal("executing archive command \"%s\"",
+							 xlogarchcmd)));
+    rc = system(xlogarchcmd);
+    if (rc != 0) {
+    	ereport(LOG,
+				(errmsg("archive command \"%s\" failed: return code %d",
+						xlogarchcmd, rc)));
+        return false;
+    }
+	ereport(LOG,
+            (errmsg("archived transaction log file \"%s\"", xlog)));
+
+    return true;
+}
+
+/*
+ * pgarch_readyXlog
+ *
+ * Return name of the oldest xlog file that has not yet been archived.
+ * No notification is set that file archiving is now in progress, so
+ * this would need to be extended if multiple concurrent archival
+ * tasks were created. If a failure occurs, we will completely
+ * re-copy the file at the next available opportunity.
+ *
+ * It is important that we return the oldest, so that we archive xlogs
+ * in order that they were written, for two reasons:
+ * 1) to maintain the sequential chain of xlogs required for recovery
+ * 2) because the oldest ones will sooner become candidates for
+ * recycling at time of checkpoint
+ */
+static bool
+pgarch_readyXlog(char *xlog)
+{
+	/*
+	 * open xlog status directory and read through list of
+	 * xlogs that have the .ready suffix, looking for earliest file.
+	 * It is possible to optimise this code, though only a single
+	 * file is expected on the vast majority of calls, so....
+	 */
+  	char		newxlog[MAX_XFN_CHARS + 6 + 1];
+ 	DIR		    *rldir;
+ 	struct dirent 	*rlde;
+ 	bool		found = false;
+
+	rldir = AllocateDir(XLogArchiveStatusDir);
+	if (rldir == NULL)
+		ereport(ERROR,
+			(errcode_for_file_access(),
+			 errmsg("could not open archive status directory \"%s\": %m",
+					XLogArchiveStatusDir)));
+
+	errno = 0;
+	while ((rlde = readdir(rldir)) != NULL)
+	{
+		int		basenamelen = (int) strlen(rlde->d_name) - 6;
+
+		if (basenamelen >= MIN_XFN_CHARS &&
+			basenamelen <= MAX_XFN_CHARS &&
+			strspn(rlde->d_name, VALID_XFN_CHARS) >= basenamelen &&
+			strcmp(rlde->d_name + basenamelen, ".ready") == 0)
+		{
+		    if (!found) {
+   				strcpy(newxlog, rlde->d_name);
+   				found = true;
+		    } else {
+          		if (strcmp(rlde->d_name, newxlog) < 0)
+   					strcpy(newxlog, rlde->d_name);
+		    }
+		}
+
+		errno = 0;
+	}
+#ifdef WIN32
+	/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but
+	   not in released version */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+	if (errno)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not read archive status directory \"%s\": %m",
+						XLogArchiveStatusDir)));
+	FreeDir(rldir);
+
+	if (found)
+	{
+		/* truncate off the .ready */
+		newxlog[strlen(newxlog) - 6] = '\0';
+		strcpy(xlog, newxlog);
+	}
+	return found;
+}
+
+/*
+ * pgarch_archiveDone
+ *
+ * Emit notification that an xlog file has been successfully archived.
+ * We do this by renaming the status file from NNN.ready to NNN.done.
+ * Eventually, a checkpoint process will notice this and delete both the
+ * NNN.done file and the xlog file itself.
+ */
+static void
+pgarch_archiveDone(char *xlog)
+{
+    char		rlogready[MAXPGPATH];
+    char		rlogdone[MAXPGPATH];
+ 	int 		rc;
+
+    snprintf(rlogready, MAXPGPATH, "%s/%s.ready", XLogArchiveStatusDir, xlog);
+ 	snprintf(rlogdone, MAXPGPATH, "%s/%s.done", XLogArchiveStatusDir, xlog);
+ 	rc = rename(rlogready, rlogdone);
+ 	if (rc < 0)
+ 		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not rename \"%s\": %m",
+						rlogready)));
+}

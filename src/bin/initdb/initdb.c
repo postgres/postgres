@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.43 2004/07/14 17:55:10 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.44 2004/07/19 02:47:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ static char *get_id(void);
 static char *get_encoding_id(char *encoding_name);
 static char *get_short_version(void);
 static int check_data_dir(void);
-static bool mkdatadir(char *subdir);
+static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
 static void set_short_version(char *short_version, char *extrapath);
@@ -900,7 +900,7 @@ check_data_dir(void)
  * make the data directory (or one of its subdirectories if subdir is not NULL)
  */
 static bool
-mkdatadir(char *subdir)
+mkdatadir(const char *subdir)
 {
 	char	   *path;
 
@@ -2022,8 +2022,16 @@ main(int argc, char *argv[])
 	char	   *short_version;
 	char	   *pgdenv;			/* PGDATA value got from sent to
 								 * environment */
-	char	   *subdirs[] =
-	{"global", "pg_xlog", "pg_clog", "pg_subtrans", "base", "base/1", "pg_tblspc"};
+	static const char *subdirs[] = {
+		"global",
+		"pg_xlog",
+		"pg_xlog/archive_status",
+		"pg_clog",
+		"pg_subtrans",
+		"base",
+		"base/1",
+		"pg_tblspc"
+	};
 
 	progname = get_progname(argv[0]);
 	set_pglocale_pgservice(argv[0], "initdb");

@@ -111,6 +111,16 @@
 #commit_delay = 0		# range 0-100000, in microseconds
 #commit_siblings = 5		# range 1-1000
 
+# - Archiving -
+
+#archive_command = ''		# command to use to archive a logfile segment
+
+# If archive_command is '' then archiving is disabled.  Otherwise, set it
+# to a command to copy a file to the proper place.  A simplistic example
+# is 'cp %p /mnt/server/archivedir/%f'.  Any %p in the string is replaced
+# by the absolute path of the file to archive, while any %f is replaced by
+# the file name only.  NOTE: it is important for the command to return
+# zero exit status if and only if it succeeded.
 
 #---------------------------------------------------------------------------
 # QUERY TUNING
