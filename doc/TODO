@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jul 17 06:50:10 EDT 2004
+Last updated:		Mon Jul 19 16:57:25 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -23,7 +23,7 @@ Administration
 * Incremental backups
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-* Allow configuration files to be specified in a different directory
+* -Allow configuration files to be specified in a different directory
 * Allow limits on per-db/user connections
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
