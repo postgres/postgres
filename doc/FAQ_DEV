@@ -602,26 +602,23 @@ typedef struct nameData
    This was written by Lamar Owen:
    
    2001-06-22
+   What open source development process is used by the PostgreSQL team?
    
-  What open source development process is used by the PostgreSQL team?
-  
    Read HACKERS for six months (or a full release cycle, whichever is
    longer). Really. HACKERS _is_the process. The process is not well
    documented (AFAIK -- it may be somewhere that I am not aware of) --
    and it changes continually.
+   What development environment (OS, system, compilers, etc) is required
+   to develop code?
    
-  What development environment (OS, system, compilers, etc) is required to
-  develop code?
-  
    Developers Corner on the website has links to this information. The
    distribution tarball itself includes all the extra tools and documents
    that go beyond a good Unix-like development environment. In general, a
    modern unix with a modern gcc, GNU make or equivalent, autoconf (of a
    particular version), and good working knowledge of those tools are
    required.
+   What areas need support?
    
-  What area or two needs some support?
-  
    The TODO list.
    
    You've made the first step, by finding and subscribing to HACKERS.
