@@ -28,11 +28,8 @@
 #
 # CIDR-ADDRESS specifies the set of hosts the record matches.
 # It is made up of an IP address and a CIDR mask that is an integer 
-# between 0 and 32 (IPv6) or 128(IPv6) inclusive, that specifies 
-# the number of significant bits in the mask, e.g. an IPv4 CIDR mask
-# of 8 is equivalent to an IP mask of 255.0.0.0, an IPv6 CIDR mask 
-# of 64 is equivalent to an IP mask of ffff:ffff:ffff:ffff::. A 
-# IPv4 CIDR mask of 32 is used for single hosts. Also, you can use a 
+# (between 0 and 32 (IPv6) or 128(IPv6) inclusive) that specifies 
+# the number of significant bits in the mask  Also, you can use a 
 # separate IP address and netmask to specify the set of hosts.
 #
 # METHOD can be "trust", "reject", "md5", "crypt", "password", 

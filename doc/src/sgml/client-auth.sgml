@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.65 2004/03/23 01:23:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.66 2004/08/26 16:50:05 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -86,12 +86,12 @@ $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.65 2004/03/23 01:23:48 tgl 
    A record may have one of the seven formats
 <synopsis>
 local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
+hostnossl  <replaceable>database</replaceable>	<replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>  <replaceable>IP-mask</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>IP-masklen</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostssl    <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>IP-masklen</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
-hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>IP-address</replaceable>/<replaceable>IP-masklen</replaceable>  <replaceable>authentication-method</replaceable>  <optional><replaceable>authentication-option</replaceable></optional>
 </synopsis>
    The meaning of the fields is as follows:
 
@@ -196,19 +196,23 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>IP-address</replaceable></term>
-     <term><replaceable>IP-mask</replaceable></term>
+     <term><replaceable>CIDR-address</replaceable></term>
      <listitem>
       <para>
-       These two fields contain IP address and mask values in standard
-       dotted decimal notation. (IP addresses can only be specified
-       numerically, not as domain or host names.)  Taken together they
-       specify the client machine IP addresses that this record
-       matches.  The precise logic is that
-<programlisting>
-(<replaceable>actual-IP-address</replaceable> xor <replaceable>IP-address-field</replaceable>) and <replaceable>IP-mask-field</replaceable>
-</programlisting>
-       must be zero for the record to match.
+       specifies the client machine IP addresses that this record
+       matches. It contains an IP address in standard dotted decimal
+       notation and a CIDR mask length. (IP addresses can only be
+       specified numerically, not as domain or host names.) For example,
+       an IPv4 CIDR mask of 8 is equivalent to an IP mask of 255.0.0.0,
+       an IPv6 CIDR mask of 64 is equivalent to an IP mask of
+       ffff:ffff:ffff:ffff::. A IPv4 CIDR mask of 32 is used for single
+       hosts.
+      </para>
+
+      <para>
+       A typical CIDR address is <literal>172.20.143.89/32</literal>.
+       There should be no white space between the IP address, the
+       <literal>/</literal>, and the CIDR mask length.
       </para>
 
       <para>
@@ -229,26 +233,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
     </varlistentry>
 
     <varlistentry>
+     <term><replaceable>IP-address</replaceable></term>
      <term><replaceable>IP-masklen</replaceable></term>
      <listitem>
       <para>
-       This field may be used as an alternative to the
-       <replaceable>IP-mask</replaceable> notation.  It is an integer
-       specifying the number of high-order bits to set in the mask.
-       The number must be between 0 and 32 (in the case of an IPv4
-       address) or 128 (in the case of an IPv6 address) inclusive. 0
-       will match any address, while 32 (or 128, respectively) will
-       match only the exact host specified.  The same matching logic
-       is used as for a dotted notation
-       <replaceable>IP-mask</replaceable>.
-      </para>
-
-      <para>
-       There must be no white space between the
-       <replaceable>IP-address</replaceable> and the
-       <literal>/</literal> or the <literal>/</literal> and the
-       <replaceable>IP-masklen</replaceable>, or the file will not be
-       parsed correctly.
+       This may be used as an alternative to the
+       <replaceable>CIDR-address</replaceable> notation. Instead of
+       specifying the mask length, the actual mask is specified in a
+       separate column. For example, 255.0.0.0 represents a IPv4 CIDR
+       mask length of 8, and 255.255.255.255 represents a CIDR mask
+       length of 32. The same matching logic is used as for a dotted
+       notation <replaceable>IP-mask</replaceable>.
       </para>
 
       <para>
@@ -458,36 +453,36 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 # any user name using Unix-domain sockets (the default for local
 # connections).
 #
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
-local   all         all                                             trust
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+local   all         all                               trust
 
 # The same using local loopback TCP/IP connections.
 #
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
-host    all         all         127.0.0.1         255.255.255.255   trust     
-
-# The same as the last line but using a CIDR mask
-#
-# TYPE  DATABASE    USER        IP-ADDRESS/CIDR-mask  METHOD
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
 host    all         all         127.0.0.1/32          trust     
+
+# The same as the last line but using a separate netmask column
+#
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+host    all         all         127.0.0.1     255.255.255.255     trust     
 
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "template1" as the same user name that ident reports for
 # the connection (typically the Unix user name).
 # 
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
-host    template1   all         192.168.93.0      255.255.255.0     ident sameuser
-
-# The same as the last line but using a CIDR mask
-#
-# TYPE  DATABASE    USER        IP-ADDRESS/CIDR-mask  METHOD
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
 host    template1   all         192.168.93.0/24       ident sameuser
+
+# The same as the last line but using a separate netmask column
+#
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+host    template1   all         192.168.93.0  255.255.255.0   ident sameuser
 
 # Allow a user from host 192.168.12.10 to connect to database
 # "template1" if the user's password is correctly supplied.
 # 
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
-host    template1   all         192.168.12.10     255.255.255.255   md5
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+host    template1   all         192.168.12.10/32      md5
 
 # In the absence of preceding "host" lines, these two lines will
 # reject all connection from 192.168.54.1 (since that entry will be
@@ -495,9 +490,9 @@ host    template1   all         192.168.12.10     255.255.255.255   md5
 # on the Internet.  The zero mask means that no bits of the host IP
 # address are considered so it matches any host.
 # 
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
-host    all         all         192.168.54.1      255.255.255.255   reject
-host    all         all         0.0.0.0           0.0.0.0           krb5
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+host    all         all         192.168.54.1/32       reject
+host    all         all         0.0.0.0/0             krb5
 
 # Allow users from 192.168.x.x hosts to connect to any database, if
 # they pass the ident check.  If, for example, ident says the user is
@@ -505,8 +500,8 @@ host    all         all         0.0.0.0           0.0.0.0           krb5
 # connection is allowed if there is an entry in pg_ident.conf for map
 # "omicron" that says "bryanh" is allowed to connect as "guest1".
 #
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
-host    all         all         192.168.0.0       255.255.0.0       ident omicron
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
+host    all         all         192.168.0.0/16        ident omicron
 
 # If these are the only three lines for local connections, they will
 # allow local users to connect only to their own databases (databases
@@ -515,7 +510,7 @@ host    all         all         192.168.0.0       255.255.0.0       ident omicro
 # $PGDATA/admins contains a list of user names.  Passwords are required in
 # all cases.
 #
-# TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
+# TYPE  DATABASE    USER        CIDR-ADDRESS          METHOD
 local   sameuser    all                                             md5
 local   all         @admins                                         md5
 local   all         +support                                        md5
@@ -959,3 +954,4 @@ FATAL:  database "testdb" does not exist
   </sect1>
 
  </chapter>
+
