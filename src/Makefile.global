@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.55 1996/11/06 22:32:18 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.56 1996/11/08 07:47:52 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -59,7 +59,7 @@
 #	to change it in Makefile.custom.
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
-PORTNAME=	BSD44_derived
+PORTNAME=	UNDEFINED
 
 # Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
 # compiling to a.out (which means you're using the dld dynamic loading 
