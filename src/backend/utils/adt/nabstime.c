@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.12 1997/01/10 20:19:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.13 1997/01/27 01:51:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ tryabsdate(char *fields[], int nf, struct tm *tm, int *tzp)
     (void) ftime(&now);
     *tzp = now.timezone;
 #else /* USE_POSIX_TIME */
-#ifdef HAVE_TZSET
+#if defined(HAVE_TZSET) && defined(HAVE_INT_TIMEZONE)
 	    tzset();
 #ifndef win32
     *tzp = timezone / 60;		/* this is an X/Open-ism */

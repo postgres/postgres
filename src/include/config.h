@@ -45,6 +45,8 @@
 #  define DISABLE_XOPEN_NLS 
 #  define NEED_UNION_SEMUN 
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
+#  undef HAVE_CBRT
 #  define HAVE_ANSI_CPP
 #  define HAS_TEST_AND_SET
    typedef unsigned int slock_t;
@@ -101,6 +103,7 @@
 #  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
 #  undef HAVE_CBRT
 #  undef HAVE_RINT
 #  define NEED_UNION_SEMUN 
@@ -116,6 +119,8 @@
 #  undef HAVE_GETRUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
+#  undef HAVE_CBRT
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
@@ -129,6 +134,8 @@
 #  define NO_EMPTY_STMTS
 #  define NO_VFORK
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
+#  undef HAVE_CBRT
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
 #  include <abi_mutex.h>
@@ -145,6 +152,8 @@
 #  define JMP_BUF
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
+#  undef HAVE_CBRT
 #  undef HAVE_CBRT
 #  define NEED_I386_TAS_ASM
 #  define HAS_TEST_AND_SET
@@ -190,6 +199,8 @@
 #  define NO_EMPTY_STMTS
 #  define USE_POSIX_TIME
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
+#  undef HAVE_CBRT
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
@@ -208,6 +219,8 @@ typedef unsigned char slock_t;
 #  undef HAVE_GETRUSAGE 
 #  define NO_EMPTY_STMTS
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
+#  undef HAVE_CBRT
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
 #endif
@@ -223,6 +236,8 @@ typedef unsigned char slock_t;
 #  define NOFILE	100
 #  define NEED_UNION_SEMUN
 #  define HAVE_TZSET
+#  define HAVE_INT_TIMEZONE
+#  undef HAVE_CBRT
 #  ifndef MAXPATHLEN
 #  define MAXPATHLEN    250
 #  endif
