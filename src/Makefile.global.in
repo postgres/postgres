@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.157 2002/12/30 17:19:50 tgl Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.158 2003/01/05 13:45:47 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -190,9 +190,6 @@ LIBS = @LIBS@
 LD = @LD@
 with_gnu_ld = @with_gnu_ld@
 ld_R_works = @ld_R_works@
-# Set trpath to a list of library paths included in LDFLAGS
-# These paths can be added to rpath in the port specific makefiles if needed.
-trpath = $(filter -L%,@LDFLAGS@)
 LDFLAGS = @LDFLAGS@
 LDREL = -r
 LDOUT = -o
