@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.32 1998/09/03 02:10:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.33 1998/09/03 05:08:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -358,7 +358,7 @@ Pg_connect(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		conn = PQsetdb(pghost, pgport, pgoptions, pgtty, dbName);
 	}
 
-    if (PQstatus(conn) == CONNECTION_OK) {
+    if (PQstatus(conn) == CONNECTION_OK)
 	{
 		PgSetConnectionId(interp, conn);
 		return TCL_OK;
@@ -1413,7 +1413,7 @@ Pg_listen(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 			ckfree(cmd);
 			/* Transfer any notify events from libpq to Tcl event queue. */
 			PgNotifyTransferEvents(connid);
-			if (PQresultStatus(result) != PGRES_COMMAND_OK) {
+			if (PQresultStatus(result) != PGRES_COMMAND_OK)
 			{
 				/* Error occurred during the execution of command */
 				PQclear(result);

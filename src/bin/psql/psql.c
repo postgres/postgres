@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.159 1998/09/03 02:10:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.160 1998/09/03 05:08:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ struct winsize
 static void usage(char *progname);
 static void slashUsage();
 static bool handleCopyOut(PGconn *conn, FILE *copystream);
-static bool handleCopyIn(PGresult *res, const bool mustprompt,
+static bool handleCopyIn(PGconn *conn, const bool mustprompt,
 			 FILE *copystream);
 static int tableList(PsqlSettings *pset, bool deep_tablelist,
 		  char info_type, bool system_tables);
