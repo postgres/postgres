@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.21 1998/06/23 16:04:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.22 1998/06/25 14:24:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ SPINLOCK	BindingLock;		/* lock for binding table access */
 static unsigned long *ShmemFreeStart = NULL;	/* pointer to the OFFSET
 												 * of first free shared
 												 * memory */
-static unsigned long *ShmemBindingTabOffset = NULL;		/* start of the binding
+static unsigned long *ShmemBindingTableOffset = NULL;		/* start of the binding
 														 * table (for bootstrap) */
 static int	ShmemBootstrap = FALSE;		/* flag becomes true when shared
 										 * mem is created by POSTMASTER */
@@ -89,13 +89,13 @@ static int	ShmemBootstrap = FALSE;		/* flag becomes true when shared
 static HTAB *BindingTable = NULL;
 
 /* ---------------------
- * ShmemBindingTabReset() - Resets the binding table to NULL....
+ * ShmemBindingTableReset() - Resets the binding table to NULL....
  * useful when the postmaster destroys existing shared memory
  * and creates all new segments after a backend crash.
  * ----------------------
  */
 void
-ShmemBindingTabReset(void)
+ShmemBindingTableReset(void)
 {
 	BindingTable = (HTAB *) NULL;
 }
@@ -179,10 +179,10 @@ InitShmem(unsigned int key, unsigned int size)
 	/* First long in shared memory is the count of available space */
 	ShmemFreeStart = (unsigned long *) ShmemBase;
 	/* next is a shmem pointer to the binding table */
-	ShmemBindingTabOffset = ShmemFreeStart + 1;
+	ShmemBindingTableOffset = ShmemFreeStart + 1;
 
 	currFreeSpace +=
-		sizeof(ShmemFreeStart) + sizeof(ShmemBindingTabOffset);
+		sizeof(ShmemFreeStart) + sizeof(ShmemBindingTableOffset);
 
 	/*
 	 * bootstrap initialize spin locks so we can start to use the
@@ -245,7 +245,7 @@ InitShmem(unsigned int key, unsigned int size)
 
 		Assert(ShmemBootstrap);
 		result->location = MAKE_OFFSET(BindingTable->hctl);
-		*ShmemBindingTabOffset = result->location;
+		*ShmemBindingTableOffset = result->location;
 		result->size = BTABLE_SIZE;
 
 		ShmemBootstrap = FALSE;
@@ -514,10 +514,10 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 		}
 		else
 		{
-			Assert(ShmemBindingTabOffset);
+			Assert(ShmemBindingTableOffset);
 
 			*foundPtr = TRUE;
-			return ((long *) MAKE_PTR(*ShmemBindingTabOffset));
+			return ((long *) MAKE_PTR(*ShmemBindingTableOffset));
 		}
 
 

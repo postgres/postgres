@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.11 1998/06/23 17:59:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.12 1998/06/25 14:24:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
 				IPCKeyGetBufferMemoryKey(key), size);
 	}
 	ShmemCreate(IPCKeyGetBufferMemoryKey(key), size);
-	ShmemBindingTabReset();
+	ShmemBindingTableReset();
 	InitShmem(key, size);
 	InitBufferPool(key);
 
