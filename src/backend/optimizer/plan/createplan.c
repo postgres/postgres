@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.167 2004/01/18 00:50:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.168 2004/02/29 17:36:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ static MergeJoin *make_mergejoin(List *tlist,
 static Sort *make_sort(Query *root, Plan *lefttree, int numCols,
 		  AttrNumber *sortColIdx, Oid *sortOperators);
 static Sort *make_sort_from_pathkeys(Query *root, Plan *lefttree,
-						Relids relids, List *pathkeys);
+						List *pathkeys);
 
 
 /*
@@ -1057,7 +1057,6 @@ create_mergejoin_plan(Query *root,
 		outer_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									outer_plan,
-						  best_path->jpath.outerjoinpath->parent->relids,
 									best_path->outersortkeys);
 	}
 
@@ -1067,7 +1066,6 @@ create_mergejoin_plan(Query *root,
 		inner_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									inner_plan,
-						  best_path->jpath.innerjoinpath->parent->relids,
 									best_path->innersortkeys);
 	}
 
@@ -1837,7 +1835,6 @@ add_sort_column(AttrNumber colIdx, Oid sortOp,
  *	  Create sort plan to sort according to given pathkeys
  *
  *	  'lefttree' is the node which yields input tuples
- *	  'relids' is the set of relids represented by the input node
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
  *
  * We must convert the pathkey information into arrays of sort key column
@@ -1850,8 +1847,7 @@ add_sort_column(AttrNumber colIdx, Oid sortOp,
  * adding a Result node just to do the projection.
  */
 static Sort *
-make_sort_from_pathkeys(Query *root, Plan *lefttree,
-						Relids relids, List *pathkeys)
+make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 {
 	List	   *tlist = lefttree->targetlist;
 	List	   *i;
@@ -1895,12 +1891,22 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 		}
 		if (!resdom)
 		{
-			/* No matching Var; look for an expression */
+			/* No matching Var; look for a computable expression */
 			foreach(j, keysublist)
 			{
+				List   *exprvars;
+				List   *k;
+
 				pathkey = lfirst(j);
-				if (bms_is_subset(pull_varnos(pathkey->key), relids))
-					break;
+				exprvars = pull_var_clause(pathkey->key, false);
+				foreach(k, exprvars)
+				{
+					if (!tlist_member(lfirst(k), tlist))
+						break;
+				}
+				freeList(exprvars);
+				if (!k)
+					break;		/* found usable expression */
 			}
 			if (!j)
 				elog(ERROR, "could not find pathkey item to sort");
