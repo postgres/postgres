@@ -1443,12 +1443,12 @@ SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
            | 1997TH 1997th 2450450th
            | 1997TH 1997th 2450508th
            | 1997TH 1997th 2450509th
-           | 1997TH 1997th 2450813rd
+           | 1997TH 1997th 2450813th
            | 1997TH 1997th 2450814th
            | 1999TH 1999th 2451544th
            | 2000TH 2000th 2451545th
            | 2000TH 2000th 2451910th
-           | 2001ST 2001st 2451911st
+           | 2001ST 2001st 2451911th
 (66 rows)
 
   
