@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.280 2003/08/11 18:07:38 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.280.2.1 2003/09/07 04:36:38 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -21,7 +21,7 @@ dnl The GNU folks apparently haven't heard that some people don't use
 dnl Texinfo. Use this sorcery to use "docdir" instead of "infodir".
 m4_define([info], [doc])
 m4_define([infodir], [docdir])
-AC_INIT([PostgreSQL], [7.4beta1], [pgsql-bugs@postgresql.org])
+AC_INIT([PostgreSQL], [7.4beta2], [pgsql-bugs@postgresql.org])
 m4_undefine([infodir])
 m4_undefine([info])
 AC_SUBST(docdir)
@@ -238,6 +238,12 @@ if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
 fi
 AC_MSG_NOTICE([using CFLAGS=$CFLAGS])
 
+# We already have this in Makefile.win32, but configure needs it too
+if test "$PORTNAME" = "win32"
+then
+	CPPFLAGS="$CPPFLAGS -Isrc/include/port/win32"
+fi
+
 # Check if the compiler still works with the template settings
 AC_MSG_CHECKING([whether the C compiler still works])
 AC_TRY_LINK([], [return 0;],
@@ -362,10 +368,10 @@ AC_MSG_RESULT([$with_perl])
 AC_SUBST(with_perl)
 
 #
-# Optionally build Python interface module
+# Optionally build Python modules (PL/Python)
 #
 AC_MSG_CHECKING([whether to build Python modules])
-PGAC_ARG_BOOL(with, python, no, [  --with-python           build Python interface module])
+PGAC_ARG_BOOL(with, python, no, [  --with-python           build Python modules (PL/Python)])
 AC_MSG_RESULT([$with_python])
 AC_SUBST(with_python)
 
@@ -608,7 +614,6 @@ fi
 
 if test "$with_python" = yes; then
   PGAC_PATH_PYTHON
-  PGAC_CHECK_PYTHON_MODULE_SETUP
   PGAC_CHECK_PYTHON_EMBED_SETUP
 fi
 
@@ -833,12 +838,15 @@ AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getpeereid memmove poll pstat setproc
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 
+HAVE_IPV6=no
 AC_CHECK_TYPE([struct sockaddr_in6],
               [AC_CHECK_FUNC(inet_ntop,
-                             [AC_DEFINE(HAVE_IPV6, 1, [Define to 1 if you have support for IPv6.])])],
+                             [AC_DEFINE(HAVE_IPV6, 1, [Define to 1 if you have support for IPv6.])
+							  HAVE_IPV6=yes])],
               [],
 [$ac_includes_default
 #include <netinet/in.h>])
+AC_SUBST(HAVE_IPV6)
 
 AC_CACHE_CHECK([for PS_STRINGS], [pgac_cv_var_PS_STRINGS],
 [AC_TRY_LINK(
@@ -978,9 +986,10 @@ AC_FUNC_FSEEKO
 #
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
+# See the comment at the top of src/port/thread.c for more information.
 #
 if test "$enable_thread_safety" = yes; then
-AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --with-threads])])
+AC_CHECK_HEADER(pthread.h, [], [AC_MSG_ERROR([pthread.h not found, required for --enable-thread-safetys])])
 
 if test "$SUPPORTS_THREADS" != yes; then
 AC_MSG_ERROR([
@@ -988,6 +997,7 @@ Cannot enable threads on your platform.
 Please report your platform threading info to the PostgreSQL mailing lists
 so it can be added to the next release.  Report all compile flags, link flags,
 functions, or libraries required for threading support.
+See the comment at the top of src/port/thread.c for more information.
 ])
 fi
 else
@@ -1014,7 +1024,12 @@ _CFLAGS="$CFLAGS"
 _LIBS="$LIBS"
 CFLAGS="$CFLAGS $THREAD_CFLAGS"
 LIBS="$LIBS $THREAD_LIBS"
-AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
+AC_CHECK_FUNC(strerror_r,
+	[], [AC_MSG_ERROR([strerror_r not found, required on this platform for --enable-thread-safety])])
+AC_CHECK_FUNC(getpwuid_r,
+	[], [AC_MSG_ERROR([getpwuid_r not found, required on this platform for --enable-thread-safety])])
+AC_CHECK_FUNC(gethostbyname_r,
+	[], [AC_MSG_ERROR([gethostbyname_r not found, required on this platform for --enable-thread-safety])])
 CFLAGS="$_CFLAGS"
 LIBS="$_LIBS"
 fi

@@ -51,8 +51,7 @@
 # TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
 
 local   all         all                                             trust
+# IPv4-style local connections:
 host    all         all         127.0.0.1         255.255.255.255   trust
-
-# uncomment these to support IPv6 localhost connections
-# host  all         all         ::1               ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff        trust
-# host  all         all         ::ffff:127.0.0.1/128                trust
+# IPv6-style local connections:
+host    all         all         ::1               ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff        trust

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.10 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.10.2.1 2003/09/07 04:36:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>TRUNCATE</refname>
   <refpurpose>empty a table</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-truncate">
+  <primary>TRUNCATE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

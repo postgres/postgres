@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.22 2003/03/25 16:15:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.22.2.1 2003/09/07 04:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname>pg_ctl</refname>
   <refpurpose>start, stop, or restart a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-pg-ctl">
+  <primary>pg_ctl</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>

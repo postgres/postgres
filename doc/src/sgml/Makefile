@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.57 2003/04/10 01:22:44 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.57.2.1 2003/09/07 04:36:40 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ endif
 
 # Enable draft mode during development
 ifneq (,$(findstring devel, $(VERSION)))
-JADEFLAGS += -V draft-mode
+override JADEFLAGS += -V draft-mode
 endif
 
 
@@ -82,7 +82,7 @@ html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -i output-html -t sgml $<
 
 
-COLLATEINDEX := $(PERL) $(COLLATEINDEX) -f -g
+COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:

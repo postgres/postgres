@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.360 2003/08/13 16:16:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.360.2.1 2003/09/07 04:36:53 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1978,7 +1978,7 @@ usage(char *progname)
 #ifdef USE_ASSERT_CHECKING
 	printf("  -A 1|0          enable/disable run-time assert checking\n");
 #endif
-	printf("  -B NBUFFERS     number of shared buffers (default %d)\n", DEF_NBUFFERS);
+	printf("  -B NBUFFERS     number of shared buffers\n");
 	printf("  -c NAME=VALUE   set run-time parameter\n");
 	printf("  -d 0-5          debugging level (0 is off)\n");
 	printf("  -D DATADIR      database directory\n");
@@ -2490,9 +2490,15 @@ PostgresMain(int argc, char *argv[], const char *username)
 	}
 	Assert(DataDir);
 
+	/* Acquire configuration parameters */
+	if (IsUnderPostmaster)
+	{
 #ifdef EXEC_BACKEND
-	read_nondefault_variables();
+		read_nondefault_variables();
 #endif
+	}
+	else
+		ProcessConfigFile(PGC_POSTMASTER);
 
 	/*
 	 * Set up signal handlers and masks.
@@ -2651,7 +2657,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.360 $ $Date: 2003/08/13 16:16:23 $\n");
+		puts("$Revision: 1.360.2.1 $ $Date: 2003/09/07 04:36:53 $\n");
 	}
 
 	/*

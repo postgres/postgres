@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.145 2003/08/13 18:56:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.145.2.1 2003/09/07 04:37:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,8 +480,8 @@ pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
 	/*
 	 * Set up fields of notice.
 	 */
-	pqSaveMessageField(res, 'M', msgBuf);
-	pqSaveMessageField(res, 'S', libpq_gettext("NOTICE"));
+	pqSaveMessageField(res, PG_DIAG_MESSAGE_PRIMARY, msgBuf);
+	pqSaveMessageField(res, PG_DIAG_SEVERITY, libpq_gettext("NOTICE"));
 	/* XXX should provide a SQLSTATE too? */
 
 	/*
@@ -2304,7 +2304,7 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	if (buffer == NULL)
 		return NULL;
 
-	for (i = j = buflen = 0; i < strtextlen;)
+	for (i = j = buflen = 0; i < (int)strtextlen;)
 	{
 		switch (strtext[i])
 		{

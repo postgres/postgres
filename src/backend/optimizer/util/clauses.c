@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.152 2003/08/08 21:41:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.152.2.1 2003/09/07 04:36:49 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1515,7 +1515,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		newarray->array_typeid = arrayexpr->array_typeid;
 		newarray->element_typeid = arrayexpr->element_typeid;
 		newarray->elements = FastListValue(&newelems);
-		newarray->ndims = arrayexpr->ndims;
+		newarray->multidims = arrayexpr->multidims;
 
 		if (all_const)
 			return (Node *) evaluate_expr((Expr *) newarray,

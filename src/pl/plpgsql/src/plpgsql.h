@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.39 2003/08/04 00:43:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.39.2.1 2003/09/07 04:37:11 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -490,6 +490,14 @@ typedef struct
 typedef struct PLpgSQL_func_hashkey
 {								/* Hash lookup key for functions */
 	Oid			funcOid;
+
+	/*
+	 * For a trigger function, the OID of the relation triggered on is part
+	 * of the hashkey --- we want to compile the trigger separately for each
+	 * relation it is used with, in case the rowtype is different.  Zero if
+	 * not called as a trigger.
+	 */
+	Oid			trigrelOid;
 
 	/*
 	 * We include actual argument types in the hash key to support

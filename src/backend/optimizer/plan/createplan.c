@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.154 2003/08/11 20:46:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.154.2.1 2003/09/07 04:36:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,8 +629,9 @@ create_unique_plan(Query *root, UniquePath *best_path)
 
 			tle = get_tle_by_resno(my_tlist, groupColIdx[groupColPos]);
 			Assert(tle != NULL);
-			sortList = addTargetToSortList(NULL, tle, sortList,
-										   my_tlist, NIL, false);
+			sortList = addTargetToSortList(NULL, tle,
+										   sortList, my_tlist,
+										   SORTBY_ASC, NIL, false);
 		}
 		plan = (Plan *) make_sort_from_sortclauses(root, my_tlist,
 												   subplan, sortList);
@@ -943,6 +944,10 @@ create_nestloop_plan(Query *root,
 		otherclauses = NIL;
 	}
 
+	/* Sort clauses into best execution order */
+	joinclauses = order_qual_clauses(root, joinclauses);
+	otherclauses = order_qual_clauses(root, otherclauses);
+
 	join_plan = make_nestloop(tlist,
 							  joinclauses,
 							  otherclauses,
@@ -993,6 +998,11 @@ create_mergejoin_plan(Query *root,
 	 */
 	mergeclauses = get_switched_clauses(best_path->path_mergeclauses,
 						 best_path->jpath.outerjoinpath->parent->relids);
+
+	/* Sort clauses into best execution order */
+	/* NB: do NOT reorder the mergeclauses */
+	joinclauses = order_qual_clauses(root, joinclauses);
+	otherclauses = order_qual_clauses(root, otherclauses);
 
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
@@ -1076,6 +1086,11 @@ create_hashjoin_plan(Query *root,
 	 */
 	hashclauses = get_switched_clauses(best_path->path_hashclauses,
 						 best_path->jpath.outerjoinpath->parent->relids);
+
+	/* Sort clauses into best execution order */
+	joinclauses = order_qual_clauses(root, joinclauses);
+	otherclauses = order_qual_clauses(root, otherclauses);
+	hashclauses = order_qual_clauses(root, hashclauses);
 
 	/*
 	 * Extract the inner hash keys (right-hand operands of the

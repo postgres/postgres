@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.23 2003/07/03 16:32:03 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.23.2.1 2003/09/07 04:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>INSERT</refname>
   <refpurpose>create new rows in a table</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-insert">
+  <primary>INSERT</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

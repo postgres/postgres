@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.28 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.28.2.1 2003/09/07 04:37:04 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -44,16 +44,6 @@ static void finishInput(int, void *);
 
 #define PSQLHISTORY ".psql_history"
 
-
-#ifdef WIN32
-
- /*
-  * translate DOS console character set into ANSI, needed e.g. for German
-  * umlauts
-  */
-if (GetVariableBool(pset.vars, "WIN32_CONSOLE"))
-	OemToChar(s, s);
-#endif
 
 #ifdef USE_READLINE
 static enum histcontrol
@@ -108,6 +98,15 @@ gets_interactive(const char *prompt)
 		s = readline((char *) prompt);
 	else
 		s = gets_basic(prompt);
+
+#ifdef WIN32
+	 /*
+	  * translate DOS console character set into ANSI, needed e.g. for German
+	  * umlauts
+	  */
+	if (GetVariableBool(pset.vars, "WIN32_CONSOLE"))
+		OemToChar(s, s);
+#endif
 
 	if (useHistory && s && s[0])
 	{
@@ -187,7 +186,8 @@ initializeInput(int flags)
 		initialize_readline();
 
 		useHistory = true;
-		SetVariable(pset.vars, "HISTSIZE", "500");
+		if (GetVariable(pset.vars, "HISTSIZE") == NULL)
+			SetVariable(pset.vars, "HISTSIZE", "500");
 		using_history();
 		home = getenv("HOME");
 		if (home)

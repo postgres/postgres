@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.217 2003/08/08 21:41:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.217.2.1 2003/09/07 04:36:49 momjian Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -785,7 +785,7 @@ _outArrayExpr(StringInfo str, ArrayExpr *node)
 	WRITE_OID_FIELD(array_typeid);
 	WRITE_OID_FIELD(element_typeid);
 	WRITE_NODE_FIELD(elements);
-	WRITE_INT_FIELD(ndims);
+	WRITE_BOOL_FIELD(multidims);
 }
 
 static void

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.428 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.428.2.1 2003/09/07 04:36:50 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -108,6 +108,7 @@ static void doNegateFloat(Value *v);
 	DropBehavior		dbehavior;
 	OnCommitAction		oncommit;
 	List				*list;
+	FastList			fastlist;
 	Node				*node;
 	Value				*value;
 	ColumnRef			*columnref;
@@ -115,7 +116,7 @@ static void doNegateFloat(Value *v);
 
 	TypeName			*typnam;
 	DefElem				*defelt;
-	SortGroupBy			*sortgroupby;
+	SortBy				*sortby;
 	JoinExpr			*jexpr;
 	IndexElem			*ielem;
 	Alias				*alias;
@@ -189,7 +190,7 @@ static void doNegateFloat(Value *v);
 				database_name access_method_clause access_method attr_name
 				index_name name function_name file_name
 
-%type <list>	func_name handler_name qual_Op qual_all_Op OptUseOp
+%type <list>	func_name handler_name qual_Op qual_all_Op
 				opt_class opt_validator
 
 %type <range>	qualified_name OptConstrFromTable
@@ -278,7 +279,7 @@ static void doNegateFloat(Value *v);
 %type <value>	NumericOnly FloatOnly IntegerOnly
 %type <columnref>	columnref
 %type <alias>	alias_clause
-%type <sortgroupby>		sortby
+%type <sortby>	sortby
 %type <ielem>	index_elem
 %type <node>	table_ref
 %type <jexpr>	joined_table
@@ -293,7 +294,7 @@ static void doNegateFloat(Value *v);
 				Bit ConstBit BitWithLength BitWithoutLength
 %type <str>		character
 %type <str>		extract_arg
-%type <str>		opt_charset opt_collate
+%type <str>		opt_charset
 %type <ival>	opt_numeric opt_decimal
 %type <boolean> opt_varying opt_timezone
 
@@ -440,7 +441,6 @@ static void doNegateFloat(Value *v);
 %right		UMINUS
 %left		'[' ']'
 %left		'(' ')'
-%left		COLLATE
 %left		TYPECAST
 %left		'.'
 /*
@@ -1460,19 +1460,13 @@ TableElement:
 			| TableConstraint					{ $$ = $1; }
 		;
 
-columnDef:	ColId Typename ColQualList opt_collate
+columnDef:	ColId Typename ColQualList
 				{
 					ColumnDef *n = makeNode(ColumnDef);
 					n->colname = $1;
 					n->typename = $2;
 					n->constraints = $3;
 					n->is_local = true;
-
-					if ($4 != NULL)
-						ereport(NOTICE,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("CREATE TABLE / COLLATE is not yet implemented; clause ignored")));
-
 					$$ = (Node *)n;
 				}
 		;
@@ -3842,17 +3836,12 @@ DropdbStmt: DROP DATABASE database_name
  *****************************************************************************/
 
 CreateDomainStmt:
-			CREATE DOMAIN_P any_name opt_as Typename ColQualList opt_collate
+			CREATE DOMAIN_P any_name opt_as Typename ColQualList
 				{
 					CreateDomainStmt *n = makeNode(CreateDomainStmt);
 					n->domainname = $3;
 					n->typename = $5;
 					n->constraints = $6;
-
-					if ($7 != NULL)
-						ereport(NOTICE,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("CREATE DOMAIN / COLLATE is not yet implemented; clause ignored")));
 					$$ = (Node *)n;
 				}
 		;
@@ -4577,21 +4566,34 @@ sortby_list:
 			| sortby_list ',' sortby				{ $$ = lappend($1, $3); }
 		;
 
-sortby:		a_expr OptUseOp
+sortby:		a_expr USING qual_all_Op
 				{
-					$$ = makeNode(SortGroupBy);
+					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->useOp = $2;
+					$$->sortby_kind = SORTBY_USING;
+					$$->useOp = $3;
 				}
-		;
-
-OptUseOp:	USING qual_all_Op						{ $$ = $2; }
-			| ASC
-							{ $$ = makeList1(makeString("<")); }
-			| DESC
-							{ $$ = makeList1(makeString(">")); }
-			| /*EMPTY*/
-							{ $$ = makeList1(makeString("<"));	/*default*/ }
+			| a_expr ASC
+				{
+					$$ = makeNode(SortBy);
+					$$->node = $1;
+					$$->sortby_kind = SORTBY_ASC;
+					$$->useOp = NIL;
+				}
+			| a_expr DESC
+				{
+					$$ = makeNode(SortBy);
+					$$->node = $1;
+					$$->sortby_kind = SORTBY_DESC;
+					$$->useOp = NIL;
+				}
+			| a_expr
+				{
+					$$ = makeNode(SortBy);
+					$$->node = $1;
+					$$->sortby_kind = SORTBY_ASC;	/* default */
+					$$->useOp = NIL;
+				}
 		;
 
 
@@ -5449,11 +5451,6 @@ opt_charset:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-opt_collate:
-			COLLATE ColId							{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NULL; }
-		;
-
 ConstDatetime:
 			TIMESTAMP '(' Iconst ')' opt_timezone
 				{
@@ -5739,15 +5736,6 @@ qual_all_Op:
 a_expr:		c_expr									{ $$ = $1; }
 			| a_expr TYPECAST Typename
 					{ $$ = makeTypeCast($1, $3); }
-			| a_expr COLLATE ColId
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName($3);
-					n->args = makeList1($1);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					$$ = (Node *) n;
-				}
 			| a_expr AT TIME ZONE c_expr
 				{
 					FuncCall *n = makeNode(FuncCall);
@@ -6706,8 +6694,18 @@ opt_indirection:
 				{ $$ = NIL; }
 		;
 
-expr_list:	a_expr									{ $$ = makeList1($1); }
-			| expr_list ',' a_expr					{ $$ = lappend($1, $3); }
+expr_list:	a_expr
+				{
+					FastList *dst = (FastList *) &$$;
+					makeFastList1(dst, $1);
+				}
+			| expr_list ',' a_expr
+				{
+					FastList *dst = (FastList *) &$$;
+					FastList *src = (FastList *) &$1;
+					*dst = *src;
+					FastAppend(dst, $3);
+				}
 		;
 
 extract_list:

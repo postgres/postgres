@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.344 2003/08/08 01:21:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.344.2.1 2003/09/07 04:37:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,32 +572,9 @@ main(int argc, char **argv)
 		dumpRules(g_fout, tblinfo, numTables);
 	}
 
-	/* Now sort the output nicely */
+	/* Now sort the output nicely: by OID within object types */
 	SortTocByOID(g_fout);
-
-	/*
-	 * Procedural languages have to be declared just after database and
-	 * schema creation, before they are used.
-	 */
-	MoveToStart(g_fout, "ACL LANGUAGE");
-	MoveToStart(g_fout, "PROCEDURAL LANGUAGE");
-	MoveToStart(g_fout, "FUNC PROCEDURAL LANGUAGE");
-	MoveToStart(g_fout, "SCHEMA");
-	MoveToStart(g_fout, "DATABASE");
-	MoveToEnd(g_fout, "TABLE DATA");
-	MoveToEnd(g_fout, "BLOBS");
-	MoveToEnd(g_fout, "INDEX");
-	MoveToEnd(g_fout, "CONSTRAINT");
-	MoveToEnd(g_fout, "TRIGGER");
-	MoveToEnd(g_fout, "RULE");
-	MoveToEnd(g_fout, "SEQUENCE SET");
-
-	/*
-	 * Moving all comments to end is annoying, but must do it for comments
-	 * on stuff we just moved, and we don't seem to have quite enough
-	 * dependency structure to get it really right...
-	 */
-	MoveToEnd(g_fout, "COMMENT");
+	SortTocByObjectType(g_fout);
 
 	if (plainText)
 	{
@@ -6039,6 +6016,8 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
  *
  * Dump out constraints after all table creation statements in
  * an alter table format.  Currently handles foreign keys only.
+ * (Unique and primary key constraints are handled with indexes,
+ * while check constraints are merged into the table definition.)
  *
  * XXX Potentially wrap in a 'SET CONSTRAINTS OFF' block so that
  * the current table data is not processed
@@ -6130,7 +6109,7 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 						 conName,
 						 tbinfo->relnamespace->nspname,
 						 tbinfo->usename,
-						 "CONSTRAINT", NULL,
+						 "FK CONSTRAINT", NULL,
 						 query->data, delqry->data,
 						 NULL, NULL, NULL);
 

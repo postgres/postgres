@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.99 2003/08/08 21:42:44 momjian Exp $
+ * $Id: executor.h,v 1.99.2.1 2003/09/07 04:37:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,6 @@ extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 					 TupleTableSlot *slot,
 					 bool *isnew);
-extern TupleHashEntry ScanTupleHashTable(TupleHashTable hashtable,
-				   TupleHashIterator *state);
 
 /*
  * prototypes from functions in execJunk.c

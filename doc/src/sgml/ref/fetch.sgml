@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.29 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.29.2.1 2003/09/07 04:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>FETCH</refname>
   <refpurpose>retrieve rows from a query using a cursor</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-fetch">
+  <primary>FETCH</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -281,7 +285,7 @@ where <replaceable class="PARAMETER">direction</replaceable> can be empty or one
 
   <variablelist>
    <varlistentry>
-    <term><computeroutput>WARNING:  PerformPortalFetch: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found</computeroutput></term>
+    <term><computeroutput>ERROR:  cursor "<replaceable class="PARAMETER">cursor</replaceable>" does not exist</computeroutput></term>
     <listitem>
      <para>
       There is no cursor with the specified name.

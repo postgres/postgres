@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.39 2003/08/04 02:40:14 momjian Exp $
+ * $Id: lmgr.h,v 1.39.2.1 2003/09/07 04:37:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,9 @@ extern void UnlockRelation(Relation relation, LOCKMODE lockmode);
 extern void LockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
 extern void UnlockRelationForSession(LockRelId *relid, LOCKMODE lockmode);
 
-/* Lock a page (mainly used for indices) */
+/* Lock a page (mainly used for indexes) */
 extern void LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
+extern bool ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 
 /* Lock an XID (used to wait for a transaction to finish) */

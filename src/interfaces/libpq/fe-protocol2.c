@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.6 2003/08/04 02:40:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.6.2.1 2003/09/07 04:37:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,10 +177,10 @@ pqSetenvPoll(PGconn *conn)
 					 * must use begin/commit in case autocommit is off by
 					 * default in a 7.3 server.
 					 *
-					 * Note: version() and getdatabaseencoding() exist in all
+					 * Note: version() exists in all
 					 * protocol-2.0-supporting backends.
 					 */
-					if (!PQsendQuery(conn, "begin; select version(), getdatabaseencoding(); end"))
+					if (!PQsendQuery(conn, "begin; select version(); end"))
 						goto error_return;
 
 					conn->setenv_state = SETENV_STATE_QUERY1_WAIT;
@@ -213,8 +213,8 @@ pqSetenvPoll(PGconn *conn)
 						}
 
 						/*
-						 * Extract server version and database encoding,
-						 * and save as if ParameterStatus
+						 * Extract server version and save as if
+						 * ParameterStatus
 						 */
 						val = PQgetvalue(res, 0, 0);
 						if (val && strncmp(val, "PostgreSQL ", 11) == 0)
@@ -235,12 +235,6 @@ pqSetenvPoll(PGconn *conn)
 							pqSaveParameterStatus(conn, "server_version",
 												  val);
 						}
-
-						val = PQgetvalue(res, 0, 1);
-						if (val && *val)		/* null should not happen,
-												 * but */
-							pqSaveParameterStatus(conn, "server_encoding",
-												  val);
 
 						PQclear(res);
 						/* Keep reading until PQgetResult returns NULL */
@@ -306,21 +300,17 @@ pqSetenvPoll(PGconn *conn)
 						else
 						{
 							/*
-							 * Error: presumably function not available,
-							 * so use PGCLIENTENCODING or database
-							 * encoding as the fallback.
+							 * Error: presumably function not
+							 * available, so use PGCLIENTENCODING or
+							 * SQL_ASCII as the fallback.
 							 */
 							val = getenv("PGCLIENTENCODING");
 							if (val && *val)
 								pqSaveParameterStatus(conn, "client_encoding",
 													  val);
 							else
-							{
-								val = PQparameterStatus(conn, "server_encoding");
-								if (val && *val)
-									pqSaveParameterStatus(conn, "client_encoding",
-														  val);
-							}
+								pqSaveParameterStatus(conn, "client_encoding",
+													  "SQL_ASCII");
 						}
 
 						PQclear(res);
@@ -828,7 +818,7 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	{
 		/* what comes before the colon is severity */
 		*splitp = '\0';
-		pqSaveMessageField(res, 'S', workBuf.data);
+		pqSaveMessageField(res, PG_DIAG_SEVERITY, workBuf.data);
 		startp = splitp + 3;
 	}
 	else
@@ -841,16 +831,16 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	{
 		/* what comes before the newline is primary message */
 		*splitp++ = '\0';
-		pqSaveMessageField(res, 'M', startp);
+		pqSaveMessageField(res, PG_DIAG_MESSAGE_PRIMARY, startp);
 		/* the rest is detail; strip any leading whitespace */
 		while (*splitp && isspace((unsigned char) *splitp))
 			splitp++;
-		pqSaveMessageField(res, 'D', splitp);
+		pqSaveMessageField(res, PG_DIAG_MESSAGE_DETAIL, splitp);
 	}
 	else
 	{
 		/* single-line message, so all primary */
-		pqSaveMessageField(res, 'M', startp);
+		pqSaveMessageField(res, PG_DIAG_MESSAGE_PRIMARY, startp);
 	}
 
 	/*

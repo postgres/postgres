@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.105 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.105.2.1 2003/09/07 04:36:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,7 +529,8 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	 * than one exact match, then someone put bogus entries in pg_opclass.
 	 *
 	 * The initial search is done by namespace.c so that we only consider
-	 * opclasses visible in the current namespace search path.
+	 * opclasses visible in the current namespace search path.  (See also
+	 * typcache.c, which applies the same logic, but over all opclasses.)
 	 */
 	for (opclass = OpclassGetCandidates(accessMethodId);
 		 opclass != NULL;

@@ -569,6 +569,30 @@ select to_tsquery('default', '\'the wether\':dc & \'           sKies \':BC ');
  'wether':CD & 'sky':BC
 (1 row)
 
+select to_tsquery('asd&(and|fghj)');
+   to_tsquery   
+----------------
+ 'asd' & 'fghj'
+(1 row)
+
+select to_tsquery('(asd&and)|fghj');
+   to_tsquery   
+----------------
+ 'asd' | 'fghj'
+(1 row)
+
+select to_tsquery('(asd&!and)|fghj');
+   to_tsquery   
+----------------
+ 'asd' | 'fghj'
+(1 row)
+
+select to_tsquery('(the|and&(i&1))&fghj');
+  to_tsquery  
+--------------
+ '1' & 'fghj'
+(1 row)
+
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca';
  ?column? 
 ----------

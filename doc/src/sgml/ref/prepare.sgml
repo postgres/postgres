@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.4 2003/04/26 23:56:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/prepare.sgml,v 1.4.2.1 2003/09/07 04:36:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>PREPARE</refname>
   <refpurpose>prepare a statement for execution</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-prepare">
+  <primary>PREPARE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -130,7 +134,7 @@ PREPARE <replaceable class="PARAMETER">plan_name</replaceable> [ (<replaceable c
    In some situations, the query plan produced by for a prepared
    statement may be inferior to the plan produced if the statement
    were submitted and executed normally. This is because when the
-   statement is planned and the planer attempts to determine the
+   statement is planned and the planner attempts to determine the
    optimal query plan, the actual values of any parameters specified
    in the statement are
    unavailable. <productname>PostgreSQL</productname> collects

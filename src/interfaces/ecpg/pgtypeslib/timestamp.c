@@ -418,7 +418,7 @@ dttofmtasc_replace(Timestamp *ts, Date dDate, int dow, struct tm * tm,
 					/* XXX */
 					break;
 				case 'C':
-					replace_val.uint_val = (tm->tm_year + 1900) / 100;
+					replace_val.uint_val = tm->tm_year / 100;
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'd':
@@ -677,7 +677,7 @@ dttofmtasc_replace(Timestamp *ts, Date dDate, int dow, struct tm * tm,
 					replace_type = PGTYPES_TYPE_UINT_2_LZ;
 					break;
 				case 'Y':
-					replace_val.uint_val = tm->tm_year + 1900;
+					replace_val.uint_val = tm->tm_year;
 					replace_type = PGTYPES_TYPE_UINT;
 					break;
 				case 'z':

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_clause.h,v 1.36 2003/08/07 19:20:23 tgl Exp $
+ * $Id: parse_clause.h,v 1.36.2.1 2003/09/07 04:37:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@ extern List *addAllTargetsToSortList(ParseState *pstate,
 						bool resolveUnknown);
 extern List *addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 					List *sortlist, List *targetlist,
-					List *opname, bool resolveUnknown);
+					int sortby_kind, List *sortby_opname,
+					bool resolveUnknown);
 extern Index assignSortGroupRef(TargetEntry *tle, List *tlist);
 extern bool targetIsInSortList(TargetEntry *tle, List *sortList);
 

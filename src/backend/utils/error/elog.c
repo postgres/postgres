@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.119 2003/08/08 21:42:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.119.2.1 2003/09/07 04:36:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,20 +530,22 @@ errcode_for_file_access(void)
 			edata->sqlerrcode = ERRCODE_INSUFFICIENT_PRIVILEGE;
 			break;
 
-			/* Object not found */
+			/* File not found */
 		case ENOENT:			/* No such file or directory */
-			edata->sqlerrcode = ERRCODE_UNDEFINED_OBJECT;
+			edata->sqlerrcode = ERRCODE_UNDEFINED_FILE;
 			break;
 
-			/* Duplicate object */
+			/* Duplicate file */
 		case EEXIST:			/* File exists */
-			edata->sqlerrcode = ERRCODE_DUPLICATE_OBJECT;
+			edata->sqlerrcode = ERRCODE_DUPLICATE_FILE;
 			break;
 
 			/* Wrong object type or state */
 		case ENOTDIR:			/* Not a directory */
 		case EISDIR:			/* Is a directory */
-		case ENOTEMPTY: /* Directory not empty */
+#if defined(ENOTEMPTY) && (ENOTEMPTY != EEXIST)	/* same code on AIX */
+		case ENOTEMPTY:			/* Directory not empty */
+#endif
 			edata->sqlerrcode = ERRCODE_WRONG_OBJECT_TYPE;
 			break;
 
@@ -1165,7 +1167,7 @@ send_message_to_frontend(ErrorData *edata)
 		int			ssval;
 		int			i;
 
-		pq_sendbyte(&msgbuf, 'S');
+		pq_sendbyte(&msgbuf, PG_DIAG_SEVERITY);
 		pq_sendstring(&msgbuf, error_severity(edata->elevel));
 
 		/* unpack MAKE_SQLSTATE code */
@@ -1177,11 +1179,11 @@ send_message_to_frontend(ErrorData *edata)
 		}
 		tbuf[i] = '\0';
 
-		pq_sendbyte(&msgbuf, 'C');
+		pq_sendbyte(&msgbuf, PG_DIAG_SQLSTATE);
 		pq_sendstring(&msgbuf, tbuf);
 
 		/* M field is required per protocol, so always send something */
-		pq_sendbyte(&msgbuf, 'M');
+		pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_PRIMARY);
 		if (edata->message)
 			pq_sendstring(&msgbuf, edata->message);
 		else
@@ -1189,45 +1191,45 @@ send_message_to_frontend(ErrorData *edata)
 
 		if (edata->detail)
 		{
-			pq_sendbyte(&msgbuf, 'D');
+			pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_DETAIL);
 			pq_sendstring(&msgbuf, edata->detail);
 		}
 
 		if (edata->hint)
 		{
-			pq_sendbyte(&msgbuf, 'H');
+			pq_sendbyte(&msgbuf, PG_DIAG_MESSAGE_HINT);
 			pq_sendstring(&msgbuf, edata->hint);
 		}
 
 		if (edata->context)
 		{
-			pq_sendbyte(&msgbuf, 'W');
+			pq_sendbyte(&msgbuf, PG_DIAG_CONTEXT);
 			pq_sendstring(&msgbuf, edata->context);
 		}
 
 		if (edata->cursorpos > 0)
 		{
 			snprintf(tbuf, sizeof(tbuf), "%d", edata->cursorpos);
-			pq_sendbyte(&msgbuf, 'P');
+			pq_sendbyte(&msgbuf, PG_DIAG_STATEMENT_POSITION);
 			pq_sendstring(&msgbuf, tbuf);
 		}
 
 		if (edata->filename)
 		{
-			pq_sendbyte(&msgbuf, 'F');
+			pq_sendbyte(&msgbuf, PG_DIAG_SOURCE_FILE);
 			pq_sendstring(&msgbuf, edata->filename);
 		}
 
 		if (edata->lineno > 0)
 		{
 			snprintf(tbuf, sizeof(tbuf), "%d", edata->lineno);
-			pq_sendbyte(&msgbuf, 'L');
+			pq_sendbyte(&msgbuf, PG_DIAG_SOURCE_LINE);
 			pq_sendstring(&msgbuf, tbuf);
 		}
 
 		if (edata->funcname)
 		{
-			pq_sendbyte(&msgbuf, 'R');
+			pq_sendbyte(&msgbuf, PG_DIAG_SOURCE_FUNCTION);
 			pq_sendstring(&msgbuf, edata->funcname);
 		}
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.7 2003/08/08 13:16:20 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.7.2.1 2003/09/07 04:37:09 momjian Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -164,10 +164,10 @@ ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat)
 
 	if (result)
 	{
-		sqlstate = PQresultErrorField(result, 'C');
+		sqlstate = PQresultErrorField(result, PG_DIAG_SQLSTATE);
 		if (sqlstate == NULL)
 			sqlstate = ECPG_SQLSTATE_ECPG_INTERNAL_ERROR;
-		message = PQresultErrorField(result, 'M');
+		message = PQresultErrorField(result, PG_DIAG_MESSAGE_PRIMARY);
 	}
 	else
 	{
@@ -192,7 +192,7 @@ ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat)
 		sqlca->sqlcode = ECPG_PGSQL;
 
 	ECPGlog("raising sqlstate %.*s in line %d, '%s'.\n",
-			sqlca->sqlstate, sizeof(sqlca->sqlstate), line, sqlca->sqlerrm.sqlerrmc);
+			sizeof(sqlca->sqlstate), sqlca->sqlstate, line, sqlca->sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
 	ECPGfree_auto_mem();

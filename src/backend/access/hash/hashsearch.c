@@ -8,47 +8,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.31 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.31.2.1 2003/09/07 04:36:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "storage/lmgr.h"
 
-
-/*
- *	_hash_search() -- Finds the page/bucket that the contains the
- *	scankey and loads it into *bufP.  the buffer has a read lock.
- */
-void
-_hash_search(Relation rel,
-			 int keysz,
-			 ScanKey scankey,
-			 Buffer *bufP,
-			 HashMetaPage metap)
-{
-	BlockNumber blkno;
-	Datum		keyDatum;
-	Bucket		bucket;
-
-	if (scankey == (ScanKey) NULL ||
-		(keyDatum = scankey[0].sk_argument) == (Datum) NULL)
-	{
-		/*
-		 * If the scankey argument is NULL, all tuples will satisfy the
-		 * scan so we start the scan at the first bucket (bucket 0).
-		 */
-		bucket = 0;
-	}
-	else
-		bucket = _hash_call(rel, metap, keyDatum);
-
-	blkno = BUCKET_TO_BLKNO(bucket);
-
-	*bufP = _hash_getbuf(rel, blkno, HASH_READ);
-}
 
 /*
  *	_hash_next() -- Get the next item in a scan.
@@ -62,38 +30,30 @@ _hash_search(Relation rel,
 bool
 _hash_next(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation	rel;
+	Relation	rel = scan->indexRelation;
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Buffer		buf;
-	Buffer		metabuf;
 	Page		page;
 	OffsetNumber offnum;
 	ItemPointer current;
 	HashItem	hitem;
 	IndexTuple	itup;
-	HashScanOpaque so;
 
-	rel = scan->indexRelation;
-	so = (HashScanOpaque) scan->opaque;
-
-	/* we still have the buffer pinned and locked */
+	/* we still have the buffer pinned and read-locked */
 	buf = so->hashso_curbuf;
 	Assert(BufferIsValid(buf));
 
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
-
 	/*
-	 * step to next valid tuple.  note that _hash_step releases our lock
-	 * on 'metabuf'; if we switch to a new 'buf' while looking for the
-	 * next tuple, we come back with a lock on that buffer.
+	 * step to next valid tuple.
 	 */
-	if (!_hash_step(scan, &buf, dir, metabuf))
+	if (!_hash_step(scan, &buf, dir))
 		return false;
 
 	/* if we're here, _hash_step found a valid tuple */
 	current = &(scan->currentItemData);
 	offnum = ItemPointerGetOffsetNumber(current);
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &hitem->hash_itup;
 	scan->xs_ctup.t_self = itup->t_tid;
@@ -101,6 +61,9 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	return true;
 }
 
+/*
+ * Advance to next page in a bucket, if any.
+ */
 static void
 _hash_readnext(Relation rel,
 			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
@@ -108,18 +71,20 @@ _hash_readnext(Relation rel,
 	BlockNumber blkno;
 
 	blkno = (*opaquep)->hasho_nextblkno;
-	_hash_relbuf(rel, *bufp, HASH_READ);
+	_hash_relbuf(rel, *bufp);
 	*bufp = InvalidBuffer;
 	if (BlockNumberIsValid(blkno))
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ);
 		*pagep = BufferGetPage(*bufp);
-		_hash_checkpage(*pagep, LH_OVERFLOW_PAGE);
+		_hash_checkpage(rel, *pagep, LH_OVERFLOW_PAGE);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
-		Assert(!PageIsEmpty(*pagep));
 	}
 }
 
+/*
+ * Advance to previous page in a bucket, if any.
+ */
 static void
 _hash_readprev(Relation rel,
 			   Buffer *bufp, Page *pagep, HashPageOpaque *opaquep)
@@ -127,36 +92,34 @@ _hash_readprev(Relation rel,
 	BlockNumber blkno;
 
 	blkno = (*opaquep)->hasho_prevblkno;
-	_hash_relbuf(rel, *bufp, HASH_READ);
+	_hash_relbuf(rel, *bufp);
 	*bufp = InvalidBuffer;
 	if (BlockNumberIsValid(blkno))
 	{
 		*bufp = _hash_getbuf(rel, blkno, HASH_READ);
 		*pagep = BufferGetPage(*bufp);
-		_hash_checkpage(*pagep, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+		_hash_checkpage(rel, *pagep, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 		*opaquep = (HashPageOpaque) PageGetSpecialPointer(*pagep);
-		if (PageIsEmpty(*pagep))
-		{
-			Assert((*opaquep)->hasho_flag & LH_BUCKET_PAGE);
-			_hash_relbuf(rel, *bufp, HASH_READ);
-			*bufp = InvalidBuffer;
-		}
 	}
 }
 
 /*
  *	_hash_first() -- Find the first item in a scan.
  *
- *		Find the first item in the tree that
+ *		Find the first item in the index that
  *		satisfies the qualification associated with the scan descriptor. On
- *		exit, the page containing the current index tuple is read locked
+ *		success, the page containing the current index tuple is read locked
  *		and pinned, and the scan's opaque data entry is updated to
  *		include the buffer.
  */
 bool
 _hash_first(IndexScanDesc scan, ScanDirection dir)
 {
-	Relation	rel;
+	Relation	rel = scan->indexRelation;
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	uint32		hashkey;
+	Bucket		bucket;
+	BlockNumber blkno;
 	Buffer		buf;
 	Buffer		metabuf;
 	Page		page;
@@ -166,73 +129,92 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	IndexTuple	itup;
 	ItemPointer current;
 	OffsetNumber offnum;
-	HashScanOpaque so;
 
-	rel = scan->indexRelation;
-	so = (HashScanOpaque) scan->opaque;
 	current = &(scan->currentItemData);
+	ItemPointerSetInvalid(current);
 
+	/*
+	 * We do not support hash scans with no index qualification, because
+	 * we would have to read the whole index rather than just one bucket.
+	 * That creates a whole raft of problems, since we haven't got a
+	 * practical way to lock all the buckets against splits or compactions.
+	 */
+	if (scan->numberOfKeys < 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("hash indexes do not support whole-index scans")));
+
+	/*
+	 * If the constant in the index qual is NULL, assume it cannot match
+	 * any items in the index.
+	 */
+	if (scan->keyData[0].sk_flags & SK_ISNULL)
+		return false;
+
+	/*
+	 * Okay to compute the hash key.  We want to do this before acquiring
+	 * any locks, in case a user-defined hash function happens to be slow.
+	 */
+	hashkey = _hash_datum2hashkey(rel, scan->keyData[0].sk_argument);
+
+	/*
+	 * Acquire shared split lock so we can compute the target bucket
+	 * safely (see README).
+	 */
+	_hash_getlock(rel, 0, HASH_SHARE);
+
+	/* Read the metapage */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
+	_hash_checkpage(rel, (Page) metap, LH_META_PAGE);
 
 	/*
-	 * XXX -- The attribute number stored in the scan key is the attno in
-	 * the heap relation.  We need to transmogrify this into the index
-	 * relation attno here.  For the moment, we have hardwired attno == 1.
+	 * Compute the target bucket number, and convert to block number.
 	 */
+	bucket = _hash_hashkey2bucket(hashkey,
+								  metap->hashm_maxbucket,
+								  metap->hashm_highmask,
+								  metap->hashm_lowmask);
 
-	/* find the correct bucket page and load it into buf */
-	_hash_search(rel, 1, scan->keyData, &buf, metap);
+	blkno = BUCKET_TO_BLKNO(metap, bucket);
+
+	/* done with the metapage */
+	_hash_relbuf(rel, metabuf);
+
+	/*
+	 * Acquire share lock on target bucket; then we can release split lock.
+	 */
+	_hash_getlock(rel, blkno, HASH_SHARE);
+
+	_hash_droplock(rel, 0, HASH_SHARE);
+
+	/* Update scan opaque state to show we have lock on the bucket */
+	so->hashso_bucket = bucket;
+	so->hashso_bucket_valid = true;
+	so->hashso_bucket_blkno = blkno;
+
+	/* Fetch the primary bucket page for the bucket */
+	buf = _hash_getbuf(rel, blkno, HASH_READ);
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	Assert(opaque->hasho_bucket == bucket);
 
-	/*
-	 * if we are scanning forward, we need to find the first non-empty
-	 * page (if any) in the bucket chain.  since overflow pages are never
-	 * empty, this had better be either the bucket page or the first
-	 * overflow page.
-	 *
-	 * if we are scanning backward, we always go all the way to the end of
-	 * the bucket chain.
-	 */
-	if (PageIsEmpty(page))
-	{
-		if (BlockNumberIsValid(opaque->hasho_nextblkno))
-			_hash_readnext(rel, &buf, &page, &opaque);
-		else
-		{
-			ItemPointerSetInvalid(current);
-			so->hashso_curbuf = InvalidBuffer;
-
-			/*
-			 * If there is no scankeys, all tuples will satisfy the scan -
-			 * so we continue in _hash_step to get tuples from all
-			 * buckets. - vadim 04/29/97
-			 */
-			if (scan->numberOfKeys >= 1)
-			{
-				_hash_relbuf(rel, buf, HASH_READ);
-				_hash_relbuf(rel, metabuf, HASH_READ);
-				return false;
-			}
-		}
-	}
+	/* If a backwards scan is requested, move to the end of the chain */
 	if (ScanDirectionIsBackward(dir))
 	{
 		while (BlockNumberIsValid(opaque->hasho_nextblkno))
 			_hash_readnext(rel, &buf, &page, &opaque);
 	}
 
-	if (!_hash_step(scan, &buf, dir, metabuf))
+	/* Now find the first tuple satisfying the qualification */
+	if (!_hash_step(scan, &buf, dir))
 		return false;
 
 	/* if we're here, _hash_step found a valid tuple */
-	current = &(scan->currentItemData);
 	offnum = ItemPointerGetOffsetNumber(current);
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &hitem->hash_itup;
 	scan->xs_ctup.t_self = itup->t_tid;
@@ -247,19 +229,16 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
  *		false.	Else, return true and set the CurrentItemData for the
  *		scan to the right thing.
  *
- *		'bufP' points to the buffer which contains the current page
- *		that we'll step through.
- *
- *		'metabuf' is released when this returns.
+ *		'bufP' points to the current buffer, which is pinned and read-locked.
+ *		On success exit, we have pin and read-lock on whichever page
+ *		contains the right item; on failure, we have released all buffers.
  */
 bool
-_hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
+_hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
-	Relation	rel;
+	Relation	rel = scan->indexRelation;
+	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	ItemPointer current;
-	HashScanOpaque so;
-	int			allbuckets;
-	HashMetaPage metap;
 	Buffer		buf;
 	Page		page;
 	HashPageOpaque opaque;
@@ -270,18 +249,13 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 	HashItem	hitem;
 	IndexTuple	itup;
 
-	rel = scan->indexRelation;
 	current = &(scan->currentItemData);
-	so = (HashScanOpaque) scan->opaque;
-	allbuckets = (scan->numberOfKeys < 1);
-
-	metap = (HashMetaPage) BufferGetPage(metabuf);
-	_hash_checkpage((Page) metap, LH_META_PAGE);
 
 	buf = *bufP;
 	page = BufferGetPage(buf);
-	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+	_hash_checkpage(rel, page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	opaque = (HashPageOpaque) PageGetSpecialPointer(page);
+	bucket = opaque->hasho_bucket;
 
 	/*
 	 * If _hash_step is called from _hash_first, current will not be
@@ -302,107 +276,63 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 	 */
 	do
 	{
-		bucket = opaque->hasho_bucket;
-
 		switch (dir)
 		{
 			case ForwardScanDirection:
 				if (offnum != InvalidOffsetNumber)
-				{
 					offnum = OffsetNumberNext(offnum);	/* move forward */
-				}
 				else
-				{
 					offnum = FirstOffsetNumber; /* new page */
-				}
+
 				while (offnum > maxoff)
 				{
-
-					/*--------
+					/*
 					 * either this page is empty
 					 * (maxoff == InvalidOffsetNumber)
 					 * or we ran off the end.
-					 *--------
 					 */
 					_hash_readnext(rel, &buf, &page, &opaque);
-					if (BufferIsInvalid(buf))
-					{			/* end of chain */
-						if (allbuckets && bucket < metap->hashm_maxbucket)
-						{
-							++bucket;
-							blkno = BUCKET_TO_BLKNO(bucket);
-							buf = _hash_getbuf(rel, blkno, HASH_READ);
-							page = BufferGetPage(buf);
-							_hash_checkpage(page, LH_BUCKET_PAGE);
-							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-							Assert(opaque->hasho_bucket == bucket);
-							while (PageIsEmpty(page) &&
-							 BlockNumberIsValid(opaque->hasho_nextblkno))
-								_hash_readnext(rel, &buf, &page, &opaque);
-							maxoff = PageGetMaxOffsetNumber(page);
-							offnum = FirstOffsetNumber;
-						}
-						else
-						{
-							maxoff = offnum = InvalidOffsetNumber;
-							break;		/* while */
-						}
-					}
-					else
+					if (BufferIsValid(buf))
 					{
-						/* _hash_readnext never returns an empty page */
 						maxoff = PageGetMaxOffsetNumber(page);
 						offnum = FirstOffsetNumber;
 					}
+					else
+					{
+						/* end of bucket */
+						maxoff = offnum = InvalidOffsetNumber;
+						break;	/* exit while */
+					}
 				}
 				break;
+
 			case BackwardScanDirection:
 				if (offnum != InvalidOffsetNumber)
-				{
 					offnum = OffsetNumberPrev(offnum);	/* move back */
-				}
 				else
-				{
 					offnum = maxoff;	/* new page */
-				}
+
 				while (offnum < FirstOffsetNumber)
 				{
-
-					/*---------
+					/*
 					 * either this page is empty
 					 * (offnum == InvalidOffsetNumber)
 					 * or we ran off the end.
-					 *---------
 					 */
 					_hash_readprev(rel, &buf, &page, &opaque);
-					if (BufferIsInvalid(buf))
-					{			/* end of chain */
-						if (allbuckets && bucket > 0)
-						{
-							--bucket;
-							blkno = BUCKET_TO_BLKNO(bucket);
-							buf = _hash_getbuf(rel, blkno, HASH_READ);
-							page = BufferGetPage(buf);
-							_hash_checkpage(page, LH_BUCKET_PAGE);
-							opaque = (HashPageOpaque) PageGetSpecialPointer(page);
-							Assert(opaque->hasho_bucket == bucket);
-							while (BlockNumberIsValid(opaque->hasho_nextblkno))
-								_hash_readnext(rel, &buf, &page, &opaque);
-							maxoff = offnum = PageGetMaxOffsetNumber(page);
-						}
-						else
-						{
-							maxoff = offnum = InvalidOffsetNumber;
-							break;		/* while */
-						}
+					if (BufferIsValid(buf))
+					{
+						maxoff = offnum = PageGetMaxOffsetNumber(page);
 					}
 					else
 					{
-						/* _hash_readprev never returns an empty page */
-						maxoff = offnum = PageGetMaxOffsetNumber(page);
+						/* end of bucket */
+						maxoff = offnum = InvalidOffsetNumber;
+						break;	/* exit while */
 					}
 				}
 				break;
+
 			default:
 				/* NoMovementScanDirection */
 				/* this should not be reached */
@@ -412,7 +342,6 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 		/* we ran off the end of the world without finding a match */
 		if (offnum == InvalidOffsetNumber)
 		{
-			_hash_relbuf(rel, metabuf, HASH_READ);
 			*bufP = so->hashso_curbuf = InvalidBuffer;
 			ItemPointerSetInvalid(current);
 			return false;
@@ -424,7 +353,6 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 	} while (!_hash_checkqual(scan, itup));
 
 	/* if we made it to here, we've found a valid tuple */
-	_hash_relbuf(rel, metabuf, HASH_READ);
 	blkno = BufferGetBlockNumber(buf);
 	*bufP = so->hashso_curbuf = buf;
 	ItemPointerSet(current, blkno, offnum);

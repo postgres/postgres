@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.98 2003/08/13 16:29:03 tgl Exp $
+ * $Id: libpq-fe.h,v 1.98.2.1 2003/09/07 04:37:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

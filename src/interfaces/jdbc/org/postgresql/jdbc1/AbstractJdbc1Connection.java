@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.22 2003/08/11 20:54:55 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.22.2.1 2003/09/07 04:37:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1121,7 +1121,7 @@ public abstract class AbstractJdbc1Connection implements BaseConnection
 			try
 			{
 				pgStream.SendChar('X');
-				pgStream.SendInteger(0,4);
+				pgStream.SendInteger(4,4);
 				pgStream.flush();
 				pgStream.close();
 			}

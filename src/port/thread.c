@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: thread.c,v 1.3 2003/08/14 05:27:18 momjian Exp $
+ * $Id: thread.c,v 1.3.2.1 2003/09/07 04:37:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,8 @@
  *	The current setup is to assume either all standard functions are
  *	thread-safe (NEED_REENTRANT_FUNC_NAMES=no), or the operating system
  *	requires reentrant function names (NEED_REENTRANT_FUNC_NAMES=yes).
+ *	Compile and run src/tools/test_thread_funcs.c to see if your operating
+ *	system requires reentrant function names.
  */
  
 
@@ -49,7 +51,7 @@
 char *
 pqStrerror(int errnum, char *strerrbuf, size_t buflen)
 {
-#if defined(USE_THREADS) && defined(HAVE_STRERROR_R)
+#if defined(USE_THREADS) && defined(NEED_REENTRANT_FUNC_NAMES)
 	/* reentrant strerror_r is available */
 	/* some early standards had strerror_r returning char * */
 	strerror_r(errnum, strerrbuf, buflen);
@@ -64,11 +66,12 @@ pqStrerror(int errnum, char *strerrbuf, size_t buflen)
  * Wrapper around getpwuid() or getpwuid_r() to mimic POSIX getpwuid_r()
  * behaviour, if it is not available or required.
  */
+#ifndef WIN32
 int
 pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 		   size_t buflen, struct passwd **result)
 {
-#if defined(USE_THREADS) && defined(HAVE_GETPWUID_R)
+#if defined(USE_THREADS) && defined(NEED_REENTRANT_FUNC_NAMES)
 	/*
 	 * Early POSIX draft of getpwuid_r() returns 'struct passwd *'.
 	 *    getpwuid_r(uid, resultbuf, buffer, buflen)
@@ -82,6 +85,7 @@ pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
 #endif
 	return (*result == NULL) ? -1 : 0;
 }
+#endif
 
 /*
  * Wrapper around gethostbyname() or gethostbyname_r() to mimic
@@ -94,8 +98,7 @@ pqGethostbyname(const char *name,
 				struct hostent **result,
 				int *herrno)
 {
-#if defined(USE_THREADS) && defined(HAVE_GETHOSTBYNAME_R)
-
+#if defined(USE_THREADS) && defined(NEED_REENTRANT_FUNC_NAMES)
 	/*
 	 * broken (well early POSIX draft) gethostbyname_r() which returns
 	 * 'struct hostent *'

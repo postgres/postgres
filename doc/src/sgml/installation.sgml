@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.138 2003/08/04 04:03:03 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.138.2.1 2003/09/07 04:36:41 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -169,10 +169,9 @@ su - postgres
 
     <listitem>
      <para>
-      To build the Python interface module or the PL/Python server
-      programming language, you need a Python installation, including
-      the header files.
-      Since PL/Python will be a shared library, the
+      To build the PL/Python server programming language, you need a
+      Python installation, including the header files.  Since
+      PL/Python will be a shared library, the
       <indexterm><primary>libpython</primary></indexterm>
       <filename>libpython</filename> library must be a shared library
       also on most platforms.  This is not the case in a default
@@ -383,6 +382,7 @@ JAVACMD=$JAVA_HOME/bin/java
     <para>
      <indexterm>
       <primary>pg_dumpall</primary>
+      <secondary>use during upgrade</secondary>
      </indexterm>
 
      To back up your database installation, type:
@@ -750,10 +750,7 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--with-python</option></term>
        <listitem>
         <para>
-         Build the Python interface module and the PL/Python
-         server-side language. You need to have root access to be able
-         to install the Python module at its default place
-         (<filename>/usr/lib/python<replaceable>x</>.<replaceable>y</></>).
+         Build the PL/Python server-side language.
         </para>
        </listitem>
       </varlistentry>
@@ -875,8 +872,8 @@ JAVACMD=$JAVA_HOME/bin/java
        <term><option>--with-pam</option></term>
        <listitem>
         <para>
-	 Build with <acronym>PAM</> (Pluggable Authentication Modules)
-	 support.
+	 Build with <acronym>PAM</><indexterm><primary>PAM</></>
+	 (Pluggable Authentication Modules) support.
         </para>
        </listitem>
       </varlistentry>
@@ -1079,20 +1076,6 @@ All of PostgreSQL is successfully made. Ready to install.
    </para>
 
    <para>
-    If you built the Python interfaces and you were not the
-    root user when you executed the above command then that part of
-    the installation probably failed. In that case you should become
-    the root user and then do
-<screen>
-<userinput>gmake -C src/interfaces/python install</userinput>
-</screen>
-    If you do not have root access you are on your own: 
-    you can still take the required files and place them in 
-    other directories where Python can find them, but how to 
-    do that is left as an exercise.
-   </para>
-
-   <para>
     The standard installation provides only the header files needed for client
     application development.  If you plan to do any server-side program
     development (such as custom functions or data types written in C),
@@ -1163,7 +1146,7 @@ All of PostgreSQL is successfully made. Ready to install.
    <title>Shared Libraries</title>
 
    <indexterm>
-    <primary>shared libraries</primary>
+    <primary>shared library</primary>
    </indexterm>
 
    <para>
@@ -1284,7 +1267,6 @@ set path = ( /usr/local/pgsql/bin $path )
    <para>
     <indexterm>
      <primary><envar>MANPATH</envar></primary>
-     <seealso>man pages</seealso>
     </indexterm>
     To enable your system to find the <application>man</>
     documentation, you need to add lines like the following to a

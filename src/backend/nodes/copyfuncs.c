@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.263 2003/08/08 21:41:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.263.2.1 2003/09/07 04:36:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -947,7 +947,7 @@ _copyArrayExpr(ArrayExpr *from)
 	COPY_SCALAR_FIELD(array_typeid);
 	COPY_SCALAR_FIELD(element_typeid);
 	COPY_NODE_FIELD(elements);
-	COPY_SCALAR_FIELD(ndims);
+	COPY_SCALAR_FIELD(multidims);
 
 	return newnode;
 }
@@ -1402,11 +1402,12 @@ _copyTypeName(TypeName *from)
 	return newnode;
 }
 
-static SortGroupBy *
-_copySortGroupBy(SortGroupBy *from)
+static SortBy *
+_copySortBy(SortBy *from)
 {
-	SortGroupBy *newnode = makeNode(SortGroupBy);
+	SortBy *newnode = makeNode(SortBy);
 
+	COPY_SCALAR_FIELD(sortby_kind);
 	COPY_NODE_FIELD(useOp);
 	COPY_NODE_FIELD(node);
 
@@ -2924,8 +2925,8 @@ copyObject(void *from)
 		case T_TypeCast:
 			retval = _copyTypeCast(from);
 			break;
-		case T_SortGroupBy:
-			retval = _copySortGroupBy(from);
+		case T_SortBy:
+			retval = _copySortBy(from);
 			break;
 		case T_RangeSubselect:
 			retval = _copyRangeSubselect(from);

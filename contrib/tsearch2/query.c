@@ -52,15 +52,6 @@ Datum		to_tsquery_name(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(to_tsquery_current);
 Datum		to_tsquery_current(PG_FUNCTION_ARGS);
 
-#define END			0
-#define ERR			1
-#define VAL			2
-#define OPR			3
-#define OPEN		4
-#define CLOSE		5
-#define VALTRUE		6			/* for stop words */
-#define VALFALSE	7
-
 /* parser's states */
 #define WAITOPERAND 1
 #define WAITOPERATOR	2
@@ -293,7 +284,7 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 
 	/* XXX */
 	if (prs.curwords == 0)
-		pushval_asis(state, VALTRUE, 0, 0, 0);
+		pushval_asis(state, VALSTOP, 0, 0, 0);
 }
 
 #define STACKDEPTH	32
@@ -526,7 +517,7 @@ findoprnd(ITEM * ptr, int4 *pos)
 	elog(DEBUG3, (ptr[*pos].type == OPR) ?
 		 "%d  %c" : "%d  %d", *pos, ptr[*pos].val);
 #endif
-	if (ptr[*pos].type == VAL || ptr[*pos].type == VALTRUE)
+	if (ptr[*pos].type == VAL || ptr[*pos].type == VALSTOP)
 	{
 		ptr[*pos].left = 0;
 		(*pos)++;

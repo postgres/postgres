@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.111 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.111.2.1 2003/09/07 04:36:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,12 +550,12 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	char	   *token;
 	char	   *db;
 	char	   *user;
-	struct addrinfo *file_ip_addr = NULL,
-			   *file_ip_mask = NULL;
+	struct addrinfo *gai_result;
 	struct addrinfo hints;
-	struct sockaddr_storage *mask;
-	char	   *cidr_slash;
 	int			ret;
+	struct sockaddr_storage addr;
+	struct sockaddr_storage mask;
+	char	   *cidr_slash;
 
 	Assert(line != NIL);
 	line_number = lfirsti(line);
@@ -648,6 +648,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		if (cidr_slash)
 			*cidr_slash = '\0';
 
+		/* Get the IP address either way */
 		hints.ai_flags = AI_NUMERICHOST;
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_socktype = 0;
@@ -657,9 +658,8 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		hints.ai_addr = NULL;
 		hints.ai_next = NULL;
 
-		/* Get the IP address either way */
-		ret = getaddrinfo_all(token, NULL, &hints, &file_ip_addr);
-		if (ret || !file_ip_addr)
+		ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
+		if (ret || !gai_result)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -667,24 +667,21 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 							token, gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
+			if (gai_result)
+				freeaddrinfo_all(hints.ai_family, gai_result);
 			goto hba_syntax;
 		}
 
 		if (cidr_slash)
 			*cidr_slash = '/';
 
-		if (file_ip_addr->ai_family != port->raddr.addr.ss_family)
-		{
-			/* Wrong address family. */
-			freeaddrinfo_all(hints.ai_family, file_ip_addr);
-			return;
-		}
+		memcpy(&addr, gai_result->ai_addr, gai_result->ai_addrlen);
+		freeaddrinfo_all(hints.ai_family, gai_result);
 
 		/* Get the netmask */
 		if (cidr_slash)
 		{
-			if (SockAddr_cidr_mask(&mask, cidr_slash + 1,
-								   file_ip_addr->ai_family) < 0)
+			if (SockAddr_cidr_mask(&mask, cidr_slash + 1, addr.ss_family) < 0)
 				goto hba_syntax;
 		}
 		else
@@ -695,15 +692,46 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 				goto hba_syntax;
 			token = lfirst(line);
 
-			ret = getaddrinfo_all(token, NULL, &hints, &file_ip_mask);
-			if (ret || !file_ip_mask)
+			ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
+			if (ret || !gai_result)
+			{
+				if (gai_result)
+					freeaddrinfo_all(hints.ai_family, gai_result);
 				goto hba_syntax;
+			}
 
-			mask = (struct sockaddr_storage *) file_ip_mask->ai_addr;
+			memcpy(&mask, gai_result->ai_addr, gai_result->ai_addrlen);
+			freeaddrinfo_all(hints.ai_family, gai_result);
 
-			if (file_ip_addr->ai_family != mask->ss_family)
+			if (addr.ss_family != mask.ss_family)
 				goto hba_syntax;
 		}
+
+		if (addr.ss_family != port->raddr.addr.ss_family)
+		{
+			/*
+			 * Wrong address family.  We allow only one case: if the
+			 * file has IPv4 and the port is IPv6, promote the file
+			 * address to IPv6 and try to match that way.
+			 */
+#ifdef HAVE_IPV6
+			if (addr.ss_family == AF_INET &&
+				port->raddr.addr.ss_family == AF_INET6)
+			{
+				promote_v4_to_v6_addr(&addr);
+				promote_v4_to_v6_mask(&mask);
+			}
+			else
+#endif /* HAVE_IPV6 */
+			{
+				/* Line doesn't match client port, so ignore it. */
+				return;
+			}
+		}
+
+		/* Ignore line if client port is not in the matching addr range. */
+		if (!rangeSockAddr(&port->raddr.addr, &addr, &mask))
+			return;
 
 		/* Read the rest of the line. */
 		line = lnext(line);
@@ -712,16 +740,6 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		parse_hba_auth(line, &port->auth_method, &port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
-
-		/* Must meet network restrictions */
-		if (!rangeSockAddr(&port->raddr.addr,
-					   (struct sockaddr_storage *) file_ip_addr->ai_addr,
-						   mask))
-			goto hba_freeaddr;
-
-		freeaddrinfo_all(hints.ai_family, file_ip_addr);
-		if (file_ip_mask)
-			freeaddrinfo_all(hints.ai_family, file_ip_mask);
 	}
 	else
 		goto hba_syntax;
@@ -748,12 +766,6 @@ hba_syntax:
 				   line_number)));
 
 	*error_p = true;
-
-hba_freeaddr:
-	if (file_ip_addr)
-		freeaddrinfo_all(hints.ai_family, file_ip_addr);
-	if (file_ip_mask)
-		freeaddrinfo_all(hints.ai_family, file_ip_mask);
 }
 
 
@@ -1292,7 +1304,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not connect to IDENT server at address \"%s\", port %s): %m",
+				 errmsg("could not connect to IDENT server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
@@ -1312,7 +1324,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not send query to IDENT server at address \"%s\", port %s): %m",
+				 errmsg("could not send query to IDENT server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;
@@ -1327,7 +1339,7 @@ ident_inet(const SockAddr remote_addr,
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not receive response from IDENT server at address \"%s\", port %s): %m",
+				 errmsg("could not receive response from IDENT server at address \"%s\", port %s: %m",
 						remote_addr_s, ident_port)));
 		ident_return = false;
 		goto ident_inet_done;

@@ -33,6 +33,8 @@ do
 	cat "$FILE" |
 # convert // comments to /* */
 	sed 's;^\([ 	]*\)//\(.*\)$;\1/* \2 */;g' |
+# Avoid bug that converts 'x =- 1' to 'x = -1'
+	sed 's;=- ;-= ;g' |
 # mark some comments for special treatment later
 	sed 's;/\*  *---;/*---X_X;g' |
 # workaround for indent bug with 'else' handling
@@ -40,7 +42,7 @@ do
 \2;g' | 
 	detab -t4 -qc |
 # work around bug where function that defines no local variables misindents
-# switch() case lines and line after #else.  Do not do with for struct/enum.
+# switch() case lines and line after #else.  Do not do for struct/enum.
 	awk '	BEGIN	{line1 = ""; line2 = ""}
 		{
 			line2 = $0;
@@ -1672,6 +1674,7 @@ do
 		cat /tmp/$$
 	fi
 	cat /tmp/$$a |
+# restore DATA/CATALOG lines
 	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
 	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
 # remove tabs and retab with four spaces

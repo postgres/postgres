@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.34 2003/06/06 15:31:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.34.2.1 2003/09/07 04:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -14,6 +14,10 @@ PostgreSQL documentation
   <refname>createuser</refname>
   <refpurpose>define a new <productname>PostgreSQL</productname> user account</refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-createuser">
+  <primary>createuser</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>
@@ -276,7 +280,7 @@ PostgreSQL documentation
       <term><computeroutput>CREATE USER</computeroutput></term>
       <listitem>
        <para>
-        All is well.
+        The user was successfully created.
        </para>
       </listitem>
      </varlistentry>

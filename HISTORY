@@ -212,6 +212,7 @@ Add new DateStyle values MDY, DMY, and YMD, honor US and European for
   prepared statements) (Tom)
 Assume NaN value to be larger than any other value in MIN()/MAX() (Tom)
 Prevent interval from supressing ':00' seconds display
+New pg_get_triggerdef(prettyprint) and pg_constraint_is_visible() functions
 
      _________________________________________________________________
 
@@ -259,6 +260,10 @@ Allow pqInternalNotice() to accept a format string and args instead of
   just a preformatted message (Tom, Sean Chittenden)
 Allow control SSL negotiation with sslmode values "disable", "allow", 
   "Prefer", and "require" (Jon Jensen)
+Allow new error codes and levels of text (Tom)
+Allow access to the underlying table and column of a query result (Tom)
+Allow access to the current transaction status (Tom)
+Add ability to pass binary data directly to the backend (Tom)
 
      _________________________________________________________________
 

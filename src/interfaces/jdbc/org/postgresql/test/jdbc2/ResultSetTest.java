@@ -4,6 +4,7 @@ import org.postgresql.test.TestUtil;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.SQLException;
 
 import junit.framework.TestCase;
 
@@ -32,6 +33,12 @@ public class ResultSetTest extends TestCase
 		stmt.executeUpdate("INSERT INTO testrs VALUES (4)");
 		stmt.executeUpdate("INSERT INTO testrs VALUES (6)");
 		stmt.executeUpdate("INSERT INTO testrs VALUES (9)");
+		
+		TestUtil.createTable(con, "teststring", "a text");
+		stmt.executeUpdate("INSERT INTO teststring VALUES ('12345')");
+		
+		TestUtil.createTable(con, "testint", "a int");
+		stmt.executeUpdate("INSERT INTO testint VALUES (12345)");
 
 		stmt.close();
 	}
@@ -39,6 +46,8 @@ public class ResultSetTest extends TestCase
 	protected void tearDown() throws Exception
 	{
 		TestUtil.dropTable(con, "testrs");
+		TestUtil.dropTable(con, "teststring");
+		TestUtil.dropTable(con, "testint");
 		TestUtil.closeDB(con);
 	}
 
@@ -84,5 +93,26 @@ public class ResultSetTest extends TestCase
 			fail( ex.getMessage() );
 		}
 
+	}
+	
+	public void testMaxFieldSize() throws Exception
+	{
+			Statement stmt = con.createStatement();
+			stmt.setMaxFieldSize(2);
+
+   			ResultSet rs = stmt.executeQuery("select * from testint");
+   			
+   			//max should not apply to the following since per the spec
+   			//it should apply only to binary and char/varchar columns
+   			rs.next();
+   			assertEquals(rs.getString(1),"12345");
+   			assertEquals(new String(rs.getBytes(1)), "12345");
+   			
+   			//max should apply to the following since the column is 
+   			//a varchar column
+   			rs = stmt.executeQuery("select * from teststring");
+   			rs.next();
+   			assertEquals(rs.getString(1), "12");
+   			assertEquals(new String(rs.getBytes(1)), "12");
 	}
 }

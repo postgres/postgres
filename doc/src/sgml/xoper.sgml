@@ -1,9 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.24 2003/06/22 22:04:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.24.2.1 2003/09/07 04:36:44 momjian Exp $
 -->
 
  <sect1 id="xoper">
   <title>User-defined Operators</title>
+
+  <indexterm zone="xoper">
+   <primary>operator</primary>
+   <secondary>user-defined</secondary>
+  </indexterm>
 
   <Para>
    Every operator is <quote>syntactic sugar</quote> for a call to an
@@ -18,9 +23,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.24 2003/06/22 22:04:54 tgl E
 
   <Para>
    <productname>PostgreSQL</productname> supports left unary, right
-   unary, and binary operators.  Operators can be overloaded; that is,
-   the same operator name can be used for different operators that
-   have different numbers and types of operands.  When a query is
+   unary, and binary operators.  Operators can be
+   overloaded;<indexterm><primary>overloading</primary><secondary>operators</secondary></indexterm>
+   that is, the same operator name can be used for different operators
+   that have different numbers and types of operands.  When a query is
    executed, the system determines the operator to call from the
    number and types of the provided operands.
   </Para>
@@ -468,17 +474,6 @@ table1.column1 OP table2.column2
      The function underlying a mergejoinable operator must be marked
      immutable or stable.  If it is volatile, the system will never
      attempt to use the operator for a merge join.
-    </para>
-    </note>
-
-    <note>
-    <para>
-     <literal>GROUP BY</> and <literal>DISTINCT</> operations require each
-     datatype being grouped or compared to have a mergejoinable
-     equality operator named <literal>=</>.  The equality operator and its
-     associated <literal>SORT1</> operator are used to implement these
-     operations.  Also, the associated <literal>SORT1</> operator is the
-     default ordering operator for <literal>ORDER BY</>.
     </para>
     </note>
 

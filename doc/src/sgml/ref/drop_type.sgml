@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.21 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.21.2.1 2003/09/07 04:36:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>DROP TYPE</refname>
   <refpurpose>remove a user-defined data type</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-droptype">
+  <primary>DROP TYPE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.149 2003/08/11 23:04:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.149.2.1 2003/09/07 04:36:59 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -818,7 +818,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"add_missing_from", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("Add missing table references to from clauses"),
+			gettext_noop("Add missing table references to FROM clauses"),
 			NULL
 		},
 		&add_missing_from,
@@ -944,7 +944,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&MaxBackends,
-		DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
+		100, 1, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -962,7 +962,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&NBuffers,
-		DEF_NBUFFERS, 16, INT_MAX, NULL, NULL
+		1000, 16, INT_MAX, NULL, NULL
 	},
 
 	{
@@ -1479,7 +1479,7 @@ static struct config_string ConfigureNamesString[] =
 		{"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
 			gettext_noop("Server (database) character set encoding"),
 			NULL,
-			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&server_encoding_string,
 		"SQL_ASCII", NULL, NULL
@@ -1501,7 +1501,7 @@ static struct config_string ConfigureNamesString[] =
 		{"session_authorization", PGC_USERSET, UNGROUPED,
 			gettext_noop("Current session userid"),
 			NULL,
-			GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
@@ -2373,7 +2373,7 @@ parse_real(const char *value, double *result)
  * properly.
  *
  * If value is NULL, set the option to its default value. If the
- * parameter DoIt is false then don't really set the option but do all
+ * parameter changeVal is false then don't really set the option but do all
  * the checks to see if it would work.
  *
  * If there is an error (non-existing option, invalid value) then an
@@ -2390,13 +2390,13 @@ parse_real(const char *value, double *result)
 bool
 set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
-				  bool isLocal, bool DoIt)
+				  bool isLocal, bool changeVal)
 {
 	struct config_generic *record;
 	int			elevel;
 	bool		interactive;
 	bool		makeDefault;
-	bool		DoIt_orig;
+	bool		changeVal_orig;
 
 	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
 		elevel = DEBUG2;
@@ -2511,26 +2511,26 @@ set_config_option(const char *name, const char *value,
 	 * Should we set reset/session values?	(If so, the behavior is not
 	 * transactional.)
 	 */
-	makeDefault = DoIt && (source <= PGC_S_OVERRIDE) && (value != NULL);
+	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) && (value != NULL);
 
 	/*
 	 * Ignore attempted set if overridden by previously processed setting.
-	 * However, if DoIt is false then plow ahead anyway since we are
+	 * However, if changeVal is false then plow ahead anyway since we are
 	 * trying to find out if the value is potentially good, not actually
 	 * use it. Also keep going if makeDefault is true, since we may want
 	 * to set the reset/session values even if we can't set the variable
 	 * itself.
 	 */
-	DoIt_orig = DoIt;			/* we might have to reverse this later */
+	changeVal_orig = changeVal;			/* we might have to reverse this later */
 	if (record->source > source)
 	{
-		if (DoIt && !makeDefault)
+		if (changeVal && !makeDefault)
 		{
 			elog(DEBUG3, "\"%s\": setting ignored because previous source is higher priority",
 				 name);
 			return true;
 		}
-		DoIt = false;			/* we won't change the variable itself */
+		changeVal = false;			/* we won't change the variable itself */
 	}
 
 	/*
@@ -2556,7 +2556,7 @@ set_config_option(const char *name, const char *value,
 					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_UNPRIVILEGED &&
-						newval < conf->session_val &&
+						newval < conf->reset_val &&
 						!superuser())
 					{
 						ereport(elevel,
@@ -2569,10 +2569,10 @@ set_config_option(const char *name, const char *value,
 					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
-						record->session_source > PGC_S_UNPRIVILEGED &&
-						newval > conf->session_val &&
+						record->reset_source > PGC_S_UNPRIVILEGED &&
+						newval > conf->reset_val &&
 						!superuser())
-						DoIt = DoIt_orig;
+						changeVal = changeVal_orig;
 				}
 				else
 				{
@@ -2581,7 +2581,7 @@ set_config_option(const char *name, const char *value,
 				}
 
 				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, DoIt, interactive))
+					if (!(*conf->assign_hook) (newval, changeVal, interactive))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2590,9 +2590,9 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-				if (DoIt || makeDefault)
+				if (changeVal || makeDefault)
 				{
-					if (DoIt)
+					if (changeVal)
 					{
 						*conf->variable = newval;
 						conf->gen.source = source;
@@ -2652,8 +2652,8 @@ set_config_option(const char *name, const char *value,
 					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_UNPRIVILEGED &&
-						conf->session_val != 0 &&
-						(newval > conf->session_val || newval == 0) &&
+						conf->reset_val != 0 &&
+						(newval > conf->reset_val || newval == 0) &&
 						!superuser())
 					{
 						ereport(elevel,
@@ -2666,10 +2666,10 @@ set_config_option(const char *name, const char *value,
 					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
-						record->session_source > PGC_S_UNPRIVILEGED &&
-						newval < conf->session_val &&
+						record->reset_source > PGC_S_UNPRIVILEGED &&
+						newval < conf->reset_val &&
 						!superuser())
-						DoIt = DoIt_orig;
+						changeVal = changeVal_orig;
 				}
 				else
 				{
@@ -2678,7 +2678,7 @@ set_config_option(const char *name, const char *value,
 				}
 
 				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, DoIt, interactive))
+					if (!(*conf->assign_hook) (newval, changeVal, interactive))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2687,9 +2687,9 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-				if (DoIt || makeDefault)
+				if (changeVal || makeDefault)
 				{
-					if (DoIt)
+					if (changeVal)
 					{
 						*conf->variable = newval;
 						conf->gen.source = source;
@@ -2749,7 +2749,7 @@ set_config_option(const char *name, const char *value,
 					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_UNPRIVILEGED &&
-						newval > conf->session_val &&
+						newval > conf->reset_val &&
 						!superuser())
 					{
 						ereport(elevel,
@@ -2762,10 +2762,10 @@ set_config_option(const char *name, const char *value,
 					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
-						record->session_source > PGC_S_UNPRIVILEGED &&
-						newval < conf->session_val &&
+						record->reset_source > PGC_S_UNPRIVILEGED &&
+						newval < conf->reset_val &&
 						!superuser())
-						DoIt = DoIt_orig;
+						changeVal = changeVal_orig;
 				}
 				else
 				{
@@ -2774,7 +2774,7 @@ set_config_option(const char *name, const char *value,
 				}
 
 				if (conf->assign_hook)
-					if (!(*conf->assign_hook) (newval, DoIt, interactive))
+					if (!(*conf->assign_hook) (newval, changeVal, interactive))
 					{
 						ereport(elevel,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -2783,9 +2783,9 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-				if (DoIt || makeDefault)
+				if (changeVal || makeDefault)
 				{
-					if (DoIt)
+					if (changeVal)
 					{
 						*conf->variable = newval;
 						conf->gen.source = source;
@@ -2860,10 +2860,10 @@ set_config_option(const char *name, const char *value,
 						}
 						/* Allow admin to override non-superuser setting */
 						if (source < PGC_S_UNPRIVILEGED &&
-							record->session_source > PGC_S_UNPRIVILEGED &&
-							newval < conf->session_val &&
+							record->reset_source > PGC_S_UNPRIVILEGED &&
+							newval < conf->reset_val &&
 							!superuser())
-							DoIt = DoIt_orig;
+							changeVal = changeVal_orig;
 					}
 				}
 				else if (conf->reset_val)
@@ -2902,7 +2902,7 @@ set_config_option(const char *name, const char *value,
 					const char *hookresult;
 
 					hookresult = (*conf->assign_hook) (newval,
-													   DoIt, interactive);
+													   changeVal, interactive);
 					guc_string_workspace = NULL;
 					if (hookresult == NULL)
 					{
@@ -2932,9 +2932,9 @@ set_config_option(const char *name, const char *value,
 
 				guc_string_workspace = NULL;
 
-				if (DoIt || makeDefault)
+				if (changeVal || makeDefault)
 				{
-					if (DoIt)
+					if (changeVal)
 					{
 						SET_STRING_VARIABLE(conf, newval);
 						conf->gen.source = source;
@@ -2976,7 +2976,7 @@ set_config_option(const char *name, const char *value,
 			}
 	}
 
-	if (DoIt && (record->flags & GUC_REPORT))
+	if (changeVal && (record->flags & GUC_REPORT))
 		ReportGUCOption(record);
 
 	return true;

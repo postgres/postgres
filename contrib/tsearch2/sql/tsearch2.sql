@@ -87,6 +87,10 @@ SELECT length(to_tsvector('default', '345 qwe@efd.r \' http://www.com/ http://ae
 select to_tsquery('default', 'qwe & sKies '); 
 select to_tsquery('simple', 'qwe & sKies '); 
 select to_tsquery('default', '\'the wether\':dc & \'           sKies \':BC ');
+select to_tsquery('asd&(and|fghj)');
+select to_tsquery('(asd&and)|fghj');
+select to_tsquery('(asd&!and)|fghj');
+select to_tsquery('(the|and&(i&1))&fghj');
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca';
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:B';
 select 'a b:89  ca:23A,64b d:34c'::tsvector @@ 'd:AC & ca:A';

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.91 2003/08/08 16:32:45 momjian Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.91.2.1 2003/09/07 04:37:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,6 +24,9 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
       dllist.o md5.o ip.o wchar.o encnames.o \
       $(filter crypt.o getaddrinfo.o inet_aton.o snprintf.o strerror.o path.o thread.o, $(LIBOBJS))
+ifeq ($(PORTNAME), win32)
+OBJS+=win32.o
+endif
 
 
 # Add libraries that libpq depends (or might depend) on into the
@@ -69,7 +72,7 @@ installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(includedir_internal)
 
 uninstall: uninstall-lib
-	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(includedir_internal)/pqexpbuffer.h
+	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(DESTDIR)$(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c snprintf.c strerror.c path.c thread.c dllist.c md5.c ip.c encnames.c wchar.c

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.66 2003/08/04 23:59:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.66.2.1 2003/09/07 04:36:54 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -880,6 +880,8 @@ static int	seq_search(char *name, char **array, int type, int max, int *len);
 static int	dch_global(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static int	dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static int	dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
+static void do_to_timestamp(text *date_txt, text *fmt,
+							struct tm *tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
@@ -1292,6 +1294,16 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 
 	for (n = node, s = inout; n->type != NODE_TYPE_END; n++)
 	{
+		if (flag == FROM_CHAR && *s=='\0')
+			/*
+			 * The input string is shorter than format picture, 
+			 * so it's good time to break this loop...
+			 * 
+			 * Note: this isn't relevant for TO_CHAR mode, beacuse 
+			 *       it use 'inout' allocated by format picture length.
+			 */
+			break;
+
 		if (n->type == NODE_TYPE_ACTION)
 		{
 			int			len;
@@ -1326,9 +1338,8 @@ DCH_processor(FormatNode *node, char *inout, int flag, void *data)
 				}
 			}
 		}
-
+		
 		++s;					/* ! */
-
 	}
 
 	if (flag == TO_CHAR)
@@ -2713,10 +2724,10 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 {
 	FormatNode *format;
 	struct tm  *tm = NULL;
-	char	   *str_fmt,
-			   *result;
-	bool		incache;
-	int			len = VARSIZE(fmt) - VARHDRSZ;
+	char	   *fmt_str,
+		   *result;
+	bool	incache;
+	int	fmt_len = VARSIZE(fmt) - VARHDRSZ;
 
 	tm = tmtcTm(tmtc);
 	tm->tm_wday = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1) % 7;
@@ -2725,29 +2736,28 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 	/*
 	 * Convert fmt to C string
 	 */
-	str_fmt = (char *) palloc(len + 1);
-	memcpy(str_fmt, VARDATA(fmt), len);
-	*(str_fmt + len) = '\0';
+	fmt_str = (char *) palloc(fmt_len + 1);
+	memcpy(fmt_str, VARDATA(fmt), fmt_len);
+	*(fmt_str + fmt_len) = '\0';
 
 	/*
 	 * Allocate result
 	 */
-	result = palloc((len * DCH_MAX_ITEM_SIZ) + 1);
+	result = palloc((fmt_len * DCH_MAX_ITEM_SIZ) + 1);
 
 	/*
 	 * Allocate new memory if format picture is bigger than static cache
-	 * and not use cache (call parser always) - incache=FALSE show this
-	 * variant
+	 * and not use cache (call parser always) 
 	 */
-	if (len > DCH_CACHE_SIZE)
+	if (fmt_len > DCH_CACHE_SIZE)
 	{
-		format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
+		format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
 		incache = FALSE;
 
-		parse_format(format, str_fmt, DCH_keywords,
+		parse_format(format, fmt_str, DCH_keywords,
 					 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-		(format + len)->type = NODE_TYPE_END;	/* Paranoia? */
+		(format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 	}
 	else
@@ -2756,25 +2766,24 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 		 * Use cache buffers
 		 */
 		DCHCacheEntry *ent;
-
 		incache = TRUE;
 
-		if ((ent = DCH_cache_search(str_fmt)) == NULL)
+		if ((ent = DCH_cache_search(fmt_str)) == NULL)
 		{
 
-			ent = DCH_cache_getnew(str_fmt);
+			ent = DCH_cache_getnew(fmt_str);
 
 			/*
 			 * Not in the cache, must run parser and save a new
 			 * format-picture to the cache.
 			 */
-			parse_format(ent->format, str_fmt, DCH_keywords,
+			parse_format(ent->format, fmt_str, DCH_keywords,
 						 DCH_suff, DCH_index, DCH_TYPE, NULL);
 
-			(ent->format + len)->type = NODE_TYPE_END;	/* Paranoia? */
+			(ent->format + fmt_len)->type = NODE_TYPE_END;	/* Paranoia? */
 
 #ifdef DEBUG_TO_FROM_CHAR
-			/* dump_node(ent->format, len); */
+			/* dump_node(ent->format, fmt_len); */
 			/* dump_index(DCH_keywords, DCH_index);  */
 #endif
 		}
@@ -2786,22 +2795,27 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt)
 	if (!incache)
 		pfree(format);
 
-	pfree(str_fmt);
+	pfree(fmt_str);
 
 	/*
 	 * for result is allocated max memory, which current format-picture
 	 * needs, now it allocate result with real size
 	 */
-	if (!(len = strlen(result)))
-		pfree(result);
-	else
+	if (result && *result)
 	{
-		text	   *res = (text *) palloc(len + 1 + VARHDRSZ);
+		int len = strlen(result);
+	
+		if (len)
+		{
+			text	   *res = (text *) palloc(len + 1 + VARHDRSZ);
 
-		memcpy(VARDATA(res), result, len);
-		VARATT_SIZEP(res) = len + VARHDRSZ;
-		return res;
+			memcpy(VARDATA(res), result, len);
+			VARATT_SIZEP(res) = len + VARHDRSZ;
+			pfree(result);
+			return res;
+		}
 	}
+	pfree(result);
 	return NULL;
 }
 
@@ -2901,243 +2915,13 @@ to_timestamp(PG_FUNCTION_ARGS)
 {
 	text	   *date_txt = PG_GETARG_TEXT_P(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
-
 	Timestamp	result;
-	FormatNode *format;
-	TmFromChar	tmfc;
-
-	bool		incache;
-	char	   *str;
-	char	   *date_str;
-	int			len,
-				date_len,
-				tz = 0;
+	int			tz;
 	struct tm	tm;
-	fsec_t		fsec = 0;
+	fsec_t		fsec;
 
-	ZERO_tm(&tm);
-	ZERO_tmfc(&tmfc);
+	do_to_timestamp(date_txt, fmt, &tm, &fsec);
 
-	len = VARSIZE(fmt) - VARHDRSZ;
-
-	if (len)
-	{
-		str = (char *) palloc(len + 1);
-		memcpy(str, VARDATA(fmt), len);
-		*(str + len) = '\0';
-
-		/*
-		 * Allocate new memory if format picture is bigger than static
-		 * cache and not use cache (call parser always) - incache=FALSE
-		 * show this variant
-		 */
-		if (len > DCH_CACHE_SIZE)
-		{
-			format = (FormatNode *) palloc((len + 1) * sizeof(FormatNode));
-			incache = FALSE;
-
-			parse_format(format, str, DCH_keywords,
-						 DCH_suff, DCH_index, DCH_TYPE, NULL);
-
-			(format + len)->type = NODE_TYPE_END;		/* Paranoia? */
-		}
-		else
-		{
-			/*
-			 * Use cache buffers
-			 */
-			DCHCacheEntry *ent;
-
-			incache = 0;
-
-			if ((ent = DCH_cache_search(str)) == NULL)
-			{
-
-				ent = DCH_cache_getnew(str);
-
-				/*
-				 * Not in the cache, must run parser and save a new
-				 * format-picture to the cache.
-				 */
-				parse_format(ent->format, str, DCH_keywords,
-							 DCH_suff, DCH_index, DCH_TYPE, NULL);
-
-				(ent->format + len)->type = NODE_TYPE_END;		/* Paranoia? */
-#ifdef DEBUG_TO_FROM_CHAR
-				/* dump_node(ent->format, len); */
-				/* dump_index(DCH_keywords, DCH_index); */
-#endif
-			}
-			format = ent->format;
-		}
-
-		/*
-		 * Call action for each node in FormatNode tree
-		 */
-#ifdef DEBUG_TO_FROM_CHAR
-		/* dump_node(format, len); */
-#endif
-
-		/*
-		 * Convert date to C string
-		 */
-		date_len = VARSIZE(date_txt) - VARHDRSZ;
-		date_str = (char *) palloc(date_len + 1);
-		memcpy(date_str, VARDATA(date_txt), date_len);
-		*(date_str + date_len) = '\0';
-
-		DCH_processor(format, date_str, FROM_CHAR, (void *) &tmfc);
-
-		pfree(date_str);
-		pfree(str);
-		if (incache)
-			pfree(format);
-	}
-
-	DEBUG_TMFC(&tmfc);
-
-	/*
-	 * Convert values that user define for FROM_CHAR
-	 * (to_date/to_timestamp) to standard 'tm'
-	 */
-	if (tmfc.ssss)
-	{
-		int			x = tmfc.ssss;
-
-		tm.tm_hour = x / 3600;
-		x %= 3600;
-		tm.tm_min = x / 60;
-		x %= 60;
-		tm.tm_sec = x;
-	}
-
-	if (tmfc.cc)
-		tm.tm_year = (tmfc.cc - 1) * 100;
-
-	if (tmfc.ww)
-		tmfc.ddd = (tmfc.ww - 1) * 7 + 1;
-
-	if (tmfc.w)
-		tmfc.dd = (tmfc.w - 1) * 7 + 1;
-
-	if (tmfc.ss)
-		tm.tm_sec = tmfc.ss;
-	if (tmfc.mi)
-		tm.tm_min = tmfc.mi;
-	if (tmfc.hh)
-		tm.tm_hour = tmfc.hh;
-
-	if (tmfc.pm || tmfc.am)
-	{
-		if (tm.tm_hour < 1 || tm.tm_hour > 12)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("AM/PM hour must be between 1 and 12")));
-
-		if (tmfc.pm && tm.tm_hour < 12)
-			tm.tm_hour += 12;
-
-		else if (tmfc.am && tm.tm_hour == 12)
-			tm.tm_hour = 0;
-	}
-
-	switch (tmfc.q)
-	{
-		case 1:
-			tm.tm_mday = 1;
-			tm.tm_mon = 1;
-			break;
-		case 2:
-			tm.tm_mday = 1;
-			tm.tm_mon = 4;
-			break;
-		case 3:
-			tm.tm_mday = 1;
-			tm.tm_mon = 7;
-			break;
-		case 4:
-			tm.tm_mday = 1;
-			tm.tm_mon = 10;
-			break;
-	}
-
-	if (tmfc.year)
-		tm.tm_year = tmfc.year;
-
-	if (tmfc.bc)
-	{
-		if (tm.tm_year > 0)
-			tm.tm_year = -(tm.tm_year - 1);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-					 errmsg("inconsistent use of year %04d and \"BC\"",
-							tm.tm_year)));
-	}
-
-	if (tmfc.j)
-		j2date(tmfc.j, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-
-	if (tmfc.iw)
-		isoweek2date(tmfc.iw, &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-
-	if (tmfc.d)
-		tm.tm_wday = tmfc.d;
-	if (tmfc.dd)
-		tm.tm_mday = tmfc.dd;
-	if (tmfc.ddd)
-		tm.tm_yday = tmfc.ddd;
-	if (tmfc.mm)
-		tm.tm_mon = tmfc.mm;
-
-	/*
-	 * we don't ignore DDD
-	 */
-	if (tmfc.ddd && (tm.tm_mon <= 1 || tm.tm_mday <= 1))
-	{
-		/* count mday and mon from yday */
-		int		   *y,
-					i;
-
-		int			ysum[2][13] = {
-			{31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365, 0},
-		{31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366, 0}};
-
-		if (!tm.tm_year)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("cannot convert yday without year information")));
-
-		y = ysum[isleap(tm.tm_year)];
-
-		for (i = 0; i <= 11; i++)
-		{
-			if (tm.tm_yday < y[i])
-				break;
-		}
-		if (tm.tm_mon <= 1)
-			tm.tm_mon = i + 1;
-
-		if (tm.tm_mday <= 1)
-			tm.tm_mday = i == 0 ? tm.tm_yday :
-				tm.tm_yday - y[i - 1];
-	}
-
-#ifdef HAVE_INT64_TIMESTAMP
-	if (tmfc.ms)
-		fsec += tmfc.ms * 1000;
-	if (tmfc.us)
-		fsec += tmfc.us;
-#else
-	if (tmfc.ms)
-		fsec += (double) tmfc.ms / 1000;
-	if (tmfc.us)
-		fsec += (double) tmfc.us / 1000000;
-#endif
-
-	/* -------------------------------------------------------------- */
-
-	DEBUG_TM(&tm);
 	tz = DetermineLocalTimeZone(&tm);
 
 	if (tm2timestamp(&tm, fsec, &tz, &result) != 0)
@@ -3156,12 +2940,261 @@ to_timestamp(PG_FUNCTION_ARGS)
 Datum
 to_date(PG_FUNCTION_ARGS)
 {
-	/*
-	 * Quick hack: since our inputs are just like to_timestamp, hand over
-	 * the whole input info struct...
-	 */
-	return DirectFunctionCall1(timestamptz_date, to_timestamp(fcinfo));
+	text	   *date_txt = PG_GETARG_TEXT_P(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
+	DateADT		result;
+	struct tm	tm;
+	fsec_t		fsec;
+
+	do_to_timestamp(date_txt, fmt, &tm, &fsec);
+
+	result = date2j(tm.tm_year, tm.tm_mon, tm.tm_mday) - POSTGRES_EPOCH_JDATE;
+
+	PG_RETURN_DATEADT(result);
 }
+
+/*
+ * do_to_timestamp: shared code for to_timestamp and to_date
+ *
+ * Parse the 'date_txt' according to 'fmt', return results as a struct tm
+ * and fractional seconds.
+ */
+static void
+do_to_timestamp(text *date_txt, text *fmt,
+				struct tm *tm, fsec_t *fsec)
+{
+	FormatNode *format;
+	TmFromChar	tmfc;
+	int		fmt_len;
+
+	ZERO_tm(tm);
+	*fsec = 0;
+
+	ZERO_tmfc(&tmfc);
+
+	fmt_len = VARSIZE(fmt) - VARHDRSZ;
+
+	if (fmt_len)
+	{
+		int date_len;
+		char *fmt_str;
+		char *date_str;
+		bool incache;
+		
+		fmt_str = (char *) palloc(fmt_len + 1);
+		memcpy(fmt_str, VARDATA(fmt), fmt_len);
+		*(fmt_str + fmt_len) = '\0';
+
+		/*
+		 * Allocate new memory if format picture is bigger than static
+		 * cache and not use cache (call parser always)
+		 */
+		if (fmt_len > DCH_CACHE_SIZE)
+		{
+			format = (FormatNode *) palloc((fmt_len + 1) * sizeof(FormatNode));
+			incache = FALSE;
+
+			parse_format(format, fmt_str, DCH_keywords,
+						 DCH_suff, DCH_index, DCH_TYPE, NULL);
+
+			(format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
+		}
+		else
+		{
+			/*
+			 * Use cache buffers
+			 */
+			DCHCacheEntry *ent;
+			incache = TRUE;
+
+			if ((ent = DCH_cache_search(fmt_str)) == NULL)
+			{
+
+				ent = DCH_cache_getnew(fmt_str);
+
+				/*
+				 * Not in the cache, must run parser and save a new
+				 * format-picture to the cache.
+				 */
+				parse_format(ent->format, fmt_str, DCH_keywords,
+							 DCH_suff, DCH_index, DCH_TYPE, NULL);
+
+				(ent->format + fmt_len)->type = NODE_TYPE_END;		/* Paranoia? */
+#ifdef DEBUG_TO_FROM_CHAR
+				/* dump_node(ent->format, fmt_len); */
+				/* dump_index(DCH_keywords, DCH_index); */
+#endif
+			}
+			format = ent->format;
+		}
+
+		/*
+		 * Call action for each node in FormatNode tree
+		 */
+#ifdef DEBUG_TO_FROM_CHAR
+		/* dump_node(format, fmt_len); */
+#endif
+
+		/*
+		 * Convert date to C string
+		 */
+		date_len = VARSIZE(date_txt) - VARHDRSZ;
+		date_str = (char *) palloc(date_len + 1);
+		memcpy(date_str, VARDATA(date_txt), date_len);
+		*(date_str + date_len) = '\0';
+
+		DCH_processor(format, date_str, FROM_CHAR, (void *) &tmfc);
+
+		pfree(date_str);
+		pfree(fmt_str);
+		if (!incache)
+			pfree(format);
+	}
+
+	DEBUG_TMFC(&tmfc);
+
+	/*
+	 * Convert values that user define for FROM_CHAR
+	 * (to_date/to_timestamp) to standard 'tm'
+	 */
+	if (tmfc.ssss)
+	{
+		int			x = tmfc.ssss;
+
+		tm->tm_hour = x / 3600;
+		x %= 3600;
+		tm->tm_min = x / 60;
+		x %= 60;
+		tm->tm_sec = x;
+	}
+
+	if (tmfc.cc)
+		tm->tm_year = (tmfc.cc - 1) * 100;
+
+	if (tmfc.ww)
+		tmfc.ddd = (tmfc.ww - 1) * 7 + 1;
+
+	if (tmfc.w)
+		tmfc.dd = (tmfc.w - 1) * 7 + 1;
+
+	if (tmfc.ss)
+		tm->tm_sec = tmfc.ss;
+	if (tmfc.mi)
+		tm->tm_min = tmfc.mi;
+	if (tmfc.hh)
+		tm->tm_hour = tmfc.hh;
+
+	if (tmfc.pm || tmfc.am)
+	{
+		if (tm->tm_hour < 1 || tm->tm_hour > 12)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("AM/PM hour must be between 1 and 12")));
+
+		if (tmfc.pm && tm->tm_hour < 12)
+			tm->tm_hour += 12;
+
+		else if (tmfc.am && tm->tm_hour == 12)
+			tm->tm_hour = 0;
+	}
+
+	switch (tmfc.q)
+	{
+		case 1:
+			tm->tm_mday = 1;
+			tm->tm_mon = 1;
+			break;
+		case 2:
+			tm->tm_mday = 1;
+			tm->tm_mon = 4;
+			break;
+		case 3:
+			tm->tm_mday = 1;
+			tm->tm_mon = 7;
+			break;
+		case 4:
+			tm->tm_mday = 1;
+			tm->tm_mon = 10;
+			break;
+	}
+
+	if (tmfc.year)
+		tm->tm_year = tmfc.year;
+
+	if (tmfc.bc)
+	{
+		if (tm->tm_year > 0)
+			tm->tm_year = -(tm->tm_year - 1);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+					 errmsg("inconsistent use of year %04d and \"BC\"",
+							tm->tm_year)));
+	}
+
+	if (tmfc.j)
+		j2date(tmfc.j, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+
+	if (tmfc.iw)
+		isoweek2date(tmfc.iw, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+
+	if (tmfc.d)
+		tm->tm_wday = tmfc.d;
+	if (tmfc.dd)
+		tm->tm_mday = tmfc.dd;
+	if (tmfc.ddd)
+		tm->tm_yday = tmfc.ddd;
+	if (tmfc.mm)
+		tm->tm_mon = tmfc.mm;
+
+	/*
+	 * we don't ignore DDD
+	 */
+	if (tmfc.ddd && (tm->tm_mon <= 1 || tm->tm_mday <= 1))
+	{
+		/* count mday and mon from yday */
+		int		   *y,
+					i;
+
+		int			ysum[2][13] = {
+			{31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365, 0},
+		{31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366, 0}};
+
+		if (!tm->tm_year)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
+				errmsg("cannot convert yday without year information")));
+
+		y = ysum[isleap(tm->tm_year)];
+
+		for (i = 0; i <= 11; i++)
+		{
+			if (tm->tm_yday < y[i])
+				break;
+		}
+		if (tm->tm_mon <= 1)
+			tm->tm_mon = i + 1;
+
+		if (tm->tm_mday <= 1)
+			tm->tm_mday = i == 0 ? tm->tm_yday :
+				tm->tm_yday - y[i - 1];
+	}
+
+#ifdef HAVE_INT64_TIMESTAMP
+	if (tmfc.ms)
+		*fsec += tmfc.ms * 1000;
+	if (tmfc.us)
+		*fsec += tmfc.us;
+#else
+	if (tmfc.ms)
+		*fsec += (double) tmfc.ms / 1000;
+	if (tmfc.us)
+		*fsec += (double) tmfc.us / 1000000;
+#endif
+
+	DEBUG_TM(tm);
+}
+
 
 /**********************************************************************
  *	the NUMBER version part

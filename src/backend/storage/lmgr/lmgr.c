@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.58 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.58.2.1 2003/09/07 04:36:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,10 @@ InitLockTable(int maxBackends)
 {
 	int			lockmethod;
 
+	/* number of lock modes is lengthof()-1 because of dummy zero */
 	lockmethod = LockMethodTableInit("LockTable",
-									 LockConflicts, MAX_LOCKMODES - 1,
+									 LockConflicts,
+									 lengthof(LockConflicts) - 1,
 									 maxBackends);
 	LockTableId = lockmethod;
 
@@ -151,7 +153,7 @@ LockRelation(Relation relation, LOCKMODE lockmode)
  * As above, but only lock if we can get the lock without blocking.
  * Returns TRUE iff the lock was acquired.
  *
- * NOTE: we do not currently need conditional versions of the other
+ * NOTE: we do not currently need conditional versions of all the
  * LockXXX routines in this file, but they could easily be added if needed.
  */
 bool
@@ -260,6 +262,26 @@ LockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
 	if (!LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
 					 lockmode, false))
 		elog(ERROR, "LockAcquire failed");
+}
+
+/*
+ *		ConditionalLockPage
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE iff the lock was acquired.
+ */
+bool
+ConditionalLockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode)
+{
+	LOCKTAG		tag;
+
+	MemSet(&tag, 0, sizeof(tag));
+	tag.relId = relation->rd_lockInfo.lockRelId.relId;
+	tag.dbId = relation->rd_lockInfo.lockRelId.dbId;
+	tag.objId.blkno = blkno;
+
+	return LockAcquire(LockTableId, &tag, GetCurrentTransactionId(),
+					   lockmode, true);
 }
 
 /*

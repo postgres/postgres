@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.53 2003/07/26 13:50:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.53.2.1 2003/09/07 04:36:40 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -199,13 +199,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
 <programlisting>
 (<replaceable>actual-IP-address</replaceable> xor <replaceable>IP-address-field</replaceable>) and <replaceable>IP-mask-field</replaceable>
 </programlisting>
-       must be zero for the record to match.  (Of course IP addresses
-       can be spoofed but this consideration is beyond the scope of
-       <productname>PostgreSQL</productname>.) If you machine supports
-       IPv6, the default <filename>pg_hba.conf</> file will have an
-       IPv6 entry for <literal>localhost</>. You can add your own IPv6
-       entries to the file. IPv6 entries are used only for IPv6
-       connections.
+       must be zero for the record to match.
+      </para>
+
+      <para>
+       An IP address given in IPv4 format will match IPv6 connections that
+       have the corresponding address, for example <literal>127.0.0.1</>
+       will match the IPv6 address <literal>::ffff:127.0.0.1</>.  An entry
+       given in IPv6 format will match only IPv6 connections, even if the
+       represented address is in the IPv4-in-IPv6 range.  Note that entries
+       in IPv6 format will be rejected if the system's C library does not have
+       support for IPv6 addresses.
       </para>
 
       <para>
@@ -219,9 +223,10 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>CIDR-mask</replaceable></term>
      <listitem>
       <para>
-        This is an integer specifying the number of significant bits 
-        to set in the mask, and is an alternative to using the 
-        <replaceable>IP-mask</replaceable> notation. The number must
+        This field may be used as an alternative to the 
+        <replaceable>IP-mask</replaceable> notation.  It is an
+	integer specifying the number of high-order bits 
+        to set in the mask.  The number must
         be between 0 and 32 (in the case of an IPv4 address) or 128
         (in the case of an IPv6 address) inclusive. 0 will match any
         address, while 32/128 will match only the exact host specified.
@@ -451,12 +456,22 @@ local   all         all                                             trust
 # TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
 host    all         all         127.0.0.1         255.255.255.255   trust     
 
+# The same as the last line but using a CIDR mask
+#
+# TYPE  DATABASE    USER        IP-ADDRESS/CIDR-mask  METHOD
+host    all         all         127.0.0.1/32          trust     
+
 # Allow any user from any host with IP address 192.168.93.x to connect
 # to database "template1" as the same user name that ident reports for
 # the connection (typically the Unix user name).
 # 
 # TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
 host    template1   all         192.168.93.0      255.255.255.0     ident sameuser
+
+# The same as the last line but using a CIDR mask
+#
+# TYPE  DATABASE    USER        IP-ADDRESS/CIDR-mask  METHOD
+host    template1   all         192.168.93.0/24       ident sameuser
 
 # Allow a user from host 192.168.12.10 to connect to database
 # "template1" if the user's password is correctly supplied.
@@ -566,6 +581,7 @@ local   db1,db2,@demodbs  all                                       md5
    </indexterm>
    <indexterm>
     <primary>password</primary>
+    <secondary>authentication</secondary>
    </indexterm>
 
    <para>
@@ -610,16 +626,21 @@ local   db1,db2,@demodbs  all                                       md5
 
    <para>
     <productname>Kerberos</productname> is an industry-standard secure
-    authentication system suitable for distributed computing over a
-    public network. A description of the
-    <productname>Kerberos</productname> system is far beyond the scope
-    of this document; in all generality it can be quite complex (yet
-    powerful). The <ulink
+    authentication system suitable for distributed computing over a public
+    network. A description of the <productname>Kerberos</productname> system
+    is far beyond the scope of this document; in all generality it can be
+    quite complex (yet powerful). The <ulink
     url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">Kerberos
-    <acronym>FAQ</></ulink> or <ulink
-    url="ftp://athena-dist.mit.edu">MIT Project Athena</ulink> can be
-    a good starting point for exploration. Several sources for
-    <productname>Kerberos</> distributions exist.
+    <acronym>FAQ</></ulink> or <ulink url="ftp://athena-dist.mit.edu">MIT
+    Project Athena</ulink> can be a good starting point for exploration.
+    Several sources for <productname>Kerberos</> distributions exist.
+   </para>
+
+   <para>
+    While <productname>PostgreSQL</> supports both Kerberos 4 and 
+    Kerberos 5, only Kerberos 5 is recommended.  Kerberos 4 is
+    considered insecure and no longer recommended for general
+    use.
    </para>
 
    <para>
@@ -849,6 +870,10 @@ omicron       bryanh            guest1
 
   <sect2 id="auth-pam">
    <title>PAM Authentication</title>
+
+   <indexterm zone="auth-pam">
+    <primary>PAM</primary>
+   </indexterm>
 
    <para>
     This authentication method operates similarly to

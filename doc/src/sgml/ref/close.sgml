@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.14 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.14.2.1 2003/09/07 04:36:44 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -13,6 +13,10 @@ PostgreSQL documentation
   <refname>CLOSE</refname>
   <refpurpose>close a cursor</refpurpose>
  </refnamediv>
+
+ <indexterm zone="sql-close">
+  <primary>CLOSE</primary>
+ </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
@@ -31,9 +35,13 @@ CLOSE <replaceable class="PARAMETER">cursor</replaceable>
   </para>
 
   <para>
-   Every open cursor is implicitly closed when a transaction is
-   terminated by <command>COMMIT</command> or
-   <command>ROLLBACK</command>.
+   Every non-holdable open cursor is implicitly closed when a
+   transaction is terminated by <command>COMMIT</command> or
+   <command>ROLLBACK</command>. Holdable cursors are implicitely
+   closed if the transaction that created them aborts via
+   <command>ROLLBACK</command>; if this does not happen, the holdable
+   cursor remains open until an explicit <command>CLOSE</command> is
+   executed, or the client disconnects.
   </para>
  </refsect1>
   
@@ -66,10 +74,10 @@ CLOSE <replaceable class="PARAMETER">cursor</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><computeroutput>WARNING:  PerformPortalClose: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found</computeroutput></term>
+    <term><computeroutput>ERROR:  cursor "<replaceable class="PARAMETER">cursor</replaceable>" does not exist</computeroutput></term>
     <listitem>
      <para>
-      This warning is given if <replaceable
+      Message returned if <replaceable
       class="PARAMETER">cursor</replaceable> is not declared or has
       already been closed.
      </para>

@@ -46,8 +46,7 @@ typedef struct
 #define OPR				3
 #define OPEN			4
 #define CLOSE			5
-#define VALTRUE			6		/* for stop words */
-#define VALFALSE		7
+#define VALSTOP			6		/* for stop words */
 
 bool TS_execute(ITEM * curitem, void *checkval,
 		   bool calcnot, bool (*chkcond) (void *checkval, ITEM * val));

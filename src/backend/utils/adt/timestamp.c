@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.92 2003/08/08 21:42:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.92.2.1 2003/09/07 04:36:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,22 +77,19 @@ timestamp_in(PG_FUNCTION_ARGS)
 	int			tz;
 	int			dtype;
 	int			nf;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp: \"%s\"",
-						str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp: \"%s\"",
-						str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "timestamp");
 
 	switch (dtype)
 	{
@@ -306,22 +303,19 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	int			tz;
 	int			dtype;
 	int			nf;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
-						str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for timestamp with time zone: \"%s\"",
-						str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz);
+	if (dterr != 0)
+		DateTimeParseError(dterr, str, "timestamp with time zone");
 
 	switch (dtype)
 	{
@@ -468,6 +462,7 @@ interval_in(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	int			dtype;
 	int			nf;
+	int			dterr;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
@@ -481,17 +476,17 @@ interval_in(PG_FUNCTION_ARGS)
 	fsec = 0;
 
 	if (strlen(str) >= sizeof(lowstr))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for interval: \"%s\"",
-						str)));
-
-	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for interval: \"%s\"",
-						str)));
+		dterr = DTERR_BAD_FORMAT;
+	else
+		dterr = ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf);
+	if (dterr == 0)
+		dterr = DecodeInterval(field, ftype, nf, &dtype, tm, &fsec);
+	if (dterr != 0)
+	{
+		if (dterr == DTERR_FIELD_OVERFLOW)
+			dterr = DTERR_INTERVAL_OVERFLOW;
+		DateTimeParseError(dterr, str, "interval");
+	}
 
 	result = (Interval *) palloc(sizeof(Interval));
 
@@ -1046,8 +1041,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
  * Argh! My Linux box puts in a 1 second offset for dates less than 1970
  *	but only if the seconds field was non-zero. So, don't copy the seconds
  *	field and instead carry forward from the original - thomas 97/06/18
- * Note that GNU/Linux uses the standard freeware zic package as do
- *	many other platforms so this may not be GNU/Linux/ix86-specific.
+ * Note that Linux uses the standard freeware zic package as do
+ *	many other platforms so this may not be Linux/ix86-specific.
  * Still shows a problem on my up to date Linux box - thomas 2001-01-17
  */
 			tm->tm_sec = tx->tm_sec;

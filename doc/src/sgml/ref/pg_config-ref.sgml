@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.15 2003/03/25 16:15:42 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.15.2.1 2003/09/07 04:36:45 momjian Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -11,6 +11,10 @@
   <refname>pg_config</refname>
   <refpurpose>retrieve information about the installed version of <productname>PostgreSQL</></refpurpose>
  </refnamediv>
+
+ <indexterm zone="app-pgconfig">
+  <primary>pg_config</primary>
+ </indexterm>
 
  <refsynopsisdiv>
   <cmdsynopsis>
