@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.103 2004/03/29 19:58:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.104 2004/04/25 18:23:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,9 +243,9 @@ set_cheapest(RelOptInfo *parent_rel)
  *	  A path is worthy if it has either a better sort order (better pathkeys)
  *	  or cheaper cost (on either dimension) than any of the existing old paths.
  *
- *	  Unless parent_rel->pruneable is false, we also remove from the rel's
- *	  pathlist any old paths that are dominated by new_path --- that is,
- *	  new_path is both cheaper and at least as well ordered.
+ *	  We also remove from the rel's pathlist any old paths that are dominated
+ *	  by new_path --- that is, new_path is both cheaper and at least as well
+ *	  ordered.
  *
  *	  The pathlist is kept sorted by TOTAL_COST metric, with cheaper paths
  *	  at the front.  No code depends on that for correctness; it's simply
@@ -342,10 +342,9 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		}
 
 		/*
-		 * Remove current element from pathlist if dominated by new,
-		 * unless xfunc told us not to remove any paths.
+		 * Remove current element from pathlist if dominated by new.
 		 */
-		if (remove_old && parent_rel->pruneable)
+		if (remove_old)
 		{
 			List	   *p1_next = lnext(p1);
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.168 2004/02/29 17:36:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.169 2004/04/25 18:23:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,19 +166,6 @@ create_plan(Query *root, Path *best_path)
 			plan = NULL;		/* keep compiler quiet */
 			break;
 	}
-
-#ifdef NOT_USED					/* fix xfunc */
-	/* sort clauses by cost/(1-selectivity) -- JMH 2/26/92 */
-	if (XfuncMode != XFUNC_OFF)
-	{
-		set_qpqual((Plan) plan,
-				   lisp_qsort(get_qpqual((Plan) plan),
-							  xfunc_clause_compare));
-		if (XfuncMode != XFUNC_NOR)
-			/* sort the disjuncts within each clause by cost -- JMH 3/4/92 */
-			xfunc_disjunct_sort(plan->qpqual);
-	}
-#endif
 
 	return plan;
 }

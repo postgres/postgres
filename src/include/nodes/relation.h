@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.93 2004/01/05 23:39:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.94 2004/04/25 18:23:57 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,8 +99,6 @@ typedef struct QualCost
  *							  (regardless of its ordering)
  *		cheapest_unique_path - for caching cheapest path to produce unique
  *							   (no duplicates) output from relation
- *		pruneable - flag to let the planner know whether it can prune the
- *					pathlist of this RelOptInfo or not.
  *
  * If the relation is a base relation it will have these fields set:
  *
@@ -193,7 +191,6 @@ typedef struct RelOptInfo
 	struct Path *cheapest_startup_path;
 	struct Path *cheapest_total_path;
 	struct Path *cheapest_unique_path;
-	bool		pruneable;
 
 	/* information about a base rel (not set for join rels!) */
 	Index		relid;

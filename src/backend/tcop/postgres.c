@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.400 2004/04/19 17:42:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.401 2004/04/25 18:23:56 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -88,11 +88,6 @@ bool		InError = false;
 bool        Log_disconnections = false;
 
 LogStmtLevel log_statement = LOGSTMT_NONE;
-
-/*
- * Flags for expensive function optimization -- JMH 3/9/92
- */
-int			XfuncMode = 0;
 
 /* GUC variable for maximum stack depth (measured in kilobytes) */
 int			max_stack_depth = 2048;
@@ -2223,7 +2218,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	ctx = debug_context = PGC_POSTMASTER;
 	gucsource = PGC_S_ARGV;		/* initial switches came from command line */
 
-	while ((flag = getopt(argc, argv, "A:B:c:D:d:Eef:FiNOPo:p:S:st:v:W:x:-:")) != -1)
+	while ((flag = getopt(argc, argv, "A:B:c:D:d:Eef:FiNOPo:p:S:st:v:W:-:")) != -1)
 		switch (flag)
 		{
 			case 'A':
@@ -2457,39 +2452,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 * wait N seconds to allow attach from a debugger
 				 */
 				pg_usleep(atoi(optarg)*1000000L);
-				break;
-
-			case 'x':
-#ifdef NOT_USED					/* planner/xfunc.h */
-
-				/*
-				 * control joey hellerstein's expensive function
-				 * optimization
-				 */
-				if (XfuncMode != 0)
-				{
-					elog(WARNING, "only one -x flag is allowed");
-					errs++;
-					break;
-				}
-				if (strcmp(optarg, "off") == 0)
-					XfuncMode = XFUNC_OFF;
-				else if (strcmp(optarg, "nor") == 0)
-					XfuncMode = XFUNC_NOR;
-				else if (strcmp(optarg, "nopull") == 0)
-					XfuncMode = XFUNC_NOPULL;
-				else if (strcmp(optarg, "nopm") == 0)
-					XfuncMode = XFUNC_NOPM;
-				else if (strcmp(optarg, "pullall") == 0)
-					XfuncMode = XFUNC_PULLALL;
-				else if (strcmp(optarg, "wait") == 0)
-					XfuncMode = XFUNC_WAIT;
-				else
-				{
-					elog(WARNING, "use -x {off,nor,nopull,nopm,pullall,wait}");
-					errs++;
-				}
-#endif
 				break;
 
 			case 'c':

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.55 2004/02/17 00:52:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.56 2004/04/25 18:23:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,6 @@ make_base_rel(Query *root, int relid)
 	rel->cheapest_startup_path = NULL;
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
-	rel->pruneable = true;
 	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	/* min_attr, max_attr, attr_needed, attr_widths are set below */
@@ -291,7 +290,6 @@ build_join_rel(Query *root,
 	joinrel->cheapest_startup_path = NULL;
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
-	joinrel->pruneable = true;
 	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->min_attr = 0;

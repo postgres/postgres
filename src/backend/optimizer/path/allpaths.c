@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.112 2004/01/14 23:01:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.113 2004/04/25 18:23:56 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,16 +530,6 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 		foreach(x, joinitems[lev])
 		{
 			rel = (RelOptInfo *) lfirst(x);
-
-#ifdef NOT_USED
-
-			/*
-			 * * for each expensive predicate in each path in each
-			 * distinct rel, * consider doing pullup  -- JMH
-			 */
-			if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
-				xfunc_trypullup(rel);
-#endif
 
 			/* Find and save the cheapest paths for this rel */
 			set_cheapest(rel);
