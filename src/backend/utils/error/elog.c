@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.59 2000/05/31 00:28:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.60 2000/06/04 15:06:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,15 +57,14 @@ static void write_syslog(int level, const char *line);
 # define Use_syslog 0
 #endif
 
+bool Log_timestamp;
+bool Log_pid;
 
-#ifdef ELOG_TIMESTAMPS
+#define TIMESTAMP_SIZE 20		/* format `YYYY-MM-DD HH:MM:SS ' */
+#define PID_SIZE 9				/* format `[123456] ' */
+
 static const char * print_timestamp(void);
-# define TIMESTAMP_SIZE 28
-#else
-# define TIMESTAMP_SIZE 0
-#endif
-
-
+static const char * print_pid(void);
 
 static int	Debugfile = -1;
 static int	Err_file = -1;
@@ -117,11 +116,9 @@ elog(int lev, const char *fmt,...)
 	int			indent = 0;
 	int			space_needed;
 
-#ifdef USE_SYSLOG
-	int			log_level;
-
-#endif
 	int			len;
+	/* size of the prefix needed for timestamp and pid, if enabled */
+	size_t      timestamp_size;
 
 	if (lev <= DEBUG && Debugfile < 0)
 		return;					/* ignore debug msgs if noplace to send */
@@ -174,13 +171,19 @@ elog(int lev, const char *fmt,...)
 		errorstr = errorstr_buf;
 	}
 
+	timestamp_size = 0;
+	if (Log_timestamp)
+		timestamp_size += TIMESTAMP_SIZE;
+	if (Log_pid)
+		timestamp_size += PID_SIZE;
+
 	/*
 	 * Set up the expanded format, consisting of the prefix string plus
 	 * input format, with any %m replaced by strerror() string (since
 	 * vsnprintf won't know what to do with %m).  To keep space
 	 * calculation simple, we only allow one %m.
 	 */
-	space_needed = TIMESTAMP_SIZE + strlen(prefix) + indent + (lineno ? 24 : 0)
+	space_needed = timestamp_size + strlen(prefix) + indent + (lineno ? 24 : 0)
 		+ strlen(fmt) + strlen(errorstr) + 1;
 	if (space_needed > (int) sizeof(fmt_fixedbuf))
 	{
@@ -194,12 +197,16 @@ elog(int lev, const char *fmt,...)
 												 * fmt_fixedbuf! */
 		}
 	}
-#ifdef ELOG_TIMESTAMPS
-	strcpy(fmt_buf, print_timestamp());
+
+	fmt_buf[0] = '\0';
+
+	if (Log_timestamp)
+		strcat(fmt_buf, print_timestamp());
+	if (Log_pid)
+		strcat(fmt_buf, print_pid());
+
 	strcat(fmt_buf, prefix);
-#else
-	strcpy(fmt_buf, prefix);
-#endif
+
 	bp = fmt_buf + strlen(fmt_buf);
 	while (indent-- > 0)
 		*bp++ = ' ';
@@ -277,12 +284,12 @@ elog(int lev, const char *fmt,...)
 			/* We're up against it, convert to fatal out-of-memory error */
 			msg_buf = msg_fixedbuf;
 			lev = REALLYFATAL;
-#ifdef ELOG_TIMESTAMPS
-			strcpy(msg_buf, print_timestamp());
+			msg_buf[0] = '\0';
+			if (Log_timestamp)
+				strcat(msg_buf, print_timestamp());
+			if (Log_pid)
+				strcat(msg_buf, print_pid());
 			strcat(msg_buf, "FATAL:  elog: out of memory");
-#else
-			strcpy(msg_buf, "FATAL:  elog: out of memory");
-#endif
 			break;
 		}
 	}
@@ -318,7 +325,7 @@ elog(int lev, const char *fmt,...)
 				syslog_level = LOG_CRIT;
 		}
 
-		write_syslog(syslog_level, msg_buf + TIMESTAMP_SIZE);
+		write_syslog(syslog_level, msg_buf + timestamp_size);
 	}
 #endif /* ENABLE_SYSLOG */
 
@@ -373,7 +380,7 @@ elog(int lev, const char *fmt,...)
 			msgtype = 'E';
 		}
 		/* exclude the timestamp from msg sent to frontend */
-		pq_puttextmessage(msgtype, msg_buf + TIMESTAMP_SIZE);
+		pq_puttextmessage(msgtype, msg_buf + timestamp_size);
 
 		/*
 		 * This flush is normally not necessary, since postgres.c will
@@ -525,33 +532,45 @@ DebugFileOpen(void)
 #endif
 
 
-#ifdef ELOG_TIMESTAMPS
+
 /*
- * Return a timestamp string like "980119.17:25:59.902 [21974] "
+ * Return a timestamp string like
+ *
+ *   "2000-06-04 13:12:03 "
  */
 static const char *
-print_timestamp()
+print_timestamp(void)
 {
-	struct timeval tv;
-	struct timezone tz = { 0, 0 };
-	struct tm  *time;
-	time_t		tm;
-	static char timestamp[32],
-				pid[8];
+	time_t curtime;
+	static char buf[TIMESTAMP_SIZE + 1];
 
-	gettimeofday(&tv, &tz);
-	tm = tv.tv_sec;
-	time = localtime(&tm);
+	curtime = time(NULL);
 
-	sprintf(pid, "[%d]", MyProcPid);
-	sprintf(timestamp, "%02d%02d%02d.%02d:%02d:%02d.%03d %7s ",
-			time->tm_year % 100, time->tm_mon + 1, time->tm_mday,
-			time->tm_hour, time->tm_min, time->tm_sec,
-			(int) (tv.tv_usec/1000), pid);
+	strftime(buf, sizeof(buf),
+			 "%Y-%m-%d %H:%M:%S ",
+			 localtime(&curtime));
 
-	return timestamp;
+	return buf;
 }
-#endif
+
+
+
+/*
+ * Return a string like
+ *
+ *     "[123456] "
+ *
+ * with the current pid.
+ */
+static const char *
+print_pid(void)
+{
+	static char buf[PID_SIZE + 1];
+
+	snprintf(buf, PID_SIZE + 1, "[%d]      ", (int)MyProcPid);
+	return buf;
+}
+
 
 
 #ifdef ENABLE_SYSLOG

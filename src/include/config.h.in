@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.115 2000/06/04 01:44:36 petere Exp $
+ * $Id: config.h.in,v 1.116 2000/06/04 15:06:32 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -140,11 +140,6 @@
  */
 #define TBL_FREE_CMD_MEMORY
 
-/*
- * ELOG_TIMESTAMPS: adds a timestamp with the following format to elog
- * messages:  yymmdd.hh:mm:ss.mmm [pid] message
- */
-/* #define ELOG_TIMESTAMPS */
 
 #undef ENABLE_SYSLOG
 

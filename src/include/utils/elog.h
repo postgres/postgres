@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.17 2000/05/31 00:28:40 petere Exp $
+ * $Id: elog.h,v 1.18 2000/06/04 15:06:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,9 @@
 #ifdef ENABLE_SYSLOG
 extern int Use_syslog;
 #endif
+
+extern bool Log_timestamp;
+extern bool Log_pid;
 
 #ifndef __GNUC__
 extern void elog(int lev, const char *fmt,...);
