@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.69 1999/10/06 21:58:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.70 1999/10/25 03:07:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,8 +333,10 @@ BootstrapMain(int argc, char *argv[])
 	 */
 	if (IsUnderPostmaster || xloginit)
 	{
-		sprintf(XLogDir, "%s%cpg_xlog", DataDir, SEP_CHAR);
-		sprintf(ControlFilePath, "%s%cpg_control", DataDir, SEP_CHAR);
+		snprintf(XLogDir, MAXPGPATH, "%s%cpg_xlog",
+				 DataDir, SEP_CHAR);
+		snprintf(ControlFilePath, MAXPGPATH, "%s%cpg_control",
+				 DataDir, SEP_CHAR);
 	}
 
 	if (IsUnderPostmaster && xloginit)

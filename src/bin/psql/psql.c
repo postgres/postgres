@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.193 1999/10/23 01:31:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.194 1999/10/25 03:07:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include <windows.h>
 #include <io.h>
 #else
-#include <sys/param.h>			/* for MAXPATHLEN */
 #include <sys/ioctl.h>
 #include <unistd.h>
 #endif
@@ -76,7 +75,6 @@
 #define open(x,y,z) _open(x,y,z)
 #define strcasecmp(x,y) stricmp(x,y)
 #define pqsignal(x,y)
-#define MAXPATHLEN MAX_PATH
 #define R_OK 0
 
 /* getopt is not in the standard includes on Win32 */
@@ -1495,7 +1493,7 @@ do_copy(const char *args, PsqlSettings *pset)
 	bool		from;
 
 	/* The direction of the copy is from a file to a table. */
-	char		file[MAXPATHLEN + 1];
+	char		file[MAXPGPATH];
 
 	/* The pathname of the file from/to which we copy */
 	char		table[NAMEDATALEN];

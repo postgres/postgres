@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.49 1999/10/06 21:58:09 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.50 1999/10/25 03:07:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,7 +415,6 @@ DebugFileOpen(void)
 
 	if (OutputFileName[0])
 	{
-		OutputFileName[MAXPGPATH - 1] = '\0';
 		if ((fd = open(OutputFileName, O_CREAT | O_APPEND | O_WRONLY,
 					   0666)) < 0)
 			elog(FATAL, "DebugFileOpen: open of %s: %m",
@@ -448,7 +447,8 @@ DebugFileOpen(void)
 	fd = fileno(stderr);
 	if (fcntl(fd, F_GETFD, 0) < 0)
 	{
-		sprintf(OutputFileName, "%s/pg.errors.%d", DataDir, (int) MyProcPid);
+		snprintf(OutputFileName, MAXPGPATH, "%s%cpg.errors.%d",
+				 DataDir, SEP_CHAR, (int) MyProcPid);
 		fd = open(OutputFileName, O_CREAT | O_APPEND | O_WRONLY, 0666);
 	}
 	if (fd < 0)

@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.85 1999/10/23 03:13:22 tgl Exp $
+ *	$Id: pqcomm.c,v 1.86 1999/10/25 03:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,8 @@ pq_close(void)
  *		Stream functions are used for vanilla TCP connection protocol.
  */
 
-static char sock_path[MAXPGPATH + 1] = "";
+static char sock_path[MAXPGPATH];
+
 
 /* StreamDoUnlink()
  * Shutdown routine for backend connection

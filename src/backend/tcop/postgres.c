@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.135 1999/10/23 03:13:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.136 1999/10/25 03:07:48 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -92,7 +92,6 @@
  * ----------------
  */
 
-/*static bool	EnableRewrite = true; , never changes why have it*/
 CommandDest whereToSendOutput = Debug;
 
 /* Define status buffer needed by PS_SET_STATUS */
@@ -114,8 +113,6 @@ int			dontExecute = 0;
 static int	ShowStats;
 static bool IsEmptyQuery = false;
 
-char		relname[80];		/* current relation name */
-
 /* note: these declarations had better match tcopprot.h */
 DLLIMPORT sigjmp_buf Warn_restart;
 
@@ -126,7 +123,7 @@ extern int	NBuffers;
 
 static bool	EchoQuery = false;		/* default don't echo */
 time_t		tim;
-char		pg_pathname[256];
+char		pg_pathname[MAXPGPATH];
 FILE	   *StatFp;
 
 /* ----------------
@@ -1359,8 +1356,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			proc_exit(1);
 		}
 		BaseInit();
-		sprintf(XLogDir, "%s%cpg_xlog", DataDir, SEP_CHAR);
-		sprintf(ControlFilePath, "%s%cpg_control", DataDir, SEP_CHAR);
+		snprintf(XLogDir, MAXPGPATH, "%s%cpg_xlog",
+				 DataDir, SEP_CHAR);
+		snprintf(ControlFilePath, MAXPGPATH, "%s%cpg_control",
+				 DataDir, SEP_CHAR);
 		StartupXLOG();
 	}
 
@@ -1372,6 +1371,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	SetCharSet();
 #endif
 
+	/* On some systems our dynloader code needs the executable's pathname */
 	if (FindExec(pg_pathname, argv[0], "postgres") < 0)
 		elog(FATAL, "%s: could not locate executable, bailing out...",
 			 argv[0]);
@@ -1494,7 +1494,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.135 $ $Date: 1999/10/23 03:13:22 $\n");
+		puts("$Revision: 1.136 $ $Date: 1999/10/25 03:07:48 $\n");
 	}
 
 	/*

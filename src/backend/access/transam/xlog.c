@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.6 1999/10/24 20:42:27 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.7 1999/10/25 03:07:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,8 @@ void		StartupXLOG(void);
 void		ShutdownXLOG(void);
 void		CreateCheckPoint(bool shutdown);
 
-char		XLogDir[MAXPGPATH+1];
-char		ControlFilePath[MAXPGPATH+1];
+char		XLogDir[MAXPGPATH];
+char		ControlFilePath[MAXPGPATH];
 uint32		XLOGbuffers = 0;
 XLogRecPtr	MyLastRecPtr = {0, 0};
 bool		StopIfError = false;
@@ -147,8 +147,8 @@ typedef struct CheckPoint
 #define	XLogFileSize	(XLogLastSeg * XLogSegSize)
 
 #define	XLogFileName(path, log, seg)	\
-			sprintf(path, "%.*s%c%08X%08X",		\
-			MAXPGPATH, XLogDir, SEP_CHAR, log, seg)
+			snprintf(path, MAXPGPATH, "%s%c%08X%08X",	\
+					 XLogDir, SEP_CHAR, log, seg)
 
 #define	PrevBufIdx(curridx)		\
 		((curridx == 0) ? XLogCtl->XLogCacheBlck : (curridx - 1))
@@ -718,7 +718,7 @@ XLogWrite(char *buffer)
 static int
 XLogFileInit(uint32 log, uint32 seg)
 {
-	char	path[MAXPGPATH+1];
+	char	path[MAXPGPATH];
 	int		fd;
 
 	XLogFileName(path, log, seg);
@@ -760,7 +760,7 @@ tryAgain:
 static int
 XLogFileOpen(uint32 log, uint32 seg, bool econt)
 {
-	char	path[MAXPGPATH+1];
+	char	path[MAXPGPATH];
 	int		fd;
 
 	XLogFileName(path, log, seg);
@@ -1067,7 +1067,7 @@ next_record_is_invalid:;
 		readId++;
 	}
 	{
-		char	path[MAXPGPATH+1];
+		char	path[MAXPGPATH];
 
 		XLogFileName(path, readId, readSeg);
 		unlink(path);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.27 1999/10/23 03:13:30 tgl Exp $
+ * $Id: postgres.h,v 1.28 1999/10/25 03:07:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
  *		2)		varlena and array types
  *		3)		TransactionId and CommandId
  *		4)		genbki macros used by catalog/pg_xxx.h files
- *		5)		random CSIGNBIT, MAXPGPATH, STATUS macros
+ *		5)		random stuff
  *
  * ----------------------------------------------------------------
  */
@@ -157,9 +157,6 @@ typedef uint32 CommandId;
 
 /* msb for char */
 #define CSIGNBIT (0x80)
-
-/* this should probably be somewhere else */
-#define MAXPGPATH		128
 
 #define STATUS_OK				(0)
 #define STATUS_ERROR			(-1)

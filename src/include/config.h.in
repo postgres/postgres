@@ -204,6 +204,18 @@
 /* #define OLD_REWRITE        */
 
 /*
+ * MAXPGPATH: standard size of a pathname buffer in Postgres (hence,
+ * maximum usable pathname length is one less).
+ *
+ * We'd use a standard system header symbol for this, if there weren't
+ * so many to choose from: MAXPATHLEN, _POSIX_PATH_MAX, MAX_PATH, PATH_MAX
+ * are all defined by different "standards", and often have different
+ * values on the same platform!  So we just punt and use a reasonably
+ * generous setting here.
+ */
+#define MAXPGPATH		1024
+
+/*
  *------------------------------------------------------------------------
  * The following is set using configure.  
  *------------------------------------------------------------------------

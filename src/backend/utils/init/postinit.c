@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.51 1999/10/06 21:58:10 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.52 1999/10/25 03:07:51 tgl Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -100,7 +100,7 @@ static void
 InitMyDatabaseInfo(char *name)
 {
 	char	   *path,
-				myPath[MAXPGPATH + 1];
+				myPath[MAXPGPATH];
 
 	SetDatabaseName(name);
 	GetRawDatabaseInfo(name, &MyDatabaseId, myPath);
@@ -143,10 +143,9 @@ static void
 VerifySystemDatabase()
 {
 	char	   *reason;
-
 	/* Failure reason returned by some function.  NULL if no failure */
 	int			fd;
-	char		errormsg[1000];
+	char		errormsg[MAXPGPATH+100];
 
 	errormsg[0] = '\0';
 
@@ -155,20 +154,21 @@ VerifySystemDatabase()
 #else
 	if ((fd = open(DataDir, O_RDONLY | O_DIROPEN, 0)) == -1)
 #endif
-		sprintf(errormsg, "Database system does not exist.  "
-				"PGDATA directory '%s' not found.\n\tNormally, you "
-				"create a database system by running initdb.",
-				DataDir);
+		snprintf(errormsg, sizeof(errormsg),
+				 "Database system does not exist.  "
+				 "PGDATA directory '%s' not found.\n\tNormally, you "
+				 "create a database system by running initdb.",
+				 DataDir);
 	else
 	{
 		close(fd);
 		ValidatePgVersion(DataDir, &reason);
 		if (reason != NULL)
-			sprintf(errormsg,
-					"InitPostgres could not validate that the database"
-					" system version is compatible with this level of"
-					" Postgres.\n\tYou may need to run initdb to create"
-					" a new database system.\n\t%s", reason);
+			snprintf(errormsg, sizeof(errormsg),
+					 "InitPostgres could not validate that the database"
+					 " system version is compatible with this level of"
+					 " Postgres.\n\tYou may need to run initdb to create"
+					 " a new database system.\n\t%s", reason);
 	}
 	if (errormsg[0] != '\0')
 		elog(FATAL, errormsg);
@@ -185,7 +185,7 @@ VerifyMyDatabase()
 	/* Failure reason returned by some function.  NULL if no failure */
 	char	   *reason;
 	int			fd;
-	char		errormsg[1000];
+	char		errormsg[MAXPGPATH+100];
 
 	name = DatabaseName;
 	myPath = DatabasePath;
@@ -195,26 +195,26 @@ VerifyMyDatabase()
 #else
 	if ((fd = open(myPath, O_RDONLY | O_DIROPEN, 0)) == -1)
 #endif
-		sprintf(errormsg,
-				"Database '%s' does not exist."
-			"\n\tWe know this because the directory '%s' does not exist."
-				"\n\tYou can create a database with the SQL command"
-				" CREATE DATABASE.\n\tTo see what databases exist,"
-				" look at the subdirectories of '%s/base/'.",
-				name, myPath, DataDir);
+		snprintf(errormsg, sizeof(errormsg),
+				 "Database '%s' does not exist."
+				 "\n\tWe know this because the directory '%s' does not exist."
+				 "\n\tYou can create a database with the SQL command"
+				 " CREATE DATABASE.\n\tTo see what databases exist,"
+				 " look at the subdirectories of '%s/base/'.",
+				 name, myPath, DataDir);
 	else
 	{
 		close(fd);
 		ValidatePgVersion(myPath, &reason);
 		if (reason != NULL)
-			sprintf(errormsg,
-					"InitPostgres could not validate that the database"
-					" version is compatible with this level of Postgres"
-					"\n\teven though the database system as a whole"
-					" appears to be at a compatible level."
-					"\n\tYou may need to recreate the database with SQL"
-					" commands DROP DATABASE and CREATE DATABASE."
-					"\n\t%s", reason);
+			snprintf(errormsg, sizeof(errormsg),
+					 "InitPostgres could not validate that the database"
+					 " version is compatible with this level of Postgres"
+					 "\n\teven though the database system as a whole"
+					 " appears to be at a compatible level."
+					 "\n\tYou may need to recreate the database with SQL"
+					 " commands DROP DATABASE and CREATE DATABASE."
+					 "\n\t%s", reason);
 		else
 		{
 
@@ -229,10 +229,10 @@ VerifyMyDatabase()
 
 			rc = chdir(myPath);
 			if (rc < 0)
-				sprintf(errormsg,
-						"InitPostgres unable to change "
-						"current directory to '%s', errno = %s (%d).",
-						myPath, strerror(errno), errno);
+				snprintf(errormsg, sizeof(errormsg),
+						 "InitPostgres unable to change "
+						 "current directory to '%s', errno = %s (%d).",
+						 myPath, strerror(errno), errno);
 			else
 				errormsg[0] = '\0';
 		}

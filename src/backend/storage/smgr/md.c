@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.56 1999/10/06 06:38:04 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.57 1999/10/25 03:07:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -591,7 +591,7 @@ mdblindwrt(char *dbstr,
 	else
 /* this is work arround only !!! */
 	{
-		char		dbpath[MAXPGPATH + 1];
+		char		dbpath[MAXPGPATH];
 		Oid			id;
 		char	   *tmpPath;
 
@@ -628,7 +628,7 @@ mdblindwrt(char *dbstr,
 	else
 /* this is work arround only !!! */
 	{
-		char		dbpath[MAXPGPATH + 1];
+		char		dbpath[MAXPGPATH];
 		Oid			id;
 		char	   *tmpPath;
 

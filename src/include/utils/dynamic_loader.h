@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.12 1999/07/15 23:04:21 momjian Exp $
+ * $Id: dynamic_loader.h,v 1.13 1999/10/25 03:07:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,6 @@
 #define DYNAMIC_LOADER_H
 
 #include <sys/types.h>
-#include <sys/param.h>			/* For MAXPATHLEN */
 
 /* we need this include because port files use them */
 #include "postgres.h"
@@ -30,7 +29,7 @@
 
 typedef struct df_files
 {
-	char		filename[MAXPATHLEN];	/* Full pathname of file */
+	char		filename[MAXPGPATH];	/* Full pathname of file */
 	dev_t		device;			/* Device file is on */
 	ino_t		inode;			/* Inode number of file */
 	void	   *handle;			/* a handle for pg_dl* functions */

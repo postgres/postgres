@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.30 1999/09/24 00:25:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.31 1999/10/25 03:07:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 {
 	Oid			dbowner,
 				dbid;
-	char		dbpath[MAXPGPATH + 1];
+	char		dbpath[MAXPGPATH];
 	text	   *dbtext;
 
 	Relation	dbrel;
@@ -86,8 +86,7 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 
 	owner = palloc(sizeof(Oid));
 	*owner = dbowner;
-	path = palloc(strlen(dbpath) + 1);
-	strcpy(path, dbpath);
+	path = pstrdup(dbpath);		/* doesn't do the right thing! */
 
 	return FALSE;
 }	/* GetDatabaseInfo() */
@@ -97,46 +96,53 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 char *
 ExpandDatabasePath(char *dbpath)
 {
-	char	   *path;
+	char		buf[MAXPGPATH];
 	char	   *cp;
-	char		buf[MAXPGPATH + 1];
+	char	   *envvar;
+	int			len;
+
+	if (strlen(dbpath) >= MAXPGPATH)
+		return NULL;			/* ain't gonna fit nohow */
 
 	/* leading path delimiter? then already absolute path */
 	if (*dbpath == SEP_CHAR)
 	{
 #ifdef ALLOW_ABSOLUTE_DBPATHS
 		cp = strrchr(dbpath, SEP_CHAR);
-		strncpy(buf, dbpath, (cp - dbpath));
-		sprintf(&buf[cp - dbpath], "%cbase%c%s", SEP_CHAR, SEP_CHAR, (cp + 1));
+		len = cp - dbpath;
+		strncpy(buf, dbpath, len);
+		snprintf(&buf[len], MAXPGPATH-len, "%cbase%c%s",
+				 SEP_CHAR, SEP_CHAR, (cp + 1));
 #else
 		return NULL;
 #endif
 	}
 	/* path delimiter somewhere? then has leading environment variable */
-	else if (strchr(dbpath, SEP_CHAR) != NULL)
+	else if ((cp = strchr(dbpath, SEP_CHAR)) != NULL)
 	{
-		cp = strchr(dbpath, SEP_CHAR);
-		strncpy(buf, dbpath, (cp - dbpath));
-		buf[cp - dbpath] = '\0';
-		path = getenv(buf);
+		len = cp - dbpath;
+		strncpy(buf, dbpath, len);
+		buf[len] = '\0';
+		envvar = getenv(buf);
 
 		/*
 		 * problem getting environment variable? let calling routine
 		 * handle it
 		 */
-		if (path == NULL)
-			return path;
+		if (envvar == NULL)
+			return envvar;
 
-		sprintf(buf, "%s%cbase%c%s", path, SEP_CHAR, SEP_CHAR, (cp + 1));
+		snprintf(buf, sizeof(buf), "%s%cbase%c%s",
+				 envvar, SEP_CHAR, SEP_CHAR, (cp + 1));
 	}
-	/* no path delimiter? then add the default path prefixes */
 	else
-		sprintf(buf, "%s%cbase%c%s", DataDir, SEP_CHAR, SEP_CHAR, dbpath);
+	{
+		/* no path delimiter? then add the default path prefix */
+		snprintf(buf, sizeof(buf), "%s%cbase%c%s",
+				 DataDir, SEP_CHAR, SEP_CHAR, dbpath);
+	}
 
-	path = palloc(strlen(buf) + 1);
-	strcpy(path, buf);
-
-	return path;
+	return pstrdup(buf);
 }	/* ExpandDatabasePath() */
 
 

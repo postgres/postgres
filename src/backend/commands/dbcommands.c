@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.41 1999/09/24 00:24:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.42 1999/10/25 03:07:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 {
 	Oid			db_id;
 	int4		user_id;
-	char		buf[512];
+	char		buf[MAXPGPATH + 100];
 	char	   *lp,
-				loc[512];
+				loc[MAXPGPATH];
 
 	/*
 	 * If this call returns, the database does not exist and we're allowed
@@ -56,7 +56,7 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 	{
 		if (*(dbpath + strlen(dbpath) - 1) == SEP_CHAR)
 			*(dbpath + strlen(dbpath) - 1) = '\0';
-		snprintf(loc, 512, "%s%c%s", dbpath, SEP_CHAR, dbname);
+		snprintf(loc, sizeof(loc), "%s%c%s", dbpath, SEP_CHAR, dbname);
 	}
 	else
 		strcpy(loc, dbname);
@@ -71,11 +71,11 @@ createdb(char *dbname, char *dbpath, int encoding, CommandDest dest)
 	if (mkdir(lp, S_IRWXU) != 0)
 		elog(ERROR, "Unable to create database directory '%s'", lp);
 
-	snprintf(buf, 512, "%s %s%cbase%ctemplate1%c* %s",
+	snprintf(buf, sizeof(buf), "%s %s%cbase%ctemplate1%c* '%s'",
 			 COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
 	system(buf);
 
-	snprintf(buf, 512,
+	snprintf(buf, sizeof(buf),
 		   "insert into pg_database (datname, datdba, encoding, datpath)"
 		  " values ('%s', '%d', '%d', '%s');", dbname, user_id, encoding,
 			 loc);
@@ -89,8 +89,8 @@ destroydb(char *dbname, CommandDest dest)
 	int4		user_id;
 	Oid			db_id;
 	char	   *path,
-				dbpath[MAXPGPATH + 1],
-				buf[MAXPGPATH + 50];
+				dbpath[MAXPGPATH],
+				buf[MAXPGPATH + 100];
 	Relation	pgdbrel;
 	HeapScanDesc pgdbscan;
 	ScanKeyData	key;
@@ -233,7 +233,7 @@ check_permissions(char *command,
 	bool		use_super;
 	char	   *userName;
 	text	   *dbtext;
-	char		path[MAXPGPATH + 1];
+	char		path[MAXPGPATH];
 
 	userName = GetPgUserName();
 	utup = SearchSysCacheTuple(USENAME,
@@ -332,7 +332,7 @@ static void
 stop_vacuum(char *dbpath, char *dbname)
 {
 #ifdef NOT_USED
-	char		filename[MAXPGPATH + 1];
+	char		filename[MAXPGPATH];
 	FILE	   *fp;
 	int			pid;
 

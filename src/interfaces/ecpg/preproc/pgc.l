@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.45 1999/10/22 23:14:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.46 1999/10/25 03:07:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,6 @@
 #include <errno.h>
 
 #include "postgres.h"
-
-#ifndef PATH_MAX
-#include <sys/param.h>
-#define PATH_MAX MAXPATHLEN
-#endif
 
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
@@ -527,7 +522,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <incl>[^ \t\n]+ 	{ /* got the include file name */
 			  struct _yy_buffer *yb;
 			  struct _include_path *ip;
-			  char inc_file[PATH_MAX];
+			  char inc_file[MAXPGPATH];
 
 			  yb = mm_alloc(sizeof(struct _yy_buffer));
 
@@ -544,7 +539,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 			  yyin = NULL;
 			  for (ip = include_paths; yyin == NULL && ip != NULL; ip = ip->next)
 			  {
-				if (strlen(ip->path) + strlen(yytext) + 3 > PATH_MAX)
+				if (strlen(ip->path) + strlen(yytext) + 3 > MAXPGPATH)
 				{
 					fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
 					continue;

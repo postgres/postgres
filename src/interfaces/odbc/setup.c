@@ -32,7 +32,6 @@ extern GLOBAL_VALUES globals;
 // Constants ---------------------------------------------------------------
 #define MIN(x,y)      ((x) < (y) ? (x) : (y))
 
-#define MAXPATHLEN      (255+1)           // Max path length
 #define MAXKEYLEN       (15+1)            // Max keyword length
 #define MAXDESC         (255+1)           // Max description length
 #define MAXDSNAME       (32+1)            // Max data source name length
@@ -323,7 +322,7 @@ LPCSTR  lpsz;
 LPCSTR  lpszStart;
 char    aszKey[MAXKEYLEN];
 int     cbKey;
-char    value[MAXPATHLEN];
+char    value[MAXPGPATH];
 
 		memset(&lpsetupdlg->ci, 0, sizeof(ConnInfo));
 
@@ -352,7 +351,7 @@ char    value[MAXPATHLEN];
 
 
                 // lpsetupdlg->aAttr[iElement].fSupplied = TRUE;
-                _fmemcpy(value, lpszStart, MIN(lpsz-lpszStart+1, MAXPATHLEN));
+                _fmemcpy(value, lpszStart, MIN(lpsz-lpszStart+1, MAXPGPATH));
 
 				mylog("aszKey='%s', value='%s'\n", aszKey, value);
 
@@ -384,8 +383,8 @@ LPCSTR  lpszDSN;                                                // Pointer to da
         {
                 if (hwndParent)
                 {
-                        char  szBuf[MAXPATHLEN];
-                        char  szMsg[MAXPATHLEN];
+                        char  szBuf[MAXPGPATH];
+                        char  szMsg[MAXPGPATH];
 
                         LoadString(s_hModule, IDS_BADDSN, szBuf, sizeof(szBuf));
                         wsprintf(szMsg, szBuf, lpszDSN);

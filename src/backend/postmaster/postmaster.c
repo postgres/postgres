@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.126 1999/10/08 05:36:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.127 1999/10/25 03:07:45 tgl Exp $
  *
  * NOTES
  *
@@ -179,7 +179,7 @@ static time_t	tnow;
 /*
  * Default Values
  */
-static char Execfile[MAXPATHLEN] = "";
+static char Execfile[MAXPGPATH];
 
 static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
 
@@ -195,7 +195,7 @@ static SSL_CTX  *SSL_context = NULL;                    /* Global SSL context */
 /*
  * Set by the -o option
  */
-static char ExtraOptions[MAXPATHLEN] = "";
+static char ExtraOptions[MAXPGPATH];
 
 /*
  * These globals control the behavior of the postmaster in case some
@@ -294,10 +294,10 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 	}
 	else
 	{
-		char		path[MAXPATHLEN];
+		char		path[MAXPGPATH];
 		FILE	   *fp;
 
-		sprintf(path, "%s%cbase%ctemplate1%cpg_class",
+		snprintf(path, sizeof(path), "%s%cbase%ctemplate1%cpg_class",
 				DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
 #ifndef __CYGWIN32__
 		fp = AllocateFile(path, "r");
@@ -446,7 +446,7 @@ PostmasterMain(int argc, char *argv[])
 			case 'b':
 				/* Set the backend executable file to use. */
 				if (!ValidateBinary(optarg))
-					strcpy(Execfile, optarg);
+					StrNCpy(Execfile, optarg, MAXPGPATH);
 				else
 				{
 					fprintf(stderr, "%s: invalid backend \"%s\"\n",
@@ -1698,7 +1698,7 @@ DoBackend(Port *port)
 {
 	char	   *av[ARGV_SIZE * 2];
 	int			ac = 0;
-	char		execbuf[MAXPATHLEN];
+	char		execbuf[MAXPGPATH];
 	char		debugbuf[ARGV_SIZE];
 	char		protobuf[ARGV_SIZE];
 	char		dbbuf[ARGV_SIZE];
@@ -1749,7 +1749,7 @@ DoBackend(Port *port)
 	 * ----------------
 	 */
 
-	StrNCpy(execbuf, Execfile, MAXPATHLEN);
+	StrNCpy(execbuf, Execfile, MAXPGPATH);
 	av[ac++] = execbuf;
 
 	/*
@@ -2013,7 +2013,7 @@ SSDataBase(bool startup)
 	{
 		char	   *av[ARGV_SIZE * 2];
 		int			ac = 0;
-		char		execbuf[MAXPATHLEN];
+		char		execbuf[MAXPGPATH];
 		char		nbbuf[ARGV_SIZE];
 		char		dbbuf[ARGV_SIZE];
 
@@ -2024,7 +2024,7 @@ SSDataBase(bool startup)
 		StreamClose(ServerSock_UNIX);
 #endif
 
-		StrNCpy(execbuf, Execfile, MAXPATHLEN);
+		StrNCpy(execbuf, Execfile, MAXPGPATH);
 		av[ac++] = execbuf;
 
 		av[ac++] = "-d";

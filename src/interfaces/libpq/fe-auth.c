@@ -9,7 +9,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.33 1999/08/31 01:37:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.34 1999/10/25 03:08:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ pg_krb4_init()
 	 */
 	if (realm = getenv("PGREALM"))
 	{
-		char		tktbuf[MAXPATHLEN];
+		char		tktbuf[MAXPGPATH];
 
 		(void) sprintf(tktbuf, "%s@%s", tkt_string(), realm);
 		krb_set_tkt_string(tktbuf);
@@ -272,7 +272,7 @@ pg_krb5_init(void)
 	krb5_error_code code;
 	char	   *realm,
 			   *defname;
-	char		tktbuf[MAXPATHLEN];
+	char		tktbuf[MAXPGPATH];
 	static krb5_ccache ccache = (krb5_ccache) NULL;
 
 	if (ccache)

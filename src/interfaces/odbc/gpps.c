@@ -36,11 +36,6 @@
 #define FALSE	((BOOL)0)
 #endif
 
-#if HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#else
-#define MAXPATHLEN	255
-#endif
 
 DWORD
 GetPrivateProfileString(char *theSection,	// section name
@@ -50,7 +45,7 @@ GetPrivateProfileString(char *theSection,	// section name
 	size_t theReturnBufferLength,	// byte length of return buffer
 	char *theIniFileName)		// pathname of ini file to search
 {
-	char buf[MAXPATHLEN+1];
+	char buf[MAXPGPATH];
 	char* ptr = 0;
 	FILE* aFile = 0;
 	size_t aLength;
@@ -70,8 +65,8 @@ GetPrivateProfileString(char *theSection,	// section name
 
 	if( ptr == NULL)
 	{
-		if( MAXPATHLEN < j )
-			theIniFileName[MAXPATHLEN] = '\0';
+		if( MAXPGPATH-1 < j )
+			theIniFileName[MAXPGPATH-1] = '\0';
 
 		sprintf(buf,"%s",theIniFileName);
 	}
@@ -84,12 +79,12 @@ GetPrivateProfileString(char *theSection,	// section name
 	 * the file won't be found and thus the default value will be
 	 * returned.
 	*/
-	if( MAXPATHLEN < strlen(ptr) + j )
+	if( MAXPGPATH-1 < strlen(ptr) + j )
 	{
-		if( MAXPATHLEN < strlen(ptr) )
-			ptr[MAXPATHLEN] = '\0';
+		if( MAXPGPATH-1 < strlen(ptr) )
+			ptr[MAXPGPATH-1] = '\0';
 		else
-			theIniFileName[MAXPATHLEN-strlen(ptr)] = '\0';
+			theIniFileName[MAXPGPATH-1-strlen(ptr)] = '\0';
 	}
 
 	sprintf( buf, "%s/%s",ptr,theIniFileName );
@@ -323,7 +318,7 @@ WritePrivateProfileString(char *theSection,	// section name
 	char *theBuffer,	// input buffer
 	char *theIniFileName)	// pathname of ini file to write
 {
-	char buf[MAXPATHLEN+1];
+	char buf[MAXPGPATH];
 	char* ptr = 0;
 	FILE* aFile = 0;
 	size_t aLength;
@@ -349,8 +344,8 @@ WritePrivateProfileString(char *theSection,	// section name
 
 	if( ptr == NULL)
 	{
-		if( MAXPATHLEN < j )
-			theIniFileName[MAXPATHLEN] = '\0';
+		if( MAXPGPATH-1 < j )
+			theIniFileName[MAXPGPATH-1] = '\0';
 
 		sprintf(buf,"%s",theIniFileName);
 	}
@@ -363,12 +358,12 @@ WritePrivateProfileString(char *theSection,	// section name
 	// the file won't be found and thus the default value will be
 	// returned.
 	//
-	if( MAXPATHLEN < strlen(ptr) + j )
+	if( MAXPGPATH-1 < strlen(ptr) + j )
 	{
-		if( MAXPATHLEN < strlen(ptr) )
-			ptr[MAXPATHLEN] = '\0';
+		if( MAXPGPATH-1 < strlen(ptr) )
+			ptr[MAXPGPATH-1] = '\0';
 		else
-			theIniFileName[MAXPATHLEN-strlen(ptr)] = '\0';
+			theIniFileName[MAXPGPATH-1-strlen(ptr)] = '\0';
 	}
 
 	sprintf( buf, "%s/%s",ptr,theIniFileName );

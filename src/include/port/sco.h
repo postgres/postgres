@@ -1,9 +1,3 @@
-#include <limits.h>				/* For _POSIX_PATH_MAX */
-
-#ifndef MAXPATHLEN
-#define MAXPATHLEN		_POSIX_PATH_MAX
-#endif
-
 #ifndef NOFILE
 #define NOFILE			NOFILES_MIN
 #endif
