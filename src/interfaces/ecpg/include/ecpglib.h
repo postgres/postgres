@@ -16,6 +16,8 @@
 #ifndef false    
 #define bool char
 #endif   /* ndef bool */
+#else /* __BEOS__ */
+#include <SupportDefs.h>
 #endif /* __BEOS__ */
 
 #ifndef TRUE
