@@ -25,9 +25,13 @@ char* crypt_getpwdfilename() {
   static char*     filename = NULL;
 
   if (!filename) {
-    char*     env;
+    char*     env = NULL;
 
     env = getenv("PGDATA");
+    if(env == NULL) {
+      elog(FATAL, "crypt.c: PGDATA is not defined");
+      exit(-1);
+    }
     filename = (char*)malloc(strlen(env) + strlen(CRYPT_PWD_FILE) + 2);
     sprintf(filename, "%s/%s", env, CRYPT_PWD_FILE);
   }

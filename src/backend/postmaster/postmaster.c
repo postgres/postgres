@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.63 1997/12/04 00:27:17 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.64 1997/12/07 20:57:45 scrappy Exp $
  *
  * NOTES
  *
@@ -332,6 +332,11 @@ PostmasterMain(int argc, char *argv[])
 			case 'D':
 				/* Set PGDATA from the command line. */
 				DataDir = optarg;
+				{
+					char envEntry[2 * ARGV_SIZE];
+					sprintf(envEntry, "PGDATA=%s", DataDir);
+					putenv(envEntry);
+				}
 				break;
 			case 'd':
 
@@ -1151,8 +1156,8 @@ BackendStartup(StartupInfo *packet,		/* client's startup packet */
 		sprintf(envEntry[3], "PGDATA=%s", DataDir);
 		putenv(envEntry[3]);
 	}
-        sprintf(envEntry[4], "IPC_KEY=%d", ipc_key);
-        putenv(envEntry[4]);
+	sprintf(envEntry[4], "IPC_KEY=%d", ipc_key);
+	putenv(envEntry[4]);
 
 	if (DebugLvl > 2)
 	{
