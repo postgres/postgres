@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.1 1996/08/28 01:58:52 scrappy Exp $
+ * $Id: elog.h,v 1.2 1996/11/06 10:15:25 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,5 +34,8 @@
 /* #define ELOG_TIMESTAMPS */
 
 extern void elog(int lev, const char *fmt, ...);
+#ifndef PG_STANDALONE
+int DebugFileOpen();
+#endif
 
 #endif	/* ELOG_H */
