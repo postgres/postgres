@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.203 2002/09/05 22:24:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.204 2002/09/06 02:33:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ inet_aton(const char *cp, struct in_addr * inp)
 #define NOTIFYLIST_INITIAL_SIZE 10
 #define NOTIFYLIST_GROWBY 10
 
-#define PGPASSFILE "/.pgpass"
+#define PGPASSFILE ".pgpass"
 
 /* ----------
  * Definition of the conninfo parameters and their fallback resources.
@@ -2927,18 +2927,17 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 	home = getenv("HOME");
 	if (home)
 	{
-		pgpassfile = malloc(strlen(home) + strlen(PGPASSFILE) + 1);
+		pgpassfile = malloc(strlen(home) + 1 + strlen(PGPASSFILE) + 1);
 		if (!pgpassfile)
 		{
-						  
 			fprintf(stderr, libpq_gettext("out of memory\n"));
-			exit(EXIT_FAILURE);
+			return NULL;
 		}
 	}
 	else
 		return NULL;
 
-	sprintf(pgpassfile, "%s" PGPASSFILE, home);
+	sprintf(pgpassfile, "%s/%s", home, PGPASSFILE);
 
 	/* If password file cannot be opened, ignore it. */
 	if (stat(pgpassfile, &stat_buf) == -1)

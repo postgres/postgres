@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.65 2002/09/05 22:05:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.66 2002/09/06 02:33:47 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -42,7 +42,7 @@
  */
 PsqlSettings pset;
 
-#define PSQLRC "/.psqlrc"
+#define PSQLRC ".psqlrc"
 
 /*
  * Structures to pass information between the option parsing routine
@@ -605,7 +605,7 @@ process_psqlrc(void)
 
 	if (home)
 	{
-		psqlrc = malloc(strlen(home) + strlen(PSQLRC) + 1 +
+		psqlrc = malloc(strlen(home) + 1 + strlen(PSQLRC) + 1 +
 				 strlen(PG_VERSION) + 1);
 		if (!psqlrc)
 		{
@@ -613,12 +613,12 @@ process_psqlrc(void)
 			exit(EXIT_FAILURE);
 		}
 
-		sprintf(psqlrc, "%s" PSQLRC "-" PG_VERSION, home);
+		sprintf(psqlrc, "%s/%s-%s", home, PSQLRC, PG_VERSION);
 		if (access(psqlrc, R_OK) == 0)
 			process_file(psqlrc);
 		else
 		{
-			sprintf(psqlrc, "%s" PSQLRC, home);
+			sprintf(psqlrc, "%s/%s", home, PSQLRC);
 			if (access(psqlrc, R_OK) == 0)
 				process_file(psqlrc);
 		}
