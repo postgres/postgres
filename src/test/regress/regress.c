@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.15 1997/09/18 20:22:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.16 1997/09/24 08:35:10 vadim Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -410,4 +410,233 @@ funny_dup17()
 		*xid = InvalidTransactionId;
 
 	return (tuple);
+}
+
+#include <ctype.h>				/* tolower () */
+
+HeapTuple		ttdummy(void);
+int32			set_ttdummy(int32 on);
+
+extern int4	nextval(struct varlena * seqin);
+
+#define TTDUMMY_INFINITY	999999
+
+static void    *splan = NULL;
+static bool		ttoff = false;
+
+HeapTuple
+ttdummy()
+{
+	Trigger    *trigger;		/* to get trigger name */
+	char	  **args;			/* arguments */
+	int			attnum[2];		/* fnumbers of start/stop columns */
+	Datum		oldon, oldoff;
+	Datum		newon, newoff;
+	Datum	   *cvals;			/* column values */
+	char	   *cnulls;			/* column nulls */
+	char	   *relname;		/* triggered relation name */
+	Relation	rel;			/* triggered relation */
+	HeapTuple	trigtuple;
+	HeapTuple	newtuple = NULL;
+	HeapTuple	rettuple;
+	TupleDesc	tupdesc;		/* tuple description */
+	int			natts;			/* # of attributes */
+	bool		isnull;			/* to know is some column NULL or not */
+	int			ret;
+	int			i;
+
+	if (!CurrentTriggerData)
+		elog(WARN, "ttdummy: triggers are not initialized");
+	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+		elog(WARN, "ttdummy: can't process STATEMENT events");
+	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
+		elog(WARN, "ttdummy: must be fired before event");
+	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
+		elog (WARN, "ttdummy: can't process INSERT event");
+	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
+		newtuple = CurrentTriggerData->tg_newtuple;
+	
+	trigtuple = CurrentTriggerData->tg_trigtuple;
+	
+	rel = CurrentTriggerData->tg_relation;
+	relname = SPI_getrelname(rel);
+	
+	/* check if TT is OFF for this relation */
+	if (ttoff)				/* OFF - nothing to do */
+	{
+		pfree (relname);
+		return ((newtuple != NULL) ? newtuple : trigtuple);
+	}
+	
+	trigger = CurrentTriggerData->tg_trigger;
+
+	if (trigger->tgnargs != 2)
+		elog(WARN, "ttdummy (%s): invalid (!= 2) number of arguments %d", 
+				relname, trigger->tgnargs);
+	
+	args = trigger->tgargs;
+	tupdesc = rel->rd_att;
+	natts = tupdesc->natts;
+	
+	CurrentTriggerData = NULL;
+	
+	for (i = 0; i < 2; i++ )
+	{
+		attnum[i] = SPI_fnumber (tupdesc, args[i]);
+		if ( attnum[i] < 0 )
+			elog(WARN, "ttdummy (%s): there is no attribute %s", relname, args[i]);
+		if (SPI_gettypeid (tupdesc, attnum[i]) != INT4OID)
+			elog(WARN, "ttdummy (%s): attributes %s and %s must be of abstime type", 
+					relname, args[0], args[1]);
+	}
+	
+	oldon = SPI_getbinval (trigtuple, tupdesc, attnum[0], &isnull);
+	if (isnull)
+		elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[0]);
+	
+	oldoff = SPI_getbinval (trigtuple, tupdesc, attnum[1], &isnull);
+	if (isnull)
+		elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
+	
+	if (newtuple != NULL)						/* UPDATE */
+	{
+		newon = SPI_getbinval (newtuple, tupdesc, attnum[0], &isnull);
+		if (isnull)
+			elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[0]);
+		newoff = SPI_getbinval (newtuple, tupdesc, attnum[1], &isnull);
+		if (isnull)
+			elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
+		
+		if ( oldon != newon || oldoff != newoff )
+			elog (WARN, "ttdummy (%s): you can't change %s and/or %s columns (use set_ttdummy)",
+					relname, args[0], args[1]);
+		
+		if ( newoff != TTDUMMY_INFINITY )
+		{
+			pfree (relname);	/* allocated in upper executor context */
+			return (NULL);
+		}
+	}
+	else if (oldoff != TTDUMMY_INFINITY)		/* DELETE */
+	{
+		pfree (relname);
+		return (NULL);
+	}
+	
+	{
+		struct varlena *seqname = textin ("ttdummy_seq");
+		
+		newoff = nextval (seqname);
+		pfree (seqname);
+	}
+	
+	/* Connect to SPI manager */
+	if ((ret = SPI_connect()) < 0)
+		elog(WARN, "ttdummy (%s): SPI_connect returned %d", relname, ret);
+	
+	/* Fetch tuple values and nulls */
+	cvals = (Datum *) palloc (natts * sizeof (Datum));
+	cnulls = (char *) palloc (natts * sizeof (char));
+	for (i = 0; i < natts; i++)
+	{
+		cvals[i] = SPI_getbinval ((newtuple != NULL) ? newtuple : trigtuple, 
+								  tupdesc, i + 1, &isnull);
+		cnulls[i] = (isnull) ? 'n' : ' ';
+	}
+	
+	/* change date column(s) */
+	if (newtuple)					/* UPDATE */
+	{
+		cvals[attnum[0] - 1] = newoff;			/* start_date eq current date */
+		cnulls[attnum[0] - 1] = ' ';
+		cvals[attnum[1] - 1] = TTDUMMY_INFINITY;	/* stop_date eq INFINITY */
+		cnulls[attnum[1] - 1] = ' ';
+	}
+	else							/* DELETE */
+	{
+		cvals[attnum[1] - 1] = newoff;			/* stop_date eq current date */
+		cnulls[attnum[1] - 1] = ' ';
+	}
+	
+	/* if there is no plan ... */
+	if (splan == NULL)
+	{
+		void	   *pplan;
+		Oid		   *ctypes;
+		char		sql[8192];
+		
+		/* allocate ctypes for preparation */
+		ctypes = (Oid *) palloc(natts * sizeof(Oid));
+		
+		/*
+		 * Construct query: 
+		 * 	INSERT INTO _relation_ VALUES ($1, ...)
+		 */
+		sprintf(sql, "INSERT INTO %s VALUES (", relname);
+		for (i = 1; i <= natts; i++)
+		{
+			sprintf(sql + strlen(sql), "$%d%s",
+				i, (i < natts) ? ", " : ")");
+			ctypes[i - 1] = SPI_gettypeid(tupdesc, i);
+		}
+		
+		/* Prepare plan for query */
+		pplan = SPI_prepare(sql, natts, ctypes);
+		if (pplan == NULL)
+			elog(WARN, "ttdummy (%s): SPI_prepare returned %d", relname, SPI_result);
+		
+		pplan = SPI_saveplan(pplan);
+		if (pplan == NULL)
+			elog(WARN, "ttdummy (%s): SPI_saveplan returned %d", relname, SPI_result);
+		
+		splan = pplan;
+	}
+	
+	ret = SPI_execp(splan, cvals, cnulls, 0);
+	
+	if (ret < 0)
+		elog(WARN, "ttdummy (%s): SPI_execp returned %d", relname, ret);
+	
+	/* Tuple to return to upper Executor ... */
+	if (newtuple)									/* UPDATE */
+	{
+		HeapTuple	tmptuple;
+		
+		tmptuple = SPI_copytuple (trigtuple);
+		rettuple = SPI_modifytuple (rel, tmptuple, 1, &(attnum[1]), &newoff, NULL);
+		SPI_pfree (tmptuple);
+	}
+	else											/* DELETE */
+		rettuple = trigtuple;
+	
+	SPI_finish();		/* don't forget say Bye to SPI mgr */
+	
+	pfree (relname);
+
+	return (rettuple);
+}
+
+int32
+set_ttdummy(int32 on)
+{
+	
+	if (ttoff)				/* OFF currently */
+	{
+		if (on == 0)
+			return (0);
+		
+		/* turn ON */
+		ttoff = false;
+		return (0);
+	}
+	
+	/* ON currently */
+	if (on != 0)
+		return (1);
+	
+	/* turn OFF */
+	ttoff = true;
+	
+	return (1);
+
 }
