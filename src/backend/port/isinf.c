@@ -1,4 +1,4 @@
-/* $Id: isinf.c,v 1.2 1998/02/02 00:03:46 scrappy Exp $ */
+/* $Id: isinf.c,v 1.3 1998/02/17 02:00:12 scrappy Exp $ */
 
 #include <math.h>  
 #include "config.h"
@@ -24,21 +24,21 @@ isinf(double d)
 	}
 	return (0);
 }
-#endif
+#else
 
-#if defined(HAVE_FP_CLASS) || defined(HAVE_FP_CLASS_D)
+# if defined(HAVE_FP_CLASS) || defined(HAVE_FP_CLASS_D)
 #  if HAVE_FP_CLASS_H
-#    include <fp_class.h>
+#   include <fp_class.h>
 #  endif
 int      
 isinf(x)         
 double          x;
 {               
-#if HAVE_FP_CLASS
+#  if HAVE_FP_CLASS
 	int	fpclass = fp_class(x);
-#else
+#  else
 	int	fpclass = fp_class_d(x);
-#endif
+#  endif
  
 	if (fpclass == FP_POS_INF)   
 		return (1); 
@@ -46,6 +46,7 @@ double          x;
 		return (-1);
 	return (0);
 }
+# endif
 #endif
 
 #if defined(HAVE_CLASS)
