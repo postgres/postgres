@@ -1,0 +1,84 @@
+#-------------------------------------------------------------------------
+#
+# Makefile
+#    Makefile for the plpgsql shared object
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.1 1998/09/25 15:50:02 momjian Exp $
+#
+#-------------------------------------------------------------------------
+
+#
+# Tell make where the postgresql sources live
+#
+SRCDIR= ../../..
+
+#
+# Include the global and port specific Makefiles
+#
+include $(SRCDIR)/Makefile.global
+include $(SRCDIR)/Makefile.port
+
+CFLAGS+= -I$(LIBPQDIR) -I$(SRCDIR)/include
+LFLAGS+= -i -l
+
+# For fmgr.h
+CFLAGS+= -I$(SRCDIR)/backend
+
+LDADD+= -L$(LIBPQDIR) -lpq
+
+#
+# DLOBJ is the dynamically-loaded object file.
+#
+DLOBJ= plpgsql$(DLSUFFIX)
+
+OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
+
+ALL=	$(DLOBJ)
+
+#
+# Build the shared object
+#
+all: $(ALL)
+
+$(DLOBJ):	$(OBJS)
+
+#
+# Clean 
+#
+clean:
+	rm -f $(ALL)
+	rm -f *.o y.tab.h pl.tab.h pl_gram.c gram.c pl_scan.c scan.c
+
+install: all
+	$(INSTALL) $(INSTL_LIB_OPTS) $(DLOBJ) $(DESTDIR)$(LIBDIR)/$(DLOBJ)
+
+$(DLOBJ):	$(OBJS)
+	$(CC) -shared -o $@ $(OBJS)
+
+#	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS)
+
+
+pl_handler.o:	pl_handler.c plpgsql.h pl.tab.h
+
+pl_comp.o:	pl_comp.c plpgsql.h pl.tab.h
+
+pl_exec.o:	pl_exec.c plpgsql.h pl.tab.h
+
+pl_funcs.o:	pl_funcs.c plpgsql.h pl.tab.h
+
+pl_parse.o:	pl_gram.c pl_scan.c plpgsql.h
+	$(CC) $(CFLAGS) -c -o $@ pl_gram.c
+
+pl_gram.c:	gram.c
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <gram.c >pl_gram.c
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <y.tab.h >pl.tab.h
+
+pl_scan.c:	scan.c
+	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <scan.c >pl_scan.c
+
+gram.c:		gram.y
+
+scan.c:		scan.l
+
+pl.tab.h:	pl_gram.c
