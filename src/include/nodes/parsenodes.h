@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.20 1997/08/22 04:05:27 vadim Exp $
+ * $Id: parsenodes.h,v 1.21 1997/08/31 11:43:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,31 @@ typedef struct ConstraintDef {
     char		*name;		/* name */
     void		*def;		/* definition */
 } ConstraintDef;
+
+/* ----------------------
+ *	Create/Drop TRIGGER Statements
+ * ----------------------
+ */
+
+typedef struct CreateTrigStmt {
+    NodeTag		type;
+    char		*trigname;	/* TRIGGER' name */
+    char		*relname;	/* triggered relation */
+    char		*funcname;	/* function to call (or NULL) */
+    List		*args;		/* list of (T_String) Values or NULL */
+    bool		before;		/* BEFORE/AFTER */
+    bool		row;		/* ROW/STATEMENT */
+    char		*lang;		/* NULL (which means Clanguage) */
+    char		*text;		/* AS 'text' */
+    List		*upattr;	/* UPDATE OF a, b,... (NI) or NULL */
+    char		*when;		/* WHEN 'a > 10 ...' (NI) or NULL */
+} CreateTrigStmt;
+
+typedef struct DropTrigStmt {
+    NodeTag		type;
+    char		*trigname;	/* TRIGGER' name */
+    char		*relname;	/* triggered relation */
+} DropTrigStmt;
 
 /* ----------------------
  *	Create SEQUENCE Statement
