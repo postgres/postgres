@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.241 2005/03/14 18:31:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.242 2005/03/25 16:08:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4467,6 +4467,17 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        separator after the year, like
        <literal>to_date('20000-1131', 'YYYY-MMDD')</literal> or
        <literal>to_date('20000Nov31', 'YYYYMonDD')</literal>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In conversions from string to <type>timestamp</type> or
+       <type>date</type>, the <literal>CC</literal> field is ignored if there
+       is a <literal>YYY</literal>, <literal>YYYY</literal> or
+       <literal>Y,YYY</literal> field. If <literal>CC</literal> is used with
+       <literal>YY</literal> or <literal>Y</literal> then the year is computed
+       as <literal>(CC-1)*100+YY</literal>.
       </para>
      </listitem>
 

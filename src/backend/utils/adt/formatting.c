@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.84 2005/01/13 01:40:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.85 2005/03/25 16:08:40 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2005, PostgreSQL Global Development Group
@@ -379,7 +379,8 @@ typedef struct
 				cc,
 				q,
 				j,
-				us;
+				us,
+				yysz;		/* is it YY or YYYY ? */
 } TmFromChar;
 
 #define ZERO_tmfc( _X ) memset(_X, 0, sizeof(TmFromChar))
@@ -390,11 +391,11 @@ typedef struct
  */
 #ifdef DEBUG_TO_FROM_CHAR
 #define DEBUG_TMFC( _X ) \
-		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\niw %d\nww %d\nw %d\ncc %d\nq %d\nj %d\nus: %d", \
+		elog(DEBUG_elog_output, "TMFC:\nhh %d\nam %d\npm %d\nmi %d\nss %d\nssss %d\nd %d\ndd %d\nddd %d\nmm %d\nms: %d\nyear %d\nbc %d\niw %d\nww %d\nw %d\ncc %d\nq %d\nj %d\nus: %d\nyysz: %d", \
 			(_X)->hh, (_X)->am, (_X)->pm, (_X)->mi, (_X)->ss, \
 			(_X)->ssss, (_X)->d, (_X)->dd, (_X)->ddd, (_X)->mm, (_X)->ms, \
 			(_X)->year, (_X)->bc, (_X)->iw, (_X)->ww, (_X)->w, \
-			(_X)->cc, (_X)->q, (_X)->j, (_X)->us);
+			(_X)->cc, (_X)->q, (_X)->j, (_X)->us, (_X)->yysz);
 #define DEBUG_TM( _X ) \
 		elog(DEBUG_elog_output, "TM:\nsec %d\nyear %d\nmin %d\nwday %d\nhour %d\nyday %d\nmday %d\nnisdst %d\nmon %d\n",\
 			(_X)->tm_sec, (_X)->tm_year,\
@@ -2463,7 +2464,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 
 				sscanf(inout, "%d,%03d", &cc, &tmfc->year);
 				tmfc->year += (cc * 1000);
-
+				tmfc->yysz = 4;
 				return strdigits_len(inout) + 3 + SKIP_THth(suf);
 			}
 			break;
@@ -2497,11 +2498,13 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				if (S_FM(suf) || is_next_separator(node))
 				{
 					sscanf(inout, "%d", &tmfc->year);
+					tmfc->yysz = 4;
 					return strdigits_len(inout) - 1 + SKIP_THth(suf);
 				}
 				else
 				{
 					sscanf(inout, "%04d", &tmfc->year);
+					tmfc->yysz = 4;
 					return 3 + SKIP_THth(suf);
 				}
 			}
@@ -2537,7 +2540,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					tmfc->year += 1000;
 				else
 					tmfc->year += 2000;
-
+				tmfc->yysz = 3;
 				return 2 + SKIP_THth(suf);
 			}
 			break;
@@ -2572,7 +2575,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 					tmfc->year += 2000;
 				else
 					tmfc->year += 1900;
-
+				tmfc->yysz = 2;
 				return 1 + SKIP_THth(suf);
 			}
 			break;
@@ -2603,7 +2606,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				 * 1-digit year: always +2000
 				 */
 				tmfc->year += 2000;
-
+				tmfc->yysz = 1;
 				return 0 + SKIP_THth(suf);
 			}
 			break;
@@ -3171,8 +3174,24 @@ do_to_timestamp(text *date_txt, text *fmt,
 	}
 
 	if (tmfc.year)
-		tm->tm_year = tmfc.year;
-
+	{
+		if (tmfc.yysz==2 && tmfc.cc)
+		{
+			/* CC and YY defined 
+			 * why -[2000|1900]? See dch_date() DCH_YY code.
+			 */
+			tm->tm_year = (tmfc.cc-1)*100 + (tmfc.year >= 2000 ? tmfc.year-2000 : tmfc.year-1900);
+		}
+		else if (tmfc.yysz==1 && tmfc.cc)
+		{
+			/* CC and Y defined 
+			 */
+			tm->tm_year = (tmfc.cc-1)*100 + tmfc.year-2000;
+		}
+		else
+			/* set year (and ignore CC if defined) */
+			tm->tm_year = tmfc.year;
+	}
 	if (tmfc.bc)
 	{
 		if (tm->tm_year > 0)
