@@ -24,7 +24,6 @@ verify_password(char *user, char *password, Port *port,
 	char	   *p,
 			   *test_user,
 			   *test_pw;
-	char		salt[3];
 
 	find_hba_entry(DataDir, port->raddr.in.sin_addr, database,
 				   &host_ok, &userauth, pw_file_name, true);
@@ -90,14 +89,12 @@ verify_password(char *user, char *password, Port *port,
 		if (test_pw[strlen(test_pw) - 1] == '\n')
 			test_pw[strlen(test_pw) - 1] = '\0';
 
-		StrNCpy(salt, test_pw, 3);
-
 		if (strcmp(user, test_user) == 0)
 		{
 			/* we're outta here one way or the other. */
 			FreeFile(pw_file);
 
-			if (strcmp(crypt(password, salt), test_pw) == 0)
+			if (strcmp(crypt(password, test_pw), test_pw) == 0)
 			{
 				/* it matched. */
 				return STATUS_OK;
