@@ -801,16 +801,34 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     
     public boolean absolute(int index) throws SQLException
     {
-	// Peter: Added because negative indices read from the end of the
-	// ResultSet
-	if(index<0)
-	    index=rows.size()+index;
-	
-	if (index > rows.size())
+	// index is 1-based, but internally we use 0-based indices
+	int internalIndex;
+
+	if (index==0)
+	    throw new SQLException("Cannot move to index of 0");	
+
+	//if index<0, count from the end of the result set, but check
+	//to be sure that it is not beyond the first index
+	if (index<0) 
+	    if (index>=-rows.size())
+		internalIndex=rows.size()+index;
+	    else {
+		beforeFirst();
+		return false;
+	    }
+		
+	//must be the case that index>0, 
+	//find the correct place, assuming that 
+	//the index is not too large
+	if (index<=rows.size())
+	    internalIndex = index-1;
+	else {
+	    afterLast();
 	    return false;
-	
-	current_row=index;
-	this_row = (byte [][])rows.elementAt(index);
+	}
+
+	current_row=internalIndex;
+	this_row = (byte [][])rows.elementAt(internalIndex);
 	return true;
     }
     
@@ -1041,7 +1059,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     // Peter: Implemented in 7.0
     public boolean relative(int rows) throws SQLException
     {
-	return absolute(current_row+rows);
+	//have to add 1 since absolute expects a 1-based index
+	return absolute(current_row+1+rows);
     }
     
     public boolean rowDeleted() throws SQLException
