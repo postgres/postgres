@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.28 2004/06/11 01:08:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.29 2004/07/17 03:28:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ PerformPortalClose(const char *name)
  * for portals.
  */
 void
-PortalCleanup(Portal portal, bool isError)
+PortalCleanup(Portal portal)
 {
 	QueryDesc  *queryDesc;
 
@@ -253,8 +253,16 @@ PortalCleanup(Portal portal, bool isError)
 	if (queryDesc)
 	{
 		portal->queryDesc = NULL;
-		if (!isError)
+		if (portal->status != PORTAL_FAILED)
+		{
+			ResourceOwner saveResourceOwner;
+
+			/* We must make the portal's resource owner current */
+			saveResourceOwner = CurrentResourceOwner;
+			CurrentResourceOwner = portal->resowner;
 			ExecutorEnd(queryDesc);
+			CurrentResourceOwner = saveResourceOwner;
+		}
 	}
 }
 
@@ -271,6 +279,7 @@ PersistHoldablePortal(Portal portal)
 {
 	QueryDesc  *queryDesc = PortalGetQueryDesc(portal);
 	Portal		saveActivePortal;
+	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldcxt;
@@ -281,8 +290,6 @@ PersistHoldablePortal(Portal portal)
 	 */
 	Assert(portal->createXact == GetCurrentTransactionId());
 	Assert(queryDesc != NULL);
-	Assert(portal->portalReady);
-	Assert(!portal->portalDone);
 
 	/*
 	 * Caller must have created the tuplestore already.
@@ -303,17 +310,19 @@ PersistHoldablePortal(Portal portal)
 	/*
 	 * Check for improper portal use, and mark portal active.
 	 */
-	if (portal->portalActive)
+	if (portal->status != PORTAL_READY)
 		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("portal \"%s\" already active", portal->name)));
-	portal->portalActive = true;
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("portal \"%s\" cannot be run", portal->name)));
+	portal->status = PORTAL_ACTIVE;
 
 	/*
 	 * Set global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
 	ActivePortal = portal;
+	saveResourceOwner = CurrentResourceOwner;
+	CurrentResourceOwner = portal->resowner;
 	savePortalContext = PortalContext;
 	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
@@ -341,13 +350,6 @@ PersistHoldablePortal(Portal portal)
 	 */
 	portal->queryDesc = NULL;	/* prevent double shutdown */
 	ExecutorEnd(queryDesc);
-
-	/* Mark portal not active */
-	portal->portalActive = false;
-
-	ActivePortal = saveActivePortal;
-	PortalContext = savePortalContext;
-	QueryContext = saveQueryContext;
 
 	/*
 	 * Reset the position in the result set: ideally, this could be
@@ -394,4 +396,12 @@ PersistHoldablePortal(Portal portal)
 	 * portal's heap via PortalContext.
 	 */
 	MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
+
+	/* Mark portal not active */
+	portal->status = PORTAL_READY;
+
+	ActivePortal = saveActivePortal;
+	CurrentResourceOwner = saveResourceOwner;
+	PortalContext = savePortalContext;
+	QueryContext = saveQueryContext;
 }

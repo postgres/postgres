@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.52 2004/07/01 00:49:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.53 2004/07/17 03:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/genam.h"
 #include "access/gist.h"
 #include "access/gistscan.h"
+#include "utils/resowner.h"
 
 
 /* routines defined and used here */
@@ -41,7 +42,7 @@ static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 typedef struct GISTScanListData
 {
 	IndexScanDesc gsl_scan;
-	TransactionId gsl_creatingXid;
+	ResourceOwner gsl_owner;
 	struct GISTScanListData *gsl_next;
 } GISTScanListData;
 
@@ -224,7 +225,7 @@ gistregscan(IndexScanDesc s)
 
 	l = (GISTScanList) palloc(sizeof(GISTScanListData));
 	l->gsl_scan = s;
-	l->gsl_creatingXid = GetCurrentTransactionId();
+	l->gsl_owner = CurrentResourceOwner;
 	l->gsl_next = GISTScans;
 	GISTScans = l;
 }
@@ -253,52 +254,28 @@ gistdropscan(IndexScanDesc s)
 }
 
 /*
- * AtEOXact_gist() --- clean up gist subsystem at xact abort or commit.
+ * ReleaseResources_gist() --- clean up gist subsystem resources.
  *
  * This is here because it needs to touch this module's static var GISTScans.
  */
 void
-AtEOXact_gist(void)
-{
-	/*
-	 * Note: these actions should only be necessary during xact abort; but
-	 * they can't hurt during a commit.
-	 */
-
-	/*
-	 * Reset the active-scans list to empty. We do not need to free the
-	 * list elements, because they're all palloc()'d, so they'll go away
-	 * at end of transaction anyway.
-	 */
-	GISTScans = NULL;
-}
-
-/*
- * AtEOSubXact_gist() --- clean up gist subsystem at subxact abort or commit.
- *
- * This is here because it needs to touch this module's static var GISTScans.
- */
-void
-AtEOSubXact_gist(TransactionId childXid)
+ReleaseResources_gist(void)
 {
 	GISTScanList l;
 	GISTScanList prev;
 	GISTScanList next;
 
 	/*
-	 * Note: these actions should only be necessary during xact abort; but
-	 * they can't hurt during a commit.
-	 */
-
-	/*
-	 * Forget active scans that were started in this subtransaction.
+	 * Note: this should be a no-op during normal query shutdown.
+	 * However, in an abort situation ExecutorEnd is not called and so
+	 * there may be open index scans to clean up.
 	 */
 	prev = NULL;
 
 	for (l = GISTScans; l != NULL; l = next)
 	{
 		next = l->gsl_next;
-		if (l->gsl_creatingXid == childXid)
+		if (l->gsl_owner == CurrentResourceOwner)
 		{
 			if (prev == NULL)
 				GISTScans = next;

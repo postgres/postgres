@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.70 2004/06/18 06:13:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.71 2004/07/17 03:28:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,12 @@ Boot_DeclareUniqueIndexStmt:
 		;
 
 Boot_BuildIndsStmt:
-		  XBUILD INDICES		{ build_indices(); }
+		  XBUILD INDICES
+				{
+					do_start();
+					build_indices();
+					do_end();
+				}
 		;
 
 

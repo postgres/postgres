@@ -1,0 +1,74 @@
+$PostgreSQL: pgsql/src/backend/utils/resowner/README,v 1.1 2004/07/17 03:30:10 tgl Exp $
+
+Notes about resource owners
+---------------------------
+
+ResourceOwner objects are a concept invented to simplify management of
+query-related resources, such as buffer pins and table locks.  These
+resources need to be tracked in a reliable way to ensure that they will
+be released at query end, even if the query fails due to an error.
+Rather than expecting the entire executor to have bulletproof data
+structures, we localize the tracking of such resources into a single
+module.
+
+The design of the ResourceOwner API is modeled on our MemoryContext API,
+which has proven very flexible and successful in preventing memory leaks.
+In particular we allow ResourceOwners to have child ResourceOwner objects
+so that there can be forests of the things; releasing a parent
+ResourceOwner acts on all its direct and indirect children as well.
+
+(It is tempting to consider unifying ResourceOwners and MemoryContexts
+into a single object type, but their usage patterns are sufficiently
+different that this is probably not really a helpful thing to do.)
+
+We create a ResourceOwner for each transaction or subtransaction as
+well as one for each Portal.  During execution of a Portal, the global
+variable CurrentResourceOwner points to the Portal's ResourceOwner.
+This causes operations such as ReadBuffer and LockAcquire to record
+ownership of the acquired resources in that ResourceOwner object.
+
+When a Portal is closed, any remaining resources (typically only locks)
+become the responsibility of the current transaction.  This is represented
+by making the Portal's ResourceOwner a child of the current transaction's
+ResourceOwner.  Similarly, subtransaction ResourceOwners are children of
+their immediate parent.
+
+We need transaction-related ResourceOwners as well as Portal-related ones
+because transactions may initiate operations that require resources (such
+as query parsing) when no associated Portal exists yet.
+
+
+API overview
+------------
+
+The basic operations on a ResourceOwner are:
+
+* create a ResourceOwner
+
+* associate or deassociate some resource with a ResourceOwner
+
+* release a ResourceOwner's assets (free all owned resources, but not the
+  owner object itself)
+
+* delete a ResourceOwner (including child owner objects); all resources
+  must have been released beforehand
+
+Currently, ResourceOwners contain direct support for recording ownership
+of buffer pins, lmgr locks, and catcache and relcache references.  Other
+objects can be associated with a ResourceOwner by recording the address of
+the owning ResourceOwner in such an object.  There is an API for other
+modules to get control during ResourceOwner release, so that they can scan
+their own data structures to find the objects that need to be deleted.
+
+Whenever we are inside a transaction, the global variable
+CurrentResourceOwner shows which resource owner should be assigned
+ownership of acquired resources.  Note however that CurrentResourceOwner
+is NULL when not inside any transaction (or when inside a failed
+transaction).  In this case it is not valid to acquire query-lifespan
+resources.
+
+When unpinning a buffer or releasing a lock or cache reference,
+CurrentResourceOwner must point to the same resource owner that was current
+when the buffer, lock, or cache reference was acquired.  It would be possible
+to relax this restriction given additional bookkeeping effort, but at present
+there seems no need.

@@ -191,6 +191,72 @@ SELECT 1;			-- this should work
         1
 (1 row)
 
+-- check non-transactional behavior of cursors
+BEGIN;
+	DECLARE c CURSOR FOR SELECT unique2 FROM tenk1;
+	BEGIN;
+		FETCH 10 FROM c;
+ unique2 
+---------
+       0
+       1
+       2
+       3
+       4
+       5
+       6
+       7
+       8
+       9
+(10 rows)
+
+	ROLLBACK;
+	BEGIN;
+		FETCH 10 FROM c;
+ unique2 
+---------
+      10
+      11
+      12
+      13
+      14
+      15
+      16
+      17
+      18
+      19
+(10 rows)
+
+	COMMIT;
+	FETCH 10 FROM c;
+ unique2 
+---------
+      20
+      21
+      22
+      23
+      24
+      25
+      26
+      27
+      28
+      29
+(10 rows)
+
+	CLOSE c;
+	DECLARE c CURSOR FOR SELECT unique2/0 FROM tenk1;
+	BEGIN;
+		FETCH 10 FROM c;
+ERROR:  division by zero
+	ROLLBACK;
+	-- c is now dead to the world ...
+	BEGIN;
+		FETCH 10 FROM c;
+ERROR:  portal "c" cannot be run
+	ROLLBACK;
+	FETCH 10 FROM c;
+ERROR:  portal "c" cannot be run
+COMMIT;
 DROP TABLE foo;
 DROP TABLE baz;
 DROP TABLE barbaz;

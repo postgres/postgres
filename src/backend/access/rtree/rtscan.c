@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.52 2004/07/01 00:49:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/rtree/rtscan.c,v 1.53 2004/07/17 03:28:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/genam.h"
 #include "access/rtree.h"
 #include "utils/lsyscache.h"
+#include "utils/resowner.h"
 
 
 /* routines defined and used here */
@@ -42,7 +43,7 @@ static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 typedef struct RTScanListData
 {
 	IndexScanDesc rtsl_scan;
-	TransactionId rtsl_creatingXid;
+	ResourceOwner rtsl_owner;
 	struct RTScanListData *rtsl_next;
 } RTScanListData;
 
@@ -241,7 +242,7 @@ rtregscan(IndexScanDesc s)
 
 	l = (RTScanList) palloc(sizeof(RTScanListData));
 	l->rtsl_scan = s;
-	l->rtsl_creatingXid = GetCurrentTransactionId();
+	l->rtsl_owner = CurrentResourceOwner;
 	l->rtsl_next = RTScans;
 	RTScans = l;
 }
@@ -272,52 +273,28 @@ rtdropscan(IndexScanDesc s)
 }
 
 /*
- * AtEOXact_rtree() --- clean up rtree subsystem at xact abort or commit.
+ * ReleaseResources_rtree() --- clean up rtree subsystem resources.
  *
  * This is here because it needs to touch this module's static var RTScans.
  */
 void
-AtEOXact_rtree(void)
-{
-	/*
-	 * Note: these actions should only be necessary during xact abort; but
-	 * they can't hurt during a commit.
-	 */
-
-	/*
-	 * Reset the active-scans list to empty. We do not need to free the
-	 * list elements, because they're all palloc()'d, so they'll go away
-	 * at end of transaction anyway.
-	 */
-	RTScans = NULL;
-}
-
-/*
- * AtEOSubXact_rtree() --- clean up rtree subsystem at subxact abort or commit.
- *
- * This is here because it needs to touch this module's static var RTScans.
- */
-void
-AtEOSubXact_rtree(TransactionId childXid)
+ReleaseResources_rtree(void)
 {
 	RTScanList l;
 	RTScanList prev;
 	RTScanList next;
 
 	/*
-	 * Note: these actions should only be necessary during xact abort; but
-	 * they can't hurt during a commit.
-	 */
-
-	/*
-	 * Forget active scans that were started in this subtransaction.
+	 * Note: this should be a no-op during normal query shutdown.
+	 * However, in an abort situation ExecutorEnd is not called and so
+	 * there may be open index scans to clean up.
 	 */
 	prev = NULL;
 
 	for (l = RTScans; l != NULL; l = next)
 	{
 		next = l->rtsl_next;
-		if (l->rtsl_creatingXid == childXid)
+		if (l->rtsl_owner == CurrentResourceOwner)
 		{
 			if (prev == NULL)
 				RTScans = next;

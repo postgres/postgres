@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.83 2004/07/01 00:51:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.84 2004/07/17 03:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,31 +93,6 @@ extern int32 *LocalRefCount;
 )
 
 /*
- * IncrBufferRefCount
- *		Increment the pin count on a buffer that we have *already* pinned
- *		at least once.
- *
- *		This macro cannot be used on a buffer we do not have pinned,
- *		because it doesn't change the shared buffer state.  Therefore the
- *		Assert checks are for refcount > 0.  Someone got this wrong once...
- */
-#define IncrBufferRefCount(buffer) \
-( \
-	BufferIsLocal(buffer) ? \
-	( \
-		(void) AssertMacro((buffer) >= -NLocBuffer), \
-		(void) AssertMacro(LocalRefCount[-(buffer) - 1] > 0), \
-		(void) LocalRefCount[-(buffer) - 1]++ \
-	) \
-	: \
-	( \
-		(void) AssertMacro(!BAD_BUFFER_ID(buffer)), \
-		(void) AssertMacro(PrivateRefCount[(buffer) - 1] > 0), \
-		(void) PrivateRefCount[(buffer) - 1]++ \
-	) \
-)
-
-/*
  * BufferGetBlock
  *		Returns a reference to a disk page image associated with a buffer.
  *
@@ -138,6 +113,7 @@ extern int32 *LocalRefCount;
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern void ReleaseBuffer(Buffer buffer);
+extern void IncrBufferRefCount(Buffer buffer);
 extern void WriteBuffer(Buffer buffer);
 extern void WriteNoReleaseBuffer(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
@@ -148,8 +124,6 @@ extern void InitBufferPoolAccess(void);
 extern char *ShowBufferUsage(void);
 extern void ResetBufferUsage(void);
 extern void AtEOXact_Buffers(bool isCommit);
-extern void AtSubStart_Buffers(void);
-extern void AtEOSubXact_Buffers(bool isCommit);
 extern void FlushBufferPool(void);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.80 2004/06/05 19:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.81 2004/07/17 03:29:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,12 +235,25 @@ ChoosePortalStrategy(List *parseTrees)
 void
 PortalStart(Portal portal, ParamListInfo params)
 {
+	Portal		saveActivePortal;
+	ResourceOwner saveResourceOwner;
+	MemoryContext savePortalContext;
 	MemoryContext oldContext;
 	QueryDesc  *queryDesc;
 
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->queryContext != NULL);	/* query defined? */
-	AssertState(!portal->portalReady);	/* else extra PortalStart */
+	AssertState(portal->status == PORTAL_NEW);	/* else extra PortalStart */
+
+	/*
+	 * Set global portal context pointers.  (Should we set QueryContext?)
+	 */
+	saveActivePortal = ActivePortal;
+	ActivePortal = portal;
+	saveResourceOwner = CurrentResourceOwner;
+	CurrentResourceOwner = portal->resowner;
+	savePortalContext = PortalContext;
+	PortalContext = PortalGetHeapMemory(portal);
 
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
@@ -324,7 +337,11 @@ PortalStart(Portal portal, ParamListInfo params)
 
 	MemoryContextSwitchTo(oldContext);
 
-	portal->portalReady = true;
+	ActivePortal = saveActivePortal;
+	CurrentResourceOwner = saveResourceOwner;
+	PortalContext = savePortalContext;
+
+	portal->status = PORTAL_READY;
 }
 
 /*
@@ -403,12 +420,12 @@ PortalRun(Portal portal, long count,
 {
 	bool		result;
 	Portal		saveActivePortal;
+	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldContext;
 
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->portalReady);	/* else no PortalStart */
 
 	/* Initialize completion tag to empty string */
 	if (completionTag)
@@ -425,21 +442,19 @@ PortalRun(Portal portal, long count,
 	/*
 	 * Check for improper portal use, and mark portal active.
 	 */
-	if (portal->portalDone)
+	if (portal->status != PORTAL_READY)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-		   errmsg("portal \"%s\" cannot be run anymore", portal->name)));
-	if (portal->portalActive)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("portal \"%s\" already active", portal->name)));
-	portal->portalActive = true;
+				 errmsg("portal \"%s\" cannot be run", portal->name)));
+	portal->status = PORTAL_ACTIVE;
 
 	/*
 	 * Set global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
 	ActivePortal = portal;
+	saveResourceOwner = CurrentResourceOwner;
+	CurrentResourceOwner = portal->resowner;
 	savePortalContext = PortalContext;
 	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
@@ -454,6 +469,9 @@ PortalRun(Portal portal, long count,
 			/* we know the query is supposed to set the tag */
 			if (completionTag && portal->commandTag)
 				strcpy(completionTag, portal->commandTag);
+
+			/* Mark portal not active */
+			portal->status = PORTAL_READY;
 
 			/*
 			 * Since it's a forward fetch, say DONE iff atEnd is now true.
@@ -491,6 +509,9 @@ PortalRun(Portal portal, long count,
 			if (completionTag && portal->commandTag)
 				strcpy(completionTag, portal->commandTag);
 
+			/* Mark portal not active */
+			portal->status = PORTAL_READY;
+
 			/*
 			 * Since it's a forward fetch, say DONE iff atEnd is now true.
 			 */
@@ -499,6 +520,10 @@ PortalRun(Portal portal, long count,
 
 		case PORTAL_MULTI_QUERY:
 			PortalRunMulti(portal, dest, altdest, completionTag);
+
+			/* Prevent portal's commands from being re-executed */
+			portal->status = PORTAL_DONE;
+
 			/* Always complete at end of RunMulti */
 			result = true;
 			break;
@@ -512,10 +537,8 @@ PortalRun(Portal portal, long count,
 
 	MemoryContextSwitchTo(oldContext);
 
-	/* Mark portal not active */
-	portal->portalActive = false;
-
 	ActivePortal = saveActivePortal;
+	CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
 
@@ -914,9 +937,6 @@ PortalRunMulti(Portal portal,
 		else if (strcmp(completionTag, "DELETE") == 0)
 			strcpy(completionTag, "DELETE 0");
 	}
-
-	/* Prevent portal's commands from being re-executed */
-	portal->portalDone = true;
 }
 
 /*
@@ -933,31 +953,29 @@ PortalRunFetch(Portal portal,
 {
 	long		result;
 	Portal		saveActivePortal;
+	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
 	MemoryContext saveQueryContext;
 	MemoryContext oldContext;
 
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->portalReady);	/* else no PortalStart */
 
 	/*
 	 * Check for improper portal use, and mark portal active.
 	 */
-	if (portal->portalDone)
+	if (portal->status != PORTAL_READY)
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-		   errmsg("portal \"%s\" cannot be run anymore", portal->name)));
-	if (portal->portalActive)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 errmsg("portal \"%s\" already active", portal->name)));
-	portal->portalActive = true;
+				 errmsg("portal \"%s\" cannot be run", portal->name)));
+	portal->status = PORTAL_ACTIVE;
 
 	/*
 	 * Set global portal context pointers.
 	 */
 	saveActivePortal = ActivePortal;
 	ActivePortal = portal;
+	saveResourceOwner = CurrentResourceOwner;
+	CurrentResourceOwner = portal->resowner;
 	savePortalContext = PortalContext;
 	PortalContext = PortalGetHeapMemory(portal);
 	saveQueryContext = QueryContext;
@@ -980,9 +998,10 @@ PortalRunFetch(Portal portal,
 	MemoryContextSwitchTo(oldContext);
 
 	/* Mark portal not active */
-	portal->portalActive = false;
+	portal->status = PORTAL_READY;
 
 	ActivePortal = saveActivePortal;
+	CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
 	QueryContext = saveQueryContext;
 

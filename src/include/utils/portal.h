@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.49 2004/07/01 00:51:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.50 2004/07/17 03:31:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 
 #include "executor/execdesc.h"
 #include "nodes/memnodes.h"
+#include "utils/resowner.h"
 #include "utils/tuplestore.h"
 
 
@@ -80,6 +81,20 @@ typedef enum PortalStrategy
 } PortalStrategy;
 
 /*
+ * A portal is always in one of these states.  It is possible to transit
+ * from ACTIVE back to READY if the query is not run to completion;
+ * otherwise we never back up in status.
+ */
+typedef enum PortalStatus
+{
+	PORTAL_NEW,					/* in process of creation */
+	PORTAL_READY,				/* PortalStart complete, can run it */
+	PORTAL_ACTIVE,				/* portal is running (can't delete it) */
+	PORTAL_DONE,				/* portal is finished (don't re-run it) */
+	PORTAL_FAILED				/* portal got error (can't re-run it) */
+} PortalStatus;
+
+/*
  * Note: typedef Portal is declared in tcop/dest.h as
  *		typedef struct PortalData *Portal;
  */
@@ -89,7 +104,8 @@ typedef struct PortalData
 	/* Bookkeeping data */
 	const char *name;			/* portal's name */
 	MemoryContext heap;			/* subsidiary memory for portal */
-	void		(*cleanup) (Portal portal, bool isError);		/* cleanup hook */
+	ResourceOwner resowner;		/* resources owned by portal */
+	void		(*cleanup) (Portal portal);			/* cleanup hook */
 	TransactionId createXact;	/* the xid of the creating xact */
 
 	/* The query or queries the portal will execute */
@@ -113,10 +129,8 @@ typedef struct PortalData
 	int			cursorOptions;	/* DECLARE CURSOR option bits */
 
 	/* Status data */
-	bool		portalReady;	/* PortalStart complete? */
+	PortalStatus status;		/* see above */
 	bool		portalUtilReady;	/* PortalRunUtility complete? */
-	bool		portalActive;	/* portal is running (can't delete it) */
-	bool		portalDone;		/* portal is finished (don't re-run it) */
 
 	/* If not NULL, Executor is active; call ExecutorEnd eventually: */
 	QueryDesc  *queryDesc;		/* info needed for executor invocation */
@@ -167,12 +181,14 @@ extern void EnablePortalManager(void);
 extern void AtCommit_Portals(void);
 extern void AtAbort_Portals(void);
 extern void AtCleanup_Portals(void);
-extern void AtSubCommit_Portals(TransactionId parentXid);
-extern void AtSubAbort_Portals(void);
+extern void AtSubCommit_Portals(TransactionId parentXid,
+								ResourceOwner parentXactOwner);
+extern void AtSubAbort_Portals(TransactionId parentXid,
+							   ResourceOwner parentXactOwner);
 extern void AtSubCleanup_Portals(void);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
-extern void PortalDrop(Portal portal, bool isError);
+extern void PortalDrop(Portal portal, bool isTopCommit);
 extern void DropDependentPortals(MemoryContext queryContext);
 extern Portal GetPortalByName(const char *name);
 extern void PortalDefineQuery(Portal portal,

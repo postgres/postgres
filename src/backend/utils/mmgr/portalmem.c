@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.66 2004/07/01 00:51:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.67 2004/07/17 03:29:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,6 +186,10 @@ CreatePortal(const char *name, bool allowDup, bool dupSilent)
 										 ALLOCSET_SMALL_INITSIZE,
 										 ALLOCSET_SMALL_MAXSIZE);
 
+	/* create a resource owner for the portal */
+	portal->resowner = ResourceOwnerCreate(CurTransactionResourceOwner,
+										   "Portal");
+
 	/* initialize portal fields that don't start off zero */
 	portal->cleanup = PortalCleanup;
 	portal->createXact = GetCurrentTransactionId();
@@ -291,17 +295,14 @@ PortalCreateHoldStore(Portal portal)
 /*
  * PortalDrop
  *		Destroy the portal.
- *
- *		isError: if true, we are destroying portals at the end of a failed
- *		transaction.  (This causes PortalCleanup to skip unneeded steps.)
  */
 void
-PortalDrop(Portal portal, bool isError)
+PortalDrop(Portal portal, bool isTopCommit)
 {
 	AssertArg(PortalIsValid(portal));
 
 	/* Not sure if this case can validly happen or not... */
-	if (portal->portalActive)
+	if (portal->status == PORTAL_ACTIVE)
 		elog(ERROR, "cannot drop active portal");
 
 	/*
@@ -314,7 +315,49 @@ PortalDrop(Portal portal, bool isError)
 
 	/* let portalcmds.c clean up the state it knows about */
 	if (PointerIsValid(portal->cleanup))
-		(*portal->cleanup) (portal, isError);
+		(*portal->cleanup) (portal);
+
+	/*
+	 * Release any resources still attached to the portal.  There are
+	 * several cases being covered here:
+	 *
+	 * Top transaction commit (indicated by isTopCommit): normally we should
+	 * do nothing here and let the regular end-of-transaction resource
+	 * releasing mechanism handle these resources too.  However, if we have
+	 * a FAILED portal (eg, a cursor that got an error), we'd better clean
+	 * up its resources to avoid resource-leakage warning messages.
+	 *
+	 * Sub transaction commit: never comes here at all, since we don't
+	 * kill any portals in AtSubCommit_Portals().
+	 *
+	 * Main or sub transaction abort: we will do nothing here because
+	 * portal->resowner was already set NULL; the resources were already
+	 * cleaned up in transaction abort.
+	 *
+	 * Ordinary portal drop: must release resources.  However, if the portal
+	 * is not FAILED then we do not release its locks.  The locks become
+	 * the responsibility of the transaction's ResourceOwner (since it is
+	 * the parent of the portal's owner) and will be released when the
+	 * transaction eventually ends.
+	 */
+	if (portal->resowner &&
+		(!isTopCommit || portal->status == PORTAL_FAILED))
+	{
+		bool	isCommit = (portal->status != PORTAL_FAILED);
+
+		ResourceOwnerRelease(portal->resowner,
+							 RESOURCE_RELEASE_BEFORE_LOCKS,
+							 isCommit, false);
+		ResourceOwnerRelease(portal->resowner,
+							 RESOURCE_RELEASE_LOCKS,
+							 isCommit, false);
+		ResourceOwnerRelease(portal->resowner,
+							 RESOURCE_RELEASE_AFTER_LOCKS,
+							 isCommit, false);
+		if (!isCommit)
+			ResourceOwnerDelete(portal->resowner);
+	}
+	portal->resowner = NULL;
 
 	/*
 	 * Delete tuplestore if present.  We should do this even under error
@@ -396,19 +439,29 @@ AtCommit_Portals(void)
 		/*
 		 * Do not touch active portals --- this can only happen in the
 		 * case of a multi-transaction utility command, such as VACUUM.
+		 *
+		 * Note however that any resource owner attached to such a portal
+		 * is still going to go away, so don't leave a dangling pointer.
 		 */
-		if (portal->portalActive)
+		if (portal->status == PORTAL_ACTIVE)
+		{
+			portal->resowner = NULL;
+			continue;
+		}
+
+		/*
+		 * Do nothing else to cursors held over from a previous
+		 * transaction. (This test must include checking CURSOR_OPT_HOLD,
+		 * else we will fail to clean up a VACUUM portal if it fails after
+		 * its first sub-transaction.)
+		 */
+		if (portal->createXact != xact &&
+			(portal->cursorOptions & CURSOR_OPT_HOLD))
 			continue;
 
-		if (portal->cursorOptions & CURSOR_OPT_HOLD)
+		if ((portal->cursorOptions & CURSOR_OPT_HOLD) &&
+			portal->status == PORTAL_READY)
 		{
-			/*
-			 * Do nothing to cursors held over from a previous
-			 * transaction.
-			 */
-			if (portal->createXact != xact)
-				continue;
-
 			/*
 			 * We are exiting the transaction that created a holdable
 			 * cursor.	Instead of dropping the portal, prepare it for
@@ -420,11 +473,18 @@ AtCommit_Portals(void)
 			 */
 			PortalCreateHoldStore(portal);
 			PersistHoldablePortal(portal);
+
+			/*
+			 * Any resources belonging to the portal will be released in the
+			 * upcoming transaction-wide cleanup; the portal will no
+			 * longer have its own resources.
+			 */
+			portal->resowner = NULL;
 		}
 		else
 		{
 			/* Zap all non-holdable portals */
-			PortalDrop(portal, false);
+			PortalDrop(portal, true);
 		}
 	}
 }
@@ -432,13 +492,11 @@ AtCommit_Portals(void)
 /*
  * Abort processing for portals.
  *
- * At this point we reset the "active" flags and run the cleanup hook if
+ * At this point we reset "active" status and run the cleanup hook if
  * present, but we can't release memory until the cleanup call.
  *
  * The reason we need to reset active is so that we can replace the unnamed
- * portal, else we'll fail to execute ROLLBACK when it arrives.  Also, we
- * want to run the cleanup hook now to be certain it knows that we had an
- * error abort and not successful conclusion.
+ * portal, else we'll fail to execute ROLLBACK when it arrives.
  */
 void
 AtAbort_Portals(void)
@@ -453,7 +511,8 @@ AtAbort_Portals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		portal->portalActive = false;
+		if (portal->status == PORTAL_ACTIVE)
+			portal->status = PORTAL_FAILED;
 
 		/*
 		 * Do nothing else to cursors held over from a previous
@@ -468,17 +527,22 @@ AtAbort_Portals(void)
 		/* let portalcmds.c clean up the state it knows about */
 		if (PointerIsValid(portal->cleanup))
 		{
-			(*portal->cleanup) (portal, true);
+			(*portal->cleanup) (portal);
 			portal->cleanup = NULL;
 		}
+		/*
+		 * Any resources belonging to the portal will be released in the
+		 * upcoming transaction-wide cleanup; they will be gone before
+		 * we run PortalDrop.
+		 */
+		portal->resowner = NULL;
 	}
 }
 
 /*
  * Post-abort cleanup for portals.
  *
- * Delete all portals not held over from prior transactions.
- */
+ * Delete all portals not held over from prior transactions.  */
 void
 AtCleanup_Portals(void)
 {
@@ -492,10 +556,9 @@ AtCleanup_Portals(void)
 	{
 		Portal		portal = hentry->portal;
 
-		/*
-		 * Let's just make sure no one's active...
-		 */
-		portal->portalActive = false;
+		/* AtAbort_Portals should have fixed these: */
+		Assert(portal->status != PORTAL_ACTIVE);
+		Assert(portal->resowner == NULL);
 
 		/*
 		 * Do nothing else to cursors held over from a previous
@@ -507,8 +570,8 @@ AtCleanup_Portals(void)
 			(portal->cursorOptions & CURSOR_OPT_HOLD))
 			continue;
 
-		/* Else zap it with prejudice. */
-		PortalDrop(portal, true);
+		/* Else zap it. */
+		PortalDrop(portal, false);
 	}
 }
 
@@ -516,11 +579,11 @@ AtCleanup_Portals(void)
  * Pre-subcommit processing for portals.
  *
  * Reassign the portals created in the current subtransaction to the parent
- * transaction.  (XXX perhaps we should reassign only holdable cursors,
- * and drop the rest?)
+ * transaction.
  */
 void
-AtSubCommit_Portals(TransactionId parentXid)
+AtSubCommit_Portals(TransactionId parentXid,
+					ResourceOwner parentXactOwner)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
@@ -533,19 +596,24 @@ AtSubCommit_Portals(TransactionId parentXid)
 		Portal	portal = hentry->portal;
 
 		if (portal->createXact == curXid)
+		{
 			portal->createXact = parentXid;
+			if (portal->resowner)
+				ResourceOwnerNewParent(portal->resowner, parentXactOwner);
+		}
 	}
 }
 
 /*
  * Subtransaction abort handling for portals.
  *
- * Deactivate all portals created during the failed subtransaction.
+ * Deactivate failed portals created during the failed subtransaction.
  * Note that per AtSubCommit_Portals, this will catch portals created
  * in descendants of the subtransaction too.
  */
 void
-AtSubAbort_Portals(void)
+AtSubAbort_Portals(TransactionId parentXid,
+				   ResourceOwner parentXactOwner)
 {
 	HASH_SEQ_STATUS status;
 	PortalHashEnt *hentry;
@@ -560,13 +628,39 @@ AtSubAbort_Portals(void)
 		if (portal->createXact != curXid)
 			continue;
 
-		portal->portalActive = false;
+		/*
+		 * Force any active portals of my own transaction into FAILED state.
+		 * This is mostly to ensure that a portal running a FETCH will go
+		 * FAILED if the underlying cursor fails.  (Note we do NOT want to
+		 * do this to upper-level portals, since they may be able to continue.)
+		 */
+ 		if (portal->status == PORTAL_ACTIVE)
+			portal->status = PORTAL_FAILED;
 
-		/* let portalcmds.c clean up the state it knows about */
-		if (PointerIsValid(portal->cleanup))
+		/*
+		 * If the portal is READY then allow it to survive into the
+		 * parent transaction; otherwise shut it down.
+		 */
+		if (portal->status == PORTAL_READY)
 		{
-			(*portal->cleanup) (portal, true);
-			portal->cleanup = NULL;
+			portal->createXact = parentXid;
+			if (portal->resowner)
+				ResourceOwnerNewParent(portal->resowner, parentXactOwner);
+		}
+		else
+		{
+			/* let portalcmds.c clean up the state it knows about */
+			if (PointerIsValid(portal->cleanup))
+			{
+				(*portal->cleanup) (portal);
+				portal->cleanup = NULL;
+			}
+			/*
+			 * Any resources belonging to the portal will be released in the
+			 * upcoming transaction-wide cleanup; they will be gone before
+			 * we run PortalDrop.
+			 */
+			portal->resowner = NULL;
 		}
 	}
 }
@@ -574,8 +668,8 @@ AtSubAbort_Portals(void)
 /*
  * Post-subabort cleanup for portals.
  *
- * Drop all portals created in the finishing subtransaction and all
- * its descendants.
+ * Drop all portals created in the failed subtransaction (but note that
+ * we will not drop any that were reassigned to the parent above).
  */
 void
 AtSubCleanup_Portals(void)
@@ -593,12 +687,11 @@ AtSubCleanup_Portals(void)
 		if (portal->createXact != curXid)
 			continue;
 
-		/*
-		 * Let's just make sure no one's active...
-		 */
-		portal->portalActive = false;
+		/* AtSubAbort_Portals should have fixed these: */
+		Assert(portal->status != PORTAL_ACTIVE);
+		Assert(portal->resowner == NULL);
 
-		/* Zap it with prejudice. */
-		PortalDrop(portal, true);
+		/* Zap it. */
+		PortalDrop(portal, false);
 	}
 }

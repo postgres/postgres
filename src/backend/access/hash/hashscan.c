@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.34 2004/07/01 00:49:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashscan.c,v 1.35 2004/07/17 03:27:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,13 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "utils/resowner.h"
 
 
 typedef struct HashScanListData
 {
 	IndexScanDesc hashsl_scan;
-	TransactionId hashsl_creatingXid;
+	ResourceOwner hashsl_owner;
 	struct HashScanListData *hashsl_next;
 } HashScanListData;
 
@@ -31,52 +32,28 @@ static HashScanList HashScans = NULL;
 
 
 /*
- * AtEOXact_hash() --- clean up hash subsystem at xact abort or commit.
+ * ReleaseResources_hash() --- clean up hash subsystem resources.
  *
  * This is here because it needs to touch this module's static var HashScans.
  */
 void
-AtEOXact_hash(void)
-{
-	/*
-	 * Note: these actions should only be necessary during xact abort; but
-	 * they can't hurt during a commit.
-	 */
-
-	/*
-	 * Reset the active-scans list to empty. We do not need to free the
-	 * list elements, because they're all palloc()'d, so they'll go away
-	 * at end of transaction anyway.
-	 */
-	HashScans = NULL;
-}
-
-/*
- * AtEOSubXact_hash() --- clean up hash subsystem at subxact abort or commit.
- *
- * This is here because it needs to touch this module's static var HashScans.
- */
-void
-AtEOSubXact_hash(TransactionId childXid)
+ReleaseResources_hash(void)
 {
 	HashScanList l;
 	HashScanList prev;
 	HashScanList next;
 
 	/*
-	 * Note: these actions should only be necessary during xact abort; but
-	 * they can't hurt during a commit.
-	 */
-
-	/*
-	 * Forget active scans that were started in this subtransaction.
+	 * Note: this should be a no-op during normal query shutdown.
+	 * However, in an abort situation ExecutorEnd is not called and so
+	 * there may be open index scans to clean up.
 	 */
 	prev = NULL;
 
 	for (l = HashScans; l != NULL; l = next)
 	{
 		next = l->hashsl_next;
-		if (l->hashsl_creatingXid == childXid)
+		if (l->hashsl_owner == CurrentResourceOwner)
 		{
 			if (prev == NULL)
 				HashScans = next;
@@ -101,7 +78,7 @@ _hash_regscan(IndexScanDesc scan)
 
 	new_el = (HashScanList) palloc(sizeof(HashScanListData));
 	new_el->hashsl_scan = scan;
-	new_el->hashsl_creatingXid = GetCurrentTransactionId();
+	new_el->hashsl_owner = CurrentResourceOwner;
 	new_el->hashsl_next = HashScans;
 	HashScans = new_el;
 }

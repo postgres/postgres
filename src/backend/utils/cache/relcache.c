@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.206 2004/07/01 00:51:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.207 2004/07/17 03:29:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
+#include "utils/resowner.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -273,8 +274,6 @@ static void IndexSupportInitialize(Form_pg_index iform,
 static OpClassCacheEnt *LookupOpclassInfo(Oid operatorClassOid,
 				  StrategyNumber numStrats,
 				  StrategyNumber numSupport);
-static inline void RelationPushReferenceCount(Relation rel);
-static inline void RelationPopReferenceCount(Relation rel);
 
 
 /*
@@ -830,16 +829,12 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	RelationGetRelid(relation) = relid;
 
 	/*
-	 * initialize relation->rd_refcnt
-	 */
-	RelationSetReferenceCount(relation, 1);
-
-	/*
 	 * normal relations are not nailed into the cache; nor can a
 	 * pre-existing relation be new.  It could be temp though.	(Actually,
 	 * it could be new too, but it's okay to forget that fact if forced to
 	 * flush the entry.)
 	 */
+	relation->rd_refcnt = 0;
 	relation->rd_isnailed = 0;
 	relation->rd_isnew = false;
 	relation->rd_istemp = isTempNamespace(relation->rd_rel->relnamespace);
@@ -1280,9 +1275,9 @@ formrdesc(const char *relationName,
 	relation->rd_smgr = NULL;
 
 	/*
-	 * initialize reference count
+	 * initialize reference count: 1 because it is nailed in cache
 	 */
-	RelationSetReferenceCount(relation, 1);
+	relation->rd_refcnt = 1;
 
 	/*
 	 * all entries built with this routine are nailed-in-cache; none are
@@ -1487,6 +1482,8 @@ RelationIdGetRelation(Oid relationId)
 	buildinfo.i.info_id = relationId;
 
 	rd = RelationBuildDesc(buildinfo, NULL);
+	if (RelationIsValid(rd))
+		RelationIncrementReferenceCount(rd);
 	return rd;
 }
 
@@ -1516,6 +1513,8 @@ RelationSysNameGetRelation(const char *relationName)
 	buildinfo.i.info_name = (char *) relationName;
 
 	rd = RelationBuildDesc(buildinfo, NULL);
+	if (RelationIsValid(rd))
+		RelationIncrementReferenceCount(rd);
 	return rd;
 }
 
@@ -1523,6 +1522,36 @@ RelationSysNameGetRelation(const char *relationName)
  *				cache invalidation support routines
  * ----------------------------------------------------------------
  */
+
+/*
+ * RelationIncrementReferenceCount
+ *		Increments relation reference count.
+ *
+ * Note: bootstrap mode has its own weird ideas about relation refcount
+ * behavior; we ought to fix it someday, but for now, just disable
+ * reference count ownership tracking in bootstrap mode.
+ */
+void
+RelationIncrementReferenceCount(Relation rel)
+{
+	ResourceOwnerEnlargeRelationRefs(CurrentResourceOwner);
+	rel->rd_refcnt += 1;
+	if (!IsBootstrapProcessingMode())
+		ResourceOwnerRememberRelationRef(CurrentResourceOwner, rel);
+}
+
+/*
+ * RelationDecrementReferenceCount
+ *		Decrements relation reference count.
+ */
+void
+RelationDecrementReferenceCount(Relation rel)
+{
+	Assert(rel->rd_refcnt > 0);
+	rel->rd_refcnt -= 1;
+	if (!IsBootstrapProcessingMode())
+		ResourceOwnerForgetRelationRef(CurrentResourceOwner, rel);
+}
 
 /*
  * RelationClose - close an open relation
@@ -1680,8 +1709,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 	list_free(relation->rd_indexlist);
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
-	if (relation->rd_prevrefcnt)
-		pfree(relation->rd_prevrefcnt);
 
 	/*
 	 * If we're really done with the relcache entry, blow it away. But if
@@ -1704,6 +1731,10 @@ RelationClearRelation(Relation relation, bool rebuild)
 		 * When rebuilding an open relcache entry, must preserve ref count
 		 * and rd_isnew flag.  Also attempt to preserve the tupledesc and
 		 * rewrite-rule substructures in place.
+		 *
+		 * Note that this process does not touch CurrentResourceOwner;
+		 * which is good because whatever ref counts the entry may have
+		 * do not necessarily belong to that resource owner.
 		 */
 		int			old_refcnt = relation->rd_refcnt;
 		bool		old_isnew = relation->rd_isnew;
@@ -1726,7 +1757,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 			elog(ERROR, "relation %u deleted while still in use",
 				 buildinfo.i.info_id);
 		}
-		RelationSetReferenceCount(relation, old_refcnt);
+		relation->rd_refcnt = old_refcnt;
 		relation->rd_isnew = old_isnew;
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
@@ -1964,7 +1995,7 @@ RelationCacheInvalidate(void)
 /*
  * AtEOXact_RelationCache
  *
- *	Clean up the relcache at transaction commit or abort.
+ *	Clean up the relcache at main-transaction commit or abort.
  *
  * Note: this must be called *before* processing invalidation messages.
  * In the case of abort, we don't want to try to rebuild any invalidated
@@ -2031,20 +2062,14 @@ AtEOXact_RelationCache(bool isCommit)
 				elog(WARNING, "relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
 					 RelationGetRelationName(relation),
 					 relation->rd_refcnt, expected_refcnt);
-				RelationSetReferenceCount(relation, expected_refcnt);
+				relation->rd_refcnt = expected_refcnt;
 			}
 		}
 		else
 		{
 			/* abort case, just reset it quietly */
-			RelationSetReferenceCount(relation, expected_refcnt);
+			relation->rd_refcnt = expected_refcnt;
 		}
-
-		/*
-		 * Reset the refcount stack.  Just drop the item count; don't deallocate
-		 * the stack itself so it can be reused by future subtransactions.
-		 */
-		relation->rd_numpushed = 0;
 
 		/*
 		 * Flush any temporary index list.
@@ -2055,131 +2080,6 @@ AtEOXact_RelationCache(bool isCommit)
 			relation->rd_indexlist = NIL;
 			relation->rd_indexvalid = 0;
 		}
-	}
-}
-
-/*
- * RelationPushReferenceCount
- *
- * Push the current reference count into the stack.  Don't modify the
- * reference count itself.
- */
-static inline void
-RelationPushReferenceCount(Relation rel)
-{
-	/* Enlarge the stack if we run out of space. */
-	if (rel->rd_numpushed == rel->rd_numalloc)
-	{
-		MemoryContext	old_cxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-		if (rel->rd_numalloc == 0)
-		{
-			rel->rd_numalloc = 8;
-			rel->rd_prevrefcnt = palloc(rel->rd_numalloc * sizeof(int));
-		}
-		else
-		{
-			rel->rd_numalloc *= 2;
-			rel->rd_prevrefcnt = repalloc(rel->rd_prevrefcnt, rel->rd_numalloc * sizeof(int));
-		}
-
-		MemoryContextSwitchTo(old_cxt);
-	}
-
-	rel->rd_prevrefcnt[rel->rd_numpushed++] = rel->rd_refcnt;
-}
-
-/*
- * RelationPopReferenceCount
- *
- * Pop the latest stored reference count.  If there is none, drop it
- * to zero; the entry was created in the current subtransaction.
- */
-static inline void
-RelationPopReferenceCount(Relation rel)
-{
-	if (rel->rd_numpushed == 0)
-	{
-		rel->rd_refcnt = rel->rd_isnailed ? 1 : 0;
-		return;
-	}
-
-	rel->rd_refcnt = rel->rd_prevrefcnt[--rel->rd_numpushed];
-}
-
-/*
- * AtEOSubXact_RelationCache
- */
-void
-AtEOSubXact_RelationCache(bool isCommit)
-{
-	HASH_SEQ_STATUS status;
-	RelIdCacheEnt *idhentry;
-
-	/* We'd better not be bootstrapping. */
-	Assert(!IsBootstrapProcessingMode());
-
-	hash_seq_init(&status, RelationIdCache);
-
-	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
-	{
-		Relation	relation = idhentry->reldesc;
-
-		/*
-		 * During subtransaction commit, we first check whether the
-		 * current refcount is correct: if there is no item in the stack,
-		 * the relcache entry was created during this subtransaction, it should
-		 * be 0 (or 1 for nailed relations).  If the stack has at least one
-		 * item, the expected count is whatever that item is.
-		 */
-		if (isCommit)
-		{
-			int expected_refcnt;
-
-			if (relation->rd_numpushed == 0)
-				expected_refcnt = relation->rd_isnailed ? 1 : 0;
-			else
-				expected_refcnt = relation->rd_prevrefcnt[relation->rd_numpushed - 1];
-
-			if (relation->rd_refcnt != expected_refcnt)
-			{
-				elog(WARNING, "relcache reference leak: relation \"%s\" has refcnt %d instead of %d",
-						RelationGetRelationName(relation),
-						relation->rd_refcnt, expected_refcnt);
-			}
-		}
-
-		/*
-		 * On commit, the expected count is stored so there's no harm in
-		 * popping it (and we may need to fix if there was a leak); and during
-		 * abort, the correct refcount has to be restored.
-		 */
-		RelationPopReferenceCount(relation);
-	}
-}
-
-/*
- * AtSubStart_RelationCache
- *
- * At subtransaction start, we push the current reference count into
- * the refcount stack, so it can be restored if the subtransaction aborts.
- */
-void
-AtSubStart_RelationCache(void)
-{
-	HASH_SEQ_STATUS status;
-	RelIdCacheEnt *idhentry;
-
-	/* We'd better not be bootstrapping. */
-	Assert(!IsBootstrapProcessingMode());
-
-	hash_seq_init(&status, RelationIdCache);
-
-	while ((idhentry = (RelIdCacheEnt *) hash_seq_search(&status)) != NULL)
-	{
-		Relation	relation = idhentry->reldesc;
-
-		RelationPushReferenceCount(relation);
 	}
 }
 
@@ -2223,7 +2123,7 @@ RelationBuildLocalRelation(const char *relname,
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;
 
-	RelationSetReferenceCount(rel, 1);
+	rel->rd_refcnt = nailit ? 1 : 0;
 
 	/* it's being created in this transaction */
 	rel->rd_isnew = true;
@@ -2304,6 +2204,11 @@ RelationBuildLocalRelation(const char *relname,
 	 * done building relcache entry.
 	 */
 	MemoryContextSwitchTo(oldcxt);
+
+	/*
+	 * Caller expects us to pin the returned entry.
+	 */
+	RelationIncrementReferenceCount(rel);
 
 	return rel;
 }
@@ -2422,7 +2327,7 @@ RelationCacheInitializePhase2(void)
 			buildinfo.i.info_name = (indname); \
 			ird = RelationBuildDesc(buildinfo, NULL); \
 			ird->rd_isnailed = 1; \
-			RelationSetReferenceCount(ird, 1); \
+			ird->rd_refcnt = 1; \
 		} while (0)
 
 		LOAD_CRIT_INDEX(ClassNameNspIndex);
@@ -3201,9 +3106,9 @@ load_relcache_init_file(void)
 		rel->rd_smgr = NULL;
 		rel->rd_targblock = InvalidBlockNumber;
 		if (rel->rd_isnailed)
-			RelationSetReferenceCount(rel, 1);
+			rel->rd_refcnt = 1;
 		else
-			RelationSetReferenceCount(rel, 0);
+			rel->rd_refcnt = 0;
 		rel->rd_indexvalid = 0;
 		rel->rd_indexlist = NIL;
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.113 2004/07/01 00:51:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.114 2004/07/17 03:29:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "utils/fmgroids.h"
 #include "utils/catcache.h"
 #include "utils/relcache.h"
+#include "utils/resowner.h"
 #include "utils/syscache.h"
 
 
@@ -360,8 +361,6 @@ CatCacheRemoveCTup(CatCache *cache, CatCTup *ct)
 	/* free associated tuple data */
 	if (ct->tuple.t_data != NULL)
 		pfree(ct->tuple.t_data);
-	if (ct->prev_refcount != NULL)
-		pfree(ct->prev_refcount);
 	pfree(ct);
 
 	--cache->cc_ntup;
@@ -396,8 +395,6 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
 	/* free associated tuple data */
 	if (cl->tuple.t_data != NULL)
 		pfree(cl->tuple.t_data);
-	if (cl->prev_refcount != NULL)
-		pfree(cl->prev_refcount);
 	pfree(cl);
 }
 
@@ -531,7 +528,7 @@ CreateCacheMemoryContext(void)
 /*
  *		AtEOXact_CatCache
  *
- * Clean up catcaches at end of transaction (either commit or abort)
+ * Clean up catcaches at end of main transaction (either commit or abort)
  *
  * We scan the caches to reset refcounts to zero.  This is of course
  * necessary in the abort case, since elog() may have interrupted routines.
@@ -564,13 +561,6 @@ AtEOXact_CatCache(bool isCommit)
 				cl->refcount = 0;
 			}
 
-			/*
-			 * Reset the refcount stack.  Drop the item count to zero,
-			 * but don't deallocate the stack itself, so it can be used by
-			 * future subtransactions.
-			 */
-			cl->numpushes = 0;
-
 			/* Clean up any now-deletable dead entries */
 			if (cl->dead)
 				CatCacheRemoveCList(ccp, cl);
@@ -596,171 +586,9 @@ AtEOXact_CatCache(bool isCommit)
 			ct->refcount = 0;
 		}
 
-		/*
-		 * Reset the refcount stack.  Drop the item count to zero,
-		 * but don't deallocate the stack itself, so it can be used by
-		 * future subtransactions.
-		 */
-		ct->numpushes = 0;
-
 		/* Clean up any now-deletable dead entries */
 		if (ct->dead)
 			CatCacheRemoveCTup(ct->my_cache, ct);
-	}
-}
-
-/*
- * AtSubStart_CatCache
- *
- * Saves reference counts of each entry at subtransaction start so they
- * can be restored if the subtransaction later aborts.
- */
-void
-AtSubStart_CatCache(void)
-{
-	CatCache   *ccp;
-	Dlelem	   *elt,
-			   *nextelt;
-	MemoryContext old_cxt;
-   
-
-	old_cxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	/*
-	 * Prepare CLists
-	 */
-	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
-	{
-		for (elt = DLGetHead(&ccp->cc_lists); elt; elt = nextelt)
-		{
-			CatCList   *cl = (CatCList *) DLE_VAL(elt);
-
-			nextelt = DLGetSucc(elt);
-
-			if (cl->numpushes == cl->numalloc)
-			{
-				if (cl->numalloc == 0)
-				{
-					cl->numalloc = 8;
-					cl->prev_refcount = palloc(sizeof(int) * cl->numalloc);
-				}
-				else
-				{
-					cl->numalloc *= 2;
-					cl->prev_refcount = repalloc(cl->prev_refcount, cl->numalloc * sizeof(int));
-				}
-			}
-
-			cl->prev_refcount[cl->numpushes++] = cl->refcount;
-		}
-	}
-
-	/*
-	 * Prepare CTuples
-	 */
-	for (elt = DLGetHead(&CacheHdr->ch_lrulist); elt; elt = nextelt)
-	{
-		CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
-
-		nextelt = DLGetSucc(elt);
-
-		if (ct->numpushes == ct->numalloc)
-		{
-			if (ct->numalloc == 0)
-			{
-				ct->numalloc = 8;
-				ct->prev_refcount = palloc(sizeof(int) * ct->numalloc);
-			}
-			else
-			{
-				ct->numalloc *= 2;
-				ct->prev_refcount = repalloc(ct->prev_refcount, sizeof(int) * ct->numalloc);
-			}
-		}
-
-		ct->prev_refcount[ct->numpushes++] = ct->refcount;
-	}
-
-	MemoryContextSwitchTo(old_cxt);
-}
-
-void
-AtEOSubXact_CatCache(bool isCommit)
-{
-	CatCache   *ccp;
-	Dlelem	   *elt,
-			   *nextelt;
-	
-	/*
-	 * Restore CLists
-	 */
-	for (ccp = CacheHdr->ch_caches; ccp; ccp = ccp->cc_next)
-	{
-		for (elt = DLGetHead(&ccp->cc_lists); elt; elt = nextelt)
-		{
-			CatCList   *cl = (CatCList *) DLE_VAL(elt);
-
-			nextelt = DLGetSucc(elt);
-
-			/*
-			 * During commit, check whether the count is what
-			 * we expect.
-			 */
-			if (isCommit)
-			{
-				int expected_refcount;
-				if (cl->numpushes > 0)
-					expected_refcount = cl->prev_refcount[cl->numpushes - 1];
-				else
-					expected_refcount = 0;
-
-				if (cl->refcount != expected_refcount)
-					elog(WARNING, "catcache reference leak");
-			}
-
-			/*
-			 * During abort we have to restore the original count;
-			 * during commit, we have to restore in case of a leak,
-			 * and it won't harm if this is the expected count.
-			 */
-			if (cl->numpushes > 0)
-				cl->refcount = cl->prev_refcount[--cl->numpushes];
-			else
-				cl->refcount = 0;
-		}
-	}
-
-	/*
-	 * Prepare CTuples
-	 */
-	for (elt = DLGetHead(&CacheHdr->ch_lrulist); elt; elt = nextelt)
-	{
-		CatCTup    *ct = (CatCTup *) DLE_VAL(elt);
-
-		nextelt = DLGetSucc(elt);
-
-		if (isCommit)
-		{
-			int expected_refcount;
-
-			if (ct->numpushes > 0)
-				expected_refcount = ct->prev_refcount[ct->numpushes - 1];
-			else
-				expected_refcount = 0;
-
-			if (ct->refcount != expected_refcount)
-				elog(WARNING, "catcache reference leak");
-		}
-
-		/*
-		 * During abort we have to restore the original count;
-		 * during commit, we have to restore in case of a leak,
-		 * and it won't harm if this is the expected count.
-		 */
-		if (ct->numpushes > 0)
-			ct->refcount = ct->prev_refcount[--ct->numpushes];
-		else
-			ct->refcount = 0;
 	}
 }
 
@@ -1334,7 +1162,9 @@ SearchCatCache(CatCache *cache,
 		 */
 		if (!ct->negative)
 		{
+			ResourceOwnerEnlargeCatCacheRefs(CurrentResourceOwner);
 			ct->refcount++;
+			ResourceOwnerRememberCatCacheRef(CurrentResourceOwner, &ct->tuple);
 
 			CACHE3_elog(DEBUG2, "SearchCatCache(%s): found in bucket %d",
 						cache->cc_relname, hashIndex);
@@ -1389,6 +1219,10 @@ SearchCatCache(CatCache *cache,
 		ct = CatalogCacheCreateEntry(cache, ntp,
 									 hashValue, hashIndex,
 									 false);
+		/* immediately set the refcount to 1 */
+		ResourceOwnerEnlargeCatCacheRefs(CurrentResourceOwner);
+		ct->refcount++;
+		ResourceOwnerRememberCatCacheRef(CurrentResourceOwner, &ct->tuple);
 		break;					/* assume only one match */
 	}
 
@@ -1415,10 +1249,9 @@ SearchCatCache(CatCache *cache,
 					cache->cc_relname, hashIndex);
 
 		/*
-		 * We are not returning the new entry to the caller, so reset its
-		 * refcount.
+		 * We are not returning the negative entry to the caller, so leave
+		 * its refcount zero.
 		 */
-		ct->refcount = 0;		/* negative entries never have refs */
 
 		return NULL;
 	}
@@ -1457,6 +1290,7 @@ ReleaseCatCache(HeapTuple tuple)
 	Assert(ct->refcount > 0);
 
 	ct->refcount--;
+	ResourceOwnerForgetCatCacheRef(CurrentResourceOwner, &ct->tuple);
 
 	if (ct->refcount == 0
 #ifndef CATCACHE_FORCE_RELEASE
@@ -1564,7 +1398,10 @@ SearchCatCacheList(CatCache *cache,
 		 * do not move the members to the fronts of their hashbucket
 		 * lists, however, since there's no point in that unless they are
 		 * searched for individually.)	Also bump the members' refcounts.
+		 * (member refcounts are NOT registered separately with the
+		 * resource owner.)
 		 */
+		ResourceOwnerEnlargeCatCacheListRefs(CurrentResourceOwner);
 		for (i = 0; i < cl->n_members; i++)
 		{
 			cl->members[i]->refcount++;
@@ -1574,6 +1411,7 @@ SearchCatCacheList(CatCache *cache,
 
 		/* Bump the list's refcount and return it */
 		cl->refcount++;
+		ResourceOwnerRememberCatCacheListRef(CurrentResourceOwner, cl);
 
 		CACHE2_elog(DEBUG2, "SearchCatCacheList(%s): found list",
 					cache->cc_relname);
@@ -1639,9 +1477,7 @@ SearchCatCacheList(CatCache *cache,
 			if (ct->c_list)
 				continue;
 
-			/* Found a match, so bump its refcount and move to front */
-			ct->refcount++;
-
+			/* Found a match, so move it to front */
 			DLMoveToFront(&ct->lrulist_elem);
 
 			break;
@@ -1655,6 +1491,16 @@ SearchCatCacheList(CatCache *cache,
 										 false);
 		}
 
+		/*
+		 * We have to bump the member refcounts immediately to ensure they
+		 * won't get dropped from the cache while loading other members.
+		 * If we get an error before we finish constructing the CatCList
+		 * then we will leak those reference counts.  This is annoying but
+		 * it has no real consequence beyond possibly generating some
+		 * warning messages at the next transaction commit, so it's not
+		 * worth fixing.
+		 */
+		ct->refcount++;
 		ctlist = lcons(ct, ctlist);
 		nmembers++;
 	}
@@ -1677,10 +1523,7 @@ SearchCatCacheList(CatCache *cache,
 	cl->cl_magic = CL_MAGIC;
 	cl->my_cache = cache;
 	DLInitElem(&cl->cache_elem, (void *) cl);
-	cl->refcount = 1;			/* count this first reference */
-	cl->prev_refcount = NULL;
-	cl->numpushes = 0;
-	cl->numalloc = 0;
+	cl->refcount = 0;			/* for the moment */
 	cl->dead = false;
 	cl->ordered = ordered;
 	cl->nkeys = nkeys;
@@ -1703,6 +1546,11 @@ SearchCatCacheList(CatCache *cache,
 
 	CACHE3_elog(DEBUG2, "SearchCatCacheList(%s): made list of %d members",
 				cache->cc_relname, nmembers);
+
+	/* Finally, bump the list's refcount and return it */
+	ResourceOwnerEnlargeCatCacheListRefs(CurrentResourceOwner);
+	cl->refcount++;
+	ResourceOwnerRememberCatCacheListRef(CurrentResourceOwner, cl);
 
 	return cl;
 }
@@ -1735,6 +1583,7 @@ ReleaseCatCacheList(CatCList *list)
 	}
 
 	list->refcount--;
+	ResourceOwnerForgetCatCacheListRef(CurrentResourceOwner, list);
 
 	if (list->refcount == 0
 #ifndef CATCACHE_FORCE_RELEASE
@@ -1748,7 +1597,7 @@ ReleaseCatCacheList(CatCList *list)
 /*
  * CatalogCacheCreateEntry
  *		Create a new CatCTup entry, copying the given HeapTuple and other
- *		supplied data into it.	The new entry is given refcount 1.
+ *		supplied data into it.	The new entry initially has refcount 0.
  */
 static CatCTup *
 CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
@@ -1775,13 +1624,10 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 	DLInitElem(&ct->lrulist_elem, (void *) ct);
 	DLInitElem(&ct->cache_elem, (void *) ct);
 	ct->c_list = NULL;
-	ct->refcount = 1;			/* count this first reference */
+	ct->refcount = 0;			/* for the moment */
 	ct->dead = false;
 	ct->negative = negative;
 	ct->hash_value = hashValue;
-	ct->prev_refcount = NULL;
-	ct->numpushes = 0;
-	ct->numalloc = 0;
 
 	DLAddHead(&CacheHdr->ch_lrulist, &ct->lrulist_elem);
 	DLAddHead(&cache->cc_bucket[hashIndex], &ct->cache_elem);
@@ -1791,8 +1637,8 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 
 	/*
 	 * If we've exceeded the desired size of the caches, try to throw away
-	 * the least recently used entry.  NB: the newly-built entry cannot
-	 * get thrown away here, because it has positive refcount.
+	 * the least recently used entry.  NB: be careful not to throw away
+	 * the newly-built entry...
 	 */
 	if (CacheHdr->ch_ntup > CacheHdr->ch_maxtup)
 	{
@@ -1805,7 +1651,7 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 
 			prevelt = DLGetPred(elt);
 
-			if (oldct->refcount == 0)
+			if (oldct->refcount == 0 && oldct != ct)
 			{
 				CACHE2_elog(DEBUG2, "CatCacheCreateEntry(%s): Overflow, LRU removal",
 							cache->cc_relname);

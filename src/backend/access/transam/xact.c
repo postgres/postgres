@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.170 2004/07/01 20:11:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.171 2004/07/17 03:28:23 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -144,10 +144,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "access/gistscan.h"
-#include "access/hash.h"
-#include "access/nbtree.h"
-#include "access/rtree.h"
 #include "access/subtrans.h"
 #include "access/xact.h"
 #include "catalog/heap.h"
@@ -168,23 +164,73 @@
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/portal.h"
-#include "utils/catcache.h"
-#include "utils/relcache.h"
+#include "utils/resowner.h"
 #include "pgstat.h"
 
 
+
+/*
+ *	transaction states - transaction state from server perspective
+ */
+typedef enum TransState
+{
+	TRANS_DEFAULT,
+	TRANS_START,
+	TRANS_INPROGRESS,
+	TRANS_COMMIT,
+	TRANS_ABORT
+} TransState;
+
+/*
+ *	transaction block states - transaction state of client queries
+ */
+typedef enum TBlockState
+{
+	TBLOCK_DEFAULT,
+	TBLOCK_STARTED,
+	TBLOCK_BEGIN,
+	TBLOCK_INPROGRESS,
+	TBLOCK_END,
+	TBLOCK_ABORT,
+	TBLOCK_ENDABORT,
+
+	TBLOCK_SUBBEGIN,
+	TBLOCK_SUBBEGINABORT,
+	TBLOCK_SUBINPROGRESS,
+	TBLOCK_SUBEND,
+	TBLOCK_SUBABORT,
+	TBLOCK_SUBENDABORT_OK,
+	TBLOCK_SUBENDABORT_ERROR
+} TBlockState;
+
+/*
+ *	transaction state structure
+ */
+typedef struct TransactionStateData
+{
+	TransactionId	transactionIdData;		/* my XID */
+	CommandId		commandId;				/* current CID */
+	TransState		state;					/* low-level state */
+	TBlockState		blockState;				/* high-level state */
+	int				nestingLevel;			/* nest depth */
+	MemoryContext	curTransactionContext;	/* my xact-lifetime context */
+	ResourceOwner	curTransactionOwner;	/* my query resources */
+	List		   *childXids;				/* subcommitted child XIDs */
+	AclId			currentUser;			/* subxact start current_user */
+	struct TransactionStateData *parent;	/* back link to parent */
+} TransactionStateData;
+
+typedef TransactionStateData *TransactionState;
+
+
 static void AbortTransaction(void);
-static void AtAbort_Cache(void);
-static void AtAbort_Locks(void);
 static void AtAbort_Memory(void);
 static void AtCleanup_Memory(void);
-static void AtCommit_Cache(void);
 static void AtCommit_LocalCache(void);
-static void AtCommit_Locks(void);
 static void AtCommit_Memory(void);
 static void AtStart_Cache(void);
-static void AtStart_Locks(void);
 static void AtStart_Memory(void);
+static void AtStart_ResourceOwner(void);
 static void CallEOXactCallbacks(bool isCommit);
 static void CleanupTransaction(void);
 static void CommitTransaction(void);
@@ -200,11 +246,11 @@ static void StartAbortedSubTransaction(void);
 static void PushTransaction(void);
 static void PopTransaction(void);
 
-static void AtSubAbort_Locks(void);
 static void AtSubAbort_Memory(void);
 static void AtSubCleanup_Memory(void);
 static void AtSubCommit_Memory(void);
 static void AtSubStart_Memory(void);
+static void AtSubStart_ResourceOwner(void);
 
 static void ShowTransactionState(const char *str);
 static void ShowTransactionStateRec(TransactionState state);
@@ -224,6 +270,7 @@ static TransactionStateData TopTransactionStateData = {
 								 * perspective */
 	0,							/* nesting level */
 	NULL,						/* cur transaction context */
+	NULL,						/* cur transaction resource owner */
 	NIL,						/* subcommitted child Xids */
 	0,							/* entry-time current userid */
 	NULL						/* link to parent state block */
@@ -462,8 +509,7 @@ CommandCounterIncrement(void)
 		SerializableSnapshot->curcid = s->commandId;
 
 	/*
-	 * make cache changes visible to me.  AtCommit_LocalCache() instead of
-	 * AtCommit_Cache() is called here.
+	 * make cache changes visible to me.
 	 */
 	AtCommit_LocalCache();
 	AtStart_Cache();
@@ -482,20 +528,6 @@ static void
 AtStart_Cache(void)
 {
 	AcceptInvalidationMessages();
-}
-
-/*
- *		AtStart_Locks
- */
-static void
-AtStart_Locks(void)
-{
-	/*
-	 * at present, it is unknown to me what belongs here -cim 3/18/90
-	 *
-	 * There isn't anything to do at the start of a xact for locks. -mer
-	 * 5/24/92
-	 */
 }
 
 /*
@@ -532,6 +564,29 @@ AtStart_Memory(void)
 	MemoryContextSwitchTo(CurTransactionContext);
 }
 
+/*
+ *	AtStart_ResourceOwner
+ */
+static void
+AtStart_ResourceOwner(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	/*
+	 * We shouldn't have a transaction resource owner already.
+	 */
+	Assert(TopTransactionResourceOwner == NULL);
+
+	/*
+	 * Create a toplevel resource owner for the transaction.
+	 */
+	s->curTransactionOwner = ResourceOwnerCreate(NULL, "TopTransaction");
+
+	TopTransactionResourceOwner = s->curTransactionOwner;
+	CurTransactionResourceOwner = s->curTransactionOwner;
+	CurrentResourceOwner = s->curTransactionOwner;
+}
+
 /* ----------------------------------------------------------------
  *						StartSubTransaction stuff
  * ----------------------------------------------------------------
@@ -563,6 +618,28 @@ AtSubStart_Memory(void)
 	MemoryContextSwitchTo(CurTransactionContext);
 }
 
+/*
+ * AtSubStart_ResourceOwner
+ */
+static void
+AtSubStart_ResourceOwner(void)
+{
+	TransactionState s = CurrentTransactionState;
+
+	Assert(s->parent != NULL);
+
+	/*
+	 * Create a resource owner for the subtransaction.  We make it a
+	 * child of the immediate parent's resource owner.
+	 */
+	s->curTransactionOwner =
+		ResourceOwnerCreate(s->parent->curTransactionOwner,
+							"SubTransaction");
+
+	CurTransactionResourceOwner = s->curTransactionOwner;
+	CurrentResourceOwner = s->curTransactionOwner;
+}
+
 /* ----------------------------------------------------------------
  *						CommitTransaction stuff
  * ----------------------------------------------------------------
@@ -581,7 +658,7 @@ RecordTransactionCommit(void)
 
 	/* Get data needed for commit record */
 	nrels = smgrGetPendingDeletes(true, &rptr);
-	nchildren = xactGetCommittedChildren(&children, false);
+	nchildren = xactGetCommittedChildren(&children);
 
 	/*
 	 * If we made neither any XLOG entries nor any temp-rel updates,
@@ -715,23 +792,6 @@ RecordTransactionCommit(void)
 
 
 /*
- *	AtCommit_Cache
- */
-static void
-AtCommit_Cache(void)
-{
-	/*
-	 * Clean up the relation cache.
-	 */
-	AtEOXact_RelationCache(true);
-
-	/*
-	 * Make catalog changes visible to all backends.
-	 */
-	AtEOXact_Inval(true);
-}
-
-/*
  *	AtCommit_LocalCache
  */
 static void
@@ -741,20 +801,6 @@ AtCommit_LocalCache(void)
 	 * Make catalog changes visible to me for the next command.
 	 */
 	CommandEndInvalidationMessages();
-}
-
-/*
- *	AtCommit_Locks
- */
-static void
-AtCommit_Locks(void)
-{
-	/*
-	 * XXX What if ProcReleaseLocks fails?	(race condition?)
-	 *
-	 * Then you're up a creek! -mer 5/24/92
-	 */
-	ProcReleaseLocks(ReleaseAllExceptSession, 0, NULL);
 }
 
 /*
@@ -878,7 +924,7 @@ RecordTransactionAbort(void)
 
 	/* Get data needed for abort record */
 	nrels = smgrGetPendingDeletes(false, &rptr);
-	nchildren = xactGetCommittedChildren(&children, false);
+	nchildren = xactGetCommittedChildren(&children);
 
 	/*
 	 * If we made neither any transaction-controlled XLOG entries nor any
@@ -980,31 +1026,6 @@ RecordTransactionAbort(void)
 }
 
 /*
- *	AtAbort_Cache
- */
-static void
-AtAbort_Cache(void)
-{
-	AtEOXact_RelationCache(false);
-	AtEOXact_Inval(false);
-}
-
-/*
- *	AtAbort_Locks
- */
-static void
-AtAbort_Locks(void)
-{
-	/*
-	 * XXX What if ProcReleaseLocks() fails?  (race condition?)
-	 *
-	 * Then you're up a creek without a paddle! -mer
-	 */
-	ProcReleaseLocks(ReleaseAll, 0, NULL);
-}
-
-
-/*
  *	AtAbort_Memory
  */
 static void
@@ -1027,22 +1048,6 @@ AtAbort_Memory(void)
 	}
 	else
 		MemoryContextSwitchTo(TopMemoryContext);
-}
-
-/*
- * AtSubAbort_Locks
- */
-static void
-AtSubAbort_Locks(void)
-{
-	int nxids;
-	TransactionId *xids;
-
-	nxids = xactGetCommittedChildren(&xids, true);
-
-	ProcReleaseLocks(ReleaseGivenXids, nxids, xids);
-
-	pfree(xids);
 }
 
 
@@ -1070,7 +1075,7 @@ RecordSubTransactionAbort(void)
 
 	/* Get data needed for abort record */
 	nrels = smgrGetPendingDeletes(false, &rptr);
-	nchildren = xactGetCommittedChildren(&children, false);
+	nchildren = xactGetCommittedChildren(&children);
 
 	/*
 	 * If we made neither any transaction-controlled XLOG entries nor any
@@ -1242,6 +1247,12 @@ StartTransaction(void)
 	XactReadOnly = DefaultXactReadOnly;
 
 	/*
+	 * must initialize resource-management stuff first
+	 */
+	AtStart_Memory();
+	AtStart_ResourceOwner();
+
+	/*
 	 * generate a new transaction id
 	 */
 	s->transactionIdData = GetNewTransactionId(false);
@@ -1268,16 +1279,10 @@ StartTransaction(void)
 	 */
 
 	/*
-	 * initialize the various transaction subsystems
+	 * initialize other subsystems for new transaction
 	 */
-	AtStart_Memory();
 	AtStart_Inval();
 	AtStart_Cache();
-	AtStart_Locks();
-
-	/*
-	 * Tell the trigger manager we're starting a transaction
-	 */
 	DeferredTriggerBeginXact();
 
 	/*
@@ -1380,27 +1385,49 @@ CommitTransaction(void)
 	 * pins); then release locks; then release backend-local resources. We
 	 * want to release locks at the point where any backend waiting for us
 	 * will see our transaction as being fully cleaned up.
+	 *
+	 * Resources that can be associated with individual queries are
+	 * handled by the ResourceOwner mechanism.  The other calls here
+	 * are for backend-wide state.
 	 */
 
 	smgrDoPendingDeletes(true);
-	AtCommit_Cache();
-	AtEOXact_Buffers(true);
 	/* smgrcommit already done */
 
-	AtCommit_Locks();
+	ResourceOwnerRelease(TopTransactionResourceOwner,
+						 RESOURCE_RELEASE_BEFORE_LOCKS,
+						 true, true);
+
+	/*
+	 * Make catalog changes visible to all backends.  This has to happen
+	 * after relcache references are dropped (see comments for
+	 * AtEOXact_RelationCache), but before locks are released (if anyone
+	 * is waiting for lock on a relation we've modified, we want them to
+	 * know about the catalog change before they start using the relation).
+	 */
+	AtEOXact_Inval(true);
+
+	ResourceOwnerRelease(TopTransactionResourceOwner,
+						 RESOURCE_RELEASE_LOCKS,
+						 true, true);
+	ResourceOwnerRelease(TopTransactionResourceOwner,
+						 RESOURCE_RELEASE_AFTER_LOCKS,
+						 true, true);
 
 	CallEOXactCallbacks(true);
 	AtEOXact_GUC(true, false);
 	AtEOXact_SPI(true);
-	AtEOXact_gist();
-	AtEOXact_hash();
-	AtEOXact_nbtree();
-	AtEOXact_rtree();
 	AtEOXact_on_commit_actions(true, s->transactionIdData);
 	AtEOXact_Namespace(true);
-	AtEOXact_CatCache(true);
 	AtEOXact_Files();
 	pgstat_count_xact_commit();
+
+	CurrentResourceOwner = NULL;
+	ResourceOwnerDelete(TopTransactionResourceOwner);
+	s->curTransactionOwner = NULL;
+	CurTransactionResourceOwner = NULL;
+	TopTransactionResourceOwner = NULL;
+
 	AtCommit_Memory();
 
 	s->nestingLevel = 0;
@@ -1504,22 +1531,24 @@ AbortTransaction(void)
 	 */
 
 	smgrDoPendingDeletes(false);
-	AtAbort_Cache();
-	AtEOXact_Buffers(false);
 	smgrabort();
 
-	AtAbort_Locks();
+	ResourceOwnerRelease(TopTransactionResourceOwner,
+						 RESOURCE_RELEASE_BEFORE_LOCKS,
+						 false, true);
+	AtEOXact_Inval(false);
+	ResourceOwnerRelease(TopTransactionResourceOwner,
+						 RESOURCE_RELEASE_LOCKS,
+						 false, true);
+	ResourceOwnerRelease(TopTransactionResourceOwner,
+						 RESOURCE_RELEASE_AFTER_LOCKS,
+						 false, true);
 
 	CallEOXactCallbacks(false);
 	AtEOXact_GUC(false, false);
 	AtEOXact_SPI(false);
-	AtEOXact_gist();
-	AtEOXact_hash();
-	AtEOXact_nbtree();
-	AtEOXact_rtree();
 	AtEOXact_on_commit_actions(false, s->transactionIdData);
 	AtEOXact_Namespace(false);
-	AtEOXact_CatCache(false);
 	AtEOXact_Files();
 	SetReindexProcessing(InvalidOid, InvalidOid);
 	pgstat_count_xact_rollback();
@@ -1548,6 +1577,13 @@ CleanupTransaction(void)
 	 * do abort cleanup processing
 	 */
 	AtCleanup_Portals();		/* now safe to release portal memory */
+
+	CurrentResourceOwner = NULL; /* and resource owner */
+	ResourceOwnerDelete(TopTransactionResourceOwner);
+	s->curTransactionOwner = NULL;
+	CurTransactionResourceOwner = NULL;
+	TopTransactionResourceOwner = NULL;
+
 	AtCleanup_Memory();			/* and transaction memory */
 
 	s->nestingLevel = 0;
@@ -2484,6 +2520,12 @@ StartSubTransaction(void)
 	s->state = TRANS_START;
 
 	/*
+	 * must initialize resource-management stuff first
+	 */
+	AtSubStart_Memory();
+	AtSubStart_ResourceOwner();
+
+	/*
 	 * Generate a new Xid and record it in pg_subtrans.
 	 */
 	s->transactionIdData = GetNewTransactionId(true);
@@ -2495,13 +2537,10 @@ StartSubTransaction(void)
 	 */
 	s->currentUser = GetUserId();
 	
-	/* Initialize the various transaction subsystems */
-	AtSubStart_Memory();
+	/*
+	 * Initialize other subsystems for new subtransaction
+	 */
 	AtSubStart_Inval();
-	AtSubStart_RelationCache();
-	AtSubStart_CatCache();
-	AtSubStart_Buffers();
-	AtSubStart_smgr();
 	AtSubStart_Notify();
 	DeferredTriggerBeginSubXact();
 
@@ -2524,7 +2563,8 @@ CommitSubTransaction(void)
 		elog(WARNING, "CommitSubTransaction and not in in-progress state");
 
 	/* Pre-commit processing */
-	AtSubCommit_Portals(s->parent->transactionIdData);
+	AtSubCommit_Portals(s->parent->transactionIdData,
+						s->parent->curTransactionOwner);
 	DeferredTriggerEndSubXact(true);
 
 	s->state = TRANS_COMMIT;
@@ -2539,17 +2579,31 @@ CommitSubTransaction(void)
 
 	AtSubEOXact_Inval(true);
 	AtEOSubXact_SPI(true, s->transactionIdData);
+
+	/*
+	 * Note that we just release the resource owner's resources and don't
+	 * delete it.  This is because locks are not actually released here.
+	 * The owner object continues to exist as a child of its parent owner
+	 * (namely my parent transaction's resource owner), and the locks
+	 * effectively become that owner object's responsibility.
+	 */
+	ResourceOwnerRelease(s->curTransactionOwner,
+						 RESOURCE_RELEASE_BEFORE_LOCKS,
+						 true, false);
+	/* we can skip the LOCKS phase */
+	ResourceOwnerRelease(s->curTransactionOwner,
+						 RESOURCE_RELEASE_AFTER_LOCKS,
+						 true, false);
+
 	AtSubCommit_Notify();
 	AtEOXact_GUC(true, true);
-	AtEOSubXact_gist(s->transactionIdData);
-	AtEOSubXact_hash(s->transactionIdData);
-	AtEOSubXact_rtree(s->transactionIdData);
 	AtEOSubXact_on_commit_actions(true, s->transactionIdData,
 								  s->parent->transactionIdData);
 
-	AtEOSubXact_CatCache(true);
-	AtEOSubXact_RelationCache(true);
-	AtEOSubXact_Buffers(true);
+	CurrentResourceOwner = s->parent->curTransactionOwner;
+	CurTransactionResourceOwner = s->parent->curTransactionOwner;
+	s->curTransactionOwner = NULL;
+
 	AtSubCommit_Memory();
 
 	s->state = TRANS_DEFAULT;
@@ -2597,20 +2651,25 @@ AbortSubTransaction(void)
 	AtSubAbort_smgr();
 
 	DeferredTriggerEndSubXact(false);
-	AtSubAbort_Portals();
-	AtSubEOXact_Inval(false);
-	AtSubAbort_Locks();
 	AtEOSubXact_SPI(false, s->transactionIdData);
+	AtSubAbort_Portals(s->parent->transactionIdData,
+					   s->parent->curTransactionOwner);
+	AtSubEOXact_Inval(false);
+
+	ResourceOwnerRelease(s->curTransactionOwner,
+						 RESOURCE_RELEASE_BEFORE_LOCKS,
+						 false, false);
+	ResourceOwnerRelease(s->curTransactionOwner,
+						 RESOURCE_RELEASE_LOCKS,
+						 false, false);
+	ResourceOwnerRelease(s->curTransactionOwner,
+						 RESOURCE_RELEASE_AFTER_LOCKS,
+						 false, false);
+
 	AtSubAbort_Notify();
 	AtEOXact_GUC(false, true);
-	AtEOSubXact_gist(s->transactionIdData);
-	AtEOSubXact_hash(s->transactionIdData);
-	AtEOSubXact_rtree(s->transactionIdData);
 	AtEOSubXact_on_commit_actions(false, s->transactionIdData,
 								  s->parent->transactionIdData);
-	AtEOSubXact_RelationCache(false);
-	AtEOSubXact_CatCache(false);
-	AtEOSubXact_Buffers(false);
 
 	/*
 	 * Reset user id which might have been changed transiently.  Here we
@@ -2645,6 +2704,12 @@ CleanupSubTransaction(void)
 		elog(WARNING, "CleanupSubTransaction and not in aborted state");
 
 	AtSubCleanup_Portals();
+
+	CurrentResourceOwner = s->parent->curTransactionOwner;
+	CurTransactionResourceOwner = s->parent->curTransactionOwner;
+	ResourceOwnerDelete(s->curTransactionOwner);
+	s->curTransactionOwner = NULL;
+
 	AtSubCleanup_Memory();
 
 	s->state = TRANS_DEFAULT;
@@ -2685,6 +2750,7 @@ StartAbortedSubTransaction(void)
 	 * Initialize only what has to be there for CleanupSubTransaction to work.
 	 */
 	AtSubStart_Memory();
+	AtSubStart_ResourceOwner();
 
 	s->state = TRANS_ABORT;
 
@@ -2723,6 +2789,7 @@ PushTransaction(void)
 	 */
 	s->transactionIdData = p->transactionIdData;
 	s->curTransactionContext = p->curTransactionContext;
+	s->curTransactionOwner = p->curTransactionOwner;
 	s->currentUser = p->currentUser;
 
 	CurrentTransactionState = s;
@@ -2751,6 +2818,10 @@ PopTransaction(void)
 	/* Let's just make sure CurTransactionContext is good */
 	CurTransactionContext = s->parent->curTransactionContext;
 	MemoryContextSwitchTo(CurTransactionContext);
+
+	/* Ditto for ResourceOwner links */
+	CurTransactionResourceOwner = s->parent->curTransactionOwner;
+	CurrentResourceOwner = s->parent->curTransactionOwner;
 
 	/* Free the old child structure */
 	pfree(s);
@@ -2861,11 +2932,9 @@ TransStateAsString(TransState state)
  * value is the number of child transactions.  *children is set to point to a
  * palloc'd array of TransactionIds.  If there are no subxacts, *children is
  * set to NULL.
- *
- * If metoo is true, include the current TransactionId.
  */
 int
-xactGetCommittedChildren(TransactionId **ptr, bool metoo)
+xactGetCommittedChildren(TransactionId **ptr)
 {
 	TransactionState	s = CurrentTransactionState;
 	int					nchildren;
@@ -2873,8 +2942,6 @@ xactGetCommittedChildren(TransactionId **ptr, bool metoo)
 	ListCell		   *p;
 
 	nchildren = list_length(s->childXids);
-	if (metoo)
-		nchildren++;
 	if (nchildren == 0)
 	{
 		*ptr = NULL;
@@ -2887,10 +2954,9 @@ xactGetCommittedChildren(TransactionId **ptr, bool metoo)
 	foreach(p, s->childXids)
 	{
 		TransactionId child = lfirst_int(p);
-		*children++ = (TransactionId)child;
+
+		*children++ = child;
 	}
-	if (metoo)
-		*children = s->transactionIdData;
 
 	return nchildren;
 }

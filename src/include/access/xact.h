@@ -7,17 +7,16 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.64 2004/07/01 00:51:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.65 2004/07/17 03:30:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef XACT_H
 #define XACT_H
 
-#include "access/transam.h"
 #include "access/xlog.h"
 #include "utils/nabstime.h"
-#include "utils/timestamp.h"
+
 
 /*
  * Xact isolation levels
@@ -41,61 +40,9 @@ extern bool DefaultXactReadOnly;
 extern bool XactReadOnly;
 
 /*
- *	transaction states - transaction state from server perspective
- */
-typedef enum TransState
-{
-	TRANS_DEFAULT,
-	TRANS_START,
-	TRANS_INPROGRESS,
-	TRANS_COMMIT,
-	TRANS_ABORT
-} TransState;
-
-/*
- *	transaction block states - transaction state of client queries
- */
-typedef enum TBlockState
-{
-	TBLOCK_DEFAULT,
-	TBLOCK_STARTED,
-	TBLOCK_BEGIN,
-	TBLOCK_INPROGRESS,
-	TBLOCK_END,
-	TBLOCK_ABORT,
-	TBLOCK_ENDABORT,
-
-	TBLOCK_SUBBEGIN,
-	TBLOCK_SUBBEGINABORT,
-	TBLOCK_SUBINPROGRESS,
-	TBLOCK_SUBEND,
-	TBLOCK_SUBABORT,
-	TBLOCK_SUBENDABORT_OK,
-	TBLOCK_SUBENDABORT_ERROR
-} TBlockState;
-
-/*
  *	end-of-transaction cleanup callbacks for dynamically loaded modules
  */
 typedef void (*EOXactCallback) (bool isCommit, void *arg);
-
-/*
- *	transaction state structure
- */
-typedef struct TransactionStateData
-{
-	TransactionId	transactionIdData;		/* my XID */
-	CommandId		commandId;				/* current CID */
-	TransState		state;					/* low-level state */
-	TBlockState		blockState;				/* high-level state */
-	int				nestingLevel;			/* nest depth */
-	MemoryContext	curTransactionContext;	/* my xact-lifetime context */
-	List		   *childXids;				/* subcommitted child XIDs */
-	AclId			currentUser;			/* subxact start current_user */
-	struct TransactionStateData *parent;	/* back link to parent */
-} TransactionStateData;
-
-typedef TransactionStateData *TransactionState;
 
 
 /* ----------------
@@ -168,7 +115,7 @@ extern void UnregisterEOXactCallback(EOXactCallback callback, void *arg);
 
 extern void RecordTransactionCommit(void);
 
-extern int	xactGetCommittedChildren(TransactionId **ptr, bool metoo);
+extern int	xactGetCommittedChildren(TransactionId **ptr);
 
 extern void XactPushRollback(void (*func) (void *), void *data);
 extern void XactPopRollback(void);

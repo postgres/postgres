@@ -11,12 +11,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.76 2004/07/11 19:52:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.77 2004/07/17 03:28:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/xact.h"
 #include "commands/tablespace.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
@@ -81,10 +82,15 @@ static HTAB *SMgrRelationHash = NULL;
  * executed immediately, but is just entered in the list.  When and if
  * the transaction commits, we can delete the physical file.
  *
- * The list is kept in CurTransactionContext.  In subtransactions, each
- * subtransaction has its own list in its own CurTransactionContext, but
- * successful subtransactions attach their lists to their parent's list.
- * Failed subtransactions can immediately execute the abort-time actions.
+ * To handle subtransactions, every entry is marked with its transaction
+ * nesting level.  At subtransaction commit, we reassign the subtransaction's
+ * entries to the parent nesting level.  At subtransaction abort, we can
+ * immediately execute the abort-time actions for all entries of the current
+ * nesting level.
+ *
+ * NOTE: the list is kept in TopMemoryContext to be sure it won't disappear
+ * unbetimes.  It'd probably be OK to keep it in TopTransactionContext,
+ * but I'm being paranoid.
  */
 
 typedef struct PendingRelDelete
@@ -93,11 +99,11 @@ typedef struct PendingRelDelete
 	int			which;			/* which storage manager? */
 	bool		isTemp;			/* is it a temporary relation? */
 	bool		atCommit;		/* T=delete at commit; F=delete at abort */
+	int			nestLevel;		/* xact nesting level of request */
+	struct PendingRelDelete *next;		/* linked-list link */
 } PendingRelDelete;
 
-static List *pendingDeletes = NIL;		/* head of linked list */
-
-static List *upperPendingDeletes = NIL; /* list of upper-xact lists */
+static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
 
 
 /*
@@ -308,7 +314,6 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 	XLogRecData		rdata;
 	xl_smgr_create	xlrec;
 	PendingRelDelete *pending;
-	MemoryContext	old_cxt;
 
 	/*
 	 * We may be using the target table space for the first time in this
@@ -349,17 +354,15 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE | XLOG_NO_TRAN, &rdata);
 
 	/* Add the relation to the list of stuff to delete at abort */
-	old_cxt = MemoryContextSwitchTo(CurTransactionContext);
-
-	pending = (PendingRelDelete *) palloc(sizeof(PendingRelDelete));
+	pending = (PendingRelDelete *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode = reln->smgr_rnode;
 	pending->which = reln->smgr_which;
 	pending->isTemp = isTemp;
 	pending->atCommit = false;	/* delete if abort */
-
-	pendingDeletes = lcons(pending, pendingDeletes);
-
-	MemoryContextSwitchTo(old_cxt);
+	pending->nestLevel = GetCurrentTransactionNestLevel();
+	pending->next = pendingDeletes;
+	pendingDeletes = pending;
 }
 
 /*
@@ -374,20 +377,17 @@ void
 smgrscheduleunlink(SMgrRelation reln, bool isTemp)
 {
 	PendingRelDelete *pending;
-	MemoryContext	 old_cxt;
 
 	/* Add the relation to the list of stuff to delete at commit */
-	old_cxt = MemoryContextSwitchTo(CurTransactionContext);
-
-	pending = (PendingRelDelete *) palloc(sizeof(PendingRelDelete));
+	pending = (PendingRelDelete *)
+		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
 	pending->relnode = reln->smgr_rnode;
 	pending->which = reln->smgr_which;
 	pending->isTemp = isTemp;
 	pending->atCommit = true;	/* delete if commit */
-
-	pendingDeletes = lcons(pending, pendingDeletes);
-
-	MemoryContextSwitchTo(old_cxt);
+	pending->nestLevel = GetCurrentTransactionNestLevel();
+	pending->next = pendingDeletes;
+	pendingDeletes = pending;
 
 	/*
 	 * NOTE: if the relation was created in this transaction, it will now
@@ -647,25 +647,45 @@ smgrimmedsync(SMgrRelation reln)
 
 /*
  *	smgrDoPendingDeletes() -- Take care of relation deletes at end of xact.
+ *
+ * This also runs when aborting a subxact; we want to clean up a failed
+ * subxact immediately.
  */
 void
 smgrDoPendingDeletes(bool isCommit)
 {
-	ListCell *p;
+	int			nestLevel = GetCurrentTransactionNestLevel();
+	PendingRelDelete *pending;
+	PendingRelDelete *prev;
+	PendingRelDelete *next;
 
-	foreach(p, pendingDeletes)
+	prev = NULL;
+	for (pending = pendingDeletes; pending != NULL; pending = next)
 	{
-		PendingRelDelete *pending = lfirst(p);
-
-		if (pending->atCommit == isCommit)
-			smgr_internal_unlink(pending->relnode,
-								 pending->which,
-								 pending->isTemp,
-								 false);
+		next = pending->next;
+		if (pending->nestLevel < nestLevel)
+		{
+			/* outer-level entries should not be processed yet */
+			prev = pending;
+		}
+		else
+		{
+			/* unlink list entry first, so we don't retry on failure */
+			if (prev)
+				prev->next = next;
+			else
+				pendingDeletes = next;
+			/* do deletion if called for */
+			if (pending->atCommit == isCommit)
+				smgr_internal_unlink(pending->relnode,
+									 pending->which,
+									 pending->isTemp,
+									 false);
+			/* must explicitly free the list entry */
+			pfree(pending);
+			/* prev does not change */
+		}
 	}
-
-	/* We needn't free the cells since they are in CurTransactionContext */
-	pendingDeletes = NIL;
 }
 
 /*
@@ -681,16 +701,15 @@ smgrDoPendingDeletes(bool isCommit)
 int
 smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 {
+	int			nestLevel = GetCurrentTransactionNestLevel();
 	int			nrels;
 	RelFileNode *rptr;
-	ListCell	*p;
+	PendingRelDelete *pending;
 
 	nrels = 0;
-	foreach(p, pendingDeletes)
+	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
-		PendingRelDelete *pending = lfirst(p);
-
-		if (pending->atCommit == forCommit)
+		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit)
 			nrels++;
 	}
 	if (nrels == 0)
@@ -700,50 +719,30 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 	}
 	rptr = (RelFileNode *) palloc(nrels * sizeof(RelFileNode));
 	*ptr = rptr;
-	foreach(p, pendingDeletes)
+	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
-		PendingRelDelete *pending = lfirst(p);
-
-		if (pending->atCommit == forCommit)
+		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit)
 			*rptr++ = pending->relnode;
 	}
 	return nrels;
 }
 
 /*
- * AtSubStart_smgr() --- Take care of subtransaction start.
- *
- * Push empty state for the new subtransaction.
- */
-void
-AtSubStart_smgr(void)
-{
-	MemoryContext	old_cxt;
-
-	/* Keep the list-of-lists in TopTransactionContext for simplicity */
-	old_cxt = MemoryContextSwitchTo(TopTransactionContext);
-
-	upperPendingDeletes = lcons(pendingDeletes, upperPendingDeletes);
-
-	pendingDeletes = NIL;
-
-	MemoryContextSwitchTo(old_cxt);
-}
-
-/*
  * AtSubCommit_smgr() --- Take care of subtransaction commit.
  *
- * Reassign all items in the pending deletes list to the parent transaction.
+ * Reassign all items in the pending-deletes list to the parent transaction.
  */
 void
 AtSubCommit_smgr(void)
 {
-	List	*parentPendingDeletes;
+	int			nestLevel = GetCurrentTransactionNestLevel();
+	PendingRelDelete *pending;
 
-	parentPendingDeletes = (List *) linitial(upperPendingDeletes);
-	upperPendingDeletes = list_delete_first(upperPendingDeletes);
-
-	pendingDeletes = list_concat(parentPendingDeletes, pendingDeletes);
+	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
+	{
+		if (pending->nestLevel >= nestLevel)
+			pending->nestLevel = nestLevel - 1;
+	}
 }
 
 /*
@@ -757,10 +756,6 @@ void
 AtSubAbort_smgr(void)
 {
 	smgrDoPendingDeletes(false);
-
-	/* Must pop the stack, too */
-	pendingDeletes = (List *) linitial(upperPendingDeletes);
-	upperPendingDeletes = list_delete_first(upperPendingDeletes);
 }
 
 /*

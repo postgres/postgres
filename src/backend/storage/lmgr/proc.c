@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.149 2004/07/01 00:50:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.150 2004/07/17 03:28:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,6 @@
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <signal.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -51,6 +50,8 @@
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/spin.h"
+#include "utils/resowner.h"
+
 
 /* GUC variables */
 int			DeadlockTimeout = 1000;
@@ -74,6 +75,11 @@ static PGPROC *DummyProcs = NULL;
 
 static bool waitingForLock = false;
 static bool waitingForSignal = false;
+
+/* Auxiliary state, valid when waitingForLock is true */
+static LOCKTAG waitingForLockTag;
+static TransactionId waitingForLockXid;
+static LOCKMODE waitingForLockMode;
 
 /* Mark these volatile because they can be changed by signal handler */
 static volatile bool statement_timeout_active = false;
@@ -234,7 +240,7 @@ InitProcess(void)
 	 * prepared for us by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
-	MyProc->errType = STATUS_OK;
+	MyProc->waitStatus = STATUS_OK;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
@@ -308,7 +314,7 @@ InitDummyProcess(int proctype)
 	 */
 	MyProc->pid = MyProcPid;	/* marks dummy proc as in use by me */
 	SHMQueueElemInit(&(MyProc->links));
-	MyProc->errType = STATUS_OK;
+	MyProc->waitStatus = STATUS_OK;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->databaseId = MyDatabaseId;
@@ -348,15 +354,40 @@ LockWaitCancel(void)
 	if (!waitingForLock)
 		return false;
 
-	waitingForLock = false;
-
 	/* Turn off the deadlock timer, if it's still running (see ProcSleep) */
 	disable_sig_alarm(false);
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
 	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
+
 	if (MyProc->links.next != INVALID_OFFSET)
+	{
+		/* We could not have been granted the lock yet */
+		Assert(MyProc->waitStatus == STATUS_ERROR);
 		RemoveFromWaitQueue(MyProc);
+	}
+	else
+	{
+		/*
+		 * Somebody kicked us off the lock queue already.  Perhaps they
+		 * granted us the lock, or perhaps they detected a deadlock.
+		 * If they did grant us the lock, we'd better remember it in
+		 * CurrentResourceOwner.
+		 *
+		 * Exception: if CurrentResourceOwner is NULL then we can't do
+		 * anything.  This could only happen when we are invoked from ProcKill
+		 * or some similar place, where all our locks are about to be released
+		 * anyway.
+		 */
+		if (MyProc->waitStatus == STATUS_OK && CurrentResourceOwner != NULL)
+			ResourceOwnerRememberLock(CurrentResourceOwner,
+									  &waitingForLockTag,
+									  waitingForLockXid,
+									  waitingForLockMode);
+	}
+
+	waitingForLock = false;
+
 	LWLockRelease(LockMgrLock);
 
 	/*
@@ -380,34 +411,29 @@ LockWaitCancel(void)
 
 /*
  * ProcReleaseLocks() -- release locks associated with current transaction
- *			at main transaction and subtransaction commit or abort
- *
- * The options for which locks to release are the same as for the underlying
- * LockReleaseAll() function.
- *
- * Notes:
+ *			at main transaction commit or abort
  *
  * At main transaction commit, we release all locks except session locks.
  * At main transaction abort, we release all locks including session locks;
  * this lets us clean up after a VACUUM FULL failure.
  *
  * At subtransaction commit, we don't release any locks (so this func is not
- * called at all); we will defer the releasing to the parent transaction.
+ * needed at all); we will defer the releasing to the parent transaction.
  * At subtransaction abort, we release all locks held by the subtransaction;
- * this is implemented by passing in the Xids of the failed subxact and its
- * children in the xids[] array.
+ * this is implemented by retail releasing of the locks under control of
+ * the ResourceOwner mechanism.
  *
  * Note that user locks are not released in any case.
  */
 void
-ProcReleaseLocks(LockReleaseWhich which, int nxids, TransactionId *xids)
+ProcReleaseLocks(bool isCommit)
 {
 	if (!MyProc)
 		return;
 	/* If waiting, get off wait queue (should only be needed after error) */
 	LockWaitCancel();
 	/* Release locks */
-	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, which, nxids, xids);
+	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, !isCommit);
 }
 
 
@@ -440,11 +466,11 @@ ProcKill(int code, Datum arg)
 	LockWaitCancel();
 
 	/* Remove from the standard lock table */
-	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, ReleaseAll, 0, NULL);
+	LockReleaseAll(DEFAULT_LOCKMETHOD, MyProc, true);
 
 #ifdef USER_LOCKS
 	/* Remove from the user lock table */
-	LockReleaseAll(USER_LOCKMETHOD, MyProc, ReleaseAll, 0, NULL);
+	LockReleaseAll(USER_LOCKMETHOD, MyProc, true);
 #endif
 
 	SpinLockAcquire(ProcStructLock);
@@ -618,6 +644,10 @@ ProcSleep(LockMethod lockMethodTable,
 				{
 					/* Skip the wait and just grant myself the lock. */
 					GrantLock(lock, proclock, lockmode);
+					ResourceOwnerRememberLock(CurrentResourceOwner,
+											  &lock->tag,
+											  proclock->tag.xid,
+											  lockmode);
 					return STATUS_OK;
 				}
 				/* Break out of loop to put myself before him */
@@ -653,7 +683,7 @@ ProcSleep(LockMethod lockMethodTable,
 	MyProc->waitHolder = proclock;
 	MyProc->waitLockMode = lockmode;
 
-	MyProc->errType = STATUS_OK;	/* initialize result for success */
+	MyProc->waitStatus = STATUS_ERROR;	/* initialize result for error */
 
 	/*
 	 * If we detected deadlock, give up without waiting.  This must agree
@@ -663,11 +693,13 @@ ProcSleep(LockMethod lockMethodTable,
 	if (early_deadlock)
 	{
 		RemoveFromWaitQueue(MyProc);
-		MyProc->errType = STATUS_ERROR;
 		return STATUS_ERROR;
 	}
 
 	/* mark that we are waiting for a lock */
+	waitingForLockTag = lock->tag;
+	waitingForLockXid = proclock->tag.xid;
+	waitingForLockMode = lockmode;
 	waitingForLock = true;
 
 	/*
@@ -683,7 +715,7 @@ ProcSleep(LockMethod lockMethodTable,
 	/*
 	 * Set timer so we can wake up after awhile and check for a deadlock.
 	 * If a deadlock is detected, the handler releases the process's
-	 * semaphore and sets MyProc->errType = STATUS_ERROR, allowing us to
+	 * semaphore and sets MyProc->waitStatus = STATUS_ERROR, allowing us to
 	 * know that we must report failure rather than success.
 	 *
 	 * By delaying the check until we've waited for a bit, we can avoid
@@ -703,8 +735,10 @@ ProcSleep(LockMethod lockMethodTable,
 	 * We pass interruptOK = true, which eliminates a window in which
 	 * cancel/die interrupts would be held off undesirably.  This is a
 	 * promise that we don't mind losing control to a cancel/die interrupt
-	 * here.  We don't, because we have no state-change work to do after
-	 * being granted the lock (the grantor did it all).
+	 * here.  We don't, because we have no shared-state-change work to do
+	 * after being granted the lock (the grantor did it all).  We do have
+	 * to worry about updating the local CurrentResourceOwner, but if we
+	 * lose control to an error, LockWaitCancel will fix that up.
 	 */
 	PGSemaphoreLock(&MyProc->sem, true);
 
@@ -715,20 +749,32 @@ ProcSleep(LockMethod lockMethodTable,
 		elog(FATAL, "could not disable timer for process wakeup");
 
 	/*
-	 * Now there is nothing for LockWaitCancel to do.
+	 * Re-acquire the locktable's masterLock.  We have to do this to hold
+	 * off cancel/die interrupts before we can mess with waitingForLock
+	 * (else we might have a missed or duplicated CurrentResourceOwner
+	 * update).
+	 */
+	LWLockAcquire(masterLock, LW_EXCLUSIVE);
+
+	/*
+	 * We no longer want LockWaitCancel to do anything.
 	 */
 	waitingForLock = false;
 
 	/*
-	 * Re-acquire the locktable's masterLock.
+	 * If we got the lock, be sure to remember it in CurrentResourceOwner.
 	 */
-	LWLockAcquire(masterLock, LW_EXCLUSIVE);
+	if (MyProc->waitStatus == STATUS_OK)
+		ResourceOwnerRememberLock(CurrentResourceOwner,
+								  &lock->tag,
+								  proclock->tag.xid,
+								  lockmode);
 
 	/*
 	 * We don't have to do anything else, because the awaker did all the
 	 * necessary update of the lock table and MyProc.
 	 */
-	return MyProc->errType;
+	return MyProc->waitStatus;
 }
 
 
@@ -743,7 +789,7 @@ ProcSleep(LockMethod lockMethodTable,
  * to twiddle the lock's request counts too --- see RemoveFromWaitQueue.
  */
 PGPROC *
-ProcWakeup(PGPROC *proc, int errType)
+ProcWakeup(PGPROC *proc, int waitStatus)
 {
 	PGPROC	   *retProc;
 
@@ -764,7 +810,7 @@ ProcWakeup(PGPROC *proc, int errType)
 	/* Clean up process' state and pass it the ok/fail signal */
 	proc->waitLock = NULL;
 	proc->waitHolder = NULL;
-	proc->errType = errType;
+	proc->waitStatus = waitStatus;
 
 	/* And awaken it */
 	PGSemaphoreUnlock(&proc->sem);
@@ -891,10 +937,10 @@ CheckDeadLock(void)
 	RemoveFromWaitQueue(MyProc);
 
 	/*
-	 * Set MyProc->errType to STATUS_ERROR so that ProcSleep will report
+	 * Set MyProc->waitStatus to STATUS_ERROR so that ProcSleep will report
 	 * an error after we return from the signal handler.
 	 */
-	MyProc->errType = STATUS_ERROR;
+	MyProc->waitStatus = STATUS_ERROR;
 
 	/*
 	 * Unlock my semaphore so that the interrupted ProcSleep() call can

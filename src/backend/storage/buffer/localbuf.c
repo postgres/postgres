@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.56 2004/06/18 06:13:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.57 2004/07/17 03:28:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
+#include "utils/resowner.h"
 
 
 /*#define LBDEBUG*/
@@ -62,6 +63,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 #endif
 
 			LocalRefCount[i]++;
+			ResourceOwnerRememberBuffer(CurrentResourceOwner,
+										BufferDescriptorGetBuffer(bufHdr));
 			if (bufHdr->flags & BM_VALID)
 				*foundPtr = TRUE;
 			else
@@ -88,6 +91,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		{
 			bufHdr = &LocalBufferDescriptors[b];
 			LocalRefCount[b]++;
+			ResourceOwnerRememberBuffer(CurrentResourceOwner,
+										BufferDescriptorGetBuffer(bufHdr));
 			nextFreeLocalBuf = (b + 1) % NLocBuffer;
 			break;
 		}
@@ -179,6 +184,7 @@ WriteLocalBuffer(Buffer buffer, bool release)
 	{
 		Assert(LocalRefCount[bufid] > 0);
 		LocalRefCount[bufid]--;
+		ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
 	}
 }
 

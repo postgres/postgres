@@ -127,6 +127,28 @@ BEGIN;
 COMMIT;
 SELECT 1;			-- this should work
 
+-- check non-transactional behavior of cursors
+BEGIN;
+	DECLARE c CURSOR FOR SELECT unique2 FROM tenk1;
+	BEGIN;
+		FETCH 10 FROM c;
+	ROLLBACK;
+	BEGIN;
+		FETCH 10 FROM c;
+	COMMIT;
+	FETCH 10 FROM c;
+	CLOSE c;
+	DECLARE c CURSOR FOR SELECT unique2/0 FROM tenk1;
+	BEGIN;
+		FETCH 10 FROM c;
+	ROLLBACK;
+	-- c is now dead to the world ...
+	BEGIN;
+		FETCH 10 FROM c;
+	ROLLBACK;
+	FETCH 10 FROM c;
+COMMIT;
+
 
 DROP TABLE foo;
 DROP TABLE baz;

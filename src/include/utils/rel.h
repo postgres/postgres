@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.75 2004/07/01 00:51:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.76 2004/07/17 03:31:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,9 +110,6 @@ typedef struct RelationData
 	BlockNumber rd_targblock;	/* current insertion target block, or
 								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
-	int		   *rd_prevrefcnt;	/* reference count stack */
-	int			rd_numalloc;	/* stack allocated size */
-	int			rd_numpushed;	/* stack used size */
 	bool		rd_isnew;		/* rel was created in current xact */
 
 	/*
@@ -191,28 +188,6 @@ typedef Relation *RelationPtr;
 		((bool)((relation)->rd_refcnt == 0))
 
 /*
- * RelationSetReferenceCount
- *		Sets relation reference count.
- */
-#define RelationSetReferenceCount(relation,count) \
-	((relation)->rd_refcnt = (count))
-
-/*
- * RelationIncrementReferenceCount
- *		Increments relation reference count.
- */
-#define RelationIncrementReferenceCount(relation) \
-	((relation)->rd_refcnt += 1)
-
-/*
- * RelationDecrementReferenceCount
- *		Decrements relation reference count.
- */
-#define RelationDecrementReferenceCount(relation) \
-	(AssertMacro((relation)->rd_refcnt > 0), \
-	 (relation)->rd_refcnt -= 1)
-
-/*
  * RelationGetForm
  *		Returns pg_class tuple for a relation.
  *
@@ -254,5 +229,9 @@ typedef Relation *RelationPtr;
  */
 #define RelationGetNamespace(relation) \
 	((relation)->rd_rel->relnamespace)
+
+/* routines in utils/cache/relcache.c */
+extern void RelationIncrementReferenceCount(Relation rel);
+extern void RelationDecrementReferenceCount(Relation rel);
 
 #endif   /* REL_H */

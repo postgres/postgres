@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.186 2004/07/11 00:18:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.187 2004/07/17 03:28:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ static void usage(void);
 static void bootstrap_signals(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
 static Form_pg_attribute AllocateAttribute(void);
-static bool BootstrapAlreadySeen(Oid id);
 static int	CompHash(char *str, int len);
 static hashnode *FindStr(char *str, int length, hashnode *mderef);
 static Oid	gettype(char *type);
@@ -880,34 +879,6 @@ InsertOneNull(int i)
 	Blanks[i] = 'n';
 }
 
-#define MORE_THAN_THE_NUMBER_OF_CATALOGS 256
-
-static bool
-BootstrapAlreadySeen(Oid id)
-{
-	static Oid	seenArray[MORE_THAN_THE_NUMBER_OF_CATALOGS];
-	static int	nseen = 0;
-	bool		seenthis;
-	int			i;
-
-	seenthis = false;
-
-	for (i = 0; i < nseen; i++)
-	{
-		if (seenArray[i] == id)
-		{
-			seenthis = true;
-			break;
-		}
-	}
-	if (!seenthis)
-	{
-		seenArray[nseen] = id;
-		nseen++;
-	}
-	return seenthis;
-}
-
 /* ----------------
  *		cleanup
  * ----------------
@@ -1269,25 +1240,6 @@ build_indices(void)
 		 * In normal processing mode, index_build would close the heap and
 		 * index, but in bootstrap mode it will not.
 		 */
-
-		/*
-		 * All of the rest of this routine is needed only because in
-		 * bootstrap processing we don't increment xact id's.  The normal
-		 * DefineIndex code replaces a pg_class tuple with updated info
-		 * including the relhasindex flag (which we need to have updated).
-		 * Unfortunately, there are always two indices defined on each
-		 * catalog causing us to update the same pg_class tuple twice for
-		 * each catalog getting an index during bootstrap resulting in the
-		 * ghost tuple problem (see heap_update).	To get around this we
-		 * change the relhasindex field ourselves in this routine keeping
-		 * track of what catalogs we already changed so that we don't
-		 * modify those tuples twice.  The normal mechanism for updating
-		 * pg_class is disabled during bootstrap.
-		 *
-		 * -mer
-		 */
-		if (!BootstrapAlreadySeen(RelationGetRelid(heap)))
-			UpdateStats(RelationGetRelid(heap), 0);
 
 		/* XXX Probably we ought to close the heap and index here? */
 	}

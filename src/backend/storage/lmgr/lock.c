@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.134 2004/07/01 00:50:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.135 2004/07/17 03:28:51 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -30,14 +30,15 @@
  */
 #include "postgres.h"
 
-#include <unistd.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "access/xact.h"
 #include "miscadmin.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
+#include "utils/resowner.h"
 
 
 /* This configuration variable is used to set the lock table size */
@@ -424,6 +425,9 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	/* ???????? This must be changed when short term locks will be used */
 	locktag->lockmethodid = lockmethodid;
 
+	/* Prepare to record the lock in the current resource owner */
+	ResourceOwnerEnlargeLocks(CurrentResourceOwner);
+
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
 	if (!lockMethodTable)
@@ -567,6 +571,8 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	if (proclock->holding[lockmode] > 0)
 	{
 		GrantLock(lock, proclock, lockmode);
+		ResourceOwnerRememberLock(CurrentResourceOwner, locktag, xid,
+								  lockmode);
 		PROCLOCK_PRINT("LockAcquire: owning", proclock);
 		LWLockRelease(masterLock);
 		return TRUE;
@@ -580,6 +586,8 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	if (myHolding[lockmode] > 0)
 	{
 		GrantLock(lock, proclock, lockmode);
+		ResourceOwnerRememberLock(CurrentResourceOwner, locktag, xid,
+								  lockmode);
 		PROCLOCK_PRINT("LockAcquire: my other XID owning", proclock);
 		LWLockRelease(masterLock);
 		return TRUE;
@@ -601,6 +609,8 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	{
 		/* No conflict with held or previously requested locks */
 		GrantLock(lock, proclock, lockmode);
+		ResourceOwnerRememberLock(CurrentResourceOwner, locktag, xid,
+								  lockmode);
 	}
 	else
 	{
@@ -803,6 +813,9 @@ LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc, int *myHolding)
  *
  * NOTE: if proc was blocked, it also needs to be removed from the wait list
  * and have its waitLock/waitHolder fields cleared.  That's not done here.
+ *
+ * NOTE: the lock also has to be recorded in the current ResourceOwner;
+ * but since we may be awaking some other process, we can't do that here.
  */
 void
 GrantLock(LOCK *lock, PROCLOCK *proclock, LOCKMODE lockmode)
@@ -963,6 +976,9 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 
 	/* ???????? This must be changed when short term locks will be used */
 	locktag->lockmethodid = lockmethodid;
+
+	/* Record release of the lock in the current resource owner */
+	ResourceOwnerForgetLock(CurrentResourceOwner, locktag, xid, lockmode);
 
 	Assert(lockmethodid < NumLockMethods);
 	lockMethodTable = LockMethods[lockmethodid];
@@ -1134,20 +1150,15 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
  *
  * Well, not necessarily *all* locks.  The available behaviors are:
  *
- * which == ReleaseAll: release all locks regardless of transaction
+ * allxids == true: release all locks regardless of transaction
  * affiliation.
  *
- * which == ReleaseAllExceptSession: release all locks with Xid != 0
+ * allxids == false: release all locks with Xid != 0
  * (zero is the Xid used for "session" locks).
- *
- * which == ReleaseGivenXids: release only locks whose Xids appear in
- * the xids[] array (of length nxids).
- *
- * xids/nxids are ignored when which != ReleaseGivenXids.
  */
 bool
 LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
-			   LockReleaseWhich which, int nxids, TransactionId *xids)
+			   bool allxids)
 {
 	SHM_QUEUE  *procHolders = &(proc->procHolders);
 	PROCLOCK   *proclock;
@@ -1196,25 +1207,9 @@ LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
 		if (LOCK_LOCKMETHOD(*lock) != lockmethodid)
 			goto next_item;
 
-		if (which == ReleaseGivenXids)
-		{
-			/* Ignore locks with an Xid not in the list */
-			bool release = false;
-
-			for (i = 0; i < nxids; i++)
-			{
-				if (TransactionIdEquals(proclock->tag.xid, xids[i]))
-				{
-					release = true;
-					break;
-				}
-			}
-			if (!release)
-				goto next_item;
-		}
-		/* Ignore locks with Xid=0 unless we are asked to release All locks */
-		else if (TransactionIdEquals(proclock->tag.xid, InvalidTransactionId)
-				 && which != ReleaseAll)
+		/* Ignore locks with Xid=0 unless we are asked to release all locks */
+		if (TransactionIdEquals(proclock->tag.xid, InvalidTransactionId)
+			&& !allxids)
 			goto next_item;
 
 		PROCLOCK_PRINT("LockReleaseAll", proclock);
