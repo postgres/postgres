@@ -728,19 +728,23 @@ CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- This next should fail, because inet=int does not exist
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
 -- This should also fail for the same reason, but here we
 -- give the column name
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable(ptest1));
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
--- This should succeed, even though they are different types
--- because varchar=int does exist
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
+-- This should succeed (with a warning), even though they are different types
+-- because int=varchar does exist
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
+WARNING:  foreign key constraint "$1" will require costly sequential scans
+DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
 DROP TABLE FKTABLE;
 -- As should this
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable(ptest1));
+WARNING:  foreign key constraint "$1" will require costly sequential scans
+DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- Two columns, two tables
@@ -748,24 +752,24 @@ CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, PRIMARY KEY(ptest1, ptest2));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- This should fail, because we just chose really odd types
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable);
-ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 -- Again, so should this...
 CREATE TABLE FKTABLE (ftest1 cidr, ftest2 timestamp, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest1, ptest2));
-ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 -- This fails because we mixed up the column ordering
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable);
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
 -- As does this...
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest1, ptest2));
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
 -- And again..
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest1, ftest2) REFERENCES pktable(ptest2, ptest1));
-ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest2" are of incompatible types: integer and inet.
 -- This works...
 CREATE TABLE FKTABLE (ftest1 int, ftest2 inet, FOREIGN KEY(ftest2, ftest1) REFERENCES pktable(ptest2, ptest1));
 DROP TABLE FKTABLE;
@@ -788,20 +792,20 @@ DROP TABLE PKTABLE;
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest3,
 ptest4) REFERENCES pktable(ptest2, ptest1));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ptest3" and "ptest2" are of incompatible types: integer and inet.
 -- Nor should this... (same reason, we have 4,3 referencing 1,2 which mismatches types
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable(ptest1, ptest2));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and integer.
 -- Not this one either... Same as the last one except we didn't defined the columns being referenced.
 CREATE TABLE PKTABLE (ptest1 int, ptest2 inet, ptest3 int, ptest4 inet, PRIMARY KEY(ptest1, ptest2), FOREIGN KEY(ptest4,
 ptest3) REFERENCES pktable);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ptest4" and "ptest1" are of incompatible types: inet and integer.
 --
 -- Now some cases with inheritance
 -- Basic 2 table case: 1 column of matching types.
@@ -897,21 +901,21 @@ create table pktable(ptest1 inet, primary key(base1, ptest1)) inherits (pktable_
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
 -- just generally bad types (with and without column references on the referenced table)
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable);
-ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "base1" are of incompatible types: cidr and integer.
 create table fktable(ftest1 cidr, ftest2 int[], foreign key (ftest1, ftest2) references pktable(base1, ptest1));
-ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "base1" are of incompatible types: cidr and integer.
 -- let's mix up which columns reference which
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable);
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest2" and "base1" are of incompatible types: inet and integer.
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest2, ftest1) references pktable(base1, ptest1));
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest2" and "base1" are of incompatible types: inet and integer.
 create table fktable(ftest1 int, ftest2 inet, foreign key(ftest1, ftest2) references pktable(ptest1, base1));
-ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: integer and inet.
 drop table pktable;
 drop table pktable_base;
 -- 2 columns (1 table), mismatched types
@@ -919,23 +923,23 @@ create table pktable_base(base1 int not null, base2 int);
 create table pktable(ptest1 inet, ptest2 inet[], primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-ERROR:  operator does not exist: inet[] = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ptest2" and "ptest1" are of incompatible types: inet[] and inet.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(base2, ptest2) references
                                              pktable(ptest1, base1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "base2" and "ptest1" are of incompatible types: integer and inet.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ptest2" and "base1" are of incompatible types: inet and integer.
 create table pktable(ptest1 inet, ptest2 inet, primary key(base1, ptest1), foreign key(ptest2, base2) references
                                              pktable(base1, ptest1)) inherits (pktable_base);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ptest2" and "base1" are of incompatible types: inet and integer.
 drop table pktable;
 ERROR:  table "pktable" does not exist
 drop table pktable_base;
@@ -1034,3 +1038,70 @@ INSERT INTO fktable VALUES (100, 200);
 COMMIT;
 ERROR:  insert or update on table "fktable" violates foreign key constraint "$1"
 DETAIL:  Key (fk)=(200) is not present in table "pktable".
+-- test notice about expensive referential integrity checks,
+-- where the index cannot be used because of type incompatibilities.
+CREATE TEMP TABLE pktable (
+        id1     INT4 PRIMARY KEY,
+        id2     VARCHAR(4) UNIQUE,
+        id3     REAL UNIQUE,
+        UNIQUE(id1, id2, id3)
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id2_key" for table "pktable"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id3_key" for table "pktable"
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "pktable_id1_key" for table "pktable"
+CREATE TEMP TABLE fktable (
+        x1      INT4 REFERENCES pktable(id1),
+        x2      VARCHAR(4) REFERENCES pktable(id2),
+        x3      REAL REFERENCES pktable(id3),
+        x4      TEXT,
+        x5      INT2
+);
+-- check individual constraints with alter table.
+-- should generate warnings
+ALTER TABLE fktable ADD CONSTRAINT fk_2_3
+FOREIGN KEY (x2) REFERENCES pktable(id3);
+WARNING:  foreign key constraint "fk_2_3" will require costly sequential scans
+DETAIL:  Key columns "x2" and "id3" are of different types: character varying and real.
+ALTER TABLE fktable ADD CONSTRAINT fk_2_1
+FOREIGN KEY (x2) REFERENCES pktable(id1);
+WARNING:  foreign key constraint "fk_2_1" will require costly sequential scans
+DETAIL:  Key columns "x2" and "id1" are of different types: character varying and integer.
+ALTER TABLE fktable ADD CONSTRAINT fk_3_1
+FOREIGN KEY (x3) REFERENCES pktable(id1);
+WARNING:  foreign key constraint "fk_3_1" will require costly sequential scans
+DETAIL:  Key columns "x3" and "id1" are of different types: real and integer.
+-- should NOT generate warnings
+-- int4 promotes to text, so this is ok
+ALTER TABLE fktable ADD CONSTRAINT fk_1_2
+FOREIGN KEY (x1) REFERENCES pktable(id2);
+-- int4 promotes to real
+ALTER TABLE fktable ADD CONSTRAINT fk_1_3
+FOREIGN KEY (x1) REFERENCES pktable(id3);
+-- text is compatible with varchar
+ALTER TABLE fktable ADD CONSTRAINT fk_4_2
+FOREIGN KEY (x4) REFERENCES pktable(id2);
+-- int2 is part of int4 opclass as of 7.5
+ALTER TABLE fktable ADD CONSTRAINT fk_5_1
+FOREIGN KEY (x5) REFERENCES pktable(id1);
+-- check multikey cases, especially out-of-order column lists
+-- no warnings here
+ALTER TABLE fktable ADD CONSTRAINT fk_123_123
+FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id1,id2,id3);
+ALTER TABLE fktable ADD CONSTRAINT fk_213_213
+FOREIGN KEY (x2,x1,x3) REFERENCES pktable(id2,id1,id3);
+ALTER TABLE fktable ADD CONSTRAINT fk_253_213
+FOREIGN KEY (x2,x5,x3) REFERENCES pktable(id2,id1,id3);
+-- warnings here
+ALTER TABLE fktable ADD CONSTRAINT fk_123_231
+FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id2,id3,id1);
+WARNING:  foreign key constraint "fk_123_231" will require costly sequential scans
+DETAIL:  Key columns "x2" and "id3" are of different types: character varying and real.
+WARNING:  foreign key constraint "fk_123_231" will require costly sequential scans
+DETAIL:  Key columns "x3" and "id1" are of different types: real and integer.
+ALTER TABLE fktable ADD CONSTRAINT fk_241_132
+FOREIGN KEY (x2,x4,x1) REFERENCES pktable(id1,id3,id2);
+WARNING:  foreign key constraint "fk_241_132" will require costly sequential scans
+DETAIL:  Key columns "x2" and "id1" are of different types: character varying and integer.
+WARNING:  foreign key constraint "fk_241_132" will require costly sequential scans
+DETAIL:  Key columns "x4" and "id3" are of different types: text and real.

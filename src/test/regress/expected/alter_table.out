@@ -194,20 +194,24 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 CREATE TEMP TABLE FKTABLE (ftest1 inet);
 -- This next should fail, because inet=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
 -- This should also fail for the same reason, but here we
 -- give the column name
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
 -- This should succeed, even though they are different types
 -- because varchar=int does exist
 DROP TABLE FKTABLE;
 CREATE TEMP TABLE FKTABLE (ftest1 varchar);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
+WARNING:  foreign key constraint "$1" will require costly sequential scans
+DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
 -- As should this
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
+WARNING:  foreign key constraint "$2" will require costly sequential scans
+DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
 DROP TABLE pktable cascade;
 NOTICE:  drop cascades to constraint $2 on table fktable
 NOTICE:  drop cascades to constraint $1 on table fktable
@@ -218,27 +222,27 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" fo
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
-ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 DROP TABLE FKTABLE;
 -- Again, so should this...
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 timestamp);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest1, ptest2);
-ERROR:  operator does not exist: cidr = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: cidr and integer.
 DROP TABLE FKTABLE;
 -- This fails because we mixed up the column ordering
 CREATE TEMP TABLE FKTABLE (ftest1 int, ftest2 inet);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2)
      references pktable(ptest2, ptest1);
-ERROR:  operator does not exist: integer = inet
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest2" are of incompatible types: integer and inet.
 -- As does this...
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest2, ftest1)
      references pktable(ptest1, ptest2);
-ERROR:  operator does not exist: inet = integer
-HINT:  No operator matches the given name and argument type(s). You may need to add explicit type casts.
+ERROR:  foreign key constraint "$1" cannot be implemented
+DETAIL:  Key columns "ftest2" and "ptest1" are of incompatible types: inet and integer.
 -- temp tables should go away by themselves, need not drop them.
 -- test check constraint adding
 create table atacc1 ( test int );

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.99 2004/02/15 21:01:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.100 2004/03/13 22:09:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,10 +89,12 @@ static void AlterTableAddForeignKeyConstraint(Relation rel,
 static int transformColumnNameList(Oid relId, List *colList,
 						int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
-						   List **attnamelist,
-						   int16 *attnums, Oid *atttypids);
+									  List **attnamelist,
+									  int16 *attnums, Oid *atttypids,
+									  Oid *opclasses);
 static Oid transformFkeyCheckAttrs(Relation pkrel,
-						int numattrs, int16 *attnums);
+								   int numattrs, int16 *attnums,
+								   Oid *opclasses);
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
 							 Relation rel, Relation pkrel);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
@@ -3016,6 +3018,7 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	int16		fkattnum[INDEX_MAX_KEYS];
 	Oid			pktypoid[INDEX_MAX_KEYS];
 	Oid			fktypoid[INDEX_MAX_KEYS];
+	Oid         opclasses[INDEX_MAX_KEYS];
 	int			i;
 	int			numfks,
 				numpks;
@@ -3088,11 +3091,11 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	 * Look up the referencing attributes to make sure they exist, and
 	 * record their attnums and type OIDs.
 	 */
-	for (i = 0; i < INDEX_MAX_KEYS; i++)
-	{
-		pkattnum[i] = fkattnum[i] = 0;
-		pktypoid[i] = fktypoid[i] = InvalidOid;
-	}
+	MemSet(pkattnum, 0, sizeof(pkattnum));
+	MemSet(fkattnum, 0, sizeof(fkattnum));
+	MemSet(pktypoid, 0, sizeof(pktypoid));
+	MemSet(fktypoid, 0, sizeof(fktypoid));
+	MemSet(opclasses, 0, sizeof(opclasses));
 
 	numfks = transformColumnNameList(RelationGetRelid(rel),
 									 fkconstraint->fk_attrs,
@@ -3102,13 +3105,15 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	 * If the attribute list for the referenced table was omitted, lookup
 	 * the definition of the primary key and use it.  Otherwise, validate
 	 * the supplied attribute list.  In either case, discover the index
-	 * OID and the attnums and type OIDs of the attributes.
+	 * OID and index opclasses, and the attnums and type OIDs of the
+	 * attributes.
 	 */
 	if (fkconstraint->pk_attrs == NIL)
 	{
 		numpks = transformFkeyGetPrimaryKey(pkrel, &indexOid,
 											&fkconstraint->pk_attrs,
-											pkattnum, pktypoid);
+											pkattnum, pktypoid,
+											opclasses);
 	}
 	else
 	{
@@ -3116,7 +3121,8 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 										 fkconstraint->pk_attrs,
 										 pkattnum, pktypoid);
 		/* Look for an index matching the column list */
-		indexOid = transformFkeyCheckAttrs(pkrel, numpks, pkattnum);
+		indexOid = transformFkeyCheckAttrs(pkrel, numpks, pkattnum,
+										   opclasses);
 	}
 
 	/* Be sure referencing and referenced column types are comparable */
@@ -3128,14 +3134,48 @@ AlterTableAddForeignKeyConstraint(Relation rel, FkConstraint *fkconstraint)
 	for (i = 0; i < numpks; i++)
 	{
 		/*
-		 * fktypoid[i] is the foreign key table's i'th element's type
-		 * pktypoid[i] is the primary key table's i'th element's type
+		 * pktypoid[i] is the primary key table's i'th key's type
+		 * fktypoid[i] is the foreign key table's i'th key's type
 		 *
-		 * We let oper() do our work for us, including ereport(ERROR) if the
-		 * types don't compare with =
+		 * Note that we look for an operator with the PK type on the left;
+		 * when the types are different this is critical because the PK index
+		 * will need operators with the indexkey on the left.  (Ordinarily
+		 * both commutator operators will exist if either does, but we won't
+		 * get the right answer from the test below on opclass membership
+		 * unless we select the proper operator.)
 		 */
 		Operator	o = oper(makeList1(makeString("=")),
-							 fktypoid[i], pktypoid[i], false);
+							 pktypoid[i], fktypoid[i], true);
+
+		if (o == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("foreign key constraint \"%s\" "
+							"cannot be implemented",
+							fkconstraint->constr_name),
+					 errdetail("Key columns \"%s\" and \"%s\" "
+							   "are of incompatible types: %s and %s.",
+							   strVal(nth(i, fkconstraint->fk_attrs)),
+							   strVal(nth(i, fkconstraint->pk_attrs)),
+							   format_type_be(fktypoid[i]),
+							   format_type_be(pktypoid[i]))));
+
+		/*
+		 * Check that the found operator is compatible with the PK index,
+		 * and generate a warning if not, since otherwise costly seqscans
+		 * will be incurred to check FK validity.
+		 */
+		if (!op_in_opclass(oprid(o), opclasses[i]))
+			ereport(WARNING, 
+					(errmsg("foreign key constraint \"%s\" "
+							"will require costly sequential scans",
+							fkconstraint->constr_name),
+					 errdetail("Key columns \"%s\" and \"%s\" "
+							   "are of different types: %s and %s.",
+							   strVal(nth(i, fkconstraint->fk_attrs)),
+							   strVal(nth(i, fkconstraint->pk_attrs)),
+							   format_type_be(fktypoid[i]),
+							   format_type_be(pktypoid[i]))));
 
 		ReleaseSysCache(o);
 	}
@@ -3225,13 +3265,19 @@ transformColumnNameList(Oid relId, List *colList,
  * transformFkeyGetPrimaryKey -
  *
  *	Look up the names, attnums, and types of the primary key attributes
- *	for the pkrel.	Used when the column list in the REFERENCES specification
- *	is omitted.
+ *	for the pkrel.  Also return the index OID and index opclasses of the
+ *	index supporting the primary key.
+ *
+ *	All parameters except pkrel are output parameters.  Also, the function
+ *	return value is the number of attributes in the primary key.
+ *
+ *	Used when the column list in the REFERENCES specification is omitted.
  */
 static int
 transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 						   List **attnamelist,
-						   int16 *attnums, Oid *atttypids)
+						   int16 *attnums, Oid *atttypids,
+						   Oid *opclasses)
 {
 	List	   *indexoidlist,
 			   *indexoidscan;
@@ -3287,6 +3333,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 
 		attnums[i] = pkattno;
 		atttypids[i] = attnumTypeId(pkrel, pkattno);
+		opclasses[i] = indexStruct->indclass[i];
 		*attnamelist = lappend(*attnamelist,
 		   makeString(pstrdup(NameStr(*attnumAttName(pkrel, pkattno)))));
 	}
@@ -3301,11 +3348,13 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
  *
  *	Make sure that the attributes of a referenced table belong to a unique
  *	(or primary key) constraint.  Return the OID of the index supporting
- *	the constraint.
+ *	the constraint, as well as the opclasses associated with the index
+ *	columns.
  */
 static Oid
 transformFkeyCheckAttrs(Relation pkrel,
-						int numattrs, int16 *attnums)
+						int numattrs, int16 *attnums,
+						Oid *opclasses)			/* output parameter */
 {
 	Oid			indexoid = InvalidOid;
 	bool		found = false;
@@ -3370,6 +3419,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 					{
 						if (attnums[j] == indexStruct->indkey[i])
 						{
+							opclasses[j] = indexStruct->indclass[i];
 							found = true;
 							break;
 						}

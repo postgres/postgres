@@ -443,8 +443,8 @@ CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
 -- This should also fail for the same reason, but here we
 -- give the column name
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable(ptest1));
--- This should succeed, even though they are different types
--- because varchar=int does exist
+-- This should succeed (with a warning), even though they are different types
+-- because int=varchar does exist
 CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
 DROP TABLE FKTABLE;
 -- As should this
@@ -698,3 +698,73 @@ INSERT INTO fktable VALUES (100, 200);
 
 -- error here on commit
 COMMIT;
+
+-- test notice about expensive referential integrity checks,
+-- where the index cannot be used because of type incompatibilities.
+
+CREATE TEMP TABLE pktable (
+        id1     INT4 PRIMARY KEY,
+        id2     VARCHAR(4) UNIQUE,
+        id3     REAL UNIQUE,
+        UNIQUE(id1, id2, id3)
+);
+
+CREATE TEMP TABLE fktable (
+        x1      INT4 REFERENCES pktable(id1),
+        x2      VARCHAR(4) REFERENCES pktable(id2),
+        x3      REAL REFERENCES pktable(id3),
+        x4      TEXT,
+        x5      INT2
+);
+
+-- check individual constraints with alter table.
+
+-- should generate warnings
+
+ALTER TABLE fktable ADD CONSTRAINT fk_2_3
+FOREIGN KEY (x2) REFERENCES pktable(id3);
+
+ALTER TABLE fktable ADD CONSTRAINT fk_2_1
+FOREIGN KEY (x2) REFERENCES pktable(id1);
+
+ALTER TABLE fktable ADD CONSTRAINT fk_3_1
+FOREIGN KEY (x3) REFERENCES pktable(id1);
+
+-- should NOT generate warnings
+
+-- int4 promotes to text, so this is ok
+ALTER TABLE fktable ADD CONSTRAINT fk_1_2
+FOREIGN KEY (x1) REFERENCES pktable(id2);
+
+-- int4 promotes to real
+ALTER TABLE fktable ADD CONSTRAINT fk_1_3
+FOREIGN KEY (x1) REFERENCES pktable(id3);
+
+-- text is compatible with varchar
+ALTER TABLE fktable ADD CONSTRAINT fk_4_2
+FOREIGN KEY (x4) REFERENCES pktable(id2);
+
+-- int2 is part of int4 opclass as of 7.5
+ALTER TABLE fktable ADD CONSTRAINT fk_5_1
+FOREIGN KEY (x5) REFERENCES pktable(id1);
+
+-- check multikey cases, especially out-of-order column lists
+
+-- no warnings here
+
+ALTER TABLE fktable ADD CONSTRAINT fk_123_123
+FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id1,id2,id3);
+
+ALTER TABLE fktable ADD CONSTRAINT fk_213_213
+FOREIGN KEY (x2,x1,x3) REFERENCES pktable(id2,id1,id3);
+
+ALTER TABLE fktable ADD CONSTRAINT fk_253_213
+FOREIGN KEY (x2,x5,x3) REFERENCES pktable(id2,id1,id3);
+
+-- warnings here
+
+ALTER TABLE fktable ADD CONSTRAINT fk_123_231
+FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id2,id3,id1);
+
+ALTER TABLE fktable ADD CONSTRAINT fk_241_132
+FOREIGN KEY (x2,x4,x1) REFERENCES pktable(id1,id3,id2);
