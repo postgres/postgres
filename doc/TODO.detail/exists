@@ -1,0 +1,191 @@
+From pgsql-sql-owner+M5999=candle.pha.pa.us=pgman@postgresql.org Mon Dec 17 01:39:56 2001
+Return-path: <pgsql-sql-owner+M5999=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBH6du410376
+	for <pgman@candle.pha.pa.us>; Mon, 17 Dec 2001 01:39:56 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBH6VoR80062
+	for <pgman@candle.pha.pa.us>; Mon, 17 Dec 2001 00:36:11 -0600 (CST)
+	(envelope-from pgsql-sql-owner+M5999=candle.pha.pa.us=pgman@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBH6Lgm62418
+	for <pgsql-sql@postgresql.org>; Mon, 17 Dec 2001 01:21:42 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fBH6LHi29550;
+	Mon, 17 Dec 2001 01:21:17 -0500 (EST)
+To: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+cc: "Stephan Szabo" <sszabo@megazone23.bigpanda.com>,
+   "MindTerm" <mindterm@yahoo.com>, pgsql-sql@postgresql.org
+Subject: Re: [SQL] performance tuning in large function / transaction 
+In-Reply-To: <GNELIHDDFBOCMGBFGEFOIENDCAAA.chriskl@familyhealth.com.au> 
+References: <GNELIHDDFBOCMGBFGEFOIENDCAAA.chriskl@familyhealth.com.au>
+Comments: In-reply-to "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+	message dated "Mon, 17 Dec 2001 12:06:14 +0800"
+Date: Mon, 17 Dec 2001 01:21:16 -0500
+Message-ID: <29547.1008570076@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+"Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+> Is it true that the IN command is implemented sort of as a linked list
+> linear time search?  Is there any plan for a super-fast implementation of
+> 'IN'?
+
+This deserves a somewhat long-winded answer.
+
+Postgres presently supports two kinds of IN (I'm not sure whether SQL92
+allows any additional kinds):
+
+1. Scalar-list IN:  foo IN ('bar', 'baz', 'quux', ...)
+
+2. Sub-select IN:   foo IN (SELECT bar FROM ...)
+
+In the scalar-list form, a variable is compared to an explicit list of
+constants or expressions.  This form is exactly equivalent to
+	foo = 'bar' OR foo = 'baz' OR foo = 'quux' OR ...
+and is converted into that form by the parser.  The planner is capable
+of converting a WHERE clause of this kind into multiple passes of
+indexscan, when foo is an indexed column and all the IN-list elements
+are constants.  Whether it actually will make that conversion depends
+on the usual vagaries of pg_statistic entries, etc.  But if it's a
+unique or fairly-selective index, and there aren't a huge number of
+entries in the IN list, a multiple indexscan should be a good plan.
+
+In the sub-select form, we pretty much suck: for each tuple in the outer
+query, we run the inner query until we find a matching value or the
+inner query ends.  This is basically a nested-loop scenario, with the
+only (minimally) redeeming social value being that the planner realizes
+it should pick a fast-start plan for the inner query.  I think it should
+be possible to convert this form into a modified kind of join (sort of
+the reverse of an outer join: rather than at least one result per
+lefthand row, at most one result per lefthand row), and then we could
+use join methods that are more efficient than nested-loop.  But no one's
+tried to make that happen yet.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-sql-owner+M6000=candle.pha.pa.us=pgman@postgresql.org Mon Dec 17 01:49:56 2001
+Return-path: <pgsql-sql-owner+M6000=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBH6nu410869
+	for <pgman@candle.pha.pa.us>; Mon, 17 Dec 2001 01:49:56 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBH6fLR80303
+	for <pgman@candle.pha.pa.us>; Mon, 17 Dec 2001 00:45:51 -0600 (CST)
+	(envelope-from pgsql-sql-owner+M6000=candle.pha.pa.us=pgman@postgresql.org)
+Received: from mail.iinet.net.au (symphony-05.iinet.net.au [203.59.3.37])
+	by postgresql.org (8.11.3/8.11.4) with SMTP id fBH6XFm62784
+	for <pgsql-sql@postgresql.org>; Mon, 17 Dec 2001 01:33:15 -0500 (EST)
+	(envelope-from chriskl@familyhealth.com.au)
+Received: (qmail 30765 invoked by uid 666); 17 Dec 2001 06:33:10 -0000
+Received: from unknown (HELO houston.familyhealth.com.au) (203.59.231.6)
+  by mail.iinet.net.au with SMTP; 17 Dec 2001 06:33:10 -0000
+Received: (from root@localhost)
+	by houston.familyhealth.com.au (8.11.6/8.11.6) id fBH6XBH96532
+	for pgsql-sql@postgresql.org; Mon, 17 Dec 2001 14:33:11 +0800 (WST)
+	(envelope-from chriskl@familyhealth.com.au)
+Received: from mariner (mariner.internal [192.168.0.101])
+	by houston.familyhealth.com.au (8.11.6/8.9.3) with SMTP id fBH6X7p96337;
+	Mon, 17 Dec 2001 14:33:07 +0800 (WST)
+From: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+cc: "Stephan Szabo" <sszabo@megazone23.bigpanda.com>,
+   "MindTerm" <mindterm@yahoo.com>, <pgsql-sql@postgresql.org>
+Subject: [SQL] 'IN' performance
+Date: Mon, 17 Dec 2001 14:33:40 +0800
+Message-ID: <GNELIHDDFBOCMGBFGEFOEENFCAAA.chriskl@familyhealth.com.au>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2910.0)
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+Importance: Normal
+In-Reply-To: <29547.1008570076@sss.pgh.pa.us>
+X-scanner: scanned by Inflex 0.1.5c - (http://www.inflex.co.za/)
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+> In the sub-select form, we pretty much suck: for each tuple in the outer
+> query, we run the inner query until we find a matching value or the
+> inner query ends.  This is basically a nested-loop scenario, with the
+> only (minimally) redeeming social value being that the planner realizes
+> it should pick a fast-start plan for the inner query.  I think it should
+> be possible to convert this form into a modified kind of join (sort of
+> the reverse of an outer join: rather than at least one result per
+> lefthand row, at most one result per lefthand row), and then we could
+> use join methods that are more efficient than nested-loop.  But no one's
+> tried to make that happen yet.
+
+That's what I was thinking...where abouts does all that activity happen?
+
+I assume the planner knows that it doesn't have to reevaluate the subquery
+if it's not correlated?
+
+Chris
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-sql-owner+M6001=candle.pha.pa.us=pgman@postgresql.org Mon Dec 17 02:00:10 2001
+Return-path: <pgsql-sql-owner+M6001=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBH709411405
+	for <pgman@candle.pha.pa.us>; Mon, 17 Dec 2001 02:00:09 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBH6psR80624
+	for <pgman@candle.pha.pa.us>; Mon, 17 Dec 2001 00:56:15 -0600 (CST)
+	(envelope-from pgsql-sql-owner+M6001=candle.pha.pa.us=pgman@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBH6iCm63171
+	for <pgsql-sql@postgresql.org>; Mon, 17 Dec 2001 01:44:12 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fBH6i3i29733;
+	Mon, 17 Dec 2001 01:44:03 -0500 (EST)
+To: "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+cc: "Stephan Szabo" <sszabo@megazone23.bigpanda.com>,
+   "MindTerm" <mindterm@yahoo.com>, pgsql-sql@postgresql.org
+Subject: Re: [SQL] 'IN' performance 
+In-Reply-To: <GNELIHDDFBOCMGBFGEFOEENFCAAA.chriskl@familyhealth.com.au> 
+References: <GNELIHDDFBOCMGBFGEFOEENFCAAA.chriskl@familyhealth.com.au>
+Comments: In-reply-to "Christopher Kings-Lynne" <chriskl@familyhealth.com.au>
+	message dated "Mon, 17 Dec 2001 14:33:40 +0800"
+Date: Mon, 17 Dec 2001 01:44:03 -0500
+Message-ID: <29730.1008571443@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-sql-owner@postgresql.org
+Status: OR
+
+"Christopher Kings-Lynne" <chriskl@familyhealth.com.au> writes:
+> That's what I was thinking...where abouts does all that activity happen?
+
+The infrastructure for different join rules already exists.  There'd
+need to be a new JOIN_xxx type added to the various join nodes in the
+executor, but AFAICS that's just a minor extension.  The part that is
+perhaps not trivial is in the planner.  All the existing inner and outer
+join types start out expressed as joins in the original query.  To make
+IN into a join, the planner would have to hoist up a clause from WHERE
+into the join-tree structure.  I think it can be done, but I have not
+thought hard about where and how, nor about what semantic restrictions
+might need to be checked.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
