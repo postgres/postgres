@@ -118,7 +118,8 @@ insert into bar2 values(4,4,4);
 
 update bar set f2 = f2 + 100 where f1 in (select f1 from foo);
 
-SELECT relname, bar.* FROM bar, pg_class where bar.tableoid = pg_class.oid;
+SELECT relname, bar.* FROM bar, pg_class where bar.tableoid = pg_class.oid
+order by 1,2;
 
 
 /* Test inheritance of structure (LIKE) */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.98 2004/12/01 19:00:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.99 2004/12/02 01:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,6 +268,12 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				 * but is probably an overestimate for indexes.  Fortunately
 				 * get_relation_info() can clamp the overestimate to the
 				 * parent table's size.
+				 *
+				 * Note: this code intentionally disregards alignment
+				 * considerations, because (a) that would be gilding the
+				 * lily considering how crude the estimate is, and (b)
+				 * it creates platform dependencies in the default plans
+				 * which are kind of a headache for regression testing.
 				 */
 				int32	tuple_width = 0;
 				int		i;
@@ -291,8 +297,7 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 						attr_widths[i] = item_width;
 					tuple_width += item_width;
 				}
-				tuple_width = MAXALIGN(tuple_width);
-				tuple_width += MAXALIGN(sizeof(HeapTupleHeaderData));
+				tuple_width += sizeof(HeapTupleHeaderData);
 				tuple_width += sizeof(ItemPointerData);
 				/* note: integer division is intentional here */
 				density = (BLCKSZ - sizeof(PageHeaderData)) / tuple_width;

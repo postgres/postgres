@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.135 2004/10/23 00:05:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.136 2004/12/02 01:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,6 +614,15 @@ cost_material(Path *path,
 		startup_cost += npages;
 		run_cost += npages;
 	}
+
+	/*
+	 * Charge a very small amount per inserted tuple, to reflect bookkeeping
+	 * costs.  We use cpu_tuple_cost/10 for this.  This is needed to break
+	 * the tie that would otherwise exist between nestloop with A outer,
+	 * materialized B inner and nestloop with B outer, materialized A inner.
+	 * The extra cost ensures we'll prefer materializing the smaller rel.
+	 */
+	startup_cost += cpu_tuple_cost * 0.1 * tuples;
 
 	/*
 	 * Also charge a small amount per extracted tuple.	We use
