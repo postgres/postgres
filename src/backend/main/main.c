@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.36 2000/12/31 03:34:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.37 2000/12/31 18:04:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include <locale.h>
 #endif
 
-#if defined(__alpha) && !defined(linux) && !defined(__FreeBSD__) && !defined(__NetBSD__)
+#if defined(__alpha) && defined(__osf__)
 #include <sys/sysinfo.h>
 #include "machine/hal_sysinfo.h"
 #define ASSEMBLER
