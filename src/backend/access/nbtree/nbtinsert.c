@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.38 1999/04/22 08:19:59 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.39 1999/05/01 16:09:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,9 +587,6 @@ l_spl:;
 			}
 			/* create a new root node and release the split buffers */
 			_bt_newroot(rel, buf, rbuf);
-			_bt_relbuf(rel, buf, BT_WRITE);
-			_bt_relbuf(rel, rbuf, BT_WRITE);
-
 		}
 		else
 		{
@@ -706,8 +703,8 @@ l_spl:;
 				{
 					_bt_updateitem(rel, keysz, pbuf,
 								   stack->bts_btitem, lowLeftItem);
-					_bt_relbuf(rel, buf, BT_WRITE);
-					_bt_relbuf(rel, rbuf, BT_WRITE);
+					_bt_wrtbuf(rel, buf);
+					_bt_wrtbuf(rel, rbuf);
 				}
 				else
 				{
@@ -729,11 +726,9 @@ l_spl:;
 
 					/*
 					 * Unlock the children before doing this
-					 *
-					 * Mmm ... I foresee problems here. - vadim 06/10/97
 					 */
-					_bt_relbuf(rel, buf, BT_WRITE);
-					_bt_relbuf(rel, rbuf, BT_WRITE);
+					_bt_wrtbuf(rel, buf);
+					_bt_wrtbuf(rel, rbuf);
 
 					/*
 					 * A regular _bt_binsrch should find the right place
@@ -758,8 +753,8 @@ l_spl:;
 			}
 			else
 			{
-				_bt_relbuf(rel, buf, BT_WRITE);
-				_bt_relbuf(rel, rbuf, BT_WRITE);
+				_bt_wrtbuf(rel, buf);
+				_bt_wrtbuf(rel, rbuf);
 			}
 
 			newskey = _bt_mkscankey(rel, &(new_item->bti_itup));
@@ -1195,8 +1190,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	/* update metadata page with new root block number */
 	_bt_metaproot(rel, rootbknum, 0);
 
-	WriteNoReleaseBuffer(lbuf);
-	WriteNoReleaseBuffer(rbuf);
+	_bt_wrtbuf(rel, lbuf);
+	_bt_wrtbuf(rel, rbuf);
 }
 
 /*
