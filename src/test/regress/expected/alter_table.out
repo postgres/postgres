@@ -285,7 +285,7 @@ INSERT INTO tmp3 values (5,50);
 -- Try (and fail) to add constraint due to invalid data
 ALTER TABLE tmp3 add constraint tmpconstr foreign key (a) references tmp2 match full;
 NOTICE:  ALTER TABLE ... ADD CONSTRAINT will create implicit trigger(s) for FOREIGN KEY check(s)
-ERROR:  <unnamed> referential integrity violation - key referenced from tmp3 not found in tmp2
+ERROR:  tmpconstr referential integrity violation - key referenced from tmp3 not found in tmp2
 -- Delete failing row
 DELETE FROM tmp3 where a=5;
 -- Try (and succeed)
