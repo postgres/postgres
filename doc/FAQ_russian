@@ -1,7 +1,7 @@
 
                Otvety na chasto zadavaemye voprosy po PostgreSQL
                                        
-   Data poslednego obnovleniya: Sreda 19 noyabrya 11:50:04 EDT 2003
+   Data poslednego obnovleniya: Vtornik 6 yanvarya 16:42:01 EDT 2003
    
    Anglijskij variant soprovozhdaet: Bryus Mom'yan (Bruce Momjian)
    (pgman@candle.pha.pa.us)
@@ -23,7 +23,7 @@
    1.4) Suschestvuyut li versii portirovannye ne na Unix sistemy?
    1.5) Gde mozhno vzyat' PostgreSQL?
    1.6) Gde poluchit' podderzhku?
-   1.7) Kakaya poslednyaya versiya?
+   1.7) Kakaya versiya poslednyaya?
    1.8) Kakaya dokumentaciya imeetsya v nalichii?
    1.9) Kak najti informaciyu ob izvestnyh oshibkah ili otsutstvuyuschih
    vozmozhnostyah?
@@ -273,7 +273,7 @@
    
      http://www.PostgreSQL.org
      
-   Esche suschestvuet IRC kanal na EFNet i Freenode, s nazvaniem
+   Esche suschestvuet IRC kanal na Freenode i EFNet, s nazvaniem
    #PostgreSQL. YA ispol'zuyu dlya podklyucheniya k `etomu kanalu komandu
    Unix irc -c '#PostgreSQL' "$USER" irc.phoenix.net. ili irc -c
    '#PostgreSQL' "$USER" irc.freenode.net.
@@ -283,7 +283,7 @@
    
     1.7) Kakaya poslednyaya versiya?
     
-   Poslednij vypusk PostgreSQL - `eto versiya 7.4.
+   Poslednij vypusk PostgreSQL - `eto versiya 7.4.1
    
    My planiruem vypuskat' novye versii kazhdye 6-8 mesyacev.
    
@@ -486,12 +486,11 @@
     2.3) Est' li u PostgreSQL graficheskij interfejs pol'zovatelya?
     
    Da, suschestvuet neskol'ko graficheskih interfejsov dlya PostgreSQL.
-   `Eto PgAccess (http://www.pgaccess.org, PgAdmin III
-   (http://www.pgadmin.org, Win32-only), RHDB Admin (
-   http://sources.redhat.com/rhdb/) i Rekall (
-   http://www.thekompany.com/products/rekall/, kommercheskij). Takzhe
-   est' PHPPgAdmin ( http://phppgadmin.sourceforge.net/) - interfejs k
-   PostgreSQL, osnovannyj na Web.
+   `Eto PgAccess (http://www.pgaccess.org), PgAdmin III
+   (http://www.pgadmin.org), RHDB Admin (http://sources.redhat.com/rhdb/)
+   i Rekall ( http://www.thekompany.com/products/rekall/, kommercheskij).
+   Takzhe est' PHPPgAdmin ( http://phppgadmin.sourceforge.net/) -
+   interfejs k PostgreSQL, osnovannyj na Web.
    
     2.4) Kakie yazyki mogut vzaimodejstvovat' s PostgreSQL?
     

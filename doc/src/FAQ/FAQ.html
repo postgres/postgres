@@ -10,14 +10,13 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sat Nov 29 23:54:03 EST 2003</P>
+    <P>Last updated: Sat Feb  7 22:16:21 EST 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
     </P>
 
-    <P>The most recent version of this document can be viewed at <A
-    href=
+    <P>The most recent version of this document can be viewed at <A href=
     "http://www.PostgreSQL.org/docs/faqs/FAQ.html">http://www.PostgreSQL.org/docs/faqs/FAQ.html</A>.</P>
 
     <P>Platform-specific questions are answered at <A href=
@@ -157,7 +156,8 @@
 
     <H4><A name="1.1">1.1</A>) What is PostgreSQL? How is it pronounced?</H4>
 
-    <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>.</P>
+    <P>PostgreSQL is pronounced <I>Post-Gres-Q-L</I>.  The name "Postgres" is
+    also used in conversation.</P>
 
     <P>PostgreSQL is an enhancement of the POSTGRES database management
     system, a next-generation <SMALL>DBMS</SMALL> research prototype.
@@ -170,8 +170,12 @@
     developers who all subscribe to the PostgreSQL development mailing
     list. The current coordinator is Marc G. Fournier (<A href=
     "mailto:scrappy@PostgreSQL.org">scrappy@PostgreSQL.org</A>). (See
-    section <a href="#1.6">1.6</a> on how to join). This team is now 
-    responsible for all development of PostgreSQL.</P>
+    section <a href="#1.6">1.6</a> on how to join). This team is now
+    responsible for all development of PostgreSQL.  It is a community
+    project and is not controlled by any company.  To get involved, see
+    the developer's FAQ,<A href=
+    "http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html">http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html</A>
+    </P>
 
     <P>The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen.
     Many others have contributed to the porting, testing, debugging,
@@ -316,7 +320,7 @@
       <A href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</A>
     </BLOCKQUOTE>
 
-    <P>There is also an IRC channel on EFNet and Freenode,
+    <P>There is also an IRC channel on Freenode and EFNet,
     channel <I>#PostgreSQL</I>. You can use the Unix command <CODE>irc -c
     '#PostgreSQL' "$USER" irc.phoenix.net.</CODE> or <CODE>irc -c
     '#PostgreSQL' "$USER" irc.freenode.net.</CODE></P>
@@ -326,7 +330,7 @@
 
     <H4><A name="1.7">1.7</A>) What is the latest release?</H4>
 
-    <P>The latest release of PostgreSQL is version 7.4.</P>
+    <P>The latest release of PostgreSQL is version 7.4.1.</P>
 
     <P>We plan to have major releases every six to eight months.</P>
 
@@ -446,7 +450,8 @@
       release. There is an interesting Web page comparing PostgreSQL to
       MySQL at <A href="http://openacs.org/philosophy/why-not-mysql.html">
       http://openacs.org/philosophy/why-not-mysql.html</A>  Also, MySQL is
-      is a company that distributes its products via open source, not an
+      is a company that distributes its products via open source, and requires
+      a commercial license for close-source software, not an
       open source development community like PostgreSQL.<BR>
 
       <BR>
@@ -927,7 +932,7 @@
     <P>Indexes do not require as much overhead, but do contain the data
     that is being indexed, so they can be large also.</P>
 
-    <P><SMALL>NULL</SMALL>s are stored in bitmaps, so they
+    <P><SMALL>NULL</SMALL>s are stored as bitmaps, so they
     use very little space.</P>
     
     <H4><A name="4.7">4.7</A>) How do I find out what tables, indexes,

@@ -14,7 +14,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <p>Deutsche Übersetzung von Ian Barwick (<a href="mailto:barwick@gmx.net">barwick@gmx.net</a>).</p>
 
-    <p>Letzte Aktualisierung der deutschen Übersetzung: Di., den 02.09.2003, 10:00 CET</p>
+    <p>Letzte Aktualisierung der deutschen Übersetzung: Fr., den 02.01.2004, 07:30 CET</p>
 
     <p>Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL Website:</p>
     <ul>
@@ -220,7 +220,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     in der Vorbereitung.</p>
 
     <p>Weitere Informationen zum Status von PostgreSQL auf der Microsoft-Plattform
-    befinden sich unter <a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a> (en.).</p>
+    befinden sich unter <a href="http://techdocs.postgresql.org/guides/Windows">http://techdocs.postgresql.org/guides/Windows</a> (en.) sowie  <a href="http://momjian.postgresql.org/main/writings/pgsql/win32.html"> http://momjian.postgresql.org/main/writings/pgsql/win32.html</a> (en.).</p>
 
     <p>Eine Portierung für Novell Netware 6 gibt es unter <a href="http://forge.novell.com">http://forge.novell.com</a>.</p>
 
@@ -273,9 +273,10 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 <blockquote>
 <a href="http://www.PostgreSQL.org">http://www.PostgreSQL.org</a>
 </blockquote>
-    <p>Es gibt außerdem einen IRC-Channel bei EFNet und bei OpenProjects, Channel
-    <em>#PostgreSQL</em>. Der FAQ-Autor Bruce Momjian nutzt den Unix-Befehl:
-    <small>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</small> um daran teilzunehmen.</p>
+    <p>Es gibt außerdem einen IRC-Channel bei EFNet und bei Freenode, Channel
+    <em>#PostgreSQL</em>. Unter UNIX/Linux können Sie mit z.B.
+    <small>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</small> bzw. <small>irc -c
+    '#PostgreSQL' "$USER" irc.freenode.net.</small> daran teilnehmen.</p>
 
     <p>Eine Liste von Unternehmen, die Support für PostgreSQL auf kommerzieller
     Basis leisten, kann unter
@@ -284,7 +285,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 
     <h4><a name="1.7">1.7</a>) Was ist die neueste Version von PostgreSQL?</h4>
 
-    <p>Die neueste Version von PostgreSQL ist 7.3.4 .</p>
+    <p>Die neueste Version von PostgreSQL ist 7.4.1 .</p>
 
     <p>Die Freigabe einer neuen Version erfolgt im Schnitt ca. dreimal pro Jahr.</p>
 
@@ -374,13 +375,15 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
       <dt><b>Performanz</b></dt>
       <dd><p>PostgreSQL weist eine Performanz auf, die mit der von kommerziellen
           und anderen Open-Source-Datenbanken vergleichbar ist. In
-          manchen Bereichen ist es schneller, in anderen langsamen. Im
-          Vergleich zu MySQL oder abgespeckten Datenbank-Systemen sind
-          INSERT- und UPDATE-Anweisungen aufgrund des Transaktionsaufwands
-          langsamer. MySQL hat allerdings keine der oben erwähnten
-          Eigenschaften. PostgreSQL setzt auf Zuverlässigkeit und
-          Funktionsumfang, obwohl selbstredend ständig an Performanz-
-          Verbesserungen gearbeitet wird. Ein interessanter Vergleich
+          manchen Bereichen ist es schneller, in anderen langsamer.</p>
+          <p>Im Vergleich zu MySQL oder abgespeckten Datenbank-Systemen 
+          ist PostgreSQL in Lastsituationen - z.B. bei zeitgleichen
+          Zugriffen durch mehrere Nutzer, komplexen Abfragen oder gleichzeitigen
+          Lese- und Schreibzugriffen schneller. MySQL ist nur bei einfacheren
+          SELECT-Abfragen mit wenigen Nutzern schneller.  MySQL hat allerdings 
+          wenige der oben erwähnten Eigenschaften. PostgreSQL setzt auf 
+          Zuverlässigkeit und Funktionsumfang, dabei wird selbstredend ständig 
+          an Performanz-Verbesserungen gearbeitet. Ein interessanter Vergleich
           zwischen PostgreSQL und MySQL befindet sich unter dieser URL:
             <a href="http://openacs.org/philosophy/why-not-mysql.html">http://openacs.org/philosophy/why-not-mysql.html</a></p>
       </dd>
@@ -479,9 +482,8 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
    
     <p>Es gibt mehrere grafische Schnittstellen für PostgreSQL, darunter
     PgAccess ( <a href="http://www.pgaccess.org">http://www.pgaccess.org</a>), 
-    PgAdmin II (<a
-    href="http://www.pgadmin.org">http://www.pgadmin.org</a>,
-    nur für Win32), RHDB Admin (<a
+    PgAdmin III (<a
+    href="http://www.pgadmin.org">http://www.pgadmin.org</a>, RHDB Admin (<a
     href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
     </a>) und Rekall (<a href="http://www.thekompany.com/products/rekall/">
     http://www.thekompany.com/products/rekall/</a>, proprietär). Es gibt 
@@ -785,7 +787,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
 <pre>
     Maximale Größe eine Datenbank?           unbeschränkt (es existieren
                                                Datenbanken mit 4TB)
-    Maximale Größe einer Tabelle?            16 TB
+    Maximale Größe einer Tabelle?            32 TB
     Maximale Größe einer Zeile?              1,6 TB
     Maximale Größe einer Spalte?             1 GB
     Maximale Anzahl von Zeilen in einer Tabelle?
@@ -799,7 +801,7 @@ href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>).</p>
     verfügbaren Platten- und Speicherressourcen eingeschränkt sind.
     Extreme Größen können zu Leistungseinbußen führen.</p>
    
-    <p>Die maximale Tabellengröße von 16 TB benötigt keine Large-File-Unterstützung
+    <p>Die maximale Tabellengröße von 32 TB benötigt keine Large-File-Unterstützung
     im Betriebssystem. Große Tabellen werden in Dateien mit einer Größe von
     1 GB aufgeteilt, wodurch etwaige dateisystem-bedingte Beschränkungen nicht
     relevant sind.</p>
@@ -1012,7 +1014,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
     Werts?</h4>
 
     <p>PostgreSQL bietet einen <small>SERIAL</small>-Datentyp. Dieser erzeugt automatisch
-    eine Sequenz und einen Index auf die angegebene Spalte. Zum Beispiel:</p>
+    eine Sequenz auf die angegebene Spalte. Zum Beispiel:</p>
 <pre>
       CREATE TABLE person (
           id   SERIAL,
@@ -1025,7 +1027,6 @@ BYTEA         bytea           Bytearray mit variabler Länge
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
         name TEXT
       );
-      CREATE UNIQUE INDEX person_id_key ON person ( id );
 </pre><p>    umgewandelt.</p>
 
     <p>Die <em>create_sequence</em> Man-Page liefert weitere Informationen über Sequenzen.
@@ -1180,8 +1181,8 @@ BYTEA         bytea           Bytearray mit variabler Länge
     <h4><a name="4.22">4.22</a>) Warum sind meine Unterabfragen (subqueries), die IN verwenden,
     so langsam?</h4>
 
-    <p>Derzeit werden Unterabfragen mit der äusseren Abfrage verbunden, indem
-    für jede Reihe der äusseren Query die Ergebnisse der Unterabfrage
+    <p>In Versionen vor 7.4 werden Unterabfragen mit der äusseren Abfrage verbunden, 
+    in dem für jede Reihe der äusseren Query die Ergebnisse der Unterabfrage
     sequentiell geprüft werden. Um dies zu vermeiden, kann man <small>IN</small> durch
     <small>EXISTS</small> ersetzen, z.B.:</p>
 <pre>
@@ -1196,8 +1197,10 @@ BYTEA         bytea           Bytearray mit variabler Länge
        WHERE EXISTS (SELECT spalte2 FROM tabelle_2 WHERE spalte1 = spalte2)
 </pre>
     <p> Damit diese Abfrage effizient durchgeführt wird, sollte für '<em>spalte2</em>'
-    ein Index angelegt worden sein. Die Einschränkung von Abfragen mit <small>IN</small>
-    wird in der nächsten PostgreSQL-Version (7.4) behoben werden.</p>
+    ein Index angelegt worden sein. Ab PostgreSQL 7.4 <small>IN</small> verwendet
+    die gleichen Methoden wie die normale Tabellenverknüpfung und ist daher soger
+    <small>EXISTS</small> vorzuziehen.
+    </p>
 
     <h4><a name="4.23">4.23</a>) Wie führe ich einen <small>OUTER JOIN</small> durch?</h4>
 
@@ -1355,8 +1358,6 @@ BYTEA         bytea           Bytearray mit variabler Länge
     entgegen, verweise jedoch auf die Mailing-Listen als schnelle und zuverlässige
     Anlaufstellen.</p>
 
-    <p>Diese Übersetzung basiert teilweise auf einer früheren Übersetzung von Karsten
-    Schulz (<a href="mailto:schulz@linux-systemhaus.de">schulz@linux-systemhaus.de</a>).</p>
 </body>
 </html>
 

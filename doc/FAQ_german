@@ -5,8 +5,8 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Di., den 02.09.2003,
-   10:00 CET
+   Letzte Aktualisierung der deutschen Übersetzung: Fr., den 02.01.2004,
+   07:30 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
@@ -229,7 +229,8 @@
    
    Weitere Informationen zum Status von PostgreSQL auf der
    Microsoft-Plattform befinden sich unter
-   http://techdocs.postgresql.org/guides/Windows (en.).
+   http://techdocs.postgresql.org/guides/Windows (en.) sowie
+   http://momjian.postgresql.org/main/writings/pgsql/win32.html (en.).
    
    Eine Portierung für Novell Netware 6 gibt es unter
    http://forge.novell.com.
@@ -280,10 +281,10 @@
    
      http://www.PostgreSQL.org
      
-   Es gibt außerdem einen IRC-Channel bei EFNet und bei OpenProjects,
-   Channel #PostgreSQL. Der FAQ-Autor Bruce Momjian nutzt den
-   Unix-Befehl: irc -c '#PostgreSQL' "$USER" irc.phoenix.net um daran
-   teilzunehmen.
+   Es gibt außerdem einen IRC-Channel bei EFNet und bei Freenode, Channel
+   #PostgreSQL. Unter UNIX/Linux können Sie mit z.B. irc -c '#PostgreSQL'
+   "$USER" irc.phoenix.net bzw. irc -c '#PostgreSQL' "$USER"
+   irc.freenode.net. daran teilnehmen.
    
    Eine Liste von Unternehmen, die Support für PostgreSQL auf
    kommerzieller Basis leisten, kann unter
@@ -291,7 +292,7 @@
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.3.4 .
+   Die neueste Version von PostgreSQL ist 7.4.1 .
    
    Die Freigabe einer neuen Version erfolgt im Schnitt ca. dreimal pro
    Jahr.
@@ -386,14 +387,18 @@
           PostgreSQL weist eine Performanz auf, die mit der von
           kommerziellen und anderen Open-Source-Datenbanken vergleichbar
           ist. In manchen Bereichen ist es schneller, in anderen
-          langsamen. Im Vergleich zu MySQL oder abgespeckten
-          Datenbank-Systemen sind INSERT- und UPDATE-Anweisungen aufgrund
-          des Transaktionsaufwands langsamer. MySQL hat allerdings keine
-          der oben erwähnten Eigenschaften. PostgreSQL setzt auf
-          Zuverlässigkeit und Funktionsumfang, obwohl selbstredend
-          ständig an Performanz- Verbesserungen gearbeitet wird. Ein
-          interessanter Vergleich zwischen PostgreSQL und MySQL befindet
-          sich unter dieser URL:
+          langsamer.
+          
+          Im Vergleich zu MySQL oder abgespeckten Datenbank-Systemen ist
+          PostgreSQL in Lastsituationen - z.B. bei zeitgleichen Zugriffen
+          durch mehrere Nutzer, komplexen Abfragen oder gleichzeitigen
+          Lese- und Schreibzugriffen schneller. MySQL ist nur bei
+          einfacheren SELECT-Abfragen mit wenigen Nutzern schneller.
+          MySQL hat allerdings wenige der oben erwähnten Eigenschaften.
+          PostgreSQL setzt auf Zuverlässigkeit und Funktionsumfang, dabei
+          wird selbstredend ständig an Performanz-Verbesserungen
+          gearbeitet. Ein interessanter Vergleich zwischen PostgreSQL und
+          MySQL befindet sich unter dieser URL:
           http://openacs.org/philosophy/why-not-mysql.html
           
    Zuverlässigkeit
@@ -488,12 +493,11 @@
     2.3) Hat PostgreSQL eine grafische Benutzerschnittstelle?
     
    Es gibt mehrere grafische Schnittstellen für PostgreSQL, darunter
-   PgAccess ( http://www.pgaccess.org), PgAdmin II
-   (http://www.pgadmin.org, nur für Win32), RHDB Admin
-   (http://sources.redhat.com/rhdb/ ) und Rekall (
-   http://www.thekompany.com/products/rekall/, proprietär). Es gibt
-   außerdem PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), eine
-   web-basierte Schnittstelle.
+   PgAccess ( http://www.pgaccess.org), PgAdmin III
+   (http://www.pgadmin.org, RHDB Admin (http://sources.redhat.com/rhdb/ )
+   und Rekall ( http://www.thekompany.com/products/rekall/, proprietär).
+   Es gibt außerdem PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ),
+   eine web-basierte Schnittstelle.
    
     2.4) Welche Programmiersprachen und Schnittstellen gibt es?
     
@@ -788,7 +792,7 @@
    Es bestehen folgende Obergrenzen:
     Maximale Größe eine Datenbank?           unbeschränkt (es existieren
                                                Datenbanken mit 4TB)
-    Maximale Größe einer Tabelle?            16 TB
+    Maximale Größe einer Tabelle?            32 TB
     Maximale Größe einer Zeile?              1,6 TB
     Maximale Größe einer Spalte?             1 GB
     Maximale Anzahl von Zeilen in einer Tabelle?
@@ -802,7 +806,7 @@
    verfügbaren Platten- und Speicherressourcen eingeschränkt sind.
    Extreme Größen können zu Leistungseinbußen führen.
    
-   Die maximale Tabellengröße von 16 TB benötigt keine
+   Die maximale Tabellengröße von 32 TB benötigt keine
    Large-File-Unterstützung im Betriebssystem. Große Tabellen werden in
    Dateien mit einer Größe von 1 GB aufgeteilt, wodurch etwaige
    dateisystem-bedingte Beschränkungen nicht relevant sind.
@@ -1016,7 +1020,7 @@ BYTEA         bytea           Bytearray mit variabler Länge
     Werts?
     
    PostgreSQL bietet einen SERIAL-Datentyp. Dieser erzeugt automatisch
-   eine Sequenz und einen Index auf die angegebene Spalte. Zum Beispiel:
+   eine Sequenz auf die angegebene Spalte. Zum Beispiel:
       CREATE TABLE person (
           id   SERIAL,
           name TEXT
@@ -1028,7 +1032,6 @@ BYTEA         bytea           Bytearray mit variabler Länge
         id   INT4 NOT NULL DEFAULT nextval('person_id_seq'),
         name TEXT
       );
-      CREATE UNIQUE INDEX person_id_key ON person ( id );
 
    umgewandelt.
    
@@ -1175,10 +1178,10 @@ BYTEA         bytea           Bytearray mit variabler Länge
     4.22) Warum sind meine Unterabfragen (subqueries), die IN verwenden, so
     langsam?
     
-   Derzeit werden Unterabfragen mit der äusseren Abfrage verbunden, indem
-   für jede Reihe der äusseren Query die Ergebnisse der Unterabfrage
-   sequentiell geprüft werden. Um dies zu vermeiden, kann man IN durch
-   EXISTS ersetzen, z.B.:
+   In Versionen vor 7.4 werden Unterabfragen mit der äusseren Abfrage
+   verbunden, in dem für jede Reihe der äusseren Query die Ergebnisse der
+   Unterabfrage sequentiell geprüft werden. Um dies zu vermeiden, kann
+   man IN durch EXISTS ersetzen, z.B.:
       SELECT *
         FROM tabelle_1
        WHERE spalte1 IN (SELECT spalte2 FROM tabelle_2)
@@ -1189,8 +1192,9 @@ BYTEA         bytea           Bytearray mit variabler Länge
        WHERE EXISTS (SELECT spalte2 FROM tabelle_2 WHERE spalte1 = spalte2)
 
    Damit diese Abfrage effizient durchgeführt wird, sollte für 'spalte2'
-   ein Index angelegt worden sein. Die Einschränkung von Abfragen mit IN
-   wird in der nächsten PostgreSQL-Version (7.4) behoben werden.
+   ein Index angelegt worden sein. Ab PostgreSQL 7.4 IN verwendet die
+   gleichen Methoden wie die normale Tabellenverknüpfung und ist daher
+   soger EXISTS vorzuziehen.
    
     4.23) Wie führe ich einen OUTER JOIN durch?
     
@@ -1344,6 +1348,3 @@ BYTEA         bytea           Bytearray mit variabler Länge
    Verständnisfragen zum Inhalt der FAQ freue ich mich. Ich nehme auch
    allgemeine Fragen zu PostgreSQL gerne entgegen, verweise jedoch auf
    die Mailing-Listen als schnelle und zuverlässige Anlaufstellen.
-   
-   Diese Übersetzung basiert teilweise auf einer früheren Übersetzung von
-   Karsten Schulz (schulz@linux-systemhaus.de).
