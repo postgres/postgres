@@ -5,77 +5,101 @@
 <FirstName>Tim</FirstName>
 <Surname>Goeke</Surname>
 </Author>
+<Author>
+<FirstName>Thomas</FirstName>
+<Surname>Lockhart</Surname>
+</Author>
 </AuthorGroup>
-<Date>Transcribed 1998-02-12</Date>
+<Date>1998-08-25</Date>
 </DocInfo>
 
-<Title>ODBC Interface</Title>
+<Title><acronym>ODBC</acronym> Interface</Title>
 
 <Para>
 <Note>
 <Para>
-Contributed by <ULink url="mailto:tgoeke@xpressway.com">Tim Goeke</ULink>
+Background information originally by
+ <ULink url="mailto:tgoeke@xpressway.com">Tim Goeke</ULink>
 </Para>
 </Note>
 
 <Para>
-ODBC is an abstract API which allows you to write standard "ODBC" code,
-using the ODBC API.
+<acronym>ODBC</acronym> (Open Database Connectivity) is an abstract 
+<acronym>API</acronym> 
+which allows you to write standard "ODBC" applications.
+<acronym>ODBC</acronym> provides a product-neutral interface 
+between frontend applications and database servers,
+allowing a user or developer to write applications which are portable among servers.
 
 <Sect1>
 <Title>Background</Title>
 
 <Para>
-The ODBC API matches up on the backend to an ODBC compatible data source.
-This could be anything from a text file to an Oracle RDBMS.
+The <acronym>ODBC</acronym> <acronym>API</acronym> matches up 
+on the backend to an <acronym>ODBC</acronym>-compatible data source.
+This could be anything from a text file to an Oracle or 
+<productname>Postgres</productname> <acronym>RDBMS</acronym>.
 
 <Para>
-The backend access come from ODBC drivers, or vendor specifc drivers that
-allow data access.   PostODBC is such a driver, along with others that are
-available, such as the OpenLink ODBC drivers.
+The backend access come from <acronym>ODBC</acronym> drivers, or vendor specifc drivers that
+allow data access.   <productname>psqlODBC</productname> is such a driver, along with others that are
+available, such as the OpenLink <acronym>ODBC</acronym> drivers.
 
 <Para>
-Once you write an ODBC application, you SHOULD be able to connect to ANY
+Once you write an <acronym>ODBC</acronym> application, you SHOULD be able to connect to ANY
 back end database, regardless of the vendor, as long as the database schema
 is the same.
 
 <Para>
-For example. you could have MS SQL Server and PostgreSQL servers which have
-exactly the same data.  Using ODBC, your Windows app would make exactly the
+For example. you could have <productname>MS SQL Server</productname>
+ and <productname>Postgres</productname> servers which have
+exactly the same data.  Using <acronym>ODBC</acronym>, your Windows app would make exactly the
 same calls and the back end data source would look the same (to the windows
 app).
 
+<para>
+<ulink url="http://www.insightdist.com/">Insight Distributors</ulink> provides active and ongoing
+support for the core <productname>psqlODBC</productname> distribution. They provide a
+<ulink url="http://www.insightdist.com/psqlodbc/"><acronym>FAQ</acronym></ulink>, ongoing development
+on the code base, and actively participate on the 
+<ulink url="mailto:interfaces@postgresql.org">interfaces mailing list</ulink>.
+
+<sect1>
+<title><productname>Windows</productname> Applications</title>
+
 <Para>
-In the real world, differences in drivers and the level of ODBC support
-lessens the potential of ODBC:
+In the real world, differences in drivers and the level of <acronym>ODBC</acronym> support
+lessens the potential of <acronym>ODBC</acronym>:
 
 <SimpleList>
 <Member>
-Access, Delphi, and Visual Basic all support ODBC directly.
+Access, Delphi, and Visual Basic all support <acronym>ODBC</acronym> directly.
 
 <Member>
-Under C++, such as Visual C++, you can use the C++ ODBC API.
+Under C++, such as Visual C++, you can use the C++ <acronym>ODBC</acronym> <acronym>API</acronym>.
 
 <Member>
-In Visual C++, you can use the CRecordSet class, which wraps the ODBC API
-set within and MFC 4.2 class.  This is the easiest route if you are doing
+In Visual C++, you can use the CRecordSet class, which wraps the 
+<acronym>ODBC</acronym> <acronym>API</acronym>
+set within an MFC 4.2 class.  This is the easiest route if you are doing
 Windows C++ development under Windows NT.
 </SimpleList>
 
 <Para>
-If I write an app for PostgreSQL can I write it using ODBC calls
-to the PostgreSQL server, or is that only when another database program 
+If I write an app for <productname>Postgres</productname> 
+can I write it using <acronym>ODBC</acronym> calls
+to the <productname>Postgres</productname> server, or is that only when another database program 
 like MS SQL Server or Access needs to access the data?
 
 <Para>
-Again, the ODBC API set is the way to go.   You can find out more at
-Microsoft's web site or in your Visual C++ docs (if that's what you are
-using.)
+Again, the <acronym>ODBC</acronym> <acronym>API</acronym> set is the way to go.
+You can find out more at
+Microsoft's web site or in your Visual C++ docs (if that's what you are using.)
 
 <Para>
-Visual Basic and the other RAD tools have Recordset objects that use ODBC
+Visual Basic and the other RAD tools have Recordset objects that use <acronym>ODBC</acronym>
 directly to access data.  Using the data-aware controls, you can quickly
-link to the ODBC back end database (<Emphasis>very</Emphasis> quickly).
+link to the <acronym>ODBC</acronym> back end database (<Emphasis>very</Emphasis> quickly).
 
 <Para>
 Playing around with MS Access will help you sort this out.  Try using
@@ -88,11 +112,107 @@ You'll have to set up a DSN first.
 </Para>
 </Tip>
 
+<!--
 <Para>
 <Tip>
 <Para>
-The PostgreSQL datetime type will break MS Access.
+The <productname>Postgres</productname> datetime type will break MS Access.
 </Para>
 </Tip>
+-->
+
+<sect1>
+<title><productname>Unix</productname> Applications</title>
+
+<para>
+<productname>ApplixWare</productname> has an <acronym>ODBC</acronym> database interface
+supported on at least some platforms. <productname>ApplixWare</productname> v4.4.1 has been
+demonstrated under Linux with <productname>Postgres</productname> v6.4 
+using the <productname>psqlODBC</productname>
+driver contained in the <productname>Postgres</productname> distribution.
+
+<sect2>
+<title>Configuration Files</title>
+
+<para>
+The <filename>~/.odbc.ini</filename> contains user-specified access information 
+for the <productname>psqlODBC</productname>
+driver. The file uses conventions typical for <productname>Windows</productname> 
+Registry files, but despite this
+restriction can be made to work.
+
+<para>
+Here is an example <filename>.odbc.ini</filename> file, 
+showing access information for three databases:
+
+<programlisting>
+[ODBC Data Sources]
+DataEntry = Read/Write Database
+QueryOnly = Read-only Database
+Test = Debugging Database
+Default = Postgres Stripped
+
+[DataEntry]
+ReadOnly = 0
+Servername = localhost
+Database = Sales
+
+[QueryOnly]
+ReadOnly = 1
+Servername = localhost
+Database = Sales
+
+[Test]
+Debug = 1
+CommLog = 1
+ReadOnly = 0
+Servername = localhost
+Username = tgl
+Password = "no$way"
+Port = 5432
+Database = test
+
+[Default]
+Servername = localhost
+Database = tgl
+Driver = /opt/postgres/current/lib/libpsqlodbc.so
+
+[ODBC]
+InstallDir = /opt/applix/axdata/axshlib
+</programlisting>
+
+<para>
+For Applix, here is an example ~/axhome/macros/login.am file:
+<programlisting>
+macro login
+        set_set_system_var@("sql_username@","tgl")
+        set_system_var@("sql_passwd@","no$way")
+endmacro
+</programlisting>
+
+<sect1>
+<title>Supported Platforms</title>
+
+<para>
+<productname>psqlODBC</productname> has been built and tested 
+on <productname>Linux</productname>. There have been reports of success 
+with FreeBSD and with Solaris.
 
 </Chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
