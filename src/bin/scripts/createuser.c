@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/createuser.c,v 1.3 2003/05/27 19:36:54 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/createuser.c,v 1.4 2003/06/11 05:13:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ help(const char *progname)
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME       database server host\n"));
+	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to create)\n"));
 	printf(_("  -W, --password            prompt for password to connect\n"));

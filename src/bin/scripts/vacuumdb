@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.27 2003/05/14 03:26:03 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/vacuumdb,v 1.28 2003/06/11 05:13:12 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -140,7 +140,7 @@ if [ "$usage" ]; then
 	echo " --help                           show this help, then exit"
 	echo
 	echo "Connection options:"
-	echo "  -h, --host=HOSTNAME             database server host"
+	echo "  -h, --host=HOSTNAME             database server host or socket directory"
 	echo "  -p, --port=PORT                 database server port"
 	echo "  -U, --username=USERNAME         user name to connect as"
 	echo "  -W, --password                  prompt for password"

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.331 2003/05/30 22:55:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.332 2003/06/11 05:13:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,7 +694,7 @@ help(const char *progname)
 			 "                           disable triggers during data-only restore\n"));
 
 	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
+	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));

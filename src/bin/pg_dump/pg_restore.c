@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.45 2003/04/04 20:42:13 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.46 2003/06/11 05:13:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,7 +409,7 @@ usage(const char *progname)
 			 "                           disable triggers during data-only restore\n"));
 
 	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
+	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));

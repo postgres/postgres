@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.20 2003/05/30 23:55:10 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.21 2003/06/11 05:13:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,7 @@ help(void)
 	printf(_("  --version                output version information, then exit\n"));
 
 	printf(_("\nConnection options:\n"));
-	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
+	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));

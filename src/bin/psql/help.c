@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.72 2003/04/14 16:23:36 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.73 2003/06/11 05:13:11 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -123,7 +123,7 @@ usage(void)
 	puts(_("\nConnection options:"));
 	/* Display default host */
 	env = getenv("PGHOST");
-	printf(_("  -h HOSTNAME     specify database server host (default: %s)\n"),
+	printf(_("  -h HOSTNAME     specify database server host or socket directory (default: %s)\n"),
 		   env ? env : _("local socket"));
 	/* Display default port */
 	env = getenv("PGPORT");

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/dropdb.c,v 1.3 2003/05/27 19:36:54 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/dropdb.c,v 1.4 2003/06/11 05:13:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ help(const char *progname)
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -i, --interactive         prompt before deleting anything\n"));
 	printf(_("  -q, --quiet               don't write any messages\n"));
-	printf(_("  -h, --host=HOSTNAME       database server host\n"));
+	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as\n"));
 	printf(_("  -W, --password            prompt for password\n"));
