@@ -4,7 +4,7 @@
 #    Makefile for storage/buffer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.9 1998/05/04 15:44:39 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/buffer/Makefile,v 1.10 1998/05/04 16:58:37 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 

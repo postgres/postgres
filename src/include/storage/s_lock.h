@@ -7,39 +7,39 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.31 1998/05/04 02:02:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.32 1998/05/04 16:58:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 DESCRIPTION
- *      The public functions that must be provided are:
+ *		The public functions that must be provided are:
  *
- *      void S_INIT_LOCK(slock_t *lock)
+ *		void S_INIT_LOCK(slock_t *lock)
  *
  *		void S_LOCK(slock_t *lock)
  *
- *      void S_UNLOCK(slock_t *lock)
+ *		void S_UNLOCK(slock_t *lock)
  *
- *      int S_LOCK_FREE(slock_t *lock) 
- *      	Tests if the lock is free. Returns non-zero if free, 0 if locked.
+ *		void S_LOCK_FREE(slock_t *lock)
+ *			Tests if the lock is free. Returns non-zero if free, 0 if locked.
  *
- *      The S_LOCK() function (in s_lock.c) implements a primitive but
- *		still useful random backoff to avoid hordes of busywaiting lockers
- *		chewing CPU.
+ *		The S_LOCK() macro	implements a primitive but still useful random
+ *		backoff to avoid hordes of busywaiting lockers chewing CPU.
  *
+ *		Effectively:
  *		void
  *		S_LOCK(slock_t *lock)
  *		{
- *		    while (TAS(lock))
- *		    {
+ *			while (TAS(lock))
+ *			{
  *			// back off the cpu for a semi-random short time
- *		    }
+ *			}
  *		}
  *
- *		This implementation takes advantage of a tas function written 
- *      (in assembly language) on machines that have a native test-and-set
- *      instruction. Alternative mutex implementations may also be used.
+ *		This implementation takes advantage of a tas function written
+ *		(in assembly language) on machines that have a native test-and-set
+ *		instruction. Alternative mutex implementations may also be used.
  *		This function is hidden under the TAS macro to allow substitutions.
  *
  *		#define TAS(lock) tas(lock)
@@ -62,7 +62,7 @@
  *		override them.
  *
  */
-#ifndef S_LOCK_H
+#if !defined(S_LOCK_H)
 #define S_LOCK_H
 
 #include "storage/ipc.h"
@@ -78,16 +78,15 @@
 
 #define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
 
-#endif							/* defined(__alpha__) && defined(linux) */
+#endif /* __alpha__ */
 
 
 
 
-#else /* defined(linux) */
+#else /* linux */
 /***************************************************************************
  * All non Linux
  */
-#endif
 
 #if defined (nextstep)
 /*
@@ -104,7 +103,7 @@
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
 #define S_LOCK_FREE(alock)	((alock)->lock == 0)
 
-#endif							/* nextstep */
+#endif /* nextstep */
 
 
 
@@ -118,37 +117,26 @@
  * assembly from his NECEWS SVR4 port, but we probably ought to retain this
  * for the R3000 chips out there.
  */
-#define S_LOCK(lock)	do \
-						{ \
-							while (!acquire_lock(lock)) \
-								; \
-						} while (0)
+#define TAS(lock)	(!acquire_lock(lock))
 
 #define S_UNLOCK(lock)	release_lock(lock)
 
 #define S_INIT_LOCK(lock)	init_lock(lock)
 
-/* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
-
 #define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
 
-#endif							/* __sgi */
+#endif /* __sgi */
 
 
+
+#if (defined(__alpha__)
 /*
  * OSF/1 (Alpha AXP)
  *
  * Note that slock_t on the Alpha AXP is msemaphore instead of char
  * (see storage/ipc.h).
  */
-
-#if defined(__alpha) && !defined(linux)
-
-#define S_LOCK(lock)	do \
-						{ \
-							while (msem_lock((lock), MSEM_IF_NOWAIT) < 0) \
-								; \
-						} while (0)
+#define TAS(lock)	(msem_lock((lock), MSEM_IF_NOWAIT) < 0)
 
 #define S_UNLOCK(lock)	msem_unlock((lock), 0)
 
@@ -156,303 +144,109 @@
 
 #define S_LOCK_FREE(lock)	(!(lock)->msem_state)
 
-#endif							/* alpha */
+#endif /* __alpha__ */
 
-/*
- * Solaris 2
- */
 
-#if (defined(__i386__) || defined(__sparc__)) && defined(__sun__)
-/* for xxxxx_solaris, this is defined in port/.../tas.s */
 
-static int	tas(slock_t *lock);
-
-#define S_LOCK(lock)	do \
-						{ \
-							while (tas(lock)) \
-								; \
-						} while (0)
-
-#define S_UNLOCK(lock)	(*(lock) = 0)
-
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#endif							/* i86pc_solaris || sparc_solaris */
-
+#if defined(_AIX)
 /*
  * AIX (POWER)
  *
  * Note that slock_t on POWER/POWER2/PowerPC is int instead of char
  * (see storage/ipc.h).
  */
+#define TAS(lock)	cs((int *) (lock), 0, 1)
 
-#if defined(_AIX)
+#endif /* _AIX */
 
-#define S_LOCK(lock)	do \
-						{ \
-							while (cs((int *) (lock), 0, 1)) \
-								; \
-						} while (0)
 
-#define S_UNLOCK(lock)	(*(lock) = 0)
 
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#endif							/* _AIX */
-
+#if defined(__hpux)
 /*
  * HP-UX (PA-RISC)
  *
  * Note that slock_t on PA-RISC is a structure instead of char
  * (see storage/ipc.h).
+ *
+ * a "set" slock_t has a single word cleared.  a "clear" slock_t has
+ * all words set to non-zero. tas() in tas.s
  */
-
-#if defined(__hpux)
-
-/*
-* a "set" slock_t has a single word cleared.  a "clear" slock_t has
-* all words set to non-zero.
-*/
-static slock_t clear_lock = {-1, -1, -1, -1};
-
-static int	tas(slock_t *lock);
-
-#define S_LOCK(lock)	do \
-						{ \
-							while (tas(lock)) \
-								; \
-						} while (0)
+static slock_t clear_lock =
+{-1, -1, -1, -1};
 
 #define S_UNLOCK(lock)	(*(lock) = clear_lock)	/* struct assignment */
 
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 
-#endif							/* __hpux */
+#endif /* __hpux */
 
-/*
- * sun3
+
+
+#endif /* else defined(linux) */
+
+
+
+
+/****************************************************************************
+ * Default Definitions - override these above as needed.
  */
 
-#if defined(sun3)
+#if !defined(S_LOCK)
 
-static int	tas(slock_t *lock);
+#include <sys/time.h>
 
-#define S_LOCK(lock)	do \
-						{ \
-							while (tas(lock)) \
-								; \
-						} while (0)
+#define S_NSPINCYCLE	16
+#define S_MAX_BUSY		1000 * S_NSPINCYCLE
 
-#define S_UNLOCK(lock)	(*(lock) = 0)
+extern int	s_spincycle[];
+extern void s_lock_stuck(slock_t *lock, char *file, int line);
 
+#if defined(S_LOCK_DEBUG)
+
+extern void s_lock(slock_t *lock);
+
+#define S_LOCK(lock) s_lock(lock, __FILE__, __LINE__)
+
+#else /* S_LOCK_DEBUG */
+
+#define S_LOCK(lock) if (1) { \
+	int spins = 0; \
+	while (TAS(lock)) { \
+		struct timeval	delay; \
+		delay.tv_sec = 0; \
+		delay.tv_usec = s_spincycle[spins++ % S_NSPINCYCLE]; \
+		(void) select(0, NULL, NULL, NULL, &delay); \
+		if (spins > S_MAX_BUSY) { \
+			/* It's been well over a minute...  */ \
+			s_lock_stuck(lock, __FILE__, __LINE__); \
+		} \
+	} \
+} else
+
+#endif /* S_LOCK_DEBUG */
+#endif /* S_LOCK */
+
+
+
+#if !defined(S_LOCK_FREE)
+#define S_LOCK_FREE(lock)	((*lock) == 0)
+#endif /* S_LOCK_FREE */
+
+#if !defined(S_UNLOCK)
+#define S_UNLOCK(lock)		(*(lock) = 0)
+#endif /* S_UNLOCK */
+
+#if !defined(S_INIT_LOCK)
 #define S_INIT_LOCK(lock)	S_UNLOCK(lock)
+#endif /* S_INIT_LOCK */
 
-static int
-tas_dummy()
-{
-	asm("LLA0:");
-	asm("	.data");
-	asm("	.text");
-	asm("|#PROC# 04");
-	asm("	.globl	_tas");
-	asm("_tas:");
-	asm("|#PROLOGUE# 1");
-	asm("	movel   sp@(0x4),a0");
-	asm("	tas	a0@");
-	asm("	beq	LLA1");
-	asm("	moveq   #-128,d0");
-	asm("	rts");
-	asm("LLA1:");
-	asm("	moveq   #0,d0");
-	asm("	rts");
-	asm("	.data");
-}
+#if !defined(TAS)
+int			tas(slock_t *lock); /* port/.../tas.s, or s_lock.c */
 
-#endif							/* sun3 */
-
-/*
- * sparc machines
- */
-
-#if defined(NEED_SPARC_TAS_ASM)
-
-/* if we're using -ansi w/ gcc, use __asm__ instead of asm */
-#if defined(__STRICT_ANSI__)
-#define asm(x)	__asm__(x)
-#endif
-
-static int	tas(slock_t *lock);
-
-static void
-tas_dummy()
-{
-	asm(".seg \"data\"");
-	asm(".seg \"text\"");
-	asm("_tas:");
-
-	/*
-	 * Sparc atomic test and set (sparc calls it "atomic load-store")
-	 */
-
-	asm("ldstub [%r8], %r8");
-
-	/*
-	 * Did test and set actually do the set?
-	 */
-
-	asm("tst %r8");
-
-	asm("be,a ReturnZero");
-
-	/*
-	 * otherwise, just return.
-	 */
-
-	asm("clr %r8");
-	asm("mov 0x1, %r8");
-	asm("ReturnZero:");
-	asm("retl");
-	asm("nop");
-}
-
-#define S_LOCK(addr)	do \
-						{ \
-							while (tas(addr)) \
-								; \
-						} while (0)
-
-/*
- * addr should be as in the above S_LOCK routine
- */
-#define S_UNLOCK(addr)	(*(addr) = 0)
-
-#define S_INIT_LOCK(addr)	(*(addr) = 0)
-
-#endif							/* NEED_SPARC_TAS_ASM */
-
-/*
- * VAXen -- even multiprocessor ones
- */
-
-#if defined(NEED_VAX_TAS_ASM)
-
-#define S_LOCK(addr)		__asm__("1: bbssi $0,(%0),1b": :"r"(addr))
-#define S_UNLOCK(addr)		(*(addr) = 0)
-#define S_INIT_LOCK(addr)	(*(addr) = 0)
-
-#endif							/* NEED_VAX_TAS_ASM */
-
-/*
- * i386 based things
- */
-
-#if defined(NEED_I386_TAS_ASM)
-
-#if defined(USE_UNIVEL_CC)
-asm void
-S_LOCK(char *lval)
-{
-% lab again;
-/* Upon entry, %eax will contain the pointer to the lock byte */
-	pushl %ebx
-	xchgl %eax, %ebx
-	movb $255, %al
-again:
-	lock
-	xchgb %al, (%ebx)
-	cmpb $0, %al
-	jne again
-	popl %ebx
-}
-
-#else
-#define S_LOCK(lock)	do \
-						{ \
-							slock_t		_res; \
-							do \
-							{ \
-				__asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(0x1)); \
-							} while (_res != 0); \
-						} while (0)
-#endif
-
-#define S_UNLOCK(lock)	(*(lock) = 0)
-
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#endif							/* NEED_I386_TAS_ASM */
+#define TAS(lock)		tas(lock)
+#endif /* TAS */
 
 
-#if defined(__alpha) && defined(linux)
+#endif /* HAS_TEST_AND_SET */
 
-void		S_LOCK(slock_t *lock);
-
-#define S_UNLOCK(lock) { __asm__("mb"); *(lock) = 0; }
-
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#endif							/* defined(__alpha) && defined(linux) */
-
-#if defined(linux) && defined(sparc)
-
-#define S_LOCK(lock)	do \
-						{ \
-							slock_t		_res; \
-							slock_t		*tmplock = lock ; \
-							do \
-							{ \
-								__asm__("ldstub [%1], %0" \
-						:		"=&r"(_res), "=r"(tmplock) \
-						:		"1"(tmplock)); \
-							} while (_res != 0); \
-						} while (0)
-
-#define S_UNLOCK(lock)	(*(lock) = 0)
-
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#endif							/* defined(linux) && defined(sparc) */
-
-#if defined(linux) && defined(PPC)
-
-static int
-tas_dummy()
-{
-	__asm__("	\n\
-tas:			\n\
-	lwarx	5,0,3	\n\
-	cmpwi	5,0	\n\
-	bne	fail	\n\
-	addi	5,5,1	\n\
-        stwcx.  5,0,3	\n\
-        beq	success	\n\
-fail:	li	3,1	\n\
-	blr		\n\
-success:		\n\
-	li 3,0		\n\
-        blr		\n\
-	");
-}
-
-#define S_LOCK(lock)	do \
-						{ \
-							while (tas(lock)) \
-								; \
-						} while (0)
-
-#define S_UNLOCK(lock)	(*(lock) = 0)
-
-#define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-
-#endif							/* defined(linux) && defined(PPC) */
-
-#ifndef S_LOCK_FREE				/* for those who have not already defined
-								 * it */
-#define S_LOCK_FREE(lock)		((*lock) == 0)
-#endif
-
-#endif							/* HAS_TEST_AND_SET */
-
-#endif							/* S_LOCK_H */
+#endif /* S_LOCK_H */
