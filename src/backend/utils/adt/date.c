@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.63 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64 2001/11/21 05:57:33 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -813,7 +813,7 @@ time_mi_time(PG_FUNCTION_ARGS)
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	result->time = time2 - time1;
+	result->time = time1 - time2;
 	result->month = 0;
 
 	PG_RETURN_INTERVAL_P(result);
