@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/destroydb.sh,v 1.1.1.1 1996/07/09 06:22:12 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/destroydb.sh,v 1.2 1996/07/25 06:55:41 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ done
 AUTHOPT="-a $AUTHSYS"
 [ -z "$AUTHSYS" ] && AUTHOPT=""
 
-monitor -TN -h $PGHOST -p $PGPORT -c "drop database $dbname" template1
+psql -Tq -H $PGHOST -p $PGPORT -c "drop database $dbname" template1
 
 if [ $? -ne 0 ]
 then

@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.1.1.1 1996/07/09 06:22:12 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.2 1996/07/25 06:55:30 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -55,13 +55,13 @@ done
 AUTHOPT="-a $AUTHSYS"
 [ -z "$AUTHSYS" ] && AUTHOPT=""
 
-MARGS="-TN $AUTHOPT -h $PGHOST -p $PGPORT"
+PARGS="-T -q $AUTHOPT -H $PGHOST -p $PGPORT"
 
 #
 # generate the first part of the actual monitor command
 #
 
-MONITOR="monitor $MARGS"
+PSQL="psql $PARGS"
 
 #
 # see if user $USER is allowed to create new users
@@ -70,7 +70,7 @@ MONITOR="monitor $MARGS"
 QUERY="select usesuper from pg_user where usename = '$USER'"
 #echo $QUERY
 
-ADDUSER=`$MONITOR -TN -c "$QUERY" template1`
+ADDUSER=`$PSQL -c "$QUERY" template1`
 
 if [ $? -ne 0 ]
 then
@@ -100,7 +100,7 @@ fi
 
 QUERY="select usesysid from pg_user where usename = '$NEWUSER'"
 
-RES=`$MONITOR -TN -c "$QUERY" template1`
+RES=`$PSQL -c "$QUERY" template1`
 
 if [ $? -ne 0 ]
 then
@@ -142,7 +142,7 @@ do
 		exit 1
 	fi
 	QUERY="select usename from pg_user where usesysid = '$SYSID'::int4"
-	RES=`$MONITOR -TN -c "$QUERY" template1`
+	RES=`$PSQL -c "$QUERY" template1`	
 	if [ $? -ne 0 ]
 	then
 		echo "$CMDNAME: database access failed."
@@ -206,7 +206,7 @@ QUERY="insert into pg_user \
        values \
          ('$NEWUSER', $SYSID, '$CANCREATE', 't', '$CANADDUSER','t')"
 
-RES=`$MONITOR -TN -c "$QUERY" template1`
+RES=`$PSQL -c "$QUERY" template1`
 
 #
 # Wrap things up.  If the user was created successfully, AND the user was

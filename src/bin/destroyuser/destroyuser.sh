@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.1.1.1 1996/07/09 06:22:12 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.2 1996/07/25 06:55:49 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -55,12 +55,13 @@ done
 AUTHOPT="-a $AUTHSYS"
 [ -z "$AUTHSYS" ] && AUTHOPT=""
 
-MARGS="-TN $AUTHOPT -p $PGPORT -h $PGHOST"
+PARGS="-Tq $AUTHOPT -p $PGPORT -H $PGHOST"
 
 #
 # generate the first part of the actual monitor command
 #
-MONITOR="monitor $MARGS"
+PSQL="psql $PARGS"
+
 
 #
 # see if user $USER is allowed to create new users.  Only a user who can
@@ -68,7 +69,7 @@ MONITOR="monitor $MARGS"
 #
 
 QUERY="select usesuper from pg_user where usename = '$USER'"
-ADDUSER=`$MONITOR -c "$QUERY" template1`
+ADDUSER=`$PSQL -c "$QUERY" template1`
 
 if [ $? -ne 0 ]
 then
@@ -93,7 +94,7 @@ fi
 
 QUERY="select usesysid from pg_user where usename = '$DELUSER'"
 
-RES=`$MONITOR -c "$QUERY" template1`
+RES=`$PSQL -c "$QUERY" template1`
 
 if [ $? -ne 0 ]
 then
@@ -117,7 +118,7 @@ SYSID=`echo $RES | sed 's/ //g'`
 QUERY="select datname from pg_database where datdba = '$SYSID'::oid"
        
 
-ALLDBS=`$MONITOR -c "$QUERY" template1`
+ALLDBS=`$PSQL -c "$QUERY" template1`
 
 if [ $? -ne 0 ]
 then
@@ -170,7 +171,7 @@ then
         echo "destroying database $i"
 
         QUERY="drop database $i"
-        $MONITOR -c "$QUERY" template1
+        $PSQL -c "$QUERY" template1
         if [ $? -ne 0 ]
         then
             echo "$CMDNAME: drop database on $i failed - exiting"
@@ -181,7 +182,7 @@ fi
 
 QUERY="delete from pg_user where usename = '$DELUSER'"
 
-$MONITOR -c "$QUERY" template1
+$PSQL -c "$QUERY" template1
 if [ $? -ne 0 ]
 then
     echo "$CMDNAME: delete of user $DELUSER was UNSUCCESSFUL"
