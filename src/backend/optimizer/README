@@ -52,7 +52,7 @@ planner()
            if a join from the join clause adds only one relation, do the join
          or find_clauseless_joins()
        find_all_join_paths()
-        generate paths(nested,mergesort) for joins found in find_join_rels()
+        generate paths(nested,sortmerge) for joins found in find_join_rels()
        prune_joinrels()
         remove from the join list the relation we just added to each join
        prune_rel_paths()

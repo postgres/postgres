@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.6 1997/11/26 01:13:48 momjian Exp $
+ * $Id: planmain.h,v 1.7 1997/12/18 12:21:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,7 @@
 /*
  * prototypes for plan/planmain.c
  */
-extern Plan *
-query_planner(Query *root,
+extern Plan *query_planner(Query *root,
 			  int command_type, List *tlist, List *qual);
 
 
@@ -30,15 +29,12 @@ query_planner(Query *root,
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(Path *best_path);
-extern SeqScan *
-make_seqscan(List *qptlist, List *qpqual, Index scanrelid,
+extern SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid,
 			 Plan *lefttree);
-extern Sort *
-make_sort(List *tlist, Oid tempid, Plan *lefttree,
+extern Sort *make_sort(List *tlist, Oid tempid, Plan *lefttree,
 		  int keycount);
-extern Agg *make_agg(List *tlist, int nagg, Aggreg **aggs);
-extern Group *
-make_group(List *tlist, bool tuplePerGroup, int ngrp,
+extern Agg *make_agg(List *tlist, int nagg, Aggreg **aggs, Plan *lefttree);
+extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Sort *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
 extern List *generate_fjoin(List *tlist);
@@ -56,11 +52,9 @@ extern void add_missing_vars_to_base_rels(Query *root, List *tlist);
  * prototypes for plan/setrefs.c
  */
 extern void set_tlist_references(Plan *plan);
-extern List *
-join_references(List *clauses, List *outer_tlist,
+extern List *join_references(List *clauses, List *outer_tlist,
 				List *inner_tlist);
-extern List *
-index_outerjoin_references(List *inner_indxqual,
+extern List *index_outerjoin_references(List *inner_indxqual,
 						   List *outer_tlist, Index inner_relid);
 extern void set_result_tlist_references(Result *resultNode);
 extern void set_agg_tlist_references(Agg *aggNode);
