@@ -26,6 +26,7 @@ void cube_scanner_finish(void);
 
 %option 8bit
 %option never-interactive
+%option nodefault
 %option nounput
 %option noyywrap
 %option prefix="cube_yy"
@@ -44,7 +45,7 @@ float        ({integer}|{real})([eE]{integer})?
 \(           yylval = "("; return O_PAREN;
 \)           yylval = ")"; return C_PAREN;
 \,           yylval = ")"; return COMMA;
-[ ]+         /* discard spaces */
+[ \t\n\r\f]+ /* discard spaces */
 .            return yytext[0]; /* alert parser of the garbage */
 
 %%

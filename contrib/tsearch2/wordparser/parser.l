@@ -18,6 +18,7 @@ YY_BUFFER_STATE buf = NULL; /* buffer to parse; it need for parse from string */
 
 %option 8bit
 %option never-interactive
+%option nodefault
 %option nounput
 %option noyywrap
 

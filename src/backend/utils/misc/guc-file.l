@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.20 2003/11/29 19:52:03 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.21 2004/02/24 22:06:32 tgl Exp $
  */
 
 %{
@@ -47,6 +47,7 @@ char *GUC_scanstr(char *);
 
 %option 8bit
 %option never-interactive
+%option nodefault
 %option nounput
 %option noyywrap
 

@@ -25,6 +25,7 @@ void seg_scanner_finish(void);
 
 %option 8bit
 %option never-interactive
+%option nodefault
 %option nounput
 %option noyywrap
 %option prefix="seg_yy"
@@ -44,7 +45,7 @@ float        ({integer}|{real})([eE]{integer})?
 \<           yylval.text = "<"; return EXTENSION;
 \>           yylval.text = ">"; return EXTENSION;
 \~           yylval.text = "~"; return EXTENSION;
-[ ]+         /* discard spaces */
+[ \t\n\r\f]+ /* discard spaces */
 .            return yytext[0]; /* alert parser of the garbage */
 
 %%
