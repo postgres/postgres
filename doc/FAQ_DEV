@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Nov 27 19:36:27 EST 2001
+   Last updated: Tue Nov 27 20:20:21 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -446,7 +446,8 @@ typedef struct nameData
   15) How are RPM's packaged?
   
    This was written by Lamar Owen:
-Thu, 03 May 2001 21:22:05 -0400
+2001-05-03
+
 As to how the RPMs are built -- to answer that question sanely requires
 me to know how much experience you have with the whole RPM paradigm.
 'How is the RPM built?' is a multifaceted question.  The obvious simple
@@ -537,7 +538,8 @@ necessary to build RPMs from their Official Tarball (TM).
   16) How are CVS branches managed?
   
    This was written by Tom Lane:
-Mon, 07 May 2001 19:35:03 -0400
+2001-05-07
+
 If you just do basic "cvs checkout", "cvs update", "cvs commit", then
 you'll always be dealing with the HEAD version of the files in CVS.
 That's what you want for development, but if you need to patch past
@@ -597,7 +599,8 @@ or two, so that we won't have to double-patch the first wave of fixes.
   17) How go I get involved in PostgreSQL development?
   
    This was written by Lamar Owen:
-Fri, 22 Jun 2001 12:59:03 -0400
+2001-06-22
+
 > If someone was interested in joining the development team, where would
 > they...
 > -  Find a description of the open source development process used by the
