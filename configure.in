@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.272 2003/08/01 19:12:52 tgl Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.273 2003/08/03 20:23:14 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -647,7 +647,10 @@ AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
 AC_CHECK_LIB(unix, main)
 AC_SEARCH_LIBS(crypt,  crypt)
 # BeOS:
-AC_CHECK_LIB(bind, __inet_ntoa)
+if test "$PORTNAME" = "beos"
+then
+	AC_CHECK_LIB(bind, __inet_ntoa)
+fi
 # Solaris:
 AC_SEARCH_LIBS(fdatasync, [rt posix4])
 # Cygwin:

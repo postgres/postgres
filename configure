@@ -5670,6 +5670,8 @@ if test "$ac_cv_search_crypt" != no; then
 fi
 
 # BeOS:
+if test "$PORTNAME" = "beos"
+then
 
 echo "$as_me:$LINENO: checking for __inet_ntoa in -lbind" >&5
 echo $ECHO_N "checking for __inet_ntoa in -lbind... $ECHO_C" >&6
@@ -5735,6 +5737,7 @@ _ACEOF
 
 fi
 
+fi
 # Solaris:
 echo "$as_me:$LINENO: checking for library containing fdatasync" >&5
 echo $ECHO_N "checking for library containing fdatasync... $ECHO_C" >&6
