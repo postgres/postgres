@@ -1,8 +1,12 @@
 :
 
 # This runs a build/initdb/regression test suite
-
-[ ! "$PGDATA" ] && echo "You must define PGDATA" 1>&2 && exit 1
+#
+# This will start a temporary postmaster, so you have to
+# have enough kernel resources to run two postmasters or
+# stop your main postmaster before running this script.
+#
+# Use -n to prevent 'gmake clean'
 
 [ ! -d src ] && echo "This must be run from the top of the PostgreSQL source tree" 1>&2 && exit 1
 
@@ -10,27 +14,15 @@ trap "rm -rf /tmp/$$" 0 1 2 3 15
 mkdir /tmp/$$
 TMP="/tmp/$$"
 
-pg_ctl stop
-rm -rf "$PGDATA"
+[ "X$1" != "X-n" ] && PGCLEAN=clean
 
-cd src
-
-# return command error value
-(gmake clean; gmake install 2>&1; echo "$?" > $TMP/ret) | 
+(gmake $PGCLEAN check 2>&1; echo "$?" > $TMP/ret) | 
 	(tee  $TMP/0; exit `cat $TMP/ret`) &&
-initdb &&
-pg_ctl start &&
-createdb test &&
-cd src/test/regress &&
-gmake clean &&
-gmake installcheck
-
+cat $TMP/0 |
 # The following grep's have to be adjusted for your setup because 
 # certain warnings are acceptable.
-
-cat $TMP/0 | 
-	grep -v warning |
-	grep -v setproctitle | 
-	grep -v find_rule | 
-	grep -v yy_flex_realloc |
-	grep -v '\[javac\] [0-9]* warning'
+grep warning | 
+grep -v setproctitle | 
+grep -v find_rule | 
+grep -v yy_flex_realloc |
+grep -v '\[javac\] [0-9]* warning'
