@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.74 2004/05/14 21:42:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.75 2004/05/16 23:18:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1668,6 +1668,7 @@ numeric_power(PG_FUNCTION_ARGS)
 	Numeric		res;
 	NumericVar	arg1;
 	NumericVar	arg2;
+	NumericVar	arg2_trunc;
 	NumericVar	result;
 
 	/*
@@ -1681,10 +1682,26 @@ numeric_power(PG_FUNCTION_ARGS)
 	 */
 	init_var(&arg1);
 	init_var(&arg2);
+	init_var(&arg2_trunc);
 	init_var(&result);
 
 	set_var_from_num(num1, &arg1);
 	set_var_from_num(num2, &arg2);
+	set_var_from_var(&arg2, &arg2_trunc);
+
+	trunc_var(&arg2_trunc, 0);
+
+	/*
+	 * Return special SQLSTATE error codes for a few conditions
+	 * mandated by the standard.
+	 */
+	if ((cmp_var(&arg1, &const_zero) == 0 &&
+		 cmp_var(&arg2, &const_zero) < 0) ||
+		(cmp_var(&arg1, &const_zero) < 0 &&
+		 cmp_var(&arg2, &arg2_trunc) != 0))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
+				 errmsg("invalid argument for power function")));
 
 	/*
 	 * Call power_var() to compute and return the result; note it handles
@@ -1696,6 +1713,7 @@ numeric_power(PG_FUNCTION_ARGS)
 
 	free_var(&result);
 	free_var(&arg2);
+	free_var(&arg2_trunc);
 	free_var(&arg1);
 
 	PG_RETURN_NUMERIC(res);
@@ -4408,10 +4426,16 @@ ln_var(NumericVar *arg, NumericVar *result, int rscale)
 	NumericVar	elem;
 	NumericVar	fact;
 	int			local_rscale;
+	int			cmp;
 
-	if (cmp_var(arg, &const_zero) <= 0)
+	cmp = cmp_var(arg, &const_zero);
+	if (cmp == 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
+				 errmsg("cannot take logarithm of zero")));
+	else if (cmp < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
 				 errmsg("cannot take logarithm of a negative number")));
 
 	local_rscale = rscale + 8;

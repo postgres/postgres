@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.104 2004/05/07 00:24:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.105 2004/05/16 23:18:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1415,7 +1415,7 @@ dsqrt(PG_FUNCTION_ARGS)
 
 	if (arg1 < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
 				 errmsg("cannot take square root of a negative number")));
 
 	result = sqrt(arg1);
@@ -1448,6 +1448,16 @@ dpow(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		arg2 = PG_GETARG_FLOAT8(1);
 	float8		result;
+
+	/*
+	 * The SQL spec requires that we emit a particular SQLSTATE error
+	 * code for certain error conditions.
+	 */
+	if ((arg1 == 0 && arg2 < 0) ||
+		(arg1 < 0 && floor(arg2) != arg2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION),
+				 errmsg("invalid argument for power function")));
 
 	/*
 	 * We must check both for errno getting set and for a NaN result, in
@@ -1501,7 +1511,6 @@ dexp(PG_FUNCTION_ARGS)
 
 /*
  *		dlog1			- returns the natural logarithm of arg1
- *						  ("dlog" is already a logging routine...)
  */
 Datum
 dlog1(PG_FUNCTION_ARGS)
@@ -1509,14 +1518,17 @@ dlog1(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/*
+	 * Emit particular SQLSTATE error codes for ln(). This is required
+	 * by the SQL standard.
+	 */
 	if (arg1 == 0.0)
 		ereport(ERROR,
-				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
 				 errmsg("cannot take logarithm of zero")));
-
 	if (arg1 < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
 				 errmsg("cannot take logarithm of a negative number")));
 
 	result = log(arg1);
@@ -1535,14 +1547,19 @@ dlog10(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/*
+	 * Emit particular SQLSTATE error codes for log(). The SQL spec
+	 * doesn't define log(), but it does define ln(), so it makes
+	 * sense to emit the same error code for an analogous error
+	 * condition.
+	 */
 	if (arg1 == 0.0)
 		ereport(ERROR,
-				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
 				 errmsg("cannot take logarithm of zero")));
-
 	if (arg1 < 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_FLOATING_POINT_EXCEPTION),
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_LOG),
 				 errmsg("cannot take logarithm of a negative number")));
 
 	result = log10(arg1);

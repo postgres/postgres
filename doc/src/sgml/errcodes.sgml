@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.5 2004/05/14 21:42:27 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.6 2004/05/16 23:18:52 neilc Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -308,6 +308,16 @@
 <row>
 <entry><literal>22015</literal></entry>
 <entry>INTERVAL FIELD OVERFLOW</entry>
+</row>
+
+<row>
+<entry><literal>2201E</literal></entry>
+<entry>INVALID ARGUMENT FOR LOGARITHM</entry>
+</row>
+
+<row>
+<entry><literal>2201F</literal></entry>
+<entry>INVALID ARGUMENT FOR POWER FUNCTION</entry>
 </row>
 
 <row>
