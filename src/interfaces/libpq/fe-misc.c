@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.102 2003/08/08 21:42:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.103 2003/10/19 21:36:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -828,7 +828,24 @@ pqSendSome(PGconn *conn, int len)
 				break;
 			}
 
-			if (pqWait(FALSE, TRUE, conn))
+			/*
+			 * There are scenarios in which we can't send data because the
+			 * communications channel is full, but we cannot expect the server
+			 * to clear the channel eventually because it's blocked trying to
+			 * send data to us.  (This can happen when we are sending a large
+			 * amount of COPY data, and the server has generated lots of
+			 * NOTICE responses.)  To avoid a deadlock situation, we must be
+			 * prepared to accept and buffer incoming data before we try
+			 * again.  Furthermore, it is possible that such incoming data
+			 * might not arrive until after we've gone to sleep.  Therefore,
+			 * we wait for either read ready or write ready.
+			 */
+			if (pqReadData(conn) < 0)
+			{
+				result = -1;	/* error message already set up */
+				break;
+			}
+			if (pqWait(TRUE, TRUE, conn))
 			{
 				result = -1;
 				break;

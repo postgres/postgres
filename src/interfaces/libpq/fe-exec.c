@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.151 2003/10/04 21:05:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.152 2003/10/19 21:36:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1336,6 +1336,17 @@ PQputCopyData(PGconn *conn, const char *buffer, int nbytes)
 						  libpq_gettext("no COPY in progress\n"));
 		return -1;
 	}
+
+	/*
+	 * Check for NOTICE messages coming back from the server.  Since the
+	 * server might generate multiple notices during the COPY, we have to
+	 * consume those in a reasonably prompt fashion to prevent the comm
+	 * buffers from filling up and possibly blocking the server.
+	 */
+	if (!PQconsumeInput(conn))
+		return -1;				/* I/O failure */
+	parseInput(conn);
+
 	if (nbytes > 0)
 	{
 		/*
