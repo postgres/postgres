@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.78 1997/07/24 20:01:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.79 1997/08/01 03:33:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ usage(char *progname)
     fprintf(stderr, "\t -d dbName               specify database name\n");
     fprintf(stderr, "\t -e                      echo the query sent to the backend\n");
     fprintf(stderr, "\t -f filename             use file as a source of queries\n");
-    fprintf(stderr, "\t -F sep                  set the field separator (default is " ")\n");
+    fprintf(stderr, "\t -F sep                  set the field separator (default is "|")\n");
     fprintf(stderr, "\t -h host                 set database server host\n");
     fprintf(stderr, "\t -H                      turn on html3.0 table output\n");
     fprintf(stderr, "\t -l                      list available databases\n");
