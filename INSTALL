@@ -5,7 +5,7 @@ This is file /usr/src/pgsql/INSTALL.  It contains notes on how to install
 PostgreSQL v6.1.  Up to date information on PostgreSQL may be found at
 http://www.postgresql.org.
 
-PostgreSQL is a database server.  It is not completely ANSI SQL
+PostgreSQL is an RDBMS database server.  It is not completely ANSI SQL
 compliant, but with each release it gets closer.
 
 PostgreSQL, formerly called Postgres95, is a derivative of Postgres 4.2
@@ -49,6 +49,7 @@ PostgreSQL has been tested on the following platforms:
    i386_solaris   i386 Solaris
    irix5          SGI MIPS on IRIX 5.3
    linux          Intel x86 on Linux 2.0 and Linux ELF
+                  SPARC on Linux ELF
                   (For non-ELF Linux, see LINUX_ELF below).
    sparc_solaris  SUN SPARC on Solaris 2.4
    sunos4         SUN SPARC on SunOS 4.1.3
@@ -82,7 +83,7 @@ To upgrade to PostgreSQL v6.1 do the following:
   3) Log into account postgres.
 
   4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.1.tar.gz from the
-     internet.
+     internet.  Store it in your home directory.
 
   5) Some platforms use flex.  If your system uses flex then make sure
      you have a good version.  Type
@@ -116,15 +117,20 @@ To upgrade to PostgreSQL v6.1 do the following:
      /usr/bin/flex++ which points to flex.
 
   6) If you are upgrading an existing system from any version before
-     version 6.1 beta release 970512 then back up the current
-     database.  Type
+     version 6.1 beta release 970525 then back up the current
+     database.  (If you don't mind the restored tables being owned by
+     the postgres account then you may use your current pg_dumpall
+     script instead of the new pg_dumpall script used below.)  Type
+     (with the gunzip line and the following line typed as one line):
         cd
-        pg_dumpall > db.out
-     If you wish to preserve object id's (oids), type
-        cd
-        pg_dumpall -o > db.out
-     instead.  However, unless you have a special reason for doing this,
-     don't do it.
+        gunzip -c postgresql-v6.1.tar.gz |
+            tar xvf - src/bin/pg_dump/pg_dumpall
+        chmod a+x src/bin/pg_dump/pg_dumpall
+        src/bin/pg_dump/pg_dumpall > db.out
+        rm -rf src
+     If you wish to preserve object id's (oids), then use the -o
+     option when running pg_dumpall.  However, unless you have a
+     special reason for doing this, don't do it.
 
      Please note that if you are upgrading from a version prior to
      Postgres95 v1.09 then you must back up your database, install
@@ -370,15 +376,22 @@ To upgrade to PostgreSQL v6.1 do the following:
      in error handling for those math functions between this platform
      and the original Sun (?) Postgres v4.2 development environment.
 
-     Here is an example from a SPARC/Linux-ELF platform (note that this is
-     for an "unsupported" platform).  Using the 970516 beta version of
-     PostgreSQL v6.1 the following tests "failed". float8 and geometry
-     "failed" due to minor precision differences in floating point numbers.
-     timespan and horology had different values from the expected
-     "14 secs ago". datetime, abstime and tinterval had "GMT" for the time
-     zone rather than "PST" or "PDT". These differences were due to a
-     mis-typed string for the TZ environment variable from step (18).
-     select_views failed for unknown reasons.
+     Here is an example from the SPARC/Linux-ELF platform.  Using the
+     970525 beta version of PostgreSQL v6.1 the following tests "failed".
+     float8 and geometry "failed" due to minor precision differences in
+     floating point numbers.  float8 also "failed" due to a table being
+     printed out in place of the expected warning message of a floating
+     point number being out of range.  timespan and horology fail
+     because of a bug on this platform that causes a timespan of
+     "14 secs ago" to be returned as "1 day 23 hours 59 mins 46 secs
+     ago".  (If you don't intend to use the timespan data type, then
+     this will not be a problem for you.)  datetime also fails due
+     to similar problems with the timespan data type.  errors fail
+     due to a parsing error.  (This bug was introduced within the
+     previous week, and is probably in the regression test itself.)
+     select_views produces massively different output, but the
+     differences are probably due to the same reasons the other tests
+     failed.
 
      Conclusion?  If you do see failures, try to understand the nature of
      the differences and then decide if those differences will affect your
@@ -592,14 +605,8 @@ Linux:
                                 (Jalon Q. Zimmerman
                                 <sneaker@powergrid.electriciti.com> 5/11/95)
 
-        To compile with flex, you need a recent version (v2.5.2 or v2.5.4 or
-        later). Otherwise, you will get a 'yy_flush_buffer' undefined error.
-        Note, however, that flex v2.5.3 has a bug. See the FAQs.
-
 BSD/OS:
-        For BSD/OS 2.0 and 2.01, you will need to get flex version 2.5.2 or
-        flex version 2.5.4 as well as the GNU dld library.
-        Flex version 2.5.3 has a known bug on all platforms.
+        For BSD/OS 2.0 and 2.01, you will need to get the GNU dld library.
 
 NeXT:
         The NeXT port was supplied by Tom R. Hageman <tom@basil.icce.rug.nl>.
@@ -608,29 +615,4 @@ NeXT:
         a product so contact him for information.  He has also indicated that
         binary releases of PostgreSQL for NEXTSTEP will be made available to
         the general public.  Contact Info@RnA.nl for information.
-
-SPARC Linux-elf:
-        There was not time to finish adding support for this in the v6.1
-        release.  However, if you are running RedHat Linux v4.0 on a
-        SPARC platform then install flex v2.5.4 and tell configure you
-        have a "linux-elf" platform.  After running "configure" and before
-        compiling PostgreSQL, make the following changes:
-          1) Edit src/GNUmakefile to comment out the call to lexflex and
-             the if-then-else test that follows it.  (This may not be
-             necessary by the time v6.1 gets released.)
-          2) Edit src/Makefile.global to change "-O2" to "-O".
-          3) Edit src/backend/libpq/pqcomprim.c, near the start to replace
-                #ifdef        HAVE_ENDIAN_H
-                #  include    <endian.h>
-                #endif
-             with
-                /*
-                #ifdef        HAVE_ENDIAN_H
-                #  include    <endian.h>
-                #endif
-                */
-                #define BYTE_ORDER LITTLE_ENDIAN 
-        For more details, look in ftp://ftp.postgresql.org/pub/majordomo/ports
-        for a May 16, 1997 mail message called "regression tests on a
-        SPARC/Linux platform".
 
