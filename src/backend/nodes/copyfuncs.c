@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.22 1997/12/18 19:46:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.23 1997/12/23 19:53:30 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1466,6 +1466,19 @@ _copySortClause(SortClause *from)
 	return newnode;
 }
 
+#if FALSE
+static GroupClause *
+_copyGroupClause(GroupClause *from)
+{
+	GroupClause *newnode = makeNode(GroupClause);
+
+	Node_Copy(from, newnode, resdom);
+	newnode->opoid = from->opoid;
+
+	return newnode;
+}
+#endif
+
 static A_Const *
 _copyAConst(A_Const *from)
 {
@@ -1542,7 +1555,7 @@ _copyQuery(Query *from)
 	Node_Copy(from, newnode, havingQual); /* currently ignored */
 
 	newnode->qry_numAgg = from->qry_numAgg;
-	if (from->qry_numAgg != NULL)
+	if (from->qry_numAgg > 0)
 	{
 		newnode->qry_aggs =
 			(Aggreg **) palloc(sizeof(Aggreg *) * from->qry_numAgg);
@@ -1763,6 +1776,11 @@ copyObject(void *from)
 		case T_SortClause:
 			retval = _copySortClause(from);
 			break;
+#if FALSE
+		case T_GroupClause:
+			retval = _copyGroupClause(from);
+			break;
+#endif
 		case T_A_Const:
 			retval = _copyAConst(from);
 			break;
