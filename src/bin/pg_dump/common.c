@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.58 2001/10/03 20:54:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.59 2001/10/22 19:31:09 tgl Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -74,6 +74,8 @@ findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid, OidOptions opts)
 			return "'any'";
 		else if ((opts & zeroAsStar) != 0)
 			return "*";
+		else if ((opts & zeroAsNone) != 0)
+			return "NONE";
 	}
 
 	for (i = 0; i < numTypes; i++)

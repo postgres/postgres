@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.233 2001/10/03 20:54:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.234 2001/10/22 19:31:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3642,10 +3642,13 @@ dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators,
 		}
 
 		resetPQExpBuffer(delq);
-		appendPQExpBuffer(delq, "DROP OPERATOR %s (%s", oprinfo[i].oprname,
-		findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft, zeroAsOpaque));
+		appendPQExpBuffer(delq, "DROP OPERATOR %s (%s",
+						  oprinfo[i].oprname,
+						  findTypeByOid(tinfo, numTypes, oprinfo[i].oprleft,
+										zeroAsNone));
 		appendPQExpBuffer(delq, ", %s);\n",
-						  findTypeByOid(tinfo, numTypes, oprinfo[i].oprright, zeroAsOpaque));
+						  findTypeByOid(tinfo, numTypes, oprinfo[i].oprright,
+										zeroAsNone));
 
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q,
