@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.37 2000/04/12 17:16:27 momjian Exp $
+ * $Id: indexing.h,v 1.38 2000/06/07 02:44:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #define Num_pg_class_indices		2
 #define Num_pg_description_indices	1
 #define Num_pg_group_indices		2
-#define Num_pg_index_indices		1
+#define Num_pg_index_indices		2
 #define Num_pg_inherits_indices		1
 #define Num_pg_language_indices		2
 #define Num_pg_listener_indices		1
@@ -58,6 +58,7 @@
 #define DescriptionObjIndex			"pg_description_objoid_index"
 #define GroupNameIndex				"pg_group_name_index"
 #define GroupSysidIndex				"pg_group_sysid_index"
+#define IndexIndrelidIndex			"pg_index_indrelid_index"
 #define IndexRelidIndex				"pg_index_indexrelid_index"
 #define InheritsRelidSeqnoIndex		"pg_inherits_relid_seqno_index"
 #define LanguageNameIndex			"pg_language_name_index"
@@ -183,6 +184,8 @@ DECLARE_UNIQUE_INDEX(pg_class_relname_index on pg_class using btree(relname name
 DECLARE_UNIQUE_INDEX(pg_description_objoid_index on pg_description using btree(objoid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_group_name_index on pg_group using btree(groname name_ops));
 DECLARE_UNIQUE_INDEX(pg_group_sysid_index on pg_group using btree(grosysid int4_ops));
+/* This following index is not used for a cache and is not unique */
+DECLARE_INDEX(pg_index_indrelid_index on pg_index using btree(indrelid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_index_indexrelid_index on pg_index using btree(indexrelid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_inherits_relid_seqno_index on pg_inherits using btree(inhrelid oid_ops, inhseqno int4_ops));
 DECLARE_UNIQUE_INDEX(pg_language_name_index on pg_language using btree(lanname name_ops));

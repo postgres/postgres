@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.62 2000/05/30 00:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.63 2000/06/07 02:44:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ char	   *Name_pg_class_indices[Num_pg_class_indices] =
 char	   *Name_pg_group_indices[Num_pg_group_indices] =
 {GroupNameIndex, GroupSysidIndex};
 char	   *Name_pg_index_indices[Num_pg_index_indices] =
-{IndexRelidIndex};
+{IndexRelidIndex, IndexIndrelidIndex};
 char	   *Name_pg_inherits_indices[Num_pg_inherits_indices] =
 {InheritsRelidSeqnoIndex};
 char	   *Name_pg_language_indices[Num_pg_language_indices] =
