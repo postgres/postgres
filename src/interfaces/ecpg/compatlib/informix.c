@@ -11,12 +11,30 @@
 int
 decadd(Numeric *arg1, Numeric *arg2, Numeric *sum)
 {
-	int i = PGTYPESnumeric_add(arg1, arg2, sum);
+	Numeric *temp_sum = malloc(sizeof(Numeric)) ;
+	int i;
+	
+	if (temp_sum == NULL)
+		return -1211;
+	
+	i = PGTYPESnumeric_add(arg1, arg2, temp_sum);
 
 	if (i == 0) /* No error */
+	{
+
+		if (PGTYPESnumeric_copy(temp_sum, sum) !=0)
+			return -1211;
+
+		free(temp_sum);
 		return 0;
-	if (errno == PGTYPES_NUM_OVERFLOW)
-		return -1200;
+	}
+	else
+	{
+		free(temp_sum);
+		
+		if (errno == PGTYPES_NUM_OVERFLOW)
+			return -1200;
+	}
 
 	return -1201;	
 }
@@ -26,7 +44,6 @@ deccmp(Numeric *arg1, Numeric *arg2)
 {
 	int i = PGTYPESnumeric_cmp(arg1, arg2);
 	
-	/* TODO: Need to return DECUNKNOWN instead of PGTYPES_NUM_BAD_NUMERIC */
 	return (i);
 }
 
@@ -46,7 +63,7 @@ strndup(char *str, int len)
 
 	if (new)
 	{
-		memcpy(str, new, use_len);
+		memcpy(new, str, use_len);
 		new[use_len] = '\0';
 	}
 	else
@@ -60,13 +77,14 @@ deccvasc(char *cp, int len, Numeric *np)
 {
 	char *str = strndup(cp, len); /* Numeric_in always converts the complete string */
 	int ret = 0;
+	Numeric *result;
 	
 	if (!str)
 		ret = -1201;
 	else
 	{
-		np = PGTYPESnumeric_from_asc(str, NULL);
-		if (!np)
+		result = PGTYPESnumeric_from_asc(str, NULL);
+		if (!result)
 		{
 			switch (errno)
 			{
@@ -77,6 +95,13 @@ deccvasc(char *cp, int len, Numeric *np)
 				default:		  ret = -1216;
 							  break;
 			}
+		}
+		else
+		{
+			if (PGTYPESnumeric_copy(result, np) !=0)
+				ret = -1211;
+
+			free(result);
 		}
 	}
 	
@@ -104,7 +129,13 @@ deccvlong(long lng, Numeric *np)
 int
 decdiv(Numeric *n1, Numeric *n2, Numeric *n3)
 {
-	int i = PGTYPESnumeric_div(n1, n2, n3), ret = 0;
+	Numeric *temp = malloc(sizeof(Numeric));
+	int i, ret = 0;
+
+	if (temp == NULL)
+		return -1211;
+	
+	i = PGTYPESnumeric_div(n1, n2, temp);
 
 	if (i != 0)
 		switch (errno)
@@ -116,14 +147,24 @@ decdiv(Numeric *n1, Numeric *n2, Numeric *n3)
 			default:		  ret = -1201;
 						  break;
 		}
-
+	else
+		if (PGTYPESnumeric_copy(temp, n3) !=0)
+			ret = -1211;
+		
+	free(temp);
 	return ret;
 }
 
 int 
 decmul(Numeric *n1, Numeric *n2, Numeric *n3)
 {
-	int i = PGTYPESnumeric_mul(n1, n2, n3), ret = 0;
+	Numeric *temp = malloc(sizeof(Numeric));
+	int i, ret = 0;
+	
+	if (temp == NULL)
+		return -1211;
+	
+	i = PGTYPESnumeric_mul(n1, n2, temp);
 
 	if (i != 0)
 		switch (errno)
@@ -133,6 +174,11 @@ decmul(Numeric *n1, Numeric *n2, Numeric *n3)
 			default:		  ret = -1201;
 						  break;
 		}
+	else
+		if (PGTYPESnumeric_copy(temp, n3) !=0)
+			ret = -1211;
+		
+	free(temp);
 
 	return ret;
 }
@@ -140,7 +186,13 @@ decmul(Numeric *n1, Numeric *n2, Numeric *n3)
 int
 decsub(Numeric *n1, Numeric *n2, Numeric *n3)
 {
-	int i = PGTYPESnumeric_sub(n1, n2, n3), ret = 0;
+	Numeric *temp = malloc(sizeof(Numeric));
+	int i, ret = 0;
+	
+	if (temp == NULL)
+		return -1211;
+	
+	i = PGTYPESnumeric_sub(n1, n2, temp);
 
 	if (i != 0)
 		switch (errno)
@@ -150,6 +202,11 @@ decsub(Numeric *n1, Numeric *n2, Numeric *n3)
 			default:		  ret = -1201;
 						  break;
 		}
+	else
+		if (PGTYPESnumeric_copy(temp, n3) !=0)
+			ret = -1211;
+		
+	free(temp);
 
 	return ret;
 }
