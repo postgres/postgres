@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.7 1996/09/25 19:37:31 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.8 1996/10/25 09:22:30 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,6 +18,8 @@ CFLAGS+= -I../backend/include \
 	-I../include \
 	-I../backend \
 	-I. \
+
+CFLAGS+= -DPOSTPORT='"$(POSTPORT)"'
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
