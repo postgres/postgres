@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.248 2003/02/22 00:45:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.249 2003/02/23 20:32:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2386,8 +2386,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		if (vacpage->blkno == (blkno - 1) &&
 			vacpage->offsets_free > 0)
 		{
-			OffsetNumber unbuf[BLCKSZ / sizeof(OffsetNumber)];
-			OffsetNumber *unused = unbuf;
+			OffsetNumber unused[BLCKSZ / sizeof(OffsetNumber)];
 			int			uncnt;
 
 			buf = ReadBuffer(onerel, vacpage->blkno);
@@ -2430,8 +2429,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			{
 				XLogRecPtr	recptr;
 
-				recptr = log_heap_clean(onerel, buf, (char *) unused,
-						  (char *) (&(unused[uncnt])) - (char *) unused);
+				recptr = log_heap_clean(onerel, buf, unused, uncnt);
 				PageSetLSN(page, recptr);
 				PageSetSUI(page, ThisStartUpID);
 			}
@@ -2555,8 +2553,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 static void
 vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 {
-	OffsetNumber unbuf[BLCKSZ / sizeof(OffsetNumber)];
-	OffsetNumber *unused = unbuf;
+	OffsetNumber unused[BLCKSZ / sizeof(OffsetNumber)];
 	int			uncnt;
 	Page		page = BufferGetPage(buffer);
 	ItemId		itemid;
@@ -2580,8 +2577,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	{
 		XLogRecPtr	recptr;
 
-		recptr = log_heap_clean(onerel, buffer, (char *) unused,
-						  (char *) (&(unused[uncnt])) - (char *) unused);
+		recptr = log_heap_clean(onerel, buffer, unused, uncnt);
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}

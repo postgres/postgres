@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.150 2003/02/13 05:35:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.151 2003/02/23 20:32:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1891,36 +1891,40 @@ heap_restrpos(HeapScanDesc scan)
 }
 
 XLogRecPtr
-log_heap_clean(Relation reln, Buffer buffer, char *unused, int unlen)
+log_heap_clean(Relation reln, Buffer buffer, OffsetNumber *unused, int uncnt)
 {
 	xl_heap_clean xlrec;
 	XLogRecPtr	recptr;
-	XLogRecData rdata[3];
+	XLogRecData rdata[2];
 
 	/* Caller should not call me on a temp relation */
 	Assert(!reln->rd_istemp);
 
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
+
 	rdata[0].buffer = InvalidBuffer;
 	rdata[0].data = (char *) &xlrec;
 	rdata[0].len = SizeOfHeapClean;
 	rdata[0].next = &(rdata[1]);
 
-	if (unlen > 0)
+	/*
+	 * The unused-offsets array is not actually in the buffer, but pretend
+	 * that it is.  When XLogInsert stores the whole buffer, the offsets
+	 * array need not be stored too.
+	 */
+	rdata[1].buffer = buffer;
+	if (uncnt > 0)
 	{
-		rdata[1].buffer = buffer;
-		rdata[1].data = unused;
-		rdata[1].len = unlen;
-		rdata[1].next = &(rdata[2]);
+		rdata[1].data = (char *) unused;
+		rdata[1].len = uncnt * sizeof(OffsetNumber);
 	}
 	else
-		rdata[0].next = &(rdata[2]);
-
-	rdata[2].buffer = buffer;
-	rdata[2].data = NULL;
-	rdata[2].len = 0;
-	rdata[2].next = NULL;
+	{
+		rdata[1].data = NULL;
+		rdata[1].len = 0;
+	}
+	rdata[1].next = NULL;
 
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_CLEAN, rdata);
 
@@ -2032,7 +2036,6 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		return;
 
 	reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->node);
-
 	if (!RelationIsValid(reln))
 		return;
 
@@ -2052,18 +2055,14 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (record->xl_len > SizeOfHeapClean)
 	{
-		OffsetNumber unbuf[BLCKSZ / sizeof(OffsetNumber)];
-		OffsetNumber *unused = unbuf;
-		char	   *unend;
+		OffsetNumber *unused;
+		OffsetNumber *unend;
 		ItemId		lp;
 
-		Assert((record->xl_len - SizeOfHeapClean) <= BLCKSZ);
-		memcpy((char *) unbuf,
-			   (char *) xlrec + SizeOfHeapClean,
-			   record->xl_len - SizeOfHeapClean);
-		unend = (char *) unbuf + (record->xl_len - SizeOfHeapClean);
+		unused = (OffsetNumber *) ((char *) xlrec + SizeOfHeapClean);
+		unend = (OffsetNumber *) ((char *) xlrec + record->xl_len);
 
-		while ((char *) unused < unend)
+		while (unused < unend)
 		{
 			lp = PageGetItemId(page, *unused + 1);
 			lp->lp_flags &= ~LP_USED;
