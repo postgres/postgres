@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.46 2000/01/24 02:12:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.47 2000/01/24 03:08:27 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -344,9 +344,8 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		sizeof(FormData_pg_shadow),
-NULL,NULL
-/*		ShadowNameIndex,
-	ShadowNameIndexScan*/},
+		ShadowNameIndex,
+	ShadowNameIndexScan},
 	{ShadowRelationName,		/* SHADOWSYSID */
 		1,
 		{
@@ -356,9 +355,8 @@ NULL,NULL
 			0
 		},
 		sizeof(FormData_pg_shadow),
-NULL,NULL
-/*		ShadowSysidIndex,
-	ShadowSysidIndexScan*/},
+		ShadowSysidIndex,
+	ShadowSysidIndexScan},
 	{StatisticRelationName,		/* STATRELID */
 		2,
 		{
