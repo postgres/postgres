@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.14 2000/04/12 17:15:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.14.2.1 2000/09/23 21:15:26 tgl Exp $
  *
  * ----------
  */
@@ -204,6 +204,13 @@ RI_FKey_check(FmgrInfo *proinfo)
 	 */
 	fk_rel = trigdata->tg_relation;
 	pk_rel = heap_openr(tgargs[RI_PK_RELNAME_ARGNO], NoLock);
+
+	if (pk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_PK_RELNAME_ARGNO]);
+	}
+
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
 		old_row = trigdata->tg_trigtuple;
@@ -564,6 +571,12 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
+
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
 			/* ----------
@@ -774,6 +787,12 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
+
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -990,6 +1009,12 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
+
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
 			/* ----------
@@ -1188,6 +1213,12 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
+
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -1421,6 +1452,12 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
+
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
 			/* ----------
@@ -1637,6 +1674,12 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
 
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
+
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
 			/* ----------
@@ -1852,6 +1895,12 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
 
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
+
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
 			/* ----------
@@ -2063,6 +2112,12 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
+
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
 
 	switch (match_type)
 	{
@@ -2316,6 +2371,12 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
 	fk_rel = heap_openr(tgargs[RI_FK_RELNAME_ARGNO], NoLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
+
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
@@ -2573,8 +2634,13 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
-
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
+
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
 
 	switch (match_type)
 	{
@@ -2841,6 +2907,12 @@ RI_FKey_keyequal_upd(void)
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
 	old_row = trigdata->tg_trigtuple;
+
+	if (fk_rel == NULL)
+	{
+		elog(ERROR, "RI constraint %s cannot find table %s",
+			tgargs[RI_CONSTRAINT_NAME_ARGNO], tgargs[RI_FK_RELNAME_ARGNO]);
+	}
 
 	switch (ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]))
 	{
