@@ -1,8 +1,9 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.9 2001/02/20 19:20:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.10 2001/04/04 21:15:56 tgl Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
-DLLLIBS=-L$(top_builddir)/src/backend -lpostgres -lcygipc -lcygwin -lcrypt -lkernel32
+DLLLIBS= -lcygipc -lcrypt
+BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
 MK_NO_LORDER=true
 MAKE_DLL=true
 #MAKE_DLL=false

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.69 2001/04/02 03:21:23 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.70 2001/04/04 21:15:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,11 +43,11 @@ else # win
 
 # No points for style here. How about encapsulating some of these
 # commands into variables?
-postgres: $(DLLOBJS) $(top_builddir)/src/utils/dllinit.o postgres.def libpostgres.a
+postgres: $(OBJS) $(top_builddir)/src/utils/dllinit.o postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
-	gcc -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(DLLOBJS) $(DLLLIBS)
+	gcc -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(DLLLIBS)
 	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
-	gcc -g -o $@$(X) $@.exp $(DLLOBJS) $(DLLLIBS)
+	gcc -g -o $@$(X) $@.exp $(OBJS) $(DLLLIBS)
 	rm $@.exp $@.base
 
 endif # win
@@ -64,12 +64,10 @@ $(DIRS:%=%-recursive): $(top_builddir)/src/include/parser/parse.h $(top_builddir
 
 ifeq ($(MAKE_DLL), true)
 
-DLLOBJS := $(OBJS)
+postgres.def: $(OBJS)
+	$(DLLTOOL) --export-all --output-def $@ $(OBJS)
 
-postgres.def: $(DLLOBJS)
-	$(DLLTOOL) --export-all --output-def $@ $(DLLOBJS)
-
-libpostgres.a: $(DLLOBJS) $(top_builddir)/src/utils/dllinit.o postgres.def
+libpostgres.a: $(OBJS) $(top_builddir)/src/utils/dllinit.o postgres.def
 	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
 
 endif # MAKE_DLL

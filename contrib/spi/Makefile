@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.19 2001/02/20 19:20:28 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/spi/Makefile,v 1.20 2001/04/04 21:15:56 tgl Exp $
 #
 
 subdir = contrib/spi
@@ -18,6 +18,9 @@ override CFLAGS += $(CFLAGS_SL)
 ifdef REFINT_VERBOSE
 override CPPFLAGS+= -DREFINT_VERBOSE
 endif
+
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
+
 
 all: $(MODS) $(SQLS)
 

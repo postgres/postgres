@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.12 2001/02/20 19:20:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Makefile,v 1.13 2001/04/04 21:15:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +16,8 @@ SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
+
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 OBJS = pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 

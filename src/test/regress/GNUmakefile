@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.33 2001/02/20 19:20:30 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.34 2001/04/04 21:15:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,6 +19,8 @@ contribdir := $(top_builddir)/contrib
 
 override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
+
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 
 ##
