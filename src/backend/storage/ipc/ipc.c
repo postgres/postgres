@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.58 2000/12/30 01:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.59 2001/01/07 04:30:41 tgl Exp $
  *
  * NOTES
  *
@@ -125,6 +125,14 @@ proc_exit(int code)
 	 * NOT send control back to the main loop, but right back here.
 	 */
 	proc_exit_inprogress = true;
+
+	/*
+	 * Forget any pending cancel or die requests; we're doing our best
+	 * to close up shop already.  Note that the signal handlers will not
+	 * set these flags again, now that proc_exit_inprogress is set.
+	 */
+	QueryCancel = false;
+	ProcDiePending = false;
 
 	if (DebugLvl > 1)
 		elog(DEBUG, "proc_exit(%d)", code);
