@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.32 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.33 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -45,7 +45,7 @@ where <replaceable class="PARAMETER">direction</replaceable> can be empty or one
   <title>Description</title>
 
   <para>
-   <command>FETCH</command> retrieves rows using a cursor.
+   <command>FETCH</command> retrieves rows using a previously-created cursor.
   </para>
 
   <para>
@@ -278,6 +278,23 @@ where <replaceable class="PARAMETER">direction</replaceable> can be empty or one
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Outputs</title>
+
+  <para>
+   On successful completion, a <command>FETCH</> command returns a command
+   tag of the form
+<screen>
+FETCH <replaceable class="parameter">count</replaceable>
+</screen>
+   The <replaceable class="parameter">count</replaceable> is the number
+   of rows fetched (possibly zero).  Note that in
+   <application>psql</application>, the command tag will not actually be
+   displayed, since <application>psql</application> displays the fetched
+   rows instead.
+  </para>
  </refsect1>
 
  <refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.23 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.24 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,12 +41,21 @@ PostgreSQL documentation
   <para>
    <application>dropdb</application> is a wrapper around the
    <acronym>SQL</acronym> command <xref linkend="SQL-DROPDATABASE"
-   endterm="SQL-DROPDATABASE-title">.  The database server must be 
-   running on the targeted host. There is nothing special
-   about dropping databases via this or other methods. Also, any
-   default settings and environment variables used by the
-   <application>libpq</application> front-end library will apply.
+   endterm="SQL-DROPDATABASE-title">.
+   There is no effective difference between dropping databases via
+   this utility and via other methods for accessing the server.
   </para>
+
+  <para>
+   In case of difficulty, see <xref linkend="SQL-DROPDATABASE"
+   endterm="sql-dropdatabase-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
+   The database server must be running at the
+   targeted host.  Also, any default connection settings and environment
+   variables used by the <application>libpq</application> front-end
+   library will apply.
+  </para>
+
  </refsect1>
 
 
@@ -100,7 +109,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   <application>createdb</application> also accepts the following
+   <application>dropdb</application> also accepts the following
    command-line arguments for connection parameters:
 
    <variablelist>
@@ -150,33 +159,6 @@ PostgreSQL documentation
      </varlistentry>
    </variablelist>
   </para>
- </refsect1>
-
-
- <refsect1>
-   <title>Diagnostics</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>DROP DATABASE</computeroutput></term>
-      <listitem>
-       <para>The database was successfully removed.</para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>dropdb: Database removal failed.</computeroutput></term>
-      <listitem>
-       <para>Something didn't work out.</para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-   <para>
-    If there is an error condition, the backend error message will be displayed.
-    See <xref linkend="SQL-DROPDATABASE" endterm="SQL-DROPDATABASE-title">
-    for possibilities.
-   </para>
  </refsect1>
 
 

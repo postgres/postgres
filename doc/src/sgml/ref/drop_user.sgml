@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.17 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_user.sgml,v 1.18 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -50,39 +50,6 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-   <variablelist>
-    <varlistentry>
-     <term><computeroutput>DROP USER</computeroutput></term>
-     <listitem>
-      <para>
-       Message returned if the user was successfully deleted.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><computeroutput>ERROR:  DROP USER: user "<replaceable class="parameter">name</replaceable>" does not exist</computeroutput></term>
-     <listitem>
-      <para>
-       Message returned if the specified user does not exist.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><computeroutput>DROP USER: user "<replaceable class="parameter">name</replaceable>" owns database "<replaceable class="parameter">name</replaceable>", cannot be removed</computeroutput></term>
-     <listitem>
-      <para>
-       You must drop the database first or change its ownership.
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
 
   <para>
@@ -90,6 +57,11 @@ DROP USER <replaceable class="PARAMETER">name</replaceable>
    linkend="APP-DROPUSER" endterm="APP-DROPUSER-title"> that has the
    same functionality as this command (in fact, it calls this command)
    but can be run from the command shell.
+  </para>
+
+  <para>
+   To drop a user who owns a database, first drop the database or change
+   its ownership.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.34 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.35 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -48,12 +48,21 @@ PostgreSQL documentation
   <para>
    <application>createdb</application> is a wrapper around the
    <acronym>SQL</acronym> command <xref linkend="SQL-CREATEDATABASE"
-   endterm="SQL-CREATEDATABASE-title">.  The database server must be 
-   running on the targeted host. There is nothing special about creating 
-   databases via this or other methods.  Also, any default settings and 
-   environment variables used by the <application>libpq</application> 
-   front-end library will apply.
+   endterm="SQL-CREATEDATABASE-title">.
+   There is no effective difference between creating databases via
+   this utility and via other methods for accessing the server.
   </para>
+
+  <para>
+   In case of difficulty, see <xref linkend="SQL-CREATEDATABASE"
+   endterm="sql-createdatabase-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
+   The database server must be running at the
+   targeted host.  Also, any default connection settings and environment
+   variables used by the <application>libpq</application> front-end
+   library will apply.
+  </para>
+
  </refsect1>
 
 
@@ -209,45 +218,6 @@ PostgreSQL documentation
     </variablelist>
    </para>
 
- </refsect1>
-
-
- <refsect1>
-  <title>Diagnostics</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>CREATE DATABASE</computeroutput></term>
-      <listitem>
-       <para>The database was successfully created.</para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>createdb: Database creation failed.</computeroutput></term>
-      <listitem>
-       <para>(Says it all.)</para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>createdb: Comment creation failed. (Database was created.)</computeroutput></term>
-      <listitem>
-       <para>
-       The comment/description for the database could not be created.
-       The database itself will have been created already. You can use the
-       <acronym>SQL</acronym> command <command>COMMENT ON DATABASE</command> to
-       create the comment later on.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
-
-   <para>
-    If there is an error condition, the backend error message will be displayed.
-    See <xref linkend="SQL-CREATEDATABASE" endterm="SQL-CREATEDATABASE-TITLE">
-    for possibilities.
-   </para>
  </refsect1>
 
 

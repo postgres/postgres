@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.17 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_database.sgml,v 1.18 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,6 +31,9 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
    <command>DROP DATABASE</command> drops a database. It removes the
    catalog entries for the database and deletes the directory
    containing the data.  It can only be executed by the database owner.
+   Also, it cannot be executed while you or anyone else are connected
+   to the target database.  (Connect to <literal>template1</literal> or any
+   other database to issue this command.) 
   </para>
 
   <para>
@@ -54,42 +57,12 @@ DROP DATABASE <replaceable class="PARAMETER">name</replaceable>
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>DROP DATABASE</computeroutput></term>
-      <listitem>
-       <para>
-        This message is returned if the command was successful.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>DROP DATABASE: cannot be executed on the currently open database</computeroutput></term>
-      <listitem>
-       <para>
-        You cannot be connected to the database you are about to remove.
-        Instead, connect to <literal>template1</literal> or any other
-        database and run this command again.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>DROP DATABASE: may not be called in a transaction block</computeroutput></term>
-      <listitem>
-       <para>
-        You must finish the transaction in progress before you can call this command.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
+
+   <para>
+    <command>DROP DATABASE</> cannot be executed inside a transaction
+    block.
+   </para>
 
   <para>
    This command cannot be executed while connected to the target

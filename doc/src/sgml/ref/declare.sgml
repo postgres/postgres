@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.27 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.28 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -44,9 +44,10 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
    format.  Once the information comes back in text form, the client
    application may need to convert it to a binary format to manipulate
    it.  In addition, data in the text format is often larger in size
-   than in the binary format.  Binary cursors return the data in the
-   native binary representation.  Nevertheless, if you intend to
-   display the data as text anyway, retrieving it in text form will
+   than in the binary format.  Binary cursors return the data in a
+   binary representation that may be more easily manipulated.
+   Nevertheless, if you intend to display the data as text anyway,
+   retrieving it in text form will
    save you some effort on the client side.
   </para>
 
@@ -54,7 +55,8 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
    As an example, if a query returns a value of one from an integer column,
    you would get a string of <literal>1</> with a default cursor
    whereas with a binary cursor you would get
-   a 4-byte value containing the internal representation of the value.
+   a 4-byte field containing the internal representation of the value
+   (in big-endian byte order).
   </para>
 
   <para>
@@ -64,16 +66,16 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
    format.
   </para>
 
-  <para>
-   The string representation is architecture-neutral whereas binary
-   representation can differ between different machine architectures.
-   <emphasis><productname>PostgreSQL</productname> does not resolve
-   byte ordering or representation issues for binary
-   cursors.</emphasis>  Therefore, if your client machine and server
-   machine use different representations (e.g.,
-   <quote>big-endian</quote> versus <quote>little-endian</quote>), you
-   will probably not want your data returned in binary format.
-  </para>
+  <note>
+   <para>
+    When the client application uses the <quote>extended query</> protocol
+    to issue a <command>FETCH</> command, the Bind protocol message
+    specifies whether data is to be retrieved in text or binary format.
+    This choice overrides the way that the cursor is defined.  The concept
+    of a binary cursor as such is thus obsolete when using extended query
+    protocol --- any cursor can be treated as either text or binary.
+   </para>
+  </note>
  </refsect1>
 
  <refsect1>
@@ -84,8 +86,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
     <term><replaceable class="parameter">cursorname</replaceable></term>
     <listitem>
      <para>
-      The name of the cursor to be used in subsequent
-      <command>FETCH</command> operations.
+      The name of the cursor to be created.
      </para>
     </listitem>
    </varlistentry>
@@ -193,47 +194,17 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DECLARE CURSOR</computeroutput></term>
-    <listitem>
-     <para>
-      The message returned if the cursor was successfully defined.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  cursor "<replaceable class="parameter">cursorname</replaceable>" already exists</computeroutput></term>
-    <listitem>
-     <para>
-      This error occurs if a cursor with the same name already exists.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  DECLARE CURSOR may only be used in begin/end transaction blocks</computeroutput></term>
-    <listitem>
-     <para>
-      This error occurs if the cursor is not declared within a
-      transaction block, and <literal>WITH HOLD</literal> is not
-      specified.
-     </para>
-    </listitem>
-   </varlistentry>     
-  </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
 
    <para>
-    If <literal>WITH HOLD</literal> is not specified, the cursor
+    Unless <literal>WITH HOLD</literal> is specified, the cursor
     created by this command can only be used within the current
-    transaction. Use
+    transaction.  Thus, <command>DECLARE</> without <literal>WITH
+    HOLD</literal> is useless outside a transaction block: the cursor would
+    survive only to the completion of the statement.  Therefore
+    <productname>PostgreSQL</productname> reports an error if this
+    command is used outside a transaction block.
+    Use
     <xref linkend="sql-begin" endterm="sql-begin-title">,
     <xref linkend="sql-commit" endterm="sql-commit-title">
     and

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.18 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/delete.sgml,v 1.19 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -52,7 +52,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE 
   <para>
    You must have the <literal>DELETE</literal> privilege on the table
    to delete from it, as well as the <literal>SELECT</literal>
-   privilege to any table whose values are read in the <replaceable
+   privilege for any table whose values are read in the <replaceable
    class="parameter">condition</replaceable>.
   </para>
  </refsect1>
@@ -84,22 +84,20 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ WHERE 
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
+  <title>Outputs</title>
 
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>DELETE <replaceable class="parameter">count</replaceable></computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if rows are successfully deleted. The
-      <replaceable class="parameter">count</replaceable> is the number
-      of rows deleted.  If <replaceable
-      class="parameter">count</replaceable> is 0, no rows were
-      deleted.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
+  <para>
+   On successful completion, a <command>DELETE</> command returns a command
+   tag of the form
+<screen>
+DELETE <replaceable class="parameter">count</replaceable>
+</screen>
+   The <replaceable class="parameter">count</replaceable> is the number
+   of rows deleted.  If <replaceable class="parameter">count</replaceable> is
+   0, no rows matched the <replaceable
+   class="parameter">condition</replaceable> (this is not considered
+   an error).
+  </para>
  </refsect1>
 
  <refsect1>

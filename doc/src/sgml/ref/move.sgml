@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.23 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/move.sgml,v 1.24 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -41,12 +41,16 @@ MOVE [ <replaceable class="PARAMETER">direction</replaceable> { FROM | IN } ] <r
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
+  <title>Outputs</title>
 
   <para>
-   The count returned in <command>MOVE</command>'s status string is
-   the count of the number of rows that would have been returned by
-   the equivalent <command>FETCH</command> command.
+   On successful completion, a <command>MOVE</> command returns a command
+   tag of the form
+<screen>
+MOVE <replaceable class="parameter">count</replaceable>
+</screen>
+   The <replaceable class="parameter">count</replaceable> is the number
+   of rows moved over (possibly zero).
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.17 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.18 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -12,8 +12,8 @@ PostgreSQL documentation
  <refnamediv>
   <refname>COMMIT</refname>
   <refpurpose>commit the current transaction</refpurpose>
- </refnamediv>  
-  
+ </refnamediv>
+
  <indexterm zone="sql-commit">
   <primary>COMMIT</primary>
  </indexterm>
@@ -74,7 +74,7 @@ COMMIT;
 </programlisting>
   </para>
  </refsect1>
- 
+
  <refsect1>
   <title>Compatibility</title>
   

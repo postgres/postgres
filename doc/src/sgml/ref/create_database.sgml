@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.35 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.36 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,6 +37,12 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
   </para>
 
   <para>
+   To create a database, you must be a superuser or have the special
+   <literal>CREATEDB</> privilege.
+   See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">.
+  </para>
+
+  <para>
    Normally, the creator becomes the owner of the new database.
    Superusers can create databases owned by other users using the
    <literal>OWNER</> clause. They can even create databases owned by
@@ -63,6 +69,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    a leading slash
    (e.g., <filename>/usr/local/pgsql/data</filename>),
    are allowed as well.
+   In either case, the final path name must be absolute and must not
+   contain any single quotes.
   </para>
 
   <para>
@@ -86,7 +94,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
  </refsect1>
 
  <refsect1>
-  <title>Parameter</title>
+  <title>Parameters</title>
 
     <variablelist>
      <varlistentry>
@@ -147,78 +155,20 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>CREATE DATABASE</computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the database was successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  user '<replaceable class="parameter">username</replaceable>' is not allowed to create/drop databases</computeroutput></term>
-      <listitem>
-       <para>
-        You must have the special <literal>CREATEDB</> privilege to create databases.
-        See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">.
-       </para>
-      </listitem>
-     </varlistentry>
-
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  createdb: database "<replaceable class="parameter">name</replaceable>" already exists</computeroutput></term>
-      <listitem>
-       <para>
-	This occurs if a database with the specified name already
-	exists.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  database path may not contain single quotes</computeroutput></term>
-      <listitem>
-       <para>
-	The database location
-        <replaceable class="parameter">dbpath</replaceable> cannot contain
-        single quotes. This is required so that the shell commands that
-        create the database directory can execute safely.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  CREATE DATABASE: may not be called in a transaction block</computeroutput></term>
-      <listitem>
-       <para>
-        If you have an explicit transaction block in progress you cannot call
-        <command>CREATE DATABASE</command>. You must finish the transaction first.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>ERROR:  Unable to create database directory '<replaceable>path</replaceable>'.</computeroutput></term>
-      <term><computeroutput>ERROR:  Could not initialize database directory.</computeroutput></term>
-      <listitem>
-       <para>
-        These are most likely related to insufficient permissions on the data
-        directory, a full disk, or other file system problems. The user under
-        which the database server is running must have access to the location.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
+
+   <para>
+    <command>CREATE DATABASE</> cannot be executed inside a transaction
+    block.
+   </para>
+
+   <para>
+    Errors along the line of <quote>could not initialize database directory</>
+    are most likely related to insufficient permissions on the data
+    directory, a full disk, or other file system problems.  When using an
+    alternate location, the user under
+    which the database server is running must have access to the location.
+   </para>
 
    <para>
     Use <xref linkend="SQL-DROPDATABASE" endterm="SQL-DROPDATABASE-title"> to remove a database.
@@ -231,7 +181,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    There are security issues involved with using alternate database
-   locations specified with absolute path names.  See <xref
+   locations specified with absolute path names; this is why the feature
+   is not enabled by default.  See <xref
    linkend="manage-ag-alternate-locs"> for more information.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.29 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/explain.sgml,v 1.30 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -80,7 +80,7 @@ ROLLBACK;
  </refsect1>
 
  <refsect1>
-  <title>Parameter</title>
+  <title>Parameters</title>
 
   <variablelist>
    <varlistentry>

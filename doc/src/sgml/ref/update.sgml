@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.25 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.26 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -118,21 +118,20 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> SET <replacea
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
+  <title>Outputs</title>
 
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>UPDATE <replaceable class="parameter">count</replaceable></computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if successful.  The value <replaceable
-      class="parameter">count</replaceable> is the number of rows
-      updated.  If <replaceable class="parameter">count</replaceable>
-      is 0, no rows were updated.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
+  <para>
+   On successful completion, an <command>UPDATE</> command returns a command
+   tag of the form
+<screen>
+UPDATE <replaceable class="parameter">count</replaceable>
+</screen>
+   The <replaceable class="parameter">count</replaceable> is the number
+   of rows updated.  If <replaceable class="parameter">count</replaceable> is
+   0, no rows matched the <replaceable
+   class="parameter">condition</replaceable> (this is not considered
+   an error).
+  </para>
  </refsect1>
 
  <refsect1>

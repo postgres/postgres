@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.32 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.33 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -143,49 +143,13 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
+  <title>Outputs</title>
 
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>VACUUM</computeroutput></term>
-    <listitem>
-     <para>
-      The command is complete.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>INFO:  --Relation <replaceable class="PARAMETER">table</replaceable>--</computeroutput></term>
-    <listitem>
-     <para>
-      The report header for <replaceable class="PARAMETER">table</replaceable>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>INFO:  Pages 98: Changed 25, Reapped 74, Empty 0, New 0;
-         Tup 1000: Vac 3000, Crash 0, UnUsed 0, MinLen 188, MaxLen 188;
-         Re-using: Free/Avail. Space 586952/586952; EndEmpty/Avail. Pages 0/74.
-         Elapsed 0/0 sec.</computeroutput></term>
-    <listitem>
-     <para>
-      The analysis for <replaceable class="PARAMETER">table</replaceable> itself.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>INFO:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
-         Tuples 1000: Deleted 3000. Elapsed 0/0 sec.</computeroutput></term>
-    <listitem>
-     <para>
-      The analysis for an index on the target table.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
+   <para>
+    When <literal>VERBOSE</> is specified, <command>VACUUM</> emits
+    progress messages to indicate which table is currently being
+    processed.  Various statistics about the tables are printed as well.
+   </para>
  </refsect1>
 
  <refsect1>
@@ -216,25 +180,37 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
   <title>Examples</title>
 
   <para>
-   The following is an example from running <command>VACUUM</command> on a table
-   in the regression database:
+   The following is an example from running <command>VACUUM</command> on a
+   table in the regression database:
 
 <programlisting>
-=> VACUUM VERBOSE ANALYZE onek;
-INFO:  --Relation onek--
-INFO:  Index onek_unique1: Pages 14; Tuples 1000: Deleted 3000.
-        CPU 0.00s/0.11u sec elapsed 0.12 sec.
-INFO:  Index onek_unique2: Pages 16; Tuples 1000: Deleted 3000.
-        CPU 0.00s/0.10u sec elapsed 0.10 sec.
-INFO:  Index onek_hundred: Pages 13; Tuples 1000: Deleted 3000.
-        CPU 0.00s/0.10u sec elapsed 0.10 sec.
-INFO:  Index onek_stringu1: Pages 31; Tuples 1000: Deleted 3000.
-        CPU 0.01s/0.09u sec elapsed 0.10 sec.
-INFO:  Removed 3000 tuples in 70 pages.
-        CPU 0.02s/0.04u sec elapsed 0.07 sec.
-INFO:  Pages 94: Changed 0, Empty 0; Tup 1000: Vac 3000, Keep 0, UnUsed 0.
-        Total CPU 0.05s/0.45u sec elapsed 0.59 sec.
-INFO:  Analyzing onek
+regression=# VACUUM VERBOSE ANALYZE onek;
+INFO:  vacuuming "public.onek"
+INFO:  index "onek_unique1" now contains 1000 tuples in 14 pages
+DETAIL:  3000 index tuples were removed.
+0 index pages have been deleted, 0 are currently reusable.
+CPU 0.01s/0.08u sec elapsed 0.18 sec.
+INFO:  index "onek_unique2" now contains 1000 tuples in 16 pages
+DETAIL:  3000 index tuples were removed.
+0 index pages have been deleted, 0 are currently reusable.
+CPU 0.00s/0.07u sec elapsed 0.23 sec.
+INFO:  index "onek_hundred" now contains 1000 tuples in 13 pages
+DETAIL:  3000 index tuples were removed.
+0 index pages have been deleted, 0 are currently reusable.
+CPU 0.01s/0.08u sec elapsed 0.17 sec.
+INFO:  index "onek_stringu1" now contains 1000 tuples in 48 pages
+DETAIL:  3000 index tuples were removed.
+0 index pages have been deleted, 0 are currently reusable.
+CPU 0.01s/0.09u sec elapsed 0.59 sec.
+INFO:  "onek": removed 3000 tuples in 108 pages
+DETAIL:  CPU 0.01s/0.06u sec elapsed 0.07 sec.
+INFO:  "onek": found 3000 removable, 1000 nonremovable tuples in 143 pages
+DETAIL:  0 dead tuples cannot be removed yet.
+There were 0 unused item pointers.
+0 pages are entirely empty.
+CPU 0.07s/0.39u sec elapsed 1.56 sec.
+INFO:  analyzing "public.onek"
+INFO:  "onek": 36 pages, 1000 rows sampled, 1000 estimated total rows
 VACUUM
 </programlisting>
   </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.34 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.35 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -190,49 +190,6 @@ SELECT * FROM <replaceable>seqname</replaceable>;
       maximum value will return an error.  If neither
       <literal>CYCLE</literal> or <literal>NO CYCLE</literal> are
       specified, <literal>NO CYCLE</literal> is the default.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE SEQUENCE</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the sequence was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  Relation '<replaceable class="parameter">seqname</replaceable>' already exists</computeroutput></term>
-    <listitem>
-     <para>
-      A sequence, table, view, or index of the specified name already exists.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">start</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)</computeroutput></term>
-    <term><computeroutput>ERROR:  DefineSequence: START value (<replaceable class="parameter">start</replaceable>) can't be < MINVALUE (<replaceable class="parameter">min</replaceable>)</computeroutput></term>
-    <listitem>
-     <para>
-      The specified starting value is out of range.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>ERROR:  DefineSequence: MINVALUE (<replaceable class="parameter">min</replaceable>) can't be >= MAXVALUE (<replaceable class="parameter">max</replaceable>)</computeroutput></term>
-    <listitem>
-     <para>
-      The minimum and maximum values are inconsistent.
      </para>
     </listitem>
    </varlistentry>

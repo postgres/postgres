@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.23 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.24 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -91,39 +91,6 @@ class="PARAMETER">column_name</replaceable> [, ...] ) ] AS <replaceable class="P
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>CREATE VIEW</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the view was successfully created.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>WARNING:  Attribute '<replaceable class="parameter">column</replaceable>' has an unknown type</computeroutput></term>
-    <listitem>
-     <para>
-      The view will be created having a column with an unknown type if
-      you do not specify it. For example, the following command gives
-      this warning:
-<programlisting>
-CREATE VIEW vista AS SELECT 'Hello World'
-</programlisting>
-      whereas this command does not:
-<programlisting>
-CREATE VIEW vista AS SELECT text 'Hello World'
-</programlisting>
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
 
    <para>
@@ -136,6 +103,20 @@ CREATE VIEW vista AS SELECT text 'Hello World'
 
    <para>
     Use the <command>DROP VIEW</command> statement to drop views.
+   </para>
+
+   <para>
+    Be careful that the names and types of the view's columns will be
+    assigned the way you want.  For example,
+<programlisting>
+CREATE VIEW vista AS SELECT 'Hello World';
+</programlisting>
+    is bad form in two ways: the column name defaults to <literal>?column?</>,
+    and the column datatype defaults to <type>unknown</>.  If you want a
+    string literal in a view's result, use something like
+<programlisting>
+CREATE VIEW vista AS SELECT text 'Hello World' AS hello;
+</programlisting>
    </para>
  </refsect1>
 

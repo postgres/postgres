@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.31 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.32 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -55,12 +55,18 @@ PostgreSQL documentation
    <application>vacuumdb</application> is a wrapper around the SQL
    command <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title">.
    There is no effective difference between vacuuming databases via
-   this or other methods.  The database server must be running at the
-   targeted host.  Also, any default settings and environment
+   this utility and via other methods for accessing the server.
+  </para>
+
+  <para>
+   In case of difficulty, see <xref linkend="SQL-VACUUM"
+   endterm="sql-vacuum-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
+   The database server must be running at the
+   targeted host.  Also, any default connection settings and environment
    variables used by the <application>libpq</application> front-end
    library will apply.
   </para>
-
 
   <para>
    <application>vacuumdb</application> might need to connect several
@@ -225,37 +231,6 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
-   </para>
- </refsect1>
-
-
- <refsect1>
-  <title>Diagnostics</title>
-
-   <para>
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>VACUUM</computeroutput></term>
-      <listitem>
-       <para>
-        The database was successfully vacuumed.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>vacuumdb: Vacuum failed.</computeroutput></term>
-      <listitem>
-       <para>
-        Something went wrong. <application>vacuumdb</application> is only a wrapper
-        script. See <xref linkend="SQL-VACUUM" endterm="SQL-VACUUM-title">
-        and <xref linkend="APP-PSQL"> for a detailed
-        discussion of error messages and potential problems.
-       </para>
-      </listitem>
-     </varlistentry>
-
     </variablelist>
    </para>
  </refsect1>

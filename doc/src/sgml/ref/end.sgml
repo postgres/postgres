@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.11 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.12 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,9 +30,10 @@ END [ WORK | TRANSACTION ]
   <para>
    <command>END</command> commits the current transaction. All changes
    made by the transaction become visible to others and are guaranteed
-   to be durable if a crash occurs.  It is a
-   <productname>PostgreSQL</productname> extension that is equivalent
-   to <xref linkend="sql-commit" endterm="sql-commit-title">.
+   to be durable if a crash occurs.  This command is a
+   <productname>PostgreSQL</productname> extension
+   that is equivalent to <xref linkend="sql-commit"
+   endterm="sql-commit-title">.
   </para>
  </refsect1>
   
@@ -51,37 +52,18 @@ END [ WORK | TRANSACTION ]
    </varlistentry>
   </variablelist>
  </refsect1>
-   
- <refsect1>
-  <title>Diagnostics</title>
 
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>COMMIT</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if the transaction was successfully committed.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>WARNING:  COMMIT: no transaction in progress</computeroutput></term>
-    <listitem>
-     <para>
-      Message if there is no transaction in progress.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-  
  <refsect1>
   <title>Notes</title>
 
   <para>
    Use <xref linkend="SQL-ROLLBACK" endterm="SQL-ROLLBACK-TITLE"> to
    abort a transaction.
+  </para>
+
+  <para>
+   Issuing <command>END</> when not inside a transaction does
+   no harm, but it will provoke a warning message.
   </para>
  </refsect1>
 
@@ -105,6 +87,16 @@ END;
    linkend="sql-commit" endterm="sql-commit-title">, which is
    specified in the SQL standard.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-begin" endterm="sql-begin-title"></member>
+   <member><xref linkend="sql-commit" endterm="sql-commit-title"></member>
+   <member><xref linkend="sql-rollback" endterm="sql-rollback-title"></member>
+  </simplelist>
  </refsect1>
 </refentry>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_language.sgml,v 1.3 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_language.sgml,v 1.4 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,7 +35,7 @@ ALTER LANGUAGE <replaceable>name</replaceable> RENAME TO <replaceable>newname</r
  </refsect1>
 
  <refsect1>
-  <title>Parameter</title>
+  <title>Parameters</title>
 
   <variablelist>
    <varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.36 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.37 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -49,17 +49,19 @@ PostgreSQL documentation
   <para>
    <application>createuser</application> is a wrapper around the
    <acronym>SQL</acronym> command <xref linkend="SQL-CREATEUSER"
-   endterm="SQL-CREATEUSER-title">.  The database server must be 
-   running on the targeted host. There is nothing special
-   about creating users via this or other methods. Also, any
-   default settings and environment variables used by the
-   <application>libpq</application> front-end library will apply.
+   endterm="SQL-CREATEUSER-title">.
+   There is no effective difference between creating users via
+   this utility and via other methods for accessing the server.
   </para>
 
   <para>
-   Passwords can only be added later or changed using the
-   <acronym>SQL</acronym> command <xref linkend="SQL-ALTERUSER" 
-   endterm="SQL-ALTERUSER-title">.
+   In case of difficulty, see <xref linkend="SQL-CREATEUSER"
+   endterm="sql-createuser-title"> and <xref linkend="APP-PSQL"> for
+   discussions of potential problems and error messages.
+   The database server must be running at the
+   targeted host.  Also, any default connection settings and environment
+   variables used by the <application>libpq</application> front-end
+   library will apply.
   </para>
 
  </refsect1>
@@ -101,6 +103,7 @@ PostgreSQL documentation
        <para>
 	The new user is not allowed to create other users (i.e.,
 	the new user is a regular user, not a superuser).
+	This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -121,6 +124,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	The new user is not allowed to create databases.
+	This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -142,7 +146,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Encrypts the user's password stored in the database. If not
-	specified, the default is used.
+	specified, the default password behavior is used.
        </para>
       </listitem>
      </varlistentry>
@@ -164,7 +168,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Does not encrypt the user's password stored in the database. If
-	not specified, the default is used.
+	not specified, the default password behavior is used.
        </para>
       </listitem>
      </varlistentry>
@@ -269,38 +273,6 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
- </refsect1>
-
-
- <refsect1>
-  <title>Diagnostics</title>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>CREATE USER</computeroutput></term>
-      <listitem>
-       <para>
-        The user was successfully created.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>createuser: creation of user "<replaceable class="parameter">username</replaceable>" failed</computeroutput></term>
-      <listitem>
-       <para>
-        Something went wrong. The user was not created.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-
-   <para>
-    If there is an error condition, the backend error message will be displayed.
-    See <xref linkend="SQL-CREATEUSER" endterm="SQL-CREATEUSER-title">
-    for possibilities.
-   </para>
  </refsect1>
 
 

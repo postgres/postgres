@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.17 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/listen.sgml,v 1.18 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,6 +31,9 @@ LISTEN <replaceable class="PARAMETER">name</replaceable>
    <command>LISTEN</command> registers the current session as a
    listener on the notification condition <replaceable
    class="PARAMETER">name</replaceable>.
+   If the current session is already registered as a listener for
+   this notification condition, a warning message appears and nothing
+   is done.
   </para>
 
   <para>
@@ -86,30 +89,6 @@ LISTEN <replaceable class="PARAMETER">name</replaceable>
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
-
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>LISTEN</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned upon successful completion of registration.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>WARNING:  Async_Listen: We are already listening on <replaceable class="PARAMETER">name</replaceable></computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if this session is already registered for that notification condition.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
- </refsect1>
-
- <refsect1>
   <title>Examples</title>
 
   <para>
@@ -117,7 +96,7 @@ LISTEN <replaceable class="PARAMETER">name</replaceable>
 <programlisting>
 LISTEN virtual;
 NOTIFY virtual;
-Asynchronous NOTIFY 'virtual' from backend with pid '8448' received.
+Asynchronous notification "virtual" received from server process with PID 8448.
 </programlisting>
   </para>
  </refsect1>

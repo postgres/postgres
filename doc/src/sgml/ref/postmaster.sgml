@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.38 2003/09/11 17:31:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.39 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -419,73 +419,52 @@ PostgreSQL documentation
 
  <refsect1>
    <title>Diagnostics</title>
+
    <para>
+    A failure message mentioning <literal>semget</> or <literal>shmget</>
+    probably indicates you need to configure your kernel to provide adequate
+    shared memory and semaphores.  For more discussion see <xref
+    linkend="kernel-resources">.
+   </para>
 
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>semget: No space left on device</computeroutput></term>
-      <listitem>
-       <para>
-	If you see this message, you probably need to configure
-	your kernel for shared memory and semaphores as described in <xref linkend="kernel-resources">.
-	If you run multiple instances of
-	<command>postmaster</command>
-	on a single host, or have a kernel with particularly small shared memory
-	and/or semaphore limits, you may have to reconfigure your kernel to increase
-	its shared memory or semaphore parameters.
-       </para>
+   <tip>
+    <para>
+     You may be able to postpone reconfiguring your kernel by decreasing
+     <varname>shared_buffers</varname> to reduce the shared memory consumption
+     of <productname>PostgreSQL</>, and/or by reducing
+     <varname>max_connections</varname> to reduce the semaphore consumption.
+    </para>
+   </tip>
 
-	<tip>
-	 <para>
-	  You may be able to postpone
-	  reconfiguring your kernel by decreasing <option>-B</option> to reduce
-	  the shared memory consumption of <productname>PostgreSQL</>,
-	  and/or by reducing <option>-N</option> to reduce the semaphore
-	  consumption.
-	 </para>
-	</tip>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>StreamServerPort: cannot bind to port</computeroutput></term>
-      <listitem>
-       <para>
-	If you see this message, you should make certain that there is no
-	other <command>postmaster</command>
-	process already running on the same port number.  The easiest way to
-	determine this is by using the command
+   <para>
+    A failure message suggesting that another postmaster is already running
+    should be checked carefully, for example by using the command
 <screen>
 <prompt>$</prompt> <userinput>ps ax | grep postmaster</userinput>
 </screen>
         or
 <screen>
-<prompt>$</prompt> <userinput>ps -e | grep postmaster</userinput>
+<prompt>$</prompt> <userinput>ps -ef | grep postmaster</userinput>
 </screen>
-	depending on your system.
-       </para>
-
-       <para>
-	If you 
-	are sure that no other
-	<command>postmaster</command>
-	processes are running and you still get this error, try specifying a
-	different port using the
-	<literal>-p</literal>
-	option.  You may also get this error if you terminate the
-	<command>postmaster</command>
-	and immediately restart it using the same port; in this case, you must
-	simply wait a few seconds until the operating system closes the port
-	before trying again.  Finally, you may get this error if you specify
-	a port number that your operating system considers to be reserved.
-	For example, many versions of Unix consider port numbers under 1024 to
-	be <quote>trusted</quote>
-	and only permit the Unix superuser to access them.
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
+    depending on your system.  If you are certain that no conflicting
+    postmaster is running, you may remove the lock file mentioned in the
+    message and try again.
    </para>
+
+   <para>
+    A failure message indicating inability to bind to a port may indicate
+    that that port is already in use by some non-PostgreSQL process.
+    You may also get this error if you terminate the
+    <command>postmaster</command>
+    and immediately restart it using the same port; in this case, you must
+    simply wait a few seconds until the operating system closes the port
+    before trying again.  Finally, you may get this error if you specify
+    a port number that your operating system considers to be reserved.
+    For example, many versions of Unix consider port numbers under 1024 to
+    be <quote>trusted</quote>
+    and only permit the Unix superuser to access them.
+   </para>
+
  </refsect1>
 
  <refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.28 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.29 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -74,7 +74,7 @@ CLUSTER
  </refsect1>
 
  <refsect1>
-  <title>Parameter</title>
+  <title>Parameters</title>
 
   <variablelist>
    <varlistentry>

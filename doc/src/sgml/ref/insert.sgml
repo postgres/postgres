@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.24 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.25 2003/09/12 00:12:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -119,30 +119,21 @@ INSERT INTO <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable 
  </refsect1>
 
  <refsect1>
-  <title>Diagnostics</title>
+  <title>Outputs</title>
 
-  <variablelist>
-   <varlistentry>
-    <term><computeroutput>INSERT <replaceable>oid</replaceable> 1</computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if only one row was inserted.
-      <returnvalue><replaceable>oid</replaceable></returnvalue> is the
-      <acronym>OID</acronym> of the inserted row.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><computeroutput>INSERT 0 <replaceable>count</replaceable></computeroutput></term>
-    <listitem>
-     <para>
-      Message returned if more than one rows were inserted.
-      <replaceable>count</replaceable> is the number of rows inserted.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
+  <para>
+   On successful completion, an <command>INSERT</> command returns a command
+   tag of the form
+<screen>
+INSERT <replaceable>oid</replaceable> <replaceable class="parameter">count</replaceable>
+</screen>
+   The <replaceable class="parameter">count</replaceable> is the number
+   of rows inserted.  If <replaceable class="parameter">count</replaceable>
+   is exactly one, and the target table has OIDs, then
+   <replaceable class="parameter">oid</replaceable> is the
+   <acronym>OID</acronym> assigned to the inserted row.  Otherwise
+   <replaceable class="parameter">oid</replaceable> is zero.
+  </para>
  </refsect1>
 
  <refsect1>
