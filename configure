@@ -17974,8 +17974,7 @@ ac_config_files="$ac_config_files GNUmakefile src/Makefile.global"
 ac_config_links="$ac_config_links src/backend/port/dynloader.c:src/backend/port/dynloader/${template}.c src/backend/port/pg_sema.c:${SEMA_IMPLEMENTATION} src/backend/port/pg_shmem.c:${SHMEM_IMPLEMENTATION} src/include/dynloader.h:src/backend/port/dynloader/${template}.h src/include/pg_config_os.h:src/include/port/${template}.h src/Makefile.port:src/makefiles/Makefile.${template}"
 
 
-case $host_os in mingw*);;
-*)
+case $host_os in mingw*)
 ac_config_commands="$ac_config_commands check_win32_symlinks"
 
 	;;
