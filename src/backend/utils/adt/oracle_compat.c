@@ -1,7 +1,7 @@
 /*
  *  Edmund Mergl <E.Mergl@bawue.de>
  *
- *  $Id: oracle_compat.c,v 1.3 1997/03/15 06:00:19 scrappy Exp $
+ *  $Id: oracle_compat.c,v 1.4 1997/03/16 01:17:49 scrappy Exp $
  *
  */
 
@@ -451,6 +451,7 @@ TRANSLATE(text *string, char from, char to)
   return ret;
 }
 
+#if 0
 
 /********************************************************************
  *
@@ -698,5 +699,6 @@ substr(text *string, int4 m)
   return ret;
 }
 
+#endif 
 
 /* EOF */
