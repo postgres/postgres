@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Mar 10 01:11:31 EST 2002
+Last updated:		Mon Mar 18 22:05:18 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -71,7 +71,7 @@ ADMIN
 DATA TYPES
 ----------
 
-* Add domain capability [domain]
+* -Add domain capability [domain] (Rod Taylor)
 * Add IPv6 capability to INET/CIDR types
 * Remove Money type, add money formatting for decimal type
 * SELECT cash_out(2) crashes because of opaque
