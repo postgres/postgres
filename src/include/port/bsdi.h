@@ -6,7 +6,6 @@ typedef unsigned char slock_t;
 typedef unsigned int slock_t;
 #endif
 #if defined(__sparc__)
-#define NEED_SPARC_TAS_ASM
 typedef unsigned char slock_t;
 #endif
 
