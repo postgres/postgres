@@ -1,24 +1,20 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.3 2004/12/03 06:18:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.4 2004/12/03 06:30:40 momjian Exp $
 -->
 
  <chapter id="external-projects">
   <title>External Projects</title>
 
   <para>
-   <productname>PostgreSQL</productname> is a large piece of very
-   complex software, and managing the code is a difficult process. We
-   have found that many enhancements to
-   <productname>PostgreSQL</productname> can be more efficiently
-   developed independently of the main project. They can have their own
-   developer teams, email lists, their own bug tracking, and their own
-   release schedule. While their independence makes development easier,
-   it makes users job harder. They have to hunt around looking for
-   database enhancements to meet their needs.
-  </para>
-
-  <para>
-   This section will outlines some of the more popular externally
+   <productname>PostgreSQL</productname> is a complex software project,
+   and managing it is difficult. We have found that many
+   enhancements to <productname>PostgreSQL</productname> can be more
+   efficiently developed independently of the main project. They can
+   have their own developer teams, email lists, their own bug tracking,
+   and their own release schedule. While their independence makes
+   development easier, it makes user's jobs harder. They have to hunt
+   around looking for database enhancements to meet their needs.
+   This section outlines some of the more popular externally
    developed enhancements and guides you on how to find them.
   </para>
 
@@ -30,13 +26,13 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.3 2004/12/03 06:18:12
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> packages very few interfaces
+   <productname>PostgreSQL</productname> includes very few interfaces
    with the base distribution. <application>libpq</> is packaged because
    it is the primary <application>C</> interface and many other
    interfaces are built on top of it. <application>ecpg</> is packaged
-   because it is tied to the server-side grammar so it is very dependent
+   because it is tied to the server-side grammar so is very dependent
    on the database version. All the other interfaces are independent
-   projects.
+   projects and must be installed separately.
   </para>
 
   <para>
