@@ -1140,5 +1140,5 @@ AC_OUTPUT(
 ],
 [
 # Update timestamp for config.h (see Makefile.global)
-echo >src/include/stamp-h
+test x"$CONFIG_HEADERS" != x"" && echo >src/include/stamp-h
 ])
