@@ -30,8 +30,8 @@ if sys.platform == "win32":
 	optional_libs=[ 'libpqdll', 'wsock32', 'advapi32' ]
 	data_files = [ 'libpq.dll' ]
 else:
-	include_dirs=['/usr/include/pgsql']
-	library_dirs=['/usr/lib/pgsql']
+	include_dirs=['../../include','../libpq','/usr/include/pgsql']
+	library_dirs=['../libpq','/usr/lib/pgsql']
 	optional_libs=['pq']
 	data_files = []
 
