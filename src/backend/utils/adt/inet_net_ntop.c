@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.4 1999/01/01 04:17:13 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.5 1999/05/25 05:29:38 momjian Exp $";
 
 #endif
 
@@ -207,7 +207,7 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 
 	/* Format whole octets plus nonzero trailing octets. */
 	tb = (bits == 32) ? 31 : bits;
-	for (b = 0; b <= (tb / 8) || (b < len && *src != 0); b++)
+	for (b = 0; bits != 0 && (b <= (tb / 8) || (b < len && *src != 0)); b++)
 	{
 		if (size < sizeof "255.")
 			goto emsgsize;
