@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.192 2004/10/16 18:57:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.193 2004/10/29 22:19:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1438,33 +1438,25 @@ CommitTransaction(void)
 	Assert(s->parent == NULL);
 
 	/*
+	 * Do pre-commit processing (most of this stuff requires database
+	 * access, and in fact could still cause an error...)
+	 */
+
+	/*
 	 * Tell the trigger manager that this transaction is about to be
 	 * committed. He'll invoke all trigger deferred until XACT before we
 	 * really start on committing the transaction.
 	 */
 	AfterTriggerEndXact();
 
+	/* Close open cursors */
+	AtCommit_Portals();
+
 	/*
-	 * Similarly, let ON COMMIT management do its thing before we start to
-	 * commit.
+	 * Let ON COMMIT management do its thing (must happen after closing
+	 * cursors, to avoid dangling-reference problems)
 	 */
 	PreCommit_on_commit_actions();
-
-	/* Prevent cancel/die interrupt while cleaning up */
-	HOLD_INTERRUPTS();
-
-	/*
-	 * set the current transaction state information appropriately during
-	 * the abort processing
-	 */
-	s->state = TRANS_COMMIT;
-
-	/*
-	 * Do pre-commit processing (most of this stuff requires database
-	 * access, and in fact could still cause an error...)
-	 */
-
-	AtCommit_Portals();
 
 	/* close large objects before lower-level cleanup */
 	AtEOXact_LargeObject(true);
@@ -1475,6 +1467,15 @@ CommitTransaction(void)
 	/* Update the flat password file if we changed pg_shadow or pg_group */
 	/* This should be the last step before commit */
 	AtEOXact_UpdatePasswordFile(true);
+
+	/* Prevent cancel/die interrupt while cleaning up */
+	HOLD_INTERRUPTS();
+
+	/*
+	 * set the current transaction state information appropriately during
+	 * the abort processing
+	 */
+	s->state = TRANS_COMMIT;
 
 	/*
 	 * Here is where we really truly commit.
