@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.12 1997/11/20 23:21:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.13 1998/02/13 03:29:39 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,13 +614,8 @@ match_clause_to_indexkey(Rel *rel,
 		/*
 		 * Check for standard s-argable clause
 		 */
-#ifdef INDEXSCAN_PATCH
-		/* Handle also function parameters.  DZ - 27-8-1996 */
 		if ((rightop && IsA(rightop, Const)) ||
 			(rightop && IsA(rightop, Param)))
-#else
-		if (rightop && IsA(rightop, Const))
-#endif
 		{
 			restrict_op = ((Oper *) ((Expr *) clause)->oper)->opno;
 			isIndexable =
@@ -634,13 +629,8 @@ match_clause_to_indexkey(Rel *rel,
 		/*
 		 * Must try to commute the clause to standard s-arg format.
 		 */
-#ifdef INDEXSCAN_PATCH
-		/* ...And here...  - vadim 01/22/97 */
 		else if ((leftop && IsA(leftop, Const)) ||
 				 (leftop && IsA(leftop, Param)))
-#else
-		else if (leftop && IsA(leftop, Const))
-#endif
 		{
 			restrict_op =
 				get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
