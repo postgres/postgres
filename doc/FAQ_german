@@ -5,8 +5,8 @@
    
    Deutsche Übersetzung von Ian Barwick (barwick@gmx.net).
    
-   Letzte Aktualisierung der deutschen Übersetzung: Mo., den 02.06.2003,
-   22:00 CET
+   Letzte Aktualisierung der deutschen Übersetzung: Di., den 22.07.2003,
+   16:20 CET
    
    Die aktuellste Version dieses Dokuments liegt auf der PostgreSQL
    Website:
@@ -287,14 +287,14 @@
    
    Eine Liste von Unternehmen, die Support für PostgreSQL auf
    kommerzieller Basis leisten, kann unter
-   http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html
-   eingesehen werden.
+   http://techdocs.postgresql.org/companies.php eingesehen werden.
    
     1.7) Was ist die neueste Version von PostgreSQL?
     
-   Die neueste Version von PostgreSQL ist 7.3.3 .
+   Die neueste Version von PostgreSQL ist 7.3.4 .
    
-   Wir planen alle 4 Monate eine neue Version herauszugeben.
+   Die Freigabe einer neuen Version erfolgt im Schnitt ca. dreimal pro
+   Jahr.
    
     1.8) Welche Dokumentation ist für PostgreSQL verfügbar?
     
