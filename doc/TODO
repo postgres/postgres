@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 28 15:18:30 EST 2001
+Last updated:		Thu Nov 29 00:53:42 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -194,6 +194,7 @@ COMMANDS
 	o MOVE 0 should not move to end of cursor
 	o Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 	o Allow DELETE WHERE CURRENT OF cursor
+	o Prevent DROP of table being referenced by our own open cursor
 * INSERT
 	o Allow INSERT/UPDATE of system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
