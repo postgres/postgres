@@ -1,4 +1,7 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.78 2001/10/12 02:08:34 ishii Exp $ -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.79 2001/11/17 22:20:33 tgl Exp $
+Postgres documentation
+-->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -3625,6 +3628,166 @@ SELECT TIMESTAMP 'now';
    </para>
 
   </sect1>
+
+
+ <sect1 id="functions-sequence">
+  <title>Sequence-Manipulation Functions</title>
+
+  <indexterm>
+   <primary>sequences</primary>
+  </indexterm>
+  <indexterm>
+   <primary>nextval</primary>
+  </indexterm>
+  <indexterm>
+   <primary>currval</primary>
+  </indexterm>
+  <indexterm>
+   <primary>setval</primary>
+  </indexterm>
+
+   <table>
+    <title>Sequence Functions</>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Function</> <entry>Returns</> <entry>Description</></row>
+     </thead>
+
+     <tbody>
+      <row>
+	<entry><function>nextval</function>(<type>text</type>)</entry>
+	<entry><type>bigint</type></entry>
+	<entry>Advance sequence and return new value</>
+      </row>
+      <row>
+	<entry><function>currval</function>(<type>text</type>)</entry>
+	<entry><type>bigint</type></entry>
+	<entry>Return value most recently obtained with <function>nextval</></entry>
+      </row>
+      <row>
+	<entry><function>setval</function>(<type>text</type>,<type>bigint</type>)</entry>
+	<entry><type>bigint</type></entry>
+	<entry>Set sequence's current value</>
+      </row>
+      <row>
+	<entry><function>setval</function>(<type>text</type>,<type>bigint</type>,<type>boolean</>)</entry>
+	<entry><type>bigint</type></entry>
+	<entry>Set sequence's current value and <literal>is_called</> flag</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+  <para>
+   This section describes <productname>Postgres</productname>'s functions
+   for operating on <firstterm>sequence objects</>.
+   Sequence objects (also called sequence generators or
+   just sequences) are special single-row tables created with
+   <command>CREATE SEQUENCE</>.  A sequence object is usually used to
+   generate unique identifiers for rows of a table.  The sequence functions
+   provide simple, multi-user-safe methods for obtaining successive
+   sequence values from sequence objects.
+  </para>
+
+  <para>
+   For largely historical reasons, the sequence to be operated on by
+   a sequence-function call is specified by a text-string argument.
+   To achieve some compatibility with the handling of ordinary SQL
+   names, the sequence functions convert their argument to lower case
+   unless the string is double-quoted.  Thus
+<programlisting>
+nextval('foo')      <lineannotation>operates on sequence </><literal>foo</>
+nextval('FOO')      <lineannotation>operates on sequence </><literal>foo</>
+nextval('"Foo"')    <lineannotation>operates on sequence </><literal>Foo</>
+</programlisting>
+   Of course, the text argument can be the result of an expression,
+   not only a simple literal, which is occasionally useful.
+  </para>
+
+  <para>
+   The available sequence functions are:
+
+    <variablelist>
+     <varlistentry>
+      <term><function>nextval</></term>
+      <listitem>
+       <para>
+        Advance the sequence object to its next value and return that
+	value.  This is done atomically: even if multiple server processes
+	execute <function>nextval</> concurrently, each will safely receive
+	a distinct sequence value.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>currval</></term>
+      <listitem>
+       <para>
+        Return the value most recently obtained by <function>nextval</>
+	for this sequence in the current server process.  (An error is
+	reported if <function>nextval</> has never been called for this
+	sequence in this process.)  Notice that because this is returning
+	a process-local value, it gives a predictable answer even if other
+	server processes are executing <function>nextval</> meanwhile.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><function>setval</></term>
+      <listitem>
+       <para>
+        Reset the sequence object's counter value.  The two-parameter
+	form sets the sequence's <literal>last_value</> field to the specified
+	value and sets its <literal>is_called</> field to <literal>true</>,
+	meaning that the next <function>nextval</> will advance the sequence
+	before returning a value.  In the three-parameter form,
+	<literal>is_called</> may be set either <literal>true</> or
+	<literal>false</>.  If it's set to <literal>false</>,
+	the next <function>nextval</> will return exactly the specified
+	value, and sequence advancement commences with the following
+	<function>nextval</>.  For example,
+       </para>
+
+       <informalexample>
+<screen>
+SELECT setval('foo', 42);           <lineannotation>Next nextval() will return 43</>
+SELECT setval('foo', 42, true);     <lineannotation>Same as above</>
+SELECT setval('foo', 42, false);    <lineannotation>Next nextval() will return 42</>
+</screen>
+       </informalexample>
+
+       <para>
+        The result returned by <function>setval</> is just the value of its
+	second argument.
+       </para>
+      </listitem>
+     </varlistentry>
+    </variablelist>
+  </para>
+
+  <important>
+   <para>
+    To avoid blocking of concurrent transactions that obtain numbers from the
+    same sequence, a <function>nextval</> operation is never rolled back;
+    that is, once a value has been fetched it is considered used, even if the
+    transaction that did the <function>nextval</> later aborts.  This means
+    that aborted transactions may leave unused <quote>holes</quote> in the
+    sequence of assigned values.  <function>setval</> operations are never
+    rolled back, either.
+   </para>
+  </important>
+
+  <para>
+   If a sequence object has been created with default parameters,
+   <function>nextval()</> calls on it will return successive values
+   beginning with one.  Other behaviors can be obtained by using
+   special parameters in the <command>CREATE SEQUENCE</> command;
+   see its command reference page for more information.
+  </para>
+
+ </sect1>
 
 
  <sect1 id="functions-conditional">

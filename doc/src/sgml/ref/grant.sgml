@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.13 2001/11/11 19:24:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.14 2001/11/17 22:20:34 tgl Exp $
 Postgres documentation
 -->
 
@@ -74,8 +74,8 @@ GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,..
        specified table.  <literal>SELECT ... FOR UPDATE</literal>
        also requires this privilege (besides the
        <literal>SELECT</literal> privilege).  For sequences, this
-       privilege allows the use of <function>currval</function> and
-       <function>nextval</function>.
+       privilege allows the use of <function>nextval</function>,
+       <function>currval</function> and <function>setval</function>.
       </para>
      </listitem>
     </varlistentry>
