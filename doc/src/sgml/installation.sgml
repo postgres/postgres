@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.100 2002/10/29 18:59:38 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.101 2002/10/29 19:09:41 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1740,8 +1740,8 @@ gunzip -c user.ps.gz \
        <row>
 	<entry><systemitem class="osname">Windows</></entry>
 	<entry><systemitem>x86</></entry>
-	<entry>7.2</entry>
-	<entry>2001-12-13,
+	<entry>7.3</entry>
+	<entry>2002-10-29,
 	 Dave Page (<email>dpage@vale-housing.co.uk</email>),
 	 Jason Tishler (<email>jason@tishler.net</email>)</entry>
         <entry>with <application>Cygwin</application>; see <filename>doc/FAQ_MSWIN</filename></entry>
