@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.37 2005/01/09 17:47:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.38 2005/01/17 01:29:02 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -161,6 +161,684 @@ DROP TABLE products;
    data now you can skip ahead to <xref linkend="dml"> and read the
    rest of this chapter later.
   </para>
+ </sect1>
+
+ <sect1 id="ddl-default">
+  <title>Default Values</title>
+
+  <indexterm zone="ddl-default">
+   <primary>default value</primary>
+  </indexterm>
+
+  <para>
+   A column can be assigned a default value.  When a new row is
+   created and no values are specified for some of the columns, the
+   columns will be filled with their respective default values.  A
+   data manipulation command can also request explicitly that a column
+   be set to its default value, without having to know what that value is.
+   (Details about data manipulation commands are in <xref linkend="dml">.)
+  </para>
+
+  <para>
+   <indexterm><primary>null value</primary><secondary>default value</secondary></indexterm>
+   If no default value is declared explicitly, the default value is the
+   null value.  This usually makes sense because a null value can
+   be considered to represent unknown data.
+  </para>
+
+  <para>
+   In a table definition, default values are listed after the column
+   data type.  For example:
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric <emphasis>DEFAULT 9.99</emphasis>
+);
+</programlisting>
+  </para>
+
+  <para>
+   The default value may be an expression, which will be
+   evaluated whenever the default value is inserted
+   (<emphasis>not</emphasis> when the table is created).  A common example
+   is that a timestamp column may have a default of <literal>now()</>,
+   so that it gets set to the time of row insertion.  Another common
+   example is generating a <quote>serial number</> for each row.
+   In <productname>PostgreSQL</productname> this is typically done by
+   something like
+<programlisting>
+CREATE TABLE products (
+    product_no integer <emphasis>DEFAULT nextval('products_product_no_seq')</emphasis>,
+    ...
+);
+</programlisting>
+   where the <literal>nextval()</> function supplies successive values
+   from a <firstterm>sequence object</> (see <xref
+   linkend="functions-sequence">). This arrangement is sufficiently common
+   that there's a special shorthand for it:
+<programlisting>
+CREATE TABLE products (
+    product_no <emphasis>SERIAL</emphasis>,
+    ...
+);
+</programlisting>
+   The <literal>SERIAL</> shorthand is discussed further in <xref
+   linkend="datatype-serial">.
+  </para>
+ </sect1>
+
+ <sect1 id="ddl-constraints">
+  <title>Constraints</title>
+
+  <indexterm zone="ddl-constraints">
+   <primary>constraint</primary>
+  </indexterm>
+
+  <para>
+   Data types are a way to limit the kind of data that can be stored
+   in a table.  For many applications, however, the constraint they
+   provide is too coarse.  For example, a column containing a product
+   price should probably only accept positive values.  But there is no
+   data type that accepts only positive numbers.  Another issue is
+   that you might want to constrain column data with respect to other
+   columns or rows.  For example, in a table containing product
+   information, there should only be one row for each product number.
+  </para>
+
+  <para>
+   To that end, SQL allows you to define constraints on columns and
+   tables.  Constraints give you as much control over the data in your
+   tables as you wish.  If a user attempts to store data in a column
+   that would violate a constraint, an error is raised.  This applies
+   even if the value came from the default value definition.
+  </para>
+
+  <sect2>
+   <title>Check Constraints</title>
+
+   <indexterm>
+    <primary>check constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>check</secondary>
+   </indexterm>
+
+   <para>
+    A check constraint is the most generic constraint type.  It allows
+    you to specify that the value in a certain column must satisfy a
+    Boolean (truth-value) expression.  For instance, to require positive
+    product prices, you could use:
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric <emphasis>CHECK (price > 0)</emphasis>
+);
+</programlisting>
+   </para>
+
+   <para>
+    As you see, the constraint definition comes after the data type,
+    just like default value definitions.  Default values and
+    constraints can be listed in any order.  A check constraint
+    consists of the key word <literal>CHECK</literal> followed by an
+    expression in parentheses.  The check constraint expression should
+    involve the column thus constrained, otherwise the constraint
+    would not make too much sense.
+   </para>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>name</secondary>
+   </indexterm>
+
+   <para>
+    You can also give the constraint a separate name.  This clarifies
+    error messages and allows you to refer to the constraint when you
+    need to change it.  The syntax is:
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric <emphasis>CONSTRAINT positive_price</emphasis> CHECK (price > 0)
+);
+</programlisting>
+    So, to specify a named constraint, use the key word
+    <literal>CONSTRAINT</literal> followed by an identifier followed
+    by the constraint definition.  (If you don't specify a constraint
+    name in this way, the system chooses a name for you.)
+   </para>
+
+   <para>
+    A check constraint can also refer to several columns.  Say you
+    store a regular price and a discounted price, and you want to
+    ensure that the discounted price is lower than the regular price.
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric CHECK (price > 0),
+    discounted_price numeric CHECK (discounted_price > 0),
+    <emphasis>CHECK (price > discounted_price)</emphasis>
+);
+</programlisting>
+   </para>
+
+   <para>
+    The first two constraints should look familiar.  The third one
+    uses a new syntax.  It is not attached to a particular column,
+    instead it appears as a separate item in the comma-separated
+    column list.  Column definitions and these constraint
+    definitions can be listed in mixed order.
+   </para>
+
+   <para>
+    We say that the first two constraints are column constraints, whereas the
+    third one is a table constraint because it is written separately
+    from any one column definition.  Column constraints can also be
+    written as table constraints, while the reverse is not necessarily
+    possible, since a column constraint is supposed to refer to only the
+    column it is attached to.  (<productname>PostgreSQL</productname> doesn't
+    enforce that rule, but you should follow it if you want your table
+    definitions to work with other database systems.)  The above example could
+    also be written as
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric,
+    CHECK (price > 0),
+    discounted_price numeric,
+    CHECK (discounted_price > 0),
+    CHECK (price > discounted_price)
+);
+</programlisting>
+    or even
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric CHECK (price > 0),
+    discounted_price numeric,
+    CHECK (discounted_price > 0 AND price > discounted_price)
+);
+</programlisting>
+    It's a matter of taste.
+   </para>
+
+   <para>
+    Names can be assigned to table constraints in just the same way as
+    for column constraints:
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric,
+    CHECK (price > 0),
+    discounted_price numeric,
+    CHECK (discounted_price > 0),
+    <emphasis>CONSTRAINT valid_discount</> CHECK (price > discounted_price)
+);
+</programlisting>
+   </para>
+
+   <indexterm>
+    <primary>null value</primary>
+    <secondary sortas="check constraints">with check constraints</secondary>
+   </indexterm>
+
+   <para>
+    It should be noted that a check constraint is satisfied if the
+    check expression evaluates to true or the null value.  Since most
+    expressions will evaluate to the null value if any operand is null,
+    they will not prevent null values in the constrained columns.  To
+    ensure that a column does not contain null values, the not-null
+    constraint described in the next section can be used.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Not-Null Constraints</title>
+
+   <indexterm>
+    <primary>not-null constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>NOT NULL</secondary>
+   </indexterm>
+
+   <para>
+    A not-null constraint simply specifies that a column must not
+    assume the null value.  A syntax example:
+<programlisting>
+CREATE TABLE products (
+    product_no integer <emphasis>NOT NULL</emphasis>,
+    name text <emphasis>NOT NULL</emphasis>,
+    price numeric
+);
+</programlisting>
+   </para>
+
+   <para>
+    A not-null constraint is always written as a column constraint.  A
+    not-null constraint is functionally equivalent to creating a check
+    constraint <literal>CHECK (<replaceable>column_name</replaceable>
+    IS NOT NULL)</literal>, but in
+    <productname>PostgreSQL</productname> creating an explicit
+    not-null constraint is more efficient.  The drawback is that you
+    cannot give explicit names to not-null constraints created that
+    way.
+   </para>
+
+   <para>
+    Of course, a column can have more than one constraint.  Just write
+    the constraints one after another:
+<programlisting>
+CREATE TABLE products (
+    product_no integer NOT NULL,
+    name text NOT NULL,
+    price numeric NOT NULL CHECK (price > 0)
+);
+</programlisting>
+    The order doesn't matter.  It does not necessarily determine in which
+    order the constraints are checked.
+   </para>
+
+   <para>
+    The <literal>NOT NULL</literal> constraint has an inverse: the
+    <literal>NULL</literal> constraint.  This does not mean that the
+    column must be null, which would surely be useless.  Instead, this
+    simply selects the default behavior that the column may be null.
+    The <literal>NULL</literal> constraint is not defined in the SQL
+    standard and should not be used in portable applications.  (It was
+    only added to <productname>PostgreSQL</productname> to be
+    compatible with some other database systems.)  Some users, however,
+    like it because it makes it easy to toggle the constraint in a
+    script file.  For example, you could start with
+<programlisting>
+CREATE TABLE products (
+    product_no integer NULL,
+    name text NULL,
+    price numeric NULL
+);
+</programlisting>
+    and then insert the <literal>NOT</literal> key word where desired.
+   </para>
+
+   <tip>
+    <para>
+     In most database designs the majority of columns should be marked
+     not null.
+    </para>
+   </tip>
+  </sect2>
+
+  <sect2>
+   <title>Unique Constraints</title>
+
+   <indexterm>
+    <primary>unique constraint</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>unique</secondary>
+   </indexterm>
+
+   <para>
+    Unique constraints ensure that the data contained in a column or a
+    group of columns is unique with respect to all the rows in the
+    table.  The syntax is
+<programlisting>
+CREATE TABLE products (
+    product_no integer <emphasis>UNIQUE</emphasis>,
+    name text,
+    price numeric
+);
+</programlisting>
+    when written as a column constraint, and
+<programlisting>
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric,
+    <emphasis>UNIQUE (product_no)</emphasis>
+);
+</programlisting>
+    when written as a table constraint.
+   </para>
+
+   <para>
+    If a unique constraint refers to a group of columns, the columns
+    are listed separated by commas:
+<programlisting>
+CREATE TABLE example (
+    a integer,
+    b integer,
+    c integer,
+    <emphasis>UNIQUE (a, c)</emphasis>
+);
+</programlisting>
+    This specifies that the combination of values in the indicated columns
+    is unique across the whole table, though any one of the columns
+    need not be (and ordinarily isn't) unique.
+   </para>
+
+   <para>
+    You can assign your own name for a unique constraint, in the usual way:
+<programlisting>
+CREATE TABLE products (
+    product_no integer <emphasis>CONSTRAINT must_be_different</emphasis> UNIQUE,
+    name text,
+    price numeric
+);
+</programlisting>
+   </para>
+
+   <indexterm>
+    <primary>null value</primary>
+    <secondary sortas="unique constraints">with unique constraints</secondary>
+   </indexterm>
+
+   <para>
+    In general, a unique constraint is violated when there are two or
+    more rows in the table where the values of all of the
+    columns included in the constraint are equal.
+    However, null values are not considered equal in this
+    comparison.  That means even in the presence of a
+    unique constraint it is possible to store an unlimited number of
+    rows that contain a null value in at least one of the constrained
+    columns.  This behavior conforms to the SQL standard, but we have
+    heard that other SQL databases may not follow this rule.  So be
+    careful when developing applications that are intended to be
+    portable.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Primary Keys</title>
+
+   <indexterm>
+    <primary>primary key</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>primary key</secondary>
+   </indexterm>
+
+   <para>
+    Technically, a primary key constraint is simply a combination of a
+    unique constraint and a not-null constraint.  So, the following
+    two table definitions accept the same data:
+<programlisting>
+CREATE TABLE products (
+    product_no integer UNIQUE NOT NULL,
+    name text,
+    price numeric
+);
+</programlisting>
+
+<programlisting>
+CREATE TABLE products (
+    product_no integer <emphasis>PRIMARY KEY</emphasis>,
+    name text,
+    price numeric
+);
+</programlisting>
+   </para>
+
+   <para>
+    Primary keys can also constrain more than one column; the syntax
+    is similar to unique constraints:
+<programlisting>
+CREATE TABLE example (
+    a integer,
+    b integer,
+    c integer,
+    <emphasis>PRIMARY KEY (a, c)</emphasis>
+);
+</programlisting>
+   </para>
+
+   <para>
+    A primary key indicates that a column or group of columns can be
+    used as a unique identifier for rows in the table.  (This is a
+    direct consequence of the definition of a primary key.  Note that
+    a unique constraint does not, by itself, provide a unique identifier
+    because it does not exclude null values.)  This is useful both for
+    documentation purposes and for client applications.  For example,
+    a GUI application that allows modifying row values probably needs
+    to know the primary key of a table to be able to identify rows
+    uniquely.
+   </para>
+
+   <para>
+    A table can have at most one primary key (while it can have many
+    unique and not-null constraints).  Relational database theory
+    dictates that every table must have a primary key.  This rule is
+    not enforced by <productname>PostgreSQL</productname>, but it is
+    usually best to follow it.
+   </para>
+  </sect2>
+
+  <sect2 id="ddl-constraints-fk">
+   <title>Foreign Keys</title>
+
+   <indexterm>
+    <primary>foreign key</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>constraint</primary>
+    <secondary>foreign key</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>referential integrity</primary>
+   </indexterm>
+
+   <para>
+    A foreign key constraint specifies that the values in a column (or
+    a group of columns) must match the values appearing in some row
+    of another table.
+    We say this maintains the <firstterm>referential
+    integrity</firstterm> between two related tables.
+   </para>
+
+   <para>
+    Say you have the product table that we have used several times already:
+<programlisting>
+CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+</programlisting>
+    Let's also assume you have a table storing orders of those
+    products.  We want to ensure that the orders table only contains
+    orders of products that actually exist.  So we define a foreign
+    key constraint in the orders table that references the products
+    table:
+<programlisting>
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    product_no integer <emphasis>REFERENCES products (product_no)</emphasis>,
+    quantity integer
+);
+</programlisting>
+    Now it is impossible to create orders with
+    <structfield>product_no</structfield> entries that do not appear in the
+    products table.
+   </para>
+
+   <para>
+    We say that in this situation the orders table is the
+    <firstterm>referencing</firstterm> table and the products table is
+    the <firstterm>referenced</firstterm> table.  Similarly, there are
+    referencing and referenced columns.
+   </para>
+
+   <para>
+    You can also shorten the above command to
+<programlisting>
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    product_no integer <emphasis>REFERENCES products</emphasis>,
+    quantity integer
+);
+</programlisting>
+    because in absence of a column list the primary key of the
+    referenced table is used as the referenced column(s).
+   </para>
+
+   <para>
+    A foreign key can also constrain and reference a group of columns.
+    As usual, it then needs to be written in table constraint form.
+    Here is a contrived syntax example:
+<programlisting>
+CREATE TABLE t1 (
+  a integer PRIMARY KEY,
+  b integer,
+  c integer,
+  <emphasis>FOREIGN KEY (b, c) REFERENCES other_table (c1, c2)</emphasis>
+);
+</programlisting>
+    Of course, the number and type of the constrained columns need to
+    match the number and type of the referenced columns.
+   </para>
+
+   <para>
+    You can assign your own name for a foreign key constraint,
+    in the usual way.
+   </para>
+
+   <para>
+    A table can contain more than one foreign key constraint.  This is
+    used to implement many-to-many relationships between tables.  Say
+    you have tables about products and orders, but now you want to
+    allow one order to contain possibly many products (which the
+    structure above did not allow).  You could use this table structure:
+<programlisting>
+CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    shipping_address text,
+    ...
+);
+
+CREATE TABLE order_items (
+    product_no integer REFERENCES products,
+    order_id integer REFERENCES orders,
+    quantity integer,
+    PRIMARY KEY (product_no, order_id)
+);
+</programlisting>
+    Notice that the primary key overlaps with the foreign keys in
+    the last table.
+   </para>
+
+   <indexterm>
+    <primary>CASCADE</primary>
+    <secondary>foreign key action</secondary>
+   </indexterm>
+
+   <indexterm>
+    <primary>RESTRICT</primary>
+    <secondary>foreign key action</secondary>
+   </indexterm>
+
+   <para>
+    We know that the foreign keys disallow creation of orders that
+    do not relate to any products.  But what if a product is removed
+    after an order is created that references it?  SQL allows you to
+    handle that as well.  Intuitively, we have a few options:
+    <itemizedlist spacing="compact">
+     <listitem><para>Disallow deleting a referenced product</para></listitem>
+     <listitem><para>Delete the orders as well</para></listitem>
+     <listitem><para>Something else?</para></listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    To illustrate this, let's implement the following policy on the
+    many-to-many relationship example above: when someone wants to
+    remove a product that is still referenced by an order (via
+    <literal>order_items</literal>), we disallow it.  If someone
+    removes an order, the order items are removed as well.
+<programlisting>
+CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    shipping_address text,
+    ...
+);
+
+CREATE TABLE order_items (
+    product_no integer REFERENCES products <emphasis>ON DELETE RESTRICT</emphasis>,
+    order_id integer REFERENCES orders <emphasis>ON DELETE CASCADE</emphasis>,
+    quantity integer,
+    PRIMARY KEY (product_no, order_id)
+);
+</programlisting>
+   </para>
+
+   <para>
+    Restricting and cascading deletes are the two most common options.
+    <literal>RESTRICT</literal> prevents deletion of a
+    referenced row. <literal>NO ACTION</literal> means that if any
+    referencing rows still exist when the constraint is checked, an error
+    is raised; this is the default behavior if you do not specify anything.
+    (The essential difference between these two choices is that
+    <literal>NO ACTION</literal> allows the check to be deferred until
+    later in the transaction, whereas <literal>RESTRICT</literal> does not.)
+    <literal>CASCADE</> specifies that when a referenced row is deleted,
+    row(s) referencing it should be automatically deleted as well.
+    There are two other options:
+    <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
+    These cause the referencing columns to be set to nulls or default
+    values, respectively, when the referenced row is deleted.
+    Note that these do not excuse you from observing any constraints.
+    For example, if an action specifies <literal>SET DEFAULT</literal>
+    but the default value would not satisfy the foreign key, the
+    operation will fail.
+   </para>
+
+   <para>
+    Analogous to <literal>ON DELETE</literal> there is also
+    <literal>ON UPDATE</literal> which is invoked when a referenced
+    column is changed (updated).  The possible actions are the same.
+   </para>
+
+   <para>
+    More information about updating and deleting data is in <xref
+    linkend="dml">.
+   </para>
+
+   <para>
+    Finally, we should mention that a foreign key must reference
+    columns that either are a primary key or form a unique constraint.
+    If the foreign key references a unique constraint, there are some
+    additional possibilities regarding how null values are matched.
+    These are explained in the reference documentation for
+    <xref linkend="sql-createtable" endterm="sql-createtable-title">.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="ddl-system-columns">
@@ -355,655 +1033,6 @@ DROP TABLE products;
    </para>
  </sect1>
 
- <sect1 id="ddl-default">
-  <title>Default Values</title>
-
-  <indexterm zone="ddl-default">
-   <primary>default value</primary>
-  </indexterm>
-
-  <para>
-   A column can be assigned a default value.  When a new row is
-   created and no values are specified for some of the columns, the
-   columns will be filled with their respective default values.  A
-   data manipulation command can also request explicitly that a column
-   be set to its default value, without having to know what that value is.
-   (Details about data manipulation commands are in <xref linkend="dml">.)
-  </para>
-
-  <para>
-   <indexterm><primary>null value</primary><secondary>default value</secondary></indexterm>
-   If no default value is declared explicitly, the default value is the
-   null value.  This usually makes sense because a null value can
-   be considered to represent unknown data.
-  </para>
-
-  <para>
-   In a table definition, default values are listed after the column
-   data type.  For example:
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric <emphasis>DEFAULT 9.99</emphasis>
-);
-</programlisting>
-  </para>
-
-  <para>
-   The default value may be a scalar expression, which will be
-   evaluated whenever the default value is inserted
-   (<emphasis>not</emphasis> when the table is created).  A common example
-   is that a timestamp column may have a default of <literal>now()</>,
-   so that it gets set to the time of row insertion.  Another common
-   example is generating a <quote>serial number</> for each row.
-   In <productname>PostgreSQL</productname> this is typically done by
-   something like
-<programlisting>
-CREATE TABLE products (
-    product_no integer <emphasis>DEFAULT nextval('products_product_no_seq')</emphasis>,
-    ...
-);
-</programlisting>
-   where the <literal>nextval()</> function supplies successive values
-   from a <firstterm>sequence object</> (see <xref
-   linkend="functions-sequence">). This arrangement is sufficiently common
-   that there's a special shorthand for it:
-<programlisting>
-CREATE TABLE products (
-    product_no <emphasis>SERIAL</emphasis>,
-    ...
-);
-</programlisting>
-   The <literal>SERIAL</> shorthand is discussed further in <xref
-   linkend="datatype-serial">.
-  </para>
- </sect1>
-
- <sect1 id="ddl-constraints">
-  <title>Constraints</title>
-
-  <indexterm zone="ddl-constraints">
-   <primary>constraint</primary>
-  </indexterm>
-
-  <para>
-   Data types are a way to limit the kind of data that can be stored
-   in a table.  For many applications, however, the constraint they
-   provide is too coarse.  For example, a column containing a product
-   price should probably only accept positive values.  But there is no
-   data type that accepts only positive numbers.  Another issue is
-   that you might want to constrain column data with respect to other
-   columns or rows.  For example, in a table containing product
-   information, there should only be one row for each product number.
-  </para>
-
-  <para>
-   To that end, SQL allows you to define constraints on columns and
-   tables.  Constraints give you as much control over the data in your
-   tables as you wish.  If a user attempts to store data in a column
-   that would violate a constraint, an error is raised.  This applies
-   even if the value came from the default value definition.
-  </para>
-
-  <sect2>
-   <title>Check Constraints</title>
-
-   <indexterm>
-    <primary>check constraint</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>constraint</primary>
-    <secondary>check</secondary>
-   </indexterm>
-
-   <para>
-    A check constraint is the most generic constraint type.  It allows
-    you to specify that the value in a certain column must satisfy an
-    arbitrary expression.  For instance, to require positive product
-    prices, you could use:
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric <emphasis>CHECK (price > 0)</emphasis>
-);
-</programlisting>
-   </para>
-
-   <para>
-    As you see, the constraint definition comes after the data type,
-    just like default value definitions.  Default values and
-    constraints can be listed in any order.  A check constraint
-    consists of the key word <literal>CHECK</literal> followed by an
-    expression in parentheses.  The check constraint expression should
-    involve the column thus constrained, otherwise the constraint
-    would not make too much sense.
-   </para>
-
-   <indexterm>
-    <primary>constraint</primary>
-    <secondary>name</secondary>
-   </indexterm>
-
-   <para>
-    You can also give the constraint a separate name.  This clarifies
-    error messages and allows you to refer to the constraint when you
-    need to change it.  The syntax is:
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric <emphasis>CONSTRAINT positive_price</emphasis> CHECK (price > 0)
-);
-</programlisting>
-    So, to specify a named constraint, use the key word
-    <literal>CONSTRAINT</literal> followed by an identifier followed
-    by the constraint definition.
-   </para>
-
-   <para>
-    A check constraint can also refer to several columns.  Say you
-    store a regular price and a discounted price, and you want to
-    ensure that the discounted price is lower than the regular price.
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric CHECK (price > 0),
-    discounted_price numeric CHECK (discounted_price > 0),
-    CHECK (price > discounted_price)
-);
-</programlisting>
-   </para>
-
-   <para>
-    The first two constraints should look familiar.  The third one
-    uses a new syntax.  It is not attached to a particular column,
-    instead it appears as a separate item in the comma-separated
-    column list.  Column definitions and these constraint
-    definitions can be listed in mixed order.
-   </para>
-
-   <para>
-    We say that the first two constraints are column constraints, whereas the
-    third one is a table constraint because it is written separately
-    from the column definitions.  Column constraints can also be
-    written as table constraints, while the reverse is not necessarily
-    possible.  The above example could also be written as
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric,
-    CHECK (price > 0),
-    discounted_price numeric,
-    CHECK (discounted_price > 0),
-    CHECK (price > discounted_price)
-);
-</programlisting>
-    or even
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric CHECK (price > 0),
-    discounted_price numeric,
-    CHECK (discounted_price > 0 AND price > discounted_price)
-);
-</programlisting>
-    It's a matter of taste.
-   </para>
-
-   <indexterm>
-    <primary>null value</primary>
-    <secondary sortas="check constraints">with check constraints</secondary>
-   </indexterm>
-
-   <para>
-    It should be noted that a check constraint is satisfied if the
-    check expression evaluates to true or the null value.  Since most
-    expressions will evaluate to the null value if one operand is null,
-    they will not prevent null values in the constrained columns.  To
-    ensure that a column does not contain null values, the not-null
-    constraint described in the next section can be used.
-   </para>
-  </sect2>
-
-  <sect2>
-   <title>Not-Null Constraints</title>
-
-   <indexterm>
-    <primary>not-null constraint</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>constraint</primary>
-    <secondary>NOT NULL</secondary>
-   </indexterm>
-
-   <para>
-    A not-null constraint simply specifies that a column must not
-    assume the null value.  A syntax example:
-<programlisting>
-CREATE TABLE products (
-    product_no integer <emphasis>NOT NULL</emphasis>,
-    name text <emphasis>NOT NULL</emphasis>,
-    price numeric
-);
-</programlisting>
-   </para>
-
-   <para>
-    A not-null constraint is always written as a column constraint.  A
-    not-null constraint is functionally equivalent to creating a check
-    constraint <literal>CHECK (<replaceable>column_name</replaceable>
-    IS NOT NULL)</literal>, but in
-    <productname>PostgreSQL</productname> creating an explicit
-    not-null constraint is more efficient.  The drawback is that you
-    cannot give explicit names to not-null constraints created that
-    way.
-   </para>
-
-   <para>
-    Of course, a column can have more than one constraint.  Just write
-    the constraints after one another:
-<programlisting>
-CREATE TABLE products (
-    product_no integer NOT NULL,
-    name text NOT NULL,
-    price numeric NOT NULL CHECK (price > 0)
-);
-</programlisting>
-    The order doesn't matter.  It does not necessarily determine in which
-    order the constraints are checked.
-   </para>
-
-   <para>
-    The <literal>NOT NULL</literal> constraint has an inverse: the
-    <literal>NULL</literal> constraint.  This does not mean that the
-    column must be null, which would surely be useless.  Instead, this
-    simply defines the default behavior that the column may be null.
-    The <literal>NULL</literal> constraint is not defined in the SQL
-    standard and should not be used in portable applications.  (It was
-    only added to <productname>PostgreSQL</productname> to be
-    compatible with some other database systems.)  Some users, however,
-    like it because it makes it easy to toggle the constraint in a
-    script file.  For example, you could start with
-<programlisting>
-CREATE TABLE products (
-    product_no integer NULL,
-    name text NULL,
-    price numeric NULL
-);
-</programlisting>
-    and then insert the <literal>NOT</literal> key word where desired.
-   </para>
-
-   <tip>
-    <para>
-     In most database designs the majority of columns should be marked
-     not null.
-    </para>
-   </tip>
-  </sect2>
-
-  <sect2>
-   <title>Unique Constraints</title>
-
-   <indexterm>
-    <primary>unique constraint</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>constraint</primary>
-    <secondary>unique</secondary>
-   </indexterm>
-
-   <para>
-    Unique constraints ensure that the data contained in a column or a
-    group of columns is unique with respect to all the rows in the
-    table.  The syntax is
-<programlisting>
-CREATE TABLE products (
-    product_no integer <emphasis>UNIQUE</emphasis>,
-    name text,
-    price numeric
-);
-</programlisting>
-    when written as a column constraint, and
-<programlisting>
-CREATE TABLE products (
-    product_no integer,
-    name text,
-    price numeric,
-    <emphasis>UNIQUE (product_no)</emphasis>
-);
-</programlisting>
-    when written as a table constraint.
-   </para>
-
-   <para>
-    If a unique constraint refers to a group of columns, the columns
-    are listed separated by commas:
-<programlisting>
-CREATE TABLE example (
-    a integer,
-    b integer,
-    c integer,
-    <emphasis>UNIQUE (a, c)</emphasis>
-);
-</programlisting>
-   </para>
-
-   <para>
-    It is also possible to assign names to unique constraints:
-<programlisting>
-CREATE TABLE products (
-    product_no integer <emphasis>CONSTRAINT must_be_different</emphasis> UNIQUE,
-    name text,
-    price numeric
-);
-</programlisting>
-   </para>
-
-   <indexterm>
-    <primary>null value</primary>
-    <secondary sortas="unique constraints">with unique constraints</secondary>
-   </indexterm>
-
-   <para>
-    In general, a unique constraint is violated when there are two or
-    more rows in the table where the values of all of the
-    columns included in the constraint are equal.
-    However, null values are not considered equal in this
-    comparison.  That means even in the presence of a
-    unique constraint it is possible to store an unlimited number of
-    rows that contain a null value in at least one of the constrained
-    columns.  This behavior conforms to the SQL standard, but we have
-    heard that other SQL databases may not follow this rule.  So be
-    careful when developing applications that are intended to be
-    portable.
-   </para>
-  </sect2>
-
-  <sect2>
-   <title>Primary Keys</title>
-
-   <indexterm>
-    <primary>primary key</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>constraint</primary>
-    <secondary>primary key</secondary>
-   </indexterm>
-
-   <para>
-    Technically, a primary key constraint is simply a combination of a
-    unique constraint and a not-null constraint.  So, the following
-    two table definitions accept the same data:
-<programlisting>
-CREATE TABLE products (
-    product_no integer UNIQUE NOT NULL,
-    name text,
-    price numeric
-);
-</programlisting>
-
-<programlisting>
-CREATE TABLE products (
-    product_no integer <emphasis>PRIMARY KEY</emphasis>,
-    name text,
-    price numeric
-);
-</programlisting>
-   </para>
-
-   <para>
-    Primary keys can also constrain more than one column; the syntax
-    is similar to unique constraints:
-<programlisting>
-CREATE TABLE example (
-    a integer,
-    b integer,
-    c integer,
-    <emphasis>PRIMARY KEY (a, c)</emphasis>
-);
-</programlisting>
-   </para>
-
-   <para>
-    A primary key indicates that a column or group of columns can be
-    used as a unique identifier for rows in the table.  (This is a
-    direct consequence of the definition of a primary key.  Note that
-    a unique constraint does not, by itself, provide a unique identifier
-    because it does not exclude null values.)  This is useful both for
-    documentation purposes and for client applications.  For example,
-    a GUI application that allows modifying row values probably needs
-    to know the primary key of a table to be able to identify rows
-    uniquely.
-   </para>
-
-   <para>
-    A table can have at most one primary key (while it can have many
-    unique and not-null constraints).  Relational database theory
-    dictates that every table must have a primary key.  This rule is
-    not enforced by <productname>PostgreSQL</productname>, but it is
-    usually best to follow it.
-   </para>
-  </sect2>
-
-  <sect2 id="ddl-constraints-fk">
-   <title>Foreign Keys</title>
-
-   <indexterm>
-    <primary>foreign key</primary>
-   </indexterm>
-
-   <indexterm>
-    <primary>constraint</primary>
-    <secondary>foreign key</secondary>
-   </indexterm>
-
-   <indexterm>
-    <primary>referential integrity</primary>
-   </indexterm>
-
-   <para>
-    A foreign key constraint specifies that the values in a column (or
-    a group of columns) must match the values appearing in some row
-    of another table.
-    We say this maintains the <firstterm>referential
-    integrity</firstterm> between two related tables.
-   </para>
-
-   <para>
-    Say you have the product table that we have used several times already:
-<programlisting>
-CREATE TABLE products (
-    product_no integer PRIMARY KEY,
-    name text,
-    price numeric
-);
-</programlisting>
-    Let's also assume you have a table storing orders of those
-    products.  We want to ensure that the orders table only contains
-    orders of products that actually exist.  So we define a foreign
-    key constraint in the orders table that references the products
-    table:
-<programlisting>
-CREATE TABLE orders (
-    order_id integer PRIMARY KEY,
-    product_no integer <emphasis>REFERENCES products (product_no)</emphasis>,
-    quantity integer
-);
-</programlisting>
-    Now it is impossible to create orders with
-    <structfield>product_no</structfield> entries that do not appear in the
-    products table.
-   </para>
-
-   <para>
-    We say that in this situation the orders table is the
-    <firstterm>referencing</firstterm> table and the products table is
-    the <firstterm>referenced</firstterm> table.  Similarly, there are
-    referencing and referenced columns.
-   </para>
-
-   <para>
-    You can also shorten the above command to
-<programlisting>
-CREATE TABLE orders (
-    order_id integer PRIMARY KEY,
-    product_no integer REFERENCES products,
-    quantity integer
-);
-</programlisting>
-    because in absence of a column list the primary key of the
-    referenced table is used as the referenced column(s).
-   </para>
-
-   <para>
-    A foreign key can also constrain and reference a group of columns.
-    As usual, it then needs to be written in table constraint form.
-    Here is a contrived syntax example:
-<programlisting>
-CREATE TABLE t1 (
-  a integer PRIMARY KEY,
-  b integer,
-  c integer,
-  <emphasis>FOREIGN KEY (b, c) REFERENCES other_table (c1, c2)</emphasis>
-);
-</programlisting>
-    Of course, the number and type of the constrained columns needs to
-    match the number and type of the referenced columns.
-   </para>
-
-   <para>
-    A table can contain more than one foreign key constraint.  This is
-    used to implement many-to-many relationships between tables.  Say
-    you have tables about products and orders, but now you want to
-    allow one order to contain possibly many products (which the
-    structure above did not allow).  You could use this table structure:
-<programlisting>
-CREATE TABLE products (
-    product_no integer PRIMARY KEY,
-    name text,
-    price numeric
-);
-
-CREATE TABLE orders (
-    order_id integer PRIMARY KEY,
-    shipping_address text,
-    ...
-);
-
-CREATE TABLE order_items (
-    product_no integer REFERENCES products,
-    order_id integer REFERENCES orders,
-    quantity integer,
-    PRIMARY KEY (product_no, order_id)
-);
-</programlisting>
-    Note also that the primary key overlaps with the foreign keys in
-    the last table.
-   </para>
-
-   <indexterm>
-    <primary>CASCADE</primary>
-    <secondary>foreign key action</secondary>
-   </indexterm>
-
-   <indexterm>
-    <primary>RESTRICT</primary>
-    <secondary>foreign key action</secondary>
-   </indexterm>
-
-   <para>
-    We know that the foreign keys disallow creation of orders that
-    do not relate to any products.  But what if a product is removed
-    after an order is created that references it?  SQL allows you to
-    handle that as well.  Intuitively, we have a few options:
-    <itemizedlist spacing="compact">
-     <listitem><para>Disallow deleting a referenced product</para></listitem>
-     <listitem><para>Delete the orders as well</para></listitem>
-     <listitem><para>Something else?</para></listitem>
-    </itemizedlist>
-   </para>
-
-   <para>
-    To illustrate this, let's implement the following policy on the
-    many-to-many relationship example above: when someone wants to
-    remove a product that is still referenced by an order (via
-    <literal>order_items</literal>), we disallow it.  If someone
-    removes an order, the order items are removed as well.
-<programlisting>
-CREATE TABLE products (
-    product_no integer PRIMARY KEY,
-    name text,
-    price numeric
-);
-
-CREATE TABLE orders (
-    order_id integer PRIMARY KEY,
-    shipping_address text,
-    ...
-);
-
-CREATE TABLE order_items (
-    product_no integer REFERENCES products <emphasis>ON DELETE RESTRICT</emphasis>,
-    order_id integer REFERENCES orders <emphasis>ON DELETE CASCADE</emphasis>,
-    quantity integer,
-    PRIMARY KEY (product_no, order_id)
-);
-</programlisting>
-   </para>
-
-   <para>
-    Restricting and cascading deletes are the two most common options.
-    <literal>RESTRICT</literal> prevents deletion of a
-    referenced row. <literal>NO ACTION</literal> means that if any
-    referencing rows still exist when the constraint is checked, an error
-    is raised; this is the default behavior if you do not specify anything.
-    (The essential difference between these two choices is that
-    <literal>NO ACTION</literal> allows the check to be deferred until
-    later in the transaction, whereas <literal>RESTRICT</literal> does not.)
-    <literal>CASCADE</> specifies that when a referenced row is deleted,
-    row(s) referencing it should be automatically deleted as well.
-    There are two other options:
-    <literal>SET NULL</literal> and <literal>SET DEFAULT</literal>.
-    These cause the referencing columns to be set to nulls or default
-    values, respectively, when the referenced row is deleted.
-    Note that these do not excuse you from observing any constraints.
-    For example, if an action specifies <literal>SET DEFAULT</literal>
-    but the default value would not satisfy the foreign key, the
-    operation will fail.
-   </para>
-
-   <para>
-    Analogous to <literal>ON DELETE</literal> there is also
-    <literal>ON UPDATE</literal> which is invoked when a referenced
-    column is changed (updated).  The possible actions are the same.
-   </para>
-
-   <para>
-    More information about updating and deleting data is in <xref
-    linkend="dml">.
-   </para>
-
-   <para>
-    Finally, we should mention that a foreign key must reference
-    columns that either are a primary key or form a unique constraint.
-    If the foreign key references a unique constraint, there are some
-    additional possibilities regarding how null values are matched.
-    These are explained in the reference documentation for
-    <xref linkend="sql-createtable" endterm="sql-createtable-title">.
-   </para>
-  </sect2>
- </sect1>
-
  <sect1 id="ddl-inherit">
   <title>Inheritance</title>
 
@@ -1118,7 +1147,7 @@ SET SQL_Inheritance TO OFF;
   <para>
   In some cases you may wish to know which table a particular row
   originated from. There is a system column called
-  <structfield>TABLEOID</structfield> in each table which can tell you the
+  <structfield>tableoid</structfield> in each table which can tell you the
   originating table:
 
 <programlisting>
@@ -1223,13 +1252,15 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
 
   <para>
    When you create a table and you realize that you made a mistake, or
-   the requirements of the application changed, then you can drop the
+   the requirements of the application change, then you can drop the
    table and create it again.  But this is not a convenient option if
    the table is already filled with data, or if the table is
    referenced by other database objects (for instance a foreign key
    constraint).  Therefore <productname>PostgreSQL</productname>
-   provides a family of commands to make modifications on existing
-   tables.
+   provides a family of commands to make modifications to existing
+   tables.  Note that this is conceptually distinct from altering
+   the data contained in the table: here we are interested in altering
+   the definition, or structure, of the table.
   </para>
 
   <para>
@@ -1275,7 +1306,7 @@ WHERE c.altitude &gt; 500 and c.tableoid = p.oid;
    </indexterm>
 
    <para>
-    To add a column, use this command:
+    To add a column, use a command like this:
 <programlisting>
 ALTER TABLE products ADD COLUMN description text;
 </programlisting>
@@ -1307,10 +1338,21 @@ ALTER TABLE products ADD COLUMN description text CHECK (description &lt;&gt; '')
    </indexterm>
 
    <para>
-    To remove a column, use this command:
+    To remove a column, use a command like this:
 <programlisting>
 ALTER TABLE products DROP COLUMN description;
 </programlisting>
+    Whatever data was in the column disappears.  Table constraints involving
+    the column are dropped, too.  However, if the column is referenced by a
+    foreign key constraint of another table,
+    <productname>PostgreSQL</productname> will not silently drop that
+    constraint.  You can authorize dropping everything that depends on
+    the column by adding <literal>CASCADE</>:
+<programlisting>
+ALTER TABLE products DROP COLUMN description CASCADE;
+</programlisting>
+    See <xref linkend="ddl-depend"> for a description of the general
+    mechanism behind this.
    </para>
   </sect2>
 
@@ -1367,6 +1409,13 @@ ALTER TABLE products DROP CONSTRAINT some_name;
    </para>
 
    <para>
+    As with dropping a column, you need to add <literal>CASCADE</> if you
+    want to drop a constraint that something else depends on.  An example
+    is that a foreign key constraint depends on a unique or primary key
+    constraint on the referenced column(s).
+   </para>
+
+   <para>
     This works the same for all constraint types except not-null
     constraints. To drop a not null constraint use
 <programlisting>
@@ -1398,7 +1447,7 @@ ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
 <programlisting>
 ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
 </programlisting>
-    This is equivalent to setting the default to null.
+    This is effectively the same as setting the default to null.
     As a consequence, it is not an error
     to drop a default where one hadn't been defined, because the
     default is implicitly the null value.
@@ -1660,6 +1709,9 @@ CREATE SCHEMA myschema;
 <synopsis>
 <replaceable>schema</><literal>.</><replaceable>table</>
 </synopsis>
+    This works anywhere a table name is expected, including the table
+    modification commands and the data access commands discussed in
+    the following chapters.
     (For brevity we will speak of tables only, but the same ideas apply
     to other kinds of named objects, such as types and functions.)
    </para>
@@ -1669,9 +1721,9 @@ CREATE SCHEMA myschema;
 <synopsis>
 <replaceable>database</><literal>.</><replaceable>schema</><literal>.</><replaceable>table</>
 </synopsis>
-    can be used too, but at present this is just for pro-forma compliance
-    with the SQL standard.  If you write a database name, it must be the
-    same as the database you are connected to.
+    can be used too, but at present this is just for <foreignphrase>pro
+    forma</> compliance with the SQL standard.  If you write a database name,
+    it must be the same as the database you are connected to.
    </para>
 
    <para>
@@ -1681,9 +1733,6 @@ CREATE TABLE myschema.mytable (
  ...
 );
 </programlisting>
-    This works anywhere a table name is expected, including the table
-    modification commands and the data access commands discussed in
-    the following chapters.
    </para>
 
    <indexterm>
@@ -1844,7 +1893,7 @@ SET search_path TO myschema;
    </para>
 
    <para>
-    See also <xref linkend="functions-info"> for other ways to access
+    See also <xref linkend="functions-info"> for other ways to manipulate
     the schema search path.
    </para>
 
@@ -2044,7 +2093,13 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 
    <listitem>
     <para>
-     Functions, operators, data types, domains
+     Functions and operators
+    </para>
+   </listitem>
+
+   <listitem>
+    <para>
+     Data types and domains
     </para>
    </listitem>
 
@@ -2120,7 +2175,7 @@ DROP TABLE products CASCADE;
    <para>
     According to the SQL standard, specifying either
     <literal>RESTRICT</literal> or <literal>CASCADE</literal> is
-    required.  No database system actually implements it that way, but
+    required.  No database system actually enforces that rule, but
     whether the default behavior is <literal>RESTRICT</literal> or
     <literal>CASCADE</literal> varies across systems.
    </para>
@@ -2132,7 +2187,7 @@ DROP TABLE products CASCADE;
     from <productname>PostgreSQL</productname> versions prior to 7.3
     are <emphasis>not</emphasis> maintained or created during the
     upgrade process.  All other dependency types will be properly
-    created during an upgrade.
+    created during an upgrade from a pre-7.3 database.
    </para>
   </note>
  </sect1>
