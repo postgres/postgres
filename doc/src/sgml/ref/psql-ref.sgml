@@ -1,69 +1,73 @@
-<REFENTRY ID="APP-PSQL">
- <REFMETA>
-  <REFENTRYTITLE id="psql-ref">
+<refentry id="APP-PSQL">
+ <refmeta>
+  <refentrytitle id="psql-ref">
    <application>psql</application>
-  </REFENTRYTITLE>
-  <REFMISCINFO>Application</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>Application</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    <application>psql</application>
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    <productname>Postgres</productname> interactive client
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-26</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-26</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 psql [ <replaceable class="parameter">dbname</replaceable> ]
 psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replaceable class="parameter">dbname</replaceable> ]
-    -e -E [ -f <replaceable class="parameter">filename</replaceable> ] [ -F <replaceable class="parameter">separator</replaceable> ] [ -h <replaceable class="parameter">hostname</replaceable> ] -Hln
-    [ -o <replaceable class="parameter">filename</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ] -qsSt ] [ -T <replaceable class="parameter">table_options</replaceable> ] -ux [ <replaceable class="parameter">dbname</replaceable> ]
-  </SYNOPSIS>
+    -e -E [ -f <replaceable class="parameter">filename</replaceable> ]
+   [ -F <replaceable class="parameter">separator</replaceable> ] [ -h <replaceable class="parameter">hostname</replaceable> ]
+    -Hln [ -o <replaceable class="parameter">filename</replaceable> ] [ -p
+<replaceable class="parameter">port</replaceable> ]
+    -qsSt [ -T <replaceable class="parameter">table_o</replaceable> ] -ux
+    [ <replaceable class="parameter">dbname</replaceable> ]
+  </synopsis>
 
-  <REFSECT2 ID="R2-APP-PSQL-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-26</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-PSQL-1">
+   <refsect2info>
+    <date>1998-09-26</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     <application>psql</application> accepts many command-line arguments,
     a rich set of meta-commands, and the full <acronym>SQL</acronym> language
     supported by <productname>Postgres</productname>. The most common
     command-line arguments are:
 
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
-       <REPLACEABLE CLASS="PARAMETER">dbname</REPLACEABLE>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <replaceable class="PARAMETER">dbname</replaceable>
+      </term>
+      <listitem>
+       <para>
 	The name of an existing database to access.
 	<replaceable class="parameter">dbname</replaceable>
 	defaults to the value of the
 	<envar>USER</envar>
 	environment variable or, if that's not set, to the Unix account name of the
 	current user.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VARLISTENTRY>
-      <TERM>
+     <varlistentry>
+      <term>
        -c <replaceable class="parameter">query</replaceable>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	A single query to run. <application>psql</application> will exit on completion.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
 	  
     </variablelist>
    </para>
@@ -85,65 +89,65 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
     You may set any of the following environment variables to avoid
     specifying command-line options:
 	
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
+    <variablelist>
+     <varlistentry>
+      <term>
        <envar>PGHOST</envar>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	The <acronym>DNS</acronym> host name of the database server.
 	Setting <envar>PGHOST</envar> to a non-zero-length string causes
 	<acronym>TCP/IP</acronym> communication
 	to be used, rather than the default local Unix domain sockets.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VARLISTENTRY>
-      <TERM>
+     <varlistentry>
+      <term>
        <envar>PGPORT</envar>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	The port number on which a <productname>Postgres</productname> server is listening.
 	Defaults to <literal>5432</literal>.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VARLISTENTRY>
-      <TERM>
+     <varlistentry>
+      <term>
        <envar>PGTTY</envar>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	The target for display of messages from the client support library.
 	Not required.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VARLISTENTRY>
-      <TERM>
+     <varlistentry>
+      <term>
        <envar>PGOPTION</envar>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	If <envar>PGOPTION</envar>
 	is specified, then the options it contains are parsed
 	<emphasis>before</emphasis>
 	any command-line options.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
 
-     <VARLISTENTRY>
-      <TERM>
+     <varlistentry>
+      <term>
        <envar>PGREALM</envar>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	<envar>PGREALM</envar>
 	only applies if
 	<productname>Kerberos</productname>
@@ -161,14 +165,14 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
    </para>
   </refsect2>
 
-  <REFSECT2 ID="R2-APP-PSQL-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-26</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-PSQL-2">
+   <refsect2info>
+    <date>1998-09-26</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     <application>psql</application>
     returns 0 to the shell on successful completion of all queries,
     1 for errors, 2 for abrupt disconnection from the backend.
@@ -180,14 +184,14 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
   </refsect2>
  </refsynopsisdiv>
 
- <REFSECT1 ID="R1-APP-PSQL-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-26</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-APP-PSQL-1">
+  <refsect1info>
+   <date>1998-09-26</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <application>psql</application> is a character-based front-end to 
    <productname>Postgres</productname>.
    It enables you to
@@ -220,13 +224,13 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
    every session.
   </para>
 
-  <REFSECT2 ID="R2-APP-PSQL-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-26</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-PSQL-3">
+   <refsect2info>
+    <date>1998-09-26</date>
+   </refsect2info>
+   <title>
     Connecting To A Database
-   </TITLE>
+   </title>
    <para>
     <application>psql</application>
     attempts to make a connection to the database at the hostname and
@@ -242,13 +246,13 @@ psql -A [ -c <replaceable class="parameter">query</replaceable> ] [ -d <replacea
    </para>
   </refsect2>
 
-  <REFSECT2 ID="R2-APP-PSQL-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-26</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-APP-PSQL-4">
+   <refsect2info>
+    <date>1998-09-26</date>
+   </refsect2info>
+   <title>
     Entering Queries
-   </TITLE>
+   </title>
    <para>
     In normal operation, 
     <application>psql</application> provides a prompt with the name of the
@@ -288,67 +292,67 @@ testdb=>
   </refsect2>
 
   <refsect2 id="R2-APP-PSQL-5">
-   <Title>Paging To Screen</Title>
+   <title>Paging To Screen</title>
 
-   <Note>
-    <Title>Author</Title>
-    <Para>
+   <note>
+    <title>Author</title>
+    <para>
      From Brett McCormick on the mailing list 1998-04-04.
-    </Para>
-   </Note>
+    </para>
+   </note>
 
-   <Para>
-    To affect the paging behavior of your <Command>psql</Command> output,
+   <para>
+    To affect the paging behavior of your <command>psql</command> output,
     set or unset your PAGER environment variable.  I always have to set mine
     before it will pause.  And of course you have to do this before
     starting the program.
    </para>
 
-   <Para>
+   <para>
     In csh/tcsh or other C shells:
 
-    <ProgramListing>
+    <programlisting>
 % unsetenv PAGER
-    </ProgramListing>
+    </programlisting>
 
     while in sh/bash or other Bourne shells:
 
-    <ProgramListing>
+    <programlisting>
 % unset PAGER
-    </ProgramListing>
+    </programlisting>
    </para>
   </refsect2>
  </refsect1>
 
- <REFSECT1 ID="R1-APP-PSQL-2">
-  <REFSECT1INFO>
-   <DATE>1998-09-26</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-APP-PSQL-2">
+  <refsect1info>
+   <date>1998-09-26</date>
+  </refsect1info>
+  <title>
    Command-line Options
-  </TITLE>
+  </title>
   <para>
    <application>psql</application>
    understands the following command-line options:
 
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
+   <variablelist>
+    <varlistentry>
+     <term>
       -A
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Turn off fill justification when printing out table elements.
       </para>
      </listitem>
     </varlistentry>
 	
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -c <replaceable class="parameter">query</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Specifies that
        <application>psql</application>
        is to execute one query string,
@@ -359,12 +363,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -d <replaceable class="parameter">dbname</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Specifies the name of the database to connect to. This is equivalent to specifying
        <replaceable class="parameter">dbname</replaceable> as the last field in the
        command line.
@@ -372,34 +376,34 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -e
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Echo the query sent to the backend
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -E
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Echo the actual query generated by \d and other backslash commands
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -f <replaceable class="parameter">filename</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Use the file <replaceable class="parameter">filename</replaceable>
        as the source of queries instead of reading queries interactively.
        This file must be specified for and visible to the client frontend.
@@ -407,12 +411,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -F <replaceable class="parameter">separator</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Use <replaceable class="parameter">separator</replaceable>
        as the field separator.
        The default is an ASCII vertical bar ("|").
@@ -420,12 +424,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -h <replaceable class="parameter">hostname</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Specifies the host name of the machine on which the
        <application>postmaster</application>
        is running.
@@ -435,12 +439,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -H
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Turns on
        <acronym>HTML 3.0</acronym>
        tabular output.
@@ -448,46 +452,46 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -l
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Lists all available databases, then exit. Other non-connection options are ignored.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -n
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Do not use the readline library for input line editing and command history.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -o <replaceable class="parameter">filename</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Put all output into file <replaceable class="parameter">filename</replaceable>.
        The path must be writable by the client.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -p <replaceable class="parameter">port</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Specifies the TCP/IP port or, by omission, the local Unix domain socket file
        extension on which the
        <application>postmaster</application>
@@ -498,12 +502,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -q
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Specifies that
        <application>psql</application>
        should do its work quietly.  By default, it
@@ -515,36 +519,36 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -s
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Run in single-step mode where the user is prompted for each query before
        it is sent to the backend.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -S
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Runs in single-line mode where each query is terminated by a newline,
        instead of a semicolon.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -t
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Turn off printing of column names.
        This is useful with the
        <option>-c</option>
@@ -553,12 +557,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -T <replaceable class="parameter">table_options</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Allows you to specify options to be placed within the
        <sgmltag>table ...</sgmltag> tag for <acronym>HTML 3.0</acronym>
        tabular output.For example, <literal>border</literal>
@@ -568,12 +572,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -u
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Asks the user for the user name and password before connecting to the database.
        If the database does not require password authentication then these are
        ignored.  If the option is not used (and the PGPASSWORD environment variable
@@ -583,12 +587,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       -x
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Turns on extended row format mode. When enabled each row will have its column
        names printed on the left with the column values printed on the right.
        This is useful for rows which are otherwise too long to fit into
@@ -604,13 +608,13 @@ testdb=>
   </para>
  </refsect1>
 
- <REFSECT1 ID="R1-APP-PSQL-3">
-  <REFSECT1INFO>
-   <DATE>1998-09-26</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-APP-PSQL-3">
+  <refsect1info>
+   <date>1998-09-26</date>
+  </refsect1info>
+  <title>
    <application>psql</application> Meta-Commands
-  </TITLE>
+  </title>
   <para>
    Anything you enter in <application>psql</application> 
    that begins with an unquoted backslash is a <application>psql</application>
@@ -618,7 +622,7 @@ testdb=>
    and simply goes into the current query buffer
    (and once you have at least one complete query, it gets automatically 
    submitted to the backend).  
-   <Application>psql</Application> meta-commands are also called slash commands.
+   <application>psql</application> meta-commands are also called slash commands.
   </para>
   <para>
    The format of a <application>psql</application> command is the backslash, 
@@ -634,36 +638,37 @@ testdb=>
   <para>
    The following meta-commands are defined:
 
-   <VARIABLELIST>
-    <VARLISTENTRY>
-     <TERM>
+   <variablelist>
+    <varlistentry>
+     <term>
       <literal>\a</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Toggle field alignment when printing out table elements.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\C</literal> <replaceable class="parameter">caption</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Set the HTML3.0 table caption to 
        <quote><replaceable class="parameter">caption</replaceable></quote>.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
-      <literal>\connect</literal> <replaceable class="parameter">dbname</replaceable> [ <replaceable class="parameter">username</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+    <varlistentry>
+     <term>
+      <literal>\connect</literal> <replaceable class="parameter">meter"</replaceable>ceable> [ <replaceable
+       class="parameter">username</replaceable> ]
+     </term>
+     <listitem>
+      <para>
        Establish a connection to a new database, using the default 
        <replaceable class="parameter">username</replaceable> if none is specified.
        The previous connection is closed.
@@ -671,17 +676,19 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
-      <literal>\copy</literal> <replaceable class="parameter">dbname</replaceable> { FROM | TO } <replaceable class="parameter">filename</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+    <varlistentry>
+     <term>
+      <literal>\copy</literal> <replaceable class="parameter">meter"</replaceable>ceable> { FROM | TO }
+      <replaceable class="parameter">filename</replaceable>
+     </term>
+     <listitem>
+      <para>
        Perform a frontend (client) copy.  This is an operation that runs a SQL COPY command,
        but instead of the backend reading or writing the specified file, and 
        consequently requiring backend access and special user privilege, 
        <application>psql</application> reads or writes the 
-       file and routes the data to or from the backend.  The default <literal>tab</literal>
+       file and routes the data to or from the backend.  The default
+       <literal>tab</literal>
        delimiter is used.
       </para>
       <tip>
@@ -695,13 +702,14 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\d</literal> [ <replaceable class="parameter">table</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       List tables in the database, or if <replaceable class="parameter">table</replaceable>
+     </term>
+     <listitem>
+      <para>
+       List tables in the database, or if <replaceable
+	class="parameter">table</replaceable>
        is specified, list the columns in that table.
        If table name is specified as an asterisk (<quote>*</quote>),
        list all tables and column information for each tables.
@@ -709,23 +717,23 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\da</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List all available aggregates.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\dd</literal> <replaceable class="parameter">object</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List the description from <literal>pg_description</literal>
        of the specified object, which can be a
        table, table.column, type, operator, or aggregate.
@@ -740,101 +748,101 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\df</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List functions.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\di</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List only indexes.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\do</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List only operators.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\ds</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List only sequences.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\dS</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List system tables and indexes.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\dt</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List only non-system tables.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\dT</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List types.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\e</literal> [ <replaceable class="parameter">filename</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Edit the current query buffer or the contents of the file
        <replaceable class="parameter">filename</replaceable>.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\E</literal> [ <replaceable class="parameter">filename</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Edit the current query buffer or the contents of the file
        <replaceable class="parameter">filename</replaceable>
        and execute it upon editor exit.
@@ -842,23 +850,23 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\f</literal> [ <replaceable class="parameter">separator</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Set the field separator.  Default is a single blank space.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\g</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Send the current query input buffer to the backend and optionally
        save the output in <replaceable class="parameter">filename</replaceable>
        or pipe the output into a separate Unix shell to execute
@@ -867,12 +875,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\h</literal> [ <replaceable class="parameter">command</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Give syntax help on the specified SQL command.  
        If <replaceable class="parameter">command</replaceable> is not a defined SQL command
        (or is not documented in <application>psql</application>), or if
@@ -886,47 +894,48 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\H</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
-       Toggle <acronym>HTML3</acronym> output. This is equivalent to the <option>-H</option>
+     </term>
+     <listitem>
+      <para>
+       Toggle <acronym>HTML3</acronym> output. This is equivalent to
+       the <option>-H</option>
        command-line option.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\i</literal> <replaceable class="parameter">filename</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Read queries from the file <replaceable class="parameter">filename</replaceable>
        into the query input buffer.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\l</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        List all the databases in the server.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\m</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Toggle the old monitor-like table display, which includes border characters
        surrounding the table.
        This is standard SQL output.
@@ -936,12 +945,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\o</literal> [ { <replaceable class="parameter">filename</replaceable> | <literal>|</literal><replaceable class="parameter">command</replaceable> } ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Save future query results to the file
        <replaceable class="parameter">filename</replaceable> or pipe future
        results into a separate Unix shell to execute
@@ -952,45 +961,45 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\p</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Print the current query buffer.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\q</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Quit the <application>psql</application> program.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\r</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Reset(clear) the query buffer.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\s</literal> [ <replaceable class="parameter">filename</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Print or save the command line history to 
        <replaceable class="parameter">filename</replaceable>.
        If <replaceable class="parameter">filename</replaceable> is omitted,
@@ -1001,23 +1010,23 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\t</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Toggle display of output column name headings and row count footer (defaults to on).
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\T</literal> <replaceable class="parameter">table_options</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Allows you to specify options to be placed within the
        <sgmltag>table ...</sgmltag> tag
        for <acronym>HTML 3.0</acronym>
@@ -1028,12 +1037,12 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\x</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Toggles extended row format mode. When enabled each row will have its column
        names printed on the left with the column values printed on the right.
        This is useful for rows which are otherwise too long to fit into
@@ -1042,48 +1051,48 @@ testdb=>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\w</literal> <replaceable class="parameter">filename</replaceable>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Outputs the current query buffer to the file
        <replaceable class="parameter">filename</replaceable>.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\z</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Produces a list of all tables in the database with their appropriate ACLs
        (grant/revoke permissions) listed.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\!</literal> [ <replaceable class="parameter">command</replaceable> ]
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Escape to a separate Unix shell or execute the Unix command
        <replaceable class="parameter">command</replaceable>.
       </para>
      </listitem>
     </varlistentry>
 
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
       <literal>\?</literal>
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
        Get help information about the slash (<quote>\</quote>) commands.
       </para>
      </listitem>

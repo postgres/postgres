@@ -206,7 +206,8 @@ postgres [ -B <replaceable class="parameter">nBuffers</replaceable> ] [ -C ] [ -
 	"American" format (<literal>MM-DD-YYYY</literal>).
 	Dates are accepted by the backend in a wide variety of formats,
 	and for input dates this switch mostly affects the interpretation
-	for ambiguous cases. See <xref linkend="datatype" endterm="datatype">
+	for ambiguous cases.
+	See <xref linkend="datatype-title" endterm="datatype-title">
 	for more information.
        </para>
       </listitem>

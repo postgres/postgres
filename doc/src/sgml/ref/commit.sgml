@@ -1,141 +1,142 @@
-<REFENTRY ID="SQL-COMMIT">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-COMMIT">
+ <refmeta>
+  <refentrytitle id="SQL-COMMIT-TITLE">
    COMMIT
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    COMMIT
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Commits the current transaction
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>  
   
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-08</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-08</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 COMMIT [ WORK | TRANSACTION ]
-  </SYNOPSIS>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-COMMIT-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-COMMIT-1">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     None
    </para>
-  </REFSECT2>
+  </refsect2>
    
-  <REFSECT2 ID="R2-SQL-COMMIT-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-COMMIT-2">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
 
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <returnvalue>END</returnvalue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-Message returned if the transaction is successfully committed.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	  <returnvalue>NOTICE EndTransactionBlock and not inprogress/abort state</returnvalue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <returnvalue>END</returnvalue>
+      </term>
+      <listitem>
+       <para>
+	Message returned if the transaction is successfully committed.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <returnvalue>NOTICE EndTransactionBlock and not inprogress/abort state</returnvalue>
+      </term>
+      <listitem>
+       <para>
 	If there is no transaction in progress.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
+  </refsect2>
+ </refsynopsisdiv>
   
- <REFSECT1 ID="R1-SQL-COMMIT-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-08</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-SQL-COMMIT-1">
+  <refsect1info>
+   <date>1998-09-08</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>COMMIT</command> commits the current transaction. All
    changes made by the transaction become visible to others
    and are guaranteed to be durable if a crash occurs.
-  </PARA>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-COMMIT-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-COMMIT-3">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
-    The keywords WORK and TRANSACTION are noise and can be omitted.
-   </PARA>
+   </title>
    <para>
-    Use the <command>ROLLBACK</command> statement to abort a transaction.
+    The keywords WORK and TRANSACTION are noise and can be omitted.
    </para>
-  </REFSECT2>
- </refsect1>
 
- <REFSECT1 ID="R1-SQL-COMMIT-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>
-To make all changes permanent:
-  </PARA>
-  <ProgramListing>
-COMMIT WORK;
-  </ProgramListing>
- </REFSECT1>
- 
- <REFSECT1 ID="R1-SQL-COMMIT-3">
-  <TITLE>
-   Compatibility
-</TITLE>
-  <PARA>
-  </PARA>
-  
-  <REFSECT2 ID="R2-SQL-COMMIT-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
-    SQL92
-   </TITLE>
-   <PARA>
-    Full compatibility.
-   </PARA>
+   <para>
+    Use <xref linkend="SQL-ROLLBACK-TITLE" endterm="SQL-ROLLBACK-TITLE">
+    to abort a transaction.
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
 
+ <refsect1 id="R1-SQL-COMMIT-2">
+  <title>
+   Usage
+  </title>
+  <para>
+   To make all changes permanent:
+   <programlisting>
+COMMIT WORK;
+   </programlisting>
+  </para>
+ </refsect1>
+ 
+ <refsect1 id="R1-SQL-COMMIT-3">
+  <title>
+   Compatibility
+  </title>
+  <para>
+  </para>
+  
+  <refsect2 id="R2-SQL-COMMIT-4">
+   <refsect2info>
+    <date>1998-09-08</date>
+   </refsect2info>
+   <title>
+    SQL92
+   </title>
+   <para>
+    Full compatibility.
+   </para>
+  </refsect2>
+ </refsect1>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

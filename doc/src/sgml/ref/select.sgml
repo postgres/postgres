@@ -18,13 +18,16 @@ SELECT
   </refsynopsisdivinfo>
   <synopsis>
 SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
-    <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
+    <replaceable class="PARAMETER">expression</replaceable> [ AS
+   <replaceable class="PARAMETER">name</replaceable> ] [, ...]
     [ INTO [TEMP] [TABLE] <replaceable class="PARAMETER">new_table</replaceable> ]
-    [ FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
+    [ FROM <replaceable class="PARAMETER">table</replaceable>
+   [<replaceable class="PARAMETER">alias</replaceable> ] [, ...] ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable> ]
+    [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable
+    class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     [ FOR UPDATE [OF class_name...]]
     [ LIMIT count [OFFSET|, count]]
@@ -66,17 +69,17 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
       </listitem>
      </varlistentry>
      
-    <VARLISTENTRY>
-     <TERM>
+    <varlistentry>
+     <term>
      TEMP
-     </TERM>
-     <LISTITEM>
-      <PARA>
+     </term>
+     <listitem>
+      <para>
 	The table is created unique to this session, and is
 	automatically dropped on session exit.
-      </PARA>
-     </LISTITEM>
-    </VARLISTENTRY>
+      </para>
+     </listitem>
+    </varlistentry>
 
      <varlistentry>
       <term>
@@ -215,7 +218,8 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
    <command>DISTINCT</command> will eliminate all duplicate rows from the
    selection.
    <command>DISTINCT ON <replaceable class="PARAMETER">column</replaceable></command> will eliminate all duplicates in the specified column; this is
-equivalent to using <command>GROUP BY <replaceable class="PARAMETER">column</replaceable></command>.  <command>ALL</command> will return all candidate rows,
+equivalent to using <command>GROUP BY <replaceable
+     class="PARAMETER">column</replaceable></command>.  <command>ALL</command> will return all candidate rows,
 including duplicates.</para>
 
   <para>
@@ -269,7 +273,9 @@ including duplicates.</para>
     The optional WHERE condition has the general form:
     
     <synopsis>
-WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARAMETER">cond_op</replaceable> <replaceable class="PARAMETER">expr</replaceable> [ <replaceable class="PARAMETER">log_op</replaceable> ... ]
+WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable
+class="PARAMETER">ETER">c</replaceable>e<replaceable class="PARAMETER">"PAR</replaceable>replaceable> [ <replaceable
+class="PARAMETER">log_op</replaceable> ... ]
     </synopsis>
     
     where <replaceable class="PARAMETER">cond_op</replaceable> can be
@@ -381,7 +387,8 @@ SELECT name FROM distributors ORDER BY code;
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> UNION [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
+<replaceable class="PARAMETER">table_query</replaceable> UNION [ ALL ]
+<replaceable class="PARAMETER">table_query</replaceable>
      [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     </synopsis>
     
@@ -417,7 +424,8 @@ SELECT name FROM distributors ORDER BY code;
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> INTERSECT <replaceable class="PARAMETER">table_query</replaceable>
+<replaceable class="PARAMETER">table_query</replaceable> INTERSECT
+<replaceable class="PARAMETER">table_query</replaceable>
      [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     </synopsis>
     
@@ -448,7 +456,8 @@ SELECT name FROM distributors ORDER BY code;
    </title>
    <para>
     <synopsis>
-<replaceable class="PARAMETER">table_query</replaceable> EXCEPT <replaceable class="PARAMETER">table_query</replaceable>
+<replaceable class="PARAMETER">table_query</replaceable> EXCEPT
+     <replaceable class="PARAMETER">table_query</replaceable>
      [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
     </synopsis>
     
@@ -485,25 +494,25 @@ SELECT f.title, f.did, d.name, f.date_prod, f.kind
     FROM distributors d, films f
     WHERE f.did = d.did
 
-    title                    |did|name            | date_prod|kind
-    -------------------------+---+----------------+----------+----------
-    The Third Man            |101|British Lion    |1949-12-23|Drama
-    The African Queen        |101|British Lion    |1951-08-11|Romantic
-    Une Femme est une Femme  |102|Jean Luc Godard |1961-03-12|Romantic
-    Vertigo                  |103|Paramount       |1958-11-14|Action
-    Becket                   |103|Paramount       |1964-02-03|Drama
-    48 Hrs                   |103|Paramount       |1982-10-22|Action
-    War and Peace            |104|Mosfilm         |1967-02-12|Drama
-    West Side Story          |105|United Artists  |1961-01-03|Musical
-    Bananas                  |105|United Artists  |1971-07-13|Comedy
-    Yojimbo                  |106|Toho            |1961-06-16|Drama
-    There's a Girl in my Soup|107|Columbia        |1970-06-11|Comedy
-    Taxi Driver              |107|Columbia        |1975-05-15|Action
-    Absence of Malice        |107|Columbia        |1981-11-15|Action
-    Storia di una donna      |108|Westward        |1970-08-15|Romantic
-    The King and I           |109|20th Century Fox|1956-08-11|Musical
-    Das Boot                 |110|Bavaria Atelier |1981-11-11|Drama
-    Bed Knobs and Broomsticks|111|Walt Disney     |          |Musical
+title                    |did|name            | date_prod|kind
+-------------------------+---+----------------+----------+----------
+The Third Man            |101|British Lion    |1949-12-23|Drama
+The African Queen        |101|British Lion    |1951-08-11|Romantic
+Une Femme est une Femme  |102|Jean Luc Godard |1961-03-12|Romantic
+Vertigo                  |103|Paramount       |1958-11-14|Action
+Becket                   |103|Paramount       |1964-02-03|Drama
+48 Hrs                   |103|Paramount       |1982-10-22|Action
+War and Peace            |104|Mosfilm         |1967-02-12|Drama
+West Side Story          |105|United Artists  |1961-01-03|Musical
+Bananas                  |105|United Artists  |1971-07-13|Comedy
+Yojimbo                  |106|Toho            |1961-06-16|Drama
+There's a Girl in my Soup|107|Columbia        |1970-06-11|Comedy
+Taxi Driver              |107|Columbia        |1975-05-15|Action
+Absence of Malice        |107|Columbia        |1981-11-15|Action
+Storia di una donna      |108|Westward        |1970-08-15|Romantic
+The King and I           |109|20th Century Fox|1956-08-11|Musical
+Das Boot                 |110|Bavaria Atelier |1981-11-11|Drama
+Bed Knobs and Broomsticks|111|Walt Disney     |          |Musical
   </programlisting>
   <para>
    To sum the column <literal>len</literal> of all films and group
@@ -587,14 +596,14 @@ SELECT actors.name
     FROM   actors
     WHERE  actors.name LIKE 'W%'
 
-    name
-    --------------
-    Walt Disney
-    Walter Matthau
-    Warner Bros.
-    Warren Beatty
-    Westward
-    Woody Allen
+name
+--------------
+Walt Disney
+Walter Matthau
+Warner Bros.
+Warren Beatty
+Westward
+Woody Allen
   </programlisting>
   
  </refsect1>
@@ -693,85 +702,10 @@ SELECT distributors.* WHERE name = 'Westwood';
  </refsect1>
 </refentry>
 
-<refentry id="SQL-SELECTINTO">
- <refmeta>
-  <refentrytitle>
-SELECT INTO
-  </refentrytitle>
-  <refmiscinfo>SQL - Language Statements</refmiscinfo>
- </refmeta>
- <refnamediv>
-  <refname>
-SELECT INTO
-  </refname>
-  <refpurpose>
-Create a new table from an existing table or view
-  </refpurpose></refnamediv>
- <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1998-09-22</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable> [ AS <replaceable class="PARAMETER">name</replaceable> ] [, ...]
-    INTO [TEMP] [ TABLE ] <replaceable class="PARAMETER">new_table</replaceable> ]
-    [ FROM <replaceable class="PARAMETER">table</replaceable> [<replaceable class="PARAMETER">alias</replaceable>] [, ...] ]
-    [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
-    [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
-    [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable>]
-    [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
-    [ FOR UPDATE [OF class_name...]]
-    [ LIMIT count [OFFSET|, count]]
-  </synopsis>
-  
-  <refsect2 id="R2-SQL-SELECTINTO-1">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-All input fields are described in detail for SELECT.
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-SELECTINTO-2">
-   <refsect2info>
-    <date>1998-09-22</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-All output fields are described in detail for SELECT.
-   </para>
-  </refsect2>
- </refsynopsisdiv>
-
- <refsect1 id="R1-SQL-SELECTINTO-1">
-  <refsect1info>
-   <date>1998-09-22</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
-  <para>
-   SELECT INTO creates a new table from the results of a query. Typically, this
-   query draws data from an existing table, but any SQL query is allowed.
-   <note>
-	<para>
-	 CREATE TABLE AS is functionally equivalent to the SELECT INTO command.
-	</para>
-   </note>
-  </para>
- </refsect1>
-</refentry>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

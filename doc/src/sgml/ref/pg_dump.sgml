@@ -22,7 +22,8 @@ pg_dump [ <replaceable class="parameter">dbname</replaceable> ]
 pg_dump [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replaceable class="parameter">port</replaceable> ]
     [ -t <replaceable class="parameter">table</replaceable> ]
     [ -f <replaceable class="parameter">outputfile</replaceable> ]
-    [ -a ] [ -c ] [ -d ] [ -D ] [ -n ] [ -N ] [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
+    [ -a ] [ -c ] [ -d ] [ -D ] [ -n ] [ -N ]
+    [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
     [ <replaceable class="parameter">dbname</replaceable> ]
 </SYNOPSIS>
 

@@ -25,6 +25,7 @@
    &createRule;
    &createSequence;
    &createTable;
+   &createTableAs;
    &createTrigger;
    &createType;
    &createUser;
@@ -57,6 +58,7 @@
    &revoke;
    &rollback;
    &select;
+   &selectInto;
    &set;
    &show;
    &unlisten;

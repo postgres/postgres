@@ -1,180 +1,201 @@
-<REFENTRY ID="SQL-BEGINWORK">
- <REFMETA>
-  <REFENTRYTITLE>
-   BEGIN WORK
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
-   BEGIN WORK
-  </REFNAME>
-  <REFPURPOSE>
+<refentry id="SQL-BEGINWORK">
+ <refmeta>
+  <refentrytitle id="SQL-BEGINWORK-TITLE">
+   BEGIN
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
+   BEGIN
+  </refname>
+  <refpurpose>
    Begins a transaction in chained mode
-  </REFPURPOSE>
+  </refpurpose>
   
   </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-08</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>  
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1999-06-11</date>
+  </refsynopsisdivinfo>
+  <synopsis>  
 BEGIN [ WORK | TRANSACTION ]
-  </SYNOPSIS>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-BEGINWORK-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-BEGINWORK-1">
+   <refsect2info>
+    <date>1999-06-11</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     None
    </para>
-  </REFSECT2>
+  </refsect2>
   
-  <REFSECT2 ID="R2-SQL-BEGINWORK-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-BEGINWORK-2">
+   <refsect2info>
+    <date>1999-06-11</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
 
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
-	  <returnvalue>BEGIN</returnvalue>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
-	   This signifies that a new transaction has been started.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
-	   <returnvalue>NOTICE:  BeginTransactionBlock and not in default state</returnvalue>
-	 </TERM>
-	 <LISTITEM>
-       <PARA>
+   <para>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <returnvalue>BEGIN</returnvalue>
+      </term>
+      <listitem>
+       <para>
+	This signifies that a new transaction has been started.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
+       <returnvalue>NOTICE:  BeginTransactionBlock and not in default state</returnvalue>
+      </term>
+      <listitem>
+       <para>
 	This indicates that a transaction was already in progress.
 	The current transaction is not affected.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
+  </refsect2>
+ </refsynopsisdiv>
  
- <REFSECT1 ID="R1-SQL-BEGINWORK-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-08</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-SQL-BEGINWORK-1">
+  <refsect1info>
+   <date>1999-06-11</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
+  </title>
+
   <para>
    By default, <productname>Postgres</productname> executes transactions
-   in unchained mode (also known as autocommit feature in other DBMSes).
+   in <firstterm>unchained mode</firstterm>
+   (also known as <quote>autocommit</quote> in other database
+   systems).
    In other words, each user statement is executed in its own transaction
-   and commit is implicit (if execution was successfull).
+   and a commit is implicitly performed at the end of the statement
+   (if execution was successful, otherwise a rollback is done).
    <command>BEGIN</command> initiates a user transaction in chained mode,
    i.e. all user statements after <command>BEGIN</command> command will
-   be executed in single transaction untill explicit COMMIT, ROLLBACK
+   be executed in a single transaction until an explicit COMMIT, ROLLBACK
    or execution abort. Statements in chained mode are executed much faster, 
-   because of transaction start/commit requires significant CPU and disk 
-   activity. This mode is also required for consistency when changing 
-   one of related tables.
+   because transaction start/commit requires significant CPU and disk 
+   activity. Execution of multiple statements inside a transaction
+   is also required for consistency when changing several
+   related tables.
   </para>
+
   <para>
-   Default transaction isolation level in <productname>Postgres</productname>
-   is READ COMMITTED one, when queries inside transaction see only changes
+   The default transaction isolation level in
+   <productname>Postgres</productname>
+   is READ COMMITTED, where queries inside the transaction see only changes
    committed before query execution. So, you have to use 
    <command>SET TRANSACTION ISOLATION LEVEL SERIALIZABLE</command>
-   command just after BEGIN if you need in better transaction isolation. 
-   In SERIALIZABLE mode queries will see only changes committed before entire
-   transaction began (actually, before execution of first DML statement
-   in serializable transaction).
+   just after BEGIN if you need more rigorous transaction isolation. 
+   In SERIALIZABLE mode queries will see only changes committed before
+   the entire
+   transaction began (actually, before execution of the first DML statement
+   in a serializable transaction).
   </para>
+
   <para>
    If the transaction is committed, <productname>Postgres</productname> 
    will ensure either that all updates are done or else that none of
-   them are done. Transactions have the standard ACID
+   them are done. Transactions have the standard <acronym>ACID</acronym>
    (atomic, consistent, isolatable, and durable) property.
   </para>
   
-  <REFSECT2 ID="R2-SQL-BEGINWORK-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-BEGINWORK-3">
+   <refsect2info>
+    <date>1999-06-11</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     The keyword TRANSACTION is just a cosmetic alternative to WORK.
     Neither keyword need be specified.
-   </PARA>
+   </para>
 
-   <PARA>
+   <para>
     Refer to the <command>LOCK</command> statement for further information
     about locking tables inside a transaction.
-   </PARA>
+   </para>
    
-   <PARA>
-    Use <command>COMMIT</command> or <command>ROLLBACK</command>
+   <para>
+    Use <xref linkend="SQL-COMMIT-TITLE" endterm="SQL-COMMIT-TITLE">
+    or
+    <xref linkend="SQL-ROLLBACK-TITLE" endterm="SQL-ROLLBACK-TITLE">
     to terminate a transaction.
-   </PARA>
-  </REFSECT2>
+   </para>
+  </refsect2>
  </refsect1>
-  
- <REFSECT1 ID="R1-SQL-BEGINWORK-2">
-  <TITLE>
-   Usage
-  </TITLE>
-  <PARA>To begin a user transaction:
 
-  <ProgramListing>
+ <refsect1 id="R1-SQL-BEGINWORK-2">
+  <title>
+   Usage
+  </title>
+
+  <para>
+   To begin a user transaction:
+
+  <programlisting>
 BEGIN WORK;
-  </ProgramListing>
+  </programlisting>
   </para>
- </REFSECT1>
+ </refsect1>
  
- <REFSECT1 ID="R1-SQL-BEGINWORK-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-BEGINWORK-3">
+  <title>
    Compatibility
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
     <command>BEGIN</command>
     is a <productname>Postgres</productname> language extension.
   </para>
-  <REFSECT2 ID="R2-SQL-BEGINWORK-4">
-     <REFSECT2INFO>
-    <DATE>1998-09-08</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-BEGINWORK-4">
+     <refsect2info>
+    <date>1999-06-11</date>
+   </refsect2info>
+   <title>
     SQL92
-   </TITLE>
-   <PARA> 
+   </title>
+   <para> 
     There is no explicit BEGIN WORK command in <acronym>SQL92</acronym>;
     transaction initiation is always implicit and it terminates either 
     with a COMMIT or with a ROLLBACK statement.
-   </PARA>
-   <PARA>
-    <acronym>SQL92</acronym> also requires SERIALIZABLE to be default
+
+    <note>
+     <para>
+      Many relational database systems offer an autocommit feature as a
+      convenience.
+     </para>
+    </note>
+   </para>
+
+   <para>
+    <acronym>SQL92</acronym> also requires SERIALIZABLE to be the default
     transaction isolation level.
-   </PARA>
+   </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
  
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t

@@ -18,7 +18,8 @@
    <date>1998-09-24</date>
   </refsynopsisdivinfo>
   <synopsis>
-SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
+SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } {
+   '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
 SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT };
 SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
   </synopsis>

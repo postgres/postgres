@@ -1,173 +1,173 @@
-<REFENTRY ID="SQL-CREATEFUNCTION">
- <REFMETA>
-  <REFENTRYTITLE>
+<refentry id="SQL-CREATEFUNCTION">
+ <refmeta>
+  <refentrytitle>
    CREATE FUNCTION
-  </REFENTRYTITLE>
-  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
- </REFMETA>
- <REFNAMEDIV>
-  <REFNAME>
+  </refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+ <refnamediv>
+  <refname>
    CREATE FUNCTION
-  </REFNAME>
-  <REFPURPOSE>
+  </refname>
+  <refpurpose>
    Defines a new function
-  </REFPURPOSE>
+  </refpurpose>
  </refnamediv>
- <REFSYNOPSISDIV>
-  <REFSYNOPSISDIVINFO>
-   <DATE>1998-09-09</DATE>
-  </REFSYNOPSISDIVINFO>
-  <SYNOPSIS>
+ <refsynopsisdiv>
+  <refsynopsisdivinfo>
+   <date>1998-09-09</date>
+  </refsynopsisdivinfo>
+  <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable class="parameter">ftype</replaceable> [, ...] ] )
     RETURNS <replaceable class="parameter">rtype</replaceable>
     AS <replaceable class="parameter">definition</replaceable>
     LANGUAGE '<replaceable class="parameter">langname</replaceable>'
-  </SYNOPSIS>
+  </synopsis>
   
-  <REFSECT2 ID="R2-SQL-CREATEFUNCTION-1">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEFUNCTION-1">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     Inputs
-   </TITLE>
-   <PARA>
-       <VARIABLELIST>
-	<VARLISTENTRY>
-	 <TERM>
+   </title>
+   <para>
+       <variablelist>
+	<varlistentry>
+	 <term>
 	  <replaceable class="parameter">name</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
+	 </term>
+	 <listitem>
+	  <para>
            The name of a function to create.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
+	  </para>
+	 </listitem>
+	</varlistentry>
+	<varlistentry>
+	 <term>
 	  <replaceable class="parameter">ftype</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
+	 </term>
+	 <listitem>
+	  <para>
            The data type of function arguments.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
+	  </para>
+	 </listitem>
+	</varlistentry>
+	<varlistentry>
+	 <term>
 	  <replaceable class="parameter">rtype</replaceable>
-	 </TERM>
-	 <LISTITEM>
-	  <PARA>
+	 </term>
+	 <listitem>
+	  <para>
            The return data type.
-	  </PARA>
-	 </LISTITEM>
-	</VARLISTENTRY>
-	<VARLISTENTRY>
-	 <TERM>
+	  </para>
+	 </listitem>
+	</varlistentry>
+	<varlistentry>
+	 <term>
 	  <replaceable class="parameter">definition</replaceable>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	A string defining the function; the meaning depends on the language.
 	It may be an internal function name, the path to an object file,
 	an SQL query, or text in a procedural language.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
-     <VARLISTENTRY>
-      <TERM>
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>
        <replaceable class="parameter">langname</replaceable>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+      </term>
+      <listitem>
+       <para>
 	may be '<literal>C</literal>', '<literal>sql</literal>',
 	'<literal>internal</literal>'
 	or '<replaceable class="parameter">plname</replaceable>',
 	where '<replaceable class="parameter">plname</replaceable>'
 	is the name of a created procedural
 	language. See <command>CREATE LANGUAGE</command> for details.
-       </PARA>
-      </LISTITEM>
-     </VARLISTENTRY>
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
-  </REFSECT2>
+  </refsect2>
   
-  <REFSECT2 ID="R2-SQL-CREATEFUNCTION-2">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEFUNCTION-2">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     Outputs
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     
-    <VARIABLELIST>
-     <VARLISTENTRY>
-      <TERM>
-       <ReturnValue>CREATE</ReturnValue>
-      </TERM>
-      <LISTITEM>
-       <PARA>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <returnvalue>CREATE</returnvalue>
+      </term>
+      <listitem>
+       <para>
 	This is returned if the command completes successfully.
        </para>
       </listitem>
      </varlistentry>
-    </VARIABLELIST>
+    </variablelist>
    </para>
-  </REFSECT2>
- </REFSYNOPSISDIV>
+  </refsect2>
+ </refsynopsisdiv>
  
- <REFSECT1 ID="R1-SQL-CREATEFUNCTION-1">
-  <REFSECT1INFO>
-   <DATE>1998-09-09</DATE>
-  </REFSECT1INFO>
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEFUNCTION-1">
+  <refsect1info>
+   <date>1998-09-09</date>
+  </refsect1info>
+  <title>
    Description
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    <command>CREATE FUNCTION</command> allows a
    <productname>Postgres</productname> user
    to register a function
    with a database. Subsequently, this user is treated as the
    owner of the function.
-  </PARA>
+  </para>
   
-  <REFSECT2 ID="R2-SQL-CREATEFUNCTION-3">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEFUNCTION-3">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     Notes
-   </TITLE>
-   <PARA>
+   </title>
+   <para>
     Refer to the chapter on functions 
 in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
     for further information.
-   </PARA>
-   <PARA>
+   </para>
+   <para>
     Use <command>DROP FUNCTION</command>
     to drop user-defined functions.
-   </PARA>
+   </para>
 
-  <PARA>
+  <para>
    <productname>Postgres</productname> allows function "overloading";
    that is, the same name can be used for several different functions
    so long as they have distinct argument types.  This facility must be
    used with caution for INTERNAL and C-language functions, however.
-  </PARA>
+  </para>
 
-  <PARA>
+  <para>
    Two INTERNAL functions cannot have the same C name without causing
    errors at link time.  To get around that, give them different C names
    (for example, use the argument types as part of the C names), then
    specify those names in the AS clause of <command>CREATE FUNCTION</command>.
    If the AS clause is left empty then <command>CREATE FUNCTION</command>
    assumes the C name of the function is the same as the SQL name.
-  </PARA>
+  </para>
 
-  <PARA>
+  <para>
    For dynamically-loaded C functions, the SQL name of the function must
    be the same as the C function name, because the AS clause is used to
    give the path name of the object file containing the C code.  In this
@@ -178,18 +178,18 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
    ways if there is a conflict of C function names.  So, even if it works
    for you today, you might regret overloading names later when you try
    to run the code somewhere else.
-  </PARA>
-  </REFSECT2>
+  </para>
+  </refsect2>
  </refsect1>
   
- <REFSECT1 ID="R1-SQL-CREATEFUNCTION-2">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEFUNCTION-2">
+  <title>
    Usage
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    To create a simple SQL function:
-  </PARA>
-  <ProgramListing>
+  </para>
+  <programlisting>
    CREATE FUNCTION one() RETURNS int4
    AS 'SELECT 1 AS RESULT'
    LANGUAGE 'sql';
@@ -201,7 +201,7 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
     ------
     1
    </computeroutput>
-  </ProgramListing>
+  </programlisting>
   <para>
    To create a C function, calling a routine from a user-created
    shared library.  This particular routine calculates a check
@@ -211,44 +211,44 @@ in the <citetitle>PostgreSQL Programmer's Guide</citetitle>
   <programlisting>
    <userinput>
     CREATE FUNCTION ean_checkdigit(bpchar, bpchar) RETURNS bool
-    AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
+        AS '/usr1/proj/bray/sql/funcs.so' LANGUAGE 'c';
     
-    CREATE TABLE product
-    (
-    id              char(8)         PRIMARY KEY,
-    eanprefix       char(8)         CHECK (eanprefix ~ '[0-9]{2}-[0-9]{5}')
-    REFERENCES brandname(ean_prefix),
-    eancode         char(6)         CHECK (eancode ~ '[0-9]{6}'),
-    CONSTRAINT ean CHECK (ean_checkdigit(eanprefix, eancode))
-    );</userinput>
+    CREATE TABLE product (
+    id        char(8) PRIMARY KEY,
+    eanprefix char(8) CHECK (eanprefix ~ '[0-9]{2}-[0-9]{5}')
+                      REFERENCES brandname(ean_prefix),
+    eancode   char(6) CHECK (eancode ~ '[0-9]{6}'),
+    CONSTRAINT ean    CHECK (ean_checkdigit(eanprefix, eancode))
+    );
+   </userinput>
   </programlisting>
- </REFSECT1>
+ </refsect1>
  
- <REFSECT1 ID="R1-SQL-CREATEFUNCTION-3">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEFUNCTION-3">
+  <title>
    Bugs
-  </TITLE>
-  <PARA>
+  </title>
+  <para>
    A C function cannot return a set of values.
-  </PARA>
- </REFSECT1>
+  </para>
+ </refsect1>
  
- <REFSECT1 ID="R1-SQL-CREATEFUNCTION-4">
-  <TITLE>
+ <refsect1 id="R1-SQL-CREATEFUNCTION-4">
+  <title>
    Compatibility
-  </TITLE>
-   <PARA>
+  </title>
+   <para>
     <command>CREATE FUNCTION</command> is
  a <productname>Postgres</productname> language extension.
-   </PARA>
+   </para>
   
-  <REFSECT2 ID="R2-SQL-CREATEFUNCTION-4">
-   <REFSECT2INFO>
-    <DATE>1998-09-09</DATE>
-   </REFSECT2INFO>
-   <TITLE>
+  <refsect2 id="R2-SQL-CREATEFUNCTION-4">
+   <refsect2info>
+    <date>1998-09-09</date>
+   </refsect2info>
+   <title>
     SQL/PSM
-   </TITLE>
+   </title>
    <para>
 
 <note>
@@ -264,7 +264,8 @@ has not yet happened, but it is hoped that PSM will
 SQL/PSM <command>CREATE FUNCTION</command> has the following syntax:
 <synopsis>
 CREATE FUNCTION <replaceable class="parameter">name</replaceable>
-    ( [ [ IN | OUT | INOUT ] <replaceable class="parameter">parm</replaceable> <replaceable class="parameter">type</replaceable> [, ...] ] )
+    ( [ [ IN | OUT | INOUT ] <replaceable class="parameter">eter</replaceable>eable> <replaceable
+      class="parameter">type</replaceable> [, ...] ] )
      RETURNS <replaceable class="parameter">rtype</replaceable>
      LANGUAGE '<replaceable class="parameter">langname</replaceable>'
      ESPECIFIC <replaceable class="parameter">routine</replaceable>
@@ -274,12 +275,12 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable>
    </para>
   </refsect2>
  </refsect1>
-</REFENTRY>
+</refentry>
 
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-omittag:t
+sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
 sgml-always-quote-attributes:t
