@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.124 2003/07/25 00:01:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.125 2003/07/29 17:21:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,10 +538,11 @@ build_column_default(Relation rel, int attrno)
 		return NULL;			/* No default anywhere */
 
 	/*
-	 * Make sure the value is coerced to the target column type (might not
-	 * be right type yet if it's not a constant!)  This should match the
-	 * parser's processing of non-defaulted expressions --- see
-	 * updateTargetListEntry().
+	 * Make sure the value is coerced to the target column type; this will
+	 * generally be true already, but there seem to be some corner cases
+	 * involving domain defaults where it might not be true.
+	 * This should match the parser's processing of non-defaulted expressions
+	 * --- see updateTargetListEntry().
 	 */
 	exprtype = exprType(expr);
 
@@ -550,10 +551,6 @@ build_column_default(Relation rel, int attrno)
 								 atttype, atttypmod,
 								 COERCION_ASSIGNMENT,
 								 COERCE_IMPLICIT_CAST);
-	/*
-	 * This really shouldn't fail; should have checked the default's
-	 * type when it was created ...
-	 */
 	if (expr == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.248 2003/07/21 01:59:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.249 2003/07/29 17:21:20 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1724,9 +1724,9 @@ SetRelationNumChecks(Relation rel, int numchecks)
  * in the expression.  (Even though we plan to reject vars, it's more
  * user-friendly to give the correct error message than "unknown var".)
  *
- * If atttypid is not InvalidOid, check that the expression is coercible
- * to the specified type.  atttypmod is needed in this case, and attname
- * is used in the error message if any.
+ * If atttypid is not InvalidOid, coerce the expression to the specified
+ * type (and typmod atttypmod).   attname is only needed in this case:
+ * it is used in the error message, if any.
  */
 Node *
 cookDefault(ParseState *pstate,
@@ -1773,24 +1773,19 @@ cookDefault(ParseState *pstate,
 				 errmsg("cannot use aggregate in DEFAULT clause")));
 
 	/*
-	 * Check that it will be possible to coerce the expression to the
-	 * column's type.  We store the expression without coercion, however,
-	 * to avoid premature coercion in cases like
-	 *
-	 * CREATE TABLE tbl (fld timestamp DEFAULT 'now');
-	 *
-	 * NB: this should match the code in rewrite/rewriteHandler.c that will
-	 * actually do the coercion, to ensure we don't accept an unusable
-	 * default expression.
+	 * Coerce the expression to the correct type and typmod, if given.  This
+	 * should match the parser's processing of non-defaulted expressions ---
+	 * see updateTargetListEntry().
 	 */
 	if (OidIsValid(atttypid))
 	{
 		Oid			type_id = exprType(expr);
 
-		if (coerce_to_target_type(pstate, expr, type_id,
-								  atttypid, atttypmod,
-								  COERCION_ASSIGNMENT,
-								  COERCE_IMPLICIT_CAST) == NULL)
+		expr = coerce_to_target_type(pstate, expr, type_id,
+									 atttypid, atttypmod,
+									 COERCION_ASSIGNMENT,
+									 COERCE_IMPLICIT_CAST);
+		if (expr == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("column \"%s\" is of type %s"
@@ -1801,7 +1796,7 @@ cookDefault(ParseState *pstate,
 					 errhint("You will need to rewrite or cast the expression.")));
 	}
 
-	return (expr);
+	return expr;
 }
 
 
