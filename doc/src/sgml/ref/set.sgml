@@ -557,7 +557,7 @@ SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL 
 	  <listitem>
 	   <para>
 		Sets the isolation level for the current transaction to
-		'SERIALIZABLE' or 'COMMITTED'.
+		'SERIALIZABLE' or 'READ COMMITTED'.
 	   </para>
 	  </listitem>
 	 </varlistentry>
