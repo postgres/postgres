@@ -10,6 +10,10 @@
 # 	o ident username
 # 	o PostgreSQL username
 # 
+# It is read on postmaster startup and when the postmaster receives a SIGHUP.
+# If you edit the file on a running system, you have to SIGHUP the postmaster
+# for the changes to take effect.
+#
 # For example, the following entry equates user "james" on a remote system
 # to PostgreSQL user "guest" in the map named "phoenix":
 # 
