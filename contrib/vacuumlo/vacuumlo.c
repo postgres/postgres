@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.24 2003/08/08 21:41:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.25 2003/09/24 05:38:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,10 +98,13 @@ vacuumlo(char *database, struct _param * param)
 			fprintf(stdout, "Test run: no large objects will be removed!\n");
 	}
 
-	res = PQexec(conn, "SET search_path = public");
+	/*
+	 * Don't get fooled by any non-system catalogs
+	 */
+	res = PQexec(conn, "SET search_path = pg_catalog");
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Failed to set search_path on:\n");
+		fprintf(stderr, "Failed to set search_path:\n");
 		fprintf(stderr, "%s", PQerrorMessage(conn));
 		PQclear(res);
 		PQfinish(conn);
@@ -113,9 +116,8 @@ vacuumlo(char *database, struct _param * param)
 	 * First we create and populate the LO temp table
 	 */
 	buf[0] = '\0';
-	strcat(buf, "SELECT DISTINCT loid AS lo ");
-	strcat(buf, "INTO TEMP TABLE vacuum_l ");
-	strcat(buf, "FROM pg_largeobject ");
+	strcat(buf, "CREATE TEMP TABLE vacuum_l AS ");
+	strcat(buf, "SELECT DISTINCT loid AS lo FROM pg_largeobject ");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
@@ -132,7 +134,7 @@ vacuumlo(char *database, struct _param * param)
 	 * for the DELETEs below.
 	 */
 	buf[0] = '\0';
-	strcat(buf, "VACUUM ANALYZE vacuum_l ");
+	strcat(buf, "VACUUM ANALYZE vacuum_l");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
@@ -145,7 +147,7 @@ vacuumlo(char *database, struct _param * param)
 	PQclear(res);
 
 	/*
-	 * Now find any candidate tables who have columns of type oid.
+	 * Now find any candidate tables that have columns of type oid.
 	 *
 	 * NOTE: we ignore system tables and temp tables by the expedient of
 	 * rejecting tables in schemas named 'pg_*'.  In particular, the temp
@@ -157,9 +159,9 @@ vacuumlo(char *database, struct _param * param)
 	 * shouldn't matter for correctness, but it saves time.
 	 */
 	buf[0] = '\0';
-	strcat(buf, "SELECT c.relname, a.attname ");
+	strcat(buf, "SELECT s.nspname, c.relname, a.attname ");
 	strcat(buf, "FROM pg_class c, pg_attribute a, pg_namespace s, pg_type t ");
-	strcat(buf, "WHERE a.attnum > 0 ");
+	strcat(buf, "WHERE a.attnum > 0 AND NOT a.attisdropped ");
 	strcat(buf, "      AND a.attrelid = c.oid ");
 	strcat(buf, "      AND a.atttypid = t.oid ");
 	strcat(buf, "      AND c.relnamespace = s.oid ");
@@ -178,14 +180,16 @@ vacuumlo(char *database, struct _param * param)
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		char	   *table,
+		char	   *schema,
+				   *table,
 				   *field;
 
-		table = PQgetvalue(res, i, 0);
-		field = PQgetvalue(res, i, 1);
+		schema = PQgetvalue(res, i, 0);
+		table = PQgetvalue(res, i, 1);
+		field = PQgetvalue(res, i, 2);
 
 		if (param->verbose)
-			fprintf(stdout, "Checking %s in %s\n", field, table);
+			fprintf(stdout, "Checking %s in %s.%s\n", field, schema, table);
 
 		/*
 		 * The "IN" construct used here was horribly inefficient before
@@ -194,13 +198,13 @@ vacuumlo(char *database, struct _param * param)
 		 */
 		snprintf(buf, BUFSIZE,
 				 "DELETE FROM vacuum_l "
-				 "WHERE lo IN (SELECT \"%s\" FROM \"%s\")",
-				 field, table);
+				 "WHERE lo IN (SELECT \"%s\" FROM \"%s\".\"%s\")",
+				 field, schema, table);
 		res2 = PQexec(conn, buf);
 		if (PQresultStatus(res2) != PGRES_COMMAND_OK)
 		{
-			fprintf(stderr, "Failed to check %s in table %s:\n",
-					field, table);
+			fprintf(stderr, "Failed to check %s in table %s.%s:\n",
+					field, schema, table);
 			fprintf(stderr, "%s", PQerrorMessage(conn));
 			PQclear(res2);
 			PQclear(res);
