@@ -34,5 +34,6 @@ extern int byleng(char *, int);
 extern void ldchar(char *, int, char *);
 
 extern bool ECPGconnect_informix(int, const char *, const char *, const char *, const char *, int);
+extern bool ECPGdeallocate_informix(int, char *);
 extern void ECPG_informix_set_var(int, void *, int);
 extern void *ECPG_informix_get_var(int);

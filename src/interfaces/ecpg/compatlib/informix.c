@@ -695,6 +695,16 @@ ECPGconnect_informix(int lineno, const char *name, const char *user, const char 
 	        return (ECPGconnect(lineno, informix_name, user, passwd, connection_name , autocommit));
 }
 
+bool
+ECPGdeallocate_informix(int lineno, char *name)
+{
+	ECPGdeallocate_one(lineno, name);
+
+	/* Just ignore all errors since we do not know the list of cursors we
+	 * are allowed to free. We have to trust that the software. */
+	return true;
+}
+	
 static struct var_list
 {
 	int number;

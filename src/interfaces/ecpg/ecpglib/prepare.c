@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.2 2003/06/15 04:07:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.3 2003/06/20 13:36:34 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -107,6 +107,18 @@ ECPGprepare(int lineno, char *name, char *variable)
 bool
 ECPGdeallocate(int lineno, char *name)
 {
+	bool ret = ECPGdeallocate_one(lineno, name);
+
+	if (!ret) 
+		ECPGraise(lineno, ECPG_INVALID_STMT, name);
+
+	return ret;
+		
+}
+
+bool
+ECPGdeallocate_one(int lineno, char *name)
+{
 	struct prepared_statement *this,
 			   *prev;
 
@@ -126,7 +138,6 @@ ECPGdeallocate(int lineno, char *name)
 		ECPGfree(this);
 		return true;
 	}
-	ECPGraise(lineno, ECPG_INVALID_STMT, name);
 	return false;
 }
 

@@ -13,13 +13,14 @@ EXEC SQL BEGIN DECLARE SECTION;
 	int *did = &i;
 	int a[10] = {9,8,7,6,5,4,3,2,1,0};
 	char text[10] = "klmnopqrst";
-	char *t = "uvwxyz1234";
+	char *t = (char *)malloc(10);
 	double f;
 	bool b = true;
 	varchar database[3];
 EXEC SQL END DECLARE SECTION;
 	FILE *dbgs;
 
+	strcpy(t, "0123456789");
 	setlocale(LC_ALL, "de_DE");
         
 	if ((dbgs = fopen("log", "w")) != NULL)

@@ -51,6 +51,7 @@ bool		ECPGtrans(int, const char *, const char *);
 bool		ECPGdisconnect(int, const char *);
 bool		ECPGprepare(int, char *, char *);
 bool		ECPGdeallocate(int, char *);
+bool		ECPGdeallocate_one(int, char *);
 bool		ECPGdeallocate_all(int);
 char	   *ECPGprepared_statement(char *);
 

@@ -1505,6 +1505,10 @@ Thu Jun 19 10:08:26 CEST 2003
 Fri Jun 20 13:23:07 CEST 2003
 
 	- Enabled constants in using clause.
+	
+Fri Jun 20 15:34:29 CEST 2003
+
+	- For Informix compatibility we have to accept a "free <cursor>".
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
