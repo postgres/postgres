@@ -65,7 +65,10 @@ disconnectdb()
 	if (res != NULL &&
 		in_result_block == FALSE &&
 		was_get_unset_result == FALSE)
+	{
 		PQclear(res);
+		res = NULL;
+	}
 
 	PQfinish(conn);
 }
