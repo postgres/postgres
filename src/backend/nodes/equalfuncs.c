@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.98 2001/08/04 22:01:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.99 2001/08/10 14:30:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1283,7 +1283,7 @@ _equalDropUserStmt(DropUserStmt *a, DropUserStmt *b)
 static bool
 _equalLockStmt(LockStmt *a, LockStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->rellist, b->rellist))
 		return false;
 	if (a->mode != b->mode)
 		return false;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.138 2001/08/04 22:01:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.139 2001/08/10 14:30:14 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1984,8 +1984,7 @@ needs_toast_table(Relation rel)
 		MAXALIGN(data_length);
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
 }
-
-
+	
 /*
  *
  * LOCK TABLE
@@ -1994,26 +1993,38 @@ needs_toast_table(Relation rel)
 void
 LockTableCommand(LockStmt *lockstmt)
 {
-	Relation	rel;
-	int			aclresult;
+	List *p;
+	Relation rel;
+	
+	/* Iterate over the list and open, lock, and close the relations
+	   one at a time
+	 */
 
-	rel = heap_openr(lockstmt->relname, NoLock);
+		foreach(p, lockstmt->rellist)
+		{
+			char* relname = strVal(lfirst(p));
+			int			aclresult;
+			
+			rel = heap_openr(relname, NoLock);
 
-	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
+			if (rel->rd_rel->relkind != RELKIND_RELATION)
+				elog(ERROR, "LOCK TABLE: %s is not a table", 
+					 relname);
+			
+			if (lockstmt->mode == AccessShareLock)
+				aclresult = pg_aclcheck(relname, GetUserId(),
+										ACL_SELECT);
+			else
+				aclresult = pg_aclcheck(relname, GetUserId(),
+										ACL_UPDATE | ACL_DELETE);
 
-	if (lockstmt->mode == AccessShareLock)
-		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_SELECT);
-	else
-		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(),
-								ACL_UPDATE | ACL_DELETE);
+			if (aclresult != ACLCHECK_OK)
+				elog(ERROR, "LOCK TABLE: permission denied");
 
-	if (aclresult != ACLCHECK_OK)
-		elog(ERROR, "LOCK TABLE: permission denied");
-
-	LockRelation(rel, lockstmt->mode);
-
-	heap_close(rel, NoLock);	/* close rel, keep lock */
+			LockRelation(rel, lockstmt->mode);
+			
+			heap_close(rel, NoLock);	/* close rel, keep lock */
+		}
 }
 
 

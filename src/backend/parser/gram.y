@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.241 2001/08/06 05:42:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.242 2001/08/10 14:30:14 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3281,11 +3281,11 @@ DeleteStmt:  DELETE FROM relation_expr where_clause
 				}
 		;
 
-LockStmt:	LOCK_P opt_table relation_name opt_lock
+LockStmt:	LOCK_P opt_table relation_name_list opt_lock
 				{
 					LockStmt *n = makeNode(LockStmt);
 
-					n->relname = $3;
+					n->rellist = $3;
 					n->mode = $4;
 					$$ = (Node *)n;
 				}
