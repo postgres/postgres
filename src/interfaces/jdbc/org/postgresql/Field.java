@@ -76,7 +76,9 @@ public class Field
       // it's not in the cache, so perform a query, and add the result to
       // the cache
       if(type_name==null) {
-	ResultSet result = (org.postgresql.ResultSet)conn.ExecSQL("select typname from pg_type where oid = " + oid);
+	ResultSet result = (org.postgresql.ResultSet)
+	    conn.ExecSQL(null, "select typname from pg_type where oid = " 
+			 + oid);
 	if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
 	  throw new PSQLException("postgresql.unexpected");
 	result.next();

@@ -6,6 +6,7 @@ package org.postgresql.jdbc1;
 // org.postgresql.jdbc2 package.
 
 import java.sql.*;
+import org.postgresql.PGStatement;
 
 import org.postgresql.util.PSQLException;
 
@@ -22,9 +23,8 @@ import org.postgresql.util.PSQLException;
  * @see java.sql.Statement
  * @see ResultSet
  */
-public class Statement implements java.sql.Statement
+public class Statement extends PGStatement implements java.sql.Statement
 {
-    Connection connection;		// The connection who created us
     java.sql.ResultSet result = null;	// The current results
     SQLWarning warnings = null;	// The warnings chain.
     int timeout = 0;		// The timeout for a query (not used)
@@ -38,7 +38,7 @@ public class Statement implements java.sql.Statement
 	 */
 	public Statement (Connection c)
 	{
-		connection = c;
+	    super(c);
 	}
 
 	/**
@@ -89,7 +89,8 @@ public class Statement implements java.sql.Statement
 	 */
 	public void close() throws SQLException
 	{
-		result = null;
+	    super.close();
+	    result = null;
 	}
 
 	/**
@@ -266,7 +267,8 @@ public class Statement implements java.sql.Statement
 	 */
 	public boolean execute(String sql) throws SQLException
 	{
-		result = connection.ExecSQL(sql);
+	    deallocate();
+		result = connection.ExecSQL(this, sql);
 		return (result != null && ((org.postgresql.ResultSet)result).reallyResultSet());
 	}
 

@@ -1497,7 +1497,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     if(procedureNamePattern==null)
       procedureNamePattern="%";
     
-    r = connection.ExecSQL("select proname, proretset from pg_proc where proname like '"+procedureNamePattern.toLowerCase()+"' order by proname");
+    r = connection.ExecSQL(null, "select proname, proretset from pg_proc where proname like '"+procedureNamePattern.toLowerCase()+"' order by proname");
     
     while (r.next())
       {
@@ -1670,7 +1670,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     sql.append("'");
     
     // Now run the query
-    r = connection.ExecSQL(sql.toString());
+    r = connection.ExecSQL(null, sql.toString());
     
     byte remarks[];
     
@@ -1679,7 +1679,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	byte[][] tuple = new byte[5][0];
 	
 	// Fetch the description for the table (if any)
-	java.sql.ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(2));
+	java.sql.ResultSet dr = connection.ExecSQL(null, "select description from pg_description where objoid="+r.getInt(2));
 	if(((org.postgresql.ResultSet)dr).getTupleCount()==1) {
 	  dr.next();
 	  remarks = dr.getBytes(1);
@@ -1893,7 +1893,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     
     // Now form the query
     // Modified by Stefan Andreasen <stefan@linux.kapow.dk>
-    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern.toLowerCase()+"' and a.attname like '"+columnNamePattern.toLowerCase()+"' and a.attnum>0 order by c.relname,a.attnum");
+    r = connection.ExecSQL(null, "select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern.toLowerCase()+"' and a.attname like '"+columnNamePattern.toLowerCase()+"' and a.attnum>0 order by c.relname,a.attnum");
     
     byte remarks[];
     
@@ -1901,7 +1901,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	byte[][] tuple = new byte[18][0];
 	
 	// Fetch the description for the table (if any)
-	java.sql.ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(1));
+	java.sql.ResultSet dr = connection.ExecSQL(null, "select description from pg_description where objoid="+r.getInt(1));
 	if(((org.postgresql.ResultSet)dr).getTupleCount()==1) {
 	  dr.next();
 	  tuple[11] = dr.getBytes(1);
@@ -1915,7 +1915,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	tuple[2] = r.getBytes(2);	// Table name
 	tuple[3] = r.getBytes(3);	// Column name
 	
-	dr = connection.ExecSQL("select typname from pg_type where oid = "+r.getString(4));
+	dr = connection.ExecSQL(null, "select typname from pg_type where oid = "+r.getString(4));
 	dr.next();
 	String typname=dr.getString(1);
 	dr.close();
@@ -2009,7 +2009,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[7] = new Field(connection,"IS_GRANTABLE",iVarcharOid,32);
     
     // This is taken direct from the psql source
-    java.sql.ResultSet r = connection.ExecSQL("SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '"+table.toLowerCase()+"' ORDER BY relname");
+    java.sql.ResultSet r = connection.ExecSQL(null, "SELECT relname, relacl FROM pg_class, pg_user WHERE ( relkind = 'r' OR relkind = 'i') and relname !~ '^pg_' and relname !~ '^xin[vx][0-9]+' and usesysid = relowner and relname like '"+table.toLowerCase()+"' ORDER BY relname");
     while(r.next()) {
       byte[][] tuple = new byte[8][0];
       tuple[0] = tuple[1]= "".getBytes();
@@ -2406,7 +2406,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getTypeInfo() throws SQLException
   {
-    java.sql.ResultSet rs = connection.ExecSQL("select typname from pg_type");
+    java.sql.ResultSet rs = connection.ExecSQL(null, "select typname from pg_type");
     if(rs!=null) {
       Field f[] = new Field[18];
       ResultSet r;	// ResultSet for the SQL query that we need to do

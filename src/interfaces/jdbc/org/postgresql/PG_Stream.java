@@ -22,7 +22,10 @@ public class PG_Stream
   private Socket connection;
   private InputStream pg_input;
   private BufferedOutputStream pg_output;
-  
+
+  public PGStatement executingStatement;
+
+
   /**
    * Constructor:  Connect to the PostgreSQL back end and return
    * a stream connection.
@@ -42,6 +45,15 @@ public class PG_Stream
     // Buffer sizes submitted by Sverre H Huseby <sverrehu@online.no>
     pg_input = new BufferedInputStream(connection.getInputStream(), 8192);
     pg_output = new BufferedOutputStream(connection.getOutputStream(), 8192);
+  }
+  
+  /**
+   * Set the currently executing statement. This is used to bind cached byte 
+   * arrays to a Statement, so the statement can return the to the global 
+   * pool of unused byte arrays when they are no longer inuse.
+   */
+  public void setExecutingStatement(PGStatement executingStatement){
+      this.executingStatement = executingStatement;
   }
   
   /**
@@ -70,7 +82,7 @@ public class PG_Stream
    */
   public void SendInteger(int val, int siz) throws IOException
   {
-    byte[] buf = new byte[siz];
+    byte[] buf = allocByteDim1(siz);
     
     while (siz-- > 0)
       {
@@ -94,7 +106,7 @@ public class PG_Stream
    */
   public void SendIntegerReverse(int val, int siz) throws IOException
   {
-    byte[] buf = new byte[siz];
+    byte[] buf = allocByteDim1(siz);
     int p=0;
     while (siz-- > 0)
       {
@@ -236,23 +248,52 @@ public class PG_Stream
       return n;
   }
 
-    public String ReceiveString(int maxsize) throws SQLException {
-        return ReceiveString(maxsize, null);
-    }
+
+  /**
+   * Receives a null-terminated string from the backend.  Maximum of
+   * maxsiz bytes - if we don't see a null, then we assume something
+   * has gone wrong.
+   *
+   * @param maxsiz maximum length of string
+   * @return string from back end
+   * @exception SQLException if an I/O error occurs
+   */
+  public String ReceiveString(int maxsiz) throws SQLException
+  {
+    return ReceiveString(maxsiz, null);
+  }
+
+  /**
+   * Receives a null-terminated string from the backend.  Maximum of
+   * maxsiz bytes - if we don't see a null, then we assume something
+   * has gone wrong.
+   *
+   * @param maxsiz maximum length of string
+   * @param encoding the charset encoding to use.
+   * @return string from back end
+   * @exception SQLException if an I/O error occurs
+   */
+  public String ReceiveString(int maxsiz, String encoding) throws SQLException
+  {
+    byte[] rst = allocByteDim1(maxsiz);
+    return ReceiveString(rst, maxsiz, encoding);
+  }
   
   /**
    * Receives a null-terminated string from the backend.  Maximum of
    * maxsiz bytes - if we don't see a null, then we assume something
    * has gone wrong.
    *
-   * @param encoding the charset encoding to use.
+   * @param rst byte array to read the String into. rst.length must 
+   *        equal to or greater than maxsize. 
    * @param maxsiz maximum length of string in bytes
+   * @param encoding the charset encoding to use.
    * @return string from back end
    * @exception SQLException if an I/O error occurs
    */
-  public String ReceiveString(int maxsiz, String encoding) throws SQLException
+  public String ReceiveString(byte rst[], int maxsiz, String encoding) 
+      throws SQLException
   {
-    byte[] rst = new byte[maxsiz];
     int s = 0;
     
     try
@@ -262,9 +303,10 @@ public class PG_Stream
 	    int c = pg_input.read();
 	    if (c < 0)
 	      throw new PSQLException("postgresql.stream.eof");
-	    else if (c == 0)
-	      break;
-	    else
+	    else if (c == 0) {
+		rst[s] = 0;
+		break;
+	    } else
 	      rst[s++] = (byte)c;
 	  }
 	if (s >= maxsiz)
@@ -299,7 +341,7 @@ public class PG_Stream
   {
     int i, bim = (nf + 7)/8;
     byte[] bitmask = Receive(bim);
-    byte[][] answer = new byte[nf][0];
+    byte[][] answer = allocByteDim2(nf);
     
     int whichbit = 0x80;
     int whichbyte = 0;
@@ -337,7 +379,7 @@ public class PG_Stream
    */
   private byte[] Receive(int siz) throws SQLException
   {
-    byte[] answer = new byte[siz];
+    byte[] answer = allocByteDim1(siz);
     Receive(answer,0,siz);
     return answer;
   }
@@ -395,4 +437,95 @@ public class PG_Stream
     pg_input.close();
     connection.close();
   }
+
+  /**
+   * Deallocate all resources that has been associated with any previous
+   * query.
+   */
+  public void deallocate(PGStatement stmt){
+
+      for(int i = 0; i < maxsize_dim1; i++){
+	  synchronized(notusemap_dim1[i]){
+	      notusemap_dim1[i].addAll(stmt.inusemap_dim1[i]);
+	  }
+	  stmt.inusemap_dim1[i].clear();
+      }
+
+      for(int i = 0; i < maxsize_dim2; i++){
+	  synchronized(notusemap_dim2[i]){
+	      notusemap_dim2[i].addAll(stmt.inusemap_dim2[i]);
+	  }
+	  stmt.inusemap_dim2[i].clear();
+      }
+  }
+
+  public static final int maxsize_dim1 = 256;
+  public static ObjectPool notusemap_dim1[] = new ObjectPool[maxsize_dim1]; 
+  public static byte binit[][] = new byte[maxsize_dim1][0];
+  public static final int maxsize_dim2 = 32;
+  public static ObjectPool notusemap_dim2[] = new ObjectPool[maxsize_dim2]; 
+  public static ObjectPoolFactory factory_dim1;
+  public static ObjectPoolFactory factory_dim2;
+
+  static {
+      for(int i = 0; i < maxsize_dim1; i++){
+	  binit[i] = new byte[i];
+	  notusemap_dim1[i] = new ObjectPool();
+      }
+      for(int i = 0; i < maxsize_dim2; i++){
+	  notusemap_dim2[i] = new ObjectPool();
+      }
+      factory_dim1 = ObjectPoolFactory.getInstance(maxsize_dim1);
+      factory_dim2 = ObjectPoolFactory.getInstance(maxsize_dim2);
+  }
+
+  public byte[] allocByteDim1(int size){
+      if(size >= maxsize_dim1 || executingStatement == null){
+	  return new byte[size];
+      }
+      ObjectPool not_usel = notusemap_dim1[size];
+      ObjectPool in_usel = executingStatement.inusemap_dim1[size];
+
+      byte b[] = null;
+
+      synchronized(not_usel){
+	  if(!not_usel.isEmpty()) {
+	      Object o = not_usel.remove();
+	      b = (byte[]) o;
+	  } else {
+	      b = new byte[size];
+	  }
+      }
+      in_usel.add(b);
+
+      return b;
+  }    
+
+  public byte[][] allocByteDim2(int size){
+      if(size >= maxsize_dim2 || executingStatement == null){
+	  return new byte[size][0];
+      }
+      ObjectPool not_usel = notusemap_dim2[size];
+      ObjectPool in_usel = executingStatement.inusemap_dim2[size];
+
+      byte b[][] = null;
+      
+      synchronized(not_usel){
+	  if(!not_usel.isEmpty()) {
+	      Object o = not_usel.remove();
+	      b = (byte[][]) o;
+	  } else 
+	      b = new byte[size][0];
+	  
+	  in_usel.add(b);
+      }
+
+      return b;
+  }    
+
 }
+
+
+
+
+

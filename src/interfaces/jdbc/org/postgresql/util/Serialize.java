@@ -50,7 +50,7 @@ public class Serialize
     
     // Second check, the type must be a table
     boolean status = false;
-    ResultSet rs = conn.ExecSQL("select typname from pg_type,pg_class where typname=relname and typname='"+type+"'");
+    ResultSet rs = conn.ExecSQL(null, "select typname from pg_type,pg_class where typname=relname and typname='"+type+"'");
     if(rs!=null) {
       if(rs.next())
 	status=true;
@@ -97,7 +97,7 @@ public class Serialize
       sb.append(oid);
       
       DriverManager.println("store: "+sb.toString());
-      ResultSet rs = conn.ExecSQL(sb.toString());
+      ResultSet rs = conn.ExecSQL(null, sb.toString());
       if(rs!=null) {
 	if(rs.next()) {
 	  for(int i=0;i<f.length;i++) {
@@ -189,7 +189,7 @@ public class Serialize
       }
       
       DriverManager.println("store: "+sb.toString());
-      ResultSet rs = conn.ExecSQL(sb.toString());
+      ResultSet rs = conn.ExecSQL(null, sb.toString());
       if(rs!=null) {
 	rs.close();
       }
@@ -236,7 +236,7 @@ public class Serialize
     // See if the table exists
     String tableName = toPostgreSQL(c.getName());
     
-    ResultSet rs = con.ExecSQL("select relname from pg_class where relname = '"+tableName+"'");
+    ResultSet rs = con.ExecSQL(null, "select relname from pg_class where relname = '"+tableName+"'");
     if(!rs.next()) {
       DriverManager.println("found "+rs.getString(1));
       // No entries returned, so the table doesn't exist
@@ -277,7 +277,7 @@ public class Serialize
       
       // Now create the table
       DriverManager.println("Serialize.create:"+sb);
-      con.ExecSQL(sb.toString());
+      con.ExecSQL(null, sb.toString());
       rs.close();
     } else {
       DriverManager.println("Serialize.create: table "+tableName+" exists, skipping");

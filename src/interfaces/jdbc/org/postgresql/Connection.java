@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.6 2000/09/12 05:09:54 momjian Exp $
+ * $Id: Connection.java,v 1.7 2000/10/08 19:37:54 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -81,6 +81,11 @@ public abstract class Connection
     // The PID an cancellation key we get from the backend process
     public int pid;
     public int ckey;
+
+    // This receive_sbuf should be used by the different methods
+    // that call pg_stream.ReceiveString() in this Connection, so 
+    // so we avoid uneccesary new allocations. 
+    byte receive_sbuf[] = new byte[8192];
     
     /**
      * This is called by Class.forName() from within org.postgresql.Driver
@@ -164,8 +169,9 @@ public abstract class Connection
 		// The most common one to be thrown here is:
 		// "User authentication failed"
 		//
-		throw new SQLException(pg_stream.ReceiveString
-                                       (4096, getEncoding()));
+		String msg = pg_stream.ReceiveString(receive_sbuf, 4096,
+						     getEncoding());
+		throw new SQLException(msg);
 		
 	      case 'R':
 		// Get the type of request
@@ -236,7 +242,7 @@ public abstract class Connection
 	case 'E':
 	case 'N':
            throw new SQLException(pg_stream.ReceiveString
-                                  (4096, getEncoding()));
+                                  (receive_sbuf, 4096, getEncoding()));
         default:
           throw new PSQLException("postgresql.con.setup");
       }
@@ -248,7 +254,7 @@ public abstract class Connection
 	   break;
 	case 'E':
 	case 'N':
-           throw new SQLException(pg_stream.ReceiveString(4096));
+           throw new SQLException(pg_stream.ReceiveString(receive_sbuf, 4096, getEncoding()));
         default:
           throw new PSQLException("postgresql.con.setup");
       }
@@ -263,7 +269,7 @@ public abstract class Connection
       //
       firstWarning = null;
       
-      ExecSQL("set datestyle to 'ISO'");
+      ExecSQL(null, "set datestyle to 'ISO'");
       
       // Initialise object handling
       initObjectTypes();
@@ -306,7 +312,8 @@ public abstract class Connection
 	//currentDateStyle=i+1; // this is the index of the format
 	//}
     }
-    
+
+
     /**
      * Send a query to the backend.  Returns one of the ResultSet
      * objects.
@@ -314,15 +321,18 @@ public abstract class Connection
      * <B>Note:</B> there does not seem to be any method currently
      * in existance to return the update count.
      *
+     * @param stmt The statment object.
      * @param sql the SQL statement to be executed
      * @return a ResultSet holding the results
      * @exception SQLException if a database error occurs
      */
-    public java.sql.ResultSet ExecSQL(String sql) throws SQLException
+    public java.sql.ResultSet ExecSQL(PGStatement stmt, 
+				      String sql) throws SQLException
     {
 	// added Oct 7 1998 to give us thread safety.
 	synchronized(pg_stream) {
-	    
+	    pg_stream.setExecutingStatement(stmt);
+
 	    Field[] fields = null;
 	    Vector tuples = new Vector();
 	    byte[] buf = null;
@@ -352,8 +362,7 @@ public abstract class Connection
 	    try
 		{
 		    pg_stream.SendChar('Q');
-		    buf = sql.getBytes();
-		    pg_stream.Send(buf);
+		    pg_stream.Send(sql.getBytes());
 		    pg_stream.SendChar(0);
 		    pg_stream.flush();
 		} catch (IOException e) {
@@ -370,7 +379,8 @@ public abstract class Connection
 			{
 			case 'A':	// Asynchronous Notify
 			    pid = pg_stream.ReceiveInteger(4);
-			    msg = pg_stream.ReceiveString(8192);
+			    msg = pg_stream.ReceiveString(receive_sbuf, 8192, 
+							  getEncoding());
 			    break;
 			case 'B':	// Binary Data Transfer
 			    if (fields == null)
@@ -381,7 +391,9 @@ public abstract class Connection
 				tuples.addElement(tup);
 			    break;
 			case 'C':	// Command Status
-			    recv_status = pg_stream.ReceiveString(8192);
+			    recv_status = 
+				pg_stream.ReceiveString(receive_sbuf, 8192,
+							getEncoding());
 				
 				// Now handle the update count correctly.
 				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE")) {
@@ -423,7 +435,8 @@ public abstract class Connection
 				tuples.addElement(tup);
 			    break;
 			case 'E':	// Error Message
-			    msg = pg_stream.ReceiveString(4096);
+			    msg = pg_stream.ReceiveString(receive_sbuf, 4096,
+							  getEncoding());
 			    final_error = new SQLException(msg);
 			    hfr = true;
 			    break;
@@ -438,10 +451,14 @@ public abstract class Connection
 				hfr = true;
 			    break;
 			case 'N':	// Error Notification
-			    addWarning(pg_stream.ReceiveString(4096));
+			    addWarning(pg_stream.ReceiveString(receive_sbuf, 
+							       4096, 
+							       getEncoding()));
 			    break;
 			case 'P':	// Portal Name
-			    String pname = pg_stream.ReceiveString(8192);
+			    String pname = 
+				pg_stream.ReceiveString(receive_sbuf, 8192, 
+							getEncoding());
 			    break;
 			case 'T':	// MetaData Field Description
 			    if (fields != null)
@@ -461,6 +478,8 @@ public abstract class Connection
 	}
     }
 
+
+
     /**
      * Receive the field descriptions from the back end
      *
@@ -474,7 +493,8 @@ public abstract class Connection
 	
 	for (i = 0 ; i < nf ; ++i)
 	    {
-		String typname = pg_stream.ReceiveString(8192);
+		String typname = pg_stream.ReceiveString(receive_sbuf, 8192,
+							 getEncoding());
 		int typid = pg_stream.ReceiveIntegerR(4);
 		int typlen = pg_stream.ReceiveIntegerR(2);
 		int typmod = pg_stream.ReceiveIntegerR(4);
