@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.170 2004/12/02 15:32:52 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.171 2004/12/13 18:05:08 petere Exp $
 -->
 
  <chapter id="libpq">
@@ -1203,7 +1203,7 @@ about such errors.
 </para>
 
 <para>
-At present, there is no way to determine the actual datatype inferred for
+At present, there is no way to determine the actual data type inferred for
 any parameters whose types are not specified in <parameter>paramTypes[]</>.
 This is a <application>libpq</> omission that will probably be rectified
 in a future release.

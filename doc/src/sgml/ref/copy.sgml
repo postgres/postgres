@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.61 2004/12/02 15:32:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.62 2004/12/13 18:05:10 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -231,7 +231,7 @@ COPY <replaceable class="parameter">tablename</replaceable> [ ( <replaceable cla
     <listitem>
      <para>
       In <literal>CSV</> <command>COPY FROM</> mode, process each
-      specified column as though it were quoted and hance not a
+      specified column as though it were quoted and hence not a
       <literal>NULL</> value. For the default <literal>null string</> in
       <literal>CSV</> mode (<literal>''</>), this causes a missing
       values to be input as a zero-length strings.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.25 2004/11/27 21:27:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.26 2004/12/13 18:05:10 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -136,7 +136,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
    linkend="sql-selectinto" endterm="sql-selectinto-title">, but it is
    preferred since it is less likely to be confused with other uses of
    the <command>SELECT INTO</> syntax. Furthermore, <command>CREATE
-   TABLE AS</command> offers a superset of the functionality offerred
+   TABLE AS</command> offers a superset of the functionality offered
    by <command>SELECT INTO</command>.
   </para>
 
@@ -150,13 +150,13 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
    frequently executed, the OID counter would be rapidly
    incremented. As of <productname>PostgresSQL</productname> 8.0,
    the <command>CREATE TABLE AS</command> command allows the user to
-   explicitely specify whether OIDs should be included. If the
-   presence of OIDs is not explicitely specified,
+   explicitly specify whether OIDs should be included. If the
+   presence of OIDs is not explicitly specified,
    the <xref linkend="guc-default-with-oids"> configuration variable is
    used. While this variable currently defaults to true, the default
    value may be changed in the future. Therefore, applications that
    require OIDs in the table created by <command>CREATE TABLE
-   AS</command> should explicitely specify <literal>WITH
+   AS</command> should explicitly specify <literal>WITH
    OIDS</literal> to ensure compatibility with future versions
    of <productname>PostgreSQL</productname>.
   </para>

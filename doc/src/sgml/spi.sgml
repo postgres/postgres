@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.35 2004/09/13 20:05:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.36 2004/12/13 18:05:09 petere Exp $
 -->
 
 <chapter id="spi">
@@ -825,7 +825,7 @@ int SPI_getargcount(void * <parameter>plan</parameter>)
 
  <refnamediv>
   <refname>SPI_getargtypeid</refname>
-  <refpurpose>returns the expected typeid for the specified argument of
+  <refpurpose>returns the expected <parameter>typeid</parameter> for the specified argument of
   a plan prepared by <function>SPI_prepare</function></refpurpose>
  </refnamediv>
 
@@ -841,7 +841,7 @@ Oid SPI_getargtypeid(void * <parameter>plan</parameter>, int <parameter>argIndex
   <title>Description</title>
 
   <para>
-   <function>SPI_getargtypeid</function> returns the Oid representing the type
+   <function>SPI_getargtypeid</function> returns the OID representing the type
    id for the <parameter>argIndex</parameter>'th argument of a plan prepared by
    <function>SPI_prepare</function>. First argument is at index zero.
   </para>
@@ -2482,8 +2482,8 @@ HeapTupleHeader SPI_returntuple(HeapTuple <parameter>row</parameter>, TupleDesc 
 
   <para>
    <function>SPI_returntuple</function> makes a copy of a row in
-   the upper executor context, returning it in the form of a rowtype Datum.
-   The returned pointer need only be converted to Datum via PointerGetDatum
+   the upper executor context, returning it in the form of a row type <type>Datum</type>.
+   The returned pointer need only be converted to <type>Datum</type> via <function>PointerGetDatum</function>
    before returning.
   </para>
 

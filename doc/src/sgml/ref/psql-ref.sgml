@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.123 2004/10/06 18:39:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.124 2004/12/13 18:05:10 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -493,7 +493,7 @@ PostgreSQL documentation
     these options are required, defaults do apply. If you omit the host
     name, <application>psql</> will connect via a Unix domain socket
     to a server on the local host, or via TCP/IP to <literal>localhost</> on machines
-    that don't have unix domain sockets. The default port number is compile-time determined.
+    that don't have Unix domain sockets. The default port number is compile-time determined.
     Since the database server uses the same default, you will not have
     to specify the port in most cases. The default user name is your
     Unix user name, as is the default database name. Note that you can't
@@ -1603,7 +1603,7 @@ lo_import 152801
         class="parameter">filename</replaceable> is omitted, the history
         is written to the standard output. This option is only available
         if <application>psql</application> is configured to use the
-        <acronym>GNU</acronym> readline (or history) library.
+        <acronym>GNU</acronym> <application>Readline</application> library.
         </para>
 
         <note>
@@ -2368,7 +2368,7 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
          Prompts may contain terminal control characters which, for
          example, change the color, background, or style of the prompt
          text, or change the title of the terminal window. In order for
-         the line editing features of readline to work properly, these
+         the line editing features of <application>Readline</application> to work properly, these
          non-printing control characters must be designated as invisible
          by surrounding them with <literal>%[</literal> and
          <literal>%]</literal>. Multiple pairs of these may occur within

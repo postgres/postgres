@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.295 2004/12/05 20:05:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.296 2004/12/13 18:05:09 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1946,11 +1946,11 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </indexterm>
       <listitem>
        <para>
-        Controls the tradeoff between planning time and query plan
+        Controls the trade off between planning time and query plan
         efficiency in GEQO. This variable must be an integer in the
         range from 1 to 10. The default value is 5. Larger values
         increase the time spent doing query planning, but also
-        increase the likelyhood that an efficient query plan will be
+        increase the likelihood that an efficient query plan will be
         chosen.
        </para>
 
@@ -2643,7 +2643,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
          only recognised by session processes, and do not apply to
          background processes such as the postmaster. <application>Syslog</>
          produces its own 
-         timestamp and process ID information, so you probably do not want to
+         time stamp and process ID information, so you probably do not want to
          use those escapes if you are using <application>syslog</>.
          This option can only be set at server start or in the
          <filename>postgresql.conf</filename> configuration file.
@@ -2660,71 +2660,69 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
            <tbody>
             <row>
              <entry><literal>%u</literal></entry>
-             <entry>User Name</entry>
-             <entry>Yes</entry>
+             <entry>User name</entry>
+             <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%d</literal></entry>
-             <entry>Database Name</entry>
-             <entry>Yes</entry>
+             <entry>Database name</entry>
+             <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%r</literal></entry>
-             <entry>Remote Hostname or IP address, and Remote Port</entry>
-             <entry>Yes</entry>
+             <entry>Remote host name or IP address, and remote port</entry>
+             <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%p</literal></entry>
              <entry>Process ID</entry>
-             <entry>No</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%t</literal></entry>
-             <entry>Timestamp</entry>
-             <entry>No</entry>
+             <entry>Time stamp</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%i</literal></entry>
-             <entry>Command Tag. This is the command which generated the log
-              line.</entry>
-             <entry>Yes</entry>
+             <entry>Command tag: This is the command that generated the log line.</entry>
+             <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%c</literal></entry>
-             <entry>Session ID. A unique identifier for each session.
+             <entry>Session ID: A unique identifier for each session.
              It is 2 4-byte hexadecimal numbers (without leading zeros) 
              separated by a dot. The numbers
-             are the Session Start Time and the Process ID, so this can also
+             are the session start time and the process ID, so this can also
              be used as a space saving way of printing these items.</entry>
-             <entry>Yes</entry>
+             <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%l</literal></entry>
-             <entry>Number of the log line for each process,
-              starting at 1</entry>
-             <entry>No</entry>
+             <entry>Number of the log line for each process, starting at 1</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%s</literal></entry>
-             <entry>Session Start Timestamp</entry>
-             <entry>Yes</entry>
+             <entry>Session start time stamp</entry>
+             <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%x</literal></entry>
              <entry>Transaction ID</entry>
-             <entry>Yes</entry>
+             <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%q</literal></entry>
              <entry>Does not produce any output, but tells non-session
              processes to stop at this point in the string. Ignored by
              session processes.</entry>
-             <entry>No</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%%</literal></entry>
              <entry>Literal <literal>%</></entry>
-             <entry>No</entry>
+             <entry>no</entry>
             </row>
            </tbody>
           </tgroup>
@@ -4477,7 +4475,7 @@ sysctl -w kern.sysv.shmall
        <para> It may, however, be necessary to modify the global
        <command>ulimit</command> information in
        <filename>/etc/security/limits</filename>, as the default hard
-       limits for filesizes (<varname>fsize</varname>) and numbers of
+       limits for file sizes (<varname>fsize</varname>) and numbers of
        files (<varname>nofiles</varname>) may be too low.
        </para>
       </listitem>
@@ -4668,7 +4666,7 @@ Out of Memory: Killed process 12345 (postmaster).
    <para>
     On Linux 2.6 and later, a better solution is to modify the kernel's
     behavior so that it will not <quote>overcommit</> memory.  This is
-    done by selecting strict overcommit mode via sysctl:
+    done by selecting strict overcommit mode via <command>sysctl</command>:
 <programlisting>
 sysctl -w vm.overcommit_memory=2
 </programlisting>
@@ -4680,7 +4678,7 @@ sysctl -w vm.overcommit_memory=2
 
    <para>
     Some vendors' Linux 2.4 kernels are reported to have early versions
-    of the 2.6 overcommit sysctl.  However, setting
+    of the 2.6 overcommit <command>sysctl</command> parameter.  However, setting
     <literal>vm.overcommit_memory</> to 2
     on a kernel that does not have the relevant code will make
     things worse not better.  It is recommended that you inspect

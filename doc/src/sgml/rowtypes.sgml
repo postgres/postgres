@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.2 2004/06/09 19:08:14 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.3 2004/12/13 18:05:09 petere Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -13,7 +13,7 @@
 
  <para>
   A <firstterm>composite type</> describes the structure of a row or record;
-  it is in essence just a list of field names and their datatypes.
+  it is in essence just a list of field names and their data types.
   <productname>PostgreSQL</productname> allows values of composite types to be
   used in many of the same ways that simple types can be used.  For example, a
   column of a table can be declared to be of a composite type.
@@ -238,7 +238,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
 </programlisting>
 
   Had we not supplied values for all the subfields of the column, the
-  remaining subfields would have been filled with NULLs.
+  remaining subfields would have been filled with null values.
  </para>
  </sect2>
 
@@ -253,7 +253,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
    around the whole value, plus commas (<literal>,</>) between adjacent
    items.  Whitespace outside the parentheses is ignored, but within the
    parentheses it is considered part of the field value, and may or may not be
-   significant depending on the input conversion rules for the field datatype.
+   significant depending on the input conversion rules for the field data type.
    For example, in
 <programlisting>
 '(  42)'

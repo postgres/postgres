@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.97 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.98 2004/12/13 18:05:09 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1547,7 +1547,7 @@ SELECT ROW(1,2.5,'this is a test');
    <para>
     By default, the value created by a <literal>ROW</> expression is of
     an anonymous record type.  If necessary, it can be cast to a named
-    composite type &mdash; either the rowtype of a table, or a composite type
+    composite type &mdash; either the row type of a table, or a composite type
     created with <command>CREATE TYPE AS</>.  An explicit cast may be needed
     to avoid ambiguity.  For example:
 <programlisting>

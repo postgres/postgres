@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.93 2004/12/01 19:00:27 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.94 2004/12/13 18:05:07 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -980,7 +980,7 @@
    represents converting from one type to another and applying a length
    coercion in a single step.  When no such entry is available, coercion
    to a type that uses a type modifier involves two steps, one to
-   convert between datatypes and a second to apply the modifier.
+   convert between data types and a second to apply the modifier.
   </para>
  </sect1>
 
@@ -1037,7 +1037,7 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>
-       The OID of the data type that corresponds to this table's rowtype,
+       The OID of the data type that corresponds to this table's row type,
        if any (zero for indexes, which have no <structname>pg_type</> entry)
       </entry>
      </row>
@@ -2010,7 +2010,7 @@
      <row>
       <entry><structfield>indclass</structfield></entry>
       <entry><type>oidvector</type></entry>
-      <entry><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</entry>
+      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
       <entry>
        For each column in the index key this contains the OID of
        the operator class to use.  See

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.50 2004/12/03 17:12:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.51 2004/12/13 18:05:08 petere Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2576,7 +2576,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
 
     <para>
      This example trigger ensures that any insert, update or delete of a row
-     in the emp table is recorded (i.e. audited) in the emp_audit table. 
+     in the <literal>emp</literal> table is recorded (i.e., audited) in the <literal>emp_audit</literal> table. 
      The current time and user name are stamped into the row, together with 
      the type of operation performed on it.
     </para>

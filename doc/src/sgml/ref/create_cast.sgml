@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.19 2004/11/27 21:27:07 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.20 2004/12/13 18:05:10 petere Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -198,7 +198,7 @@ SELECT 'The time is ' || CAST(now() AS text);
    (Bizarrely, the SQL spec demands different behaviors for explicit and
    implicit casts in some cases.  This argument is supplied for functions
    that must implement such casts.  It is not recommended that you design
-   your own datatypes so that this matters.)
+   your own data types so that this matters.)
   </para>
 
   <para>
@@ -219,7 +219,7 @@ SELECT 'The time is ' || CAST(now() AS text);
    represents converting from one type to another and applying a length
    coercion in a single step.  When no such entry is available, coercion
    to a type that uses a type modifier involves two steps, one to
-   convert between datatypes and a second to apply the modifier.
+   convert between data types and a second to apply the modifier.
   </para>
 
  </refsect1>
@@ -251,7 +251,7 @@ SELECT 'The time is ' || CAST(now() AS text);
   <para>
    While not required, it is recommended that you continue to follow this old
    convention of naming cast implementation functions after the target data
-   type.  Many users are used to being able to cast datatypes using a
+   type.  Many users are used to being able to cast data types using a
    function-style notation, that is
    <replaceable>typename</>(<replaceable>x</>).  This notation is in fact
    nothing more nor less than a call of the cast implementation function; it

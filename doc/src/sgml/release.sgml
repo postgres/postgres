@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.316 2004/12/13 18:05:08 petere Exp $
 -->
 
 <appendix id="release">
@@ -519,7 +519,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
 
     <listitem>
      <para>
-      Improve btree index performance for duplicate keys (Dmitry Tkach, Tom)
+      Improve B-tree index performance for duplicate keys (Dmitry Tkach, Tom)
      </para>
      <para>
       This improves the way indexes are scanned when many duplicate
@@ -1244,7 +1244,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
       and <command>CHECKPOINT</command> (Tom)
      </para>
      <para>
-      In 7.3 and 7.4, a long-running btree index build could block concurrent
+      In 7.3 and 7.4, a long-running B-tree index build could block concurrent
       <command>CHECKPOINT</>s from completing, thereby causing WAL bloat because the
       WAL log could not be recycled.
      </para>
@@ -1426,8 +1426,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
 
     <listitem>
      <para>
-      Make <function>netmask()</> and <function>hostmask()</> functions
-      return maximum-length masklen (Tom)
+      Make <function>netmask</> and <function>hostmask</> functions
+      return maximum-length mask length (Tom)
      </para>
     </listitem>
 
@@ -1810,7 +1810,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
 
     <listitem>
      <para>
-      Add global <application>psql</> config file, <filename>psqlrc.sample</filename>
+      Add global <application>psql</> configuration file, <filename>psqlrc.sample</filename>
       (Bruce)
      </para>
      <para>
@@ -1983,7 +1983,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
 
     <listitem>
      <para>
-      Many ecpg improvements, including <command>SET DESCRIPTOR</> (Michael)
+      Many ECPG improvements, including <command>SET DESCRIPTOR</> (Michael)
      </para>
     </listitem>
 
@@ -2076,7 +2076,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
 
     <listitem>
      <para>
-      Decouple platform tests from cpu spinlock code (Bruce, Tom)
+      Decouple platform tests from CPU spinlock code (Bruce, Tom)
      </para>
     </listitem>
 
@@ -2224,7 +2224,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
 
     <listitem>
      <para>
-      Make libpq and ecpg build as proper shared libraries on OS X (Tom)
+      Make libpq and ECPG build as proper shared libraries on OS X (Tom)
      </para>
     </listitem>
 
@@ -2238,74 +2238,74 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp
 
     <listitem>
      <para>
-      Overhaul of /contrib/dblink (Joe)
+      Overhaul of <filename>contrib/dblink</> (Joe)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      /contrib/dbmirror improvements (Steven Singer)
+      <filename>contrib/dbmirror</> improvements (Steven Singer)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New /contrib/xml2 (John Gray, Torchbox)
+      New <filename>contrib/xml2</> (John Gray, Torchbox)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Update /contrib/mysql
+      Updated <filename>contrib/mysql</filename>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New version of /contrib/btree_gist (Teodor)
+      New version of <filename>contrib/btree_gist</> (Teodor)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      New /contrib/trgm, trigram matching for
+      New <filename>contrib/trgm</>, trigram matching for
       <productname>PostgreSQL</productname> (Teodor)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Many /contrib/tsearch2 improvements (Teodor)
+      Many <filename>contrib/tsearch2</> improvements (Teodor)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add double metaphone to /contrib/fuzzystrmatch (Andrew)
+      Add double metaphone to <filename>contrib/fuzzystrmatch</> (Andrew)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Allow /contrib/pg_autovacuum to run as a Windows service (Dave Page)
+      Allow <filename>contrib/pg_autovacuum</> to run as a Windows service (Dave Page)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Add functions to /contrib/dbsize (Andreas Pflug)
+      Add functions to <filename>contrib/dbsize</> (Andreas Pflug)
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Remove contrib/pg_logger
+      Removed <filename>contrib/pg_logger</>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      Remove contrib/rserv: obsoleted by various separate projects
+      Removed <filename>contrib/rserv</>: obsoleted by various separate projects
      </para>
     </listitem>
 
@@ -2355,7 +2355,7 @@ left-side rows given just the right data distribution.
 <para>
 This is to guard against any possible security issues.
 </para></listitem>
-<listitem><para>Avoid using temp files in /tmp in make_oidjoins_check</para>
+<listitem><para>Avoid using temp files in <filename>/tmp</> in <command>make_oidjoins_check</command></para>
 <para>
 This has been reported as a security issue, though it's hardly worthy of
 concern since there is no reason for non-developers to use this script anyway.
@@ -2366,7 +2366,7 @@ result</para>
 In rare cases, a client might think that its last command had succeeded when
 it really had been aborted by forced database shutdown.
 </para></listitem>
-<listitem><para>Repair bug in pg_stat_get_backend_idset()</para>
+<listitem><para>Repair bug in <function>pg_stat_get_backend_idset</function></para>
 <para>
 This could lead to misbehavior in some of the system-statistics views.
 </para></listitem>
@@ -2410,9 +2410,9 @@ ECPG prepare statement</para></listitem>
     <title>Changes</title>
 
 <itemizedlist>
-<listitem><para>Repair possible crash during concurrent btree index insertions</para>
+<listitem><para>Repair possible crash during concurrent B-tree index insertions</para>
 <para>
-This patch fixes a rare case in which concurrent insertions into a btree index
+This patch fixes a rare case in which concurrent insertions into a B-tree index
 could result in a server panic.  No permanent damage would result, but it's
 still worth a re-release.  The bug does not exist in pre-7.4 releases.
 </para></listitem>
@@ -2456,7 +2456,7 @@ since <productname>PostgreSQL</productname> 7.1.
 </para></listitem>
 <listitem><para>Check HAVING restriction before evaluating result list of an
 aggregate plan</para></listitem>
-<listitem><para>Avoid crash when session's current userID is deleted</para></listitem>
+<listitem><para>Avoid crash when session's current user ID is deleted</para></listitem>
 <listitem><para>Fix hashed crosstab for zero-rows case (Joe)</para></listitem>
 <listitem><para>Force cache update after renaming a column in a foreign key</para></listitem>
 <listitem><para>Pretty-print UNION queries correctly</para></listitem>

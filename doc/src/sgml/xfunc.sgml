@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.89 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.90 2004/12/13 18:05:09 petere Exp $
 -->
 
  <sect1 id="xfunc">
@@ -1930,7 +1930,7 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
      There are two ways you can build a composite data value (henceforth
      a <quote>tuple</>): you can build it from an array of Datum values,
      or from an array of C strings that can be passed to the input
-     conversion functions of the tuple's column datatypes.  In either
+     conversion functions of the tuple's column data types.  In either
      case, you first need to obtain or construct a <structname>TupleDesc</>
      descriptor for the tuple structure.  When working with Datums, you
      pass the <structname>TupleDesc</> to <function>BlessTupleDesc</>,
@@ -2494,10 +2494,10 @@ CREATE FUNCTION test(int, int) RETURNS int
       for all calls within a single surrounding query.  This category
       allows the optimizer to optimize away multiple calls of the function
       within a single query.  In particular, it is safe to use an expression
-      containing such a function in an indexscan condition.  (Since an
-      indexscan will evaluate the comparison value only once, not once at
+      containing such a function in an index scan condition.  (Since an
+      index scan will evaluate the comparison value only once, not once at
       each row, it is not valid to use a <literal>VOLATILE</> function in
-      an indexscan condition.)
+      an index scan condition.)
      </para>
     </listitem>
     <listitem>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.229 2004/12/03 18:34:31 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.230 2004/12/13 18:05:08 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -8553,7 +8553,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
       <row>
        <entry><literal><function>pg_get_serial_sequence</function>(<parameter>table_name</parameter>, <parameter>column_name</parameter>)</literal></entry>
        <entry><type>text</type></entry>
-       <entry>get name of the sequence that a serial or bigserial column
+       <entry>get name of the sequence that a <type>serial</type> or <type>bigserial</type> column
        uses</entry>
       </row>
       <row>
@@ -8801,7 +8801,7 @@ SELECT set_config('log_statement_stats', 'off', false);
     This function returns 1 if successful, 0 if not successful.
     The process ID (<literal>pid</literal>) of an active backend can be found
     from the <structfield>procpid</structfield> column in the
-    <structname>pg_stat_activity</structname> view, or by listing the postgres
+    <structname>pg_stat_activity</structname> view, or by listing the <command>postgres</command>
     processes on the server with <application>ps</>.
    </para>
 

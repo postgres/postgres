@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.40 2004/11/27 21:27:05 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.41 2004/12/13 18:05:07 petere Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -547,8 +547,8 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
    equal to one, an additional decoration that indicates the actual
    array dimensions will precede the array structure decoration.
    The decoration consists of square braces (<literal>[</> and <literal>]</>)
-   around each array dimension's lower and upper bound indicies, plus
-   a colon (<literal>:</>) delimiter character inbetween. Delimiting the
+   around each array dimension's lower and upper bound indices, plus
+   a colon (<literal>:</>) delimiter character in between. Delimiting the
    array dimension decoration from the array structure decoration is a
    single assignment operator (<literal>=</>). For example:
 <programlisting>
@@ -569,7 +569,7 @@ SELECT ARRAY[1,2] || ARRAY[[3,4]] AS array;
   </para>
 
   <para>
-   In a similar fashion, an array with non-default indicies may be specified
+   In a similar fashion, an array with non-default indices may be specified
    using the same literal syntax. For example:
 <programlisting>
 SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.15 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.16 2004/12/13 18:05:09 petere Exp $
 -->
 
  <chapter id="source">
@@ -109,9 +109,9 @@ less -x4
    <para>
     A typical call to <function>ereport</> might look like this:
 <programlisting>
-    ereport(ERROR,
-            (errcode(ERRCODE_DIVISION_BY_ZERO),
-             errmsg("division by zero")));
+ereport(ERROR,
+        (errcode(ERRCODE_DIVISION_BY_ZERO),
+         errmsg("division by zero")));
 </programlisting>
     This specifies error severity level <literal>ERROR</> (a run-of-the-mill
     error).  The <function>errcode</> call specifies the SQLSTATE error code
@@ -124,13 +124,13 @@ less -x4
    <para>
     Here is a more complex example:
 <programlisting>
-    ereport(ERROR,
-            (errcode(ERRCODE_AMBIGUOUS_FUNCTION),
-             errmsg("function %s is not unique",
-                    func_signature_string(funcname, nargs,
-                                          actual_arg_types)),
-             errhint("Unable to choose a best candidate function. "
-                     "You may need to add explicit typecasts.")));
+ereport(ERROR,
+        (errcode(ERRCODE_AMBIGUOUS_FUNCTION),
+         errmsg("function %s is not unique",
+                func_signature_string(funcname, nargs,
+                                      actual_arg_types)),
+         errhint("Unable to choose a best candidate function. "
+                 "You may need to add explicit typecasts.")));
 </programlisting>
     This illustrates the use of format codes to embed run-time values into
     a message text.  Also, an optional <quote>hint</> message is provided.
@@ -141,7 +141,7 @@ less -x4
   <itemizedlist>
    <listitem>
     <para>
-     <function>errcode</>(sqlerrcode) specifies the SQLSTATE error identifier
+     <function>errcode(sqlerrcode)</function> specifies the SQLSTATE error identifier
      code for the condition.  If this routine is not called, the error
      identifier defaults to
      <literal>ERRCODE_INTERNAL_ERROR</> when the error severity level is
@@ -149,12 +149,12 @@ less -x4
      error level is <literal>WARNING</>, otherwise (for <literal>NOTICE</>
      and below) <literal>ERRCODE_SUCCESSFUL_COMPLETION</>.
      While these defaults are often convenient, always think whether they
-     are appropriate before omitting the <function>errcode</>() call.
+     are appropriate before omitting the <function>errcode()</> call.
     </para>
    </listitem>
    <listitem>
     <para>
-     <function>errmsg</>(const char *msg, ...) specifies the primary error
+     <function>errmsg(const char *msg, ...)</function> specifies the primary error
      message text, and possibly run-time values to insert into it.  Insertions
      are specified by <function>sprintf</>-style format codes.  In addition to
      the standard format codes accepted by <function>sprintf</>, the format
@@ -177,7 +177,7 @@ less -x4
    </listitem>
    <listitem>
     <para>
-     <function>errmsg_internal</>(const char *msg, ...) is the same as
+     <function>errmsg_internal(const char *msg, ...)</function> is the same as
      <function>errmsg</>, except that the message string will not be
      included in the internationalization message dictionary.
      This should be used for <quote>can't happen</> cases that are probably
@@ -186,7 +186,7 @@ less -x4
    </listitem>
    <listitem>
     <para>
-     <function>errdetail</>(const char *msg, ...) supplies an optional
+     <function>errdetail(const char *msg, ...)</function> supplies an optional
      <quote>detail</> message; this is to be used when there is additional
      information that seems inappropriate to put in the primary message.
      The message string is processed in just the same way as for
@@ -195,7 +195,7 @@ less -x4
    </listitem>
    <listitem>
     <para>
-     <function>errhint</>(const char *msg, ...) supplies an optional
+     <function>errhint(const char *msg, ...)</function> supplies an optional
      <quote>hint</> message; this is to be used when offering suggestions
      about how to fix the problem, as opposed to factual details about
      what went wrong.
@@ -205,7 +205,7 @@ less -x4
    </listitem>
    <listitem>
     <para>
-     <function>errcontext</>(const char *msg, ...) is not normally called
+     <function>errcontext(const char *msg, ...)</function> is not normally called
      directly from an <function>ereport</> message site; rather it is used
      in <literal>error_context_stack</> callback functions to provide
      information about the context in which an error occurred, such as the
@@ -218,7 +218,7 @@ less -x4
    </listitem>
    <listitem>
     <para>
-     <function>errposition</>(int cursorpos) specifies the textual location
+     <function>errposition(int cursorpos)</function> specifies the textual location
      of an error within a query string.  Currently it is only useful for
      errors detected in the lexical and syntactic analysis phases of
      query processing.
@@ -226,7 +226,7 @@ less -x4
    </listitem>
    <listitem>
     <para>
-     <function>errcode_for_file_access</>() is a convenience function that
+     <function>errcode_for_file_access()</> is a convenience function that
      selects an appropriate SQLSTATE error identifier for a failure in a
      file-access-related system call.  It uses the saved
      <literal>errno</> to determine which error code to generate.
@@ -236,7 +236,7 @@ less -x4
    </listitem>
    <listitem>
     <para>
-     <function>errcode_for_socket_access</>() is a convenience function that
+     <function>errcode_for_socket_access()</> is a convenience function that
      selects an appropriate SQLSTATE error identifier for a failure in a
      socket-related system call.
     </para>
@@ -248,11 +248,11 @@ less -x4
     There is an older function <function>elog</> that is still heavily used.
     An <function>elog</> call
 <programlisting>
-    elog(level, "format string", ...);
+elog(level, "format string", ...);
 </programlisting>
     is exactly equivalent to
 <programlisting>
-    ereport(level, (errmsg_internal("format string", ...)));
+ereport(level, (errmsg_internal("format string", ...)));
 </programlisting>
     Notice that the SQLSTATE errcode is always defaulted, and the message
     string is not included in the internationalization message dictionary.
@@ -297,14 +297,14 @@ less -x4
    <para>
     For example, instead of
 <programlisting>
-        IpcMemoryCreate: shmget(key=%d, size=%u, 0%o) failed: %m
-        (plus a long addendum that is basically a hint)
+IpcMemoryCreate: shmget(key=%d, size=%u, 0%o) failed: %m
+(plus a long addendum that is basically a hint)
 </programlisting>
-write
+    write
 <programlisting>
-        Primary:    could not create shared memory segment: %m
-        Detail:     Failed syscall was shmget(key=%d, size=%u, 0%o).
-        Hint:       the addendum
+Primary:    could not create shared memory segment: %m
+Detail:     Failed syscall was shmget(key=%d, size=%u, 0%o).
+Hint:       the addendum
 </programlisting>
    </para>
 
@@ -461,11 +461,11 @@ write
    <para>
     There is a nontrivial semantic difference between sentences of the form
 <programlisting>
-        could not open file "%s": %m
+could not open file "%s": %m
 </programlisting>
 and
 <programlisting>
-        cannot open file "%s"
+cannot open file "%s"
 </programlisting>
     The first one means that the attempt to open the file failed.  The
     message should give a reason, such as <quote>disk full</quote> or
@@ -525,7 +525,7 @@ and
    When a message includes text that is generated elsewhere, embed it in
    this style:
 <programlisting>
-        could not open file %s: %m
+could not open file %s: %m
 </programlisting>
    </para>
 
@@ -546,8 +546,8 @@ and
     Messages should always state the reason why an error occurred.
     For example:
 <programlisting>
-        BAD:    could not open file %s
-        BETTER: could not open file %s (I/O failure)
+BAD:    could not open file %s
+BETTER: could not open file %s (I/O failure)
 </programlisting>
     If no reason is known you better fix the code.
    </para>
@@ -563,8 +563,8 @@ and
     not helpful information.  If the error text doesn't make as much sense
     without the function name, reword it. 
 <programlisting>
-        BAD:    pg_atoi: error in "z": can't parse "z"
-        BETTER: invalid input syntax for integer: "z"
+BAD:    pg_atoi: error in "z": can't parse "z"
+BETTER: invalid input syntax for integer: "z"
 </programlisting>
    </para>
 
@@ -572,8 +572,8 @@ and
     Avoid mentioning called function names, either; instead say what the code
     was trying to do:
 <programlisting>
-        BAD:    open() failed: %m
-        BETTER: could not open file %s: %m
+BAD:    open() failed: %m
+BETTER: could not open file %s: %m
 </programlisting>
     If it really seems necessary, mention the system call in the detail
     message.  (In some cases, providing the actual values passed to the
@@ -622,8 +622,8 @@ and
     it's erroneous? <quote>Unrecognized</quote> is often a better choice.
     Also, be sure to include the value being complained of. 
 <programlisting>
-        BAD:    unknown node type
-        BETTER: unrecognized node type: 42
+BAD:    unknown node type
+BETTER: unrecognized node type: 42
 </programlisting>
    </para>
   </formalpara>

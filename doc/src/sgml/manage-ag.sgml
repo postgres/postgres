@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.37 2004/12/02 19:28:48 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.38 2004/12/13 18:05:08 petere Exp $
 -->
 
 <chapter id="managing-databases">
@@ -379,10 +379,10 @@ CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
    <note>
     <para>
      There is usually not much point in making more than one
-     tablespace per logical filesystem, since you cannot control the location
-     of individual files within a logical filesystem.  However,
+     tablespace per logical file system, since you cannot control the location
+     of individual files within a logical file system.  However,
      <productname>PostgreSQL</> does not enforce any such limitation, and
-     indeed it is not directly aware of the filesystem boundaries on your
+     indeed it is not directly aware of the file system boundaries on your
      system.  It just stores files in the directories you tell it to use.
     </para>
    </note>

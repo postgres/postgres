@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.52 2004/11/17 18:29:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.53 2004/12/13 18:05:07 petere Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -317,7 +317,7 @@ tar -cf backup.tar /usr/local/pgsql/data
       get a usable backup. Half-way measures such as disallowing all
       connections will <emphasis>not</emphasis> work
       (mainly because <command>tar</command> and similar tools do not take an
-      atomic snapshot of the state of the filesystem at a point in
+      atomic snapshot of the state of the file system at a point in
       time). Information about stopping the server can be found in
       <xref linkend="postmaster-shutdown">.  Needless to say that you
       also need to shut down the server before restoring the data.
@@ -365,7 +365,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    If your database is spread across multiple volumes (for example,
    data files and WAL log on different disks) there may not be any way
    to obtain exactly-simultaneous frozen snapshots of all the volumes.
-   Read your filesystem documentation very carefully before trusting
+   Read your file system documentation very carefully before trusting
    to the consistent-snapshot technique in such situations.
   </para>
 
@@ -402,7 +402,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    database can be restored to consistency by <quote>replaying</> the
    log entries made since the last checkpoint.  However, the existence
    of the log makes it possible to use a third strategy for backing up
-   databases: we can combine a filesystem-level backup with backup of
+   databases: we can combine a file-system-level backup with backup of
    the WAL files.  If recovery is needed, we restore the backup and
    then replay from the backed-up WAL files to bring the backup up to
    current time.  This approach is more complex to administer than
@@ -414,7 +414,7 @@ tar -cf backup.tar /usr/local/pgsql/data
      We do not need a perfectly consistent backup as the starting point.
      Any internal inconsistency in the backup will be corrected by log
      replay (this is not significantly different from what happens during
-     crash recovery).  So we don't need filesystem snapshot capability,
+     crash recovery).  So we don't need file system snapshot capability,
      just <application>tar</> or a similar archiving tool.
     </para>
    </listitem>
@@ -449,7 +449,7 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <para>
-   As with the plain filesystem-backup technique, this method can only
+   As with the plain file-system-backup technique, this method can only
    support restoration of an entire database cluster, not a subset.
    Also, it requires a lot of archival storage: the base backup may be bulky,
    and a busy system will generate many megabytes of WAL traffic that
@@ -618,7 +618,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
     <filename>postgresql.conf</>, <filename>pg_hba.conf</> and
     <filename>pg_ident.conf</>) after the initial base backup.
     You may wish to keep the configuration files in a location that will
-    be backed up by your regular filesystem backup procedures.
+    be backed up by your regular file system backup procedures.
    </para>
   </sect2>
 
@@ -655,7 +655,7 @@ SELECT pg_start_backup('label');
    </listitem>
    <listitem>
     <para>
-     Perform the backup, using any convenient filesystem-backup tool
+     Perform the backup, using any convenient file-system-backup tool
      such as <application>tar</> or <application>cpio</>.  It is neither
      necessary nor desirable to stop normal operation of the database
      while you do this.
@@ -867,7 +867,7 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     It is important that the command return nonzero exit status on failure.
     The command <emphasis>will</> be asked for log files that are not present
     in the archive; it must return nonzero when so asked.  This is not an
-    error condition.  Be aware also that the basename of the <literal>%p</>
+    error condition.  Be aware also that the base name of the <literal>%p</>
     path will be different from <literal>%f</>; do not expect them to be
     interchangeable.
    </para>
@@ -948,7 +948,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
       </term>
       <listitem>
        <para>
-        This parameter specifies the timestamp up to which recovery
+        This parameter specifies the time stamp up to which recovery
         will proceed.
         At most one of <varname>recovery_target_time</> and
         <xref linkend="recovery-target-xid"> can be specified.
@@ -1098,7 +1098,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   <itemizedlist>
    <listitem>
     <para>
-     Operations on non-btree indexes (hash, R-tree, and GiST indexes) are
+     Operations on non-B-tree indexes (hash, R-tree, and GiST indexes) are
      not presently WAL-logged, so replay will not update these index types.
      The recommended workaround is to manually <command>REINDEX</> each
      such index after completing a recovery operation.
@@ -1196,7 +1196,7 @@ psql template1 < backup
 
   <para>
    You will always need a SQL dump (<application>pg_dump</> dump) for
-   migrating to a new release.  Filesystem-level backups (including
+   migrating to a new release.  File-system-level backups (including
    on-line backups) will not work, for the same reason that you can't
    just do the update in-place: the file formats won't necessarily be
    compatible across major releases.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.211 2004/12/11 20:54:14 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.212 2004/12/13 18:05:08 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -173,8 +173,8 @@ su - postgres
      <para>
       To build the <application>PL/Python</> server programming
       language, you need a <productname>Python</productname>
-      installation with the header files and the distutils module.
-      The distutils module is included by default with
+      installation with the header files and the <application>distutils</application> module.
+      The <application>distutils</application> module is included by default with
       <productname>Python</productname> 1.6 and later; users of
       earlier versions of <productname>Python</productname> will need
       to install it.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.55 2004/11/15 06:32:14 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.56 2004/12/13 18:05:08 petere Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -902,7 +902,7 @@
         The function call was completed and returned the result given
 	in the message.
 	(Note that the Function Call protocol can only handle a single
-	scalar result, not a rowtype or set of results.)
+	scalar result, not a row type or set of results.)
        </Para>
       </ListItem>
      </VarListEntry>
