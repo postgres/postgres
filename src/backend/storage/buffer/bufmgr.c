@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.149 2003/12/14 00:34:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.150 2003/12/20 22:18:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,10 @@
  */
 #include "postgres.h"
 
-#include <sys/file.h>
 #include <math.h>
 #include <signal.h>
+#include <sys/file.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "lib/stringinfo.h"
