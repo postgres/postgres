@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.86 2004/03/24 03:45:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.87 2004/03/25 21:48:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,6 +458,9 @@ extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
 #ifdef ENABLE_THREAD_SAFETY
 extern void check_sigpipe_handler(void);
 extern pthread_key_t thread_in_send;
+#endif
+
+#ifdef USE_SSL
 extern bool pq_initssllib;
 #endif
 
