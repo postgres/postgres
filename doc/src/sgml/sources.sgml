@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.13 2004/02/17 02:53:03 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.14 2004/05/08 02:13:31 momjian Exp $
 -->
 
  <chapter id="source">
@@ -402,7 +402,7 @@ write
 
    <para>
     Detail and hint messages: Use complete sentences, and end each with
-    a period.  Capitalize the starts of sentences.
+    a period.  Capitalize the first word of sentences.
    </para>
 
    <para>
