@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.26 2000/06/27 00:30:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.27 2000/07/01 15:02:19 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,8 +14,6 @@ include ../Makefile.global
 
 DIRS := initdb initlocation ipcclean pg_ctl pg_dump pg_id \
 	pg_passwd pg_version psql scripts
-
-ALLDIRS := $(DIRS) pg_encoding pgaccess pgtclsh
 
 ifdef MULTIBYTE
 DIRS += pg_encoding
@@ -32,8 +30,5 @@ endif
 all install installdirs uninstall depend:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit 1; done
 
-clean:
-	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done
-
-distclean maintainer-clean:
-	@for dir in $(ALLDIRS); do $(MAKE) -C $$dir $@; done
+clean distclean maintainer-clean:
+	-@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done

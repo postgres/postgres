@@ -1,23 +1,23 @@
 #! /bin/sh
 
-if [ ! -r @TCL_CONFIG_SH@ ]; then
-    echo "@TCL_CONFIG_SH@ not found"
-    echo "I need this file! Please make a symbolic link to this file"
-    echo "and start make again."
-    exit 1
+# $1 = path to tclConfig.sh ; $2 = output file
+
+if test x"$1" = x ; then
+   echo "$0: No tclConfig.sh file specified. Did you use \`configure --with-tcl'?" 1>&2
+   exit 1
 fi
 
 # Source the file to obtain the correctly expanded variable definitions
-. @TCL_CONFIG_SH@
+. "$1"
 
 # Read the file a second time as an easy way of getting the list of variable
 # definitions to output.
-cat @TCL_CONFIG_SH@ |
+cat "$1" |
     egrep '^TCL_|^TK_' |
     sed 's/^\([^=]*\)=.*$/\1/' |
     while read var
     do
 	eval echo "\"$var = \$$var\""
-    done >Makefile.tcldefs
+    done > "$2"
 
 exit 0

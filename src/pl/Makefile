@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.9 2000/06/27 00:31:48 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.10 2000/07/01 15:02:27 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,17 +20,11 @@ endif
 
 # Disabled because it doesn't work
 #ifeq ($(with_perl), yes)
-#	$(MAKE) -C plperl $@
+#DIRS += plperl
 #endif
-
-ALLDIRS := plpgsql tcl plperl
-
 
 all install installdirs uninstall depend:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit 1; done
 
-clean:
+clean distclean maintainer-clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done
-
-distclean maintainer-clean:
-	@for dir in $(ALLDIRS); do $(MAKE) -C $$dir $@; done

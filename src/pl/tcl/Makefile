@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.19 2000/06/30 16:10:56 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.20 2000/07/01 15:02:31 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -108,16 +108,8 @@ all install:
 	 echo "*****"
 endif
 
-
 Makefile.tcldefs: mkMakefile.tcldefs.sh
-	$(SHELL) $<
+	$(SHELL) $< '$(TCL_CONFIG_SH)' '$@'
 
-mkMakefile.tcldefs.sh: mkMakefile.tcldefs.sh.in $(top_builddir)/config.status
-	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
-
-
-clean:
+clean distclean maintainer-clean:
 	rm -f $(INFILES) *.o Makefile.tcldefs
-
-distclean maintainer-clean: clean
-	rm -f mkMakefile.tcldefs.sh

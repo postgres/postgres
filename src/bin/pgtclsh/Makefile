@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.29 2000/06/30 16:10:47 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.30 2000/07/01 15:02:23 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,20 +60,13 @@ uninstall:
 	rm -f $(bindir)/pgtclsh $(bindir)/pgtksh
 
 Makefile.tcldefs: mkMakefile.tcldefs.sh
-	$(SHELL) $<
+	$(SHELL) $< '$(TCL_CONFIG_SH)' '$@'
 
 Makefile.tkdefs: mkMakefile.tkdefs.sh
-	$(SHELL) $<
+	$(SHELL) $< '$(TK_CONFIG_SH)' '$@'
 
-mkMakefile.tcldefs.sh mkMakefile.tkdefs.sh: $(top_builddir)/config.status
-mkMakefile.tcldefs.sh mkMakefile.tkdefs.sh: % : %.in
-	cd $(top_builddir) && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= ./config.status
-
-clean:
+clean distclean maintainer-clean:
 	rm -f *.o Makefile.tcldefs Makefile.tkdefs pgtclsh pgtksh
-
-distclean maintainer-clean: clean
-	rm -f mkMakefile.tcldefs.sh mkMakefile.tkdefs.sh
 
 dep depend:
 	$(CC) -MM $(CFLAGS) *.c > depend

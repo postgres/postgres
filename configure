@@ -8903,10 +8903,7 @@ trap 'rm -fr `echo "GNUmakefile
 	src/backend/port/Makefile
 	src/backend/catalog/genbki.sh
 	src/backend/utils/Gen_fmgrtab.sh
-	src/bin/pgtclsh/mkMakefile.tcldefs.sh
-	src/bin/pgtclsh/mkMakefile.tkdefs.sh
 	src/include/version.h
-	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/test/regress/GNUmakefile
  src/include/config.h" | sed "s/:[^ ]*//g"` conftest*; exit 1' 1 2 15
 EOF
@@ -9077,10 +9074,7 @@ CONFIG_FILES=\${CONFIG_FILES-"GNUmakefile
 	src/backend/port/Makefile
 	src/backend/catalog/genbki.sh
 	src/backend/utils/Gen_fmgrtab.sh
-	src/bin/pgtclsh/mkMakefile.tcldefs.sh
-	src/bin/pgtclsh/mkMakefile.tkdefs.sh
 	src/include/version.h
-	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/test/regress/GNUmakefile
 "}
 EOF

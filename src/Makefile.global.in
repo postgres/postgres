@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.82 2000/06/28 18:29:13 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.83 2000/07/01 15:02:16 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -129,6 +129,8 @@ python_moduledir = @python_moduledir@
 USE_TCL= @USE_TCL@
 USE_TK= @USE_TK@
 WISH= @WISH@
+TCL_CONFIG_SH = @TCL_CONFIG_SH@
+TK_CONFIG_SH = @TK_CONFIG_SH@
 
 X_CFLAGS= @X_CFLAGS@
 X_LIBS= @X_LIBS@

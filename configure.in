@@ -1199,9 +1199,6 @@ AC_OUTPUT(
 	src/backend/port/Makefile
 	src/backend/catalog/genbki.sh
 	src/backend/utils/Gen_fmgrtab.sh
-	src/bin/pgtclsh/mkMakefile.tcldefs.sh
-	src/bin/pgtclsh/mkMakefile.tkdefs.sh
 	src/include/version.h
-	src/pl/tcl/mkMakefile.tcldefs.sh
 	src/test/regress/GNUmakefile
 )
