@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Sep  4 01:06:12 EDT 2001</P>
+    <P>Last updated: Tue Sep  4 01:14:28 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -1267,12 +1267,18 @@ BYTEA           bytea           variable-length byte array (null-safe)
     WHERE tab1.col1 NOT IN (SELECT tab2.col1 FROM tab2)
     ORDER BY col1
 </PRE>
-    <HR>
 
     <H4><A href="#4.25">4.25</A>) How do I perform queries
-	using multiple databases?<H4>
+    using multiple databases?<H4>
 
-<P>
+    <P>There is no way to query any database except the current one.
+    Because PostgreSQL loads database-specific system catalogs, it is
+    uncertain how a cross-database query should even behave.</P>
+
+    <P>Of course, a client can make simultaneous connections to
+    different databases and merge the information that way.</P>
+    <HR>
+
     <CENTER>
       <H2>Extending PostgreSQL</H2>
     </CENTER>
