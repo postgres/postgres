@@ -166,6 +166,7 @@ typedef struct
 	char		translation_option[SMALL_REGISTRY_LEN];
 	char		focus_password;
 	char		disallow_premature;
+	char		allow_keyset;
 	char		updatable_cursors;
 	char		lf_conversion;
 	char		true_is_minus1;
@@ -290,12 +291,13 @@ struct ConnectionClass_
 	char		result_uncommitted;
 	char		schema_support;
 #ifdef	MULTIBYTE
-	char	   *client_encoding;
-	char	   *server_encoding;
+	char		*client_encoding;
+	char		*server_encoding;
 #endif   /* MULTIBYTE */
-	int	ccsc;
+	int		ccsc;
 	int		be_pid;	/* pid returned by backend */
 	int		be_key; /* auth code needed to send cancel */
+	UInt4		isolation;
 };
 
 
@@ -339,11 +341,15 @@ void		CC_log_error(const char *func, const char *desc, const ConnectionClass *se
 int			CC_get_max_query_len(const ConnectionClass *self);
 int		CC_send_cancel_request(const ConnectionClass *conn);
 void		CC_on_commit(ConnectionClass *conn);
-void		CC_on_abort(ConnectionClass *conn, BOOL set_no_trans);
+void		CC_on_abort(ConnectionClass *conn, UDWORD opt);
 void		ProcessRollback(ConnectionClass *conn, BOOL undo);
 
-/* CC_send_query_options */
+/* CC_send_query options */
 #define	CLEAR_RESULT_ON_ABORT	1L
 #define	CREATE_KEYSET		(1L << 1) /* create keyset for updatable curosrs */
 #define	GO_INTO_TRANSACTION	(1L << 2) /* issue begin in advance */
-#endif
+/* CC_on_abort options */
+#define	NO_TRANS		1L
+#define	CONN_DEAD		(1L << 1) /* connection is no longer valid */
+
+#endif /* __CONNECTION_H__ */

@@ -53,6 +53,8 @@ struct Rollback_
 #define	CURS_SELF_DELETED	(1L << 7)
 #define	CURS_SELF_UPDATED	(1L << 8)
 #define	CURS_NEEDS_REREAD	(1L << 9)
+#define	CURS_IN_ROWSET		(1L << 10)
+#define	CURS_OTHER_DELETED	(1L << 11)
 
 /*	These macros are wrappers for the corresponding set_tuplefield functions
 	but these handle automatic NULL determination and call set_tuplefield_null()

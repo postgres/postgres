@@ -77,10 +77,12 @@ extern void qlog(char *fmt,...);
 #define PG_BINARY			O_BINARY
 #define PG_BINARY_R			"rb"
 #define PG_BINARY_W			"wb"
+#define PG_BINARY_A			"ab"
 #else
 #define PG_BINARY			0
 #define PG_BINARY_R			"r"
 #define PG_BINARY_W			"w"
+#define PG_BINARY_A			"a"
 #endif
 
 
@@ -91,7 +93,8 @@ char	   *make_string(const char *s, int len, char *buf);
 char	   *my_strcat(char *buf, const char *fmt, const char *s, int len);
 char	   *schema_strcat(char *buf, const char *fmt, const char *s, int len,
 			const char *, int);
-#define	GET_SCHEMA_NAME(nspname) 	(stricmp(nspname, "public") ? nspname : "")
+/* #define	GET_SCHEMA_NAME(nspname) 	(stricmp(nspname, "public") ? nspname : "") */
+#define	GET_SCHEMA_NAME(nspname) 	(nspname)
 
 /* defines for return value of my_strcpy */
 #define STRCPY_SUCCESS		1

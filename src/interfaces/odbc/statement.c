@@ -272,7 +272,7 @@ SC_Constructor(void)
 		rv->rowset_start = -1;
 		rv->current_col = -1;
 		rv->bind_row = 0;
-		rv->last_fetch_count = 0;
+		rv->last_fetch_count = rv->last_fetch_count_include_ommitted = 0;
 		rv->save_rowset_size = -1;
 
 		rv->data_at_exec = -1;
@@ -302,6 +302,7 @@ SC_Constructor(void)
 		rv->miscinfo = 0;
 		rv->updatable = FALSE;
 		rv->error_recsize = -1;
+		rv->diag_row_count = 0;
 	}
 	return rv;
 }
@@ -533,7 +534,7 @@ SC_recycle_statement(StatementClass *self)
 	self->rowset_start = -1;
 	self->current_col = -1;
 	self->bind_row = 0;
-	self->last_fetch_count = 0;
+	self->last_fetch_count = self->last_fetch_count_include_ommitted = 0;
 
 	self->errormsg = NULL;
 	self->errornumber = 0;
@@ -619,6 +620,7 @@ SC_clear_error(StatementClass *self)
 	self->errormsg_created = FALSE;
 	self->errorpos = 0;
 	self->error_recsize = -1;
+	self->diag_row_count = 0;
 }
 
 
@@ -733,21 +735,21 @@ SC_fetch(StatementClass *self)
 	/* TupleField *tupleField; */
 	ConnInfo   *ci = &(SC_get_conn(self)->connInfo);
 
-	self->last_fetch_count = 0;
+	self->last_fetch_count = self->last_fetch_count_include_ommitted = 0;
 	coli = QR_get_fields(res);	/* the column info */
 
 	mylog("manual_result = %d, use_declarefetch = %d\n", self->manual_result, ci->drivers.use_declarefetch);
 
 	if (self->manual_result || !SC_is_fetchcursor(self))
 	{
-		if (self->currTuple >= QR_get_num_tuples(res) - 1 ||
+		if (self->currTuple >= QR_get_num_total_tuples(res) - 1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1))
 		{
 			/*
 			 * if at the end of the tuples, return "no data found" and set
 			 * the cursor past the end of the result set
 			 */
-			self->currTuple = QR_get_num_tuples(res);
+			self->currTuple = QR_get_num_total_tuples(res);
 			return SQL_NO_DATA_FOUND;
 		}
 
@@ -774,11 +776,23 @@ SC_fetch(StatementClass *self)
 			return SQL_ERROR;
 		}
 	}
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	if (res->haskeyset)
+	{
+		UWORD	pstatus = res->keyset[self->currTuple].status;
+		if (0 != (pstatus & (CURS_SELF_DELETING | CURS_SELF_DELETED)))
+			return SQL_SUCCESS_WITH_INFO;
+		if (SQL_ROW_DELETED != (pstatus & KEYSET_INFO_PUBLIC) &&
+		    0 != (pstatus & CURS_OTHER_DELETED))
+			return SQL_SUCCESS_WITH_INFO;
+	}
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 
 	num_cols = QR_NumResultCols(res);
 
 	result = SQL_SUCCESS;
-	self->last_fetch_count = 1;
+	self->last_fetch_count++;
+	self->last_fetch_count_include_ommitted++;
 
 	opts = SC_get_ARD(self);
 	/*
@@ -830,7 +844,12 @@ SC_fetch(StatementClass *self)
 			else if (SC_is_fetchcursor(self))
 				value = QR_get_value_backend(res, lf);
 			else
-				value = QR_get_value_backend_row(res, self->currTuple, lf);
+			{
+				int curt = res->base;
+				if (self->rowset_start >= 0)
+					curt += (self->currTuple - self->rowset_start);
+				value = QR_get_value_backend_row(res, curt, lf);
+			}
 
 			mylog("value = '%s'\n", (value == NULL) ? "<NULL>" : value);
 
@@ -1152,7 +1171,7 @@ SC_log_error(const char *func, const char *desc, const StatementClass *self)
 		if (res)
 		{
 			qlog("                 fields=%u, manual_tuples=%u, backend_tuples=%u, tupleField=%d, conn=%u\n", res->fields, res->manual_tuples, res->backend_tuples, res->tupleField, res->conn);
-			qlog("                 fetch_count=%d, fcount=%d, num_fields=%d, cursor='%s'\n", res->fetch_count, res->fcount, res->num_fields, nullcheck(res->cursor));
+			qlog("                 fetch_count=%d, num_total_rows=%d, num_fields=%d, cursor='%s'\n", res->fetch_count, res->num_total_rows, res->num_fields, nullcheck(res->cursor));
 			qlog("                 message='%s', command='%s', notice='%s'\n", nullcheck(res->message), nullcheck(res->command), nullcheck(res->notice));
 			qlog("                 status=%d, inTuples=%d\n", res->status, res->inTuples);
 		}

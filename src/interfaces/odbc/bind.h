@@ -27,6 +27,8 @@ struct BindInfoClass_
 	Int2		returntype;		/* kind of conversion to be applied when
 								 * returning (SQL_C_DEFAULT,
 								 * SQL_C_CHAR...) */
+	Int2	precision;		/* the precision for numeric or timestamp type */
+	Int2	scale;			/* the scale for numeric type */
 };
 
 /*
@@ -40,12 +42,14 @@ struct ParameterInfoClass_
 	Int2		paramType;
 	Int2		CType;
 	Int2		SQLType;
-	UInt4		column_size;
 	Int2		decimal_digits;
+	UInt4		column_size;
 	Oid			lobj_oid;
 	Int4	   *EXEC_used;		/* amount of data OR the oid of the large
 								 * object */
 	char	   *EXEC_buffer;	/* the data or the FD of the large object */
+	Int2		precision;	/* the precision for numeric or timestamp type */
+	Int2		scale;		/* the scale for numeric type */
 	char		data_at_exec;
 };
 

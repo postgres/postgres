@@ -101,7 +101,8 @@ Int2		sqlTypes[] = {
 };
 
 #if (ODBCVER >= 0x0300) && defined(OBDCINT64)
-#define	ALLOWED_C_BIGINT	SQL_C_SBIGINT
+/* #define	ALLOWED_C_BIGINT	SQL_C_SBIGINT */
+#define	ALLOWED_C_BIGINT	SQL_C_CHAR /* Delphi should be either ? */
 #else
 #define	ALLOWED_C_BIGINT	SQL_C_CHAR
 #endif
@@ -286,11 +287,13 @@ pgtype_to_concise_type(StatementClass *stmt, Int4 type)
 
 			/* Change this to SQL_BIGINT for ODBC v3 bjm 2001-01-23 */
 		case PG_TYPE_INT8:
+			if (conn->ms_jet) 
+				return SQL_NUMERIC; /* maybe a little better than SQL_VARCHAR */
 #if (ODBCVER >= 0x0300)
-			if (!conn->ms_jet)
-				return SQL_BIGINT;
-#endif /* ODBCVER */
+			return SQL_BIGINT;
+#else
 			return SQL_VARCHAR;
+#endif /* ODBCVER */
 
 		case PG_TYPE_NUMERIC:
 			return SQL_NUMERIC;

@@ -340,7 +340,7 @@ ds_optionsProc(HWND hdlg,
 			CheckDlgButton(hdlg, DS_DISALLOWPREMATURE, ci->disallow_premature);
 			CheckDlgButton(hdlg, DS_LFCONVERSION, ci->lf_conversion);
 			CheckDlgButton(hdlg, DS_TRUEISMINUS1, ci->true_is_minus1);
-			CheckDlgButton(hdlg, DS_UPDATABLECURSORS, ci->updatable_cursors);
+			CheckDlgButton(hdlg, DS_UPDATABLECURSORS, ci->allow_keyset);
 #ifndef DRIVER_CURSOR_IMPLEMENT
 			EnableWindow(GetDlgItem(hdlg, DS_UPDATABLECURSORS), FALSE);
 #endif /* DRIVER_CURSOR_IMPLEMENT */
@@ -382,7 +382,7 @@ ds_optionsProc(HWND hdlg,
 					ci->lf_conversion = IsDlgButtonChecked(hdlg, DS_LFCONVERSION);
 					ci->true_is_minus1 = IsDlgButtonChecked(hdlg, DS_TRUEISMINUS1);
 #ifdef DRIVER_CURSOR_IMPLEMENT
-					ci->updatable_cursors = IsDlgButtonChecked(hdlg, DS_UPDATABLECURSORS);
+					ci->allow_keyset = IsDlgButtonChecked(hdlg, DS_UPDATABLECURSORS);
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 
 					/* OID Options */
@@ -590,7 +590,7 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 				INI_LFCONVERSION,
 				ci->lf_conversion,
 				INI_UPDATABLECURSORS,
-				ci->updatable_cursors,
+				ci->allow_keyset,
 				INI_DISALLOWPREMATURE,
 				ci->disallow_premature,
 				INI_TRUEISMINUS1,
@@ -601,7 +601,7 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 		unsigned long flag = 0;
 		if (ci->disallow_premature)
 			flag |= BIT_DISALLOWPREMATURE;
-		if (ci->updatable_cursors)
+		if (ci->allow_keyset)
 			flag |= BIT_UPDATABLECURSORS;
 		if (ci->lf_conversion)
 			flag |= BIT_LFCONVERSION;
@@ -686,7 +686,7 @@ unfoldCXAttribute(ConnInfo *ci, const char *value)
 		sscanf(value + 2, "%lx", &flag);
 	}
 	ci->disallow_premature = (char)((flag & BIT_DISALLOWPREMATURE) != 0);
-	ci->updatable_cursors = (char)((flag & BIT_UPDATABLECURSORS) != 0);
+	ci->allow_keyset = (char)((flag & BIT_UPDATABLECURSORS) != 0);
 	ci->lf_conversion = (char)((flag & BIT_LFCONVERSION) != 0);
 	if (count < 4)
 		return;
@@ -770,7 +770,7 @@ copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
 	else if (stricmp(attribute, INI_DISALLOWPREMATURE) == 0 || stricmp(attribute, "C3") == 0)
 		ci->disallow_premature = atoi(value);
 	else if (stricmp(attribute, INI_UPDATABLECURSORS) == 0 || stricmp(attribute, "C4") == 0)
-		ci->updatable_cursors = atoi(value);
+		ci->allow_keyset = atoi(value);
 	else if (stricmp(attribute, INI_LFCONVERSION) == 0)
 		ci->lf_conversion = atoi(value);
 	else if (stricmp(attribute, INI_TRUEISMINUS1) == 0)
@@ -870,8 +870,8 @@ getDSNdefaults(ConnInfo *ci)
 
 	if (ci->disallow_premature < 0)
 		ci->disallow_premature = DEFAULT_DISALLOWPREMATURE;
-	if (ci->updatable_cursors < 0)
-		ci->updatable_cursors = DEFAULT_UPDATABLECURSORS;
+	if (ci->allow_keyset < 0)
+		ci->allow_keyset = DEFAULT_UPDATABLECURSORS;
 	if (ci->lf_conversion < 0)
 		ci->lf_conversion = DEFAULT_LFCONVERSION;
 	if (ci->true_is_minus1 < 0)
@@ -960,11 +960,11 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 			ci->disallow_premature = atoi(temp);
 	}
 
-	if (ci->updatable_cursors < 0 || overwrite)
+	if (ci->allow_keyset < 0 || overwrite)
 	{
 		SQLGetPrivateProfileString(DSN, INI_UPDATABLECURSORS, "", temp, sizeof(temp), ODBC_INI);
 		if (temp[0])
-			ci->updatable_cursors = atoi(temp);
+			ci->allow_keyset = atoi(temp);
 	}
 
 	if (ci->lf_conversion < 0 || overwrite)
@@ -1094,7 +1094,7 @@ writeDSNinfo(const ConnInfo *ci)
 								 INI_DISALLOWPREMATURE,
 								 temp,
 								 ODBC_INI);
-	sprintf(temp, "%d", ci->updatable_cursors);
+	sprintf(temp, "%d", ci->allow_keyset);
 	SQLWritePrivateProfileString(DSN,
 								 INI_UPDATABLECURSORS,
 								 temp,

@@ -48,15 +48,18 @@ struct QResultClass_
 	QResultClass	*next;		/* the following result class */
 
 	/* Stuff for declare/fetch tuples */
-	int			count_allocated;	/* m(re)alloced count */
+	int			num_total_rows;	/* total count of rows read in */
+	int			count_backend_allocated;/* m(re)alloced count */
+	int			count_keyset_allocated; /* m(re)alloced count */
+	int			num_backend_rows;	/* count of tuples kept in backend_tuples member */
 	int			fetch_count;	/* logical rows read so far */
-	int			fcount;			/* actual rows read in the fetch */
 	int			currTuple;
 	int			base;
 
 	int			num_fields;		/* number of fields in the result */
 	int			cache_size;
 	int			rowset_size;
+	Int4			recent_processed_row_count;
 
 	QueryResultCode status;
 
@@ -77,6 +80,9 @@ struct QResultClass_
 	UInt2		rb_alloc;	/* count of allocated rollback info */	
 	UInt2		rb_count;	/* count of rollback info */	
 	Rollback	*rollback;	
+	UInt2		dl_alloc;	/* count of allocated deleted info */	
+	UInt2		dl_count;	/* count of deleted info */	
+	UInt4		*deleted;	
 };
 
 #define QR_get_fields(self)					(self->fields)
@@ -96,7 +102,8 @@ struct QResultClass_
 #define QR_get_field_type(self, fieldno_)	(CI_get_oid(self->fields, fieldno_))
 
 /*	These functions are used only for manual result sets */
-#define QR_get_num_tuples(self)				(self->manual_tuples ? TL_get_num_tuples(self->manual_tuples) : self->fcount)
+#define QR_get_num_total_tuples(self)		(self->manual_tuples ? TL_get_num_tuples(self->manual_tuples) : self->num_total_rows)
+#define QR_get_num_backend_tuples(self)		(self->manual_tuples ? TL_get_num_tuples(self->manual_tuples) : self->num_backend_rows)
 #define QR_add_tuple(self, new_tuple)		(TL_add_tuple(self->manual_tuples, new_tuple))
 #define QR_set_field_info(self, field_num, name, adtid, adtsize)  (CI_set_field_info(self->fields, field_num, name, adtid, adtsize, -1))
 

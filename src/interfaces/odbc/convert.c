@@ -371,7 +371,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		pbic = &opts->bindings[stmt->current_col];
 		if (pbic->data_left == -2)
 			pbic->data_left = (cbValueMax > 0) ? 0 : -1; /* This seems to be *
-						 * needed for ADO ? */
+						 * needed by ADO ? */
 		if (pbic->data_left == 0)
 		{
 			if (pbic->ttlbuf != NULL)
@@ -984,6 +984,90 @@ inolog("2stime fr=%d\n", st.fr);
 #endif /* HAVE_LOCALE_H */
 				break;
 
+#if (ODBCVER >= 0x0300)
+                        case SQL_C_NUMERIC:
+#ifdef HAVE_LOCALE_H
+			/* strcpy(saved_locale, setlocale(LC_ALL, NULL));
+			setlocale(LC_ALL, "C"); not needed currently */ 
+#endif /* HAVE_LOCALE_H */
+			{
+			SQL_NUMERIC_STRUCT      *ns;
+			int	i, nlen, bit, hval, tv, dig, sta, olen;
+			char	calv[SQL_MAX_NUMERIC_LEN * 3], *wv;
+			BOOL	dot_exist;
+
+			len = sizeof(SQL_NUMERIC_STRUCT);
+			if (bind_size > 0)
+				ns = (SQL_NUMERIC_STRUCT *) ((char *) rgbValue + (bind_row * bind_size));
+			else
+				ns = (SQL_NUMERIC_STRUCT *) rgbValue + bind_row;
+			for (wv = neut_str; *wv && isspace(*wv); wv++)
+				;
+			ns->sign = 1;
+			if (*wv == '-')
+			{
+				ns->sign = 0;
+				wv++;
+			}
+			else if (*wv == '+')
+				wv++;
+			while (*wv == '0') wv++;
+			ns->precision = 0;
+			ns->scale = 0;
+			for (nlen = 0, dot_exist = FALSE;; wv++) 
+			{
+				if (*wv == '.')
+				{
+					if (dot_exist)
+						break;
+					dot_exist = TRUE;
+				}
+				else if (!isdigit(*wv))
+						break;
+				else
+				{
+					if (dot_exist)
+						ns->scale++;
+					else
+						ns->precision++;
+					calv[nlen++] = *wv;
+				}
+			}
+			memset(ns->val, 0, sizeof(ns->val));
+			for (hval = 0, bit = 1L, sta = 0, olen = 0; sta < nlen;)
+			{
+				for (dig = 0, i = sta; i < nlen; i++)
+				{
+					tv = dig * 10 + calv[i] - '0';
+					dig = tv % 2;
+					calv[i] = tv / 2 + '0';
+					if (i == sta && tv < 2)
+						sta++;
+				}
+				if (dig > 0)
+					hval |= bit;
+				bit <<= 1;
+				if (bit >= (1L << 8))
+				{
+					ns->val[olen++] = hval;
+					hval = 0;
+					bit = 1L;
+					if (olen >= SQL_MAX_NUMERIC_LEN - 1)
+					{
+						ns->scale = sta - ns->precision;
+						break;
+					}
+				} 
+			}
+			if (hval && olen < SQL_MAX_NUMERIC_LEN - 1)
+				ns->val[olen++] = hval;
+			}
+#ifdef HAVE_LOCALE_H
+			/* setlocale(LC_ALL, saved_locale); */
+#endif /* HAVE_LOCALE_H */
+			break;
+#endif /* ODBCVER */
+
 			case SQL_C_SSHORT:
 			case SQL_C_SHORT:
 				len = 2;
@@ -1179,6 +1263,8 @@ QP_initialize(QueryParse *q, const StatementClass *stmt)
 
 #define	FLGB_PRE_EXECUTING	1L
 #define	FLGB_INACCURATE_RESULT	(1L << 1)
+#define	FLGB_CREATE_KEYSET	(1L << 2)
+#define	FLGB_KEYSET_DRIVEN	(1L << 3)
 typedef struct _QueryBuild {
 	char	*query_statement;
 	UInt4	str_size_limit;
@@ -1589,10 +1675,16 @@ copy_statement_with_parameters(StatementClass *stmt)
 	{
 		if (stmt->parse_status == STMT_PARSE_NONE)
 			parse_statement(stmt);
-		/*if (stmt->parse_status != STMT_PARSE_COMPLETE)
+		if (stmt->parse_status == STMT_PARSE_FATAL)
+		{
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-		else*/ if (!stmt->updatable)
+			return SQL_ERROR;
+		}
+		else if (!stmt->updatable)
+		{
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+			stmt->options.cursor_type = SQL_CURSOR_STATIC;
+		}
 		else
 		{
 			qp->from_pos = stmt->from_pos;
@@ -1602,7 +1694,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 #else
 	stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 	if (stmt->options.cursor_type == SQL_CURSOR_KEYSET_DRIVEN)
-		stmt->options.cursor_type = SQL_CURSOR_FORWARD_ONLY;
+		stmt->options.cursor_type = SQL_CURSOR_STATIC;
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 
 	/* If the application hasn't set a cursor name, then generate one */
@@ -1640,6 +1732,12 @@ copy_statement_with_parameters(StatementClass *stmt)
 			qb->npos = strlen(new_statement);
 			qp->flags |= FLGP_CURSOR_CHECK_OK;
 			qp->declare_pos = qb->npos;
+		}
+		else if (SQL_CONCUR_READ_ONLY != stmt->options.scroll_concurrency)
+		{
+			qb->flags |= FLGB_CREATE_KEYSET;
+			if (SQL_CURSOR_KEYSET_DRIVEN == stmt->options.cursor_type)
+				qb->flags |= FLGB_KEYSET_DRIVEN;
 		}
 	}
 
@@ -1693,13 +1791,29 @@ copy_statement_with_parameters(StatementClass *stmt)
 		UInt4	npos = qb->load_stmt_len;
 
 		if (0 == npos)
+		{
 			npos = qb->npos;
+			for (; npos > 0; npos--)
+			{
+				if (isspace(new_statement[npos - 1]))
+					continue;
+				if (';' != new_statement[npos - 1])
+					break;
+			}
+			if (0 != (qb->flags & FLGB_KEYSET_DRIVEN))
+			{
+				qb->npos = npos;
+				/* ----------
+				 * 1st query is for field information
+				 * 2nd query is keyset gathering
+				 */
+				CVT_APPEND_STR(qb, " where ctid = '(,)';select ctid, oid from ");
+				CVT_APPEND_DATA(qb, qp->statement + qp->from_pos + 5, npos - qp->from_pos - 5);
+			}
+		}
 		stmt->load_statement = malloc(npos + 1);
-		memcpy(stmt->load_statement, new_statement, npos);
-		if (stmt->load_statement[npos - 1] == ';')
-			stmt->load_statement[npos - 1] = '\0';
-		else
-			stmt->load_statement[npos] = '\0';
+		memcpy(stmt->load_statement, qb->query_statement, npos);
+		stmt->load_statement[npos] = '\0';
 	}
 #endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (prepare_dummy_cursor && SC_is_pre_executable(stmt))
@@ -1732,7 +1846,14 @@ inner_process_tokens(QueryParse *qp, QueryBuild *qb)
 		CVT_APPEND_STR(qb, ", CTID, OID ");
 	}
 	else if (qp->where_pos == (Int4) qp->opos)
+	{
 		qb->load_stmt_len = qb->npos;
+		if (0 != (qb->flags & FLGB_KEYSET_DRIVEN))
+		{
+			CVT_APPEND_STR(qb, "where ctid = '(,)';select CTID, OID from ");
+			CVT_APPEND_DATA(qb, qp->statement + qp->from_pos + 5, qp->where_pos - qp->from_pos - 5);
+		}
+	}
 #ifdef MULTIBYTE
 	oldchar = encoded_byte_check(&qp->encstr, qp->opos);
 	if (ENCODE_STATUS(qp->encstr) != 0)
@@ -1836,6 +1957,7 @@ inner_process_tokens(QueryParse *qp, QueryBuild *qb)
 						{
 							qp->flags |= FLGP_SELECT_INTO;
 							qp->flags &= ~FLGP_CURSOR_CHECK_OK;
+							qb->flags &= ~FLGB_KEYSET_DRIVEN;
 							qp->statement_type = STMT_TYPE_CREATE;
 							memmove(qb->query_statement, qb->query_statement + qp->declare_pos, qb->npos - qp->declare_pos);
 							qb->npos -= qp->declare_pos;
@@ -1887,6 +2009,130 @@ inner_process_tokens(QueryParse *qp, QueryBuild *qb)
 	return SQL_SUCCESS;
 }
 
+#if (ODBCVER >= 0x0300)
+static BOOL
+ResolveNumericParam(const SQL_NUMERIC_STRUCT *ns, char *chrform)
+{
+	static int prec[] = {1, 3, 5, 8, 10, 13, 15, 17, 20, 22, 25, 29, 32, 34, 37, 39};
+	Int4	i, j, k, ival, vlen, len, newlen;
+	unsigned char		calv[40];
+	const unsigned char	*val = (const unsigned char *) ns->val;
+	BOOL	next_figure;
+
+	if (0 == ns->precision)
+	{
+		strcpy(chrform, "0");
+		return TRUE;
+	}
+	else if (ns->precision < prec[sizeof(Int4)])
+	{
+		for (i = 0, ival = 0; i < sizeof(Int4) && prec[i] <= ns->precision; i++)
+		{
+			ival += (val[i] << (8 * i)); /* ns->val is little endian */
+		}
+		if (0 == ns->scale)
+		{
+			if (0 == ns->sign)
+				ival *= -1;
+			sprintf(chrform, "%d", ival);
+		}
+		else if (ns->scale > 0)
+		{
+			Int4	i, div, o1val, o2val;
+
+			for (i = 0, div = 1; i < ns->scale; i++)
+				div *= 10;
+			o1val = ival / div;
+			o2val = ival % div;
+			if (0 == ns->sign)
+				o1val *= -1;
+			sprintf(chrform, "%d.%0.*d", o1val, ns->scale, o2val);
+		}
+		return TRUE;
+	}
+
+	for (i = 0; i < SQL_MAX_NUMERIC_LEN && prec[i] <= ns->precision; i++)
+		;
+	vlen = i;
+	len = 0;
+	memset(calv, 0, sizeof(calv));
+	for (i = vlen - 1; i >= 0; i--)
+	{
+		for (j = len - 1; j >= 0; j--)
+		{
+			if (!calv[j])
+				continue;
+			ival = (((Int4)calv[j]) << 8);
+			calv[j] = (ival % 10);
+			ival /= 10;
+			calv[j + 1] += (ival % 10);
+			ival /= 10;
+			calv[j + 2] += (ival % 10);
+			ival /= 10;
+			calv[j + 3] += ival;
+			for (k = j;; k++)
+			{
+				next_figure = FALSE;
+				if (calv[k] > 0)
+				{
+					if (k >= len)
+						len = k + 1;
+					while (calv[k] > 9)
+					{
+						calv[k + 1]++;
+						calv[k] -= 10;
+						next_figure = TRUE;
+					}
+				}
+				if (k >= j + 3 && !next_figure)
+					break;
+			}
+		}
+		ival = val[i];
+		if (!ival)
+			continue;
+		calv[0] += (ival % 10);
+		ival /= 10;
+		calv[1] += (ival % 10);
+		ival /= 10;
+		calv[2] += ival;
+		for (j = 0;; j++)
+		{
+			next_figure = FALSE;
+			if (calv[j] > 0)
+			{
+				if (j >= len)
+					len = j + 1;
+				while (calv[j] > 9)
+				{
+					calv[j + 1]++;
+					calv[j] -= 10;
+					next_figure = TRUE;
+				}
+			}
+			if (j >= 2 && !next_figure)
+				break;
+		}
+	}
+	newlen = 0;
+	if (0 == ns->sign)
+		chrform[newlen++] = '-';
+	for (i = len - 1; i >= ns->scale; i--)
+		chrform[newlen++] = calv[i] + '0';
+	if (ns->scale > 0)
+	{
+		chrform[newlen++] = '.';
+		for (; i >= 0; i--)
+			chrform[newlen++] = calv[i] + '0';
+	}
+	chrform[newlen] = '\0';
+	return TRUE;
+}
+#endif /* ODBCVER */
+
+/*
+ *
+ */
 static int
 ResolveOneParam(QueryBuild *qb)
 {
@@ -2138,6 +2384,11 @@ ResolveOneParam(QueryBuild *qb)
 				break;
 
 			}
+#if (ODBCVER >= 0x0300)
+		case SQL_C_NUMERIC:
+			if (ResolveNumericParam((SQL_NUMERIC_STRUCT *) buffer, param_string))
+				break;
+#endif
 		default:
 			/* error */
 			qb->errormsg = "Unrecognized C_parameter type in copy_statement_with_parameters";
@@ -2336,16 +2587,16 @@ ResolveOneParam(QueryBuild *qb)
 			if (buf)
 			{
 				cbuf[0] = '\'';
-				my_strcpy(cbuf + 1, sizeof(cbuf) - 12, buf, used);	/* 12 = 1('\'') +
-																	* strlen("'::numeric")
+				my_strcpy(cbuf + 1, sizeof(cbuf) - 3, buf, used);	/* 3 = 1('\'') +
+																	* strlen("'")
 																	* + 1('\0') */
-				strcat(cbuf, "'::numeric");
+				strcat(cbuf, "'");
 			}
 			else
-				sprintf(cbuf, "'%s'::numeric", param_string);
+				sprintf(cbuf, "'%s'", param_string);
 			CVT_APPEND_STR(qb, cbuf);
 			break;
-			default:			/* a numeric type or SQL_BIT */
+		default:			/* a numeric type or SQL_BIT */
 			if (param_sqltype == SQL_BIT)
 				CVT_APPEND_CHAR(qb, '\'');		/* Open Quote */
 
@@ -2938,7 +3189,7 @@ conv_from_octal(const unsigned char *s)
 				y = 0;
 
 	for (i = 1; i <= 3; i++)
-		y += (s[i] - '0') << (3  * (3 - i));
+		y += (s[i] - '0') << (3 * (3 - i));
 
 	return y;
 

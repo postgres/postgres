@@ -38,12 +38,11 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 
 		case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES1:
 			len = 4;
-			value = SQL_CA1_NEXT | SQL_CA1_ABSOLUTE |
-				SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK;
+			value = SQL_CA1_NEXT; /* others aren't allowed in ODBC spec */
 			break;
 		case SQL_FORWARD_ONLY_CURSOR_ATTRIBUTES2:
 			len = 4;
-			value = 0;
+			value = SQL_CA2_READ_ONLY_CONCURRENCY;
 			break;
 		case SQL_KEYSET_CURSOR_ATTRIBUTES1:
 			len = 4;
@@ -71,6 +70,8 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			value = 0;
 			if (ci->updatable_cursors || ci->drivers.lie)
 				value |= (SQL_CA2_OPT_ROWVER_CONCURRENCY
+				/*| SQL_CA2_CRC_APPROXIMATE*/
+				| SQL_CA2_CRC_EXACT
 				| SQL_CA2_SENSITIVITY_DELETIONS
 				| SQL_CA2_SENSITIVITY_UPDATES
 				/* | SQL_CA2_SENSITIVITY_ADDITIONS */
@@ -85,8 +86,6 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 				| SQL_CA2_MAX_ROWS_UPDATE
 				| SQL_CA2_MAX_ROWS_CATALOG
 				| SQL_CA2_MAX_ROWS_AFFECTS_ALL
-				| SQL_CA2_CRC_EXACT
-				| SQL_CA2_CRC_APPROXIMATE
 				| SQL_CA2_SIMULATE_NON_UNIQUE
 				| SQL_CA2_SIMULATE_TRY_UNIQUE
 				| SQL_CA2_SIMULATE_UNIQUE
@@ -101,6 +100,7 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 				| SQL_CA1_POS_REFRESH;
 			if (ci->updatable_cursors)
 				value |= (SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE
+				| SQL_CA1_BULK_ADD
 				);
 			break;
 		case SQL_STATIC_CURSOR_ATTRIBUTES2:
@@ -108,6 +108,7 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			value = SQL_CA2_READ_ONLY_CONCURRENCY;
 			if (ci->updatable_cursors)
 				value |= (SQL_CA2_OPT_ROWVER_CONCURRENCY
+				| SQL_CA2_CRC_EXACT
 				/* | SQL_CA2_SENSITIVITY_ADDITIONS
 				| SQL_CA2_SENSITIVITY_DELETIONS
 				| SQL_CA2_SENSITIVITY_UPDATES */
@@ -117,6 +118,8 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 		case SQL_ODBC_INTERFACE_CONFORMANCE:
 			len = 4;
 			value = SQL_OIC_CORE;
+			if (ci->drivers.lie)
+				value = SQL_OIC_LEVEL2;
 			break;
 		case SQL_ACTIVE_ENVIRONMENTS:
 			len = 2;

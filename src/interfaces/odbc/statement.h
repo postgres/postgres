@@ -80,6 +80,7 @@ typedef enum
 #define STMT_ERROR_IN_ROW						30
 #define STMT_INVALID_DESCRIPTOR_IDENTIFIER				31
 #define STMT_OPTION_NOT_FOR_THE_DRIVER					32
+#define STMT_FETCH_OUT_OF_RANGE						33
 
 /* statement types */
 enum
@@ -137,15 +138,6 @@ struct StatementClass_
 	char	   *errormsg;
 	int			errornumber;
 
-	/* information on bindings */
-	/*** BindInfoClass *bindings; ***/	/* array to store the binding information */
-	/*** BindInfoClass bookmark;
-	int			bindings_allocated; ***/
-
-	/* information on statement parameters */
-	/*** int			parameters_allocated;
-	ParameterInfoClass *parameters; ***/
-
 	Int4		currTuple;		/* current absolute row number (GetData,
 								 * SetPos, SQLFetch) */
 	int			save_rowset_size;		/* saved rowset size in case of
@@ -200,9 +192,11 @@ struct StatementClass_
 	char		updatable;
 	SWORD		errorpos;
 	SWORD		error_recsize;
+	Int4		diag_row_count;
 	char		*load_statement; /* to (re)load updatable individual rows */
 	Int4		from_pos;	
 	Int4		where_pos;
+	Int4		last_fetch_count_include_ommitted;
 };
 
 #define SC_get_conn(a)	  (a->hdbc)

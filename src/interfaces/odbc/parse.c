@@ -50,6 +50,29 @@ char	   *getNextToken(char *s, char *token, int smax, char *delim, char *quote, 
 void		getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k);
 char		searchColInfo(COL_INFO *col_info, FIELD_INFO *fi);
 
+Int4 FI_precision(const FIELD_INFO *fi)
+{
+	if (!fi)	return -1;
+	switch (fi->type)
+	{
+		case PG_TYPE_NUMERIC:
+			return fi->column_size;
+		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
+			return fi->decimal_digits;
+	}
+	return 0;
+}
+Int4 FI_scale(const FIELD_INFO *fi)
+{
+	if (!fi)	return -1;
+	switch (fi->type)
+	{
+		case PG_TYPE_NUMERIC:
+			return fi->decimal_digits;
+	}
+	return 0;
+}
 
 char *
 getNextToken(
@@ -265,7 +288,7 @@ searchColInfo(COL_INFO *col_info, FIELD_INFO *fi)
 				cmp;
 	char	   *col;
 
-	for (k = 0; k < QR_get_num_tuples(col_info->result); k++)
+	for (k = 0; k < QR_get_num_backend_tuples(col_info->result); k++)
 	{
 		col = QR_get_value_manual(col_info->result, k, 3);
 		if (fi->dquote)
@@ -291,7 +314,7 @@ char
 parse_statement(StatementClass *stmt)
 {
 	static char *func = "parse_statement";
-	char		token[256];
+	char		token[256], stoken[256];
 	char		delim,
 				quote,
 				dquote,
@@ -315,7 +338,7 @@ parse_statement(StatementClass *stmt)
 				i,
 				k = 0,
 				n,
-				blevel = 0;
+				blevel = 0, old_blevel, subqlevel = 0;
 	FIELD_INFO **fi;
 	TABLE_INFO **ti;
 	char		parse;
@@ -347,42 +370,43 @@ parse_statement(StatementClass *stmt)
 
 		mylog("unquoted=%d, quote=%d, dquote=%d, numeric=%d, delim='%c', token='%s', ptr='%s'\n", unquoted, quote, dquote, numeric, delim, token, ptr);
 
-		if (in_select && unquoted && blevel == 0)
-		{
-			if (!stricmp(token, "distinct"))
-			{
-				in_distinct = TRUE;
-				updatable = FALSE;
-
-				mylog("DISTINCT\n");
-				continue;
-			}
-			if (!stricmp(token, "into"))
-			{
-				in_select = FALSE;
-				mylog("INTO\n");
-				stmt->statement_type = STMT_TYPE_CREATE;
-				stmt->parse_status = STMT_PARSE_FATAL;
-				return FALSE;
-			}
-			if (!stricmp(token, "from"))
-			{
-				in_select = FALSE;
-				in_from = TRUE;
-				if (stmt->from_pos < 0 &&
-					(!strnicmp(pptr, "from", 4)))
-				{
-					mylog("First ");
-					stmt->from_pos = pptr - stmt->statement;
-				}
-
-				mylog("FROM\n");
-				continue;
-			}
-		} /* in_select && unquoted && blevel == 0 */
+		old_blevel = blevel;
 		if (unquoted && blevel == 0)
 		{
-			if ((!stricmp(token, "where") ||
+			if (in_select)
+			{
+				if (!stricmp(token, "distinct"))
+				{
+					in_distinct = TRUE;
+					updatable = FALSE;
+
+					mylog("DISTINCT\n");
+					continue;
+				}
+				else if (!stricmp(token, "into"))
+				{
+					in_select = FALSE;
+					mylog("INTO\n");
+					stmt->statement_type = STMT_TYPE_CREATE;
+					stmt->parse_status = STMT_PARSE_FATAL;
+					return FALSE;
+				}
+				else if (!stricmp(token, "from"))
+				{
+					in_select = FALSE;
+					in_from = TRUE;
+					if (stmt->from_pos < 0 &&
+						(!strnicmp(pptr, "from", 4)))
+					{
+						mylog("First ");
+						stmt->from_pos = pptr - stmt->statement;
+					}
+
+					mylog("FROM\n");
+					continue;
+				}
+			} /* in_select && unquoted && blevel == 0 */
+			else if ((!stricmp(token, "where") ||
 				 !stricmp(token, "union") ||
 				 !stricmp(token, "intersect") ||
 				 !stricmp(token, "except") ||
@@ -390,7 +414,6 @@ parse_statement(StatementClass *stmt)
 				 !stricmp(token, "group") ||
 				 !stricmp(token, "having")))
 			{
-				in_select = FALSE;
 				in_from = FALSE;
 				in_where = TRUE;
 
@@ -406,54 +429,82 @@ parse_statement(StatementClass *stmt)
 				continue;
 			}
 		} /* unquoted && blevel == 0 */
-		if (in_select && (in_expr || in_func))
+		/* check the change of blevel etc */
+		if (unquoted)
 		{
-			/* just eat the expression */
-			mylog("in_expr=%d or func=%d\n", in_expr, in_func);
-
-			if (unquoted)
+			if (!stricmp(token, "select"))
 			{
-				if (token[0] == '(')
+				stoken[0] = '\0';
+				if (0 == blevel)
 				{
-					blevel++;
-					mylog("blevel++ = %d\n", blevel);
+					in_select = TRUE; 
+					mylog("SELECT\n");
+					continue;
 				}
-				else if (token[0] == ')')
+				else
 				{
-					blevel--;
-					mylog("blevel-- = %d\n", blevel);
+					mylog("SUBSELECT\n");
+					if (0 == subqlevel)
+						subqlevel = blevel;
 				}
 			}
-			if (blevel == 0)
+			else if (token[0] == '(')
 			{
-				if (delim == ',')
+				blevel++;
+				mylog("blevel++ = %d\n", blevel);
+				/* aggregate function ? */
+				if (stoken[0] && updatable && 0 == subqlevel)
 				{
-					mylog("**** Got comma in_expr/func\n");
-					in_func = FALSE;
-					in_expr = FALSE;
-					in_field = FALSE;
-				}
-				else if (unquoted && !stricmp(token, "as"))
-				{
-					mylog("got AS in_expr\n");
-					in_func = FALSE;
-					in_expr = FALSE;
-					in_as = TRUE;
-					in_field = TRUE;
+					if (stricmp(stoken, "count") == 0 ||
+					    stricmp(stoken, "sum") == 0 ||
+					    stricmp(stoken, "avg") == 0 ||
+					    stricmp(stoken, "max") == 0 ||
+					    stricmp(stoken, "min") == 0 ||
+					    stricmp(stoken, "variance") == 0 ||
+					    stricmp(stoken, "stddev") == 0)
+						updatable = FALSE;
 				}
 			}
-			continue;
-		} /* in_select && (in_expr || in_func) */
-
-		if (unquoted && !stricmp(token, "select"))
-		{
-			in_select = TRUE;
-
-			mylog("SELECT\n");
-			continue;
+			else if (token[0] == ')')
+			{
+				blevel--;
+				mylog("blevel-- = %d\n", blevel);
+				if (blevel < subqlevel)
+					subqlevel = 0;
+			}
+			if (blevel >= old_blevel && ',' != delim)
+				strcpy(stoken, token);
+			else
+				stoken[0] = '\0';
 		}
 		if (in_select)
 		{
+			if (in_expr || in_func)
+			{
+				/* just eat the expression */
+				mylog("in_expr=%d or func=%d\n", in_expr, in_func);
+
+				if (blevel == 0)
+				{
+					if (delim == ',')
+					{
+						mylog("**** Got comma in_expr/func\n");
+						in_func = FALSE;
+						in_expr = FALSE;
+						in_field = FALSE;
+					}
+					else if (unquoted && !stricmp(token, "as"))
+					{
+						mylog("got AS in_expr\n");
+						in_func = FALSE;
+						in_expr = FALSE;
+						in_as = TRUE;
+						in_field = TRUE;
+					}
+				}
+				continue;
+			} /* (in_expr || in_func) && in_select */
+
 			if (in_distinct)
 			{
 				mylog("in distinct\n");
@@ -515,12 +566,11 @@ parse_statement(StatementClass *stmt)
 					mylog("**** got numeric: nfld = %d\n", irdflds->nfields);
 					fi[irdflds->nfields]->numeric = TRUE;
 				}
-				else if (token[0] == '(')
+				else if (0 == old_blevel && blevel > 0)
 				{				/* expression */
 					mylog("got EXPRESSION\n");
 					fi[irdflds->nfields++]->expr = TRUE;
 					in_expr = TRUE;
-					blevel = 1;
 					continue;
 				}
 				else
@@ -579,11 +629,10 @@ parse_statement(StatementClass *stmt)
 			}
 
 			/* Function */
-			if (token[0] == '(')
+			if (0 == old_blevel && blevel > 0)
 			{
 				in_dot = FALSE;
 				in_func = TRUE;
-				blevel = 1;
 				fi[irdflds->nfields - 1]->func = TRUE;
 
 				/*
@@ -654,6 +703,7 @@ parse_statement(StatementClass *stmt)
 
 				ti[stmt->ntab]->schema[0] = '\0';
 				ti[stmt->ntab]->alias[0] = '\0';
+				ti[stmt->ntab]->updatable = 1;
 
 				strcpy(ti[stmt->ntab]->name, token);
 				if (!dquote)
@@ -845,6 +895,37 @@ parse_statement(StatementClass *stmt)
 			col_stmt = (StatementClass *) hcol_stmt;
 			col_stmt->internal = TRUE;
 
+			if (!ti[i]->schema[0] && conn->schema_support)
+			{
+				QResultClass	*res;
+				BOOL		tblFound = FALSE;
+
+				/* Unfortunately CURRENT_SCHEMA doesn't exist
+				 * in PostgreSQL and we have to check as follows.
+				 */
+				sprintf(token, "select nspname from pg_namespace n, pg_class c"
+					" where c.relnamespace=n.oid and c.oid='%s'::regclass", ti[i]->name);
+				res = CC_send_query(conn, token, NULL, CLEAR_RESULT_ON_ABORT);
+				if (res)
+				{
+					if (QR_get_num_total_tuples(res) == 1)
+					{
+						tblFound = TRUE;
+						strcpy(ti[i]->schema, QR_get_value_backend_row(res, 0, 0));
+					}
+					QR_Destructor(res);
+				}
+				else
+					CC_abort(conn);
+				if (!tblFound)
+				{
+					stmt->parse_status = STMT_PARSE_FATAL;
+					stmt->errornumber = STMT_EXEC_ERROR;
+					stmt->errormsg = "Table not found";
+					stmt->updatable = FALSE;
+					return FALSE;
+				}
+			}
 			result = PGAPI_Columns(hcol_stmt, "", 0, ti[i]->schema,
 					 SQL_NTS, ti[i]->name, SQL_NTS, "", 0, PODBC_NOT_SEARCH_PATTERN);
 
@@ -907,6 +988,8 @@ parse_statement(StatementClass *stmt)
 	/*
 	 * Now resolve the fields to point to column info
 	 */
+	if (updatable && 1 == stmt->ntab)
+		updatable = stmt->ti[0]->updatable;
 	for (i = 0; i < (int) irdflds->nfields;)
 	{
 		fi[i]->updatable = updatable;
@@ -934,14 +1017,14 @@ parse_statement(StatementClass *stmt)
 
 			if (fi[i]->ti)		/* The star represents only the qualified
 								 * table */
-				total_cols = QR_get_num_tuples(fi[i]->ti->col_info->result);
+				total_cols = QR_get_num_backend_tuples(fi[i]->ti->col_info->result);
 
 			else
 			{					/* The star represents all tables */
 
 				/* Calculate the total number of columns after expansion */
 				for (k = 0; k < stmt->ntab; k++)
-					total_cols += QR_get_num_tuples(ti[k]->col_info->result);
+					total_cols += QR_get_num_backend_tuples(ti[k]->col_info->result);
 			}
 			increased_cols = total_cols - 1;
 
@@ -988,7 +1071,7 @@ parse_statement(StatementClass *stmt)
 			{
 				TABLE_INFO *the_ti = do_all_tables ? ti[k] : fi[i]->ti;
 
-				cols = QR_get_num_tuples(the_ti->col_info->result);
+				cols = QR_get_num_backend_tuples(the_ti->col_info->result);
 
 				for (n = 0; n < cols; n++)
 				{

@@ -172,7 +172,8 @@ RETCODE SQL_API PGAPI_ExtendedFetch(
 					SQLUSMALLINT fFetchType,
 					SQLINTEGER irow,
 					SQLUINTEGER *pcrow,
-					SQLUSMALLINT *rgfRowStatus);
+					SQLUSMALLINT *rgfRowStatus,
+					SQLINTEGER FetchOffset);
 RETCODE SQL_API PGAPI_ForeignKeys(
 				  HSTMT hstmt,
 				  SQLCHAR *szPkCatalogName,
@@ -281,6 +282,8 @@ RETCODE SQL_API PGAPI_SetConnectAttr(HDBC ConnectionHandle,
 RETCODE SQL_API PGAPI_SetStmtAttr(HSTMT StatementHandle,
 		SQLINTEGER Attribute, PTR Value,
 		SQLINTEGER StringLength);
+RETCODE SQL_API PGAPI_BulkOperations(HSTMT StatementHandle,
+			SQLSMALLINT operation);
 RETCODE SQL_API PGAPI_SetDescField(SQLHDESC DescriptorHandle,
 			SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
 			PTR Value, SQLINTEGER BufferLength);

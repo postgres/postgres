@@ -30,6 +30,7 @@ RETCODE	SQL_API	SQLGetStmtAttrW(SQLHSTMT hstmt,
 	RETCODE	ret;
 
 	mylog("[SQLGetStmtAttrW]");
+	SC_clear_error((StatementClass *) hstmt);
 	ret = PGAPI_GetStmtAttr(hstmt, fAttribute, rgbValue,
 		cbValueMax, pcbValue);
 	return ret;
@@ -43,6 +44,7 @@ RETCODE SQL_API	SQLSetStmtAttrW(SQLHSTMT hstmt,
 	RETCODE	ret;
 
 	mylog("[SQLSetStmtAttrW]");
+	SC_clear_error((StatementClass *) hstmt);
 	ret = PGAPI_SetStmtAttr(hstmt, fAttribute, rgbValue,
 		cbValueMax);
 	return ret;
@@ -57,6 +59,7 @@ RETCODE SQL_API	SQLGetConnectAttrW(HDBC hdbc,
 	RETCODE	ret;
 
 	mylog("[SQLGetConnectAttrW]");
+	CC_clear_error((ConnectionClass *) hdbc);
 	ret = PGAPI_GetConnectAttr(hdbc, fAttribute, rgbValue,
 		cbValueMax, pcbValue);
 	return ret;
@@ -70,6 +73,7 @@ RETCODE SQL_API	SQLSetConnectAttrW(HDBC hdbc,
 	RETCODE	ret;
 
 	mylog("[SQLSetConnectAttrW]");
+	CC_clear_error((ConnectionClass *) hdbc);
 	ret = PGAPI_SetConnectAttr(hdbc, fAttribute, rgbValue,
 		cbValue);
 	return ret;
@@ -229,6 +233,7 @@ RETCODE SQL_API SQLColAttributeW(
         char    *rgbD = NULL;
 
 	mylog("[SQLColAttributeW]");
+	SC_clear_error((StatementClass *) hstmt);
 	switch (fDescType)
 	{ 
 		case SQL_DESC_BASE_COLUMN_NAME:

@@ -61,6 +61,7 @@ SQLBindParam(HSTMT StatementHandle,
 	int			BufferLength = 512;		/* Is it OK ? */
 
 	mylog("[[SQLBindParam]]");
+	SC_clear_error((StatementClass *) StatementHandle);
 	return PGAPI_BindParameter(StatementHandle, ParameterNumber, SQL_PARAM_INPUT, ValueType, ParameterType, LengthPrecision, ParameterScale, ParameterValue, BufferLength, StrLen_or_Ind);
 }
 
@@ -69,6 +70,7 @@ RETCODE		SQL_API
 SQLCloseCursor(HSTMT StatementHandle)
 {
 	mylog("[[SQLCloseCursor]]");
+	SC_clear_error((StatementClass *) StatementHandle);
 	return PGAPI_FreeStmt(StatementHandle, SQL_CLOSE);
 }
 
@@ -80,6 +82,7 @@ SQLColAttribute(HSTMT StatementHandle,
 				SQLSMALLINT *StringLength, PTR NumericAttribute)
 {
 	mylog("[[SQLColAttribute]]");
+	SC_clear_error((StatementClass *) StatementHandle);
 	return PGAPI_ColAttributes(StatementHandle, ColumnNumber,
 					   FieldIdentifier, CharacterAttribute, BufferLength,
 							   StringLength, NumericAttribute);
@@ -140,6 +143,7 @@ SQLEndTran(SQLSMALLINT HandleType, SQLHANDLE Handle,
 		case SQL_HANDLE_ENV:
 			return PGAPI_Transact(Handle, SQL_NULL_HDBC, CompletionType);
 		case SQL_HANDLE_DBC:
+			CC_clear_error((ConnectionClass *) Handle);
 			return PGAPI_Transact(SQL_NULL_HENV, Handle, CompletionType);
 		default:
 			break;
@@ -157,16 +161,18 @@ SQLFetchScroll(HSTMT StatementHandle,
 	RETCODE		ret;
 	IRDFields	*irdopts = SC_get_IRD(stmt);
 	SQLUSMALLINT *rowStatusArray = irdopts->rowStatusArray;
-	SQLINTEGER *pcRow = irdopts->rowsFetched;
+	SQLINTEGER *pcRow = irdopts->rowsFetched, bkmarkoff = 0;
 
 	mylog("[[%s]] %d,%d\n", func, FetchOrientation, FetchOffset);
+	SC_clear_error(stmt);
 	if (FetchOrientation == SQL_FETCH_BOOKMARK)
 	{
 		if (stmt->options.bookmark_ptr)
-{
-			FetchOffset += *((Int4 *) stmt->options.bookmark_ptr);
-mylog("real FetchOffset = %d\n", FetchOffset);
-}
+		{
+			bkmarkoff = FetchOffset;
+			FetchOffset = *((Int4 *) stmt->options.bookmark_ptr);
+mylog("bookmark=%u FetchOffset = %d\n", FetchOffset, bkmarkoff);
+		}
 		else
 		{
 			stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -176,7 +182,7 @@ mylog("real FetchOffset = %d\n", FetchOffset);
 		}
 	}
 	ret = PGAPI_ExtendedFetch(StatementHandle, FetchOrientation, FetchOffset,
-							  pcRow, rowStatusArray);
+				pcRow, rowStatusArray, bkmarkoff);
 	if (ret != SQL_SUCCESS)
 		mylog("%s return = %d\n", func, ret);
 	return ret;
@@ -288,6 +294,7 @@ SQLGetConnectAttr(HDBC ConnectionHandle,
 				  SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
 	mylog("[[SQLGetConnectAttr]] %d\n", Attribute);
+	CC_clear_error((ConnectionClass *) ConnectionHandle);
 	return PGAPI_GetConnectAttr(ConnectionHandle, Attribute,Value,
 			BufferLength, StringLength);
 }
@@ -301,6 +308,7 @@ SQLGetStmtAttr(HSTMT StatementHandle,
 	static char *func = "SQLGetStmtAttr";
 
 	mylog("[[%s]] Handle=%u %d\n", func, StatementHandle, Attribute);
+	SC_clear_error((StatementClass *) StatementHandle);
 	return PGAPI_GetStmtAttr(StatementHandle, Attribute, Value,
 			BufferLength, StringLength);
 }
@@ -314,6 +322,7 @@ SQLSetConnectAttr(HDBC ConnectionHandle,
 	ConnectionClass *conn = (ConnectionClass *) ConnectionHandle;
 
 	mylog("[[SQLSetConnectAttr]] %d\n", Attribute);
+	CC_clear_error(conn);
 	return PGAPI_SetConnectAttr(ConnectionHandle, Attribute, Value,
 				  StringLength);
 }
@@ -396,6 +405,7 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 	StatementClass *stmt = (StatementClass *) StatementHandle;
 
 	mylog("[[%s]] Handle=%u %d,%u\n", func, StatementHandle, Attribute, Value);
+	SC_clear_error(stmt);
 	return PGAPI_SetStmtAttr(StatementHandle, Attribute, Value, StringLength);
 }
 
@@ -409,6 +419,7 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 	ConnectionClass	*conn = (ConnectionClass *) hdbc;
 	ConnInfo	*ci = &(conn->connInfo);
 
+	CC_clear_error(conn);
 	if (fFunction != SQL_API_ODBC3_ALL_FUNCTIONS)
 		return SQL_ERROR;
 	memset(pfExists, 0, sizeof(UWORD) * SQL_API_ODBC3_ALL_FUNCTIONS_SIZE);
@@ -497,12 +508,12 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLENDTRAN);		/* 1005 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLFREEHANDLE);		/* 1006 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETCONNECTATTR);	/* 1007 */
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDESCFIELD); 	/* 1008 */
 	if (ci->drivers.lie)
 	{
-		SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDESCFIELD); /* 1008 not implemented yet */
 		SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDESCREC); /* 1009 not implemented yet */
-		SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDIAGFIELD); /* 1010 not implemented yet */
 	}
+	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDIAGFIELD); /* 1010 minimal implementation */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETDIAGREC);		/* 1011 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETENVATTR);		/* 1012 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLGETSTMTATTR);	/* 1014 */
@@ -525,72 +536,15 @@ RETCODE	SQL_API
 SQLBulkOperations(HSTMT hstmt, SQLSMALLINT operation)
 {
 	static char	*func = "SQLBulkOperations";
-	StatementClass	*stmt = (StatementClass *) hstmt;
 #ifndef	DRIVER_CURSOR_IMPLEMENT
+	StatementClass	*stmt = (StatementClass *) hstmt;
 	stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 	stmt->errormsg = "driver must be compiled with the DRIVER_CURSOR_IMPLEMENT option";
 	SC_log_error(func, "", stmt);
 	return SQL_ERROR;
 #else
-	ARDFields	*opts = SC_get_ARD(stmt);
-	RETCODE		ret;
-	UInt4		offset, bind_size = opts->bind_size, *bmark;
-	int		i, processed;
-	ConnectionClass	*conn;
-	BOOL		auto_commit_needed = FALSE;
-
-	mylog("[[%s]] operation = %d\n", func, operation);
-	offset = opts->row_offset_ptr ? *opts->row_offset_ptr : 0;
-	switch (operation)
-	{
-		case SQL_ADD:
-			ret = PGAPI_SetPos(hstmt, 0, operation, SQL_LOCK_NO_CHANGE);
-			break;
-		default:
-			if (SQL_FETCH_BY_BOOKMARK != operation)
-			{
-				conn = SC_get_conn(stmt);
-				if (auto_commit_needed = CC_is_in_autocommit(conn), auto_commit_needed)
-					PGAPI_SetConnectOption(conn, SQL_AUTOCOMMIT,
-SQL_AUTOCOMMIT_OFF);
-			}
-			if (bmark = (UInt4 *) opts->bookmark->buffer, !bmark)
-			{
-				stmt->errormsg = "bookmark isn't specified";
-				return SQL_ERROR;
-			}
-			bmark += (offset >> 4);
-			for (i = 0, processed = 0; i < opts->rowset_size; i++)
-			{
-				if (!opts->row_operation_ptr || SQL_ROW_PROCEED == opts->row_operation_ptr[i])
-				{
-					switch (operation)
-					{
-						case SQL_UPDATE_BY_BOOKMARK:
-							ret = SC_pos_update(stmt, (UWORD) i, *bmark);
-							break;
-						case SQL_DELETE_BY_BOOKMARK:
-							ret = SC_pos_delete(stmt, (UWORD) i, *bmark);
-							break;
-						case SQL_FETCH_BY_BOOKMARK:
-							ret = SC_pos_refresh(stmt, (UWORD) i, *bmark);
-							break;
-					}
-					processed++;
-					if (SQL_ERROR == ret)
-						break;
-					if (bind_size > 0)
-						bmark += (bind_size >> 2);
-					else
-						bmark++; 
-				}
-			}
-			if (auto_commit_needed)
-				PGAPI_SetConnectOption(conn, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_ON);
-			if (SC_get_IRD(stmt)->rowsFetched)
-				*SC_get_IRD(stmt)->rowsFetched = processed;
-			break;
-	}
-	return ret;
+	mylog("[[%s]] Handle=%u %d\n", func, hstmt, operation);
+	SC_clear_error((StatementClass *) hstmt);
+	return	PGAPI_BulkOperations(hstmt, operation);
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 }	

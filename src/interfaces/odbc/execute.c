@@ -212,6 +212,7 @@ PGAPI_Execute(
 	int			i,
 				retval, start_row, end_row;
 	int	cursor_type, scroll_concurrency;
+	QResultClass	*res;
 
 	mylog("%s: entering...\n", func);
 
@@ -403,6 +404,23 @@ next_param_row:
 		{
 			if (ipdopts->param_processed_ptr)
 				(*ipdopts->param_processed_ptr)++;
+			/* special handling of result for keyset driven cursors */
+			if (SQL_CURSOR_KEYSET_DRIVEN == stmt->options.cursor_type &&
+			    SQL_CONCUR_READ_ONLY != stmt->options.scroll_concurrency)
+			{
+				QResultClass	*kres;
+
+				res = SC_get_Result(stmt);
+				if (kres = res->next, kres)
+				{
+					kres->fields = res->fields;
+					res->fields = NULL;
+					kres->num_fields = res->num_fields;
+					res->next = NULL;
+					QR_Destructor(res);
+					SC_set_Result(stmt, kres);
+				}
+			}
 		}
 #if (ODBCVER >= 0x0300)
 		if (ipdopts->param_status_ptr)
@@ -440,7 +458,7 @@ next_param_row:
 		BOOL		in_trans = CC_is_in_trans(conn);
 		BOOL		issued_begin = FALSE,
 					begin_included = FALSE;
-		QResultClass *res, *curres;
+		QResultClass *curres;
 
 		if (strnicmp(stmt->stmt_with_params, "BEGIN;", 6) == 0)
 			begin_included = TRUE;
@@ -474,8 +492,10 @@ next_param_row:
 		stmt->status = STMT_FINISHED;
 		return SQL_SUCCESS;
 	}
-	else if (stmt->options.cursor_type != cursor_type ||
-		 stmt->options.scroll_concurrency != scroll_concurrency)
+	if (res = SC_get_Curres(stmt), res)
+		stmt->diag_row_count = res->recent_processed_row_count;
+	if (stmt->options.cursor_type != cursor_type ||
+	    stmt->options.scroll_concurrency != scroll_concurrency)
 	{
 		stmt->errornumber = STMT_OPTION_VALUE_CHANGED;
 		stmt->errormsg = "cursor updatability changed";
@@ -548,7 +568,7 @@ PGAPI_Transact(
 		if (!res)
 		{
 			/* error msg will be in the connection */
-			CC_on_abort(conn, TRUE);
+			CC_on_abort(conn, NO_TRANS);
 			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}
@@ -558,7 +578,7 @@ PGAPI_Transact(
 
 		if (!ok)
 		{
-			CC_on_abort(conn, TRUE);
+			CC_on_abort(conn, NO_TRANS);
 			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}

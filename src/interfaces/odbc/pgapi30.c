@@ -25,6 +25,7 @@
 #include "connection.h"
 #include "statement.h"
 #include "descriptor.h"
+#include "qresult.h"
 #include "pgapifunc.h"
 
 static HSTMT statementHandleFromDescHandle(SQLHDESC, SQLINTEGER *descType); 
@@ -69,13 +70,22 @@ PGAPI_GetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
 	return ret;
 }
 
+/*
+ *	Minimal implementation. 
+ *
+ */
 RETCODE		SQL_API
 PGAPI_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
 		SQLSMALLINT RecNumber, SQLSMALLINT DiagIdentifier,
 		PTR DiagInfoPtr, SQLSMALLINT BufferLength,
 		SQLSMALLINT *StringLengthPtr)
 {
-	RETCODE		ret = SQL_ERROR;
+	RETCODE		ret = SQL_ERROR, rtn;
+	ConnectionClass	*conn;
+	SQLHANDLE	stmtHandle;
+	StatementClass	*stmt;
+	SDWORD		rc;
+	SWORD		pcbErrm;
 	static const char *func = "PGAPI_GetDiagField";
 
 	mylog("%s entering rec=%d", func, RecNumber);
@@ -87,43 +97,243 @@ PGAPI_GetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
 				case SQL_DIAG_CLASS_ORIGIN:
 				case SQL_DIAG_SUBCLASS_ORIGIN:
 				case SQL_DIAG_CONNECTION_NAME:
-				case SQL_DIAG_MESSAGE_TEXT:
-				case SQL_DIAG_NATIVE:
-				case SQL_DIAG_NUMBER:
-				case SQL_DIAG_RETURNCODE:
 				case SQL_DIAG_SERVER_NAME:
+					strcpy((char *) DiagInfoPtr, "");
+					if (StringLengthPtr)
+						*StringLengthPtr = 0;
+					ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_MESSAGE_TEXT:
+					ret = PGAPI_EnvError(Handle, RecNumber,
+                        			NULL, NULL, DiagInfoPtr,
+						BufferLength, StringLengthPtr, 0);  
+					break;
+				case SQL_DIAG_NATIVE:
+					ret = PGAPI_EnvError(Handle, RecNumber,
+                        			NULL, DiagInfoPtr, NULL,
+						0, NULL, 0);  
+					if (StringLengthPtr)  
+						*StringLengthPtr = sizeof(SQLINTEGER);  
+					if (SQL_SUCCESS_WITH_INFO == ret)  
+						ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_NUMBER:
+					ret = PGAPI_EnvError(Handle, RecNumber,
+                        			NULL, NULL, NULL,
+						0, NULL, 0);
+					if (SQL_SUCCESS == ret ||
+					    SQL_SUCCESS_WITH_INFO == ret)
+					{
+						*((SQLINTEGER *) DiagInfoPtr) = 1;
+						if (StringLengthPtr)
+							*StringLengthPtr = sizeof(SQLINTEGER);
+						ret = SQL_SUCCESS;
+					}
+					break;
 				case SQL_DIAG_SQLSTATE:
+					ret = PGAPI_EnvError(Handle, RecNumber,
+                        			DiagInfoPtr, NULL, NULL,
+						0, NULL, 0);
+					if (StringLengthPtr)  
+						*StringLengthPtr = 5;  
+					if (SQL_SUCCESS_WITH_INFO == ret)  
+						ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_RETURNCODE: /* driver manager returns */
+					break;
+				case SQL_DIAG_CURSOR_ROW_COUNT:
+				case SQL_DIAG_ROW_COUNT:
+				case SQL_DIAG_DYNAMIC_FUNCTION:
+				case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
+					/* options for statement type only */
 					break;
 			}
 			break;
 		case SQL_HANDLE_DBC:
+			conn = (ConnectionClass *) Handle;
 			switch (DiagIdentifier)
 			{
 				case SQL_DIAG_CLASS_ORIGIN:
 				case SQL_DIAG_SUBCLASS_ORIGIN:
 				case SQL_DIAG_CONNECTION_NAME:
-				case SQL_DIAG_MESSAGE_TEXT:
-				case SQL_DIAG_NATIVE:
-				case SQL_DIAG_NUMBER:
-				case SQL_DIAG_RETURNCODE:
+					strcpy((char *) DiagInfoPtr, "");
+					if (StringLengthPtr)
+						*StringLengthPtr = 0;
+					ret = SQL_SUCCESS;
+					break;
 				case SQL_DIAG_SERVER_NAME:
+					strcpy((SQLCHAR *) DiagInfoPtr, CC_get_DSN(conn));
+					if (StringLengthPtr)
+						*StringLengthPtr = strlen(CC_get_DSN(conn));
+					ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_MESSAGE_TEXT:
+					ret = PGAPI_ConnectError(Handle, RecNumber,
+                        			NULL, NULL, DiagInfoPtr,
+						BufferLength, StringLengthPtr, 0);  
+					break;
+				case SQL_DIAG_NATIVE:
+					ret = PGAPI_ConnectError(Handle, RecNumber,
+                        			NULL, DiagInfoPtr, NULL,
+						0, NULL, 0);  
+					if (StringLengthPtr)  
+						*StringLengthPtr = sizeof(SQLINTEGER);  
+					if (SQL_SUCCESS_WITH_INFO == ret)  
+						ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_NUMBER:
+					ret = PGAPI_ConnectError(Handle, RecNumber,
+                        			NULL, NULL, NULL,
+						0, NULL, 0);
+					if (SQL_SUCCESS == ret ||
+					    SQL_SUCCESS_WITH_INFO == ret)
+					{
+						*((SQLINTEGER *) DiagInfoPtr) = 1;
+						if (StringLengthPtr)
+							*StringLengthPtr = sizeof(SQLINTEGER);
+						ret = SQL_SUCCESS;
+					}
+					break;  
 				case SQL_DIAG_SQLSTATE:
+					ret = PGAPI_ConnectError(Handle, RecNumber,
+                        			DiagInfoPtr, NULL, NULL,
+						0, NULL, 0);
+					if (StringLengthPtr)  
+						*StringLengthPtr = 5;  
+					if (SQL_SUCCESS_WITH_INFO == ret)  
+						ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_RETURNCODE: /* driver manager returns */
+					break;
+				case SQL_DIAG_CURSOR_ROW_COUNT:
+				case SQL_DIAG_ROW_COUNT:
+				case SQL_DIAG_DYNAMIC_FUNCTION:
+				case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
+					/* options for statement type only */
 					break;
 			}
 			break;
 		case SQL_HANDLE_STMT:
+			conn = (ConnectionClass *) SC_get_conn(((StatementClass *) Handle));
 			switch (DiagIdentifier)
 			{
 				case SQL_DIAG_CLASS_ORIGIN:
 				case SQL_DIAG_SUBCLASS_ORIGIN:
 				case SQL_DIAG_CONNECTION_NAME:
+					strcpy((char *) DiagInfoPtr, "");
+					if (StringLengthPtr)
+						*StringLengthPtr = 0;
+					ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_SERVER_NAME:
+					strcpy((SQLCHAR *) DiagInfoPtr, CC_get_DSN(conn));
+					if (StringLengthPtr)
+						*StringLengthPtr = strlen(CC_get_DSN(conn));
+					ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_MESSAGE_TEXT:
+					ret = PGAPI_StmtError(Handle, RecNumber,
+                        			NULL, NULL, DiagInfoPtr,
+						BufferLength, StringLengthPtr, 0);  
+					break;
+				case SQL_DIAG_NATIVE:
+					ret = PGAPI_StmtError(Handle, RecNumber,
+                        			NULL, DiagInfoPtr, NULL,
+						0, NULL, 0);  
+					if (StringLengthPtr)  
+						*StringLengthPtr = sizeof(SQLINTEGER);  
+					if (SQL_SUCCESS_WITH_INFO == ret)  
+						ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_NUMBER:
+					*((SQLINTEGER *) DiagInfoPtr) = 0;
+					ret = SQL_NO_DATA_FOUND;
+					stmt = (StatementClass *) Handle;
+					do
+					{
+						rtn = PGAPI_StmtError(Handle, RecNumber,
+                        				NULL, NULL, NULL,
+							0, &pcbErrm, 0);
+						if (SQL_SUCCESS == rtn ||
+					    	    SQL_SUCCESS_WITH_INFO == rtn)
+						{
+							*((SQLINTEGER *) DiagInfoPtr)++;
+							ret = SQL_SUCCESS;
+						}
+					} while (pcbErrm >= stmt->error_recsize);
+					if (StringLengthPtr)
+						*StringLengthPtr = sizeof(SQLINTEGER);
+					break;
+				case SQL_DIAG_SQLSTATE:
+					ret = PGAPI_StmtError(Handle, RecNumber,
+                        			DiagInfoPtr, NULL, NULL,
+						0, NULL, 0);
+					if (StringLengthPtr)  
+						*StringLengthPtr = 5;
+					if (SQL_SUCCESS_WITH_INFO == ret)  
+						ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_CURSOR_ROW_COUNT:
+					stmt = (StatementClass *) Handle;
+					rc = -1;
+					if (stmt->status == STMT_FINISHED)
+					{
+						QResultClass *res = SC_get_Curres(stmt);
+
+						if (res && QR_NumResultCols(res) > 0 && !SC_is_fetchcursor(stmt))
+							rc = QR_get_num_total_tuples(res) - res->dl_count;
+					} 
+					*((SQLINTEGER *) DiagInfoPtr) = rc;
+					if (StringLengthPtr)
+						*StringLengthPtr = sizeof(SQLINTEGER);
+					ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_ROW_COUNT:
+					stmt = (StatementClass *) Handle;
+					*((SQLINTEGER *) DiagInfoPtr) = stmt->diag_row_count;
+					if (StringLengthPtr)
+						*StringLengthPtr = sizeof(SQLINTEGER);
+					ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_RETURNCODE: /* driver manager returns */
+					break;
+			}
+			break;
+		case SQL_HANDLE_DESC:
+			stmtHandle = statementHandleFromDescHandle(Handle, NULL); 
+			conn = (ConnectionClass *) SC_get_conn(((StatementClass *) stmtHandle)); 
+			switch (DiagIdentifier)
+			{
+				case SQL_DIAG_CLASS_ORIGIN:
+				case SQL_DIAG_SUBCLASS_ORIGIN:
+				case SQL_DIAG_CONNECTION_NAME:
+					strcpy((char *) DiagInfoPtr, "");
+					if (StringLengthPtr)
+						*StringLengthPtr = 0;
+					ret = SQL_SUCCESS;
+					break;
+				case SQL_DIAG_SERVER_NAME:
+					strcpy((SQLCHAR *) DiagInfoPtr, CC_get_DSN(conn));
+					if (StringLengthPtr)
+						*StringLengthPtr = strlen(CC_get_DSN(conn));
+					ret = SQL_SUCCESS;
+					break;
 				case SQL_DIAG_MESSAGE_TEXT:
 				case SQL_DIAG_NATIVE:
 				case SQL_DIAG_NUMBER:
-				case SQL_DIAG_RETURNCODE:
-				case SQL_DIAG_SERVER_NAME:
-					break;
 				case SQL_DIAG_SQLSTATE:
+					ret = PGAPI_GetDiagField(SQL_HANDLE_STMT,
+						stmtHandle, RecNumber,
+						DiagIdentifier, DiagInfoPtr,
+						BufferLength, StringLengthPtr);
+					break;
+				case SQL_DIAG_RETURNCODE: /* driver manager returns */
+					break;
+				case SQL_DIAG_CURSOR_ROW_COUNT:
+				case SQL_DIAG_ROW_COUNT:
+				case SQL_DIAG_DYNAMIC_FUNCTION:
+				case SQL_DIAG_DYNAMIC_FUNCTION_CODE:
+					/* options for statement type only */
 					break;
 			}
 			break;
@@ -155,12 +365,7 @@ PGAPI_GetConnectAttr(HDBC ConnectionHandle,
 			*((SQLUINTEGER *) Value) = SQL_FALSE;
 			break;
 		case SQL_ATTR_CONNECTION_DEAD:
-			if (CC_is_in_trans(conn))
-				*((SQLUINTEGER *) Value) = SQL_CD_FALSE;
-			else if (conn->num_stmts > 0)
-				*((SQLUINTEGER *) Value) = SQL_CD_FALSE;
-			else
-				*((SQLUINTEGER *) Value) = SQL_CD_FALSE;
+			*((SQLUINTEGER *) Value) = (conn->status == CONN_NOT_CONNECTED || conn->status == CONN_DOWN);
 			break;
 		case SQL_ATTR_CONNECTION_TIMEOUT:
 			*((SQLUINTEGER *) Value) = 0;
@@ -348,12 +553,24 @@ ARDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 				opts->bindings[RecNumber - 1].buflen = (Int4) Value;
 			}
 			break;
+		case SQL_DESC_PRECISION:
+			if (RecNumber)
+			{
+				column_bindings_set(opts, RecNumber, TRUE);
+				opts->bindings[RecNumber - 1].precision = (Int2) Value;
+			}
+			break;
+		case SQL_DESC_SCALE:
+			if (RecNumber)
+			{
+				column_bindings_set(opts, RecNumber, TRUE);
+				opts->bindings[RecNumber - 1].scale = (Int4) Value;
+			}
+			break;
 		case SQL_DESC_ALLOC_TYPE: /* read-only */
 		case SQL_DESC_DATETIME_INTERVAL_PRECISION:
 		case SQL_DESC_LENGTH:
 		case SQL_DESC_NUM_PREC_RADIX:
-		case SQL_DESC_PRECISION:
-		case SQL_DESC_SCALE:
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
@@ -460,12 +677,18 @@ APDSetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_COUNT:
 			parameter_bindings_set(opts, (SQLUINTEGER) Value, FALSE);
 			break; 
+		case SQL_DESC_PRECISION:
+			parameter_bindings_set(opts, RecNumber, TRUE);
+			opts->parameters[RecNumber - 1].precision = (Int2) Value;
+			break;
+		case SQL_DESC_SCALE:
+			parameter_bindings_set(opts, RecNumber, TRUE);
+			opts->parameters[RecNumber - 1].scale = (Int2) Value;
+			break;
 		case SQL_DESC_ALLOC_TYPE: /* read-only */
 		case SQL_DESC_DATETIME_INTERVAL_PRECISION:
 		case SQL_DESC_LENGTH:
 		case SQL_DESC_NUM_PREC_RADIX:
-		case SQL_DESC_PRECISION:
-		case SQL_DESC_SCALE:
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
@@ -710,11 +933,23 @@ ARDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_ALLOC_TYPE: /* read-only */
 			ival = SQL_DESC_ALLOC_AUTO;
 			break;
+		case SQL_DESC_PRECISION:
+			if (RecNumber)
+			{
+				ival = opts->bindings[RecNumber - 1].precision;
+			}
+			break;
+		case SQL_DESC_SCALE:
+			if (RecNumber)
+			{
+				ival = opts->bindings[RecNumber - 1].scale;
+			}
+			break;
+		case SQL_DESC_NUM_PREC_RADIX:
+			ival = 10;
+			break;
 		case SQL_DESC_DATETIME_INTERVAL_PRECISION:
 		case SQL_DESC_LENGTH:
-		case SQL_DESC_NUM_PREC_RADIX:
-		case SQL_DESC_PRECISION:
-		case SQL_DESC_SCALE:
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
@@ -818,11 +1053,17 @@ APDGetField(StatementClass *stmt, SQLSMALLINT RecNumber,
 		case SQL_DESC_ALLOC_TYPE: /* read-only */
 			ival = SQL_DESC_ALLOC_AUTO;
 			break;
+		case SQL_DESC_NUM_PREC_RADIX:
+			ival = 10;
+			break;
 		case SQL_DESC_PRECISION:
+			ival = opts->parameters[RecNumber - 1].precision;
+			break;
 		case SQL_DESC_SCALE:
+			ival = opts->parameters[RecNumber - 1].scale;
+			break;
 		case SQL_DESC_DATETIME_INTERVAL_PRECISION:
 		case SQL_DESC_LENGTH:
-		case SQL_DESC_NUM_PREC_RADIX:
 		default:ret = SQL_ERROR;
 			stmt->errornumber = STMT_INVALID_DESCRIPTOR_IDENTIFIER; 
 	}
@@ -1339,3 +1580,77 @@ PGAPI_SetStmtAttr(HSTMT StatementHandle,
 	}
 	return SQL_SUCCESS;
 }
+
+#ifdef DRIVER_CURSOR_IMPLEMENT
+RETCODE	SQL_API
+PGAPI_BulkOperations(HSTMT hstmt, SQLSMALLINT operation)
+{
+	static char	*func = "PGAPI_BulkOperations";
+	StatementClass	*stmt = (StatementClass *) hstmt;
+	ARDFields	*opts = SC_get_ARD(stmt);
+	RETCODE		ret;
+	UInt4		offset, bind_size = opts->bind_size, *bmark = NULL;
+	int		i, processed;
+	ConnectionClass	*conn;
+	BOOL		auto_commit_needed = FALSE;
+	QResultClass	*res;
+
+	mylog("%s operation = %d\n", func, operation);
+	SC_clear_error(stmt);
+	offset = opts->row_offset_ptr ? *opts->row_offset_ptr : 0;
+	
+	if (SQL_FETCH_BY_BOOKMARK != operation)
+	{
+		conn = SC_get_conn(stmt);
+		if (auto_commit_needed = CC_is_in_autocommit(conn), auto_commit_needed)
+			PGAPI_SetConnectOption(conn, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_OFF);
+	}
+	if (SQL_ADD != operation)
+	{
+		if (bmark = (UInt4 *) opts->bookmark->buffer, !bmark)
+		{
+			stmt->errornumber = STMT_INVALID_OPTION_IDENTIFIER;
+			stmt->errormsg = "bookmark isn't specified";
+			return SQL_ERROR;
+		}
+		bmark += (offset >> 4);
+	}
+	for (i = 0, processed = 0; i < opts->rowset_size; i++)
+	{
+		/* Note opts->row_operation_ptr is ignored */
+		switch (operation)
+		{
+			case SQL_ADD:
+				ret = SC_pos_add(stmt, (UWORD) i);
+				break;
+			case SQL_UPDATE_BY_BOOKMARK:
+				ret = SC_pos_update(stmt, (UWORD) i, *bmark);
+				break;
+			case SQL_DELETE_BY_BOOKMARK:
+				ret = SC_pos_delete(stmt, (UWORD) i, *bmark);
+				break;
+			case SQL_FETCH_BY_BOOKMARK:
+				ret = SC_pos_refresh(stmt, (UWORD) i, *bmark);
+				break;
+		}
+		processed++;
+		if (SQL_ERROR == ret)
+			break;
+		if (SQL_ADD != operation)
+		{
+			if (bind_size > 0)
+				bmark += (bind_size >> 2);
+			else
+				bmark++;
+		} 
+	}
+	if (auto_commit_needed)
+		PGAPI_SetConnectOption(conn, SQL_AUTOCOMMIT, SQL_AUTOCOMMIT_ON);
+	if (SC_get_IRD(stmt)->rowsFetched)
+		*(SC_get_IRD(stmt)->rowsFetched) = processed;
+
+	if (res = SC_get_Curres(stmt), res)
+		res->recent_processed_row_count = stmt->diag_row_count = processed;
+	return ret;
+}	
+#endif /* DRIVER_CURSOR_IMPLEMENT */

@@ -95,9 +95,13 @@ set_statement_option(ConnectionClass *conn,
 				;
 			else if (SQL_CURSOR_STATIC == vParam)
 				setval = vParam;
-			/** else if (SQL_CURSOR_KEYSET_DRIVEN == vParam && ci->updatable)
-				setval = vParam; **/
-
+			else if (SQL_CURSOR_KEYSET_DRIVEN == vParam)
+			{
+				if (ci->updatable_cursors)
+					setval = vParam;
+				else
+					setval = SQL_CURSOR_STATIC; /* at least scrollable */
+			}
 			if (conn)
 				conn->stmtOptions.cursor_type = setval;
 			else if (stmt)
@@ -372,6 +376,60 @@ PGAPI_SetConnectOption(
 			break;
 
 		case SQL_TXN_ISOLATION:	/* ignored */
+			retval = SQL_SUCCESS;
+                        if (CC_is_in_trans(conn))
+			{
+				conn->errormsg = "Cannot switch isolation level while a transaction is in progress";
+				conn->errornumber = CONN_TRANSACT_IN_PROGRES;
+				CC_log_error(func, "", conn);
+				return SQL_ERROR;
+			}
+			if (conn->isolation == vParam)
+				break; 
+			switch (vParam)
+			{
+				case SQL_TXN_SERIALIZABLE:
+					if (PG_VERSION_GE(conn, 6.5) &&
+					    PG_VERSION_LE(conn, 7.0))
+						retval = SQL_ERROR;
+					break;
+				case SQL_TXN_READ_COMMITTED:
+					if (PG_VERSION_LT(conn, 6.5))
+						retval = SQL_ERROR;
+					break;
+				default:
+					retval = SQL_ERROR;
+			}
+			if (SQL_ERROR == retval)
+			{
+				conn->errornumber = CONN_INVALID_ARGUMENT_NO;
+				conn->errormsg = "Illegal parameter value for SQL_TXN_ISOLATION";
+				CC_log_error(func, "", conn);
+				return SQL_ERROR;
+			}
+			else
+			{
+				char *query;
+				QResultClass *res;
+
+				if (vParam == SQL_TXN_SERIALIZABLE)
+					query = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE";
+				else
+					query = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED";
+				res = CC_send_query(conn, query, NULL, 0);
+				if (!res || !QR_command_maybe_successful(res))
+					retval = SQL_ERROR;
+				else
+					conn->isolation = vParam;
+				if (res)
+					QR_Destructor(res);
+				if (SQL_ERROR == retval)
+				{
+					conn->errornumber = STMT_EXEC_ERROR;
+					conn->errormsg = "ISOLATION change request to the server error";
+					return SQL_ERROR;
+				}
+			}
 			break;
 
 			/* These options should be handled by driver manager */
@@ -476,8 +534,8 @@ PGAPI_GetConnectOption(
 			*((UDWORD *) pvParam) = (UDWORD) NULL;
 			break;
 
-		case SQL_TXN_ISOLATION:	/* NOT SUPPORTED */
-			*((UDWORD *) pvParam) = SQL_TXN_READ_COMMITTED;
+		case SQL_TXN_ISOLATION:
+			*((UDWORD *) pvParam) = conn->isolation;
 			break;
 
 			/* These options should be handled by driver manager */
@@ -567,7 +625,7 @@ PGAPI_GetStmtOption(
 			{
 				/* make sure we're positioned on a valid row */
 				if ((stmt->currTuple < 0) ||
-					(stmt->currTuple >= QR_get_num_tuples(res)))
+					(stmt->currTuple >= QR_get_num_backend_tuples(res)))
 				{
 					stmt->errormsg = "Not positioned on a valid row.";
 					stmt->errornumber = STMT_INVALID_CURSOR_STATE_ERROR;

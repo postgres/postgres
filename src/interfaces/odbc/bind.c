@@ -69,6 +69,23 @@ PGAPI_BindParameter(
 	opts->parameters[ipar].SQLType = fSqlType;
 	opts->parameters[ipar].column_size = cbColDef;
 	opts->parameters[ipar].decimal_digits = ibScale;
+	opts->parameters[ipar].precision = 0;
+	opts->parameters[ipar].scale = 0;
+#if (ODBCVER >= 0x0300)
+	switch (fCType)
+	{
+		case SQL_C_NUMERIC:
+			if (cbColDef > 0)
+				opts->parameters[ipar].precision = (UInt2) cbColDef;
+			if (ibScale > 0)
+				opts->parameters[ipar].scale = ibScale;
+			break;
+		case SQL_C_TYPE_TIMESTAMP:
+			if (ibScale > 0)
+				opts->parameters[ipar].precision = ibScale;
+			break;
+	}
+#endif /* ODBCVER */
 
 	/*
 	 * If rebinding a parameter that had data-at-exec stuff in it, then
@@ -210,6 +227,8 @@ inolog("Column 0 is type %d not of type SQL_C_BOOKMARK", fCType);
 			free(opts->bindings[icol].ttlbuf);
 		opts->bindings[icol].ttlbuf = NULL;
 		opts->bindings[icol].ttlbuflen = 0;
+		opts->bindings[icol].precision = 0;
+		opts->bindings[icol].scale = 0;
 	}
 	else
 	{
@@ -218,6 +237,13 @@ inolog("Column 0 is type %d not of type SQL_C_BOOKMARK", fCType);
 		opts->bindings[icol].buffer = rgbValue;
 		opts->bindings[icol].used = pcbValue;
 		opts->bindings[icol].returntype = fCType;
+#if (ODBCVER >= 0x0300)
+		if (SQL_C_NUMERIC == fCType)
+			opts->bindings[icol].precision = 32;
+		else
+#endif /* ODBCVER */
+			opts->bindings[icol].precision = 0;
+		opts->bindings[icol].scale = 0;
 
 		mylog("       bound buffer[%d] = %u\n", icol, opts->bindings[icol].buffer);
 	}
@@ -460,6 +486,8 @@ reset_a_parameter_binding(APDFields *self, int ipar)
 	self->parameters[ipar].SQLType = 0;
 	self->parameters[ipar].column_size = 0;
 	self->parameters[ipar].decimal_digits = 0;
+	self->parameters[ipar].precision = 0;
+	self->parameters[ipar].scale = 0;
 	self->parameters[ipar].data_at_exec = FALSE;
 	self->parameters[ipar].lobj_oid = 0;
 }

@@ -78,6 +78,12 @@ PGAPI_FreeEnv(HENV henv)
 }
 
 
+static void
+pg_sqlstate_set(const EnvironmentClass *env, UCHAR *szSqlState, const UCHAR *ver3str, const UCHAR *ver2str)
+{
+	strcpy(szSqlState, EN_is_odbc3(env) ? ver3str : ver2str);
+}
+
 #define	DRVMNGRDIV	511
 /*		Returns the next SQL error information. */
 RETCODE		SQL_API
@@ -92,6 +98,7 @@ PGAPI_StmtError(	HSTMT hstmt,
 {
 	/* CC: return an error of a hstmt  */
 	StatementClass *stmt = (StatementClass *) hstmt;
+	EnvironmentClass *env = (EnvironmentClass *) SC_get_conn(stmt)->henv;
 	char		*msg;
 	int		status;
 	BOOL		partial_ok = ((flag & PODBC_ALLOW_PARTIAL_EXTRACT) != 0),
@@ -173,120 +180,124 @@ PGAPI_StmtError(	HSTMT hstmt,
 		{
 				/* now determine the SQLSTATE to be returned */
 			case STMT_ROW_VERSION_CHANGED:
-				strcpy(szSqlState, "01001");
+				pg_sqlstate_set(env, szSqlState, "01001", "01001");
 				/* data truncated */
 				break;
 			case STMT_TRUNCATED:
-				strcpy(szSqlState, "01004");
+				pg_sqlstate_set(env, szSqlState, "01004", "01004");
 				/* data truncated */
 				break;
 			case STMT_INFO_ONLY:
-				strcpy(szSqlState, "00000");
+				pg_sqlstate_set(env, szSqlState, "00000", "0000");
 				/* just information that is returned, no error */
 				break;
 			case STMT_BAD_ERROR:
-				strcpy(szSqlState, "08S01");
+				pg_sqlstate_set(env, szSqlState, "08S01", "08S01");
 				/* communication link failure */
 				break;
 			case STMT_CREATE_TABLE_ERROR:
-				strcpy(szSqlState, "S0001");
+				pg_sqlstate_set(env, szSqlState, "42S01", "S0001");
 				/* table already exists */
 				break;
 			case STMT_STATUS_ERROR:
 			case STMT_SEQUENCE_ERROR:
-				strcpy(szSqlState, "S1010");
+				pg_sqlstate_set(env, szSqlState, "HY010", "S1010");
 				/* Function sequence error */
 				break;
 			case STMT_NO_MEMORY_ERROR:
-				strcpy(szSqlState, "S1001");
+				pg_sqlstate_set(env, szSqlState, "HY001", "S1001");
 				/* memory allocation failure */
 				break;
 			case STMT_COLNUM_ERROR:
-				strcpy(szSqlState, "S1002");
+				pg_sqlstate_set(env, szSqlState, "07009", "S1002");
 				/* invalid column number */
 				break;
 			case STMT_NO_STMTSTRING:
-				strcpy(szSqlState, "S1001");
+				pg_sqlstate_set(env, szSqlState, "HY001", "S1001");
 				/* having no stmtstring is also a malloc problem */
 				break;
 			case STMT_ERROR_TAKEN_FROM_BACKEND:
-				strcpy(szSqlState, "S1000");
+				pg_sqlstate_set(env, szSqlState, "HY000", "S1000");
 				/* general error */
 				break;
 			case STMT_INTERNAL_ERROR:
-				strcpy(szSqlState, "S1000");
+				pg_sqlstate_set(env, szSqlState, "HY000", "S1000");
 				/* general error */
 				break;
+			case STMT_FETCH_OUT_OF_RANGE:
+				pg_sqlstate_set(env, szSqlState, "HY106", "S1106");
+				break;
+
 			case STMT_ROW_OUT_OF_RANGE:
-				strcpy(szSqlState, "S1107");
+				pg_sqlstate_set(env, szSqlState, "HY107", "S1107");
 				break;
 
 			case STMT_OPERATION_CANCELLED:
-				strcpy(szSqlState, "S1008");
+				pg_sqlstate_set(env, szSqlState, "HY008", "S1008");
 				break;
 
 			case STMT_NOT_IMPLEMENTED_ERROR:
-				strcpy(szSqlState, "S1C00");	/* == 'driver not
+				pg_sqlstate_set(env, szSqlState, "HYC00", "S1C00");	/* == 'driver not
 													 * capable' */
 				break;
 			case STMT_OPTION_OUT_OF_RANGE_ERROR:
-				strcpy(szSqlState, "S1092");
+				pg_sqlstate_set(env, szSqlState, "HY092", "S1092");
 				break;
 			case STMT_BAD_PARAMETER_NUMBER_ERROR:
-				strcpy(szSqlState, "S1093");
+				pg_sqlstate_set(env, szSqlState, "07009", "S1093");
 				break;
 			case STMT_INVALID_COLUMN_NUMBER_ERROR:
-				strcpy(szSqlState, "S1002");
+				pg_sqlstate_set(env, szSqlState, "07009", "S1002");
 				break;
 			case STMT_RESTRICTED_DATA_TYPE_ERROR:
-				strcpy(szSqlState, "07006");
+				pg_sqlstate_set(env, szSqlState, "07006", "07006");
 				break;
 			case STMT_INVALID_CURSOR_STATE_ERROR:
-				strcpy(szSqlState, "24000");
+				pg_sqlstate_set(env, szSqlState, "07005", "24000");
 				break;
 			case STMT_ERROR_IN_ROW:
-				strcpy(szSqlState, "01S01");
+				pg_sqlstate_set(env, szSqlState, "01S01", "01S01");
 				break;
 			case STMT_OPTION_VALUE_CHANGED:
-				strcpy(szSqlState, "01S02");
+				pg_sqlstate_set(env, szSqlState, "01S02", "01S02");
 				break;
 			case STMT_POS_BEFORE_RECORDSET:
-				strcpy(szSqlState, "01S06");
+				pg_sqlstate_set(env, szSqlState, "01S06", "01S06");
 				break;
 			case STMT_INVALID_CURSOR_NAME:
-				strcpy(szSqlState, "34000");
+				pg_sqlstate_set(env, szSqlState, "34000", "34000");
 				break;
 			case STMT_NO_CURSOR_NAME:
-				strcpy(szSqlState, "S1015");
+				pg_sqlstate_set(env, szSqlState, "S1015", "S1015");
 				break;
 			case STMT_INVALID_ARGUMENT_NO:
-				strcpy(szSqlState, "S1009");
+				pg_sqlstate_set(env, szSqlState, "HY024", "S1009");
 				/* invalid argument value */
 				break;
 			case STMT_INVALID_CURSOR_POSITION:
-				strcpy(szSqlState, "S1109");
+				pg_sqlstate_set(env, szSqlState, "HY109", "S1109");
 				break;
 			case STMT_RETURN_NULL_WITHOUT_INDICATOR:
-				strcpy(szSqlState, "22002");
+				pg_sqlstate_set(env, szSqlState, "22002", "22002");
 				break;
 			case STMT_VALUE_OUT_OF_RANGE:
-				strcpy(szSqlState, "22003");
+				pg_sqlstate_set(env, szSqlState, "HY019", "22003");
 				break;
 			case STMT_OPERATION_INVALID:
-				strcpy(szSqlState, "S1011");
+				pg_sqlstate_set(env, szSqlState, "HY011", "S1011");
 				break;
 			case STMT_INVALID_DESCRIPTOR_IDENTIFIER:
-				strcpy(szSqlState, "HY091");
+				pg_sqlstate_set(env, szSqlState, "HY091", "HY091");
 				break;
 			case STMT_INVALID_OPTION_IDENTIFIER:
-				strcpy(szSqlState, "HY092");
+				pg_sqlstate_set(env, szSqlState, "HY092", "HY092");
 				break;
 			case STMT_OPTION_NOT_FOR_THE_DRIVER:
-				strcpy(szSqlState, "HYC00");
+				pg_sqlstate_set(env, szSqlState, "HYC00", "HYC00");
 				break;
 			case STMT_EXEC_ERROR:
 			default:
-				strcpy(szSqlState, "S1000");
+				pg_sqlstate_set(env, szSqlState, "HY000", "S1000");
 				/* also a general error */
 				break;
 		}
@@ -314,6 +325,7 @@ PGAPI_ConnectError(	HDBC hdbc,
 			UWORD flag)
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
+	EnvironmentClass *env = (EnvironmentClass *) conn->henv;
 	char		*msg;
 	int		status;
 	BOOL	once_again = FALSE;
@@ -357,43 +369,43 @@ PGAPI_ConnectError(	HDBC hdbc,
 		{
 			case STMT_OPTION_VALUE_CHANGED:
 			case CONN_OPTION_VALUE_CHANGED:
-				strcpy(szSqlState, "01S02");
+				pg_sqlstate_set(env, szSqlState, "01S02", "01S02");
 				break;
 			case STMT_TRUNCATED:
 			case CONN_TRUNCATED:
-				strcpy(szSqlState, "01004");
+				pg_sqlstate_set(env, szSqlState, "01004", "01004");
 				/* data truncated */
 				break;
 			case CONN_INIREAD_ERROR:
-				strcpy(szSqlState, "IM002");
+				pg_sqlstate_set(env, szSqlState, "IM002", "IM002");
 				/* data source not found */
 				break;
 			case CONNECTION_SERVER_NOT_REACHED:
 			case CONN_OPENDB_ERROR:
-				strcpy(szSqlState, "08001");
+				pg_sqlstate_set(env, szSqlState, "08001", "08001");
 				/* unable to connect to data source */
 				break;
 			case CONN_INVALID_AUTHENTICATION:
 			case CONN_AUTH_TYPE_UNSUPPORTED:
-				strcpy(szSqlState, "28000");
+				pg_sqlstate_set(env, szSqlState, "28000", "28000");
 				break;
 			case CONN_STMT_ALLOC_ERROR:
-				strcpy(szSqlState, "S1001");
+				pg_sqlstate_set(env, szSqlState, "HY001", "S1001");
 				/* memory allocation failure */
 				break;
 			case CONN_IN_USE:
-				strcpy(szSqlState, "S1000");
+				pg_sqlstate_set(env, szSqlState, "HY000", "S1000");
 				/* general error */
 				break;
 			case CONN_UNSUPPORTED_OPTION:
-				strcpy(szSqlState, "IM001");
+				pg_sqlstate_set(env, szSqlState, "IM001", "IM001");
 				/* driver does not support this function */
 			case CONN_INVALID_ARGUMENT_NO:
-				strcpy(szSqlState, "S1009");
+				pg_sqlstate_set(env, szSqlState, "HY009", "S1009");
 				/* invalid argument value */
 				break;
 			case CONN_TRANSACT_IN_PROGRES:
-				strcpy(szSqlState, "S1010");
+				pg_sqlstate_set(env, szSqlState, "HY010", "S1010");
 
 				/*
 				 * when the user tries to switch commit mode in a
@@ -402,21 +414,21 @@ PGAPI_ConnectError(	HDBC hdbc,
 				/* -> function sequence error */
 				break;
 			case CONN_NO_MEMORY_ERROR:
-				strcpy(szSqlState, "S1001");
+				pg_sqlstate_set(env, szSqlState, "HY001", "S1001");
 				break;
 			case CONN_NOT_IMPLEMENTED_ERROR:
 			case STMT_NOT_IMPLEMENTED_ERROR:
-				strcpy(szSqlState, "S1C00");
+				pg_sqlstate_set(env, szSqlState, "HYC00", "S1C00");
 				break;
 			case STMT_RETURN_NULL_WITHOUT_INDICATOR:
-				strcpy(szSqlState, "22002");
+				pg_sqlstate_set(env, szSqlState, "22002", "22002");
 				break;
 			case CONN_VALUE_OUT_OF_RANGE:
 			case STMT_VALUE_OUT_OF_RANGE:
-				strcpy(szSqlState, "22003");
+				pg_sqlstate_set(env, szSqlState, "HY019", "22003");
 				break;
 			default:
-				strcpy(szSqlState, "S1000");
+				pg_sqlstate_set(env, szSqlState, "HY000", "S1000");
 				/* general error */
 				break;
 		}
@@ -455,7 +467,7 @@ PGAPI_EnvError(		HENV henv,
 			mylog("EN_get_error: status = %d, msg = #%s#\n", status, msg);
 		
 		if (NULL != szSqlState)
-			strcpy(szSqlState, "00000");
+			pg_sqlstate_set(env, szSqlState, "00000", "00000");
 		if (NULL != pcbErrorMsg)
 			*pcbErrorMsg = 0;
 		if ((NULL != szErrorMsg) && (cbErrorMsgMax > 0))
@@ -478,10 +490,10 @@ PGAPI_EnvError(		HENV henv,
 		{
 			case ENV_ALLOC_ERROR:
 				/* memory allocation failure */
-				strcpy(szSqlState, "S1001");
+				pg_sqlstate_set(env, szSqlState, "HY001", "S1001");
 				break;
 			default:
-				strcpy(szSqlState, "S1000");
+				pg_sqlstate_set(env, szSqlState, "HY000", "S1000");
 				/* general error */
 				break;
 		}

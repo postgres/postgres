@@ -210,7 +210,10 @@ PGAPI_GetInfo(
 
 		case SQL_DEFAULT_TXN_ISOLATION: /* ODBC 1.0 */
 			len = 4;
-			value = SQL_TXN_READ_COMMITTED;		/* SQL_TXN_SERIALIZABLE; */
+			if (PG_VERSION_LT(conn, 6.5))
+				value = SQL_TXN_SERIALIZABLE;
+			else
+				value = SQL_TXN_READ_COMMITTED;
 			break;
 
 		case SQL_DRIVER_NAME:	/* ODBC 1.0 */
@@ -505,7 +508,7 @@ PGAPI_GetInfo(
 
 		case SQL_POS_OPERATIONS:		/* ODBC 2.0 */
 			len = 4;
-			value = ci->drivers.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
+			value = (SQL_POS_POSITION | SQL_POS_REFRESH);
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 			if (ci->updatable_cursors)
 				value |= (SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD);
@@ -557,32 +560,29 @@ PGAPI_GetInfo(
 			 * Driver doesn't support keyset-driven or mixed cursors, so
 			 * not much point in saying row updates are supported
 			 */
-			p = (ci->drivers.lie || ci->updatable_cursors) ? "Y" : "N";
+			p = (ci->updatable_cursors) ? "Y" : "N";
 			break;
 
 		case SQL_SCROLL_CONCURRENCY:	/* ODBC 1.0 */
 			len = 4;
-			value = ci->drivers.lie ? (SQL_SCCO_READ_ONLY |
-									   SQL_SCCO_LOCK |
-									   SQL_SCCO_OPT_ROWVER |
-									   SQL_SCCO_OPT_VALUES) :
-				(SQL_SCCO_READ_ONLY);
+			value = SQL_SCCO_READ_ONLY;
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 			if (ci->updatable_cursors)
 				value |= SQL_SCCO_OPT_ROWVER;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
+			if (ci->drivers.lie)
+				value |= (SQL_SCCO_LOCK | SQL_SCCO_OPT_VALUES);
 			break;
 
 		case SQL_SCROLL_OPTIONS:		/* ODBC 1.0 */
 			len = 4;
-			value = ci->drivers.lie ? (SQL_SO_FORWARD_ONLY |
-									   SQL_SO_STATIC |
-									   SQL_SO_KEYSET_DRIVEN |
-									   SQL_SO_DYNAMIC |
-									   SQL_SO_MIXED)
-				: (ci->drivers.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
+			value = SQL_SO_FORWARD_ONLY;
+			if (!ci->drivers.use_declarefetch)
+				value |= SQL_SO_STATIC;
 			if (ci->updatable_cursors)
-				value |= 0;		/* SQL_SO_KEYSET_DRIVEN in the furure */
+				value |= SQL_SO_KEYSET_DRIVEN;
+			if (ci->drivers.lie)
+				value |= (SQL_SO_DYNAMIC | SQL_SO_MIXED);
 			break;
 
 		case SQL_SEARCH_PATTERN_ESCAPE: /* ODBC 1.0 */
@@ -602,7 +602,7 @@ PGAPI_GetInfo(
 
 		case SQL_STATIC_SENSITIVITY:	/* ODBC 2.0 */
 			len = 4;
-			value = ci->drivers.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
+			value = 0;
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 			if (ci->updatable_cursors)
 				value |= (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES);
@@ -666,7 +666,12 @@ PGAPI_GetInfo(
 
 		case SQL_TXN_ISOLATION_OPTION:	/* ODBC 1.0 */
 			len = 4;
-			value = SQL_TXN_READ_COMMITTED;		/* SQL_TXN_SERIALIZABLE; */
+			if (PG_VERSION_LT(conn, 6.5))
+				value = SQL_TXN_SERIALIZABLE;
+			else if (PG_VERSION_GE(conn, 7.1))
+				value = SQL_TXN_READ_COMMITTED | SQL_TXN_SERIALIZABLE;
+			else
+				value = SQL_TXN_READ_COMMITTED;
 			break;
 
 		case SQL_UNION: /* ODBC 2.0 */
@@ -2097,7 +2102,7 @@ PGAPI_SpecialColumns(
 	RETCODE		result;
 	char		relhasrules[MAX_INFO_STRING];
 
-	mylog("%s: entering...stmt=%u scnm=%x len=%d\n", func, stmt, szTableOwner, cbTableOwner);
+	mylog("%s: entering...stmt=%u scnm=%x len=%d colType=%d\n", func, stmt, szTableOwner, cbTableOwner, fColType);
 
 	if (!stmt)
 	{
@@ -2219,6 +2224,43 @@ PGAPI_SpecialColumns(
 
 				QR_add_tuple(res, row);
 			}
+		}
+	}
+	else
+	{
+		/* use the oid value for the rowid */
+		if (fColType == SQL_BEST_ROWID)
+		{
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
+
+			set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
+			set_tuplefield_string(&row->tuple[1], "oid");
+			set_tuplefield_int2(&row->tuple[2], pgtype_to_concise_type(stmt, PG_TYPE_OID));
+			set_tuplefield_string(&row->tuple[3], "OID");
+			set_tuplefield_int4(&row->tuple[4], pgtype_column_size(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[5], pgtype_buffer_length(stmt, PG_TYPE_OID, PG_STATIC, PG_STATIC));
+			set_tuplefield_int2(&row->tuple[6], pgtype_decimal_digits(stmt, PG_TYPE_OID, PG_STATIC));
+			set_tuplefield_int2(&row->tuple[7], SQL_PC_NOT_PSEUDO);
+
+			QR_add_tuple(res, row);
+
+		}
+		else if (fColType == SQL_ROWVER)
+		{
+			Int2		the_type = PG_TYPE_TID;
+
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
+
+			set_tuplefield_null(&row->tuple[0]);
+			set_tuplefield_string(&row->tuple[1], "ctid");
+			set_tuplefield_int2(&row->tuple[2], pgtype_to_concise_type(stmt, the_type));
+			set_tuplefield_string(&row->tuple[3], pgtype_to_name(stmt, the_type));
+			set_tuplefield_int4(&row->tuple[4], pgtype_column_size(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[5], pgtype_buffer_length(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int2(&row->tuple[6], pgtype_decimal_digits(stmt, the_type, PG_STATIC));
+			set_tuplefield_int2(&row->tuple[7], SQL_PC_NOT_PSEUDO);
+
+			QR_add_tuple(res, row);
 		}
 	}
 
@@ -3124,7 +3166,7 @@ getClientColumnName(ConnectionClass *conn, UInt4 relid, char *serverColumnName, 
 	{
 		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, CLEAR_RESULT_ON_ABORT), res)
 		{
-			if (QR_get_num_tuples(res) > 0)
+			if (QR_get_num_backend_tuples(res) > 0)
 				conn->server_encoding = strdup(QR_get_value_backend_row(res, 0, 0));
 			QR_Destructor(res);
 		}
@@ -3140,7 +3182,7 @@ getClientColumnName(ConnectionClass *conn, UInt4 relid, char *serverColumnName, 
 			relid, serverColumnName);
 		if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
 		{
-			if (QR_get_num_tuples(res) > 0)
+			if (QR_get_num_backend_tuples(res) > 0)
 			{
 				strcpy(saveattnum, QR_get_value_backend_row(res, 0, 0));
 			}
@@ -3165,7 +3207,7 @@ getClientColumnName(ConnectionClass *conn, UInt4 relid, char *serverColumnName, 
 	sprintf(query, "select attname from pg_attribute where attrelid = %u and attnum = %s", relid, saveattnum);
 	if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
 	{
-		if (QR_get_num_tuples(res) > 0)
+		if (QR_get_num_backend_tuples(res) > 0)
 		{
 			ret = strdup(QR_get_value_backend_row(res, 0, 0));
 			*nameAlloced = TRUE;
@@ -4135,7 +4177,7 @@ PGAPI_Procedures(
 	 * The following seems the simplest implementation
 	 */
 	if (conn->schema_support)
-		strcpy(proc_query, "select '' as " "PROCEDURE_CAT" ", case when nspname = 'PUBLIC' then ''::text else nspname end as " "PROCEDURE_SCHEM" ","
+		strcpy(proc_query, "select '' as " "PROCEDURE_CAT" ", nspname as " "PROCEDURE_SCHEM" ","
 		" proname as " "PROCEDURE_NAME" ", '' as " "NUM_INPUT_PARAMS" ","
 		   " '' as " "NUM_OUTPUT_PARAMS" ", '' as " "NUM_RESULT_SETS" ","
 		   " '' as " "REMARKS" ","
@@ -4204,7 +4246,7 @@ usracl_auth(char *usracl, const char *auth)
 static void
 useracl_upd(char (*useracl)[ACLMAX], QResultClass *allures, const char *user, const char *auth)
 {
-	int usercount = QR_get_num_tuples(allures), i, addcnt = 0;
+	int usercount = QR_get_num_backend_tuples(allures), i, addcnt = 0;
 
 mylog("user=%s auth=%s\n", user, auth);
 	if (user[0])
@@ -4315,7 +4357,7 @@ PGAPI_TablePrivileges(
 		return SQL_ERROR;
 	}
 	strncpy_null(proc_query, "select usename, usesysid, usesuper from pg_user", sizeof(proc_query));
-	tablecount = QR_get_num_tuples(res);
+	tablecount = QR_get_num_backend_tuples(res);
 	if (allures = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT), !allures)
 	{
 		QR_Destructor(res);
@@ -4323,7 +4365,7 @@ PGAPI_TablePrivileges(
 		stmt->errormsg = "PGAPI_TablePrivileges query error";
 		return SQL_ERROR;
 	}
-	usercount = QR_get_num_tuples(allures);
+	usercount = QR_get_num_backend_tuples(allures);
 	useracl = (char (*)[ACLMAX]) malloc(usercount * sizeof(char [ACLMAX]));
 	for (i = 0; i < tablecount; i++)
 	{ 

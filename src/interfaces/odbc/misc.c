@@ -105,7 +105,7 @@ mylog(char *fmt,...)
 		if (!LOGFP)
 		{
 			generate_filename(MYLOGDIR, MYLOGFILE, filebuf);
-			LOGFP = fopen(filebuf, PG_BINARY_W);
+			LOGFP = fopen(filebuf, PG_BINARY_A);
 			setbuf(LOGFP, NULL);
 		}
 
@@ -138,7 +138,7 @@ qlog(char *fmt,...)
 		if (!LOGFP)
 		{
 			generate_filename(QLOGDIR, QLOGFILE, filebuf);
-			LOGFP = fopen(filebuf, PG_BINARY_W);
+			LOGFP = fopen(filebuf, PG_BINARY_A);
 			setbuf(LOGFP, NULL);
 		}
 
@@ -284,8 +284,13 @@ schema_strcat(char *buf, const char *fmt, const char *s, int len, const char *tb
 {
 	if (!s || 0 == len)
 	{
-		if (tbname && (tbnmlen > 0 || tbnmlen == SQL_NTS))
-			return my_strcat(buf, fmt, "public", 6);
+		/*
+		 *	I can find no appropriate way to find
+		 *	the CURRENT SCHEMA. If you are lucky
+		 *	you can get expected result.
+		 */
+		/***** if (tbname && (tbnmlen > 0 || tbnmlen == SQL_NTS))
+			return my_strcat(buf, fmt, "public", 6); *****/
 		return NULL;
 	}
 	return my_strcat(buf, fmt, s, len);

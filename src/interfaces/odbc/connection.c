@@ -237,7 +237,7 @@ CC_conninfo_init(ConnInfo *conninfo)
 {
 		memset(conninfo, 0, sizeof(ConnInfo));
 		conninfo->disallow_premature = -1;
-		conninfo->updatable_cursors = -1;
+		conninfo->allow_keyset = -1;
 		conninfo->lf_conversion = -1;
 		conninfo->true_is_minus1 = -1;
 		memcpy(&(conninfo->drivers), &globals, sizeof(globals));
@@ -293,6 +293,7 @@ CC_Constructor()
 		rv->unicode = 0;
 		rv->result_uncommitted = 0;
 		rv->schema_support = 0;
+		rv->isolation = SQL_TXN_READ_COMMITTED;
 #ifdef	MULTIBYTE
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
@@ -996,6 +997,12 @@ another_version_retry:
 	}
 #endif /* UNICODE_SUPPORT */
 #endif /* MULTIBYTE */
+	ci->updatable_cursors = 0;
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	if (!ci->drivers.use_declarefetch &&
+		PG_VERSION_GE(self, 7.0)) /* Tid scan since 7.0 */
+		ci->updatable_cursors = ci->allow_keyset;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 
 	CC_clear_error(self);		/* clear any initial command errors */
 	self->status = CONN_CONNECTED;
@@ -1130,7 +1137,7 @@ void	CC_on_commit(ConnectionClass *conn)
 	}
 	conn->result_uncommitted = 0;
 }
-void	CC_on_abort(ConnectionClass *conn, BOOL set_no_trans)
+void	CC_on_abort(ConnectionClass *conn, UDWORD opt)
 {
 	if (CC_is_in_trans(conn))
 	{
@@ -1138,9 +1145,11 @@ void	CC_on_abort(ConnectionClass *conn, BOOL set_no_trans)
 		if (conn->result_uncommitted)
 			ProcessRollback(conn, TRUE);
 #endif /* DRIVER_CURSOR_IMPLEMENT */
-		if (set_no_trans)
+		if (0 != (opt & NO_TRANS))
 			CC_set_no_trans(conn);
 	}
+	if (0 != (opt & CONN_DEAD))
+		conn->status = CONN_DOWN;
 	conn->result_uncommitted = 0;
 }
 
@@ -1162,8 +1171,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 	BOOL	clear_result_on_abort = ((flag & CLEAR_RESULT_ON_ABORT) != 0),
 		create_keyset = ((flag & CREATE_KEYSET) != 0),
 		issue_begin = ((flag & GO_INTO_TRANSACTION) != 0 && !CC_is_in_trans(self));
-	char		swallow,
-			   *wq;
+	char		swallow, *wq, *ptr;
 	int			id;
 	SocketClass *sock = self->sock;
 	int			maxlen,
@@ -1173,8 +1181,8 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 				query_completed = FALSE,
 				before_64 = PG_VERSION_LT(self, 6.4),
 				aborted = FALSE,
-				used_passed_result_object = FALSE,
-				set_no_trans;
+				used_passed_result_object = FALSE;
+	UDWORD		abort_opt;
 
 	/* ERROR_MSG_LENGTH is suffcient */
 	static char msgbuffer[ERROR_MSG_LENGTH + 1];
@@ -1201,7 +1209,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 	{
 		self->errornumber = CONNECTION_COULD_NOT_SEND;
 		self->errormsg = "Could not send Query to backend";
-		CC_on_abort(self, TRUE);
+		CC_on_abort(self, NO_TRANS | CONN_DEAD);
 		return NULL;
 	}
 
@@ -1210,7 +1218,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 	{
 		self->errornumber = CONNECTION_COULD_NOT_SEND;
 		self->errormsg = "Could not send Query to backend";
-		CC_on_abort(self, TRUE);
+		CC_on_abort(self, NO_TRANS | CONN_DEAD);
 		return NULL;
 	}
 
@@ -1223,7 +1231,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 	{
 		self->errornumber = CONNECTION_COULD_NOT_SEND;
 		self->errormsg = "Could not send Query to backend";
-		CC_on_abort(self, TRUE);
+		CC_on_abort(self, NO_TRANS | CONN_DEAD);
 		return NULL;
 	}
 
@@ -1260,7 +1268,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 			self->errormsg = "No response from the backend";
 
 			mylog("send_query: 'id' - %s\n", self->errormsg);
-			CC_on_abort(self, TRUE);
+			CC_on_abort(self, NO_TRANS | CONN_DEAD);
 			ReadyToReturn = TRUE;
 			retres = NULL;
 			break;
@@ -1284,7 +1292,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 					self->errornumber = CONNECTION_NO_RESPONSE;
 					self->errormsg = "No response from backend while receiving a portal query command";
 					mylog("send_query: 'C' - %s\n", self->errormsg);
-					CC_on_abort(self, TRUE);
+					CC_on_abort(self, NO_TRANS | CONN_DEAD);
 					ReadyToReturn = TRUE;
 					retres = NULL;
 				}
@@ -1312,11 +1320,20 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 					else if (strnicmp(cmdbuffer, "COMMIT", 6) == 0)
 						CC_on_commit(self);
 					else if (strnicmp(cmdbuffer, "ROLLBACK", 8) == 0)
-						CC_on_abort(self, TRUE);
+						CC_on_abort(self, NO_TRANS);
 					else if (strnicmp(cmdbuffer, "END", 3) == 0)
 						CC_on_commit(self);
 					else if (strnicmp(cmdbuffer, "ABORT", 5) == 0)
-						CC_on_abort(self, TRUE);
+						CC_on_abort(self, NO_TRANS);
+					else
+					{
+						trim(cmdbuffer); /* get rid of trailing space */ 
+						ptr = strrchr(cmdbuffer, ' ');
+						if (ptr)
+							res->recent_processed_row_count = atoi(ptr + 1);
+						else
+							res->recent_processed_row_count = -1;
+					}
 
 					if (QR_command_successful(res))
 						QR_set_status(res, PGRES_COMMAND_OK);
@@ -1400,15 +1417,15 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 				qlog("ERROR from backend during send_query: '%s'\n", msgbuffer);
 
 				/* We should report that an error occured. Zoltan */
-				set_no_trans = FALSE;
+				abort_opt = 0;
 				if (!strncmp(msgbuffer, "FATAL", 5))
 				{
 					self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
-					set_no_trans = TRUE;
+					abort_opt = NO_TRANS | CONN_DEAD;
 				}
 				else
 					self->errornumber = CONNECTION_SERVER_REPORTED_WARNING;
-				CC_on_abort(self, set_no_trans);
+				CC_on_abort(self, abort_opt);
 				QR_set_status(res, PGRES_FATAL_ERROR);
 				QR_set_message(res, msgbuffer);
 				QR_set_aborted(res, TRUE);
@@ -1497,7 +1514,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi, UDWORD flag)
 			default:
 				self->errornumber = CONNECTION_BACKEND_CRAZY;
 				self->errormsg = "Unexpected protocol character from backend (send_query)";
-				CC_on_abort(self, TRUE);
+				CC_on_abort(self, NO_TRANS | CONN_DEAD);
 
 				mylog("send_query: error - %s\n", self->errormsg);
 				ReadyToReturn = TRUE;
@@ -1585,7 +1602,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 	{
 		self->errornumber = CONNECTION_COULD_NOT_SEND;
 		self->errormsg = "Could not send function to backend";
-		CC_on_abort(self, TRUE);
+		CC_on_abort(self, NO_TRANS | CONN_DEAD);
 		return FALSE;
 	}
 
@@ -1594,7 +1611,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 	{
 		self->errornumber = CONNECTION_COULD_NOT_SEND;
 		self->errormsg = "Could not send function to backend";
-		CC_on_abort(self, TRUE);
+		CC_on_abort(self, NO_TRANS | CONN_DEAD);
 		return FALSE;
 	}
 
@@ -1643,7 +1660,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 			case 'E':
 				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 				self->errormsg = msgbuffer;
-				CC_on_abort(self, FALSE);
+				CC_on_abort(self, 0);
 
 				mylog("send_function(V): 'E' - %s\n", self->errormsg);
 				qlog("ERROR from backend during send_function: '%s'\n", self->errormsg);
@@ -1656,7 +1673,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 			default:
 				self->errornumber = CONNECTION_BACKEND_CRAZY;
 				self->errormsg = "Unexpected protocol character from backend (send_function, args)";
-				CC_on_abort(self, TRUE);
+				CC_on_abort(self, NO_TRANS | CONN_DEAD);
 
 				mylog("send_function: error - %s\n", self->errormsg);
 				return FALSE;
@@ -1690,7 +1707,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 			case 'E':
 				SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
 				self->errormsg = msgbuffer;
-				CC_on_abort(self, FALSE);
+				CC_on_abort(self, 0);
 				mylog("send_function(G): 'E' - %s\n", self->errormsg);
 				qlog("ERROR from backend during send_function: '%s'\n", self->errormsg);
 
@@ -1711,7 +1728,7 @@ CC_send_function(ConnectionClass *self, int fnid, void *result_buf, int *actual_
 			default:
 				self->errornumber = CONNECTION_BACKEND_CRAZY;
 				self->errormsg = "Unexpected protocol character from backend (send_function, result)";
-				CC_on_abort(self, TRUE);
+				CC_on_abort(self, NO_TRANS | CONN_DEAD);
 
 				mylog("send_function: error - %s\n", self->errormsg);
 				return FALSE;
