@@ -1,0 +1,99 @@
+QUERY: CREATE TABLE RELTIME_TBL (f1 reltime);
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 1 minute');
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 5 hour');
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 10 day');
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 34 year');
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 3 months');
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 14 seconds ago');
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('badly formatted reltime');
+QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 30 eons ago');
+QUERY: SELECT '' AS eight, RELTIME_TBL.*;
+eight|f1               
+-----+-----------------
+     |@ 1 minute       
+     |@ 5 hours        
+     |@ 10 days        
+     |@ 34 years       
+     |@ 3 months       
+     |@ 14 seconds ago 
+     |Undefined RelTime
+     |Undefined RelTime
+(8 rows)
+
+QUERY: SELECT '' AS five, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 <> '@ 10 days'::reltime;
+five|f1              
+----+----------------
+    |@ 1 minute      
+    |@ 5 hours       
+    |@ 34 years      
+    |@ 3 months      
+    |@ 14 seconds ago
+(5 rows)
+
+QUERY: SELECT '' AS three, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 <= '@ 5 hours'::reltime;
+three|f1              
+-----+----------------
+     |@ 1 minute      
+     |@ 5 hours       
+     |@ 14 seconds ago
+(3 rows)
+
+QUERY: SELECT '' AS three, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 < '@ 1 day'::reltime;
+three|f1              
+-----+----------------
+     |@ 1 minute      
+     |@ 5 hours       
+     |@ 14 seconds ago
+(3 rows)
+
+QUERY: SELECT '' AS one, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 = '@ 34 years'::reltime;
+one|f1        
+---+----------
+   |@ 34 years
+(1 row)
+
+QUERY: SELECT '' AS two, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 >= '@ 1 month'::reltime;
+two|f1        
+---+----------
+   |@ 34 years
+   |@ 3 months
+(2 rows)
+
+QUERY: SELECT '' AS five, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 > '@ 3 seconds ago'::reltime;
+five|f1        
+----+----------
+    |@ 1 minute
+    |@ 5 hours 
+    |@ 10 days 
+    |@ 34 years
+    |@ 3 months
+(5 rows)
+
+QUERY: SELECT '' AS fifteen, r1.*, r2.*
+   FROM RELTIME_TBL r1, RELTIME_TBL r2
+   WHERE r1.f1 > r2.f1;
+fifteen|f1        |f1              
+-------+----------+----------------
+       |@ 5 hours |@ 1 minute      
+       |@ 10 days |@ 1 minute      
+       |@ 34 years|@ 1 minute      
+       |@ 3 months|@ 1 minute      
+       |@ 10 days |@ 5 hours       
+       |@ 34 years|@ 5 hours       
+       |@ 3 months|@ 5 hours       
+       |@ 34 years|@ 10 days       
+       |@ 3 months|@ 10 days       
+       |@ 34 years|@ 3 months      
+       |@ 1 minute|@ 14 seconds ago
+       |@ 5 hours |@ 14 seconds ago
+       |@ 10 days |@ 14 seconds ago
+       |@ 34 years|@ 14 seconds ago
+       |@ 3 months|@ 14 seconds ago
+(15 rows)
+

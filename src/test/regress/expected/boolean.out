@@ -1,0 +1,179 @@
+QUERY: SELECT 1 AS one;
+one
+---
+  1
+(1 row)
+
+QUERY: SELECT 't'::bool AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: SELECT 'f'::bool AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT 't'::bool or 'f'::bool AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: SELECT 't'::bool and 'f'::bool AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT not 'f'::bool AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: SELECT 't'::bool = 'f'::bool AS false;
+false
+-----
+f    
+(1 row)
+
+QUERY: SELECT 't'::bool <> 'f'::bool AS true;
+true
+----
+t   
+(1 row)
+
+QUERY: CREATE TABLE BOOLTBL1 (f1 bool);
+QUERY: INSERT INTO BOOLTBL1 (f1) VALUES ('t'::bool);
+QUERY: INSERT INTO BOOLTBL1 (f1) VALUES ('True'::bool);
+QUERY: INSERT INTO BOOLTBL1 (f1) VALUES ('true'::bool);
+QUERY: SELECT '' AS t_3, BOOLTBL1.*;
+t_3|f1
+---+--
+   |t 
+   |t 
+   |t 
+(3 rows)
+
+QUERY: SELECT '' AS t_3, BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE f1 = 'true'::bool;
+t_3|f1
+---+--
+   |t 
+   |t 
+   |t 
+(3 rows)
+
+QUERY: SELECT '' AS t_3, BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE f1 <> 'false'::bool;
+t_3|f1
+---+--
+   |t 
+   |t 
+   |t 
+(3 rows)
+
+QUERY: SELECT '' AS zero, BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE booleq('false'::bool, f1);
+zero|f1
+----+--
+(0 rows)
+
+QUERY: INSERT INTO BOOLTBL1 (f1) VALUES ('f'::bool);
+QUERY: SELECT '' AS f_1, BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE f1 = 'false'::bool;
+f_1|f1
+---+--
+   |f 
+(1 row)
+
+QUERY: CREATE TABLE BOOLTBL2 (f1 bool);
+QUERY: INSERT INTO BOOLTBL2 (f1) VALUES ('f'::bool);
+QUERY: INSERT INTO BOOLTBL2 (f1) VALUES ('false'::bool);
+QUERY: INSERT INTO BOOLTBL2 (f1) VALUES ('False'::bool);
+QUERY: INSERT INTO BOOLTBL2 (f1)
+   VALUES ('XXX'::bool);
+QUERY: SELECT '' AS f_4, BOOLTBL2.*;
+f_4|f1
+---+--
+   |f 
+   |f 
+   |f 
+   |f 
+(4 rows)
+
+QUERY: SELECT '' AS tf_12, BOOLTBL1.*, BOOLTBL2.*
+   WHERE BOOLTBL2.f1 <> BOOLTBL1.f1;
+tf_12|f1|f1
+-----+--+--
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+(12 rows)
+
+QUERY: SELECT '' AS tf_12, BOOLTBL1.*, BOOLTBL2.*
+   WHERE boolne(BOOLTBL2.f1,BOOLTBL1.f1);
+tf_12|f1|f1
+-----+--+--
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+     |t |f 
+(12 rows)
+
+QUERY: SELECT '' AS ff_4, BOOLTBL1.*, BOOLTBL2.*
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 and BOOLTBL1.f1 = 'false'::bool;
+ff_4|f1|f1
+----+--+--
+    |f |f 
+    |f |f 
+    |f |f 
+    |f |f 
+(4 rows)
+
+QUERY: SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool;
+tf_12_ff_4|f1|f1
+----------+--+--
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |t |f 
+          |f |f 
+          |f |f 
+          |f |f 
+          |f |f 
+(16 rows)
+
