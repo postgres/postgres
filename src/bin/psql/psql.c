@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.180 1999/05/26 20:08:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.181 1999/05/30 15:32:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3118,7 +3118,7 @@ handleCopyIn(PGconn *conn, const bool mustprompt, FILE *copystream)
 	char		copybuf[COPYBUFSIZ];
 	char	   *s;
 	int			buflen;
-	int			c;
+	int			c = 0;
 
 	if (mustprompt)
 	{
@@ -3138,18 +3138,23 @@ handleCopyIn(PGconn *conn, const bool mustprompt, FILE *copystream)
 		while (!linedone)
 		{						/* for each buffer ... */
 			s = copybuf;
-			buflen = COPYBUFSIZ;
-			for (; buflen > 1 &&
-				 !(linedone = (c = getc(copystream)) == '\n' || c == EOF);
-				 --buflen)
+			for (buflen = COPYBUFSIZ; buflen > 1; buflen--)
+			{
+				c = getc(copystream);
+				if (c == '\n' || c == EOF)
+				{
+					linedone = true;
+					break;
+				}
 				*s++ = c;
+			}
+			*s = '\0';
 			if (c == EOF)
 			{
 				PQputline(conn, "\\.");
 				copydone = true;
 				break;
 			}
-			*s = '\0';
 			PQputline(conn, copybuf);
 			if (firstload)
 			{
