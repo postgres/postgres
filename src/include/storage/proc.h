@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.41 2001/03/22 04:01:08 momjian Exp $
+ * $Id: proc.h,v 1.42 2001/05/25 15:34:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,9 @@ struct proc
 								 * were starting our xact: vacuum must not
 								 * remove tuples deleted by xid >= xmin ! */
 
+	Oid			startOid;		/* oid at startup, used by vacuum to find
+								 * orphaned files.
+								 */
 	/*
 	 * XLOG location of first XLOG record written by this backend's
 	 * current transaction.  If backend is not in a transaction or hasn't

@@ -947,11 +947,7 @@ pgsource_print(pgsourceobject * self, FILE *fp, int flags)
 
 /* query type definition */
 staticforward PyTypeObject PgSourceType = {
-#ifndef MS_WIN32
-	PyObject_HEAD_INIT(&PyType_Type)
-#else
 	PyObject_HEAD_INIT(NULL)
-#endif
 
 	0,							/* ob_size */
 	"pgsourceobject",			/* tp_name */
@@ -3141,7 +3137,8 @@ init_pg(void)
 			   *v;
 
 	/* Initialize here because some WIN platforms get confused otherwise */
-	PglargeType.ob_type = PgType.ob_type = PgQueryType.ob_type = &PyType_Type;
+	PglargeType.ob_type = PgType.ob_type = PgQueryType.ob_type =
+		PgSourceType.ob_type = &PyType_Type;
 
 	/* Create the module and add the functions */
 	mod = Py_InitModule4("_pg", pg_methods, pg__doc__, NULL, PYTHON_API_VERSION);

@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.212 2001/04/19 19:09:23 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.213 2001/05/25 15:34:50 momjian Exp $
  *
  * NOTES
  *
@@ -58,6 +58,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -243,6 +244,7 @@ static void RandomSalt(char *salt);
 static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
+static void RemovePgSorttemp(void);
 
 static pid_t SSDataBase(int xlop);
 
@@ -594,6 +596,9 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (!CreateDataDirLockFile(DataDir, true))
 		ExitPostmaster(1);
+
+	/* Remove old sort files */
+	RemovePgSorttemp();
 
 	/*
 	 * Establish input sockets.
@@ -2449,4 +2454,52 @@ CreateOptsFile(int argc, char *argv[])
 
 	fclose(fp);
 	return true;
+}
+
+
+/*
+ * Remove old sort files
+ */
+static void
+RemovePgSorttemp(void)
+{
+	char 		db_path[MAXPGPATH];
+	char 		temp_path[MAXPGPATH];
+	char 		rm_path[MAXPGPATH];
+	DIR		   *db_dir;
+	DIR		   *temp_dir;
+	struct dirent  *db_de;
+	struct dirent  *temp_de;
+
+	/*
+	 * Cycle through pg_tempsort for all databases and
+	 * and remove old sort files.
+	 */
+	/* trailing slash forces symlink following */
+	snprintf(db_path, sizeof(db_path), "%s/base/",	DataDir);
+	if ((db_dir = opendir(db_path)) != NULL)
+	{
+		while ((db_de = readdir(db_dir)) != NULL)
+		{
+			snprintf(temp_path, sizeof(temp_path),
+				"%s/%s/%s/",	db_path, db_de->d_name, SORT_TEMP_DIR);
+			if ((temp_dir = opendir(temp_path)) != NULL)
+			{
+				while ((temp_de = readdir(temp_dir)) != NULL)
+				{
+					if (strspn(temp_de->d_name, "0123456789.") ==
+						strlen(temp_de->d_name))
+					{
+						snprintf(rm_path, sizeof(temp_path),
+							"%s/%s/%s/%s",
+							db_path, db_de->d_name,
+							SORT_TEMP_DIR, temp_de->d_name);
+						unlink(rm_path);
+					}
+				}
+				closedir(temp_dir);
+			}
+		}
+		closedir(db_dir);
+	}
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.38 2001/03/22 03:59:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.39 2001/05/25 15:34:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,10 @@
 #include "access/transam.h"
 #include "access/xlog.h"
 #include "storage/proc.h"
+#include "storage/sinval.h"
+#include "storage/sinvaladt.h"
 
+extern SISeg	   *shmInvalBuffer;
 
 /* Number of XIDs and OIDs to prefetch (preallocate) per XLOG write */
 #define VAR_XID_PREFETCH		1024
@@ -143,3 +146,44 @@ CheckMaxObjectId(Oid assigned_oid)
 
 	SpinRelease(OidGenLockId);
 }
+
+/*
+ * GetMinBackendOid -- returns lowest oid stored on startup of
+ * each backend.
+ */
+Oid
+GetMinStartupOid(void)
+{
+	SISeg	   *segP = shmInvalBuffer;
+	ProcState  *stateP = segP->procState;
+	int			index;
+	Oid			min_oid;
+
+	/* prime with current oid, no need for lock */
+	min_oid = ShmemVariableCache->nextOid;
+
+	SpinAcquire(SInvalLock);
+
+	for (index = 0; index < segP->lastBackend; index++)
+	{
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
+
+		if (pOffset != INVALID_OFFSET)
+		{
+			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			Oid			proc_oid;
+
+			proc_oid = proc->startOid;	/* we don't use spin-locking in
+									 * AbortTransaction() ! */
+			if (proc == MyProc || proc_oid <= BootstrapObjectIdData)
+				continue;
+			if (proc_oid < min_oid)
+				min_oid = proc_oid;
+		}
+	}
+
+	SpinRelease(SInvalLock);
+	return min_oid;
+}
+
+
