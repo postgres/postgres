@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.5 1996/08/14 04:51:34 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.6 1996/08/27 06:55:28 scrappy Exp $
  *
  * NOTES
  *
@@ -33,43 +33,47 @@
  *-------------------------------------------------------------------------
  */
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
+#include "config.h"
+
 #include <string.h>
 #include <stdlib.h>
-#ifndef WIN32
-#include <unistd.h>
-#endif /* WIN32 */
+
+#if !defined(NO_UNISTD_H)
+# include <unistd.h>
+#endif /* !NO_UNISTD_H */
+
 #include <ctype.h>
 #include <sys/types.h>		/* for fd_set stuff */
 #include <sys/stat.h>		/* for umask */
 #include <sys/time.h>
 #include <sys/param.h>		/* for MAXHOSTNAMELEN on most */
-#ifdef WIN32
-#include <winsock.h>
-#include <limits.h>
-#define MAXINT        INT_MAX
+
+#if defined(USES_WINSOCK)
+# include <winsock.h>
+# include <limits.h>
+# define MAXINT        INT_MAX
 #else
-#include <netdb.h>		/* for MAXHOSTNAMELEN on some */
-#ifndef MAXHOSTNAMELEN		/* for MAXHOSTNAMELEN everywhere else */
-#include <arpa/nameser.h>
-#define MAXHOSTNAMELEN		MAXDNAME
-#endif
-# if defined(PORTNAME_BSD44_derived) || \
-     defined(PORTNAME_bsdi) || \
-     defined(PORTNAME_bsdi_2_1)
-# include <machine/limits.h>
-# define MAXINT		INT_MAX
+# include <netdb.h>		/* for MAXHOSTNAMELEN on some */
+# ifndef MAXHOSTNAMELEN		/* for MAXHOSTNAMELEN everywhere else */
+#  include <arpa/nameser.h>
+#  define MAXHOSTNAMELEN		MAXDNAME
+# endif
+# if defined(USE_LIMITS_H)
+#  include <machine/limits.h>
+#  define MAXINT		INT_MAX
 # else
-# include <values.h>
-# endif /* !PORTNAME_BSD44_derived */
-#include <sys/wait.h>
-#endif /* WIN32 */
+#  include <values.h>
+# endif /* !USE_LIMITS_H */
+# include <sys/wait.h>
+#endif /* USES_WINSOCK */
+
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 
-#if defined(PORTNAME_aix)
-#include <sys/select.h>
-#endif /* PORTNAME_aix */
+#if defined(NEED_SYS_SELECT_H)
+# include <sys/select.h>
+#endif /* NEED_SYS_SELECT_H */
 
 #include "storage/ipc.h"
 #include "libpq/libpq.h"
@@ -81,15 +85,14 @@
 #include "storage/proc.h"
 #include "utils/elog.h"
 
-#ifdef DBX_VERSION
-#define FORK() (0)
+#if defined(DBX_VERSION)
+# define FORK() (0)
 #else
-#if defined(PORTNAME_irix5)
-/* IRIX 5 does not have vfork() */
-#define FORK() fork()
-#else
-#define FORK() vfork()
-#endif
+# if defined(NO_VFORK)
+#  define FORK() fork()
+# else
+#  define FORK() vfork()
+# endif
 #endif
 
 /*
@@ -140,7 +143,7 @@ static int	SendStop = 0;
 static int MultiplexedBackends = 0;
 static int MultiplexedBackendPort;
 
-#ifdef HBA
+#if defined(HBA)
 static int useHostBasedAuth = 1;
 #else
 static int useHostBasedAuth = 0;
@@ -153,7 +156,7 @@ static void pmdaemonize(void);
 static int ConnStartup(Port *port);
 static int ConnCreate(int serverFd, int *newFdP);
 static void reset_shared(short port);
-#if defined(PORTNAME_linux)
+#if defined(linux)
 static void pmdie(int);
 static void reaper(int);
 static void dumpstatus(int);
@@ -184,7 +187,7 @@ PostmasterMain(int argc, char *argv[])
     int		status;
     int		silentflag = 0;
     char	hostbuf[MAXHOSTNAMELEN];
-#ifdef WIN32
+#if defined(WIN32)
     WSADATA WSAData;
 #endif /* WIN32 */
     
@@ -313,7 +316,7 @@ PostmasterMain(int argc, char *argv[])
     }
     
 
-#ifdef WIN32
+#if defined(WIN32)
     if ((status = WSAStartup(MAKEWORD(1,1), &WSAData)) == 0)
       (void) printf("%s\nInitializing WinSock: %s\n", WSAData.szDescription, WSAData.szSystemStatus);
     else
@@ -951,7 +954,7 @@ DoExec(StartupInfo *packet, int portFd)
     char	dbbuf[ARGV_SIZE + 1];
     int	ac = 0;
     int i;
-#ifdef WIN32
+#if defined(WIN32)
     char      win32_args[(2 * ARGV_SIZE) + 1];
     PROCESS_INFORMATION piProcInfo;
     STARTUPINFO siStartInfo;
@@ -984,7 +987,7 @@ DoExec(StartupInfo *packet, int portFd)
     if (packet->tty[0]) {
 	(void) strncpy(ttybuf, packet->tty, ARGV_SIZE);
 	av[ac++] = "-o";
-#ifdef WIN32
+#if defined(WIN32)
      /* BIG HACK - The front end is passing "/dev/null" here which
      ** causes new backends to fail. So, as a very special case,
      ** use a real NT filename.
