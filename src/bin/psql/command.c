@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.119 2004/07/11 13:29:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.120 2004/07/11 21:34:03 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -375,6 +375,7 @@ exec_command(const char *cmd,
 			fname = psql_scan_slash_option(scan_state,
 										   OT_NORMAL, NULL, true);
 			expand_tilde(&fname);
+			canonicalize_path(fname);
 			status = do_edit(fname, query_buf) ? CMD_NEWEDIT : CMD_ERROR;
 			free(fname);
 		}
@@ -777,8 +778,10 @@ exec_command(const char *cmd,
 					fd = popen(&fname[1], "w");
 				}
 				else
+				{
+					canonicalize_path(fname);
 					fd = fopen(fname, "w");
-
+				}
 				if (!fd)
 				{
 					psql_error("%s: %s\n", fname, strerror(errno));
@@ -1122,7 +1125,6 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 
 	if (filename_arg)
 		fname = filename_arg;
-
 	else
 	{
 		/* make a temp file to edit */
@@ -1262,6 +1264,7 @@ process_file(char *filename)
 	if (!filename)
 		return false;
 
+	canonicalize_path(filename);
 	fd = fopen(filename, PG_BINARY_R);
 
 	if (!fd)

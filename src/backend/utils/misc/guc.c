@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.214 2004/07/11 00:18:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.215 2004/07/11 21:34:00 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -113,6 +113,7 @@ static const char *assign_custom_variable_classes(const char *newval, bool doit,
 static bool assign_stage_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
+static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
 
 static void ReadConfigFile(char *filename, GucContext context);
 
@@ -1470,7 +1471,7 @@ static struct config_string ConfigureNamesString[] =
 						 "the specified file.")
 		},
 		&Dynamic_library_path,
-		"$libdir", NULL, NULL
+		"$libdir", assign_canonical_path, NULL
 	},
 
 	{
@@ -1556,7 +1557,7 @@ static struct config_string ConfigureNamesString[] =
 			GUC_LIST_INPUT | GUC_LIST_QUOTE
 		},
 		&preload_libraries_string,
-		"", NULL, NULL
+		"", assign_canonical_path, NULL
 	},
 
 	{
@@ -1678,7 +1679,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL
 		},
 		&UnixSocketDir,
-		"", NULL, NULL
+		"", assign_canonical_path, NULL
 	},
 
 	{
@@ -1712,25 +1713,25 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"pgdata", PGC_POSTMASTER, 0, gettext_noop("Sets the location of the data directory"), NULL}, 
 		&guc_pgdata,
-		NULL, NULL, NULL
+		NULL, assign_canonical_path, NULL
 	},
 
 	{
 		{"hba_conf", PGC_SIGHUP, 0, gettext_noop("Sets the location of the \"hba\" configuration file"), NULL}, 
 		&guc_hbafile,
-		NULL, NULL, NULL
+		NULL, assign_canonical_path, NULL
 	},
 
 	{
 		{"ident_conf", PGC_SIGHUP, 0, gettext_noop("Sets the location of the \"ident\" configuration file"), NULL}, 
 		&guc_identfile,
-		NULL, NULL, NULL
+		NULL, assign_canonical_path, NULL
 	},
 
 	{
 		{"external_pidfile", PGC_POSTMASTER, 0, gettext_noop("Writes the postmaster PID to the specified file"), NULL},
 		&external_pidfile,
-		NULL, NULL, NULL
+		NULL, assign_canonical_path, NULL
 	},
 
 	/* End-of-list marker */
@@ -5160,8 +5161,7 @@ assign_log_min_messages(const char *newval,
 }
 
 static const char *
-assign_client_min_messages(const char *newval,
-						   bool doit, GucSource source)
+assign_client_min_messages(const char *newval, bool doit, GucSource source)
 {
 	return (assign_msglvl(&client_min_messages, newval, doit, source));
 }
@@ -5428,6 +5428,21 @@ assign_transaction_read_only(bool newval, bool doit, GucSource source)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("cannot set transaction read only mode inside a subtransaction")));
 	return true;
+}
+
+static const char *
+assign_canonical_path(const char *newval, bool doit, GucSource source)
+{
+	
+	if (doit)
+	{
+		/* We have to create a new pointer to force the change */
+		char *canon_val = guc_strdup(FATAL, newval);
+		canonicalize_path(canon_val);
+		return canon_val;
+	}
+	else
+		return newval;
 }
 
 #include "guc-file.c"

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.49 2004/07/11 13:29:15 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.50 2004/07/11 21:34:03 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -512,6 +512,8 @@ do_copy(const char *args)
 	{
 		appendPQExpBuffer(&query, " FORCE NOT NULL %s", options->force_notnull_list);
 	}
+
+	canonicalize_path(options->file);
 
 	if (options->from)
 	{

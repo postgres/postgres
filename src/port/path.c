@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.22 2004/07/11 02:59:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.23 2004/07/11 21:34:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #endif
 
 const static char *relative_path(const char *bin_path, const char *other_path);
+static void make_relative(const char *my_exec_path, const char *p, char *ret_path);
 static void trim_directory(char *path);
 static void trim_trailing_separator(char *path);
 
@@ -42,15 +43,6 @@ static void trim_trailing_separator(char *path);
 	while (IS_DIR_SEP((p)[0]) && (IS_DIR_SEP((p)[1]) || !(p)[1])) \
 		(p)++; \
 }
-
-/* Macro creates a relative path */
-#define MAKE_RELATIVE \
-do { \
-		StrNCpy(path, my_exec_path, MAXPGPATH); \
-		trim_directory(path); \
-		trim_directory(path); \
-		snprintf(ret_path, MAXPGPATH, "%s/%s", path, p); \
-} while (0)
 
 /*
  *	first_dir_separator
@@ -140,13 +132,13 @@ get_progname(const char *argv0)
 void
 get_share_path(const char *my_exec_path, char *ret_path)
 {
-	char path[MAXPGPATH];
 	const char *p;
 	
 	if ((p = relative_path(PGBINDIR, PGSHAREDIR)))
-		MAKE_RELATIVE;
+		make_relative(my_exec_path, p, ret_path);
 	else
 		StrNCpy(ret_path, PGSHAREDIR, MAXPGPATH);
+	canonicalize_path(ret_path);
 }
 
 
@@ -157,13 +149,13 @@ get_share_path(const char *my_exec_path, char *ret_path)
 void
 get_etc_path(const char *my_exec_path, char *ret_path)
 {
-	char path[MAXPGPATH];
 	const char *p;
 	
 	if ((p = relative_path(PGBINDIR, SYSCONFDIR)))
-		MAKE_RELATIVE;
+		make_relative(my_exec_path, p, ret_path);
 	else
 		StrNCpy(ret_path, SYSCONFDIR, MAXPGPATH);
+	canonicalize_path(ret_path);
 }
 
 
@@ -174,13 +166,13 @@ get_etc_path(const char *my_exec_path, char *ret_path)
 void
 get_include_path(const char *my_exec_path, char *ret_path)
 {
-	char path[MAXPGPATH];
 	const char *p;
 	
 	if ((p = relative_path(PGBINDIR, INCLUDEDIR)))
-		MAKE_RELATIVE;
+		make_relative(my_exec_path, p, ret_path);
 	else
 		StrNCpy(ret_path, INCLUDEDIR, MAXPGPATH);
+	canonicalize_path(ret_path);
 }
 
 
@@ -191,13 +183,13 @@ get_include_path(const char *my_exec_path, char *ret_path)
 void
 get_pkginclude_path(const char *my_exec_path, char *ret_path)
 {
-	char path[MAXPGPATH];
 	const char *p;
 	
 	if ((p = relative_path(PGBINDIR, PKGINCLUDEDIR)))
-		MAKE_RELATIVE;
+		make_relative(my_exec_path, p, ret_path);
 	else
 		StrNCpy(ret_path, PKGINCLUDEDIR, MAXPGPATH);
+	canonicalize_path(ret_path);
 }
 
 
@@ -210,13 +202,13 @@ get_pkginclude_path(const char *my_exec_path, char *ret_path)
 void
 get_pkglib_path(const char *my_exec_path, char *ret_path)
 {
-	char path[MAXPGPATH];
 	const char *p;
 	
 	if ((p = relative_path(PGBINDIR, PKGLIBDIR)))
-		MAKE_RELATIVE;
+		make_relative(my_exec_path, p, ret_path);
 	else
 		StrNCpy(ret_path, PKGLIBDIR, MAXPGPATH);
+	canonicalize_path(ret_path);
 }
 
 
@@ -229,13 +221,13 @@ get_pkglib_path(const char *my_exec_path, char *ret_path)
 void
 get_locale_path(const char *my_exec_path, char *ret_path)
 {
-	char path[MAXPGPATH];
 	const char *p;
 	
 	if ((p = relative_path(PGBINDIR, LOCALEDIR)))
-		MAKE_RELATIVE;
+		make_relative(my_exec_path, p, ret_path);
 	else
 		StrNCpy(ret_path, LOCALEDIR, MAXPGPATH);
+	canonicalize_path(ret_path);
 }
 
 
@@ -270,6 +262,7 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 	{
 		/* set for libpq to use */
 		snprintf(env_path, sizeof(env_path), "PGLOCALEDIR=%s", path);
+		canonicalize_path(env_path);
 		putenv(strdup(env_path));
 	}
 #endif
@@ -280,10 +273,25 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 	
 		/* set for libpq to use */
 		snprintf(env_path, sizeof(env_path), "PGSYSCONFDIR=%s", path);
+		canonicalize_path(env_path);
 		putenv(strdup(env_path));
 	}
 }
 
+
+/*
+ *	make_relative - adjust path to be relative to bin/
+ */
+static void
+make_relative(const char *my_exec_path, const char *p, char *ret_path)
+{
+	char path[MAXPGPATH];
+
+	StrNCpy(path, my_exec_path, MAXPGPATH);
+	trim_directory(path);
+	trim_directory(path);
+	snprintf(ret_path, MAXPGPATH, "%s/%s", path, p);
+}
 
 
 /*
@@ -391,7 +399,10 @@ trim_trailing_separator(char *path)
 	char *p = path + strlen(path);
 
 #ifdef WIN32
-    /* Skip over network and drive specifiers for win32 */
+	/*
+	 *	Skip over network and drive specifiers for win32.
+	 *	Set 'path' to point to the last character to keep.
+	 */
     if (strlen(path) >= 2)
     {
         if (IS_DIR_SEP(path[0]) && IS_DIR_SEP(path[1]))
