@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.117 2002/04/23 15:45:30 tgl Exp $
+ * $Id: c.h,v 1.118 2002/04/24 02:12:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,6 +404,7 @@ struct varlena
  */
 typedef struct varlena bytea;
 typedef struct varlena text;
+typedef struct varlena unknown;
 typedef struct varlena BpChar;	/* blank-padded char, ie SQL char(n) */
 typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
 

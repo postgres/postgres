@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.229 2002/04/21 19:48:23 thomas Exp $
+ * $Id: pg_proc.h,v 1.230 2002/04/24 02:12:53 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -236,6 +236,11 @@ DATA(insert OID = 107 (  scalarltjoinsel   PGNSP PGUID 12 f t f t f s 3 701 "0 2
 DESCR("join selectivity of < and related operators on scalar datatypes");
 DATA(insert OID = 108 (  scalargtjoinsel   PGNSP PGUID 12 f t f t f s 3 701 "0 26 0" 100 0 0 100  scalargtjoinsel - _null_ ));
 DESCR("join selectivity of > and related operators on scalar datatypes");
+
+DATA(insert OID =  109 (  unknownin			   PGNSP PGUID 12 f t t i 1 f 705 "0" 100 0 0 100	unknownin - _null_ ));
+DESCR("(internal)");
+DATA(insert OID =  110 (  unknownout		   PGNSP PGUID 12 f t t i 1 f 23  "0" 100 0 0 100	unknownout - _null_ ));
+DESCR("(internal)");
 
 DATA(insert OID = 112 (  text			   PGNSP PGUID 12 f t t t f i 1  25 "23" 100 0 0 100  int4_text - _null_ ));
 DESCR("convert int4 to text");

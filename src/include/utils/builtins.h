@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.177 2002/04/18 20:01:11 tgl Exp $
+ * $Id: builtins.h,v 1.178 2002/04/24 02:12:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -413,6 +413,9 @@ extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);
 extern List *textToQualifiedNameList(text *textval, const char *caller);
 extern bool SplitIdentifierString(char *rawstring, char separator,
 								  List **namelist);
+
+extern Datum unknownin(PG_FUNCTION_ARGS);
+extern Datum unknownout(PG_FUNCTION_ARGS);
 
 extern Datum byteain(PG_FUNCTION_ARGS);
 extern Datum byteaout(PG_FUNCTION_ARGS);

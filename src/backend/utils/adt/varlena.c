@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.83 2002/04/15 07:54:37 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.84 2002/04/24 02:12:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,46 @@ textout(PG_FUNCTION_ARGS)
 #ifdef CYR_RECODE
 	convertstr(result, len, 1);
 #endif
+
+	PG_RETURN_CSTRING(result);
+}
+
+
+/*
+ *		unknownin			- converts "..." to internal representation
+ */
+Datum
+unknownin(PG_FUNCTION_ARGS)
+{
+	char	   *inputStr = PG_GETARG_CSTRING(0);
+	unknown	   *result;
+	int			len;
+
+	len = strlen(inputStr) + VARHDRSZ;
+
+	result = (unknown *) palloc(len);
+	VARATT_SIZEP(result) = len;
+
+	memcpy(VARDATA(result), inputStr, len - VARHDRSZ);
+
+	PG_RETURN_UNKNOWN_P(result);
+}
+
+
+/*
+ *		unknownout			- converts internal representation to "..."
+ */
+Datum
+unknownout(PG_FUNCTION_ARGS)
+{
+	unknown	   *t = PG_GETARG_UNKNOWN_P(0);
+	int			len;
+	char	   *result;
+
+	len = VARSIZE(t) - VARHDRSZ;
+	result = (char *) palloc(len + 1);
+	memcpy(result, VARDATA(t), len);
+	result[len] = '\0';
 
 	PG_RETURN_CSTRING(result);
 }

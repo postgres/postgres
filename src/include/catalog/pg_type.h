@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.120 2002/04/21 00:26:43 tgl Exp $
+ * $Id: pg_type.h,v 1.121 2002/04/24 02:12:53 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -302,7 +302,7 @@ DATA(insert OID = 30 (	oidvector  PGNSP PGUID INDEX_MAX_KEYS*4 -1 f b t \054 0  
 DESCR("array of INDEX_MAX_KEYS oids, used in system tables");
 #define OIDVECTOROID	30
 
-DATA(insert OID = 32 (	SET		   PGNSP PGUID -1  -1 f b t \054 0   0 textin textout textin textout i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 32 (	SET		   PGNSP PGUID -1  -1 f b t \054 0   0 unknownin unknownout unknownin unknownout i p f 0 -1 0 _null_ _null_ ));
 DESCR("set of tuples");
 
 DATA(insert OID = 71 (	pg_type		 PGNSP PGUID 4 4 t c t \054 1247 0 int4in int4out int4in int4out i p f 0 -1 0 _null_ _null_ ));
@@ -366,7 +366,7 @@ DESCR("relative, limited-range time interval (Unix delta time)");
 DATA(insert OID = 704 (  tinterval PGNSP PGUID 12  47 f b t \054 0   0 tintervalin tintervalout tintervalin tintervalout i p f 0 -1 0 _null_ _null_ ));
 DESCR("(abstime,abstime), time interval");
 #define TINTERVALOID	704
-DATA(insert OID = 705 (  unknown   PGNSP PGUID -1  -1 f b t \054 0   0 textin textout textin textout i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 705 (  unknown   PGNSP PGUID -1  -1 f b t \054 0   0 unknownin unknownout unknownin unknownout i p f 0 -1 0 _null_ _null_ ));
 DESCR("");
 #define UNKNOWNOID		705
 
