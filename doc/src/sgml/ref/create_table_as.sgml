@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.4 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.5 2001/03/03 22:11:40 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,10 +20,10 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2001-03-03</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceable> [, ...] ) ]
+CREATE [ TEMPORARY | TEMP ] TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceable> [, ...] ) ]
      AS <replaceable>select_clause</replaceable>
   </synopsis>
   
@@ -37,6 +37,20 @@ CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceabl
    <para>
    
    <variablelist>
+     <varlistentry>
+      <term>TEMPORARY or TEMP</term>
+      <listitem>
+       <para>
+	If specified, the table is created only for this session, and is
+	automatically dropped on session exit.
+	Existing permanent tables with the same name are not visible
+	(in this session) while the temporary table exists.
+	Any indexes created on a temporary table are automatically
+	temporary as well.
+       </para>
+      </listitem>
+     </varlistentry>
+
     <varlistentry>
      <term><replaceable>table</replaceable></term>
      <listitem>
@@ -51,7 +65,9 @@ CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceabl
       <listitem>
        <para>
 	The name of a column. Multiple column names can be specified using
-	a comma-delimited list of column names.
+	a comma-delimited list of column names.  If column names are not
+	provided, they are taken from the output column names of the
+	SELECT query.
        </para>
       </listitem>
      </varlistentry>
@@ -94,7 +110,7 @@ CREATE TABLE <replaceable>table</replaceable> [ (<replaceable>column</replaceabl
   <para>
    <command>CREATE TABLE AS</command> enables a table to be created
    from the contents of an existing table.
-   It is functionality equivalent to
+   It is functionally equivalent to
    <xref linkend="sql-selectinto" endterm="sql-selectinto-title">,
    but with perhaps a more direct syntax.
   </para>
