@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.96 2002/12/14 00:17:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.97 2002/12/26 23:38:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1163,6 +1163,16 @@ estimate_hash_bucketsize(Query *root, Var *var)
 	 */
 	if (avgfreq > 0.0 && mcvfreq > avgfreq)
 		estfract *= mcvfreq / avgfreq;
+
+	/*
+	 * Clamp bucketsize to sane range (the above adjustment could easily
+	 * produce an out-of-range result).  We set the lower bound a little
+	 * above zero, since zero isn't a very sane result.
+	 */
+	if (estfract < 1.0e-6)
+		estfract = 1.0e-6;
+	else if (estfract > 1.0)
+		estfract = 1.0;
 
 	ReleaseSysCache(tuple);
 
