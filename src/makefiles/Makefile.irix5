@@ -1,14 +1,17 @@
-# RANLIB is not used on IRIX 5
-RANLIB= touch
 MK_NO_LORDER= true
 AROPT = crs
 rpath = -Wl,-rpath,$(libdir)
 
 DLSUFFIX = .so
+# PIC is default
 CFLAGS_SL =
 
 %.so: %.o
 	$(LD) -G -Bdynamic -shared -o $@ $< 
 
 override CPPFLAGS += -U_NO_XOPEN4
-override CFLAGS += -woff 1164,1171,1185,1195,1552 -Wl,-woff,15 -Wl,-woff,84
+
+ifneq ($(GCC), yes)
+CFLAGS += -woff 1164,1171,1185,1195,1552
+endif
+LDFLAGS += -Wl,-woff,15 -Wl,-woff,84
