@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.3 1997/03/14 23:19:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.4 1997/04/27 19:20:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,14 @@ boolne(int8 arg1, int8 arg2)
     return(arg1 != arg2); 
 }
 
+bool
+boollt(int8 arg1, int8 arg2)	
+{ 
+    return(arg1 < arg2); 
+}
 
-
-
-
+bool
+boolgt(int8 arg1, int8 arg2)	
+{ 
+    return(arg1 > arg2); 
+}

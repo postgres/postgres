@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.3 1996/11/08 05:59:47 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.4 1997/04/27 19:20:16 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,12 @@ char *regprocout(RegProcedure proid)
  *   PUBLIC ROUTINES                                                         *
  *****************************************************************************/
 
-Oid RegprocToOid(RegProcedure rp)
+/* regproctooid()
+ * Lowercase version of RegprocToOid() to allow case-insensitive SQL.
+ * Define RegprocToOid() as a macro in builtins.h.
+ * Referenced in pg_proc.h. - tgl 97/04/26
+ */
+Oid regproctooid(RegProcedure rp)
 {
     return (Oid)rp;
 }

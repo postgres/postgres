@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.5 1996/11/14 08:23:31 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.6 1997/04/27 19:20:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  * Check if data is Null 
  */
 bool
-NullValue(Datum value, bool *isNull)
+nullvalue(Datum value, bool *isNull)
 {
     if (*isNull) {
 	*isNull = false;
@@ -38,7 +38,7 @@ NullValue(Datum value, bool *isNull)
  *     check if data is not Null                                        *
  *--------------------------------------------------------------------- */
 bool
-NonNullValue(Datum value, bool *isNull)
+nonnullvalue(Datum value, bool *isNull)
 {
     if (*isNull) {
 	*isNull = false;

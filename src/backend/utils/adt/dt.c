@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.18 1997/04/27 02:55:49 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.19 1997/04/27 19:20:10 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -474,9 +474,9 @@ timespan_lt(TimeSpan *timespan1, TimeSpan *timespan2)
 	return FALSE;
 
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
+    if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
+    if (timespan2->month != 0) span2 += (timespan2->month * (30.0*86400));
 
     return( span1 < span2);
 } /* timespan_lt() */
@@ -493,9 +493,9 @@ timespan_gt(TimeSpan *timespan1, TimeSpan *timespan2)
 	return FALSE;
 
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
+    if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
+    if (timespan2->month != 0) span2 += (timespan2->month * (30.0*86400));
 
     return( span1 > span2);
 } /* timespan_gt() */
@@ -512,9 +512,9 @@ timespan_le(TimeSpan *timespan1, TimeSpan *timespan2)
 	return FALSE;
 
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
+    if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
+    if (timespan2->month != 0) span2 += (timespan2->month * (30.0*86400));
 
     return( span1 <= span2);
 } /* timespan_le() */
@@ -531,9 +531,9 @@ timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
 	return FALSE;
 
     span1 = timespan1->time;
-    if (timespan1->month != 0) span1 += (timespan1->month * (30*86400));
+    if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
     span2 = timespan2->time;
-    if (timespan2->month != 0) span2 += (timespan2->month * (30*86400));
+    if (timespan2->month != 0) span2 += (timespan2->month * (30.0*86400));
 
     return( span1 >= span2);
 } /* timespan_ge() */
@@ -546,6 +546,65 @@ timespan_ge(TimeSpan *timespan1, TimeSpan *timespan2)
  *	datetime_xx	is an internal routine which returns the
  *			actual value.
  *---------------------------------------------------------*/
+
+DateTime *datetime_smaller(DateTime *datetime1, DateTime *datetime2)
+{
+    DateTime *result;
+
+    DateTime dt1, dt2;
+
+    if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
+	return NULL;
+
+    dt1 = *datetime1;
+    dt2 = *datetime2;
+
+    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	elog(WARN,"Memory allocation failed, can't find smaller date",NULL);
+
+    if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
+    if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
+
+    if (DATETIME_IS_INVALID(dt1)) {
+	*result = dt2;
+    } else if (DATETIME_IS_INVALID(dt2)) {
+	*result = dt1;
+    } else {
+	*result = ((dt2 < dt1)? dt2: dt1);
+    };
+
+    return(result);
+} /* datetime_smaller() */
+
+DateTime *datetime_larger(DateTime *datetime1, DateTime *datetime2)
+{
+    DateTime *result;
+
+    DateTime dt1, dt2;
+
+    if (!PointerIsValid(datetime1) || !PointerIsValid(datetime2))
+	return NULL;
+
+    dt1 = *datetime1;
+    dt2 = *datetime2;
+
+    if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
+	elog(WARN,"Memory allocation failed, can't find larger date",NULL);
+
+    if (DATETIME_IS_RELATIVE(dt1)) dt1 = SetDateTime(dt1);
+    if (DATETIME_IS_RELATIVE(dt2)) dt2 = SetDateTime(dt2);
+
+    if (DATETIME_IS_INVALID(dt1)) {
+	*result = dt2;
+    } else if (DATETIME_IS_INVALID(dt2)) {
+	*result = dt1;
+    } else {
+	*result = ((dt2 > dt1)? dt2: dt1);
+    };
+
+    return(result);
+} /* datetime_larger() */
+
 
 TimeSpan *datetime_sub(DateTime *datetime1, DateTime *datetime2)
 {
@@ -691,6 +750,95 @@ TimeSpan *timespan_um(TimeSpan *timespan)
 
     return(result);
 } /* timespan_um() */
+
+
+TimeSpan *timespan_smaller(TimeSpan *timespan1, TimeSpan *timespan2)
+{
+    TimeSpan *result;
+
+    double span1, span2;
+
+    if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
+	return NULL;
+
+    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
+	elog(WARN,"Memory allocation failed, can't find smaller timespan",NULL);
+
+    if (TIMESPAN_IS_INVALID(*timespan1)) {
+	result->time = timespan2->time;
+	result->month = timespan2->month;
+
+    } else if (TIMESPAN_IS_INVALID(*timespan2)) {
+	result->time = timespan1->time;
+	result->month = timespan1->month;
+
+    } else {
+	span1 = timespan1->time;
+	if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
+	span2 = timespan2->time;
+	if (timespan2->month != 0) span2 += (timespan2->month * (30.0*86400));
+
+#ifdef DATEDEBUG
+printf( "timespan_smaller- months %d %d times %f %f spans %f %f\n",
+ timespan1->month, timespan2->month, timespan1->time, timespan2->time, span1, span2);
+#endif
+
+	if (span2 < span1) {
+	    result->time = timespan2->time;
+	    result->month = timespan2->month;
+
+	} else {
+	    result->time = timespan1->time;
+	    result->month = timespan1->month;
+	};
+    };
+
+    return(result);
+} /* timespan_smaller() */
+
+TimeSpan *timespan_larger(TimeSpan *timespan1, TimeSpan *timespan2)
+{
+    TimeSpan *result;
+
+    double span1, span2;
+
+    if (!PointerIsValid(timespan1) || !PointerIsValid(timespan2))
+	return NULL;
+
+    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
+	elog(WARN,"Memory allocation failed, can't find larger timespan",NULL);
+
+    if (TIMESPAN_IS_INVALID(*timespan1)) {
+	result->time = timespan2->time;
+	result->month = timespan2->month;
+
+    } else if (TIMESPAN_IS_INVALID(*timespan2)) {
+	result->time = timespan1->time;
+	result->month = timespan1->month;
+
+    } else {
+	span1 = timespan1->time;
+	if (timespan1->month != 0) span1 += (timespan1->month * (30.0*86400));
+	span2 = timespan2->time;
+	if (timespan2->month != 0) span2 += (timespan2->month * (30.0*86400));
+
+#ifdef DATEDEBUG
+printf( "timespan_larger- months %d %d times %f %f spans %f %f\n",
+ timespan1->month, timespan2->month, timespan1->time, timespan2->time, span1, span2);
+#endif
+
+	if (span2 > span1) {
+	    result->time = timespan2->time;
+	    result->month = timespan2->month;
+
+	} else {
+	    result->time = timespan1->time;
+	    result->month = timespan1->month;
+	};
+    };
+
+    return(result);
+} /* timespan_larger() */
 
 
 TimeSpan *timespan_add(TimeSpan *span1, TimeSpan *span2)
@@ -2773,7 +2921,7 @@ int EncodeDateTime(struct tm *tm, double fsec, int *tzp, int style, char *str)
     char mabbrev[4], dabbrev[4];
     int day, hour, min;
     double sec;
-#ifdef DATEDEBUG
+#if defined(DATEDEBUG) && FALSE
     char buf[MAXDATELEN+1];
 #endif
 
