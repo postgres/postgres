@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.11 1997/12/19 02:05:42 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.12 1998/02/03 01:25:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,18 @@ main(int argc, char *argv[])
 {
 	int			len;
 
+#if defined(alpha)
+#  ifdef NOFIXADE
+	int                     buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
+#  endif                                                  /* NOFIXADE */
+#  ifdef NOPRINTADE
+	int                     buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
+#  endif	/* NOPRINTADE */
+#endif
+
 #ifdef USE_LOCALE
 	setlocale(LC_CTYPE, "");	/* take locale information from an
-								 * environment */
+					 * environment */
 	setlocale(LC_COLLATE, "");
 	setlocale(LC_MONETARY, "");
 #endif
@@ -50,8 +59,20 @@ main(int argc, char *argv[])
 	 * Must be first so that the bootstrap code calls it, too. (Only
 	 * needed on some RISC architectures.)
 	 */
-	init_address_fixup();
-#endif							/* NOFIXADE || NOPRINTADE */
+
+#if defined(ultrix4)
+	 syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
+#endif
+
+#if defined(alpha)
+	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
+			(unsigned long) NULL) < 0)
+	{
+		elog(NOTICE, "setsysinfo failed: %d\n", errno);
+	}
+#endif 
+
+#endif	/* NOFIXADE || NOPRINTADE */
 
 	/*
 	 * use one executable for both postgres and postmaster, invoke one or
