@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.12 1999/07/15 23:04:11 momjian Exp $
+ * $Id: itemptr.h,v 1.13 1999/07/16 17:07:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITEMPTR_H
 #define ITEMPTR_H
 
-#include "storage/off.h"
 #include "storage/block.h"
+#include "storage/off.h"
 
 /*
  * ItemPointer:

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.44 1999/07/15 15:20:53 momjian Exp $
+ * $Id: heapam.h,v 1.45 1999/07/16 17:07:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,9 +14,9 @@
 #define HEAPAM_H
 
 #include <time.h>
-#include "access/tupmacs.h"
 #include "access/htup.h"
 #include "access/relscan.h"
+#include "access/tupmacs.h"
 #include "storage/block.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"

@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.14 1999/07/15 15:21:26 momjian Exp $
+ * $Id: parse_coerce.h,v 1.15 1999/07/16 17:07:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_COERCE_H
 #define PARSE_COERCE_H
 
-#include "parser/parse_node.h"
 #include "catalog/pg_type.h"
+#include "parser/parse_node.h"
 
 typedef enum CATEGORY
 {

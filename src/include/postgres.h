@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.24 1999/07/15 15:20:47 momjian Exp $
+ * $Id: postgres.h,v 1.25 1999/07/16 17:07:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,9 @@
 #include "config.h"
 #endif
 #include "c.h"
-#include "utils/palloc.h"
-#include "utils/mcxt.h"
 #include "utils/elog.h"
+#include "utils/mcxt.h"
+#include "utils/palloc.h"
 
 /* ----------------------------------------------------------------
  *				Section 1:	simple type definitions

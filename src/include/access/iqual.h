@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: iqual.h,v 1.12 1999/07/15 23:03:34 momjian Exp $
+ * $Id: iqual.h,v 1.13 1999/07/16 17:07:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef IQUAL_H
 #define IQUAL_H
 
-#include "access/skey.h"
 #include "access/itup.h"
+#include "access/skey.h"
 
 
 /* ----------------

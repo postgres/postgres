@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.24 1999/07/15 23:04:23 momjian Exp $
+ * $Id: rel.h,v 1.25 1999/07/16 17:07:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef REL_H
 #define REL_H
 
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
 #include "access/strat.h"
 #include "access/tupdesc.h"
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
 #include "rewrite/prs2lock.h"
 #include "storage/fd.h"
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.83 1999/07/15 23:04:20 momjian Exp $
+ * $Id: builtins.h,v 1.84 1999/07/16 17:07:39 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -24,11 +24,11 @@
 
 #include "storage/itemptr.h"
 #include "utils/array.h"
-#include "utils/geo_decls.h"
 #include "utils/datetime.h"
-#include "utils/nabstime.h"
-#include "utils/int8.h"
+#include "utils/geo_decls.h"
 #include "utils/inet.h"
+#include "utils/int8.h"
+#include "utils/nabstime.h"
 #include "utils/numeric.h"
 
 /*

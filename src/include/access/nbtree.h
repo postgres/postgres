@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.29 1999/07/15 23:03:35 momjian Exp $
+ * $Id: nbtree.h,v 1.30 1999/07/16 17:07:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NBTREE_H
 #define NBTREE_H
 
-#include "access/sdir.h"
-#include "access/relscan.h"
 #include "access/funcindex.h"
 #include "access/itup.h"
+#include "access/relscan.h"
+#include "access/sdir.h"
 
 /*
  *	BTPageOpaqueData -- At the end of every page, we store a pointer

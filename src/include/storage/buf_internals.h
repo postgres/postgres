@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.30 1999/07/15 23:04:08 momjian Exp $
+ * $Id: buf_internals.h,v 1.31 1999/07/16 17:07:37 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -17,8 +17,8 @@
 #ifndef BUFMGR_INTERNALS_H
 #define BUFMGR_INTERNALS_H
 
-#include "storage/lmgr.h"
 #include "storage/buf.h"
+#include "storage/lmgr.h"
 
 /* Buf Mgr constants */
 /* in bufmgr.c */

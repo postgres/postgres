@@ -19,6 +19,9 @@ do
 	do
 		[ -s /usr/include/$INCLUDE ] && continue
 		[ "$INCLUDE" = postgres.h ] && continue
+		# preserve configure-specific includes
+		grep -B1 -A1 -q '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' |
+		     egrep -q '^#if|^#else|^#endif' && continue		
 		cat /tmp/$$a |
 		grep -v '^#include[ 	]*[<"]'"$INCLUDE"'[>"]' >/tmp/$$b
 		if [ "$IS_INCLUDE" = "Y" ]

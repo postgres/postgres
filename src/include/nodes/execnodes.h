@@ -6,20 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.32 1999/07/15 23:03:52 momjian Exp $
+ * $Id: execnodes.h,v 1.33 1999/07/16 17:07:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECNODES_H
 #define EXECNODES_H
 
-#include "nodes/primnodes.h"
-#include "executor/hashjoin.h"
+#include "access/funcindex.h"
 #include "access/relscan.h"
 #include "access/sdir.h"
-#include "nodes/params.h"
+#include "executor/hashjoin.h"
 #include "executor/tuptable.h"
-#include "access/funcindex.h"
+#include "nodes/params.h"
+#include "nodes/primnodes.h"
 
 /* ----------------
  *	  IndexInfo information

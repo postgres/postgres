@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.16 1999/07/15 23:03:59 momjian Exp $
+ * $Id: prep.h,v 1.17 1999/07/16 17:07:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PREP_H
 #define PREP_H
 
-#include "nodes/plannodes.h"
 #include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 
 /*
  * prototypes for prepqual.c

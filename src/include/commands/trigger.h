@@ -9,8 +9,8 @@
 #ifndef TRIGGER_H
 #define TRIGGER_H
 
-#include "nodes/parsenodes.h"
 #include "nodes/execnodes.h"
+#include "nodes/parsenodes.h"
 
 typedef uint32 TriggerEvent;
 

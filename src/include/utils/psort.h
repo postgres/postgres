@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.20 1999/07/15 15:21:42 momjian Exp $
+ * $Id: psort.h,v 1.21 1999/07/16 17:07:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PSORT_H
 #define PSORT_H
 
-#include "storage/fd.h"
 #include "access/relscan.h"
-#include "utils/lselect.h"
 #include "nodes/plannodes.h"
+#include "storage/fd.h"
+#include "utils/lselect.h"
 
 #define MAXTAPES		7		/* See Knuth Fig. 70, p273 */
 
