@@ -3,14 +3,20 @@
 -- Test the random function
 --
 
--- count the number of tuples originally
+-- count the number of tuples originally, should be 1000
 SELECT count(*) FROM onek;
 
--- select roughly 1/10 of the tuples
--- Assume that the "onek" table has 1000 tuples
---  and try to bracket the correct number so we
---  have a regression test which can pass/fail
--- - thomas 1998-08-17
+-- pick three random rows, they shouldn't match
+(SELECT unique1 AS random
+  FROM onek ORDER BY random() LIMIT 1)
+INTERSECT
+(SELECT unique1 AS random
+  FROM onek ORDER BY random() LIMIT 1)
+INTERSECT
+(SELECT unique1 AS random
+  FROM onek ORDER BY random() LIMIT 1);
+
+-- count roughly 1/10 of the tuples
 SELECT count(*) AS random INTO RANDOM_TBL
   FROM onek WHERE random() < 1.0/10;
 
@@ -19,10 +25,20 @@ INSERT INTO RANDOM_TBL (random)
   SELECT count(*)
   FROM onek WHERE random() < 1.0/10;
 
--- now test the results for randomness in the correct range
-SELECT random, count(random) FROM RANDOM_TBL
-  GROUP BY random HAVING count(random) > 1;
+-- select again, the count should be different
+INSERT INTO RANDOM_TBL (random)
+  SELECT count(*)
+  FROM onek WHERE random() < 1.0/10;
 
-SELECT random FROM RANDOM_TBL
-  WHERE random NOT BETWEEN 80 AND 120;
+-- select again, the count should be different
+INSERT INTO RANDOM_TBL (random)
+  SELECT count(*)
+  FROM onek WHERE random() < 1.0/10;
+
+-- now test that they are different counts
+SELECT random, count(random) FROM RANDOM_TBL
+  GROUP BY random HAVING count(random) > 3;
+
+SELECT AVG(random) FROM RANDOM_TBL
+  HAVING AVG(random) NOT BETWEEN 80 AND 120;
 
