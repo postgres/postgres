@@ -4,10 +4,17 @@
  *	  definition of the system "version" relation (pg_version)
  *	  along with the relation's initial contents.
  *
+ * NOTE: this table has nothing to do with the overall Postgres system
+ * version or anything like that.  It is for defining individual relations
+ * that have multiple concurrently-existing versions.  Yes, there used to
+ * be such a feature in Postgres, but it's been broken for a long time
+ * (see src/backend/commands/_deadcode/version.c).  The pg_version table
+ * isn't even created at present.
+ *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.8 1999/02/13 23:21:16 momjian Exp $
+ * $Id: pg_version.h,v 1.9 1999/10/24 19:22:37 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
