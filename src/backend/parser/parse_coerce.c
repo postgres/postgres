@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.37 2000/03/19 00:15:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.38 2000/03/20 04:02:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		/* safety check that we got the right thing */
 		if (exprType(result) != targetTypeId)
 			elog(ERROR, "coerce_type: conversion function %s produced %s",
-				 typeTypeName(targetType), 
+				 typeTypeName(targetType),
 				 typeidTypeName(exprType(result)));
 
 		/*
@@ -320,6 +320,7 @@ TypeCategory(Oid inType)
 		case (NAMEOID):
 		case (BPCHAROID):
 		case (VARCHAROID):
+	case (BYTEAOID):
 		case (TEXTOID):
 		case (LZTEXTOID):
 			result = STRING_TYPE;
@@ -550,6 +551,7 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 				{
 					case (BPCHAROID):
 					case (VARCHAROID):
+		    case (BYTEAOID):
 					case (TEXTOID):
 
 					case (INT2OID):
@@ -614,6 +616,7 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 			{
 				case (BPCHAROID):
 				case (VARCHAROID):
+		case (BYTEA):
 				case (TEXTOID):
 
 				case (INT2OID):
