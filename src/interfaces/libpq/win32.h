@@ -5,9 +5,6 @@
  */
 #define strcasecmp(a,b) stricmp(a,b)
 
-
-
-#define NO_UNISTD_H
 #define SOCKET_SIZE_TYPE int
 
 /*
@@ -22,8 +19,6 @@
  * crypt not available (yet)
  */
 #define crypt(a,b) a
-
-
 
 /*
  * Parts of config.h that you get with autoconf on other systems
