@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.47 1999/06/21 01:26:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.48 1999/07/11 17:54:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2610,6 +2610,8 @@ RewritePreprocessQuery(Query *parsetree)
 	 * target relation. FixNew() depends on it when replacing
 	 * *new* references in a rule action by the expressions
 	 * from the rewritten query.
+	 * resjunk targets are somewhat arbitrarily given a resno of 0;
+	 * this is to prevent FixNew() from matching them to var nodes.
 	 * ----------
 	 */
 	if (parsetree->resultRelation > 0)
@@ -2617,8 +2619,6 @@ RewritePreprocessQuery(Query *parsetree)
 		RangeTblEntry *rte;
 		Relation	rd;
 		List	   *tl;
-		TargetEntry *tle;
-		int			resdomno;
 
 		rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
 									parsetree->rtable);
@@ -2626,9 +2626,12 @@ RewritePreprocessQuery(Query *parsetree)
 
 		foreach(tl, parsetree->targetList)
 		{
-			tle = (TargetEntry *) lfirst(tl);
-			resdomno = attnameAttNum(rd, tle->resdom->resname);
-			tle->resdom->resno = resdomno;
+			TargetEntry *tle = (TargetEntry *) lfirst(tl);
+
+			if (! tle->resdom->resjunk)
+				tle->resdom->resno = attnameAttNum(rd, tle->resdom->resname);
+			else
+				tle->resdom->resno = 0;
 		}
 
 		heap_close(rd);
