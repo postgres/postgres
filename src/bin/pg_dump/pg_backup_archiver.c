@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.4 2003/05/03 22:19:18 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.5 2004/02/05 22:12:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1450,7 +1450,7 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 	for (off = 0; off < AH->offSize; off++)
 	{
 		if (off < sizeof(off_t))
-			*o |= ((*AH->ReadBytePtr) (AH)) << (off * 8);
+			*o |= ((off_t) ((*AH->ReadBytePtr) (AH))) << (off * 8);
 		else
 		{
 			if ((*AH->ReadBytePtr) (AH) != 0)
