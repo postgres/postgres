@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.167 2004/04/02 19:06:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.168 2004/04/02 21:30:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1221,7 +1221,8 @@ unknown_attribute(ParseState *pstate, Node *relref, char *attname)
 {
 	RangeTblEntry *rte;
 
-	if (IsA(relref, Var))
+	if (IsA(relref, Var) &&
+		((Var *) relref)->varattno == InvalidAttrNumber)
 	{
 		/* Reference the RTE by alias not by actual table name */
 		rte = GetRTEByRangeTablePosn(pstate,
