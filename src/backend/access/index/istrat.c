@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.21 1998/07/27 19:37:37 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.22 1998/08/10 14:32:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,10 +381,9 @@ RelationInvokeStrategy(Relation relation,
 
 	termData.degree = 1;
 
-	strategyMap =
-		IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
-									evaluation->maxStrategy,
-									attributeNumber);
+	strategyMap = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
+												evaluation->maxStrategy,
+												attributeNumber);
 
 	entry = StrategyMapGetScanKeyEntry(strategyMap, strategy);
 
@@ -393,8 +392,7 @@ RelationInvokeStrategy(Relation relation,
 		termData.operatorData[0].strategy = strategy;
 		termData.operatorData[0].flags = 0x0;
 
-		return
-			StrategyTermEvaluate(&termData, strategyMap, left, right);
+		return StrategyTermEvaluate(&termData, strategyMap, left, right);
 	}
 
 
@@ -409,8 +407,7 @@ RelationInvokeStrategy(Relation relation,
 			termData.operatorData[0].strategy = newStrategy;
 			termData.operatorData[0].flags = SK_NEGATE;
 
-			return
-				StrategyTermEvaluate(&termData, strategyMap, left, right);
+			return StrategyTermEvaluate(&termData, strategyMap, left, right);
 		}
 	}
 
@@ -425,8 +422,7 @@ RelationInvokeStrategy(Relation relation,
 			termData.operatorData[0].strategy = newStrategy;
 			termData.operatorData[0].flags = SK_COMMUTE;
 
-			return
-				StrategyTermEvaluate(&termData, strategyMap, left, right);
+			return StrategyTermEvaluate(&termData, strategyMap, left, right);
 		}
 	}
 
@@ -441,8 +437,7 @@ RelationInvokeStrategy(Relation relation,
 			termData.operatorData[0].strategy = newStrategy;
 			termData.operatorData[0].flags = SK_NEGATE | SK_COMMUTE;
 
-			return
-				StrategyTermEvaluate(&termData, strategyMap, left, right);
+			return StrategyTermEvaluate(&termData, strategyMap, left, right);
 		}
 	}
 
@@ -466,8 +461,7 @@ RelationInvokeStrategy(Relation relation,
 
 			if (index == (*termP)->degree)
 			{
-				return
-					StrategyTermEvaluate(*termP, strategyMap, left, right);
+				return StrategyTermEvaluate(*termP, strategyMap, left, right);
 			}
 
 			termP += 1;
