@@ -32,7 +32,7 @@ count
 (6 rows)
 
 QUERY: SELECT count(*) FROM test_missing_target GROUP BY a ORDER BY b;
-ERROR:  parser: illegal use of aggregates or non-group column in target list
+ERROR:  Illegal use of aggregates or non-group column in target list
 QUERY: SELECT count(*) FROM test_missing_target GROUP BY b ORDER BY b;
 count
 -----
@@ -191,7 +191,7 @@ count
 (4 rows)
 
 QUERY: SELECT count(a) FROM test_missing_target GROUP BY a ORDER BY b;
-ERROR:  parser: illegal use of aggregates or non-group column in target list
+ERROR:  Illegal use of aggregates or non-group column in target list
 QUERY: SELECT count(b) FROM test_missing_target GROUP BY b/2 ORDER BY b/2;
 count
 -----
