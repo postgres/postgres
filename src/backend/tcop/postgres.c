@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.203 2001/01/19 22:08:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.204 2001/01/24 14:32:32 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -906,9 +906,9 @@ quickdie(SIGNAL_ARGS)
 	PG_SETMASK(&BlockSig);
 	elog(NOTICE, "Message from PostgreSQL backend:"
 		 "\n\tThe Postmaster has informed me that some other backend"
-		 " died abnormally and possibly corrupted shared memory."
+		 "\tdied abnormally and possibly corrupted shared memory."
 		 "\n\tI have rolled back the current transaction and am"
-		 " going to terminate your database system connection and exit."
+		 "\tgoing to terminate your database system connection and exit."
 	"\n\tPlease reconnect to the database system and repeat your query.");
 
 	/*
@@ -1680,7 +1680,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.203 $ $Date: 2001/01/19 22:08:47 $\n");
+		puts("$Revision: 1.204 $ $Date: 2001/01/24 14:32:32 $\n");
 	}
 
 	/*
