@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.5 1996/11/08 00:45:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.6 1997/08/20 14:53:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,7 +336,7 @@ ExecEndMaterial(Material *node)
     ExecClearTuple(matstate->csstate.css_ScanTupleSlot);
 } 
 
-#if 0	/* not used */
+#ifdef NOT_USED	/* not used */
 /* ----------------------------------------------------------------
  *	ExecMaterialMarkPos
  * ----------------------------------------------------------------

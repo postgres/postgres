@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.3 1997/08/19 21:32:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.4 1997/08/20 14:53:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,7 +532,7 @@ get_expr(TargetEntry *tle)
  *    append the group attribute to the target list if it's not already
  *    in there.
  */
-#if 0
+#ifdef NOT_USED
 void
 AddGroupAttrToTlist(List *tlist, List *grpCl)
 {

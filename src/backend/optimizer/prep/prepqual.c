@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.2 1996/10/31 10:59:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.3 1997/08/20 14:53:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -543,7 +543,7 @@ remove_ands(Expr *qual)
  *    are referenced in the target list.
  *    
  */
-#if 0 
+#ifdef NOT_USED 
 static List *
 update_relations(List *tlist)
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.16 1997/06/10 07:28:47 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.17 1997/08/20 14:53:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,6 @@ static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey it
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
 static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, BTItem oldItem, BTItem newItem);
 static bool _bt_isequal (TupleDesc itupdesc, Page page, OffsetNumber offnum, int keysz, ScanKey scankey);
-#if 0
-static InsertIndexResult _bt_shift (Relation rel, Buffer buf, BTStack stack, int keysz, ScanKey scankey, BTItem btitem, BTItem hikey);
-#endif
 
 /*
  *  _bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -1449,7 +1446,7 @@ _bt_isequal (TupleDesc itupdesc, Page page, OffsetNumber offnum,
     return (true);
 }
 
-#if 0
+#ifdef NOT_USED
 /*
  * _bt_shift - insert btitem on the passed page after shifting page 
  *	       to the right in the tree.

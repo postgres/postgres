@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.8 1997/08/19 21:39:37 momjian Exp $
+ * $Id: parse_query.h,v 1.9 1997/08/20 14:54:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,11 +57,6 @@ extern void handleTargetColname(ParseState *pstate, char **resname,
 /*
  * analyze.c
  */
-
-#if 0
-extern List *p_rtable;
-extern int NumLevels;
-#endif
 
 Oid exprType(Node *expr);
 QueryTreeList *parse_analyze(List *querytree_list);

@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.7 1997/08/19 21:40:43 momjian Exp $
+ * $Id: memutils.h,v 1.8 1997/08/20 14:54:35 momjian Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -27,7 +27,7 @@
 #define MEMUTILS_H
 
 
-#if 0
+#ifdef NOT_USED
 /*****************************************************************************
  *	align.h		- alignment macros                                   *
  ****************************************************************************

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.15 1997/08/19 21:35:13 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.16 1997/08/20 14:54:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,22 @@ static void RelationFlushRelation(Relation *relationPtr,
 static Relation RelationNameCacheGetRelation(char *relationName);
 static void init_irels(void);
 static void write_irels(void);
+/* non-export function prototypes */
+static void formrdesc(char *relationName, u_int natts,
+		      FormData_pg_attribute att[]);
+static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
+static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
+static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
+static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
+static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,    
+		Relation relation, AttributeTupleForm attp, u_int natts);
+static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
+		Relation relation, AttributeTupleForm attp, u_int natts);
+static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
+		Relation relation, AttributeTupleForm attp, u_int natts);
+static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
+static void IndexedAccessMethodInitialize(Relation relation);
+
 
 /* ----------------
  *	defines
@@ -238,27 +254,6 @@ typedef struct relnamecacheent {
 	  } \
     }
 
-/* non-export function prototypes */
-static void formrdesc(char *relationName, u_int natts,
-		      FormData_pg_attribute att[]);
-
-#if 0		/* See comments at line 1304 */
-static void RelationFlushIndexes(Relation *r, Oid accessMethodId);
-#endif
-
-static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
-static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
-static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
-static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
-static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,    
-		Relation relation, AttributeTupleForm attp, u_int natts);
-static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
-		Relation relation, AttributeTupleForm attp, u_int natts);
-static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
-		Relation relation, AttributeTupleForm attp, u_int natts);
-static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
-static void IndexedAccessMethodInitialize(Relation relation);
-
 /*
  * newlyCreatedRelns -
  *    relations created during this transaction. We need to keep track of
@@ -273,7 +268,7 @@ static List *newlyCreatedRelns = NULL;
  */
  
 
-#if 0		/* XXX This doesn't seem to be used anywhere */
+#ifdef NOT_USED		/* XXX This doesn't seem to be used anywhere */
 /* --------------------------------
  *	BuildDescInfoError returns a string appropriate to
  *	the buildinfo passed to it
@@ -1351,7 +1346,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
     }
 }
 
-#if 0		/* See comments at line 1304 */
+#ifdef NOT_USED		/* See comments at line 1304 */
 /* --------------------------------
  *	RelationIdInvalidateRelationCacheByAccessMethodId
  *

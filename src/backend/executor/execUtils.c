@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.11 1997/08/19 21:31:06 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.12 1997/08/20 14:53:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,7 +467,7 @@ ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
  *	    to share common code.
  * ----------------
  */
-#if 0 
+#ifdef NOT_USED 
 void
 ExecSetTypeInfo(int index,
 		TupleDesc typeInfo,
