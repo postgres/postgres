@@ -27,6 +27,7 @@ nextstep*) os=nextstep;;
      osf*) os=alpha;;
      sco*) os=sco;;
  machten*) os=machten;;
+  cygwin*) os=win;;
  sysv4.2*) 
        case "$host_vendor" in
                univel) os=univel;;
