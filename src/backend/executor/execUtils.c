@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.13 1997/08/21 03:01:42 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.14 1997/08/22 03:12:19 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1182,6 +1182,7 @@ setVarAttrLenForCreateTable(TupleDesc tupType, List *targetList,
 }
 
 
+#ifdef NOT_USED		/* look at execMain.c */
 /* ----------------------------------------------------------------
  * resetVarAttrLenForCreateTable -
  *    called when we do a SELECT * INTO TABLE tab
@@ -1202,3 +1203,4 @@ resetVarAttrLenForCreateTable(TupleDesc tupType)
 	    tupType->attrs[varno]->attlen = -1;
     }
 }
+#endif

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.17 1997/08/19 21:31:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.18 1997/08/22 03:12:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,8 @@ static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		       EState *estate);
 static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate, Query *parseTree);
+
+static HeapTuple ExecAttrDefault (Relation rel, HeapTuple tuple);
 
 /* end of local decls */
 
@@ -513,6 +515,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	char *intoName;
 	char   archiveMode;
 	Oid    intoRelationId;
+	TupleDesc   tupdesc;
 	
 	if (!parseTree->isPortal) {
 	    /*
@@ -529,17 +532,24 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		 */
 		intoName = parseTree->into;
 		archiveMode = 'n';
+		
+		/*
+		 * have to copy tupType to get rid of constraints
+		 */
+		tupdesc = CreateTupleDescCopy (tupType);
 
 		/* fixup to prevent zero-length columns in create */
-		setVarAttrLenForCreateTable(tupType, targetList, rangeTable);
+		setVarAttrLenForCreateTable(tupdesc, targetList, rangeTable);
 		
 		intoRelationId = heap_create(intoName,
 					     intoName, /* not used */
 					     archiveMode,
 					     DEFAULT_SMGR,
-					     tupType);
-		
-		resetVarAttrLenForCreateTable(tupType);
+					     tupdesc);
+#ifdef NOT_USED	/* it's copy ... */
+		resetVarAttrLenForCreateTable(tupdesc);
+#endif
+		FreeTupleDesc (tupdesc);
 
 		/* ----------------
 		 *  XXX rather than having to call setheapoverride(true)
@@ -918,16 +928,34 @@ ExecAppend(TupleTableSlot *slot,
      * ----------------
      */
 
-    if (resultRelationDesc->rd_att->constr && resultRelationDesc->rd_att->constr->has_not_null)
-      {
-	int attrChk;
-	for (attrChk = 1; attrChk <= resultRelationDesc->rd_att->natts; attrChk++) {
-	  if (resultRelationDesc->rd_att->attrs[attrChk-1]->attnotnull && heap_attisnull(tuple,attrChk))
-	    elog(WARN,"ExecAppend:  Fail to add null value in not null attribute %s",
-		 resultRelationDesc->rd_att->attrs[attrChk-1]->attname.data);
-	}
-      }
-
+    if ( resultRelationDesc->rd_att->constr )
+    {
+    	if ( resultRelationDesc->rd_att->constr->num_defval > 0 )
+    	{
+    	    HeapTuple newtuple;
+    	    
+    	    newtuple = ExecAttrDefault (resultRelationDesc, tuple);
+    	    
+    	    if ( newtuple != tuple )
+    	    {
+    	    	Assert ( slot->ttc_shouldFree );
+    	    	slot->val = tuple = newtuple;
+    	    }
+    	}
+    	    
+    	if ( resultRelationDesc->rd_att->constr->has_not_null )
+    	{
+	    int attrChk;
+	    
+	    for (attrChk = 1; attrChk <= resultRelationDesc->rd_att->natts; attrChk++)
+	    {
+	    	if (resultRelationDesc->rd_att->attrs[attrChk-1]->attnotnull && heap_attisnull(tuple,attrChk))
+    	    	    elog(WARN,"ExecAppend:  Fail to add null value in not null attribute %s",
+	    	    	resultRelationDesc->rd_att->attrs[attrChk-1]->attname.data);
+    	    }
+    	}
+    }
+    
     /* ----------------
      *	insert the tuple
      * ----------------
@@ -1105,4 +1133,58 @@ ExecReplace(TupleTableSlot *slot,
     if (numIndices > 0) {
 	ExecInsertIndexTuples(slot, &(tuple->t_ctid), estate, true);
     }
+}
+
+static HeapTuple
+ExecAttrDefault (Relation rel, HeapTuple tuple)
+{
+    int ndef = rel->rd_att->constr->num_defval;
+    AttrDefault *attrdef = rel->rd_att->constr->defval;
+    ExprContext *econtext = makeNode(ExprContext);
+    Node *expr;
+    bool isnull;
+    bool isdone;
+    Datum val;
+    Datum *replValue = NULL;
+    char *replNull = NULL;
+    char *repl = NULL;
+    int i;
+    
+    for (i = 0; i < ndef; i++)
+    {
+    	if ( !heap_attisnull (tuple, attrdef[i].adnum) )
+    	    continue;
+    	expr = (Node*) stringToNode (attrdef[i].adbin);
+    	econtext->ecxt_scantuple = NULL;		/* scan tuple slot */
+    	econtext->ecxt_innertuple = NULL;		/* inner tuple slot */
+    	econtext->ecxt_outertuple = NULL;		/* outer tuple slot */
+    	econtext->ecxt_relation = NULL;			/* relation */
+    	econtext->ecxt_relid = 0;			/* relid */
+    	econtext->ecxt_param_list_info = NULL;		/* param list info */
+    	econtext->ecxt_range_table = NULL;		/* range table */
+    	
+    	val = ExecEvalExpr (expr, econtext, &isnull, &isdone);
+    	
+    	if ( isnull )
+    	    continue;
+    	
+    	if ( repl == NULL )
+    	{
+    	    repl = (char*) palloc (rel->rd_att->natts * sizeof (char));
+    	    replNull = (char*) palloc (rel->rd_att->natts * sizeof (char));
+    	    replValue = (Datum*) palloc (rel->rd_att->natts * sizeof (Datum));
+    	    memset (repl, ' ', rel->rd_att->natts * sizeof (char));
+    	}
+    	
+    	repl[attrdef[i].adnum - 1] = 'r';
+    	replNull[attrdef[i].adnum - 1] = ' ';
+    	replValue[attrdef[i].adnum - 1] = val;
+    	
+    }
+    
+    if ( repl == NULL )
+    	return (tuple);
+    
+    return (heap_modifytuple (tuple, InvalidBuffer, rel, replValue, replNull, repl));
+    
 }
