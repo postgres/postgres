@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.189 2005/03/27 19:18:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.190 2005/03/28 00:58:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1190,6 +1190,9 @@ rowtype_field_matches(Oid rowtypeid, int fieldnum,
  *
  * We assume that the tree has already been type-checked and contains
  * only operators and functions that are reasonable to try to execute.
+ *
+ * NOTE: the planner assumes that this will always flatten nested AND and
+ * OR clauses into N-argument form.  See comments in prepqual.c.
  *--------------------
  */
 Node *
@@ -1871,7 +1874,7 @@ eval_const_expressions_mutator(Node *node,
  * is TRUE and at least one is NULL.
  *
  * This is split out as a subroutine so that we can recurse to fold sub-ORs
- * into the upper OR clause, thereby preserving AND/OR flatness.
+ * into the upper OR clause, thereby ensuring that nested ORs are flattened.
  *
  * The output arguments *haveNull and *forceTrue must be initialized FALSE
  * by the caller.  They will be set TRUE if a null constant or true constant,
@@ -1931,7 +1934,7 @@ simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
  * is FALSE and at least one is NULL.
  *
  * This is split out as a subroutine so that we can recurse to fold sub-ANDs
- * into the upper AND clause, thereby preserving AND/OR flatness.
+ * into the upper AND clause, thereby ensuring that nested ANDs are flattened.
  *
  * The output arguments *haveNull and *forceFalse must be initialized FALSE
  * by the caller.  They will be set TRUE if a null constant or false constant,

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.171 2005/03/27 06:29:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.172 2005/03/28 00:58:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -750,8 +750,8 @@ check_partial_indexes(Query *root, RelOptInfo *rel)
  *	  that the given predicate is true.
  *
  *	  The top-level List structure of each list corresponds to an AND list.
- *	  We assume that canonicalize_qual() has been applied and so there are
- *	  no un-flattened ANDs or ORs (e.g., no AND immediately within an AND,
+ *	  We assume that eval_const_expressions() has been applied and so there
+ *	  are no un-flattened ANDs or ORs (e.g., no AND immediately within an AND,
  *	  including AND just below the top-level List structure).
  *	  If this is not true we might fail to prove an implication that is
  *	  valid, but no worse consequences will ensue.

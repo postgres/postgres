@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.180 2005/03/17 23:44:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.181 2005/03/28 00:58:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,13 +422,17 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		expr = flatten_join_alias_vars(parse, expr);
 
 	/*
-	 * If it's a qual or havingQual, canonicalize it.  It seems most
-	 * useful to do this before applying eval_const_expressions, since the
-	 * latter can optimize flattened AND/ORs better than unflattened ones.
+	 * Simplify constant expressions.
 	 *
-	 * Note: all processing of a qual expression after this point must be
-	 * careful to maintain AND/OR flatness --- that is, do not generate a
-	 * tree with AND directly under AND, nor OR directly under OR.
+	 * Note: this also flattens nested AND and OR expressions into N-argument
+	 * form.  All processing of a qual expression after this point must be
+	 * careful to maintain AND/OR flatness --- that is, do not generate a tree
+	 * with AND directly under AND, nor OR directly under OR.
+	 */
+	expr = eval_const_expressions(expr);
+
+	/*
+	 * If it's a qual or havingQual, canonicalize it.
 	 */
 	if (kind == EXPRKIND_QUAL)
 	{
@@ -439,11 +443,6 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 		pprint(expr);
 #endif
 	}
-
-	/*
-	 * Simplify constant expressions.
-	 */
-	expr = eval_const_expressions(expr);
 
 	/* Expand SubLinks to SubPlans */
 	if (parse->hasSubLinks)
