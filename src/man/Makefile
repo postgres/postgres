@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.5 1998/04/06 01:36:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/man/Attic/Makefile,v 1.6 1998/04/06 02:03:03 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ install:
 	-mkdir $(DESTDIR)$(POSTMANDIR)/man1
 	-mkdir $(DESTDIR)$(POSTMANDIR)/man3
 	-mkdir $(DESTDIR)$(POSTMANDIR)/man5
- 	-mkdir $(DESTDIR)$(POSTMANDIR)/manl
+	-mkdir $(DESTDIR)$(POSTMANDIR)/manl
 	cp *.1* $(DESTDIR)$(POSTMANDIR)/man1
 	cp *.3* $(DESTDIR)$(POSTMANDIR)/man3
 	cp *.5* $(DESTDIR)$(POSTMANDIR)/man5
