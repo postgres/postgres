@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.86 2001/11/28 20:49:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.87 2001/12/01 04:19:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -265,7 +265,15 @@ PostgreSQL documentation
 <replaceable>expression</replaceable> IS NULL
 <replaceable>expression</replaceable> IS NOT NULL
 </synopsis>
-   Do <emphasis>not</emphasis> use
+   or the equivalent, but less standard, constructs
+<synopsis>
+<replaceable>expression</replaceable> ISNULL
+<replaceable>expression</replaceable> NOTNULL
+</synopsis>
+  </para>
+
+  <para>
+   Do <emphasis>not</emphasis> write
    <literal><replaceable>expression</replaceable> = NULL</literal>
    because NULL is not <quote>equal to</quote> NULL.  (NULL represents
    an unknown value, and it is not known whether two unknown values are
@@ -279,7 +287,7 @@ PostgreSQL documentation
    the NULL value.  To support these applications, the run-time option
    <varname>transform_null_equals</varname> can be turned on (e.g.,
    <literal>SET transform_null_equals TO ON;</literal>).
-   <productname>PostgreSQL</productname> would then convert <literal>x
+   <productname>PostgreSQL</productname> will then convert <literal>x
    = NULL</literal> clauses to <literal>x IS NULL</literal>.  This was
    the default behavior in releases 6.5 through 7.1.
   </para>
@@ -4516,6 +4524,425 @@ SELECT NULLIF(value, '(none)') ...
    particular, <function>SUM</function> of no rows returns NULL, not
    zero as one might expect.  <function>COALESCE</function> may be
    used to substitute zero for NULL when necessary.
+  </para>
+
+ </sect1>
+
+
+ <sect1 id="functions-subquery">
+  <title>Subquery Expressions</title>
+
+  <indexterm>
+   <primary>exists</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>in</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>not in</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>any</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>all</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>some</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>subqueries</primary>
+  </indexterm>
+
+  <para>
+   This section describes the <acronym>SQL</acronym>-compliant subquery
+   expressions available in <productname>PostgreSQL</productname>.
+   All of the expression forms documented in this section return
+   Boolean (true/false) results.
+  </para>
+
+  <bridgehead renderas="sect2">EXISTS</bridgehead>
+
+<synopsis>
+EXISTS ( <replaceable>subquery</replaceable> )
+</synopsis>
+
+  <para>
+   The argument of <token>EXISTS</> is an arbitrary SELECT statement,
+   or <firstterm>subquery</>.  The
+   subquery is evaluated to determine whether it returns any rows.
+   If it returns at least one row, the result of <token>EXISTS</> is
+   TRUE; if the subquery returns no rows, the result of <token>EXISTS</> 
+   is FALSE.
+  </para>
+
+  <para>
+   The subquery can refer to variables from the surrounding query,
+   which will act as constants during any one evaluation of the subquery.
+  </para>
+
+  <para>
+   The subquery will generally only be executed far enough to determine
+   whether at least one row is returned, not all the way to completion.
+   It is unwise to write a subquery that has any side-effects (such as
+   calling sequence functions); whether the side-effects occur or not
+   may be difficult to predict.
+  </para>
+
+  <para>
+   Since the result depends only on whether any rows are returned,
+   and not on the contents of those rows, the output list of the
+   subquery is normally uninteresting.  A common coding convention is
+   to write all EXISTS tests in the form
+   <literal>EXISTS(SELECT 1 WHERE ...)</>.  There are exceptions to
+   this rule however, such as subqueries that use <token>INTERSECT</>.
+  </para>
+
+  <para>
+   This simple example is like an inner join on col2, but it produces at
+   most one output row for each tab1 row, even if there are multiple matching
+   tab2 rows:
+<screen>
+SELECT col1 FROM tab1
+    WHERE EXISTS(SELECT 1 FROM tab2 WHERE col2 = tab1.col2);
+</screen>
+  </para>
+
+   <bridgehead renderas="sect2">IN (scalar form)</bridgehead>
+
+<synopsis>
+<replaceable>expression</replaceable> IN (<replaceable>value</replaceable><optional>, ...</optional>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>IN</> is a parenthesized list
+   of scalar expressions.  The result is TRUE if the left-hand expression's
+   result is equal to any of the right-hand expressions.  This is a shorthand
+   notation for
+
+<synopsis>
+<replaceable>expression</replaceable> = <replaceable>value1</replaceable>
+OR
+<replaceable>expression</replaceable> = <replaceable>value2</replaceable>
+OR
+...
+</synopsis>
+
+   Note that if the left-hand expression yields NULL, or if there are
+   no equal right-hand values and at least one right-hand expression yields
+   NULL, the result of the <token>IN</> construct will be NULL, not FALSE.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of NULL values.
+  </para>
+
+  <note>
+  <para>
+   This form of <token>IN</> is not truly a subquery expression, but it
+   seems best to document it in the same place as subquery <token>IN</>.
+  </para>
+  </note>
+
+   <bridgehead renderas="sect2">IN (subquery form)</bridgehead>
+
+<synopsis>
+<replaceable>expression</replaceable> IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>IN</> is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result.
+   The result of <token>IN</> is TRUE if any equal subquery row is found.
+   The result is FALSE if no equal row is found (including the special
+   case where the subquery returns no rows).
+  </para>
+
+  <para>
+   Note that if the left-hand expression yields NULL, or if there are
+   no equal right-hand values and at least one right-hand row yields
+   NULL, the result of the <token>IN</> construct will be NULL, not FALSE.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of NULL values.
+  </para>
+
+  <para>
+   As with <token>EXISTS</>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+(<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>) IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>IN</> is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand list.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result.
+   The result of <token>IN</> is TRUE if any equal subquery row is found.
+   The result is FALSE if no equal row is found (including the special
+   case where the subquery returns no rows).
+  </para>
+
+  <para>
+   As usual, NULLs in the expressions or subquery rows are combined per
+   the normal rules of SQL boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of that row comparison is unknown (NULL).
+   If all the row results are either unequal or NULL, with at least one NULL,
+   then the result of <token>IN</> is NULL.
+  </para>
+
+   <bridgehead renderas="sect2">NOT IN (scalar form)</bridgehead>
+
+<synopsis>
+<replaceable>expression</replaceable> NOT IN (<replaceable>value</replaceable><optional>, ...</optional>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>NOT IN</> is a parenthesized list
+   of scalar expressions.  The result is TRUE if the left-hand expression's
+   result is unequal to all of the right-hand expressions.  This is a shorthand
+   notation for
+
+<synopsis>
+<replaceable>expression</replaceable> &lt;&gt; <replaceable>value1</replaceable>
+AND
+<replaceable>expression</replaceable> &lt;&gt; <replaceable>value2</replaceable>
+AND
+...
+</synopsis>
+
+   Note that if the left-hand expression yields NULL, or if there are
+   no equal right-hand values and at least one right-hand expression yields
+   NULL, the result of the <token>NOT IN</> construct will be NULL, not TRUE
+   as one might naively expect.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of NULL values.
+  </para>
+
+  <tip>
+  <para>
+   <literal>x NOT IN y</> is equivalent to <literal>NOT (x IN y)</> in all
+   cases.  However, NULLs are much more likely to trip up the novice when
+   working with <token>NOT IN</> than when working with <token>IN</>.
+   It's best to express your condition positively if possible.
+  </para>
+  </tip>
+
+   <bridgehead renderas="sect2">NOT IN (subquery form)</bridgehead>
+
+<synopsis>
+<replaceable>expression</replaceable> NOT IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>NOT IN</> is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result.
+   The result of <token>NOT IN</> is TRUE if only unequal subquery rows
+   are found (including the special case where the subquery returns no rows).
+   The result is FALSE if any equal row is found.
+  </para>
+
+  <para>
+   Note that if the left-hand expression yields NULL, or if there are
+   no equal right-hand values and at least one right-hand row yields
+   NULL, the result of the <token>NOT IN</> construct will be NULL, not TRUE.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of NULL values.
+  </para>
+
+  <para>
+   As with <token>EXISTS</>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+(<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>) NOT IN (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>NOT IN</> is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand list.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result.
+   The result of <token>NOT IN</> is TRUE if only unequal subquery rows
+   are found (including the special case where the subquery returns no rows).
+   The result is FALSE if any equal row is found.
+  </para>
+
+  <para>
+   As usual, NULLs in the expressions or subquery rows are combined per
+   the normal rules of SQL boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of that row comparison is unknown (NULL).
+   If all the row results are either unequal or NULL, with at least one NULL,
+   then the result of <token>NOT IN</> is NULL.
+  </para>
+
+   <bridgehead renderas="sect2">ANY</bridgehead>
+
+<synopsis>
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> ANY (<replaceable>subquery</replaceable>)
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> SOME (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>ANY</> is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result using the
+   given <replaceable>operator</replaceable>, which must yield a boolean
+   result.
+   The result of <token>ANY</> is TRUE if any true result is obtained.
+   The result is FALSE if no true result is found (including the special
+   case where the subquery returns no rows).
+  </para>
+
+  <para>
+   <token>SOME</> is a synonym for <token>ANY</>.
+   <token>IN</> is equivalent to <literal>= ANY</>.
+  </para>
+
+  <para>
+   Note that if there are no successes and at least one right-hand row yields
+   NULL for the operator's result, the result of the <token>ANY</> construct
+   will be NULL, not FALSE.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of NULL values.
+  </para>
+
+  <para>
+   As with <token>EXISTS</>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+(<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>) <replaceable>operator</replaceable> ANY (<replaceable>subquery</replaceable>)
+(<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>) <replaceable>operator</replaceable> SOME (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>ANY</> is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand list.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result,
+   using the given <replaceable>operator</replaceable>.  Presently,
+   only <literal>=</> and <literal>&lt;&gt;</> operators are allowed
+   in row-wise <token>ANY</> queries.
+   The result of <token>ANY</> is TRUE if any equal or unequal row is
+   found, respectively.
+   The result is FALSE if no such row is found (including the special
+   case where the subquery returns no rows).
+  </para>
+
+  <para>
+   As usual, NULLs in the expressions or subquery rows are combined per
+   the normal rules of SQL boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of that row comparison is unknown (NULL).
+   If there is at least one NULL row result, then the result of <token>ANY</>
+   cannot be FALSE; it will be TRUE or NULL. 
+  </para>
+
+   <bridgehead renderas="sect2">ALL</bridgehead>
+
+<synopsis>
+<replaceable>expression</replaceable> <replaceable>operator</replaceable> ALL (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>ALL</> is a parenthesized
+   subquery, which must return exactly one column.  The left-hand expression
+   is evaluated and compared to each row of the subquery result using the
+   given <replaceable>operator</replaceable>, which must yield a boolean
+   result.
+   The result of <token>ALL</> is TRUE if all rows yield TRUE
+   (including the special case where the subquery returns no rows).
+   The result is FALSE if any false result is found.
+  </para>
+
+  <para>
+   <token>NOT IN</> is equivalent to <literal>&lt;&gt; ALL</>.
+  </para>
+
+  <para>
+   Note that if there are no failures but at least one right-hand row yields
+   NULL for the operator's result, the result of the <token>ALL</> construct
+   will be NULL, not TRUE.
+   This is in accordance with SQL's normal rules for Boolean combinations
+   of NULL values.
+  </para>
+
+  <para>
+   As with <token>EXISTS</>, it's unwise to assume that the subquery will
+   be evaluated completely.
+  </para>
+
+<synopsis>
+(<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>) <replaceable>operator</replaceable> ALL (<replaceable>subquery</replaceable>)
+</synopsis>
+
+  <para>
+   The right-hand side of this form of <token>ALL</> is a parenthesized
+   subquery, which must return exactly as many columns as there are
+   expressions in the left-hand list.  The left-hand expressions are
+   evaluated and compared row-wise to each row of the subquery result,
+   using the given <replaceable>operator</replaceable>.  Presently,
+   only <literal>=</> and <literal>&lt;&gt;</> operators are allowed
+   in row-wise <token>ALL</> queries.
+   The result of <token>ALL</> is TRUE if all subquery rows are equal
+   or unequal, respectively (including the special
+   case where the subquery returns no rows).
+   The result is FALSE if any row is found to be unequal or equal,
+   respectively.
+  </para>
+
+  <para>
+   As usual, NULLs in the expressions or subquery rows are combined per
+   the normal rules of SQL boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of that row comparison is unknown (NULL).
+   If there is at least one NULL row result, then the result of <token>ALL</>
+   cannot be TRUE; it will be FALSE or NULL. 
+  </para>
+
+   <bridgehead renderas="sect2">Row-wise comparison</bridgehead>
+
+<synopsis>
+(<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>) <replaceable>operator</replaceable> (<replaceable>subquery</replaceable>)
+(<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>) <replaceable>operator</replaceable> (<replaceable>expression</replaceable>, <replaceable>expression</replaceable><optional>, ...</optional>)
+</synopsis>
+
+  <para>
+   The left-hand side is a list of scalar expressions.  The right-hand side
+   can be either a list of scalar expressions of the same length, or a
+   parenthesized subquery, which must return exactly as many columns as there
+   are expressions on the left-hand side.  Furthermore, the subquery cannot
+   return more than one row.  (If it returns zero rows, the result is taken to
+   be NULL.)  The left-hand side is evaluated and compared row-wise to the
+   single subquery result row, or to the right-hand expression list.
+   Presently, only <literal>=</> and <literal>&lt;&gt;</> operators are allowed
+   in row-wise comparisons.
+   The result is TRUE if the two rows are equal or unequal, respectively.
+  </para>
+
+  <para>
+   As usual, NULLs in the expressions or subquery rows are combined per
+   the normal rules of SQL boolean expressions.  Two rows are considered
+   equal if all their corresponding members are non-null and equal; the rows
+   are unequal if any corresponding members are non-null and unequal;
+   otherwise the result of the row comparison is unknown (NULL).
   </para>
 
  </sect1>

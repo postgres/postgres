@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.53 2001/11/28 20:49:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.54 2001/12/01 04:19:20 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -845,7 +845,11 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       <command>SELECT</command> in parentheses that returns exactly one
       row with one column.  It is an error to use a subquery that
       returns more than one row or more than one column in the context
-      of a value expression.
+      of a value expression.  (But if, during a particular execution, the
+      subquery returns no rows, the scalar result is taken to be NULL.)
+      The subquery can refer to variables from the surrounding query,
+      which will act as constants during any one evaluation of the subquery.
+      See also <xref linkend="functions-subquery">.
      </para>
     </listitem>
    </itemizedlist>
