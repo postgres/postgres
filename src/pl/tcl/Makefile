@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.29 2001/05/09 20:19:30 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.30 2001/05/09 20:30:09 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -100,9 +100,9 @@ tcl_unknown: $(top_builddir)/src/Makefile.global \
 	modules/pltcl_delmod.in \
 	modules/pltcl_listmod.in
 ifeq ($(enable_pltcl_unknown), yes)
-	sed -e 's/@TCLSH@/$(TCLSH)/g' modules/pltcl_loadmod.in > modules/pltcl_loadmod
-	sed -e 's/@TCLSH@/$(TCLSH)/g' modules/pltcl_delmod.in > modules/pltcl_delmod
-	sed -e 's/@TCLSH@/$(TCLSH)/g' modules/pltcl_listmod.in > modules/pltcl_listmod
+	sed -e 's,@TCLSH@,$(TCLSH),g' modules/pltcl_loadmod.in > modules/pltcl_loadmod
+	sed -e 's,@TCLSH@,$(TCLSH),g' modules/pltcl_delmod.in > modules/pltcl_delmod
+	sed -e 's,@TCLSH@,$(TCLSH),g' modules/pltcl_listmod.in > modules/pltcl_listmod
 	chmod a+x modules/pltcl_loadmod modules/pltcl_delmod modules/pltcl_listmod
 endif
 
