@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.193 2001/02/18 18:33:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.194 2001/03/06 04:53:28 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -106,6 +106,8 @@
  *    - Fix help output: replace 'f' with 't' and change desc.
  *    - Add extra arg to formatStringLiteral to specify how to handle LF & TAB.
  *      I opted for encoding them except in procedure bodies.
+ *	  - Dump relevant parts of sequences only when doing schemaOnly & dataOnly
+ *	  - Prevent double-dumping of sequences when dataOnly.
  * 
  *-------------------------------------------------------------------------
  */
@@ -156,7 +158,7 @@ typedef enum _formatLiteralOptions {
 } formatLiteralOptions;
 
 static void dumpComment(Archive *outfile, const char *target, const char *oid);
-static void dumpSequence(Archive *fout, TableInfo tbinfo);
+static void dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool dataOnly);
 static void dumpACL(Archive *fout, TableInfo tbinfo);
 static void dumpTriggers(Archive *fout, const char *tablename,
 			 TableInfo *tblinfo, int numTables);
@@ -607,24 +609,6 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 				(onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "", 
 				(onlytable == NULL || (strlen(onlytable) == 0)) ? "s" : "",
 				g_comment_end);
-
-	/* Dump SEQUENCEs first (if dataOnly) */
-	if (dataOnly)
-	{
-		for (i = 0; i < numTables; i++)
-		{
-			if (!(tblinfo[i].sequence))
-				continue;
-			if (!onlytable || (strcmp(tblinfo[i].relname, onlytable) == 0) || (strlen(onlytable) == 0) )
-			{
-				if (g_verbose)
-					fprintf(stderr, "%s dumping out schema of sequence '%s' %s\n",
-					 g_comment_start, tblinfo[i].relname, g_comment_end);
-				/* becomeUser(fout, tblinfo[i].usename); */
-				dumpSequence(fout, tblinfo[i]);
-			}
-		}
-	}
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -3730,7 +3714,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			|| (serialSeq && !strcmp(tblinfo[i].relname, serialSeq)))
 		{
 			/* becomeUser(fout, tblinfo[i].usename); */
-			dumpSequence(fout, tblinfo[i]);
+			dumpSequence(fout, tblinfo[i], schemaOnly, dataOnly);
 			if (!aclsSkip)
 				dumpACL(fout, tblinfo[i]);
 		}
@@ -4314,7 +4298,7 @@ findLastBuiltinOid(const char* dbname)
 
 
 static void
-dumpSequence(Archive *fout, TableInfo tbinfo)
+dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool dataOnly)
 {
 	PGresult   *res;
 	int4		last,
@@ -4367,44 +4351,52 @@ dumpSequence(Archive *fout, TableInfo tbinfo)
 	t = PQgetvalue(res, 0, 7);
 	called = *t;
 
-	PQclear(res);
-
-	resetPQExpBuffer(delqry);
-	appendPQExpBuffer(delqry, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
-
 	/*
 	 * The logic we use for restoring sequences is as follows:
 	 *		- 	Add a basic CREATE SEQUENCE statement 
 	 *			(use last_val for start if called == 'f', else use min_val for start_val).
 	 *		-	Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff we load data
 	 */
-	resetPQExpBuffer(query);
-	appendPQExpBuffer(query,
-				  "CREATE SEQUENCE %s start %d increment %d maxvalue %d "
-					  "minvalue %d  cache %d %s;\n",
-					fmtId(tbinfo.relname, force_quotes), 
-					  (called == 't') ? minv : last,
-					  incby, maxv, minv, cache,
-					  (cycled == 't') ? "cycle" : "");
 
-	ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE", NULL,
-					query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
+	if (!dataOnly)
+	{
+		PQclear(res);
 
+		resetPQExpBuffer(delqry);
+		appendPQExpBuffer(delqry, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
 
-	resetPQExpBuffer(query);
-	appendPQExpBuffer(query, "SELECT setval (");
-	formatStringLiteral(query, fmtId(tbinfo.relname, force_quotes), CONV_ALL);
-	appendPQExpBuffer(query, ", %d, '%c');\n", last, called);
+		resetPQExpBuffer(query);
+		appendPQExpBuffer(query,
+					  "CREATE SEQUENCE %s start %d increment %d maxvalue %d "
+						  "minvalue %d  cache %d %s;\n",
+						fmtId(tbinfo.relname, force_quotes), 
+						  (called == 't') ? minv : last,
+						  incby, maxv, minv, cache,
+						  (cycled == 't') ? "cycle" : "");
 
-	ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE SET", NULL,
-					query->data, "" /* Del */, "", "", NULL, NULL);
+		ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE", NULL,
+						query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
+	}
 
-	/* Dump Sequence Comments */
+	if (!schemaOnly)
+	{
+		resetPQExpBuffer(query);
+		appendPQExpBuffer(query, "SELECT setval (");
+		formatStringLiteral(query, fmtId(tbinfo.relname, force_quotes), CONV_ALL);
+		appendPQExpBuffer(query, ", %d, '%c');\n", last, called);
 
-	resetPQExpBuffer(query);
-	appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo.relname, force_quotes));
-	dumpComment(fout, query->data, tbinfo.oid);
+		ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE SET", NULL,
+						query->data, "" /* Del */, "", "", NULL, NULL);
+	}
 
+	if (!dataOnly)
+	{
+		/* Dump Sequence Comments */
+
+		resetPQExpBuffer(query);
+		appendPQExpBuffer(query, "SEQUENCE %s", fmtId(tbinfo.relname, force_quotes));
+		dumpComment(fout, query->data, tbinfo.oid);
+	}
 }
 
 
