@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.37 1998/10/17 02:36:11 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.38 1998/10/17 03:48:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -69,8 +69,8 @@ clean:
 
 distclean: clean
 	#  The second group of files comes from configure.in
-	rm -f 
-		Makefile.port
+	rm -f \
+		Makefile.port \
 		config.cache \
 		config.status \
 		config.log \
