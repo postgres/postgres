@@ -2735,7 +2735,7 @@ else
 fi
 done
 
-for ac_hdr in sys/resource.h netdb.h arpa/inet.h
+for ac_hdr in sys/resource.h netdb.h arpa/inet.h getopt.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
@@ -2815,7 +2815,7 @@ else
 fi
 done
 
-for ac_hdr in readline/history.h ieeefp.h fp_class.h
+for ac_hdr in readline/history.h ieeefp.h fp_class.h netinet/in.h
 do
 ac_safe=`echo "$ac_hdr" | sed 'y%./+-%__p_%'`
 echo $ac_n "checking for $ac_hdr""... $ac_c" 1>&6
@@ -3224,7 +3224,7 @@ else
 fi
 rm -f conftest*
 
-if test x$ac_cv_prog_gcc = xyes; then
+if test $ac_cv_prog_gcc = yes; then
     echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
 echo "configure:3230: checking whether ${CC-cc} needs -traditional" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
