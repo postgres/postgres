@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 12 00:24:09 EDT 2000
+Last updated:		Thu Oct 12 11:43:40 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -139,7 +139,6 @@ COMMANDS
 * -Allow DELETE and UPDATE to use inheritance
 * Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
 * Allow BINARY option to SELECT, like we do with DECLARE
-* Prevent truncate on table with a referential integrity trigger (RESTRICT)
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
   
