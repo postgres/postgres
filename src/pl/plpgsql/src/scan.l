@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.12 2001/05/21 14:22:19 wieck Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.13 2001/07/11 18:54:19 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -121,6 +121,10 @@ null			{ return K_NULL;			}
 open			{ return K_OPEN;			}
 perform			{ return K_PERFORM;			}
 raise			{ return K_RAISE;			}
+set			{ return K_SET;				}
+authorization		{ return K_AUTHORIZATION;		}
+invoker			{ return K_INVOKER;			}
+definer			{ return K_DEFINER;			}
 record			{ return K_RECORD;			}
 rename			{ return K_RENAME;			}
 result_oid		{ return K_RESULT_OID;		}

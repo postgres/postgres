@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.13 2001/05/21 14:22:19 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.14 2001/07/11 18:54:18 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -382,6 +382,7 @@ static void dump_fors(PLpgSQL_stmt_fors * stmt);
 static void dump_select(PLpgSQL_stmt_select * stmt);
 static void dump_exit(PLpgSQL_stmt_exit * stmt);
 static void dump_return(PLpgSQL_stmt_return * stmt);
+static void dump_setauth(PLpgSQL_stmt_setauth * stmt);
 static void dump_raise(PLpgSQL_stmt_raise * stmt);
 static void dump_execsql(PLpgSQL_stmt_execsql * stmt);
 static void dump_dynexecute(PLpgSQL_stmt_dynexecute * stmt);
@@ -437,6 +438,9 @@ dump_stmt(PLpgSQL_stmt * stmt)
 			break;
 		case PLPGSQL_STMT_RETURN:
 			dump_return((PLpgSQL_stmt_return *) stmt);
+			break;
+		case PLPGSQL_STMT_SETAUTH:
+			dump_setauth((PLpgSQL_stmt_setauth *) stmt);
 			break;
 		case PLPGSQL_STMT_RAISE:
 			dump_raise((PLpgSQL_stmt_raise *) stmt);
@@ -719,6 +723,21 @@ dump_return(PLpgSQL_stmt_return * stmt)
 			dump_expr(stmt->expr);
 	}
 	printf("\n");
+}
+
+static void
+dump_setauth(PLpgSQL_stmt_setauth * stmt)
+{
+	dump_ind();
+        switch (stmt->auth_level)
+        {
+        	case PLPGSQL_AUTH_DEFINER:
+                	printf("SET AUTHORIZATION DEFINER\n");
+                        break;
+                case PLPGSQL_AUTH_INVOKER:
+                	printf("SET AUTHORIZATION INVOKER\n");
+                        break;
+        }
 }
 
 static void

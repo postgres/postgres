@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.21 2001/06/06 18:54:41 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.22 2001/07/11 18:54:18 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -122,10 +122,12 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %type <stmts>	proc_sect, proc_stmts, stmt_else, loop_body
 %type <stmt>	proc_stmt, pl_block
 %type <stmt>	stmt_assign, stmt_if, stmt_loop, stmt_while, stmt_exit
-%type <stmt>	stmt_return, stmt_raise, stmt_execsql, stmt_fori
+%type <stmt>	stmt_return, stmt_raise, stmt_execsql, stmt_fori, stmt_setauth
 %type <stmt>	stmt_fors, stmt_select, stmt_perform
 %type <stmt>	stmt_dynexecute, stmt_dynfors, stmt_getdiag
 %type <stmt>	stmt_open, stmt_fetch, stmt_close
+
+%type <ival>	auth_level
 
 %type <intlist>	raise_params
 %type <ival>	raise_level, raise_param
@@ -172,6 +174,10 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 %token	K_PERFORM
 %token	K_ROW_COUNT
 %token	K_RAISE
+%token	K_SET
+%token	K_AUTHORIZATION
+%token	K_INVOKER
+%token	K_DEFINER
 %token	K_RECORD
 %token	K_RENAME
 %token	K_RESULT_OID
@@ -726,6 +732,8 @@ proc_stmt		: pl_block
 						{ $$ = $1; }
 				| stmt_raise
 						{ $$ = $1; }
+				| stmt_setauth
+						{ $$ = $1; }
 				| stmt_execsql
 						{ $$ = $1; }
 				| stmt_dynexecute
@@ -1242,6 +1250,29 @@ stmt_return		: K_RETURN lno
 						$$ = (PLpgSQL_stmt *)new;
 					}
 				;
+
+stmt_setauth		: K_SET K_AUTHORIZATION auth_level lno ';'
+				{
+					PLpgSQL_stmt_setauth *new;
+
+					new=malloc(sizeof(PLpgSQL_stmt_setauth));
+
+					new->cmd_type = PLPGSQL_STMT_SETAUTH;
+					new->auth_level = $3;
+                                        new->lineno = $4;
+                                        
+					$$ = (PLpgSQL_stmt *)new;
+				}
+
+auth_level : K_DEFINER
+		{
+			$$=PLPGSQL_AUTH_DEFINER;
+                }
+	   | K_INVOKER
+           	{
+                	$$=PLPGSQL_AUTH_INVOKER;
+                }
+;
 
 stmt_raise		: K_RAISE lno raise_level raise_msg raise_params ';'
 					{

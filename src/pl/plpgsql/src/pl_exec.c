@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.44 2001/05/28 19:33:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.45 2001/07/11 18:54:18 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -47,6 +47,7 @@
 #include "plpgsql.h"
 #include "pl.tab.h"
 
+#include "miscadmin.h"
 #include "access/heapam.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -105,6 +106,8 @@ static int exec_stmt_exit(PLpgSQL_execstate * estate,
 			   PLpgSQL_stmt_exit * stmt);
 static int exec_stmt_return(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_return * stmt);
+static int exec_stmt_setauth(PLpgSQL_execstate * estate,
+				PLpgSQL_stmt_setauth * stmt);
 static int exec_stmt_raise(PLpgSQL_execstate * estate,
 				PLpgSQL_stmt_raise * stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate * estate,
@@ -226,6 +229,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 					case PLPGSQL_STMT_RETURN:
 						stmttype = "return";
 						break;
+					case PLPGSQL_STMT_SETAUTH:
+						stmttype = "setauth";
+						break;
 					case PLPGSQL_STMT_RAISE:
 						stmttype = "raise";
 						break;
@@ -277,7 +283,10 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	estate.retistuple = func->fn_retistuple;
 	estate.retisset = func->fn_retset;
 	estate.exitlabel = NULL;
-
+	estate.invoker_uid = GetUserId();
+	estate.definer_uid = func->definer_uid;
+	estate.auth_level = PLPGSQL_AUTH_INVOKER;
+        
 	estate.found_varno = func->found_varno;
 	estate.ndatums = func->ndatums;
 	estate.datums = palloc(sizeof(PLpgSQL_datum *) * estate.ndatums);
@@ -396,6 +405,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 		error_info_text = "at END of toplevel PL block";
 		elog(ERROR, "control reaches end of function without RETURN");
 	}
+
+	if (estate.auth_level!=PLPGSQL_AUTH_INVOKER)
+		SetUserId(estate.invoker_uid);
 
 	/*
 	 * We got a return value - process it
@@ -577,6 +589,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	estate.retistuple = func->fn_retistuple;
 	estate.retisset = func->fn_retset;
 	estate.exitlabel = NULL;
+	estate.invoker_uid = GetUserId();
+	estate.definer_uid = func->definer_uid;
+	estate.auth_level = PLPGSQL_AUTH_INVOKER;
 
 	estate.found_varno = func->found_varno;
 	estate.ndatums = func->ndatums;
@@ -759,6 +774,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		error_info_text = "at END of toplevel PL block";
 		elog(ERROR, "control reaches end of trigger procedure without RETURN");
 	}
+
+	if (estate.auth_level!=PLPGSQL_AUTH_INVOKER)
+		SetUserId(estate.invoker_uid);
 
 	/*
 	 * Check that the returned tuple structure has the same attributes,
@@ -1020,6 +1038,10 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 
 		case PLPGSQL_STMT_RETURN:
 			rc = exec_stmt_return(estate, (PLpgSQL_stmt_return *) stmt);
+			break;
+
+		case PLPGSQL_STMT_SETAUTH:
+			rc = exec_stmt_setauth(estate, (PLpgSQL_stmt_setauth *) stmt);
 			break;
 
 		case PLPGSQL_STMT_RAISE:
@@ -1643,6 +1665,29 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 									&(estate->rettype));
 
 	return PLPGSQL_RC_RETURN;
+}
+
+/* ----------
+ * exec_stmt_setauth            Changes user ID to/from
+ *                              that of the function owner's
+ * ----------
+ */
+
+static int
+exec_stmt_setauth(PLpgSQL_execstate * estate, PLpgSQL_stmt_setauth * stmt)
+{
+	switch(stmt->auth_level)
+        {
+        	case PLPGSQL_AUTH_DEFINER:
+                	SetUserId(estate->definer_uid);
+                        break;
+                case PLPGSQL_AUTH_INVOKER:
+                	SetUserId(estate->invoker_uid);
+                        break;
+	}
+
+	estate->auth_level=stmt->auth_level;
+	return PLPGSQL_RC_OK;
 }
 
 
