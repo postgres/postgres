@@ -80,6 +80,9 @@
 /* Set to 1 if you have sigprocmask() */
 #undef HAVE_SIGPROCMASK
 
+/* Set to 1 if you have strdup() */
+#undef HAVE_STRDUP
+
 /* Set to 1 if you have libreadline.a */
 #undef HAVE_LIBREADLINE
 
