@@ -4,7 +4,7 @@
   <note>
    <title>Author</title>
    <para>
-    This chapter originally appeared as a part of <xref id="SIM98">, Stefan Simkovics'
+    This chapter originally appeared as a part of <xref linkend="SIM98" endterm="SIM98">, Stefan Simkovics'
     Master's Thesis prepared at Vienna University of Technology under the direction
     of O.Univ.Prof.Dr. Georg Gottlob and Univ.Ass. Mag. Katrin Seyr.
    </para>
@@ -437,6 +437,7 @@ current context are performed.
 \end{figure}
 -->
 
+   </sect2>
   </sect1>
 
   <sect1>
@@ -494,7 +495,7 @@ current context are performed.
      <title>Techniques To Implement Views</title>
 
      <para>
-      Now will sketch the algorithm of the query rewrite system. For
+      Now we will sketch the algorithm of the query rewrite system. For
       better illustration we show how to implement views using rules
       as an example.
      </para>
@@ -578,6 +579,7 @@ current context are performed.
         s.sname &lt;&gt; 'Smith';
       </programlisting>
      </para>
+</sect3>
    </sect2>
   </sect1>
 
