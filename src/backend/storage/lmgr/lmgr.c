@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.58 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.59 2003/08/17 22:41:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,10 @@ InitLockTable(int maxBackends)
 {
 	int			lockmethod;
 
+	/* number of lock modes is lengthof()-1 because of dummy zero */
 	lockmethod = LockMethodTableInit("LockTable",
-									 LockConflicts, MAX_LOCKMODES - 1,
+									 LockConflicts,
+									 lengthof(LockConflicts) - 1,
 									 maxBackends);
 	LockTableId = lockmethod;
 

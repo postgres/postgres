@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.126 2003/08/04 02:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.127 2003/08/17 22:41:12 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -212,8 +212,8 @@ LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
 	int			i;
 
 	lockMethodTable->numLockModes = numModes;
-	numModes++;
-	for (i = 0; i < numModes; i++, conflictsP++)
+	/* copies useless zero element as well as the N lockmodes */
+	for (i = 0; i <= numModes; i++, conflictsP++)
 		lockMethodTable->conflictTab[i] = *conflictsP;
 }
 
@@ -241,11 +241,8 @@ LockMethodTableInit(char *tabName,
 				max_table_size;
 
 	if (numModes >= MAX_LOCKMODES)
-	{
-		elog(WARNING, "too many lock types %d (limit is %d)",
-			 numModes, MAX_LOCKMODES);
-		return INVALID_LOCKMETHOD;
-	}
+		elog(ERROR, "too many lock types %d (limit is %d)",
+			 numModes, MAX_LOCKMODES-1);
 
 	/* Compute init/max size to request for lock hashtables */
 	max_table_size = NLOCKENTS(maxBackends);
