@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dl.h,v 1.5 1997/09/08 02:27:33 momjian Exp $
+ * $Id: ultrix4.h,v 1.1 1998/03/10 05:23:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
