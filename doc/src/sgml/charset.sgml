@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.51 2005/03/13 01:26:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.52 2005/03/13 01:30:59 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -315,33 +315,29 @@ initdb --locale=sv_SE
        </thead>
        <tbody>
         <row>
-         <entry><literal>SQL_ASCII</literal></entry>
-         <entry><acronym>ASCII</acronym></entry>
-        </row>
-        <row>
          <entry><literal>BIG5</literal></entry>
          <entry>Chinese</entry>
          <entry>Aliases: WIN950, Windows950</entry>
-        </row>
-        <row>
-         <entry><literal>EUC_JP</literal></entry>
-         <entry>Japanese <acronym>EUC</></entry>
         </row>
         <row>
          <entry><literal>EUC_CN</literal></entry>
          <entry>Chinese <acronym>EUC</></entry>
         </row>
         <row>
+         <entry><literal>EUC_JP</literal></entry>
+         <entry>Japanese <acronym>EUC</></entry>
+        </row>
+        <row>
          <entry><literal>EUC_KR</literal></entry>
          <entry>Korean <acronym>EUC</></entry>
         </row>
         <row>
-         <entry><literal>JOHAB</literal></entry>
-         <entry>Korean <acronym>EUC</> (Hangle base)</entry>
-        </row>
-        <row>
          <entry><literal>EUC_TW</literal></entry>
          <entry>Taiwan <acronym>EUC</acronym></entry>
+        </row>
+        <row>
+         <entry><literal>GB18030</literal></entry>
+         <entry>Chinese </entry>
         </row>
         <row>
          <entry><literal>GBK</literal></entry>
@@ -349,17 +345,29 @@ initdb --locale=sv_SE
          <entry>Aliases: WIN936, Windows936</entry>
         </row>
         <row>
-         <entry><literal>GB18030</literal></entry>
-         <entry>Chinese </entry>
+         <entry><literal>ISO_8859_5</literal></entry>
+         <entry>ISO 8859-5/<acronym>ECMA</> 113 (Latin/Cyrillic)</entry>
         </row>
         <row>
-         <entry><literal>UTF8</literal></entry>
-         <entry>UTF-8 (Unicode, 8-bit)</entry>
-         <entry>Aliases: Unicode</entry>
+         <entry><literal>ISO_8859_6</literal></entry>
+         <entry>ISO 8859-6/<acronym>ECMA</> 114 (Latin/Arabic)</entry>
         </row>
         <row>
-         <entry><literal>MULE_INTERNAL</literal></entry>
-         <entry>Mule internal code (Multi-lingual Emacs)</entry>
+         <entry><literal>ISO_8859_7</literal></entry>
+         <entry>ISO 8859-7/<acronym>ECMA</> 118 (Latin/Greek)</entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_8</literal></entry>
+         <entry>ISO 8859-8/<acronym>ECMA</> 121 (Latin/Hebrew)</entry>
+        </row>
+        <row>
+         <entry><literal>JOHAB</literal></entry>
+         <entry>Korean <acronym>EUC</> (Hangle base)</entry>
+        </row>
+        <row>
+         <entry><literal>KOI8</literal></entry>
+         <entry><acronym>KOI</acronym>8-R(U) (Cyrillic)</entry>
+         <entry>Aliases: KOI8</entry>
         </row>
         <row>
          <entry><literal>LATIN1</literal></entry>
@@ -412,25 +420,8 @@ initdb --locale=sv_SE
          <entry>Aliases: ISO885916</entry>
         </row>
         <row>
-         <entry><literal>ISO_8859_5</literal></entry>
-         <entry>ISO 8859-5/<acronym>ECMA</> 113 (Latin/Cyrillic)</entry>
-        </row>
-        <row>
-         <entry><literal>ISO_8859_6</literal></entry>
-         <entry>ISO 8859-6/<acronym>ECMA</> 114 (Latin/Arabic)</entry>
-        </row>
-        <row>
-         <entry><literal>ISO_8859_7</literal></entry>
-         <entry>ISO 8859-7/<acronym>ECMA</> 118 (Latin/Greek)</entry>
-        </row>
-        <row>
-         <entry><literal>ISO_8859_8</literal></entry>
-         <entry>ISO 8859-8/<acronym>ECMA</> 121 (Latin/Hebrew)</entry>
-        </row>
-        <row>
-         <entry><literal>KOI8</literal></entry>
-         <entry><acronym>KOI</acronym>8-R(U) (Cyrillic)</entry>
-         <entry>Aliases: KOI8</entry>
+         <entry><literal>MULE_INTERNAL</literal></entry>
+         <entry>Mule internal code (Multi-lingual Emacs)</entry>
         </row>
         <row>
          <entry><literal>SJIS</literal></entry>
@@ -438,9 +429,18 @@ initdb --locale=sv_SE
          <entry>Aliases: Mskanji, ShiftJIS, WIN932, Windows932</entry>
         </row>
         <row>
+         <entry><literal>SQL_ASCII</literal></entry>
+         <entry><acronym>ASCII</acronym></entry>
+        </row>
+        <row>
          <entry><literal>UHC</literal></entry>
          <entry>Unified Hangul Code (Korean)</entry>
          <entry>Aliases: WIN949, Windows949</entry>
+        </row>
+        <row>
+         <entry><literal>UTF8</literal></entry>
+         <entry>UTF-8 (Unicode, 8-bit)</entry>
+         <entry>Aliases: Unicode</entry>
         </row>
         <row>
          <entry><literal>WIN866</literal></entry>
@@ -472,16 +472,6 @@ initdb --locale=sv_SE
        </tbody>
       </tgroup>
      </table>
-
-    <important>
-     <para>
-      Before <productname>PostgreSQL</> 7.2, <literal>LATIN5</>
-      mistakenly meant ISO 8859-5.  From 7.2 on, <literal>LATIN5</>
-      means ISO 8859-9. If you have a <literal>LATIN5</> database
-      created on 7.1 or earlier and want to migrate to 7.2 or later,
-      you should be careful about this change.
-     </para>
-    </important>
 
      <para>
       Not all <acronym>API</>s support all the listed character sets. For example, the
