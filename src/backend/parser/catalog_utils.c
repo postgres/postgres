@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.26 1997/09/12 04:07:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.27 1997/09/13 03:11:51 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -804,7 +804,7 @@ varattno(Relation rd, char *a)
 		}
 	}
 
-	elog(WARN, "Relation %s does not have attribute %s\n",
+	elog(WARN, "Relation %s does not have attribute %s",
 		 RelationGetRelationName(rd), a);
 	return (-1);
 }
@@ -872,7 +872,7 @@ getAttrName(Relation rd, int attrno)
 				return (name);
 			}
 		}
-		elog(WARN, "Illegal attr no %d for relation %s\n",
+		elog(WARN, "Illegal attr no %d for relation %s",
 			 attrno, RelationGetRelationName(rd));
 	}
 	else if (attrno >= 1 && attrno <= RelationGetNumberOfAttributes(rd))
@@ -882,7 +882,7 @@ getAttrName(Relation rd, int attrno)
 	}
 	else
 	{
-		elog(WARN, "Illegal attr no %d for relation %s\n",
+		elog(WARN, "Illegal attr no %d for relation %s",
 			 attrno, RelationGetRelationName(rd));
 	}
 
@@ -945,7 +945,7 @@ GetArrayElementType(Oid typearray)
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(WARN, "GetArrayElementType: Cache lookup failed for type %d\n",
+		elog(WARN, "GetArrayElementType: Cache lookup failed for type %d",
 			 typearray);
 
 	/* get the array type struct from the type tuple */
@@ -1518,9 +1518,7 @@ typeid_get_retinfunc(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(WARN,
-			 "typeid_get_retinfunc: Invalid type - oid = %u",
-			 type_id);
+		elog(WARN, "typeid_get_retinfunc: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	infunc = type->typinput;
@@ -1539,9 +1537,7 @@ typeid_get_retoutfunc(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(WARN,
-			 "typeid_get_retoutfunc: Invalid type - oid = %u",
-			 type_id);
+		elog(WARN, "typeid_get_retoutfunc: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	outfunc = type->typoutput;
@@ -1559,7 +1555,7 @@ typeid_get_relid(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(WARN, "typeid_get_relid: Invalid type - oid = %u ", type_id);
+		elog(WARN, "typeid_get_relid: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	infunc = type->typrelid;
