@@ -66,12 +66,12 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.9 2005/03/01 05:47:28 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.10 2005/03/02 00:02:13 momjian Exp $";*/
 
 int			snprintf(char *str, size_t count, const char *fmt,...);
 int			vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 int			printf(const char *format, ...);
-static void 		dopr(char *buffer, const char *format, va_list args, char *end);
+static void dopr(char *buffer, const char *format, va_list args, char *end);
 
 int
 printf(const char *fmt,...)
@@ -119,13 +119,14 @@ vsnprintf(char *str, size_t count, const char *fmt, va_list args)
  * dopr(): poor man's version of doprintf
  */
 
-static void fmtstr(char *value, int ljust, int len, int zpad, int maxwidth, char *end);
-static void fmtnum(int64 value, int base, int dosign, int ljust, int len, int zpad, char *end);
-static void fmtfloat(double value, char type, int ljust, int len, int precision, int pointflag, char *end);
-static void dostr(char *str, int cut, char *end);
-static void dopr_outch(int c, char *end);
-
-static char *output;
+static void fmtstr(char *value, int ljust, int len, int zpad, int maxwidth,
+				   char *end, char **output);
+static void fmtnum(int64 value, int base, int dosign, int ljust, int len,
+				   int zpad, char *end, char **output);
+static void fmtfloat(double value, char type, int ljust, int len,
+					 int precision, int pointflag, char *end, char **output);
+static void dostr(char *str, int cut, char *end, char **output);
+static void dopr_outch(int c, char *end, char **output);
 
 #define	FMTSTR		1
 #define	FMTNUM		2
@@ -152,7 +153,12 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 	int			fmtpos = 1;
 	int			realpos = 0;
 	int			position;
-	static struct{
+	char		*output;
+	/* In thread mode this structure is too large.  */
+#ifndef ENABLE_THREAD_SAFETY
+	static
+#endif
+	struct{
 		const char*	fmtbegin;
 		const char*	fmtend;
 		void*	value;
@@ -235,7 +241,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						goto nextch;
 					case 'u':
 					case 'U':
-						/* fmtnum(value,base,dosign,ljust,len,zpad) */
+						/* fmtnum(value,base,dosign,ljust,len,zpad,&output) */
 						if (longflag)
 						{
 							if (longlongflag)
@@ -259,7 +265,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						break;
 					case 'o':
 					case 'O':
-						/* fmtnum(value,base,dosign,ljust,len,zpad) */
+						/* fmtnum(value,base,dosign,ljust,len,zpad,&output) */
 						if (longflag)
 						{
 							if (longlongflag)
@@ -286,7 +292,9 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						if (longflag)
 						{
 							if (longlongflag)
+							{
 								value = va_arg(args, int64);
+							}
 							else
 								value = va_arg(args, long);
 						}
@@ -396,11 +404,11 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 					case '%':
 						break;
 					default:
-						dostr("???????", 0, end);
+						dostr("???????", 0, end, &output);
 				}
 				break;
 			default:
-				dopr_outch(ch, end);
+				dopr_outch(ch, end, &output);
 				break;
 		}
 	}
@@ -427,28 +435,28 @@ performpr:
 				case FMTSTR:
 					fmtstr(fmtparptr[i]->value, fmtparptr[i]->ljust,
 						fmtparptr[i]->len, fmtparptr[i]->zpad,
-						fmtparptr[i]->maxwidth, end);
+						fmtparptr[i]->maxwidth, end, &output);
 					break;
 				case FMTNUM:
 					fmtnum(fmtparptr[i]->numvalue, fmtparptr[i]->base,
 						fmtparptr[i]->dosign, fmtparptr[i]->ljust,
-						fmtparptr[i]->len, fmtparptr[i]->zpad, end);
+						fmtparptr[i]->len, fmtparptr[i]->zpad, end, &output);
 					break;
 				case FMTFLOAT:
 					fmtfloat(fmtparptr[i]->fvalue, fmtparptr[i]->type,
 						fmtparptr[i]->ljust, fmtparptr[i]->len,
 						fmtparptr[i]->precision, fmtparptr[i]->pointflag,
-						end);
+						end, &output);
 					break;
 				case FMTCHAR:
-					dopr_outch(fmtparptr[i]->charvalue, end);
+					dopr_outch(fmtparptr[i]->charvalue, end, &output);
 					break;
 				}
 				format = fmtpar[i].fmtend;
 				goto nochar;
 			}
 		}
-		dopr_outch(ch, end);
+		dopr_outch(ch, end, &output);
 nochar:
 	/* nothing */
 	; /* semicolon required because a goto has to be attached to a statement */
@@ -457,7 +465,8 @@ nochar:
 }
 
 static void
-fmtstr(char *value, int ljust, int len, int zpad, int maxwidth, char *end)
+fmtstr(char *value, int ljust, int len, int zpad, int maxwidth, char *end,
+	   char **output)
 {
 	int			padlen,
 				strlen;			/* amount to pad */
@@ -474,19 +483,20 @@ fmtstr(char *value, int ljust, int len, int zpad, int maxwidth, char *end)
 		padlen = -padlen;
 	while (padlen > 0)
 	{
-		dopr_outch(' ', end);
+		dopr_outch(' ', end, output);
 		--padlen;
 	}
-	dostr(value, maxwidth, end);
+	dostr(value, maxwidth, end, output);
 	while (padlen < 0)
 	{
-		dopr_outch(' ', end);
+		dopr_outch(' ', end, output);
 		++padlen;
 	}
 }
 
 static void
-fmtnum(int64 value, int base, int dosign, int ljust, int len, int zpad, char *end)
+fmtnum(int64 value, int base, int dosign, int ljust, int len, int zpad,
+	   char *end, char **output)
 {
 	int			signvalue = 0;
 	uint64		uvalue;
@@ -541,34 +551,35 @@ fmtnum(int64 value, int base, int dosign, int ljust, int len, int zpad, char *en
 	{
 		if (signvalue)
 		{
-			dopr_outch(signvalue, end);
+			dopr_outch(signvalue, end, output);
 			--padlen;
 			signvalue = 0;
 		}
 		while (padlen > 0)
 		{
-			dopr_outch(zpad, end);
+			dopr_outch(zpad, end, output);
 			--padlen;
 		}
 	}
 	while (padlen > 0)
 	{
-		dopr_outch(' ', end);
+		dopr_outch(' ', end, output);
 		--padlen;
 	}
 	if (signvalue)
-		dopr_outch(signvalue, end);
+		dopr_outch(signvalue, end, output);
 	while (place > 0)
-		dopr_outch(convert[--place], end);
+		dopr_outch(convert[--place], end, output);
 	while (padlen < 0)
 	{
-		dopr_outch(' ', end);
+		dopr_outch(' ', end, output);
 		++padlen;
 	}
 }
 
 static void
-fmtfloat(double value, char type, int ljust, int len, int precision, int pointflag, char *end)
+fmtfloat(double value, char type, int ljust, int len, int precision,
+		 int pointflag, char *end, char **output)
 {
 	char		fmt[32];
 	char		convert[512];
@@ -595,43 +606,43 @@ fmtfloat(double value, char type, int ljust, int len, int precision, int pointfl
 
 	while (padlen > 0)
 	{
-		dopr_outch(' ', end);
+		dopr_outch(' ', end, output);
 		--padlen;
 	}
-	dostr(convert, 0, end);
+	dostr(convert, 0, end, output);
 	while (padlen < 0)
 	{
-		dopr_outch(' ', end);
+		dopr_outch(' ', end, output);
 		++padlen;
 	}
 }
 
 static void
-dostr(char *str, int cut, char *end)
+dostr(char *str, int cut, char *end, char **output)
 {
 	if (cut)
 	{
 		while (*str && cut-- > 0)
-			dopr_outch(*str++, end);
+			dopr_outch(*str++, end, output);
 	}
 	else
 	{
 		while (*str)
-			dopr_outch(*str++, end);
+			dopr_outch(*str++, end, output);
 	}
 }
 
 static void
-dopr_outch(int c, char *end)
+dopr_outch(int c, char *end, char **output)
 {
 #ifdef NOT_USED
 	if (iscntrl((unsigned char) c) && c != '\n' && c != '\t')
 	{
 		c = '@' + (c & 0x1F);
-		if (end == 0 || output < end)
-			*output++ = '^';
+		if (end == 0 || *output < end)
+			*(*output)++ = '^';
 	}
 #endif
-	if (end == 0 || output < end)
-		*output++ = c;
+	if (end == 0 || *output < end)
+		*(*output)++ = c;
 }
