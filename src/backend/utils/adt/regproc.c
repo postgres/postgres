@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.68 2002/05/11 00:24:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.69 2002/06/20 17:19:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,6 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-
-static List *stringToQualifiedNameList(const char *string, const char *caller);
 static void parseNameAndArgTypes(const char *string, const char *caller,
 								 const char *type0_spelling,
 								 List **names, int *nargs, Oid *argtypes);
@@ -960,14 +958,10 @@ regtypeout(PG_FUNCTION_ARGS)
 }
 
 
-/*****************************************************************************
- *	 SUPPORT ROUTINES														 *
- *****************************************************************************/
-
 /*
  * Given a C string, parse it into a qualified-name list.
  */
-static List *
+List *
 stringToQualifiedNameList(const char *string, const char *caller)
 {
 	char	   *rawname;
@@ -996,6 +990,10 @@ stringToQualifiedNameList(const char *string, const char *caller)
 
 	return result;
 }
+
+/*****************************************************************************
+ *	 SUPPORT ROUTINES														 *
+ *****************************************************************************/
 
 /*
  * Given a C string, parse it into a qualified function or operator name

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.78 2002/03/29 19:05:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.79 2002/06/20 17:19:08 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -19,6 +19,9 @@
 
 #include "postgres.h"
 
+#include "funcapi.h"
+#include "access/heapam.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "nodes/parsenodes.h"
 #include "parser/parse_type.h"
@@ -548,4 +551,110 @@ BuildDescForRelation(List *schema)
 		desc->constr = NULL;
 	}
 	return desc;
+}
+
+
+/*
+ * RelationNameGetTupleDesc
+ *
+ * Given a (possibly qualified) relation name, build a TupleDesc.
+ */
+TupleDesc
+RelationNameGetTupleDesc(char *relname)
+{
+	RangeVar   *relvar;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	List	   *relname_list;
+
+	/* Open relation and get the tuple description */
+	relname_list = stringToQualifiedNameList(relname, "RelationNameGetTupleDesc");
+	relvar = makeRangeVarFromNameList(relname_list);
+	rel = heap_openrv(relvar, AccessShareLock);
+	tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
+	relation_close(rel, AccessShareLock);
+
+	return tupdesc;
+}
+
+/*
+ * TypeGetTupleDesc
+ *
+ * Given a type Oid, build a TupleDesc.
+ *
+ * If the type is composite, *and* a colaliases List is provided, *and*
+ * the List is of natts length, use the aliases instead of the relation
+ * attnames.
+ *
+ * If the type is a base type, a single item alias List is required.
+ */
+TupleDesc
+TypeGetTupleDesc(Oid typeoid, List *colaliases)
+{
+	Oid			relid = typeidTypeRelid(typeoid);
+	TupleDesc	tupdesc;
+
+	/*
+	 * Build a suitable tupledesc representing the output rows
+	 */
+	if (OidIsValid(relid))
+	{
+		/* Composite data type, i.e. a table's row type */
+		Relation	rel;
+		int			natts;
+
+		rel = relation_open(relid, AccessShareLock);
+		tupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
+		natts = tupdesc->natts;
+		relation_close(rel, AccessShareLock);
+
+		/* check to see if we've given column aliases */
+		if(colaliases != NIL)
+		{
+			char	   *label;
+			int			varattno;
+
+			/* does the List length match the number of attributes */
+			if (length(colaliases) != natts)
+				elog(ERROR, "TypeGetTupleDesc: number of aliases does not match number of attributes");
+
+			/* OK, use the aliases instead */
+			for (varattno = 0; varattno < natts; varattno++)
+			{
+				label = strVal(nth(varattno, colaliases));
+
+				if (label != NULL)
+					namestrcpy(&(tupdesc->attrs[varattno]->attname), label);
+				else
+					MemSet(NameStr(tupdesc->attrs[varattno]->attname), 0, NAMEDATALEN);
+			}
+		}
+	}
+	else
+	{
+		/* Must be a base data type, i.e. scalar */
+		char	   *attname;
+
+		/* the alias List is required for base types */
+		if (colaliases == NIL)
+			elog(ERROR, "TypeGetTupleDesc: no column alias was provided");
+
+		/* the alias List length must be 1 */
+		if (length(colaliases) != 1)
+			elog(ERROR, "TypeGetTupleDesc: number of aliases does not match number of attributes");
+
+		/* OK, get the column alias */
+		attname = strVal(lfirst(colaliases));
+
+		tupdesc = CreateTemplateTupleDesc(1);
+		TupleDescInitEntry(tupdesc,
+						   (AttrNumber) 1,
+						   attname,
+						   typeoid,
+						   -1,
+						   0,
+						   false);
+	}
+
+	return tupdesc;
 }

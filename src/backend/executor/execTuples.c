@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.51 2002/03/21 06:21:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.52 2002/06/20 17:19:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,10 +107,10 @@
  */
 #include "postgres.h"
 
+#include "funcapi.h"
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
-
 
 /* ----------------------------------------------------------------
  *				  tuple table create/delete functions
@@ -673,3 +673,123 @@ ExecTypeFromTL(List *targetList)
 
 	return typeInfo;
 }
+
+/*
+ * TupleDescGetSlot - Initialize a slot based on the supplied
+ * tupledesc
+ */
+TupleTableSlot *
+TupleDescGetSlot(TupleDesc tupdesc)
+{
+	TupleTableSlot	   *slot;
+
+	/* Make a standalone slot */
+	slot = MakeTupleTableSlot();
+
+	/* Bind the tuple description to the slot */
+	ExecSetSlotDescriptor(slot, tupdesc, true);
+
+	/* Return the slot */
+	return slot;
+}
+
+/*
+ * TupleDescGetAttInMetadata - Get a pointer to AttInMetadata based on the
+ * supplied TupleDesc. AttInMetadata can be used in conjunction with C strings
+ * to produce a properly formed tuple.
+ */
+AttInMetadata *
+TupleDescGetAttInMetadata(TupleDesc tupdesc)
+{
+	int				natts;
+	int				i;
+	Oid				atttypeid;
+	Oid				attinfuncid;
+	Oid				attelem;
+	FmgrInfo	   *attinfuncinfo;
+	Oid			   *attelems;
+	int4		   *atttypmods;
+	AttInMetadata  *attinmeta;
+
+	attinmeta = (AttInMetadata *) palloc(sizeof(AttInMetadata));
+	natts = tupdesc->natts;
+
+	/*
+	 * Gather info needed later to call the "in" function for each attribute
+	 */
+	attinfuncinfo = (FmgrInfo *) palloc(natts * sizeof(FmgrInfo));
+	attelems = (Oid *) palloc(natts * sizeof(Oid));
+	atttypmods = (int4 *) palloc(natts * sizeof(int4));
+
+	for (i = 0; i < natts; i++)
+	{
+		atttypeid = tupdesc->attrs[i]->atttypid;
+		get_type_metadata(atttypeid, &attinfuncid, &attelem);
+
+		fmgr_info(attinfuncid, &attinfuncinfo[i]);
+		attelems[i] = attelem;
+		atttypmods[i] = tupdesc->attrs[i]->atttypmod;
+	}
+	attinmeta->tupdesc = tupdesc;
+	attinmeta->attinfuncs = attinfuncinfo;
+	attinmeta->attelems = attelems;
+	attinmeta->atttypmods = atttypmods;
+
+	return attinmeta;
+}
+
+/*
+ * BuildTupleFromCStrings - build a HeapTuple given user data in C string form.
+ * values is an array of C strings, one for each attribute of the return tuple.
+ */
+HeapTuple
+BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
+{
+	TupleDesc			tupdesc;
+	int					natts;
+	HeapTuple			tuple;
+	char			   *nulls;
+	int					i;
+	Datum			   *dvalues;
+	FmgrInfo			attinfuncinfo;
+	Oid					attelem;
+	int4				atttypmod;
+
+	tupdesc = attinmeta->tupdesc;
+	natts = tupdesc->natts;
+
+	dvalues = (Datum *) palloc(natts * sizeof(Datum));
+
+	/* Call the "in" function for each attribute */
+	for (i = 0; i < natts; i++)
+	{
+		if (values[i] != NULL)
+		{
+			attinfuncinfo = attinmeta->attinfuncs[i];
+			attelem = attinmeta->attelems[i];
+			atttypmod = attinmeta->atttypmods[i];
+
+			dvalues[i] = FunctionCall3(&attinfuncinfo, CStringGetDatum(values[i]),
+										ObjectIdGetDatum(attelem),
+										Int32GetDatum(atttypmod));
+		}
+		else
+			dvalues[i] = PointerGetDatum(NULL);
+	}
+
+	/*
+	 * Form a tuple
+	 */
+	nulls = (char *) palloc(natts * sizeof(char));
+	for (i = 0; i < natts; i++)
+	{
+		if (DatumGetPointer(dvalues[i]) != NULL)
+			nulls[i] = ' ';
+		else
+			nulls[i] = 'n';
+	}
+	tuple = heap_formtuple(tupdesc, dvalues, nulls);
+
+	return tuple;
+}
+
