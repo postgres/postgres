@@ -275,9 +275,6 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			/* semicolon? then send query */
 			else if (line[i] == ';' && !was_bslash && !paren_level)
 			{
-                /* delete the old query buffer from last time around */
-                if (slashCmdStatus == CMD_SEND)
-
 				line[i] = '\0';
 				/* is there anything else on the line? */
 				if (line[query_start + strspn(line + query_start, " \t")] != '\0')
