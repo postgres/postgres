@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.1 1996/11/14 10:18:04 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.2 1996/11/27 13:49:46 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 Postgres95 Postgres95
 .SH "Section 4 \(em SQL Commands (COMMANDS)"
 .SH "General Information"
@@ -311,8 +311,8 @@ A
 .IR "time expression"
 is in one of two forms:
 .nf
- ['date']
- ['date-1', 'date-2']
+ ["date"]
+ ["date-1", "date-2"]
 .fi
 The first case requires instances that are valid at the indicated
 time.  The second case requires instances that are valid at some time
@@ -321,7 +321,7 @@ the default is \*(lqnow\*(rq.
 .PP
 In each case, the date is a character string of the form
 .nf
-[MON-FRI] 'MMM DD [HH:MM:SS] YYYY' [Timezone]
+"[MON-FRI] MMM DD [HH:MM:SS] YYYY [Timezone]"
 .fi
 where MMM is the month (Jan \- Dec), DD is a legal day number in the
 specified month, HH:MM:SS is an optional time in that day (24-hour
@@ -333,8 +333,8 @@ local time zone.
 .PP
 For example,
 .nf
-['Jan 1 1990']
-['Mar 3 00:00:00 1980', 'Mar 3 23:59:59 1981r']
+["Jan 1 1990"]
+["Mar 3 00:00:00 1980", "Mar 3 23:59:59 1981"]
 .fi
 are valid time specifications.
 .PP

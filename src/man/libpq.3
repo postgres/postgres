@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.2 1996/11/15 17:55:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.3 1996/11/27 13:49:44 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 Postgres95 Postgres95
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -788,7 +788,7 @@ main()
   while (1) {
       /* async notification only come back as a result of a query*/
       /* we can send empty queries */
-      res = PQexec(conn, " ");
+      res = PQexec(conn, "");
 /*      printf("res->status = %s\\n", pgresStatus[PQresultStatus(res)]); */
       /* check for asynchronous returns */
       notify = PQnotifies(conn);
