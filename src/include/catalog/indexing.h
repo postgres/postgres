@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.2 1996/11/06 07:05:18 scrappy Exp $
+ * $Id: indexing.h,v 1.3 1997/08/21 01:37:48 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,8 @@
 #define Num_pg_proc_indices	3
 #define Num_pg_type_indices	2
 #define Num_pg_class_indices	2
+#define Num_pg_attrdef_indices	1
+#define Num_pg_relcheck_indices	1
 
 
 /*
@@ -39,11 +41,15 @@
 #define TypeOidIndex       "pg_typeidind"
 #define ClassNameIndex     "pg_classnameind"
 #define ClassOidIndex      "pg_classoidind"
+#define AttrDefaultIndex   "pg_attrdefind"
+#define RelCheckIndex      "pg_relcheckind"
 
 extern char *Name_pg_attr_indices[];
 extern char *Name_pg_proc_indices[];
 extern char *Name_pg_type_indices[];
 extern char *Name_pg_class_indices[];
+extern char *Name_pg_attrdef_indices[];
+extern char *Name_pg_relcheck_indices[];
 
 extern char *IndexedCatalogNames[];
 
@@ -97,6 +103,9 @@ DECLARE_INDEX(pg_typenameind on pg_type using btree (typname name_ops));
 
 DECLARE_INDEX(pg_classnameind on pg_class using btree (relname name_ops));
 DECLARE_INDEX(pg_classoidind on pg_class using btree (Oid oid_ops));
+
+DECLARE_INDEX(pg_attrdefind on pg_attrdef using btree (adrelid oid_ops));
+DECLARE_INDEX(pg_relcheckind on pg_relcheck using btree (rcrelid oid_ops));
 
 /* now build indices in the initialization scripts */
 BUILD_INDICES

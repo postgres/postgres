@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.5 1997/04/02 03:29:35 vadim Exp $
+ * $Id: pg_class.h,v 1.6 1997/08/21 01:37:52 vadim Exp $
  *
  * NOTES
  *    ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -69,8 +69,7 @@ CATALOG(pg_class) BOOTSTRAP {
           class which have attnum > 0 (= user attribute).
           */
      int2	relsmgr;
-     int28 	relkey;			/* not used */
-     oid8	relkeyop;		/* not used */
+     int2	relchecks;		/* # of CHECK constraints */
      bool	relhasrules;
      aclitem	relacl[1];		/* this is here for the catalog */
 } FormData_pg_class;
@@ -96,8 +95,8 @@ typedef FormData_pg_class	*Form_pg_class;
  *	relacl field.
  * ----------------
  */
-#define Natts_pg_class_fixed		17
-#define Natts_pg_class			18
+#define Natts_pg_class_fixed		16
+#define Natts_pg_class			17
 #define Anum_pg_class_relname		1
 #define Anum_pg_class_reltype           2
 #define Anum_pg_class_relowner		3
@@ -112,31 +111,32 @@ typedef FormData_pg_class	*Form_pg_class;
 #define Anum_pg_class_relarch		12
 #define Anum_pg_class_relnatts		13
 #define Anum_pg_class_relsmgr		14
-#define Anum_pg_class_relkey		15
-#define Anum_pg_class_relkeyop		16
-#define Anum_pg_class_relhasrules	17
-#define Anum_pg_class_relacl		18
+#define Anum_pg_class_relchecks		15
+#define Anum_pg_class_relhasrules	16
+#define Anum_pg_class_relacl		17
 
 /* ----------------
  *	initial contents of pg_class
  * ----------------
  */
 
-DATA(insert OID = 1247 (  pg_type 71          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID = 1249 (  pg_attribute 75      PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID = 1251 (  pg_demon 76          PGUID 0 0 0 0 0 f t r n 4 0 - - f _null_ ));
-DATA(insert OID = 1253 (  pg_magic 80         PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
-DATA(insert OID = 1255 (  pg_proc 81          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID = 1257 (  pg_server 82         PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
-DATA(insert OID = 1259 (  pg_class 83         PGUID 0 0 0 0 0 f f r n 18 0 - - f _null_ ));    
-DATA(insert OID = 1260 (  pg_user 86          PGUID 0 0 0 0 0 f t r n 6 0 - - f _null_ ));
-DATA(insert OID = 1261 (  pg_group 87          PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
-DATA(insert OID = 1262 (  pg_database 88      PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
-DATA(insert OID = 1263 (  pg_defaults 89       PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
-DATA(insert OID = 1264 (  pg_variable 90        PGUID 0 0 0 0 0 f t s n 2 0 - - f _null_ ));
-DATA(insert OID = 1269 (  pg_log  99           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
-DATA(insert OID = 1271 (  pg_time 100           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
-DATA(insert OID = 1273 (  pg_hosts 101           PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
+DATA(insert OID = 1247 (  pg_type 71          PGUID 0 0 0 0 0 f f r n 16 0 0 f _null_ ));
+DATA(insert OID = 1249 (  pg_attribute 75     PGUID 0 0 0 0 0 f f r n 16 0 0 f _null_ ));
+DATA(insert OID = 1251 (  pg_demon 76         PGUID 0 0 0 0 0 f t r n 4 0 0 f _null_ ));
+DATA(insert OID = 1253 (  pg_magic 80         PGUID 0 0 0 0 0 f t r n 2 0 0 f _null_ ));
+DATA(insert OID = 1255 (  pg_proc 81          PGUID 0 0 0 0 0 f f r n 16 0 0 f _null_ ));
+DATA(insert OID = 1257 (  pg_server 82        PGUID 0 0 0 0 0 f t r n 3 0 0 f _null_ ));
+DATA(insert OID = 1259 (  pg_class 83         PGUID 0 0 0 0 0 f f r n 18 0 0 f _null_ ));    
+DATA(insert OID = 1260 (  pg_user 86          PGUID 0 0 0 0 0 f t r n 6 0 0 f _null_ ));
+DATA(insert OID = 1261 (  pg_group 87         PGUID 0 0 0 0 0 f t s n 3 0 0 f _null_ ));
+DATA(insert OID = 1262 (  pg_database 88      PGUID 0 0 0 0 0 f t r n 3 0 0 f _null_ ));
+DATA(insert OID = 1263 (  pg_defaults 89      PGUID 0 0 0 0 0 f t r n 2 0 0 f _null_ ));
+DATA(insert OID = 1264 (  pg_variable 90      PGUID 0 0 0 0 0 f t s n 2 0 0 f _null_ ));
+DATA(insert OID = 1269 (  pg_log  99          PGUID 0 0 0 0 0 f t s n 1 0 0 f _null_ ));
+DATA(insert OID = 1271 (  pg_time 100         PGUID 0 0 0 0 0 f t s n 1 0 0 f _null_ ));
+DATA(insert OID = 1273 (  pg_hosts 101        PGUID 0 0 0 0 0 f t s n 3 0 0 f _null_ ));
+DATA(insert OID = 1215 (  pg_attrdef 109      PGUID 0 0 0 0 0 t t s n 4 0 0 f _null_ ));
+DATA(insert OID = 1216 (  pg_relcheck 110     PGUID 0 0 0 0 0 t t s n 4 0 0 f _null_ ));
 
 #define RelOid_pg_type		1247
 #define RelOid_pg_demon       	1251
@@ -153,6 +153,8 @@ DATA(insert OID = 1273 (  pg_hosts 101           PGUID 0 0 0 0 0 f t s n 3 0 - -
 #define RelOid_pg_log   	1269
 #define RelOid_pg_time   	1271      
 #define RelOid_pg_hosts   	1273      
+#define RelOid_pg_attrdef  	1215    
+#define RelOid_pg_relcheck  	1216    
     
 #define MAX_SYSTEM_RELOID       1273    /* this does not seem to be used */
                                         /* anywhere                      */
