@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.2 1996/07/23 03:38:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.3 1996/09/16 05:54:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,192 @@
 #include "libpq/libpq-fs.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
+
+#ifdef TCL_ARRAYS
+#define ISOCTAL(c)	(((c) >= '0') && ((c) <= '7'))
+#define DIGIT(c)	((c) - '0')
+
+/*
+ * translate_escape() --
+ *
+ * This function performs in-place translation of a single C-style
+ * escape sequence pointed by p. Curly braces { } and double-quote
+ * are left escaped if they appear inside an array.
+ * The value returned is the pointer to the last character (the one
+ * just before the rest of the buffer).
+ */
+
+static inline char*
+translate_escape(char *p, int isArray)
+{
+    register char c, *q, *s;
+
+#ifdef DEBUG_ESCAPE
+    printf("   escape = '%s'\n", p);
+#endif
+    /* Address of the first character after the escape sequence */
+    s = p+2;
+    switch (c = *(p+1)) {
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+	c = DIGIT(c);
+	if (ISOCTAL(*s)) {
+	    c = (c<<3) + DIGIT(*s++);
+	}
+	if (ISOCTAL(*s)) {
+	    c = (c<<3) + DIGIT(*s++);
+	}
+	*p = c;
+	break;
+      case 'b':
+	*p = '\b';
+	break;
+      case 'f':
+	*p = '\f';
+	break;
+      case 'n':
+	*p = '\n';
+	break;
+      case 'r':
+	*p = '\r';
+	break;
+      case 't':
+	*p = '\t';
+	break;
+      case 'v':
+	*p = '\v';
+	break;
+      case '\\':
+      case '{':
+      case '}':
+      case '"':
+	/*
+	 * Backslahes, curly braces and double-quotes are left
+	 * escaped if they appear inside an array. They will be
+	 * unescaped by Tcl in Tcl_AppendElement.
+	 * The buffer position is advanced by 1 so that the this
+	 * character is not processed again by the caller.
+	 */
+	if (isArray) {
+	    return p+1;
+	} else {
+	    *p = c;
+	}
+	break;
+      case '\0':
+	/*
+	 * This means a backslash at the end of the string.
+	 * It should never happen but in that case replace
+	 * the \ with a \0 but don't shift the rest of the
+	 * buffer so that the caller can see the end of the
+	 * string and terminate.
+	 */
+	*p = c;
+	return p;
+	break;
+      default:
+	/*
+	 * Default case, store the escaped character over the backslash
+	 * and shift the buffer over itself.
+	 */
+	*p = c;
+    }
+    /* Shift the rest of the buffer over itself after the current char */
+    q = p+1;
+    for ( ; *s ; ) {
+	*q++ = *s++;
+    }
+    *q = '\0';
+#ifdef DEBUG_ESCAPE
+    printf("   after  = '%s'\n", p);
+#endif
+    return p;
+}
+
+/*
+ * tcl_value() --
+ *
+ * This function does in-line conversion of a value returned by libpq
+ * into a tcl string or into a tcl list if the value looks like the
+ * representation of a postgres array.
+ */
+
+static char *
+tcl_value (char *value)
+{
+    int literal, last;
+    register char c, *p, *q, *s;
+
+    if (!value) {
+	return ((char *) NULL);
+    }
+
+#ifdef DEBUG
+    printf("pq_value  = '%s'\n", value);
+#endif
+    last = strlen(value)-1;
+    if ((last >= 1) && (value[0] == '{') && (value[last] == '}')) {
+	/* Looks like an array, replace ',' with spaces */
+	/* Remove the outer pair of { }, the last first! */
+	value[last] = '\0';
+	value++;
+	literal = 0;
+	for (p=value; *p; p++) {
+	    if (!literal) {
+		/* We are at the list level, look for ',' and '"' */
+		switch (*p) {
+		  case '"':	/* beginning of literal */
+		    literal = 1;
+		    break;
+		  case ',':	/* replace the ',' with space */
+		    *p = ' ';
+		    break;
+		}
+	    } else {
+		/* We are inside a C string */
+		switch (*p) {
+		  case '"':	/* end of literal */
+		    literal = 0;
+		    break;
+		  case '\\':
+		    /*
+		     * escape sequence, translate it
+		     */
+		    p = translate_escape(p,1);
+		    break;
+		}
+	    }
+	    if (!*p) {
+		break;
+	    }
+	}
+    } else {
+	/* Looks like a normal scalar value */
+	for (p=value; *p; p++) {
+	    if (*p == '\\') {
+		/*
+		 * escape sequence, translate it
+		 */
+		p = translate_escape(p,0);
+	    }
+	    if (!*p) {
+		break;
+	    }
+	}
+    }
+#ifdef DEBUG
+    printf("tcl_value = '%s'\n\n", value);
+#endif
+    return (value);
+}
+
+#endif
 
 /**********************************
  * pg_connect
@@ -264,7 +450,11 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	    for (i=0;i<PQnfields(result);i++) {
 		sprintf(arrayInd, "%d,%s", tupno, PQfname(result,i));
 		Tcl_SetVar2(interp, arrVar, arrayInd, 
+#ifdef TCL_ARRAYS
+			    tcl_value(PQgetvalue(result,tupno,i)),
+#else
 			    PQgetvalue(result,tupno,i),
+#endif
 			    TCL_LEAVE_ERR_MSG);
 	    }
 	}
@@ -304,12 +494,19 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
 	    return TCL_ERROR;
 	}
 
+#ifdef TCL_ARRAYS
+	for (i=0; i<PQnfields(result); i++) {
+	    Tcl_AppendElement(interp, tcl_value(PQgetvalue(result,tupno,i)));
+	}
+#else
 /*	Tcl_AppendResult(interp, PQgetvalue(result,tupno,0),NULL); */
         Tcl_AppendElement(interp, PQgetvalue(result,tupno,0));
 	for (i=1;i<PQnfields(result);i++) {
 /*	  Tcl_AppendResult(interp, " ", PQgetvalue(result,tupno,i),NULL);*/
          Tcl_AppendElement(interp, PQgetvalue(result,tupno,i));
 	}
+#endif
+
 	return TCL_OK;
     }
     else if (strcmp(opt, "-attributes") == 0) {
