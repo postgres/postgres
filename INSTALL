@@ -281,7 +281,7 @@ If you still have questions, please send them to:
 questions@postgreSQL.org
 
 If you have a bug report to make, please send a filled out version of
-the file named "bug.template" to hackers@postgreSQL.org.
+the file named "bug.template" to bugs@postgreSQL.org.
 
 If you would like to help out with the development and maintenance of
 PostgreSQL, send subscribe to the developers mailing list.  See
