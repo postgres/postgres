@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.14 2000/12/11 19:00:33 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.15 2000/12/31 18:38:44 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -89,9 +89,6 @@ unset top_builddir
 unset temp_install
 unset multibyte
 
-export PGHOST
-export PGPORT
-
 dbname=regression
 hostname=localhost
 
@@ -138,9 +135,11 @@ do
                 shift;;
         --host=*)
                 PGHOST=`expr "x$1" : "x--host=\(.*\)"`
+                export PGHOST
                 shift;;
         --port=*)
                 PGPORT=`expr "x$1" : "x--port=\(.*\)"`
+                export PGPORT
                 shift;;
         --user=*)
                 PGUSER=`expr "x$1" : "x--user=\(.*\)"`
@@ -276,10 +275,12 @@ then
     PGDATA=$temp_install/data
     if [ "$unix_sockets" = no ]; then
         PGHOST=$hostname
+        export PGHOST
     else
         unset PGHOST
     fi
     PGPORT=65432
+    export PGPORT
 
     # ----------
     # Set up shared library paths, needed by psql and pg_encoding
@@ -357,7 +358,10 @@ then
 else # not temp-install
 
     # If Unix sockets are not available, use the local host by default.
-    [ "$unix_sockets" = no ] && ${PGHOST=$hostname}
+    if [ "$unix_sockets" = no ]; then
+        PGHOST=$hostname
+        export PGHOST
+    fi
 
     if [ -n "$PGPORT" ]; then
         port_info="port $PGPORT"
