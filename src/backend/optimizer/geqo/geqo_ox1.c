@@ -1,0 +1,103 @@
+/*------------------------------------------------------------------------
+*
+* geqo_ox1.c--
+*
+*    order crossover [OX] routines;
+*    OX1 operator according to Davis
+*    (Proc Int'l Joint Conf on AI)
+*
+* $Id: geqo_ox1.c,v 1.1 1997/03/14 16:02:58 scrappy Exp $
+*
+*-------------------------------------------------------------------------
+*/
+
+/* contributed by:
+   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+   *  Martin Utesch              * Institute of Automatic Control      *
+   =                             = University of Mining and Technology =
+   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany                   *
+   =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
+ */
+
+/* the ox algorithm is adopted from Genitor : */
+/*************************************************************/
+/*                                                           */
+/*  Copyright (c) 1990                                       */
+/*  Darrell L. Whitley                                       */
+/*  Computer Science Department                              */
+/*  Colorado State University                                */
+/*                                                           */
+/*  Permission is hereby granted to copy all or any part of  */
+/*  this program for free distribution.   The author's name  */
+/*  and this copyright notice must be included in any copy.  */
+/*                                                           */
+/*************************************************************/
+
+#include "postgres.h"
+
+#include "nodes/pg_list.h"
+#include "nodes/relation.h"
+#include "nodes/primnodes.h"
+
+#include "utils/palloc.h"
+#include "utils/elog.h"
+
+#include "optimizer/internal.h"
+#include "optimizer/paths.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/clauses.h"
+#include "optimizer/cost.h"
+
+#include "optimizer/geqo_gene.h"
+#include "optimizer/geqo.h"
+#include "optimizer/geqo_recombination.h"
+#include "optimizer/geqo_random.h"
+
+
+/* ox1--
+ *
+ *   position crossover
+ */
+void
+ox1(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table)
+{
+   int left, right, k, p, temp;
+
+   /* initialize city table */
+   for (k = 1; k <= num_gene; k++)
+     city_table[k].used = 0;
+
+   /* select portion to copy from tour1 */
+   left = geqo_randint (num_gene - 1, 0);
+   right = geqo_randint (num_gene - 1, 0);
+   
+   if (left > right)
+   {
+     temp = left;
+     left = right;       
+     right = temp;
+   }
+
+   /* copy portion from tour1 to offspring */
+   for (k = left; k <= right; k++)
+   {
+     offspring[k] = tour1[k];
+     city_table[(int) tour1[k]].used = 1;
+   }
+
+   k = (right + 1) % num_gene; /* index into offspring */
+   p = k;                      /* index into tour2 */
+
+   /* copy stuff from tour2 to offspring */
+   while (k != left)    
+   {
+     if (!city_table[(int) tour2[p]].used)
+     {
+       offspring[k] = tour2[p];
+       k = (k + 1) % num_gene;    
+       city_table[(int) tour2[p]].used = 1;
+     }
+     p = (p + 1) % num_gene; /* increment tour2-index */
+   }
+
+ }

@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.2 1997/02/19 14:51:55 scrappy Exp $
+# $Id: Makefile,v 1.3 1997/03/14 16:02:40 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,9 +21,8 @@ CFLAGS+=$(INCLUDE_OPT) -Wno-error
 OBJS =	geqo_copy.o geqo_eval.o geqo_main.o geqo_misc.o \
 	geqo_params.o geqo_paths.o geqo_pool.o geqo_recombination.o \
 	geqo_selection.o \
-	geqo_erx.o geqo_pmx.o geqo_cx.o geqo_px.o 
+	geqo_erx.o geqo_pmx.o geqo_cx.o geqo_px.o geqo_ox1.o geqo_ox2.o
 
-# not ready yet: geqo_ox1.o geqo_ox2.o
 # deprecated: minspantree.o
 
 all: SUBSYS.o

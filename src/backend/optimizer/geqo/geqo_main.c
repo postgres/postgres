@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.2 1997/02/19 14:51:59 scrappy Exp $
+ * $Id: geqo_main.c,v 1.3 1997/03/14 16:02:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,21 +71,21 @@ geqo(Query *root)
  Chromosome  *daddy;
  Chromosome  *kid;
 
+#if defined(ERX)
  Edge *edge_table; /* list of edges */
  int edge_failures=0;
  float      difference;
+#endif 
 
-#if defined(CX) || defined(PX) || defined(QX1) || defined(QX2)
+#if defined(CX) || defined(PX) || defined(OX1) || defined(OX2)
  City *city_table; /* list of cities */
 #endif
 
 #if defined(CX)
  int cycle_diffs=0;
-#endif 
-
-#if defined(CX) && defined(GEQO_DEBUG)
  int mutations=0;
 #endif
+
 
  int number_of_rels;
 
