@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.221 2004/10/26 22:16:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.222 2004/11/08 15:57:05 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -5944,7 +5944,7 @@ SELECT TIMESTAMP 'now';
 	<entry><literal><function>pclose</function>(<type>path</>)</literal></entry>
 	<entry><type>path</type></entry>
 	<entry>convert path to closed</entry>
-	<entry><literal>popen(path '[(0,0),(1,1),(2,0)]')</literal></entry>
+	<entry><literal>pclose(path '[(0,0),(1,1),(2,0)]')</literal></entry>
        </row>
 <![IGNORE[
 <!-- Not defined by this name. Implements the intersection operator '#' -->
