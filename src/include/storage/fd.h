@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.28 2001/05/25 15:34:50 momjian Exp $
+ * $Id: fd.h,v 1.29 2001/05/25 15:45:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,6 @@
 /*
  * FileSeek uses the standard UNIX lseek(2) flags.
  */
-
-#define SORT_TEMP_DIR "pg_sorttemp"
 
 typedef char *FileName;
 

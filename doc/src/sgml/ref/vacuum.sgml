@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.15 2001/05/25 15:34:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.16 2001/05/25 15:45:31 momjian Exp $
 Postgres documentation
 -->
 
@@ -154,8 +154,7 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
 
   <para>
    With no parameter, <command>VACUUM</command> processes every table in the
-   current database. It also detects any extraneous files in the
-   database directory.  With a parameter, <command>VACUUM</command> processes
+   current database.  With a parameter, <command>VACUUM</command> processes
    only that table.
   </para>
 

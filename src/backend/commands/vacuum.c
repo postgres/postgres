@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.194 2001/05/25 15:34:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.195 2001/05/25 15:45:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,9 @@
 
 #include <fcntl.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <limits.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <dirent.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 
@@ -33,7 +30,6 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
-#include "access/transam.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
@@ -163,7 +159,6 @@ static int	vac_cmp_vtlinks(const void *left, const void *right);
 static bool enough_space(VacPage vacpage, Size len);
 static void init_rusage(VacRUsage *ru0);
 static char *show_rusage(VacRUsage *ru0);
-static void report_orphans(void);
 
 
 /*
@@ -241,10 +236,6 @@ vacuum(VacuumStmt *vacstmt)
 
 	/* clean up */
 	vacuum_shutdown();
-
-	if (VacRelName == NULL)
-		report_orphans();
-
 }
 
 /*
@@ -2654,75 +2645,4 @@ show_rusage(VacRUsage *ru0)
 			 (int) (ru1.tv.tv_usec - ru0->tv.tv_usec) / 10000);
 
 	return result;
-}
-
-/*
- * report_orphans
- *
- * Report files that are not referenced by any pg_class.relfilenode.
- * Could be caused by backend crash no cleaning up.
- */
-static void
-report_orphans(void)
-{
-	DIR		   *db_dir;
-	struct dirent  *db_de;
-	Relation	rel;
-	TupleDesc	tupdesc;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-	Oid			dir_file_oid;
-	Oid			rel_file_oid;
-	Datum		d;
-	bool		n;
-	bool		match_found;
-	char 		cwd[MAXPGPATH];
-
-	getcwd(cwd,MAXPGPATH);
-	db_dir = opendir(".");
-	rel = heap_openr(RelationRelationName, AccessShareLock);
-	Assert(db_dir);
-
-	/*
-	 * Cycle through directory and check each file against
-	 * pg_class.relfilenode.
-	 * XXX This is O(n^2).  Is it too slow?  bjm
-	 */
-	while ((db_de = readdir(db_dir)) != NULL)
-	{
-		if (strspn(db_de->d_name, "0123456789") ==
-			strlen(db_de->d_name))
-		{
-			dir_file_oid = (Oid) strtoul((db_de->d_name), NULL, 10);
-
-			if (dir_file_oid >= GetMinStartupOid() ||
-				dir_file_oid <= BootstrapObjectIdData)
-				continue;
-
-			tupdesc = RelationGetDescr(rel);
-
-			match_found = false;
-			scan = heap_beginscan(rel, false, SnapshotNow, 0, (ScanKey) NULL);
-			while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-			{
-				d = heap_getattr(tuple, Anum_pg_class_relfilenode, tupdesc, &n);
-				rel_file_oid = DatumGetObjectId(d);
-				if (dir_file_oid == rel_file_oid)
-				{
-					match_found = true;
-					break;
-				}
-			}
-			heap_endscan(scan);
-			/* make sure there was no oid wrap-around during the scan */
-			if (!match_found && dir_file_oid <= ShmemVariableCache->nextOid)
-				elog(NOTICE,
-				"Unreferenced file found in database directory:\n\t%s/%s",
-					cwd, db_de->d_name);
-			/* Maybe one day we can unlink too.  bjm 2001-05-24 */
-		}
-	}
-
-	heap_close(rel, AccessShareLock);
-	closedir(db_dir);
 }

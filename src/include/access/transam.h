@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.34 2001/05/25 15:34:50 momjian Exp $
+ * $Id: transam.h,v 1.35 2001/05/25 15:45:33 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -133,7 +133,6 @@ extern void GetNewTransactionId(TransactionId *xid);
 extern void ReadNewTransactionId(TransactionId *xid);
 extern void GetNewObjectId(Oid *oid_return);
 extern void CheckMaxObjectId(Oid assigned_oid);
-extern Oid GetMinStartupOid(void);
 
 /* ----------------
  *		global variable extern declarations

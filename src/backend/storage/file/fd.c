@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.77 2001/05/25 15:34:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.78 2001/05/25 15:45:33 momjian Exp $
  *
  * NOTES:
  *
@@ -742,29 +742,21 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 File
 OpenTemporaryFile(void)
 {
-	char		tempfilepath[128];
+	char		tempfilename[64];
 	File		file;
 
 	/*
 	 * Generate a tempfile name that's unique within the current
 	 * transaction
 	 */
-	snprintf(tempfilepath, sizeof(tempfilepath),
-			 "%s%c%d.%ld", SORT_TEMP_DIR, SEP_CHAR, MyProcPid,
-			 tempFileCounter++);
+	snprintf(tempfilename, sizeof(tempfilename),
+			 "pg_sorttemp%d.%ld", MyProcPid, tempFileCounter++);
 
 	/* Open the file */
-	file = FileNameOpenFile(tempfilepath,
+	file = FileNameOpenFile(tempfilename,
 							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY, 0600);
 	if (file <= 0)
-	{
-		/* mkdir could fail if some one else already created it */
-		mkdir(SORT_TEMP_DIR, S_IRWXU);
-		file = FileNameOpenFile(tempfilepath,
-							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY, 0600);
-		if (file <= 0)
-			elog(ERROR, "Failed to create temporary file %s", tempfilepath);
-	}
+		elog(ERROR, "Failed to create temporary file %s", tempfilename);
 
 	/* Mark it for deletion at close or EOXact */
 	VfdCache[file].fdstate |= FD_TEMPORARY;
