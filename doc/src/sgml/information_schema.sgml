@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.14 2004/01/24 23:45:13 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.15 2004/02/29 15:36:46 neilc Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -355,7 +355,7 @@
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the user or group that the privilege was granted to</entry>
      </row>
@@ -367,25 +367,25 @@
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the table that contains the column</entry>
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table that contains the column</entry>
      </row>
 
      <row>
-      <entry><literal>column_name</literal</entry>
+      <entry><literal>column_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the column</entry>
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
@@ -869,7 +869,7 @@
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that contains the table that contains the
@@ -878,7 +878,7 @@
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the table that contains the column that is used by some
@@ -887,7 +887,7 @@
      </row>
 
      <row>
-      <entry><literal>column_name</literal</entry>
+      <entry><literal>column_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the column that is used by some constraint
@@ -901,13 +901,13 @@
      </row>
 
      <row>
-      <entry><literal>constraint_schema</literal</entry>
+      <entry><literal>constraint_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the constraint</entry>
      </row>
 
      <row>
-      <entry><literal>constraint_name</literal</entry>
+      <entry><literal>constraint_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the constraint</entry>
      </row>
@@ -955,7 +955,7 @@
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that contains the table that is used by some
@@ -964,7 +964,7 @@
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table that is used by some constraint</entry>
      </row>
@@ -976,13 +976,13 @@
      </row>
 
      <row>
-      <entry><literal>constraint_schema</literal</entry>
+      <entry><literal>constraint_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the constraint</entry>
      </row>
 
      <row>
-      <entry><literal>constraint_name</literal</entry>
+      <entry><literal>constraint_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the constraint</entry>
      </row>
@@ -1030,19 +1030,19 @@
      </row>
 
      <row>
-      <entry><literal>object_schema</literal</entry>
+      <entry><literal>object_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the described object</entry>
      </row>
 
      <row>
-      <entry><literal>object_name</literal</entry>
+      <entry><literal>object_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the described object</entry>
      </row>
 
      <row>
-      <entry><literal>object_type</literal</entry>
+      <entry><literal>object_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        The type of the described object: one of
@@ -1055,7 +1055,7 @@
      </row>
 
      <row>
-      <entry><literal>dtd_identifier</literal</entry>
+      <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        The identifier of the data type descriptor, which is unique
@@ -1095,13 +1095,13 @@
      </row>
 
      <row>
-      <entry><literal>constraint_schema</literal</entry>
+      <entry><literal>constraint_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the constraint</entry>
      </row>
 
      <row>
-      <entry><literal>constraint_name</literal</entry>
+      <entry><literal>constraint_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the constraint</entry>
      </row>
@@ -1113,13 +1113,13 @@
      </row>
 
      <row>
-      <entry><literal>domain_schema</literal</entry>
+      <entry><literal>domain_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the domain</entry>
      </row>
 
      <row>
-      <entry><literal>domain_name</literal</entry>
+      <entry><literal>domain_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the domain</entry>
      </row>
@@ -1188,13 +1188,13 @@
      </row>
 
      <row>
-      <entry><literal>domain_schema</literal</entry>
+      <entry><literal>domain_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the domain</entry>
      </row>
 
      <row>
-      <entry><literal>domain_name</literal</entry>
+      <entry><literal>domain_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the domain</entry>
      </row>
@@ -1231,13 +1231,13 @@
      </row>
 
      <row>
-      <entry><literal>domain_schema</literal</entry>
+      <entry><literal>domain_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the domain</entry>
      </row>
 
      <row>
-      <entry><literal>domain_name</literal</entry>
+      <entry><literal>domain_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the domain</entry>
      </row>
@@ -1488,7 +1488,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>object_schema</literal</entry>
+      <entry><literal>object_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that contains the object that uses the array
@@ -1497,7 +1497,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>object_name</literal</entry>
+      <entry><literal>object_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the object that uses the array being described
@@ -1505,7 +1505,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>object_type</literal</entry>
+      <entry><literal>object_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        The type of the object that uses the array being described: one
@@ -1517,7 +1517,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>array_type_identifier</literal</entry>
+      <entry><literal>array_type_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        The identifier of the data type descriptor of the array being
@@ -1758,13 +1758,13 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>constraint_schema</literal</entry>
+      <entry><literal>constraint_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the constraint</entry>
      </row>
 
      <row>
-      <entry><literal>constraint_name</literal</entry>
+      <entry><literal>constraint_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the constraint</entry>
      </row>
@@ -1780,7 +1780,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that contains the table that contains the
@@ -1789,7 +1789,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the table that contains the column that is restricted
@@ -1798,7 +1798,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>column_name</literal</entry>
+      <entry><literal>column_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the column that is restricted by some constraint
@@ -1806,7 +1806,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>ordinal_position</literal</entry>
+      <entry><literal>ordinal_position</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>
        Ordinal position of the column within the constraint key (count
@@ -2196,7 +2196,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the group that the privilege was granted to</entry>
      </row>
@@ -2208,25 +2208,25 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the table that contains the column</entry>
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table that contains the column</entry>
      </row>
 
      <row>
-      <entry><literal>column_name</literal</entry>
+      <entry><literal>column_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the column</entry>
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
@@ -2275,7 +2275,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the group that the privilege was granted to</entry>
      </row>
@@ -2320,7 +2320,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>Always <literal>EXECUTE</literal> (the only privilege type for functions)</entry>
      </row>
@@ -2365,7 +2365,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the group that the privilege was granted to</entry>
      </row>
@@ -2377,19 +2377,19 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the table</entry>
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table</entry>
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
@@ -2449,7 +2449,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>In the future, the name of the group that the privilege was granted to</entry>
      </row>
@@ -2479,7 +2479,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>Always <literal>USAGE</literal></entry>
      </row>
@@ -2525,7 +2525,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the user or group that the privilege was granted to</entry>
      </row>
@@ -2570,7 +2570,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>Always <literal>EXECUTE</literal> (the only privilege type for functions)</entry>
      </row>
@@ -3527,13 +3527,13 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>constraint_schema</literal</entry>
+      <entry><literal>constraint_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the constraint</entry>
      </row>
 
      <row>
-      <entry><literal>constraint_name</literal</entry>
+      <entry><literal>constraint_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the constraint</entry>
      </row>
@@ -3545,19 +3545,19 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the table</entry>
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table</entry>
      </row>
 
      <row>
-      <entry><literal>constraint_type</literal</entry>
+      <entry><literal>constraint_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Type of the constraint: <literal>CHECK</literal>,
@@ -3613,7 +3613,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the user or group that the privilege was granted to</entry>
      </row>
@@ -3625,19 +3625,19 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the table</entry>
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table</entry>
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Type of the privilege: <literal>SELECT</literal>,
@@ -3701,19 +3701,19 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the table</entry>
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table</entry>
      </row>
 
      <row>
-      <entry><literal>table_type</literal</entry>
+      <entry><literal>table_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Type of the table: <literal>BASE TABLE</literal> for a
@@ -3786,19 +3786,19 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>trigger_schema</literal</entry>
+      <entry><literal>trigger_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the trigger</entry>
      </row>
 
      <row>
-      <entry><literal>trigger_name</literal</entry>
+      <entry><literal>trigger_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the trigger</entry>
      </row>
 
      <row>
-      <entry><literal>event_manipulation</literal</entry>
+      <entry><literal>event_manipulation</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Event that fires the trigger (<literal>INSERT</literal>,
@@ -3816,31 +3816,31 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>event_object_schema</literal</entry>
+      <entry><literal>event_object_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the table that the trigger is defined on</entry>
      </row>
 
      <row>
-      <entry><literal>event_object_name</literal</entry>
+      <entry><literal>event_object_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the table that the trigger is defined on</entry>
      </row>
 
      <row>
-      <entry><literal>action_order</literal</entry>
+      <entry><literal>action_order</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>Not yet implemented</entry>
      </row>
 
      <row>
-      <entry><literal>action_condition</literal</entry>
+      <entry><literal>action_condition</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
-      <entry><literal>action_statement</literal</entry>
+      <entry><literal>action_statement</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Statement that is executed by the trigger (currently always
@@ -3850,7 +3850,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>action_orientation</literal</entry>
+      <entry><literal>action_orientation</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Identifies whether the trigger fires once for each processed
@@ -3860,7 +3860,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>condition_timing</literal</entry>
+      <entry><literal>condition_timing</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Time at which the trigger fires (<literal>BEFORE</literal> or
@@ -3869,13 +3869,13 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>condition_reference_old_table</literal</entry>
+      <entry><literal>condition_reference_old_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
 
      <row>
-      <entry><literal>condition_reference_new_table</literal</entry>
+      <entry><literal>condition_reference_new_table</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Applies to a feature not available in <productname>PostgreSQL</></entry>
      </row>
@@ -3945,7 +3945,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>grantee</literal</entry>
+      <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Currently always <literal>PUBLIC</literal></entry>
      </row>
@@ -3975,7 +3975,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>privilege_type</literal</entry>
+      <entry><literal>privilege_type</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>Always <literal>USAGE</literal></entry>
      </row>
@@ -4028,13 +4028,13 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>view_schema</literal</entry>
+      <entry><literal>view_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the view</entry>
      </row>
 
      <row>
-      <entry><literal>view_name</literal</entry>
+      <entry><literal>view_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the view</entry>
      </row>
@@ -4049,7 +4049,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that contains the table that contains the
@@ -4058,7 +4058,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the table that contains the column that is used by the
@@ -4067,7 +4067,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>column_name</literal</entry>
+      <entry><literal>column_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the column that is used by the view</entry>
      </row>
@@ -4113,13 +4113,13 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>view_schema</literal</entry>
+      <entry><literal>view_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the view</entry>
      </row>
 
      <row>
-      <entry><literal>view_name</literal</entry>
+      <entry><literal>view_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the view</entry>
      </row>
@@ -4134,7 +4134,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the schema that contains the table that is used by the
@@ -4143,7 +4143,7 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        Name of the table that is used by the view
@@ -4183,19 +4183,19 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>table_schema</literal</entry>
+      <entry><literal>table_schema</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the schema that contains the view</entry>
      </row>
 
      <row>
-      <entry><literal>table_name</literal</entry>
+      <entry><literal>table_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>Name of the view</entry>
      </row>
 
      <row>
-      <entry><literal>view definition</literal</entry>
+      <entry><literal>view definition</literal></entry>
       <entry><type>character_data</type></entry>
       <entry>
        Query expression defining the view (null if the current user is
