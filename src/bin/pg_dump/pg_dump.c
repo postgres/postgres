@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.34 1997/07/23 17:14:59 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.35 1997/07/23 17:42:25 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -782,6 +782,13 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
     int i,j;
     for(i=0;i<numTables;++i) {
 
+        if(tblinfo[i].oid) free (tblinfo[i].oid);
+        if(tblinfo[i].relname) free (tblinfo[i].relname);
+        if(tblinfo[i].relarch) free (tblinfo[i].relarch);
+        if(tblinfo[i].relacl) free (tblinfo[i].relacl);
+        if(tblinfo[i].sequence) free (tblinfo[i].sequence);
+        if(tblinfo[i].usename) free (tblinfo[i].usename);
+
         /* skip archive tables */
         if (isArchiveName(tblinfo[i].relname))
             continue;
@@ -789,10 +796,7 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
         if ( tblinfo[i].sequence )
             continue;
 
-        if(tblinfo[i].oid) free (tblinfo[i].oid);
-        if(tblinfo[i].relname) free (tblinfo[i].relname);
-        if(tblinfo[i].relarch) free (tblinfo[i].relarch);
-        if(tblinfo[i].relacl) free (tblinfo[i].relacl);
+	/* Process Attributes */
         for(j=0;j<tblinfo[i].numatts;j++) {
             if(tblinfo[i].attnames[j]) free (tblinfo[i].attnames[j]);
             if(tblinfo[i].typnames[j]) free (tblinfo[i].typnames[j]);
@@ -801,7 +805,6 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
         if(tblinfo[i].inhAttrs) free((int *)tblinfo[i].inhAttrs);
         if(tblinfo[i].attnames) free (tblinfo[i].attnames);
         if(tblinfo[i].typnames) free (tblinfo[i].typnames);
-        if(tblinfo[i].usename) free (tblinfo[i].usename);
     }
     free(tblinfo);
 }
