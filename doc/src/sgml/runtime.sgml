@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.167 2003/01/25 23:10:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.168 2003/02/06 20:25:31 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1447,8 +1447,7 @@ env PGOPTIONS='-c geqo=off' psql
         practice. On a heavily loaded server you might want to raise it.
         Ideally the setting should exceed your typical transaction time,
         so as to improve the odds that the lock will be released before
-        the waiter decides to check for deadlock. This option can only
-        be set at server start.
+        the waiter decides to check for deadlock.
        </para>
       </listitem>
      </varlistentry>
@@ -1777,6 +1776,20 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         The TCP port the server listens on; 5432 by default. This
         option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>REGEX_FLAVOR</varname> (<type>string</type>)</term>
+      <indexterm><primary>regular expressions</></>
+      <listitem>
+       <para>
+        The regular expression <quote>flavor</> can be set to
+	<literal>advanced</>, <literal>extended</>, or <literal>basic</>.
+	The usual default is <literal>advanced</>.  The <literal>extended</>
+	setting may be useful for exact backwards compatibility with
+	pre-7.4 releases of <productname>PostgreSQL</>.
        </para>
       </listitem>
      </varlistentry>

@@ -208,6 +208,7 @@
 #max_expr_depth = 10000		# min 10
 #max_files_per_process = 1000	# min 25
 #password_encryption = true
+#regex_flavor = advanced	# advanced, extended, or basic
 #sql_inheritance = true
 #transform_null_equals = false
 #statement_timeout = 0		# 0 is disabled, in milliseconds

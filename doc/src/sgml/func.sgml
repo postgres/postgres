@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.137 2003/02/05 17:41:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.138 2003/02/06 20:25:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2665,9 +2665,23 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
     due to their availability in programming languages such as Perl and Tcl.
     <acronym>RE</acronym>s using these non-POSIX extensions are called
     <firstterm>advanced</> <acronym>RE</acronym>s or <acronym>ARE</>s
-    in this documentation.  We first describe the ERE/ARE flavor and then
-    mention the restrictions of the BRE form.
+    in this documentation.  AREs are almost an exact superset of EREs,
+    but BREs have several notational incompatibilities (as well as being
+    much more limited).
+    We first describe the ARE and ERE forms, noting features that apply
+    only to AREs, and then describe how BREs differ.
    </para>
+
+   <note>
+    <para>
+     The form of regular expressions accepted by <productname>PostgreSQL</>
+     can be chosen by setting the <varname>REGEX_FLAVOR</> run-time parameter
+     (described in the &cite-admin;).  The usual setting is
+     <literal>advanced</>, but one might choose <literal>extended</> for
+     maximum backwards compatibility with pre-7.4 releases of
+     <productname>PostgreSQL</>.
+    </para>
+   </note>
 
    <para>
     A regular expression is defined as one or more
@@ -2784,7 +2798,7 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
      meaning in <productname>PostgreSQL</> string literals.
      To write a pattern constant that contains a backslash,
      you must write two backslashes in the query.
-   </para>
+    </para>
    </note>
 
    <table id="posix-quantifiers-table">
@@ -3392,11 +3406,11 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
    </para>
 
    <para>
-    Normally the flavor of RE being used is specified by
-    application-dependent means.
-    However, this can be overridden by a <firstterm>director</>.
+    Normally the flavor of RE being used is determined by
+    <varname>REGEX_FLAVOR</>.
+    However, this can be overridden by a <firstterm>director</> prefix.
     If an RE of any flavor begins with <literal>***:</>,
-    the rest of the RE is an ARE.
+    the rest of the RE is taken as an ARE.
     If an RE of any flavor begins with <literal>***=</>,
     the rest of the RE is taken to be a literal string,
     with all characters considered ordinary characters.
@@ -3407,8 +3421,8 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
     a sequence <literal>(?</><replaceable>xyz</><literal>)</>
     (where <replaceable>xyz</> is one or more alphabetic characters)
     specifies options affecting the rest of the RE.
-    These supplement, and can override,
-    any options specified externally.
+    These options override any previously determined options (including
+    both the RE flavor and case sensitivity).
     The available option letters are
     shown in <xref linkend="posix-embedded-options-table">.
    </para>
@@ -3432,7 +3446,7 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
        <entry> <literal>c</> </entry>
-       <entry> case-sensitive matching (usual default) </entry>
+       <entry> case-sensitive matching (overrides operator type) </entry>
        </row>
 
        <row>
@@ -3443,7 +3457,7 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
        <row>
        <entry> <literal>i</> </entry>
        <entry> case-insensitive matching (see
-       <xref linkend="posix-matching-rules">) </entry>
+       <xref linkend="posix-matching-rules">) (overrides operator type) </entry>
        </row>
 
        <row>
@@ -3471,12 +3485,12 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
 
        <row>
        <entry> <literal>s</> </entry>
-       <entry> non-newline-sensitive matching (usual default) </entry>
+       <entry> non-newline-sensitive matching (default) </entry>
        </row>
 
        <row>
        <entry> <literal>t</> </entry>
-       <entry> tight syntax (usual default; see below) </entry>
+       <entry> tight syntax (default; see below) </entry>
        </row>
 
        <row>
@@ -3696,7 +3710,7 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
    </para>
 
    <para>
-    Two significant incompatibilites exist between AREs and the ERE syntax
+    Two significant incompatibilities exist between AREs and the ERE syntax
     recognized by pre-7.4 releases of <productname>PostgreSQL</>:
 
     <itemizedlist>
@@ -3717,6 +3731,10 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
       </para>
      </listitem>
     </itemizedlist>
+
+    While these differences are unlikely to create a problem for most
+    applications, you can avoid them if necessary by
+    setting <varname>REGEX_FLAVOR</> to <literal>extended</>.
    </para>
    </sect3>
 

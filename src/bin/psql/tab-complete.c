@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.72 2003/01/25 23:10:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.73 2003/02/06 20:25:33 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -215,14 +215,11 @@ psql_completion(char *text, int start, int end)
 		"TRANSACTION",
 
 		/*
-		 * the rest should match USERSET entries in
-		 * backend/utils/misc/guc.c
+		 * the rest should match USERSET and possibly SUSET entries in
+		 * backend/utils/misc/guc.c.
 		 */
 		"australian_timezones",
-		"authentication_timeout",
 		"autocommit",
-		"checkpoint_segments",
-		"checkpoint_timeout",
 		"client_encoding",
 		"client_min_messages",
 		"commit_delay",
@@ -231,7 +228,6 @@ psql_completion(char *text, int start, int end)
 		"cpu_operator_cost",
 		"cpu_tuple_cost",
 		"DateStyle",
-		"db_user_namespace",
 		"deadlock_timeout",
 		"debug_pretty_print",
 		"debug_print_parse",
@@ -239,19 +235,19 @@ psql_completion(char *text, int start, int end)
 		"debug_print_rewritten",
 		"default_statistics_target",
 		"default_transaction_isolation",
+		"default_transaction_read_only",
 		"dynamic_library_path",
 		"effective_cache_size",
+		"enable_hashagg",
 		"enable_hashjoin",
 		"enable_indexscan",
 		"enable_mergejoin",
 		"enable_nestloop",
 		"enable_seqscan",
 		"enable_sort",
-		"enable_hashagg",
 		"enable_tidscan",
 		"explain_pretty_print",
 		"extra_float_digits",
-		"fixbtree",
 		"from_collapse_limit",
 		"fsync",
 		"geqo",
@@ -262,18 +258,19 @@ psql_completion(char *text, int start, int end)
 		"geqo_selection_bias",
 		"geqo_threshold",
 		"join_collapse_limit",
-		"log_hostname",
 		"krb_server_keyfile",
 		"lc_messages",
 		"lc_monetary",
 		"lc_numeric",
 		"lc_time",
-		"log_connections",
 		"log_duration",
+		"log_executor_stats",
 		"log_min_error_statement",
-		"log_pid",
+		"log_min_messages",
+		"log_parser_stats",
+		"log_planner_stats",
 		"log_statement",
-		"log_timestamp",
+		"log_statement_stats",
 		"max_connections",
 		"max_expr_depth",
 		"max_files_per_process",
@@ -282,19 +279,12 @@ psql_completion(char *text, int start, int end)
 		"max_locks_per_transaction",
 		"password_encryption",
 		"port",
-		"pre_auth_delay",
 		"random_page_cost",
+		"regex_flavor",
 		"search_path",
-		"log_min_messages",
 		"shared_buffers",
-		"log_executor_stats",
-		"log_parser_stats",
-		"log_planner_stats",
-		"log_source_port",
-		"log_statement_stats",
 		"seed",
 		"server_encoding",
-		"silent_mode",
 		"sort_mem",
 		"sql_inheritance",
 		"ssl",
@@ -316,7 +306,6 @@ psql_completion(char *text, int start, int end)
 		"unix_socket_group",
 		"unix_socket_permissions",
 		"vacuum_mem",
-		"virtual_hostt",
 		"wal_buffers",
 		"wal_debug",
 		"wal_sync_method",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.44 2003/02/05 17:41:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.45 2003/02/06 20:25:33 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -32,6 +32,10 @@
 #include "regex/regex.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
+
+
+/* GUC-settable flavor parameter */
+static int	regex_flavor = REG_ADVANCED;
 
 
 /*
@@ -217,6 +221,34 @@ RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
 
 
 /*
+ * assign_regex_flavor - GUC hook to validate and set REGEX_FLAVOR
+ */
+const char *
+assign_regex_flavor(const char *value,
+					bool doit, bool interactive)
+{
+	if (strcasecmp(value, "advanced") == 0)
+	{
+		if (doit)
+			regex_flavor = REG_ADVANCED;
+	}
+	else if (strcasecmp(value, "extended") == 0)
+	{
+		if (doit)
+			regex_flavor = REG_EXTENDED;
+	}
+	else if (strcasecmp(value, "basic") == 0)
+	{
+		if (doit)
+			regex_flavor = REG_BASIC;
+	}
+	else
+		return NULL;			/* fail */
+	return value;				/* OK */
+}
+
+
+/*
  *	interface routines called by the function manager
  */
 
@@ -229,7 +261,7 @@ nameregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  (unsigned char *) NameStr(*n),
 										  strlen(NameStr(*n)),
-										  REG_ADVANCED,
+										  regex_flavor,
 										  0, NULL));
 }
 
@@ -242,7 +274,7 @@ nameregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   (unsigned char *) NameStr(*n),
 										   strlen(NameStr(*n)),
-										   REG_ADVANCED,
+										   regex_flavor,
 										   0, NULL));
 }
 
@@ -255,7 +287,7 @@ textregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  (unsigned char *) VARDATA(s),
 										  VARSIZE(s) - VARHDRSZ,
-										  REG_ADVANCED,
+										  regex_flavor,
 										  0, NULL));
 }
 
@@ -268,7 +300,7 @@ textregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   (unsigned char *) VARDATA(s),
 										   VARSIZE(s) - VARHDRSZ,
-										   REG_ADVANCED,
+										   regex_flavor,
 										   0, NULL));
 }
 
@@ -288,7 +320,7 @@ nameicregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  (unsigned char *) NameStr(*n),
 										  strlen(NameStr(*n)),
-										  REG_ICASE | REG_ADVANCED,
+										  regex_flavor | REG_ICASE,
 										  0, NULL));
 }
 
@@ -301,7 +333,7 @@ nameicregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   (unsigned char *) NameStr(*n),
 										   strlen(NameStr(*n)),
-										   REG_ICASE | REG_ADVANCED,
+										   regex_flavor | REG_ICASE,
 										   0, NULL));
 }
 
@@ -314,7 +346,7 @@ texticregexeq(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  (unsigned char *) VARDATA(s),
 										  VARSIZE(s) - VARHDRSZ,
-										  REG_ICASE | REG_ADVANCED,
+										  regex_flavor | REG_ICASE,
 										  0, NULL));
 }
 
@@ -327,7 +359,7 @@ texticregexne(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   (unsigned char *) VARDATA(s),
 										   VARSIZE(s) - VARHDRSZ,
-										   REG_ICASE | REG_ADVANCED,
+										   regex_flavor | REG_ICASE,
 										   0, NULL));
 }
 
@@ -353,7 +385,7 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	match = RE_compile_and_execute(p,
 								   (unsigned char *) VARDATA(s),
 								   VARSIZE(s) - VARHDRSZ,
-								   REG_ADVANCED,
+								   regex_flavor,
 								   2, pmatch);
 
 	/* match? then return the substring matching the pattern */
