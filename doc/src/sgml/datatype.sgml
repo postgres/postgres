@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.136 2003/12/20 15:32:54 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.137 2003/12/20 15:59:25 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -1832,7 +1832,7 @@ January 8 04:05:06 1999 PST
 		  <entry>P2Y10M15DT10H30M20S</entry>
 		 </row>
 		</tbody>
-	   </thead>
+	   </tgroup>
 	  </table>
 	  
      </para>
