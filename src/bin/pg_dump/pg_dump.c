@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.247 2002/04/11 20:00:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.248 2002/04/13 19:57:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4416,36 +4416,6 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 					appendPQExpBuffer(q, "%s",
 									  tblinfo[i].check_expr[k]);
-				}
-
-				/* Primary Key */
-				if (tblinfo[i].pkIndexOid != NULL)
-				{
-					PQExpBuffer consDef;
-
-					/* Find the corresponding index */
-					for (k = 0; k < numIndexes; k++)
-					{
-						if (strcmp(indinfo[k].indexreloid,
-								   tblinfo[i].pkIndexOid) == 0)
-							break;
-					}
-
-					if (k >= numIndexes)
-					{
-						write_msg(NULL, "dumpTables(): failed sanity check, could not find index (%s) for primary key constraint\n",
-								  tblinfo[i].pkIndexOid);
-						exit_nicely();
-					}
-
-					consDef = getPKconstraint(&tblinfo[i], &indinfo[k]);
-
-					if ((actual_atts + tblinfo[i].ncheck) > 0)
-						appendPQExpBuffer(q, ",\n\t");
-
-					appendPQExpBuffer(q, "%s", consDef->data);
-
-					destroyPQExpBuffer(consDef);
 				}
 
 				/*
