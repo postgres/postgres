@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.88 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.88.2.1 2004/08/11 21:10:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -725,31 +725,37 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
  * lookups.  Hence, the stored form of the value must provide a numeric userid
  * that can be re-used directly.  We store the string in the form of
  * NAMEDATALEN 'x's, followed by T or F to indicate superuserness, followed
- * by the numeric userid --- this cannot conflict with any valid user name,
- * because of the NAMEDATALEN limit on names.
+ * by the numeric userid, followed by a comma, followed by the user name.
+ * This cannot be confused with a plain user name because of the NAMEDATALEN
+ * limit on names, so we can tell whether we're being passed an initial
+ * username or a saved/restored value.
  */
+extern char *session_authorization_string; /* in guc.c */
+
 const char *
 assign_session_authorization(const char *value, bool doit, bool interactive)
 {
 	AclId		usesysid = 0;
 	bool		is_superuser = false;
+	const char *actual_username = NULL;
 	char	   *result;
 
 	if (strspn(value, "x") == NAMEDATALEN &&
 		(value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'))
 	{
-		/* might be a saved numeric userid */
+		/* might be a saved userid string */
+		AclId		savedsysid;
 		char	   *endptr;
 
-		usesysid = (AclId) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
+		savedsysid = (AclId) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
 
-		if (endptr != value + NAMEDATALEN + 1 && *endptr == '\0')
+		if (endptr != value + NAMEDATALEN + 1 && *endptr == ',')
 		{
-			/* syntactically valid, so use the numeric user ID and flag */
+			/* syntactically valid, so break out the data */
+			usesysid = savedsysid;
 			is_superuser = (value[NAMEDATALEN] == 'T');
+			actual_username = endptr + 1;
 		}
-		else
-			usesysid = 0;
 	}
 
 	if (usesysid == 0)
@@ -781,6 +787,7 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 
 		usesysid = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
 		is_superuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
+		actual_username = value;
 
 		ReleaseSysCache(userTup);
 	}
@@ -788,15 +795,16 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 	if (doit)
 		SetSessionAuthorization(usesysid, is_superuser);
 
-	result = (char *) malloc(NAMEDATALEN + 32);
+	result = (char *) malloc(NAMEDATALEN + 32 + strlen(actual_username));
 	if (!result)
 		return NULL;
 
 	memset(result, 'x', NAMEDATALEN);
 
-	snprintf(result + NAMEDATALEN, 32, "%c%lu",
-			 is_superuser ? 'T' : 'F',
-			 (unsigned long) usesysid);
+	sprintf(result + NAMEDATALEN, "%c%lu,%s",
+			is_superuser ? 'T' : 'F',
+			(unsigned long) usesysid,
+			actual_username);
 
 	return result;
 }
@@ -805,8 +813,19 @@ const char *
 show_session_authorization(void)
 {
 	/*
-	 * We can't use the stored string; see comments for
+	 * Extract the user name from the stored string; see
 	 * assign_session_authorization
 	 */
-	return GetUserNameFromId(GetSessionUserId());
+	const char *value = session_authorization_string;
+	AclId		savedsysid;
+	char	   *endptr;
+
+	Assert(strspn(value, "x") == NAMEDATALEN &&
+		   (value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'));
+
+	savedsysid = (AclId) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
+
+	Assert(endptr != value + NAMEDATALEN + 1 && *endptr == ',');
+
+	return endptr + 1;
 }

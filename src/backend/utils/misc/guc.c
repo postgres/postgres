@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.2 2004/02/23 20:46:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.164.2.3 2004/08/11 21:10:52 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -151,9 +151,10 @@ static char *locale_ctype;
 static char *regex_flavor_string;
 static char *server_encoding_string;
 static char *server_version_string;
-static char *session_authorization_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
+/* should be static, but commands/variable.c needs to get at it */
+char *session_authorization_string;
 
 
 /* Macros for freeing malloc'd pointers only if appropriate to do so */
