@@ -8,3 +8,4 @@ i386-unknown-netbsd=netbsd
 mips-sgi-irix5=irix5
 sparc-sun-solaris2=sparc_solaris-gcc
 sparc-unknown-linux-gnu=linux-elf
+alpha-unknown-linux-gnu=linuxalpha

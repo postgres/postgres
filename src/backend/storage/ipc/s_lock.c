@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.16 1997/08/12 22:53:55 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.17 1997/08/17 02:39:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,11 @@
 
 #if defined(HAS_TEST_AND_SET)
 
+# if defined(__alpha__) && defined(linux)
+extern long int tas(slock_t *lock);
+# else
 extern int tas(slock_t *lock);
+#endif
 
 #if defined (nextstep)
 /*
@@ -126,7 +130,7 @@ S_LOCK_FREE(slock_t *lock)
  * (see storage/ipc.h).
  */
 
-#if defined(alpha) && !defined(linuxalpha)
+#if defined(__alpha__)
 
 void
 S_LOCK(slock_t *lock)
@@ -409,9 +413,9 @@ S_INIT_LOCK(slock_t *lock)
 #endif /* NEED_I386_TAS_ASM */
 
 
-#if defined(linuxalpha)
+#if defined(__alpha__) && defined(linux)
 
-int
+long int
 tas(slock_t *m)
 {
     slock_t res;
@@ -451,7 +455,7 @@ S_INIT_LOCK(slock_t *lock)
     S_UNLOCK(lock);
 }
 
-#endif
+#endif /* defined(__alpha__) && defined(linux) */
 
 #if defined(linux) && defined(sparc)
  
