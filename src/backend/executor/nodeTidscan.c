@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.2 1999/12/16 22:19:44 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.3 1999/12/20 01:14:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,6 @@ TidNext(TidScan *node)
 	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[node->scan.scanrelid - 1] != NULL)
 	{
-		int	iptr, numQuals;
-
 		ExecClearTuple(slot);
 		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
 			return slot;		/* return empty slot */

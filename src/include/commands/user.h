@@ -21,4 +21,6 @@ extern void CreateGroup(CreateGroupStmt *stmt, CommandDest dest);
 extern void AlterGroup(AlterGroupStmt *stmt, CommandDest dest);
 extern void DropGroup(DropGroupStmt *stmt, CommandDest dest);
 
+extern void update_pg_pwd(void);
+
 #endif	 /* USER_H */

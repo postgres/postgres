@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.45 1999/12/16 17:24:13 momjian Exp $
+ * $Id: user.c,v 1.46 1999/12/20 01:11:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ static void CheckPgUserAclNotNull(void);
 #define SQL_LENGTH	512
 
 /*---------------------------------------------------------------------
- * UpdatePgPwdFile
+ * update_pg_pwd
  *
  * copy the modified contents of pg_shadow to a file used by the postmaster
  * for user authentication.  The file is stored as $PGDATA/pg_pwd.
@@ -48,12 +48,8 @@ static void CheckPgUserAclNotNull(void);
  *---------------------------------------------------------------------
  */
 
-/* This is the old name. Now uses a lower case name to be able to call this
-   from SQL. */
-#define UpdatePgPwdFile() update_pg_pwd()
-
 void
-update_pg_pwd()
+update_pg_pwd(void)
 {
 	char	   *filename,
 			   *tempname;
@@ -242,7 +238,7 @@ DefineUser(CreateUserStmt *stmt, CommandDest dest)
 	 * we can be sure no other backend will try to write the flat
 	 * file at the same time.
 	 */
-	UpdatePgPwdFile();
+	update_pg_pwd();
 
 	/*
 	 * Now we can clean up.
@@ -391,7 +387,7 @@ AlterUser(AlterUserStmt *stmt, CommandDest dest)
 	 * we can be sure no other backend will try to write the flat
 	 * file at the same time.
 	 */
-	UpdatePgPwdFile();
+	update_pg_pwd();
 
 	/*
 	 * Now we can clean up.
@@ -524,7 +520,7 @@ RemoveUser(char *user, CommandDest dest)
 	 * we can be sure no other backend will try to write the flat
 	 * file at the same time.
 	 */
-	UpdatePgPwdFile();
+	update_pg_pwd();
 
 	/*
 	 * Now we can clean up.
@@ -758,7 +754,6 @@ AlterGroup(AlterGroupStmt *stmt, CommandDest dest)
      */
     if (stmt->action == 0) /* change sysid */
     {
-        bool          sysid_exists = false;
         ScanKeyData   keys[2];
         HeapTuple	  tuple;
         HeapScanDesc  scan;

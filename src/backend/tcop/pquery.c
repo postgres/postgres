@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.28 1999/09/24 00:24:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.29 1999/12/20 01:19:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ EState *
 CreateExecutorState(void)
 {
 	EState	   *state;
-	extern int	NBuffers;
 
 	/* ----------------
 	 *	create a new executor state

@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.47 1999/12/12 05:15:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.48 1999/12/20 01:11:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <signal.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "postgres.h"
 

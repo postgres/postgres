@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.12 1999/10/11 06:28:26 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.13 1999/12/20 01:23:04 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -144,7 +144,7 @@ text_tid(const text *string)
 
 	if (!string)	return (ItemPointer)0;
 
-	str = textout(string);
+	str = textout((text *) string);
 	result = tidin(str);
 	pfree(str);
 
@@ -188,7 +188,7 @@ currtid_byrelname(const text *relname, ItemPointer tid)
 
 	if (!relname)	return result;
 
-	str = textout(relname);
+	str = textout((text *) relname);
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	ItemPointerSetInvalid(result);
