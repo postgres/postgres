@@ -471,7 +471,7 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a unique constraint (fails)
 alter table atacc1 add constraint atacc_test1 unique (test);
- NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
+NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
 ERROR:  Cannot create unique index. Table contains non-unique values
 insert into atacc1 (test) values (3);
 drop table atacc1;
