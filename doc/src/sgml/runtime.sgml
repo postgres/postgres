@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.233 2004/01/25 00:36:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.234 2004/01/25 03:30:00 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1825,7 +1825,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <command>EXECUTE</> only displays the plan name, not the
         prepared query. Server-side languages like
         <application>PL/pgSQL</> that store functions in a cache only
-        display their queries on first function call. superusers can
+        display their queries on first function call. Only superusers can
         turn off this option if it is enabled by the administrator.
        </para>
       </listitem>
