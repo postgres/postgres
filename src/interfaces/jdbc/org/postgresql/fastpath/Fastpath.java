@@ -98,7 +98,9 @@ public class Fastpath
 
 			// Now loop, reading the results
 			Object result = null; // our result
-			while (true)
+			StringBuffer errorMessage = null;
+			boolean loop = true;
+			while (loop)
 			{
 				int in = stream.ReceiveChar();
 				//DriverManager.println("ReceiveChar() = "+in+" '"+((char)in)+"'");
@@ -128,8 +130,10 @@ public class Fastpath
 						//------------------------------
 						// Error message returned
 					case 'E':
-						throw new PSQLException("postgresql.fp.error", stream.ReceiveString(conn.getEncoding()));
-
+						if ( errorMessage == null )
+							errorMessage = new StringBuffer();
+						errorMessage.append(stream.ReceiveString(conn.getEncoding()));
+						break;
 						//------------------------------
 						// Notice from backend
 					case 'N':
@@ -143,15 +147,22 @@ public class Fastpath
 						// processed earlier. If no result, this already contains null
 					case '0':
 						//DriverManager.println("returning "+result);
-						return result;
-
+						// return result;
+						break;
 					case 'Z':
+						// cause the loop to exit
+						loop = false;
 						break;
 
 					default:
 						throw new PSQLException("postgresql.fp.protocol", new Character((char)in));
 				}
 			}
+			
+			if ( errorMessage != null )
+				throw new PSQLException("postgresql.fp.error", errorMessage.toString());
+
+			return result;
 		}
 	}
 
