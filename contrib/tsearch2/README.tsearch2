@@ -31,7 +31,18 @@ Tsearch2 - full text search extension for PostgreSQL
      * specify the parser used to process a document.
        
    See [11]Documentation Roadmap for links to documentation.
-   
+
+OpenFTS vs Tsearch2
+
+    OpenFTS is a middleware between application and database, so it uses 
+    tsearch2 as a storage, while database engine is used as a query executor 
+    (searching). Everything else (parsing of documents, query processing, 
+    linguistics) carry outs on client side. That's why OpenFTS has its own 
+    configuration table (fts_conf) and works with its own set of dictionaries. 
+    OpenFTS is more flexible, because it could be used in multi-server 
+    architecture with separated machines for repository of documents 
+    (documents could be stored in file system), database and query engine.   
+
 Authors
 
      * Oleg Bartunov <oleg@sai.msu.su>, Moscow, Moscow University, Russia
