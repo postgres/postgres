@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.21 1997/01/10 17:39:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.22 1997/01/14 03:02:06 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -344,6 +344,6 @@ echo
 
 if [ $debug -eq 0 ]; then
     echo "vacuuming template1"
-
-    echo "vacuum" | postgres -F -Q -D$PGDATA template1 > /dev/null
+    echo "vacuum" | postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	 grep -v "^DEBUG"
 fi
