@@ -7,16 +7,25 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.2 1996/11/08 05:56:27 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.3 1996/11/14 20:49:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 #include "postgres.h"
 #include "miscadmin.h"
 #include "bootstrap/bootstrap.h"	/* for BootstrapMain() */
 #include "tcop/tcopprot.h"		/* for PostgresMain() */
 #include "port-protos.h"		/* for init_address_fixup() */
+
+#define NOROOTEXEC "\
+\n\"root\" execution of the PostgreSQL backend is not permitted\n\n\
+It is highly recommended that the backend be started under it's own userid\n\
+to prevent possible system security compromise. This can be accomplished\n\
+by placing the following command in the PostgreSQL startup script.\n\n\
+echo \"postmaster -B 256 >/var/log/pglog 2>&1 &\" | su - postgres\n\n"
 
 int
 main(int argc, char *argv[])
@@ -33,6 +42,12 @@ main(int argc, char *argv[])
     /* use one executable for both postgres and postmaster,
        invoke one or the other depending on the name of the executable */
     len = strlen(argv[0]);
+
+    if (!geteuid()) {
+      fprintf(stderr, "%s", NOROOTEXEC);
+      exit(1);
+    }
+
     if(len >= 10 && ! strcmp(argv[0] + len - 10, "postmaster"))
         exit(PostmasterMain(argc, argv));
 
