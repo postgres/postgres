@@ -395,7 +395,11 @@ has the termination sequence on the last line):
  </refsect1>
  
  <refsect1 ID="R1-SQL-COPY-5">
-  <title>Bugs</title>
+  <title>Bugs and features</title>
+  <para>
+   <command>COPY</command> neither invokes rules nor acts on column defaults.
+   It does invoke triggers, however.
+  </para>
   <para>
    <command>COPY</command> stops operation at the first error.  This
    should not lead to problems in the event of

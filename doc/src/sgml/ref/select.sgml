@@ -205,9 +205,15 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
    Description
   </title>
   <para>
-   <command>SELECT</command> will get all rows which satisfy the
- WHERE condition
-   or all rows of a table if WHERE is omitted.</para>
+   <command>SELECT</command> will return rows from one or more tables.
+   Candidates for selection are rows which satisfy the WHERE condition;
+   if WHERE is omitted, all rows are candidates.</para>
+  <para>
+   <command>DISTINCT</command> will eliminate all duplicate rows from the
+   selection.
+   <command>DISTINCT ON <replaceable class="PARAMETER">column</replaceable></command> will eliminate all duplicates in the specified column; this is
+equivalent to using <command>GROUP BY <replaceable class="PARAMETER">column</replaceable></command>.  <command>ALL</command> will return all candidate rows,
+including duplicates.
    
   <para>
    The GROUP BY clause allows a user to divide a table
@@ -247,8 +253,9 @@ WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARA
     </synopsis>
     
     where <replaceable class="PARAMETER">cond_op</replaceable> can be
-    one of: =, &lt;, &lt;=, &gt;, &gt;=, &lt;&gt;
-    or a conditional operator like ALL, ANY, IN, LIKE, et cetera
+    one of: =, &lt;, &lt;=, &gt;, &gt;= or &lt;&gt;,
+    a conditional operator like ALL, ANY, IN, LIKE, et cetera or a
+    locally-defined operator, 
     and <replaceable class="PARAMETER">log_op</replaceable> can be one 
     of: AND, OR, NOT.
     The comparison returns either TRUE or FALSE and all
@@ -266,10 +273,16 @@ WHERE <replaceable class="PARAMETER">expr</replaceable> <replaceable class="PARA
    </title>
    <para>
     GROUP BY specifies a grouped table derived by the application
-    of the this clause:
+    of this clause:
     <synopsis>
 GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...]
-    </synopsis></para></refsect2>
+    </synopsis></para>
+    <para>
+     GROUP BY will condense into a single row all rows that share the same values for the
+     grouped columns; aggregates return values derived from all rows that make up the group.  The value returned for an ungrouped
+     and unaggregated column is dependent on the order in which rows happen to be read from the database.
+    </para>
+</refsect2>
     
   <refsect2 id="R2-SQL-HAVING-2">
    <refsect2info>
@@ -327,8 +340,8 @@ SELECT title, date_prod + 1 AS newlen FROM films ORDER BY newlen;
     </programlisting></para>
     
    <para>
-    The columns in the ORDER BY must appear in the SELECT clause.
-    Thus the following statement is illegal:
+    From release 6.4 of PostgreSQL, the columns in the ORDER BY clause do not need to appear in the SELECT clause.
+    Thus the following statement is now legal:
     <programlisting>
 SELECT name FROM distributors ORDER BY code;
     </programlisting></para>
@@ -409,7 +422,7 @@ SELECT f.title, f.did, d.name, f.date_prod, f.kind
   </programlisting>
   <para>
    To sum the column <literal>len</literal> of all films and group
-   the reults by <literal>kind</literal>:
+   the results by <literal>kind</literal>:
   </para>
   <programlisting>
 SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
@@ -425,7 +438,7 @@ SELECT kind, SUM(len) AS total FROM films GROUP BY kind;
 
   <para>
    To sum the column <literal>len</literal> of all films, group
-   the reults by <literal>kind</literal> and show those group totals
+   the results by <literal>kind</literal> and show those group totals
    that are less than 5 hours:
   </para>
   <programlisting>
@@ -562,6 +575,10 @@ SELECT distributors.* WHERE name = 'Westwood';
      "AS" clause may be referenced in GROUP BY and HAVING clauses.
      This is not currently
      allowed in <productname>Postgres</productname>.
+    </para>
+     
+    <para>
+     The DISTINCT ON phrase is not part of <acronym>SQL92</acronym>.
     </para>
    </refsect3>
 
