@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.42 2000/09/30 16:58:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.43 2000/10/08 13:24:09 petere Exp $
 -->
 
 <!doctype set PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -190,7 +190,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.42 2000/09/30 16:58:20 pe
   <bookinfo>
    <abstract>
     <para>
-     Information on extending Postgres
+     Information on client and server programming
     </para>
    </abstract>
   </bookinfo>
@@ -201,6 +201,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.42 2000/09/30 16:58:20 pe
   included twice.
    &intro-pg;
 -->
+  <part>
+   <title>Server Programming</title>
   &arch-pg;
   &extend;
   &xfunc;
@@ -215,19 +217,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.42 2000/09/30 16:58:20 pe
   &trigger;
   &spi;
   &xplang;
- </book>
+  </part>
 
- <book id="interfaces">
-  <title>Interfaces</title>
-
-  <bookinfo>
-   <abstract>
-    <para>
-     Information on Postgres language interfaces
-    </para>
-   </abstract>
-  </bookinfo>
-
+  <part>
+   <title>Client Interfaces</title>
    &func-ref;
    &lobj;
    &ecpg;
@@ -238,6 +231,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.42 2000/09/30 16:58:20 pe
    &odbc;
    &jdbc;
    &lisp;
+  </part>
  </book>
  
  <book id="developer">

@@ -1,0 +1,61 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.1 2000/10/08 13:24:09 petere Exp $ -->
+<!-- PostgreSQL Developer's Guide -->
+
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+
+<!entity about      SYSTEM "about.sgml">
+<!entity history    SYSTEM "history.sgml">
+<!entity info       SYSTEM "info.sgml">
+<!entity legal      SYSTEM "legal.sgml">
+<!entity notation   SYSTEM "notation.sgml">
+<!entity problems   SYSTEM "problems.sgml">
+<!entity y2k        SYSTEM "y2k.sgml">
+
+<!entity arch-dev   SYSTEM "arch-dev.sgml">
+<!entity biblio     SYSTEM "biblio.sgml">
+<!entity bki        SYSTEM "bki.sgml">
+<!entity catalogs   SYSTEM "catalogs.sgml">
+<!entity compiler   SYSTEM "compiler.sgml">
+<!entity contacts   SYSTEM "contacts.sgml">
+<!entity cvs        SYSTEM "cvs.sgml">
+<!entity docguide   SYSTEM "docguide.sgml">
+<!entity geqo       SYSTEM "geqo.sgml">
+<!entity page       SYSTEM "page.sgml">
+<!entity protocol   SYSTEM "protocol.sgml">
+<!entity sources    SYSTEM "sources.sgml">
+
+]>
+
+<book id="developer">
+ <title><productname>PostgreSQL Developer's Guide</></>
+
+ <bookinfo>
+  <abstract>
+   <simpara>
+    This document contains assorted information that can be of use to
+    <productname>PostgreSQL</> developers.
+   </simpara>
+  </abstract>
+
+  <corpauthor>The PostgreSQL Global Development Group</>
+ </bookinfo>
+ 
+ &sources;
+ &arch-dev; 
+ &geqo;
+<!--
+ This listing of Postgres catalogs is currently just a copy of the old
+ man page. It is not up to date and has not been marked up for DocBook.
+ - thomas 2000-04-20
+ &catalogs;
+-->
+ &protocol;
+ &compiler;
+ &bki;
+ &page;
+ &biblio;
+
+<!-- appendices -->
+ &cvs;
+ &docguide;
+</book>

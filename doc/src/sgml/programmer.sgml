@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.27 2000/06/18 21:24:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.28 2000/10/08 13:24:09 petere Exp $
 
 Postgres Programmer's Guide.
 -->
@@ -39,20 +39,7 @@ Postgres Programmer's Guide.
 <!entity xplang     SYSTEM "xplang.sgml">
 <!entity xoper      SYSTEM "xoper.sgml">
 <!entity xtypes     SYSTEM "xtypes.sgml">
-
-<!-- developer's guide -->
-<!entity arch-dev   SYSTEM "arch-dev.sgml">
 <!entity biblio     SYSTEM "biblio.sgml">
-<!entity bki        SYSTEM "bki.sgml">
-<!entity catalogs   SYSTEM "catalogs.sgml">
-<!entity compiler   SYSTEM "compiler.sgml">
-<!entity contacts   SYSTEM "contacts.sgml">
-<!entity cvs        SYSTEM "cvs.sgml">
-<!entity docguide   SYSTEM "docguide.sgml">
-<!entity geqo       SYSTEM "geqo.sgml">
-<!entity page       SYSTEM "page.sgml">
-<!entity protocol   SYSTEM "protocol.sgml">
-<!entity sources    SYSTEM "sources.sgml">
 ]>
 
 <book id="programmer">
@@ -125,6 +112,8 @@ Your name here...
  </preface>
 
   &intro-pg;
+ <part>
+  <title>Server Programming</>
   &arch-pg;
   &extend;
   &xfunc;
@@ -149,6 +138,9 @@ Disable it until we put in some info.
 
  &trigger;
  &spi;
+ </part>
+ <part>
+  <title>Client Interfaces</>
  &lobj;
  &libpq;
  &libpqpp;
@@ -158,31 +150,11 @@ Disable it until we put in some info.
  &odbc;
  &jdbc;
  &lisp;
- 
-<!-- development -->
- 
- &sources;
- &arch-dev; 
- &geqo;
-<!--
- This listing of Postgres catalogs is currently just a copy of the old
- man page. It is not up to date and has not been marked up for SGML.
- - thomas 2000-04-20
- &catalogs;
--->
- &protocol;
- &compiler;
- &bki;
- &page;
-
-<!-- appendices -->
-
-  &cvs;
-  &docguide;
+ </part>
 <!--
 &contacts;
 -->
-  &biblio;
+ &biblio;
 
 <!--
 <index id="index">
