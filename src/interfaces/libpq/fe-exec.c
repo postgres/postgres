@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.118 2002/04/08 03:48:10 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.119 2002/04/15 23:35:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1510,8 +1510,16 @@ getNotify(PGconn *conn)
 		return EOF;
 	if (pqGets(&conn->workBuffer, conn))
 		return EOF;
-	newNotify = (PGnotify *) malloc(sizeof(PGnotify));
-	strncpy(newNotify->relname, conn->workBuffer.data, NAMEDATALEN);
+
+	/*
+	 * Store the relation name right after the PQnotify structure so it can
+	 * all be freed at once.  We don't use NAMEDATALEN because we don't
+	 * want to tie this interface to a specific server name length.
+	 */
+	newNotify = (PGnotify *) malloc(sizeof(PGnotify) +
+				strlen(conn->workBuffer.data) + 1);
+	newNotify->relname = (char *)newNotify + sizeof(PGnotify);
+	strcpy(newNotify->relname, conn->workBuffer.data);
 	newNotify->be_pid = be_pid;
 	DLAddTail(conn->notifyList, DLNewElem(newNotify));
 	return 0;
