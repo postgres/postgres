@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.38 2002/11/13 00:39:47 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.39 2003/03/21 21:54:29 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -605,6 +605,46 @@ network_netmask(PG_FUNCTION_ARGS)
 	PG_RETURN_INET_P(dst);
 }
 
+Datum
+network_hostmask(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	inet	   *dst;
+
+	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
+	/* make sure any unused bits are zeroed */
+	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
+
+	if (ip_family(ip) == AF_INET)
+	{
+		/* It's an IP V4 address: */
+		unsigned long mask = 0xffffffff;
+
+		/*
+		 * Only shift if the mask len is < 32 bits ..
+		 */
+
+		if (ip_bits(ip) < 32)
+			mask >>= ip_bits(ip);
+		else
+			mask = 0;
+
+		ip_v4addr(dst) = htonl(mask);
+
+		ip_bits(dst) = 32;
+	}
+	else
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
+
+	ip_family(dst) = ip_family(ip);
+	ip_type(dst) = 0;
+	VARATT_SIZEP(dst) = VARHDRSZ
+		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
+		+ ip_addrsize(dst);
+
+	PG_RETURN_INET_P(dst);
+}
 
 /*
  * Convert a value of a network datatype to an approximate scalar value.

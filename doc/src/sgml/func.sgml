@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.145 2003/03/20 18:58:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.146 2003/03/21 21:54:29 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5898,6 +5898,13 @@ SELECT TIMESTAMP 'now';
 	<entry>construct netmask for network</entry>
 	<entry><literal>netmask('192.168.1.5/24')</literal></entry>
 	<entry><literal>255.255.255.0</literal></entry>
+       </row>
+       <row>
+	<entry><function>hostmask</function>(<type>inet</type>)</entry>
+	<entry><type>inet</type></entry>
+	<entry>construct hostmask for network</entry>
+	<entry><literal>hostmask('192.168.23.20/30')</literal></entry>
+	<entry><literal>0.0.0.3</literal></entry>
        </row>
        <row>
 	<entry><literal><function>network</function>(<type>inet</type>)</literal></entry>

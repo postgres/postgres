@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.289 2003/03/20 18:58:02 momjian Exp $
+ * $Id: pg_proc.h,v 1.290 2003/03/21 21:54:29 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2358,6 +2358,8 @@ DATA(insert OID = 699 (  host				PGNSP PGUID 12 f f t f i 1 25 "869"  network_ho
 DESCR("show address octets only");
 DATA(insert OID = 730 (  text				PGNSP PGUID 12 f f t f i 1 25 "869"  network_show - _null_ ));
 DESCR("show all parts of inet/cidr value");
+DATA(insert OID = 1362 (  hostmask			PGNSP PGUID 12 f f t f i 1 869 "869"	network_hostmask - _null_ ));
+DESCR("hostmask of address");
 DATA(insert OID = 1713 (  inet				PGNSP PGUID 12 f f t f i 1 869 "25"  text_inet - _null_ ));
 DESCR("text to inet");
 DATA(insert OID = 1714 (  cidr				PGNSP PGUID 12 f f t f i 1 650 "25"  text_cidr - _null_ ));
