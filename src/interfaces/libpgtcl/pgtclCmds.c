@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.46 2000/01/26 05:58:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.47 2000/02/27 07:44:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,8 +287,8 @@ Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	if (argc == 1)
 	{
 		Tcl_AppendResult(interp, "pg_connect: database name missing\n", 0);
-		Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]\n", 0);
-		Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
+		Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]\n", 0);
+		Tcl_AppendResult(interp, "pg_connect -conninfo conninfoString", 0);
 		return TCL_ERROR;
 
 	}
@@ -302,7 +302,7 @@ Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 		if (argc != 3)
 		{
 			Tcl_AppendResult(interp, "pg_connect: syntax error\n", 0);
-			Tcl_AppendResult(interp, "pg_connect -conninfo <conninfo-string>", 0);
+			Tcl_AppendResult(interp, "pg_connect -conninfo conninfoString", 0);
 			return TCL_ERROR;
 		}
 		conn = PQconnectdb(argv[2]);
@@ -341,16 +341,17 @@ Pg_connect(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 				}
 				else
 				{
-					Tcl_AppendResult(interp, "Bad option to pg_connect : \n",
+					Tcl_AppendResult(interp, "Bad option to pg_connect: ",
 									 argv[i], 0);
-					Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]", 0);
+					Tcl_AppendResult(interp, "\npg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]", 0);
 					return TCL_ERROR;
 				}
 			}					/* while */
 			if ((i % 2 != 0) || i != argc)
 			{
-				Tcl_AppendResult(interp, "wrong # of arguments to pg_connect\n", argv[i], 0);
-				Tcl_AppendResult(interp, "pg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]]", 0);
+				Tcl_AppendResult(interp, "wrong # of arguments to pg_connect: ",
+								 argv[i], 0);
+				Tcl_AppendResult(interp, "\npg_connect databaseName [-host hostName] [-port portNumber] [-tty pgtty]", 0);
 				return TCL_ERROR;
 			}
 		}
