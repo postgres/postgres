@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.201 2001/10/12 00:07:14 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.202 2001/10/22 22:49:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/heap.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
@@ -50,6 +51,7 @@ typedef struct
 	char	   *relname;		/* name of relation */
 	List	   *inhRelnames;	/* names of relations to inherit from */
 	bool		istemp;			/* is it to be a temp relation? */
+	bool		hasoids;		/* does relation have an OID column? */
 	Oid			relOid;			/* OID of table, if ALTER TABLE case */
 	List	   *columns;		/* ColumnDef items */
 	List	   *ckconstraints;	/* CHECK constraints */
@@ -720,6 +722,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	cxt.relname = stmt->relname;
 	cxt.inhRelnames = stmt->inhRelnames;
 	cxt.istemp = stmt->istemp;
+	cxt.hasoids = stmt->hasoids;
 	cxt.relOid = InvalidOid;
 	cxt.columns = NIL;
 	cxt.ckconstraints = NIL;
@@ -1105,6 +1108,15 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				/* found column in the new table; force it to be NOT NULL */
 				if (constraint->contype == CONSTR_PRIMARY)
 					column->is_not_null = TRUE;
+			}
+			else if (SystemAttributeByName(key->name, cxt->hasoids) != NULL)
+			{
+				/*
+				 * column will be a system column in the new table,
+				 * so accept it.  System columns can't ever be null,
+				 * so no need to worry about PRIMARY/NOT NULL constraint.
+				 */
+				found = true;
 			}
 			else if (cxt->inhRelnames)
 			{
@@ -2520,6 +2532,10 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 			cxt.relOid = GetSysCacheOid(RELNAME,
 										PointerGetDatum(stmt->relname),
 										0, 0, 0);
+			cxt.hasoids = SearchSysCacheExists(ATTNUM,
+											   ObjectIdGetDatum(cxt.relOid),
+											   Int16GetDatum(ObjectIdAttributeNumber),
+											   0, 0);
 			cxt.columns = NIL;
 			cxt.ckconstraints = NIL;
 			cxt.fkconstraints = NIL;
@@ -2548,6 +2564,10 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 			cxt.relOid = GetSysCacheOid(RELNAME,
 										PointerGetDatum(stmt->relname),
 										0, 0, 0);
+			cxt.hasoids = SearchSysCacheExists(ATTNUM,
+											   ObjectIdGetDatum(cxt.relOid),
+											   Int16GetDatum(ObjectIdAttributeNumber),
+											   0, 0);
 			cxt.columns = NIL;
 			cxt.ckconstraints = NIL;
 			cxt.fkconstraints = NIL;
