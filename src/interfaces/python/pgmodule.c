@@ -554,13 +554,13 @@ pgsource_fetch(pgsourceobject * self, PyObject * args)
 
 		for (j = 0; j < self->num_fields; j++)
 		{
-			if (PQgetisnull(self->last_result, i, j))
+			if (PQgetisnull(self->last_result, self->current_row, j))
 			{
 				Py_INCREF(Py_None);
 				str = Py_None;
 			}
 			else
-				str = PyString_FromString(PQgetvalue(self->last_result, i, j));
+				str = PyString_FromString(PQgetvalue(self->last_result, self->current_row, j));
 
 			PyTuple_SET_ITEM(rowtuple, j, str);
 		}
