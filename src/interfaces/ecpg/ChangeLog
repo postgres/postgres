@@ -1304,6 +1304,10 @@ Fri Sep 20 07:57:42 CEST 2002
 	- Synced keywords.c.
 	- Deactivated backend functions PREPARE, EXECUTE and DEALLOCATE for
 	  the time being.
+
+Thu Nov  7 10:34:07 CET 2002
+
+	- Synced preproc.y with gram.y.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 

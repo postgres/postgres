@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.200 2002/11/01 22:52:33 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.201 2002/11/07 09:48:09 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -181,8 +181,8 @@ make_name(void)
         AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY AS ASC
 	ASSERTION ASSIGNMENT AT AUTHORIZATION
 
-        BACKWARD BEFORE BEGIN_TRANS BETWEEN BIGINT BINARY BIT BOTH
-        BOOLEAN BY
+        BACKWARD BEFORE BEGIN_TRANS BETWEEN BIGINT BINARY BIT
+        BOOLEAN BOTH BY
 
         CACHE CALLED CASCADE CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
@@ -208,6 +208,7 @@ make_name(void)
         INTEGER INTERSECT INTERVAL INTO INVOKER IS ISNULL ISOLATION
 			
         JOIN
+	
         KEY
 
 	LANCOMPILER LANGUAGE LEADING LEFT LEVEL LIKE LIMIT LISTEN
@@ -222,8 +223,8 @@ make_name(void)
 	OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR ORDER
         OUT_P OUTER_P OVERLAPS OVERLAY OWNER
 
-	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION PRECISION PREPARE
-	PRIMARY	PRIOR PRIVILEGES PROCEDURE PROCEDURAL
+	PARTIAL PASSWORD PATH_P PENDANT PLACING POSITION
+	PRECISION PREPARE PRIMARY PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	READ REAL RECHECK REFERENCES REINDEX RELATIVE RENAME REPLACE
 	RESET RESTRICT RETURNS REVOKE RIGHT ROLLBACK ROW RULE
@@ -295,14 +296,14 @@ make_name(void)
 %type  <str>	update_target_el opt_id qualified_name database_name
 %type  <str>	access_method attr_name index_name name func_name
 %type  <str>	file_name AexprConst c_expr ConstTypename var_list
-%type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
+%type  <str>	a_expr b_expr TruncateStmt CommentStmt
 %type  <str>	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_default
 %type  <str>	trim_list in_expr substr_for attrs TableFuncElement
 %type  <str>	Typename SimpleTypename Numeric opt_float opt_numeric
 %type  <str>	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate opt_timezone opt_interval table_ref 
-%type  <str>	row_descriptor row_list ConstDatetime trans_options
+%type  <str>	row_descriptor ConstDatetime trans_options
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
 %type  <str>	sortby OptUseOp qualified_name_list name_list ColId_or_Sconst
@@ -364,8 +365,7 @@ make_name(void)
 %type  <str>	opt_oids TableLikeClause key_action opt_definition 
 %type  <str>	cast_context row r_expr qual_Op qual_all_Op opt_default
 %type  <str>	CreateConversionStmt any_operator opclass_item_list
-%type  <str>	iso_level convert_list 
-%type  <str>	convert_args type_list CharacterWithLength ConstCharacter
+%type  <str>	iso_level type_list CharacterWithLength ConstCharacter
 %type  <str>	CharacterWithoutLength BitWithLength BitWithoutLength
 %type  <str>	ConstBit GenericType TableFuncElementList
 %type  <str>	opt_sort_clause
@@ -2381,13 +2381,9 @@ ExecuteStmt: EXECUTE name execute_param_clause into_clause
 		{ $$ = cat_str(4, make_str("execute"), $2, $3, $4); }
 		;
 
-execute_param_clause: '(' execute_param_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
+execute_param_clause: '(' expr_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 			| /* EMPTY * /		{ $$ = EMPTY; }
 			;
-
-execute_param_list: a_expr		{ $$ = $1; }
-	| execute_param_list ',' a_expr	{ $$ = cat_str(3, $1, make_str(","), $3); }
-	;
 
 DeallocateStmt: DEALLOCATE name		{ $$ = cat2_str(make_str("deallocate"), $2); }
 	| DEALLOCATE PREPARE name	{ $$ = cat2_str(make_str("deallocate prepare"), $3); }
@@ -3149,16 +3145,10 @@ row: ROW '(' row_descriptor ')'
                 { $$ = cat_str(3, make_str("("), $2, make_str(")")); }
 	;
 
-row_descriptor:  row_list ',' a_expr
+row_descriptor:  expr_list ',' a_expr
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-row_list:  row_list ',' a_expr
-			{ $$ = cat_str(3, $1, make_str(","), $3); }
-		| a_expr
-			{ $$ = $1; }
-		;
-		
 sub_type:  ANY					{ $$ = make_str("ANY"); }
 		| SOME					{ $$ = make_str("SOME"); }
 		| ALL					{ $$ = make_str("ALL"); }
@@ -3456,7 +3446,9 @@ c_expr: columnref
 			{ $$ = cat_str(3, make_str("trim(trailing"), $4, make_str(")")); }
 		| TRIM '(' trim_list ')'
 			{ $$ = cat_str(3, make_str("trim("), $3, make_str(")")); }
-		| CONVERT '(' convert_list ')'
+		| CONVERT '(' a_expr USING any_name ')'
+		 	{ $$ = cat_str(5, make_str("convert("), $3, make_str("using"), $5, make_str(")"));}
+		| CONVERT '(' expr_list ')'
 			{ $$ = cat_str(3, make_str("convert("), $3, make_str(")")); }
 		| select_with_parens	%prec UMINUS
 			{ $$ = $1; }
@@ -3479,8 +3471,6 @@ expr_list:	a_expr
 			{ $$ = $1; }
 		| expr_list ',' a_expr
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
-		| expr_list USING a_expr
-			{ $$ = cat_str(3, $1, make_str("using"), $3); }
 		;
 
 extract_list:  extract_arg FROM a_expr
@@ -3557,29 +3547,10 @@ trim_list:	a_expr FROM expr_list
 			{ $$ = $1; }
 		;
 
-convert_list:
-                        a_expr USING any_name
-				{ $$ = cat_str(3, $1, make_str("using"), $3); }
-			| convert_args
-				{ $$ = $1; }
-			| /* EMPTY */
-				{ $$ = EMPTY; }
-			;
-			
-convert_args:   a_expr			{ $$ = $1; }
-	| convert_args ',' a_expr	{ $$ = cat_str(3, $1, ',', $3); }
-	;
-	
 in_expr:  select_with_parens
 			{ $$ = $1; }
-		| '(' in_expr_nodes ')'
+		| '(' expr_list ')'
 			{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		;
-
-in_expr_nodes:	a_expr
-			{ $$ = $1; }
-		| in_expr_nodes ',' a_expr
-			{ $$ = cat_str(3, $1, make_str(","), $3);}
 		;
 
 /* Case clause
@@ -5289,6 +5260,7 @@ col_name_keyword:
  */
 		| CHARACTER		{ $$ = make_str("character"); }
 		| COALESCE		{ $$ = make_str("coalesce"); }
+		| CONVERT		{ $$ = make_str("convert"); }
 		| DEC			{ $$ = make_str("dec"); }
 		| DECIMAL		{ $$ = make_str("decimal"); }
 		| EXISTS		{ $$ = make_str("exists"); }
