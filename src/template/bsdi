@@ -10,12 +10,12 @@ case $host_os in
 esac
 
 case $host_os in
-  bsdi2.0 | bsdi2.1 | bsdi3)
+  bsdi2.0 | bsdi2.1 | bsdi3*)
     SHARED_LIB=
     DLSUFFIX=.o
     CC=gcc2
     ;;
-  bsdi4)
+  *)
     SHARED_LIB=-fpic
     DLSUFFIX=.so
     ;;
