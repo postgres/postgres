@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan 22 17:22:16 EST 2002
+Last updated:		Wed Jan 23 11:12:42 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -410,6 +410,11 @@ WRITE-AHEAD LOG
   partial page writes
 * Turn off after-change writes if fsync is disabled (?)
 * Add WAL index reliability improvement to non-btree indexes
+* Reorder postgresql.conf WAL items in order of importance
+* Remove wal_files postgresql.conf option because WAL files are now recycled
+* Find proper defaults for postgresql.conf WAL entries
+* Add checkpoint_min_warning postgresql.conf option to warn about checkpoints
+  that are too frequent
 
 OPTIMIZER/EXECUTOR
 
