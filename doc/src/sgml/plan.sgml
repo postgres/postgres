@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.2 2000/03/31 03:27:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.3 2000/03/31 17:45:00 tgl Exp $
 -->
 
  <chapter>
@@ -31,7 +31,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.2 2000/03/31 03:27:41 t
 
    <para>
     Plan-reading is an art that deserves a tutorial, and I haven't
-    had time to write one.  Here is some quick & dirty explanation.
+    had time to write one.  Here is some quick &amp; dirty explanation.
    </para>
 
    <para>
@@ -69,9 +69,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.2 2000/03/31 03:27:41 t
    </para>
 
    <para>
-    The costs are measured in units of disk page fetches.  (There are some
-    fairly bogus fudge-factors for converting CPU effort estimates into
-    disk-fetch units; see the SET ref page if you want to play with these.)
+    The costs are measured in units of disk page fetches.  (CPU effort
+    estimates are converted into disk-page units using some
+    fairly arbitrary fudge-factors.  See the <command>SET</command>
+    reference page if you want to experiment with these.)
     It's important to note that the cost of an upper-level node includes
     the cost of all its child nodes.  It's also important to realize that
     the cost only reflects things that the planner/optimizer cares about.
@@ -83,7 +84,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.2 2000/03/31 03:27:41 t
    </para>
 
    <para>
-    Rows output is a little tricky because it is *not* the number of rows
+    Rows output is a little tricky because it is <emphasis>not</emphasis> the number of rows
     processed/scanned by the query --- it is usually less, reflecting the
     estimated selectivity of any WHERE-clause constraints that are being
     applied at this node.
@@ -98,7 +99,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/plan.sgml,v 2.2 2000/03/31 03:27:41 t
 
    <para>
     Here are some examples (using the regress test database after a
-    vacuum analyze, and current sources):
+    vacuum analyze, and almost-7.0 sources):
 
     <programlisting>
 regression=# explain select * from tenk1;
@@ -109,7 +110,7 @@ Seq Scan on tenk1  (cost=0.00..333.00 rows=10000 width=148)
    </para>
 
    <para>
-    About as straightforward as it gets.  If you do
+    This is about as straightforward as it gets.  If you do
 
     <programlisting>
 select * from pg_class where relname = 'tenk1';
@@ -131,7 +132,7 @@ NOTICE:  QUERY PLAN:
 Seq Scan on tenk1  (cost=0.00..358.00 rows=1000 width=148)
     </programlisting>
 
-    Estimated output rows has gone down because of the WHERE clause.
+    The estimate of output rows has gone down because of the WHERE clause.
     (The uncannily accurate estimate is just because tenk1 is a particularly
     simple case --- the unique1 column has 10000 distinct values ranging
     from 0 to 9999, so the estimator's linear interpolation between min and
@@ -191,10 +192,11 @@ Nested Loop  (cost=0.00..144.07 rows=100 width=296)
 
    <para>
     In this nested-loop join, the outer scan is the same indexscan we had
-    in the example before last, and the cost and row count are the same
-    because we are applying the "unique1 &lt; 100" WHERE clause at this node.
+    in the example before last, and so its cost and row count are the same
+    because we are applying the "unique1 &lt; 100" WHERE clause at that node.
     The "t1.unique2 = t2.unique2" clause isn't relevant yet, so it doesn't
-    affect the row count.  For the inner scan, we assume that the current
+    affect the outer scan's row count.  For the inner scan, the
+    current
     outer-scan tuple's unique2 value is plugged into the inner indexscan
     to produce an indexqual like
     "t2.unique2 = <replaceable>constant</replaceable>".  So we get the
@@ -221,7 +223,7 @@ Nested Loop  (cost=0.00..144.07 rows=100 width=296)
     but it's what we've got at the moment):
 
     <programlisting>
-regression=# set enable_nestloop = 'off';
+regression=# set enable_nestloop = off;
 SET VARIABLE
 regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 < 100
 regression-# and t1.unique2 = t2.unique2;
