@@ -148,7 +148,7 @@ proc getDBs { {host "localhost"} {port "5432"} } {
 <Sect1>
 <Title>pgtcl Command Reference Information</Title>
 
-<REFENTRY ID="PGTCL-PGCONNECT-1">
+<REFENTRY ID="PGTCL-PGCONNECT">
 <REFMETA>
 <REFENTRYTITLE>pg_connect</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
@@ -266,7 +266,7 @@ The return result is either an error message or a handle for a database
 </REFSECT1>
 </REFENTRY>
 
-<REFENTRY ID="PGTCL-PGDISCONNECT-1">
+<REFENTRY ID="PGTCL-PGDISCONNECT">
 <REFMETA>
 <REFENTRYTITLE>pg_disconnect</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
@@ -338,7 +338,7 @@ pg_disconnect <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE>
 
 </REFENTRY>
 
-<REFENTRY ID="PGTCL-PGEXEC-1">
+<REFENTRY ID="PGTCL-PGEXEC">
 <REFMETA>
 <REFENTRYTITLE>pg_exec</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
@@ -424,7 +424,7 @@ and a result number.
 </PARA>
 </REFSECT1>
 
-<REFENTRY ID="PGTCL-PGLISTEN-1">
+<REFENTRY ID="PGTCL-PGLISTEN">
 <REFMETA>
 <REFENTRYTITLE>pg_listen</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Asynchronous Notify</REFMISCINFO>
@@ -535,7 +535,7 @@ the idle loop to be entered.
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGSELECT-1">
+<REFENTRY ID="PGTCL-PGSELECT">
 <REFMETA>
 <REFENTRYTITLE>pg_select</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
@@ -662,7 +662,7 @@ pg_select <REPLACEABLE CLASS="PARAMETER">dbHandle</REPLACEABLE> <REPLACEABLE CLA
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGRESULT-1">
+<REFENTRY ID="PGTCL-PGRESULT">
 <REFMETA>
 <REFENTRYTITLE>pg_result</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Connection Management</REFMISCINFO>
@@ -847,7 +847,7 @@ clear the result buffer. Do not reuse after this
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOCREAT-1">
+<REFENTRY ID="PGTCL-PGLOCREAT">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_creat</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -940,7 +940,7 @@ The OR delimiter character is "|".
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOOPEN-1">
+<REFENTRY ID="PGTCL-PGLOOPEN">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_open</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1038,7 +1038,7 @@ Mode can be either "r", "w", or "rw".
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOCLOSE-1">
+<REFENTRY ID="PGTCL-PGLOCLOSE">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_close</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1117,7 +1117,7 @@ A file descriptor for use in later pg_lo* routines.
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOREAD-1">
+<REFENTRY ID="PGTCL-PGLOREAD">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_read</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1216,7 +1216,7 @@ at most <REPLACEABLE CLASS="PARAMETER">len</REPLACEABLE> bytes from a large obje
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOWRITE-1">
+<REFENTRY ID="PGTCL-PGLOWRITE">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_write</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1316,7 +1316,7 @@ the actual string to write, not a variable name.
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOLSEEK-1">
+<REFENTRY ID="PGTCL-PGLOLSEEK">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_lseek</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1415,7 +1415,7 @@ can be "SEEK_CUR", "SEEK_END", or "SEEK_SET".
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOTELL-1">
+<REFENTRY ID="PGTCL-PGLOTELL">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_tell</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1505,7 +1505,7 @@ to <REPLACEABLE CLASS="PARAMETER">offset</REPLACEABLE> in bytes from the beginni
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOUNLINK-1">
+<REFENTRY ID="PGTCL-PGLOUNLINK">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_unlink</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1587,7 +1587,7 @@ None
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOIMPORT-1">
+<REFENTRY ID="PGTCL-PGLOIMPORT">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_import</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>
@@ -1670,7 +1670,7 @@ XXX Does this return a lobjId? Is that the same as the objOid in other calls? th
 
 <!-- ********************************************************** -->
 
-<REFENTRY ID="PGTCL-PGLOEXPORT-1">
+<REFENTRY ID="PGTCL-PGLOEXPORT">
 <REFMETA>
 <REFENTRYTITLE>pg_lo_export</REFENTRYTITLE>
 <REFMISCINFO>PGTCL - Large Objects</REFMISCINFO>

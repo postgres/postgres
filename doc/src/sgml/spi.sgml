@@ -1,4 +1,4 @@
-<Chapter Id="spi">
+<Chapter id="spi">
 <DocInfo>
 <AuthorGroup>
 <Author>
@@ -60,7 +60,7 @@ On error, a negative or NULL result will be returned.
 <Sect1>
 <Title>Interface Functions</Title>
 
-<REFENTRY ID="SPI-SPICONNECT-1">
+<REFENTRY ID="SPI-SPICONNECT">
 <REFMETA>
 <REFENTRYTITLE>SPI_connect</REFENTRYTITLE>
 <REFMISCINFO>SPI - Connection Management</REFMISCINFO>
@@ -191,7 +191,7 @@ Return status
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIFINISH-1">
+<REFENTRY ID="SPI-SPIFINISH">
 <REFMETA>
 <REFENTRYTITLE>SPI_finish</REFENTRYTITLE>
 <REFMISCINFO>SPI - Connection Management</REFMISCINFO>
@@ -316,7 +316,7 @@ SPI_finish(void)
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIEXEC-1">
+<REFENTRY ID="SPI-SPIEXEC">
 <REFMETA>
 <REFENTRYTITLE>SPI_exec</REFENTRYTITLE>
 <REFMISCINFO>SPI - Connection Management</REFMISCINFO>
@@ -573,7 +573,7 @@ You may pass many queries in one string or query string may be
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIPREPARE-1">
+<REFENTRY ID="SPI-SPIPREPARE">
 <REFMETA>
 <REFENTRYTITLE>SPI_prepare</REFENTRYTITLE>
 <REFMISCINFO>SPI - Plan Preparation</REFMISCINFO>
@@ -728,7 +728,7 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPISAVEPLAN-1">
+<REFENTRY ID="SPI-SPISAVEPLAN">
 <REFMETA>
 <REFENTRYTITLE>SPI_saveplan</REFENTRYTITLE>
 <REFMISCINFO>SPI - Plan Storage</REFMISCINFO>
@@ -883,7 +883,7 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIEXECP-1">
+<REFENTRY ID="SPI-SPIEXECP">
 <REFMETA>
 <REFENTRYTITLE>SPI_execp</REFENTRYTITLE>
 <REFMISCINFO>SPI - Plan Execution</REFMISCINFO>
@@ -1099,7 +1099,7 @@ procedures.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPICOPYTUPLE-1">
+<REFENTRY ID="SPI-SPICOPYTUPLE">
 <REFMETA>
 <REFENTRYTITLE>SPI_copytuple</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Copy</REFMISCINFO>
@@ -1213,7 +1213,7 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIMODIFYTUPLE-1">
+<REFENTRY ID="SPI-SPIMODIFYTUPLE">
 <REFMETA>
 <REFENTRYTITLE>SPI_modifytuple</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Modify</REFMISCINFO>
@@ -1398,7 +1398,7 @@ is not changed.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIFNUMBER-1">
+<REFENTRY ID="SPI-SPIFNUMBER">
 <REFMETA>
 <REFENTRYTITLE>SPI_fnumber</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Information</REFMISCINFO>
@@ -1518,7 +1518,7 @@ Attribute numbers are 1 based.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIFNAME-1">
+<REFENTRY ID="SPI-SPIFNAME">
 <REFMETA>
 <REFENTRYTITLE>SPI_fname</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Information</REFMISCINFO>
@@ -1638,7 +1638,7 @@ Returns a newly-allocated copy of the attribute name.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIGETVALUE-1">
+<REFENTRY ID="SPI-SPIGETVALUE">
 <REFMETA>
 <REFENTRYTITLE>SPI_getvalue</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Information</REFMISCINFO>
@@ -1774,7 +1774,7 @@ Allocates memory as required by the value.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIGETBINVAL-1">
+<REFENTRY ID="SPI-SPIGETBINVAL">
 <REFMETA>
 <REFENTRYTITLE>SPI_getbinval</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Information</REFMISCINFO>
@@ -1920,7 +1920,7 @@ Does not allocate new space for the binary value.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIGETTYPE-1">
+<REFENTRY ID="SPI-SPIGETTYPE">
 <REFMETA>
 <REFENTRYTITLE>SPI_gettype</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Information</REFMISCINFO>
@@ -2046,7 +2046,7 @@ Does not allocate new space for the binary value.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIGETTYPEID-1">
+<REFENTRY ID="SPI-SPIGETTYPEID">
 <REFMETA>
 <REFENTRYTITLE>SPI_gettypeid</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Information</REFMISCINFO>
@@ -2172,7 +2172,7 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIGETRELNAME-1">
+<REFENTRY ID="SPI-SPIGETRELNAME">
 <REFMETA>
 <REFENTRYTITLE>SPI_getrelname</REFENTRYTITLE>
 <REFMISCINFO>SPI - Tuple Information</REFMISCINFO>
@@ -2274,7 +2274,7 @@ Copies the relation name into new storage.
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIPALLOC-1">
+<REFENTRY ID="SPI-SPIPALLOC">
 <REFMETA>
 <REFENTRYTITLE>SPI_palloc</REFENTRYTITLE>
 <REFMISCINFO>SPI - Memory Management</REFMISCINFO>
@@ -2378,7 +2378,7 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIREPALLOC-1">
+<REFENTRY ID="SPI-SPIREPALLOC">
 <REFMETA>
 <REFENTRYTITLE>SPI_repalloc</REFENTRYTITLE>
 <REFMISCINFO>SPI - Memory Management</REFMISCINFO>
@@ -2492,7 +2492,7 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
-<REFENTRY ID="SPI-SPIPFREE-1">
+<REFENTRY ID="SPI-SPIPFREE">
 <REFMETA>
 <REFENTRYTITLE>SPI_pfree</REFENTRYTITLE>
 <REFMISCINFO>SPI - Memory Management</REFMISCINFO>
