@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.43 2000/10/04 00:04:43 vadim Exp $
+ * $Id: nbtree.h,v 1.44 2000/10/13 02:03:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,11 +42,28 @@ typedef struct BTPageOpaqueData
 #define BTP_FREE		(1 << 2)	/* not currently used... */
 #define BTP_META		(1 << 3)	/* Set in the meta-page only */
 
+#ifdef	XLOG
+#define	BTP_REORDER		(1 << 4)	/* items must be re-ordered */
+#endif
 } BTPageOpaqueData;
 
 typedef BTPageOpaqueData *BTPageOpaque;
 
 #define BTREE_METAPAGE	0	/* first page is meta */
+#define BTREE_MAGIC		0x053162
+
+#define BTREE_VERSION	1
+
+typedef struct BTMetaPageData
+{
+	uint32		btm_magic;
+	uint32		btm_version;
+	BlockNumber btm_root;
+	int32		btm_level;
+} BTMetaPageData;
+
+#define BTPageGetMeta(p) \
+	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
 
 /*
  *	BTScanOpaqueData is used to remember which buffers we're currently
@@ -228,13 +245,13 @@ typedef struct xl_btree_delete
 
 /* 
  * This is what we need to know about pure (without split) insert - 
- * 14 + [4] + btitem with key data. Note that we need in CommandID
- * (4 bytes) only for leaf page insert.
+ * 14 + [4+8] + btitem with key data. Note that we need in CommandID
+ * and HeapNode (4 + 8 bytes) only for leaf page insert.
  */
 typedef struct xl_btree_insert
 {
 	xl_btreetid			target;		/* inserted tuple id */
-	/* [CommandID and ] BTITEM FOLLOWS AT END OF STRUCT */
+	/* [CommandID, HeapNode and ] BTITEM FOLLOWS AT END OF STRUCT */
 } xl_btree_insert;
 
 #define SizeOfBtreeInsert	(offsetof(xl_btreetid, tid) + SizeOfIptrData)
@@ -242,8 +259,8 @@ typedef struct xl_btree_insert
 
 /* 
  * This is what we need to know about insert with split - 
- * 22 + [4] + [btitem] + right sibling btitems. Note that we need in
- * CommandID (4 bytes) only for leaf page insert.
+ * 22 + [4+8] + [btitem] + right sibling btitems. Note that we need in
+ * CommandID and HeapNode (4 + 8 bytes) only for leaf page insert.
  */
 typedef struct xl_btree_split
 {
@@ -255,7 +272,7 @@ typedef struct xl_btree_split
 	 * We log all btitems from the right sibling. If new btitem goes on
 	 * the left sibling then we log it too and it will be the first
 	 * BTItemData at the end of this struct, but after (for the leaf
-	 * pages) CommandId.
+	 * pages) CommandId and HeapNode.
 	 */
 } xl_btree_split;
 

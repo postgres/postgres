@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.86 2000/10/04 00:04:41 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.87 2000/10/13 02:02:59 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2016,6 +2016,22 @@ void heap_redo(XLogRecPtr lsn, XLogRecord *record)
 		elog(STOP, "heap_redo: unknown op code %u", info);
 }
 
+void heap_undo(XLogRecPtr lsn, XLogRecord *record)
+{
+	uint8	info = record->xl_info & ~XLR_INFO_MASK;
+
+	if (info == XLOG_HEAP_INSERT)
+		heap_xlog_insert(false, lsn, record);
+	else if (info == XLOG_HEAP_DELETE)
+		heap_xlog_delete(false, lsn, record);
+	else if (info == XLOG_HEAP_UPDATE)
+		heap_xlog_update(false, lsn, record);
+	else if (info == XLOG_HEAP_MOVE)
+		heap_xlog_move(false, lsn, record);
+	else
+		elog(STOP, "heap_undo: unknown op code %u", info);
+}
+
 void heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
 	xl_heap_delete *xlrec = (xl_heap_delete*) XLogRecGetData(record);
@@ -2199,7 +2215,7 @@ void heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	else	/* we can't delete tuple right now */
 	{
 		lp->lp_flags |= LP_DELETE;	/* mark for deletion */
-		MarkBufferForCleanup(buffer, PageCleanup);
+		MarkBufferForCleanup(buffer, HeapPageCleanup);
 	}
 
 }

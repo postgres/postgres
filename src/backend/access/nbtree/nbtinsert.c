@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.64 2000/10/05 20:10:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.65 2000/10/13 02:03:00 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,10 @@ static void _bt_pgaddtup(Relation rel, Page page,
 						 OffsetNumber itup_off, const char *where);
 static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 						int keysz, ScanKey scankey);
+
+#ifdef XLOG
+static Relation		_xlheapRel;	/* temporary hack */
+#endif
 
 /*
  *	_bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -118,6 +122,10 @@ top:
 			goto top;
 		}
 	}
+
+#ifdef XLOG
+	_xlheapRel = heapRel;	/* temporary hack */
+#endif
 
 	/* do the insertion */
 	res = _bt_insertonpg(rel, buf, stack, natts, itup_scankey, btitem, 0);
@@ -517,21 +525,38 @@ _bt_insertonpg(Relation rel,
 #ifdef XLOG
 		/* XLOG stuff */
 		{
-			char				xlbuf[sizeof(xl_btree_insert) + 2 * sizeof(CommandId)];
+			char				xlbuf[sizeof(xl_btree_insert) + 
+					sizeof(CommandId) + sizeof(RelFileNode)];
 			xl_btree_insert	   *xlrec = xlbuf;
 			int					hsize = SizeOfBtreeInsert;
+			BTItemData			truncitem;
+			BTItem				xlitem = btitem;
+			Size				xlsize = IndexTupleDSize(btitem->bti_itup) + 
+							(sizeof(BTItemData) - sizeof(IndexTupleData));
 
 			xlrec->target.node = rel->rd_node;
 			ItemPointerSet(&(xlrec->target.tid), BufferGetBlockNumber(buf), newitemoff);
 			if (P_ISLEAF(lpageop))
-			{
+ 			{
 				CommandId	cid = GetCurrentCommandId();
-				memcpy(xlbuf + SizeOfBtreeInsert, &(char*)cid, sizeof(CommandId));
+				memcpy(xlbuf + hsize, &cid, sizeof(CommandId));
 				hsize += sizeof(CommandId);
+				memcpy(xlbuf + hsize, &(_xlheapRel->rd_node), sizeof(RelFileNode));
+				hsize += sizeof(RelFileNode);
+			}
+			/*
+			 * Read comments in _bt_pgaddtup
+			 */
+			else if (newitemoff == P_FIRSTDATAKEY(lpageop))
+			{
+				truncitem = *btitem;
+				truncitem.bti_itup.t_info = sizeof(BTItemData);
+				xlitem = &truncitem;
+				xlsize = sizeof(BTItemData);
 			}
 
 			XLogRecPtr recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_INSERT,
-				xlbuf, hsize, (char*) btitem, itemsz);
+				xlbuf, hsize, (char*) xlitem, xlsize);
 
 			PageSetLSN(page, recptr);
 			PageSetSUI(page, ThisStartUpID);
@@ -752,7 +777,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 */
 	{
 		char				xlbuf[sizeof(xl_btree_split) + 
-			2 * sizeof(CommandId) + BLCKSZ];
+			sizeof(CommandId) + sizeof(RelFileNode) + BLCKSZ];
 		xl_btree_split	   *xlrec = xlbuf;
 		int					hsize = SizeOfBtreeSplit;
 		int					flag = (newitemonleft) ? 
@@ -765,11 +790,30 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			CommandId	cid = GetCurrentCommandId();
 			memcpy(xlbuf + hsize, &(char*)cid, sizeof(CommandId));
 			hsize += sizeof(CommandId);
+			memcpy(xlbuf + hsize, &(_xlheapRel->rd_node), sizeof(RelFileNode));
+			hsize += sizeof(RelFileNode);
 		}
 		if (newitemonleft)
 		{
-			memcpy(xlbuf + hsize, (char*) newitem, newitemsz);
-			hsize += newitemsz;
+			/*
+			 * Read comments in _bt_pgaddtup.
+			 * Actually, seems that in non-leaf splits newitem shouldn't
+			 * go to first data key position.
+			 */
+			if (! P_ISLEAF(lopaque) && itup_off == P_FIRSTDATAKEY(lopaque))
+			{
+				BTItemData	truncitem = *newitem;
+				truncitem.bti_itup.t_info = sizeof(BTItemData);
+				memcpy(xlbuf + hsize, &truncitem, sizeof(BTItemData));
+				hsize += sizeof(BTItemData);
+			}
+			else
+			{
+				Size	itemsz = IndexTupleDSize(newitem->bti_itup) + 
+							(sizeof(BTItemData) - sizeof(IndexTupleData));
+				memcpy(xlbuf + hsize, (char*) newitem, itemsz);
+				hsize += itemsz;
+			}
 			xlrec->otherblk = BufferGetBlockNumber(rbuf);
 		}
 		else
@@ -1012,7 +1056,7 @@ static Buffer
 _bt_getstackbuf(Relation rel, BTStack stack)
 {
 	BlockNumber blkno;
-	Buffer		buf;
+	Buffer		buf, newbuf;
 	OffsetNumber start,
 				offnum,
 				maxoff;
@@ -1101,11 +1145,18 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	Size		itemsz;
 	BTItem		new_item;
 
+#ifdef XLOG
+	Buffer		metabuf;
+#endif
+
 	/* get a new root page */
 	rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	rootpage = BufferGetPage(rootbuf);
 	rootblknum = BufferGetBlockNumber(rootbuf);
 
+#ifdef XLOG
+	metabuf = _bt_getbuf(rel, BTREE_METAPAGE,BT_WRITE);
+#endif
 
 	/* NO ELOG(ERROR) from here till newroot op is logged */
 
@@ -1168,9 +1219,12 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 #ifdef XLOG
 	/* XLOG stuff */
 	{
-		xl_btree_newroot	   xlrec;
+		xl_btree_newroot	xlrec;
+		Page				metapg = BufferGetPage(metabuf);
+		BTMetaPageData	   *metad = BTPageGetMeta(metapg);
+
 		xlrec.node = rel->rd_node;
-		xlrec.rootblk = rootblknum;
+		BlockIdSet(&(xlrec.rootblk), rootblknum);
 
 		/* 
 		 * Dirrect access to page is not good but faster - we should 
@@ -1181,16 +1235,25 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 			(char*)rootpage + (PageHeader) rootpage)->pd_upper,
 			((PageHeader) rootpage)->pd_special - ((PageHeader) rootpage)->upper);
 
+		metad->btm_root = rootblknum;
+		(metad->btm_level)++;
+
 		PageSetLSN(rootpage, recptr);
 		PageSetSUI(rootpage, ThisStartUpID);
+		PageSetLSN(metapg, recptr);
+		PageSetSUI(metapg, ThisStartUpID);
+
+		_bt_wrtbuf(rel, metabuf);
 	}
 #endif
 
 	/* write and let go of the new root buffer */
 	_bt_wrtbuf(rel, rootbuf);
 
+#ifndef XLOG
 	/* update metadata page with new root block number */
 	_bt_metaproot(rel, rootblknum, 0);
+#endif
 
 	/* update and release new sibling, and finally the old root */
 	_bt_wrtbuf(rel, rbuf);
