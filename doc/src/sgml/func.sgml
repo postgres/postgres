@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.98 2002/05/18 13:47:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.99 2002/06/02 21:56:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2730,21 +2730,6 @@ PostgreSQL documentation
 	<entry><literal>Wed Feb 21 17:01:13.000126 2001 EST</literal></entry>
        </row>
 
-       <row>
-	<entry><function>timestamp</function>(<type>date</type>)</entry>
-	<entry><type>timestamp</type></entry>
-	<entry><type>date</type> to <type>timestamp</type></entry>
-	<entry><literal>timestamp(date '2000-12-25')</literal></entry>
-	<entry><literal>2000-12-25 00:00:00</literal></entry>
-       </row>
-
-       <row>
-	<entry><function>timestamp</function>(<type>date</type>, <type>time</type>)</entry>
-	<entry><type>timestamp</type></entry>
-	<entry><type>date</type> and <type>time</type> to <type>timestamp</type></entry>
-	<entry><literal>timestamp(date '1998-02-24',time '23:07')</literal></entry>
-	<entry><literal>1998-02-24 23:07:00</literal></entry>
-       </row>
       </tbody>
      </tgroup>
     </table>
