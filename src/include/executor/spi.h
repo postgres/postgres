@@ -72,6 +72,8 @@ extern int	SPI_result;
 
 extern int	SPI_connect(void);
 extern int	SPI_finish(void);
+extern void	SPI_push(void);
+extern void	SPI_pop(void);
 extern int	SPI_exec(char *src, int tcount);
 extern int	SPI_execp(void *plan, Datum *values, char *Nulls, int tcount);
 extern void *SPI_prepare(char *src, int nargs, Oid *argtypes);

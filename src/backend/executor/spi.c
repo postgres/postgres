@@ -3,24 +3,15 @@
  * spi.c--
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.31 1999/01/27 00:36:21 tgl Exp $
+ * $Id: spi.c,v 1.32 1999/01/27 16:15:20 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "catalog/pg_type.h"
 #include "access/printtup.h"
 #include "fmgr.h"
-
-typedef struct
-{
-	QueryTreeList *qtlist;		/* malloced */
-	uint32		processed;		/* by Executor */
-	SPITupleTable *tuptable;
-	Portal		portal;			/* portal per procedure */
-	MemoryContext savedcxt;
-	CommandId	savedId;
-} _SPI_connection;
 
 static Portal _SPI_portal = (Portal) NULL;
 static _SPI_connection *_SPI_stack = NULL;
@@ -32,23 +23,11 @@ uint32		SPI_processed = 0;
 SPITupleTable *SPI_tuptable;
 int			SPI_result;
 
-typedef struct
-{
-	QueryTreeList *qtlist;
-	List	   *ptlist;
-	int			nargs;
-	Oid		   *argtypes;
-} _SPI_plan;
-
 static int	_SPI_execute(char *src, int tcount, _SPI_plan *plan);
 static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
 
 static int _SPI_execute_plan(_SPI_plan *plan,
 				  Datum *Values, char *Nulls, int tcount);
-
-#define _SPI_CPLAN_CURCXT	0
-#define _SPI_CPLAN_PROCXT	1
-#define _SPI_CPLAN_TOPCXT	2
 
 static _SPI_plan *_SPI_copy_plan(_SPI_plan *plan, int location);
 
@@ -176,6 +155,18 @@ SPI_finish()
 
 	return SPI_OK_FINISH;
 
+}
+
+void
+SPI_push(void)
+{
+	_SPI_curid++;
+}
+
+void
+SPI_pop(void)
+{
+	_SPI_curid--;
 }
 
 int

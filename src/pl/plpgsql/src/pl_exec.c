@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.5 1999/01/17 21:53:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.6 1999/01/27 16:15:22 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -48,6 +48,7 @@
 #include "pl.tab.h"
 
 #include "executor/spi.h"
+#include "executor/spi_priv.h"
 #include "commands/trigger.h"
 #include "utils/elog.h"
 #include "utils/builtins.h"
@@ -115,6 +116,16 @@ static int exec_stmt_raise(PLpgSQL_execstate * estate,
 				PLpgSQL_stmt_raise * stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_execsql * stmt);
+
+static void exec_prepare_plan(PLpgSQL_execstate * estate,
+				PLpgSQL_expr * expr);
+static bool exec_simple_check_node(Node * node);
+static void exec_simple_check_plan(PLpgSQL_expr * expr);
+static void exec_eval_clear_fcache(Node *node);
+static Datum exec_eval_simple_expr(PLpgSQL_execstate * estate, 
+				PLpgSQL_expr * expr, 
+				bool *isNull, 
+				Oid *rettype);
 
 static void exec_assign_expr(PLpgSQL_execstate * estate,
 				 PLpgSQL_datum * target,
@@ -1656,6 +1667,72 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 
 
 /* ----------
+ * Generate a prepared plan
+ * ----------
+ */
+static void
+exec_prepare_plan(PLpgSQL_execstate * estate,
+				PLpgSQL_expr * expr)
+{
+	PLpgSQL_var *var;
+	PLpgSQL_rec *rec;
+	PLpgSQL_recfield *recfield;
+	int			i;
+	int			fno;
+	void	   *plan;
+	Oid		   *argtypes;
+
+	/* ----------
+	 * Setup the argtypes array
+	 * ----------
+	 */
+	argtypes = malloc(sizeof(Oid *) * (expr->nparams + 1));
+
+	for (i = 0; i < expr->nparams; i++)
+	{
+		switch (estate->datums[expr->params[i]]->dtype)
+		{
+			case PLPGSQL_DTYPE_VAR:
+				var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
+				argtypes[i] = var->datatype->typoid;
+				break;
+
+			case PLPGSQL_DTYPE_RECFIELD:
+				recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
+				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
+
+				if (!HeapTupleIsValid(rec->tup))
+					elog(ERROR, "record %s is unassigned yet", rec->refname);
+				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
+				if (fno == SPI_ERROR_NOATTRIBUTE)
+					elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+				argtypes[i] = SPI_gettypeid(rec->tupdesc, fno);
+				break;
+
+			case PLPGSQL_DTYPE_TRIGARG:
+				argtypes[i] = (Oid) TEXTOID;
+				break;
+
+			default:
+				elog(ERROR, "unknown parameter dtype %d in exec_run_select()", estate->datums[expr->params[i]]);
+		}
+	}
+
+	/* ----------
+	 * Generate and save the plan
+	 * ----------
+	 */
+	plan = SPI_prepare(expr->query, expr->nparams, argtypes);
+	if (plan == NULL)
+		elog(ERROR, "SPI_prepare() failed on \"%s\"", expr->query);
+	expr->plan = SPI_saveplan(plan);
+	expr->plan_argtypes = argtypes;
+	expr->plan_simple_expr = NULL;
+	exec_simple_check_plan(expr);
+}
+
+
+/* ----------
  * exec_stmt_execsql			Execute an SQL statement not
  *					returning any data.
  * ----------
@@ -1683,48 +1760,7 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 	 * ----------
 	 */
 	if (expr->plan == NULL)
-	{
-		void	   *plan;
-		Oid		   *argtypes;
-
-		argtypes = malloc(sizeof(Oid *) * (expr->nparams + 1));
-
-		for (i = 0; i < expr->nparams; i++)
-		{
-			switch (estate->datums[expr->params[i]]->dtype)
-			{
-				case PLPGSQL_DTYPE_VAR:
-					var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
-					argtypes[i] = var->datatype->typoid;
-					break;
-
-				case PLPGSQL_DTYPE_RECFIELD:
-					recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
-					rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
-
-					if (!HeapTupleIsValid(rec->tup))
-						elog(ERROR, "record %s is unassigned yet", rec->refname);
-					fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-					if (fno == SPI_ERROR_NOATTRIBUTE)
-						elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
-					argtypes[i] = SPI_gettypeid(rec->tupdesc, fno);
-					break;
-
-				case PLPGSQL_DTYPE_TRIGARG:
-					argtypes[i] = (Oid) TEXTOID;
-					break;
-
-				default:
-					elog(ERROR, "unknown parameter dtype %d in exec_stmt_execsql()", estate->datums[expr->params[i]]->dtype);
-			}
-		}
-
-		plan = SPI_prepare(expr->query, expr->nparams, argtypes);
-		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed on \"%s\"", expr->query);
-		expr->plan = SPI_saveplan(plan);
-		expr->plan_argtypes = argtypes;
-	}
+		exec_prepare_plan(estate, expr);
 
 	/* ----------
 	 * Now build up the values and nulls arguments for SPI_execp()
@@ -1987,6 +2023,21 @@ exec_eval_expr(PLpgSQL_execstate * estate,
 {
 	int			rc;
 
+	/* ----------
+	 * If not already done create a plan for this expression
+	 * ----------
+	 */
+	if (expr->plan == NULL)
+		exec_prepare_plan(estate, expr);
+
+	/* ----------
+	 * If this is a simple expression, bypass SPI and use the
+	 * executor directly
+	 * ----------
+	 */
+	if (expr->plan_simple_expr != NULL)
+		return exec_eval_simple_expr(estate, expr, isNull, rettype);
+
 	rc = exec_run_select(estate, expr, 2);
 	if (rc != SPI_OK_SELECT)
 		elog(ERROR, "query \"%s\" didn't return data", expr->query);
@@ -2045,56 +2096,7 @@ exec_run_select(PLpgSQL_execstate * estate,
 	 * ----------
 	 */
 	if (expr->plan == NULL)
-	{
-		void	   *plan;
-		Oid		   *argtypes;
-
-		/* ----------
-		 * Setup the argtypes array
-		 * ----------
-		 */
-		argtypes = malloc(sizeof(Oid *) * (expr->nparams + 1));
-
-		for (i = 0; i < expr->nparams; i++)
-		{
-			switch (estate->datums[expr->params[i]]->dtype)
-			{
-				case PLPGSQL_DTYPE_VAR:
-					var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
-					argtypes[i] = var->datatype->typoid;
-					break;
-
-				case PLPGSQL_DTYPE_RECFIELD:
-					recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
-					rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
-
-					if (!HeapTupleIsValid(rec->tup))
-						elog(ERROR, "record %s is unassigned yet", rec->refname);
-					fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-					if (fno == SPI_ERROR_NOATTRIBUTE)
-						elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
-					argtypes[i] = SPI_gettypeid(rec->tupdesc, fno);
-					break;
-
-				case PLPGSQL_DTYPE_TRIGARG:
-					argtypes[i] = (Oid) TEXTOID;
-					break;
-
-				default:
-					elog(ERROR, "unknown parameter dtype %d in exec_run_select()", estate->datums[expr->params[i]]);
-			}
-		}
-
-		/* ----------
-		 * Generate and save the plan
-		 * ----------
-		 */
-		plan = SPI_prepare(expr->query, expr->nparams, argtypes);
-		if (plan == NULL)
-			elog(ERROR, "SPI_prepare() failed on \"%s\"", expr->query);
-		expr->plan = SPI_saveplan(plan);
-		expr->plan_argtypes = argtypes;
-	}
+		exec_prepare_plan(estate, expr);
 
 	/* ----------
 	 * Now build up the values and nulls arguments for SPI_execp()
@@ -2169,6 +2171,130 @@ exec_run_select(PLpgSQL_execstate * estate,
 	pfree(nulls);
 
 	return rc;
+}
+
+
+/* ----------
+ * exec_eval_simple_expr -		Evaluate a simple expression returning
+ *								a Datum by directly calling ExecEvalExpr().
+ * ----------
+ */
+static Datum
+exec_eval_simple_expr(PLpgSQL_execstate * estate, 
+					PLpgSQL_expr * expr, 
+					bool *isNull, 
+					Oid *rettype)
+{
+	Datum		retval;
+	PLpgSQL_var *var;
+	PLpgSQL_rec *rec;
+	PLpgSQL_recfield *recfield;
+	PLpgSQL_trigarg *trigarg;
+	int			tgargno;
+	Oid			tgargoid;
+	int			fno;
+	int			i;
+	bool		isnull;
+	bool		isdone;
+	ExprContext	*econtext;
+	ParamListInfo paramLI;
+
+	/* ----------
+	 * Create a simple expression context to hold the arguments
+	 * ----------
+	 */
+	econtext = makeNode(ExprContext);
+	paramLI = (ParamListInfo) palloc((expr->nparams + 1) *
+							sizeof(ParamListInfoData));
+	econtext->ecxt_param_list_info = paramLI;
+
+	/* ----------
+	 * Put the parameter values into the parameter list info of
+	 * the expression context.
+	 * ----------
+	 */
+	for (i = 0; i < expr->nparams; i++, paramLI++)
+	{
+		paramLI->kind = PARAM_NUM;
+		paramLI->id   = i + 1;
+
+		switch (estate->datums[expr->params[i]]->dtype)
+		{
+			case PLPGSQL_DTYPE_VAR:
+				var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
+				paramLI->isnull = var->isnull;
+				paramLI->value = var->value;
+				break;
+
+			case PLPGSQL_DTYPE_RECFIELD:
+				recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
+				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
+
+				if (!HeapTupleIsValid(rec->tup))
+					elog(ERROR, "record %s is unassigned yet", rec->refname);
+				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
+				if (fno == SPI_ERROR_NOATTRIBUTE)
+					elog(ERROR, "record %s has no field %s", rec->refname, recfield->fieldname);
+
+				if (expr->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
+					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
+
+				paramLI->value = SPI_getbinval(rec->tup, rec->tupdesc, fno, &isnull);
+				paramLI->isnull = isnull;
+				break;
+
+			case PLPGSQL_DTYPE_TRIGARG:
+				trigarg = (PLpgSQL_trigarg *) (estate->datums[expr->params[i]]);
+				tgargno = (int) exec_eval_expr(estate, trigarg->argnum,
+											   &isnull, &tgargoid);
+				if (isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
+				{
+					paramLI->value = 0;
+					paramLI->isnull = TRUE;
+				}
+				else
+				{
+					paramLI->value = estate->trig_argv[tgargno];
+					paramLI->isnull = FALSE;
+				}
+				break;
+
+			default:
+				elog(ERROR, "unknown parameter dtype %d in exec_eval_simple_expr()", estate->datums[expr->params[i]]->dtype);
+		}
+	}
+	paramLI->kind = PARAM_INVALID;
+
+	/* ----------
+	 * Initialize things
+	 * ----------
+	 */
+	*isNull = FALSE;
+	*rettype = expr->plan_simple_type;
+	isdone = FALSE;
+
+	/* ----------
+	 * Clear the function cache
+	 * ----------
+	 */
+	exec_eval_clear_fcache(expr->plan_simple_expr);
+
+	/* ----------
+	 * Now call the executor to evaluate the expression
+	 * ----------
+	 */
+	SPI_push();
+	retval = ExecEvalExpr(expr->plan_simple_expr,
+							econtext,
+							isNull,
+							&isdone);
+	SPI_pop();
+
+	/* ----------
+	 * That's it.
+	 * ----------
+	 */
+	return retval;
 }
 
 
@@ -2293,6 +2419,169 @@ exec_cast_value(Datum value, Oid valtype,
 	}
 
 	return value;
+}
+
+
+/* ----------
+ * exec_simple_check_node -		Recursively check if an expression
+ *								is made only of simple things we can
+ *								hand out directly to ExecEvalExpr()
+ *								instead of calling SPI.
+ * ----------
+ */
+static bool
+exec_simple_check_node(Node * node)
+{
+	switch (nodeTag(node))
+	{
+		case T_Expr:	{
+							Expr	*expr = (Expr *)node;
+							List	*l;
+
+							switch (expr->opType)
+							{
+								case OP_EXPR:
+								case FUNC_EXPR:
+								case OR_EXPR:
+								case AND_EXPR:
+								case NOT_EXPR:	break;
+
+								default:		return FALSE;
+							}
+
+							foreach (l, expr->args)
+							{
+								if (!exec_simple_check_node(lfirst(l)))
+									return FALSE;
+							}
+
+							return TRUE;
+						}
+
+		case T_Param:	return TRUE;
+
+		case T_Const:	return TRUE;
+
+		default:		return FALSE;
+	}
+}
+
+
+/* ----------
+ * exec_simple_check_plan -		Check if a plan is simple enough to
+ *								be evaluated by ExecEvalExpr() instead
+ *								of SPI.
+ * ----------
+ */
+static void
+exec_simple_check_plan(PLpgSQL_expr * expr)
+{
+	_SPI_plan	*spi_plan = (_SPI_plan *)expr->plan;
+	Plan		*plan;
+	TargetEntry	*tle;
+
+	expr->plan_simple_expr = NULL;
+
+	/* ----------
+	 * 1. We can only evaluate queries that resulted in one single
+	 *    execution plan
+	 * ----------
+	 */
+	if (spi_plan->ptlist == NULL || length(spi_plan->ptlist) != 1)
+		return;
+
+	plan = (Plan *)lfirst(spi_plan->ptlist);
+
+	/* ----------
+	 * 2. It must be a RESULT plan --> no scan's required
+	 * ----------
+	 */
+	if (nodeTag(plan) != T_Result)
+		return;
+
+	/* ----------
+	 * 3. The plan must have a single attribute as result
+	 * ----------
+	 */
+	if (length(plan->targetlist) != 1)
+		return;
+
+	/* ----------
+	 * 4. Don't know if all these can break us, so let SPI handle
+	 *    those plans
+	 * ----------
+	 */
+	if (plan->qual != NULL || plan->lefttree != NULL || plan->righttree != NULL)
+		return;
+
+	/* ----------
+	 * 5. Check that all the nodes in the expression are one of
+	 *    Expr, Param or Const.
+	 * ----------
+	 */
+	tle = (TargetEntry *)lfirst(plan->targetlist);
+	if (!exec_simple_check_node(tle->expr))
+		return;
+
+	/* ----------
+	 * Yes - this is a simple expression. Remember the expression
+	 * and the return type
+	 * ----------
+	 */
+	expr->plan_simple_expr = tle->expr;
+
+	switch (nodeTag(tle->expr))
+	{
+		case T_Expr:	expr->plan_simple_type = 
+									((Expr *)(tle->expr))->typeOid;
+						break;
+
+		case T_Param:	expr->plan_simple_type = 
+									((Param *)(tle->expr))->paramtype;
+						break;
+
+		case T_Const:	expr->plan_simple_type =
+									((Const *)(tle->expr))->consttype;
+						break;
+
+		default:		expr->plan_simple_type = InvalidOid;
+	}
+
+	return;
+}
+
+
+/* ----------
+ * exec_eval_clear_fcache -		The function cache is palloc()'d by
+ *								the executor, and contains call specific
+ *								data based on the arguments. This has
+ *								to be recalculated.
+ * ----------
+ */
+static void
+exec_eval_clear_fcache(Node *node)
+{
+	Expr	*expr;
+	List	*l;
+
+	if (nodeTag(node) != T_Expr)
+		return;
+
+	expr = (Expr *)node;
+
+	switch(expr->opType)
+	{
+		case OP_EXPR:	((Oper *)(expr->oper))->op_fcache = NULL;
+						break;
+
+		case FUNC_EXPR:	((Func *)(expr->oper))->func_fcache = NULL;
+						break;
+
+		default:		break;
+	}
+
+	foreach (l, expr->args)
+		exec_eval_clear_fcache(lfirst(l));
 }
 
 
