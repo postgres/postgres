@@ -44,6 +44,9 @@
 /* Set to 1 if you have cbrt() */
 #undef HAVE_CBRT
 
+/* Set to 1 if you have cbrt() */
+#undef HAVE_INET_ATON
+
 /* Set to 1 if you have rint() */
 #undef HAVE_RINT 
 
