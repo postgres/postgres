@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.33 2001/10/28 06:26:09 momjian Exp $
+ * $Id: smgr.h,v 1.34 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,4 +108,4 @@ extern Datum smgrin(PG_FUNCTION_ARGS);
 extern Datum smgreq(PG_FUNCTION_ARGS);
 extern Datum smgrne(PG_FUNCTION_ARGS);
 
-#endif	 /* SMGR_H */
+#endif   /* SMGR_H */

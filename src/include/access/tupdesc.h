@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.32 2001/10/28 06:25:59 momjian Exp $
+ * $Id: tupdesc.h,v 1.33 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ typedef struct tupleDesc
 	Form_pg_attribute *attrs;
 	/* attrs[N] is a pointer to the description of Attribute Number N+1.  */
 	TupleConstr *constr;
-}		   *TupleDesc;
+}	*TupleDesc;
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);
 
@@ -75,4 +75,4 @@ extern bool TupleDescInitEntry(TupleDesc desc,
 
 extern TupleDesc BuildDescForRelation(List *schema, char *relname);
 
-#endif	 /* TUPDESC_H */
+#endif   /* TUPDESC_H */

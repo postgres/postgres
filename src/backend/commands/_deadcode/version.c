@@ -10,7 +10,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.28 2001/10/28 06:25:43 momjian Exp $
+ *	$Id: version.c,v 1.29 2001/11/05 17:46:25 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -287,7 +287,7 @@ VersionDelete(char *vname, char *bname, char *snapshot)
 			vname, vname, vname, bname, bname, snapshot, bname);
 
 	eval_as_new_xact(rule_buf);
-#endif	 /* OLD_REWRITE */
+#endif   /* OLD_REWRITE */
 }
 #endif
 
@@ -338,7 +338,7 @@ VersionReplace(char *vname, char *bname, char *snapshot)
 	vname, vname, vname, attr_list, bname, bname, snapshot, vname, bname);
 
 	eval_as_new_xact(rule_buf);
-#endif	 /* OLD_REWRITE */
+#endif   /* OLD_REWRITE */
 /*	printf("%s\n",rule_buf); */
 
 }

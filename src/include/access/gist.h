@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gist.h,v 1.34 2001/10/28 06:25:59 momjian Exp $
+ * $Id: gist.h,v 1.35 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,4 +185,4 @@ extern void gist_desc(char *buf, uint8 xl_info, char *rec);
 /* gistget.c */
 extern Datum gistgettuple(PG_FUNCTION_ARGS);
 
-#endif	 /* GIST_H */
+#endif   /* GIST_H */

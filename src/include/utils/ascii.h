@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * ascii.h
  *
- * $Id: ascii.h,v 1.7 2001/10/28 06:26:09 momjian Exp $
+ * $Id: ascii.h,v 1.8 2001/11/05 17:46:36 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -22,6 +22,6 @@ extern Datum to_ascii_default(PG_FUNCTION_ARGS);
 
 extern char *pg_to_ascii(unsigned char *src, unsigned char *src_end,
 			unsigned char *desc, int enc);
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
-#endif	 /* _ASCII_H_ */
+#endif   /* _ASCII_H_ */

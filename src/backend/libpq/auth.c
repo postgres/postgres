@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.71 2001/10/28 06:25:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.72 2001/11/05 17:46:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static struct pam_conv pam_passw_conv = {
 static char *pam_passwd = NULL; /* Workaround for Solaris 2.6 brokenness */
 static Port *pam_port_cludge;	/* Workaround for passing "Port *port"
 								 * into pam_passwd_conv_proc */
-#endif	 /* USE_PAM */
+#endif   /* USE_PAM */
 
 #ifdef KRB4
 /*----------------------------------------------------------------
@@ -144,7 +144,7 @@ pg_krb4_recvauth(Port *port)
 
 	return STATUS_ERROR;
 }
-#endif	 /* KRB4 */
+#endif   /* KRB4 */
 
 
 #ifdef KRB5
@@ -325,7 +325,7 @@ pg_krb5_recvauth(Port *port)
 
 	return STATUS_ERROR;
 }
-#endif	 /* KRB5 */
+#endif   /* KRB5 */
 
 
 /*
@@ -467,7 +467,7 @@ auth_failed(Port *port, int status)
 		case uaPAM:
 			authmethod = "PAM";
 			break;
-#endif	 /* USE_PAM */
+#endif   /* USE_PAM */
 	}
 
 	elog(FATAL, "%s authentication failed for user \"%s\"",
@@ -586,7 +586,7 @@ ClientAuthentication(Port *port)
 			pam_port_cludge = port;
 			status = CheckPAMAuth(port, port->user, "");
 			break;
-#endif	 /* USE_PAM */
+#endif   /* USE_PAM */
 
 		case uaTrust:
 			status = STATUS_OK;
@@ -819,7 +819,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 	else
 		return STATUS_ERROR;
 }
-#endif	 /* USE_PAM */
+#endif   /* USE_PAM */
 
 
 /*
@@ -920,7 +920,7 @@ map_old_to_new(Port *port, UserAuth old, int status)
 		case uaReject:
 #ifdef USE_PAM
 		case uaPAM:
-#endif	 /* USE_PAM */
+#endif   /* USE_PAM */
 			status = STATUS_ERROR;
 			break;
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.4 2001/10/28 06:26:11 momjian Exp $
+ * $Id: pg_type.h,v 1.5 2001/11/05 17:46:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -69,4 +69,4 @@
 #define VARBITOID	  1562
 #define NUMERICOID		1700
 
-#endif	 /* PG_TYPE_H */
+#endif   /* PG_TYPE_H */

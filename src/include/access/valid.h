@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.25 2001/10/28 06:25:59 momjian Exp $
+ * $Id: valid.h,v 1.26 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,4 +131,4 @@ do \
 	} \
 } while (0)
 
-#endif	 /* VALID_H */
+#endif   /* VALID_H */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.9 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/variables.h,v 1.10 2001/11/05 17:46:31 momjian Exp $
  */
 
 /*
@@ -36,4 +36,4 @@ bool		SetVariableBool(VariableSpace space, const char *name);
 bool		DeleteVariable(VariableSpace space, const char *name);
 void		DestroyVariableSpace(VariableSpace space);
 
-#endif	 /* VARIABLES_H */
+#endif   /* VARIABLES_H */

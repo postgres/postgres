@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.23 2001/10/28 06:26:09 momjian Exp $
+ * $Id: large_object.h,v 1.24 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,4 +76,4 @@ extern int	inv_tell(LargeObjectDesc *obj_desc);
 extern int	inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 extern int	inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 
-#endif	 /* LARGE_OBJECT_H */
+#endif   /* LARGE_OBJECT_H */

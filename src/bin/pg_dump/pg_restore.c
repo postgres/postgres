@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.28 2001/11/04 04:05:36 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.29 2001/11/05 17:46:30 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
 		{NULL, 0, NULL, 0}
 	};
-#endif	 /* HAVE_GETOPT_LONG */
+#endif   /* HAVE_GETOPT_LONG */
 
 
 #ifdef ENABLE_NLS

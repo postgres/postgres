@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.h,v 1.10 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.h,v 1.11 2001/11/05 17:46:31 momjian Exp $
  */
 #ifndef PROMPT_H
 #define PROMPT_H
@@ -21,4 +21,4 @@ typedef enum _promptStatus
 
 char	   *get_prompt(promptStatus_t status);
 
-#endif	 /* PROMPT_H */
+#endif   /* PROMPT_H */

@@ -10,7 +10,7 @@ typedef struct Complex
 {
 	double		x;
 	double		y;
-}			Complex;
+}	Complex;
 
 /* These prototypes declare the requirements that Postgres places on these
    user written functions.

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.210 2001/11/05 05:00:14 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.211 2001/11/05 17:46:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,8 +504,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	}
 
 	/*
-	 * XXX It is possible that the targetlist has fewer entries than were in
-	 * the columns list.  We do not consider this an error.  Perhaps we
+	 * XXX It is possible that the targetlist has fewer entries than were
+	 * in the columns list.  We do not consider this an error.	Perhaps we
 	 * should, if the columns list was explicitly given?
 	 */
 
@@ -1241,7 +1241,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 		elog(NOTICE, "%s / %s%s will create implicit index '%s' for table '%s'",
 			 cxt->stmtType,
-			 (strcmp(cxt->stmtType,"ALTER TABLE") == 0) ? "ADD " : "",
+			 (strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
 			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
 			 index->idxname, cxt->relname);
 	}
@@ -2393,12 +2393,12 @@ static void
 applyColumnNames(List *dst, List *src)
 {
 	if (length(src) > length(dst))
-		elog(ERROR,"CREATE TABLE AS specifies too many column names");
+		elog(ERROR, "CREATE TABLE AS specifies too many column names");
 
 	while (src != NIL && dst != NIL)
 	{
 		TargetEntry *d = (TargetEntry *) lfirst(dst);
-		ColumnDef *s = (ColumnDef *) lfirst(src);
+		ColumnDef  *s = (ColumnDef *) lfirst(src);
 
 		Assert(d->resdom && !d->resdom->resjunk);
 

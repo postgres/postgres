@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.14 2001/10/25 05:49:57 momjian Exp $
+ * $Id: pg_language.h,v 1.15 2001/11/05 17:46:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -73,4 +73,4 @@ DATA(insert OID = 14 ( "sql" f f 0 "postgres"));
 DESCR("SQL-language functions");
 #define SQLlanguageId 14
 
-#endif	 /* PG_LANGUAGE_H */
+#endif   /* PG_LANGUAGE_H */

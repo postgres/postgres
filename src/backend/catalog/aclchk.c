@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.52 2001/10/25 05:49:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.53 2001/11/05 17:46:24 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -61,7 +61,7 @@ dumpacl(Acl *acl)
 			 DatumGetCString(DirectFunctionCall1(aclitemout,
 											 PointerGetDatum(aip + i))));
 }
-#endif	 /* ACLDEBUG */
+#endif   /* ACLDEBUG */
 
 
 /*

@@ -33,7 +33,7 @@ typedef WORD WPARAM;
 typedef DWORD LPARAM;
 typedef void *HWND;
 typedef int BOOL;
-#endif	 /* _UNIX_ */
+#endif   /* _UNIX_ */
 
 #if    defined(WIN32) || defined(WIN32_SYSTEM)
 
@@ -57,7 +57,7 @@ typedef int BOOL;
 #define  STRLEN(str)		((str)? _fstrlen((char FAR*)(str)):0)
 #define  STREQ(a, b)		(_fstrcmp((char FAR*)(a), (char FAR*)(b) == 0)
 #endif
-#endif	 /* WIN32 */
+#endif   /* WIN32 */
 
 #define    SYSERR			(-1)
 

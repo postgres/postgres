@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_control.h,v 1.5 2001/10/28 06:26:00 momjian Exp $
+ * $Id: pg_control.h,v 1.6 2001/11/05 17:46:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,4 +111,4 @@ typedef struct ControlFileData
 	char		lc_ctype[LOCALE_NAME_BUFLEN];
 } ControlFileData;
 
-#endif	 /* PG_CONTROL_H */
+#endif   /* PG_CONTROL_H */

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.2 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.3 2001/11/05 17:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ PRINT_LWDEBUG(const char *where, LWLockId lockid, const LWLock *lock)
 
 #else							/* not LOCK_DEBUG */
 #define PRINT_LWDEBUG(a,b,c)
-#endif	 /* LOCK_DEBUG */
+#endif   /* LOCK_DEBUG */
 
 
 /*

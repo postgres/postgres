@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.11 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.12 2001/11/05 17:46:31 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -75,4 +75,4 @@ typedef struct _printQueryOpt
 void
 			printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout);
 
-#endif	 /* PRINT_H */
+#endif   /* PRINT_H */

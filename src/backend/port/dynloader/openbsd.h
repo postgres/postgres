@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: openbsd.h,v 1.8 2001/10/28 06:25:47 momjian Exp $
+ * $Id: openbsd.h,v 1.9 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,4 +42,4 @@ void	   *BSD44_derived_dlopen(const char *filename, int num);
 void	   *BSD44_derived_dlsym(void *handle, const char *name);
 void		BSD44_derived_dlclose(void *handle);
 
-#endif	 /* PORT_PROTOS_H */
+#endif   /* PORT_PROTOS_H */

@@ -110,4 +110,4 @@ extern int pg95_regexec(const regex_t *preg, const char *string,
 			 regmatch_t *pmatch, int eflags);
 extern void pg95_regfree(regex_t *preg);
 
-#endif	 /* !_REGEX_H_ */
+#endif   /* !_REGEX_H_ */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.95 2001/10/28 06:26:07 momjian Exp $
+ * $Id: nodes.h,v 1.96 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,4 +365,4 @@ typedef enum JoinType
 	 (jointype) == JOIN_FULL || \
 	 (jointype) == JOIN_RIGHT)
 
-#endif	 /* NODES_H */
+#endif   /* NODES_H */

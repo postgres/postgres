@@ -61,7 +61,7 @@ typedef struct
 {
 	BF_word		S[4][0x100];
 	BF_key		P;
-}			BF_ctx;
+}	BF_ctx;
 
 /*
  * Magic IV for 64 Blowfish encryptions that we do at the end.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.58 2001/10/28 06:26:09 momjian Exp $
+ * $Id: lock.h,v 1.59 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ extern bool Trace_locks;
 extern bool Trace_userlocks;
 extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
-#endif	 /* LOCK_DEBUG */
+#endif   /* LOCK_DEBUG */
 
 
 typedef int LOCKMASK;
@@ -252,4 +252,4 @@ extern void DumpLocks(void);
 extern void DumpAllLocks(void);
 #endif
 
-#endif	 /* LOCK_H */
+#endif   /* LOCK_H */

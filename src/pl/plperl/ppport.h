@@ -284,6 +284,6 @@ SV		   *sv;
 	PL_curcop->cop_line = oldline;
 }
 #endif
-#endif	 /* newCONSTSUB */
+#endif   /* newCONSTSUB */
 
-#endif	 /* _P_P_PORTABILITY_H_ */
+#endif   /* _P_P_PORTABILITY_H_ */

@@ -34,7 +34,7 @@ typedef struct
 	char	   *(*lemmatize) (void *, char *, int *);
 	int			(*is_stoplemm) (void *, char *, int);
 	int			(*is_stemstoplemm) (void *, char *, int);
-}			DICT;
+}	DICT;
 
 /* insert all dictionaries */
 #define DICT_BODY

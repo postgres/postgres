@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.240 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.241 2001/11/05 17:46:28 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -99,7 +99,7 @@ int			UseNewLine = 1;		/* Use newlines query delimiters (the
 
 #else
 int			UseNewLine = 0;		/* Use EOF as query delimiters */
-#endif	 /* TCOP_DONTUSENEWLINE */
+#endif   /* TCOP_DONTUSENEWLINE */
 
 /*
 ** Flags for expensive function optimization -- JMH 3/9/92
@@ -1642,7 +1642,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.240 $ $Date: 2001/10/28 06:25:51 $\n");
+		puts("$Revision: 1.241 $ $Date: 2001/11/05 17:46:28 $\n");
 	}
 
 	/*
@@ -1916,7 +1916,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 #include "rusagestub.h"
 #else
 #include <sys/resource.h>
-#endif	 /* HAVE_GETRUSAGE */
+#endif   /* HAVE_GETRUSAGE */
 
 struct rusage Save_r;
 struct timeval Save_t;
@@ -2018,7 +2018,7 @@ ShowUsage(void)
 			r.ru_nvcsw - Save_r.ru_nvcsw,
 			r.ru_nivcsw - Save_r.ru_nivcsw,
 			r.ru_nvcsw, r.ru_nivcsw);
-#endif	 /* HAVE_GETRUSAGE */
+#endif   /* HAVE_GETRUSAGE */
 	fprintf(StatFp, "! postgres usage stats:\n");
 	PrintBufferUsage(StatFp);
 /*	   DisplayTupleCount(StatFp); */

@@ -15,7 +15,7 @@ typedef struct _varray
 	size_t		maxObj;			/* max. number of objects in this array */
 	size_t		size;			/* size of each element in the array */
 	void	   *val;			/* array of elements */
-}			Varray;
+}	Varray;
 
 /* type for custom copying function */
 typedef void (*CopyingFunct) (void *from, void *to);
@@ -45,4 +45,4 @@ typedef void (*CopyingFunct) (void *from, void *to);
 extern Varray *NewVarray(size_t nobj, size_t size);
 extern int	AppendVarray(Varray * array, void *value, CopyingFunct copy);
 
-#endif	 /* _VARRAY_H_ */
+#endif   /* _VARRAY_H_ */

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.43 2001/11/02 20:51:27 tgl Exp $
+ * $Id: libpq-int.h,v 1.44 2001/11/05 17:46:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ typedef struct pgresAttDesc
 	Oid			typid;			/* type id */
 	int			typlen;			/* type size */
 	int			atttypmod;		/* type-specific modifier info */
-}			PGresAttDesc;
+}	PGresAttDesc;
 
 /* Data for a single attribute of a single tuple */
 
@@ -108,7 +108,7 @@ typedef struct pgresAttValue
 	int			len;			/* length in bytes of the value */
 	char	   *value;			/* actual value, plus terminating zero
 								 * byte */
-}			PGresAttValue;
+}	PGresAttValue;
 
 struct pg_result
 {
@@ -165,7 +165,7 @@ typedef enum
 	PGASYNC_READY,				/* result ready for PQgetResult */
 	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
 	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
-}			PGAsyncStatusType;
+}	PGAsyncStatusType;
 
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */
 typedef enum
@@ -176,7 +176,7 @@ typedef enum
 	SETENV_STATE_ENCODINGS_SEND,	/* About to send an "encodings" query */
 	SETENV_STATE_ENCODINGS_WAIT,	/* Waiting for query to complete	  */
 	SETENV_STATE_IDLE
-}			PGSetenvStatusType;
+}	PGSetenvStatusType;
 
 /* large-object-access data ... allocated only if large-object code is used. */
 typedef struct pgLobjfuncs
@@ -189,7 +189,7 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_tell;		/* OID of backend function lo_tell		*/
 	Oid			fn_lo_read;		/* OID of backend function LOread		*/
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
-}			PGlobjfuncs;
+}	PGlobjfuncs;
 
 /* PGconn stores all the state data associated with a single connection
  * to a backend.
@@ -365,4 +365,4 @@ __attribute__((format_arg(1)));
 #define SOCK_STRERROR strerror
 #endif
 
-#endif	 /* LIBPQ_INT_H */
+#endif   /* LIBPQ_INT_H */

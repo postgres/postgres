@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.12 2001/10/28 06:26:09 momjian Exp $
+ * $Id: guc.h,v 1.13 2001/11/05 17:46:36 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -73,4 +73,4 @@ extern bool Show_btree_build_stats;
 extern bool SQL_inheritance;
 extern bool Australian_timezones;
 
-#endif	 /* GUC_H */
+#endif   /* GUC_H */

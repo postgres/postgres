@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.13 2001/10/30 05:38:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/predmig.c,v 1.14 2001/11/05 17:46:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ static int	xfunc_stream_compare(void *arg1, void *arg2);
 static bool xfunc_check_stream(Stream node);
 static bool xfunc_in_stream(Stream node, Stream stream);
 
-/* -----------------   MAIN FUNCTIONS ------------------------ */
+/* -----------------	 MAIN FUNCTIONS ------------------------ */
 /*
 ** xfunc_do_predmig
 **	  wrapper for Predicate Migration.	It calls xfunc_predmig until no

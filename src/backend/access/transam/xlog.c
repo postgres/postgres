@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.81 2001/11/04 19:55:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.82 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2052,7 +2052,7 @@ WriteControlFile(void)
 #else							/* not USE_LOCALE */
 	strcpy(ControlFile->lc_collate, "C");
 	strcpy(ControlFile->lc_ctype, "C");
-#endif	 /* not USE_LOCALE */
+#endif   /* not USE_LOCALE */
 
 	/* Contents are protected with a CRC */
 	INIT_CRC64(ControlFile->crc);
@@ -2187,7 +2187,7 @@ ReadControlFile(void)
 			 "\tLC_CTYPE '%s', but the server was compiled without locale support.\n"
 			 "\tIt looks like you need to initdb or recompile.",
 			 ControlFile->lc_collate, ControlFile->lc_ctype);
-#endif	 /* not USE_LOCALE */
+#endif   /* not USE_LOCALE */
 }
 
 void

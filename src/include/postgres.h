@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.55 2001/10/28 06:25:59 momjian Exp $
+ * $Id: postgres.h,v 1.56 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,7 +533,7 @@ extern DLLIMPORT bool assert_enabled;
 
 #define AssertState(condition) \
 		Trap(!(condition), BadState)
-#endif	 /* USE_ASSERT_CHECKING */
+#endif   /* USE_ASSERT_CHECKING */
 
 /*
  * LogTrap
@@ -588,7 +588,7 @@ __attribute__((format(printf, 1, 2)));
 #ifdef ASSERT_CHECKING_TEST
 extern int	assertTest(int val);
 #endif
-#endif	 /* USE_ASSERT_CHECKING */
+#endif   /* USE_ASSERT_CHECKING */
 
 /* ----------------------------------------------------------------
  *				Section 4: genbki macros used by catalog/pg_xxx.h files
@@ -609,4 +609,4 @@ extern int	assertTest(int val);
 
 typedef int4 aclitem;			/* PHONY definition for catalog use only */
 
-#endif	 /* POSTGRES_H */
+#endif   /* POSTGRES_H */

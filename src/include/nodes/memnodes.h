@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.22 2001/10/25 05:50:04 momjian Exp $
+ * $Id: memnodes.h,v 1.23 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,4 +72,4 @@ typedef struct MemoryContextData
 	((context) != NULL && \
 	 (IsA((context), AllocSetContext)))
 
-#endif	 /* MEMNODES_H */
+#endif   /* MEMNODES_H */

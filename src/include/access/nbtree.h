@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.58 2001/10/28 06:25:59 momjian Exp $
+ * $Id: nbtree.h,v 1.59 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,4 +399,4 @@ extern void _bt_spooldestroy(BTSpool *btspool);
 extern void _bt_spool(BTItem btitem, BTSpool *btspool);
 extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
 
-#endif	 /* NBTREE_H */
+#endif   /* NBTREE_H */

@@ -17,7 +17,7 @@ typedef struct ITEM
 	/* user-friendly value */
 	uint16		distance;
 	uint16		length;
-}			ITEM;
+}	ITEM;
 
 /*
  *Storage:
@@ -28,7 +28,7 @@ typedef struct
 	int4		len;
 	int4		size;
 	char		data[1];
-}			QUERYTYPE;
+}	QUERYTYPE;
 
 #define HDRSIZEQT	( 2*sizeof(int4) )
 #define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + size * sizeof(ITEM) + lenofoperand )

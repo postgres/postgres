@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clog.h,v 1.4 2001/10/28 06:25:59 momjian Exp $
+ * $Id: clog.h,v 1.5 2001/11/05 17:46:31 momjian Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H
@@ -47,4 +47,4 @@ extern void clog_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void clog_undo(XLogRecPtr lsn, XLogRecord *record);
 extern void clog_desc(char *buf, uint8 xl_info, char *rec);
 
-#endif	 /* CLOG_H */
+#endif   /* CLOG_H */

@@ -6,4 +6,4 @@ typedef struct SEG
 	char		u_sigd;
 	char		l_ext;
 	char		u_ext;
-}			SEG;
+}	SEG;

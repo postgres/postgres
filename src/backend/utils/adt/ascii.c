@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.11 2001/10/28 06:25:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.12 2001/11/05 17:46:28 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -191,4 +191,4 @@ to_ascii_default(PG_FUNCTION_ARGS)
 		);
 }
 
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */

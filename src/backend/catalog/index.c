@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.168 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.169 2001/11/05 17:46:24 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2027,7 +2027,7 @@ reindex_relation(Oid relid, bool force)
 		else
 			elog(ERROR, "the target relation %u is nailed", relid);
 	}
-#endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
+#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 	/*
 	 * Shared system indexes must be overwritten because it's impossible

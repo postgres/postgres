@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.47 2001/10/28 06:26:07 momjian Exp $
+ * $Id: libpq.h,v 1.48 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,4 +77,4 @@ extern void pqdebug(char *fmt, char *msg);
 extern void PQtrace(void);
 extern void PQuntrace(void);
 
-#endif	 /* LIBPQ_H */
+#endif   /* LIBPQ_H */

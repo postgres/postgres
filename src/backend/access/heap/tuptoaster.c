@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.25 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.26 2001/11/05 17:46:23 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1085,4 +1085,4 @@ toast_fetch_datum(varattrib *attr)
 	return result;
 }
 
-#endif	 /* TUPLE_TOASTER_ACTIVE */
+#endif   /* TUPLE_TOASTER_ACTIVE */

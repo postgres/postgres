@@ -43,7 +43,7 @@ static struct cclass
 	char	   *name;
 	char	   *chars;
 	char	   *multis;
-} cclasses[] =
+}	cclasses[] =
 
 {
 	{
@@ -52,7 +52,7 @@ static struct cclass
 	},
 	{
 		"alpha", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-			""
+		""
 	},
 	{
 		"blank", " \t", ""
@@ -67,31 +67,31 @@ static struct cclass
 	{
 		"graph", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
 0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
-			""
+		""
 	},
 	{
 		"lower", "abcdefghijklmnopqrstuvwxyz",
-			""
+		""
 	},
 	{
 		"print", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
 0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ",
-			""
+		""
 	},
 	{
 		"punct", "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
-			""
+		""
 	},
 	{
 		"space", "\t\n\v\f\r ", ""
 	},
 	{
 		"upper", "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-			""
+		""
 	},
 	{
 		"xdigit", "0123456789ABCDEFabcdef",
-			""
+		""
 	},
 	{
 		NULL, NULL, ""

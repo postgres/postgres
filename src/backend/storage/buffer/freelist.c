@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.27 2001/10/28 06:25:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.28 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ AddBufferToFreelist(BufferDesc *bf)
 #ifdef BMTRACE
 	_bm_trace(bf->tag.relId.dbId, bf->tag.relId.relId, bf->tag.blockNum,
 			  BufferDescriptorGetBuffer(bf), BMT_DEALLOC);
-#endif	 /* BMTRACE */
+#endif   /* BMTRACE */
 	IsNotInQueue(bf);
 
 	/* change bf so it points to inFrontOfNew and its successor */

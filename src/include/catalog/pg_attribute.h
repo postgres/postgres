@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.78 2001/10/28 06:26:00 momjian Exp $
+ * $Id: pg_attribute.h,v 1.79 2001/11/05 17:46:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -195,7 +195,7 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 	(attribute)->atttypid = (Oid) -1; \
 	(attribute)->attnotnull = false; \
 	(attribute)->atthasdef = false;
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 
 /* ----------------
  *		SCHEMA_ macros for declaring hardcoded tuple descriptors.
@@ -486,4 +486,4 @@ DATA(insert ( 1259 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
  */
 DATA(insert ( 376 xactlockfoo		26 0  4   1 0 -1 -1 t p f i f f));
 
-#endif	 /* PG_ATTRIBUTE_H */
+#endif   /* PG_ATTRIBUTE_H */

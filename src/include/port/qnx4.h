@@ -14,11 +14,11 @@
 #ifndef					NAN
 #ifndef					__nan_bytes
 #define __nan_bytes								{ 0, 0, 0, 0, 0, 0, 0xf8, 0x7f }
-#endif	 /* __nan_bytes */
+#endif   /* __nan_bytes */
 extern unsigned char __nan[8];
 
 #define							   NAN	   (*(const double *) __nan)
-#endif	 /* NAN */
+#endif   /* NAN */
 
 typedef u_short ushort;
 

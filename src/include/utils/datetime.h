@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.25 2001/10/28 06:26:09 momjian Exp $
+ * $Id: datetime.h,v 1.26 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,7 @@ typedef struct
 	char	   *token;
 #else
 	char		token[TOKMAXLEN];
-#endif	 /* _AIX */
+#endif   /* _AIX */
 	char		type;
 	char		value;			/* this may be unsigned, alas */
 } datetkn;
@@ -282,4 +282,4 @@ extern void ClearDateCache(bool);
 
 extern int	j2day(int jd);
 
-#endif	 /* DATETIME_H */
+#endif   /* DATETIME_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.42 2001/11/04 19:55:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.43 2001/11/05 17:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ SIBackendInit(SISeg *segP)
 
 #ifdef	INVALIDDEBUG
 	elog(DEBUG, "SIBackendInit: backend id %d", MyBackendId);
-#endif	 /* INVALIDDEBUG */
+#endif   /* INVALIDDEBUG */
 
 	/* mark myself active, with all extant messages already read */
 	stateP->nextMsgNum = segP->maxMsgNum;
@@ -205,9 +205,9 @@ SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data)
 	 * Try to prevent table overflow.  When the table is 70% full send a
 	 * WAKEN_CHILDREN request to the postmaster.  The postmaster will send
 	 * a SIGUSR2 signal (ordinarily a NOTIFY signal) to all the backends.
-	 * This will force idle backends to execute a transaction to look through
-	 * pg_listener for NOTIFY messages, and as a byproduct of the transaction
-	 * start they will read SI entries.
+	 * This will force idle backends to execute a transaction to look
+	 * through pg_listener for NOTIFY messages, and as a byproduct of the
+	 * transaction start they will read SI entries.
 	 *
 	 * This should never happen if all the backends are actively executing
 	 * queries, but if a backend is sitting idle then it won't be starting

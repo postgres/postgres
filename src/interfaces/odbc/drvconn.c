@@ -338,7 +338,7 @@ dconn_FDriverConnectProc(
 
 	return FALSE;
 }
-#endif	 /* WIN32 */
+#endif   /* WIN32 */
 
 
 void
@@ -354,7 +354,7 @@ dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo *ci)
 	memset(ci, 0, sizeof(ConnInfo));
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	ci->updatable_cursors = 1;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 
 	our_connect_string = strdup(connect_string);
 	strtok_arg = our_connect_string;

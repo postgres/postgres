@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.76 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.77 2001/11/05 17:46:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1051,7 +1051,7 @@ DetermineLocalTimeZone(struct tm * tm)
 			tz = 0;				/* assume GMT if mktime failed */
 #elif defined(HAVE_INT_TIMEZONE)
 		tz = ((tmp->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-#endif	 /* HAVE_INT_TIMEZONE */
+#endif   /* HAVE_INT_TIMEZONE */
 
 #else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
 		tm->tm_isdst = 0;

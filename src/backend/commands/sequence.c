@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.66 2001/10/28 06:25:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.67 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 #endif
 #else							/* INT64_IS_BUSTED */
 #define SEQ_MAXVALUE	((int64) 0x7FFFFFFF)
-#endif	 /* INT64_IS_BUSTED */
+#endif   /* INT64_IS_BUSTED */
 
 #define SEQ_MINVALUE	(-SEQ_MAXVALUE)
 

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.h,v 1.3 2001/10/25 05:49:20 momjian Exp $
+ * $Id: px.h,v 1.4 2001/11/05 17:46:23 momjian Exp $
  */
 
 #ifndef __PX_H
@@ -180,4 +180,4 @@ const char *px_resolve_alias(const PX_Alias * aliases, const char *name);
 					(c)->decrypt(c, data, dlen, res, rlen)
 #define px_combo_free(c)		(c)->free(c)
 
-#endif	 /* __PX_H */
+#endif   /* __PX_H */

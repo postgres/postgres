@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.14 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/recipe.c,v 1.15 2001/11/05 17:46:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,13 +54,13 @@ typedef struct _teePlanInfo
 	char	   *tpi_relName;
 	Query	   *tpi_parsetree;
 	Plan	   *tpi_plan;
-}			TeePlanInfo;
+}	TeePlanInfo;
 
 typedef struct _teeInfo
 {
 	int			num;
 	TeePlanInfo *val;
-}			TeeInfo;
+}	TeeInfo;
 
 QueryTreeList *appendQlist(QueryTreeList * q1, QueryTreeList * q2);
 void		OffsetVarAttno(Node *node, int varno, int offset);
@@ -186,7 +186,7 @@ beginRecipe(RecipeStmt *stmt)
 
 #ifdef DEBUG_RECIPE
 		elog(NOTICE, "beginRecipe: eyes[%d] = %s\n", i, e->nodeName);
-#endif	 /* DEBUG_RECIPE */
+#endif   /* DEBUG_RECIPE */
 
 		qList = tg_parseSubQuery(r, e->inNodes->val[0], teeInfo);
 
@@ -835,7 +835,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 #ifdef DEBUG_RECIPE
 					elog(NOTICE, "calling parser with %s", elem->src);
-#endif	 /* DEBUG_RECIPE */
+#endif   /* DEBUG_RECIPE */
 
 					parameterCount = getParamTypes(elem, typev);
 
@@ -878,7 +878,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 #ifdef DEBUG_RECIPE
 					elog(NOTICE, "calling parser with %s", newquery);
-#endif	 /* DEBUG_RECIPE */
+#endif   /* DEBUG_RECIPE */
 
 					qList = parser(newquery, typev, parameterCount);
 					if (qList->len > 1)
@@ -1315,4 +1315,4 @@ replaceTeeScans(Plan *plan, Query *parsetree, TeeInfo * teeInfo)
 }
 
 
-#endif	 /* TIOGA */
+#endif   /* TIOGA */

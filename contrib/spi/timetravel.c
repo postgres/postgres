@@ -17,7 +17,7 @@ typedef struct
 {
 	char	   *ident;
 	void	   *splan;
-}			EPlan;
+}	EPlan;
 
 static EPlan *Plans = NULL;		/* for UPDATE/DELETE */
 static int	nPlans = 0;

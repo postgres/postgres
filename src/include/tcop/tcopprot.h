@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.45 2001/10/28 06:26:09 momjian Exp $
+ * $Id: tcopprot.h,v 1.46 2001/11/05 17:46:36 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -39,7 +39,7 @@ extern Plan *pg_plan_query(Query *querytree);
 extern void pg_exec_query_string(char *query_string,
 					 CommandDest dest,
 					 MemoryContext parse_context);
-#endif	 /* BOOTSTRAP_INCLUDE */
+#endif   /* BOOTSTRAP_INCLUDE */
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS);
@@ -49,4 +49,4 @@ extern void ResetUsage(void);
 extern void ShowUsage(void);
 extern FILE *StatFp;
 
-#endif	 /* TCOPPROT_H */
+#endif   /* TCOPPROT_H */

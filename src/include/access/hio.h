@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hio.h,v 1.21 2001/10/28 06:25:59 momjian Exp $
+ * $Id: hio.h,v 1.22 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,4 +21,4 @@ extern void RelationPutHeapTuple(Relation relation, Buffer buffer,
 extern Buffer RelationGetBufferForTuple(Relation relation, Size len,
 						  Buffer otherBuffer);
 
-#endif	 /* HIO_H */
+#endif   /* HIO_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.60 2001/10/28 06:26:06 momjian Exp $
+ * $Id: executor.h,v 1.61 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,4 +178,4 @@ extern void ExecCloseIndices(ResultRelInfo *resultRelInfo);
 extern void ExecInsertIndexTuples(TupleTableSlot *slot, ItemPointer tupleid,
 					  EState *estate, bool is_update);
 
-#endif	 /* EXECUTOR_H	*/
+#endif   /* EXECUTOR_H  */

@@ -35,7 +35,7 @@ static struct
 {
 	int			type;
 	char	   *s;
-} Statement_Type[] =
+}	Statement_Type[] =
 
 {
 	{
@@ -215,7 +215,7 @@ InitializeStatementOptions(StatementOptions *opt)
 	opt->retrieve_data = SQL_RD_ON;
 	opt->use_bookmarks = SQL_UB_OFF;
 	opt->paramset_size = 1;
-	opt->param_bind_type = 0; /*default is column-wise binding */
+	opt->param_bind_type = 0;	/* default is column-wise binding */
 }
 
 
@@ -324,7 +324,8 @@ SC_Destructor(StatementClass *self)
 	/* about that here. */
 	if (self->bindings)
 	{
-		int	lf;
+		int			lf;
+
 		for (lf = 0; lf < self->bindings_allocated; lf++)
 		{
 			if (self->bindings[lf].ttlbuf != NULL)
@@ -711,7 +712,7 @@ SC_fetch(StatementClass *self)
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	int			updret;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	Int2		num_cols,
 				lf;
 	Oid			type;
@@ -791,13 +792,13 @@ SC_fetch(StatementClass *self)
 			updret = SQL_ROW_DELETED;
 		num_cols -= 2;
 	}
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (self->options.retrieve_data == SQL_RD_OFF)		/* data isn't required */
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 		return updret ? updret + 10 : SQL_SUCCESS;
 #else
 		return SQL_SUCCESS;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	for (lf = 0; lf < num_cols; lf++)
 	{
 		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
@@ -881,7 +882,7 @@ SC_fetch(StatementClass *self)
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	if (updret)
 		result = updret + 10;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	return result;
 }
 

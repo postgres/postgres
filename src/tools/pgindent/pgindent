@@ -1454,11 +1454,11 @@ do
 		cat /tmp/$$
 	fi
 	cat /tmp/$$a |
+	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
+	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
 # remove tabs and retab with four spaces
 	detab -t8 -qc |
 	entab -t4 -qc |
-	sed 's;^/\*\(DATA(.*\)\*/$;\1;' |
-	sed 's;^/\*\(CATALOG(.*\)\*/$;\1;' |
 	sed 's;/\*---X_X;/* ---;g' |
 # workaround indent bug
 	sed 's;^static[ 	][ 	]*;static ;g' |

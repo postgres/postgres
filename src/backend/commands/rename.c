@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.60 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.61 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,8 +258,8 @@ renamerel(const char *oldrelname, const char *newrelname)
 		return;					/* all done... */
 
 	/*
-	 * Grab an exclusive lock on the target table or index, which we will NOT
-	 * release until end of transaction.
+	 * Grab an exclusive lock on the target table or index, which we will
+	 * NOT release until end of transaction.
 	 */
 	targetrelation = relation_openr(oldrelname, AccessExclusiveLock);
 

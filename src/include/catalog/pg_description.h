@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.15 2001/10/28 06:26:00 momjian Exp $
+ * $Id: pg_description.h,v 1.16 2001/11/05 17:46:32 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -84,4 +84,4 @@ typedef FormData_pg_description *Form_pg_description;
  *	by genbki.sh and loaded during initdb.
  */
 
-#endif	 /* PG_DESCRIPTION_H */
+#endif   /* PG_DESCRIPTION_H */

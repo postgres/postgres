@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rusagestub.h,v 1.8 2001/10/28 06:25:59 momjian Exp $
+ * $Id: rusagestub.h,v 1.9 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,4 +29,4 @@ struct rusage
 
 extern int	getrusage(int who, struct rusage * rusage);
 
-#endif	 /* RUSAGESTUB_H */
+#endif   /* RUSAGESTUB_H */

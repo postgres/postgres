@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.55 2001/11/05 10:35:14 inoue Exp $
+ * $Id: psqlodbc.h,v 1.56 2001/11/05 17:46:38 momjian Exp $
  *
  */
 
@@ -21,9 +21,9 @@
 #include <stdio.h>				/* for FILE* pointers: see GLOBAL_VALUES */
 
 /* Must come before sql.h */
-#ifndef	ODBCVER
+#ifndef ODBCVER
 #define ODBCVER						0x0250
-#endif	 /* ODBCVER_REP */
+#endif   /* ODBCVER_REP */
 
 
 #if defined(WIN32) || defined(WITH_UNIXODBC) || defined(WITH_IODBC)
@@ -83,7 +83,7 @@ typedef UInt4 Oid;
 #else
 #define DRIVER_ODBC_VER				"02.50"
 #define DBMS_NAME					"PostgreSQL"
-#endif /* ODBCVER */
+#endif   /* ODBCVER */
 
 #define POSTGRESDRIVERVERSION		"07.01.0009"
 
@@ -92,10 +92,10 @@ typedef UInt4 Oid;
 #define DRIVER_FILE_NAME			"PSQLODBC30.DLL"
 #else
 #define DRIVER_FILE_NAME			"PSQLODBC.DLL"
-#endif /* ODBCVER */
+#endif   /* ODBCVER */
 #else
 #define DRIVER_FILE_NAME			"libpsqlodbc.so"
-#endif /* WIN32 */
+#endif   /* WIN32 */
 
 /* Limits */
 #ifdef WIN32
@@ -209,14 +209,14 @@ typedef struct StatementOptions_
 	UInt4	   *rowsFetched;
 	UInt2	   *rowStatusArray;
 	void	   *bookmark_ptr;
-	UInt2			*row_operation_ptr;
-	UInt4			*row_offset_ptr;
-	UInt4			paramset_size;
-	UInt4			param_bind_type;
-	UInt4			*param_processed_ptr;
-	UInt2			*param_status_ptr;
-	UInt2			*param_operation_ptr;
-	UInt4			*param_offset_ptr;
+	UInt2	   *row_operation_ptr;
+	UInt4	   *row_offset_ptr;
+	UInt4		paramset_size;
+	UInt4		param_bind_type;
+	UInt4	   *param_processed_ptr;
+	UInt2	   *param_status_ptr;
+	UInt2	   *param_operation_ptr;
+	UInt4	   *param_offset_ptr;
 } StatementOptions;
 
 /*	Used to pass extra query info to send_query */
@@ -263,6 +263,6 @@ void		debug_memory_check(void);
 #define realloc debug_realloc
 #define strdup	debug_strdup
 #define free	debug_free
-#endif	 /* _MEMORY_DEBUG_ */
+#endif   /* _MEMORY_DEBUG_ */
 
 #endif

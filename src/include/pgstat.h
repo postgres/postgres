@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.h,v 1.9 2001/10/25 05:49:54 momjian Exp $
+ *	$Id: pgstat.h,v 1.10 2001/11/05 17:46:31 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -449,4 +449,4 @@ extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgStat_StatBeEntry *pgstat_fetch_stat_beentry(int beid);
 extern int	pgstat_fetch_stat_numbackends(void);
 
-#endif	 /* PGSTAT_H */
+#endif   /* PGSTAT_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2001, PostgreSQL Global Development Group
  *
- * $Id: instrument.h,v 1.3 2001/10/28 06:26:06 momjian Exp $
+ * $Id: instrument.h,v 1.4 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,4 +36,4 @@ extern void InstrStartNode(Instrumentation *instr);
 extern void InstrStopNode(Instrumentation *instr, bool returnedTuple);
 extern void InstrEndLoop(Instrumentation *instr);
 
-#endif	 /* INSTRUMENT_H */
+#endif   /* INSTRUMENT_H */

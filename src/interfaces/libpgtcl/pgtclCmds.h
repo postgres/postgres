@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.24 2001/10/28 06:26:11 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.25 2001/11/05 17:46:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ typedef struct Pg_TclNotifies_s
 	 * got round to deleting the Pg_TclNotifies structure.
 	 */
 	Tcl_HashTable notify_hash;	/* Active pg_listen requests */
-}			Pg_TclNotifies;
+}	Pg_TclNotifies;
 
 typedef struct Pg_ConnectionId_s
 {
@@ -70,7 +70,7 @@ typedef struct Pg_ConnectionId_s
 #else
 	int			notifier_socket;	/* PQsocket on which notifier is listening */
 #endif
-}			Pg_ConnectionId;
+}	Pg_ConnectionId;
 
 /* Values of res_copyStatus */
 #define RES_COPY_NONE	0
@@ -129,4 +129,4 @@ extern int Pg_lo_export(
 extern int Pg_listen(
 		  ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 
-#endif	 /* PGTCLCMDS_H */
+#endif   /* PGTCLCMDS_H */

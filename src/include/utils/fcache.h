@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.19 2001/10/28 06:26:09 momjian Exp $
+ * $Id: fcache.h,v 1.20 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,4 +67,4 @@ typedef struct FunctionCache
 extern FunctionCachePtr init_fcache(Oid foid, int nargs,
 			MemoryContext fcacheCxt);
 
-#endif	 /* FCACHE_H */
+#endif   /* FCACHE_H */

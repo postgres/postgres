@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.21 2001/10/28 06:26:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.22 2001/11/05 17:46:39 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -133,7 +133,7 @@ typedef struct
 	int			alloc;
 	int			used;
 	char	   *value;
-}			PLpgSQL_dstring;
+}	PLpgSQL_dstring;
 
 
 typedef struct
@@ -145,14 +145,14 @@ typedef struct
 	int16		typlen;
 	bool		typbyval;
 	int32		atttypmod;
-}			PLpgSQL_type;
+}	PLpgSQL_type;
 
 
 typedef struct
 {								/* Generic datum array item		*/
 	int			dtype;
 	int			dno;
-}			PLpgSQL_datum;
+}	PLpgSQL_datum;
 
 
 typedef struct
@@ -166,7 +166,7 @@ typedef struct
 	Oid		   *plan_argtypes;
 	int			nparams;
 	int			params[1];
-}			PLpgSQL_expr;
+}	PLpgSQL_expr;
 
 
 typedef struct
@@ -186,7 +186,7 @@ typedef struct
 	Datum		value;
 	bool		isnull;
 	bool		freeval;
-}			PLpgSQL_var;
+}	PLpgSQL_var;
 
 
 typedef struct
@@ -200,7 +200,7 @@ typedef struct
 	int			nfields;
 	char	  **fieldnames;
 	int		   *varnos;
-}			PLpgSQL_row;
+}	PLpgSQL_row;
 
 
 typedef struct
@@ -214,7 +214,7 @@ typedef struct
 	TupleDesc	tupdesc;
 	bool		freetup;
 	bool		freetupdesc;
-}			PLpgSQL_rec;
+}	PLpgSQL_rec;
 
 
 typedef struct
@@ -223,7 +223,7 @@ typedef struct
 	int			rfno;
 	char	   *fieldname;
 	int			recno;
-}			PLpgSQL_recfield;
+}	PLpgSQL_recfield;
 
 
 typedef struct
@@ -231,7 +231,7 @@ typedef struct
 	int			dtype;
 	int			dno;
 	PLpgSQL_expr *argnum;
-}			PLpgSQL_trigarg;
+}	PLpgSQL_trigarg;
 
 
 typedef struct
@@ -239,7 +239,7 @@ typedef struct
 	int			itemtype;
 	int			itemno;
 	char		name[1];
-}			PLpgSQL_nsitem;
+}	PLpgSQL_nsitem;
 
 
 typedef struct PLpgSQL_ns
@@ -248,7 +248,7 @@ typedef struct PLpgSQL_ns
 	int			items_used;
 	PLpgSQL_nsitem **items;
 	struct PLpgSQL_ns *upper;
-}			PLpgSQL_ns;
+}	PLpgSQL_ns;
 
 
 typedef struct
@@ -256,14 +256,14 @@ typedef struct
 	int			stmts_alloc;
 	int			stmts_used;
 	struct PLpgSQL_stmt **stmts;
-}			PLpgSQL_stmts;
+}	PLpgSQL_stmts;
 
 
 typedef struct
 {								/* Generic execution node		*/
 	int			cmd_type;
 	int			lineno;
-}			PLpgSQL_stmt;
+}	PLpgSQL_stmt;
 
 
 typedef struct
@@ -274,7 +274,7 @@ typedef struct
 	PLpgSQL_stmts *body;
 	int			n_initvars;
 	int		   *initvarnos;
-}			PLpgSQL_stmt_block;
+}	PLpgSQL_stmt_block;
 
 
 typedef struct
@@ -283,14 +283,14 @@ typedef struct
 	int			lineno;
 	int			varno;
 	PLpgSQL_expr *expr;
-}			PLpgSQL_stmt_assign;
+}	PLpgSQL_stmt_assign;
 
 
 typedef struct
 {								/* Get Diagnostics item		*/
 	int			item;			/* id for diagnostic value desired */
 	int			target;			/* where to assign it */
-}			PLpgSQL_diag_item;
+}	PLpgSQL_diag_item;
 
 typedef struct
 {								/* Get Diagnostics statement		*/
@@ -298,7 +298,7 @@ typedef struct
 	int			lineno;
 	int			ndtitems;
 	PLpgSQL_diag_item *dtitems;
-}			PLpgSQL_stmt_getdiag;
+}	PLpgSQL_stmt_getdiag;
 
 
 typedef struct
@@ -308,7 +308,7 @@ typedef struct
 	PLpgSQL_expr *cond;
 	PLpgSQL_stmts *true_body;
 	PLpgSQL_stmts *false_body;
-}			PLpgSQL_stmt_if;
+}	PLpgSQL_stmt_if;
 
 
 typedef struct
@@ -317,7 +317,7 @@ typedef struct
 	int			lineno;
 	char	   *label;
 	PLpgSQL_stmts *body;
-}			PLpgSQL_stmt_loop;
+}	PLpgSQL_stmt_loop;
 
 
 typedef struct
@@ -327,7 +327,7 @@ typedef struct
 	char	   *label;
 	PLpgSQL_expr *cond;
 	PLpgSQL_stmts *body;
-}			PLpgSQL_stmt_while;
+}	PLpgSQL_stmt_while;
 
 
 typedef struct
@@ -340,7 +340,7 @@ typedef struct
 	PLpgSQL_expr *upper;
 	int			reverse;
 	PLpgSQL_stmts *body;
-}			PLpgSQL_stmt_fori;
+}	PLpgSQL_stmt_fori;
 
 
 typedef struct
@@ -352,7 +352,7 @@ typedef struct
 	PLpgSQL_row *row;
 	PLpgSQL_expr *query;
 	PLpgSQL_stmts *body;
-}			PLpgSQL_stmt_fors;
+}	PLpgSQL_stmt_fors;
 
 
 typedef struct
@@ -364,7 +364,7 @@ typedef struct
 	PLpgSQL_row *row;
 	PLpgSQL_expr *query;
 	PLpgSQL_stmts *body;
-}			PLpgSQL_stmt_dynfors;
+}	PLpgSQL_stmt_dynfors;
 
 
 typedef struct
@@ -374,7 +374,7 @@ typedef struct
 	PLpgSQL_rec *rec;
 	PLpgSQL_row *row;
 	PLpgSQL_expr *query;
-}			PLpgSQL_stmt_select;
+}	PLpgSQL_stmt_select;
 
 
 typedef struct
@@ -386,7 +386,7 @@ typedef struct
 	PLpgSQL_expr *argquery;
 	PLpgSQL_expr *query;
 	PLpgSQL_expr *dynquery;
-}			PLpgSQL_stmt_open;
+}	PLpgSQL_stmt_open;
 
 
 typedef struct
@@ -396,7 +396,7 @@ typedef struct
 	PLpgSQL_rec *rec;
 	PLpgSQL_row *row;
 	int			curvar;
-}			PLpgSQL_stmt_fetch;
+}	PLpgSQL_stmt_fetch;
 
 
 typedef struct
@@ -404,7 +404,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	int			curvar;
-}			PLpgSQL_stmt_close;
+}	PLpgSQL_stmt_close;
 
 
 typedef struct
@@ -413,7 +413,7 @@ typedef struct
 	int			lineno;
 	char	   *label;
 	PLpgSQL_expr *cond;
-}			PLpgSQL_stmt_exit;
+}	PLpgSQL_stmt_exit;
 
 
 typedef struct
@@ -423,7 +423,7 @@ typedef struct
 	bool		retistuple;
 	PLpgSQL_expr *expr;
 	int			retrecno;
-}			PLpgSQL_stmt_return;
+}	PLpgSQL_stmt_return;
 
 
 typedef struct
@@ -434,7 +434,7 @@ typedef struct
 	char	   *message;
 	int			nparams;
 	int		   *params;
-}			PLpgSQL_stmt_raise;
+}	PLpgSQL_stmt_raise;
 
 
 typedef struct
@@ -442,7 +442,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *sqlstmt;
-}			PLpgSQL_stmt_execsql;
+}	PLpgSQL_stmt_execsql;
 
 
 typedef struct
@@ -450,7 +450,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	PLpgSQL_expr *query;
-}			PLpgSQL_stmt_dynexecute;
+}	PLpgSQL_stmt_dynexecute;
 
 
 typedef struct PLpgSQL_function
@@ -487,7 +487,7 @@ typedef struct PLpgSQL_function
 	PLpgSQL_stmt_block *action;
 
 	struct PLpgSQL_function *next;		/* for chaining list of functions */
-}			PLpgSQL_function;
+}	PLpgSQL_function;
 
 
 typedef struct
@@ -512,7 +512,7 @@ typedef struct
 	uint32		eval_processed;
 	Oid			eval_lastoid;
 	ExprContext *eval_econtext;
-}			PLpgSQL_execstate;
+}	PLpgSQL_execstate;
 
 
 /**********************************************************************
@@ -612,4 +612,4 @@ extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
 extern void plpgsql_setinput(char *s, int functype);
 
-#endif	 /* PLPGSQL_H */
+#endif   /* PLPGSQL_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: logtape.h,v 1.6 2001/10/28 06:26:09 momjian Exp $
+ * $Id: logtape.h,v 1.7 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,4 +39,4 @@ extern bool LogicalTapeSeek(LogicalTapeSet *lts, int tapenum,
 extern void LogicalTapeTell(LogicalTapeSet *lts, int tapenum,
 				long *blocknum, int *offset);
 
-#endif	 /* LOGTAPE_H */
+#endif   /* LOGTAPE_H */

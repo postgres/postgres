@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: readfuncs.h,v 1.13 2001/10/28 06:26:07 momjian Exp $
+ * $Id: readfuncs.h,v 1.14 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,4 @@ extern void *nodeRead(bool read_car_only);
  */
 extern Node *parsePlanString(void);
 
-#endif	 /* READFUNCS_H */
+#endif   /* READFUNCS_H */

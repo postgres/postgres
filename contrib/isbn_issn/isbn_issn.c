@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for ISBNs.
  *
- *	$Id: isbn_issn.c,v 1.3 2001/02/10 02:31:25 tgl Exp $
+ *	$Id: isbn_issn.c,v 1.4 2001/11/05 17:46:23 momjian Exp $
  */
 
 #include "postgres.h"
@@ -16,7 +16,7 @@ typedef struct isbn
 {
 	char		num[13];
 	char		pad[3];
-}			isbn;
+}	isbn;
 
 /*
  *	Various forward declarations:
@@ -204,7 +204,7 @@ typedef struct issn
 {
 	char		num[9];
 	char		pad[7];
-}			issn;
+}	issn;
 
 /*
  *	Various forward declarations:

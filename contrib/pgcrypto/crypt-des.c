@@ -713,7 +713,7 @@ px_crypt_des(const char *key, const char *setting)
 		p = output + strlen(output);
 	}
 	else
-#endif	 /* !DISABLE_XDES */
+#endif   /* !DISABLE_XDES */
 	{
 		/*
 		 * "old"-style: setting - 2 bytes of salt key - up to 8 characters

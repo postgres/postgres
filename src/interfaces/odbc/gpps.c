@@ -449,6 +449,6 @@ if (!keyFound)
 
 	return aReturnLength > 0 ? aReturnLength - 1 : 0;
 }
-#endif	 /* NOT_USED */
+#endif   /* NOT_USED */
 
-#endif	 /* not WIN32 */
+#endif   /* not WIN32 */

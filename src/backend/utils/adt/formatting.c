@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.43 2001/10/28 06:25:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.44 2001/11/05 17:46:29 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -1360,7 +1360,7 @@ dump_node(FormatNode *node, int max)
 
 	}
 }
-#endif	 /* DEBUG */
+#endif   /* DEBUG */
 
 /*****************************************************************************
  *			Private utils
@@ -1566,7 +1566,7 @@ dump_index(KeyWord *k, int *index)
 	elog(DEBUG_elog_output, "\n\t\tUsed positions: %d,\n\t\tFree positions: %d",
 		 count, free_i);
 }
-#endif	 /* DEBUG */
+#endif   /* DEBUG */
 
 /* ----------
  * Skip TM / th in FROM_CHAR

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplesort.h,v 1.10 2001/10/28 06:26:10 momjian Exp $
+ * $Id: tuplesort.h,v 1.11 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,4 +102,4 @@ extern int32 ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
 				  Datum datum1, bool isNull1,
 				  Datum datum2, bool isNull2);
 
-#endif	 /* TUPLESORT_H */
+#endif   /* TUPLESORT_H */

@@ -269,7 +269,7 @@ struct ConnectionClass_
 #ifdef	MULTIBYTE
 	char	   *client_encoding;
 	char	   *server_encoding;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 };
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.15 2001/10/28 06:26:08 momjian Exp $
+ * $Id: block.h,v 1.16 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,4 +118,4 @@ typedef BlockIdData *BlockId;	/* block identifier */
 	(BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) \
 )
 
-#endif	 /* BLOCK_H */
+#endif   /* BLOCK_H */

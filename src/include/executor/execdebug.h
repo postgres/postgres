@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.18 2001/10/28 06:26:06 momjian Exp $
+ * $Id: execdebug.h,v 1.19 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ extern int	NIndexTupleInserted;
 #define IncrProcessed()			(void)(0)
 #define IncrIndexProcessed()	(void)(0)
 #define IncrIndexInserted()		(void)(0)
-#endif	 /* EXEC_TUPLECOUNT */
+#endif   /* EXEC_TUPLECOUNT */
 
 /* ----------------
  *		memory context debugging defines
@@ -149,7 +149,7 @@ extern int	NIndexTupleInserted;
 #else
 #define CXT_printf(s)
 #define CXT1_printf(s, a)
-#endif	 /* EXEC_CONTEXTDEBUG */
+#endif   /* EXEC_CONTEXTDEBUG */
 
 /* ----------------
  *		eutils debugging defines
@@ -169,7 +169,7 @@ extern int	NIndexTupleInserted;
 #define EU2_printf(s, a, b)
 #define EU3_printf(s, a, b, c)
 #define EU4_printf(s, a, b, c, d)
-#endif	 /* EXEC_UTILSDEBUG */
+#endif   /* EXEC_UTILSDEBUG */
 
 
 /* ----------------
@@ -188,7 +188,7 @@ extern int	NIndexTupleInserted;
 #define NL1_printf(s, a)
 #define NL4_printf(s, a, b, c, d)
 #define ENL1_printf(message)
-#endif	 /* EXEC_NESTLOOPDEBUG */
+#endif   /* EXEC_NESTLOOPDEBUG */
 
 /* ----------------
  *		proc node debugging defines
@@ -200,7 +200,7 @@ extern int	NIndexTupleInserted;
 #else
 #define PN_printf(s)
 #define PN1_printf(s, p)
-#endif	 /* EXEC_PROCDEBUG */
+#endif   /* EXEC_PROCDEBUG */
 
 /* ----------------
  *		exec eval / target list debugging defines
@@ -216,7 +216,7 @@ extern int	NIndexTupleInserted;
 #define EV_printf(s)
 #define EV1_printf(s, a)
 #define EV5_printf(s, a, b, c, d, e)
-#endif	 /* EXEC_EVALDEBUG */
+#endif   /* EXEC_EVALDEBUG */
 
 /* ----------------
  *		scan debugging defines
@@ -230,7 +230,7 @@ extern int	NIndexTupleInserted;
 #define S_nodeDisplay(l)
 #define S_printf(s)
 #define S1_printf(s, p)
-#endif	 /* EXEC_SCANDEBUG */
+#endif   /* EXEC_SCANDEBUG */
 
 /* ----------------
  *		sort node debugging defines
@@ -244,7 +244,7 @@ extern int	NIndexTupleInserted;
 #define SO_nodeDisplay(l)
 #define SO_printf(s)
 #define SO1_printf(s, p)
-#endif	 /* EXEC_SORTDEBUG */
+#endif   /* EXEC_SORTDEBUG */
 
 /* ----------------
  *		merge join debugging defines
@@ -281,7 +281,7 @@ extern int	NIndexTupleInserted;
 #define MJ_DEBUG_QUAL(clause, res)
 #define MJ_DEBUG_MERGE_COMPARE(qual, res)
 #define MJ_DEBUG_PROC_NODE(slot)
-#endif	 /* EXEC_MERGEJOINDEBUG */
+#endif   /* EXEC_MERGEJOINDEBUG */
 
 /* ----------------------------------------------------------------
  *		DO NOT DEFINE THESE EVER OR YOU WILL BURN!
@@ -298,4 +298,4 @@ extern int	NIndexTupleInserted;
 extern long NDirectFileRead;
 extern long NDirectFileWrite;
 
-#endif	 /* ExecDebugIncluded */
+#endif   /* ExecDebugIncluded */

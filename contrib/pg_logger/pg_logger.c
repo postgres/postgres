@@ -18,7 +18,7 @@ struct
 	const char *tag;
 	int			size;
 	int			priority;
-}			tags[] =
+}	tags[] =
 
 {
 	{

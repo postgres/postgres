@@ -334,7 +334,7 @@ typedef struct
 	WORD	   *words;
 	int4		lenwords;
 	int4		curwords;
-}			PRSTEXT;
+}	PRSTEXT;
 
 /*
  * Parse text to lexems

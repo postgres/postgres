@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.53 2001/10/28 06:26:07 momjian Exp $
+ * $Id: planmain.h,v 1.54 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,4 +68,4 @@ extern bool _use_keyset_query_optimizer;
 
 extern void transformKeySetQuery(Query *origNode);
 
-#endif	 /* PLANMAIN_H */
+#endif   /* PLANMAIN_H */

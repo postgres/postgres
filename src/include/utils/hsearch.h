@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.24 2001/10/28 06:26:09 momjian Exp $
+ * $Id: hsearch.h,v 1.25 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,4 +167,4 @@ extern long hash_select_dirsize(long num_entries);
 extern long string_hash(void *key, int keysize);
 extern long tag_hash(void *key, int keysize);
 
-#endif	 /* HSEARCH_H */
+#endif   /* HSEARCH_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeTidscan.h,v 1.7 2001/10/28 06:26:06 momjian Exp $
+ * $Id: nodeTidscan.h,v 1.8 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,4 +24,4 @@ extern bool ExecInitTidScan(TidScan *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsTidScan(TidScan *node);
 extern void ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif	 /* NODETIDSCAN_H */
+#endif   /* NODETIDSCAN_H */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.36 2001/10/28 06:26:09 momjian Exp $
+ * $Id: geo_decls.h,v 1.37 2001/11/05 17:46:36 momjian Exp $
  *
  * NOTE
  *	  These routines do *not* use the float types from adt/.
@@ -398,4 +398,4 @@ extern Datum positionjoinsel(PG_FUNCTION_ARGS);
 extern Datum contsel(PG_FUNCTION_ARGS);
 extern Datum contjoinsel(PG_FUNCTION_ARGS);
 
-#endif	 /* GEO_DECLS_H */
+#endif   /* GEO_DECLS_H */

@@ -72,7 +72,7 @@ typedef struct NODE
 	int2		distance;
 	int2		length;
 	struct NODE *next;
-}			NODE;
+}	NODE;
 
 typedef struct
 {
@@ -92,7 +92,7 @@ typedef struct
 
 	/* state for value's parser */
 	TI_IN_STATE valstate;
-}			QPRS_STATE;
+}	QPRS_STATE;
 
 /*
  * get token from query string
@@ -322,7 +322,7 @@ typedef struct
 	WordEntry  *arre;
 	char	   *values;
 	char	   *operand;
-}			CHKVAL;
+}	CHKVAL;
 
 /*
  * compare 2 string values
@@ -626,7 +626,7 @@ typedef struct
 	char	   *cur;
 	char	   *op;
 	int4		buflen;
-}			INFIX;
+}	INFIX;
 
 #define RESIZEBUF(inf,addsize) \
 while( ( inf->cur - inf->buf ) + addsize + 1 >= inf->buflen ) \

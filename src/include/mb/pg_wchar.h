@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.36 2001/10/28 06:26:07 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.37 2001/11/05 17:46:33 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -264,7 +264,7 @@ typedef struct pg_enconv
 
 extern pg_enconv pg_enconv_tbl[];
 extern pg_enconv *pg_get_enconv_by_encoding(int encoding);
-#endif	 /* FRONTEND */
+#endif   /* FRONTEND */
 
 /*
  * pg_wchar stuff
@@ -345,6 +345,6 @@ extern unsigned short BIG5toCNS(unsigned short, unsigned char *);
 extern unsigned short CNStoBIG5(unsigned short, unsigned char);
 
 char	   *pg_verifymbstr(const unsigned char *, int);
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
-#endif	 /* PG_WCHAR_H */
+#endif   /* PG_WCHAR_H */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.62 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.63 2001/11/05 17:46:30 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -288,7 +288,7 @@ exec_command(const char *cmd,
 			 * directory, so if someone wants to code this here instead...
 			 */
 			dir = "/";
-#endif	 /* WIN32 */
+#endif   /* WIN32 */
 		}
 
 		if (chdir(dir) == -1)

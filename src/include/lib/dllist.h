@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.18 2001/10/28 06:26:07 momjian Exp $
+ * $Id: dllist.h,v 1.19 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,4 +82,4 @@ extern void DLMoveToFront(Dlelem *e);	/* move node to front of its list */
 
 #define DLE_VAL(elem)	((elem)->dle_val)
 
-#endif	 /* DLLIST_H */
+#endif   /* DLLIST_H */

@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.6 2001/10/28 06:25:40 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/pg_dumplo.h,v 1.7 2001/11/05 17:46:23 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -41,7 +41,7 @@ typedef struct
 	char	   *lo_table,
 			   *lo_attr;
 	Oid			lo_oid;
-}			LOlist;
+}	LOlist;
 
 typedef struct
 {
@@ -60,7 +60,7 @@ typedef struct
 				quiet;
 	PGresult   *res;
 	PGconn	   *conn;
-}			LODumpMaster;
+}	LODumpMaster;
 
 typedef enum
 {
@@ -69,7 +69,7 @@ typedef enum
 	ACTION_EXPORT_ATTR,
 	ACTION_EXPORT_ALL,
 	ACTION_IMPORT
-}			PGLODUMP_ACTIONS;
+}	PGLODUMP_ACTIONS;
 
 extern char *progname;
 
@@ -79,4 +79,4 @@ extern void load_lolist(LODumpMaster * pgLO);
 extern void pglo_export(LODumpMaster * pgLO);
 extern void pglo_import(LODumpMaster * pgLO);
 
-#endif	 /* PG_DUMPLO_H */
+#endif   /* PG_DUMPLO_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.52 2001/10/28 06:26:07 momjian Exp $
+ * $Id: plannodes.h,v 1.53 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -432,7 +432,7 @@ typedef struct Tee
 	List	   *rtentries;		/* the range table for the plan below the
 								 * Tee may be different than the parent
 								 * plans */
-}			Tee;
+}	Tee;
 #endif
 
 /* ---------------------
@@ -464,4 +464,4 @@ typedef struct SubPlan
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 } SubPlan;
 
-#endif	 /* PLANNODES_H */
+#endif   /* PLANNODES_H */

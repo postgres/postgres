@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.4 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.5 2001/11/05 17:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ _success:						\n\
 			rts					\n\
 ");
 }
-#endif	 /* __m68k__ */
+#endif   /* __m68k__ */
 
 #if defined(__APPLE__) && defined(__ppc__)
 /* used in darwin. */
@@ -138,7 +138,7 @@ success:						\n\
 			blr					\n\
 ");
 }
-#endif	 /* __APPLE__ && __ppc__ */
+#endif   /* __APPLE__ && __ppc__ */
 
 #if defined(__powerpc__)
 /* Note: need a nice gcc constrained asm version so it can be inlined */
@@ -162,7 +162,7 @@ success:						\n\
 			blr					\n\
 ");
 }
-#endif	 /* __powerpc__ */
+#endif   /* __powerpc__ */
 
 #if defined(__mips__) && !defined(__sgi)
 static void
@@ -186,7 +186,7 @@ fail:							\n\
 			j   	$31			\n\
 ");
 }
-#endif	 /* __mips__ && !__sgi */
+#endif   /* __mips__ && !__sgi */
 
 #else							/* not __GNUC__ */
 /***************************************************************************
@@ -217,7 +217,7 @@ tas_dummy()						/* really means: extern int tas(slock_t
 	asm("   rts");
 	asm("   .data");
 }
-#endif	 /* sun3 */
+#endif   /* sun3 */
 
 
 
@@ -240,15 +240,15 @@ tas_dummy()						/* really means: extern int tas(slock_t
 	asm("retl");
 	asm("nop");
 }
-#endif	 /* NEED_SPARC_TAS_ASM */
+#endif   /* NEED_SPARC_TAS_ASM */
 
 
 
 
 #if defined(NEED_I386_TAS_ASM)
 /* non gcc i386 based things */
-#endif	 /* NEED_I386_TAS_ASM */
-#endif	 /* not __GNUC__ */
+#endif   /* NEED_I386_TAS_ASM */
+#endif   /* not __GNUC__ */
 
 
 
@@ -291,4 +291,4 @@ main()
 
 }
 
-#endif	 /* S_LOCK_TEST */
+#endif   /* S_LOCK_TEST */

@@ -15,20 +15,20 @@ typedef struct intkey
 {
 	int4		lower;
 	int4		upper;
-}			INT4KEY;
+}	INT4KEY;
 
 typedef struct tskey
 {
 	Timestamp	lower;
 	Timestamp	upper;
-}			TSKEY;
+}	TSKEY;
 
 /* used for sorting */
 typedef struct rix
 {
 	int			index;
 	char	   *r;
-}			RIX;
+}	RIX;
 
 /*
 ** int4key in/out

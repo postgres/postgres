@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.90 2001/10/30 19:58:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.91 2001/11/05 17:46:26 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -43,14 +43,14 @@ typedef struct
 {
 	Query	   *query;
 	List	   *groupClauses;
-} check_subplans_for_ungrouped_vars_context;
+}	check_subplans_for_ungrouped_vars_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
-						check_subplans_for_ungrouped_vars_context *context);
+					check_subplans_for_ungrouped_vars_context * context);
 static bool contain_noncachable_functions_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node, void *context);
 static Expr *simplify_op_or_func(Expr *expr, List *args);
@@ -525,7 +525,7 @@ pull_subplans_walker(Node *node, List **listptr)
  *
  * A deficiency in this scheme is that any outer reference var must be
  * grouped by itself; we don't recognize groupable expressions within
- * subselects.  For example, consider
+ * subselects.	For example, consider
  *		SELECT
  *			(SELECT x FROM bar where y = (foo.a + foo.b))
  *		FROM foo
@@ -536,12 +536,13 @@ void
 check_subplans_for_ungrouped_vars(Query *query)
 {
 	check_subplans_for_ungrouped_vars_context context;
-	List	*gl;
+	List	   *gl;
 
 	context.query = query;
+
 	/*
-	 * Build a list of the acceptable GROUP BY expressions for use in
-	 * the walker (to avoid repeated scans of the targetlist within the
+	 * Build a list of the acceptable GROUP BY expressions for use in the
+	 * walker (to avoid repeated scans of the targetlist within the
 	 * recursive routine).
 	 */
 	context.groupClauses = NIL;
@@ -555,9 +556,9 @@ check_subplans_for_ungrouped_vars(Query *query)
 	}
 
 	/*
-	 * Recursively scan the targetlist and the HAVING clause.
-	 * WHERE and JOIN/ON conditions are not examined, since they are
-	 * evaluated before grouping.
+	 * Recursively scan the targetlist and the HAVING clause. WHERE and
+	 * JOIN/ON conditions are not examined, since they are evaluated
+	 * before grouping.
 	 */
 	check_subplans_for_ungrouped_vars_walker((Node *) query->targetList,
 											 &context);
@@ -569,13 +570,13 @@ check_subplans_for_ungrouped_vars(Query *query)
 
 static bool
 check_subplans_for_ungrouped_vars_walker(Node *node,
-						check_subplans_for_ungrouped_vars_context *context)
+					 check_subplans_for_ungrouped_vars_context * context)
 {
 	List	   *gl;
 
 	if (node == NULL)
 		return false;
-	if (IsA(node, Const) || IsA(node, Param))
+	if (IsA(node, Const) ||IsA(node, Param))
 		return false;			/* constants are always acceptable */
 
 	/*
@@ -648,7 +649,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 				char	   *attname;
 
 				Assert(var->varno > 0 &&
-					   (int) var->varno <= length(context->query->rtable));
+					 (int) var->varno <= length(context->query->rtable));
 				rte = rt_fetch(var->varno, context->query->rtable);
 				attname = get_rte_attribute_name(rte, var->varattno);
 				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",

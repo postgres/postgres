@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.51 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.52 2001/11/05 17:46:28 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -340,7 +340,7 @@ HandleFunctionRequest(void)
 	fcinfo.isnull = true;
 #else
 	retval = FunctionCallInvoke(&fcinfo);
-#endif	 /* NO_FASTPATH */
+#endif   /* NO_FASTPATH */
 
 	if (fcinfo.isnull)
 		SendFunctionResult(retval, fip->retbyval, 0);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqformat.h,v 1.10 2001/10/28 06:26:07 momjian Exp $
+ * $Id: pqformat.h,v 1.11 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,4 +29,4 @@ extern int	pq_puttextmessage(char msgtype, const char *str);
 extern int	pq_getint(int *result, int b);
 extern int	pq_getstr(StringInfo s);
 
-#endif	 /* PQFORMAT_H */
+#endif   /* PQFORMAT_H */

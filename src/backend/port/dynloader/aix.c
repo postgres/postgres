@@ -32,7 +32,7 @@ typedef struct
 {
 	char	   *name;			/* the symbols's name */
 	void	   *addr;			/* its relocated virtual address */
-}			Export, *ExportPtr;
+}	Export, *ExportPtr;
 
 /*
  * xlC uses the following structure to list its constructors and
@@ -42,7 +42,7 @@ typedef struct
 {
 	void		(*init) (void); /* call static constructors */
 	void		(*term) (void); /* call static destructors */
-}			Cdtor, *CdtorPtr;
+}	Cdtor, *CdtorPtr;
 
 /*
  * The void * handle returned from dlopen is actually a ModulePtr.
@@ -57,7 +57,7 @@ typedef struct Module
 	CdtorPtr	cdtors;			/* optional C++ constructors */
 	int			nExports;		/* the number of exports found */
 	ExportPtr	exports;		/* the array of exports */
-}			Module, *ModulePtr;
+}	Module, *ModulePtr;
 
 /*
  * We keep a list of all loaded modules to be able to call the fini
@@ -608,4 +608,4 @@ findMain(void)
 	return ret;
 }
 
-#endif	 /* HAVE_DLOPEN */
+#endif   /* HAVE_DLOPEN */

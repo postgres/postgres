@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/prepare.c,v 1.9 2001/10/28 06:26:11 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/prepare.c,v 1.10 2001/11/05 17:46:37 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -15,7 +15,7 @@ static struct prepared_statement
 	char	   *name;
 	struct statement *stmt;
 	struct prepared_statement *next;
-} *prep_stmts = NULL;
+}	*prep_stmts = NULL;
 
 static bool
 isvarchar(unsigned char c)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.h,v 1.5 2001/10/28 06:25:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.h,v 1.6 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,4 +65,4 @@ extern		"C"
 }
 #endif
 
-#endif	 /* _SYS_SEM_H */
+#endif   /* _SYS_SEM_H */

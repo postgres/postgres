@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.36 2001/10/28 06:26:10 momjian Exp $
+ * $Id: tqual.h,v 1.37 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,4 +111,4 @@ extern Snapshot GetSnapshotData(bool serializable);
 extern void SetQuerySnapshot(void);
 extern void FreeXactSnapshot(void);
 
-#endif	 /* TQUAL_H */
+#endif   /* TQUAL_H */

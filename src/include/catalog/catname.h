@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.22 2001/10/28 06:25:59 momjian Exp $
+ * $Id: catname.h,v 1.23 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,4 +44,4 @@
 
 extern char *SharedSystemRelationNames[];
 
-#endif	 /* CATNAME_H */
+#endif   /* CATNAME_H */

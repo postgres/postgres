@@ -39,9 +39,9 @@
 #include "pgapifunc.h"
 
 #ifdef	__CYGWIN__
-#define TIMEZONE_GLOBAL	_timezone
+#define TIMEZONE_GLOBAL _timezone
 #elif	defined(WIN32) || defined(HAVE_INT_TIMEZONE)
-#define	TIMEZONE_GLOBAL	timezone
+#define TIMEZONE_GLOBAL timezone
 #endif
 
 /*
@@ -141,17 +141,20 @@ static char *conv_to_octal(unsigned char val);
 
 
 
-/*	
+/*
  *	TIMESTAMP <-----> SIMPLE_TIME
  *		precision support since 7.2.
  *		time zone support is unavailable(the stuff is unreliable)
  */
-static	BOOL timestamp2stime(const char * str, SIMPLE_TIME *st, BOOL *bZone, int *zone)
+static BOOL
+timestamp2stime(const char *str, SIMPLE_TIME *st, BOOL *bZone, int *zone)
 {
-	char	rest[64], *ptr;
-	int	scnt, i;
+	char		rest[64],
+			   *ptr;
+	int			scnt,
+				i;
 	long		timediff;
-	BOOL	withZone = *bZone;
+	BOOL		withZone = *bZone;
 
 	*bZone = FALSE;
 	*zone = 0;
@@ -194,7 +197,7 @@ static	BOOL timestamp2stime(const char * str, SIMPLE_TIME *st, BOOL *bZone, int 
 			st->fr = atoi(&rest[1]);
 			break;
 		default:
-			return	TRUE;
+			return TRUE;
 	}
 	if (!withZone || !*bZone || st->y < 1970)
 		return TRUE;
@@ -205,11 +208,12 @@ static	BOOL timestamp2stime(const char * str, SIMPLE_TIME *st, BOOL *bZone, int 
 		return TRUE;
 	}
 	timediff = TIMEZONE_GLOBAL + (*zone) * 3600;
-	if (!daylight && timediff == 0) /* the same timezone */
+	if (!daylight && timediff == 0)		/* the same timezone */
 		return TRUE;
 	else
 	{
-		struct tm	tm, *tm2;
+		struct tm	tm,
+				   *tm2;
 		time_t		time0;
 
 		*bZone = FALSE;
@@ -225,7 +229,7 @@ static	BOOL timestamp2stime(const char * str, SIMPLE_TIME *st, BOOL *bZone, int 
 			return TRUE;
 		if (tm.tm_isdst > 0)
 			timediff -= 3600;
-		if (timediff == 0) /* the same time zone */
+		if (timediff == 0)		/* the same time zone */
 			return TRUE;
 		time0 -= timediff;
 		if (time0 >= 0 && (tm2 = localtime(&time0)) != NULL)
@@ -233,20 +237,22 @@ static	BOOL timestamp2stime(const char * str, SIMPLE_TIME *st, BOOL *bZone, int 
 			st->y = tm2->tm_year + 1900;
 			st->m = tm2->tm_mon + 1;
 			st->d = tm2->tm_mday;
-			st->hh= tm2->tm_hour;
-			st->mm= tm2->tm_min;
-			st->ss= tm2->tm_sec;
+			st->hh = tm2->tm_hour;
+			st->mm = tm2->tm_min;
+			st->ss = tm2->tm_sec;
 			*bZone = TRUE;
 		}
 	}
-#endif /* WIN32 */
-	return	TRUE;
+#endif   /* WIN32 */
+	return TRUE;
 }
 
-static	BOOL stime2timestamp(const SIMPLE_TIME *st, char * str, BOOL bZone, BOOL precision)
+static BOOL
+stime2timestamp(const SIMPLE_TIME *st, char *str, BOOL bZone, BOOL precision)
 {
-	char	precstr[16], zonestr[16];
-	int	i;
+	char		precstr[16],
+				zonestr[16];
+	int			i;
 
 	precstr[0] = '\0';
 	if (precision && st->fr)
@@ -263,13 +269,13 @@ static	BOOL stime2timestamp(const SIMPLE_TIME *st, char * str, BOOL bZone, BOOL 
 #if defined(WIN32) || defined(HAVE_INT_TIMEZONE)
 	if (bZone && tzname[0] && tzname[0][0] && st->y >= 1970)
 	{
-		long	zoneint;
+		long		zoneint;
 		struct tm	tm;
 		time_t		time0;
 
 		zoneint = TIMEZONE_GLOBAL;
-		if (daylight && st->y >=1900)
-		{ 
+		if (daylight && st->y >= 1900)
+		{
 			tm.tm_year = st->y - 1900;
 			tm.tm_mon = st->m - 1;
 			tm.tm_mday = st->d;
@@ -282,13 +288,13 @@ static	BOOL stime2timestamp(const SIMPLE_TIME *st, char * str, BOOL bZone, BOOL 
 				zoneint -= 3600;
 		}
 		if (zoneint > 0)
-			sprintf(zonestr, "-%02d", (int)zoneint / 3600);
+			sprintf(zonestr, "-%02d", (int) zoneint / 3600);
 		else
-			sprintf(zonestr, "+%02d", -(int)zoneint / 3600);
+			sprintf(zonestr, "+%02d", -(int) zoneint / 3600);
 	}
-#endif /* WIN32 */
+#endif   /* WIN32 */
 	sprintf(str, "%.4d-%.2d-%.2d %.2d:%.2d:%.2d%s%s", st->y, st->m, st->d, st->hh, st->mm, st->ss, precstr, zonestr);
-	return	TRUE;
+	return TRUE;
 }
 
 /*	This is called by SQLFetch() */
@@ -323,14 +329,15 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	const char *neut_str = value;
 	char		midtemp[2][32];
 	int			mtemp_cnt = 0;
-	static	BindInfoClass	sbic;
-	BindInfoClass		*pbic;
+	static BindInfoClass sbic;
+	BindInfoClass *pbic;
 
 	if (stmt->current_col >= 0)
 	{
 		pbic = &stmt->bindings[stmt->current_col];
 		if (pbic->data_left == -2)
-			pbic->data_left = (cbValueMax > 0) ? 0 : -1;	/* This seems to be * needed for ADO ? */
+			pbic->data_left = (cbValueMax > 0) ? 0 : -1;		/* This seems to be *
+																 * needed for ADO ? */
 		if (pbic->data_left == 0)
 		{
 			if (pbic->ttlbuf != NULL)
@@ -339,8 +346,8 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				pbic->ttlbuf = NULL;
 				pbic->ttlbuflen = 0;
 			}
-			pbic->data_left = -2; /* needed by ADO ? */
-			return	COPY_NO_DATA_FOUND;
+			pbic->data_left = -2;		/* needed by ADO ? */
+			return COPY_NO_DATA_FOUND;
 		}
 	}
 	/*---------
@@ -416,10 +423,14 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			st.fr = 0;
 			if (strnicmp(value, "invalid", 7) != 0)
 			{
-				BOOL	bZone = (field_type != PG_TYPE_TIMESTAMP_NO_TMZONE && PG_VERSION_GE(SC_get_conn(stmt), 7.2));
-				int	zone;
-				/*sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m, &st.d, &st.hh, &st.mm, &st.ss);*/
-				bZone = FALSE; /* time zone stuff is unreliable */
+				BOOL		bZone = (field_type != PG_TYPE_TIMESTAMP_NO_TMZONE && PG_VERSION_GE(SC_get_conn(stmt), 7.2));
+				int			zone;
+
+				/*
+				 * sscanf(value, "%4d-%2d-%2d %2d:%2d:%2d", &st.y, &st.m,
+				 * &st.d, &st.hh, &st.mm, &st.ss);
+				 */
+				bZone = FALSE;	/* time zone stuff is unreliable */
 				timestamp2stime(value, &st, &bZone, &zone);
 			}
 			else
@@ -710,7 +721,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 		{
 			case SQL_C_DATE:
 #if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_DATE: /* 91 */
+			case SQL_C_TYPE_DATE:		/* 91 */
 #endif
 				len = 6;
 				{
@@ -728,7 +739,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 			case SQL_C_TIME:
 #if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_TIME: /* 92 */
+			case SQL_C_TYPE_TIME:		/* 92 */
 #endif
 				len = 6;
 				{
@@ -746,7 +757,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 			case SQL_C_TIMESTAMP:
 #if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_TIMESTAMP: /* 93 */
+			case SQL_C_TYPE_TIMESTAMP:	/* 93 */
 #endif
 				len = 16;
 				{
@@ -923,7 +934,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 	if (pcbValue)
 		*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = len;
 
-	if (result == COPY_OK && stmt->current_col >=0)
+	if (result == COPY_OK && stmt->current_col >= 0)
 		stmt->bindings[stmt->current_col].data_left = 0;
 	return result;
 
@@ -1180,7 +1191,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	BOOL		search_from_pos = FALSE;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (ci->disallow_premature)
 		prepare_dummy_cursor = stmt->pre_executing;
 
@@ -1217,7 +1228,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 		else
 			search_from_pos = TRUE;
 	}
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 
 	/* If the application hasn't set a cursor name, then generate one */
 	if (stmt->cursor_name[0] == '\0')
@@ -1346,7 +1357,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 				if (multibyte_strchr(&old_statement[opos], '('))
 #else
 				if (strchr(&old_statement[opos], '('))
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 					proc_no_param = FALSE;
 				continue;
 			}
@@ -1417,7 +1428,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 								npos -= 5;
 								CVT_APPEND_STR(", CTID, OID from");
 							}
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 						}
 						if (token_len == 3)
 						{
@@ -1591,7 +1602,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			case SQL_C_DATE:
 #if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_DATE: /* 91 */
+			case SQL_C_TYPE_DATE:		/* 91 */
 #endif
 				{
 					DATE_STRUCT *ds = (DATE_STRUCT *) buffer;
@@ -1605,7 +1616,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			case SQL_C_TIME:
 #if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_TIME: /* 92 */
+			case SQL_C_TYPE_TIME:		/* 92 */
 #endif
 				{
 					TIME_STRUCT *ts = (TIME_STRUCT *) buffer;
@@ -1619,7 +1630,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			case SQL_C_TIMESTAMP:
 #if (ODBCVER >= 0x0300)
-			case SQL_C_TYPE_TIMESTAMP: /* 93 */
+			case SQL_C_TYPE_TIMESTAMP:	/* 93 */
 #endif
 				{
 					TIMESTAMP_STRUCT *tss = (TIMESTAMP_STRUCT *) buffer;
@@ -1682,7 +1693,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			case SQL_DATE:
 #if (ODBCVER >= 0x0300)
-			case SQL_TYPE_DATE: /* 91 */
+			case SQL_TYPE_DATE:	/* 91 */
 #endif
 				if (buf)
 				{				/* copy char data to time */
@@ -1697,7 +1708,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			case SQL_TIME:
 #if (ODBCVER >= 0x0300)
-			case SQL_TYPE_TIME: /* 92 */
+			case SQL_TYPE_TIME:	/* 92 */
 #endif
 				if (buf)
 				{				/* copy char data to time */
@@ -1712,7 +1723,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 
 			case SQL_TIMESTAMP:
 #if (ODBCVER >= 0x0300)
-			case SQL_TYPE_TIMESTAMP: /* 93 */
+			case SQL_TYPE_TIMESTAMP:	/* 93 */
 #endif
 
 				if (buf)
@@ -1721,8 +1732,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 					parse_datetime(cbuf, &st);
 				}
 
-				/* sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'",
-						st.y, st.m, st.d, st.hh, st.mm, st.ss);*/
+				/*
+				 * sprintf(tmp, "'%.4d-%.2d-%.2d %.2d:%.2d:%.2d'", st.y,
+				 * st.m, st.d, st.hh, st.mm, st.ss);
+				 */
 				tmp[0] = '\'';
 				/* Time zone stuff is unreliable */
 				stime2timestamp(&st, tmp + 1, FALSE, PG_VERSION_GE(conn, 7.2));
@@ -1916,7 +1929,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 	if (search_from_pos)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (prepare_dummy_cursor && SC_is_pre_executable(stmt))
 	{
 		char		fetchstr[128];
@@ -2414,10 +2427,12 @@ static const char *hextbl = "0123456789ABCDEF";
 static int
 pg_bin2hex(UCHAR *src, UCHAR *dst, int length)
 {
-	UCHAR	chr, *src_wk, *dst_wk;
-	BOOL	backwards;
-	int	i;
-	
+	UCHAR		chr,
+			   *src_wk,
+			   *dst_wk;
+	BOOL		backwards;
+	int			i;
+
 	backwards = FALSE;
 	if (dst < src)
 	{
@@ -2447,6 +2462,7 @@ pg_bin2hex(UCHAR *src, UCHAR *dst, int length)
 	dst[2 * length] = '\0';
 	return length;
 }
+
 /*-------
  *	1. get oid (from 'value')
  *	2. open the large object
@@ -2474,7 +2490,7 @@ convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 	BindInfoClass *bindInfo = NULL;
 	ConnectionClass *conn = SC_get_conn(stmt);
 	ConnInfo   *ci = &(conn->connInfo);
-	int	factor = (fCType == SQL_C_CHAR ? 2 : 1);
+	int			factor = (fCType == SQL_C_CHAR ? 2 : 1);
 
 	/* If using SQLGetData, then current_col will be set */
 	if (stmt->current_col >= 0)

@@ -539,7 +539,7 @@ getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 static Int2
 getTimestampScale(StatementClass *stmt, Int4 type, int col)
 {
-	ConnectionClass	*conn = SC_get_conn (stmt);
+	ConnectionClass *conn = SC_get_conn(stmt);
 	Int4		atttypmod;
 	QResultClass *result;
 	ColumnInfoClass *flds;
@@ -563,11 +563,11 @@ getTimestampScale(StatementClass *stmt, Int4 type, int col)
 		flds = result->fields;
 		if (flds)
 			atttypmod = flds->atttypmod[col];
-mylog("atttypmod1=%d\n", atttypmod);
+		mylog("atttypmod1=%d\n", atttypmod);
 	}
-	else 
+	else
 		atttypmod = QR_get_atttypmod(result, col);
-mylog("atttypmod2=%d\n", atttypmod);
+	mylog("atttypmod2=%d\n", atttypmod);
 	return (atttypmod > -1 ? atttypmod : 0);
 }
 
@@ -575,7 +575,8 @@ mylog("atttypmod2=%d\n", atttypmod);
 static Int4
 getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
 {
-	Int4	fixed, scale;
+	Int4		fixed,
+				scale;
 
 	mylog("getTimestampPrecision: type=%d, col=%d\n", type, col);
 
@@ -594,8 +595,8 @@ getTimestampPrecision(StatementClass *stmt, Int4 type, int col)
 			fixed = 22;
 			break;
 	}
-	scale = getTimestampScale(stmt, type, col);	
-	return (scale > 0) ? fixed + 1 + scale : fixed;	
+	scale = getTimestampScale(stmt, type, col);
+	return (scale > 0) ? fixed + 1 + scale : fixed;
 }
 
 /*
@@ -760,7 +761,7 @@ pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_
 #else
 			/* CR -> CR/LF */
 			return 2 * pgtype_precision(stmt, type, col, handle_unknown_size_as);
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 		default:
 			return pgtype_precision(stmt, type, col, handle_unknown_size_as);
 	}

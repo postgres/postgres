@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.11 2001/10/28 06:26:15 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.12 2001/11/05 17:46:39 momjian Exp $
  *
  *********************************************************************
  */
@@ -76,19 +76,19 @@ typedef struct PLyDatumToOb
 	FmgrInfo	typfunc;
 	Oid			typelem;
 	bool		typbyval;
-}			PLyDatumToOb;
+}	PLyDatumToOb;
 
 typedef struct PLyTupleToOb
 {
 	PLyDatumToOb *atts;
 	int			natts;
-}			PLyTupleToOb;
+}	PLyTupleToOb;
 
 typedef union PLyTypeInput
 {
 	PLyDatumToOb d;
 	PLyTupleToOb r;
-}			PLyTypeInput;
+}	PLyTypeInput;
 
 /* convert PyObject to a Postgresql Datum or tuple.
  * output from Python
@@ -98,19 +98,19 @@ typedef struct PLyObToDatum
 	FmgrInfo	typfunc;
 	Oid			typelem;
 	bool		typbyval;
-}			PLyObToDatum;
+}	PLyObToDatum;
 
 typedef struct PLyObToTuple
 {
 	PLyObToDatum *atts;
 	int			natts;
-}			PLyObToTuple;
+}	PLyObToTuple;
 
 typedef union PLyTypeOutput
 {
 	PLyObToDatum d;
 	PLyObToTuple r;
-}			PLyTypeOutput;
+}	PLyTypeOutput;
 
 /* all we need to move Postgresql data to Python objects,
  * and vis versa
@@ -120,7 +120,7 @@ typedef struct PLyTypeInfo
 	PLyTypeInput in;
 	PLyTypeOutput out;
 	int			is_rel;
-}			PLyTypeInfo;
+}	PLyTypeInfo;
 
 
 /* cached procedure data
@@ -141,7 +141,7 @@ typedef struct PLyProcedure
 	PyObject   *globals;		/* data saved across calls, global score */
 	PyObject   *me;				/* PyCObject containing pointer to this
 								 * PLyProcedure */
-}			PLyProcedure;
+}	PLyProcedure;
 
 
 /* Python objects.
@@ -154,7 +154,7 @@ typedef struct PLyPlanObject
 	Oid		   *types;
 	Datum	   *values;
 	PLyTypeInfo *args;
-}			PLyPlanObject;
+}	PLyPlanObject;
 
 typedef struct PLyResultObject
 {
@@ -163,7 +163,7 @@ typedef struct PLyResultObject
 	PyObject   *nrows;			/* number of rows returned by query */
 	PyObject   *rows;			/* data rows, or None if no data returned */
 	PyObject   *status;			/* query status, SPI_OK_*, or SPI_ERR_* */
-}			PLyResultObject;
+}	PLyResultObject;
 
 
 /* function declarations

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.35 2001/10/28 06:26:09 momjian Exp $
+ * $Id: shmem.h,v 1.36 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,4 +96,4 @@ extern Pointer SHMQueueNext(SHM_QUEUE *queue, SHM_QUEUE *curElem,
 			 Size linkOffset);
 extern bool SHMQueueEmpty(SHM_QUEUE *queue);
 
-#endif	 /* SHMEM_H */
+#endif   /* SHMEM_H */

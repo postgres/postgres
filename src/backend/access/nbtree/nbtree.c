@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.83 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.84 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ btbuild(PG_FUNCTION_ARGS)
 #ifdef BTREE_BUILD_STATS
 	if (Show_btree_build_stats)
 		ResetUsage();
-#endif	 /* BTREE_BUILD_STATS */
+#endif   /* BTREE_BUILD_STATS */
 
 	/*
 	 * We expect to be called exactly once for any index relation. If
@@ -175,7 +175,7 @@ btbuild(PG_FUNCTION_ARGS)
 		ShowUsage();
 		ResetUsage();
 	}
-#endif	 /* BTREE_BUILD_STATS */
+#endif   /* BTREE_BUILD_STATS */
 
 	/* all done */
 	BuildingBtree = false;

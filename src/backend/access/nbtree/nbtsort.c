@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.61 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.62 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ _bt_leafbuild(BTSpool *btspool, BTSpool *btspool2)
 		ShowUsage();
 		ResetUsage();
 	}
-#endif	 /* BTREE_BUILD_STATS */
+#endif   /* BTREE_BUILD_STATS */
 	tuplesort_performsort(btspool->sortstate);
 
 	if (btspool2)

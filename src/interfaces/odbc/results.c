@@ -1165,7 +1165,7 @@ PGAPI_ExtendedFetch(
 			/* this should be refined */
 			else if (result > 10 && result < 20)
 				*(rgfRowStatus + i) = result - 10;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 			else
 				*(rgfRowStatus + i) = SQL_ROW_SUCCESS;
 		}
@@ -1721,7 +1721,7 @@ SC_pos_add(StatementClass *stmt,
 /*
  *	Stuff for updatable cursors end.
  */
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 
 /*
  *	This positions the cursor within a rowset, that was positioned using SQLExtendedFetch.
@@ -1752,7 +1752,7 @@ PGAPI_SetPos(
 	if (stmt->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
 		;
 	else
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	if (fOption != SQL_POSITION && fOption != SQL_REFRESH)
 	{
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
@@ -1798,7 +1798,7 @@ PGAPI_SetPos(
 		case SQL_ADD:
 			return SC_pos_add(stmt, irow);
 	}
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 	/* Reset for SQLGetData */
 	for (i = 0; i < num_cols; i++)
 		bindings[i].data_left = -1;
@@ -1812,7 +1812,7 @@ PGAPI_SetPos(
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 		if (stmt->options.cursor_type == SQL_CURSOR_KEYSET_DRIVEN)
 			SC_pos_reload(stmt, irow, (UWORD *) 0);
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 		stmt->currTuple = stmt->rowset_start + irow - 1;
 		stmt->bind_row = irow;
 		SC_fetch(stmt);

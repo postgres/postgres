@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_listener.h,v 1.11 2001/10/25 05:49:57 momjian Exp $
+ * $Id: pg_listener.h,v 1.12 2001/11/05 17:46:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -60,4 +60,4 @@ typedef FormData_pg_listener *Form_pg_listener;
  * ----------------
  */
 
-#endif	 /* PG_LISTENER_H */
+#endif   /* PG_LISTENER_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.58 2001/10/25 05:50:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.59 2001/11/05 17:46:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ tcl_value(char *value)
 #endif
 	return value;
 }
-#endif	 /* TCL_ARRAYS */
+#endif   /* TCL_ARRAYS */
 
 
 /**********************************

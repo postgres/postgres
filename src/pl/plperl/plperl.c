@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.25 2001/10/25 05:50:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.26 2001/11/05 17:46:39 momjian Exp $
  *
  **********************************************************************/
 
@@ -99,7 +99,7 @@ typedef struct plperl_proc_desc
 	Oid			arg_out_elem[FUNC_MAX_ARGS];
 	int			arg_is_rel[FUNC_MAX_ARGS];
 	SV		   *reference;
-}			plperl_proc_desc;
+}	plperl_proc_desc;
 
 
 /**********************************************************************

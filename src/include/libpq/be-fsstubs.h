@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: be-fsstubs.h,v 1.14 2001/10/28 06:26:07 momjian Exp $
+ * $Id: be-fsstubs.h,v 1.15 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,4 +47,4 @@ extern int	lo_write(int fd, char *buf, int len);
  */
 extern void lo_commit(bool isCommit);
 
-#endif	 /* BE_FSSTUBS_H */
+#endif   /* BE_FSSTUBS_H */

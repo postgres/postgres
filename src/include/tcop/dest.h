@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.27 2001/10/28 06:26:09 momjian Exp $
+ * $Id: dest.h,v 1.28 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,4 +98,4 @@ extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
 extern void UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples);
 
-#endif	 /* DEST_H */
+#endif   /* DEST_H */

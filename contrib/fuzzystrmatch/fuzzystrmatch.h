@@ -169,4 +169,4 @@ char		_codes[26] = {
 /* These prevent GH from becoming F */
 #define NOGHTOF(c)	(ENCODE(c) & 16)	/* BDH */
 
-#endif	 /* FUZZYSTRMATCH_H */
+#endif   /* FUZZYSTRMATCH_H */

@@ -445,11 +445,11 @@ updateCommons(const ConnInfo *ci)
 	{
 		sprintf(tmp, "%d", comval->unique_index);
 		SQLWritePrivateProfileString(sectionName, INI_UNIQUEINDEX, tmp,
-			fileName);
+									 fileName);
 
-	 	sprintf(tmp, "%d", comval->onlyread);
-	 	SQLWritePrivateProfileString(sectionName, INI_READONLY, tmp,
-			fileName);
+		sprintf(tmp, "%d", comval->onlyread);
+		SQLWritePrivateProfileString(sectionName, INI_READONLY, tmp,
+									 fileName);
 	}
 
 	sprintf(tmp, "%d", comval->use_declarefetch);
@@ -497,7 +497,7 @@ updateCommons(const ConnInfo *ci)
 	 * comval->conn_settings, fileName);
 	 */
 }
-#endif	 /* WIN32 */
+#endif   /* WIN32 */
 
 
 void

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.42 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.43 2001/11/05 17:46:31 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -141,7 +141,7 @@ MainLoop(FILE *source)
 		 * ready
 		 */
 		pqsignal(SIGINT, handle_sigint);		/* control-C => cancel */
-#endif	 /* not WIN32 */
+#endif   /* not WIN32 */
 
 		if (slashCmdStatus == CMD_NEWEDIT)
 		{

@@ -251,7 +251,7 @@ CC_Constructor()
 		memset(&rv->connInfo, 0, sizeof(ConnInfo));
 #ifdef	DRIVER_CURSOR_IMPLEMENT
 		rv->connInfo.updatable_cursors = 1;
-#endif	 /* DRIVER_CURSOR_IMPLEMENT */
+#endif   /* DRIVER_CURSOR_IMPLEMENT */
 		memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
 		rv->sock = SOCK_Constructor(rv);
 		if (!rv->sock)
@@ -282,7 +282,7 @@ CC_Constructor()
 #ifdef	MULTIBYTE
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 
 		/* Initialize statement options to defaults */
@@ -313,7 +313,7 @@ CC_Destructor(ConnectionClass *self)
 		free(self->client_encoding);
 	if (self->server_encoding)
 		free(self->server_encoding);
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 	/* Free up statement holders */
 	if (self->stmts)
 	{
@@ -525,7 +525,7 @@ CC_connect(ConnectionClass *self, char do_password)
 
 #ifdef	MULTIBYTE
 	char	   *encoding;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 	mylog("%s: entering...\n", func);
 

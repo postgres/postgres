@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.40 2001/10/28 06:25:59 momjian Exp $
+ * $Id: xact.h,v 1.41 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,4 +135,4 @@ extern Datum xidout(PG_FUNCTION_ARGS);
 extern Datum xideq(PG_FUNCTION_ARGS);
 extern Datum xid_age(PG_FUNCTION_ARGS);
 
-#endif	 /* XACT_H */
+#endif   /* XACT_H */

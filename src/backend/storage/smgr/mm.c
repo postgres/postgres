@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.29 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.30 2001/11/05 17:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ typedef struct MMCacheTag
 	Oid			mmct_dbid;
 	Oid			mmct_relid;
 	BlockNumber mmct_blkno;
-}			MMCacheTag;
+}	MMCacheTag;
 
 /*
  *	Shared-memory hash table for main memory relations contains
@@ -46,7 +46,7 @@ typedef struct MMHashEntry
 {
 	MMCacheTag	mmhe_tag;
 	int			mmhe_bufno;
-}			MMHashEntry;
+}	MMHashEntry;
 
 /*
  * MMRelTag -- Unique identifier for each relation that is stored in the
@@ -57,7 +57,7 @@ typedef struct MMRelTag
 {
 	Oid			mmrt_dbid;
 	Oid			mmrt_relid;
-}			MMRelTag;
+}	MMRelTag;
 
 /*
  *	Shared-memory hash table for # blocks in main memory relations contains
@@ -68,7 +68,7 @@ typedef struct MMRelHashEntry
 {
 	MMRelTag	mmrhe_tag;
 	int			mmrhe_nblocks;
-}			MMRelHashEntry;
+}	MMRelHashEntry;
 
 #define MMNBUFFERS		10
 #define MMNRELATIONS	2
@@ -562,4 +562,4 @@ MMShmemSize()
 	return size;
 }
 
-#endif	 /* STABLE_MEMORY_STORAGE */
+#endif   /* STABLE_MEMORY_STORAGE */

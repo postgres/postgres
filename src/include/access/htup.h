@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.50 2001/10/28 06:25:59 momjian Exp $
+ * $Id: htup.h,v 1.51 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,4 +276,4 @@ typedef HeapTupleData *HeapTuple;
 #define HeapTupleHasExtended(tuple) \
 		((((HeapTuple)(tuple))->t_data->t_infomask & HEAP_HASEXTENDED) != 0)
 
-#endif	 /* HTUP_H */
+#endif   /* HTUP_H */

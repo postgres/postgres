@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.49 2001/10/25 05:49:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.50 2001/11/05 17:46:24 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -197,7 +197,7 @@ TransactionIdIsInProgress(TransactionId transactionId)
 
 	return TransactionLogTest(transactionId, TRANSACTION_STATUS_IN_PROGRESS);
 }
-#endif	 /* NOT_USED */
+#endif   /* NOT_USED */
 
 /* --------------------------------
  *		TransactionId Commit

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.12 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.13 2001/11/05 17:46:30 momjian Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -41,4 +41,4 @@ bool do_pset(const char *param,
 		printQueryOpt *popt,
 		bool quiet);
 
-#endif	 /* COMMAND_H */
+#endif   /* COMMAND_H */

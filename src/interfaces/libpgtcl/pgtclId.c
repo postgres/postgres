@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.28 2001/10/25 05:50:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.29 2001/11/05 17:46:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,7 +497,7 @@ typedef struct
 	Tcl_Event	header;			/* Standard Tcl event info */
 	PGnotify	info;			/* Notify name from SQL server */
 	Pg_ConnectionId *connid;	/* Connection for server */
-}			NotifyEvent;
+}	NotifyEvent;
 
 /* Dispatch a NotifyEvent that has reached the front of the event queue */
 

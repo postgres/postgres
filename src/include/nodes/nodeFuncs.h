@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeFuncs.h,v 1.15 2001/10/28 06:26:07 momjian Exp $
+ * $Id: nodeFuncs.h,v 1.16 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,4 +21,4 @@ extern bool var_is_outer(Var *var);
 extern bool var_is_rel(Var *var);
 extern Oper *replace_opid(Oper *oper);
 
-#endif	 /* NODEFUNCS_H */
+#endif   /* NODEFUNCS_H */

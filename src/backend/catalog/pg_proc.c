@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.62 2001/10/25 05:49:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.63 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ ProcedureCreate(char *procedureName,
 				return retval;
 #else
 			elog(ERROR, "lookup for procedure by source needs fix (Jan)");
-#endif	 /* SETS_FIXED */
+#endif   /* SETS_FIXED */
 		}
 	}
 

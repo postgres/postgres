@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: osf.h,v 1.5 2001/10/28 06:25:47 momjian Exp $
+ * $Id: osf.h,v 1.6 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,4 +33,4 @@
 #define  pg_dlclose(h)	dlclose(h)
 #define  pg_dlerror()	dlerror()
 
-#endif	 /* PORT_PROTOS_H */
+#endif   /* PORT_PROTOS_H */

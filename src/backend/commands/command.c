@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.149 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.150 2001/11/05 17:46:24 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -819,7 +819,7 @@ typedef struct SysScanDescData
 	IndexScanDesc iscan;
 	HeapTupleData tuple;
 	Buffer		buffer;
-}			SysScanDescData, *SysScanDesc;
+}	SysScanDescData, *SysScanDesc;
 
 static void *
 systable_beginscan(Relation rel, const char *indexRelname, int nkeys, ScanKey entry)
@@ -1017,7 +1017,7 @@ RemoveColumnReferences(Oid reloid, int attnum, bool checkonly, HeapTuple reltup)
 
 	return checkok;
 }
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 
 /*
  * ALTER TABLE DROP COLUMN
@@ -1174,7 +1174,7 @@ AlterTableDropColumn(const char *relationName,
 	heap_close(rel, NoLock);
 #else
 	elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 }
 
 

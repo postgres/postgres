@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_target.h,v 1.22 2001/10/28 06:26:08 momjian Exp $
+ * $Id: parse_target.h,v 1.23 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,4 @@ extern Node *CoerceTargetExpr(ParseState *pstate, Node *expr,
 extern List *checkInsertTargets(ParseState *pstate, List *cols,
 				   List **attrnos);
 
-#endif	 /* PARSE_TARGET_H */
+#endif   /* PARSE_TARGET_H */

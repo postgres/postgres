@@ -1,5 +1,5 @@
 /*
- * $Id: aix.h,v 1.8 2001/10/28 06:25:47 momjian Exp $
+ * $Id: aix.h,v 1.9 2001/11/05 17:46:27 momjian Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -53,7 +53,7 @@ extern		"C"
 #ifdef __cplusplus
 }
 #endif
-#endif	 /* HAVE_DLOPEN */
+#endif   /* HAVE_DLOPEN */
 
 #include "utils/dynamic_loader.h"
 
@@ -62,4 +62,4 @@ extern		"C"
 #define  pg_dlclose dlclose
 #define  pg_dlerror dlerror
 
-#endif	 /* PORT_PROTOS_H */
+#endif   /* PORT_PROTOS_H */

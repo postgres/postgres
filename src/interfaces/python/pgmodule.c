@@ -72,15 +72,15 @@ const char *__movename[5] =
 
 #ifndef NO_DIRECT
 #define DIRECT_ACCESS	1		/* enables direct access functions */
-#endif	 /* NO_DIRECT */
+#endif   /* NO_DIRECT */
 
 #ifndef NO_LARGE
 #define LARGE_OBJECTS	1		/* enables large objects support */
-#endif	 /* NO_LARGE */
+#endif   /* NO_LARGE */
 
 #ifndef NO_DEF_VAR
 #define DEFAULT_VARS	1		/* enables default variables use */
-#endif	 /* NO_DEF_VAR */
+#endif   /* NO_DEF_VAR */
 
 #ifdef MS_WIN32
 #define NO_SNPRINTF 1
@@ -99,7 +99,7 @@ static PyObject *pg_default_tty;	/* default debug tty */
 static PyObject *pg_default_port;		/* default connection port */
 static PyObject *pg_default_user;		/* default username */
 static PyObject *pg_default_passwd;		/* default password */
-#endif	 /* DEFAULT_VARS */
+#endif   /* DEFAULT_VARS */
 
 DL_EXPORT(void) init_pg(void);
 int		   *get_type_array(PGresult *result, int nfields);
@@ -115,7 +115,7 @@ typedef struct
 	int			valid;			/* validity flag */
 	PGconn	   *cnx;			/* PostGres connection handle */
 	PGresult   *last_result;	/* last result content */
-}			pgobject;
+}	pgobject;
 
 staticforward PyTypeObject PgType;
 
@@ -144,7 +144,7 @@ typedef struct
 	int			result_type;	/* type of previous result */
 	long		current_pos;	/* current position in last result */
 	long		num_rows;		/* number of (affected) rows */
-}			pgqueryobject;
+}	pgqueryobject;
 
 staticforward PyTypeObject PgQueryType;
 
@@ -163,7 +163,7 @@ typedef struct
 	int			current_row;	/* current selected row */
 	int			max_row;		/* number of rows in the result */
 	int			num_fields;		/* number of fields in each row */
-}			pgsourceobject;
+}	pgsourceobject;
 
 staticforward PyTypeObject PgSourceType;
 
@@ -179,12 +179,12 @@ typedef struct
 	pgobject * pgcnx;			/* parent connection object */
 	Oid			lo_oid;			/* large object oid */
 	int			lo_fd;			/* large object fd */
-}			pglargeobject;
+}	pglargeobject;
 
 staticforward PyTypeObject PglargeType;
 
 #define is_pglargeobject(v) ((v)->ob_type == &PglargeType)
-#endif	 /* LARGE_OBJECTS */
+#endif   /* LARGE_OBJECTS */
 
 /* --------------------------------------------------------------------- */
 /* INTERNAL FUNCTIONS */
@@ -235,7 +235,7 @@ check_lo_obj(pglargeobject * self, int level)
 
 	return 1;
 }
-#endif	 /* LARGE_OBJECTS */
+#endif   /* LARGE_OBJECTS */
 
 /* checks source object validity */
 static int
@@ -1450,7 +1450,7 @@ staticforward PyTypeObject PglargeType = {
 	0,							/* tp_as_mapping */
 	0,							/* tp_hash */
 };
-#endif	 /* LARGE_OBJECTS */
+#endif   /* LARGE_OBJECTS */
 
 
 /* --------------------------------------------------------------------- */
@@ -1511,7 +1511,7 @@ pgconnect(pgobject * self, PyObject * args, PyObject * dict)
 
 	if ((!pgpasswd) && (pg_default_passwd != Py_None))
 		pgpasswd = PyString_AsString(pg_default_passwd);
-#endif	 /* DEFAULT_VARS */
+#endif   /* DEFAULT_VARS */
 
 	if ((npgobj = (pgobject *) pgobject_New()) == NULL)
 		return NULL;
@@ -2335,7 +2335,7 @@ pg_endcopy(pgobject * self, PyObject * args)
 	Py_INCREF(Py_None);
 	return Py_None;
 }
-#endif	 /* DIRECT_ACCESS */
+#endif   /* DIRECT_ACCESS */
 
 
 static PyObject *
@@ -2623,13 +2623,13 @@ static struct PyMethodDef pgobj_methods[] = {
 	{"putline", (PyCFunction) pg_putline, 1, pg_putline__doc__},
 	{"getline", (PyCFunction) pg_getline, 1, pg_getline__doc__},
 	{"endcopy", (PyCFunction) pg_endcopy, 1, pg_endcopy__doc__},
-#endif	 /* DIRECT_ACCESS */
+#endif   /* DIRECT_ACCESS */
 
 #ifdef LARGE_OBJECTS
 	{"locreate", (PyCFunction) pg_locreate, 1, pg_locreate__doc__},
 	{"getlo", (PyCFunction) pg_getlo, 1, pg_getlo__doc__},
 	{"loimport", (PyCFunction) pg_loimport, 1, pg_loimport__doc__},
-#endif	 /* LARGE_OBJECTS */
+#endif   /* LARGE_OBJECTS */
 
 	{NULL, NULL}				/* sentinel */
 };
@@ -3119,7 +3119,7 @@ pgsetdefport(PyObject * self, PyObject * args)
 
 	return old;
 }
-#endif	 /* DEFAULT_VARS */
+#endif   /* DEFAULT_VARS */
 
 /* List of functions defined in the module */
 
@@ -3140,7 +3140,7 @@ static struct PyMethodDef pg_methods[] = {
 	{"get_defuser", pggetdefuser, 1, getdefuser__doc__},
 	{"set_defuser", pgsetdefuser, 1, setdefuser__doc__},
 	{"set_defpasswd", pgsetdefpasswd, 1, setdefpasswd__doc__},
-#endif	 /* DEFAULT_VARS */
+#endif   /* DEFAULT_VARS */
 	{NULL, NULL}				/* sentinel */
 };
 
@@ -3187,7 +3187,7 @@ init_pg(void)
 	PyDict_SetItemString(dict, "SEEK_SET", PyInt_FromLong(SEEK_SET));
 	PyDict_SetItemString(dict, "SEEK_CUR", PyInt_FromLong(SEEK_CUR));
 	PyDict_SetItemString(dict, "SEEK_END", PyInt_FromLong(SEEK_END));
-#endif	 /* LARGE_OBJECTS */
+#endif   /* LARGE_OBJECTS */
 
 #ifdef DEFAULT_VARS
 	/* prepares default values */
@@ -3205,7 +3205,7 @@ init_pg(void)
 	pg_default_user = Py_None;
 	Py_INCREF(Py_None);
 	pg_default_passwd = Py_None;
-#endif	 /* DEFAULT_VARS */
+#endif   /* DEFAULT_VARS */
 
 	/* Check for errors */
 	if (PyErr_Occurred())

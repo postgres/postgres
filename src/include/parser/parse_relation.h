@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.27 2001/10/28 06:26:08 momjian Exp $
+ * $Id: parse_relation.h,v 1.28 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,4 +48,4 @@ extern int	attnameAttNum(Relation rd, char *a);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);
 
-#endif	 /* PARSE_RELATION_H */
+#endif   /* PARSE_RELATION_H */

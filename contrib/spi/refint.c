@@ -17,7 +17,7 @@ typedef struct
 	char	   *ident;
 	int			nplans;
 	void	  **splan;
-}			EPlan;
+}	EPlan;
 
 static EPlan *FPlans = NULL;
 static int	nFPlans = 0;

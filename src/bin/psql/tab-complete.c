@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.40 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.41 2001/11/05 17:46:31 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1112,6 +1112,6 @@ dequote_file_name(char *text, char quote_char)
 
 	return s;
 }
-#endif	 /* 0 */
+#endif   /* 0 */
 
-#endif	 /* USE_READLINE */
+#endif   /* USE_READLINE */

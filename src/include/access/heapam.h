@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.71 2001/11/02 16:30:29 tgl Exp $
+ * $Id: heapam.h,v 1.72 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ extern Datum nocachegetattr(HeapTuple tup, int attnum,
 
 extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			bool *isnull);
-#endif	 /* defined(DISABLE_COMPLEX_MACRO) */
+#endif   /* defined(DISABLE_COMPLEX_MACRO) */
 
 
 /* ----------------
@@ -139,6 +139,7 @@ extern void relation_close(Relation relation, LOCKMODE lockmode);
 
 extern Relation heap_open(Oid relationId, LOCKMODE lockmode);
 extern Relation heap_openr(const char *relationName, LOCKMODE lockmode);
+
 #define heap_close(r,l)  relation_close(r,l)
 
 extern HeapScanDesc heap_beginscan(Relation relation, int atend,
@@ -186,4 +187,4 @@ extern HeapTuple heap_modifytuple(HeapTuple tuple,
 extern void heap_freetuple(HeapTuple tuple);
 extern HeapTuple heap_addheader(int natts, Size structlen, void *structure);
 
-#endif	 /* HEAPAM_H */
+#endif   /* HEAPAM_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_inherits.h,v 1.12 2001/10/25 05:49:57 momjian Exp $
+ * $Id: pg_inherits.h,v 1.13 2001/11/05 17:46:32 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -54,4 +54,4 @@ typedef FormData_pg_inherits *Form_pg_inherits;
 #define Anum_pg_inherits_inhparent		2
 #define Anum_pg_inherits_inhseqno		3
 
-#endif	 /* PG_INHERITS_H */
+#endif   /* PG_INHERITS_H */

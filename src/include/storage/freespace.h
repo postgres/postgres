@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freespace.h,v 1.5 2001/10/28 06:26:08 momjian Exp $
+ * $Id: freespace.h,v 1.6 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,4 +48,4 @@ extern void FreeSpaceMapForgetDatabase(Oid dbid);
 extern void DumpFreeSpace(void);
 #endif
 
-#endif	 /* FREESPACE_H */
+#endif   /* FREESPACE_H */

@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
-#endif	 /* LIBC_SCCS and not lint */
+#endif   /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <nlist.h>
@@ -82,6 +82,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 	return NULL;
 #else
 	void	   *vp;
+
 #ifndef __ELF__
 	char		buf[BUFSIZ];
 

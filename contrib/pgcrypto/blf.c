@@ -48,7 +48,7 @@
 #define inline __inline
 #else							/* !__GNUC__ */
 #define inline
-#endif	 /* !__GNUC__ */
+#endif   /* !__GNUC__ */
 
 /* Function for Feistel Networks */
 

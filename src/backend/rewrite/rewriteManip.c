@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.60 2001/10/28 06:25:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.61 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -884,7 +884,7 @@ typedef struct
 	int		   *modified;
 	int		   *badsql;
 	int			sublevels_up;
-}			HandleRIRAttributeRule_context;
+}	HandleRIRAttributeRule_context;
 
 static Node *
 HandleRIRAttributeRule_mutator(Node *node,
@@ -996,4 +996,4 @@ HandleRIRAttributeRule(Query *parsetree,
 					   (void *) &context, true);
 }
 
-#endif	 /* NOT_USED */
+#endif   /* NOT_USED */

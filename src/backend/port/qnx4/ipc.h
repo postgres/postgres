@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/ipc.h,v 1.5 2001/10/28 06:25:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/ipc.h,v 1.6 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,4 @@
 #define IPC_RMID	0			/* remove identifier */
 #define IPC_STAT	1			/* get shm status */
 
-#endif	 /* _SYS_IPC_H */
+#endif   /* _SYS_IPC_H */

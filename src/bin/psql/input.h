@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.14 2001/10/28 06:25:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.h,v 1.15 2001/11/05 17:46:31 momjian Exp $
  */
 #ifndef INPUT_H
 #define INPUT_H
@@ -40,4 +40,4 @@ char	   *gets_fromFile(FILE *source);
 void		initializeInput(int flags);
 bool		saveHistory(char *fname);
 
-#endif	 /* INPUT_H */
+#endif   /* INPUT_H */

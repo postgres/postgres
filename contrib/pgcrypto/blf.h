@@ -50,7 +50,7 @@ typedef struct BlowfishContext
 {
 	uint32		S[4][256];		/* S-Boxes */
 	uint32		P[BLF_N + 2];	/* Subkeys */
-}			blf_ctx;
+}	blf_ctx;
 
 /* Raw access to customized Blowfish
  *	blf_key is just:

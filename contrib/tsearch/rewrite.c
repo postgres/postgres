@@ -24,7 +24,7 @@ typedef struct NODE
 	struct NODE *left;
 	struct NODE *right;
 	ITEM	   *valnode;
-}			NODE;
+}	NODE;
 
 /*
  * make query tree from plain view of query
@@ -50,7 +50,7 @@ typedef struct
 	ITEM	   *ptr;
 	int4		len;
 	int4		cur;
-}			PLAINTREE;
+}	PLAINTREE;
 
 static void
 plainnode(PLAINTREE * state, NODE * node)

@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.17 2001/10/25 05:50:11 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.18 2001/11/05 17:46:37 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -86,7 +86,7 @@ get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 		case ECPGt_unsigned_long_long:
 			*(unsigned long long int *) var = (unsigned long long int) value;
 			break;
-#endif	 /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_float:
 			*(float *) var = (float) value;
 			break;

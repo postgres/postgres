@@ -54,7 +54,7 @@ typedef struct
 	 */
 	PGresult   *res;
 
-}			dblink_results;
+}	dblink_results;
 
 /*
  * External declarations
@@ -67,4 +67,4 @@ extern Datum dblink_tok(PG_FUNCTION_ARGS);
  */
 dblink_results *init_dblink_results(MemoryContext fn_mcxt);
 
-#endif	 /* DBLINK_H */
+#endif   /* DBLINK_H */

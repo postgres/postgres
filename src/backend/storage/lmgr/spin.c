@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.6 2001/10/28 06:25:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.7 2001/11/05 17:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,4 +187,4 @@ tas_sema(volatile slock_t *lock)
 	return !IpcSemaphoreTryLock(lock->semId, lock->sem);
 }
 
-#endif	 /* !HAS_TEST_AND_SET */
+#endif   /* !HAS_TEST_AND_SET */

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.60 2001/10/25 05:49:59 momjian Exp $
+ * $Id: pqcomm.h,v 1.61 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include <sys/un.h>
 #endif
 #include <netinet/in.h>
-#endif	 /* not WIN32 */
+#endif   /* not WIN32 */
 
 
 #ifndef HAVE_STRUCT_SOCKADDR_UN
@@ -178,4 +178,4 @@ typedef struct CancelRequestPacket
  */
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
 
-#endif	 /* PQCOMM_H */
+#endif   /* PQCOMM_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.30 2001/11/02 16:30:29 tgl Exp $
+ * $Id: genam.h,v 1.31 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,4 +64,4 @@ extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
 					 uint16 numberOfKeys, ScanKey key);
 extern void IndexScanEnd(IndexScanDesc scan);
 
-#endif	 /* GENAM_H */
+#endif   /* GENAM_H */

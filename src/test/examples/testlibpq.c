@@ -28,7 +28,7 @@ main()
 
 #ifdef DEBUG
 	FILE	   *debug;
-#endif	 /* DEBUG */
+#endif   /* DEBUG */
 
 	PGconn	   *conn;
 	PGresult   *res;
@@ -60,7 +60,7 @@ main()
 #ifdef DEBUG
 	debug = fopen("/tmp/trace.out", "w");
 	PQtrace(conn, debug);
-#endif	 /* DEBUG */
+#endif   /* DEBUG */
 
 	/* start a transaction block */
 	res = PQexec(conn, "BEGIN");
@@ -127,7 +127,7 @@ main()
 
 #ifdef DEBUG
 	fclose(debug);
-#endif	 /* DEBUG */
+#endif   /* DEBUG */
 
 	return 0;
 }

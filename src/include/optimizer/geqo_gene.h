@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_gene.h,v 1.12 2001/10/28 06:26:07 momjian Exp $
+ * $Id: geqo_gene.h,v 1.13 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,4 +42,4 @@ typedef struct Pool
 	int			string_length;
 } Pool;
 
-#endif	 /* GEQO_GENE_H */
+#endif   /* GEQO_GENE_H */

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.35 2001/10/28 06:26:09 momjian Exp $
+ * $Id: syscache.h,v 1.36 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,4 +73,4 @@ extern Oid GetSysCacheOid(int cacheId,
 extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
 				AttrNumber attributeNumber, bool *isNull);
 
-#endif	 /* SYSCACHE_H */
+#endif   /* SYSCACHE_H */

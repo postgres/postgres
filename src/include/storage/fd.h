@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.33 2001/10/28 06:26:08 momjian Exp $
+ * $Id: fd.h,v 1.34 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,4 +79,4 @@ extern void RemovePgTempFiles(void);
 extern int	pg_fsync(int fd);
 extern int	pg_fdatasync(int fd);
 
-#endif	 /* FD_H */
+#endif   /* FD_H */

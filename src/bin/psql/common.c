@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.37 2001/10/25 05:49:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.38 2001/11/05 17:46:30 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -306,7 +306,7 @@ handle_sigint(SIGNAL_ARGS)
 	}
 	errno = save_errno;			/* just in case the write changed it */
 }
-#endif	 /* not WIN32 */
+#endif   /* not WIN32 */
 
 
 /*

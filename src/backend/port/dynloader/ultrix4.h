@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ultrix4.h,v 1.9 2001/10/28 06:25:47 momjian Exp $
+ * $Id: ultrix4.h,v 1.10 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,20 +51,20 @@ typedef struct ScnInfo
 	CoreAddr	addr;			/* starting address of the section */
 	SCNHDR		hdr;			/* section header */
 	RELOC	   *relocEntries;	/* relocation entries */
-}			ScnInfo;
+}	ScnInfo;
 
 typedef enum
 {
 	DL_NEEDRELOC,				/* still need relocation */
 	DL_RELOCATED,				/* no relocation necessary */
 	DL_INPROG					/* relocation in progress */
-}			dlRStatus;
+}	dlRStatus;
 
 typedef struct JmpTbl
 {
 	char	   *block;			/* the jump table memory block */
 	struct JmpTbl *next;		/* next block */
-}			JmpTbl;
+}	JmpTbl;
 
 typedef struct dlFile
 {
@@ -94,14 +94,14 @@ typedef struct dlFile
 	JmpTbl	   *jmptable;		/* the jump table for R_JMPADDR */
 
 	struct dlFile *next;		/* next member of the archive */
-}			dlFile;
+}	dlFile;
 
 typedef struct dlSymbol
 {
 	char	   *name;			/* name of the symbol */
 	long		addr;			/* address of the symbol */
 	dlFile	   *objFile;		/* from which file */
-}			dlSymbol;
+}	dlSymbol;
 
 /*
  * prototypes for the dl* interface
@@ -121,4 +121,4 @@ extern char **dl_undefinedSymbols( /* int *count */ );
 extern void dl_printAllSymbols( /* void *handle */ );
 extern void dl_setLibraries( /* char *libs */ );
 
-#endif	 /* _DL_HEADER_ */
+#endif   /* _DL_HEADER_ */

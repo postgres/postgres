@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.38 2001/10/28 06:26:09 momjian Exp $
+ * $Id: acl.h,v 1.39 2001/11/05 17:46:36 momjian Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -208,4 +208,4 @@ extern bool pg_func_ownercheck(Oid userid, char *funcname,
 extern bool pg_aggr_ownercheck(Oid userid, char *aggname,
 				   Oid basetypeID);
 
-#endif	 /* ACL_H */
+#endif   /* ACL_H */

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.13 2001/10/25 05:49:58 momjian Exp $
+ * $Id: pg_version.h,v 1.14 2001/11/05 17:46:33 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -61,4 +61,4 @@ typedef FormData_pg_version *Form_pg_version;
 #define Anum_pg_version_verbaseid		2
 #define Anum_pg_version_vertime			3
 
-#endif	 /* PG_VERSION_H */
+#endif   /* PG_VERSION_H */

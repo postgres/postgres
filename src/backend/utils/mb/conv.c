@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.34 2001/10/28 06:25:54 momjian Exp $
+ * $Id: conv.c,v 1.35 2001/11/05 17:46:30 momjian Exp $
  *
  *
  */
@@ -63,7 +63,7 @@
 #include "Unicode/utf8_to_alt.map"
 #include "Unicode/utf8_to_koi8r.map"
 #include "Unicode/utf8_to_win1251.map"
-#endif	 /* UNICODE_CONVERSION */
+#endif   /* UNICODE_CONVERSION */
 
 /*
  * SJIS alternative code.
@@ -1348,7 +1348,7 @@ utf_to_latin5(unsigned char *utf, unsigned char *iso, int len)
 {
 	utf_to_local(utf, iso, ULmapISO8859_5, sizeof(ULmapISO8859_5) / sizeof(pg_utf_to_local), len);
 }
-#endif	 /* NOT_USED */
+#endif   /* NOT_USED */
 
 /*
  * Cyrillic charsets
@@ -1485,7 +1485,7 @@ latin5_to_utf(unsigned char *iso, unsigned char *utf, int len)
 {
 	local_to_utf(iso, utf, LUmapISO8859_5, sizeof(LUmapISO8859_5) / sizeof(pg_local_to_utf), PG_LATIN5, len);
 }
-#endif	 /* NOT_USED */
+#endif   /* NOT_USED */
 
 #define UTF_ISO8859(_id_) \
 static void \
@@ -1845,4 +1845,4 @@ pg_enconv	pg_enconv_tbl[] =
 	},
 };
 
-#endif	 /* UNICODE_CONVERSION */
+#endif   /* UNICODE_CONVERSION */

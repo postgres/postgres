@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.6 2001/03/22 04:01:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.7 2001/11/05 17:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 typedef struct ImageHdr
 {
 	int			size;
-}			ImageHdr;
+}	ImageHdr;
 
 #define BUFSIZE 10
 

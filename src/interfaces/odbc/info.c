@@ -2839,7 +2839,7 @@ getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *se
 	}
 	return ret;
 }
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 RETCODE		SQL_API
 PGAPI_ForeignKeys(
@@ -2888,7 +2888,7 @@ PGAPI_ForeignKeys(
 				pkt_alloced,
 				fkt_alloced;
 	ConnectionClass *conn;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 	int			i,
 				j,
 				k,
@@ -2950,7 +2950,7 @@ PGAPI_ForeignKeys(
 	QR_set_field_info(stmt->result, 13, "TRIGGER_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
 #if (ODBCVER >= 0x0300)
 	QR_set_field_info(stmt->result, 14, "DEFERRABILITY", PG_TYPE_INT2, 2);
-#endif	 /* ODBCVER >= 0x0300 */
+#endif   /* ODBCVER >= 0x0300 */
 
 	/*
 	 * also, things need to think that this statement is finished so the
@@ -2985,7 +2985,7 @@ PGAPI_ForeignKeys(
 	pkey_text = fkey_text = pkt_text = fkt_text = NULL;
 	pkey_alloced = fkey_alloced = pkt_alloced = fkt_alloced = FALSE;
 	conn = SC_get_conn(stmt);
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 	/*
 	 * Case #2 -- Get the foreign keys in the specified table (fktab) that
@@ -3151,7 +3151,7 @@ PGAPI_ForeignKeys(
 			pkt_text = getClientTableName(conn, pk_table, &pkt_alloced);
 #else
 			pkt_text = pk_table;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 			/* If there is a pk table specified, then check it. */
 			if (pk_table_needed[0] != '\0')
 			{
@@ -3192,7 +3192,7 @@ PGAPI_ForeignKeys(
 				pkey_text = getClientColumnName(conn, pk_table, pkey_ptr, &pkey_alloced);
 #else
 				pkey_text = pkey_ptr;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 				mylog("%s: pkey_ptr='%s', pkey='%s'\n", func, pkey_text, pkey);
 				if (strcmp(pkey_text, pkey))
 				{
@@ -3202,7 +3202,7 @@ PGAPI_ForeignKeys(
 #ifdef	MULTIBYTE
 				if (pkey_alloced)
 					free(pkey_text);
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 				/* Get to next primary key */
 				for (k = 0; k < 2; k++)
 					pkey_ptr += strlen(pkey_ptr) + 1;
@@ -3245,7 +3245,7 @@ PGAPI_ForeignKeys(
 				defer_type = SQL_INITIALLY_IMMEDIATE;
 			else
 				defer_type = SQL_NOT_DEFERRABLE;
-#endif	 /* ODBCVER >= 0x0300 */
+#endif   /* ODBCVER >= 0x0300 */
 
 			/* Get to first primary key */
 			pkey_ptr = trig_args;
@@ -3262,7 +3262,7 @@ PGAPI_ForeignKeys(
 #else
 				pkey_text = pkey_ptr;
 				fkey_text = fkey_ptr;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pkt_text, pkey_text);
 				set_tuplefield_null(&row->tuple[0]);
 				set_tuplefield_string(&row->tuple[1], "");
@@ -3284,7 +3284,7 @@ PGAPI_ForeignKeys(
 				set_tuplefield_string(&row->tuple[13], trig_args);
 #if (ODBCVER >= 0x0300)
 				set_tuplefield_int2(&row->tuple[14], defer_type);
-#endif	 /* ODBCVER >= 0x0300 */
+#endif   /* ODBCVER >= 0x0300 */
 
 				QR_add_tuple(stmt->result, row);
 #ifdef	MULTIBYTE
@@ -3294,7 +3294,7 @@ PGAPI_ForeignKeys(
 				if (pkey_alloced)
 					free(pkey_text);
 				pkey_alloced = FALSE;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 				/* next primary/foreign key */
 				for (i = 0; i < 2; i++)
 				{
@@ -3306,7 +3306,7 @@ PGAPI_ForeignKeys(
 			if (pkt_alloced)
 				free(pkt_text);
 			pkt_alloced = FALSE;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 			result = PGAPI_Fetch(htbl_stmt);
 		}
@@ -3475,7 +3475,7 @@ PGAPI_ForeignKeys(
 				defer_type = SQL_INITIALLY_IMMEDIATE;
 			else
 				defer_type = SQL_NOT_DEFERRABLE;
-#endif	 /* ODBCVER >= 0x0300 */
+#endif   /* ODBCVER >= 0x0300 */
 
 			mylog("Foreign Key Case#1: trig_nargs = %d, num_keys = %d\n", trig_nargs, num_keys);
 
@@ -3492,7 +3492,7 @@ PGAPI_ForeignKeys(
 			fkt_text = getClientTableName(conn, fk_table, &fkt_alloced);
 #else
 			fkt_text = fk_table;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 			/* Get to first foreign key */
 			fkey_ptr = trig_args;
@@ -3507,7 +3507,7 @@ PGAPI_ForeignKeys(
 #else
 				pkey_text = pkey_ptr;
 				fkey_text = fkey_ptr;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_text, fkt_text, fkey_text);
 
 				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
@@ -3538,7 +3538,7 @@ PGAPI_ForeignKeys(
 #if (ODBCVER >= 0x0300)
 				mylog("defer_type = '%s'", defer_type);
 				set_tuplefield_int2(&row->tuple[14], defer_type);
-#endif	 /* ODBCVER >= 0x0300 */
+#endif   /* ODBCVER >= 0x0300 */
 
 				QR_add_tuple(stmt->result, row);
 #ifdef	MULTIBYTE
@@ -3548,7 +3548,7 @@ PGAPI_ForeignKeys(
 				if (fkey_alloced)
 					free(fkey_text);
 				fkey_alloced = FALSE;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 				/* next primary/foreign key */
 				for (j = 0; j < 2; j++)
@@ -3561,7 +3561,7 @@ PGAPI_ForeignKeys(
 			if (fkt_alloced)
 				free(fkt_text);
 			fkt_alloced = FALSE;
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 			result = PGAPI_Fetch(htbl_stmt);
 		}
 	}
@@ -3582,7 +3582,7 @@ PGAPI_ForeignKeys(
 		free(fkt_text);
 	if (fkey_alloced)
 		free(fkey_text);
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 	PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 

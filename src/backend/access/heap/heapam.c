@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.127 2001/11/02 16:30:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.128 2001/11/05 17:46:23 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -156,7 +156,7 @@ heapgettup(Relation relation,
 	elog(DEBUG, "heapgettup: relation(%c)=`%s', %p",
 		 relation->rd_rel->relkind, RelationGetRelationName(relation),
 		 snapshot);
-#endif	 /* !defined(HEAPDEBUGALL) */
+#endif   /* !defined(HEAPDEBUGALL) */
 
 	if (!ItemPointerIsValid(tid))
 	{
@@ -433,7 +433,7 @@ fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 			 )
 		);
 }
-#endif	 /* defined(DISABLE_COMPLEX_MACRO) */
+#endif   /* defined(DISABLE_COMPLEX_MACRO) */
 
 
 /* ----------------------------------------------------------------
@@ -501,12 +501,12 @@ relation_openr(const char *relationName, LOCKMODE lockmode)
 
 	/*
 	 * Check for shared-cache-inval messages before trying to open the
-	 * relation.  This is needed to cover the case where the name identifies
-	 * a rel that has been dropped and recreated since the start of our
-	 * transaction: if we don't flush the old relcache entry then we'll
-	 * latch onto that entry and suffer an error when we do LockRelation.
-	 * Note that relation_open does not need to do this, since a relation's
-	 * OID never changes.
+	 * relation.  This is needed to cover the case where the name
+	 * identifies a rel that has been dropped and recreated since the
+	 * start of our transaction: if we don't flush the old relcache entry
+	 * then we'll latch onto that entry and suffer an error when we do
+	 * LockRelation. Note that relation_open does not need to do this,
+	 * since a relation's OID never changes.
 	 *
 	 * We skip this if asked for NoLock, on the assumption that the caller
 	 * has already ensured some appropriate lock is held.
@@ -757,7 +757,7 @@ elog(DEBUG, "heap_getnext([%s,nkeys=%d],backw=%d) called", \
 #define HEAPDEBUG_1
 #define HEAPDEBUG_2
 #define HEAPDEBUG_3
-#endif	 /* !defined(HEAPDEBUGALL) */
+#endif   /* !defined(HEAPDEBUGALL) */
 
 
 HeapTuple

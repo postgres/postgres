@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_recombination.h,v 1.10 2001/10/25 05:50:05 momjian Exp $
+ * $Id: geqo_recombination.h,v 1.11 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,4 +77,4 @@ extern void ox1(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_
 /* order crossover [OX2] according to Syswerda */
 extern void ox2(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_table);
 
-#endif	 /* GEQO_RECOMBINATION_H */
+#endif   /* GEQO_RECOMBINATION_H */

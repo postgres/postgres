@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.37 2001/10/25 05:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.38 2001/11/05 17:46:29 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -34,7 +34,7 @@
 
 #if defined(DISABLE_XOPEN_NLS)
 #undef _XOPEN_SOURCE
-#endif	 /* DISABLE_XOPEN_NLS */
+#endif   /* DISABLE_XOPEN_NLS */
 
 /* this is the number of cached regular expressions held. */
 #ifndef MAX_CACHED_RES

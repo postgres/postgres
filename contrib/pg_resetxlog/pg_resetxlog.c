@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.9 2001/10/28 06:25:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.10 2001/11/05 17:46:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ typedef struct crc64V0
 {
 	uint32		crc1;
 	uint32		crc2;
-}			crc64V0;
+}	crc64V0;
 
 static uint32 crc_tableV0[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -309,7 +309,7 @@ typedef struct ControlFileDataV0
 	char		lc_collate[LOCALE_NAME_BUFLEN_V0];
 	char		lc_ctype[LOCALE_NAME_BUFLEN_V0];
 	char		archdir[MAXPGPATH];		/* where to move offline log files */
-}			ControlFileDataV0;
+}	ControlFileDataV0;
 
 typedef struct CheckPointV0
 {
@@ -323,7 +323,7 @@ typedef struct CheckPointV0
 	TransactionId nextXid;
 	Oid			nextOid;
 	bool		Shutdown;
-}			CheckPointV0;
+}	CheckPointV0;
 
 typedef struct XLogRecordV0
 {
@@ -334,14 +334,14 @@ typedef struct XLogRecordV0
 	uint16		xl_len;			/* total len of record *data* */
 	uint8		xl_info;
 	RmgrId		xl_rmid;		/* resource manager inserted this record */
-}			XLogRecordV0;
+}	XLogRecordV0;
 
 #define SizeOfXLogRecordV0	DOUBLEALIGN(sizeof(XLogRecordV0))
 
 typedef struct XLogContRecordV0
 {
 	uint16		xl_len;			/* len of data left */
-}			XLogContRecordV0;
+}	XLogContRecordV0;
 
 #define SizeOfXLogContRecordV0	DOUBLEALIGN(sizeof(XLogContRecordV0))
 
@@ -351,7 +351,7 @@ typedef struct XLogPageHeaderDataV0
 {
 	uint32		xlp_magic;
 	uint16		xlp_info;
-}			XLogPageHeaderDataV0;
+}	XLogPageHeaderDataV0;
 
 #define SizeOfXLogPHDV0   DOUBLEALIGN(sizeof(XLogPageHeaderDataV0))
 

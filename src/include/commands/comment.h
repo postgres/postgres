@@ -32,4 +32,4 @@ extern void DeleteComments(Oid oid, Oid classoid);
 
 extern void CreateComments(Oid oid, Oid classoid, int32 subid, char *comment);
 
-#endif	 /* COMMENT_H */
+#endif   /* COMMENT_H */

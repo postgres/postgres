@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.5 2001/10/25 05:49:19 momjian Exp $
+ * $Id: chkpass.c,v 1.6 2001/11/05 17:46:22 momjian Exp $
  * best viewed with tabs set to 4
  */
 
@@ -32,7 +32,7 @@
 typedef struct chkpass
 {
 	char		password[16];
-}			chkpass;
+}	chkpass;
 
 /*
  * Various forward declarations:

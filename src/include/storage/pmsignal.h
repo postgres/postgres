@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pmsignal.h,v 1.1 2001/11/04 19:55:31 tgl Exp $
+ * $Id: pmsignal.h,v 1.2 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ typedef enum
 	PMSIGNAL_WAKEN_CHILDREN,	/* send a NOTIFY signal to all backends */
 
 	NUM_PMSIGNALS				/* Must be last value of enum! */
-} PMSignalReason;
+}	PMSignalReason;
 
 /*
  * prototypes for functions in pmsignal.c
@@ -36,4 +36,4 @@ extern void PMSignalInit(void);
 extern void SendPostmasterSignal(PMSignalReason reason);
 extern bool CheckPostmasterSignal(PMSignalReason reason);
 
-#endif	 /* PMSIGNAL_H */
+#endif   /* PMSIGNAL_H */

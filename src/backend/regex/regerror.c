@@ -55,7 +55,7 @@ static struct rerr
 	int			code;
 	char	   *name;
 	char	   *explain;
-} rerrs[] =
+}	rerrs[] =
 
 {
 	{

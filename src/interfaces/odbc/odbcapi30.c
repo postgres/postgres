@@ -344,7 +344,7 @@ SQLGetStmtAttr(HSTMT StatementHandle,
 			len = 4;
 			break;
 		case SQL_ATTR_AUTO_IPD:	/* 10001 */
-		/* case SQL_ATTR_ROW_BIND_TYPE:	** == SQL_BIND_TYPE(ODBC2.0) */
+			/* case SQL_ATTR_ROW_BIND_TYPE: ** == SQL_BIND_TYPE(ODBC2.0) */
 		case SQL_ATTR_PARAMSET_SIZE:	/* 22 */
 		case SQL_ATTR_PARAM_STATUS_PTR: /* 20 */
 		case SQL_ATTR_PARAMS_PROCESSED_PTR:		/* 21 */
@@ -484,7 +484,7 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 		case SQL_ATTR_APP_ROW_DESC:		/* 10010 */
 		case SQL_ATTR_APP_PARAM_DESC:	/* 10011 */
 		case SQL_ATTR_AUTO_IPD:	/* 10001 */
-		/* case SQL_ATTR_ROW_BIND_TYPE: ** == SQL_BIND_TYPE(ODBC2.0) */
+			/* case SQL_ATTR_ROW_BIND_TYPE: ** == SQL_BIND_TYPE(ODBC2.0) */
 		case SQL_ATTR_IMP_ROW_DESC:		/* 10012 */
 		case SQL_ATTR_IMP_PARAM_DESC:	/* 10013 */
 		case SQL_ATTR_METADATA_ID:		/* 10014 */

@@ -3,7 +3,7 @@
  * user.h
  *
  *
- * $Id: user.h,v 1.15 2001/10/28 06:26:06 momjian Exp $
+ * $Id: user.h,v 1.16 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@ extern void DropGroup(DropGroupStmt *stmt);
 
 extern Datum update_pg_pwd(PG_FUNCTION_ARGS);
 
-#endif	 /* USER_H */
+#endif   /* USER_H */

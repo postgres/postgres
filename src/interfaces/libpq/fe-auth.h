@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.14 2001/10/28 06:26:12 momjian Exp $
+ * $Id: fe-auth.h,v 1.15 2001/11/05 17:46:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #define DEFAULT_CLIENT_AUTHSVC	UNAUTHNAME
 #else							/* KRB4 || KRB5 */
 #define DEFAULT_CLIENT_AUTHSVC	"kerberos"
-#endif	 /* KRB4 || KRB5 */
+#endif   /* KRB4 || KRB5 */
 
 extern int fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			const char *password, char *PQerrormsg);
@@ -42,4 +42,4 @@ extern char *fe_getauthname(char *PQerrormsg);
 #define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */
 #define PG_KRB5_VERSION "PGVER5.1"
 
-#endif	 /* FE_AUTH_H */
+#endif   /* FE_AUTH_H */

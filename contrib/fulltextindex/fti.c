@@ -103,7 +103,7 @@ char	   *StopWords[] = {		/* list of words to skip in indexing */
 	"the",
 	"yes"
 };
-#endif	 /* USE_STOP_WORDS */
+#endif   /* USE_STOP_WORDS */
 
 /* stuff for caching query-plans, stolen from contrib/spi/\*.c */
 typedef struct
@@ -111,7 +111,7 @@ typedef struct
 	char	   *ident;
 	int			nplans;
 	void	  **splan;
-}			EPlan;
+}	EPlan;
 
 static EPlan *InsertPlans = NULL;
 static EPlan *DeletePlans = NULL;
@@ -403,7 +403,7 @@ is_stopword(char *text)
 		else
 			StopHigh = StopMiddle;
 	}
-#endif	 /* USE_STOP_WORDS */
+#endif   /* USE_STOP_WORDS */
 
 	return (false);
 }

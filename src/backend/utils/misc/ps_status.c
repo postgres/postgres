@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.9 2001/10/28 06:25:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.10 2001/11/05 17:46:30 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -83,7 +83,7 @@ static const size_t ps_buffer_size = PS_BUFFER_SIZE;
 #else							/* PS_USE_CLOBBER_ARGV */
 static char *ps_buffer;			/* will point to argv area */
 static size_t ps_buffer_size;	/* space determined at run time */
-#endif	 /* PS_USE_CLOBBER_ARGV */
+#endif   /* PS_USE_CLOBBER_ARGV */
 
 static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
 
@@ -154,7 +154,7 @@ save_ps_display_args(int argc, char *argv[])
 		new_environ[i] = NULL;
 		environ = new_environ;
 	}
-#endif	 /* PS_USE_CLOBBER_ARGV */
+#endif   /* PS_USE_CLOBBER_ARGV */
 }
 
 /*
@@ -190,11 +190,11 @@ init_ps_display(const char *username, const char *dbname,
 #ifdef PS_USE_CHANGE_ARGV
 	save_argv[0] = ps_buffer;
 	save_argv[1] = NULL;
-#endif	 /* PS_USE_CHANGE_ARGV */
+#endif   /* PS_USE_CHANGE_ARGV */
 
 #ifdef PS_USE_CLOBBER_ARGV
 	save_argv[1] = NULL;
-#endif	 /* PS_USE_CLOBBER_ARGV */
+#endif   /* PS_USE_CLOBBER_ARGV */
 
 	/*
 	 * Make fixed prefix of ps display.
@@ -216,7 +216,7 @@ init_ps_display(const char *username, const char *dbname,
 #endif
 
 	ps_buffer_fixed_size = strlen(ps_buffer);
-#endif	 /* not PS_USE_NONE */
+#endif   /* not PS_USE_NONE */
 }
 
 
@@ -256,12 +256,12 @@ set_ps_display(const char *activity)
 		pst.pst_command = ps_buffer;
 		pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
 	}
-#endif	 /* PS_USE_PSTAT */
+#endif   /* PS_USE_PSTAT */
 
 #ifdef PS_USE_PS_STRINGS
 	PS_STRINGS->ps_nargvstr = 1;
 	PS_STRINGS->ps_argvstr = ps_buffer;
-#endif	 /* PS_USE_PS_STRINGS */
+#endif   /* PS_USE_PS_STRINGS */
 
 #ifdef PS_USE_CLOBBER_ARGV
 	{
@@ -273,8 +273,8 @@ set_ps_display(const char *activity)
 			 cp++)
 			*cp = PS_PADDING;
 	}
-#endif	 /* PS_USE_CLOBBER_ARGV */
-#endif	 /* not PS_USE_NONE */
+#endif   /* PS_USE_CLOBBER_ARGV */
+#endif   /* not PS_USE_NONE */
 }
 
 

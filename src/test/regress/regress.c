@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.48 2001/08/16 20:38:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.49 2001/11/05 17:46:40 momjian Exp $
  */
 
 #include "postgres.h"
@@ -214,7 +214,7 @@ typedef struct
 {
 	Point		center;
 	double		radius;
-}			WIDGET;
+}	WIDGET;
 
 WIDGET	   *widget_in(char *str);
 char	   *widget_out(WIDGET * widget);

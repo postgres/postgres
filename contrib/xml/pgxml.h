@@ -24,7 +24,7 @@ typedef struct
 	char	   *results[MAXRESULTS];
 	int32		reslens[MAXRESULTS];
 	char	   *resbuf;			/* pointer to the result buffer for pfree */
-}			XPath_Results;
+}	XPath_Results;
 
 
 
@@ -36,7 +36,7 @@ typedef struct
 	char	   *resptr;
 	int32		reslen;
 	XPath_Results *xpres;
-}			pgxml_udata;
+}	pgxml_udata;
 
 
 #define UD ((pgxml_udata *) userData)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.85 2001/10/25 05:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.86 2001/11/05 17:46:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1934,7 +1934,7 @@ gist_dumptree(Relation r, int level, BlockNumber blk, OffsetNumber coff)
 	ReleaseBuffer(buffer);
 	pfree(pred);
 }
-#endif	 /* defined GISTDEBUG */
+#endif   /* defined GISTDEBUG */
 
 void
 gist_redo(XLogRecPtr lsn, XLogRecord *record)

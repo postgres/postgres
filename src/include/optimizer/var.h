@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: var.h,v 1.16 2001/10/28 06:26:07 momjian Exp $
+ * $Id: var.h,v 1.17 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern bool contain_whole_tuple_var(Node *node, int varno, int levelsup);
 extern bool contain_var_clause(Node *node);
 extern List *pull_var_clause(Node *node, bool includeUpperVars);
 
-#endif	 /* VAR_H */
+#endif   /* VAR_H */

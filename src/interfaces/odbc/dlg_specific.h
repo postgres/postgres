@@ -134,7 +134,7 @@ int CALLBACK ds_optionsProc(HWND hdlg,
 			   WORD wMsg,
 			   WPARAM wParam,
 			   LPARAM lParam);
-#endif	 /* WIN32 */
+#endif   /* WIN32 */
 
 void		updateGlobals(void);
 void		writeDSNinfo(const ConnInfo *ci);

@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.30 2001/10/28 06:26:07 momjian Exp $
+ * $Id: hba.h,v 1.31 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ typedef enum UserAuth
 	uaMD5
 #ifdef USE_PAM
 	,uaPAM
-#endif	 /* USE_PAM */
+#endif   /* USE_PAM */
 } UserAuth;
 
 typedef struct Port hbaPort;

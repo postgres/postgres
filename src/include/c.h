@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.107 2001/10/28 06:25:59 momjian Exp $
+ * $Id: c.h,v 1.108 2001/11/05 17:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@
  */
 #define _priv_CppIdentity(x)x
 #define CppConcat(x, y)			_priv_CppIdentity(x)y
-#endif	 /* !HAVE_STRINGIZE */
+#endif   /* !HAVE_STRINGIZE */
 
 /*
  * dummyret is used to set return values in macros that use ?: to make
@@ -162,8 +162,8 @@ typedef char bool;
 #ifndef false
 #define false	((bool) 0)
 #endif
-#endif	 /* not C++ */
-#endif	 /* __BEOS__ */
+#endif   /* not C++ */
+#endif   /* __BEOS__ */
 
 typedef bool *BoolPtr;
 
@@ -208,7 +208,7 @@ typedef char *Pointer;
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
-#endif	 /* __BEOS__ */
+#endif   /* __BEOS__ */
 
 /*
  * uintN
@@ -220,7 +220,7 @@ typedef signed int int32;		/* == 32 bits */
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
-#endif	 /* __BEOS__ */
+#endif   /* __BEOS__ */
 
 /*
  * boolN
@@ -286,7 +286,7 @@ typedef unsigned long int uint64;
 #define INT64_IS_BUSTED
 #endif
 #endif
-#endif	 /* __BEOS__ */
+#endif   /* __BEOS__ */
 
 /*
  * Size
@@ -436,7 +436,7 @@ typedef NameData *Name;
  */
 #ifndef offsetof
 #define offsetof(type, field)	((long) &((type *)0)->field)
-#endif	 /* offsetof */
+#endif   /* offsetof */
 
 /*
  * lengthof
@@ -646,4 +646,4 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
  * ----------------
  */
 
-#endif	 /* C_H */
+#endif   /* C_H */

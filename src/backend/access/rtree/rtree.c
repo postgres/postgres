@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.67 2001/10/28 06:25:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.68 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1340,7 +1340,7 @@ _rtdump(Relation r)
 		ReleaseBuffer(buf);
 	}
 }
-#endif	 /* defined RTDEBUG */
+#endif   /* defined RTDEBUG */
 
 void
 rtree_redo(XLogRecPtr lsn, XLogRecord *record)

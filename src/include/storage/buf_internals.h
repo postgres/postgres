@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.53 2001/10/28 06:26:08 momjian Exp $
+ * $Id: buf_internals.h,v 1.54 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,8 +145,8 @@ typedef struct _bmtrace
 #define BMT_ALLOCNOTFND 2
 #define BMT_DEALLOC		3
 
-}			bmtrace;
-#endif	 /* BMTRACE */
+}	bmtrace;
+#endif   /* BMTRACE */
 
 
 /*
@@ -184,4 +184,4 @@ extern int	FlushLocalBuffer(Buffer buffer, bool sync, bool release);
 extern void LocalBufferSync(void);
 extern void ResetLocalBufferPool(void);
 
-#endif	 /* BUFMGR_INTERNALS_H */
+#endif   /* BUFMGR_INTERNALS_H */

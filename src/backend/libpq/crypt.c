@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.41 2001/11/02 18:39:57 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.42 2001/11/05 17:46:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,8 @@
 #define CRYPT_PWD_FILE	"pg_pwd"
 
 
-static char	  **pwd_cache = NULL;
-static int		pwd_cache_count = 0;
+static char **pwd_cache = NULL;
+static int	pwd_cache_count = 0;
 
 /*
  * crypt_getpwdfilename --- get full pathname of password file
@@ -91,8 +91,8 @@ compar_user(const void *user_a, const void *user_b)
 	login_b = *((char **) user_b);
 
 	/*
-	 * We only really want to compare the user logins which are first
-	 * and are terminated by CRYPT_PWD_FILE_SEPSTR.  (NB: this code
+	 * We only really want to compare the user logins which are first and
+	 * are terminated by CRYPT_PWD_FILE_SEPSTR.  (NB: this code
 	 * effectively assumes that CRYPT_PWD_FILE_SEPSTR is just one char.)
 	 */
 	len_a = strcspn(login_a, CRYPT_PWD_FILE_SEPSTR);
@@ -134,10 +134,10 @@ load_password_cache(void)
 	}
 
 	/*
-	 * Read the file and store its lines in current memory context,
-	 * which we expect will be PostmasterContext.  That context will
-	 * live as long as we need the cache to live, ie, until just after
-	 * each postmaster child has completed client authentication.
+	 * Read the file and store its lines in current memory context, which
+	 * we expect will be PostmasterContext.  That context will live as
+	 * long as we need the cache to live, ie, until just after each
+	 * postmaster child has completed client authentication.
 	 */
 	while (fgets(buffer, sizeof(buffer), pwd_file) != NULL)
 	{

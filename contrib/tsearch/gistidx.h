@@ -46,7 +46,7 @@ typedef struct
 	int4		len;
 	int4		flag;
 	char		data[1];
-}			GISTTYPE;
+}	GISTTYPE;
 
 #define ARRKEY		0x01
 #define SIGNKEY		0x02

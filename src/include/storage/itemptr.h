@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.20 2001/10/28 06:26:09 momjian Exp $
+ * $Id: itemptr.h,v 1.21 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,4 +143,4 @@ typedef ItemPointerData *ItemPointer;
 
 extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
 
-#endif	 /* ITEMPTR_H */
+#endif   /* ITEMPTR_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.30 2001/10/25 05:50:10 momjian Exp $
+ * $Id: portal.h,v 1.31 2001/11/05 17:46:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,4 +67,4 @@ extern void PortalSetQuery(Portal portal, QueryDesc *queryDesc,
 			   TupleDesc attinfo, EState *state,
 			   void (*cleanup) (Portal portal));
 
-#endif	 /* PORTAL_H */
+#endif   /* PORTAL_H */

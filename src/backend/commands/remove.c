@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.64 2001/10/25 05:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.65 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ AttributeAndRelationRemove(Oid typeOid)
 	}
 	heap_close(rel, RowExclusiveLock);
 }
-#endif	 /* NOTYET */
+#endif   /* NOTYET */
 
 /*
  *	TypeRemove

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.42 2001/10/28 06:26:07 momjian Exp $
+ * $Id: cost.h,v 1.43 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,4 +95,4 @@ extern Selectivity clause_selectivity(Query *root,
 				   Node *clause,
 				   int varRelid);
 
-#endif	 /* COST_H */
+#endif   /* COST_H */

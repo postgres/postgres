@@ -62,4 +62,4 @@
  /* NOTICE:  BlankPortalAssignName: portal * already exists */
 #define ECPG_NOTICE_PORTAL_EXISTS	   -605
 
-#endif	 /* !_ECPG_ERROR_H */
+#endif   /* !_ECPG_ERROR_H */

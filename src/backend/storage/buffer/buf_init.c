@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.46 2001/10/25 05:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.47 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ bmtrace    *TraceBuf;
 long	   *CurTraceBuf;
 
 #define BMT_LIMIT		200
-#endif	 /* BMTRACE */
+#endif   /* BMTRACE */
 int			ShowPinTrace = 0;
 
 int			Data_Descriptors;

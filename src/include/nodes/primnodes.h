@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.56 2001/10/28 06:26:07 momjian Exp $
+ * $Id: primnodes.h,v 1.57 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,4 +550,4 @@ typedef struct FromExpr
 	Node	   *quals;			/* qualifiers on join, if any */
 } FromExpr;
 
-#endif	 /* PRIMNODES_H */
+#endif   /* PRIMNODES_H */

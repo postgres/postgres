@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.118 2001/10/25 05:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.119 2001/11/05 17:46:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,7 +350,7 @@ BufferAlloc(Relation reln,
 		}
 #ifdef BMTRACE
 		_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCFND);
-#endif	 /* BMTRACE */
+#endif   /* BMTRACE */
 
 		if (!(*foundPtr))
 			StartBufferIO(buf, true);
@@ -558,7 +558,7 @@ BufferAlloc(Relation reln,
 
 #ifdef BMTRACE
 	_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCNOTFND);
-#endif	 /* BMTRACE */
+#endif   /* BMTRACE */
 
 	LWLockRelease(BufMgrLock);
 
@@ -1881,7 +1881,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 
 	kill(getpid(), SIGILL);
 }
-#endif	 /* BMTRACE */
+#endif   /* BMTRACE */
 
 /*
  * SetBufferCommitInfoNeedsSave

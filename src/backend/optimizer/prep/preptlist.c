@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.45 2001/11/02 20:23:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.46 2001/11/05 17:46:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,7 +202,7 @@ expand_targetlist(List *tlist, int command_type,
 					if (COLUMN_IS_DROPPED(att_tup))
 						new_expr = (Node *) makeNullConst(atttype);
 					else
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 						new_expr = (Node *) makeVar(result_relation,
 													attrno,
 													atttype,
@@ -211,7 +211,7 @@ expand_targetlist(List *tlist, int command_type,
 					break;
 				default:
 					elog(ERROR, "expand_targetlist: unexpected command_type");
-					new_expr = NULL; /* keep compiler quiet */
+					new_expr = NULL;	/* keep compiler quiet */
 					break;
 			}
 
@@ -373,7 +373,7 @@ build_column_default(Relation rel, int attrno)
 		{
 			if (attrno == defval[ndef].adnum)
 			{
-				Oid		type_id;
+				Oid			type_id;
 
 				/*
 				 * Found it, convert string representation to node tree.
@@ -381,10 +381,11 @@ build_column_default(Relation rel, int attrno)
 				expr = stringToNode(defval[ndef].adbin);
 
 				/*
-				 * Make sure the value is coerced to the target column type
-				 * (might not be right type yet if it's not a constant!)
-				 * This should match the parser's processing of non-defaulted
-				 * expressions --- see updateTargetListEntry().
+				 * Make sure the value is coerced to the target column
+				 * type (might not be right type yet if it's not a
+				 * constant!) This should match the parser's processing of
+				 * non-defaulted expressions --- see
+				 * updateTargetListEntry().
 				 */
 				type_id = exprType(expr);
 
@@ -392,6 +393,7 @@ build_column_default(Relation rel, int attrno)
 				{
 					expr = CoerceTargetExpr(NULL, expr, type_id,
 											atttype, atttypmod);
+
 					/*
 					 * This really shouldn't fail; should have checked the
 					 * default's type when it was created ...
@@ -418,13 +420,15 @@ build_column_default(Relation rel, int attrno)
 
 	/*
 	 * No per-column default, so look for a default for the type itself.
-	 * If there isn't one, we generate a NULL constant of the correct type.
+	 * If there isn't one, we generate a NULL constant of the correct
+	 * type.
 	 */
 	if (att_tup->attisset)
 	{
 		/*
 		 * Set attributes are represented as OIDs no matter what the set
-		 * element type is, and the element type's default is irrelevant too.
+		 * element type is, and the element type's default is irrelevant
+		 * too.
 		 */
 		hasdefault = false;
 		typedefault = (Datum) 0;
@@ -440,7 +444,7 @@ build_column_default(Relation rel, int attrno)
 			typedefault = (Datum) 0;
 		}
 		else
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 			hasdefault = get_typdefault(atttype, &typedefault);
 
 		get_typlenbyval(atttype, &typlen, &typbyval);
@@ -451,12 +455,12 @@ build_column_default(Relation rel, int attrno)
 							  typedefault,
 							  !hasdefault,
 							  typbyval,
-							  false, /* not a set */
+							  false,	/* not a set */
 							  false);
 
 	/*
 	 * If the column is a fixed-length type, it may need a length coercion
-	 * as well as a type coercion.  But NULLs don't need that.
+	 * as well as a type coercion.	But NULLs don't need that.
 	 */
 	if (hasdefault)
 		expr = coerce_type_typmod(NULL, expr,

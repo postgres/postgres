@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSort.h,v 1.13 2001/10/28 06:26:06 momjian Exp $
+ * $Id: nodeSort.h,v 1.14 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,4 +24,4 @@ extern void ExecSortMarkPos(Sort *node);
 extern void ExecSortRestrPos(Sort *node);
 extern void ExecReScanSort(Sort *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif	 /* NODESORT_H */
+#endif   /* NODESORT_H */

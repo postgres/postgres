@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.150 2001/11/05 05:00:14 tgl Exp $
+ * $Id: parsenodes.h,v 1.151 2001/11/05 17:46:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1355,4 +1355,4 @@ typedef struct SortClause
  */
 typedef SortClause GroupClause;
 
-#endif	 /* PARSENODES_H */
+#endif   /* PARSENODES_H */

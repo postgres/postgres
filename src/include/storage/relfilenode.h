@@ -19,4 +19,4 @@ typedef struct RelFileNode
 	((node1).relNode == (node2).relNode && \
 	 (node1).tblNode == (node2).tblNode)
 
-#endif	 /* RELFILENODE_H */
+#endif   /* RELFILENODE_H */

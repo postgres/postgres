@@ -18,14 +18,14 @@ typedef struct
 {
 	uint16		len;
 	uint16		pos;
-}			WordEntry;
+}	WordEntry;
 
 typedef struct
 {
 	int4		len;
 	int4		size;
 	char		data[1];
-}			txtidx;
+}	txtidx;
 
 #define DATAHDRSIZE (sizeof(int4)*2)
 #define CALCDATASIZE(x, lenstr) ( x * sizeof(WordEntry) + DATAHDRSIZE + lenstr )
@@ -41,7 +41,7 @@ typedef struct
 	int4		len;
 	int4		state;
 	bool		oprisdelim;
-}			TI_IN_STATE;
+}	TI_IN_STATE;
 
 int4		gettoken_txtidx(TI_IN_STATE * state);
 

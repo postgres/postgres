@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAgg.h,v 1.14 2001/10/28 06:26:06 momjian Exp $
+ * $Id: nodeAgg.h,v 1.15 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@ extern int	ExecCountSlotsAgg(Agg *node);
 extern void ExecEndAgg(Agg *node);
 extern void ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif	 /* NODEAGG_H */
+#endif   /* NODEAGG_H */

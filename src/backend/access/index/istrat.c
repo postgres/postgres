@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.55 2001/10/28 06:25:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.56 2001/11/05 17:46:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -641,4 +641,4 @@ IndexStrategyDisplay(IndexStrategy indexStrategy,
 	}
 }
 
-#endif	 /* defined(ISTRATDEBUG) */
+#endif   /* defined(ISTRATDEBUG) */

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.101 2001/10/28 06:25:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.102 2001/11/05 17:46:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2926,7 +2926,7 @@ locale_is_like_safe(void)
 	return (bool) result;
 #else							/* not USE_LOCALE */
 	return true;				/* We must be in C locale, which is OK */
-#endif	 /* USE_LOCALE */
+#endif   /* USE_LOCALE */
 }
 
 /*

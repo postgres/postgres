@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.47 2001/10/28 06:25:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.48 2001/11/05 17:46:29 momjian Exp $
  *
  * ----------
  */
@@ -2268,7 +2268,7 @@ dump_var(char *str, NumericVar *var)
 
 	printf("\n");
 }
-#endif	 /* NUMERIC_DEBUG */
+#endif   /* NUMERIC_DEBUG */
 
 
 /* ----------

@@ -6,8 +6,8 @@
 #define DLLIMPORT __declspec (dllimport)
 #else
 #define DLLIMPORT
-#endif	 /* __CYGWIN__ */
-#endif	 /* DLLIMPORT */
+#endif   /* __CYGWIN__ */
+#endif   /* DLLIMPORT */
 
 #define SQLERRMC_LEN	70
 

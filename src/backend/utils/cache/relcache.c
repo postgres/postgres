@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.148 2001/10/28 06:25:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.149 2001/11/05 17:46:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,7 @@ static void RelationClearRelation(Relation relation, bool rebuildIt);
 
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 static void RelationReloadClassinfo(Relation relation);
-#endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
+#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 static void RelationFlushRelation(Relation relation);
 static Relation RelationNameCacheGetRelation(const char *relationName);
 static void init_irels(void);
@@ -645,7 +645,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	{
 #ifdef	_DROP_COLUMN_HACK__
 		bool		columnDropped = false;
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 
 		atttup = AttributeRelidNumIndexScan(attrel,
 							ObjectIdGetDatum(RelationGetRelid(relation)),
@@ -658,12 +658,12 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 							ObjectIdGetDatum(RelationGetRelid(relation)),
 								 Int32GetDatum(DROPPED_COLUMN_INDEX(i)));
 			if (!HeapTupleIsValid(atttup))
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 				elog(ERROR, "cannot find attribute %d of relation %s", i,
 					 RelationGetRelationName(relation));
 #ifdef	_DROP_COLUMN_HACK__
 			columnDropped = true;
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 		}
 
 		relation->rd_att->attrs[i - 1] = attp =
@@ -680,7 +680,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 #ifdef	_DROP_COLUMN_HACK__
 		if (columnDropped)
 			continue;
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 
 		/* Update if this attribute have a constraint */
 		if (attp->attnotnull)
@@ -1556,7 +1556,7 @@ RelationReloadClassinfo(Relation relation)
 
 	return;
 }
-#endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
+#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 /*
  * RelationClearRelation
@@ -1593,7 +1593,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	{
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 		RelationReloadClassinfo(relation);
-#endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
+#endif   /* ENABLE_REINDEX_NAILED_RELATIONS */
 		return;
 	}
 

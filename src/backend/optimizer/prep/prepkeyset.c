@@ -217,4 +217,4 @@ inspectOpNode(Expr *expr)
 	return (firstExpr && secondExpr && nodeTag(firstExpr) == T_Var && nodeTag(secondExpr) == T_Const);
 }
 
-#endif	 /* ENABLE_KEY_SET_QUERY */
+#endif   /* ENABLE_KEY_SET_QUERY */

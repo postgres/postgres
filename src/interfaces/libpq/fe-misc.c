@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.59 2001/10/28 06:26:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.60 2001/11/05 17:46:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -830,7 +830,7 @@ PQenv2encoding(void)
 {
 	return 0;
 }
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 
 
 #ifdef ENABLE_NLS
@@ -847,7 +847,7 @@ libpq_gettext(const char *msgid)
 
 	return dgettext("libpq", msgid);
 }
-#endif	 /* ENABLE_NLS */
+#endif   /* ENABLE_NLS */
 
 #ifdef WIN32
 /*

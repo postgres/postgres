@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.56 2001/10/25 05:49:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.57 2001/11/05 17:46:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1470,7 +1470,7 @@ Int64GetDatum(int64 X)
 	MemSet(retval, 0, Max(sizeof(int64), 8));
 	*retval = X;
 	return PointerGetDatum(retval);
-#endif	 /* INT64_IS_BUSTED */
+#endif   /* INT64_IS_BUSTED */
 }
 
 Datum

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.75 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.76 2001/11/05 17:46:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,7 +356,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 #ifdef	_DROP_COLUMN_HACK__
 			if (COLUMN_IS_DROPPED(attr[i]))
 				continue;
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 			id->name = palloc(NAMEDATALEN);
 			StrNCpy(id->name, NameStr(attr[i]->attname), NAMEDATALEN);
 			id->indirection = NIL;

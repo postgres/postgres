@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.103 2001/10/30 05:38:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.104 2001/11/05 17:46:28 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -147,7 +147,7 @@ HOLDER_PRINT(const char *where, const HOLDER *holderP)
 
 #define LOCK_PRINT(where, lock, type)
 #define HOLDER_PRINT(where, holderP)
-#endif	 /* not LOCK_DEBUG */
+#endif   /* not LOCK_DEBUG */
 
 
 /*
@@ -589,7 +589,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 				break;
 			}
 		}
-#endif	 /* CHECK_DEADLOCK_RISK */
+#endif   /* CHECK_DEADLOCK_RISK */
 	}
 
 	/*
@@ -1464,4 +1464,4 @@ DumpAllLocks(void)
 	}
 }
 
-#endif	 /* LOCK_DEBUG */
+#endif   /* LOCK_DEBUG */

@@ -4,7 +4,7 @@
  *	 The PostgreSQL locale utils.
  *
  *
- * $Id: pg_locale.h,v 1.10 2001/10/28 06:26:09 momjian Exp $
+ * $Id: pg_locale.h,v 1.11 2001/11/05 17:46:36 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -51,6 +51,6 @@ extern void PGLC_free_categories(PG_LocaleCategories *lc);
  *------
  */
 extern struct lconv *PGLC_localeconv(void);
-#endif	 /* USE_LOCALE */
+#endif   /* USE_LOCALE */
 
-#endif	 /* _PG_LOCALE_ */
+#endif   /* _PG_LOCALE_ */

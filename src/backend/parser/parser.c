@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.50 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.51 2001/11/05 17:46:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 
 #if defined(FLEX_SCANNER)
 extern void DeleteBuffer(void);
-#endif	 /* FLEX_SCANNER */
+#endif   /* FLEX_SCANNER */
 
 char	   *parseString;		/* the char* which holds the string to be
 								 * parsed */
@@ -64,7 +64,7 @@ parser(char *str, Oid *typev, int nargs)
 
 #if defined(FLEX_SCANNER)
 	DeleteBuffer();
-#endif	 /* FLEX_SCANNER */
+#endif   /* FLEX_SCANNER */
 
 	clearerr(stdin);
 

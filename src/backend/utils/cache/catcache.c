@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.85 2001/10/28 06:25:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.86 2001/11/05 17:46:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -917,7 +917,7 @@ SearchCatCache(CatCache *cache,
 #ifdef CACHEDEBUG
 		CACHE3_elog(DEBUG, "SearchCatCache(%s): found in bucket %d",
 					cache->cc_relname, hash);
-#endif	 /* CACHEDEBUG */
+#endif   /* CACHEDEBUG */
 
 		return &ct->tuple;
 	}

@@ -241,4 +241,4 @@ RETCODE SQL_API PGAPI_SetScrollOptions(
 					   SDWORD crowKeyset,
 					   UWORD crowRowset);
 
-#endif	 /* define_PG_API_FUNC_H__ */
+#endif   /* define_PG_API_FUNC_H__ */

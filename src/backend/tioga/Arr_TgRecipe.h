@@ -29,7 +29,7 @@
 #ifndef ARR_TgString_INITIAL_SIZE
 #define ARR_TgString_INITIAL_SIZE 32	/* change this size to suit your
 										 * need */
-#endif	 /* ARR_TgString_INITIAL_SIZE */
+#endif   /* ARR_TgString_INITIAL_SIZE */
 
 typedef struct Arr_TgString
 {
@@ -37,7 +37,7 @@ typedef struct Arr_TgString
 	size_t		size;
 	size_t		valSize;
 	TgString   *val;
-}			Arr_TgString;
+}	Arr_TgString;
 
 #define newArr_TgString() \
   (Arr_TgString *) NewVarray(ARR_TgString_INITIAL_SIZE, sizeof(TgString))
@@ -52,7 +52,7 @@ typedef struct Arr_TgString
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgString)
 
 #define deleteArr_TgString(A) FreeVarray(A)
-#endif	 /* _ARR_TgString_ */
+#endif   /* _ARR_TgString_ */
 
 /* -- Defining types and function for Arr_TgElementPtr type -- */
 /* -- the following must be supplied by the user:
@@ -66,7 +66,7 @@ typedef struct Arr_TgString
 #ifndef ARR_TgElementPtr_INITIAL_SIZE
 #define ARR_TgElementPtr_INITIAL_SIZE 32		/* change this size to
 												 * suit your need */
-#endif	 /* ARR_TgElementPtr_INITIAL_SIZE */
+#endif   /* ARR_TgElementPtr_INITIAL_SIZE */
 
 typedef struct Arr_TgElementPtr
 {
@@ -74,7 +74,7 @@ typedef struct Arr_TgElementPtr
 	size_t		size;
 	size_t		valSize;
 	TgElementPtr *val;
-}			Arr_TgElementPtr;
+}	Arr_TgElementPtr;
 
 #define newArr_TgElementPtr() \
   (Arr_TgElementPtr *) NewVarray(ARR_TgElementPtr_INITIAL_SIZE, sizeof(TgElementPtr))
@@ -89,7 +89,7 @@ typedef struct Arr_TgElementPtr
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgElementPtr)
 
 #define deleteArr_TgElementPtr(A) FreeVarray(A)
-#endif	 /* _ARR_TgElementPtr_ */
+#endif   /* _ARR_TgElementPtr_ */
 
 /* -- Defining types and function for Arr_TgNodePtr type -- */
 /* -- the following must be supplied by the user:
@@ -103,7 +103,7 @@ typedef struct Arr_TgElementPtr
 #ifndef ARR_TgNodePtr_INITIAL_SIZE
 #define ARR_TgNodePtr_INITIAL_SIZE 32	/* change this size to suit your
 										 * need */
-#endif	 /* ARR_TgNodePtr_INITIAL_SIZE */
+#endif   /* ARR_TgNodePtr_INITIAL_SIZE */
 
 typedef struct Arr_TgNodePtr
 {
@@ -111,7 +111,7 @@ typedef struct Arr_TgNodePtr
 	size_t		size;
 	size_t		valSize;
 	TgNodePtr  *val;
-}			Arr_TgNodePtr;
+}	Arr_TgNodePtr;
 
 #define newArr_TgNodePtr() \
   (Arr_TgNodePtr *) NewVarray(ARR_TgNodePtr_INITIAL_SIZE, sizeof(TgNodePtr))
@@ -127,4 +127,4 @@ typedef struct Arr_TgNodePtr
 
 #define deleteArr_TgNodePtr(A) FreeVarray(A)
 
-#endif	 /* _ARR_TgNodePtr_ */
+#endif   /* _ARR_TgNodePtr_ */

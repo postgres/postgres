@@ -615,7 +615,7 @@ parse_statement(StatementClass *stmt)
 						if ((unsigned char) *ptr >= 0x80)
 							ptr++;
 						else
-#endif	 /* MULTIBYTE */
+#endif   /* MULTIBYTE */
 							*ptr = tolower((unsigned char) *ptr);
 					}
 				}

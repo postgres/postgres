@@ -40,7 +40,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.18 2001/10/28 06:26:09 momjian Exp $
+ * $Id: spin.h,v 1.19 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,4 +74,4 @@
 
 extern void CreateSpinlocks(void);
 
-#endif	 /* SPIN_H */
+#endif   /* SPIN_H */

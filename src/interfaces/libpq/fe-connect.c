@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.179 2001/10/28 06:26:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.180 2001/11/05 17:46:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ static const struct EnvironmentOptions
 {
 	const char *envName,
 			   *pgName;
-} EnvironmentOptions[] =
+}	EnvironmentOptions[] =
 
 {
 	/* common user-interface settings */
@@ -672,7 +672,7 @@ update_db_info(PGconn *conn)
 
 	return 0;
 }
-#endif	 /* NOT_USED */
+#endif   /* NOT_USED */
 
 
 /* ----------
@@ -1822,7 +1822,7 @@ PQsetenv(PGconn *conn)
 		flag = PQsetenvPoll(conn);
 	}
 }
-#endif	 /* NOT_USED */
+#endif   /* NOT_USED */
 
 
 /*

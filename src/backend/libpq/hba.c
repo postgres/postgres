@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.76 2001/10/28 06:25:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.77 2001/11/05 17:46:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1262,4 +1262,4 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 	}
 }
 
-#endif	 /* CYR_RECODE */
+#endif   /* CYR_RECODE */

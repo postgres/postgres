@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.20 2001/10/30 05:38:55 momjian Exp $
+ * $Id: tgRecipe.h,v 1.21 2001/11/05 17:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,15 +30,16 @@ typedef struct
 } Point;						/* this should match whatever is in
 
 								 *
+								 *
 								 * geo-decls.h */
-#endif	 /* TIOGA_FRONTEND */
+#endif   /* TIOGA_FRONTEND */
 
 typedef enum
 {
 	TG_INGRED,
 	TG_EYE,
 	TG_RECIPE
-}			TgElemType;
+}	TgElemType;
 
 typedef enum
 {
@@ -46,7 +47,7 @@ typedef enum
 	TG_C,
 	TG_RECIPE_GRAPH,
 	TG_COMPILED
-}			TgSrcLangType;
+}	TgSrcLangType;
 
 typedef enum
 {
@@ -56,7 +57,7 @@ typedef enum
 	TG_TEE_NODE					/* tee nodes are not stored in the db we
 								 * create them when we read the recipe
 								 * back */
-}			TgNodeType;
+}	TgNodeType;
 
 /* -- type definition for setting up in memory Tioga recipe structure -- */
 /* -- see 'recipe-schema.sql' for their corresponding database types  -- */
@@ -87,7 +88,7 @@ typedef struct _tgelement
 	char	   *src;			/* source code for this element */
 	TgSrcLangType srcLang;		/* source language */
 	char	   *owner;			/* owner recipe name */
-}			TgElement;
+}	TgElement;
 
 
 /* C structure representation of a Tioga Node */
@@ -101,7 +102,7 @@ typedef struct _tgnode
 								 * NULL TgNodePtr indicates a run-time
 								 * parameter */
 	Arr_TgNodePtr *outNodes;	/* variable array of out node pointers. */
-}			TgNode;
+}	TgNode;
 
 /* C structure representation of a Tioga Recipe */
 typedef struct _tgrecipe
@@ -120,7 +121,7 @@ typedef struct _tgrecipe
 								 * recipe, elements may be shared by
 								 * multiple nodes */
 
-}			TgRecipe;
+}	TgRecipe;
 
 /* functions defined in tgRecipe.c */
 extern TgRecipe *retrieveRecipe(char *name);

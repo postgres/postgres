@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_type.h,v 1.19 2001/10/28 06:26:08 momjian Exp $
+ * $Id: parse_type.h,v 1.20 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,4 +38,4 @@ extern void parseTypeString(const char *str, Oid *type_id, int32 *typmod);
 
 #define ISCOMPLEX(typeid) (typeidTypeRelid(typeid) != InvalidOid)
 
-#endif	 /* PARSE_TYPE_H */
+#endif   /* PARSE_TYPE_H */

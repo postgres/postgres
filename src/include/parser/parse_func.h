@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.34 2001/10/28 06:26:08 momjian Exp $
+ * $Id: parse_func.h,v 1.35 2001/11/05 17:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ typedef struct _CandidateList
 {
 	Oid		   *args;
 	struct _CandidateList *next;
-}		   *CandidateList;
+}	*CandidateList;
 
 /* Result codes for func_get_detail */
 typedef enum
@@ -64,4 +64,4 @@ extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 extern void func_error(char *caller, char *funcname,
 		   int nargs, Oid *argtypes, char *msg);
 
-#endif	 /* PARSE_FUNC_H */
+#endif   /* PARSE_FUNC_H */

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.30 2001/10/28 06:26:11 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.31 2001/11/05 17:46:37 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -76,7 +76,7 @@ static struct auto_mem
 {
 	void	   *pointer;
 	struct auto_mem *next;
-} *auto_allocs = NULL;
+}	*auto_allocs = NULL;
 
 static void
 add_mem(void *ptr, int lineno)
@@ -503,7 +503,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 			if (*(long long int *) var->ind_value < (long long) 0)
 				*tobeinserted_p = "null";
 			break;
-#endif	 /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG_INT_64 */
 		default:
 			break;
 	}
@@ -673,7 +673,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				*tobeinserted_p = mallocedval;
 				*malloced_p = true;
 				break;
-#endif	 /* HAVE_LONG_LONG_INT_64 */
+#endif   /* HAVE_LONG_LONG_INT_64 */
 			case ECPGt_float:
 				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
 					return false;

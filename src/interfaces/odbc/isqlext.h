@@ -378,7 +378,7 @@ typedef struct
 	SQLUINTEGER dwLowWord;
 	SQLINTEGER	dwHighWord;
 } SQLBIGINT;
-#endif	 /* GCC */
+#endif   /* GCC */
 
 typedef struct tagDATE_STRUCT
 {

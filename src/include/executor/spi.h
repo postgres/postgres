@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.30 2001/10/28 06:26:06 momjian Exp $
+ * $Id: spi.h,v 1.31 2001/11/05 17:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,4 +113,4 @@ extern void SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(void);
 
-#endif	 /* SPI_H */
+#endif   /* SPI_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.86 2001/10/28 06:25:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.87 2001/11/05 17:46:27 momjian Exp $
  *
  * NOTES:
  *
@@ -313,7 +313,7 @@ pg_nofile(void)
 #else
 		no_files = (long) max_files_per_process;
 #endif
-#endif	 /* HAVE_SYSCONF */
+#endif   /* HAVE_SYSCONF */
 
 		/*
 		 * Some platforms return hopelessly optimistic values.	Apply a
@@ -355,7 +355,7 @@ _dump_lru(void)
 	sprintf(buf + strlen(buf), "LEAST");
 	elog(DEBUG, buf);
 }
-#endif	 /* FDDEBUG */
+#endif   /* FDDEBUG */
 
 static void
 Delete(File file)

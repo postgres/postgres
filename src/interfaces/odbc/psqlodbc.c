@@ -114,8 +114,8 @@ _fini(void)
 {
 	return TRUE;
 }
-#endif	 /* not __GNUC__ */
-#endif	 /* not WIN32 */
+#endif   /* not __GNUC__ */
+#endif   /* not WIN32 */
 
 
 /*

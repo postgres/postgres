@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.48 2001/10/25 05:49:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.49 2001/11/05 17:46:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,11 +67,11 @@ main(int argc, char *argv[])
 #if defined(__alpha)
 #ifdef NOFIXADE
 	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
-#endif	 /* NOFIXADE */
+#endif   /* NOFIXADE */
 #ifdef NOPRINTADE
 	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
-#endif	 /* NOPRINTADE */
-#endif	 /* __alpha */
+#endif   /* NOPRINTADE */
+#endif   /* __alpha */
 
 #if defined(NOFIXADE) || defined(NOPRINTADE)
 
@@ -84,7 +84,7 @@ main(int argc, char *argv[])
 				   (unsigned long) NULL) < 0)
 		fprintf(stderr, gettext("%s: setsysinfo failed: %s\n"), argv[0], strerror(errno));
 #endif
-#endif	 /* NOFIXADE || NOPRINTADE */
+#endif   /* NOFIXADE || NOPRINTADE */
 
 #ifdef __BEOS__
 	/* BeOS-specific actions on startup */
@@ -159,7 +159,7 @@ main(int argc, char *argv[])
 									));
 			exit(1);
 		}
-#endif	 /* __BEOS__ */
+#endif   /* __BEOS__ */
 
 		/*
 		 * Also make sure that real and effective uids are the same.

@@ -51,7 +51,7 @@ typedef struct
 	u_char		dbh_hlen[2];	/* length of this header */
 	u_char		dbh_rlen[2];	/* length of a record */
 	u_char		dbh_stub[20];	/* misc stuff we don't need */
-}			dbf_header;
+}	dbf_header;
 
 /* disk field-description */
 
@@ -64,7 +64,7 @@ typedef struct
 	u_char		dbf_dec;		/* number of decimal positions if type is
 								 * 'N' */
 	u_char		dbf_stub[14];	/* stuff we don't need */
-}			dbf_field;
+}	dbf_field;
 
 /* memory field-description */
 
@@ -74,7 +74,7 @@ typedef struct
 	u_char		db_type;		/* field-type */
 	u_char		db_flen;		/* field-length */
 	u_char		db_dec;			/* number of decimal positions */
-}			f_descr;
+}	f_descr;
 
 /* memory dfb-header */
 
@@ -95,7 +95,7 @@ typedef struct
 	u_char	   *db_buff;		/* record-buffer to save malloc()'s */
 	f_descr    *db_fields;		/* pointer to an array of field-
 								 * descriptions */
-}			dbhead;
+}	dbhead;
 
 /* structure that contains everything a user wants from a field, including
    the contents (in ASCII). Warning! db_flen may be bigger than the actual
@@ -109,7 +109,7 @@ typedef struct
 	u_char		db_flen;		/* field-length */
 	u_char		db_dec;			/* number of decimal positions */
 	u_char	   *db_contents;	/* contents of the field in ASCII */
-}			field;
+}	field;
 
 /* prototypes for functions */
 
@@ -136,4 +136,4 @@ extern void put_long(u_char *cp, long lval);
 extern short get_short(u_char *cp);
 extern void put_short(u_char *cp, short lval);
 
-#endif	 /* _DBF_H */
+#endif   /* _DBF_H */

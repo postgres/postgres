@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/pmsignal.c,v 1.2 2001/11/05 01:34:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/pmsignal.c,v 1.3 2001/11/05 17:46:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,9 +24,9 @@
 
 /*
  * The postmaster is signaled by its children by sending SIGUSR1.  The
- * specific reason is communicated via flags in shared memory.  We keep
+ * specific reason is communicated via flags in shared memory.	We keep
  * a boolean flag for each possible "reason", so that different reasons
- * can be signaled by different backends at the same time.  (However,
+ * can be signaled by different backends at the same time.	(However,
  * if the same reason is signaled more than once simultaneously, the
  * postmaster will observe it only once.)
  *
@@ -35,7 +35,7 @@
  * values are atomic, allowing us to dispense with any explicit locking.
  */
 
-static volatile sig_atomic_t * PMSignalFlags;
+static volatile sig_atomic_t *PMSignalFlags;
 
 
 /*

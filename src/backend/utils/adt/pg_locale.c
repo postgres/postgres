@@ -4,7 +4,7 @@
  *	 The PostgreSQL locale utils.
  *
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.12 2001/10/28 06:25:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.13 2001/11/05 17:46:29 momjian Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -197,4 +197,4 @@ PGLC_localeconv(void)
 	return &CurrentLocaleConv;
 }
 
-#endif	 /* USE_LOCALE */
+#endif   /* USE_LOCALE */

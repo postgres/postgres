@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.256 2001/11/04 20:12:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.257 2001/11/05 17:46:27 momjian Exp $
  *
  * NOTES
  *
@@ -721,7 +721,7 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGTERM, pmdie);	/* wait for children and ShutdownDataBase */
 	pqsignal(SIGALRM, SIG_IGN); /* ignored */
 	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal(SIGUSR1, sigusr1_handler);		/* message from child process */
+	pqsignal(SIGUSR1, sigusr1_handler); /* message from child process */
 	pqsignal(SIGUSR2, dummy_handler);	/* unused, reserve for children */
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
@@ -869,12 +869,13 @@ ServerLoop(void)
 
 		/*
 		 * The timeout for the select() below is normally set on the basis
-		 * of the time to the next checkpoint.  However, if for some reason
-		 * we don't have a next-checkpoint time, time out after 60 seconds.
-		 * This keeps checkpoint scheduling from locking up when we get new
-		 * connection requests infrequently (since we are likely to detect
-		 * checkpoint completion just after enabling signals below, after
-		 * we've already made the decision about how long to wait this time).
+		 * of the time to the next checkpoint.	However, if for some
+		 * reason we don't have a next-checkpoint time, time out after 60
+		 * seconds. This keeps checkpoint scheduling from locking up when
+		 * we get new connection requests infrequently (since we are
+		 * likely to detect checkpoint completion just after enabling
+		 * signals below, after we've already made the decision about how
+		 * long to wait this time).
 		 */
 		timeout.tv_sec = 60;
 		timeout.tv_usec = 0;
@@ -926,8 +927,8 @@ ServerLoop(void)
 		}
 
 		/*
-		 * Block all signals until we wait again.  (This makes it safe
-		 * for our signal handlers to do nontrivial work.)
+		 * Block all signals until we wait again.  (This makes it safe for
+		 * our signal handlers to do nontrivial work.)
 		 */
 		PG_SETMASK(&BlockSig);
 
@@ -1512,8 +1513,10 @@ static void
 reaper(SIGNAL_ARGS)
 {
 	int			save_errno = errno;
+
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
+
 #else
 	union wait	status;			/* backend exit status */
 #endif
@@ -2234,8 +2237,8 @@ sigusr1_handler(SIGNAL_ARGS)
 		/*
 		 * Request to schedule a checkpoint
 		 *
-		 * Ignore request if checkpoint is already running or
-		 * checkpointing is currently disabled
+		 * Ignore request if checkpoint is already running or checkpointing
+		 * is currently disabled
 		 */
 		if (CheckPointPID == 0 && checkpointed &&
 			Shutdown == NoShutdown && !FatalError && random_seed != 0)
@@ -2256,8 +2259,8 @@ sigusr1_handler(SIGNAL_ARGS)
 	if (CheckPostmasterSignal(PMSIGNAL_WAKEN_CHILDREN))
 	{
 		/*
-		 * Send SIGUSR2 to all children (triggers AsyncNotifyHandler).
-		 * See storage/ipc/sinvaladt.c for the use of this.
+		 * Send SIGUSR2 to all children (triggers AsyncNotifyHandler). See
+		 * storage/ipc/sinvaladt.c for the use of this.
 		 */
 		if (Shutdown == NoShutdown)
 			SignalChildren(SIGUSR2);

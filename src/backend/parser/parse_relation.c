@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.59 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.60 2001/11/05 17:46:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,7 +737,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 #ifdef	_DROP_COLUMN_HACK__
 			if (COLUMN_IS_DROPPED(attr))
 				continue;
-#endif	 /* _DROP_COLUMN_HACK__ */
+#endif   /* _DROP_COLUMN_HACK__ */
 
 			if (colnames)
 			{
