@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.40 2002/09/06 00:01:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.41 2002/09/12 21:16:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2920,7 +2920,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	 * unfortunately).
 	 */
 	myRel = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
-						 RelationGetRelationName(rel));
+						 pstrdup(RelationGetRelationName(rel)));
 
 	/*
 	 * Preset objectAddress fields
