@@ -35,6 +35,12 @@ isbn_issn -
 	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
 	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
 
+likeplanning -
+	Scripts to enable/disable new planning code for LIKE and regexp
+	pattern match operators.  These will go away again once the code
+	is mature enough to enable by default.
+	by Tom Lane <tgl@sss.pgh.pa.us>
+
 linux -
 	Start postgres back end system
 	by Thomas Lockhart <lockhart@alumni.caltech.edu>
