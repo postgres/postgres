@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.16 1997/08/20 14:54:07 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.17 1997/08/21 01:36:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,7 @@
 #include "catalog/pg_variable.h"
 #include "catalog/pg_log.h"
 #include "catalog/pg_time.h"
+#include "catalog/pg_attrdef.h"
 #include "catalog/indexing.h"
 #include "catalog/index.h"
 #include "fmgr.h"
@@ -90,22 +91,6 @@ static void RelationFlushRelation(Relation *relationPtr,
 static Relation RelationNameCacheGetRelation(char *relationName);
 static void init_irels(void);
 static void write_irels(void);
-/* non-export function prototypes */
-static void formrdesc(char *relationName, u_int natts,
-		      FormData_pg_attribute att[]);
-static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
-static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
-static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
-static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
-static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,    
-		Relation relation, AttributeTupleForm attp, u_int natts);
-static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
-		Relation relation, AttributeTupleForm attp, u_int natts);
-static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
-		Relation relation, AttributeTupleForm attp, u_int natts);
-static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
-static void IndexedAccessMethodInitialize(Relation relation);
-
 
 /* ----------------
  *	defines
@@ -254,6 +239,28 @@ typedef struct relnamecacheent {
 	  } \
     }
 
+/* non-export function prototypes */
+static void formrdesc(char *relationName, u_int natts,
+		      FormData_pg_attribute att[]);
+
+#if 0		/* See comments at line 1304 */
+static void RelationFlushIndexes(Relation *r, Oid accessMethodId);
+#endif
+
+static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
+static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
+static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
+static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
+static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,    
+		Relation relation, u_int natts);
+static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
+		Relation relation, u_int natts);
+static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
+		Relation relation, u_int natts);
+static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
+static void IndexedAccessMethodInitialize(Relation relation);
+static void AttrDefaultFetch (Relation relation);
+
 /*
  * newlyCreatedRelns -
  *    relations created during this transaction. We need to keep track of
@@ -268,7 +275,7 @@ static List *newlyCreatedRelns = NULL;
  */
  
 
-#ifdef NOT_USED		/* XXX This doesn't seem to be used anywhere */
+#if NOT_USED		/* XXX This doesn't seem to be used anywhere */
 /* --------------------------------
  *	BuildDescInfoError returns a string appropriate to
  *	the buildinfo passed to it
@@ -481,7 +488,6 @@ AllocateRelationDesc(u_int natts, Form_pg_class relp)
 static void
 RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,    
 		       Relation relation,
-		       AttributeTupleForm attp,
 		       u_int natts)
 {
     /*
@@ -491,20 +497,26 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
      */
     
     if (IsBootstrapProcessingMode())
-	build_tupdesc_seq(buildinfo, relation, attp, natts);
+	build_tupdesc_seq(buildinfo, relation, natts);
     else
-	build_tupdesc_ind(buildinfo, relation, attp, natts);
+    {
+    	relation->rd_att->constr = (AttrConstr *) palloc(sizeof(struct attrConstr));
+    	relation->rd_att->constr->num_check = 0;
+    	relation->rd_att->constr->num_defval = 0;
+    	relation->rd_att->constr->has_not_null = false;
+	build_tupdesc_ind(buildinfo, relation, natts);
+    }
 }
 
 static void
 build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 		  Relation relation,
-		  AttributeTupleForm attp,
 		  u_int natts)
 {
     HeapTuple    pg_attribute_tuple;
     Relation	 pg_attribute_desc;
     HeapScanDesc pg_attribute_scan;
+    AttributeTupleForm	attp;
     ScanKeyData	 key;
     int		 need;
                                    
@@ -530,9 +542,6 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
      * ----------------
      */
     need = natts;
-    if (!relation->rd_att->constr)
-      relation->rd_att->constr = (AttrConstr *) palloc(sizeof(struct attrConstr));
-    relation->rd_att->constr->has_not_null = false;
 
     pg_attribute_tuple = heap_getnext(pg_attribute_scan, 0, (Buffer *) NULL);
     while (HeapTupleIsValid(pg_attribute_tuple) && need > 0) {
@@ -545,11 +554,6 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	    memmove((char *) (relation->rd_att->attrs[attp->attnum - 1]),
 		    (char *) attp,
 		    ATTRIBUTE_TUPLE_SIZE);
-
-            /* Update if this attribute have a constraint */
-            if (attp->attnotnull)
-	      relation->rd_att->constr->has_not_null = true;
-	    
 	    need--;
 	}
 	pg_attribute_tuple = heap_getnext(pg_attribute_scan,
@@ -571,17 +575,15 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 static void
 build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 		  Relation	relation,
-		  AttributeTupleForm attp,
 		  u_int natts)
 {
     Relation attrel;
     HeapTuple atttup;
+    AttributeTupleForm	attp;
+    AttrDefault	*attrdef = NULL;
+    int ndef = 0;
     int i;
 
-    if (!relation->rd_att->constr)
-      relation->rd_att->constr = (AttrConstr *) palloc(sizeof(struct attrConstr));
-    relation->rd_att->constr->has_not_null = false;
-     
     attrel = heap_openr(AttributeRelationName);
     
     for (i = 1; i <= relation->rd_rel->relnatts; i++) {
@@ -589,8 +591,8 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	atttup = (HeapTuple) AttributeNumIndexScan(attrel, relation->rd_id, i);
 	
 	if (!HeapTupleIsValid(atttup))
-	    elog(WARN, "cannot find attribute %d of relation %.16s", i,
-		 &(relation->rd_rel->relname.data[0]));
+	    elog(WARN, "cannot find attribute %d of relation %.*s", i,
+		 NAMEDATALEN, &(relation->rd_rel->relname.data[0]));
 	attp = (AttributeTupleForm) GETSTRUCT(atttup);
 	
 	relation->rd_att->attrs[i - 1] = 
@@ -602,10 +604,33 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 
 	/* Update if this attribute have a constraint */
 	if (attp->attnotnull)
-	  relation->rd_att->constr->has_not_null = true;
+	    relation->rd_att->constr->has_not_null = true;
+	
+	if (attp->atthasdef)
+	{
+	    if ( attrdef == NULL )
+	    	attrdef = (AttrDefault*) palloc (relation->rd_rel->relnatts *
+	    					sizeof (AttrDefault));
+	    attrdef[ndef].adnum = i;
+	    attrdef[ndef].adbin = NULL;
+	    attrdef[ndef].adsrc = NULL;
+	    ndef++;
+	}
     }
     
     heap_close(attrel);
+
+    if ( ndef > 0 )
+    {
+    	if ( ndef > relation->rd_rel->relnatts )
+    	    relation->rd_att->constr->defval = (AttrDefault*) 
+    	    		repalloc (attrdef, ndef * sizeof (AttrDefault));
+    	else
+    	    relation->rd_att->constr->defval = attrdef;
+    	relation->rd_att->constr->num_defval = ndef;
+    	AttrDefaultFetch (relation);
+    }
+    
 }
 
 /* --------------------------------
@@ -759,7 +784,6 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
     Oid			relid;
     Oid			relam;
     Form_pg_class	relp;
-    AttributeTupleForm	attp = NULL;
     
     MemoryContext	oldcxt;
     
@@ -834,7 +858,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
      *  already allocated for it by AllocateRelationDesc.
      * ----------------
      */
-    RelationBuildTupleDesc(buildinfo, relation, attp, natts);
+    RelationBuildTupleDesc(buildinfo, relation, natts);
 
     /* ----------------
      *  initialize rules that affect this relation
@@ -1346,7 +1370,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
     }
 }
 
-#ifdef NOT_USED		/* See comments at line 1304 */
+#if NOT_USED		/* See comments at line 1304 */
 /* --------------------------------
  *	RelationIdInvalidateRelationCacheByAccessMethodId
  *
@@ -1574,6 +1598,95 @@ RelationInitialize(void)
 	init_irels();
     
     MemoryContextSwitchTo(oldcxt);
+}
+
+static void
+AttrDefaultFetch (Relation relation)
+{
+    AttrDefault *attrdef = relation->rd_att->constr->defval;
+    int ndef = relation->rd_att->constr->num_defval;
+    Relation adrel;
+    Relation irel;
+    ScanKeyData skey;
+    HeapTuple tuple;
+    Form_pg_attrdef adform;
+    IndexScanDesc sd;
+    RetrieveIndexResult indexRes;
+    Buffer buffer;
+    ItemPointer iptr;
+    struct varlena *val;
+    bool isnull;
+    int found;
+    int i;
+    
+    ScanKeyEntryInitialize(&skey,
+			   (bits16)0x0,
+			   (AttrNumber)1,
+			   (RegProcedure)ObjectIdEqualRegProcedure,
+			   ObjectIdGetDatum(relation->rd_id));
+    
+    adrel = heap_openr(AttrDefaultRelationName);
+    irel = index_openr(AttrDefaultIndex);
+    sd = index_beginscan(irel, false, 1, &skey);
+    tuple = (HeapTuple)NULL;
+    
+    for (found = 0; ; )
+    {
+	indexRes = index_getnext(sd, ForwardScanDirection);
+	if (!indexRes)
+	    break;
+	    
+	iptr = &indexRes->heap_iptr;
+	tuple = heap_fetch(adrel, NowTimeQual, iptr, &buffer);
+	pfree(indexRes);
+    	if (!HeapTupleIsValid(tuple))
+    	    continue;
+    	adform = (Form_pg_attrdef) GETSTRUCT(tuple);
+    	for (i = 1; i <= ndef; i++)
+    	{
+    	    if ( adform->adnum != attrdef[i].adnum )
+    	    	continue;
+    	    if ( attrdef[i].adsrc != NULL )
+    	    	    elog (WARN, "AttrDefaultFetch: second record found for attr %.*s in rel %.*s",
+    	    	    	NAMEDATALEN, relation->rd_att->attrs[adform->adnum - 1]->attname.data,
+    	    	    	NAMEDATALEN, relation->rd_rel->relname.data);
+    	    
+    	    val = (struct varlena*) fastgetattr (tuple, 
+    	    					Anum_pg_attrdef_adbin,
+    	    					adrel->rd_att, &isnull);
+    	    if ( isnull )
+    	    	elog (WARN, "AttrDefaultFetch: adbin IS NULL for attr %.*s in rel %.*s",
+    	    	    NAMEDATALEN, relation->rd_att->attrs[adform->adnum - 1]->attname.data,
+    	    	    NAMEDATALEN, relation->rd_rel->relname.data);
+    	    attrdef[i].adbin = textout (val);
+    	    val = (struct varlena*) fastgetattr (tuple, 
+    	    					Anum_pg_attrdef_adsrc,
+    	    					adrel->rd_att, &isnull);
+    	    if ( isnull )
+    	    	elog (WARN, "AttrDefaultFetch: adsrc IS NULL for attr %.*s in rel %.*s",
+    	    	    NAMEDATALEN, relation->rd_att->attrs[adform->adnum - 1]->attname.data,
+    	    	    NAMEDATALEN, relation->rd_rel->relname.data);
+    	    attrdef[i].adsrc = textout (val);
+    	    found++;
+    	}
+	
+    	if ( i > ndef )
+    	    elog (WARN, "AttrDefaultFetch: unexpected record found for attr %d in rel %.*s",
+    	    	    	adform->adnum,
+    	    	    	NAMEDATALEN, relation->rd_rel->relname.data);
+	ReleaseBuffer(buffer);
+    }
+    
+    if ( found < ndef )
+    	elog (WARN, "AttrDefaultFetch: %d record not found for rel %.*s",
+    	    	    	ndef - found,
+    	    	    	NAMEDATALEN, relation->rd_rel->relname.data);
+    
+    index_endscan (sd);
+    pfree (sd);
+    index_close (irel);
+    heap_close (adrel);
+    
 }
 
 /*
