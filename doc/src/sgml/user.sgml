@@ -1,10 +1,15 @@
-<!-- user.sgml
--
-- Postgres User's Manual.
-- Derived from postgres.sgml.
-- thomas 1998-02-24
--
-- -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.4 1998/08/15 06:52:54 thomas Exp $
+Postgres User's Manual.
+Derived from postgres.sgml.
+thomas 1998-02-24
+
+$Log: user.sgml,v $
+Revision 1.4  1998/08/15 06:52:54  thomas
+Include new chapters.
+
+-->
+
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 <!entity intro    SYSTEM "intro.sgml">
 <!entity advanced SYSTEM "advanced.sgml">
@@ -14,6 +19,7 @@
 <!entity oper     SYSTEM "oper.sgml">
 <!entity func     SYSTEM "func.sgml">
 <!entity typeconv SYSTEM "typeconv.sgml">
+<!entity keys     SYSTEM "keys.sgml">
 <!entity array    SYSTEM "array.sgml">
 <!entity inherit  SYSTEM "inherit.sgml">
 <!entity query-ug SYSTEM "query-ug.sgml">
@@ -76,7 +82,7 @@ Your name here...
 </Dedication>
 -->
 
-<Preface>
+<preface id="preface">
 <Title>Summary</Title>
 
 <Para>
@@ -98,6 +104,7 @@ It provides SQL92/SQL3 language support,
 &oper;
 &func;
 &typeconv;
+&keys;
 &array;
 &inherit;
 &query-ug;
@@ -110,7 +117,8 @@ It provides SQL92/SQL3 language support,
 -->
 &biblio;
 
-<INDEX> </INDEX>
+<index Id="index">
+</index>
 
 </Book>
 

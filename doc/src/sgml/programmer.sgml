@@ -54,6 +54,8 @@
 <!entity geqo     SYSTEM "geqo.sgml">
 <!entity protocol SYSTEM "protocol.sgml">
 <!entity compiler SYSTEM "compiler.sgml">
+<!entity page     SYSTEM "page.sgml">
+<!entity bki      SYSTEM "bki.sgml">
 <!entity docguide SYSTEM "docguide.sgml">
 <!entity biblio   SYSTEM "biblio.sgml">
 <!entity contacts SYSTEM "contacts.sgml">
@@ -157,6 +159,8 @@ It provides SQL92/SQL3 language support,
 &geqo;
 &protocol;
 &compiler;
+&bki;
+&page;
 
 <!-- appendices -->
 

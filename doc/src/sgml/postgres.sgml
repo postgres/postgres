@@ -1,10 +1,15 @@
-<!-- postgres.sgml
--
-- Postgres integrated documentation.
-- Other subset docs should be copied and shrunk from here.
-- thomas 1998-02-23
--
-- -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.7 1998/08/15 06:52:53 thomas Exp $
+Postgres integrated documentation.
+Other subset docs should be copied and shrunk from here.
+thomas 1998-02-23
+
+$Log: postgres.sgml,v $
+Revision 1.7  1998/08/15 06:52:53  thomas
+Include new chapters.
+
+-->
+
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
 
 <!-- tutorial -->
@@ -21,6 +26,7 @@
 <!entity oper     SYSTEM "oper.sgml">
 <!entity func     SYSTEM "func.sgml">
 <!entity typeconv SYSTEM "typeconv.sgml">
+<!entity keys     SYSTEM "keys.sgml">
 <!entity array    SYSTEM "array.sgml">
 <!entity inherit  SYSTEM "inherit.sgml">
 <!entity query-ug SYSTEM "query-ug.sgml">
@@ -68,6 +74,8 @@
 <!entity geqo     SYSTEM "geqo.sgml">
 <!entity protocol SYSTEM "protocol.sgml">
 <!entity compiler SYSTEM "compiler.sgml">
+<!entity page     SYSTEM "page.sgml">
+<!entity bki      SYSTEM "bki.sgml">
 <!entity docguide SYSTEM "docguide.sgml">
 <!entity biblio   SYSTEM "biblio.sgml">
 <!entity contacts SYSTEM "contacts.sgml">
@@ -126,7 +134,7 @@ Your name here...
 </Dedication>
 -->
 
-<Preface>
+<preface id="preface">
 <Title>Summary</Title>
 
 <Para>
@@ -141,7 +149,7 @@ It provides SQL92/SQL3 language support,
 </Para>
 </Preface>
 
-<Part>
+<part Id="part-tutorial">
 <Title>Tutorial</Title>
 <PartIntro>
 <Para>
@@ -155,7 +163,7 @@ Introduction for new users.
 &advanced;
 </Part>
 
-<Part>
+<part Id="part-user">
 <Title>User's Guide</Title>
 <PartIntro>
 <Para>
@@ -168,6 +176,7 @@ Information for users.
 &oper;
 &func;
 &typeconv;
+&keys;
 &array;
 &inherit;
 &query-ug;
@@ -176,7 +185,7 @@ Information for users.
 &pgaccess;
 </Part>
 
-<Part>
+<part Id="part-admin">
 <Title>Administrator's Guide</Title>
 <PartIntro>
 <Para>
@@ -191,7 +200,7 @@ Installation and maintenance information.
 &release;
 </Part>
 
-<Part>
+<part Id="part-programmer">
 <Title>Programmer's Guide</Title>
 <PartIntro>
 <Para>
@@ -214,7 +223,7 @@ Information for extending <ProductName>Postgres</ProductName>.
 <!-- &libpq; -->
 </Part>
 
-<Part>
+<part Id="part-interfaces">
 <Title>Interfaces</Title>
 <PartIntro>
 <Para>
@@ -230,7 +239,7 @@ User and programmer interfaces.
 &jdbc;
 </Part>
 
-<Part>
+<part Id="part-reference">
 <Title>Reference</Title>
 <PartIntro>
 <Para>
@@ -241,7 +250,7 @@ Command syntax.
 &commands;
 </Part>
 
-<Part>
+<part Id="part-developer">
 <Title>Developer's Guide</Title>
 <PartIntro>
 <Para>
@@ -253,9 +262,11 @@ future development.
 &geqo;
 &protocol;
 &compiler;
+&bki;
+&page;
 </Part>
 
-<Part>
+<part Id="part-appendix">
 <Title>Appendices</Title>
 <PartIntro>
 <Para>
@@ -267,6 +278,7 @@ Additional related information.
 &biblio;
 </Part>
 
-<INDEX> </INDEX>
+<index Id="part-index">
+</index>
 
 </Book>
