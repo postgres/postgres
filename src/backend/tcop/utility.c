@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.100 2000/11/07 02:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.101 2000/11/08 16:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -670,7 +670,14 @@ ProcessUtility(Node *parsetree,
 
 				set_ps_display(commandTag = "CLUSTER");
 
-				cluster(stmt->relname, stmt->indexname);
+				relname = stmt->relname;
+				if (IsSystemRelationName(relname))
+					elog(ERROR, "CLUSTER: relation \"%s\" is a system catalog",
+						 relname);
+				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+					elog(ERROR, "permission denied");
+
+				cluster(relname, stmt->indexname);
 			}
 			break;
 
