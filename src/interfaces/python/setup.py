@@ -19,6 +19,7 @@
 # on using distutils to install Python programs.
 
 from distutils.core import setup
+from distutils.extension import Extension
 import sys
 
 if sys.platform == "win32":
@@ -35,21 +36,21 @@ else:
 	data_files = []
 
 setup (name = "PyGreSQL",
-    version = "3.1",
-    description = "Python PostgreSQL Interfaces",
-    author = "D'Arcy J. M. Cain",
-    author_email = "darcy@druid.net",
-    url = "http://www.druid.net/pygresql/",
-    licence = "Python",
+	version = "3.1",
+	description = "Python PostgreSQL Interfaces",
+	author = "D'Arcy J. M. Cain",
+	author_email = "darcy@druid.net",
+	url = "http://www.druid.net/pygresql/",
+	licence = "Python",
 
 	py_modules = ['pg', 'pgdb'],
-    ext_modules = [ Extension(
+	ext_modules = [ Extension(
 		name='_pg',
-        'sources': ['pgmodule.c'],
-        'include_dirs': include_dirs,
-        'library_dirs': library_dirs,
-        'libraries': optional_libs
-    )]
+		sources = ['pgmodule.c'],
+		include_dirs = include_dirs,
+		library_dirs = library_dirs,
+		libraries = optional_libs
+	)]
 	data_files = data_files
 )
 
