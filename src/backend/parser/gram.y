@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.91 1999/07/16 04:59:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.92 1999/07/16 22:29:42 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -169,8 +169,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		oper_argtypes, RuleActionList, RuleActionBlock, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
-		from_clause, from_expr, table_list, opt_array_bounds, nest_array_bounds,
-		expr_list, attrs, res_target_list, res_target_list2,
+		from_clause, from_expr, table_list, opt_array_bounds,
+		expr_list, attrs, target_list, update_target_list,
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
 		opt_select_limit
 
@@ -189,7 +189,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <str>		join_outer
 %type <ival>	join_type
 
-%type <node>	position_expr
 %type <list>	extract_list, position_list
 %type <list>	substr_list, substr_from, substr_for, trim_list
 %type <list>	opt_interval
@@ -232,10 +231,11 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <ielem>	index_elem, func_index
 %type <range>	table_expr
 %type <relexp>	relation_expr
-%type <target>	res_target_el, res_target_el2
+%type <target>	target_el, update_target_el
 %type <paramno> ParamNo
 
-%type <typnam>	Typename, opt_type, Array, Generic, Character, Datetime, Numeric
+%type <typnam>	Typename, opt_type, SimpleTypename,
+				Generic, Numeric, Character, Datetime
 %type <str>		generic, numeric, character, datetime
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
@@ -685,6 +685,10 @@ ClosePortalStmt:  CLOSE opt_id
 					n->portalname = $2;
 					$$ = (Node *)n;
 				}
+		;
+
+opt_id:  ColId									{ $$ = $1; }
+		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 
@@ -2476,7 +2480,7 @@ InsertStmt:  INSERT INTO relation_name  insert_rest
 				}
 		;
 
-insert_rest:  VALUES '(' res_target_list2 ')'
+insert_rest:  VALUES '(' target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = NULL;
@@ -2519,7 +2523,7 @@ insert_rest:  VALUES '(' res_target_list2 ')'
 					$$->intersectClause = n->intersectClause;
 					$$->forUpdate = n->forUpdate;
 				}
-		| '(' columnList ')' VALUES '(' res_target_list2 ')'
+		| '(' columnList ')' VALUES '(' target_list ')'
 				{
 					$$ = makeNode(InsertStmt);
 					$$->cols = $2;
@@ -2621,7 +2625,7 @@ opt_lmode:	SHARE				{ $$ = TRUE; }
  *****************************************************************************/
 
 UpdateStmt:  UPDATE relation_name
-			  SET res_target_list
+			  SET update_target_list
 			  from_clause
 			  where_clause
 				{
@@ -2804,7 +2808,7 @@ select_clause: '(' select_clause ')'
 			}
 		; 
 
-SubSelect:	SELECT opt_unique res_target_list2
+SubSelect:	SELECT opt_unique target_list
 			 result from_clause where_clause
 			 group_clause having_clause
 				{
@@ -3183,17 +3187,9 @@ relation_expr:	relation_name
 					$$->inh = TRUE;
 				}
 
-opt_array_bounds:  '[' ']' nest_array_bounds
+opt_array_bounds:	'[' ']' opt_array_bounds
 				{  $$ = lcons(makeInteger(-1), $3); }
-		| '[' Iconst ']' nest_array_bounds
-				{  $$ = lcons(makeInteger($2), $4); }
-		| /*EMPTY*/
-				{  $$ = NIL; }
-		;
-
-nest_array_bounds:	'[' ']' nest_array_bounds
-				{  $$ = lcons(makeInteger(-1), $3); }
-		| '[' Iconst ']' nest_array_bounds
+		| '[' Iconst ']' opt_array_bounds
 				{  $$ = lcons(makeInteger($2), $4); }
 		| /*EMPTY*/
 				{  $$ = NIL; }
@@ -3210,7 +3206,7 @@ nest_array_bounds:	'[' ']' nest_array_bounds
  *
  *****************************************************************************/
 
-Typename:  Array opt_array_bounds
+Typename:  SimpleTypename opt_array_bounds
 				{
 					$$ = $1;
 					$$->arrayBounds = $2;
@@ -3232,17 +3228,17 @@ Typename:  Array opt_array_bounds
 					else
 						$$->setof = FALSE;
 				}
-		| SETOF Array
+		| SETOF SimpleTypename
 				{
 					$$ = $2;
 					$$->setof = TRUE;
 				}
 		;
 
-Array:  Generic
-		| Datetime
+SimpleTypename:  Generic
 		| Numeric
 		| Character
+		| Datetime
 		;
 
 Generic:  generic
@@ -3254,7 +3250,7 @@ Generic:  generic
 		;
 
 generic:  IDENT									{ $$ = $1; }
-		| TYPE_P								{ $$ = xlateSqlType("type"); }
+		| TYPE_P								{ $$ = "type"; }
 		;
 
 /* SQL92 numeric data types
@@ -3615,21 +3611,18 @@ sub_type:  ANY								{ $$ = ANY_SUBLINK; }
  * All operations/expressions are allowed in a BETWEEN clause
  *  if surrounded by parens.
  */
-a_expr:  attr opt_indirection
-				{
-					$1->indirection = $2;
-					$$ = (Node *)$1;
-				}
+a_expr:  attr
+				{	$$ = (Node *) $1;  }
 		| row_expr
 				{	$$ = $1;  }
 		| AexprConst
 				{	$$ = $1;  }
-		| ColId
+		| ColId opt_indirection
 				{
 					/* could be a column name or a relation_name */
 					Ident *n = makeNode(Ident);
 					n->name = $1;
-					n->indirection = NULL;
+					n->indirection = $2;
 					$$ = (Node *)n;
 				}
 		| '-' a_expr %prec UMINUS
@@ -3679,7 +3672,7 @@ a_expr:  attr opt_indirection
 					/* AexprConst can be either A_Const or ParamNo */
 					if (nodeTag($1) == T_A_Const) {
 						((A_Const *)$1)->typename = $3;
-					} else if (nodeTag($1) == T_Param) {
+					} else if (nodeTag($1) == T_ParamNo) {
 						((ParamNo *)$1)->typename = $3;
 					/* otherwise, try to transform to a function call */
 					} else {
@@ -3695,7 +3688,7 @@ a_expr:  attr opt_indirection
 					/* AexprConst can be either A_Const or ParamNo */
 					if (nodeTag($3) == T_A_Const) {
 						((A_Const *)$3)->typename = $5;
-					} else if (nodeTag($5) == T_Param) {
+					} else if (nodeTag($3) == T_ParamNo) {
 						((ParamNo *)$3)->typename = $5;
 					/* otherwise, try to transform to a function call */
 					} else {
@@ -4282,21 +4275,19 @@ a_expr:  attr opt_indirection
 /* Restricted expressions
  * b_expr is a subset of the complete expression syntax
  *  defined by a_expr. b_expr is used in BETWEEN clauses
- *  to eliminate parser ambiguities stemming from the AND keyword.
+ *  to eliminate parser ambiguities stemming from the AND keyword,
+ *  and also in POSITION clauses where the IN keyword gives trouble.
  */
-b_expr:  attr opt_indirection
-				{
-					$1->indirection = $2;
-					$$ = (Node *)$1;
-				}
+b_expr:  attr
+				{	$$ = (Node *) $1;  }
 		| AexprConst
 				{	$$ = $1;  }
-		| ColId
+		| ColId opt_indirection
 				{
 					/* could be a column name or a relation_name */
 					Ident *n = makeNode(Ident);
 					n->name = $1;
-					n->indirection = NULL;
+					n->indirection = $2;
 					$$ = (Node *)n;
 				}
 		| '-' b_expr %prec UMINUS
@@ -4317,10 +4308,10 @@ b_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "/", $1, $3); }
 		| b_expr '%' b_expr
 				{	$$ = makeA_Expr(OP, "%", $1, $3); }
-		| b_expr '^' b_expr
-				{	$$ = makeA_Expr(OP, "^", $1, $3); }
 		| b_expr '*' b_expr
 				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+		| b_expr '^' b_expr
+				{	$$ = makeA_Expr(OP, "^", $1, $3); }
 		| ':' b_expr
 				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
 		| ';' b_expr
@@ -4333,7 +4324,7 @@ b_expr:  attr opt_indirection
 					/* AexprConst can be either A_Const or ParamNo */
 					if (nodeTag($1) == T_A_Const) {
 						((A_Const *)$1)->typename = $3;
-					} else if (nodeTag($1) == T_Param) {
+					} else if (nodeTag($1) == T_ParamNo) {
 						((ParamNo *)$1)->typename = $3;
 					/* otherwise, try to transform to a function call */
 					} else {
@@ -4349,7 +4340,7 @@ b_expr:  attr opt_indirection
 					/* AexprConst can be either A_Const or ParamNo */
 					if (nodeTag($3) == T_A_Const) {
 						((A_Const *)$3)->typename = $5;
-					} else if (nodeTag($3) == T_Param) {
+					} else if (nodeTag($3) == T_ParamNo) {
 						((ParamNo *)$3)->typename = $5;
 					/* otherwise, try to transform to a function call */
 					} else {
@@ -4571,138 +4562,12 @@ extract_arg:  datetime						{ $$ = $1; }
 		| TIMEZONE_MINUTE					{ $$ = "tz_minute"; }
 		;
 
-position_list:  position_expr IN position_expr
+/* position_list uses b_expr not a_expr to avoid conflict with general IN */
+
+position_list:  b_expr IN b_expr
 				{	$$ = makeList($3, $1, -1); }
 		| /*EMPTY*/
 				{	$$ = NIL; }
-		;
-
-position_expr:  attr opt_indirection
-				{
-					$1->indirection = $2;
-					$$ = (Node *)$1;
-				}
-		| AexprConst
-				{	$$ = $1;  }
-		| '-' position_expr %prec UMINUS
-				{	$$ = makeA_Expr(OP, "-", NULL, $2); }
-		| position_expr '+' position_expr
-				{	$$ = makeA_Expr(OP, "+", $1, $3); }
-		| position_expr '-' position_expr
-				{	$$ = makeA_Expr(OP, "-", $1, $3); }
-		| position_expr '/' position_expr
-				{	$$ = makeA_Expr(OP, "/", $1, $3); }
-		| position_expr '%' position_expr
-				{	$$ = makeA_Expr(OP, "%", $1, $3); }
-		| position_expr '*' position_expr
-				{	$$ = makeA_Expr(OP, "*", $1, $3); }
-		| '|' position_expr
-				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
-		| position_expr TYPECAST Typename
-				{
-					$$ = (Node *)$1;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const) {
-						((A_Const *)$1)->typename = $3;
-					} else if (nodeTag($1) == T_Param) {
-						((ParamNo *)$1)->typename = $3;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $3->name;
-						n->args = lcons($1,NIL);
-						$$ = (Node *)n;
-					}
-				}
-		| CAST '(' position_expr AS Typename ')'
-				{
-					$$ = (Node *)$3;
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($3) == T_A_Const) {
-						((A_Const *)$3)->typename = $5;
-					} else if (nodeTag($3) == T_Param) {
-						((ParamNo *)$3)->typename = $5;
-					/* otherwise, try to transform to a function call */
-					} else {
-						FuncCall *n = makeNode(FuncCall);
-						n->funcname = $5->name;
-						n->args = lcons($3,NIL);
-						$$ = (Node *)n;
-					}
-				}
-		| '(' position_expr ')'
-				{	$$ = $2; }
-		| position_expr Op position_expr
-				{	$$ = makeA_Expr(OP, $2, $1, $3); }
-		| Op position_expr
-				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
-		| position_expr Op
-				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| ColId
-				{
-					/* could be a column name or a relation_name */
-					Ident *n = makeNode(Ident);
-					n->name = $1;
-					n->indirection = NULL;
-					$$ = (Node *)n;
-				}
-		| func_name '(' ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = NIL;
-					$$ = (Node *)n;
-				}
-		| func_name '(' expr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		| POSITION '(' position_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "strpos";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		| SUBSTRING '(' substr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "substr";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
-		/* various trim expressions are defined in SQL92 - thomas 1997-07-19 */
-		| TRIM '(' BOTH trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "btrim";
-					n->args = $4;
-					$$ = (Node *)n;
-				}
-		| TRIM '(' LEADING trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "ltrim";
-					n->args = $4;
-					$$ = (Node *)n;
-				}
-		| TRIM '(' TRAILING trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "rtrim";
-					n->args = $4;
-					$$ = (Node *)n;
-				}
-		| TRIM '(' trim_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "btrim";
-					n->args = $3;
-					$$ = (Node *)n;
-				}
 		;
 
 substr_list:  expr_list substr_from substr_for
@@ -4846,38 +4711,27 @@ case_default:  ELSE a_expr_or_null				{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-case_arg:  attr opt_indirection
-				{
-					$1->indirection = $2;
-					$$ = (Node *)$1;
-				}
-		| ColId
-				{
-					/* could be a column name or a relation_name */
-					Ident *n = makeNode(Ident);
-					n->name = $1;
-					n->indirection = NULL;
-					$$ = (Node *)n;
-				}
+case_arg:  a_expr
+				{	$$ = $1; }
 		| /*EMPTY*/
 				{	$$ = NULL; }
 		;
 
-attr:  relation_name '.' attrs
+attr:  relation_name '.' attrs opt_indirection
 				{
 					$$ = makeNode(Attr);
 					$$->relname = $1;
 					$$->paramNo = NULL;
 					$$->attrs = $3;
-					$$->indirection = NULL;
+					$$->indirection = $4;
 				}
-		| ParamNo '.' attrs
+		| ParamNo '.' attrs opt_indirection
 				{
 					$$ = makeNode(Attr);
 					$$->relname = NULL;
 					$$->paramNo = $1;
 					$$->attrs = $3;
-					$$->indirection = NULL;
+					$$->indirection = $4;
 				}
 		;
 
@@ -4896,66 +4750,16 @@ attrs:	  attr_name
  *
  *****************************************************************************/
 
-res_target_list:  res_target_list ',' res_target_el
-				{	$$ = lappend($1,$3);  }
-		| res_target_el
-				{	$$ = lcons($1, NIL);  }
-		| '*'
-				{
-					ResTarget *rt = makeNode(ResTarget);
-					Attr *att = makeNode(Attr);
-					att->relname = "*";
-					att->paramNo = NULL;
-					att->attrs = NULL;
-					att->indirection = NIL;
-					rt->name = NULL;
-					rt->indirection = NULL;
-					rt->val = (Node *)att;
-					$$ = lcons(rt, NIL);
-				}
-		;
+/* Target lists as found in SELECT ... and INSERT VALUES ( ... ) */
 
-res_target_el:  ColId opt_indirection '=' a_expr_or_null
-				{
-					$$ = makeNode(ResTarget);
-					$$->name = $1;
-					$$->indirection = $2;
-					$$->val = (Node *)$4;
-				}
-		| attr opt_indirection
-				{
-					$$ = makeNode(ResTarget);
-					$$->name = NULL;
-					$$->indirection = $2;
-					$$->val = (Node *)$1;
-				}
-		| relation_name '.' '*'
-				{
-					Attr *att = makeNode(Attr);
-					att->relname = $1;
-					att->paramNo = NULL;
-					att->attrs = lcons(makeString("*"), NIL);
-					att->indirection = NIL;
-					$$ = makeNode(ResTarget);
-					$$->name = NULL;
-					$$->indirection = NULL;
-					$$->val = (Node *)att;
-				}
-		;
-
-/*
-** target list for select.
-** should get rid of the other but is still needed by the defunct select into
-** and update (uses a subset)
-*/
-res_target_list2:  res_target_list2 ',' res_target_el2
+target_list:  target_list ',' target_el
 				{	$$ = lappend($1, $3);  }
-		| res_target_el2
+		| target_el
 				{	$$ = lcons($1, NIL);  }
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
-res_target_el2:  a_expr_or_null AS ColLabel
+target_el:  a_expr_or_null AS ColLabel
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $3;
@@ -4995,9 +4799,28 @@ res_target_el2:  a_expr_or_null AS ColLabel
 				}
 		;
 
-opt_id:  ColId									{ $$ = $1; }
-		| /*EMPTY*/								{ $$ = NULL; }
+/* Target list as found in UPDATE table SET ... */
+
+update_target_list:  update_target_list ',' update_target_el
+				{	$$ = lappend($1,$3);  }
+		| update_target_el
+				{	$$ = lcons($1, NIL);  }
 		;
+
+update_target_el:  ColId opt_indirection '=' a_expr_or_null
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = $1;
+					$$->indirection = $2;
+					$$->val = (Node *)$4;
+				}
+		;
+
+/*****************************************************************************
+ *
+ *	Names and constants
+ *
+ *****************************************************************************/
 
 relation_name:	SpecialRuleRelation
 				{
@@ -5056,7 +4879,10 @@ AexprConst:  Iconst
 					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}
-		| Typename Sconst
+		/* this rule formerly used Typename, but that causes reduce conflicts
+		 * with subscripted column names ...
+		 */
+		| SimpleTypename Sconst
 				{
 					A_Const *n = makeNode(A_Const);
 					n->typename = $1;
