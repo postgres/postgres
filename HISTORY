@@ -1,6 +1,44 @@
 
                                Release Notes
                                       
+                               Release 7.3.1
+                                      
+     Release date: 2002-12-18
+     
+   This has a variety of fixes from 7.3.
+     _________________________________________________________________
+   
+                         Migration to version 7.3.1
+                                      
+   A dump/restore is *not* required for those running 7.3. However, it
+   should be noted that the main PostgreSQL interface library, libpq, has
+   a new major version number for this release, which may require
+   recompilation of client code in certain cases.
+     _________________________________________________________________
+   
+                                  Changes
+                                      
+   Fix a core dump of COPY TO when client/server encodings don't match (T
+   om)
+   Allow pg_dump to work with pre-7.2 servers (Tom)
+   /contrib/adddepend fixes (Tom)
+   Fix problem with deletion of per-user/per-database config settings (To
+   m)
+   /contrib/vacuumlo fix (Tom)
+   Allow 'password' encryption even when pg_shadow contains MD5 passwords
+    (Bruce)
+   /contrib/dbmirror fix (Steven Singer)
+   Optimizer fixes (Tom)
+   /contrib/tsearch fixes (Teodor Sigaev, Magnus)
+   Allow locale names to be mixed case (Nicolai Tufar)
+   Increment libpq library's major version number (Bruce)
+   pg_hba.conf error reporting fixes (Bruce, Neil)
+   Add SCO Openserver 5.0.4 as a supported platform (Bruce)
+   Prevent EXPLAIN from crashing server (Tom)
+   SSL fixes (Nathan Mueller)
+   Prevent composite column creation via ALTER TABLE (Tom)
+     _________________________________________________________________
+   
                                 Release 7.3
                                       
      Release date: 2002-11-27
@@ -3519,7 +3557,7 @@ Enhancements
  * pg_dump now output the schema and/or the data, with many fixes to
    enhance completeness.
  * psql used in place of monitor in administration shell scripts.
-   monitor to be depreciated in next release.
+   monitor to be deprecated in next release.
  * date/time functions enhanced
  * NULL insert/update/comparison fixed/enhanced
  * TCL/TK lib and shell fixed to work with both tck7.4/tk4.0 and tcl7.5/tk4.1

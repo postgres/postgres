@@ -1,10 +1,62 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.4 2002/11/26 22:04:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.5 2002/12/18 02:07:24 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-7-3-1">
+   <title>Release 7.3.1</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2002-12-18</simpara>
+   </note>
+
+   <para>
+    This has a variety of fixes from 7.3.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.3.1</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those
+     running 7.3. However, it should be noted that the main PostgreSQL
+     interface library, libpq, has a new major version number for this
+     release, which may require recompilation of client code in certain
+     cases.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+<literallayout>
+Fix a core dump of COPY TO when client/server encodings don't match (Tom)
+Allow pg_dump to work with pre-7.2 servers (Tom)
+/contrib/adddepend fixes (Tom)
+Fix problem with deletion of per-user/per-database config settings (Tom)
+/contrib/vacuumlo fix (Tom)
+Allow 'password' encryption even when pg_shadow contains MD5 passwords (Bruce)
+/contrib/dbmirror fix (Steven Singer)
+Optimizer fixes (Tom)
+/contrib/tsearch fixes (Teodor Sigaev, Magnus)
+Allow locale names to be mixed case (Nicolai Tufar)
+Increment libpq library's major version number (Bruce)
+pg_hba.conf error reporting fixes (Bruce, Neil)
+Add SCO Openserver 5.0.4 as a supported platform (Bruce)
+Prevent EXPLAIN from crashing server (Tom)
+SSL fixes (Nathan Mueller)
+Prevent composite column creation via ALTER TABLE (Tom)
+</literallayout>
+    </para>
+   </sect2>
+  </sect1>
+  
+  
  <sect1 id="release-7-3">
   <title>Release 7.3</title>
 
@@ -4596,7 +4648,7 @@ Enhancements
  * pg_dump now output the schema and/or the data, with many fixes to
    enhance completeness.
  * psql used in place of monitor in administration shell scripts.
-   monitor to be depreciated in next release.
+   monitor to be deprecated in next release.
  * date/time functions enhanced
  * NULL insert/update/comparison fixed/enhanced
  * TCL/TK lib and shell fixed to work with both tck7.4/tk4.0 and tcl7.5/tk4.1
