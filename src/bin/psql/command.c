@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.56 2001/06/08 23:53:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.57 2001/09/02 23:52:19 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -241,8 +241,8 @@ exec_command(const char *cmd,
 		char		opt1q,
 					opt2q;
 
-		opt1 = scan_option(&string, OT_NORMAL, &opt1q);
-		opt2 = scan_option(&string, OT_NORMAL, &opt2q);
+		opt1 = scan_option(&string, OT_SQLID, &opt1q);
+		opt2 = scan_option(&string, OT_SQLID, &opt2q);
 
 		if (opt2)
 			/* gave username */
