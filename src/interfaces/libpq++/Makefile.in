@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.12 1999/05/23 01:03:57 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.13 1999/05/26 16:19:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,7 +44,11 @@ endif
 
 OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 
+ifeq ($(PORTNAME), win)
+SHLIB_LINK+= --driver-name g++ -L../libpq -lpq
+else
 SHLIB_LINK= -L../libpq -lpq
+endif
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
