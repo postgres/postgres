@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.6 1996/08/06 16:51:17 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.7 1996/11/12 11:16:44 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ MKDIR=	../../mk
 include $(MKDIR)/postgres.mk
 include $(MKDIR)/postgres.user.mk
 
-CFLAGS+=-I$(HEADERDIR)
+CFLAGS+=-I../../include
 
 #
 # try locating libpq.a in the following places
