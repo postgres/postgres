@@ -40,7 +40,7 @@ INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate
 -- Test copy
 COPY basictest (testvarchar) FROM stdin; -- fail
 ERROR:  value too long for type character varying(5)
-CONTEXT:  COPY FROM, line 1
+CONTEXT:  COPY basictest, line 1: "notsoshorttext"
 COPY basictest (testvarchar) FROM stdin;
 select * from basictest;
  testint4 | testtext | testvarchar | testnumeric 
@@ -127,11 +127,11 @@ INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
 ERROR:  domain dcheck does not allow null values
-CONTEXT:  COPY FROM, line 1
+CONTEXT:  COPY nulltest, line 1: "a	b	\N	d	\N"
 -- Last row is bad
 COPY nulltest FROM stdin;
 ERROR:  new row for relation "nulltest" violates check constraint "nulltest_col5"
-CONTEXT:  COPY FROM, line 3
+CONTEXT:  COPY nulltest, line 3: "a	b	c	\N	a"
 select * from nulltest;
  col1 | col2 | col3 | col4 | col5 
 ------+------+------+------+------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.211 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.212 2003/09/29 22:06:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,22 +59,21 @@
 typedef enum CopyDest
 {
 	COPY_FILE,					/* to/from file */
-	COPY_OLD_FE,				/* to/from frontend (old protocol) */
-	COPY_NEW_FE					/* to/from frontend (new protocol) */
+	COPY_OLD_FE,				/* to/from frontend (2.0 protocol) */
+	COPY_NEW_FE					/* to/from frontend (3.0 protocol) */
 } CopyDest;
 
 /*
- * Represents the type of data returned by CopyReadAttribute()
+ * State indicator showing what stopped CopyReadAttribute()
  */
 typedef enum CopyReadResult
 {
 	NORMAL_ATTR,
-	END_OF_LINE,
-	END_OF_FILE
+	END_OF_LINE
 } CopyReadResult;
 
 /*
- *	Represents the end-of-line terminator of the input
+ *	Represents the end-of-line terminator type of the input
  */
 typedef enum EolType
 {
@@ -85,17 +84,6 @@ typedef enum EolType
 } EolType;
 
 
-/* non-export function prototypes */
-static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
-	   char *delim, char *null_print);
-static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
-		 char *delim, char *null_print);
-static char *CopyReadAttribute(const char *delim, CopyReadResult *result);
-static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
-						Oid typelem, bool *isnull);
-static void CopyAttributeOut(char *string, char *delim);
-static List *CopyGetAttnums(Relation rel, List *attnamelist);
-
 static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 /*
@@ -103,11 +91,18 @@ static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
  * never been reentrant...
  */
 static CopyDest copy_dest;
-static FILE *copy_file;			/* if copy_dest == COPY_FILE */
-static StringInfo copy_msgbuf;	/* if copy_dest == COPY_NEW_FE */
+static FILE *copy_file;			/* used if copy_dest == COPY_FILE */
+static StringInfo copy_msgbuf;	/* used if copy_dest == COPY_NEW_FE */
 static bool fe_eof;				/* true if detected end of copy data */
 static EolType eol_type;		/* EOL type of input */
+static int	client_encoding;	/* remote side's character encoding */
+static int	server_encoding;	/* local encoding */
+
+/* these are just for error messages, see copy_in_error_callback */
+static bool copy_binary;		/* is it a binary copy? */
+static const char *copy_relname;	/* table name for error messages */
 static int	copy_lineno;		/* line number for error messages */
+static const char *copy_attname;	/* current att for error messages */
 
 
 /*
@@ -117,16 +112,34 @@ static int	copy_lineno;		/* line number for error messages */
  * grow to a suitable size, and then we will avoid palloc/pfree overhead
  * for subsequent attributes.  Note that CopyReadAttribute returns a pointer
  * to attribute_buf's data buffer!
- * encoding, if needed, can be set once at the start of the copy operation.
  */
 static StringInfoData attribute_buf;
 
-static int	client_encoding;
-static int	server_encoding;
-
 /*
- * Internal communications functions
+ * Similarly, line_buf holds the whole input line being processed (its
+ * cursor field points to the next character to be read by CopyReadAttribute).
+ * The input cycle is first to read the whole line into line_buf, convert it
+ * to server encoding, and then extract individual attribute fields into
+ * attribute_buf.  (We used to have CopyReadAttribute read the input source
+ * directly, but that caused a lot of encoding issues and unnecessary logic
+ * complexity).
  */
+static StringInfoData line_buf;
+static bool line_buf_converted;
+
+/* non-export function prototypes */
+static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
+	   char *delim, char *null_print);
+static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
+		 char *delim, char *null_print);
+static bool CopyReadLine(void);
+static char *CopyReadAttribute(const char *delim, CopyReadResult *result);
+static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
+						Oid typelem, bool *isnull);
+static void CopyAttributeOut(char *string, char *delim);
+static List *CopyGetAttnums(Relation rel, List *attnamelist);
+
+/* Internal communications functions */
 static void SendCopyBegin(bool binary, int natts);
 static void ReceiveCopyBegin(bool binary, int natts);
 static void SendCopyEnd(bool binary);
@@ -144,6 +157,7 @@ static void CopySendInt32(int32 val);
 static int32 CopyGetInt32(void);
 static void CopySendInt16(int16 val);
 static int16 CopyGetInt16(void);
+
 
 /*
  * Send copy start/stop messages for frontend copies.  These have changed
@@ -780,6 +794,8 @@ DoCopy(const CopyStmt *stmt)
 	 * Set up variables to avoid per-attribute overhead.
 	 */
 	initStringInfo(&attribute_buf);
+	initStringInfo(&line_buf);
+	line_buf_converted = false;
 
 	client_encoding = pg_get_client_encoding();
 	server_encoding = GetDatabaseEncoding();
@@ -907,6 +923,7 @@ DoCopy(const CopyStmt *stmt)
 	else if (IsUnderPostmaster && !is_from)
 		SendCopyEnd(binary);
 	pfree(attribute_buf.data);
+	pfree(line_buf.data);
 
 	/*
 	 * Close the relation.	If reading, we can release the AccessShareLock
@@ -1111,7 +1128,55 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 static void
 copy_in_error_callback(void *arg)
 {
-	errcontext("COPY FROM, line %d", copy_lineno);
+#define MAX_COPY_DATA_DISPLAY 100
+
+	if (copy_binary)
+	{
+		/* can't usefully display the data */
+		if (copy_attname)
+			errcontext("COPY %s, line %d, column %s",
+					   copy_relname, copy_lineno, copy_attname);
+		else
+			errcontext("COPY %s, line %d", copy_relname, copy_lineno);
+	}
+	else
+	{
+		if (copy_attname)
+		{
+			/* error is relevant to a particular column */
+			errcontext("COPY %s, line %d, column %s: \"%.*s%s\"",
+					   copy_relname, copy_lineno, copy_attname,
+					   MAX_COPY_DATA_DISPLAY, attribute_buf.data,
+					   (attribute_buf.len > MAX_COPY_DATA_DISPLAY) ? "..." : "");
+		}
+		else
+		{
+			/* error is relevant to a particular line */
+			if (!line_buf_converted)
+			{
+				/* didn't convert the encoding yet... */
+				if (client_encoding != server_encoding)
+				{
+					char	   *cvt;
+
+					cvt = (char *) pg_client_to_server((unsigned char *) line_buf.data,
+													   line_buf.len);
+					if (cvt != line_buf.data)
+					{
+						/* transfer converted data back to line_buf */
+						line_buf.len = 0;
+						line_buf.data[0] = '\0';
+						appendBinaryStringInfo(&line_buf, cvt, strlen(cvt));
+					}
+				}
+				line_buf_converted = true;
+			}
+			errcontext("COPY %s, line %d: \"%.*s%s\"",
+					   copy_relname, copy_lineno,
+					   MAX_COPY_DATA_DISPLAY, line_buf.data,
+					   (line_buf.len > MAX_COPY_DATA_DISPLAY) ? "..." : "");
+		}
+	}
 }
 
 
@@ -1327,7 +1392,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	/* Initialize static variables */
 	fe_eof = false;
 	eol_type = EOL_UNKNOWN;
+	copy_binary = binary;
+	copy_relname = RelationGetRelationName(rel);
 	copy_lineno = 0;
+	copy_attname = NULL;
 
 	/* Set up callback to identify error line number */
 	errcontext.callback = copy_in_error_callback;
@@ -1359,16 +1427,21 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			CopyReadResult result = NORMAL_ATTR;
 			char	   *string;
 
+			/* Actually read the line into memory here */
+			done = CopyReadLine();
+
+			/*
+			 * EOF at start of line means we're done.  If we see EOF
+			 * after some characters, we act as though it was newline
+			 * followed by EOF, ie, process the line and then exit loop
+			 * on next iteration.
+			 */
+			if (done && line_buf.len == 0)
+				break;
+
 			if (file_has_oids)
 			{
 				string = CopyReadAttribute(delim, &result);
-
-				if (result == END_OF_FILE && *string == '\0')
-				{
-					/* EOF at start of line: all is well */
-					done = true;
-					break;
-				}
 
 				if (strcmp(string, null_print) == 0)
 					ereport(ERROR,
@@ -1376,12 +1449,14 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 							 errmsg("null OID in COPY data")));
 				else
 				{
+					copy_attname = "oid";
 					loaded_oid = DatumGetObjectId(DirectFunctionCall1(oidin,
 											   CStringGetDatum(string)));
 					if (loaded_oid == InvalidOid)
 						ereport(ERROR,
 								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 								 errmsg("invalid OID in COPY data")));
+					copy_attname = NULL;
 				}
 			}
 
@@ -1394,7 +1469,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				int			m = attnum - 1;
 
 				/*
-				 * If prior attr on this line was ended by newline or EOF,
+				 * If prior attr on this line was ended by newline,
 				 * complain.
 				 */
 				if (result != NORMAL_ATTR)
@@ -1405,68 +1480,33 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 				string = CopyReadAttribute(delim, &result);
 
-				if (result == END_OF_FILE && *string == '\0' &&
-					cur == attnumlist && !file_has_oids)
-				{
-					/* EOF at start of line: all is well */
-					done = true;
-					break;		/* out of per-attr loop */
-				}
-
 				if (strcmp(string, null_print) == 0)
 				{
 					/* we read an SQL NULL, no need to do anything */
 				}
 				else
 				{
+					copy_attname = NameStr(attr[m]->attname);
 					values[m] = FunctionCall3(&in_functions[m],
 											  CStringGetDatum(string),
 										   ObjectIdGetDatum(elements[m]),
 									  Int32GetDatum(attr[m]->atttypmod));
 					nulls[m] = ' ';
+					copy_attname = NULL;
 				}
 			}
-
-			if (done)
-				break;			/* out of per-row loop */
 
 			/*
 			 * Complain if there are more fields on the input line.
 			 *
 			 * Special case: if we're reading a zero-column table, we won't
-			 * yet have called CopyReadAttribute() at all; so do that and
-			 * check we have an empty line.  Fortunately we can keep that
-			 * silly corner case out of the main line of execution.
+			 * yet have called CopyReadAttribute() at all; so no error if
+			 * line is empty.
 			 */
-			if (result == NORMAL_ATTR)
-			{
-				if (attnumlist == NIL && !file_has_oids)
-				{
-					string = CopyReadAttribute(delim, &result);
-					if (result == NORMAL_ATTR || *string != '\0')
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-						errmsg("extra data after last expected column")));
-					if (result == END_OF_FILE)
-					{
-						/* EOF at start of line: all is well */
-						done = true;
-						break;
-					}
-				}
-				else
-					ereport(ERROR,
-							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-					   errmsg("extra data after last expected column")));
-			}
-
-			/*
-			 * If we got some data on the line, but it was ended by EOF,
-			 * process the line normally but set flag to exit the loop
-			 * when we return to the top.
-			 */
-			if (result == END_OF_FILE)
-				done = true;
+			if (result == NORMAL_ATTR && line_buf.len != 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+						 errmsg("extra data after last expected column")));
 		}
 		else
 		{
@@ -1488,6 +1528,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 			if (file_has_oids)
 			{
+				copy_attname = "oid";
 				loaded_oid =
 					DatumGetObjectId(CopyReadBinaryAttribute(0,
 														&oid_in_function,
@@ -1497,6 +1538,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("invalid OID in COPY data")));
+				copy_attname = NULL;
 			}
 
 			i = 0;
@@ -1505,12 +1547,14 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				int			attnum = lfirsti(cur);
 				int			m = attnum - 1;
 
+				copy_attname = NameStr(attr[m]->attname);
 				i++;
 				values[m] = CopyReadBinaryAttribute(i,
 													&in_functions[m],
 													elements[m],
 													&isnull);
 				nulls[m] = isnull ? 'n' : ' ';
+				copy_attname = NULL;
 			}
 		}
 
@@ -1642,46 +1686,53 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 
 /*
- * Read the value of a single attribute.
+ * Read the next input line and stash it in line_buf, with conversion to
+ * server encoding.
  *
- * *result is set to indicate what terminated the read:
- *		NORMAL_ATTR:	column delimiter
- *		END_OF_LINE:	newline
- *		END_OF_FILE:	EOF indicator
- * In all cases, the string read up to the terminator is returned.
- *
- * Note: This function does not care about SQL NULL values -- it
- * is the caller's responsibility to check if the returned string
- * matches what the user specified for the SQL NULL value.
- *
- * delim is the column delimiter string.
+ * Result is true if read was terminated by EOF, false if terminated
+ * by newline.
  */
-static char *
-CopyReadAttribute(const char *delim, CopyReadResult *result)
+static bool
+CopyReadLine(void)
 {
+	bool		result;
+	bool		change_encoding = (client_encoding != server_encoding);
 	int			c;
-	int			delimc = (unsigned char) delim[0];
 	int			mblen;
+	int			j;
 	unsigned char s[2];
 	char	   *cvt;
-	int			j;
 
 	s[1] = 0;
 
-	/* reset attribute_buf to empty */
-	attribute_buf.len = 0;
-	attribute_buf.data[0] = '\0';
+	/* reset line_buf to empty */
+	line_buf.len = 0;
+	line_buf.data[0] = '\0';
+	line_buf.cursor = 0;
+
+	/* mark that encoding conversion hasn't occurred yet */
+	line_buf_converted = false;
 
 	/* set default status */
-	*result = NORMAL_ATTR;
+	result = false;
 
+	/*
+	 * In this loop we only care for detecting newlines (\r and/or \n)
+	 * and the end-of-copy marker (\.).  For backwards compatibility
+	 * we allow backslashes to escape newline characters.  Backslashes
+	 * other than the end marker get put into the line_buf, since
+	 * CopyReadAttribute does its own escape processing.  These four
+	 * characters, and only these four, are assumed the same in frontend
+	 * and backend encodings.  We do not assume that second and later bytes
+	 * of a frontend multibyte character couldn't look like ASCII characters.
+	 */
 	for (;;)
 	{
 		c = CopyGetChar();
 		if (c == EOF)
 		{
-			*result = END_OF_FILE;
-			goto copy_eof;
+			result = true;
+			break;
 		}
 		if (c == '\r')
 		{
@@ -1691,7 +1742,7 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 						 errmsg("literal carriage return found in data"),
 				  errhint("Use \"\\r\" to represent carriage return.")));
 			/* Check for \r\n on first line, _and_ handle \r\n. */
-			if (copy_lineno == 1 || eol_type == EOL_CRNL)
+			if (eol_type == EOL_UNKNOWN || eol_type == EOL_CRNL)
 			{
 				int			c2 = CopyPeekChar();
 
@@ -1717,7 +1768,6 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 					eol_type = EOL_CR;
 				}
 			}
-			*result = END_OF_LINE;
 			break;
 		}
 		if (c == '\n')
@@ -1728,19 +1778,150 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 						 errmsg("literal newline found in data"),
 						 errhint("Use \"\\n\" to represent newline.")));
 			eol_type = EOL_NL;
-			*result = END_OF_LINE;
 			break;
 		}
-		if (c == delimc)
-			break;
 		if (c == '\\')
 		{
 			c = CopyGetChar();
 			if (c == EOF)
 			{
-				*result = END_OF_FILE;
-				goto copy_eof;
+				result = true;
+				break;
 			}
+			if (c == '.')
+			{
+				if (eol_type == EOL_CRNL)
+				{
+					c = CopyGetChar();
+					if (c == '\n')
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("end-of-copy marker does not match previous newline style")));
+					if (c != '\r')
+						ereport(ERROR,
+								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+								 errmsg("end-of-copy marker corrupt")));
+				}
+				c = CopyGetChar();
+				if (c != '\r' && c != '\n')
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("end-of-copy marker corrupt")));
+				if ((eol_type == EOL_NL && c != '\n') ||
+					(eol_type == EOL_CRNL && c != '\n') ||
+					(eol_type == EOL_CR && c != '\r'))
+					ereport(ERROR,
+							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
+							 errmsg("end-of-copy marker does not match previous newline style")));
+
+				/*
+				 * In protocol version 3, we should ignore anything
+				 * after \. up to the protocol end of copy data.  (XXX
+				 * maybe better not to treat \. as special?)
+				 */
+				if (copy_dest == COPY_NEW_FE)
+				{
+					while (c != EOF)
+						c = CopyGetChar();
+				}
+				result = true;	/* report EOF */
+				break;
+			}
+			/* not EOF mark, so emit \ and following char literally */
+			appendStringInfoCharMacro(&line_buf, '\\');
+		}
+
+		appendStringInfoCharMacro(&line_buf, c);
+
+		/*
+		 * When client encoding != server, must be careful to read the
+		 * extra bytes of a multibyte character exactly, since the encoding
+		 * might not ensure they don't look like ASCII.  When the encodings
+		 * are the same, we need not do this, since no server encoding we
+		 * use has ASCII-like following bytes.
+		 */
+		if (change_encoding)
+		{
+			s[0] = c;
+			mblen = pg_encoding_mblen(client_encoding, s);
+			for (j = 1; j < mblen; j++)
+			{
+				c = CopyGetChar();
+				if (c == EOF)
+				{
+					result = true;
+					break;
+				}
+				appendStringInfoCharMacro(&line_buf, c);
+			}
+			if (result)
+				break;			/* out of outer loop */
+		}
+	} /* end of outer loop */
+
+	/*
+	 * Done reading the line.  Convert it to server encoding.
+	 */
+	if (change_encoding)
+	{
+		cvt = (char *) pg_client_to_server((unsigned char *) line_buf.data,
+										   line_buf.len);
+		if (cvt != line_buf.data)
+		{
+			/* transfer converted data back to line_buf */
+			line_buf.len = 0;
+			line_buf.data[0] = '\0';
+			appendBinaryStringInfo(&line_buf, cvt, strlen(cvt));
+		}
+	}
+
+	line_buf_converted = true;
+
+	return result;
+}
+
+/*
+ * Read the value of a single attribute, performing de-escaping as needed.
+ *
+ * *result is set to indicate what terminated the read:
+ *		NORMAL_ATTR:	column delimiter
+ *		END_OF_LINE:	end of line
+ * In either case, the string read up to the terminator is returned.
+ *
+ * Note: This function does not care about SQL NULL values -- it
+ * is the caller's responsibility to check if the returned string
+ * matches what the user specified for the SQL NULL value.
+ *
+ * delim is the column delimiter string.
+ */
+static char *
+CopyReadAttribute(const char *delim, CopyReadResult *result)
+{
+	char		c;
+	char		delimc = delim[0];
+
+	/* reset attribute_buf to empty */
+	attribute_buf.len = 0;
+	attribute_buf.data[0] = '\0';
+
+	/* set default status */
+	*result = END_OF_LINE;
+
+	for (;;)
+	{
+		if (line_buf.cursor >= line_buf.len)
+			break;
+		c = line_buf.data[line_buf.cursor++];
+		if (c == delimc)
+		{
+			*result = NORMAL_ATTR;
+			break;
+		}
+		if (c == '\\')
+		{
+			if (line_buf.cursor >= line_buf.len)
+				break;
+			c = line_buf.data[line_buf.cursor++];
 			switch (c)
 			{
 				case '0':
@@ -1755,35 +1936,23 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 						int			val;
 
 						val = OCTVALUE(c);
-						c = CopyPeekChar();
-						if (ISOCTAL(c))
+						if (line_buf.cursor < line_buf.len)
 						{
-							val = (val << 3) + OCTVALUE(c);
-							CopyDonePeek(c, true /* pick up */ );
-							c = CopyPeekChar();
+							c = line_buf.data[line_buf.cursor];
 							if (ISOCTAL(c))
 							{
+								line_buf.cursor++;
 								val = (val << 3) + OCTVALUE(c);
-								CopyDonePeek(c, true /* pick up */ );
-							}
-							else
-							{
-								if (c == EOF)
+								if (line_buf.cursor < line_buf.len)
 								{
-									*result = END_OF_FILE;
-									goto copy_eof;
+									c = line_buf.data[line_buf.cursor];
+									if (ISOCTAL(c))
+									{
+										line_buf.cursor++;
+										val = (val << 3) + OCTVALUE(c);
+									}
 								}
-								CopyDonePeek(c, false /* put back */ );
 							}
-						}
-						else
-						{
-							if (c == EOF)
-							{
-								*result = END_OF_FILE;
-								goto copy_eof;
-							}
-							CopyDonePeek(c, false /* put back */ );
 						}
 						c = val & 0377;
 					}
@@ -1816,79 +1985,12 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 				case 'v':
 					c = '\v';
 					break;
-				case '.':
-					if (eol_type == EOL_CRNL)
-					{
-						c = CopyGetChar();
-						if (c == '\n')
-							ereport(ERROR,
-								  (errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								   errmsg("end-of-copy marker does not match previous newline style")));
-						if (c != '\r')
-							ereport(ERROR,
-								  (errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								   errmsg("end-of-copy marker corrupt")));
-					}
-					c = CopyGetChar();
-					if (c != '\r' && c != '\n')
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker corrupt")));
-					if ((eol_type == EOL_NL && c != '\n') ||
-						(eol_type == EOL_CRNL && c != '\n') ||
-						(eol_type == EOL_CR && c != '\r'))
-						ereport(ERROR,
-								(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-								 errmsg("end-of-copy marker does not match previous newline style")));
-
-					/*
-					 * In protocol version 3, we should ignore anything
-					 * after \. up to the protocol end of copy data.  (XXX
-					 * maybe better not to treat \. as special?)
-					 */
-					if (copy_dest == COPY_NEW_FE)
-					{
-						while (c != EOF)
-							c = CopyGetChar();
-					}
-					*result = END_OF_FILE;
-					goto copy_eof;
+				/*
+				 * in all other cases, take the char after '\' literally
+				 */
 			}
 		}
 		appendStringInfoCharMacro(&attribute_buf, c);
-
-		/* XXX shouldn't this be done even when encoding is the same? */
-		if (client_encoding != server_encoding)
-		{
-			/* get additional bytes of the char, if any */
-			s[0] = c;
-			mblen = pg_encoding_mblen(client_encoding, s);
-			for (j = 1; j < mblen; j++)
-			{
-				c = CopyGetChar();
-				if (c == EOF)
-				{
-					*result = END_OF_FILE;
-					goto copy_eof;
-				}
-				appendStringInfoCharMacro(&attribute_buf, c);
-			}
-		}
-	}
-
-copy_eof:
-
-	if (client_encoding != server_encoding)
-	{
-		cvt = (char *) pg_client_to_server((unsigned char *) attribute_buf.data,
-										   attribute_buf.len);
-		if (cvt != attribute_buf.data)
-		{
-			/* transfer converted data back to attribute_buf */
-			attribute_buf.len = 0;
-			attribute_buf.data[0] = '\0';
-			appendBinaryStringInfo(&attribute_buf, cvt, strlen(cvt));
-		}
 	}
 
 	return attribute_buf.data;
@@ -1917,7 +2019,7 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
 	if (fld_size < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
-				 errmsg("invalid size for field %d", column_no)));
+				 errmsg("invalid field size")));
 
 	/* reset attribute_buf to empty, and load raw data in it */
 	attribute_buf.len = 0;
@@ -1944,8 +2046,7 @@ CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
 	if (attribute_buf.cursor != attribute_buf.len)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("incorrect binary data format in field %d",
-						column_no)));
+				 errmsg("incorrect binary data format")));
 
 	*isnull = false;
 	return result;

@@ -998,7 +998,7 @@ copy test("........pg.dropped.1........") to stdout;
 ERROR:  column "........pg.dropped.1........" of relation "test" does not exist
 copy test from stdin;
 ERROR:  extra data after last expected column
-CONTEXT:  COPY FROM, line 1
+CONTEXT:  COPY test, line 1: "10	11	12"
 select * from test;
  b | c 
 ---+---

@@ -35,17 +35,17 @@ ERROR:  column "d" specified more than once
 -- missing data: should fail
 COPY x from stdin;
 ERROR:  invalid input syntax for integer: ""
-CONTEXT:  COPY FROM, line 1
+CONTEXT:  COPY x, line 1, column a: ""
 COPY x from stdin;
 ERROR:  missing data for column "e"
-CONTEXT:  COPY FROM, line 1
+CONTEXT:  COPY x, line 1: "2000	230	23	23"
 COPY x from stdin;
 ERROR:  missing data for column "e"
-CONTEXT:  COPY FROM, line 1
+CONTEXT:  COPY x, line 1: "2001	231	\N	\N"
 -- extra data: should fail
 COPY x from stdin;
 ERROR:  extra data after last expected column
-CONTEXT:  COPY FROM, line 1
+CONTEXT:  COPY x, line 1: "2002	232	40	50	60	70	80"
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 -- check results of copy in
