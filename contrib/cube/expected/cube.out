@@ -258,46 +258,46 @@ SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
 SELECT ''::cube AS cube;
 ERROR:  cube_in: can't parse an empty string
 SELECT 'ABC'::cube AS cube;
-ERROR:  parse error at or before position 1, character ('A', \101), input: 'ABC'
+ERROR:  syntax error at or before position 1, character ('A', \101), input: 'ABC'
 
 SELECT '()'::cube AS cube;
-ERROR:  parse error at or before position 2, character (')', \051), input: '()'
+ERROR:  syntax error at or before position 2, character (')', \051), input: '()'
 
 SELECT '[]'::cube AS cube;
-ERROR:  parse error at or before position 2, character (']', \135), input: '[]'
+ERROR:  syntax error at or before position 2, character (']', \135), input: '[]'
 
 SELECT '[()]'::cube AS cube;
-ERROR:  parse error at or before position 3, character (')', \051), input: '[()]'
+ERROR:  syntax error at or before position 3, character (')', \051), input: '[()]'
 
 SELECT '[(1)]'::cube AS cube;
-ERROR:  parse error at or before position 5, character (']', \135), input: '[(1)]'
+ERROR:  syntax error at or before position 5, character (']', \135), input: '[(1)]'
 
 SELECT '[(1),]'::cube AS cube;
-ERROR:  parse error at or before position 6, character (']', \135), input: '[(1),]'
+ERROR:  syntax error at or before position 6, character (']', \135), input: '[(1),]'
 
 SELECT '[(1),2]'::cube AS cube;
-ERROR:  parse error at or before position 7, character (']', \135), input: '[(1),2]'
+ERROR:  syntax error at or before position 7, character (']', \135), input: '[(1),2]'
 
 SELECT '[(1),(2),(3)]'::cube AS cube;
-ERROR:  parse error at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
+ERROR:  syntax error at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
 
 SELECT '1,'::cube AS cube;
-ERROR:  parse error at or before position 2, character (',', \054), input: '1,'
+ERROR:  syntax error at or before position 2, character (',', \054), input: '1,'
 
 SELECT '1,2,'::cube AS cube;
-ERROR:  parse error at or before position 4, character (',', \054), input: '1,2,'
+ERROR:  syntax error at or before position 4, character (',', \054), input: '1,2,'
 
 SELECT '1,,2'::cube AS cube;
-ERROR:  parse error at or before position 3, character (',', \054), input: '1,,2'
+ERROR:  syntax error at or before position 3, character (',', \054), input: '1,,2'
 
 SELECT '(1,)'::cube AS cube;
-ERROR:  parse error at or before position 4, character (')', \051), input: '(1,)'
+ERROR:  syntax error at or before position 4, character (')', \051), input: '(1,)'
 
 SELECT '(1,2,)'::cube AS cube;
-ERROR:  parse error at or before position 6, character (')', \051), input: '(1,2,)'
+ERROR:  syntax error at or before position 6, character (')', \051), input: '(1,2,)'
 
 SELECT '(1,,2)'::cube AS cube;
-ERROR:  parse error at or before position 4, character (',', \054), input: '(1,,2)'
+ERROR:  syntax error at or before position 4, character (',', \054), input: '(1,,2)'
 
 -- invalid input: semantic errors and trailing garbage
 SELECT '[(1),(2)],'::cube AS cube; -- 0
@@ -338,6 +338,60 @@ ERROR:  (7) bad cube representation; garbage at or before char 4, ('end of input
 
 SELECT '1..2'::cube AS cube; -- 7
 ERROR:  (7) bad cube representation; garbage at or before char 4, ('end of input', \000)
+
+--
+-- Testing building cubes from float8 values
+--
+SELECT cube(0::float8);
+ cube 
+------
+ (0)
+(1 row)
+
+SELECT cube(1::float8);
+ cube 
+------
+ (1)
+(1 row)
+
+SELECT cube(1,2);
+  cube   
+---------
+ (1),(2)
+(1 row)
+
+SELECT cube(cube(1,2),3);
+     cube      
+---------------
+ (1, 3),(2, 3)
+(1 row)
+
+SELECT cube(cube(1,2),3,4);
+     cube      
+---------------
+ (1, 3),(2, 4)
+(1 row)
+
+SELECT cube(cube(cube(1,2),3,4),5);
+        cube         
+---------------------
+ (1, 3, 5),(2, 4, 5)
+(1 row)
+
+SELECT cube(cube(cube(1,2),3,4),5,6);
+        cube         
+---------------------
+ (1, 3, 5),(2, 4, 6)
+(1 row)
+
+--
+-- Test that the text -> cube cast was installed.
+--
+SELECT '(0)'::text::cube;
+ cube 
+------
+ (0)
+(1 row)
 
 --
 -- Testing limit of CUBE_MAX_DIM dimensions check in cube_in.

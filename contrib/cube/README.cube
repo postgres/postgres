@@ -264,6 +264,27 @@ cube(text) returns cube
   cube takes text input and returns a cube. This is useful for making cubes
   from computed strings.
 
+cube(float8) returns cube
+  This makes a one dimensional cube with both coordinates the same.
+  If the type of the argument is a numeric type other than float8 an
+  explicit cast to float8 may be needed.
+  cube(1) == '(1)'
+
+cube(float8, float8) returns cube
+  This makes a one dimensional cube.
+  cube(1,2) == '(1),(2)'
+
+cube(cube, float8) returns cube
+  This builds a new cube by adding a dimension on to an existing cube with
+  the same values for both parts of the new coordinate. This is useful for
+  building cubes piece by piece from calculated values.
+  cube('(1)',2) == '(1,2),(1,2)'
+
+cube(cube, float8, float8) returns cube
+  This builds a new cube by adding a dimension on to an existing cube.
+  This is useful for building cubes piece by piece from calculated values.
+  cube('(1,2)',3,4) == '(1,3),(2,4)'
+
 cube_dim(cube) returns int
   cube_dim returns the number of dimensions stored in the the data structure
   for a cube. This is useful for constraints on the dimensions of a cube.

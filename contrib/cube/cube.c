@@ -30,6 +30,13 @@ extern int	cube_yyparse();
 NDBOX	   *cube_in(char *str);
 NDBOX	   *cube(text *str);
 char	   *cube_out(NDBOX * cube);
+NDBOX      *cube_f8(double *);
+NDBOX      *cube_f8_f8(double *, double *);
+NDBOX      *cube_c_f8(NDBOX *, double *);
+NDBOX      *cube_c_f8_f8(NDBOX *, double *, double *);
+int4			cube_dim(NDBOX * a);
+double	   *cube_ll_coord(NDBOX * a, int4 n);
+double	   *cube_ur_coord(NDBOX * a, int4 n);
 
 
 /*
@@ -73,9 +80,6 @@ bool		cube_right(NDBOX * a, NDBOX * b);
 bool		cube_lt(NDBOX * a, NDBOX * b);
 bool		cube_gt(NDBOX * a, NDBOX * b);
 double	   *cube_distance(NDBOX * a, NDBOX * b);
-int4			cube_dim(NDBOX * a);
-double	   *cube_ll_coord(NDBOX * a, int4 n);
-double	   *cube_ur_coord(NDBOX * a, int4 n);
 bool		cube_is_point(NDBOX * a);
 NDBOX	   *cube_enlarge(NDBOX * a, double *r, int4 n);
 
@@ -1224,5 +1228,80 @@ cube_enlarge(NDBOX * a, double *r, int4 n)
 		result->x[i] = -*r;
 		result->x[j] = *r;
 	}
+	return result;
+}
+
+/* Create a one dimensional box with identical upper and lower coordinates */
+NDBOX *
+cube_f8(double *x1)
+{
+	NDBOX	   *result;
+        int        size;
+	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
+	result = (NDBOX *) palloc(size);
+	memset(result, 0, size);
+	result->size = size;
+	result->dim = 1;
+        result->x[0] = *x1;
+        result->x[1] = *x1;
+	return result;
+}
+
+/* Create a one dimensional box */
+NDBOX *
+cube_f8_f8(double *x1, double *x2)
+{
+	NDBOX	   *result;
+        int        size;
+	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
+	result = (NDBOX *) palloc(size);
+	memset(result, 0, size);
+	result->size = size;
+	result->dim = 1;
+        result->x[0] = *x1;
+        result->x[1] = *x2;
+	return result;
+}
+
+/* Add a dimension to an existing cube with the same values for the new
+   coordinate */
+NDBOX *
+cube_c_f8(NDBOX *c, double *x1)
+{
+	NDBOX	   *result;
+        int        size;
+        int        i;
+	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) * 2;
+	result = (NDBOX *) palloc(size);
+	memset(result, 0, size);
+	result->size = size;
+	result->dim = c->dim + 1;
+        for (i = 0; i < c->dim; i++) {
+            result->x[i] = c->x[i];
+            result->x[result->dim + i] = c->x[c->dim + i];
+        }
+        result->x[result->dim - 1] = *x1;
+        result->x[2 * result->dim - 1] = *x1;
+	return result;
+}
+
+/* Add a dimension to an existing cube */
+NDBOX *
+cube_c_f8_f8(NDBOX *c, double *x1, double *x2)
+{
+	NDBOX	   *result;
+        int        size;
+        int        i;
+	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) * 2;
+	result = (NDBOX *) palloc(size);
+	memset(result, 0, size);
+	result->size = size;
+	result->dim = c->dim + 1;
+        for (i = 0; i < c->dim; i++) {
+            result->x[i] = c->x[i];
+            result->x[result->dim + i] = c->x[c->dim + i];
+        }
+        result->x[result->dim - 1] = *x1;
+        result->x[2 * result->dim - 1] = *x2;
 	return result;
 }

@@ -93,6 +93,24 @@ SELECT '1,2a'::cube AS cube; -- 7
 SELECT '1..2'::cube AS cube; -- 7
 
 --
+-- Testing building cubes from float8 values
+--
+
+SELECT cube(0::float8);
+SELECT cube(1::float8);
+SELECT cube(1,2);
+SELECT cube(cube(1,2),3);
+SELECT cube(cube(1,2),3,4);
+SELECT cube(cube(cube(1,2),3,4),5);
+SELECT cube(cube(cube(1,2),3,4),5,6);
+
+--
+-- Test that the text -> cube cast was installed.
+--
+
+SELECT '(0)'::text::cube;
+
+--
 -- Testing limit of CUBE_MAX_DIM dimensions check in cube_in.
 --
 
