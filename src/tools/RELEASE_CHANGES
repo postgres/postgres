@@ -1,5 +1,6 @@
 * Version numbers
     configure.in and configure
+    doc/bug.template
     bump interface version numbers
       o src/interfaces/*/Makefile
       o src/interfaces/libpq/libpq.rc (update for minor release)
@@ -18,9 +19,6 @@
     update ports list in doc/src/sgml/installation.sgml
     update INSTALL
     platform-specific FAQ's, if needed
-
-* Miscellaneous files
-    doc/bug.template
 
 * Update pg_upgrade to handle new version, or disable
 

@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.95 2003/11/29 19:52:11 pgsql Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.96 2003/11/30 06:09:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 # shared library parameters
 NAME= pq
 SO_MAJOR_VERSION= 3
-SO_MINOR_VERSION= 1
+SO_MINOR_VERSION= 2
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) $(THREAD_CPPFLAGS) -DFRONTEND -DSYSCONFDIR='"$(sysconfdir)"'
 

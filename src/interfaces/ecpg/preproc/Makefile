@@ -1,11 +1,11 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.95 2003/11/29 19:52:08 pgsql Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.96 2003/11/30 06:09:47 momjian Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 MAJOR_VERSION=3
-MINOR_VERSION=0
+MINOR_VERSION=1
 PATCHLEVEL=0
 
 override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) $(THREAD_CPPFLAGS) \
