@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep 13 22:19:20 EDT 1999
+Last updated:		Thu Sep 16 21:50:14 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -247,6 +247,7 @@ MISC
 * In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * pass atttypmod through parser in more cases(Bruce)
 * remove duplicate type in/out functions for disk and net
+* change VACUUM ANALYZE to use btree comparison functions, not <,=,> calls
 
 SOURCE CODE
 -----------
@@ -254,6 +255,7 @@ SOURCE CODE
 * Fix C optimizer problem where fmgr_ptr calls return different types
 * Add needed includes and removed unneede include files(Bruce)
 * Make configure --enable-debug add -g on compile line
+* Does Mariposa source contain any other bug fixes?
 
 ---------------------------------------------------------------------------
 
