@@ -14,6 +14,7 @@
  *
  *-------------------------------------------------------------------------
  */
+#ifdef PRE_BSDI_2_1
 #include <stdio.h>
 #include <dld.h>
 #include "postgres.h"
@@ -91,3 +92,4 @@ pg_dlerror()
 {
     return dld_strerror(dld_errno);
 }
+#endif
