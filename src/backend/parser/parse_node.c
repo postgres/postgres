@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.63 2002/04/25 02:56:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.64 2002/05/01 19:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ make_op(List *opname, Node *ltree, Node *rtree)
 	/* right operator? */
 	if (rtree == NULL)
 	{
-		tup = right_oper(opname, ltypeId);
+		tup = right_oper(opname, ltypeId, false);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 		left = make_operand(ltree, ltypeId, opform->oprleft);
 		right = NULL;
@@ -118,7 +118,7 @@ make_op(List *opname, Node *ltree, Node *rtree)
 	/* left operator? */
 	else if (ltree == NULL)
 	{
-		tup = left_oper(opname, rtypeId);
+		tup = left_oper(opname, rtypeId, false);
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 		right = make_operand(rtree, rtypeId, opform->oprright);
 		left = NULL;

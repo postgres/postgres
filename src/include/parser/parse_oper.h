@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.19 2002/04/16 23:08:12 tgl Exp $
+ * $Id: parse_oper.h,v 1.20 2002/05/01 19:26:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,8 @@ extern Oid	LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 /* Routines to find operators matching a name and given input types */
 /* NB: the selected operator may require coercion of the input types! */
 extern Operator oper(List *op, Oid arg1, Oid arg2, bool noError);
-extern Operator right_oper(List *op, Oid arg);
-extern Operator left_oper(List *op, Oid arg);
+extern Operator right_oper(List *op, Oid arg, bool noError);
+extern Operator left_oper(List *op, Oid arg, bool noError);
 
 /* Routines to find operators that DO NOT require coercion --- ie, their */
 /* input types are either exactly as given, or binary-compatible */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.55 2002/04/16 23:08:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.56 2002/05/01 19:26:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -751,19 +751,21 @@ compatible_oper_funcid(List *op, Oid arg1, Oid arg2, bool noError)
 }
 
 
-/* Given unary right operator (operator on right), return oper struct
+/* right_oper() -- search for a unary right operator (operator on right)
+ * Given operator name and type of arg, return oper struct.
  *
  * IMPORTANT: the returned operator (if any) is only promised to be
  * coercion-compatible with the input datatype.  Do not use this if
  * you need an exact- or binary-compatible match.
  *
- * Always raises error on failure.
+ * If no matching operator found, return NULL if noError is true,
+ * raise an error if it is false.
  *
  * NOTE: on success, the returned object is a syscache entry.  The caller
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-right_oper(List *op, Oid arg)
+right_oper(List *op, Oid arg, bool noError)
 {
 	FuncCandidateList clist;
 	Oid			operOid = InvalidOid;
@@ -804,26 +806,28 @@ right_oper(List *op, Oid arg)
 								 0, 0, 0);
 	}
 
-	if (!HeapTupleIsValid(tup))
+	if (!HeapTupleIsValid(tup) && !noError)
 		unary_op_error(op, arg, FALSE);
 
 	return (Operator) tup;
-}	/* right_oper() */
+}
 
 
-/* Given unary left operator (operator on left), return oper struct
+/* left_oper() -- search for a unary left operator (operator on left)
+ * Given operator name and type of arg, return oper struct.
  *
  * IMPORTANT: the returned operator (if any) is only promised to be
  * coercion-compatible with the input datatype.  Do not use this if
  * you need an exact- or binary-compatible match.
  *
- * Always raises error on failure.
+ * If no matching operator found, return NULL if noError is true,
+ * raise an error if it is false.
  *
  * NOTE: on success, the returned object is a syscache entry.  The caller
  * must ReleaseSysCache() the entry when done with it.
  */
 Operator
-left_oper(List *op, Oid arg)
+left_oper(List *op, Oid arg, bool noError)
 {
 	FuncCandidateList clist;
 	Oid			operOid = InvalidOid;
@@ -869,11 +873,11 @@ left_oper(List *op, Oid arg)
 								 0, 0, 0);
 	}
 
-	if (!HeapTupleIsValid(tup))
+	if (!HeapTupleIsValid(tup) && !noError)
 		unary_op_error(op, arg, TRUE);
 
 	return (Operator) tup;
-}	/* left_oper() */
+}
 
 
 /* op_error()
