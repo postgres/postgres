@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.106 2001/05/19 00:33:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.107 2001/05/19 00:37:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,136 +103,6 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 
 	return retval;
 }
-
-static int
-agg_get_candidates(char *aggname,
-				   Oid typeId,
-				   CandidateList *candidates)
-{
-	CandidateList current_candidate;
-	Relation	pg_aggregate_desc;
-	HeapScanDesc pg_aggregate_scan;
-	HeapTuple	tup;
-	Form_pg_aggregate agg;
-	int			ncandidates = 0;
-	ScanKeyData aggKey[1];
-
-	*candidates = NULL;
-
-	ScanKeyEntryInitialize(&aggKey[0], 0,
-						   Anum_pg_aggregate_aggname,
-						   F_NAMEEQ,
-						   NameGetDatum(aggname));
-
-	pg_aggregate_desc = heap_openr(AggregateRelationName, AccessShareLock);
-	pg_aggregate_scan = heap_beginscan(pg_aggregate_desc,
-									   0,
-									   SnapshotSelf,	/* ??? */
-									   1,
-									   aggKey);
-
-	while (HeapTupleIsValid(tup = heap_getnext(pg_aggregate_scan, 0)))
-	{
-		agg = (Form_pg_aggregate) GETSTRUCT(tup);
-
-		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
-		current_candidate->args = (Oid *) palloc(sizeof(Oid));
-
-		current_candidate->args[0] = agg->aggbasetype;
-		current_candidate->next = *candidates;
-		*candidates = current_candidate;
-		ncandidates++;
-	}
-
-	heap_endscan(pg_aggregate_scan);
-	heap_close(pg_aggregate_desc, AccessShareLock);
-
-	return ncandidates;
-}	/* agg_get_candidates() */
-
-/* agg_select_candidate()
- *
- * Try to choose only one candidate aggregate function from a list of
- * possible matches.  Return value is Oid of input type of aggregate
- * if successful, else InvalidOid.
- */
-static Oid
-agg_select_candidate(Oid typeid, CandidateList candidates)
-{
-	CandidateList current_candidate;
-	CandidateList last_candidate;
-	Oid			current_typeid;
-	int			ncandidates;
-	CATEGORY	category,
-				current_category;
-
-	/*
-	 * First look for exact matches or binary compatible matches. (Of
-	 * course exact matches shouldn't even get here, but anyway.)
-	 */
-	ncandidates = 0;
-	last_candidate = NULL;
-	for (current_candidate = candidates;
-		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
-	{
-		current_typeid = current_candidate->args[0];
-
-		if (current_typeid == typeid
-			|| IS_BINARY_COMPATIBLE(current_typeid, typeid))
-		{
-			last_candidate = current_candidate;
-			ncandidates++;
-		}
-	}
-	if (ncandidates == 1)
-		return last_candidate->args[0];
-
-	/*
-	 * If no luck that way, look for candidates which allow coercion and
-	 * have a preferred type. Keep all candidates if none match.
-	 */
-	category = TypeCategory(typeid);
-	ncandidates = 0;
-	last_candidate = NULL;
-	for (current_candidate = candidates;
-		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
-	{
-		current_typeid = current_candidate->args[0];
-		current_category = TypeCategory(current_typeid);
-
-		if (current_category == category
-			&& IsPreferredType(current_category, current_typeid)
-			&& can_coerce_type(1, &typeid, &current_typeid))
-		{
-			/* only one so far? then keep it... */
-			if (last_candidate == NULL)
-			{
-				candidates = current_candidate;
-				last_candidate = current_candidate;
-				ncandidates = 1;
-			}
-			/* otherwise, keep this one too... */
-			else
-			{
-				last_candidate->next = current_candidate;
-				last_candidate = current_candidate;
-				ncandidates++;
-			}
-		}
-		/* otherwise, don't bother keeping this one around... */
-	}
-
-	if (last_candidate)			/* terminate rebuilt list */
-		last_candidate->next = NULL;
-
-	if (ncandidates == 1)
-		return candidates->args[0];
-
-	return InvalidOid;
-}	/* agg_select_candidate() */
-
 
 /*
  * 	parse function
@@ -707,6 +577,136 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 	return retval;
 }
+
+
+static int
+agg_get_candidates(char *aggname,
+				   Oid typeId,
+				   CandidateList *candidates)
+{
+	CandidateList current_candidate;
+	Relation	pg_aggregate_desc;
+	HeapScanDesc pg_aggregate_scan;
+	HeapTuple	tup;
+	Form_pg_aggregate agg;
+	int			ncandidates = 0;
+	ScanKeyData aggKey[1];
+
+	*candidates = NULL;
+
+	ScanKeyEntryInitialize(&aggKey[0], 0,
+						   Anum_pg_aggregate_aggname,
+						   F_NAMEEQ,
+						   NameGetDatum(aggname));
+
+	pg_aggregate_desc = heap_openr(AggregateRelationName, AccessShareLock);
+	pg_aggregate_scan = heap_beginscan(pg_aggregate_desc,
+									   0,
+									   SnapshotSelf,	/* ??? */
+									   1,
+									   aggKey);
+
+	while (HeapTupleIsValid(tup = heap_getnext(pg_aggregate_scan, 0)))
+	{
+		agg = (Form_pg_aggregate) GETSTRUCT(tup);
+
+		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
+		current_candidate->args = (Oid *) palloc(sizeof(Oid));
+
+		current_candidate->args[0] = agg->aggbasetype;
+		current_candidate->next = *candidates;
+		*candidates = current_candidate;
+		ncandidates++;
+	}
+
+	heap_endscan(pg_aggregate_scan);
+	heap_close(pg_aggregate_desc, AccessShareLock);
+
+	return ncandidates;
+}	/* agg_get_candidates() */
+
+/* agg_select_candidate()
+ *
+ * Try to choose only one candidate aggregate function from a list of
+ * possible matches.  Return value is Oid of input type of aggregate
+ * if successful, else InvalidOid.
+ */
+static Oid
+agg_select_candidate(Oid typeid, CandidateList candidates)
+{
+	CandidateList current_candidate;
+	CandidateList last_candidate;
+	Oid			current_typeid;
+	int			ncandidates;
+	CATEGORY	category,
+				current_category;
+
+	/*
+	 * First look for exact matches or binary compatible matches. (Of
+	 * course exact matches shouldn't even get here, but anyway.)
+	 */
+	ncandidates = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+	{
+		current_typeid = current_candidate->args[0];
+
+		if (current_typeid == typeid
+			|| IS_BINARY_COMPATIBLE(current_typeid, typeid))
+		{
+			last_candidate = current_candidate;
+			ncandidates++;
+		}
+	}
+	if (ncandidates == 1)
+		return last_candidate->args[0];
+
+	/*
+	 * If no luck that way, look for candidates which allow coercion and
+	 * have a preferred type. Keep all candidates if none match.
+	 */
+	category = TypeCategory(typeid);
+	ncandidates = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+	{
+		current_typeid = current_candidate->args[0];
+		current_category = TypeCategory(current_typeid);
+
+		if (current_category == category
+			&& IsPreferredType(current_category, current_typeid)
+			&& can_coerce_type(1, &typeid, &current_typeid))
+		{
+			/* only one so far? then keep it... */
+			if (last_candidate == NULL)
+			{
+				candidates = current_candidate;
+				last_candidate = current_candidate;
+				ncandidates = 1;
+			}
+			/* otherwise, keep this one too... */
+			else
+			{
+				last_candidate->next = current_candidate;
+				last_candidate = current_candidate;
+				ncandidates++;
+			}
+		}
+		/* otherwise, don't bother keeping this one around... */
+	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
+
+	if (ncandidates == 1)
+		return candidates->args[0];
+
+	return InvalidOid;
+}	/* agg_select_candidate() */
 
 
 /* func_get_candidates()
