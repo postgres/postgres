@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.15 2000/05/17 16:57:41 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.16 2000/05/18 15:37:56 momjian Exp $
 
 # ----------
 # Check call syntax
@@ -59,7 +59,7 @@ extratests="$*"
 # ----------
 # Special setting for Windows (no unix domain sockets)
 # ----------
-if [ "x$hostname" = "xwin" ]
+if [ "x$hostname" = "xwin" -o "x$hostname" = "xi386-pc-qnx" ]
 then
     HOSTLOC="-h localhost"
 else
