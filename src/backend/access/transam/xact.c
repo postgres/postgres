@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.34 1999/05/09 00:52:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.35 1999/05/13 00:34:57 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -690,13 +690,27 @@ AtCommit_Locks()
 static void
 AtCommit_Memory()
 {
+	Portal		portal;
+	MemoryContext portalContext;
+
 	/* ----------------
-	 *	now that we're "out" of a transaction, have the
+	 *	Release memory in the blank portal.
+	 *  Since EndPortalAllocMode implicitly works on the current context,
+	 *  first make real sure that the blank portal is the selected context.
+	 *  (This is probably not necessary, but seems like a good idea...)
+	 * ----------------
+	 */
+	portal = GetPortalByName(NULL);
+	portalContext = (MemoryContext) PortalGetHeapMemory(portal);
+	MemoryContextSwitchTo(portalContext);
+	EndPortalAllocMode();
+
+	/* ----------------
+	 *	Now that we're "out" of a transaction, have the
 	 *	system allocate things in the top memory context instead
 	 *	of the blank portal memory context.
 	 * ----------------
 	 */
-	EndPortalAllocMode();
 	MemoryContextSwitchTo(TopMemoryContext);
 }
 
@@ -770,10 +784,25 @@ AtAbort_Locks()
 static void
 AtAbort_Memory()
 {
+	Portal		portal;
+	MemoryContext portalContext;
+
 	/* ----------------
-	 *	after doing an abort transaction, make certain the
-	 *	system uses the top memory context rather then the
-	 *	portal memory context (until the next transaction).
+	 *	Release memory in the blank portal.
+	 *  Since EndPortalAllocMode implicitly works on the current context,
+	 *  first make real sure that the blank portal is the selected context.
+	 *  (This is ESSENTIAL in case we aborted from someplace where it wasn't.)
+	 * ----------------
+	 */
+	portal = GetPortalByName(NULL);
+	portalContext = (MemoryContext) PortalGetHeapMemory(portal);
+	MemoryContextSwitchTo(portalContext);
+	EndPortalAllocMode();
+
+	/* ----------------
+	 *	Now that we're "out" of a transaction, have the
+	 *	system allocate things in the top memory context instead
+	 *	of the blank portal memory context.
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
