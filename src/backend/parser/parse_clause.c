@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.31 1999/05/13 07:28:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.32 1999/05/13 14:59:05 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,7 +285,9 @@ parseFromClause(ParseState *pstate, List *frmList, Node **qual)
 		else if (IsA(n, JoinExpr))
 		{
 			JoinExpr   *j = (JoinExpr *)n;
+#ifdef ENABLE_OUTER_JOINS
 			char	   *lname = transformTableEntry(pstate, (RangeVar *)j->larg);
+#endif
 			char	   *rname;
 
 			if (IsA((Node *)j->rarg, RangeVar))
