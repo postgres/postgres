@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.85 2001/06/02 18:25:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.86 2001/06/08 21:16:48 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,6 @@
 
 #include <time.h>
 #include <fcntl.h>
-#ifndef O_RDONLY
-#include <sys/file.h>
-#endif	 /* O_RDONLY */
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -40,10 +37,6 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
-
-extern int	errno;
-
-extern CommandDest whereToSendOutput;
 
 #ifdef ENABLE_SYSLOG
 /*
@@ -70,9 +63,14 @@ bool		Log_pid;
 
 static const char *print_timestamp(void);
 static const char *print_pid(void);
+static void send_notice_to_frontend(const char *msg);
+static void send_error_to_frontend(const char *msg);
+static const char *useful_strerror(int errnum);
+static const char *elog_message_prefix(int lev);
+
 
 static int	Debugfile = -1;
-static int	ElogDebugIndentLevel = 0;
+
 
 /*--------------------
  * elog
@@ -119,87 +117,44 @@ elog(int lev, const char *fmt,...)
 	char	   *fmt_buf = fmt_fixedbuf;
 	char	   *msg_buf = msg_fixedbuf;
 
-	/* this buffer is only used for strange values of lev: */
-	char		prefix_buf[32];
+	/* for COPY line numbers */
+	char		copylineno_buf[32];
 
-	/* this buffer is only used if errno has a bogus value: */
-	char		errorstr_buf[32];
 	const char *errorstr;
 	const char *prefix;
 	const char *cp;
 	char	   *bp;
-	int			indent = 0;
-	int			space_needed;
-	int			len;
+	size_t		space_needed;
 
 	/* size of the prefix needed for timestamp and pid, if enabled */
 	size_t		timestamp_size;
 
-	if (lev <= DEBUG && Debugfile < 0)
-		return;					/* ignore debug msgs if noplace to send */
+	/* ignore debug msgs if noplace to send */
+	if (lev == DEBUG && Debugfile < 0)
+		return;
 
 	/* Save error str before calling any function that might change errno */
-	errorstr = strerror(errno);
+	errorstr = useful_strerror(errno);
 
 	/*
-	 * Some strerror()s return an empty string for out-of-range errno.
-	 * This is ANSI C spec compliant, but not exactly useful.
+	 * Convert initialization errors into fatal errors. This is
+	 * probably redundant, because Warn_restart_ready won't be set
+	 * anyway.
 	 */
-	if (errorstr == NULL || *errorstr == '\0')
-	{
-		sprintf(errorstr_buf, "error %d", errno);
-		errorstr = errorstr_buf;
-	}
+	if (lev == ERROR && IsInitProcessingMode())
+		lev = FATAL;
 
+	/*
+	 * If we are inside a critical section, all errors become
+	 * REALLYFATAL errors.  See miscadmin.h.
+	 */
 	if (lev == ERROR || lev == FATAL)
 	{
-
-		/*
-		 * Convert initialization errors into fatal errors. This is
-		 * probably redundant, because Warn_restart_ready won't be set
-		 * anyway...
-		 */
-		if (IsInitProcessingMode())
-			lev = FATAL;
-
-		/*
-		 * If we are inside a critical section, all errors become STOP
-		 * errors. See miscadmin.h.
-		 */
 		if (CritSectionCount > 0)
-			lev = STOP;
+			lev = REALLYFATAL;
 	}
 
-	/* choose message prefix and indent level */
-	switch (lev)
-	{
-		case NOIND:
-			indent = ElogDebugIndentLevel - 1;
-			if (indent < 0)
-				indent = 0;
-			if (indent > 30)
-				indent = indent % 30;
-			prefix = "DEBUG:  ";
-			break;
-		case DEBUG:
-			indent = ElogDebugIndentLevel;
-			if (indent < 0)
-				indent = 0;
-			if (indent > 30)
-				indent = indent % 30;
-			prefix = "DEBUG:  ";
-			break;
-		case NOTICE:
-			prefix = "NOTICE:  ";
-			break;
-		case ERROR:
-			prefix = "ERROR:  ";
-			break;
-		default:
-			sprintf(prefix_buf, "FATAL %d:  ", lev);
-			prefix = prefix_buf;
-			break;
-	}
+	prefix = elog_message_prefix(lev);
 
 	timestamp_size = 0;
 	if (Log_timestamp)
@@ -214,22 +169,36 @@ elog(int lev, const char *fmt,...)
 	 * vsnprintf won't know what to do with %m).  To keep space
 	 * calculation simple, we only allow one %m.
 	 */
-	space_needed = timestamp_size + strlen(prefix) + indent + (lineno ? 24 : 0)
+	space_needed = timestamp_size + strlen(prefix)
 		+ strlen(fmt) + strlen(errorstr) + 1;
-	if (space_needed > (int) sizeof(fmt_fixedbuf))
+
+	if (copy_lineno)
 	{
-		fmt_buf = (char *) malloc(space_needed);
+		/* translator: This string will be truncated at 31 characters. */
+		snprintf(copylineno_buf, 32, gettext("copy: line %d, "), copy_lineno);
+		space_needed += strlen(copylineno_buf);
+	}
+
+	if (space_needed > sizeof(fmt_fixedbuf))
+	{
+		fmt_buf = malloc(space_needed);
 		if (fmt_buf == NULL)
 		{
 			/* We're up against it, convert to out-of-memory error */
 			fmt_buf = fmt_fixedbuf;
-			if (lev < FATAL)
+			if (lev != FATAL && lev != REALLYFATAL)
 			{
 				lev = ERROR;
-				prefix = "ERROR:  ";
+				prefix = elog_message_prefix(lev);
 			}
-			fmt = "elog: out of memory";		/* this must fit in
-												 * fmt_fixedbuf! */
+			/*
+			 * gettext doesn't allocate memory, except in the very
+			 * first call (which this isn't), so it's safe to
+			 * translate here.  Worst case we get the untranslated
+			 * string back.
+			 */
+			/* translator: This must fit in fmt_fixedbuf. */
+			fmt = gettext("elog: out of memory");
 		}
 	}
 
@@ -242,18 +211,15 @@ elog(int lev, const char *fmt,...)
 
 	strcat(fmt_buf, prefix);
 
-	bp = fmt_buf + strlen(fmt_buf);
-	while (indent-- > 0)
-		*bp++ = ' ';
-
 	/* If error was in CopyFrom() print the offending line number -- dz */
-	if (lineno)
+	if (copy_lineno)
 	{
-		sprintf(bp, "copy: line %d, ", lineno);
-		bp += strlen(bp);
-		if (lev == ERROR || lev >= FATAL)
-			lineno = 0;
+		strcat(fmt_buf, copylineno_buf);
+		if (lev == ERROR || lev == FATAL || lev == REALLYFATAL)
+			copy_lineno = 0;
 	}
+
+	bp = fmt_buf + strlen(fmt_buf);
 
 	for (cp = fmt; *cp; cp++)
 	{
@@ -261,7 +227,6 @@ elog(int lev, const char *fmt,...)
 		{
 			if (cp[1] == 'm')
 			{
-
 				/*
 				 * XXX If there are any %'s in errorstr then vsnprintf
 				 * will do the Wrong Thing; do we need to cope? Seems
@@ -313,15 +278,15 @@ elog(int lev, const char *fmt,...)
 		if (msg_buf != msg_fixedbuf)
 			free(msg_buf);
 		space_needed *= 2;
-		msg_buf = (char *) malloc(space_needed);
+		msg_buf = malloc(space_needed);
 		if (msg_buf == NULL)
 		{
 			/* We're up against it, convert to out-of-memory error */
 			msg_buf = msg_fixedbuf;
-			if (lev < FATAL)
+			if (lev != FATAL && lev != REALLYFATAL)
 			{
 				lev = ERROR;
-				prefix = "ERROR:  ";
+				prefix = elog_message_prefix(lev);
 			}
 			msg_buf[0] = '\0';
 			if (Log_timestamp)
@@ -329,7 +294,7 @@ elog(int lev, const char *fmt,...)
 			if (Log_pid)
 				strcat(msg_buf, print_pid());
 			strcat(msg_buf, prefix);
-			strcat(msg_buf, "elog: out of memory");
+			strcat(msg_buf, gettext("elog: out of memory"));
 			break;
 		}
 	}
@@ -346,9 +311,6 @@ elog(int lev, const char *fmt,...)
 
 		switch (lev)
 		{
-			case NOIND:
-				syslog_level = LOG_DEBUG;
-				break;
 			case DEBUG:
 				syslog_level = LOG_DEBUG;
 				break;
@@ -364,27 +326,25 @@ elog(int lev, const char *fmt,...)
 			case REALLYFATAL:
 			default:
 				syslog_level = LOG_CRIT;
+				break;
 		}
 
 		write_syslog(syslog_level, msg_buf + timestamp_size);
 	}
-#endif	 /* ENABLE_SYSLOG */
+#endif /* ENABLE_SYSLOG */
 
 	/* syslog doesn't want a trailing newline, but other destinations do */
 	strcat(msg_buf, "\n");
 
-	len = strlen(msg_buf);
-
 	/* Write to debug file, if open and enabled */
 	/* NOTE: debug file is typically pointed at stderr */
 	if (Debugfile >= 0 && Use_syslog <= 1)
-		write(Debugfile, msg_buf, len);
+		write(Debugfile, msg_buf, strlen(msg_buf));
 
 	if (lev > DEBUG && whereToSendOutput == Remote)
 	{
 		/* Send IPC message to the front-end program */
 		MemoryContext oldcxt;
-		char		msgtype;
 
 		/*
 		 * Since backend libpq may call palloc(), switch to a context
@@ -395,38 +355,24 @@ elog(int lev, const char *fmt,...)
 		oldcxt = MemoryContextSwitchTo(ErrorContext);
 
 		if (lev == NOTICE)
-			msgtype = 'N';
+			/* exclude the timestamp from msg sent to frontend */
+			send_notice_to_frontend(msg_buf + timestamp_size);
 		else
 		{
-
 			/*
 			 * Abort any COPY OUT in progress when an error is detected.
 			 * This hack is necessary because of poor design of copy
 			 * protocol.
 			 */
 			pq_endcopyout(true);
-			msgtype = 'E';
+			send_error_to_frontend(msg_buf + timestamp_size);
 		}
-		/* exclude the timestamp from msg sent to frontend */
-		pq_puttextmessage(msgtype, msg_buf + timestamp_size);
-
-		/*
-		 * This flush is normally not necessary, since postgres.c will
-		 * flush out waiting data when control returns to the main loop.
-		 * But it seems best to leave it here, so that the client has some
-		 * clue what happened if the backend dies before getting back to
-		 * the main loop ... error/notice messages should not be a
-		 * performance-critical path anyway, so an extra flush won't hurt
-		 * much ...
-		 */
-		pq_flush();
 
 		MemoryContextSwitchTo(oldcxt);
 	}
 
 	if (lev > DEBUG && whereToSendOutput != Remote)
 	{
-
 		/*
 		 * We are running as an interactive backend, so just send the
 		 * message to stderr.  But don't send a duplicate if Debugfile
@@ -466,7 +412,6 @@ elog(int lev, const char *fmt,...)
 		 */
 		if (lev == FATAL || !Warn_restart_ready || proc_exit_inprogress)
 		{
-
 			/*
 			 * fflush here is just to improve the odds that we get to see
 			 * the error message, in case things are so hosed that
@@ -476,7 +421,7 @@ elog(int lev, const char *fmt,...)
 			 */
 			fflush(stdout);
 			fflush(stderr);
-			proc_exit((int) (proc_exit_inprogress || !IsUnderPostmaster));
+			proc_exit(proc_exit_inprogress || !IsUnderPostmaster);
 		}
 
 		/*
@@ -492,9 +437,8 @@ elog(int lev, const char *fmt,...)
 		siglongjmp(Warn_restart, 1);
 	}
 
-	if (lev > FATAL)
+	if (lev == FATAL || lev == REALLYFATAL)
 	{
-
 		/*
 		 * Serious crash time. Postmaster will observe nonzero process
 		 * exit status and kill the other backends too.
@@ -511,6 +455,7 @@ elog(int lev, const char *fmt,...)
 	/* We reach here if lev <= NOTICE.	OK to return to caller. */
 }
 
+
 int
 DebugFileOpen(void)
 {
@@ -518,11 +463,9 @@ DebugFileOpen(void)
 				istty;
 
 	Debugfile = -1;
-	ElogDebugIndentLevel = 0;
 
 	if (OutputFileName[0])
 	{
-
 		/*
 		 * A debug-output file name was given.
 		 *
@@ -737,4 +680,104 @@ write_syslog(int level, const char *line)
 	}
 }
 
-#endif	 /* ENABLE_SYSLOG */
+#endif /* ENABLE_SYSLOG */
+
+
+
+static void
+send_notice_or_error_to_frontend(int type, const char *msg);
+
+
+static void
+send_notice_to_frontend(const char *msg)
+{
+	send_notice_or_error_to_frontend(NOTICE, msg);
+}
+
+
+static void
+send_error_to_frontend(const char *msg)
+{
+	send_notice_or_error_to_frontend(ERROR, msg);
+}
+
+
+static void
+send_notice_or_error_to_frontend(int type, const char *msg)
+{
+	StringInfo buf;
+
+	AssertArg(type == NOTICE || type == ERROR);
+
+	buf = makeStringInfo();
+
+	pq_beginmessage(buf);
+	pq_sendbyte(buf, type == NOTICE ? 'N' : 'E');
+	pq_sendstring(buf, msg);
+	pq_endmessage(buf);
+
+	pfree(buf);
+	/*
+	 * This flush is normally not necessary, since postgres.c will
+	 * flush out waiting data when control returns to the main loop.
+	 * But it seems best to leave it here, so that the client has some
+	 * clue what happened if the backend dies before getting back to
+	 * the main loop ... error/notice messages should not be a
+	 * performance-critical path anyway, so an extra flush won't hurt
+	 * much ...
+	 */
+	pq_flush();
+}
+
+
+static const char *useful_strerror(int errnum)
+{
+	/* this buffer is only used if errno has a bogus value */
+	static char	errorstr_buf[48];
+	char	   *str;
+
+	str = strerror(errnum);
+
+	/*
+	 * Some strerror()s return an empty string for out-of-range errno.
+	 * This is ANSI C spec compliant, but not exactly useful.
+	 */
+	if (str == NULL || *str == '\0')
+	{
+		/* translator: This string will be truncated at 47 characters expanded. */
+		snprintf(errorstr_buf, 48, gettext("operating system error %d"), errnum);
+		str = errorstr_buf;
+	}
+
+	return str;
+}
+
+
+
+static const char *
+elog_message_prefix(int lev)
+{
+	const char * prefix = NULL;
+
+	switch (lev)
+	{
+		case DEBUG:
+			prefix = gettext("DEBUG:  ");
+			break;
+		case NOTICE:
+			prefix = gettext("NOTICE:  ");
+			break;
+		case ERROR:
+			prefix = gettext("ERROR:  ");
+			break;
+		case FATAL:
+			prefix = gettext("FATAL 1:  ");
+			break;
+		case REALLYFATAL:
+			prefix = gettext("FATAL 2:  ");
+			break;
+	}
+
+	Assert(prefix != NULL);
+	return prefix;
+}
