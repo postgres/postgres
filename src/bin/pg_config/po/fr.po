@@ -1,17 +1,18 @@
 # translation of pg_config-fr.po to 
+# translation of pg_config-fr.po to
 # translation of pg_config.po to FR_fr
 # French message translation file for pg_config
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.3 2004/12/13 21:49:09 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.3.4.1 2005/02/11 11:53:30 petere Exp $
 #
 # Use these quotes: «%s»
-# Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
+# Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config-fr\n"
-"POT-Creation-Date: 2004-12-13 19:07+0000\n"
-"PO-Revision-Date: 2004-12-13 22:13+0100\n"
+"POT-Creation-Date: 2005-01-30 19:12+0000\n"
+"PO-Revision-Date: 2005-02-07 23:14+0100\n"
 "Last-Translator: \n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -125,32 +126,47 @@ msgstr "%s : argument invalide : %s\n"
 msgid "%s: could not find own executable\n"
 msgstr "%s : n'a pas pu trouver mon propre exécutable\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "n'a pas pu identifier le répertoire courant : %s"
 
-#: ../../port/exec.c:323 ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binaire invalide «%s»"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "n'a pas pu lire le binaire «%s»"
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "n'a pas pu trouver un «%s» à exécuter"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "n'a pas pu accéder au répertoire «%s»"
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "n'a pas pu lire le lien symbolique «%s»"
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "le processus fils a quitté avec le code de sortie %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "le processus fils a été terminé avec le signal %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"

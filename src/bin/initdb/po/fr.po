@@ -1,17 +1,18 @@
 # translation of initdb-fr.po to 
+# translation of initdb-fr.po to
 # translation of initdb-fr.po to FR_fr
 # French message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.6 2004/12/13 21:49:08 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.6.4.1 2005/02/11 11:53:30 petere Exp $
 #
 # Use these quotes: «%s»
-# Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
+# Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: initdb-fr\n"
-"POT-Creation-Date: 2004-12-13 19:06+0000\n"
-"PO-Revision-Date: 2004-12-13 22:11+0100\n"
+"POT-Creation-Date: 2005-01-30 19:12+0000\n"
+"PO-Revision-Date: 2005-02-07 23:14+0100\n"
 "Last-Translator: \n"
 "Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -19,57 +20,57 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.9.1\n"
 
-#: initdb.c:250 initdb.c:264
+#: initdb.c:251 initdb.c:265
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : espace mémoire insuffisant\n"
 
-#: initdb.c:374 initdb.c:1403
+#: initdb.c:372 initdb.c:1403
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s : impossible d'ouvrir le fichier «%s» en lecture : %s\n"
 
-#: initdb.c:435 initdb.c:1035 initdb.c:1062
+#: initdb.c:433 initdb.c:1030 initdb.c:1057
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s : impossible d'ouvrir le fichier «%s» en écriture : %s\n"
 
-#: initdb.c:443 initdb.c:451 initdb.c:1042 initdb.c:1068
+#: initdb.c:441 initdb.c:449 initdb.c:1037 initdb.c:1063
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s : n'a pas pu écrire le fichier «%s» : %s\n"
 
-#: initdb.c:470
+#: initdb.c:468
 #, c-format
 msgid "%s: could not execute command \"%s\": %s\n"
 msgstr "%s : n'a pas pu exécuter la commande «%s» : %s\n"
 
-#: initdb.c:593
+#: initdb.c:588
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s : suppression du répertoire des données «%s»\n"
 
-#: initdb.c:596
+#: initdb.c:591
 #, c-format
 msgid "%s: failed to remove data directory\n"
 msgstr "%s : a échoué lors de la suppression du répertoire data\n"
 
-#: initdb.c:602
+#: initdb.c:597
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s : suppression du contenu du répertoire des données «%s»\n"
 
-#: initdb.c:605
+#: initdb.c:600
 #, c-format
 msgid "%s: failed to remove contents of data directory\n"
 msgstr "%s : a échoué lors de la suppression du contenu du répertoire data\n"
 
-#: initdb.c:614
+#: initdb.c:609
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s : répertoire des données «%s» non supprimé à la demande de l'utilisateur\n"
 
-#: initdb.c:640
+#: initdb.c:635
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -79,17 +80,17 @@ msgstr ""
 "%s : impossible de se lancer en tant qu'utilisateur root\n"
 "Merci de vous connecter (en utilisant, par exemple, «su») en tant qu'utilisateur non privilégié et propriétaire du processus serveur.\n"
 
-#: initdb.c:689
+#: initdb.c:684
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s : «%s» n'est pas un nom de codage valide pour le serveur\n"
 
-#: initdb.c:844
+#: initdb.c:839
 #, c-format
 msgid "%s: warning: encoding mismatch\n"
 msgstr "%s : attention : codage différent\n"
 
-#: initdb.c:846
+#: initdb.c:841
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the selected\n"
@@ -105,12 +106,12 @@ msgstr ""
 "%s et soit vous ne spécifiez pas de codage explicitement, soit vous choisissez\n"
 "une combinaison fonctionnelle.\n"
 
-#: initdb.c:976
+#: initdb.c:971
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
 msgstr "%s : n'a pas pu créer le répertoire «%s» : %s\n"
 
-#: initdb.c:1004
+#: initdb.c:999
 #, c-format
 msgid ""
 "%s: file \"%s\" does not exist\n"
@@ -121,15 +122,15 @@ msgstr ""
 "Cela signifie que vous avez une installation corrompue ou que vous avez\n"
 "identifié le mauvais répertoire avec l'option -L.\n"
 
-#: initdb.c:1086
+#: initdb.c:1081
 msgid "selecting default max_connections ... "
 msgstr "sélection de la valeur par défaut de max_connections... "
 
-#: initdb.c:1122
+#: initdb.c:1117
 msgid "selecting default shared_buffers ... "
 msgstr "sélection de la valeur par défaut de shared_buffers... "
 
-#: initdb.c:1155
+#: initdb.c:1150
 msgid "creating configuration files ... "
 msgstr "création des fichiers de configuration... "
 
@@ -562,32 +563,47 @@ msgstr ""
 msgid "out of memory\n"
 msgstr "espace mémoire insuffisant\n"
 
-#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "n'a pas pu identifier le répertoire courant : %s"
 
-#: ../../port/exec.c:323 ../../port/exec.c:359
+#: ../../port/exec.c:213
+#, c-format
+msgid "invalid binary \"%s\""
+msgstr "binaire invalide «%s»"
+
+#: ../../port/exec.c:262
+#, c-format
+msgid "could not read binary \"%s\""
+msgstr "n'a pas pu lire le binaire «%s»"
+
+#: ../../port/exec.c:269
+#, c-format
+msgid "could not find a \"%s\" to execute"
+msgstr "n'a pas pu trouver un «%s» à exécuter"
+
+#: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "impossible d'accéder au répertoire «%s»"
 
-#: ../../port/exec.c:338
+#: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "n'a pas pu lire le lien symbolique «%s»"
 
-#: ../../port/exec.c:569
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "le processus fils a quitté avec le code de sortie %d"
 
-#: ../../port/exec.c:572
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "le processus fils a été terminé avec le signal %d"
 
-#: ../../port/exec.c:575
+#: ../../port/exec.c:593
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec un statut %d non reconnu"
