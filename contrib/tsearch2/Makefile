@@ -3,7 +3,7 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 
-override CPPFLAGS := -I. -I./snowball -I./ispell -I./wordparser $(CPPFLAGS)
+override CPPFLAGS := -I$(srcdir) -I$(srcdir)/snowball -I$(srcdir)/ispell -I$(srcdir)/wordparser $(CPPFLAGS)
 
 MODULE_big = tsearch2
 OBJS = dict_ex.o dict.o snmap.o stopword.o common.o prs_dcfg.o \
@@ -35,7 +35,7 @@ include $(top_srcdir)/contrib/contrib-global.mk
 install: installstop
 
 installstop:
-	cp stopword/*.stop $(datadir)
+	cp $(srcdir)/stopword/*.stop $(datadir)
 
 
 tsearch2.sql.in: tsearch.sql._in

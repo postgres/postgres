@@ -3,7 +3,7 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 
-override CPPFLAGS := -I. -I.. $(CPPFLAGS)
+override CPPFLAGS := -I$(srcdir) -I$(srcdir)/.. $(CPPFLAGS)
 
 SUBOBJS = english_stem.o api.o russian_stem.o utilities.o
 
