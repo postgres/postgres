@@ -1,7 +1,5 @@
-This program tests fsync.  If first times a simple read.  Then, it times
-an fsync that is part of a write, and one that is done on a newly opened
-file.  Third, it tests various fsync methods.
+This program tests fsync.  The tests are described as part of the program output.
 
-The program writes to /var/tmp because /tmp is sometimes a memory file
-system.
+	Usage:	test_fsync [-f filename] [loops]
 
+Loops defaults to 1000.
