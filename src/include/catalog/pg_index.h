@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.19 2001/05/15 03:49:35 momjian Exp $
+ * $Id: pg_index.h,v 1.20 2001/05/17 00:29:52 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -48,13 +48,10 @@ CATALOG(pg_index)
 								 * index */
 	int2vector	indkey;
 	oidvector	indclass;
-	bool		indisclustered;	/* this is unused, but is referenced by
-								 * the ODBC driver.  Remove it someday.
-								 * bjm 2001-05-14
-								 */
+	bool		indisclustered;	/* unused */
 	bool		indislossy;		/* do we fetch false tuples (lossy
 								 * compression)? */
-	bool		indhaskeytype;	/* does key type != attribute type? */
+	bool		indhaskeytype;	/* not used, originally added by GIST */
 	bool		indisunique;	/* is this a unique index? */
 	bool		indisprimary;	/* is this index for primary key */
 	Oid			indreference;	/* oid of index of referenced relation (ie
