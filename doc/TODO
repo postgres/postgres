@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Dec 27 00:56:45 EST 2002
+Last updated:		Sun Dec 29 23:48:48 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -67,6 +67,8 @@ Data Types
 * Add now("transaction|statement|clock") functionality
 * -Add GUC variables to control floating number output digits (Pedro Ferreira)
 * Have sequence dependency track use of DEFAULT sequences, seqname.nextval
+* Allow infinite dates just like infinite timestamps
+
 
 * CONVERSION
 	o Allow better handling of numeric constants, type conversion 
