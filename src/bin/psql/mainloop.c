@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.38 2001/03/23 00:36:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.39 2001/03/26 15:18:51 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -567,7 +567,9 @@ MainLoop(FILE *source)
 	 * it will re-enable ^C catching as soon as it gets back to the top
 	 * of its loop and resets main_loop_jmp to point to itself.
 	 */
+#ifndef WIN32
 	pqsignal(SIGINT, SIG_DFL);
+#endif
 
 	destroyPQExpBuffer(query_buf);
 	destroyPQExpBuffer(previous_buf);
