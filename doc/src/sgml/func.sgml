@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.104 2002/06/24 22:17:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.105 2002/07/31 02:27:28 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -4353,6 +4353,11 @@ SELECT NULLIF(value, '(none)') ...
        <entry><type>name[]</type></entry>
        <entry>names of schemas in search path optionally including implicit schemas</entry>
       </row>
+     <row>
+      <entry><function>backend_pid</function>()</entry>
+      <entry><type>integer</type></entry>
+      <entry>process ID of the session backend</entry>
+     </row>
      </tbody>
     </tgroup>
    </table>
