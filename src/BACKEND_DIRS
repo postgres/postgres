@@ -16,7 +16,6 @@ lib             support library
 libpq           communication to client libpq library routines
 main            passes control to postmaster or postgres
 nodes           creation/manipulation of nodes
-obj             object files
 optimizer       creates path and plan
 optimizer/path          creates path from parser output
 optimizer/plan          optmizes path output
@@ -46,21 +45,3 @@ utils/init              initialization stuff
 utils/mmgr              memory manager(process-local memory)
 utils/sort              sort routines for internal algorithms
 utils/time              transaction time qualification routines
-
-port            port-specific files
-port/BSD44_derived
-port/aix
-port/alpha
-port/bsdi
-port/dgux
-port/hpux
-port/i386_solaris
-port/irix5
-port/linux
-port/sunos4
-port/sparc_solaris
-port/svr4
-port/ultrix4
-port/win32
-port/win32/regex
-port/win32/sys
