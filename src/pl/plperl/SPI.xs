@@ -6,17 +6,17 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include "eloglvl.h"
+#include "spi_internal.h"
 
 
 
-MODULE = SPI PREFIX = elog_
+MODULE = SPI PREFIX = spi_
 
 PROTOTYPES: ENABLE
 VERSIONCHECK: DISABLE
 
 void
-elog_elog(level, message)
+spi_elog(level, message)
 	int level
 	char* message
 	CODE:
@@ -24,21 +24,33 @@ elog_elog(level, message)
 
 
 int
-elog_DEBUG()
+spi_DEBUG()
 
 int
-elog_LOG()
+spi_LOG()
 
 int
-elog_INFO()
+spi_INFO()
 
 int
-elog_NOTICE()
+spi_NOTICE()
 
 int
-elog_WARNING()
+spi_WARNING()
 
 int
-elog_ERROR()
+spi_ERROR()
 
-
+SV*
+spi_spi_exec_query(query, ...)
+	char* query;
+	PREINIT:
+		HV *ret_hash;
+		int limit=0;
+	CODE:
+			if (items>2) Perl_croak(aTHX_ "Usage: spi_exec_query(query, limit) or spi_exec_query(query)");
+			if (items == 2) limit = SvIV(ST(1));
+			ret_hash=plperl_spi_exec(query, limit);
+		RETVAL = newRV_noinc((SV*)ret_hash);
+	OUTPUT:
+		RETVAL
