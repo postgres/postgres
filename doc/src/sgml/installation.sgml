@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.167 2003/10/26 01:32:36 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.168 2003/10/26 01:39:43 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1580,7 +1580,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>Alpha</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
        </row>
        <row>
@@ -1588,7 +1588,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>arm41</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
        </row>
        <row>
@@ -1596,7 +1596,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>Itanium</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
        </row>
        <row>
@@ -1604,7 +1604,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>m68k</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
        </row>
        <row>
@@ -1612,7 +1612,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>MIPS</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
        </row>
        <row>
@@ -1628,7 +1628,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>PPC</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
-	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry></entry>
        </row>
        <row>
@@ -1636,7 +1636,7 @@ gunzip -c postgres.ps.gz \
 	<entry><systemitem>S/390</></entry>
 	<entry>7.3</entry>
 	<entry>2003-10-25,
-	 No?l K?the (<email>noel@debian.org</email>)</entry>
+	 No&egrave;l K&ouml;the (<email>noel@debian.org</email>)</entry>
 	<entry>2.4</entry>
        </row>
        <row>
