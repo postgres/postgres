@@ -312,6 +312,17 @@ g_int_consistent(PG_FUNCTION_ARGS) {
 									   query);
 			break;
 		case RTSameStrategyNumber:
+			if ( GIST_LEAF(entry) )
+				DirectFunctionCall3(
+					g_int_same,
+					entry->key,
+					PointerGetDatum(query),
+					PointerGetDatum(&retval)
+				);
+			else
+				retval = inner_int_contains((ArrayType *) DatumGetPointer(entry->key),
+										query);
+			break;
 		case RTContainsStrategyNumber:
 			retval = inner_int_contains((ArrayType *) DatumGetPointer(entry->key),
 										query);
@@ -1263,6 +1274,16 @@ g_intbig_consistent(PG_FUNCTION_ARGS) {
 			retval = _intbig_overlap((ArrayType *) DatumGetPointer(entry->key), q);
 			break;
 		case RTSameStrategyNumber:
+			if ( GIST_LEAF(entry) )
+				DirectFunctionCall3(
+					g_intbig_same,
+					entry->key,
+					PointerGetDatum(q),
+					PointerGetDatum(&retval)
+				);
+			else
+				retval = _intbig_contains((ArrayType *) DatumGetPointer(entry->key), q);
+			break;
 		case RTContainsStrategyNumber:
 			retval = _intbig_contains((ArrayType *) DatumGetPointer(entry->key), q);
 			break;

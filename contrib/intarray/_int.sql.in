@@ -177,7 +177,7 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
 
 -- _int_same
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 6, false, c.opoid
+   SELECT opcl.oid, 6, true, c.opoid
    FROM pg_opclass opcl, _int_ops_tmp c
    WHERE
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
@@ -349,6 +349,15 @@ INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
       opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
       and opcname = 'gist__intbig_ops' 
       and c.oprname = '~';
+
+-- _int_same
+INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
+   SELECT opcl.oid, 6, true, c.opoid
+   FROM pg_opclass opcl, _int_ops_tmp c
+   WHERE
+      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
+      and opcname = 'gist__intbig_ops' 
+      and c.oprname = '=';
 
 --boolean search
 INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
