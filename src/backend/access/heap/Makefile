@@ -4,7 +4,7 @@
 #    Makefile for access/heap
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.8 1999/12/13 22:32:24 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.9 1999/12/21 00:06:40 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ include ../../../Makefile.global
 
 CFLAGS += -I../.. 
 
-OBJS = heapam.o hio.o stats.o
+OBJS = heapam.o hio.o stats.o tuptoaster.o
 
 all: SUBSYS.o
 

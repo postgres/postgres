@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.26 1999/12/16 22:19:58 wieck Exp $
+ * $Id: htup.h,v 1.27 1999/12/21 00:06:42 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,11 @@ typedef HeapTupleData *HeapTuple;
 #define HEAP_HASNULL			0x0001	/* has null attribute(s) */
 #define HEAP_HASVARLENA			0x0002	/* has variable length
 										 * attribute(s) */
+#define HEAP_HASEXTERNAL		0x0004	/* has external stored */
+										/* attribute(s) */
+#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored */
+										/* attribute(s) */
+#define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
 #define HEAP_XMIN_INVALID		0x0200	/* t_xmin invalid/aborted */
 #define HEAP_XMAX_COMMITTED		0x0400	/* t_xmax committed */
@@ -143,5 +148,14 @@ typedef HeapTupleData *HeapTuple;
 
 #define HeapTupleAllFixed(tuple) \
 		(!(((HeapTuple) (tuple))->t_data->t_infomask & HEAP_HASVARLENA))
+
+#define HeapTupleHasExternal(tuple) \
+		((((HeapTuple)(tuple))->t_data->t_infomask & HEAP_HASEXTERNAL) != 0)
+
+#define HeapTupleHasCompressed(tuple) \
+		((((HeapTuple)(tuple))->t_data->t_infomask & HEAP_HASCOMPRESSED) != 0)
+
+#define HeapTupleHasExtended(tuple) \
+		((((HeapTuple)(tuple))->t_data->t_infomask & HEAP_HASEXTENDED) != 0)
 
 #endif	 /* HTUP_H */

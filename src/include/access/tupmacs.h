@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.11 1999/07/15 15:20:56 momjian Exp $
+ * $Id: tupmacs.h,v 1.12 1999/12/21 00:06:42 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@
 	) \
 	: \
 	( \
-		(cur_offset) + VARSIZE(DatumGetPointer(attval)) \
+		(cur_offset) + VARATT_SIZE(DatumGetPointer(attval)) \
 	) \
 )
 

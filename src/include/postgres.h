@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.30 1999/11/07 23:08:32 momjian Exp $
+ * $Id: postgres.h,v 1.31 1999/12/21 00:06:41 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,79 @@ typedef struct varlena text;
 
 typedef int2 int28[8];
 typedef Oid oid8[8];
+
+
+/*
+ * Proposed new layout for variable length attributes
+ * DO NOT USE YET - Jan
+ */
+#undef TUPLE_TOASTER_ACTIVE
+#undef TUPLE_TOASTER_ALL_TYPES
+
+#ifdef TUPLE_TOASTER_ACTIVE
+typedef struct varattrib
+{
+	int32				va_header;			/* External/compressed storage */
+											/* flags and item size */
+	union
+	{
+		struct
+		{
+			int32		va_rawsize;			/* Plain data size */
+		}				va_compressed;		/* Compressed stored attribute */
+
+		struct
+		{
+			int32		va_rawsize;			/* Plain data size */
+			Oid			va_valueid;			/* Unique identifier of value */
+			Oid			va_longrelid;		/* RelID where to find chunks */
+			Oid			va_rowid;			/* Main tables row Oid */
+			int16		va_attno;			/* Main tables attno */
+		}				va_external;		/* External stored attribute */
+
+		char			va_data[1];			/* Plain stored attribute */
+	}					va_content;
+} varattrib;
+
+#define VARATT_FLAG_EXTERNAL	0x8000
+#define VARATT_FLAG_COMPRESSED	0x4000
+#define VARATT_MASK_FLAGS		0xc000
+#define VARATT_MASK_SIZE		0x3fff
+
+#define VARATT_SIZEP(_PTR)	(((varattrib *)(_PTR))->va_header)
+#define VARATT_SIZE(PTR)	(VARATT_SIZEP(PTR) & VARATT_MASK_SIZE) 
+#define VARATT_DATA(PTR)	(((varattrib *)(PTR))->va_content.va_data)
+
+#define VARATT_IS_EXTENDED(PTR)		\
+				((VARATT_SIZEP(PTR) & VARATT_MASK_FLAGS) != 0)
+#define VARATT_IS_EXTERNAL(PTR)		\
+				((VARATT_SIZEP(PTR) & VARATT_FLAG_EXTERNAL) != 0)
+#define VARATT_IS_COMPRESSED(PTR)	\
+				((VARATT_SIZEP(PTR) & VARATT_FLAG_COMPRESSED) != 0)
+
+/* ----------
+ * This is regularly declared in access/tuptoaster.h,
+ * but we don't want to include that into every source,
+ * so we (evil evil evil) declare it here once more.
+ * ----------
+ */
+extern varattrib *heap_tuple_untoast_attr(varattrib *attr);
+
+#define VARATT_GETPLAIN(_ARG,_VAR) {								\
+				if (VARATTR_IS_EXTENDED(_ARG))						\
+					(_VAR) = (void *)heap_tuple_untoast_attr(_ARG);	\
+				else												\
+					(_VAR) = (_ARG);								\
+			}
+#define VARATT_FREE(_ARG,VAR) {										\
+				if ((void *)(_VAR) != (void *)(_ARG))				\
+					pfree((void *)(_VAR));							\
+			}
+#else /* TUPLE_TOASTER_ACTIVE */
+#define VARATT_SIZE(__PTR) VARSIZE(__PTR)
+#define VARATT_SIZEP(__PTR) VARSIZE(__PTR)
+#endif /* TUPLE_TOASTER_ACTIVE */
+
 
 /* We want NameData to have length NAMEDATALEN and int alignment,
  * because that's how the data type 'name' is defined in pg_type.

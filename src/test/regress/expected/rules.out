@@ -128,11 +128,11 @@ a| b
 2|13
 (3 rows)
 
-QUERY: delete from rtest_v1 where b = 12;
-QUERY: select * from rtest_v1;
 ** Remember the delete rule on rtest_v1: It says
 ** DO INSTEAD DELETE FROM rtest_t1 WHERE a = old.a
 ** So this time both rows with a = 2 must get deleted
+QUERY: delete from rtest_v1 where b = 12;
+QUERY: select * from rtest_v1;
 a| b
 -+--
 1|11

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.58 1999/12/20 10:40:38 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.59 1999/12/21 00:06:39 wieck Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -378,8 +378,12 @@ TupleDescInitEntry(TupleDesc desc,
  * relations for automatic move off into "secondary" relation.
  * Jan
  */
-#ifdef LONG_ATTRIBUTES_NOW_IMPLEMENTED_FOR_ALL_VARLENA_DATA_TYPES
-		att->attcanlong = (att->attlen == -1) ? 'e' : 'p';
+#ifdef TUPLE_TOASTER_ACTIVE
+#ifdef TUPLE_TOASTER_ALL_TYPES
+		att->attstorage = (att->attlen == -1) ? 'e' : 'p';
+#else
+		att->attstorage = 'p';
+#endif
 #else
 		att->attstorage = 'p';
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.61 1999/12/16 22:19:36 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.62 1999/12/21 00:06:40 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -78,6 +78,7 @@
 #include "access/heapam.h"
 #include "access/hio.h"
 #include "access/valid.h"
+#include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
