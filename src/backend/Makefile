@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.91 2003/01/07 04:25:29 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.92 2003/01/07 15:12:17 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -142,7 +142,7 @@ else
 endif
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_service.conf.sample $(DESTDIR)$(datadir)/pg_service.conf.sample
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
-        $(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
+	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)
