@@ -13,3 +13,8 @@ update pgaccess
 update odbc
 update doc/src/sgml/release.sgml 
 update interfaces/libpq/libpq.rc
+update documentation
+	command-line arg printout from inside the program
+	psql help in psqlHelp.c
+	man pages
+	sgml docs
