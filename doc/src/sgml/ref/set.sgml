@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.37 2000/04/08 23:12:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.38 2000/04/11 03:49:04 momjian Exp $
 Postgres documentation
 -->
 
@@ -378,6 +378,15 @@ SELECT setseed(<replaceable>value</replaceable>);
     by the <command>SET</command> command:
     
     <variablelist>
+     <varlistentry>
+      <term>pg_options</term>
+      <listitem>
+       <para>
+        Sets various backend parameters.
+       </para>
+      </listitem>
+     </varlistentry>
+    
      <varlistentry>
       <term>RANDOM_PAGE_COST</term>
       <listitem>
