@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.5 2003/07/24 15:52:53 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.6 2003/07/31 17:21:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,12 +19,15 @@
 #include "parser/keywords.h"
 
 
+#define supports_grant_options(version) ((version) >= 70400)
+
+static bool parseAclArray(const char *acls, char ***itemarray, int *nitems);
 static bool parseAclItem(const char *item, const char *type, const char *name,
 						 int remoteVersion,
 						 PQExpBuffer grantee, PQExpBuffer grantor,
 						 PQExpBuffer privs, PQExpBuffer privswgo);
+static char *copyAclUserName(PQExpBuffer output, char *input);
 static void AddAcl(PQExpBuffer aclbuf, const char *keyword);
-#define supports_grant_options(version) ((version) >= 70400)
 
 
 /*
@@ -185,14 +188,22 @@ buildACLCommands(const char *name, const char *type,
 				 int remoteVersion,
 				 PQExpBuffer sql)
 {
-	char	   *aclbuf,
-			   *tok;
+	char	  **aclitems;
+	int			naclitems;
+	int			i;
 	PQExpBuffer grantee, grantor, privs, privswgo;
 	PQExpBuffer	firstsql, secondsql;
 	bool		found_owner_privs = false;
 
 	if (strlen(acls) == 0)
 		return true;			/* object has default permissions */
+
+	if (!parseAclArray(acls, &aclitems, &naclitems))
+	{
+		if (aclitems)
+			free(aclitems);
+		return false;
+	}
 
 	grantee = createPQExpBuffer();
 	grantor = createPQExpBuffer();
@@ -217,27 +228,10 @@ buildACLCommands(const char *name, const char *type,
 	appendPQExpBuffer(firstsql, "REVOKE ALL ON %s %s FROM PUBLIC;\n",
 					  type, name);
 
-	/* Make a working copy of acls so we can use strtok */
-	aclbuf = strdup(acls);
-
-	/* Scan comma-separated ACL items */
-	for (tok = strtok(aclbuf, ","); tok != NULL; tok = strtok(NULL, ","))
+	/* Scan individual ACL items */
+	for (i = 0; i < naclitems; i++)
 	{
-		size_t toklen;
-
-		/*
-		 * Token may start with '{' and/or '"'.  Actually only the start
-		 * of the string should have '{', but we don't verify that.
-		 */
-		if (*tok == '{')
-			tok++;
-		if (*tok == '"')
-			tok++;
-		toklen = strlen(tok);
-		while (toklen >=0 && (tok[toklen-1] == '"' || tok[toklen-1] == '}'))
-			tok[toklen-- - 1] = '\0';
-
-		if (!parseAclItem(tok, type, name, remoteVersion,
+		if (!parseAclItem(aclitems[i], type, name, remoteVersion,
 						  grantee, grantor, privs, privswgo))
 			return false;
 
@@ -327,7 +321,6 @@ buildACLCommands(const char *name, const char *type,
 						  type, name, fmtId(owner));
 	}
 
-	free(aclbuf);
 	destroyPQExpBuffer(grantee);
 	destroyPQExpBuffer(grantor);
 	destroyPQExpBuffer(privs);
@@ -337,15 +330,105 @@ buildACLCommands(const char *name, const char *type,
 	destroyPQExpBuffer(firstsql);
 	destroyPQExpBuffer(secondsql);
 
+	free(aclitems);
+
 	return true;
 }
 
+/*
+ * Deconstruct an ACL array (or actually any 1-dimensional Postgres array)
+ * into individual items.
+ *
+ * On success, returns true and sets *itemarray and *nitems to describe
+ * an array of individual strings.  On parse failure, returns false;
+ * *itemarray may exist or be NULL.
+ *
+ * NOTE: free'ing itemarray is sufficient to deallocate the working storage.
+ */
+static bool
+parseAclArray(const char *acls, char ***itemarray, int *nitems)
+{
+	int			inputlen;
+	char	  **items;
+	char	   *strings;
+	int			curitem;
+
+	/*
+	 * We expect input in the form of "{item,item,item}" where any item
+	 * is either raw data, or surrounded by double quotes (in which case
+	 * embedded characters including backslashes and quotes are backslashed).
+	 *
+	 * We build the result as an array of pointers followed by the actual
+	 * string data, all in one malloc block for convenience of deallocation.
+	 * The worst-case storage need is not more than one pointer and one
+	 * character for each input character (consider "{,,,,,,,,,,}").
+	 */
+	*itemarray = NULL;
+	*nitems = 0;
+	inputlen = strlen(acls);
+	if (inputlen < 2 || acls[0] != '{' || acls[inputlen-1] != '}')
+		return false;			/* bad input */
+	items = (char **) malloc(inputlen * (sizeof(char *) + sizeof(char)));
+	if (items == NULL)
+		return false;			/* out of memory */
+	*itemarray = items;
+	strings = (char *) (items + inputlen);
+
+	acls++;						/* advance over initial '{' */
+	curitem = 0;
+	while (*acls != '}')
+	{
+		if (*acls == '\0')
+			return false;		/* premature end of string */
+		items[curitem] = strings;
+		while (*acls != '}' && *acls != ',')
+		{
+			if (*acls == '\0')
+				return false;		/* premature end of string */
+			if (*acls != '"')
+				*strings++ = *acls++; /* copy unquoted data */
+			else
+			{
+				/* process quoted substring */
+				acls++;
+				while (*acls != '"')
+				{
+					if (*acls == '\0')
+						return false;		/* premature end of string */
+					if (*acls == '\\')
+					{
+						acls++;
+						if (*acls == '\0')
+							return false; /* premature end of string */
+					}
+					*strings++ = *acls++; /* copy quoted data */
+				}
+				acls++;
+			}
+		}
+		*strings++ = '\0';
+		if (*acls == ',')
+			acls++;
+		curitem++;
+	}
+	if (acls[1] != '\0')
+		return false;			/* bogus syntax (embedded '}') */
+	*nitems = curitem;
+	return true;
+}
 
 /*
- * This will take an aclitem string of privilege code letters and
- * parse it into grantee, grantor, and privilege information.  The
- * privilege information is split between privileges with grant option
- * (privswgo) and without (privs).
+ * This will parse an aclitem string, having the general form
+ *		username=privilegecodes/grantor
+ * or
+ *		group groupname=privilegecodes/grantor
+ * (the /grantor part will not be present if pre-7.4 database).
+ *
+ * The returned grantee string will be the dequoted username or groupname
+ * (preceded with "group " in the latter case).  The returned grantor is
+ * the dequoted grantor name or empty.  Privilege characters are decoded
+ * and split between privileges with grant option (privswgo) and without
+ * (privs).
  *
  * Note: for cross-version compatibility, it's important to use ALL when
  * appropriate.
@@ -365,19 +448,19 @@ parseAclItem(const char *item, const char *type, const char *name,
 
 	buf = strdup(item);
 
-	/* user name is string up to = */
-	eqpos = strchr(buf, '=');
-	if (!eqpos)
+	/* user or group name is string up to = */
+	eqpos = copyAclUserName(grantee, buf);
+	if (*eqpos != '=')
 		return false;
-	*eqpos = '\0';
-	printfPQExpBuffer(grantee, "%s", buf);
 
 	/* grantor may be listed after / */
 	slpos = strchr(eqpos + 1, '/');
 	if (slpos)
 	{
-		*slpos = '\0';
-		printfPQExpBuffer(grantor, "%s", slpos + 1);
+		*slpos++ = '\0';
+		slpos = copyAclUserName(grantor, slpos);
+		if (*slpos != '\0')
+			return false;
 	}
 	else
 		resetPQExpBuffer(grantor);
@@ -457,6 +540,38 @@ parseAclItem(const char *item, const char *type, const char *name,
 	return true;
 }
 
+/*
+ * Transfer a user or group name starting at *input into the output buffer,
+ * dequoting if needed.  Returns a pointer to just past the input name.
+ * The name is taken to end at an unquoted '=' or end of string.
+ */
+static char *
+copyAclUserName(PQExpBuffer output, char *input)
+{
+	resetPQExpBuffer(output);
+	while (*input && *input != '=')
+	{
+		if (*input != '"')
+			appendPQExpBufferChar(output, *input++);
+		else
+		{
+			input++;
+			while (*input != '"')
+			{
+				if (*input == '\0')
+					return input; /* really a syntax error... */
+				/*
+				 * There is no quoting convention here, thus we can't cope
+				 * with usernames containing double quotes.  Keep this code
+				 * in sync with putid() in backend's acl.c.
+				 */
+				appendPQExpBufferChar(output, *input++);
+			}
+			input++;
+		}
+	}
+	return input;
+}
 
 /*
  * Append a privilege keyword to a keyword list, inserting comma if needed.
