@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.113 2002/08/20 04:45:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.114 2002/08/21 05:25:49 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -245,7 +245,7 @@ PostgreSQL documentation
     </synopsis>
     is equivalent to
     <synopsis>
-<replaceable>a</replaceable> &gt;= <replaceable>x</replaceable> AND <replaceable>a</replaceable>able> &lt;= <replaceable>y</replaceable>
+<replaceable>a</replaceable> &gt;= <replaceable>x</replaceable> AND <replaceable>a</replaceable> &lt;= <replaceable>y</replaceable>
     </synopsis>
     Similarly,
     <synopsis>
@@ -253,7 +253,7 @@ PostgreSQL documentation
     </synopsis>
     is equivalent to
     <synopsis>
-<replaceable>a</replaceable> &lt; <replaceable>x</replaceable> OR <replaceable>a</replaceable>able> &gt; <replaceable>y</replaceable>
+<replaceable>a</replaceable> &lt; <replaceable>x</replaceable> OR <replaceable>a</replaceable> &gt; <replaceable>y</replaceable>
     </synopsis>
     There is no difference between the two respective forms apart from
     the <acronym>CPU</acronym> cycles required to rewrite the first one
