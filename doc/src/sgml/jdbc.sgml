@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.23 2001/09/12 15:49:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.24 2001/09/12 15:55:00 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -1330,7 +1330,7 @@ Methods
                 obj - Object to compare with
             
         Returns:
-                true if the two boxes are identical
+                true if the two circles are identical
 
         Overrides:
                 equals in class PGobject
@@ -1395,7 +1395,7 @@ Constructors
  public PGline(String s) throws SQLException
                
         Parameters:
-                s - definition of the circle in PostgreSQL's syntax.
+                s - definition of the line in PostgreSQL's syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1424,7 +1424,7 @@ syntax
                 obj - Object to compare with
                
         Returns:
-                true if the two boxes are identical
+                true if the two lines are identical
    
         Overrides:
                 equals in class PGobject
@@ -1488,7 +1488,7 @@ Constructors
  public PGlseg(String s) throws SQLException
 
         Parameters:
-                s - definition of the circle in PostgreSQL's syntax.
+                s - Definition of the line segment in PostgreSQL's syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1517,7 +1517,7 @@ syntax
                 obj - Object to compare with
                
         Returns:
-                true if the two boxes are identical
+                true if the two line segments are identical
    
         Overrides:
                 equals in class PGobject
@@ -1578,7 +1578,7 @@ Constructors
  public PGpath(String s) throws SQLException
 
         Parameters:
-                s - definition of the circle in PostgreSQL's syntax.
+                s - definition of the path in PostgreSQL's syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1602,7 +1602,7 @@ Methods
                 obj - Object to compare with
 
         Returns:
-                true if the two boxes are identical
+                true if the two pathes are identical
 
         Overrides:
                 equals in class PGobject
@@ -1616,7 +1616,7 @@ Methods
 
  public String getValue()
 
-          This returns the polygon in the syntax expected by 
+          This returns the path in the syntax expected by 
 <productname>PostgreSQL</productname>
 
         Overrides:
@@ -1706,7 +1706,7 @@ Methods
                 obj - Object to compare with
 
         Returns:
-                true if the two boxes are identical
+                true if the two points are identical
 
         Overrides:
                 equals in class PGobject
@@ -1818,7 +1818,7 @@ Constructors
  public PGpolygon(String s) throws SQLException
                  
         Parameters:
-                s - definition of the circle in PostgreSQL's syntax.
+                s - definition of the polygon in PostgreSQL's syntax.
 
         Throws: SQLException
                 on conversion failure
@@ -1846,7 +1846,7 @@ Methods
                 obj - Object to compare with
                                 
         Returns:
-                true if the two boxes are identical
+                true if the two polygons are identical
 
         Overrides:
                 equals in class PGobject
@@ -2473,49 +2473,7 @@ serializing any objects.
         Throws: SQLException
                 on error
 
-                   Returns:
-                Object relating to oid
-
-        Throws: SQLException
-                on error
-
- public int store(Object o) throws SQLException
-
-          This stores an object into a table, returning it's OID.
-
-          If the object has an int called OID, and it is > 0, then 
-that value is used for the OID, and the table will be updated. If the 
-value of OID is 0, then a new row will be created, and the value of 
-OID will be set in the object. This enables an object's value in the 
-database to be updateable. If the object has no int called OID, then 
-the object is stored. However if the object is later retrieved, 
-amended and stored again, it's new state will be appended to the 
-table, and will not overwrite the old entries.
-
-        Parameters:
-                o - Object to store (must implement Serializable)
-
-        Returns:
-                oid of stored object
-
-        Throws: SQLException
-                on error
- 
  public static void create(org.postgresql.Connection con,
-                           Object o) throws SQLException
-
-          This method is not used by the driver, but it creates a 
-table, given a Serializable Java Object. It should be used before 
-serializing any objects.
-
-        Parameters:
-                c - Connection to database
-                o - Object to base table on
-
-        Throws: SQLException
-                on error
-                
- public static void create(Connection con,
                            Class c) throws SQLException
 
           This method is not used by the driver, but it creates a 
@@ -2596,11 +2554,10 @@ Constructors
                
  public PGmoney(String value) throws SQLException
    
-          This is called mainly from the other geometric types, when a 
-point is imbeded within their definition.
+          Create a money.
 
         Parameters:
-                value - Definition of this point in PostgreSQL's 
+                value - Definition of this money in PostgreSQL's 
 syntax
 
  public PGmoney()
@@ -2612,7 +2569,7 @@ Methods
  public void setValue(String s) throws SQLException
 
         Parameters:
-                s - Definition of this point in PostgreSQL's syntax
+                s - Definition of this money in PostgreSQL's syntax
 
         Throws: SQLException
                 on conversion failure
@@ -2626,7 +2583,7 @@ Methods
                 obj - Object to compare with
                                 
         Returns:
-                true if the two boxes are identical
+                true if the two moneys are identical
 
         Overrides:
                 equals in class PGobject
@@ -2641,7 +2598,7 @@ Methods
  public String getValue()
 
         Returns:
-                the PGpoint in the syntax expected by <productname>PostgreSQL</productname>
+                the PGmoney in the syntax expected by <productname>PostgreSQL</productname>
 
         Overrides:
                 getValue in class PGobject
@@ -2720,7 +2677,7 @@ in the form required by <productname>PostgreSQL</productname>.
                 obj - Object to compare with
 
         Returns:
-                true if the two boxes are identical
+                true if the two objects are identical
 
         Overrides:
                 equals in class Object
@@ -2851,9 +2808,6 @@ PGpoint).
 
           Removes ( and ) from the beginning and end of all tokens
 
-        Returns:
-                String without the ( or )
-
  public static String removeBox(String s)
    
           Removes [ and ] from the beginning and end of a string
@@ -2868,9 +2822,6 @@ PGpoint).
 
           Removes [ and ] from the beginning and end of all tokens
 
-        Returns:
-                String without the [ or ]
-
  public static String removeAngle(String s)
 
           Removes < and > from the beginning and end of a string
@@ -2884,9 +2835,6 @@ PGpoint).
  public void removeAngle()
 
           Removes < and > from the beginning and end of all tokens
-
-        Returns:
-                String without the < or >
 
 <!-- **************************************************************** -->
 Class org.postgresql.util.Serialize
