@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.58 2004/12/17 02:14:48 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.59 2005/03/24 17:22:34 tgl Exp $
  *
  *********************************************************************
  */
@@ -1206,10 +1206,14 @@ PLy_procedure_munge_source(const char *name, const char *src)
 
 	while (*sp != '\0')
 	{
-		if (*sp == '\n')
+		if (*sp == '\r' && *(sp + 1) == '\n')
+			sp++;
+
+		if (*sp == '\n' || *sp == '\r')
 		{
-			*mp++ = *sp++;
+			*mp++ = '\n';
 			*mp++ = '\t';
+			sp++;
 		}
 		else
 			*mp++ = *sp++;
