@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.15 1999/02/10 21:02:35 momjian Exp $
+ * $Id: geqo_paths.c,v 1.16 1999/02/11 14:58:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ geqo_rel_paths(RelOptInfo *rel)
 	{
 		path = (Path *) lfirst(y);
 
-		if (!path->path_order->ord.sortop)
+		if (!path->pathorder->ord.sortop)
 			break;
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.26 1999/02/10 21:02:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.27 1999/02/11 14:58:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ prune_rel_paths(List *rel_list)
 		{
 			path = (Path *) lfirst(y);
 
-			if (!path->path_order->ord.sortop)
+			if (!path->pathorder->ord.sortop)
 				break;
 		}
 		cheapest = (JoinPath *) prune_rel_path(rel, path);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.18 1999/02/10 21:02:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.19 1999/02/11 14:58:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,14 +104,14 @@ create_or_index_paths(Query *root,
 
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
-				pathnode->path.path_order = makeNode(PathOrder);
-			    pathnode->path.path_order->ordtype = SORTOP_ORDER;
+				pathnode->path.pathorder = makeNode(PathOrder);
+			    pathnode->path.pathorder->ordtype = SORTOP_ORDER;
 			    /*
 				 *	This is an IndexScan, but it does index lookups based
 				 *	on the order of the fields specified in the WHERE clause,
 				 *	not in any order, so the sortop is NULL.
 				 */
-			    pathnode->path.path_order->ord.sortop = NULL;
+			    pathnode->path.pathorder->ord.sortop = NULL;
 			    pathnode->path.pathkeys = NIL;
 
 				pathnode->indexqual = lcons(clausenode, NIL);

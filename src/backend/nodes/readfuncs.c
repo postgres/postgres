@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.53 1999/02/10 03:52:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.54 1999/02/11 14:58:49 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1522,8 +1522,8 @@ _readPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :path_order */
-	local_node->path_order = nodeRead(true); /* now read it */
+	token = lsptok(NULL, &length);		/* get :pathorder */
+	local_node->pathorder = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->pathkeys = nodeRead(true);	/* now read it */
@@ -1554,8 +1554,8 @@ _readIndexPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :path_order */
- 	local_node->path.path_order = nodeRead(true);		/* now read it */
+	token = lsptok(NULL, &length);		/* get :pathorder */
+ 	local_node->path.pathorder = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true);		/* now read it */
@@ -1593,8 +1593,8 @@ _readJoinPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :path_order */
-	local_node->path.path_order = nodeRead(true);		/* now read it */
+	token = lsptok(NULL, &length);		/* get :pathorder */
+	local_node->path.pathorder = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true);		/* now read it */
@@ -1658,8 +1658,8 @@ _readMergePath()
 
 	local_node->jpath.path.path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :path_order */
-	local_node->jpath.path.path_order = nodeRead(true); /* now read it */
+	token = lsptok(NULL, &length);		/* get :pathorder */
+	local_node->jpath.path.pathorder = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);		/* now read it */
@@ -1732,8 +1732,8 @@ _readHashPath()
 
 	local_node->jpath.path.path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :path_order */
-	local_node->jpath.path.path_order = nodeRead(true); /* now read it */
+	token = lsptok(NULL, &length);		/* get :pathorder */
+	local_node->jpath.path.pathorder = nodeRead(true); /* now read it */
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);		/* now read it */

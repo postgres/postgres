@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.18 1999/02/10 03:52:50 momjian Exp $
+ * $Id: relation.h,v 1.19 1999/02/11 14:59:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ typedef struct Path
 
 	NodeTag		pathtype;
 
-	PathOrder	*path_order;
+	PathOrder	*pathorder;
 
 	List	    *pathkeys;	/* This is a List of List of Var nodes.
 							 * It is a List of Lists because of multi-key
