@@ -1,7 +1,7 @@
 How to install PostgreSQL on Windows
 ====================================
 
-$Date: 2003/11/12 04:14:30 $
+$Date: 2003/11/13 03:53:00 $
 
 PostgreSQL requires the appropriate subset of Cygwin DLLs to be 
 installed in order that it functions under Windows.
@@ -55,9 +55,8 @@ adjust these instructions accordingly.
 
 5.  It is possible to install ipc-daemon2 and the postmaster as
     Windows NT services.  For information on how to do this, please
-    refer to one of the README documents here:
-
-	http://www.tishler.net/jason/software/postgresql/
+    refer to the README document included with Cygwin PostgreSQL.  It
+    is installed in the /usr/share/doc/Cygwin directory.
 
 Building from source
 --------------------
