@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/Makefile,v 1.7 1998/04/06 01:14:26 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroydb/Attic/Makefile,v 1.8 1998/04/06 16:49:51 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ destroydb: destroydb.sh
 	cp destroydb.sh destroydb
 
 install: destroydb
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean:
 	rm -f destroydb

@@ -15,7 +15,7 @@ pg_passwd: $(OBJS)
 	$(CC) -o pg_passwd $(OBJS) $(LDFLAGS)
 
 install: pg_passwd
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_passwd $(DESTDIR)$(BINDIR)/pg_passwd
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_passwd $(BINDIR)/pg_passwd
 
 .PHONY: submake
 submake:

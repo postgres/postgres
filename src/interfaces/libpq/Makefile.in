@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.13 1998/04/06 01:35:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.14 1998/04/06 16:52:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -117,65 +117,65 @@ install-headers: beforeinstall-headers c.h \
                  $(SRCDIR)/include/libpq/libpq-fs.h $(SRCDIR)/include/lib/dllist.h \
                  $(SRCDIR)/include/utils/geo_decls.h libpq-fe.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/os.h \
-          $(DESTDIR)$(HEADERDIR)/os.h
+          $(HEADERDIR)/os.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/config.h \
-          $(DESTDIR)$(HEADERDIR)/config.h
+          $(HEADERDIR)/config.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/postgres.h \
-          $(DESTDIR)$(HEADERDIR)/postgres.h
+          $(HEADERDIR)/postgres.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/postgres_ext.h \
-          $(DESTDIR)$(HEADERDIR)/postgres_ext.h
+          $(HEADERDIR)/postgres_ext.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/pqcomm.h \
-          $(DESTDIR)$(HEADERDIR)/libpq/pqcomm.h
+          $(HEADERDIR)/libpq/pqcomm.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/libpq/libpq-fs.h \
-          $(DESTDIR)$(HEADERDIR)/libpq/libpq-fs.h
+          $(HEADERDIR)/libpq/libpq-fs.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/lib/dllist.h \
-          $(DESTDIR)$(HEADERDIR)/lib/dllist.h
+          $(HEADERDIR)/lib/dllist.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/geo_decls.h \
-          $(DESTDIR)$(HEADERDIR)/utils/geo_decls.h
+          $(HEADERDIR)/utils/geo_decls.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/elog.h \
-          $(DESTDIR)$(HEADERDIR)/utils/elog.h
+          $(HEADERDIR)/utils/elog.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/palloc.h \
-          $(DESTDIR)$(HEADERDIR)/utils/palloc.h
+          $(HEADERDIR)/utils/palloc.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/access/attnum.h \
-          $(DESTDIR)$(HEADERDIR)/access/attnum.h
+          $(HEADERDIR)/access/attnum.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/executor/spi.h \
-          $(DESTDIR)$(HEADERDIR)/executor/spi.h
+          $(HEADERDIR)/executor/spi.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/commands/trigger.h \
-          $(DESTDIR)$(HEADERDIR)/commands/trigger.h
-	$(INSTALL) $(INSTLOPTS) libpq-fe.h $(DESTDIR)$(HEADERDIR)/libpq-fe.h
+          $(HEADERDIR)/commands/trigger.h
+	$(INSTALL) $(INSTLOPTS) libpq-fe.h $(HEADERDIR)/libpq-fe.h
 ifeq ($(PORTNAME), hpux)
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/backend/port/hpux/fixade.h \
-          $(DESTDIR)$(HEADERDIR)/port/hpux/fixade.h
+          $(HEADERDIR)/port/hpux/fixade.h
 endif
-	$(INSTALL) $(INSTLOPTS) c.h $(DESTDIR)$(HEADERDIR)/c.h
+	$(INSTALL) $(INSTLOPTS) c.h $(HEADERDIR)/c.h
 
 beforeinstall-headers:
-	@if [ ! -d $(DESTDIR)$(HEADERDIR) ]; then mkdir $(DESTDIR)$(HEADERDIR); fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/port ]; then mkdir $(DESTDIR)$(HEADERDIR)/port; fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/port/$(PORTNAME) ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/port/$(PORTNAME); fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/include ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/include; fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/lib ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/lib; fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/libpq ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/libpq; fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/utils ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/utils; fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/access ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/access; fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/executor ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/executor; fi
-	@if [ ! -d $(DESTDIR)$(HEADERDIR)/commands ]; \
-		then mkdir $(DESTDIR)$(HEADERDIR)/commands; fi
+	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
+	@if [ ! -d $(HEADERDIR)/port ]; then mkdir $(HEADERDIR)/port; fi
+	@if [ ! -d $(HEADERDIR)/port/$(PORTNAME) ]; \
+		then mkdir $(HEADERDIR)/port/$(PORTNAME); fi
+	@if [ ! -d $(HEADERDIR)/include ]; \
+		then mkdir $(HEADERDIR)/include; fi
+	@if [ ! -d $(HEADERDIR)/lib ]; \
+		then mkdir $(HEADERDIR)/lib; fi
+	@if [ ! -d $(HEADERDIR)/libpq ]; \
+		then mkdir $(HEADERDIR)/libpq; fi
+	@if [ ! -d $(HEADERDIR)/utils ]; \
+		then mkdir $(HEADERDIR)/utils; fi
+	@if [ ! -d $(HEADERDIR)/access ]; \
+		then mkdir $(HEADERDIR)/access; fi
+	@if [ ! -d $(HEADERDIR)/executor ]; \
+		then mkdir $(HEADERDIR)/executor; fi
+	@if [ ! -d $(HEADERDIR)/commands ]; \
+		then mkdir $(HEADERDIR)/commands; fi
 
 install-libpq: libpq.a
-	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(DESTDIR)$(LIBDIR)/libpq.a
+	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(LIBDIR)/libpq.a
 
 install-shlib: $(shlib)
-	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(DESTDIR)$(LIBDIR)/$(shlib)
-	rm -f $(DESTDIR)$(LIBDIR)/libpq.so
-	ln -s $(shlib) $(DESTDIR)$(LIBDIR)/libpq.so
+	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+	rm -f $(LIBDIR)/libpq.so
+	ln -s $(shlib) $(LIBDIR)/libpq.so
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

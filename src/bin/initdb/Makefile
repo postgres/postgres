@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.8 1998/04/06 02:10:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.9 1998/04/06 16:50:22 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include ../../Makefile.global
 all: initdb
 
 install: initdb
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
 
 clean:
 

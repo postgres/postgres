@@ -56,14 +56,14 @@ clean:
 dep depend:
 
 install: libecpg.a $(shlib) $(install-shlib-dep)
-	$(INSTALL) $(INSTLOPTS) libecpg.a $(DESTDIR)$(LIBDIR)
+	$(INSTALL) $(INSTLOPTS) libecpg.a $(LIBDIR)
 
 install-shlib:
-	$(INSTALL) $(INSTLOPTS) $(shlib) $(DESTDIR)$(LIBDIR)
-	ln -sf $(shlib) $(DESTDIR)$(LIBDIR)/libecpg.so
+	$(INSTALL) $(INSTLOPTS) $(shlib) $(LIBDIR)
+	ln -sf $(shlib) $(LIBDIR)/libecpg.so
 
 uninstall::
-	rm -f $(DESTDIR)$(LIBDIR)/libecpg.a $(DESTDIR)$(LIBDIR)/$(shlib)
+	rm -f $(LIBDIR)/libecpg.a $(LIBDIR)/$(shlib)
 
 # Rules that do something
 libecpg.a : libecpg.a(ecpglib.o) libecpg.a(typename.o)
