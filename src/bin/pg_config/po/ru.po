@@ -1,16 +1,19 @@
 # ru.po
 # PG_CONFIG Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.2 2004/10/27 11:22:07 petere Exp $
+# Copyright (c) 2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Distributed under the same licensing terms as PostgreSQL itself.
+#
+# $PostgreSQL: pgsql/src/bin/pg_config/po/ru.po,v 1.3 2004/12/06 22:10:40 petere Exp $
 #
 # ChangeLog:
-#   - October 13 - 21, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - October 13 - November 24, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-20 19:06+0100\n"
-"PO-Revision-Date: 2004-10-21 02:58-0500\n"
+"POT-Creation-Date: 2004-11-28 07:10+0000\n"
+"PO-Revision-Date: 2004-11-28 20:50-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-ru-general <pgsql-ru-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -122,4 +125,37 @@ msgstr "%s: неверный аргумент: %s\n"
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: не удалось найти свой собственный выполняемый файл\n"
+
+#: ../../port/exec.c:193
+#: ../../port/exec.c:307
+#: ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "не удалось идентифицировать текущую директорию: %s"
+
+#: ../../port/exec.c:323
+#: ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "не удалось поменять директорию на \"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "не получилось считать ссылку \"%s\""
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "процесс-наследник завершился с кодом возрата %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "процесс-наследник завершён сигналом %d"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "процесс-наследник завершился с нераспознанным статусом %d"
 

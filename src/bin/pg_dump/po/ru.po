@@ -4,10 +4,10 @@
 # Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.16 2004/11/16 22:47:39 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/ru.po,v 1.17 2004/12/06 22:10:41 petere Exp $
 #
 # ChangeLog:
-#   - April 6 - November 14, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - April 6 - November 24, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - October 5, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - September 14, 2002: Post-7.3 beta 1, Take II, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -17,8 +17,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-11-14 07:08+0000\n"
-"PO-Revision-Date: 2004-11-14 18:27-0500\n"
+"POT-Creation-Date: 2004-11-28 07:11+0000\n"
+"PO-Revision-Date: 2004-11-28 20:50-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -1773,4 +1773,37 @@ msgstr "%s: запрос не удался: %s"
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: запрос был: %s\n"
+
+#: ../../port/exec.c:193
+#: ../../port/exec.c:307
+#: ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "не удалось идентифицировать текущую директорию: %s"
+
+#: ../../port/exec.c:323
+#: ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "не удалось поменять директорию на \"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "не получилось считать ссылку \"%s\""
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "процесс-наследник завершился с кодом возрата %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "процесс-наследник завершён сигналом %d"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "процесс-наследник завершился с нераспознанным статусом %d"
 
