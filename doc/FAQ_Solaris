@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.2
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2002/03/04 17:47:11 $
+last updated:        $Date: 2002/07/15 21:34:04 $
 
 current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
@@ -94,7 +94,7 @@ produced by configure:
 (1) In src/Makefile.global, change the line
 	SNPRINTF = 
 to read
-	SNPRINTF = snprintf.o
+	SNPRINTF = $(top_builddir)/src/backend/port/snprint.o
 
 (2) In src/backend/port/Makefile, add "snprintf.o" to OBJS.  (Skip this
 step if you see "$(SNPRINTF)" already listed in OBJS.)

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.10 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.11 2002/07/15 21:34:04 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -41,7 +41,7 @@
  *
  *	  ...
  *
- *	  Because the risk of cryptanalysis increases as large 
+ *	  Because the risk of cryptanalysis increases as large
  *	  amounts of data are sent with the same session key, the
  *	  session keys are periodically renegotiated.
  *
@@ -50,7 +50,7 @@
  *	  [*] existing SSL code pulled out of existing files.
  *	  [*] SSL_get_error() after SSL_read() and SSL_write(),
  *	      SSL_shutdown(), default to TLSv1.
- *	
+ *
  *	  milestone 2: provide endpoint authentication (server)
  *	  [*] client verifies server cert
  *	  [*] client verifies server hostname
@@ -99,7 +99,6 @@
 #endif
 #include <arpa/inet.h>
 #endif
-
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
@@ -153,20 +152,20 @@ static SSL_CTX *SSL_context = NULL;
  *	As discussed above, EDH protects the confidentiality of
  *	sessions even if the static private key is compromised,
  *	so we are *highly* motivated to ensure that we can use
- *	EDH even if the DBA... or an attacker... deletes the 
+ *	EDH even if the DBA... or an attacker... deletes the
  *	$DataDir/dh*.pem files.
  *
  *	We could refuse SSL connections unless a good DH parameter
  *	file exists, but some clients may quietly renegotiate an
  *	unsecured connection without fully informing the user.
- *	Very uncool.  
+ *	Very uncool.
  *
  *	Alternately, the backend could attempt to load these files
  *	on startup if SSL is enabled - and refuse to start if any
  *	do not exist - but this would tend to piss off DBAs.
  *
  *	If you want to create your own hardcoded DH parameters
- *	for fun and profit, review "Assigned Number for SKIP 
+ *	for fun and profit, review "Assigned Number for SKIP
  *	Protocols" (http://www.skip-vpn.org/spec/numbers.html)
  *	for suggestions.
  */
@@ -241,7 +240,7 @@ secure_destroy (void)
 /*
  *	Attempt to negotiate secure session.
  */
-int 
+int
 secure_open_server (Port *port)
 {
 	int r = 0;
@@ -373,7 +372,7 @@ secure_write (Port *port, const void *ptr, size_t len)
  *	Load precomputed DH parameters.
  *
  *	To prevent "downgrade" attacks, we perform a number of checks
- *	to verify that the DBA-generated DH parameters file contains 
+ *	to verify that the DBA-generated DH parameters file contains
  *	what we expect it to contain.
  */
 static DH *
@@ -415,7 +414,7 @@ load_dh_file (int keylength)
 			elog(LOG, "DH error (%s): p is not prime", fnbuf);
 			return NULL;
 		}
-		if ((codes & DH_NOT_SUITABLE_GENERATOR) && 
+		if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
 			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
 		{
 			elog(LOG,
@@ -520,7 +519,7 @@ tmp_dh_cb (SSL *s, int is_export, int keylength)
 		elog(DEBUG1, "DH: generating parameters (%d bits)....", keylength);
 		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
 	}
-	
+
 	return r;
 }
 
@@ -585,7 +584,7 @@ initialize_SSL (void)
 {
 	char fnbuf[2048];
 	struct stat buf;
-	
+
 	if (!SSL_context)
 	{
 		SSL_library_init();
@@ -648,7 +647,7 @@ initialize_SSL (void)
 						 fnbuf, SSLerrmessage());
 		ExitPostmaster(1);
 	}
-	SSL_CTX_set_verify(SSL_context, 
+	SSL_CTX_set_verify(SSL_context,
 		SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, verify_cb);
 
 	return 0;

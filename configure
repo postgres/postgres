@@ -10637,7 +10637,7 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  SNPRINTF='snprintf.o'
+  SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
 fi
 done
 
@@ -10715,7 +10715,7 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  SNPRINTF='snprintf.o'
+  SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
 fi
 done
 
@@ -11465,7 +11465,7 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  STRERROR='strerror.o'
+  STRERROR='$(top_builddir)/src/backend/port/strerror.o'
 fi
 done
 
@@ -11544,7 +11544,7 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  STRDUP='../../utils/strdup.o'
+  STRDUP='$(top_builddir)/src/utils/strdup.o'
 fi
 done
 
@@ -12657,7 +12657,7 @@ echo $ECHO_N "checking whether snprintf handles 'long long int' as %lld... $ECHO
    echo "$as_me:$LINENO: result: assuming not on target machine" >&5
 echo "${ECHO_T}assuming not on target machine" >&6
 	# Force usage of our own snprintf, since we cannot test foreign snprintf
-	SNPRINTF='snprintf.o'
+	SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
 	INT64_FORMAT='"%lld"'
 
 else
@@ -12717,7 +12717,7 @@ echo $ECHO_N "checking whether snprintf handles 'long long int' as %qd... $ECHO_
    echo "$as_me:$LINENO: result: assuming not on target machine" >&5
 echo "${ECHO_T}assuming not on target machine" >&6
 	# Force usage of our own snprintf, since we cannot test foreign snprintf
-	SNPRINTF='snprintf.o'
+	SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
 	INT64_FORMAT='"%lld"'
 
 else
@@ -12772,7 +12772,7 @@ cat conftest.$ac_ext >&5
  echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 	# Force usage of our own snprintf, since system snprintf is broken
-	SNPRINTF='snprintf.o'
+	SNPRINTF='$(top_builddir)/src/backend/port/snprintf.o'
 	INT64_FORMAT='"%lld"'
 
 fi

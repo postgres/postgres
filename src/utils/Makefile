@@ -2,7 +2,7 @@
 #
 # Makefile for utils
 #
-# $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.9 2000/08/31 16:12:35 petere Exp $
+# $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.10 2002/07/15 21:34:05 momjian Exp $
 #
 # About strdup:  Some systems have strdup in their standard library, others
 # don't.  Ones that don't will use this make file to compile the strdup.c
@@ -22,6 +22,8 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
 all:
+	# Nothing required here.  These C files are compiled in
+	# directories as needed.
 
 clean distclean maintainer-clean:
 	rm -f dllinit.o getopt.o strdup.o
