@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.251 2003/08/06 15:54:06 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.252 2003/08/25 13:44:00 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -420,7 +420,7 @@ adjust_informix(struct arguments *list)
 %type  <str>	row_descriptor ConstDatetime AlterDomainStmt AlterSeqStmt
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr
-%type  <str>	sortby OptUseOp qualified_name_list name_list ColId_or_Sconst
+%type  <str>	sortby qualified_name_list name_list ColId_or_Sconst
 %type  <str>	group_clause having_clause from_clause opt_distinct opt_hold
 %type  <str>	join_outer where_clause relation_expr sub_type opt_arg
 %type  <str>	opt_column_list insert_rest InsertStmt
@@ -2887,14 +2887,14 @@ sortby_list:  sortby					{ $$ = $1; }
 		| sortby_list ',' sortby		{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-sortby: a_expr OptUseOp
-			{ $$ = cat2_str($1, $2); }
-		;
-
-OptUseOp:  USING all_Op		{ $$ = cat2_str(make_str("using"), $2); }
-		| ASC				{ $$ = make_str("asc"); }
-		| DESC				{ $$ = make_str("desc"); }
-		| /*EMPTY*/			{ $$ = EMPTY; }
+sortby: a_expr USING qual_all_Op
+			{ $$ = cat_str(3, $1, make_str("using"), $3); }
+		| a_expr ASC
+			{ $$ = cat2_str($1, make_str("asc")); }
+		| a_expr DESC
+			{ $$ = cat2_str($1, make_str("desc")); }
+		| a_expr
+			{ $$ = $1; }
 		;
 
 select_limit:	LIMIT select_limit_value OFFSET select_offset_value

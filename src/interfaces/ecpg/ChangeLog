@@ -1600,6 +1600,10 @@ Fri Aug  1 08:54:02 CEST 2003
 	
 	- Added some Informix error codes in Informix mode.
 	- Added just another pgtypeslib function.
+
+Mon Aug 25 13:24:27 CEST 2003
+
+	- Synced parser.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
