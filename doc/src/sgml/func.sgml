@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.217 2004/08/10 00:55:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.218 2004/08/18 03:06:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1179,8 +1179,8 @@ PostgreSQL documentation
 	non-identifier characters or would be case-folded).
 	Embedded quotes are properly doubled.
        </entry>
-       <entry><literal>quote_ident('Foo')</literal></entry>
-       <entry><literal>"Foo"</literal></entry>
+       <entry><literal>quote_ident('Foo bar')</literal></entry>
+       <entry><literal>"Foo bar"</literal></entry>
       </row>
 
       <row>
