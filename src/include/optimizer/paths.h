@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.55 2001/08/21 16:36:06 tgl Exp $
+ * $Id: paths.h,v 1.56 2001/10/18 16:11:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,10 @@ extern int	geqo_rels;
 
 extern RelOptInfo *make_one_rel(Query *root);
 extern RelOptInfo *make_fromexpr_rel(Query *root, FromExpr *from);
+
+#ifdef OPTIMIZER_DEBUG
+extern void debug_print_rel(Query *root, RelOptInfo *rel);
+#endif
 
 /*
  * indxpath.c
@@ -111,6 +115,8 @@ extern List *build_join_pathkeys(Query *root,
 					List *outer_pathkeys);
 extern List *make_pathkeys_for_sortclauses(List *sortclauses,
 							  List *tlist);
+extern void cache_mergeclause_pathkeys(Query *root,
+									   RestrictInfo *restrictinfo);
 extern List *find_mergeclauses_for_pathkeys(Query *root,
 							   List *pathkeys,
 							   List *restrictinfos);

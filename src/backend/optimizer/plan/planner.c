@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.108 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.109 2001/10/18 16:11:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,9 @@
 
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
+#ifdef OPTIMIZER_DEBUG
+#include "nodes/print.h"
+#endif
 #include "optimizer/clauses.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"

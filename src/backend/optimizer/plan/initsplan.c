@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.63 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.64 2001/10/18 16:11:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,13 @@ static void mark_baserels_for_outer_join(Query *root, Relids rels,
 static void distribute_qual_to_rels(Query *root, Node *clause,
 						bool ispusheddown,
 						bool isouterjoin,
+						bool isdeduced,
 						Relids qualscope);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 					  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
+static bool qual_is_redundant(Query *root, RestrictInfo *restrictinfo,
+							  List *restrictlist);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
 
@@ -219,7 +222,7 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		 */
 		foreach(qual, (List *) f->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(qual),
-									true, false, result);
+									true, false, false, result);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
@@ -279,7 +282,7 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 
 		foreach(qual, (List *) j->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(qual),
-									false, isouterjoin, result);
+									false, isouterjoin, false, result);
 	}
 	else
 		elog(ERROR, "distribute_quals_to_rels: unexpected node type %d",
@@ -339,6 +342,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
  * 'ispusheddown': if TRUE, force the clause to be marked 'ispusheddown'
  *		(this indicates the clause came from a FromExpr, not a JoinExpr)
  * 'isouterjoin': TRUE if the qual came from an OUTER JOIN's ON-clause
+ * 'isdeduced': TRUE if the qual came from implied-equality deduction
  * 'qualscope': list of baserels the qual's syntactic scope covers
  *
  * 'qualscope' identifies what level of JOIN the qual came from.  For a top
@@ -349,6 +353,7 @@ static void
 distribute_qual_to_rels(Query *root, Node *clause,
 						bool ispusheddown,
 						bool isouterjoin,
+						bool isdeduced,
 						Relids qualscope)
 {
 	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
@@ -405,8 +410,17 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * clause's own reference list.  At the time we are called, the
 	 * outerjoinset list of each baserel will show exactly those outer
 	 * joins that are below the qual in the join tree.
+	 *
+	 * If the qual came from implied-equality deduction, we can evaluate
+	 * the qual at its natural semantic level.
+	 * 
 	 */
-	if (isouterjoin)
+	if (isdeduced)
+	{
+		Assert(sameseti(relids, qualscope));
+		can_be_equijoin = true;
+	}
+	else if (isouterjoin)
 	{
 		relids = qualscope;
 		can_be_equijoin = false;
@@ -461,9 +475,6 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 */
 		RelOptInfo *rel = build_base_rel(root, lfirsti(relids));
 
-		rel->baserestrictinfo = lappend(rel->baserestrictinfo,
-										restrictinfo);
-
 		/*
 		 * Check for a "mergejoinable" clause even though it's not a join
 		 * clause.	This is so that we can recognize that "a.x = a.y"
@@ -474,10 +485,26 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 */
 		if (can_be_equijoin)
 			check_mergejoinable(restrictinfo);
+
+		/*
+		 * If the clause was deduced from implied equality, check to see
+		 * whether it is redundant with restriction clauses we already have
+		 * for this rel.  Note we cannot apply this check to user-written
+		 * clauses, since we haven't found the canonical pathkey sets yet
+		 * while processing user clauses.  (NB: no comparable check is done
+		 * in the join-clause case; redundancy will be detected when the
+		 * join clause is moved into a join rel's restriction list.)
+		 */
+		if (!isdeduced ||
+			!qual_is_redundant(root, restrictinfo, rel->baserestrictinfo))
+		{
+			/* Add clause to rel's restriction list */
+			rel->baserestrictinfo = lappend(rel->baserestrictinfo,
+											restrictinfo);
+		}
 	}
 	else if (relids != NIL)
 	{
-
 		/*
 		 * 'clause' is a join clause, since there is more than one rel in
 		 * the relid list.	Set additional RestrictInfo fields for
@@ -524,9 +551,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * the two sides represent equivalent PathKeyItems for path keys: any
 	 * path that is sorted by one side will also be sorted by the other
 	 * (as soon as the two rels are joined, that is).  Record the key
-	 * equivalence for future use.
+	 * equivalence for future use.  (We can skip this for a deduced clause,
+	 * since the keys are already known equivalent in that case.)
 	 */
-	if (can_be_equijoin && restrictinfo->mergejoinoperator != InvalidOid)
+	if (can_be_equijoin && restrictinfo->mergejoinoperator != InvalidOid &&
+		!isdeduced)
 		add_equijoined_keys(root, restrictinfo);
 }
 
@@ -684,16 +713,104 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 
 	/*
 	 * Note: we mark the qual "pushed down" to ensure that it can never be
-	 * taken for an original JOIN/ON clause.  We also claim it is an
-	 * outer- join clause, which it isn't, but that keeps
-	 * distribute_qual_to_rels from examining the outerjoinsets of the
-	 * relevant rels (which are no longer of interest, but could keep the
-	 * qual from being pushed down to where it should be).	It'll also
-	 * save a useless call to add_equijoined keys...
+	 * taken for an original JOIN/ON clause.
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
-							true, true,
+							true, false, true,
 							pull_varnos((Node *) clause));
+}
+
+/*
+ * qual_is_redundant
+ *	  Detect whether an implied-equality qual that turns out to be a
+ *	  restriction clause for a single base relation is redundant with
+ *	  already-known restriction clauses for that rel.  This occurs with,
+ *	  for example,
+ *				SELECT * FROM tab WHERE f1 = f2 AND f2 = f3;
+ *	  We need to suppress the redundant condition to avoid computing
+ *	  too-small selectivity, not to mention wasting time at execution.
+ */
+static bool
+qual_is_redundant(Query *root,
+				  RestrictInfo *restrictinfo,
+				  List *restrictlist)
+{
+	List   *oldquals;
+	List   *olditem;
+	Node   *newleft;
+	Node   *newright;
+	List   *equalvars;
+	bool	someadded;
+
+	/*
+	 * Set cached pathkeys.  NB: it is okay to do this now because this
+	 * routine is only invoked while we are generating implied equalities.
+	 * Therefore, the equi_key_list is already complete and so we can
+	 * correctly determine canonical pathkeys.
+	 */
+	cache_mergeclause_pathkeys(root, restrictinfo);
+	/* If different, say "not redundant" (should never happen) */
+	if (restrictinfo->left_pathkey != restrictinfo->right_pathkey)
+		return false;
+	/*
+	 * Scan existing quals to find those referencing same pathkeys.
+	 * Usually there will be few, if any, so build a list of just the
+	 * interesting ones.
+	 */
+	oldquals = NIL;
+	foreach(olditem, restrictlist)
+	{
+		RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);
+
+		if (oldrinfo->mergejoinoperator != InvalidOid)
+		{
+			cache_mergeclause_pathkeys(root, oldrinfo);
+			if (restrictinfo->left_pathkey == oldrinfo->left_pathkey &&
+				restrictinfo->right_pathkey == oldrinfo->right_pathkey)
+				oldquals = lcons(oldrinfo, oldquals);
+		}
+	}
+	if (oldquals == NIL)
+		return false;
+	/*
+	 * Now, we want to develop a list of Vars that are known equal to the
+	 * left side of the new qual.  We traverse the old-quals list repeatedly
+	 * to transitively expand the Vars list.  If at any point we find we
+	 * can reach the right-side Var of the new qual, we are done.  We give
+	 * up when we can't expand the equalvars list any more.
+	 */
+	newleft = (Node *) get_leftop(restrictinfo->clause);
+	newright = (Node *) get_rightop(restrictinfo->clause);
+	equalvars = makeList1(newleft);
+	do {
+		someadded = false;
+		foreach(olditem, oldquals)
+		{
+			RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);
+			Node *oldleft = (Node *) get_leftop(oldrinfo->clause);
+			Node *oldright = (Node *) get_rightop(oldrinfo->clause);
+			Node *newguy = NULL;
+
+			if (member(oldleft, equalvars))
+				newguy = oldright;
+			else if (member(oldright, equalvars))
+				newguy = oldleft;
+			else
+				continue;
+			if (equal(newguy, newright))
+				return true;	/* we proved new clause is redundant */
+			equalvars = lcons(newguy, equalvars);
+			someadded = true;
+			/*
+			 * Remove this qual from list, since we don't need it anymore.
+			 * Note this doesn't break the foreach() loop, since lremove
+			 * doesn't touch the next-link of the removed cons cell.
+			 */
+			oldquals = lremove(oldrinfo, oldquals);
+		}
+	} while (someadded);
+
+	return false;				/* it's not redundant */
 }
 
 

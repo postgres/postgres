@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.33 2001/05/20 20:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.34 2001/10/18 16:11:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/joininfo.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/tlist.h"
 #include "parser/parsetree.h"
@@ -24,9 +25,10 @@
 
 static RelOptInfo *make_base_rel(Query *root, int relid);
 static List *new_join_tlist(List *tlist, int first_resdomno);
-static List *build_joinrel_restrictlist(RelOptInfo *joinrel,
-						   RelOptInfo *outer_rel,
-						   RelOptInfo *inner_rel);
+static List *build_joinrel_restrictlist(Query *root,
+										RelOptInfo *joinrel,
+										RelOptInfo *outer_rel,
+										RelOptInfo *inner_rel);
 static void build_joinrel_joinlist(RelOptInfo *joinrel,
 					   RelOptInfo *outer_rel,
 					   RelOptInfo *inner_rel);
@@ -274,7 +276,8 @@ build_join_rel(Query *root,
 		 * particular pair of component relations.
 		 */
 		if (restrictlist_ptr)
-			*restrictlist_ptr = build_joinrel_restrictlist(joinrel,
+			*restrictlist_ptr = build_joinrel_restrictlist(root,
+														   joinrel,
 														   outer_rel,
 														   inner_rel);
 		return joinrel;
@@ -326,7 +329,10 @@ build_join_rel(Query *root,
 	 * caller might or might not need the restrictlist, but I need it
 	 * anyway for set_joinrel_size_estimates().)
 	 */
-	restrictlist = build_joinrel_restrictlist(joinrel, outer_rel, inner_rel);
+	restrictlist = build_joinrel_restrictlist(root,
+											  joinrel,
+											  outer_rel,
+											  inner_rel);
 	if (restrictlist_ptr)
 		*restrictlist_ptr = restrictlist;
 	build_joinrel_joinlist(joinrel, outer_rel, inner_rel);
@@ -407,6 +413,11 @@ new_join_tlist(List *tlist,
  *	  join paths made from this pair of sub-relations.	(It will not need to
  *	  be considered further up the join tree.)
  *
+ *	  When building a restriction list, we eliminate redundant clauses.
+ *	  We don't try to do that for join clause lists, since the join clauses
+ *	  aren't really doing anything, just waiting to become part of higher
+ *	  levels' restriction lists.
+ *
  * 'joinrel' is a join relation node
  * 'outer_rel' and 'inner_rel' are a pair of relations that can be joined
  *		to form joinrel.
@@ -421,19 +432,80 @@ new_join_tlist(List *tlist,
  * the original nodes in the lists made for the join relation.
  */
 static List *
-build_joinrel_restrictlist(RelOptInfo *joinrel,
+build_joinrel_restrictlist(Query *root,
+						   RelOptInfo *joinrel,
 						   RelOptInfo *outer_rel,
 						   RelOptInfo *inner_rel)
 {
+	List   *result = NIL;
+	List   *rlist;
+	List   *item;
 
 	/*
-	 * We must eliminate duplicates, since we will see the same clauses
-	 * arriving from both input relations...
+	 * Collect all the clauses that syntactically belong at this level.
 	 */
-	return set_union(subbuild_joinrel_restrictlist(joinrel,
-												   outer_rel->joininfo),
-					 subbuild_joinrel_restrictlist(joinrel,
-												   inner_rel->joininfo));
+	rlist = nconc(subbuild_joinrel_restrictlist(joinrel,
+												outer_rel->joininfo),
+				  subbuild_joinrel_restrictlist(joinrel,
+												inner_rel->joininfo));
+
+	/*
+	 * Eliminate duplicate and redundant clauses.
+	 *
+	 * We must eliminate duplicates, since we will see many of the same
+	 * clauses arriving from both input relations.  Also, if a clause is
+	 * a mergejoinable clause, it's possible that it is redundant with
+	 * previous clauses (see optimizer/README for discussion).  We detect
+	 * that case and omit the redundant clause from the result list.
+	 *
+	 * We can detect redundant mergejoinable clauses very cheaply by using
+	 * their left and right pathkeys, which uniquely identify the sets of
+	 * equijoined variables in question.  All the members of a pathkey set
+	 * that are in the left relation have already been forced to be equal;
+	 * likewise for those in the right relation.  So, we need to have only
+	 * one clause that checks equality between any set member on the left and
+	 * any member on the right; by transitivity, all the rest are then equal.
+	 */
+	foreach(item, rlist)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
+
+		/* eliminate duplicates */
+		if (member(rinfo, result))
+			continue;
+
+		/* check for redundant merge clauses */
+		if (rinfo->mergejoinoperator != InvalidOid)
+		{
+			bool	redundant = false;
+			List   *olditem;
+
+			cache_mergeclause_pathkeys(root, rinfo);
+
+			foreach(olditem, result)
+			{
+				RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);
+
+				if (oldrinfo->mergejoinoperator != InvalidOid &&
+					rinfo->left_pathkey == oldrinfo->left_pathkey &&
+					rinfo->right_pathkey == oldrinfo->right_pathkey)
+				{
+					redundant = true;
+					break;
+				}
+			}
+
+			if (redundant)
+				continue;
+		}
+
+		/* otherwise, add it to result list */
+		result = lappend(result, rinfo);
+	}
+
+	freeList(rlist);
+
+	return result;
 }
 
 static void
@@ -458,7 +530,6 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 
 		if (is_subseti(joininfo->unjoined_relids, joinrel->relids))
 		{
-
 			/*
 			 * Clauses in this JoinInfo list become restriction clauses
 			 * for the joinrel, since they refer to no outside rels.
@@ -471,7 +542,6 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 		}
 		else
 		{
-
 			/*
 			 * These clauses are still join clauses at this level, so we
 			 * ignore them in this routine.
@@ -497,7 +567,6 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 											  joinrel->relids);
 		if (new_unjoined_relids == NIL)
 		{
-
 			/*
 			 * Clauses in this JoinInfo list become restriction clauses
 			 * for the joinrel, since they refer to no outside rels. So we
@@ -506,7 +575,6 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 		}
 		else
 		{
-
 			/*
 			 * These clauses are still join clauses at this level, so find
 			 * or make the appropriate JoinInfo item for the joinrel, and

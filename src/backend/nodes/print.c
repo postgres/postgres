@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.47 2001/03/22 03:59:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.48 2001/10/18 16:11:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -20,10 +20,12 @@
 #include "postgres.h"
 
 #include "access/printtup.h"
+#include "catalog/pg_type.h"
 #include "nodes/print.h"
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 static char *plannode_type(Plan *p);
 
@@ -188,6 +190,36 @@ print_expr(Node *expr, List *rtable)
 		}
 		printf("%s.%s", relname, attname);
 	}
+	else if (IsA(expr, Const))
+	{
+		Const	   *c = (Const *) expr;
+		HeapTuple	typeTup;
+		Oid			typoutput;
+		Oid			typelem;
+		char	   *outputstr;
+
+		if (c->constisnull)
+		{
+			printf("NULL");
+			return;
+		}
+
+		typeTup = SearchSysCache(TYPEOID,
+								 ObjectIdGetDatum(c->consttype),
+								 0, 0, 0);
+		if (!HeapTupleIsValid(typeTup))
+			elog(ERROR, "Cache lookup for type %u failed", c->consttype);
+		typoutput = ((Form_pg_type) GETSTRUCT(typeTup))->typoutput;
+		typelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+		ReleaseSysCache(typeTup);
+
+		outputstr = DatumGetCString(OidFunctionCall3(typoutput,
+													 c->constvalue,
+													 ObjectIdGetDatum(typelem),
+													 Int32GetDatum(-1)));
+		printf("%s", outputstr);
+		pfree(outputstr);
+	}
 	else if (IsA(expr, Expr))
 	{
 		Expr	   *e = (Expr *) expr;
@@ -232,7 +264,7 @@ print_pathkeys(List *pathkeys, List *rtable)
 			if (lnext(k))
 				printf(", ");
 		}
-		printf(") ");
+		printf(")");
 		if (lnext(i))
 			printf(", ");
 	}

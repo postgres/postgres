@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.32 2001/03/22 06:16:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.33 2001/10/18 16:11:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -705,7 +705,7 @@ make_pathkeys_for_sortclauses(List *sortclauses,
  * This is a worthwhile savings because these routines will be invoked
  * many times when dealing with a many-relation query.
  */
-static void
+void
 cache_mergeclause_pathkeys(Query *root, RestrictInfo *restrictinfo)
 {
 	Node	   *key;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.53 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.54 2001/10/18 16:11:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,6 +373,10 @@ make_jointree_rel(Query *root, Node *jtnode)
 		 * will need it!
 		 */
 		set_cheapest(rel);
+
+#ifdef OPTIMIZER_DEBUG
+		debug_print_rel(root, rel);
+#endif
 
 		return rel;
 	}

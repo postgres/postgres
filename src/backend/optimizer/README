@@ -461,6 +461,23 @@ code than it would otherwise have, and reduces the number of tuples
 processed in join stages, so it's a win to make these deductions even
 if we weren't forced to.
 
+When we generate implied equality constraints, we may find ourselves
+adding redundant clauses to specific relations.  For example, consider
+	SELECT * FROM t1, t2, t3 WHERE t1.a = t2.b AND t2.b = t3.c;
+We will generate the implied clause t1.a = t3.c and add it to the tree.
+This is good since it allows us to consider joining t1 and t3 directly,
+which we otherwise wouldn't do.  But when we reach the stage of joining
+all three relations, we will have redundant join clauses --- eg, if we
+join t1 and t2 first, then the path that joins (t1 t2) to t3 will have
+both t2.b = t3.c and t1.a = t3.c as restriction clauses.  This is bad;
+not only is evaluation of the extra clause useless work at runtime,
+but the selectivity estimator routines will underestimate the number
+of tuples produced since they won't know that the two clauses are
+perfectly redundant.  We fix this by detecting and removing redundant
+clauses as the restriction clause list is built for each join.  (We
+can't do it sooner, since which clauses are redundant will vary depending
+on the join order.)
+
 Yet another implication of all this is that mergejoinable operators
 must form closed equivalence sets.  For example, if "int2 = int4"
 and "int4 = int8" are both marked mergejoinable, then there had better

@@ -8,13 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.78 2001/07/31 17:56:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.79 2001/10/18 16:11:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#ifdef OPTIMIZER_DEBUG
+#include "nodes/print.h"
+#endif
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
@@ -41,11 +44,6 @@ static void set_subquery_pathlist(Query *root, RelOptInfo *rel,
 								  Index rti, RangeTblEntry *rte);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
-
-#ifdef OPTIMIZER_DEBUG
-static void debug_print_rel(Query *root, RelOptInfo *rel);
-
-#endif
 
 
 /*
@@ -116,6 +114,10 @@ set_base_rel_pathlists(Query *root)
 			/* Plain relation */
 			set_plain_rel_pathlist(root, rel, rte);
 		}
+
+#ifdef OPTIMIZER_DEBUG
+		debug_print_rel(root, rel);
+#endif
 	}
 }
 
@@ -520,10 +522,22 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 #ifdef OPTIMIZER_DEBUG
 
 static void
-print_joinclauses(Query *root, List *clauses)
+print_relids(Relids relids)
 {
 	List	   *l;
-	extern void print_expr(Node *expr, List *rtable);	/* in print.c */
+
+	foreach(l, relids)
+	{
+		printf("%d", lfirsti(l));
+		if (lnext(l))
+			printf(" ");
+	}
+}
+
+static void
+print_restrictclauses(Query *root, List *clauses)
+{
+	List	   *l;
 
 	foreach(l, clauses)
 	{
@@ -531,20 +545,16 @@ print_joinclauses(Query *root, List *clauses)
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))
-			printf(" ");
+			printf(", ");
 	}
 }
 
 static void
 print_path(Query *root, Path *path, int indent)
 {
-	char	   *ptype = NULL;
-	JoinPath   *jp;
-	bool		join = false;
+	const char   *ptype;
+	bool		join;
 	int			i;
-
-	for (i = 0; i < indent; i++)
-		printf("\t");
 
 	switch (nodeTag(path))
 	{
@@ -554,6 +564,10 @@ print_path(Query *root, Path *path, int indent)
 			break;
 		case T_IndexPath:
 			ptype = "IdxScan";
+			join = false;
+			break;
+		case T_TidPath:
+			ptype = "TidScan";
 			join = false;
 			break;
 		case T_NestPath:
@@ -569,81 +583,81 @@ print_path(Query *root, Path *path, int indent)
 			join = true;
 			break;
 		default:
+			ptype = "???Path";
+			join = false;
 			break;
 	}
+
+	for (i = 0; i < indent; i++)
+		printf("\t");
+	printf("%s(", ptype);
+	print_relids(path->parent->relids);
+	printf(") rows=%.0f cost=%.2f..%.2f\n",
+		   path->parent->rows, path->startup_cost, path->total_cost);
+
+	if (path->pathkeys)
+	{
+		for (i = 0; i < indent; i++)
+			printf("\t");
+		printf("  pathkeys: ");
+		print_pathkeys(path->pathkeys, root->rtable);
+	}
+
 	if (join)
 	{
-		jp = (JoinPath *) path;
+		JoinPath   *jp = (JoinPath *) path;
 
-		printf("%s rows=%.0f cost=%.2f..%.2f\n",
-			   ptype, path->parent->rows,
-			   path->startup_cost, path->total_cost);
+		for (i = 0; i < indent; i++)
+			printf("\t");
+		printf("  clauses: ");
+		print_restrictclauses(root, jp->joinrestrictinfo);
+		printf("\n");
 
-		if (path->pathkeys)
+		if (nodeTag(path) == T_MergePath)
 		{
-			for (i = 0; i < indent; i++)
-				printf("\t");
-			printf("  pathkeys=");
-			print_pathkeys(path->pathkeys, root->rtable);
-		}
+			MergePath  *mp = (MergePath *) path;
 
-		switch (nodeTag(path))
-		{
-			case T_MergePath:
-			case T_HashPath:
+			if (mp->outersortkeys || mp->innersortkeys)
+			{
 				for (i = 0; i < indent; i++)
 					printf("\t");
-				printf("  clauses=(");
-				print_joinclauses(root, jp->joinrestrictinfo);
-				printf(")\n");
-
-				if (nodeTag(path) == T_MergePath)
-				{
-					MergePath  *mp = (MergePath *) path;
-
-					if (mp->outersortkeys || mp->innersortkeys)
-					{
-						for (i = 0; i < indent; i++)
-							printf("\t");
-						printf("  sortouter=%d sortinner=%d\n",
-							   ((mp->outersortkeys) ? 1 : 0),
-							   ((mp->innersortkeys) ? 1 : 0));
-					}
-				}
-				break;
-			default:
-				break;
+				printf("  sortouter=%d sortinner=%d\n",
+					   ((mp->outersortkeys) ? 1 : 0),
+					   ((mp->innersortkeys) ? 1 : 0));
+			}
 		}
+
 		print_path(root, jp->outerjoinpath, indent + 1);
 		print_path(root, jp->innerjoinpath, indent + 1);
 	}
-	else
-	{
-		int			relid = lfirsti(path->parent->relids);
-
-		printf("%s(%d) rows=%.0f cost=%.2f..%.2f\n",
-			   ptype, relid, path->parent->rows,
-			   path->startup_cost, path->total_cost);
-
-		if (path->pathkeys)
-		{
-			for (i = 0; i < indent; i++)
-				printf("\t");
-			printf("  pathkeys=");
-			print_pathkeys(path->pathkeys, root->rtable);
-		}
-	}
 }
 
-static void
+void
 debug_print_rel(Query *root, RelOptInfo *rel)
 {
 	List	   *l;
 
-	printf("(");
-	foreach(l, rel->relids)
-		printf("%d ", lfirsti(l));
+	printf("RELOPTINFO (");
+	print_relids(rel->relids);
 	printf("): rows=%.0f width=%d\n", rel->rows, rel->width);
+
+	if (rel->baserestrictinfo)
+	{
+		printf("\tbaserestrictinfo: ");
+		print_restrictclauses(root, rel->baserestrictinfo);
+		printf("\n");
+	}
+
+	foreach(l, rel->joininfo)
+	{
+		JoinInfo *j = (JoinInfo *) lfirst(l);
+
+		printf("\tjoininfo (");
+		print_relids(j->unjoined_relids);
+		printf("): ");
+		print_restrictclauses(root, j->jinfo_restrictinfo);
+		printf("\n");
+	}
 
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)
@@ -652,6 +666,8 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 	print_path(root, rel->cheapest_startup_path, 1);
 	printf("\n\tcheapest total path:\n");
 	print_path(root, rel->cheapest_total_path, 1);
+	printf("\n");
+	fflush(stdout);
 }
 
 #endif	 /* OPTIMIZER_DEBUG */
