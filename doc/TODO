@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Dec 24 17:06:43 EST 2002
+Last updated:		Fri Dec 27 00:56:45 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -305,6 +305,7 @@ Exotic Features
 * Allow plug-in modules to emulate features from other databases
 * SQL*Net listener that makes PostgreSQL appear as an Oracle database
   to clients
+* Two-phase commit to implement distributed transactions
 
 
 PERFORMANCE
