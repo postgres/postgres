@@ -1247,9 +1247,7 @@ fi
 AC_OUTPUT(
 [
   GNUmakefile
-  src/GNUmakefile
   src/Makefile.global
-  src/backend/port/Makefile
 ],
 [
 # Update timestamp for pg_config.h (see Makefile.global)

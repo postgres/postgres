@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.142 2002/03/05 17:55:22 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.143 2002/03/13 00:05:02 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -325,12 +325,21 @@ endif
 #
 # substitute implementations of the C library
 
-INET_ATON = @INET_ATON@
-STRERROR = @STRERROR@
-SNPRINTF = @SNPRINTF@
-STRDUP = @STRDUP@
-MEMCMP = @MEMCMP@
-STRTOUL = @STRTOUL@
+GETHOSTNAME = @GETHOSTNAME@
+GETRUSAGE   = @GETRUSAGE@
+INET_ATON   = @INET_ATON@
+ISINF       = @ISINF@
+MEMCMP      = @MEMCMP@
+MISSING_RANDOM = @MISSING_RANDOM@
+SNPRINTF    = @SNPRINTF@
+SRANDOM     = @SRANDOM@
+STRCASECMP  = @STRCASECMP@
+STRDUP      = @STRDUP@
+STRERROR    = @STRERROR@
+STRTOL      = @STRTOL@
+STRTOUL     = @STRTOUL@
+
+TAS         = @TAS@
 
 
 ##########################################################################
