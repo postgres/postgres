@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.195 2004/01/26 22:35:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.196 2004/02/02 00:17:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3358,33 +3358,28 @@ write_relcache_init_file(void)
 		/*
 		 * OK, rename the temp file to its final name, deleting any
 		 * previously-existing init file.
-		 *
-		 * Note: a failure here is possible under Cygwin, if some other
-		 * backend is holding open an unlinked-but-not-yet-gone init file.
-		 * So treat this as a noncritical failure.
 		 */
-		if (rename(tempfilename, finalfilename) < 0)
+#if defined(WIN32) || defined(CYGWIN)
+		rename(tempfilename, finalfilename);
+		LWLockRelease(RelCacheInitLock);
+#else
 		{
-			ereport(WARNING,
-					(errcode_for_file_access(),
-				errmsg("could not rename relation-cache initialization file \"%s\" to \"%s\": %m",
-					   tempfilename, finalfilename),
-					 errdetail("Continuing anyway, but there's something wrong.")));
-
-			/*
-			 * If we fail, try to clean up the useless temp file; don't
-			 * bother to complain if this fails too.
-			 */
-			unlink(tempfilename);
+			char		finalfilename_new[MAXPGPATH];
+	
+			snprintf(finalfilename_new, sizeof(finalfilename_new), "%s.new", finalfilename);
+			rename(tempfilename, finalfilename_new);
+			LWLockRelease(RelCacheInitLock);
+			/* Rename to active file after lock is released */
+			rename(finalfilename_new, finalfilename);
 		}
+#endif
 	}
 	else
 	{
 		/* Delete the already-obsolete temp file */
 		unlink(tempfilename);
+		LWLockRelease(RelCacheInitLock);
 	}
-
-	LWLockRelease(RelCacheInitLock);
 }
 
 /*
