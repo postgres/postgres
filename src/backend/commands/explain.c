@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.109 2003/05/08 18:16:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.110 2003/05/28 23:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1033,12 +1033,15 @@ make_ors_ands_explicit(List *orclauses)
 		return (Node *) make_ands_explicit(lfirst(orclauses));
 	else
 	{
-		List	   *args = NIL;
+		FastList	args;
 		List	   *orptr;
 
+		FastListInit(&args);
 		foreach(orptr, orclauses)
-			args = lappend(args, make_ands_explicit(lfirst(orptr)));
+		{
+			FastAppend(&args, make_ands_explicit(lfirst(orptr)));
+		}
 
-		return (Node *) make_orclause(args);
+		return (Node *) make_orclause(FastListValue(&args));
 	}
 }

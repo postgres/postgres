@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.143 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.144 2003/05/28 23:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,7 +681,7 @@ create_indexscan_plan(Query *root,
 	Expr	   *indxqual_or_expr = NULL;
 	List	   *fixed_indxqual;
 	List	   *recheck_indxqual;
-	List	   *indexids;
+	FastList	indexids;
 	List	   *ixinfo;
 	IndexScan  *scan_plan;
 
@@ -692,12 +692,12 @@ create_indexscan_plan(Query *root,
 	/*
 	 * Build list of index OIDs.
 	 */
-	indexids = NIL;
+	FastListInit(&indexids);
 	foreach(ixinfo, best_path->indexinfo)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
 
-		indexids = lappendo(indexids, index->indexoid);
+		FastAppendo(&indexids, index->indexoid);
 	}
 
 	/*
@@ -719,15 +719,15 @@ create_indexscan_plan(Query *root,
 		 * the implicit OR and AND semantics of the first- and
 		 * second-level lists.
 		 */
-		List	   *orclauses = NIL;
+		FastList	orclauses;
 		List	   *orclause;
 
+		FastListInit(&orclauses);
 		foreach(orclause, indxqual)
 		{
-			orclauses = lappend(orclauses,
-								make_ands_explicit(lfirst(orclause)));
+			FastAppend(&orclauses, make_ands_explicit(lfirst(orclause)));
 		}
-		indxqual_or_expr = make_orclause(orclauses);
+		indxqual_or_expr = make_orclause(FastListValue(&orclauses));
 
 		qpqual = set_difference(scan_clauses, makeList1(indxqual_or_expr));
 	}
@@ -778,7 +778,7 @@ create_indexscan_plan(Query *root,
 	scan_plan = make_indexscan(tlist,
 							   qpqual,
 							   baserelid,
-							   indexids,
+							   FastListValue(&indexids),
 							   fixed_indxqual,
 							   indxqual,
 							   best_path->indexscandir);
@@ -1091,13 +1091,15 @@ static void
 fix_indxqual_references(List *indexquals, IndexPath *index_path,
 					  List **fixed_indexquals, List **recheck_indexquals)
 {
-	List	   *fixed_quals = NIL;
-	List	   *recheck_quals = NIL;
+	FastList	fixed_quals;
+	FastList	recheck_quals;
 	Relids		baserelids = index_path->path.parent->relids;
 	int			baserelid = index_path->path.parent->relid;
 	List	   *ixinfo = index_path->indexinfo;
 	List	   *i;
 
+	FastListInit(&fixed_quals);
+	FastListInit(&recheck_quals);
 	foreach(i, indexquals)
 	{
 		List	   *indexqual = lfirst(i);
@@ -1107,15 +1109,15 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 
 		fix_indxqual_sublist(indexqual, baserelids, baserelid, index,
 							 &fixed_qual, &recheck_qual);
-		fixed_quals = lappend(fixed_quals, fixed_qual);
+		FastAppend(&fixed_quals, fixed_qual);
 		if (recheck_qual != NIL)
-			recheck_quals = lappend(recheck_quals, recheck_qual);
+			FastAppend(&recheck_quals, recheck_qual);
 
 		ixinfo = lnext(ixinfo);
 	}
 
-	*fixed_indexquals = fixed_quals;
-	*recheck_indexquals = recheck_quals;
+	*fixed_indexquals = FastListValue(&fixed_quals);
+	*recheck_indexquals = FastListValue(&recheck_quals);
 }
 
 /*
@@ -1136,10 +1138,12 @@ fix_indxqual_sublist(List *indexqual,
 					 IndexOptInfo *index,
 					 List **fixed_quals, List **recheck_quals)
 {
-	List	   *fixed_qual = NIL;
-	List	   *recheck_qual = NIL;
+	FastList	fixed_qual;
+	FastList	recheck_qual;
 	List	   *i;
 
+	FastListInit(&fixed_qual);
+	FastListInit(&recheck_qual);
 	foreach(i, indexqual)
 	{
 		OpExpr	   *clause = (OpExpr *) lfirst(i);
@@ -1178,19 +1182,18 @@ fix_indxqual_sublist(List *indexqual,
 													   index,
 													   &opclass);
 
-		fixed_qual = lappend(fixed_qual, newclause);
+		FastAppend(&fixed_qual, newclause);
 
 		/*
 		 * Finally, check to see if index is lossy for this operator. If
 		 * so, add (a copy of) original form of clause to recheck list.
 		 */
 		if (op_requires_recheck(newclause->opno, opclass))
-			recheck_qual = lappend(recheck_qual,
-								   copyObject((Node *) clause));
+			FastAppend(&recheck_qual, copyObject((Node *) clause));
 	}
 
-	*fixed_quals = fixed_qual;
-	*recheck_quals = recheck_qual;
+	*fixed_quals = FastListValue(&fixed_qual);
+	*recheck_quals = FastListValue(&recheck_qual);
 }
 
 static Node *
@@ -1327,26 +1330,28 @@ get_switched_clauses(List *clauses, Relids outerrelids)
 static List *
 order_qual_clauses(Query *root, List *clauses)
 {
-	List	   *nosubplans;
-	List	   *withsubplans;
+	FastList	nosubplans;
+	FastList	withsubplans;
 	List	   *l;
 
 	/* No need to work hard if the query is subselect-free */
 	if (!root->hasSubLinks)
 		return clauses;
 
-	nosubplans = withsubplans = NIL;
+	FastListInit(&nosubplans);
+	FastListInit(&withsubplans);
 	foreach(l, clauses)
 	{
 		Node   *clause = lfirst(l);
 
 		if (contain_subplans(clause))
-			withsubplans = lappend(withsubplans, clause);
+			FastAppend(&withsubplans, clause);
 		else
-			nosubplans = lappend(nosubplans, clause);
+			FastAppend(&nosubplans, clause);
 	}
 
-	return nconc(nosubplans, withsubplans);
+	FastConcFast(&nosubplans, &withsubplans);
+	return FastListValue(&nosubplans);
 }
 
 /*
