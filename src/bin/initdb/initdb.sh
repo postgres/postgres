@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.68 1999/12/17 03:46:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.69 1999/12/17 16:53:11 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -438,16 +438,16 @@ echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" \
 chmod go-rw $PGDATA/pg_pwd || exit_nicely
 
 echo "Creating view pg_user."
-echo "CREATE VIEW pg_user AS
-        SELECT
-            usename,
-            usesysid,
-            usecreatedb,
-            usetrace,
-            usesuper,
-            usecatupd,
-            '********'::text as passwd,
-            valuntil
+echo "CREATE VIEW pg_user AS \
+        SELECT \
+            usename, \
+            usesysid, \
+            usecreatedb, \
+            usetrace, \
+            usesuper, \
+            usecatupd, \
+            '********'::text as passwd, \
+            valuntil \
         FROM pg_shadow" \
         | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
@@ -455,54 +455,54 @@ echo "REVOKE ALL on pg_shadow FROM public" \
 	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_rules."
-echo "CREATE VIEW pg_rules AS
-        SELECT
-            C.relname AS tablename,
-            R.rulename AS rulename,
-	    pg_get_ruledef(R.rulename) AS definition
-	FROM pg_rewrite R, pg_class C
-	WHERE R.rulename !~ '^_RET'
+echo "CREATE VIEW pg_rules AS \
+        SELECT \
+            C.relname AS tablename, \
+            R.rulename AS rulename, \
+	    pg_get_ruledef(R.rulename) AS definition \
+	FROM pg_rewrite R, pg_class C \
+	WHERE R.rulename !~ '^_RET' \
             AND C.oid = R.ev_class;" \
 	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_views."
-echo "CREATE VIEW pg_views AS
-        SELECT
-            C.relname AS viewname,
-            pg_get_userbyid(C.relowner) AS viewowner,
-            pg_get_viewdef(C.relname) AS definition
-        FROM pg_class C
-        WHERE C.relhasrules
-            AND	EXISTS (
-                SELECT rulename FROM pg_rewrite R
-                    WHERE ev_class = C.oid AND ev_type = '1'
+echo "CREATE VIEW pg_views AS \
+        SELECT \
+            C.relname AS viewname, \
+            pg_get_userbyid(C.relowner) AS viewowner, \
+            pg_get_viewdef(C.relname) AS definition \
+        FROM pg_class C \
+        WHERE C.relhasrules \
+            AND	EXISTS ( \
+                SELECT rulename FROM pg_rewrite R \
+                    WHERE ev_class = C.oid AND ev_type = '1' \
             )" \
 	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_tables."
-echo "CREATE VIEW pg_tables AS
-        SELECT
-            C.relname AS tablename,
-	    pg_get_userbyid(C.relowner) AS tableowner,
-	    C.relhasindex AS hasindexes,
-	    C.relhasrules AS hasrules,
-	    (C.reltriggers > 0) AS hastriggers
-        FROM pg_class C
-        WHERE C.relkind IN ('r', 's')
-            AND NOT EXISTS (
-                SELECT rulename FROM pg_rewrite
-                    WHERE ev_class = C.oid AND ev_type = '1'
+echo "CREATE VIEW pg_tables AS \
+        SELECT \
+            C.relname AS tablename, \
+	    pg_get_userbyid(C.relowner) AS tableowner, \
+	    C.relhasindex AS hasindexes, \
+	    C.relhasrules AS hasrules, \
+	    (C.reltriggers > 0) AS hastriggers \
+        FROM pg_class C \
+        WHERE C.relkind IN ('r', 's') \
+            AND NOT EXISTS ( \
+                SELECT rulename FROM pg_rewrite \
+                    WHERE ev_class = C.oid AND ev_type = '1' \
             )" \
 	| $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_indexes."
-echo "CREATE VIEW pg_indexes AS
-        SELECT
-            C.relname AS tablename,
-	    I.relname AS indexname,
-            pg_get_indexdef(X.indexrelid) AS indexdef
-        FROM pg_index X, pg_class C, pg_class I
-	WHERE C.oid = X.indrelid
+echo "CREATE VIEW pg_indexes AS \
+        SELECT \
+            C.relname AS tablename, \
+	    I.relname AS indexname, \
+            pg_get_indexdef(X.indexrelid) AS indexdef \
+        FROM pg_index X, pg_class C, pg_class I \
+	WHERE C.oid = X.indrelid \
             AND I.oid = X.indexrelid" \
         | $PGPATH/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
