@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.197 2002/07/24 19:11:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.198 2002/07/29 22:14:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2147,6 +2147,19 @@ _copyRemoveOperStmt(RemoveOperStmt *from)
 	return newnode;
 }
 
+static RemoveOpClassStmt *
+_copyRemoveOpClassStmt(RemoveOpClassStmt *from)
+{
+	RemoveOpClassStmt *newnode = makeNode(RemoveOpClassStmt);
+
+	Node_Copy(from, newnode, opclassname);
+	if (from->amname)
+		newnode->amname = pstrdup(from->amname);
+	newnode->behavior = from->behavior;
+
+	return newnode;
+}
+
 static RenameStmt *
 _copyRenameStmt(RenameStmt *from)
 {
@@ -2248,6 +2261,36 @@ _copyCreateDomainStmt(CreateDomainStmt *from)
 	Node_Copy(from, newnode, domainname);
 	Node_Copy(from, newnode, typename);
 	Node_Copy(from, newnode, constraints);
+
+	return newnode;
+}
+
+static CreateOpClassStmt *
+_copyCreateOpClassStmt(CreateOpClassStmt *from)
+{
+	CreateOpClassStmt *newnode = makeNode(CreateOpClassStmt);
+
+	Node_Copy(from, newnode, opclassname);
+	if (from->amname)
+		newnode->amname = pstrdup(from->amname);
+	Node_Copy(from, newnode, datatype);
+	Node_Copy(from, newnode, items);
+	newnode->isDefault = from->isDefault;
+
+	return newnode;
+}
+
+static CreateOpClassItem *
+_copyCreateOpClassItem(CreateOpClassItem *from)
+{
+	CreateOpClassItem *newnode = makeNode(CreateOpClassItem);
+
+	newnode->itemtype = from->itemtype;
+	Node_Copy(from, newnode, name);
+	Node_Copy(from, newnode, args);
+	newnode->number = from->number;
+	newnode->recheck = from->recheck;
+	Node_Copy(from, newnode, storedtype);
 
 	return newnode;
 }
@@ -2872,6 +2915,9 @@ copyObject(void *from)
 		case T_RemoveOperStmt:
 			retval = _copyRemoveOperStmt(from);
 			break;
+		case T_RemoveOpClassStmt:
+			retval = _copyRemoveOpClassStmt(from);
+			break;
 		case T_RenameStmt:
 			retval = _copyRenameStmt(from);
 			break;
@@ -2898,6 +2944,12 @@ copyObject(void *from)
 			break;
 		case T_CreateDomainStmt:
 			retval = _copyCreateDomainStmt(from);
+			break;
+		case T_CreateOpClassStmt:
+			retval = _copyCreateOpClassStmt(from);
+			break;
+		case T_CreateOpClassItem:
+			retval = _copyCreateOpClassItem(from);
 			break;
 		case T_CreatedbStmt:
 			retval = _copyCreatedbStmt(from);

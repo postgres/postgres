@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.187 2002/07/20 05:49:28 momjian Exp $
+ * $Id: builtins.h,v 1.188 2002/07/29 22:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,6 +343,8 @@ extern Datum regclassout(PG_FUNCTION_ARGS);
 extern Datum regtypein(PG_FUNCTION_ARGS);
 extern Datum regtypeout(PG_FUNCTION_ARGS);
 extern List *stringToQualifiedNameList(const char *string, const char *caller);
+extern char *format_procedure(Oid procedure_oid);
+extern char *format_operator(Oid operator_oid);
 
 /* ruleutils.c */
 extern Datum pg_get_ruledef(PG_FUNCTION_ARGS);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.349 2002/07/24 19:11:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.350 2002/07/29 22:14:10 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -136,11 +136,11 @@ static void doNegateFloat(Value *v);
 		AlterTableStmt, AlterUserStmt, AlterUserSetStmt,
 		AnalyzeStmt, ClosePortalStmt, ClusterStmt, CommentStmt,
 		ConstraintsSetStmt, CopyStmt, CreateAsStmt, CreateCastStmt,
-		CreateDomainStmt, CreateGroupStmt, CreatePLangStmt,
+		CreateDomainStmt, CreateGroupStmt, CreateOpClassStmt, CreatePLangStmt,
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt,
 		CreateAssertStmt, CreateTrigStmt, CreateUserStmt,
 		CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
-		DropGroupStmt, DropPLangStmt, DropStmt,
+		DropGroupStmt, DropOpClassStmt, DropPLangStmt, DropStmt,
 		DropAssertStmt, DropTrigStmt, DropRuleStmt, DropCastStmt,
 		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt,
@@ -156,7 +156,7 @@ static void doNegateFloat(Value *v);
 %type <node>	select_no_parens, select_with_parens, select_clause,
 				simple_select
 
-%type <node>	alter_column_default
+%type <node>	alter_column_default, opclass_item
 %type <ival>	add_drop
 
 %type <dbehavior>	opt_drop_behavior
@@ -218,7 +218,7 @@ static void doNegateFloat(Value *v);
 				target_list, update_target_list, insert_column_list,
 				insert_target_list, def_list, opt_indirection,
 				group_clause, TriggerFuncArgs, select_limit,
-				opt_select_limit
+				opt_select_limit, opclass_item_list
 
 %type <range>	into_clause, OptTempTableName
 
@@ -240,7 +240,7 @@ static void doNegateFloat(Value *v);
 
 %type <boolean> opt_instead, opt_cursor
 %type <boolean> index_opt_unique, opt_verbose, opt_full
-%type <boolean> opt_freeze, opt_default
+%type <boolean> opt_freeze, opt_default, opt_recheck
 %type <defelt>	opt_binary, opt_oids, copy_delimiter
 
 %type <boolean> copy_from
@@ -326,7 +326,7 @@ static void doNegateFloat(Value *v);
 	BOOLEAN, BY,
 
 	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P,
-	CHARACTER, CHARACTERISTICS, CHECK, CHECKPOINT, CLOSE,
+	CHARACTER, CHARACTERISTICS, CHECK, CHECKPOINT, CLASS, CLOSE,
 	CLUSTER, COALESCE, COLLATE, COLUMN, COMMENT, COMMIT,
 	COMMITTED, CONSTRAINT, CONSTRAINTS, CONVERSION_P, COPY, CREATE, CREATEDB,
 	CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
@@ -371,7 +371,7 @@ static void doNegateFloat(Value *v);
 	PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE,
 	PROCEDURAL,
 
-	READ, REAL, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE,
+	READ, REAL, RECHECK, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE,
 	RESET, RESTRICT, RETURNS, REVOKE, RIGHT, ROLLBACK, ROW,
 	RULE,
 
@@ -481,6 +481,7 @@ stmt :
 			| CreateSchemaStmt
 			| CreateGroupStmt
 			| CreateSeqStmt
+			| CreateOpClassStmt
 			| CreatePLangStmt
 			| CreateAssertStmt
 			| CreateTrigStmt
@@ -492,6 +493,7 @@ stmt :
 			| CommentStmt
 			| DropCastStmt
 			| DropGroupStmt
+			| DropOpClassStmt
 			| DropPLangStmt
 			| DropAssertStmt
 			| DropTrigStmt
@@ -2267,6 +2269,93 @@ def_arg:	func_return						{ $$ = (Node *)$1; }
 
 /*****************************************************************************
  *
+ *		QUERIES :
+ *				CREATE OPERATOR CLASS ...
+ *				DROP OPERATOR CLASS ...
+ *
+ *****************************************************************************/
+
+CreateOpClassStmt:
+			CREATE OPERATOR CLASS any_name opt_default FOR TYPE_P Typename
+			USING access_method AS opclass_item_list
+				{
+					CreateOpClassStmt *n = makeNode(CreateOpClassStmt);
+					n->opclassname = $4;
+					n->isDefault = $5;
+					n->datatype = $8;
+					n->amname = $10;
+					n->items = $12;
+					$$ = (Node *) n;
+				}
+		;
+
+opclass_item_list:
+			opclass_item							{ $$ = makeList1($1); }
+			| opclass_item_list ',' opclass_item	{ $$ = lappend($1, $3); }
+		;
+
+opclass_item:
+			OPERATOR Iconst any_operator opt_recheck
+				{
+					CreateOpClassItem *n = makeNode(CreateOpClassItem);
+					n->itemtype = OPCLASS_ITEM_OPERATOR;
+					n->name = $3;
+					n->args = NIL;
+					n->number = $2;
+					n->recheck = $4;
+					$$ = (Node *) n;
+				}
+			| OPERATOR Iconst any_operator '(' oper_argtypes ')' opt_recheck
+				{
+					CreateOpClassItem *n = makeNode(CreateOpClassItem);
+					n->itemtype = OPCLASS_ITEM_OPERATOR;
+					n->name = $3;
+					n->args = $5;
+					n->number = $2;
+					n->recheck = $7;
+					$$ = (Node *) n;
+				}
+			| FUNCTION Iconst func_name func_args
+				{
+					CreateOpClassItem *n = makeNode(CreateOpClassItem);
+					n->itemtype = OPCLASS_ITEM_FUNCTION;
+					n->name = $3;
+					n->args = $4;
+					n->number = $2;
+					$$ = (Node *) n;
+				}
+			| STORAGE Typename
+				{
+					CreateOpClassItem *n = makeNode(CreateOpClassItem);
+					n->itemtype = OPCLASS_ITEM_STORAGETYPE;
+					n->storedtype = $2;
+					$$ = (Node *) n;
+				}
+		;
+
+opt_default:	DEFAULT	{ $$ = TRUE; }
+			| /*EMPTY*/	{ $$ = FALSE; }
+		;
+
+opt_recheck:	RECHECK	{ $$ = TRUE; }
+			| /*EMPTY*/	{ $$ = FALSE; }
+		;
+
+
+DropOpClassStmt:
+			DROP OPERATOR CLASS any_name USING access_method opt_drop_behavior
+				{
+					RemoveOpClassStmt *n = makeNode(RemoveOpClassStmt);
+					n->opclassname = $4;
+					n->amname = $6;
+					n->behavior = $7;
+					$$ = (Node *) n;
+				}
+		;
+
+
+/*****************************************************************************
+ *
  *		QUERY:
  *
  *		DROP itemtype itemname [, itemname ...] [ RESTRICT | CASCADE ]
@@ -3653,10 +3742,6 @@ CreateConversionStmt:
 			  n->def = $2;
 			  $$ = (Node *)n;
 			}
-		;
-
-opt_default:	DEFAULT	{ $$ = TRUE; }
-			| /*EMPTY*/	{ $$ = FALSE; }
 		;
 
 /*****************************************************************************
@@ -6624,6 +6709,7 @@ unreserved_keyword:
 			| CHAIN
 			| CHARACTERISTICS
 			| CHECKPOINT
+			| CLASS
 			| CLOSE
 			| CLUSTER
 			| COMMENT
@@ -6715,6 +6801,7 @@ unreserved_keyword:
 			| PROCEDURAL
 			| PROCEDURE
 			| READ
+			| RECHECK
 			| REINDEX
 			| RELATIVE
 			| RENAME

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.6 2002/07/25 10:07:10 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.7 2002/07/29 22:14:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,15 +21,16 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
-#include "catalog/pg_namespace.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
-#include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
@@ -40,6 +41,7 @@
 #include "optimizer/clauses.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
+#include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -48,15 +50,16 @@
 /* This enum covers all system catalogs whose OIDs can appear in classid. */
 typedef enum ObjectClasses
 {
-	OCLASS_CAST,				/* pg_cast */
 	OCLASS_CLASS,				/* pg_class */
 	OCLASS_PROC,				/* pg_proc */
 	OCLASS_TYPE,				/* pg_type */
+	OCLASS_CAST,				/* pg_cast */
 	OCLASS_CONSTRAINT,			/* pg_constraint */
 	OCLASS_CONVERSION,			/* pg_conversion */
 	OCLASS_DEFAULT,				/* pg_attrdef */
 	OCLASS_LANGUAGE,			/* pg_language */
 	OCLASS_OPERATOR,			/* pg_operator */
+	OCLASS_OPCLASS,				/* pg_opclass */
 	OCLASS_REWRITE,				/* pg_rewrite */
 	OCLASS_TRIGGER,				/* pg_trigger */
 	OCLASS_SCHEMA,				/* pg_namespace */
@@ -579,6 +582,10 @@ doDeletion(const ObjectAddress *object)
 			RemoveTypeById(object->objectId);
 			break;
 
+		case OCLASS_CAST:
+			DropCastById(object->objectId);
+			break;
+
 		case OCLASS_CONSTRAINT:
 			RemoveConstraintById(object->objectId);
 			break;
@@ -599,6 +606,10 @@ doDeletion(const ObjectAddress *object)
 			RemoveOperatorById(object->objectId);
 			break;
 
+		case OCLASS_OPCLASS:
+			RemoveOpClassById(object->objectId);
+			break;
+
 		case OCLASS_REWRITE:
 			RemoveRewriteRuleById(object->objectId);
 			break;
@@ -609,10 +620,6 @@ doDeletion(const ObjectAddress *object)
 
 		case OCLASS_SCHEMA:
 			RemoveSchemaById(object->objectId);
-			break;
-
-		case OCLASS_CAST:
-			DropCastById(object->objectId);
 			break;
 
 		default:
@@ -990,15 +997,16 @@ term_object_addresses(ObjectAddresses *addrs)
 static void
 init_object_classes(void)
 {
-	object_classes[OCLASS_CAST] = get_system_catalog_relid(CastRelationName);
 	object_classes[OCLASS_CLASS] = RelOid_pg_class;
 	object_classes[OCLASS_PROC] = RelOid_pg_proc;
 	object_classes[OCLASS_TYPE] = RelOid_pg_type;
+	object_classes[OCLASS_CAST] = get_system_catalog_relid(CastRelationName);
 	object_classes[OCLASS_CONSTRAINT] = get_system_catalog_relid(ConstraintRelationName);
 	object_classes[OCLASS_CONVERSION] = get_system_catalog_relid(ConversionRelationName);
 	object_classes[OCLASS_DEFAULT] = get_system_catalog_relid(AttrDefaultRelationName);
 	object_classes[OCLASS_LANGUAGE] = get_system_catalog_relid(LanguageRelationName);
 	object_classes[OCLASS_OPERATOR] = get_system_catalog_relid(OperatorRelationName);
+	object_classes[OCLASS_OPCLASS] = get_system_catalog_relid(OperatorClassRelationName);
 	object_classes[OCLASS_REWRITE] = get_system_catalog_relid(RewriteRelationName);
 	object_classes[OCLASS_TRIGGER] = get_system_catalog_relid(TriggerRelationName);
 	object_classes[OCLASS_SCHEMA] = get_system_catalog_relid(NamespaceRelationName);
@@ -1066,6 +1074,11 @@ getObjectClass(const ObjectAddress *object)
 		Assert(object->objectSubId == 0);
 		return OCLASS_OPERATOR;
 	}
+	if (object->classId == object_classes[OCLASS_OPCLASS])
+	{
+		Assert(object->objectSubId == 0);
+		return OCLASS_OPCLASS;
+	}
 	if (object->classId == object_classes[OCLASS_REWRITE])
 	{
 		Assert(object->objectSubId == 0);
@@ -1101,10 +1114,6 @@ getObjectDescription(const ObjectAddress *object)
 
 	switch (getObjectClass(object))
 	{
-		case OCLASS_CAST:
-			appendStringInfo(&buffer, "cast");
-			break;
-
 		case OCLASS_CLASS:
 			getRelationDescription(&buffer, object->objectId);
 			if (object->objectSubId != 0)
@@ -1114,24 +1123,46 @@ getObjectDescription(const ObjectAddress *object)
 			break;
 
 		case OCLASS_PROC:
-			/* XXX could improve on this */
 			appendStringInfo(&buffer, "function %s",
-							 get_func_name(object->objectId));
+							 format_procedure(object->objectId));
 			break;
 
 		case OCLASS_TYPE:
-		{
-			HeapTuple		typeTup;
-
-			typeTup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(object->objectId),
-									 0, 0, 0);
-			if (!HeapTupleIsValid(typeTup))
-				elog(ERROR, "getObjectDescription: Type %u does not exist",
-					 object->objectId);
 			appendStringInfo(&buffer, "type %s",
-							 NameStr(((Form_pg_type) GETSTRUCT(typeTup))->typname));
-			ReleaseSysCache(typeTup);
+							 format_type_be(object->objectId));
+			break;
+
+		case OCLASS_CAST:
+		{
+			Relation		castDesc;
+			ScanKeyData		skey[1];
+			SysScanDesc		rcscan;
+			HeapTuple		tup;
+			Form_pg_cast	castForm;
+
+			castDesc = heap_openr(CastRelationName, AccessShareLock);
+
+			ScanKeyEntryInitialize(&skey[0], 0x0,
+								   ObjectIdAttributeNumber, F_OIDEQ,
+								   ObjectIdGetDatum(object->objectId));
+
+			rcscan = systable_beginscan(castDesc, CastOidIndex, true,
+										SnapshotNow, 1, skey);
+
+			tup = systable_getnext(rcscan);
+
+			if (!HeapTupleIsValid(tup))
+				elog(ERROR, "getObjectDescription: Cast %u does not exist",
+					 object->objectId);
+
+			castForm = (Form_pg_cast) GETSTRUCT(tup);
+
+			appendStringInfo(&buffer, "cast from %s to %s",
+							 format_type_be(castForm->castsource),
+							 format_type_be(castForm->casttarget));
+
+			systable_endscan(rcscan);
+			heap_close(castDesc, AccessShareLock);
 			break;
 		}
 
@@ -1248,10 +1279,51 @@ getObjectDescription(const ObjectAddress *object)
 		}
 
 		case OCLASS_OPERATOR:
-			/* XXX could improve on this */
 			appendStringInfo(&buffer, "operator %s",
-							 get_opname(object->objectId));
+							 format_operator(object->objectId));
 			break;
+
+		case OCLASS_OPCLASS:
+		{
+			HeapTuple	opcTup;
+			Form_pg_opclass	opcForm;
+			HeapTuple	amTup;
+			Form_pg_am	amForm;
+			char	   *nspname;
+
+			opcTup = SearchSysCache(CLAOID,
+									ObjectIdGetDatum(object->objectId),
+									0, 0, 0);
+			if (!HeapTupleIsValid(opcTup))
+				elog(ERROR, "cache lookup of opclass %u failed",
+					 object->objectId);
+			opcForm = (Form_pg_opclass) GETSTRUCT(opcTup);
+
+			/* Qualify the name if not visible in search path */
+			if (OpclassIsVisible(object->objectId))
+				nspname = NULL;
+			else
+				nspname = get_namespace_name(opcForm->opcnamespace);
+
+			appendStringInfo(&buffer, "operator class %s",
+							 quote_qualified_identifier(nspname,
+														NameStr(opcForm->opcname)));
+
+			amTup = SearchSysCache(AMOID,
+								   ObjectIdGetDatum(opcForm->opcamid),
+								   0, 0, 0);
+			if (!HeapTupleIsValid(amTup))
+				elog(ERROR, "syscache lookup for AM %u failed",
+					 opcForm->opcamid);
+			amForm = (Form_pg_am) GETSTRUCT(amTup);
+
+			appendStringInfo(&buffer, " for %s",
+							 NameStr(amForm->amname));
+
+			ReleaseSysCache(amTup);
+			ReleaseSysCache(opcTup);
+			break;
+		}
 
 		case OCLASS_REWRITE:
 		{
@@ -1323,17 +1395,13 @@ getObjectDescription(const ObjectAddress *object)
 
 		case OCLASS_SCHEMA:
 		{
-			HeapTuple		schemaTup;
+			char	   *nspname;
 
-			schemaTup = SearchSysCache(NAMESPACEOID,
-									   ObjectIdGetDatum(object->objectId),
-									   0, 0, 0);
-			if (!HeapTupleIsValid(schemaTup))
+			nspname = get_namespace_name(object->objectId);
+			if (!nspname)
 				elog(ERROR, "getObjectDescription: Schema %u does not exist",
 					 object->objectId);
-			appendStringInfo(&buffer, "schema %s",
-							 NameStr(((Form_pg_namespace) GETSTRUCT(schemaTup))->nspname));
-			ReleaseSysCache(schemaTup);
+			appendStringInfo(&buffer, "schema %s", nspname);
 			break;
 		}
 
@@ -1356,49 +1424,58 @@ getRelationDescription(StringInfo buffer, Oid relid)
 {
 	HeapTuple	relTup;
 	Form_pg_class	relForm;
+	char	   *nspname;
+	char	   *relname;
 
 	relTup = SearchSysCache(RELOID,
 							ObjectIdGetDatum(relid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(relTup))
-		elog(ERROR, "getObjectDescription: Relation %u does not exist",
-			 relid);
+		elog(ERROR, "cache lookup of relation %u failed", relid);
 	relForm = (Form_pg_class) GETSTRUCT(relTup);
+
+	/* Qualify the name if not visible in search path */
+	if (RelationIsVisible(relid))
+		nspname = NULL;
+	else
+		nspname = get_namespace_name(relForm->relnamespace);
+
+	relname = quote_qualified_identifier(nspname, NameStr(relForm->relname));
 
 	switch (relForm->relkind)
 	{
 		case RELKIND_RELATION:
 			appendStringInfo(buffer, "table %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 		case RELKIND_INDEX:
 			appendStringInfo(buffer, "index %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 		case RELKIND_SPECIAL:
 			appendStringInfo(buffer, "special system relation %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 		case RELKIND_SEQUENCE:
 			appendStringInfo(buffer, "sequence %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 		case RELKIND_UNCATALOGED:
 			appendStringInfo(buffer, "uncataloged table %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 		case RELKIND_TOASTVALUE:
 			appendStringInfo(buffer, "toast table %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 		case RELKIND_VIEW:
 			appendStringInfo(buffer, "view %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 		default:
 			/* shouldn't get here */
 			appendStringInfo(buffer, "relation %s",
-							 NameStr(relForm->relname));
+							 relname);
 			break;
 	}
 

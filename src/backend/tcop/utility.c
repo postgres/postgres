@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.165 2002/07/25 10:07:11 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.166 2002/07/29 22:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -834,6 +834,14 @@ ProcessUtility(Node *parsetree,
 
 		case T_DropCastStmt:
 			DropCast((DropCastStmt *) parsetree);
+			break;
+
+		case T_CreateOpClassStmt:
+			DefineOpClass((CreateOpClassStmt *) parsetree);
+			break;
+
+		case T_RemoveOpClassStmt:
+			RemoveOpClass((RemoveOpClassStmt *) parsetree);
 			break;
 
 		default:

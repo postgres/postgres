@@ -2,6 +2,10 @@
 -- 
 BEGIN TRANSACTION;
 
+-- Adjust this setting to control where the operators, functions, and
+-- opclasses get created.
+SET search_path = public;
+
 -- Query type
 CREATE FUNCTION bqarr_in(opaque)
 RETURNS opaque
@@ -143,137 +147,22 @@ CREATE FUNCTION g_int_same(_int4, _int4, opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 
--- register the default opclass for indexing
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'gist'),
-        'gist__int_ops',
-        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = '_int4'),
-        true,
-        0);
+-- Create the operator class for indexing
 
-
--- get the comparators for _intments and store them in a tmp table
-SELECT o.oid AS opoid, o.oprname
-INTO TEMP TABLE _int_ops_tmp
-FROM pg_operator o, pg_type t, pg_type tq
-WHERE o.oprleft = t.oid and ( o.oprright = t.oid or o.oprright=tq.oid )
-   and t.typname = '_int4'
-   and tq.typname='query_int';
-
--- make sure we have the right operators
--- SELECT * from _int_ops_tmp;
-
--- using the tmp table, generate the amop entries 
-
--- _int_overlap
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 3, false, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops' 
-      and c.oprname = '&&';
-
--- _int_same
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 6, true, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops' 
-      and c.oprname = '=';
-
--- _int_contains
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 7, false, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops' 
-      and c.oprname = '@';
-
--- _int_contained
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 8, false, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops' 
-      and c.oprname = '~';
-
---boolean search
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 20, false, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops' 
-      and c.oprname = '@@';
-
-DROP TABLE _int_ops_tmp;
-
-
--- add the entries to amproc for the support methods
--- note the amprocnum numbers associated with each are specific!
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 1, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops'
-      and proname = 'g_int_consistent';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 2, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops'
-      and proname = 'g_int_union';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 3, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops'
-      and proname = 'g_int_compress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 4, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops'
-      and proname = 'g_int_decompress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 5, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops'
-      and proname = 'g_int_penalty';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 6, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops'
-      and proname = 'g_int_picksplit';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 7, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__int_ops'
-      and proname = 'g_int_same';
+CREATE OPERATOR CLASS gist__int_ops
+    DEFAULT FOR TYPE _int4 USING gist AS
+	OPERATOR	3	&&,
+	OPERATOR	6	=	RECHECK,
+	OPERATOR	7	@,
+	OPERATOR	8	~,
+	OPERATOR	20	@@ (_int4, query_int),
+	FUNCTION	1	g_int_consistent (opaque, _int4, int4),
+	FUNCTION	2	g_int_union (bytea, opaque),
+	FUNCTION	3	g_int_compress (opaque),
+	FUNCTION	4	g_int_decompress (opaque),
+	FUNCTION	5	g_int_penalty (opaque, opaque, opaque),
+	FUNCTION	6	g_int_picksplit (opaque, opaque),
+	FUNCTION	7	g_int_same (_int4, _int4, opaque);
 
 
 ---------------------------------------------
@@ -302,136 +191,20 @@ CREATE FUNCTION g_intbig_same(_int4, _int4, opaque) RETURNS opaque
 	AS 'MODULE_PATHNAME' LANGUAGE 'c';
 
 -- register the opclass for indexing (not as default)
-INSERT INTO pg_opclass (opcamid, opcname, opcnamespace, opcowner, opcintype, opcdefault, opckeytype)
-    VALUES (
-        (SELECT oid FROM pg_am WHERE amname = 'gist'),
-        'gist__intbig_ops',
-        (SELECT oid FROM pg_namespace WHERE nspname = 'pg_catalog'),
-        1,	-- UID of superuser is hardwired to 1 as of PG 7.3
-        (SELECT oid FROM pg_type WHERE typname = '_int4'),
-        false,
-        0);
 
-
--- get the comparators for _intments and store them in a tmp table
-SELECT o.oid AS opoid, o.oprname
-INTO TEMP TABLE _int_ops_tmp
-FROM pg_operator o, pg_type t, pg_type tq
-WHERE o.oprleft = t.oid and ( o.oprright = t.oid or o.oprright=tq.oid )
-   and t.typname = '_int4'
-   and tq.typname='query_int';
-
--- make sure we have the right operators
--- SELECT * from _int_ops_tmp;
-
--- using the tmp table, generate the amop entries 
--- note: these operators are all lossy
-
--- _int_overlap
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 3, true, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops' 
-      and c.oprname = '&&';
-
--- _int_contains
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 7, true, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops' 
-      and c.oprname = '@';
-
--- _int_contained
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 8, true, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops' 
-      and c.oprname = '~';
-
--- _int_same
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 6, true, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops' 
-      and c.oprname = '=';
-
---boolean search
-INSERT INTO pg_amop (amopclaid, amopstrategy, amopreqcheck, amopopr)
-   SELECT opcl.oid, 20, true, c.opoid
-   FROM pg_opclass opcl, _int_ops_tmp c
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops' 
-      and c.oprname = '@@';
-
-DROP TABLE _int_ops_tmp;
-
-
--- add the entries to amproc for the support methods
--- note the amprocnum numbers associated with each are specific!
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 1, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops'
-      and proname = 'g_intbig_consistent';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 2, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops'
-      and proname = 'g_intbig_union';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 3, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops'
-      and proname = 'g_intbig_compress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 4, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops'
-      and proname = 'g_intbig_decompress';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 5, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops'
-      and proname = 'g_intbig_penalty';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 6, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops'
-      and proname = 'g_intbig_picksplit';
-
-INSERT INTO pg_amproc (amopclaid, amprocnum, amproc)
-   SELECT opcl.oid, 7, pro.oid
-   FROM pg_opclass opcl, pg_proc pro
-   WHERE
-      opcamid = (SELECT oid FROM pg_am WHERE amname = 'gist')
-      and opcname = 'gist__intbig_ops'
-      and proname = 'g_intbig_same';
+CREATE OPERATOR CLASS gist__intbig_ops
+    FOR TYPE _int4 USING gist AS
+	OPERATOR	3	&&	RECHECK,
+	OPERATOR	6	=	RECHECK,
+	OPERATOR	7	@	RECHECK,
+	OPERATOR	8	~	RECHECK,
+	OPERATOR	20	@@ (_int4, query_int)	RECHECK,
+	FUNCTION	1	g_intbig_consistent (opaque, _int4, int4),
+	FUNCTION	2	g_intbig_union (bytea, opaque),
+	FUNCTION	3	g_intbig_compress (opaque),
+	FUNCTION	4	g_intbig_decompress (opaque),
+	FUNCTION	5	g_intbig_penalty (opaque, opaque, opaque),
+	FUNCTION	6	g_intbig_picksplit (opaque, opaque),
+	FUNCTION	7	g_intbig_same (_int4, _int4, opaque);
 
 END TRANSACTION;

@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.31 2002/07/22 08:57:15 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.32 2002/07/29 22:14:10 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -70,6 +70,7 @@ PostgreSQL Reference Manual
    &createIndex;
    &createLanguage;
    &createOperator;
+   &createOperatorClass;
    &createRule;
    &createSchema;
    &createSequence;
@@ -91,6 +92,7 @@ PostgreSQL Reference Manual
    &dropIndex;
    &dropLanguage;
    &dropOperator;
+   &dropOperatorClass;
    &dropRule;
    &dropSchema;
    &dropSequence;

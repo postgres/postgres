@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.144 2002/07/24 19:11:10 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.145 2002/07/29 22:14:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -976,6 +976,18 @@ _equalRemoveOperStmt(RemoveOperStmt *a, RemoveOperStmt *b)
 	return true;
 }
 
+static bool
+_equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
+{
+	if (!equal(a->opclassname, b->opclassname))
+		return false;
+	if (!equalstr(a->amname, b->amname))
+		return false;
+	if (a->behavior != b->behavior)
+		return false;
+
+	return true;
+}
 
 static bool
 _equalRenameStmt(RenameStmt *a, RenameStmt *b)
@@ -1077,6 +1089,42 @@ _equalCreateDomainStmt(CreateDomainStmt *a, CreateDomainStmt *b)
 	if (!equal(a->typename, b->typename))
 		return false;
 	if (!equal(a->constraints, b->constraints))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCreateOpClassStmt(CreateOpClassStmt *a, CreateOpClassStmt *b)
+{
+	if (!equal(a->opclassname, b->opclassname))
+		return false;
+	if (!equalstr(a->amname, b->amname))
+		return false;
+	if (!equal(a->datatype, b->datatype))
+		return false;
+	if (!equal(a->items, b->items))
+		return false;
+	if (a->isDefault != b->isDefault)
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCreateOpClassItem(CreateOpClassItem *a, CreateOpClassItem *b)
+{
+	if (a->itemtype != b->itemtype)
+		return false;
+	if (!equal(a->name, b->name))
+		return false;
+	if (!equal(a->args, b->args))
+		return false;
+	if (a->number != b->number)
+		return false;
+	if (a->recheck != b->recheck)
+		return false;
+	if (!equal(a->storedtype, b->storedtype))
 		return false;
 
 	return true;
@@ -2036,6 +2084,9 @@ equal(void *a, void *b)
 		case T_RemoveOperStmt:
 			retval = _equalRemoveOperStmt(a, b);
 			break;
+		case T_RemoveOpClassStmt:
+			retval = _equalRemoveOpClassStmt(a, b);
+			break;
 		case T_RenameStmt:
 			retval = _equalRenameStmt(a, b);
 			break;
@@ -2062,6 +2113,12 @@ equal(void *a, void *b)
 			break;
 		case T_CreateDomainStmt:
 			retval = _equalCreateDomainStmt(a, b);
+			break;
+		case T_CreateOpClassStmt:
+			retval = _equalCreateOpClassStmt(a, b);
+			break;
+		case T_CreateOpClassItem:
+			retval = _equalCreateOpClassItem(a, b);
 			break;
 		case T_CreatedbStmt:
 			retval = _equalCreatedbStmt(a, b);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.122 2002/07/18 23:11:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.123 2002/07/29 22:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"characteristics", CHARACTERISTICS},
 	{"check", CHECK},
 	{"checkpoint", CHECKPOINT},
+	{"class", CLASS},
 	{"close", CLOSE},
 	{"cluster", CLUSTER},
 	{"coalesce", COALESCE},
@@ -232,6 +233,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"procedure", PROCEDURE},
 	{"read", READ},
 	{"real", REAL},
+	{"recheck", RECHECK},
 	{"references", REFERENCES},
 	{"reindex", REINDEX},
 	{"relative", RELATIVE},

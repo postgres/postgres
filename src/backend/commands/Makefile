@@ -4,7 +4,7 @@
 #    Makefile for backend/commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.29 2002/07/11 07:39:27 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.30 2002/07/29 22:14:10 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,8 @@ include $(top_builddir)/src/Makefile.global
 OBJS = aggregatecmds.o analyze.o async.o cluster.o comment.o  \
 	conversioncmds.o copy.o \
 	dbcommands.o define.o explain.o functioncmds.o \
-	indexcmds.o lockcmds.o operatorcmds.o portalcmds.o proclang.o \
+	indexcmds.o lockcmds.o operatorcmds.o opclasscmds.o \
+	portalcmds.o proclang.o \
 	schemacmds.o sequence.o tablecmds.o trigger.o typecmds.o user.o \
 	vacuum.o vacuumlazy.o variable.o view.o
 

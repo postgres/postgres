@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.71 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.72 2002/07/29 22:14:10 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -26,6 +26,7 @@
 #include "catalog/pg_group.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_namespace.h"
+#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
@@ -1364,6 +1365,33 @@ pg_namespace_ownercheck(Oid nsp_oid, Oid userid)
 			 nsp_oid);
 
 	owner_id = ((Form_pg_namespace) GETSTRUCT(tuple))->nspowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
+}
+
+/*
+ * Ownership check for an operator class (specified by OID).
+ */
+bool
+pg_opclass_ownercheck(Oid opc_oid, Oid userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(CLAOID,
+						   ObjectIdGetDatum(opc_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_opclass_ownercheck: operator class %u not found",
+			 opc_oid);
+
+	owner_id = ((Form_pg_opclass) GETSTRUCT(tuple))->opcowner;
 
 	ReleaseSysCache(tuple);
 

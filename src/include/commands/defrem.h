@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.42 2002/07/18 23:11:32 petere Exp $
+ * $Id: defrem.h,v 1.43 2002/07/29 22:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,10 @@ extern void RemoveType(List *names, DropBehavior behavior);
 extern void RemoveTypeById(Oid typeOid);
 extern void DefineDomain(CreateDomainStmt *stmt);
 extern void RemoveDomain(List *names, DropBehavior behavior);
+
+extern void DefineOpClass(CreateOpClassStmt *stmt);
+extern void RemoveOpClass(RemoveOpClassStmt *stmt);
+extern void RemoveOpClassById(Oid opclassOid);
 
 
 /* support routines in commands/define.c */

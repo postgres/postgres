@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.143 2002/07/20 15:12:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.144 2002/07/29 22:14:10 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+CREATE OPERATOR CLASS/DROP OPERATOR CLASS
 CREATE CAST/DROP CAST
 Sequences created by SERIAL column definitions now auto-drop with the column
 Most forms of DROP now support RESTRICT and CASCADE options

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.162 2002/07/24 19:11:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.163 2002/07/29 22:14:11 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -708,14 +708,15 @@ $ECHO_N "initializing pg_depend... "$ECHO_C
 -- First delete any already-made entries; PINs override all else, and must
 -- be the only entries for their objects.
 DELETE FROM pg_depend;
-INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_cast;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_class;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_proc;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_type;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_cast;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_constraint;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_attrdef;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_language;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_operator;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_opclass;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_rewrite;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_trigger;
 -- restriction here to avoid pinning the public namespace

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.186 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.187 2002/07/29 22:14:10 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -712,7 +712,7 @@ index_create(Oid heapRelationId,
 										   false, /* isDeferred */
 										   heapRelationId,
 										   indexInfo->ii_KeyAttrNumbers,
-										   indexInfo->ii_NumIndexAttrs,
+										   indexInfo->ii_NumKeyAttrs,
 										   InvalidOid, /* no domain */
 										   InvalidOid, /* no foreign key */
 										   NULL,
@@ -732,7 +732,7 @@ index_create(Oid heapRelationId,
 		}
 		else
 		{
-			for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+			for (i = 0; i < indexInfo->ii_NumKeyAttrs; i++)
 			{
 				referenced.classId = RelOid_pg_class;
 				referenced.objectId = heapRelationId;
@@ -740,6 +740,16 @@ index_create(Oid heapRelationId,
 
 				recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
 			}
+		}
+
+		/* Store dependency on operator classes */
+		referenced.classId = get_system_catalog_relid(OperatorClassRelationName);
+		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		{
+			referenced.objectId = classObjectId[i];
+			referenced.objectSubId = 0;
+
+			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 		}
 
 		/* Store the dependency on the function (if appropriate) */

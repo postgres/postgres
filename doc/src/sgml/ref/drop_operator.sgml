@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.17 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.18 2002/07/29 22:14:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -171,10 +171,6 @@ ERROR: RemoveOperator: right unary operator '<replaceable class="PARAMETER">oper
     Refer to
     <xref linkend="sql-createoperator" endterm="sql-createoperator-title">
     for information on how to create operators.
-   </para>
-   <para>
-    It is the user's responsibility to remove any access method
-    operator classes that rely on the deleted operator.
    </para>
   </refsect2>
  </refsect1>

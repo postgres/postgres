@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.194 2002/07/24 19:11:14 petere Exp $
+ * $Id: parsenodes.h,v 1.195 2002/07/29 22:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,6 +1116,37 @@ typedef struct CreateDomainStmt
 } CreateDomainStmt;
 
 /* ----------------------
+ *		Create Operator Class Statement
+ * ----------------------
+ */
+typedef struct CreateOpClassStmt
+{
+	NodeTag		type;
+	List	   *opclassname;	/* qualified name (list of Value strings) */
+	char	   *amname;			/* name of index AM opclass is for */
+	TypeName   *datatype;		/* datatype of indexed column */
+	List	   *items;			/* List of CreateOpClassItem nodes */
+	bool		isDefault;		/* Should be marked as default for type? */
+} CreateOpClassStmt;
+
+#define OPCLASS_ITEM_OPERATOR		1
+#define OPCLASS_ITEM_FUNCTION		2
+#define OPCLASS_ITEM_STORAGETYPE	3
+
+typedef struct CreateOpClassItem
+{
+	NodeTag		type;
+	int			itemtype;		/* see codes above */
+	/* fields used for an operator or function item: */
+	List	   *name;			/* operator or function name */
+	List	   *args;			/* argument types */
+	int			number;			/* strategy num or support proc num */
+	bool		recheck;		/* only used for operators */
+	/* fields used for a storagetype item: */
+	TypeName   *storedtype;		/* datatype stored in index */
+} CreateOpClassItem;
+
+/* ----------------------
  *		Drop Table|Sequence|View|Index|Type|Domain|Conversion|Schema Statement
  * ----------------------
  */
@@ -1287,6 +1318,18 @@ typedef struct RemoveOperStmt
 	List	   *args;			/* types of the arguments */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
 } RemoveOperStmt;
+
+/* ----------------------
+ *		Drop Operator Class Statement
+ * ----------------------
+ */
+typedef struct RemoveOpClassStmt
+{
+	NodeTag		type;
+	List	   *opclassname;	/* qualified name (list of Value strings) */
+	char	   *amname;			/* name of index AM opclass is for */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+} RemoveOpClassStmt;
 
 /* ----------------------
  *		Alter Object Rename Statement

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.71 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.72 2002/07/29 22:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,23 +280,19 @@ regprocedurein(PG_FUNCTION_ARGS)
 }
 
 /*
- * regprocedureout		- converts proc OID to "pro_name(args)"
+ * format_procedure		- converts proc OID to "pro_name(args)"
+ *
+ * This exports the useful functionality of regprocedureout for use
+ * in other backend modules.  The result is a palloc'd string.
  */
-Datum
-regprocedureout(PG_FUNCTION_ARGS)
+char *
+format_procedure(Oid procedure_oid)
 {
-	RegProcedure proid = PG_GETARG_OID(0);
 	char	   *result;
 	HeapTuple	proctup;
 
-	if (proid == InvalidOid)
-	{
-		result = pstrdup("-");
-		PG_RETURN_CSTRING(result);
-	}
-
 	proctup = SearchSysCache(PROCOID,
-							 ObjectIdGetDatum(proid),
+							 ObjectIdGetDatum(procedure_oid),
 							 0, 0, 0);
 
 	if (HeapTupleIsValid(proctup))
@@ -316,7 +312,7 @@ regprocedureout(PG_FUNCTION_ARGS)
 		 * Would this proc be found (given the right args) by regprocedurein?
 		 * If not, we need to qualify it.
 		 */
-		if (FunctionIsVisible(proid))
+		if (FunctionIsVisible(procedure_oid))
 			nspname = NULL;
 		else
 			nspname = get_namespace_name(procform->pronamespace);
@@ -344,8 +340,25 @@ regprocedureout(PG_FUNCTION_ARGS)
 	{
 		/* If OID doesn't match any pg_proc entry, return it numerically */
 		result = (char *) palloc(NAMEDATALEN);
-		snprintf(result, NAMEDATALEN, "%u", proid);
+		snprintf(result, NAMEDATALEN, "%u", procedure_oid);
 	}
+
+	return result;
+}
+
+/*
+ * regprocedureout		- converts proc OID to "pro_name(args)"
+ */
+Datum
+regprocedureout(PG_FUNCTION_ARGS)
+{
+	RegProcedure proid = PG_GETARG_OID(0);
+	char	   *result;
+
+	if (proid == InvalidOid)
+		result = pstrdup("-");
+	else
+		result = format_procedure(proid);
 
 	PG_RETURN_CSTRING(result);
 }
@@ -602,23 +615,19 @@ regoperatorin(PG_FUNCTION_ARGS)
 }
 
 /*
- * regoperatorout		- converts operator OID to "opr_name(args)"
+ * format_operator		- converts operator OID to "opr_name(args)"
+ *
+ * This exports the useful functionality of regoperatorout for use
+ * in other backend modules.  The result is a palloc'd string.
  */
-Datum
-regoperatorout(PG_FUNCTION_ARGS)
+char *
+format_operator(Oid operator_oid)
 {
-	Oid			oprid = PG_GETARG_OID(0);
 	char	   *result;
 	HeapTuple	opertup;
 
-	if (oprid == InvalidOid)
-	{
-		result = pstrdup("0");
-		PG_RETURN_CSTRING(result);
-	}
-
 	opertup = SearchSysCache(OPEROID,
-							 ObjectIdGetDatum(oprid),
+							 ObjectIdGetDatum(operator_oid),
 							 0, 0, 0);
 
 	if (HeapTupleIsValid(opertup))
@@ -636,7 +645,7 @@ regoperatorout(PG_FUNCTION_ARGS)
 		 * Would this oper be found (given the right args) by regoperatorin?
 		 * If not, we need to qualify it.
 		 */
-		if (!OperatorIsVisible(oprid))
+		if (!OperatorIsVisible(operator_oid))
 		{
 			nspname = get_namespace_name(operform->oprnamespace);
 			appendStringInfo(&buf, "%s.",
@@ -665,8 +674,25 @@ regoperatorout(PG_FUNCTION_ARGS)
 	{
 		/* If OID doesn't match any pg_operator entry, return it numerically */
 		result = (char *) palloc(NAMEDATALEN);
-		snprintf(result, NAMEDATALEN, "%u", oprid);
+		snprintf(result, NAMEDATALEN, "%u", operator_oid);
 	}
+
+	return result;
+}
+
+/*
+ * regoperatorout		- converts operator OID to "opr_name(args)"
+ */
+Datum
+regoperatorout(PG_FUNCTION_ARGS)
+{
+	Oid			oprid = PG_GETARG_OID(0);
+	char	   *result;
+
+	if (oprid == InvalidOid)
+		result = pstrdup("0");
+	else
+		result = format_operator(oprid);
 
 	PG_RETURN_CSTRING(result);
 }
