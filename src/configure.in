@@ -18,11 +18,16 @@ nextstep*) PORTNAME='nextstep';;
     irix*) PORTNAME='irix5';;
     hpux*) PORTNAME='hpux';;
      osf*) PORTNAME='alpha';;
+ sysv4.2*) 
+       case "$host_vendor" in
+               univel) PORTNAME='univel';;
+                    *) PORTNAME='unknown';;
+       esac ;;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
    echo "therefore you must do a manual configuration of:"
-   echo ""
+   echo "$host_os"
    echo "Please contact scrappy@hub.org to see about rectifying this, "
    echo "including the above 'checking host system type...' line "
    echo "*************************************************************"
@@ -123,6 +128,7 @@ AC_CHECK_LIB(ld,       main)
 AC_CHECK_LIB(compat,   main)
 AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(crypt,      main)
+AC_CHECK_LIB(gen,      main)
 
 dnl Checks for header files.
 AC_HEADER_STDC

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.12 1997/03/06 22:58:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.13 1997/03/25 07:16:30 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -59,6 +59,7 @@
 #   sunos4         SUN SPARC on SunOS 4.1.3
 #   svr4           Intel x86 on Intel SVR4
 #   ultrix4        DEC MIPS on Ultrix 4.4
+#   univel         Unixware 2.0x x86
 #
 # PostgresSQL has known problems/bugs on the following platforms:
 #
@@ -597,6 +598,45 @@ DLSUFFIX= .o
 
 endif
 
+
+#-----------------------------------------------------------------------------
+
+#
+#	The univel port is almost guaranteed NOT to work yet.
+#
+ifeq ($(PORTNAME), univel)
+#CFLAGS+= -DHAVE_RUSAGE -DTRACEDEBUG -DASYNC_DEBUG
+CFLAGS+= -DHAVE_RUSAGE -m486 -Dsvr4
+CFLAGS_SL= -fPIC
+
+YACC= bison -y
+
+#
+#	Some of the Makefiles use LDADD, others use LD_ADD.
+#	This makes them the same.
+#
+LDADD= $(LD_ADD)
+
+# MAKE_EXPORTS is required for svr4 loaders that want a file of
+# symbol names to tell them what to export/import.
+#MAKE_EXPORTS= true
+
+#
+# Random things that must be passed everywhere to enable
+# everything to compile.  :-/
+#
+# The extra -I flag is to scoop up extra BSD-emulating headers.
+CFLAGS_BE+= -I$(SRCDIR)/backend/port/univel
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<
+
+DASH_N= ''
+BACKSLASH_C= '\\\\c'
+
+INSTALL= /usr/ucb/install
+
+endif
 
 #---------------------------------------------------------------------------
 ifeq ($(PORTNAME), nextstep)

@@ -671,6 +671,9 @@ case $os in
 	-unixware* | svr4*)
 		os=-sysv4
 		;;
+	-univel*)
+		os=-sysv4
+		;;
 	-gnu/linux*)
 		os=`echo $os | sed -e 's|gnu/linux|linux-gnu|'`
 		;;
