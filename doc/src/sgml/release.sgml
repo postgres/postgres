@@ -1,12 +1,18 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.81 2001/02/11 14:20:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.82 2001/02/12 13:09:33 momjian Exp $
 -->
 
  <appendix id="release">
   <title>Release Notes</title>
 
   <sect1>
-   <title>Release 7.1  (2001-??-??)</title>
+   <title>Release 7.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>2001-??-??</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -303,7 +309,13 @@ Improved assembly language source code format (Bruce)
 
 
   <sect1 id="release-7-0-3">
-   <title>Release 7.0.3  (2000-11-11)</title>
+   <title>Release 7.0.3</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>2000-11-11</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -380,7 +392,13 @@ Fix for crash of backend, on abort (Tom)
 
 
   <sect1 id="release-7-0-2">
-   <title>Release 7.0.2  (2000-06-05)</title>
+   <title>Release 7.0.2</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>2000-06-05</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -419,7 +437,13 @@ Added documentation to tarball.
 
 
   <sect1 id="release-7-0-1">
-   <title>Release 7.0.1  (2000-06-01)</title>
+   <title>Release 7.0.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>2000-06-01</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -479,7 +503,13 @@ ecpg changes (Michael)
   </sect1>
 
   <sect1 id="release-7-0">
-   <title>Release 7.0  (2000-05-08)</title>
+   <title>Release 7.0</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>2000-05-08</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -964,7 +994,13 @@ New multibyte encodings
   </sect1>
 
   <sect1 id="release-6-5-3">
-   <title>Release 6.5.3  (1999-10-13)</title>
+   <title>Release 6.5.3</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1999-10-13</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -1005,7 +1041,13 @@ Fix dumping rules on inherited tables
 
 
   <sect1 id="release-6-5-2">
-   <title>Release 6.5.2  (1999-09-15)</title>
+   <title>Release 6.5.2</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1999-09-15</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -1067,7 +1109,13 @@ Updated version of pgaccess 0.98
   </sect1>
 
   <sect1 id="release-6-5-1">
-   <title>Release 6.5.1  (1999-07-15)</title>
+   <title>Release 6.5.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1999-07-15</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -1127,7 +1175,13 @@ Add Win1250 (Czech) support (Pavel Behal)
   </sect1>
 
   <sect1 id="release-6-5">
-   <title>Release 6.5  (1999-06-09)</title>
+   <title>Release 6.5</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1999-06-09</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -1530,7 +1584,13 @@ New install commands for plpgsql(Jan)
 
 
 <sect1 id="release-6-4-2">
-<title>Release 6.4.2  (1999-12-20)</title>
+<title>Release 6.4.2</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1999-12-20</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -1570,7 +1630,13 @@ Fix for datetime constant problem on some platforms(Thomas)
 
 
 <sect1 id="release-6-4-1">
-<title>Release 6.4.1  (1999-12-18)</title>
+<title>Release 6.4.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1999-12-18</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -1639,7 +1705,13 @@ Upgrade to PyGreSQL 2.2(D'Arcy)
 
 
 <sect1 id="release-6-4">
-<title>Release 6.4  (1998-10-30)</title>
+<title>Release 6.4</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1998-10-30</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -1941,7 +2013,13 @@ new Makefile.shlib for shared library configuration(Tom)
 </sect1>
 
 <sect1 id="release-6-3-2">
-<title>Release 6.3.2  (1998-04-07)</title>
+<title>Release 6.3.2</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1998-04-07</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -2016,7 +2094,13 @@ ASSERT fixes(Bruce)
   </sect1>
 
   <sect1 id="release-6-3-1">
-   <title>Release 6.3.1  (1998-03-23)</title>
+   <title>Release 6.3.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1998-03-23</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -2107,7 +2191,13 @@ Better identify tcl and tk libs and includes(Bruce)
   </sect1>
 
   <sect1 id="release-6-3">
-   <title>Release 6.3  (1998-03-01)</title>
+   <title>Release 6.3</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1998-03-01</simpara>
+   </note>
+
    <!--
   <docinfo>
   <authorgroup>
@@ -2424,7 +2514,13 @@ Remove un-needed malloc() calls and replace with palloc()(Bruce)
 </sect1>
 
 <sect1 id="release-6-2-1">
-<title>Release 6.2.1  (1997-10-17)</title>
+<title>Release 6.2.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1997-10-17</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -2511,7 +2607,13 @@ Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
   </sect1>
 
 <sect1 id="release-6-2">
-<title>Release 6.2  (1997-10-02)</title>
+<title>Release 6.2</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1997-10-02</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -2669,7 +2771,13 @@ SPI and Trigger programming guides (Vadim & D'Arcy)
 </sect1>
 
 <sect1 id="release-6-1-1">
-<title>Release 6.1.1  (1997-07-22)</title>
+<title>Release 6.1.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1997-07-22</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -2720,7 +2828,13 @@ pg_dumpall now returns proper status, portability fix(Bruce)
   </sect1>
 
 <sect1 id="release-6-1">
-<title>Release 6.1  (1997-06-08)</title>
+<title>Release 6.1</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1997-06-08</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -2896,7 +3010,13 @@ DG-UX, Ultrix, Irix, AIX portability fixes
 </sect1>
 
 <sect1 id="release-6-0">
-<title>Release 6.0  (1997-01-29)</title>
+<title>Release 6.0</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1997-01-29</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -3070,7 +3190,13 @@ releases.
 </sect1>
 
 <sect1 id="release-1-02">
-<title>Release 1.02  (1996-08-01)</title>
+<title>Release 1.02</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1996-08-01</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -3224,7 +3350,13 @@ Contributors (appologies to any missed)
 </sect1>
 
 <sect1 id="release-1-01">
-<title>Release 1.01  (1996-02-23)</title>
+<title>Release 1.01</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1996-02-23</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -3420,7 +3552,13 @@ Bug fixes:
 </sect1>
 
 <sect1 id="release-1-0">
-<title>Release 1.0  (1995-09-05)</title>
+<title>Release 1.0</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1995-09-05</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -3482,7 +3620,13 @@ Bug fixes:
 </sect1>
 
 <sect1 id="release-0-03">
-<title><productname>Postgres95</productname> Release 0.03  (1995-07-21)</title>
+<title><productname>Postgres95</productname>Release 0.03</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1995-07-21</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -3609,7 +3753,13 @@ New documentation:
 </sect1>
 
 <sect1 id="release-0-02">
-<title><productname>Postgres95</productname> Release 0.02  (1995-03-25)</title>
+<title><productname>Postgres95</productname>Release 0.02</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1995-03-25</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
@@ -3665,7 +3815,13 @@ The following bugs have been fixed in postgres95-beta-0.02:
 </sect1>
 
 <sect1 id="release-0-01">
-<title><productname>Postgres95</productname> Release 0.01  (1995-05-01)</title>
+<title><productname>Postgres95</productname>Release 0.01</title>
+
+   <note>
+   <title>Release date<title>
+   <simpara>1995-05-01</simpara>
+   </note>
+
 <!--
 <docinfo>
 <authorgroup>
