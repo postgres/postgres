@@ -1,0 +1,1411 @@
+From pgsql-hackers-owner+M46352=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 02:20:11 2003
+Return-path: <pgsql-hackers-owner+M46352=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA37K9511168
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 02:20:10 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGXy7-0002PD-Dn
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 00:13:39 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id C7586D1CA89
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 06:08:20 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 93156-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 02:07:49 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id A35A6D1C9FF
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 02:07:46 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP id 657631E1A
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 01:07:45 -0500 (EST)
+Subject: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+Content-Type: text/plain
+Message-ID: <1067839664.3089.173.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 01:07:45 -0500
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+A couple days ago, Manfred Spraul mentioned the posix_fadvise() API on
+-hackers:
+
+http://www.opengroup.org/onlinepubs/007904975/functions/posix_fadvise.html
+
+I'm working on making use of posix_fadvise() where appropriate. I can
+think of the following places where this would be useful:
+
+(1) As Manfred originally noted, when we advance to a new XLOG segment,
+we can use POSIX_FADV_DONTNEED to let the kernel know we won't be
+accessing the old WAL segment anymore. I've attached a quick kludge of a
+patch that implements this. I haven't done any benchmarking of it yet,
+though (comments or benchmark results are welcome).
+
+(2) ISTM that we can set POSIX_FADV_RANDOM for *all* indexes, since the
+vast majority of the accesses to them shouldn't be sequential. Are there
+any situations in which this assumption doesn't hold? (Perhaps B+-tree
+bulk loading, or CLUSTER?) Should this be done per-index-AM, or
+globally?
+
+(3) When doing VACUUM, ANALYZE, or large sequential scans (for some
+reasonable definition of "large"), we can use POSIX_FADV_SEQUENTIAL.
+
+(4) Various other components, such as tuplestore, tuplesort, and any
+utility commands that need to scan through an entire user relation for
+some reason. Once we've got the APIs for doing this worked out, it
+should be relatively easy to add other uses of posix_fadvise().
+
+(5) I'm hesitant to make use of POSIX_FADV_DONTNEED in VACUUM, as has
+been suggested elsewhere. The problem is that it's all-or-nothing: if
+the VACUUM happens to look at hot pages, these will be flushed from the
+page cache, so the net result may be a loss.
+
+So what API is desirable for uses 2-4? I'm thinking of adding a new
+function to the smgr API, smgradvise(). Given a Relation and an advice,
+this would:
+
+(a) propagate the advice for this relation to all the open FDs for the
+relation
+
+(b) store the new advice somewhere so that new FDs for the relation can
+have this advice set for them: clients should just be able to call
+smgradvise() without needing to worry if someone else has already called
+smgropen() for the relation in the past. One problem is how to store
+this: I don't think it can be a field of RelationData, since that is
+transient. Any suggestions?
+
+Note that I'm assuming that we don't need to set advice on sub-sections
+of a relation, although the posix_fadvise() API allows it -- does anyone
+think that would be useful?
+
+One potential issue is that when one process calls posix_fadvise() on a
+particular FD, I'd expect that other processes accessing the same file
+will be affected. For example, enabling FADV_SEQUENTIAL while we're
+vacuuming a relation will mean that another client doing a concurrent
+SELECT on the relation will see different readahead behavior. That
+doesn't seem like a major problem though.
+
+BTW, posix_fadvise() is currently only supported on Linux 2.6 w/ a
+recent version of glibc (BSD hackers, if you're listening,
+posix_fadvise() would be a very cool thing to have :P). So we'll need to
+do the appropriate configure magic to ensure we only use it where its
+available. Thankfully, it is a POSIX standard, so I would expect that in
+the years to come it will be available on more platforms.
+
+Any comments would be welcome.
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 7: don't forget to increase your free space map settings
+
+From pgsql-hackers-owner+M46354=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 04:16:05 2003
+Return-path: <pgsql-hackers-owner+M46354=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA39G4519850
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 04:16:04 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGY3D-0002fz-QO
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 00:18:55 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id C35A5D1C9FF
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 06:16:01 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 02547-01
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 02:15:31 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id A2D66D1CB3D
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 02:15:30 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP id B7CE81E1A
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 01:15:30 -0500 (EST)
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <1067839664.3089.173.camel@tokyo>
+References: <1067839664.3089.173.camel@tokyo>
+Content-Type: multipart/mixed; boundary="=-FWP1piDRdCKsDZuLvApE"
+Message-ID: <1067840130.3089.177.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 01:15:30 -0500
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+--=-FWP1piDRdCKsDZuLvApE
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+
+On Mon, 2003-11-03 at 01:07, Neil Conway wrote:
+> (1) As Manfred originally noted, when we advance to a new XLOG segment,
+> we can use POSIX_FADV_DONTNEED to let the kernel know we won't be
+> accessing the old WAL segment anymore. I've attached a quick kludge of a
+> patch that implements this. I haven't done any benchmarking of it yet,
+> though (comments or benchmark results are welcome).
+
+Woops, the patch is attached.
+
+-Neil
+
+
+--=-FWP1piDRdCKsDZuLvApE
+Content-Disposition: attachment; filename=xlog-fadvise-1.patch
+Content-Type: text/x-patch; name=xlog-fadvise-1.patch; charset=ANSI_X3.4-1968
+Content-Transfer-Encoding: 7bit
+
+Index: src/backend/access/transam/xlog.c
+===================================================================
+RCS file: /var/lib/cvs/pgsql-server/src/backend/access/transam/xlog.c,v
+retrieving revision 1.125
+diff -c -r1.125 xlog.c
+*** src/backend/access/transam/xlog.c	27 Sep 2003 18:16:35 -0000	1.125
+--- src/backend/access/transam/xlog.c	3 Nov 2003 02:46:57 -0000
+***************
+*** 1043,1048 ****
+--- 1043,1060 ----
+  			 */
+  			if (openLogFile >= 0)
+  			{
++ 				/*
++ 				 * Let the kernel know that we're not going to need
++ 				 * this WAL segment anymore, so there's no need to
++ 				 * keep it in the I/O cache
++ 				 */
++ 				if (posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED) != 0)
++ 				{
++ 					ereport(WARNING,
++ 							(errcode_for_file_access(),
++ 							 errmsg("could not posix_fadvise() log file %u: %m", openLogId)));
++ 				}
++ 
+  				if (close(openLogFile) != 0)
+  					ereport(PANIC,
+  							(errcode_for_file_access(),
+***************
+*** 1159,1164 ****
+--- 1171,1188 ----
+  			if (openLogFile >= 0 &&
+  			 !XLByteInPrevSeg(LogwrtResult.Write, openLogId, openLogSeg))
+  			{
++ 				/*
++ 				 * Let the kernel know that we're not going to need
++ 				 * this WAL segment anymore, so there's no need to
++ 				 * keep it in the I/O cache
++ 				 */
++ 				if (posix_fadvise(openLogFile, 0, 0, POSIX_FADV_DONTNEED) != 0)
++ 				{
++ 					ereport(WARNING,
++ 							(errcode_for_file_access(),
++ 							 errmsg("could not posix_fadvise() log file %u: %m", openLogId)));
++ 				}
++ 
+  				if (close(openLogFile) != 0)
+  					ereport(PANIC,
+  							(errcode_for_file_access(),
+
+--=-FWP1piDRdCKsDZuLvApE
+Content-Type: text/plain
+Content-Disposition: inline
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
+--=-FWP1piDRdCKsDZuLvApE--
+
+From pgsql-hackers-owner+M46358=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 04:30:38 2003
+Return-path: <pgsql-hackers-owner+M46358=pgman=candle.pha.pa.us@postgresql.org>
+Received: from hosting.commandprompt.com (222.commandprompt.com [207.173.200.222])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA39UY522930
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 04:30:36 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by hosting.commandprompt.com (8.11.6/8.11.6) with ESMTP id hA39UMm25323
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 01:30:32 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id D53FED1CB31
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 09:24:28 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 21316-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 05:23:58 -0400 (AST)
+Received: from fuji.krosing.net (silmet.estpak.ee [194.126.97.78])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5B0FED1CAC2
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 05:23:56 -0400 (AST)
+Received: from fuji.krosing.net (localhost.localdomain [127.0.0.1])
+	by fuji.krosing.net (8.12.8/8.12.8) with ESMTP id hA39La7Q002784;
+	Mon, 3 Nov 2003 11:21:36 +0200
+Received: (from hannu@localhost)
+	by fuji.krosing.net (8.12.8/8.12.8/Submit) id hA39LaAZ002782;
+	Mon, 3 Nov 2003 11:21:36 +0200
+X-Authentication-Warning: fuji.krosing.net: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Hannu Krosing <hannu@tm.ee>
+To: Neil Conway <neilc@samurai.com>
+cc: PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <1067839664.3089.173.camel@tokyo>
+References: <1067839664.3089.173.camel@tokyo>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Message-ID: <1067851295.2580.12.camel@fuji.krosing.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 11:21:36 +0200
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Neil Conway kirjutas E, 03.11.2003 kell 08:07:
+> A couple days ago, Manfred Spraul mentioned the posix_fadvise() API on
+> -hackers:
+> 
+> http://www.opengroup.org/onlinepubs/007904975/functions/posix_fadvise.html
+> 
+> I'm working on making use of posix_fadvise() where appropriate. I can
+> think of the following places where this would be useful:
+> 
+> (1) As Manfred originally noted, when we advance to a new XLOG segment,
+> we can use POSIX_FADV_DONTNEED to let the kernel know we won't be
+> accessing the old WAL segment anymore. I've attached a quick kludge of a
+> patch that implements this. I haven't done any benchmarking of it yet,
+> though (comments or benchmark results are welcome).
+> 
+> (2) ISTM that we can set POSIX_FADV_RANDOM for *all* indexes, since the
+> vast majority of the accesses to them shouldn't be sequential. Are there
+> any situations in which this assumption doesn't hold? (Perhaps B+-tree
+> bulk loading, or CLUSTER?) Should this be done per-index-AM, or
+> globally?
+
+Perhaps we could do it for all _leaf_ nodes, the root and intermediate
+nodes are usually better kept in cache.
+
+> (3) When doing VACUUM, ANALYZE, or large sequential scans (for some
+> reasonable definition of "large"), we can use POSIX_FADV_SEQUENTIAL.
+
+perhaps just sequential scans without "large" ?
+
+> (4) Various other components, such as tuplestore, tuplesort, and any
+> utility commands that need to scan through an entire user relation for
+> some reason. Once we've got the APIs for doing this worked out, it
+> should be relatively easy to add other uses of posix_fadvise().
+> 
+> (5) I'm hesitant to make use of POSIX_FADV_DONTNEED in VACUUM, as has
+> been suggested elsewhere. The problem is that it's all-or-nothing: if
+> the VACUUM happens to look at hot pages, these will be flushed from the
+> page cache, so the net result may be a loss.
+
+True. POSIX_FADV_DONTNEED should be only used if the page was retrieved
+by VACUUM.
+
+> So what API is desirable for uses 2-4? I'm thinking of adding a new
+> function to the smgr API, smgradvise(). Given a Relation and an advice,
+> this would:
+> 
+> (a) propagate the advice for this relation to all the open FDs for the
+> relation
+> 
+> (b) store the new advice somewhere so that new FDs for the relation can
+> have this advice set for them: clients should just be able to call
+> smgradvise() without needing to worry if someone else has already called
+> smgropen() for the relation in the past. One problem is how to store
+> this: I don't think it can be a field of RelationData, since that is
+> transient. Any suggestions?
+
+also, you may want to restore old FADV* after you are done - just
+running one seqscan should probably not leave the relation in
+POSIX_FADV_SEQUENTIAL mode forever.
+
+> Note that I'm assuming that we don't need to set advice on sub-sections
+> of a relation, although the posix_fadvise() API allows it -- does anyone
+> think that would be useful?
+>
+> One potential issue is that when one process calls posix_fadvise() on a
+> particular FD, I'd expect that other processes accessing the same file
+> will be affected. For example, enabling FADV_SEQUENTIAL while we're
+> vacuuming a relation will mean that another client doing a concurrent
+> SELECT on the relation will see different readahead behavior. That
+> doesn't seem like a major problem though.
+> 
+> BTW, posix_fadvise() is currently only supported on Linux 2.6 w/ a
+> recent version of glibc (BSD hackers, if you're listening,
+> posix_fadvise() would be a very cool thing to have :P). So we'll need to
+> do the appropriate configure magic to ensure we only use it where its
+> available. Thankfully, it is a POSIX standard, so I would expect that in
+> the years to come it will be available on more platforms.
+> 
+> Any comments would be welcome.
+> 
+> -Neil
+> 
+> 
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 7: don't forget to increase your free space map settings
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M46361=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 12:20:11 2003
+Return-path: <pgsql-hackers-owner+M46361=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3HK8528457
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 12:20:10 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGfAs-0000gy-1V
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 07:55:18 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 82330D1B524
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 13:50:36 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 54341-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 09:50:08 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id 56261D1B57F
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 09:50:04 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP
+	id 80F521DDE; Mon,  3 Nov 2003 08:50:00 -0500 (EST)
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: Hannu Krosing <hannu@tm.ee>
+cc: PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <1067851295.2580.12.camel@fuji.krosing.net>
+References: <1067839664.3089.173.camel@tokyo>
+  <1067851295.2580.12.camel@fuji.krosing.net>
+Content-Type: text/plain
+Message-ID: <1067867399.3089.219.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 08:50:00 -0500
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+On Mon, 2003-11-03 at 04:21, Hannu Krosing wrote:
+> Neil Conway kirjutas E, 03.11.2003 kell 08:07:
+> > (2) ISTM that we can set POSIX_FADV_RANDOM for *all* indexes, since the
+> > vast majority of the accesses to them shouldn't be sequential.
+> 
+> Perhaps we could do it for all _leaf_ nodes, the root and intermediate
+> nodes are usually better kept in cache.
+
+POSIX_FADV_RANDOM doesn't effect the page cache, it just determines how
+aggressive the kernel is when doing readahead (at least on Linux, but
+I'd expect to see other kernels implement similar behavior). In other
+words, using FADV_RANDOM shouldn't decrease the chance that interior
+B+-tree nodes are kept in the page cache.
+
+> True. POSIX_FADV_DONTNEED should be only used if the page was retrieved
+> by VACUUM.
+
+Right -- we'd like pages touched by VACUUM to be flushed from the page
+cache if that page wasn't previously in *either* the PostgreSQL buffer
+pool or the kernel's page cache. We can implement the former easily
+enough, but I don't see any feasible way to do the latter: on a high-end
+machine with gigabytes of RAM but a relatively small shared_buffers
+(which is the configuration we recommend), there may be plenty of hot
+pages that aren't in the PostgreSQL buffer pool but are in the page
+cache.
+
+> also, you may want to restore old FADV* after you are done - just
+> running one seqscan should probably not leave the relation in
+> POSIX_FADV_SEQUENTIAL mode forever.
+
+Right, I forgot to mention that. The API doesn't provide a means to get
+the current advice for an FD. So when we're finished doing whatever
+operation we set some advice for, we'll need to just reset the file to
+FADV_NORMAL and hope that it doesn't overrule some advise just set by
+someone else. Either that, or we can manually keep track of all the
+advise we're setting ourselves, but that seems a hassle.
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M46362=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 11:38:34 2003
+Return-path: <pgsql-hackers-owner+M46362=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3GcW524671
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 11:38:33 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGfZS-0001Yo-Ot
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 08:20:42 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id E7744D1CA72
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 14:17:05 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 72987-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 10:16:37 -0400 (AST)
+Received: from mail.libertyrms.com (unknown [209.167.124.227])
+	by svr1.postgresql.org (Postfix) with ESMTP id E0B34D1B57D
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 10:16:33 -0400 (AST)
+Received: from [10.1.2.130] (helo=dba2)
+	by mail.libertyrms.com with esmtp (Exim 3.22 #3 (Debian))
+	id 1AGfVW-00055W-00
+	for <pgsql-hackers@postgresql.org>; Mon, 03 Nov 2003 09:16:38 -0500
+Received: by dba2 (Postfix, from userid 1019)
+	id DCCBACD8C; Mon,  3 Nov 2003 09:16:37 -0500 (EST)
+Date: Mon, 3 Nov 2003 09:16:37 -0500
+From: Andrew Sullivan <andrew@libertyrms.info>
+To: PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+Message-ID: <20031103141637.GB12457@libertyrms.info>
+Mail-Followup-To: Andrew Sullivan <andrew@libertyrms.info>,
+	PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+References: <1067839664.3089.173.camel@tokyo> <1067851295.2580.12.camel@fuji.krosing.net> <1067867399.3089.219.camel@tokyo>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <1067867399.3089.219.camel@tokyo>
+User-Agent: Mutt/1.5.4i
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+On Mon, Nov 03, 2003 at 08:50:00AM -0500, Neil Conway wrote:
+
+> pool or the kernel's page cache. We can implement the former easily
+> enough, but I don't see any feasible way to do the latter: on a high-end
+> machine with gigabytes of RAM but a relatively small shared_buffers
+> (which is the configuration we recommend), there may be plenty of hot
+
+I wonder if the limitations that are on one's ability to evaluate
+effectively what is in the OS's filesystem cache is the real reason
+all those Other systems (of Databases, Big, too) have stayed with
+their old design of managing it all themselves (raw filesystems and
+all the buffering handled by the back end).  Maybe that's not just an
+historical argument whereby they happen to have the code around. 
+After all, it can't be cheap to maintain.  Not that I'm advocating
+writing such a system -- I sure couldn't do the work, to begin with.
+
+A 
+
+
+-- 
+----
+Andrew Sullivan                         204-4141 Yonge Street
+Afilias Canada                        Toronto, Ontario Canada
+<andrew@libertyrms.info>                              M2P 2A8
+                                         +1 416 646 3304 x110
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M46363=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 12:41:32 2003
+Return-path: <pgsql-hackers-owner+M46363=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3HfU500821
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 12:41:31 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGfuP-0001rv-3W
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 08:42:21 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 77F1ED1CA56
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 14:38:57 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 73581-06
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 10:38:29 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id EE4C8D1B923
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 10:38:19 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.10/8.12.10) with ESMTP id hA3EcO19013973;
+	Mon, 3 Nov 2003 09:38:24 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] adding support for posix_fadvise() 
+In-Reply-To: <1067839664.3089.173.camel@tokyo> 
+References: <1067839664.3089.173.camel@tokyo>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 03 Nov 2003 01:07:45 -0500"
+Date: Mon, 03 Nov 2003 09:38:23 -0500
+Message-ID: <13972.1067870303@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> So what API is desirable for uses 2-4? I'm thinking of adding a new
+> function to the smgr API, smgradvise().
+
+It's a little premature to be inventing APIs when you have no evidence
+that this will make any useful performance difference.  I'd recommend a
+quick hack to get proof of concept before you bother with nice APIs.
+
+> Given a Relation and an advice, this would:
+> (a) propagate the advice for this relation to all the open FDs for the
+> relation
+
+"All"?  You cannot affect the FDs being used by other backends.  It's
+fairly unclear to me what the posix_fadvise function is really going
+to do for files that are being accessed by multiple processes.  For
+instance, is there any value in setting POSIX_FADV_DONTNEED on a WAL
+file, given that every other backend is going to have that same file
+open?  I would expect that rational kernel behavior would be to ignore
+this advice unless it's set by the last backend to have the file open
+--- but I'm not sure we can synchronize the closing of old WAL segments
+well enough to know which backend is the last to close the file.
+
+A related problem is that the smgr uses the same FD to access the same
+relation no matter how many scans are in progress.  Think about a
+complex query that is doing both a seqscan and an indexscan on the same
+relation (a self-join could easily do this).  You'd really need to
+change this if you want POSIX_FADV_SEQUENTIAL and POSIX_FADV_RANDOM to
+get set usefully.
+
+In short I think you need to do some more thinking about what the scope
+of the advice flags is going to be ...
+
+> (b) store the new advice somewhere so that new FDs for the relation can
+> have this advice set for them: clients should just be able to call
+> smgradvise() without needing to worry if someone else has already called
+> smgropen() for the relation in the past. One problem is how to store
+> this: I don't think it can be a field of RelationData, since that is
+> transient. Any suggestions?
+
+Something Vadim had wanted to do for years is to decouple the smgr and
+lower levels from the existing Relation cache, and have a low-level
+notion of "open relation" that only requires having the "RelFileNode"
+value to open it.  This would allow eliminating the concept of blind
+write, which would be a Very Good Thing.  It would make sense to
+associate the advice setting with such low-level relations.  One
+possible way to handle the multiple-scan issue is to make the desired
+advice part of the low-level open() call, so that you actually have
+different low-level relations for seq and random access to a relation.
+Not sure if this works cleanly when you take into account issues like
+smgrunlink, but it's something to think about.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M46366=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 16:16:06 2003
+Return-path: <pgsql-hackers-owner+M46366=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3LG4520809
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 16:16:05 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGgI8-0002Y4-7P
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 09:06:52 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id B00B3D1CA79
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 15:02:23 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 75791-08
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 11:01:55 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id 65D22D1CAFC
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 11:01:51 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.10/8.12.10) with ESMTP id hA3F1t19014250;
+	Mon, 3 Nov 2003 10:01:55 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: Hannu Krosing <hannu@tm.ee>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] adding support for posix_fadvise() 
+In-Reply-To: <1067867399.3089.219.camel@tokyo> 
+References: <1067839664.3089.173.camel@tokyo> <1067851295.2580.12.camel@fuji.krosing.net> <1067867399.3089.219.camel@tokyo>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 03 Nov 2003 08:50:00 -0500"
+Date: Mon, 03 Nov 2003 10:01:55 -0500
+Message-ID: <14249.1067871715@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> POSIX_FADV_RANDOM doesn't effect the page cache, it just determines how
+> aggressive the kernel is when doing readahead (at least on Linux, but
+> I'd expect to see other kernels implement similar behavior).
+
+I would expect POSIX_FADV_SEQUENTIAL to reduce the chance that a page
+will be kept in buffer cache after it's been used.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M46367=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 11:29:59 2003
+Return-path: <pgsql-hackers-owner+M46367=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3GTw523888
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 11:29:59 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGgzl-0003cP-FZ
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 09:51:57 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 891D0D1CB32
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 15:45:26 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 85721-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 11:44:59 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id 0A282D1CB2C
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 11:44:55 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP
+	id 235771FAE; Mon,  3 Nov 2003 10:44:44 -0500 (EST)
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Hannu Krosing <hannu@tm.ee>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <14249.1067871715@sss.pgh.pa.us>
+References: <1067839664.3089.173.camel@tokyo>
+  <1067851295.2580.12.camel@fuji.krosing.net>
+  <1067867399.3089.219.camel@tokyo>  <14249.1067871715@sss.pgh.pa.us>
+Content-Type: text/plain
+Message-ID: <1067874283.3089.241.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 10:44:43 -0500
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+On Mon, 2003-11-03 at 10:01, Tom Lane wrote:
+> Neil Conway <neilc@samurai.com> writes:
+> > POSIX_FADV_RANDOM doesn't effect the page cache, it just determines how
+> > aggressive the kernel is when doing readahead (at least on Linux, but
+> > I'd expect to see other kernels implement similar behavior).
+> 
+> I would expect POSIX_FADV_SEQUENTIAL to reduce the chance that a page
+> will be kept in buffer cache after it's been used.
+
+I don't think that can be reasonably implied from the POSIX text, which
+is merely:
+
+POSIX_FADV_SEQUENTIAL
+        Specifies that the application expects to access the specified
+        data sequentially from lower offsets to higher offsets.
+
+The present Linux implementation doesn't do this, AFAICS -- all it does
+it increase the readahead for this file:
+
+	http://lxr.linux.no/source/mm/fadvise.c?v=2.6.0-test7
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M46369=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 11:17:50 2003
+Return-path: <pgsql-hackers-owner+M46369=pgman=candle.pha.pa.us@postgresql.org>
+Received: from hosting.commandprompt.com (222.commandprompt.com [207.173.200.222])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3GHm522584
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 11:17:49 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by hosting.commandprompt.com (8.11.6/8.11.6) with ESMTP id hA3GHYm21291
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 08:17:45 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id CC4D5D1CB1B
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 16:12:10 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 87278-03
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 12:11:39 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id 5B0AED1B56D
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 12:11:37 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.10/8.12.10) with ESMTP id hA3GBa19024628;
+	Mon, 3 Nov 2003 11:11:36 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: Hannu Krosing <hannu@tm.ee>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] adding support for posix_fadvise() 
+In-Reply-To: <1067874283.3089.241.camel@tokyo> 
+References: <1067839664.3089.173.camel@tokyo> <1067851295.2580.12.camel@fuji.krosing.net> <1067867399.3089.219.camel@tokyo> <14249.1067871715@sss.pgh.pa.us> <1067874283.3089.241.camel@tokyo>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 03 Nov 2003 10:44:43 -0500"
+Date: Mon, 03 Nov 2003 11:11:36 -0500
+Message-ID: <24627.1067875896@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> On Mon, 2003-11-03 at 10:01, Tom Lane wrote:
+>> I would expect POSIX_FADV_SEQUENTIAL to reduce the chance that a page
+>> will be kept in buffer cache after it's been used.
+
+> I don't think that can be reasonably implied from the POSIX text, which
+> is merely:
+
+> POSIX_FADV_SEQUENTIAL
+>         Specifies that the application expects to access the specified
+>         data sequentially from lower offsets to higher offsets.
+
+Why not?  The advice says that you're going to access the data
+sequentially in the forward direction.  If you're not going to back up,
+there is no point in keeping pages in cache after they've been read.
+
+A reasonable implementation of the POSIX semantics would need to balance
+this consideration against the likelihood that some other process would
+want to access some of these pages later.  But I would certainly expect
+it to reduce the probability of keeping the pages in cache.
+
+> The present Linux implementation doesn't do this, AFAICS -- 
+
+So it only does part of what it could do.  No surprise...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M46371=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 17:03:33 2003
+Return-path: <pgsql-hackers-owner+M46371=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3M3V525067
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 17:03:32 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGi7n-00058i-6q
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 11:04:19 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id A01ADD1CAC3
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 16:59:59 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 95778-05
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 12:59:28 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id 88C61D1CAC1
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 12:59:27 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP
+	id BC4611FA6; Mon,  3 Nov 2003 11:59:25 -0500 (EST)
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: Hannu Krosing <hannu@tm.ee>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <24627.1067875896@sss.pgh.pa.us>
+References: <1067839664.3089.173.camel@tokyo>
+  <1067851295.2580.12.camel@fuji.krosing.net>
+  <1067867399.3089.219.camel@tokyo> <14249.1067871715@sss.pgh.pa.us>
+  <1067874283.3089.241.camel@tokyo>  <24627.1067875896@sss.pgh.pa.us>
+Content-Type: text/plain
+Message-ID: <1067878764.3089.369.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 11:59:24 -0500
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+On Mon, 2003-11-03 at 11:11, Tom Lane wrote:
+> Why not?  The advice says that you're going to access the data
+> sequentially in the forward direction.  If you're not going to back up,
+> there is no point in keeping pages in cache after they've been read.
+
+The advice says: "I'm going to read this data sequentially, going
+forward." It doesn't say: "I'm only going to read the data once, and
+then not access it again" (ISTM that's what FADV_NOREUSE is for). For
+example, the following is a perfectly reasonable sequential access
+pattern:
+
+	a,b,c,a,b,c,a,b,c,a,b,c
+
+(i.e. repeatedly scanning through a large file, say for a data-analysis
+app that does multiple passes over the input data). It might not be a
+particularly common database reference pattern, but just because an app
+is doing a sequential read says little about the temporal locality of
+references to the pages in question.
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M46373=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 12:24:42 2003
+Return-path: <pgsql-hackers-owner+M46373=pgman=candle.pha.pa.us@postgresql.org>
+Received: from hosting.commandprompt.com (222.commandprompt.com [207.173.200.222])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3HOd529168
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 12:24:40 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by hosting.commandprompt.com (8.11.6/8.11.6) with ESMTP id hA3HOBm27594
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 09:24:35 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 13798D1B557
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 17:18:13 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 05139-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 13:17:42 -0400 (AST)
+Received: from fuji.krosing.net (silmet.estpak.ee [194.126.97.78])
+	by svr1.postgresql.org (Postfix) with ESMTP id A1A62D1B4FE
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 13:17:40 -0400 (AST)
+Received: from fuji.krosing.net (localhost.localdomain [127.0.0.1])
+	by fuji.krosing.net (8.12.8/8.12.8) with ESMTP id hA3HHerb002608;
+	Mon, 3 Nov 2003 19:17:40 +0200
+Received: (from hannu@localhost)
+	by fuji.krosing.net (8.12.8/8.12.8/Submit) id hA3HHehZ002606;
+	Mon, 3 Nov 2003 19:17:40 +0200
+X-Authentication-Warning: fuji.krosing.net: hannu set sender to hannu@tm.ee using -f
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Hannu Krosing <hannu@tm.ee>
+To: Neil Conway <neilc@samurai.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <1067878764.3089.369.camel@tokyo>
+References: <1067839664.3089.173.camel@tokyo>
+  <1067851295.2580.12.camel@fuji.krosing.net>
+  <1067867399.3089.219.camel@tokyo> <14249.1067871715@sss.pgh.pa.us>
+  <1067874283.3089.241.camel@tokyo>  <24627.1067875896@sss.pgh.pa.us>
+  <1067878764.3089.369.camel@tokyo>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Message-ID: <1067879859.2414.27.camel@fuji.krosing.net>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 19:17:40 +0200
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Neil Conway kirjutas E, 03.11.2003 kell 18:59:
+> On Mon, 2003-11-03 at 11:11, Tom Lane wrote:
+> > Why not?  The advice says that you're going to access the data
+> > sequentially in the forward direction.  If you're not going to back up,
+> > there is no point in keeping pages in cache after they've been read.
+> 
+> The advice says: "I'm going to read this data sequentially, going
+> forward." It doesn't say: "I'm only going to read the data once, and
+> then not access it again" (ISTM that's what FADV_NOREUSE is for).
+
+They seem like independent features. 
+
+Can you use combinations like ( FADV_NOREUS | FADV_SEQUENTIAL )
+
+(I obviously have'nt read the spec)
+
+----------------
+Hannu
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M46376=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 14:03:58 2003
+Return-path: <pgsql-hackers-owner+M46376=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3J3t508443
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 14:03:56 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGjpp-0007xC-6K
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 12:53:53 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 84EB3D1CAF9
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 18:47:18 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 15987-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 14:46:47 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id B951FD1B53F
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 14:46:46 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP
+	id E47C61FB5; Mon,  3 Nov 2003 13:46:46 -0500 (EST)
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: Hannu Krosing <hannu@tm.ee>
+cc: Tom Lane <tgl@sss.pgh.pa.us>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <1067879859.2414.27.camel@fuji.krosing.net>
+References: <1067839664.3089.173.camel@tokyo>
+  <1067851295.2580.12.camel@fuji.krosing.net>
+  <1067867399.3089.219.camel@tokyo> <14249.1067871715@sss.pgh.pa.us>
+  <1067874283.3089.241.camel@tokyo>  <24627.1067875896@sss.pgh.pa.us>
+  <1067878764.3089.369.camel@tokyo>
+  <1067879859.2414.27.camel@fuji.krosing.net>
+Content-Type: text/plain
+Message-ID: <1067885206.3089.476.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 13:46:46 -0500
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+On Mon, 2003-11-03 at 12:17, Hannu Krosing wrote:
+> Can you use combinations like ( FADV_NOREUS | FADV_SEQUENTIAL )
+
+You can do an fadvise() for FADV_SEQUENTIAL, and then another fadvise()
+for FADV_NOREUSE.
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M46378=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 14:32:05 2003
+Return-path: <pgsql-hackers-owner+M46378=pgman=candle.pha.pa.us@postgresql.org>
+Received: from hosting.commandprompt.com (222.commandprompt.com [207.173.200.222])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3JW3511090
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 14:32:04 -0500 (EST)
+Received: from postgresql.org (svr1.postgresql.org [200.46.204.71])
+	by hosting.commandprompt.com (8.11.6/8.11.6) with ESMTP id hA3JVYm07352
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 11:31:53 -0800
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id E5BF3D1B541
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 19:26:06 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 17405-10
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 15:25:37 -0400 (AST)
+Received: from dbl.q-ag.de (dbl.q-ag.de [80.146.160.66])
+	by svr1.postgresql.org (Postfix) with ESMTP id A9477D1B908
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 15:25:29 -0400 (AST)
+Received: from colorfullife.com (dbl [127.0.0.1])
+	by dbl.q-ag.de (8.12.3/8.12.3/Debian-6.6) with ESMTP id hA3JP0N9002667;
+	Mon, 3 Nov 2003 20:25:01 +0100
+Message-ID: <3FA6AB8B.8060902@colorfullife.com>
+Date: Mon, 03 Nov 2003 20:24:59 +0100
+From: Manfred Spraul <manfred@colorfullife.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.4) Gecko/20030701
+X-Accept-Language: en-us, en
+MIME-Version: 1.0
+To: Neil Conway <neilc@samurai.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Hannu Krosing <hannu@tm.ee>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+References: <1067839664.3089.173.camel@tokyo>	 <1067851295.2580.12.camel@fuji.krosing.net>	 <1067867399.3089.219.camel@tokyo>  <14249.1067871715@sss.pgh.pa.us> <1067874283.3089.241.camel@tokyo>
+In-Reply-To: <1067874283.3089.241.camel@tokyo>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Neil Conway wrote:
+
+>The present Linux implementation doesn't do this, AFAICS -- all it does
+>it increase the readahead for this file:
+>  
+>
+AFAIK Linux uses a modified LRU that automatically puts pages that were 
+touched only once at a lower priority than frequently accessed pages.
+
+Neil: what about calling posix_fadvise for the whole file immediately 
+after issue_xlog_fsync() in XLogWrite? According to the comment, it's 
+guaranteed that this will happen only once.
+Or:  add an posix_fadvise into issue_xlog_fsync(), for the range just 
+sync'ed.
+
+Btw, how much xlog traffic does a busy postgres site generate?
+
+--
+    Manfred
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 9: the planner will ignore your desire to choose an index scan if your
+      joining column's datatypes do not match
+
+From pgsql-hackers-owner+M46381=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 21:41:18 2003
+Return-path: <pgsql-hackers-owner+M46381=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA42fG527858
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 21:41:17 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGl6T-0001bk-22
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 14:15:09 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 444D7D1B541
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 20:11:01 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 35524-02
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 16:10:31 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id 602CDD1CA8E
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 16:10:29 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP
+	id 87D611FC7; Mon,  3 Nov 2003 15:10:29 -0500 (EST)
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <13972.1067870303@sss.pgh.pa.us>
+References: <1067839664.3089.173.camel@tokyo>
+  <13972.1067870303@sss.pgh.pa.us>
+Content-Type: text/plain
+Message-ID: <1067890228.3089.532.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 15:10:29 -0500
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+On Mon, 2003-11-03 at 09:38, Tom Lane wrote:
+> Neil Conway <neilc@samurai.com> writes:
+> > Given a Relation and an advice, this would:
+> > (a) propagate the advice for this relation to all the open FDs for the
+> > relation
+> 
+> "All"?  You cannot affect the FDs being used by other backends.
+
+Sorry, I meant just the FDs opened by this backend.
+
+> It's fairly unclear to me what the posix_fadvise function is really
+> going to do for files that are being accessed by multiple processes.
+
+In a thread on lkml[1], Andrew Morton comments:
+
+        Note that it applies to a file descriptor. If
+        posix_fadvise(FADV_DONTNEED) is called against a file
+        descriptor, and someone else has an fd open against the same
+        file, that other user gets their foot shot off. That's OK.
+
+I would imagine that by "getting their foot" shot off, Andrew is saying
+that FADV_DONTNEED by one process affects any other processes accessing
+the same file via a different FD. If I'm misunderstanding what's going
+on here, please let me know.
+
+> For instance, is there any value in setting POSIX_FADV_DONTNEED on a
+> WAL file, given that every other backend is going to have that same
+> file open?
+
+My understanding is that yes, there is value in doing this, for the
+reasons mentioned above.
+
+> A related problem is that the smgr uses the same FD to access the same
+> relation no matter how many scans are in progress.
+
+Interesting ... I'll have to think some more about this. Thanks for the
+suggestions and comments.
+
+-Neil
+
+[1] - http://www.ussg.iu.edu/hypermail/linux/kernel/0203.2/0361.html
+
+The rest of the thread includes an interesting discussion -- I recommend
+reading it. The lkml folks actually speculate about what we (OSS DBMS
+developers) would find useful in fadvise(), amusingly enough... The
+thread starts here:
+
+http://www.ussg.iu.edu/hypermail/linux/kernel/0203.2/0230.html
+
+Finally, Andrew Morton provides some more clarification on what happens
+when multiple processes are accessing a file that is fadvise()'d:
+
+http://www.ussg.iu.edu/hypermail/linux/kernel/0203.2/0476.html
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M46385=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 17:57:53 2003
+Return-path: <pgsql-hackers-owner+M46385=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA3Mvp502402
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 17:57:52 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGlJr-0002JW-HW
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 14:28:59 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 761FFD1B541
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 20:23:41 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 35080-07
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 16:23:11 -0400 (AST)
+Received: from bob.samurai.com (bob.samurai.com [205.207.28.75])
+	by svr1.postgresql.org (Postfix) with ESMTP id 56553D1B8E4
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 16:23:09 -0400 (AST)
+Received: from 6-allhosts (d226-89-59.home.cgocable.net [24.226.89.59])
+	by bob.samurai.com (Postfix) with ESMTP
+	id 36EBC1F7A; Mon,  3 Nov 2003 15:23:10 -0500 (EST)
+Subject: Re: [HACKERS] adding support for posix_fadvise()
+From: Neil Conway <neilc@samurai.com>
+To: Manfred Spraul <manfred@colorfullife.com>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, Hannu Krosing <hannu@tm.ee>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+In-Reply-To: <3FA6AB8B.8060902@colorfullife.com>
+References: <1067839664.3089.173.camel@tokyo>
+  <1067851295.2580.12.camel@fuji.krosing.net>
+  <1067867399.3089.219.camel@tokyo>  <14249.1067871715@sss.pgh.pa.us>
+  <1067874283.3089.241.camel@tokyo>  <3FA6AB8B.8060902@colorfullife.com>
+Content-Type: text/plain
+Message-ID: <1067890989.3089.540.camel@tokyo>
+MIME-Version: 1.0
+X-Mailer: Ximian Evolution 1.4.5 
+Date: Mon, 03 Nov 2003 15:23:09 -0500
+Content-Transfer-Encoding: 7bit
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+On Mon, 2003-11-03 at 14:24, Manfred Spraul wrote:
+> Neil: what about calling posix_fadvise for the whole file immediately 
+> after issue_xlog_fsync() in XLogWrite? According to the comment, it's 
+> guaranteed that this will happen only once.
+> Or:  add an posix_fadvise into issue_xlog_fsync(), for the range just 
+> sync'ed.
+
+I'll try those, in case it makes any difference. My guess/hope is that
+it won't (as mentioned earlier), but we'll see.
+
+> Btw, how much xlog traffic does a busy postgres site generate?
+
+No idea. Can anyone recommend what kind of benchmark would be be
+appropriate?
+
+-Neil
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+               http://www.postgresql.org/docs/faqs/FAQ.html
+
+From pgsql-hackers-owner+M46392=pgman=candle.pha.pa.us@postgresql.org Mon Nov  3 23:04:29 2003
+Return-path: <pgsql-hackers-owner+M46392=pgman=candle.pha.pa.us@postgresql.org>
+Received: from noon.pghoster.com ([64.246.0.64])
+	by candle.pha.pa.us (8.11.6/8.11.6) with ESMTP id hA444O504242
+	for <pgman@candle.pha.pa.us>; Mon, 3 Nov 2003 23:04:28 -0500 (EST)
+Received: from svr1.postgresql.org ([200.46.204.71] helo=postgresql.org)
+	by noon.pghoster.com with esmtp (Exim 4.20)
+	id 1AGoLI-0007lm-9Z
+	for pgman@candle.pha.pa.us; Mon, 03 Nov 2003 17:42:40 -0600
+X-Original-To: pgsql-hackers-postgresql.org@localhost.postgresql.org
+Received: from localhost (unknown [200.46.204.2])
+	by svr1.postgresql.org (Postfix) with ESMTP id 2A5ADD1CA7C
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>; Mon,  3 Nov 2003 23:38:33 +0000 (GMT)
+Received: from svr1.postgresql.org ([200.46.204.71])
+	by localhost (neptune.hub.org [200.46.204.2]) (amavisd-new, port 10024)
+	with ESMTP id 67058-04
+	for <pgsql-hackers-postgresql.org@localhost.postgresql.org>;
+	Mon,  3 Nov 2003 19:38:04 -0400 (AST)
+Received: from sss.pgh.pa.us (unknown [192.204.191.242])
+	by svr1.postgresql.org (Postfix) with ESMTP id 157C4D1B914
+	for <pgsql-hackers@postgresql.org>; Mon,  3 Nov 2003 19:38:01 -0400 (AST)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.12.10/8.12.10) with ESMTP id hA3Nc119013157;
+	Mon, 3 Nov 2003 18:38:01 -0500 (EST)
+To: Neil Conway <neilc@samurai.com>
+cc: Hannu Krosing <hannu@tm.ee>,
+   PostgreSQL Hackers <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] adding support for posix_fadvise() 
+In-Reply-To: <1067878764.3089.369.camel@tokyo> 
+References: <1067839664.3089.173.camel@tokyo> <1067851295.2580.12.camel@fuji.krosing.net> <1067867399.3089.219.camel@tokyo> <14249.1067871715@sss.pgh.pa.us> <1067874283.3089.241.camel@tokyo> <24627.1067875896@sss.pgh.pa.us> <1067878764.3089.369.camel@tokyo>
+Comments: In-reply-to Neil Conway <neilc@samurai.com>
+	message dated "Mon, 03 Nov 2003 11:59:24 -0500"
+Date: Mon, 03 Nov 2003 18:38:01 -0500
+Message-ID: <13156.1067902681@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+X-Virus-Scanned: by amavisd-new at postgresql.org
+X-Mailing-List: pgsql-hackers
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - noon.pghoster.com
+X-AntiAbuse: Original Domain - candle.pha.pa.us
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - postgresql.org
+Status: OR
+
+Neil Conway <neilc@samurai.com> writes:
+> On Mon, 2003-11-03 at 11:11, Tom Lane wrote:
+>> Why not?  The advice says that you're going to access the data
+>> sequentially in the forward direction.  If you're not going to back up,
+>> there is no point in keeping pages in cache after they've been read.
+
+> The advice says: "I'm going to read this data sequentially, going
+> forward." It doesn't say: "I'm only going to read the data once, and
+> then not access it again" (ISTM that's what FADV_NOREUSE is for).
+
+I'd believe that interpretation if the spec specifically allowed for
+applying multiple "advice" values to the same fd.  However, given the
+way the API is written, it sure looks like the intention is that only
+the most recent advice value is valid for any one (portion of a) file.
+If the intention was that you could specify both FADV_SEQUENTIAL and
+FADV_NOREUSE, the usual Unix-y way to handle it would have been to
+define these constants as bit mask values and specify that the parameter
+to the syscall is a bitwise OR of multiple flags.  The way you are
+interpreting it, there is no way to cancel an FADV_NOREUSE setting,
+since there is no value that is the opposite setting.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+               http://archives.postgresql.org
+
