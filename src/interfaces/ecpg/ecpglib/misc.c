@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.1 2003/03/16 10:42:53 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.2 2003/03/21 15:31:04 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -109,9 +109,11 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	{
 		con->committed = true;
 
+#if 0
 		/* deallocate all prepared statements */
 		if (!ECPGdeallocate_all(lineno))
 			return false;
+#endif
 	}
 
 	return true;

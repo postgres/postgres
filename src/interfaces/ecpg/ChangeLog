@@ -1368,6 +1368,7 @@ Thu Mar 20 16:53:40 CET 2003
 Fri Mar 21 15:13:42 CET 2003
 
 	- Made sure preprocessor accepts new datatypes.
+	- Do not free prepared statements at the end of a transaction.
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0
