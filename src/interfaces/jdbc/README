@@ -32,6 +32,10 @@ the directory PREFIX/share/java.
 
 That jar file will contain the driver for _your_ version of the JDK.
 
+If you would like to use ANT directly, first invoke 'make build.properties'
+after running the configure script with the java option. This will create a
+needed Java properties file from the configured information.
+
 REMEMBER: Once you have compiled the driver, it will work on ALL platforms
 that support that version of the API. You don't need to build it for each
 platform.

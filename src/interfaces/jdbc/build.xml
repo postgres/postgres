@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.30 2002/10/20 00:10:55 barry Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.31 2002/12/11 12:27:47 davec Exp $
 
 -->
 
@@ -22,6 +22,8 @@
   <property name="builddir" value="build" />
   <property name="package" value="org/postgresql" />
   <property name="debug" value="on" />
+
+  <property file="build.properties"/>
 
   <!--
     This is a simpler method than utils.CheckVersion
@@ -115,12 +117,21 @@
     </javac>
   </target>
 
+  <target name="check_driver">
+    <uptodate targetfile="${package}/Driver.java" property="driver.uptodate">
+      <srcfiles dir=".">
+      <include name="${package}/Driver.java.in"/>
+      <include name="build.properties"/>
+      </srcfiles>
+    </uptodate>
+  </target>
 
   <!--
     This generates Driver.java from Driver.java.in
     It's required for importing the driver version properties
   -->
-  <target name="driver" depends="prepare,check_versions">
+  <target name="driver" depends="prepare,check_versions,check_driver"
+          unless="driver.uptodate">
     <!-- determine the edition text -->
     <condition property="edition" value="JDBC1">
         <equals arg1="${jdbc1}" arg2="true"/>
@@ -158,6 +169,9 @@
 
      <fail unless="major" message="'major' undefined. Please follow the directions in README."/>
      <fail unless="minor" message="'minor' undefined. Please follow the directions in README."/>
+     <fail unless="fullversion" message="'fullversion' undefined. Please follow the directions in README."/>
+     <fail unless="def_pgport" message="'def_pgport' undefined. Please follow the directions in README."/>
+     <fail unless="enable_debug" message="'enable_debug' undefined. Please follow the directions in README."/>
  
     <!-- Put a check for the current version here -->
 
@@ -231,6 +245,9 @@
     <delete quiet="true" file="${package}/Driver.java" />
   </target>
 
+  <target name="clean_all" depends="clean">
+    <delete quiet="true" file="build.properties" />
+  </target>
 
 
   <!-- This compiles and executes the JUnit tests -->
