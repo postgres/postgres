@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.104 1999/05/25 16:08:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.105 1999/05/29 10:25:30 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,6 @@ static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tupl
 static void vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int16 *bucket_len);
 static void vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
 static void vc_delhilowstats(Oid relid, int attcnt, int *attnums);
-static void vc_setpagelock(Relation rel, BlockNumber blkno);
 static VPageDescr vc_tidreapped(ItemPointer itemptr, VPageList vpl);
 static void vc_reappage(VPageList vpl, VPageDescr vpc);
 static void vc_vpinsert(VPageList vpl, VPageDescr vpnew);
@@ -2221,7 +2220,8 @@ vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int16 *bucket_l
  *		tuple that's already on the page.  The reason for this is that if
  *		we updated these tuples in the usual way, then every tuple in pg_class
  *		would be replaced every day.  This would make planning and executing
- *		historical queries very expensive.
+ *		historical queries very expensive. Note that we also don't use
+ *		any locking while doing updation.
  */
 static void
 vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats)
@@ -2257,7 +2257,6 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 	pfree(ctup);
 
 	/* overwrite the existing statistics in the tuple */
-	vc_setpagelock(rd, ItemPointerGetBlockNumber(&(rtup.t_self)));
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
 	pgcform->reltuples = num_tuples;
 	pgcform->relpages = num_pages;
@@ -2301,11 +2300,6 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 			/* overwrite the existing statistics in the tuple */
 			if (VacAttrStatsEqValid(stats))
 			{
-				Buffer		abuffer = scan->rs_cbuf;
-
-				vc_setpagelock(ad, ItemPointerGetBlockNumber(&atup->t_self));
-				attp = (Form_pg_attribute) GETSTRUCT(atup);
-
 				if (stats->nonnull_cnt + stats->null_cnt == 0 ||
 					(stats->null_cnt <= 1 && stats->best_cnt == 1))
 					selratio = 0;
@@ -2338,7 +2332,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				 * Invalidate the cache for the tuple and write the buffer
 				 */
 				RelationInvalidateHeapTuple(ad, atup);
-				WriteNoReleaseBuffer(abuffer);
+				WriteNoReleaseBuffer(scan->rs_cbuf);
 
 				/* DO PG_STATISTIC INSERTS */
 
@@ -2396,9 +2390,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 	 */
 	RelationInvalidateHeapTuple(rd, &rtup);
 
-	WriteNoReleaseBuffer(buffer);
-
-	ReleaseBuffer(buffer);
+	WriteBuffer(buffer);
 
 	heap_close(rd);
 }
@@ -2447,12 +2439,6 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 
 	heap_endscan(scan);
 	heap_close(pgstatistic);
-}
-
-static void
-vc_setpagelock(Relation rel, BlockNumber blkno)
-{
-	LockPage(rel, blkno, ExclusiveLock);
 }
 
 /*

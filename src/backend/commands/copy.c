@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.78 1999/05/26 12:55:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.79 1999/05/29 10:25:29 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,7 +381,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	int32		ntuples;
 	TupleDesc	tupDesc;
 
-	scandesc = heap_beginscan(rel, 0, SnapshotNow, 0, NULL);
+	scandesc = heap_beginscan(rel, 0, QuerySnapshot, 0, NULL);
 
 	attr_count = rel->rd_att->natts;
 	attr = rel->rd_att->attrs;
@@ -1363,7 +1363,7 @@ CountTuples(Relation relation)
 
 	int			i;
 
-	scandesc = heap_beginscan(relation, 0, SnapshotNow, 0, NULL);
+	scandesc = heap_beginscan(relation, 0, QuerySnapshot, 0, NULL);
 
 	i = 0;
 	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))

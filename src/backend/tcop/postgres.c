@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.117 1999/05/26 12:55:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.118 1999/05/29 10:25:30 vadim Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -73,6 +73,8 @@
 #include "utils/rel.h"
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
+#include "nodes/parsenodes.h"
+#include "../backend/parser/parse.h"
 
 #ifdef NOT_USED
 #include "nodes/relation.h"
@@ -715,6 +717,13 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			else if (Verbose)
 				TPRINTF(TRACE_VERBOSE, "ProcessUtility");
 
+			/*
+			 * We have to set query SnapShot in the case of FETCH or COPY TO.
+			 */
+			if (nodeTag(querytree->utilityStmt) == T_FetchStmt ||
+				(nodeTag(querytree->utilityStmt) == T_CopyStmt && 
+				((CopyStmt *)(querytree->utilityStmt))->direction != FROM))
+				SetQuerySnapshot();
 			ProcessUtility(querytree->utilityStmt, dest);
 		}
 		else
@@ -1527,7 +1536,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.117 $ $Date: 1999/05/26 12:55:55 $\n");
+		puts("$Revision: 1.118 $ $Date: 1999/05/29 10:25:30 $\n");
 	}
 
 	/* ----------------

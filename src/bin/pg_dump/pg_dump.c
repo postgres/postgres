@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.113 1999/05/27 16:29:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.114 1999/05/29 10:25:31 vadim Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -190,15 +190,6 @@ isViewRule(char *relname)
 	int			ntups;
 	char		query[MAX_QUERY_SIZE];
 
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
-
 	sprintf(query, "select relname from pg_class, pg_rewrite "
 			"where pg_class.oid = ev_class "
 			"and pg_rewrite.ev_type = '1' "
@@ -214,8 +205,6 @@ isViewRule(char *relname)
 
 	ntups = PQntuples(res);
 
-	PQclear(res);
-	res = PQexec(g_conn, "end");
 	PQclear(res);
 	return ntups > 0 ? TRUE : FALSE;
 }
@@ -722,6 +711,28 @@ main(int argc, char **argv)
 		exit_nicely(g_conn);
 	}
 
+	/*
+	 * Start serializable transaction to dump consistent data
+	 */
+	{
+		PGresult   *res;
+
+		res = PQexec(g_conn, "begin");
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			exit_nicely(g_conn);
+		}
+		PQclear(res);
+		res = PQexec(g_conn, "set transaction isolation level serializable");
+		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "SET TRANSACTION command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
+			exit_nicely(g_conn);
+		}
+		PQclear(res);
+	}
+
 	g_last_builtin_oid = findLastBuiltinOid();
 
 	if (oids == true)
@@ -788,15 +799,6 @@ getTypes(int *numTypes)
 	int			i_typrelid;
 	int			i_typbyval;
 	int			i_usename;
-
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
 
 	/* find all base types */
 
@@ -878,9 +880,6 @@ getTypes(int *numTypes)
 
 	PQclear(res);
 
-	res = PQexec(g_conn, "end");
-	PQclear(res);
-
 	return tinfo;
 }
 
@@ -922,14 +921,6 @@ getOperators(int *numOprs)
 	 * find all operators, including builtin operators, filter out
 	 * system-defined operators at dump-out time
 	 */
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
 
 	sprintf(query, "SELECT pg_operator.oid, oprname, oprkind, oprcode, "
 			"oprleft, oprright, oprcom, oprnegate, oprrest, oprjoin, "
@@ -983,8 +974,6 @@ getOperators(int *numOprs)
 		oprinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 	}
 
-	PQclear(res);
-	res = PQexec(g_conn, "end");
 	PQclear(res);
 
 	return oprinfo;
@@ -1259,15 +1248,6 @@ getAggregates(int *numAggs)
 
 	/* find all user-defined aggregates */
 
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
-
 	sprintf(query,
 			"SELECT pg_aggregate.oid, aggname, aggtransfn1, aggtransfn2, "
 			"aggfinalfn, aggtranstype1, aggbasetype, aggtranstype2, "
@@ -1316,8 +1296,6 @@ getAggregates(int *numAggs)
 
 	PQclear(res);
 
-	res = PQexec(g_conn, "end");
-	PQclear(res);
 	return agginfo;
 }
 
@@ -1351,15 +1329,6 @@ getFuncs(int *numFuncs)
 	int			i_usename;
 
 	/* find all user-defined funcs */
-
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
 
 	sprintf(query,
 			"SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
@@ -1414,8 +1383,6 @@ getFuncs(int *numFuncs)
 	}
 
 	PQclear(res);
-	res = PQexec(g_conn, "end");
-	PQclear(res);
 
 	return finfo;
 
@@ -1454,15 +1421,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	 *
 	 * we ignore tables that start with xinv
 	 */
-
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
 
 	sprintf(query,
 			"SELECT pg_class.oid, relname, relkind, relacl, usename, "
@@ -1760,8 +1718,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	}
 
 	PQclear(res);
-	res = PQexec(g_conn, "end");
-	PQclear(res);
 
 	return tblinfo;
 
@@ -1789,14 +1745,6 @@ getInherits(int *numInherits)
 	int			i_inhparent;
 
 	/* find all the inheritance information */
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
 
 	sprintf(query, "SELECT inhrel, inhparent from pg_inherits");
 
@@ -1823,8 +1771,6 @@ getInherits(int *numInherits)
 		inhinfo[i].inhparent = strdup(PQgetvalue(res, i, i_inhparent));
 	}
 
-	PQclear(res);
-	res = PQexec(g_conn, "end");
 	PQclear(res);
 	return inhinfo;
 }
@@ -1977,15 +1923,6 @@ getIndices(int *numIndices)
 	 * this is a 4-way join !!
 	 */
 
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-	PQclear(res);
-
 	sprintf(query,
 		  "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
 			"i.indproc, i.indkey, i.indclass, "
@@ -2030,8 +1967,6 @@ getIndices(int *numIndices)
 					  (const char *) PQgetvalue(res, i, i_indclass));
 		indinfo[i].indisunique = strdup(PQgetvalue(res, i, i_indisunique));
 	}
-	PQclear(res);
-	res = PQexec(g_conn, "end");
 	PQclear(res);
 	return indinfo;
 }
@@ -2138,14 +2073,6 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 	int			i,
 				fidx;
 
-	res = PQexec(g_conn, "begin");
-	if (!res ||
-		PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-		exit_nicely(g_conn);
-	}
-
 	sprintf(query, "SELECT * FROM pg_language "
 			"WHERE lanispl "
 			"ORDER BY oid");
@@ -2198,8 +2125,6 @@ dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 
 	PQclear(res);
 
-	res = PQexec(g_conn, "end");
-	PQclear(res);
 }
 
 /*
@@ -2262,15 +2187,6 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 		int			i_lanname;
 		char		query[256];
 
-		res = PQexec(g_conn, "begin");
-		if (!res ||
-			PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "dumpOneFunc(): BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-			exit_nicely(g_conn);
-		}
-		PQclear(res);
-
 		sprintf(query, "SELECT lanname FROM pg_language "
 				"WHERE oid = %u",
 				finfo[i].lang);
@@ -2296,8 +2212,6 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 
 		PQclear(res);
 
-		res = PQexec(g_conn, "end");
-		PQclear(res);
 	}
 
 	if (dropSchema)
@@ -3330,14 +3244,6 @@ dumpRules(FILE *fout, const char *tablename,
 	{
 		if (tablename && strcmp(tblinfo[t].relname, tablename))
 			continue;
-		res = PQexec(g_conn, "begin");
-		if (!res ||
-			PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "BEGIN command failed.  Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-			exit_nicely(g_conn);
-		}
-		PQclear(res);
 
 		/*
 		 * Get all rules defined for this table
@@ -3366,9 +3272,6 @@ dumpRules(FILE *fout, const char *tablename,
 		for (i = 0; i < nrules; i++)
 			fprintf(fout, "%s\n", PQgetvalue(res, i, i_definition));
 
-		PQclear(res);
-
-		res = PQexec(g_conn, "end");
 		PQclear(res);
 	}
 }
