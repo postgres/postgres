@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Oct 12 13:33:23 EDT 2000
+   Last updated: Thu Oct 12 17:21:11 EDT 2000
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -690,7 +690,7 @@ Maximum number of indexes on a table?    unlimited
    
    The row length limit will be removed in 7.1.
    
-    4.7)How much database disk space is required to store data from a typical
+    4.7) How much database disk space is required to store data from a typical
     text file?
     
    A PostgreSQL database may need six-and-a-half times the disk space
