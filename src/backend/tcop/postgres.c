@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.358 2003/08/12 18:23:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.359 2003/08/12 18:52:38 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2023,7 +2023,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	GucSource	gucsource;
 	char	   *tmp;
 	int			firstchar;
-	StringInfo	input_message;
+	StringInfoData	input_message;
 	volatile bool send_rfq = true;
 
 	/*
@@ -2646,7 +2646,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.358 $ $Date: 2003/08/12 18:23:21 $\n");
+		puts("$Revision: 1.359 $ $Date: 2003/08/12 18:52:38 $\n");
 	}
 
 	/*
@@ -2765,35 +2765,36 @@ PostgresMain(int argc, char *argv[], const char *username)
 		MemoryContextSwitchTo(MessageContext);
 		MemoryContextResetAndDeleteChildren(MessageContext);
 
-		input_message = makeStringInfo();
+		initStringInfo(&input_message);
 
 		/*
-		 * (1) tell the frontend we're ready for a new query.
+		 * (1) If we've reached idle state, tell the frontend we're ready
+		 * for a new query.
 		 *
 		 * Note: this includes fflush()'ing the last of the prior output.
+		 *
+		 * This is also a good time to send collected statistics to the
+		 * collector, and to update the PS stats display.  We avoid doing
+		 * those every time through the message loop because it'd slow down
+		 * processing of batched messages.
 		 */
 		if (send_rfq)
 		{
+			pgstat_report_tabstat();
+
+			if (IsTransactionBlock())
+			{
+				set_ps_display("idle in transaction");
+				pgstat_report_activity("<IDLE> in transaction");
+			}
+			else
+			{
+				set_ps_display("idle");
+				pgstat_report_activity("<IDLE>");
+			}
+
 			ReadyForQuery(whereToSendOutput);
 			send_rfq = false;
-		}
-
-		/* ----------
-		 * Tell the statistics collector what we've collected
-		 * so far.
-		 * ----------
-		 */
-		pgstat_report_tabstat();
-
-		if (IsTransactionBlock())
-		{
-			set_ps_display("idle in transaction");
-			pgstat_report_activity("<IDLE> in transaction");
-		}
-		else
-		{
-			set_ps_display("idle");
-			pgstat_report_activity("<IDLE>");
 		}
 
 		/*
@@ -2815,7 +2816,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/*
 		 * (3) read a command (loop blocks here)
 		 */
-		firstchar = ReadCommand(input_message);
+		firstchar = ReadCommand(&input_message);
 
 		/*
 		 * (4) disable async signal conditions again.
@@ -2848,8 +2849,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 				{
 					const char *query_string;
 
-					query_string = pq_getmsgstring(input_message);
-					pq_getmsgend(input_message);
+					query_string = pq_getmsgstring(&input_message);
+					pq_getmsgend(&input_message);
 
 					exec_simple_query(query_string);
 
@@ -2864,18 +2865,18 @@ PostgresMain(int argc, char *argv[], const char *username)
 					int			numParams;
 					Oid		   *paramTypes = NULL;
 
-					stmt_name = pq_getmsgstring(input_message);
-					query_string = pq_getmsgstring(input_message);
-					numParams = pq_getmsgint(input_message, 2);
+					stmt_name = pq_getmsgstring(&input_message);
+					query_string = pq_getmsgstring(&input_message);
+					numParams = pq_getmsgint(&input_message, 2);
 					if (numParams > 0)
 					{
 						int			i;
 
 						paramTypes = (Oid *) palloc(numParams * sizeof(Oid));
 						for (i = 0; i < numParams; i++)
-							paramTypes[i] = pq_getmsgint(input_message, 4);
+							paramTypes[i] = pq_getmsgint(&input_message, 4);
 					}
-					pq_getmsgend(input_message);
+					pq_getmsgend(&input_message);
 
 					exec_parse_message(query_string, stmt_name,
 									   paramTypes, numParams);
@@ -2888,7 +2889,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				 * this message is complex enough that it seems best to
 				 * put the field extraction out-of-line
 				 */
-				exec_bind_message(input_message);
+				exec_bind_message(&input_message);
 				break;
 
 			case 'E':			/* execute */
@@ -2896,9 +2897,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 					const char *portal_name;
 					int			max_rows;
 
-					portal_name = pq_getmsgstring(input_message);
-					max_rows = pq_getmsgint(input_message, 4);
-					pq_getmsgend(input_message);
+					portal_name = pq_getmsgstring(&input_message);
+					max_rows = pq_getmsgint(&input_message, 4);
+					pq_getmsgend(&input_message);
 
 					exec_execute_message(portal_name, max_rows);
 				}
@@ -2914,7 +2915,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/* switch back to message context */
 				MemoryContextSwitchTo(MessageContext);
 
-				if (HandleFunctionRequest(input_message) == EOF)
+				if (HandleFunctionRequest(&input_message) == EOF)
 				{
 					/* lost frontend connection during F message input */
 
@@ -2939,9 +2940,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 					int			close_type;
 					const char *close_target;
 
-					close_type = pq_getmsgbyte(input_message);
-					close_target = pq_getmsgstring(input_message);
-					pq_getmsgend(input_message);
+					close_type = pq_getmsgbyte(&input_message);
+					close_target = pq_getmsgstring(&input_message);
+					pq_getmsgend(&input_message);
 
 					switch (close_type)
 					{
@@ -2987,9 +2988,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 					int			describe_type;
 					const char *describe_target;
 
-					describe_type = pq_getmsgbyte(input_message);
-					describe_target = pq_getmsgstring(input_message);
-					pq_getmsgend(input_message);
+					describe_type = pq_getmsgbyte(&input_message);
+					describe_target = pq_getmsgstring(&input_message);
+					pq_getmsgend(&input_message);
 
 					switch (describe_type)
 					{
@@ -3010,13 +3011,13 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'H':			/* flush */
-				pq_getmsgend(input_message);
+				pq_getmsgend(&input_message);
 				if (whereToSendOutput == Remote)
 					pq_flush();
 				break;
 
 			case 'S':			/* sync */
-				pq_getmsgend(input_message);
+				pq_getmsgend(&input_message);
 				finish_xact_command();
 				send_rfq = true;
 				break;
