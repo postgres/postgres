@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.166 2002/07/12 18:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.167 2002/07/15 01:57:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,12 +238,12 @@ do { \
 										   (void *)&(RELATION->rd_id), \
 										   HASH_REMOVE, NULL); \
 	if (idhentry == NULL) \
-		elog(WARNING, "trying to delete a reldesc that does not exist."); \
+		elog(WARNING, "trying to delete a rd_id reldesc that does not exist."); \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
 										   (void *)&(RELATION->rd_node), \
 										   HASH_REMOVE, NULL); \
 	if (nodentry == NULL) \
-		elog(WARNING, "trying to delete a reldesc that does not exist."); \
+		elog(WARNING, "trying to delete a rd_node reldesc that does not exist."); \
 	if (IsSystemNamespace(RelationGetNamespace(RELATION))) \
 	{ \
 		char *relname = RelationGetRelationName(RELATION); \
@@ -252,7 +252,7 @@ do { \
 												   relname, \
 												   HASH_REMOVE, NULL); \
 		if (namehentry == NULL) \
-			elog(WARNING, "trying to delete a reldesc that does not exist."); \
+			elog(WARNING, "trying to delete a relname reldesc that does not exist."); \
 	} \
 } while(0)
 
@@ -276,7 +276,7 @@ static HTAB *OpClassCache = NULL;
 
 /* non-export function prototypes */
 
-static void RelationClearRelation(Relation relation, bool rebuildIt);
+static void RelationClearRelation(Relation relation, bool rebuild);
 
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 static void RelationReloadClassinfo(Relation relation);
@@ -1652,7 +1652,7 @@ RelationReloadClassinfo(Relation relation)
  *	 it's told to do; callers must determine which they want.
  */
 static void
-RelationClearRelation(Relation relation, bool rebuildIt)
+RelationClearRelation(Relation relation, bool rebuild)
 {
 	MemoryContext oldcxt;
 
@@ -1719,7 +1719,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	 * moving the physical RelationData record (so that the someone's
 	 * pointer is still valid).
 	 */
-	if (!rebuildIt)
+	if (!rebuild)
 	{
 		/* ok to zap remaining substructure */
 		FreeTupleDesc(relation->rd_att);
@@ -1806,7 +1806,7 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 static void
 RelationFlushRelation(Relation relation)
 {
-	bool		rebuildIt;
+	bool		rebuild;
 
 	if (relation->rd_myxactonly)
 	{
@@ -1814,17 +1814,17 @@ RelationFlushRelation(Relation relation)
 		 * Local rels should always be rebuilt, not flushed; the relcache
 		 * entry must live until RelationPurgeLocalRelation().
 		 */
-		rebuildIt = true;
+		rebuild = true;
 	}
 	else
 	{
 		/*
 		 * Nonlocal rels can be dropped from the relcache if not open.
 		 */
-		rebuildIt = !RelationHasReferenceCountZero(relation);
+		rebuild = !RelationHasReferenceCountZero(relation);
 	}
 
-	RelationClearRelation(relation, rebuildIt);
+	RelationClearRelation(relation, rebuild);
 }
 
 /*
