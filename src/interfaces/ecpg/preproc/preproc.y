@@ -239,7 +239,7 @@ make_name(void)
 		VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE
+%token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP
 %token <ival>   ICONST PARAM
 %token <dval>   FCONST
 
@@ -4029,9 +4029,11 @@ connection_target: database_name opt_server opt_port
 		    mmerror(ET_ERROR, errortext);
 		  }
 
-		  if (strncmp($1, "unix", strlen("unix")) == 0 && strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0)
+		  if (strncmp($1, "unix", strlen("unix")) == 0 && 
+			strncmp($3 + strlen("//"), "localhost", strlen("localhost")) != 0 &&
+			strncmp($3 + strlen("//"), "127.0.0.1", strlen("127.0.0.1")) != 0)
 		  {
-		    sprintf(errortext, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 +strlen("//"));
+		    sprintf(errortext, "unix domain sockets only work on 'localhost' but not on '%9.9s'", $3 + strlen("//"));
                     mmerror(ET_ERROR, errortext);
 		  }
 
@@ -4087,7 +4089,8 @@ opt_server: server { $$ = $1; }
         | /* empty */ { $$ = EMPTY; }
 
 server_name: ColId   { $$ = $1; }
-        | ColId '.' server_name { 	$$ = make3_str($1, make_str("."), $3); }
+        | ColId '.' server_name { $$ = make3_str($1, make_str("."), $3); }
+	| IP			{ $$ = make_name(); }
 
 opt_port: ':' Iconst { $$ = make2_str(make_str(":"), $2); }
         | /* empty */ { $$ = EMPTY; }

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.61 2000/09/19 11:47:14 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.62 2000/09/21 11:56:07 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,6 +260,8 @@ elif	[eE][lL][iI][fF]
 endif	[eE][nN][dD][iI][fF]
 
 exec_sql		{exec}{space_or_nl}*{sql}{space_or_nl}*
+ipdigit			({digit}|{digit}{digit}|{digit}{digit}{digit})
+ip			{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
 
 /* Take care of cpp continuation lines */
 cppline			{space}*#(.*\\{line_end})*.*
@@ -515,6 +517,10 @@ cppline			{space}*#(.*\\{line_end})*.*
 						return FCONST;
 					}
 					return ICONST;
+				}
+<SQL>{ip}			{
+					yylval.str = mm_strdup((char*)yytext);
+					return IP;
 				}
 {decimal}		{
 					yylval.str = mm_strdup((char*)yytext);

@@ -262,7 +262,7 @@ static void
 ECPGtypeinfocache_push(struct ECPGtype_information_cache **cache, int oid, bool isarray, int lineno)
 {
 	struct ECPGtype_information_cache	*new_entry 
-						= ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
+						= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
 	new_entry->oid = oid;
 	new_entry->isarray = isarray;
 	new_entry->next = *cache;
@@ -989,7 +989,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.9 2000/09/20 13:25:51 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.10 2000/09/21 11:56:07 meskes Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

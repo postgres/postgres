@@ -42,7 +42,7 @@ exec sql end declare section;
                 ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect to unix:postgresql://localhost:5432/mm;
+	exec sql connect to unix:postgresql://127.0.0.1:5432/mm;
 
 	strcpy(msg, "create");
 	exec sql create table meskes(name char(8), born integer, age smallint, married date, children integer);
@@ -123,6 +123,7 @@ exec sql end declare section;
 
 	if (dbgs != NULL)
                 fclose(dbgs);
+
 
 	return (0);
 }

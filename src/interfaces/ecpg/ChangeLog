@@ -940,5 +940,9 @@ Mit Sep 20 12:40:27 PDT 2000
 	  backend NOTICEs.
 	- Added patch by Christof Petig <christof.petig@wtal.de> to cache
 	  type information.
+
+Don Sep 21 13:54:13 PDT 2000
+
+	- Enabled parser to accept ip addresses instead of host names.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
