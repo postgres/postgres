@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.400 2004/05/29 22:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.401 2004/05/30 03:50:11 tgl Exp $
  *
  * NOTES
  *
@@ -276,6 +276,8 @@ static DWORD WINAPI win32_sigchld_waiter(LPVOID param);
 static pid_t *win32_childPIDArray;
 static HANDLE *win32_childHNDArray;
 static unsigned long win32_numChildren = 0;
+
+HANDLE PostmasterHandle;
 #endif
 
 static pid_t backend_forkexec(Port *port);
@@ -748,6 +750,21 @@ PostmasterMain(int argc, char *argv[])
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
+
+	/*
+	 * Set up a handle that child processes can use to check whether the
+	 * postmaster is still running.
+	 */
+	if (DuplicateHandle(GetCurrentProcess(),
+						GetCurrentProcess(),
+						GetCurrentProcess(),
+						&PostmasterHandle,
+						0,
+						TRUE,
+						DUPLICATE_SAME_ACCESS) == 0)
+		ereport(FATAL,
+				(errmsg_internal("could not duplicate postmaster handle: %d",
+								 (int) GetLastError())));
 #endif
 
 	/*
@@ -3221,6 +3238,9 @@ write_backend_variables(char *filename, Port *port)
 
 	write_var(debug_flag, fp);
 	write_var(PostmasterPid, fp);
+#ifdef WIN32
+	write_var(PostmasterHandle, fp);
+#endif
 
 	StrNCpy(str_buf, my_exec_path, MAXPGPATH);
 	write_array_var(str_buf, fp);
@@ -3289,6 +3309,9 @@ read_backend_variables(char *filename, Port *port)
 
 	read_var(debug_flag, fp);
 	read_var(PostmasterPid, fp);
+#ifdef WIN32
+	read_var(PostmasterHandle, fp);
+#endif
 
 	read_array_var(str_buf, fp);
 	StrNCpy(my_exec_path, str_buf, MAXPGPATH);
@@ -3360,7 +3383,7 @@ ShmemBackendArrayRemove(pid_t pid)
 	}
 
 	ereport(WARNING,
-			(errmsg_internal("unable to find backend entry with pid %d",
+			(errmsg_internal("could not find backend entry with pid %d",
 							 (int) pid)));
 }
 
@@ -3411,22 +3434,22 @@ win32_forkexec(const char *path, char *argv[])
 		win32_AddChild(pi.dwProcessId, pi.hProcess);
 	}
 
-	if (!DuplicateHandle(GetCurrentProcess(),
-						 pi.hProcess,
-						 GetCurrentProcess(),
-						 &childHandleCopy,
-						 0,
-						 FALSE,
-						 DUPLICATE_SAME_ACCESS))
+	if (DuplicateHandle(GetCurrentProcess(),
+						pi.hProcess,
+						GetCurrentProcess(),
+						&childHandleCopy,
+						0,
+						FALSE,
+						DUPLICATE_SAME_ACCESS) == 0)
 		ereport(FATAL,
-				(errmsg_internal("failed to duplicate child handle: %d",
+				(errmsg_internal("could not duplicate child handle: %d",
 								 (int) GetLastError())));
 
 	waiterThread = CreateThread(NULL, 64 * 1024, win32_sigchld_waiter,
 								(LPVOID) childHandleCopy, 0, NULL);
 	if (!waiterThread)
 		ereport(FATAL,
-				(errmsg_internal("failed to create sigchld waiter thread: %d",
+				(errmsg_internal("could not create sigchld waiter thread: %d",
 								 (int) GetLastError())));
 	CloseHandle(waiterThread);
 
@@ -3460,7 +3483,7 @@ win32_AddChild(pid_t pid, HANDLE handle)
 	}
 	else
 		ereport(FATAL,
-				(errmsg_internal("unable to add child entry with pid %lu",
+				(errmsg_internal("no room for child entry with pid %lu",
 								 (unsigned long) pid)));
 }
 
@@ -3486,7 +3509,7 @@ win32_RemoveChild(pid_t pid)
 	}
 
 	ereport(WARNING,
-			(errmsg_internal("unable to find child entry with pid %lu",
+			(errmsg_internal("could not find child entry with pid %lu",
 							 (unsigned long) pid)));
 }
 
@@ -3562,7 +3585,7 @@ win32_sigchld_waiter(LPVOID param)
 	if (r == WAIT_OBJECT_0)
 		pg_queue_signal(SIGCHLD);
 	else
-		fprintf(stderr, "ERROR: Failed to wait on child process handle: %i\n",
+		fprintf(stderr, "ERROR: failed to wait on child process handle: %d\n",
 				(int) GetLastError());
 	CloseHandle(procHandle);
 	return 0;
