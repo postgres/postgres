@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.49 2001/04/18 20:53:08 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.50 2001/05/06 21:15:51 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -140,6 +140,9 @@ HandleSlashCmds(const char *line,
 		new_cmd[1] = '\0';
 
 		status = exec_command(new_cmd, line + 1, &continue_parse, query_buf);
+
+		/* continue_parse must be relative to my_line for calculation below */
+		continue_parse += my_line - line;
 
 #if 0							/* turned out to be too annoying */
 		if (status != CMD_UNKNOWN && isalpha((unsigned char) new_cmd[0]))
