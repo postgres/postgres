@@ -72,7 +72,7 @@ user.tar:
 	(cd sgml; $(TAR) -cf ../$@ $(TAREXCLUDE) *.html *.htm)
 
 man.tar:
-	$(MAKE) -C sgml man1 manl
+	$(MAKE) -C sgml man
 	$(TAR) -cf $@ -C sgml man1 manl
 
 # Generic production rules
