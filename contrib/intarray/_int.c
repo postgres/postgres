@@ -4,11 +4,10 @@
   format for these routines is dictated by Postgres architecture.
 ******************************************************************************/
 
-#include <stdio.h>
-#include <float.h>
-#include <string.h>
-
 #include "postgres.h"
+
+#include <float.h>
+
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"
@@ -22,7 +21,7 @@
 
 #define max(a,b)        ((a) >  (b) ? (a) : (b))
 #define min(a,b)        ((a) <= (b) ? (a) : (b))
-#define abs(a)          ((a) <  (0) ? (-a) : (a))
+#define abs(a)          ((a) <  (0) ? -(a) : (a))
 
 #define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
 #ifdef PGSQL71
@@ -53,7 +52,7 @@ typedef char* BITVECP;
 
 #define NULLIFY(a) MemSet( a, 0, sizeof( BITVEC ) )
 #define NEWSIG(a) \
-        a=(BITVECP) malloc( sizeof( BITVEC );\
+        a=(BITVECP) malloc( sizeof( BITVEC ) );\
         NULLIFY(a);
 
 #define LOOPBYTE(a) \
@@ -66,10 +65,11 @@ typedef char* BITVECP;
                 a;\
         }
 
-#define getbytebit(x,i) ( *( (char*)(x) + (int)( i / BITBYTE ) ) )
-#define clrbit(x,i)   getbytebit(x,i) &= ~( 0x01 << ( i % BITBYTE ) )
-#define setbit(x,i)   getbytebit(x,i) |=  ( 0x01 << ( i % BITBYTE ) )
-#define getbit(x,i) ( getbytebit(x,i) >> ( i % BITBYTE ) & 0x01 )
+/* beware of multiple evaluation of arguments to these macros! */
+#define GETBYTEBIT(x,i) ( *( (BITVECP)(x) + (int)( (i) / BITBYTE ) ) )
+#define CLRBIT(x,i)   GETBYTEBIT(x,i) &= ~( 0x01 << ( (i) % BITBYTE ) )
+#define SETBIT(x,i)   GETBYTEBIT(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
+#define GETBIT(x,i) ( (GETBYTEBIT(x,i) >> ( (i) % BITBYTE )) & 0x01 )
 
 #define union_sig(a,b,r) LOOPBYTE(r[i] = a[i] | b[i])
 #define inter_sig(a,b,r) LOOPBYTE(r[i] = a[i] & b[i])
@@ -97,7 +97,7 @@ static void printbitvec( BITVEC bv ) {
         int i;
 	char str[ SIGLENBIT+1 ];
 	str[ SIGLENBIT ] ='\0';
-        LOOPBIT( str[i] = ( getbit(bv,i) ) ? '1' : '0' );
+        LOOPBIT( str[i] = ( GETBIT(bv,i) ) ? '1' : '0' );
 	
 	elog(NOTICE,"BV: %s", str);
 }
@@ -727,7 +727,7 @@ gensign(BITVEC sign, int * a, int len) {
         int i;
         NULLIFY(sign);
         for(i=0; i<len; i++) {
-                setbit( sign, *a%SIGLENBIT );
+                SETBIT( sign, (*a)%SIGLENBIT );
                 a++;
         }
 }
@@ -770,7 +770,7 @@ rt__intbig_size(ArrayType *a, float* sz) {
 	}
 
 	bv = SIGPTR(a);
-	LOOPBIT( len += getbit(bv, i) );
+	LOOPBIT( len += GETBIT(bv, i) );
 	*sz = (float) len;
 	return;
 }
@@ -780,8 +780,9 @@ _intbig_union(ArrayType *a, ArrayType *b) {
         ArrayType * r = NULL;
         BITVECP da, db, dr;
         int i;
-       
+
         if ( ARRISNULL( a ) && ARRISNULL( b ) ) return new_intArrayType(0);
+
         if ( ARRISNULL( a ) ) {
 		r = copy_intArrayType( b );
 		return r;
@@ -876,7 +877,7 @@ g_intbig_compress(GISTENTRY *entry) {
 	gensign( SIGPTR( r ), 
 		 ARRPTR ( in ),
 		 ARRSIZE( in ) );
-	
+
 	gistentryinit(*retval, (char *)r, entry->rel, entry->page, entry->offset, VARSIZE( r ), FALSE);
 
 #ifdef PGSQL71	
@@ -971,9 +972,11 @@ g_intbig_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result){
 bool             
 g_intbig_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy) {
     bool retval;
-    ArrayType * q = new_intArrayType( SIGLENINT );
+    ArrayType * q;
 
     if ( ARRISNULL( query ) ) return FALSE;
+
+    q = new_intArrayType( SIGLENINT );
 
     gensign( 	SIGPTR( q ),
 		ARRPTR( query ),
@@ -1060,7 +1063,7 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
     pfree((char *)ud);
 
 #ifdef GIST_DEBUG
-    elog(NOTICE, "--penalty\t%g", *result);
+    elog(NOTICE, "--penalty\t%g\t%g\t%g", *result, tmp1, tmp2);
 #endif
 
     return(result);
@@ -1160,6 +1163,7 @@ _int_common_picksplit(bytea *entryvec,
      */
     
     maxoff = OffsetNumberNext(maxoff);
+
     for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i)) {
 
 	
