@@ -43,10 +43,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   static final int iInt4Oid = 23;	// OID for int4
   static final int VARHDRSZ =  4;	// length for int4
 
-  // This is a default value for remarks
-  private static final byte defaultRemarks[]="no remarks".getBytes();
-
-
   public DatabaseMetaData(Connection conn)
   {
     this.connection = conn;
@@ -1517,8 +1513,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
 
-    byte remarks[] = defaultRemarks;
-
     f[0] = new Field(connection, "PROCEDURE_CAT",   iVarcharOid, 32);
     f[1] = new Field(connection, "PROCEDURE_SCHEM", iVarcharOid, 32);
     f[2] = new Field(connection, "PROCEDURE_NAME",  iVarcharOid, 32);
@@ -1540,7 +1534,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	tuple[1] = null;			// Schema name
 	tuple[2] = r.getBytes(1);		// Procedure name
 	tuple[3] = tuple[4] = tuple[5] = null;	// Reserved
-	tuple[6] = remarks;			// Remarks
+	tuple[6] = null;			// Remarks
 
 	if (r.getBoolean(2))
 	  tuple[7] = Integer.toString(java.sql.DatabaseMetaData.procedureReturnsResult).getBytes();
@@ -1684,6 +1678,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
     // Now form the query
     StringBuffer sql = new StringBuffer("select relname,oid,relkind from pg_class where (");
+
     boolean notFirst=false;
     for(int i=0;i<types.length;i++) {
       for(int j=0;j<getTableTypes.length;j++)
@@ -1704,19 +1699,24 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     // Now run the query
     r = connection.ExecSQL(sql.toString());
 
-    byte remarks[];
-
     while (r.next())
       {
 	byte[][] tuple = new byte[5][0];
 
 	// Fetch the description for the table (if any)
-	java.sql.ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(2));
+	String getDescriptionStatement =
+		connection.haveMinimumServerVersion("7.2") ?
+		"select obj_description("+r.getInt(2)+",'pg_class')" :
+		"select description from pg_description where objoid=" + r.getInt(2);
+
+	java.sql.ResultSet dr = connection.ExecSQL(getDescriptionStatement);
+
+    byte remarks[] = null;
+
 	if(((org.postgresql.ResultSet)dr).getTupleCount()==1) {
 	  dr.next();
 	  remarks = dr.getBytes(1);
-	} else
-	  remarks = defaultRemarks;
+	}
 	dr.close();
 
 	String relKind;
@@ -1919,22 +1919,35 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     if (columnNamePattern == null) columnNamePattern="%";
 
     // Now form the query
-    // Modified by Stefan Andreasen <stefan@linux.kapow.dk>
-    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod,d.adsrc from pg_class c,pg_attribute a,pg_attrdef d where a.attrelid=c.oid and c.relname like '"+tableNamePattern.toLowerCase()+"' and a.attname like '"+columnNamePattern.toLowerCase()+"' and a.attnum>0 and c.oid=d.adrelid and d.adnum=a.attnum order by c.relname,a.attnum");
+	String query =
+	    "select " +
+		(connection.haveMinimumServerVersion("7.2") ? "a.attrelid" : "a.oid") +
+		",c.relname,a.attname,a.atttypid," +
+		"a.attnum,a.attnotnull,a.attlen,a.atttypmod,d.adsrc from pg_class c," +
+		"pg_attribute a,pg_attrdef d where a.attrelid=c.oid and " +
+		"c.relname like '"+tableNamePattern.toLowerCase()+"' and " +
+		"a.attname like '"+columnNamePattern.toLowerCase()+"' and " +
+		"a.attnum>0 and c.oid=d.adrelid and d.adnum=a.attnum " +
+		"order by c.relname,a.attnum";
 
-    byte remarks[];
+    r = connection.ExecSQL(query);
 
     while(r.next()) {
 	byte[][] tuple = new byte[18][0];
 
 	// Fetch the description for the table (if any)
-	java.sql.ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(1));
+	String getDescriptionStatement =
+		connection.haveMinimumServerVersion("7.2") ?
+		"select col_description(" + r.getInt(1) + "," + r.getInt(5) + ")" :
+	    "select description from pg_description where objoid=" + r.getInt(1);
+
+	java.sql.ResultSet dr = connection.ExecSQL(getDescriptionStatement);
+
 	if(((org.postgresql.ResultSet)dr).getTupleCount()==1) {
 	  dr.next();
 	  tuple[11] = dr.getBytes(1);
 	} else
-	  tuple[11] = defaultRemarks;
-
+		tuple[11] = null;
 	dr.close();
 
 	tuple[0] = "".getBytes();	// Catalog name
@@ -1985,7 +1998,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     r.close();
     return new ResultSet(connection, f, v, "OK", 1);
   }
-
   /**
    * Get a description of the access rights for a table's columns.
    *
