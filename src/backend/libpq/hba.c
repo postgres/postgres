@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.95 2003/03/20 03:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.96 2003/04/03 21:25:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,7 +387,7 @@ get_group_line(const char *group)
 /*
  * Lookup a user name in the pg_shadow file
  */
-List	  **
+List **
 get_user_line(const char *user)
 {
 	return (List **) bsearch((void *) user,
@@ -401,7 +401,7 @@ get_user_line(const char *user)
 /*
  * Check group for a specific user.
  */
-static int
+static bool
 check_group(char *group, char *user)
 {
 	List	  **line,
@@ -411,16 +411,16 @@ check_group(char *group, char *user)
 	{
 		foreach(l, lnext(lnext(*line)))
 			if (strcmp(lfirst(l), user) == 0)
-			return 1;
+				return true;
 	}
 
-	return 0;
+	return false;
 }
 
 /*
  * Check comma user list for a specific user, handle group names.
  */
-static int
+static bool
 check_user(char *user, char *param_str)
 {
 	char	   *tok;
@@ -430,20 +430,20 @@ check_user(char *user, char *param_str)
 		if (tok[0] == '+')
 		{
 			if (check_group(tok + 1, user))
-				return 1;
+				return true;
 		}
 		else if (strcmp(tok, user) == 0 ||
 				 strcmp(tok, "all") == 0)
-			return 1;
+			return true;
 	}
 
-	return 0;
+	return false;
 }
 
 /*
  * Check to see if db/user combination matches param string.
  */
-static int
+static bool
 check_db(char *dbname, char *user, char *param_str)
 {
 	char	   *tok;
@@ -451,21 +451,21 @@ check_db(char *dbname, char *user, char *param_str)
 	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
 	{
 		if (strcmp(tok, "all") == 0)
-			return 1;
+			return true;
 		else if (strcmp(tok, "sameuser") == 0)
 		{
 			if (strcmp(dbname, user) == 0)
-				return 1;
+				return true;
 		}
 		else if (strcmp(tok, "samegroup") == 0)
 		{
 			if (check_group(dbname, user))
-				return 1;
+				return true;
 		}
 		else if (strcmp(tok, dbname) == 0)
-			return 1;
+			return true;
 	}
-	return 0;
+	return false;
 }
 
 
@@ -752,13 +752,18 @@ user_openfile(void)
  *	 Load group/user name mapping file
  */
 void
-load_group()
+load_group(void)
 {
 	FILE	   *group_file;
 	List	   *line;
 
+	/* Discard any old data */
 	if (group_lines)
 		free_lines(&group_lines);
+	if (group_sorted)
+		pfree(group_sorted);
+	group_sorted = NULL;
+	group_length = 0;
 
 	group_file = group_openfile();
 	if (!group_file)
@@ -767,8 +772,6 @@ load_group()
 	FreeFile(group_file);
 
 	/* create sorted lines for binary searching */
-	if (group_sorted)
-		pfree(group_sorted);
 	group_length = length(group_lines);
 	if (group_length)
 	{
@@ -779,10 +782,11 @@ load_group()
 		foreach(line, group_lines)
 			group_sorted[i++] = lfirst(line);
 
-		qsort((void *) group_sorted, group_length, sizeof(List *), user_group_qsort_cmp);
+		qsort((void *) group_sorted,
+			  group_length,
+			  sizeof(List *),
+			  user_group_qsort_cmp);
 	}
-	else
-		group_sorted = NULL;
 }
 
 
@@ -790,13 +794,18 @@ load_group()
  *	 Load user/password mapping file
  */
 void
-load_user()
+load_user(void)
 {
 	FILE	   *user_file;
 	List	   *line;
 
+	/* Discard any old data */
 	if (user_lines)
 		free_lines(&user_lines);
+	if (user_sorted)
+		pfree(user_sorted);
+	user_sorted = NULL;
+	user_length = 0;
 
 	user_file = user_openfile();
 	if (!user_file)
@@ -805,8 +814,6 @@ load_user()
 	FreeFile(user_file);
 
 	/* create sorted lines for binary searching */
-	if (user_sorted)
-		pfree(user_sorted);
 	user_length = length(user_lines);
 	if (user_length)
 	{
@@ -817,10 +824,11 @@ load_user()
 		foreach(line, user_lines)
 			user_sorted[i++] = lfirst(line);
 
-		qsort((void *) user_sorted, user_length, sizeof(List *), user_group_qsort_cmp);
+		qsort((void *) user_sorted,
+			  user_length,
+			  sizeof(List *),
+			  user_group_qsort_cmp);
 	}
-	else
-		user_sorted = NULL;
 }
 
 
@@ -848,11 +856,9 @@ load_hba(void)
 
 	file = AllocateFile(conf_file, "r");
 	if (file == NULL)
-	{
 		elog(FATAL,
 			 "load_hba: Unable to open authentication config file \"%s\": %m",
 			 conf_file);
-	}
 
 	hba_lines = tokenize_file(file);
 	FreeFile(file);
