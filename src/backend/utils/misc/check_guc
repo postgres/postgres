@@ -19,15 +19,11 @@
 INTENTIONALLY_NOT_INCLUDED="pre_auth_delay lc_messages lc_monetary \
 lc_time lc_numeric fixbtree"
 
-#self_path stolen from pg_ctl
-self_path=`echo "$0" | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
-PATH_TO_GUC="$self_path"
-
 ### What options are listed in postgresql.conf.sample, but don't appear 
 ### in guc.h?
 
 # grab everything that looks like a setting and convert it to lower case
-SETTINGS=`grep ' =' $PATH_TO_GUC/postgresql.conf.sample | grep -v '^# ' | \
+SETTINGS=`grep ' =' postgresql.conf.sample | grep -v '^# ' | \
           sed -e 's/^#//' | awk '{print $1}'`
 SETTINGS=`echo "$SETTINGS" | tr 'A-Z' 'a-z'`
 
@@ -40,7 +36,7 @@ for i in $SETTINGS ; do
     fi
   done
   if [ "0" = "$hidden" ] ; then
-    grep -i $i $PATH_TO_GUC/guc.c > /dev/null; 
+    grep -i $i guc.c > /dev/null; 
     if [ ! $? = 0 ] ; then 
       echo "$i seems to be missing from guc.c"; 
     fi; 
@@ -52,7 +48,7 @@ done
 
 # grab everything that looks like a setting and convert it to lower case
 
-SETTINGS=`grep '{ .*PGC_' $PATH_TO_GUC/guc.c | awk '{print $2}' | \
+SETTINGS=`grep '{ .*PGC_' guc.c | awk '{print $2}' | \
           sed -e 's/"//g' -e 's/,//'`
 SETTINGS=`echo "$SETTINGS" | tr 'A-Z' 'a-z'`
 
@@ -64,7 +60,7 @@ for i in $SETTINGS ; do
     fi
   done
   if [ "0" = "$hidden" ] ; then
-    grep -i $i $PATH_TO_GUC/postgresql.conf.sample > /dev/null;
+    grep -i $i postgresql.conf.sample > /dev/null;
     if [ ! $? = 0 ] ; then
       echo "$i seems to be missing from postgresql.conf.sample";
     fi
