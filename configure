@@ -6358,7 +6358,8 @@ done
 fi
 
 if test "$with_krb5" = yes ; then
-  echo "$as_me:$LINENO: checking for library containing com_err" >&5
+  if test "$PORTNAME" != "win32"; then
+     echo "$as_me:$LINENO: checking for library containing com_err" >&5
 echo $ECHO_N "checking for library containing com_err... $ECHO_C" >&6
 if test "${ac_cv_search_com_err+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6470,7 +6471,7 @@ echo "$as_me: error: could not find function 'com_err' required for Kerberos 5" 
    { (exit 1); exit 1; }; }
 fi
 
-  echo "$as_me:$LINENO: checking for library containing krb5_encrypt" >&5
+     echo "$as_me:$LINENO: checking for library containing krb5_encrypt" >&5
 echo $ECHO_N "checking for library containing krb5_encrypt... $ECHO_C" >&6
 if test "${ac_cv_search_krb5_encrypt+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6582,7 +6583,7 @@ echo "$as_me: error: could not find function 'krb5_encrypt' required for Kerbero
    { (exit 1); exit 1; }; }
 fi
 
-  echo "$as_me:$LINENO: checking for library containing krb5_sendauth" >&5
+     echo "$as_me:$LINENO: checking for library containing krb5_sendauth" >&5
 echo $ECHO_N "checking for library containing krb5_sendauth... $ECHO_C" >&6
 if test "${ac_cv_search_krb5_sendauth+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -6694,6 +6695,120 @@ echo "$as_me: error: could not find function 'krb5_sendauth' required for Kerber
    { (exit 1); exit 1; }; }
 fi
 
+  else
+     echo "$as_me:$LINENO: checking for library containing com_err" >&5
+echo $ECHO_N "checking for library containing com_err... $ECHO_C" >&6
+if test "${ac_cv_search_com_err+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_func_search_save_LIBS=$LIBS
+ac_cv_search_com_err=no
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char com_err ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+com_err ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_com_err="none required"
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+if test "$ac_cv_search_com_err" = no; then
+  for ac_lib in 'comerr32 -lkrb5_32'; do
+    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+    cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char com_err ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+com_err ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_search_com_err="-l$ac_lib"
+break
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  done
+fi
+LIBS=$ac_func_search_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_search_com_err" >&5
+echo "${ECHO_T}$ac_cv_search_com_err" >&6
+if test "$ac_cv_search_com_err" != no; then
+  test "$ac_cv_search_com_err" = "none required" || LIBS="$ac_cv_search_com_err $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: could not find function 'com_err' required for Kerberos 5" >&5
+echo "$as_me: error: could not find function 'com_err' required for Kerberos 5" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+  fi
 fi
 
 if test "$with_openssl" = yes ; then

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.443.4.1 2005/03/18 03:49:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.443.4.2 2005/03/25 00:35:14 tgl Exp $
  *
  * NOTES
  *
@@ -2531,7 +2531,7 @@ report_fork_failure_to_client(Port *port, int errnum)
 			 strerror(errnum));
 
 	/* Set port to non-blocking.  Don't do send() if this fails */
-	if (!set_noblock(port->sock))
+	if (!pg_set_noblock(port->sock))
 		return;
 
 	send(port->sock, buffer, strlen(buffer) + 1, 0);
