@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.57 2003/05/15 16:35:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.58 2003/07/04 16:41:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "miscadmin.h"
 #include "bootstrap/bootstrap.h"
 #include "tcop/tcopprot.h"
+#include "utils/help_config.h"
 #include "utils/ps_status.h"
 
 
@@ -198,7 +199,7 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * Now dispatch to one of PostmasterMain, PostgresMain, or
+	 * Now dispatch to one of PostmasterMain, PostgresMain, GucInfoMain, or
 	 * BootstrapMain depending on the program name (and possibly first
 	 * argument) we were called with.  The lack of consistency here is
 	 * historical.
@@ -217,6 +218,14 @@ main(int argc, char *argv[])
 	 */
 	if (argc > 1 && strcmp(new_argv[1], "-boot") == 0)
 		exit(BootstrapMain(argc - 1, new_argv + 1));
+
+	/*
+	 * If the first argument is "--help-config", then invoke runtime
+	 * configuration option display mode.
+	 * We remove "--help-config" from the arguments passed on to GucInfoMain.
+	 */
+	if (argc > 1 && strcmp(new_argv[1], "--help-config") == 0)
+		exit(GucInfoMain(argc - 1, new_argv + 1));
 
 	/*
 	 * Otherwise we're a standalone backend.  Invoke PostgresMain,

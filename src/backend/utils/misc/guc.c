@@ -10,11 +10,10 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.133 2003/06/30 16:47:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.134 2003/07/04 16:41:21 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include <errno.h>
@@ -23,6 +22,7 @@
 #include <unistd.h>
 
 #include "utils/guc.h"
+#include "utils/guc_tables.h"
 
 #include "access/xlog.h"
 #include "catalog/namespace.h"
@@ -56,8 +56,6 @@
 #include "utils/pg_locale.h"
 #include "pgstat.h"
 
-int			log_min_duration_statement = 0;
-
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -87,7 +85,7 @@ static const char *assign_facility(const char *facility,
 static const char *assign_defaultxactisolevel(const char *newval,
 						   bool doit, bool interactive);
 static const char *assign_log_min_messages(const char *newval,
-						   bool doit, bool interactive);
+						bool doit, bool interactive);
 static const char *assign_client_min_messages(const char *newval,
 						   bool doit, bool interactive);
 static const char *assign_min_error_statement(const char *newval, bool doit,
@@ -95,7 +93,7 @@ static const char *assign_min_error_statement(const char *newval, bool doit,
 static const char *assign_msglvl(int *var, const char *newval,
 			  bool doit, bool interactive);
 static const char *assign_log_error_verbosity(const char *newval, bool doit,
-											  bool interactive);
+						   bool interactive);
 static bool assign_phony_autocommit(bool newval, bool doit, bool interactive);
 
 
@@ -130,6 +128,8 @@ int			log_min_error_statement = PANIC;
 int			log_min_messages = NOTICE;
 int			client_min_messages = NOTICE;
 
+int			log_min_duration_statement = 0;
+
 
 /*
  * These variables are all dummies that don't do anything, except in some
@@ -155,110 +155,6 @@ static char *session_authorization_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
 
-
-/*
- * Declarations for GUC tables
- *
- * See src/backend/utils/misc/README for design notes.
- */
-enum config_type
-{
-	PGC_BOOL,
-	PGC_INT,
-	PGC_REAL,
-	PGC_STRING
-};
-
-/* Generic fields applicable to all types of variables */
-struct config_generic
-{
-	/* constant fields, must be set correctly in initial value: */
-	const char *name;			/* name of variable - MUST BE FIRST */
-	GucContext	context;		/* context required to set the variable */
-	int			flags;			/* flag bits, see below */
-	/* variable fields, initialized at runtime: */
-	enum config_type vartype;	/* type of variable (set only at startup) */
-	int			status;			/* status bits, see below */
-	GucSource	reset_source;	/* source of the reset_value */
-	GucSource	session_source; /* source of the session_value */
-	GucSource	tentative_source;		/* source of the tentative_value */
-	GucSource	source;			/* source of the current actual value */
-};
-
-/* bit values in flags field */
-#define GUC_LIST_INPUT		0x0001		/* input can be list format */
-#define GUC_LIST_QUOTE		0x0002		/* double-quote list elements */
-#define GUC_NO_SHOW_ALL		0x0004		/* exclude from SHOW ALL */
-#define GUC_NO_RESET_ALL	0x0008		/* exclude from RESET ALL */
-#define GUC_REPORT			0x0010		/* auto-report changes to client */
-
-/* bit values in status field */
-#define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
-#define GUC_HAVE_LOCAL		0x0002		/* a SET LOCAL has been executed */
-
-
-/* GUC records for specific variable types */
-
-struct config_bool
-{
-	struct config_generic gen;
-	/* these fields must be set correctly in initial value: */
-	/* (all but reset_val are constants) */
-	bool	   *variable;
-	bool		reset_val;
-	bool		(*assign_hook) (bool newval, bool doit, bool interactive);
-	const char *(*show_hook) (void);
-	/* variable fields, initialized at runtime: */
-	bool		session_val;
-	bool		tentative_val;
-};
-
-struct config_int
-{
-	struct config_generic gen;
-	/* these fields must be set correctly in initial value: */
-	/* (all but reset_val are constants) */
-	int		   *variable;
-	int			reset_val;
-	int			min;
-	int			max;
-	bool		(*assign_hook) (int newval, bool doit, bool interactive);
-	const char *(*show_hook) (void);
-	/* variable fields, initialized at runtime: */
-	int			session_val;
-	int			tentative_val;
-};
-
-struct config_real
-{
-	struct config_generic gen;
-	/* these fields must be set correctly in initial value: */
-	/* (all but reset_val are constants) */
-	double	   *variable;
-	double		reset_val;
-	double		min;
-	double		max;
-	bool		(*assign_hook) (double newval, bool doit, bool interactive);
-	const char *(*show_hook) (void);
-	/* variable fields, initialized at runtime: */
-	double		session_val;
-	double		tentative_val;
-};
-
-struct config_string
-{
-	struct config_generic gen;
-	/* these fields must be set correctly in initial value: */
-	/* (all are constants) */
-	char	  **variable;
-	const char *boot_val;
-	const char *(*assign_hook) (const char *newval, bool doit, bool interactive);
-	const char *(*show_hook) (void);
-	/* variable fields, initialized at runtime: */
-	char	   *reset_val;
-	char	   *session_val;
-	char	   *tentative_val;
-};
 
 /* Macros for freeing malloc'd pointers only if appropriate to do so */
 /* Some of these tests are probably redundant, but be safe ... */
@@ -300,8 +196,53 @@ struct config_string
 	} while (0)
 
 
+/*
+ * The display name for each of the groupings defined in enum config_group
+ * This array needs to be kept in sync with enum config_group.
+ * This array however needs to be NULL terminated.
+ */
+const char *const config_group_names[] = {
+	gettext_noop("Ungrouped"),
+	gettext_noop("Connections & Authentication"),
+	gettext_noop("Connections & Authentication / Connection Settings"),
+	gettext_noop("Connections & Authentication / Security & Authentication"),
+	gettext_noop("Resource Usage"),
+	gettext_noop("Resource Usage / Memory"),
+	gettext_noop("Resource Usage / Free Space Map"),
+	gettext_noop("Resource Usage / Kernel Resources"),
+	gettext_noop("Write Ahead Log"),
+	gettext_noop("Write Ahead Log / Settings"),
+	gettext_noop("Write Ahead Log / Checkpoints"),
+	gettext_noop("Query Tuning"),
+	gettext_noop("Query Tuning / Planner Method Enabling"),
+	gettext_noop("Query Tuning / Planner Cost Constants"),
+	gettext_noop("Query Tuning / Genetic Query Optimizer"),
+	gettext_noop("Query Tuning / Other Planner Options"),
+	gettext_noop("Reporting & Logging"),
+	gettext_noop("Reporting & Logging / Syslog"),
+	gettext_noop("Reporting & Logging / When To Log"),
+	gettext_noop("Reporting & Logging / What To Log"),
+	gettext_noop("Statistics"),
+	gettext_noop("Statistics / Monitoring"),
+	gettext_noop("Statistics / Query & Index Statistics Collector"),
+	gettext_noop("Client Connection Defaults"),
+	gettext_noop("Client Connection Defaults / Statement Behavior"),
+	gettext_noop("Client Connection Defaults / Locale and Formatting"),
+	gettext_noop("Client Connection Defaults / Other Defaults"),
+	gettext_noop("Lock Management"),
+	gettext_noop("Version & Platform Compatibility"),
+	gettext_noop("Version & Platform Compatibility / Previous Postgres Versions"),
+	gettext_noop("Version & Platform Compatibility / Other Platforms & Clients"),
+	gettext_noop("Developer Options"),
+	NULL
+};
+
 
 /*
+ * Contents of GUC tables
+ *
+ * See src/backend/utils/misc/README for design notes.
+ *
  * TO ADD AN OPTION:
  *
  * 1. Declare a global variable of type bool, int, double, or char*
@@ -325,299 +266,588 @@ struct config_string
 
 /******** option records follow ********/
 
-static struct config_bool
-			ConfigureNamesBool[] =
+static struct config_bool ConfigureNamesBool[] =
 {
 	{
-		{"enable_seqscan", PGC_USERSET}, &enable_seqscan,
+		{"enable_seqscan", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of sequential-scan plans"),
+			NULL
+		},
+		&enable_seqscan,
 		true, NULL, NULL
 	},
 	{
-		{"enable_indexscan", PGC_USERSET}, &enable_indexscan,
+		{"enable_indexscan", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of index-scan plans"),
+			NULL
+		},
+		&enable_indexscan,
 		true, NULL, NULL
 	},
 	{
-		{"enable_tidscan", PGC_USERSET}, &enable_tidscan,
+		{"enable_tidscan", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of TID scan plans"),
+			NULL
+		},
+		&enable_tidscan,
 		true, NULL, NULL
 	},
 	{
-		{"enable_sort", PGC_USERSET}, &enable_sort,
+		{"enable_sort", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of explicit sort steps"),
+			NULL
+		},
+		&enable_sort,
 		true, NULL, NULL
 	},
 	{
-		{"enable_hashagg", PGC_USERSET}, &enable_hashagg,
+		{"enable_hashagg", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of hashed aggregation plans"),
+			NULL
+		},
+		&enable_hashagg,
 		true, NULL, NULL
 	},
 	{
-		{"enable_nestloop", PGC_USERSET}, &enable_nestloop,
+		{"enable_nestloop", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of nested-loop join plans"),
+			NULL
+		},
+		&enable_nestloop,
 		true, NULL, NULL
 	},
 	{
-		{"enable_mergejoin", PGC_USERSET}, &enable_mergejoin,
+		{"enable_mergejoin", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of merge join plans"),
+			NULL
+		},
+		&enable_mergejoin,
 		true, NULL, NULL
 	},
 	{
-		{"enable_hashjoin", PGC_USERSET}, &enable_hashjoin,
+		{"enable_hashjoin", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable planner's use of hash join plans"),
+			NULL
+		},
+		&enable_hashjoin,
 		true, NULL, NULL
 	},
 	{
-		{"geqo", PGC_USERSET}, &enable_geqo,
+		{"geqo", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("Enable genetic query optimization"),
+			gettext_noop("This algorithm attempts to do planning without "
+						 "exhaustive searching")
+		},
+		&enable_geqo,
 		true, NULL, NULL
 	},
-
-	/* Not for general use --- used by SET SESSION AUTHORIZATION */
 	{
-		{"is_superuser", PGC_INTERNAL, GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL},
+		/* Not for general use --- used by SET SESSION AUTHORIZATION */
+		{"is_superuser", PGC_INTERNAL, UNGROUPED,
+			gettext_noop("Set to indicate current user's privilege status"),
+			NULL,
+			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
 		&session_auth_is_superuser,
 		false, NULL, NULL
 	},
-
 	{
-		{"tcpip_socket", PGC_POSTMASTER}, &NetServer,
+		{"tcpip_socket", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Accept TCP/IP connections"),
+			NULL
+		},
+		&NetServer,
 		false, NULL, NULL
 	},
 	{
-		{"ssl", PGC_POSTMASTER}, &EnableSSL,
+		{"ssl", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Enables SSL connections"),
+			NULL
+		},
+		&EnableSSL,
 		false, NULL, NULL
 	},
 	{
-		{"fsync", PGC_SIGHUP}, &enableFsync,
+		{"fsync", PGC_SIGHUP, WAL_SETTINGS,
+			gettext_noop("If on, server physically writes updates to disk"),
+			gettext_noop("It will use the fsync() system call in several places to make "
+						 "sure that updates are physically written to disk. This insures "
+						 "that a database cluster will recover to a consistent state after "
+						 "an operating system or hardware crash")
+		},
+		&enableFsync,
 		true, NULL, NULL
 	},
 	{
-		{"zero_damaged_pages", PGC_SUSET}, &zero_damaged_pages,
+		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Continues processing past damaged page headers"),
+			gettext_noop("Detection of a damaged page header normally causes PostgreSQL to "
+			"report an error, aborting the current transaction. Setting "
+						 "zero_damaged_pages to true causes the system to instead report a "
+						 "warning, zero out the damaged page, and continue processing. This "
+						 "behavior will destroy data, namely all the rows on the damaged page"),
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&zero_damaged_pages,
 		false, NULL, NULL
 	},
 	{
-		{"silent_mode", PGC_POSTMASTER}, &SilentMode,
-		false, NULL, NULL
-	},
-
-	{
-		{"log_connections", PGC_BACKEND}, &Log_connections,
-		false, NULL, NULL
-	},
-	{
-		{"log_timestamp", PGC_SIGHUP}, &Log_timestamp,
+		{"silent_mode", PGC_POSTMASTER, LOGGING_WHEN,
+			gettext_noop("Runs the server silently"),
+			gettext_noop("If this option is set, the server will automatically run in the"
+			"background and any controlling terminals are disassociated")
+		},
+		&SilentMode,
 		false, NULL, NULL
 	},
 	{
-		{"log_pid", PGC_SIGHUP}, &Log_pid,
+		{"log_connections", PGC_BACKEND, LOGGING_WHAT,
+			gettext_noop("Logs each successful connection"),
+			NULL
+		},
+		&Log_connections,
+		false, NULL, NULL
+	},
+	{
+		{"log_timestamp", PGC_SIGHUP, LOGGING_WHAT,
+			gettext_noop("Prefixes server log messages with a time stamp"),
+			NULL
+		},
+		&Log_timestamp,
+		false, NULL, NULL
+	},
+	{
+		{"log_pid", PGC_SIGHUP, LOGGING_WHAT,
+			gettext_noop("Prefixes server log messages with the server PID"),
+			NULL
+		},
+		&Log_pid,
 		false, NULL, NULL
 	},
 
 #ifdef USE_ASSERT_CHECKING
 	{
-		{"debug_assertions", PGC_USERSET}, &assert_enabled,
+		{"debug_assertions", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Turns on various assertion checks"),
+			gettext_noop("This is a debugging aid. To use this option, "
+						 "PostgreSQL must be built with the configure option --enable-cassert"),
+			GUC_NOT_IN_SAMPLE
+		},
+		&assert_enabled,
 		true, NULL, NULL
 	},
 #endif
 
 	{
 		/* currently undocumented, so don't show in SHOW ALL */
-		{"exit_on_error", PGC_USERSET, GUC_NO_SHOW_ALL}, &ExitOnAnyError,
-		false, NULL, NULL
-	},
-
-	{
-		{"log_statement", PGC_SUSET}, &log_statement,
-		false, NULL, NULL
-	},
-	{
-		{"log_duration", PGC_SUSET}, &log_duration,
+		{"exit_on_error", PGC_USERSET, UNGROUPED,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&ExitOnAnyError,
 		false, NULL, NULL
 	},
 	{
-		{"debug_print_parse", PGC_USERSET}, &Debug_print_parse,
+		{"log_statement", PGC_SUSET, LOGGING_WHAT,
+			gettext_noop("Causes each SQL statement to be logged"),
+			NULL
+		},
+		&log_statement,
 		false, NULL, NULL
 	},
 	{
-		{"debug_print_rewritten", PGC_USERSET}, &Debug_print_rewritten,
+		{"log_duration", PGC_SUSET, LOGGING_WHAT,
+			gettext_noop("Duration of every completed statement is logged"),
+			NULL
+		},
+		&log_duration,
 		false, NULL, NULL
 	},
 	{
-		{"debug_print_plan", PGC_USERSET}, &Debug_print_plan,
+		{"debug_print_parse", PGC_USERSET, LOGGING_WHAT,
+			gettext_noop("Parse tree printed to server logs"),
+			gettext_noop("Parsed for each executed query")
+		},
+		&Debug_print_parse,
 		false, NULL, NULL
 	},
 	{
-		{"debug_pretty_print", PGC_USERSET}, &Debug_pretty_print,
-		false, NULL, NULL
-	},
-
-	{
-		{"log_parser_stats", PGC_SUSET}, &log_parser_stats,
-		false, NULL, NULL
-	},
-	{
-		{"log_planner_stats", PGC_SUSET}, &log_planner_stats,
+		{"debug_print_rewritten", PGC_USERSET, LOGGING_WHAT,
+			gettext_noop("Prints query rewriter output to server log"),
+			NULL
+		},
+		&Debug_print_rewritten,
 		false, NULL, NULL
 	},
 	{
-		{"log_executor_stats", PGC_SUSET}, &log_executor_stats,
+		{"debug_print_plan", PGC_USERSET, LOGGING_WHAT,
+			gettext_noop("Prints execution plan to the server log"),
+			NULL
+		},
+		&Debug_print_plan,
 		false, NULL, NULL
 	},
 	{
-		{"log_statement_stats", PGC_SUSET}, &log_statement_stats,
+		{"debug_pretty_print", PGC_USERSET, LOGGING_WHAT,
+			gettext_noop("Indents displays from parse, rewritten and plan"),
+			NULL
+		},
+		&Debug_pretty_print,
+		false, NULL, NULL
+	},
+	{
+		{"log_parser_stats", PGC_SUSET, STATS_MONITORING,
+			gettext_noop("Write parser performance stats to server log"),
+			NULL
+		},
+		&log_parser_stats,
+		false, NULL, NULL
+	},
+	{
+		{"log_planner_stats", PGC_SUSET, STATS_MONITORING,
+			gettext_noop("Write planner performance stats to server log"),
+			NULL
+		},
+		&log_planner_stats,
+		false, NULL, NULL
+	},
+	{
+		{"log_executor_stats", PGC_SUSET, STATS_MONITORING,
+			gettext_noop("Write executor performance stats to server log"),
+			NULL
+		},
+		&log_executor_stats,
+		false, NULL, NULL
+	},
+	{
+		{"log_statement_stats", PGC_SUSET, STATS_MONITORING,
+			gettext_noop("Write statement performance stats to server log"),
+			NULL
+		},
+		&log_statement_stats,
 		false, NULL, NULL
 	},
 #ifdef BTREE_BUILD_STATS
 	{
-		{"log_btree_build_stats", PGC_SUSET}, &log_btree_build_stats,
+		{"log_btree_build_stats", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&log_btree_build_stats,
 		false, NULL, NULL
 	},
 #endif
 
 	{
-		{"explain_pretty_print", PGC_USERSET}, &Explain_pretty_print,
+		{"explain_pretty_print", PGC_USERSET, CLIENT_CONN_OTHER,
+			gettext_noop("Use indented output format for EXPLAIN VERBOSE"),
+			NULL
+		},
+		&Explain_pretty_print,
 		true, NULL, NULL
+	},
+	{
+		{"stats_start_collector", PGC_POSTMASTER, STATS_COLLECTOR,
+			gettext_noop("Start server statistics-collection subprocess"),
+			NULL
+		},
+		&pgstat_collect_startcollector,
+		true, NULL, NULL
+	},
+	{
+		{"stats_reset_on_server_start", PGC_POSTMASTER, STATS_COLLECTOR,
+			gettext_noop("Collected statistics zeroed out on server restart"),
+			NULL
+		},
+		&pgstat_collect_resetonpmstart,
+		true, NULL, NULL
+	},
+	{
+		{"stats_command_string", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Enable stat collection of executing commands"),
+			gettext_noop("Enables the collection of statistics on the currently "
+				"executing command of each session, along with the time "
+						 "at which that command began execution.")
+		},
+		&pgstat_collect_querystring,
+		false, NULL, NULL
+	},
+	{
+		{"stats_row_level", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Enable collection of row-level stats on db activity"),
+			NULL
+		},
+		&pgstat_collect_tuplelevel,
+		false, NULL, NULL
+	},
+	{
+		{"stats_block_level", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Enables collection of block-level stats on db activity"),
+			NULL
+		},
+		&pgstat_collect_blocklevel,
+		false, NULL, NULL
 	},
 
 	{
-		{"stats_start_collector", PGC_POSTMASTER}, &pgstat_collect_startcollector,
-		true, NULL, NULL
-	},
-	{
-		{"stats_reset_on_server_start", PGC_POSTMASTER}, &pgstat_collect_resetonpmstart,
-		true, NULL, NULL
-	},
-	{
-		{"stats_command_string", PGC_SUSET}, &pgstat_collect_querystring,
-		false, NULL, NULL
-	},
-	{
-		{"stats_row_level", PGC_SUSET}, &pgstat_collect_tuplelevel,
-		false, NULL, NULL
-	},
-	{
-		{"stats_block_level", PGC_SUSET}, &pgstat_collect_blocklevel,
-		false, NULL, NULL
-	},
-
-	{
-		{"trace_notify", PGC_USERSET}, &Trace_notify,
+		{"trace_notify", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Generates debugging output for LISTEN and NOTIFY"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_notify,
 		false, NULL, NULL
 	},
 
 #ifdef LOCK_DEBUG
 	{
-		{"trace_locks", PGC_SUSET}, &Trace_locks,
+		{"trace_locks", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_locks,
 		false, NULL, NULL
 	},
 	{
-		{"trace_userlocks", PGC_SUSET}, &Trace_userlocks,
+		{"trace_userlocks", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_userlocks,
 		false, NULL, NULL
 	},
 	{
-		{"trace_lwlocks", PGC_SUSET}, &Trace_lwlocks,
+		{"trace_lwlocks", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_lwlocks,
 		false, NULL, NULL
 	},
 	{
-		{"debug_deadlocks", PGC_SUSET}, &Debug_deadlocks,
+		{"debug_deadlocks", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Debug_deadlocks,
 		false, NULL, NULL
 	},
 #endif
 
 	{
-		{"log_hostname", PGC_SIGHUP}, &log_hostname,
+		{"log_hostname", PGC_SIGHUP, LOGGING_WHAT,
+			gettext_noop("Log hostname to connection logs"),
+			gettext_noop("By default, connection logs only show the IP address "
+						 "of the connecting host. If you want them to show the host name you "
+						 "can turn this on, but depending on your host name resolution "
+			"setup it might impose a non-negligible performance penalty")
+		},
+		&log_hostname,
 		false, NULL, NULL
 	},
 	{
-		{"log_source_port", PGC_SIGHUP}, &LogSourcePort,
+		{"log_source_port", PGC_SIGHUP, LOGGING_WHAT,
+			gettext_noop("Log outgoing port number of the connecting host"),
+			NULL
+		},
+		&LogSourcePort,
 		false, NULL, NULL
 	},
 
 	{
-		{"sql_inheritance", PGC_USERSET}, &SQL_inheritance,
+		{"sql_inheritance", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("This controls the inheritance semantics"),
+			gettext_noop("In particular, whether subtables are included by "
+						 "various commands by default")
+		},
+		&SQL_inheritance,
 		true, NULL, NULL
 	},
 	{
-		{"australian_timezones", PGC_USERSET}, &Australian_timezones,
+		{"australian_timezones", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("If true, ACST, CST, EST, and SAT are interpreted "
+						 "as Australian time zones"),
+			gettext_noop("Otherwise they are interpreted as North/South American "
+						 "time zones and Saturday")
+		},
+		&Australian_timezones,
 		false, ClearDateCache, NULL
 	},
 	{
-		{"password_encryption", PGC_USERSET}, &Password_encryption,
+		{"password_encryption", PGC_USERSET, CONN_AUTH_SECURITY,
+			gettext_noop("If unspecified the password is encrypted"),
+			gettext_noop("When a password is specified in CREATE USER or "
+			"ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "
+						 "this option determines whether the password is to be encrypted")
+		},
+		&Password_encryption,
 		true, NULL, NULL
 	},
 	{
-		{"transform_null_equals", PGC_USERSET}, &Transform_null_equals,
+		{"transform_null_equals", PGC_USERSET, COMPAT_OPTIONS_CLIENT,
+			gettext_noop("expr=NULL treated as expr IS NULL"),
+			gettext_noop("When turned on, expressions of the form expr = NULL "
+			"(or NULL = expr) are treated as expr IS NULL, that is, they "
+			"return true if expr evaluates to the null value, and false "
+			"otherwise. The correct behavior of expr = NULL is to always "
+						 "return null (unknown)")
+		},
+		&Transform_null_equals,
 		false, NULL, NULL
 	},
 	{
-		{"db_user_namespace", PGC_SIGHUP}, &Db_user_namespace,
+		{"db_user_namespace", PGC_SIGHUP, CONN_AUTH_SECURITY,
+			gettext_noop("This allows per-database user names"),
+			NULL
+		},
+		&Db_user_namespace,
 		false, NULL, NULL
 	},
 	{
-		/*
-		 * This var doesn't do anything; it's just here so that we won't
-		 * choke on SET AUTOCOMMIT TO ON from 7.3-vintage clients.
-		 */
-		{"autocommit", PGC_USERSET, GUC_NO_SHOW_ALL}, &phony_autocommit,
+		/* only here for backwards compatibility */
+		{"autocommit", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("This var doesn't do anything"),
+			gettext_noop("It's just here so that we won't choke on SET AUTOCOMMIT "
+						 "TO ON from 7.3-vintage clients."),
+			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
+		},
+		&phony_autocommit,
 		true, assign_phony_autocommit, NULL
 	},
 	{
-		{"default_transaction_read_only", PGC_USERSET}, &DefaultXactReadOnly,
+		{"default_transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Controls default read-only status of new transactions"),
+			NULL
+		},
+		&DefaultXactReadOnly,
 		false, NULL, NULL
 	},
 	{
-		{"transaction_read_only", PGC_USERSET, GUC_NO_RESET_ALL}, &XactReadOnly,
+		{"transaction_read_only", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Current transaction's read-only status"),
+			NULL,
+			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&XactReadOnly,
 		false, NULL, NULL
 	},
 	{
-		{"add_missing_from", PGC_USERSET}, &add_missing_from,
+		{"add_missing_from", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("Add missing table references to from clauses"),
+			NULL
+		},
+		&add_missing_from,
 		true, NULL, NULL
 	},
 
 	/* End-of-list marker */
 	{
-		{NULL, 0}, NULL, false, NULL, NULL
-	},
+		{NULL, 0, 0, NULL, NULL}, NULL, false, NULL, NULL
+	}
 };
 
 
-static struct config_int
-			ConfigureNamesInt[] =
+static struct config_int ConfigureNamesInt[] =
 {
 	{
-		{"default_statistics_target", PGC_USERSET}, &default_statistics_target,
+		{"default_statistics_target", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("Sets the default statistics target"),
+			gettext_noop("This applies to table columns that have not had a "
+			 "column-specific target set via ALTER TABLE SET STATISTICS")
+		},
+		&default_statistics_target,
 		10, 1, 1000, NULL, NULL
 	},
 	{
-		{"from_collapse_limit", PGC_USERSET}, &from_collapse_limit,
+		{"from_collapse_limit", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("From list size beyond which sub-queries are not "
+						 "collapsed"),
+			gettext_noop("The planner will merge sub-queries into upper "
+			"queries if the resulting FROM list would have no more than "
+						 "this many items")
+		},
+		&from_collapse_limit,
 		8, 1, INT_MAX, NULL, NULL
 	},
 	{
-		{"join_collapse_limit", PGC_USERSET}, &join_collapse_limit,
+		{"join_collapse_limit", PGC_USERSET, QUERY_TUNING_OTHER,
+			gettext_noop("From list size beyond which JOIN constructs not "
+						 "flattened"),
+			gettext_noop("The planner will flatten explicit inner JOIN "
+						 "constructs into lists of FROM items whenever a list of no more "
+						 "than this many items would result")
+		},
+		&join_collapse_limit,
 		8, 1, INT_MAX, NULL, NULL
 	},
 	{
-		{"geqo_threshold", PGC_USERSET}, &geqo_threshold,
+		{"geqo_threshold", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("Threshold of FROM items beyond which geqo is used"),
+			NULL
+		},
+		&geqo_threshold,
 		11, 2, INT_MAX, NULL, NULL
 	},
 	{
-		{"geqo_pool_size", PGC_USERSET}, &Geqo_pool_size,
+		{"geqo_pool_size", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("The number of individuals in one population"),
+			NULL
+		},
+		&Geqo_pool_size,
 		DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL
 	},
 	{
-		{"geqo_effort", PGC_USERSET}, &Geqo_effort,
+		{"geqo_effort", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("Effort is used to calculate a default for generations"),
+			NULL
+		},
+		&Geqo_effort,
 		1, 1, INT_MAX, NULL, NULL
 	},
 	{
-		{"geqo_generations", PGC_USERSET}, &Geqo_generations,
+		{"geqo_generations", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("Specifies the number of iterations in the algorithm"),
+			gettext_noop("The number must be a positive integer. If 0 is "
+						 "specified then Effort * Log2(PoolSize) is used")
+		},
+		&Geqo_generations,
 		0, 0, INT_MAX, NULL, NULL
 	},
 	{
-		{"geqo_random_seed", PGC_USERSET}, &Geqo_random_seed,
+		{"geqo_random_seed", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("Can be set to get reproducible results from the algorithm"),
+			gettext_noop("If it is set to -1 then the algorithm behaves "
+						 "non-deterministically")
+		},
+		&Geqo_random_seed,
 		-1, INT_MIN, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"deadlock_timeout", PGC_SIGHUP}, &DeadlockTimeout,
+		{"deadlock_timeout", PGC_SIGHUP, LOCK_MANAGEMENT,
+			gettext_noop("Time to wait on lock (msec) before checking for deadlock"),
+			NULL
+		},
+		&DeadlockTimeout,
 		1000, 0, INT_MAX, NULL, NULL
 	},
 
 #ifdef HAVE_SYSLOG
 	{
-		{"syslog", PGC_SIGHUP}, &Use_syslog,
+		{"syslog", PGC_SIGHUP, LOGGING_SYSLOG,
+			gettext_noop("Allows the use of syslog for logging"),
+			gettext_noop("If this option is 1, messages go both to syslog "
+						 "and the standard output. A value of 2 sends output only to syslog. "
+						 "(Some messages will still go to the standard output/error.) The "
+						 "default is 0, which means syslog is off")
+		},
+		&Use_syslog,
 		0, 0, 2, NULL, NULL
 	},
 #endif
@@ -630,350 +860,645 @@ static struct config_int
 	 * backends number.
 	 */
 	{
-		{"max_connections", PGC_POSTMASTER}, &MaxBackends,
+		{"max_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Max number of concurrent connections"),
+			NULL
+		},
+		&MaxBackends,
 		DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"superuser_reserved_connections", PGC_POSTMASTER}, &ReservedBackends,
+		{"superuser_reserved_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Number of 'connection slots' reserved for superusers"),
+			NULL
+		},
+		&ReservedBackends,
 		2, 0, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"shared_buffers", PGC_POSTMASTER}, &NBuffers,
+		{"shared_buffers", PGC_POSTMASTER, RESOURCES_MEM,
+			gettext_noop("The number of shared memory buffers used by the server"),
+			NULL
+		},
+		&NBuffers,
 		DEF_NBUFFERS, 16, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"port", PGC_POSTMASTER}, &PostPortNumber,
+		{"port", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("The TCP port the server listens on"),
+			NULL
+		},
+		&PostPortNumber,
 		DEF_PGPORT, 1, 65535, NULL, NULL
 	},
 
 	{
-		{"unix_socket_permissions", PGC_POSTMASTER}, &Unix_socket_permissions,
+		{"unix_socket_permissions", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("Sets the access permissions of the Unix domain socket"),
+			gettext_noop("Unix domain sockets use the usual Unix file system "
+						 "permission set. The option value is expected to be an numeric mode "
+						 "specification in the form accepted by the chmod and umask  system "
+						 "calls. (To use the customary octal format the number must start with "
+						 "a 0 (zero).)")
+		},
+		&Unix_socket_permissions,
 		0777, 0000, 0777, NULL, NULL
 	},
 
 	{
-		{"sort_mem", PGC_USERSET}, &SortMem,
+		{"sort_mem", PGC_USERSET, RESOURCES_MEM,
+			gettext_noop("Max memory to be used for sorts and hash tables"),
+			gettext_noop("Specifies the amount of memory to be used by internal "
+						 "sort operations and hash tables before switching to temporary disk "
+						 "files")
+		},
+		&SortMem,
 		1024, 8 * BLCKSZ / 1024, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"vacuum_mem", PGC_USERSET}, &VacuumMem,
+		{"vacuum_mem", PGC_USERSET, RESOURCES_MEM,
+			gettext_noop("Max mem used to keep track of to-be-reclaimed tuples"),
+			NULL
+		},
+		&VacuumMem,
 		8192, 1024, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"max_files_per_process", PGC_BACKEND}, &max_files_per_process,
+		{"max_files_per_process", PGC_BACKEND, RESOURCES_KERNEL,
+			gettext_noop("Max num of simultaneously open files for each subprocess"),
+			NULL
+		},
+		&max_files_per_process,
 		1000, 25, INT_MAX, NULL, NULL
 	},
 
 #ifdef LOCK_DEBUG
 	{
-		{"trace_lock_oidmin", PGC_SUSET}, &Trace_lock_oidmin,
+		{"trace_lock_oidmin", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_lock_oidmin,
 		BootstrapObjectIdData, 1, INT_MAX, NULL, NULL
 	},
 	{
-		{"trace_lock_table", PGC_SUSET}, &Trace_lock_table,
+		{"trace_lock_table", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&Trace_lock_table,
 		0, 0, INT_MAX, NULL, NULL
 	},
 #endif
 	{
-		{"max_expr_depth", PGC_USERSET}, &max_expr_depth,
+		{"max_expr_depth", PGC_USERSET, CLIENT_CONN_OTHER,
+			gettext_noop("Max expression nesting depth"),
+			NULL
+		},
+		&max_expr_depth,
 		DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"statement_timeout", PGC_USERSET}, &StatementTimeout,
+		{"statement_timeout", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Max allowed duration (msec) of any statement"),
+			gettext_noop("A value of 0 turns off the timeout")
+		},
+		&StatementTimeout,
 		0, 0, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"max_fsm_relations", PGC_POSTMASTER}, &MaxFSMRelations,
+		{"max_fsm_relations", PGC_POSTMASTER, RESOURCES_FSM,
+			gettext_noop("Max num. of tables+indexes for which free space is "
+						 "tracked"),
+			NULL
+		},
+		&MaxFSMRelations,
 		1000, 100, INT_MAX, NULL, NULL
 	},
 	{
-		{"max_fsm_pages", PGC_POSTMASTER}, &MaxFSMPages,
+		{"max_fsm_pages", PGC_POSTMASTER, RESOURCES_FSM,
+			gettext_noop("Max num. of disk pages for which free space is "
+						 "tracked"),
+			NULL
+		},
+		&MaxFSMPages,
 		20000, 1000, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"max_locks_per_transaction", PGC_POSTMASTER}, &max_locks_per_xact,
+		{"max_locks_per_transaction", PGC_POSTMASTER, LOCK_MANAGEMENT,
+			gettext_noop("Max locks per transaction"),
+			gettext_noop("The shared lock table is sized on the assumption that "
+						 "at most max_locks_per_transaction * max_connections distinct "
+					   "objects will need to be locked at any one time.")
+		},
+		&max_locks_per_xact,
 		64, 10, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"authentication_timeout", PGC_SIGHUP}, &AuthenticationTimeout,
+		{"authentication_timeout", PGC_SIGHUP, CONN_AUTH_SECURITY,
+			gettext_noop("Max time (sec) to complete client authentication"),
+			NULL
+		},
+		&AuthenticationTimeout,
 		60, 1, 600, NULL, NULL
 	},
 
-	/* Not for general use */
 	{
-		{"pre_auth_delay", PGC_SIGHUP}, &PreAuthDelay,
+		/* Not for general use */
+		{"pre_auth_delay", PGC_SIGHUP, DEVELOPER_OPTIONS,
+			gettext_noop("No Description Available"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&PreAuthDelay,
 		0, 0, 60, NULL, NULL
 	},
 
 	{
-		{"checkpoint_segments", PGC_SIGHUP}, &CheckPointSegments,
+		{"checkpoint_segments", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Max distance between automatic WAL checkpoints"),
+			NULL
+		},
+		&CheckPointSegments,
 		3, 1, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"checkpoint_timeout", PGC_SIGHUP}, &CheckPointTimeout,
+		{"checkpoint_timeout", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Max time (sec) between automatic WAL checkpoints"),
+			NULL
+		},
+		&CheckPointTimeout,
 		300, 30, 3600, NULL, NULL
 	},
 
 	{
-		{"checkpoint_warning", PGC_SIGHUP}, &CheckPointWarning,
+		{"checkpoint_warning", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Log if filling of checkpoint segments happens more"
+						 "frequently than this (sec)"),
+			gettext_noop("Send a message to the server logs if checkpoints "
+						 "caused by the filling of checkpoint segment files happens more "
+						 "frequently than this number of seconds. Zero turns off the warning.")
+		},
+		&CheckPointWarning,
 		30, 0, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"wal_buffers", PGC_POSTMASTER}, &XLOGbuffers,
+		{"wal_buffers", PGC_POSTMASTER, WAL_SETTINGS,
+			gettext_noop("Disk-page buffers in shared memory for WAL logging"),
+			NULL
+		},
+		&XLOGbuffers,
 		8, 4, INT_MAX, NULL, NULL
 	},
 
 	{
-		{"wal_debug", PGC_SUSET}, &XLOG_DEBUG,
+		{"wal_debug", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("If nonzero, log WAL-related debugging output"),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&XLOG_DEBUG,
 		0, 0, 16, NULL, NULL
 	},
 
 	{
-		{"commit_delay", PGC_USERSET}, &CommitDelay,
+		{"commit_delay", PGC_USERSET, WAL_CHECKPOINTS,
+			gettext_noop("Delay (usec) between transaction commit and "
+						 "flushing WAL to disk"),
+			NULL
+		},
+		&CommitDelay,
 		0, 0, 100000, NULL, NULL
 	},
 
 	{
-		{"commit_siblings", PGC_USERSET}, &CommitSiblings,
+		{"commit_siblings", PGC_USERSET, WAL_CHECKPOINTS,
+			gettext_noop("Min concurrent open trans. before performing "
+						 "COMMIT_DELAY"),
+			NULL
+		},
+		&CommitSiblings,
 		5, 1, 1000, NULL, NULL
 	},
 
 	{
-		{"extra_float_digits", PGC_USERSET}, &extra_float_digits,
+		{"extra_float_digits", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Adjusts number of digits displayed for "
+						 "floating-point values"),
+			gettext_noop("This affects float4, float8, and geometric data types. "
+						 "The parameter value is added to the standard number of digits "
+						 "(FLT_DIG or DBL_DIG as appropriate)")
+		},
+		&extra_float_digits,
 		0, -15, 2, NULL, NULL
 	},
 
 	{
-		{"log_min_duration_statement", PGC_SUSET}, &log_min_duration_statement,
+		{"log_min_duration_statement", PGC_SUSET, LOGGING_WHEN,
+			gettext_noop("Min execution time (msec) above which statements will "
+						 "be logged"),
+			gettext_noop("The default is 0 (turning this feature off).")
+		},
+		&log_min_duration_statement,
 		0, 0, INT_MAX / 1000, NULL, NULL
 	},
 
 	/* End-of-list marker */
 	{
-		{NULL, 0}, NULL, 0, 0, 0, NULL, NULL
+		{NULL, 0, 0, NULL, NULL}, NULL, 0, 0, 0, NULL, NULL
 	}
 };
 
 
-static struct config_real
-			ConfigureNamesReal[] =
+static struct config_real ConfigureNamesReal[] =
 {
 	{
-		{"effective_cache_size", PGC_USERSET}, &effective_cache_size,
+		{"effective_cache_size", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Planner's assumption about size of the disk cache"),
+			gettext_noop("That is, the portion of the kernel's disk cache that "
+						 "will be used for PostgreSQL data files. This is measured in disk "
+						 "pages, which are normally 8 kB each.")
+		},
+		&effective_cache_size,
 		DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		{"random_page_cost", PGC_USERSET}, &random_page_cost,
+		{"random_page_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Planner's estimate of the cost of a nonsequentially "
+						 "fetched disk page"),
+			gettext_noop("This is measured as a multiple of the cost of a "
+						 "sequential page fetch. A higher value makes it more likely a "
+						 "sequential scan will be used, a lower value makes it more likely an "
+						 "index scan will be used.")
+		},
+		&random_page_cost,
 		DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		{"cpu_tuple_cost", PGC_USERSET}, &cpu_tuple_cost,
+		{"cpu_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Planner's estimate of the cost of processing each tuple"),
+			gettext_noop("This is measured as a fraction of the cost of a "
+						 "sequential page fetch.")
+		},
+		&cpu_tuple_cost,
 		DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		{"cpu_index_tuple_cost", PGC_USERSET}, &cpu_index_tuple_cost,
+		{"cpu_index_tuple_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Planner's estimate of processing cost for each "
+						 "index tuple during index scan"),
+			gettext_noop("This is measured as a fraction of the cost of a "
+						 "sequential page fetch.")
+		},
+		&cpu_index_tuple_cost,
 		DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
-		{"cpu_operator_cost", PGC_USERSET}, &cpu_operator_cost,
+		{"cpu_operator_cost", PGC_USERSET, QUERY_TUNING_COST,
+			gettext_noop("Planner's estimate of processing cost of each op. in WHERE"),
+			gettext_noop("This is measured as a fraction of the cost of a sequential "
+						 "page fetch.")
+		},
+		&cpu_operator_cost,
 		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
 	},
 
 	{
-		{"geqo_selection_bias", PGC_USERSET}, &Geqo_selection_bias,
+		{"geqo_selection_bias", PGC_USERSET, QUERY_TUNING_GEQO,
+			gettext_noop("The selective pressure within the population"),
+			NULL
+		},
+		&Geqo_selection_bias,
 		DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
 		MAX_GEQO_SELECTION_BIAS, NULL, NULL
 	},
 
 	{
-		{"seed", PGC_USERSET, GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL},
+		{"seed", PGC_USERSET, UNGROUPED,
+			gettext_noop("Seed for random-number generation"),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
 		&phony_random_seed,
 		0.5, 0.0, 1.0, assign_random_seed, show_random_seed
 	},
 
 	/* End-of-list marker */
 	{
-		{NULL, 0}, NULL, 0.0, 0.0, 0.0, NULL, NULL
+		{NULL, 0, 0, NULL, NULL}, NULL, 0.0, 0.0, 0.0, NULL, NULL
 	}
 };
 
 
-static struct config_string
-			ConfigureNamesString[] =
+static struct config_string ConfigureNamesString[] =
 {
 	{
-		{"client_encoding", PGC_USERSET, GUC_REPORT},
+		{"client_encoding", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Client's character set encoding"),
+			NULL,
+			GUC_REPORT
+		},
 		&client_encoding_string,
 		"SQL_ASCII", assign_client_encoding, NULL
 	},
 
 	{
-		{"client_min_messages", PGC_USERSET}, &client_min_messages_str,
+		{"client_min_messages", PGC_USERSET, LOGGING_WHEN,
+			gettext_noop("Controls which message levels are sent to the client"),
+			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, "
+						 "DEBUG1, LOG, NOTICE, WARNING, and ERROR. Each level includes all the "
+						 "levels that follow it. The later the level, the fewer messages are "
+						 "sent.")
+		},
+		&client_min_messages_str,
 		"notice", assign_client_min_messages, NULL
 	},
 
 	{
-		{"log_min_messages", PGC_SUSET}, &log_min_messages_str,
+		{"log_min_messages", PGC_SUSET, LOGGING_WHEN,
+			gettext_noop("Controls which message levels logged"),
+			gettext_noop("Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, "
+						 "INFO, NOTICE, WARNING, ERROR, LOG, FATAL, and PANIC. Each level "
+						 "includes all the levels that follow it")
+		},
+		&log_min_messages_str,
 		"notice", assign_log_min_messages, NULL
 	},
 
 	{
-		{"log_error_verbosity", PGC_SUSET}, &log_error_verbosity_str,
+		{"log_error_verbosity", PGC_SUSET, LOGGING_WHEN,
+			gettext_noop("Controls verbosity of logged messages"),
+			gettext_noop("Valid values are TERSE, DEFAULT, and VERBOSE")
+		},
+		&log_error_verbosity_str,
 		"default", assign_log_error_verbosity, NULL
 	},
 
 	{
-		{"log_min_error_statement", PGC_SUSET}, &log_min_error_statement_str,
+		{"log_min_error_statement", PGC_SUSET, LOGGING_WHEN,
+			gettext_noop("Controls whether the erroneous statement is logged"),
+			gettext_noop("All SQL statements that cause an error of the "
+						 "specified level, or a higher level, are logged")
+		},
+		&log_min_error_statement_str,
 		"panic", assign_min_error_statement, NULL
 	},
 
 	{
-		{"DateStyle", PGC_USERSET, GUC_LIST_INPUT | GUC_REPORT},
+		{"DateStyle", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("The display format for date and time values"),
+			gettext_noop("As well as the rules for interpreting ambiguous date "
+						 "input values"),
+			GUC_LIST_INPUT | GUC_REPORT
+		},
 		&datestyle_string,
 		"ISO, US", assign_datestyle, show_datestyle
 	},
 
 	{
-		{"default_transaction_isolation", PGC_USERSET}, &default_iso_level_string,
+		{"default_transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("The default isolation level of each new transaction"),
+			gettext_noop("Each SQL transaction has an isolation level, which "
+					 "can be either 'read committed' or 'serializable'.")
+		},
+		&default_iso_level_string,
 		"read committed", assign_defaultxactisolevel, NULL
 	},
 
 	{
-		{"dynamic_library_path", PGC_SUSET}, &Dynamic_library_path,
+		{"dynamic_library_path", PGC_SUSET, CLIENT_CONN_OTHER,
+			gettext_noop("Path for dynamically loadable modules"),
+			gettext_noop("If a dynamically loadable module needs to be opened and "
+						 "the specified name does not have a directory component (i.e. the "
+						 "name does not contain a slash), the system will search this path for "
+						 "the specified file.")
+		},
+		&Dynamic_library_path,
 		"$libdir", NULL, NULL
 	},
 
 	{
-		{"krb_server_keyfile", PGC_POSTMASTER}, &pg_krb_server_keyfile,
+		{"krb_server_keyfile", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("The location of the Kerberos server key file"),
+			NULL
+		},
+		&pg_krb_server_keyfile,
 		PG_KRB_SRVTAB, NULL, NULL
 	},
 
 	/* See main.c about why defaults for LC_foo are not all alike */
 
 	{
-		{"lc_collate", PGC_INTERNAL}, &locale_collate,
+		{"lc_collate", PGC_INTERNAL, CLIENT_CONN_LOCALE,
+			gettext_noop("Locale collation order"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&locale_collate,
 		"C", NULL, NULL
 	},
 
 	{
-		{"lc_ctype", PGC_INTERNAL}, &locale_ctype,
+		{"lc_ctype", PGC_INTERNAL, CLIENT_CONN_LOCALE,
+			gettext_noop("Locale character classification and case conversion"),
+			NULL,
+			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
+		&locale_ctype,
 		"C", NULL, NULL
 	},
 
 	{
-		{"lc_messages", PGC_SUSET}, &locale_messages,
+		{"lc_messages", PGC_SUSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Language in which messages are displayed"),
+			NULL
+		},
+		&locale_messages,
 		"", locale_messages_assign, NULL
 	},
 
 	{
-		{"lc_monetary", PGC_USERSET}, &locale_monetary,
+		{"lc_monetary", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Locale for formatting monetary amounts"),
+			NULL
+		},
+		&locale_monetary,
 		"C", locale_monetary_assign, NULL
 	},
 
 	{
-		{"lc_numeric", PGC_USERSET}, &locale_numeric,
+		{"lc_numeric", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Locale for formatting numbers"),
+			NULL
+		},
+		&locale_numeric,
 		"C", locale_numeric_assign, NULL
 	},
 
 	{
-		{"lc_time", PGC_USERSET}, &locale_time,
+		{"lc_time", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Locale for formatting date and time values"),
+			NULL
+		},
+		&locale_time,
 		"C", locale_time_assign, NULL
 	},
 
 	{
-		{"preload_libraries", PGC_POSTMASTER, GUC_LIST_INPUT | GUC_LIST_QUOTE},
+		{"preload_libraries", PGC_POSTMASTER, RESOURCES_KERNEL,
+			gettext_noop("Shared libraries to preload into postmaster"),
+			NULL,
+			GUC_LIST_INPUT | GUC_LIST_QUOTE
+		},
 		&preload_libraries_string,
 		"", NULL, NULL
 	},
 
 	{
-		{"regex_flavor", PGC_USERSET}, &regex_flavor_string,
+		{"regex_flavor", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
+			gettext_noop("Regular expression 'flavor'"),
+			gettext_noop("This can be set to advanced, extended, or basic")
+		},
+		&regex_flavor_string,
 		"advanced", assign_regex_flavor, NULL
 	},
 
 	{
-		{"search_path", PGC_USERSET, GUC_LIST_INPUT | GUC_LIST_QUOTE},
+		{"search_path", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Schema search order for names not schema-qualified"),
+			NULL,
+			GUC_LIST_INPUT | GUC_LIST_QUOTE
+		},
 		&namespace_search_path,
 		"$user,public", assign_search_path, NULL
 	},
 
-	/* Can't be set in postgresql.conf */
 	{
-		{"server_encoding", PGC_INTERNAL, GUC_REPORT},
+		/* Can't be set in postgresql.conf */
+		{"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
+			gettext_noop("Server (database) character set encoding"),
+			NULL,
+			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
 		&server_encoding_string,
 		"SQL_ASCII", NULL, NULL
 	},
 
-	/* Can't be set in postgresql.conf */
 	{
-		{"server_version", PGC_INTERNAL, GUC_REPORT},
+		/* Can't be set in postgresql.conf */
+		{"server_version", PGC_INTERNAL, UNGROUPED,
+			gettext_noop("Server version"),
+			NULL,
+			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
 		&server_version_string,
 		PG_VERSION, NULL, NULL
 	},
 
-	/* Not for general use --- used by SET SESSION AUTHORIZATION */
 	{
-		{"session_authorization", PGC_USERSET, GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL},
+		/* Not for general use --- used by SET SESSION AUTHORIZATION */
+		{"session_authorization", PGC_USERSET, UNGROUPED,
+			gettext_noop("Current session userid"),
+			NULL,
+			GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
 		&session_authorization_string,
 		NULL, assign_session_authorization, show_session_authorization
 	},
 
 #ifdef HAVE_SYSLOG
 	{
-		{"syslog_facility", PGC_POSTMASTER}, &Syslog_facility,
+		{"syslog_facility", PGC_POSTMASTER, LOGGING_SYSLOG,
+			gettext_noop("Which syslog 'facility' to be used when syslog enabled"),
+			gettext_noop("You may choose from LOCAL0, LOCAL1, LOCAL2, LOCAL3, "
+						 "LOCAL4, LOCAL5, LOCAL6, LOCAL7")
+		},
+		&Syslog_facility,
 		"LOCAL0", assign_facility, NULL
 	},
 	{
-		{"syslog_ident", PGC_POSTMASTER}, &Syslog_ident,
+		{"syslog_ident", PGC_POSTMASTER, LOGGING_SYSLOG,
+			gettext_noop("Program name used to identify PostgreSQL messages "
+						 "in syslog"),
+			NULL
+		},
+		&Syslog_ident,
 		"postgres", NULL, NULL
 	},
 #endif
 
 	{
-		{"TimeZone", PGC_USERSET}, &timezone_string,
+		{"TimeZone", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Time zone for displaying and interpreting time stamps"),
+			NULL
+		},
+		&timezone_string,
 		"UNKNOWN", assign_timezone, show_timezone
 	},
 
 	{
-		{"transaction_isolation", PGC_USERSET, GUC_NO_RESET_ALL},
+		{"transaction_isolation", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Current transaction's isolation level"),
+			NULL,
+			GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+		},
 		&XactIsoLevel_string,
 		NULL, assign_XactIsoLevel, show_XactIsoLevel
 	},
 
 	{
-		{"unix_socket_group", PGC_POSTMASTER}, &Unix_socket_group,
+		{"unix_socket_group", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("The group owner of the Unix domain socket"),
+			gettext_noop("(The owning user of the socket is always the user "
+						 "that starts the server.)")
+		},
+		&Unix_socket_group,
 		"", NULL, NULL
 	},
 
 	{
-		{"unix_socket_directory", PGC_POSTMASTER}, &UnixSocketDir,
+		{"unix_socket_directory", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("The Unix-domain socket directory to listen to"),
+			NULL
+		},
+		&UnixSocketDir,
 		"", NULL, NULL
 	},
 
 	{
-		{"virtual_host", PGC_POSTMASTER}, &VirtualHost,
+		{"virtual_host", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
+			gettext_noop("The host name or IP address to listen to"),
+			NULL
+		},
+		&VirtualHost,
 		"", NULL, NULL
 	},
 
 	{
-		{"wal_sync_method", PGC_SIGHUP}, &XLOG_sync_method,
+		{"wal_sync_method", PGC_SIGHUP, WAL_SETTINGS,
+			gettext_noop("Method used for forcing WAL updates out to disk"),
+			NULL
+		},
+		&XLOG_sync_method,
 		XLOG_sync_method_default, assign_xlog_sync_method, NULL
 	},
 
 	/* End-of-list marker */
 	{
-		{NULL, 0}, NULL, NULL, NULL, NULL
+		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL
 	}
 };
 
@@ -983,8 +1508,8 @@ static struct config_string
 /*
  * Actual lookup of variables is done through this single, sorted array.
  */
-static struct config_generic **guc_variables;
-static int	num_guc_variables;
+struct config_generic **guc_variables;
+int			num_guc_variables;
 
 static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
@@ -994,7 +1519,7 @@ static char *guc_string_workspace;		/* for avoiding memory leaks */
 
 
 static int	guc_var_compare(const void *a, const void *b);
-static void ReportGUCOption(struct config_generic *record);
+static void ReportGUCOption(struct config_generic * record);
 static char *_ShowOption(struct config_generic * record);
 
 
@@ -1003,7 +1528,7 @@ static char *_ShowOption(struct config_generic * record);
  * re-executed after startup (eg, we could allow loadable modules to
  * add vars, and then we'd need to re-sort).
  */
-static void
+void
 build_guc_variables(void)
 {
 	int			num_vars = 0;
@@ -1437,7 +1962,7 @@ AtEOXact_GUC(bool isCommit)
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
-		bool	changed;
+		bool		changed;
 
 		/* Skip if nothing's happened to this var in this transaction */
 		if (gconf->status == 0)
@@ -1601,11 +2126,11 @@ BeginReportingGUCOptions(void)
  * ReportGUCOption: if appropriate, transmit option value to frontend
  */
 static void
-ReportGUCOption(struct config_generic *record)
+ReportGUCOption(struct config_generic * record)
 {
 	if (reporting_enabled && (record->flags & GUC_REPORT))
 	{
-		char	*val = _ShowOption(record);
+		char	   *val = _ShowOption(record);
 		StringInfoData msgbuf;
 
 		pq_beginmessage(&msgbuf, 'S');
@@ -2211,7 +2736,7 @@ set_config_option(const char *name, const char *value,
 	}
 
 	if (DoIt && (record->flags & GUC_REPORT))
-			ReportGUCOption(record);
+		ReportGUCOption(record);
 
 	return true;
 }
@@ -2890,10 +3415,11 @@ _ShowOption(struct config_generic * record)
 void
 write_nondefault_variables(GucContext context)
 {
-	int i;
-	char *new_filename, *filename;
-	int elevel;
-	FILE *fp;
+	int			i;
+	char	   *new_filename,
+			   *filename;
+	int			elevel;
+	FILE	   *fp;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 	Assert(DataDir);
@@ -2903,7 +3429,7 @@ write_nondefault_variables(GucContext context)
 	 * Open file
 	 */
 	new_filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) +
-							strlen(".new") + 2);
+						  strlen(".new") + 2);
 	filename = malloc(strlen(DataDir) + strlen(CONFIG_EXEC_PARAMS) + 2);
 	if (new_filename == NULL || filename == NULL)
 	{
@@ -2913,13 +3439,13 @@ write_nondefault_variables(GucContext context)
 	sprintf(new_filename, "%s/" CONFIG_EXEC_PARAMS ".new", DataDir);
 	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
 
-    fp = AllocateFile(new_filename, "w");
-    if (!fp)
-    {
- 		free(new_filename);
+	fp = AllocateFile(new_filename, "w");
+	if (!fp)
+	{
+		free(new_filename);
 		free(filename);
 		elog(elevel, "could not write exec config params file `"
-					CONFIG_EXEC_PARAMS "': %s", strerror(errno));
+			 CONFIG_EXEC_PARAMS "': %s", strerror(errno));
 		return;
 	}
 
@@ -2994,8 +3520,10 @@ write_nondefault_variables(GucContext context)
 static char *
 read_string_with_null(FILE *fp)
 {
-	int i = 0, ch, maxlen = 256;
-	char *str = NULL;
+	int			i = 0,
+				ch,
+				maxlen = 256;
+	char	   *str = NULL;
 
 	do
 	{
@@ -3024,10 +3552,11 @@ read_string_with_null(FILE *fp)
 void
 read_nondefault_variables(void)
 {
-	char *filename;
-	FILE *fp;
-	char *varname, *varvalue;
-	int varsource;
+	char	   *filename;
+	FILE	   *fp;
+	char	   *varname,
+			   *varvalue;
+	int			varsource;
 
 	Assert(DataDir);
 
@@ -3042,29 +3571,29 @@ read_nondefault_variables(void)
 	}
 	sprintf(filename, "%s/" CONFIG_EXEC_PARAMS, DataDir);
 
-    fp = AllocateFile(filename, "r");
-    if (!fp)
-    {
+	fp = AllocateFile(filename, "r");
+	if (!fp)
+	{
 		free(filename);
-        /* File not found is fine */
-        if (errno != ENOENT)
-            elog(FATAL, "could not read exec config params file `"
-					CONFIG_EXEC_PARAMS "': %s", strerror(errno));
+		/* File not found is fine */
+		if (errno != ENOENT)
+			elog(FATAL, "could not read exec config params file `"
+				 CONFIG_EXEC_PARAMS "': %s", strerror(errno));
 		return;
-    }
+	}
 
-    while (1)
+	while (1)
 	{
 		if ((varname = read_string_with_null(fp)) == NULL)
 			break;
 
 		if ((varvalue = read_string_with_null(fp)) == NULL)
 			elog(FATAL, "Invalid format of exec config params file");
- 		if (fread(&varsource, sizeof(varsource), 1, fp) == 0)
+		if (fread(&varsource, sizeof(varsource), 1, fp) == 0)
 			elog(FATAL, "Invalid format of exec config params file");
 
 		(void) set_config_option(varname, varvalue, PGC_POSTMASTER,
-				varsource, false, true);
+								 varsource, false, true);
 		free(varname);
 		free(varvalue);
 	}
@@ -3384,7 +3913,7 @@ assign_defaultxactisolevel(const char *newval, bool doit, bool interactive)
 
 static const char *
 assign_log_min_messages(const char *newval,
-						   bool doit, bool interactive)
+						bool doit, bool interactive)
 {
 	return (assign_msglvl(&log_min_messages, newval, doit, interactive));
 }
@@ -3513,4 +4042,3 @@ assign_phony_autocommit(bool newval, bool doit, bool interactive)
 
 
 #include "guc-file.c"
-

@@ -27,70 +27,83 @@
 #
 #	Connection Parameters
 #
+
+# CONNECTIONS AND AUTHENTICATION
+# ----------------------------------
+# Connection Settings
+
 #tcpip_socket = false
-#ssl = false
-
 #max_connections = 32
+	# note: increasing max_connections costs about 500 bytes of shared
+	# memory per connection slot, in addition to costs from shared_buffers
+        # and max_locks_per_transaction.
 #superuser_reserved_connections = 2
-
-#port = 5432 
-
+#port = 5432
 #unix_socket_directory = ''
 #unix_socket_group = ''
 #unix_socket_permissions = 0777	# octal
-
 #virtual_host = ''
 
+# Security & Authentication
+
+#authentication_timeout = 60	# 1-600, in seconds
+#ssl = false
+#password_encryption = true
 #krb_server_keyfile = ''
+#db_user_namespace = false
 
 
-#
-#	Shared Memory Size
-#
+# RESOURCE USAGE (except WAL)
+# ---------------------------------
+# Memory
+
 #shared_buffers = 64		# min 16, at least max_connections*2, 8KB each
-#max_locks_per_transaction = 64	# min 10, ~260*max_connections bytes each
-#wal_buffers = 8		# min 4, 8KB each
-# fsm = free space map
-#max_fsm_relations = 1000	# min 100, ~50 bytes each
-#max_fsm_pages = 20000		# min max_fsm_relations*16, 6 bytes each
-# note: increasing max_connections also costs about 500 bytes each,
-# in addition to costs from shared_buffers and max_locks_per_transaction.
-
-
-#
-#	Non-shared Memory Sizes
-#
 #sort_mem = 1024		# min 64, size in KB
 #vacuum_mem = 8192		# min 1024, size in KB
 
+# Free Space Map
 
-#
-#	Write-ahead log (WAL)
-#
+#max_fsm_pages = 20000		# min max_fsm_relations*16, 6 bytes each
+#max_fsm_relations = 1000	# min 100, ~50 bytes each
+
+# Kernel Resource Usage
+
+#max_files_per_process = 1000	# min 25
+#preload_libraries = ''
+
+
+# WRITE AHEAD LOG
+# ---------------------------------
+# Settings
+
+#fsync = true			# turns forced synchronization on or off
+#wal_sync_method = fsync	# the default varies across platforms:
+				# fsync, fdatasync, open_sync, or open_datasync
+#wal_buffers = 8		# min 4, 8KB each
+
+# Checkpoints
+
 #checkpoint_segments = 3	# in logfile segments, min 1, 16MB each
 #checkpoint_timeout = 300	# range 30-3600, in seconds
 #checkpoint_warning = 30	# 0 is off, in seconds
-#
 #commit_delay = 0		# range 0-100000, in microseconds
 #commit_siblings = 5		# range 1-1000
-#
-#fsync = true
-#wal_sync_method = fsync	# the default varies across platforms:
-#				# fsync, fdatasync, open_sync, or open_datasync
-#wal_debug = 0			# range 0-16
 
 
-#
-#	Optimizer Parameters
-#
-#enable_seqscan = true
-#enable_indexscan = true
-#enable_tidscan = true
-#enable_sort = true
+# QUERY TUNING
+# --------------------------------
+# Planner Method Enabling
+
 #enable_hashagg = true
-#enable_nestloop = true
-#enable_mergejoin = true
 #enable_hashjoin = true
+#enable_indexscan = true
+#enable_mergejoin = true
+#enable_nestloop = true
+#enable_seqscan = true
+#enable_sort = true
+#enable_tidscan = true
+
+# Planner Cost Constants
 
 #effective_cache_size = 1000	# typically 8KB each
 #random_page_cost = 4		# units are one sequential page fetch cost
@@ -98,117 +111,127 @@
 #cpu_index_tuple_cost = 0.001	# (same)
 #cpu_operator_cost = 0.0025	# (same)
 
+# Genetic Query Optimizer
+
+#geqo = true
+#geqo_threshold = 11
+#geqo_effort = 1
+#geqo_generations = 0
+#geqo_pool_size = 0		# default based on tables in statement,
+				# range 128-1024
+#geqo_random_seed = -1		# -1 = use variable seed
+#geqo_selection_bias = 2.0	# range 1.5-2.0
+
+# Other Planner Options
+
+#default_statistics_target = 10	# range 1-1000
 #from_collapse_limit = 8
 #join_collapse_limit = 8	# 1 disables collapsing of explicit JOINs
 
-#default_statistics_target = 10	# range 1-1000
 
-#
-#	GEQO Optimizer Parameters
-#
-#geqo = true
-#geqo_selection_bias = 2.0	# range 1.5-2.0
-#geqo_threshold = 11
-#geqo_pool_size = 0		# default based on tables in statement, 
-				# range 128-1024
-#geqo_effort = 1
-#geqo_generations = 0
-#geqo_random_seed = -1		# auto-compute seed
+# ERROR REPORTING AND LOGGING
+# ------------------------------------
+# Syslog
 
+#syslog = 0			# range 0-2
+#syslog_facility = 'LOCAL0'
+#syslog_ident = 'postgres'
 
-#
-#	Message display
-#
+# When to Log
+
 #client_min_messages = notice	# Values, in order of decreasing detail:
 				#   debug5, debug4, debug3, debug2, debug1,
 				#   log, info, notice, warning, error
+
 #log_min_messages = notice	# Values, in order of decreasing detail:
 				#   debug5, debug4, debug3, debug2, debug1,
 				#   info, notice, warning, error, log, fatal,
 				#   panic
 
-#log_error_verbosity = default	# terse, default, or verbose messages
-
-#silent_mode = false
-
-#log_connections = false
-#log_hostname = false
-#log_source_port = false
-#log_pid = false
-#log_statement = false
-#log_duration = false
-#log_timestamp = false
+#log_error_verbosity = default   # terse, default, or verbose messages
 
 #log_min_error_statement = panic # Values in order of increasing severity:
 				 #   debug5, debug4, debug3, debug2, debug1,
 				 #   info, notice, warning, error, panic(off)
-
+				 
 #log_min_duration_statement = 0  # Log all statements whose
 				 # execution time exceeds the value, in
 				 # milliseconds.  Zero disables.
+
+#silent_mode = false		 # DO NOT USE without Syslog!
+
+# What to Log
 
 #debug_print_parse = false
 #debug_print_rewritten = false
 #debug_print_plan = false
 #debug_pretty_print = false
+#log_connections = false
+#log_duration = false
+#log_pid = false
+#log_statement = false
+#log_timestamp = false
+#log_hostname = false
+#log_source_port = false
 
-#explain_pretty_print = true
+# RUNTIME STATISTICS
+# -------------------------------------
+# Statistics Monitoring
 
-# requires USE_ASSERT_CHECKING
-#debug_assertions = true
-
-
-#
-#	Syslog
-#
-#syslog = 0			# range 0-2
-#syslog_facility = 'LOCAL0'
-#syslog_ident = 'postgres'
-
-
-#
-#	Statistics
-#
 #log_parser_stats = false
 #log_planner_stats = false
 #log_executor_stats = false
 #log_statement_stats = false
 
-# requires BTREE_BUILD_STATS
-#log_btree_build_stats = false
+# Query/Index Statistics Collector
 
-
-#
-#	Access statistics collection
-#
 #stats_start_collector = true
-#stats_reset_on_server_start = true
 #stats_command_string = false
-#stats_row_level = false
 #stats_block_level = false
+#stats_row_level = false
+#stats_reset_on_server_start = true
 
 
-#
-#	Misc
-#
-#dynamic_library_path = '$libdir'
+# CLIENT CONNECTION DEFAULTS
+# -------------------------------------
+# Statement Behavior
+
 #search_path = '$user,public'	# schema names
+#default_transaction_isolation = 'read committed'
+#default_transaction_read_only = false
+#statement_timeout = 0		# 0 is disabled, in milliseconds
+
+# Locale and Formatting
+
 #datestyle = 'iso, us'
 #timezone = unknown		# actually, defaults to TZ environment setting
 #australian_timezones = false
-#client_encoding = sql_ascii	# actually, defaults to database encoding
-#authentication_timeout = 60	# 1-600, in seconds
-#deadlock_timeout = 1000	# in milliseconds
-#default_transaction_isolation = 'read committed'
-#default_transaction_read_only = false
 #extra_float_digits = 0		# min -15, max 2
+#client_encoding = sql_ascii	# actually, defaults to database encoding
+
+# These settings are initialized by initdb -- they may be changed
+
+# Other Defaults
+
+#explain_pretty_print = true
+#dynamic_library_path = '$libdir'
 #max_expr_depth = 10000		# min 10
-#max_files_per_process = 1000	# min 25
-#password_encryption = true
+
+# LOCK MANAGEMENT
+# -----------------------------------------
+
+#deadlock_timeout = 1000	# in milliseconds
+#max_locks_per_transaction = 64	# min 10, ~260*max_connections bytes each
+
+
+# VERSION/PLATFORM COMPATIBILITY
+# -----------------------------------------
+# Previous Postgres Versions
+
+#add_missing_from = true
 #regex_flavor = advanced	# advanced, extended, or basic
 #sql_inheritance = true
+
+# Other Platforms & Clients
+
 #transform_null_equals = false
-#statement_timeout = 0		# 0 is disabled, in milliseconds
-#db_user_namespace = false
-#preload_libraries = ''
-#add_missing_from = true

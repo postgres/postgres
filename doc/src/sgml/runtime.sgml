@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.189 2003/06/30 16:47:01 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.190 2003/07/04 16:41:21 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -710,6 +710,18 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><varname>VIRTUAL_HOST</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Specifies the host name or IP address on which the server is
+        to listen for connections from client applications. The
+        default is to listen on all configured addresses (including
+        <systemitem class="systemname">localhost</>).
+       </para>
+      </listitem>
+     </varlistentry>
      
      </variablelist>
      </sect3>
@@ -748,23 +760,23 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry>
-      <term><varname>KRB_SERVER_KEYFILE</varname> (<type>string</type>)</term>
+      <term><varname>PASSWORD_ENCRYPTION</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Sets the location of the Kerberos server key file. See
-        <xref linkend="kerberos-auth"> for details.
+        When a password is specified in <command>CREATE USER</> or
+        <command>ALTER USER</> without writing either <literal>ENCRYPTED</> or
+        <literal>UNENCRYPTED</>, this option determines whether the password is to be
+        encrypted. The default is on (encrypt the password).
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><varname>VIRTUAL_HOST</varname> (<type>string</type>)</term>
+      <term><varname>KRB_SERVER_KEYFILE</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        Specifies the host name or IP address on which the server is
-        to listen for connections from client applications. The
-        default is to listening on all configured addresses (including
-        <systemitem class="systemname">localhost</>).
+        Sets the location of the Kerberos server key file. See
+        <xref linkend="kerberos-auth"> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -905,8 +917,8 @@ SET ENABLE_SEQSCAN TO OFF;
      
      </variablelist>
      </sect3>
-     <sect3 id="runtime-config-resource-disk">
-     <title>Disk Resource Usage</title>
+     <sect3 id="runtime-config-resource-kernel">
+     <title>Kernel Resource Usage</title>
      <variablelist>
 
      <varlistentry>
@@ -957,7 +969,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         By preloading a shared library (and initializing it if
         applicable), the library startup time is avoided when the
-        library is first used.
+        library is first used.  However, the time to start each new
+	server process may increase, even if that process never
+	uses the library.
        </para>
       </listitem>
      </varlistentry>
@@ -967,7 +981,7 @@ SET ENABLE_SEQSCAN TO OFF;
    </sect2>
 
    <sect2 id="runtime-config-wal">
-    <title>Write Ahead Logging</title>
+    <title>Write Ahead Log</title>
 
    <para>
     See also <xref linkend="wal-configuration"> for details on WAL
@@ -1020,14 +1034,6 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        It should be noted that the performance penalty of having
-        <varname>fsync</> on is considerably less in
-        <productname>PostgreSQL</> version 7.1 and later. If you
-        previously suppressed <function>fsync</> for performance
-        reasons, you may wish to reconsider your choice.
-       </para>
-
-       <para>
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
@@ -1056,7 +1062,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Number of disk-page buffers in shared memory for WAL
-        logging. The default is 4. This option can only be set at
+        logging. The default is 8. This option can only be set at
         server start.
        </para>
       </listitem>
@@ -1288,9 +1294,18 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-    </variablelist>
 
-    <variablelist>
+     <varlistentry>
+      <term><varname>CPU_TUPLE_COST</varname> (<type>floating point</type>)</term>
+      <listitem>
+       <para>
+        Sets the query planner's estimate of the cost of processing
+        each tuple during a query. This is measured as a fraction of
+        the cost of a sequential page fetch.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term><varname>CPU_INDEX_TUPLE_COST</varname> (<type>floating point</type>)</term>
       <listitem>
@@ -1313,21 +1328,11 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><varname>CPU_TUPLE_COST</varname> (<type>floating point</type>)</term>
-      <listitem>
-       <para>
-        Sets the query planner's estimate of the cost of processing
-        each tuple during a query. This is measured as a fraction of
-        the cost of a sequential page fetch.
-       </para>
-      </listitem>
-     </varlistentry>
-
      </variablelist>
+
     </sect3>
      <sect3 id="runtime-config-query-geqo">
-     <title>Genetic Estimate Query Optimizer</title>
+     <title>Genetic Query Optimizer</title>
 
      <variablelist>
 
@@ -1395,20 +1400,23 @@ SET ENABLE_SEQSCAN TO OFF;
      </variablelist>
     </sect3>
      <sect3 id="runtime-config-query-other">
-     <title>Other Query Modifiers</title>
+     <title>Other Planner Options</title>
 
      <variablelist>
 
      <varlistentry>
-      <term><varname>EXPLAIN_PRETTY_PRINT</varname> (<type>boolean</type>)</term>
+      <term><varname>DEFAULT_STATISTICS_TARGET</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Determines whether <command>EXPLAIN VERBOSE</> uses the indented
-        or non-indented format for displaying detailed query-tree dumps.
+        Sets the default statistics target for table columns that have not
+        had a column-specific target set via <command>ALTER TABLE SET
+        STATISTICS</>.  Larger values increase the time needed to do
+        <command>ANALYZE</>, but may improve the quality of the planner's
+        estimates. The default value is 10.
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry>
       <term><varname>FROM_COLLAPSE_LIMIT</varname> (<type>integer</type>)</term>
       <listitem>
@@ -1437,25 +1445,13 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><varname>MAX_EXPR_DEPTH</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        Sets the maximum expression nesting depth of the parser. The
-        default value is high enough for any normal query, but you can
-        raise it if needed. (But if you raise it too high, you run
-        the risk of server crashes due to stack overflow.)
-       </para>
-      </listitem>
-     </varlistentry>
      
      </variablelist>
     </sect3>
    </sect2>
 
    <sect2 id="runtime-config-logging">
-    <title>Logging and Debugging</title>
+    <title>Error Reporting and Logging</title>
 
     <sect3 id="runtime-config-logging-syslog">
      <title>Syslog</title>
@@ -1511,88 +1507,6 @@ SET ENABLE_SEQSCAN TO OFF;
     </sect3>
      <sect3 id="runtime-config-logging-when">
      <title>When To Log</title>
-
-       <para>
-        Here is a list of the various message severity levels:
-        <variablelist>
-         <varlistentry>
-          <term><literal>DEBUG[1-5]</literal></term>
-          <listitem>
-           <para>
-            Provides information for use by developers.
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
-          <term><literal>INFO</literal></term>
-          <listitem>
-           <para>
-            Provides information implicitly requested by the user,
-            e.g., during <command>VACUUM VERBOSE</>.
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
-          <term><literal>NOTICE</literal></term>
-          <listitem>
-           <para>
-            Provides information that may be helpful to users, e.g.,
-            truncation of long identifiers and the creation of indexes as part
-            of primary keys.
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
-          <term><literal>WARNING</literal></term>
-          <listitem>
-           <para>
-            Provides warnings to the user, e.g., <command>COMMIT</>
-            outside a transaction block.
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
-          <term><literal>ERROR</literal></term>
-          <listitem>
-           <para>
-            Reports an error that caused the current transaction to abort.
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
-          <term><literal>LOG</literal></term>
-          <listitem>
-           <para>
-            Reports information of interest to administrators, e.g.,
-            checkpoint activity.
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
-          <term><literal>FATAL</literal></term>
-          <listitem>
-           <para>
-            Reports an error that caused the current session to abort.
-           </para>
-          </listitem>
-         </varlistentry>
-
-         <varlistentry>
-          <term><literal>PANIC</literal></term>
-          <listitem>
-           <para>
-            Reports an error that caused all sessions to abort.
-           </para>
-          </listitem>
-         </varlistentry>
-        </variablelist>
-       </para>
 
      <variablelist>
 
@@ -1699,6 +1613,90 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      </variablelist>
+
+       <para>
+        Here is a list of the various message severity levels used in
+	these settings:
+        <variablelist>
+         <varlistentry>
+          <term><literal>DEBUG[1-5]</literal></term>
+          <listitem>
+           <para>
+            Provides information for use by developers.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>INFO</literal></term>
+          <listitem>
+           <para>
+            Provides information implicitly requested by the user,
+            e.g., during <command>VACUUM VERBOSE</>.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>NOTICE</literal></term>
+          <listitem>
+           <para>
+            Provides information that may be helpful to users, e.g.,
+            truncation of long identifiers and the creation of indexes as part
+            of primary keys.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>WARNING</literal></term>
+          <listitem>
+           <para>
+            Provides warnings to the user, e.g., <command>COMMIT</>
+            outside a transaction block.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>ERROR</literal></term>
+          <listitem>
+           <para>
+            Reports an error that caused the current transaction to abort.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>LOG</literal></term>
+          <listitem>
+           <para>
+            Reports information of interest to administrators, e.g.,
+            checkpoint activity.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>FATAL</literal></term>
+          <listitem>
+           <para>
+            Reports an error that caused the current session to abort.
+           </para>
+          </listitem>
+         </varlistentry>
+
+         <varlistentry>
+          <term><literal>PANIC</literal></term>
+          <listitem>
+           <para>
+            Reports an error that caused all sessions to abort.
+           </para>
+          </listitem>
+         </varlistentry>
+        </variablelist>
+       </para>
+
     </sect3>
      <sect3 id="runtime-config-logging-what">
      <title>What To Log</title>
@@ -1807,6 +1805,95 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
+     </variablelist>
+    </sect3>
+   </sect2>
+
+   <sect2 id="runtime-config-statistics">
+    <title>Runtime Statistics</title>
+
+    <sect3 id="runtime-config-statistics-monitor">
+     <title>Statistics Monitoring</title>
+     <variablelist>
+
+     <varlistentry>
+      <term><varname>LOG_STATEMENT_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_PARSER_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_PLANNER_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_EXECUTOR_STATS</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        For each query, write performance statistics of the respective
+        module to the server log. This is a crude profiling
+        instrument.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     </variablelist>
+
+    </sect3>
+    <sect3 id="runtime-config-statistics-collector">
+     <title>Query and Index Statistics Collector</title>
+     <variablelist>
+
+     <varlistentry>
+      <term><varname>STATS_START_COLLECTOR</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Controls whether the server should start the
+        statistics-collection subprocess.  This is on by default, but
+        may be turned off if you know you have no interest in
+        collecting statistics.  This option can only be set at server
+        start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>STATS_COMMAND_STRING</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables the collection of statistics on the currently
+        executing command of each session, along with the time at
+        which that command began execution. This option is off by
+        default. Note that even when enabled, this information is not
+        visible to all users, only to superusers and the user owning
+        the session being reported on; so it should not represent a
+        security risk. This data can be accessed via the
+        <structname>pg_stat_activity</structname> system view; refer
+        to <xref linkend="monitoring"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>STATS_BLOCK_LEVEL</varname> (<type>boolean</type>)</term>
+      <term><varname>STATS_ROW_LEVEL</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        These enable the collection of block-level and row-level statistics
+        on database activity, respectively. These options are off by
+        default. This data can be accessed via the
+        <structname>pg_stat</structname> and
+        <structname>pg_statio</structname> family of system views;
+        refer to <xref linkend="monitoring"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>STATS_RESET_ON_SERVER_START</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        If on, collected statistics are zeroed out whenever the server
+        is restarted. If off, statistics are accumulated across server
+        restarts. The default is on. This option can only be set at
+        server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      </variablelist>
     </sect3>
    </sect2>
@@ -2007,6 +2094,16 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><varname>CLIENT_ENCODING</varname> (<type>string</type>)</term>
+      <indexterm><primary>character set encoding</></>
+      <listitem>
+       <para>
+        Sets the client-side encoding (character set).
+        The default is to use the database encoding.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
       <term><varname>LC_MESSAGES</varname> (<type>string</type>)</term>
@@ -2074,18 +2171,8 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><varname>CLIENT_ENCODING</varname> (<type>string</type>)</term>
-      <indexterm><primary>character set encoding</></>
-      <listitem>
-       <para>
-        Sets the client-side encoding (character set).
-        The default is to use the database encoding.
-       </para>
-      </listitem>
-     </varlistentry>
-
      </variablelist>
+
     </sect3>
      <sect3 id="runtime-config-client-other">
      <title>Other Defaults</title>
@@ -2093,17 +2180,14 @@ SET ENABLE_SEQSCAN TO OFF;
      <variablelist>
 
      <varlistentry>
-      <term><varname>PASSWORD_ENCRYPTION</varname> (<type>boolean</type>)</term>
+      <term><varname>EXPLAIN_PRETTY_PRINT</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        When a password is specified in <command>CREATE USER</> or
-        <command>ALTER USER</> without writing either <literal>ENCRYPTED</> or
-        <literal>UNENCRYPTED</>, this option determines whether the password is to be
-        encrypted. The default is on (encrypt the password).
+        Determines whether <command>EXPLAIN VERBOSE</> uses the indented
+        or non-indented format for displaying detailed query-tree dumps.
        </para>
       </listitem>
      </varlistentry>
-
 
      <varlistentry>
       <term><varname>DYNAMIC_LIBRARY_PATH</varname> (<type>string</type>)</term>
@@ -2151,105 +2235,14 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-
-     </variablelist>
-    </sect3>
-   </sect2>
-
-   <sect2 id="runtime-config-statistics">
-    <title>Statistics</title>
-
-    <sect3 id="runtime-config-statistics-monitor">
-     <title>Statistics Monitoring</title>
-     <variablelist>
-
      <varlistentry>
-      <term><varname>LOG_STATEMENT_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>LOG_PARSER_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>LOG_PLANNER_STATS</varname> (<type>boolean</type>)</term>
-      <term><varname>LOG_EXECUTOR_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>MAX_EXPR_DEPTH</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        For each query, write performance statistics of the respective
-        module to the server log. This is a crude profiling
-        instrument.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>DEFAULT_STATISTICS_TARGET</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        Sets the default statistics target for table columns that have not
-        had a column-specific target set via <command>ALTER TABLE SET
-        STATISTICS</>.  Larger values increase the time needed to do
-        <command>ANALYZE</>, but may improve the quality of the planner's
-        estimates. The default value is 10.
-       </para>
-      </listitem>
-     </varlistentry>
-     
-     
-     </variablelist>
-    </sect3>
-    <sect3 id="runtime-config-statistics-collector">
-     <title>Query and Index Statistics Collector</title>
-     <variablelist>
-
-     <varlistentry>
-      <term><varname>STATS_START_COLLECTOR</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        Controls whether the server should start the
-        statistics-collection subprocess.  This is on by default, but
-        may be turned off if you know you have no interest in
-        collecting statistics.  This option can only be set at server
-        start.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>STATS_COMMAND_STRING</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        Enables the collection of statistics on the currently
-        executing command of each session, along with the time at
-        which that command began execution. This option is off by
-        default. Note that even when enabled, this information is not
-        visible to all users, only to superusers and the user owning
-        the session being reported on; so it should not represent a
-        security risk. This data can be accessed via the
-        <structname>pg_stat_activity</structname> system view; refer
-        to <xref linkend="monitoring"> for more information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>STATS_BLOCK_LEVEL</varname> (<type>boolean</type>)</term>
-      <term><varname>STATS_ROW_LEVEL</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        These enable the collection of block-level and row-level statistics
-        on database activity, respectively. These options are off by
-        default. This data can be accessed via the
-        <structname>pg_stat</structname> and
-        <structname>pg_statio</structname> family of system views;
-        refer to <xref linkend="monitoring"> for more information.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>STATS_RESET_ON_SERVER_START</varname> (<type>boolean</type>)</term>
-      <listitem>
-       <para>
-        If on, collected statistics are zeroed out whenever the server
-        is restarted. If off, statistics are accumulated across server
-        restarts. The default is on. This option can only be set at
-        server start.
+        Sets the maximum expression nesting depth of the parser. The
+        default value is high enough for any normal query, but you can
+        raise it if needed. (But if you raise it too high, you run
+        the risk of server crashes due to stack overflow.)
        </para>
       </listitem>
      </varlistentry>
@@ -2365,15 +2358,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      <variablelist>
 
      <varlistentry>
-      <term><varname>HAS_RENDEZVOUS</varname> (<type>boolean</type>)</term>
-      <indexterm><primary>rendezvous</></>
-      <listitem>
-       <para>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><varname>TRANSFORM_NULL_EQUALS</varname> (<type>boolean</type>)</term>
       <indexterm><primary>IS NULL</></>
       <listitem>
@@ -2421,14 +2405,16 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
    </sect2>
 
    <sect2 id="runtime-config-developer">
-    <title>Source Developer Options</title>
+    <title>Developer Options</title>
 
     <para>
-    The following options are for work on the PostgreSQL source and for severly
-    crashed databases only.  There should be no reason to use them in a production
-    database setup.  As such, they have been excluded from the postgresql.conf file.
-    Additionally, many of these options require special source compilation flags
-    to work.
+     The following options are intended for work on the PostgreSQL source,
+     and in some cases to assist with recovery of
+     severely damaged databases.  There should be no reason to use them in
+     a production database setup.  As such, they have been excluded from the
+     sample <filename>postgresql.conf</> file.
+     Note that many of these options require special
+     source compilation flags to work at all.
     </para>
 
     <variablelist>
@@ -2451,6 +2437,19 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
+      <term><varname>PRE_AUTH_DELAY</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        If nonzero, a delay of this many seconds occurs just after a new
+	server process is forked, before it conducts the authentication
+	process.  This is intended to give an opportunity to attach to the
+	server process with a debugger to trace down misbehavior in
+	authentication.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><varname>TRACE_NOTIFY</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2458,19 +2457,20 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
         <command>LISTEN</command> and <command>NOTIFY</command>
         commands.
         <option>CLIENT_MIN_MESSAGES</option> or <option>LOG_MIN_MESSAGES</option>
-        must be <literal>DEBUG1</literal> or lower to send output to the client
-        or server logs.
+        must be <literal>DEBUG1</literal> or lower to send this output to the
+        client or server log, respectively.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><varname>TRACE_LOCKS</varname> (<type>boolean</type>)</term>
+      <term><varname>TRACE_LWLOCKS</varname> (<type>boolean</type>)</term>
       <term><varname>TRACE_USERLOCKS</varname> (<type>boolean</type>)</term>
       <term><varname>TRACE_LOCK_OIDMIN</varname> (<type>boolean</type>)</term>
       <term><varname>TRACE_LOCK_TABLE</varname> (<type>boolean</type>)</term>
       <term><varname>DEBUG_DEADLOCKS</varname> (<type>boolean</type>)</term>
-      <term><varname>SHOW_BTREE_BUILD_STATS</varname> (<type>boolean</type>)</term>
+      <term><varname>LOG_BTREE_BUILD_STATS</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Various other code tracing and debugging options.
@@ -2482,7 +2482,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <term><varname>WAL_DEBUG</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        If nonzero, turn on WAL-related debugging output to the server log.
+        If nonzero, turn on WAL-related debugging output.
        </para>
       </listitem>
      </varlistentry>

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.20 2002/11/01 22:52:33 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/utils/misc/Makefile,v 1.21 2003/07/04 16:41:21 tgl Exp $
 
 subdir = src/backend/utils/misc
 top_builddir = ../../../..
@@ -6,7 +6,7 @@ include $(top_builddir)/src/Makefile.global
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
-OBJS = database.o superuser.o guc.o ps_status.o
+OBJS = database.o superuser.o guc.o help_config.o ps_status.o
 
 # This location might depend on the installation directories. Therefore
 # we can't subsitute it into config.h.
