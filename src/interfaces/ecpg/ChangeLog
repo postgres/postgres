@@ -258,3 +258,15 @@ Tue Jul  7 15:14:14 CEST 1998
 
 	- Fixed some bugs in preproc.y
 	- Set version to 2.3.4
+
+Mon Jul 27 17:13:11 CEST 1998
+
+	- Changed text of error message to make emacs happy
+
+Mon Aug  3 17:23:18 CEST 1998
+
+	- Added latest changes from gram.y resp. scan.l to
+	  preproc.y resp. pgc.l
+	- Fixed cursor handling
+	- Set version to 2.3.5
+	- Set library version to 2.4

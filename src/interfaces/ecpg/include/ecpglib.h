@@ -13,6 +13,9 @@ bool		ECPGdisconnect(int, const char *);
 
 void		ECPGlog(const char *format,...);
 
+bool		ECPGdeclare(int, const char *, char *);
+bool		ECPGopen(int, const char *);
+
 #ifdef LIBPQ_FE_H
 bool		ECPGsetdb(PGconn *);
 
@@ -31,6 +34,11 @@ struct ECPGgeneric_varchar
 
 /* print an error message */
 void		sqlprint(void);
+
+struct cursor {	const char *name;
+		char *command;
+		struct cursor *next;
+	      };
 
 /* define this for simplicity as well as compatibility */
 

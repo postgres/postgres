@@ -23,6 +23,7 @@
 #define ECPG_CONVERT_BOOL	-207
 #define ECPG_EMPTY		-208
 #define ECPG_NO_CONN		-209
+#define ECPG_UNDECLARED_CURSOR	-210
 
 /* finally the backend error messages, they start at 300 */
 #define ECPG_PGSQL		-300

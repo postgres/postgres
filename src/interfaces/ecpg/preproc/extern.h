@@ -16,13 +16,6 @@ struct _include_path {  char * path;
 
 extern struct _include_path *include_paths;
 
-struct cursor {	char *name;
-		char *command;
-		struct cursor *next;
-	      };
-
-extern struct cursor *cur;
-
 /* This is a linked list of the variable names and types. */
 struct variable
 {

@@ -940,3 +940,56 @@ sqlprint(void)
 	sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml] = '\0';
 	printf("sql error %s\n", sqlca.sqlerrm.sqlerrmc);
 }
+
+/* keep a list of cursors */
+struct cursor *cur = NULL;
+
+bool ECPGdeclare(int lineno, const char *name, char *command)
+{
+	struct cursor *ptr;
+	
+	for (ptr = cur; ptr != NULL; ptr = ptr->next)
+	{
+		if (strcmp(name, ptr->name) == 0)
+		{
+		        /* re-definition */
+           		free(ptr->command);
+                        ptr->command = command;
+                        break;
+                }
+        }
+                        
+        if (ptr == NULL)
+        {
+        	struct cursor *this = (struct cursor *) malloc(sizeof(struct cursor));
+
+		if (!this)
+		{
+		        ECPGlog("out of memory\n");
+		        register_error(ECPG_OUT_OF_MEMORY, "out of memory in line %d", lineno);
+                	return false;
+                }
+        	/* initial definition */
+	        this->next = cur;
+	        this->name = name;
+	        this->command = command;
+        	cur = this;
+	}
+	
+	return(true);
+}
+
+bool ECPGopen(int lineno, const char *name)
+{
+	struct cursor *ptr;
+
+        for (ptr = cur; ptr != NULL; ptr=ptr->next)
+        {
+               if (strcmp(ptr->name, name) == 0)
+                    return(ECPGdo(lineno, ptr->command, ECPGt_EOIT, ECPGt_EORT));
+        }
+
+	ECPGlog("trying to open undeclared cursor %s\n", name);
+	register_error(ECPG_UNDECLARED_CURSOR, "trying to open undeclared cursor %s in line %d", name, lineno);        
+        return(false);
+}

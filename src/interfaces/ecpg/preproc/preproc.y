@@ -8,6 +8,10 @@
 #include "type.h"
 #include "extern.h"
 
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
+
 #define STRUCT_DEPTH 128
 
 /*
@@ -21,9 +25,6 @@ static char     *actual_storage[STRUCT_DEPTH];
 
 /* temporarily store struct members while creating the data structure */
 struct ECPGstruct_member *struct_member_list[STRUCT_DEPTH] = { NULL };
-
-/* keep a list of cursors */
-struct cursor *cur = NULL;
 
 struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, {NULL}};
 struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
@@ -542,7 +543,7 @@ output_statement(char * stmt, int mode)
                 GRANT, GROUP, HAVING, HOUR_P,
                 IN, INNER_P, INSERT, INTERVAL, INTO, IS,
                 JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
-                MATCH, MINUTE_P, MONTH_P,
+                MATCH, MINUTE_P, MONTH_P, NAMES,
                 NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NULL_P, NUMERIC,
                 ON, OPTION, OR, ORDER, OUTER_P,
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
@@ -570,7 +571,7 @@ output_statement(char * stmt, int mode)
                 NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
                 RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
                 SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED,
-                VACUUM, VERBOSE, VERSION
+                VACUUM, VERBOSE, VERSION, ENCODING
 
 /* Keywords (obsolete; retain through next version for parser - thomas 1997-12-0 4) */
 %token  ARCHIVE
@@ -614,21 +615,20 @@ output_statement(char * stmt, int mode)
 %left		'.'
 %left		'[' ']'
 %nonassoc	TYPECAST
-%nonassoc	REDUCE
 %left		UNION
 
-%type  <str>	Iconst Sconst TransactionStmt CreateStmt UserId
+%type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
 %type  <str>	OptArchiveType OptInherit key_reference key_action
 %type  <str>    key_match constraint_expr ColLabel SpecialRuleRelation
 %type  <str> 	ColId default_expr ColQualifier columnDef ColQualList
-%type  <str>    ColConstraint ColConstraintElem default_list
+%type  <str>    ColConstraint ColConstraintElem default_list NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
 %type  <str>    ConstraintElem key_actions constraint_list TypeId
 %type  <str>    res_target_list res_target_el res_target_list2
 %type  <str>    res_target_el2 opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
-%type  <str>    file_name recipe_name AexprConst ParamNo NumConst TypeId
+%type  <str>    file_name recipe_name AexprConst ParamNo TypeId
 %type  <str>	in_expr_nodes not_in_expr_nodes a_expr b_expr
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list position_expr substr_list substr_from
@@ -645,7 +645,7 @@ output_statement(char * stmt, int mode)
 %type  <str> 	join_using where_clause relation_expr row_op sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
-%type  <str>    NotifyStmt columnElem copy_dirn 
+%type  <str>    NotifyStmt columnElem copy_dirn SubUnion
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
 %type  <str>    ClosePortalStmt DestroyStmt VacuumStmt opt_verbose
@@ -661,15 +661,15 @@ output_statement(char * stmt, int mode)
 %type  <str>    RemoveOperStmt RenameStmt all_Op user_valid_clause
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>    VariableResetStmt AddAttrStmt alter_clause DropUserStmt
-%type  <str>    user_passwd_clause user_createdb_clause
+%type  <str>    user_passwd_clause user_createdb_clause opt_trans
 %type  <str>    user_createuser_clause user_group_list user_group_clause
 %type  <str>    CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>    OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	TriggerFuncArgs DropTrigStmt TriggerOneEvent TriggerEvents
 %type  <str>    TriggerActionTime CreateTrigStmt DropPLangStmt PLangTrusted
 %type  <str>    CreatePLangStmt IntegerOnly TriggerFuncArgs TriggerFuncArg
-%type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database location
-%type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt
+%type  <str>    ViewStmt LoadStmt CreatedbStmt opt_database1 opt_database2 location
+%type  <str>    DestroydbStmt ClusterStmt grantee RevokeStmt encoding
 %type  <str>	GrantStmt privileges operation_commalist operation
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen open_opts
@@ -737,10 +737,10 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| RenameStmt		{ output_statement($1, 0); }
 		| RevokeStmt		{ output_statement($1, 0); }
                 | OptimizableStmt	{
-						if (strncmp($1, "/* declare" , sizeof("/* declare")-1) == 0)
+						if (strncmp($1, "ECPGdeclare" , sizeof("ECPGdeclare")-1) == 0)
 						{
 							fputs($1, yyout);
-							output_line_number();
+							whenever_action(0);
 							free($1);
 						}
 						else
@@ -775,7 +775,10 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 						whenever_action(0);
 						free($1);
 					}
-		| ECPGOpen		{ output_statement($1, 0); }
+		| ECPGOpen		{	fprintf(yyout, "ECPGopen(__LINE__, %s);", $1);
+						whenever_action(0);
+						free($1);
+					}
 		| ECPGRelease		{ /* output already done */ }
 		| ECPGSetConnection     {
 						fprintf(yyout, "ECPGsetconn(__LINE__, %s);", $1);
@@ -898,8 +901,15 @@ VariableSetStmt:  SET ColId TO var_value
 				{
 					$$ = cat2_str(make1_str("set time zone"), $4);
 				}
-
-		;
+		| SET NAMES encoding
+                                {
+#ifdef MB
+					$$ = cat2_str(make1_str("set names"), $3);
+#else
+                                        yyerror("SET NAMES is not supported");
+#endif
+                                }
+                ;
 
 var_value:  Sconst			{ $$ = $1; }
 		| DEFAULT			{ $$ = make1_str("default"); }
@@ -1403,6 +1413,20 @@ OptSeqElem:  CACHE IntegerOnly
 				}
 		;
 
+NumericOnly:  FloatOnly         { $$ = $1; }
+		| IntegerOnly   { $$ = $1; }
+
+FloatOnly:  Fconst
+                               {
+                                       $$ = $1;
+                               }
+                       | '-' Fconst
+                               {
+                                       $$ = cat2_str(make1_str("-"), $2);
+                               }
+               ;
+
+
 IntegerOnly:  Iconst
 				{
 					$$ = $1;
@@ -1502,9 +1526,9 @@ TriggerFuncArg:  Iconst
 				{
 					$$ = $1;
 				}
-			| FCONST
+			| Fconst
 				{
-					$$ = make_name();
+					$$ = $1;
 				}
 			| Sconst	{  $$ = $1; }
 			| ident		{  $$ = $1; }
@@ -1569,7 +1593,7 @@ def_elem:  def_name '=' def_arg	{
 
 def_arg:  ColId			{  $$ = $1; }
 		| all_Op	{  $$ = $1; }
-		| NumConst	{  $$ = $1; /* already a Value */ }
+		| NumericOnly	{  $$ = $1; }
 		| Sconst	{  $$ = $1; }
 		| SETOF ColId
 				{
@@ -2056,15 +2080,16 @@ ListenStmt:  LISTEN relation_name
  *                              (END)
  *
  *****************************************************************************/
-TransactionStmt:  ABORT_TRANS TRANSACTION	{ $$ = make1_str("rollback"); }
-	| BEGIN_TRANS TRANSACTION		{ $$ = make1_str("begin transaction"); }
-	| BEGIN_TRANS WORK			{ $$ = make1_str("begin transaction"); }
-	| COMMIT WORK				{ $$ = make1_str("commit"); }
-	| END_TRANS TRANSACTION			{ $$ = make1_str("commit"); }
-	| ROLLBACK WORK				{ $$ = make1_str("rollback"); }
-	| ABORT_TRANS				{ $$ = make1_str("rollback"); }
-	| COMMIT				{ $$ = make1_str("commit"); }
-	| ROLLBACK				{ $$ = make1_str("rollback"); }
+TransactionStmt:  ABORT_TRANS opt_trans	{ $$ = make1_str("rollback"); }
+	| BEGIN_TRANS opt_trans		{ $$ = make1_str("begin transaction"); }
+	| COMMIT opt_trans		{ $$ = make1_str("commit"); }
+	| END_TRANS opt_trans			{ $$ = make1_str("commit"); }
+	| ROLLBACK opt_trans			{ $$ = make1_str("rollback"); }
+
+opt_trans: WORK 	{ $$ = ""; }
+	| TRANSACTION	{ $$ = ""; }
+	| /*EMPTY*/	{ $$ = ""; }
+                ;
 
 /*****************************************************************************
  *
@@ -2101,20 +2126,39 @@ LoadStmt:  LOAD file_name
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name opt_database
+CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
 				{
-					$$ = cat3_str(make1_str("create database"), $3, $4);
+					if (strlen($5) == 0 || strlen($6) == 0) 
+						yyerror("CREATE DATABASE WITH requires at least an option");
+#ifndef MULTIBYTE
+					if (strlen($6) != 0)
+						yyerror("WITH ENCODING is not supported");
+#endif
+					$$ = cat5_str(make1_str("create database"), $3, make1_str("with"), $5, $6);
+				}
+		| CREATE DATABASE database_name
+        			{
+					$$ = cat2_str(make1_str("create database"), $3);
 				}
 		;
 
-opt_database:  WITH LOCATION '=' location	{ $$ = cat2_str(make1_str("with location ="), $4); }
+opt_database1:  LOCATION '=' location	{ $$ = cat2_str(make1_str("location ="), $3); }
 		| /*EMPTY*/			{ $$ = make1_str(""); }
 		;
+
+opt_database2:  ENCODING '=' encoding   { $$ = cat2_str(make1_str("encoding ="), $3); }
+                | /*EMPTY*/	        { $$ = NULL; }
+                ;
 
 location:  Sconst				{ $$ = $1; }
 		| DEFAULT			{ $$ = make1_str("default"); }
 		| /*EMPTY*/			{ $$ = make1_str(""); }
 		;
+
+encoding:  Sconst		{ $$ = $1; }
+		| DEFAULT	{ $$ = make1_str("default"); }
+		| /*EMPTY*/	{ $$ = make1_str(""); }
+               ;
 
 /*****************************************************************************
  *
@@ -2315,31 +2359,7 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 			 group_clause having_clause
 			 union_clause sort_clause
 				{
-					struct cursor *ptr, *this = (struct cursor *) mm_alloc(sizeof(struct cursor));
-
-					this->name = strdup($2);
-					this->command = cat4_str(cat5_str(cat5_str(make1_str("declare"), strdup($2), $3, make1_str("cursor for select"), $7), $8, $9, $10, $11), $12, $13, $14);
-					this->next = NULL;
-
-					for (ptr = cur; ptr != NULL; ptr = ptr->next)
-					{
-						if (strcmp(this->name, ptr->name) == 0)
-						{
-							/* re-definition */
-							free(ptr->command);
-							ptr->command = this->command;
-							break;
-						}
-					}
-
-					if (ptr == NULL)
-					{
-						/* initial definition */
-						this->next = cur;
-						cur = this;
-					}
-
-					$$ = make5_str(make1_str("/* declare cursor \""), $2, make1_str("\" statement has been moved to location of open cursor \""), strdup($2), make1_str("\" statement. */"));
+					$$ = make5_str(make1_str("ECPGdeclare(__LINE__, \""), $2, make1_str("\", \""), cat4_str(cat5_str(cat5_str(make1_str("declare"), strdup($2), $3, make1_str("cursor for select"), $7), $8, $9, $10, $11), $12, $13, $14), make1_str("\");"));
 				}
 		;
 
@@ -2361,6 +2381,15 @@ SelectStmt:  SELECT opt_unique res_target_list2
 				}
 		;
 
+SubSelect:  SELECT opt_unique res_target_list2
+                        from_clause where_clause
+                        group_clause having_clause
+                        union_clause
+                               {
+					$$ =cat4_str(cat5_str(make1_str("select"), $2, $3, $4, $5), $6, $7, $8);
+                               }
+               ;
+
 union_clause:  UNION opt_union select_list
 				{
 					$$ = cat3_str(make1_str("union"), $2, $3);
@@ -2369,15 +2398,15 @@ union_clause:  UNION opt_union select_list
 				{ $$ = make1_str(""); }
 		;
 
-select_list:  select_list UNION opt_union SubSelect
+select_list:  select_list UNION opt_union SubUnion
 				{
 					$$ = cat4_str($1, make1_str("union"), $3, $4);
 				}
-		| SubSelect
+		| SubUnion
 				{ $$ = $1; }
 		;
 
-SubSelect:	SELECT opt_unique res_target_list2
+SubUnion:	SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
 				{
@@ -2477,9 +2506,6 @@ groupby:  ColId
 
 having_clause:  HAVING a_expr
 				{
-#if FALSE
-					yyerror("HAVING clause not yet implemented");
-#endif
 					$$ = cat2_str(make1_str("having"), $2);
 				}
 		| /*EMPTY*/		{ $$ = make1_str(""); }
@@ -3637,9 +3663,9 @@ AexprConst:  Iconst
 				{
 					$$ = $1;
 				}
-		| FCONST
+		| Fconst
 				{
-					$$ = make_name();
+					$$ = $1;
 				}
 		| Sconst
 				{
@@ -3667,11 +3693,8 @@ ParamNo:  PARAM
 				}
 		;
 
-NumConst:  Iconst						{ $$ = $1; }
-		| FCONST						{ $$ = make_name(); }
-		;
-
 Iconst:  ICONST                                 { $$ = make_name();};
+Fconst:  FCONST                                 { $$ = make_name();};
 Sconst:  SCONST                                 {
 							$$ = (char *)mm_alloc(strlen($1) + 3);
 							$$[0]='\'';
@@ -3711,6 +3734,7 @@ ColId:  ident							{ $$ = $1; }
 		| DELIMITERS					{ $$ = make1_str("delimiters"); }
 		| DOUBLE						{ $$ = make1_str("double"); }
 		| EACH							{ $$ = make1_str("each"); }
+		| ENCODING							{ $$ = make1_str("encoding"); }
 		| FUNCTION						{ $$ = make1_str("function"); }
 		| INCREMENT						{ $$ = make1_str("increment"); }
 		| INDEX							{ $$ = make1_str("index"); }
@@ -4197,22 +4221,7 @@ execstring: cvariable |
  * open is an open cursor, at the moment this has to be removed
  */
 ECPGOpen: SQL_OPEN name open_opts {
-		struct cursor *ptr;
-
-		for (ptr = cur; ptr != NULL; ptr=ptr->next)
-		{
-			if (strcmp(ptr->name, $2) == 0)
-			{
-				$$ = ptr->command;
-				break;
-			}
-		}
-
-		if (ptr == NULL)
-		{
-			sprintf(errortext, "unknown cursor %s opened", $2);
-			yyerror(errortext);
-		}
+		$$ = make3_str(make1_str("\""), $2, make1_str("\""));
 };
 
 open_opts: /* empty */		{ $$ = make1_str(""); }
@@ -4633,7 +4642,7 @@ c_thing: c_anything | ';' { $$ = make1_str(";"); }
 c_anything:  IDENT 	{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
 	| Iconst	{ $$ = $1; }
-	| FCONST	{ $$ = make_name(); }
+	| Fconst	{ $$ = $1; }
 	| '*'		{ $$ = make1_str("*"); }
 	| S_AUTO	{ $$ = make1_str("auto"); }
 	| S_BOOL	{ $$ = make1_str("bool"); }
@@ -4662,13 +4671,13 @@ c_anything:  IDENT 	{ $$ = $1; }
 do_anything: IDENT	{ $$ = $1; }
         | CSTRING       { $$ = make3_str(make1_str("\""), $1, make1_str("\""));}
         | Iconst        { $$ = $1; }
-	| FCONST	{ $$ = make_name(); }
+	| Fconst	{ $$ = $1; }
 	| ','		{ $$ = make1_str(","); }
 
 var_anything: IDENT 		{ $$ = $1; }
 	| CSTRING       	{ $$ = make3_str(make1_str("\""), $1, make1_str("\"")); }
 	| Iconst		{ $$ = $1; }
-	| FCONST		{ $$ = make_name(); }
+	| Fconst		{ $$ = $1; }
 	| '{' c_line '}'	{ $$ = make3_str(make1_str("{"), $2, make1_str("}")); }
 
 blockstart : '{' {
@@ -4685,6 +4694,6 @@ blockend : '}' {
 
 void yyerror(char * error)
 {
-    fprintf(stderr, "%s in line %d of file %s\n", error, yylineno, input_filename);
+    fprintf(stderr, "%s:%d: %s\n", input_filename, yylineno, error);
     exit(PARSE_ERROR);
 }

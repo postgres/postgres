@@ -42,8 +42,8 @@ exec sql end declare section;
 	exec sql commit;
 
 	strcpy(msg, "declare");
-	exec sql declare cur cursor for 
-		select name, born, age, married from meskes;
+	exec sql declare cur cursor for
+                select name, born, age, married from meskes;
 
 	strcpy(msg, "open");
 	exec sql open cur;

@@ -141,20 +141,6 @@ main(int argc, char *const argv[])
 				/* initialize lex */
 				lex_init();
 				
-				/* initialize cursor list */
-				for (ptr = cur; ptr != NULL;)
-				{
-					struct cursor *c;
-					
-					free(ptr->name);
-					free(ptr->command);
-					c = ptr;
-					ptr = ptr->next;
-					free(c);
-				}
-				
-				cur = NULL;
-				
 				/* we need two includes and a constant */
 				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/*These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n\nconst int no_auto_trans = %d;\n\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, no_auto_trans);
 
