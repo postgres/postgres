@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.41 2001/08/25 18:52:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.42 2001/08/26 16:56:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,8 +592,8 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
  * HeapTupleSatisfiesVacuum - determine tuple status for VACUUM and related
  *		operations
  *
- * XmaxRecent is a cutoff XID (obtained from GetXmaxRecent()).  Tuples
- * deleted by XIDs >= XmaxRecent are deemed "recently dead"; they might
+ * OldestXmin is a cutoff XID (obtained from GetOldestXmin()).  Tuples
+ * deleted by XIDs >= OldestXmin are deemed "recently dead"; they might
  * still be visible to some open transaction, so we can't remove them,
  * even if we see that the deleting transaction has committed.
  *
@@ -603,7 +603,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
  * change in t_infomask and scheduling a disk write if so.
  */
 HTSV_Result
-HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId XmaxRecent)
+HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 {
 	/*
 	 * Has inserting transaction committed?
@@ -712,7 +712,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId XmaxRecent)
 		return HEAPTUPLE_DEAD;
 	}
 
-	if (!TransactionIdPrecedes(tuple->t_xmax, XmaxRecent))
+	if (!TransactionIdPrecedes(tuple->t_xmax, OldestXmin))
 	{
 		/* deleting xact is too recent, tuple could still be visible */
 		return HEAPTUPLE_RECENTLY_DEAD;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.206 2001/08/16 20:38:54 tgl Exp $
+ * $Id: pg_proc.h,v 1.207 2001/08/26 16:56:02 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1450,6 +1450,8 @@ DATA(insert OID = 1179 (  date			   PGUID 12 f t f t 1 f 1082 "702" 100 0 0 100	
 DESCR("convert abstime to date");
 DATA(insert OID = 1180 (  abstime		   PGUID 12 f t f t 1 f  702 "1184" 100 0 0 100  timestamp_abstime - ));
 DESCR("convert timestamp to abstime");
+DATA(insert OID = 1181 (  age			   PGUID 12 f t f t 1 f 23 "28" 100 0 0 100  xid_age - ));
+DESCR("age of a transaction ID, in transactions before current transaction");
 
 DATA(insert OID = 1188 (  timestamp_mi		PGUID 12 f t f t 2 f 1186 "1184 1184" 100 0 0 100  timestamp_mi - ));
 DESCR("subtract");

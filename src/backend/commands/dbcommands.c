@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.78 2001/08/10 18:57:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.79 2001/08/26 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,9 @@
 
 /* non-export function prototypes */
 static bool get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
-			int *encodingP, bool *dbIsTemplateP,
-			Oid *dbLastSysOidP, char *dbpath);
+			int *encodingP, bool *dbIsTemplateP, Oid *dbLastSysOidP,
+			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
+			char *dbpath);
 static bool get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb);
 static char *resolve_alt_dbpath(const char *dbpath, Oid dboid);
 static bool remove_dbdirs(const char *real_loc, const char *altloc);
@@ -65,6 +66,8 @@ createdb(const char *dbname, const char *dbpath,
 	int			src_encoding;
 	bool		src_istemplate;
 	Oid			src_lastsysoid;
+	TransactionId src_vacuumxid;
+	TransactionId src_frozenxid;
 	char		src_dbpath[MAXPGPATH];
 	Relation	pg_database_rel;
 	HeapTuple	tuple;
@@ -91,7 +94,7 @@ createdb(const char *dbname, const char *dbpath,
 	 * idea, so accept possibility of race to create.  We will check again
 	 * after we grab the exclusive lock.
 	 */
-	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL))
+	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 		elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
 
 	/*
@@ -101,7 +104,9 @@ createdb(const char *dbname, const char *dbpath,
 		dbtemplate = "template1";		/* Default template database name */
 
 	if (!get_db_info(dbtemplate, &src_dboid, &src_owner, &src_encoding,
-					 &src_istemplate, &src_lastsysoid, src_dbpath))
+					 &src_istemplate, &src_lastsysoid,
+					 &src_vacuumxid, &src_frozenxid,
+					 src_dbpath))
 		elog(ERROR, "CREATE DATABASE: template \"%s\" does not exist",
 			 dbtemplate);
 
@@ -208,8 +213,10 @@ createdb(const char *dbname, const char *dbpath,
 	pg_database_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 
 	/* Check to see if someone else created same DB name meanwhile. */
-	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL))
+	if (get_db_info(dbname, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL))
 	{
+		/* Don't hold lock while doing recursive remove */
+		heap_close(pg_database_rel, AccessExclusiveLock);
 		remove_dbdirs(nominal_loc, alt_loc);
 		elog(ERROR, "CREATE DATABASE: database \"%s\" already exists", dbname);
 	}
@@ -227,6 +234,8 @@ createdb(const char *dbname, const char *dbpath,
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(false);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
+	new_record[Anum_pg_database_datvacuumxid - 1] = TransactionIdGetDatum(src_vacuumxid);
+	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
 	/* no nulls here, GetRawDatabaseInfo doesn't like them */
 	new_record[Anum_pg_database_datpath - 1] =
 		DirectFunctionCall1(textin, CStringGetDatum(dbpath ? dbpath : ""));
@@ -307,7 +316,7 @@ dropdb(const char *dbname)
 	pgdbrel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 
 	if (!get_db_info(dbname, &db_id, &db_owner, NULL,
-					 &db_istemplate, NULL, dbpath))
+					 &db_istemplate, NULL, NULL, NULL, dbpath))
 		elog(ERROR, "DROP DATABASE: database \"%s\" does not exist", dbname);
 
 	if (!use_super && GetUserId() != db_owner)
@@ -397,13 +406,15 @@ dropdb(const char *dbname)
 
 static bool
 get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
-			int *encodingP, bool *dbIsTemplateP,
-			Oid *dbLastSysOidP, char *dbpath)
+			int *encodingP, bool *dbIsTemplateP, Oid *dbLastSysOidP,
+			TransactionId *dbVacuumXidP, TransactionId *dbFrozenXidP,
+			char *dbpath)
 {
 	Relation	relation;
 	ScanKeyData scanKey;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
+	bool		gottuple;
 
 	AssertArg(name);
 
@@ -414,12 +425,11 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 						   F_NAMEEQ, NameGetDatum(name));
 
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scanKey);
-	if (!HeapScanIsValid(scan))
-		elog(ERROR, "Cannot begin scan of %s", DatabaseRelationName);
 
 	tuple = heap_getnext(scan, 0);
 
-	if (HeapTupleIsValid(tuple))
+	gottuple = HeapTupleIsValid(tuple);
+	if (gottuple)
 	{
 		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
 		text	   *tmptext;
@@ -428,7 +438,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		/* oid of the database */
 		if (dbIdP)
 			*dbIdP = tuple->t_data->t_oid;
-		/* uid of the owner */
+		/* sysid of the owner */
 		if (ownerIdP)
 			*ownerIdP = dbform->datdba;
 		/* multibyte encoding */
@@ -440,6 +450,12 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 		/* last system OID used in database */
 		if (dbLastSysOidP)
 			*dbLastSysOidP = dbform->datlastsysoid;
+		/* limit of vacuumed XIDs */
+		if (dbVacuumXidP)
+			*dbVacuumXidP = dbform->datvacuumxid;
+		/* limit of frozen XIDs */
+		if (dbFrozenXidP)
+			*dbFrozenXidP = dbform->datfrozenxid;
 		/* database path (as registered in pg_database) */
 		if (dbpath)
 		{
@@ -462,7 +478,7 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 	heap_endscan(scan);
 	heap_close(relation, AccessShareLock);
 
-	return HeapTupleIsValid(tuple);
+	return gottuple;
 }
 
 static bool

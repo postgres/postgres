@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.20 2001/07/06 21:04:26 tgl Exp $
+ * $Id: sinval.h,v 1.21 2001/08/26 16:56:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ extern void ReceiveSharedInvalidMessages(
 
 extern bool DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself);
 extern bool TransactionIdIsInProgress(TransactionId xid);
-extern void GetXmaxRecent(TransactionId *XmaxRecent);
+extern TransactionId GetOldestXmin(bool allDbs);
 extern int	CountActiveBackends(void);
 /* Use "struct proc", not PROC, to avoid including proc.h here */
 extern struct proc *BackendIdGetProc(BackendId procId);

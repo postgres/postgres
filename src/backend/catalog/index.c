@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.162 2001/08/22 18:24:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.163 2001/08/26 16:55:59 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1692,7 +1692,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	TupleTableSlot *slot;
 	ExprContext *econtext;
 	Snapshot	snapshot;
-	TransactionId XmaxRecent;
+	TransactionId OldestXmin;
 
 	/*
 	 * sanity checks
@@ -1731,12 +1731,12 @@ IndexBuildHeapScan(Relation heapRelation,
 	if (IsBootstrapProcessingMode())
 	{
 		snapshot = SnapshotNow;
-		XmaxRecent = InvalidTransactionId;
+		OldestXmin = InvalidTransactionId;
 	}
 	else
 	{
 		snapshot = SnapshotAny;
-		GetXmaxRecent(&XmaxRecent);
+		OldestXmin = GetOldestXmin(heapRelation->rd_rel->relisshared);
 	}
 
 	scan = heap_beginscan(heapRelation, /* relation */
@@ -1769,7 +1769,7 @@ IndexBuildHeapScan(Relation heapRelation,
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 			sv_infomask = heapTuple->t_data->t_infomask;
 
-			switch (HeapTupleSatisfiesVacuum(heapTuple->t_data, XmaxRecent))
+			switch (HeapTupleSatisfiesVacuum(heapTuple->t_data, OldestXmin))
 			{
 				case HEAPTUPLE_DEAD:
 					indexIt = false;

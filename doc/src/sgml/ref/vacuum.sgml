@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.17 2001/07/10 22:09:28 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.18 2001/08/26 16:55:59 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,11 +20,11 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>2001-07-10</date>
+   <date>2001-08-26</date>
   </refsynopsisdivinfo>
   <synopsis>
-VACUUM [ FULL ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
-VACUUM [ FULL ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> ]
+VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
   </synopsis>
 
   <refsect2 id="R2-SQL-VACUUM-1">
@@ -43,6 +43,14 @@ VACUUM [ FULL ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">table</repl
        <para>
         Selects <quote>full</quote> vacuum, which may reclaim more space,
 	but takes much longer and exclusively locks the table.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>FREEZE</term>
+      <listitem>
+       <para>
+        Selects aggressive <quote>freezing</quote> of tuples.
        </para>
       </listitem>
      </varlistentry>
@@ -169,21 +177,38 @@ NOTICE:  Index <replaceable class="PARAMETER">index</replaceable>: Pages 28;
   </para>
 
   <para>
-   Plain <command>VACUUM</command> simply reclaims space and makes it
-   available for re-use.  This form of the command can operate in parallel
-   with normal reading and writing of the table.  <command>VACUUM
-   FULL</command> does more extensive processing, including moving of tuples
-   across blocks to try to compact the table to the minimum number of disk
-   blocks.  This is much slower and requires an exclusive lock on each table
-   while it is being processed.
-  </para>
-
-  <para>
    <command>VACUUM ANALYZE</command> performs a <command>VACUUM</command>
    and then an <command>ANALYZE</command> for each selected table.  This
    is a handy combination form for routine maintenance scripts.  See
    <xref linkend="sql-analyze" endterm="sql-analyze-title">
    for more details about its processing.
+  </para>
+
+  <para>
+   Plain <command>VACUUM</command> (without <literal>FULL</>) simply reclaims
+   space and makes it
+   available for re-use.  This form of the command can operate in parallel
+   with normal reading and writing of the table.  <command>VACUUM
+   FULL</command> does more extensive processing, including moving of tuples
+   across blocks to try to compact the table to the minimum number of disk
+   blocks.  This form is much slower and requires an exclusive lock on each
+   table while it is being processed.
+  </para>
+
+  <para>
+   <command>FREEZE</command> is a special-purpose option that
+   causes tuples to be marked <quote>frozen</quote> as soon as possible,
+   rather than waiting until they are quite old.  If this is done when there
+   are no other open transactions in the same database, then it is guaranteed
+   that all tuples in the database are <quote>frozen</> and will not be
+   subject to transaction ID wraparound problems, no matter how long the
+   database is left un-vacuumed.
+   <command>FREEZE</command> is not recommended for routine use.  Its only
+   intended usage is in connection with preparation of user-defined template
+   databases, or other databases that are completely read-only and will not
+   receive routine maintenance <command>VACUUM</> operations.
+   See <xref linkend="sql-createdatabase" endterm="sql-createdatabase-title">
+   for details.
   </para>
 
   <refsect2 id="R2-SQL-VACUUM-3">

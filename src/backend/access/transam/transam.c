@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.47 2001/08/25 18:52:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.48 2001/08/26 16:55:59 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -235,4 +235,69 @@ TransactionIdAbort(TransactionId transactionId)
 		return;
 
 	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_ABORTED);
+}
+
+
+/*
+ * TransactionIdPrecedes --- is id1 logically < id2?
+ */
+bool
+TransactionIdPrecedes(TransactionId id1, TransactionId id2)
+{
+	/*
+	 * If either ID is a permanent XID then we can just do unsigned
+	 * comparison.  If both are normal, do a modulo-2^31 comparison.
+	 */
+	int32		diff;
+
+	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
+		return (id1 < id2);
+
+	diff = (int32) (id1 - id2);
+	return (diff < 0);
+}
+
+/*
+ * TransactionIdPrecedesOrEquals --- is id1 logically <= id2?
+ */
+bool
+TransactionIdPrecedesOrEquals(TransactionId id1, TransactionId id2)
+{
+	int32		diff;
+
+	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
+		return (id1 <= id2);
+
+	diff = (int32) (id1 - id2);
+	return (diff <= 0);
+}
+
+/*
+ * TransactionIdFollows --- is id1 logically > id2?
+ */
+bool
+TransactionIdFollows(TransactionId id1, TransactionId id2)
+{
+	int32		diff;
+
+	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
+		return (id1 > id2);
+
+	diff = (int32) (id1 - id2);
+	return (diff > 0);
+}
+
+/*
+ * TransactionIdFollowsOrEquals --- is id1 logically >= id2?
+ */
+bool
+TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2)
+{
+	int32		diff;
+
+	if (!TransactionIdIsNormal(id1) || !TransactionIdIsNormal(id2))
+		return (id1 >= id2);
+
+	diff = (int32) (id1 - id2);
+	return (diff >= 0);
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.53 2001/08/25 18:52:43 tgl Exp $
+ * $Id: pg_class.h,v 1.54 2001/08/26 16:56:01 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -142,7 +142,7 @@ DATA(insert OID = 1260 (  pg_shadow		86	PGUID 0 1260 0 0 0 0 f t r 8  0 0 0 0 0 
 DESCR("");
 DATA(insert OID = 1261 (  pg_group		87	PGUID 0 1261 0 0 0 0 f t r 3  0 0 0 0 0 f f f f _null_ ));
 DESCR("");
-DATA(insert OID = 1262 (  pg_database	88	PGUID 0 1262 0 0 0 0 f t r 7  0 0 0 0 0 t f f f _null_ ));
+DATA(insert OID = 1262 (  pg_database	88	PGUID 0 1262 0 0 0 0 f t r 9  0 0 0 0 0 t f f f _null_ ));
 DESCR("");
 DATA(insert OID = 376  (  pg_xactlock	0	PGUID 0    0 0 0 0 0 f t s 1  0 0 0 0 0 f f f f _null_ ));
 DESCR("");

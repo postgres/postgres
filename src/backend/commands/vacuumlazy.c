@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.4 2001/08/10 18:57:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.5 2001/08/26 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,8 @@ typedef struct LVRelStats
 
 static int	MESSAGE_LEVEL;		/* message level */
 
-static TransactionId XmaxRecent;
+static TransactionId OldestXmin;
+static TransactionId FreezeLimit;
 
 
 /* non-export function prototypes */
@@ -143,7 +144,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	else
 		MESSAGE_LEVEL = DEBUG;
 
-	GetXmaxRecent(&XmaxRecent);
+	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
+						  &OldestXmin, &FreezeLimit);
 
 	vacrelstats = (LVRelStats *) palloc(sizeof(LVRelStats));
 	MemSet(vacrelstats, 0, sizeof(LVRelStats));
@@ -307,12 +309,25 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			tupgone = false;
 			sv_infomask = tuple.t_data->t_infomask;
 
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, XmaxRecent))
+			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
 			{
 				case HEAPTUPLE_DEAD:
 					tupgone = true;	/* we can delete the tuple */
 					break;
 				case HEAPTUPLE_LIVE:
+					/*
+					 * Tuple is good.  Consider whether to replace its xmin
+					 * value with FrozenTransactionId.
+					 */
+					if (TransactionIdIsNormal(tuple.t_data->t_xmin) &&
+						TransactionIdPrecedes(tuple.t_data->t_xmin,
+											  FreezeLimit))
+					{
+						tuple.t_data->t_xmin = FrozenTransactionId;
+						tuple.t_data->t_infomask &= ~HEAP_XMIN_INVALID;
+						tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+						pgchanged = true;
+					}
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
 					/*
@@ -783,12 +798,13 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 			tupgone = false;
 			sv_infomask = tuple.t_data->t_infomask;
 
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, XmaxRecent))
+			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
 			{
 				case HEAPTUPLE_DEAD:
 					tupgone = true;	/* we can delete the tuple */
 					break;
 				case HEAPTUPLE_LIVE:
+					/* Shouldn't be necessary to re-freeze anything */
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
 					/*

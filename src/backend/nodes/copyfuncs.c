@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.154 2001/08/21 16:36:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.155 2001/08/26 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2246,6 +2246,7 @@ _copyVacuumStmt(VacuumStmt *from)
 	newnode->vacuum = from->vacuum;
 	newnode->full = from->full;
 	newnode->analyze = from->analyze;
+	newnode->freeze = from->freeze;
 	newnode->verbose = from->verbose;
 	if (from->vacrel)
 		newnode->vacrel = pstrdup(from->vacrel);

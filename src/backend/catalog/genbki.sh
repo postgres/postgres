@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.22 2001/08/24 14:07:48 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.23 2001/08/26 16:55:59 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -155,12 +155,14 @@ INDEXMAXKEYS4=`expr $INDEXMAXKEYS '*' 4` || exit
 touch ${OUTPUT_PREFIX}.description.$$
 
 # ----------------
-# 	strip comments and trash from .h before we generate
-#	the .bki file...
+# 	Strip comments and other trash from .h
+#
+#	Put multi-line start/end comments on a separate line
+#
+#	Rename datatypes that have different names in .h files than in SQL
+#
+#	Substitute values of configuration constants
 # ----------------
-#	also, change Oid to oid. -- AY 8/94.
-#	also, change NameData to name. -- jolly 8/21/95.
-#	put multi-line start/end comments on a separate line
 #
 cat $INFILES | \
 sed -e 's;/\*.*\*/;;g' \
@@ -173,11 +175,14 @@ sed -e 's;/\*.*\*/;;g' \
 sed -e "s/;[ 	]*$//g" \
     -e "s/^[ 	]*//" \
     -e "s/[ 	]Oid/ oid/g" \
-    -e "s/[ 	]NameData/ name/g" \
     -e "s/^Oid/oid/g" \
+    -e "s/(Oid/(oid/g" \
+    -e "s/[ 	]NameData/ name/g" \
     -e "s/^NameData/name/g" \
     -e "s/(NameData/(name/g" \
-    -e "s/(Oid/(oid/g" \
+    -e "s/[ 	]TransactionId/ xid/g" \
+    -e "s/^TransactionId/xid/g" \
+    -e "s/(TransactionId/(xid/g" \
     -e "s/NAMEDATALEN/$NAMEDATALEN/g" \
     -e "s/DEFAULT_ATTSTATTARGET/$DEFAULTATTSTATTARGET/g" \
     -e "s/INDEX_MAX_KEYS\*2/$INDEXMAXKEYS2/g" \

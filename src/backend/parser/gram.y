@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.248 2001/08/25 18:52:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.249 2001/08/26 16:55:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -215,7 +215,7 @@ static void doNegateFloat(Value *v);
 
 %type <boolean>	opt_binary, opt_using, opt_instead, opt_cursor
 %type <boolean>	opt_with_copy, index_opt_unique, opt_verbose, opt_full
-%type <boolean>	analyze_keyword
+%type <boolean>	opt_freeze, analyze_keyword
 
 %type <ival>	copy_dirn, direction, reindex_type, drop_type,
 		opt_column, event, comment_type, comment_cl,
@@ -346,7 +346,7 @@ static void doNegateFloat(Value *v);
 		CACHE, CHECKPOINT, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN,
-		FORCE, FORWARD, FUNCTION, HANDLER,
+		FORCE, FORWARD, FREEZE, FUNCTION, HANDLER,
 		ILIKE, INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
 		MAXVALUE, MINVALUE, MODE, MOVE,
@@ -3082,34 +3082,37 @@ ClusterStmt:  CLUSTER index_name ON relation_name
  *
  *****************************************************************************/
 
-VacuumStmt:  VACUUM opt_full opt_verbose
+VacuumStmt:  VACUUM opt_full opt_freeze opt_verbose
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = true;
 					n->analyze = false;
 					n->full = $2;
-					n->verbose = $3;
+					n->freeze = $3;
+					n->verbose = $4;
 					n->vacrel = NULL;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
 				}
-		| VACUUM opt_full opt_verbose relation_name
+		| VACUUM opt_full opt_freeze opt_verbose relation_name
 				{
 					VacuumStmt *n = makeNode(VacuumStmt);
 					n->vacuum = true;
 					n->analyze = false;
 					n->full = $2;
-					n->verbose = $3;
-					n->vacrel = $4;
+					n->freeze = $3;
+					n->verbose = $4;
+					n->vacrel = $5;
 					n->va_cols = NIL;
 					$$ = (Node *)n;
 				}
-		| VACUUM opt_full opt_verbose AnalyzeStmt
+		| VACUUM opt_full opt_freeze opt_verbose AnalyzeStmt
 				{
-					VacuumStmt *n = (VacuumStmt *) $4;
+					VacuumStmt *n = (VacuumStmt *) $5;
 					n->vacuum = true;
 					n->full = $2;
-					n->verbose |= $3;
+					n->freeze = $3;
+					n->verbose |= $4;
 					$$ = (Node *)n;
 				}
 		;
@@ -3120,6 +3123,7 @@ AnalyzeStmt:  analyze_keyword opt_verbose
 					n->vacuum = false;
 					n->analyze = true;
 					n->full = false;
+					n->freeze = false;
 					n->verbose = $2;
 					n->vacrel = NULL;
 					n->va_cols = NIL;
@@ -3131,6 +3135,7 @@ AnalyzeStmt:  analyze_keyword opt_verbose
 					n->vacuum = false;
 					n->analyze = true;
 					n->full = false;
+					n->freeze = false;
 					n->verbose = $2;
 					n->vacrel = $3;
 					n->va_cols = $4;
@@ -3147,6 +3152,10 @@ opt_verbose:  VERBOSE							{ $$ = TRUE; }
 		;
 
 opt_full:  FULL									{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+opt_freeze:  FREEZE								{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
@@ -5615,6 +5624,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| DROP							{ $$ = "drop"; }
 		| EACH							{ $$ = "each"; }
 		| ENCODING						{ $$ = "encoding"; }
+		| ENCRYPTED						{ $$ = "encrypted"; }
 		| ESCAPE						{ $$ = "escape"; }
 		| EXCLUSIVE						{ $$ = "exclusive"; }
 		| EXECUTE						{ $$ = "execute"; }
@@ -5693,6 +5703,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
 		| TYPE_P						{ $$ = "type"; }
+		| UNENCRYPTED					{ $$ = "unencrypted"; }
 		| UNLISTEN						{ $$ = "unlisten"; }
 		| UNTIL							{ $$ = "until"; }
 		| UPDATE						{ $$ = "update"; }
@@ -5753,7 +5764,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| DISTINCT						{ $$ = "distinct"; }
 		| DO							{ $$ = "do"; }
 		| ELSE							{ $$ = "else"; }
-		| ENCRYPTED						{ $$ = "encrypted"; }
 		| END_TRANS						{ $$ = "end"; }
 		| EXCEPT						{ $$ = "except"; }
 		| EXISTS						{ $$ = "exists"; }
@@ -5763,6 +5773,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| FLOAT							{ $$ = "float"; }
 		| FOR							{ $$ = "for"; }
 		| FOREIGN						{ $$ = "foreign"; }
+		| FREEZE						{ $$ = "freeze"; }
 		| FROM							{ $$ = "from"; }
 		| FULL							{ $$ = "full"; }
 		| GLOBAL						{ $$ = "global"; }
@@ -5825,7 +5836,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
-		| UNENCRYPTED					{ $$ = "unencrypted"; }
 		| UNION							{ $$ = "union"; }
 		| UNIQUE						{ $$ = "unique"; }
 		| UNKNOWN						{ $$ = "unknown"; }

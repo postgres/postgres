@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.2 2001/08/25 23:24:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.3 2001/08/26 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -762,8 +762,12 @@ ExtendCLOG(TransactionId newestXact)
 {
 	int			pageno;
 
-	/* No work except at first XID of a page */
-	if (TransactionIdToPgIndex(newestXact) != 0)
+	/*
+	 * No work except at first XID of a page.  But beware: just after
+	 * wraparound, the first XID of page zero is FirstNormalTransactionId.
+	 */
+	if (TransactionIdToPgIndex(newestXact) != 0 &&
+		!TransactionIdEquals(newestXact, FirstNormalTransactionId))
 		return;
 
 	pageno = TransactionIdToPage(newestXact);
@@ -818,6 +822,18 @@ TruncateCLOG(TransactionId oldestXact)
 	S_LOCK(&(ClogCtl->control_lck));
 
 restart:;
+	/*
+	 * While we are holding the lock, make an important safety check:
+	 * the planned cutoff point must be <= the current CLOG endpoint page.
+	 * Otherwise we have already wrapped around, and proceeding with the
+	 * truncation would risk removing the current CLOG segment.
+	 */
+	if (CLOGPagePrecedes(ClogCtl->latest_page_number, cutoffPage))
+	{
+		S_UNLOCK(&(ClogCtl->control_lck));
+		elog(LOG, "unable to truncate commit log: apparent wraparound");
+		return;
+	}
 
 	for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
 	{

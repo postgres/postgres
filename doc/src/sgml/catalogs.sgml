@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.21 2001/08/21 16:35:58 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.22 2001/08/26 16:55:58 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -840,8 +840,31 @@
       <entry><type>oid</type></entry>
       <entry></entry>
       <entry>
-       Last oid in existence after the database was created; useful
+       Last system OID in the database; useful
        particularly to <application>pg_dump</application>
+      </entry>
+     </row>
+
+     <row>
+      <entry>datvacuumxid</entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       All tuples inserted or deleted by transaction IDs before this one
+       have been marked as known committed or known aborted in this database.
+       This is used to determine when commit-log space can be recycled.
+      </entry>
+     </row>
+
+     <row>
+      <entry>datfrozenxid</entry>
+      <entry><type>xid</type></entry>
+      <entry></entry>
+      <entry>
+       All tuples inserted by transaction IDs before this one have been
+       relabeled with a permanent (<quote>frozen</>) transaction ID in this
+       database.  This is useful to check whether a database must be vacuumed
+       soon to avoid transaction ID wraparound problems.
       </entry>
      </row>
 

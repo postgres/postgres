@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.17 2000/11/15 19:43:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.18 2001/08/26 16:55:59 tgl Exp $
 Postgres documentation
 -->
 
@@ -283,6 +283,20 @@ comment from Olly; response from Thomas...
    to that database will be allowed (but existing sessions are not killed
    simply by setting the flag false).  The <literal>template0</literal>
    database is normally marked this way to prevent modification of it.
+  </para>
+
+  <para>
+   After preparing a template database, or making any changes to one,
+   it is a good idea to perform
+   <command>VACUUM FREEZE</> or <command>VACUUM FULL FREEZE</> in that
+   database.  If this is done when there are no other open transactions
+   in the same database, then it is guaranteed that all tuples in the
+   database are <quote>frozen</> and will not be subject to transaction
+   ID wraparound problems.  This is particularly important for a database
+   that will have <literal>datallowconn</literal> set to false, since it
+   will be impossible to do routine maintenance <command>VACUUM</>s on
+   such a database.
+    See the Administrator's Guide for more information.
   </para>
   </refsect2>
  </refsect1>

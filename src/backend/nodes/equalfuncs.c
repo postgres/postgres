@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.102 2001/08/21 16:36:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.103 2001/08/26 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1115,6 +1115,8 @@ _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 	if (a->full != b->full)
 		return false;
 	if (a->analyze != b->analyze)
+		return false;
+	if (a->freeze != b->freeze)
 		return false;
 	if (a->verbose != b->verbose)
 		return false;

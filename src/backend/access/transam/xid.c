@@ -6,22 +6,17 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.32 2001/08/23 23:06:37 tgl Exp $
- *
- * OLD COMMENTS
- * XXX WARNING
- *		Much of this file will change when we change our representation
- *		of transaction ids -cim 3/23/90
- *
- * It is time to make the switch from 5 byte to 4 byte transaction ids
- * This file was totally reworked. -mer 5/22/92
+ *	$Id: xid.c,v 1.33 2001/08/26 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include <limits.h>
+
 #include "access/xact.h"
+
 
 #define PG_GETARG_TRANSACTIONID(n)	DatumGetTransactionId(PG_GETARG_DATUM(n))
 #define PG_RETURN_TRANSACTIONID(x)	return TransactionIdGetDatum(x)
@@ -30,9 +25,9 @@
 Datum
 xidin(PG_FUNCTION_ARGS)
 {
-	char	   *representation = PG_GETARG_CSTRING(0);
+	char	   *str = PG_GETARG_CSTRING(0);
 
-	PG_RETURN_TRANSACTIONID((TransactionId) atol(representation));
+	PG_RETURN_TRANSACTIONID((TransactionId) strtoul(str, NULL, 0));
 }
 
 Datum
@@ -40,21 +35,15 @@ xidout(PG_FUNCTION_ARGS)
 {
 	TransactionId transactionId = PG_GETARG_TRANSACTIONID(0);
 	/* maximum 32 bit unsigned integer representation takes 10 chars */
-	char	   *representation = palloc(11);
+	char	   *str = palloc(11);
 
-	snprintf(representation, 11, "%lu", (unsigned long) transactionId);
+	snprintf(str, 11, "%lu", (unsigned long) transactionId);
 
-	PG_RETURN_CSTRING(representation);
+	PG_RETURN_CSTRING(str);
 }
 
-/* ----------------------------------------------------------------
- *		xideq
- * ----------------------------------------------------------------
- */
-
 /*
- *		xideq			- returns 1, iff xid1 == xid2
- *								  0  else;
+ *		xideq			- are two xids equal?
  */
 Datum
 xideq(PG_FUNCTION_ARGS)
@@ -63,4 +52,20 @@ xideq(PG_FUNCTION_ARGS)
 	TransactionId xid2 = PG_GETARG_TRANSACTIONID(1);
 
 	PG_RETURN_BOOL(TransactionIdEquals(xid1, xid2));
+}
+
+/*
+ *		xid_age			- compute age of an XID (relative to current xact)
+ */
+Datum
+xid_age(PG_FUNCTION_ARGS)
+{
+	TransactionId xid = PG_GETARG_TRANSACTIONID(0);
+	TransactionId now = GetCurrentTransactionId();
+
+	/* Permanent XIDs are always infinitely old */
+	if (! TransactionIdIsNormal(xid))
+		PG_RETURN_INT32(INT_MAX);
+
+	PG_RETURN_INT32((int32) (now - xid));
 }

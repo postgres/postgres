@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.39 2001/08/25 18:52:42 tgl Exp $
+ * $Id: transam.h,v 1.40 2001/08/26 16:56:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #define BootstrapTransactionId		((TransactionId) 1)
 #define FrozenTransactionId			((TransactionId) 2)
 #define FirstNormalTransactionId	((TransactionId) 3)
+#define MaxTransactionId			((TransactionId) 0xFFFFFFFF)
 
 /* ----------------
  *		transaction ID manipulation macros
@@ -38,11 +39,7 @@
  */
 #define TransactionIdIsValid(xid)		((xid) != InvalidTransactionId)
 #define TransactionIdIsNormal(xid)		((xid) >= FirstNormalTransactionId)
-#define TransactionIdEquals(id1, id2)			((id1) == (id2))
-#define TransactionIdPrecedes(id1, id2)			((id1) < (id2))
-#define TransactionIdPrecedesOrEquals(id1, id2)	((id1) <= (id2))
-#define TransactionIdFollows(id1, id2)			((id1) > (id2))
-#define TransactionIdFollowsOrEquals(id1, id2)	((id1) >= (id2))
+#define TransactionIdEquals(id1, id2)	((id1) == (id2))
 #define TransactionIdStore(xid, dest)	(*(dest) = (xid))
 #define StoreInvalidTransactionId(dest)	(*(dest) = InvalidTransactionId)
 /* advance a transaction ID variable, handling wraparound correctly */
@@ -105,6 +102,10 @@ extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
 extern void TransactionIdCommit(TransactionId transactionId);
 extern void TransactionIdAbort(TransactionId transactionId);
+extern bool TransactionIdPrecedes(TransactionId id1, TransactionId id2);
+extern bool TransactionIdPrecedesOrEquals(TransactionId id1, TransactionId id2);
+extern bool TransactionIdFollows(TransactionId id1, TransactionId id2);
+extern bool TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2);
 
 /* in transam/varsup.c */
 extern TransactionId GetNewTransactionId(void);

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.207 2001/08/10 18:57:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.208 2001/08/26 16:55:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,13 @@
 
 #include <unistd.h>
 
+#include "access/clog.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/xlog.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
@@ -108,15 +110,24 @@ static MemoryContext vac_context = NULL;
 
 static int	MESSAGE_LEVEL;		/* message level */
 
-static TransactionId XmaxRecent;
+static TransactionId OldestXmin;
+static TransactionId FreezeLimit;
+
+static TransactionId initialOldestXmin;
+static TransactionId initialFreezeLimit;
 
 
 /* non-export function prototypes */
-static void vacuum_init(void);
-static void vacuum_shutdown(void);
+static void vacuum_init(VacuumStmt *vacstmt);
+static void vacuum_shutdown(VacuumStmt *vacstmt);
 static VRelList getrels(Name VacRelP, const char *stmttype);
+static void vac_update_dbstats(Oid dbid,
+							   TransactionId vacuumXID,
+							   TransactionId frozenXID);
+static void vac_truncate_clog(TransactionId vacuumXID,
+							  TransactionId frozenXID);
 static void vacuum_rel(Oid relid, VacuumStmt *vacstmt);
-static void full_vacuum_rel(Relation onerel);
+static void full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel,
 					  VacPageList vacuum_pages, VacPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel,
@@ -213,7 +224,7 @@ vacuum(VacuumStmt *vacstmt)
 	/*
 	 * Start up the vacuum cleaner.
 	 */
-	vacuum_init();
+	vacuum_init(vacstmt);
 
 	/*
 	 * Process each selected relation.  We are careful to process
@@ -230,21 +241,8 @@ vacuum(VacuumStmt *vacstmt)
 			analyze_rel(cur->vrl_relid, vacstmt);
 	}
 
-	/*
-	 * If we did a complete vacuum, then flush the init file that relcache.c
-	 * uses to save startup time. The next backend startup will rebuild the
-	 * init file with up-to-date information from pg_class.  This lets the
-	 * optimizer see the stats that we've collected for certain critical
-	 * system indexes.  See relcache.c for more details.
-	 *
-	 * Ignore any failure to unlink the file, since it might not be there if
-	 * no backend has been started since the last vacuum.
-	 */
-	if (vacstmt->vacrel == NULL)
-		unlink(RELCACHE_INIT_FILENAME);
-
 	/* clean up */
-	vacuum_shutdown();
+	vacuum_shutdown(vacstmt);
 }
 
 /*
@@ -268,19 +266,67 @@ vacuum(VacuumStmt *vacstmt)
  *		PostgresMain().
  */
 static void
-vacuum_init(void)
+vacuum_init(VacuumStmt *vacstmt)
 {
+	if (vacstmt->vacuum && vacstmt->vacrel == NULL)
+	{
+		/*
+		 * Compute the initially applicable OldestXmin and FreezeLimit XIDs,
+		 * so that we can record these values at the end of the VACUUM.
+		 * Note that individual tables may well be processed with newer values,
+		 * but we can guarantee that no (non-shared) relations are processed
+		 * with older ones.
+		 *
+		 * It is okay to record non-shared values in pg_database, even though
+		 * we may vacuum shared relations with older cutoffs, because only
+		 * the minimum of the values present in pg_database matters.  We
+		 * can be sure that shared relations have at some time been vacuumed
+		 * with cutoffs no worse than the global minimum; for, if there is
+		 * a backend in some other DB with xmin = OLDXMIN that's determining
+		 * the cutoff with which we vacuum shared relations, it is not possible
+		 * for that database to have a cutoff newer than OLDXMIN recorded in
+		 * pg_database.
+		 */
+		vacuum_set_xid_limits(vacstmt, false,
+							  &initialOldestXmin, &initialFreezeLimit);
+	}
+
 	/* matches the StartTransaction in PostgresMain() */
 	CommitTransactionCommand();
 }
 
 static void
-vacuum_shutdown(void)
+vacuum_shutdown(VacuumStmt *vacstmt)
 {
 	/* on entry, we are not in a transaction */
 
 	/* matches the CommitTransaction in PostgresMain() */
 	StartTransactionCommand();
+
+	/*
+	 * If we did a database-wide VACUUM, update the database's pg_database
+	 * row with info about the transaction IDs used, and try to truncate
+	 * pg_clog.
+	 */
+	if (vacstmt->vacuum && vacstmt->vacrel == NULL)
+	{
+		vac_update_dbstats(MyDatabaseId,
+						   initialOldestXmin, initialFreezeLimit);
+		vac_truncate_clog(initialOldestXmin, initialFreezeLimit);
+	}
+
+	/*
+	 * If we did a complete vacuum or analyze, then flush the init file that
+	 * relcache.c uses to save startup time. The next backend startup will
+	 * rebuild the init file with up-to-date information from pg_class.
+	 * This lets the optimizer see the stats that we've collected for certain
+	 * critical system indexes.  See relcache.c for more details.
+	 *
+	 * Ignore any failure to unlink the file, since it might not be there if
+	 * no backend has been started since the last vacuum.
+	 */
+	if (vacstmt->vacrel == NULL)
+		unlink(RELCACHE_INIT_FILENAME);
 
 	/*
 	 * Clean up working storage --- note we must do this after
@@ -382,6 +428,52 @@ getrels(Name VacRelP, const char *stmttype)
 	return vrl;
 }
 
+/*
+ * vacuum_set_xid_limits() -- compute oldest-Xmin and freeze cutoff points
+ */
+void
+vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
+					  TransactionId *oldestXmin,
+					  TransactionId *freezeLimit)
+{
+	TransactionId limit;
+
+	*oldestXmin = GetOldestXmin(sharedRel);
+
+	Assert(TransactionIdIsNormal(*oldestXmin));
+
+	if (vacstmt->freeze)
+	{
+		/* FREEZE option: use oldest Xmin as freeze cutoff too */
+		limit = *oldestXmin;
+	}
+	else
+	{
+		/*
+		 * Normal case: freeze cutoff is well in the past, to wit, about
+		 * halfway to the wrap horizon
+		 */
+		limit = GetCurrentTransactionId() - (MaxTransactionId >> 2);
+	}
+
+	/*
+	 * Be careful not to generate a "permanent" XID
+	 */
+	if (!TransactionIdIsNormal(limit))
+		limit = FirstNormalTransactionId;
+
+	/*
+	 * Ensure sane relationship of limits
+	 */
+	if (TransactionIdFollows(limit, *oldestXmin))
+	{
+		elog(NOTICE, "oldest Xmin is far in the past --- close open transactions soon to avoid wraparound problems");
+		limit = *oldestXmin;
+	}
+
+	*freezeLimit = limit;
+}
+
 
 /*
  *	vac_update_relstats() -- update statistics for one relation
@@ -446,6 +538,122 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	WriteBuffer(buffer);
 
 	heap_close(rd, RowExclusiveLock);
+}
+
+
+/*
+ *	vac_update_dbstats() -- update statistics for one database
+ *
+ *		Update the whole-database statistics that are kept in its pg_database
+ *		row.
+ *
+ *		We violate no-overwrite semantics here by storing new values for the
+ *		statistics columns directly into the tuple that's already on the page.
+ *		As with vac_update_relstats, this avoids leaving dead tuples behind
+ *		after a VACUUM; which is good since GetRawDatabaseInfo
+ *		can get confused by finding dead tuples in pg_database.
+ *
+ *		This routine is shared by full and lazy VACUUM.  Note that it is only
+ *		applied after a database-wide VACUUM operation.
+ */
+static void
+vac_update_dbstats(Oid dbid,
+				   TransactionId vacuumXID,
+				   TransactionId frozenXID)
+{
+	Relation	relation;
+	ScanKeyData entry[1];
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	Form_pg_database dbform;
+
+	relation = heap_openr(DatabaseRelationName, RowExclusiveLock);
+
+	/* Must use a heap scan, since there's no syscache for pg_database */
+	ScanKeyEntryInitialize(&entry[0], 0x0,
+						   ObjectIdAttributeNumber, F_OIDEQ,
+						   ObjectIdGetDatum(dbid));
+
+	scan = heap_beginscan(relation, 0, SnapshotNow, 1, entry);
+
+	tuple = heap_getnext(scan, 0);
+
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "database %u does not exist", dbid);
+
+	dbform = (Form_pg_database) GETSTRUCT(tuple);
+
+	/* overwrite the existing statistics in the tuple */
+	dbform->datvacuumxid = vacuumXID;
+	dbform->datfrozenxid = frozenXID;
+
+	/* invalidate the tuple in the cache and write the buffer */
+	RelationInvalidateHeapTuple(relation, tuple);
+	WriteNoReleaseBuffer(scan->rs_cbuf);
+
+	heap_endscan(scan);
+
+	heap_close(relation, RowExclusiveLock);
+}
+
+
+/*
+ *	vac_truncate_clog() -- attempt to truncate the commit log
+ *
+ *		Scan pg_database to determine the system-wide oldest datvacuumxid,
+ *		and use it to truncate the transaction commit log (pg_clog).
+ *		Also generate a warning if the system-wide oldest datfrozenxid
+ *		seems to be in danger of wrapping around.
+ *
+ *		The passed XIDs are simply the ones I just wrote into my pg_database
+ *		entry.  They're used to initialize the "min" calculations.
+ *
+ *		This routine is shared by full and lazy VACUUM.  Note that it is only
+ *		applied after a database-wide VACUUM operation.
+ */
+static void
+vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
+{
+	Relation	relation;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	int32		age;
+
+	relation = heap_openr(DatabaseRelationName, AccessShareLock);
+
+	scan = heap_beginscan(relation, 0, SnapshotNow, 0, NULL);
+
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	{
+		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
+
+		/* Ignore non-connectable databases (eg, template0) */
+		/* It's assumed that these have been frozen correctly */
+		if (!dbform->datallowconn)
+			continue;
+
+		if (TransactionIdIsNormal(dbform->datvacuumxid) &&
+			TransactionIdPrecedes(dbform->datvacuumxid, vacuumXID))
+			vacuumXID = dbform->datvacuumxid;
+		if (TransactionIdIsNormal(dbform->datfrozenxid) &&
+			TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
+			frozenXID = dbform->datfrozenxid;
+	}
+
+	heap_endscan(scan);
+
+	heap_close(relation, AccessShareLock);
+
+	/* Truncate CLOG to the oldest vacuumxid */
+	TruncateCLOG(vacuumXID);
+
+	/* Give warning about impending wraparound problems */
+	age = (int32) (GetCurrentTransactionId() - frozenXID);
+	if (age > (int32) ((MaxTransactionId >> 3) * 3))
+		elog(NOTICE, "Some databases have not been vacuumed in %d transactions."
+			 "\n\tBetter vacuum them within %d transactions,"
+			 "\n\tor you may have a wraparound failure.",
+			 age, (int32) (MaxTransactionId >> 1) - age);
 }
 
 
@@ -550,7 +758,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
 	if (vacstmt->full)
-		full_vacuum_rel(onerel);
+		full_vacuum_rel(onerel, vacstmt);
 	else
 		lazy_vacuum_rel(onerel, vacstmt);
 
@@ -597,7 +805,7 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt)
  *		and locked the relation.
  */
 static void
-full_vacuum_rel(Relation onerel)
+full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 {
 	VacPageListData vacuum_pages;		/* List of pages to vacuum and/or
 										 * clean indexes */
@@ -613,7 +821,8 @@ full_vacuum_rel(Relation onerel)
 		IsSystemRelationName(RelationGetRelationName(onerel)))
 		reindex = true;
 
-	GetXmaxRecent(&XmaxRecent);
+	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
+						  &OldestXmin, &FreezeLimit);
 
 	/*
 	 * Set up statistics-gathering machinery.
@@ -845,12 +1054,25 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			tupgone = false;
 			sv_infomask = tuple.t_data->t_infomask;
 
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, XmaxRecent))
+			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
 			{
 				case HEAPTUPLE_DEAD:
 					tupgone = true;	/* we can delete the tuple */
 					break;
 				case HEAPTUPLE_LIVE:
+					/*
+					 * Tuple is good.  Consider whether to replace its xmin
+					 * value with FrozenTransactionId.
+					 */
+					if (TransactionIdIsNormal(tuple.t_data->t_xmin) &&
+						TransactionIdPrecedes(tuple.t_data->t_xmin,
+											  FreezeLimit))
+					{
+						tuple.t_data->t_xmin = FrozenTransactionId;
+						tuple.t_data->t_infomask &= ~HEAP_XMIN_INVALID;
+						tuple.t_data->t_infomask |= HEAP_XMIN_COMMITTED;
+						pgchanged = true;
+					}
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
 					/*
@@ -1312,7 +1534,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * tuples to another places.
 			 */
 			if ((tuple.t_data->t_infomask & HEAP_UPDATED &&
-				 !TransactionIdPrecedes(tuple.t_data->t_xmin, XmaxRecent)) ||
+				 !TransactionIdPrecedes(tuple.t_data->t_xmin, OldestXmin)) ||
 				(!(tuple.t_data->t_infomask & HEAP_XMAX_INVALID) &&
 				 !(ItemPointerEquals(&(tuple.t_self),
 									 &(tuple.t_data->t_ctid)))))
@@ -1362,7 +1584,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 						/*
 						 * This means that in the middle of chain there
-						 * was tuple updated by older (than XmaxRecent)
+						 * was tuple updated by older (than OldestXmin)
 						 * xaction and this tuple is already deleted by
 						 * me. Actually, upper part of chain should be
 						 * removed and seems that this should be handled
@@ -1430,7 +1652,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					/* All done ? */
 					if (!(tp.t_data->t_infomask & HEAP_UPDATED) ||
-						TransactionIdPrecedes(tp.t_data->t_xmin, XmaxRecent))
+						TransactionIdPrecedes(tp.t_data->t_xmin, OldestXmin))
 						break;
 
 					/* Well, try to find tuple with old row version */

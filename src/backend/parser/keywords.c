@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.96 2001/08/16 20:38:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.97 2001/08/26 16:56:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"force", FORCE},
 	{"foreign", FOREIGN},
 	{"forward", FORWARD},
+	{"freeze", FREEZE},
 	{"from", FROM},
 	{"full", FULL},
 	{"function", FUNCTION},

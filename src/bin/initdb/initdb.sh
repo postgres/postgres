@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.134 2001/08/25 18:52:42 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.135 2001/08/26 16:56:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -841,7 +841,7 @@ echo "ok"
 $ECHO_N "vacuuming database template1... "$ECHO_C
 
 "$PGPATH"/postgres $PGSQL_OPT template1 >/dev/null <<EOF
-VACUUM FULL ANALYZE;
+VACUUM FULL FREEZE;
 EOF
 if [ "$?" -ne 0 ]; then
     exit_nicely
