@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.261 2003/06/13 23:10:07 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.262 2003/06/14 14:35:42 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -323,7 +323,9 @@ IFS=$ac_save_IFS
 # Enable libpq to be thread-safe
 #
 AC_MSG_CHECKING([allow threaded libpq])
-PGAC_ARG_BOOL(with, threads, no, [  --with-threads          allow libpq to be thread-safe])
+PGAC_ARG_BOOL(with, threads, no, [  --with-threads          allow libpq to be thread-safe],
+              [AC_DEFINE([USE_THREADS], 1, [Define to 1 to build libpq with threads. (--with-threads)])])
+
 AC_MSG_RESULT([$with_threads])
 AC_SUBST(with_threads)
 
@@ -559,9 +561,12 @@ case $host_os in
 			# these require no special flags or libraries
 			;;
 		freebsd2*|freebsd3*|freebsd4*) THREAD_CFLAGS="-pthread" ;;
-		freebsd*) THREAD_LIBS="-lc_r" ;;
-		linux*) THREAD_LIBS="-lpthread"
-			THREAD_CFLAGS="-D_REENTRANT" ;;
+		freebsd*)
+			THREAD_LIBS="-lc_r"
+			;;
+		linux*) THREAD_CFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
+			THREAD_LIBS="-lpthread"
+			;;
 		*)
 			# other operating systems might fail because they have pthread.h but need
 			# special libs we don't know about yet.
@@ -571,10 +576,10 @@ Please report your platform threading info to the PostgreSQL mailing lists
 so it can be added to the next release.  Report any compile or link flags,
 or libraries required for threading support.
 ])
-	esac
+esac
 fi
-AC_SUBST(THREAD_LIBS)
 AC_SUBST(THREAD_CFLAGS)
+AC_SUBST(THREAD_LIBS)
 
 #
 # Assignments
@@ -982,6 +987,20 @@ AC_CHECK_FUNCS(atexit, [],
                [AC_MSG_ERROR([neither atexit() nor on_exit() found])])])
 
 AC_FUNC_FSEEKO
+
+#
+# Check for re-entrant versions of certain functions
+#
+# Include special flags if required
+#
+_CFLAGS="$CFLAGS"
+_LIB="$LIBS"
+CFLAGS="$CFLAGS $TREAD_CFLAGS"
+LIBS="$LIBS $THREAD_LIBS"
+AC_CHECK_FUNCS([strerror_r getpwuid_r gethostbyname_r])
+CFLAGS="$_CFLAGS"
+LIB="$_LIBS"
+
 
 
 # This test makes sure that run tests work at all.  Sometimes a shared

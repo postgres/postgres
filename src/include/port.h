@@ -6,10 +6,14 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.6 2003/06/12 08:15:29 momjian Exp $
+ * $Id: port.h,v 1.7 2003/06/14 14:35:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+/* for thread.c */
+#include <pwd.h>
+#include <netdb.h>
 
 /* Portable path handling for Unix/Win32 */
 bool is_absolute_path(const char *filename);
@@ -98,3 +102,15 @@ extern long random(void);
 #ifndef HAVE_SRANDOM
 extern void srandom(unsigned int seed);
 #endif
+
+/* thread.h */
+extern char *pqStrerror(int errnum, char *strerrbuf, size_t buflen);
+
+extern int pqGetpwuid(uid_t uid, struct passwd *resultbuf, char *buffer,
+		      size_t buflen, struct passwd **result);
+
+extern int pqGethostbyname(const char *name,
+			   struct hostent *resbuf,
+			   char *buf, size_t buflen,
+			   struct hostent **result,
+			   int *herrno);

@@ -2824,7 +2824,11 @@ if test "${with_threads+set}" = set; then
 
   case $withval in
     yes)
-      :
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_THREADS 1
+_ACEOF
+
       ;;
     no)
       :
@@ -2840,6 +2844,7 @@ else
   with_threads=no
 
 fi;
+
 
 echo "$as_me:$LINENO: result: $with_threads" >&5
 echo "${ECHO_T}$with_threads" >&6
@@ -3899,9 +3904,12 @@ case $host_os in
 			# these require no special flags or libraries
 			;;
 		freebsd2*|freebsd3*|freebsd4*) THREAD_CFLAGS="-pthread" ;;
-		freebsd*) THREAD_LIBS="-lc_r" ;;
-		linux*) THREAD_LIBS="-lpthread"
-			THREAD_CFLAGS="-D_REENTRANT" ;;
+		freebsd*)
+			THREAD_LIBS="-lc_r"
+			;;
+		linux*) THREAD_CFLAGS="-D_REENTRANT -D_THREAD_SAFE -D_POSIX_PTHREAD_SEMANTICS"
+			THREAD_LIBS="-lpthread"
+			;;
 		*)
 			# other operating systems might fail because they have pthread.h but need
 			# special libs we don't know about yet.
@@ -3918,7 +3926,7 @@ so it can be added to the next release.  Report any compile or link flags,
 or libraries required for threading support.
 " >&2;}
    { (exit 1); exit 1; }; }
-	esac
+esac
 fi
 
 
@@ -12818,6 +12826,97 @@ _ACEOF
 fi
 
 
+#
+# Check for re-entrant versions of certain functions
+#
+# Include special flags if required
+#
+_CFLAGS="$CFLAGS"
+_LIB="$LIBS"
+CFLAGS="$CFLAGS $TREAD_CFLAGS"
+LIBS="$LIBS $THREAD_LIBS"
+
+
+
+for ac_func in strerror_r getpwuid_r gethostbyname_r
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
+if eval "test \"\${$as_ac_var+set}\" = set"; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char $ac_func (); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char $ac_func ();
+char (*f) ();
+
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
+choke me
+#else
+f = $ac_func;
+#endif
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  eval "$as_ac_var=yes"
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+eval "$as_ac_var=no"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
+echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+CFLAGS="$_CFLAGS"
+LIB="$_LIBS"
+
+
 
 # This test makes sure that run tests work at all.  Sometimes a shared
 # library is found by the linker, but the runtime linker can't find it.
@@ -17603,8 +17702,8 @@ s,@with_pam@,$with_pam,;t t
 s,@with_rendezvous@,$with_rendezvous,;t t
 s,@with_openssl@,$with_openssl,;t t
 s,@ELF_SYS@,$ELF_SYS,;t t
-s,@THREAD_LIBS@,$THREAD_LIBS,;t t
 s,@THREAD_CFLAGS@,$THREAD_CFLAGS,;t t
+s,@THREAD_LIBS@,$THREAD_LIBS,;t t
 s,@AWK@,$AWK,;t t
 s,@FLEX@,$FLEX,;t t
 s,@FLEXFLAGS@,$FLEXFLAGS,;t t

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.163 2003/05/27 16:36:50 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.164 2003/06/14 14:35:42 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -121,6 +121,7 @@ localedir := @localedir@
 #
 # Records the choice of the various --enable-xxx and --with-xxx options.
 
+with_threads	= @with_threads@
 with_java	= @with_java@
 with_perl	= @with_perl@
 with_python	= @with_python@
@@ -340,7 +341,7 @@ endif
 #
 # substitute implementations of the C library
 
-LIBOBJS = @LIBOBJS@ path.o
+LIBOBJS = @LIBOBJS@ path.o threads.o
 
 ifneq (,$(LIBOBJS))
 LIBS += -lpgport

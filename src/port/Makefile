@@ -7,7 +7,7 @@
 # with broken/missing library files.
 
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/port/Makefile,v 1.3 2002/07/27 20:10:05 petere Exp $
+#    $Header: /cvsroot/pgsql/src/port/Makefile,v 1.4 2003/06/14 14:35:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,6 +21,9 @@ endif
 
 libpgport.a: $(LIBOBJS)
 	$(AR) crs $@ $^
+
+thread.o: thread.c
+	$(CC) $(CFLAGS) $(THREAD_CFLAGS) -c thread.c
 
 clean distclean maintainer-clean:
 	rm -f libpgport.a $(LIBOBJS)
