@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.80 2002/11/08 19:12:21 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.81 2002/12/12 21:02:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -846,6 +846,29 @@ testdb=>
         Lists all available domains (derived types). If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only matching domains are shown.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dc</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <listitem>
+        <para>
+        Lists all available conversions (between encodings). If <replaceable
+        class="parameter">pattern</replaceable>
+        is specified, only matching conversions are shown.
+        </para>
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dC</literal></term>
+        <listitem>
+        <para>
+        Lists all available type casts.  Casts can be explicit, explicit and assignment
+	or implicit, and are used to change a variable from one type to another.
         </para>
         </listitem>
       </varlistentry>

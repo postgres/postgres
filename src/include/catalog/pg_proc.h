@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.279 2002/12/06 05:20:26 momjian Exp $
+ * $Id: pg_proc.h,v 1.280 2002/12/12 21:02:25 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2930,6 +2930,8 @@ DATA(insert OID = 2082 (  pg_operator_is_visible	PGNSP PGUID 12 f f t f s 1 16 "
 DESCR("is operator visible in search path?");
 DATA(insert OID = 2083 (  pg_opclass_is_visible		PGNSP PGUID 12 f f t f s 1 16 "26"	pg_opclass_is_visible - _null_ ));
 DESCR("is opclass visible in search path?");
+DATA(insert OID = 2093 (  pg_conversion_is_visible		PGNSP PGUID 12 f f t f s 1 16 "26"	pg_conversion_is_visible - _null_ ));
+DESCR("is conversion visible in search path?");
 
 
 /* Aggregates (moved here from pg_aggregate for 7.3) */

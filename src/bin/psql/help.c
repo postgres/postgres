@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.66 2002/12/11 23:07:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.67 2002/12/12 21:02:24 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -206,6 +206,8 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _(" \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 					  "                list tables/indexes/sequences/views/system tables\n"));
 	fprintf(output, _(" \\da [PATTERN]  list aggregate functions\n"));
+	fprintf(output, _(" \\dc [PATTERN]  list conversions\n"));
+	fprintf(output, _(" \\dC            list casts\n"));
 	fprintf(output, _(" \\dd [PATTERN]  show comment for object\n"));
 	fprintf(output, _(" \\dD [PATTERN]  list domains\n"));
 	fprintf(output, _(" \\df [PATTERN]  list functions (add \"+\" for more detail)\n"));

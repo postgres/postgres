@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.41 2002/12/04 05:18:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.42 2002/12/12 21:02:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ Datum		pg_type_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_function_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_operator_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_opclass_is_visible(PG_FUNCTION_ARGS);
-
+Datum		pg_conversion_is_visible(PG_FUNCTION_ARGS);
 
 /*
  * RangeVarGetRelid
@@ -1036,6 +1036,87 @@ OpclassIsVisible(Oid opcid)
 }
 
 /*
+ * ConversionGetConid
+ *		Try to resolve an unqualified conversion name.
+ *		Returns OID if conversion found in search path, else InvalidOid.
+ *
+ * This is essentially the same as RelnameGetRelid.
+ */
+Oid
+ConversionGetConid(const char *conname)
+{
+	Oid		conid;
+	List	   *lptr;
+
+	recomputeNamespacePath();
+
+	foreach(lptr, namespaceSearchPath)
+	{
+		Oid			namespaceId = (Oid) lfirsti(lptr);
+
+		conid = GetSysCacheOid(CONNAMENSP,
+							   PointerGetDatum(conname),
+							   ObjectIdGetDatum(namespaceId),
+							   0, 0);
+		if (OidIsValid(conid))
+			return conid;
+	}
+
+	/* Not found in path */
+	return InvalidOid;
+}
+
+/*
+ * ConversionIsVisible
+ *		Determine whether a conversion (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified conversion name".
+ */
+bool
+ConversionIsVisible(Oid conid)
+{
+	HeapTuple	contup;
+	Form_pg_conversion conform;
+	Oid			connamespace;
+	bool		visible;
+
+	contup = SearchSysCache(CONOID,
+							ObjectIdGetDatum(conid),
+							0, 0, 0);
+	if (!HeapTupleIsValid(contup))
+		elog(ERROR, "Cache lookup failed for converions %u", conid);
+	conform = (Form_pg_conversion) GETSTRUCT(contup);
+
+	recomputeNamespacePath();
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible.
+	 * Items in the system namespace are surely in the path and so we
+	 * needn't even do intMember() for them.
+	 */
+	connamespace = conform->connamespace;
+	if (connamespace != PG_CATALOG_NAMESPACE &&
+		!intMember(connamespace, namespaceSearchPath))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could
+		 * be hidden by another conversion of the same name earlier in the
+		 * path. So we must do a slow check to see if this conversion would
+		 * be found by ConvnameGetConid.
+		 */
+		char	   *conname = NameStr(conform->conname);
+		
+		visible = (ConversionGetConid(conname) == conid);
+	}
+
+	ReleaseSysCache(contup);
+
+	return visible;
+}
+
+/*
  * DeconstructQualifiedName
  *		Given a possibly-qualified name expressed as a list of String nodes,
  *		extract the schema name and object name.
@@ -1853,4 +1934,12 @@ pg_opclass_is_visible(PG_FUNCTION_ARGS)
 	Oid			oid = PG_GETARG_OID(0);
 
 	PG_RETURN_BOOL(OpclassIsVisible(oid));
+}
+
+Datum
+pg_conversion_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(ConversionIsVisible(oid));
 }
