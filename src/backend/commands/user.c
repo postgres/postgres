@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.46 1999/12/20 01:11:37 tgl Exp $
+ * $Id: user.c,v 1.47 1999/12/21 22:39:01 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/indexing.h"
 #include "commands/copy.h"
 #include "commands/user.h"
+#include "commands/trigger.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
@@ -48,12 +49,19 @@ static void CheckPgUserAclNotNull(void);
  *---------------------------------------------------------------------
  */
 
-void
+HeapTuple
 update_pg_pwd(void)
 {
 	char	   *filename,
 			   *tempname;
 	int			bufsize;
+
+
+	/*
+	 * This is a trigger, so clean out the information provided by
+	 * the trigger manager.
+	 */
+	CurrentTriggerData = NULL;
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
@@ -93,6 +101,8 @@ update_pg_pwd(void)
 	creat(filename, S_IRUSR | S_IWUSR);
 
 	pfree((void *) tempname);
+
+	return NULL;
 }
 
 /*---------------------------------------------------------------------
