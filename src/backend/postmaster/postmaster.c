@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.30 1996/12/26 22:07:17 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.31 1997/01/14 08:05:19 bryanh Exp $
  *
  * NOTES
  *
@@ -119,11 +119,6 @@ static short    ActiveBackends = FALSE;
 static int      NextBackendId = MAXINT;         /* XXX why? */
 static char     *progname = (char *) NULL;
 
-char            *DataDir;
-  /* The PGDATA directory user says to use, or defaults to via environment
-     variable.  NULL if no option given and no environment variable set 
-  */
-    
 /*
  * Default Values
  */

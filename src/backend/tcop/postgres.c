@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.24 1996/12/26 22:07:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.25 1997/01/14 08:05:26 bryanh Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -100,7 +100,6 @@ int     dontExecute = 0;
 static int      ShowStats;
 static bool     IsEmptyQuery = false;
 
-Relation        reldesc;                /* current relation descritor */
 char            relname[80];            /* current relation name */
 
 #if defined(WIN32) || defined(next)
@@ -1272,7 +1271,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.24 $ $Date: 1996/12/26 22:07:40 $");
+        puts("$Revision: 1.25 $ $Date: 1997/01/14 08:05:26 $");
     }
     
     /* ----------------

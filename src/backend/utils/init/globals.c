@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.3 1996/11/14 10:24:38 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.4 1997/01/14 08:05:36 bryanh Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -41,8 +41,12 @@ int		Noversion = 0;
 int             Quiet = 1;
 
 int		MasterPid;
-char*           DataDir;
-
+char            *DataDir;
+  /* The PGDATA directory user says to use, or defaults to via environment
+     variable.  NULL if no option given and no environment variable set 
+  */
+Relation        reldesc;                /* current relation descriptor */
+    
 char		OutputFileName[MAXPGPATH] = "";
 
 BackendId	MyBackendId;
