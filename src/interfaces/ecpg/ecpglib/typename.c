@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.1 2003/03/16 10:42:53 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.2 2003/03/20 15:56:50 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -49,6 +49,10 @@ ECPGtype_name(enum ECPGttype typ)
 			return "char";
 		case ECPGt_numeric:
 			return "numeric";
+		case ECPGt_date:
+			return "date";
+		case ECPGt_timestamp:
+			return "timestamp";
 		default:
 			abort();
 	}

@@ -8,6 +8,7 @@ main()
 	NumericVar *value1, *value2, *res;
 	exec sql begin declare section;
 		decimal(14,7) des = {0, 0, 0, 0, 0, NULL, NULL} ;
+		numeric num;
 	exec sql end declare section;
 	double d;
 	FILE *dbgs;
@@ -52,6 +53,13 @@ main()
 	text = PGTYPESnumeric_ntoa(res);
 	PGTYPESnumeric_ntod(res, &d);
 	printf("div = %s %e\n", text, d);
+
+	exec sql rollback;
+	exec sql disconnect;
+
+	if (dbgs != NULL)
+                fclose(dbgs);
+		
 	return (0);
 }
 

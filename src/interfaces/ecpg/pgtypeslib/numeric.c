@@ -5,9 +5,9 @@
 #include <math.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 
 #include "c.h"
+#include "extern.h"
 #include "numeric.h"
 #include "pgtypes_error.h"
 
@@ -24,21 +24,6 @@
           } while (0)
 
 #include "pgtypes_numeric.h"
-
-static char *
-pgtypes_alloc(long size)
-{
-	char *new = (char *) calloc(1L, size);
-
-	if (!new)
-	{
-		errno = ENOMEM;
-		return NULL;
-	}
-
-	memset(new, '\0', size);
-	return (new);
-}
 
 #if 0
 /* ----------

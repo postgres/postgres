@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.3 2003/03/19 16:05:41 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.4 2003/03/20 15:56:50 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -27,6 +27,8 @@
 #include "sqlca.h"
 #include "sql3types.h"
 #include "pgtypes_numeric.h"
+#include "pgtypes_date.h"
+#include "pgtypes_timestamp.h"
 
 /* variables visible to the programs */
 struct sqlca sqlca =
@@ -59,8 +61,7 @@ struct sqlca sqlca =
 /* This function returns a newly malloced string that has the  \
    in the argument quoted with \ and the ' quoted with ' as SQL92 says.
  */
-static
-char *
+static char *
 quote_postgres(char *arg, int lineno)
 {
 	char	   *res = (char *) ECPGalloc(2 * strlen(arg) + 3, lineno);
@@ -876,6 +877,89 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					free(str);
 				}
 				break;
+
+			case ECPGt_date:
+				{
+					char *str = NULL;
+					int slen;
+					
+					if (var->arrsize > 1)
+					{
+						for (element = 0; element < var->arrsize; element++)
+						{
+							str = PGTYPESdate_dtoa(*(Date *)((var + var->offset * element)->value));
+							slen = strlen (str);
+							
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
+								return false;
+							
+							if (!element)
+								strcpy(mallocedval, "'{");
+							
+							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+							strcpy(mallocedval + strlen(mallocedval), ",");
+						}
+						strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					}
+					else
+					{
+						str = PGTYPESdate_dtoa(*(Date *)(var->value));
+						slen = strlen (str);
+					
+						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+							return false;
+
+						strncpy(mallocedval, str , slen);
+						mallocedval[slen] = '\0';
+					}
+					
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
+					free(str);
+				}
+				break;
+				
+			case ECPGt_timestamp:
+				{
+					char *str = NULL;
+					int slen;
+					
+					if (var->arrsize > 1)
+					{
+						for (element = 0; element < var->arrsize; element++)
+						{
+							str = PGTYPEStimestamp_ttoa(*(Timestamp *)((var + var->offset * element)->value));
+							slen = strlen (str);
+							
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + 5, stmt->lineno)))
+								return false;
+							
+							if (!element)
+								strcpy(mallocedval, "'{");
+							
+							strncpy(mallocedval + strlen(mallocedval), str , slen + 1);
+							strcpy(mallocedval + strlen(mallocedval), ",");
+						}
+						strcpy(mallocedval + strlen(mallocedval) - 1, "}'");
+					}
+					else
+					{
+						str = PGTYPEStimestamp_ttoa(*(Timestamp *)(var->value));
+						slen = strlen (str);
+					
+						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+							return false;
+
+						strncpy(mallocedval, str , slen);
+						mallocedval[slen] = '\0';
+					}
+					
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
+					free(str);
+				}
+				break;
+				
 			default:
 				/* Not implemented yet */
 				ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, (char *) ECPGtype_name(var->type));

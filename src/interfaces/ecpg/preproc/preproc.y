@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.212 2003/03/16 10:42:54 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.213 2003/03/20 15:56:50 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4223,6 +4223,22 @@ single_vt_type: common_type
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
 			}
+			else if (strcmp($1, "date") == 0)
+			{
+				$$.type_enum = ECPGt_date;
+				$$.type_str = make_str("Date");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "timestamp") == 0)
+			{
+				$$.type_enum = ECPGt_timestamp;
+				$$.type_str = make_str("Timestamp");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
 			else
 			{
 				/* this is for typedef'ed types */
@@ -4235,17 +4251,6 @@ single_vt_type: common_type
 				$$.type_sizeof = this->type->type_sizeof;
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
-		}
-		| ECPGColLabelCommon '(' precision opt_scale ')'
-		{
-			if (strcmp($1, "numeric") != 0 && strcmp($1, "decimal") != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
-			
-			$$.type_enum = ECPGt_numeric;
-			$$.type_str = EMPTY;
-			$$.type_dimension = -1;
-			$$.type_index = -1;
-			$$.type_sizeof = NULL;
 		}
 		;
 
@@ -4415,6 +4420,17 @@ common_type: simple_type
 			$$.type_index = -1;
 			$$.type_sizeof = NULL;
 		}
+		| ECPGColLabelCommon '(' precision opt_scale ')'
+		{
+			if (strcmp($1, "numeric") != 0 && strcmp($1, "decimal") != 0)
+				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
+			
+			$$.type_enum = ECPGt_numeric;
+			$$.type_str = EMPTY;
+			$$.type_dimension = -1;
+			$$.type_index = -1;
+			$$.type_sizeof = NULL;
+		}
 		;
 
 var_type:	common_type
@@ -4464,6 +4480,22 @@ var_type:	common_type
 				$$.type_index = -1;
 				$$.type_sizeof = NULL;
 			}
+			else if (strcmp($1, "date") == 0)
+			{
+				$$.type_enum = ECPGt_date;
+				$$.type_str = make_str("Date");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
+			else if (strcmp($1, "timestamp") == 0)
+			{
+				$$.type_enum = ECPGt_timestamp;
+				$$.type_str = make_str("Timestamp");
+				$$.type_dimension = -1;
+				$$.type_index = -1;
+				$$.type_sizeof = NULL;
+			}
 			else
 			{
 				/* this is for typedef'ed types */
@@ -4476,17 +4508,6 @@ var_type:	common_type
 				$$.type_sizeof = this->type->type_sizeof;
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
-		}
-		| ECPGColLabelCommon '(' precision opt_scale ')'
-		{
-			if (strcmp($1, "numeric") != 0 && strcmp($1, "decimal") != 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
-			
-			$$.type_enum = ECPGt_numeric;
-			$$.type_str = EMPTY;
-			$$.type_dimension = -1;
-			$$.type_index = -1;
-			$$.type_sizeof = NULL;
 		}
 		;
 

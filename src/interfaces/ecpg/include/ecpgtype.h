@@ -52,7 +52,9 @@ enum ECPGttype
 	ECPGt_NO_INDICATOR,			/* no indicator */
 	ECPGt_long_long, ECPGt_unsigned_long_long,
 	ECPGt_descriptor,			/* sql descriptor, no C variable */
-	ECPGt_numeric
+	ECPGt_numeric,
+	ECPGt_date,
+	ECPGt_timestamp
 };
 
  /* descriptor items */

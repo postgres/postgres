@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.1 2003/03/16 10:42:53 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.2 2003/03/20 15:56:50 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -11,6 +11,8 @@
 #include "extern.h"
 #include "sqlca.h"
 #include "pgtypes_numeric.h"
+#include "pgtypes_date.h"
+#include "pgtypes_timestamp.h"
 
 bool
 ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
@@ -99,6 +101,8 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				double		dres;
 				char	   *scan_length;
 				NumericVar *nres;
+				Date	   ddres;
+				Timestamp	tres;
 
 			case ECPGt_short:
 			case ECPGt_int:
@@ -397,7 +401,51 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 
 				PGTYPESnumeric_copy(nres, (NumericVar *)(var + offset * act_tuple));
 				break;
+				
+			case ECPGt_date:
+				if (pval)
+				{
+					if (isarray && *pval == '"')
+						ddres = PGTYPESdate_atod(pval + 1, &scan_length);
+					else
+						ddres = PGTYPESdate_atod(pval, &scan_length);
 
+					if (isarray && *scan_length == '"')
+						scan_length++;
+
+					if ((isarray && *scan_length != ',' && *scan_length != '}')
+						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
+					{
+						ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval);
+						return (false);
+					}
+
+					*((Date *)(var + offset * act_tuple)) = ddres;
+				}
+				break;
+
+			case ECPGt_timestamp:
+				if (pval)
+				{
+					if (isarray && *pval == '"')
+						tres = PGTYPEStimestamp_atot(pval + 1, &scan_length);
+					else
+						tres = PGTYPEStimestamp_atot(pval, &scan_length);
+
+					if (isarray && *scan_length == '"')
+						scan_length++;
+
+					if ((isarray && *scan_length != ',' && *scan_length != '}')
+						|| (!isarray && *scan_length != '\0'))	/* Garbage left */
+					{
+						ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval);
+						return (false);
+					}
+
+					*((Timestamp *)(var + offset * act_tuple)) = tres;
+				}
+				break;
+				
 			default:
 				ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(type));
 				return (false);

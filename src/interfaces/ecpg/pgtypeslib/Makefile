@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.1 2003/03/16 10:42:54 meskes Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.2 2003/03/20 15:56:50 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ SO_MINOR_VERSION= 0.0
 
 override CPPFLAGS := -g -I$(top_srcdir)/src/interfaces/ecpg/include -I$(top_srcdir)/src/include/utils $(CPPFLAGS)
 
-OBJS= numeric.o
+OBJS= numeric.o datetime.o common.o dt_common.o timestamp.o
 
 all: all-lib
 

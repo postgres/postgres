@@ -175,6 +175,12 @@ get_type(enum ECPGttype type)
 		case ECPGt_descriptor:
 			return ("ECPGt_descriptor");
 			break;
+		case ECPGt_date:
+			return ("ECPGt_date");
+			break;
+		case ECPGt_timestamp:
+			return ("ECPGt_timestamp");
+			break;
 		default:
 			sprintf(errortext, "illegal variable type %d\n", type);
 			yyerror(errortext);
@@ -329,6 +335,22 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 				sprintf(offset, "sizeof(struct NumericVar)");
+				break;
+			case ECPGt_date:
+
+				/*
+				 *  we have to use a pointer and translate the variable type
+				 */
+				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+				sprintf(offset, "sizeof(Date)");
+				break;
+			case ECPGt_timestamp:
+
+				/*
+				 *  we have to use a pointer and translate the variable type
+				 */
+				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
+				sprintf(offset, "sizeof(Date)");
 				break;
 			default:
 
