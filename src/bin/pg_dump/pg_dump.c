@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.165 2000/09/15 04:35:16 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.166 2000/09/17 20:01:28 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3994,7 +3994,7 @@ dumpRules(Archive *fout, const char *tablename,
 		if (!res ||
 			PQresultStatus(res) != PGRES_TUPLES_OK)
 		{
-			fprintf(stderr, "dumpRules(): SELECT failed for table %s.  Explanation from backend: '%s'.\n",
+			fprintf(stderr, "dumpRules(): SELECT failed for rules associated with table \"%s\".\n\tExplanation from backend: '%s'.\n",
 					tblinfo[t].relname, PQerrorMessage(g_conn));
 			exit_nicely(g_conn);
 		}
