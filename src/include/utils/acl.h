@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.42 2002/04/11 20:00:17 tgl Exp $
+ * $Id: acl.h,v 1.43 2002/04/21 00:26:44 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -37,49 +37,35 @@ typedef uint32 AclId;
 /*
  * AclIdType	tag that describes if the AclId is a user, group, etc.
  */
-typedef uint8 AclIdType;
-
-#define ACL_IDTYPE_WORLD		0x00
+#define ACL_IDTYPE_WORLD		0x00	/* PUBLIC */
 #define ACL_IDTYPE_UID			0x01	/* user id - from pg_shadow */
 #define ACL_IDTYPE_GID			0x02	/* group id - from pg_group */
 
 /*
- * AclMode		the actual permissions
- *				XXX should probably use bit.h routines.
- *				XXX should probably also stuff the modechg cruft in the
- *					high bits, too.
+ * AclMode		a bitmask of privilege bits
  */
-typedef uint8 AclMode;
-
-#define ACL_NO			0		/* no permissions */
-#define ACL_INSERT		(1<<0)
-#define ACL_SELECT		(1<<1)
-#define ACL_UPDATE		(1<<2)
-#define ACL_DELETE		(1<<3)
-#define ACL_RULE		(1<<4)
-#define ACL_REFERENCES	(1<<5)
-#define ACL_TRIGGER		(1<<6)
-#define N_ACL_MODES		7		/* 1 plus the last 1<<x */
+typedef uint32 AclMode;
 
 /*
  * AclItem
+ *
+ * Note: must be same size on all platforms, because the size is hardcoded
+ * in the pg_type.h entry for aclitem.
  */
 typedef struct AclItem
 {
-	AclId		ai_id;
-	AclIdType	ai_idtype;
-	AclMode		ai_mode;
-
-	/*
-	 * This is actually type 'aclitem', and we want a fixed size for all
-	 * platforms, so we pad this with dummies.
-	 */
-	char		dummy1,
-				dummy2;
+	AclId		ai_id;			/* ID that this item applies to */
+	AclMode		ai_privs;		/* AclIdType plus privilege bits */
 } AclItem;
 
-/* Note: if the size of AclItem changes,
-   change the aclitem typlen in pg_type.h */
+/*
+ * The AclIdType is stored in the top two bits of the ai_privs field of an
+ * AclItem, leaving us with thirty usable privilege bits.
+ */
+#define ACLITEM_GET_PRIVS(item)   ((item).ai_privs & 0x3FFFFFFF)
+#define ACLITEM_GET_IDTYPE(item)  ((item).ai_privs >> 30)
+#define ACLITEM_SET_PRIVS_IDTYPE(item,privs,idtype) \
+  ((item).ai_privs = ((privs) & 0x3FFFFFFF) | ((idtype) << 30))
 
 
 /*
@@ -144,20 +130,39 @@ typedef ArrayType IdList;
 #define ACL_MODECHG_DEL			2
 #define ACL_MODECHG_EQL			3
 
-/* mode indicators for I/O */
-#define ACL_MODECHG_STR			"+-="	/* list of valid characters */
+/* external representation of mode indicators for I/O */
 #define ACL_MODECHG_ADD_CHR		'+'
 #define ACL_MODECHG_DEL_CHR		'-'
 #define ACL_MODECHG_EQL_CHR		'='
-#define ACL_MODE_STR			"arwdRxt"		/* list of valid
-												 * characters */
-#define ACL_MODE_INSERT_CHR		'a'		/* formerly known as "append" */
-#define ACL_MODE_SELECT_CHR		'r'		/* formerly known as "read" */
-#define ACL_MODE_UPDATE_CHR		'w'		/* formerly known as "write" */
-#define ACL_MODE_DELETE_CHR		'd'
-#define ACL_MODE_RULE_CHR		'R'
-#define ACL_MODE_REFERENCES_CHR 'x'
-#define ACL_MODE_TRIGGER_CHR	't'
+
+/*
+ * External representations of the privilege bits --- aclitemin/aclitemout
+ * represent each possible privilege bit with a distinct 1-character code
+ */
+#define ACL_INSERT_CHR			'a'		/* formerly known as "append" */
+#define ACL_SELECT_CHR			'r'		/* formerly known as "read" */
+#define ACL_UPDATE_CHR			'w'		/* formerly known as "write" */
+#define ACL_DELETE_CHR			'd'
+#define ACL_RULE_CHR			'R'
+#define ACL_REFERENCES_CHR		'x'
+#define ACL_TRIGGER_CHR			't'
+#define ACL_EXECUTE_CHR			'X'
+#define ACL_USAGE_CHR			'U'
+#define ACL_CREATE_CHR			'C'
+#define ACL_CREATE_TEMP_CHR		'T'
+
+/* string holding all privilege code chars, in order by bitmask position */
+#define ACL_ALL_RIGHTS_STR	"arwdRxtXUCT"
+
+/*
+ * Bitmasks defining "all rights" for each supported object type
+ */
+#define ACL_ALL_RIGHTS_RELATION		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_RULE|ACL_REFERENCES|ACL_TRIGGER)
+#define ACL_ALL_RIGHTS_DATABASE		(ACL_CREATE|ACL_CREATE_TEMP)
+#define ACL_ALL_RIGHTS_FUNCTION		(ACL_EXECUTE)
+#define ACL_ALL_RIGHTS_LANGUAGE		(ACL_USAGE)
+#define ACL_ALL_RIGHTS_NAMESPACE	(ACL_USAGE|ACL_CREATE)
+
 
 /* result codes for pg_*_aclcheck */
 #define ACLCHECK_OK				  0
@@ -171,26 +176,18 @@ extern const char * const aclcheck_error_strings[];
 /*
  * routines used internally
  */
-extern Acl *acldefault(AclId ownerid);
-extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg);
-
-/*
- * routines used by the parser
- */
-extern char *aclmakepriv(const char *old_privlist, char new_priv);
-extern char *aclmakeuser(const char *user_type, const char *user);
+extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
+extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
+					   unsigned modechg);
 
 /*
  * exported routines (from acl.c)
  */
-extern Acl *makeacl(int n);
 extern Datum aclitemin(PG_FUNCTION_ARGS);
 extern Datum aclitemout(PG_FUNCTION_ARGS);
 extern Datum aclinsert(PG_FUNCTION_ARGS);
 extern Datum aclremove(PG_FUNCTION_ARGS);
 extern Datum aclcontains(PG_FUNCTION_ARGS);
-extern const char *aclparse(const char *s, AclItem *aip, unsigned *modechg);
-extern char *makeAclString(const char *privileges, const char *grantee, char grant_or_revoke);
 
 /*
  * prototypes for functions in aclchk.c
@@ -201,13 +198,16 @@ extern char *get_groname(AclId grosysid);
 
 /* these return ACLCHECK_* result codes */
 extern int32 pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode);
-extern int32 pg_proc_aclcheck(Oid proc_oid, Oid userid);
-extern int32 pg_language_aclcheck(Oid lang_oid, Oid userid);
+extern int32 pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode);
+extern int32 pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode);
+extern int32 pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode);
+extern int32 pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode);
 
 /* ownercheck routines just return true (owner) or false (not) */
 extern bool pg_class_ownercheck(Oid class_oid, Oid userid);
 extern bool pg_type_ownercheck(Oid type_oid, Oid userid);
 extern bool pg_oper_ownercheck(Oid oper_oid, Oid userid);
 extern bool pg_proc_ownercheck(Oid proc_oid, Oid userid);
+extern bool pg_namespace_ownercheck(Oid nsp_oid, Oid userid);
 
 #endif   /* ACL_H */

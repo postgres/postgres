@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.105 2002/04/18 21:16:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.106 2002/04/21 00:26:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,37 +355,4 @@ ScanKeywordLookup(char *text)
 	}
 
 	return NULL;
-}
-
-
-/*
- * This does the reverse mapping from token number to string.
- */
-const char *
-TokenString(int token)
-{
-    int i = 0;
-    static char buf[NAMEDATALEN];
-
-    while (i < sizeof(ScanKeywords))
-    {
-	if (ScanKeywords[i].value == token)
-	{
-	    int k;
-
-	    /* uppercase */
-	    for (k = 0; k < NAMEDATALEN; k++)
-		if (ScanKeywords[i].name[k] >= 'a'
-		    && ScanKeywords[i].name[k] <= 'z')
-		    buf[k] = ScanKeywords[i].name[k] + ('A' - 'a');
-		else
-		    buf[k] = ScanKeywords[i].name[k];
-
-	    return buf;
-	}
-
-	i++;
-    }
-
-    return NULL;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.172 2002/04/18 20:01:11 tgl Exp $
+ * $Id: parsenodes.h,v 1.173 2002/04/21 00:26:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,17 +756,45 @@ typedef struct AlterTableStmt
 } AlterTableStmt;
 
 /* ----------------------
- *		Grant Statement
+ *		Grant|Revoke Statement
  * ----------------------
  */
+typedef enum GrantObjectType
+{
+	ACL_OBJECT_RELATION,		/* table, view, sequence */
+	ACL_OBJECT_DATABASE,		/* database */
+	ACL_OBJECT_FUNCTION,		/* function */
+	ACL_OBJECT_LANGUAGE,		/* procedural language */
+	ACL_OBJECT_NAMESPACE		/* namespace */
+} GrantObjectType;
+
+/*
+ * Grantable rights are encoded so that we can OR them together in a bitmask.
+ * The present representation of AclItem limits us to 30 distinct rights.
+ * Caution: changing these codes breaks stored ACLs, hence forces initdb.
+ */
+#define ACL_INSERT		(1<<0)	/* for relations */
+#define ACL_SELECT		(1<<1)
+#define ACL_UPDATE		(1<<2)
+#define ACL_DELETE		(1<<3)
+#define ACL_RULE		(1<<4)
+#define ACL_REFERENCES	(1<<5)
+#define ACL_TRIGGER		(1<<6)
+#define ACL_EXECUTE		(1<<7)	/* for functions */
+#define ACL_USAGE		(1<<8)	/* for languages and namespaces */
+#define ACL_CREATE		(1<<9)	/* for namespaces and databases */
+#define ACL_CREATE_TEMP	(1<<10)	/* for databases */
+#define N_ACL_RIGHTS	11		/* 1 plus the last 1<<x */
+#define ACL_ALL_RIGHTS	(-1)	/* all-privileges marker in GRANT list */
+#define ACL_NO_RIGHTS	0
 
 typedef struct GrantStmt
 {
 	NodeTag		type;
-	bool		is_grant;		/* not revoke */
-	int			objtype;
-	List	   *objects;		/* list of names (as Value strings)
-								 * or relations (as RangeVar's) */
+	bool		is_grant;		/* true = GRANT, false = REVOKE */
+	GrantObjectType objtype;	/* kind of object being operated on */
+	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs nodes,
+								 * or plain names (as Value strings) */
 	List	   *privileges;		/* integer list of privilege codes */
 	List	   *grantees;		/* list of PrivGrantee nodes */
 } GrantStmt;
@@ -789,7 +817,7 @@ typedef struct FuncWithArgs
 typedef struct PrivTarget
 {
 	NodeTag		type;
-	int			objtype;
+	GrantObjectType objtype;
 	List	   *objs;
 } PrivTarget;
 

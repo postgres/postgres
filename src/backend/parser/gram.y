@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.305 2002/04/18 21:16:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.306 2002/04/21 00:26:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2473,8 +2473,8 @@ RevokeStmt:  REVOKE opt_revoke_grant_option privileges ON privilege_target FROM 
 
 /* either ALL [PRIVILEGES] or a list of individual privileges */
 privileges: privilege_list { $$ = $1; }
-		| ALL { $$ = makeListi1(ALL); }
-		| ALL PRIVILEGES { $$ = makeListi1(ALL); }
+		| ALL { $$ = makeListi1(ACL_ALL_RIGHTS); }
+		| ALL PRIVILEGES { $$ = makeListi1(ACL_ALL_RIGHTS); }
 		;
 
 privilege_list: privilege { $$ = makeListi1($1); }
@@ -2482,16 +2482,20 @@ privilege_list: privilege { $$ = makeListi1($1); }
 		;
 
 /* Not all of these privilege types apply to all objects, but that
-   gets sorted out later. */
-privilege: SELECT    { $$ = SELECT; }
-		| INSERT     { $$ = INSERT; }
-		| UPDATE     { $$ = UPDATE; }
-		| DELETE     { $$ = DELETE; }
-		| RULE       { $$ = RULE; }
-		| REFERENCES { $$ = REFERENCES; }
-		| TRIGGER    { $$ = TRIGGER; }
-		| EXECUTE    { $$ = EXECUTE; }
-		| USAGE      { $$ = USAGE; }
+ * gets sorted out later.
+ */
+privilege: SELECT    { $$ = ACL_SELECT; }
+		| INSERT     { $$ = ACL_INSERT; }
+		| UPDATE     { $$ = ACL_UPDATE; }
+		| DELETE     { $$ = ACL_DELETE; }
+		| RULE       { $$ = ACL_RULE; }
+		| REFERENCES { $$ = ACL_REFERENCES; }
+		| TRIGGER    { $$ = ACL_TRIGGER; }
+		| EXECUTE    { $$ = ACL_EXECUTE; }
+		| USAGE      { $$ = ACL_USAGE; }
+		| CREATE     { $$ = ACL_CREATE; }
+		| TEMPORARY  { $$ = ACL_CREATE_TEMP; }
+		| TEMP	     { $$ = ACL_CREATE_TEMP; }
 		;
 
 
@@ -2500,28 +2504,42 @@ privilege: SELECT    { $$ = SELECT; }
 privilege_target: qualified_name_list
 				{
 					PrivTarget *n = makeNode(PrivTarget);
-					n->objtype = TABLE;
+					n->objtype = ACL_OBJECT_RELATION;
 					n->objs = $1;
 					$$ = n;
 				}
 			| TABLE qualified_name_list
 				{
 					PrivTarget *n = makeNode(PrivTarget);
-					n->objtype = TABLE;
+					n->objtype = ACL_OBJECT_RELATION;
 					n->objs = $2;
 					$$ = n;
 				}
 			| FUNCTION function_with_argtypes_list
 				{
 					PrivTarget *n = makeNode(PrivTarget);
-					n->objtype = FUNCTION;
+					n->objtype = ACL_OBJECT_FUNCTION;
+					n->objs = $2;
+					$$ = n;
+				}
+			| DATABASE name_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = ACL_OBJECT_DATABASE;
 					n->objs = $2;
 					$$ = n;
 				}
 			| LANGUAGE name_list
 				{
 					PrivTarget *n = makeNode(PrivTarget);
-					n->objtype = LANGUAGE;
+					n->objtype = ACL_OBJECT_LANGUAGE;
+					n->objs = $2;
+					$$ = n;
+				}
+			| SCHEMA name_list
+				{
+					PrivTarget *n = makeNode(PrivTarget);
+					n->objtype = ACL_OBJECT_NAMESPACE;
 					n->objs = $2;
 					$$ = n;
 				}

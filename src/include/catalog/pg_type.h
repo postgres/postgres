@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.119 2002/03/29 19:06:20 tgl Exp $
+ * $Id: pg_type.h,v 1.120 2002/04/21 00:26:43 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -420,12 +420,6 @@ DATA(insert OID = 1023 (  _abstime	 PGNSP PGUID -1  -1 f b t \054 0 702 array_in
 DATA(insert OID = 1024 (  _reltime	 PGNSP PGUID -1  -1 f b t \054 0 703 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1025 (  _tinterval PGNSP PGUID -1  -1 f b t \054 0 704 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1027 (  _polygon	 PGNSP PGUID -1  -1 f b t \054 0 604 array_in array_out array_in array_out d x f 0 -1 0 _null_ _null_ ));
-/*
- *	Note: the size of aclitem needs to match sizeof(AclItem) in acl.h.
- *	Thanks to some padding, this will be 8 on all platforms.
- *	We also have an Assert to make sure.
- */
-#define ACLITEMSIZE 8
 DATA(insert OID = 1033 (  aclitem	 PGNSP PGUID 8   -1 f b t \054 0 0 aclitemin aclitemout aclitemin aclitemout i p f 0 -1 0 _null_ _null_ ));
 DESCR("access control list");
 DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 -1 f b t \054 0 1033 array_in array_out array_in array_out i x f 0 -1 0 _null_ _null_ ));

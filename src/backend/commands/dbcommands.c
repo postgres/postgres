@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.86 2002/04/11 05:32:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.87 2002/04/21 00:26:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,6 +269,9 @@ createdb(const char *dbname, const char *dbowner,
 	pg_database_dsc = RelationGetDescr(pg_database_rel);
 
 	/* Form tuple */
+	MemSet(new_record, 0, sizeof(new_record));
+	MemSet(new_record_nulls, ' ', sizeof(new_record_nulls));
+
 	new_record[Anum_pg_database_datname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(datdba);
@@ -278,12 +281,12 @@ createdb(const char *dbname, const char *dbowner,
 	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(src_lastsysoid);
 	new_record[Anum_pg_database_datvacuumxid - 1] = TransactionIdGetDatum(src_vacuumxid);
 	new_record[Anum_pg_database_datfrozenxid - 1] = TransactionIdGetDatum(src_frozenxid);
-	/* no nulls here, GetRawDatabaseInfo doesn't like them */
+	/* do not set datpath to null, GetRawDatabaseInfo won't cope */
 	new_record[Anum_pg_database_datpath - 1] =
 		DirectFunctionCall1(textin, CStringGetDatum(dbpath ? dbpath : ""));
 
-	memset(new_record_nulls, ' ', sizeof(new_record_nulls));
 	new_record_nulls[Anum_pg_database_datconfig - 1] = 'n';
+	new_record_nulls[Anum_pg_database_datacl - 1] = 'n';
 
 	tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
 
@@ -454,7 +457,6 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	Datum		repl_val[Natts_pg_database];
 	char		repl_null[Natts_pg_database];
 	char		repl_repl[Natts_pg_database];
-	int			i;
 
 	valuestr = (stmt->value
 				? ((A_Const *) lfirst(stmt->value))->val.val.str
@@ -472,8 +474,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		  || ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
 		elog(ERROR, "permission denied");
 
-	for (i = 0; i < Natts_pg_database; i++)
-		repl_repl[i] = ' ';
+	MemSet(repl_repl, ' ', sizeof(repl_repl));
 
 	repl_repl[Anum_pg_database_datconfig-1] = 'r';
 	if (strcmp(stmt->variable, "all")==0 && stmt->value == NULL)
@@ -605,7 +606,7 @@ have_createdb_privilege(void)
 						  0, 0, 0);
 
 	if (!HeapTupleIsValid(utup))
-		retval = true;
+		retval = false;
 	else
 		retval = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
 

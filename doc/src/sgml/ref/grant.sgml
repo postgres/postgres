@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.21 2002/02/21 22:39:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.22 2002/04/21 00:26:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,11 @@ PostgreSQL documentation
 <synopsis>
 GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
-    ON [ TABLE ] <replaceable class="PARAMETER">objectname</replaceable> [, ...]
+    ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
+    ON DATABASE <replaceable>dbname</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
@@ -28,6 +32,10 @@ GRANT { EXECUTE | ALL [ PRIVILEGES ] }
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>langname</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
+    ON SCHEMA <replaceable>schemaname</replaceable> [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
 </synopsis>
  </refsynopsisdiv>
 
@@ -36,7 +44,8 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
 
   <para>
    The <command>GRANT</command> command gives specific permissions on
-   an object (table, view, sequence, function, procedural language) to
+   an object (table, view, sequence, database, function, procedural language,
+   or schema) to
    one or more users or groups of users.  These permissions are added
    to those already granted, if any.
   </para>
@@ -145,6 +154,29 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
     </varlistentry>
 
     <varlistentry>
+     <term>CREATE</term>
+     <listitem>
+      <para>
+       For databases, allows new schemas to be created in the database.
+      </para>
+      <para>
+       For schemas, allows new objects to be created within the specified
+       schema.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>TEMPORARY</term>
+     <term>TEMP</term>
+     <listitem>
+      <para>
+       Allows temporary tables to be created while using the database.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term>EXECUTE</term>
      <listitem>
       <para>
@@ -159,9 +191,15 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
      <term>USAGE</term>
      <listitem>
       <para>
-       Allows the use of the specified procedural language for the
-       creation of functions in that language.  This is the only type
+       For procedural languages, allows the use of the specified language for
+       the creation of functions in that language.  This is the only type
        of privilege that is applicable to procedural languages.
+      </para>
+      <para>
+       For schemas, allows the use of objects contained in the specified 
+       schema (assuming that the objects' own privilege requirements are
+       met).  Essentially this allows the grantee to <quote>look up</>
+       objects within the schema.
       </para>
      </listitem>
     </varlistentry>
@@ -226,7 +264,11 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
                   R -- RULE
                   x -- REFERENCES
                   t -- TRIGGER
-            arwdRxt -- ALL PRIVILEGES
+                  X -- EXECUTE
+                  U -- USAGE
+                  C -- CREATE
+                  T -- TEMPORARY
+            arwdRxt -- ALL PRIVILEGES (for tables)
 </programlisting>
    </para>
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.22 2002/03/01 22:45:17 petere Exp $
+ * $Id: pg_database.h,v 1.23 2002/04/21 00:26:43 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -42,7 +42,8 @@ CATALOG(pg_database) BOOTSTRAP
 	TransactionId datvacuumxid; /* all XIDs before this are vacuumed */
 	TransactionId datfrozenxid; /* all XIDs before this are frozen */
 	text		datpath;		/* VARIABLE LENGTH FIELD */
-	text		datconfig[1];		/* database-specific GUC */
+	text		datconfig[1];	/* database-specific GUC (VAR LENGTH) */
+	aclitem		datacl[1];		/* access permissions (VAR LENGTH) */
 } FormData_pg_database;
 
 /* ----------------
@@ -56,7 +57,7 @@ typedef FormData_pg_database *Form_pg_database;
  *		compiler constants for pg_database
  * ----------------
  */
-#define Natts_pg_database				10
+#define Natts_pg_database				11
 #define Anum_pg_database_datname		1
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
@@ -67,8 +68,9 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datfrozenxid	8
 #define Anum_pg_database_datpath		9
 #define Anum_pg_database_datconfig		10
+#define Anum_pg_database_datacl			11
 
-DATA(insert OID = 1 (  template1 PGUID ENCODING t t 0 0 0 "" _null_ ));
+DATA(insert OID = 1 (  template1 PGUID ENCODING t t 0 0 0 "" _null_ _null_ ));
 DESCR("Default template database");
 
 #define TemplateDbOid			1

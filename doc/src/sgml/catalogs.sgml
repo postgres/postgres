@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.42 2002/04/16 23:08:09 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.43 2002/04/21 00:26:42 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -825,7 +825,7 @@
       <entry>
        If true then this database can be used in the
        <quote>TEMPLATE</quote> clause of <command>CREATE
-       DATABASE</command> to create the new database as a clone of
+       DATABASE</command> to create a new database as a clone of
        this one.
       </entry>
      </row>
@@ -889,6 +889,13 @@
       <entry><type>text[]</type></entry>
       <entry></entry>
       <entry>Session defaults for run-time configuration variables</entry>
+     </row>
+
+     <row>
+      <entry>datacl</entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>Access permissions</entry>
      </row>
     </tbody>
    </tgroup>

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.2 2002/04/21 00:26:42 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -325,7 +325,7 @@ CreateFunction(ProcedureStmt *stmt)
 	languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 
 	if (!((languageStruct->lanpltrusted
-		   && pg_language_aclcheck(languageOid, GetUserId()) == ACLCHECK_OK)
+		   && pg_language_aclcheck(languageOid, GetUserId(), ACL_USAGE) == ACLCHECK_OK)
 		  || superuser()))
 		elog(ERROR, "permission denied");
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.90 2002/04/11 20:00:11 tgl Exp $
+ * $Id: pg_attribute.h,v 1.91 2002/04/21 00:26:43 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -281,6 +281,7 @@ DATA(insert ( 1262 datfrozenxid		28 0  4   8 0 -1 -1 t p f i f f));
 /* do not mark datpath as toastable; GetRawDatabaseInfo won't cope */
 DATA(insert ( 1262 datpath			25 0 -1   9 0 -1 -1 f p f i f f));
 DATA(insert ( 1262 datconfig	  1009 0 -1  10 0 -1 -1 f x f i f f));
+DATA(insert ( 1262 datacl		  1034 0 -1  11 0 -1 -1 f x f i f f));
 DATA(insert ( 1262 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert ( 1262 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert ( 1262 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

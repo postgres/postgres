@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.65 2002/04/12 20:38:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.66 2002/04/21 00:26:42 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -18,37 +18,35 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "access/transam.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_aggregate.h"
+#include "catalog/pg_database.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
-#include "nodes/parsenodes.h"
-#include "parser/keywords.h"
-#include "parser/parse.h"
-#include "parser/parse_agg.h"
 #include "parser/parse_func.h"
-#include "parser/parse_expr.h"
-#include "parser/parse_type.h"
 #include "utils/acl.h"
+#include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
-static void ExecuteGrantStmt_Table(GrantStmt *stmt);
+static void ExecuteGrantStmt_Relation(GrantStmt *stmt);
+static void ExecuteGrantStmt_Database(GrantStmt *stmt);
 static void ExecuteGrantStmt_Function(GrantStmt *stmt);
-static void ExecuteGrantStmt_Lang(GrantStmt *stmt);
+static void ExecuteGrantStmt_Language(GrantStmt *stmt);
+static void ExecuteGrantStmt_Namespace(GrantStmt *stmt);
 
-static const char *privilege_token_string(int token);
+static const char *privilege_to_string(AclMode privilege);
 
-static int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);
+static int32 aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode);
 
 /* warning messages, now more explicit. */
 /* MUST correspond to the order of the ACLCHECK_* result codes in acl.h. */
@@ -83,11 +81,15 @@ dumpacl(Acl *acl)
  * grantees to the existing old_acl.  If is_grant is false, the
  * privileges for the given grantees are removed from old_acl.
  */
-static Acl*
-merge_acl_with_grant(Acl *old_acl, bool is_grant, List *grantees, char *privileges)
+static Acl *
+merge_acl_with_grant(Acl *old_acl, bool is_grant,
+					 List *grantees, AclMode privileges)
 {
+	unsigned	modechg;
 	List	   *j;
 	Acl		   *new_acl;
+
+	modechg = is_grant ? ACL_MODECHG_ADD : ACL_MODECHG_DEL;
 
 #ifdef ACLDEBUG
 	dumpacl(old_acl);
@@ -97,23 +99,27 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant, List *grantees, char *privileg
 	foreach(j, grantees)
 	{
 		PrivGrantee *grantee = (PrivGrantee *) lfirst(j);
-		char	   *granteeString;
-		char	   *aclString;
-		AclItem aclitem;
-		unsigned	modechg;
+		AclItem		aclitem;
+		uint32		idtype;
 
 		if (grantee->username)
-			granteeString = aclmakeuser("U", grantee->username);
+		{
+			aclitem.ai_id = get_usesysid(grantee->username);
+			idtype = ACL_IDTYPE_UID;
+		}
 		else if (grantee->groupname)
-			granteeString = aclmakeuser("G", grantee->groupname);
+		{
+			aclitem.ai_id = get_grosysid(grantee->groupname);
+			idtype = ACL_IDTYPE_GID;
+		}
 		else
-			granteeString = aclmakeuser("A", "");
+		{
+			aclitem.ai_id = ACL_ID_WORLD;
+			idtype = ACL_IDTYPE_WORLD;
+		}
 
-		aclString = makeAclString(privileges, granteeString,
-								  is_grant ? '+' : '-');
+		ACLITEM_SET_PRIVS_IDTYPE(aclitem, privileges, idtype);
 
-		/* Convert string ACL spec into internal form */
-		aclparse(aclString, &aclitem, &modechg);
 		new_acl = aclinsert3(new_acl, &aclitem, modechg);
 
 #ifdef ACLDEBUG
@@ -131,73 +137,49 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant, List *grantees, char *privileg
 void
 ExecuteGrantStmt(GrantStmt *stmt)
 {
-	/* see comment in pg_type.h */
-	Assert(ACLITEMSIZE == sizeof(AclItem));
-
-	switch(stmt->objtype)
+	switch (stmt->objtype)
 	{
-		case TABLE:
-			ExecuteGrantStmt_Table(stmt);
+		case ACL_OBJECT_RELATION:
+			ExecuteGrantStmt_Relation(stmt);
 			break;
-		case FUNCTION:
+		case ACL_OBJECT_DATABASE:
+			ExecuteGrantStmt_Database(stmt);
+			break;
+		case ACL_OBJECT_FUNCTION:
 			ExecuteGrantStmt_Function(stmt);
 			break;
-		case LANGUAGE:
-			ExecuteGrantStmt_Lang(stmt);
+		case ACL_OBJECT_LANGUAGE:
+			ExecuteGrantStmt_Language(stmt);
+			break;
+		case ACL_OBJECT_NAMESPACE:
+			ExecuteGrantStmt_Namespace(stmt);
 			break;
 		default:
-			elog(ERROR, "bogus GrantStmt.objtype %d", stmt->objtype);
+			elog(ERROR, "bogus GrantStmt.objtype %d", (int) stmt->objtype);
 	}
 }
 
-
 static void
-ExecuteGrantStmt_Table(GrantStmt *stmt)
+ExecuteGrantStmt_Relation(GrantStmt *stmt)
 {
+	AclMode		privileges;
 	List	   *i;
-	char	   *privstring;
 
-	if (lfirsti(stmt->privileges) == ALL)
-		privstring = aclmakepriv(ACL_MODE_STR, 0);
+	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+		privileges = ACL_ALL_RIGHTS_RELATION;
 	else
 	{
-		privstring = "";
+		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			int c = 0;
+			AclMode		priv = lfirsti(i);
 
-			switch(lfirsti(i))
-			{
-				case SELECT:
-					c = ACL_MODE_SELECT_CHR;
-					break;
-				case INSERT:
-					c = ACL_MODE_INSERT_CHR;
-					break;
-				case UPDATE:
-					c = ACL_MODE_UPDATE_CHR;
-					break;
-				case DELETE:
-					c = ACL_MODE_DELETE_CHR;
-					break;
-				case RULE:
-					c = ACL_MODE_RULE_CHR;
-					break;
-				case REFERENCES:
-					c = ACL_MODE_REFERENCES_CHR;
-					break;
-				case TRIGGER:
-					c = ACL_MODE_TRIGGER_CHR;
-					break;
-				default:
-					elog(ERROR, "invalid privilege type %s for table object",
-						 privilege_token_string(lfirsti(i)));
-			}
-
-			privstring = aclmakepriv(privstring, c);
+			if (priv & ~((AclMode) ACL_ALL_RIGHTS_RELATION))
+				elog(ERROR, "invalid privilege type %s for table object",
+					 privilege_to_string(priv));
+			privileges |= priv;
 		}
 	}
-
 
 	foreach(i, stmt->objects)
 	{
@@ -210,7 +192,6 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 		bool		isNull;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
-		unsigned	i;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_class];
 		char		nulls[Natts_pg_class];
@@ -241,24 +222,23 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 		aclDatum = SysCacheGetAttr(RELOID, tuple, Anum_pg_class_relacl,
 								   &isNull);
 		if (isNull)
-			old_acl = acldefault(pg_class_tuple->relowner);
+			old_acl = acldefault(ACL_OBJECT_RELATION,
+								 pg_class_tuple->relowner);
 		else
-			/* get a detoasted copy of the rel's ACL */
+			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privstring);
+									   stmt->grantees, privileges);
 
 		/* finished building new ACL value, now insert it */
-		for (i = 0; i < Natts_pg_class; ++i)
-		{
-			replaces[i] = ' ';
-			nulls[i] = ' ';		/* ignored if replaces[i]==' ' anyway */
-			values[i] = (Datum) NULL;	/* ignored if replaces[i]==' '
-										 * anyway */
-		}
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, ' ', sizeof(nulls));
+		MemSet(replaces, ' ', sizeof(replaces));
+
 		replaces[Anum_pg_class_relacl - 1] = 'r';
 		values[Anum_pg_class_relacl - 1] = PointerGetDatum(new_acl);
+
 		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
 
 		ReleaseSysCache(tuple);
@@ -282,25 +262,124 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 	}
 }
 
+static void
+ExecuteGrantStmt_Database(GrantStmt *stmt)
+{
+	AclMode		privileges;
+	List	   *i;
+
+	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+		privileges = ACL_ALL_RIGHTS_DATABASE;
+	else
+	{
+		privileges = ACL_NO_RIGHTS;
+		foreach(i, stmt->privileges)
+		{
+			AclMode		priv = lfirsti(i);
+
+			if (priv & ~((AclMode) ACL_ALL_RIGHTS_DATABASE))
+				elog(ERROR, "invalid privilege type %s for database object",
+					 privilege_to_string(priv));
+			privileges |= priv;
+		}
+	}
+
+	foreach(i, stmt->objects)
+	{
+		char	   *dbname = strVal(lfirst(i));
+		Relation	relation;
+		ScanKeyData entry[1];
+		HeapScanDesc scan;
+		HeapTuple	tuple;
+		Form_pg_database pg_database_tuple;
+		Datum		aclDatum;
+		bool		isNull;
+		Acl		   *old_acl;
+		Acl		   *new_acl;
+		HeapTuple	newtuple;
+		Datum		values[Natts_pg_database];
+		char		nulls[Natts_pg_database];
+		char		replaces[Natts_pg_database];
+
+		relation = heap_openr(DatabaseRelationName, RowExclusiveLock);
+		ScanKeyEntryInitialize(&entry[0], 0,
+							   Anum_pg_database_datname, F_NAMEEQ,
+							   CStringGetDatum(dbname));
+		scan = heap_beginscan(relation, 0, SnapshotNow, 1, entry);
+		tuple = heap_getnext(scan, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "database \"%s\" not found", dbname);
+		pg_database_tuple = (Form_pg_database) GETSTRUCT(tuple);
+
+		if (!superuser() && pg_database_tuple->datdba != GetUserId())
+			elog(ERROR, "permission denied");
+
+		/*
+		 * If there's no ACL, create a default.
+		 */
+		aclDatum = heap_getattr(tuple, Anum_pg_database_datacl,
+								RelationGetDescr(relation), &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_DATABASE,
+								 pg_database_tuple->datdba);
+		else
+			/* get a detoasted copy of the ACL */
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
+									   stmt->grantees, privileges);
+
+		/* finished building new ACL value, now insert it */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, ' ', sizeof(nulls));
+		MemSet(replaces, ' ', sizeof(replaces));
+
+		replaces[Anum_pg_database_datacl - 1] = 'r';
+		values[Anum_pg_database_datacl - 1] = PointerGetDatum(new_acl);
+
+		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+
+		simple_heap_update(relation, &newtuple->t_self, newtuple);
+
+		{
+			/* keep the catalog indexes up to date */
+			Relation	idescs[Num_pg_database_indices];
+
+			CatalogOpenIndices(Num_pg_database_indices, Name_pg_database_indices,
+							   idescs);
+			CatalogIndexInsert(idescs, Num_pg_database_indices, relation, newtuple);
+			CatalogCloseIndices(Num_pg_database_indices, idescs);
+		}
+
+		pfree(old_acl);
+		pfree(new_acl);
+
+		heap_endscan(scan);
+
+		heap_close(relation, RowExclusiveLock);
+	}
+}
 
 static void
 ExecuteGrantStmt_Function(GrantStmt *stmt)
 {
+	AclMode		privileges;
 	List	   *i;
-	char	   *privstring = NULL;
 
-	if (lfirsti(stmt->privileges) == ALL)
-		privstring = aclmakepriv("", ACL_MODE_SELECT_CHR);
+	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+		privileges = ACL_ALL_RIGHTS_FUNCTION;
 	else
 	{
+		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			if (lfirsti(i) != EXECUTE)
-				elog(ERROR, "invalid privilege type %s for function object",
-					 privilege_token_string(lfirsti(i)));
-		}
+			AclMode		priv = lfirsti(i);
 
-		privstring = aclmakepriv("", ACL_MODE_SELECT_CHR);
+			if (priv & ~((AclMode) ACL_ALL_RIGHTS_FUNCTION))
+				elog(ERROR, "invalid privilege type %s for function object",
+					 privilege_to_string(priv));
+			privileges |= priv;
+		}
 	}
 
 	foreach(i, stmt->objects)
@@ -314,7 +393,6 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		bool		isNull;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
-		unsigned	i;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_proc];
 		char		nulls[Natts_pg_proc];
@@ -323,15 +401,14 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		oid = LookupFuncNameTypeNames(func->funcname, func->funcargs,
 									  true, "GRANT");
 		relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
-		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(oid), 0, 0, 0);
+		tuple = SearchSysCache(PROCOID,
+							   ObjectIdGetDatum(oid),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-		{
-			heap_close(relation, RowExclusiveLock);
 			elog(ERROR, "function %u not found", oid);
-		}
 		pg_proc_tuple = (Form_pg_proc) GETSTRUCT(tuple);
 
-		if (pg_proc_tuple->proowner != GetUserId())
+		if (!pg_proc_ownercheck(oid, GetUserId()))
 			elog(ERROR, "permission denied");
 
 		/*
@@ -341,24 +418,23 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
 								   &isNull);
 		if (isNull)
-			old_acl = acldefault(pg_proc_tuple->proowner);
+			old_acl = acldefault(ACL_OBJECT_FUNCTION,
+								 pg_proc_tuple->proowner);
 		else
-			/* get a detoasted copy of the rel's ACL */
+			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privstring);
+									   stmt->grantees, privileges);
 
 		/* finished building new ACL value, now insert it */
-		for (i = 0; i < Natts_pg_proc; ++i)
-		{
-			replaces[i] = ' ';
-			nulls[i] = ' ';		/* ignored if replaces[i]==' ' anyway */
-			values[i] = (Datum) NULL;	/* ignored if replaces[i]==' '
-										 * anyway */
-		}
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, ' ', sizeof(nulls));
+		MemSet(replaces, ' ', sizeof(replaces));
+
 		replaces[Anum_pg_proc_proacl - 1] = 'r';
 		values[Anum_pg_proc_proacl - 1] = PointerGetDatum(new_acl);
+
 		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
 
 		ReleaseSysCache(tuple);
@@ -382,25 +458,26 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 	}
 }
 
-
 static void
-ExecuteGrantStmt_Lang(GrantStmt *stmt)
+ExecuteGrantStmt_Language(GrantStmt *stmt)
 {
+	AclMode		privileges;
 	List	   *i;
-	char	   *privstring = NULL;
 
-	if (lfirsti(stmt->privileges) == ALL)
-		privstring = aclmakepriv("", ACL_MODE_SELECT_CHR);
+	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+		privileges = ACL_ALL_RIGHTS_LANGUAGE;
 	else
 	{
+		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			if (lfirsti(i) != USAGE)
-				elog(ERROR, "invalid privilege type %s for language object",
-					 privilege_token_string(lfirsti(i)));
-		}
+			AclMode		priv = lfirsti(i);
 
-		privstring = aclmakepriv("", ACL_MODE_SELECT_CHR);
+			if (priv & ~((AclMode) ACL_ALL_RIGHTS_LANGUAGE))
+				elog(ERROR, "invalid privilege type %s for language object",
+					 privilege_to_string(priv));
+			privileges |= priv;
+		}
 	}
 
 	foreach(i, stmt->objects)
@@ -413,7 +490,6 @@ ExecuteGrantStmt_Lang(GrantStmt *stmt)
 		bool		isNull;
 		Acl		   *old_acl;
 		Acl		   *new_acl;
-		unsigned	i;
 		HeapTuple	newtuple;
 		Datum		values[Natts_pg_language];
 		char		nulls[Natts_pg_language];
@@ -423,19 +499,15 @@ ExecuteGrantStmt_Lang(GrantStmt *stmt)
 			elog(ERROR, "permission denied");
 
 		relation = heap_openr(LanguageRelationName, RowExclusiveLock);
-		tuple = SearchSysCache(LANGNAME, PointerGetDatum(langname), 0, 0, 0);
+		tuple = SearchSysCache(LANGNAME,
+							   PointerGetDatum(langname),
+							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-		{
-			heap_close(relation, RowExclusiveLock);
 			elog(ERROR, "language \"%s\" not found", langname);
-		}
 		pg_language_tuple = (Form_pg_language) GETSTRUCT(tuple);
 
 		if (!pg_language_tuple->lanpltrusted)
-		{
-			heap_close(relation, RowExclusiveLock);
 			elog(ERROR, "language \"%s\" is not trusted", langname);
-		}
 
 		/*
 		 * If there's no ACL, create a default.
@@ -443,24 +515,23 @@ ExecuteGrantStmt_Lang(GrantStmt *stmt)
 		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
 								   &isNull);
 		if (isNull)
-			old_acl = acldefault(InvalidOid);
+			old_acl = acldefault(ACL_OBJECT_LANGUAGE,
+								 InvalidOid);
 		else
-			/* get a detoasted copy of the rel's ACL */
+			/* get a detoasted copy of the ACL */
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privstring);
+									   stmt->grantees, privileges);
 
 		/* finished building new ACL value, now insert it */
-		for (i = 0; i < Natts_pg_language; ++i)
-		{
-			replaces[i] = ' ';
-			nulls[i] = ' ';		/* ignored if replaces[i]==' ' anyway */
-			values[i] = (Datum) NULL;	/* ignored if replaces[i]==' '
-										 * anyway */
-		}
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, ' ', sizeof(nulls));
+		MemSet(replaces, ' ', sizeof(replaces));
+
 		replaces[Anum_pg_language_lanacl - 1] = 'r';
 		values[Anum_pg_language_lanacl - 1] = PointerGetDatum(new_acl);
+
 		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
 
 		ReleaseSysCache(tuple);
@@ -484,20 +555,136 @@ ExecuteGrantStmt_Lang(GrantStmt *stmt)
 	}
 }
 
+static void
+ExecuteGrantStmt_Namespace(GrantStmt *stmt)
+{
+	AclMode		privileges;
+	List	   *i;
+
+	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+		privileges = ACL_ALL_RIGHTS_NAMESPACE;
+	else
+	{
+		privileges = ACL_NO_RIGHTS;
+		foreach(i, stmt->privileges)
+		{
+			AclMode		priv = lfirsti(i);
+
+			if (priv & ~((AclMode) ACL_ALL_RIGHTS_NAMESPACE))
+				elog(ERROR, "invalid privilege type %s for namespace object",
+					 privilege_to_string(priv));
+			privileges |= priv;
+		}
+	}
+
+	foreach(i, stmt->objects)
+	{
+		char	   *nspname = strVal(lfirst(i));
+		Relation	relation;
+		HeapTuple	tuple;
+		Form_pg_namespace pg_namespace_tuple;
+		Datum		aclDatum;
+		bool		isNull;
+		Acl		   *old_acl;
+		Acl		   *new_acl;
+		HeapTuple	newtuple;
+		Datum		values[Natts_pg_namespace];
+		char		nulls[Natts_pg_namespace];
+		char		replaces[Natts_pg_namespace];
+
+		relation = heap_openr(NamespaceRelationName, RowExclusiveLock);
+		tuple = SearchSysCache(NAMESPACENAME,
+							   CStringGetDatum(nspname),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "namespace \"%s\" not found", nspname);
+		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
+
+		if (!pg_namespace_ownercheck(tuple->t_data->t_oid, GetUserId()))
+			elog(ERROR, "permission denied");
+
+		/*
+		 * If there's no ACL, create a default using the pg_namespace.nspowner
+		 * field.
+		 */
+		aclDatum = SysCacheGetAttr(NAMESPACENAME, tuple,
+								   Anum_pg_namespace_nspacl,
+								   &isNull);
+		if (isNull)
+			old_acl = acldefault(ACL_OBJECT_NAMESPACE,
+								 pg_namespace_tuple->nspowner);
+		else
+			/* get a detoasted copy of the ACL */
+			old_acl = DatumGetAclPCopy(aclDatum);
+
+		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
+									   stmt->grantees, privileges);
+
+		/* finished building new ACL value, now insert it */
+		MemSet(values, 0, sizeof(values));
+		MemSet(nulls, ' ', sizeof(nulls));
+		MemSet(replaces, ' ', sizeof(replaces));
+
+		replaces[Anum_pg_namespace_nspacl - 1] = 'r';
+		values[Anum_pg_namespace_nspacl - 1] = PointerGetDatum(new_acl);
+
+		newtuple = heap_modifytuple(tuple, relation, values, nulls, replaces);
+
+		ReleaseSysCache(tuple);
+
+		simple_heap_update(relation, &newtuple->t_self, newtuple);
+
+		{
+			/* keep the catalog indexes up to date */
+			Relation	idescs[Num_pg_namespace_indices];
+
+			CatalogOpenIndices(Num_pg_namespace_indices, Name_pg_namespace_indices,
+							   idescs);
+			CatalogIndexInsert(idescs, Num_pg_namespace_indices, relation, newtuple);
+			CatalogCloseIndices(Num_pg_namespace_indices, idescs);
+		}
+
+		pfree(old_acl);
+		pfree(new_acl);
+
+		heap_close(relation, RowExclusiveLock);
+	}
+}
 
 
 static const char *
-privilege_token_string(int token)
+privilege_to_string(AclMode privilege)
 {
-	const char *s = TokenString(token);
-
-	if (s)
-		return s;
-	else
-		elog(ERROR, "privilege_token_string: invalid token number");
-	return NULL; /* appease compiler */
+	switch (privilege)
+	{
+		case ACL_INSERT:
+			return "INSERT";
+		case ACL_SELECT:
+			return "SELECT";
+		case ACL_UPDATE:
+			return "UPDATE";
+		case ACL_DELETE:
+			return "DELETE";
+		case ACL_RULE:
+			return "RULE";
+		case ACL_REFERENCES:
+			return "REFERENCES";
+		case ACL_TRIGGER:
+			return "TRIGGER";
+		case ACL_EXECUTE:
+			return "EXECUTE";
+		case ACL_USAGE:
+			return "USAGE";
+		case ACL_CREATE:
+			return "CREATE";
+		case ACL_CREATE_TEMP:
+			return "TEMP";
+		default:
+			elog(ERROR, "privilege_to_string: unrecognized privilege %d",
+				 privilege);
+	}
+	return NULL;				/* appease compiler */
 }
-
 
 
 AclId
@@ -599,7 +786,7 @@ in_group(AclId uid, AclId gid)
  * The ACL list is expected to be sorted in standard order.
  */
 static int32
-aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
+aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode)
 {
 	AclItem    *aip,
 			   *aidat;
@@ -635,12 +822,12 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 * "World" rights are applicable regardless of the passed-in ID, and
 	 * since they're much the cheapest to check, check 'em first.
 	 */
-	if (aidat->ai_idtype != ACL_IDTYPE_WORLD)
+	if (ACLITEM_GET_IDTYPE(*aidat) != ACL_IDTYPE_WORLD)
 		elog(ERROR, "aclcheck: first entry in ACL is not 'world' entry");
-	if (aidat->ai_mode & mode)
+	if (aidat->ai_privs & mode)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG1, "aclcheck: using world=%d", aidat->ai_mode);
+		elog(DEBUG1, "aclcheck: using world=%d", ACLITEM_GET_PRIVS(*aidat));
 #endif
 		return ACLCHECK_OK;
 	}
@@ -650,31 +837,31 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 		case ACL_IDTYPE_UID:
 			/* See if permission is granted directly to user */
 			for (i = 1, aip = aidat + 1;		/* skip world entry */
-				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
+				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_UID;
 				 ++i, ++aip)
 			{
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG
 					elog(DEBUG1, "aclcheck: found user %u/%d",
-						 aip->ai_id, aip->ai_mode);
+						 aip->ai_id, ACLITEM_GET_PRIVS(*aip));
 #endif
-					if (aip->ai_mode & mode)
+					if (aip->ai_privs & mode)
 						return ACLCHECK_OK;
 				}
 			}
 			/* See if he has the permission via any group */
 			for (;
-				 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
+				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_GID;
 				 ++i, ++aip)
 			{
-				if (aip->ai_mode & mode)
+				if (aip->ai_privs & mode)
 				{
 					if (in_group(id, aip->ai_id))
 					{
 #ifdef ACLDEBUG
 						elog(DEBUG1, "aclcheck: found group %u/%d",
-							 aip->ai_id, aip->ai_mode);
+							 aip->ai_id, ACLITEM_GET_PRIVS(*aip));
 #endif
 						return ACLCHECK_OK;
 					}
@@ -684,20 +871,20 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 		case ACL_IDTYPE_GID:
 			/* Look for this group ID */
 			for (i = 1, aip = aidat + 1;		/* skip world entry */
-				 i < num && aip->ai_idtype == ACL_IDTYPE_UID;
+				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_UID;
 				 ++i, ++aip)
 				 /* skip UID entry */ ;
 			for (;
-				 i < num && aip->ai_idtype == ACL_IDTYPE_GID;
+				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_GID;
 				 ++i, ++aip)
 			{
 				if (aip->ai_id == id)
 				{
 #ifdef ACLDEBUG
 					elog(DEBUG1, "aclcheck: found group %u/%d",
-						 aip->ai_id, aip->ai_mode);
+						 aip->ai_id, ACLITEM_GET_PRIVS(*aip));
 #endif
-					if (aip->ai_mode & mode)
+					if (aip->ai_privs & mode)
 						return ACLCHECK_OK;
 				}
 			}
@@ -795,7 +982,7 @@ pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
 		AclId		ownerId;
 
 		ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
-		acl = acldefault(ownerId);
+		acl = acldefault(ACL_OBJECT_RELATION, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -804,7 +991,7 @@ pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, (AclIdType) ACL_IDTYPE_UID, mode);
+	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -816,12 +1003,77 @@ pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode)
 }
 
 /*
+ * Exported routine for checking a user's access privileges to a database
+ *
+ * Returns an ACLCHECK_* result code.
+ */
+int32
+pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode)
+{
+	int32		result;
+	Relation	pg_database;
+	ScanKeyData entry[1];
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return ACLCHECK_OK;
+
+	/*
+	 * Get the database's ACL from pg_database
+	 *
+	 * There's no syscache for pg_database, so must look the hard way
+	 */
+	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry[0], 0x0,
+						   ObjectIdAttributeNumber, F_OIDEQ,
+						   ObjectIdGetDatum(db_oid));
+	scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, entry);
+	tuple = heap_getnext(scan, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_database_aclcheck: database %u not found", db_oid);
+
+	aclDatum = heap_getattr(tuple, Anum_pg_database_datacl,
+							RelationGetDescr(pg_database), &isNull);
+
+	if (isNull)
+	{
+		/* No ACL, so build default ACL */
+		AclId		ownerId;
+
+		ownerId = ((Form_pg_database) GETSTRUCT(tuple))->datdba;
+		acl = acldefault(ACL_OBJECT_DATABASE, ownerId);
+		aclDatum = (Datum) 0;
+	}
+	else
+	{
+		/* detoast ACL if necessary */
+		acl = DatumGetAclP(aclDatum);
+	}
+
+	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
+
+	/* if we have a detoasted copy, free it */
+	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
+		pfree(acl);
+
+	heap_endscan(scan);
+	heap_close(pg_database, AccessShareLock);
+
+	return result;
+}
+
+/*
  * Exported routine for checking a user's access privileges to a function
  *
  * Returns an ACLCHECK_* result code.
  */
 int32
-pg_proc_aclcheck(Oid proc_oid, Oid userid)
+pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode)
 {
 	int32		result;
 	HeapTuple	tuple;
@@ -850,7 +1102,7 @@ pg_proc_aclcheck(Oid proc_oid, Oid userid)
 		AclId		ownerId;
 
 		ownerId = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
-		acl = acldefault(ownerId);
+		acl = acldefault(ACL_OBJECT_FUNCTION, ownerId);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -859,11 +1111,7 @@ pg_proc_aclcheck(Oid proc_oid, Oid userid)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	/*
-	 * Functions only have one kind of privilege, which is encoded as
-	 * "SELECT" here.
-	 */
-	result = aclcheck(acl, userid, (AclIdType) ACL_IDTYPE_UID, ACL_SELECT);
+	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -880,7 +1128,7 @@ pg_proc_aclcheck(Oid proc_oid, Oid userid)
  * Returns an ACLCHECK_* result code.
  */
 int32
-pg_language_aclcheck(Oid lang_oid, Oid userid)
+pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode)
 {
 	int32		result;
 	HeapTuple	tuple;
@@ -906,7 +1154,7 @@ pg_language_aclcheck(Oid lang_oid, Oid userid)
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		acl = acldefault(InvalidOid);
+		acl = acldefault(ACL_OBJECT_LANGUAGE, InvalidOid);
 		aclDatum = (Datum) 0;
 	}
 	else
@@ -915,11 +1163,62 @@ pg_language_aclcheck(Oid lang_oid, Oid userid)
 		acl = DatumGetAclP(aclDatum);
 	}
 
+	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
+
+	/* if we have a detoasted copy, free it */
+	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
+		pfree(acl);
+
+	ReleaseSysCache(tuple);
+
+	return result;
+}
+
+/*
+ * Exported routine for checking a user's access privileges to a namespace
+ *
+ * Returns an ACLCHECK_* result code.
+ */
+int32
+pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode)
+{
+	int32		result;
+	HeapTuple	tuple;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return ACLCHECK_OK;
+
 	/*
-	 * Languages only have one kind of privilege, which is encoded as
-	 * "SELECT" here.
+	 * Get the function's ACL from pg_namespace
 	 */
-	result = aclcheck(acl, userid, (AclIdType) ACL_IDTYPE_UID, ACL_SELECT);
+	tuple = SearchSysCache(NAMESPACEOID,
+						   ObjectIdGetDatum(nsp_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_namespace_aclcheck: namespace %u not found", nsp_oid);
+
+	aclDatum = SysCacheGetAttr(NAMESPACEOID, tuple, Anum_pg_namespace_nspacl,
+							   &isNull);
+	if (isNull)
+	{
+		/* No ACL, so build default ACL */
+		AclId		ownerId;
+
+		ownerId = ((Form_pg_namespace) GETSTRUCT(tuple))->nspowner;
+		acl = acldefault(ACL_OBJECT_NAMESPACE, ownerId);
+		aclDatum = (Datum) 0;
+	}
+	else
+	{
+		/* detoast ACL if necessary */
+		acl = DatumGetAclP(aclDatum);
+	}
+
+	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1029,6 +1328,33 @@ pg_proc_ownercheck(Oid proc_oid, Oid userid)
 		elog(ERROR, "pg_proc_ownercheck: function %u not found", proc_oid);
 
 	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
+
+	ReleaseSysCache(tuple);
+
+	return userid == owner_id;
+}
+
+/*
+ * Ownership check for a namespace (specified by OID).
+ */
+bool
+pg_namespace_ownercheck(Oid nsp_oid, Oid userid)
+{
+	HeapTuple	tuple;
+	AclId		owner_id;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(userid))
+		return true;
+
+	tuple = SearchSysCache(NAMESPACEOID,
+						   ObjectIdGetDatum(nsp_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "pg_namespace_ownercheck: namespace %u not found",
+			 nsp_oid);
+
+	owner_id = ((Form_pg_namespace) GETSTRUCT(tuple))->nspowner;
 
 	ReleaseSysCache(tuple);
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.21 2002/02/21 22:39:36 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.22 2002/04/21 00:26:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -18,7 +18,11 @@ PostgreSQL documentation
 <synopsis>
 REVOKE { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
-    ON [ TABLE ] <replaceable class="PARAMETER">object</replaceable> [, ...]
+    ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
+    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+REVOKE { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
+    ON DATABASE <replaceable>dbname</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
 
 REVOKE { EXECUTE | ALL [ PRIVILEGES ] }
@@ -27,6 +31,10 @@ REVOKE { EXECUTE | ALL [ PRIVILEGES ] }
 
 REVOKE { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>langname</replaceable> [, ...]
+    FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+
+REVOKE { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
+    ON SCHEMA <replaceable>schemaname</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
 </synopsis>
  </refsynopsisdiv>

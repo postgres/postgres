@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.70 2002/03/26 19:16:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.71 2002/04/21 00:26:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,16 +16,11 @@
 
 #include <ctype.h>
 
-#include "access/heapam.h"
-#include "catalog/catalog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_shadow.h"
-#include "catalog/pg_type.h"
-#include "lib/stringinfo.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
-#include "utils/memutils.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -34,6 +29,8 @@
 #define ACL_IDTYPE_UID_KEYWORD	"user"
 
 static const char *getid(const char *s, char *n);
+static Acl *makeacl(int n);
+static const char *aclparse(const char *s, AclItem *aip, unsigned *modechg);
 static bool aclitemeq(const AclItem *a1, const AclItem *a2);
 static bool aclitemgt(const AclItem *a1, const AclItem *a2);
 
@@ -115,9 +112,11 @@ getid(const char *s, char *n)
  *		  UID/GID, id type identifier and mode type values.
  *		- loads 'modechg' with the mode change flag.
  */
-const char *
+static const char *
 aclparse(const char *s, AclItem *aip, unsigned *modechg)
 {
+	AclMode		privs;
+	uint32		idtype;
 	char		name[NAMEDATALEN];
 
 	Assert(s && aip && modechg);
@@ -125,23 +124,23 @@ aclparse(const char *s, AclItem *aip, unsigned *modechg)
 #ifdef ACLDEBUG
 	elog(LOG, "aclparse: input = '%s'", s);
 #endif
-	aip->ai_idtype = ACL_IDTYPE_UID;
+	idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
 	if (*s != ACL_MODECHG_ADD_CHR &&
 		*s != ACL_MODECHG_DEL_CHR &&
 		*s != ACL_MODECHG_EQL_CHR)
 	{
 		/* we just read a keyword, not a name */
-		if (!strcmp(name, ACL_IDTYPE_GID_KEYWORD))
-			aip->ai_idtype = ACL_IDTYPE_GID;
-		else if (strcmp(name, ACL_IDTYPE_UID_KEYWORD))
+		if (strcmp(name, ACL_IDTYPE_GID_KEYWORD) == 0)
+			idtype = ACL_IDTYPE_GID;
+		else if (strcmp(name, ACL_IDTYPE_UID_KEYWORD) != 0)
 			elog(ERROR, "aclparse: bad keyword, must be [group|user]");
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
 			elog(ERROR, "aclparse: a name must follow the [group|user] keyword");
 	}
 	if (name[0] == '\0')
-		aip->ai_idtype = ACL_IDTYPE_WORLD;
+		idtype = ACL_IDTYPE_WORLD;
 
 	switch (*s)
 	{
@@ -155,43 +154,58 @@ aclparse(const char *s, AclItem *aip, unsigned *modechg)
 			*modechg = ACL_MODECHG_EQL;
 			break;
 		default:
-			elog(ERROR, "aclparse: mode change flag must use \"%s\"",
-				 ACL_MODECHG_STR);
+			elog(ERROR, "aclparse: mode change flag must use \"%c%c%c\"",
+				 ACL_MODECHG_ADD_CHR,
+				 ACL_MODECHG_DEL_CHR,
+				 ACL_MODECHG_EQL_CHR);
 	}
 
-	aip->ai_mode = ACL_NO;
+	privs = ACL_NO_RIGHTS;
+
 	while (isalpha((unsigned char) *++s))
 	{
 		switch (*s)
 		{
-			case ACL_MODE_INSERT_CHR:
-				aip->ai_mode |= ACL_INSERT;
+			case ACL_INSERT_CHR:
+				privs |= ACL_INSERT;
 				break;
-			case ACL_MODE_SELECT_CHR:
-				aip->ai_mode |= ACL_SELECT;
+			case ACL_SELECT_CHR:
+				privs |= ACL_SELECT;
 				break;
-			case ACL_MODE_UPDATE_CHR:
-				aip->ai_mode |= ACL_UPDATE;
+			case ACL_UPDATE_CHR:
+				privs |= ACL_UPDATE;
 				break;
-			case ACL_MODE_DELETE_CHR:
-				aip->ai_mode |= ACL_DELETE;
+			case ACL_DELETE_CHR:
+				privs |= ACL_DELETE;
 				break;
-			case ACL_MODE_RULE_CHR:
-				aip->ai_mode |= ACL_RULE;
+			case ACL_RULE_CHR:
+				privs |= ACL_RULE;
 				break;
-			case ACL_MODE_REFERENCES_CHR:
-				aip->ai_mode |= ACL_REFERENCES;
+			case ACL_REFERENCES_CHR:
+				privs |= ACL_REFERENCES;
 				break;
-			case ACL_MODE_TRIGGER_CHR:
-				aip->ai_mode |= ACL_TRIGGER;
+			case ACL_TRIGGER_CHR:
+				privs |= ACL_TRIGGER;
+				break;
+			case ACL_EXECUTE_CHR:
+				privs |= ACL_EXECUTE;
+				break;
+			case ACL_USAGE_CHR:
+				privs |= ACL_USAGE;
+				break;
+			case ACL_CREATE_CHR:
+				privs |= ACL_CREATE;
+				break;
+			case ACL_CREATE_TEMP_CHR:
+				privs |= ACL_CREATE_TEMP;
 				break;
 			default:
 				elog(ERROR, "aclparse: mode flags must use \"%s\"",
-					 ACL_MODE_STR);
+					 ACL_ALL_RIGHTS_STR);
 		}
 	}
 
-	switch (aip->ai_idtype)
+	switch (idtype)
 	{
 		case ACL_IDTYPE_UID:
 			aip->ai_id = get_usesysid(name);
@@ -204,9 +218,11 @@ aclparse(const char *s, AclItem *aip, unsigned *modechg)
 			break;
 	}
 
+	ACLITEM_SET_PRIVS_IDTYPE(*aip, privs, idtype);
+
 #ifdef ACLDEBUG
 	elog(LOG, "aclparse: correctly read [%x %d %x], modechg=%x",
-		 aip->ai_idtype, aip->ai_id, aip->ai_mode, *modechg);
+		 idtype, aip->ai_id, privs, *modechg);
 #endif
 	return s;
 }
@@ -218,7 +234,7 @@ aclparse(const char *s, AclItem *aip, unsigned *modechg)
  * RETURNS:
  *		the new Acl
  */
-Acl *
+static Acl *
 makeacl(int n)
 {
 	Acl		   *new_acl;
@@ -281,10 +297,10 @@ aclitemout(PG_FUNCTION_ARGS)
 	unsigned	i;
 	char	   *tmpname;
 
-	p = out = palloc(strlen("group =" ACL_MODE_STR " ") + 1 + NAMEDATALEN);
+	p = out = palloc(strlen("group = ") + N_ACL_RIGHTS + NAMEDATALEN + 1);
 	*p = '\0';
 
-	switch (aip->ai_idtype)
+	switch (ACLITEM_GET_IDTYPE(*aip))
 	{
 		case ACL_IDTYPE_UID:
 			htup = SearchSysCache(SHADOWSYSID,
@@ -327,15 +343,16 @@ aclitemout(PG_FUNCTION_ARGS)
 		case ACL_IDTYPE_WORLD:
 			break;
 		default:
-			elog(ERROR, "aclitemout: bad ai_idtype: %d", aip->ai_idtype);
+			elog(ERROR, "aclitemout: bad idtype: %d",
+				 ACLITEM_GET_IDTYPE(*aip));
 			break;
 	}
 	while (*p)
 		++p;
 	*p++ = '=';
-	for (i = 0; i < N_ACL_MODES; ++i)
-		if ((aip->ai_mode >> i) & 01)
-			*p++ = ACL_MODE_STR[i];
+	for (i = 0; i < N_ACL_RIGHTS; ++i)
+		if (aip->ai_privs & (1 << i))
+			*p++ = ACL_ALL_RIGHTS_STR[i];
 	*p = '\0';
 
 	PG_RETURN_CSTRING(out);
@@ -345,8 +362,8 @@ aclitemout(PG_FUNCTION_ARGS)
  * aclitemeq
  * aclitemgt
  *		AclItem equality and greater-than comparison routines.
- *		Two AclItems are considered equal iff they have the
- *		same identifier (and identifier type); the mode is ignored.
+ *		Two AclItems are considered equal iff they have the same
+ *		identifier (and identifier type); the privileges are ignored.
  *		Note that these routines are really only useful for sorting
  *		AclItems into identifier order.
  *
@@ -356,14 +373,16 @@ aclitemout(PG_FUNCTION_ARGS)
 static bool
 aclitemeq(const AclItem *a1, const AclItem *a2)
 {
-	return a1->ai_idtype == a2->ai_idtype && a1->ai_id == a2->ai_id;
+	return ACLITEM_GET_IDTYPE(*a1) == ACLITEM_GET_IDTYPE(*a2) &&
+		a1->ai_id == a2->ai_id;
 }
 
 static bool
 aclitemgt(const AclItem *a1, const AclItem *a2)
 {
-	return ((a1->ai_idtype > a2->ai_idtype) ||
-			(a1->ai_idtype == a2->ai_idtype && a1->ai_id > a2->ai_id));
+	return ((ACLITEM_GET_IDTYPE(*a1) > ACLITEM_GET_IDTYPE(*a2)) ||
+			(ACLITEM_GET_IDTYPE(*a1) == ACLITEM_GET_IDTYPE(*a2) &&
+			 a1->ai_id > a2->ai_id));
 }
 
 
@@ -374,26 +393,53 @@ aclitemgt(const AclItem *a1, const AclItem *a2)
  * newly-created tables (or any table with a NULL acl entry in pg_class)
  */
 Acl *
-acldefault(AclId ownerid)
+acldefault(GrantObjectType objtype, AclId ownerid)
 {
+	AclMode		world_default;
+	AclMode		owner_default;
 	Acl		   *acl;
 	AclItem    *aip;
 
-#define ACL_WORLD_DEFAULT		(ACL_NO)
-#define ACL_OWNER_DEFAULT		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_RULE|ACL_REFERENCES|ACL_TRIGGER)
+	switch (objtype)
+	{
+		case ACL_OBJECT_RELATION:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_RELATION;
+			break;
+		case ACL_OBJECT_DATABASE:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_DATABASE;
+			break;
+		case ACL_OBJECT_FUNCTION:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_FUNCTION;
+			break;
+		case ACL_OBJECT_LANGUAGE:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_LANGUAGE;
+			break;
+		case ACL_OBJECT_NAMESPACE:
+			world_default = ACL_NO_RIGHTS;
+			owner_default = ACL_ALL_RIGHTS_NAMESPACE;
+			break;
+		default:
+			elog(ERROR, "acldefault: bogus objtype %d", (int) objtype);
+			world_default = ACL_NO_RIGHTS; /* keep compiler quiet */
+			owner_default = ACL_NO_RIGHTS;
+			break;
+	}
 
 	acl = makeacl(ownerid ? 2 : 1);
 	aip = ACL_DAT(acl);
-	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
+
 	aip[0].ai_id = ACL_ID_WORLD;
-	aip[0].ai_mode = ACL_WORLD_DEFAULT;
-	/* FIXME: The owner's default should vary with the object type. */
+	ACLITEM_SET_PRIVS_IDTYPE(aip[0], world_default, ACL_IDTYPE_WORLD);
 	if (ownerid)
 	{
-		aip[1].ai_idtype = ACL_IDTYPE_UID;
 		aip[1].ai_id = ownerid;
-		aip[1].ai_mode = ACL_OWNER_DEFAULT;
+		ACLITEM_SET_PRIVS_IDTYPE(aip[1], owner_default, ACL_IDTYPE_UID);
 	}
+
 	return acl;
 }
 
@@ -469,8 +515,8 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg)
 		}
 		/* initialize the new entry with no permissions */
 		new_aip[dst].ai_id = mod_aip->ai_id;
-		new_aip[dst].ai_idtype = mod_aip->ai_idtype;
-		new_aip[dst].ai_mode = 0;
+		ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst], ACL_NO_RIGHTS,
+								 ACLITEM_GET_IDTYPE(*mod_aip));
 		num++;					/* set num to the size of new_acl */
 	}
 
@@ -478,13 +524,15 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg)
 	switch (modechg)
 	{
 		case ACL_MODECHG_ADD:
-			new_aip[dst].ai_mode |= mod_aip->ai_mode;
+			new_aip[dst].ai_privs |= ACLITEM_GET_PRIVS(*mod_aip);
 			break;
 		case ACL_MODECHG_DEL:
-			new_aip[dst].ai_mode &= ~mod_aip->ai_mode;
+			new_aip[dst].ai_privs &= ~ACLITEM_GET_PRIVS(*mod_aip);
 			break;
 		case ACL_MODECHG_EQL:
-			new_aip[dst].ai_mode = mod_aip->ai_mode;
+			ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst],
+									 ACLITEM_GET_PRIVS(*mod_aip),
+									 ACLITEM_GET_IDTYPE(new_aip[dst]));
 			break;
 	}
 
@@ -493,7 +541,7 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg)
 	 * For example, this helps in removing entries for users who no longer
 	 * exist.  EXCEPTION: never remove the world entry.
 	 */
-	if (new_aip[dst].ai_mode == 0 && dst > 0)
+	if (ACLITEM_GET_PRIVS(new_aip[dst]) == ACL_NO_RIGHTS && dst > 0)
 	{
 		memmove((char *) (new_aip + dst),
 				(char *) (new_aip + dst + 1),
@@ -594,130 +642,11 @@ aclcontains(PG_FUNCTION_ARGS)
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)
 	{
-		/* Note that aclitemeq only considers id, not mode */
-		if (aclitemeq(aip, aidat + i) &&
-			aip->ai_mode == aidat[i].ai_mode)
+		if (aip->ai_id == aidat[i].ai_id &&
+			aip->ai_privs == aidat[i].ai_privs)
 			PG_RETURN_BOOL(true);
 	}
 	PG_RETURN_BOOL(false);
-}
-
-
-/*
- * Parser support routines for ACL-related statements.
- *
- * XXX CAUTION: these are called from gram.y, which is not allowed to
- * do any table accesses.  Therefore, it is not kosher to do things
- * like trying to translate usernames to user IDs here.  Keep it all
- * in string form until statement execution time.
- */
-
-/*
- * aclmakepriv
- *	  make a acl privilege string out of an existing privilege string
- * and a new privilege
- *
- * does not add duplicate privileges
- */
-char *
-aclmakepriv(const char *old_privlist, char new_priv)
-{
-	char	   *priv;
-	int			i;
-	int			l;
-
-	Assert(strlen(old_privlist) <= strlen(ACL_MODE_STR));
-	priv = palloc(strlen(ACL_MODE_STR) + 1);
-
-	if (old_privlist == NULL || old_privlist[0] == '\0')
-	{
-		priv[0] = new_priv;
-		priv[1] = '\0';
-		return priv;
-	}
-
-	strcpy(priv, old_privlist);
-
-	l = strlen(old_privlist);
-
-	if (l == strlen(ACL_MODE_STR))
-	{							/* can't add any more privileges */
-		return priv;
-	}
-
-	/* check to see if the new privilege is already in the old string */
-	for (i = 0; i < l; i++)
-	{
-		if (priv[i] == new_priv)
-			break;
-	}
-	if (i == l)
-	{							/* we really have a new privilege */
-		priv[l] = new_priv;
-		priv[l + 1] = '\0';
-	}
-
-	return priv;
-}
-
-/*
- * aclmakeuser
- *	  user_type must be "A"  - all users
- *						"G"  - group
- *						"U"  - user
- *
- * Just concatenates the two strings together with a space in between.
- * Per above comments, we can't try to resolve a user or group name here.
- */
-char *
-aclmakeuser(const char *user_type, const char *user)
-{
-	char	   *user_list;
-
-	user_list = palloc(strlen(user_type) + strlen(user) + 2);
-	sprintf(user_list, "%s %s", user_type, user);
-	return user_list;
-}
-
-
-/*
- * makeAclString:  We take in the privileges and grantee as well as a
- * single character '+' or '-' to indicate grant or revoke.
- *
- * We convert the information to the same external form recognized by
- * aclitemin (see aclparse) and return that string.  Conversion to
- * internal form happens when the statement is executed.
- */
-char *
-makeAclString(const char *privileges, const char *grantee, char grant_or_revoke)
-{
-	StringInfoData str;
-	char	   *ret;
-
-	initStringInfo(&str);
-
-	/* the grantee string is "G <group_name>", "U <user_name>", or "ALL" */
-	if (grantee[0] == 'G')		/* group permissions */
-	{
-		appendStringInfo(&str, "%s \"%s\"%c%s",
-						 ACL_IDTYPE_GID_KEYWORD,
-						 grantee + 2, grant_or_revoke, privileges);
-	}
-	else if (grantee[0] == 'U') /* user permission */
-	{
-		appendStringInfo(&str, "%s \"%s\"%c%s",
-						 ACL_IDTYPE_UID_KEYWORD,
-						 grantee + 2, grant_or_revoke, privileges);
-	}
-	else
-	{
-		/* all permission */
-		appendStringInfo(&str, "%c%s",
-						 grant_or_revoke, privileges);
-	}
-	ret = pstrdup(str.data);
-	pfree(str.data);
-	return ret;
 }
 
 
@@ -949,7 +878,7 @@ convert_priv_string(text *priv_type_text)
 	/*
 	 * We should never get here, but stop the compiler from complaining
 	 */
-	return ACL_NO;
+	return ACL_NO_RIGHTS;
 }
 
 /*

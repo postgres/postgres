@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.42 2002/02/18 23:11:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.43 2002/04/21 00:26:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ init_fcache(Oid foid, int nargs, MemoryContext fcacheCxt)
 	/* Initialize additional info */
 	retval->setArgsValid = false;
 
-	retval->permission_ok = pg_proc_aclcheck(foid, GetUserId()) == ACLCHECK_OK;
+	retval->permission_ok = pg_proc_aclcheck(foid, GetUserId(), ACL_EXECUTE) == ACLCHECK_OK;
 
 	return retval;
 }
