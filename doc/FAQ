@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jul 29 21:35:23 EDT 2002
+   Last updated: Tue Jul 30 11:05:09 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -370,7 +370,8 @@
    Of course, this infrastructure is not cheap. There are a variety of
    monthly and one-time expenses that are required to keep it going. If
    you or your company has money it can donate to help fund this effort,
-   please go to http://www.pgsql.com/pg_goodies and make a donation.
+   please go to https://store.pgsql.com/shopping/index.php?id=1 and make
+   a donation.
    
    Although the web page mentions PostgreSQL, Inc, the "contributions"
    item is solely to support the PostgreSQL project and does not fund any
