@@ -334,7 +334,7 @@ dbf_get_record(dbhead * dbh, field * fields, u_long rec)
 		{
 			end = &dbffield[fields[t].db_flen - 1];
 			i = fields[t].db_flen;
-			while ((i > 0) && ((*end < 0x21) || (*end > 0x7E)))
+			while (i > 0 && !isprint(*end))
 			{
 				end--;
 				i--;
@@ -346,7 +346,7 @@ dbf_get_record(dbhead * dbh, field * fields, u_long rec)
 		{
 			end = dbffield;
 			i = fields[t].db_flen;
-			while ((i > 0) && ((*end < 0x21) || (*end > 0x7E)))
+			while (i > 0 && !isprint(*end))
 			{
 				end++;
 				i--;
