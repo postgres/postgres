@@ -1,0 +1,12 @@
+QUERY: SELECT d1, count(*) FROM DATETIME_TBL
+  GROUP BY d1 HAVING count(*) > 1;
+d1                          |count
+----------------------------+-----
+Thu Jun 13 00:00:00 1957 PDT|    2
+Mon Feb 10 09:32:01 1997 PST|    3
+Mon Feb 10 17:32:01 1997 PST|   13
+Sun Feb 16 17:32:01 1997 PST|    2
+Sat Mar 01 17:32:01 1997 PST|    2
+invalid                     |    2
+(6 rows)
+
