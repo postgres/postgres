@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.1 1996/08/28 01:59:04 scrappy Exp $
+ * $Id: hsearch.h,v 1.2 1996/10/31 09:51:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HSEARCH_H
 #define HSEARCH_H
 
-#include "postgres.h"
 
 /*
  * Constants

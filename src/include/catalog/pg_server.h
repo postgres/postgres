@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_server.h,v 1.1 1996/08/28 01:57:12 scrappy Exp $
+ * $Id: pg_server.h,v 1.2 1996/10/31 09:47:55 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -24,7 +24,6 @@
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "postgres.h"
 
 /* ----------------
  *	pg_server definition.  cpp turns this into

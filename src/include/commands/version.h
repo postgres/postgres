@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: version.h,v 1.1 1996/08/28 07:21:53 scrappy Exp $
+ * $Id: version.h,v 1.2 1996/10/31 09:48:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VERSION_H
 #define VERSION_H
 
-#include "postgres.h"
 #include "nodes/pg_list.h"
 
 extern void DefineVersion(char *name, char *fromRelname, char *date);

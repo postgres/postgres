@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.1 1996/08/28 07:21:46 scrappy Exp $
+ * $Id: defrem.h,v 1.2 1996/10/31 09:48:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	DEFREM_H
 #define DEFREM_H
 
-#include "postgres.h"
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
 #include "nodes/parsenodes.h"

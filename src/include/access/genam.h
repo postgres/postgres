@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.1 1996/08/27 21:50:09 scrappy Exp $
+ * $Id: genam.h,v 1.2 1996/10/31 09:46:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	GENAM_H
 #define GENAM_H
 
-#include "postgres.h"
 
 #include "access/attnum.h"
 #include "access/htup.h"

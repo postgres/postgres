@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.1 1996/08/28 01:57:55 scrappy Exp $
+ * $Id: block.h,v 1.2 1996/10/31 09:49:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	BLOCK_H
 #define BLOCK_H
-
-#include "c.h"
 
 /*
  * BlockNumber:

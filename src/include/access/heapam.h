@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.2 1996/09/23 08:36:39 scrappy Exp $
+ * $Id: heapam.h,v 1.3 1996/10/31 09:46:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 #include <sys/types.h>
 
-#include "postgres.h"
 
 #include "access/attnum.h"
 #include "access/htup.h"

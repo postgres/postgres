@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lselect.h,v 1.1 1996/08/28 01:59:07 scrappy Exp $
+ * $Id: lselect.h,v 1.2 1996/10/31 09:51:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	LSELECT_H
 #define	LSELECT_H
 
-#include "c.h"
 #include "access/htup.h"
 
 struct	leftist {

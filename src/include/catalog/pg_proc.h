@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.1 1996/08/28 01:57:09 scrappy Exp $
+ * $Id: pg_proc.h,v 1.2 1996/10/31 09:47:52 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -28,7 +28,6 @@
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "postgres.h"
 #include "nodes/pg_list.h"
 #include "tcop/dest.h"
 

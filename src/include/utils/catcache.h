@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.1 1996/08/28 01:58:46 scrappy Exp $
+ * $Id: catcache.h,v 1.2 1996/10/31 09:51:09 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 /* #define	CACHEDEBUG 	 turns DEBUG elogs on */
 
-#include "postgres.h"
     
 #include "access/skey.h"
 #include "access/htup.h"

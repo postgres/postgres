@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.1 1996/08/28 01:58:29 scrappy Exp $
+ * $Id: sinvaladt.h,v 1.2 1996/10/31 09:50:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SINVALADT_H
 #define SINVALADT_H
-
-#include "postgres.h"	/* XXX */
 
 #include "storage/ipc.h"
 #include "storage/itemptr.h"

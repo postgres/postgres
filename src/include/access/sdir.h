@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sdir.h,v 1.1 1996/08/27 21:50:23 scrappy Exp $
+ * $Id: sdir.h,v 1.2 1996/10/31 09:46:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	SDIR_H
 #define SDIR_H
 
-#include "c.h"
 
 /*
  * ScanDirection was an int8 for no apparent reason. I kept the original

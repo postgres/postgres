@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.1 1996/08/28 07:22:09 scrappy Exp $
+ * $Id: executor.h,v 1.2 1996/10/31 09:48:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "postgres.h"
 #include "nodes/pg_list.h"
 
 /* ----------------

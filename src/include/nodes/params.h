@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.1 1996/08/28 01:57:39 scrappy Exp $
+ * $Id: params.h,v 1.2 1996/10/31 09:49:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#include "postgres.h"
 #include "access/attnum.h"
 
 /* ----------------------------------------------------------------

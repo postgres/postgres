@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.1 1996/08/28 07:23:51 scrappy Exp $
+ * $Id: catalog_utils.h,v 1.2 1996/10/31 09:49:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,6 @@
 #define	CATALOG_UTILS_H
 
 
-#include "postgres.h"
 
 #include "access/htup.h"
 #include "utils/rel.h"

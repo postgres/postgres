@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.1 1996/08/28 07:22:41 scrappy Exp $
+ * $Id: stringinfo.h,v 1.2 1996/10/31 09:48:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef STRINGINFO_H
 #define STRINGINFO_H
 
-/*#include "c.h"		*/	/* for 'String' */
 
 /*-------------------------
  * StringInfoData holds information about a string.

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.1 1996/08/28 01:56:30 scrappy Exp $
+ * $Id: pg_aggregate.h,v 1.2 1996/10/31 09:47:04 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -24,7 +24,6 @@
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "postgres.h"
 
 /* ----------------------------------------------------------------
  *	pg_aggregate definition.

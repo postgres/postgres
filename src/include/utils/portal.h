@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.1 1996/08/28 01:59:18 scrappy Exp $
+ * $Id: portal.h,v 1.2 1996/10/31 09:51:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #ifndef	PORTAL_H
 #define PORTAL_H
 
-#include "c.h"
 
 #include "nodes/execnodes.h"		/* for EState */
 #include "nodes/memnodes.h"

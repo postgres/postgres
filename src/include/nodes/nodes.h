@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.1 1996/08/28 01:57:37 scrappy Exp $
+ * $Id: nodes.h,v 1.2 1996/10/31 09:49:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODES_H
 #define	NODES_H
 
-#include "c.h"
 
 /*
  * The first field of every node is NodeTag. Each node created (with makeNode)

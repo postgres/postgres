@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pos.h,v 1.1 1996/08/28 01:58:22 scrappy Exp $
+ * $Id: pos.h,v 1.2 1996/10/31 09:50:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	POS_H
 #define POS_H
-
-#include "c.h"
 
 /*
  * a 'position' used to be <pagenumber, offset> in postgres.  this has

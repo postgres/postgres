@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.1 1996/08/28 01:58:48 scrappy Exp $
+ * $Id: datum.h,v 1.2 1996/10/31 09:51:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	DATUM_H
 #define	DATUM_H
 
-#include "postgres.h"
 
 /*--------------------------------------------------------
  * SOME NOT VERY PORTABLE ROUTINES ???

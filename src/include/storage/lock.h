@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.1 1996/08/28 01:58:15 scrappy Exp $
+ * $Id: lock.h,v 1.2 1996/10/31 09:49:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCK_H_
 #define LOCK_H_
 
-#include "postgres.h"
 #include "storage/itemptr.h"
 #include "storage/shmem.h"
 #include "storage/spin.h"

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.1 1996/08/28 01:58:45 scrappy Exp $
+ * $Id: builtins.h,v 1.2 1996/10/31 09:51:07 scrappy Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -18,7 +18,6 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
-#include "postgres.h"
 
 #include "storage/itemptr.h"
 

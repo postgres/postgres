@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.1 1996/08/28 01:57:44 scrappy Exp $
+ * $Id: plannodes.h,v 1.2 1996/10/31 09:49:16 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PLANNODES_H
 #define	PLANNODES_H
 
-#include "postgres.h"
 
 #include "nodes/nodes.h"
 #include "nodes/pg_list.h"

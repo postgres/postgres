@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.1 1996/08/28 01:59:05 scrappy Exp $
+ * $Id: inval.h,v 1.2 1996/10/31 09:51:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	INVAL_H
 #define INVAL_H
 
-#include "postgres.h"
 #include "access/htup.h"
 #include "utils/rel.h"
 

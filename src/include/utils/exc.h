@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.1 1996/08/28 01:58:53 scrappy Exp $
+ * $Id: exc.h,v 1.2 1996/10/31 09:51:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	EXC_H
 #define EXC_H
 
-#include "c.h"		/* for Exception, etc. */
 #include <setjmp.h>
 
 extern char *ExcFileName;

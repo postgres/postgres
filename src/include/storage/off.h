@@ -6,16 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.1 1996/08/28 01:58:18 scrappy Exp $
+ * $Id: off.h,v 1.2 1996/10/31 09:49:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	OFF_H
 #define OFF_H
-
-#include "c.h"
-#include "machine.h"		/* for BLCKSZ */
-#include "storage/itemid.h"
 
 /*
  * OffsetNumber:

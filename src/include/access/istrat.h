@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.1 1996/08/27 21:50:17 scrappy Exp $
+ * $Id: istrat.h,v 1.2 1996/10/31 09:46:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ISTRAT_H
 #define ISTRAT_H
 
-#include "postgres.h"
 #include "access/attnum.h"
 #include "access/skey.h"
 #include "access/strat.h"

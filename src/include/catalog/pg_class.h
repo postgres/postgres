@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.1 1996/08/28 01:56:39 scrappy Exp $
+ * $Id: pg_class.h,v 1.2 1996/10/31 09:47:21 scrappy Exp $
  *
  * NOTES
  *    ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -29,7 +29,6 @@
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "postgres.h"
 #include "utils/nabstime.h"
 
 /* ----------------

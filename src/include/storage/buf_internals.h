@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.1 1996/08/28 01:58:00 scrappy Exp $
+ * $Id: buf_internals.h,v 1.2 1996/10/31 09:49:42 scrappy Exp $
  *
  * NOTE
  *	If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -17,7 +17,6 @@
 #ifndef	BUFMGR_INTERNALS_H
 #define BUFMGR_INTERNALS_H
 
-#include "postgres.h"
 #include "storage/buf.h"
 #include "storage/ipc.h"
 #include "storage/shmem.h"

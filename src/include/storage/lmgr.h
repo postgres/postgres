@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.1 1996/08/28 01:58:13 scrappy Exp $
+ * $Id: lmgr.h,v 1.2 1996/10/31 09:49:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	LMGR_H
 #define LMGR_H
 
-#include "postgres.h"
 
 #include "storage/itemptr.h"
 #include "storage/lock.h"

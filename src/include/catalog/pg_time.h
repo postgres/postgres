@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_time.h,v 1.1 1996/08/28 01:57:17 scrappy Exp $
+ * $Id: pg_time.h,v 1.2 1996/10/31 09:47:58 scrappy Exp $
  *
  * NOTES
  *    The structures and macros used by the transam/ code
@@ -26,7 +26,6 @@
  *	can be read by both genbki.sh and the C compiler.
  * ----------------
  */
-#include "postgres.h"
 
 CATALOG(pg_time) BOOTSTRAP {
     Oid  	timefoo;

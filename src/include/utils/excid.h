@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: excid.h,v 1.1 1996/08/28 01:58:55 scrappy Exp $
+ * $Id: excid.h,v 1.2 1996/10/31 09:51:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	EXCID_H
 #define EXCID_H
 
-#include "c.h"
 #include "utils/exc.h"	/* for Exception */
 
 extern Exception FailedAssertion;

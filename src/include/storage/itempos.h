@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itempos.h,v 1.1 1996/08/28 01:58:09 scrappy Exp $
+ * $Id: itempos.h,v 1.2 1996/10/31 09:49:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ITEMPOS_H
 #define ITEMPOS_H
 
-#include "c.h"
 #include "storage/buf.h"
 #include "storage/itemid.h"
 

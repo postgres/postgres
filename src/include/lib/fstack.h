@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fstack.h,v 1.1 1996/08/28 07:22:37 scrappy Exp $
+ * $Id: fstack.h,v 1.2 1996/10/31 09:48:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,6 @@
 #ifndef	FSTACK_H
 #define FSTACK_H
 
-#include "c.h"
 
 /*
  * FixedItem --

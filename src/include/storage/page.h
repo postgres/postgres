@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: page.h,v 1.1 1996/08/28 01:58:20 scrappy Exp $
+ * $Id: page.h,v 1.2 1996/10/31 09:49:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	PAGE_H
 #define PAGE_H
-
-#include "c.h"
 
 typedef Pointer	Page;
 

@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.1 1996/08/28 07:22:36 scrappy Exp $
+ * $Id: dllist.h,v 1.2 1996/10/31 09:48:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,6 @@
 #ifndef DLLIST_H
 #define DLLIST_H
 
-#include "c.h"
 
 struct Dllist;
 struct Dlelem;

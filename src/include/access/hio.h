@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hio.h,v 1.1 1996/08/27 21:50:14 scrappy Exp $
+ * $Id: hio.h,v 1.2 1996/10/31 09:46:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	HIO_H
 #define HIO_H
 
-#include "c.h"
 
 #include "storage/block.h"
 #include "access/htup.h"

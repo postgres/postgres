@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.1 1996/08/28 01:59:10 scrappy Exp $
+ * $Id: memutils.h,v 1.2 1996/10/31 09:51:27 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -26,7 +26,6 @@
 #ifndef MEMUTILS_H
 #define MEMUTILS_H
 
-#include "c.h"
 
 #if 0
 /*****************************************************************************
@@ -97,7 +96,7 @@ s...)
  *	XXX functional interface should not change.
  *
  * Identification:
- *	$Header: /cvsroot/pgsql/src/include/utils/memutils.h,v 1.1 1996/08/28 01:59:10 scrappy Exp $
+ *	$Header: /cvsroot/pgsql/src/include/utils/memutils.h,v 1.2 1996/10/31 09:51:27 scrappy Exp $
  */
 
 typedef struct OrderedElemData OrderedElemData;

@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: iqual.h,v 1.2 1996/10/23 07:41:27 scrappy Exp $
+ * $Id: iqual.h,v 1.3 1996/10/31 09:46:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	IQUAL_H
 #define IQUAL_H
 
-#include "c.h"
 
 #include "storage/itemid.h"
 #include "utils/rel.h"

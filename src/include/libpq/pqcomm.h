@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.3 1996/10/23 07:41:47 scrappy Exp $
+ * $Id: pqcomm.h,v 1.4 1996/10/31 09:48:59 scrappy Exp $
  *
  * NOTES
  *    Some of this should move to libpq.h
@@ -25,7 +25,6 @@
 #include <netinet/in.h>
 #endif /* WIN32 */
 
-#include "postgres.h"
 
 /*
  * startup msg parameters: path length, argument string length

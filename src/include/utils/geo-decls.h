@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo-decls.h,v 1.1 1996/08/28 01:59:03 scrappy Exp $
+ * $Id: geo-decls.h,v 1.2 1996/10/31 09:51:18 scrappy Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -25,7 +25,6 @@
  *-------------------------------------------------------------------*/
 
 #include <math.h>
-#include "c.h"
 
 #define	EPSILON			1.0E-06
 

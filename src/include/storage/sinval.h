@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.1 1996/08/28 01:58:28 scrappy Exp $
+ * $Id: sinval.h,v 1.2 1996/10/31 09:50:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	SINVAL_H
 #define SINVAL_H
 
-#include "c.h"
 #include "storage/spin.h"
 #include "storage/ipc.h"
 #include "storage/itemptr.h"

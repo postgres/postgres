@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.1 1996/08/28 01:56:23 scrappy Exp $
+ * $Id: catname.h,v 1.2 1996/10/31 09:47:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	CATNAME_H
 #define CATNAME_H
 
-#include "postgres.h"
 
 
 #define  AggregateRelationName "pg_aggregate"

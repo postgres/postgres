@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.1 1996/08/28 01:59:24 scrappy Exp $
+ * $Id: relcache.h,v 1.2 1996/10/31 09:51:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 #include <sys/types.h>
 
-#include "postgres.h"
 #include "utils/rel.h"
 
 /*

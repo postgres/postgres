@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgrtab.h,v 1.1 1996/08/28 01:58:59 scrappy Exp $
+ * $Id: fmgrtab.h,v 1.2 1996/10/31 09:51:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef FMGRTAB_H
 #define FMGRTAB_H
 
-#include "postgres.h"		/* for ObjectId */
 #include "fmgr.h"		/* genearated by Gen_fmgrtab.sh */
 
 typedef struct {

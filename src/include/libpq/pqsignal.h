@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqsignal.h,v 1.1 1996/08/28 07:23:03 scrappy Exp $
+ * $Id: pqsignal.h,v 1.2 1996/10/31 09:49:01 scrappy Exp $
  *
  * NOTES
  *    This shouldn't be in libpq, but the monitor and some other
@@ -19,7 +19,6 @@
 
 #include <signal.h>
 
-#include "c.h"
 
 typedef void (*pqsigfunc)(int);
 

@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.1 1996/08/28 01:59:09 scrappy Exp $
+ * $Id: mcxt.h,v 1.2 1996/10/31 09:51:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	MCXT_H
 #define MCXT_H
 
-#include "c.h"
 
 #include "nodes/memnodes.h"
 #include "nodes/nodes.h"
