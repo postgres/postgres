@@ -678,34 +678,16 @@
      The CHECK constraint specifies a rule that a group of one or
      more columns of a table may contain only those values allowed by
      the rule.
-    </para>
-    <PARA>
      The CHECK constraint is either a table constraint or a column
      constraint.
     </PARA>
     <PARA>
      PostgreSQL automatically creates an unique index to assure
-     data integrity. (See CREATE INDEX statement)
-    </PARA>
-    <PARA>
+     data integrity (See CREATE INDEX statement).
      The SQL92 CHECK column constraints can only be defined on, and
      refer to, one column of the table. PostgreSQL does not have
      this restriction.
     </PARA>
-   </refsect3>
-   <refsect3>
-    <title>BUGS in CHECK constraint</title>
-    <PARA>
-     The following CHECK constraints gives a parse error like:
-     <programlisting>
-      ERROR:  parser: parse error at or near "opname":
-     </programlisting>
-     <simplelist columns="1">
-      <member>CHECK ( <replaceable class="parameter">column</replaceable> BETWEEN 'A' AND 'Z' )</member>
-      <member>CHECK ( <replaceable class="parameter">column</replaceable> IN ('A','Z'))</member>
-      <member>CHECK ( <replaceable class="parameter">column</replaceable> NOT LIKE 'A%')</member>
-     </simplelist>
-    </para>
    </refsect3>
   </REFSECT2>
   
@@ -1015,10 +997,11 @@
    </programlisting> 
    <para>
 Temporary tables are not currently available in <productname>Postgres</productname>.
+<tip>
    <para>
-    TIP: In the current release of <productname>Postgres</productname> (v6.3.2), to create a temporary
+    In the current release of <productname>Postgres</productname> (v6.4), to create a temporary
     table you must create and drop the table by explicit commands.
-   </para>
+</tip>
    
    <REFSECT3 ID="R3-SQL-UNIQUECLAUSE-1">
     <REFSECT3INFO>
@@ -1067,6 +1050,13 @@ Temporary tables are not currently available in <productname>Postgres</productna
     </synopsis>
    </REFSECT3>
    
+<!--
+I can't figure out why DEFAULT clause is different from what we already have.
+Perhaps because CURRENT_USER and CURRENT_DATE have specific types (currently
+the "name" type), if you aren't careful then the types won't match up with
+the column. Not our problem...
+- Thomas 1998-08-16
+
    <REFSECT3 ID="R3-SQL-DEFAULTCLAUSE-1">
     <REFSECT3INFO>
      <DATE>1998-04-15</DATE>
@@ -1080,12 +1070,12 @@ Temporary tables are not currently available in <productname>Postgres</productna
      or a domain.
     </para>
     <synopsis>
-     DEFAULT <replaceable class="parameter">literal</replaceable> |
-              niladic USER function |
-              niladic datetime function |
-              NULL
+     DEFAULT niladic USER function |
+             niladic datetime function |
+             NULL
     </synopsis>
    </refsect3>
+-->
    
    <REFSECT3 ID="R3-SQL-CONSTRAINT-3">
     <REFSECT3INFO>
@@ -1096,7 +1086,7 @@ Temporary tables are not currently available in <productname>Postgres</productna
     </TITLE>
     <PARA>
      SQL92 specifies some additional capabilities for CONSTRAINTs,
-     it also defines assertions and domain constraints.
+     and also defines assertions and domain constraints.
     </PARA>
     <PARA>
      An assertion is a special type of integrity constraint and share
@@ -1209,12 +1199,19 @@ Temporary tables are not currently available in <productname>Postgres</productna
      CHECK clause
     </TITLE>
     <PARA>
-     SQL92 specifies some additional capabilities for CHECK:
+     SQL92 specifies some additional capabilities for CHECK in either
+table or column constraints.
     </PARA>
+<!--
+Constraints associated with domains do not need to be mentioned here,
+even though it is the case that a domain constraint may possibly
+affect a column or a table.
+- Thomas 1998-08-16
     <para>
      A CHECK constraint is either a table constraint, a column
      constraint or a domain constraint.
     </para> 
+-->
     <para>
      table constraint definition:
     </para>
@@ -1233,6 +1230,7 @@ Temporary tables are not currently available in <productname>Postgres</productna
       [ {INITIALLY DEFERRED | INITIALLY IMMEDIATE} ]
       [ [ NOT ] DEFERRABLE ]
     </synopsis>
+<!--
     <para>
      domain constraint definition: 
     </para>
@@ -1253,6 +1251,7 @@ Temporary tables are not currently available in <productname>Postgres</productna
      ALTER DOMAIN cities 
         ADD CONSTRAINT new_city CHECK (VALUE LIKE 'L%');
     </programlisting>
+-->
    </refsect3>
    
    
