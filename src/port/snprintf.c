@@ -40,7 +40,9 @@
 Your platform must have a thread-safe snprintf() to compile with threads.
 #endif
 
+#ifndef WIN32
 #include <sys/ioctl.h>
+#endif
 #include <sys/param.h>
 
 
@@ -83,7 +85,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.6 2005/02/22 04:57:24 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.7 2005/02/28 14:16:16 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 
