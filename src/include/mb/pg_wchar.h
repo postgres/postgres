@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.6 1999/02/02 18:51:25 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.7 1999/03/24 06:53:28 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -23,6 +23,9 @@
 #define LATIN7 13				/* ISO-8859 Latin 7 */
 #define LATIN8 14				/* ISO-8859 Latin 8 */
 #define LATIN9 15				/* ISO-8859 Latin 9 */
+#define KOI8   16				/* KOI8-R */
+#define WIN    17				/* windows-1251 */
+#define ALT    18				/* Alternativny Variant (MS-DOS CP866) */
 /* followings are for client encoding only */
 #define SJIS 32					/* Shift JIS */
 #define BIG5 33					/* Big5 */
@@ -57,7 +60,8 @@ typedef unsigned int pg_wchar;
 #define LC_ISO8859_4	0x84	/* ISO8859 Latin 4 */
 #define LC_ISO8859_5	0x8d	/* ISO8859 Latin 5 */
 #define LC_JISX0201K	0x89	/* Japanese 1 byte kana */
-#define LC_JISX0201R	0x90	/* Japanese 1 byte Roman */
+#define LC_JISX0201R	0x8a	/* Japanese 1 byte Roman */
+#define LC_KOI8_R	0x8c	/* Cyrillic KOI8-R */
 #define LC_GB2312_80	0x91	/* Chinese */
 #define LC_JISX0208 0x92		/* Japanese Kanji */
 #define LC_KS5601	0x93		/* Korean */
