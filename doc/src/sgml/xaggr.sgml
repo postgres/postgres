@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.8 2000/07/17 03:04:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.9 2000/10/23 00:46:06 tgl Exp $
 -->
 
  <chapter id="xaggr">
@@ -100,7 +100,7 @@ SELECT complex_sum(a) FROM test_complex;
 CREATE AGGREGATE avg (
     sfunc = float8_accum,
     basetype = float8,
-    stype = _float8,
+    stype = float8[],
     finalfunc = float8_avg,
     initcond = '{0,0}'
 );

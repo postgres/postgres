@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.21 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.22 2000/10/23 00:46:06 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -108,7 +108,7 @@ SELECT tp1( 17,100.0);
      EMP, and retrieves multiple results:
 
      <programlisting>
-CREATE FUNCTION hobbies (EMP) RETURNS SET OF hobbies
+CREATE FUNCTION hobbies (EMP) RETURNS SETOF hobbies
     AS 'SELECT hobbies.* FROM hobbies
         WHERE $1.name = hobbies.person'
     LANGUAGE 'sql';

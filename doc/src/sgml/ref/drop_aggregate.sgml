@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.8 2000/07/17 03:04:41 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_aggregate.sgml,v 1.9 2000/10/23 00:46:07 tgl Exp $
 Postgres documentation
 -->
 
@@ -47,7 +47,8 @@ DROP AGGREGATE <replaceable class="PARAMETER">name</replaceable> <replaceable cl
       <term><replaceable class="parameter">type</replaceable></term>
       <listitem>
        <para>
-	The type of an existing aggregate function.
+	The input datatype of an existing aggregate function,
+	or <literal>*</literal> if the function accepts any input type.
 	(Refer to the <citetitle>PostgreSQL User's Guide</citetitle> for
 	further information about data types.)
 	<comment>This should become a cross-reference rather than a

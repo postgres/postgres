@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.7 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_operator.sgml,v 1.8 2000/10/23 00:46:07 tgl Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable class="PARAMETER">type</replaceable> | NONE [,...] )
+DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable class="PARAMETER">lefttype</replaceable> | NONE , <replaceable class="PARAMETER">righttype</replaceable> | NONE )
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPOPERATOR-1">
@@ -45,10 +45,20 @@ DROP OPERATOR <replaceable class="PARAMETER">id</replaceable> ( <replaceable cla
       </listitem>
      </varlistentry>
      <varlistentry>
-      <term><replaceable class="parameter">type</replaceable></term>
+      <term><replaceable class="parameter">lefttype</replaceable></term>
       <listitem>
        <para>
-	The type of function parameters.
+	The type of the operator's left argument; write <literal>NONE</literal> if the
+	operator has no left argument.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">righttype</replaceable></term>
+      <listitem>
+       <para>
+	The type of the operator's right argument; write <literal>NONE</literal> if the
+	operator has no right argument.
        </para>
       </listitem>
      </varlistentry>
@@ -127,7 +137,7 @@ ERROR:  RemoveOperator: right unary operator '<replaceable class="PARAMETER">ope
   </para>
   <para>
    The left or right type of a left or right unary
-   operator, respectively, may be specified as <literal>NONE</literal>.
+   operator, respectively, must be specified as <literal>NONE</literal>.
   </para>
 
   <refsect2 id="R2-SQL-DROPOPERATOR-3">
@@ -166,13 +176,13 @@ DROP OPERATOR ^ (int4, int4);
    </programlisting>
   </para>
   <para>
-   Remove left unary negation operator (<literal>b !</literal>) for booleans:
+   Remove left unary negation operator (<literal>! b</literal>) for booleans:
    <programlisting>
 DROP OPERATOR ! (none, bool);
    </programlisting>
   </para>
   <para>
-   Remove right unary factorial operator (<literal>! i</literal>) for
+   Remove right unary factorial operator (<literal>i !</literal>) for
    <literal>int4</literal>:
    <programlisting>
 DROP OPERATOR ! (int4, none);
