@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.97 1997/09/19 03:42:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.98 1997/09/23 19:47:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1185,7 +1185,7 @@ do_help(PsqlSettings *pset, const char *topic)
 					printf("%-25s\n", QL_HELP[i].cmd);
 					left_center_right = 'L';
 					break;
-			};
+			}
 			i++;
 		}
 		if (left_center_right != 'L')
@@ -1649,6 +1649,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 	/* We've reached the end of our command input. */
 	bool		success;
 	bool		in_quote;
+	bool		was_bslash;	/* backslash */
 	int			paren_level;
 	char	   *query_start;
 
@@ -1737,7 +1738,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		{
 			query_start = line;
 			xcomment = line;
-		};
+		}
 
 		if (line == NULL)
 		{						/* No more input.  Time to quit */
@@ -1774,9 +1775,11 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			{
 				int			i;
 
+				was_bslash = false;
+
 				for (i = 0; i < len; i++)
 				{
-					if (line[i] == '\\')
+					if (line[i] == '\\' && !in_quote)
 					{
 						char		hold_char = line[i];
 
@@ -1791,7 +1794,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 							else
 							{
 								strcpy(query, query_start);
-							};
+							}
 						}
 						line[i] = hold_char;
 						query_start = line + i;
@@ -1806,32 +1809,32 @@ MainLoop(PsqlSettings *pset, FILE *source)
 						querySent = false;
 					}
 
-					/* inside a quote? */
-					if (in_quote && (line[i] != '\''))
-					{
-						continue;
+					if (was_bslash)
+						was_bslash = false;
+					else if (i > 0 && line[i-1] == '\\')
+						was_bslash = true;
 
-						/* inside an extended comment? */
+					/* inside a quote? */
+					if (in_quote && (line[i] != '\'' || was_bslash))
+					{
+						/* do nothing */;
 					}
-					else if (xcomment != NULL)
+					else if (xcomment != NULL)	/*inside an extended comment?*/
 					{
 						if (line[i] == '*' && line[i + 1] == '/')
 						{
 							xcomment = NULL;
 							i++;
-						};
-						continue;
-
-						/* possible backslash command? */
+						}
 					}
+						/* possible backslash command? */
 					else if (line[i] == '/' && line[i + 1] == '*')
 					{
 						xcomment = line + i;
 						i++;
-						continue;
 
-						/* single-line comment? truncate line */
 					}
+						/* single-line comment? truncate line */
 					else if ((line[i] == '-' && line[i + 1] == '-') ||
 							 (line[i] == '/' && line[i + 1] == '/'))
 					{
@@ -1840,14 +1843,12 @@ MainLoop(PsqlSettings *pset, FILE *source)
 							fprintf(stdout, "%s\n", line + i);
 						line[i] = '\0'; /* remove comment */
 						break;
-
 					}
 					else if (line[i] == '\'')
 					{
 						in_quote ^= 1;
-
-						/* semi-colon? then send query now */
 					}
+						/* semi-colon? then send query now */
 					else if (!paren_level && line[i] == ';')
 					{
 						char		hold_char = line[i + 1];
@@ -1878,10 +1879,10 @@ MainLoop(PsqlSettings *pset, FILE *source)
 					else if (paren_level && line[i] == ')')
 					{
 						paren_level--;
-					};
+					}
 				}
 			}
-
+puts(line);
 			/* nothing on line after trimming? then ignore */
 			if (line[0] == '\0')
 			{
