@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.12 2001/01/06 12:26:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.13 2001/01/09 15:26:16 momjian Exp $
 -->
 
  <chapter id="plsql">
@@ -488,18 +488,28 @@ PERFORM <replaceable>query</replaceable>
       <listitem>
        <cmdsynopsis>
         <command>EXECUTE</command>
-        <arg choice="req"><replaceable class="command">query</replaceable></arg>
+        <arg choice="req"><replaceable class="command">query-string</replaceable></arg>
        </cmdsynopsis>
-
+	   
+	   <para>
+       where <replaceable>query-string</replaceable> is a string
+	   of type TEXT containing the <replaceable>query</replaceable> to be executed.
+       </para>
+	    
        <para>
         Unlike all other queries in PL/pgSQL, a
         <replaceable>query</replaceable> run by an EXECUTE statement
         is not prepared and saved just once during the life of the
         server.  Instead, the <replaceable>query</replaceable> is
-        prepared each time the statement is run. This allows the
-        <replaceable>query</replaceable> to be dynamically created
+        prepared each time the statement is run. The
+        <replaceable>query-string</replaceable> can be dynamically created
         within the procedure to perform actions on variable tables and
         fields.
+       </para>
+		
+       <para>
+		The results from SELECT queries are discarded by EXECUTE unless
+		SELECT INTO is used to save the results into a table.
        </para>
 
        <para>
