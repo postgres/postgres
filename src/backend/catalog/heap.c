@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.276 2004/08/31 17:10:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.277 2004/12/01 19:00:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -607,37 +607,22 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 */
 	new_rel_reltup = new_rel_desc->rd_rel;
 
-	/*
-	 * Here we insert bogus estimates of the size of the new relation. In
-	 * reality, of course, the new relation has 0 tuples and pages, and if
-	 * we were tracking these statistics accurately then we'd set the
-	 * fields that way.  But at present the stats will be updated only by
-	 * VACUUM or CREATE INDEX, and the user might insert a lot of tuples
-	 * before he gets around to doing either of those.	So, instead of
-	 * saying the relation is empty, we insert guesstimates.  The point is
-	 * to keep the optimizer from making really stupid choices on
-	 * never-yet-vacuumed tables; so the estimates need only be large
-	 * enough to discourage the optimizer from using nested-loop plans.
-	 * With this hack, nested-loop plans will be preferred only after the
-	 * table has been proven to be small by VACUUM or CREATE INDEX.
-	 * Maintaining the stats on-the-fly would solve the problem more
-	 * cleanly, but the overhead of that would likely cost more than it'd
-	 * save. (NOTE: CREATE INDEX inserts the same bogus estimates if it
-	 * finds the relation has 0 rows and pages. See index.c.)
-	 */
 	switch (relkind)
 	{
 		case RELKIND_RELATION:
 		case RELKIND_INDEX:
 		case RELKIND_TOASTVALUE:
-			new_rel_reltup->relpages = 10;		/* bogus estimates */
-			new_rel_reltup->reltuples = 1000;
+			/* The relation is real, but as yet empty */
+			new_rel_reltup->relpages = 0;
+			new_rel_reltup->reltuples = 0;
 			break;
 		case RELKIND_SEQUENCE:
+			/* Sequences always have a known size */
 			new_rel_reltup->relpages = 1;
 			new_rel_reltup->reltuples = 1;
 			break;
-		default:				/* views, etc */
+		default:
+			/* Views, etc, have no disk storage */
 			new_rel_reltup->relpages = 0;
 			new_rel_reltup->reltuples = 0;
 			break;

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.47 2004/11/15 06:32:14 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.48 2004/12/01 19:00:27 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -389,14 +389,15 @@ SELECT relname, relkind, reltuples, relpages FROM pg_class WHERE relname LIKE 't
   <para>
    For efficiency reasons, <structfield>reltuples</structfield> 
    and <structfield>relpages</structfield> are not updated on-the-fly,
-   and so they usually contain only approximate values (which is good
-   enough for the planner's purposes).  They are initialized with dummy
-   values (presently 1000 and 10 respectively) when a table is created.
-   They are updated by certain commands, presently <command>VACUUM</>,
-   <command>ANALYZE</>, and <command>CREATE INDEX</>.  A stand-alone
+   and so they usually contain somewhat out-of-date values.
+   They are updated by <command>VACUUM</>, <command>ANALYZE</>, and a
+   few DDL commands such as <command>CREATE INDEX</>.  A stand-alone
    <command>ANALYZE</>, that is one not part of <command>VACUUM</>,
    generates an approximate <structfield>reltuples</structfield> value
-   since it does not read every row of the table.
+   since it does not read every row of the table.  The planner
+   will scale the values it finds in <structname>pg_class</structname>
+   to match the current physical table size, thus obtaining a closer
+   approximation.
   </para>
 
   <indexterm>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.11 2004/06/21 04:06:03 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.12 2004/12/01 19:00:27 tgl Exp $
 -->
 
 <chapter id="diskusage">
@@ -7,11 +7,7 @@ $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.11 2004/06/21 04:06:03 tgl Ex
 
  <para>
   This chapter discusses how to monitor the disk usage of a
-  <productname>PostgreSQL</> database system.  In the current
-  release, the database administrator does not have much control over
-  the on-disk storage layout, so this chapter is mostly informative
-  and can give you some ideas how to manage the disk usage with
-  operating system tools.
+  <productname>PostgreSQL</> database system.
  </para>
 
  <sect1 id="disk-usage">
@@ -23,11 +19,12 @@ $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.11 2004/06/21 04:06:03 tgl Ex
 
   <para>
    Each table has a primary heap disk file where most of the data is
-   stored. To store long column values, there is also a
-   <acronym>TOAST</> file associated with the table, named based on the
-   table's OID (actually <literal>pg_class.relfilenode</>), and an index on the
-   <acronym>TOAST</> table. There also may be indexes associated with
-   the base table.
+   stored. If the table has any columns with potentially-wide values,
+   there is also a <acronym>TOAST</> file associated with the table,
+   which is used to store values too wide to fit comfortably in the main
+   table.  There will be one index on the
+   <acronym>TOAST</> table, if present. There may also be indexes associated
+   with the base table.
   </para>
 
   <para>
@@ -45,18 +42,24 @@ SELECT relfilenode, relpages FROM pg_class WHERE relname = 'customer';
        16806 |       60
 (1 row)
 </programlisting>
-   Each page is typically 8 kilobytes. (Remember, <literal>relpages</>
-   is only updated by <command>VACUUM</> and <command>ANALYZE</>.)
+   Each page is typically 8 kilobytes. (Remember, <structfield>relpages</>
+   is only updated by <command>VACUUM</>, <command>ANALYZE</>, and
+   a few DDL commands such as <command>CREATE INDEX</>.)  The
+   <structfield>relfilenode</> value is of interest if you want to examine
+   the table's disk file directly.
   </para>
 
   <para>
    To show the space used by <acronym>TOAST</> tables, use a query
-   like the following, substituting the <literal>relfilenode</literal>
-   number of the heap (determined by the query above):
+   like the following:
 <programlisting>
 SELECT relname, relpages
-    FROM pg_class
-    WHERE relname = 'pg_toast_16806' OR relname = 'pg_toast_16806_index'
+    FROM pg_class,
+         (SELECT reltoastrelid FROM pg_class
+          WHERE relname = 'customer') ss
+    WHERE oid = ss.reltoastrelid
+       OR oid = (SELECT reltoastidxid FROM pg_class
+                 WHERE oid = ss.reltoastrelid)
     ORDER BY relname;
 
        relname        | relpages 
@@ -74,7 +77,7 @@ SELECT c2.relname, c2.relpages
     WHERE c.relname = 'customer'
         AND c.oid = i.indrelid
         AND c2.oid = i.indexrelid
-        ORDER BY c2.relname;
+    ORDER BY c2.relname;
 
        relname        | relpages 
 ----------------------+----------
@@ -113,13 +116,10 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
 
   <para>
    The most important disk monitoring task of a database administrator
-   is to make sure the disk doesn't grow full.  A filled data disk may
-   result in subsequent corruption of database indexes, but not of the
-   tables themselves. If the WAL files are on the same disk (as
-   is the case for a default configuration) then a filled disk during
-   database initialization may result in corrupted or incomplete WAL
-   files. This failure condition is detected and the database server
-   will refuse to start up.
+   is to make sure the disk doesn't grow full.  A filled data disk will
+   not result in data corruption, but it may well prevent useful activity
+   from occurring. If the disk holding the WAL files grows full, database
+   server panic and consequent shutdown may occur.
   </para>
 
   <para>

@@ -561,13 +561,13 @@ SELECT relname, bar.* FROM bar, pg_class where bar.tableoid = pg_class.oid;
  relname | f1 | f2  
 ---------+----+-----
  bar     |  4 |   4
- bar     |  1 | 101
- bar     |  2 | 102
  bar     |  3 | 103
+ bar     |  2 | 102
+ bar     |  1 | 101
  bar2    |  4 |   4
- bar2    |  1 | 101
- bar2    |  2 | 102
  bar2    |  3 | 103
+ bar2    |  2 | 102
+ bar2    |  1 | 101
 (8 rows)
 
 /* Test inheritance of structure (LIKE) */

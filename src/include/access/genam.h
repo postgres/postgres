@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.45 2004/08/29 04:13:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/genam.h,v 1.46 2004/12/01 19:00:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,15 @@
  * an index AM could choose to have bulk-delete return a larger struct
  * of which this is just the first field; this provides a way for bulk-delete
  * to communicate additional private data to vacuum-cleanup.
+ *
+ * Note: pages_removed is the amount by which the index physically shrank,
+ * if any (ie the change in its total size on disk).  pages_deleted and
+ * pages_free refer to free space within the index file.
  */
 typedef struct IndexBulkDeleteResult
 {
 	BlockNumber num_pages;		/* pages remaining in index */
+	BlockNumber pages_removed;	/* # removed by bulk-delete operation */
 	double		num_index_tuples;		/* tuples remaining */
 	double		tuples_removed; /* # removed by bulk-delete operation */
 	BlockNumber pages_deleted;	/* # unused pages in index */

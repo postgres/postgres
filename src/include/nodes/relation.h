@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.100 2004/11/26 21:08:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.101 2004/12/01 19:00:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,7 +255,7 @@ typedef struct IndexOptInfo
 	Oid			indexoid;		/* OID of the index relation */
 
 	/* statistics from pg_class */
-	long		pages;			/* number of disk pages in index */
+	BlockNumber	pages;			/* number of disk pages in index */
 	double		tuples;			/* number of index tuples in index */
 
 	/* index descriptor information */

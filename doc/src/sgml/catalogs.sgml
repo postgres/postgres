@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.92 2004/11/15 06:32:13 neilc Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.93 2004/12/01 19:00:27 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1079,11 +1079,12 @@
       <entry><type>int4</type></entry>
       <entry></entry>
       <entry>
-       Size of the on-disk representation of this table in pages (size
+       Size of the on-disk representation of this table in pages (of size
        <symbol>BLCKSZ</symbol>).
        This is only an estimate used by the planner.
        It is updated by <command>VACUUM</command>,
-       <command>ANALYZE</command>, and <command>CREATE INDEX</command>.
+       <command>ANALYZE</command>, and a few DDL commands
+       such as <command>CREATE INDEX</command>.
       </entry>
      </row>
 
@@ -1095,7 +1096,8 @@
        Number of rows in the table.
        This is only an estimate used by the planner.
        It is updated by <command>VACUUM</command>,
-       <command>ANALYZE</command>, and <command>CREATE INDEX</command>.
+       <command>ANALYZE</command>, and a few DDL commands
+       such as <command>CREATE INDEX</command>.
       </entry>
      </row>
 

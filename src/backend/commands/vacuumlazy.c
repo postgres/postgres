@@ -31,11 +31,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.48 2004/10/25 15:42:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.49 2004/12/01 19:00:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <math.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -67,6 +69,8 @@ typedef struct LVRelStats
 	/* Overall statistics about rel */
 	BlockNumber rel_pages;
 	double		rel_tuples;
+	BlockNumber	pages_removed;
+	double		tuples_deleted;
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
 	Size		threshold;		/* minimum interesting free space */
 	/* List of TIDs of tuples we intend to delete */
@@ -94,12 +98,19 @@ static void lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			   Relation *Irel, int nindexes);
 static void lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats);
 static void lazy_scan_index(Relation indrel, LVRelStats *vacrelstats);
-static void lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats);
+static void lazy_vacuum_index(Relation indrel,
+							  double *index_tups_vacuumed,
+							  BlockNumber *index_pages_removed,
+							  LVRelStats *vacrelstats);
 static int lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 				 int tupindex, LVRelStats *vacrelstats);
 static void lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats);
 static BlockNumber count_nondeletable_pages(Relation onerel,
 						 LVRelStats *vacrelstats);
+static void lazy_update_relstats(Relation rel, BlockNumber num_pages,
+								 BlockNumber pages_removed,
+								 double num_tuples, double tuples_removed,
+								 bool hasindex);
 static void lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks);
 static void lazy_record_dead_tuple(LVRelStats *vacrelstats,
 					   ItemPointer itemptr);
@@ -169,8 +180,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	lazy_update_fsm(onerel, vacrelstats);
 
 	/* Update statistics in pg_class */
-	vac_update_relstats(RelationGetRelid(onerel), vacrelstats->rel_pages,
-						vacrelstats->rel_tuples, hasindex);
+	lazy_update_relstats(onerel, vacrelstats->rel_pages,
+						 vacrelstats->pages_removed,
+						 vacrelstats->rel_tuples, vacrelstats->tuples_deleted,
+						 hasindex);
 }
 
 
@@ -195,6 +208,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 				tups_vacuumed,
 				nkeep,
 				nunused;
+	double	   *index_tups_vacuumed;
+	BlockNumber *index_pages_removed;
+	bool		did_vacuum_index = false;
 	int			i;
 	VacRUsage	ru0;
 
@@ -208,6 +224,16 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	empty_pages = 0;
 	num_tuples = tups_vacuumed = nkeep = nunused = 0;
+
+	/*
+	 * Because index vacuuming is done in multiple passes, we have to keep
+	 * track of the total number of rows and pages removed from each index.
+	 * index_tups_vacuumed[i] is the number removed so far from the i'th
+	 * index.  (For partial indexes this could well be different from
+	 * tups_vacuumed.)  Likewise for index_pages_removed[i].
+	 */
+	index_tups_vacuumed = (double *) palloc0(nindexes * sizeof(double));
+	index_pages_removed = (BlockNumber *) palloc0(nindexes * sizeof(BlockNumber));
 
 	nblocks = RelationGetNumberOfBlocks(onerel);
 	vacrelstats->rel_pages = nblocks;
@@ -238,7 +264,11 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		{
 			/* Remove index entries */
 			for (i = 0; i < nindexes; i++)
-				lazy_vacuum_index(Irel[i], vacrelstats);
+				lazy_vacuum_index(Irel[i],
+								  &index_tups_vacuumed[i],
+								  &index_pages_removed[i],
+								  vacrelstats);
+			did_vacuum_index = true;
 			/* Remove tuples from heap */
 			lazy_vacuum_heap(onerel, vacrelstats);
 			/* Forget the now-vacuumed tuples, and press on */
@@ -400,6 +430,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 
 	/* save stats for use later */
 	vacrelstats->rel_tuples = num_tuples;
+	vacrelstats->tuples_deleted = tups_vacuumed;
 
 	/* If any tuples need to be deleted, perform final vacuum cycle */
 	/* XXX put a threshold on min number of tuples here? */
@@ -407,11 +438,14 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 	{
 		/* Remove index entries */
 		for (i = 0; i < nindexes; i++)
-			lazy_vacuum_index(Irel[i], vacrelstats);
+			lazy_vacuum_index(Irel[i],
+							  &index_tups_vacuumed[i],
+							  &index_pages_removed[i],
+							  vacrelstats);
 		/* Remove tuples from heap */
 		lazy_vacuum_heap(onerel, vacrelstats);
 	}
-	else
+	else if (!did_vacuum_index)
 	{
 		/* Must do post-vacuum cleanup and statistics update anyway */
 		for (i = 0; i < nindexes; i++)
@@ -588,9 +622,9 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
 		return;
 
 	/* now update statistics in pg_class */
-	vac_update_relstats(RelationGetRelid(indrel),
-						stats->num_pages, stats->num_index_tuples,
-						false);
+	lazy_update_relstats(indrel, stats->num_pages, stats->pages_removed,
+						 stats->num_index_tuples, stats->tuples_removed,
+						 false);
 
 	ereport(elevel,
 	   (errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -611,11 +645,17 @@ lazy_scan_index(Relation indrel, LVRelStats *vacrelstats)
  *		Delete all the index entries pointing to tuples listed in
  *		vacrelstats->dead_tuples.
  *
+ *		Increment *index_tups_vacuumed by the number of index entries
+ *		removed, and *index_pages_removed by the number of pages removed.
+ *
  *		Finally, we arrange to update the index relation's statistics in
  *		pg_class.
  */
 static void
-lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
+lazy_vacuum_index(Relation indrel,
+				  double *index_tups_vacuumed,
+				  BlockNumber *index_pages_removed,
+				  LVRelStats *vacrelstats)
 {
 	IndexBulkDeleteResult *stats;
 	IndexVacuumCleanupInfo vcinfo;
@@ -652,10 +692,14 @@ lazy_vacuum_index(Relation indrel, LVRelStats *vacrelstats)
 	if (!stats)
 		return;
 
+	/* accumulate total removed over multiple index-cleaning cycles */
+	*index_tups_vacuumed += stats->tuples_removed;
+	*index_pages_removed += stats->pages_removed;
+
 	/* now update statistics in pg_class */
-	vac_update_relstats(RelationGetRelid(indrel),
-						stats->num_pages, stats->num_index_tuples,
-						false);
+	lazy_update_relstats(indrel, stats->num_pages, *index_pages_removed,
+						 stats->num_index_tuples, *index_tups_vacuumed,
+						 false);
 
 	ereport(elevel,
 	   (errmsg("index \"%s\" now contains %.0f row versions in %u pages",
@@ -741,8 +785,6 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 * Do the physical truncation.
 	 */
 	RelationTruncate(onerel, new_rel_pages);
-	vacrelstats->rel_pages = new_rel_pages;		/* save new number of
-												 * blocks */
 
 	/*
 	 * Drop free-space info for removed blocks; these must not get entered
@@ -762,6 +804,10 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	vacrelstats->num_free_pages = j;
 	/* We destroyed the heap ordering, so mark array unordered */
 	vacrelstats->fs_is_heap = false;
+
+	/* update statistics */
+	vacrelstats->rel_pages = new_rel_pages;
+	vacrelstats->pages_removed = old_rel_pages - new_rel_pages;
 
 	/*
 	 * We keep the exclusive lock until commit (perhaps not necessary)?
@@ -884,6 +930,51 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 	 * known-nonempty page.
 	 */
 	return vacrelstats->nonempty_pages;
+}
+
+/*
+ * lazy_update_relstats - update pg_class statistics for a table or index
+ *
+ * We always want to set relpages to an accurate value.  However, for lazy
+ * VACUUM it seems best to set reltuples to the average of the number of
+ * rows before vacuuming and the number after vacuuming, rather than just
+ * using the number after vacuuming.  This will result in the best average
+ * performance in a steady-state situation where VACUUMs are performed
+ * regularly on a table of roughly constant size, assuming that the physical
+ * number of pages in the table stays about the same throughout.  (Note that
+ * we do not apply the same logic to VACUUM FULL, because it repacks the table
+ * and thereby boosts the tuple density.)
+ *
+ * An important point is that when the table size has decreased a lot during
+ * vacuuming, the old reltuples count might give an overestimate of the tuple
+ * density.  We handle this by scaling down the old reltuples count by the
+ * fraction by which the table has shortened before we merge it with the
+ * new reltuples count.  In particular this means that when relpages goes to
+ * zero, reltuples will immediately go to zero as well, causing the planner
+ * to fall back on other estimation procedures as the table grows again.
+ *
+ * Because we do this math independently for the table and the indexes, it's
+ * quite possible to end up with an index's reltuples different from the
+ * table's, which is silly except in the case of partial indexes.  We don't
+ * worry too much about that here; the planner contains filtering logic to
+ * ensure it only uses sane estimates.
+ */
+static void
+lazy_update_relstats(Relation rel, BlockNumber num_pages,
+					 BlockNumber pages_removed,
+					 double num_tuples, double tuples_removed,
+					 bool hasindex)
+{
+	double	old_num_tuples;
+
+	old_num_tuples = num_tuples + tuples_removed;
+	if (pages_removed > 0)
+		old_num_tuples *= (double) num_pages / (double) (num_pages + pages_removed);
+	if (old_num_tuples > num_tuples)
+		num_tuples = ceil((num_tuples + old_num_tuples) * 0.5);
+
+	vac_update_relstats(RelationGetRelid(rel), num_pages, num_tuples,
+						hasindex);
 }
 
 /*

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.314 2004/11/27 21:56:04 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.315 2004/12/01 19:00:27 tgl Exp $
 -->
 
 <appendix id="release">
@@ -524,6 +524,24 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.314 2004/11/27 21:56:04 petere 
      <para>
       This improves the way indexes are scanned when many duplicate
       values exist in the index.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Use dynamically-generated table size estimates while planning (Tom)
+     </para>
+     <para>
+      The optimizer now uses a table's current actual size on disk as its
+      estimate of the number of blocks in the table, and it makes an estimate
+      of the number of rows in the table based on the current size on disk.
+      Formerly, the
+      <structname>pg_class</structname>.<structfield>relpages</structfield>
+      and
+      <structname>pg_class</structname>.<structfield>reltuples</structfield>
+      fields were used as-is, but these values might be quite out-of-date,
+      leading to poor choices of plans.  They are now treated only as an
+      indication of the table's density (rows per page).
      </para>
     </listitem>
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.241 2004/10/15 22:39:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.242 2004/12/01 19:00:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -33,34 +33,21 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_constraint.h"
-#include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
-#include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
-#include "optimizer/prep.h"
 #include "parser/parse_expr.h"
-#include "parser/parse_func.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
-#include "utils/catcache.h"
 #include "utils/fmgroids.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
-
-/*
- * macros used in guessing how many tuples are on a page.
- */
-#define AVG_ATTR_SIZE 8
-#define NTUPLES_PER_PAGE(natts) \
-	((BLCKSZ - MAXALIGN(sizeof(PageHeaderData))) / \
-	((natts) * AVG_ATTR_SIZE + MAXALIGN(sizeof(HeapTupleHeaderData))))
 
 /* non-export function prototypes */
 static TupleDesc ConstructTupleDescriptor(Relation heapRelation,
@@ -1153,6 +1140,8 @@ setNewRelfilenode(Relation relation)
 
 	/* update the pg_class row */
 	rd_rel->relfilenode = newrelfilenode;
+	rd_rel->relpages = 0;		/* it's empty until further notice */
+	rd_rel->reltuples = 0;
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
 
@@ -1170,7 +1159,7 @@ setNewRelfilenode(Relation relation)
  *
  * Update pg_class' relpages and reltuples statistics for the given relation
  * (which can be either a table or an index).  Note that this is not used
- * in the context of VACUUM.
+ * in the context of VACUUM, only CREATE INDEX.
  * ----------------
  */
 void
@@ -1209,7 +1198,8 @@ UpdateStats(Oid relid, double reltuples)
 	 * Find the tuple to update in pg_class.  Normally we make a copy of
 	 * the tuple using the syscache, modify it, and apply heap_update. But
 	 * in bootstrap mode we can't use heap_update, so we cheat and
-	 * overwrite the tuple in-place.
+	 * overwrite the tuple in-place.  (Note: as of PG 8.0 this isn't called
+	 * during bootstrap, but leave the code here for possible future use.)
 	 *
 	 * We also must cheat if reindexing pg_class itself, because the target
 	 * index may presently not be part of the set of indexes that
@@ -1246,44 +1236,13 @@ UpdateStats(Oid relid, double reltuples)
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
-	 * Figure values to insert.
-	 *
-	 * If we found zero tuples in the scan, do NOT believe it; instead put a
-	 * bogus estimate into the statistics fields.  Otherwise, the common
-	 * pattern "CREATE TABLE; CREATE INDEX; insert data" leaves the table
-	 * with zero size statistics until a VACUUM is done.  The optimizer
-	 * will generate very bad plans if the stats claim the table is empty
-	 * when it is actually sizable.  See also CREATE TABLE in heap.c.
-	 *
-	 * Note: this path is also taken during bootstrap, because bootstrap.c
-	 * passes reltuples = 0 after loading a table.	We have to estimate
-	 * some number for reltuples based on the actual number of pages.
-	 */
-	relpages = RelationGetNumberOfBlocks(whichRel);
-
-	if (reltuples == 0)
-	{
-		if (relpages == 0)
-		{
-			/* Bogus defaults for a virgin table, same as heap.c */
-			reltuples = 1000;
-			relpages = 10;
-		}
-		else if (whichRel->rd_rel->relkind == RELKIND_INDEX && relpages <= 2)
-		{
-			/* Empty index, leave bogus defaults in place */
-			reltuples = 1000;
-		}
-		else
-			reltuples = ((double) relpages) * NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
-	}
-
-	/*
 	 * Update statistics in pg_class, if they changed.	(Avoiding an
 	 * unnecessary update is not just a tiny performance improvement; it
 	 * also reduces the window wherein concurrent CREATE INDEX commands
 	 * may conflict.)
 	 */
+	relpages = RelationGetNumberOfBlocks(whichRel);
+
 	if (rd_rel->relpages != (int32) relpages ||
 		rd_rel->reltuples != (float4) reltuples)
 	{

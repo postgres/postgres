@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.97 2004/10/01 17:11:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.98 2004/12/01 19:00:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,10 @@
 #include "miscadmin.h"
 
 
+static void estimate_rel_size(Relation rel, int32 *attr_widths,
+							  BlockNumber *pages, double *tuples);
+
+
 /*
  * get_relation_info -
  *	  Retrieves catalog information for a given relation.
@@ -50,6 +54,10 @@
  *	indexlist	list of IndexOptInfos for relation's indexes
  *	pages		number of pages
  *	tuples		number of tuples
+ *
+ * Also, initialize the attr_needed[] and attr_widths[] arrays.  In most
+ * cases these are left as zeroes, but sometimes we need to compute attr
+ * widths here, and we may as well cache the results for costsize.c.
  */
 void
 get_relation_info(Oid relationObjectId, RelOptInfo *rel)
@@ -63,6 +71,18 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 	rel->min_attr = FirstLowInvalidHeapAttributeNumber + 1;
 	rel->max_attr = RelationGetNumberOfAttributes(relation);
+
+	Assert(rel->max_attr >= rel->min_attr);
+	rel->attr_needed = (Relids *)
+		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
+	rel->attr_widths = (int32 *)
+		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
+
+	/*
+	 * Estimate relation size.
+	 */
+	estimate_rel_size(relation, rel->attr_widths - rel->min_attr,
+					  &rel->pages, &rel->tuples);
 
 	/*
 	 * Make list of indexes.  Ignore indexes on system catalogs if told
@@ -121,8 +141,6 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			}
 
 			info->relam = indexRelation->rd_rel->relam;
-			info->pages = indexRelation->rd_rel->relpages;
-			info->tuples = indexRelation->rd_rel->reltuples;
 			info->amcostestimate = index_cost_estimator(indexRelation);
 
 			/*
@@ -156,6 +174,26 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			info->predOK = false;		/* set later in indxpath.c */
 			info->unique = index->indisunique;
 
+			/*
+			 * Estimate the index size.  If it's not a partial index, we
+			 * lock the number-of-tuples estimate to equal the parent table;
+			 * if it is partial then we have to use the same methods as we
+			 * would for a table, except we can be sure that the index is
+			 * not larger than the table.
+			 */
+			if (info->indpred == NIL)
+			{
+				info->pages = RelationGetNumberOfBlocks(indexRelation);
+				info->tuples = rel->tuples;
+			}
+			else
+			{
+				estimate_rel_size(indexRelation, NULL,
+								  &info->pages, &info->tuples);
+				if (info->tuples > rel->tuples)
+					info->tuples = rel->tuples;
+			}
+
 			/* initialize cached join info to empty */
 			info->outer_relids = NULL;
 			info->inner_paths = NIL;
@@ -170,11 +208,108 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 
 	rel->indexlist = indexinfos;
 
-	rel->pages = relation->rd_rel->relpages;
-	rel->tuples = relation->rd_rel->reltuples;
-
 	/* XXX keep the lock here? */
 	heap_close(relation, AccessShareLock);
+}
+
+/*
+ * estimate_rel_size - estimate # pages and # tuples in a table or index
+ *
+ * If attr_widths isn't NULL, it points to the zero-index entry of the
+ * relation's attr_width[] cache; we fill this in if we have need to compute
+ * the attribute widths for estimation purposes.
+ */
+static void
+estimate_rel_size(Relation rel, int32 *attr_widths,
+				  BlockNumber *pages, double *tuples)
+{
+	BlockNumber	curpages;
+	BlockNumber	relpages;
+	double		reltuples;
+	double		density;
+
+	switch (rel->rd_rel->relkind)
+	{
+		case RELKIND_RELATION:
+		case RELKIND_INDEX:
+		case RELKIND_TOASTVALUE:
+			/* it has storage, ok to call the smgr */
+			*pages = curpages = RelationGetNumberOfBlocks(rel);
+			/* quick exit if rel is clearly empty */
+			if (curpages == 0)
+			{
+				*tuples = 0;
+				break;
+			}
+			/* coerce values in pg_class to more desirable types */
+			relpages = (BlockNumber) rel->rd_rel->relpages;
+			reltuples = (double) rel->rd_rel->reltuples;
+			/*
+			 * If it's an index, discount the metapage.  This is a kluge
+			 * because it assumes more than it ought to about index contents;
+			 * it's reasonably OK for btrees but a bit suspect otherwise.
+			 */
+			if (rel->rd_rel->relkind == RELKIND_INDEX &&
+				relpages > 0)
+			{
+				curpages--;
+				relpages--;
+			}
+			/* estimate number of tuples from previous tuple density */
+			if (relpages > 0)
+				density = reltuples / (double) relpages;
+			else
+			{
+				/*
+				 * When we have no data because the relation was truncated,
+				 * estimate tuple width from attribute datatypes.  We assume
+				 * here that the pages are completely full, which is OK for
+				 * tables (since they've presumably not been VACUUMed yet)
+				 * but is probably an overestimate for indexes.  Fortunately
+				 * get_relation_info() can clamp the overestimate to the
+				 * parent table's size.
+				 */
+				int32	tuple_width = 0;
+				int		i;
+
+				for (i = 1; i <= RelationGetNumberOfAttributes(rel); i++)
+				{
+					Form_pg_attribute att = rel->rd_att->attrs[i - 1];
+					int32		item_width;
+
+					if (att->attisdropped)
+						continue;
+					/* This should match set_rel_width() in costsize.c */
+					item_width = get_attavgwidth(RelationGetRelid(rel), i);
+					if (item_width <= 0)
+					{
+						item_width = get_typavgwidth(att->atttypid,
+													 att->atttypmod);
+						Assert(item_width > 0);
+					}
+					if (attr_widths != NULL)
+						attr_widths[i] = item_width;
+					tuple_width += item_width;
+				}
+				tuple_width = MAXALIGN(tuple_width);
+				tuple_width += MAXALIGN(sizeof(HeapTupleHeaderData));
+				tuple_width += sizeof(ItemPointerData);
+				/* note: integer division is intentional here */
+				density = (BLCKSZ - sizeof(PageHeaderData)) / tuple_width;
+			}
+			*tuples = rint(density * (double) curpages);
+			break;
+		case RELKIND_SEQUENCE:
+			/* Sequences always have a known size */
+			*pages = 1;
+			*tuples = 1;
+			break;
+		default:
+			/* else it has no disk storage; probably shouldn't get here? */
+			*pages = 0;
+			*tuples = 0;
+			break;
+	}
 }
 
 /*

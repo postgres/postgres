@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.62 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.63 2004/12/01 19:00:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,22 +159,20 @@ make_base_rel(Query *root, int relid)
 			break;
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
-			/* Subquery or function --- need only set up attr range */
+			/* Subquery or function --- set up attr range and arrays */
 			/* Note: 0 is included in range to support whole-row Vars */
 			rel->min_attr = 0;
 			rel->max_attr = list_length(rte->eref->colnames);
+			rel->attr_needed = (Relids *)
+				palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
+			rel->attr_widths = (int32 *)
+				palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
 			break;
 		default:
 			elog(ERROR, "unrecognized RTE kind: %d",
 				 (int) rte->rtekind);
 			break;
 	}
-
-	Assert(rel->max_attr >= rel->min_attr);
-	rel->attr_needed = (Relids *)
-		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(Relids));
-	rel->attr_widths = (int32 *)
-		palloc0((rel->max_attr - rel->min_attr + 1) * sizeof(int32));
 
 	return rel;
 }
