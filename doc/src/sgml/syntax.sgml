@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.64 2002/08/05 19:43:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.65 2002/08/10 19:01:53 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -755,7 +755,7 @@ SELECT (5 !) - 6;
       </row>
 
       <row>
-       <entry><token>LIKE</token> <token>ILIKE</token></entry>
+       <entry><token>LIKE</token> <token>ILIKE</token> <token>SIMILAR</token></entry>
        <entry></entry>
        <entry>string pattern matching</entry>
       </row>
@@ -800,6 +800,17 @@ SELECT (5 !) - 6;
     <quote>+</quote> operator for some custom data type it will have
     the same precedence as the built-in <quote>+</quote> operator, no
     matter what yours does.
+   </para>
+
+   <para>
+    When a schema-qualified operator name is used in the
+    <literal>OPERATOR</> syntax, as for example in
+<programlisting>
+SELECT 3 OPERATOR(pg_catalog.+) 4;
+</programlisting>
+    the <literal>OPERATOR</> construct is taken to have the default precedence
+    shown above for <quote>any other</> operator.  This is true no matter
+    which specific operator name appears inside <literal>OPERATOR()</>.
    </para>
   </sect2>
  </sect1>

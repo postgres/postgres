@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.357 2002/08/06 05:40:45 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.358 2002/08/10 19:01:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1307,27 +1307,19 @@ copy_opt_list:
 copy_opt_item:
 			BINARY
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "binary";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("binary", (Node *)makeInteger(TRUE));
 				}
 			| OIDS
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "oids";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("oids", (Node *)makeInteger(TRUE));
 				}
 			| DELIMITER opt_as Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "delimiter";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("delimiter", (Node *)makeString($3));
 				}
 			| NULL_P opt_as Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "null";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("null", (Node *)makeString($3));
 				}
 		;
 
@@ -1336,9 +1328,7 @@ copy_opt_item:
 opt_binary:
 			BINARY
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "binary";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("binary", (Node *)makeInteger(TRUE));
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -1346,9 +1336,7 @@ opt_binary:
 opt_oids:
 			WITH OIDS
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "oids";
-					$$->arg = (Node *)makeInteger(TRUE);
+					$$ = makeDefElem("oids", (Node *)makeInteger(TRUE));
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -1357,9 +1345,7 @@ copy_delimiter:
 			/* USING DELIMITERS kept for backward compatibility. 2002-06-15 */
 			opt_using DELIMITERS Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "delimiter";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("delimiter", (Node *)makeString($3));
 				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -2276,7 +2262,7 @@ def_elem:  ColLabel '=' def_arg
 
 /* Note: any simple identifier will be returned as a type name! */
 def_arg:	func_return						{ $$ = (Node *)$1; }
-			| all_Op						{ $$ = (Node *)makeString($1); }
+			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
 			| Sconst						{ $$ = (Node *)makeString($1); }
 		;
@@ -3568,27 +3554,19 @@ createdb_opt_list:
 createdb_opt_item:
 			LOCATION opt_equal Sconst
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "location";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("location", (Node *)makeString($3));
 				}
 			| LOCATION opt_equal DEFAULT
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "location";
-					$$->arg = NULL;
+					$$ = makeDefElem("location", NULL);
 				}
 			| TEMPLATE opt_equal name
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "template";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("template", (Node *)makeString($3));
 				}
 			| TEMPLATE opt_equal DEFAULT
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "template";
-					$$->arg = NULL;
+					$$ = makeDefElem("template", NULL);
 				}
 			| ENCODING opt_equal Sconst
 				{
@@ -3598,9 +3576,7 @@ createdb_opt_item:
 						elog(ERROR, "%s is not a valid encoding name", $3);
 					encoding = pg_char_to_encoding($3);
 
-					$$ = makeNode(DefElem);
-					$$->defname = "encoding";
-					$$->arg = (Node *)makeInteger(encoding);
+					$$ = makeDefElem("encoding", (Node *)makeInteger(encoding));
 				}
 			| ENCODING opt_equal Iconst
 				{
@@ -3610,27 +3586,19 @@ createdb_opt_item:
 					if (!strcmp(encoding_name,"") ||
 					    pg_valid_server_encoding(encoding_name) < 0)
 						elog(ERROR, "%d is not a valid encoding code", $3);
-					$$ = makeNode(DefElem);
-					$$->defname = "encoding";
-					$$->arg = (Node *)makeInteger($3);
+					$$ = makeDefElem("encoding", (Node *)makeInteger($3));
 				}
 			| ENCODING opt_equal DEFAULT
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "encoding";
-					$$->arg = (Node *)makeInteger(-1);
+					$$ = makeDefElem("encoding", (Node *)makeInteger(-1));
 				}
 			| OWNER opt_equal name
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "owner";
-					$$->arg = (Node *)makeString($3);
+					$$ = makeDefElem("owner", (Node *)makeString($3));
 				}
 			| OWNER opt_equal DEFAULT
 				{
-					$$ = makeNode(DefElem);
-					$$->defname = "owner";
-					$$->arg = NULL;
+					$$ = makeDefElem("owner", NULL);
 				}
 		;
 

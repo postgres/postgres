@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.29 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.30 2002/08/10 19:01:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -436,6 +436,15 @@ MYBOXES.description === box '((0,0), (1,1))'
     for further information.
     Refer to <command>DROP OPERATOR</command> to delete
     user-defined operators from a database.
+   </para>
+
+   <para>
+    To give a schema-qualified operator name in <replaceable
+    class="parameter">com_op</replaceable> or the other optional
+    arguments, use the <literal>OPERATOR()</> syntax, for example
+<programlisting>
+   COMMUTATOR = OPERATOR(myschema.===) ,
+</programlisting>  
    </para>
   </refsect2>
  </refsect1>
