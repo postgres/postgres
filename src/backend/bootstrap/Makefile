@@ -2,17 +2,13 @@
 #
 # Makefile for the bootstrap module
 #
-# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.27 2001/02/10 22:31:42 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.28 2001/08/22 20:02:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 subdir = src/backend/bootstrap
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
-
-ifeq ($(GCC), yes)
-override CFLAGS+= -Wno-error
-endif
 
 # qnx4's wlink currently crashes with bootstrap.o
 ifneq ($(PORTNAME), qnx4)
