@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.18 2004/04/21 20:58:56 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.19 2004/04/22 23:58:03 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <pwd.h>
 #include <string.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -54,9 +53,9 @@ struct passwd *passwd_p2;
 struct hostent *hostent_p1;
 struct hostent *hostent_p2;
 
-bool gethostbyname_threadsafe;
-bool getpwuid_threadsafe;
-bool strerror_threadsafe;
+bool gethostbyname_threadsafe = false;
+bool getpwuid_threadsafe = false;
+bool strerror_threadsafe = false;
 bool platform_is_threadsafe = true;
 
 pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -92,42 +91,16 @@ defines to your template/$port file before compiling this program.\n\n"
 	while (thread1_done == 0 || thread2_done == 0)
 		sched_yield();	/* if this is a portability problem, remove it */
 
-	fprintf(stderr, "errno is thread-safe\n\n");
+	fprintf(stderr, "errno is thread-safe\n");
 	
-	printf("Add this to your template/$port file:\n\n");
-
 	if (strerror_p1 != strerror_p2)
-	{
-		printf("STRERROR_THREADSAFE=yes\n");
 		strerror_threadsafe = true;
-	}
-	else
-	{
-		printf("STRERROR_THREADSAFE=no\n");
-		strerror_threadsafe = false;
-	}
 
 	if (passwd_p1 != passwd_p2)
-	{
-		printf("GETPWUID_THREADSAFE=yes\n");
 		getpwuid_threadsafe = true;
-	}
-	else
-	{
-		printf("GETPWUID_THREADSAFE=no\n");
-		getpwuid_threadsafe = false;
-	}
 
 	if (hostent_p1 != hostent_p2)
-	{
-		printf("GETHOSTBYNAME_THREADSAFE=yes\n");
 		gethostbyname_threadsafe = true;
-	}
-	else
-	{
-		printf("GETHOSTBYNAME_THREADSAFE=no\n");
-		gethostbyname_threadsafe = false;
-	}
 
 	pthread_mutex_unlock(&init_mutex);	/* let children exit  */
 	
@@ -141,11 +114,11 @@ defines to your template/$port file before compiling this program.\n\n"
 #else
 	printf("Your system uses strerror() which is ");
 	if (strerror_threadsafe)
-		printf("thread-safe\n");
+		printf("thread-safe.\n");
 	else
 	{
 		platform_is_threadsafe = false;
-		printf("not thread-safe\n");
+		printf("not thread-safe.\n");
 	}
 #endif
 
@@ -154,11 +127,11 @@ defines to your template/$port file before compiling this program.\n\n"
 #else
 	printf("Your system uses getpwuid() which is ");
 	if (getpwuid_threadsafe)
-		printf("thread-safe\n");
+		printf("thread-safe.\n");
 	else
 	{
 		platform_is_threadsafe = false;
-		printf("not thread-safe\n");
+		printf("not thread-safe.\n");
 	}
 #endif
 
@@ -171,11 +144,11 @@ defines to your template/$port file before compiling this program.\n\n"
 #else
 	printf("Your system uses gethostbyname which is ");
 	if (gethostbyname_threadsafe)
-		printf("thread-safe\n");
+		printf("thread-safe.\n");
 	else
 	{
 		platform_is_threadsafe = false;
-		printf("not thread-safe\n");
+		printf("not thread-safe.\n");
 	}
 #endif
 #endif
