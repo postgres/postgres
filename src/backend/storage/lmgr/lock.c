@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.48 1999/04/30 16:22:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.49 1999/04/30 17:03:04 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -819,7 +819,7 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 	{
 		/* ------------------------
 		 * If someone with a greater priority is waiting for the lock,
-		 * do not continue and share the lock, even if we can.	bjm
+		 * do not continue and share the lock, even if we can.
 		 * Don't do this if the process already has some locks, because
 		 * this could hold up other people waiting on our locks, causing
 		 * a priority inversion.  bjm
