@@ -43,7 +43,7 @@ Migration to 7.2
 
 
 
-AS OF 2001-09-13
+AS OF 2001-10-25
 
 Bug Fixes
 ---------
@@ -141,6 +141,7 @@ DROP AGGREGATE and COMMENT ON AGGREGATE now accept an aggtype (Tom)
 Prevent output of default index op class in pg_dump (Tom)
 Allow trailing semicolons in psql backslash commands (Greg Sabino Mullane)
 Prompt for psql password from /dev/tty if possible
+Allow SPI column functions to work for system columns (Tom)
 
 Types
 -----
@@ -161,7 +162,7 @@ New TIMEZONE WITHOUT TIMEZONE data types (Thomas)
 Add ISO date/time specification with 'T', yyyy-mm-ddThh:mm:ss (Thomas)
 New xid/int comparison functions (Hiroshi)
 Fix TID sequential scans (Hiroshi)
-Add precision to TIME and TIMESTAMP data types (Thomas)
+Add precision to TIME, TIMESTAMP, and INVERVAL data types (Thomas)
 Cachability fixes (Thomas, Tom)
 PL/TCL now reports errorInfo (Vsevolod Lobko)
 Modify type coersion logic to attempt binary-compatible functions first (Tom)
@@ -170,8 +171,9 @@ Add compatibility functions to odbc.sql (Peter E)
 Force new password prompt when changing user and database in psql (Tatsuo, Tom)
 New /contrib/tsearch full text indexing (Oleg, Teodor Sigaev)
 Allow better selectivity with Nan and infinities in NUMERIC (Tom)
-Accept an INTERVAL argument for SET TIME ZONE (Thomas)
-Implement INTERVAL() YEA
+Add INTERVAL argument for SET TIME ZONE (Thomas)
+Add INTERVAL() YEAR TO MONTH (etc) syntax (Thomas)
+
 Performance
 -----------
 Optimizer improvements (Tom)
@@ -218,6 +220,7 @@ JDBC
 	Add isNullable() (Rene Pijlman)
 	JDBC date/time test suite fixes (Liam Stewart)
 	Fix for SELECT 'id' AS xxx FROM table (Dave Cramer)
+	DatabaseMetaData patch to show precision properly (Mark Lillywhite)
 ODBC
 	Remove query limit (Hiroshi)
 	Remove text field size limit (Hiroshi)
