@@ -1009,5 +1009,9 @@ Fri Nov  3 11:34:43 CET 2000
 
 	- Synced pgc.l with scan.l.
 	- Synced gram.y and preproc.y.
+
+Sat Nov  4 17:42:43 CET 2000
+
+	- Added patch by Christof Petig to fix several small bugs.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
