@@ -105,7 +105,7 @@ FROM dblink_fetch('rmt_foo_cursor',4) AS t(a int, b text, c text[]);
 -- close the persistent connection
 SELECT dblink_disconnect();
 
--- should generate "no connection to the server" error
+-- should generate "connection not available" error
 SELECT *
 FROM dblink('SELECT * FROM foo') AS t(a int, b text, c text[])
 WHERE t.a > 7;
