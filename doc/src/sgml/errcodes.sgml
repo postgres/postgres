@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.11 2004/11/27 21:27:06 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.12 2005/01/06 01:49:24 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -46,7 +46,9 @@
   same as the phrase shown in the table, with underscores substituted
   for spaces.  For example, code <literal>22012</>, DIVISION BY ZERO,
   has condition name <literal>DIVISION_BY_ZERO</>.  Condition names can
-  be written in either upper or lower case.
+  be written in either upper or lower case.  (Note that
+  <application>PL/pgSQL</> does not recognize warning, as opposed to error,
+  condition names; those are classes 00, 01, and 02.)
  </para>
 
 

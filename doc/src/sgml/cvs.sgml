@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.29 2004/12/02 04:12:12 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.30 2005/01/06 01:49:22 tgl Exp $
 -->
 
 <appendix id="cvs">
@@ -227,8 +227,8 @@ $ cvs checkout -r REL6_4 tc
 
    <note>
     <para>
-     For creating a release branch, other then a
-     -b option added to the command, it's the same thing.</para>
+     For creating a release branch, other than a
+     <literal>-b</> option added to the command, it's the same thing.</para>
    </note>
   </para>
 
@@ -317,7 +317,7 @@ cvs commit
 
    <para>
     Two directory areas are required for <productname>CVSup</productname>
-    to do it's job: a local <productname>CVS</productname> repository
+    to do its job: a local <productname>CVS</productname> repository
     (or simply a directory area if you are fetching a snapshot rather
     than a repository; see below)
     and a local <productname>CVSup</productname> bookkeeping

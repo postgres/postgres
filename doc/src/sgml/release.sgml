@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.316 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.317 2005/01/06 01:49:24 tgl Exp $
 -->
 
 <appendix id="release">
@@ -10,7 +10,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.316 2004/12/13 18:05:08 petere 
 
   <note>
    <title>Release date</title>
-   <simpara>2004-??-??, current as of 2004-11-21</simpara>
+   <simpara>2005-??-??, current as of 2004-11-21</simpara>
   </note>
 
   <sect2>
@@ -55,7 +55,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.316 2004/12/13 18:05:08 petere 
         Previous releases required the Unix emulation toolkit
         <productname>Cygwin</> in order to run the server on Windows
         operating systems.  <productname>PostgreSQL</productname> has
-        always supported clients on Windows.
+        supported native clients on Windows for many years.
        </para>
       </listitem>
      </varlistentry>
@@ -275,7 +275,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.316 2004/12/13 18:05:08 petere 
      <listitem>
       <para>
        The arithmetic operators associated with the single-byte
-       <type>"char"</> data type has been removed.
+       <type>"char"</> data type have been removed.
       </para>
      </listitem>
 
@@ -312,8 +312,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.316 2004/12/13 18:05:08 petere 
       <para> The JDBC client interface has been removed from the core
       distribution, and is now hosted at <ulink url=
       "http://jdbc.postgresql.org">http://jdbc.postgresql.org</ulink>.
-      The TCL client interface has also been removed. There are several
-      TCL interfaces now hosted at <ulink url=
+      The Tcl client interface has also been removed. There are several
+      Tcl interfaces now hosted at <ulink url=
       "http://gborg.postgresql.org">http://gborg.postgresql.org</ulink>.
       </para>
      </listitem>
@@ -922,7 +922,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.316 2004/12/13 18:05:08 petere 
       Make <literal>CASE val WHEN compval1 THEN ...</> evaluate <literal>val</> only once (Tom)
      </para>
      <para>
-      <option>CASE</> no longer evaluates the test expression multiple
+      <option>CASE</> no longer evaluates the tested expression multiple
       times. This has benefits when the expression is complex or is
       volatile.
      </para>
