@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.87 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.88 2002/01/01 20:32:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,6 @@ static void _bt_pgaddtup(Relation rel, Page page,
 static bool _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 			int keysz, ScanKey scankey);
 
-static Relation _xlheapRel;		/* temporary hack */
 
 /*
  *	_bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -116,7 +115,21 @@ top:
 
 	/*
 	 * If we're not allowing duplicates, make sure the key isn't already
-	 * in the index.  XXX this belongs somewhere else, likely
+	 * in the index.
+	 *
+	 * NOTE: obviously, _bt_check_unique can only detect keys that are
+	 * already in the index; so it cannot defend against concurrent
+	 * insertions of the same key.  We protect against that by means
+	 * of holding a write lock on the target page.  Any other would-be
+	 * inserter of the same key must acquire a write lock on the same
+	 * target page, so only one would-be inserter can be making the check
+	 * at one time.  Furthermore, once we are past the check we hold
+	 * write locks continuously until we have performed our insertion,
+	 * so no later inserter can fail to see our insertion.  (This
+	 * requires some care in _bt_insertonpg.)
+	 *
+	 * If we must wait for another xact, we release the lock while waiting,
+	 * and then must start over completely.
 	 */
 	if (index_is_unique)
 	{
@@ -134,8 +147,6 @@ top:
 			goto top;
 		}
 	}
-
-	_xlheapRel = heapRel;		/* temporary hack */
 
 	/* do the insertion */
 	res = _bt_insertonpg(rel, buf, stack, natts, itup_scankey, btitem, 0);
@@ -397,9 +408,16 @@ _bt_insertonpg(Relation rel,
 		{
 			/* step right one page */
 			BlockNumber rblkno = lpageop->btpo_next;
+			Buffer	rbuf;
 
+			/*
+			 * must write-lock next page before releasing write lock on
+			 * current page; else someone else's _bt_check_unique scan
+			 * could fail to see our insertion.
+			 */
+			rbuf = _bt_getbuf(rel, rblkno, BT_WRITE);
 			_bt_relbuf(rel, buf);
-			buf = _bt_getbuf(rel, rblkno, BT_WRITE);
+			buf = rbuf;
 			page = BufferGetPage(buf);
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
 			movedright = true;
@@ -833,7 +851,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * page is not updated yet. Log changes before continuing.
 	 *
 	 * NO ELOG(ERROR) till right sibling is updated.
-	 *
 	 */
 	START_CRIT_SECTION();
 	{
