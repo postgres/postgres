@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * geo-decls.h--
+ * geo_decls.h--
  *    Declarations for various 2D constructs.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo-decls.h,v 1.4 1996/11/10 03:06:32 momjian Exp $
+ * $Id: geo_decls.h,v 1.1 1997/03/14 23:33:27 scrappy Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -114,7 +114,7 @@ typedef struct {
 
 
 /* 
- * in geo-ops.h
+ * in geo_ops.h
  */
 extern BOX *box_in(char *str);
 extern char *box_out(BOX *box);
@@ -235,7 +235,7 @@ extern long poly_overlap(POLYGON *polya, POLYGON *polyb);
 extern long poly_contain(POLYGON *polya, POLYGON *polyb);
 extern long poly_contained(POLYGON *polya, POLYGON *polyb);
 
-/* geo-selfuncs.c */
+/* geo_selfuncs.c */
 extern float64 areasel(Oid opid, Oid relid, AttrNumber attno, 
 	char *value, int32 flag);
 extern float64 areajoinsel(Oid opid, Oid relid, AttrNumber attno,

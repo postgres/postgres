@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.4 1996/12/09 01:24:53 bryanh Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.5 1997/03/14 23:34:16 scrappy Exp $
  */
 
 #include <float.h>		/* faked on sunos */
@@ -8,7 +8,7 @@
 
 #include <postgres.h>
 
-#include "utils/geo-decls.h"	/* includes <math.h> */
+#include "utils/geo_decls.h"	/* includes <math.h> */
 #include "executor/executor.h"  /* For GetAttributeByName */
 
 #define P_MAXDIG 12

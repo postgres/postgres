@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.27 1997/01/20 00:51:38 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.28 1997/03/14 23:34:03 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -81,7 +81,7 @@ install-headers: beforeinstall-headers c.h \
                  ../include/postgres.h ../include/postgres_ext.h \
                  ../include/config.h ../include/libpq/pqcomm.h \
                  ../include/libpq/libpq-fs.h ../include/lib/dllist.h \
-                 ../include/utils/geo-decls.h libpq-fe.h
+                 ../include/utils/geo_decls.h libpq-fe.h
 	$(INSTALL) $(INSTLOPTS) ../include/config.h \
           $(HEADERDIR)/config.h
 	$(INSTALL) $(INSTLOPTS) ../include/postgres.h \
@@ -94,8 +94,8 @@ install-headers: beforeinstall-headers c.h \
           $(HEADERDIR)/libpq/libpq-fs.h
 	$(INSTALL) $(INSTLOPTS) ../include/lib/dllist.h \
           $(HEADERDIR)/lib/dllist.h
-	$(INSTALL) $(INSTLOPTS) ../include/utils/geo-decls.h \
-          $(HEADERDIR)/utils/geo-decls.h
+	$(INSTALL) $(INSTLOPTS) ../include/utils/geo_decls.h \
+          $(HEADERDIR)/utils/geo_decls.h
 	$(INSTALL) $(INSTLOPTS) ../include/utils/elog.h \
           $(HEADERDIR)/utils/elog.h
 	$(INSTALL) $(INSTLOPTS) ../include/utils/palloc.h \

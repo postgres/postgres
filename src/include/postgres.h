@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.3 1996/12/10 07:03:40 bryanh Exp $
+ * $Id: postgres.h,v 1.4 1997/03/14 23:31:22 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  *	2)	varlena and array types
  *	3)	TransactionId and CommandId
  *	4)	genbki macros used by catalog/pg_xxx.h files
- *	5)	random SIGNBIT, MAXPGPATH, STATUS macros
+ *	5)	random CSIGNBIT, MAXPGPATH, STATUS macros
  *
  * ----------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef int32	int4;
 typedef float	float4;
 typedef double	float8;
 
-typedef int4 aclitem;
+typedef int4	aclitem;
 
 #define InvalidOid	0
 #define OidIsValid(objectId)  ((bool) (objectId != InvalidOid))
@@ -177,15 +177,16 @@ typedef uint16			CommandId;
 
 /* ----------------------------------------------------------------
  *		Section 5:  random stuff
- *			    SIGNBIT, MAXPGPATH, STATUS...
+ *			    CSIGNBIT, MAXPGPATH, STATUS...
  * ----------------------------------------------------------------
  */
 
 /* msb for int/unsigned */
-#define	SIGNBIT	(0x8000)
+#define	ISIGNBIT (0x80000000)
+#define	WSIGNBIT (0x8000)
 
 /* msb for char */
-#define	CSIGNBIT (1 << 7)
+#define	CSIGNBIT (0x80)
 
 /* ----------------
  *	global variables which should probably go someplace else.
