@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.81 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.81.2.1 2004/12/17 20:58:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1488,7 +1488,14 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 
 	/* Check for empty array */
 	if (nitems <= 0)
-		PG_RETURN_ARRAYTYPE_P(v);
+	{
+		/* Return empty array */
+		result = (ArrayType *) palloc(sizeof(ArrayType));
+		MemSet(result, 0, sizeof(ArrayType));
+		result->size = sizeof(ArrayType);
+		result->elemtype = retType;
+		PG_RETURN_ARRAYTYPE_P(result);
+	}
 
 	/* Lookup source and result types. Unneeded variables are reused. */
 	system_cache_lookup(inpType, false, &inp_typlen, &inp_typbyval,
