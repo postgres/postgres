@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.5 2002/01/15 04:55:26 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.6 2002/01/15 05:03:25 momjian Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -31,7 +31,7 @@ CUR_VERSION="7.2"
 
 trap "rm -f /tmp/$$.*" 0 1 2 3 15
 
-BASENAME=`basename "$0`
+BASENAME=`basename "$0"`
 PHASE=""
 
 if [ "$#" -eq 1 ]
@@ -294,7 +294,7 @@ then
 	fi
 	echo
 	echo
-	echo "Plase 1 completed."
+	echo "$BASENAME phase 1 completed."
 	echo "Continue with the steps outlined in the $BASENAME manual page."
 	exit 0
 fi
@@ -545,12 +545,13 @@ if [ "$SRC_VERSION" = "7.1" -o \
 then	echo "Set sequence values..."
 	psql -d template1 -At < "$INFODIR"/setval
 	if [ $? -ne 0 ]
-	then	echo "There were errors during int4 sequence restore.  Exiting." 1>&2
+	then	echo "There were errors during int4 sequence restoration.  Exiting." 1>&2
 		exit 1
 	fi
 fi
 
 echo
 echo
+echo "$BASENAME phase 2 completed."
 echo "You may remove the old database files with 'rm -r $INFODIR'."
 exit 0
