@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.39 2001/08/21 16:36:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.40 2001/10/06 14:41:17 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -793,7 +793,7 @@ describeTableDetails(const char *name, bool desc)
 		}
 
 		/* count triggers */
-		if (!error && tableinfo.hasrules)
+		if (!error && tableinfo.triggers)
 		{
 			sprintf(buf,
 					"SELECT t.tgname\n"
