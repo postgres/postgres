@@ -31,11 +31,9 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 		c = *next;
 		*next = '\0';
 	}
-	printf("MM: Need to search for %s\n", str);
 
 	for (; members; members = members->next)
 	{
-		printf("MM: comparing %s\n§", members->name);
 		if (strcmp(members->name, str) == 0)
 		{
 			if (next == NULL)
@@ -106,7 +104,6 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 						return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
 						break;
 					case '.':
-						printf("MM: Now searching for %s \n", end);
 						if (members->type->type == ECPGt_array)
 							return (find_struct_member(name, end, members->type->u.element->u.members, brace_level));
 						else
