@@ -30,7 +30,10 @@
 #include <tcop/tcopprot.h>
 #include <utils/acl.h>
 #include <utils/rel.h>
+#include <utils/syscache.h>
 #include <commands/user.h>
+
+static void CheckPgUserAclNotNull(void);
 
 /*---------------------------------------------------------------------
  * UpdatePgPwdFile
@@ -93,6 +96,8 @@ void DefineUser(CreateUserStmt *stmt) {
                    inblock;
   int              max_id = -1;
 
+  if (stmt->password)
+	CheckPgUserAclNotNull();
   if (!(inblock = IsTransactionBlock()))
     BeginTransactionBlock();
 
@@ -204,6 +209,8 @@ extern void AlterUser(AlterUserStmt *stmt) {
                    n,
                    inblock;
 
+  if (stmt->password)
+	CheckPgUserAclNotNull();
   if (!(inblock = IsTransactionBlock()))
     BeginTransactionBlock();
 
@@ -419,4 +426,31 @@ extern void RemoveUser(char* user) {
 
   if (IsTransactionBlock() && !inblock)
     EndTransactionBlock();
+}
+
+/*
+ * CheckPgUserAclNotNull
+ *
+ * check to see if there is an ACL on pg_user
+ */
+static void CheckPgUserAclNotNull()
+{
+HeapTuple htp;
+
+	htp = SearchSysCacheTuple(RELNAME, PointerGetDatum(UserRelationName),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(htp))
+	{
+		elog(ERROR, "IsPgUserAclNull: class \"%s\" not found",
+			 UserRelationName);
+	}
+
+	if (heap_attisnull(htp, Anum_pg_class_relacl))
+	{
+		elog(NOTICE, "To use passwords, you have to revoke permissions on pg_user");
+		elog(NOTICE, "so normal users can not read the passwords.");
+		elog(ERROR, "Try 'REVOKE ALL ON pg_user FROM PUBLIC'");
+	}
+	
+	return;
 }

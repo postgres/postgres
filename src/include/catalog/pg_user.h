@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_user.h,v 1.8 1997/12/12 16:26:36 momjian Exp $
+ * $Id: pg_user.h,v 1.9 1998/02/19 17:19:51 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -58,7 +58,7 @@ typedef FormData_pg_user *Form_pg_user;
 #define Anum_pg_user_usetrace			4
 #define Anum_pg_user_usesuper			5
 #define Anum_pg_user_usecatupd			6
-#define Anum_pg_user_passwd			7
+#define Anum_pg_user_passwd				7
 #define Anum_pg_user_valuntil			8
 
 /* ----------------

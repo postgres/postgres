@@ -6,9 +6,9 @@ all clean::
 	@echo Nothing to be done.
 
 install::
-	install ecpglib.h $(DESTDIR)$(HEADERDIR)	
-	install ecpgtype.h $(DESTDIR)$(HEADERDIR)	
-	install sqlca.h $(DESTDIR)$(HEADERDIR)	
+	install $(INSTLOPTS) ecpglib.h $(DESTDIR)$(HEADERDIR)	
+	install $(INSTLOPTS) ecpgtype.h $(DESTDIR)$(HEADERDIR)	
+	install $(INSTLOPTS) sqlca.h $(DESTDIR)$(HEADERDIR)	
 
 uninstall::
 	rm -f $(DESTDIR)$(HEADERDIR)/ecpglib.h
