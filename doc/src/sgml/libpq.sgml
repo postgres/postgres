@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.135 2003/09/03 22:05:01 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.136 2003/09/11 21:42:20 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2049,11 +2049,13 @@ unsigned char *PQescapeBytea(const unsigned char *from,
    <parameter>from</parameter> parameter binary string in memory
    allocated with <function>malloc()</>.  This memory must be freed
    using <function>PQfreemem()</> when the result is no longer needed.
-   The return string has all special characters replaced
-   so that they can be properly processed by the PostgreSQL string literal
-   parser, and the <type>bytea</type> input function. A terminating zero
-   byte is also added.  The single quotes that must surround
-   PostgreSQL string literals are not part of the result string.
+   The return string has all special characters replaced so that they
+   can be properly processed by the
+   <productname>PostgreSQL</productname> string literal parser, and
+   the <type>bytea</type> input function. A terminating zero byte is
+   also added.  The single quotes that must surround
+   <productname>PostgreSQL</productname> string literals are not part
+   of the result string.
   </para>
   </listitem>
   </varlistentry>

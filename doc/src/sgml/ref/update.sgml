@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.24 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/update.sgml,v 1.25 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -164,7 +164,8 @@ UPDATE weather SET temp_lo = temp_lo+1, temp_hi = temp_lo+15, prcp = DEFAULT
 
   <para>
    This command conforms to the SQL standard.  The
-   <literal>FROM</literal> clause is a PostgreSQL extension.
+   <literal>FROM</literal> clause is a
+   <productname>PostgreSQL</productname> extension.
   </para>
  </refsect1>
 </refentry>

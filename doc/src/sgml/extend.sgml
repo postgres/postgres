@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.24 2003/08/31 17:32:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.25 2003/09/11 21:42:19 momjian Exp $
 -->
 
  <chapter id="extend">
@@ -69,14 +69,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/extend.sgml,v 1.24 2003/08/31 17:32:18 pete
    </para>
 
    <para>
-    The PostgreSQL server can moreover incorporate user-written code into
-    itself through dynamic loading.  That is, the user  can
-    specify  an  object code file (e.g., a shared library) that implements a new type or  function,
-    and <productname>PostgreSQL</productname> will load it as required.  Code written 
-    in <acronym>SQL</acronym> is even more trivial to add to the  server.
-    This ability to modify its operation <quote>on the fly</quote> makes
-    <productname>PostgreSQL</productname> uniquely suited for rapid prototyping  of  new
-    applications and storage structures.
+    The <productname>PostgreSQL</productname> server can moreover
+    incorporate user-written code into itself through dynamic loading.
+    That is, the user can specify an object code file (e.g., a shared
+    library) that implements a new type or function, and
+    <productname>PostgreSQL</productname> will load it as required.
+    Code written in <acronym>SQL</acronym> is even more trivial to add
+    to the server.  This ability to modify its operation <quote>on the
+    fly</quote> makes <productname>PostgreSQL</productname> uniquely
+    suited for rapid prototyping of new applications and storage
+    structures.
    </para>
   </sect1>
 

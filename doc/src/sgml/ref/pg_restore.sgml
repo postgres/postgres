@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.41 2003/08/31 17:32:24 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.42 2003/09/11 21:42:20 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -659,7 +659,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 
   <para>
    The <application>pg_restore</application> utility first appeared in
-   PostgreSQL 7.1.
+   <productname>PostgreSQL</productname> 7.1.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.26 2003/08/31 17:32:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.27 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -105,9 +105,9 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
      <para>
       Indicates that data retrieved from the cursor should be
       unaffected by updates to the tables underlying the cursor while
-      the cursor exists.  In PostgreSQL, all cursors are insensitive;
-      this key word currently has no effect and is present for
-      compatibility with the SQL standard.
+      the cursor exists.  In <productname>PostgreSQL</productname>,
+      all cursors are insensitive; this key word currently has no
+      effect and is present for compatibility with the SQL standard.
      </para>
     </listitem>
    </varlistentry>

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.43 2003/08/31 17:32:19 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.44 2003/09/11 21:42:19 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -194,11 +194,11 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 </synopsis>
    <note>
     <para>
-     Testing has shown PostgreSQL's hash indexes to be similar or slower
-     than B-tree indexes, and the index size and build time for hash
-     indexes is much worse. Hash indexes also suffer poor performance
-     under high concurrency. For these reasons, hash index use is
-     presently discouraged.
+     Testing has shown <productname>PostgreSQL</productname>'s hash
+     indexes to be similar or slower than B-tree indexes, and the
+     index size and build time for hash indexes is much worse. Hash
+     indexes also suffer poor performance under high concurrency. For
+     these reasons, hash index use is presently discouraged.
     </para>
    </note>  
   </para>

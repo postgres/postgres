@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.206 2003/08/27 03:35:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.207 2003/09/11 21:42:20 momjian Exp $
 -->
 
 <appendix id="release">
@@ -10,8 +10,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.206 2003/08/27 03:35:35 mo
 
   <para>
    Below is a subset of the changes that have gone into the
-   development branch of PostgreSQL since version 7.3.  For a complete
-   list of changes, consult the CVS logs.
+   development branch of <productname>PostgreSQL</productname> since
+   version 7.3.  For a complete list of changes, consult the CVS logs.
   </para>
 
 <!--

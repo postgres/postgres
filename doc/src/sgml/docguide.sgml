@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.44 2003/06/06 14:17:08 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.45 2003/09/11 21:42:19 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -497,8 +497,9 @@ CATALOG "docbook-dsssl--1.<replaceable>xx</>/catalog
   <para>
    Before you can build the documentation you need to run the
    <filename>configure</filename> script as you would when building
-   the PostgreSQL programs themselves.  Check the output near the end
-   of the run, it should look something like this:
+   the <productname>PostgreSQL</productname> programs themselves.
+   Check the output near the end of the run, it should look something
+   like this:
 <screen>
 <computeroutput>
 checking for onsgmls... onsgmls
@@ -640,7 +641,7 @@ gmake man.tar.gz
    <title>Print Output via <acronym>RTF</acronym></title>
 
    <para>
-    You can also create a printable version of the PostgreSQL
+    You can also create a printable version of the <productname>PostgreSQL</productname>
     documentation by converting it to <acronym>RTF</acronym> and
     applying minor formatting corrections using an office suite.
     Depending on the capabilities of the particular office suite, you
@@ -651,7 +652,7 @@ gmake man.tar.gz
 
    <note>
     <para>
-     It appears that current versions of the PostgreSQL documentation
+     It appears that current versions of the <productname>PostgreSQL</productname> documentation
      trigger some bug in or exceed the size limit of OpenJade.  If the
      build process of the <acronym>RTF</acronym> version hangs for a
      long time and the output file still has size 0, then you may have

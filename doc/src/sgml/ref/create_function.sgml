@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.51 2003/09/10 20:13:45 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.52 2003/09/11 21:42:20 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -382,7 +382,7 @@ CREATE FUNCTION add(integer, integer) RETURNS integer
 
   <para>
    A <command>CREATE FUNCTION</command> command is defined in SQL99.
-   The <application>PostgreSQL</application> version is similar but
+   The <productname>PostgreSQL</productname> version is similar but
    not fully compatible.  The attributes are not portable, neither are the
    different available languages.
   </para>

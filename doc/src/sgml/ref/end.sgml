@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.10 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.11 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -30,9 +30,9 @@ END [ WORK | TRANSACTION ]
   <para>
    <command>END</command> commits the current transaction. All changes
    made by the transaction become visible to others and are guaranteed
-   to be durable if a crash occurs.  It is a PostgreSQL extension that
-   is equivalent to <xref linkend="sql-commit"
-   endterm="sql-commit-title">.
+   to be durable if a crash occurs.  It is a
+   <productname>PostgreSQL</productname> extension that is equivalent
+   to <xref linkend="sql-commit" endterm="sql-commit-title">.
   </para>
  </refsect1>
   

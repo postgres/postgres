@@ -1,10 +1,10 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.43 2003/09/03 22:05:07 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.44 2003/09/11 21:42:20 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
 
  <para>
-  <application>PostgreSQL</application> uses a message-based protocol
+  <productname>PostgreSQL</productname> uses a message-based protocol
   for communication between frontends and backends (clients and servers).
   The protocol is supported over <acronym>TCP/IP</acronym> and also over
   Unix-domain sockets.  Port number 5432 has been registered with IANA as
@@ -14,7 +14,7 @@
 
  <para>
   This document describes version 3.0 of the protocol, implemented in
-  <application>PostgreSQL</application> 7.4 and later.  For descriptions
+  <productname>PostgreSQL</productname> 7.4 and later.  For descriptions
   of the earlier protocol versions, see previous releases of the
   <productname>PostgreSQL</productname> documentation.  A single server
   can support multiple protocol versions.  The initial
@@ -165,7 +165,7 @@
 
    <para>
     Data of a particular datatype might be transmitted in any of several
-    different <firstterm>formats</>.  As of <application>PostgreSQL</> 7.4
+    different <firstterm>formats</>.  As of <productname>PostgreSQL</> 7.4
     the only supported formats are <quote>text</> and <quote>binary</>,
     but the protocol makes provision for future extensions.  The desired
     format for any value is specified by a <firstterm>format code</>.

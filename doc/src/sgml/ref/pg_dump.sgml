@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.63 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.64 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -705,7 +705,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    The <application>pg_dump</application> utility first appeared in
    <application>Postgres95</application> release 0.02.  The
    non-plain-text output formats were introduced in
-   <application>PostgreSQL</application> release 7.1.
+   <productname>PostgreSQL</productname> release 7.1.
   </para>
  </refsect1>
 

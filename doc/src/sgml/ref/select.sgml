@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.69 2003/08/31 17:32:24 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.70 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -798,10 +798,10 @@ FOR UPDATE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] 
 
    <para>
     <literal>FOR UPDATE</literal> may appear before
-    <literal>LIMIT</literal> for compatibility with PostgreSQL
-    versions before 7.3.  It effectively executes after
-    <literal>LIMIT</literal>, however, and so that is the recommended
-    place to write it.
+    <literal>LIMIT</literal> for compatibility with
+    <productname>PostgreSQL</productname> versions before 7.3.  It
+    effectively executes after <literal>LIMIT</literal>, however, and
+    so that is the recommended place to write it.
    </para>
   </refsect2>
  </refsect1>
@@ -1008,11 +1008,12 @@ SELECT d.* FROM distributors d;
 SELECT distributors.* FROM distributors d, distributors distributors;
 </programlisting>
     that he will actually get.  To help detect this sort of mistake,
-    PostgreSQL will warn if the implicit-<literal>FROM</literal>
-    feature is used in a <command>SELECT</command> statement that also
-    contains an explicit <literal>FROM</literal> clause.  Also, it is
-    possible to disable the implicit-<literal>FROM</literal> feature
-    by setting the <varname>ADD_MISSING_FROM</> parameter to false.
+    <productname>PostgreSQL</productname> will warn if the
+    implicit-<literal>FROM</literal> feature is used in a
+    <command>SELECT</command> statement that also contains an explicit
+    <literal>FROM</literal> clause.  Also, it is possible to disable
+    the implicit-<literal>FROM</literal> feature by setting the
+    <varname>ADD_MISSING_FROM</> parameter to false.
    </para>
   </refsect2>
 

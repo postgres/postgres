@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.10 2003/08/31 17:32:24 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.11 2003/09/11 21:42:20 momjian Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <refmeta>
   <refentrytitle id="sql-set-session-authorization-title">SET SESSION AUTHORIZATION</refentrytitle>
@@ -89,10 +89,10 @@ SELECT SESSION_USER, CURRENT_USER;
   <para>
    The SQL standard allows some other expressions to appear in place
    of the literal <replaceable>username</replaceable> which are not
-   important in practice.  <application>PostgreSQL</application>
+   important in practice.  <productname>PostgreSQL</productname>
    allows identifier syntax (<literal>"username"</literal>), which SQL
    does not.  SQL does not allow this command during a transaction;
-   <application>PostgreSQL</application> does not make this
+   <productname>PostgreSQL</productname> does not make this
    restriction because there is no reason to.  The privileges
    necessary to execute this command are left implementation-defined
    by the standard.

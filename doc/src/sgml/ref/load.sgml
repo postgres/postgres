@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.18 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.19 2003/09/11 21:42:20 momjian Exp $
 -->
 
 <refentry id="SQL-LOAD">
@@ -50,7 +50,7 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   <title>Compatibility</title>
 
   <para>
-   <command>LOAD</command> is a <application>PostgreSQL</application>
+   <command>LOAD</command> is a <productname>PostgreSQL</productname>
    extension.
   </para>
  </refsect1>

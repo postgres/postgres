@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.49 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.50 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -201,7 +201,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
     directly by the server, not by the client application. Therefore,
     they must reside on or be accessible to the database server machine,
     not the client. They must be accessible to and readable or writable
-    by the <application>PostgreSQL</application> user (the user ID the
+    by the <productname>PostgreSQL</productname> user (the user ID the
     server runs as), not the client. <command>COPY</command> naming a
     file is only allowed to database superusers, since it allows reading
     or writing any file that the server has privileges to access.
@@ -367,7 +367,7 @@ COPY <replaceable class="parameter">table</replaceable> [ ( <replaceable class="
 
    <para>
     The file format used for <command>COPY BINARY</command> changed in
-    <application>PostgreSQL</application> 7.4. The new format consists
+    <productname>PostgreSQL</productname> 7.4. The new format consists
     of a file header, zero or more tuples containing the row data, and
     a file trailer. Headers and data are now in network byte order.
    </para>
@@ -474,7 +474,7 @@ to be specified.
 
     <para>
 To determine the appropriate binary format for the actual tuple data you
-should consult the <application>PostgreSQL</application> source, in
+should consult the <productname>PostgreSQL</productname> source, in
 particular the <function>*send</> and <function>*recv</> functions for
 the data type (typically found in the <filename>src/backend/utils/adt</filename>
 directory). The <application>contrib/binarycopy</application> module

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.29 2003/08/31 17:32:19 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.30 2003/09/11 21:42:20 momjian Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -8,16 +8,17 @@
  </indexterm>
 
 <Para>
-     This chapter discusses the rule system in PostgreSQL.
-     Production rule systems are conceptually simple, but
-     there are many subtle points involved in actually using
-     them.
+     This chapter discusses the rule system in
+     <productname>PostgreSQL</productname>.  Production rule systems
+     are conceptually simple, but there are many subtle points
+     involved in actually using them.
 </Para>
 
 <Para>
      Some other database systems define active database rules, which
-     are usually stored procedures and triggers.  In PostgreSQL, these
-     can be implemented using functions and triggers as well.
+     are usually stored procedures and triggers.  In
+     <productname>PostgreSQL</productname>, these can be implemented
+     using functions and triggers as well.
 </Para>
 
 <Para>

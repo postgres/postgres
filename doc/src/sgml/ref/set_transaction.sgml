@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.16 2003/09/09 18:28:53 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.17 2003/09/11 21:42:20 momjian Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
@@ -122,7 +122,7 @@ SET default_transaction_isolation = '<replaceable>value</replaceable>'
   <para>
    Both commands are defined in the <acronym>SQL</acronym> standard.
    <literal>SERIALIZABLE</literal> is the default transaction
-   isolation level in the standard; in PostgreSQL the default is
+   isolation level in the standard; in <productname>PostgreSQL</productname> the default is
    ordinarily <literal>READ COMMITTED</literal>, but you can change it as
    described above.  <productname>PostgreSQL</productname> does not
    provide the isolation levels <literal>READ UNCOMMITTED</literal>

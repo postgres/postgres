@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.21 2003/09/08 23:02:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.22 2003/09/11 21:42:19 momjian Exp $
 -->
 
 <sect1 id="history">
@@ -206,8 +206,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/history.sgml,v 1.21 2003/09/08 23:02:28 pet
   </para>
 
   <para>
-   Details about what has happened in PostgreSQL since then can be
-   found in <xref linkend="release">.
+   Details about what has happened in <productname>PostgreSQL</> since
+   then can be found in <xref linkend="release">.
   </para>
  </sect2>
 </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.41 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.42 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -53,7 +53,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
   </para>
 
   <para>
-   <application>PostgreSQL</application> provides the index methods
+   <productname>PostgreSQL</productname> provides the index methods
    B-tree, R-tree, hash, and GiST. The B-tree index method is an
    implementation of Lehman-Yao high-concurrency B-trees. The R-tree
    index method implements standard R-trees using Guttman's quadratic
@@ -198,7 +198,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">index_name</replaceable> 
    Currently, only the B-tree and GiST index methods support
    multicolumn indexes. Up to 32 fields may be specified by default.
    (This limit can be altered when building
-   <application>PostgreSQL</application>.)  Only B-tree currently
+   <productname>PostgreSQL</productname>.)  Only B-tree currently
    supports unique indexes.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.18 2003/03/13 01:30:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.19 2003/09/11 21:42:19 momjian Exp $
 -->
 
 <appendix id="features">
@@ -63,11 +63,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.18 2003/03/13 01:30:28 pe
   In the following two sections, we provide a list of those features
   that <productname>PostgreSQL</productname> supports, followed by a
   list of the features defined in SQL99 which are not yet supported in
-  PostgreSQL.  Both of these lists are approximate: There may be minor
-  details that are nonconforming for a feature that is listed as
-  supported, and large parts of an unsupported feature may in fact be
-  implemented.  The main body of the documentation always contains the
-  most accurate information about what does and does not work.
+  <productname>PostgreSQL</productname>.  Both of these lists are
+  approximate: There may be minor details that are nonconforming for a
+  feature that is listed as supported, and large parts of an
+  unsupported feature may in fact be implemented.  The main body of
+  the documentation always contains the most accurate information
+  about what does and does not work.
  </para>
 
  <note>

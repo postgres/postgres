@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.50 2003/09/09 10:54:44 meskes Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.51 2003/09/11 21:42:19 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -1153,10 +1153,11 @@ struct
     condition.  A successful state is indicated by the code
     <literal>00000</literal>.  Further information about the codes can
     be found XXX.  The <literal>SQLSTATE</literal> codes are for the
-    most part defined in the SQL standard.  The PostgreSQL server
-    natively supports <literal>SQLSTATE</literal> error codes;
-    therefore a high degree of consistency can be achieved by using
-    this error code scheme throughout all applications.
+    most part defined in the SQL standard.  The
+    <productname>PostgreSQL</productname> server natively supports
+    <literal>SQLSTATE</literal> error codes; therefore a high degree
+    of consistency can be achieved by using this error code scheme
+    throughout all applications.
    </para>
 
    <para>
@@ -1168,11 +1169,11 @@ struct
     affected zero rows, and no specific negative values.  Therefore,
     this scheme can only achieve poor portability and does not have a
     hierarchical code assignment.  Historically, the embedded SQL
-    processor for PostgreSQL has assigned some specific
-    <literal>SQLCODE</literal> values for its use, which are listed
-    below with their numeric value and their symbolic name.  Remember
-    that these are not portable to other SQL implementations.  To
-    simplify the porting of applications to the
+    processor for <productname>PostgreSQL</productname> has assigned
+    some specific <literal>SQLCODE</literal> values for its use, which
+    are listed below with their numeric value and their symbolic name.
+    Remember that these are not portable to other SQL implementations.
+    To simplify the porting of applications to the
     <literal>SQLSTATE</literal> scheme, the corresponding
     <literal>SQLSTATE</literal> is also listed.  There is, however, no
     one-to-one or one-to-many mapping between the two schemes (indeed
@@ -1291,9 +1292,10 @@ struct
      <term>-208 (<symbol>ECPG_EMPTY</symbol>)</term>
      <listitem>
       <para>
-       The statement sent to the PostgreSQL server was empty.  (This
-       cannot normally happen in an embedded SQL program, so it may
-       point to an internal error.)  (SQLSTATE YE002)
+       The statement sent to the <productname>PostgreSQL</productname>
+       server was empty.  (This cannot normally happen in an embedded
+       SQL program, so it may point to an internal error.)  (SQLSTATE
+       YE002)
       </para>
      </listitem>
     </varlistentry>

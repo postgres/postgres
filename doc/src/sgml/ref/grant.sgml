@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.34 2003/08/31 17:32:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.35 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -375,8 +375,8 @@ GRANT <replaceable class="PARAMETER">privileges</replaceable>
 
    <para>
     The <literal>RULE</literal> privilege, and privileges on
-    databases, schemas, languages, and sequences are PostgreSQL
-    extensions.
+    databases, schemas, languages, and sequences are
+    <productname>PostgreSQL</productname> extensions.
    </para>
  </refsect1>
 

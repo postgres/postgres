@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.140 2003/09/01 23:01:49 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.141 2003/09/11 21:42:20 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -406,13 +406,14 @@ JAVACMD=$JAVA_HOME/bin/java
      To make the backup, you can use the <command>pg_dumpall</command>
      command from the version you are currently running.  For best
      results, however, try to use the <command>pg_dumpall</command>
-     command from PostgreSQL &version;, since this version contains
-     bug fixes and improvements over older versions.  While this
-     advice might seem idiosyncratic since you haven't installed the
-     new version yet, it is advisable to follow it if you plan to
-     install the new version in parallel with the old version.  In
-     that case you can complete the installation normally and transfer
-     the data later.  This will also decrease the downtime.
+     command from <productname>PostgreSQL</productname> &version;,
+     since this version contains bug fixes and improvements over older
+     versions.  While this advice might seem idiosyncratic since you
+     haven't installed the new version yet, it is advisable to follow
+     it if you plan to install the new version in parallel with the
+     old version.  In that case you can complete the installation
+     normally and transfer the data later.  This will also decrease
+     the downtime.
     </para>
    </step>
 

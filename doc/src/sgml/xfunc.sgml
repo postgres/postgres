@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.73 2003/08/31 17:32:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.74 2003/09/11 21:42:20 momjian Exp $
 -->
 
  <sect1 id="xfunc">
@@ -814,15 +814,15 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
 
     <para>
      To know how to write C-language functions, you need to know how
-     PostgreSQL internally represents base data types and how they can
-     be passed to and from functions.
-     Internally, <productname>PostgreSQL</productname> regards a
-     base type as a <quote>blob of memory</quote>.   The  user-defined  
-     functions that you define over a type in turn define the 
-     way  that  <productname>PostgreSQL</productname> can operate  
-     on  it.  That is, <productname>PostgreSQL</productname> will 
-     only store and retrieve the data from disk and use  your  
-     user-defined functions to input, process, and output the data.
+     <productname>PostgreSQL</productname> internally represents base
+     data types and how they can be passed to and from functions.
+     Internally, <productname>PostgreSQL</productname> regards a base
+     type as a <quote>blob of memory</quote>.  The user-defined
+     functions that you define over a type in turn define the way that
+     <productname>PostgreSQL</productname> can operate on it.  That
+     is, <productname>PostgreSQL</productname> will only store and
+     retrieve the data from disk and use your user-defined functions
+     to input, process, and output the data.
     </para>
 
     <para>
@@ -1249,13 +1249,14 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
 
     <para>
      Here, <replaceable>DIRECTORY</replaceable> stands for the
-     directory of the shared library file (for instance the PostgreSQL
-     tutorial directory, which contains the code for the examples used
-     in this section).  (Better style would be to use just
-     <literal>'funcs'</> in the <literal>AS</> clause, after having
-     added <replaceable>DIRECTORY</replaceable> to the search path.
-     In any case, we may omit the system-specific extension for a
-     shared library, commonly <literal>.so</literal> or
+     directory of the shared library file (for instance the
+     <productname>PostgreSQL</productname> tutorial directory, which
+     contains the code for the examples used in this section).
+     (Better style would be to use just <literal>'funcs'</> in the
+     <literal>AS</> clause, after having added
+     <replaceable>DIRECTORY</replaceable> to the search path.  In any
+     case, we may omit the system-specific extension for a shared
+     library, commonly <literal>.so</literal> or
      <literal>.sl</literal>.)
     </para>
 
@@ -1483,15 +1484,16 @@ concat_text(PG_FUNCTION_ARGS)
 
     <para>
      Before we turn to the more advanced topics, we should discuss
-     some coding rules for PostgreSQL C-language functions.  While it
-     may be possible to load functions written in languages other than
-     C into <productname>PostgreSQL</productname>, this is usually
-     difficult (when it is possible at all) because other languages,
-     such as C++, FORTRAN, or Pascal often do not follow the same
-     calling convention as C.  That is, other languages do not pass
-     argument and return values between functions in the same way.
-     For this reason, we will assume that your C-language functions
-     are actually written in C.
+     some coding rules for <productname>PostgreSQL</productname>
+     C-language functions.  While it may be possible to load functions
+     written in languages other than C into
+     <productname>PostgreSQL</productname>, this is usually difficult
+     (when it is possible at all) because other languages, such as
+     C++, FORTRAN, or Pascal often do not follow the same calling
+     convention as C.  That is, other languages do not pass argument
+     and return values between functions in the same way.  For this
+     reason, we will assume that your C-language functions are
+     actually written in C.
     </para>
 
     <para>

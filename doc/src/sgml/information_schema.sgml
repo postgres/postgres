@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.6 2003/06/29 15:14:41 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/information_schema.sgml,v 1.7 2003/09/11 21:42:19 momjian Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -12,11 +12,13 @@
   information about the objects defined in the current database.  The
   information schema is defined in the SQL standard and can therefore
   be expected to be portable and remain stable --- unlike the system
-  catalogs, which are specific to PostgreSQL and are modelled after
+  catalogs, which are specific to
+  <productname>PostgreSQL</productname> and are modelled after
   implementation concerns.  The information schema views do not,
-  however, contain information about PostgreSQL-specific features; to
-  inquire about those you need to query the system catalogs or other
-  PostgreSQL-specific views.
+  however, contain information about
+  <productname>PostgreSQL</productname>-specific features; to inquire
+  about those you need to query the system catalogs or other
+  <productname>PostgreSQL</productname>-specific views.
  </para>
 
  <sect1 id="infoschema-schema">
@@ -319,12 +321,13 @@
   </para>
 
   <para>
-   In PostgreSQL, you can only grant privileges on entire tables, not
-   individual columns.  Therefore, this view contains the same
-   information as <literal>table_privileges</literal>, just
-   represented through one row for each column in each appropriate
-   table, but it only convers privilege types where column granularity
-   is possible: <literal>SELECT</literal>, <literal>INSERT</literal>,
+   In <productname>PostgreSQL</productname>, you can only grant
+   privileges on entire tables, not individual columns.  Therefore,
+   this view contains the same information as
+   <literal>table_privileges</literal>, just represented through one
+   row for each column in each appropriate table, but it only convers
+   privilege types where column granularity is possible:
+   <literal>SELECT</literal>, <literal>INSERT</literal>,
    <literal>UPDATE</literal>, <literal>REFERENCES</literal>.  If you
    want to make your applications fit for possible future
    developements, it is generally the right choice to use this view
@@ -404,8 +407,8 @@
    Note that the column <literal>grantee</literal> makes no
    distinction between users and groups.  If you have users and groups
    with the same name, there is unfortunately no way to distinguish
-   them.  A future version of PostgreSQL will possibly prohibit having
-   users and groups with the same name.
+   them.  A future version of <productname>PostgreSQL</productname>
+   will possibly prohibit having users and groups with the same name.
   </para>
  </sect1>
 
@@ -415,9 +418,9 @@
   <para>
    The view <literal>column_udt_usage</literal> identifies all columns
    that use data types owned by the current user.  Note that in
-   PostgreSQL, built-in data types behave like user-defined types, so
-   they are included here as well.  See also <xref
-   linkend="infoschema-columns"> for details.
+   <productname>PostgreSQL</productname>, built-in data types behave
+   like user-defined types, so they are included here as well.  See
+   also <xref linkend="infoschema-columns"> for details.
   </para>
 
   <table>
@@ -595,7 +598,7 @@
       <entry>
        If <literal>data_type</literal> identifies a character type,
        the maximum possible length in octets (bytes) of a datum (this
-       should not be of concern to PostgreSQL users); null for all
+       should not be of concern to <productname>PostgreSQL</productname> users); null for all
        other data types.
       </entry>
      </row>
@@ -800,24 +803,26 @@
 
   <para>
    Since data types can be defined in a variety of ways in SQL, and
-   PostgreSQL contains additional ways to define data types, their
-   representation in the information schema can be somewhat difficult.
-   The column <literal>data_type</literal> is supposed to identify the
-   underlying built-in type of the column.  In PostgreSQL, this means
-   that the type is defined in the system catalog schema
+   <productname>PostgreSQL</productname> contains additional ways to
+   define data types, their representation in the information schema
+   can be somewhat difficult.  The column <literal>data_type</literal>
+   is supposed to identify the underlying built-in type of the column.
+   In <productname>PostgreSQL</productname>, this means that the type
+   is defined in the system catalog schema
    <literal>pg_catalog</literal>.  This column may be useful if the
    application can handle the well-known built-in types specially (for
    example, format the numeric types differently or use the data in
    the precision columns).  The columns <literal>udt_name</literal>,
    <literal>udt_schema</literal>, and <literal>udt_catalog</literal>
    always identify the underlying data type of the column, even if the
-   column is based on a domain.  (Since PostgreSQL treats built-in
-   types like user-defined types, built-in types appear here as well.
-   This is an extension of the SQL standard.)  These columns should be
-   used if an application wants to process data differently according
-   to the type, because in that case it wouldn't matter if the column
-   is really based on a domain.  If the column is based on a domain,
-   the identity of the domain is stored in the columns
+   column is based on a domain.  (Since
+   <productname>PostgreSQL</productname> treats built-in types like
+   user-defined types, built-in types appear here as well.  This is an
+   extension of the SQL standard.)  These columns should be used if an
+   application wants to process data differently according to the
+   type, because in that case it wouldn't matter if the column is
+   really based on a domain.  If the column is based on a domain, the
+   identity of the domain is stored in the columns
    <literal>domain_name</literal>, <literal>domain_schema</literal>,
    and <literal>domain_catalog</literal>.  If you want to pair up
    columns with their associated data types and treat domains as
@@ -1141,8 +1146,8 @@
   <para>
    The view <literal>domain_udt_usage</literal> identifies all columns
    that use data types owned by the current user. Note that in
-   PostgreSQL, built-in data types behave like user-defined types, so
-   they are included here as well.
+   <productname>PostgreSQL</productname>, built-in data types behave
+   like user-defined types, so they are included here as well.
   </para>
 
   <table>
@@ -1266,7 +1271,8 @@
       <entry>
        If the domain has a character type, the maximum possible length
        in octets (bytes) of a datum (this should not be of concern to
-       PostgreSQL users); null for all other data types.
+       <productname>PostgreSQL</productname> users); null for all
+       other data types.
       </entry>
      </row>
 
@@ -2416,11 +2422,11 @@ ORDER BY c.ordinal_position;
    The view <literal>role_usage_grants</literal> is meant to identify
    <literal>USAGE</literal> privileges granted on various kinds of
    objects to a group that the current user is a member of.  In
-   PostgreSQL, this currently only applies to domains, and since
-   domains do not have real privileges in PostgreSQL, this view is
-   empty.  Futher information can be found under
-   <literal>usage_privileges</literal>.  In the future, this view may
-   contain more useful information.
+   <productname>PostgreSQL</productname>, this currently only applies
+   to domains, and since domains do not have real privileges in
+   <productname>PostgreSQL</productname>, this view is empty.  Futher
+   information can be found under <literal>usage_privileges</literal>.
+   In the future, this view may contain more useful information.
   </para>
 
   <table>
@@ -2582,8 +2588,8 @@ ORDER BY c.ordinal_position;
    Note that the column <literal>grantee</literal> makes no
    distinction between users and groups.  If you have users and groups
    with the same name, there is unfortunately no way to distinguish
-   them.  A future version of PostgreSQL will possibly prohibit having
-   users and groups with the same name.
+   them.  A future version of <productname>PostgreSQL</productname>
+   will possibly prohibit having users and groups with the same name.
   </para>
  </sect1>
 
@@ -2874,8 +2880,9 @@ ORDER BY c.ordinal_position;
        not the owner of the function).  (According to the SQL
        standard, this column is only applicable if
        <literal>routine_body</literal> is <literal>SQL</literal>, but
-       in PostgreSQL it will contain whatever source text was
-       specified when the function was created.)
+       in <productname>PostgreSQL</productname> it will contain
+       whatever source text was specified when the function was
+       created.)
       </entry>
      </row>
 
@@ -3082,9 +3089,9 @@ ORDER BY c.ordinal_position;
   <para>
    The table <literal>sql_features</literal> contains information
    about which formal features defined in the SQL standard are
-   supported by PostgreSQL.  This is the same information that is
-   presented in <xref linkend="features">.  There you can also find
-   some additional background information.
+   supported by <productname>PostgreSQL</productname>.  This is the
+   same information that is presented in <xref linkend="features">.
+   There you can also find some additional background information.
   </para>
 
   <table>
@@ -3226,9 +3233,10 @@ ORDER BY c.ordinal_position;
 
   <para>
    The table <literal>sql_languages</literal> contains one row for
-   each SQL language binding that is supported by PostgreSQL.
-   PostgreSQL supports direct SQL and embedded SQL in C; that is all
-   you will learn from this table.
+   each SQL language binding that is supported by
+   <productname>PostgreSQL</productname>.
+   <productname>PostgreSQL</productname> supports direct SQL and
+   embedded SQL in C; that is all you will learn from this table.
   </para>
 
   <table>
@@ -3313,8 +3321,8 @@ ORDER BY c.ordinal_position;
   <para>
    The table <literal>sql_packages</literal> contains information
    about which features packages defined in the SQL standard are
-   supported by PostgreSQL.  Refer to <xref linkend="features"> for
-   background information on feature packages.
+   supported by <productname>PostgreSQL</productname>.  Refer to <xref
+   linkend="features"> for background information on feature packages.
   </para>
 
   <table>
@@ -3375,12 +3383,13 @@ ORDER BY c.ordinal_position;
 
   <para>
    The table <literal>sql_sizing</literal> contains information about
-   various size limits and maximum values in PostgreSQL.  This
-   information is primarily intended for use in the context of the
-   ODBC interface; users of other interfaces will probably find this
-   information to be of little use.  For this reason, the individual
-   sizing items are not described here; you will find them in the
-   description of the ODBC interface.
+   various size limits and maximum values in
+   <productname>PostgreSQL</productname>.  This information is
+   primarily intended for use in the context of the ODBC interface;
+   users of other interfaces will probably find this information to be
+   of little use.  For this reason, the individual sizing items are
+   not described here; you will find them in the description of the
+   ODBC interface.
   </para>
 
   <table>
@@ -3657,8 +3666,8 @@ ORDER BY c.ordinal_position;
    Note that the column <literal>grantee</literal> makes no
    distinction between users and groups.  If you have users and groups
    with the same name, there is unfortunately no way to distinguish
-   them.  A future version of PostgreSQL will possibly prohibit having
-   users and groups with the same name.
+   them.  A future version of <productname>PostgreSQL</productname>
+   will possibly prohibit having users and groups with the same name.
   </para>
  </sect1>
 
@@ -3875,21 +3884,23 @@ ORDER BY c.ordinal_position;
   </table>
 
   <para>
-   Triggers in PostgreSQL have two incompatibilities with the SQL
-   standard that affect the representation in the information schema.
-   First, trigger names are local to the table in PostgreSQL, rather
+   Triggers in <productname>PostgreSQL</productname> have two
+   incompatibilities with the SQL standard that affect the
+   representation in the information schema.  First, trigger names are
+   local to the table in <productname>PostgreSQL</productname>, rather
    than independent schema objects.  Therefore there may be duplicate
    trigger names defined in one schema, as long as they belong to
    different tables.  (<literal>trigger_catalog</literal> and
    <literal>trigger_schema</literal> are really the values pertaining
    to the table that the trigger is defined on.)  Second, triggers can
-   be defined to fire on multiple events in PostgreSQL (e.g.,
-   <literal>ON INSERT OR UPDATE</literal>), whereas the SQL standard
-   only allows one.  If a trigger is defined to fire on multiple
-   events, it is represented as multiple rows in the information
-   schema, one for each type of event.  As a consequence of these two
-   issues, the primary key of the view <literal>triggers</literal> is
-   really <literal>(trigger_catalog, trigger_schema, trigger_name,
+   be defined to fire on multiple events in
+   <productname>PostgreSQL</productname> (e.g., <literal>ON INSERT OR
+   UPDATE</literal>), whereas the SQL standard only allows one.  If a
+   trigger is defined to fire on multiple events, it is represented as
+   multiple rows in the information schema, one for each type of
+   event.  As a consequence of these two issues, the primary key of
+   the view <literal>triggers</literal> is really
+   <literal>(trigger_catalog, trigger_schema, trigger_name,
    event_object_name, event_manipulation)</literal> instead of
    <literal>(trigger_catalog, trigger_schema, trigger_name)</literal>,
    which is what the SQL standard specifies.  Nonetheless, if you
@@ -3905,9 +3916,10 @@ ORDER BY c.ordinal_position;
   <para>
    The view <literal>usage_privileges</literal> is meant to identify
    <literal>USAGE</literal> privileges granted on various kinds of
-   objects to the current user or by the current user.  In PostgreSQL,
-   this currently only applies to domains, and since domains do not
-   have real privileges in PostgreSQL, this view shows implicit
+   objects to the current user or by the current user.  In
+   <productname>PostgreSQL</productname>, this currently only applies
+   to domains, and since domains do not have real privileges in
+   <productname>PostgreSQL</productname>, this view shows implicit
    <literal>USAGE</literal> privileges granted to
    <literal>PUBLIC</literal> for all domains.  In the future, this
    view may contain more useful information.

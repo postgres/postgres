@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.206 2003/09/11 18:30:39 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.207 2003/09/11 21:42:20 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -797,7 +797,7 @@ SET ENABLE_SEQSCAN TO OFF;
         this much time, the server breaks the connection. This prevents
         hung clients from occupying a connection indefinitely. This
         option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        <filename>postgresql.conf</filename> file. The default is 60.
        </para>
       </listitem>
      </varlistentry>
@@ -1028,9 +1028,9 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        PostgreSQL procedural language libraries may be preloaded in
-        this way, typically by using the syntax
-        <literal>'$libdir/plXXX:plXXX_init'</literal> where
+        <productname>PostgreSQL</productname> procedural language
+        libraries may be preloaded in this way, typically by using the
+        syntax <literal>'$libdir/plXXX:plXXX_init'</literal> where
         <literal>XXX</literal> is <literal>pgsql</>, <literal>perl</>,
         <literal>tcl</>, or <literal>python</>.
        </para>
@@ -1228,11 +1228,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <para>
        These configuration parameters provide a crude method for
        influencing the query plans chosen by the query optimizer. If
-       the default plan chosen by the optimizer is not optimal, a
-       temporary solution may be found by using one of these
-       configuration parameters to force the optimizer to choose a
-       better plan. Other ways to improve the quality of the plans
-       chosen by the optimizer include configuring the <xref
+       the default plan chosen by the optimizer for a particular query
+       is not optimal, a temporary solution may be found by using one
+       of these configuration parameters to force the optimizer to
+       choose a better plan. Other ways to improve the quality of the
+       plans chosen by the optimizer include configuring the <xref
        linkend="runtime-config-query-constants"
        endterm="runtime-config-query-constants-title">, running
        <command>ANALYZE</command> more frequently, and increasing the
@@ -1370,7 +1370,7 @@ SET ENABLE_SEQSCAN TO OFF;
         disk cache (that is, the portion of the kernel's disk cache
         that will be used for <productname>PostgreSQL</productname>
         data files). This is measured in disk pages, which are
-        normally 8192 bytes each.
+        normally 8192 bytes each. The default is 1000.
        </para>
       </listitem>
      </varlistentry>
@@ -1382,8 +1382,9 @@ SET ENABLE_SEQSCAN TO OFF;
         Sets the query planner's estimate of the cost of a
         nonsequentially fetched disk page. This is measured as a
         multiple of the cost of a sequential page fetch. A higher
-        value makes it more likely a sequential scan will be used,
-        a lower value makes it more likely an index scan will be used.
+        value makes it more likely a sequential scan will be used, a
+        lower value makes it more likely an index scan will be
+        used. The default is four.
        </para>
       </listitem>
      </varlistentry>
@@ -1394,7 +1395,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the query planner's estimate of the cost of processing
         each tuple during a query. This is measured as a fraction of
-        the cost of a sequential page fetch.
+        the cost of a sequential page fetch. The default is 0.01.
        </para>
       </listitem>
      </varlistentry>
@@ -1405,7 +1406,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the query planner's estimate of the cost of processing
         each index tuple during an index scan. This is measured as a
-        fraction of the cost of a sequential page fetch.
+        fraction of the cost of a sequential page fetch. The default
+        is 0.001.
        </para>
       </listitem>
      </varlistentry>
@@ -1416,7 +1418,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the planner's estimate of the cost of processing each
         operator in a <literal>WHERE</> clause. This is measured as a fraction of
-        the cost of a sequential page fetch.
+        the cost of a sequential page fetch. The default is 0.0025.
        </para>
       </listitem>
      </varlistentry>
@@ -1502,7 +1504,7 @@ SET ENABLE_SEQSCAN TO OFF;
         had a column-specific target set via <command>ALTER TABLE SET
         STATISTICS</>.  Larger values increase the time needed to do
         <command>ANALYZE</>, but may improve the quality of the planner's
-        estimates. The default value is 10.
+        estimates. The default is 10.
        </para>
       </listitem>
      </varlistentry>
@@ -1650,8 +1652,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Controls the amount of detail written in the server log for each
-	message that is logged.  Valid values are <literal>terse</>,
-	<literal>default</>, and <literal>verbose</>, each adding more
+	message that is logged.  Valid values are <literal>TERSE</>,
+	<literal>DEFAULT</>, and <literal>VERBOSE</>, each adding more
 	fields to displayed messages.
        </para>
       </listitem>
@@ -1813,14 +1815,15 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>debug_pretty_print</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        These options enable various debugging output to be sent to the
-        client or server log. For each executed query, they print the resulting
-        parse tree, the query rewriter output, or the execution plan.
-        <option>DEBUG_PRETTY_PRINT</option> indents these displays to
-        produce a more readable but much longer output format.
-        <option>CLIENT_MIN_MESSAGES</option> or <option>LOG_MIN_MESSAGES</option>
-        must be <literal>DEBUG1</literal> or lower to send output to the client
-        or server logs.
+        These options enable various debugging output to be sent to
+        the client or server log. For each executed query, they print
+        the resulting parse tree, the query rewriter output, or the
+        execution plan.  <varname>debug_pretty_print</varname> indents
+        these displays to produce a more readable but much longer
+        output format.  <varname>client_min_messages</varname> or
+        <varname>log_min_messages</varname> must be
+        <literal>DEBUG1</literal> or lower to send output to the
+        client or server logs. These options are off by default.
        </para>
       </listitem>
      </varlistentry>
@@ -1845,7 +1848,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Causes the duration of every completed statement to be logged.
         To use this option, enable <varname>log_statement</> and
         <varname>log_pid</> so you can link the statement to the
-        duration using the process ID.
+        duration using the process ID. The default is off.
         Only superusers can turn off this option if it is enabled by
         the administrator.
        </para>
@@ -1869,7 +1872,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>log_statement</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Causes each SQL statement to be logged.
+        Causes each SQL statement to be logged. The default is off.
         Only superusers can turn off this option if it is enabled by
         the administrator.
        </para>
@@ -1932,9 +1935,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         For each query, write performance statistics of the respective
         module to the server log. This is a crude profiling
-        instrument.
-        Only superusers can turn off this option if it is enabled by
-        the administrator.
+        instrument. All of these options are disabled by default.
+        Only superusers can turn off any of these options if they have
+        been enabled by the administrator.
        </para>
       </listitem>
      </varlistentry>
@@ -2127,7 +2130,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Aborts any statement that takes over the specified number of
-        milliseconds.  A value of zero turns off the timer.
+        milliseconds.  A value of zero turns off the timer, which is
+        the default value.
        </para>
       </listitem>
      </varlistentry>
@@ -2300,8 +2304,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>explain_pretty_print</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Determines whether <command>EXPLAIN VERBOSE</> uses the indented
-        or non-indented format for displaying detailed query-tree dumps.
+        Determines whether <command>EXPLAIN VERBOSE</> uses the
+        indented or non-indented format for displaying detailed
+        query-tree dumps. The default is on.
        </para>
       </listitem>
      </varlistentry>
@@ -2357,9 +2362,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         Sets the maximum expression nesting depth of the parser. The
-        default value is high enough for any normal query, but you can
-        raise it if needed. (But if you raise it too high, you run
-        the risk of server crashes due to stack overflow.)
+        default value of 10000 is high enough for any normal query,
+        but you can raise it if needed. (But if you raise it too high,
+        you run the risk of server crashes due to stack overflow.)
        </para>
       </listitem>
      </varlistentry>
@@ -2409,7 +2414,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         The shared lock table is sized on the assumption that at most
-        <varname>max_locks_per_transaction</> *
+        <varname>max_locks_per_transaction</varname> *
         <varname>max_connections</varname> distinct objects will need to
         be locked at any one time. The default, 64, has historically
         proven sufficient, but you might need to raise this value if you
@@ -2453,7 +2458,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         The regular expression <quote>flavor</> can be set to
         <literal>advanced</>, <literal>extended</>, or <literal>basic</>.
-        The usual default is <literal>advanced</>.  The <literal>extended</>
+        The default is <literal>advanced</>.  The <literal>extended</>
         setting may be useful for exact backwards compatibility with
         pre-7.4 releases of <productname>PostgreSQL</>.
        </para>
@@ -2533,13 +2538,13 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
     <title>Developer Options</title>
 
     <para>
-     The following options are intended for work on the PostgreSQL source,
-     and in some cases to assist with recovery of
-     severely damaged databases.  There should be no reason to use them in
-     a production database setup.  As such, they have been excluded from the
-     sample <filename>postgresql.conf</> file.
-     Note that many of these options require special
-     source compilation flags to work at all.
+     The following options are intended for work on the
+     <productname>PostgreSQL</productname> source, and in some cases
+     to assist with recovery of severely damaged databases.  There
+     should be no reason to use them in a production database setup.
+     As such, they have been excluded from the sample
+     <filename>postgresql.conf</> file.  Note that many of these
+     options require special source compilation flags to work at all.
     </para>
 
     <variablelist>
@@ -2580,9 +2585,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Generates a great amount of debugging output for the
         <command>LISTEN</command> and <command>NOTIFY</command>
-        commands.
-        <option>CLIENT_MIN_MESSAGES</option> or <option>LOG_MIN_MESSAGES</option>
-        must be <literal>DEBUG1</literal> or lower to send this output to the
+        commands.  <varname>client_min_messages</varname> or
+        <varname>log_min_messages</varname> must be
+        <literal>DEBUG1</literal> or lower to send this output to the
         client or server log, respectively.
        </para>
       </listitem>

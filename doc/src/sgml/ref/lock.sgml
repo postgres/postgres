@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.37 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.38 2003/09/11 21:42:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -201,7 +201,7 @@ COMMIT WORK;
   <para>
    There is no <command>LOCK TABLE</command> in the SQL standard,
    which instead uses <command>SET TRANSACTION</command> to specify
-   concurrency levels on transactions.  PostgreSQL supports that too;
+   concurrency levels on transactions.  <productname>PostgreSQL</productname> supports that too;
    see <xref linkend="SQL-SET-TRANSACTION"
    endterm="SQL-SET-TRANSACTION-TITLE"> for details.
   </para>

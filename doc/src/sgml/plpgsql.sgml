@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.24 2003/09/11 18:30:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.25 2003/09/11 21:42:20 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2056,9 +2056,10 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     (raise an error and abort the current transaction). Whether
     messages of a particular priority are reported to the client,
     written to the server log, or both is controlled by the
-    <option>log_min_messages</option> and
-    <option>client_min_messages</option> configuration variables. See
-    <xref linkend="runtime-config"> for more information.
+    <varname>log_min_messages</varname> and
+    <varname>client_min_messages</varname> configuration
+    variables. See <xref linkend="runtime-config"> for more
+    information.
    </para>
 
    <para>
@@ -2448,7 +2449,8 @@ show errors;
        <para>
         The <literal>RETURN</literal> key word in the function
         prototype (not the function body) becomes
-        <literal>RETURNS</literal> in PostgreSQL.
+        <literal>RETURNS</literal> in
+        <productname>PostgreSQL</productname>.
        </para>
       </listitem>
 
@@ -2805,7 +2807,8 @@ END;
 
    <para>
     This section explains a few other things to watch for when porting
-    Oracle <application>PL/SQL</> functions to PostgreSQL.
+    Oracle <application>PL/SQL</> functions to
+    <productname>PostgreSQL</productname>.
    </para>
 
    <sect3>

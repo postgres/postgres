@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.7 2003/08/31 17:32:24 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.8 2003/09/11 21:42:20 momjian Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -77,8 +77,9 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">constraint</replaceable> 
 
   <para>
    This command complies with the behavior defined in the SQL
-   standard, except for the limitation that, in PostgreSQL, it only
-   applies to foreign-key constraints.
+   standard, except for the limitation that, in
+   <productname>PostgreSQL</productname>, it only applies to
+   foreign-key constraints.
   </para>
  </refsect1>
 </refentry>
