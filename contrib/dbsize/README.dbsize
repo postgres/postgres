@@ -1,8 +1,10 @@
-This module contains several functions that report the size of a given
-database object:
+This module contains several functions that report the on-disk size of a 
+given database object in bytes:
 
 	int8 database_size(name)
 	int8 relation_size(text)
+	int8 indexes_size(text)
+	int8 total_relation_size(text)
 
 	int8 pg_database_size(oid)
 	int8 pg_relation_size(oid)
@@ -10,42 +12,104 @@ database object:
 
 	text pg_size_pretty(int8)
 
-The first two functions:
+	setof record relation_size_components(text)
+
+The first four functions take the name of the object (possibly 
+schema-qualified for the latter three) and returns the size of the
+on-disk files in bytes.
 
 	SELECT database_size('template1');
 	SELECT relation_size('pg_class');
+	SELECT indexes_size('pg_class');
+	SELECT total_relation_size('pg_class');
 
-take the name of the object (possibly schema-qualified, for relation_size),
-while these functions take object OIDs:
+These functions take object OIDs:
 	
 	SELECT pg_database_size(1);         -- template1 database
 	SELECT pg_relation_size(1259);      -- pg_class table size
 	SELECT pg_tablespace_size(1663);    -- pg_default tablespace
 
+The indexes_size() function returns the total size of the indices for a 
+relation, including any toasted indices.
+
+The total_relation_size() function returns the total size of the relation,
+all its indices, and any toasted data.  
+
 Please note that relation_size and pg_relation_size report only the size of
-the selected relation itself; any subsidiary indexes or toast tables are not
-counted.  To obtain the total size of a table including all helper files
-you'd have to do something like:
+the selected relation itself; any related indexes or toast tables are not
+counted.  To obtain the total size of a table including all indices and
+toasted data, use total_relation_size().
 
-SELECT *,
-    pg_size_pretty(tablesize+indexsize+toastsize+toastindexsize) AS totalsize
-FROM
-(SELECT pg_relation_size(cl.oid) AS tablesize,
-        COALESCE((SELECT SUM(pg_relation_size(indexrelid))::bigint
-                  FROM pg_index WHERE cl.oid=indrelid), 0) AS indexsize,
-        CASE WHEN reltoastrelid=0 THEN 0
-             ELSE pg_relation_size(reltoastrelid)
-        END AS toastsize,
-        CASE WHEN reltoastrelid=0 THEN 0
-             ELSE pg_relation_size((SELECT reltoastidxid FROM pg_class ct
-                                    WHERE ct.oid = cl.reltoastrelid))
-        END AS toastindexsize
- FROM pg_class cl
- WHERE relname = 'foo') ss;
+The last function, relation_size_components(), returns a set of rows
+showing the sizes of the component relations constituting the input 
+relation.  
 
-This sample query utilizes the helper function pg_size_pretty(int8),
-which formats the number of bytes into a convenient string using KB, MB,
-GB.  It is also contained in this module.
+Examples
+========
+
+I've loaded the following table with a little less than 3 MB of data for 
+illustration:
+
+    create table fat ( id serial, data varchar );
+    create index fat_uidx on fat (id);
+    create index fat_idx on fat (data);
+
+You can retrieve a rowset containing constituent sizes as follows:
+
+# SELECT relation_size_components('fat');
+              relation_size_components              
+----------------------------------------------------
+ (2088960,65536,2891776,fat,r,59383,59383)
+ (32768,704512,737280,pg_toast_59383,t,59386,59386)
+ (0,32768,32768,pg_toast_59383_index,i,59388,59388)
+ (0,2039808,2039808,fat_idx,i,59389,59389)
+ (0,49152,49152,fat_uidx,i,59911,59911)
+(5 rows)
+
+To see a more readable output of the rowset:
+
+    SELECT * 
+    FROM relation_size_components('fat') AS (idxsize BIGINT, 
+                                             datasize BIGINT, 
+                                             totalsize BIGINT, 
+                                             relname NAME, 
+                                             kind "char", 
+                                             relid OID, 
+                                             node OID) 
+    ORDER BY totalsize;
+
+ idxsize | datasize | totalsize |       relname        | kind | relid | node  
+---------+----------+-----------+----------------------+------+-------+-------
+       0 |    32768 |     32768 | pg_toast_59383_index | i    | 59388 | 59388
+       0 |    49152 |     49152 | fat_uidx             | i    | 59911 | 59911
+   32768 |   704512 |    737280 | pg_toast_59383       | t    | 59386 | 59386
+       0 |  2039808 |   2039808 | fat_idx              | i    | 59389 | 59389
+ 2088960 |    65536 |   2891776 | fat                  | r    | 59383 | 59383
+(5 rows)
+
+To see the sum total size of a relation:
+
+# select total_relation_size('fat');
+ total_relation_size 
+-------------------------
+                 2891776
+(1 row)
+
+To see just the size of the uncompressed relation data:
+
+# select relation_size('fat');
+ relation_size 
+---------------
+         65536
+(1 row)
+
+To see the size of all related indices:
+
+# select indexes_size('fat');
+ indexes_size 
+--------------
+      2088960
+(1 row)
 
 To install, just run make; make install.  Then load the functions
 into any database using dbsize.sql.

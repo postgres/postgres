@@ -21,3 +21,112 @@ CREATE FUNCTION pg_relation_size(oid) RETURNS bigint
 CREATE FUNCTION pg_size_pretty(bigint) RETURNS text
     AS 'MODULE_PATHNAME', 'pg_size_pretty'
     LANGUAGE C STRICT;
+
+CREATE FUNCTION total_relation_size (text) RETURNS bigint AS '
+SELECT pg_relation_size(r.oid)
+     + COALESCE(pg_relation_size(t.oid), 0)::bigint
+     + COALESCE(pg_relation_size(ti.oid), 0)::bigint
+     + COALESCE(SUM(pg_relation_size(i.indexrelid)), 0)::bigint
+     + COALESCE(SUM(pg_relation_size(it.oid)), 0)::bigint
+     + COALESCE(SUM(pg_relation_size(iti.oid)), 0)::bigint AS bytes
+FROM pg_class r 
+     LEFT JOIN pg_class t   ON (r.reltoastrelid = t.oid) 
+     LEFT JOIN pg_class ti  ON (t.reltoastidxid = ti.oid) 
+     LEFT JOIN pg_index i   ON (r.oid = i.indrelid) 
+     LEFT JOIN pg_class ir  ON (ir.oid = i.indexrelid) 
+     LEFT JOIN pg_class it  ON (ir.reltoastrelid = it.oid) 
+     LEFT JOIN pg_class iti ON (it.reltoastidxid = iti.oid) 
+WHERE r.relname = \$1 
+GROUP BY r.oid, t.oid, ti.oid
+' LANGUAGE SQL;
+
+CREATE FUNCTION indexes_size (text) RETURNS bigint 
+    AS '
+SELECT COALESCE(SUM(pg_relation_size(ir.oid)), 0)::bigint
+     + COALESCE(SUM(pg_relation_size(it.oid)), 0)::bigint
+     + COALESCE(SUM(pg_relation_size(iti.oid)), 0)::bigint AS bytes
+FROM pg_class r 
+     LEFT JOIN pg_index i   ON (r.oid = i.indrelid) 
+     LEFT JOIN pg_class ir  ON (ir.oid = i.indexrelid) 
+     LEFT JOIN pg_class it  ON (ir.reltoastrelid = it.oid) 
+     LEFT JOIN pg_class iti ON (it.reltoastidxid = iti.oid) 
+WHERE r.relname = \$1 
+' LANGUAGE SQL;
+
+CREATE FUNCTION relation_size_components (text) RETURNS SETOF RECORD
+    AS '
+-- relation size
+SELECT indexes_size(r.relname) AS indexes_size, 
+       relation_size(r.relname) AS data_size, 
+       total_relation_size(r.relname) AS total_size, 
+       r.relname, r.relkind, r.oid AS relid, r.relfilenode 
+FROM pg_class r 
+WHERE r.relname = \$1 
+
+UNION ALL 
+
+-- relation toast size
+SELECT indexes_size(toast.relname) AS indexes_size, 
+       relation_size(''pg_toast.''||toast.relname) AS data_size, 
+       total_relation_size(toast.relname) AS total_size, 
+       toast.relname, toast.relkind, toast.oid AS relid, toast.relfilenode 
+FROM pg_class r, pg_class toast
+WHERE r.reltoastrelid = toast.oid 
+  AND r.relname = \$1 
+
+UNION ALL 
+
+-- relation toast index size
+SELECT indexes_size(toastidxr.relname) AS indexes_size, 
+       relation_size(''pg_toast.''||toastidxr.relname) AS data_size, 
+       total_relation_size(toastidxr.relname) AS total_size, 
+       toastidxr.relname, toastidxr.relkind, 
+       toastidxr.oid AS relid, toastidxr.relfilenode 
+FROM pg_class r, pg_index toastidx, pg_class toastidxr
+WHERE r.relname = \$1
+  AND r.reltoastrelid = toastidx.indrelid 
+  AND toastidx.indexrelid = toastidxr.oid 
+
+UNION ALL 
+
+-- relation indices size
+SELECT indexes_size(idxr.relname) AS indexes_size, 
+       relation_size(idxr.relname) AS data_size, 
+       total_relation_size(idxr.relname) AS total_size, 
+       idxr.relname, idxr.relkind, idxr.oid AS relid, idxr.relfilenode 
+FROM pg_class r, pg_class idxr, pg_index idx 
+WHERE r.relname = \$1
+  AND r.oid = idx.indrelid
+  AND idx.indexrelid = idxr.oid 
+
+UNION ALL 
+
+-- relation indices toast size
+SELECT indexes_size(idxtoastr.relname) AS indexes_size, 
+       relation_size(''pg_toast.''||idxtoastr.relname) AS data_size, 
+       total_relation_size(idxtoastr.relname) AS total_size, 
+       idxtoastr.relname, idxtoastr.relkind, idxtoastr.oid AS relid, 
+       idxtoastr.relfilenode 
+FROM pg_class r, pg_class idxr, pg_index idx, pg_class idxtoastr
+WHERE r.relname = \$1
+  AND r.oid = idx.indrelid
+  AND idx.indexrelid = idxr.oid 
+  AND idxr.reltoastrelid = idxtoastr.oid 
+
+UNION ALL 
+
+-- relation indices toast index size
+SELECT indexes_size(idxtoastidxr.relname) AS indexes_size, 
+       relation_size(''pg_toast.''||idxtoastidxr.relname) AS data_size, 
+       total_relation_size(idxtoastidxr.relname) AS total_size, 
+       idxtoastidxr.relname, idxtoastidxr.relkind, 
+       idxtoastidxr.oid AS relid, idxtoastidxr.relfilenode 
+FROM pg_class r, pg_class idxr, pg_index idx, pg_class idxtoast, 
+     pg_class idxtoastidxr
+WHERE r.relname = \$1
+  AND r.oid = idx.indrelid
+  AND idx.indexrelid = idxr.oid 
+  AND idxr.reltoastrelid = idxtoast.oid 
+  AND idxtoast.reltoastrelid = idxtoastidxr.oid 
+' LANGUAGE SQL;
+
