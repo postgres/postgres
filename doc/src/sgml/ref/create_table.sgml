@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.67 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.68 2003/05/04 00:03:55 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -16,7 +16,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE [ [ LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> (
+CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable class="PARAMETER">table_name</replaceable> (
     { <replaceable class="PARAMETER">column_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [ DEFAULT <replaceable>default_expr</> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [, ... ] ]
     | <replaceable>table_constraint</replaceable> }  [, ... ]
 )
@@ -101,7 +101,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
   <variablelist>
 
    <varlistentry>
-    <term><literal>[LOCAL] TEMPORARY</> or <literal>[LOCAL] TEMP</></term>
+    <term><literal>TEMPORARY</> or <literal>TEMP</></term>
     <listitem>
      <para>
       If specified, the table is created as a temporary table.
@@ -115,7 +115,9 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      The <literal>LOCAL</literal> word is optional.  But see under
+      Optionally, <literal>GLOBAL</literal> or <literal>LOCAL</literal>
+      can be written before <literal>TEMPORARY</> or <literal>TEMP</>.
+      This makes no difference in <productname>PostgreSQL</>, but see
       <xref linkend="sql-createtable-compatibility"
       endterm="sql-createtable-compatibility-title">.
      </para>
@@ -195,7 +197,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 <!--
      <para>
-      <application>PostgreSQL</application> automatically allows the
+      <productname>PostgreSQL</> automatically allows the
      created table to inherit
       functions on tables above it in the inheritance hierarchy; that
       is, if we create table <literal>foo</literal> inheriting from
@@ -786,7 +788,8 @@ CREATE TABLE distributors (
 
    <para>
     Although the syntax of <literal>CREATE TEMPORARY TABLE</literal>
-    resembles that of SQL standard, the effect is not the same.  In the standard,
+    resembles that of the SQL standard, the effect is not the same.  In the
+    standard, 
     temporary tables are defined just once and automatically exist (starting
     with empty contents) in every session that needs them.
     <productname>PostgreSQL</productname> instead
@@ -798,7 +801,7 @@ CREATE TABLE distributors (
    </para>
 
    <para>
-    The behavior of temporary tables mandated by the standard is
+    The standard's definition of the behavior of temporary tables is
     widely ignored.  <productname>PostgreSQL</productname>'s behavior
     on this point is similar to that of several other SQL databases.
    </para>
@@ -808,6 +811,9 @@ CREATE TABLE distributors (
     is not in <productname>PostgreSQL</productname>, since that distinction
     depends on the concept of modules, which
     <productname>PostgreSQL</productname> does not have.
+    For compatibility's sake, <productname>PostgreSQL</productname> will
+    accept the <literal>GLOBAL</literal> and <literal>LOCAL</literal> keywords
+    in a temporary table declaration, but they have no effect.
    </para>
 
    <para>
