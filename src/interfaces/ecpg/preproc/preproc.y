@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.260 2003/09/24 19:05:32 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.261 2003/09/26 15:16:29 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4785,7 +4785,11 @@ common_type: simple_type
 				$$.type_str = make_str("decimal");
 			}
 			else
+			{
 				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
+				$$.type_enum = ECPGt_numeric;
+				$$.type_str = make_str("numeric");
+			}
 			
 			$$.type_dimension = make_str("-1");
 			$$.type_index = make_str("-1");

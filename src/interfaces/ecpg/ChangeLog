@@ -1656,6 +1656,11 @@ Tue Sep 23 14:50:45 CEST 2003
 
 	- Changed struct definition handling so "struct foo {}" always gets
 	  defined.
+	  
+Fri Sep 26 17:14:07 CEST 2003
+
+	- Incorrect datatype with precision argument should not create a
+	  segfault.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
