@@ -5063,7 +5063,7 @@ echo "${ECHO_T}${python_libspec}" >&6
 fi
 
 
-v##
+##
 ## Libraries
 ##
 
