@@ -15,7 +15,7 @@ import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.10 2002/11/04 06:42:33 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.11 2002/12/23 16:12:36 davec Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -1009,7 +1009,9 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 				{
 
 					String column = (String) columns.nextElement();
-					updateSQL.append( column + "= ?");
+					updateSQL.append("\"");
+					updateSQL.append( column );
+					updateSQL.append("\" = ?");
 
 					if ( i < numColumns - 1 )
 					{
@@ -1026,7 +1028,9 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 				{
 
 					PrimaryKey primaryKey = ((PrimaryKey) primaryKeys.get(i));
-					updateSQL.append(primaryKey.name).append("= ?");
+					updateSQL.append("\"");
+					updateSQL.append(primaryKey.name);
+					updateSQL.append("\" = ?");
 
 					if ( i < numKeys - 1 )
 					{
@@ -1328,7 +1332,16 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 		else
 		{
 			// otherwise go and get the primary keys and create a hashtable of keys
-			java.sql.ResultSet rs = ((java.sql.Connection) connection).getMetaData().getPrimaryKeys("", "", tableName);
+			// if the user has supplied a quoted table name
+			// remove the quotes, but preserve the case.
+			// otherwise fold to lower case.
+			String quotelessTableName;
+			if (tableName.startsWith("\"") && tableName.endsWith("\"")) {
+				quotelessTableName = tableName.substring(1,tableName.length()-1);
+			} else {
+				quotelessTableName = tableName.toLowerCase();
+			}
+			java.sql.ResultSet rs = ((java.sql.Connection) connection).getMetaData().getPrimaryKeys("", "", quotelessTableName);
 
 
 			for (; rs.next(); i++ )
