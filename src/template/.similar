@@ -21,3 +21,7 @@ powerpc-ibm-aix4.1.5.0=aix_41
 powerpc-unknown-linux-gnu=linux-elf
 sparc-sun-solaris=sparc_solaris-gcc
 sparc-unknown-linux-gnu=linux-elf-sparc
+sparc-sun-sunos4.1.3=sunos4-gcc
+sparc-sun-sunos4.1.3_JL=sunos4-gcc
+sparc-sun-sunos4.1.4=sunos4-gcc
+sparc-sun-sunos4.1.4_JL=sunos4-gcc
