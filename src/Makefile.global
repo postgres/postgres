@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.52 1996/11/04 03:59:09 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.53 1996/11/04 05:01:47 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -480,9 +480,8 @@ CFLAGS_SL=	-fpic
 # for postgres.mk
 #
 CC=		gcc
-CFLAGS_OPT=	-O2 -pipe
 
-CFLAGS_BE= -D__USE_POSIX_SIGNALS -DUSE_POSIX_SIGNALS -O2
+CFLAGS_BE= -D__USE_POSIX_SIGNALS -DUSE_POSIX_SIGNALS
 LDADD_BE= -ldl -lfl
 
 LEX = flex
@@ -667,7 +666,6 @@ CFLAGS_SL=	-fpic
 #
 # for postgres.mk
 #
-CFLAGS_OPT=	-O2 -pipe -m486
 
 # The Linux gnulib #defines the problem away for you and calls 
 # the BSD routines if you give it the right flags.
@@ -793,7 +791,6 @@ LD_ADD+= $(LDADD_BE)
 #
 # for postgres.mk
 #
-CFLAGS_OPT=     -O
 
 #
 # for postgres.user.mk
