@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.83 2000/02/18 09:29:31 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.84 2000/02/19 02:29:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -856,7 +856,7 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->reindexType)
 				{
 					case INDEX:
-						relname = stmt->name;
+						relname = (char*) stmt->name;
 						if (IsSystemRelationName(relname))
 						{
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
@@ -873,7 +873,7 @@ ProcessUtility(Node *parsetree,
 						ReindexIndex(relname, stmt->force);
 						break;
 					case TABLE:
-						relname = stmt->name;
+						relname = (char*) stmt->name;
 						if (IsSystemRelationName(relname))
 						{
 							if (!allowSystemTableMods && IsSystemRelationName(relname))
@@ -890,7 +890,7 @@ ProcessUtility(Node *parsetree,
 						ReindexTable(relname, stmt->force);
 						break;
 					case DATABASE:
-						relname = stmt->name;
+						relname = (char*) stmt->name;
 						if (!allowSystemTableMods)
 							elog(ERROR, "-O option is needed");
 						if (!IsIgnoringSystemIndexes())
