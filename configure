@@ -3020,11 +3020,6 @@ if test "${with_java+set}" = set; then
     yes)
       echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-if test ! "$JAVA_HOME" -o ! -d "$JAVA_HOME" ; then
-  { { echo "$as_me:$LINENO: error: Set the JAVA_HOME environment variable to build Java components" >&5
-echo "$as_me: error: Set the JAVA_HOME environment variable to build Java components" >&2;}
-   { (exit 1); exit 1; }; }
-fi
 
   for ac_prog in jakarta-ant ant ant.sh ant.bat
 do
@@ -3125,8 +3120,10 @@ echo "$as_me: error: ant does not work" >&2;}
 
 
 if test -z "$ANT"; then
-  { { echo "$as_me:$LINENO: error: Ant is required to build Java components" >&5
-echo "$as_me: error: Ant is required to build Java components" >&2;}
+  { { echo "$as_me:$LINENO: error: Ant is required to build Java components
+If you have Ant already installed, see config.log for details on the failure." >&5
+echo "$as_me: error: Ant is required to build Java components
+If you have Ant already installed, see config.log for details on the failure." >&2;}
    { (exit 1); exit 1; }; }
 fi
 if "$ANT" -version | sed q | egrep -v ' 1\.[5-9]| [2-9]\.' >/dev/null ; then
@@ -5841,8 +5838,12 @@ echo "${ECHO_T}no" >&6
 fi
   if test x"$pgac_cv_check_readline" = x"no"; then
     { { echo "$as_me:$LINENO: error: readline library not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support." >&5
 echo "$as_me: error: readline library not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support." >&2;}
    { (exit 1); exit 1; }; }
   fi
@@ -5914,8 +5915,12 @@ _ACEOF
 
 else
   { { echo "$as_me:$LINENO: error: zlib library not found
+If you have zlib already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." >&5
 echo "$as_me: error: zlib library not found
+If you have zlib already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7341,8 +7346,12 @@ _ACEOF
 
 else
   { { echo "$as_me:$LINENO: error: readline header not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support." >&5
 echo "$as_me: error: readline header not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7576,8 +7585,12 @@ _ACEOF
 
 else
   { { echo "$as_me:$LINENO: error: history header not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support." >&5
 echo "$as_me: error: history header not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-readline to disable readline support." >&2;}
    { (exit 1); exit 1; }; }
 fi
@@ -7696,8 +7709,12 @@ if test $ac_cv_header_zlib_h = yes; then
   :
 else
   { { echo "$as_me:$LINENO: error: zlib header not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." >&5
 echo "$as_me: error: zlib header not found
+If you have readline already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
 Use --without-zlib to disable zlib support." >&2;}
    { (exit 1); exit 1; }; }
 fi
