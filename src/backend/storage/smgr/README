@@ -1,40 +1,31 @@
-# $PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.2 2003/11/29 19:51:57 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/storage/smgr/README,v 1.3 2004/02/10 01:55:26 tgl Exp $
 
-This directory contains the code that supports the Postgres storage manager
-switch and all of the installed storage managers.  In released systems,
-the only supported storage manager is the magnetic disk manager.  At UC
-Berkeley, the Sony WORM optical disk jukebox and persistent main memory are
-also supported.
+In the original Berkeley Postgres system, there were several storage managers,
+of which only the "magnetic disk" manager remains.  (At Berkeley there were
+also managers for the Sony WORM optical disk jukebox and persistent main
+memory, but these were never supported in any externally released Postgres,
+nor in any version of PostgreSQL.)  However, we retain the notion of a storage
+manager switch in case anyone wants to reintroduce other kinds of storage
+managers.
 
-As of Postgres Release 3.0, every relation in the system is tagged with the
-storage manager on which it resides.  The storage manager switch code turns
-what used to by filesystem operations into operations on the correct store,
-for any given relation.
+In Berkeley Postgres each relation was tagged with the ID of the storage
+manager to use for it.  This is gone.  It would be more reasonable to
+associate storage managers with tablespaces (a feature not present as this
+text is being written, but one likely to emerge soon).
 
 The files in this directory, and their contents, are
 
     smgrtype.c	Storage manager type -- maps string names to storage manager
 		IDs and provides simple comparison operators.  This is the
 		regproc support for type 'smgr' in the system catalogs.
+		(This is vestigial since no columns of type smgr exist
+		in the catalogs anymore.)
 
     smgr.c	The storage manager switch dispatch code.  The routines in
 		this file call the appropriate storage manager to do hardware
-		accesses requested by the backend.
+		accesses requested by the backend.  smgr.c also manages the
+		file handle cache (SMgrRelation table).
 
     md.c	The magnetic disk storage manager.
 
-    mm.c	The persistent main memory storage manager (#undef'ed in
-		tmp/c.h for all distributed systems).
-
-    sj.c	The sony jukebox storage manager and cache management code
-		(#undef'ed in tmp/c.h for all distributed systems).  The
-		routines in this file allocate extents, maintain block
-		maps, and guarantee the persistence and coherency of a cache
-		of jukebox blocks on magnetic disk.
-
-    pgjb.c	The postgres jukebox interface routines.  The routines here
-		handle exclusion on the physical device and translate requests
-		from the storage manager code (sj.c) into jbaccess calls.
-
-    jbaccess.c	Access code for the physical Sony jukebox device.  This code
-		was swiped from Andy McFadden's jblib.a code at UC Berkeley.
+Note that md.c in turn relies on src/backend/storage/file/fd.c.

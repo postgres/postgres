@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.161 2004/01/26 22:51:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.162 2004/02/10 01:55:24 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -159,6 +159,7 @@
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"

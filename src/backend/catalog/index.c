@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.226 2004/01/28 21:02:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.227 2004/02/10 01:55:24 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -808,7 +808,11 @@ index_drop(Oid indexId)
 	if (i < 0)
 		elog(ERROR, "FlushRelationBuffers returned %d", i);
 
-	smgrunlink(DEFAULT_SMGR, userIndexRelation);
+	if (userIndexRelation->rd_smgr == NULL)
+		userIndexRelation->rd_smgr = smgropen(userIndexRelation->rd_node);
+	smgrscheduleunlink(userIndexRelation->rd_smgr,
+					   userIndexRelation->rd_istemp);
+	userIndexRelation->rd_smgr = NULL;
 
 	/*
 	 * We are presently too lazy to attempt to compute the new correct
@@ -818,7 +822,7 @@ index_drop(Oid indexId)
 	 * owning relation to ensure other backends update their relcache
 	 * lists of indexes.
 	 */
-	CacheInvalidateRelcache(heapId);
+	CacheInvalidateRelcache(userHeapRelation);
 
 	/*
 	 * Close rels, but keep locks
@@ -1057,7 +1061,7 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	else
 	{
 		/* no need to change tuple, but force relcache rebuild anyway */
-		CacheInvalidateRelcache(relid);
+		CacheInvalidateRelcacheByTuple(tuple);
 	}
 
 	if (!pg_class_scan)
@@ -1077,10 +1081,11 @@ void
 setNewRelfilenode(Relation relation)
 {
 	Oid			newrelfilenode;
+	RelFileNode newrnode;
+	SMgrRelation srel;
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class rd_rel;
-	RelationData workrel;
 
 	/* Can't change relfilenode for nailed tables (indexes ok though) */
 	Assert(!relation->rd_isnailed ||
@@ -1107,14 +1112,18 @@ setNewRelfilenode(Relation relation)
 
 	/* create another storage file. Is it a little ugly ? */
 	/* NOTE: any conflict in relfilenode value will be caught here */
-	memcpy((char *) &workrel, relation, sizeof(RelationData));
-	workrel.rd_fd = -1;
-	workrel.rd_node.relNode = newrelfilenode;
-	heap_storage_create(&workrel);
-	smgrclose(DEFAULT_SMGR, &workrel);
+	newrnode = relation->rd_node;
+	newrnode.relNode = newrelfilenode;
+
+	srel = smgropen(newrnode);
+	smgrcreate(srel, relation->rd_istemp, false);
+	smgrclose(srel);
 
 	/* schedule unlinking old relfilenode */
-	smgrunlink(DEFAULT_SMGR, relation);
+	if (relation->rd_smgr == NULL)
+		relation->rd_smgr = smgropen(relation->rd_node);
+	smgrscheduleunlink(relation->rd_smgr, relation->rd_istemp);
+	relation->rd_smgr = NULL;
 
 	/* update the pg_class row */
 	rd_rel->relfilenode = newrelfilenode;
@@ -1672,7 +1681,9 @@ reindex_index(Oid indexId)
 		DropRelationBuffers(iRel);
 
 		/* Now truncate the actual data and set blocks to zero */
-		smgrtruncate(DEFAULT_SMGR, iRel, 0);
+		if (iRel->rd_smgr == NULL)
+			iRel->rd_smgr = smgropen(iRel->rd_node);
+		smgrtruncate(iRel->rd_smgr, 0);
 		iRel->rd_nblocks = 0;
 		iRel->rd_targblock = InvalidBlockNumber;
 	}

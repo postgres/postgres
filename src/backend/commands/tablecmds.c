@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.97 2004/01/28 21:02:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.98 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1010,7 +1010,7 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 	else
 	{
 		/* no need to change tuple, but force relcache rebuild anyway */
-		CacheInvalidateRelcache(relationId);
+		CacheInvalidateRelcacheByTuple(tuple);
 	}
 
 	heap_freetuple(tuple);

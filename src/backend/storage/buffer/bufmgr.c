@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.156 2004/02/06 19:36:18 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.157 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
 				   bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
-static bool BufferReplace(BufferDesc *bufHdr);
+static void BufferReplace(BufferDesc *bufHdr);
 
 #ifdef NOT_USED
 void		PrintBufferDescs(void);
@@ -127,13 +127,16 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 				   bool bufferLockHeld)
 {
 	BufferDesc *bufHdr;
-	int			status;
 	bool		found;
 	bool		isExtend;
 	bool		isLocalBuf;
 
 	isExtend = (blockNum == P_NEW);
 	isLocalBuf = reln->rd_istemp;
+
+	/* Open it at the smgr level if not already done */
+	if (reln->rd_smgr == NULL)
+		reln->rd_smgr = smgropen(reln->rd_node);
 
 	if (isLocalBuf)
 	{
@@ -160,7 +163,7 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		if (isExtend)
 		{
 			/* must be sure we have accurate file length! */
-			blockNum = reln->rd_nblocks = smgrnblocks(DEFAULT_SMGR, reln);
+			blockNum = reln->rd_nblocks = smgrnblocks(reln->rd_smgr);
 			reln->rd_nblocks++;
 		}
 
@@ -207,23 +210,19 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	}
 
 	/*
-	 * if we have gotten to this point, the reln pointer must be ok and
-	 * the relation file must be open.
+	 * if we have gotten to this point, the relation must be open in the smgr.
 	 */
 	if (isExtend)
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
-		status = smgrextend(DEFAULT_SMGR, reln, blockNum,
-							(char *) MAKE_PTR(bufHdr->data));
+		smgrextend(reln->rd_smgr, blockNum, (char *) MAKE_PTR(bufHdr->data));
 	}
 	else
 	{
-		status = smgrread(DEFAULT_SMGR, reln, blockNum,
-						  (char *) MAKE_PTR(bufHdr->data));
+		smgrread(reln->rd_smgr, blockNum, (char *) MAKE_PTR(bufHdr->data));
 		/* check for garbage data */
-		if (status == SM_SUCCESS &&
-			!PageHeaderIsValid((PageHeader) MAKE_PTR(bufHdr->data)))
+		if (!PageHeaderIsValid((PageHeader) MAKE_PTR(bufHdr->data)))
 		{
 			/*
 			 * During WAL recovery, the first access to any data page should
@@ -250,46 +249,19 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	if (isLocalBuf)
 	{
 		/* No shared buffer state to update... */
-		if (status == SM_FAIL)
-		{
-			bufHdr->flags |= BM_IO_ERROR;
-			return InvalidBuffer;
-		}
 		return BufferDescriptorGetBuffer(bufHdr);
 	}
 
 	/* lock buffer manager again to update IO IN PROGRESS */
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
-	if (status == SM_FAIL)
-	{
-		/* IO Failed.  cleanup the data structures and go home */
-		StrategyInvalidateBuffer(bufHdr);
-
-		/* remember that BufferAlloc() pinned the buffer */
-		UnpinBuffer(bufHdr);
-
-		/*
-		 * Have to reset the flag so that anyone waiting for the buffer
-		 * can tell that the contents are invalid.
-		 */
-		bufHdr->flags |= BM_IO_ERROR;
-		bufHdr->flags &= ~BM_IO_IN_PROGRESS;
-	}
-	else
-	{
-		/* IO Succeeded.  clear the flags, finish buffer update */
-
-		bufHdr->flags &= ~(BM_IO_ERROR | BM_IO_IN_PROGRESS);
-	}
+	/* IO Succeeded.  clear the flags, finish buffer update */
+	bufHdr->flags &= ~(BM_IO_ERROR | BM_IO_IN_PROGRESS);
 
 	/* If anyone was waiting for IO to complete, wake them up now */
 	TerminateBufferIO(bufHdr);
 
 	LWLockRelease(BufMgrLock);
-
-	if (status == SM_FAIL)
-		return InvalidBuffer;
 
 	return BufferDescriptorGetBuffer(bufHdr);
 }
@@ -391,8 +363,6 @@ BufferAlloc(Relation reln,
 
 		if (buf->flags & BM_DIRTY || buf->cntxDirty)
 		{
-			bool	replace_ok;
-
 			/*
 			 * skip write error buffers
 			 */
@@ -425,39 +395,21 @@ BufferAlloc(Relation reln,
 			 * Write the buffer out, being careful to release BufMgrLock
 			 * before starting the I/O.
 			 */
-			replace_ok = BufferReplace(buf);
+			BufferReplace(buf);
 
-			if (replace_ok == false)
+			/*
+			 * BM_JUST_DIRTIED cleared by BufferReplace and shouldn't
+			 * be set by anyone.		- vadim 01/17/97
+			 */
+			if (buf->flags & BM_JUST_DIRTIED)
 			{
-				ereport(WARNING,
-						(errcode(ERRCODE_IO_ERROR),
-						 errmsg("could not write block %u of %u/%u",
-								buf->tag.blockNum,
-								buf->tag.rnode.tblNode,
-								buf->tag.rnode.relNode)));
-				inProgress = FALSE;
-				buf->flags |= BM_IO_ERROR;
-				buf->flags &= ~BM_IO_IN_PROGRESS;
-				TerminateBufferIO(buf);
-				UnpinBuffer(buf);
-				buf = NULL;
+				elog(PANIC, "content of block %u of %u/%u changed while flushing",
+					 buf->tag.blockNum,
+					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
 			}
-			else
-			{
-				/*
-				 * BM_JUST_DIRTIED cleared by BufferReplace and shouldn't
-				 * be set by anyone.		- vadim 01/17/97
-				 */
-				if (buf->flags & BM_JUST_DIRTIED)
-				{
-					elog(PANIC, "content of block %u of %u/%u changed while flushing",
-						 buf->tag.blockNum,
-						 buf->tag.rnode.tblNode, buf->tag.rnode.relNode);
-				}
 
-				buf->flags &= ~BM_DIRTY;
-				buf->cntxDirty = false;
-			}
+			buf->flags &= ~BM_DIRTY;
+			buf->cntxDirty = false;
 
 			/*
 			 * Somebody could have pinned the buffer while we were doing
@@ -721,10 +673,8 @@ BufferSync(int percent, int maxpages)
 	for (i = 0; i < num_buffer_dirty; i++)
 	{
 		Buffer		buffer;
-		int			status;
-		RelFileNode rnode;
 		XLogRecPtr	recptr;
-		Relation	reln;
+		SMgrRelation reln;
 
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
@@ -775,14 +725,8 @@ BufferSync(int percent, int maxpages)
 		StartBufferIO(bufHdr, false);	/* output IO start */
 
 		buffer = BufferDescriptorGetBuffer(bufHdr);
-		rnode = bufHdr->tag.rnode;
 
 		LWLockRelease(BufMgrLock);
-
-		/*
-		 * Try to find relation for buffer
-		 */
-		reln = RelationNodeCacheGetRelation(rnode);
 
 		/*
 		 * Protect buffer content against concurrent update
@@ -805,27 +749,13 @@ BufferSync(int percent, int maxpages)
 		bufHdr->flags &= ~BM_JUST_DIRTIED;
 		LWLockRelease(BufMgrLock);
 
-		if (reln == NULL)
-		{
-			status = smgrblindwrt(DEFAULT_SMGR,
-								  bufHdr->tag.rnode,
-								  bufHdr->tag.blockNum,
-								  (char *) MAKE_PTR(bufHdr->data));
-		}
-		else
-		{
-			status = smgrwrite(DEFAULT_SMGR, reln,
-							   bufHdr->tag.blockNum,
-							   (char *) MAKE_PTR(bufHdr->data));
-		}
+		/* Find smgr relation for buffer */
+		reln = smgropen(bufHdr->tag.rnode);
 
-		if (status == SM_FAIL)	/* disk failure ?! */
-			ereport(PANIC,
-					(errcode(ERRCODE_IO_ERROR),
-					 errmsg("could not write block %u of %u/%u",
-							bufHdr->tag.blockNum,
-							bufHdr->tag.rnode.tblNode,
-							bufHdr->tag.rnode.relNode)));
+		/* And write... */
+		smgrwrite(reln,
+				  bufHdr->tag.blockNum,
+				  (char *) MAKE_PTR(bufHdr->data));
 
 		/*
 		 * Note that it's safe to change cntxDirty here because of we
@@ -853,10 +783,6 @@ BufferSync(int percent, int maxpages)
 			bufHdr->flags &= ~BM_DIRTY;
 		UnpinBuffer(bufHdr);
 		LWLockRelease(BufMgrLock);
-
-		/* drop refcnt obtained by RelationNodeCacheGetRelation */
-		if (reln != NULL)
-			RelationDecrementReferenceCount(reln);
 	}
 
 	pfree(buffer_dirty);
@@ -1026,11 +952,21 @@ BufferBackgroundWriter(void)
 		n = BufferSync(BgWriterPercent, BgWriterMaxpages);
 
 		/*
-		 * Whatever signal is sent to us, let's just die galantly. If
+		 * Whatever signal is sent to us, let's just die gallantly. If
 		 * it wasn't meant that way, the postmaster will reincarnate us.
 		 */
 		if (InterruptPending)
 			return;
+
+		/*
+		 * Whenever we have nothing to do, close all smgr files.  This
+		 * is so we won't hang onto smgr references to deleted files
+		 * indefinitely.  XXX this is a bogus, temporary solution.  'Twould
+		 * be much better to do this once per checkpoint, but the bgwriter
+		 * doesn't yet know anything about checkpoints.
+		 */
+		if (n == 0)
+			smgrcloseall();
 
 		/*
 		 * Nap for the configured time or sleep for 10 seconds if
@@ -1073,17 +1009,15 @@ BufferGetBlockNumber(Buffer buffer)
 /*
  * BufferReplace
  *
- * Write out the buffer corresponding to 'bufHdr'. Returns 'true' if
- * the buffer was successfully written out, 'false' otherwise.
+ * Write out the buffer corresponding to 'bufHdr'.
  *
  * BufMgrLock must be held at entry, and the buffer must be pinned.
  */
-static bool
+static void
 BufferReplace(BufferDesc *bufHdr)
 {
-	Relation	reln;
+	SMgrRelation reln;
 	XLogRecPtr	recptr;
-	int			status;
 	ErrorContextCallback errcontext;
 
 	/* To check if block content changed while flushing. - vadim 01/17/97 */
@@ -1104,36 +1038,20 @@ BufferReplace(BufferDesc *bufHdr)
 	recptr = BufferGetLSN(bufHdr);
 	XLogFlush(recptr);
 
-	reln = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
+	/* Find smgr relation for buffer */
+	reln = smgropen(bufHdr->tag.rnode);
 
-	if (reln != NULL)
-	{
-		status = smgrwrite(DEFAULT_SMGR, reln,
-						   bufHdr->tag.blockNum,
-						   (char *) MAKE_PTR(bufHdr->data));
-	}
-	else
-	{
-		status = smgrblindwrt(DEFAULT_SMGR, bufHdr->tag.rnode,
-							  bufHdr->tag.blockNum,
-							  (char *) MAKE_PTR(bufHdr->data));
-	}
-
-	/* drop relcache refcnt incremented by RelationNodeCacheGetRelation */
-	if (reln != NULL)
-		RelationDecrementReferenceCount(reln);
+	/* And write... */
+	smgrwrite(reln,
+			  bufHdr->tag.blockNum,
+			  (char *) MAKE_PTR(bufHdr->data));
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;
 
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
-	if (status == SM_FAIL)
-		return false;
-
 	BufferFlushCount++;
-
-	return true;
 }
 
 /*
@@ -1151,12 +1069,17 @@ RelationGetNumberOfBlocks(Relation relation)
 	 *
 	 * Don't call smgr on a view or a composite type, either.
 	 */
-	if (relation->rd_rel->relkind == RELKIND_VIEW)
-		relation->rd_nblocks = 0;
-	else if (relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+	if (relation->rd_rel->relkind == RELKIND_VIEW ||
+		relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		relation->rd_nblocks = 0;
 	else if (!relation->rd_isnew && !relation->rd_istemp)
-		relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
+	{
+		/* Open it at the smgr level if not already done */
+		if (relation->rd_smgr == NULL)
+			relation->rd_smgr = smgropen(relation->rd_node);
+
+		relation->rd_nblocks = smgrnblocks(relation->rd_smgr);
+	}
 
 	return relation->rd_nblocks;
 }
@@ -1172,12 +1095,17 @@ RelationGetNumberOfBlocks(Relation relation)
 void
 RelationUpdateNumberOfBlocks(Relation relation)
 {
-	if (relation->rd_rel->relkind == RELKIND_VIEW)
-		relation->rd_nblocks = 0;
-	else if (relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
+	if (relation->rd_rel->relkind == RELKIND_VIEW ||
+		relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
 		relation->rd_nblocks = 0;
 	else
-		relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
+	{
+		/* Open it at the smgr level if not already done */
+		if (relation->rd_smgr == NULL)
+			relation->rd_smgr = smgropen(relation->rd_node);
+
+		relation->rd_nblocks = smgrnblocks(relation->rd_smgr);
+	}
 }
 
 /* ---------------------------------------------------------------------
@@ -1465,7 +1393,6 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 	int			i;
 	BufferDesc *bufHdr;
 	XLogRecPtr	recptr;
-	int			status;
 	ErrorContextCallback errcontext;
 
 	/* Setup error traceback support for ereport() */
@@ -1484,17 +1411,13 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 			{
 				if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
 				{
-					status = smgrwrite(DEFAULT_SMGR, rel,
-									   bufHdr->tag.blockNum,
-									   (char *) MAKE_PTR(bufHdr->data));
-					if (status == SM_FAIL)
-					{
-						error_context_stack = errcontext.previous;
-						elog(WARNING, "FlushRelationBuffers(\"%s\" (local), %u): block %u is dirty, could not flush it",
-							 RelationGetRelationName(rel), firstDelBlock,
-							 bufHdr->tag.blockNum);
-						return (-1);
-					}
+					/* Open it at the smgr level if not already done */
+					if (rel->rd_smgr == NULL)
+						rel->rd_smgr = smgropen(rel->rd_node);
+
+					smgrwrite(rel->rd_smgr,
+							  bufHdr->tag.blockNum,
+							  (char *) MAKE_PTR(bufHdr->data));
 					bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 					bufHdr->cntxDirty = false;
 				}
@@ -1553,17 +1476,13 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 
 					LWLockRelease(BufMgrLock);
 
-					status = smgrwrite(DEFAULT_SMGR, rel,
-									   bufHdr->tag.blockNum,
-									   (char *) MAKE_PTR(bufHdr->data));
+					/* Open it at the smgr level if not already done */
+					if (rel->rd_smgr == NULL)
+						rel->rd_smgr = smgropen(rel->rd_node);
 
-					if (status == SM_FAIL)		/* disk failure ?! */
-						ereport(PANIC,
-								(errcode(ERRCODE_IO_ERROR),
-							  errmsg("could not write block %u of %u/%u",
-									 bufHdr->tag.blockNum,
-									 bufHdr->tag.rnode.tblNode,
-									 bufHdr->tag.rnode.relNode)));
+					smgrwrite(rel->rd_smgr,
+							  bufHdr->tag.blockNum,
+							  (char *) MAKE_PTR(bufHdr->data));
 
 					BufferFlushCount++;
 
@@ -2046,7 +1965,11 @@ AbortBufferIO(void)
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 		Assert(buf->flags & BM_IO_IN_PROGRESS);
 		if (IsForInput)
+		{
 			Assert(!(buf->flags & BM_DIRTY) && !(buf->cntxDirty));
+			/* Don't think that buffer is valid */
+			StrategyInvalidateBuffer(buf);
+		}
 		else
 		{
 			Assert(buf->flags & BM_DIRTY || buf->cntxDirty);

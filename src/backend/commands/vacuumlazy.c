@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.35 2004/02/06 19:36:17 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.36 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,9 +148,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vac_open_indexes(onerel, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
 
-	/* Turn on vacuum cost accounting */
-	if (VacuumCostNaptime > 0)
-		VacuumCostActive = true;
+	/* Turn vacuum cost accounting on or off */
+	VacuumCostActive = (VacuumCostNaptime > 0);
 	VacuumCostBalance = 0;
 
 	/* Do the vacuuming */
@@ -784,7 +783,9 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	/*
 	 * Do the physical truncation.
 	 */
-	new_rel_pages = smgrtruncate(DEFAULT_SMGR, onerel, new_rel_pages);
+	if (onerel->rd_smgr == NULL)
+		onerel->rd_smgr = smgropen(onerel->rd_node);
+	new_rel_pages = smgrtruncate(onerel->rd_smgr, new_rel_pages);
 	onerel->rd_nblocks = new_rel_pages; /* update relcache immediately */
 	onerel->rd_targblock = InvalidBlockNumber;
 	vacrelstats->rel_pages = new_rel_pages;		/* save new number of

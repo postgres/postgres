@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.32 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/sinval.h,v 1.33 2004/02/10 01:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "storage/backendid.h"
 #include "storage/itemptr.h"
+#include "storage/relfilenode.h"
 
 
 /*
@@ -26,6 +27,13 @@
  * positive means a catcache inval message (and also serves as the catcache
  * ID field).  -1 means a relcache inval message.  Other negative values
  * are available to identify other inval message types.
+ *
+ * Relcache invalidation messages usually also cause invalidation of entries
+ * in the smgr's relation cache.  This means they must carry both logical
+ * and physical relation ID info (ie, both dbOID/relOID and RelFileNode).
+ * In some cases RelFileNode information is not available so the sender fills
+ * those fields with zeroes --- this is okay so long as no smgr cache flush
+ * is required.
  *
  * Shared-inval events are initially driven by detecting tuple inserts,
  * updates and deletions in system catalogs (see CacheInvalidateHeapTuple).
@@ -63,6 +71,12 @@ typedef struct
 	int16		id;				/* type field --- must be first */
 	Oid			dbId;			/* database ID, or 0 if a shared relation */
 	Oid			relId;			/* relation ID */
+	RelFileNode	physId;			/* physical file ID */
+	/*
+	 * Note: it is likely that RelFileNode will someday be changed to
+	 * include database ID.  In that case the dbId field will be redundant
+	 * and should be removed to save space.
+	 */
 } SharedInvalRelcacheMsg;
 
 typedef union

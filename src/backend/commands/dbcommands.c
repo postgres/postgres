@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.130 2004/01/07 18:56:25 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.131 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/sinval.h"
 #include "utils/acl.h"

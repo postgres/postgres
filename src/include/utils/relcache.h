@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.38 2003/11/29 22:41:16 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.39 2004/02/10 01:55:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@ extern Relation RelationSysNameGetRelation(const char *relationName);
 
 /* finds an existing cache entry, but won't make a new one */
 extern Relation RelationIdCacheGetRelation(Oid relationId);
-extern Relation RelationNodeCacheGetRelation(RelFileNode rnode);
 
 extern void RelationClose(Relation relation);
 
@@ -61,7 +60,7 @@ extern Relation RelationBuildLocalRelation(const char *relname,
  */
 extern void RelationForgetRelation(Oid rid);
 
-extern void RelationIdInvalidateRelationCacheByRelationId(Oid relationId);
+extern void RelationCacheInvalidateEntry(Oid relationId, RelFileNode *rnode);
 
 extern void RelationCacheInvalidate(void);
 
@@ -72,11 +71,6 @@ extern void AtEOXact_RelationCache(bool commit);
  */
 extern bool RelationIdIsInInitFile(Oid relationId);
 extern void RelationCacheInitFileInvalidate(bool beforeSend);
-
-/* XLOG support */
-extern void CreateDummyCaches(void);
-extern void DestroyDummyCaches(void);
-
 
 /* should be used only by relcache.c and catcache.c */
 extern bool criticalRelcachesBuilt;

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.68 2004/01/06 18:07:31 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.69 2004/02/10 01:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,72 +21,52 @@
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 
-static void smgrshutdown(int code, Datum arg);
-
+/*
+ * This struct of function pointers defines the API between smgr.c and
+ * any individual storage manager module.  Note that smgr subfunctions are
+ * generally expected to return TRUE on success, FALSE on error.  (For
+ * nblocks and truncate we instead say that returning InvalidBlockNumber
+ * indicates an error.)
+ */
 typedef struct f_smgr
 {
-	int			(*smgr_init) (void);	/* may be NULL */
-	int			(*smgr_shutdown) (void);		/* may be NULL */
-	int			(*smgr_create) (Relation reln);
-	int			(*smgr_unlink) (RelFileNode rnode);
-	int			(*smgr_extend) (Relation reln, BlockNumber blocknum,
+	bool		(*smgr_init) (void);			/* may be NULL */
+	bool		(*smgr_shutdown) (void);		/* may be NULL */
+	bool		(*smgr_close) (SMgrRelation reln);
+	bool		(*smgr_create) (SMgrRelation reln, bool isRedo);
+	bool		(*smgr_unlink) (RelFileNode rnode, bool isRedo);
+	bool		(*smgr_extend) (SMgrRelation reln, BlockNumber blocknum,
 											char *buffer);
-	int			(*smgr_open) (Relation reln);
-	int			(*smgr_close) (Relation reln);
-	int			(*smgr_read) (Relation reln, BlockNumber blocknum,
+	bool		(*smgr_read) (SMgrRelation reln, BlockNumber blocknum,
 										  char *buffer);
-	int			(*smgr_write) (Relation reln, BlockNumber blocknum,
+	bool		(*smgr_write) (SMgrRelation reln, BlockNumber blocknum,
 										   char *buffer);
-	int			(*smgr_blindwrt) (RelFileNode rnode, BlockNumber blkno,
-											  char *buffer);
-	BlockNumber (*smgr_nblocks) (Relation reln);
-	BlockNumber (*smgr_truncate) (Relation reln, BlockNumber nblocks);
-	int			(*smgr_commit) (void);	/* may be NULL */
-	int			(*smgr_abort) (void);	/* may be NULL */
-	int			(*smgr_sync) (void);
+	BlockNumber (*smgr_nblocks) (SMgrRelation reln);
+	BlockNumber (*smgr_truncate) (SMgrRelation reln, BlockNumber nblocks);
+	bool		(*smgr_commit) (void);			/* may be NULL */
+	bool		(*smgr_abort) (void);			/* may be NULL */
+	bool		(*smgr_sync) (void);			/* may be NULL */
 } f_smgr;
 
-/*
- *	The weird placement of commas in this init block is to keep the compiler
- *	happy, regardless of what storage managers we have (or don't have).
- */
 
-static f_smgr smgrsw[] = {
-
+static const f_smgr smgrsw[] = {
 	/* magnetic disk */
-	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
-		mdread, mdwrite, mdblindwrt,
-		mdnblocks, mdtruncate, mdcommit, mdabort, mdsync
-	},
-
-#ifdef STABLE_MEMORY_STORAGE
-	/* main memory */
-	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
-		mmread, mmwrite, mmblindwrt,
-	mmnblocks, NULL, mmcommit, mmabort, NULL},
-#endif
+	{mdinit, NULL, mdclose, mdcreate, mdunlink, mdextend,
+	 mdread, mdwrite, mdnblocks, mdtruncate, mdcommit, mdabort, mdsync
+	}
 };
+
+static const int	NSmgr = lengthof(smgrsw);
+
 
 /*
- *	This array records which storage managers are write-once, and which
- *	support overwrite.	A 'true' entry means that the storage manager is
- *	write-once.  In the best of all possible worlds, there would be no
- *	write-once storage managers.
+ * Each backend has a hashtable that stores all extant SMgrRelation objects.
  */
-
-#ifdef NOT_USED
-static bool smgrwo[] = {
-	false,						/* magnetic disk */
-#ifdef STABLE_MEMORY_STORAGE
-	false,						/* main memory */
-#endif
-};
-#endif
-
-static int	NSmgr = lengthof(smgrsw);
+static HTAB *SMgrRelationHash = NULL;
 
 /*
  * We keep a list of all relations (represented as RelFileNode values)
@@ -105,7 +85,7 @@ static int	NSmgr = lengthof(smgrsw);
 typedef struct PendingRelDelete
 {
 	RelFileNode relnode;		/* relation that may need to be deleted */
-	int16		which;			/* which storage manager? */
+	int			which;			/* which storage manager? */
 	bool		isTemp;			/* is it a temporary relation? */
 	bool		atCommit;		/* T=delete at commit; F=delete at abort */
 	struct PendingRelDelete *next;		/* linked-list link */
@@ -114,12 +94,20 @@ typedef struct PendingRelDelete
 static PendingRelDelete *pendingDeletes = NULL; /* head of linked list */
 
 
+/* local function prototypes */
+static void smgrshutdown(int code, Datum arg);
+static void smgr_internal_unlink(RelFileNode rnode, int which,
+								 bool isTemp, bool isRedo);
+
+
 /*
  *	smgrinit(), smgrshutdown() -- Initialize or shut down all storage
  *								  managers.
  *
+ * Note: in the normal multiprocess scenario with a postmaster, these are
+ * called at postmaster start and stop, not per-backend.
  */
-int
+void
 smgrinit(void)
 {
 	int			i;
@@ -128,7 +116,7 @@ smgrinit(void)
 	{
 		if (smgrsw[i].smgr_init)
 		{
-			if ((*(smgrsw[i].smgr_init)) () == SM_FAIL)
+			if (! (*(smgrsw[i].smgr_init)) ())
 				elog(FATAL, "smgr initialization failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
@@ -137,8 +125,6 @@ smgrinit(void)
 
 	/* register the shutdown proc */
 	on_proc_exit(smgrshutdown, 0);
-
-	return SM_SUCCESS;
 }
 
 static void
@@ -150,7 +136,7 @@ smgrshutdown(int code, Datum arg)
 	{
 		if (smgrsw[i].smgr_shutdown)
 		{
-			if ((*(smgrsw[i].smgr_shutdown)) () == SM_FAIL)
+			if (! (*(smgrsw[i].smgr_shutdown)) ())
 				elog(FATAL, "smgr shutdown failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
@@ -159,57 +145,177 @@ smgrshutdown(int code, Datum arg)
 }
 
 /*
- *	smgrcreate() -- Create a new relation.
+ *	smgropen() -- Return an SMgrRelation object, creating it if need be.
  *
- *		This routine takes a reldesc, creates the relation on the appropriate
- *		device, and returns a file descriptor for it.
+ *		This does not attempt to actually open the object.
  */
-int
-smgrcreate(int16 which, Relation reln)
+SMgrRelation
+smgropen(RelFileNode rnode)
 {
-	int			fd;
-	PendingRelDelete *pending;
+	SMgrRelation	reln;
+	bool		found;
 
-	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
+	if (SMgrRelationHash == NULL)
+	{
+		/* First time through: initialize the hash table */
+		HASHCTL		ctl;
+
+		MemSet(&ctl, 0, sizeof(ctl));
+		ctl.keysize = sizeof(RelFileNode);
+		ctl.entrysize = sizeof(SMgrRelationData);
+		ctl.hash = tag_hash;
+		SMgrRelationHash = hash_create("smgr relation table", 400,
+									   &ctl, HASH_ELEM | HASH_FUNCTION);
+	}
+
+	/* Look up or create an entry */
+	reln = (SMgrRelation) hash_search(SMgrRelationHash,
+									  (void *) &rnode,
+									  HASH_ENTER, &found);
+	if (reln == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+
+	/* Initialize it if not present before */
+	if (!found)
+	{
+		/* hash_search already filled in the lookup key */
+		reln->smgr_which = 0;	/* we only have md.c at present */
+		reln->md_fd = NULL;		/* mark it not open */
+	}
+
+	return reln;
+}
+
+/*
+ *	smgrclose() -- Close and delete an SMgrRelation object.
+ *
+ * It is the caller's responsibility not to leave any dangling references
+ * to the object.  (Pointers should be cleared after successful return;
+ * on the off chance of failure, the SMgrRelation object will still exist.)
+ */
+void
+smgrclose(SMgrRelation reln)
+{
+	if (! (*(smgrsw[reln->smgr_which].smgr_close)) (reln))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not create relation \"%s\": %m",
-						RelationGetRelationName(reln))));
+				 errmsg("could not close relation %u/%u: %m",
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode)));
+
+	if (hash_search(SMgrRelationHash,
+					(void *) &(reln->smgr_rnode),
+					HASH_REMOVE, NULL) == NULL)
+		elog(ERROR, "SMgrRelation hashtable corrupted");
+}
+
+/*
+ *	smgrcloseall() -- Close all existing SMgrRelation objects.
+ *
+ * It is the caller's responsibility not to leave any dangling references.
+ */
+void
+smgrcloseall(void)
+{
+	HASH_SEQ_STATUS status;
+	SMgrRelation reln;
+
+	/* Nothing to do if hashtable not set up */
+	if (SMgrRelationHash == NULL)
+		return;
+
+	hash_seq_init(&status, SMgrRelationHash);
+
+	while ((reln = (SMgrRelation) hash_seq_search(&status)) != NULL)
+	{
+		smgrclose(reln);
+	}
+}
+
+/*
+ *	smgrclosenode() -- Close SMgrRelation object for given RelFileNode,
+ *					   if one exists.
+ *
+ * This has the same effects as smgrclose(smgropen(rnode)), but it avoids
+ * uselessly creating a hashtable entry only to drop it again when no
+ * such entry exists already.
+ *
+ * It is the caller's responsibility not to leave any dangling references.
+ */
+void
+smgrclosenode(RelFileNode rnode)
+{
+	SMgrRelation	reln;
+
+	/* Nothing to do if hashtable not set up */
+	if (SMgrRelationHash == NULL)
+		return;
+
+	reln = (SMgrRelation) hash_search(SMgrRelationHash,
+									  (void *) &rnode,
+									  HASH_FIND, NULL);
+	if (reln != NULL)
+		smgrclose(reln);
+}
+
+/*
+ *	smgrcreate() -- Create a new relation.
+ *
+ *		Given an already-created (but presumably unused) SMgrRelation,
+ *		cause the underlying disk file or other storage to be created.
+ *
+ *		If isRedo is true, it is okay for the underlying file to exist
+ *		already because we are in a WAL replay sequence.  In this case
+ *		we should make no PendingRelDelete entry; the WAL sequence will
+ *		tell whether to drop the file.
+ */
+void
+smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
+{
+	PendingRelDelete *pending;
+
+	if (! (*(smgrsw[reln->smgr_which].smgr_create)) (reln, isRedo))
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not create relation %u/%u: %m",
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode)));
+
+	if (isRedo)
+		return;
 
 	/* Add the relation to the list of stuff to delete at abort */
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = reln->rd_node;
-	pending->which = which;
-	pending->isTemp = reln->rd_istemp;
+	pending->relnode = reln->smgr_rnode;
+	pending->which = reln->smgr_which;
+	pending->isTemp = isTemp;
 	pending->atCommit = false;	/* delete if abort */
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
-
-	return fd;
 }
 
 /*
- *	smgrunlink() -- Unlink a relation.
+ *	smgrscheduleunlink() -- Schedule unlinking a relation at xact commit.
  *
- *		The relation is removed from the store.  Actually, we just remember
- *		that we want to do this at transaction commit.
+ *		The relation is marked to be removed from the store if we
+ *		successfully commit the current transaction.
+ *
+ * This also implies smgrclose() on the SMgrRelation object.
  */
-int
-smgrunlink(int16 which, Relation reln)
+void
+smgrscheduleunlink(SMgrRelation reln, bool isTemp)
 {
 	PendingRelDelete *pending;
-
-	/* Make sure the file is closed */
-	if (reln->rd_fd >= 0)
-		smgrclose(which, reln);
 
 	/* Add the relation to the list of stuff to delete at commit */
 	pending = (PendingRelDelete *)
 		MemoryContextAlloc(TopMemoryContext, sizeof(PendingRelDelete));
-	pending->relnode = reln->rd_node;
-	pending->which = which;
-	pending->isTemp = reln->rd_istemp;
+	pending->relnode = reln->smgr_rnode;
+	pending->which = reln->smgr_which;
+	pending->isTemp = isTemp;
 	pending->atCommit = true;	/* delete if commit */
 	pending->next = pendingDeletes;
 	pendingDeletes = pending;
@@ -224,7 +330,63 @@ smgrunlink(int16 which, Relation reln)
 	 * immediately, but for now I'll keep the logic simple.
 	 */
 
-	return SM_SUCCESS;
+	/* Now close the file and throw away the hashtable entry */
+	smgrclose(reln);
+}
+
+/*
+ *	smgrdounlink() -- Immediately unlink a relation.
+ *
+ *		The relation is removed from the store.  This should not be used
+ *		during transactional operations, since it can't be undone.
+ *
+ *		If isRedo is true, it is okay for the underlying file to be gone
+ *		already.  (In practice isRedo will always be true.)
+ *
+ * This also implies smgrclose() on the SMgrRelation object.
+ */
+void
+smgrdounlink(SMgrRelation reln, bool isTemp, bool isRedo)
+{
+	RelFileNode	rnode = reln->smgr_rnode;
+	int			which = reln->smgr_which;
+
+	/* Close the file and throw away the hashtable entry */
+	smgrclose(reln);
+
+	smgr_internal_unlink(rnode, which, isTemp, isRedo);
+}
+
+/*
+ * Shared subroutine that actually does the unlink ...
+ */
+static void
+smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
+{
+	/*
+	 * Get rid of any leftover buffers for the rel (shouldn't be any in the
+	 * commit case, but there can be in the abort case).
+	 */
+	DropRelFileNodeBuffers(rnode, isTemp);
+
+	/*
+	 * Tell the free space map to forget this relation.  It won't be accessed
+	 * any more anyway, but we may as well recycle the map space quickly.
+	 */
+	FreeSpaceMapForgetRel(&rnode);
+
+	/*
+	 * And delete the physical files.
+	 *
+	 * Note: we treat deletion failure as a WARNING, not an error,
+	 * because we've already decided to commit or abort the current xact.
+	 */
+	if (! (*(smgrsw[which].smgr_unlink)) (rnode, isRedo))
+		ereport(WARNING,
+				(errcode_for_file_access(),
+				 errmsg("could not unlink relation %u/%u: %m",
+						rnode.tblNode,
+						rnode.relNode)));
 }
 
 /*
@@ -234,68 +396,17 @@ smgrunlink(int16 which, Relation reln)
  *		specified position.  However, we are expecting to extend the
  *		relation (ie, blocknum is the current EOF), and so in case of
  *		failure we clean up by truncating.
- *
- *		Returns SM_SUCCESS on success; aborts the current transaction on
- *		failure.
  */
-int
-smgrextend(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
+void
+smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
-	int			status;
-
-	status = (*(smgrsw[which].smgr_extend)) (reln, blocknum, buffer);
-
-	if (status == SM_FAIL)
+	if (! (*(smgrsw[reln->smgr_which].smgr_extend)) (reln, blocknum, buffer))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not extend relation \"%s\": %m",
-						RelationGetRelationName(reln)),
+				 errmsg("could not extend relation %u/%u: %m",
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode),
 				 errhint("Check free disk space.")));
-
-	return status;
-}
-
-/*
- *	smgropen() -- Open a relation using a particular storage manager.
- *
- *		Returns the fd for the open relation on success.
- *
- *		On failure, returns -1 if failOK, else aborts the transaction.
- */
-int
-smgropen(int16 which, Relation reln, bool failOK)
-{
-	int			fd;
-
-	if (reln->rd_rel->relkind == RELKIND_VIEW)
-		return -1;
-	if (reln->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		return -1;
-	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
-		if (!failOK)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not open file \"%s\": %m",
-							RelationGetRelationName(reln))));
-
-	return fd;
-}
-
-/*
- *	smgrclose() -- Close a relation.
- *
- *		Returns SM_SUCCESS on success, aborts on failure.
- */
-int
-smgrclose(int16 which, Relation reln)
-{
-	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not close relation \"%s\": %m",
-						RelationGetRelationName(reln))));
-
-	return SM_SUCCESS;
 }
 
 /*
@@ -304,24 +415,18 @@ smgrclose(int16 which, Relation reln)
  *
  *		This routine is called from the buffer manager in order to
  *		instantiate pages in the shared buffer cache.  All storage managers
- *		return pages in the format that POSTGRES expects.  This routine
- *		dispatches the read.  On success, it returns SM_SUCCESS.  On failure,
- *		the current transaction is aborted.
+ *		return pages in the format that POSTGRES expects.
  */
-int
-smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
+void
+smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
-	int			status;
-
-	status = (*(smgrsw[which].smgr_read)) (reln, blocknum, buffer);
-
-	if (status == SM_FAIL)
+	if (! (*(smgrsw[reln->smgr_which].smgr_read)) (reln, blocknum, buffer))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not read block %d of relation \"%s\": %m",
-						blocknum, RelationGetRelationName(reln))));
-
-	return status;
+				 errmsg("could not read block %u of relation %u/%u: %m",
+						blocknum,
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode)));
 }
 
 /*
@@ -329,56 +434,17 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *
  *		This is not a synchronous write -- the block is not necessarily
  *		on disk at return, only dumped out to the kernel.
- *
- *		The buffer is written out via the appropriate
- *		storage manager.  This routine returns SM_SUCCESS or aborts
- *		the current transaction.
  */
-int
-smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
+void
+smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
-	int			status;
-
-	status = (*(smgrsw[which].smgr_write)) (reln, blocknum, buffer);
-
-	if (status == SM_FAIL)
+	if (! (*(smgrsw[reln->smgr_which].smgr_write)) (reln, blocknum, buffer))
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not write block %d of relation \"%s\": %m",
-						blocknum, RelationGetRelationName(reln))));
-
-	return status;
-}
-
-/*
- *	smgrblindwrt() -- Write a page out blind.
- *
- *		In some cases, we may find a page in the buffer cache that we
- *		can't make a reldesc for.  This happens, for example, when we
- *		want to reuse a dirty page that was written by a transaction
- *		that has not yet committed, which created a new relation.  In
- *		this case, the buffer manager will call smgrblindwrt() with
- *		the name and OID of the database and the relation to which the
- *		buffer belongs.  Every storage manager must be able to write
- *		this page out to stable storage in this circumstance.
- */
-int
-smgrblindwrt(int16 which,
-			 RelFileNode rnode,
-			 BlockNumber blkno,
-			 char *buffer)
-{
-	int			status;
-
-	status = (*(smgrsw[which].smgr_blindwrt)) (rnode, blkno, buffer);
-
-	if (status == SM_FAIL)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write block %d of %u/%u blind: %m",
-						blkno, rnode.tblNode, rnode.relNode)));
-
-	return status;
+				 errmsg("could not write block %u of relation %u/%u: %m",
+						blocknum,
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode)));
 }
 
 /*
@@ -389,11 +455,11 @@ smgrblindwrt(int16 which,
  *		transaction on failure.
  */
 BlockNumber
-smgrnblocks(int16 which, Relation reln)
+smgrnblocks(SMgrRelation reln)
 {
 	BlockNumber nblocks;
 
-	nblocks = (*(smgrsw[which].smgr_nblocks)) (reln);
+	nblocks = (*(smgrsw[reln->smgr_which].smgr_nblocks)) (reln);
 
 	/*
 	 * NOTE: if a relation ever did grow to 2^32-1 blocks, this code would
@@ -404,8 +470,9 @@ smgrnblocks(int16 which, Relation reln)
 	if (nblocks == InvalidBlockNumber)
 		ereport(ERROR,
 				(errcode_for_file_access(),
-				 errmsg("could not count blocks of relation \"%s\": %m",
-						RelationGetRelationName(reln))));
+				 errmsg("could not count blocks of relation %u/%u: %m",
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode)));
 
 	return nblocks;
 }
@@ -418,27 +485,25 @@ smgrnblocks(int16 which, Relation reln)
  *		transaction on failure.
  */
 BlockNumber
-smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
+smgrtruncate(SMgrRelation reln, BlockNumber nblocks)
 {
 	BlockNumber newblks;
 
-	newblks = nblocks;
-	if (smgrsw[which].smgr_truncate)
-	{
-		/*
-		 * Tell the free space map to forget anything it may have stored
-		 * for the about-to-be-deleted blocks.	We want to be sure it
-		 * won't return bogus block numbers later on.
-		 */
-		FreeSpaceMapTruncateRel(&reln->rd_node, nblocks);
+	/*
+	 * Tell the free space map to forget anything it may have stored
+	 * for the about-to-be-deleted blocks.	We want to be sure it
+	 * won't return bogus block numbers later on.
+	 */
+	FreeSpaceMapTruncateRel(&reln->smgr_rnode, nblocks);
 
-		newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks);
-		if (newblks == InvalidBlockNumber)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not truncate relation \"%s\" to %u blocks: %m",
-							RelationGetRelationName(reln), nblocks)));
-	}
+	newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, nblocks);
+	if (newblks == InvalidBlockNumber)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not truncate relation %u/%u to %u blocks: %m",
+						reln->smgr_rnode.tblNode,
+						reln->smgr_rnode.relNode,
+						nblocks)));
 
 	return newblks;
 }
@@ -446,7 +511,7 @@ smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
 /*
  *	smgrDoPendingDeletes() -- Take care of relation deletes at end of xact.
  */
-int
+void
 smgrDoPendingDeletes(bool isCommit)
 {
 	while (pendingDeletes != NULL)
@@ -455,39 +520,12 @@ smgrDoPendingDeletes(bool isCommit)
 
 		pendingDeletes = pending->next;
 		if (pending->atCommit == isCommit)
-		{
-			/*
-			 * Get rid of any leftover buffers for the rel (shouldn't be
-			 * any in the commit case, but there can be in the abort
-			 * case).
-			 */
-			DropRelFileNodeBuffers(pending->relnode, pending->isTemp);
-
-			/*
-			 * Tell the free space map to forget this relation.  It won't
-			 * be accessed any more anyway, but we may as well recycle the
-			 * map space quickly.
-			 */
-			FreeSpaceMapForgetRel(&pending->relnode);
-
-			/*
-			 * And delete the physical files.
-			 *
-			 * Note: we treat deletion failure as a WARNING, not an error,
-			 * because we've already decided to commit or abort the
-			 * current xact.
-			 */
-			if ((*(smgrsw[pending->which].smgr_unlink)) (pending->relnode) == SM_FAIL)
-				ereport(WARNING,
-						(errcode_for_file_access(),
-						 errmsg("could not unlink %u/%u: %m",
-								pending->relnode.tblNode,
-								pending->relnode.relNode)));
-		}
+			smgr_internal_unlink(pending->relnode,
+								 pending->which,
+								 pending->isTemp,
+								 false);
 		pfree(pending);
 	}
-
-	return SM_SUCCESS;
 }
 
 /*
@@ -496,7 +534,7 @@ smgrDoPendingDeletes(bool isCommit)
  *
  *		This is called before we actually commit.
  */
-int
+void
 smgrcommit(void)
 {
 	int			i;
@@ -505,20 +543,18 @@ smgrcommit(void)
 	{
 		if (smgrsw[i].smgr_commit)
 		{
-			if ((*(smgrsw[i].smgr_commit)) () == SM_FAIL)
+			if (! (*(smgrsw[i].smgr_commit)) ())
 				elog(FATAL, "transaction commit failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
 	}
-
-	return SM_SUCCESS;
 }
 
 /*
  *	smgrabort() -- Abort changes made during the current transaction.
  */
-int
+void
 smgrabort(void)
 {
 	int			i;
@@ -527,20 +563,18 @@ smgrabort(void)
 	{
 		if (smgrsw[i].smgr_abort)
 		{
-			if ((*(smgrsw[i].smgr_abort)) () == SM_FAIL)
+			if (! (*(smgrsw[i].smgr_abort)) ())
 				elog(FATAL, "transaction abort failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
 	}
-
-	return SM_SUCCESS;
 }
 
 /*
  *	smgrsync() -- Sync files to disk at checkpoint time.
  */
-int
+void
 smgrsync(void)
 {
 	int			i;
@@ -549,26 +583,14 @@ smgrsync(void)
 	{
 		if (smgrsw[i].smgr_sync)
 		{
-			if ((*(smgrsw[i].smgr_sync)) () == SM_FAIL)
+			if (! (*(smgrsw[i].smgr_sync)) ())
 				elog(PANIC, "storage sync failed on %s: %m",
 					 DatumGetCString(DirectFunctionCall1(smgrout,
 													 Int16GetDatum(i))));
 		}
 	}
-
-	return SM_SUCCESS;
 }
 
-#ifdef NOT_USED
-bool
-smgriswo(int16 smgrno)
-{
-	if (smgrno < 0 || smgrno >= NSmgr)
-		elog(ERROR, "invalid storage manager id: %d", smgrno);
-
-	return smgrwo[smgrno];
-}
-#endif
 
 void
 smgr_redo(XLogRecPtr lsn, XLogRecord *record)

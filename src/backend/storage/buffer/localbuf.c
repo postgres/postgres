@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.51 2004/01/07 18:56:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.52 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,24 +90,15 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 */
 	if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
 	{
-		Relation	bufrel = RelationNodeCacheGetRelation(bufHdr->tag.rnode);
+		SMgrRelation reln;
 
-		/* flush this page */
-		if (bufrel == NULL)
-		{
-			smgrblindwrt(DEFAULT_SMGR,
-						 bufHdr->tag.rnode,
-						 bufHdr->tag.blockNum,
-						 (char *) MAKE_PTR(bufHdr->data));
-		}
-		else
-		{
-			smgrwrite(DEFAULT_SMGR, bufrel,
-					  bufHdr->tag.blockNum,
-					  (char *) MAKE_PTR(bufHdr->data));
-			/* drop refcount incremented by RelationNodeCacheGetRelation */
-			RelationDecrementReferenceCount(bufrel);
-		}
+		/* Find smgr relation for buffer */
+		reln = smgropen(bufHdr->tag.rnode);
+
+		/* And write... */
+		smgrwrite(reln,
+				  bufHdr->tag.blockNum,
+				  (char *) MAKE_PTR(bufHdr->data));
 
 		LocalBufferFlushCount++;
 	}
@@ -143,9 +134,6 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 
 	/*
 	 * it's all ours now.
-	 *
-	 * We need not in tblNode currently but will in future I think, when
-	 * we'll give up rel->rd_fd to fmgr cache.
 	 */
 	bufHdr->tag.rnode = reln->rd_node;
 	bufHdr->tag.blockNum = blockNum;

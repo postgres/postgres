@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.10 2004/01/28 21:02:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/slru.c,v 1.11 2004/02/10 01:55:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <unistd.h>
 
 #include "access/slru.h"
+#include "storage/fd.h"
 #include "storage/lwlock.h"
 #include "miscadmin.h"
 

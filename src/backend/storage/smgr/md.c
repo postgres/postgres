@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.101 2004/01/07 18:56:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.102 2004/02/10 01:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,108 +21,81 @@
 
 #include "catalog/catalog.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 #include "storage/smgr.h"
-#include "utils/inval.h"
 #include "utils/memutils.h"
+
 
 /*
  *	The magnetic disk storage manager keeps track of open file
  *	descriptors in its own descriptor pool.  This is done to make it
  *	easier to support relations that are larger than the operating
- *	system's file size limit (often 2GBytes).  In order to do that, we
+ *	system's file size limit (often 2GBytes).  In order to do that,
  *	we break relations up into chunks of < 2GBytes and store one chunk
  *	in each of several files that represent the relation.  See the
  *	BLCKSZ and RELSEG_SIZE configuration constants in
- *	include/pg_config.h.
- *
- *	The file descriptor stored in the relation cache (see RelationGetFile())
- *	is actually an index into the Md_fdvec array.  -1 indicates not open.
- *
- *	When a relation is broken into multiple chunks, only the first chunk
- *	has its own entry in the Md_fdvec array; the remaining chunks have
- *	palloc'd MdfdVec objects that are chained onto the first chunk via the
- *	mdfd_chain links.  All chunks except the last MUST have size exactly
+ *	include/pg_config.h.  All chunks except the last MUST have size exactly
  *	equal to RELSEG_SIZE blocks --- see mdnblocks() and mdtruncate().
+ *
+ *	The file descriptor pointer (md_fd field) stored in the SMgrRelation
+ *	cache is, therefore, just the head of a list of MdfdVec objects.
+ *	But note the md_fd pointer can be NULL, indicating relation not open.
+ *
+ *	All MdfdVec objects are palloc'd in the MdCxt memory context.
  */
 
 typedef struct _MdfdVec
 {
-	int			mdfd_vfd;		/* fd number in vfd pool */
-	int			mdfd_flags;		/* fd status flags */
+	File		mdfd_vfd;			/* fd number in fd.c's pool */
 
-/* these are the assigned bits in mdfd_flags: */
-#define MDFD_FREE	(1 << 0)	/* unused entry */
-
-	int			mdfd_nextFree;	/* link to next freelist member, if free */
 #ifndef LET_OS_MANAGE_FILESIZE
 	struct _MdfdVec *mdfd_chain;	/* for large relations */
 #endif
 } MdfdVec;
 
-static int	Nfds = 100;			/* initial/current size of Md_fdvec array */
-static MdfdVec *Md_fdvec = NULL;
-static int	Md_Free = -1;		/* head of freelist of unused fdvec
-								 * entries */
-static int	CurFd = 0;			/* first never-used fdvec index */
 static MemoryContext MdCxt;		/* context for all md.c allocations */
 
+
 /* routines declared here */
-static void mdclose_fd(int fd);
-static int	_mdfd_getrelnfd(Relation reln);
-static MdfdVec *_mdfd_openseg(Relation reln, BlockNumber segno, int oflags);
-static MdfdVec *_mdfd_getseg(Relation reln, BlockNumber blkno);
-
-static int	_mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno);
-
-static int	_fdvec_alloc(void);
-static void _fdvec_free(int);
+static MdfdVec *mdopen(SMgrRelation reln);
+static MdfdVec *_fdvec_alloc(void);
+#ifndef LET_OS_MANAGE_FILESIZE
+static MdfdVec *_mdfd_openseg(SMgrRelation reln, BlockNumber segno,
+							  int oflags);
+#endif
+static MdfdVec *_mdfd_getseg(SMgrRelation reln, BlockNumber blkno);
 static BlockNumber _mdnblocks(File file, Size blcksz);
+
 
 /*
  *	mdinit() -- Initialize private state for magnetic disk storage manager.
- *
- *		We keep a private table of all file descriptors.  This routine
- *		allocates and initializes the table.
- *
- *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
-int
+bool
 mdinit(void)
 {
-	int			i;
-
 	MdCxt = AllocSetContextCreate(TopMemoryContext,
 								  "MdSmgr",
 								  ALLOCSET_DEFAULT_MINSIZE,
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
 
-	Md_fdvec = (MdfdVec *) MemoryContextAlloc(MdCxt, Nfds * sizeof(MdfdVec));
-
-	MemSet(Md_fdvec, 0, Nfds * sizeof(MdfdVec));
-
-	/* Set free list */
-	for (i = 0; i < Nfds; i++)
-	{
-		Md_fdvec[i].mdfd_nextFree = i + 1;
-		Md_fdvec[i].mdfd_flags = MDFD_FREE;
-	}
-	Md_Free = 0;
-	Md_fdvec[Nfds - 1].mdfd_nextFree = -1;
-
-	return SM_SUCCESS;
+	return true;
 }
 
-int
-mdcreate(Relation reln)
+/*
+ *	mdcreate() -- Create a new relation on magnetic disk.
+ *
+ * If isRedo is true, it's okay for the relation to exist already.
+ */
+bool
+mdcreate(SMgrRelation reln, bool isRedo)
 {
 	char	   *path;
-	int			fd,
-				vfd;
+	File		fd;
 
-	Assert(reln->rd_fd < 0);
+	Assert(reln->md_fd == NULL);
 
-	path = relpath(reln->rd_node);
+	path = relpath(reln->smgr_rnode);
 
 	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | PG_BINARY, 0600);
 
@@ -134,43 +107,45 @@ mdcreate(Relation reln)
 		 * During bootstrap, there are cases where a system relation will
 		 * be accessed (by internal backend processes) before the
 		 * bootstrap script nominally creates it.  Therefore, allow the
-		 * file to exist already, but in bootstrap mode only.  (See also
+		 * file to exist already, even if isRedo is not set.  (See also
 		 * mdopen)
 		 */
-		if (IsBootstrapProcessingMode())
+		if (isRedo || IsBootstrapProcessingMode())
 			fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 		if (fd < 0)
 		{
 			pfree(path);
 			/* be sure to return the error reported by create, not open */
 			errno = save_errno;
-			return -1;
+			return false;
 		}
 		errno = 0;
 	}
 
 	pfree(path);
 
-	vfd = _fdvec_alloc();
-	if (vfd < 0)
-		return -1;
+	reln->md_fd = _fdvec_alloc();
 
-	Md_fdvec[vfd].mdfd_vfd = fd;
-	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
+	reln->md_fd->mdfd_vfd = fd;
 #ifndef LET_OS_MANAGE_FILESIZE
-	Md_fdvec[vfd].mdfd_chain = NULL;
+	reln->md_fd->mdfd_chain = NULL;
 #endif
 
-	return vfd;
+	return true;
 }
 
 /*
  *	mdunlink() -- Unlink a relation.
+ *
+ * Note that we're passed a RelFileNode --- by the time this is called,
+ * there won't be an SMgrRelation hashtable entry anymore.
+ *
+ * If isRedo is true, it's okay for the relation to be already gone.
  */
-int
-mdunlink(RelFileNode rnode)
+bool
+mdunlink(RelFileNode rnode, bool isRedo)
 {
-	int			status = SM_SUCCESS;
+	bool		status = true;
 	int			save_errno = 0;
 	char	   *path;
 
@@ -179,13 +154,16 @@ mdunlink(RelFileNode rnode)
 	/* Delete the first segment, or only segment if not doing segmenting */
 	if (unlink(path) < 0)
 	{
-		status = SM_FAIL;
-		save_errno = errno;
+		if (!isRedo || errno != ENOENT)
+		{
+			status = false;
+			save_errno = errno;
+		}
 	}
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	/* Get the additional segments, if any */
-	if (status == SM_SUCCESS)
+	if (status)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
 		BlockNumber segno;
@@ -198,7 +176,7 @@ mdunlink(RelFileNode rnode)
 				/* ENOENT is expected after the last segment... */
 				if (errno != ENOENT)
 				{
-					status = SM_FAIL;
+					status = false;
 					save_errno = errno;
 				}
 				break;
@@ -222,16 +200,15 @@ mdunlink(RelFileNode rnode)
  *		relation (ie, blocknum is the current EOF), and so in case of
  *		failure we clean up by truncating.
  *
- *		This routine returns SM_FAIL or SM_SUCCESS, with errno set as
- *		appropriate.
+ *		This routine returns true or false, with errno set as appropriate.
  *
  * Note: this routine used to call mdnblocks() to get the block position
  * to write at, but that's pretty silly since the caller needs to know where
  * the block will be written, and accordingly must have done mdnblocks()
  * already.  Might as well pass in the position and save a seek.
  */
-int
-mdextend(Relation reln, BlockNumber blocknum, char *buffer)
+bool
+mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
 	long		seekpos;
 	int			nbytes;
@@ -256,7 +233,7 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 	 * to make room for the new page's buffer.
 	 */
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		return SM_FAIL;
+		return false;
 
 	if ((nbytes = FileWrite(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
@@ -269,29 +246,32 @@ mdextend(Relation reln, BlockNumber blocknum, char *buffer)
 			FileSeek(v->mdfd_vfd, seekpos, SEEK_SET);
 			errno = save_errno;
 		}
-		return SM_FAIL;
+		return false;
 	}
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	Assert(_mdnblocks(v->mdfd_vfd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
-	return SM_SUCCESS;
+	return true;
 }
 
 /*
- *	mdopen() -- Open the specified relation.
+ *	mdopen() -- Open the specified relation.  ereport's on failure.
+ *
+ * Note we only open the first segment, when there are multiple segments.
  */
-int
-mdopen(Relation reln)
+static MdfdVec *
+mdopen(SMgrRelation reln)
 {
 	char	   *path;
-	int			fd;
-	int			vfd;
+	File		fd;
 
-	Assert(reln->rd_fd < 0);
+	/* No work if already open */
+	if (reln->md_fd)
+		return reln->md_fd;
 
-	path = relpath(reln->rd_node);
+	path = relpath(reln->smgr_rnode);
 
 	fd = FileNameOpenFile(path, O_RDWR | PG_BINARY, 0600);
 
@@ -309,57 +289,45 @@ mdopen(Relation reln)
 		if (fd < 0)
 		{
 			pfree(path);
-			return -1;
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not open relation %u/%u: %m",
+							reln->smgr_rnode.tblNode,
+							reln->smgr_rnode.relNode)));
 		}
 	}
 
 	pfree(path);
 
-	vfd = _fdvec_alloc();
-	if (vfd < 0)
-		return -1;
+	reln->md_fd = _fdvec_alloc();
 
-	Md_fdvec[vfd].mdfd_vfd = fd;
-	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
+	reln->md_fd->mdfd_vfd = fd;
 #ifndef LET_OS_MANAGE_FILESIZE
-	Md_fdvec[vfd].mdfd_chain = NULL;
+	reln->md_fd->mdfd_chain = NULL;
 	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
 #endif
 
-	return vfd;
+	return reln->md_fd;
 }
 
 /*
  *	mdclose() -- Close the specified relation, if it isn't closed already.
  *
- *		AND FREE fd vector! It may be re-used for other relations!
- *		reln should be flushed from cache after closing !..
- *
- *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
+ *		Returns true or false with errno set as appropriate.
  */
-int
-mdclose(Relation reln)
+bool
+mdclose(SMgrRelation reln)
 {
-	int			fd;
+	MdfdVec    *v = reln->md_fd;
 
-	fd = RelationGetFile(reln);
-	if (fd < 0)
-		return SM_SUCCESS;		/* already closed, so no work */
+	/* No work if already closed */
+	if (v == NULL)
+		return true;
 
-	mdclose_fd(fd);
-
-	reln->rd_fd = -1;
-
-	return SM_SUCCESS;
-}
-
-static void
-mdclose_fd(int fd)
-{
-	MdfdVec    *v;
+	reln->md_fd = NULL;			/* prevent dangling pointer after error */
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	for (v = &Md_fdvec[fd]; v != NULL;)
+	while (v != NULL)
 	{
 		MdfdVec    *ov = v;
 
@@ -368,32 +336,24 @@ mdclose_fd(int fd)
 			FileClose(v->mdfd_vfd);
 		/* Now free vector */
 		v = v->mdfd_chain;
-		if (ov != &Md_fdvec[fd])
-			pfree(ov);
+		pfree(ov);
 	}
-
-	Md_fdvec[fd].mdfd_chain = NULL;
 #else
-	v = &Md_fdvec[fd];
-	if (v != NULL)
-	{
-		if (v->mdfd_vfd >= 0)
-			FileClose(v->mdfd_vfd);
-	}
+	if (v->mdfd_vfd >= 0)
+		FileClose(v->mdfd_vfd);
+	pfree(v);
 #endif
 
-	_fdvec_free(fd);
+	return true;
 }
 
 /*
  *	mdread() -- Read the specified block from a relation.
- *
- *		Returns SM_SUCCESS or SM_FAIL.
  */
-int
-mdread(Relation reln, BlockNumber blocknum, char *buffer)
+bool
+mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
-	int			status;
+	bool		status;
 	long		seekpos;
 	int			nbytes;
 	MdfdVec    *v;
@@ -408,9 +368,9 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		return SM_FAIL;
+		return false;
 
-	status = SM_SUCCESS;
+	status = true;
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		/*
@@ -425,7 +385,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 			(nbytes > 0 && mdnblocks(reln) == blocknum))
 			MemSet(buffer, 0, BLCKSZ);
 		else
-			status = SM_FAIL;
+			status = false;
 	}
 
 	return status;
@@ -433,11 +393,9 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 
 /*
  *	mdwrite() -- Write the supplied block at the appropriate location.
- *
- *		Returns SM_SUCCESS or SM_FAIL.
  */
-int
-mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
+bool
+mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
 	long		seekpos;
 	MdfdVec    *v;
@@ -452,69 +410,12 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		return SM_FAIL;
+		return false;
 
 	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
-		return SM_FAIL;
+		return false;
 
-	return SM_SUCCESS;
-}
-
-/*
- *	mdblindwrt() -- Write a block to disk blind.
- *
- *		We have to be able to do this using only the rnode of the relation
- *		in which the block belongs.  Otherwise this is much like mdwrite().
- */
-int
-mdblindwrt(RelFileNode rnode,
-		   BlockNumber blkno,
-		   char *buffer)
-{
-	int			status;
-	long		seekpos;
-	int			fd;
-
-	fd = _mdfd_blind_getseg(rnode, blkno);
-
-	if (fd < 0)
-		return SM_FAIL;
-
-#ifndef LET_OS_MANAGE_FILESIZE
-	seekpos = (long) (BLCKSZ * (blkno % ((BlockNumber) RELSEG_SIZE)));
-	Assert(seekpos < BLCKSZ * RELSEG_SIZE);
-#else
-	seekpos = (long) (BLCKSZ * (blkno));
-#endif
-
-	errno = 0;
-	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
-	{
-		elog(LOG, "lseek(%ld) failed: %m", seekpos);
-		close(fd);
-		return SM_FAIL;
-	}
-
-	status = SM_SUCCESS;
-
-	/* write the block */
-	errno = 0;
-	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
-	{
-		/* if write didn't set errno, assume problem is no disk space */
-		if (errno == 0)
-			errno = ENOSPC;
-		elog(LOG, "write() failed: %m");
-		status = SM_FAIL;
-	}
-
-	if (close(fd) < 0)
-	{
-		elog(LOG, "close() failed: %m");
-		status = SM_FAIL;
-	}
-
-	return status;
+	return true;
 }
 
 /*
@@ -525,24 +426,16 @@ mdblindwrt(RelFileNode rnode,
  *		called, then only segments up to the last one actually touched
  *		are present in the chain...
  *
- *		Returns # of blocks, ereport's on error.
+ *		Returns # of blocks, or InvalidBlockNumber on error.
  */
 BlockNumber
-mdnblocks(Relation reln)
+mdnblocks(SMgrRelation reln)
 {
-	int			fd;
-	MdfdVec    *v;
+	MdfdVec    *v = mdopen(reln);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	BlockNumber nblocks;
-	BlockNumber segno;
-#endif
-
-	fd = _mdfd_getrelnfd(reln);
-	v = &Md_fdvec[fd];
-
-#ifndef LET_OS_MANAGE_FILESIZE
-	segno = 0;
+	BlockNumber segno = 0;
 
 	/*
 	 * Skip through any segments that aren't the last one, to avoid
@@ -583,8 +476,7 @@ mdnblocks(Relation reln)
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 			if (v->mdfd_chain == NULL)
-				elog(ERROR, "could not count blocks of \"%s\": %m",
-					 RelationGetRelationName(reln));
+				return InvalidBlockNumber;		/* failed? */
 		}
 
 		v = v->mdfd_chain;
@@ -600,9 +492,8 @@ mdnblocks(Relation reln)
  *		Returns # of blocks or InvalidBlockNumber on error.
  */
 BlockNumber
-mdtruncate(Relation reln, BlockNumber nblocks)
+mdtruncate(SMgrRelation reln, BlockNumber nblocks)
 {
-	int			fd;
 	MdfdVec    *v;
 	BlockNumber curnblk;
 
@@ -615,13 +506,14 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 	 * that truncate/delete loop will get them all!
 	 */
 	curnblk = mdnblocks(reln);
+	if (curnblk == InvalidBlockNumber)
+		return InvalidBlockNumber;		/* mdnblocks failed */
 	if (nblocks > curnblk)
 		return InvalidBlockNumber;		/* bogus request */
 	if (nblocks == curnblk)
 		return nblocks;			/* no work */
 
-	fd = _mdfd_getrelnfd(reln);
-	v = &Md_fdvec[fd];
+	v = mdopen(reln);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	priorblocks = 0;
@@ -641,7 +533,7 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 			FileTruncate(v->mdfd_vfd, 0);
 			FileUnlink(v->mdfd_vfd);
 			v = v->mdfd_chain;
-			Assert(ov != &Md_fdvec[fd]);		/* we never drop the 1st
+			Assert(ov != reln->md_fd);			/* we never drop the 1st
 												 * segment */
 			pfree(ov);
 		}
@@ -682,115 +574,65 @@ mdtruncate(Relation reln, BlockNumber nblocks)
 
 /*
  *	mdcommit() -- Commit a transaction.
- *
- *		Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
-int
+bool
 mdcommit(void)
 {
 	/*
 	 * We don't actually have to do anything here...
 	 */
-	return SM_SUCCESS;
+	return true;
 }
 
 /*
  *	mdabort() -- Abort a transaction.
  */
-int
+bool
 mdabort(void)
 {
 	/*
 	 * We don't actually have to do anything here...
 	 */
-	return SM_SUCCESS;
+	return true;
 }
 
 /*
  *	mdsync() -- Sync previous writes to stable storage.
  */
-int
+bool
 mdsync(void)
 {
 	sync();
 	if (IsUnderPostmaster)
 		sleep(2);
 	sync();
-	return SM_SUCCESS;
+	return true;
 }
 
 /*
- *	_fdvec_alloc() -- Grab a free (or new) md file descriptor vector.
+ *	_fdvec_alloc() -- Make a MdfdVec object.
  */
-static int
+static MdfdVec *
 _fdvec_alloc(void)
 {
-	MdfdVec    *nvec;
-	int			fdvec,
-				i;
+	MdfdVec *v;
 
-	if (Md_Free >= 0)			/* get from free list */
-	{
-		fdvec = Md_Free;
-		Md_Free = Md_fdvec[fdvec].mdfd_nextFree;
-		Assert(Md_fdvec[fdvec].mdfd_flags == MDFD_FREE);
-		Md_fdvec[fdvec].mdfd_flags = 0;
-		if (fdvec >= CurFd)
-		{
-			Assert(fdvec == CurFd);
-			CurFd++;
-		}
-		return fdvec;
-	}
+	v = (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
+	v->mdfd_vfd = -1;
+#ifndef LET_OS_MANAGE_FILESIZE
+	v->mdfd_chain = NULL;
+#endif
 
-	/* Must allocate more room */
-
-	if (Nfds != CurFd)
-		elog(FATAL, "_fdvec_alloc error");
-
-	Nfds *= 2;
-
-	nvec = (MdfdVec *) MemoryContextAlloc(MdCxt, Nfds * sizeof(MdfdVec));
-	MemSet(nvec, 0, Nfds * sizeof(MdfdVec));
-	memcpy(nvec, (char *) Md_fdvec, CurFd * sizeof(MdfdVec));
-	pfree(Md_fdvec);
-
-	Md_fdvec = nvec;
-
-	/* Set new free list */
-	for (i = CurFd; i < Nfds; i++)
-	{
-		Md_fdvec[i].mdfd_nextFree = i + 1;
-		Md_fdvec[i].mdfd_flags = MDFD_FREE;
-	}
-	Md_fdvec[Nfds - 1].mdfd_nextFree = -1;
-	Md_Free = CurFd + 1;
-
-	fdvec = CurFd;
-	CurFd++;
-	Md_fdvec[fdvec].mdfd_flags = 0;
-
-	return fdvec;
+	return v;
 }
 
+#ifndef LET_OS_MANAGE_FILESIZE
 /*
- *	_fdvec_free() -- free md file descriptor vector.
- *
+ * Open the specified segment of the relation,
+ * and make a MdfdVec object for it.  Returns NULL on failure.
  */
-static
-void
-_fdvec_free(int fdvec)
-{
-
-	Assert(Md_Free < 0 || Md_fdvec[Md_Free].mdfd_flags == MDFD_FREE);
-	Assert(Md_fdvec[fdvec].mdfd_flags != MDFD_FREE);
-	Md_fdvec[fdvec].mdfd_nextFree = Md_Free;
-	Md_fdvec[fdvec].mdfd_flags = MDFD_FREE;
-	Md_Free = fdvec;
-}
-
 static MdfdVec *
-_mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
+_mdfd_openseg(SMgrRelation reln, BlockNumber segno, int oflags)
 {
 	MdfdVec    *v;
 	int			fd;
@@ -798,7 +640,7 @@ _mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
 			   *fullpath;
 
 	/* be sure we have enough space for the '.segno', if any */
-	path = relpath(reln->rd_node);
+	path = relpath(reln->smgr_rnode);
 
 	if (segno > 0)
 	{
@@ -818,61 +660,32 @@ _mdfd_openseg(Relation reln, BlockNumber segno, int oflags)
 		return NULL;
 
 	/* allocate an mdfdvec entry for it */
-	v = (MdfdVec *) MemoryContextAlloc(MdCxt, sizeof(MdfdVec));
+	v = _fdvec_alloc();
 
 	/* fill the entry */
 	v->mdfd_vfd = fd;
-	v->mdfd_flags = (uint16) 0;
-#ifndef LET_OS_MANAGE_FILESIZE
 	v->mdfd_chain = NULL;
 	Assert(_mdnblocks(fd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
-#endif
 
 	/* all done */
 	return v;
 }
-
-/*
- *	_mdfd_getrelnfd() -- Get the (virtual) fd for the relation,
- *						 opening it if it's not already open
- *
- */
-static int
-_mdfd_getrelnfd(Relation reln)
-{
-	int			fd;
-
-	fd = RelationGetFile(reln);
-	if (fd < 0)
-	{
-		if ((fd = mdopen(reln)) < 0)
-			elog(ERROR, "could not open relation \"%s\": %m",
-				 RelationGetRelationName(reln));
-		reln->rd_fd = fd;
-	}
-	return fd;
-}
+#endif
 
 /*
  *	_mdfd_getseg() -- Find the segment of the relation holding the
- *					  specified block
- *
+ *					  specified block.  ereport's on failure.
  */
 static MdfdVec *
-_mdfd_getseg(Relation reln, BlockNumber blkno)
+_mdfd_getseg(SMgrRelation reln, BlockNumber blkno)
 {
-	MdfdVec    *v;
-	int			fd;
+	MdfdVec    *v = mdopen(reln);
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	BlockNumber segno;
 	BlockNumber i;
-#endif
 
-	fd = _mdfd_getrelnfd(reln);
-
-#ifndef LET_OS_MANAGE_FILESIZE
-	for (v = &Md_fdvec[fd], segno = blkno / ((BlockNumber) RELSEG_SIZE), i = 1;
+	for (segno = blkno / ((BlockNumber) RELSEG_SIZE), i = 1;
 		 segno > 0;
 		 i++, segno--)
 	{
@@ -892,65 +705,24 @@ _mdfd_getseg(Relation reln, BlockNumber blkno)
 			v->mdfd_chain = _mdfd_openseg(reln, i, (segno == 1) ? O_CREAT : 0);
 
 			if (v->mdfd_chain == NULL)
-				elog(ERROR, "could not open segment %u of relation \"%s\" (target block %u): %m",
-					 i, RelationGetRelationName(reln), blkno);
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not open segment %u of relation %u/%u (target block %u): %m",
+								i,
+								reln->smgr_rnode.tblNode,
+								reln->smgr_rnode.relNode,
+								blkno)));
 		}
 		v = v->mdfd_chain;
 	}
-#else
-	v = &Md_fdvec[fd];
 #endif
 
 	return v;
 }
 
 /*
- * Find the segment of the relation holding the specified block.
- *
- * This performs the same work as _mdfd_getseg() except that we must work
- * "blind" with no Relation struct.  We assume that we are not likely to
- * touch the same relation again soon, so we do not create an FD entry for
- * the relation --- we just open a kernel file descriptor which will be
- * used and promptly closed.  We also assume that the target block already
- * exists, ie, we need not extend the relation.
- *
- * The return value is the kernel descriptor, or -1 on failure.
+ * Get number of blocks present in a single disk file
  */
-static int
-_mdfd_blind_getseg(RelFileNode rnode, BlockNumber blkno)
-{
-	char	   *path;
-	int			fd;
-
-#ifndef LET_OS_MANAGE_FILESIZE
-	BlockNumber segno;
-#endif
-
-	path = relpath(rnode);
-
-#ifndef LET_OS_MANAGE_FILESIZE
-	/* append the '.segno', if needed */
-	segno = blkno / ((BlockNumber) RELSEG_SIZE);
-	if (segno > 0)
-	{
-		char	   *segpath = (char *) palloc(strlen(path) + 12);
-
-		sprintf(segpath, "%s.%u", path, segno);
-		pfree(path);
-		path = segpath;
-	}
-#endif
-
-	/* call fd.c to allow other FDs to be closed if needed */
-	fd = BasicOpenFile(path, O_RDWR | PG_BINARY, 0600);
-	if (fd < 0)
-		elog(LOG, "could not open \"%s\": %m", path);
-
-	pfree(path);
-
-	return fd;
-}
-
 static BlockNumber
 _mdnblocks(File file, Size blcksz)
 {

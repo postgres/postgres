@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.196 2004/02/02 00:17:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.197 2004/02/10 01:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "storage/fd.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -90,13 +91,6 @@ static FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
  */
 static HTAB *RelationIdCache;
 static HTAB *RelationSysNameCache;
-
-/*
- * Bufmgr uses RelFileNode for lookup. Actually, I would like to do
- * not pass Relation to bufmgr & beyond at all and keep some cache
- * in smgr, but no time to do it right way now.		-- vadim 10/22/2000
- */
-static HTAB *RelationNodeCache;
 
 /*
  * This flag is false until we have prepared the critical relcache entries
@@ -152,18 +146,12 @@ typedef struct relnamecacheent
 	Relation	reldesc;
 } RelNameCacheEnt;
 
-typedef struct relnodecacheent
-{
-	RelFileNode relnode;
-	Relation	reldesc;
-} RelNodeCacheEnt;
-
 /*
  *		macros to manipulate the lookup hashtables
  */
 #define RelationCacheInsert(RELATION)	\
 do { \
-	RelIdCacheEnt *idhentry; RelNodeCacheEnt *nodentry; bool found; \
+	RelIdCacheEnt *idhentry; bool found; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										   (void *) &(RELATION->rd_id), \
 										   HASH_ENTER, \
@@ -174,16 +162,6 @@ do { \
 				 errmsg("out of memory"))); \
 	/* used to give notice if found -- now just keep quiet */ \
 	idhentry->reldesc = RELATION; \
-	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
-										   (void *) &(RELATION->rd_node), \
-										   HASH_ENTER, \
-										   &found); \
-	if (nodentry == NULL) \
-		ereport(ERROR, \
-				(errcode(ERRCODE_OUT_OF_MEMORY), \
-				 errmsg("out of memory"))); \
-	/* used to give notice if found -- now just keep quiet */ \
-	nodentry->reldesc = RELATION; \
 	if (IsSystemNamespace(RelationGetNamespace(RELATION))) \
 	{ \
 		char *relname = RelationGetRelationName(RELATION); \
@@ -223,30 +201,14 @@ do { \
 		RELATION = NULL; \
 } while(0)
 
-#define RelationNodeCacheLookup(NODE, RELATION) \
-do { \
-	RelNodeCacheEnt *hentry; \
-	hentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
-										   (void *)&(NODE), HASH_FIND,NULL); \
-	if (hentry) \
-		RELATION = hentry->reldesc; \
-	else \
-		RELATION = NULL; \
-} while(0)
-
 #define RelationCacheDelete(RELATION) \
 do { \
-	RelIdCacheEnt *idhentry; RelNodeCacheEnt *nodentry; \
+	RelIdCacheEnt *idhentry; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										   (void *)&(RELATION->rd_id), \
 										   HASH_REMOVE, NULL); \
 	if (idhentry == NULL) \
 		elog(WARNING, "trying to delete a rd_id reldesc that does not exist"); \
-	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
-										   (void *)&(RELATION->rd_node), \
-										   HASH_REMOVE, NULL); \
-	if (nodentry == NULL) \
-		elog(WARNING, "trying to delete a rd_node reldesc that does not exist"); \
 	if (IsSystemNamespace(RelationGetNamespace(RELATION))) \
 	{ \
 		char *relname = RelationGetRelationName(RELATION); \
@@ -423,7 +385,7 @@ AllocateRelationDesc(Relation relation, Form_pg_class relp)
 	relation->rd_targblock = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
-	relation->rd_fd = -1;
+	relation->rd_smgr = NULL;
 
 	/*
 	 * Copy the relation tuple form
@@ -914,7 +876,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	relation->rd_node.relNode = relation->rd_rel->relfilenode;
 
 	/* make sure relation is marked as having no open file yet */
-	relation->rd_fd = -1;
+	relation->rd_smgr = NULL;
 
 	/*
 	 * Insert newly created relation into relcache hash tables.
@@ -1303,7 +1265,7 @@ formrdesc(const char *relationName,
 	relation->rd_targblock = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
-	relation->rd_fd = -1;
+	relation->rd_smgr = NULL;
 
 	/*
 	 * initialize reference count
@@ -1482,30 +1444,6 @@ RelationSysNameCacheGetRelation(const char *relationName)
 }
 
 /*
- *		RelationNodeCacheGetRelation
- *
- *		As above, but lookup by relfilenode.
- *
- * NOTE: this must NOT try to revalidate invalidated nailed indexes, since
- * that could cause us to return an entry with a different relfilenode than
- * the caller asked for.  Currently this is used only by the buffer manager.
- * Really the bufmgr's idea of relations should be separated out from the
- * relcache ...
- */
-Relation
-RelationNodeCacheGetRelation(RelFileNode rnode)
-{
-	Relation	rd;
-
-	RelationNodeCacheLookup(rnode, rd);
-
-	if (RelationIsValid(rd))
-		RelationIncrementReferenceCount(rd);
-
-	return rd;
-}
-
-/*
  *		RelationIdGetRelation
  *
  *		Lookup a reldesc by OID; make one if not already in cache.
@@ -1635,14 +1573,8 @@ RelationReloadClassinfo(Relation relation)
 		elog(ERROR, "could not find tuple for system relation %u",
 			 relation->rd_id);
 	relp = (Form_pg_class) GETSTRUCT(pg_class_tuple);
-	if (relation->rd_node.relNode != relp->relfilenode)
-	{
-		/* We have to re-insert the entry into the relcache indexes */
-		RelationCacheDelete(relation);
-		memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
-		relation->rd_node.relNode = relp->relfilenode;
-		RelationCacheInsert(relation);
-	}
+	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
+	relation->rd_node.relNode = relp->relfilenode;
 	heap_freetuple(pg_class_tuple);
 	/* Must adjust number of blocks after we know the new relfilenode */
 	relation->rd_targblock = InvalidBlockNumber;
@@ -1672,10 +1604,10 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * ensures that the low-level file access state is updated after, say,
 	 * a vacuum truncation.
 	 */
-	if (relation->rd_fd >= 0)
+	if (relation->rd_smgr)
 	{
-		smgrclose(DEFAULT_SMGR, relation);
-		relation->rd_fd = -1;
+		smgrclose(relation->rd_smgr);
+		relation->rd_smgr = NULL;
 	}
 
 	/*
@@ -1866,18 +1798,31 @@ RelationForgetRelation(Oid rid)
 }
 
 /*
- *		RelationIdInvalidateRelationCacheByRelationId
+ *		RelationCacheInvalidateEntry
  *
  *		This routine is invoked for SI cache flush messages.
  *
- *		We used to skip local relations, on the grounds that they could
- *		not be targets of cross-backend SI update messages; but it seems
- *		safer to process them, so that our *own* SI update messages will
- *		have the same effects during CommandCounterIncrement for both
- *		local and nonlocal relations.
+ * Any relcache entry matching the relid must be flushed.  (Note: caller has
+ * already determined that the relid belongs to our database or is a shared
+ * relation.)  If rnode isn't NULL, we must also ensure that any smgr cache
+ * entry matching that rnode is flushed.
+ *
+ * Ordinarily, if rnode is supplied then it will match the relfilenode of
+ * the target relid.  However, it's possible for rnode to be different if
+ * someone is engaged in a relfilenode change.  In that case we want to
+ * make sure we clear the right cache entries.  This has to be done here
+ * to keep things in sync between relcache and smgr cache --- we can't have
+ * someone flushing an smgr cache entry that a relcache entry still points
+ * to.
+ *
+ * We used to skip local relations, on the grounds that they could
+ * not be targets of cross-backend SI update messages; but it seems
+ * safer to process them, so that our *own* SI update messages will
+ * have the same effects during CommandCounterIncrement for both
+ * local and nonlocal relations.
  */
 void
-RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
+RelationCacheInvalidateEntry(Oid relationId, RelFileNode *rnode)
 {
 	Relation	relation;
 
@@ -1886,14 +1831,27 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 	if (PointerIsValid(relation))
 	{
 		relcacheInvalsReceived++;
+		if (rnode)
+		{
+			/* Need to be sure smgr is flushed, but don't do it twice */
+			if (relation->rd_smgr == NULL ||
+				!RelFileNodeEquals(*rnode, relation->rd_node))
+				smgrclosenode(*rnode);
+		}
 		RelationFlushRelation(relation);
+	}
+	else
+	{
+		if (rnode)
+			smgrclosenode(*rnode);
 	}
 }
 
 /*
  * RelationCacheInvalidate
  *	 Blow away cached relation descriptors that have zero reference counts,
- *	 and rebuild those with positive reference counts.
+ *	 and rebuild those with positive reference counts.  Also reset the smgr
+ *	 relation cache.
  *
  *	 This is currently used only to recover from SI message buffer overflow,
  *	 so we do not touch new-in-transaction relations; they cannot be targets
@@ -1934,6 +1892,13 @@ RelationCacheInvalidate(void)
 	{
 		relation = idhentry->reldesc;
 
+		/* Must close all smgr references to avoid leaving dangling ptrs */
+		if (relation->rd_smgr)
+		{
+			smgrclose(relation->rd_smgr);
+			relation->rd_smgr = NULL;
+		}
+
 		/* Ignore new relations, since they are never SI targets */
 		if (relation->rd_isnew)
 			continue;
@@ -1969,6 +1934,13 @@ RelationCacheInvalidate(void)
 	}
 
 	rebuildList = nconc(rebuildFirstList, rebuildList);
+
+	/*
+	 * Now zap any remaining smgr cache entries.  This must happen before
+	 * we start to rebuild entries, since that may involve catalog fetches
+	 * which will re-open catalog files.
+	 */
+	smgrcloseall();
 
 	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
 	foreach(l, rebuildList)
@@ -2107,7 +2079,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_targblock = InvalidBlockNumber;
 
 	/* make sure relation is marked as having no open file yet */
-	rel->rd_fd = -1;
+	rel->rd_smgr = NULL;
 
 	RelationSetReferenceCount(rel, 1);
 
@@ -2232,12 +2204,6 @@ RelationCacheInitialize(void)
 	ctl.hash = tag_hash;
 	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
 								  &ctl, HASH_ELEM | HASH_FUNCTION);
-
-	ctl.keysize = sizeof(RelFileNode);
-	ctl.entrysize = sizeof(RelNodeCacheEnt);
-	ctl.hash = tag_hash;
-	RelationNodeCache = hash_create("Relcache by rnode", INITRELCACHESIZE,
-									&ctl, HASH_ELEM | HASH_FUNCTION);
 
 	/*
 	 * Try to load the relcache cache file.  If successful, we're done for
@@ -2404,65 +2370,6 @@ RelationCacheInitializePhase3(void)
 		/* now write the file */
 		write_relcache_init_file();
 	}
-}
-
-
-/* used by XLogInitCache */
-void		CreateDummyCaches(void);
-void		DestroyDummyCaches(void);
-
-void
-CreateDummyCaches(void)
-{
-	MemoryContext oldcxt;
-	HASHCTL		ctl;
-
-	if (!CacheMemoryContext)
-		CreateCacheMemoryContext();
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	MemSet(&ctl, 0, sizeof(ctl));
-	ctl.keysize = sizeof(NameData);
-	ctl.entrysize = sizeof(RelNameCacheEnt);
-	RelationSysNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
-									   &ctl, HASH_ELEM);
-
-	ctl.keysize = sizeof(Oid);
-	ctl.entrysize = sizeof(RelIdCacheEnt);
-	ctl.hash = tag_hash;
-	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
-								  &ctl, HASH_ELEM | HASH_FUNCTION);
-
-	ctl.keysize = sizeof(RelFileNode);
-	ctl.entrysize = sizeof(RelNodeCacheEnt);
-	ctl.hash = tag_hash;
-	RelationNodeCache = hash_create("Relcache by rnode", INITRELCACHESIZE,
-									&ctl, HASH_ELEM | HASH_FUNCTION);
-
-	MemoryContextSwitchTo(oldcxt);
-}
-
-void
-DestroyDummyCaches(void)
-{
-	MemoryContext oldcxt;
-
-	if (!CacheMemoryContext)
-		return;
-
-	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
-
-	if (RelationIdCache)
-		hash_destroy(RelationIdCache);
-	if (RelationSysNameCache)
-		hash_destroy(RelationSysNameCache);
-	if (RelationNodeCache)
-		hash_destroy(RelationNodeCache);
-
-	RelationIdCache = RelationSysNameCache = RelationNodeCache = NULL;
-
-	MemoryContextSwitchTo(oldcxt);
 }
 
 static void
@@ -3125,7 +3032,7 @@ load_relcache_init_file(void)
 		/*
 		 * Reset transient-state fields in the relcache entry
 		 */
-		rel->rd_fd = -1;
+		rel->rd_smgr = NULL;
 		rel->rd_targblock = InvalidBlockNumber;
 		if (rel->rd_isnailed)
 			RelationSetReferenceCount(rel, 1);

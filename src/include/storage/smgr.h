@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.39 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.40 2004/02/10 01:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,36 +16,54 @@
 
 #include "access/xlog.h"
 #include "fmgr.h"
-#include "storage/relfilenode.h"
 #include "storage/block.h"
-#include "utils/rel.h"
+#include "storage/relfilenode.h"
 
 
-#define SM_FAIL			0
-#define SM_SUCCESS		1
+/*
+ * smgr.c maintains a table of SMgrRelation objects, which are essentially
+ * cached file handles.  An SMgrRelation is created (if not already present)
+ * by smgropen(), and destroyed by smgrclose().  Note that neither of these
+ * operations imply I/O, they just create or destroy a hashtable entry.
+ * (But smgrclose() may release associated resources, such as OS-level file
+ * descriptors.)
+ */
+typedef struct SMgrRelationData
+{
+	/* rnode is the hashtable lookup key, so it must be first! */
+	RelFileNode	smgr_rnode;		/* relation physical identifier */
 
-#define DEFAULT_SMGR	0
+	/* additional public fields may someday exist here */
 
-extern int	smgrinit(void);
-extern int	smgrcreate(int16 which, Relation reln);
-extern int	smgrunlink(int16 which, Relation reln);
-extern int smgrextend(int16 which, Relation reln, BlockNumber blocknum,
-		   char *buffer);
-extern int	smgropen(int16 which, Relation reln, bool failOK);
-extern int	smgrclose(int16 which, Relation reln);
-extern int smgrread(int16 which, Relation reln, BlockNumber blocknum,
-		 char *buffer);
-extern int smgrwrite(int16 which, Relation reln, BlockNumber blocknum,
-		  char *buffer);
-extern int smgrblindwrt(int16 which, RelFileNode rnode,
-			 BlockNumber blkno, char *buffer);
-extern BlockNumber smgrnblocks(int16 which, Relation reln);
-extern BlockNumber smgrtruncate(int16 which, Relation reln,
-			 BlockNumber nblocks);
-extern int	smgrDoPendingDeletes(bool isCommit);
-extern int	smgrcommit(void);
-extern int	smgrabort(void);
-extern int	smgrsync(void);
+	/*
+	 * Fields below here are intended to be private to smgr.c and its
+	 * submodules.  Do not touch them from elsewhere.
+	 */
+	int			smgr_which;		/* storage manager selector */
+
+	struct _MdfdVec *md_fd;		/* for md.c; NULL if not open */
+} SMgrRelationData;
+
+typedef SMgrRelationData *SMgrRelation;
+
+
+extern void smgrinit(void);
+extern SMgrRelation smgropen(RelFileNode rnode);
+extern void smgrclose(SMgrRelation reln);
+extern void smgrcloseall(void);
+extern void smgrclosenode(RelFileNode rnode);
+extern void smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo);
+extern void smgrscheduleunlink(SMgrRelation reln, bool isTemp);
+extern void smgrdounlink(SMgrRelation reln, bool isTemp, bool isRedo);
+extern void smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer);
+extern void smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer);
+extern void smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer);
+extern BlockNumber smgrnblocks(SMgrRelation reln);
+extern BlockNumber smgrtruncate(SMgrRelation reln, BlockNumber nblocks);
+extern void smgrDoPendingDeletes(bool isCommit);
+extern void smgrcommit(void);
+extern void smgrabort(void);
+extern void smgrsync(void);
 
 extern void smgr_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void smgr_undo(XLogRecPtr lsn, XLogRecord *record);
@@ -55,38 +73,18 @@ extern void smgr_desc(char *buf, uint8 xl_info, char *rec);
 /* internals: move me elsewhere -- ay 7/94 */
 
 /* in md.c */
-extern int	mdinit(void);
-extern int	mdcreate(Relation reln);
-extern int	mdunlink(RelFileNode rnode);
-extern int	mdextend(Relation reln, BlockNumber blocknum, char *buffer);
-extern int	mdopen(Relation reln);
-extern int	mdclose(Relation reln);
-extern int	mdread(Relation reln, BlockNumber blocknum, char *buffer);
-extern int	mdwrite(Relation reln, BlockNumber blocknum, char *buffer);
-extern int	mdblindwrt(RelFileNode rnode, BlockNumber blkno, char *buffer);
-extern BlockNumber mdnblocks(Relation reln);
-extern BlockNumber mdtruncate(Relation reln, BlockNumber nblocks);
-extern int	mdcommit(void);
-extern int	mdabort(void);
-extern int	mdsync(void);
-
-/* mm.c */
-extern int	mminit(void);
-extern int	mmcreate(Relation reln);
-extern int	mmunlink(RelFileNode rnode);
-extern int	mmextend(Relation reln, BlockNumber blocknum, char *buffer);
-extern int	mmopen(Relation reln);
-extern int	mmclose(Relation reln);
-extern int	mmread(Relation reln, BlockNumber blocknum, char *buffer);
-extern int	mmwrite(Relation reln, BlockNumber blocknum, char *buffer);
-extern int	mmblindwrt(RelFileNode rnode, BlockNumber blkno, char *buffer);
-extern BlockNumber mmnblocks(Relation reln);
-extern BlockNumber mmtruncate(Relation reln, BlockNumber nblocks);
-extern int	mmcommit(void);
-extern int	mmabort(void);
-
-extern int	mmshutdown(void);
-extern int	MMShmemSize(void);
+extern bool mdinit(void);
+extern bool mdclose(SMgrRelation reln);
+extern bool mdcreate(SMgrRelation reln, bool isRedo);
+extern bool mdunlink(RelFileNode rnode, bool isRedo);
+extern bool mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer);
+extern bool mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer);
+extern bool mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer);
+extern BlockNumber mdnblocks(SMgrRelation reln);
+extern BlockNumber mdtruncate(SMgrRelation reln, BlockNumber nblocks);
+extern bool mdcommit(void);
+extern bool mdabort(void);
+extern bool mdsync(void);
 
 /* smgrtype.c */
 extern Datum smgrout(PG_FUNCTION_ARGS);

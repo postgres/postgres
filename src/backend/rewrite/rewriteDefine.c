@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.92 2004/01/14 23:01:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.93 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,7 +480,12 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * XXX what about getting rid of its TOAST table?  For now, we don't.
 	 */
 	if (RelisBecomingView)
-		smgrunlink(DEFAULT_SMGR, event_relation);
+	{
+		if (event_relation->rd_smgr == NULL)
+			event_relation->rd_smgr = smgropen(event_relation->rd_node);
+		smgrscheduleunlink(event_relation->rd_smgr, event_relation->rd_istemp);
+		event_relation->rd_smgr = NULL;
+	}
 
 	/* Close rel, but keep lock till commit... */
 	heap_close(event_relation, NoLock);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.111 2004/02/06 19:36:17 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.112 2004/02/10 01:55:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -821,7 +821,9 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			/*
 			 * Do the physical truncation.
 			 */
-			new_pages = smgrtruncate(DEFAULT_SMGR, rel, new_pages);
+			if (rel->rd_smgr == NULL)
+				rel->rd_smgr = smgropen(rel->rd_node);
+			new_pages = smgrtruncate(rel->rd_smgr, new_pages);
 			rel->rd_nblocks = new_pages;		/* update relcache
 												 * immediately */
 			rel->rd_targblock = InvalidBlockNumber;

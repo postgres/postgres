@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.257 2003/12/28 21:57:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.258 2004/02/10 01:55:24 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -298,9 +298,9 @@ heap_create(const char *relname,
 void
 heap_storage_create(Relation rel)
 {
-	Assert(rel->rd_fd < 0);
-	rel->rd_fd = smgrcreate(DEFAULT_SMGR, rel);
-	Assert(rel->rd_fd >= 0);
+	Assert(rel->rd_smgr == NULL);
+	rel->rd_smgr = smgropen(rel->rd_node);
+	smgrcreate(rel->rd_smgr, rel->rd_istemp, false);
 }
 
 /* ----------------------------------------------------------------
@@ -1210,7 +1210,12 @@ heap_drop_with_catalog(Oid rid)
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
 		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
-		smgrunlink(DEFAULT_SMGR, rel);
+	{
+		if (rel->rd_smgr == NULL)
+			rel->rd_smgr = smgropen(rel->rd_node);
+		smgrscheduleunlink(rel->rd_smgr, rel->rd_istemp);
+		rel->rd_smgr = NULL;
+	}
 
 	/*
 	 * Close relcache entry, but *keep* AccessExclusiveLock on the
@@ -1706,7 +1711,7 @@ SetRelationNumChecks(Relation rel, int numchecks)
 	else
 	{
 		/* Skip the disk update, but force relcache inval anyway */
-		CacheInvalidateRelcache(RelationGetRelid(rel));
+		CacheInvalidateRelcache(rel);
 	}
 
 	heap_freetuple(reltup);
@@ -1943,7 +1948,9 @@ RelationTruncateIndexes(Oid heapId)
 		DropRelationBuffers(currentIndex);
 
 		/* Now truncate the actual data and set blocks to zero */
-		smgrtruncate(DEFAULT_SMGR, currentIndex, 0);
+		if (currentIndex->rd_smgr == NULL)
+			currentIndex->rd_smgr = smgropen(currentIndex->rd_node);
+		smgrtruncate(currentIndex->rd_smgr, 0);
 		currentIndex->rd_nblocks = 0;
 		currentIndex->rd_targblock = InvalidBlockNumber;
 
@@ -1990,7 +1997,9 @@ heap_truncate(Oid rid)
 	DropRelationBuffers(rel);
 
 	/* Now truncate the actual data and set blocks to zero */
-	smgrtruncate(DEFAULT_SMGR, rel, 0);
+	if (rel->rd_smgr == NULL)
+		rel->rd_smgr = smgropen(rel->rd_node);
+	smgrtruncate(rel->rd_smgr, 0);
 	rel->rd_nblocks = 0;
 	rel->rd_targblock = InvalidBlockNumber;
 

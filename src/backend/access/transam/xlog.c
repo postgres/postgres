@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.133 2004/01/26 22:35:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.134 2004/02/10 01:55:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 #include "storage/bufpage.h"
+#include "storage/fd.h"
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
@@ -3126,7 +3127,6 @@ ShutdownXLOG(int code, Datum arg)
 	MyXactMadeTempRelUpdate = false;
 
 	CritSectionCount++;
-	CreateDummyCaches();
 	CreateCheckPoint(true, true);
 	ShutdownCLOG();
 	CritSectionCount--;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteSupport.c,v 1.57 2003/11/29 19:51:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteSupport.c,v 1.58 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ SetRelationRuleStatus(Oid relationId, bool relHasRules,
 	else
 	{
 		/* no need to change tuple, but force relcache rebuild anyway */
-		CacheInvalidateRelcache(relationId);
+		CacheInvalidateRelcacheByTuple(tuple);
 	}
 
 	heap_freetuple(tuple);

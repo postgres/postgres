@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.136 2004/02/02 17:21:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.137 2004/02/10 01:55:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "commands/user.h"
 #include "libpq/crypt.h"
 #include "miscadmin.h"
+#include "storage/fd.h"
 #include "storage/pmsignal.h"
 #include "utils/acl.h"
 #include "utils/array.h"

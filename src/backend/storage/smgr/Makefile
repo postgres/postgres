@@ -4,7 +4,7 @@
 #    Makefile for storage/smgr
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/storage/smgr/Makefile,v 1.14 2003/11/29 19:51:57 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/storage/smgr/Makefile,v 1.15 2004/02/10 01:55:26 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/storage/smgr
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = md.o mm.o smgr.o smgrtype.o
+OBJS = md.o smgr.o smgrtype.o
 
 all: SUBSYS.o
 

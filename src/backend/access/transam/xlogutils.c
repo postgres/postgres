@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.28 2003/12/14 00:34:47 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.29 2004/02/10 01:55:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,14 +261,12 @@ _xl_remove_hash_entry(XLogRelDesc *rdesc)
 	if (hentry == NULL)
 		elog(PANIC, "_xl_remove_hash_entry: file was not found in cache");
 
-	if (rdesc->reldata.rd_fd >= 0)
-		smgrclose(DEFAULT_SMGR, &(rdesc->reldata));
+	if (rdesc->reldata.rd_smgr != NULL)
+		smgrclose(rdesc->reldata.rd_smgr);
 
 	memset(rdesc, 0, sizeof(XLogRelDesc));
 	memset(tpgc, 0, sizeof(FormData_pg_class));
 	rdesc->reldata.rd_rel = tpgc;
-
-	return;
 }
 
 static XLogRelDesc *
@@ -296,7 +294,6 @@ _xl_new_reldesc(void)
 void
 XLogInitRelationCache(void)
 {
-	CreateDummyCaches();
 	_xl_init_rel_cache();
 }
 
@@ -305,8 +302,6 @@ XLogCloseRelationCache(void)
 {
 	HASH_SEQ_STATUS status;
 	XLogRelCacheEntry *hentry;
-
-	DestroyDummyCaches();
 
 	if (!_xlrelarr)
 		return;
@@ -347,10 +342,17 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 
 		sprintf(RelationGetRelationName(&(res->reldata)), "%u", rnode.relNode);
 
-		/* unexisting DB id */
-		res->reldata.rd_lockInfo.lockRelId.dbId = RecoveryDb;
-		res->reldata.rd_lockInfo.lockRelId.relId = rnode.relNode;
 		res->reldata.rd_node = rnode;
+
+		/*
+		 * We set up the lockRelId in case anything tries to lock the dummy
+		 * relation.  Note that this is fairly bogus since relNode may be
+		 * different from the relation's OID.  It shouldn't really matter
+		 * though, since we are presumably running by ourselves and can't
+		 * have any lock conflicts ...
+		 */
+		res->reldata.rd_lockInfo.lockRelId.dbId = rnode.tblNode;
+		res->reldata.rd_lockInfo.lockRelId.relId = rnode.relNode;
 
 		hentry = (XLogRelCacheEntry *)
 			hash_search(_xlrelcache, (void *) &rnode, HASH_ENTER, &found);
@@ -364,18 +366,23 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 		hentry->rdesc = res;
 
 		res->reldata.rd_targblock = InvalidBlockNumber;
-		res->reldata.rd_fd = -1;
-		res->reldata.rd_fd = smgropen(DEFAULT_SMGR, &(res->reldata),
-									  true /* allow failure */ );
+		res->reldata.rd_smgr = smgropen(res->reldata.rd_node);
+		/*
+		 * Create the target file if it doesn't already exist.  This lets
+		 * us cope if the replay sequence contains writes to a relation
+		 * that is later deleted.  (The original coding of this routine
+		 * would instead return NULL, causing the writes to be suppressed.
+		 * But that seems like it risks losing valuable data if the filesystem
+		 * loses an inode during a crash.  Better to write the data until we
+		 * are actually told to delete the file.)
+		 */
+		smgrcreate(res->reldata.rd_smgr, res->reldata.rd_istemp, true);
 	}
 
 	res->moreRecently = &(_xlrelarr[0]);
 	res->lessRecently = _xlrelarr[0].lessRecently;
 	_xlrelarr[0].lessRecently = res;
 	res->lessRecently->moreRecently = res;
-
-	if (res->reldata.rd_fd < 0) /* file doesn't exist */
-		return (NULL);
 
 	return (&(res->reldata));
 }

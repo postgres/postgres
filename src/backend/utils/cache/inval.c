@@ -74,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.59 2003/11/29 19:52:00 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.60 2004/02/10 01:55:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,7 @@
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/sinval.h"
+#include "storage/smgr.h"
 #include "utils/catcache.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -298,19 +299,22 @@ AddCatcacheInvalidationMessage(InvalidationListHeader *hdr,
  */
 static void
 AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
-							   Oid dbId, Oid relId)
+							   Oid dbId, Oid relId, RelFileNode physId)
 {
 	SharedInvalidationMessage msg;
 
 	/* Don't add a duplicate item */
-	/* We assume comparing relId is sufficient, needn't check dbId */
+	/* We assume dbId need not be checked because it will never change */
+	/* relfilenode fields must be checked to support reassignment */
 	ProcessMessageList(hdr->rclist,
-					   if (msg->rc.relId == relId) return);
+					   if (msg->rc.relId == relId && 
+						   RelFileNodeEquals(msg->rc.physId, physId)) return);
 
 	/* OK, add the item */
 	msg.rc.id = SHAREDINVALRELCACHE_ID;
 	msg.rc.dbId = dbId;
 	msg.rc.relId = relId;
+	msg.rc.physId = physId;
 	AddInvalidationMessage(&hdr->rclist, &msg);
 }
 
@@ -391,10 +395,10 @@ RegisterCatcacheInvalidation(int cacheId,
  * As above, but register a relcache invalidation event.
  */
 static void
-RegisterRelcacheInvalidation(Oid dbId, Oid relId)
+RegisterRelcacheInvalidation(Oid dbId, Oid relId, RelFileNode physId)
 {
 	AddRelcacheInvalidationMessage(&CurrentCmdInvalidMsgs,
-								   dbId, relId);
+								   dbId, relId, physId);
 
 	/*
 	 * If the relation being invalidated is one of those cached in the
@@ -435,9 +439,17 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 	}
 	else if (msg->id == SHAREDINVALRELCACHE_ID)
 	{
-		if (msg->rc.dbId == MyDatabaseId || msg->rc.dbId == 0)
+		/*
+		 * If the message includes a valid relfilenode, we must ensure that
+		 * smgr cache entry gets zapped.  The relcache will handle this if
+		 * called, otherwise we must do it directly.
+		 */
+		if (msg->rc.dbId == MyDatabaseId || msg->rc.dbId == InvalidOid)
 		{
-			RelationIdInvalidateRelationCacheByRelationId(msg->rc.relId);
+			if (OidIsValid(msg->rc.physId.relNode))
+				RelationCacheInvalidateEntry(msg->rc.relId, &msg->rc.physId);
+			else
+				RelationCacheInvalidateEntry(msg->rc.relId, NULL);
 
 			for (i = 0; i < cache_callback_count; i++)
 			{
@@ -446,6 +458,12 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 				if (ccitem->id == SHAREDINVALRELCACHE_ID)
 					(*ccitem->function) (ccitem->arg, msg->rc.relId);
 			}
+		}
+		else
+		{
+			/* might have smgr entry even if not in our database */
+			if (OidIsValid(msg->rc.physId.relNode))
+				smgrclosenode(msg->rc.physId);
 		}
 	}
 	else
@@ -456,7 +474,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
  *		InvalidateSystemCaches
  *
  *		This blows away all tuples in the system catalog caches and
- *		all the cached relation descriptors (and closes their files too).
+ *		all the cached relation descriptors and smgr cache entries.
  *		Relation descriptors that have positive refcounts are then rebuilt.
  *
  *		We call this when we see a shared-inval-queue overflow signal,
@@ -469,7 +487,7 @@ InvalidateSystemCaches(void)
 	int			i;
 
 	ResetCatalogCaches();
-	RelationCacheInvalidate();
+	RelationCacheInvalidate();	/* gets smgr cache too */
 
 	for (i = 0; i < cache_callback_count; i++)
 	{
@@ -488,11 +506,15 @@ static void
 PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 							void (*CacheIdRegisterFunc) (int, uint32,
 													   ItemPointer, Oid),
-							void (*RelationIdRegisterFunc) (Oid, Oid))
+							void (*RelationIdRegisterFunc) (Oid, Oid,
+															RelFileNode))
 {
 	Oid			tupleRelId;
+	Oid			databaseId;
 	Oid			relationId;
+	RelFileNode	rnode;
 
+	/* Do nothing during bootstrap */
 	if (IsBootstrapProcessingMode())
 		return;
 
@@ -524,24 +546,49 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 	tupleRelId = RelationGetRelid(relation);
 
 	if (tupleRelId == RelOid_pg_class)
+	{
+		Form_pg_class classtup = (Form_pg_class) GETSTRUCT(tuple);
+
 		relationId = HeapTupleGetOid(tuple);
+		if (classtup->relisshared)
+			databaseId = InvalidOid;
+		else
+			databaseId = MyDatabaseId;
+		rnode.tblNode = databaseId;			/* XXX change for tablespaces */
+		rnode.relNode = classtup->relfilenode;
+		/*
+		 * Note: during a pg_class row update that assigns a new relfilenode
+		 * value, we will be called on both the old and new tuples, and thus
+		 * will broadcast invalidation messages showing both the old and new
+		 * relfilenode values.  This ensures that other backends will close
+		 * smgr references to the old relfilenode file.
+		 */
+	}
 	else if (tupleRelId == RelOid_pg_attribute)
-		relationId = ((Form_pg_attribute) GETSTRUCT(tuple))->attrelid;
+	{
+		Form_pg_attribute atttup = (Form_pg_attribute) GETSTRUCT(tuple);
+
+		relationId = atttup->attrelid;
+		/*
+		 * KLUGE ALERT: we always send the relcache event with MyDatabaseId,
+		 * even if the rel in question is shared (which we can't easily tell).
+		 * This essentially means that only backends in this same database
+		 * will react to the relcache flush request.  This is in fact
+		 * appropriate, since only those backends could see our pg_attribute
+		 * change anyway.  It looks a bit ugly though.
+		 */
+		databaseId = MyDatabaseId;
+		/* We assume no smgr cache flush is needed, either */
+		rnode.tblNode = InvalidOid;
+		rnode.relNode = InvalidOid;
+	}
 	else
 		return;
 
 	/*
-	 * Yes.  We need to register a relcache invalidation event for the
-	 * relation identified by relationId.
-	 *
-	 * KLUGE ALERT: we always send the relcache event with MyDatabaseId, even
-	 * if the rel in question is shared.  This essentially means that only
-	 * backends in this same database will react to the relcache flush
-	 * request.  This is in fact appropriate, since only those backends
-	 * could see our pg_class or pg_attribute change anyway.  It looks a
-	 * bit ugly though.
+	 * Yes.  We need to register a relcache invalidation event.
 	 */
-	(*RelationIdRegisterFunc) (MyDatabaseId, relationId);
+	(*RelationIdRegisterFunc) (databaseId, relationId, rnode);
 }
 
 
@@ -660,7 +707,7 @@ CommandEndInvalidationMessages(bool isCommit)
 /*
  * CacheInvalidateHeapTuple
  *		Register the given tuple for invalidation at end of command
- *		(ie, current command is outdating this tuple).
+ *		(ie, current command is creating or outdating this tuple).
  */
 void
 CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple)
@@ -678,12 +725,44 @@ CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple)
  * This is used in places that need to force relcache rebuild but aren't
  * changing any of the tuples recognized as contributors to the relcache
  * entry by PrepareForTupleInvalidation.  (An example is dropping an index.)
+ * We assume in particular that relfilenode isn't changing.
  */
 void
-CacheInvalidateRelcache(Oid relationId)
+CacheInvalidateRelcache(Relation relation)
 {
-	/* See KLUGE ALERT in PrepareForTupleInvalidation */
-	RegisterRelcacheInvalidation(MyDatabaseId, relationId);
+	Oid			databaseId;
+	Oid			relationId;
+
+	relationId = RelationGetRelid(relation);
+	if (relation->rd_rel->relisshared)
+		databaseId = InvalidOid;
+	else
+		databaseId = MyDatabaseId;
+
+	RegisterRelcacheInvalidation(databaseId, relationId, relation->rd_node);
+}
+
+/*
+ * CacheInvalidateRelcacheByTuple
+ *		As above, but relation is identified by passing its pg_class tuple.
+ */
+void
+CacheInvalidateRelcacheByTuple(HeapTuple classTuple)
+{
+	Form_pg_class classtup = (Form_pg_class) GETSTRUCT(classTuple);
+	Oid			databaseId;
+	Oid			relationId;
+	RelFileNode	rnode;
+
+	relationId = HeapTupleGetOid(classTuple);
+	if (classtup->relisshared)
+		databaseId = InvalidOid;
+	else
+		databaseId = MyDatabaseId;
+	rnode.tblNode = databaseId;			/* XXX change for tablespaces */
+	rnode.relNode = classtup->relfilenode;
+
+	RegisterRelcacheInvalidation(databaseId, relationId, rnode);
 }
 
 /*
