@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/doc/man/Attic/postgres.1,v 1.1.1.1 1996/08/18 22:14:26 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/doc/man/Attic/postgres.1,v 1.2 1996/09/26 16:49:09 momjian Exp $
 .TH POSTGRES95 UNIX 11/05/95 Postgres95 Postgres95
 .SH NAME
 postgres \(em the Postgres backend server
@@ -11,6 +11,9 @@ postgres \(em the Postgres backend server
 n_buffers]
 [\c
 .BR "-E"
+]
+[\c
+.BR "-F"
 ]
 [\c
 .BR "-P"
@@ -62,6 +65,11 @@ allocate.  This value defaults to 64.
 .TP
 .BR "-E"
 Echo all queries.
+.TP
+.BR "-F"
+Disbable automatic fsync() call after each transaction.
+This option improves performance, but an operating system crash
+while a transaction is in progress will probably cause data loss.
 .TP
 .BR "-P" " filedes"
 .IR "filedes"
