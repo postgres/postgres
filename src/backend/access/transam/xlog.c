@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.92 2002/04/21 19:08:02 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.93 2002/04/24 01:54:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1504,7 +1504,7 @@ InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 	 * overwrite an existing logfile.  However, there shouldn't be one, so
 	 * rename() is an acceptable substitute except for the truly paranoid.
 	 */
-#ifndef __BEOS__
+#if !defined(__BEOS__) && !defined(N_PLAT_NLM)
 	if (link(tmppath, path) < 0)
 		elog(PANIC, "link from %s to %s (initialization of log file %u, segment %u) failed: %m",
 			 tmppath, path, log, seg);
