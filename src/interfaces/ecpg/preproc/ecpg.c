@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.82 2003/11/29 19:52:08 pgsql Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.83 2003/12/18 18:55:09 petere Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -174,6 +174,7 @@ main(int argc, char *const argv[])
 					add_preprocessor_define("dec_t=decimal");
 					add_preprocessor_define("intrvl_t=interval");
 					add_preprocessor_define("dtime_t=timestamp");
+					add_include_path(PKGINCLUDEDIR "/informix/esql");
 				}
 				else
 				{
@@ -209,7 +210,7 @@ main(int argc, char *const argv[])
 
 	add_include_path(".");
 	add_include_path("/usr/local/include");
-	add_include_path(INCLUDE_PATH);
+	add_include_path(INCLUDEDIR);
 	add_include_path("/usr/include");
 
 	if (verbose)

@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.96 2003/11/30 06:09:47 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.97 2003/12/18 18:55:09 petere Exp $
 
 subdir = src/interfaces/ecpg/preproc
 top_builddir = ../../../..
@@ -11,7 +11,8 @@ PATCHLEVEL=0
 override CPPFLAGS := -I$(srcdir)/../include -I$(srcdir) $(CPPFLAGS) $(THREAD_CPPFLAGS) \
 	-DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
-	-DINCLUDE_PATH=\"$(includedir)\" 
+	-DINCLUDEDIR=\"$(includedir)\" \
+	-DPKGINCLUDEDIR=\"$(pkgincludedir)\" 
 
 ifeq ($(GCC), yes)
 override CFLAGS += -Wno-error
