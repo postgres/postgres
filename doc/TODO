@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Dec  5 18:11:24 EST 2001
+Last updated:		Thu Dec  6 05:19:15 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -78,7 +78,6 @@ DATA TYPES
 * ARRAYS
 	o Allow nulls in arrays
 	o Allow arrays to be ORDER'ed
-	o fix array handling in ECPG
 * BINARY DATA
 	o -Add non-large-object binary field (already exists -- bytea)
 	o -Make binary interface for TOAST columns (base64)
@@ -255,7 +254,8 @@ CLIENTS
 * ECPG
 	o Implement set descriptor, using descriptor
 	o Make casts work in variable initializations
-	o Allow variable to specify the connection name
+	o -Allow variable to specify the connection name
+	o -Fix variable handling in EXEC SQL AT statement
 	o Implement SQLDA
 	o Allow SELECT of array of strings into a auto-sized variable
 	o Solve cardinality > 1 for input descriptors / variables
@@ -267,7 +267,7 @@ CLIENTS
 	o Remove space_or_nl and line_end from pgc.l
 	o Fix nested C comments
 	o Add SQLSTATE
-	o -Fix variable handling in EXEC SQL AT statement
+	o fix array handling in ECPG
 
 REFERENTIAL INTEGRITY
 
