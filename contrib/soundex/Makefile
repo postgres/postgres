@@ -10,25 +10,7 @@ SRCDIR = $(PGDIR)/src
 
 include $(SRCDIR)/Makefile.global
 
-INCLUDE_OPT =	-I ./ \
-		-I $(SRCDIR)/ \
-		-I $(SRCDIR)/include \
-		-I $(SRCDIR)/interfaces/libpq \
-		-I $(SRCDIR)/port/$(PORTNAME)
-
-CFLAGS += $(INCLUDE_OPT)
-
-ifeq ($(PORTNAME), linux)
-  ifdef LINUX_ELF
-    ifeq ($(CC), gcc)
-      CFLAGS += -fPIC
-    endif
-  endif
-endif
-
-ifeq ($(PORTNAME), i386_solaris)
-  CFLAGS+= -fPIC
-endif
+CFLAGS += -I. $(CFLAGS_SL)
 
 MODNAME =	soundex
 
@@ -53,7 +35,7 @@ install:	$(MODULE)
 		$(CC) $(CFLAGS) -shared -o $@ $<
 
 depend dep:
-		$(CC) -MM $(INCLUDE_OPT) *.c >depend
+		$(CC) -MM $(CFLAGS) *.c >depend
 
 clean:
 		rm -f $(MODULE) $(MODNAME).sql

@@ -4,7 +4,7 @@ include $(SRCDIR)/Makefile.global
 
 CONTRIBDIR=$(LIBDIR)/contrib
 
-CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include
+CFLAGS+= $(CFLAGS_SL)
 
 TARGETS= fti$(DLSUFFIX)
 CLEANFILES+= $(TARGETS)

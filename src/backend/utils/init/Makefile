@@ -4,14 +4,12 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.12 2000/01/19 02:58:57 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.13 2000/05/29 05:45:32 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = enbl.o findbe.o globals.o miscinit.o postinit.o
 

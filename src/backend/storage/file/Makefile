@@ -4,14 +4,12 @@
 #    Makefile for storage/file
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/file/Makefile,v 1.8 1999/12/13 22:33:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/file/Makefile,v 1.9 2000/05/29 05:45:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = fd.o buffile.o
 

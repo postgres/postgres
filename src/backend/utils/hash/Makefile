@@ -4,14 +4,12 @@
 #    Makefile for utils/hash
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.7 1999/12/13 22:34:50 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.8 2000/05/29 05:45:30 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = dynahash.o hashfn.o
 

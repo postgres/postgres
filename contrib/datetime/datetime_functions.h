@@ -15,6 +15,7 @@ int4		date_month(DateADT val);
 int4		date_year(DateADT val);
 TimeADT    *currenttime(void);
 DateADT		currentdate(void);
+int4		date2mjd(DateADT val);
 
 #endif
 

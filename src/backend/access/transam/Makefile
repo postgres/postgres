@@ -4,14 +4,12 @@
 #    Makefile for access/transam
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.10 1999/12/13 22:32:32 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/transam/Makefile,v 1.11 2000/05/29 05:44:41 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../.. 
 
 OBJS = transam.o transsup.o varsup.o xact.o xid.o xlog.o rmgr.o
 

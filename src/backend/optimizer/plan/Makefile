@@ -4,14 +4,12 @@
 #    Makefile for optimizer/plan
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.9 1999/12/13 22:32:54 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/Makefile,v 1.10 2000/05/29 05:44:51 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = createplan.o initsplan.o planmain.o planner.o setrefs.o subselect.o
 

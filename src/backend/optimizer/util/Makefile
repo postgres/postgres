@@ -4,14 +4,12 @@
 #    Makefile for optimizer/util
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.11 1999/12/13 22:32:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.12 2000/05/29 05:44:53 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = restrictinfo.o clauses.o indexnode.o plancat.o \
        joininfo.o pathnode.o relnode.o tlist.o var.o

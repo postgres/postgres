@@ -5,14 +5,12 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.13 1999/12/13 22:32:50 momjian Exp $
+# $Id: Makefile,v 1.14 2000/05/29 05:44:48 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error

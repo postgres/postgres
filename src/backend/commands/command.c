@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.73 2000/05/29 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.74 2000/05/29 05:44:44 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -51,7 +51,7 @@
 #include "commands/comment.h"
 #include "access/genam.h"
 #include "optimizer/clauses.h"
-#include "../parser/parse.h"
+#include "parser/parse.h"
 #endif	 /* _DROP_COLUMN_HACK__ */
 
 /* ----------------

@@ -4,14 +4,12 @@
 #    Makefile for main
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/main/Makefile,v 1.7 1999/12/13 22:32:45 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/main/Makefile,v 1.8 2000/05/29 05:44:47 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
-
-CFLAGS += -I..
 
 OBJS = main.o
 

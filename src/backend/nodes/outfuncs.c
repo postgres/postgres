@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.116 2000/05/25 22:43:12 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.117 2000/05/29 05:44:47 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -36,11 +36,11 @@
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
+#include "parser/parse.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-#include "../parse.h"
 
 static void _outDatum(StringInfo str, Datum value, Oid type);
 static void _outNode(StringInfo str, void *obj);

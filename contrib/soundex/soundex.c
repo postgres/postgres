@@ -2,23 +2,21 @@
 /* soundex.c */
 /*****************************************************************************/
 
+#include <ctype.h>
 #include <string.h>
 #include <stdio.h>
-#include "postgres.h"			/* for char16, etc. */
-#include "utils/palloc.h"		/* for palloc */
-#include "libpq-fe.h"			/* for TUPLE */
-#include <stdio.h>
-#include <ctype.h>
 
-/* prototype for soundex function */
+#include "postgres.h"			/* for char16, etc. */
+
+#include "utils/palloc.h"		/* for palloc */
+
+/* prototypes for soundex functions */
+text	   *text_soundex(text *t);
 char	   *soundex(char *instr, char *outstr);
 
 text *
 text_soundex(text *t)
 {
-	/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-	char	   *table = "01230120022455012623010202";
-	int			count = 0;
 	text	   *new_t;
 
 	char		outstr[6 + 1];	/* max length of soundex is 6 */
@@ -49,7 +47,8 @@ text_soundex(text *t)
 
 char *
 soundex(char *instr, char *outstr)
-{								/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
+{
+	/* ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 	char	   *table = "01230120022455012623010202";
 	int			count = 0;
 

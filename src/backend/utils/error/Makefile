@@ -4,14 +4,12 @@
 #    Makefile for utils/error
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.7 1999/12/13 22:34:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/error/Makefile,v 1.8 2000/05/29 05:45:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = assert.o elog.o exc.o excabort.o excid.o format.o
 

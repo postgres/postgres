@@ -22,6 +22,7 @@
 /* define this if you want to see iso-8859 characters */
 #define ISO8859
 
+#undef MIN
 #define MIN(x, y)	((x) < (y) ? (x) : (y))
 #define VALUE(char) ((char) - '0')
 #define DIGIT(val)	((val) + '0')

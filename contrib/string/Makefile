@@ -11,12 +11,7 @@ SRCDIR = $(PGDIR)/src
 
 include $(SRCDIR)/Makefile.global
 
-INCLUDE_OPT =	-I./ \
-		-I$(SRCDIR)/ \
-		-I$(SRCDIR)/include \
-		-I$(SRCDIR)/port/$(PORTNAME)
-
-CFLAGS += $(INCLUDE_OPT) $(CFLAGS_SL)
+CFLAGS += -I. $(CFLAGS_SL)
 
 MODNAME =	string_io
 
@@ -61,7 +56,7 @@ $(SQLDIR):
 		$(CC) $(CFLAGS) -shared -o $@ $<
 
 depend dep:
-		$(CC) -MM $(INCLUDE_OPT) *.c >depend
+		$(CC) -MM $(CFLAGS) *.c >depend
 
 clean:
 		rm -f *~ $(MODULE) $(MODNAME).sql

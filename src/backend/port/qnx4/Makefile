@@ -4,16 +4,12 @@
 #    Makefile for port/sparc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/Makefile,v 1.1 1999/12/16 16:52:52 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/Makefile,v 1.2 2000/05/29 05:44:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-INCLUDE_OPT = -I../.. 
-
-CFLAGS+=$(INCLUDE_OPT)
 
 OBJS = isnan.o rint.o sem.o shm.o
 
@@ -32,7 +28,7 @@ tstshm: tstshm.o shm.o
 	$(CC) -o tstshm shm.o tstshm.o
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) tstrint tstrint.o tstsem tstsem.o tstshm tstshm.o

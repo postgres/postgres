@@ -4,14 +4,12 @@
 #    Makefile for storage/page
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/page/Makefile,v 1.8 1999/12/13 22:33:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/page/Makefile,v 1.9 2000/05/29 05:45:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS =  bufpage.o itemptr.o
 

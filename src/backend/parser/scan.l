@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.69 2000/05/27 05:13:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.70 2000/05/29 05:44:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,9 @@
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
-#include "parse.h"
 #include "parser/gramparse.h"
 #include "parser/keywords.h"
+#include "parser/parse.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
 

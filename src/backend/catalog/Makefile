@@ -4,14 +4,12 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.20 1999/12/13 22:32:36 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.21 2000/05/29 05:44:43 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
-
-CFLAGS += -I..
 
 OBJS = catalog.o heap.o index.o indexing.o aclchk.o \
        pg_aggregate.o pg_operator.o pg_proc.o pg_type.o

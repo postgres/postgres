@@ -4,14 +4,12 @@
 #    Makefile for postmaster
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.10 1999/12/13 22:33:19 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/postmaster/Makefile,v 1.11 2000/05/29 05:44:58 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
-
-CFLAGS += -I..
 
 OBJS = postmaster.o
 

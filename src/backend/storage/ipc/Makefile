@@ -4,14 +4,12 @@
 #    Makefile for storage/ipc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.10 1999/12/13 22:33:45 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.11 2000/05/29 05:45:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 # seems to be required 1999/07/22 bjm
 ifeq ($(CPU),alpha)

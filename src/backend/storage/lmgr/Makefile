@@ -4,14 +4,12 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.12 2000/01/19 02:58:54 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.13 2000/05/29 05:45:08 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = lmgr.o lock.o proc.o
 

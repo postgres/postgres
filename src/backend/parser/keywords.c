@@ -8,17 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.71 2000/04/12 17:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.72 2000/05/29 05:44:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
 
 #include "postgres.h"
+
 #include "nodes/parsenodes.h"
 #include "nodes/pg_list.h"
-#include "parse.h"
 #include "parser/keywords.h"
+#include "parser/parse.h"
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for ISSNs.
  *
- *	$Id: issn.c,v 1.2 1999/05/25 16:05:42 momjian Exp $
+ *	$Id: issn.c,v 1.3 2000/05/29 05:44:26 tgl Exp $
  */
 
 #include <stdio.h>
@@ -47,8 +47,6 @@ issn *
 issn_in(char *str)
 {
 	issn	   *result;
-	char	   *cp;
-	int			count;
 
 	if (strlen(str) != 9)
 	{

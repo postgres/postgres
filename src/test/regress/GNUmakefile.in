@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Attic/GNUmakefile.in,v 1.1 2000/01/09 07:53:58 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Attic/GNUmakefile.in,v 1.2 2000/05/29 05:45:55 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ CONTRIB= $(SRCDIR)/../contrib
 
 HOST= @host@
 
-CFLAGS+= -I$(LIBPQDIR) -I$(SRCDIR)/include $(CFLAGS_SL)
+CFLAGS+= -I$(LIBPQDIR) $(CFLAGS_SL)
 
 LDADD+= -L$(LIBPQDIR) -lpq
         

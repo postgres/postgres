@@ -4,14 +4,12 @@
 #    Makefile for access/heap
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.9 1999/12/21 00:06:40 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/heap/Makefile,v 1.10 2000/05/29 05:44:35 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../.. 
 
 OBJS = heapam.o hio.o stats.o tuptoaster.o
 

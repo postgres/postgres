@@ -4,14 +4,12 @@
 #    Makefile for access/gist
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/gist/Makefile,v 1.8 1999/12/13 22:32:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/gist/Makefile,v 1.9 2000/05/29 05:44:34 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../.. 
 
 OBJS = gist.o gistget.o gistscan.o giststrat.o
 

@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.22 2000/04/04 01:47:59 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.23 2000/05/29 05:45:53 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,8 +14,6 @@ SO_MINOR_VERSION= 0
 
 SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
-
-CFLAGS+= -I$(SRCDIR)/include -I$(SRCDIR)/backend
 
 # If using flex, ask for a case-insensitive, lex-compatible lexer.
 ifneq (,$(findstring flex,$(LEX)))

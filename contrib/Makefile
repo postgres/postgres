@@ -11,42 +11,18 @@
 # The following subdirs give make errors:
 #
 #   earthdistance
-#   findoidjoins
-#   isbn_issn
 #   os2client
-#   pginterface
 
-all:	
-	for dir in *; do \
-	    if [ -e $$dir/Makefile ]; then \
-		$(MAKE) -C $$dir; \
-	    fi; \
-	done
-
-install:	
+all:
 	for dir in *; do \
 	    if [ -e $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@ ; \
 	    fi; \
 	done
 
-install-doc:	
+.DEFAULT:
 	for dir in *; do \
 	    if [ -e $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@ ; \
 	    fi; \
-	done || exit 0
-
-clean:	
-	for dir in *; do \
-	    if [ -e $$dir/Makefile ]; then \
-		$(MAKE) -C $$dir $@ ; \
-	    fi; \
-	done || exit 0
-
-distclean:
-	for dir in *; do \
-	    if [ -e $$dir/Makefile ]; then \
-		$(MAKE) -C $$dir $@ ; \
-	    fi; \
-	done || exit 0
+	done

@@ -4,16 +4,12 @@
 #    Makefile for lib (miscellaneous stuff)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.12 1999/12/13 22:32:41 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/lib/Makefile,v 1.13 2000/05/29 05:44:45 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
-
-INCLUDE_OPT = -I.. 
-
-CFLAGS+=$(INCLUDE_OPT)
 
 OBJS = bit.o fstack.o hasht.o lispsort.o stringinfo.o dllist.o
 
@@ -23,7 +19,7 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
 	rm -f SUBSYS.o $(OBJS) 

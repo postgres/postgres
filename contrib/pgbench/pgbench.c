@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.3 2000/04/12 17:14:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.4 2000/05/29 05:44:29 tgl Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -591,7 +591,7 @@ main(int argc, char **argv)
 				}
 				if (rlim.rlim_cur <= (nclients + 2))
 				{
-					fprintf(stderr, "You need at least %d open files resource but you are only allowed to use %ld.\n", nclients + 2, rlim.rlim_cur);
+					fprintf(stderr, "You need at least %d open files resource but you are only allowed to use %ld.\n", nclients + 2, (long) rlim.rlim_cur);
 					fprintf(stderr, "Use limit/ulimt to increase the limit before using pgbench.\n");
 					exit(1);
 				}

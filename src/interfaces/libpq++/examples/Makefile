@@ -15,9 +15,7 @@ LIBPQDIR= /usr/local/pgsql/lib
 #CXXFLAGS= $(CFLAGS) -Wno-error -Wno-unused -Wl,-Bdynamic
 CXXFLAGS= $(CFLAGS)
 
-INCLUDE_OPT= -I$(HEADERDIR)
-
-CXXFLAGS+= $(INCLUDE_OPT)
+CXXFLAGS+= -I$(HEADERDIR)
 
 LDFLAGS+= -L$(LIBPQDIR) -lpq++ 
 

@@ -29,12 +29,12 @@
 #
 #   We don't use $(LD) for linking.  We use $(CC) instead.  This is because
 #   the $(CC) program apparently can do linking too, and it has certain
-#   thinks like default options and search paths for libraries set up for 
+#   things like default options and search paths for libraries set up for 
 #   it that the more primitive $(LD) doesn't have.
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.48 2000/05/28 17:55:51 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.49 2000/05/29 05:44:33 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,9 +50,11 @@ DIRS += tioga
 endif
 
 OBJS = $(DIRS:%=%/SUBSYS.o)
+
 ifeq ($(PORTNAME), qnx4)
-# This file chrashes wlink and is therefore not in bootstrap/SUBSYS.o.
-OBJS1 = bootstrap/bootstrap.o
+# This file crashes qnx4's wlink and is therefore not in bootstrap/SUBSYS.o
+# on that platform.  (Wotta hack ... is it still necessary?)
+OBJS+= bootstrap/bootstrap.o
 endif
 
 VERSIONOBJ = $(SRCDIR)/utils/version.o
@@ -75,22 +77,25 @@ libpostgres.a: $(DLLOBJS) $(SRCDIR)/utils/dllinit.o postgres.def
 	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
 endif
 
-all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source \
-				global1.description local1_template1.description
+all: prebuildheaders postgres $(POSTGRES_IMP) \
+		global1.bki.source local1_template1.bki.source \
+		global1.description local1_template1.description
 
 ifneq ($(PORTNAME), win)
-postgres: utils/fmgroids.h $(OBJS) $(VERSIONOBJ)
-	$(CC) $(CFLAGS) -o postgres $(OBJS) $(OBJS1) $(VERSIONOBJ) $(LDFLAGS)
+
+postgres: $(OBJS) $(VERSIONOBJ)
+	$(CC) $(CFLAGS) -o postgres $(OBJS) $(VERSIONOBJ) $(LDFLAGS)
+
 else
+
 postgres: $(DLLOBJS) $(SRCDIR)/utils/dllinit.o postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	gcc -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(DLLOBJS) $(DLLLIBS)
 	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
 	gcc -g -o $@$(X) $@.exp $(DLLOBJS) $(DLLLIBS)
 	rm $@.exp $@.base
-endif
 
-#.PHONY: postgres
+endif
 
 $(OBJS): $(DIRS:%=%.dir)
 
@@ -114,24 +119,36 @@ catalog/global1.description catalog/local1_template1.description:
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.
 postgres.o: $(OBJS)
-	$(CC) $(LDREL) $(LDOUT) postgres.o $(OBJS) $(OBJS1) $(LDFLAGS)
+	$(CC) $(LDREL) $(LDOUT) postgres.o $(OBJS) $(LDFLAGS)
+
+# These header files should be up-to-date before we do much else...
+.PHONY: prebuildheaders
+
+prebuildheaders: $(SRCDIR)/include/parser/parse.h \
+		$(SRCDIR)/include/utils/fmgroids.h
 
 ############################################################################
 # The following targets are specified in make commands that appear in the
-# make files in our subdirectories.
+# make files in our subdirectories.  Note that it's important we match the
+# dependencies shown in the subdirectory makefiles!
 
-parse.h: parser/parse.h
-	cp parser/parse.h .
+$(SRCDIR)/include/parser/parse.h: parser/parse.h
+	cp parser/parse.h $(SRCDIR)/include/parser
 
-parser/parse.h:
+parser/parse.h: parser/gram.y
 	$(MAKE) -C parser parse.h
 
-utils/fmgroids.h:
+$(SRCDIR)/include/utils/fmgroids.h: utils/fmgroids.h
+	cp utils/fmgroids.h $(SRCDIR)/include/utils
+
+utils/fmgroids.h: utils/Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
 	$(MAKE) -C utils fmgroids.h
 
 #############################################################################
 clean:
-	rm -f postgres$(X) $(POSTGRES_IMP) parse.h \
+	rm -f postgres$(X) $(POSTGRES_IMP) \
+		$(SRCDIR)/include/parser/parse.h \
+		$(SRCDIR)/include/utils/fmgroids.h \
 	    global1.bki.source local1_template1.bki.source \
 	    global1.description local1_template1.description
 ifeq ($(PORTNAME), win)
@@ -140,6 +157,9 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	for i in $(DIRS); do $(MAKE) -C $$i clean; done
+
+depend dep: prebuildheaders
+	for i in $(DIRS); do $(MAKE) -C $$i $@; done
 
 .DEFAULT:
 	for i in $(DIRS); do $(MAKE) -C $$i $@; done
@@ -202,7 +222,7 @@ install-templates: $(TEMPLATEDIR) \
 	$(INSTALL) $(INSTLOPTS) pg_options.sample \
 	  $(TEMPLATEDIR)/pg_options.sample
 
-install-headers: utils/fmgroids.h $(SRCDIR)/include/config.h
+install-headers: prebuildheaders $(SRCDIR)/include/config.h
 	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 	-@if [ ! -d $(HEADERDIR)/port ]; then mkdir $(HEADERDIR)/port; fi
 	-@if [ ! -d $(HEADERDIR)/port/$(PORTNAME) ]; \
@@ -239,7 +259,7 @@ install-headers: utils/fmgroids.h $(SRCDIR)/include/config.h
           $(HEADERDIR)/utils/geo_decls.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/elog.h \
           $(HEADERDIR)/utils/elog.h
-	$(INSTALL) $(INSTLOPTS) utils/fmgroids.h \
+	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/fmgroids.h \
           $(HEADERDIR)/utils/fmgroids.h
 	$(INSTALL) $(INSTLOPTS) $(SRCDIR)/include/utils/palloc.h \
           $(HEADERDIR)/utils/palloc.h
@@ -284,7 +304,7 @@ endif
 # are up to date.  It saves the time of doing all the submakes.
 .PHONY: quick
 quick: $(OBJS)
-	$(CC) -o postgres $(OBJS) $(OBJS1) $(LDFLAGS)
+	$(CC) -o postgres $(OBJS) $(LDFLAGS)
 
 #
 # Build the file, "./ID", used by the "gid" (grep-for-identifier) tool

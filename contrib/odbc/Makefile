@@ -9,7 +9,7 @@ ifndef PGLIB
   PGLIB= .
 endif
 
-CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include
+CFLAGS+= $(CFLAGS_SL)
 
 TARGETS_7= odbc.sql
 TARGETS_PRE7= odbc$(DLSUFFIX) odbc-pre7.sql

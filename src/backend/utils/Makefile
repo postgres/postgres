@@ -4,16 +4,12 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.11 2000/05/28 17:56:05 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.12 2000/05/29 05:45:18 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include $(SRCDIR)/Makefile.global
-
-INCLUDE_OPT = -I.. 
-
-CFLAGS+=$(INCLUDE_OPT)
 
 all: submake SUBSYS.o
 

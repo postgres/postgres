@@ -54,7 +54,7 @@ my $perllib = "-L$Config{archlibexp}/CORE -lperl";
 
 WriteMakefile( 'NAME' => 'plperl', 
 	dynamic_lib => { 'OTHERLDFLAGS' => "$opcode $perllib" } ,
-	INC => '-I$(SRCDIR)/include -I$(SRCDIR)/backend $(PGSQL_INCLUDES)',
+	INC => '-I$(SRCDIR)/include $(PGSQL_INCLUDES)',
 	XS => { 'SPI.xs' => 'SPI.c' },
 	OBJECT => 'plperl.o eloglvl.o SPI.o',
 	);

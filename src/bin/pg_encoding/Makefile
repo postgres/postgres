@@ -6,18 +6,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.6 2000/03/31 14:14:32 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.7 2000/05/29 05:45:44 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../../Makefile.global
-
-# This is a bit of hackery here: pg_encoding uses backend includes and the
-# frontend library.
+include $(SRCDIR)/Makefile.global
 
 OBJS= pg_encoding.o
-CFLAGS:= -I$(SRCDIR)/include $(CFLAGS)
 
 all: submake pg_encoding
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.77 2000/05/25 22:42:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.78 2000/05/29 05:44:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,9 @@
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "nodes/relation.h"
-#include "parse.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
+#include "parser/parse.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"

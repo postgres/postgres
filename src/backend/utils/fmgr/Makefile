@@ -4,14 +4,12 @@
 #    Makefile for utils/fmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.8 1999/12/13 22:34:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/fmgr/Makefile,v 1.9 2000/05/29 05:45:30 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = dfmgr.o fmgr.o
 

@@ -13,14 +13,12 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.22 2000/05/19 02:50:32 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.23 2000/05/29 05:44:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR=../..
 include ../../Makefile.global
-
-CFLAGS+= -I..
 
 OBJS = dynloader.o @INET_ATON@ @STRERROR@ @MISSING_RANDOM@ @SRANDOM@
 OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @STRDUP@ @TAS@ @ISINF@

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.143 2000/05/28 17:56:00 tgl Exp $
+ *	$Id: analyze.c,v 1.144 2000/05/29 05:44:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,8 @@
 #include "catalog/pg_index.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
-#include "parse.h"
 #include "parser/analyze.h"
+#include "parser/parse.h"
 #include "parser/parse_agg.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_relation.h"

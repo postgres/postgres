@@ -15,6 +15,7 @@
 #include <errno.h>
 
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/relscan.h"
@@ -22,14 +23,16 @@
 #include "access/tupdesc.h"
 #include "catalog/catname.h"
 #include "catalog/pg_listener.h"
+#include "fmgr.h"
 #include "storage/lmgr.h"
-#include "utils/fmgr.h"
+#include "utils/fmgroids.h"
 #include "utils/palloc.h"
 #include "utils/rel.h"
 #include "utils/tqual.h"
 
 #include "misc_utils.h"
 
+#undef MIN
 #define MIN(x,y)	((x)<=(y) ? (x) : (y))
 
 extern int	ExecutorLimit(int limit);

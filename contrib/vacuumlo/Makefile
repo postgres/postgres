@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/vacuumlo/Makefile,v 1.1 1999/04/10 16:48:04 peter Exp $
+# $Header: /cvsroot/pgsql/contrib/vacuumlo/Makefile,v 1.2 2000/05/29 05:44:32 tgl Exp $
 
 SRCDIR= ../../src
 
@@ -6,7 +6,7 @@ include $(SRCDIR)/Makefile.global
 
 CONTRIBDIR=$(LIBDIR)/contrib
 
-CFLAGS+= -I$(HEADERDIR)
+CFLAGS+= -I$(LIBPQDIR)
 
 TARGETS= vacuumlo
 CLEANFILES+= $(TARGETS)

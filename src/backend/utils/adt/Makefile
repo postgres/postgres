@@ -4,14 +4,12 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.36 2000/04/08 02:12:54 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.37 2000/05/29 05:45:20 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 # seems to be required for some date/time stuff 1999/07/22 bjm
 ifeq ($(CPU),alpha)

@@ -8,17 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.60 2000/05/12 01:33:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.61 2000/05/29 05:44:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "miscadmin.h"
 #include "optimizer/tlist.h"
-#include "parse.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"

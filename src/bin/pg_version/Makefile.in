@@ -7,14 +7,12 @@
 # Portions Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.8 2000/05/11 17:46:35 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.9 2000/05/29 05:45:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
-
-CFLAGS+= -I$(SRCDIR)/include
 
 OBJS= pg_version.o $(SRCDIR)/utils/version.o @STRERROR2@
 

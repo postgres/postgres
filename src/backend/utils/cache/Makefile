@@ -4,14 +4,12 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.12 1999/12/13 22:34:38 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/cache/Makefile,v 1.13 2000/05/29 05:45:24 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = catcache.o inval.o rel.o relcache.o syscache.o lsyscache.o \
 	fcache.o temprel.o

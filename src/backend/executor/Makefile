@@ -4,14 +4,12 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.11 1999/12/13 22:32:40 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/executor/Makefile,v 1.12 2000/05/29 05:44:45 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
-
-CFLAGS += -I..
 
 OBJS = execAmi.o execFlatten.o execJunk.o execMain.o \
        execProcnode.o execQual.o execScan.o execTuples.o \

@@ -3,7 +3,7 @@ SRCDIR= ../../src
 
 include $(SRCDIR)/Makefile.global
 
-CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include
+CFLAGS+= $(CFLAGS_SL)
 
 ifdef REFINT_VERBOSE
 CFLAGS+= -DREFINT_VERBOSE

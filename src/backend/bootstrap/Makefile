@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.21 2000/01/19 02:58:51 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.22 2000/05/29 05:44:42 tgl Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -19,9 +19,7 @@
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
-include ../../Makefile.global
-
-CFLAGS += -I..
+include $(SRCDIR)/Makefile.global
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
@@ -29,20 +27,18 @@ endif
 
 BOOTYACCS= bootstrap_tokens.h bootparse.c
 
+ifneq ($(PORTNAME), qnx4)
 OBJS= bootparse.o bootscanner.o bootstrap.o 
-ifeq ($(PORTNAME), qnx4)
-# wlink currently crashes with bootstrap.o
-OBJS1= bootparse.o bootscanner.o
+else
+# qnx4's wlink currently crashes with bootstrap.o
+OBJS= bootparse.o bootscanner.o
 endif
 
-all: SUBSYS.o
+# make sure bootstrap.o is built even on qnx4
+all: SUBSYS.o bootstrap.o
 
 SUBSYS.o: $(OBJS)
-ifneq ($(PORTNAME), qnx4)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
-else
-	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS1)
-endif
 
 # bootstrap.o's dependency on bootstrap_tokens.h is computed by the
 # make depend, but we state it here explicitly anyway because 
@@ -65,7 +61,7 @@ bootscanner.c: bootscanner.l
 	rm -f lex.yy.c sedfile
 
 clean:
-	rm -f SUBSYS.o $(OBJS)
+	rm -f SUBSYS.o $(OBJS) bootstrap.o
 # And the garbage that might have been left behind by partial build:
 	rm -f y.tab.h y.tab.c y.output lex.yy.c
 
@@ -77,4 +73,3 @@ dep depend: bootparse.c bootscanner.c bootstrap_tokens.h
 ifeq (depend,$(wildcard depend))
 include depend
 endif
-

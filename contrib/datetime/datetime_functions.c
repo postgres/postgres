@@ -96,7 +96,7 @@ hhmm_in(char *str)
 			   *tm = &tt;
 
 	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) time external representation", NULL);
+		elog(ERROR, "Bad (null) time external representation");
 
 	if (decode_24h_time(str, tm, &fsec) != 0)
 		elog(ERROR, "Bad time external representation '%s'", str);

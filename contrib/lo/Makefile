@@ -3,7 +3,7 @@
 #
 #	Makefile pinched from the ip-mac contrib package
 #
-#	$Id: Makefile,v 1.1 1998/06/16 07:07:11 momjian Exp $
+#	$Id: Makefile,v 1.2 2000/05/29 05:44:27 tgl Exp $
 
 SRCDIR= ../../src
 
@@ -11,7 +11,7 @@ include $(SRCDIR)/Makefile.global
 
 CONTRIBDIR=$(LIBDIR)/modules
 
-CFLAGS+= $(CFLAGS_SL) -I$(SRCDIR)/include
+CFLAGS+= $(CFLAGS_SL)
 
 ifdef REFINT_VERBOSE
 CFLAGS+= -DREFINT_VERBOSE

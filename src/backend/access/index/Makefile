@@ -4,14 +4,12 @@
 #    Makefile for access/index
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/index/Makefile,v 1.8 1999/12/13 22:32:26 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/index/Makefile,v 1.9 2000/05/29 05:44:38 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../.. 
 
 OBJS = genam.o indexam.o istrat.o
 

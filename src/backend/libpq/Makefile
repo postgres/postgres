@@ -4,14 +4,12 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.18 2000/05/28 17:55:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.19 2000/05/29 05:44:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
-
-CFLAGS += -I..
 
 # kerberos flags
 ifdef KRBVERS

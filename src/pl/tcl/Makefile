@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.14 2000/05/23 02:12:44 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.15 2000/05/29 05:45:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -70,7 +70,7 @@ CFLAGS= $(TCL_CFLAGS_OPTIMIZE)
 
 CFLAGS+= $(TCL_SHLIB_CFLAGS) $(TCL_DEFS)
 
-CFLAGS+= -I$(SRCDIR)/include -I$(SRCDIR)/backend $(PGSQL_INCLUDES)
+CFLAGS+= -I$(SRCDIR)/include $(PGSQL_INCLUDES)
         
 #
 # Uncomment the following to enable the unknown command lookup

@@ -4,14 +4,12 @@
 #    Makefile for utils/time
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/time/Makefile,v 1.7 1999/12/13 22:35:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/time/Makefile,v 1.8 2000/05/29 05:45:42 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
-
-CFLAGS += -I../..
 
 OBJS = tqual.o
 
