@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.51 2004/08/13 14:47:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.52 2004/08/13 22:59:29 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -663,6 +663,7 @@ handleCopyIn(PGconn *conn, FILE *copystream)
 	bool		copydone = false;
 	bool		firstload;
 	bool		linedone;
+	bool		saw_cr = false;
 	char		copybuf[COPYBUFSIZ];
 	char	   *s;
 	int			bufleft;
@@ -695,30 +696,49 @@ handleCopyIn(PGconn *conn, FILE *copystream)
 
 		while (!linedone)
 		{						/* for each bufferload in line ... */
+			/* Fetch string until \n, EOF, or buffer full */
 			s = copybuf;
 			for (bufleft = COPYBUFSIZ - 1; bufleft > 0; bufleft--)
 			{
 				c = getc(copystream);
-				if (c == '\n' || c == EOF)
+				if (c == EOF)
 				{
 					linedone = true;
 					break;
 				}
 				*s++ = c;
+				if (c == '\n')
+				{
+					linedone = true;
+					break;
+				}
+				if (c == '\r')
+					saw_cr = true;
 			}
 			*s = '\0';
+			/* EOF with empty line-so-far? */
 			if (c == EOF && s == copybuf && firstload)
 			{
-				PQputline(conn, "\\.");
+				/*
+				 * We are guessing a little bit as to the right line-ending
+				 * here...
+				 */
+				if (saw_cr)
+					PQputline(conn, "\\.\r\n");
+				else
+					PQputline(conn, "\\.\n");
 				copydone = true;
 				if (pset.cur_cmd_interactive)
 					puts("\\.");
 				break;
 			}
+			/* No, so pass the data to the backend */
 			PQputline(conn, copybuf);
+			/* Check for line consisting only of \. */
 			if (firstload)
 			{
-				if (!strcmp(copybuf, "\\."))
+				if (strcmp(copybuf, "\\.\n") == 0 ||
+					strcmp(copybuf, "\\.\r\n") == 0)
 				{
 					copydone = true;
 					break;
@@ -726,7 +746,6 @@ handleCopyIn(PGconn *conn, FILE *copystream)
 				firstload = false;
 			}
 		}
-		PQputline(conn, "\n");
 		linecount++;
 	}
 	ret = !PQendcopy(conn);
