@@ -264,9 +264,9 @@ Or do not specify an argument to the option to use the default.])
 )
 
 dnl Old option variant
-if test "${with_mb}"; then                                   
+if test "${with_mb}"; then
   AC_MSG_ERROR([--with-mb is not supported anymore. Use --enable-multibyte instead.])
-fi                                                                                
+fi
 
 
 dnl We use the default value of 5432 for the DEF_PGPORT value.	If
@@ -278,7 +278,7 @@ AC_ARG_WITH(
    [default_port="$withval"],
    [default_port=5432]
 )
-dnl Need to do this twice because backend wants an integer and frontend a string
+dnl Need both of these because backend wants an integer and frontend a string
 AC_DEFINE_UNQUOTED(DEF_PGPORT, ${default_port})
 AC_DEFINE_UNQUOTED(DEF_PGPORT_STR, "${default_port}")
 AC_MSG_RESULT(${default_port})
@@ -292,6 +292,36 @@ AC_ARG_WITH(
    AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, ${withval}) AC_MSG_RESULT($with_maxbackends),
    AC_DEFINE_UNQUOTED(DEF_MAXBACKENDS, 32) AC_MSG_RESULT(32)
 )
+
+
+dnl Check for C support (allow override if needed)
+dnl Note: actually, setting CC environment variable works just as well.
+AC_ARG_WITH(CC,
+    [  --with-CC=compiler      use specific C compiler],
+    [
+	case "$withval" in
+	"" | y | ye | yes | n | no)
+	    AC_MSG_ERROR([*** You must supply an argument to the --with-CC option.])
+	  ;;
+	esac
+	CC="$withval"
+    ])
+
+dnl Find a compiler if CC is not already set.
+AC_PROG_CC
+dnl Find CPP, then check traditional.
+dnl Caution: these macros must be called in this order...
+AC_PROG_CPP
+AC_PROG_GCC_TRADITIONAL
+
+if test "$CC" = "gcc"
+then
+	CC_VERSION=`${CC} --version`
+else
+	CC_VERSION=""
+fi
+AC_SUBST(CC_VERSION)
+
 
 dnl We exclude tcl support unless user says --with-tcl
 AC_MSG_CHECKING(setting USE_TCL)
@@ -396,12 +426,13 @@ then
 fi
 AC_SUBST(ODBCINSTDIR)
 
-#check for unixODBC
+# check for unixODBC
 
 use_unixODBC=no
 AC_ARG_WITH(unixODBC,
-[  --with-unixODBC[=DIR]   Use unixODBC located in DIR],
-[use_unixODBC=yes;unixODBC="$withval"],use_unixODBC=no)
+    [  --with-unixODBC[=DIR]   Use unixODBC located in DIR],
+    [use_unixODBC=yes; unixODBC="$withval"],
+    use_unixODBC=no)
 
 if test "x$use_unixODBC" = "xyes"
 then
@@ -414,15 +445,19 @@ fi
 
 AC_ARG_WITH(unixODBC-includes,
     [  --with-unixODBC-includes=DIR Find unixODBC headers in DIR],
-    unixODBC_includes="$withval",unixODBC_includes="$unixODBC/include")
+    unixODBC_includes="$withval",
+    unixODBC_includes="$unixODBC/include")
 
-    AC_ARG_WITH(unixODBC-libs,
+AC_ARG_WITH(unixODBC-libs,
     [  --with-unixODBC-libs=DIR Find unixODBC libraries in DIR],
-    unixODBC_libs="$withval",unixODBC_libs="$unixODBC/lib")
+    unixODBC_libs="$withval",
+    unixODBC_libs="$unixODBC/lib")
 
-    CPPFLAGS="$CPPFLAGS -I$unixODBC_includes"
-    AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
-        unixODBC_ok=yes;odbc_headers="$odbc_headers $ac_hdr",unixODBC_ok=no; break)
+PGSQL_INCLUDES="$PGSQL_INCLUDES -I$unixODBC_includes"
+
+AC_CHECK_HEADERS(sql.h sqlext.h odbcinst.h,
+    [unixODBC_ok=yes; odbc_headers="$odbc_headers $ac_hdr"],
+    [unixODBC_ok=no; break])
 
 if test "x$unixODBC_ok" != "xyes"
 then
@@ -430,12 +465,13 @@ then
 fi
 
 save_LIBS="$LIBS"
-LIBS="-L$unixODBC_libs $LIBS"
+LIBS="$LIBS -L$unixODBC_libs"
 
-AC_CHECK_LIB(odbcinst,SQLGetPrivateProfileString,
-[AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
-LIBS="$LIBS -lodbcinst"],
-[LIBS="$save_LIBS"])
+AC_CHECK_LIB(odbcinst, SQLGetPrivateProfileString,
+	[AC_DEFINE(HAVE_SQLGETPRIVATEPROFILESTRING)
+	 LIBS="$LIBS -lodbcinst"],
+	[LIBS="$save_LIBS"])
+
 fi
 
 dnl Unless we specify the command line options
@@ -448,34 +484,6 @@ AC_ARG_ENABLE(
    AC_DEFINE(USE_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
    AC_MSG_RESULT(disabled)
 )
-
-dnl Check for C support (allow override if needed)
-dnl Note: actually, setting CC environment variable works just as well.
-AC_ARG_WITH(CC,
-    [  --with-CC=compiler      use specific C compiler],
-    [
-	case "$withval" in
-	"" | y | ye | yes | n | no)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-CC option.])
-	  ;;
-	esac
-	CC="$withval"
-    ])
-
-dnl Find a compiler if CC is not already set.
-AC_PROG_CC
-dnl Find CPP, then check traditional.
-dnl Caution: these macros must be called in this order...
-AC_PROG_CPP
-AC_PROG_GCC_TRADITIONAL
-
-if test "$CC" = "gcc"
-then
-	CC_VERSION=`${CC} --version`
-else
-	CC_VERSION=""
-fi
-AC_SUBST(CC_VERSION)
 
 CPPFLAGS="$CPPFLAGS $PGSQL_INCLUDES"
 echo "- setting CPPFLAGS=$CPPFLAGS"
