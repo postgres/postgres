@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.120 2004/02/02 16:58:30 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.121 2004/05/19 22:06:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,58 +518,60 @@ check_db(char *dbname, char *user, char *param_str)
 /*
  *	Scan the rest of a host record (after the mask field)
  *	and return the interpretation of it as *userauth_p, *auth_arg_p, and
- *	*error_p.  line points to the next token of the line.
+ *	*error_p.  *line points to the next token of the line, and is
+ *	advanced over successfully-read tokens.
  */
 static void
-parse_hba_auth(List *line, UserAuth *userauth_p, char **auth_arg_p,
+parse_hba_auth(List **line, UserAuth *userauth_p, char **auth_arg_p,
 			   bool *error_p)
 {
 	char	   *token;
 
 	*auth_arg_p = NULL;
 
-	if (!line)
+	/* Get authentication type token. */
+	if (!*line)
+	{
 		*error_p = true;
+		return;
+	}
+	token = lfirst(*line);
+	if (strcmp(token, "trust") == 0)
+		*userauth_p = uaTrust;
+	else if (strcmp(token, "ident") == 0)
+		*userauth_p = uaIdent;
+	else if (strcmp(token, "password") == 0)
+		*userauth_p = uaPassword;
+	else if (strcmp(token, "krb4") == 0)
+		*userauth_p = uaKrb4;
+	else if (strcmp(token, "krb5") == 0)
+		*userauth_p = uaKrb5;
+	else if (strcmp(token, "reject") == 0)
+		*userauth_p = uaReject;
+	else if (strcmp(token, "md5") == 0)
+		*userauth_p = uaMD5;
+	else if (strcmp(token, "crypt") == 0)
+		*userauth_p = uaCrypt;
+#ifdef USE_PAM
+	else if (strcmp(token, "pam") == 0)
+		*userauth_p = uaPAM;
+#endif
 	else
 	{
-		/* Get authentication type token. */
-		token = lfirst(line);
-		if (strcmp(token, "trust") == 0)
-			*userauth_p = uaTrust;
-		else if (strcmp(token, "ident") == 0)
-			*userauth_p = uaIdent;
-		else if (strcmp(token, "password") == 0)
-			*userauth_p = uaPassword;
-		else if (strcmp(token, "krb4") == 0)
-			*userauth_p = uaKrb4;
-		else if (strcmp(token, "krb5") == 0)
-			*userauth_p = uaKrb5;
-		else if (strcmp(token, "reject") == 0)
-			*userauth_p = uaReject;
-		else if (strcmp(token, "md5") == 0)
-			*userauth_p = uaMD5;
-		else if (strcmp(token, "crypt") == 0)
-			*userauth_p = uaCrypt;
-#ifdef USE_PAM
-		else if (strcmp(token, "pam") == 0)
-			*userauth_p = uaPAM;
-#endif
-		else
-			*error_p = true;
-		line = lnext(line);
+		*error_p = true;
+		return;
 	}
+	*line = lnext(*line);
 
-	if (!*error_p)
+	/* Get the authentication argument token, if any */
+	if (*line)
 	{
-		/* Get the authentication argument token, if any */
-		if (line)
-		{
-			token = lfirst(line);
-			*auth_arg_p = pstrdup(token);
-			/* If there is more on the line, it is an error */
-			if (lnext(line))
-				*error_p = true;
-		}
+		token = lfirst(*line);
+		*auth_arg_p = pstrdup(token);
+		*line = lnext(*line);
+		/* If there is more on the line, it is an error */
+		if (*line)
+			*error_p = true;
 	}
 }
 
@@ -623,7 +625,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 
 		/* Read the rest of the line. */
-		parse_hba_auth(line, &port->auth_method, &port->auth_arg, error_p);
+		parse_hba_auth(&line, &port->auth_method, &port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 
@@ -704,13 +706,13 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("invalid IP address \"%s\" in pg_hba.conf file: %s",
-							token, gai_strerror(ret))));
+					 errmsg("invalid IP address \"%s\" in pg_hba.conf file line %d: %s",
+							token, line_number, gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
 			if (gai_result)
 				freeaddrinfo_all(hints.ai_family, gai_result);
-			goto hba_syntax;
+			goto hba_other_error;
 		}
 
 		if (cidr_slash)
@@ -736,16 +738,26 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
 			if (ret || !gai_result)
 			{
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("invalid IP mask \"%s\" in pg_hba.conf file line %d: %s",
+								token, line_number, gai_strerror(ret))));
 				if (gai_result)
 					freeaddrinfo_all(hints.ai_family, gai_result);
-				goto hba_syntax;
+				goto hba_other_error;
 			}
 
 			memcpy(&mask, gai_result->ai_addr, gai_result->ai_addrlen);
 			freeaddrinfo_all(hints.ai_family, gai_result);
 
 			if (addr.ss_family != mask.ss_family)
-				goto hba_syntax;
+			{
+				ereport(LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("IP address and mask do not match in pg_hba.conf file line %d",
+								line_number)));
+				goto hba_other_error;
+			}
 		}
 
 		if (addr.ss_family != port->raddr.addr.ss_family)
@@ -778,13 +790,14 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
-		parse_hba_auth(line, &port->auth_method, &port->auth_arg, error_p);
+		parse_hba_auth(&line, &port->auth_method, &port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 	}
 	else
 		goto hba_syntax;
 
+	/* Does the entry match database and user? */
 	if (!check_db(port->database_name, port->user_name, db))
 		return;
 	if (!check_user(port->user_name, user))
@@ -806,6 +819,8 @@ hba_syntax:
 			errmsg("missing field in pg_hba.conf file at end of line %d",
 				   line_number)));
 
+	/* Come here if suitable message already logged */
+hba_other_error:
 	*error_p = true;
 }
 
