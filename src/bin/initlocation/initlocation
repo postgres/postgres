@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation,v 1.1 1997/11/07 06:21:38 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation,v 1.2 1997/12/09 03:11:16 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,11 +35,11 @@ do
 	shift
 done
 
-if [ ! -z "$badparm" ]; then
+if [ -n "$badparm" ]; then
 	echo "$CMDNAME: Unrecognized parameter '$badparm'"
 fi
 
-if [ ! -z "$usage" ]; then
+if [ -n "$usage" ]; then
 	echo "Usage: $CMDNAME [-u SUPERUSER] DATADIR"
 	exit 1
 fi

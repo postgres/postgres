@@ -16,9 +16,11 @@
 #include <crypt.h>
 #endif
 
-#include <postgres.h>
-#include <libpq/crypt.h>
-#include <utils/nabstime.h>
+#include "postgres.h"
+#include "libpq/crypt.h"
+#include "utils/nabstime.h"
+#include "utils/palloc.h"
+#include "storage/fd.h"
 
 char* crypt_getpwdfilename() {
 
@@ -32,7 +34,7 @@ char* crypt_getpwdfilename() {
       elog(FATAL, "crypt.c: PGDATA is not defined");
       exit(-1);
     }
-    filename = (char*)malloc(strlen(env) + strlen(CRYPT_PWD_FILE) + 2);
+    filename = (char*)palloc(strlen(env) + strlen(CRYPT_PWD_FILE) + 2);
     sprintf(filename, "%s/%s", env, CRYPT_PWD_FILE);
   }
 
@@ -47,7 +49,7 @@ FILE* crypt_openpwdfile() {
   char*     filename;
 
   filename = crypt_getpwdfilename();
-  return (fopen(filename, "r"));
+  return (AllocateFile(filename, "r"));
 }
 
 /*-------------------------------------------------------------------------*/
@@ -66,7 +68,7 @@ void crypt_parsepwdfile(FILE* datafile, char** login, char** pwd, char** valdate
   /* store a copy of user login to return
    */
   count = strcspn(parse, "#");
-  *login = (char*)malloc(count + 1);
+  *login = (char*)palloc(count + 1);
   strncpy(*login, parse, count);
   (*login)[count] = '\0';
   parse += (count + 1);
@@ -79,7 +81,7 @@ void crypt_parsepwdfile(FILE* datafile, char** login, char** pwd, char** valdate
   /* store a copy of user password to return
    */
   count = strcspn(parse, "#");
-  *pwd = (char*)malloc(count + 1);
+  *pwd = (char*)palloc(count + 1);
   strncpy(*pwd, parse, count);
   (*pwd)[count] = '\0';
   parse += (count + 1);
@@ -87,7 +89,7 @@ void crypt_parsepwdfile(FILE* datafile, char** login, char** pwd, char** valdate
   /* store a copy of date login becomes invalid
    */
   count = strcspn(parse, "#");
-  *valdate = (char*)malloc(count + 1);
+  *valdate = (char*)palloc(count + 1);
   strncpy(*valdate, parse, count);
   (*valdate)[count] = '\0';
   parse += (count + 1);
@@ -112,15 +114,15 @@ void crypt_getloginfo(const char* user, char** passwd, char** valuntil) {
   while (!feof(datafile)) {
     crypt_parsepwdfile(datafile, &login, &pwd, &valdate);
     if (!strcmp(login, user)) {
-      free((void*)login);
+      pfree((void*)login);
       *passwd = pwd;
       *valuntil = valdate;
       fclose(datafile);
       return;
     }
-    free((void*)login);
-    free((void*)pwd);
-    free((void*)valdate);
+    pfree((void*)login);
+    pfree((void*)pwd);
+    pfree((void*)valdate);
   }
   fclose(datafile);
 }
@@ -135,13 +137,13 @@ MsgType crypt_salt(const char* user) {
   crypt_getloginfo(user, &passwd, &valuntil);
 
   if (passwd == NULL || *passwd == '\0') {
-    if (passwd) free((void*)passwd);
-    if (valuntil) free((void*)valuntil);
+    if (passwd) pfree((void*)passwd);
+    if (valuntil) pfree((void*)valuntil);
     return STARTUP_UNSALT_MSG;
   }
 
-  free((void*)passwd);
-  if (valuntil) free((void*)valuntil);
+  pfree((void*)passwd);
+  if (valuntil) pfree((void*)valuntil);
   return STARTUP_SALT_MSG;
 }
 
@@ -159,8 +161,8 @@ int crypt_verify(Port* port, const char* user, const char* pgpass) {
   crypt_getloginfo(user, &passwd, &valuntil);
 
   if (passwd == NULL || *passwd == '\0') {
-    if (passwd) free((void*)passwd);
-    if (valuntil) free((void*)valuntil);
+    if (passwd) pfree((void*)passwd);
+    if (valuntil) pfree((void*)valuntil);
     return STATUS_ERROR;
   }
 
@@ -179,8 +181,8 @@ int crypt_verify(Port* port, const char* user, const char* pgpass) {
       retval = STATUS_OK;
   }
 
-  free((void*)passwd);
-  if (valuntil) free((void*)valuntil);
+  pfree((void*)passwd);
+  if (valuntil) pfree((void*)valuntil);
   
   return retval;
 }

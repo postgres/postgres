@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.11 1997/11/10 05:15:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portal.c,v 1.12 1997/12/09 03:10:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,7 +612,7 @@ PQgetAttr(PortalBuffer *portal,
 	if (tbp)
 	{
 		len = tbp->lengths[tuple_offset][field_number];
-		result = malloc(len + 1);
+		result = palloc(len + 1);
 		memcpy(result,
 			   tbp->values[tuple_offset][field_number],
 			   len);

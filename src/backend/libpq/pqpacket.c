@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.11 1997/11/17 16:18:07 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.12 1997/12/09 03:10:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,7 @@ StartupInfo2PacketBuf(StartupInfo* s)
   PacketBuf* res;
   char* tmp;
 
-  res = (PacketBuf*)malloc(sizeof(PacketBuf));
+  res = (PacketBuf*)palloc(sizeof(PacketBuf));
   res->len = htonl(sizeof(PacketBuf));
   res->data[0] = '\0';
 
@@ -285,7 +285,7 @@ PacketBuf2StartupInfo(PacketBuf* p)
   StartupInfo* res;
   char* tmp;
 
-  res = (StartupInfo*)malloc(sizeof(StartupInfo));
+  res = (StartupInfo*)palloc(sizeof(StartupInfo));
 
   res->database[0]='\0';
   res->user[0]='\0';

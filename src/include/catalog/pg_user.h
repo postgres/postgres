@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_user.h,v 1.6 1997/12/04 00:27:54 scrappy Exp $
+ * $Id: pg_user.h,v 1.7 1997/12/09 03:11:25 scrappy Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -65,7 +65,7 @@ typedef FormData_pg_user *Form_pg_user;
  *		initial contents of pg_user
  * ----------------
  */
-DATA(insert OID = 0 ( postgres PGUID t t t t postgres 2116994400 ));
+DATA(insert OID = 0 ( postgres PGUID t t t t "" 2116994400 ));
 
 BKI_BEGIN
 #ifdef ALLOW_PG_GROUP

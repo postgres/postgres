@@ -56,7 +56,7 @@ verify_password(char *user, char *password, Port *port,
 		return STATUS_ERROR;
 	}
 
-	pw_file_fullname = (char *) malloc(strlen(DataDir) + strlen(pw_file_name) + 2);
+	pw_file_fullname = (char *) palloc(strlen(DataDir) + strlen(pw_file_name) + 2);
 	strcpy(pw_file_fullname, DataDir);
 	strcat(pw_file_fullname, "/");
 	strcat(pw_file_fullname, pw_file_name);

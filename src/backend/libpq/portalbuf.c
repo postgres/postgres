@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.8 1997/10/25 01:09:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.9 1997/12/09 03:10:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@
 PortalEntry **portals = (PortalEntry **) NULL;
 size_t		portals_array_size = 0;
 
-/* portals array memory is malloc'd instead of using MemoryContexts */
+/* portals array memory is palloc'd instead of using MemoryContexts */
 /* since it will be used by both front and backend programs*/
 /*	GlobalMemory portals_mmcxt = (GlobalMemory) NULL;  */
 
@@ -83,7 +83,7 @@ portals_realloc(size_t size)
 		newp = (PortalEntry **) realloc(portals,
 							 portals_array_size * sizeof(PortalEntry *));
 	else
-		newp = (PortalEntry **) malloc(portals_array_size * sizeof(PortalEntry *));
+		newp = (PortalEntry **) palloc(portals_array_size * sizeof(PortalEntry *));
 
 	if (newp)
 		portals = newp;

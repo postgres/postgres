@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.19 1997/12/04 00:26:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.20 1997/12/09 03:10:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,10 +397,10 @@ pg_krb5_recvauth(int sock,
 				username, kusername);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		free(kusername);
+		pfree(kusername);
 		return (STATUS_ERROR);
 	}
-	free(kusername);
+	pfree(kusername);
 	return (STATUS_OK);
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.24 1997/11/10 05:15:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.25 1997/12/09 03:10:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,7 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 
 
 	/* put together the full pathname to the old config file */
-	old_conf_file = (char *) malloc((strlen(DataDir) +
+	old_conf_file = (char *) palloc((strlen(DataDir) +
 							  strlen(OLD_CONF_FILE) + 2) * sizeof(char));
 	sprintf(old_conf_file, "%s/%s", DataDir, OLD_CONF_FILE);
 
@@ -427,7 +427,7 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 								 * read */
 
 		/* put together the full pathname to the config file */
-		conf_file = (char *) malloc((strlen(DataDir) +
+		conf_file = (char *) palloc((strlen(DataDir) +
 								  strlen(CONF_FILE) + 2) * sizeof(char));
 		sprintf(conf_file, "%s/%s", DataDir, CONF_FILE);
 
@@ -452,9 +452,9 @@ find_hba_entry(const char DataDir[], const struct in_addr ip_addr,
 									 usermap_name, find_password_entries);
 			FreeFile(file);
 		}
-		free(conf_file);
+		pfree(conf_file);
 	}
-	free(old_conf_file);
+	pfree(old_conf_file);
 	return;
 }
 
@@ -799,7 +799,7 @@ verify_against_usermap(const char DataDir[],
 								 * read */
 
 		/* put together the full pathname to the map file */
-		map_file = (char *) malloc((strlen(DataDir) +
+		map_file = (char *) palloc((strlen(DataDir) +
 									strlen(MAP_FILE) + 2) * sizeof(char));
 		sprintf(map_file, "%s/%s", DataDir, MAP_FILE);
 
@@ -826,7 +826,7 @@ verify_against_usermap(const char DataDir[],
 										checks_out_p);
 			FreeFile(file);
 		}
-		free(map_file);
+		pfree(map_file);
 
 
 	}

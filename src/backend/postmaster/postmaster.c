@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.64 1997/12/07 20:57:45 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.65 1997/12/09 03:11:08 scrappy Exp $
  *
  * NOTES
  *
@@ -88,6 +88,7 @@
 #include "storage/proc.h"
 #include "utils/elog.h"
 #include "port-protos.h"		/* For gethostname() */
+#include "storage/fd.h"
 
 #if defined(DBX_VERSION)
 #define FORK() (0)
@@ -228,7 +229,7 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 
 		sprintf(path, "%s%cbase%ctemplate1%cpg_class",
 				DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
-		fp = fopen(path, "r");
+		fp = AllocateFile(path, "r");
 		if (fp == NULL)
 		{
 			fprintf(stderr, "%s does not find the database system.  "
@@ -244,7 +245,7 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 
 			/* reason ValidatePgVersion failed.  NULL if didn't */
 
-			fclose(fp);
+			FreeFile(fp);
 
 			ValidatePgVersion(DataDir, &reason);
 			if (reason)

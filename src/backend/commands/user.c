@@ -176,7 +176,6 @@ extern void AlterUser(AlterUserStmt *stmt) {
   bool             exists = false,
                    n,
                    inblock;
-  int              max_id = -1;
 
   if (!(inblock = IsTransactionBlock()))
     BeginTransactionBlock();
