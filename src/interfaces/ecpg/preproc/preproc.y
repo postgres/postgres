@@ -337,7 +337,7 @@ make_name(void)
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
-%type  <str>    IntConst PosIntConst
+%type  <str>    IntConst PosIntConst grantee_list func_type
 %type  <str>    select_limit opt_for_update_clause CheckPointStmt
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
@@ -852,6 +852,10 @@ VariableShowStmt:  SHOW ColId
 				{
 					$$ = make_str("show time zone");
 				}
+		| SHOW ALL
+				{
+					$$ = make_str("show all");
+				}
 		| SHOW TRANSACTION ISOLATION LEVEL
 				{
 					$$ = make_str("show transaction isolation level");
@@ -870,6 +874,10 @@ VariableResetStmt:	RESET ColId
 				{
 					$$ = make_str("reset transaction isolation level");
 				}
+		| RESET ALL
+                                {
+                                        $$ = make_str("reset all");
+                                }
 		;
 
 ConstraintsSetStmt:    SET CONSTRAINTS constraints_set_list constraints_set_mode
@@ -1681,11 +1689,11 @@ comment_text:    StringConst		{ $$ = $1; }
 /*****************************************************************************
  *
  *		QUERY:
- *				GRANT [privileges] ON [relation_name_list] TO [GROUP] grantee
+ * GRANT [privileges] ON [TABLE] relation_name_list TO [GROUP] grantee, ...
  *
  *****************************************************************************/
 
-GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee opt_with_grant
+GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee_list opt_with_grant
 				{
 					$$ = cat_str(8, make_str("grant"), $2, make_str("on"), $4, $5, make_str("to"), $7);
 				}
@@ -1759,6 +1767,10 @@ grantee:  PUBLIC
 				}
 		;
 
+grantee_list: grantee  				{ $$ = $1; }
+		| grantee_list ',' grantee 	{ $$ = cat_str(3, $1, make_str(","), $3); }
+		;
+
 opt_with_grant:  WITH GRANT OPTION
 				{
 					mmerror(ET_ERROR, "WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
@@ -1770,11 +1782,11 @@ opt_with_grant:  WITH GRANT OPTION
 /*****************************************************************************
  *
  *		QUERY:
- *				REVOKE [privileges] ON [relation_name] FROM [user]
+ * REVOKE privileges ON [TABLE relation_name_list FROM [user], ...
  *
  *****************************************************************************/
 
-RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee
+RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee_list
 				{
 					$$ = cat_str(8, make_str("revoke"), $2, make_str("on"), $4, $5, make_str("from"), $7);
 				}
@@ -1914,7 +1926,7 @@ func_args_list:  func_arg				{ $$ = $1; }
 				{	$$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-func_arg:  opt_arg Typename
+func_arg:  opt_arg func_type
                                {
                                        /* We can catch over-specified arguments here if we want to,
                                         * but for now better to silently swallow typmod, etc.
@@ -1922,7 +1934,7 @@ func_arg:  opt_arg Typename
                                         */
                                        $$ = cat2_str($1, $2);
                                }
-		| Typename 
+		| func_type
 				{
 					$$ = $1;
 				}
@@ -1944,7 +1956,7 @@ opt_arg:  IN    { $$ = make_str("in"); }
 func_as: StringConst				{ $$ = $1; }
 		| StringConst ',' StringConst	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
-func_return:  Typename
+func_return:  func_type
 				{
                                        /* We can catch over-specified arguments here if we want to,
                                         * but for now better to silently swallow typmod, etc.
@@ -1952,6 +1964,16 @@ func_return:  Typename
                                         */
                                        $$ = $1;
                                 }
+		;
+
+func_type:	Typename
+				{
+					$$ = $1;
+				}
+		| IDENT '.' ColId '%' TYPE_P   
+				{
+					$$ = cat_str(4, $1, make_str("."), $3, make_str("% type"));
+				}
 		;
 
 /*****************************************************************************
@@ -3869,7 +3891,7 @@ connection_target: database_name opt_server opt_port
 		  /* old style: dbname[@server][:port] */
 		  if (strlen($2) > 0 && *($2) != '@')
 		  {
-		    sprintf(errortext, "parse error at or near '%s'", $2);
+		    sprintf(errortext, "Expected '@', found '%s'", $2);
 		    mmerror(ET_ERROR, errortext);
 		  }
 
@@ -3880,7 +3902,7 @@ connection_target: database_name opt_server opt_port
 		  /* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
                   if (strncmp($3, "//", strlen("//")) != 0)
 		  {
-		    sprintf(errortext, "parse error at or near '%s'", $3);
+		    sprintf(errortext, "Expected '://', found '%s'", $3);
 		    mmerror(ET_ERROR, errortext);
 		  }
 
@@ -3926,7 +3948,7 @@ db_prefix: ident cvariable
                 {
 		  if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
 		  {
-		    sprintf(errortext, "parse error at or near '%s'", $2);
+		    sprintf(errortext, "Expected 'postgresql', found '%s'", $2);
 		    mmerror(ET_ERROR, errortext);	
 		  }
 
@@ -3943,7 +3965,7 @@ server: Op server_name
                 {
 		  if (strcmp($1, "@") != 0 && strcmp($1, "//") != 0)
 		  {
-		    sprintf(errortext, "parse error at or near '%s'", $1);
+		    sprintf(errortext, "Expected '@' or '://', found '%s'", $1);
 		    mmerror(ET_ERROR, errortext);
 		  }
 
@@ -4037,11 +4059,11 @@ char_variable: cvariable
 opt_options: Op ColId
 		{
 			if (strlen($1) == 0)
-				mmerror(ET_ERROR, "parse error");
+				mmerror(ET_ERROR, "incomplete statement");
 				
 			if (strcmp($1, "?") != 0)
 			{
-				sprintf(errortext, "parse error at or near %s", $1);
+				sprintf(errortext, "unrecognised token '%s'", $1);
 				mmerror(ET_ERROR, errortext);
 			}
 			

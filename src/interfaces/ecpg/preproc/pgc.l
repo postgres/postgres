@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.78 2001/04/02 08:17:24 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.79 2001/06/13 12:38:58 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -896,7 +896,7 @@ lex_init(void)
 	braces_open = 0;
 
 	preproc_tos = 0;
-	yylineno = 0;
+	yylineno = 1;
 	ifcond = TRUE;
 	stacked_if_value[preproc_tos].condition = ifcond;
 	stacked_if_value[preproc_tos].else_branch = FALSE;
