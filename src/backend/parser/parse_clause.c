@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.66 2000/09/12 21:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.67 2000/09/17 22:21:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,9 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
-#include "optimizer/tlist.h"
 #include "nodes/makefuncs.h"
+#include "optimizer/tlist.h"
+#include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse.h"
 #include "parser/parsetree.h"
@@ -38,12 +39,15 @@ static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 static void extractUniqueColumns(List *common_colnames,
 								 List *src_colnames, List *src_colvars,
 								 List **res_colnames, List **res_colvars);
-static Node *transformUsingClause(ParseState *pstate,
-								  List *leftVars, List *rightVars);
+static Node *transformJoinUsingClause(ParseState *pstate,
+									  List *leftVars, List *rightVars);
+static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
+								   List *containedRels);
 static RangeTblRef *transformTableEntry(ParseState *pstate, RangeVar *r);
 static RangeTblRef *transformRangeSubselect(ParseState *pstate,
 											RangeSubselect *r);
-static Node *transformFromClauseItem(ParseState *pstate, Node *n);
+static Node *transformFromClauseItem(ParseState *pstate, Node *n,
+									 List **containedRels);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
@@ -76,8 +80,9 @@ makeRangeTable(ParseState *pstate, List *frmList)
 	foreach(fl, frmList)
 	{
 		Node	   *n = lfirst(fl);
+		List	   *containedRels;
 
-		n = transformFromClauseItem(pstate, n);
+		n = transformFromClauseItem(pstate, n, &containedRels);
 		pstate->p_jointree = lappend(pstate->p_jointree, n);
 	}
 }
@@ -164,13 +169,13 @@ extractUniqueColumns(List *common_colnames,
 	*res_colvars = new_colvars;
 }
 
-/* transformUsingClause()
- * Build a complete ON clause from a partially-transformed USING list.
- * We are given lists of Var nodes representing left and right match columns.
- * Result is a transformed qualification expression.
+/* transformJoinUsingClause()
+ *	  Build a complete ON clause from a partially-transformed USING list.
+ *	  We are given lists of nodes representing left and right match columns.
+ *	  Result is a transformed qualification expression.
  */
 static Node *
-transformUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
+transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 {
 	Node	   *result = NULL;
 	List	   *lvars,
@@ -210,18 +215,82 @@ transformUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 		rvars = lnext(rvars);
 	}
 
+	/*
+	 * Since the references are already Vars, and are certainly from the
+	 * input relations, we don't have to go through the same pushups that
+	 * transformJoinOnClause() does.  Just invoke transformExpr() to fix
+	 * up the operators, and we're done.
+	 */
 	result = transformExpr(pstate, result, EXPR_COLUMN_FIRST);
 
 	if (exprType(result) != BOOLOID)
 	{
 		/* This could only happen if someone defines a funny version of '=' */
-		elog(ERROR, "USING clause must return type bool, not type %s",
+		elog(ERROR, "JOIN/USING clause must return type bool, not type %s",
 			 typeidTypeName(exprType(result)));
 	}
 
 	return result;
-}	/* transformUsingClause() */
+}	/* transformJoinUsingClause() */
 
+/* transformJoinOnClause()
+ *	  Transform the qual conditions for JOIN/ON.
+ *	  Result is a transformed qualification expression.
+ */
+static Node *
+transformJoinOnClause(ParseState *pstate, JoinExpr *j,
+					  List *containedRels)
+{
+	Node	   *result;
+	List	   *sv_jointree;
+	List	   *clause_varnos,
+			   *l;
+
+	/*
+	 * This is a tad tricky, for two reasons.  First, at the point where
+	 * we're called, the two subtrees of the JOIN node aren't yet part of
+	 * the pstate's jointree, which means that transformExpr() won't resolve
+	 * unqualified references to their columns correctly.  We fix this in a
+	 * slightly klugy way: temporarily make the pstate's jointree consist of
+	 * just those two subtrees (which creates exactly the namespace the ON
+	 * clause should see).  This is OK only because the ON clause can't
+	 * legally alter the jointree by causing relation refs to be added.
+	 */
+	sv_jointree = pstate->p_jointree;
+	pstate->p_jointree = lcons(j->larg, lcons(j->rarg, NIL));
+
+	/* This part is just like transformWhereClause() */
+	result = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
+	if (exprType(result) != BOOLOID)
+	{
+		elog(ERROR, "JOIN/ON clause must return type bool, not type %s",
+			 typeidTypeName(exprType(result)));
+	}
+
+	pstate->p_jointree = sv_jointree;
+
+	/*
+	 * Second, we need to check that the ON condition doesn't refer to any
+	 * rels outside the input subtrees of the JOIN.  It could do that despite
+	 * our hack on the jointree if it uses fully-qualified names.  So, grovel
+	 * through the transformed clause and make sure there are no bogus
+	 * references.
+	 */
+	clause_varnos = pull_varnos(result);
+	foreach(l, clause_varnos)
+	{
+		int		varno = lfirsti(l);
+
+		if (! intMember(varno, containedRels))
+		{
+			elog(ERROR, "JOIN/ON clause refers to \"%s\", which is not part of JOIN",
+				 rt_fetch(varno, pstate->p_rtable)->eref->relname);
+		}
+	}
+	freeList(clause_varnos);
+
+	return result;
+}
 
 /*
  * transformTableEntry --- transform a RangeVar (simple relation reference)
@@ -309,25 +378,40 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
  *	  range table list being built in the ParseState, and return the
  *	  transformed item ready to include in the jointree list.
  *	  This routine can recurse to handle SQL92 JOIN expressions.
+ *
+ *	  Aside from the primary return value (the transformed jointree item)
+ *	  this routine also returns an integer list of the rangetable indexes
+ *	  of all the base relations represented in the jointree item.  This
+ *	  list is needed for checking JOIN/ON conditions in higher levels.
  */
 static Node *
-transformFromClauseItem(ParseState *pstate, Node *n)
+transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 {
 	if (IsA(n, RangeVar))
 	{
 		/* Plain relation reference */
-		return (Node *) transformTableEntry(pstate, (RangeVar *) n);
+		RangeTblRef *rtr;
+
+		rtr = transformTableEntry(pstate, (RangeVar *) n);
+		*containedRels = lconsi(rtr->rtindex, NIL);
+		return (Node *) rtr;
 	}
 	else if (IsA(n, RangeSubselect))
 	{
-		/* Plain relation reference */
-		return (Node *) transformRangeSubselect(pstate, (RangeSubselect *) n);
+		/* sub-SELECT is like a plain relation */
+		RangeTblRef *rtr;
+
+		rtr = transformRangeSubselect(pstate, (RangeSubselect *) n);
+		*containedRels = lconsi(rtr->rtindex, NIL);
+		return (Node *) rtr;
 	}
 	else if (IsA(n, JoinExpr))
 	{
 		/* A newfangled join expression */
 		JoinExpr   *j = (JoinExpr *) n;
-		List	   *l_colnames,
+		List	   *l_containedRels,
+				   *r_containedRels,
+				   *l_colnames,
 				   *r_colnames,
 				   *res_colnames,
 				   *l_colvars,
@@ -337,8 +421,13 @@ transformFromClauseItem(ParseState *pstate, Node *n)
 		/*
 		 * Recursively process the left and right subtrees
 		 */
-		j->larg = transformFromClauseItem(pstate, j->larg);
-		j->rarg = transformFromClauseItem(pstate, j->rarg);
+		j->larg = transformFromClauseItem(pstate, j->larg, &l_containedRels);
+		j->rarg = transformFromClauseItem(pstate, j->rarg, &r_containedRels);
+
+		/*
+		 * Generate combined list of relation indexes
+		 */
+		*containedRels = nconc(l_containedRels, r_containedRels);
 
 		/*
 		 * Extract column name and var lists from both subtrees
@@ -463,7 +552,7 @@ transformFromClauseItem(ParseState *pstate, Node *n)
 					ndx++;
 				}
 				if (l_index < 0)
-					elog(ERROR, "USING column \"%s\" not found in left table",
+					elog(ERROR, "JOIN/USING column \"%s\" not found in left table",
 						 u_colname);
 
 				ndx = 0;
@@ -480,7 +569,7 @@ transformFromClauseItem(ParseState *pstate, Node *n)
 					ndx++;
 				}
 				if (r_index < 0)
-					elog(ERROR, "USING column \"%s\" not found in right table",
+					elog(ERROR, "JOIN/USING column \"%s\" not found in right table",
 						 u_colname);
 
 				l_colvar = nth(l_index, l_colvars);
@@ -520,18 +609,14 @@ transformFromClauseItem(ParseState *pstate, Node *n)
 				res_colvars = lappend(res_colvars, colvar);
 			}
 
-			j->quals = transformUsingClause(pstate, l_usingvars, r_usingvars);
+			j->quals = transformJoinUsingClause(pstate,
+												l_usingvars,
+												r_usingvars);
 		}
 		else if (j->quals)
 		{
 			/* User-written ON-condition; transform it */
-			j->quals = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
-			if (exprType(j->quals) != BOOLOID)
-			{
-				elog(ERROR, "ON clause must return type bool, not type %s",
-					 typeidTypeName(exprType(j->quals)));
-			}
-			/* XXX should check that ON clause refers only to joined tbls */
+			j->quals = transformJoinOnClause(pstate, j, *containedRels);
 		}
 		else
 		{
