@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.22 2000/01/28 03:22:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.23 2000/02/27 19:45:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,8 @@ canonicalize_qual(Expr *qual, bool removeAndFlag)
 	 * and only one relation is mentioned, and DNF is no larger than
 	 * the CNF representation.  (Pretty shaky; can we improve on this?)
 	 */
-	if (dnfok && dnfnodes <= cnfnodes && or_clause((Node *) newqual) &&
+	if (cnfok && dnfok && dnfnodes <= cnfnodes &&
+		or_clause((Node *) newqual) &&
 		NumRelids((Node *) newqual) == 1)
 		cnfok = false;
 	/*
