@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.7 1997/04/07 06:45:41 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.8 1997/04/18 02:48:05 vadim Exp $
  *
  *  NOTES
  *	These functions are stored in pg_amproc.  For each operator class
@@ -134,19 +134,37 @@ btnamecmp(NameData *a, NameData *b)
 int32
 bttextcmp(struct varlena *a, struct varlena *b)
 {
-    char *ap, *bp;
-    int len;
+    unsigned char *ap, *bp;
     int res;
+
+#ifdef USE_LOCALE
+    int la = VARSIZE(a) - VARHDRSZ;
+    int lb = VARSIZE(b) - VARHDRSZ;
     
-    ap = VARDATA(a);
-    bp = VARDATA(b);
+    ap = (unsigned char *) palloc (la + 1);
+    bp = (unsigned char *) palloc (lb + 1);
+
+    memcpy(ap, VARDATA(a), la);
+    *(ap + la) = '\0';
+    memcpy(bp, VARDATA(b), lb);
+    *(bp + lb) = '\0';
+
+    res = strcoll (ap, bp);
+    
+    pfree (ap);
+    pfree (bp);
+
+#else
+    int len = VARSIZE(a);
     
     /* len is the length of the shorter of the two strings */
-    if ((len = VARSIZE(a)) > VARSIZE(b))
+    if ( len > VARSIZE(b) )
 	len = VARSIZE(b);
-    
-    /* len includes the four bytes in which string length is stored */
-    len -= sizeof(VARSIZE(a));
+
+    len -= VARHDRSZ;
+
+    ap = VARDATA(a);
+    bp = VARDATA(b);
     
     /*
      *  If the two strings differ in the first len bytes, or if they're
@@ -161,6 +179,8 @@ bttextcmp(struct varlena *a, struct varlena *b)
 	    len--;
 	} while (res == 0 && len != 0);
     }
+
+#endif
     
     if (res != 0 || VARSIZE(a) == VARSIZE(b))
 	return (res);
