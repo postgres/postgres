@@ -18,7 +18,7 @@ Overview
 
    Drop Column
 
-           PostgreSQL now support ALTER TABLE ... DROP COLUMN functionality.
+           PostgreSQL now supports ALTER TABLE ... DROP COLUMN functionality.
 
    Table Functions
 
@@ -42,7 +42,7 @@ Overview
 
    Multibyte/Locale
 
-           Both multibyte and locale are now enabled by default.
+           Both multibyte and locale are now always enabled.
 
    Logging
 
@@ -57,7 +57,7 @@ Overview
    Functions/Identifiers
 
            By default, functions can now take up to 32 parameters, and 
-           identifiers can be up to 64 bytes long.
+           identifiers can be up to 63 bytes long.
 
      ----------------------------------------------------------------------
 
@@ -101,7 +101,7 @@ Changes
 Server Operation
 ================
 Kerberos V Heimdal support (KTH)
-Add pg_locks table to show locks (Neil)
+Add pg_locks view to show locks (Neil)
 Security fixes for password negotiation memory allocation (Neil)
 Remove support for version 0, <=6.2 FE/BE protocol (Tom)
 Reserve the last few backend slots for superusers, add GUC variable
@@ -115,12 +115,10 @@ Improve caching of index information (Tom)
 Optimizer improvements (Tom, Fernando Nasser)
 Catalog caches now store failed lookups (Tom)
 Hash function improvements (Neil)
-EXPLAIN now outputs as a query (Tom)
 Improve performance of query tokenization and network handling (Peter)
 Speed improvement for large object restore (Mario Weilguni)
 Mark expired index entries on first lookup, saving later heap fetches (Tom)
 Eliminate NULL bitmap padding when not required (Manfred)
-Display sort keys in EXPLAIN (Tom)
 Add BSD-licensed qsort() for Solaris, for performance (Bruce)
 Reduce per-row overhead by four bytes (Manfred Koizar)
 Fix GEQO optimizer bug (Neil Conway)
@@ -228,9 +226,11 @@ Make pg_dump use ALTER TABLE ADD PRIMARY KEY, for performance (Neil)
 Disable brackets in multi-statement rules (Bruce)
 Disable VACUUM from being called inside a function (Bruce)
 Allow dropdb and other scripts to use identifiers with spaces (Bruce)
-Restrict comments to the current database
+Restrict comment to the current database
 Allow comments on operators, independent of the underlying function (Rod)
 Rollback SET commands in aborted transactions (Tom)
+EXPLAIN now outputs as a query (Tom)
+Display sort keys in EXPLAIN (Tom)
 Add 'SET LOCAL var = value' to set GUC variables for a single transaction (Tom)
 Allow ANALYZE to run in a transaction (Bruce)
 Improve COPY syntax using new WITH clauses, keep backward compatibility (Bruce)
@@ -291,7 +291,7 @@ Allow bit string constants without fully-specified length (Thomas)
 Allow conversion between 8-byte integers and bit strings (Thomas)
 Implement hex literal conversion to bit string literal (Thomas)
 Allow table functions to appear in the FROM clause (Joe)
-Increase maximum number of function parameters to 32 (Bruce)                                                                      momjian
+Increase maximum number of function parameters to 32 (Bruce)
 No longer automatically create index for SERIAL column (Tom)
 Add current_database() (Rod)
 Fix cash_words() to not overflow buffer (Tom)
@@ -412,12 +412,12 @@ Rename some internal identifiers to simplify Win32 compile (Jan, Katherine Ward)
 Add documentation on computing disk space (Bruce)
 Remove KSQO from GUC (Bruce)
 Fix memory leak in rtree (Kenneth Been)
-Modify a few error messages for consistency (Bruce)                                                                      momjian
+Modify a few error messages for consistency (Bruce)
 Remove unused system table columns (Peter)
 Make system columns NOT NULL where appropriate (Tom)
 Clean up use of sprintf in favor of snprintf()
 Remove OPAQUE and create specific subtypes (Tom)
-Cleanups in array internal handling (Tom)
+Cleanups in array internal handling (Joe)
 Disallow pg_atoi('') (Bruce)
 Remove GUC parameter wal_files because WAL files are now recycled (Bruce)
 
