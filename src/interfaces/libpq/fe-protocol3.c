@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.10 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.11 2003/12/28 17:43:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,15 @@
 #endif
 #include <arpa/inet.h>
 #endif
+
+
+/*
+ * This macro lists the backend message types that could be "long" (more
+ * than a couple of kilobytes).
+ */
+#define VALID_LONG_MESSAGE_TYPE(id) \
+	((id) == 'T' || (id) == 'D' || (id) == 'd' || (id) == 'V' || \
+	 (id) == 'E' || (id) == 'N' || (id) == 'A')
 
 
 static void handleSyncLoss(PGconn *conn, char id, int msgLength);
@@ -83,8 +92,7 @@ pqParseInput3(PGconn *conn)
 			handleSyncLoss(conn, id, msgLength);
 			return;
 		}
-		if (msgLength > 30000 &&
-			!(id == 'T' || id == 'D' || id == 'd'))
+		if (msgLength > 30000 && !VALID_LONG_MESSAGE_TYPE(id))
 		{
 			handleSyncLoss(conn, id, msgLength);
 			return;
@@ -1257,8 +1265,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
 			handleSyncLoss(conn, id, msgLength);
 			break;
 		}
-		if (msgLength > 30000 &&
-			!(id == 'T' || id == 'D' || id == 'd' || id == 'V'))
+		if (msgLength > 30000 && !VALID_LONG_MESSAGE_TYPE(id))
 		{
 			handleSyncLoss(conn, id, msgLength);
 			break;
