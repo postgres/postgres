@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.114 2001/11/12 00:00:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.115 2001/12/12 03:28:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1165,7 +1165,8 @@ func_get_detail(char *funcname,
 			targetType = GetSysCacheOid(TYPENAME,
 										PointerGetDatum(funcname),
 										0, 0, 0);
-			if (OidIsValid(targetType))
+			if (OidIsValid(targetType) &&
+				!ISCOMPLEX(targetType))
 			{
 				Oid			sourceType = argtypes[0];
 				Node	   *arg1 = lfirst(fargs);
