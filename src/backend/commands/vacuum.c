@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.300 2005/02/15 03:50:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.301 2005/02/20 02:21:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "catalog/pg_index.h"
+#include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -761,8 +762,13 @@ vac_update_dbstats(Oid dbid,
  *
  *		Scan pg_database to determine the system-wide oldest datvacuumxid,
  *		and use it to truncate the transaction commit log (pg_clog).
- *		Also generate a warning if the system-wide oldest datfrozenxid
- *		seems to be in danger of wrapping around.
+ *		Also update the XID wrap limit point maintained by varsup.c.
+ *
+ *		We also generate a warning if the system-wide oldest datfrozenxid
+ *		seems to be in danger of wrapping around.  This is a long-in-advance
+ *		warning; if we start getting uncomfortably close, GetNewTransactionId
+ *		will generate more-annoying warnings, and ultimately refuse to issue
+ *		any more new XIDs.
  *
  *		The passed XIDs are simply the ones I just wrote into my pg_database
  *		entry.	They're used to initialize the "min" calculations.
@@ -778,10 +784,17 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	int32		age;
+	NameData	oldest_datname;
 	bool		vacuumAlreadyWrapped = false;
 	bool		frozenAlreadyWrapped = false;
 
+	/* init oldest_datname to sync with my frozenXID */
+	namestrcpy(&oldest_datname, get_database_name(MyDatabaseId));
 
+	/*
+	 * Note: the "already wrapped" cases should now be impossible due to the
+	 * defenses in GetNewTransactionId, but we keep them anyway.
+	 */
 	relation = heap_openr(DatabaseRelationName, AccessShareLock);
 
 	scan = heap_beginscan(relation, SnapshotNow, 0, NULL);
@@ -807,7 +820,10 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 			if (TransactionIdPrecedes(myXID, dbform->datfrozenxid))
 				frozenAlreadyWrapped = true;
 			else if (TransactionIdPrecedes(dbform->datfrozenxid, frozenXID))
+			{
 				frozenXID = dbform->datfrozenxid;
+				namecpy(&oldest_datname, &dbform->datname);
+			}
 		}
 	}
 
@@ -830,24 +846,30 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 	/* Truncate CLOG to the oldest vacuumxid */
 	TruncateCLOG(vacuumXID);
 
-	/* Give warning about impending wraparound problems */
+	/*
+	 * Do not update varsup.c if we seem to have suffered wraparound
+	 * already; the computed XID might be bogus.
+	 */
 	if (frozenAlreadyWrapped)
 	{
 		ereport(WARNING,
 				(errmsg("some databases have not been vacuumed in over 1 billion transactions"),
 				 errhint("Better vacuum them soon, or you may have a wraparound failure.")));
+		return;
 	}
-	else
-	{
-		age = (int32) (myXID - frozenXID);
-		if (age > (int32) ((MaxTransactionId >> 3) * 3))
-			ereport(WARNING,
-					(errmsg("some databases have not been vacuumed in %d transactions",
-							age),
-					 errhint("Better vacuum them within %d transactions, "
-							 "or you may have a wraparound failure.",
-							 (int32) (MaxTransactionId >> 1) - age)));
-	}
+
+	/* Update the wrap limit for GetNewTransactionId */
+	SetTransactionIdLimit(frozenXID, &oldest_datname);
+
+	/* Give warning about impending wraparound problems */
+	age = (int32) (myXID - frozenXID);
+	if (age > (int32) ((MaxTransactionId >> 3) * 3))
+		ereport(WARNING,
+				(errmsg("database \"%s\" must be vacuumed within %u transactions",
+						NameStr(oldest_datname),
+						(MaxTransactionId >> 1) - age),
+				 errhint("To avoid a database shutdown, execute a full-database VACUUM in \"%s\".",
+						 NameStr(oldest_datname))));
 }
 
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.149 2005/01/27 23:23:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.150 2005/02/20 02:21:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -506,6 +507,11 @@ createdb(const CreatedbStmt *stmt)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pg_database_rel, NoLock);
+
+	/*
+	 * Set flag to update flat database file at commit.
+	 */
+	database_file_update_needed();
 }
 
 
@@ -642,6 +648,11 @@ dropdb(const char *dbname)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(pgdbrel, NoLock);
+
+	/*
+	 * Set flag to update flat database file at commit.
+	 */
+	database_file_update_needed();
 }
 
 
@@ -741,6 +752,11 @@ RenameDatabase(const char *oldname, const char *newname)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(rel, NoLock);
+
+	/*
+	 * Set flag to update flat database file at commit.
+	 */
+	database_file_update_needed();
 }
 
 
@@ -834,6 +850,11 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(rel, NoLock);
+
+	/*
+	 * We don't bother updating the flat file since ALTER DATABASE SET
+	 * doesn't affect it.
+	 */
 }
 
 
@@ -933,6 +954,11 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 
 	/* Close pg_database, but keep exclusive lock till commit */
 	heap_close(rel, NoLock);
+
+	/*
+	 * We don't bother updating the flat file since ALTER DATABASE OWNER
+	 * doesn't affect it.
+	 */
 }
 
 

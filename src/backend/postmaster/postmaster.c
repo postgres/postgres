@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.443 2005/01/12 16:38:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.444 2005/02/20 02:21:54 tgl Exp $
  *
  * NOTES
  *
@@ -903,12 +903,10 @@ PostmasterMain(int argc, char *argv[])
 	pgstat_init();
 
 	/*
-	 * Load cached files for client authentication.
+	 * Load configuration files for client authentication.
 	 */
 	load_hba();
 	load_ident();
-	load_user();
-	load_group();
 
 	/*
 	 * We're ready to rock and roll...
@@ -1797,6 +1795,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 		if (SysLoggerPID != 0)
 			kill(SysLoggerPID, SIGHUP);
 		/* PgStatPID does not currently need SIGHUP */
+
+		/* Reload authentication config files too */
 		load_hba();
 		load_ident();
 
@@ -2005,6 +2005,14 @@ reaper(SIGNAL_ARGS)
 			 * recovery.
 			 */
 			FatalError = false;
+
+			/*
+			 * Load the flat user/group files into postmaster's caches.
+			 * The startup process has recomputed these from the database
+			 * contents, so we wait till it finishes before loading them.
+			 */
+			load_user();
+			load_group();
 
 			/*
 			 * Crank up the background writer.	It doesn't matter if this
@@ -2662,7 +2670,7 @@ BackendRun(Port *port)
 	port->remote_port = strdup(remote_port);
 
 	/*
-	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.c
+	 * In EXEC_BACKEND case, we didn't inherit the contents of pg_hba.conf
 	 * etcetera from the postmaster, and have to load them ourselves.
 	 * Build the PostmasterContext (which didn't exist before, in this
 	 * process) to contain the data.

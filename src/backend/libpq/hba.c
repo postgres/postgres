@@ -10,13 +10,12 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.137 2005/02/12 23:53:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.138 2005/02/20 02:21:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
 #include <pwd.h>
 #include <fcntl.h>
 #include <sys/param.h>
@@ -29,12 +28,12 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "commands/user.h"
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "storage/fd.h"
+#include "utils/flatfiles.h"
 #include "utils/guc.h"
 
 
@@ -936,7 +935,7 @@ load_group(void)
 	group_length = 0;
 
 	/* Read in the file contents */
-	filename = group_getfilename();
+	filename = group_getflatfilename();
 	group_file = AllocateFile(filename, "r");
 
 	if (group_file == NULL)
@@ -993,7 +992,7 @@ load_user(void)
 	user_length = 0;
 
 	/* Read in the file contents */
-	filename = user_getfilename();
+	filename = user_getflatfilename();
 	user_file = AllocateFile(filename, "r");
 
 	if (user_file == NULL)

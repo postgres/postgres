@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195 2004/12/31 21:59:29 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.196 2005/02/20 02:21:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@
 #include "commands/async.h"
 #include "commands/tablecmds.h"
 #include "commands/trigger.h"
-#include "commands/user.h"
 #include "executor/spi.h"
 #include "libpq/be-fsstubs.h"
 #include "miscadmin.h"
@@ -36,6 +35,7 @@
 #include "storage/proc.h"
 #include "storage/sinval.h"
 #include "storage/smgr.h"
+#include "utils/flatfiles.h"
 #include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
@@ -1354,6 +1354,7 @@ StartTransaction(void)
 	 * start processing
 	 */
 	s->state = TRANS_START;
+	s->transactionId = InvalidTransactionId; /* until assigned */
 
 	/*
 	 * Make sure we've freed any old snapshot, and reset xact state
@@ -1464,9 +1465,9 @@ CommitTransaction(void)
 	/* NOTIFY commit must come before lower-level cleanup */
 	AtCommit_Notify();
 
-	/* Update the flat password file if we changed pg_shadow or pg_group */
+	/* Update flat files if we changed pg_database, pg_shadow or pg_group */
 	/* This should be the last step before commit */
-	AtEOXact_UpdatePasswordFile(true);
+	AtEOXact_UpdateFlatFiles(true);
 
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
@@ -1654,10 +1655,14 @@ AbortTransaction(void)
 	AtAbort_Portals();
 	AtEOXact_LargeObject(false);	/* 'false' means it's abort */
 	AtAbort_Notify();
-	AtEOXact_UpdatePasswordFile(false);
+	AtEOXact_UpdateFlatFiles(false);
 
-	/* Advertise the fact that we aborted in pg_clog. */
-	RecordTransactionAbort();
+	/*
+	 * Advertise the fact that we aborted in pg_clog (assuming that we
+	 * got as far as assigning an XID to advertise).
+	 */
+	if (TransactionIdIsValid(s->transactionId))
+		RecordTransactionAbort();
 
 	/*
 	 * Let others know about no transaction in progress by me. Note that
@@ -2034,10 +2039,25 @@ AbortCurrentTransaction(void)
 
 	switch (s->blockState)
 	{
-			/*
-			 * we aren't in a transaction, so we do nothing.
-			 */
 		case TBLOCK_DEFAULT:
+			if (s->state == TRANS_DEFAULT)
+			{
+				/* we are idle, so nothing to do */
+			}
+			else
+			{
+				/*
+				 * We can get here after an error during transaction start
+				 * (state will be TRANS_START).  Need to clean up the
+				 * incompletely started transaction.  First, adjust the
+				 * low-level state to suppress warning message from
+				 * AbortTransaction.
+				 */
+				if (s->state == TRANS_START)
+					s->state = TRANS_INPROGRESS;
+				AbortTransaction();
+				CleanupTransaction();
+			}
 			break;
 
 			/*
@@ -3277,8 +3297,8 @@ CommitSubTransaction(void)
 	AtEOSubXact_LargeObject(true, s->subTransactionId,
 							s->parent->subTransactionId);
 	AtSubCommit_Notify();
-	AtEOSubXact_UpdatePasswordFile(true, s->subTransactionId,
-								   s->parent->subTransactionId);
+	AtEOSubXact_UpdateFlatFiles(true, s->subTransactionId,
+								s->parent->subTransactionId);
 
 	CallSubXactCallbacks(SUBXACT_EVENT_COMMIT_SUB, s->subTransactionId,
 						 s->parent->subTransactionId);
@@ -3387,8 +3407,8 @@ AbortSubTransaction(void)
 		AtEOSubXact_LargeObject(false, s->subTransactionId,
 								s->parent->subTransactionId);
 		AtSubAbort_Notify();
-		AtEOSubXact_UpdatePasswordFile(false, s->subTransactionId,
-									   s->parent->subTransactionId);
+		AtEOSubXact_UpdateFlatFiles(false, s->subTransactionId,
+									s->parent->subTransactionId);
 
 		/* Advertise the fact that we aborted in pg_clog. */
 		if (TransactionIdIsValid(s->transactionId))

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.40 2004/12/27 22:30:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.41 2005/02/20 02:21:26 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -290,7 +290,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.40 2004/12/27 22:30:10 tgl 
     transaction's XID is <quote>in the future</> and should not be visible
     to the current transaction.  But since transaction IDs have limited size
     (32 bits at this writing) a cluster that runs for a long time (more
-    than 4 billion transactions) will suffer <firstterm>transaction ID
+    than 4 billion transactions) would suffer <firstterm>transaction ID
     wraparound</>: the XID counter wraps around to zero, and all of a sudden
     transactions that were in the past appear to be in the future &mdash; which
     means their outputs become invisible.  In short, catastrophic data loss.
@@ -313,8 +313,13 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.40 2004/12/27 22:30:10 tgl 
     In practice this isn't an onerous requirement, but since the
     consequences of failing to meet it can be complete data loss (not
     just wasted disk space or slow performance), some special provisions
-    have been made to help database administrators keep track of the
-    time since the last <command>VACUUM</>. The remainder of this
+    have been made to help database administrators avoid disaster.
+    For each database in the cluster, <productname>PostgreSQL</productname>
+    keeps track of the time of the last database-wide <command>VACUUM</>.
+    When any database approaches the billion-transaction danger level,
+    the system begins to emit warning messages.  If nothing is done, it
+    will eventually shut down normal operations until appropriate
+    manual maintenance is done.  The remainder of this
     section gives the details.
    </para>
 
@@ -363,7 +368,8 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.40 2004/12/27 22:30:10 tgl 
     statistics in the system table <literal>pg_database</>.  In particular,
     the <literal>datfrozenxid</> column of a database's
     <literal>pg_database</> row is updated at the completion of any
-    database-wide <command>VACUUM</command> operation (i.e., <command>VACUUM</> that does not
+    database-wide <command>VACUUM</command> operation (i.e.,
+    <command>VACUUM</> that does not
     name a specific table).  The value stored in this field is the freeze
     cutoff XID that was used by that <command>VACUUM</> command.  All normal
     XIDs older than this cutoff XID are guaranteed to have been replaced by
@@ -391,10 +397,35 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
 
 <programlisting>
 play=# VACUUM;
-WARNING:  some databases have not been vacuumed in 1613770184 transactions
-HINT:  Better vacuum them within 533713463 transactions, or you may have a wraparound failure.
+WARNING:  database "mydb" must be vacuumed within 177009986 transactions
+HINT:  To avoid a database shutdown, execute a full-database VACUUM in "mydb".
 VACUUM
 </programlisting>
+   </para>
+
+   <para>
+    If the warnings emitted by <command>VACUUM</> go ignored, then
+    <productname>PostgreSQL</productname> will begin to emit a warning
+    like the above on every transaction start once there are fewer than 10
+    million transactions left until wraparound.  If those warnings also are
+    ignored, the system will shut down and refuse to execute any new
+    transactions once there are fewer than 1 million transactions left
+    until wraparound:
+
+<programlisting>
+play=# select 2+2;
+ERROR:  database is shut down to avoid wraparound data loss in database "mydb"
+HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
+</programlisting>
+
+    The 1-million-transaction safety margin exists to let the
+    administrator recover without data loss, by manually executing the
+    required <command>VACUUM</> commands.  However, since the system will not
+    execute commands once it has gone into the safety shutdown mode,
+    the only way to do this is to stop the postmaster and use a standalone
+    backend to execute <command>VACUUM</>.  The shutdown mode is not enforced
+    by a standalone backend.  See the <xref linkend="app-postgres"> reference
+    page for details about using a standalone backend.
    </para>
 
    <para>
@@ -410,26 +441,19 @@ VACUUM
     It should also be used to prepare any user-created databases that
     are to be marked <literal>datallowconn</> = <literal>false</> in
     <literal>pg_database</>, since there isn't any convenient way to
-    <command>VACUUM</command> a database that you can't connect to. Note that
-    <command>VACUUM</command>'s automatic warning message about
-    unvacuumed databases will ignore <literal>pg_database</> entries
-    with <literal>datallowconn</> = <literal>false</>, so as to avoid
-    giving false warnings about these databases; therefore it's up to
-    you to ensure that such databases are frozen correctly.
+    <command>VACUUM</command> a database that you can't connect to.
    </para>
 
    <warning>
     <para>
-     To be sure of safety against transaction wraparound, it is necessary
-     to vacuum <emphasis>every</> table, including system catalogs, in
-     <emphasis>every</> database at least once every billion transactions.
-     We have seen data loss situations caused by people deciding that they
-     only needed to vacuum their active user tables, rather than issuing
-     database-wide vacuum commands.  That will appear to work fine ...
-     for a while.
+     A database that is marked <literal>datallowconn</> = <literal>false</>
+     in <literal>pg_database</> is assumed to be properly frozen; the
+     automatic warnings and wraparound protection shutdown do not take
+     such databases into account.  Therefore it's up to you to ensure
+     you've correctly frozen a database before you mark it with
+     <literal>datallowconn</> = <literal>false</>.
     </para>
    </warning>
-
   </sect2>
  </sect1>
 

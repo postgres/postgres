@@ -6,7 +6,7 @@
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.60 2005/01/01 05:43:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/varsup.c,v 1.61 2005/02/20 02:21:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,10 @@
 #include "access/clog.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
+#include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
+#include "utils/builtins.h"
 
 
 /* Number of OIDs to prefetch (preallocate) per XLOG write */
@@ -45,6 +47,37 @@ GetNewTransactionId(bool isSubXact)
 	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
 	xid = ShmemVariableCache->nextXid;
+
+	/*
+	 * Check to see if it's safe to assign another XID.  This protects
+	 * against catastrophic data loss due to XID wraparound.  The basic
+	 * rules are: warn if we're past xidWarnLimit, and refuse to execute
+	 * transactions if we're past xidStopLimit, unless we are running in
+	 * a standalone backend (which gives an escape hatch to the DBA who
+	 * ignored all those warnings).
+	 *
+	 * Test is coded to fall out as fast as possible during normal operation,
+	 * ie, when the warn limit is set and we haven't violated it.
+	 */
+	if (TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidWarnLimit) &&
+		TransactionIdIsValid(ShmemVariableCache->xidWarnLimit))
+	{
+		if (IsUnderPostmaster &&
+			TransactionIdFollowsOrEquals(xid, ShmemVariableCache->xidStopLimit))
+			ereport(ERROR,
+					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+					 errmsg("database is shut down to avoid wraparound data loss in database \"%s\"",
+							NameStr(ShmemVariableCache->limit_datname)),
+					 errhint("Stop the postmaster and use a standalone backend to VACUUM in \"%s\".",
+							 NameStr(ShmemVariableCache->limit_datname))));
+		else
+			ereport(WARNING,
+					(errmsg("database \"%s\" must be vacuumed within %u transactions",
+							NameStr(ShmemVariableCache->limit_datname),
+							ShmemVariableCache->xidWrapLimit - xid),
+					 errhint("To avoid a database shutdown, execute a full-database VACUUM in \"%s\".",
+							 NameStr(ShmemVariableCache->limit_datname))));
+	}
 
 	/*
 	 * If we are allocating the first XID of a new page of the commit log,
@@ -136,6 +169,84 @@ ReadNewTransactionId(void)
 
 	return xid;
 }
+
+/*
+ * Determine the last safe XID to allocate given the currently oldest
+ * datfrozenxid (ie, the oldest XID that might exist in any database
+ * of our cluster).
+ */
+void
+SetTransactionIdLimit(TransactionId oldest_datfrozenxid,
+					  Name oldest_datname)
+{
+	TransactionId xidWarnLimit;
+	TransactionId xidStopLimit;
+	TransactionId xidWrapLimit;
+	TransactionId curXid;
+
+	Assert(TransactionIdIsValid(oldest_datfrozenxid));
+
+	/*
+	 * The place where we actually get into deep trouble is halfway around
+	 * from the oldest potentially-existing XID.  (This calculation is
+	 * probably off by one or two counts, because the special XIDs reduce the
+	 * size of the loop a little bit.  But we throw in plenty of slop below,
+	 * so it doesn't matter.)
+	 */
+	xidWrapLimit = oldest_datfrozenxid + (MaxTransactionId >> 1);
+	if (xidWrapLimit < FirstNormalTransactionId)
+		xidWrapLimit += FirstNormalTransactionId;
+
+	/*
+	 * We'll refuse to continue assigning XIDs in interactive mode once
+	 * we get within 1M transactions of data loss.  This leaves lots
+	 * of room for the DBA to fool around fixing things in a standalone
+	 * backend, while not being significant compared to total XID space.
+	 * (Note that since vacuuming requires one transaction per table
+	 * cleaned, we had better be sure there's lots of XIDs left...)
+	 */
+	xidStopLimit = xidWrapLimit - 1000000;
+	if (xidStopLimit < FirstNormalTransactionId)
+		xidStopLimit -= FirstNormalTransactionId;
+
+	/*
+	 * We'll start complaining loudly when we get within 10M transactions
+	 * of the stop point.  This is kind of arbitrary, but if you let your
+	 * gas gauge get down to 1% of full, would you be looking for the
+	 * next gas station?  We need to be fairly liberal about this number
+	 * because there are lots of scenarios where most transactions are
+	 * done by automatic clients that won't pay attention to warnings.
+	 * (No, we're not gonna make this configurable.  If you know enough to
+	 * configure it, you know enough to not get in this kind of trouble in
+	 * the first place.)
+	 */
+	xidWarnLimit = xidStopLimit - 10000000;
+	if (xidWarnLimit < FirstNormalTransactionId)
+		xidWarnLimit -= FirstNormalTransactionId;
+
+	/* Grab lock for just long enough to set the new limit values */
+	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
+	ShmemVariableCache->xidWarnLimit = xidWarnLimit;
+	ShmemVariableCache->xidStopLimit = xidStopLimit;
+	ShmemVariableCache->xidWrapLimit = xidWrapLimit;
+	namecpy(&ShmemVariableCache->limit_datname, oldest_datname);
+	curXid = ShmemVariableCache->nextXid;
+	LWLockRelease(XidGenLock);
+
+	/* Log the info */
+	ereport(LOG,
+			(errmsg("transaction ID wrap limit is %u, limited by database \"%s\"",
+					xidWrapLimit, NameStr(*oldest_datname))));
+	/* Give an immediate warning if past the wrap warn point */
+	if (TransactionIdFollowsOrEquals(curXid, xidWarnLimit))
+		ereport(WARNING,
+				(errmsg("database \"%s\" must be vacuumed within %u transactions",
+						NameStr(*oldest_datname),
+						xidWrapLimit - curXid),
+				 errhint("To avoid a database shutdown, execute a full-database VACUUM in \"%s\".",
+						 NameStr(*oldest_datname))));
+}
+
 
 /* ----------------------------------------------------------------
  *					object id generation support

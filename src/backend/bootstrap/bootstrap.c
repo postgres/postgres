@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.198 2005/01/14 21:08:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.199 2005/02/20 02:21:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
+#include "utils/flatfiles.h"
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -407,6 +408,7 @@ BootstrapMain(int argc, char *argv[])
 			bootstrap_signals();
 			StartupXLOG();
 			LoadFreeSpaceMap();
+			BuildFlatFiles(false);
 			proc_exit(0);		/* startup done */
 
 		case BS_XLOG_BGWRITER:

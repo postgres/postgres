@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.440 2004/12/31 22:01:16 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.441 2005/02/20 02:21:57 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -55,6 +55,7 @@
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
+#include "utils/flatfiles.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -2706,6 +2707,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		LoadFreeSpaceMap();
 		on_shmem_exit(DumpFreeSpaceMap, 0);
+
+		/*
+		 * We have to build the flat file for pg_database, but not for
+		 * the user and group tables, since we won't try to do authentication.
+		 */
+		BuildFlatFiles(true);
 	}
 
 	/*

@@ -4,7 +4,7 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/init/Makefile,v 1.17 2004/05/11 21:57:14 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/init/Makefile,v 1.18 2005/02/20 02:22:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/utils/init
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = globals.o miscinit.o postinit.o
+OBJS = flatfiles.o globals.o miscinit.o postinit.o
 
 all: SUBSYS.o
 
