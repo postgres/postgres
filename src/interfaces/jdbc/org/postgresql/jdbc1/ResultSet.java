@@ -445,7 +445,13 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		String s = getString(columnIndex);
 		if (s == null)
 			return null;
-		return java.sql.Date.valueOf(s);
+		// length == 10: SQL Date
+		// length >  10: SQL Timestamp, assumes PGDATESTYLE=ISO
+		try {
+		        return java.sql.Date.valueOf((s.length() == 10) ? s : s.substring(0,10));
+		} catch (NumberFormatException e) {
+		        throw new PSQLException("postgresql.res.baddate", s);
+		}
 	}
 
 	/**

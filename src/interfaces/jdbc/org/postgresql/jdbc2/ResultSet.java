@@ -1554,14 +1554,26 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	{
 		if (s == null)
 			return null;
-		return java.sql.Date.valueOf(s);
+		// length == 10: SQL Date
+		// length >  10: SQL Timestamp, assumes PGDATESTYLE=ISO
+		try {
+		        return java.sql.Date.valueOf((s.length() == 10) ? s : s.substring(0,10));
+		} catch (NumberFormatException e) {
+		        throw new PSQLException("postgresql.res.baddate", s);
+		}
 	}
 
 	public static Time toTime(String s) throws SQLException
 	{
 		if (s == null)
 			return null; // SQL NULL
-		return java.sql.Time.valueOf(s);
+		// length == 8: SQL Time
+		// length >  8: SQL Timestamp
+		try {
+		        return java.sql.Time.valueOf((s.length() == 8) ? s : s.substring(11,19));
+		} catch (NumberFormatException e) {
+		        throw new PSQLException("postgresql.res.badtime",s);
+		}
 	}
 
 	public static Timestamp toTimestamp(String s, ResultSet resultSet) throws SQLException
@@ -1598,9 +1610,17 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 			resultSet.sbuf.setLength(0);
 			resultSet.sbuf.append(s);
 
+			//we are looking to see if the backend has appended on a timezone.
+			//currently postgresql will return +/-HH:MM or +/-HH for timezone offset
+			//(i.e. -06, or +06:30, note the expectation of the leading zero for the
+			//hours, and the use of the : for delimiter between hours and minutes)
+			//if the backend ISO format changes in the future this code will
+			//need to be changed as well
 			char sub = resultSet.sbuf.charAt(resultSet.sbuf.length() - 3);
 			if (sub == '+' || sub == '-')
 			{
+			        //we have found timezone info of format +/-HH
+
 				resultSet.sbuf.setLength(resultSet.sbuf.length() - 3);
 				if (subsecond)
 				{
@@ -1609,6 +1629,23 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				else
 				{
 					resultSet.sbuf.append("GMT").append(s.substring(s.length() - 3)).append(":00");
+				}
+			} else if (sub == ':') {
+			        //we may have found timezone info of format +/-HH:MM, or there is no
+			        //timezone info at all and this is the : preceding the seconds
+			        char sub2 = resultSet.sbuf.charAt(resultSet.sbuf.length()-5);
+				if (sub2 == '+' || sub2 == '-') 
+				{
+				        //we have found timezone info of format +/-HH:MM
+				        resultSet.sbuf.setLength(resultSet.sbuf.length()-5);
+					if (subsecond)  
+					{
+					        resultSet.sbuf.append('0').append("GMT").append(s.substring(s.length()-5));
+					} else {
+					        resultSet.sbuf.append("GMT").append(s.substring(s.length()-5));
+					}
+				} else if (subsecond) {
+				        resultSet.sbuf.append('0');
 				}
 			}
 			else if (subsecond)
