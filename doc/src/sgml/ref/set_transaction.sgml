@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.20 2004/08/12 21:00:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.21 2004/08/14 22:17:08 tgl Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <refmeta>
   <refentrytitle id="SQL-SET-TRANSACTION-TITLE">SET TRANSACTION</refentrytitle>
@@ -34,9 +34,9 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
    characteristics of the current transaction. It has no effect on any
    subsequent transactions.  <command>SET SESSION
    CHARACTERISTICS</command> sets the default transaction
-   characteristics for subsequent transactions of a session.  <command>SET
-   TRANSACTION</command> can override it for an individual
-   transaction.
+   characteristics for subsequent transactions of a session.  These
+   defaults can be overridden by <command>SET TRANSACTION</command> for an
+   individual transaction.
   </para>
 
   <para>
@@ -68,14 +68,6 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
        before the first query or data-modification statement was executed in
        this transaction.
       </para>
-      <tip>
-       <para>
-        Intuitively, serializable means that two concurrent
-        transactions will leave the database in the same state as if
-        the two had been executed strictly one after the other (in one
-        order or the other).
-       </para>
-      </tip>
      </listitem>
     </varlistentry>
    </variablelist>
@@ -111,7 +103,7 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
    <literal>TRUNCATE</literal>; and <literal>EXPLAIN ANALYZE</literal>
    and <literal>EXECUTE</literal> if the command they would execute is
    among those listed.  This is a high-level notion of read-only that
-   does not prevent writes to disk.
+   does not prevent all writes to disk.
   </para>
  </refsect1>
 
@@ -138,8 +130,9 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
    and <xref linkend="guc-default-transaction-read-only">.
    (In fact <command>SET SESSION CHARACTERISTICS</command> is just a
    verbose equivalent for setting these variables with <command>SET</>.)
-   This allows them to be set in the configuration file.  Consult <xref
-   linkend="runtime-config"> for more information.
+   This means the defaults can be set in the configuration file, via
+   <command>ALTER DATABASE</>, etc.  Consult <xref linkend="runtime-config">
+   for more information.
   </para>
  </refsect1>
 
@@ -149,10 +142,10 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
   <para>
    Both commands are defined in the <acronym>SQL</acronym> standard.
    <literal>SERIALIZABLE</literal> is the default transaction
-   isolation level in the standard; in
+   isolation level in the standard.  In
    <productname>PostgreSQL</productname> the default is ordinarily
    <literal>READ COMMITTED</literal>, but you can change it as
-   mentioned above.  Because of multiversion concurrency control, the
+   mentioned above.  Because of lack of predicate locking, the
    <literal>SERIALIZABLE</literal> level is not truly
    serializable. See <xref linkend="mvcc"> for details.
   </para>
