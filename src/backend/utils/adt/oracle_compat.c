@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.14 1998/06/15 19:29:36 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.15 1998/08/11 18:38:07 momjian Exp $
  *
  */
 
@@ -297,7 +297,7 @@ btrim(text *string, text *set)
 				break;
 			++ptr2;
 		}
-		if (*ptr != *ptr2)
+		if (ptr2 > end2)
 			break;
 		ptr++;
 		ptr2 = VARDATA(set);
@@ -316,7 +316,7 @@ btrim(text *string, text *set)
 				break;
 			++ptr2;
 		}
-		if (*end != *ptr2)
+		if (ptr2 > end2)
 			break;
 		--end;
 		ptr2 = VARDATA(set);
@@ -374,7 +374,7 @@ ltrim(text *string, text *set)
 				break;
 			++ptr2;
 		}
-		if (*ptr != *ptr2)
+		if (ptr2 > end2)
 			break;
 		ptr++;
 		ptr2 = VARDATA(set);
@@ -434,7 +434,7 @@ rtrim(text *string, text *set)
 				break;
 			++ptr2;
 		}
-		if (*ptr != *ptr2)
+		if (ptr2 > end2)
 			break;
 		--ptr;
 		ptr2 = VARDATA(set);
