@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.38 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.39 2004/12/27 22:30:10 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -37,23 +37,21 @@ $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.38 2004/12/13 18:05:08 petere
   </para>
 
   <para>
-   An application that connects to the database server specifies in
+   When connecting to the database server, a client must specify in
    its connection request the name of the database it wants to connect
    to. It is not possible to access more than one database per
    connection. (But an application is not restricted in the number of
-   connections it opens to the same or other databases.)  It is
-   possible, however, to access more than one schema from the same
-   connection.  Schemas are a purely logical structure and who can
-   access what is managed by the privilege system.  Databases are
+   connections it opens to the same or other databases.)  Databases are
    physically separated and access control is managed at the
    connection level.  If one <productname>PostgreSQL</> server
    instance is to house projects or users that should be separate and
    for the most part unaware of each other, it is therefore
    recommendable to put them into separate databases.  If the projects
    or users are interrelated and should be able to use each other's
-   resources they should be put in the same databases but possibly
-   into separate schemas.  More information about managing schemas is
-   in <xref linkend="ddl-schemas">.
+   resources they should be put in the same database, but possibly
+   into separate schemas.  Schemas are a purely logical structure and who can
+   access what is managed by the privilege system.  More information about
+   managing schemas is in <xref linkend="ddl-schemas">.
   </para>
 
   <note>
@@ -116,7 +114,7 @@ CREATE DATABASE <replaceable>name</>;
   </para>
 
   <para>
-   As an extra convenience, there is also a program that you can
+   As a convenience, there is a program that you can
    execute from the shell to create new databases,
    <command>createdb</>.<indexterm><primary>createdb</></>
 
@@ -127,7 +125,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
    <command>createdb</> does no magic. It connects to the <literal>template1</>
    database and issues the <command>CREATE DATABASE</> command,
    exactly as described above.
-   The reference page on <command>createdb</> contains the invocation
+   The <xref linkend="app-createdb"> reference page contains the invocation
    details. Note that <command>createdb</> without any arguments will create
    a database with the current user name, which may or may not be what
    you want.
@@ -285,10 +283,11 @@ createdb -T template0 <replaceable>dbname</>
 <programlisting>
 ALTER DATABASE mydb SET geqo TO off;
 </programlisting>
-   This will save the setting (but not set it immediately) and in
-   subsequent connections it will appear as though <literal>SET geqo
-   TO off;</literal> had been called right before the session started.
-   Note that users can still alter this setting during the session; it
+   This will save the setting (but not set it immediately).  In
+   subsequent connections to this database it will appear as though
+   <literal>SET geqo TO off;</literal> had been executed just before the
+   session started.
+   Note that users can still alter this setting during their sessions; it
    will only be the default.  To undo any such setting, use
    <literal>ALTER DATABASE <replaceable>dbname</> RESET
    <replaceable>varname</>;</literal>.
@@ -322,7 +321,7 @@ DROP DATABASE <replaceable>name</>;
 
   <para>
    For convenience, there is also a shell program to drop
-   databases:<indexterm><primary>dropdb</></>
+   databases, <xref linkend="app-dropdb">:<indexterm><primary>dropdb</></>
 <synopsis>
 dropdb <replaceable class="parameter">dbname</replaceable>
 </synopsis>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.46 2004/11/15 06:32:13 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.47 2004/12/27 22:30:10 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -72,14 +72,15 @@ initdb --locale=sv_SE
     locale then the specifications look like this:
     <literal>cs_CZ.ISO8859-2</>. What locales are available under what
     names on your system depends on what was provided by the operating
-    system vendor and what was installed.
+    system vendor and what was installed.  (On most systems, the command
+    <literal>locale -a</> will provide a list of available locales.)
    </para>
 
    <para>
     Occasionally it is useful to mix rules from several locales, e.g.,
     use English collation rules but Spanish messages.  To support that, a
     set of locale subcategories exist that control only a certain
-    aspect of the localization rules.
+    aspect of the localization rules:
 
     <informaltable>
      <tgroup cols="2">
@@ -90,7 +91,7 @@ initdb --locale=sv_SE
        </row>
        <row>
         <entry><envar>LC_CTYPE</></>
-        <entry>Character classification (What is a letter? The upper-case equivalent?)</>
+        <entry>Character classification (What is a letter? Its upper-case equivalent?)</>
        </row>
        <row>
         <entry><envar>LC_MESSAGES</></>
@@ -154,7 +155,7 @@ initdb --locale=sv_SE
     environment variables seen by the server, not by the environment
     of any client.  Therefore, be careful to configure the correct locale settings
     before starting the server.  A consequence of this is that if
-    client and server are set up to different locales, messages may
+    client and server are set up in different locales, messages may
     appear in different languages depending on where they originated.
    </para>
 
@@ -181,7 +182,7 @@ initdb --locale=sv_SE
    </note>
 
    <para>
-    To enable messages translated to the user's preferred language,
+    To enable messages to be translated to the user's preferred language,
     <acronym>NLS</acronym> must have been enabled at build time.  This
     choice is independent of the other locale support.
    </para>
@@ -234,8 +235,8 @@ initdb --locale=sv_SE
     changed without repeating <command>initdb</>.  Other locale
     settings including <envar>LC_MESSAGES</> and <envar>LC_MONETARY</>
     are initially determined by the environment the server is started
-    in.  You can check the <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
-    settings of a database using the <command>SHOW</> command.
+    in, but can be changed on-the-fly.  You can check the active locale
+    settings using the <command>SHOW</> command.
    </para>
 
    <para>
@@ -256,9 +257,9 @@ initdb --locale=sv_SE
     Maintaining catalogs of message translations requires the on-going
     efforts of many volunteers that want to see
     <productname>PostgreSQL</> speak their preferred language well.
-    If messages in your language is currently not available or fully
+    If messages in your language are currently not available or not fully
     translated, your assistance would be appreciated.  If you want to
-    help, refer to the <xref linkend="nls"> or write to the developers'
+    help, refer to <xref linkend="nls"> or write to the developers'
     mailing list.
    </para>
   </sect2>
@@ -298,128 +299,128 @@ initdb --locale=sv_SE
       <title>Server Character Sets</title>
       <tgroup cols="2">
        <thead>
-	<row>
-	 <entry>Name</entry>
-	 <entry>Description</entry>
-	</row>
+        <row>
+         <entry>Name</entry>
+         <entry>Description</entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry><literal>SQL_ASCII</literal></entry>
-	 <entry><acronym>ASCII</acronym></entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_JP</literal></entry>
-	 <entry>Japanese <acronym>EUC</></entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_CN</literal></entry>
-	 <entry>Chinese <acronym>EUC</></entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_KR</literal></entry>
-	 <entry>Korean <acronym>EUC</></entry>
-	</row>
-	<row>
-	 <entry><literal>JOHAB</literal></entry>
-	 <entry>Korean <acronym>EUC</> (Hangle base)</entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_TW</literal></entry>
-	 <entry>Taiwan <acronym>EUC</acronym></entry>
-	</row>
-	<row>
-	 <entry><literal>UNICODE</literal></entry>
-	 <entry>Unicode (<acronym>UTF</acronym>-8)</entry>
-	</row>
-	<row>
-	 <entry><literal>MULE_INTERNAL</literal></entry>
-	 <entry>Mule internal code</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN1</literal></entry>
-	 <entry>ISO 8859-1/<acronym>ECMA</> 94 (Latin alphabet no.1)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN2</literal></entry>
-	 <entry>ISO 8859-2/<acronym>ECMA</> 94 (Latin alphabet no.2)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN3</literal></entry>
-	 <entry>ISO 8859-3/<acronym>ECMA</> 94 (Latin alphabet no.3)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN4</literal></entry>
-	 <entry>ISO 8859-4/<acronym>ECMA</> 94 (Latin alphabet no.4)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN5</literal></entry>
-	 <entry>ISO 8859-9/<acronym>ECMA</> 128 (Latin alphabet no.5)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN6</literal></entry>
-	 <entry>ISO 8859-10/<acronym>ECMA</> 144 (Latin alphabet no.6)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN7</literal></entry>
-	 <entry>ISO 8859-13 (Latin alphabet no.7)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN8</literal></entry>
-	 <entry>ISO 8859-14 (Latin alphabet no.8)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN9</literal></entry>
-	 <entry>ISO 8859-15 (Latin alphabet no.9)</entry>
-	</row>
-	<row>
-	 <entry><literal>LATIN10</literal></entry>
-	 <entry>ISO 8859-16/<acronym>ASRO</> SR 14111 (Latin alphabet no.10)</entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_5</literal></entry>
-	 <entry>ISO 8859-5/<acronym>ECMA</> 113 (Latin/Cyrillic)</entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_6</literal></entry>
-	 <entry>ISO 8859-6/<acronym>ECMA</> 114 (Latin/Arabic)</entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_7</literal></entry>
-	 <entry>ISO 8859-7/<acronym>ECMA</> 118 (Latin/Greek)</entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_8</literal></entry>
-	 <entry>ISO 8859-8/<acronym>ECMA</> 121 (Latin/Hebrew)</entry>
-	</row>
-	<row>
-	 <entry><literal>KOI8</literal></entry>
-	 <entry><acronym>KOI</acronym>8-R(U)</entry>
-	</row>
-	<row>
-	 <entry><literal>ALT</literal></entry>
-	 <entry>Windows CP866</entry>
-	</row>
-	<row>
-	 <entry><literal>WIN874</literal></entry>
-	 <entry>Windows CP874 (Thai)</entry>
-	</row>
-	<row>
-	 <entry><literal>WIN1250</literal></entry>
-	 <entry>Windows CP1250</entry>
-	</row>
-	<row>
-	 <entry><literal>WIN</literal></entry>
-	 <entry>Windows CP1251</entry>
-	</row>
-	<row>
-	 <entry><literal>WIN1256</literal></entry>
-	 <entry>Windows CP1256 (Arabic)</entry>
-	</row>
-	<row>
-	 <entry><literal>TCVN</literal></entry>
-	 <entry><acronym>TCVN</>-5712/Windows CP1258 (Vietnamese)</entry>
-	</row>
+        <row>
+         <entry><literal>SQL_ASCII</literal></entry>
+         <entry><acronym>ASCII</acronym></entry>
+        </row>
+        <row>
+         <entry><literal>EUC_JP</literal></entry>
+         <entry>Japanese <acronym>EUC</></entry>
+        </row>
+        <row>
+         <entry><literal>EUC_CN</literal></entry>
+         <entry>Chinese <acronym>EUC</></entry>
+        </row>
+        <row>
+         <entry><literal>EUC_KR</literal></entry>
+         <entry>Korean <acronym>EUC</></entry>
+        </row>
+        <row>
+         <entry><literal>JOHAB</literal></entry>
+         <entry>Korean <acronym>EUC</> (Hangle base)</entry>
+        </row>
+        <row>
+         <entry><literal>EUC_TW</literal></entry>
+         <entry>Taiwan <acronym>EUC</acronym></entry>
+        </row>
+        <row>
+         <entry><literal>UNICODE</literal></entry>
+         <entry>Unicode (<acronym>UTF</acronym>-8)</entry>
+        </row>
+        <row>
+         <entry><literal>MULE_INTERNAL</literal></entry>
+         <entry>Mule internal code</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN1</literal></entry>
+         <entry>ISO 8859-1/<acronym>ECMA</> 94 (Latin alphabet no.1)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN2</literal></entry>
+         <entry>ISO 8859-2/<acronym>ECMA</> 94 (Latin alphabet no.2)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN3</literal></entry>
+         <entry>ISO 8859-3/<acronym>ECMA</> 94 (Latin alphabet no.3)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN4</literal></entry>
+         <entry>ISO 8859-4/<acronym>ECMA</> 94 (Latin alphabet no.4)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN5</literal></entry>
+         <entry>ISO 8859-9/<acronym>ECMA</> 128 (Latin alphabet no.5)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN6</literal></entry>
+         <entry>ISO 8859-10/<acronym>ECMA</> 144 (Latin alphabet no.6)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN7</literal></entry>
+         <entry>ISO 8859-13 (Latin alphabet no.7)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN8</literal></entry>
+         <entry>ISO 8859-14 (Latin alphabet no.8)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN9</literal></entry>
+         <entry>ISO 8859-15 (Latin alphabet no.9)</entry>
+        </row>
+        <row>
+         <entry><literal>LATIN10</literal></entry>
+         <entry>ISO 8859-16/<acronym>ASRO</> SR 14111 (Latin alphabet no.10)</entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_5</literal></entry>
+         <entry>ISO 8859-5/<acronym>ECMA</> 113 (Latin/Cyrillic)</entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_6</literal></entry>
+         <entry>ISO 8859-6/<acronym>ECMA</> 114 (Latin/Arabic)</entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_7</literal></entry>
+         <entry>ISO 8859-7/<acronym>ECMA</> 118 (Latin/Greek)</entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_8</literal></entry>
+         <entry>ISO 8859-8/<acronym>ECMA</> 121 (Latin/Hebrew)</entry>
+        </row>
+        <row>
+         <entry><literal>KOI8</literal></entry>
+         <entry><acronym>KOI</acronym>8-R(U)</entry>
+        </row>
+        <row>
+         <entry><literal>ALT</literal></entry>
+         <entry>Windows CP866</entry>
+        </row>
+        <row>
+         <entry><literal>WIN874</literal></entry>
+         <entry>Windows CP874 (Thai)</entry>
+        </row>
+        <row>
+         <entry><literal>WIN1250</literal></entry>
+         <entry>Windows CP1250</entry>
+        </row>
+        <row>
+         <entry><literal>WIN</literal></entry>
+         <entry>Windows CP1251</entry>
+        </row>
+        <row>
+         <entry><literal>WIN1256</literal></entry>
+         <entry>Windows CP1256 (Arabic)</entry>
+        </row>
+        <row>
+         <entry><literal>TCVN</literal></entry>
+         <entry><acronym>TCVN</>-5712/Windows CP1258 (Vietnamese)</entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -498,6 +499,31 @@ $ <userinput>psql -l</userinput>
 (9 rows)
 </screen>
     </para>
+
+    <important>
+     <para>
+      Although you can specify any encoding you want for a database, it is
+      unwise to choose an encoding that is not what is expected by the locale
+      you have selected.  The <literal>LC_COLLATE</literal> and
+      <literal>LC_CTYPE</literal> settings imply a particular encoding,
+      and locale-dependent operations (such as sorting) are likely to
+      misinterpret data that is in an incompatible encoding.
+     </para>
+
+     <para>
+      Since these locale settings are frozen by <command>initdb</>, the
+      apparent flexibility to use different encodings in different databases
+      of a cluster is more theoretical than real.  It is likely that these
+      mechanisms will be revisited in future versions of
+      <productname>PostgreSQL</productname>.
+     </para>
+
+     <para>
+      One way to use multiple encodings safely is to set the locale to
+      <literal>C</> or <literal>POSIX</> during <command>initdb</>, thus
+      disabling any real locale awareness.
+     </para>
+    </important>
    </sect2>
 
    <sect2>
@@ -518,206 +544,206 @@ $ <userinput>psql -l</userinput>
       <title>Client/Server Character Set Conversions</title>
       <tgroup cols="2">
        <thead>
-	<row>
-	 <entry>Server Character Set</entry>
-	 <entry>Available Client Character Sets</entry>
-	</row>
+        <row>
+         <entry>Server Character Set</entry>
+         <entry>Available Client Character Sets</entry>
+        </row>
        </thead>
        <tbody>
-	<row>
-	 <entry><literal>SQL_ASCII</literal></entry>
-	 <entry><literal>SQL_ASCII</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_JP</literal></entry>
-	 <entry><literal>EUC_JP</literal>, <literal>SJIS</literal>,
-	 <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_CN</literal></entry>
-	 <entry><literal>EUC_CN</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_KR</literal></entry>
-	 <entry><literal>EUC_KR</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>JOHAB</literal></entry>
-	 <entry><literal>JOHAB</literal>, <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>EUC_TW</literal></entry>
-	 <entry><literal>EUC_TW</literal>, <literal>BIG5</literal>,
-	 <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN1</literal></entry>
-	 <entry><literal>LATIN1</literal>, <literal>UNICODE</literal>
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN2</literal></entry>
-	 <entry><literal>LATIN2</literal>, <literal>WIN1250</literal>,
-	 <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN3</literal></entry>
-	 <entry><literal>LATIN3</literal>, <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN4</literal></entry>
-	 <entry><literal>LATIN4</literal>, <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN5</literal></entry>
-	 <entry><literal>LATIN5</literal>, <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN6</literal></entry>
-	 <entry><literal>LATIN6</literal>, <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN7</literal></entry>
-	 <entry><literal>LATIN7</literal>, <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN8</literal></entry>
-	 <entry><literal>LATIN8</literal>, <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN9</literal></entry>
-	 <entry><literal>LATIN9</literal>, <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>  
-	 <entry><literal>LATIN10</literal></entry>
-	 <entry><literal>LATIN10</literal>, <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_5</literal></entry>
-	 <entry><literal>ISO_8859_5</literal>,
-	 <literal>UNICODE</literal>,
-	 <literal>MULE_INTERNAL</literal>,
-	 <literal>WIN</literal>,
-	 <literal>ALT</literal>,
-	 <literal>KOI8</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_6</literal></entry>
-	 <entry><literal>ISO_8859_6</literal>,
-	 <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_7</literal></entry>
-	 <entry><literal>ISO_8859_7</literal>,
-	 <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>ISO_8859_8</literal></entry>
-	 <entry><literal>ISO_8859_8</literal>,
-	 <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>UNICODE</literal></entry>
-	 <entry>
-	 <literal>EUC_JP</literal>, <literal>SJIS</literal>, 
-	 <literal>EUC_KR</literal>, <literal>UHC</literal>, <literal>JOHAB</literal>,
-	 <literal>EUC_CN</literal>, <literal>GBK</literal>,
-	 <literal>EUC_TW</literal>, <literal>BIG5</literal>, 
-	 <literal>LATIN1</literal> to <literal>LATIN10</literal>, 
-	 <literal>ISO_8859_5</literal>, 
-	 <literal>ISO_8859_6</literal>,
- 	 <literal>ISO_8859_7</literal>, 
-	 <literal>ISO_8859_8</literal>, 
-	 <literal>WIN</literal>, <literal>ALT</literal>, 
-	 <literal>KOI8</literal>, 
-	 <literal>WIN1256</literal>,
-	 <literal>TCVN</literal>,
-	 <literal>WIN874</literal>,
-	 <literal>GB18030</literal>,
-	 <literal>WIN1250</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>MULE_INTERNAL</literal></entry>
-	 <entry><literal>EUC_JP</literal>, <literal>SJIS</literal>, <literal>EUC_KR</literal>, <literal>EUC_CN</literal>, 
-	  <literal>EUC_TW</literal>, <literal>BIG5</literal>, <literal>LATIN1</literal> to <literal>LATIN5</literal>, 
-	  <literal>WIN</literal>, <literal>ALT</literal>,
-	 <literal>WIN1250</literal>,
-	  <literal>BIG5</literal>, <literal>ISO_8859_5</literal>, <literal>KOI8</literal></entry>
-	</row>
-	<row>
-	 <entry><literal>KOI8</literal></entry>
-	 <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
-	 <literal>ALT</literal>, <literal>KOI8</literal>,
-	 <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>ALT</literal></entry>
-	 <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
-	 <literal>ALT</literal>, <literal>KOI8</literal>,
-	 <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>WIN874</literal></entry>
-	 <entry><literal>WIN874</literal>,
-	 <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>WIN1250</literal></entry>
-	 <entry><literal>LATIN2</literal>, <literal>WIN1250</literal>,
+        <row>
+         <entry><literal>SQL_ASCII</literal></entry>
+         <entry><literal>SQL_ASCII</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>EUC_JP</literal></entry>
+         <entry><literal>EUC_JP</literal>, <literal>SJIS</literal>,
          <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>WIN</literal></entry>
-	 <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
-	 <literal>ALT</literal>, <literal>KOI8</literal>,
-	 <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>WIN1256</literal></entry>
-	 <entry><literal>WIN1256</literal>,
-	 <literal>UNICODE</literal>
-	 </entry>
-	</row>
-	<row>
-	 <entry><literal>TCVN</literal></entry>
-	 <entry><literal>TCVN</literal>,
-	 <literal>UNICODE</literal>
-	 </entry>
-	</row>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>EUC_CN</literal></entry>
+         <entry><literal>EUC_CN</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>EUC_KR</literal></entry>
+         <entry><literal>EUC_KR</literal>, <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>JOHAB</literal></entry>
+         <entry><literal>JOHAB</literal>, <literal>UNICODE</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>EUC_TW</literal></entry>
+         <entry><literal>EUC_TW</literal>, <literal>BIG5</literal>,
+         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN1</literal></entry>
+         <entry><literal>LATIN1</literal>, <literal>UNICODE</literal>
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN2</literal></entry>
+         <entry><literal>LATIN2</literal>, <literal>WIN1250</literal>,
+         <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN3</literal></entry>
+         <entry><literal>LATIN3</literal>, <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN4</literal></entry>
+         <entry><literal>LATIN4</literal>, <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN5</literal></entry>
+         <entry><literal>LATIN5</literal>, <literal>UNICODE</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN6</literal></entry>
+         <entry><literal>LATIN6</literal>, <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN7</literal></entry>
+         <entry><literal>LATIN7</literal>, <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN8</literal></entry>
+         <entry><literal>LATIN8</literal>, <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN9</literal></entry>
+         <entry><literal>LATIN9</literal>, <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>  
+         <entry><literal>LATIN10</literal></entry>
+         <entry><literal>LATIN10</literal>, <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_5</literal></entry>
+         <entry><literal>ISO_8859_5</literal>,
+         <literal>UNICODE</literal>,
+         <literal>MULE_INTERNAL</literal>,
+         <literal>WIN</literal>,
+         <literal>ALT</literal>,
+         <literal>KOI8</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_6</literal></entry>
+         <entry><literal>ISO_8859_6</literal>,
+         <literal>UNICODE</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_7</literal></entry>
+         <entry><literal>ISO_8859_7</literal>,
+         <literal>UNICODE</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>ISO_8859_8</literal></entry>
+         <entry><literal>ISO_8859_8</literal>,
+         <literal>UNICODE</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>UNICODE</literal></entry>
+         <entry>
+         <literal>EUC_JP</literal>, <literal>SJIS</literal>, 
+         <literal>EUC_KR</literal>, <literal>UHC</literal>, <literal>JOHAB</literal>,
+         <literal>EUC_CN</literal>, <literal>GBK</literal>,
+         <literal>EUC_TW</literal>, <literal>BIG5</literal>, 
+         <literal>LATIN1</literal> to <literal>LATIN10</literal>, 
+         <literal>ISO_8859_5</literal>, 
+         <literal>ISO_8859_6</literal>,
+         <literal>ISO_8859_7</literal>, 
+         <literal>ISO_8859_8</literal>, 
+         <literal>WIN</literal>, <literal>ALT</literal>, 
+         <literal>KOI8</literal>, 
+         <literal>WIN1256</literal>,
+         <literal>TCVN</literal>,
+         <literal>WIN874</literal>,
+         <literal>GB18030</literal>,
+         <literal>WIN1250</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>MULE_INTERNAL</literal></entry>
+         <entry><literal>EUC_JP</literal>, <literal>SJIS</literal>, <literal>EUC_KR</literal>, <literal>EUC_CN</literal>, 
+          <literal>EUC_TW</literal>, <literal>BIG5</literal>, <literal>LATIN1</literal> to <literal>LATIN5</literal>, 
+          <literal>WIN</literal>, <literal>ALT</literal>,
+         <literal>WIN1250</literal>,
+          <literal>BIG5</literal>, <literal>ISO_8859_5</literal>, <literal>KOI8</literal></entry>
+        </row>
+        <row>
+         <entry><literal>KOI8</literal></entry>
+         <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
+         <literal>ALT</literal>, <literal>KOI8</literal>,
+         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>ALT</literal></entry>
+         <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
+         <literal>ALT</literal>, <literal>KOI8</literal>,
+         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN874</literal></entry>
+         <entry><literal>WIN874</literal>,
+         <literal>UNICODE</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN1250</literal></entry>
+         <entry><literal>LATIN2</literal>, <literal>WIN1250</literal>,
+         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN</literal></entry>
+         <entry><literal>ISO_8859_5</literal>, <literal>WIN</literal>, 
+         <literal>ALT</literal>, <literal>KOI8</literal>,
+         <literal>UNICODE</literal>, <literal>MULE_INTERNAL</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>WIN1256</literal></entry>
+         <entry><literal>WIN1256</literal>,
+         <literal>UNICODE</literal>
+         </entry>
+        </row>
+        <row>
+         <entry><literal>TCVN</literal></entry>
+         <entry><literal>TCVN</literal>,
+         <literal>UNICODE</literal>
+         </entry>
+        </row>
        </tbody>
       </tgroup>
      </table>
@@ -731,11 +757,11 @@ $ <userinput>psql -l</userinput>
      <itemizedlist>
       <listitem>
        <para>
-	Using the <command>\encoding</command> command in
-	<application>psql</application>.
-	<command>\encoding</command> allows you to change client
-	encoding on the fly. For
-	example, to change the encoding to <literal>SJIS</literal>, type:
+        Using the <command>\encoding</command> command in
+        <application>psql</application>.
+        <command>\encoding</command> allows you to change client
+        encoding on the fly. For
+        example, to change the encoding to <literal>SJIS</literal>, type:
 
 <programlisting>
 \encoding SJIS
@@ -745,27 +771,27 @@ $ <userinput>psql -l</userinput>
 
       <listitem>
        <para>
-	Using <application>libpq</> functions.
-	<command>\encoding</command> actually calls
-	<function>PQsetClientEncoding()</function> for its purpose.
+        Using <application>libpq</> functions.
+        <command>\encoding</command> actually calls
+        <function>PQsetClientEncoding()</function> for its purpose.
 
 <synopsis>
 int PQsetClientEncoding(PGconn *<replaceable>conn</replaceable>, const char *<replaceable>encoding</replaceable>);
 </synopsis>
 
-	where <replaceable>conn</replaceable> is a connection to the server,
-	and <replaceable>encoding</replaceable> is the encoding you
-	want to use. If the function successfully sets the encoding, it returns 0,
-	otherwise -1. The current encoding for this connection can be determined by
-	using:
+        where <replaceable>conn</replaceable> is a connection to the server,
+        and <replaceable>encoding</replaceable> is the encoding you
+        want to use. If the function successfully sets the encoding, it returns 0,
+        otherwise -1. The current encoding for this connection can be determined by
+        using:
 
 <synopsis>
 int PQclientEncoding(const PGconn *<replaceable>conn</replaceable>);
 </synopsis>
 
-	Note that it returns the encoding ID, not a symbolic string
-	such as <literal>EUC_JP</literal>. To convert an encoding ID to an encoding name, you
-	can use:
+        Note that it returns the encoding ID, not a symbolic string
+        such as <literal>EUC_JP</literal>. To convert an encoding ID to an encoding name, you
+        can use:
 
 <synopsis>
 char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
@@ -775,27 +801,27 @@ char *pg_encoding_to_char(int <replaceable>encoding_id</replaceable>);
 
       <listitem>
        <para>
-	Using <command>SET client_encoding TO</command>.
+        Using <command>SET client_encoding TO</command>.
 
-	Setting the client encoding can be done with this SQL command:
+        Setting the client encoding can be done with this SQL command:
 
 <programlisting>
 SET CLIENT_ENCODING TO '<replaceable>value</>';
 </programlisting>
 
-	Also you can use the more standard SQL syntax <literal>SET NAMES</literal> for this purpose:
+        Also you can use the more standard SQL syntax <literal>SET NAMES</literal> for this purpose:
 
 <programlisting>
 SET NAMES '<replaceable>value</>';
 </programlisting>
 
-	To query the current client encoding:
+        To query the current client encoding:
 
 <programlisting>
 SHOW client_encoding;
 </programlisting>
 
-	To return to the default encoding:
+        To return to the default encoding:
 
 <programlisting>
 RESET client_encoding;
@@ -805,7 +831,7 @@ RESET client_encoding;
 
       <listitem>
        <para>
-        Using <envar>PGCLIENTENCODING</envar>. If environment variable
+        Using <envar>PGCLIENTENCODING</envar>. If the environment variable
         <envar>PGCLIENTENCODING</envar> is defined in the client's
         environment, that client encoding is automatically selected
         when a connection to the server is made.  (This can
@@ -874,7 +900,7 @@ RESET client_encoding;
 
        <listitem>
         <para>
-	 <acronym>UTF</acronym>-8 is defined here.
+         <acronym>UTF</acronym>-8 is defined here.
         </para>
        </listitem>
       </varlistentry>

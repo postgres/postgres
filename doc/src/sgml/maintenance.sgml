@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.39 2004/12/13 18:05:08 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.40 2004/12/27 22:30:10 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -79,7 +79,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.39 2004/12/13 18:05:08 pete
    Therefore, database administrators must understand these issues and
    develop an appropriate maintenance strategy.  This section concentrates
    on explaining the high-level issues; for details about command syntax
-   and so on, see the <command>VACUUM</> command reference page.
+   and so on, see the <xref linkend="sql-vacuum"> reference page.
   </para>
 
   <para>
@@ -89,6 +89,13 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.39 2004/12/13 18:05:08 pete
    Routine vacuuming is therefore not nearly as intrusive as it was in prior
    releases, and it is not as critical to try to schedule it at low-usage
    times of day.
+  </para>
+
+  <para>
+   Beginning in <productname>PostgreSQL</productname> 8.0, there are
+   configuration parameters that can be adjusted to further reduce the
+   performance impact of background vacuuming.  See
+   <xref linkend="runtime-config-resource-vacuum-cost">.
   </para>
 
   <sect2 id="vacuum-for-space-recovery">
@@ -162,12 +169,19 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.39 2004/12/13 18:05:08 pete
     Recommended practice for most sites is to schedule a database-wide
     <command>VACUUM</> once a day at a low-usage time of day,
     supplemented by more frequent vacuuming of heavily-updated tables
-    if necessary. In fact, some installations with an extremely high
-    rate of data modification <command>VACUUM</command> some tables as
-    often as once very five minutes.  (If you have multiple databases
+    if necessary. (Some installations with an extremely high
+    rate of data modification <command>VACUUM</command> busy tables as
+    often as once every few minutes.)  If you have multiple databases
     in a cluster, don't forget to <command>VACUUM</command> each one;
-    the program <filename>vacuumdb</> may be helpful.)
+    the program <filename>vacuumdb</> may be helpful.
    </para>
+
+   <tip>
+    <para>
+     The <filename>contrib/pg_autovacuum</> program can be useful for
+     automating high-frequency vacuuming operations.
+    </para>
+   </tip>
 
    <para>
     <command>VACUUM FULL</> is recommended for cases where you know
@@ -404,6 +418,18 @@ VACUUM
     you to ensure that such databases are frozen correctly.
    </para>
 
+   <warning>
+    <para>
+     To be sure of safety against transaction wraparound, it is necessary
+     to vacuum <emphasis>every</> table, including system catalogs, in
+     <emphasis>every</> database at least once every billion transactions.
+     We have seen data loss situations caused by people deciding that they
+     only needed to vacuum their active user tables, rather than issuing
+     database-wide vacuum commands.  That will appear to work fine ...
+     for a while.
+    </para>
+   </warning>
+
   </sect2>
  </sect1>
 
@@ -475,7 +501,7 @@ VACUUM
    If you start the server with
    <command>pg_ctl</>, then <systemitem>stderr</>
    is already redirected to <systemitem>stdout</>, so you just need a
-   pipe command:
+   pipe command, for example:
 
 <programlisting>
 pg_ctl start | rotatelogs /var/log/pgsql_log 86400
@@ -499,7 +525,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
   <para>
    On many systems, however, <application>syslog</> is not very reliable,
    particularly with large log messages; it may truncate or drop messages
-   just when you need them the most.  Also, on <productname>linux</>,
+   just when you need them the most.  Also, on <productname>Linux</>,
    <application>syslog</> will sync each message to disk, yielding poor
    performance.  (You can use a <literal>-</> at the start of the file name
    in the <application>syslog</> configuration file to disable this behavior.)
@@ -508,8 +534,10 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
   <para>
    Note that all the solutions described above take care of starting new
    log files at configurable intervals, but they do not handle deletion
-   of old, no-longer-interesting log files.  You will also want to set
-   up a batch job to periodically delete old log files.
+   of old, no-longer-interesting log files.  You will probably want to set
+   up a batch job to periodically delete old log files.  Another possibility
+   is to configure the rotation program so that old log files are overwritten
+   cyclically.
   </para>
  </sect1>
 </chapter>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.25 2004/02/17 09:07:16 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.26 2004/12/27 22:30:10 tgl Exp $
 -->
 
 <chapter id="user-manag">
@@ -175,9 +175,10 @@ dropuser <replaceable>name</replaceable>
 <programlisting>
 ALTER USER myname SET enable_indexscan TO off;
 </programlisting>
-   This will save the setting (but not set it immediately) and in
-   subsequent connections it will appear as though <literal>SET enable_indexscan
-   TO off;</literal> had been called right before the session started.
+   This will save the setting (but not set it immediately).  In
+   subsequent connections by this user it will appear as though
+   <literal>SET enable_indexscan TO off;</literal> had been executed
+   just before the session started.
    You can still alter this setting during the session; it will only
    be the default. To undo any such setting, use <literal>ALTER USER
    <replaceable>username</> RESET <replaceable>varname</>;</literal>.
@@ -243,7 +244,7 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
    <literal>RULE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
    <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>,
    <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For more
-   information on the different types of privileges support by
+   information on the different types of privileges supported by
    <productname>PostgreSQL</productname>, see the
    <xref linkend="sql-grant" endterm="sql-grant-title"> reference page.
    The right to modify or
@@ -289,18 +290,21 @@ REVOKE ALL ON accounts FROM PUBLIC;
    Functions and triggers allow users to insert code into the backend
    server that other users may execute without knowing it. Hence, both
    mechanisms permit users to <quote>Trojan horse</quote>
-   others with relative impunity. The only real protection is tight
+   others with relative ease. The only real protection is tight
    control over who can define functions.
   </para>
 
   <para>
-   Functions written in any language except SQL run inside the backend
-   server process with the operating systems permissions of the
-   database server daemon process. It is possible to change the
-   server's internal data structures from inside of trusted functions.
+   Functions run inside the backend
+   server process with the operating system permissions of the
+   database server daemon.  If the programmming language
+   used for the function allows unchecked memory accesses, it is
+   possible to change the server's internal data structures.
    Hence, among many other things, such functions can circumvent any
-   system access controls. This is an inherent problem with
-   user-defined C functions.
+   system access controls.  Function languages that allow such access
+   are considered <quote>untrusted</>, and
+   <productname>PostgreSQL</productname> allows only superusers to
+   create functions written in those languages.
   </para>
  </sect1>
 
