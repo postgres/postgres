@@ -1,76 +1,66 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jun  6 22:08:59 EDT 1999
+Last updated:		Tue Jul  6 05:41:10 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
 The most recent version of this document can be viewed at
-the PostgreSQL WWW site, http://www.postgreSQL.org.
+the PostgreSQL web site, http://www.postgreSQL.org.
 
-A dash(-) marks changes to be in the next release.
-
-Developers who have claimed items are:
--------------------------------------
-	* Billy is Billy G. Allie <Bill.Allie@mug.org>
-	* Brook is Brook Milligan <brook@trillium.NMSU.Edu>
-	* Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
-	* Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
-	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
-	* David is David Hartwig <daveh@insightdist.com>
-	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
-	* Goran is Goran Thyni <goran@kyla.kiruna.se>
-	* Hiroshi is Hiroshi Inoue<Inoue@tpf.co.jp>
-	* Jan is Jan Wieck <wieck@sapserv.debis.de>
- 	* Marc is Marc Fournier <scrappy@hub.org>
-	* Massimo Dal Zotto <dz@cs.unitn.it>
-	* Michael is Michael Meskes <meskes@debian.org>
-	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
-	* Peter is Peter T Mount <peter@retep.org.uk>
-	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
-	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
-	* Tom is Tom Lane <tgl@sss.pgh.pa.us>
-	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
-	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
-
-	* Vadim is "Vadim B. Mikheev" <vadim@krs.ru>
+A dash(-) marks changes that will appear in the next release.
 
 
 RELIABILITY
 -----------
-* Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
-* Overhaul bufmgr/lockmgr/transaction manager
-* Remove EXTEND?
-* Tables that start with xinv confused to be large objects
-* Two and three dimensional arrays display improperly, missing {}
-* Select a[1] FROM test fails, it needs test.a[1]
-* Update table SET table.value = 3 fails
-* User who can create databases can modify pg_database table
-* Elog() does not free all its memory(Jan)
-* Disallow inherited columns with the same name as new columns
-* Recover or force failure when disk space is exhausted
-* Views containing aggregates sometimes fail(Jan)
-* Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
-* Array index references without table name cause problems
-* Views with spaces in view name fail when referenced
-* Plpgsql does not handle quoted mixed-case identifiers
-* Do not allow bpchar column creation without length
-* INSERT INTO ... SELECT with AS columns matching result columns problem
 
+RESOURCES
+
+* Elog() does not free all its memory(Jan)
+* spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
+* Recover or force failure when disk space is exhausted
+
+PARSER
+
+* Disallow inherited columns with the same name as new columns
+* INSERT INTO ... SELECT with AS columns matching result columns problem
+* SELECT pg_class FROM pg_class generates strange error
+* Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
+* Do not allow bpchar column creation without length
+* Select a[1] FROM test fails, it needs test.a[1]
+* Array index references without table name cause problems
+* Update table SET table.value = 3 fails
+* Creating index of timestamp fails
+
+VIEWS
+
+* Views containing aggregates sometimes fail(Jan)
+* Views with spaces in view name fail when referenced
+
+MISC
+
+* User who can create databases can modify pg_database table
+* Plpgsql does not handle quoted mixed-case identifiers
 
 ENHANCEMENTS
 ------------
+
+URGENT
+
 * Add referential integrity
 * Add OUTER joins, left and right(Thomas)
 * Allow long tuples by chaining or auto-storing outside db (chaining,large objs)
+* Eliminate limits on query length
 * Fix memory leak for expressions?, aggregates?
 
-Exotic features:
+EXOTIC FEATURES
+
 * Add sql3 recursive unions
 * Add the concept of dataspaces
 * Add replication of distributed databases
 * Allow queries across multiple databases
 
-Admin:
+ADMIN
+
 * Better interface for adding to pg_group
 * More access control over who can create tables and access the database
 * Add syslog functionality
@@ -79,45 +69,46 @@ Admin:
 * Generate postmaster pid file and remove flock/fcntl lock code
 * Add ability to specifiy location of lock/socket files
 
-Types:
+TYPES
+
 * Add BIT, BIT VARYING
 * Nchar (as distinguished from ordinary varchar),
 * Domain capability
 * Add STDDEV/VARIANCE() function for standard deviation computation/variance
 * Allow compression of large fields or a compressed field type
 * Large objects
-	* Fix large object mapping scheme, own typeid or reltype(Peter)
-	* Allow large text type to use large objects(Peter)
-	* Not to stuff everything as files in a single directory
+	o Fix large object mapping scheme, own typeid or reltype(Peter)
+	o Allow large text type to use large objects(Peter)
+	o Not to stuff everything as files in a single directory
 * Allow pg_descriptions when creating types, tables, columns, and functions
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
 * Store binary-compatible type information in the system
 * Allow user to define char1 column
 * Add support for & operator
+* Allow LOCALE on a per-column basis, default to ASCII
+* Allow array on int8[]
+* Remove Money type, add money formatting for decimal type
 
-Views:
+VIEWS
+
 * Allow DISTINCT on views
 * Allow views of aggregate columns
 * Allow views with subselects
 
-* Allow subqueries in target list
-* Put sort files, large objects in their on directory
-* Do autocommit so always in a transaction block
-* Show location of syntax error in query
-* Redesign the function call interface to handle NULLs better(Jan)
-* Document/trigger/rule so changes to pg_shadow create pg_pwd
-* Missing optimizer selectivities for date, etc.
+INDEXES
 
-Indexes:
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
-	fails index can't store constant parameters
+  fails index can't store constant parameters
 * Allow creation of functional indexes to use default types
 * Permissions on indexes - prevent them?
 * Allow SQL function indexes
 * Add FILLFACTOR to index creation
+* Allow indexing of LIKE with localle character sets
+* Allow indexing of more than eight columns
 
-Commands:
+COMMANDS
+
 * ALTER TABLE ADD COLUMN to inherited table put column in wrong place
 * Add ALTER TABLE DROP/ALTER COLUMN feature
 * Allow CLUSTER on all tables at once, and improve CLUSTER
@@ -128,17 +119,20 @@ Commands:
 * Allow INSERT/UPDATE of system-generated oid value for a row
 * Allow ESCAPE '\' at the end of LIKE for ANSI compliance
 * Rewrite the LIKE handling by rewriting the user string with the 
-	supplied ESCAPE
+  supplied ESCAPE
 * Move LIKE index optimization handling to the optimizer
   
-Clients:
+CLIENTS
+
 * Make NULL's come out at the beginning or end depending on the 
-	ORDER BY direction
+  ORDER BY direction
 * Allow flag to control COPY input/output of NULLs
 * Update reltuples from COPY command
 * Allow psql \copy to allow delimiters
 * Add a function to return the last inserted oid, for use in psql scripts
 * Allow psql to print nulls as distinct from ""(?)
+
+MISC
 
 * Increase identifier length(NAMEDATALEN) if small performance hit
 * Allow row re-use without vacuum, maybe?(Vadim)
@@ -152,27 +146,44 @@ Clients:
 * Transaction log, so re-do log can be on a separate disk
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
-
+* Allow subqueries in target list
+* Put sort files, large objects in their on directory
+* Do autocommit so always in a transaction block
+* Show location of syntax error in query
+* Redesign the function call interface to handle NULLs better(Jan)
+* Document/trigger/rule so changes to pg_shadow create pg_pwd
+* Missing optimizer selectivities for date, etc.
+* Overhaul mdmgr/smgr to fix double unlinking and double opens, cleanup
+* Overhaul bufmgr/lockmgr/transaction manager
+* Tables that start with xinv confused to be large objects
 * Add PL/Perl(Mark Hollomon)
 
 
 PERFORMANCE
 -----------
+
+FSYNC
+
 * Allow transaction commits with rollback with no-fsync performance
 * Prevent fsync in SELECT-only queries
+
+INDEXES
 
 * Use indexes in ORDER BY for restrictive data sets, min(), max()
 * Pull requested data directly from indexes, bypassing heap data
 * Use index to restrict rows returned by multi-key index when used with
-	non-consecutive keys or OR clauses, so fewer heap accesses
-* Use index with constants on functions
-
+  non-consecutive keys or OR clauses, so fewer heap accesses
+* Convert function(constant) into a constant for index use
 * Allow LIMIT ability on single-table queries that have no ORDER BY to use
-	a matching index
+  a matching index
 * Improve LIMIT processing by using index to limit rows processed
+
+CACHE
 
 * Cache most recent query plan(s?)
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
+
+MISC
 
 * Allow compression of log and meta data
 * Update pg_statistic table to remove operator column
@@ -181,7 +192,7 @@ PERFORMANCE
 * Do async I/O to do better read-ahead of data
 * Fix memory exhaustion when using many OR's
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
-	when it is available
+  when it is available
 * Use mmap() rather than SYSV shared memory(?)
 * Process const = const parts of OR clause in separate pass
 * Make oid use oidin/oidout not int4in/int4out in pg_type.h
@@ -190,6 +201,37 @@ PERFORMANCE
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
 
 
-DOCUMENTATION
--------------
+SOURCE CODE
+-----------
 * Add use of 'const' for varibles in source tree
+* Fix C optimizer problem where fmgr_ptr calls return different types
+
+
+---------------------------------------------------------------------------
+
+
+Developers who have claimed items are:
+--------------------------------------
+	* Billy is Billy G. Allie <Bill.Allie@mug.org>
+	* Brook is Brook Milligan <brook@trillium.NMSU.Edu>
+	* Bruce is Bruce Momjian<maillist@candle.pha.pa.us>
+	* Bryan is Bryan Henderson<bryanh@giraffe.netgate.net>
+	* D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
+	* David is David Hartwig <daveh@insightdist.com>
+	* Edmund is Edmund Mergl <E.Mergl@bawue.de>
+	* Goran is Goran Thyni <goran@kyla.kiruna.se>
+	* Hiroshi is Hiroshi Inoue<Inoue@tpf.co.jp>
+	* Jan is Jan Wieck <wieck@sapserv.debis.de>
+ 	* Marc is Marc Fournier <scrappy@hub.org>
+	* Massimo Dal Zotto <dz@cs.unitn.it>
+	* Michael is Michael Meskes <meskes@postgresql.org>
+	* Oleg is Oleg Bartunov <oleg@sai.msu.su>
+	* Peter is Peter T Mount <peter@retep.org.uk>
+	* Stefan Simkovics <ssimkovi@rainbow.studorg.tuwien.ac.at>
+	* Tatsuo is Tatsuo Ishii <t-ishii@sra.co.jp>
+	* Tom is Tom Lane <tgl@sss.pgh.pa.us>
+	* Thomas is Thomas Lockhart <lockhart@alumni.caltech.edu>
+	* TomH is Tom I Helbekkmo <tih@Hamartun.Priv.NO>
+	* Vadim is "Vadim B. Mikheev" <vadim@krs.ru>
+
+
