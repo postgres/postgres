@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.3 1996/07/26 20:03:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.4 1996/08/19 01:52:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,6 +527,16 @@ ExecHashGetBucket(HashJoinTable hashtable,
      */
     keyval = ExecEvalVar(hashkey, econtext, &isNull);
     
+    /*
+     * keyval could be null, so we better point it to something
+     * valid before trying to run hashFunc on it. --djm 8/17/96
+     */
+    if(isNull) {
+	execConstByVal = 0;
+	execConstLen = 0;
+	keyval = (Datum)"";
+    }
+
     /* ------------------
      *  compute the hash function
      * ------------------
