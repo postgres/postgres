@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.49 2003/08/31 17:32:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.50 2003/09/09 10:54:44 meskes Exp $
 -->
 
 <chapter id="ecpg">
@@ -296,6 +296,7 @@ EXEC SQL SELECT foo INTO :FooBar FROM table1 WHERE ascii = 'doodad';
 EXEC SQL DECLARE foo_bar CURSOR FOR
     SELECT number, ascii FROM foo
     ORDER BY ascii;
+EXEC SQL OPEN foo_bar;
 EXEC SQL FETCH foo_bar INTO :FooBar, DooDad;
 ...
 EXEC SQL CLOSE foo_bar;
@@ -450,8 +451,8 @@ char  foo[16], bar[16];
    </para>
 
    <para>
-    The special types <type>VARCHAR</type> and <type>VARCHAR2</type>
-    are converted into a named <type>struct</> for every variable. A
+    The special type <type>VARCHAR</type> 
+    is converted into a named <type>struct</> for every variable. A
     declaration like
 <programlisting>
 VARCHAR var[180];
@@ -1787,8 +1788,8 @@ ECPG = ecpg
 EXEC SQL OPEN <replaceable>cursor</replaceable>;
 </programlisting>
     is not copied to the output. Instead, the cursor's
-    <command>DECLARE</> command is used because it opens the cursor as
-    well.
+    <command>DECLARE</> command is used at the position of the <command>OPEN</> command
+    because it indeed opens the cursor.
    </para>
 
    <para>
