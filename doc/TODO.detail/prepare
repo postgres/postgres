@@ -373,3 +373,75 @@ query-cache-kernel. SQL92 is really a little unlike my PREPARE/EXECUTE.
 						Karel
 
 
+From pgsql-hackers-owner+M9563@postgresql.org Thu May 31 16:31:59 2001
+Return-path: <pgsql-hackers-owner+M9563@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f4VKVxc26942
+	for <pgman@candle.pha.pa.us>; Thu, 31 May 2001 16:31:59 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f4VKVIE38645;
+	Thu, 31 May 2001 16:31:18 -0400 (EDT)
+	(envelope-from pgsql-hackers-owner+M9563@postgresql.org)
+Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
+	by postgresql.org (8.11.3/8.11.1) with ESMTP id f4VKNVE35356
+	for <pgsql-hackers@postgresql.org>; Thu, 31 May 2001 16:23:31 -0400 (EDT)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: (from zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) id WAA19957;
+	Thu, 31 May 2001 22:23:26 +0200
+Date: Thu, 31 May 2001 22:23:26 +0200
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Roberto Abalde <roberto.abalde@galego21.org>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Cache for query plans
+Message-ID: <20010531222326.B16862@ara.zf.jcu.cz>
+References: <000701c0e932$d17646c0$c6023dc8@ultra>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0.1i
+In-Reply-To: <000701c0e932$d17646c0$c6023dc8@ultra>; from roberto.abalde@galego21.org on Wed, May 30, 2001 at 03:00:53PM -0300
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+On Wed, May 30, 2001 at 03:00:53PM -0300, Roberto Abalde wrote:
+> Hi,
+> 
+> I need to implement a cache for query plans as part of my BSc thesis. Does
+> anybody know what happened to Karel Zak's patch?
+> 
+
+
+ Hi,
+
+
+ my patch is on my ftp and nobody works on it, but I mean it's good
+begin for some next work. I not sure with implement this experimental
+patch (but usable) to official sources. For example Jan has more complex
+idea about query plan cache ... but first time we must solve some
+sub-problems like memory management in shared memory that is transparently
+for starndard routines like copy query plan ... and Tom isn't sure with
+query cache in shared memory...etc. Too much queries, but less answers :-)
+
+
+				Karel
+> 
+> PS: Sorry for my english :(
+
+
+ Do you anytime read any my mail :-)
+
+
+			Karel
+
+
+-- 
+ Karel Zak  <zakkr@zf.jcu.cz>
+ http://home.zf.jcu.cz/~zakkr/
+ 
+ C, PostgreSQL, PHP, WWW, http://docs.linux.cz, http://mape.jcu.cz
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
