@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.76 2004/05/19 21:37:43 momjian Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.77 2004/07/13 00:06:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -71,8 +71,14 @@ LINK.static = $(AR) $(AROPT)
 
 ifeq ($(enable_shared), yes)
 
+# Default shlib naming convention used by the majority of platforms
+shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+shlib_major	= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+shlib_bare	= lib$(NAME)$(DLSUFFIX)
+
 # For each platform we support shared libraries on, set shlib to the
-# name of the library, LINK.shared to the command to link the library,
+# name of the library (if default above is not right), set
+# LINK.shared to the command to link the library,
 # and adjust SHLIB_LINK if necessary.
 
 # Try to keep the sections in some kind of order, folks...
@@ -82,17 +88,28 @@ override CFLAGS += $(CFLAGS_SL)
 soname = lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
 
 ifeq ($(PORTNAME), aix)
-  shlib			:= lib$(NAME)$(DLSUFFIX)
+  shlib			= lib$(NAME)$(DLSUFFIX)
 #   SHLIB_LINK		+= -lc
 endif
 
 ifeq ($(PORTNAME), darwin)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LINK.shared		= $(COMPILER) -bundle
+  ifneq ($(SO_MAJOR_VERSION), 0)
+    version_link	:= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  endif
+  ifeq ($(DLTYPE), library)
+    # linkable library
+    DLSUFFIX		:= .dylib
+    LINK.shared		= $(COMPILER) -dynamiclib -install_name $(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX) $(version_link) -multiply_defined suppress
+  else
+    # loadable module (default case)
+    DLSUFFIX		:= .so
+    LINK.shared		= $(COMPILER) -bundle
+  endif
+  shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
+  shlib_major		= lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX)
 endif
 
 ifeq ($(PORTNAME), openbsd)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifdef ELF_SYSTEM
     LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
     SHLIB_LINK		+= -lc
@@ -102,7 +119,6 @@ ifeq ($(PORTNAME), openbsd)
 endif
 
 ifeq ($(PORTNAME), bsdi)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifeq ($(DLSUFFIX), .so)
     LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
     SHLIB_LINK		+= -lc
@@ -114,16 +130,15 @@ endif
 
 ifeq ($(PORTNAME), freebsd)
   ifdef ELF_SYSTEM
-    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
     LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
   else
-    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
     LINK.shared		= $(LD) -x -Bshareable -Bforcearchive
   endif
 endif
 
 ifeq ($(PORTNAME), netbsd)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifdef ELF_SYSTEM
     LINK.shared		= $(COMPILER) -shared -Wl,-x,-soname,$(soname)
   else
@@ -132,7 +147,7 @@ ifeq ($(PORTNAME), netbsd)
 endif
 
 ifeq ($(PORTNAME), hpux)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   LINK.shared		= $(LD) +h $(soname) -b +b $(libdir)
   ifeq ($(GCC), yes)
     SHLIB_LINK		+= `$(CC) -print-libgcc-file-name`
@@ -140,17 +155,15 @@ ifeq ($(PORTNAME), hpux)
 endif
 
 ifeq ($(PORTNAME), irix)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  shlib			= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
   LINK.shared		= $(COMPILER) -shared -Wl,-set_version,sgi$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
 endif
 
 ifeq ($(PORTNAME), linux)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LINK.shared		= $(COMPILER) -shared -Wl,-soname,$(soname)
 endif
 
 ifeq ($(PORTNAME), solaris)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifeq ($(GCC), yes)
     LINK.shared		= $(CC) -shared
   else
@@ -164,17 +177,14 @@ ifeq ($(PORTNAME), solaris)
 endif
 
 ifeq ($(PORTNAME), sunos4)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LINK.shared		= $(LD) -assert pure-text -Bdynamic
 endif
  
 ifeq ($(PORTNAME), osf)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LINK.shared		= $(LD) -shared -expect_unresolved '*'
 endif
 
 ifeq ($(PORTNAME), sco)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifeq ($(GCC), yes)
     LINK.shared		= $(CC) -shared
   else
@@ -184,17 +194,14 @@ ifeq ($(PORTNAME), sco)
 endif
 
 ifeq ($(PORTNAME), svr4)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LINK.shared		= $(LD) -G
 endif
 
 ifeq ($(PORTNAME), univel)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   LINK.shared		= $(LD) -G -z text
 endif
 
 ifeq ($(PORTNAME), unixware)
-  shlib			:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   ifeq ($(GCC), yes)
     LINK.shared		= $(CC) -shared
   else
@@ -204,15 +211,15 @@ ifeq ($(PORTNAME), unixware)
 endif
 
 ifeq ($(PORTNAME), cygwin)
-  shlib			:= $(NAME)$(DLSUFFIX)
+  shlib			= $(NAME)$(DLSUFFIX)
 endif
 
 ifeq ($(PORTNAME), win32)
-  shlib			:= lib$(NAME)$(DLSUFFIX)
+  shlib			= lib$(NAME)$(DLSUFFIX)
 endif
 
 ifeq ($(PORTNAME), beos)
-  shlib			:= lib$(NAME)$(DLSUFFIX)
+  shlib			= lib$(NAME)$(DLSUFFIX)
   LINK.shared		= $(LD) -nostart
   SHLIB_LINK		+= -ltermcap -lstdc++.r4 -lbind -lsocket -L/boot/develop/lib/x86
 endif
@@ -258,23 +265,23 @@ endif # not cygwin
 
 ifeq ($(enable_shared), yes)
 
-ifneq ($(PORTNAME), beos)
-ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
+ifneq ($(PORTNAME), cygwin)
+ifneq ($(PORTNAME), beos)
 ifneq ($(PORTNAME), aix)
 
 # Normal case
 $(shlib): $(OBJS)
 	$(LINK.shared) $(OBJS) $(SHLIB_LINK) -o $@
 # If we're using major and minor versions, then make a symlink to major-version-only.
-ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
-	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
-	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+ifneq ($(shlib), $(shlib_major))
+	rm -f $(shlib_major)
+	$(LN_S) $(shlib) $(shlib_major)
 endif
 # Make sure we have a link to a name without any version numbers
-ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
-	rm -f lib$(NAME)$(DLSUFFIX)
-	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX)
+ifneq ($(shlib), $(shlib_bare))
+	rm -f $(shlib_bare)
+	$(LN_S) $(shlib) $(shlib_bare)
 endif
 
 else # PORTNAME == aix
@@ -286,15 +293,14 @@ $(shlib): lib$(NAME).a
 	
 endif # PORTNAME == aix
 
-else # PORTNAME == win32
+else # PORTNAME == beos
 
-# win32 case
-$(shlib) lib$(NAME).a: $(OBJS)
-	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
-	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
+# BEOS case
+$(shlib): $(OBJS)
+	ln -fs $(top_srcdir)/src/backend/postgres _APP_
+	$(CC) -Xlinker -soname=$@ $(LDFLAGS_SL) -o $@ _APP_ $(OBJS) $(SHLIB_LINK)
 
-endif # PORTNAME == win32
+endif # PORTNAME == beos
 
 else # PORTNAME == cygwin
 
@@ -309,14 +315,15 @@ $(DLLINIT): $(DLLINIT:%.o=%.c)
 
 endif # PORTNAME == cygwin
 
-else # PORTNAME == beos
+else # PORTNAME == win32
 
-# BEOS case
-$(shlib): $(OBJS)
-	ln -fs $(top_srcdir)/src/backend/postgres _APP_
-	$(CC) -Xlinker -soname=$@ $(LDFLAGS_SL) -o $@ _APP_ $(OBJS) $(SHLIB_LINK)
+# win32 case
+$(shlib) lib$(NAME).a: $(OBJS)
+	$(DLLTOOL) --export-all $(DLLTOOL_DEFFLAGS) --output-def $(NAME).def $(OBJS)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) $(DLLWRAP_FLAGS) --def $(NAME).def $(OBJS) $(SHLIB_LINK)
+	$(DLLTOOL) --dllname $(shlib) $(DLLTOOL_LIBFLAGS) --def $(NAME).def --output-lib lib$(NAME).a
 
-endif # PORTNAME == beos
+endif # PORTNAME == win32
 
 endif # enable_shared
 
@@ -340,17 +347,16 @@ install-lib-shared: $(shlib)
 	$(INSTALL_SHLIB) $< $(DESTDIR)$(libdir)/$(shlib)
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
-ifneq ($(shlib), lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION))
+ifneq ($(shlib), $(shlib_major))
 	cd $(DESTDIR)$(libdir) && \
-	rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) && \
-	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	rm -f $(shlib_major) && \
+	$(LN_S) $(shlib) $(shlib_major)
 endif
-ifneq ($(shlib), lib$(NAME)$(DLSUFFIX))
+ifneq ($(shlib), $(shlib_bare))
 	cd $(DESTDIR)$(libdir) && \
-	rm -f lib$(NAME)$(DLSUFFIX) && \
-	$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX)
+	rm -f $(shlib_bare) && \
+	$(LN_S) $(shlib) $(shlib_bare)
 endif
-
 endif # not win32
 endif # not cygwin
 endif # enable_shared
@@ -364,9 +370,9 @@ endif # enable_shared
 uninstall-lib:
 	rm -f $(DESTDIR)$(libdir)/lib$(NAME).a
 ifeq ($(enable_shared), yes)
-	rm -f $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX) \
-	  $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) \
-	  $(DESTDIR)$(libdir)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+	rm -f $(DESTDIR)$(libdir)/$(shlib_bare) \
+	  $(DESTDIR)$(libdir)/$(shlib_major) \
+	  $(DESTDIR)$(libdir)/$(shlib)
 endif # enable_shared
 
 
@@ -378,7 +384,7 @@ endif # enable_shared
 clean-lib:
 	rm -f lib$(NAME).a
 ifeq ($(enable_shared), yes)
-	rm -f lib$(NAME)$(DLSUFFIX) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+	rm -f $(shlib_bare) $(shlib_major) $(shlib)
 ifdef EXPSUFF
 	rm -f lib$(NAME)$(EXPSUFF)
 endif

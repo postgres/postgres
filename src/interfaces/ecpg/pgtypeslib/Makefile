@@ -1,10 +1,10 @@
 #-------------------------------------------------------------------------
 #
-# Makefile for ecpg library
+# Makefile for ecpg pgtypes library
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.21 2004/05/26 17:24:07 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.22 2004/07/13 00:06:43 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,6 +15,7 @@ include $(top_builddir)/src/Makefile.global
 NAME= pgtypes
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 2
+DLTYPE= library
 
 override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(top_srcdir)/src/include/utils -I$(libpq_srcdir) $(CPPFLAGS) \
