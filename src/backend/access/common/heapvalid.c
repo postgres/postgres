@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.7 1996/10/30 06:07:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.8 1996/10/31 07:48:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "storage/item.h"
 #include "storage/itemid.h"
 #include "storage/off.h"
+#include "storage/page.h"
 #include "utils/nabstime.h"
 
 #include "access/skey.h"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.9 1996/10/21 11:49:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.10 1996/10/31 07:48:35 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -35,6 +35,7 @@
 #include "storage/item.h"
 #include "storage/itemid.h"
 #include "storage/off.h"
+#include "storage/page.h"
 #include "utils/memutils.h"
 #include "utils/nabstime.h"
 #include "utils/palloc.h"

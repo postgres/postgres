@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.7 1996/10/30 06:07:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.8 1996/10/31 07:48:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "access/attnum.h"
 #include "catalog/pg_attribute.h"
 #include "executor/execdebug.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "storage/off.h"
 #include "storage/block.h"

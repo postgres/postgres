@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.5 1996/10/21 11:49:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.6 1996/10/31 07:48:38 scrappy Exp $
  *
  * NOTES
  *    some of the executor utility code such as "ExecTypeFromTL" should be
@@ -21,6 +21,7 @@
 #include <time.h>
 
 #include "postgres.h"
+#include "utils/fcache.h"
 #include "access/attnum.h"
 #include "catalog/pg_am.h"
 #include "catalog/pg_attribute.h"
