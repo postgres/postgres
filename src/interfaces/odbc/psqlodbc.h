@@ -34,8 +34,8 @@ typedef double SDOUBLE;
 typedef UInt4 Oid;
 
 /* Driver stuff */
-#define ODBCVER				0x0200
-#define DRIVER_ODBC_VER		"02.00"
+#define ODBCVER				0x0250
+#define DRIVER_ODBC_VER		"02.50"
 
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
