@@ -6,13 +6,17 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.6 2004/11/09 13:01:25 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.7 2004/11/16 19:52:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+
+static BOOL pgwin32_get_dynamic_tokeninfo(HANDLE token,
+										  TOKEN_INFORMATION_CLASS class, char **InfoBuffer,
+										  char *errbuf, int errsize);
 
 /*
  * Returns nonzero if the current user has administrative privileges,
@@ -26,8 +30,8 @@ pgwin32_is_admin(void)
 {
 	HANDLE		AccessToken;
 	char	   *InfoBuffer = NULL;
+	char        errbuf[256];
 	PTOKEN_GROUPS Groups;
-	DWORD		InfoBufferSize;
 	PSID		AdministratorsSid;
 	PSID		PowerUsersSid;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
@@ -41,35 +45,14 @@ pgwin32_is_admin(void)
 		exit(1);
 	}
 
-	if (GetTokenInformation(AccessToken, TokenGroups, NULL, 0, &InfoBufferSize))
+	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups,
+									   &InfoBuffer, errbuf, sizeof(errbuf)))
 	{
-		write_stderr("could not get token information: got zero size\n");
+		write_stderr(errbuf);
 		exit(1);
 	}
 
-	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-	{
-		write_stderr("could not get token information: error code %d\n",
-					 (int) GetLastError());
-		exit(1);
-	}
-
-	InfoBuffer = malloc(InfoBufferSize);
-	if (!InfoBuffer)
-	{
-		write_stderr("could not allocate %i bytes for token information\n",
-					 (int) InfoBufferSize);
-		exit(1);
-	}
 	Groups = (PTOKEN_GROUPS) InfoBuffer;
-
-	if (!GetTokenInformation(AccessToken, TokenGroups, InfoBuffer,
-							 InfoBufferSize, &InfoBufferSize))
-	{
-		write_stderr("could not get token information: error code %d\n",
-					 (int) GetLastError());
-		exit(1);
-	}
 
 	CloseHandle(AccessToken);
 
@@ -131,10 +114,10 @@ pgwin32_is_service(void)
 {
 	static int	_is_service = -1;
 	HANDLE		AccessToken;
-	UCHAR		InfoBuffer[1024];
-	PTOKEN_GROUPS Groups = (PTOKEN_GROUPS) InfoBuffer;
-	PTOKEN_USER User = (PTOKEN_USER) InfoBuffer;
-	DWORD		InfoBufferSize;
+	char       *InfoBuffer = NULL;
+	char        errbuf[256];
+	PTOKEN_GROUPS Groups;
+	PTOKEN_USER User;
 	PSID		ServiceSid;
 	PSID		LocalSystemSid;
 	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
@@ -152,12 +135,14 @@ pgwin32_is_service(void)
 	}
 
 	/* First check for local system */
-	if (!GetTokenInformation(AccessToken, TokenUser, InfoBuffer, 1024, &InfoBufferSize))
+	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenUser, &InfoBuffer,
+									   errbuf, sizeof(errbuf)))
 	{
-		fprintf(stderr, "could not get token information: error code %d\n",
-				(int) GetLastError());
+		fprintf(stderr,errbuf);
 		return -1;
 	}
+
+	User = (PTOKEN_USER) InfoBuffer;
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
 						  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
@@ -171,26 +156,31 @@ pgwin32_is_service(void)
 	if (EqualSid(LocalSystemSid, User->User.Sid))
 	{
 		FreeSid(LocalSystemSid);
+		free(InfoBuffer);
 		CloseHandle(AccessToken);
 		_is_service = 1;
 		return _is_service;
 	}
 
 	FreeSid(LocalSystemSid);
+	free(InfoBuffer);
 
 	/* Now check for group SID */
-	if (!GetTokenInformation(AccessToken, TokenGroups, InfoBuffer, 1024, &InfoBufferSize))
+	if (!pgwin32_get_dynamic_tokeninfo(AccessToken, TokenGroups, &InfoBuffer,
+									   errbuf, sizeof(errbuf)))
 	{
-		fprintf(stderr, "could not get token information: error code %d\n",
-				(int) GetLastError());
+		fprintf(stderr,errbuf);
 		return -1;
 	}
+
+	Groups = (PTOKEN_GROUPS) InfoBuffer;
 
 	if (!AllocateAndInitializeSid(&NtAuthority, 1,
 							   SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &ServiceSid))
 	{
 		fprintf(stderr, "could not get SID for service group\n");
+		free(InfoBuffer);
 		CloseHandle(AccessToken);
 		return -1;
 	}
@@ -205,9 +195,54 @@ pgwin32_is_service(void)
 		}
 	}
 
+	free(InfoBuffer);
 	FreeSid(ServiceSid);
 
 	CloseHandle(AccessToken);
 
 	return _is_service;
+}
+
+
+/*
+ * Call GetTokenInformation() on a token and return a dynamically sized
+ * buffer with the information in it. This buffer must be free():d by
+ * the calling function!
+ */
+static BOOL
+pgwin32_get_dynamic_tokeninfo(HANDLE token, TOKEN_INFORMATION_CLASS class,
+							  char **InfoBuffer, char *errbuf, int errsize)
+{
+	DWORD InfoBufferSize;
+
+	if (GetTokenInformation(token, class, NULL, 0, &InfoBufferSize))
+	{
+		snprintf(errbuf,errsize,"could not get token information: got zero size\n");
+		return FALSE;
+	}
+
+	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+	{
+		snprintf(errbuf,errsize,"could not get token information: error code %d\n",
+				 (int) GetLastError());
+		return FALSE;
+	}
+
+	*InfoBuffer = malloc(InfoBufferSize);
+	if (*InfoBuffer == NULL)
+	{
+		snprintf(errbuf,errsize,"could not allocate %d bytes for token information\n",
+				 (int) InfoBufferSize);
+		return FALSE;
+	}
+
+	if (!GetTokenInformation(token, class, *InfoBuffer, 
+							 InfoBufferSize, &InfoBufferSize))
+	{
+		snprintf(errbuf,errsize,"could not get token information: error code %d\n",
+				 (int) GetLastError());
+		return FALSE;
+	}
+	
+	return TRUE;
 }
