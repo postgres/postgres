@@ -663,7 +663,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 		cp += strlen(cp);
 	}
 
-	if (is_before && (style == USE_POSTGRES_DATES))
+	if (is_before && (style != USE_ISO_DATES))
 	{
 		strcat(cp, " ago");
 		cp += strlen(cp);
