@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.90 2003/02/19 04:04:04 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.91 2003/03/10 15:46:01 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1899,11 +1899,11 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.pager == 1)
-				puts(gettext("Using pager is on."));
+				puts(gettext("Pager is on (for long output)."));
 			else if (popt->topt.pager == 2)
-				puts(gettext("Using pager is always."));
+				puts(gettext("Pager is always (used)."));
 			else
-				puts(gettext("Using pager is off."));
+				puts(gettext("Pager is off."));
 		}
 	}
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.69 2003/01/07 20:56:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.70 2003/03/10 15:46:03 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -173,7 +173,7 @@ slashUsage(unsigned short int pager)
 	 */
 	fprintf(output, _("General\n"));
 	fprintf(output, _("  \\c[onnect] [DBNAME|- [USER]]\n"
-					  "                connect to new database (currently \"%s\")\n"),
+					  "                 connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
 	fprintf(output, _("  \\cd [DIR]      change the current working directory\n"));
 	fprintf(output, _("  \\copyright     show PostgreSQL usage and distribution terms\n"));
