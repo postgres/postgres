@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.4 1996/11/10 03:02:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.5 1997/01/16 08:13:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ WriteLocalBuffer(Buffer buffer, bool release)
  *    flushes a local buffer
  */
 int
-FlushLocalBuffer(Buffer buffer)
+FlushLocalBuffer(Buffer buffer, bool release)
 {
     int bufid;
     Relation bufrel;
@@ -194,7 +194,8 @@ FlushLocalBuffer(Buffer buffer)
 	      (char *) MAKE_PTR(bufHdr->data));
 
     Assert(LocalRefCount[bufid] > 0);
-    LocalRefCount[bufid]--;
+    if ( release )
+    	LocalRefCount[bufid]--;
     
     return true;
 }
