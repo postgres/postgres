@@ -30,8 +30,8 @@ static PGresult *res = NULL;
 
 static int	on_error_state = ON_ERROR_STOP;
 
-static in_result_block = FALSE;
-static was_get_unset_result = FALSE;
+static int	in_result_block = FALSE;
+static int	was_get_unset_result = FALSE;
 
 /* LOCAL VARIABLES */
 static int	tuple;
@@ -214,6 +214,7 @@ get_result()
 	was_get_unset_result = TRUE;
 
 	/* we have to store the fetch location somewhere */
+	/* XXX THIS IS A NO-NO */
 	cmdstatus[0] = NUL;
 	memcpy(&cmdstatus[1], &tuple, sizeof(tuple));
 
@@ -235,13 +236,16 @@ set_result(PGresult *newres)
 		halt("set_result called with null result pointer\n");
 
 	if (res != NULL && was_get_unset_result == FALSE)
+	{
 		if (in_result_block == FALSE)
 			PQclear(res);
 		else
 		{
+			/* XXX THIS IS A NO-NO */
 			cmdstatus[0] = NUL;
 			memcpy(&cmdstatus[1], &tuple, sizeof(tuple));
 		}
+	}
 
 	in_result_block = TRUE;
 	was_get_unset_result = FALSE;
@@ -270,6 +274,8 @@ unset_result(PGresult *oldres)
 		halt("Unset of result without being set.\n");
 
 	was_get_unset_result = TRUE;
+
+	/* XXX THIS IS A NO-NO */
 	cmdstatus[0] = NUL;
 	memcpy(&cmdstatus[1], &tuple, sizeof(tuple));
 	in_result_block = FALSE;
