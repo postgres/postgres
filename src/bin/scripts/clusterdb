@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.8 2002/10/21 20:32:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.8.2.1 2003/09/29 18:53:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -156,10 +156,12 @@ fi
 
 for db in $dbname
 do
+
 	[ "$alldb" ] && echo "Clustering $db"
 	query="SELECT nspname, pg_class.relname, pg_class_2.relname FROM pg_class, pg_class AS pg_class_2 JOIN pg_namespace ON (pg_namespace.oid=relnamespace), pg_index WHERE pg_class.oid=pg_index.indrelid AND pg_class_2.oid=pg_index.indexrelid AND pg_index.indisclustered AND pg_class.relowner=(SELECT usesysid FROM pg_user WHERE usename=current_user)"
+
 	if [ -z "$table" ]; then
-		tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query"`
+		tables=`${PATHNAME}psql $PSQLOPT -F: -P format=unaligned -t -c "$query" $db`
 		[ "$?" -ne 0 ] && exit 1
 	else
 		# if tablename has a dot, use it as namespace separator
@@ -167,10 +169,10 @@ do
 		then
 			tbl=`echo $table | cut -d. -f2`
 			nspc=`echo $table | cut -d. -f1`
-			tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query AND pg_class.relname='$tbl' AND nspname='$nspc'"`
+			tables=`${PATHNAME}psql $PSQLOPT -F: -P format=unaligned -t -c "$query AND pg_class.relname='$tbl' AND nspname='$nspc'" $db`
 			echo $tables
 		else
-			tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query AND pg_class.relname='$table'"`
+			tables=`${PATHNAME}psql $PSQLOPT -F: -P format=unaligned -t -c "$query AND pg_class.relname='$table'" $db`
 		fi
 	fi
 	query=
