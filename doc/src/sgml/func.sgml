@@ -966,14 +966,15 @@
      <listitem>
       <para>
        <literal>YYYY</literal> conversion from string to timestamp or
-       date is limited if you use year great than 4-digits. You must
-       use after <literal>YYYY</literal> some non-digit char or template
-       else year is always interpreted as 4-digits. For example (with year
-       20000):
-       <literal> to_date('200001131', 'YYYYMMDD') <literal> will bad 
-       interpreded as 4-digits year, right is use after year non-digit 
-       separator <literal> to_date('20000-1131', 'YYYY-MMDD')<literal> or
-       <literal> to_date('20000Nov31', 'YYYYMonDD')<literal>.
+       date is limited if you use a year longer than 4-digits. You must
+       use some non-digit character or template after <literal>YYYY</literal>,
+       otherwise the year is always interpreted as 4-digits. For example
+       (with year 20000):
+       <literal>to_date('200001131', 'YYYYMMDD')</literal> will be 
+       interpreted as a 4-digit year, better is to use a non-digit 
+       separator after the year, like
+       <literal>to_date('20000-1131', 'YYYY-MMDD')</literal> or
+       <literal>to_date('20000Nov31', 'YYYYMonDD')</literal>.
       </para>
      </listitem>
     </itemizedlist>

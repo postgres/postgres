@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.9 2000/11/24 17:44:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.10 2000/11/25 13:20:05 petere Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -88,7 +88,6 @@ PostgreSQL Reference Manual
    &selectInto;
    &set;
    &setConstraints;
-   &setSession;
    &setTransaction;
    &show;
    &truncate;
