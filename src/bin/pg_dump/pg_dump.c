@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.348 2003/09/22 00:23:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.349 2003/09/23 22:48:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,6 @@ main(int argc, char **argv)
 	int			outputCreate = 0;
 	int			outputBlobs = 0;
 	int			outputNoOwner = 0;
-	int			outputNoReconnect = 0;
 	static int	use_setsessauth = 0;
 	static int	disable_triggers = 0;
 	char	   *outputSuperuser = NULL;
@@ -322,8 +321,8 @@ main(int argc, char **argv)
 				pgport = optarg;
 				break;
 
-			case 'R':			/* No reconnect */
-				outputNoReconnect = 1;
+			case 'R':
+				/* no-op, still accepted for backwards compatibility */
 				break;
 
 			case 's':			/* dump schema only */
@@ -369,7 +368,7 @@ main(int argc, char **argv)
 				 */
 			case 'X':
 				if (strcmp(optarg, "use-set-session-authorization") == 0)
-					use_setsessauth = 1;
+					/* no-op, still allowed for compatibility */ ;
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
 				else
@@ -585,8 +584,6 @@ main(int argc, char **argv)
 		ropt->superuser = outputSuperuser;
 		ropt->create = outputCreate;
 		ropt->noOwner = outputNoOwner;
-		ropt->noReconnect = outputNoReconnect;
-		ropt->use_setsessauth = use_setsessauth;
 		ropt->disable_triggers = disable_triggers;
 
 		if (compressLevel == -1)
@@ -633,18 +630,13 @@ help(const char *progname)
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
 	printf(_("  -n, --schema=SCHEMA      dump the named schema only\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
-	printf(_("  -O, --no-owner           do not output \\connect commands in plain\n"
-			 "                           text format\n"));
-	printf(_("  -R, --no-reconnect       disable ALL reconnections to the database in\n"
-			 "                           plain text format\n"));
+	printf(_("  -O, --no-owner           do not output commands to set object ownership\n"
+			 "                           in plain text format\n"));
 	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in\n"
 			 "                           plain text format\n"));
 	printf(_("  -t, --table=TABLE        dump the named table only\n"));
 	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
-	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
-			 "                           output SET SESSION AUTHORIZATION commands rather\n"
-			 "                           than \\connect commands\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
 

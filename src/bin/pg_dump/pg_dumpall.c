@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.27 2003/08/07 21:11:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.28 2003/09/23 22:48:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -659,8 +659,7 @@ runPgDump(const char *dbname)
 	const char *p;
 	int			ret;
 
-	appendPQExpBuffer(cmd, "%s %s -X use-set-session-authorization -Fp '",
-					  pgdumploc, pgdumpopts->data);
+	appendPQExpBuffer(cmd, "%s %s -Fp '", pgdumploc, pgdumpopts->data);
 
 	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
 	for (p = dbname; *p; p++)

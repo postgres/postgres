@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.25 2003/08/28 20:21:34 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.26 2003/09/23 22:48:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,12 +62,7 @@ typedef int (*DataDumperPtr) (Archive *AH, char *oid, void *userArg);
 typedef struct _restoreOptions
 {
 	int			create;			/* Issue commands to create the database */
-	int			noOwner;		/* Don't reconnect to database to match
-								 * original object owner */
-	int			noReconnect;	/* Don't reconnect to database under any
-								 * cirsumstances */
-	int			use_setsessauth;/* use SET SESSSION AUTHORIZATION instead
-								 * of \connect */
+	int			noOwner;		/* Don't try to match original object owner */
 	int			disable_triggers;		/* disable triggers during
 										 * data-only restore */
 	char	   *superuser;		/* Username to use as superuser */

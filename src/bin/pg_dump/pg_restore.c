@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.51 2003/08/28 20:21:34 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.52 2003/09/23 22:48:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ main(int argc, char **argv)
 				opts->rearrange = 1;
 				break;
 			case 'R':
-				opts->noReconnect = 1;
+				/* no-op, still accepted for backwards compatibility */
 				break;
 			case 'P':			/* Function */
 				opts->selTypes = 1;
@@ -262,7 +262,7 @@ main(int argc, char **argv)
 
 			case 'X':
 				if (strcmp(optarg, "use-set-session-authorization") == 0)
-					use_setsessauth = 1;
+					/* no-op, still allowed for compatibility */ ;
 				else if (strcmp(optarg, "disable-triggers") == 0)
 					disable_triggers = 1;
 				else
@@ -290,7 +290,6 @@ main(int argc, char **argv)
 	else
 		fileSpec = NULL;
 
-	opts->use_setsessauth = use_setsessauth;
 	opts->disable_triggers = disable_triggers;
 
 	if (opts->formatName)
@@ -378,21 +377,16 @@ usage(const char *progname)
 			 "                           output from this file\n"));
 	printf(_("  -N, --orig-order         restore in original dump order\n"));
 	printf(_("  -o, --oid-order          restore in OID order\n"));
-	printf(_("  -O, --no-owner           do not reconnect to database to match\n"
-			 "                           object owner\n"));
+	printf(_("  -O, --no-owner           do not output commands to set object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"
 			 "                           restore named function\n"));
 	printf(_("  -r, --rearrange          rearrange output to put indexes etc. at end\n"));
-	printf(_("  -R, --no-reconnect       disallow ALL reconnections to the database\n"));
 	printf(_("  -s, --schema-only        restore only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME     specify the superuser user name to use for\n"
 			 "                           disabling triggers\n"));
 	printf(_("  -t, --table=NAME         restore named table\n"));
 	printf(_("  -T, --trigger=NAME       restore named trigger\n"));
 	printf(_("  -x, --no-privileges      skip restoration of access privileges (grant/revoke)\n"));
-	printf(_("  -X use-set-session-authorization, --use-set-session-authorization\n"
-			 "                           use SET SESSION AUTHORIZATION commands instead\n"
-		   "                           of reconnecting, if possible\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
 

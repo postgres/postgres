@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.42 2003/09/11 21:42:20 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.43 2003/09/23 22:48:53 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -261,10 +261,16 @@
       <term><option>--no-owner</option></term>
       <listitem>
        <para>
-        Prevent any attempt to restore original object
-        ownership. Objects will be owned by the user name used to
-        attach to the database. See also under <option>-R</option> and
-        <option>-X use-set-session-authorization</option>.
+        Do not output commands to set
+	ownership of objects to match the original database.
+	By default, <application>pg_restore</application> issues
+	<command>SET SESSION AUTHORIZATION</command>
+	statements to set ownership of created schema elements.
+	These statements will fail unless the initial connection to the
+	database is made by a superuser
+	(or the same user that owns all of the objects in the script).
+	With <option>-O</option>, any user name can be used for the
+	initial connection, and this user will own all the created objects.
        </para>
       </listitem>
      </varlistentry>
@@ -311,20 +317,8 @@
       <term><option>--no-reconnect</option></term>
       <listitem>
        <para>
-        While restoring an archive, <application>pg_restore</application>
-        typically has to reconnect to the database several times with
-        different user names to set the correct ownership of the
-        created objects.  If this is undesirable (e.g., because manual
-        interaction (passwords) would be necessary for each
-        reconnection), this option prevents
-        <application>pg_restore</application> from issuing any reconnection
-        requests.  (A connection request while in plain text mode, not
-        connected to a database, is made by putting out a <xref
-        linkend="app-psql"> <command>\connect</command> command.)
-        However, this option is a rather blunt instrument because it
-        makes <application>pg_restore</application> lose all object ownership
-        information, <emphasis>unless</emphasis> you use the
-        <option>-X use-set-session-authorization</option> option.
+        This option is obsolete but still accepted for backwards
+	compatibility.
        </para>
       </listitem>
      </varlistentry>
@@ -397,16 +391,10 @@
       <term><option>--use-set-session-authorization</option></term>
       <listitem>
        <para>
-        Normally, if restoring an archive requires altering the
-        current database user (e.g., to set correct object
-        ownerships), a new connection to the database must be opened,
-        which might require manual interaction (e.g., passwords).  If
-        you use the <option>-X use-set-session-authorization</option> option,
-        then <application>pg_restore</application> will instead use the <xref
-        linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title"> command.  This has
-        the same effect, but it requires that the user restoring the
-        archive is a database superuser.  This option effectively
-        overrides the <option>-R</option> option.
+        This option is obsolete but still accepted for backwards
+	compatibility.
+        <application>pg_restore</application> now always behaves in the
+	way formerly selected by this option.
        </para>
       </listitem>
      </varlistentry>
@@ -428,8 +416,7 @@
         Presently, the commands emitted for
 	<option>--disable-triggers</> must be done as superuser.  So, you
 	should also specify a superuser name with <option>-S</>, or
-	preferably specify <option>--use-set-session-authorization</> and
-	run <application>pg_restore</application> as a
+	preferably run <application>pg_restore</application> as a
 	<productname>PostgreSQL</> superuser.
        </para>
       </listitem>
