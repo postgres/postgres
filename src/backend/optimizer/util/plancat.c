@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.71 2002/04/12 20:38:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.72 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,8 +290,8 @@ find_inheritance_children(Oid inhparent)
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(inhparent));
 	relation = heap_openr(InheritsRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
-	while (HeapTupleIsValid(inheritsTuple = heap_getnext(scan, 0)))
+	scan = heap_beginscan(relation, SnapshotNow, 1, key);
+	while ((inheritsTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrelid;
 		list = lappendi(list, inhrelid);

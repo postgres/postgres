@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.27 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.28 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ _hash_search(Relation rel,
  *		exit, we have the page containing the next item locked but not
  *		pinned.
  */
-RetrieveIndexResult
+bool
 _hash_next(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel;
@@ -67,13 +67,12 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	Buffer		metabuf;
 	Page		page;
 	OffsetNumber offnum;
-	RetrieveIndexResult res;
 	ItemPointer current;
 	HashItem	hitem;
 	IndexTuple	itup;
 	HashScanOpaque so;
 
-	rel = scan->relation;
+	rel = scan->indexRelation;
 	so = (HashScanOpaque) scan->opaque;
 	current = &(scan->currentItemData);
 
@@ -101,7 +100,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	 * next tuple, we come back with a lock on that buffer.
 	 */
 	if (!_hash_step(scan, &buf, dir, metabuf))
-		return (RetrieveIndexResult) NULL;
+		return false;
 
 	/* if we're here, _hash_step found a valid tuple */
 	current = &(scan->currentItemData);
@@ -110,9 +109,9 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &hitem->hash_itup;
-	res = FormRetrieveIndexResult(current, &(itup->t_tid));
+	scan->xs_ctup.t_self = itup->t_tid;
 
-	return res;
+	return true;
 }
 
 static void
@@ -161,13 +160,13 @@ _hash_readprev(Relation rel,
 /*
  *	_hash_first() -- Find the first item in a scan.
  *
- *		Return the RetrieveIndexResult of the first item in the tree that
- *		satisfies the qualificatin associated with the scan descriptor. On
+ *		Find the first item in the tree that
+ *		satisfies the qualification associated with the scan descriptor. On
  *		exit, the page containing the current index tuple is read locked
  *		and pinned, and the scan's opaque data entry is updated to
  *		include the buffer.
  */
-RetrieveIndexResult
+bool
 _hash_first(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel;
@@ -180,10 +179,9 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	IndexTuple	itup;
 	ItemPointer current;
 	OffsetNumber offnum;
-	RetrieveIndexResult res;
 	HashScanOpaque so;
 
-	rel = scan->relation;
+	rel = scan->indexRelation;
 	so = (HashScanOpaque) scan->opaque;
 	current = &(scan->currentItemData);
 
@@ -230,7 +228,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 			{
 				_hash_relbuf(rel, buf, HASH_READ);
 				_hash_relbuf(rel, metabuf, HASH_READ);
-				return (RetrieveIndexResult) NULL;
+				return false;
 			}
 		}
 	}
@@ -241,7 +239,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	if (!_hash_step(scan, &buf, dir, metabuf))
-		return (RetrieveIndexResult) NULL;
+		return false;
 
 	/* if we're here, _hash_step found a valid tuple */
 	current = &(scan->currentItemData);
@@ -250,9 +248,9 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	_hash_checkpage(page, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	hitem = (HashItem) PageGetItem(page, PageGetItemId(page, offnum));
 	itup = &hitem->hash_itup;
-	res = FormRetrieveIndexResult(current, &(itup->t_tid));
+	scan->xs_ctup.t_self = itup->t_tid;
 
-	return res;
+	return true;
 }
 
 /*
@@ -285,7 +283,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 	HashItem	hitem;
 	IndexTuple	itup;
 
-	rel = scan->relation;
+	rel = scan->indexRelation;
 	current = &(scan->currentItemData);
 	so = (HashScanOpaque) scan->opaque;
 	allbuckets = (scan->numberOfKeys < 1);

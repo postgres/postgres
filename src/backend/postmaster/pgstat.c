@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.20 2002/05/05 00:03:28 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.21 2002/05/20 23:51:43 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -619,8 +619,8 @@ pgstat_vacuum_tabstat(void)
 	dbidlist = (Oid *) palloc(sizeof(Oid) * dbidalloc);
 
 	dbrel = heap_openr(DatabaseRelationName, AccessShareLock);
-	dbscan = heap_beginscan(dbrel, 0, SnapshotNow, 0, NULL);
-	while (HeapTupleIsValid(dbtup = heap_getnext(dbscan, FALSE)))
+	dbscan = heap_beginscan(dbrel, SnapshotNow, 0, NULL);
+	while ((dbtup = heap_getnext(dbscan, ForwardScanDirection)) != NULL)
 	{
 		if (dbidused >= dbidalloc)
 		{

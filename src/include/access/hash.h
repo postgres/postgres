@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.45 2002/03/09 17:35:37 tgl Exp $
+ * $Id: hash.h,v 1.46 2002/05/20 23:51:43 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -306,8 +306,8 @@ extern void AtEOXact_hash(void);
 /* hashsearch.c */
 extern void _hash_search(Relation rel, int keysz, ScanKey scankey,
 			 Buffer *bufP, HashMetaPage metap);
-extern RetrieveIndexResult _hash_next(IndexScanDesc scan, ScanDirection dir);
-extern RetrieveIndexResult _hash_first(IndexScanDesc scan, ScanDirection dir);
+extern bool _hash_next(IndexScanDesc scan, ScanDirection dir);
+extern bool _hash_first(IndexScanDesc scan, ScanDirection dir);
 extern bool _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir,
 		   Buffer metabuf);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.40 2002/03/05 05:30:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.41 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,12 +54,11 @@ Datum
 rtbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	r = (Relation) PG_GETARG_POINTER(0);
-	bool		fromEnd = PG_GETARG_BOOL(1);
-	uint16		nkeys = PG_GETARG_UINT16(2);
-	ScanKey		key = (ScanKey) PG_GETARG_POINTER(3);
+	int			nkeys = PG_GETARG_INT32(1);
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
 	IndexScanDesc s;
 
-	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
+	s = RelationGetIndexScan(r, nkeys, key);
 
 	rtregscan(s);
 
@@ -70,8 +69,7 @@ Datum
 rtrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	bool		fromEnd = PG_GETARG_BOOL(1);
-	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
 	RTreeScanOpaque p;
 	RegProcedure internal_proc;
 	int			i;
@@ -81,18 +79,6 @@ rtrescan(PG_FUNCTION_ARGS)
 	 */
 	ItemPointerSetInvalid(&s->currentItemData);
 	ItemPointerSetInvalid(&s->currentMarkData);
-
-	/*
-	 * Set flags.
-	 */
-	if (RelationGetNumberOfBlocks(s->relation) == 0)
-		s->flags = ScanUnmarked;
-	else if (fromEnd)
-		s->flags = ScanUnmarked | ScanUncheckedPrevious;
-	else
-		s->flags = ScanUnmarked | ScanUncheckedNext;
-
-	s->scanFromEnd = fromEnd;
 
 	if (s->numberOfKeys > 0)
 	{
@@ -133,7 +119,7 @@ rtrescan(PG_FUNCTION_ARGS)
 			for (i = 0; i < s->numberOfKeys; i++)
 			{
 				p->s_internalKey[i].sk_argument = s->keyData[i].sk_argument;
-				internal_proc = RTMapOperator(s->relation,
+				internal_proc = RTMapOperator(s->indexRelation,
 											  s->keyData[i].sk_attno,
 											  s->keyData[i].sk_procedure);
 				ScanKeyEntryInitialize(&(p->s_internalKey[i]),
@@ -306,7 +292,7 @@ rtadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum)
 	relid = RelationGetRelid(r);
 	for (l = RTScans; l != (RTScanList) NULL; l = l->rtsl_next)
 	{
-		if (RelationGetRelid(l->rtsl_scan->relation) == relid)
+		if (RelationGetRelid(l->rtsl_scan->indexRelation) == relid)
 			rtadjone(l->rtsl_scan, op, blkno, offnum);
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.28 2002/03/05 05:33:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.29 2002/05/20 23:51:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -36,8 +36,6 @@
 #include "utils/fmgroids.h"
 #include "utils/pg_lzcompress.h"
 
-
-#ifdef TUPLE_TOASTER_ACTIVE
 
 #undef TOAST_DEBUG
 
@@ -961,14 +959,12 @@ toast_save_datum(Relation rel, Datum value)
 static void
 toast_delete_datum(Relation rel, Datum value)
 {
-	register varattrib *attr = (varattrib *) value;
+	varattrib  *attr = (varattrib *) DatumGetPointer(value);
 	Relation	toastrel;
 	Relation	toastidx;
 	ScanKeyData toastkey;
 	IndexScanDesc toastscan;
-	HeapTupleData toasttup;
-	RetrieveIndexResult indexRes;
-	Buffer		buffer;
+	HeapTuple	toasttup;
 
 	if (!VARATT_IS_EXTERNAL(attr))
 		return;
@@ -993,22 +989,14 @@ toast_delete_datum(Relation rel, Datum value)
 	/*
 	 * Find the chunks by index
 	 */
-	toastscan = index_beginscan(toastidx, false, 1, &toastkey);
-	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
+	toastscan = index_beginscan(toastrel, toastidx, SnapshotToast,
+								1, &toastkey);
+	while ((toasttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
-		toasttup.t_self = indexRes->heap_iptr;
-		heap_fetch(toastrel, SnapshotToast, &toasttup, &buffer, toastscan);
-		pfree(indexRes);
-
-		if (!toasttup.t_data)
-			continue;
-
 		/*
 		 * Have a chunk, delete it
 		 */
-		simple_heap_delete(toastrel, &toasttup.t_self);
-
-		ReleaseBuffer(buffer);
+		simple_heap_delete(toastrel, &toasttup->t_self);
 	}
 
 	/*
@@ -1034,11 +1022,8 @@ toast_fetch_datum(varattrib *attr)
 	Relation	toastidx;
 	ScanKeyData toastkey;
 	IndexScanDesc toastscan;
-	HeapTupleData toasttup;
 	HeapTuple	ttup;
 	TupleDesc	toasttupDesc;
-	RetrieveIndexResult indexRes;
-	Buffer		buffer;
 	varattrib  *result;
 	int32		ressize;
 	int32		residx,
@@ -1082,17 +1067,10 @@ toast_fetch_datum(varattrib *attr)
 	 */
 	nextidx = 0;
 
-	toastscan = index_beginscan(toastidx, false, 1, &toastkey);
-	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
+	toastscan = index_beginscan(toastrel, toastidx, SnapshotToast,
+								1, &toastkey);
+	while ((ttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
-		toasttup.t_self = indexRes->heap_iptr;
-		heap_fetch(toastrel, SnapshotToast, &toasttup, &buffer, toastscan);
-		pfree(indexRes);
-
-		if (toasttup.t_data == NULL)
-			continue;
-		ttup = &toasttup;
-
 		/*
 		 * Have a chunk, extract the sequence number and the data
 		 */
@@ -1135,7 +1113,6 @@ toast_fetch_datum(varattrib *attr)
 			   VARATT_DATA(chunk),
 			   chunksize);
 
-		ReleaseBuffer(buffer);
 		nextidx++;
 	}
 
@@ -1170,16 +1147,12 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	Relation	toastrel;
 	Relation	toastidx;
 	ScanKeyData toastkey[3];
+	int			nscankeys;
 	IndexScanDesc toastscan;
-	HeapTupleData toasttup;
 	HeapTuple	ttup;
 	TupleDesc	toasttupDesc;
-	RetrieveIndexResult indexRes;
-	Buffer		buffer;
-
 	varattrib  *result;
 	int32		attrsize;
-	int32       nscankeys;
 	int32		residx;
 	int32       nextidx;
 	int		    numchunks;
@@ -1198,15 +1171,15 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	totalchunks = ((attrsize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
 
 	if (sliceoffset >= attrsize) 
-	  {
+	{
 	    sliceoffset = 0;
 	    length = 0;
-	  }
+	}
 
 	if (((sliceoffset + length) > attrsize) || length < 0)
-	  {
+	{
 	    length = attrsize - sliceoffset;
-	  }
+	}
 
 	result = (varattrib *) palloc(length + VARHDRSZ);
 	VARATT_SIZEP(result) = length + VARHDRSZ;
@@ -1274,17 +1247,10 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	 * The index is on (valueid, chunkidx) so they will come in order
 	 */
 	nextidx = startchunk;
-	toastscan = index_beginscan(toastidx, false, nscankeys, &toastkey[0]);
-	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
+	toastscan = index_beginscan(toastrel, toastidx, SnapshotToast,
+								nscankeys, toastkey);
+	while ((ttup = index_getnext(toastscan, ForwardScanDirection)) != NULL)
 	{
-		toasttup.t_self = indexRes->heap_iptr;
-		heap_fetch(toastrel, SnapshotToast, &toasttup, &buffer, toastscan);
-		pfree(indexRes);
-
-		if (toasttup.t_data == NULL)
-			continue;
-		ttup = &toasttup;
-
 		/*
 		 * Have a chunk, extract the sequence number and the data
 		 */
@@ -1329,7 +1295,6 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 			   VARATT_DATA(chunk) + chcpystrt,
 			   (chcpyend - chcpystrt) + 1);
 		
-		ReleaseBuffer(buffer);
 		nextidx++;
 	}
 
@@ -1350,5 +1315,3 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 
 	return result;
 }
-
-#endif   /* TUPLE_TOASTER_ACTIVE */

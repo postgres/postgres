@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.90 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.91 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,12 +198,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	uint32		lastbyte = 0;
 	ScanKeyData skey[1];
 	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData tuple;
-	Buffer		buffer;
-	Form_pg_largeobject data;
-	bytea	   *datafield;
-	bool		pfreeit;
+	HeapTuple	tuple;
 
 	Assert(PointerIsValid(obj_desc));
 
@@ -213,10 +208,8 @@ inv_getsize(LargeObjectDesc *obj_desc)
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(obj_desc->id));
 
-	sd = index_beginscan(obj_desc->index_r, true, 1, skey);
-
-	tuple.t_datamcxt = CurrentMemoryContext;
-	tuple.t_data = NULL;
+	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
+						 SnapshotNow, 1, skey);
 
 	/*
 	 * Because the pg_largeobject index is on both loid and pageno, but we
@@ -224,15 +217,14 @@ inv_getsize(LargeObjectDesc *obj_desc)
 	 * large object in reverse pageno order.  So, it's sufficient to
 	 * examine the first valid tuple (== last valid page).
 	 */
-	while ((indexRes = index_getnext(sd, BackwardScanDirection)))
+	while ((tuple = index_getnext(sd, BackwardScanDirection)) != NULL)
 	{
-		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(obj_desc->heap_r, SnapshotNow, &tuple, &buffer, sd);
-		pfree(indexRes);
-		if (tuple.t_data == NULL)
-			continue;
+		Form_pg_largeobject data;
+		bytea	   *datafield;
+		bool		pfreeit;
+
 		found = true;
-		data = (Form_pg_largeobject) GETSTRUCT(&tuple);
+		data = (Form_pg_largeobject) GETSTRUCT(tuple);
 		datafield = &(data->data);
 		pfreeit = false;
 		if (VARATT_IS_EXTENDED(datafield))
@@ -244,7 +236,6 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		lastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
 		if (pfreeit)
 			pfree(datafield);
-		ReleaseBuffer(buffer);
 		break;
 	}
 
@@ -306,12 +297,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	uint32		pageoff;
 	ScanKeyData skey[2];
 	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData tuple;
-	Buffer		buffer;
-	Form_pg_largeobject data;
-	bytea	   *datafield;
-	bool		pfreeit;
+	HeapTuple	tuple;
 
 	Assert(PointerIsValid(obj_desc));
 	Assert(buf != NULL);
@@ -331,21 +317,16 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 						   (RegProcedure) F_INT4GE,
 						   Int32GetDatum(pageno));
 
-	sd = index_beginscan(obj_desc->index_r, false, 2, skey);
+	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
+						 SnapshotNow, 2, skey);
 
-	tuple.t_datamcxt = CurrentMemoryContext;
-	tuple.t_data = NULL;
-
-	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
+	while ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
 	{
-		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(obj_desc->heap_r, SnapshotNow, &tuple, &buffer, sd);
-		pfree(indexRes);
+		Form_pg_largeobject data;
+		bytea	   *datafield;
+		bool		pfreeit;
 
-		if (tuple.t_data == NULL)
-			continue;
-
-		data = (Form_pg_largeobject) GETSTRUCT(&tuple);
+		data = (Form_pg_largeobject) GETSTRUCT(tuple);
 
 		/*
 		 * We assume the indexscan will deliver pages in order.  However,
@@ -389,7 +370,6 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				pfree(datafield);
 		}
 
-		ReleaseBuffer(buffer);
 		if (nread >= nbytes)
 			break;
 	}
@@ -409,9 +389,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	int32		pageno = (int32) (obj_desc->offset / LOBLKSIZE);
 	ScanKeyData skey[2];
 	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData oldtuple;
-	Buffer		buffer;
+	HeapTuple	oldtuple;
 	Form_pg_largeobject olddata;
 	bool		neednextpage;
 	bytea	   *datafield;
@@ -453,12 +431,11 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 						   (RegProcedure) F_INT4GE,
 						   Int32GetDatum(pageno));
 
-	sd = index_beginscan(obj_desc->index_r, false, 2, skey);
+	sd = index_beginscan(obj_desc->heap_r, obj_desc->index_r,
+						 SnapshotNow, 2, skey);
 
-	oldtuple.t_datamcxt = CurrentMemoryContext;
-	oldtuple.t_data = NULL;
+	oldtuple = NULL;
 	olddata = NULL;
-	buffer = InvalidBuffer;
 	neednextpage = true;
 
 	while (nwritten < nbytes)
@@ -470,17 +447,10 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		 */
 		if (neednextpage)
 		{
-			while ((indexRes = index_getnext(sd, ForwardScanDirection)))
+			if ((oldtuple = index_getnext(sd, ForwardScanDirection)) != NULL)
 			{
-				oldtuple.t_self = indexRes->heap_iptr;
-				heap_fetch(obj_desc->heap_r, SnapshotNow, &oldtuple, &buffer, sd);
-				pfree(indexRes);
-				if (oldtuple.t_data != NULL)
-				{
-					olddata = (Form_pg_largeobject) GETSTRUCT(&oldtuple);
-					Assert(olddata->pageno >= pageno);
-					break;
-				}
+				olddata = (Form_pg_largeobject) GETSTRUCT(oldtuple);
+				Assert(olddata->pageno >= pageno);
 			}
 			neednextpage = false;
 		}
@@ -538,7 +508,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			memset(replace, ' ', sizeof(replace));
 			values[Anum_pg_largeobject_data - 1] = PointerGetDatum(&workbuf);
 			replace[Anum_pg_largeobject_data - 1] = 'r';
-			newtup = heap_modifytuple(&oldtuple, obj_desc->heap_r,
+			newtup = heap_modifytuple(oldtuple, obj_desc->heap_r,
 									  values, nulls, replace);
 			simple_heap_update(obj_desc->heap_r, &newtup->t_self, newtup);
 			if (write_indices)
@@ -549,9 +519,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			/*
 			 * We're done with this old page.
 			 */
-			ReleaseBuffer(buffer);
-			oldtuple.t_datamcxt = CurrentMemoryContext;
-			oldtuple.t_data = NULL;
+			oldtuple = NULL;
 			olddata = NULL;
 			neednextpage = true;
 		}
@@ -595,9 +563,6 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		}
 		pageno++;
 	}
-
-	if (olddata != NULL)
-		ReleaseBuffer(buffer);
 
 	index_endscan(sd);
 

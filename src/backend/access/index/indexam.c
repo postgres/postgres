@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.57 2002/04/17 20:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.58 2002/05/20 23:51:41 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -73,20 +73,20 @@
  */
 #define RELATION_CHECKS \
 ( \
-	AssertMacro(RelationIsValid(relation)), \
-	AssertMacro(PointerIsValid(relation->rd_am)) \
+	AssertMacro(RelationIsValid(indexRelation)), \
+	AssertMacro(PointerIsValid(indexRelation->rd_am)) \
 )
 
 #define SCAN_CHECKS \
 ( \
 	AssertMacro(IndexScanIsValid(scan)), \
-	AssertMacro(RelationIsValid(scan->relation)), \
-	AssertMacro(PointerIsValid(scan->relation->rd_am)) \
+	AssertMacro(RelationIsValid(scan->indexRelation)), \
+	AssertMacro(PointerIsValid(scan->indexRelation->rd_am)) \
 )
 
 #define GET_REL_PROCEDURE(x,y) \
 ( \
-	procedure = relation->rd_am->y, \
+	procedure = indexRelation->rd_am->y, \
 	(!RegProcedureIsValid(procedure)) ? \
 		elog(ERROR, "index_%s: invalid %s regproc", \
 			CppAsString(x), CppAsString(y)) \
@@ -95,7 +95,7 @@
 
 #define GET_SCAN_PROCEDURE(x,y) \
 ( \
-	procedure = scan->relation->rd_am->y, \
+	procedure = scan->indexRelation->rd_am->y, \
 	(!RegProcedureIsValid(procedure)) ? \
 		elog(ERROR, "index_%s: invalid %s regproc", \
 			CppAsString(x), CppAsString(y)) \
@@ -200,11 +200,11 @@ index_close(Relation relation)
  * ----------------
  */
 InsertIndexResult
-index_insert(Relation relation,
-			 Datum *datum,
+index_insert(Relation indexRelation,
+			 Datum *datums,
 			 char *nulls,
 			 ItemPointer heap_t_ctid,
-			 Relation heapRel)
+			 Relation heapRelation)
 {
 	RegProcedure procedure;
 	InsertIndexResult specificResult;
@@ -217,11 +217,11 @@ index_insert(Relation relation,
 	 */
 	specificResult = (InsertIndexResult)
 		DatumGetPointer(OidFunctionCall5(procedure,
-										 PointerGetDatum(relation),
-										 PointerGetDatum(datum),
+										 PointerGetDatum(indexRelation),
+										 PointerGetDatum(datums),
 										 PointerGetDatum(nulls),
 										 PointerGetDatum(heap_t_ctid),
-										 PointerGetDatum(heapRel)));
+										 PointerGetDatum(heapRelation)));
 
 	/* must be pfree'ed */
 	return specificResult;
@@ -229,13 +229,19 @@ index_insert(Relation relation,
 
 /* ----------------
  *		index_beginscan - start a scan of an index
+ *
+ * Note: heapRelation may be NULL if there is no intention of calling
+ * index_getnext on this scan; index_getnext_indexitem will not use the
+ * heapRelation link (nor the snapshot).  However, the caller had better
+ * be holding some kind of lock on the heap relation in any case, to ensure
+ * no one deletes it (or the index) out from under us.
  * ----------------
  */
 IndexScanDesc
-index_beginscan(Relation relation,
-				bool scanFromEnd,
-				uint16 numberOfKeys,
-				ScanKey key)
+index_beginscan(Relation heapRelation,
+				Relation indexRelation,
+				Snapshot snapshot,
+				int nkeys, ScanKey key)
 {
 	IndexScanDesc scan;
 	RegProcedure procedure;
@@ -243,7 +249,7 @@ index_beginscan(Relation relation,
 	RELATION_CHECKS;
 	GET_REL_PROCEDURE(beginscan, ambeginscan);
 
-	RelationIncrementReferenceCount(relation);
+	RelationIncrementReferenceCount(indexRelation);
 
 	/*
 	 * Acquire AccessShareLock for the duration of the scan
@@ -252,16 +258,23 @@ index_beginscan(Relation relation,
 	 * rebuild the relcache entry.	The refcount increment above ensures
 	 * that we will rebuild it and not just flush it...
 	 */
-	LockRelation(relation, AccessShareLock);
+	LockRelation(indexRelation, AccessShareLock);
 
+	/*
+	 * Tell the AM to open a scan.
+	 */
 	scan = (IndexScanDesc)
-		DatumGetPointer(OidFunctionCall4(procedure,
-										 PointerGetDatum(relation),
-										 BoolGetDatum(scanFromEnd),
-										 UInt16GetDatum(numberOfKeys),
+		DatumGetPointer(OidFunctionCall3(procedure,
+										 PointerGetDatum(indexRelation),
+										 Int32GetDatum(nkeys),
 										 PointerGetDatum(key)));
 
-	pgstat_initstats(&scan->xs_pgstat_info, relation);
+	/*
+	 * Save additional parameters into the scandesc.  Everything else
+	 * was set up by RelationGetIndexScan.
+	 */
+	scan->heapRelation = heapRelation;
+	scan->xs_snapshot = snapshot;
 
 	/*
 	 * We want to look up the amgettuple procedure just once per scan, not
@@ -275,20 +288,23 @@ index_beginscan(Relation relation,
 }
 
 /* ----------------
- *		index_rescan  - restart a scan of an index
+ *		index_rescan  - (re)start a scan of an index
+ *
+ * The caller may specify a new set of scankeys (but the number of keys
+ * cannot change).  Note that this is also called when first starting
+ * an indexscan; see RelationGetIndexScan.
  * ----------------
  */
 void
-index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
+index_rescan(IndexScanDesc scan, ScanKey key)
 {
 	RegProcedure procedure;
 
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(rescan, amrescan);
 
-	OidFunctionCall3(procedure,
+	OidFunctionCall2(procedure,
 					 PointerGetDatum(scan),
-					 BoolGetDatum(scanFromEnd),
 					 PointerGetDatum(key));
 
 	pgstat_reset_index_scan(&scan->xs_pgstat_info);
@@ -306,13 +322,21 @@ index_endscan(IndexScanDesc scan)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(endscan, amendscan);
 
+	/* Release any held pin on a heap page */
+	if (BufferIsValid(scan->xs_cbuf))
+	{
+		ReleaseBuffer(scan->xs_cbuf);
+		scan->xs_cbuf = InvalidBuffer;
+	}
+
+	/* End the AM's scan */
 	OidFunctionCall1(procedure, PointerGetDatum(scan));
 
-	/* Release lock and refcount acquired by index_beginscan */
+	/* Release index lock and refcount acquired by index_beginscan */
 
-	UnlockRelation(scan->relation, AccessShareLock);
+	UnlockRelation(scan->indexRelation, AccessShareLock);
 
-	RelationDecrementReferenceCount(scan->relation);
+	RelationDecrementReferenceCount(scan->indexRelation);
 
 	/* Release the scan data structure itself */
 	IndexScanEnd(scan);
@@ -349,33 +373,87 @@ index_restrpos(IndexScanDesc scan)
 }
 
 /* ----------------
- *		index_getnext - get the next tuple from a scan
+ *		index_getnext - get the next heap tuple from a scan
  *
- *		A RetrieveIndexResult is a index tuple/heap tuple pair
+ * The result is the next heap tuple satisfying the scan keys and the
+ * snapshot, or NULL if no more matching tuples exist.  On success,
+ * the buffer containing the heap tuple is pinned (the pin will be dropped
+ * at the next index_getnext or index_endscan).  The index TID corresponding
+ * to the heap tuple can be obtained if needed from scan->currentItemData.
  * ----------------
  */
-RetrieveIndexResult
-index_getnext(IndexScanDesc scan,
-			  ScanDirection direction)
+HeapTuple
+index_getnext(IndexScanDesc scan, ScanDirection direction)
 {
-	RetrieveIndexResult result;
+	bool found;
 
 	SCAN_CHECKS;
 
-	pgstat_count_index_scan(&scan->xs_pgstat_info);
+	/* Release any previously held pin */
+	if (BufferIsValid(scan->xs_cbuf))
+	{
+		ReleaseBuffer(scan->xs_cbuf);
+		scan->xs_cbuf = InvalidBuffer;
+	}
+
+	for (;;)
+	{
+		pgstat_count_index_scan(&scan->xs_pgstat_info);
+
+		/*
+		 * The AM's gettuple proc finds the next tuple matching the scan
+		 * keys.  index_beginscan already set up fn_getnext.
+		 */
+		found = DatumGetBool(FunctionCall2(&scan->fn_getnext,
+										   PointerGetDatum(scan),
+										   Int32GetDatum(direction)));
+		if (!found)
+			return NULL;		/* failure exit */
+		/*
+		 * Fetch the heap tuple and see if it matches the snapshot.
+		 */
+		heap_fetch(scan->heapRelation, scan->xs_snapshot,
+				   &scan->xs_ctup, &scan->xs_cbuf,
+				   &scan->xs_pgstat_info);
+		if (scan->xs_ctup.t_data != NULL)
+			break;
+		/*
+		 * XXX here, consider whether we can kill the index tuple.
+		 */
+	}
+
+	/* Success exit */
+	pgstat_count_index_getnext(&scan->xs_pgstat_info);
+
+	return &scan->xs_ctup;
+}
+
+/* ----------------
+ *		index_getnext_indexitem - get the next index tuple from a scan
+ *
+ * Finds the next index tuple satisfying the scan keys.  Note that no
+ * time qual (snapshot) check is done; indeed the heap tuple is not accessed.
+ * On success (TRUE return), the found index TID is in scan->currentItemData,
+ * and its heap TID is in scan->xs_ctup.t_self.  scan->xs_cbuf is untouched.
+ * ----------------
+ */
+bool
+index_getnext_indexitem(IndexScanDesc scan,
+						ScanDirection direction)
+{
+	bool found;
+
+	SCAN_CHECKS;
 
 	/*
 	 * have the am's gettuple proc do all the work. index_beginscan
 	 * already set up fn_getnext.
 	 */
-	result = (RetrieveIndexResult)
-		DatumGetPointer(FunctionCall2(&scan->fn_getnext,
-									  PointerGetDatum(scan),
-									  Int32GetDatum(direction)));
+	found = DatumGetBool(FunctionCall2(&scan->fn_getnext,
+									   PointerGetDatum(scan),
+									   Int32GetDatum(direction)));
 
-	if (result != NULL)
-		pgstat_count_index_getnext(&scan->xs_pgstat_info);
-	return result;
+	return found;
 }
 
 /* ----------------
@@ -388,7 +466,7 @@ index_getnext(IndexScanDesc scan,
  * ----------------
  */
 IndexBulkDeleteResult *
-index_bulk_delete(Relation relation,
+index_bulk_delete(Relation indexRelation,
 				  IndexBulkDeleteCallback callback,
 				  void *callback_state)
 {
@@ -400,7 +478,7 @@ index_bulk_delete(Relation relation,
 
 	result = (IndexBulkDeleteResult *)
 		DatumGetPointer(OidFunctionCall3(procedure,
-										 PointerGetDatum(relation),
+										 PointerGetDatum(indexRelation),
 									 PointerGetDatum((Pointer) callback),
 									   PointerGetDatum(callback_state)));
 
@@ -418,7 +496,7 @@ index_bulk_delete(Relation relation,
  * ----------------
  */
 RegProcedure
-index_cost_estimator(Relation relation)
+index_cost_estimator(Relation indexRelation)
 {
 	RegProcedure procedure;
 

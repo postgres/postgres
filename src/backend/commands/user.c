@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.101 2002/05/17 01:19:17 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.102 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,8 +140,8 @@ write_group_file(Relation urel, Relation grel)
 		elog(ERROR, "write_group_file: unable to write %s: %m", tempname);
 
 	/* read table */
-	scan = heap_beginscan(grel, false, SnapshotSelf, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	scan = heap_beginscan(grel, SnapshotSelf, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Datum		datum, grolist_datum;
 		bool		isnull;
@@ -284,8 +284,8 @@ write_user_file(Relation urel)
 		elog(ERROR, "write_password_file: unable to write %s: %m", tempname);
 
 	/* read table */
-	scan = heap_beginscan(urel, false, SnapshotSelf, 0, NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	scan = heap_beginscan(urel, SnapshotSelf, 0, NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Datum		datum;
 		bool		isnull;
@@ -517,10 +517,10 @@ CreateUser(CreateUserStmt *stmt)
 	pg_shadow_rel = heap_openr(ShadowRelationName, ExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
-	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, NULL);
+	scan = heap_beginscan(pg_shadow_rel, SnapshotNow, 0, NULL);
 	max_id = 99;				/* start auto-assigned ids at 100 */
 	while (!user_exists && !sysid_exists &&
-		   HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		   (tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_shadow shadow_form = (Form_pg_shadow) GETSTRUCT(tuple);
 		int32		this_sysid;
@@ -977,9 +977,9 @@ DropUser(DropUserStmt *stmt)
 							   Anum_pg_database_datdba, F_INT4EQ,
 							   Int32GetDatum(usesysid));
 
-		scan = heap_beginscan(pg_rel, false, SnapshotNow, 1, &scankey);
+		scan = heap_beginscan(pg_rel, SnapshotNow, 1, &scankey);
 
-		if (HeapTupleIsValid(tmp_tuple = heap_getnext(scan, 0)))
+		if ((tmp_tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			char	   *dbname;
 
@@ -1012,8 +1012,8 @@ DropUser(DropUserStmt *stmt)
 		 */
 		pg_rel = heap_openr(GroupRelationName, ExclusiveLock);
 		pg_dsc = RelationGetDescr(pg_rel);
-		scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
-		while (HeapTupleIsValid(tmp_tuple = heap_getnext(scan, 0)))
+		scan = heap_beginscan(pg_rel, SnapshotNow, 0, NULL);
+		while ((tmp_tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			AlterGroupStmt ags;
 
@@ -1148,10 +1148,10 @@ CreateGroup(CreateGroupStmt *stmt)
 	pg_group_rel = heap_openr(GroupRelationName, ExclusiveLock);
 	pg_group_dsc = RelationGetDescr(pg_group_rel);
 
-	scan = heap_beginscan(pg_group_rel, false, SnapshotNow, 0, NULL);
+	scan = heap_beginscan(pg_group_rel, SnapshotNow, 0, NULL);
 	max_id = 99;				/* start auto-assigned ids at 100 */
 	while (!group_exists && !sysid_exists &&
-		   HeapTupleIsValid(tuple = heap_getnext(scan, false)))
+		   (tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_group group_form = (Form_pg_group) GETSTRUCT(tuple);
 		int32		this_sysid;

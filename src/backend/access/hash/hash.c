@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.56 2002/03/09 17:35:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.57 2002/05/20 23:51:41 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -210,7 +210,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
-	RetrieveIndexResult res;
+	bool res;
 
 	/*
 	 * If we've already initialized this scan, we can just advance it in
@@ -223,7 +223,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 	else
 		res = _hash_first(scan, dir);
 
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(res);
 }
 
 
@@ -234,17 +234,15 @@ Datum
 hashbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	bool		fromEnd = PG_GETARG_BOOL(1);
-	uint16		keysz = PG_GETARG_UINT16(2);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(3);
+	int			keysz = PG_GETARG_INT32(1);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
 	IndexScanDesc scan;
 	HashScanOpaque so;
 
-	scan = RelationGetIndexScan(rel, fromEnd, keysz, scankey);
+	scan = RelationGetIndexScan(rel, keysz, scankey);
 	so = (HashScanOpaque) palloc(sizeof(HashScanOpaqueData));
 	so->hashso_curbuf = so->hashso_mrkbuf = InvalidBuffer;
 	scan->opaque = so;
-	scan->flags = 0x0;
 
 	/* register scan in case we change pages it's using */
 	_hash_regscan(scan);
@@ -259,11 +257,7 @@ Datum
 hashrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-
-#ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
-	bool		fromEnd = PG_GETARG_BOOL(1);
-#endif
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
 	ItemPointer iptr;
 	HashScanOpaque so;
 
@@ -272,13 +266,13 @@ hashrescan(PG_FUNCTION_ARGS)
 	/* we hold a read lock on the current page in the scan */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
-		_hash_relbuf(scan->relation, so->hashso_curbuf, HASH_READ);
+		_hash_relbuf(scan->indexRelation, so->hashso_curbuf, HASH_READ);
 		so->hashso_curbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
 	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
 	{
-		_hash_relbuf(scan->relation, so->hashso_mrkbuf, HASH_READ);
+		_hash_relbuf(scan->indexRelation, so->hashso_mrkbuf, HASH_READ);
 		so->hashso_mrkbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -309,7 +303,7 @@ hashendscan(PG_FUNCTION_ARGS)
 	/* release any locks we still hold */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
-		_hash_relbuf(scan->relation, so->hashso_curbuf, HASH_READ);
+		_hash_relbuf(scan->indexRelation, so->hashso_curbuf, HASH_READ);
 		so->hashso_curbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -317,7 +311,7 @@ hashendscan(PG_FUNCTION_ARGS)
 	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
 	{
 		if (BufferIsValid(so->hashso_mrkbuf))
-			_hash_relbuf(scan->relation, so->hashso_mrkbuf, HASH_READ);
+			_hash_relbuf(scan->indexRelation, so->hashso_mrkbuf, HASH_READ);
 		so->hashso_mrkbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -346,7 +340,7 @@ hashmarkpos(PG_FUNCTION_ARGS)
 	/* release lock on old marked data, if any */
 	if (ItemPointerIsValid(iptr = &(scan->currentMarkData)))
 	{
-		_hash_relbuf(scan->relation, so->hashso_mrkbuf, HASH_READ);
+		_hash_relbuf(scan->indexRelation, so->hashso_mrkbuf, HASH_READ);
 		so->hashso_mrkbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -354,7 +348,7 @@ hashmarkpos(PG_FUNCTION_ARGS)
 	/* bump lock on currentItemData and copy to currentMarkData */
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
-		so->hashso_mrkbuf = _hash_getbuf(scan->relation,
+		so->hashso_mrkbuf = _hash_getbuf(scan->indexRelation,
 								 BufferGetBlockNumber(so->hashso_curbuf),
 										 HASH_READ);
 		scan->currentMarkData = scan->currentItemData;
@@ -378,7 +372,7 @@ hashrestrpos(PG_FUNCTION_ARGS)
 	/* release lock on current data, if any */
 	if (ItemPointerIsValid(iptr = &(scan->currentItemData)))
 	{
-		_hash_relbuf(scan->relation, so->hashso_curbuf, HASH_READ);
+		_hash_relbuf(scan->indexRelation, so->hashso_curbuf, HASH_READ);
 		so->hashso_curbuf = InvalidBuffer;
 		ItemPointerSetInvalid(iptr);
 	}
@@ -386,7 +380,7 @@ hashrestrpos(PG_FUNCTION_ARGS)
 	/* bump lock on currentMarkData and copy to currentItemData */
 	if (ItemPointerIsValid(&(scan->currentMarkData)))
 	{
-		so->hashso_curbuf = _hash_getbuf(scan->relation,
+		so->hashso_curbuf = _hash_getbuf(scan->indexRelation,
 								 BufferGetBlockNumber(so->hashso_mrkbuf),
 										 HASH_READ);
 
@@ -413,7 +407,6 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
-	RetrieveIndexResult res;
 	IndexScanDesc iscan;
 
 	tuples_removed = 0;
@@ -424,30 +417,25 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	 */
 
 	/* walk through the entire index */
-	iscan = index_beginscan(rel, false, 0, (ScanKey) NULL);
+	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
 
-	while ((res = index_getnext(iscan, ForwardScanDirection))
-		   != (RetrieveIndexResult) NULL)
+	while (index_getnext_indexitem(iscan, ForwardScanDirection))
 	{
-		ItemPointer heapptr = &res->heap_iptr;
-
-		if (callback(heapptr, callback_state))
+		if (callback(&iscan->xs_ctup.t_self, callback_state))
 		{
-			ItemPointer indexptr = &res->index_iptr;
+			ItemPointerData indextup = iscan->currentItemData;
 
 			/* adjust any active scans that will be affected by deletion */
 			/* (namely, my own scan) */
-			_hash_adjscans(rel, indexptr);
+			_hash_adjscans(rel, &indextup);
 
 			/* delete the data from the page */
-			_hash_pagedel(rel, indexptr);
+			_hash_pagedel(rel, &indextup);
 
 			tuples_removed += 1;
 		}
 		else
 			num_index_tuples += 1;
-
-		pfree(res);
 	}
 
 	index_endscan(iscan);

@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.22 2002/01/06 00:37:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.23 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2076,9 +2076,9 @@ SelectSortFunction(Oid sortOperator,
 						   ObjectIdGetDatum(sortOperator));
 
 	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, false, SnapshotNow, 1, skey);
+	scan = heap_beginscan(relation, SnapshotNow, 1, skey);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
 

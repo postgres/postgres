@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.69 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.70 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "access/nbtree.h"
 
 
-static RetrieveIndexResult _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
+static bool _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
 
 /*
@@ -357,11 +357,11 @@ _bt_compare(Relation rel,
  *
  *		On entry, we have a valid currentItemData in the scan, and a
  *		read lock and pin count on the page that contains that item.
- *		We return the next item in the scan, or NULL if no more.
+ *		We return the next item in the scan, or false if no more.
  *		On successful exit, the page containing the new item is locked
- *		and pinned; on NULL exit, no lock or pin is held.
+ *		and pinned; on failure exit, no lock or pin is held.
  */
-RetrieveIndexResult
+bool
 _bt_next(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel;
@@ -374,7 +374,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	BTScanOpaque so;
 	bool		continuescan;
 
-	rel = scan->relation;
+	rel = scan->indexRelation;
 	so = (BTScanOpaque) scan->opaque;
 	current = &(scan->currentItemData);
 
@@ -386,7 +386,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	{
 		/* step one tuple in the appropriate direction */
 		if (!_bt_step(scan, &buf, dir))
-			return (RetrieveIndexResult) NULL;
+			return false;
 
 		/* current is the next candidate tuple to return */
 		offnum = ItemPointerGetOffsetNumber(current);
@@ -397,7 +397,8 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 		if (_bt_checkkeys(scan, itup, dir, &continuescan))
 		{
 			/* tuple passes all scan key conditions, so return it */
-			return FormRetrieveIndexResult(current, &(itup->t_tid));
+			scan->xs_ctup.t_self = itup->t_tid;
+			return true;
 		}
 
 		/* This tuple doesn't pass, but there might be more that do */
@@ -408,20 +409,20 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	so->btso_curbuf = InvalidBuffer;
 	_bt_relbuf(rel, buf);
 
-	return (RetrieveIndexResult) NULL;
+	return false;
 }
 
 /*
  *	_bt_first() -- Find the first item in a scan.
  *
  *		We need to be clever about the type of scan, the operation it's
- *		performing, and the tree ordering.	We return the RetrieveIndexResult
- *		of the first item in the tree that satisfies the qualification
+ *		performing, and the tree ordering.	We find the
+ *		first item in the tree that satisfies the qualification
  *		associated with the scan descriptor.  On exit, the page containing
  *		the current index tuple is read locked and pinned, and the scan's
  *		opaque data entry is updated to include the buffer.
  */
-RetrieveIndexResult
+bool
 _bt_first(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel;
@@ -434,9 +435,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	ItemPointer current;
 	BlockNumber blkno;
 	StrategyNumber strat;
-	RetrieveIndexResult res;
+	bool		res;
 	int32		result;
 	BTScanOpaque so;
+	bool		scanFromEnd;
 	bool		continuescan;
 	ScanKey		scankeys = NULL;
 	int			keysCount = 0;
@@ -445,7 +447,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				j;
 	StrategyNumber strat_total;
 
-	rel = scan->relation;
+	rel = scan->indexRelation;
 	so = (BTScanOpaque) scan->opaque;
 
 	/*
@@ -459,12 +461,12 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * be satisfied (eg, x == 1 AND x > 2).
 	 */
 	if (!so->qual_ok)
-		return (RetrieveIndexResult) NULL;
+		return false;
 
 	/*
 	 * Examine the scan keys to discover where we need to start the scan.
 	 */
-	scan->scanFromEnd = false;
+	scanFromEnd = false;
 	strat_total = BTEqualStrategyNumber;
 	if (so->numberOfKeys > 0)
 	{
@@ -511,13 +513,13 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			}
 		}
 		if (keysCount == 0)
-			scan->scanFromEnd = true;
+			scanFromEnd = true;
 	}
 	else
-		scan->scanFromEnd = true;
+		scanFromEnd = true;
 
 	/* if we just need to walk down one edge of the tree, do that */
-	if (scan->scanFromEnd)
+	if (scanFromEnd)
 	{
 		if (nKeyIs)
 			pfree(nKeyIs);
@@ -544,7 +546,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			pfree(nKeyIs);
 			pfree(scankeys);
 			elog(ERROR, "_bt_first: btree doesn't support is(not)null, yet");
-			return ((RetrieveIndexResult) NULL);
+			return false;
 		}
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		ScanKeyEntryInitializeWithInfo(scankeys + i,
@@ -574,7 +576,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		pfree(scankeys);
-		return (RetrieveIndexResult) NULL;
+		return false;
 	}
 
 	/* remember which buffer we have pinned */
@@ -598,7 +600,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * the scan strategy to find the exact place to start the scan.
 	 *
 	 * Note: if _bt_step fails (meaning we fell off the end of the index in
-	 * one direction or the other), we either return NULL (no matches) or
+	 * one direction or the other), we either return false (no matches) or
 	 * call _bt_endpoint() to set up a scan starting at that index
 	 * endpoint, as appropriate for the desired scan type.
 	 *
@@ -615,7 +617,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			if (!_bt_step(scan, &buf, BackwardScanDirection))
 			{
 				pfree(scankeys);
-				return (RetrieveIndexResult) NULL;
+				return false;
 			}
 			break;
 
@@ -649,7 +651,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			if (!_bt_step(scan, &buf, BackwardScanDirection))
 			{
 				pfree(scankeys);
-				return (RetrieveIndexResult) NULL;
+				return false;
 			}
 			break;
 
@@ -664,7 +666,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				if (!_bt_step(scan, &buf, ForwardScanDirection))
 				{
 					pfree(scankeys);
-					return (RetrieveIndexResult) NULL;
+					return false;
 				}
 				offnum = ItemPointerGetOffsetNumber(current);
 				page = BufferGetPage(buf);
@@ -706,7 +708,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				if (!_bt_step(scan, &buf, ForwardScanDirection))
 				{
 					pfree(scankeys);
-					return (RetrieveIndexResult) NULL;
+					return false;
 				}
 			}
 			break;
@@ -722,7 +724,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				if (!_bt_step(scan, &buf, ForwardScanDirection))
 				{
 					pfree(scankeys);
-					return (RetrieveIndexResult) NULL;
+					return false;
 				}
 				offnum = ItemPointerGetOffsetNumber(current);
 				page = BufferGetPage(buf);
@@ -733,7 +735,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				if (!_bt_step(scan, &buf, ForwardScanDirection))
 				{
 					pfree(scankeys);
-					return (RetrieveIndexResult) NULL;
+					return false;
 				}
 				offnum = ItemPointerGetOffsetNumber(current);
 				page = BufferGetPage(buf);
@@ -752,7 +754,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	if (_bt_checkkeys(scan, itup, dir, &continuescan))
 	{
 		/* yes, return it */
-		res = FormRetrieveIndexResult(current, &(itup->t_tid));
+		scan->xs_ctup.t_self = itup->t_tid;
+		res = true;
 	}
 	else if (continuescan)
 	{
@@ -766,7 +769,7 @@ nomatches:
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		_bt_relbuf(rel, buf);
-		res = (RetrieveIndexResult) NULL;
+		res = false;
 	}
 
 	pfree(scankeys);
@@ -788,7 +791,7 @@ nomatches:
 bool
 _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 {
-	Relation	rel = scan->relation;
+	Relation	rel = scan->indexRelation;
 	ItemPointer current = &(scan->currentItemData);
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Page		page;
@@ -902,7 +905,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
  * that the scan must start at the beginning or end of the index (for
  * a forward or backward scan respectively).
  */
-static RetrieveIndexResult
+static bool
 _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel;
@@ -917,10 +920,10 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	BTItem		btitem;
 	IndexTuple	itup;
 	BTScanOpaque so;
-	RetrieveIndexResult res;
+	bool		res;
 	bool		continuescan;
 
-	rel = scan->relation;
+	rel = scan->indexRelation;
 	current = &(scan->currentItemData);
 	so = (BTScanOpaque) scan->opaque;
 
@@ -936,7 +939,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		/* empty index... */
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
-		return (RetrieveIndexResult) NULL;
+		return false;
 	}
 
 	blkno = BufferGetBlockNumber(buf);
@@ -1016,7 +1019,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	if (start > maxoff)
 	{
 		if (!_bt_step(scan, &buf, dir))
-			return (RetrieveIndexResult) NULL;
+			return false;
 		start = ItemPointerGetOffsetNumber(current);
 		page = BufferGetPage(buf);
 	}
@@ -1028,7 +1031,8 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	if (_bt_checkkeys(scan, itup, dir, &continuescan))
 	{
 		/* yes, return it */
-		res = FormRetrieveIndexResult(current, &(itup->t_tid));
+		scan->xs_ctup.t_self = itup->t_tid;
+		res = true;
 	}
 	else if (continuescan)
 	{
@@ -1041,7 +1045,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		_bt_relbuf(rel, buf);
-		res = (RetrieveIndexResult) NULL;
+		res = false;
 	}
 
 	return res;

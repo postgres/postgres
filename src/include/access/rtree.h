@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.27 2001/11/05 17:46:31 momjian Exp $
+ * $Id: rtree.h,v 1.28 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ typedef struct RTreeScanOpaqueData
 	struct RTSTACK *s_stack;
 	struct RTSTACK *s_markstk;
 	uint16		s_flags;
-	uint16		s_internalNKey;
+	int			s_internalNKey;
 	ScanKey		s_internalKey;
 } RTreeScanOpaqueData;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.153 2002/04/27 03:45:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.154 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -494,9 +494,9 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp,
 		CopySendData(&tmp, sizeof(int32), fp);
 	}
 
-	scandesc = heap_beginscan(rel, 0, QuerySnapshot, 0, NULL);
+	scandesc = heap_beginscan(rel, QuerySnapshot, 0, NULL);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
+	while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
 	{
 		bool		need_delim = false;
 

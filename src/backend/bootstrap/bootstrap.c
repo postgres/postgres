@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.129 2002/05/17 01:19:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.130 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,18 +482,18 @@ boot_openrel(char *relname)
 	if (Typ == (struct typmap **) NULL)
 	{
 		rel = heap_openr(TypeRelationName, NoLock);
-		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
-		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
+		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 			++i;
 		heap_endscan(scan);
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
 		app = Typ;
-		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
+		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			(*app)->am_oid = tup->t_data->t_oid;
 			memcpy((char *) &(*app)->am_typ,
@@ -858,18 +858,18 @@ gettype(char *type)
 		}
 		elog(DEBUG3, "external type: %s", type);
 		rel = heap_openr(TypeRelationName, NoLock);
-		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
 		i = 0;
-		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
+		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 			++i;
 		heap_endscan(scan);
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		scan = heap_beginscan(rel, 0, SnapshotNow, 0, (ScanKey) NULL);
+		scan = heap_beginscan(rel, SnapshotNow, 0, (ScanKey) NULL);
 		app = Typ;
-		while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
+		while ((tup = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			(*app)->am_oid = tup->t_data->t_oid;
 			memmove((char *) &(*app++)->am_typ,

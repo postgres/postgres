@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.67 2002/02/19 20:11:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.68 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,14 +72,10 @@ IndexNext(IndexScan *node)
 	IndexScanState *indexstate;
 	ExprContext *econtext;
 	ScanDirection direction;
-	Snapshot	snapshot;
 	IndexScanDescPtr scanDescs;
 	IndexScanDesc scandesc;
-	Relation	heapRelation;
-	RetrieveIndexResult result;
 	HeapTuple	tuple;
 	TupleTableSlot *slot;
-	Buffer		buffer = InvalidBuffer;
 	int			numIndices;
 	bool		bBackward;
 	int			indexNumber;
@@ -96,11 +92,9 @@ IndexNext(IndexScan *node)
 		else if (ScanDirectionIsBackward(direction))
 			direction = ForwardScanDirection;
 	}
-	snapshot = estate->es_snapshot;
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
 	scanDescs = indexstate->iss_ScanDescs;
-	heapRelation = scanstate->css_currentRelation;
 	numIndices = indexstate->iss_NumIndices;
 	econtext = scanstate->cstate.cs_ExprContext;
 	slot = scanstate->css_ScanTupleSlot;
@@ -142,8 +136,6 @@ IndexNext(IndexScan *node)
 		return slot;
 	}
 
-	tuple = &(indexstate->iss_htup);
-
 	/*
 	 * ok, now that we have what we need, fetch an index tuple. if
 	 * scanning this index succeeded then return the appropriate heap
@@ -170,48 +162,37 @@ IndexNext(IndexScan *node)
 	while (indexNumber < numIndices)
 	{
 		scandesc = scanDescs[indexstate->iss_IndexPtr];
-		while ((result = index_getnext(scandesc, direction)) != NULL)
+		while ((tuple = index_getnext(scandesc, direction)) != NULL)
 		{
-			tuple->t_self = result->heap_iptr;
-			heap_fetch(heapRelation, snapshot, tuple, &buffer, scandesc);
-			pfree(result);
+			/*
+			 * store the scanned tuple in the scan tuple slot of the
+			 * scan state.  Note: we pass 'false' because tuples
+			 * returned by amgetnext are pointers onto disk pages and
+			 * must not be pfree()'d.
+			 */
+			ExecStoreTuple(tuple,	/* tuple to store */
+						   slot,	/* slot to store in */
+						   scandesc->xs_cbuf, /* buffer containing tuple */
+						   false);	/* don't pfree */
 
-			if (tuple->t_data != NULL)
+			/*
+			 * We must check to see if the current tuple was already
+			 * matched by an earlier index, so we don't double-report
+			 * it. We do this by passing the tuple through ExecQual
+			 * and checking for failure with all previous
+			 * qualifications.
+			 */
+			if (indexstate->iss_IndexPtr > 0)
 			{
 				bool		prev_matches = false;
 				int			prev_index;
 				List	   *qual;
 
-				/*
-				 * store the scanned tuple in the scan tuple slot of the
-				 * scan state.	Eventually we will only do this and not
-				 * return a tuple.	Note: we pass 'false' because tuples
-				 * returned by amgetnext are pointers onto disk pages and
-				 * must not be pfree()'d.
-				 */
-				ExecStoreTuple(tuple,	/* tuple to store */
-							   slot,	/* slot to store in */
-							   buffer,	/* buffer associated with tuple  */
-							   false);	/* don't pfree */
-
-				/*
-				 * At this point we have an extra pin on the buffer,
-				 * because ExecStoreTuple incremented the pin count. Drop
-				 * our local pin.
-				 */
-				ReleaseBuffer(buffer);
-
-				/*
-				 * We must check to see if the current tuple was already
-				 * matched by an earlier index, so we don't double-report
-				 * it. We do this by passing the tuple through ExecQual
-				 * and checking for failure with all previous
-				 * qualifications.
-				 */
 				econtext->ecxt_scantuple = slot;
 				ResetExprContext(econtext);
 				qual = node->indxqualorig;
-				for (prev_index = 0; prev_index < indexstate->iss_IndexPtr;
+				for (prev_index = 0;
+					 prev_index < indexstate->iss_IndexPtr;
 					 prev_index++)
 				{
 					if (ExecQual((List *) lfirst(qual), econtext, false))
@@ -221,12 +202,17 @@ IndexNext(IndexScan *node)
 					}
 					qual = lnext(qual);
 				}
-				if (!prev_matches)
-					return slot;	/* OK to return tuple */
-				/* Duplicate tuple, so drop it and loop back for another */
-				ExecClearTuple(slot);
+				if (prev_matches)
+				{
+					/* Duplicate, so drop it and loop back for another */
+					ExecClearTuple(slot);
+					continue;
+				}
 			}
+
+			return slot;		/* OK to return tuple */
 		}
+
 		if (indexNumber < numIndices)
 		{
 			indexNumber++;
@@ -300,7 +286,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	EState	   *estate;
 	IndexScanState *indexstate;
 	ExprContext *econtext;
-	ScanDirection direction;
 	int			numIndices;
 	IndexScanDescPtr scanDescs;
 	ScanKey    *scanKeys;
@@ -313,7 +298,6 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	indexstate = node->indxstate;
 	econtext = indexstate->iss_RuntimeContext;	/* context for runtime
 												 * keys */
-	direction = estate->es_direction;
 	numIndices = indexstate->iss_NumIndices;
 	scanDescs = indexstate->iss_ScanDescs;
 	scanKeys = indexstate->iss_ScanKeys;
@@ -431,7 +415,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 		IndexScanDesc scan = scanDescs[i];
 		ScanKey		skey = scanKeys[i];
 
-		index_rescan(scan, direction, skey);
+		index_rescan(scan, skey);
 	}
 }
 
@@ -622,16 +606,14 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	int			indexPtr;
 	ScanKey    *scanKeys;
 	int		   *numScanKeys;
-	RelationPtr relationDescs;
+	RelationPtr indexDescs;
 	IndexScanDescPtr scanDescs;
 	int		  **runtimeKeyInfo;
 	bool		have_runtime_keys;
-	List	   *rangeTable;
 	RangeTblEntry *rtentry;
 	Index		relid;
 	Oid			reloid;
 	Relation	currentRelation;
-	ScanDirection direction;
 
 	/*
 	 * assign execution state to node
@@ -701,7 +683,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 */
 	numScanKeys = (int *) palloc(numIndices * sizeof(int));
 	scanKeys = (ScanKey *) palloc(numIndices * sizeof(ScanKey));
-	relationDescs = (RelationPtr) palloc(numIndices * sizeof(Relation));
+	indexDescs = (RelationPtr) palloc(numIndices * sizeof(Relation));
 	scanDescs = (IndexScanDescPtr) palloc(numIndices * sizeof(IndexScanDesc));
 
 	/*
@@ -1011,17 +993,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	}
 
 	/*
-	 * get the range table and direction information from the execution
-	 * state (these are needed to open the relations).
-	 */
-	rangeTable = estate->es_range_table;
-	direction = estate->es_direction;
-
-	/*
 	 * open the base relation and acquire AccessShareLock on it.
 	 */
 	relid = node->scan.scanrelid;
-	rtentry = rt_fetch(relid, rangeTable);
+	rtentry = rt_fetch(relid, estate->es_range_table);
 	reloid = rtentry->relid;
 
 	currentRelation = heap_open(reloid, AccessShareLock);
@@ -1049,24 +1024,16 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	{
 		Oid			indexOid = (Oid) lfirsti(listscan);
 
-		if (indexOid != 0)
-		{
-			relationDescs[i] = index_open(indexOid);
-
-			/*
-			 * Note: index_beginscan()'s second arg is a boolean indicating
-			 * that the scan should be done in reverse.  That is, if you pass
-			 * it true, then the scan is backward.
-			 */
-			scanDescs[i] = index_beginscan(relationDescs[i],
-										   false, /* see above comment */
-										   numScanKeys[i],
-										   scanKeys[i]);
-		}
+		indexDescs[i] = index_open(indexOid);
+		scanDescs[i] = index_beginscan(currentRelation,
+									   indexDescs[i],
+									   estate->es_snapshot,
+									   numScanKeys[i],
+									   scanKeys[i]);
 		listscan = lnext(listscan);
 	}
 
-	indexstate->iss_RelationDescs = relationDescs;
+	indexstate->iss_RelationDescs = indexDescs;
 	indexstate->iss_ScanDescs = scanDescs;
 
 	/*

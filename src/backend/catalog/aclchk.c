@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.67 2002/04/27 03:45:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.68 2002/05/20 23:51:41 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -295,8 +295,8 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		ScanKeyEntryInitialize(&entry[0], 0,
 							   Anum_pg_database_datname, F_NAMEEQ,
 							   CStringGetDatum(dbname));
-		scan = heap_beginscan(relation, 0, SnapshotNow, 1, entry);
-		tuple = heap_getnext(scan, 0);
+		scan = heap_beginscan(relation, SnapshotNow, 1, entry);
+		tuple = heap_getnext(scan, ForwardScanDirection);
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "database \"%s\" not found", dbname);
 		pg_database_tuple = (Form_pg_database) GETSTRUCT(tuple);
@@ -1045,8 +1045,8 @@ pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode)
 	ScanKeyEntryInitialize(&entry[0], 0x0,
 						   ObjectIdAttributeNumber, F_OIDEQ,
 						   ObjectIdGetDatum(db_oid));
-	scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, entry);
-	tuple = heap_getnext(scan, 0);
+	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
+	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_database_aclcheck: database %u not found", db_oid);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.10 2001/08/10 20:52:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.11 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,9 +88,7 @@ LargeObjectDrop(Oid loid)
 	Relation	pg_lo_idx;
 	ScanKeyData skey[1];
 	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData tuple;
-	Buffer		buffer;
+	HeapTuple	tuple;
 
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
@@ -101,22 +99,12 @@ LargeObjectDrop(Oid loid)
 	pg_largeobject = heap_openr(LargeObjectRelationName, RowShareLock);
 	pg_lo_idx = index_openr(LargeObjectLOidPNIndex);
 
-	sd = index_beginscan(pg_lo_idx, false, 1, skey);
+	sd = index_beginscan(pg_largeobject, pg_lo_idx, SnapshotNow, 1, skey);
 
-	tuple.t_datamcxt = CurrentMemoryContext;
-	tuple.t_data = NULL;
-
-	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
+	while ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
 	{
-		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(pg_largeobject, SnapshotNow, &tuple, &buffer, sd);
-		pfree(indexRes);
-		if (tuple.t_data != NULL)
-		{
-			simple_heap_delete(pg_largeobject, &tuple.t_self);
-			ReleaseBuffer(buffer);
-			found = true;
-		}
+		simple_heap_delete(pg_largeobject, &tuple->t_self);
+		found = true;
 	}
 
 	index_endscan(sd);
@@ -136,9 +124,7 @@ LargeObjectExists(Oid loid)
 	Relation	pg_lo_idx;
 	ScanKeyData skey[1];
 	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData tuple;
-	Buffer		buffer;
+	HeapTuple	tuple;
 
 	/*
 	 * See if we can find any tuples belonging to the specified LO
@@ -152,23 +138,10 @@ LargeObjectExists(Oid loid)
 	pg_largeobject = heap_openr(LargeObjectRelationName, RowShareLock);
 	pg_lo_idx = index_openr(LargeObjectLOidPNIndex);
 
-	sd = index_beginscan(pg_lo_idx, false, 1, skey);
+	sd = index_beginscan(pg_largeobject, pg_lo_idx, SnapshotNow, 1, skey);
 
-	tuple.t_datamcxt = CurrentMemoryContext;
-	tuple.t_data = NULL;
-
-	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
-	{
-		tuple.t_self = indexRes->heap_iptr;
-		heap_fetch(pg_largeobject, SnapshotNow, &tuple, &buffer, sd);
-		pfree(indexRes);
-		if (tuple.t_data != NULL)
-		{
-			retval = true;
-			ReleaseBuffer(buffer);
-			break;
-		}
-	}
+	if ((tuple = index_getnext(sd, ForwardScanDirection)) != NULL)
+		retval = true;
 
 	index_endscan(sd);
 

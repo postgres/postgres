@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.41 2002/03/05 05:30:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistscan.c,v 1.42 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,12 +53,11 @@ Datum
 gistbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	r = (Relation) PG_GETARG_POINTER(0);
-	bool		fromEnd = PG_GETARG_BOOL(1);
-	uint16		nkeys = PG_GETARG_UINT16(2);
-	ScanKey		key = (ScanKey) PG_GETARG_POINTER(3);
+	int			nkeys = PG_GETARG_INT32(1);
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
 	IndexScanDesc s;
 
-	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
+	s = RelationGetIndexScan(r, nkeys, key);
 
 	gistregscan(s);
 
@@ -69,8 +68,7 @@ Datum
 gistrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
-	bool		fromEnd = PG_GETARG_BOOL(1);
-	ScanKey		key = (ScanKey) PG_GETARG_POINTER(2);
+	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
 	GISTScanOpaque p;
 	int			i;
 
@@ -79,18 +77,6 @@ gistrescan(PG_FUNCTION_ARGS)
 	 */
 	ItemPointerSetInvalid(&s->currentItemData);
 	ItemPointerSetInvalid(&s->currentMarkData);
-
-	/*
-	 * Set flags.
-	 */
-	if (RelationGetNumberOfBlocks(s->relation) == 0)
-		s->flags = ScanUnmarked;
-	else if (fromEnd)
-		s->flags = ScanUnmarked | ScanUncheckedPrevious;
-	else
-		s->flags = ScanUnmarked | ScanUncheckedNext;
-
-	s->scanFromEnd = fromEnd;
 
 	if (s->numberOfKeys > 0)
 	{
@@ -109,7 +95,8 @@ gistrescan(PG_FUNCTION_ARGS)
 		for (i = 0; i < s->numberOfKeys; i++)
 		{
 			s->keyData[i].sk_procedure
-				= RelationGetGISTStrategy(s->relation, s->keyData[i].sk_attno,
+				= RelationGetGISTStrategy(s->indexRelation,
+										  s->keyData[i].sk_attno,
 										  s->keyData[i].sk_procedure);
 			s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
 		}
@@ -122,7 +109,7 @@ gistrescan(PG_FUNCTION_ARGS)
 		p->s_flags = 0x0;
 		s->opaque = p;
 		p->giststate = (GISTSTATE *) palloc(sizeof(GISTSTATE));
-		initGISTstate(p->giststate, s->relation);
+		initGISTstate(p->giststate, s->indexRelation);
 		if (s->numberOfKeys > 0)
 
 			/*
@@ -133,15 +120,10 @@ gistrescan(PG_FUNCTION_ARGS)
 			 */
 			for (i = 0; i < s->numberOfKeys; i++)
 			{
-
-				/*----------
-				 * s->keyData[i].sk_procedure =
-				 *		index_getprocid(s->relation, 1, GIST_CONSISTENT_PROC);
-				 *----------
-				 */
-				s->keyData[i].sk_procedure
-					= RelationGetGISTStrategy(s->relation, s->keyData[i].sk_attno,
-											  s->keyData[i].sk_procedure);
+				s->keyData[i].sk_procedure =
+					RelationGetGISTStrategy(s->indexRelation,
+											s->keyData[i].sk_attno,
+											s->keyData[i].sk_procedure);
 				s->keyData[i].sk_func = p->giststate->consistentFn[s->keyData[i].sk_attno - 1];
 			}
 	}
@@ -309,7 +291,7 @@ gistadjscans(Relation rel, int op, BlockNumber blkno, OffsetNumber offnum)
 	relid = RelationGetRelid(rel);
 	for (l = GISTScans; l != (GISTScanList) NULL; l = l->gsl_next)
 	{
-		if (l->gsl_scan->relation->rd_id == relid)
+		if (l->gsl_scan->indexRelation->rd_id == relid)
 			gistadjone(l->gsl_scan, op, blkno, offnum);
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.177 2002/04/27 21:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.178 2002/05/20 23:51:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1067,10 +1067,9 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
 						   F_OIDEQ, ObjectIdGetDatum(relid));
-	scan = heap_beginscan(indexRelation, false, SnapshotNow,
-						  1, &entry);
-	if (!heap_getnext(scan, 0))
-		isactive = true;
+	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
+	if (heap_getnext(scan, ForwardScanDirection) == NULL)
+		isactive = true;		/* no indexes, so report "active" */
 	heap_endscan(scan);
 	heap_close(indexRelation, AccessShareLock);
 	return isactive;
@@ -1121,8 +1120,8 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
 
-		pg_class_scan = heap_beginscan(pg_class, 0, SnapshotNow, 1, key);
-		tuple = heap_getnext(pg_class_scan, 0);
+		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
+		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
 	}
 
 	if (!HeapTupleIsValid(tuple))
@@ -1341,8 +1340,8 @@ UpdateStats(Oid relid, double reltuples)
 							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
 
-		pg_class_scan = heap_beginscan(pg_class, 0, SnapshotNow, 1, key);
-		tuple = heap_getnext(pg_class_scan, 0);
+		pg_class_scan = heap_beginscan(pg_class, SnapshotNow, 1, key);
+		tuple = heap_getnext(pg_class_scan, ForwardScanDirection);
 	}
 
 	if (!HeapTupleIsValid(tuple))
@@ -1563,7 +1562,6 @@ IndexBuildHeapScan(Relation heapRelation,
 	}
 
 	scan = heap_beginscan(heapRelation, /* relation */
-						  0,	/* start at end */
 						  snapshot,		/* seeself */
 						  0,	/* number of keys */
 						  (ScanKey) NULL);		/* scan key */
@@ -1573,7 +1571,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	/*
 	 * Scan all tuples in the base relation.
 	 */
-	while (HeapTupleIsValid(heapTuple = heap_getnext(scan, 0)))
+	while ((heapTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		bool		tupleIsAlive;
 
@@ -1967,10 +1965,9 @@ reindex_relation(Oid relid, bool force)
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
 						   F_OIDEQ, ObjectIdGetDatum(relid));
-	scan = heap_beginscan(indexRelation, false, SnapshotNow,
-						  1, &entry);
+	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
 	reindexed = false;
-	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
+	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_index index = (Form_pg_index) GETSTRUCT(indexTuple);
 

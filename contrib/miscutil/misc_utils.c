@@ -93,12 +93,12 @@ active_listeners(text *relname)
 							   Anum_pg_listener_relname,
 							   F_NAMEEQ,
 							   PointerGetDatum(listen_name));
-		sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, &key);
+		sRel = heap_beginscan(lRel, SnapshotNow, 1, &key);
 	}
 	else
-		sRel = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
+		sRel = heap_beginscan(lRel, SnapshotNow, 0, (ScanKey) NULL);
 
-	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
+	while ((lTuple = heap_getnext(sRel, ForwardScanDirection)) != NULL)
 	{
 		d = heap_getattr(lTuple, Anum_pg_listener_pid, tdesc, &isnull);
 		pid = DatumGetInt32(d);
@@ -111,14 +111,3 @@ active_listeners(text *relname)
 
 	return count;
 }
-
-
-/* end of file */
-
-/*
- * Local Variables:
- *	tab-width: 4
- *	c-indent-level: 4
- *	c-basic-offset: 4
- * End:
- */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.25 2001/03/22 03:59:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.26 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,9 @@
 
 static OffsetNumber findnext(IndexScanDesc s, Page p, OffsetNumber n,
 		 ScanDirection dir);
-static RetrieveIndexResult rtscancache(IndexScanDesc s, ScanDirection dir);
-static RetrieveIndexResult rtfirst(IndexScanDesc s, ScanDirection dir);
-static RetrieveIndexResult rtnext(IndexScanDesc s, ScanDirection dir);
-static ItemPointer rtheapptr(Relation r, ItemPointer itemp);
+static bool rtscancache(IndexScanDesc s, ScanDirection dir);
+static bool rtfirst(IndexScanDesc s, ScanDirection dir);
+static bool rtnext(IndexScanDesc s, ScanDirection dir);
 
 
 Datum
@@ -32,35 +31,34 @@ rtgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
-	RetrieveIndexResult res;
+	bool res;
 
 	/* if we have it cached in the scan desc, just return the value */
-	if ((res = rtscancache(s, dir)) != (RetrieveIndexResult) NULL)
-		PG_RETURN_POINTER(res);
+	if (rtscancache(s, dir))
+		PG_RETURN_BOOL(true);
 
 	/* not cached, so we'll have to do some work */
 	if (ItemPointerIsValid(&(s->currentItemData)))
 		res = rtnext(s, dir);
 	else
 		res = rtfirst(s, dir);
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(res);
 }
 
-static RetrieveIndexResult
+static bool
 rtfirst(IndexScanDesc s, ScanDirection dir)
 {
 	Buffer		b;
 	Page		p;
 	OffsetNumber n;
 	OffsetNumber maxoff;
-	RetrieveIndexResult res;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
 	RTSTACK    *stk;
 	BlockNumber blk;
 	IndexTuple	it;
 
-	b = ReadBuffer(s->relation, P_ROOT);
+	b = ReadBuffer(s->indexRelation, P_ROOT);
 	p = BufferGetPage(b);
 	po = (RTreePageOpaque) PageGetSpecialPointer(p);
 	so = (RTreeScanOpaque) s->opaque;
@@ -75,13 +73,12 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
-
 			ReleaseBuffer(b);
 			if (so->s_stack == (RTSTACK *) NULL)
-				return (RetrieveIndexResult) NULL;
+				return false;
 
 			stk = so->s_stack;
-			b = ReadBuffer(s->relation, stk->rts_blk);
+			b = ReadBuffer(s->indexRelation, stk->rts_blk);
 			p = BufferGetPage(b);
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
 			maxoff = PageGetMaxOffsetNumber(p);
@@ -101,10 +98,10 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 
-			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+			s->xs_ctup.t_self = it->t_tid;
 
 			ReleaseBuffer(b);
-			return res;
+			return true;
 		}
 		else
 		{
@@ -118,21 +115,20 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
 			ReleaseBuffer(b);
-			b = ReadBuffer(s->relation, blk);
+			b = ReadBuffer(s->indexRelation, blk);
 			p = BufferGetPage(b);
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
 		}
 	}
 }
 
-static RetrieveIndexResult
+static bool
 rtnext(IndexScanDesc s, ScanDirection dir)
 {
 	Buffer		b;
 	Page		p;
 	OffsetNumber n;
 	OffsetNumber maxoff;
-	RetrieveIndexResult res;
 	RTreePageOpaque po;
 	RTreeScanOpaque so;
 	RTSTACK    *stk;
@@ -147,7 +143,7 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 	else
 		n = OffsetNumberPrev(n);
 
-	b = ReadBuffer(s->relation, blk);
+	b = ReadBuffer(s->indexRelation, blk);
 	p = BufferGetPage(b);
 	po = (RTreePageOpaque) PageGetSpecialPointer(p);
 	so = (RTreeScanOpaque) s->opaque;
@@ -159,13 +155,12 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
-
 			ReleaseBuffer(b);
 			if (so->s_stack == (RTSTACK *) NULL)
-				return (RetrieveIndexResult) NULL;
+				return false;
 
 			stk = so->s_stack;
-			b = ReadBuffer(s->relation, stk->rts_blk);
+			b = ReadBuffer(s->indexRelation, stk->rts_blk);
 			p = BufferGetPage(b);
 			maxoff = PageGetMaxOffsetNumber(p);
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
@@ -185,10 +180,10 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 
-			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+			s->xs_ctup.t_self = it->t_tid;
 
 			ReleaseBuffer(b);
-			return res;
+			return true;
 		}
 		else
 		{
@@ -202,7 +197,7 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
 			ReleaseBuffer(b);
-			b = ReadBuffer(s->relation, blk);
+			b = ReadBuffer(s->indexRelation, blk);
 			p = BufferGetPage(b);
 			po = (RTreePageOpaque) PageGetSpecialPointer(p);
 
@@ -243,14 +238,14 @@ findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 		if (po->flags & F_LEAF)
 		{
 			if (index_keytest(it,
-							  RelationGetDescr(s->relation),
+							  RelationGetDescr(s->indexRelation),
 							  s->numberOfKeys, s->keyData))
 				break;
 		}
 		else
 		{
 			if (index_keytest(it,
-							  RelationGetDescr(s->relation),
+							  RelationGetDescr(s->indexRelation),
 							  so->s_internalNKey, so->s_internalKey))
 				break;
 		}
@@ -264,57 +259,25 @@ findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 	return n;
 }
 
-static RetrieveIndexResult
+static bool
 rtscancache(IndexScanDesc s, ScanDirection dir)
-{
-	RetrieveIndexResult res;
-	ItemPointer ip;
-
-	if (!(ScanDirectionIsNoMovement(dir)
-		  && ItemPointerIsValid(&(s->currentItemData))))
-	{
-
-		return (RetrieveIndexResult) NULL;
-	}
-
-	ip = rtheapptr(s->relation, &(s->currentItemData));
-
-	if (ItemPointerIsValid(ip))
-		res = FormRetrieveIndexResult(&(s->currentItemData), ip);
-	else
-		res = (RetrieveIndexResult) NULL;
-
-	pfree(ip);
-
-	return res;
-}
-
-/*
- *	rtheapptr returns the item pointer to the tuple in the heap relation
- *	for which itemp is the index relation item pointer.
- */
-static ItemPointer
-rtheapptr(Relation r, ItemPointer itemp)
 {
 	Buffer		b;
 	Page		p;
-	IndexTuple	it;
-	ItemPointer ip;
 	OffsetNumber n;
+	IndexTuple	it;
 
-	ip = (ItemPointer) palloc(sizeof(ItemPointerData));
-	if (ItemPointerIsValid(itemp))
-	{
-		b = ReadBuffer(r, ItemPointerGetBlockNumber(itemp));
-		p = BufferGetPage(b);
-		n = ItemPointerGetOffsetNumber(itemp);
-		it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-		memmove((char *) ip, (char *) &(it->t_tid),
-				sizeof(ItemPointerData));
-		ReleaseBuffer(b);
-	}
-	else
-		ItemPointerSetInvalid(ip);
+	if (!(ScanDirectionIsNoMovement(dir)
+		  && ItemPointerIsValid(&(s->currentItemData))))
+		return false;
 
-	return ip;
+	b = ReadBuffer(s->indexRelation,
+				   ItemPointerGetBlockNumber(&(s->currentItemData)));
+	p = BufferGetPage(b);
+	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
+	it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
+	s->xs_ctup.t_self = it->t_tid;
+	ReleaseBuffer(b);
+
+	return true;
 }

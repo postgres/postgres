@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.237 2002/05/18 13:48:00 petere Exp $
+ * $Id: pg_proc.h,v 1.238 2002/05/20 23:51:43 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -681,7 +681,7 @@ DATA(insert OID = 322 (  rtgettuple		   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 10
 DESCR("r-tree(internal)");
 DATA(insert OID = 323 (  rtbuild		   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100	rtbuild - _null_ ));
 DESCR("r-tree(internal)");
-DATA(insert OID = 324 (  rtbeginscan	   PGNSP PGUID 12 f f f t f v 4 23 "0 0 0 0" 100 0 0 100  rtbeginscan - _null_ ));
+DATA(insert OID = 324 (  rtbeginscan	   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100  rtbeginscan - _null_ ));
 DESCR("r-tree(internal)");
 DATA(insert OID = 325 (  rtendscan		   PGNSP PGUID 12 f f f t f v 1 23 "0" 100 0 0 100	rtendscan - _null_ ));
 DESCR("r-tree(internal)");
@@ -689,7 +689,7 @@ DATA(insert OID = 326 (  rtmarkpos		   PGNSP PGUID 12 f f f t f v 1 23 "0" 100 0
 DESCR("r-tree(internal)");
 DATA(insert OID = 327 (  rtrestrpos		   PGNSP PGUID 12 f f f t f v 1 23 "0" 100 0 0 100	rtrestrpos - _null_ ));
 DESCR("r-tree(internal)");
-DATA(insert OID = 328 (  rtrescan		   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100	rtrescan - _null_ ));
+DATA(insert OID = 328 (  rtrescan		   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 100 0 0 100	rtrescan - _null_ ));
 DESCR("r-tree(internal)");
 DATA(insert OID = 321 (  rtbulkdelete	   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100	rtbulkdelete - _null_ ));
 DESCR("r-tree(internal)");
@@ -700,9 +700,9 @@ DATA(insert OID = 330 (  btgettuple		   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 10
 DESCR("btree(internal)");
 DATA(insert OID = 331 (  btinsert		   PGNSP PGUID 12 f f f t f v 5 23 "0 0 0 0 0" 100 0 0 100	btinsert - _null_ ));
 DESCR("btree(internal)");
-DATA(insert OID = 333 (  btbeginscan	   PGNSP PGUID 12 f f f t f v 4 23 "0 0 0 0" 100 0 0 100  btbeginscan - _null_ ));
+DATA(insert OID = 333 (  btbeginscan	   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100  btbeginscan - _null_ ));
 DESCR("btree(internal)");
-DATA(insert OID = 334 (  btrescan		   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100	btrescan - _null_ ));
+DATA(insert OID = 334 (  btrescan		   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 100 0 0 100	btrescan - _null_ ));
 DESCR("btree(internal)");
 DATA(insert OID = 335 (  btendscan		   PGNSP PGUID 12 f f f t f v 1 23 "0" 100 0 0 100	btendscan - _null_ ));
 DESCR("btree(internal)");
@@ -803,9 +803,9 @@ DATA(insert OID = 440 (  hashgettuple	   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 1
 DESCR("hash(internal)");
 DATA(insert OID = 441 (  hashinsert		   PGNSP PGUID 12 f f f t f v 5 23 "0 0 0 0 0" 100 0 0 100	hashinsert - _null_ ));
 DESCR("hash(internal)");
-DATA(insert OID = 443 (  hashbeginscan	   PGNSP PGUID 12 f f f t f v 4 23 "0 0 0 0" 100 0 0 100  hashbeginscan - _null_ ));
+DATA(insert OID = 443 (  hashbeginscan	   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100  hashbeginscan - _null_ ));
 DESCR("hash(internal)");
-DATA(insert OID = 444 (  hashrescan		   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100	hashrescan - _null_ ));
+DATA(insert OID = 444 (  hashrescan		   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 100 0 0 100	hashrescan - _null_ ));
 DESCR("hash(internal)");
 DATA(insert OID = 445 (  hashendscan	   PGNSP PGUID 12 f f f t f v 1 23 "0" 100 0 0 100	hashendscan - _null_ ));
 DESCR("hash(internal)");
@@ -1033,9 +1033,9 @@ DATA(insert OID = 774 (  gistgettuple	   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 1
 DESCR("gist(internal)");
 DATA(insert OID = 775 (  gistinsert		   PGNSP PGUID 12 f f f t f v 5 23 "0 0 0 0 0" 100 0 0 100	gistinsert - _null_ ));
 DESCR("gist(internal)");
-DATA(insert OID = 777 (  gistbeginscan	   PGNSP PGUID 12 f f f t f v 4 23 "0 0 0 0" 100 0 0 100  gistbeginscan - _null_ ));
+DATA(insert OID = 777 (  gistbeginscan	   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100  gistbeginscan - _null_ ));
 DESCR("gist(internal)");
-DATA(insert OID = 778 (  gistrescan		   PGNSP PGUID 12 f f f t f v 3 23 "0 0 0" 100 0 0 100	gistrescan - _null_ ));
+DATA(insert OID = 778 (  gistrescan		   PGNSP PGUID 12 f f f t f v 2 23 "0 0" 100 0 0 100	gistrescan - _null_ ));
 DESCR("gist(internal)");
 DATA(insert OID = 779 (  gistendscan	   PGNSP PGUID 12 f f f t f v 1 23 "0" 100 0 0 100	gistendscan - _null_ ));
 DESCR("gist(internal)");

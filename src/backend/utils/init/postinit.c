@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.105 2002/05/17 01:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.106 2002/05/20 23:51:43 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -95,9 +95,9 @@ ReverifyMyDatabase(const char *name)
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(name));
 
-	pgdbscan = heap_beginscan(pgdbrel, 0, SnapshotNow, 1, &key);
+	pgdbscan = heap_beginscan(pgdbrel, SnapshotNow, 1, &key);
 
-	tup = heap_getnext(pgdbscan, 0);
+	tup = heap_getnext(pgdbscan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tup) ||
 		tup->t_data->t_oid != MyDatabaseId)
 	{
@@ -456,8 +456,8 @@ ThereIsAtLeastOneUser(void)
 	pg_shadow_rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
 	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
-	scan = heap_beginscan(pg_shadow_rel, false, SnapshotNow, 0, 0);
-	result = HeapTupleIsValid(heap_getnext(scan, 0));
+	scan = heap_beginscan(pg_shadow_rel, SnapshotNow, 0, NULL);
+	result = (heap_getnext(scan, ForwardScanDirection) != NULL);
 
 	heap_endscan(scan);
 	heap_close(pg_shadow_rel, AccessExclusiveLock);

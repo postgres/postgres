@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.70 2002/05/12 20:10:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.71 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,18 +292,11 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (event_relation->rd_rel->relkind != RELKIND_VIEW)
 		{
 			HeapScanDesc scanDesc;
-			HeapTuple	tuple;
 
-			scanDesc = heap_beginscan(event_relation, 0, SnapshotNow, 0, NULL);
-			tuple = heap_getnext(scanDesc, 0);
-			if (HeapTupleIsValid(tuple))
+			scanDesc = heap_beginscan(event_relation, SnapshotNow, 0, NULL);
+			if (heap_getnext(scanDesc, ForwardScanDirection) != NULL)
 				elog(ERROR, "Relation \"%s\" is not empty. Cannot convert it to view",
 					 event_obj->relname);
-
-			/*
-			 * don't need heap_freetuple because we never got a valid
-			 * tuple
-			 */
 			heap_endscan(scanDesc);
 
 			RelisBecomingView = true;

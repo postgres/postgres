@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.68 2002/05/12 20:10:04 tgl Exp $
+ * $Id: execnodes.h,v 1.69 2002/05/20 23:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -463,7 +463,6 @@ typedef struct IndexScanState
 	bool		iss_RuntimeKeysReady;
 	RelationPtr iss_RelationDescs;
 	IndexScanDescPtr iss_ScanDescs;
-	HeapTupleData iss_htup;
 } IndexScanState;
 
 /* ----------------

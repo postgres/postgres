@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.84 2002/05/05 00:03:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.85 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,8 +204,8 @@ Async_Listen(char *relname, int pid)
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 
 	/* Detect whether we are already listening on this relname */
-	scan = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	scan = heap_beginscan(lRel, SnapshotNow, 0, (ScanKey) NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(tuple);
 
@@ -305,8 +305,8 @@ Async_Unlisten(char *relname, int pid)
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 
-	scan = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	scan = heap_beginscan(lRel, SnapshotNow, 0, (ScanKey) NULL);
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(tuple);
 
@@ -369,9 +369,9 @@ Async_UnlistenAll(void)
 						   Anum_pg_listener_pid,
 						   F_INT4EQ,
 						   Int32GetDatum(MyProcPid));
-	scan = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
+	scan = heap_beginscan(lRel, SnapshotNow, 1, key);
 
-	while (HeapTupleIsValid(lTuple = heap_getnext(scan, 0)))
+	while ((lTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		simple_heap_delete(lRel, &lTuple->t_self);
 
 	heap_endscan(scan);
@@ -472,9 +472,9 @@ AtCommit_Notify(void)
 
 	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
-	scan = heap_beginscan(lRel, 0, SnapshotNow, 0, (ScanKey) NULL);
+	scan = heap_beginscan(lRel, SnapshotNow, 0, (ScanKey) NULL);
 
-	while (HeapTupleIsValid(lTuple = heap_getnext(scan, 0)))
+	while ((lTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(lTuple);
 		char	   *relname = NameStr(listener->relname);
@@ -773,7 +773,7 @@ ProcessIncomingNotify(void)
 						   Anum_pg_listener_pid,
 						   F_INT4EQ,
 						   Int32GetDatum(MyProcPid));
-	scan = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
+	scan = heap_beginscan(lRel, SnapshotNow, 1, key);
 
 	/* Prepare data for rewriting 0 into notification field */
 	nulls[0] = nulls[1] = nulls[2] = ' ';
@@ -782,7 +782,7 @@ ProcessIncomingNotify(void)
 	value[0] = value[1] = value[2] = (Datum) 0;
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(0);
 
-	while (HeapTupleIsValid(lTuple = heap_getnext(scan, 0)))
+	while ((lTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_listener listener = (Form_pg_listener) GETSTRUCT(lTuple);
 		char	   *relname = NameStr(listener->relname);

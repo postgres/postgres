@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.88 2002/03/02 21:39:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.89 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -296,7 +296,7 @@ btgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
-	RetrieveIndexResult res;
+	bool res;
 
 	/*
 	 * If we've already initialized this scan, we can just advance it in
@@ -326,12 +326,12 @@ btgettuple(PG_FUNCTION_ARGS)
 	 */
 	if (res)
 	{
-		((BTScanOpaque) scan->opaque)->curHeapIptr = res->heap_iptr;
+		((BTScanOpaque) scan->opaque)->curHeapIptr = scan->xs_ctup.t_self;
 		LockBuffer(((BTScanOpaque) scan->opaque)->btso_curbuf,
 				   BUFFER_LOCK_UNLOCK);
 	}
 
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(res);
 }
 
 /*
@@ -341,13 +341,12 @@ Datum
 btbeginscan(PG_FUNCTION_ARGS)
 {
 	Relation	rel = (Relation) PG_GETARG_POINTER(0);
-	bool		fromEnd = PG_GETARG_BOOL(1);
-	uint16		keysz = PG_GETARG_UINT16(2);
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(3);
+	int			keysz = PG_GETARG_INT32(1);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
 	IndexScanDesc scan;
 
 	/* get the scan */
-	scan = RelationGetIndexScan(rel, fromEnd, keysz, scankey);
+	scan = RelationGetIndexScan(rel, keysz, scankey);
 
 	PG_RETURN_POINTER(scan);
 }
@@ -359,11 +358,7 @@ Datum
 btrescan(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc scan = (IndexScanDesc) PG_GETARG_POINTER(0);
-
-#ifdef NOT_USED					/* XXX surely it's wrong to ignore this? */
-	bool		fromEnd = PG_GETARG_BOOL(1);
-#endif
-	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(2);
+	ScanKey		scankey = (ScanKey) PG_GETARG_POINTER(1);
 	ItemPointer iptr;
 	BTScanOpaque so;
 
@@ -373,11 +368,13 @@ btrescan(PG_FUNCTION_ARGS)
 	{
 		so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
 		so->btso_curbuf = so->btso_mrkbuf = InvalidBuffer;
-		so->keyData = (ScanKey) NULL;
+		ItemPointerSetInvalid(&(so->curHeapIptr));
+		ItemPointerSetInvalid(&(so->mrkHeapIptr));
 		if (scan->numberOfKeys > 0)
 			so->keyData = (ScanKey) palloc(scan->numberOfKeys * sizeof(ScanKeyData));
+		else
+			so->keyData = (ScanKey) NULL;
 		scan->opaque = so;
-		scan->flags = 0x0;
 	}
 
 	/* we aren't holding any read locks, but gotta drop the pins */
@@ -385,6 +382,7 @@ btrescan(PG_FUNCTION_ARGS)
 	{
 		ReleaseBuffer(so->btso_curbuf);
 		so->btso_curbuf = InvalidBuffer;
+		ItemPointerSetInvalid(&(so->curHeapIptr));
 		ItemPointerSetInvalid(iptr);
 	}
 
@@ -392,6 +390,7 @@ btrescan(PG_FUNCTION_ARGS)
 	{
 		ReleaseBuffer(so->btso_mrkbuf);
 		so->btso_mrkbuf = InvalidBuffer;
+		ItemPointerSetInvalid(&(so->mrkHeapIptr));
 		ItemPointerSetInvalid(iptr);
 	}
 
@@ -491,7 +490,7 @@ btmarkpos(PG_FUNCTION_ARGS)
 	/* bump pin on current buffer for assignment to mark buffer */
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
-		so->btso_mrkbuf = ReadBuffer(scan->relation,
+		so->btso_mrkbuf = ReadBuffer(scan->indexRelation,
 								  BufferGetBlockNumber(so->btso_curbuf));
 		scan->currentMarkData = scan->currentItemData;
 		so->mrkHeapIptr = so->curHeapIptr;
@@ -523,7 +522,7 @@ btrestrpos(PG_FUNCTION_ARGS)
 	/* bump pin on marked buffer */
 	if (ItemPointerIsValid(&(scan->currentMarkData)))
 	{
-		so->btso_curbuf = ReadBuffer(scan->relation,
+		so->btso_curbuf = ReadBuffer(scan->indexRelation,
 								  BufferGetBlockNumber(so->btso_mrkbuf));
 		scan->currentItemData = scan->currentMarkData;
 		so->curHeapIptr = so->mrkHeapIptr;
@@ -549,7 +548,6 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
-	RetrieveIndexResult res;
 	IndexScanDesc scan;
 	BTScanOpaque so;
 	ItemPointer current;
@@ -569,19 +567,16 @@ btbulkdelete(PG_FUNCTION_ARGS)
 	 * doesn't care which kind of lock it's releasing).  This should
 	 * minimize the amount of work needed per page.
 	 */
-	scan = index_beginscan(rel, false, 0, (ScanKey) NULL);
+	scan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
 	so = (BTScanOpaque) scan->opaque;
 	current = &(scan->currentItemData);
 
 	/* Use _bt_first to get started, then _bt_step to remaining tuples */
-	res = _bt_first(scan, ForwardScanDirection);
-
-	if (res != NULL)
+	if (_bt_first(scan, ForwardScanDirection))
 	{
 		Buffer		buf;
 		BlockNumber lockedBlock = InvalidBlockNumber;
 
-		pfree(res);
 		/* we have the buffer pinned and locked */
 		buf = so->btso_curbuf;
 		Assert(BufferIsValid(buf));
@@ -683,7 +678,7 @@ btbulkdelete(PG_FUNCTION_ARGS)
 static void
 _bt_restscan(IndexScanDesc scan)
 {
-	Relation	rel = scan->relation;
+	Relation	rel = scan->indexRelation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Buffer		buf = so->btso_curbuf;
 	Page		page;

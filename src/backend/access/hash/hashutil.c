@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.28 2002/03/06 20:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.29 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
 	if (scan->numberOfKeys > 0)
 		return (index_keytest(itup,
-							  RelationGetDescr(scan->relation),
+							  RelationGetDescr(scan->indexRelation),
 							  scan->numberOfKeys, scan->keyData));
 	else
 		return true;

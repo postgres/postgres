@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.47 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.48 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,7 +195,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 {
 	ScanKeyData xform[BTMaxStrategyNumber];
 	bool		init[BTMaxStrategyNumber];
-	uint16		numberOfKeys = so->numberOfKeys;
+	int			numberOfKeys = so->numberOfKeys;
 	ScanKey		key;
 	ScanKey		cur;
 	StrategyMap map;
@@ -203,7 +203,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 	int			i,
 				j;
 	AttrNumber	attno;
-	uint16		new_numberOfKeys;
+	int			new_numberOfKeys;
 	bool		allEqualSoFar;
 
 	so->qual_ok = true;
@@ -439,10 +439,10 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 			  ScanDirection dir, bool *continuescan)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
-	Size		keysz = so->numberOfKeys;
+	int			keysz = so->numberOfKeys;
+	int			keysok;
 	TupleDesc	tupdesc;
 	ScanKey		key;
-	Size		keysok;
 
 	*continuescan = true;
 
@@ -450,7 +450,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple,
 	if (keysz == 0)
 		return true;
 
-	tupdesc = RelationGetDescr(scan->relation);
+	tupdesc = RelationGetDescr(scan->indexRelation);
 	key = so->keyData;
 	keysok = 0;
 

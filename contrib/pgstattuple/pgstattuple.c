@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.5 2002/03/30 01:02:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.6 2002/05/20 23:51:40 tgl Exp $
  *
  * Copyright (c) 2001  Tatsuo Ishii
  *
@@ -70,9 +70,9 @@ pgstattuple(PG_FUNCTION_ARGS)
 	rel = heap_openrv(relrv, AccessShareLock);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
-	scan = heap_beginscan(rel, false, SnapshotAny, 0, NULL);
+	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
 
-	while ((tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		if (HeapTupleSatisfiesNow(tuple->t_data))
 		{

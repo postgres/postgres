@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.46 2002/05/13 17:45:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.47 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,12 +122,9 @@ void
 CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 {
 	Relation	description;
-	Relation	descriptionindex;
 	ScanKeyData skey[3];
-	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData oldtuple;
-	Buffer		buffer;
+	SysScanDesc sd;
+	HeapTuple	oldtuple;
 	HeapTuple	newtuple = NULL;
 	Datum		values[Natts_pg_description];
 	char		nulls[Natts_pg_description];
@@ -153,11 +150,6 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 		values[i++] = DirectFunctionCall1(textin, CStringGetDatum(comment));
 	}
 
-	/* Open pg_description and its index */
-
-	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
-	descriptionindex = index_openr(DescriptionObjIndex);
-
 	/* Use the index to search for a matching old tuple */
 
 	ScanKeyEntryInitialize(&skey[0],
@@ -178,40 +170,32 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 						   (RegProcedure) F_INT4EQ,
 						   Int32GetDatum(subid));
 
-	sd = index_beginscan(descriptionindex, false, 3, skey);
+	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
 
-	oldtuple.t_datamcxt = CurrentMemoryContext;
-	oldtuple.t_data = NULL;
+	sd = systable_beginscan(description, DescriptionObjIndex, true,
+							SnapshotNow, 3, skey);
 
-	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
+	while ((oldtuple = systable_getnext(sd)) != NULL)
 	{
-		oldtuple.t_self = indexRes->heap_iptr;
-		heap_fetch(description, SnapshotNow, &oldtuple, &buffer, sd);
-		pfree(indexRes);
-
-		if (oldtuple.t_data == NULL)
-			continue;			/* time qual failed */
-
 		/* Found the old tuple, so delete or update it */
 
 		if (comment == NULL)
-			simple_heap_delete(description, &oldtuple.t_self);
+			simple_heap_delete(description, &oldtuple->t_self);
 		else
 		{
-			newtuple = heap_modifytuple(&oldtuple, description, values,
+			newtuple = heap_modifytuple(oldtuple, description, values,
 										nulls, replaces);
-			simple_heap_update(description, &oldtuple.t_self, newtuple);
+			simple_heap_update(description, &oldtuple->t_self, newtuple);
 		}
 
-		ReleaseBuffer(buffer);
 		break;					/* Assume there can be only one match */
 	}
 
-	index_endscan(sd);
+	systable_endscan(sd);
 
 	/* If we didn't find an old tuple, insert a new one */
 
-	if (oldtuple.t_data == NULL && comment != NULL)
+	if (newtuple == NULL && comment != NULL)
 	{
 		newtuple = heap_formtuple(RelationGetDescr(description),
 								  values, nulls);
@@ -237,7 +221,6 @@ CreateComments(Oid oid, Oid classoid, int32 subid, char *comment)
 
 	/* Done */
 
-	index_close(descriptionindex);
 	heap_close(description, NoLock);
 }
 
@@ -252,17 +235,9 @@ void
 DeleteComments(Oid oid, Oid classoid)
 {
 	Relation	description;
-	Relation	descriptionindex;
 	ScanKeyData skey[2];
-	IndexScanDesc sd;
-	RetrieveIndexResult indexRes;
-	HeapTupleData oldtuple;
-	Buffer		buffer;
-
-	/* Open pg_description and its index */
-
-	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
-	descriptionindex = index_openr(DescriptionObjIndex);
+	SysScanDesc	sd;
+	HeapTuple	oldtuple;
 
 	/* Use the index to search for all matching old tuples */
 
@@ -278,26 +253,19 @@ DeleteComments(Oid oid, Oid classoid)
 						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(classoid));
 
-	sd = index_beginscan(descriptionindex, false, 2, skey);
+	description = heap_openr(DescriptionRelationName, RowExclusiveLock);
 
-	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
+	sd = systable_beginscan(description, DescriptionObjIndex, true,
+							SnapshotNow, 2, skey);
+
+	while ((oldtuple = systable_getnext(sd)) != NULL)
 	{
-		oldtuple.t_self = indexRes->heap_iptr;
-		heap_fetch(description, SnapshotNow, &oldtuple, &buffer, sd);
-		pfree(indexRes);
-
-		if (oldtuple.t_data == NULL)
-			continue;			/* time qual failed */
-
-		simple_heap_delete(description, &oldtuple.t_self);
-
-		ReleaseBuffer(buffer);
+		simple_heap_delete(description, &oldtuple->t_self);
 	}
 
 	/* Done */
 
-	index_endscan(sd);
-	index_close(descriptionindex);
+	systable_endscan(sd);
 	heap_close(description, NoLock);
 }
 
@@ -449,8 +417,8 @@ CommentDatabase(List *qualname, char *comment)
 	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, CStringGetDatum(database));
-	scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, &entry);
-	dbtuple = heap_getnext(scan, 0);
+	scan = heap_beginscan(pg_database, SnapshotNow, 1, &entry);
+	dbtuple = heap_getnext(scan, ForwardScanDirection);
 
 	/* Validate database exists, and fetch the db oid */
 
@@ -566,10 +534,10 @@ CommentRule(List *qualname, char *comment)
 							   PointerGetDatum(rulename));
 
 		RewriteRelation = heap_openr(RewriteRelationName, AccessShareLock);
-		scanDesc = heap_beginscan(RewriteRelation,
-								  0, SnapshotNow, 1, &scanKeyData);
+		scanDesc = heap_beginscan(RewriteRelation, SnapshotNow,
+								  1, &scanKeyData);
 
-		tuple = heap_getnext(scanDesc, 0);
+		tuple = heap_getnext(scanDesc, ForwardScanDirection);
 		if (HeapTupleIsValid(tuple))
 		{
 			reloid = ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class;
@@ -581,7 +549,8 @@ CommentRule(List *qualname, char *comment)
 			reloid = ruleoid = 0; /* keep compiler quiet */
 		}
 
-		if (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
+		if (HeapTupleIsValid(tuple = heap_getnext(scanDesc,
+												  ForwardScanDirection)))
 			elog(ERROR, "There are multiple rules \"%s\""
 				 "\n\tPlease specify a relation name as well as a rule name",
 				 rulename);

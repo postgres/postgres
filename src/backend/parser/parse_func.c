@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.130 2002/05/17 22:35:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.131 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -959,9 +959,9 @@ find_inheritors(Oid relid, Oid **supervec)
 							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
 
-		inhscan = heap_beginscan(inhrel, 0, SnapshotNow, 1, &skey);
+		inhscan = heap_beginscan(inhrel, SnapshotNow, 1, &skey);
 
-		while (HeapTupleIsValid(inhtup = heap_getnext(inhscan, 0)))
+		while ((inhtup = heap_getnext(inhscan, ForwardScanDirection)) != NULL)
 		{
 			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
 

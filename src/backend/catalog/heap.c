@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.199 2002/05/12 23:43:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.200 2002/05/20 23:51:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -776,7 +776,6 @@ RelationRemoveInheritance(Relation relation)
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	scan = heap_beginscan(catalogRelation,
-						  false,
 						  SnapshotNow,
 						  1,
 						  &entry);
@@ -784,8 +783,7 @@ RelationRemoveInheritance(Relation relation)
 	/*
 	 * if any subclasses exist, then we disallow the deletion.
 	 */
-	tuple = heap_getnext(scan, 0);
-	if (HeapTupleIsValid(tuple))
+	if ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Oid			subclass = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
 		char	   *subclassname;
@@ -808,12 +806,11 @@ RelationRemoveInheritance(Relation relation)
 	entry.sk_attno = Anum_pg_inherits_inhrelid;
 
 	scan = heap_beginscan(catalogRelation,
-						  false,
 						  SnapshotNow,
 						  1,
 						  &entry);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		simple_heap_delete(catalogRelation, &tuple->t_self);
 		found = true;
@@ -1074,7 +1071,6 @@ DeleteTypeTuple(Relation rel)
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	pg_type_scan = heap_beginscan(pg_type_desc,
-								  0,
 								  SnapshotNow,
 								  1,
 								  &key);
@@ -1083,7 +1079,7 @@ DeleteTypeTuple(Relation rel)
 	 * use heap_getnext() to fetch the pg_type tuple.  If this tuple is
 	 * not valid then something's wrong.
 	 */
-	tup = heap_getnext(pg_type_scan, 0);
+	tup = heap_getnext(pg_type_scan, ForwardScanDirection);
 
 	if (!HeapTupleIsValid(tup))
 	{
@@ -1109,7 +1105,6 @@ DeleteTypeTuple(Relation rel)
 						   ObjectIdGetDatum(typoid));
 
 	pg_attribute_scan = heap_beginscan(pg_attribute_desc,
-									   0,
 									   SnapshotNow,
 									   1,
 									   &attkey);
@@ -1118,7 +1113,7 @@ DeleteTypeTuple(Relation rel)
 	 * try and get a pg_attribute tuple.  if we succeed it means we can't
 	 * delete the relation because something depends on the schema.
 	 */
-	atttup = heap_getnext(pg_attribute_scan, 0);
+	atttup = heap_getnext(pg_attribute_scan, ForwardScanDirection);
 
 	if (HeapTupleIsValid(atttup))
 	{
@@ -1833,9 +1828,9 @@ RemoveAttrDefaults(Relation rel)
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
-	adscan = heap_beginscan(adrel, 0, SnapshotNow, 1, &key);
+	adscan = heap_beginscan(adrel, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(tup = heap_getnext(adscan, 0)))
+	while ((tup = heap_getnext(adscan, ForwardScanDirection)) != NULL)
 		simple_heap_delete(adrel, &tup->t_self);
 
 	heap_endscan(adscan);
@@ -1856,9 +1851,9 @@ RemoveRelChecks(Relation rel)
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
-	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 1, &key);
+	rcscan = heap_beginscan(rcrel, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(tup = heap_getnext(rcscan, 0)))
+	while ((tup = heap_getnext(rcscan, ForwardScanDirection)) != NULL)
 		simple_heap_delete(rcrel, &tup->t_self);
 
 	heap_endscan(rcscan);
@@ -1946,14 +1941,14 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 						   PointerGetDatum(constrName));
 
 	/* Begin scanning the heap */
-	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 2, key);
+	rcscan = heap_beginscan(rcrel, SnapshotNow, 2, key);
 
 	/*
 	 * Scan over the result set, removing any matching entries.  Note that
 	 * this has the side-effect of removing ALL CHECK constraints that
 	 * share the specified constraint name.
 	 */
-	while (HeapTupleIsValid(rctup = heap_getnext(rcscan, 0)))
+	while ((rctup = heap_getnext(rcscan, ForwardScanDirection)) != NULL)
 	{
 		simple_heap_delete(rcrel, &rctup->t_self);
 		++rel_deleted;
@@ -2008,9 +2003,9 @@ RemoveStatistics(Relation rel)
 	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_statistic_starelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
-	scan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &key);
+	scan = heap_beginscan(pgstatistic, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		simple_heap_delete(pgstatistic, &tuple->t_self);
 
 	heap_endscan(scan);

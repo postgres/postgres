@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * genam.h
- *	  POSTGRES general access method definitions.
+ *	  POSTGRES generalized index access method definitions.
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.33 2002/03/26 19:16:17 tgl Exp $
+ * $Id: genam.h,v 1.34 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,9 @@ typedef bool (*IndexBulkDeleteCallback) (ItemPointer itemptr, void *state);
 typedef struct SysScanDescData
 {
 	Relation	heap_rel;		/* catalog being scanned */
-	Snapshot	snapshot;		/* time qual (normally SnapshotNow) */
 	Relation	irel;			/* NULL if doing heap scan */
 	HeapScanDesc scan;			/* only valid in heap-scan case */
 	IndexScanDesc iscan;		/* only valid in index-scan case */
-	HeapTupleData tuple;		/* workspace for indexscan */
-	Buffer		buffer;			/* working state for indexscan */
 } SysScanDescData;
 
 typedef SysScanDescData *SysScanDesc;
@@ -54,22 +51,27 @@ extern Relation index_open(Oid relationId);
 extern Relation index_openrv(const RangeVar *relation);
 extern Relation index_openr(const char *sysRelationName);
 extern void index_close(Relation relation);
-extern InsertIndexResult index_insert(Relation relation,
-			 Datum *datum, char *nulls,
+extern InsertIndexResult index_insert(Relation indexRelation,
+			 Datum *datums, char *nulls,
 			 ItemPointer heap_t_ctid,
-			 Relation heapRel);
-extern IndexScanDesc index_beginscan(Relation relation, bool scanFromEnd,
-				uint16 numberOfKeys, ScanKey key);
-extern void index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key);
+			 Relation heapRelation);
+
+extern IndexScanDesc index_beginscan(Relation heapRelation,
+									 Relation indexRelation,
+									 Snapshot snapshot,
+									 int nkeys, ScanKey key);
+extern void index_rescan(IndexScanDesc scan, ScanKey key);
 extern void index_endscan(IndexScanDesc scan);
 extern void index_markpos(IndexScanDesc scan);
 extern void index_restrpos(IndexScanDesc scan);
-extern RetrieveIndexResult index_getnext(IndexScanDesc scan,
-			  ScanDirection direction);
-extern IndexBulkDeleteResult *index_bulk_delete(Relation relation,
+extern HeapTuple index_getnext(IndexScanDesc scan, ScanDirection direction);
+extern bool index_getnext_indexitem(IndexScanDesc scan,
+									ScanDirection direction);
+
+extern IndexBulkDeleteResult *index_bulk_delete(Relation indexRelation,
 				  IndexBulkDeleteCallback callback,
 				  void *callback_state);
-extern RegProcedure index_cost_estimator(Relation relation);
+extern RegProcedure index_cost_estimator(Relation indexRelation);
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
 extern struct FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
@@ -78,18 +80,18 @@ extern struct FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
 /*
  * index access method support routines (in genam.c)
  */
-extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
-					 uint16 numberOfKeys, ScanKey key);
+extern IndexScanDesc RelationGetIndexScan(Relation indexRelation,
+										  int nkeys, ScanKey key);
 extern void IndexScanEnd(IndexScanDesc scan);
 
 /*
  * heap-or-index access to system catalogs (in genam.c)
  */
-extern SysScanDesc systable_beginscan(Relation rel,
+extern SysScanDesc systable_beginscan(Relation heapRelation,
 									  const char *indexRelname,
 									  bool indexOK,
 									  Snapshot snapshot,
-									  unsigned nkeys, ScanKey key);
+									  int nkeys, ScanKey key);
 extern HeapTuple systable_getnext(SysScanDesc sysscan);
 extern void systable_endscan(SysScanDesc sysscan);
 

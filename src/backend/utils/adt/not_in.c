@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.28 2002/03/30 01:02:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.29 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,13 +75,13 @@ int4notin(PG_FUNCTION_ARGS)
 		elog(ERROR, "int4notin: unknown attribute %s for relation %s",
 			 attribute, RelationGetRelationName(relation_to_scan));
 
-	scan_descriptor = heap_beginscan(relation_to_scan, false, SnapshotNow,
+	scan_descriptor = heap_beginscan(relation_to_scan, SnapshotNow,
 									 0, (ScanKey) NULL);
 
 	retval = true;
 
 	/* do a scan of the relation, and do the check */
-	while (HeapTupleIsValid(current_tuple = heap_getnext(scan_descriptor, 0)))
+	while ((current_tuple = heap_getnext(scan_descriptor, ForwardScanDirection)) != NULL)
 	{
 		value = heap_getattr(current_tuple,
 							 (AttrNumber) attrid,

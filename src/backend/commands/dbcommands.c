@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.89 2002/05/17 01:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.90 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,9 +387,9 @@ dropdb(const char *dbname)
 	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
 						   F_OIDEQ, ObjectIdGetDatum(db_id));
 
-	pgdbscan = heap_beginscan(pgdbrel, 0, SnapshotNow, 1, &key);
+	pgdbscan = heap_beginscan(pgdbrel, SnapshotNow, 1, &key);
 
-	tup = heap_getnext(pgdbscan, 0);
+	tup = heap_getnext(pgdbscan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tup))
 	{
 		/*
@@ -463,8 +463,8 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	rel = heap_openr(DatabaseRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&scankey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(stmt->dbname));
-	scan = heap_beginscan(rel, 0, SnapshotNow, 1, &scankey);
-	tuple = heap_getnext(scan, 0);
+	scan = heap_beginscan(rel, SnapshotNow, 1, &scankey);
+	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "database \"%s\" does not exist", stmt->dbname);
 
@@ -535,9 +535,9 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(name));
 
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scanKey);
+	scan = heap_beginscan(relation, SnapshotNow, 1, &scanKey);
 
-	tuple = heap_getnext(scan, 0);
+	tuple = heap_getnext(scan, ForwardScanDirection);
 
 	gottuple = HeapTupleIsValid(tuple);
 	if (gottuple)

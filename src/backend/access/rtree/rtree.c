@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.70 2002/03/02 21:39:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.71 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1189,7 +1189,6 @@ rtbulkdelete(PG_FUNCTION_ARGS)
 	BlockNumber num_pages;
 	double		tuples_removed;
 	double		num_index_tuples;
-	RetrieveIndexResult res;
 	IndexScanDesc iscan;
 
 	tuples_removed = 0;
@@ -1206,23 +1205,20 @@ rtbulkdelete(PG_FUNCTION_ARGS)
 	 */
 
 	/* walk through the entire index */
-	iscan = index_beginscan(rel, false, 0, (ScanKey) NULL);
+	iscan = index_beginscan(NULL, rel, SnapshotAny, 0, (ScanKey) NULL);
 
-	while ((res = index_getnext(iscan, ForwardScanDirection))
-		   != (RetrieveIndexResult) NULL)
+	while (index_getnext_indexitem(iscan, ForwardScanDirection))
 	{
-		ItemPointer heapptr = &res->heap_iptr;
-
-		if (callback(heapptr, callback_state))
+		if (callback(&iscan->xs_ctup.t_self, callback_state))
 		{
-			ItemPointer indexptr = &res->index_iptr;
+			ItemPointerData indextup = iscan->currentItemData;
 			BlockNumber blkno;
 			OffsetNumber offnum;
 			Buffer		buf;
 			Page		page;
 
-			blkno = ItemPointerGetBlockNumber(indexptr);
-			offnum = ItemPointerGetOffsetNumber(indexptr);
+			blkno = ItemPointerGetBlockNumber(&indextup);
+			offnum = ItemPointerGetOffsetNumber(&indextup);
 
 			/* adjust any scans that will be affected by this deletion */
 			/* (namely, my own scan) */
@@ -1240,8 +1236,6 @@ rtbulkdelete(PG_FUNCTION_ARGS)
 		}
 		else
 			num_index_tuples += 1;
-
-		pfree(res);
 	}
 
 	index_endscan(iscan);

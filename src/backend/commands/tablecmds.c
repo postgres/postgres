@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.14 2002/05/17 22:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.15 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1314,32 +1314,38 @@ update_ri_trigger_args(Oid relid,
 					   bool update_relname)
 {
 	Relation	tgrel;
-	Relation	irel;
 	ScanKeyData skey[1];
-	IndexScanDesc idxtgscan;
-	RetrieveIndexResult idxres;
+	SysScanDesc	trigscan;
+	HeapTuple	tuple;
 	Datum		values[Natts_pg_trigger];
 	char		nulls[Natts_pg_trigger];
 	char		replaces[Natts_pg_trigger];
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	if (fk_scan)
-		irel = index_openr(TriggerConstrRelidIndex);
-	else
-		irel = index_openr(TriggerRelidNameIndex);
-
-	ScanKeyEntryInitialize(&skey[0], 0x0,
-						   1,	/* column 1 of index in either case */
-						   F_OIDEQ,
-						   ObjectIdGetDatum(relid));
-	idxtgscan = index_beginscan(irel, false, 1, skey);
-
-	while ((idxres = index_getnext(idxtgscan, ForwardScanDirection)) != NULL)
 	{
-		HeapTupleData tupledata;
-		Buffer		buffer;
-		HeapTuple	tuple;
-		Form_pg_trigger pg_trigger;
+		ScanKeyEntryInitialize(&skey[0], 0x0,
+							   Anum_pg_trigger_tgconstrrelid,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(relid));
+		trigscan = systable_beginscan(tgrel, TriggerConstrRelidIndex,
+									  true, SnapshotNow,
+									  1, skey);
+	}
+	else
+	{
+		ScanKeyEntryInitialize(&skey[0], 0x0,
+							   Anum_pg_trigger_tgrelid,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(relid));
+		trigscan = systable_beginscan(tgrel, TriggerRelidNameIndex,
+									  true, SnapshotNow,
+									  1, skey);
+	}
+
+	while ((tuple = systable_getnext(trigscan)) != NULL)
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 		bytea	   *val;
 		bytea	   *newtgargs;
 		bool		isnull;
@@ -1352,18 +1358,10 @@ update_ri_trigger_args(Oid relid,
 		const char *arga[RI_MAX_ARGUMENTS];
 		const char *argp;
 
-		tupledata.t_self = idxres->heap_iptr;
-		heap_fetch(tgrel, SnapshotNow, &tupledata, &buffer, idxtgscan);
-		pfree(idxres);
-		if (!tupledata.t_data)
-			continue;
-		tuple = &tupledata;
-		pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 		tg_type = ri_trigger_type(pg_trigger->tgfoid);
 		if (tg_type == RI_TRIGGER_NONE)
 		{
 			/* Not an RI trigger, forget it */
-			ReleaseBuffer(buffer);
 			continue;
 		}
 
@@ -1381,7 +1379,6 @@ update_ri_trigger_args(Oid relid,
 			tgnargs > RI_MAX_ARGUMENTS)
 		{
 			/* This probably shouldn't happen, but ignore busted triggers */
-			ReleaseBuffer(buffer);
 			continue;
 		}
 		argp = (const char *) VARDATA(val);
@@ -1429,7 +1426,6 @@ update_ri_trigger_args(Oid relid,
 		if (!changed)
 		{
 			/* Don't need to update this tuple */
-			ReleaseBuffer(buffer);
 			continue;
 		}
 
@@ -1463,11 +1459,6 @@ update_ri_trigger_args(Oid relid,
 		tuple = heap_modifytuple(tuple, tgrel, values, nulls, replaces);
 
 		/*
-		 * Now we can release hold on original tuple.
-		 */
-		ReleaseBuffer(buffer);
-
-		/*
 		 * Update pg_trigger and its indexes
 		 */
 		simple_heap_update(tgrel, &tuple->t_self, tuple);
@@ -1485,8 +1476,7 @@ update_ri_trigger_args(Oid relid,
 		heap_freetuple(tuple);
 	}
 
-	index_endscan(idxtgscan);
-	index_close(irel);
+	systable_endscan(trigscan);
 
 	heap_close(tgrel, RowExclusiveLock);
 
@@ -1979,9 +1969,9 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
 	 */
 	tupdesc = RelationGetDescr(rel);
 
-	scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+	scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Datum 		d;
 		bool		isnull;
@@ -2177,9 +2167,9 @@ drop_default(Oid relid, int16 attnum)
 						   Anum_pg_attrdef_adnum, F_INT2EQ,
 						   Int16GetDatum(attnum));
 
-	scan = heap_beginscan(attrdef_rel, false, SnapshotNow, 2, scankeys);
+	scan = heap_beginscan(attrdef_rel, SnapshotNow, 2, scankeys);
 
-	if (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	if ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		simple_heap_delete(attrdef_rel, &tuple->t_self);
 
 	heap_endscan(scan);
@@ -2501,9 +2491,9 @@ AlterTableAddConstraint(Oid myrelid,
 								 * Scan through the rows now, checking the
 								 * expression at each row.
 								 */
-								scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+								scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 
-								while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+								while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 								{
 									ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 									if (!ExecQual(qual, econtext, true))
@@ -2621,9 +2611,9 @@ AlterTableAddConstraint(Oid myrelid,
 					}
 					trig.tgnargs = count - 1;
 
-					scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+					scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 
-					while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+					while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 					{
 						/* Make a call to the check function */
 

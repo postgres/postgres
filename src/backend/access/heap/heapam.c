@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.133 2002/05/01 01:23:37 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.134 2002/05/20 23:51:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -24,7 +24,7 @@
  *		heap_rescan		- restart a relation scan
  *		heap_endscan	- end relation scan
  *		heap_getnext	- retrieve next tuple in scan
- *		heap_fetch		- retrive tuple with tid
+ *		heap_fetch		- retrieve tuple with tid
  *		heap_insert		- insert tuple into a relation
  *		heap_delete		- delete a tuple from a relation
  *		heap_update		- replace a tuple in a relation with another tuple
@@ -70,11 +70,7 @@ static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
  * ----------------
  */
 static void
-initscan(HeapScanDesc scan,
-		 Relation relation,
-		 int atend,
-		 unsigned nkeys,
-		 ScanKey key)
+initscan(HeapScanDesc scan, ScanKey key)
 {
 	/*
 	 * Make sure we have up-to-date idea of number of blocks in relation.
@@ -82,7 +78,7 @@ initscan(HeapScanDesc scan,
 	 * added while the scan is in progress will be invisible to my
 	 * transaction anyway...
 	 */
-	relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
+	scan->rs_rd->rd_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
 
 	scan->rs_ctup.t_datamcxt = NULL;
 	scan->rs_ctup.t_data = NULL;
@@ -95,7 +91,7 @@ initscan(HeapScanDesc scan,
 	 * copy the scan key, if appropriate
 	 */
 	if (key != NULL)
-		memmove(scan->rs_key, key, nkeys * sizeof(ScanKeyData));
+		memcpy(scan->rs_key, key, scan->rs_nkeys * sizeof(ScanKeyData));
 }
 
 /* ----------------
@@ -185,7 +181,7 @@ heapgettup(Relation relation,
 	/*
 	 * calculate next starting lineoff, given scan direction
 	 */
-	if (!dir)
+	if (dir == 0)
 	{
 		/*
 		 * ``no movement'' scan direction: refetch same tuple
@@ -216,8 +212,8 @@ heapgettup(Relation relation,
 		tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 		tuple->t_len = ItemIdGetLength(lpp);
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
-		return;
 
+		return;
 	}
 	else if (dir < 0)
 	{
@@ -255,7 +251,6 @@ heapgettup(Relation relation,
 				OffsetNumberPrev(ItemPointerGetOffsetNumber(tid));
 		}
 		/* page and lineoff now reference the physically previous tid */
-
 	}
 	else
 	{
@@ -287,7 +282,6 @@ heapgettup(Relation relation,
 		dp = (Page) BufferGetPage(*buffer);
 		lines = PageGetMaxOffsetNumber(dp);
 		/* page and lineoff now reference the physically next tid */
-
 	}
 
 	/* 'dir' is now non-zero */
@@ -675,11 +669,8 @@ heap_openr(const char *sysRelationName, LOCKMODE lockmode)
  * ----------------
  */
 HeapScanDesc
-heap_beginscan(Relation relation,
-			   int atend,
-			   Snapshot snapshot,
-			   unsigned nkeys,
-			   ScanKey key)
+heap_beginscan(Relation relation, Snapshot snapshot,
+			   int nkeys, ScanKey key)
 {
 	HeapScanDesc scan;
 
@@ -715,20 +706,20 @@ heap_beginscan(Relation relation,
 
 	scan->rs_rd = relation;
 	scan->rs_snapshot = snapshot;
-	scan->rs_nkeys = (short) nkeys;
-
-	pgstat_initstats(&scan->rs_pgstat_info, relation);
+	scan->rs_nkeys = nkeys;
 
 	/*
 	 * we do this here instead of in initscan() because heap_rescan also
 	 * calls initscan() and we don't want to allocate memory again
 	 */
-	if (nkeys)
+	if (nkeys > 0)
 		scan->rs_key = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
 	else
 		scan->rs_key = NULL;
 
-	initscan(scan, relation, atend, nkeys, key);
+	pgstat_initstats(&scan->rs_pgstat_info, relation);
+
+	initscan(scan, key);
 
 	return scan;
 }
@@ -739,7 +730,6 @@ heap_beginscan(Relation relation,
  */
 void
 heap_rescan(HeapScanDesc scan,
-			bool scanFromEnd,
 			ScanKey key)
 {
 	/*
@@ -757,7 +747,7 @@ heap_rescan(HeapScanDesc scan,
 	/*
 	 * reinitialize scan descriptor
 	 */
-	initscan(scan, scan->rs_rd, scanFromEnd, scan->rs_nkeys, key);
+	initscan(scan, key);
 
 	pgstat_reset_heap_scan(&scan->rs_pgstat_info);
 }
@@ -808,14 +798,14 @@ heap_endscan(HeapScanDesc scan)
 
 #ifdef HEAPDEBUGALL
 #define HEAPDEBUG_1 \
-elog(LOG, "heap_getnext([%s,nkeys=%d],backw=%d) called", \
-	 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, backw)
+	elog(LOG, "heap_getnext([%s,nkeys=%d],dir=%d) called", \
+		 RelationGetRelationName(scan->rs_rd), scan->rs_nkeys, (int) direction)
 
 #define HEAPDEBUG_2 \
 	 elog(LOG, "heap_getnext returning EOS")
 
 #define HEAPDEBUG_3 \
-	 elog(LOG, "heap_getnext returning tuple");
+	 elog(LOG, "heap_getnext returning tuple")
 #else
 #define HEAPDEBUG_1
 #define HEAPDEBUG_2
@@ -824,7 +814,7 @@ elog(LOG, "heap_getnext([%s,nkeys=%d],backw=%d) called", \
 
 
 HeapTuple
-heap_getnext(HeapScanDesc scan, int backw)
+heap_getnext(HeapScanDesc scan, ScanDirection direction)
 {
 	/*
 	 * increment access statistics
@@ -842,43 +832,21 @@ heap_getnext(HeapScanDesc scan, int backw)
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
-	if (backw)
-	{
-		/*
-		 * handle reverse scan
-		 */
-		heapgettup(scan->rs_rd,
-				   -1,
-				   &(scan->rs_ctup),
-				   &(scan->rs_cbuf),
-				   scan->rs_snapshot,
-				   scan->rs_nkeys,
-				   scan->rs_key);
+	/*
+	 * Note: we depend here on the -1/0/1 encoding of ScanDirection.
+	 */
+	heapgettup(scan->rs_rd,
+			   (int) direction,
+			   &(scan->rs_ctup),
+			   &(scan->rs_cbuf),
+			   scan->rs_snapshot,
+			   scan->rs_nkeys,
+			   scan->rs_key);
 
-		if (scan->rs_ctup.t_data == NULL && !BufferIsValid(scan->rs_cbuf))
-		{
-			HEAPDEBUG_2;		/* heap_getnext returning EOS */
-			return NULL;
-		}
-	}
-	else
+	if (scan->rs_ctup.t_data == NULL && !BufferIsValid(scan->rs_cbuf))
 	{
-		/*
-		 * handle forward scan
-		 */
-		heapgettup(scan->rs_rd,
-				   1,
-				   &(scan->rs_ctup),
-				   &(scan->rs_cbuf),
-				   scan->rs_snapshot,
-				   scan->rs_nkeys,
-				   scan->rs_key);
-
-		if (scan->rs_ctup.t_data == NULL && !BufferIsValid(scan->rs_cbuf))
-		{
-			HEAPDEBUG_2;		/* heap_getnext returning EOS */
-			return NULL;
-		}
+		HEAPDEBUG_2;			/* heap_getnext returning EOS */
+		return NULL;
 	}
 
 	pgstat_count_heap_scan(&scan->rs_pgstat_info);
@@ -897,16 +865,17 @@ heap_getnext(HeapScanDesc scan, int backw)
 }
 
 /* ----------------
- *		heap_fetch		- retrive tuple with tid
+ *		heap_fetch		- retrieve tuple with given tid
  *
- *		Currently ignores LP_IVALID during processing!
+ * On entry, tuple->t_self is the TID to fetch.
  *
- *		Because this is not part of a scan, there is no way to
- *		automatically lock/unlock the shared buffers.
- *		For this reason, we require that the user retrieve the buffer
- *		value, and they are required to BufferRelease() it when they
- *		are done.  If they want to make a copy of it before releasing it,
- *		they can call heap_copytyple().
+ * If successful (ie, tuple found and passes snapshot time qual),
+ * then the rest of *tuple is filled in, and *userbuf is set to the
+ * buffer holding the tuple.  A pin is obtained on the buffer; the
+ * caller must BufferRelease the buffer when done with the tuple.
+ *
+ * If not successful, tuple->t_data is set to NULL and *userbuf is set to
+ * InvalidBuffer.
  * ----------------
  */
 void
@@ -914,7 +883,7 @@ heap_fetch(Relation relation,
 		   Snapshot snapshot,
 		   HeapTuple tuple,
 		   Buffer *userbuf,
-		   IndexScanDesc iscan)
+		   PgStat_Info *pgstat_info)
 {
 	ItemId		lp;
 	Buffer		buffer;
@@ -936,8 +905,9 @@ heap_fetch(Relation relation,
 	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(buffer))
-		elog(ERROR, "heap_fetch: %s relation: ReadBuffer(%lx) failed",
-			 RelationGetRelationName(relation), (long) tid);
+		elog(ERROR, "heap_fetch: %s relation: ReadBuffer(%ld) failed",
+			 RelationGetRelationName(relation),
+			 (long) ItemPointerGetBlockNumber(tid));
 
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
@@ -990,8 +960,12 @@ heap_fetch(Relation relation,
 		 */
 		*userbuf = buffer;
 
-		if (iscan != NULL)
-			pgstat_count_heap_fetch(&iscan->xs_pgstat_info);
+		/*
+		 * Count the successful fetch in *pgstat_info if given,
+		 * otherwise in the relation's default statistics area.
+		 */
+		if (pgstat_info != NULL)
+			pgstat_count_heap_fetch(pgstat_info);
 		else
 			pgstat_count_heap_fetch(&relation->pgstat_info);
 	}

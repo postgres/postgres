@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.117 2002/05/12 23:43:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.118 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1233,9 +1233,9 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 						   ObjectIdGetDatum(pred_op));
 
 	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
-	scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
+	scan = heap_beginscan(relation, SnapshotNow, 1, entry);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		aform = (Form_pg_amop) GETSTRUCT(tuple);
 		if (opclass_is_btree(aform->amopclaid))

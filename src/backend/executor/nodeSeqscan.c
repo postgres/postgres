@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.34 2002/02/19 20:11:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.35 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ SeqNext(SeqScan *node)
 	/*
 	 * get the next tuple from the access methods
 	 */
-	tuple = heap_getnext(scandesc, ScanDirectionIsBackward(direction));
+	tuple = heap_getnext(scandesc, direction);
 
 	/*
 	 * save the tuple and the buffer returned to us by the access methods
@@ -148,7 +148,6 @@ InitScanRelation(SeqScan *node, EState *estate,
 	List	   *rangeTable;
 	RangeTblEntry *rtentry;
 	Oid			reloid;
-	ScanDirection direction;
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
 
@@ -162,12 +161,10 @@ InitScanRelation(SeqScan *node, EState *estate,
 	rangeTable = estate->es_range_table;
 	rtentry = rt_fetch(relid, rangeTable);
 	reloid = rtentry->relid;
-	direction = estate->es_direction;
 
 	currentRelation = heap_open(reloid, AccessShareLock);
 
 	currentScanDesc = heap_beginscan(currentRelation,
-									 ScanDirectionIsBackward(direction),
 									 estate->es_snapshot,
 									 0,
 									 NULL);
@@ -316,7 +313,6 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 	CommonScanState *scanstate;
 	EState	   *estate;
 	HeapScanDesc scan;
-	ScanDirection direction;
 
 	scanstate = node->scanstate;
 	estate = node->plan.state;
@@ -330,10 +326,8 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 	}
 
 	scan = scanstate->css_currentScanDesc;
-	direction = estate->es_direction;
 
 	heap_rescan(scan,			/* scan desc */
-				ScanDirectionIsBackward(direction), /* backward flag */
 				NULL);			/* new scan keys */
 }
 

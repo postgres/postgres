@@ -922,10 +922,9 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 	indexRelation = heap_openr(IndexRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&entry, 0, Anum_pg_index_indrelid,
 						   F_OIDEQ, ObjectIdGetDatum(relid));
-	scan = heap_beginscan(indexRelation, false, SnapshotNow,
-						  1, &entry);
+	scan = heap_beginscan(indexRelation, SnapshotNow, 1, &entry);
 
-	while (HeapTupleIsValid(indexTuple = heap_getnext(scan, 0)))
+	while ((indexTuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_index	index = (Form_pg_index) GETSTRUCT(indexTuple);
 

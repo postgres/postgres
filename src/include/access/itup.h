@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.33 2001/11/05 17:46:31 momjian Exp $
+ * $Id: itup.h,v 1.34 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,15 +52,6 @@ typedef struct InsertIndexResultData
 } InsertIndexResultData;
 
 typedef InsertIndexResultData *InsertIndexResult;
-
-
-typedef struct RetrieveIndexResultData
-{
-	ItemPointerData index_iptr;
-	ItemPointerData heap_iptr;
-} RetrieveIndexResultData;
-
-typedef RetrieveIndexResultData *RetrieveIndexResult;
 
 
 /* ----------------
@@ -147,8 +138,6 @@ extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
 				Datum *value, char *null);
 extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
 					  TupleDesc tupleDesc, bool *isnull);
-extern RetrieveIndexResult FormRetrieveIndexResult(ItemPointer indexItemPointer,
-						ItemPointer heapItemPointer);
 extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);
 
 #endif   /* ITUP_H */

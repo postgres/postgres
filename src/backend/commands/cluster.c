@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.79 2002/04/27 21:24:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.80 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 				LocalOldHeap,
 				LocalOldIndex;
 	IndexScanDesc ScanDesc;
-	RetrieveIndexResult ScanResult;
+	HeapTuple	LocalHeapTuple;
 
 	/*
 	 * Open the relations I need. Scan through the OldHeap on the OldIndex
@@ -227,36 +227,24 @@ rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	LocalOldHeap = heap_open(OIDOldHeap, AccessExclusiveLock);
 	LocalOldIndex = index_open(OIDOldIndex);
 
-	ScanDesc = index_beginscan(LocalOldIndex, false, 0, (ScanKey) NULL);
+	ScanDesc = index_beginscan(LocalOldHeap, LocalOldIndex,
+							   SnapshotNow, 0, (ScanKey) NULL);
 
-	while ((ScanResult = index_getnext(ScanDesc, ForwardScanDirection)) != NULL)
+	while ((LocalHeapTuple = index_getnext(ScanDesc, ForwardScanDirection)) != NULL)
 	{
-		HeapTupleData LocalHeapTuple;
-		Buffer		LocalBuffer;
+		/*
+		 * We must copy the tuple because heap_insert() will overwrite
+		 * the commit-status fields of the tuple it's handed, and the
+		 * retrieved tuple will actually be in a disk buffer!  Thus,
+		 * the source relation would get trashed, which is bad news if
+		 * we abort later on.  (This was a bug in releases thru 7.0)
+		 */
+		HeapTuple	copiedTuple = heap_copytuple(LocalHeapTuple);
+
+		heap_insert(LocalNewHeap, copiedTuple);
+		heap_freetuple(copiedTuple);
 
 		CHECK_FOR_INTERRUPTS();
-
-		LocalHeapTuple.t_self = ScanResult->heap_iptr;
-		LocalHeapTuple.t_datamcxt = NULL;
-		LocalHeapTuple.t_data = NULL;
-		heap_fetch(LocalOldHeap, SnapshotNow, &LocalHeapTuple, &LocalBuffer,
-				   ScanDesc);
-		if (LocalHeapTuple.t_data != NULL)
-		{
-			/*
-			 * We must copy the tuple because heap_insert() will overwrite
-			 * the commit-status fields of the tuple it's handed, and the
-			 * retrieved tuple will actually be in a disk buffer!  Thus,
-			 * the source relation would get trashed, which is bad news if
-			 * we abort later on.  (This was a bug in releases thru 7.0)
-			 */
-			HeapTuple	copiedTuple = heap_copytuple(&LocalHeapTuple);
-
-			ReleaseBuffer(LocalBuffer);
-			heap_insert(LocalNewHeap, copiedTuple);
-			heap_freetuple(copiedTuple);
-		}
-		pfree(ScanResult);
 	}
 
 	index_endscan(ScanDesc);

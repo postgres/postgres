@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.21 2002/04/11 05:32:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.22 2002/05/20 23:51:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,8 @@ is_dbadmin(Oid dbid)
 	ScanKeyEntryInitialize(&entry[0], 0x0,
 						   ObjectIdAttributeNumber, F_OIDEQ,
 						   ObjectIdGetDatum(dbid));
-	scan = heap_beginscan(pg_database, 0, SnapshotNow, 1, entry);
-	dbtuple = heap_getnext(scan, 0);
+	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
+	dbtuple = heap_getnext(scan, ForwardScanDirection);
 	if (!HeapTupleIsValid(dbtuple))
 		elog(ERROR, "database %u does not exist", dbid);
 	dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;

@@ -59,8 +59,8 @@ database_size(PG_FUNCTION_ARGS)
 	relation = heap_openr(DatabaseRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
 						   F_NAMEEQ, NameGetDatum(dbname));
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, &scanKey);
-	tuple = heap_getnext(scan, 0);
+	scan = heap_beginscan(relation, SnapshotNow, 1, &scanKey);
+	tuple = heap_getnext(scan, ForwardScanDirection);
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "database %s does not exist", NameStr(*dbname));

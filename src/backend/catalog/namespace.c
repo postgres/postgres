@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.21 2002/05/17 20:53:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.22 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1588,9 +1588,9 @@ FindTempRelations(Oid tempNamespaceId)
 						   ObjectIdGetDatum(tempNamespaceId));
 
 	pgclass = heap_openr(RelationRelationName, AccessShareLock);
-	scan = heap_beginscan(pgclass, false, SnapshotNow, 1, &key);
+	scan = heap_beginscan(pgclass, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		switch (((Form_pg_class) GETSTRUCT(tuple))->relkind)
 		{
@@ -1627,9 +1627,9 @@ FindDeletionConstraints(List *relOids)
 	 * Scan pg_inherits to find parents and children that are in the list.
 	 */
 	inheritsrel = heap_openr(InheritsRelationName, AccessShareLock);
-	scan = heap_beginscan(inheritsrel, 0, SnapshotNow, 0, NULL);
+	scan = heap_beginscan(inheritsrel, SnapshotNow, 0, NULL);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Oid		inhrelid = ((Form_pg_inherits) GETSTRUCT(tuple))->inhrelid;
 		Oid		inhparent = ((Form_pg_inherits) GETSTRUCT(tuple))->inhparent;

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.224 2002/04/15 23:39:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.225 2002/05/20 23:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,9 +350,9 @@ getrels(const RangeVar *vacrel, const char *stmttype)
 
 		pgclass = heap_openr(RelationRelationName, AccessShareLock);
 
-		scan = heap_beginscan(pgclass, false, SnapshotNow, 1, &key);
+		scan = heap_beginscan(pgclass, SnapshotNow, 1, &key);
 
-		while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+		while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 		{
 			/* Make a relation list entry for this guy */
 			oldcontext = MemoryContextSwitchTo(vac_context);
@@ -521,9 +521,9 @@ vac_update_dbstats(Oid dbid,
 						   ObjectIdAttributeNumber, F_OIDEQ,
 						   ObjectIdGetDatum(dbid));
 
-	scan = heap_beginscan(relation, 0, SnapshotNow, 1, entry);
+	scan = heap_beginscan(relation, SnapshotNow, 1, entry);
 
-	tuple = heap_getnext(scan, 0);
+	tuple = heap_getnext(scan, ForwardScanDirection);
 
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "database %u does not exist", dbid);
@@ -573,9 +573,9 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 
 	relation = heap_openr(DatabaseRelationName, AccessShareLock);
 
-	scan = heap_beginscan(relation, 0, SnapshotNow, 0, NULL);
+	scan = heap_beginscan(relation, SnapshotNow, 0, NULL);
 
-	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
+	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		Form_pg_database dbform = (Form_pg_database) GETSTRUCT(tuple);
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.32 2002/03/05 05:30:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.33 2002/05/20 23:51:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,9 @@
 
 static OffsetNumber gistfindnext(IndexScanDesc s, Page p, OffsetNumber n,
 			 ScanDirection dir);
-static RetrieveIndexResult gistscancache(IndexScanDesc s, ScanDirection dir);
-static RetrieveIndexResult gistfirst(IndexScanDesc s, ScanDirection dir);
-static RetrieveIndexResult gistnext(IndexScanDesc s, ScanDirection dir);
-static ItemPointer gistheapptr(Relation r, ItemPointer itemp);
+static bool gistscancache(IndexScanDesc s, ScanDirection dir);
+static bool gistfirst(IndexScanDesc s, ScanDirection dir);
+static bool gistnext(IndexScanDesc s, ScanDirection dir);
 static bool gistindex_keytest(IndexTuple tuple,
 				  int scanKeySize, ScanKey key, GISTSTATE *giststate,
 				  Relation r, Page p, OffsetNumber offset);
@@ -34,35 +33,34 @@ gistgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
-	RetrieveIndexResult res;
+	bool res;
 
 	/* if we have it cached in the scan desc, just return the value */
-	if ((res = gistscancache(s, dir)) != (RetrieveIndexResult) NULL)
-		PG_RETURN_POINTER(res);
+	if (gistscancache(s, dir))
+		PG_RETURN_BOOL(true);
 
 	/* not cached, so we'll have to do some work */
 	if (ItemPointerIsValid(&(s->currentItemData)))
 		res = gistnext(s, dir);
 	else
 		res = gistfirst(s, dir);
-	PG_RETURN_POINTER(res);
+	PG_RETURN_BOOL(res);
 }
 
-static RetrieveIndexResult
+static bool
 gistfirst(IndexScanDesc s, ScanDirection dir)
 {
 	Buffer		b;
 	Page		p;
 	OffsetNumber n;
 	OffsetNumber maxoff;
-	RetrieveIndexResult res;
 	GISTPageOpaque po;
 	GISTScanOpaque so;
 	GISTSTACK  *stk;
 	BlockNumber blk;
 	IndexTuple	it;
 
-	b = ReadBuffer(s->relation, GISTP_ROOT);
+	b = ReadBuffer(s->indexRelation, GISTP_ROOT);
 	p = BufferGetPage(b);
 	po = (GISTPageOpaque) PageGetSpecialPointer(p);
 	so = (GISTScanOpaque) s->opaque;
@@ -77,13 +75,12 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
-
 			ReleaseBuffer(b);
 			if (so->s_stack == (GISTSTACK *) NULL)
-				return (RetrieveIndexResult) NULL;
+				return false;
 
 			stk = so->s_stack;
-			b = ReadBuffer(s->relation, stk->gs_blk);
+			b = ReadBuffer(s->indexRelation, stk->gs_blk);
 			p = BufferGetPage(b);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 			maxoff = PageGetMaxOffsetNumber(p);
@@ -103,10 +100,10 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 
-			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+			s->xs_ctup.t_self = it->t_tid;
 
 			ReleaseBuffer(b);
-			return res;
+			return true;
 		}
 		else
 		{
@@ -120,21 +117,20 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
 			ReleaseBuffer(b);
-			b = ReadBuffer(s->relation, blk);
+			b = ReadBuffer(s->indexRelation, blk);
 			p = BufferGetPage(b);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 		}
 	}
 }
 
-static RetrieveIndexResult
+static bool
 gistnext(IndexScanDesc s, ScanDirection dir)
 {
 	Buffer		b;
 	Page		p;
 	OffsetNumber n;
 	OffsetNumber maxoff;
-	RetrieveIndexResult res;
 	GISTPageOpaque po;
 	GISTScanOpaque so;
 	GISTSTACK  *stk;
@@ -149,7 +145,7 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 	else
 		n = OffsetNumberPrev(n);
 
-	b = ReadBuffer(s->relation, blk);
+	b = ReadBuffer(s->indexRelation, blk);
 	p = BufferGetPage(b);
 	po = (GISTPageOpaque) PageGetSpecialPointer(p);
 	so = (GISTScanOpaque) s->opaque;
@@ -161,13 +157,12 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 
 		while (n < FirstOffsetNumber || n > maxoff)
 		{
-
 			ReleaseBuffer(b);
 			if (so->s_stack == (GISTSTACK *) NULL)
-				return (RetrieveIndexResult) NULL;
+				return false;
 
 			stk = so->s_stack;
-			b = ReadBuffer(s->relation, stk->gs_blk);
+			b = ReadBuffer(s->indexRelation, stk->gs_blk);
 			p = BufferGetPage(b);
 			maxoff = PageGetMaxOffsetNumber(p);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
@@ -187,10 +182,10 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 
 			it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 
-			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+			s->xs_ctup.t_self = it->t_tid;
 
 			ReleaseBuffer(b);
-			return res;
+			return true;
 		}
 		else
 		{
@@ -204,7 +199,7 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 			blk = ItemPointerGetBlockNumber(&(it->t_tid));
 
 			ReleaseBuffer(b);
-			b = ReadBuffer(s->relation, blk);
+			b = ReadBuffer(s->indexRelation, blk);
 			p = BufferGetPage(b);
 			po = (GISTPageOpaque) PageGetSpecialPointer(p);
 
@@ -232,7 +227,6 @@ gistindex_keytest(IndexTuple tuple,
 	GISTENTRY	de;
 
 	IncrIndexProcessed();
-
 
 	while (scanKeySize > 0)
 	{
@@ -314,7 +308,7 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 		it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 		if (gistindex_keytest(it,
 							  s->numberOfKeys, s->keyData, giststate,
-							  s->relation, p, n))
+							  s->indexRelation, p, n))
 			break;
 
 		if (ScanDirectionIsBackward(dir))
@@ -326,57 +320,25 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 	return n;
 }
 
-static RetrieveIndexResult
+static bool
 gistscancache(IndexScanDesc s, ScanDirection dir)
-{
-	RetrieveIndexResult res;
-	ItemPointer ip;
-
-	if (!(ScanDirectionIsNoMovement(dir)
-		  && ItemPointerIsValid(&(s->currentItemData))))
-	{
-
-		return (RetrieveIndexResult) NULL;
-	}
-
-	ip = gistheapptr(s->relation, &(s->currentItemData));
-
-	if (ItemPointerIsValid(ip))
-		res = FormRetrieveIndexResult(&(s->currentItemData), ip);
-	else
-		res = (RetrieveIndexResult) NULL;
-
-	pfree(ip);
-
-	return res;
-}
-
-/*
- *	gistheapptr returns the item pointer to the tuple in the heap relation
- *	for which itemp is the index relation item pointer.
- */
-static ItemPointer
-gistheapptr(Relation r, ItemPointer itemp)
 {
 	Buffer		b;
 	Page		p;
-	IndexTuple	it;
-	ItemPointer ip;
 	OffsetNumber n;
+	IndexTuple	it;
 
-	ip = (ItemPointer) palloc(sizeof(ItemPointerData));
-	if (ItemPointerIsValid(itemp))
-	{
-		b = ReadBuffer(r, ItemPointerGetBlockNumber(itemp));
-		p = BufferGetPage(b);
-		n = ItemPointerGetOffsetNumber(itemp);
-		it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-		memmove((char *) ip, (char *) &(it->t_tid),
-				sizeof(ItemPointerData));
-		ReleaseBuffer(b);
-	}
-	else
-		ItemPointerSetInvalid(ip);
+	if (!(ScanDirectionIsNoMovement(dir)
+		  && ItemPointerIsValid(&(s->currentItemData))))
+		return false;
 
-	return ip;
+	b = ReadBuffer(s->indexRelation,
+				   ItemPointerGetBlockNumber(&(s->currentItemData)));
+	p = BufferGetPage(b);
+	n = ItemPointerGetOffsetNumber(&(s->currentItemData));
+	it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
+	s->xs_ctup.t_self = it->t_tid;
+	ReleaseBuffer(b);
+
+	return true;
 }
