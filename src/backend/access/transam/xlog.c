@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.75 2001/08/25 18:52:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.76 2001/09/06 02:02:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -760,7 +760,7 @@ begin:;
 	{
 		char		buf[8192];
 
-		sprintf(buf, "INSERT @ %u/%u: ", RecPtr.xlogid, RecPtr.xrecoff);
+		sprintf(buf, "INSERT @ %X/%X: ", RecPtr.xlogid, RecPtr.xrecoff);
 		xlog_outrec(buf, record);
 		if (rdata->data != NULL)
 		{
@@ -1012,7 +1012,10 @@ XLogWrite(XLogwrtRqst WriteRqst)
 		 * AdvanceXLInsertBuffer.
 		 */
 		if (!XLByteLT(LogwrtResult.Write, XLogCtl->xlblocks[Write->curridx]))
-			elog(STOP, "XLogWrite: write request is past end of log");
+			elog(STOP, "XLogWrite: write request %X/%X is past end of log %X/%X",
+				 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
+				 XLogCtl->xlblocks[Write->curridx].xlogid,
+				 XLogCtl->xlblocks[Write->curridx].xrecoff);
 
 		/* Advance LogwrtResult.Write to end of current buffer page */
 		LogwrtResult.Write = XLogCtl->xlblocks[Write->curridx];
@@ -1190,7 +1193,7 @@ XLogFlush(XLogRecPtr record)
 
 	if (XLOG_DEBUG)
 	{
-		elog(DEBUG, "XLogFlush%s%s: request %u/%u; write %u/%u; flush %u/%u\n",
+		elog(DEBUG, "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X\n",
 				(IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
 				(InRedo) ? "(redo)" : "",
 				record.xlogid, record.xrecoff,
@@ -1266,7 +1269,9 @@ XLogFlush(XLogRecPtr record)
 			XLogWrite(WriteRqst);
 			S_UNLOCK(&(XLogCtl->logwrt_lck));
 			if (XLByteLT(LogwrtResult.Flush, record))
-				elog(STOP, "XLogFlush: request is not satisfied");
+				elog(STOP, "XLogFlush: request %X/%X is not satisfied --- flushed only to %X/%X",
+					 record.xlogid, record.xrecoff,
+					 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
 			break;
 		}
 		S_LOCK_SLEEP(&(XLogCtl->logwrt_lck), spins++, XLOG_LOCK_TIMEOUT);
@@ -1688,7 +1693,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 
 	if (!EQ_CRC64(record->xl_crc, crc))
 	{
-		elog(emode, "ReadRecord: bad resource manager data checksum in record at %u/%u",
+		elog(emode, "ReadRecord: bad resource manager data checksum in record at %X/%X",
 			 recptr.xlogid, recptr.xrecoff);
 		return (false);
 	}
@@ -1710,7 +1715,7 @@ RecordIsValid(XLogRecord *record, XLogRecPtr recptr, int emode)
 
 		if (!EQ_CRC64(cbuf, crc))
 		{
-			elog(emode, "ReadRecord: bad checksum of backup block %d in record at %u/%u",
+			elog(emode, "ReadRecord: bad checksum of backup block %d in record at %X/%X",
 				 i + 1, recptr.xlogid, recptr.xrecoff);
 			return (false);
 		}
@@ -1780,7 +1785,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 		tmpRecPtr.xrecoff += SizeOfXLogPHD;
 	}
 	else if (!XRecOffIsValid(RecPtr->xrecoff))
-		elog(STOP, "ReadRecord: invalid record offset at (%u, %u)",
+		elog(STOP, "ReadRecord: invalid record offset at %X/%X",
 			 RecPtr->xlogid, RecPtr->xrecoff);
 
 	if (readFile >= 0 && !XLByteInSeg(*RecPtr, readId, readSeg))
@@ -1819,7 +1824,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 	if ((((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD) &&
 		RecPtr->xrecoff % BLCKSZ == SizeOfXLogPHD)
 	{
-		elog(emode, "ReadRecord: contrecord is requested by (%u, %u)",
+		elog(emode, "ReadRecord: contrecord is requested by %X/%X",
 			 RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
@@ -1833,7 +1838,7 @@ got_record:;
 	 */
 	if (record->xl_len == 0)
 	{
-		elog(emode, "ReadRecord: record with zero length at (%u, %u)",
+		elog(emode, "ReadRecord: record with zero length at %X/%X",
 			 RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
@@ -1857,13 +1862,13 @@ got_record:;
 	 */
 	if (total_len > _INTL_MAXLOGRECSZ)
 	{
-		elog(emode, "ReadRecord: record length %u at (%u, %u) too long",
+		elog(emode, "ReadRecord: record length %u at %X/%X too long",
 			 total_len, RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
 	if (record->xl_rmid > RM_MAX_ID)
 	{
-		elog(emode, "ReadRecord: invalid resource manager id %u at (%u, %u)",
+		elog(emode, "ReadRecord: invalid resource manager id %u at %X/%X",
 			 record->xl_rmid, RecPtr->xlogid, RecPtr->xrecoff);
 		goto next_record_is_invalid;
 	}
@@ -1987,7 +1992,7 @@ ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
 	recaddr.xrecoff = readSeg * XLogSegSize + readOff;
 	if (!XLByteEQ(hdr->xlp_pageaddr, recaddr))
 	{
-		elog(emode, "ReadRecord: unexpected pageaddr (%u, %u) in log file %u, segment %u, offset %u",
+		elog(emode, "ReadRecord: unexpected pageaddr %X/%X in log file %u, segment %u, offset %u",
 			 hdr->xlp_pageaddr.xlogid, hdr->xlp_pageaddr.xrecoff,
 			 readId, readSeg, readOff);
 		return false;
@@ -2486,7 +2491,7 @@ StartupXLOG(void)
 	if (record != NULL)
 	{
 		checkPointLoc = ControlFile->checkPoint;
-		elog(LOG, "checkpoint record is at (%u, %u)",
+		elog(LOG, "checkpoint record is at %X/%X",
 			 checkPointLoc.xlogid, checkPointLoc.xrecoff);
 	}
 	else
@@ -2495,7 +2500,7 @@ StartupXLOG(void)
 		if (record != NULL)
 		{
 			checkPointLoc = ControlFile->prevCheckPoint;
-			elog(LOG, "using previous checkpoint record at (%u, %u)",
+			elog(LOG, "using previous checkpoint record at %X/%X",
 				 checkPointLoc.xlogid, checkPointLoc.xrecoff);
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
 		}
@@ -2506,7 +2511,7 @@ StartupXLOG(void)
 	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 	wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 
-	elog(LOG, "redo record is at (%u, %u); undo record is at (%u, %u); shutdown %s",
+	elog(LOG, "redo record is at %X/%X; undo record is at %X/%X; shutdown %s",
 		 checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
 		 checkPoint.undo.xlogid, checkPoint.undo.xrecoff,
 		 wasShutdown ? "TRUE" : "FALSE");
@@ -2561,7 +2566,7 @@ StartupXLOG(void)
 		if (record != NULL)
 		{
 			InRedo = true;
-			elog(LOG, "redo starts at (%u, %u)",
+			elog(LOG, "redo starts at %X/%X",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			do
 			{
@@ -2576,7 +2581,7 @@ StartupXLOG(void)
 				{
 					char		buf[8192];
 
-					sprintf(buf, "REDO @ %u/%u; LSN %u/%u: ",
+					sprintf(buf, "REDO @ %X/%X; LSN %X/%X: ",
 							ReadRecPtr.xlogid, ReadRecPtr.xrecoff,
 							EndRecPtr.xlogid, EndRecPtr.xrecoff);
 					xlog_outrec(buf, record);
@@ -2592,7 +2597,7 @@ StartupXLOG(void)
 				RmgrTable[record->xl_rmid].rm_redo(EndRecPtr, record);
 				record = ReadRecord(NULL, LOG, buffer);
 			} while (record != NULL);
-			elog(LOG, "redo done at (%u, %u)",
+			elog(LOG, "redo done at %X/%X",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 			LastRec = ReadRecPtr;
 			InRedo = false;
@@ -2681,7 +2686,7 @@ StartupXLOG(void)
 		RecPtr = ReadRecPtr;
 		if (XLByteLT(checkPoint.undo, RecPtr))
 		{
-			elog(LOG, "undo starts at (%u, %u)",
+			elog(LOG, "undo starts at %X/%X",
 				 RecPtr.xlogid, RecPtr.xrecoff);
 			do
 			{
@@ -2691,7 +2696,7 @@ StartupXLOG(void)
 					RmgrTable[record->xl_rmid].rm_undo(EndRecPtr, record);
 				RecPtr = record->xl_prev;
 			} while (XLByteLE(checkPoint.undo, RecPtr));
-			elog(LOG, "undo done at (%u, %u)",
+			elog(LOG, "undo done at %X/%X",
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 		}
 		else
@@ -3144,7 +3149,7 @@ xlog_desc(char *buf, uint8 xl_info, char *rec)
 	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
-		sprintf(buf + strlen(buf), "checkpoint: redo %u/%u; undo %u/%u; "
+		sprintf(buf + strlen(buf), "checkpoint: redo %X/%X; undo %X/%X; "
 				"sui %u; xid %u; oid %u; %s",
 				checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
 				checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
@@ -3169,7 +3174,7 @@ xlog_outrec(char *buf, XLogRecord *record)
 	int			bkpb;
 	int			i;
 
-	sprintf(buf + strlen(buf), "prev %u/%u; xprev %u/%u; xid %u",
+	sprintf(buf + strlen(buf), "prev %X/%X; xprev %X/%X; xid %u",
 			record->xl_prev.xlogid, record->xl_prev.xrecoff,
 			record->xl_xact_prev.xlogid, record->xl_xact_prev.xrecoff,
 			record->xl_xid);
