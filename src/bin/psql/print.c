@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.25 2001/10/30 05:38:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.26 2002/04/24 15:56:38 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -1073,7 +1073,8 @@ printTable(const char *title,
 		if (cells)
 			for (ptr = cells; *ptr; ptr++)
 				row_count++;
-		row_count /= col_count;
+		if (col_count > 0)
+			row_count /= col_count;
 
 		if (opt->expanded)
 			lines = (col_count + 1) * row_count;
