@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.90 2001/05/20 20:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.91 2001/05/27 17:37:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -940,9 +940,7 @@ Datum
 eqjoinsel(PG_FUNCTION_ARGS)
 {
 	Query	   *root = (Query *) PG_GETARG_POINTER(0);
-#ifdef NOT_USED					/* see neqjoinsel() before removing me! */
 	Oid			operator = PG_GETARG_OID(1);
-#endif
 	List	   *args = (List *) PG_GETARG_POINTER(2);
 	Var		   *var1;
 	Var		   *var2;
@@ -958,73 +956,219 @@ eqjoinsel(PG_FUNCTION_ARGS)
 		HeapTuple	statsTuple2 = NULL;
 		Form_pg_statistic stats1 = NULL;
 		Form_pg_statistic stats2 = NULL;
-		double		nd1,
-					nd2;
+		double		nd1 = DEFAULT_NUM_DISTINCT;
+		double		nd2 = DEFAULT_NUM_DISTINCT;
+		bool		have_mcvs1 = false;
+		Datum	   *values1 = NULL;
+		int			nvalues1 = 0;
+		float4	   *numbers1 = NULL;
+		int			nnumbers1 = 0;
+		bool		have_mcvs2 = false;
+		Datum	   *values2 = NULL;
+		int			nvalues2 = 0;
+		float4	   *numbers2 = NULL;
+		int			nnumbers2 = 0;
 
-		if (var1 == NULL)
-		{
-			nd1 = DEFAULT_NUM_DISTINCT;
-		}
-		else
+		if (var1 != NULL)
 		{
 			/* get stats for the attribute, if available */
 			Oid		relid1 = getrelid(var1->varno, root->rtable);
 
-			if (relid1 == InvalidOid)
-				nd1 = DEFAULT_NUM_DISTINCT;
-			else
+			if (relid1 != InvalidOid)
 			{
 				statsTuple1 = SearchSysCache(STATRELATT,
 											 ObjectIdGetDatum(relid1),
 											 Int16GetDatum(var1->varattno),
 											 0, 0);
 				if (HeapTupleIsValid(statsTuple1))
+				{
 					stats1 = (Form_pg_statistic) GETSTRUCT(statsTuple1);
+					have_mcvs1 = get_attstatsslot(statsTuple1,
+												  var1->vartype,
+												  var1->vartypmod,
+												  STATISTIC_KIND_MCV,
+												  InvalidOid,
+												  &values1, &nvalues1,
+												  &numbers1, &nnumbers1);
+				}
 
 				nd1 = get_att_numdistinct(root, var1, stats1);
 			}
 		}
 
-		if (var2 == NULL)
-		{
-			nd2 = DEFAULT_NUM_DISTINCT;
-		}
-		else
+		if (var2 != NULL)
 		{
 			/* get stats for the attribute, if available */
 			Oid		relid2 = getrelid(var2->varno, root->rtable);
 
-			if (relid2 == InvalidOid)
-				nd2 = DEFAULT_NUM_DISTINCT;
-			else
+			if (relid2 != InvalidOid)
 			{
 				statsTuple2 = SearchSysCache(STATRELATT,
 											 ObjectIdGetDatum(relid2),
 											 Int16GetDatum(var2->varattno),
 											 0, 0);
 				if (HeapTupleIsValid(statsTuple2))
+				{
 					stats2 = (Form_pg_statistic) GETSTRUCT(statsTuple2);
+					have_mcvs2 = get_attstatsslot(statsTuple2,
+												  var2->vartype,
+												  var2->vartypmod,
+												  STATISTIC_KIND_MCV,
+												  InvalidOid,
+												  &values2, &nvalues2,
+												  &numbers2, &nnumbers2);
+				}
 
 				nd2 = get_att_numdistinct(root, var2, stats2);
 			}
 		}
 
-		/*
-		 * Estimate the join selectivity as 1 / sqrt(nd1*nd2)
-		 * (can we produce any theory for this)?
-		 *
-		 * XXX possibility to do better: if both attributes have histograms
-		 * then we could determine the exact join selectivity between the
-		 * MCV sets, and only have to assume the join behavior of the non-MCV
-		 * values.  This could be a big win when the MCVs cover a large part
-		 * of the population.
-		 *
-		 * XXX what about nulls?
-		 */
-		selec = 1.0 / sqrt(nd1 * nd2);
-		if (selec > 1.0)
-			selec = 1.0;
+		if (have_mcvs1 && have_mcvs2)
+		{
+			/*
+			 * We have most-common-value lists for both relations.  Run
+			 * through the lists to see which MCVs actually join to each
+			 * other with the given operator.  This allows us to determine
+			 * the exact join selectivity for the portion of the relations
+			 * represented by the MCV lists.  We still have to estimate for
+			 * the remaining population, but in a skewed distribution this
+			 * gives us a big leg up in accuracy.  For motivation see the
+			 * analysis in Y. Ioannidis and S. Christodoulakis, "On the
+			 * propagation of errors in the size of join results", Technical
+			 * Report 1018, Computer Science Dept., University of Wisconsin,
+			 * Madison, March 1991 (available from ftp.cs.wisc.edu).
+			 */
+			FmgrInfo	eqproc;
+			bool	   *hasmatch1;
+			bool	   *hasmatch2;
+			double		matchprodfreq,
+						matchfreq1,
+						matchfreq2,
+						unmatchfreq1,
+						unmatchfreq2,
+						otherfreq1,
+						otherfreq2,
+						totalsel1,
+						totalsel2;
+			int			i,
+						nmatches;
 
+			fmgr_info(get_opcode(operator), &eqproc);
+			hasmatch1 = (bool *) palloc(nvalues1 * sizeof(bool));
+			memset(hasmatch1, 0, nvalues1 * sizeof(bool));
+			hasmatch2 = (bool *) palloc(nvalues2 * sizeof(bool));
+			memset(hasmatch2, 0, nvalues2 * sizeof(bool));
+			/*
+			 * Note we assume that each MCV will match at most one member of
+			 * the other MCV list.  If the operator isn't really equality,
+			 * there could be multiple matches --- but we don't look for them,
+			 * both for speed and because the math wouldn't add up...
+			 */
+			matchprodfreq = 0.0;
+			nmatches = 0;
+			for (i = 0; i < nvalues1; i++)
+			{
+				int		j;
+
+				for (j = 0; j < nvalues2; j++)
+				{
+					if (hasmatch2[j])
+						continue;
+					if (DatumGetBool(FunctionCall2(&eqproc,
+												   values1[i],
+												   values2[j])))
+					{
+						hasmatch1[i] = hasmatch2[j] = true;
+						matchprodfreq += numbers1[i] * numbers2[j];
+						nmatches++;
+						break;
+					}
+				}
+			}
+			/* Sum up frequencies of matched and unmatched MCVs */
+			matchfreq1 = unmatchfreq1 = 0.0;
+			for (i = 0; i < nvalues1; i++)
+			{
+				if (hasmatch1[i])
+					matchfreq1 += numbers1[i];
+				else
+					unmatchfreq1 += numbers1[i];
+			}
+			matchfreq2 = unmatchfreq2 = 0.0;
+			for (i = 0; i < nvalues2; i++)
+			{
+				if (hasmatch2[i])
+					matchfreq2 += numbers2[i];
+				else
+					unmatchfreq2 += numbers2[i];
+			}
+			pfree(hasmatch1);
+			pfree(hasmatch2);
+			/*
+			 * Compute total frequency of non-null values that are not in
+			 * the MCV lists.
+			 */
+			otherfreq1 = 1.0 - stats1->stanullfrac - matchfreq1 - unmatchfreq1;
+			otherfreq2 = 1.0 - stats2->stanullfrac - matchfreq2 - unmatchfreq2;
+			/*
+			 * We can estimate the total selectivity from the point of view
+			 * of relation 1 as: the known selectivity for matched MCVs, plus
+			 * unmatched MCVs that are assumed to match against random members
+			 * of relation 2's non-MCV population, plus non-MCV values that
+			 * are assumed to match against random members of relation 2's
+			 * unmatched MCVs plus non-MCV values.
+			 */
+			totalsel1 = matchprodfreq;
+			if (nd2 > nvalues2)
+				totalsel1 += unmatchfreq1 * otherfreq2 / (nd2 - nvalues2);
+			if (nd2 > nmatches)
+				totalsel1 += otherfreq1 * (otherfreq2 + unmatchfreq2) /
+					(nd2 - nmatches);
+			/* Same estimate from the point of view of relation 2. */
+			totalsel2 = matchprodfreq;
+			if (nd1 > nvalues1)
+				totalsel2 += unmatchfreq2 * otherfreq1 / (nd1 - nvalues1);
+			if (nd1 > nmatches)
+				totalsel2 += otherfreq2 * (otherfreq1 + unmatchfreq1) /
+					(nd1 - nmatches);
+			/*
+			 * For robustness, we average the two estimates.  (Can a case
+			 * be made for taking the min or max instead?)
+			 */
+			selec = (totalsel1 + totalsel2) * 0.5;
+		}
+		else
+		{
+			/*
+			 * We do not have MCV lists for both sides.  Estimate the
+			 * join selectivity as MIN(1/nd1, 1/nd2).  This is plausible
+			 * if we assume that the values are about equally distributed:
+			 * a given tuple of rel1 will join to either 0 or N2/nd2 rows
+			 * of rel2, so total join rows are at most N1*N2/nd2 giving
+			 * a join selectivity of not more than 1/nd2.  By the same logic
+			 * it is not more than 1/nd1, so MIN(1/nd1, 1/nd2) is an upper
+			 * bound.  Using the MIN() means we estimate from the point of
+			 * view of the relation with smaller nd (since the larger nd is
+			 * determining the MIN).  It is reasonable to assume that most
+			 * tuples in this rel will have join partners, so the bound is
+			 * probably reasonably tight and should be taken as-is.
+			 *
+			 * XXX Can we be smarter if we have an MCV list for just one side?
+			 * It seems that if we assume equal distribution for the other
+			 * side, we end up with the same answer anyway.
+			 */
+			if (nd1 > nd2)
+				selec = 1.0 / nd1;
+			else
+				selec = 1.0 / nd2;
+		}
+
+		if (have_mcvs1)
+			free_attstatsslot(var1->vartype, values1, nvalues1,
+							  numbers1, nnumbers1);
+		if (have_mcvs2)
+			free_attstatsslot(var2->vartype, values2, nvalues2,
+							  numbers2, nnumbers2);
 		if (HeapTupleIsValid(statsTuple1))
 			ReleaseSysCache(statsTuple1);
 		if (HeapTupleIsValid(statsTuple2))
@@ -1039,14 +1183,30 @@ eqjoinsel(PG_FUNCTION_ARGS)
 Datum
 neqjoinsel(PG_FUNCTION_ARGS)
 {
+	Query	   *root = (Query *) PG_GETARG_POINTER(0);
+	Oid			operator = PG_GETARG_OID(1);
+	List	   *args = (List *) PG_GETARG_POINTER(2);
+	Oid			eqop;
 	float8		result;
 
 	/*
-	 * XXX we skip looking up the negator operator here because we know
-	 * eqjoinsel() won't look at it anyway.  If eqjoinsel() ever does
-	 * look, this routine will need to look more like neqsel() does.
+	 * We want 1 - eqjoinsel() where the equality operator is the one
+	 * associated with this != operator, that is, its negator.
 	 */
-	result = DatumGetFloat8(eqjoinsel(fcinfo));
+	eqop = get_negator(operator);
+	if (eqop)
+	{
+		result = DatumGetFloat8(DirectFunctionCall3(eqjoinsel,
+											 PointerGetDatum(root),
+											 ObjectIdGetDatum(eqop),
+											 PointerGetDatum(args)));
+
+	}
+	else
+	{
+		/* Use default selectivity (should we raise an error instead?) */
+		result = DEFAULT_EQ_SEL;
+	}
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
