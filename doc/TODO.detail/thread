@@ -3937,3 +3937,564 @@ TIP 6: Have you searched our list archives?
 
 http://archives.postgresql.org
 
+From pgsql-hackers-owner+M37860@postgresql.org Fri Apr 11 15:37:03 2003
+Return-path: <pgsql-hackers-owner+M37860@postgresql.org>
+Received: from relay3.pgsql.com (relay3.pgsql.com [64.117.224.149])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h3BJaxv13018
+	for <pgman@candle.pha.pa.us>; Fri, 11 Apr 2003 15:37:01 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by relay3.pgsql.com (Postfix) with ESMTP
+	id 3F9D0EA81E7; Fri, 11 Apr 2003 19:36:56 +0000 (GMT)
+X-Original-To: pgsql-hackers@postgresql.org
+Received: from spampd.localdomain (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id D27B2476036
+	for <pgsql-hackers@postgresql.org>; Fri, 11 Apr 2003 15:35:32 -0400 (EDT)
+Received: from mail1.ihs.com (mail1.ihs.com [170.207.70.222])
+	by postgresql.org (Postfix) with ESMTP id 742DD475F5F
+	for <pgsql-hackers@postgresql.org>; Fri, 11 Apr 2003 15:35:31 -0400 (EDT)
+Received: from css120.ihs.com (css120.ihs.com [170.207.105.120])
+	by mail1.ihs.com (8.12.9/8.12.9) with ESMTP id h3BJZHRF027332;
+	Fri, 11 Apr 2003 13:35:17 -0600 (MDT)
+Date: Fri, 11 Apr 2003 13:31:06 -0600 (MDT)
+From: "scott.marlowe" <scott.marlowe@ihs.com>
+To: Ron Peacetree <rjpeace@earthlink.net>
+cc: <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Anyone working on better transaction locking?
+In-Reply-To: <eS0la.16229$ey1.1398978@newsread1.prod.itd.earthlink.net>
+Message-ID: <Pine.LNX.4.33.0304111314130.3232-100000@css120.ihs.com>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-MailScanner: Found to be clean
+X-Spam-Status: No, hits=-31.5 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+       QUOTE_TWICE_1,REPLY_WITH_QUOTES,USER_AGENT_PINE
+	autolearn=ham	version=2.50
+X-Spam-Checker-Version: SpamAssassin 2.50 (1.173-2003-02-20-exp)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Wed, 9 Apr 2003, Ron Peacetree wrote:
+
+> "Andrew Sullivan" <andrew@libertyrms.info> wrote in message
+> news:20030409170926.GH2255@libertyrms.info...
+> > On Wed, Apr 09, 2003 at 05:41:06AM +0000, Ron Peacetree wrote:
+> > Nonsense.  You explicitly made the MVCC comparison with Oracle, and
+> > are asking for a "better" locking mechanism without providing any
+> > evidence that PostgreSQL's is bad.
+> >
+> Just because someone else's is "better" does not mean PostgreSQL's is
+> "bad", and I've never said such.  As I've said, I'll get back to Tom
+> and the list on this.
+
+But you didn't identify HOW it was better.  I think that's the point 
+being made.
+
+> > > Please see my posts with regards to ...
+> >
+> > I think your other posts were similar to the one which started this
+> > thread: full of mighty big pronouncements which turned out to depend
+> > on a bunch of not-so-tenable assumptions.
+> >
+> Hmmm.  Well, I don't think of algorithm analysis by the likes of
+> Knuth, Sedgewick, Gonnet, and Baeza-Yates as being "not so tenable
+> assumptions", but YMMV.  As for "mighty pronouncements", that also
+> seems a bit misleading since we are talking about quantifiable
+> programming and computer science issues, not unquantifiable things
+> like politics.
+
+But the real truth is revealed when the rubber hits the pavement.  
+Remember that Linux Torvalds was roundly criticized for his choice of a 
+monolithic development model for his kernel, and was literally told that 
+his choice would restrict to "toy" status and that no commercial OS could 
+scale with a monolithic kernel.
+
+There's no shortage of people with good ideas, just people with the skills 
+to implement those good ideas.  If you've got a patch to apply that's been 
+tested to show something is faster EVERYONE here wants to see it.
+
+If you've got a theory, no matter how well backed up by academic research, 
+it's still just a theory.  Until someone writes to code to implement it, 
+the gains are theoretical, and many things that MIGHT help don't because 
+of the real world issues underlying your database, like I/O bandwidth or 
+CPU <-> memory bandwidth.
+
+> > I'm sorry to be so cranky about this, but I get tired of having to
+> > defend one of my employer's core technologies from accusations based
+> > on half-truths and "everybody knows" assumptions.  For instance,
+> >
+> Again, "accusations" is a bit strong.  I thought the discussion was
+> about the technical merits and costs of various features and various
+> ways to implement them, particularly when this product must compete
+> for installed base with other solutions.  Being coldly realistic about
+> what a product's strengths and weaknesses are is, again, just good
+> business.  Sun Tzu's comment about knowing the enemy and yourself
+> seems appropriate here...
+
+No, you're wrong.  Postgresql doesn't have to compete.  It doesn't have to 
+win.  it doesn't need a marketing department.  All those things are nice, 
+and I'm glad if it does them, but doesn't HAVE TO.  Postgresql has to 
+work.  It does that well.
+
+Postgresql CAN compete if someone wants to put the effort into competing, 
+but it isn't a priority for me.  Working is the priority, and if other 
+people aren't smart enough to test Postgresql to see if it works for them, 
+all the better, I keep my edge by having a near zero cost database engine, 
+while the competition spends money on MSSQL or Oracle.
+
+Tom and Andrew ARE coldly realistic about the shortcomings of postgresql.  
+It has issues, and things that need to be fixed.  It needs more coders.  
+It doesn't need every feature that Oracle or DB2 have.  Heck some of their 
+"features" would be considered a mis-feature in the Postgresql world.
+
+> > > I'll mention thread support in passing,
+> >
+> > there's actually a FAQ item about thread support, because in the
+> > opinion of those who have looked at it, the cost is just not worth
+> > the benefit.  If you have evidence to the contrary (specific
+> > evidence, please, for this application), and have already read all
+> the
+> > previous discussion of the topic, perhaps people would be interested
+> in
+> > opening that debate again (though I have my doubts).
+> >
+> Zeus had a performance ceiling roughly 3x that of Apache when Zeus
+> supported threading as well as pre-forking and Apache only supported
+> pre forking.  The Apache folks now support both.  DB2, Oracle, and SQL
+> Server all use threads.  Etc, etc.
+
+Yes, and if you configured your apache server to have 20 or 30 spare 
+servers, in the real world, it was nearly neck and neck to Zeus, but since 
+Zeus cost like $3,000 a copy, it is still cheaper to just overwhelm it 
+with more servers running apache than to use zeus.
+
+> That's an awful lot of very bright programmers and some serious $$
+> voting that threads are worth it.  
+
+For THAT application.  for what a web server does, threads can be very 
+useful, even useful enough to put up with the problems created by running 
+threads on multiple threading libs on different OSes.  
+
+Let me ask you, if Zeus scrams and crashes out, and it's installed 
+properly so it just comes right back up, how much data can you lose?
+
+If Postgresql scrams and crashes out, how much data can you lost?
+
+> Given all that, if PostgreSQL
+> specific
+> thread support is =not= showing itself to be a win that's an
+> unexpected
+> enough outcome that we should be asking hard questions as to why not.
+
+There HAS been testing on threads in Postgresql.  It has been covered to 
+death.  The fact that you're still arguing proves you likely haven't read 
+the archive (google has it back to way back when, use that to look it up) 
+about this subject.
+
+Threads COULD help on multi-sorted results, and a few other areas, but the 
+increase in performance really wasn't that great for 95% of all the cases, 
+and for the 5% it was, simple query planner improvements have provided far 
+greater performance increases.
+
+The problem with threading is that we can either use the one process -> 
+many thread design, which I personally don't trust for something like a 
+database, or a process per backend connection which can run 
+multi-threaded.  This scenario makes Postgresql just as stable and 
+reliable as it was as a multi-process app, but allows threaded performance 
+in certain areas of the backend that are parallelizable to run in parallel 
+on multi-CPU systems.
+
+the gain, again, is minimal, and on a system with many users accessing it, 
+there is NO real world gain.
+
+> At their core, threads are a context switching efficiency tweak.
+
+Except that on the two OSes which Postgresql runs on the most, threads are 
+really no faster than processes.  In the Linux kernel, the only real 
+difference is how the OS treats them, creation, destruction of threads 
+versus processes is virtually identical there.
+
+> Certainly it's =possible= that threads have nothing to offer
+> PostgreSQL, but IMHO it's not =probable=.  Just another thing for me
+> to add to my TODO heap for looking at...
+
+It's been tested, it didn't help a lot, and it made it MUCH harder to 
+maintain, as threads in Linux are handled by a different lib than in say 
+Solaris, or Windows or any other OS.  I.e. you can't guarantee the thread 
+lib you need will be there, and that there are no bugs.  MySQL still has 
+thread bug issues pop up, most of which are in the thread libs themselves.
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M37865@postgresql.org Fri Apr 11 17:34:21 2003
+Return-path: <pgsql-hackers-owner+M37865@postgresql.org>
+Received: from relay1.pgsql.com (relay1.pgsql.com [64.49.215.129])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h3BLYIv28485
+	for <pgman@candle.pha.pa.us>; Fri, 11 Apr 2003 17:34:19 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by relay1.pgsql.com (Postfix) with ESMTP
+	id 0AF036F77ED; Fri, 11 Apr 2003 17:34:19 -0400 (EDT)
+X-Original-To: pgsql-hackers@postgresql.org
+Received: from spampd.localdomain (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id EBB41476323
+	for <pgsql-hackers@postgresql.org>; Fri, 11 Apr 2003 17:33:02 -0400 (EDT)
+Received: from filer (12-234-86-219.client.attbi.com [12.234.86.219])
+	by postgresql.org (Postfix) with ESMTP id CED7D4762E1
+	for <pgsql-hackers@postgresql.org>; Fri, 11 Apr 2003 17:32:57 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+  (uid 1000)
+  by filer with local; Fri, 11 Apr 2003 14:32:59 -0700
+Date: Fri, 11 Apr 2003 14:32:59 -0700
+From: Kevin Brown <kevin@sysexperts.com>
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Anyone working on better transaction locking?
+Message-ID: <20030411213259.GU1833@filer>
+Mail-Followup-To: Kevin Brown <kevin@sysexperts.com>,
+	pgsql-hackers@postgresql.org
+References: <20030409170926.GH2255@libertyrms.info> <eS0la.16229$ey1.1398978@newsread1.prod.itd.earthlink.net>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+In-Reply-To: <eS0la.16229$ey1.1398978@newsread1.prod.itd.earthlink.net>
+User-Agent: Mutt/1.4i
+Organization: Frobozzco International
+X-Spam-Status: No, hits=-38.0 required=5.0
+	tests=BAYES_10,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+       REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_MUTT
+	autolearn=ham	version=2.50
+X-Spam-Checker-Version: SpamAssassin 2.50 (1.173-2003-02-20-exp)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Ron Peacetree wrote:
+> Zeus had a performance ceiling roughly 3x that of Apache when Zeus
+> supported threading as well as pre-forking and Apache only supported
+> pre forking.  The Apache folks now support both.  DB2, Oracle, and SQL
+> Server all use threads.  Etc, etc.
+
+You can't use Apache as an example of why you should thread a database
+engine, except for the cases where the database is used much like the
+web server is: for numerous short transactions.
+
+> That's an awful lot of very bright programmers and some serious $$
+> voting that threads are worth it.  Given all that, if PostgreSQL
+> specific thread support is =not= showing itself to be a win that's
+> an unexpected enough outcome that we should be asking hard questions
+> as to why not.
+
+It's not that there won't be any performance benefits to be had from
+threading (there surely will, on some platforms), but gaining those
+benefits comes at a very high development and maintenance cost.  You
+lose a *lot* of robustness when all of your threads share the same
+memory space, and make yourself vulnerable to classes of failures that
+simply don't happen when you don't have shared memory space.
+
+PostgreSQL is a compromise in this regard: it *does* share memory, but
+it only shares memory that has to be shared, and nothing else.  To get
+the benefits of full-fledged threads, though, requires that all memory
+be shared (otherwise the OS has to tweak the page tables whenever it
+switches contexts between your threads).
+
+> At their core, threads are a context switching efficiency tweak.
+
+This is the heart of the matter.  Context switching is an operating
+system problem, and *that* is where the optimization belongs.  Threads
+exist in large part because operating system vendors didn't bother to
+do a good job of optimizing process context switching and
+creation/destruction.
+
+Under Linux, from what I've read, process creation/destruction and
+context switching happens almost as fast as thread context switching
+on other operating systems (Windows in particular, if I'm not
+mistaken).
+
+> Since DB's switch context a lot under many circumstances, threads
+> should be a win under such circumstances.  At the least, it should be
+> helpful in situations where we have multiple CPUs to split query
+> execution between.
+
+This is true, but I see little reason that we can't do the same thing
+using fork()ed processes and shared memory instead.
+
+There is context switching within databases, to be sure, but I think
+you'll be hard pressed to demonstrate that it is anything more than an
+insignificant fraction of the total overhead incurred by the database.
+I strongly suspect that much larger gains are to be had by optimizing
+other areas of the database, such as the planner, the storage manager
+(using mmap for file handling may prove useful here), the shared
+memory system (mmap may be faster than System V style shared memory),
+etc.
+
+The big overhead in the process model on most platforms is in creation
+and destruction of processes.  PostgreSQL has a relatively high
+connection startup cost.  But there are ways of dealing with this
+problem other than threading, namely the use of a connection caching
+middleware layer.  Such layers exist for databases other than
+PostgreSQL, so the high cost of fielding and setting up a database
+connection is *not* unique to PostgreSQL ... which suggests that while
+threading may help, it doesn't help *enough*.
+
+I'd rather see some development work go into a connection caching
+process that understands the PostgreSQL wire protocol well enough to
+look like a PostgreSQL backend to connecting processes, rather than
+see a much larger amount of effort be spent on converting PostgreSQL
+to a threaded architecture (and then discover that connection caching
+is still needed anyway).
+
+> Certainly it's =possible= that threads have nothing to offer
+> PostgreSQL, but IMHO it's not =probable=.  Just another thing for me
+> to add to my TODO heap for looking at...
+
+It's not that threads don't have anything to offer.  It's that the
+costs associated with them are high enough that it's not at all clear
+that they're an overall win.
+
+
+-- 
+Kevin Brown					      kevin@sysexperts.com
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M37876@postgresql.org Sat Apr 12 06:56:17 2003
+Return-path: <pgsql-hackers-owner+M37876@postgresql.org>
+Received: from relay3.pgsql.com (relay3.pgsql.com [64.117.224.149])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h3CAuDS20700
+	for <pgman@candle.pha.pa.us>; Sat, 12 Apr 2003 06:56:15 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by relay3.pgsql.com (Postfix) with ESMTP
+	id 35797EA81FF; Sat, 12 Apr 2003 10:55:59 +0000 (GMT)
+X-Original-To: pgsql-hackers@postgresql.org
+Received: from spampd.localdomain (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 7393E4762EF
+	for <pgsql-hackers@postgresql.org>; Sat, 12 Apr 2003 06:54:48 -0400 (EDT)
+Received: from filer (12-234-86-219.client.attbi.com [12.234.86.219])
+	by postgresql.org (Postfix) with ESMTP id 423294762E1
+	for <pgsql-hackers@postgresql.org>; Sat, 12 Apr 2003 06:54:44 -0400 (EDT)
+Received: from localhost (localhost [127.0.0.1])
+  (uid 1000)
+  by filer with local; Sat, 12 Apr 2003 03:54:52 -0700
+Date: Sat, 12 Apr 2003 03:54:52 -0700
+From: Kevin Brown <kevin@sysexperts.com>
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Anyone working on better transaction locking?
+Message-ID: <20030412105452.GV1833@filer>
+Mail-Followup-To: Kevin Brown <kevin@sysexperts.com>,
+	pgsql-hackers@postgresql.org
+References: <20030409170926.GH2255@libertyrms.info> <eS0la.16229$ey1.1398978@newsread1.prod.itd.earthlink.net> <20030411213259.GU1833@filer> <200304121221.12377.shridhar_daithankar@nospam.persistent.co.in>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+In-Reply-To: <200304121221.12377.shridhar_daithankar@nospam.persistent.co.in>
+User-Agent: Mutt/1.4i
+Organization: Frobozzco International
+X-Spam-Status: No, hits=-39.4 required=5.0
+	tests=BAYES_01,EMAIL_ATTRIBUTION,IN_REP_TO,QUOTED_EMAIL_TEXT,
+       QUOTE_TWICE_1,REFERENCES,REPLY_WITH_QUOTES,USER_AGENT_MUTT
+	autolearn=ham	version=2.50
+X-Spam-Checker-Version: SpamAssassin 2.50 (1.173-2003-02-20-exp)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Shridhar Daithankar wrote:
+> Apache does too many things to be a speed daemon and what it offers
+> is pretty impressive from performance POV.
+>
+> But database is not webserver. It is not suppose to handle tons of
+> concurrent requests. That is a fundamental difference.
+
+I'm not sure I necessarily agree with this.  A database is just a
+tool, a means of reliably storing information in such a way that it
+can be retrieved quickly.  Whether or not it "should" handle lots of
+concurrent requests is a question that the person trying to use it
+must answer.
+
+A better answer is that a database engine that can handle lots of
+concurrent requests can also handle a smaller number, but not vice
+versa.  So it's clearly an advantage to have a database engine that
+can handle lots of concurrent requests because such an engine can be
+applied to a larger number of problems.  That is, of course, assuming
+that all other things are equal...
+
+There are situations in which a database would have to handle a lot of
+concurrent requests.  Handling ATM transactions over a large area is
+one such situation.  A database with current weather information might
+be another, if it is actively queried by clients all over the country.
+Acting as a mail store for a large organization is another.  And, of
+course, acting as a filesystem is definitely another.  :-)
+
+> Well. Threading does not necessarily imply one thread per connection
+> model. Threading can be used to make CPU work during I/O and taking
+> advantage of SMP for things like sort etc. This is especially true
+> for 2.4.x linux kernels where async I/O can not be used for threaded
+> apps. as threads and signal do not mix together well.
+
+This is true, but whether you choose to limit the use of threads to a
+few specific situations or use them throughout the database, the
+dangers and difficulties faced by the developers when using threads
+will be the same.
+
+> One connection per thread is not a good model for postgresql since
+> it has already built a robust product around process paradigm. If I
+> have to start a new database project today, a mix of process+thread
+> is what I would choose bu postgresql is not in same stage of life.
+
+Certainly there are situations for which it would be advantageous to
+have multiple concurrent actions happening on behalf of a single
+connection, as you say.  But that doesn't automatically mean that a
+thread is the best overall solution.  On systems such as Linux that
+have fast process handling, processes are almost certainly the way to
+go.  On other systems such as Solaris or Windows, threads might be the
+right answer (on Windows they might be the *only* answer).  But my
+argument here is simple: the responsibility of optimizing process
+handling belongs to the maintainers of the OS.  Application developers
+shouldn't have to worry about this stuff.
+
+Of course, back here in the real world they *do* have to worry about
+this stuff, and that's why it's important to quantify the problem.
+It's not sufficient to say that "processes are slow and threads are
+fast".  Processes on the target platform may well be slow relative to
+other systems (and relative to threads).  But the question is: for the
+problem being solved, how much overhead does process handling
+represent relative to the total amount of overhead the solution itself
+incurs?
+
+For instance, if we're talking about addressing the problem of
+distributing sorts across multiple CPUs, the amount of overhead
+involved in doing disk activity while sorting could easily swamp, in
+the typical case, the overhead involved in creating parallel processes
+to do the sorts themselves.  And if that's the case, you may as well
+gain the benefits of using full-fledged processes rather than deal
+with the problems that come with the use of threads -- because the
+gains to be found by using threads will be small in relative terms.
+
+> > > At their core, threads are a context switching efficiency tweak.
+> >
+> > This is the heart of the matter.  Context switching is an operating
+> > system problem, and *that* is where the optimization belongs.  Threads
+> > exist in large part because operating system vendors didn't bother to
+> > do a good job of optimizing process context switching and
+> > creation/destruction.
+> 
+> But why would a database need a tons of context switches if it is
+> not supposed to service loads to request simaltenously? If there are
+> 50 concurrent connections, how much context switching overhead is
+> involved regardless of amount of work done in a single connection? 
+> Remeber that database state is maintened in shared memory. It does
+> not take a context switch to access it.
+
+If there are 50 concurrent connections with one process per
+connection, then there are 50 database processes.  The context switch
+overhead is incurred whenever the current process blocks (or exhausts
+its time slice) and the OS activates a different process.  Since
+database handling is generally rather I/O intensive as services go,
+relatively few of those 50 processes are likely to be in a runnable
+state, so I would expect the overall hit from context switching to be
+rather low -- I'd expect the I/O subsystem to fall over well before
+context switching became a real issue.
+
+Of course, all of that is independent of whether or not the database
+can handle a lot of simultaneous requests.
+
+> > Under Linux, from what I've read, process creation/destruction and
+> > context switching happens almost as fast as thread context switching
+> > on other operating systems (Windows in particular, if I'm not
+> > mistaken).
+> 
+> I hear solaris also has very heavy processes. But postgresql has
+> other issues with solaris as well.
+
+Yeah, I didn't want to mention Solaris because I haven't kept up with
+it and thought that perhaps they had fixed this...
+
+
+-- 
+Kevin Brown					      kevin@sysexperts.com
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M37883@postgresql.org Sat Apr 12 16:09:19 2003
+Return-path: <pgsql-hackers-owner+M37883@postgresql.org>
+Received: from relay1.pgsql.com (relay1.pgsql.com [64.49.215.129])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id h3CK9HS03520
+	for <pgman@candle.pha.pa.us>; Sat, 12 Apr 2003 16:09:18 -0400 (EDT)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by relay1.pgsql.com (Postfix) with ESMTP
+	id 507626F768B; Sat, 12 Apr 2003 16:09:01 -0400 (EDT)
+X-Original-To: pgsql-hackers@postgresql.org
+Received: from spampd.localdomain (postgresql.org [64.49.215.8])
+	by postgresql.org (Postfix) with ESMTP id 06543475AE4
+	for <pgsql-hackers@postgresql.org>; Sat, 12 Apr 2003 16:08:03 -0400 (EDT)
+Received: from mail.gmx.net (mail.gmx.net [213.165.65.60])
+	by postgresql.org (Postfix) with SMTP id C6DC347580B
+	for <pgsql-hackers@postgresql.org>; Sat, 12 Apr 2003 16:08:01 -0400 (EDT)
+Received: (qmail 31386 invoked by uid 65534); 12 Apr 2003 20:08:13 -0000
+Received: from chello062178186201.1.15.tuwien.teleweb.at (EHLO beeblebrox) (62.178.186.201)
+  by mail.gmx.net (mp001-rz3) with SMTP; 12 Apr 2003 22:08:13 +0200
+Message-ID: <01cc01c3012f$526aaf80$3201a8c0@beeblebrox>
+From: "Michael Paesold" <mpaesold@gmx.at>
+To: "Neil Conway" <neilc@samurai.com>, "Kevin Brown" <kevin@sysexperts.com>
+cc: "PostgreSQL Hackers" <pgsql-hackers@postgresql.org>
+References: <20030409170926.GH2255@libertyrms.info> <eS0la.16229$ey1.1398978@newsread1.prod.itd.earthlink.net> <20030411213259.GU1833@filer> <1050175777.392.13.camel@tokyo>
+Subject: Re: [HACKERS] Anyone working on better transaction locking?
+Date: Sat, 12 Apr 2003 22:08:40 +0200
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="Windows-1252"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook Express 6.00.2800.1106
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2800.1106
+X-Spam-Status: No, hits=-25.8 required=5.0
+	tests=BAYES_20,EMAIL_ATTRIBUTION,QUOTED_EMAIL_TEXT,REFERENCES,
+       REPLY_WITH_QUOTES
+	autolearn=ham	version=2.50
+X-Spam-Checker-Version: SpamAssassin 2.50 (1.173-2003-02-20-exp)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Neil Conway wrote:
+
+> Furthermore, IIRC PostgreSQL's relatively slow connection creation time
+> has as much to do with other per-backend initialization work as it does
+> with the time to actually fork() a new backend. If there is interest in
+> optimizing backend startup time, my guess would be that there is plenty
+> of room for improvement without requiring the replacement of processes
+> with threads.
+
+I see there is a whole TODO Chapter devoted to the topic. There is the idea
+of pre-forked and persistent backends. That would be very useful in an
+environment where it's quite hard to use connection pooling. We are
+currently working on a mail system for a free webmail. The mda (mail
+delivery agent) written in C connects to the pg database to do some queries
+everytime a new mail comes in. I didn't find a solution for connection
+pooling yet.
+
+About the TODO items, apache has a nice description of their accept()
+serialization:
+http://httpd.apache.org/docs-2.0/misc/perf-tuning.html
+
+Perhaps this could be useful if someone decided to start implementing those
+features.
+
+Regards,
+Michael Paesold
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
