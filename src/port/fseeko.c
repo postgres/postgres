@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.1 2002/10/23 20:56:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.2 2002/10/23 21:16:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifdef __bsdi__
 
+#include <pthread.h>
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -25,7 +26,7 @@
  *	off_t is an arithmetic type, but not necessarily integral,
  *	while fpos_t might be neither.
  *
- *	I don't think this is thread-safe.
+ *	This is thread-safe using flockfile/funlockfile.
  */
 
 int
@@ -37,11 +38,19 @@ fseeko(FILE *stream, off_t offset, int whence)
 	switch (whence)
 	{
 		case SEEK_CUR:
+			flockfile(stream);
 			if (fgetpos(stream, &floc) != 0)
+			{
+				funlockfile(stream);
 				return -1;
+			}
 			floc += offset;
 			if (fsetpos(stream, &floc) != 0)
+			{
+				funlockfile(stream);
 				return -1;
+			}
+			flockfile(stream);
 			return 0;
 			break;
 		case SEEK_SET:
@@ -50,11 +59,19 @@ fseeko(FILE *stream, off_t offset, int whence)
 			return 0;
 			break;
 		case SEEK_END:
+			flockfile(stream);
 			if (fstat(fileno(stream), &filestat) != 0)
+			{
+				funlockfile(stream);
 				return -1;
+			}
 			floc = filestat.st_size;
 			if (fsetpos(stream, &floc) != 0)
+			{
+				funlockfile(stream);
 				return -1;
+			}
+			funlockfile(stream);
 			return 0;
 			break;
 		default:
