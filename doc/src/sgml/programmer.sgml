@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.17 1999/06/03 04:21:49 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.18 1999/06/23 06:21:19 thomas Exp $
 
 Postgres Programmer's Guide.
-- thomas 1998-10-27
 
 $Log: programmer.sgml,v $
-Revision 1.17  1999/06/03 04:21:49  thomas
-Markup changes for v6.5 release.
-Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
+Revision 1.18  1999/06/23 06:21:19  thomas
+Remove User's Guide entities since they were not being used.
 
 Revision 1.16  1999/05/26 17:30:30  thomas
 Add chapters on CVS access, MVCC, SQL theory to the docs.
@@ -16,38 +14,14 @@ Update most references to Postgres version numbers to 6.5,
  *except* for the porting list which will require a report
  from a successful installation to be updated.
 
-Revision 1.15  1999/05/22 02:27:24  thomas
-Finish initial markup of cvs.sgml, and include it in the programmer's guide
- and the integrated doc. Clean up other markup.
-
-Revision 1.14  1999/05/20 05:39:27  thomas
-Rearrange and consolidate the Admin Guide.
-Add reference pages for utilities and remove standalone chapters for same.
-Add material for an appendix on date/time properties, but not yet
- integrated with the User's Guide.
-Break up the former chapter on pg_options
- into Admin and Programmer's Guides.
-
-Revision 1.13  1999/04/08 13:28:22  thomas
-Add emacs editor hints to bottom of file.
-
 Revision 1.12  1999/02/13 03:54:51  thomas
 Re-enable arch-dev.sgml now that it has new information from Stefan's
  Master's Thesis.
-
-Revision 1.11  1999/01/07 03:02:27  thomas
-Remove mention of a couple of introductory chapters
- which are not used here.
 
 Revision 1.10  1998/10/31 09:36:36  thomas
 Cleanup for v6.4 release.
 Make new file current.sgml to hold release info for the current release.
  Should be moved to release.sgml before filling with next release info.
-
-Revision 1.9  1998/10/30 19:37:11  thomas
-Minor editing and markup changes as a result of preparing the Postscript
- documentation for v6.4.
-Bigger updates to the installation instructions (install and config).
 
 -->
 
@@ -59,26 +33,6 @@ Bigger updates to the installation instructions (install and config).
 <!entity legal    SYSTEM "legal.sgml">
 <!entity notation SYSTEM "notation.sgml">
 <!entity y2k      SYSTEM "y2k.sgml">
-
-<!entity arch     SYSTEM "arch.sgml">
-<!entity query    SYSTEM "query.sgml">
-
-<!entity advanced SYSTEM "advanced.sgml">
-<!entity environ  SYSTEM "environ.sgml">
-<!entity manage   SYSTEM "manage.sgml">
-<!entity datatype SYSTEM "datatype.sgml">
-<!entity array    SYSTEM "array.sgml">
-<!entity inherit  SYSTEM "inherit.sgml">
-<!entity query-ug SYSTEM "query-ug.sgml">
-<!entity storage  SYSTEM "storage.sgml">
-<!entity psql     SYSTEM "psql.sgml">
-<!entity pgaccess SYSTEM "pgaccess.sgml">
-
-<!entity install  SYSTEM "install.sgml">
-<!entity recovery SYSTEM "recovery.sgml">
-<!entity regress  SYSTEM "regress.sgml">
-<!entity ports    SYSTEM "ports.sgml">
-<!entity release  SYSTEM "release.sgml">
 
 <!entity intro-pg SYSTEM "intro-pg.sgml">
 <!entity arch-pg  SYSTEM "arch-pg.sgml">
@@ -118,27 +72,27 @@ Bigger updates to the installation instructions (install and config).
 <!entity signals  SYSTEM "signals.sgml">
 ]>
 
-<Book Id="programmer">
+<book id="programmer">
 
 <!-- Title information -->
 
- <Title>PostgreSQL Programmer's Guide</Title>
- <BookInfo>
-  <ReleaseInfo>Covering v6.5 for general release</ReleaseInfo>
-  <BookBiblio>
-   <AuthorGroup>
-    <CorpAuthor>The PostgreSQL Development Team</CorpAuthor>
-   </AuthorGroup>
+ <title>PostgreSQL Programmer's Guide</title>
+ <bookinfo>
+  <releaseinfo>Covering v6.5 for general release</releaseinfo>
+  <bookbiblio>
+   <authorgroup>
+    <corpauthor>The PostgreSQL Development Team</corpauthor>
+   </authorgroup>
 <!-- editor in authorgroup is not supported
     <AuthorGroup>
 -->
-   <Editor>
-    <FirstName>Thomas</FirstName>
-    <SurName>Lockhart</SurName>
-    <Affiliation>
-     <OrgName>Caltech/JPL</OrgName>
-    </Affiliation>
-   </Editor>
+   <editor>
+    <firstname>Thomas</firstname>
+    <surname>Lockhart</surname>
+    <affiliation>
+     <orgname>Caltech/JPL</orgname>
+    </affiliation>
+   </editor>
 <!--
     </AuthorGroup>
 -->
@@ -147,17 +101,17 @@ Bigger updates to the installation instructions (install and config).
     <AuthorInitials>TGL</AuthorInitials>
 -->
 
-   <Date>(last updated 1999-06-01)</Date>
-  </BookBiblio>
+   <date>(last updated 1999-06-19)</date>
+  </bookbiblio>
 
-  <LegalNotice>
-   <Para>
-    <ProductName>PostgreSQL</ProductName> is Copyright &copy; 1996-9
+  <legalnotice>
+   <para>
+    <productname>PostgreSQL</productname> is Copyright &copy; 1996-9
     by the Postgres Global Development Group.
-   </Para>
-  </LegalNotice>
+   </para>
+  </legalnotice>
 
- </BookInfo>
+ </bookinfo>
 
 <!--
 <TOC> </TOC>
@@ -172,20 +126,20 @@ Your name here...
 </Dedication>
 -->
 
- <Preface id="preface">
-  <Title>Summary</Title>
+ <preface id="preface">
+  <title>Summary</title>
 
-  <Para>
-   <ProductName>Postgres</ProductName>, 
+  <para>
+   <productname>Postgres</productname>, 
    developed originally in the UC Berkeley Computer Science Department,
    pioneered many of the object-relational concepts
    now becoming available in some commercial databases.
    It provides SQL92/SQL3 language support,
    transaction integrity, and type extensibility.
-   <ProductName>PostgreSQL</ProductName> is a public-domain, 
+   <productname>PostgreSQL</productname> is a public-domain, 
    open source descendant of this original Berkeley code.
-  </Para>
- </Preface>
+  </para>
+ </preface>
 
   &intro-pg;
   &arch-pg;
@@ -244,7 +198,7 @@ Disable it until we put in some info.
 </index>
 -->
 
-</Book>
+</book>
 
 <!-- Keep this comment at the end of the file
 Local variables:
