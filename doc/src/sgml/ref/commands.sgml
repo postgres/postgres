@@ -27,6 +27,10 @@
 &declare;
 &delete;
 &dropFunction;
+&explain;
+&fetch;
+&grant;
+&insert;
 &listen;
 &load;
 &lock;

@@ -1,0 +1,331 @@
+<REFENTRY ID="SQL-FETCH">
+<REFMETA>
+<REFENTRYTITLE>
+FETCH
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+FETCH
+</REFNAME>
+<REFPURPOSE>
+Gets rows using a cursor
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-09-01</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+FETCH [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] { [ <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE> | ALL ] } { IN | FROM } <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-FETCH-1">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Selector define fetch direction and it can be one
+         the following:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+FORWARD
+</TERM>
+<LISTITEM>
+<PARA>
+fetch next row(s), it is assumed by default
+                       if selector is omitted.
+
+<VARLISTENTRY>
+<TERM>
+BACKWARD
+</TERM>
+<LISTITEM>
+<PARA>
+fetch previous row(s).
+
+</VARIABLELIST>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+An unsigned integer that specify how many rows to fetch.
+
+<VARLISTENTRY>
+<TERM>
+ALL
+</TERM>
+<LISTITEM>
+<PARA>
+Retrieve all remaining rows.
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+An open cursor's name.
+
+</variablelist>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-FETCH-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+FETCH returns the results of the query defined by the specified cursor.
+The following messages will be returned if the query fails:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+NOTICE:  PerformPortalFetch: portal "<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>" not found
+</TERM>
+<LISTITEM>
+<PARA>
+If <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE> is not previously declared.
+The cursor must be declared within a transaction block.
+
+</variablelist>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-FETCH-1">
+<REFSECT1INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   FETCH allows a user to retrieve rows using a cursor.
+   The number of rows retrieved is specified by #.
+   If the number of rows remaining in the cursor is less
+   than #, then only those available are fetched.
+   Substituting the keyword ALL in place of a number will
+   cause all remaining rows in the cursor to be retrieved.
+   Instances may be fetched in both forward and backward
+   directions. The default direction is forward.
+
+<para>
+   Once all rows are fetched, every other fetch access returns
+   no rows.
+
+<para>
+   Updating data in a cursor is not supported by 
+<productname>Postgres</productname>,
+   because mapping cursor updates back to base tables is
+not generally possible, similarly to VIEW updates. Consequently,
+   users must issue explicit replace commands to update data.
+
+<para>
+   Cursors may only be used inside of transactions because
+   the data that they store spans multiple user queries.
+
+<REFSECT2 ID="R2-SQL-FETCH-3">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<PARA>
+   Refer to MOVE statements to change cursor position.
+   Refer to DECLARE statements to declare a cursor.
+   Refer to BEGIN WORK, COMMIT WORK, ROLLBACK WORK statements
+     for further information about transactions.
+
+</REFSECT2>
+
+<REFSECT1 ID="R1-SQL-FETCH-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+<ProgramListing>
+   --set up and use a cursor:
+   --
+   BEGIN WORK;
+     DECLARE liahona CURSOR
+        FOR SELECT * FROM films;
+
+   --Fetch first 5 rows in the cursor liahona:
+   --
+     FETCH FORWARD 5 IN liahona;
+
+     code |title                  |did| date_prod|kind      |len
+     -----+-----------------------+---+----------+----------+------
+     BL101|The Third Man          |101|1949-12-23|Drama     | 01:44
+     BL102|The African Queen      |101|1951-08-11|Romantic  | 01:43
+     JL201|Une Femme est une Femme|102|1961-03-12|Romantic  | 01:25
+     P_301|Vertigo                |103|1958-11-14|Action    | 02:08
+     P_302|Becket                 |103|1964-02-03|Drama     | 02:28
+ 
+
+   --Fetch previous row:
+   --
+     FETCH BACKWARD 1 IN liahona;
+
+     code |title                  |did| date_prod|kind      |len
+     -----+-----------------------+---+----------+----------+------
+     P_301|Vertigo                |103|1958-11-14|Action    | 02:08
+
+   -- close the cursor and commit work:
+   --
+     CLOSE liahona;
+   COMMIT WORK;
+</ProgramListing>
+        
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-FETCH-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-FETCH-4">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   SQL92 specifies some additional capabilities for FETCH statement.
+
+<synopsis>
+FETCH [ [ <REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE> ] FROM ] <REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+    INTO :<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> [, ...]
+</synopsis>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">selector</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Defines the fetch direction with one of the following values:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+NEXT
+</TERM>
+<LISTITEM>
+<PARA>
+Fetch next row, it is assumed by default
+                       if selector is omitted.
+                       This is the only legal selector unless cursor is
+                       declared with the SCROLL option.
+
+<VARLISTENTRY>
+<TERM>
+PRIOR
+</TERM>
+<LISTITEM>
+<PARA>
+Fetch previous row.
+
+<VARLISTENTRY>
+<TERM>
+FIRST
+</TERM>
+<LISTITEM>
+<PARA>
+Fetch first row.
+
+<VARLISTENTRY>
+<TERM>
+LAST
+</TERM>
+<LISTITEM>
+<PARA>
+Fetch last row.
+
+<VARLISTENTRY>
+<TERM>
+ABSOLUTE <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Refers to the <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>th row
+ in the table associated with the cursor.
+
+<VARLISTENTRY>
+<TERM>
+RELATIVE <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Refers to the <REPLACEABLE CLASS="PARAMETER">#</REPLACEABLE>th row
+ relative to the cursor position.
+A negative number is equivalent to reversing the sense of the FORWARD and
+ BACKWARD keywords.
+
+</variablelist>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">cursor</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+A cursor previously defined in the same transaction block using BEGIN and DECLARE.
+
+<VARLISTENTRY>
+<TERM>
+:<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Target host variable(s).
+
+</variablelist>
+
+</REFENTRY>
+
+<!--
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+<ReturnValue></ReturnValue>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>&bull;
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+<PARA>
+</PARA>
+-->

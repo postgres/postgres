@@ -1,0 +1,422 @@
+<REFENTRY ID="SQL-GRANT">
+<REFMETA>
+<REFENTRYTITLE>
+GRANT
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+GRANT
+</REFNAME>
+<REFPURPOSE>
+Grants access privilege to a user, a group or all users
+</REFPURPOSE>
+
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-04-15</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+GRANT <REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE> [, ...]
+    ON <REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE> [, ...]
+    TO { PUBLIC | GROUP <REPLACEABLE CLASS="PARAMETER">group</REPLACEABLE> | <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE> }
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-GRANT-1">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+The possible privileges are:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+SELECT
+</TERM>
+<LISTITEM>
+<PARA>
+Access all of the columns of a specific
+                        table/view.
+
+<VARLISTENTRY>
+<TERM>
+INSERT
+</TERM>
+<LISTITEM>
+<PARA>
+Insert data into all columns of a
+                        specific table.
+
+<VARLISTENTRY>
+<TERM>
+UPDATE
+</TERM>
+<LISTITEM>
+<PARA>
+Update all columns of a specific
+                        table.
+
+<VARLISTENTRY>
+<TERM>
+DELETE
+</TERM>
+<LISTITEM>
+<PARA>
+Delete rows from a specific table.
+
+<VARLISTENTRY>
+<TERM>
+RULE
+</TERM>
+<LISTITEM>
+<PARA>
+Define rules on the table/view
+                        (See CREATE RULE statement).
+
+<VARLISTENTRY>
+<TERM>
+ALL
+</TERM>
+<LISTITEM>
+<PARA>
+Grant all privileges.
+
+</VARIABLELIST>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+The name of an object to which to grant access.
+          The possible objects are:
+<simplelist>
+<member>
+              table 
+<member>
+              view 
+<member>
+              sequence 
+<member>
+              index
+</simplelist>
+
+<VARLISTENTRY>
+<TERM>
+PUBLIC
+</TERM>
+<LISTITEM>
+<PARA>
+A short form representing all users.
+
+<VARLISTENTRY>
+<TERM>
+GROUP <REPLACEABLE CLASS="PARAMETER">group</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+A <REPLACEABLE CLASS="PARAMETER">group</REPLACEABLE> to whom to grant privileges.
+In the current release, the group must be created explicitly as described below.
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+The name of a user to whom grant privileges. PUBLIC is a short form
+representing all users.
+
+</VARIABLELIST>
+
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-GRANT-2">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+CHANGE
+</TERM>
+<LISTITEM>
+<PARA>
+Message returned if successful.
+
+<VARLISTENTRY>
+<TERM>
+ERROR:  ChangeAcl: class "<REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE>"
+ not found
+</TERM>
+<LISTITEM>
+<PARA>
+Message returned if the specified object is not available or 
+if it is impossible
+          to give privileges to the specified group or users.
+
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-GRANT-1">
+<REFSECT1INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   GRANT allows the creator of an object to give specific permissions to
+   all users (PUBLIC) or to a certain user or group. 
+   Users other than the creator don't have any access permission 
+   unless the creator GRANTs permissions, after the object
+   is created.
+
+<para>
+   Once a user has a privilege on an object, he is enabled to exercise
+that privilege.
+There is no need to GRANT privileges to the creator of 
+   an object, the creator automatically holds ALL privileges, and can 
+   also drop the object. 
+
+<REFSECT2 ID="R2-SQL-GRANT-3">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<PARA>
+Use the <command>psql \z</command> command
+ for further information about permissions 
+         on existing objects:
+<programlisting>
+   Database    = lusitania
+   +------------------+---------------------------------------------+
+   |  Relation        |        Grant/Revoke Permissions             |
+   +------------------+---------------------------------------------+
+   | mytable          | {"=rw","miriam=arwR","group todos=rw"}      |
+   +------------------+---------------------------------------------+
+   Legend:
+         uname=arwR -- privileges granted to a user
+   group gname=arwR -- privileges granted to a GROUP
+              =arwR -- privileges granted to PUBLIC
+
+                  r -- SELECT
+                  w -- UPDATE/DELETE
+                  a -- INSERT
+                  R -- RULE
+               arwR -- ALL
+</programlisting>
+
+<tip>
+<para>
+Currently, to create a GROUP you have to insert 
+          data manually into table pg_group as:
+<programlisting>
+          INSERT INTO pg_group VALUES ('todos');
+          CREATE USER miriam IN GROUP todos;
+</programlisting>
+   Refer to REVOKE statements to revoke access privileges.
+</tip>
+
+</REFSECT2>
+
+<REFSECT1 ID="R1-SQL-GRANT-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+<ProgramListing>
+   -- grant insert privilege to all users on table films:
+   --
+   GRANT INSERT ON films TO PUBLIC;
+</programlisting>
+
+<programlisting>
+   -- grant all privileges to user manuel on view kinds:
+   --
+   GRANT ALL ON kinds TO manuel;
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-GRANT-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-GRANT-4">
+<REFSECT2INFO>
+<DATE>1998-09-01</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   The SQL92 syntax for GRANT allows setting privileges 
+for individual columns
+within a table, and allows setting a privilege to grant
+the same privileges to others.
+
+<SYNOPSIS>
+GRANT <REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE> [, ...]
+    ON <REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE> [ ( <REPLACEABLE CLASS="PARAMETER">column</REPLACEABLE> [, ...] ) ] [, ...]
+    TO { PUBLIC | <REPLACEABLE CLASS="PARAMETER">username</REPLACEABLE> [, ...] }
+    [ WITH GRANT OPTION ]
+</SYNOPSIS>
+
+Fields are compatible with the those in the <acronym>Postgres</acronym>
+implementation, with the following additions:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE>
+SELECT
+</TERM>
+<LISTITEM>
+<PARA>
+<acronym>SQL92</acronym> permits additional privileges to be specified:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+REFERENCES
+</TERM>
+<LISTITEM>
+<PARA>
+Allowed to reference some or all of the columns of a specific
+table/view in integrity constraints.
+
+<VARLISTENTRY>
+<TERM>
+USAGE
+</TERM>
+<LISTITEM>
+<PARA>
+Allowed to use a domain, character set, collation
+                    or translation.
+                    If an object specifies anything other than a table/view,
+<REPLACEABLE CLASS="PARAMETER">privilege</REPLACEABLE>
+must specify only USAGE.
+
+</variablelist>
+ 
+<tip>
+<para>
+Currently, to grant privileges in <productname>Postgres</productname>
+to only few columns, you must
+           create a view having desired columns and then grant privileges
+           to that view.
+</tip>
+
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+
+<variablelist>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">object</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+<acronym>SQL92</acronym> allows an additional non-functional keyword:
+
+<simplelist>
+<member>
+[ TABLE ] table 
+</simplelist>
+
+<VARLISTENTRY>
+<TERM>
+CHARACTER SET
+</TERM>
+<LISTITEM>
+<PARA>
+Allowed to use the specified character set.
+
+<VARLISTENTRY>
+<TERM>
+COLLATION
+</TERM>
+<LISTITEM>
+<PARA>
+Allowed to use the specified collation sequence.
+
+<VARLISTENTRY>
+<TERM>
+TRANSLATION
+</TERM>
+<LISTITEM>
+<PARA>
+Allowed to use the specified character set translation.
+
+<VARLISTENTRY>
+<TERM>
+DOMAIN
+</TERM>
+<LISTITEM>
+<PARA>
+Allowed to use the specified domain.
+
+</variablelist>
+
+
+<VARLISTENTRY>
+<TERM>
+WITH GRANT OPTION
+</TERM>
+<LISTITEM>
+<PARA>
+Allowed to grant the same privilege to others.
+
+</variablelist>
+</REFENTRY>
+
+<!--
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+<ReturnValue></ReturnValue>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>&bull;
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+<PARA>
+</PARA>
+-->
