@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.87.2.1 2002/12/11 22:17:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.87.2.2 2002/12/14 18:49:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -845,16 +845,13 @@ load_hba(void)
 	file = AllocateFile(conf_file, "r");
 	if (file == NULL)
 	{
-		/* The open of the config file failed.	*/
-		elog(LOG, "load_hba: Unable to open authentication config file \"%s\": %m",
+		elog(FATAL,
+			 "load_hba: Unable to open authentication config file \"%s\": %m",
 			 conf_file);
-		pfree(conf_file);
 	}
-	else
-	{
-		hba_lines = tokenize_file(file);
-		FreeFile(file);
-	}
+
+	hba_lines = tokenize_file(file);
+	FreeFile(file);
 	pfree(conf_file);
 }
 
