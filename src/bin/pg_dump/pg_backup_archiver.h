@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.55 2003/12/08 16:39:05 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.56 2004/02/24 03:35:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -245,7 +245,6 @@ typedef struct _archiveHandle
 	/* these vars track state to avoid sending redundant SET commands */
 	char	   *currUser;		/* current username */
 	char	   *currSchema;		/* current schema */
-	bool		chk_fn_bodies;	/* current state of check_function_bodies */
 
 	void	   *lo_buf;
 	size_t		lo_buf_used;

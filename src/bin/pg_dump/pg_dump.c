@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.364 2004/02/12 23:41:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.365 2004/02/24 03:35:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,7 @@ static char *myFormatType(const char *typname, int32 typmod);
 static const char *fmtQualifiedId(const char *schema, const char *id);
 static int	dumpBlobs(Archive *AH, void *arg);
 static void dumpDatabase(Archive *AH);
+static void dumpEncoding(Archive *AH);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
 static const char *fmtCopyColumnList(const TableInfo *ti);
 static void do_sql_command(PGconn *conn, const char *query);
@@ -561,11 +562,14 @@ main(int argc, char **argv)
 	 * in a safe order.
 	 */
 
-	/* The database item is always first. */
+	/* First the special encoding entry. */
+	dumpEncoding(g_fout);
+
+	/* The database item is always second. */
 	if (!dataOnly)
 		dumpDatabase(g_fout);
 
-	/* Max OID is second. */
+	/* Max OID is next. */
 	if (oids == true)
 		setMaxOid(g_fout);
 
@@ -575,7 +579,7 @@ main(int argc, char **argv)
 		dumpDumpableObject(g_fout, dobjs[i]);
 	}
 
-	/* BLOBs are always last. */
+	/* BLOBs are always last (XXX is this right?) */
 	if (outputBlobs)
 		ArchiveEntry(g_fout, nilCatalogId, createDumpId(),
 					 "BLOBS", NULL, "",
@@ -1243,6 +1247,48 @@ dumpDatabase(Archive *AH)
 	destroyPQExpBuffer(dbQry);
 	destroyPQExpBuffer(delQry);
 	destroyPQExpBuffer(creaQry);
+}
+
+
+/*
+ * dumpEncoding: put the correct encoding into the archive
+ */
+static void
+dumpEncoding(Archive *AH)
+{
+	PQExpBuffer qry;
+	PGresult   *res;
+
+	/* Can't read the encoding from pre-7.3 servers (SHOW isn't a query) */
+	if (AH->remoteVersion < 70300)
+		return;
+
+	if (g_verbose)
+		write_msg(NULL, "saving encoding\n");
+
+	qry = createPQExpBuffer();
+
+	appendPQExpBuffer(qry, "SHOW client_encoding");
+
+	res = PQexec(g_conn, qry->data);
+
+	check_sql_result(res, g_conn, qry->data, PGRES_TUPLES_OK);
+
+	resetPQExpBuffer(qry);
+
+	appendPQExpBuffer(qry, "SET client_encoding = ");
+	appendStringLiteral(qry, PQgetvalue(res, 0, 0), true);
+	appendPQExpBuffer(qry, ";\n");
+
+	ArchiveEntry(AH, nilCatalogId, createDumpId(),
+				 "ENCODING", NULL, "",
+				 "ENCODING", qry->data, "", NULL,
+				 NULL, 0,
+				 NULL, NULL);
+
+	PQclear(res);
+
+	destroyPQExpBuffer(qry);
 }
 
 
