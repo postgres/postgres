@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.205 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.206 2001/07/18 00:46:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,11 +129,11 @@ static void vacuum_index(VacPageList vacpagelist, Relation indrel,
 						 double num_tuples, int keep_tuples);
 static void scan_index(Relation indrel, double num_tuples);
 static bool tid_reaped(ItemPointer itemptr, void *state);
+static bool dummy_tid_reaped(ItemPointer itemptr, void *state);
 static void vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 						   BlockNumber rel_pages);
 static VacPage copy_vac_page(VacPage vacpage);
 static void vpage_insert(VacPageList vacpagelist, VacPage vpnew);
-static bool is_partial_index(Relation indrel);
 static void *vac_bsearch(const void *key, const void *base,
 						 size_t nelem, size_t size,
 						 int (*compar) (const void *, const void *));
@@ -2178,51 +2178,52 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 
 /*
  *	scan_index() -- scan one index relation to update statistic.
+ *
+ * We use this when we have no deletions to do.
  */
 static void
 scan_index(Relation indrel, double num_tuples)
 {
-	RetrieveIndexResult res;
-	IndexScanDesc iscan;
-	BlockNumber	nipages;
-	double		nitups;
+	IndexBulkDeleteResult *stats;
 	VacRUsage	ru0;
 
 	vac_init_rusage(&ru0);
 
-	/* walk through the entire index */
-	iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
-	nitups = 0;
+	/*
+	 * Even though we're not planning to delete anything, use the
+	 * ambulkdelete call, so that the scan happens within the index AM
+	 * for more speed.
+	 */
+	stats = index_bulk_delete(indrel, dummy_tid_reaped, NULL);
 
-	while ((res = index_getnext(iscan, ForwardScanDirection))
-		   != (RetrieveIndexResult) NULL)
-	{
-		nitups += 1;
-		pfree(res);
-	}
-
-	index_endscan(iscan);
+	if (!stats)
+		return;
 
 	/* now update statistics in pg_class */
-	nipages = RelationGetNumberOfBlocks(indrel);
-	vac_update_relstats(RelationGetRelid(indrel), nipages, nitups, false);
+	vac_update_relstats(RelationGetRelid(indrel),
+						stats->num_pages, stats->num_index_tuples,
+						false);
 
 	elog(MESSAGE_LEVEL, "Index %s: Pages %u; Tuples %.0f.\n\t%s",
-		 RelationGetRelationName(indrel), nipages, nitups,
+		 RelationGetRelationName(indrel),
+		 stats->num_pages, stats->num_index_tuples,
 		 vac_show_rusage(&ru0));
 
 	/*
 	 * Check for tuple count mismatch.  If the index is partial, then
 	 * it's OK for it to have fewer tuples than the heap; else we got trouble.
 	 */
-	if (nitups != num_tuples)
+	if (stats->num_index_tuples != num_tuples)
 	{
-		if (nitups > num_tuples ||
-			! is_partial_index(indrel))
+		if (stats->num_index_tuples > num_tuples ||
+			! vac_is_partial_index(indrel))
 			elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
-				 RelationGetRelationName(indrel), nitups, num_tuples);
+				 RelationGetRelationName(indrel),
+				 stats->num_index_tuples, num_tuples);
 	}
+
+	pfree(stats);
 }
 
 /*
@@ -2269,7 +2270,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	if (stats->num_index_tuples != num_tuples + keep_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
-			! is_partial_index(indrel))
+			! vac_is_partial_index(indrel))
 			elog(NOTICE, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
 \n\tRecreate the index.",
 				 RelationGetRelationName(indrel),
@@ -2329,6 +2330,15 @@ tid_reaped(ItemPointer itemptr, void *state)
 
 	/* tid is reaped */
 	return true;
+}
+
+/*
+ * Dummy version for scan_index.
+ */
+static bool
+dummy_tid_reaped(ItemPointer itemptr, void *state)
+{
+	return false;
 }
 
 /*
@@ -2552,8 +2562,11 @@ vac_close_indexes(int nindexes, Relation *Irel)
 }
 
 
-static bool
-is_partial_index(Relation indrel)
+/*
+ * Is an index partial (ie, could it contain fewer tuples than the heap?)
+ */
+bool
+vac_is_partial_index(Relation indrel)
 {
 	bool		result;
 	HeapTuple	cachetuple;
@@ -2570,7 +2583,7 @@ is_partial_index(Relation indrel)
 								ObjectIdGetDatum(RelationGetRelid(indrel)),
 								0, 0, 0);
 	if (!HeapTupleIsValid(cachetuple))
-		elog(ERROR, "is_partial_index: index %u not found",
+		elog(ERROR, "vac_is_partial_index: index %u not found",
 			 RelationGetRelid(indrel));
 	indexStruct = (Form_pg_index) GETSTRUCT(cachetuple);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.38 2001/07/13 22:55:59 tgl Exp $
+ * $Id: vacuum.h,v 1.39 2001/07/18 00:46:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ extern void vac_update_relstats(Oid relid,
 								BlockNumber num_pages,
 								double num_tuples,
 								bool hasindex);
+extern bool vac_is_partial_index(Relation indrel);
 extern void vac_init_rusage(VacRUsage *ru0);
 extern const char *vac_show_rusage(VacRUsage *ru0);
 
