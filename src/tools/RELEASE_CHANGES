@@ -33,9 +33,6 @@
 
 * Update pg_upgrade to handle new version, or disable
 
-* Update copyright year when needed
-    doc/src/sgml/legal.sgml will also need to be updated
-
 
 ---------------------------------------------------------------------------
 
