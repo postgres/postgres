@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.43 2003/07/27 04:53:07 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.44 2003/08/01 23:22:52 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -45,7 +45,6 @@ static int ip_addrsize(inet *inetptr);
 	(ip_family(inetptr) == PGSQL_AF_INET ? 32 : 128)
 
 /*
- * Now, as a function!
  * Return the number of bytes of storage needed for this data type.
  */
 static int
@@ -76,11 +75,10 @@ network_in(char *src, int type)
 	 * if there is one present, assume it's V6, otherwise assume it's V4.
 	 */
 
-	if (strchr(src, ':') != NULL) {
+	if (strchr(src, ':') != NULL)
 		ip_family(dst) = PGSQL_AF_INET6;
-	} else {
+	else
 		ip_family(dst) = PGSQL_AF_INET;
-        }
   
 	bits = inet_net_pton(ip_family(dst), src, ip_addr(dst),
 			     type ? ip_addrsize(dst) : -1);
@@ -188,7 +186,8 @@ inet_recv(PG_FUNCTION_ARGS)
 	addr = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	ip_family(addr) = pq_getmsgbyte(buf);
-	if (ip_family(addr) != AF_INET)
+	if (ip_family(addr) != PGSQL_AF_INET &&
+		ip_family(addr) != PGSQL_AF_INET6)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 				 errmsg("invalid family in external inet")));
@@ -218,7 +217,7 @@ inet_recv(PG_FUNCTION_ARGS)
 
 	/*
 	 * Error check: CIDR values must not have any bits set beyond the
-	 * masklen. XXX this code is not IPV6 ready.
+	 * masklen.
 	 */
 	if (ip_type(addr))
 	{
@@ -902,12 +901,10 @@ addressOK(unsigned char *a, int bits, int family)
 		maxbits = 128;
 		maxbytes = 16;
 	}
-#if 0
-	assert(bits <= maxbits);
-#endif
+	Assert(bits <= maxbits);
 
 	if (bits == maxbits)
-		return 1;
+		return true;
 
 	byte = (bits + 7) / 8;
 	nbits = bits % 8;
@@ -917,12 +914,12 @@ addressOK(unsigned char *a, int bits, int family)
 
 	while (byte < maxbytes) {
 		if ((a[byte] & mask) != 0)
-			return 0;
+			return false;
 		mask = 0xff;
 		byte++;
 	}
 
-	return 1;
+	return true;
 }
 
 
