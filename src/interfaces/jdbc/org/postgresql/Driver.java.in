@@ -351,7 +351,7 @@ public class Driver implements java.sql.Driver
    */
   public int port()
   {
-    return Integer.parseInt(props.getProperty("PGPORT","5432"));
+    return Integer.parseInt(props.getProperty("PGPORT","@DEF_PGPORT@"));
   }
 
   /**

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.19 2001/02/24 12:40:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.20 2001/03/11 11:06:59 petere Exp $
 -->
 
  <chapter id="jdbc">
@@ -53,55 +53,49 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.19 2001/02/24 12:40:27 
 
    <para>
     Starting with <productname>PostgreSQL</productname> version 7.1,
-    the preferred way to build the <acronym>JDBC</acronym> driver is
-    using <productname>Ant</productname>, a special tool for building
+    the <acronym>JDBC</acronym> driver is built using
+    <application>Ant</application>, a special tool for building
     Java-based packages.  You should download
-    <productname>Ant</productname> from the <ulink
-    url="http://jakarta.apache.org/ant/index.html"><productname>Ant</productname>
-    web site</ulink> and install it before proceeding.
+    <application>Ant</application> from the <ulink
+    url="http://jakarta.apache.org/ant/index.html"><application>Ant</application>
+    web site</ulink> and install it before proceeding.  Precompiled
+    <application>Ant</application> distributions are typically set up
+    to read a file <filename>.antrc</filename> in the current user's
+    home directory for configuration.  For example, to use a different
+    <acronym>JDK</acronym> than the default, this may work:
+<programlisting>
+JAVA_HOME=/usr/local/sun-jdk1.3
+JAVACMD=$JAVA_HOME/bin/java
+</programlisting>
    </para>
 
    <para>
-    The build the driver, issue the command
+    The build the driver, add the <option>--with-java</option> option to your
+    <filename>configure</filename> command line, e.g.,
 <screen>
-<prompt>$</prompt> <userinput>ant</userinput>
+<prompt>$</prompt> <userinput>./configure --prefix=<replaceable>xxx</replaceable> --with-java ...</userinput>
 </screen>
-    in the top level directory of the
-    <productname>PostgreSQL</productname> source distribution.
-   </para>
-
-   <para>
-    To install the driver, enter the command
-<screen>
-<prompt>$</prompt> <userinput>ant -Dinstall.directory=<replaceable>mydir</replaceable> install</userinput>
-</screen>
-    Replace <replaceable>mydir</replaceable> with a directory name of
-    your choice; the directory will be created if necessary.  The
-    <productname>PostgreSQL</productname> <acronym>JDBC</acronym>
-    driver consists of a <filename>postgresql.jar</filename> file that
-    will be copied to that directory.
-   </para>
-
-   <para>
-    Alternatively, you can use the old <command>make</command>-based
-    interface.  The driver's source is located in the <filename
-    class="directory">src/interfaces/jdbc</filename> directory of the
-    source tree. To compile, simply change directory to that
-    directory, and type:
-<screen>
-<prompt>$</prompt> <userinput>gmake</userinput>
-</screen>
-    (Remember to use <acronym>GNU</acronym> make.)  Upon completion,
-    you will find the archive <filename>postgresql.jar</filename> in
-    the current directory. This is the <acronym>JDBC</acronym> driver,
-    which you can copy to an appropriate directory in your system.
+    This will build and install the driver along with the rest of the
+    <productname>PostgreSQL</productname> package when you issue the
+    <literal>gmake</literal> and <literal>gmake install</literal>
+    commands.  If you only want to build the driver and not the rest
+    of <productname>PostgreSQL</productname>, change into the
+    directory <filename
+    class="directory">src/interfaces/jdbc</filename> and issue the
+    respective <literal>make</literal> command there.  Refer to the
+    <productname>PostgreSQL</productname> installation instructions
+    for more information about the configuration and build process.
    </para>
 
    <note>
     <para>
-     You must not use <command>javac</command> directly, as the
-     driver uses some dynamic loading techniques for performance
-     reasons, and <command>javac</command> cannot cope.
+     Do not try to build by calling <command>javac</command> directly,
+     as the driver uses some dynamic loading techniques for
+     performance reasons, and <command>javac</command> cannot cope.
+     Do not try to run <command>ant</command> directly either, because
+     some configuration information is communicated through the
+     makefiles.  Running <command>ant</command> directly without
+     providing these parameters will result in a broken driver.
     </para>
    </note>
   </sect2>
@@ -114,7 +108,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.19 2001/02/24 12:40:27 
     <filename>postgresql.jar</filename> needs to be included in the
     class path, either by putting it in the <envar>CLASSPATH</envar>
     environment variable, or by using flags on the
-    <command>java</command> command line.
+    <command>java</command> command line.  By default, the jar archive
+    is installed in the directory <filename
+    class="directory">/usr/local/pgsql/share/java</filename>.  You may
+    have it in a different directory if you used the
+    <option>--prefix</option> option when you ran
+    <filename>configure</filename>.
    </para>
 
    <informalexample>
@@ -128,7 +127,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.19 2001/02/24 12:40:27 
      <filename>/usr/local/jdk1.1.6</filename>.  To run the
      application, I would use:
 <programlisting>
-export CLASSPATH=/usr/local/lib/finder.jar<co id="co.jdbc-finder">:/usr/local/lib/postgresql.jar:.
+export CLASSPATH=/usr/local/lib/finder.jar<co id="co.jdbc-finder">:/usr/local/pgsql/share/java/postgresql.jar:.
 java uk.org.retep.finder.Main
 </programlisting>
      <calloutlist>

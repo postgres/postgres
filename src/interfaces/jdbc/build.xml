@@ -3,7 +3,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.7 2001/03/05 09:40:01 peter Exp $
+  $Id: build.xml,v 1.8 2001/03/11 11:07:00 petere Exp $
 
 -->
 
@@ -14,8 +14,6 @@
   <property name="jars"    value="jars" />
   <property name="dest"    value="build" />
   <property name="package" value="org/postgresql" />
-  <property name="major" value="7" />
-  <property name="minor" value="1" />
 
   <!--
     defaults for the tests - overide these if required
@@ -68,8 +66,9 @@
     <!-- Some defaults -->
     <filter token="MAJORVERSION" value="${major}" />
     <filter token="MINORVERSION" value="${minor}" />
-    <filter token="VERSION" value="PostgreSQL ${major}.${minor} ${edition}" />
+    <filter token="VERSION" value="PostgreSQL ${fullversion} ${edition}" />
     <filter token="JDBCCONNECTCLASS" value="${connectclass}" />
+    <filter token="DEF_PGPORT" value="${def_pgport}" />
 
     <!-- Put a check for the current version here -->
 
@@ -151,6 +150,17 @@
         <include name="**/*.jar" />
       </fileset>
     </copy>
+  </target>
+
+  <!--
+    Uninstall the jar file.
+  -->
+  <target name="uninstall" if="install.directory">
+    <delete>
+      <fileset dir="${install.directory}">
+        <include name="**/*.jar" />
+      </fileset>
+    </delete>
   </target>
 
   <!--
