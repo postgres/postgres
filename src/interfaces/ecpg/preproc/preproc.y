@@ -192,8 +192,8 @@ make_name(void)
                 PARTIAL, PATH_P, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
-                TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
-		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
+                TABLE, TEMPORARY, THEN, TIME, TIMESTAMP
+		TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHEN, WHERE, WITH, WITHOUT, WORK, YEAR_P, ZONE
@@ -335,7 +335,7 @@ make_name(void)
 %type  <str>	opt_level opt_lock lock_type OptGroupList OptGroupElem
 %type  <str>    OptConstrFromTable OptTempTableName StringConst
 %type  <str>    constraints_set_list constraints_set_namelist
-%type  <str>	constraints_set_mode comment_type
+%type  <str>	constraints_set_mode comment_type opt_empty_parentheses
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
 %type  <str>	opt_force key_update CreateSchemaStmt PosIntStringConst
 %type  <str>    IntConst PosIntConst grantee_list func_type opt_or_replace
@@ -1693,7 +1693,7 @@ comment_text:    StringConst		{ $$ = $1; }
 
 GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee_list opt_with_grant
 				{
-					$$ = cat_str(8, make_str("grant"), $2, make_str("on"), $4, $5, make_str("to"), $7);
+					$$ = cat_str(7, make_str("grant"), $2, make_str("on"), $4, $5, make_str("to"), $7);
 				}
 		;
 
@@ -3064,19 +3064,19 @@ bit:  BIT opt_varying
  * The following implements CHAR() and VARCHAR().
  *								- ay 6/95
  */
-Character:  character '(' PosIntConst ')'
+Character:  character '(' PosIntConst ')' opt_charset
 				{
-					$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));
+					$$ = cat_str(5, $1, make_str("("), $3, make_str(")"), $5);
 				}
-		| character
+		| character opt_charset
 				{
-					$$ = $1;
+					$$ = cat2_str($1, $2);
 				}
 		;
 
-character:  CHARACTER opt_varying opt_charset
+character:  CHARACTER opt_varying 
 				{
-					$$ = cat_str(3, make_str("character"), $2, $3);
+					$$ = cat2_str(make_str("character"), $2);
 				}
 		| CHAR opt_varying			{ $$ = cat2_str(make_str("char"), $2); }
 		| VARCHAR				{ $$ = make_str("varchar"); }
@@ -3101,9 +3101,17 @@ ConstDatetime:  datetime
 				{
 					$$ = $1;
 				}
+		| TIMESTAMP '(' PosIntConst ')' opt_timezone
+				{
+					$$ = cat_str(4, make_str("timestamp("), $3, make_str(")"), $5);
+				}
 		| TIMESTAMP opt_timezone
 				{
 					$$ = cat2_str(make_str("timestamp"), $2);
+				}
+		| TIME '(' PosIntConst ')' opt_timezone
+				{
+					$$ = cat_str(4, make_str("time("), $3, make_str(")"), $5);
 				}
 		| TIME opt_timezone
 				{
@@ -3439,36 +3447,24 @@ c_expr:  attr
 				{	$$ = cat2_str($1, make_str("(*)")); }
 		| CURRENT_DATE
 				{	$$ = make_str("current_date"); }
-		| CURRENT_TIME
-				{	$$ = make_str("current_time"); }
+		| CURRENT_TIME opt_empty_parentheses
+				{	$$ = cat2_str(make_str("current_time"), $2); }
 		| CURRENT_TIME '(' PosIntConst ')'
 				{
-					if (atol($3) != 0)
-					{
-						sprintf(errortext, "CURRENT_TIME(%s) precision not implemented; backend will use zero instead", $3);
-						mmerror(ET_NOTICE, errortext);
-					}
-
 					$$ = make_str("current_time");
 				}
-		| CURRENT_TIMESTAMP
-				{	$$ = make_str("current_timestamp"); }
+		| CURRENT_TIMESTAMP opt_empty_parentheses
+				{	$$ = cat2_str(make_str("current_timestamp"), $2); }
 		| CURRENT_TIMESTAMP '(' PosIntConst ')'
 				{
-					if (atol($3) != 0)
-					{
-						sprintf(errortext, "CURRENT_TIMESTAMP(%s) precision not implemented; backend will use zero instead", $3);
-						mmerror(ET_NOTICE, errortext);
-					}
-
 					$$ = make_str("current_timestamp");
 				}
-		| CURRENT_USER
-				{	$$ = make_str("current_user"); }
-		| SESSION_USER
-				{       $$ = make_str("session_user"); }
-		| USER
-				{       $$ = make_str("user"); }
+		| CURRENT_USER opt_empty_parentheses
+				{	$$ = cat2_str(make_str("current_user"), $2); }
+		| SESSION_USER opt_empty_parentheses
+				{       $$ = cat2_str(make_str("session_user"), $2); }
+		| USER opt_empty_parentheses
+				{       $$ = cat2_str(make_str("user"), $2); }
 		| EXTRACT '(' extract_list ')'
 				{	$$ = cat_str(3, make_str("extract("), $3, make_str(")")); }
 		| POSITION '(' position_list ')'
@@ -3528,8 +3524,6 @@ extract_list:  extract_arg FROM a_expr
 extract_arg:  datetime		{ $$ = $1; }
 	| SCONST				{ $$ = $1; }
 	| IDENT					{ $$ = $1; }
-	| TIMEZONE_HOUR 	{ $$ = make_str("timezone_hour"); }	
-	| TIMEZONE_MINUTE 	{ $$ = make_str("timezone_minute"); }	
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
@@ -3663,6 +3657,8 @@ attrs:	  attr_name
 				{ $$ = make2_str($1, make_str(".*")); }
 		;
 
+opt_empty_parentheses: '(' ')' 	{ $$ = make_str("()"); }
+                | /*EMPTY*/ 	{ $$ = EMPTY; }
 
 /*****************************************************************************
  *
@@ -5063,8 +5059,6 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	| TEMP				{ $$ = make_str("temp"); }
 	| TEMPLATE			{ $$ = make_str("template"); }
 	| TEMPORARY			{ $$ = make_str("temporary"); }
-	| TIMEZONE_HOUR                 { $$ = make_str("timezone_hour"); }
-        | TIMEZONE_MINUTE               { $$ = make_str("timezone_minute"); } 
         | TOAST		                { $$ = make_str("toast"); }
 	| TRIGGER			{ $$ = make_str("trigger"); }
 	| TRUNCATE			{ $$ = make_str("truncate"); }
@@ -5092,8 +5086,6 @@ ECPGColId: ident			{ $$ = $1; }
 	| NATIONAL			{ $$ = make_str("national"); }
 	| NONE				{ $$ = make_str("none"); }
 	| PATH_P			{ $$ = make_str("path_p"); }
-	| TIME				{ $$ = make_str("time"); }
-	| TIMESTAMP			{ $$ = make_str("timestamp"); }
 	| ECPGKeywords                  { $$ = $1; }
 	;
 
@@ -5195,6 +5187,8 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| SUBSTRING	{ $$ = make_str("substring"); }
 		| TABLE		{ $$ = make_str("table"); }
 		| THEN          { $$ = make_str("then"); }
+		| TIME		{ $$ = make_str("time"); }
+		| TIMESTAMP	{ $$ = make_str("timestamp"); }
 		| TO		{ $$ = make_str("to"); }
 		| TRANSACTION	{ $$ = make_str("transaction"); }
 		| TRIM		{ $$ = make_str("trim"); }

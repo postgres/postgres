@@ -1102,28 +1102,32 @@ Tue Sep 25 20:10:03 CEST 2001
 	- Synced preproc.y with gram.y.
 	- Changed locale handling.
 
-Mon Okt  1 13:49:40 CEST 2001
+Mon Oct  1 13:49:40 CEST 2001
 
 	- Fixed truncate bug.
 	- Added patch by Christof Petig <christof.petig@wtal.de> to clean up
 	  ecpglib.
 
-TUe Okt  2 16:09:26 CEST 2001
+TUe Oct  2 16:09:26 CEST 2001
 
 	- Re-added Tom's patch fixing my setlocale patch. I accidently
 	  deleted it.
 
-Fri Okt  5 08:37:01 CEST 2001
+Fri Oct  5 08:37:01 CEST 2001
 
 	- Fixed yet another typo in preproc.y.
 
-Fri Okt  5 19:33:46 CEST 2001
+Fri Oct  5 19:33:46 CEST 2001
 
 	- Make sure every call to ECPGraise is logged.
 
-Mon Okt  8 10:10:23 CEST 2001
+Mon Oct  8 10:10:23 CEST 2001
 
 	- Fix include file so library is binary compatible again.
 
+Sun Oct 14 14:07:59 CEST 2001
+
+	- Fixed GRANT statement.
+	- Synced preproc.y with gram.y.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
