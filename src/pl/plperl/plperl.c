@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.64 2004/11/24 18:47:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.65 2004/11/29 20:11:05 tgl Exp $
  *
  **********************************************************************/
 
@@ -200,7 +200,7 @@ plperl_init_interp(void)
 
 	plperl_interp = perl_alloc();
 	if (!plperl_interp)
-		elog(ERROR, "could not allocate perl interpreter");
+		elog(ERROR, "could not allocate Perl interpreter");
 
 	perl_construct(plperl_interp);
 	perl_parse(plperl_interp, plperl_init_shared_libs, 3, embedding, NULL);
@@ -233,8 +233,8 @@ plperl_safe_init(void)
 	"$PLContainer->permit_only(':default');"
 	"$PLContainer->share(qw[&elog &ERROR ]);"
 	"sub ::mksafefunc { return $PLContainer->reval(qq[sub { "
-	"elog(ERROR,'trusted perl functions disabled - "
-    "please upgrade perl Safe module to at least 2.09');}]); }"
+	"elog(ERROR,'trusted Perl functions disabled - "
+    "please upgrade Perl Safe module to version 2.09 or later');}]); }"
 			   ;
 
 	SV		   *res;
@@ -291,7 +291,10 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 		int			attn = SPI_fnumber(td, key);
 
 		if (attn <= 0 || td->attrs[attn - 1]->attisdropped)
-			elog(ERROR, "plperl: invalid attribute \"%s\" in hash", key);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("Perl hash contains nonexistent column \"%s\"",
+							key)));
 		if (SvTYPE(val) != SVt_NULL)
 			values[attn - 1] = SvPV(val, PL_na);
 	}
@@ -408,8 +411,9 @@ get_function_tupdesc(Oid result_type, ReturnSetInfo *rsinfo)
 		if (!rsinfo || !IsA(rsinfo, ReturnSetInfo) ||
 			rsinfo->expectedDesc == NULL)
 			ereport(ERROR,
-					(errcode(ERRCODE_DATATYPE_MISMATCH),
-					 errmsg("could not determine row description for function returning record")));
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("function returning record called in context "
+							"that cannot accept type record")));
 		return rsinfo->expectedDesc;
 	}
 	else				/* ordinary composite type */
@@ -439,9 +443,13 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 
 	svp = hv_fetch(hvTD, "new", 3, FALSE);
 	if (!svp)
-		elog(ERROR, "plperl: key \"new\" not found");
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("$_TD->{new} does not exist")));
 	if (SvTYPE(*svp) != SVt_RV || SvTYPE(SvRV(*svp)) != SVt_PVHV)
-		elog(ERROR, "plperl: $_TD->{new} is not a hash reference");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("$_TD->{new} is not a hash reference")));
 	hvNew = (HV *) SvRV(*svp);
 
 	modattrs = palloc(tupdesc->natts * sizeof(int));
@@ -455,7 +463,10 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 		int			attn = SPI_fnumber(tupdesc, key);
 
 		if (attn <= 0 || tupdesc->attrs[attn - 1]->attisdropped)
-			elog(ERROR, "plperl: invalid attribute \"%s\" in hash", key);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("Perl hash contains nonexistent column \"%s\"",
+							key)));
 		if (SvTYPE(val) != SVt_NULL)
 		{
 			Oid			typinput;
@@ -490,7 +501,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 	pfree(modnulls);
 
 	if (rtup == NULL)
-		elog(ERROR, "plperl: SPI_modifytuple failed: %s",
+		elog(ERROR, "SPI_modifytuple failed: %s",
 			 SPI_result_code_string(SPI_result));
 
 	return rtup;
@@ -594,8 +605,10 @@ plperl_create_sub(char *s, bool trusted)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "creation of function failed: %s",
-			 strip_trailing_ws(SvPV(ERRSV, PL_na)));
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("creation of Perl function failed: %s",
+						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
 	/*
@@ -722,8 +735,10 @@ plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "error from function: %s",
-			 strip_trailing_ws(SvPV(ERRSV, PL_na)));
+		/* XXX need to find a way to assign an errcode here */
+		ereport(ERROR,
+				(errmsg("error from Perl function: %s",
+						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -780,8 +795,10 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo,
 		PUTBACK;
 		FREETMPS;
 		LEAVE;
-		elog(ERROR, "error from trigger function: %s",
-			 strip_trailing_ws(SvPV(ERRSV, PL_na)));
+		/* XXX need to find a way to assign an errcode here */
+		ereport(ERROR,
+				(errmsg("error from Perl trigger function: %s",
+						strip_trailing_ws(SvPV(ERRSV, PL_na)))));
 	}
 
 	retval = newSVsv(POPs);
@@ -857,7 +874,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		AttInMetadata *attinmeta;
 
 		if (SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVAV)
-			elog(ERROR, "plperl: set-returning function must return reference to array");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("set-returning Perl function must return reference to array")));
 		ret_av = (AV *) SvRV(perlret);
 
 		if (SRF_IS_FIRSTCALL())
@@ -893,7 +912,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			Assert(svp != NULL);
 
 			if (SvTYPE(*svp) != SVt_RV || SvTYPE(SvRV(*svp)) != SVt_PVHV)
-				elog(ERROR, "plperl: element of result array is not a reference to hash");
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("elements of Perl result array must be reference to hash")));
 			row_hv = (HV *) SvRV(*svp);
 
 			tuple = plperl_build_tuple_result(row_hv, attinmeta);
@@ -913,7 +934,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		FuncCallContext *funcctx;
 
 		if (SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVAV)
-			elog(ERROR, "plperl: set-returning function must return reference to array");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("set-returning Perl function must return reference to array")));
 		ret_av = (AV *) SvRV(perlret);
 
 		if (SRF_IS_FIRSTCALL())
@@ -966,7 +989,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		HeapTuple	tup;
 
 		if (SvTYPE(perlret) != SVt_RV || SvTYPE(SvRV(perlret)) != SVt_PVHV)
-			elog(ERROR, "plperl: composite-returning function must return a reference to hash");
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("composite-returning Perl function must return reference to hash")));
 		perlhash = (HV *) SvRV(perlret);
 
 		/*
@@ -1036,7 +1061,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	* because SPI_finish would free it).
 	************************************************************/
 	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "plperl: SPI_finish() failed");
+		elog(ERROR, "SPI_finish() failed");
 
 	if (!(perlret && SvOK(perlret) && SvTYPE(perlret) != SVt_NULL))
 	{
@@ -1073,13 +1098,17 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 										  trigdata->tg_newtuple);
 			else
 			{
-				elog(WARNING, "plperl: ignoring modified tuple in DELETE trigger");
+				ereport(WARNING,
+						(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+						 errmsg("ignoring modified tuple in DELETE trigger")));
 				trv = NULL;
 			}
 		}
 		else
 		{
-			elog(ERROR, "plperl: expected trigger result to be undef, \"SKIP\" or \"MODIFY\"");
+			ereport(ERROR,
+					(errcode(ERRCODE_E_R_I_E_TRIGGER_PROTOCOL_VIOLATED),
+					 errmsg("result of Perl trigger function must be undef, \"SKIP\" or \"MODIFY\"")));
 			trv = NULL;
 		}
 		retval = PointerGetDatum(trv);
@@ -1318,7 +1347,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 ************************************************************/
 		prodesc->reference = plperl_create_sub(proc_source, prodesc->lanpltrusted);
 		pfree(proc_source);
-		if (!prodesc->reference)
+		if (!prodesc->reference) /* can this happen? */
 		{
 			free(prodesc->proname);
 			free(prodesc);
