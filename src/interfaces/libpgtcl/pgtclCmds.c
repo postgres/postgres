@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.18 1997/10/30 17:29:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.19 1997/11/21 19:12:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1000,7 +1000,7 @@ Pg_lo_creat
  syntax:
    pg_lo_creat conn mode
 
-mode can be any OR'ing together of INV_READ, INV_WRITE, and INV_ARCHIVE,
+mode can be any OR'ing together of INV_READ, INV_WRITE
 for now, we don't support any additional storage managers.
 
 ***********************************/
@@ -1038,14 +1038,10 @@ Pg_lo_creat(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	{
 		mode = INV_WRITE;
 	}
-	else if (strcmp(modeWord, "INV_ARCHIVE") == 0)
-	{
-		mode = INV_ARCHIVE;
-	}
 	else
 	{
 		Tcl_AppendResult(interp,
-						 "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, INV_WRITE, and INV_ARCHIVE",
+						 "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, and INV_WRITE",
 						 0);
 		return TCL_ERROR;
 	}
@@ -1060,14 +1056,10 @@ Pg_lo_creat(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		{
 			mode |= INV_WRITE;
 		}
-		else if (strcmp(modeWord, "INV_ARCHIVE") == 0)
-		{
-			mode |= INV_ARCHIVE;
-		}
 		else
 		{
 			Tcl_AppendResult(interp,
-							 "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, INV_WRITE, and INV_ARCHIVE",
+							 "invalid mode argument to Pg_lo_creat\nmode argument must be some OR'd combination of INV_READ, and INV_WRITE",
 							 0);
 			return TCL_ERROR;
 		}

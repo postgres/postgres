@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.13 1997/10/28 15:11:43 vadim Exp $
+ * $Id: rel.h,v 1.14 1997/11/21 19:12:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,8 +76,6 @@ typedef RelationData *Relation;
 typedef Relation *RelationPtr;
 
 #define InvalidRelation ((Relation)NULL)
-
-typedef char ArchiveMode;
 
 /*
  * RelationIsValid --

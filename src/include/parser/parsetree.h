@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.3 1997/09/07 04:59:38 momjian Exp $
+ * $Id: parsetree.h,v 1.4 1997/11/21 19:12:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,16 +30,7 @@
  *								  ^^^^^^^^^^
  *	range table:
  *		(rtentry ...)
- *
  *	rtentry:
- *		note: this might be wrong, I don't understand how
- *		rt_time / rt_archive_time work together.  anyways it
- *		looks something like:
- *
- *		   (relname ?		relid timestuff flags rulelocks)
- *		or (new/cur relname relid timestuff flags rulelocks)
- *
- *		someone who knows more should correct this -cim 6/9/91
  * ----------------
  */
 
