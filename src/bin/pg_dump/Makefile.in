@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.13 1997/02/06 02:31:05 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.1 1997/02/09 03:23:23 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,11 +15,7 @@ SRCDIR= ../..
 include ../../Makefile.global
 include ../Makefile.global
 
-OBJS= pg_dump.o common.o
-
-ifeq ($(PORTNAME), ultrix4)
-OBJS+= ../../utils/strdup.o
-endif
+OBJS= pg_dump.o common.o @STRDUP@
 
 all: submake pg_dump
 
