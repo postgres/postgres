@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.101 1999/10/04 02:12:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.102 1999/10/06 03:08:46 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -642,7 +642,6 @@ AddNewRelationTuple(Relation pg_class_desc,
 	Form_pg_class new_rel_reltup;
 	HeapTuple	tup;
 	Relation	idescs[Num_pg_class_indices];
-	bool		isBootstrap;
 
 	/* ----------------
 	 *	first we munge some of the information in our
@@ -689,36 +688,23 @@ AddNewRelationTuple(Relation pg_class_desc,
 						 (char *) new_rel_reltup);
 	tup->t_data->t_oid = new_rel_oid;
 
-	/* ----------------
-	 *	finally insert the new tuple and free it.
-	 *
-	 *	Note: I have no idea why we do a
-	 *			SetProcessingMode(BootstrapProcessing);
-	 *		  here -cim 6/14/90
-	 * ----------------
+	/*
+	 * finally insert the new tuple and free it.
 	 */
-	isBootstrap = IsBootstrapProcessingMode() ? true : false;
-
-	SetProcessingMode(BootstrapProcessing);
-
 	heap_insert(pg_class_desc, tup);
 
 	if (temp_relname)
 		create_temp_relation(temp_relname, tup);
 
-	if (!isBootstrap)
+	if (!IsBootstrapProcessingMode())
 	{
-
 		/*
 		 * First, open the catalog indices and insert index tuples for the
 		 * new relation.
 		 */
-
 		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, idescs);
 		CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class_desc, tup);
 		CatalogCloseIndices(Num_pg_class_indices, idescs);
-		/* now restore processing mode */
-		SetProcessingMode(NormalProcessing);
 	}
 
 	pfree(tup);
