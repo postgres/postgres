@@ -8,21 +8,21 @@
 
 #include <string.h>
 #include <stdio.h>
-#include "postgres.h"			/* for char16, etc. */
+#include "postgres.h"			/* for variable length type */
 #include "utils/palloc.h"		/* for palloc */
-#include "libpq-fe.h"			/* for TUPLE */
 #include "executor/executor.h"	/* for GetAttributeByName() */
+#include "utils/geo_decls.h"	/* for point type */
 
 /* The following prototypes declare what we assume the user declares to
    Postgres in his CREATE FUNCTION statement.
 */
 
 int			add_one(int arg);
-char16	   *concat16(char16 * arg1, char16 * arg2);
+Point	   *makepoint(Point *pointx, Point *pointy );
 text	   *copytext(text *t);
 
-bool c_overpaid(TUPLE t,				/* the current instance of EMP */
-		   int4 limit);
+bool c_overpaid(TupleTableSlot *t,	  /* the current instance of EMP */
+				int4 limit);
 
 
 
@@ -32,14 +32,15 @@ add_one(int arg)
 	return arg + 1;
 }
 
-char16 *
-concat16(char16 * arg1, char16 * arg2)
+Point *
+makepoint(Point *pointx, Point *pointy )
 {
-	char16	   *new_c16 = (char16 *) palloc(sizeof(char16));
+	Point	  *new_point = (Point *) palloc(sizeof(Point));
 
-	MemSet(new_c16, 0, sizeof(char16));
-	strncpy((char *) new_c16, (char *) arg1, 16);
-	return (char16 *) (strncat((char *) new_c16, (char *) arg2, 16));
+	new_point->x = pointx->x;
+	new_point->y = pointy->y;
+
+	return new_point;
 }
 
 text *
@@ -66,7 +67,7 @@ copytext(text *t)
 }
 
 bool
-c_overpaid(TUPLE t,				/* the current instance of EMP */
+c_overpaid(TupleTableSlot *t,	 /* the current instance of EMP */
 		   int4 limit)
 {
 	bool		isnull = false;

@@ -1,12 +1,12 @@
 ---------------------------------------------------------------------------
 --
 -- funcs.sql-
---    Tutorial on using functions in POSTGRES.
+--	  Tutorial on using functions in POSTGRES.
 --
 --
 -- Copyright (c) 1994-5, Regents of the University of California
 --
--- $Id: funcs.source,v 1.2 1998/02/11 03:51:38 thomas Exp $
+-- $Id: funcs.source,v 1.3 1999/03/14 15:22:15 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -52,14 +52,14 @@ CREATE TABLE EMP (
 	name		text,
 	salary		int4,
 	age		int4,
-	dept		char16
+	cubicle		point
 );
 
-INSERT INTO EMP VALUES ('Sam', 1200, 16, 'toy');
-INSERT INTO EMP VALUES ('Claire', 5000, 32, 'shoe');
-INSERT INTO EMP VALUES ('Andy', -1000, 2, 'candy');
-INSERT INTO EMP VALUES ('Bill', 4200, 36, 'shoe');
-INSERT INTO EMP VALUES ('Ginger', 4800, 30, 'candy');
+INSERT INTO EMP VALUES ('Sam', 1200, 16, '(1,1)');
+INSERT INTO EMP VALUES ('Claire', 5000, 32, '(1,2)');
+INSERT INTO EMP VALUES ('Andy', -1000, 2, '(1,3)');
+INSERT INTO EMP VALUES ('Bill', 4200, 36, '(2,1)');
+INSERT INTO EMP VALUES ('Ginger', 4800, 30, '(2,4)');
 
 -- the argument of a function can also be a tuple. For instance, 
 -- double_salary takes a tuple of the EMP table
@@ -69,7 +69,7 @@ CREATE FUNCTION double_salary(EMP) RETURNS int4
 
 SELECT name, double_salary(EMP) AS dream
 FROM EMP
-WHERE EMP.dept = 'toy';
+WHERE EMP.cubicle ~= '(2,1)'::point;
 
 -- the return value of a function can also be a tuple. However, make sure 
 -- that the expressions in the target list is in the same order as the 
@@ -77,9 +77,9 @@ WHERE EMP.dept = 'toy';
 
 CREATE FUNCTION new_emp() RETURNS EMP
    AS 'SELECT \'None\'::text AS name,
-              1000 AS salary,
-              25 AS age,
-              \'none\'::char16 AS dept'
+			  1000 AS salary,
+			  25 AS age,
+			  \'(2,2)\'::point AS cubicle'
    LANGUAGE 'sql';
 
 -- you can then project a column out of resulting the tuple by using the
@@ -99,33 +99,36 @@ SELECT name(high_pay()) AS overpaid;
 -----------------------------
 -- Creating SQL Functions with multiple SQL statements
 --	you can also create functions that do more than just a SELECT.
+--
+-- 14MAR99 Clark Evans: Does not quite work, commented out for now.
+--
 -----------------------------
 
 -- you may have noticed that Andy has a negative salary. We'll create a
 -- function that removes employees with negative salaries.
-
-SELECT * FROM EMP;
-
-CREATE FUNCTION clean_EMP () RETURNS int4
-   AS 'DELETE FROM EMP WHERE EMP.salary <= 0\;
-       SELECT 1 AS ignore_this'
-   LANGUAGE 'sql';
-
-SELECT clean_EMP();
-
-SELECT * FROM EMP;
+--
+-- SELECT * FROM EMP;
+--
+-- CREATE FUNCTION clean_EMP () RETURNS int4
+--	  AS 'DELETE FROM EMP WHERE EMP.salary <= 0\;
+--		  SELECT 1 AS ignore_this'
+--	  LANGUAGE 'sql';
+--
+-- SELECT clean_EMP();
+--
+-- SELECT * FROM EMP;
 
 
 -----------------------------
 -- Creating C Functions
 --	in addition to SQL functions, you can also create C functions. 
---	See C-code/funcs.c for the definition of the C functions.
+--	See funcs.c for the definition of the C functions.
 -----------------------------
 
 CREATE FUNCTION add_one(int4) RETURNS int4
    AS '_OBJWD_/funcs.so' LANGUAGE 'c';
 
-CREATE FUNCTION concat16(char16, char16) RETURNS char16
+CREATE FUNCTION makepoint(point, point) RETURNS point
    AS '_OBJWD_/funcs.so' LANGUAGE 'c';
 
 CREATE FUNCTION copytext(text) RETURNS text
@@ -136,7 +139,7 @@ CREATE FUNCTION c_overpaid(EMP, int4) RETURNS bool
 
 SELECT add_one(3) AS four;
 
-SELECT concat16('abc', 'xyz') AS newchar16;
+SELECT makepoint('(1,2)'::point, '(3,4)'::point ) AS newpoint;
 
 SELECT copytext('hello world!');
 
@@ -148,9 +151,10 @@ WHERE name = 'Bill' or name = 'Sam';
 
 DROP FUNCTION c_overpaid(EMP, int4);
 DROP FUNCTION copytext(text);
-DROP FUNCTION concat16(char16,char16);
+DROP FUNCTION makepoint(point,point);
 DROP FUNCTION add_one(int4);
 DROP FUNCTION clean_EMP();
+DROP FUNCTION high_pay();
 DROP FUNCTION new_emp();
 DROP FUNCTION add_em(int4, int4);
 DROP FUNCTION one();
