@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.94 2001/05/18 22:35:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.95 2001/05/19 00:33:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  a->lexpr,
 															  precedence);
 
-							result = ParseColumnOrFunc(pstate,
+							result = ParseFuncOrColumn(pstate,
 													   "nullvalue",
 													   makeList1(lexpr),
 													   false, false,
@@ -186,7 +186,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  a->lexpr,
 															  precedence);
 
-							result = ParseColumnOrFunc(pstate,
+							result = ParseFuncOrColumn(pstate,
 													   "nonnullvalue",
 													   makeList1(lexpr),
 													   false, false,
@@ -273,7 +273,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					lfirst(args) = transformExpr(pstate,
 												 (Node *) lfirst(args),
 												 precedence);
-				result = ParseColumnOrFunc(pstate,
+				result = ParseFuncOrColumn(pstate,
 										   fn->funcname,
 										   fn->args,
 										   fn->agg_star,

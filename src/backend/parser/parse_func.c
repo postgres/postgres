@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.105 2001/05/18 22:54:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.106 2001/05/19 00:33:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 												  (Node *) attr->paramNo,
 													EXPR_RELATION_FIRST);
 
-		retval = ParseColumnOrFunc(pstate, strVal(lfirst(attr->attrs)),
+		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
 								   makeList1(param),
 								   false, false,
 								   precedence);
@@ -86,7 +86,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 
 		ident->name = attr->relname;
 		ident->isRel = TRUE;
-		retval = ParseColumnOrFunc(pstate, strVal(lfirst(attr->attrs)),
+		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
 								   makeList1(ident),
 								   false, false,
 								   precedence);
@@ -95,7 +95,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
 	/* Do more attributes follow this one? */
 	foreach(mutator_iter, lnext(attr->attrs))
 	{
-		retval = ParseColumnOrFunc(pstate, strVal(lfirst(mutator_iter)),
+		retval = ParseFuncOrColumn(pstate, strVal(lfirst(mutator_iter)),
 								   makeList1(retval),
 								   false, false,
 								   precedence);
@@ -236,14 +236,18 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 
 /*
  * 	parse function
- * 	This code is confusing code because the database can accept
+ * 	This code is confusing because the database can accept
  *  relation.column, column.function, or relation.column.function.
- *  It can also be called as func(col) or func(col,col).
+ *	In these cases, funcname is the last parameter, and fargs are
+ *  the rest.
  *
- *	Funcname is the first parameter, and fargs are the rest.
+ *  It can also be called as func(col) or func(col,col).
+ *  In this case, Funcname is the part before parens, and fargs
+ *  are the part in parens.
+ *
  */
 Node *
-ParseColumnOrFunc(ParseState *pstate, char *funcname, List *fargs,
+ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				  bool agg_star, bool agg_distinct,
 				  int precedence)
 {
@@ -491,7 +495,7 @@ ParseColumnOrFunc(ParseState *pstate, char *funcname, List *fargs,
 			}
 			else
 			{
-				elog(ERROR, "ParseColumnOrFunc: unexpected node type %d",
+				elog(ERROR, "ParseFuncOrColumn: unexpected node type %d",
 					 nodeTag(rteorjoin));
 				rte = NULL;		/* keep compiler quiet */
 			}
@@ -1540,7 +1544,7 @@ make_arguments(ParseState *pstate,
 /*
  ** setup_field_select
  **		Build a FieldSelect node that says which attribute to project to.
- **		This routine is called by ParseColumnOrFunc() when we have found
+ **		This routine is called by ParseFuncOrColumn() when we have found
  **		a projection on a function result or parameter.
  */
 static FieldSelect *

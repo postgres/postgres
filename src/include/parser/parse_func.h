@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.30 2001/05/18 22:35:51 momjian Exp $
+ * $Id: parse_func.h,v 1.31 2001/05/19 00:33:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct _CandidateList
 
 extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 						int precedence);
-extern Node *ParseColumnOrFunc(ParseState *pstate,
+extern Node *ParseFuncOrColumn(ParseState *pstate,
 				  char *funcname, List *fargs,
 				  bool agg_star, bool agg_distinct,
 				  int precedence);
